@@ -28,9 +28,9 @@ int main(
   int argc,
   char *argv[]) {
 
-  static atm_t *atm, *atm2;
+  atm_t *atm, *atm2;
 
-  static ctl_t ctl;
+  ctl_t ctl;
 
   gsl_rng *rng;
 
@@ -47,30 +47,30 @@ int main(
     ERRMSG("Give parameters: <ctl> <atm_in> <atm_out>");
 
   /* Read control parameters... */
-  read_ctl(NULL, NULL, argc, argv, &ctl);
-  n = (int) scan_ctl(NULL, NULL, argc, argv, "N", -1, "", NULL);
-  m = scan_ctl(NULL, NULL, argc, argv, "M", -1, "-999", NULL);
-  dz = scan_ctl(NULL, NULL, argc, argv, "DZ", -1, "0", NULL);
-  z0 = scan_ctl(NULL, NULL, argc, argv, "Z0", -1, "0", NULL);
-  z1 = scan_ctl(NULL, NULL, argc, argv, "Z1", -1, "0", NULL);
-  dx = scan_ctl(NULL, NULL, argc, argv, "DX", -1, "0", NULL);
-  lon0 = scan_ctl(NULL, NULL, argc, argv, "LON0", -1, "0", NULL);
-  lon1 = scan_ctl(NULL, NULL, argc, argv, "LON1", -1, "0", NULL);
-  lat0 = scan_ctl(NULL, NULL, argc, argv, "LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(NULL, NULL, argc, argv, "LAT1", -1, "0", NULL);
+  read_ctl(argv[1], argc, argv, &ctl);
+  n = (int) scan_ctl(argv[1], argc, argv, "N", -1, "", NULL);
+  m = scan_ctl(argv[1], argc, argv, "M", -1, "-999", NULL);
+  dz = scan_ctl(argv[1], argc, argv, "DZ", -1, "0", NULL);
+  z0 = scan_ctl(argv[1], argc, argv, "Z0", -1, "0", NULL);
+  z1 = scan_ctl(argv[1], argc, argv, "Z1", -1, "0", NULL);
+  dx = scan_ctl(argv[1], argc, argv, "DX", -1, "0", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "0", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "0", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "0", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "0", NULL);
 
   /* Init random number generator... */
   gsl_rng_env_setup();
   rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Read atmospheric data... */
-  read_atm(NULL, argv[2], atm, &ctl);
+  read_atm(argv[2], atm, &ctl);
 
   /* Get total and maximum mass... */
-  if (ctl.qnt_mass >= 0)
+  if (ctl.qnt_m >= 0)
     for (ip = 0; ip < atm->np; ip++) {
-      mtot += atm->q[ctl.qnt_mass][ip];
-      mmax = GSL_MAX(mmax, atm->q[ctl.qnt_mass][ip]);
+      mtot += atm->q[ctl.qnt_m][ip];
+      mmax = GSL_MAX(mmax, atm->q[ctl.qnt_m][ip]);
     }
   if (m > 0)
     mtot = m;
@@ -79,10 +79,10 @@ int main(
   for (i = 0; i < n; i++) {
 
     /* Select air parcel... */
-    if (ctl.qnt_mass >= 0)
+    if (ctl.qnt_m >= 0)
       do {
 	ip = (int) gsl_rng_uniform_int(rng, (long unsigned int) atm->np);
-      } while (gsl_rng_uniform(rng) > atm->q[ctl.qnt_mass][ip] / mmax);
+      } while (gsl_rng_uniform(rng) > atm->q[ctl.qnt_m][ip] / mmax);
     else
       ip = (int) gsl_rng_uniform_int(rng, (long unsigned int) atm->np);
 
@@ -112,8 +112,8 @@ int main(
       atm2->q[iq][atm2->np] = atm->q[iq][ip];
 
     /* Adjust mass... */
-    if (ctl.qnt_mass >= 0)
-      atm2->q[ctl.qnt_mass][atm2->np] = mtot / n;
+    if (ctl.qnt_m >= 0)
+      atm2->q[ctl.qnt_m][atm2->np] = mtot / n;
 
     /* Increment particle counter... */
     if ((++atm2->np) >= NP)
@@ -121,7 +121,7 @@ int main(
   }
 
   /* Save data and close file... */
-  write_atm(NULL, argv[3], atm2, &ctl);
+  write_atm(argv[3], atm2, &ctl, atm->time[0]);
 
   /* Free... */
   free(atm);

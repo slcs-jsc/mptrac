@@ -19,28 +19,29 @@
 
 /*! 
   \file
-  Calculate accuracy of trajectories based on reference calculations.
+  Calculate transport deviations of trajectories.
 */
 
 #include "libtrac.h"
+#include <gsl/gsl_sort.h>
 
 int main(
   int argc,
   char *argv[]) {
 
-  atm_t *atm1, *atm2;
-
-  char *name;
-  char *year, *mon, *day, *hour, *min;
-
   ctl_t ctl;
+
+  atm_t *atm1, *atm2;
 
   FILE *out;
 
-  double x0[3], x1[3], *lon1, *lat1, *p1, *dh1, *dv1, *lon2, *lat2, *p2,
-    *dh2, *dv2, ahtd, avtd, rhtd, rvtd, t;
+  char *name, *year, *mon, *day, *hour, *min;
 
-  int ip, f;
+  double aux, x0[3], x1[3], x2[3], *lon1, *lat1, *p1, *lh1, *lv1,
+    *lon2, *lat2, *p2, *lh2, *lv2, ahtd, avtd, ahtd2, avtd2,
+    rhtd, rvtd, rhtd2, rvtd2, t, *dh, *dv;
+
+  int f, i, ip, iph, ipv;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -51,9 +52,9 @@ int main(
 	NP);
   ALLOC(p1, double,
 	NP);
-  ALLOC(dh1, double,
+  ALLOC(lh1, double,
 	NP);
-  ALLOC(dv1, double,
+  ALLOC(lv1, double,
 	NP);
   ALLOC(lon2, double,
 	NP);
@@ -61,9 +62,13 @@ int main(
 	NP);
   ALLOC(p2, double,
 	NP);
-  ALLOC(dh2, double,
+  ALLOC(lh2, double,
 	NP);
-  ALLOC(dv2, double,
+  ALLOC(lv2, double,
+	NP);
+  ALLOC(dh, double,
+	NP);
+  ALLOC(dv, double,
 	NP);
 
   /* Check arguments... */
@@ -71,12 +76,8 @@ int main(
     ERRMSG
       ("Give parameters: <outfile> <atm1a> <atm1b> [<atm2a> <atm2b> ...]");
 
-  if (argv[2][strlen(argv[2]) - 1] == 'c') {
-    ctl.atm_iformat = 1;
-  }
-
   /* Write info... */
-  printf("Write trajectory analysis data: %s\n", argv[1]);
+  printf("Write transport deviations: %s\n", argv[1]);
 
   /* Create output file... */
   if (!(out = fopen(argv[1], "w")))
@@ -84,88 +85,139 @@ int main(
 
   /* Write header... */
   fprintf(out,
-	  "# $1 = time [s]\n"
-	  "# $2 = AHTD(t) [km]\n"
-	  "# $3 = RHTD(t) [%%]\n"
-	  "# $4 = AVTD(t) [km]\n" "# $5 = RVTD(t) [%%]\n\n");
+	  "# $1  = time [s]\n"
+	  "# $2  = AHTD (mean) [km]\n"
+	  "# $3  = AHTD (sigma) [km]\n"
+	  "# $4  = AHTD (minimum) [km]\n"
+	  "# $5  = AHTD (10%% percentile) [km]\n"
+	  "# $6  = AHTD (1st quartile) [km]\n"
+	  "# $7  = AHTD (median) [km]\n"
+	  "# $8  = AHTD (3rd quartile) [km]\n"
+	  "# $9  = AHTD (90%% percentile) [km]\n"
+	  "# $10 = AHTD (maximum) [km]\n"
+	  "# $11 = AHTD (maximum trajectory index)\n"
+	  "# $12 = RHTD (mean) [%%]\n" "# $13 = RHTD (sigma) [%%]\n");
+  fprintf(out,
+	  "# $14 = AVTD (mean) [km]\n"
+	  "# $15 = AVTD (sigma) [km]\n"
+	  "# $16 = AVTD (minimum) [km]\n"
+	  "# $17 = AVTD (10%% percentile) [km]\n"
+	  "# $18 = AVTD (1st quartile) [km]\n"
+	  "# $19 = AVTD (median) [km]\n"
+	  "# $20 = AVTD (3rd quartile) [km]\n"
+	  "# $21 = AVTD (90%% percentile) [km]\n"
+	  "# $22 = AVTD (maximum) [km]\n"
+	  "# $23 = AVTD (maximum trajectory index)\n"
+	  "# $24 = RVTD (mean) [%%]\n" "# $25 = RVTD (sigma) [%%]\n\n");
 
   /* Loop over file pairs... */
   for (f = 2; f < argc; f += 2) {
 
     /* Read atmopheric data... */
-    read_atm(NULL, argv[f], atm1, &ctl);
-    read_atm(NULL, argv[f + 1], atm2, &ctl);
+    read_atm(argv[f], atm1, &ctl);
+    read_atm(argv[f + 1], atm2, &ctl);
 
     /* Check if structs match... */
     if (atm1->np != atm2->np)
       ERRMSG("Different numbers of parcels!");
     for (ip = 0; ip < atm1->np; ip++)
-      if (fabs(atm1->time[ip] - atm2->time[ip]) > 1)
-	printf("WARNING! Times do not match! dt=%f\n",
-	       fabs(atm1->time[ip] - atm2->time[ip]));
+      if (atm1->time[ip] != atm2->time[ip])
+	ERRMSG("Times do not match!");
 
     /* Init... */
-    ahtd = avtd = rhtd = rvtd = 0;
+    ahtd = ahtd2 = 0;
+    avtd = avtd2 = 0;
+    rhtd = rhtd2 = 0;
+    rvtd = rvtd2 = 0;
 
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
 
-      /* Calculate total length of trajectories... */
-      if (f > 2) {
-	dv1[ip] += fabs(Z(p1[ip]) - Z(atm1->p[ip]));
-	geo2cart(0, atm1->lon[ip], atm1->lat[ip], x0);
-	geo2cart(0, lon1[ip], lat1[ip], x1);
-	dh1[ip] += DIST(x0, x1);
+      /* Get Cartesian coordinates... */
+      geo2cart(0, atm1->lon[ip], atm1->lat[ip], x1);
+      geo2cart(0, atm2->lon[ip], atm2->lat[ip], x2);
 
-	dv2[ip] += fabs(Z(p2[ip]) - Z(atm2->p[ip]));
-	geo2cart(0, atm2->lon[ip], atm2->lat[ip], x0);
-	geo2cart(0, lon2[ip], lat2[ip], x1);
-	dh2[ip] += DIST(x0, x1);
+      /* Calculate absolute transport deviations... */
+      dh[ip] = DIST(x1, x2);
+      ahtd += dh[ip];
+      ahtd2 += gsl_pow_2(dh[ip]);
+
+      dv[ip] = fabs(Z(atm1->p[ip]) - Z(atm2->p[ip]));
+      avtd += dv[ip];
+      avtd2 += gsl_pow_2(dv[ip]);
+
+      /* Calculate relative transport deviations... */
+      if (f > 2) {
+
+	/* Get trajectory lengths... */
+	geo2cart(0, lon1[ip], lat1[ip], x0);
+	lh1[ip] += DIST(x0, x1);
+	lv1[ip] += fabs(Z(p1[ip]) - Z(atm1->p[ip]));
+
+	geo2cart(0, lon2[ip], lat2[ip], x0);
+	lh2[ip] += DIST(x0, x2);
+	lv2[ip] += fabs(Z(p2[ip]) - Z(atm2->p[ip]));
+
+	/* Get relative transport devations... */
+	if (lh1[ip] + lh2[ip] > 0) {
+	  aux = 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
+	  rhtd += aux;
+	  rhtd2 += gsl_pow_2(aux);
+	}
+	if (lv1[ip] + lv2[ip] > 0) {
+	  aux =
+	    200. * fabs(Z(atm1->p[ip]) - Z(atm2->p[ip])) / (lv1[ip] +
+							    lv2[ip]);
+	  rvtd += aux;
+	  rvtd2 += gsl_pow_2(aux);
+	}
       }
 
-      /* Save last locations of air parcels... */
+      /* Save positions of air parcels... */
       lon1[ip] = atm1->lon[ip];
       lat1[ip] = atm1->lat[ip];
       p1[ip] = atm1->p[ip];
+
       lon2[ip] = atm2->lon[ip];
       lat2[ip] = atm2->lat[ip];
       p2[ip] = atm2->p[ip];
-
-      /* Sum up the vertical error... */
-      avtd += fabs(Z(atm1->p[ip]) - Z(atm2->p[ip])) / atm1->np;
-
-      /* Sum up the horizontal error... */
-      geo2cart(0, atm1->lon[ip], atm1->lat[ip], x0);
-      geo2cart(0, atm2->lon[ip], atm2->lat[ip], x1);
-      ahtd += DIST(x0, x1) / atm1->np;
-
-      /* Sum up the relative transport devation... */
-      if (f > 2) {
-	t = ((200. * DIST(x0, x1)) / (dh1[ip] + dh2[ip]) / atm1->np);
-	if (gsl_finite(t))
-	  rhtd += t;
-	t = ((200. * fabs(Z(atm1->p[ip]) - Z(atm2->p[ip]))) /
-	     (dv1[ip] + dv2[ip]) / atm1->np);
-	if (gsl_finite(t))
-	  rvtd += t;
-      }
     }
 
+    /* Get indices of trajectories with maximum errors... */
+    iph = (int) gsl_stats_max_index(dh, 1, (size_t) atm1->np);
+    ipv = (int) gsl_stats_max_index(dv, 1, (size_t) atm1->np);
+
+    /* Sort distances to calculate percentiles... */
+    gsl_sort(dh, 1, (size_t) atm1->np);
+    gsl_sort(dv, 1, (size_t) atm1->np);
+
     /* Get date from filename... */
-    for (ip = (int) strlen(argv[f]) - 1; argv[f][ip] != '/' || ip == 0; ip--);
-    name = strtok(&(argv[f][ip]), "_");
+    for (i = (int) strlen(argv[f]) - 1; argv[f][i] != '/' || i == 0; i--);
+    name = strtok(&(argv[f][i]), "_");
     year = strtok(NULL, "_");
     mon = strtok(NULL, "_");
     day = strtok(NULL, "_");
     hour = strtok(NULL, "_");
-    name = strtok(NULL, "_");
+    name = strtok(NULL, "_");	/* TODO: Why another "name" here? */
     min = strtok(name, ".");
     time2jsec(atoi(year), atoi(mon), atoi(day), atoi(hour), atoi(min), 0, 0,
 	      &t);
 
     /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g\n", t, ahtd, rhtd, avtd, rvtd);
-    printf("%.2f %g %g %g %g\n", t, ahtd, rhtd, avtd, rvtd);
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d %g %g"
+	    " %g %g %g %g %g %g %g %g %g %d %g %g\n", t,
+	    ahtd / atm1->np,
+	    sqrt(ahtd2 / atm1->np - gsl_pow_2(ahtd / atm1->np)),
+	    dh[0], dh[atm1->np / 10], dh[atm1->np / 4], dh[atm1->np / 2],
+	    dh[atm1->np - atm1->np / 4], dh[atm1->np - atm1->np / 10],
+	    dh[atm1->np - 1], iph, rhtd / atm1->np,
+	    sqrt(rhtd2 / atm1->np - gsl_pow_2(rhtd / atm1->np)),
+	    avtd / atm1->np,
+	    sqrt(avtd2 / atm1->np - gsl_pow_2(avtd / atm1->np)),
+	    dv[0], dv[atm1->np / 10], dv[atm1->np / 4], dv[atm1->np / 2],
+	    dv[atm1->np - atm1->np / 4], dv[atm1->np - atm1->np / 10],
+	    dv[atm1->np - 1], ipv, rvtd / atm1->np,
+	    sqrt(rvtd2 / atm1->np - gsl_pow_2(rvtd / atm1->np)));
   }
 
   /* Close file... */
@@ -177,13 +229,15 @@ int main(
   free(lon1);
   free(lat1);
   free(p1);
-  free(dh1);
-  free(dv1);
+  free(lh1);
+  free(lv1);
   free(lon2);
   free(lat2);
   free(p2);
-  free(dh2);
-  free(dv2);
+  free(lh2);
+  free(lv2);
+  free(dh);
+  free(dv);
 
   return EXIT_SUCCESS;
 }

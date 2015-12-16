@@ -29,20 +29,41 @@
 #endif
 
 /* ------------------------------------------------------------
-   Global variables...
+   Defines...
    ------------------------------------------------------------ */
 
 /*! Timer for total runtime. */
-int timer_total;
+#define TIMER_TOTAL 0
 
-/*! Timer for physics calculations. */
-int timer_phys;
+/*! Timer for initalization. */
+#define TIMER_INIT 1
 
 /*! Timer for file input. */
-int timer_input;
+#define TIMER_INPUT 2
 
 /*! Timer for file output. */
-int timer_output;
+#define TIMER_OUTPUT 3
+
+/*! Timer for advection module. */
+#define TIMER_ADVECT 4
+
+/*! Timer for decay module. */
+#define TIMER_DECAY 5
+
+/*! Timer for mesoscale diffusion module. */
+#define TIMER_DIFFMESO 6
+
+/*! Timer for turbulent diffusion module. */
+#define TIMER_DIFFTURB 7
+
+/*! Timer for interpolation meteorological data. */
+#define TIMER_METEO 8
+
+/*! Timer for position module. */
+#define TIMER_POSITION 9
+
+/*! Timer for sedimentation module. */
+#define TIMER_SEDI 10
 
 /* ------------------------------------------------------------
    Functions...
@@ -55,7 +76,6 @@ void init_simtime(
 
 /*! Calculate advection of air parcels. */
 void module_advection(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -65,29 +85,52 @@ void module_advection(
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt);
 
-/*! Calculate turbulent and mesoscale diffusion. */
-void module_diffusion(
+/*! Calculate mesoscale diffusion. */
+void module_diffusion_meso(
   ctl_t * ctl,
-  met_t * met_t0,
-  met_t * met_t1,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt,
   gsl_rng * rng);
 
+/*! Calculate turbulent diffusion. */
+void module_diffusion_turb(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  int ip,
+  double dt,
+  gsl_rng * rng);
+
+/*! Interpolate meteorological data for air parcel positions. */
+void module_meteo(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  int ip);
+
 /*! Check position of air parcels. */
 void module_position(
-  met_t * met,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip);
 
 /*! Calculate sedimentation of air parcels. */
 void module_sedi(
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt);
@@ -97,8 +140,7 @@ void write_output(
   const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
-  double t,
-  int force);
+  double t);
 
 /* ------------------------------------------------------------
    Main...
@@ -112,15 +154,15 @@ int main(
 
   atm_t *atm;
 
-  met_t *met_t0, *met_t1;
+  met_t *met0, *met1;
 
   gsl_rng *rng[NTHREADS];
 
   FILE *dirlist;
 
-  char dirname[LEN];
+  char dirname[LEN], filename[LEN];
 
-  double dt, t, t0;
+  double *dt, t, t0;
 
   int i, ip, ntask = 0, rank = 0, size = 1;
 
@@ -150,22 +192,20 @@ int main(
        Initialize model run...
        ------------------------------------------------------------ */
 
-    /* Create timers... */
-    timer_total = CREATE_TIMER("total");
-    timer_phys = CREATE_TIMER("physics");
-    timer_input = CREATE_TIMER("input");
-    timer_output = CREATE_TIMER("output");
-
-    /* Start timer for total runtime... */
-    START_TIMER(timer_total);
+    /* Set timers... */
+    START_TIMER(TIMER_TOTAL);
+    START_TIMER(TIMER_INIT);
 
     /* Allocate... */
     ALLOC(atm, atm_t, 1);
-    ALLOC(met_t0, met_t, 1);
-    ALLOC(met_t1, met_t, 1);
+    ALLOC(met0, met_t, 1);
+    ALLOC(met1, met_t, 1);
+    ALLOC(dt, double,
+	  NP);
 
     /* Read control parameters... */
-    read_ctl(dirname, argv[2], argc, argv, &ctl);
+    sprintf(filename, "%s/%s", dirname, argv[2]);
+    read_ctl(filename, argc, argv, &ctl);
 
     /* Initialize random number generators... */
     gsl_rng_env_setup();
@@ -173,27 +213,24 @@ int main(
       rng[i] = gsl_rng_alloc(gsl_rng_default);
 
     /* Read atmospheric data... */
-    START_TIMER(timer_input);
-    read_atm(dirname, argv[3], atm, &ctl);
-    STOP_TIMER(timer_input);
+    sprintf(filename, "%s/%s", dirname, argv[3]);
+    read_atm(filename, atm, &ctl);
 
     /* Get simulation time interval... */
     init_simtime(&ctl, atm);
-
-    /* Write initial output... */
-    START_TIMER(timer_output);
-    write_output(dirname, &ctl, atm, ctl.t_start, 1);
-    STOP_TIMER(timer_output);
-
-    /* ------------------------------------------------------------
-       Loop over timesteps...
-       ------------------------------------------------------------ */
 
     /* Get rounded start time... */
     if (ctl.direction == 1)
       t0 = floor(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
     else
       t0 = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
+
+    /* Set timers... */
+    STOP_TIMER(TIMER_INIT);
+
+    /* ------------------------------------------------------------
+       Loop over timesteps...
+       ------------------------------------------------------------ */
 
     /* Loop over timesteps... */
     for (t = t0; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
@@ -203,50 +240,114 @@ int main(
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
 
-      /* Get meteorological data... */
-      START_TIMER(timer_input);
-      get_met(t, ctl.direction, argv[4], ctl.dt_met, ctl.red_met, met_t0,
-	      met_t1);
-      STOP_TIMER(timer_input);
-
-      /* Loop over air parcels... */
-      START_TIMER(timer_phys);
-#pragma omp parallel for default(shared) private(dt,ip)
+      /* Set time steps for air parcels... */
       for (ip = 0; ip < atm->np; ip++)
 	if ((ctl.direction * (atm->time[ip] - ctl.t_start) >= 0
 	     && ctl.direction * (atm->time[ip] - ctl.t_stop) <= 0
-	     && ctl.direction * (atm->time[ip] - t) < 0)) {
+	     && ctl.direction * (atm->time[ip] - t) < 0))
+	  dt[ip] = t - atm->time[ip];
+	else
+	  dt[ip] = GSL_NAN;
 
-	  /* Set time step... */
-	  dt = t - atm->time[ip];
+      /* Get meteorological data... */
+      START_TIMER(TIMER_INPUT);
+      get_met(&ctl, argv[4], t, met0, met1);
+      STOP_TIMER(TIMER_INPUT);
 
-	  /* Calculate advection... */
-	  module_advection(&ctl, met_t0, met_t1, atm, ip, dt);
+      /* Advection... */
+      START_TIMER(TIMER_ADVECT);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	if (gsl_finite(dt[ip]))
+	  module_advection(met0, met1, atm, ip, dt[ip]);
+      STOP_TIMER(TIMER_ADVECT);
 
-	  /* Calculate diffusion... */
-	  module_diffusion(&ctl, met_t0, met_t1, atm, ip, dt,
-			   rng[omp_get_thread_num()]);
+      /* Turbulent diffusion... */
+      START_TIMER(TIMER_DIFFTURB);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	if (gsl_finite(dt[ip]))
+	  module_diffusion_turb(&ctl, met0, met1, atm, ip, dt[ip],
+				rng[omp_get_thread_num()]);
+      STOP_TIMER(TIMER_DIFFTURB);
 
-	  /* Calculate sedimentation... */
-	  module_sedi(&ctl, atm, ip, dt);
+      /* Mesoscale diffusion... */
+      START_TIMER(TIMER_DIFFMESO);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	if (gsl_finite(dt[ip]))
+	  module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
+				rng[omp_get_thread_num()]);
+      STOP_TIMER(TIMER_DIFFMESO);
 
-	  /* Check position... */
-	  module_position(met_t0, atm, ip);
+      /* Sedimentation... */
+      START_TIMER(TIMER_SEDI);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	if (gsl_finite(dt[ip]))
+	  module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
+      STOP_TIMER(TIMER_SEDI);
 
-	  /* Calculate decay of mass... */
-	  module_decay(&ctl, atm, ip, dt);
-	}
-      STOP_TIMER(timer_phys);
+      /* Position... */
+      START_TIMER(TIMER_POSITION);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	module_position(met0, met1, atm, ip);
+      STOP_TIMER(TIMER_POSITION);
+
+      /* Meteorological data... */
+      START_TIMER(TIMER_METEO);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	module_meteo(&ctl, met0, met1, atm, ip);
+      STOP_TIMER(TIMER_METEO);
+
+      /* Decay... */
+      START_TIMER(TIMER_DECAY);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	if (gsl_finite(dt[ip]))
+	  module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
+      STOP_TIMER(TIMER_DECAY);
 
       /* Write output... */
-      START_TIMER(timer_output);
-      write_output(dirname, &ctl, atm, t, t == ctl.t_stop);
-      STOP_TIMER(timer_output);
+      START_TIMER(TIMER_OUTPUT);
+      write_output(dirname, &ctl, atm, t);
+      STOP_TIMER(TIMER_OUTPUT);
     }
 
     /* ------------------------------------------------------------
        Finalize model run...
        ------------------------------------------------------------ */
+
+    /* Report timers... */
+    STOP_TIMER(TIMER_TOTAL);
+    PRINT_TIMER(TIMER_TOTAL);
+    PRINT_TIMER(TIMER_INIT);
+    PRINT_TIMER(TIMER_INPUT);
+    PRINT_TIMER(TIMER_OUTPUT);
+    PRINT_TIMER(TIMER_ADVECT);
+    PRINT_TIMER(TIMER_DECAY);
+    PRINT_TIMER(TIMER_DIFFMESO);
+    PRINT_TIMER(TIMER_DIFFTURB);
+    PRINT_TIMER(TIMER_METEO);
+    PRINT_TIMER(TIMER_POSITION);
+    PRINT_TIMER(TIMER_SEDI);
+
+    /* Report memory usage... */
+    printf("MEMORY_ATM = %g MByte\n", 2. * sizeof(atm_t) / 1024. / 1024.);
+    printf("MEMORY_METEO = %g MByte\n", 2. * sizeof(met_t) / 1024. / 1024.);
+    printf("MEMORY_DYNAMIC = %g MByte\n",
+	   NP * sizeof(double) / 1024. / 1024.);
+    printf("MEMORY_STATIC = %g MByte\n",
+	   (((EX + EY) + (2 + NQ) * GX * GY * GZ) * sizeof(double)
+	    + (EX * EY + EX * EY * EP) * sizeof(float)
+	    + (2 * GX * GY * GZ) * sizeof(int)) / 1024. / 1024.);
+
+    /* Report problem size... */
+    printf("SIZE_NP = %d\n", atm->np);
+    printf("SIZE_TASKS = %d\n", size);
+    printf("SIZE_THREADS = %d\n", omp_get_max_threads());
 
     /* Free random number generators... */
     for (i = 0; i < NTHREADS; i++)
@@ -254,17 +355,9 @@ int main(
 
     /* Free... */
     free(atm);
-    free(met_t0);
-    free(met_t1);
-
-    /* Stop timer for total runtime... */
-    STOP_TIMER(timer_total);
-
-    /* Report timers... */
-    PRINT_TIMER(timer_total);
-    PRINT_TIMER(timer_phys);
-    PRINT_TIMER(timer_input);
-    PRINT_TIMER(timer_output);
+    free(met0);
+    free(met1);
+    free(dt);
   }
 
 #ifdef MPI
@@ -302,68 +395,81 @@ void init_simtime(
 /*****************************************************************************/
 
 void module_advection(
-  ctl_t * ctl,
-  met_t * met_t0,
-  met_t * met_t1,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt) {
 
-  double t0, t1, v[3], x[3], xout[3];
-
-  /* Copy air parcel data... */
-  x[0] = atm->lon[ip];
-  x[1] = atm->lat[ip];
-  x[2] = atm->p[ip];
+  double v[3], xm[3];
 
   /* Interpolate meteorological data... */
-  intpol_met_time(met_t0, met_t1, atm->time[ip], x[2], x[0], x[1], &t0,
-		  &v[0], &v[1], &v[2]);
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+		  atm->lon[ip], atm->lat[ip], NULL, NULL, NULL,
+		  &v[0], &v[1], &v[2], NULL, NULL);
 
   /* Get position of the mid point... */
-  xout[0] = x[0] + dx2deg(0.5 * dt * v[0] / 1000., x[1]);
-  xout[1] = x[1] + dy2deg(0.5 * dt * v[1] / 1000.);
-  xout[2] = x[2] + 0.5 * dt * v[2];
+  xm[0] = atm->lon[ip] + dx2deg(0.5 * dt * v[0] / 1000., atm->lat[ip]);
+  xm[1] = atm->lat[ip] + dy2deg(0.5 * dt * v[1] / 1000.);
+  xm[2] = atm->p[ip] + 0.5 * dt * v[2];
 
   /* Interpolate meteorological data for mid point... */
-  intpol_met_time(met_t0, met_t1, atm->time[ip] + 0.5 * dt,
-		  xout[2], xout[0], xout[1], &t1, &v[0], &v[1], &v[2]);
-
-  /* Get new position... */
-  xout[0] = x[0] + dx2deg(dt * v[0] / 1000., x[1]);
-  xout[1] = x[1] + dy2deg(dt * v[1] / 1000.);
-  xout[2] = x[2] + dt * v[2];
+  intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt,
+		  xm[2], xm[0], xm[1], NULL, NULL, NULL,
+		  &v[0], &v[1], &v[2], NULL, NULL);
 
   /* Save new position... */
   atm->time[ip] += dt;
-  atm->lon[ip] = xout[0];
-  atm->lat[ip] = xout[1];
-  atm->p[ip] = xout[2];
-
-  /* Extrapolate temperature... */
-  if (ctl->qnt_temp >= 0)
-    atm->q[ctl->qnt_temp][ip] = 2. * t1 - t0;
+  atm->lon[ip] += dx2deg(dt * v[0] / 1000., xm[1]);
+  atm->lat[ip] += dy2deg(dt * v[1] / 1000.);
+  atm->p[ip] += dt * v[2];
 }
 
 /*****************************************************************************/
 
 void module_decay(
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt) {
 
+  double ps, pt, tdec;
+
+  /* Check lifetime values... */
+  if ((ctl->tdec_trop <= 0 && ctl->tdec_strat <= 0) || ctl->qnt_m < 0)
+    return;
+
+  /* Set constant lifetime... */
+  if (ctl->tdec_trop == ctl->tdec_strat)
+    tdec = ctl->tdec_trop;
+
+  /* Set altitude-dependent lifetime... */
+  else {
+
+    /* Get surface and tropopause pressure... */
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+		    atm->lon[ip], atm->lat[ip], &ps, &pt, NULL,
+		    NULL, NULL, NULL, NULL, NULL);
+
+    /* Set lifetime... */
+    if (atm->p[ip] <= pt)
+      tdec = ctl->tdec_strat;
+    else
+      tdec = LIN(ps, ctl->tdec_trop, pt, ctl->tdec_strat, atm->p[ip]);
+  }
+
   /* Calculate exponential decay... */
-  if (ctl->t12 > 0 && ctl->qnt_mass >= 0)
-    atm->q[ctl->qnt_mass][ip] *= exp(-dt / (ctl->t12 * 86400. / log(2.)));
+  atm->q[ctl->qnt_m][ip] *= exp(-dt / tdec);
 }
 
 /*****************************************************************************/
 
-void module_diffusion(
+void module_diffusion_meso(
   ctl_t * ctl,
-  met_t * met_t0,
-  met_t * met_t1,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt,
@@ -377,70 +483,70 @@ void module_diffusion(
   if (ctl->turb_meso > 0) {
 
     /* Get indices... */
-    ix = locate(met_t0->lon, met_t0->nx, atm->lon[ip]);
-    iy = locate(met_t0->lat, met_t0->ny, atm->lat[ip]);
-    iz = locate(met_t0->p, met_t0->np, atm->p[ip]);
+    ix = locate(met0->lon, met0->nx, atm->lon[ip]);
+    iy = locate(met0->lat, met0->ny, atm->lat[ip]);
+    iz = locate(met0->p, met0->np, atm->p[ip]);
 
     /* Collect local wind data... */
-    u[0] = met_t0->u[ix][iy][iz];
-    u[1] = met_t0->u[ix + 1][iy][iz];
-    u[2] = met_t0->u[ix][iy + 1][iz];
-    u[3] = met_t0->u[ix + 1][iy + 1][iz];
-    u[4] = met_t0->u[ix][iy][iz + 1];
-    u[5] = met_t0->u[ix + 1][iy][iz + 1];
-    u[6] = met_t0->u[ix][iy + 1][iz + 1];
-    u[7] = met_t0->u[ix + 1][iy + 1][iz + 1];
+    u[0] = met0->u[ix][iy][iz];
+    u[1] = met0->u[ix + 1][iy][iz];
+    u[2] = met0->u[ix][iy + 1][iz];
+    u[3] = met0->u[ix + 1][iy + 1][iz];
+    u[4] = met0->u[ix][iy][iz + 1];
+    u[5] = met0->u[ix + 1][iy][iz + 1];
+    u[6] = met0->u[ix][iy + 1][iz + 1];
+    u[7] = met0->u[ix + 1][iy + 1][iz + 1];
 
-    v[0] = met_t0->v[ix][iy][iz];
-    v[1] = met_t0->v[ix + 1][iy][iz];
-    v[2] = met_t0->v[ix][iy + 1][iz];
-    v[3] = met_t0->v[ix + 1][iy + 1][iz];
-    v[4] = met_t0->v[ix][iy][iz + 1];
-    v[5] = met_t0->v[ix + 1][iy][iz + 1];
-    v[6] = met_t0->v[ix][iy + 1][iz + 1];
-    v[7] = met_t0->v[ix + 1][iy + 1][iz + 1];
+    v[0] = met0->v[ix][iy][iz];
+    v[1] = met0->v[ix + 1][iy][iz];
+    v[2] = met0->v[ix][iy + 1][iz];
+    v[3] = met0->v[ix + 1][iy + 1][iz];
+    v[4] = met0->v[ix][iy][iz + 1];
+    v[5] = met0->v[ix + 1][iy][iz + 1];
+    v[6] = met0->v[ix][iy + 1][iz + 1];
+    v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
-    w[0] = met_t0->w[ix][iy][iz];
-    w[1] = met_t0->w[ix + 1][iy][iz];
-    w[2] = met_t0->w[ix][iy + 1][iz];
-    w[3] = met_t0->w[ix + 1][iy + 1][iz];
-    w[4] = met_t0->w[ix][iy][iz + 1];
-    w[5] = met_t0->w[ix + 1][iy][iz + 1];
-    w[6] = met_t0->w[ix][iy + 1][iz + 1];
-    w[7] = met_t0->w[ix + 1][iy + 1][iz + 1];
+    w[0] = met0->w[ix][iy][iz];
+    w[1] = met0->w[ix + 1][iy][iz];
+    w[2] = met0->w[ix][iy + 1][iz];
+    w[3] = met0->w[ix + 1][iy + 1][iz];
+    w[4] = met0->w[ix][iy][iz + 1];
+    w[5] = met0->w[ix + 1][iy][iz + 1];
+    w[6] = met0->w[ix][iy + 1][iz + 1];
+    w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
     /* Get indices... */
-    ix = locate(met_t1->lon, met_t1->nx, atm->lon[ip]);
-    iy = locate(met_t1->lat, met_t1->ny, atm->lat[ip]);
-    iz = locate(met_t1->p, met_t1->np, atm->p[ip]);
+    ix = locate(met1->lon, met1->nx, atm->lon[ip]);
+    iy = locate(met1->lat, met1->ny, atm->lat[ip]);
+    iz = locate(met1->p, met1->np, atm->p[ip]);
 
     /* Collect local wind data... */
-    u[8] = met_t1->u[ix][iy][iz];
-    u[9] = met_t1->u[ix + 1][iy][iz];
-    u[10] = met_t1->u[ix][iy + 1][iz];
-    u[11] = met_t1->u[ix + 1][iy + 1][iz];
-    u[12] = met_t1->u[ix][iy][iz + 1];
-    u[13] = met_t1->u[ix + 1][iy][iz + 1];
-    u[14] = met_t1->u[ix][iy + 1][iz + 1];
-    u[15] = met_t1->u[ix + 1][iy + 1][iz + 1];
+    u[8] = met1->u[ix][iy][iz];
+    u[9] = met1->u[ix + 1][iy][iz];
+    u[10] = met1->u[ix][iy + 1][iz];
+    u[11] = met1->u[ix + 1][iy + 1][iz];
+    u[12] = met1->u[ix][iy][iz + 1];
+    u[13] = met1->u[ix + 1][iy][iz + 1];
+    u[14] = met1->u[ix][iy + 1][iz + 1];
+    u[15] = met1->u[ix + 1][iy + 1][iz + 1];
 
-    v[8] = met_t1->v[ix][iy][iz];
-    v[9] = met_t1->v[ix + 1][iy][iz];
-    v[10] = met_t1->v[ix][iy + 1][iz];
-    v[11] = met_t1->v[ix + 1][iy + 1][iz];
-    v[12] = met_t1->v[ix][iy][iz + 1];
-    v[13] = met_t1->v[ix + 1][iy][iz + 1];
-    v[14] = met_t1->v[ix][iy + 1][iz + 1];
-    v[15] = met_t1->v[ix + 1][iy + 1][iz + 1];
+    v[8] = met1->v[ix][iy][iz];
+    v[9] = met1->v[ix + 1][iy][iz];
+    v[10] = met1->v[ix][iy + 1][iz];
+    v[11] = met1->v[ix + 1][iy + 1][iz];
+    v[12] = met1->v[ix][iy][iz + 1];
+    v[13] = met1->v[ix + 1][iy][iz + 1];
+    v[14] = met1->v[ix][iy + 1][iz + 1];
+    v[15] = met1->v[ix + 1][iy + 1][iz + 1];
 
-    w[8] = met_t1->w[ix][iy][iz];
-    w[9] = met_t1->w[ix + 1][iy][iz];
-    w[10] = met_t1->w[ix][iy + 1][iz];
-    w[11] = met_t1->w[ix + 1][iy + 1][iz];
-    w[12] = met_t1->w[ix][iy][iz + 1];
-    w[13] = met_t1->w[ix + 1][iy][iz + 1];
-    w[14] = met_t1->w[ix][iy + 1][iz + 1];
-    w[15] = met_t1->w[ix + 1][iy + 1][iz + 1];
+    w[8] = met1->w[ix][iy][iz];
+    w[9] = met1->w[ix + 1][iy][iz];
+    w[10] = met1->w[ix][iy + 1][iz];
+    w[11] = met1->w[ix + 1][iy + 1][iz];
+    w[12] = met1->w[ix][iy][iz + 1];
+    w[13] = met1->w[ix + 1][iy][iz + 1];
+    w[14] = met1->w[ix][iy + 1][iz + 1];
+    w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
     /* Get standard deviations of local wind data... */
     usig = gsl_stats_sd(u, 1, 16);
@@ -467,36 +573,136 @@ void module_diffusion(
     atm->lat[ip] += dy2deg(atm->vp[ip] * dt / 1000.);
     atm->p[ip] += atm->wp[ip] * dt;
   }
+}
+
+/*****************************************************************************/
+
+void module_diffusion_turb(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  int ip,
+  double dt,
+  gsl_rng * rng) {
+
+  double dx, dz, pt, p0, p1, w;
+
+  /* Get tropopause pressure... */
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+		  atm->lon[ip], atm->lat[ip], NULL, &pt, NULL,
+		  NULL, NULL, NULL, NULL, NULL);
+
+  /* Get weighting factor... */
+  p1 = pt * 0.866877899;
+  p0 = pt / 0.866877899;
+  if (atm->p[ip] > p0)
+    w = 1;
+  else if (atm->p[ip] < p1)
+    w = 0;
+  else
+    w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
+
+  /* Set diffusivitiy... */
+  dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
+  dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
   /* Horizontal turbulent diffusion... */
-  if (ctl->turb_dx > 0) {
+  if (dx > 0) {
     atm->lon[ip]
-      +=
-      dx2deg(gsl_ran_gaussian_ziggurat
-	     (rng, sqrt(2.0 * ctl->turb_dx * fabs(dt)))
-	     / 1000., atm->lat[ip]);
+      += dx2deg(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
+		/ 1000., atm->lat[ip]);
     atm->lat[ip]
-      +=
-      dy2deg(gsl_ran_gaussian_ziggurat
-	     (rng, sqrt(2.0 * ctl->turb_dx * fabs(dt)))
-	     / 1000.);
+      += dy2deg(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
+		/ 1000.);
   }
 
   /* Vertical turbulent diffusion... */
-  if (ctl->turb_dz > 0)
+  if (dz > 0)
     atm->p[ip]
-      +=
-      dz2dp(gsl_ran_gaussian_ziggurat
-	    (rng, sqrt(2.0 * ctl->turb_dz * fabs(dt)))
-	    / 1000., atm->p[ip]);
+      += dz2dp(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
+	       / 1000., atm->p[ip]);
+}
+
+/*****************************************************************************/
+
+void module_meteo(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  int ip) {
+
+  /* Interpolate surface pressure... */
+  if (ctl->qnt_ps >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], &atm->q[ctl->qnt_ps][ip], NULL, NULL,
+		    NULL, NULL, NULL, NULL, NULL);
+
+  /* Interpolate tropopause... */
+  if (ctl->qnt_pt >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, &atm->q[ctl->qnt_pt][ip], NULL,
+		    NULL, NULL, NULL, NULL, NULL);
+
+  /* Interpolate temperature... */
+  if (ctl->qnt_t >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_t][ip],
+		    NULL, NULL, NULL, NULL, NULL);
+
+  /* Interpolate zonal wind... */
+  if (ctl->qnt_u >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, NULL,
+		    &atm->q[ctl->qnt_u][ip], NULL, NULL, NULL, NULL);
+
+  /* Interpolate meridional wind... */
+  if (ctl->qnt_v >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, NULL,
+		    NULL, &atm->q[ctl->qnt_v][ip], NULL, NULL, NULL);
+
+  /* Interpolate vertical velocity... */
+  if (ctl->qnt_w >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, NULL,
+		    NULL, NULL, &atm->q[ctl->qnt_w][ip], NULL, NULL);
+
+  /* Interpolate water vapor vmr... */
+  if (ctl->qnt_h2o >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, NULL,
+		    NULL, NULL, NULL, &atm->q[ctl->qnt_h2o][ip], NULL);
+
+  /* Interpolate ozone... */
+  if (ctl->qnt_o3 >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, NULL,
+		    NULL, NULL, NULL, NULL, &atm->q[ctl->qnt_o3][ip]);
+
+  /* Calculate potential temperature... */
+  if (ctl->qnt_theta >= 0) {
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_theta][ip],
+		    NULL, NULL, NULL, NULL, NULL);
+    atm->q[ctl->qnt_theta][ip] *= pow(P0 / atm->p[ip], 0.286);
+  }
 }
 
 /*****************************************************************************/
 
 void module_position(
-  met_t * met,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip) {
+
+  double ps;
+
+  /* Calculate modulo... */
+  atm->lon[ip] = fmod(atm->lon[ip], 360);
+  atm->lat[ip] = fmod(atm->lat[ip], 360);
 
   /* Check latitude... */
   while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
@@ -516,17 +722,24 @@ void module_position(
   while (atm->lon[ip] >= 180)
     atm->lon[ip] -= 360;
 
+  /* Get surface pressure... */
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+		  atm->lon[ip], atm->lat[ip], &ps, NULL, NULL,
+		  NULL, NULL, NULL, NULL, NULL);
+
   /* Check pressure... */
-  if (atm->p[ip] > met->p[0])
-    atm->p[ip] = met->p[0];
-  else if (atm->p[ip] < met->p[met->np - 1])
-    atm->p[ip] = met->p[met->np - 1];
+  if (atm->p[ip] > ps)
+    atm->p[ip] = ps;
+  else if (atm->p[ip] < met0->p[met0->np - 1])
+    atm->p[ip] = met0->p[met0->np - 1];
 }
 
 /*****************************************************************************/
 
 void module_sedi(
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   int ip,
   double dt) {
@@ -543,14 +756,17 @@ void module_sedi(
   double G, K, eta, lambda, p, r_p, rho, rho_p, T, v, v_p;
 
   /* Check if parameters are available... */
-  if (ctl->qnt_r_p < 0 || ctl->qnt_rho_p < 0 || ctl->qnt_temp < 0)
+  if (ctl->qnt_r < 0 || ctl->qnt_rho < 0)
     return;
 
   /* Convert units... */
   p = 100 * atm->p[ip];
-  T = atm->q[ctl->qnt_temp][ip];
-  r_p = 1e-6 * atm->q[ctl->qnt_r_p][ip];
-  rho_p = atm->q[ctl->qnt_rho_p][ip];
+  r_p = 1e-6 * atm->q[ctl->qnt_r][ip];
+  rho_p = atm->q[ctl->qnt_rho][ip];
+
+  /* Get temperature... */
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		  atm->lat[ip], NULL, NULL, &T, NULL, NULL, NULL, NULL, NULL);
 
   /* Density of dry air... */
   rho = p / (R * T);
@@ -585,8 +801,7 @@ void write_output(
   const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
-  double t,
-  int force) {
+  double t) {
 
   char filename[LEN];
 
@@ -598,32 +813,34 @@ void write_output(
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Write atmospheric data... */
-  if (ctl->atm_dt_out > 0 && (fmod(t, ctl->atm_dt_out) == 0 || force)) {
-    sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    ctl->atm_basename, year, mon, day, hour, min,
-	    (ctl->atm_oformat == 0 ? "tab" : "nc"));
-    write_atm(dirname, filename, atm, ctl);
-  }
-
-  /* Write CSI data... */
-  if (ctl->csi_dt_update > 0 && (fmod(t, ctl->csi_dt_update) == 0 || force)) {
-    sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    ctl->csi_basename, year, mon, day, hour, min);
-    write_csi(dirname, filename, atm, ctl, t, ctl->csi_dt_update,
-	      fmod(t, ctl->csi_dt_out) == 0 || force);
+  if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->atm_basename, year, mon, day, hour, min);
+    write_atm(filename, atm, ctl, t);
   }
 
   /* Write gridded data... */
-  if (ctl->grid_dt_out > 0 && (fmod(t, ctl->grid_dt_out) == 0 || force)) {
-    sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    ctl->grid_basename, year, mon, day, hour, min);
-    write_grid(dirname, filename, atm, ctl, t, ctl->grid_dt_out);
+  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->grid_basename, year, mon, day, hour, min);
+    write_grid(filename, atm, ctl, t);
+  }
+
+  /* Write CSI data... */
+  if (ctl->csi_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
+    write_csi(filename, atm, ctl, t);
+  }
+
+  /* Write sample data... */
+  if (ctl->sample_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
+    write_sample(filename, atm, ctl, t);
   }
 
   /* Write station data... */
-  if (ctl->stat_dt_out > 0 && (fmod(t, ctl->stat_dt_out) == 0 || force)) {
-    sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    ctl->stat_basename, year, mon, day, hour, min);
-    write_station(dirname, filename, atm, ctl, t, ctl->stat_dt_out);
+  if (ctl->stat_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
+    write_station(filename, atm, ctl, t);
   }
 }

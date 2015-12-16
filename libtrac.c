@@ -98,43 +98,6 @@ double dz2dp(
 
 /*****************************************************************************/
 
-void extrapolate_met(
-  met_t * met) {
-
-  int ip, ip0, ix, iy;
-
-  /* Loop over columns... */
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
-
-      /* Find lowest valid data point... */
-      for (ip0 = met->np - 1; ip0 >= 0; ip0--)
-	if (!gsl_finite(met->u[ix][iy][ip0])
-	    || !gsl_finite(met->v[ix][iy][ip0])
-	    || !gsl_finite(met->w[ix][iy][ip0])
-	    || !gsl_finite(met->t[ix][iy][ip0]))
-	  break;
-
-      /* Extrapolate... */
-      for (ip = ip0; ip >= 0; ip--) {
-	met->t[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->t[ix][iy][ip + 1],
-			met->p[ip + 2], met->t[ix][iy][ip + 2], met->p[ip]);
-	met->u[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->u[ix][iy][ip + 1],
-			met->p[ip + 2], met->u[ix][iy][ip + 2], met->p[ip]);
-	met->v[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->v[ix][iy][ip + 1],
-			met->p[ip + 2], met->v[ix][iy][ip + 2], met->p[ip]);
-	met->w[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->w[ix][iy][ip + 1],
-			met->p[ip + 2], met->w[ix][iy][ip + 2], met->p[ip]);
-      }
-    }
-}
-
-/*****************************************************************************/
-
 void geo2cart(
   double z,
   double lon,
@@ -152,11 +115,9 @@ void geo2cart(
 /*****************************************************************************/
 
 void get_met(
-  double t,
-  int direct,
+  ctl_t * ctl,
   char *metbase,
-  double dt_met,
-  int reduce,
+  double t,
   met_t * met0,
   met_t * met1) {
 
@@ -168,33 +129,25 @@ void get_met(
   if (!init) {
     init = 1;
 
-    get_met_help(t, -1, metbase, dt_met, filename);
+    get_met_help(t, -1, metbase, ctl->dt_met, filename);
     read_met(filename, met0);
-    extrapolate_met(met0);
-    reduce_met(met0, reduce, reduce, 1);
 
-    get_met_help(t, 1, metbase, dt_met, filename);
+    get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
     read_met(filename, met1);
-    extrapolate_met(met1);
-    reduce_met(met1, reduce, reduce, 1);
   }
 
   /* Read new data for forward trajectories... */
-  if (t > met1->time && direct == 1) {
+  if (t > met1->time && ctl->direction == 1) {
     memcpy(met0, met1, sizeof(met_t));
-    get_met_help(t, 1, metbase, dt_met, filename);
+    get_met_help(t, 1, metbase, ctl->dt_met, filename);
     read_met(filename, met1);
-    extrapolate_met(met1);
-    reduce_met(met1, reduce, reduce, 1);
   }
 
   /* Read new data for backward trajectories... */
-  if (t < met0->time && direct == -1) {
+  if (t < met0->time && ctl->direction == -1) {
     memcpy(met1, met0, sizeof(met_t));
-    get_met_help(t, -1, metbase, dt_met, filename);
+    get_met_help(t, -1, metbase, ctl->dt_met, filename);
     read_met(filename, met0);
-    extrapolate_met(met0);
-    reduce_met(met0, reduce, reduce, 1);
   }
 }
 
@@ -226,7 +179,31 @@ void get_met_help(
 
 /*****************************************************************************/
 
-void intpol_met_help(
+void intpol_met_2d(
+  double array[EX][EY],
+  int ix,
+  int iy,
+  double wx,
+  double wy,
+  double *var) {
+
+  double aux00, aux01, aux10, aux11;
+
+  /* Set variables... */
+  aux00 = array[ix][iy];
+  aux01 = array[ix][iy + 1];
+  aux10 = array[ix + 1][iy];
+  aux11 = array[ix + 1][iy + 1];
+
+  /* Interpolate horizontally... */
+  aux00 = wy * (aux00 - aux01) + aux01;
+  aux11 = wy * (aux10 - aux11) + aux11;
+  *var = wx * (aux00 - aux11) + aux11;
+}
+
+/*****************************************************************************/
+
+void intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
   int ix,
@@ -261,10 +238,14 @@ void intpol_met_space(
   double p,
   double lon,
   double lat,
+  double *ps,
+  double *pt,
   double *t,
   double *u,
   double *v,
-  double *w) {
+  double *w,
+  double *h2o,
+  double *o3) {
 
   double wp, wx, wy;
 
@@ -285,10 +266,22 @@ void intpol_met_space(
   wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
 
   /* Interpolate... */
-  intpol_met_help(met->t, ip, ix, iy, wp, wx, wy, t);
-  intpol_met_help(met->u, ip, ix, iy, wp, wx, wy, u);
-  intpol_met_help(met->v, ip, ix, iy, wp, wx, wy, v);
-  intpol_met_help(met->w, ip, ix, iy, wp, wx, wy, w);
+  if (ps != NULL)
+    intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
+  if (pt != NULL)
+    intpol_met_2d(met->pt, ix, iy, wx, wy, pt);
+  if (t != NULL)
+    intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
+  if (u != NULL)
+    intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
+  if (v != NULL)
+    intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
+  if (w != NULL)
+    intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
+  if (h2o != NULL)
+    intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
+  if (o3 != NULL)
+    intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
 }
 
 /*****************************************************************************/
@@ -300,25 +293,56 @@ void intpol_met_time(
   double p,
   double lon,
   double lat,
+  double *ps,
+  double *pt,
   double *t,
   double *u,
   double *v,
-  double *w) {
+  double *w,
+  double *h2o,
+  double *o3) {
 
-  double t0, t1, u0, u1, v0, v1, w0, w1, wt;
+  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1,
+    t0, t1, u0, u1, v0, v1, w0, w1, wt;
 
   /* Spatial interpolation... */
-  intpol_met_space(met0, p, lon, lat, &t0, &u0, &v0, &w0);
-  intpol_met_space(met1, p, lon, lat, &t1, &u1, &v1, &w1);
+  intpol_met_space(met0, p, lon, lat,
+		   ps == NULL ? NULL : &ps0,
+		   pt == NULL ? NULL : &pt0,
+		   t == NULL ? NULL : &t0,
+		   u == NULL ? NULL : &u0,
+		   v == NULL ? NULL : &v0,
+		   w == NULL ? NULL : &w0,
+		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
+  intpol_met_space(met1, p, lon, lat,
+		   ps == NULL ? NULL : &ps1,
+		   pt == NULL ? NULL : &pt1,
+		   t == NULL ? NULL : &t1,
+		   u == NULL ? NULL : &u1,
+		   v == NULL ? NULL : &v1,
+		   w == NULL ? NULL : &w1,
+		   h2o == NULL ? NULL : &h2o1, o3 == NULL ? NULL : &o31);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
-  *t = wt * (t0 - t1) + t1;
-  *u = wt * (u0 - u1) + u1;
-  *v = wt * (v0 - v1) + v1;
-  *w = wt * (w0 - w1) + w1;
+  if (ps != NULL)
+    *ps = wt * (ps0 - ps1) + ps1;
+  if (pt != NULL)
+    *pt = wt * (pt0 - pt1) + pt1;
+  if (t != NULL)
+    *t = wt * (t0 - t1) + t1;
+  if (u != NULL)
+    *u = wt * (u0 - u1) + u1;
+  if (v != NULL)
+    *v = wt * (v0 - v1) + v1;
+  if (w != NULL)
+    *w = wt * (w0 - w1) + w1;
+  if (h2o != NULL)
+    *h2o = wt * (h2o0 - h2o1) + h2o1;
+  if (o3 != NULL)
+    *o3 = wt * (o30 - o31) + o31;
 }
 
 /*****************************************************************************/
@@ -391,35 +415,6 @@ int locate(
 /*****************************************************************************/
 
 void read_atm(
-  const char *dirname,
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl) {
-
-  char file[LEN];
-
-  /* Set filename... */
-  if (dirname != NULL)
-    sprintf(file, "%s/%s", dirname, filename);
-  else
-    sprintf(file, "%s", filename);
-
-  /* Write info... */
-  printf("Read atmospheric data: %s\n", file);
-
-  /* Call function for the selected file format. */
-  if (ctl->atm_iformat == 0)
-    read_atm_from_ascii(file, atm, ctl);
-  else if (ctl->atm_iformat == 1)
-    read_atm_from_netcdf(file, atm, ctl);
-  else
-    ERRMSG("File format undefined!");
-}
-
-
-/*****************************************************************************/
-
-void read_atm_from_ascii(
   const char *filename,
   atm_t * atm,
   ctl_t * ctl) {
@@ -430,13 +425,15 @@ void read_atm_from_ascii(
 
   int iq;
 
+  /* Initialize... */
   atm->np = 0;
 
+  /* Write info... */
+  printf("Read atmospheric data: %s\n", filename);
+
   /* Open file... */
-  if (!(in = fopen(filename, "r"))) {
-    printf("%s\n", filename);
+  if (!(in = fopen(filename, "r")))
     ERRMSG("Cannot open file!");
-  }
 
   /* Read line... */
   while (fgets(line, LEN, in)) {
@@ -467,52 +464,7 @@ void read_atm_from_ascii(
 
 /*****************************************************************************/
 
-void read_atm_from_netcdf(
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl) {
-
-  size_t size, loadnum[1], startpos[1];
-
-  int iq, varid, ncid, dimid;
-
-  /* Open file... */
-  NC(nc_open(filename, NC_NOWRITE, &ncid));
-
-  /* Read dimensions... */
-  NC(nc_inq_dimid(ncid, "np", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &size));
-  atm->np = (int) size;
-
-  if (atm->np > NP)
-    ERRMSG("Too many data points!");
-  startpos[0] = (size_t) 0;
-  loadnum[0] = (size_t) atm->np;
-
-  /* Read coordinate variables... */
-  NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_get_vara_double(ncid, varid, startpos, loadnum, atm->time));
-  NC(nc_inq_varid(ncid, "pressure", &varid));
-  NC(nc_get_vara_double(ncid, varid, startpos, loadnum, atm->p));
-  NC(nc_inq_varid(ncid, "longitude", &varid));
-  NC(nc_get_vara_double(ncid, varid, startpos, loadnum, atm->lon));
-  NC(nc_inq_varid(ncid, "latitude", &varid));
-  NC(nc_get_vara_double(ncid, varid, startpos, loadnum, atm->lat));
-
-  /* Read quantities... */
-  for (iq = 0; iq < ctl->nq; iq++) {
-    NC(nc_inq_varid(ncid, ctl->qnt_name[iq], &varid));
-    NC(nc_get_vara_double(ncid, varid, startpos, loadnum, atm->q[iq]));
-  }
-
-  /* Close file... */
-  NC(nc_close(ncid));
-}
-
-/*****************************************************************************/
-
 void read_ctl(
-  const char *dirname,
   const char *filename,
   int argc,
   char *argv[],
@@ -526,154 +478,153 @@ void read_ctl(
 	 argv[0], __DATE__, __TIME__);
 
   /* Initialize quantity indices... */
-  ctl->qnt_mass = -1;
-  ctl->qnt_r_p = -1;
-  ctl->qnt_rho_p = -1;
-  ctl->qnt_station = -1;
-  ctl->qnt_temp = -1;
+  ctl->qnt_m = -1;
+  ctl->qnt_r = -1;
+  ctl->qnt_rho = -1;
+  ctl->qnt_ps = -1;
+  ctl->qnt_pt = -1;
+  ctl->qnt_t = -1;
+  ctl->qnt_u = -1;
+  ctl->qnt_v = -1;
+  ctl->qnt_w = -1;
+  ctl->qnt_h2o = -1;
+  ctl->qnt_o3 = -1;
+  ctl->qnt_theta = -1;
+  ctl->qnt_stat = -1;
 
   /* Read quantities... */
-  ctl->nq =
-    (int) scan_ctl(dirname, filename, argc, argv, "NQ", -1, "0", NULL);
+  ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
   for (iq = 0; iq < ctl->nq; iq++) {
 
     /* Read quantity names, units, and formats... */
-    scan_ctl(dirname, filename, argc, argv, "QNT_NAME", iq, "",
-	     ctl->qnt_name[iq]);
-    scan_ctl(dirname, filename, argc, argv, "QNT_UNIT", iq, "",
-	     ctl->qnt_unit[iq]);
-    scan_ctl(dirname, filename, argc, argv, "QNT_FORMAT", iq, "%g",
+    scan_ctl(filename, argc, argv, "QNT_NAME", iq, "", ctl->qnt_name[iq]);
+    scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
+    scan_ctl(filename, argc, argv, "QNT_FORMAT", iq, "%g",
 	     ctl->qnt_format[iq]);
 
     /* Try to identify quantities... */
-    if (strcmp(ctl->qnt_name[iq], "mass") == 0)
-      ctl->qnt_mass = iq;
-    else if (strcmp(ctl->qnt_name[iq], "part_radius") == 0)
-      ctl->qnt_r_p = iq;
-    else if (strcmp(ctl->qnt_name[iq], "part_density") == 0)
-      ctl->qnt_rho_p = iq;
-    else if (strcmp(ctl->qnt_name[iq], "station") == 0)
-      ctl->qnt_station = iq;
-    else if (strcmp(ctl->qnt_name[iq], "temperature") == 0)
-      ctl->qnt_temp = iq;
+    if (strcmp(ctl->qnt_name[iq], "m") == 0)
+      ctl->qnt_m = iq;
+    else if (strcmp(ctl->qnt_name[iq], "r") == 0)
+      ctl->qnt_r = iq;
+    else if (strcmp(ctl->qnt_name[iq], "rho") == 0)
+      ctl->qnt_rho = iq;
+    else if (strcmp(ctl->qnt_name[iq], "ps") == 0)
+      ctl->qnt_ps = iq;
+    else if (strcmp(ctl->qnt_name[iq], "pt") == 0)
+      ctl->qnt_pt = iq;
+    else if (strcmp(ctl->qnt_name[iq], "t") == 0)
+      ctl->qnt_t = iq;
+    else if (strcmp(ctl->qnt_name[iq], "u") == 0)
+      ctl->qnt_u = iq;
+    else if (strcmp(ctl->qnt_name[iq], "v") == 0)
+      ctl->qnt_v = iq;
+    else if (strcmp(ctl->qnt_name[iq], "w") == 0)
+      ctl->qnt_w = iq;
+    else if (strcmp(ctl->qnt_name[iq], "h2o") == 0)
+      ctl->qnt_h2o = iq;
+    else if (strcmp(ctl->qnt_name[iq], "o3") == 0)
+      ctl->qnt_o3 = iq;
+    else if (strcmp(ctl->qnt_name[iq], "theta") == 0)
+      ctl->qnt_theta = iq;
+    else if (strcmp(ctl->qnt_name[iq], "stat") == 0)
+      ctl->qnt_stat = iq;
   }
 
   /* Time steps of simulation... */
   ctl->direction =
-    (int) scan_ctl(dirname, filename, argc, argv, "DIRECTION", -1, "1", NULL);
+    (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
   if (ctl->direction != -1 && ctl->direction != 1)
     ERRMSG("Set DIRECTION to -1 or 1!");
   ctl->t_start =
-    scan_ctl(dirname, filename, argc, argv, "T_START", -1, "-1e100", NULL);
-  ctl->t_stop =
-    scan_ctl(dirname, filename, argc, argv, "T_STOP", -1, "-1e100", NULL);
-  ctl->dt_mod =
-    scan_ctl(dirname, filename, argc, argv, "DT_MOD", -1, "600", NULL);
+    scan_ctl(filename, argc, argv, "T_START", -1, "-1e100", NULL);
+  ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "-1e100", NULL);
+  ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "600", NULL);
 
   /* Meteorological data... */
-  ctl->dt_met =
-    scan_ctl(dirname, filename, argc, argv, "DT_MET", -1, "21600", NULL);
-  ctl->red_met =
-    (int) scan_ctl(dirname, filename, argc, argv, "RED_MET", -1, "1", NULL);
+  ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
 
-  /* Dispersion parameters... */
-  ctl->turb_dx =
-    scan_ctl(dirname, filename, argc, argv, "TURB_DX", -1, "50.0", NULL);
-  ctl->turb_dz =
-    scan_ctl(dirname, filename, argc, argv, "TURB_DZ", -1, "0.1", NULL);
+  /* Diffusion parameters... */
+  ctl->turb_dx_trop
+    = scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50.0", NULL);
+  ctl->turb_dx_strat
+    = scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0.0", NULL);
+  ctl->turb_dz_trop
+    = scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0.0", NULL);
+  ctl->turb_dz_strat
+    = scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
   ctl->turb_meso =
-    scan_ctl(dirname, filename, argc, argv, "TURB_MESO", -1, "0.16", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESO", -1, "0.16", NULL);
 
-  /* Half life time of particles... */
-  ctl->t12 = scan_ctl(dirname, filename, argc, argv, "T12", -1, "0", NULL);
+  /* Life time of particles... */
+  ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
+  ctl->tdec_strat =
+    scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
 
   /* Output of atmospheric data... */
-  scan_ctl(dirname, filename, argc, argv, "ATM_BASENAME", -1, "atm",
-	   ctl->atm_basename);
+  scan_ctl(filename, argc, argv, "ATM_BASENAME", -1, "-", ctl->atm_basename);
+  scan_ctl(filename, argc, argv, "ATM_GPFILE", -1, "-", ctl->atm_gpfile);
   ctl->atm_dt_out =
-    scan_ctl(dirname, filename, argc, argv, "ATM_DT_OUT", -1, "0", NULL);
-  ctl->atm_iformat =
-    (int) scan_ctl(dirname, filename, argc, argv, "ATM_IFORMAT", -1, "0",
-		   NULL);
-  ctl->atm_oformat =
-    (int) scan_ctl(dirname, filename, argc, argv, "ATM_OFORMAT", -1, "0",
-		   NULL);
+    scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
 
   /* Output of CSI data... */
-  scan_ctl(dirname, filename, argc, argv, "CSI_BASENAME", -1, "csi",
-	   ctl->csi_basename);
+  scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
   ctl->csi_dt_out =
-    scan_ctl(dirname, filename, argc, argv, "CSI_DT_OUT", -1, "0", NULL);
-  ctl->csi_dt_update =
-    scan_ctl(dirname, filename, argc, argv, "CSI_DT_UPDATE", -1, "0", NULL);
-  scan_ctl(dirname, filename, argc, argv, "CSI_OBSFILE", -1, "obs.tab",
+    scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
+  scan_ctl(filename, argc, argv, "CSI_OBSFILE", -1, "obs.tab",
 	   ctl->csi_obsfile);
   ctl->csi_obsmin =
-    scan_ctl(dirname, filename, argc, argv, "CSI_OBSMIN", -1, "0", NULL);
+    scan_ctl(filename, argc, argv, "CSI_OBSMIN", -1, "0", NULL);
   ctl->csi_modmin =
-    scan_ctl(dirname, filename, argc, argv, "CSI_MODMIN", -1, "0", NULL);
-  ctl->csi_z0 =
-    scan_ctl(dirname, filename, argc, argv, "CSI_Z0", -1, "0", NULL);
-  ctl->csi_z1 =
-    scan_ctl(dirname, filename, argc, argv, "CSI_Z1", -1, "100", NULL);
-  ctl->csi_nz =
-    (int) scan_ctl(dirname, filename, argc, argv, "CSI_NZ", -1, "1", NULL);
+    scan_ctl(filename, argc, argv, "CSI_MODMIN", -1, "0", NULL);
+  ctl->csi_z0 = scan_ctl(filename, argc, argv, "CSI_Z0", -1, "0", NULL);
+  ctl->csi_z1 = scan_ctl(filename, argc, argv, "CSI_Z1", -1, "100", NULL);
+  ctl->csi_nz = (int) scan_ctl(filename, argc, argv, "CSI_NZ", -1, "1", NULL);
   ctl->csi_lon0 =
-    scan_ctl(dirname, filename, argc, argv, "CSI_LON0", -1, "-180", NULL);
-  ctl->csi_lon1 =
-    scan_ctl(dirname, filename, argc, argv, "CSI_LON1", -1, "180", NULL);
+    scan_ctl(filename, argc, argv, "CSI_LON0", -1, "-180", NULL);
+  ctl->csi_lon1 = scan_ctl(filename, argc, argv, "CSI_LON1", -1, "180", NULL);
   ctl->csi_nx =
-    (int) scan_ctl(dirname, filename, argc, argv, "CSI_NX", -1, "360", NULL);
-  ctl->csi_lat0 =
-    scan_ctl(dirname, filename, argc, argv, "CSI_LAT0", -1, "-90", NULL);
-  ctl->csi_lat1 =
-    scan_ctl(dirname, filename, argc, argv, "CSI_LAT1", -1, "90", NULL);
+    (int) scan_ctl(filename, argc, argv, "CSI_NX", -1, "360", NULL);
+  ctl->csi_lat0 = scan_ctl(filename, argc, argv, "CSI_LAT0", -1, "-90", NULL);
+  ctl->csi_lat1 = scan_ctl(filename, argc, argv, "CSI_LAT1", -1, "90", NULL);
   ctl->csi_ny =
-    (int) scan_ctl(dirname, filename, argc, argv, "CSI_NY", -1, "180", NULL);
-
-  /* Spearman */
-  ctl->spearman_modmin =
-    scan_ctl(dirname, filename, argc, argv, "SPEARMAN_MODMIN", -1, "-9999999",
-	     NULL);
-  ctl->spearman_obsmin =
-    scan_ctl(dirname, filename, argc, argv, "SPEARMAN_OBSMIN", -1, "-9999999",
-	     NULL);
+    (int) scan_ctl(filename, argc, argv, "CSI_NY", -1, "180", NULL);
 
   /* Output of gridded data... */
-  scan_ctl(dirname, filename, argc, argv, "GRID_BASENAME", -1, "grid",
+  scan_ctl(filename, argc, argv, "GRID_BASENAME", -1, "-",
 	   ctl->grid_basename);
+  scan_ctl(filename, argc, argv, "GRID_GPFILE", -1, "-", ctl->grid_gpfile);
   ctl->grid_dt_out =
-    scan_ctl(dirname, filename, argc, argv, "GRID_DT_OUT", -1, "0", NULL);
-  ctl->grid_z0 =
-    scan_ctl(dirname, filename, argc, argv, "GRID_Z0", -1, "0", NULL);
-  ctl->grid_z1 =
-    scan_ctl(dirname, filename, argc, argv, "GRID_Z1", -1, "100", NULL);
+    scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
+  ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "0", NULL);
+  ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "100", NULL);
   ctl->grid_nz =
-    (int) scan_ctl(dirname, filename, argc, argv, "GRID_NZ", -1, "1", NULL);
+    (int) scan_ctl(filename, argc, argv, "GRID_NZ", -1, "1", NULL);
   ctl->grid_lon0 =
-    scan_ctl(dirname, filename, argc, argv, "GRID_LON0", -1, "-180", NULL);
+    scan_ctl(filename, argc, argv, "GRID_LON0", -1, "-180", NULL);
   ctl->grid_lon1 =
-    scan_ctl(dirname, filename, argc, argv, "GRID_LON1", -1, "180", NULL);
+    scan_ctl(filename, argc, argv, "GRID_LON1", -1, "180", NULL);
   ctl->grid_nx =
-    (int) scan_ctl(dirname, filename, argc, argv, "GRID_NX", -1, "360", NULL);
+    (int) scan_ctl(filename, argc, argv, "GRID_NX", -1, "360", NULL);
   ctl->grid_lat0 =
-    scan_ctl(dirname, filename, argc, argv, "GRID_LAT0", -1, "-90", NULL);
+    scan_ctl(filename, argc, argv, "GRID_LAT0", -1, "-90", NULL);
   ctl->grid_lat1 =
-    scan_ctl(dirname, filename, argc, argv, "GRID_LAT1", -1, "90", NULL);
+    scan_ctl(filename, argc, argv, "GRID_LAT1", -1, "90", NULL);
   ctl->grid_ny =
-    (int) scan_ctl(dirname, filename, argc, argv, "GRID_NY", -1, "180", NULL);
+    (int) scan_ctl(filename, argc, argv, "GRID_NY", -1, "180", NULL);
+
+  /* Output of sample data... */
+  scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
+	   ctl->sample_basename);
+  scan_ctl(filename, argc, argv, "SAMPLE_OBSFILE", -1, "-",
+	   ctl->sample_obsfile);
 
   /* Output of station data... */
-  scan_ctl(dirname, filename, argc, argv, "STAT_BASENAME", -1, "stat",
+  scan_ctl(filename, argc, argv, "STAT_BASENAME", -1, "-",
 	   ctl->stat_basename);
-  ctl->stat_dt_out =
-    scan_ctl(dirname, filename, argc, argv, "STAT_DT_OUT", -1, "0", NULL);
-  ctl->stat_lon =
-    scan_ctl(dirname, filename, argc, argv, "STAT_LON", -1, "0", NULL);
-  ctl->stat_lat =
-    scan_ctl(dirname, filename, argc, argv, "STAT_LAT", -1, "0", NULL);
-  ctl->stat_r =
-    scan_ctl(dirname, filename, argc, argv, "STAT_R", -1, "100", NULL);
+  ctl->stat_lon = scan_ctl(filename, argc, argv, "STAT_LON", -1, "0", NULL);
+  ctl->stat_lat = scan_ctl(filename, argc, argv, "STAT_LAT", -1, "0", NULL);
+  ctl->stat_r = scan_ctl(filename, argc, argv, "STAT_R", -1, "50", NULL);
 }
 
 /*****************************************************************************/
@@ -682,9 +633,11 @@ void read_met(
   char *filename,
   met_t * met) {
 
-  int ip, dimid, ncid, varid, year, mon, day, hour;
+  static float help[EX * EY];
 
-  size_t np, np2 = 1, nx, ny;
+  int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
+
+  size_t np, nx, ny;
 
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
@@ -707,12 +660,6 @@ void read_met(
   NC(nc_inq_dimlen(ncid, dimid, &np));
   if (np > EP)
     ERRMSG("Too many pressure levels!");
-
-  /* Check for different number of pressure levels... */
-  if (nc_inq_dimid(ncid, "lev_2", &dimid) == NC_NOERR)
-    NC(nc_inq_dimlen(ncid, dimid, &np2));
-  if (np2 == 1)
-    np2 = np;
 
   /* Store dimensions... */
   met->np = (int) np;
@@ -742,18 +689,84 @@ void read_met(
   hour = (int) (met->time * 24.);
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
-  /* Convert pressure to hPa... */
-  for (ip = 0; ip < met->np; ip++)
+  /* Check and convert pressure levels... */
+  for (ip = 0; ip < met->np; ip++) {
+    if (ip > 0 && met->p[ip - 1] > met->p[ip])
+      ERRMSG("Pressure levels must be in descending order!");
     met->p[ip] /= 100.;
+  }
 
-  /* Read wind... */
+  /* Read surface pressure... */
+  if (nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
+    NC(nc_get_var_float(ncid, varid, help));
+    for (iy = 0; iy < met->ny; iy++)
+      for (ix = 0; ix < met->nx; ix++)
+	met->ps[ix][iy] = exp(help[iy * met->nx + ix]) / 100.;
+  } else {
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->ny; iy++)
+	met->ps[ix][iy] = met->p[0];
+  }
+
+  /* Read meteorological data... */
   read_met_help(ncid, "T", met, met->np, met->t, 1.0);
   read_met_help(ncid, "U", met, met->np, met->u, 1.0);
   read_met_help(ncid, "V", met, met->np, met->v, 1.0);
-  read_met_help(ncid, "W", met, (int) np2, met->w, 0.01f);
+  read_met_help(ncid, "W", met, met->np, met->w, 0.01f);
+  read_met_help(ncid, "Q", met, met->np, met->h2o, 1.608f);
+  read_met_help(ncid, "O3", met, met->np, met->o3, 0.602f);
+
+  /* Extrapolate data for lower boundary... */
+  read_met_extrapolate(met);
+
+  /* Estimate tropopause height... */
+  read_met_tropopause(met);
 
   /* Close file... */
   NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
+void read_met_extrapolate(
+  met_t * met) {
+
+  int ip, ip0, ix, iy;
+
+  /* Loop over columns... */
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+
+      /* Find lowest valid data point... */
+      for (ip0 = met->np - 1; ip0 >= 0; ip0--)
+	if (!gsl_finite(met->u[ix][iy][ip0])
+	    || !gsl_finite(met->v[ix][iy][ip0])
+	    || !gsl_finite(met->w[ix][iy][ip0])
+	    || !gsl_finite(met->t[ix][iy][ip0]))
+	  break;
+
+      /* Extrapolate... */
+      for (ip = ip0; ip >= 0; ip--) {
+	met->t[ix][iy][ip]
+	  = (float) LIN(met->p[ip + 1], met->t[ix][iy][ip + 1],
+			met->p[ip + 2], met->t[ix][iy][ip + 2], met->p[ip]);
+	met->u[ix][iy][ip]
+	  = (float) LIN(met->p[ip + 1], met->u[ix][iy][ip + 1],
+			met->p[ip + 2], met->u[ix][iy][ip + 2], met->p[ip]);
+	met->v[ix][iy][ip]
+	  = (float) LIN(met->p[ip + 1], met->v[ix][iy][ip + 1],
+			met->p[ip + 2], met->v[ix][iy][ip + 2], met->p[ip]);
+	met->w[ix][iy][ip]
+	  = (float) LIN(met->p[ip + 1], met->w[ix][iy][ip + 1],
+			met->p[ip + 2], met->w[ix][iy][ip + 2], met->p[ip]);
+	met->h2o[ix][iy][ip]
+	  = (float) LIN(met->p[ip + 1], met->h2o[ix][iy][ip + 1],
+			met->p[ip + 2], met->h2o[ix][iy][ip + 2], met->p[ip]);
+	met->o3[ix][iy][ip]
+	  = (float) LIN(met->p[ip + 1], met->o3[ix][iy][ip + 1],
+			met->p[ip + 2], met->o3[ix][iy][ip + 2], met->p[ip]);
+      }
+    }
 }
 
 /*****************************************************************************/
@@ -768,88 +781,99 @@ void read_met_help(
 
   static float help[EX * EY * EP];
 
-  char varname2[LEN];
-
-  int i, ip, ix, iy, n = 0, varid;
+  int ip, ix, iy, n = 0, varid;
 
   /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR) {
-    for (i = 0; i < (int) strlen(varname); i++) {
-      varname2[i] = (char) tolower(varname[i]);
-      varname2[i + 1] = '\0';
-    }
-    NC(nc_inq_varid(ncid, varname2, &varid));
-  }
+  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
+    return;
+
+  /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
 
-  /* Copy data... */
+  /* Copy and check data... */
   for (ip = 0; ip < np; ip++)
     for (iy = 0; iy < met->ny; iy++)
-      for (ix = 0; ix < met->nx; ix++)
+      for (ix = 0; ix < met->nx; ix++) {
 	dest[ix][iy][ip] = scl * help[n++];
-
-  /* Check data... */
-  for (ip = 0; ip < met->np; ip++)
-    for (iy = 0; iy < met->ny; iy++)
-      for (ix = 0; ix < met->nx; ix++)
 	if (dest[ix][iy][ip] < -1e10 || dest[ix][iy][ip] > 1e10)
 	  dest[ix][iy][ip] = GSL_NAN;
+      }
 }
 
 /*****************************************************************************/
 
-void reduce_met(
-  met_t * met,
-  int dx,
-  int dy,
-  int dp) {
+void read_met_tropopause(
+  met_t * met) {
 
-  met_t *met2;
+  static double pt[EX][EY];
 
-  int ix, iy, ip;
+  double w, wa[6], wsum, z[EP], zmin;
 
-  /* Check grid distances... */
-  if (dx < 1 || dy < 1 || dp < 1 || dx * dy * dp <= 1)
-    return;
+  int ip, ip2, ix, ix2, iy, iy2, okay;
 
-  /* Allocate... */
-  ALLOC(met2, met_t, 1);
+  /* Calculate altitudes... */
+  for (ip = 0; ip < met->np; ip++)
+    z[ip] = Z(met->p[ip]);
 
-  /* Reduce resolution... */
-  for (ix = 0; ix < met->nx; ix++) {
-    met2->lon[ix / dx] += met->lon[ix] / (double) (dx);
-    for (iy = 0; iy < met->ny; iy++) {
-      if (ix == 0)
-	met2->lat[iy / dy] += met->lat[iy] / (double) (dy);
-      for (ip = 0; ip < met->np; ip++) {
-	if (ix == 0 && iy == 0)
-	  met2->p[ip / dp] += met->p[ip] / (double) (dp);
-	met2->t[ix / dx][iy / dy][ip / dp] +=
-	  met->t[ix][iy][ip] / (float) (dx * dy * dp);
-	met2->u[ix / dx][iy / dy][ip / dp] +=
-	  met->u[ix][iy][ip] / (float) (dx * dy * dp);
-	met2->v[ix / dx][iy / dy][ip / dp] +=
-	  met->v[ix][iy][ip] / (float) (dx * dy * dp);
-	met2->w[ix / dx][iy / dy][ip / dp] +=
-	  met->w[ix][iy][ip] / (float) (dx * dy * dp);
-      }
+  /* Loop over latitudes... */
+  for (iy = 0; iy < met->ny; iy++) {
+
+    /* Set minimum altitude... */
+    zmin = 8. - 4. * fabs(cos((90. - met->lat[iy]) * M_PI / 180.));
+
+    /* Loop over longitudes... */
+    for (ix = 0; ix < met->nx; ix++) {
+
+      /* Search tropopause (WMO definition)... */
+      pt[ix][iy] = GSL_NAN;
+      for (ip = 0; ip < met->np; ip++)
+	if (z[ip] >= zmin && z[ip] <= 20.5) {
+	  okay = 1;
+	  for (ip2 = ip + 1; ip2 < met->np; ip2++)
+	    if (z[ip2] - z[ip] <= 2.0)
+	      if ((met->t[ix][iy][ip2] - met->t[ix][iy][ip])
+		  / (z[ip2] - z[ip]) < -2.0)
+		okay = 0;
+	  if (okay) {
+	    pt[ix][iy] = met->p[ip];
+	    break;
+	  }
+	}
     }
   }
-  met2->nx = met->nx / dx;
-  met2->ny = met->ny / dy;
-  met2->np = met->np / dp;
 
-  /* Copy... */
-  memcpy(met, met2, sizeof(met_t));
+  /* Calculate weights... */
+  for (ix = 0; ix < 6; ix++)
+    wa[ix] = exp(-gsl_pow_2(ix) / 1.2);
 
-  /* Free... */
-  free(met2);
+  /* Fill data gaps... */
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+
+      /* Init... */
+      met->pt[ix][iy] = 0;
+      wsum = 0;
+
+      /* Averrage data points... */
+      for (ix2 = GSL_MAX(0, ix - 5); ix2 < GSL_MIN(met->nx, ix + 5); ix2++)
+	for (iy2 = GSL_MAX(0, iy - 5); iy2 < GSL_MIN(met->ny, iy + 5); iy2++)
+	  if (gsl_finite(pt[ix2][iy2])) {
+	    w = wa[abs(ix - ix2)] * wa[abs(iy - iy2)];
+	    met->pt[ix][iy] += w * pt[ix2][iy2];
+	    wsum += w;
+	  }
+
+      /* Normalize... */
+      if (wsum > 0)
+	met->pt[ix][iy] /= wsum;
+      else
+	ERRMSG("Cannot estimate tropopause height!");
+    }
 }
 
 /*****************************************************************************/
 
 double scan_ctl(
-  const char *dirname,
   const char *filename,
   int argc,
   char *argv[],
@@ -860,22 +884,14 @@ double scan_ctl(
 
   FILE *in = NULL;
 
-  char dummy[LEN], file[LEN], fullname1[LEN], fullname2[LEN], line[LEN],
+  char dummy[LEN], fullname1[LEN], fullname2[LEN], line[LEN],
     msg[LEN], rvarname[LEN], rval[LEN];
 
   int contain = 0, i;
 
-  /* Set filename... */
-  if (dirname != NULL && filename != NULL)
-    sprintf(file, "%s/%s", dirname, filename);
-  else if (filename != NULL)
-    sprintf(file, "%s", filename);
-  else
-    sprintf(file, "%s", argv[1]);
-
   /* Open file... */
-  if (file[strlen(file) - 1] != '-')
-    if (!(in = fopen(file, "r")))
+  if (filename[strlen(filename) - 1] != '-')
+    if (!(in = fopen(filename, "r")))
       ERRMSG("Cannot open file!");
 
   /* Set full variable name... */
@@ -960,106 +976,90 @@ void time2jsec(
 
 /*****************************************************************************/
 
-int timer(
+void timer(
   const char *name,
   int id,
   int mode) {
 
-  static struct timeval tim;
-
-  static char names[NTIMER][LEN];
-
   static double starttime[NTIMER], runtime[NTIMER];
 
-  static int n;
+  /* Check id... */
+  if (id < 0 || id >= NTIMER)
+    ERRMSG("Too many timers!");
 
-  /* Create new timer... */
-  if (name != NULL) {
-    if (n >= NTIMER)
-      ERRMSG("Too many timers!");
-    strcpy(names[n], name);
-    id = n;
-    n++;
-  } else {
-
-    /* Start timer... */
-    if (mode == 1) {
-      if (starttime[id] <= 0) {
-	gettimeofday(&tim, NULL);
-	starttime[id] = (double) tim.tv_sec + (double) tim.tv_usec / 1e6;
-      } else
-	ERRMSG("Timer already started!");
-    }
-
-    /* Stop timer... */
-    else if (mode == 2) {
-      if (starttime[id] > 0) {
-	gettimeofday(&tim, NULL);
-	runtime[id] =
-	  runtime[id] + (double) tim.tv_sec + (double) tim.tv_usec / 1e6 -
-	  starttime[id];
-	starttime[id] = -1;
-      } else
-	ERRMSG("Timer not started!");
-    }
-
-    /* Print timer... */
-    else if (mode == 3) {
-      if (starttime[id] > 0) {
-	gettimeofday(&tim, NULL);
-	printf("TIMER: %s %.4f s\n", names[id],
-	       runtime[id] + (double) tim.tv_sec +
-	       (double) tim.tv_usec / 1e6 - starttime[id]);
-      } else
-	printf("TIMER: %s %.4f s\n", names[id], runtime[id]);
-    }
+  /* Start timer... */
+  if (mode == 1) {
+    if (starttime[id] <= 0)
+      starttime[id] = omp_get_wtime();
+    else
+      ERRMSG("Timer already started!");
   }
 
-  return id;
+  /* Stop timer... */
+  else if (mode == 2) {
+    if (starttime[id] > 0) {
+      runtime[id] = runtime[id] + omp_get_wtime() - starttime[id];
+      starttime[id] = -1;
+    } else
+      ERRMSG("Timer not started!");
+  }
+
+  /* Print timer... */
+  else if (mode == 3)
+    printf("%s = %g s\n", name, runtime[id]);
 }
 
 /*****************************************************************************/
 
 void write_atm(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
-  ctl_t * ctl) {
+  ctl_t * ctl,
+  double t) {
 
-  char file[LEN];
+  FILE *in, *out;
 
-  /* Set filename... */
-  if (dirname != NULL)
-    sprintf(file, "%s/%s", dirname, filename);
-  else
-    sprintf(file, "%s", filename);
+  char line[LEN];
 
-  /* Write info... */
-  printf("Write atmospheric data: %s\n", file);
+  double r;
 
-  /* Select file format... */
-  if (ctl->atm_oformat == 0)
-    write_atm_to_ascii(file, atm, ctl);
-  else if (ctl->atm_oformat == 1)
-    write_atm_to_netcdf(file, atm, ctl);
-  else
-    ERRMSG("Unknown file format!");
-}
+  int ip, iq, year, mon, day, hour, min, sec;
 
-/*****************************************************************************/
+  /* Check if gnuplot output is requested... */
+  if (ctl->atm_gpfile[0] != '-') {
 
-void write_atm_to_ascii(
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl) {
+    /* Write info... */
+    printf("Plot atmospheric data: %s.png\n", filename);
 
-  static FILE *out;
+    /* Create gnuplot pipe... */
+    if (!(out = popen("gnuplot", "w")))
+      ERRMSG("Cannot create pipe to gnuplot!");
 
-  int ip, iq;
+    /* Set plot filename... */
+    fprintf(out, "set out \"%s.png\"\n", filename);
 
-  /* Create file... */
-  if (!(out = fopen(filename, "w")))
-    ERRMSG("Cannot create file!");
+    /* Set time string... */
+    jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+    fprintf(out, "timestr=\"%d-%02d-%02d, %02d:%02d UTC\"\n",
+	    year, mon, day, hour, min);
+
+    /* Dump gnuplot file to pipe... */
+    if (!(in = fopen(ctl->atm_gpfile, "r")))
+      ERRMSG("Cannot open file!");
+    while (fgets(line, LEN, in))
+      fprintf(out, "%s", line);
+    fclose(in);
+  }
+
+  else {
+
+    /* Write info... */
+    printf("Write atmospheric data: %s\n", filename);
+
+    /* Create file... */
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+  }
 
   /* Write header... */
   fprintf(out,
@@ -1088,73 +1088,11 @@ void write_atm_to_ascii(
 
 /*****************************************************************************/
 
-void write_atm_to_netcdf(
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl) {
-
-  static int n_dimid, dimids[1], iq, varid[4 + NQ], ncid = -1;
-
-  size_t start[1], count[1];
-
-  char unit_str[LEN];
-
-  /* Create file... */
-  NC(nc_create(filename, NC_CLOBBER, &ncid));
-
-  /* Create dimensions... */
-  NC(nc_def_dim(ncid, "np", NC_UNLIMITED, &n_dimid));
-  dimids[0] = n_dimid;
-
-  /* Create variables... */
-  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, dimids, &varid[0]));
-  NC(nc_put_att_text(ncid, varid[0], "units", 1, "s"));
-
-  NC(nc_def_var(ncid, "pressure", NC_DOUBLE, 1, dimids, &varid[1]));
-  NC(nc_put_att_text(ncid, varid[1], "units", 3, "hPa"));
-
-  NC(nc_def_var(ncid, "longitude", NC_DOUBLE, 1, dimids, &varid[2]));
-  NC(nc_put_att_text(ncid, varid[2], "units", 3, "deg"));
-
-  NC(nc_def_var(ncid, "latitude", NC_DOUBLE, 1, dimids, &varid[3]));
-  NC(nc_put_att_text(ncid, varid[3], "units", 3, "deg"));
-
-  /* Loop over quantities... */
-  for (iq = 0; iq < ctl->nq; iq++) {
-    NC(nc_def_var
-       (ncid, ctl->qnt_name[iq], NC_DOUBLE, 1, dimids, &varid[4 + iq]));
-    strcpy(unit_str, ctl->qnt_unit[iq]);
-    NC(nc_put_att_text
-       (ncid, varid[4 + iq], "units", strlen(unit_str), unit_str));
-  }
-
-  /* Finish definition... */
-  nc_enddef(ncid);
-
-  /* Write data... */
-  start[0] = (size_t) 0;
-  count[0] = (size_t) atm->np;
-  NC(nc_put_vara_double(ncid, varid[0], start, count, atm->time));
-  NC(nc_put_vara_double(ncid, varid[1], start, count, atm->p));
-  NC(nc_put_vara_double(ncid, varid[2], start, count, atm->lon));
-  NC(nc_put_vara_double(ncid, varid[3], start, count, atm->lat));
-  for (iq = 0; iq < ctl->nq; iq++)
-    NC(nc_put_vara_double(ncid, varid[4 + iq], start, count, atm->q[iq]));
-
-  /* Close file... */
-  NC(nc_close(ncid));
-}
-
-/*****************************************************************************/
-
 void write_csi(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
   ctl_t * ctl,
-  double t,
-  double dt,
-  int write) {
+  double t) {
 
   static FILE *in, *out;
 
@@ -1163,52 +1101,49 @@ void write_csi(
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
     rt, rz, rlon, rlat, t0, t1, area, dlon, dlat, lat;
 
-  static double mod_val[SPEARMAN_NP], obs_val[SPEARMAN_NP],
-    work[2 * SPEARMAN_NP];
+  static int init, obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz, robs;
 
-  static int init = 0, obscounter[GX][GY][GZ],
-    gw[GX][GY][GZ], gx[GX][GY][GZ], gy[GX][GY][GZ], gz[GX][GY][GZ], cw, cx,
-    cy, cz, ip, ix, iy, iz, robs;
+  /* Init... */
+  if (!init) {
+    init = 1;
 
-  static size_t mod_n;
+    /* Check quantity index for mass... */
+    if (ctl->qnt_m < 0)
+      ERRMSG("Need quantity mass to analyze CSI!");
 
-  char file[LEN];
+    /* Open observation data file... */
+    printf("Read CSI observation data: %s\n", ctl->csi_obsfile);
+    if (!(in = fopen(ctl->csi_obsfile, "r")))
+      ERRMSG("Cannot open observation data file!");
 
-  /* Set filename... */
-  if (dirname != NULL)
-    sprintf(file, "%s/%s", dirname, filename);
-  else
-    sprintf(file, "%s", filename);
+    /* Create new file... */
+    printf("Write CSI data: %s\n", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create model data file!");
 
-  /* Write info... */
-  if (write)
-    printf("Write CSI data: %s\n", file);
-  else
-    printf("Update CSI data: %s\n", file);
-
-  /* Check quantity index for mass... */
-  if (ctl->qnt_mass < 0)
-    ERRMSG("Need quantity mass to analyze CSI!");
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = number of hits (cx)\n"
+	    "# $3 = number of misses (cy)\n"
+	    "# $4 = number of false alarms (cz)\n"
+	    "# $5 = number of observations (cx + cy)\n"
+	    "# $6 = number of forecasts (cx + cz)\n"
+	    "# $7 = bias (forecasts/observations) [%%]\n"
+	    "# $8 = probability of detection (POD) [%%]\n"
+	    "# $9 = false alarm rate (FAR) [%%]\n"
+	    "# $10 = critical success index (CSI) [%%]\n\n");
+  }
 
   /* Set time interval... */
-  t0 = t - 0.5 * dt;
-  t1 = t + 0.5 * dt;
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid cells... */
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
-      for (iz = 0; iz < ctl->csi_nz; iz++) {
-	modmean[ix][iy][iz] = 0;
-	obsmean[ix][iy][iz] = 0;
-	obscounter[ix][iy][iz] = 0;
-      }
-
-  /* Open observation data file... */
-  if (!init) {
-    init = 1;
-    if (!(in = fopen(ctl->csi_obsfile, "r")))
-      ERRMSG("Cannot open observation data file!");
-  }
+      for (iz = 0; iz < ctl->csi_nz; iz++)
+	modmean[ix][iy][iz] = obsmean[ix][iy][iz] = obscount[ix][iy][iz] = 0;
 
   /* Read data... */
   while (fgets(line, LEN, in)) {
@@ -1224,7 +1159,7 @@ void write_csi(
     if (rt > t1)
       break;
 
-    /* Calculate indices */
+    /* Calculate indices... */
     ix = (int) ((rlon - ctl->csi_lon0)
 		/ (ctl->csi_lon1 - ctl->csi_lon0) * ctl->csi_nx);
     iy = (int) ((rlat - ctl->csi_lat0)
@@ -1239,7 +1174,7 @@ void write_csi(
 
     /* Get mean observation index... */
     obsmean[ix][iy][iz] += robs;
-    obscounter[ix][iy][iz]++;
+    obscount[ix][iy][iz]++;
   }
 
   /* Analyze model data... */
@@ -1263,7 +1198,7 @@ void write_csi(
       continue;
 
     /* Get total mass in grid cell... */
-    modmean[ix][iy][iz] += atm->q[ctl->qnt_mass][ip];
+    modmean[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
   }
 
   /* Analyze all grid cells... */
@@ -1272,8 +1207,8 @@ void write_csi(
       for (iz = 0; iz < ctl->csi_nz; iz++) {
 
 	/* Calculate mean observation index... */
-	if (obscounter[ix][iy][iz] > 0)
-	  obsmean[ix][iy][iz] /= obscounter[ix][iy][iz];
+	if (obscount[ix][iy][iz] > 0)
+	  obsmean[ix][iy][iz] /= obscount[ix][iy][iz];
 
 	/* Calculate column density... */
 	if (modmean[ix][iy][iz] > 0) {
@@ -1286,134 +1221,66 @@ void write_csi(
 	}
 
 	/* Calculate CSI... */
-	if (obscounter[ix][iy][iz] > 0) {
+	if (obscount[ix][iy][iz] > 0) {
 	  if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
-	      modmean[ix][iy][iz] >= ctl->csi_modmin) {
+	      modmean[ix][iy][iz] >= ctl->csi_modmin)
 	    cx++;
-	    gx[ix][iy][iz]++;
-	  } else if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
-		     modmean[ix][iy][iz] < ctl->csi_modmin) {
+	  else if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
+		   modmean[ix][iy][iz] < ctl->csi_modmin)
 	    cy++;
-	    gy[ix][iy][iz]++;
-	  } else if (obsmean[ix][iy][iz] < ctl->csi_obsmin &&
-		     modmean[ix][iy][iz] >= ctl->csi_modmin) {
+	  else if (obsmean[ix][iy][iz] < ctl->csi_obsmin &&
+		   modmean[ix][iy][iz] >= ctl->csi_modmin)
 	    cz++;
-	    gz[ix][iy][iz]++;
-	  } else {
-	    cw++;
-	    gw[ix][iy][iz]++;
-	  }
-	}
-
-	/* Fill Array for Spearman */
-	if (mod_n < SPEARMAN_NP && obscounter[ix][iy][iz] > 0
-	    && modmean[ix][iy][iz] >= ctl->spearman_modmin
-	    && obsmean[ix][iy][iz] >= ctl->spearman_obsmin) {
-	  mod_val[mod_n] = modmean[ix][iy][iz];
-	  obs_val[mod_n] = obsmean[ix][iy][iz];
-	  mod_n = mod_n + 1;
 	}
       }
 
-  /* Check if output is requested... */
-  if (write) {
+  /* Write output... */
+  if (fmod(t, ctl->csi_dt_out) == 0) {
 
-    /* Create CSI data file... */
-    if (!(out = fopen(file, "w")))
-      ERRMSG("Cannot create CSI data file!");
+    /* Write... */
+    fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g\n",
+	    t, cx, cy, cz, cx + cy, cx + cz,
+	    (cx + cy > 0) ? 100. * (cx + cz) / (cx + cy) : GSL_NAN,
+	    (cx + cy > 0) ? (100. * cx) / (cx + cy) : GSL_NAN,
+	    (cx + cz > 0) ? (100. * cz) / (cx + cz) : GSL_NAN,
+	    (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : GSL_NAN);
 
-    /* Write header... */
-    fprintf(out,
-	    "# $1 = time [s]\n"
-	    "# $2 = altitude [km]\n"
-	    "# $3 = longitude [deg]\n"
-	    "# $4 = latitude [deg]\n"
-	    "# $5 = W\n" "# $6 = X\n" "# $7 = Y\n" "# $8 = Z\n");
-
-    /* Write data... */
-    for (iz = 0; iz < ctl->csi_nz; iz++)
-      for (ix = 0; ix < ctl->csi_nx; ix++) {
-	fprintf(out, "\n");
-	for (iy = 0; iy < ctl->csi_ny; iy++)
-	  fprintf(out, "%.2f %g %g %g %d %d %d %d\n",
-		  t,
-		  ctl->csi_z0 + (ctl->csi_z1 -
-				 ctl->csi_z0) / ctl->csi_nz * (iz + 0.5),
-		  ctl->csi_lon0 + (ctl->csi_lon1 -
-				   ctl->csi_lon0) / ctl->csi_nx * (ix + 0.5),
-		  ctl->csi_lat0 + (ctl->csi_lat1 -
-				   ctl->csi_lat0) / ctl->csi_ny * (iy + 0.5),
-		  gw[ix][iy][iz], gx[ix][iy][iz], gy[ix][iy][iz],
-		  gz[ix][iy][iz]);
-      }
-
-    /* Print CSI data... */
-    fprintf(out, "\n");
-    fprintf(out, "# t= %.2f / O= %d\n", t, cx + cy);
-    fprintf(out, "# t= %.2f / F= %d\n", t, cx + cz);
-    fprintf(out, "# t= %.2f / X= %d\n", t, cx);
-    fprintf(out, "# t= %.2f / Y= %d\n", t, cy);
-    fprintf(out, "# t= %.2f / Z= %d\n", t, cz);
-    fprintf(out, "# t= %.2f / B= %g\n", t, 100. * (cx + cz) / (cx + cy));
-    fprintf(out, "# t= %.2f / POD= %g\n", t, (100. * cx) / (cx + cy));
-    fprintf(out, "# t= %.2f / FAR= %g\n", t, (100. * cz) / (cx + cz));
-    fprintf(out, "# t= %.2f / CSI= %g\n", t, (100. * cx) / (cx + cy + cz));
-    fprintf(out, "# t= %.2f / GS= %g\n", t,
-	    (100. * (cx * cw - cy * cz)) / ((cy + cz) * (cx + cy + cw + cz) *
-					    (cx * cw - cy * cz)));
-    fprintf(out, "# t= %.2f / SPEARMAN= %.8f\n", t,
-	    mod_n > 0 ? gsl_stats_spearman(mod_val, 1, obs_val, 1, mod_n,
-					   work) : 0);
-    fprintf(out, "# t= %.2f / SPEARMAN_N= %i\n", t, (int) mod_n);
-
-    /* Close data file... */
-    fclose(out);
-
-    /* Reset counters... */
-    mod_n = 0;
-    cw = cx = cy = cz = 0;
-    for (ix = 0; ix < ctl->csi_nx; ix++)
-      for (iy = 0; iy < ctl->csi_ny; iy++)
-	for (iz = 0; iz < ctl->csi_nz; iz++)
-	  gw[ix][iy][iz] = gx[ix][iy][iz] = gy[ix][iy][iz] = gz[ix][iy][iz] =
-	    0;
+    /* Set counters to zero... */
+    cx = cy = cz = 0;
   }
+
+  /* Close file... */
+  if (t == ctl->t_stop)
+    fclose(out);
 }
 
 /*****************************************************************************/
 
 void write_grid(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
   ctl_t * ctl,
-  double t,
-  double dt) {
+  double t) {
+
+  FILE *in, *out;
+
+  char line[LEN];
 
   static double grid_q[NQ][GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
-    area, rho_air, cd, mmr, t0, t1;
+    area, rho_air, cd, mmr, t0, t1, r;
 
-  static int grid_n[GX][GY][GZ], ip, ix, iy, iz, iq;
-
-  FILE *out;
-
-  char file[LEN];
-
-  /* Set filename... */
-  if (dirname != NULL)
-    sprintf(file, "%s/%s", dirname, filename);
-  else
-    sprintf(file, "%s", filename);
+  static int grid_n[GX][GY][GZ], ip, ix, iy, iz, iq,
+    year, mon, day, hour, min, sec;
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
     ERRMSG("Grid dimensions too large!");
 
   /* Set time interval for output... */
-  t0 = t - 0.5 * dt;
-  t1 = t + 0.5 * dt;
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Set grid box sizes... */
+  /* Set grid box size... */
   dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
   dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
   dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
@@ -1453,12 +1320,41 @@ void write_grid(
 	  if (grid_n[ix][iy][iz] > 0)
 	    grid_q[iq][ix][iy][iz] /= grid_n[ix][iy][iz];
 
-  /* Write info... */
-  printf("Write gridded data: %s\n", file);
+  /* Check if gnuplot output is requested... */
+  if (ctl->grid_gpfile[0] != '-') {
 
-  /* Create new file... */
-  if (!(out = fopen(file, "w")))
-    ERRMSG("Cannot create file!");
+    /* Write info... */
+    printf("Plot gridded data: %s.png\n", filename);
+
+    /* Create gnuplot pipe... */
+    if (!(out = popen("gnuplot", "w")))
+      ERRMSG("Cannot create pipe to gnuplot!");
+
+    /* Set plot filename... */
+    fprintf(out, "set out \"%s.png\"\n", filename);
+
+    /* Set time string... */
+    jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+    fprintf(out, "timestr=\"%d-%02d-%02d, %02d:%02d UTC\"\n",
+	    year, mon, day, hour, min);
+
+    /* Dump gnuplot file to pipe... */
+    if (!(in = fopen(ctl->grid_gpfile, "r")))
+      ERRMSG("Cannot open file!");
+    while (fgets(line, LEN, in))
+      fprintf(out, "%s", line);
+    fclose(in);
+  }
+
+  else {
+
+    /* Write info... */
+    printf("Write gridded data: %s\n", filename);
+
+    /* Create file... */
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+  }
 
   /* Write header... */
   fprintf(out,
@@ -1491,16 +1387,15 @@ void write_grid(
 	  * cos(lat * M_PI / 180.);
 
 	/* Calculate column density... */
-	if (ctl->qnt_mass >= 0)
+	if (ctl->qnt_m >= 0)
 	  cd =
-	    grid_q[ctl->qnt_mass][ix][iy][iz] * grid_n[ix][iy][iz] / (1e6 *
-								      area);
+	    grid_q[ctl->qnt_m][ix][iy][iz] * grid_n[ix][iy][iz] / (1e6 *
+								   area);
 
 	/* Calculate mass mixing ratio... */
-	if (ctl->qnt_mass >= 0 && ctl->qnt_temp >= 0) {
-	  rho_air =
-	    100. * P(z) / (287.058 * grid_q[ctl->qnt_temp][ix][iy][iz]);
-	  mmr = grid_q[ctl->qnt_mass][ix][iy][iz] * grid_n[ix][iy][iz]
+	if (ctl->qnt_m >= 0 && ctl->qnt_t >= 0) {
+	  rho_air = 100. * P(z) / (287.058 * grid_q[ctl->qnt_t][ix][iy][iz]);
+	  mmr = grid_q[ctl->qnt_m][ix][iy][iz] * grid_n[ix][iy][iz]
 	    / (rho_air * 1e6 * area * 1e3 * dz);
 	}
 
@@ -1519,83 +1414,222 @@ void write_grid(
 
 /*****************************************************************************/
 
-void write_station(
-  const char *dirname,
+void write_sample(
   const char *filename,
   atm_t * atm,
   ctl_t * ctl,
-  double t,
-  double dt) {
+  double t) {
+
+  static FILE *in, *out;
+
+  static char line[LEN];
+
+  static double area, cd, mmr, rho_air, rt, rz, rlon, rlat, rdz, rdx,
+    dlat, dx2, p0, p1, t0, t1, x0[3], x1[3], q_mean[NQ];
+
+  static int init, ip, iq, np, ridx, ridx_old = -999;
+
+  /* Open files... */
+  if (!init) {
+    init = 1;
+
+    /* Open observation data file... */
+    printf("Read sample observation data: %s\n", ctl->sample_obsfile);
+    if (!(in = fopen(ctl->sample_obsfile, "r")))
+      ERRMSG("Cannot open observation data file!");
+
+    /* Create new file... */
+    printf("Write sample model data: %s\n", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create model data file!");
+
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n"
+	    "# $4 = latitude [deg]\n"
+	    "# $5 = vertical layer width [km]\n"
+	    "# $6 = search radius [km]\n"
+	    "# $7 = data set index\n"
+	    "# $8 = number of particles\n"
+	    "# $9 = column density [kg/m^2]\n"
+	    "# $10 = mass mixing ratio [kg/kg]\n");
+    for (iq = 0; iq < ctl->nq; iq++)
+      fprintf(out, "# $%i = %s (mean) [%s]\n", iq + 11, ctl->qnt_name[iq],
+	      ctl->qnt_unit[iq]);
+  }
+
+  /* Set time interval... */
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Read data... */
+  while (fgets(line, LEN, in)) {
+
+    /* Read data... */
+    if (sscanf(line, "%lg %lg %lg %lg %lg %lg %d",
+	       &rt, &rz, &rlon, &rlat, &rdz, &rdx, &ridx) != 7)
+      continue;
+
+    /* Check time... */
+    if (rt < t0)
+      continue;
+    if (rt > t1)
+      break;
+
+    /* Set search ranges... */
+    p0 = P(rz - 0.5 * rdz);
+    p1 = P(rz + 0.5 * rdz);
+    dlat = dy2deg(rdx);
+    dx2 = gsl_pow_2(rdx);
+
+    /* Get geolocation... */
+    geo2cart(0, rlon, rlat, x0);
+
+    /* Init... */
+    np = 0;
+    for (iq = 0; iq < ctl->nq; iq++)
+      q_mean[iq] = 0;
+
+    /* Loop over air parcles... */
+    for (ip = 0; ip < atm->np; ip++) {
+
+      /* Check latitudinal distance... */
+      if (fabs(atm->lat[ip] - rlat) > dlat)
+	continue;
+
+      /* Check vertical distance... */
+      if (atm->p[ip] > p0 || atm->p[ip] < p1)
+	continue;
+
+      /* Check horizontal distance... */
+      geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
+      if (DIST2(x0, x1) > dx2)
+	continue;
+
+      /* Calculate mean values... */
+      for (iq = 0; iq < ctl->nq; iq++)
+	q_mean[iq] += atm->q[iq][ip];
+      np++;
+    }
+
+    /* Calculate mean values... */
+    if (np > 0)
+      for (iq = 0; iq < ctl->nq; iq++)
+	q_mean[iq] /= np;
+
+    /* Calculate surface area... */
+    area = M_PI * dx2;
+
+    /* Calculate column density... */
+    if (ctl->qnt_m >= 0)
+      cd = q_mean[ctl->qnt_m] * np / (1e6 * area);
+
+    /* Calculate mass mixing ratio... */
+    if (ctl->qnt_m >= 0 && ctl->qnt_t >= 0) {
+      rho_air = 100. * P(rz) / (287.058 * q_mean[ctl->qnt_t]);
+      mmr = q_mean[ctl->qnt_m] * np / (rho_air * 1e6 * area * 1e3 * rdz);
+    }
+
+    /* Write output... */
+    if (ridx != ridx_old)
+      fprintf(out, "\n");
+    ridx_old = ridx;
+    fprintf(out, "%.2f %g %g %g %g %g %d %d %g %g",
+	    rt, rz, rlon, rlat, rdz, rdx, ridx, np, cd, mmr);
+    for (iq = 0; iq < ctl->nq; iq++) {
+      fprintf(out, " ");
+      fprintf(out, ctl->qnt_format[iq], q_mean[iq]);
+    }
+    fprintf(out, "\n");
+  }
+
+  /* Close files... */
+  if (t == ctl->t_stop) {
+    fclose(out);
+    fclose(in);
+  }
+}
+
+/*****************************************************************************/
+
+void write_station(
+  const char *filename,
+  atm_t * atm,
+  ctl_t * ctl,
+  double t) {
 
   static FILE *out;
 
-  double rmax2, x0[3], x1[3], t0, t1;
+  static double rmax2, t0, t1, x0[3], x1[3];
 
-  int ip, iq;
-
-  char file[LEN];
-
-  /* Set filename... */
-  if (dirname != NULL)
-    sprintf(file, "%s/%s", dirname, filename);
-  else
-    sprintf(file, "%s", filename);
+  static int init, ip, iq;
 
   /* Init... */
-  rmax2 = gsl_pow_2(ctl->stat_r);
-  geo2cart(0, ctl->stat_lon, ctl->stat_lat, x0);
+  if (!init) {
+    init = 1;
+
+    /* Write info... */
+    printf("Write station data: %s\n", filename);
+
+    /* Create new file... */
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+    for (iq = 0; iq < ctl->nq; iq++)
+      fprintf(out, "# $%i = %s [%s]\n", (iq + 5),
+	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+    fprintf(out, "\n");
+
+    /* Set geolocation and search radius... */
+    geo2cart(0, ctl->stat_lon, ctl->stat_lat, x0);
+    rmax2 = gsl_pow_2(ctl->stat_r);
+  }
 
   /* Set time interval for output... */
-  t0 = t - 0.5 * dt;
-  t1 = t + 0.5 * dt;
-
-  /* Write info... */
-  printf("Write station data: %s\n", file);
-
-  /* Create new file... */
-  if (!(out = fopen(file, "w")))
-    ERRMSG("Cannot create file!");
-
-  /* Write header... */
-  fprintf(out,
-	  "# $1 = time [s]\n"
-	  "# $2 = altitude [km]\n"
-	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-  for (iq = 0; iq < ctl->nq; iq++)
-    fprintf(out, "# $%i = %s [%s]\n", (iq + 5),
-	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-  fprintf(out, "\n");
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over air parcels... */
-  for (ip = 0; ip < atm->np; ip++)
-    if (atm->time[ip] >= t0 && atm->time[ip] <= t1) {
+  for (ip = 0; ip < atm->np; ip++) {
 
-      /* Check station flag... */
-      if (ctl->qnt_station >= 0)
-	if (atm->q[ctl->qnt_station][ip])
-	  continue;
+    /* Check time... */
+    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
 
-      /* Get Cartesian coordinates... */
-      geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
+    /* Check station flag... */
+    if (ctl->qnt_stat >= 0)
+      if (atm->q[ctl->qnt_stat][ip])
+	continue;
 
-      /* Check horizontal distance... */
-      if (DIST2(x0, x1) <= rmax2) {
+    /* Get Cartesian coordinates... */
+    geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
 
-	/* Set station flag... */
-	if (ctl->qnt_station >= 0)
-	  atm->q[ctl->qnt_station][ip] = 1;
+    /* Check horizontal distance... */
+    if (DIST2(x0, x1) > rmax2)
+      continue;
 
-	/* Write data... */
-	fprintf(out, "%.2f %g %g %g",
-		atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]);
-	for (iq = 0; iq < ctl->nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
-	}
-	fprintf(out, "\n");
-      }
+    /* Set station flag... */
+    if (ctl->qnt_stat >= 0)
+      atm->q[ctl->qnt_stat][ip] = 1;
+
+    /* Write data... */
+    fprintf(out, "%.2f %g %g %g",
+	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]);
+    for (iq = 0; iq < ctl->nq; iq++) {
+      fprintf(out, " ");
+      fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
     }
+    fprintf(out, "\n");
+  }
 
   /* Close file... */
-  fclose(out);
+  if (t == ctl->t_stop)
+    fclose(out);
 }

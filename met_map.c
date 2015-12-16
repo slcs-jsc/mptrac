@@ -34,10 +34,10 @@ int main(
 
   FILE *in, *out;
 
-  static double dz, dzmin = 1e10, z, timem[EX][EY], tm[EX][EY],
-    um[EX][EY], vm[EX][EY], wm[EX][EY];
+  static double dz, dzmin = 1e10, z, timem[EX][EY], psm[EX][EY], ptm[EX][EY],
+    tm[EX][EY], um[EX][EY], vm[EX][EY], wm[EX][EY], h2om[EX][EY], o3m[EX][EY];
 
-  static int epol, i, ip, ip2, ix, iy, np[EX][EY], redx, redy, redp, wrap;
+  static int i, ip, ip2, ix, iy, np[EX][EY];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -47,13 +47,8 @@ int main(
     ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
-  read_ctl(NULL, NULL, argc, argv, &ctl);
-  z = scan_ctl(NULL, NULL, argc, argv, "Z", -1, "", NULL);
-  epol = (int) scan_ctl(NULL, NULL, argc, argv, "EPOL", -1, "0", NULL);
-  redx = (int) scan_ctl(NULL, NULL, argc, argv, "REDX", -1, "1", NULL);
-  redy = (int) scan_ctl(NULL, NULL, argc, argv, "REDY", -1, "1", NULL);
-  redp = (int) scan_ctl(NULL, NULL, argc, argv, "REDP", -1, "1", NULL);
-  wrap = (int) scan_ctl(NULL, NULL, argc, argv, "WRAP", -1, "0", NULL);
+  read_ctl(argv[1], argc, argv, &ctl);
+  z = scan_ctl(argv[1], argc, argv, "Z", -1, "", NULL);
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
@@ -64,13 +59,6 @@ int main(
     else
       fclose(in);
     read_met(argv[i], met);
-
-    /* Extrapolate... */
-    if (epol)
-      extrapolate_met(met);
-
-    /* Reduce resolution... */
-    reduce_met(met, redx, redy, redp);
 
     /* Find nearest pressure level... */
     for (ip2 = 0; ip2 < met->np; ip2++) {
@@ -89,6 +77,10 @@ int main(
 	um[ix][iy] += met->u[ix][iy][ip];
 	vm[ix][iy] += met->v[ix][iy][ip];
 	wm[ix][iy] += met->w[ix][iy][ip];
+	h2om[ix][iy] += met->h2o[ix][iy][ip];
+	o3m[ix][iy] += met->o3[ix][iy][ip];
+	psm[ix][iy] += met->ps[ix][iy];
+	ptm[ix][iy] += met->pt[ix][iy];
 	np[ix][iy]++;
       }
   }
@@ -108,34 +100,33 @@ int main(
 	  "# $6  = temperature [K]\n"
 	  "# $7  = zonal wind [m/s]\n"
 	  "# $8  = meridional wind [m/s]\n"
-	  "# $9  = vertical wind [hPa/s]\n");
+	  "# $9  = vertical wind [hPa/s]\n"
+	  "# $10 = H2O volume mixing ratio [1]\n"
+	  "# $11 = O3 volume mixing ratio [1]\n"
+	  "# $12 = surface pressure [hPa]\n"
+	  "# $13 = tropopause pressure [hPa]\n");
 
   /* Write data... */
   for (iy = 0; iy < met->ny; iy++) {
     fprintf(out, "\n");
-    if (wrap) {
-      for (ix = 0; ix < met->nx; ix++)
-	if (met->lon[ix] >= 180)
-	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
-		  timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
-		  met->lon[ix] - 360.0, met->lat[iy], met->p[ip],
-		  tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
-		  vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy]);
-      for (ix = 0; ix < met->nx; ix++)
-	if (met->lon[ix] <= 180)
-	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
-		  timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
-		  met->lon[ix], met->lat[iy], met->p[ip],
-		  tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
-		  vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy]);
-    } else {
-      for (ix = 0; ix < met->nx; ix++)
-	fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
+    for (ix = 0; ix < met->nx; ix++)
+      if (met->lon[ix] >= 180)
+	fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g\n",
+		timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
+		met->lon[ix] - 360.0, met->lat[iy], met->p[ip],
+		tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
+		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
+		h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
+		psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy]);
+    for (ix = 0; ix < met->nx; ix++)
+      if (met->lon[ix] <= 180)
+	fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
 		met->lon[ix], met->lat[iy], met->p[ip],
 		tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
-		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy]);
-    }
+		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
+		h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
+		psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

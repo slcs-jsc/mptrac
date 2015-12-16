@@ -103,17 +103,14 @@
 /*! Convert pressure to altitude. */
 #define Z(p) (H0*log(P0/(p)))
 
-/*! Creates a timer and return its ID. */
-#define CREATE_TIMER(name) timer(name, 0, 0)
-
 /*! Starts a timer. */
-#define START_TIMER(id)	timer(NULL, id, 1)
+#define START_TIMER(id)	timer(#id, id, 1)
 
 /*! Stops a timer. */
-#define STOP_TIMER(id) timer(NULL, id, 2)
+#define STOP_TIMER(id) timer(#id, id, 2)
 
 /*! Prints a timer name and its time. */
-#define PRINT_TIMER(id)	timer(NULL, id, 3)
+#define PRINT_TIMER(id)	timer(#id, id, 3)
 
 /* ------------------------------------------------------------
    Constants...
@@ -139,19 +136,19 @@
 #define LEN 5000
 
 /*! Maximum number of atmospheric data points. */
-#define NP 20000000
+#define NP 10000000
 
 /*! Maximum number of quantities per data point. */
-#define NQ 7
+#define NQ 5
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 91
+#define EP 66
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 1440
+#define EX 360
 
 /*! Maximum number of latitudes for meteorological data. */
-#define EY 721
+#define EY 181
 
 /*! Maximum number of longitudes for gridded data. */
 #define GX 720
@@ -167,9 +164,6 @@
 
 /*! Maximum number of timers. */
 #define NTIMER 20
-
-/*! Maximum number of data points for Spearman correlation coefficient. */
-#define SPEARMAN_NP 1500000
 
 /* ------------------------------------------------------------
    Structs...
@@ -187,23 +181,47 @@ typedef struct {
   /*! Quantity units. */
   char qnt_unit[NQ][LEN];
 
-  /*! Quantity units. */
+  /*! Quantity output format. */
   char qnt_format[NQ][LEN];
 
   /*! Quantity array index for mass. */
-  int qnt_mass;
+  int qnt_m;
 
   /*! Quantity array index for particle density. */
-  int qnt_rho_p;
+  int qnt_rho;
 
   /*! Quantity array index for particle radius. */
-  int qnt_r_p;
+  int qnt_r;
 
-  /*! Quantity array index for station flag. */
-  int qnt_station;
+  /*! Quantity array index for surface pressure. */
+  int qnt_ps;
+
+  /*! Quantity array index for tropopause pressure. */
+  int qnt_pt;
 
   /*! Quantity array index for temperature. */
-  int qnt_temp;
+  int qnt_t;
+
+  /*! Quantity array index for zonal wind. */
+  int qnt_u;
+
+  /*! Quantity array index for meridional wind. */
+  int qnt_v;
+
+  /*! Quantity array index for vertical velocity. */
+  int qnt_w;
+
+  /*! Quantity array index for water vapor vmr. */
+  int qnt_h2o;
+
+  /*! Quantity array index for ozone vmr. */
+  int qnt_o3;
+
+  /*! Quantity array index for potential temperature. */
+  int qnt_theta;
+
+  /*! Quantity array index for station flag. */
+  int qnt_stat;
 
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
@@ -220,41 +238,41 @@ typedef struct {
   /*! Time step of meteorological data [s]. */
   double dt_met;
 
-  /*! Factor to reduce horizontal resolution of meteorological data. */
-  int red_met;
+  /*! Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. */
+  double turb_dx_trop;
 
-  /*! Horizontal turbulent diffusion coefficient [m^2/s]. */
-  double turb_dx;
+  /*! Horizontal turbulent diffusion coefficient (stratosphere) [m^2/s]. */
+  double turb_dx_strat;
 
-  /*! Vertical turbulent diffusion coefficient [m^2/s]. */
-  double turb_dz;
+  /*! Vertical turbulent diffusion coefficient (troposphere) [m^2/s]. */
+  double turb_dz_trop;
+
+  /*! Vertical turbulent diffusion coefficient (stratosphere) [m^2/s]. */
+  double turb_dz_strat;
 
   /*! Scaling factor for mesoscale wind fluctuations. */
   double turb_meso;
 
-  /*! Half life time of particles [days]. */
-  double t12;
+  /*! Life time of particles (troposphere) [s]. */
+  double tdec_trop;
+
+  /*! Life time of particles (stratosphere)  [s]. */
+  double tdec_strat;
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];
 
+  /*! Gnuplot file for atmospheric data. */
+  char atm_gpfile[LEN];
+
   /*! Time step for atmospheric data output [s]. */
   double atm_dt_out;
-
-  /*! Input data format (0=ASCII, 1=netCDF). */
-  int atm_iformat;
-
-  /*! Output data format (0=ASCII, 1=netCDF). */
-  int atm_oformat;
 
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
   /*! Time step for CSI data output [s]. */
   double csi_dt_out;
-
-  /*! Time step for CSI data update [s]. */
-  double csi_dt_update;
 
   /*! Observation data file for CSI analysis. */
   char csi_obsfile[LEN];
@@ -295,6 +313,9 @@ typedef struct {
   /*! Basename of grid data files. */
   char grid_basename[LEN];
 
+  /*! Gnuplot file for gridded data. */
+  char grid_gpfile[LEN];
+
   /*! Time step for gridded data output [s]. */
   double grid_dt_out;
 
@@ -325,17 +346,14 @@ typedef struct {
   /*! Upper latitude of gridded data [deg]. */
   double grid_lat1;
 
-  /*! minimum model column density requried for spearman recognition */
-  double spearman_modmin;
+  /*! Basename for sample output file. */
+  char sample_basename[LEN];
 
-  /*! minimum mean observed value for a spearman recognition */
-  double spearman_obsmin;
+  /*! Observation data file for sample output. */
+  char sample_obsfile[LEN];
 
-  /*! Basename of station data files. */
+  /*! Basename of station data file. */
   char stat_basename[LEN];
-
-  /*! Time step for station data output [s]. */
-  double stat_dt_out;
 
   /*! Longitude of station [deg]. */
   double stat_lon;
@@ -375,7 +393,7 @@ typedef struct {
   /*! Meridional wind perturbation [m/s]. */
   double vp[NP];
 
-  /*! Vertical velocity perturbation [m/s]. */
+  /*! Vertical velocity perturbation [hPa/s]. */
   double wp[NP];
 
 } atm_t;
@@ -404,6 +422,12 @@ typedef struct {
   /*! Pressure [hPa]. */
   double p[EP];
 
+  /*! Surface pressure [hPa]. */
+  double ps[EX][EY];
+
+  /*! Tropopause pressure [hPa]. */
+  double pt[EX][EY];
+
   /*! Temperature [K]. */
   float t[EX][EY][EP];
 
@@ -415,6 +439,12 @@ typedef struct {
 
   /*! Vertical wind [hPa/s]. */
   float w[EX][EY][EP];
+
+  /*! Water vapor volume mixing ratio [1]. */
+  float h2o[EX][EY][EP];
+
+  /*! Ozone volume mixing ratio [1]. */
+  float o3[EX][EY][EP];
 
 } met_t;
 
@@ -457,10 +487,6 @@ double dz2dp(
   double dz,
   double p);
 
-/*! Extrapolate meteorological data at lower boundary. */
-void extrapolate_met(
-  met_t * met);
-
 /*! Convert geolocation to Cartesian coordinates. */
 void geo2cart(
   double z,
@@ -470,11 +496,9 @@ void geo2cart(
 
 /*! Get meteorological data for given timestep. */
 void get_met(
-  double t,
-  int direct,
+  ctl_t * ctl,
   char *metbase,
-  double dt_met,
-  int reduce,
+  double t,
   met_t * met0,
   met_t * met1);
 
@@ -487,7 +511,16 @@ void get_met_help(
   char *filename);
 
 /*! Auxilary function for interpolation of meteorological data. */
-void intpol_met_help(
+void intpol_met_2d(
+  double array[EX][EY],
+  int ix,
+  int iy,
+  double wx,
+  double wy,
+  double *var);
+
+/*! Auxilary function for interpolation of meteorological data. */
+void intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
   int ix,
@@ -503,10 +536,14 @@ void intpol_met_space(
   double p,
   double lon,
   double lat,
+  double *ps,
+  double *pt,
   double *t,
   double *u,
   double *v,
-  double *w);
+  double *w,
+  double *h2o,
+  double *o3);
 
 /*! Temporal interpolation of meteorological data. */
 void intpol_met_time(
@@ -516,10 +553,14 @@ void intpol_met_time(
   double p,
   double lon,
   double lat,
+  double *ps,
+  double *pt,
   double *t,
   double *u,
   double *v,
-  double *w);
+  double *w,
+  double *h2o,
+  double *o3);
 
 /*! Convert seconds to date. */
 void jsec2time(
@@ -540,26 +581,12 @@ int locate(
 
 /*! Read atmospheric data. */
 void read_atm(
-  const char *dirname,
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl);
-
-/*! Read atmospheric data from ASCII file. */
-void read_atm_from_ascii(
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl);
-
-/*! Read atmospheric data from netCDF file. */
-void read_atm_from_netcdf(
   const char *filename,
   atm_t * atm,
   ctl_t * ctl);
 
 /*! Read control parameters. */
 void read_ctl(
-  const char *dirname,
   const char *filename,
   int argc,
   char *argv[],
@@ -568,6 +595,10 @@ void read_ctl(
 /*! Read meteorological data file. */
 void read_met(
   char *filename,
+  met_t * met);
+
+/*! Extrapolate meteorological data at lower boundary. */
+void read_met_extrapolate(
   met_t * met);
 
 /*! Read and convert variable from meteorological data file. */
@@ -579,16 +610,12 @@ void read_met_help(
   float dest[EX][EY][EP],
   float scl);
 
-/*! Reduce spatial resolution of meteorological data. */
-void reduce_met(
-  met_t * met,
-  int dx,
-  int dy,
-  int dp);
+/*! Determine tropopause height. */
+void read_met_tropopause(
+  met_t * met);
 
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
-  const char *dirname,
   const char *filename,
   int argc,
   char *argv[],
@@ -609,54 +636,49 @@ void time2jsec(
   double *jsec);
 
 /*! Measure wall-clock time. */
-int timer(
+void timer(
   const char *name,
   int id,
   int mode);
 
 /*! Write atmospheric data. */
 void write_atm(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
-  ctl_t * ctl);
-
-/*! Write atmospheric data to NetCDF file. */
-void write_atm_to_netcdf(
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl);
-
-/*! Write atmospheric data to ASCII file. */
-void write_atm_to_ascii(
-  const char *filename,
-  atm_t * atm,
-  ctl_t * ctl);
+  ctl_t * ctl,
+  double t);
 
 /*! Write CSI data. */
 void write_csi(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
   ctl_t * ctl,
-  double t,
-  double dt,
-  int write);
+  double t);
 
 /*! Write gridded data. */
 void write_grid(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
   ctl_t * ctl,
-  double t,
-  double dt);
+  double t);
+
+/*! Write samples of model data. */
+void write_sample(
+  const char *filename,
+  atm_t * atm,
+  ctl_t * ctl,
+  double t);
 
 /*! Write station data. */
 void write_station(
-  const char *dirname,
   const char *filename,
   atm_t * atm,
   ctl_t * ctl,
-  double t,
-  double dt);
+  double t);
+
+/*! Write trajectory data. */
+void write_traj(
+  const char *filename,
+  atm_t * atm,
+  ctl_t * ctl,
+  double t);

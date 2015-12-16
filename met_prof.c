@@ -47,9 +47,9 @@ int main(
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ],
-    u, um[NZ], v, vm[NZ], w, wm[NZ];
+    u, um[NZ], v, vm[NZ], w, wm[NZ], h2o, h2om[NZ], o3, o3m[NZ];
 
-  static int epol, i, iz, np[NZ], redx, redy, redp;
+  static int i, iz, np[NZ];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -59,20 +59,16 @@ int main(
     ERRMSG("Give parameters: <ctl> <prof.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
-  read_ctl(NULL, NULL, argc, argv, &ctl);
-  z0 = scan_ctl(NULL, NULL, argc, argv, "Z0", -1, "0", NULL);
-  z1 = scan_ctl(NULL, NULL, argc, argv, "Z1", -1, "60", NULL);
-  dz = scan_ctl(NULL, NULL, argc, argv, "DZ", -1, "1", NULL);
-  lon0 = scan_ctl(NULL, NULL, argc, argv, "LON0", -1, "0", NULL);
-  lon1 = scan_ctl(NULL, NULL, argc, argv, "LON1", -1, "0", NULL);
-  dlon = scan_ctl(NULL, NULL, argc, argv, "DLON", -1, "1", NULL);
-  lat0 = scan_ctl(NULL, NULL, argc, argv, "LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(NULL, NULL, argc, argv, "LAT1", -1, "0", NULL);
-  dlat = scan_ctl(NULL, NULL, argc, argv, "DLAT", -1, "1", NULL);
-  epol = (int) scan_ctl(NULL, NULL, argc, argv, "EPOL", -1, "0", NULL);
-  redx = (int) scan_ctl(NULL, NULL, argc, argv, "REDX", -1, "1", NULL);
-  redy = (int) scan_ctl(NULL, NULL, argc, argv, "REDY", -1, "1", NULL);
-  redp = (int) scan_ctl(NULL, NULL, argc, argv, "REDP", -1, "1", NULL);
+  read_ctl(argv[1], argc, argv, &ctl);
+  z0 = scan_ctl(argv[1], argc, argv, "Z0", -1, "0", NULL);
+  z1 = scan_ctl(argv[1], argc, argv, "Z1", -1, "60", NULL);
+  dz = scan_ctl(argv[1], argc, argv, "DZ", -1, "1", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "0", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "0", NULL);
+  dlon = scan_ctl(argv[1], argc, argv, "DLON", -1, "1", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "0", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "0", NULL);
+  dlat = scan_ctl(argv[1], argc, argv, "DLAT", -1, "1", NULL);
 
   /* Loop over input files... */
   for (i = 3; i < argc; i++) {
@@ -84,13 +80,6 @@ int main(
       fclose(in);
     read_met(argv[i], met);
 
-    /* Extrapolate... */
-    if (epol)
-      extrapolate_met(met);
-
-    /* Reduce resolution... */
-    reduce_met(met, redx, redy, redp);
-
     /* Average... */
     for (z = z0; z <= z1; z += dz) {
       iz = (int) ((z - z0) / dz);
@@ -98,7 +87,8 @@ int main(
 	ERRMSG("Too many altitudes!");
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
-	  intpol_met_space(met, P(z), lon, lat, &t, &u, &v, &w);
+	  intpol_met_space(met, P(z), lon, lat, NULL, NULL,
+			   &t, &u, &v, &w, &h2o, &o3);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
 	    timem[iz] += met->time;
@@ -108,6 +98,8 @@ int main(
 	    um[iz] += u;
 	    vm[iz] += v;
 	    wm[iz] += w;
+	    h2om[iz] += h2o;
+	    o3m[iz] += o3;
 	    np[iz]++;
 	  }
 	}
@@ -125,6 +117,8 @@ int main(
       um[iz] /= np[iz];
       vm[iz] /= np[iz];
       wm[iz] /= np[iz];
+      h2om[iz] /= np[iz];
+      o3m[iz] /= np[iz];
     } else {
       timem[iz] = GSL_NAN;
       lonm[iz] = GSL_NAN;
@@ -133,6 +127,8 @@ int main(
       um[iz] = GSL_NAN;
       vm[iz] = GSL_NAN;
       wm[iz] = GSL_NAN;
+      h2om[iz] = GSL_NAN;
+      o3m[iz] = GSL_NAN;
     }
   }
 
@@ -151,14 +147,16 @@ int main(
 	  "# $6  = temperature [K]\n"
 	  "# $7  = zonal wind [m/s]\n"
 	  "# $8  = meridional wind [m/s]\n"
-	  "# $9  = vertical wind [hPa/s]\n\n");
+	  "# $9  = vertical wind [hPa/s]\n"
+	  "# $10 = H2O volume mixing ratio [1]\n"
+	  "# $11 = O3 volume mixing ratio [1]\n\n");
 
   /* Write data... */
   for (z = z0; z <= z1; z += dz) {
     iz = (int) ((z - z0) / dz);
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz], z, lonm[iz], latm[iz], P(z),
-	    tm[iz], um[iz], vm[iz], wm[iz]);
+	    tm[iz], um[iz], vm[iz], wm[iz], h2om[iz], o3m[iz]);
   }
 
   /* Close file... */
