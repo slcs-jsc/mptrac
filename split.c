@@ -48,16 +48,16 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  n = (int) scan_ctl(argv[1], argc, argv, "N", -1, "", NULL);
-  m = scan_ctl(argv[1], argc, argv, "M", -1, "-999", NULL);
-  dz = scan_ctl(argv[1], argc, argv, "DZ", -1, "0", NULL);
-  z0 = scan_ctl(argv[1], argc, argv, "Z0", -1, "0", NULL);
-  z1 = scan_ctl(argv[1], argc, argv, "Z1", -1, "0", NULL);
-  dx = scan_ctl(argv[1], argc, argv, "DX", -1, "0", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "0", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "0", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "0", NULL);
+  n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
+  m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
+  dz = scan_ctl(argv[1], argc, argv, "SPLIT_DZ", -1, "0", NULL);
+  z0 = scan_ctl(argv[1], argc, argv, "SPLIT_Z0", -1, "0", NULL);
+  z1 = scan_ctl(argv[1], argc, argv, "SPLIT_Z1", -1, "0", NULL);
+  dx = scan_ctl(argv[1], argc, argv, "SPLIT_DX", -1, "0", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "SPLIT_LON0", -1, "0", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "SPLIT_LON1", -1, "0", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT0", -1, "0", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT1", -1, "0", NULL);
 
   /* Init random number generator... */
   gsl_rng_env_setup();
