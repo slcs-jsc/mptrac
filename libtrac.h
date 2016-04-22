@@ -196,9 +196,6 @@ typedef struct {
   /*! Quantity array index for surface pressure. */
   int qnt_ps;
 
-  /*! Quantity array index for tropopause pressure. */
-  int qnt_pt;
-
   /*! Quantity array index for temperature. */
   int qnt_t;
 
@@ -425,9 +422,6 @@ typedef struct {
   /*! Surface pressure [hPa]. */
   double ps[EX][EY];
 
-  /*! Tropopause pressure [hPa]. */
-  double pt[EX][EY];
-
   /*! Temperature [K]. */
   float t[EX][EY][EP];
 
@@ -537,7 +531,6 @@ void intpol_met_space(
   double lon,
   double lat,
   double *ps,
-  double *pt,
   double *t,
   double *u,
   double *v,
@@ -554,7 +547,6 @@ void intpol_met_time(
   double lon,
   double lat,
   double *ps,
-  double *pt,
   double *t,
   double *u,
   double *v,
@@ -610,10 +602,6 @@ void read_met_help(
   float dest[EX][EY][EP],
   float scl);
 
-/*! Determine tropopause height. */
-void read_met_tropopause(
-  met_t * met);
-
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
   const char *filename,
@@ -640,6 +628,11 @@ void timer(
   const char *name,
   int id,
   int mode);
+
+/* Get tropopause pressure... */
+double tropopause(
+  double t,
+  double lat);
 
 /*! Write atmospheric data. */
 void write_atm(

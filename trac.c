@@ -104,8 +104,6 @@ void module_diffusion_meso(
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
   ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
   int ip,
   double dt,
@@ -267,7 +265,7 @@ int main(
 #pragma omp parallel for default(shared) private(ip)
       for (ip = 0; ip < atm->np; ip++)
 	if (gsl_finite(dt[ip]))
-	  module_diffusion_turb(&ctl, met0, met1, atm, ip, dt[ip],
+	  module_diffusion_turb(&ctl, atm, ip, dt[ip],
 				rng[omp_get_thread_num()]);
       STOP_TIMER(TIMER_DIFFTURB);
 
@@ -405,7 +403,7 @@ void module_advection(
 
   /* Interpolate meteorological data... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], NULL, NULL, NULL,
+		  atm->lon[ip], atm->lat[ip], NULL, NULL,
 		  &v[0], &v[1], &v[2], NULL, NULL);
 
   /* Get position of the mid point... */
@@ -415,7 +413,7 @@ void module_advection(
 
   /* Interpolate meteorological data for mid point... */
   intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt,
-		  xm[2], xm[0], xm[1], NULL, NULL, NULL,
+		  xm[2], xm[0], xm[1], NULL, NULL,
 		  &v[0], &v[1], &v[2], NULL, NULL);
 
   /* Save new position... */
@@ -448,10 +446,13 @@ void module_decay(
   /* Set altitude-dependent lifetime... */
   else {
 
-    /* Get surface and tropopause pressure... */
+    /* Get surface pressure... */
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		    atm->lon[ip], atm->lat[ip], &ps, &pt, NULL,
+		    atm->lon[ip], atm->lat[ip], &ps, NULL,
 		    NULL, NULL, NULL, NULL, NULL);
+
+    /* Get tropopause pressure... */
+    pt = tropopause(atm->time[ip], atm->lat[ip]);
 
     /* Set lifetime... */
     if (atm->p[ip] <= pt)
@@ -579,8 +580,6 @@ void module_diffusion_meso(
 
 void module_diffusion_turb(
   ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
   int ip,
   double dt,
@@ -589,9 +588,7 @@ void module_diffusion_turb(
   double dx, dz, pt, p0, p1, w;
 
   /* Get tropopause pressure... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], NULL, &pt, NULL,
-		  NULL, NULL, NULL, NULL, NULL);
+  pt = tropopause(atm->time[ip], atm->lat[ip]);
 
   /* Get weighting factor... */
   p1 = pt * 0.866877899;
@@ -636,55 +633,49 @@ void module_meteo(
   /* Interpolate surface pressure... */
   if (ctl->qnt_ps >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], &atm->q[ctl->qnt_ps][ip], NULL, NULL,
-		    NULL, NULL, NULL, NULL, NULL);
-
-  /* Interpolate tropopause... */
-  if (ctl->qnt_pt >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, &atm->q[ctl->qnt_pt][ip], NULL,
+		    atm->lat[ip], &atm->q[ctl->qnt_ps][ip], NULL,
 		    NULL, NULL, NULL, NULL, NULL);
 
   /* Interpolate temperature... */
   if (ctl->qnt_t >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_t][ip],
+		    atm->lat[ip], NULL, &atm->q[ctl->qnt_t][ip],
 		    NULL, NULL, NULL, NULL, NULL);
 
   /* Interpolate zonal wind... */
   if (ctl->qnt_u >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL,
-		    &atm->q[ctl->qnt_u][ip], NULL, NULL, NULL, NULL);
+		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_u][ip],
+		    NULL, NULL, NULL, NULL);
 
   /* Interpolate meridional wind... */
   if (ctl->qnt_v >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL,
-		    NULL, &atm->q[ctl->qnt_v][ip], NULL, NULL, NULL);
+		    &atm->q[ctl->qnt_v][ip], NULL, NULL, NULL);
 
   /* Interpolate vertical velocity... */
   if (ctl->qnt_w >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL,
-		    NULL, NULL, &atm->q[ctl->qnt_w][ip], NULL, NULL);
+		    atm->lat[ip], NULL, NULL, NULL, NULL,
+		    &atm->q[ctl->qnt_w][ip], NULL, NULL);
 
   /* Interpolate water vapor vmr... */
   if (ctl->qnt_h2o >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL,
-		    NULL, NULL, NULL, &atm->q[ctl->qnt_h2o][ip], NULL);
+		    atm->lat[ip], NULL, NULL, NULL, NULL, NULL,
+		    &atm->q[ctl->qnt_h2o][ip], NULL);
 
   /* Interpolate ozone... */
   if (ctl->qnt_o3 >= 0)
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL,
-		    NULL, NULL, NULL, NULL, &atm->q[ctl->qnt_o3][ip]);
+		    atm->lat[ip], NULL, NULL, NULL, NULL, NULL, NULL,
+		    &atm->q[ctl->qnt_o3][ip]);
 
   /* Calculate potential temperature... */
   if (ctl->qnt_theta >= 0) {
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_theta][ip],
+		    atm->lat[ip], NULL, &atm->q[ctl->qnt_theta][ip],
 		    NULL, NULL, NULL, NULL, NULL);
     atm->q[ctl->qnt_theta][ip] *= pow(P0 / atm->p[ip], 0.286);
   }
@@ -724,7 +715,7 @@ void module_position(
 
   /* Get surface pressure... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], &ps, NULL, NULL,
+		  atm->lon[ip], atm->lat[ip], &ps, NULL,
 		  NULL, NULL, NULL, NULL, NULL);
 
   /* Check pressure... */
@@ -766,7 +757,7 @@ void module_sedi(
 
   /* Get temperature... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		  atm->lat[ip], NULL, NULL, &T, NULL, NULL, NULL, NULL, NULL);
+		  atm->lat[ip], NULL, &T, NULL, NULL, NULL, NULL, NULL);
 
   /* Density of dry air... */
   rho = p / (R * T);
