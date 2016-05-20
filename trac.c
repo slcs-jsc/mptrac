@@ -56,14 +56,17 @@
 /*! Timer for turbulent diffusion module. */
 #define TIMER_DIFFTURB 7
 
+/*! Timer for isosurface module module. */
+#define TIMER_ISOSURF 8
+
 /*! Timer for interpolation meteorological data. */
-#define TIMER_METEO 8
+#define TIMER_METEO 9
 
 /*! Timer for position module. */
-#define TIMER_POSITION 9
+#define TIMER_POSITION 10
 
 /*! Timer for sedimentation module. */
-#define TIMER_SEDI 10
+#define TIMER_SEDI 11
 
 /* ------------------------------------------------------------
    Functions...
@@ -108,6 +111,15 @@ void module_diffusion_turb(
   int ip,
   double dt,
   gsl_rng * rng);
+
+/*! Force air parcels to stay on isosurface. */
+void module_isosurf(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  int ip,
+  double *iso);
 
 /*! Interpolate meteorological data for air parcel positions. */
 void module_meteo(
@@ -160,7 +172,7 @@ int main(
 
   char dirname[LEN], filename[LEN];
 
-  double *dt, t, t0;
+  double *dt, *iso, t, t0;
 
   int i, ip, ntask = 0, rank = 0, size = 1;
 
@@ -199,6 +211,8 @@ int main(
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
+	  NP);
+    ALLOC(iso, double,
 	  NP);
 
     /* Read control parameters... */
@@ -252,6 +266,13 @@ int main(
       get_met(&ctl, argv[4], t, met0, met1);
       STOP_TIMER(TIMER_INPUT);
 
+      /* Isosurface... */
+      START_TIMER(TIMER_ISOSURF);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	module_isosurf(&ctl, met0, met1, atm, ip, iso);
+      STOP_TIMER(TIMER_ISOSURF);
+
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
 #pragma omp parallel for default(shared) private(ip)
@@ -285,6 +306,13 @@ int main(
 	if (gsl_finite(dt[ip]))
 	  module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
       STOP_TIMER(TIMER_SEDI);
+
+      /* Isosurface... */
+      START_TIMER(TIMER_ISOSURF);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	module_isosurf(&ctl, met0, met1, atm, ip, iso);
+      STOP_TIMER(TIMER_ISOSURF);
 
       /* Position... */
       START_TIMER(TIMER_POSITION);
@@ -328,6 +356,7 @@ int main(
     PRINT_TIMER(TIMER_DECAY);
     PRINT_TIMER(TIMER_DIFFMESO);
     PRINT_TIMER(TIMER_DIFFTURB);
+    PRINT_TIMER(TIMER_ISOSURF);
     PRINT_TIMER(TIMER_METEO);
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
@@ -356,6 +385,7 @@ int main(
     free(met0);
     free(met1);
     free(dt);
+    free(iso);
   }
 
 #ifdef MPI
@@ -619,6 +649,66 @@ void module_diffusion_turb(
     atm->p[ip]
       += dz2dp(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
 	       / 1000., atm->p[ip]);
+}
+
+/*****************************************************************************/
+
+void module_isosurf(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  int ip,
+  double *iso) {
+
+  double t;
+
+  /* Check control parameter... */
+  if (ctl->isosurf < 1 || ctl->isosurf > 3)
+    return;
+
+  /* Set initial values... */
+  if (iso[ip] == 0) {
+
+    /* Save pressure... */
+    if (ctl->isosurf == 1)
+      iso[ip] = atm->p[ip];
+
+    /* Save density... */
+    else if (ctl->isosurf == 2) {
+      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		      atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
+      iso[ip] = atm->p[ip] / t;
+    }
+
+    /* Save potential temperature... */
+    else if (ctl->isosurf == 3) {
+      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		      atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
+      iso[ip] = t * pow(P0 / atm->p[ip], 0.286);
+    }
+
+    /* Leave initialization... */
+    return;
+  }
+
+  /* Restore pressure... */
+  if (ctl->isosurf == 1)
+    atm->p[ip] = iso[ip];
+
+  /* Restore density... */
+  else if (ctl->isosurf == 2) {
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
+    atm->p[ip] = iso[ip] * t;
+  }
+
+  /* Restore potential temperature... */
+  else if (ctl->isosurf == 3) {
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
+    atm->p[ip] = P0 * pow(iso[ip] / t, -1. / 0.286);
+  }
 }
 
 /*****************************************************************************/

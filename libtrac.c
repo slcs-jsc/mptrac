@@ -532,6 +532,10 @@ void read_ctl(
   /* Meteorological data... */
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
 
+  /* Isosurface parameter... */
+  ctl->isosurf
+    = (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
+
   /* Diffusion parameters... */
   ctl->turb_dx_trop
     = scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50.0", NULL);
@@ -1061,7 +1065,7 @@ double tropopause(
   p1 = LIN(lats[ilat], tps[imon + 1][ilat],
 	   lats[ilat + 1], tps[imon + 1][ilat + 1], lat);
   pt = LIN(doys[imon], p0, doys[imon + 1], p1, doy);
-  
+
   /* Return tropopause pressure... */
   return pt;
 }
