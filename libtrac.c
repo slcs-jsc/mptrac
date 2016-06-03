@@ -711,6 +711,9 @@ void read_met(
   /* Extrapolate data for lower boundary... */
   read_met_extrapolate(met);
 
+  /* Copy data to obtain periodic boundary conditions... */
+  read_met_periodic(met);
+
   /* Close file... */
   NC(nc_close(ncid));
 }
@@ -787,6 +790,37 @@ void read_met_help(
 	if (dest[ix][iy][ip] < -1e10 || dest[ix][iy][ip] > 1e10)
 	  dest[ix][iy][ip] = GSL_NAN;
       }
+}
+
+/*****************************************************************************/
+
+void read_met_periodic(
+  met_t * met) {
+
+  int ip, iy;
+
+  /* Check longitudes... */
+  if (fabs(met->lon[met->nx - 1] - met->lon[0] - 360) < 0.01)
+    return;
+
+  /* Increase longitude counter... */
+  if ((++met->nx) > EX)
+    ERRMSG("Cannot create periodic boundary conditions!");
+
+  /* Set longitude... */
+  met->lon[met->nx - 1] = met->lon[met->nx - 2] + met->lon[1] - met->lon[0];
+
+  /* Loop over latitudes and pressure levels... */
+  for (iy = 0; iy < met->ny; iy++)
+    for (ip = 0; ip < met->np; ip++) {
+      met->ps[met->nx - 1][iy] = met->ps[0][iy];
+      met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
+      met->v[met->nx - 1][iy][ip] = met->v[0][iy][ip];
+      met->w[met->nx - 1][iy][ip] = met->w[0][iy][ip];
+      met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
+      met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
+      met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
+    }
 }
 
 /*****************************************************************************/
