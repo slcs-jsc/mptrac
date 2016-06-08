@@ -33,7 +33,7 @@ int main(
 
   atm_t *atm;
 
-  FILE *out;
+  FILE *in, *out;
 
   int f, ip, iq;
 
@@ -42,16 +42,17 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <outfile> <ip> <atm1> [<atm2> ...]");
+    ERRMSG("Give parameters: <ctl> <outfile> <atm1> [<atm2> ...]");
 
-  /* Get air parcel index... */
-  ip = atoi(argv[2]);
+  /* Read control parameters... */
+  read_ctl(argv[1], argc, argv, &ctl);
+  ip = (int) scan_ctl(argv[1], argc, argv, "EXTRACT_IP", -1, "0", NULL);
 
   /* Write info... */
-  printf("Write trajectory data: %s\n", argv[1]);
+  printf("Write trajectory data: %s\n", argv[2]);
 
   /* Create output file... */
-  if (!(out = fopen(argv[1], "w")))
+  if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 
   /* Write header... */
@@ -68,6 +69,10 @@ int main(
   for (f = 3; f < argc; f++) {
 
     /* Read atmopheric data... */
+    if (!(in = fopen(argv[f], "r")))
+      continue;
+    else
+      fclose(in);
     read_atm(argv[f], atm, &ctl);
 
     /* Write data... */

@@ -68,7 +68,7 @@
 /*! Print error message and quit program. */
 #define ERRMSG(msg) {							\
     printf("\nError (%s, %s, l%d): %s\n\n",				\
-	   __FILE__, __FUNCTION__, __LINE__, msg);			\
+	   __FILE__, __func__, __LINE__, msg);			\
     exit(EXIT_FAILURE);							\
   }
 
