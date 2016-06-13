@@ -536,6 +536,9 @@ void read_ctl(
   ctl->isosurf
     = (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
 
+  /* Balloon data... */
+  scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
+
   /* Diffusion parameters... */
   ctl->turb_dx_trop
     = scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50.0", NULL);

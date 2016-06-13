@@ -235,8 +235,12 @@ typedef struct {
   /*! Time step of meteorological data [s]. */
   double dt_met;
 
-  /*! Isosurface parameter (0=none, 1=pressure, 2=density, 3=theta). */
+  /*! Isosurface parameter
+     (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;
+
+  /*! Balloon position filename. */
+  char balloon[LEN];
 
   /*! Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. */
   double turb_dx_trop;

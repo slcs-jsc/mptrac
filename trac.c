@@ -661,14 +661,21 @@ void module_isosurf(
   int ip,
   double *iso) {
 
-  double t;
+  static double ps[100000], t, ts[100000];
+
+  static int idx, init, n;
+
+  FILE *in;
+
+  char line[LEN];
 
   /* Check control parameter... */
-  if (ctl->isosurf < 1 || ctl->isosurf > 3)
+  if (ctl->isosurf < 1 || ctl->isosurf > 4)
     return;
 
-  /* Set initial values... */
-  if (iso[ip] == 0) {
+  /* Initialize... */
+  if (!init) {
+    init = 1;
 
     /* Save pressure... */
     if (ctl->isosurf == 1)
@@ -686,6 +693,30 @@ void module_isosurf(
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		      atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
       iso[ip] = t * pow(P0 / atm->p[ip], 0.286);
+    }
+
+    /* Read balloon pressure data... */
+    else if (ctl->isosurf == 4 && ip == 0) {
+
+      /* Write info... */
+      printf("Read balloon pressure data: %s\n", ctl->balloon);
+
+      /* Open file... */
+      if (!(in = fopen(ctl->balloon, "r")))
+	ERRMSG("Cannot open file!");
+
+      /* Read pressure time series... */
+      while (fgets(line, LEN, in))
+	if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
+	  if ((++n) > 100000)
+	    ERRMSG("Too many data points!");
+
+      /* Check number of points... */
+      if (n < 1)
+	ERRMSG("Could not read any data!");
+
+      /* Close file... */
+      fclose(in);
     }
 
     /* Leave initialization... */
@@ -708,6 +739,19 @@ void module_isosurf(
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
     atm->p[ip] = P0 * pow(iso[ip] / t, -1. / 0.286);
+  }
+
+  /* Interpolate pressure... */
+  else if (ctl->isosurf == 4) {
+    if (atm->time[ip] <= ts[0])
+      atm->p[ip] = ps[0];
+    else if (atm->time[ip] >= ts[n - 1])
+      atm->p[ip] = ps[n - 1];
+    else {
+      idx = locate(ts, n, atm->time[ip]);
+      atm->p[ip] = LIN(ts[idx], ps[idx],
+		       ts[idx + 1], ps[idx + 1], atm->time[ip]);
+    }
   }
 }
 
