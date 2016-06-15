@@ -35,9 +35,9 @@ int main(
 
   FILE *out;
 
-  double x1[3], x2[3], dh, dv, lh = 0, lv = 0;
+  double x1[3], x2[3], dh, dq[NQ], dv, lh = 0, lt = 0, lv = 0;
 
-  int ip1, ip2, iq;
+  int ip1, ip2, iq, n;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -90,7 +90,16 @@ int main(
       geo2cart(0, atm2->lon[ip2], atm2->lat[ip2], x2);
       lh += DIST(x1, x2);
       lv += fabs(Z(atm2->p[ip2 - 1]) - Z(atm2->p[ip2]));
+      lt = atm2->time[ip2] - atm2->time[0];
     }
+
+    /* Init... */
+    n = 0;
+    dh = 0;
+    dv = 0;
+    for (iq = 0; iq < ctl.nq; iq++)
+      dq[iq] = 0;
+    geo2cart(0, atm2->lon[ip2], atm2->lat[ip2], x2);
 
     /* Find corresponding time step (test data)... */
     for (ip1 = 0; ip1 < atm1->np; ip1++)
@@ -98,27 +107,29 @@ int main(
 
 	/* Calculate deviations... */
 	geo2cart(0, atm1->lon[ip1], atm1->lat[ip1], x1);
-	geo2cart(0, atm2->lon[ip2], atm2->lat[ip2], x2);
-	dh = DIST(x1, x2);
-	dv = Z(atm1->p[ip1]) - Z(atm2->p[ip2]);
-
-	/* Write output... */
-	fprintf(out, "%.2f %.4f %.4f %.4f",
-		atm2->time[ip2], Z(atm2->p[ip2]),
-		atm2->lon[ip2], atm2->lat[ip2]);
-	for (iq = 0; iq < ctl.nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl.qnt_format[iq], atm2->q[iq][ip2]);
-	}
-	fprintf(out, " %.2f %g %g %g %g", atm2->time[ip2] - atm2->time[0],
-		lv, lh, dv, dh);
-	for (iq = 0; iq < ctl.nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl.qnt_format[iq],
-		  atm1->q[iq][ip1] - atm2->q[iq][ip2]);
-	}
-	fprintf(out, "\n");
+	dh += DIST(x1, x2);
+	dv += fabs(Z(atm1->p[ip1]) - Z(atm2->p[ip2]));
+	for (iq = 0; iq < ctl.nq; iq++)
+	  dq[iq] += fabs(atm1->q[iq][ip1] - atm2->q[iq][ip2]);
+	n++;
       }
+
+    /* Write output... */
+    if (n > 0) {
+      fprintf(out, "%.2f %.4f %.4f %.4f",
+	      atm2->time[ip2], Z(atm2->p[ip2]),
+	      atm2->lon[ip2], atm2->lat[ip2]);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	fprintf(out, " ");
+	fprintf(out, ctl.qnt_format[iq], atm2->q[iq][ip2]);
+      }
+      fprintf(out, " %.2f %g %g %g %g", lt, lv, lh, dv / n, dh / n);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	fprintf(out, " ");
+	fprintf(out, ctl.qnt_format[iq], dq[iq] / n);
+      }
+      fprintf(out, "\n");
+    }
   }
 
   /* Close file... */

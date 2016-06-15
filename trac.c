@@ -673,9 +673,36 @@ void module_isosurf(
   if (ctl->isosurf < 1 || ctl->isosurf > 4)
     return;
 
-  /* Initialize... */
-  if (!init) {
+  /* Read balloon pressure data... */
+  if (ctl->isosurf == 4 && !init && ip == 0) {
     init = 1;
+
+    /* Write info... */
+    printf("Read balloon pressure data: %s\n", ctl->balloon);
+
+    /* Open file... */
+    if (!(in = fopen(ctl->balloon, "r")))
+      ERRMSG("Cannot open file!");
+
+    /* Read pressure time series... */
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
+	if ((++n) > 100000)
+	  ERRMSG("Too many data points!");
+
+    /* Check number of points... */
+    if (n < 1)
+      ERRMSG("Could not read any data!");
+
+    /* Close file... */
+    fclose(in);
+
+    /* Leave initialization... */
+    return;
+  }
+
+  /* Initialize... */
+  if (ctl->isosurf <= 3 && iso[0] == 0) {
 
     /* Save pressure... */
     if (ctl->isosurf == 1)
@@ -693,30 +720,6 @@ void module_isosurf(
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		      atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
       iso[ip] = t * pow(P0 / atm->p[ip], 0.286);
-    }
-
-    /* Read balloon pressure data... */
-    else if (ctl->isosurf == 4 && ip == 0) {
-
-      /* Write info... */
-      printf("Read balloon pressure data: %s\n", ctl->balloon);
-
-      /* Open file... */
-      if (!(in = fopen(ctl->balloon, "r")))
-	ERRMSG("Cannot open file!");
-
-      /* Read pressure time series... */
-      while (fgets(line, LEN, in))
-	if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
-	  if ((++n) > 100000)
-	    ERRMSG("Too many data points!");
-
-      /* Check number of points... */
-      if (n < 1)
-	ERRMSG("Could not read any data!");
-
-      /* Close file... */
-      fclose(in);
     }
 
     /* Leave initialization... */
