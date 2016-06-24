@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 # Executables...
-EXC = center dist extract init jsec2time match met_map met_prof smago split time2jsec trac wind
+EXC = center dist extract init jsec2time match met_map met_prof met_sample smago split time2jsec trac wind
 
 # Library directories...
 LIBDIR = -L../lib/build/lib -L../../project/lib/build/lib -L../../project/lib/build/lib64 -L/usr/local/gsl/1.14/lib -L/usr/local/netcdf/v4.3.0/lib
