@@ -90,7 +90,7 @@ int main(
       geo2cart(0, atm2->lon[ip2], atm2->lat[ip2], x2);
       lh += DIST(x1, x2);
       lv += fabs(Z(atm2->p[ip2 - 1]) - Z(atm2->p[ip2]));
-      lt = atm2->time[ip2] - atm2->time[0];
+      lt = fabs(atm2->time[ip2] - atm2->time[0]);
     }
 
     /* Init... */
@@ -110,7 +110,7 @@ int main(
 	dh += DIST(x1, x2);
 	dv += fabs(Z(atm1->p[ip1]) - Z(atm2->p[ip2]));
 	for (iq = 0; iq < ctl.nq; iq++)
-	  dq[iq] += fabs(atm1->q[iq][ip1] - atm2->q[iq][ip2]);
+	  dq[iq] += atm1->q[iq][ip1] - atm2->q[iq][ip2];
 	n++;
       }
 
