@@ -108,7 +108,7 @@ int main(
 	/* Calculate deviations... */
 	geo2cart(0, atm1->lon[ip1], atm1->lat[ip1], x1);
 	dh += DIST(x1, x2);
-	dv += fabs(Z(atm1->p[ip1]) - Z(atm2->p[ip2]));
+	dv += Z(atm1->p[ip1]) - Z(atm2->p[ip2]);
 	for (iq = 0; iq < ctl.nq; iq++)
 	  dq[iq] += atm1->q[iq][ip1] - atm2->q[iq][ip2];
 	n++;
