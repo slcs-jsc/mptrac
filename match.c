@@ -31,17 +31,21 @@ int main(
 
   ctl_t ctl;
 
-  atm_t *atm1, *atm2;
+  atm_t *atm1, *atm2, *atm3;
 
   FILE *out;
 
-  double x1[3], x2[3], dh, dq[NQ], dv, lh = 0, lt = 0, lv = 0;
+  char filename[LEN];
 
-  int ip1, ip2, iq, n;
+  double filter_dt, w, wsum, x1[3], x2[3], dh, dq[NQ], dv,
+    lh = 0, lt = 0, lv = 0;
+
+  int filter, ip1, ip2, iq, n;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
   ALLOC(atm2, atm_t, 1);
+  ALLOC(atm3, atm_t, 1);
 
   /* Check arguments... */
   if (argc < 5)
@@ -49,6 +53,8 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  filter = (int) scan_ctl(argv[1], argc, argv, "FILTER", -1, "0", NULL);
+  filter_dt = scan_ctl(argv[1], argc, argv, "FILTER_DT", -1, "0", NULL);
 
   /* Read atmospheric data... */
   read_atm(argv[2], atm1, &ctl);
@@ -80,6 +86,42 @@ int main(
     fprintf(out, "# $%d = %s deviation [%s]\n", ctl.nq + iq + 10,
 	    ctl.qnt_name[iq], ctl.qnt_unit[iq]);
   fprintf(out, "\n");
+
+  /* Filtering of reference time series... */
+  if (filter > 0) {
+
+    /* Copy data... */
+    memcpy(atm3, atm2, sizeof(atm_t));
+
+    /* Loop over data points... */
+    for (ip1 = 0; ip1 < atm2->np; ip1++) {
+      wsum = 0;
+      atm2->p[ip1] = 0;
+      for (iq = 0; iq < ctl.nq; iq++)
+	atm2->q[iq][ip1] = 0;
+      for (ip2 = 0; ip2 < atm2->np; ip2++)
+	if (fabs(atm2->time[ip1] - atm2->time[ip2]) < filter_dt) {
+	  if (filter == 1)
+	    w = 1.0;
+	  else if (filter == 2)
+	    w = 0.54 + 0.46
+	      * cos(M_PI * (atm2->time[ip1] - atm2->time[ip2]) / filter_dt);
+	  else
+	    ERRMSG("Cannot set filter!");
+	  atm2->p[ip1] += w * atm3->p[ip2];
+	  for (iq = 0; iq < ctl.nq; iq++)
+	    atm2->q[iq][ip1] += w * atm3->q[iq][ip2];
+	  wsum += w;
+	}
+      atm2->p[ip1] /= wsum;
+      for (iq = 0; iq < ctl.nq; iq++)
+	atm2->q[iq][ip1] /= wsum;
+    }
+
+    /* Write filtered data... */
+    sprintf(filename, "%s.filt", argv[3]);
+    write_atm(filename, atm2, &ctl, 0);
+  }
 
   /* Loop over air parcels (reference data)... */
   for (ip2 = 0; ip2 < atm2->np; ip2++) {
@@ -138,6 +180,7 @@ int main(
   /* Free... */
   free(atm1);
   free(atm2);
+  free(atm3);
 
   return EXIT_SUCCESS;
 }
