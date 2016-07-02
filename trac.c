@@ -118,8 +118,7 @@ void module_isosurf(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double *iso);
+  int ip);
 
 /*! Interpolate meteorological data for air parcel positions. */
 void module_meteo(
@@ -172,7 +171,7 @@ int main(
 
   char dirname[LEN], filename[LEN];
 
-  double *dt, *iso, t, t0;
+  double *dt, t, t0;
 
   int i, ip, ntask = 0, rank = 0, size = 1;
 
@@ -211,8 +210,6 @@ int main(
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
-	  NP);
-    ALLOC(iso, double,
 	  NP);
 
     /* Read control parameters... */
@@ -266,11 +263,10 @@ int main(
       get_met(&ctl, argv[4], t, met0, met1);
       STOP_TIMER(TIMER_INPUT);
 
-      /* Isosurface... */
+      /* Initialize isosurface... */
       START_TIMER(TIMER_ISOSURF);
-#pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	module_isosurf(&ctl, met0, met1, atm, ip, iso);
+      if (t == t0)
+	module_isosurf(&ctl, met0, met1, atm, -1);
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Advection... */
@@ -311,7 +307,7 @@ int main(
       START_TIMER(TIMER_ISOSURF);
 #pragma omp parallel for default(shared) private(ip)
       for (ip = 0; ip < atm->np; ip++)
-	module_isosurf(&ctl, met0, met1, atm, ip, iso);
+	module_isosurf(&ctl, met0, met1, atm, ip);
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Position... */
@@ -385,7 +381,6 @@ int main(
     free(met0);
     free(met1);
     free(dt);
-    free(iso);
   }
 
 #ifdef MPI
@@ -658,12 +653,11 @@ void module_isosurf(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double *iso) {
+  int ip) {
 
-  static double ps[100000], t, ts[100000];
+  static double *iso, *ps, t, *ts;
 
-  static int idx, init, n;
+  static int idx, ip2, n, nb = 100000;
 
   FILE *in;
 
@@ -673,53 +667,62 @@ void module_isosurf(
   if (ctl->isosurf < 1 || ctl->isosurf > 4)
     return;
 
-  /* Read balloon pressure data... */
-  if (ctl->isosurf == 4 && !init && ip == 0) {
-    init = 1;
-
-    /* Write info... */
-    printf("Read balloon pressure data: %s\n", ctl->balloon);
-
-    /* Open file... */
-    if (!(in = fopen(ctl->balloon, "r")))
-      ERRMSG("Cannot open file!");
-
-    /* Read pressure time series... */
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
-	if ((++n) > 100000)
-	  ERRMSG("Too many data points!");
-
-    /* Check number of points... */
-    if (n < 1)
-      ERRMSG("Could not read any data!");
-
-    /* Close file... */
-    fclose(in);
-
-    /* Leave initialization... */
-    return;
-  }
-
   /* Initialize... */
-  if (ctl->isosurf <= 3 && iso[0] == 0) {
+  if (ip < 0) {
+
+    /* Allocate... */
+    ALLOC(iso, double,
+	  NP);
+    ALLOC(ps, double,
+	  nb);
+    ALLOC(ts, double,
+	  nb);
 
     /* Save pressure... */
     if (ctl->isosurf == 1)
-      iso[ip] = atm->p[ip];
+      for (ip2 = 0; ip2 < atm->np; ip2++)
+	iso[ip2] = atm->p[ip2];
 
     /* Save density... */
-    else if (ctl->isosurf == 2) {
-      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		      atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
-      iso[ip] = atm->p[ip] / t;
-    }
+    else if (ctl->isosurf == 2)
+      for (ip2 = 0; ip2 < atm->np; ip2++) {
+	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
+			atm->lon[ip2], atm->lat[ip2], NULL, &t, NULL, NULL,
+			NULL, NULL, NULL);
+	iso[ip2] = atm->p[ip2] / t;
+      }
 
     /* Save potential temperature... */
-    else if (ctl->isosurf == 3) {
-      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		      atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
-      iso[ip] = t * pow(P0 / atm->p[ip], 0.286);
+    else if (ctl->isosurf == 3)
+      for (ip2 = 0; ip2 < atm->np; ip2++) {
+	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
+			atm->lon[ip2], atm->lat[ip2], NULL, &t, NULL, NULL,
+			NULL, NULL, NULL);
+	iso[ip2] = t * pow(P0 / atm->p[ip2], 0.286);
+      }
+
+    /* Read balloon pressure data... */
+    else if (ctl->isosurf == 4) {
+
+      /* Write info... */
+      printf("Read balloon pressure data: %s\n", ctl->balloon);
+
+      /* Open file... */
+      if (!(in = fopen(ctl->balloon, "r")))
+	ERRMSG("Cannot open file!");
+
+      /* Read pressure time series... */
+      while (fgets(line, LEN, in))
+	if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
+	  if ((++n) > 100000)
+	    ERRMSG("Too many data points!");
+
+      /* Check number of points... */
+      if (n < 1)
+	ERRMSG("Could not read any data!");
+
+      /* Close file... */
+      fclose(in);
     }
 
     /* Leave initialization... */
