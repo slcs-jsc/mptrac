@@ -87,7 +87,7 @@ int main(
 	ERRMSG("Too many altitudes!");
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
-	  intpol_met_space(met, P(z), lon, lat, NULL,
+	  intpol_met_space(&ctl, met, P(z), lon, lat, NULL,
 			   &t, &u, &v, &w, &h2o, &o3);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {

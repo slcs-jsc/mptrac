@@ -85,7 +85,7 @@ int main(
     get_met(&ctl, argv[2], atm->time[ip], met0, met1);
 
     /* Interpolate meteorological data... */
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(&ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &t, &u, &v, &w, &h2o, &o3);
 
     /* Write data... */
