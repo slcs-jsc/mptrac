@@ -15,7 +15,7 @@ int main(
 
   FILE *out;
 
-  static double dz, dzmin = 1e10, z, t, s, ls2, k[EX][EY], c = 0.1;
+  static double dz, dzmin = 1e10, z, t, s, ls2, k[EX][EY], c = 0.15;
 
   static int ip, ip2, ix, iy;
 
@@ -42,26 +42,27 @@ int main(
     }
   }
 
+  /* Write info... */
+  printf("Analyze %g hPa...\n", met->p[ip]);
+
   /* Calculate horizontal diffusion coefficients... */
   for (ix = 1; ix < met->nx - 1; ix++)
     for (iy = 1; iy < met->ny - 1; iy++) {
-      t = (met->u[ix + 1][iy][ip] - met->u[ix - 1][iy][ip])
-	/ (1000. * deg2dx(met->lon[ix + 1] - met->lon[ix - 1], met->lat[iy]))
-	- (met->v[ix][iy + 1][ip] - met->v[ix][iy - 1][ip])
-	/ (1000. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1]));
-      s = (met->u[ix][iy + 1][ip] - met->u[ix][iy - 1][ip])
-	/ (1000. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1]))
-	+ (met->v[ix + 1][iy][ip] - met->v[ix - 1][iy][ip])
-	/ (1000. * deg2dx(met->lon[ix + 1] - met->lon[ix - 1], met->lat[iy]));
-      ls2 =
-	c / (1. /
-	     gsl_pow_2(1000. *
-		       deg2dx(met->lon[ix + 1] - met->lon[ix - 1],
-			      met->lat[iy]))
-	     +
-	     1. / gsl_pow_2(1000. *
-			    deg2dy(met->lat[iy + 1] - met->lat[iy - 1])));
-      k[ix][iy] = ls2 * sqrt(gsl_pow_2(t) + gsl_pow_2(s));
+      t = 0.5 * ((met->u[ix + 1][iy][ip] - met->u[ix - 1][iy][ip])
+		 / (1000. *
+		    deg2dx(met->lon[ix + 1] - met->lon[ix - 1], met->lat[iy]))
+		 - (met->v[ix][iy + 1][ip] - met->v[ix][iy - 1][ip])
+		 / (1000. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1])));
+      s = 0.5 * ((met->u[ix][iy + 1][ip] - met->u[ix][iy - 1][ip])
+		 / (1000. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1]))
+		 + (met->v[ix + 1][iy][ip] - met->v[ix - 1][iy][ip])
+		 / (1000. *
+		    deg2dx(met->lon[ix + 1] - met->lon[ix - 1],
+			   met->lat[iy])));
+      ls2 = gsl_pow_2(c * 500. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1]));
+      if (fabs(met->lat[iy]) > 80)
+	ls2 *= (90. - fabs(met->lat[iy])) / 10.;
+      k[ix][iy] = ls2 * sqrt(2.0 * (gsl_pow_2(t) + gsl_pow_2(s)));
     }
 
   /* Create output file... */
@@ -81,12 +82,12 @@ int main(
   for (iy = 0; iy < met->ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < met->nx; ix++)
-      if (met->lon[ix] >= 180)
+      if (met->lon[ix] >= 180 && met->lon[ix] < 360)
 	fprintf(out, "%g %g %g %g %g\n",
 		met->lon[ix] - 360.0, met->lat[iy],
 		met->u[ix][iy][ip], met->v[ix][iy][ip], k[ix][iy]);
     for (ix = 0; ix < met->nx; ix++)
-      if (met->lon[ix] <= 180)
+      if (met->lon[ix] <= 180 && met->lon[ix] > 0)
 	fprintf(out, "%g %g %g %g %g\n",
 		met->lon[ix], met->lat[iy],
 		met->u[ix][iy][ip], met->v[ix][iy][ip], k[ix][iy]);
