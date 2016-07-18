@@ -99,7 +99,7 @@
 /*! Print macro for debugging. */
 #define PRINT(format, var)						\
   printf("Print (%s, %s, l%d): %s= "format"\n",				\
-	 __FILE__, __FUNCTION__, __LINE__, #var, var);
+	 __FILE__, __func__, __LINE__, #var, var);
 
 /*! Convert altitude to pressure. */
 #define P(z) (P0*exp(-(z)/H0))
