@@ -769,25 +769,12 @@ void read_met(
 
   static float help[EX * EY];
 
-  char tstr[LEN];
-
   int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
 
   size_t np, nx, ny;
 
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
-
-  /* Get time from filename... */
-  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
-  year = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
-  mon = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
-  day = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-  hour = atoi(tstr);
-  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Open netCDF file... */
   NC(nc_open(filename, NC_NOWRITE, &ncid));
@@ -814,6 +801,9 @@ void read_met(
   met->ny = (int) ny;
 
   /* Read geolocations... */
+  NC(nc_inq_varid(ncid, "time", &varid));
+  NC(nc_get_var_double(ncid, varid, &met->time));
+
   NC(nc_inq_varid(ncid, "lev", &varid));
   NC(nc_get_var_double(ncid, varid, met->p));
 
@@ -822,6 +812,16 @@ void read_met(
 
   NC(nc_inq_varid(ncid, "lat", &varid));
   NC(nc_get_var_double(ncid, varid, met->lat));
+
+  /* Convert time... */
+  year = (int) met->time / 10000;
+  met->time -= year * 10000;
+  mon = (int) met->time / 100;
+  met->time -= mon * 100;
+  day = (int) (met->time);
+  met->time -= day;
+  hour = (int) (met->time * 24.);
+  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Check and convert pressure levels... */
   for (ip = 0; ip < met->np; ip++) {
