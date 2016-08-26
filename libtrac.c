@@ -730,6 +730,8 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "GRID_GPFILE", -1, "-", ctl->grid_gpfile);
   ctl->grid_dt_out =
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
+  ctl->grid_sparse =
+    (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "0", NULL);
   ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "100", NULL);
   ctl->grid_nz =
@@ -1503,10 +1505,10 @@ void write_grid(
 
   char line[LEN];
 
-  static double grid_q[NQ][GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
-    area, rho_air, cd, mmr, t0, t1, r;
+  static double grid_m[GX][GY][GZ], grid_t[GX][GY][GZ], z, dz, lon, dlon,
+    lat, dlat, area, rho_air, cd, mmr, t0, t1, r;
 
-  static int grid_n[GX][GY][GZ], ip, ix, iy, iz, iq,
+  static int grid_n[GX][GY][GZ], ip, ix, iy, iz,
     year, mon, day, hour, min, sec;
 
   /* Check dimensions... */
@@ -1527,8 +1529,8 @@ void write_grid(
     for (iy = 0; iy < ctl->grid_ny; iy++)
       for (iz = 0; iz < ctl->grid_nz; iz++) {
 	grid_n[ix][iy][iz] = 0;
-	for (iq = 0; iq < ctl->nq; iq++)
-	  grid_q[iq][ix][iy][iz] = 0;
+	grid_m[ix][iy][iz] = 0;
+	grid_t[ix][iy][iz] = 0;
       }
 
   /* Average data... */
@@ -1545,17 +1547,20 @@ void write_grid(
 
       /* Add data... */
       grid_n[ix][iy][iz]++;
-      for (iq = 0; iq < ctl->nq; iq++)
-	grid_q[iq][ix][iy][iz] += atm->q[iq][ip];
+      if (ctl->qnt_m >= 0)
+	grid_m[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+      if (ctl->qnt_t >= 0)
+	grid_t[ix][iy][iz] += atm->q[ctl->qnt_t][ip];
     }
 
   /* Calculate mean values... */
-  for (iq = 0; iq < ctl->nq; iq++)
-    for (ix = 0; ix < ctl->grid_nx; ix++)
-      for (iy = 0; iy < ctl->grid_ny; iy++)
-	for (iz = 0; iz < ctl->grid_nz; iz++)
-	  if (grid_n[ix][iy][iz] > 0)
-	    grid_q[iq][ix][iy][iz] /= grid_n[ix][iy][iz];
+  for (ix = 0; ix < ctl->grid_nx; ix++)
+    for (iy = 0; iy < ctl->grid_ny; iy++)
+      for (iz = 0; iz < ctl->grid_nz; iz++)
+	if (grid_n[ix][iy][iz] > 0) {
+	  grid_m[ix][iy][iz] /= grid_n[ix][iy][iz];
+	  grid_t[ix][iy][iz] /= grid_n[ix][iy][iz];
+	}
 
   /* Check if gnuplot output is requested... */
   if (ctl->grid_gpfile[0] != '-') {
@@ -1603,47 +1608,44 @@ void write_grid(
 	  "# $6 = layer width [km]\n"
 	  "# $7 = number of particles\n"
 	  "# $8 = column density [kg/m^2]\n"
-	  "# $9 = mass mixing ratio [kg/kg]\n");
-  for (iq = 0; iq < ctl->nq; iq++)
-    fprintf(out, "# $%i = %s (mean) [%s]\n", (10 + iq),
-	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+	  "# $9 = mass mixing ratio [kg/kg]\n\n");
 
   /* Write data... */
-  for (iz = 0; iz < ctl->grid_nz; iz++)
-    for (ix = 0; ix < ctl->grid_nx; ix++) {
+  for (ix = 0; ix < ctl->grid_nx; ix++) {
+    if (ix > 0 && ctl->grid_ny > 1 && !ctl->grid_sparse)
       fprintf(out, "\n");
-      for (iy = 0; iy < ctl->grid_ny; iy++) {
-
-	/* Set coordinates... */
-	z = ctl->grid_z0 + dz * (iz + 0.5);
-	lon = ctl->grid_lon0 + dlon * (ix + 0.5);
-	lat = ctl->grid_lat0 + dlat * (iy + 0.5);
-
-	/* Calculate surface area... */
-	area = dlat * M_PI * RE / 180. * dlon * M_PI * RE / 180.
-	  * cos(lat * M_PI / 180.);
-
-	/* Calculate column density... */
-	if (ctl->qnt_m >= 0)
-	  cd =
-	    grid_q[ctl->qnt_m][ix][iy][iz] * grid_n[ix][iy][iz] / (1e6 *
-								   area);
-
-	/* Calculate mass mixing ratio... */
-	if (ctl->qnt_m >= 0 && ctl->qnt_t >= 0) {
-	  rho_air = 100. * P(z) / (287.058 * grid_q[ctl->qnt_t][ix][iy][iz]);
-	  mmr = grid_q[ctl->qnt_m][ix][iy][iz] * grid_n[ix][iy][iz]
-	    / (rho_air * 1e6 * area * 1e3 * dz);
-	}
-
-	/* Write to file... */
-	fprintf(out, "%.2f %g %g %g %g %g %d %g %g",
-		t, z, lon, lat, area, dz, grid_n[ix][iy][iz], cd, mmr);
-	for (iq = 0; iq < ctl->nq; iq++)
-	  fprintf(out, " %g", grid_q[iq][ix][iy][iz]);
+    for (iy = 0; iy < ctl->grid_ny; iy++) {
+      if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
-      }
+      for (iz = 0; iz < ctl->grid_nz; iz++)
+	if (!ctl->grid_sparse || ix == 0 || iy == 0 || iz == 0
+	    || grid_n[ix][iy][iz] > 0) {
+
+	  /* Set coordinates... */
+	  z = ctl->grid_z0 + dz * (iz + 0.5);
+	  lon = ctl->grid_lon0 + dlon * (ix + 0.5);
+	  lat = ctl->grid_lat0 + dlat * (iy + 0.5);
+
+	  /* Calculate surface area... */
+	  area = dlat * M_PI * RE / 180. * dlon * M_PI * RE / 180.
+	    * cos(lat * M_PI / 180.);
+
+	  /* Calculate column density... */
+	  cd = grid_m[ix][iy][iz] * grid_n[ix][iy][iz] / (1e6 * area);
+
+	  /* Calculate mass mixing ratio... */
+	  if (grid_m[ix][iy][iz] > 0 && grid_t[ix][iy][iz] > 0) {
+	    rho_air = 100. * P(z) / (287.058 * grid_t[ix][iy][iz]);
+	    mmr = grid_m[ix][iy][iz] * grid_n[ix][iy][iz]
+	      / (rho_air * 1e6 * area * 1e3 * dz);
+	  }
+
+	  /* Write to file... */
+	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g\n",
+		  t, z, lon, lat, area, dz, grid_n[ix][iy][iz], cd, mmr);
+	}
     }
+  }
 
   /* Close file... */
   fclose(out);

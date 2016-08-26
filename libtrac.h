@@ -168,7 +168,7 @@
 #define GY 360
 
 /*! Maximum number of altitudes for gridded data. */
-#define GZ 1
+#define GZ 100
 
 /*! Maximum number of OpenMP threads. */
 #define NTHREADS 128
@@ -337,6 +337,9 @@ typedef struct {
 
   /*! Time step for gridded data output [s]. */
   double grid_dt_out;
+
+  /*! Sparse output in grid data files (0=no, 1=yes). */
+  int grid_sparse;
 
   /*! Number of altitudes of gridded data. */
   int grid_nz;
