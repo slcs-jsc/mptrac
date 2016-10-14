@@ -34,7 +34,8 @@ int main(
 
   gsl_rng *rng;
 
-  double m, mtot = 0, dx, dz, mmax = 0, z0, z1, lon0, lon1, lat0, lat1;
+  double m, mtot = 0, dt, dx, dz, mmax = 0,
+    t0, t1, z0, z1, lon0, lon1, lat0, lat1;
 
   int i, ip, iq, n;
 
@@ -50,6 +51,9 @@ int main(
   read_ctl(argv[1], argc, argv, &ctl);
   n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
   m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
+  dt = scan_ctl(argv[1], argc, argv, "SPLIT_DT", -1, "0", NULL);
+  t0 = scan_ctl(argv[1], argc, argv, "SPLIT_T0", -1, "0", NULL);
+  t1 = scan_ctl(argv[1], argc, argv, "SPLIT_T1", -1, "0", NULL);
   dz = scan_ctl(argv[1], argc, argv, "SPLIT_DZ", -1, "0", NULL);
   z0 = scan_ctl(argv[1], argc, argv, "SPLIT_Z0", -1, "0", NULL);
   z1 = scan_ctl(argv[1], argc, argv, "SPLIT_Z1", -1, "0", NULL);
@@ -87,7 +91,11 @@ int main(
       ip = (int) gsl_rng_uniform_int(rng, (long unsigned int) atm->np);
 
     /* Set time... */
-    atm2->time[atm2->np] = atm->time[ip];
+    if (t1 > t0)
+      atm2->time[atm2->np] = t0 + (t1 - t0) * gsl_rng_uniform_pos(rng);
+    else
+      atm2->time[atm2->np] = atm->time[ip]
+	+ gsl_ran_gaussian_ziggurat(rng, dt / 2.3548);
 
     /* Set vertical position... */
     if (z1 > z0)
