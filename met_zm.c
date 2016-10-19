@@ -34,10 +34,10 @@ int main(
 
   FILE *in, *out;
 
-  static double timem[EP][EY], psm[EP][EY], tm[EP][EY],
-    um[EP][EY], vm[EP][EY], wm[EP][EY], h2om[EP][EY], o3m[EP][EY],
-    psm2[EP][EY], tm2[EP][EY], um2[EP][EY], vm2[EP][EY], wm2[EP][EY],
-    h2om2[EP][EY], o3m2[EP][EY];
+  static double timem[EP][EY], psm[EP][EY], tm[EP][EY], um[EP][EY],
+    vm[EP][EY], vhm[EP][EY], wm[EP][EY], h2om[EP][EY], o3m[EP][EY],
+    psm2[EP][EY], tm2[EP][EY], um2[EP][EY], vm2[EP][EY], vhm2[EP][EY],
+    wm2[EP][EY], h2om2[EP][EY], o3m2[EP][EY];
 
   static int i, ip, ix, iy, np[EP][EY];
 
@@ -69,6 +69,8 @@ int main(
 	  tm[ip][iy] += met->t[ix][iy][ip];
 	  um[ip][iy] += met->u[ix][iy][ip];
 	  vm[ip][iy] += met->v[ix][iy][ip];
+	  vhm[ip][iy] += sqrt(gsl_pow_2(met->u[ix][iy][ip])
+			      + gsl_pow_2(met->v[ix][iy][ip]));
 	  wm[ip][iy] += met->w[ix][iy][ip];
 	  h2om[ip][iy] += met->h2o[ix][iy][ip];
 	  o3m[ip][iy] += met->o3[ix][iy][ip];
@@ -76,6 +78,8 @@ int main(
 	  tm2[ip][iy] += gsl_pow_2(met->t[ix][iy][ip]);
 	  um2[ip][iy] += gsl_pow_2(met->u[ix][iy][ip]);
 	  vm2[ip][iy] += gsl_pow_2(met->v[ix][iy][ip]);
+	  vhm2[ip][iy] += gsl_pow_2(met->u[ix][iy][ip])
+	    + gsl_pow_2(met->v[ix][iy][ip]);
 	  wm2[ip][iy] += gsl_pow_2(met->w[ix][iy][ip]);
 	  h2om2[ip][iy] += gsl_pow_2(met->h2o[ix][iy][ip]);
 	  o3m2[ip][iy] += gsl_pow_2(met->o3[ix][iy][ip]);
@@ -100,20 +104,23 @@ int main(
 	  "# $7  = zonal wind standard deviation [m/s]\n"
 	  "# $8  = meridional wind mean [m/s]\n"
 	  "# $9  = meridional wind standard deviation [m/s]\n"
-	  "# $10 = vertical wind mean [hPa/s]\n"
-	  "# $11 = vertical wind standard deviation [hPa/s]\n"
-	  "# $12 = H2O vmr mean [1]\n"
-	  "# $13 = H2O vmr standard deviation [1]\n"
-	  "# $14 = O3 vmr mean [1]\n"
-	  "# $15 = O3 vmr standard deviation [1]\n"
-	  "# $16 = surface pressure mean [hPa]\n"
-	  "# $17 = surface pressure standard deviation [hPa]\n");
+	  "# $10 = horizontal wind mean [m/s]\n"
+	  "# $11 = horizontal wind standard deviation [m/s]\n"
+	  "# $12 = vertical wind mean [hPa/s]\n"
+	  "# $13 = vertical wind standard deviation [hPa/s]\n"
+	  "# $14 = H2O vmr mean [1]\n"
+	  "# $15 = H2O vmr standard deviation [1]\n"
+	  "# $16 = O3 vmr mean [1]\n"
+	  "# $17 = O3 vmr standard deviation [1]\n"
+	  "# $18 = surface pressure mean [hPa]\n"
+	  "# $19 = surface pressure standard deviation [hPa]\n");
 
   /* Write data... */
   for (iy = 0; iy < met->ny; iy++) {
     fprintf(out, "\n");
     for (ip = 0; ip < met->np; ip++)
-      fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+      fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g\n",
 	      timem[ip][iy] / np[ip][iy], Z(met->p[ip]), met->lat[iy],
 	      tm[ip][iy] / np[ip][iy],
 	      sqrt(tm2[ip][iy] / np[ip][iy] -
@@ -124,6 +131,9 @@ int main(
 	      vm[ip][iy] / np[ip][iy],
 	      sqrt(vm2[ip][iy] / np[ip][iy] -
 		   gsl_pow_2(vm[ip][iy] / np[ip][iy])),
+	      vhm[ip][iy] / np[ip][iy],
+	      sqrt(vhm2[ip][iy] / np[ip][iy] -
+		   gsl_pow_2(vhm[ip][iy] / np[ip][iy])),
 	      wm[ip][iy] / np[ip][iy],
 	      sqrt(wm2[ip][iy] / np[ip][iy] -
 		   gsl_pow_2(wm[ip][iy] / np[ip][iy])),
