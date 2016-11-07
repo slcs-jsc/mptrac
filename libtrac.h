@@ -79,7 +79,7 @@
 /*! Print error message and quit program. */
 #define ERRMSG(msg) {							\
     printf("\nError (%s, %s, l%d): %s\n\n",				\
-	   __FILE__, __func__, __LINE__, msg);			\
+	   __FILE__, __func__, __LINE__, msg);				\
     exit(EXIT_FAILURE);							\
   }
 
@@ -641,6 +641,7 @@ void read_met_extrapolate(
 void read_met_help(
   int ncid,
   char *varname,
+  char *varname2,
   met_t * met,
   int np,
   float dest[EX][EY][EP],

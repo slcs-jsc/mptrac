@@ -769,6 +769,8 @@ void read_met(
   char *filename,
   met_t * met) {
 
+  char tstr[10];
+
   static float help[EX * EY];
 
   int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
@@ -777,6 +779,17 @@ void read_met(
 
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
+
+  /* Get time from filename... */
+  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
+  year = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
+  mon = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
+  day = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+  hour = atoi(tstr);
+  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Open netCDF file... */
   NC(nc_open(filename, NC_NOWRITE, &ncid));
@@ -803,9 +816,6 @@ void read_met(
   met->ny = (int) ny;
 
   /* Read geolocations... */
-  NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_get_var_double(ncid, varid, &met->time));
-
   NC(nc_inq_varid(ncid, "lev", &varid));
   NC(nc_get_var_double(ncid, varid, met->p));
 
@@ -814,16 +824,6 @@ void read_met(
 
   NC(nc_inq_varid(ncid, "lat", &varid));
   NC(nc_get_var_double(ncid, varid, met->lat));
-
-  /* Convert time... */
-  year = (int) met->time / 10000;
-  met->time -= year * 10000;
-  mon = (int) met->time / 100;
-  met->time -= mon * 100;
-  day = (int) (met->time);
-  met->time -= day;
-  hour = (int) (met->time * 24.);
-  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Check and convert pressure levels... */
   for (ip = 0; ip < met->np; ip++) {
@@ -845,12 +845,12 @@ void read_met(
   }
 
   /* Read meteorological data... */
-  read_met_help(ncid, "T", met, met->np, met->t, 1.0);
-  read_met_help(ncid, "U", met, met->np, met->u, 1.0);
-  read_met_help(ncid, "V", met, met->np, met->v, 1.0);
-  read_met_help(ncid, "W", met, met->np, met->w, 0.01f);
-  read_met_help(ncid, "Q", met, met->np, met->h2o, 1.608f);
-  read_met_help(ncid, "O3", met, met->np, met->o3, 0.602f);
+  read_met_help(ncid, "t", "T", met, met->np, met->t, 1.0);
+  read_met_help(ncid, "u", "U", met, met->np, met->u, 1.0);
+  read_met_help(ncid, "v", "V", met, met->np, met->v, 1.0);
+  read_met_help(ncid, "w", "W", met, met->np, met->w, 0.01f);
+  read_met_help(ncid, "q", "Q", met, met->np, met->h2o, 1.608f);
+  read_met_help(ncid, "o3", "O3", met, met->np, met->o3, 0.602f);
 
   /* Extrapolate data for lower boundary... */
   read_met_extrapolate(met);
@@ -875,32 +875,20 @@ void read_met_extrapolate(
 
       /* Find lowest valid data point... */
       for (ip0 = met->np - 1; ip0 >= 0; ip0--)
-	if (!gsl_finite(met->u[ix][iy][ip0])
+	if (!gsl_finite(met->t[ix][iy][ip0])
+	    || !gsl_finite(met->u[ix][iy][ip0])
 	    || !gsl_finite(met->v[ix][iy][ip0])
-	    || !gsl_finite(met->w[ix][iy][ip0])
-	    || !gsl_finite(met->t[ix][iy][ip0]))
+	    || !gsl_finite(met->w[ix][iy][ip0]))
 	  break;
 
       /* Extrapolate... */
       for (ip = ip0; ip >= 0; ip--) {
-	met->t[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->t[ix][iy][ip + 1],
-			met->p[ip + 2], met->t[ix][iy][ip + 2], met->p[ip]);
-	met->u[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->u[ix][iy][ip + 1],
-			met->p[ip + 2], met->u[ix][iy][ip + 2], met->p[ip]);
-	met->v[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->v[ix][iy][ip + 1],
-			met->p[ip + 2], met->v[ix][iy][ip + 2], met->p[ip]);
-	met->w[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->w[ix][iy][ip + 1],
-			met->p[ip + 2], met->w[ix][iy][ip + 2], met->p[ip]);
-	met->h2o[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->h2o[ix][iy][ip + 1],
-			met->p[ip + 2], met->h2o[ix][iy][ip + 2], met->p[ip]);
-	met->o3[ix][iy][ip]
-	  = (float) LIN(met->p[ip + 1], met->o3[ix][iy][ip + 1],
-			met->p[ip + 2], met->o3[ix][iy][ip + 2], met->p[ip]);
+	met->t[ix][iy][ip] = met->t[ix][iy][ip + 1];
+	met->u[ix][iy][ip] = met->u[ix][iy][ip + 1];
+	met->v[ix][iy][ip] = met->v[ix][iy][ip + 1];
+	met->w[ix][iy][ip] = met->w[ix][iy][ip + 1];
+	met->h2o[ix][iy][ip] = met->h2o[ix][iy][ip + 1];
+	met->o3[ix][iy][ip] = met->o3[ix][iy][ip + 1];
       }
     }
 }
@@ -910,6 +898,7 @@ void read_met_extrapolate(
 void read_met_help(
   int ncid,
   char *varname,
+  char *varname2,
   met_t * met,
   int np,
   float dest[EX][EY][EP],
@@ -921,7 +910,8 @@ void read_met_help(
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    return;
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
+      return;
 
   /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
