@@ -37,8 +37,7 @@ int main(
 
   char filename[LEN];
 
-  double filter_dt, w, wsum, x1[3], x2[3], dh, dq[NQ], dv,
-    lh = 0, lt = 0, lv = 0;
+  double filter_dt, x1[3], x2[3], dh, dq[NQ], dv, lh = 0, lt = 0, lv = 0;
 
   int filter, ip1, ip2, iq, n;
 
@@ -88,34 +87,27 @@ int main(
   fprintf(out, "\n");
 
   /* Filtering of reference time series... */
-  if (filter > 0) {
+  if (filter) {
 
     /* Copy data... */
     memcpy(atm3, atm2, sizeof(atm_t));
 
     /* Loop over data points... */
     for (ip1 = 0; ip1 < atm2->np; ip1++) {
-      wsum = 0;
+      n = 0;
       atm2->p[ip1] = 0;
       for (iq = 0; iq < ctl.nq; iq++)
 	atm2->q[iq][ip1] = 0;
       for (ip2 = 0; ip2 < atm2->np; ip2++)
 	if (fabs(atm2->time[ip1] - atm2->time[ip2]) < filter_dt) {
-	  if (filter == 1)
-	    w = 1.0;
-	  else if (filter == 2)
-	    w = 0.54 + 0.46
-	      * cos(M_PI * (atm2->time[ip1] - atm2->time[ip2]) / filter_dt);
-	  else
-	    ERRMSG("Cannot set filter!");
-	  atm2->p[ip1] += w * atm3->p[ip2];
+	  atm2->p[ip1] += atm3->p[ip2];
 	  for (iq = 0; iq < ctl.nq; iq++)
-	    atm2->q[iq][ip1] += w * atm3->q[iq][ip2];
-	  wsum += w;
+	    atm2->q[iq][ip1] += atm3->q[iq][ip2];
+	  n++;
 	}
-      atm2->p[ip1] /= wsum;
+      atm2->p[ip1] /= n;
       for (iq = 0; iq < ctl.nq; iq++)
-	atm2->q[iq][ip1] /= wsum;
+	atm2->q[iq][ip1] /= n;
     }
 
     /* Write filtered data... */
@@ -145,7 +137,8 @@ int main(
 
     /* Find corresponding time step (test data)... */
     for (ip1 = 0; ip1 < atm1->np; ip1++)
-      if (fabs(atm1->time[ip1] - atm2->time[ip2]) < 0.1) {
+      if (fabs(atm1->time[ip1] - atm2->time[ip2])
+	  < (filter ? filter_dt : 0.1)) {
 
 	/* Calculate deviations... */
 	geo2cart(0, atm1->lon[ip1], atm1->lat[ip1], x1);
