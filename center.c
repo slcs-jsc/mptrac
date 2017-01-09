@@ -92,7 +92,7 @@ int main(
   for (f = 2; f < argc; f++) {
 
     /* Read atmopheric data... */
-    read_atm(argv[f], atm, &ctl);
+    read_atm(argv[f], &ctl, atm);
 
     /* Initialize... */
     zm = zs = 0;

@@ -114,7 +114,7 @@ int main(
       atm->q[ctl.qnt_m][ip] = m / atm->np;
 
   /* Save data... */
-  write_atm(argv[2], atm, &ctl, t0);
+  write_atm(argv[2], &ctl, atm, t0);
 
   /* Free... */
   gsl_rng_free(rng);

@@ -68,7 +68,7 @@ int main(
   rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Read atmospheric data... */
-  read_atm(argv[2], atm, &ctl);
+  read_atm(argv[2], &ctl, atm);
 
   /* Get total and maximum mass... */
   if (ctl.qnt_m >= 0)
@@ -129,7 +129,7 @@ int main(
   }
 
   /* Save data and close file... */
-  write_atm(argv[3], atm2, &ctl, atm->time[0]);
+  write_atm(argv[3], &ctl, atm2, atm->time[0]);
 
   /* Free... */
   free(atm);

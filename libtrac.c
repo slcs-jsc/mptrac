@@ -547,9 +547,9 @@ int locate(
 
 void read_atm(
   const char *filename,
-  atm_t * atm,
-  ctl_t * ctl) {
-
+  ctl_t * ctl,
+  atm_t * atm) {
+  
   FILE *in;
 
   char line[LEN], *tok;
@@ -1242,8 +1242,8 @@ double tropopause(
 
 void write_atm(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t) {
 
   FILE *in, *out;
@@ -1319,8 +1319,8 @@ void write_atm(
 
 void write_csi(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t) {
 
   static FILE *in, *out;
@@ -1487,8 +1487,8 @@ void write_csi(
 
 void write_grid(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t) {
 
   FILE *in, *out;
@@ -1645,8 +1645,8 @@ void write_grid(
 
 void write_sample(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t) {
 
   static FILE *in, *out;
@@ -1785,8 +1785,8 @@ void write_sample(
 
 void write_station(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t) {
 
   static FILE *out;

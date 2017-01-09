@@ -618,8 +618,8 @@ int locate(
 /*! Read atmospheric data. */
 void read_atm(
   const char *filename,
-  atm_t * atm,
-  ctl_t * ctl);
+  ctl_t * ctl,
+  atm_t * atm);
 
 /*! Read control parameters. */
 void read_ctl(
@@ -686,41 +686,34 @@ double tropopause(
 /*! Write atmospheric data. */
 void write_atm(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t);
 
 /*! Write CSI data. */
 void write_csi(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t);
 
 /*! Write gridded data. */
 void write_grid(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t);
 
 /*! Write samples of model data. */
 void write_sample(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
+  atm_t * atm,
   double t);
 
 /*! Write station data. */
 void write_station(
   const char *filename,
-  atm_t * atm,
   ctl_t * ctl,
-  double t);
-
-/*! Write trajectory data. */
-void write_traj(
-  const char *filename,
   atm_t * atm,
-  ctl_t * ctl,
   double t);

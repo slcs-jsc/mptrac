@@ -73,7 +73,7 @@ int main(
       continue;
     else
       fclose(in);
-    read_atm(argv[f], atm, &ctl);
+    read_atm(argv[f], &ctl, atm);
 
     /* Write data... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip],

@@ -114,8 +114,8 @@ int main(
   for (f = 2; f < argc; f += 2) {
 
     /* Read atmopheric data... */
-    read_atm(argv[f], atm1, &ctl);
-    read_atm(argv[f + 1], atm2, &ctl);
+    read_atm(argv[f], &ctl, atm1);
+    read_atm(argv[f + 1], &ctl, atm2);
 
     /* Check if structs match... */
     if (atm1->np != atm2->np)

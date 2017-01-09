@@ -225,7 +225,7 @@ int main(
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
-    read_atm(filename, atm, &ctl);
+    read_atm(filename, &ctl, atm);
 
     /* Get simulation time interval... */
     init_simtime(&ctl, atm);
@@ -951,31 +951,31 @@ void write_output(
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
-    write_atm(filename, atm, ctl, t);
+    write_atm(filename, ctl, atm, t);
   }
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
-    write_grid(filename, atm, ctl, t);
+    write_grid(filename, ctl, atm, t);
   }
 
   /* Write CSI data... */
   if (ctl->csi_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
-    write_csi(filename, atm, ctl, t);
+    write_csi(filename, ctl, atm, t);
   }
 
   /* Write sample data... */
   if (ctl->sample_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
-    write_sample(filename, atm, ctl, t);
+    write_sample(filename, ctl, atm, t);
   }
 
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
-    write_station(filename, atm, ctl, t);
+    write_station(filename, ctl, atm, t);
   }
 }

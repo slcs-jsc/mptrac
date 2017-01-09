@@ -56,8 +56,8 @@ int main(
   filter_dt = scan_ctl(argv[1], argc, argv, "FILTER_DT", -1, "0", NULL);
 
   /* Read atmospheric data... */
-  read_atm(argv[2], atm1, &ctl);
-  read_atm(argv[3], atm2, &ctl);
+  read_atm(argv[2], &ctl, atm1);
+  read_atm(argv[3], &ctl, atm2);
 
   /* Write info... */
   printf("Write transport deviations: %s\n", argv[4]);
@@ -112,7 +112,7 @@ int main(
 
     /* Write filtered data... */
     sprintf(filename, "%s.filt", argv[3]);
-    write_atm(filename, atm2, &ctl, 0);
+    write_atm(filename, &ctl, atm2, 0);
   }
 
   /* Loop over air parcels (reference data)... */

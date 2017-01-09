@@ -57,7 +57,7 @@ int main(
   read_ctl(argv[1], argc, argv, &ctl);
 
   /* Read atmospheric data... */
-  read_atm(argv[3], atm, &ctl);
+  read_atm(argv[3], &ctl, atm);
 
   /* Create output file... */
   printf("Write meteorological data file: %s\n", argv[4]);
