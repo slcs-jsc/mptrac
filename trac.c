@@ -150,6 +150,8 @@ void module_sedi(
 void write_output(
   const char *dirname,
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   double t);
 
@@ -336,7 +338,7 @@ int main(
 
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
-      write_output(dirname, &ctl, atm, t);
+      write_output(dirname, &ctl, met0, met1, atm, t);
       STOP_TIMER(TIMER_OUTPUT);
     }
 
@@ -935,6 +937,8 @@ void module_sedi(
 void write_output(
   const char *dirname,
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   double t) {
 
@@ -958,7 +962,7 @@ void write_output(
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
-    write_grid(filename, ctl, atm, t);
+    write_grid(filename, ctl, met0, met1, atm, t);
   }
 
   /* Write CSI data... */
@@ -970,7 +974,7 @@ void write_output(
   /* Write sample data... */
   if (ctl->sample_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
-    write_sample(filename, ctl, atm, t);
+    write_sample(filename, ctl, met0, met1, atm, t);
   }
 
   /* Write station data... */

@@ -701,6 +701,8 @@ void write_csi(
 void write_grid(
   const char *filename,
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   double t);
 
@@ -708,6 +710,8 @@ void write_grid(
 void write_sample(
   const char *filename,
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   double t);
 
