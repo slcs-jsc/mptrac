@@ -1661,14 +1661,18 @@ void write_sample(
 
   static char line[LEN];
 
-  static double area, cd, mmr, rho_air, rt, rz, rlon, rlat, rdz, rdx,
-    dlat, dx2, p0, p1, t0, t1, x0[3], x1[3], q_mean[NQ];
+  static double mass, press, temp, area, cd, mmr, rho_air,
+    rt, rz, rlon, rlat, rdz, rdx, dlat, dlon, p0, p1, t0, t1;
 
-  static int init, ip, iq, np, ridx, ridx_old = -999;
+  static int init, ip;
 
   /* Open files... */
   if (!init) {
     init = 1;
+
+    /* Check quantity index for mass... */
+    if (ctl->qnt_m < 0)
+      ERRMSG("Need quantity mass to write sample data!");
 
     /* Open observation data file... */
     printf("Read sample observation data: %s\n", ctl->sample_obsfile);
@@ -1686,15 +1690,11 @@ void write_sample(
 	    "# $2 = altitude [km]\n"
 	    "# $3 = longitude [deg]\n"
 	    "# $4 = latitude [deg]\n"
-	    "# $5 = vertical layer width [km]\n"
-	    "# $6 = search radius [km]\n"
-	    "# $7 = data set index\n"
-	    "# $8 = number of particles\n"
-	    "# $9 = column density [kg/m^2]\n"
-	    "# $10 = mass mixing ratio [kg/kg]\n");
-    for (iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%i = %s (mean) [%s]\n", iq + 11, ctl->qnt_name[iq],
-	      ctl->qnt_unit[iq]);
+	    "# $5 = surface area [km^2]\n"
+	    "# $6 = layer width [km]\n"
+	    "# $7 = temperature [K]\n"
+	    "# $8 = column density [kg/m^2]\n"
+	    "# $9 = mass mixing ratio [kg/kg]\n\n");
   }
 
   /* Set time interval... */
@@ -1705,8 +1705,8 @@ void write_sample(
   while (fgets(line, LEN, in)) {
 
     /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg %lg %d",
-	       &rt, &rz, &rlon, &rlat, &rdz, &rdx, &ridx) != 7)
+    if (sscanf(line, "%lg %lg %lg %lg %lg %lg",
+	       &rt, &rz, &rlon, &rlat, &rdz, &rdx) != 6)
       continue;
 
     /* Check time... */
@@ -1718,70 +1718,49 @@ void write_sample(
     /* Set search ranges... */
     p0 = P(rz - 0.5 * rdz);
     p1 = P(rz + 0.5 * rdz);
-    dlat = dy2deg(rdx);
-    dx2 = gsl_pow_2(rdx);
-
-    /* Get geolocation... */
-    geo2cart(0, rlon, rlat, x0);
+    dlat = 0.5 * dy2deg(rdx);
+    dlon = 0.5 * dx2deg(rdx, rlat);
 
     /* Init... */
-    np = 0;
-    for (iq = 0; iq < ctl->nq; iq++)
-      q_mean[iq] = 0;
+    mass = 0;
 
     /* Loop over air parcles... */
     for (ip = 0; ip < atm->np; ip++) {
-
-      /* Check latitudinal distance... */
-      if (fabs(atm->lat[ip] - rlat) > dlat)
-	continue;
 
       /* Check vertical distance... */
       if (atm->p[ip] > p0 || atm->p[ip] < p1)
 	continue;
 
-      /* Check horizontal distance... */
-      geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
-      if (DIST2(x0, x1) > dx2)
+      /* Check longitudinal distance... */
+      if (fabs(atm->lon[ip] - rlon) > dlon)
+	continue;
+
+      /* Check latitudinal distance... */
+      if (fabs(atm->lat[ip] - rlat) > dlat)
 	continue;
 
       /* Calculate mean values... */
-      for (iq = 0; iq < ctl->nq; iq++)
-	q_mean[iq] += atm->q[iq][ip];
-      np++;
+      mass += atm->q[ctl->qnt_m][ip];
     }
 
-    /* Calculate mean values... */
-    if (np > 0)
-      for (iq = 0; iq < ctl->nq; iq++)
-	q_mean[iq] /= np;
+    /* Get pressure and temperature... */
+    press = P(rz);
+    intpol_met_time(ctl, met0, met1, t, press, rlon, rlat,
+		    NULL, &temp, NULL, NULL, NULL, NULL, NULL);
 
     /* Calculate surface area... */
-    area = M_PI * dx2;
+    area = M_PI * gsl_pow_2(rdx);
 
     /* Calculate column density... */
-    if (ctl->qnt_m >= 0)
-      cd = q_mean[ctl->qnt_m] * np / (1e6 * area);
+    cd = mass / (1e6 * area);
 
     /* Calculate mass mixing ratio... */
-    if (ctl->qnt_m >= 0) {
-      intpol_met_time(ctl, met0, met1, rt, P(rz), rlon, rlat,
-		      NULL, &t, NULL, NULL, NULL, NULL, NULL);
-      rho_air = 100. * P(rz) / (287.058 * t);
-      mmr = q_mean[ctl->qnt_m] * np / (rho_air * 1e6 * area * 1e3 * rdz);
-    }
+    rho_air = 100. * press / (287.058 * temp);
+    mmr = mass / (rho_air * 1e6 * area * 1e3 * rdz);
 
     /* Write output... */
-    if (ridx != ridx_old)
-      fprintf(out, "\n");
-    ridx_old = ridx;
-    fprintf(out, "%.2f %g %g %g %g %g %d %d %g %g",
-	    rt, rz, rlon, rlat, rdz, rdx, ridx, np, cd, mmr);
-    for (iq = 0; iq < ctl->nq; iq++) {
-      fprintf(out, " ");
-      fprintf(out, ctl->qnt_format[iq], q_mean[iq]);
-    }
-    fprintf(out, "\n");
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
+	    rt, rz, rlon, rlat, area, rdz, temp, cd, mmr);
   }
 
   /* Close files... */
