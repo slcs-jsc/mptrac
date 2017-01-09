@@ -626,39 +626,52 @@ void read_ctl(
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
   for (iq = 0; iq < ctl->nq; iq++) {
 
-    /* Read quantity names, units, and formats... */
+    /* Read quantity name and format... */
     scan_ctl(filename, argc, argv, "QNT_NAME", iq, "", ctl->qnt_name[iq]);
-    scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
     scan_ctl(filename, argc, argv, "QNT_FORMAT", iq, "%g",
 	     ctl->qnt_format[iq]);
-
-    /* Try to identify quantities... */
-    if (strcmp(ctl->qnt_name[iq], "m") == 0)
+    
+    /* Try to identify quantity... */
+    if (strcmp(ctl->qnt_name[iq], "m") == 0) {
       ctl->qnt_m = iq;
-    else if (strcmp(ctl->qnt_name[iq], "r") == 0)
+      sprintf(ctl->qnt_unit[iq], "kg");
+    } else if (strcmp(ctl->qnt_name[iq], "r") == 0) {
       ctl->qnt_r = iq;
-    else if (strcmp(ctl->qnt_name[iq], "rho") == 0)
+      sprintf(ctl->qnt_unit[iq], "m");
+    } else if (strcmp(ctl->qnt_name[iq], "rho") == 0) {
       ctl->qnt_rho = iq;
-    else if (strcmp(ctl->qnt_name[iq], "ps") == 0)
+      sprintf(ctl->qnt_unit[iq], "kg/m^3");
+    } else if (strcmp(ctl->qnt_name[iq], "ps") == 0) {
       ctl->qnt_ps = iq;
-    else if (strcmp(ctl->qnt_name[iq], "t") == 0)
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "t") == 0) {
       ctl->qnt_t = iq;
-    else if (strcmp(ctl->qnt_name[iq], "u") == 0)
+      sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "u") == 0) {
       ctl->qnt_u = iq;
-    else if (strcmp(ctl->qnt_name[iq], "v") == 0)
+      sprintf(ctl->qnt_unit[iq], "m/s");
+    } else if (strcmp(ctl->qnt_name[iq], "v") == 0) {
       ctl->qnt_v = iq;
-    else if (strcmp(ctl->qnt_name[iq], "w") == 0)
+      sprintf(ctl->qnt_unit[iq], "m/s");
+    } else if (strcmp(ctl->qnt_name[iq], "w") == 0) {
       ctl->qnt_w = iq;
-    else if (strcmp(ctl->qnt_name[iq], "h2o") == 0)
+      sprintf(ctl->qnt_unit[iq], "hPa/s");
+    } else if (strcmp(ctl->qnt_name[iq], "h2o") == 0) {
       ctl->qnt_h2o = iq;
-    else if (strcmp(ctl->qnt_name[iq], "o3") == 0)
+      sprintf(ctl->qnt_unit[iq], "1");
+    } else if (strcmp(ctl->qnt_name[iq], "o3") == 0) {
       ctl->qnt_o3 = iq;
-    else if (strcmp(ctl->qnt_name[iq], "theta") == 0)
+      sprintf(ctl->qnt_unit[iq], "1");
+    } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
-    else if (strcmp(ctl->qnt_name[iq], "stat") == 0)
+      sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "stat") == 0) {
       ctl->qnt_stat = iq;
+      sprintf(ctl->qnt_unit[iq], "-");
+    } else
+      scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
-
+  
   /* Time steps of simulation... */
   ctl->direction =
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
