@@ -967,6 +967,12 @@ void write_output(
     write_csi(filename, ctl, atm, t);
   }
 
+  /* Write profile data... */
+  if (ctl->prof_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
+    write_prof(filename, ctl, met0, met1, atm, t);
+  }
+
   /* Write sample data... */
   if (ctl->sample_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);

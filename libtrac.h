@@ -353,6 +353,24 @@ typedef struct {
   /*! Upper latitude of gridded data [deg]. */
   double grid_lat1;
 
+  /*! Basename for profile output file. */
+  char prof_basename[LEN];
+
+  /*! Observation data file for profile output. */
+  char prof_obsfile[LEN];
+
+  /*! Number of altitudes of profile data. */
+  int prof_nz;
+
+  /*! Lower altitude of profile data [km]. */
+  double prof_z0;
+
+  /*! Upper altitude of profile data [km]. */
+  double prof_z1;
+
+  /*! Horizontal box size of profile data [km]. */
+  double prof_dx;
+
   /*! Basename for sample output file. */
   char sample_basename[LEN];
 
@@ -672,7 +690,16 @@ void write_grid(
   atm_t * atm,
   double t);
 
-/*! Write samples of model data. */
+/*! Write profile data. */
+void write_prof(
+  const char *filename,
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t);
+
+/*! Write sample data. */
 void write_sample(
   const char *filename,
   ctl_t * ctl,

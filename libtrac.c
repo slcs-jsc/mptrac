@@ -621,6 +621,16 @@ void read_ctl(
   ctl->grid_ny =
     (int) scan_ctl(filename, argc, argv, "GRID_NY", -1, "180", NULL);
 
+  /* Output of profile data... */
+  scan_ctl(filename, argc, argv, "PROF_BASENAME", -1, "-",
+	   ctl->prof_basename);
+  scan_ctl(filename, argc, argv, "PROF_OBSFILE", -1, "-", ctl->prof_obsfile);
+  ctl->prof_z0 = scan_ctl(filename, argc, argv, "PROF_Z0", -1, "0", NULL);
+  ctl->prof_z1 = scan_ctl(filename, argc, argv, "PROF_Z1", -1, "60", NULL);
+  ctl->prof_nz =
+    (int) scan_ctl(filename, argc, argv, "PROF_NZ", -1, "60", NULL);
+  ctl->prof_dx = scan_ctl(filename, argc, argv, "PROF_DX", -1, "15", NULL);
+
   /* Output of sample data... */
   scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
 	   ctl->sample_basename);
@@ -1508,6 +1518,141 @@ void write_grid(
 
 /*****************************************************************************/
 
+void write_prof(
+  const char *filename,
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t) {
+
+  static FILE *in, *out;
+
+  static char line[LEN];
+
+  static double mass[GZ], press, temp, area, mmr, rho_air, h2o, o3,
+    rt, rlon, rlat, dz, dlat, dlon, t0, t1, z;
+
+  static int init, ip, iz, next = 1;
+
+  /* Open files... */
+  if (!init) {
+    init = 1;
+
+    /* Check quantity index for mass... */
+    if (ctl->qnt_m < 0)
+      ERRMSG("Need quantity mass to write profile data!");
+
+    /* Check number of levels... */
+    if (ctl->prof_nz > GZ)
+      ERRMSG("Too many vertical levels!");
+
+    /* Open observation data file... */
+    printf("Read profile observation data: %s\n", ctl->prof_obsfile);
+    if (!(in = fopen(ctl->prof_obsfile, "r")))
+      ERRMSG("Cannot open observation data file!");
+
+    /* Create new file... */
+    printf("Write profile model data: %s\n", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create model data file!");
+
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n"
+	    "# $4 = latitude [deg]\n"
+	    "# $5 = pressure [hPa]\n"
+	    "# $6 = temperature [K]\n"
+	    "# $7 = mass mixing ratio [1]\n"
+	    "# $8 = H2O vmr [1]\n" "# $9 = O3 vmr [1]\n");
+
+    /* Set box sizes... */
+    dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
+    dlat = 0.5 * dy2deg(ctl->prof_dx);
+    area = M_PI * gsl_pow_2(ctl->prof_dx);
+  }
+
+  /* Set time interval... */
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Read data... */
+  while (!feof(in)) {
+
+    /* Read data... */
+    if (next)
+      while (fgets(line, LEN, in))
+	if (sscanf(line, "%lg %lg %lg", &rt, &rlon, &rlat) == 3)
+	  break;
+
+    /* Check time... */
+    if (rt < t0) {
+      next = 1;
+      continue;
+    }
+    if (rt > t1) {
+      next = 0;
+      break;
+    }
+    next = 1;
+
+    /* Set box sizes... */
+    dlon = 0.5 * dx2deg(ctl->prof_dx, rlat);
+
+    /* Init... */
+    for (iz = 0; iz < ctl->prof_nz; iz++)
+      mass[iz] = 0;
+
+    /* Loop over air parcles... */
+    for (ip = 0; ip < atm->np; ip++) {
+
+      /* Check longitudinal distance... */
+      if (fabs(atm->lon[ip] - rlon) > dlon
+	  || fabs(atm->lat[ip] - rlat) > dlat)
+	continue;
+
+      /* Get index... */
+      iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
+
+      /* Check indices... */
+      if (iz < 0 || iz >= ctl->prof_nz)
+	continue;
+
+      /* Add mass... */
+      mass[iz] += atm->q[ctl->qnt_m][ip];
+    }
+
+    /* Write profile data... */
+    fprintf(out, "\n");
+    for (iz = 0; iz < ctl->prof_nz; iz++) {
+
+      /* Get meteorological data... */
+      z = ctl->prof_z0 + dz * (iz + 0.5);
+      press = P(z);
+      intpol_met_time(met0, met1, t, press, rlon, rlat,
+		      NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
+
+      /* Calculate mass mixing ratio... */
+      rho_air = 100. * press / (287.058 * temp);
+      mmr = mass[iz] / (rho_air * 1e6 * area * 1e3 * dz);
+
+      /* Write output... */
+      fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
+	      rt, z, rlon, rlat, press, temp, mmr, h2o, o3);
+    }
+  }
+
+  /* Close files... */
+  if (t == ctl->t_stop) {
+    fclose(out);
+    fclose(in);
+  }
+}
+
+/*****************************************************************************/
+
 void write_sample(
   const char *filename,
   ctl_t * ctl,
@@ -1524,8 +1669,6 @@ void write_sample(
     rt, rz, rlon, rlat, rdz, rdx, dlat, dlon, p0, p1, t0, t1;
 
   static int init, ip;
-
-  printf("start sample...\n");
 
   /* Open files... */
   if (!init) {
@@ -1630,9 +1773,6 @@ void write_sample(
     fclose(out);
     fclose(in);
   }
-
-
-  printf("stop sample...\n");
 }
 
 /*****************************************************************************/
