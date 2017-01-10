@@ -203,42 +203,6 @@ void intpol_met_2d(
 
 /*****************************************************************************/
 
-void intpol_met_2d_cubic(
-  double array[EX][EY],
-  met_t * met,
-  double lon,
-  double lat,
-  double *var) {
-
-  double aux2[4];
-
-  int dx, ix, iy;
-
-  /* Get indices... */
-  ix = locate(met->lon, met->nx, lon);
-  iy = locate(met->lat, met->ny, lat);
-
-  /* Adjust indices... */
-  if (ix > 0)
-    ix--;
-  if (iy > 0)
-    iy--;
-
-  /* Interpolate in latitude... */
-  for (dx = 0; dx < 4; dx++)
-    aux2[dx] = CUBIC(met->lat[iy], array[ix + dx][iy],
-		     met->lat[iy + 1], array[ix + dx][iy + 1],
-		     met->lat[iy + 2], array[ix + dx][iy + 2],
-		     met->lat[iy + 3], array[ix + dx][iy + 3], lat);
-
-  /* Interpolate in longitude... */
-  *var = CUBIC(met->lon[ix], aux2[0],
-	       met->lon[ix + 1], aux2[1],
-	       met->lon[ix + 2], aux2[2], met->lon[ix + 3], aux2[3], lon);
-}
-
-/*****************************************************************************/
-
 void intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
@@ -269,56 +233,7 @@ void intpol_met_3d(
 
 /*****************************************************************************/
 
-void intpol_met_3d_cubic(
-  float array[EX][EY][EP],
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
-  double *var) {
-
-  double aux[4][4], aux2[4];
-
-  int dx, dy, ip, ix, iy;
-
-  /* Get indices... */
-  ip = locate(met->p, met->np, p);
-  ix = locate(met->lon, met->nx, lon);
-  iy = locate(met->lat, met->ny, lat);
-
-  /* Adjust indices... */
-  if (ip > 0)
-    ip--;
-  if (ix > 0)
-    ix--;
-  if (iy > 0)
-    iy--;
-
-  /* Interpolate vertically... */
-  for (dx = 0; dx < 4; dx++)
-    for (dy = 0; dy < 4; dy++)
-      aux[dx][dy] = CUBIC(met->p[ip], array[ix + dx][iy + dy][ip],
-			  met->p[ip + 1], array[ix + dx][iy + dy][ip + 1],
-			  met->p[ip + 2], array[ix + dx][iy + dy][ip + 2],
-			  met->p[ip + 3], array[ix + dx][iy + dy][ip + 3], p);
-
-  /* Interpolate in latitude... */
-  for (dx = 0; dx < 4; dx++)
-    aux2[dx] = CUBIC(met->lat[iy], aux[dx][0],
-		     met->lat[iy + 1], aux[dx][1],
-		     met->lat[iy + 2], aux[dx][2],
-		     met->lat[iy + 3], aux[dx][3], lat);
-
-  /* Interpolate in longitude... */
-  *var = CUBIC(met->lon[ix], aux2[0],
-	       met->lon[ix + 1], aux2[1],
-	       met->lon[ix + 2], aux2[2], met->lon[ix + 3], aux2[3], lon);
-}
-
-/*****************************************************************************/
-
 void intpol_met_space(
-  ctl_t * ctl,
   met_t * met,
   double p,
   double lon,
@@ -344,86 +259,31 @@ void intpol_met_space(
   ix = locate(met->lon, met->nx, lon);
   iy = locate(met->lat, met->ny, lat);
 
-  /* Nearest neighbour... */
-  if (ctl->intpol == 0) {
+  /* Get weights... */
+  wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
+  wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
+  wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
 
-    /* Adjust indices... */
-    if (fabs(p - met->p[ip + 1]) < fabs(p - met->p[ip]))
-      ip++;
-    if (fabs(lon - met->lon[ix + 1]) < fabs(lon - met->lon[ix]))
-      ix++;
-    if (fabs(lat - met->lat[iy + 1]) < fabs(lat - met->lat[iy]))
-      iy++;
-
-    /* Interpolate... */
-    if (ps != NULL)
-      *ps = met->ps[ix][iy];
-    if (t != NULL)
-      *t = met->t[ix][iy][ip];
-    if (u != NULL)
-      *u = met->u[ix][iy][ip];
-    if (v != NULL)
-      *v = met->v[ix][iy][ip];
-    if (w != NULL)
-      *w = met->w[ix][iy][ip];
-    if (h2o != NULL)
-      *h2o = met->h2o[ix][iy][ip];
-    if (o3 != NULL)
-      *o3 = met->o3[ix][iy][ip];
-  }
-
-  /* Linear interpolation... */
-  else if (ctl->intpol == 1) {
-
-    /* Get weights... */
-    wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
-    wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
-    wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
-
-    /* Interpolate... */
-    if (ps != NULL)
-      intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
-    if (t != NULL)
-      intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
-    if (u != NULL)
-      intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
-    if (v != NULL)
-      intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
-    if (w != NULL)
-      intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
-    if (h2o != NULL)
-      intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
-    if (o3 != NULL)
-      intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
-  }
-
-  /* Cubic interpolation... */
-  else if (ctl->intpol == 2) {
-    if (ps != NULL)
-      intpol_met_2d_cubic(met->ps, met, lon, lat, ps);
-    if (t != NULL)
-      intpol_met_3d_cubic(met->t, met, p, lon, lat, t);
-    if (u != NULL)
-      intpol_met_3d_cubic(met->u, met, p, lon, lat, u);
-    if (v != NULL)
-      intpol_met_3d_cubic(met->v, met, p, lon, lat, v);
-    if (w != NULL)
-      intpol_met_3d_cubic(met->w, met, p, lon, lat, w);
-    if (h2o != NULL)
-      intpol_met_3d_cubic(met->h2o, met, p, lon, lat, h2o);
-    if (o3 != NULL)
-      intpol_met_3d_cubic(met->o3, met, p, lon, lat, o3);
-  }
-
-  /* Error message... */
-  else
-    ERRMSG("Unknown interpolation method!");
+  /* Interpolate... */
+  if (ps != NULL)
+    intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
+  if (t != NULL)
+    intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
+  if (u != NULL)
+    intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
+  if (v != NULL)
+    intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
+  if (w != NULL)
+    intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
+  if (h2o != NULL)
+    intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
+  if (o3 != NULL)
+    intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
 }
 
 /*****************************************************************************/
 
 void intpol_met_time(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   double ts,
@@ -441,14 +301,14 @@ void intpol_met_time(
   double h2o0, h2o1, o30, o31, ps0, ps1, t0, t1, u0, u1, v0, v1, w0, w1, wt;
 
   /* Spatial interpolation... */
-  intpol_met_space(ctl, met0, p, lon, lat,
+  intpol_met_space(met0, p, lon, lat,
 		   ps == NULL ? NULL : &ps0,
 		   t == NULL ? NULL : &t0,
 		   u == NULL ? NULL : &u0,
 		   v == NULL ? NULL : &v0,
 		   w == NULL ? NULL : &w0,
 		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
-  intpol_met_space(ctl, met1, p, lon, lat,
+  intpol_met_space(met1, p, lon, lat,
 		   ps == NULL ? NULL : &ps1,
 		   t == NULL ? NULL : &t1,
 		   u == NULL ? NULL : &u1,
@@ -684,7 +544,6 @@ void read_ctl(
 
   /* Meteorological data... */
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
-  ctl->intpol = (int) scan_ctl(filename, argc, argv, "INTPOL", -1, "1", NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf
@@ -1622,7 +1481,7 @@ void write_grid(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(ctl, met0, met1, t, press, lon, lat,
+	  intpol_met_time(met0, met1, t, press, lon, lat,
 			  NULL, &temp, NULL, NULL, NULL, NULL, NULL);
 
 	  /* Calculate surface area... */
@@ -1665,6 +1524,8 @@ void write_sample(
     rt, rz, rlon, rlat, rdz, rdx, dlat, dlon, p0, p1, t0, t1;
 
   static int init, ip;
+
+  printf("start sample...\n");
 
   /* Open files... */
   if (!init) {
@@ -1746,7 +1607,7 @@ void write_sample(
 
     /* Get pressure and temperature... */
     press = P(rz);
-    intpol_met_time(ctl, met0, met1, t, press, rlon, rlat,
+    intpol_met_time(met0, met1, t, press, rlon, rlat,
 		    NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
 
     /* Calculate surface area... */
@@ -1769,6 +1630,9 @@ void write_sample(
     fclose(out);
     fclose(in);
   }
+
+
+  printf("stop sample...\n");
 }
 
 /*****************************************************************************/

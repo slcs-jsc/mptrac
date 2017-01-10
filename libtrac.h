@@ -55,17 +55,6 @@
   if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
     ERRMSG("Out of memory!");
 
-/*! Compute cubic interpolation. */
-#define CUBIC(x0, y0, x1, y1, x2, y2, x3, y3, x)	\
-  ((y0)*((x)-(x1))*((x)-(x2))*((x)-(x3))		\
-   /(((x0)-(x1))*((x0)-(x2))*((x0)-(x3)))		\
-   +(y1)*((x)-(x0))*((x)-(x2))*((x)-(x3))		\
-   /(((x1)-(x0))*((x1)-(x2))*((x1)-(x3)))		\
-   +(y2)*((x)-(x0))*((x)-(x1))*((x)-(x3))		\
-   /(((x2)-(x0))*((x2)-(x1))*((x2)-(x3)))		\
-   +(y3)*((x)-(x0))*((x)-(x1))*((x)-(x2))		\
-   /(((x3)-(x0))*((x3)-(x1))*((x3)-(x2))))
-
 /*! Compute Cartesian distance between two vectors. */
 #define DIST(a, b) sqrt(DIST2(a, b))
 
@@ -245,10 +234,6 @@ typedef struct {
 
   /*! Time step of meteorological data [s]. */
   double dt_met;
-
-  /*! Interpolation method for meteorological data
-     (0=nearest neighbour, 1=linear, 2=cubic). */
-  int intpol;
 
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
@@ -538,14 +523,6 @@ void intpol_met_2d(
   double wy,
   double *var);
 
-/*! Cubic interpolation of 2-D meteorological data. */
-void intpol_met_2d_cubic(
-  double array[EX][EY],
-  met_t * met,
-  double lon,
-  double lat,
-  double *var);
-
 /*! Linear interpolation of 3-D meteorological data. */
 void intpol_met_3d(
   float array[EX][EY][EP],
@@ -557,18 +534,8 @@ void intpol_met_3d(
   double wy,
   double *var);
 
-/*! Cubic interpolation of 3-D meteorological data. */
-void intpol_met_3d_cubic(
-  float array[EX][EY][EP],
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
-  double *var);
-
 /*! Spatial interpolation of meteorological data. */
 void intpol_met_space(
-  ctl_t * ctl,
   met_t * met,
   double p,
   double lon,
@@ -583,7 +550,6 @@ void intpol_met_space(
 
 /*! Temporal interpolation of meteorological data. */
 void intpol_met_time(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   double ts,

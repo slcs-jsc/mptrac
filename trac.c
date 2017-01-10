@@ -79,7 +79,6 @@ void init_simtime(
 
 /*! Calculate advection of air parcels. */
 void module_advection(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -131,7 +130,6 @@ void module_meteo(
 
 /*! Check position of air parcels. */
 void module_position(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -278,7 +276,7 @@ int main(
 #pragma omp parallel for default(shared) private(ip)
       for (ip = 0; ip < atm->np; ip++)
 	if (gsl_finite(dt[ip]))
-	  module_advection(&ctl, met0, met1, atm, ip, dt[ip]);
+	  module_advection(met0, met1, atm, ip, dt[ip]);
       STOP_TIMER(TIMER_ADVECT);
 
       /* Turbulent diffusion... */
@@ -318,7 +316,7 @@ int main(
       START_TIMER(TIMER_POSITION);
 #pragma omp parallel for default(shared) private(ip)
       for (ip = 0; ip < atm->np; ip++)
-	module_position(&ctl, met0, met1, atm, ip);
+	module_position(met0, met1, atm, ip);
       STOP_TIMER(TIMER_POSITION);
 
       /* Meteorological data... */
@@ -422,7 +420,6 @@ void init_simtime(
 /*****************************************************************************/
 
 void module_advection(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -432,7 +429,7 @@ void module_advection(
   double v[3], xm[3];
 
   /* Interpolate meteorological data... */
-  intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip],
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		  atm->lon[ip], atm->lat[ip], NULL, NULL,
 		  &v[0], &v[1], &v[2], NULL, NULL);
 
@@ -442,7 +439,7 @@ void module_advection(
   xm[2] = atm->p[ip] + 0.5 * dt * v[2];
 
   /* Interpolate meteorological data for mid point... */
-  intpol_met_time(ctl, met0, met1, atm->time[ip] + 0.5 * dt,
+  intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt,
 		  xm[2], xm[0], xm[1], NULL, NULL,
 		  &v[0], &v[1], &v[2], NULL, NULL);
 
@@ -477,7 +474,7 @@ void module_decay(
   else {
 
     /* Get surface pressure... */
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		    atm->lon[ip], atm->lat[ip], &ps, NULL,
 		    NULL, NULL, NULL, NULL, NULL);
 
@@ -691,7 +688,7 @@ void module_isosurf(
     /* Save density... */
     else if (ctl->isosurf == 2)
       for (ip2 = 0; ip2 < atm->np; ip2++) {
-	intpol_met_time(ctl, met0, met1, atm->time[ip2], atm->p[ip2],
+	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
 			atm->lon[ip2], atm->lat[ip2], NULL, &t, NULL, NULL,
 			NULL, NULL, NULL);
 	iso[ip2] = atm->p[ip2] / t;
@@ -700,7 +697,7 @@ void module_isosurf(
     /* Save potential temperature... */
     else if (ctl->isosurf == 3)
       for (ip2 = 0; ip2 < atm->np; ip2++) {
-	intpol_met_time(ctl, met0, met1, atm->time[ip2], atm->p[ip2],
+	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
 			atm->lon[ip2], atm->lat[ip2], NULL, &t, NULL, NULL,
 			NULL, NULL, NULL);
 	iso[ip2] = t * pow(P0 / atm->p[ip2], 0.286);
@@ -740,14 +737,14 @@ void module_isosurf(
 
   /* Restore density... */
   else if (ctl->isosurf == 2) {
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
     atm->p[ip] = iso[ip] * t;
   }
 
   /* Restore potential temperature... */
   else if (ctl->isosurf == 3) {
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
     atm->p[ip] = P0 * pow(iso[ip] / t, -1. / 0.286);
   }
@@ -777,49 +774,49 @@ void module_meteo(
 
   /* Interpolate surface pressure... */
   if (ctl->qnt_ps >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], &atm->q[ctl->qnt_ps][ip], NULL,
 		    NULL, NULL, NULL, NULL, NULL);
 
   /* Interpolate temperature... */
   if (ctl->qnt_t >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &atm->q[ctl->qnt_t][ip],
 		    NULL, NULL, NULL, NULL, NULL);
 
   /* Interpolate zonal wind... */
   if (ctl->qnt_u >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_u][ip],
 		    NULL, NULL, NULL, NULL);
 
   /* Interpolate meridional wind... */
   if (ctl->qnt_v >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL,
 		    &atm->q[ctl->qnt_v][ip], NULL, NULL, NULL);
 
   /* Interpolate vertical velocity... */
   if (ctl->qnt_w >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL, NULL,
 		    &atm->q[ctl->qnt_w][ip], NULL, NULL);
 
   /* Interpolate water vapor vmr... */
   if (ctl->qnt_h2o >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL, NULL, NULL,
 		    &atm->q[ctl->qnt_h2o][ip], NULL);
 
   /* Interpolate ozone... */
   if (ctl->qnt_o3 >= 0)
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL, NULL, NULL, NULL,
 		    &atm->q[ctl->qnt_o3][ip]);
 
   /* Calculate potential temperature... */
   if (ctl->qnt_theta >= 0) {
-    intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &atm->q[ctl->qnt_theta][ip],
 		    NULL, NULL, NULL, NULL, NULL);
     atm->q[ctl->qnt_theta][ip] *= pow(P0 / atm->p[ip], 0.286);
@@ -829,7 +826,6 @@ void module_meteo(
 /*****************************************************************************/
 
 void module_position(
-  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -860,7 +856,7 @@ void module_position(
     atm->lon[ip] -= 360;
 
   /* Get surface pressure... */
-  intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip],
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		  atm->lon[ip], atm->lat[ip], &ps, NULL,
 		  NULL, NULL, NULL, NULL, NULL);
 
@@ -902,7 +898,7 @@ void module_sedi(
   rho_p = atm->q[ctl->qnt_rho][ip];
 
   /* Get temperature... */
-  intpol_met_time(ctl, met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		  atm->lat[ip], NULL, &T, NULL, NULL, NULL, NULL, NULL);
 
   /* Density of dry air... */
