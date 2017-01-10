@@ -1602,7 +1602,7 @@ void write_grid(
 	  "# $6 = layer width [km]\n"
 	  "# $7 = temperature [K]\n"
 	  "# $8 = column density [kg/m^2]\n"
-	  "# $9 = mass mixing ratio [kg/kg]\n\n");
+	  "# $9 = mass mixing ratio [1]\n\n");
 
   /* Write data... */
   for (ix = 0; ix < ctl->grid_nx; ix++) {
@@ -1661,7 +1661,7 @@ void write_sample(
 
   static char line[LEN];
 
-  static double mass, press, temp, area, cd, mmr, rho_air,
+  static double mass, press, temp, area, cd, mmr, rho_air, h2o, o3,
     rt, rz, rlon, rlat, rdz, rdx, dlat, dlon, p0, p1, t0, t1;
 
   static int init, ip;
@@ -1686,15 +1686,16 @@ void write_sample(
 
     /* Write header... */
     fprintf(out,
-	    "# $1 = time [s]\n"
-	    "# $2 = altitude [km]\n"
-	    "# $3 = longitude [deg]\n"
-	    "# $4 = latitude [deg]\n"
-	    "# $5 = surface area [km^2]\n"
-	    "# $6 = layer width [km]\n"
-	    "# $7 = temperature [K]\n"
-	    "# $8 = column density [kg/m^2]\n"
-	    "# $9 = mass mixing ratio [kg/kg]\n\n");
+	    "# $1  = time [s]\n"
+	    "# $2  = altitude [km]\n"
+	    "# $3  = longitude [deg]\n"
+	    "# $4  = latitude [deg]\n"
+	    "# $5  = surface area [km^2]\n"
+	    "# $6  = layer width [km]\n"
+	    "# $7  = temperature [K]\n"
+	    "# $8  = column density [kg/m^2]\n"
+	    "# $9  = mass mixing ratio [1]\n"
+	    "# $10 = H2O vmr [1]\n" "# $11 = O3 vmr [1]\n\n");
   }
 
   /* Set time interval... */
@@ -1746,7 +1747,7 @@ void write_sample(
     /* Get pressure and temperature... */
     press = P(rz);
     intpol_met_time(ctl, met0, met1, t, press, rlon, rlat,
-		    NULL, &temp, NULL, NULL, NULL, NULL, NULL);
+		    NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
 
     /* Calculate surface area... */
     area = M_PI * gsl_pow_2(rdx);
@@ -1759,8 +1760,8 @@ void write_sample(
     mmr = mass / (rho_air * 1e6 * area * 1e3 * rdz);
 
     /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
-	    rt, rz, rlon, rlat, area, rdz, temp, cd, mmr);
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g\n",
+	    rt, rz, rlon, rlat, area, rdz, temp, cd, mmr, h2o, o3);
   }
 
   /* Close files... */
