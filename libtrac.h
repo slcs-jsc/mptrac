@@ -368,8 +368,8 @@ typedef struct {
   /*! Upper altitude of profile data [km]. */
   double prof_z1;
 
-  /*! Horizontal box size of profile data [km]. */
-  double prof_dx;
+  /*! Horizontal radius for profile data [km]. */
+  double prof_r;
 
   /*! Basename of station data file. */
   char stat_basename[LEN];

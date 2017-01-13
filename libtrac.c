@@ -125,7 +125,7 @@ void get_met(
 
   static int init;
 
-  /* Initialize at first call... */
+  /* Init... */
   if (!init) {
     init = 1;
 
@@ -416,7 +416,7 @@ void read_atm(
 
   int iq;
 
-  /* Initialize... */
+  /* Init... */
   atm->np = 0;
 
   /* Write info... */
@@ -596,7 +596,7 @@ void read_ctl(
   ctl->csi_ny =
     (int) scan_ctl(filename, argc, argv, "CSI_NY", -1, "180", NULL);
 
-  /* Output of gridded data... */
+  /* Output of grid data... */
   scan_ctl(filename, argc, argv, "GRID_BASENAME", -1, "-",
 	   ctl->grid_basename);
   scan_ctl(filename, argc, argv, "GRID_GPFILE", -1, "-", ctl->grid_gpfile);
@@ -629,7 +629,7 @@ void read_ctl(
   ctl->prof_z1 = scan_ctl(filename, argc, argv, "PROF_Z1", -1, "60", NULL);
   ctl->prof_nz =
     (int) scan_ctl(filename, argc, argv, "PROF_NZ", -1, "60", NULL);
-  ctl->prof_dx = scan_ctl(filename, argc, argv, "PROF_DX", -1, "15", NULL);
+  ctl->prof_r = scan_ctl(filename, argc, argv, "PROF_R", -1, "15", NULL);
 
   /* Output of station data... */
   scan_ctl(filename, argc, argv, "STAT_BASENAME", -1, "-",
@@ -1423,7 +1423,7 @@ void write_grid(
   if (ctl->grid_gpfile[0] != '-') {
 
     /* Write info... */
-    printf("Plot gridded data: %s.png\n", filename);
+    printf("Plot grid data: %s.png\n", filename);
 
     /* Create gnuplot pipe... */
     if (!(out = popen("gnuplot", "w")))
@@ -1448,7 +1448,7 @@ void write_grid(
   else {
 
     /* Write info... */
-    printf("Write gridded data: %s\n", filename);
+    printf("Write grid data: %s\n", filename);
 
     /* Create file... */
     if (!(out = fopen(filename, "w")))
@@ -1525,11 +1525,11 @@ void write_prof(
   static char line[LEN];
 
   static double mass[GZ], press, temp, area, mmr, rho_air, h2o, o3,
-    rt, rlon, rlat, dz, dlat, dlon, t0, t1, z;
+    rt, rlon, rlat, dz, dlat, dlon, t0, t1, z, x0[3], x1[3], r2;
 
   static int init, ip, iz, next = 1;
 
-  /* Open files... */
+  /* Initialize... */
   if (!init) {
     init = 1;
 
@@ -1547,7 +1547,7 @@ void write_prof(
       ERRMSG("Cannot open file!");
 
     /* Create new file... */
-    printf("Write profile model data: %s\n", filename);
+    printf("Write profile data: %s\n", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
@@ -1565,8 +1565,9 @@ void write_prof(
 
     /* Set box sizes... */
     dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
-    dlat = 0.5 * dy2deg(ctl->prof_dx);
-    area = M_PI * gsl_pow_2(ctl->prof_dx);
+    dlat = dy2deg(ctl->prof_r);
+    r2 = gsl_pow_2(ctl->prof_r);
+    area = M_PI * r2;
   }
 
   /* Set time interval... */
@@ -1593,8 +1594,9 @@ void write_prof(
     }
     next = 1;
 
-    /* Set box sizes... */
-    dlon = 0.5 * dx2deg(ctl->prof_dx, rlat);
+    /* Get position... */
+    geo2cart(0, rlon, rlat, x0);
+    dlon = dx2deg(ctl->prof_r, rlat);
 
     /* Init... */
     for (iz = 0; iz < ctl->prof_nz; iz++)
@@ -1603,16 +1605,19 @@ void write_prof(
     /* Loop over air parcles... */
     for (ip = 0; ip < atm->np; ip++) {
 
-      /* Check horizontal distances... */
-      if (fabs(atm->lon[ip] - rlon) > dlon
-	  || fabs(atm->lat[ip] - rlat) > dlat)
+      /* Check latitudinal distance... */
+      if (fabs(atm->lat[ip] - rlat) > dlat
+	  || fabs(atm->lon[ip] - rlon) > dlon)
 	continue;
 
       /* Get vertical index... */
       iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
-
-      /* Check vertical index... */
       if (iz < 0 || iz >= ctl->prof_nz)
+	continue;
+
+      /* Check horizontal distance... */
+      geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
+      if (DIST2(x0, x1) > r2)
 	continue;
 
       /* Add mass... */
