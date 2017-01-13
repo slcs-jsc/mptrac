@@ -973,12 +973,6 @@ void write_output(
     write_prof(filename, ctl, met0, met1, atm, t);
   }
 
-  /* Write sample data... */
-  if (ctl->sample_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
-    write_sample(filename, ctl, met0, met1, atm, t);
-  }
-
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);

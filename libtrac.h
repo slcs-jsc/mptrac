@@ -371,12 +371,6 @@ typedef struct {
   /*! Horizontal box size of profile data [km]. */
   double prof_dx;
 
-  /*! Basename for sample output file. */
-  char sample_basename[LEN];
-
-  /*! Observation data file for sample output. */
-  char sample_obsfile[LEN];
-
   /*! Basename of station data file. */
   char stat_basename[LEN];
 
@@ -692,15 +686,6 @@ void write_grid(
 
 /*! Write profile data. */
 void write_prof(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t);
-
-/*! Write sample data. */
-void write_sample(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,

@@ -450,7 +450,7 @@ void read_atm(
 
   /* Check number of points... */
   if (atm->np < 1)
-    ERRMSG("Could not read any data!");
+    ERRMSG("Can not read any data!");
 }
 
 /*****************************************************************************/
@@ -631,12 +631,6 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "PROF_NZ", -1, "60", NULL);
   ctl->prof_dx = scan_ctl(filename, argc, argv, "PROF_DX", -1, "15", NULL);
 
-  /* Output of sample data... */
-  scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
-	   ctl->sample_basename);
-  scan_ctl(filename, argc, argv, "SAMPLE_OBSFILE", -1, "-",
-	   ctl->sample_obsfile);
-
   /* Output of station data... */
   scan_ctl(filename, argc, argv, "STAT_BASENAME", -1, "-",
 	   ctl->stat_basename);
@@ -710,7 +704,7 @@ void read_met(
   /* Check and convert pressure levels... */
   for (ip = 0; ip < met->np; ip++) {
     if (ip > 0 && met->p[ip - 1] > met->p[ip])
-      ERRMSG("Pressure levels must be in descending order!");
+      ERRMSG("Pressure levels must be descending!");
     met->p[ip] /= 100.;
   }
 
@@ -1225,12 +1219,12 @@ void write_csi(
     /* Open observation data file... */
     printf("Read CSI observation data: %s\n", ctl->csi_obsfile);
     if (!(in = fopen(ctl->csi_obsfile, "r")))
-      ERRMSG("Cannot open observation data file!");
+      ERRMSG("Cannot open file!");
 
     /* Create new file... */
     printf("Write CSI data: %s\n", filename);
     if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create model data file!");
+      ERRMSG("Cannot create file!");
 
     /* Write header... */
     fprintf(out,
@@ -1550,12 +1544,12 @@ void write_prof(
     /* Open observation data file... */
     printf("Read profile observation data: %s\n", ctl->prof_obsfile);
     if (!(in = fopen(ctl->prof_obsfile, "r")))
-      ERRMSG("Cannot open observation data file!");
+      ERRMSG("Cannot open file!");
 
     /* Create new file... */
     printf("Write profile model data: %s\n", filename);
     if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create model data file!");
+      ERRMSG("Cannot create file!");
 
     /* Write header... */
     fprintf(out,
@@ -1566,7 +1560,8 @@ void write_prof(
 	    "# $5 = pressure [hPa]\n"
 	    "# $6 = temperature [K]\n"
 	    "# $7 = mass mixing ratio [1]\n"
-	    "# $8 = H2O vmr [1]\n" "# $9 = O3 vmr [1]\n");
+	    "# $8 = H2O volume mixing ratio [1]\n"
+	    "# $9 = O3 volume mixing ratio [1]\n");
 
     /* Set box sizes... */
     dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
@@ -1608,15 +1603,15 @@ void write_prof(
     /* Loop over air parcles... */
     for (ip = 0; ip < atm->np; ip++) {
 
-      /* Check longitudinal distance... */
+      /* Check horizontal distances... */
       if (fabs(atm->lon[ip] - rlon) > dlon
 	  || fabs(atm->lat[ip] - rlat) > dlat)
 	continue;
 
-      /* Get index... */
+      /* Get vertical index... */
       iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
 
-      /* Check indices... */
+      /* Check vertical index... */
       if (iz < 0 || iz >= ctl->prof_nz)
 	continue;
 
@@ -1636,136 +1631,12 @@ void write_prof(
 
       /* Calculate mass mixing ratio... */
       rho_air = 100. * press / (287.058 * temp);
-      mmr = mass[iz] / (rho_air * 1e6 * area * 1e3 * dz);
+      mmr = mass[iz] / (rho_air * 1e9 * area * dz);
 
       /* Write output... */
       fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
 	      rt, z, rlon, rlat, press, temp, mmr, h2o, o3);
     }
-  }
-
-  /* Close files... */
-  if (t == ctl->t_stop) {
-    fclose(out);
-    fclose(in);
-  }
-}
-
-/*****************************************************************************/
-
-void write_sample(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
-
-  static FILE *in, *out;
-
-  static char line[LEN];
-
-  static double mass, press, temp, area, cd, mmr, rho_air, h2o, o3,
-    rt, rz, rlon, rlat, rdz, rdx, dlat, dlon, p0, p1, t0, t1;
-
-  static int init, ip;
-
-  /* Open files... */
-  if (!init) {
-    init = 1;
-
-    /* Check quantity index for mass... */
-    if (ctl->qnt_m < 0)
-      ERRMSG("Need quantity mass to write sample data!");
-
-    /* Open observation data file... */
-    printf("Read sample observation data: %s\n", ctl->sample_obsfile);
-    if (!(in = fopen(ctl->sample_obsfile, "r")))
-      ERRMSG("Cannot open observation data file!");
-
-    /* Create new file... */
-    printf("Write sample model data: %s\n", filename);
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create model data file!");
-
-    /* Write header... */
-    fprintf(out,
-	    "# $1  = time [s]\n"
-	    "# $2  = altitude [km]\n"
-	    "# $3  = longitude [deg]\n"
-	    "# $4  = latitude [deg]\n"
-	    "# $5  = surface area [km^2]\n"
-	    "# $6  = layer width [km]\n"
-	    "# $7  = temperature [K]\n"
-	    "# $8  = column density [kg/m^2]\n"
-	    "# $9  = mass mixing ratio [1]\n"
-	    "# $10 = H2O vmr [1]\n" "# $11 = O3 vmr [1]\n\n");
-  }
-
-  /* Set time interval... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Read data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg %lg",
-	       &rt, &rz, &rlon, &rlat, &rdz, &rdx) != 6)
-      continue;
-
-    /* Check time... */
-    if (rt < t0)
-      continue;
-    if (rt > t1)
-      break;
-
-    /* Set search ranges... */
-    p0 = P(rz - 0.5 * rdz);
-    p1 = P(rz + 0.5 * rdz);
-    dlat = 0.5 * dy2deg(rdx);
-    dlon = 0.5 * dx2deg(rdx, rlat);
-
-    /* Init... */
-    mass = 0;
-
-    /* Loop over air parcles... */
-    for (ip = 0; ip < atm->np; ip++) {
-
-      /* Check vertical distance... */
-      if (atm->p[ip] > p0 || atm->p[ip] < p1)
-	continue;
-
-      /* Check longitudinal distance... */
-      if (fabs(atm->lon[ip] - rlon) > dlon)
-	continue;
-
-      /* Check latitudinal distance... */
-      if (fabs(atm->lat[ip] - rlat) > dlat)
-	continue;
-
-      /* Calculate mean values... */
-      mass += atm->q[ctl->qnt_m][ip];
-    }
-
-    /* Get pressure and temperature... */
-    press = P(rz);
-    intpol_met_time(met0, met1, t, press, rlon, rlat,
-		    NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
-
-    /* Calculate surface area... */
-    area = M_PI * gsl_pow_2(rdx);
-
-    /* Calculate column density... */
-    cd = mass / (1e6 * area);
-
-    /* Calculate mass mixing ratio... */
-    rho_air = 100. * press / (287.058 * temp);
-    mmr = mass / (rho_air * 1e6 * area * 1e3 * rdz);
-
-    /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g\n",
-	    rt, rz, rlon, rlat, area, rdz, temp, cd, mmr, h2o, o3);
   }
 
   /* Close files... */
