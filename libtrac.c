@@ -629,7 +629,18 @@ void read_ctl(
   ctl->prof_z1 = scan_ctl(filename, argc, argv, "PROF_Z1", -1, "60", NULL);
   ctl->prof_nz =
     (int) scan_ctl(filename, argc, argv, "PROF_NZ", -1, "60", NULL);
-  ctl->prof_r = scan_ctl(filename, argc, argv, "PROF_R", -1, "15", NULL);
+  ctl->prof_lon0 =
+    scan_ctl(filename, argc, argv, "PROF_LON0", -1, "-180", NULL);
+  ctl->prof_lon1 =
+    scan_ctl(filename, argc, argv, "PROF_LON1", -1, "180", NULL);
+  ctl->prof_nx =
+    (int) scan_ctl(filename, argc, argv, "PROF_NX", -1, "360", NULL);
+  ctl->prof_lat0 =
+    scan_ctl(filename, argc, argv, "PROF_LAT0", -1, "-90", NULL);
+  ctl->prof_lat1 =
+    scan_ctl(filename, argc, argv, "PROF_LAT1", -1, "90", NULL);
+  ctl->prof_ny =
+    (int) scan_ctl(filename, argc, argv, "PROF_NY", -1, "180", NULL);
 
   /* Output of station data... */
   scan_ctl(filename, argc, argv, "STAT_BASENAME", -1, "-",
@@ -1204,9 +1215,9 @@ void write_csi(
   static char line[LEN];
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
-    rt, rz, rlon, rlat, t0, t1, area, dlon, dlat, lat;
+    rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat;
 
-  static int init, obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz, robs;
+  static int init, obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz;
 
   /* Init... */
   if (!init) {
@@ -1254,7 +1265,7 @@ void write_csi(
   while (fgets(line, LEN, in)) {
 
     /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %d", &rt, &rz, &rlon, &rlat, &robs) !=
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
 	5)
       continue;
 
@@ -1524,22 +1535,23 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GZ], press, temp, area, mmr, rho_air, h2o, o3,
-    rt, rlon, rlat, dz, dlat, dlon, t0, t1, z, x0[3], x1[3], r2;
+  static double mass[GX][GY][GZ], obsmean[GX][GY], tmean[GX][GY],
+    rt, rlon, rlat, robs, t0, t1, area, dz, dlon, dlat, lon, lat, z,
+    press, temp, rho_air, mmr, h2o, o3;
 
-  static int init, ip, iz, next = 1;
+  static int init, obscount[GX][GY], ip, ix, iy, iz;
 
-  /* Initialize... */
+  /* Init... */
   if (!init) {
     init = 1;
 
     /* Check quantity index for mass... */
     if (ctl->qnt_m < 0)
-      ERRMSG("Need quantity mass to write profile data!");
+      ERRMSG("Need quantity mass!");
 
-    /* Check number of levels... */
-    if (ctl->prof_nz > GZ)
-      ERRMSG("Too many vertical levels!");
+    /* Check dimensions... */
+    if (ctl->prof_nx > GX || ctl->prof_ny > GY || ctl->prof_nz > GZ)
+      ERRMSG("Grid dimensions too large!");
 
     /* Open observation data file... */
     printf("Read profile observation data: %s\n", ctl->prof_obsfile);
@@ -1553,102 +1565,123 @@ void write_prof(
 
     /* Write header... */
     fprintf(out,
-	    "# $1 = time [s]\n"
-	    "# $2 = altitude [km]\n"
-	    "# $3 = longitude [deg]\n"
-	    "# $4 = latitude [deg]\n"
-	    "# $5 = pressure [hPa]\n"
-	    "# $6 = temperature [K]\n"
-	    "# $7 = mass mixing ratio [1]\n"
-	    "# $8 = H2O volume mixing ratio [1]\n"
-	    "# $9 = O3 volume mixing ratio [1]\n");
+	    "# $1  = time [s]\n"
+	    "# $2  = altitude [km]\n"
+	    "# $3  = longitude [deg]\n"
+	    "# $4  = latitude [deg]\n"
+	    "# $5  = pressure [hPa]\n"
+	    "# $6  = temperature [K]\n"
+	    "# $7  = mass mixing ratio [1]\n"
+	    "# $8  = H2O volume mixing ratio [1]\n"
+	    "# $9  = O3 volume mixing ratio [1]\n"
+	    "# $10 = mean BT index [K]\n");
 
-    /* Set box sizes... */
+    /* Set grid box size... */
     dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
-    dlat = dy2deg(ctl->prof_r);
-    r2 = gsl_pow_2(ctl->prof_r);
-    area = M_PI * r2;
+    dlon = (ctl->prof_lon1 - ctl->prof_lon0) / ctl->prof_nx;
+    dlat = (ctl->prof_lat1 - ctl->prof_lat0) / ctl->prof_ny;
   }
 
   /* Set time interval... */
   t0 = t - 0.5 * ctl->dt_mod;
   t1 = t + 0.5 * ctl->dt_mod;
 
+  /* Initialize... */
+  for (ix = 0; ix < ctl->prof_nx; ix++)
+    for (iy = 0; iy < ctl->prof_ny; iy++) {
+      obsmean[ix][iy] = 0;
+      obscount[ix][iy] = 0;
+      tmean[ix][iy] = 0;
+      for (iz = 0; iz < ctl->prof_nz; iz++)
+	mass[ix][iy][iz] = 0;
+    }
+
   /* Read data... */
-  while (!feof(in)) {
+  while (fgets(line, LEN, in)) {
 
     /* Read data... */
-    if (next)
-      while (fgets(line, LEN, in))
-	if (sscanf(line, "%lg %lg %lg", &rt, &rlon, &rlat) == 3)
-	  break;
+    if (sscanf(line, "%lg %lg %lg %lg", &rt, &rlon, &rlat, &robs) != 4)
+      continue;
 
     /* Check time... */
-    if (rt < t0) {
-      next = 1;
+    if (rt < t0)
       continue;
-    }
-    if (rt > t1) {
-      next = 0;
+    if (rt > t1)
       break;
-    }
-    next = 1;
 
-    /* Get position... */
-    geo2cart(0, rlon, rlat, x0);
-    dlon = dx2deg(ctl->prof_r, rlat);
+    /* Calculate indices... */
+    ix = (int) ((rlon - ctl->prof_lon0) / dlon);
+    iy = (int) ((rlat - ctl->prof_lat0) / dlat);
 
-    /* Init... */
-    for (iz = 0; iz < ctl->prof_nz; iz++)
-      mass[iz] = 0;
+    /* Check indices... */
+    if (ix < 0 || ix >= ctl->prof_nx || iy < 0 || iy >= ctl->prof_ny)
+      continue;
 
-    /* Loop over air parcles... */
-    for (ip = 0; ip < atm->np; ip++) {
-
-      /* Check latitudinal distance... */
-      if (fabs(atm->lat[ip] - rlat) > dlat
-	  || fabs(atm->lon[ip] - rlon) > dlon)
-	continue;
-
-      /* Get vertical index... */
-      iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
-      if (iz < 0 || iz >= ctl->prof_nz)
-	continue;
-
-      /* Check horizontal distance... */
-      geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
-      if (DIST2(x0, x1) > r2)
-	continue;
-
-      /* Add mass... */
-      mass[iz] += atm->q[ctl->qnt_m][ip];
-    }
-
-    /* Write profile data... */
-    fprintf(out, "\n");
-    for (iz = 0; iz < ctl->prof_nz; iz++) {
-
-      /* Get meteorological data... */
-      z = ctl->prof_z0 + dz * (iz + 0.5);
-      press = P(z);
-      intpol_met_time(met0, met1, t, press, rlon, rlat,
-		      NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
-
-      /* Calculate mass mixing ratio... */
-      rho_air = 100. * press / (287.058 * temp);
-      mmr = mass[iz] / (rho_air * 1e9 * area * dz);
-
-      /* Write output... */
-      fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
-	      rt, z, rlon, rlat, press, temp, mmr, h2o, o3);
-    }
+    /* Get mean observation index... */
+    obsmean[ix][iy] += robs;
+    tmean[ix][iy] += rt;
+    obscount[ix][iy]++;
   }
 
-  /* Close files... */
-  if (t == ctl->t_stop) {
+  /* Analyze model data... */
+  for (ip = 0; ip < atm->np; ip++) {
+
+    /* Check time... */
+    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
+
+    /* Get indices... */
+    ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
+    iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
+    iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
+
+    /* Check indices... */
+    if (ix < 0 || ix >= ctl->prof_nx ||
+	iy < 0 || iy >= ctl->prof_ny || iz < 0 || iz >= ctl->prof_nz)
+      continue;
+
+    /* Get total mass in grid cell... */
+    mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+  }
+
+  /* Extract profiles... */
+  for (ix = 0; ix < ctl->prof_nx; ix++)
+    for (iy = 0; iy < ctl->prof_ny; iy++)
+      if (obscount[ix][iy] > 0) {
+
+	/* Write output... */
+	fprintf(out, "\n");
+
+	/* Loop over altitudes... */
+	for (iz = 0; iz < ctl->prof_nz; iz++) {
+
+	  /* Set coordinates... */
+	  z = ctl->prof_z0 + dz * (iz + 0.5);
+	  lon = ctl->prof_lon0 + dlon * (ix + 0.5);
+	  lat = ctl->prof_lat0 + dlat * (iy + 0.5);
+
+	  /* Get meteorological data... */
+	  press = P(z);
+	  intpol_met_time(met0, met1, t, press, lon, lat,
+			  NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
+
+	  /* Calculate mass mixing ratio... */
+	  rho_air = 100. * press / (287.058 * temp);
+	  area = dlat * dlon * gsl_pow_2(M_PI * RE / 180.)
+	    * cos(lat * M_PI / 180.);
+	  mmr = mass[ix][iy][iz] / (rho_air * area * dz * 1e9);
+
+	  /* Write output... */
+	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n",
+		  tmean[ix][iy] / obscount[ix][iy],
+		  z, lon, lat, press, temp, mmr, h2o, o3,
+		  obsmean[ix][iy] / obscount[ix][iy]);
+	}
+      }
+
+  /* Close file... */
+  if (t == ctl->t_stop)
     fclose(out);
-    fclose(in);
-  }
 }
 
 /*****************************************************************************/

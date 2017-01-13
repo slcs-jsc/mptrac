@@ -359,17 +359,32 @@ typedef struct {
   /*! Observation data file for profile output. */
   char prof_obsfile[LEN];
 
-  /*! Number of altitudes of profile data. */
+  /*! Number of altitudes of gridded profile data. */
   int prof_nz;
 
-  /*! Lower altitude of profile data [km]. */
+  /*! Lower altitude of gridded profile data [km]. */
   double prof_z0;
 
-  /*! Upper altitude of profile data [km]. */
+  /*! Upper altitude of gridded profile data [km]. */
   double prof_z1;
 
-  /*! Horizontal radius for profile data [km]. */
-  double prof_r;
+  /*! Number of longitudes of gridded profile data. */
+  int prof_nx;
+
+  /*! Lower longitude of gridded profile data [deg]. */
+  double prof_lon0;
+
+  /*! Upper longitude of gridded profile data [deg]. */
+  double prof_lon1;
+
+  /*! Number of latitudes of gridded profile data. */
+  int prof_ny;
+
+  /*! Lower latitude of gridded profile data [deg]. */
+  double prof_lat0;
+
+  /*! Upper latitude of gridded profile data [deg]. */
+  double prof_lat1;
 
   /*! Basename of station data file. */
   char stat_basename[LEN];
