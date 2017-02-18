@@ -5,34 +5,91 @@ Lagrangian particle dispersion model for the free troposphere
 and stratosphere. MPTRAC has been developed to support
 the analysis of atmospheric transport processes.
 
-## Algorithms
-
 The primary task of MPTRAC is to calculate air parcel trajectories by
 solving the kinematic equation of motion. Turbulent diffusion and
 sub-grid scale wind fluctuations are simulated with Markov chain models.
 Additional modules are implemented to simulate the sedimentation
 of air parcels and the decay of particle mass.
 
-## Implementation
+MPTRAC can be used on a desktop PC, but it also features an
+MPI/OpenMP hybrid parallelization for efficient use on supercomputers.
 
-MPTRAC is written in the C programming language. It uses the
-GNU Scientific Library (https://www.gnu.org/software/gsl) for
-numerical operations. The Unidata netCDF library
-(http://www.unidata.ucar.edu/software/netcdf) is used for
-file-I/O. MPTRAC can be used on a desktop PC, but it also features
-an MPI/OpenMP hybrid parallelization for efficient use on supercomputers.
+Further information can be found at:
+http://www.fz-juelich.de/ias/jsc/mptrac
+
+## Installation
+
+This documentation describes the installation of MPTRAC on a Linux system.
+A number of standard tools such as the GNU Compiler Collection (gcc)
+and 'make' are required to install MPTRAC.
+
+Start by downloading the source code from the github repository:
+
+    git clone https://github.com/slcs-jsc/mptrac
+
+Change to the directory mptrac/ which holds source codes,
+libraries, documentation, etc:
+
+    cd mptrac
+
+The GNU Scientific Library (https://www.gnu.org/software/gsl)
+is required for numerical operations and the Unidata netCDF library
+(http://www.unidata.ucar.edu/software/netcdf) is needed file-I/O.
+Copies of these libraries can be found in the repository, if they are
+not available on your system. A script is provided to build the libraries:
+
+    cd lib
+    ./build.sh
+
+Next, change to the source directory and edit the Makefile according to
+your needs. In particular, check the paths to the libraries
+(INCDIR and LIBDIR). Then try to compile the code:
+
+    cd ../src
+    emacs Makefile
+    make
+
+The binaries will linked statically, i.e., they can be copied and run on
+other machines. Sometimes this causes problems, in particular in combination
+with MPI. In this case remove the '-static' flag from the CFLAGS in the
+Makefile and compile again.
+
+By default we use rather strict compiler warnings.
+All warning messages will be turned into errors and no binaries will be
+produced. This behavior is enforced by the flag '-Werror'.
+
+The binaries will remain in the src/ directory.
+
+## Getting started
+
+This script illustrates how to use MPTRAC:
+
+    cd mptrac/example
+    ./run.sh
+
+The example illustrates how to simulate the dispersion of volcanic ash from the
+eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
+
+The script generates a number of plots at different times after the
+eruption by means of 'gnuplot'. These plots should look similar to
+the output already provided in the repository.
+
+More details on the control parameters, data structures, and algorithms
+can be found in the MPTRAC reference manual:
+
+     evince ../doc/refman.pdf
 
 ## Contact
 
 We are interested in sharing MPTRAC for research applications.
 
-Please do not hesitate to contact us if you have further questions:
+Please do not hesitate to contact us if you have any further questions:
 
 Dr. Lars Hoffmann  
 Forschungszentrum Jülich  
 Jülich Supercomputing Centre  
 52425 Jülich  
-Germany
+Germany  
 
 e-mail: l.hoffmann@fz-juelich.de
 
