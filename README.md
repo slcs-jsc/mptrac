@@ -49,7 +49,7 @@ your needs. In particular, check the paths to the libraries
     emacs Makefile
     make
 
-The binaries will linked statically, i.e., they can be copied and run on
+The binaries will be linked statically, i.e., they can be copied and run on
 other machines. Sometimes this causes problems, in particular in combination
 with MPI. In this case remove the '-static' flag from the CFLAGS in the
 Makefile and compile again.
@@ -64,15 +64,16 @@ The binaries will remain in the src/ directory.
 
 This script illustrates how to use MPTRAC:
 
-    cd mptrac/example
+    cd ../example
     ./run.sh
 
 The example illustrates how to simulate the dispersion of volcanic ash from the
 eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-The script generates a number of plots at different times after the
-eruption by means of 'gnuplot'. These plots should look similar to
-the output already provided in the repository.
+The script generates a number of plots of the simulation output
+at different times after the eruption by means of 'gnuplot'.
+These plots should look similar to the output already
+provided in the repository.
 
 More details on the control parameters, data structures, and algorithms
 can be found in the MPTRAC reference manual:
