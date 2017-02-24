@@ -251,7 +251,7 @@ void intpol_met_space(
   int ip, ix, iy;
 
   /* Check longitude... */
-  if (lon < 0)
+  if (met->lon[met->nx - 1] > 180 && lon < 0)
     lon += 360;
 
   /* Get indices... */

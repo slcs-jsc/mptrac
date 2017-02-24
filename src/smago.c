@@ -82,12 +82,12 @@ int main(
   for (iy = 0; iy < met->ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < met->nx; ix++)
-      if (met->lon[ix] >= 180 && met->lon[ix] < 360)
+      if (met->lon[ix] >= 180)
 	fprintf(out, "%g %g %g %g %g\n",
 		met->lon[ix] - 360.0, met->lat[iy],
 		met->u[ix][iy][ip], met->v[ix][iy][ip], k[ix][iy]);
     for (ix = 0; ix < met->nx; ix++)
-      if (met->lon[ix] <= 180 && met->lon[ix] > 0)
+      if (met->lon[ix] <= 180)
 	fprintf(out, "%g %g %g %g %g\n",
 		met->lon[ix], met->lat[iy],
 		met->u[ix][iy][ip], met->v[ix][iy][ip], k[ix][iy]);
