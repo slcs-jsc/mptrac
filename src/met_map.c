@@ -58,7 +58,7 @@ int main(
       continue;
     else
       fclose(in);
-    read_met(argv[i], met);
+    read_met(&ctl, argv[i], met);
 
     /* Find nearest pressure level... */
     for (ip2 = 0; ip2 < met->np; ip2++) {

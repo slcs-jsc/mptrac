@@ -78,7 +78,7 @@ int main(
       continue;
     else
       fclose(in);
-    read_met(argv[i], met);
+    read_met(&ctl, argv[i], met);
 
     /* Average... */
     for (z = z0; z <= z1; z += dz) {

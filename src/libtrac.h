@@ -142,13 +142,13 @@
 #define NQ 5
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 66
+#define EP 73
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 361
+#define EX 577
 
 /*! Maximum number of latitudes for meteorological data. */
-#define EY 181
+#define EY 361
 
 /*! Maximum number of longitudes for gridded data. */
 #define GX 720
@@ -234,6 +234,12 @@ typedef struct {
 
   /*! Time step of meteorological data [s]. */
   double dt_met;
+
+  /*! Number of target pressure levels. */
+  int met_np;
+
+  /*! Target pressure levels [hPa]. */
+  double met_p[EP];
 
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
@@ -459,6 +465,9 @@ typedef struct {
   /*! Surface pressure [hPa]. */
   double ps[EX][EY];
 
+  /*! Pressure on model levels [hPa]. */
+  float pl[EX][EY][EP];
+
   /*! Temperature [K]. */
   float t[EX][EY][EP];
 
@@ -623,6 +632,7 @@ void read_ctl(
 
 /*! Read meteorological data file. */
 void read_met(
+  ctl_t * ctl,
   char *filename,
   met_t * met);
 
@@ -636,9 +646,14 @@ void read_met_help(
   char *varname,
   char *varname2,
   met_t * met,
-  int np,
   float dest[EX][EY][EP],
   float scl);
+
+/*! Convert meteorological data from model levels to pressure levels. */
+void read_met_ml2pl(
+  ctl_t * ctl,
+  met_t * met,
+  float var[EX][EY][EP]);
 
 /*! Create meteorological data with periodic boundary conditions. */
 void read_met_periodic(

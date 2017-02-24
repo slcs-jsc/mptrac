@@ -130,24 +130,24 @@ void get_met(
     init = 1;
 
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(filename, met0);
+    read_met(ctl, filename, met0);
 
     get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
-    read_met(filename, met1);
+    read_met(ctl, filename, met1);
   }
 
   /* Read new data for forward trajectories... */
   if (t > met1->time && ctl->direction == 1) {
     memcpy(met0, met1, sizeof(met_t));
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
-    read_met(filename, met1);
+    read_met(ctl, filename, met1);
   }
 
   /* Read new data for backward trajectories... */
   if (t < met0->time && ctl->direction == -1) {
     memcpy(met1, met0, sizeof(met_t));
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(filename, met0);
+    read_met(ctl, filename, met0);
   }
 }
 
@@ -461,7 +461,7 @@ void read_ctl(
   char *argv[],
   ctl_t * ctl) {
 
-  int iq;
+  int ip, iq;
 
   /* Write info... */
   printf("\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
@@ -544,6 +544,11 @@ void read_ctl(
 
   /* Meteorological data... */
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
+  ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
+  if (ctl->met_np > EP)
+    ERRMSG("Too many levels!");
+  for (ip = 0; ip < ctl->met_np; ip++)
+    ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf
@@ -653,6 +658,7 @@ void read_ctl(
 /*****************************************************************************/
 
 void read_met(
+  ctl_t * ctl,
   char *filename,
   met_t * met) {
 
@@ -695,29 +701,64 @@ void read_met(
   NC(nc_inq_dimid(ncid, "lev", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &np));
   if (np > EP)
-    ERRMSG("Too many pressure levels!");
+    ERRMSG("Too many levels!");
 
   /* Store dimensions... */
   met->np = (int) np;
   met->nx = (int) nx;
   met->ny = (int) ny;
 
-  /* Read geolocations... */
-  NC(nc_inq_varid(ncid, "lev", &varid));
-  NC(nc_get_var_double(ncid, varid, met->p));
-
+  /* Get horizontal grid... */
   NC(nc_inq_varid(ncid, "lon", &varid));
   NC(nc_get_var_double(ncid, varid, met->lon));
-
   NC(nc_inq_varid(ncid, "lat", &varid));
   NC(nc_get_var_double(ncid, varid, met->lat));
 
-  /* Check and convert pressure levels... */
-  for (ip = 0; ip < met->np; ip++) {
-    if (ip > 0 && met->p[ip - 1] > met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
-    met->p[ip] /= 100.;
+  /* Read meteorological data... */
+  read_met_help(ncid, "t", "T", met, met->t, 1.0);
+  read_met_help(ncid, "u", "U", met, met->u, 1.0);
+  read_met_help(ncid, "v", "V", met, met->v, 1.0);
+  read_met_help(ncid, "w", "W", met, met->w, 0.01f);
+  read_met_help(ncid, "q", "Q", met, met->h2o, 1.608f);
+  read_met_help(ncid, "o3", "O3", met, met->o3, 0.602f);
+
+  /* Meteo data on pressure levels... */
+  if (ctl->met_np <= 0) {
+
+    /* Read pressure levels from file... */
+    NC(nc_inq_varid(ncid, "lev", &varid));
+    NC(nc_get_var_double(ncid, varid, met->p));
+    for (ip = 0; ip < met->np; ip++)
+      met->p[ip] /= 100.;
+
+    /* Extrapolate data for lower boundary... */
+    read_met_extrapolate(met);
   }
+
+  /* Meteo data on model levels... */
+  else {
+
+    /* Read pressure data from file... */
+    read_met_help(ncid, "pl", "PL", met, met->pl, 0.01f);
+
+    /* Interpolate from model levels to pressure levels... */
+    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->u);
+    read_met_ml2pl(ctl, met, met->v);
+    read_met_ml2pl(ctl, met, met->w);
+    read_met_ml2pl(ctl, met, met->h2o);
+    read_met_ml2pl(ctl, met, met->o3);
+
+    /* Set pressure levels... */
+    met->np = ctl->met_np;
+    for (ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
+  }
+
+  /* Check ordering of pressure levels... */
+  for (ip = 1; ip < met->np; ip++)
+    if (met->p[ip - 1] < met->p[ip])
+      ERRMSG("Pressure levels must be descending!");
 
   /* Read surface pressure... */
   if (nc_inq_varid(ncid, "PS", &varid) == NC_NOERR) {
@@ -735,18 +776,7 @@ void read_met(
       for (iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = met->p[0];
 
-  /* Read meteorological data... */
-  read_met_help(ncid, "t", "T", met, met->np, met->t, 1.0);
-  read_met_help(ncid, "u", "U", met, met->np, met->u, 1.0);
-  read_met_help(ncid, "v", "V", met, met->np, met->v, 1.0);
-  read_met_help(ncid, "w", "W", met, met->np, met->w, 0.01f);
-  read_met_help(ncid, "q", "Q", met, met->np, met->h2o, 1.608f);
-  read_met_help(ncid, "o3", "O3", met, met->np, met->o3, 0.602f);
-
-  /* Extrapolate data for lower boundary... */
-  read_met_extrapolate(met);
-
-  /* Copy data to obtain periodic boundary conditions... */
+  /* Create periodic boundary conditions... */
   read_met_periodic(met);
 
   /* Close file... */
@@ -791,7 +821,6 @@ void read_met_help(
   char *varname,
   char *varname2,
   met_t * met,
-  int np,
   float dest[EX][EY][EP],
   float scl) {
 
@@ -808,13 +837,51 @@ void read_met_help(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
-  for (ip = 0; ip < np; ip++)
+  for (ip = 0; ip < met->np; ip++)
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++) {
 	dest[ix][iy][ip] = scl * help[n++];
-	if (dest[ix][iy][ip] < -1e10 || dest[ix][iy][ip] > 1e10)
+	if (fabs(dest[ix][iy][ip] / scl) > 1e14)
 	  dest[ix][iy][ip] = GSL_NAN;
       }
+}
+
+/*****************************************************************************/
+
+void read_met_ml2pl(
+  ctl_t * ctl,
+  met_t * met,
+  float var[EX][EY][EP]) {
+
+  double aux[EP], p[EP], pt;
+
+  int ip, ip2, ix, iy;
+
+  /* Loop over columns... */
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+
+      /* Copy pressure profile... */
+      for (ip = 0; ip < met->np; ip++)
+	p[ip] = met->pl[ix][iy][ip];
+
+      /* Interpolate... */
+      for (ip = 0; ip < ctl->met_np; ip++) {
+	pt = ctl->met_p[ip];
+	if ((pt > p[0] && p[0] > p[1]) || (pt < p[0] && p[0] < p[1]))
+	  pt = p[0];
+	else if ((pt > p[met->np - 1] && p[1] > p[0])
+		 || (pt < p[met->np - 1] && p[1] < p[0]))
+	  pt = p[met->np - 1];
+	ip2 = locate(p, met->np, pt);
+	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
+		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
+      }
+
+      /* Copy data... */
+      for (ip = 0; ip < ctl->met_np; ip++)
+	var[ix][iy][ip] = (float) aux[ip];
+    }
 }
 
 /*****************************************************************************/
@@ -825,7 +892,8 @@ void read_met_periodic(
   int ip, iy;
 
   /* Check longitudes... */
-  if (fabs(met->lon[met->nx - 1] - met->lon[0] - 360) < 0.01)
+  if (!(fabs(met->lon[met->nx - 1] - met->lon[0]
+	     + met->lon[1] - met->lon[0] - 360) < 0.01))
     return;
 
   /* Increase longitude counter... */

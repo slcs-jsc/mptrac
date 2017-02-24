@@ -59,7 +59,7 @@ int main(
       continue;
     else
       fclose(in);
-    read_met(argv[i], met);
+    read_met(&ctl, argv[i], met);
 
     /* Average data... */
     for (ix = 0; ix < met->nx; ix++)
