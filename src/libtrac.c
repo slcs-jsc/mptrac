@@ -720,16 +720,20 @@ void read_met(
   }
 
   /* Read surface pressure... */
-  if (nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
+  if (nc_inq_varid(ncid, "PS", &varid) == NC_NOERR) {
+    NC(nc_get_var_float(ncid, varid, help));
+    for (iy = 0; iy < met->ny; iy++)
+      for (ix = 0; ix < met->nx; ix++)
+	met->ps[ix][iy] = help[iy * met->nx + ix] / 100.;
+  } else if (nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
 	met->ps[ix][iy] = exp(help[iy * met->nx + ix]) / 100.;
-  } else {
+  } else
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = met->p[0];
-  }
 
   /* Read meteorological data... */
   read_met_help(ncid, "t", "T", met, met->np, met->t, 1.0);
