@@ -145,7 +145,7 @@
 #define EP 73
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 577
+#define EX 721
 
 /*! Maximum number of latitudes for meteorological data. */
 #define EY 361
