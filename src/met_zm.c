@@ -46,7 +46,7 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
+    ERRMSG("Give parameters: <ctl> <zm.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
