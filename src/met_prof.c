@@ -46,8 +46,8 @@ int main(
   FILE *in, *out;
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
-    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ],
-    u, um[NZ], v, vm[NZ], w, wm[NZ], h2o, h2om[NZ], o3, o3m[NZ];
+    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ],
+    w, wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ];
 
   static int i, iz, np[NZ];
 
@@ -87,7 +87,7 @@ int main(
 	ERRMSG("Too many altitudes!");
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
-	  intpol_met_space(met, P(z), lon, lat, NULL,
+	  intpol_met_space(met, P(z), lon, lat, &ps,
 			   &t, &u, &v, &w, &h2o, &o3);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
@@ -100,6 +100,7 @@ int main(
 	    wm[iz] += w;
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
+	    psm[iz] += ps;
 	    np[iz]++;
 	  }
 	}
@@ -119,6 +120,7 @@ int main(
       wm[iz] /= np[iz];
       h2om[iz] /= np[iz];
       o3m[iz] /= np[iz];
+      psm[iz] /= np[iz];
     } else {
       timem[iz] = GSL_NAN;
       lonm[iz] = GSL_NAN;
@@ -129,6 +131,7 @@ int main(
       wm[iz] = GSL_NAN;
       h2om[iz] = GSL_NAN;
       o3m[iz] = GSL_NAN;
+      psm[iz] = GSL_NAN;
     }
   }
 
@@ -149,14 +152,15 @@ int main(
 	  "# $8  = meridional wind [m/s]\n"
 	  "# $9  = vertical wind [hPa/s]\n"
 	  "# $10 = H2O volume mixing ratio [1]\n"
-	  "# $11 = O3 volume mixing ratio [1]\n\n");
+	  "# $11 = O3 volume mixing ratio [1]\n"
+	  "# $12 = surface pressure [hPa]\n\n");
 
   /* Write data... */
   for (z = z0; z <= z1; z += dz) {
     iz = (int) ((z - z0) / dz);
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g\n",
-	    timem[iz], z, lonm[iz], latm[iz], P(z),
-	    tm[iz], um[iz], vm[iz], wm[iz], h2om[iz], o3m[iz]);
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g\n",
+	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz],
+	    um[iz], vm[iz], wm[iz], h2om[iz], o3m[iz], psm[iz]);
   }
 
   /* Close file... */
