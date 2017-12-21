@@ -217,6 +217,9 @@ typedef struct {
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
 
+  /*! Quantity array index for potential vorticity. */
+  int qnt_pv;
+
   /*! Quantity array index for station flag. */
   int qnt_stat;
 

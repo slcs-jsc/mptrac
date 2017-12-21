@@ -772,54 +772,72 @@ void module_meteo(
   atm_t * atm,
   int ip) {
 
-  /* Interpolate surface pressure... */
+  double ps, p1, t, t1, u, u1, v, v1, w, h2o, o3, grad, vort;
+
+  /* Interpolate meteorological data... */
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		  atm->lat[ip], &ps, &t, &u, &v, &w, &h2o, &o3);
+
+  /* Set surface pressure... */
   if (ctl->qnt_ps >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], &atm->q[ctl->qnt_ps][ip], NULL,
-		    NULL, NULL, NULL, NULL, NULL);
+    atm->q[ctl->qnt_ps][ip] = ps;
 
-  /* Interpolate temperature... */
+  /* Set temperature... */
   if (ctl->qnt_t >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, &atm->q[ctl->qnt_t][ip],
-		    NULL, NULL, NULL, NULL, NULL);
+    atm->q[ctl->qnt_t][ip] = t;
 
-  /* Interpolate zonal wind... */
+  /* Set zonal wind... */
   if (ctl->qnt_u >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_u][ip],
-		    NULL, NULL, NULL, NULL);
+    atm->q[ctl->qnt_u][ip] = u;
 
-  /* Interpolate meridional wind... */
+  /* Set meridional wind... */
   if (ctl->qnt_v >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL,
-		    &atm->q[ctl->qnt_v][ip], NULL, NULL, NULL);
+    atm->q[ctl->qnt_v][ip] = v;
 
-  /* Interpolate vertical velocity... */
+  /* Set vertical velocity... */
   if (ctl->qnt_w >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, NULL,
-		    &atm->q[ctl->qnt_w][ip], NULL, NULL);
+    atm->q[ctl->qnt_w][ip] = w;
 
-  /* Interpolate water vapor vmr... */
+  /* Set water vapor vmr... */
   if (ctl->qnt_h2o >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, NULL, NULL,
-		    &atm->q[ctl->qnt_h2o][ip], NULL);
+    atm->q[ctl->qnt_h2o][ip] = h2o;
 
-  /* Interpolate ozone... */
+  /* Set ozone vmr... */
   if (ctl->qnt_o3 >= 0)
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, NULL, NULL, NULL,
-		    &atm->q[ctl->qnt_o3][ip]);
+    atm->q[ctl->qnt_o3][ip] = o3;
 
   /* Calculate potential temperature... */
-  if (ctl->qnt_theta >= 0) {
+  if (ctl->qnt_theta >= 0)
+    atm->q[ctl->qnt_theta][ip] = t * pow(P0 / atm->p[ip], 0.286);
+
+  /* Calculate potential vorticity... */
+  if (ctl->qnt_pv >= 0) {
+
+    /* Absolute vorticity... */
+    vort = 2 * 7.2921e-5 * sin(atm->lat[ip] * M_PI / 180.);
+    if (fabs(atm->lat[ip]) < 89.) {
+      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+		      (atm->lon[ip] >=
+		       0 ? atm->lon[ip] - 1. : atm->lon[ip] + 1.),
+		      atm->lat[ip], NULL, NULL, NULL, &v1, NULL, NULL, NULL);
+      vort += (v1 - v) / 1000.
+	/ ((atm->lon[ip] >= 0 ? -1 : 1) * deg2dx(1., atm->lat[ip]));
+    }
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, &atm->q[ctl->qnt_theta][ip],
-		    NULL, NULL, NULL, NULL, NULL);
-    atm->q[ctl->qnt_theta][ip] *= pow(P0 / atm->p[ip], 0.286);
+		    (atm->lat[ip] >=
+		     0 ? atm->lat[ip] - 1. : atm->lat[ip] + 1.), NULL, NULL,
+		    &u1, NULL, NULL, NULL, NULL);
+    vort += (u1 - u) / 1000. / ((atm->lat[ip] >= 0 ? -1 : 1) * deg2dy(1.));
+
+    /* Potential temperature gradient... */
+    p1 = 0.85 * atm->p[ip];
+    intpol_met_time(met0, met1, atm->time[ip], p1, atm->lon[ip],
+		    atm->lat[ip], NULL, &t1, NULL, NULL, NULL, NULL, NULL);
+    grad = (t1 * pow(P0 / p1, 0.286) - t * pow(P0 / atm->p[ip], 0.286))
+      / (100. * (p1 - atm->p[ip]));
+
+    /* Calculate PV... */
+    atm->q[ctl->qnt_pv][ip] = -1e6 * G0 * vort * grad;
   }
 }
 

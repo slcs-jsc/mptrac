@@ -480,6 +480,7 @@ void read_ctl(
   ctl->qnt_h2o = -1;
   ctl->qnt_o3 = -1;
   ctl->qnt_theta = -1;
+  ctl->qnt_pv = -1;
   ctl->qnt_stat = -1;
 
   /* Read quantities... */
@@ -525,6 +526,9 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
       sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "pv") == 0) {
+      ctl->qnt_pv = iq;
+      sprintf(ctl->qnt_unit[iq], "PVU");
     } else if (strcmp(ctl->qnt_name[iq], "stat") == 0) {
       ctl->qnt_stat = iq;
       sprintf(ctl->qnt_unit[iq], "-");
