@@ -772,7 +772,8 @@ void module_meteo(
   atm_t * atm,
   int ip) {
 
-  double ps, p1, t, t1, u, u1, v, v1, w, h2o, o3, grad, vort;
+  double b, c, ps, p1, p_hno3, p_h2o, t, t1, term1, term2,
+    u, u1, v, v1, w, x1, x2, h2o, o3, grad, vort;
 
   /* Interpolate meteorological data... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
@@ -781,6 +782,10 @@ void module_meteo(
   /* Set surface pressure... */
   if (ctl->qnt_ps >= 0)
     atm->q[ctl->qnt_ps][ip] = ps;
+
+  /* Set pressure... */
+  if (ctl->qnt_p >= 0)
+    atm->q[ctl->qnt_p][ip] = atm->p[ip];
 
   /* Set temperature... */
   if (ctl->qnt_t >= 0)
@@ -838,6 +843,27 @@ void module_meteo(
 
     /* Calculate PV... */
     atm->q[ctl->qnt_pv][ip] = -1e6 * G0 * vort * grad;
+  }
+
+  /* Calculate T_ice (Marti and Mauersberger, 1993)... */
+  if (ctl->qnt_tice >= 0)
+    atm->q[ctl->qnt_tice][ip] = -2663.5
+      / (log10(4e-6 * atm->p[ip] * 100.) - 12.537);
+
+  /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
+  if (ctl->qnt_tnat >= 0) {
+    p_hno3 = 9e-9 * atm->p[ip] / 1.333224;
+    p_h2o = 4e-6 * atm->p[ip] / 1.333224;
+    term1 = 38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o);
+    term2 = 0.009179 - 0.00088 * log10(p_h2o);
+    b = term1 / term2;
+    c = -11397.0 / term2;
+    x1 = (-b + sqrt(b * b - 4. * c)) / 2.;
+    x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
+    if (x1 > 0)
+      atm->q[ctl->qnt_tnat][ip] = x1;
+    if (x2 > 0)
+      atm->q[ctl->qnt_tnat][ip] = x2;
   }
 }
 

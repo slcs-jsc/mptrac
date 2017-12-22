@@ -139,7 +139,7 @@
 #define NP 10000000
 
 /*! Maximum number of quantities per data point. */
-#define NQ 5
+#define NQ 10
 
 /*! Maximum number of pressure levels for meteorological data. */
 #define EP 73
@@ -196,6 +196,9 @@ typedef struct {
   /*! Quantity array index for surface pressure. */
   int qnt_ps;
 
+  /*! Quantity array index for pressure. */
+  int qnt_p;
+
   /*! Quantity array index for temperature. */
   int qnt_t;
 
@@ -219,6 +222,12 @@ typedef struct {
 
   /*! Quantity array index for potential vorticity. */
   int qnt_pv;
+
+  /*! Quantity array index for T_ice. */
+  int qnt_tice;
+
+  /*! Quantity array index for T_NAT. */
+  int qnt_tnat;
 
   /*! Quantity array index for station flag. */
   int qnt_stat;

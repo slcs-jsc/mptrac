@@ -473,6 +473,7 @@ void read_ctl(
   ctl->qnt_r = -1;
   ctl->qnt_rho = -1;
   ctl->qnt_ps = -1;
+  ctl->qnt_p = -1;
   ctl->qnt_t = -1;
   ctl->qnt_u = -1;
   ctl->qnt_v = -1;
@@ -481,6 +482,8 @@ void read_ctl(
   ctl->qnt_o3 = -1;
   ctl->qnt_theta = -1;
   ctl->qnt_pv = -1;
+  ctl->qnt_tice = -1;
+  ctl->qnt_tnat = -1;
   ctl->qnt_stat = -1;
 
   /* Read quantities... */
@@ -504,6 +507,9 @@ void read_ctl(
       sprintf(ctl->qnt_unit[iq], "kg/m^3");
     } else if (strcmp(ctl->qnt_name[iq], "ps") == 0) {
       ctl->qnt_ps = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "p") == 0) {
+      ctl->qnt_p = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
     } else if (strcmp(ctl->qnt_name[iq], "t") == 0) {
       ctl->qnt_t = iq;
@@ -529,6 +535,12 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "pv") == 0) {
       ctl->qnt_pv = iq;
       sprintf(ctl->qnt_unit[iq], "PVU");
+    } else if (strcmp(ctl->qnt_name[iq], "tice") == 0) {
+      ctl->qnt_tice = iq;
+      sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "tnat") == 0) {
+      ctl->qnt_tnat = iq;
+      sprintf(ctl->qnt_unit[iq], "K");
     } else if (strcmp(ctl->qnt_name[iq], "stat") == 0) {
       ctl->qnt_stat = iq;
       sprintf(ctl->qnt_unit[iq], "-");
