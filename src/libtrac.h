@@ -290,6 +290,9 @@ typedef struct {
   /*! Time step for atmospheric data output [s]. */
   double atm_dt_out;
 
+  /*! Time filter for atmospheric data output (0=no, 1=yes). */
+  int atm_filter;
+
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 

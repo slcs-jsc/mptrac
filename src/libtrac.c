@@ -593,6 +593,8 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "ATM_GPFILE", -1, "-", ctl->atm_gpfile);
   ctl->atm_dt_out =
     scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
+  ctl->atm_filter =
+    (int) scan_ctl(filename, argc, argv, "ATM_FILTER", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -1225,9 +1227,13 @@ void write_atm(
 
   char line[LEN];
 
-  double r;
+  double r, t0, t1;
 
   int ip, iq, year, mon, day, hour, min, sec;
+
+  /* Set time interval for output... */
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
 
   /* Check if gnuplot output is requested... */
   if (ctl->atm_gpfile[0] != '-') {
@@ -1277,6 +1283,12 @@ void write_atm(
 
   /* Write data... */
   for (ip = 0; ip < atm->np; ip++) {
+
+    /* Check time... */
+    if (ctl->atm_filter && (atm->time[ip] < t0 || atm->time[ip] > t1))
+      continue;
+
+    /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
 	    atm->lon[ip], atm->lat[ip]);
     for (iq = 0; iq < ctl->nq; iq++) {
