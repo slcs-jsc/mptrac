@@ -160,8 +160,8 @@
 /*! Maximum number of altitudes for gridded data. */
 #define GZ 100
 
-/*! Maximum number of data points for PSC analysis. */
-#define NPSC 2000
+/*! Maximum number of data points for ensemble analysis. */
+#define NENS 2000
 
 /*! Maximum number of OpenMP threads. */
 #define NTHREADS 128
@@ -188,8 +188,8 @@ typedef struct {
   /*! Quantity output format. */
   char qnt_format[NQ][LEN];
 
-  /*! Quantity array index for trajectory start time. */
-  int qnt_t0;
+  /*! Quantity array index for ensemble IDs. */
+  int qnt_ens;
 
   /*! Quantity array index for mass. */
   int qnt_m;
@@ -232,6 +232,9 @@ typedef struct {
 
   /*! Quantity array index for T_ice. */
   int qnt_tice;
+
+  /*! Quantity array index for T_STS. */
+  int qnt_tsts;
 
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
@@ -287,6 +290,12 @@ typedef struct {
 
   /*! Life time of particles (stratosphere)  [s]. */
   double tdec_strat;
+
+  /*! H2O volume mixing ratio for PSC analysis. */
+  double psc_h2o;
+
+  /*! HNO3 volume mixing ratio for PSC analysis. */
+  double psc_hno3;
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];
@@ -414,8 +423,8 @@ typedef struct {
   /*! Upper latitude of gridded profile data [deg]. */
   double prof_lat1;
 
-  /*! Basename of PSC data file. */
-  char psc_basename[LEN];
+  /*! Basename of ensemble data file. */
+  char ens_basename[LEN];
 
   /*! Basename of station data file. */
   char stat_basename[LEN];
@@ -730,6 +739,13 @@ void write_csi(
   atm_t * atm,
   double t);
 
+/*! Write ensemble data. */
+void write_ens(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
 /*! Write gridded data. */
 void write_grid(
   const char *filename,
@@ -745,13 +761,6 @@ void write_prof(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
-
-/*! Write PSC data. */
-void write_psc(
-  const char *filename,
-  ctl_t * ctl,
   atm_t * atm,
   double t);
 

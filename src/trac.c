@@ -846,14 +846,14 @@ void module_meteo(
   }
 
   /* Calculate T_ice (Marti and Mauersberger, 1993)... */
-  if (ctl->qnt_tice >= 0)
+  if (ctl->qnt_tice >= 0 || ctl->qnt_tsts >= 0)
     atm->q[ctl->qnt_tice][ip] = -2663.5
-      / (log10(4e-6 * atm->p[ip] * 100.) - 12.537);
+      / (log10(ctl->psc_h2o * atm->p[ip] * 100.) - 12.537);
 
   /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
-  if (ctl->qnt_tnat >= 0) {
-    p_hno3 = 9e-9 * atm->p[ip] / 1.333224;
-    p_h2o = 4e-6 * atm->p[ip] / 1.333224;
+  if (ctl->qnt_tnat >= 0 || ctl->qnt_tsts >= 0) {
+    p_hno3 = ctl->psc_hno3 * atm->p[ip] / 1.333224;
+    p_h2o = ctl->psc_h2o * atm->p[ip] / 1.333224;
     term1 = 38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o);
     term2 = 0.009179 - 0.00088 * log10(p_h2o);
     b = term1 / term2;
@@ -864,6 +864,14 @@ void module_meteo(
       atm->q[ctl->qnt_tnat][ip] = x1;
     if (x2 > 0)
       atm->q[ctl->qnt_tnat][ip] = x2;
+  }
+
+  /* Calculate T_STS (mean of T_ice and T_NAT)... */
+  if (ctl->qnt_tsts >= 0) {
+    if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
+      ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
+    atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
+				       + atm->q[ctl->qnt_tnat][ip]);
   }
 }
 
@@ -998,6 +1006,18 @@ void write_output(
     write_atm(filename, ctl, atm, t);
   }
 
+  /* Write CSI data... */
+  if (ctl->csi_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
+    write_csi(filename, ctl, atm, t);
+  }
+
+  /* Write ensemble data... */
+  if (ctl->ens_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
+    write_ens(filename, ctl, atm, t);
+  }
+
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
@@ -1005,22 +1025,10 @@ void write_output(
     write_grid(filename, ctl, met0, met1, atm, t);
   }
 
-  /* Write CSI data... */
-  if (ctl->csi_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
-    write_csi(filename, ctl, atm, t);
-  }
-
   /* Write profile data... */
   if (ctl->prof_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write PSC data... */
-  if (ctl->psc_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->psc_basename);
-    write_psc(filename, ctl, atm, t);
   }
 
   /* Write station data... */
