@@ -36,6 +36,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_sort.h>
 #include <gsl/gsl_statistics.h>
 #include <math.h>
 #include <netcdf.h>
@@ -159,6 +160,9 @@
 /*! Maximum number of altitudes for gridded data. */
 #define GZ 100
 
+/*! Maximum number of data points for PSC analysis. */
+#define NPSC 2000
+
 /*! Maximum number of OpenMP threads. */
 #define NTHREADS 128
 
@@ -183,6 +187,9 @@ typedef struct {
 
   /*! Quantity output format. */
   char qnt_format[NQ][LEN];
+
+  /*! Quantity array index for trajectory start time. */
+  int qnt_t0;
 
   /*! Quantity array index for mass. */
   int qnt_m;
@@ -406,6 +413,9 @@ typedef struct {
 
   /*! Upper latitude of gridded profile data [deg]. */
   double prof_lat1;
+
+  /*! Basename of PSC data file. */
+  char psc_basename[LEN];
 
   /*! Basename of station data file. */
   char stat_basename[LEN];
@@ -735,6 +745,13 @@ void write_prof(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
+  atm_t * atm,
+  double t);
+
+/*! Write PSC data. */
+void write_psc(
+  const char *filename,
+  ctl_t * ctl,
   atm_t * atm,
   double t);
 

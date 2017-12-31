@@ -469,6 +469,7 @@ void read_ctl(
 	 argv[0], __DATE__, __TIME__);
 
   /* Initialize quantity indices... */
+  ctl->qnt_t0 = -1;
   ctl->qnt_m = -1;
   ctl->qnt_r = -1;
   ctl->qnt_rho = -1;
@@ -496,7 +497,10 @@ void read_ctl(
 	     ctl->qnt_format[iq]);
 
     /* Try to identify quantity... */
-    if (strcmp(ctl->qnt_name[iq], "m") == 0) {
+    if (strcmp(ctl->qnt_name[iq], "t0") == 0) {
+      ctl->qnt_t0 = iq;
+      sprintf(ctl->qnt_unit[iq], "s");
+    } else if (strcmp(ctl->qnt_name[iq], "m") == 0) {
       ctl->qnt_m = iq;
       sprintf(ctl->qnt_unit[iq], "kg");
     } else if (strcmp(ctl->qnt_name[iq], "r") == 0) {
@@ -664,6 +668,9 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "PROF_LAT1", -1, "90", NULL);
   ctl->prof_ny =
     (int) scan_ctl(filename, argc, argv, "PROF_NY", -1, "180", NULL);
+
+  /* Output of PSC data... */
+  scan_ctl(filename, argc, argv, "PSC_BASENAME", -1, "-", ctl->psc_basename);
 
   /* Output of station data... */
   scan_ctl(filename, argc, argv, "STAT_BASENAME", -1, "-",
@@ -1779,6 +1786,135 @@ void write_prof(
 	}
       }
 
+  /* Close file... */
+  if (t == ctl->t_stop)
+    fclose(out);
+}
+
+/*****************************************************************************/
+
+void write_psc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t) {
+
+  static FILE *out;
+
+  static double dtice[NPSC], dtsts[NPSC], dtnat[NPSC], dummy,
+    latm, lonm, p[NPSC], pv[NPSC], t0, t1, ts, x[NPSC][3], xm[3];
+  
+  static int init, ip;
+  
+  static size_t i, n;
+  
+  /* Init... */
+  if (!init) {
+    init = 1;
+
+    /* Check quantity indices... */
+    if (ctl->qnt_t0 < 0 || ctl->qnt_pv < 0 || ctl->qnt_t < 0 ||
+	ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
+      ERRMSG("Missing quantities for PSC analysis!");
+    
+    /* Create new file... */
+    printf("Write PSC data: %s\n", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n"
+	    "# $4 = latitude [deg]\n"
+	    "# $5 = start time [s]\n"
+	    "# $6 = potential vorticity [PVU]\n"
+	    "# $7 = T - T_ice (mean) [K]\n"
+	    "# $8 = T - T_ice (sigma) [K]\n"
+	    "# $9 = T - T_STS (mean) [K]\n"
+	    "# $10 = T - T_STS (sigma) [K]\n"
+	    "# $11 = T - T_NAT (mean) [K]\n"
+	    "# $12 = T - T_NAT (sigma) [K]\n\n");
+  }
+  
+  /* Set time interval... */
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Init... */
+  ts = GSL_NAN;
+  n = 0;
+
+  /* Loop over air parcels... */
+  for (ip = 0; ip < atm->np; ip++) {
+
+    /* Check time... */
+    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
+
+    /* Check trajectory start time... */
+    if (atm->q[ctl->qnt_t0][ip] != ts) {
+
+      /* Write results... */
+      if (n > 0) {
+
+	/* Get mean position... */
+	xm[0] = xm[1] = xm[2] = 0;
+	for (i = 0; i < n; i++) {
+	  xm[0] += x[i][0] / (double) n;
+	  xm[1] += x[i][1] / (double) n;
+	  xm[2] += x[i][2] / (double) n;
+	}
+	cart2geo(xm, &dummy, &lonm, &latm);
+
+	/* Get statistics... */
+	fprintf(out, "%.2f %g %g %g %.2f %g %.2f %.2f %.2f %.2f %.2f %.2f\n",
+		t, Z(gsl_stats_mean(p, 1, n)), lonm, latm, ts,
+		gsl_stats_mean(pv, 1, n),
+		gsl_stats_mean(dtice, 1, n), gsl_stats_sd(dtice, 1, n),
+		gsl_stats_mean(dtsts, 1, n), gsl_stats_sd(dtsts, 1, n),
+		gsl_stats_mean(dtnat, 1, n), gsl_stats_sd(dtnat, 1, n));
+      }
+
+      /* Save new start time... */
+      ts = atm->q[ctl->qnt_t0][ip];
+      n = 0;
+    }
+
+    /* Save data... */
+    p[n] = atm->p[ip];
+    geo2cart(0, atm->lon[ip], atm->lat[ip], x[n]);
+    pv[n] = atm->q[ctl->qnt_pv][ip];
+    dtice[n] = atm->q[ctl->qnt_t][ip] - atm->q[ctl->qnt_tice][ip];
+    dtsts[n] = atm->q[ctl->qnt_t][ip]
+      - 0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]);
+    dtnat[n] = atm->q[ctl->qnt_t][ip] - atm->q[ctl->qnt_tnat][ip];
+    if ((++n) >= NPSC)
+      ERRMSG("Too many data points!");
+  }
+  
+  /* Write results... */
+  if (n > 0) {
+    
+    /* Get mean position... */
+    xm[0] = xm[1] = xm[2] = 0;
+    for (i = 0; i < n; i++) {
+      xm[0] += x[i][0] / (double) n;
+      xm[1] += x[i][1] / (double) n;
+      xm[2] += x[i][2] / (double) n;
+    }
+    cart2geo(xm, &dummy, &lonm, &latm);
+    
+    /* Get statistics... */
+    fprintf(out, "%.2f %g %g %g %.2f %g %.2f %.2f %.2f %.2f %.2f %.2f\n",
+	    t, Z(gsl_stats_mean(p, 1, n)), lonm, latm, ts,
+	    gsl_stats_mean(pv, 1, n),
+	    gsl_stats_mean(dtice, 1, n), gsl_stats_sd(dtice, 1, n),
+	    gsl_stats_mean(dtsts, 1, n), gsl_stats_sd(dtsts, 1, n),
+	    gsl_stats_mean(dtnat, 1, n), gsl_stats_sd(dtnat, 1, n));
+  }
+  
   /* Close file... */
   if (t == ctl->t_stop)
     fclose(out);

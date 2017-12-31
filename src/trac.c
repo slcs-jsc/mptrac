@@ -1017,6 +1017,12 @@ void write_output(
     write_prof(filename, ctl, met0, met1, atm, t);
   }
 
+  /* Write PSC data... */
+  if (ctl->psc_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->psc_basename);
+    write_psc(filename, ctl, atm, t);
+  }
+
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
