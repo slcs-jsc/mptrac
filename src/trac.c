@@ -321,8 +321,9 @@ int main(
 
       /* Meteorological data... */
       START_TIMER(TIMER_METEO);
+      module_meteo(&ctl, met0, met1, atm, 0);
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
+      for (ip = 1; ip < atm->np; ip++)
 	module_meteo(&ctl, met0, met1, atm, ip);
       STOP_TIMER(TIMER_METEO);
 
@@ -906,45 +907,43 @@ void module_meteo(
       = LIN(topo_lon[ilon], var0, topo_lon[ilon + 1], var1, atm->lon[ip]);
   }
 
-  /* Get temperature variance data... */
-  if (ctl->qnt_gw_var >= 0) {
-
-#pragma omp single
-    {
-      /* Read variance data for current day... */
-      jsec2time(atm->time[ip], &year, &mon, &day, &idum, &idum, &idum, &rdum);
-      if (year != year_old || mon != mon_old || day != day_old) {
-	year_old = year;
-	mon_old = mon;
-	day_old = day;
-	nlon = nlat = -1;
-	sprintf(filename, "%s_%d_%02d_%02d.tab",
-		ctl->gw_basename, year, mon, day);
+  /* Read variance data for current day... */
+  if (ip == 0 && ctl->qnt_gw_var >= 0) {
+    jsec2time(atm->time[ip], &year, &mon, &day, &idum, &idum, &idum, &rdum);
+    if (year != year_old || mon != mon_old || day != day_old) {
+      year_old = year;
+      mon_old = mon;
+      day_old = day;
+      nlon = nlat = -1;
+      sprintf(filename, "%s_%d_%02d_%02d.tab",
+	      ctl->gw_basename, year, mon, day);
+      if ((in = fopen(filename, "r"))) {
 	printf("Read gravity wave data: %s\n", filename);
-	if ((in = fopen(filename, "r"))) {
-	  while (fgets(line, LEN, in)) {
-	    if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rvar) != 3)
-	      continue;
-	    if (rlat != rlat_old) {
-	      rlat_old = rlat;
-	      if ((++nlat) > GY)
-		ERRMSG("Too many latitudes!");
-	      nlon = -1;
-	    }
-	    if ((++nlon) > GX)
-	      ERRMSG("Too many longitudes!");
-	    lon[nlon] = rlon;
-	    lat[nlat] = rlat;
-	    var[nlon][nlat] = GSL_MAX(0, rvar);
+	while (fgets(line, LEN, in)) {
+	  if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rvar) != 3)
+	    continue;
+	  if (rlat != rlat_old) {
+	    rlat_old = rlat;
+	    if ((++nlat) > GY)
+	      ERRMSG("Too many latitudes!");
+	    nlon = -1;
 	  }
-	  fclose(in);
-	  nlat++;
-	  nlon++;
+	  if ((++nlon) > GX)
+	    ERRMSG("Too many longitudes!");
+	  lon[nlon] = rlon;
+	  lat[nlat] = rlat;
+	  var[nlon][nlat] = GSL_MAX(0, rvar);
 	}
-      }
+	fclose(in);
+	nlat++;
+	nlon++;
+      } else
+	printf("Missing gravity wave data: %s\n", filename);
     }
+  }
 
-    /* Interpolate variance data... */
+  /* Interpolate variance data... */
+  if (ctl->qnt_gw_var >= 0) {
     if (nlat >= 2 && nlon >= 2) {
       ilat = locate(lat, nlat, atm->lat[ip]);
       ilon = locate(lon, nlon, atm->lon[ip]);
