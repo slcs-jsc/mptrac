@@ -486,10 +486,15 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
+  ctl->qnt_gw_wind = -1;
+  ctl->qnt_gw_sso = -1;
+  ctl->qnt_gw_var = -1;
   ctl->qnt_stat = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
+  if (ctl->nq > NQ)
+    ERRMSG("Too many quantities!");
   for (iq = 0; iq < ctl->nq; iq++) {
 
     /* Read quantity name and format... */
@@ -549,6 +554,15 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "tnat") == 0) {
       ctl->qnt_tnat = iq;
       sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "gw_wind") == 0) {
+      ctl->qnt_gw_wind = iq;
+      sprintf(ctl->qnt_unit[iq], "m/s");
+    } else if (strcmp(ctl->qnt_name[iq], "gw_sso") == 0) {
+      ctl->qnt_gw_sso = iq;
+      sprintf(ctl->qnt_unit[iq], "m^2");
+    } else if (strcmp(ctl->qnt_name[iq], "gw_var") == 0) {
+      ctl->qnt_gw_var = iq;
+      sprintf(ctl->qnt_unit[iq], "K^2");
     } else if (strcmp(ctl->qnt_name[iq], "stat") == 0) {
       ctl->qnt_stat = iq;
       sprintf(ctl->qnt_unit[iq], "-");
@@ -600,6 +614,9 @@ void read_ctl(
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);
   ctl->psc_hno3 =
     scan_ctl(filename, argc, argv, "PSC_HNO3", -1, "9e-9", NULL);
+
+  /* Gravity wave analysis... */
+  scan_ctl(filename, argc, argv, "GW_BASENAME", -1, "-", ctl->gw_basename);
 
   /* Output of atmospheric data... */
   scan_ctl(filename, argc, argv, "ATM_BASENAME", -1, "-", ctl->atm_basename);

@@ -772,8 +772,21 @@ void module_meteo(
   atm_t * atm,
   int ip) {
 
+#include "topo.c"
+
+  static FILE *in;
+
+  static char filename[LEN], line[LEN];
+
+  static double lon[GX], lat[GY], var[GX][GY],
+    rdum, rlat, rlat_old = -999, rlon, rvar;
+
+  static int year_old, mon_old, day_old, nlon, nlat;
+
   double b, c, ps, p1, p_hno3, p_h2o, t, t1, term1, term2,
-    u, u1, v, v1, w, x1, x2, h2o, o3, grad, vort;
+    u, u1, v, v1, w, x1, x2, h2o, o3, grad, vort, var0, var1;
+
+  int day, mon, year, idum, ilat, ilon;
 
   /* Interpolate meteorological data... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
@@ -872,6 +885,77 @@ void module_meteo(
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
     atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
 				       + atm->q[ctl->qnt_tnat][ip]);
+  }
+
+  /* Interpolate low-level (750 hPa) wind... */
+  if (ctl->qnt_gw_wind >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], 750., atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_gw_wind][ip],
+		    NULL, NULL, NULL, NULL);
+
+  /* Interpolate terrain height variance... */
+  if (ctl->qnt_gw_sso >= 0) {
+    ilat = locate(topo_lat, TOPO_NLAT, atm->lat[ip]);
+    ilon = locate(topo_lon, TOPO_NLON, atm->lon[ip]);
+    var0 = LIN(topo_lat[ilat], topo_zvar[ilon][ilat],
+	       topo_lat[ilat + 1], topo_zvar[ilon][ilat + 1], atm->lat[ip]);
+    var1 = LIN(topo_lat[ilat], topo_zvar[ilon + 1][ilat],
+	       topo_lat[ilat + 1], topo_zvar[ilon + 1][ilat + 1],
+	       atm->lat[ip]);
+    atm->q[ctl->qnt_gw_sso][ip]
+      = LIN(topo_lon[ilon], var0, topo_lon[ilon + 1], var1, atm->lon[ip]);
+  }
+
+  /* Get temperature variance data... */
+  if (ctl->qnt_gw_var >= 0) {
+
+#pragma omp single
+    {
+      /* Read variance data for current day... */
+      jsec2time(atm->time[ip], &year, &mon, &day, &idum, &idum, &idum, &rdum);
+      if (year != year_old || mon != mon_old || day != day_old) {
+	year_old = year;
+	mon_old = mon;
+	day_old = day;
+	nlon = nlat = -1;
+	sprintf(filename, "%s_%d_%02d_%02d.tab",
+		ctl->gw_basename, year, mon, day);
+	printf("Read gravity wave data: %s\n", filename);
+	if ((in = fopen(filename, "r"))) {
+	  while (fgets(line, LEN, in)) {
+	    if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rvar) != 3)
+	      continue;
+	    if (rlat != rlat_old) {
+	      rlat_old = rlat;
+	      if ((++nlat) > GY)
+		ERRMSG("Too many latitudes!");
+	      nlon = -1;
+	    }
+	    if ((++nlon) > GX)
+	      ERRMSG("Too many longitudes!");
+	    lon[nlon] = rlon;
+	    lat[nlat] = rlat;
+	    var[nlon][nlat] = GSL_MAX(0, rvar);
+	  }
+	  fclose(in);
+	  nlat++;
+	  nlon++;
+	}
+      }
+    }
+
+    /* Interpolate variance data... */
+    if (nlat >= 2 && nlon >= 2) {
+      ilat = locate(lat, nlat, atm->lat[ip]);
+      ilon = locate(lon, nlon, atm->lon[ip]);
+      var0 = LIN(lat[ilat], var[ilon][ilat],
+		 lat[ilat + 1], var[ilon][ilat + 1], atm->lat[ip]);
+      var1 = LIN(lat[ilat], var[ilon + 1][ilat],
+		 lat[ilat + 1], var[ilon + 1][ilat + 1], atm->lat[ip]);
+      atm->q[ctl->qnt_gw_var][ip]
+	= LIN(lon[ilon], var0, lon[ilon + 1], var1, atm->lon[ip]);
+    } else
+      atm->q[ctl->qnt_gw_var][ip] = GSL_NAN;
   }
 }
 

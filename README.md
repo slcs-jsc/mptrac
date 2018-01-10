@@ -1,13 +1,13 @@
 # Massive-Parallel Trajectory Calculations
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a new
+Massive-Parallel Trajectory Calculations (MPTRAC) is a
 Lagrangian particle dispersion model for the free troposphere
 and stratosphere. MPTRAC has been developed to support
 the analysis of atmospheric transport processes.
 
 The primary task of MPTRAC is to calculate air parcel trajectories by
 solving the kinematic equation of motion. Turbulent diffusion and
-sub-grid scale wind fluctuations are simulated with Markov chain models.
+sub-grid scale wind fluctuations are simulated with a Markov chain model.
 Additional modules are implemented to simulate the sedimentation
 of air parcels and the decay of particle mass.
 
@@ -33,7 +33,7 @@ libraries, documentation, etc:
     cd mptrac
 
 The GNU Scientific Library (https://www.gnu.org/software/gsl)
-is required for numerical operations and the Unidata netCDF library
+is required for numerical calculations and the Unidata netCDF library
 (http://www.unidata.ucar.edu/software/netcdf) is needed file-I/O.
 Copies of these libraries can be found in the repository, if they are
 not available on your system. A script is provided to build the libraries:
@@ -49,10 +49,10 @@ your needs. In particular, check the paths to the libraries
     emacs Makefile
     make
 
-The binaries will be linked statically, i.e., they can be copied and run on
-other machines. Sometimes this causes problems, in particular in combination
-with MPI. In this case remove the '-static' flag from the CFLAGS in the
-Makefile and compile again.
+The binaries will be linked statically, i.e., they can be copied to other
+machines. Sometimes static compilations causes problems, in particular in
+combination with MPI. In this case remove the '-static' flag from the
+CFLAGS in the Makefile and compile again.
 
 By default we use rather strict compiler warnings.
 All warning messages will be turned into errors and no binaries will be

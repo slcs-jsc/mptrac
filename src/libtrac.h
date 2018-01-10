@@ -140,7 +140,7 @@
 #define NP 10000000
 
 /*! Maximum number of quantities per data point. */
-#define NQ 10
+#define NQ 12
 
 /*! Maximum number of pressure levels for meteorological data. */
 #define EP 73
@@ -242,6 +242,15 @@ typedef struct {
   /*! Quantity array index for station flag. */
   int qnt_stat;
 
+  /*! Quantity array index for low-level wind speed. */
+  int qnt_gw_wind;
+
+  /*! Quantity array index for subgrid-scale orography. */
+  int qnt_gw_sso;
+
+  /*! Quantity array index for gravity wave variances. */
+  int qnt_gw_var;
+
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
 
@@ -296,6 +305,9 @@ typedef struct {
 
   /*! HNO3 volume mixing ratio for PSC analysis. */
   double psc_hno3;
+
+  /*! Basename for gravity wave variance data. */
+  char gw_basename[LEN];
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];
