@@ -486,9 +486,6 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_gw_u750 = -1;
-  ctl->qnt_gw_v750 = -1;
-  ctl->qnt_gw_sso = -1;
   ctl->qnt_gw_var = -1;
   ctl->qnt_stat = -1;
 
@@ -555,15 +552,6 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "tnat") == 0) {
       ctl->qnt_tnat = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "gw_u750") == 0) {
-      ctl->qnt_gw_u750 = iq;
-      sprintf(ctl->qnt_unit[iq], "m/s");
-    } else if (strcmp(ctl->qnt_name[iq], "gw_v750") == 0) {
-      ctl->qnt_gw_v750 = iq;
-      sprintf(ctl->qnt_unit[iq], "m/s");
-    } else if (strcmp(ctl->qnt_name[iq], "gw_sso") == 0) {
-      ctl->qnt_gw_sso = iq;
-      sprintf(ctl->qnt_unit[iq], "m^2");
     } else if (strcmp(ctl->qnt_name[iq], "gw_var") == 0) {
       ctl->qnt_gw_var = iq;
       sprintf(ctl->qnt_unit[iq], "K^2");
