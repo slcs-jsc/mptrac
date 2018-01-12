@@ -888,11 +888,15 @@ void module_meteo(
 				       + atm->q[ctl->qnt_tnat][ip]);
   }
 
-  /* Interpolate low-level (750 hPa) wind... */
-  if (ctl->qnt_gw_wind >= 0)
+  /* Interpolate low-level winds... */
+  if (ctl->qnt_gw_u750 >= 0)
     intpol_met_time(met0, met1, atm->time[ip], 750., atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_gw_wind][ip],
+		    atm->lat[ip], NULL, NULL, &atm->q[ctl->qnt_gw_u750][ip],
 		    NULL, NULL, NULL, NULL);
+  if (ctl->qnt_gw_v750 >= 0)
+    intpol_met_time(met0, met1, atm->time[ip], 750., atm->lon[ip],
+		    atm->lat[ip], NULL, NULL, NULL,
+		    &atm->q[ctl->qnt_gw_v750][ip], NULL, NULL, NULL);
 
   /* Interpolate terrain height variance... */
   if (ctl->qnt_gw_sso >= 0) {

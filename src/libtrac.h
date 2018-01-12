@@ -242,8 +242,11 @@ typedef struct {
   /*! Quantity array index for station flag. */
   int qnt_stat;
 
-  /*! Quantity array index for low-level wind speed. */
-  int qnt_gw_wind;
+  /*! Quantity array index for low-level zonal wind. */
+  int qnt_gw_u750;
+
+  /*! Quantity array index for low-level meridional wind. */
+  int qnt_gw_v750;
 
   /*! Quantity array index for subgrid-scale orography. */
   int qnt_gw_sso;
