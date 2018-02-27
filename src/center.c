@@ -35,11 +35,11 @@ int main(
 
   FILE *out;
 
-  char *name, *year, *mon, *day, *hour, *min;
+  char tstr[LEN];
 
   double latm, lats, lonm, lons, t, zm, zs;
 
-  int i, f, ip;
+  int f, ip, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -119,17 +119,18 @@ int main(
     gsl_sort(atm->lon, 1, (size_t) atm->np);
     gsl_sort(atm->lat, 1, (size_t) atm->np);
 
-    /* Get date from filename... */
-    for (i = (int) strlen(argv[f]) - 1; argv[f][i] != '/' || i == 0; i--);
-    name = strtok(&(argv[f][i]), "_");
-    year = strtok(NULL, "_");
-    mon = strtok(NULL, "_");
-    day = strtok(NULL, "_");
-    hour = strtok(NULL, "_");
-    name = strtok(NULL, "_");	/* TODO: Why another "name" here? */
-    min = strtok(name, ".");
-    time2jsec(atoi(year), atoi(mon), atoi(day), atoi(hour), atoi(min), 0, 0,
-	      &t);
+    /* Get time from filename... */
+    sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
+    year = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 15]);
+    mon = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 12]);
+    day = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 9]);
+    hour = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 6]);
+    min = atoi(tstr);
+    time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
     /* Write data... */
     fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g "

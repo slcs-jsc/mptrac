@@ -49,11 +49,20 @@ int main(
   static double r, t0, z0, z1, dataLon[EX], dataLat[EY], dataZ[EP],
     u0, u1, alpha;
 
-  static float dataT[EP * EY * EX], dataU[EP * EY * EX], dataV[EP * EY * EX],
-    dataW[EP * EY * EX];
+  static float *dataT, *dataU, *dataV, *dataW;
 
   static int ncid, dims[4], timid, levid, latid, lonid, tid, uid, vid, wid,
     idx, ix, iy, iz, nx, ny, nz, year, mon, day, hour, min, sec;
+
+  /* Allocate... */
+  ALLOC(dataT, float,
+	EP * EY * EX);
+  ALLOC(dataU, float,
+	EP * EY * EX);
+  ALLOC(dataV, float,
+	EP * EY * EX);
+  ALLOC(dataW, float,
+	EP * EY * EX);
 
   /* Check arguments... */
   if (argc < 3)
@@ -164,6 +173,12 @@ int main(
 
   /* Close file... */
   NC(nc_close(ncid));
+
+  /* Free... */
+  free(dataT);
+  free(dataU);
+  free(dataV);
+  free(dataW);
 
   return EXIT_SUCCESS;
 }

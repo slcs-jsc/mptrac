@@ -143,13 +143,13 @@
 #define NQ 12
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 73
+#define EP 137
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 721
+#define EX 1201
 
 /*! Maximum number of latitudes for meteorological data. */
-#define EY 361
+#define EY 601
 
 /*! Maximum number of longitudes for gridded data. */
 #define GX 720
