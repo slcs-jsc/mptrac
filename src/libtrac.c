@@ -706,7 +706,7 @@ void read_met(
   char *filename,
   met_t * met) {
 
-  char cmd[LEN], tstr[10];
+  char cmd[LEN], levname[LEN], tstr[10];
 
   static float help[EX * EY];
 
@@ -746,18 +746,24 @@ void read_met(
   /* Get dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nx));
-  if (nx > EX)
-    ERRMSG("Too many longitudes!");
+  if (nx < 2 || nx > EX)
+    ERRMSG("Number of longitudes out of range!");
 
   NC(nc_inq_dimid(ncid, "lat", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &ny));
-  if (ny > EY)
-    ERRMSG("Too many latitudes!");
+  if (ny < 2 || ny > EY)
+    ERRMSG("Number of latitudes out of range!");
 
-  NC(nc_inq_dimid(ncid, "lev", &dimid));
+  sprintf(levname, "lev");
+  NC(nc_inq_dimid(ncid, levname, &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &np));
-  if (np > EP)
-    ERRMSG("Too many levels!");
+  if (np == 1) {
+    sprintf(levname, "lev_2");
+    NC(nc_inq_dimid(ncid, levname, &dimid));
+    NC(nc_inq_dimlen(ncid, dimid, &np));
+  }
+  if (np < 2 || np > EP)
+    ERRMSG("Number of levels out of range!");
 
   /* Store dimensions... */
   met->np = (int) np;
@@ -782,7 +788,7 @@ void read_met(
   if (ctl->met_np <= 0) {
 
     /* Read pressure levels from file... */
-    NC(nc_inq_varid(ncid, "lev", &varid));
+    NC(nc_inq_varid(ncid, levname, &varid));
     NC(nc_get_var_double(ncid, varid, met->p));
     for (ip = 0; ip < met->np; ip++)
       met->p[ip] /= 100.;
@@ -817,12 +823,14 @@ void read_met(
       ERRMSG("Pressure levels must be descending!");
 
   /* Read surface pressure... */
-  if (nc_inq_varid(ncid, "PS", &varid) == NC_NOERR) {
+  if (nc_inq_varid(ncid, "ps", &varid) == NC_NOERR
+      || nc_inq_varid(ncid, "PS", &varid) == NC_NOERR) {
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
 	met->ps[ix][iy] = help[iy * met->nx + ix] / 100.;
-  } else if (nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
+  } else if (nc_inq_varid(ncid, "lnsp", &varid) == NC_NOERR
+	     || nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
