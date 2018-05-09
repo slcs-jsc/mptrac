@@ -32,7 +32,7 @@ int main(
 
   met_t *met;
 
-  FILE *in, *out;
+  FILE *out;
 
   static double dz, dzmin = 1e10, z, timem[EX][EY], psm[EX][EY], tm[EX][EY],
     um[EX][EY], vm[EX][EY], wm[EX][EY], h2om[EX][EY], o3m[EX][EY];
@@ -54,10 +54,6 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!(in = fopen(argv[i], "r")))
-      continue;
-    else
-      fclose(in);
     read_met(&ctl, argv[i], met);
 
     /* Find nearest pressure level... */

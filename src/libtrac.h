@@ -275,6 +275,9 @@ typedef struct {
   /*! Target pressure levels [hPa]. */
   double met_p[EP];
 
+  /*! Command to stage meteo data. */
+  char met_stage[LEN];
+
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;

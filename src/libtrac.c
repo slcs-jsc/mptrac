@@ -579,6 +579,7 @@ void read_ctl(
     ERRMSG("Too many levels!");
   for (ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
+  scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
 
   /* Isosurface parameters... */
   ctl->isosurf
@@ -705,7 +706,7 @@ void read_met(
   char *filename,
   met_t * met) {
 
-  char tstr[10];
+  char cmd[LEN], tstr[10];
 
   static float help[EX * EY];
 
@@ -728,7 +729,19 @@ void read_met(
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Open netCDF file... */
-  NC(nc_open(filename, NC_NOWRITE, &ncid));
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+
+    /* Try to stage meteo file... */
+    if (ctl->met_stage[0] != '-') {
+      sprintf(cmd, "%s %d %02d %02d %02d %s", ctl->met_stage,
+	      year, mon, day, hour, filename);
+      if (system(cmd) != 0)
+	ERRMSG("Error while staging meteo data!");
+    }
+
+    /* Try to open again... */
+    NC(nc_open(filename, NC_NOWRITE, &ncid));
+  }
 
   /* Get dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));

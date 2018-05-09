@@ -32,7 +32,7 @@ int main(
 
   met_t *met;
 
-  FILE *in, *out;
+  FILE *out;
 
   static double timem[EP][EY], psm[EP][EY], tm[EP][EY], um[EP][EY],
     vm[EP][EY], vhm[EP][EY], wm[EP][EY], h2om[EP][EY], o3m[EP][EY],
@@ -55,10 +55,6 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!(in = fopen(argv[i], "r")))
-      continue;
-    else
-      fclose(in);
     read_met(&ctl, argv[i], met);
 
     /* Average data... */

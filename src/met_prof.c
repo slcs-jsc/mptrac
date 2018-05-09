@@ -43,7 +43,7 @@ int main(
 
   met_t *met;
 
-  FILE *in, *out;
+  FILE *out;
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ],
@@ -74,10 +74,6 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!(in = fopen(argv[i], "r")))
-      continue;
-    else
-      fclose(in);
     read_met(&ctl, argv[i], met);
 
     /* Average... */
