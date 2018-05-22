@@ -37,7 +37,7 @@ int main(
   double dt, dz, dlon, dlat, lat0, lat1, lon0, lon1, t0, t1, z0, z1,
     t, z, lon, lat, st, sz, slon, slat, sx, ut, uz, ulon, ulat, m;
 
-  int ip, irep, rep;
+  int even, ip, irep, rep;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -69,6 +69,7 @@ int main(
   uz = scan_ctl(argv[1], argc, argv, "INIT_UZ", -1, "0", NULL);
   ulon = scan_ctl(argv[1], argc, argv, "INIT_ULON", -1, "0", NULL);
   ulat = scan_ctl(argv[1], argc, argv, "INIT_ULAT", -1, "0", NULL);
+  even = (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "1", NULL);
   rep = (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
   m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
 
@@ -87,17 +88,26 @@ int main(
 	    atm->time[atm->np]
 	      = (t + gsl_ran_gaussian_ziggurat(rng, st / 2.3548)
 		 + ut * (gsl_rng_uniform(rng) - 0.5));
-	    atm->p[atm->np]
-	      = P(z + gsl_ran_gaussian_ziggurat(rng, sz / 2.3548)
-		  + uz * (gsl_rng_uniform(rng) - 0.5));
-	    atm->lon[atm->np]
-	      = (lon + gsl_ran_gaussian_ziggurat(rng, slon / 2.3548)
-		 + gsl_ran_gaussian_ziggurat(rng, dx2deg(sx, lat) / 2.3548)
-		 + ulon * (gsl_rng_uniform(rng) - 0.5));
-	    atm->lat[atm->np]
-	      = (lat + gsl_ran_gaussian_ziggurat(rng, slat / 2.3548)
-		 + gsl_ran_gaussian_ziggurat(rng, dy2deg(sx) / 2.3548)
-		 + ulat * (gsl_rng_uniform(rng) - 0.5));
+	    do {
+	      atm->p[atm->np]
+		= P(z + gsl_ran_gaussian_ziggurat(rng, sz / 2.3548)
+		    + uz * (gsl_rng_uniform(rng) - 0.5));
+	    } while (atm->p[atm->np] < 0);
+	    do {
+	      atm->lon[atm->np]
+		= (lon + gsl_ran_gaussian_ziggurat(rng, slon / 2.3548)
+		   + gsl_ran_gaussian_ziggurat(rng, dx2deg(sx, lat) / 2.3548)
+		   + ulon * (gsl_rng_uniform(rng) - 0.5));
+	    } while (atm->lon[atm->np] < -180 || atm->lon[atm->np] >= 180);
+	    do {
+	      do {
+		atm->lat[atm->np]
+		  = (lat + gsl_ran_gaussian_ziggurat(rng, slat / 2.3548)
+		     + gsl_ran_gaussian_ziggurat(rng, dy2deg(sx) / 2.3548)
+		     + ulat * (gsl_rng_uniform(rng) - 0.5));
+	      } while (atm->lat[atm->np] < -90 || atm->lat[atm->np] >= 90);
+	    } while (even && gsl_rng_uniform(rng) >
+		     fabs(cos(atm->lat[atm->np] * M_PI / 180.)));
 
 	    /* Set particle counter... */
 	    if ((++atm->np) >= NP)
