@@ -29,46 +29,6 @@
 #endif
 
 /* ------------------------------------------------------------
-   Defines...
-   ------------------------------------------------------------ */
-
-/*! Timer for total runtime. */
-#define TIMER_TOTAL 0
-
-/*! Timer for initalization. */
-#define TIMER_INIT 1
-
-/*! Timer for file input. */
-#define TIMER_INPUT 2
-
-/*! Timer for file output. */
-#define TIMER_OUTPUT 3
-
-/*! Timer for advection module. */
-#define TIMER_ADVECT 4
-
-/*! Timer for decay module. */
-#define TIMER_DECAY 5
-
-/*! Timer for mesoscale diffusion module. */
-#define TIMER_DIFFMESO 6
-
-/*! Timer for turbulent diffusion module. */
-#define TIMER_DIFFTURB 7
-
-/*! Timer for isosurface module module. */
-#define TIMER_ISOSURF 8
-
-/*! Timer for interpolation meteorological data. */
-#define TIMER_METEO 9
-
-/*! Timer for position module. */
-#define TIMER_POSITION 10
-
-/*! Timer for sedimentation module. */
-#define TIMER_SEDI 11
-
-/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -226,6 +186,8 @@ int main(
 
     /* Initialize random number generators... */
     gsl_rng_env_setup();
+    if (omp_get_max_threads() > NTHREADS)
+      ERRMSG("Too many threads!");
     for (i = 0; i < NTHREADS; i++)
       rng[i] = gsl_rng_alloc(gsl_rng_default);
 
@@ -358,6 +320,7 @@ int main(
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_INIT);
+    PRINT_TIMER(TIMER_STAGE);
     PRINT_TIMER(TIMER_INPUT);
     PRINT_TIMER(TIMER_OUTPUT);
     PRINT_TIMER(TIMER_ADVECT);

@@ -48,72 +48,6 @@
 #include <sys/time.h>
 
 /* ------------------------------------------------------------
-   Macros...
-   ------------------------------------------------------------ */
-
-/*! Allocate and clear memory. */
-#define ALLOC(ptr, type, n)                             \
-  if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
-    ERRMSG("Out of memory!");
-
-/*! Compute Cartesian distance between two vectors. */
-#define DIST(a, b) sqrt(DIST2(a, b))
-
-/*! Compute squared distance between two vectors. */
-#define DIST2(a, b)                                                     \
-  ((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1])+(a[2]-b[2])*(a[2]-b[2]))
-
-/*! Compute dot product of two vectors. */
-#define DOTP(a, b) (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
-
-/*! Print error message and quit program. */
-#define ERRMSG(msg) {							\
-    printf("\nError (%s, %s, l%d): %s\n\n",				\
-	   __FILE__, __func__, __LINE__, msg);				\
-    exit(EXIT_FAILURE);							\
-  }
-
-/*! Compute linear interpolation. */
-#define LIN(x0, y0, x1, y1, x)			\
-  ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
-
-/*! Execute netCDF library command and check result. */
-#define NC(cmd) {				     \
-    if((cmd)!=NC_NOERR)				     \
-      ERRMSG(nc_strerror(cmd));			     \
-  }
-
-/*! Compute norm of a vector. */
-#define NORM(a) sqrt(DOTP(a, a))
-
-/*! Print macro for debugging. */
-#define PRINT(format, var)						\
-  printf("Print (%s, %s, l%d): %s= "format"\n",				\
-	 __FILE__, __func__, __LINE__, #var, var);
-
-/*! Convert altitude to pressure. */
-#define P(z) (P0*exp(-(z)/H0))
-
-/*! Get string tokens. */
-#define TOK(line, tok, format, var) {					\
-    if(((tok)=strtok((line), " \t"))) {					\
-      if(sscanf(tok, format, &(var))!=1) continue;			\
-    } else ERRMSG("Error while reading!");				\
-  }
-
-/*! Convert pressure to altitude. */
-#define Z(p) (H0*log(P0/(p)))
-
-/*! Starts a timer. */
-#define START_TIMER(id)	timer(#id, id, 1)
-
-/*! Stops a timer. */
-#define STOP_TIMER(id) timer(#id, id, 2)
-
-/*! Prints a timer name and its time. */
-#define PRINT_TIMER(id)	timer(#id, id, 3)
-
-/* ------------------------------------------------------------
    Constants...
    ------------------------------------------------------------ */
 
@@ -166,8 +100,117 @@
 /*! Maximum number of OpenMP threads. */
 #define NTHREADS 128
 
+/* ------------------------------------------------------------
+   Macros...
+   ------------------------------------------------------------ */
+
+/*! Allocate and clear memory. */
+#define ALLOC(ptr, type, n)				 \
+  if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
+    ERRMSG("Out of memory!");
+
+/*! Compute Cartesian distance between two vectors. */
+#define DIST(a, b) sqrt(DIST2(a, b))
+
+/*! Compute squared distance between two vectors. */
+#define DIST2(a, b)                                                     \
+  ((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1])+(a[2]-b[2])*(a[2]-b[2]))
+
+/*! Compute dot product of two vectors. */
+#define DOTP(a, b) (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+
+/*! Print error message and quit program. */
+#define ERRMSG(msg) {							\
+    printf("\nError (%s, %s, l%d): %s\n\n",				\
+	   __FILE__, __func__, __LINE__, msg);				\
+    exit(EXIT_FAILURE);							\
+  }
+
+/*! Compute linear interpolation. */
+#define LIN(x0, y0, x1, y1, x)			\
+  ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
+
+/*! Execute netCDF library command and check result. */
+#define NC(cmd) {				     \
+    if((cmd)!=NC_NOERR)				     \
+      ERRMSG(nc_strerror(cmd));			     \
+  }
+
+/*! Compute norm of a vector. */
+#define NORM(a) sqrt(DOTP(a, a))
+
+/*! Print macro for debugging. */
+#define PRINT(format, var)						\
+  printf("Print (%s, %s, l%d): %s= "format"\n",				\
+	 __FILE__, __func__, __LINE__, #var, var);
+
+/*! Convert altitude to pressure. */
+#define P(z) (P0*exp(-(z)/H0))
+
+/*! Get string tokens. */
+#define TOK(line, tok, format, var) {					\
+    if(((tok)=strtok((line), " \t"))) {					\
+      if(sscanf(tok, format, &(var))!=1) continue;			\
+    } else ERRMSG("Error while reading!");				\
+  }
+
+/*! Convert pressure to altitude. */
+#define Z(p) (H0*log(P0/(p)))
+
+/* ------------------------------------------------------------
+   Timers...
+   ------------------------------------------------------------ */
+
+/*! Starts a timer. */
+#define START_TIMER(id)	timer(#id, id, 1)
+
+/*! Stops a timer. */
+#define STOP_TIMER(id) timer(#id, id, 2)
+
+/*! Prints a timer name and its time. */
+#define PRINT_TIMER(id)	timer(#id, id, 3)
+
 /*! Maximum number of timers. */
-#define NTIMER 20
+#define NTIMER 13
+
+/*! Timer for total runtime. */
+#define TIMER_TOTAL 0
+
+/*! Timer for initalization. */
+#define TIMER_INIT 1
+
+/*! Timer for file staging. */
+#define TIMER_STAGE 2
+
+/*! Timer for file input. */
+#define TIMER_INPUT 3
+
+/*! Timer for file output. */
+#define TIMER_OUTPUT 4
+
+/*! Timer for advection module. */
+#define TIMER_ADVECT 5
+
+/*! Timer for decay module. */
+#define TIMER_DECAY 6
+
+/*! Timer for mesoscale diffusion module. */
+#define TIMER_DIFFMESO 7
+
+/*! Timer for turbulent diffusion module. */
+#define TIMER_DIFFTURB 8
+
+/*! Timer for isosurface module module. */
+#define TIMER_ISOSURF 9
+
+/*! Timer for interpolation meteorological data. */
+#define TIMER_METEO 10
+
+/*! Timer for position module. */
+#define TIMER_POSITION 11
+
+/*! Timer for sedimentation module. */
+#define TIMER_SEDI 12
 
 /* ------------------------------------------------------------
    Structs...

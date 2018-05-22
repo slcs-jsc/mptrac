@@ -732,12 +732,14 @@ void read_met(
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
 
     /* Try to stage meteo file... */
+    START_TIMER(TIMER_STAGE);
     if (ctl->met_stage[0] != '-') {
       sprintf(cmd, "%s %d %02d %02d %02d %s", ctl->met_stage,
 	      year, mon, day, hour, filename);
       if (system(cmd) != 0)
 	ERRMSG("Error while staging meteo data!");
     }
+    STOP_TIMER(TIMER_STAGE);
 
     /* Try to open again... */
     NC(nc_open(filename, NC_NOWRITE, &ncid));
