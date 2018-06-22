@@ -23,7 +23,6 @@
 */
 
 #include "libtrac.h"
-#include <gsl/gsl_sort.h>
 
 int main(
   int argc,

@@ -2,6 +2,7 @@ doc/latex/
 lib/build/
 projects/
 src/center
+src/cluster
 src/dist
 src/extract
 src/init
