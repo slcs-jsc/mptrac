@@ -29,7 +29,7 @@
    ------------------------------------------------------------ */
 
 /*! Maximum number of seeds. */
-#define NS 30
+#define NS 100
 
 /*! Maximum number of timesteps. */
 #define NT 1000
@@ -57,7 +57,7 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <outfile> <atm1> [<atm2> <atm3> ...]");
+    ERRMSG("Give parameters: <ctl> <cluster.log> <atm1> [<atm2> <atm3> ...]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
