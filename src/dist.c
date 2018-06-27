@@ -38,9 +38,9 @@ int main(
 
   double aux, x0[3], x1[3], x2[3], *lon1, *lat1, *p1, *lh1, *lv1,
     *lon2, *lat2, *p2, *lh2, *lv2, ahtd, avtd, ahtd2, avtd2,
-    rhtd, rvtd, rhtd2, rvtd2, t, *dh, *dv;
+    aqtd[NQ], aqtd2[NQ], rhtd, rvtd, rhtd2, rvtd2, t, *dh, *dv, dq;
 
-  int f, ip, iph, ipv, year, mon, day, hour, min;
+  int f, ip, iph, ipv, iq, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -71,15 +71,18 @@ int main(
 	NP);
 
   /* Check arguments... */
-  if (argc < 4)
-    ERRMSG
-      ("Give parameters: <outfile> <atm1a> <atm1b> [<atm2a> <atm2b> ...]");
+  if (argc < 5)
+    ERRMSG("Give parameters: <ctl> <outfile> <atm1a> <atm1b>"
+	   " [<atm2a> <atm2b> ...]");
+
+  /* Read control parameters... */
+  read_ctl(argv[1], argc, argv, &ctl);
 
   /* Write info... */
-  printf("Write transport deviations: %s\n", argv[1]);
+  printf("Write transport deviations: %s\n", argv[2]);
 
   /* Create output file... */
-  if (!(out = fopen(argv[1], "w")))
+  if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 
   /* Write header... */
@@ -107,10 +110,17 @@ int main(
 	  "# $21 = AVTD (90%% percentile) [km]\n"
 	  "# $22 = AVTD (maximum) [km]\n"
 	  "# $23 = AVTD (maximum trajectory index)\n"
-	  "# $24 = RVTD (mean) [%%]\n" "# $25 = RVTD (sigma) [%%]\n\n");
+	  "# $24 = RVTD (mean) [%%]\n" "# $25 = RVTD (sigma) [%%]\n");
+  for (iq = 0; iq < ctl.nq; iq++)
+    fprintf(out,
+	    "# $%d = %s transport deviation (mean) [%s]\n"
+	    "# $%d = %s transport deviation (sigma) [%s]\n",
+	    26 + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq],
+	    27 + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq]);
+  fprintf(out, "\n");
 
   /* Loop over file pairs... */
-  for (f = 2; f < argc; f += 2) {
+  for (f = 3; f < argc; f += 2) {
 
     /* Read atmopheric data... */
     read_atm(argv[f], &ctl, atm1);
@@ -128,6 +138,8 @@ int main(
     avtd = avtd2 = 0;
     rhtd = rhtd2 = 0;
     rvtd = rvtd2 = 0;
+    for (iq = 0; iq < ctl.nq; iq++)
+      aqtd[iq] = aqtd2[iq] = 0;
 
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
@@ -144,6 +156,12 @@ int main(
       dv[ip] = fabs(Z(atm1->p[ip]) - Z(atm2->p[ip]));
       avtd += dv[ip];
       avtd2 += gsl_pow_2(dv[ip]);
+
+      for (iq = 0; iq < ctl.nq; iq++) {
+	dq = fabs(atm1->q[iq][ip] - atm2->q[iq][ip]);
+	aqtd[iq] += dq;
+	aqtd2[iq] += gsl_pow_2(dq);
+      }
 
       /* Calculate relative transport deviations... */
       if (f > 2) {
@@ -205,7 +223,7 @@ int main(
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d %g %g"
-	    " %g %g %g %g %g %g %g %g %g %d %g %g\n", t,
+	    " %g %g %g %g %g %g %g %g %g %d %g %g", t,
 	    ahtd / atm1->np,
 	    sqrt(ahtd2 / atm1->np - gsl_pow_2(ahtd / atm1->np)),
 	    dh[0], dh[atm1->np / 10], dh[atm1->np / 4], dh[atm1->np / 2],
@@ -218,6 +236,14 @@ int main(
 	    dv[atm1->np - atm1->np / 4], dv[atm1->np - atm1->np / 10],
 	    dv[atm1->np - 1], ipv, rvtd / atm1->np,
 	    sqrt(rvtd2 / atm1->np - gsl_pow_2(rvtd / atm1->np)));
+    for (iq = 0; iq < ctl.nq; iq++) {
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], aqtd[iq] / atm1->np);
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq],
+	      sqrt(aqtd2[iq] / atm1->np - gsl_pow_2(aqtd[iq] / atm1->np)));
+    }
+    fprintf(out, "\n");
   }
 
   /* Close file... */

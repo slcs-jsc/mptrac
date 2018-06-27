@@ -44,14 +44,17 @@ int main(
   ALLOC(atm, atm_t, 1);
 
   /* Check arguments... */
-  if (argc < 3)
-    ERRMSG("Give parameters: <outfile> <atm1> [<atm2> ...]");
+  if (argc < 4)
+    ERRMSG("Give parameters: <ctl> <outfile> <atm1> [<atm2> ...]");
+
+  /* Read control parameters... */
+  read_ctl(argv[1], argc, argv, &ctl);
 
   /* Write info... */
-  printf("Write center of mass data: %s\n", argv[1]);
+  printf("Write center of mass data: %s\n", argv[2]);
 
   /* Create output file... */
-  if (!(out = fopen(argv[1], "w")))
+  if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 
   /* Write header... */
@@ -88,7 +91,7 @@ int main(
 	  "# $28 = latitude (maximum) [deg]\n\n");
 
   /* Loop over files... */
-  for (f = 2; f < argc; f++) {
+  for (f = 3; f < argc; f++) {
 
     /* Read atmopheric data... */
     read_atm(argv[f], &ctl, atm);
