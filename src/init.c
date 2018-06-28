@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2015 Forschungszentrum Juelich GmbH
+  Copright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -88,24 +88,18 @@ int main(
 	    atm->time[atm->np]
 	      = (t + gsl_ran_gaussian_ziggurat(rng, st / 2.3548)
 		 + ut * (gsl_rng_uniform(rng) - 0.5));
+	    atm->p[atm->np]
+	      = P(z + gsl_ran_gaussian_ziggurat(rng, sz / 2.3548)
+		  + uz * (gsl_rng_uniform(rng) - 0.5));
+	    atm->lon[atm->np]
+	      = (lon + gsl_ran_gaussian_ziggurat(rng, slon / 2.3548)
+		 + gsl_ran_gaussian_ziggurat(rng, dx2deg(sx, lat) / 2.3548)
+		 + ulon * (gsl_rng_uniform(rng) - 0.5));
 	    do {
-	      atm->p[atm->np]
-		= P(z + gsl_ran_gaussian_ziggurat(rng, sz / 2.3548)
-		    + uz * (gsl_rng_uniform(rng) - 0.5));
-	    } while (atm->p[atm->np] < 0);
-	    do {
-	      atm->lon[atm->np]
-		= (lon + gsl_ran_gaussian_ziggurat(rng, slon / 2.3548)
-		   + gsl_ran_gaussian_ziggurat(rng, dx2deg(sx, lat) / 2.3548)
-		   + ulon * (gsl_rng_uniform(rng) - 0.5));
-	    } while (atm->lon[atm->np] < -180 || atm->lon[atm->np] >= 180);
-	    do {
-	      do {
-		atm->lat[atm->np]
-		  = (lat + gsl_ran_gaussian_ziggurat(rng, slat / 2.3548)
-		     + gsl_ran_gaussian_ziggurat(rng, dy2deg(sx) / 2.3548)
-		     + ulat * (gsl_rng_uniform(rng) - 0.5));
-	      } while (atm->lat[atm->np] < -90 || atm->lat[atm->np] >= 90);
+	      atm->lat[atm->np]
+		= (lat + gsl_ran_gaussian_ziggurat(rng, slat / 2.3548)
+		   + gsl_ran_gaussian_ziggurat(rng, dy2deg(sx) / 2.3548)
+		   + ulat * (gsl_rng_uniform(rng) - 0.5));
 	    } while (even && gsl_rng_uniform(rng) >
 		     fabs(cos(atm->lat[atm->np] * M_PI / 180.)));
 
