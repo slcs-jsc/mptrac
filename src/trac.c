@@ -894,7 +894,7 @@ void module_meteo(
 	nlat++;
 	nlon++;
       } else
-	printf("Missing gravity wave data: %s\n", filename);
+	printf("Warning: Missing gravity wave data: %s\n", filename);
     }
   }
 
