@@ -333,14 +333,14 @@ int main(
     PRINT_TIMER(TIMER_SEDI);
 
     /* Report memory usage... */
-    printf("MEMORY_ATM = %g MByte\n", 2. * sizeof(atm_t) / 1024. / 1024.);
+    printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
     printf("MEMORY_METEO = %g MByte\n", 2. * sizeof(met_t) / 1024. / 1024.);
     printf("MEMORY_DYNAMIC = %g MByte\n",
-	   NP * sizeof(double) / 1024. / 1024.);
+	   4 * NP * sizeof(double) / 1024. / 1024.);
     printf("MEMORY_STATIC = %g MByte\n",
-	   (((EX + EY) + (2 + NQ) * GX * GY * GZ) * sizeof(double)
+	   ((3 * GX * GY + 4 * GX * GY * GZ) * sizeof(double)
 	    + (EX * EY + EX * EY * EP) * sizeof(float)
-	    + (2 * GX * GY * GZ) * sizeof(int)) / 1024. / 1024.);
+	    + (GX * GY + GX * GY * GZ) * sizeof(int)) / 1024. / 1024.);
 
     /* Report problem size... */
     printf("SIZE_NP = %d\n", atm->np);
@@ -559,15 +559,15 @@ void module_diffusion_meso(
     rs = sqrt(1 - r * r);
 
     /* Calculate mesoscale wind fluctuations... */
-    atm->up[ip] =
-      r * atm->up[ip] + rs * gsl_ran_gaussian_ziggurat(rng,
-						       ctl->turb_meso * usig);
-    atm->vp[ip] =
-      r * atm->vp[ip] + rs * gsl_ran_gaussian_ziggurat(rng,
-						       ctl->turb_meso * vsig);
-    atm->wp[ip] =
-      r * atm->wp[ip] + rs * gsl_ran_gaussian_ziggurat(rng,
-						       ctl->turb_meso * wsig);
+    atm->up[ip] = (float)
+      (r * atm->up[ip]
+       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * usig));
+    atm->vp[ip] = (float)
+      (r * atm->vp[ip]
+       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * vsig));
+    atm->wp[ip] = (float)
+      (r * atm->wp[ip]
+       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * wsig));
 
     /* Calculate air parcel displacement... */
     atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
@@ -632,7 +632,7 @@ void module_isosurf(
 
   static double *iso, *ps, t, *ts;
 
-  static int idx, ip2, n, nb = 100000;
+  static int idx, ip2, n;
 
   FILE *in;
 
@@ -649,9 +649,9 @@ void module_isosurf(
     ALLOC(iso, double,
 	  NP);
     ALLOC(ps, double,
-	  nb);
+	  NP);
     ALLOC(ts, double,
-	  nb);
+	  NP);
 
     /* Save pressure... */
     if (ctl->isosurf == 1)
@@ -689,7 +689,7 @@ void module_isosurf(
       /* Read pressure time series... */
       while (fgets(line, LEN, in))
 	if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
-	  if ((++n) > 100000)
+	  if ((++n) > NP)
 	    ERRMSG("Too many data points!");
 
       /* Check number of points... */

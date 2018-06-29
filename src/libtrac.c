@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2015 Forschungszentrum Juelich GmbH
+  Copright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -426,23 +426,50 @@ void read_atm(
   if (!(in = fopen(filename, "r")))
     ERRMSG("Cannot open file!");
 
-  /* Read line... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    TOK(line, tok, "%lg", atm->time[atm->np]);
-    TOK(NULL, tok, "%lg", atm->p[atm->np]);
-    TOK(NULL, tok, "%lg", atm->lon[atm->np]);
-    TOK(NULL, tok, "%lg", atm->lat[atm->np]);
+  /* Read binary data... */
+  if (ctl->atm_bin && ctl->atm_gpfile[0] == '-') {
+    FREAD(&atm->np, int,
+	  1,
+	  in);
+    FREAD(atm->time, double,
+	    (size_t) atm->np,
+	  in);
+    FREAD(atm->p, double,
+	    (size_t) atm->np,
+	  in);
+    FREAD(atm->lon, double,
+	    (size_t) atm->np,
+	  in);
+    FREAD(atm->lat, double,
+	    (size_t) atm->np,
+	  in);
     for (iq = 0; iq < ctl->nq; iq++)
-      TOK(NULL, tok, "%lg", atm->q[iq][atm->np]);
+      FREAD(atm->q[iq], double,
+	      (size_t) atm->np,
+	    in);
+  }
 
-    /* Convert altitude to pressure... */
-    atm->p[atm->np] = P(atm->p[atm->np]);
+  /* Read ASCII data... */
+  else {
 
-    /* Increment data point counter... */
-    if ((++atm->np) > NP)
-      ERRMSG("Too many data points!");
+    /* Read line... */
+    while (fgets(line, LEN, in)) {
+
+      /* Read data... */
+      TOK(line, tok, "%lg", atm->time[atm->np]);
+      TOK(NULL, tok, "%lg", atm->p[atm->np]);
+      TOK(NULL, tok, "%lg", atm->lon[atm->np]);
+      TOK(NULL, tok, "%lg", atm->lat[atm->np]);
+      for (iq = 0; iq < ctl->nq; iq++)
+	TOK(NULL, tok, "%lg", atm->q[iq][atm->np]);
+
+      /* Convert altitude to pressure... */
+      atm->p[atm->np] = P(atm->p[atm->np]);
+
+      /* Increment data point counter... */
+      if ((++atm->np) > NP)
+	ERRMSG("Too many data points!");
+    }
   }
 
   /* Close file... */
@@ -618,6 +645,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
   ctl->atm_filter =
     (int) scan_ctl(filename, argc, argv, "ATM_FILTER", -1, "0", NULL);
+  ctl->atm_bin =
+    (int) scan_ctl(filename, argc, argv, "ATM_BIN", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -1118,7 +1147,7 @@ void timer(
 
   /* Print timer... */
   else if (mode == 3)
-    printf("%s = %g s\n", name, runtime[id]);
+    printf("%s = %.3f s\n", name, runtime[id]);
 }
 
 /*****************************************************************************/
@@ -1320,31 +1349,58 @@ void write_atm(
       ERRMSG("Cannot create file!");
   }
 
-  /* Write header... */
-  fprintf(out,
-	  "# $1 = time [s]\n"
-	  "# $2 = altitude [km]\n"
-	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-  for (iq = 0; iq < ctl->nq; iq++)
-    fprintf(out, "# $%i = %s [%s]\n", iq + 5, ctl->qnt_name[iq],
-	    ctl->qnt_unit[iq]);
-  fprintf(out, "\n");
+  /* Write binary data... */
+  if (ctl->atm_bin && ctl->atm_gpfile[0] == '-') {
+    FWRITE(&atm->np, int,
+	   1,
+	   out);
+    FWRITE(atm->time, double,
+	     (size_t) atm->np,
+	   out);
+    FWRITE(atm->p, double,
+	     (size_t) atm->np,
+	   out);
+    FWRITE(atm->lon, double,
+	     (size_t) atm->np,
+	   out);
+    FWRITE(atm->lat, double,
+	     (size_t) atm->np,
+	   out);
+    for (iq = 0; iq < ctl->nq; iq++)
+      FWRITE(atm->q[iq], double,
+	       (size_t) atm->np,
+	     out);
+  }
 
-  /* Write data... */
-  for (ip = 0; ip < atm->np; ip++) {
+  /* Write ASCII data... */
+  else {
 
-    /* Check time... */
-    if (ctl->atm_filter && (atm->time[ip] < t0 || atm->time[ip] > t1))
-      continue;
-
-    /* Write output... */
-    fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
-	    atm->lon[ip], atm->lat[ip]);
-    for (iq = 0; iq < ctl->nq; iq++) {
-      fprintf(out, " ");
-      fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
-    }
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+    for (iq = 0; iq < ctl->nq; iq++)
+      fprintf(out, "# $%i = %s [%s]\n", iq + 5, ctl->qnt_name[iq],
+	      ctl->qnt_unit[iq]);
     fprintf(out, "\n");
+
+    /* Write data... */
+    for (ip = 0; ip < atm->np; ip++) {
+
+      /* Check time... */
+      if (ctl->atm_filter && (atm->time[ip] < t0 || atm->time[ip] > t1))
+	continue;
+
+      /* Write output... */
+      fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
+	      atm->lon[ip], atm->lat[ip]);
+      for (iq = 0; iq < ctl->nq; iq++) {
+	fprintf(out, " ");
+	fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
+      }
+      fprintf(out, "\n");
+    }
   }
 
   /* Close file... */

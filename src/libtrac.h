@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2015 Forschungszentrum Juelich GmbH
+  Copright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -77,7 +77,7 @@
 #define NQ 12
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 137
+#define EP 111
 
 /*! Maximum number of longitudes for meteorological data. */
 #define EX 1201
@@ -124,6 +124,18 @@
     printf("\nError (%s, %s, l%d): %s\n\n",				\
 	   __FILE__, __func__, __LINE__, msg);				\
     exit(EXIT_FAILURE);							\
+  }
+
+/*! Read binary data. */
+#define FREAD(ptr, type, size, out) {					\
+    if(fread(ptr, sizeof(type), size, out)!=size)			\
+      ERRMSG("Error while reading!");					\
+  }
+
+/*! Write binary data. */
+#define FWRITE(ptr, type, size, out) {					\
+    if(fwrite(ptr, sizeof(type), size, out)!=size)			\
+      ERRMSG("Error while writing!");					\
   }
 
 /*! Compute linear interpolation. */
@@ -370,6 +382,9 @@ typedef struct {
   /*! Time filter for atmospheric data output (0=no, 1=yes). */
   int atm_filter;
 
+  /*! Binary I/O of atmospheric data (0=no, 1=yes). */
+  int atm_bin;
+
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
@@ -523,13 +538,13 @@ typedef struct {
   double q[NQ][NP];
 
   /*! Zonal wind perturbation [m/s]. */
-  double up[NP];
+  float up[NP];
 
   /*! Meridional wind perturbation [m/s]. */
-  double vp[NP];
+  float vp[NP];
 
   /*! Vertical velocity perturbation [hPa/s]. */
-  double wp[NP];
+  float wp[NP];
 
 } atm_t;
 
