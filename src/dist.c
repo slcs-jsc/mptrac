@@ -36,29 +36,30 @@ int main(
 
   char tstr[LEN];
 
-  double x0[3], x1[3], x2[3], *lon1, *lat1, *p1, *lh1, *lv1,
-    *lon2, *lat2, *p2, *lh2, *lv2, ahtd, avtd, aqtd[NQ], rhtd, rvtd, t;
+  double ahtd, aqtd[NQ], avtd, lat0, lat1, *lat1_old, *lat2_old, *lh1, *lh2,
+    lon0, lon1, *lon1_old, *lon2_old, *lv1, *lv2, p0, p1, rhtd, rvtd, t,
+    x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
 
   int ens, f, ip, iq, np, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
   ALLOC(atm2, atm_t, 1);
-  ALLOC(lon1, double,
+  ALLOC(lon1_old, double,
 	NP);
-  ALLOC(lat1, double,
+  ALLOC(lat1_old, double,
 	NP);
-  ALLOC(p1, double,
+  ALLOC(z1_old, double,
 	NP);
   ALLOC(lh1, double,
 	NP);
   ALLOC(lv1, double,
 	NP);
-  ALLOC(lon2, double,
+  ALLOC(lon2_old, double,
 	NP);
-  ALLOC(lat2, double,
+  ALLOC(lat2_old, double,
 	NP);
-  ALLOC(p2, double,
+  ALLOC(z2_old, double,
 	NP);
   ALLOC(lh2, double,
 	NP);
@@ -73,6 +74,12 @@ int main(
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
   ens = (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-1", NULL);
+  p0 = P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
+  p1 = P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
+  lat0 = scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "DIST_LAT1", -1, "1000", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "DIST_LON0", -1, "-1000", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
 
   /* Write info... */
   printf("Write transport deviations: %s\n", argv[2]);
@@ -90,7 +97,7 @@ int main(
     fprintf(out,
 	    "# $%d = AQTD (%s) [%s]\n",
 	    6 + iq, ctl.qnt_name[iq], ctl.qnt_unit[iq]);
-  fprintf(out, "\n");
+  fprintf(out, "# $%d = number of particles\n\n", 6 + ctl.nq);
 
   /* Loop over file pairs... */
   for (f = 3; f < argc; f += 2) {
@@ -113,51 +120,61 @@ int main(
       aqtd[iq] = 0;
 
     /* Loop over air parcels... */
-    for (ip = 0; ip < atm1->np; ip++)
-      if (ens < 0 || (ctl.qnt_ens >= 0 && atm1->q[ctl.qnt_ens][ip] == ens)) {
+    for (ip = 0; ip < atm1->np; ip++) {
 
-	/* Get Cartesian coordinates... */
-	geo2cart(0, atm1->lon[ip], atm1->lat[ip], x1);
-	geo2cart(0, atm2->lon[ip], atm2->lat[ip], x2);
+      /* Check ensemble ID... */
+      if (ens >= 0 && ctl.qnt_ens >= 0 && atm1->q[ctl.qnt_ens][ip] != ens)
+	continue;
 
-	/* Calculate absolute transport deviations... */
-	ahtd += DIST(x1, x2);
-	avtd += fabs(Z(atm1->p[ip]) - Z(atm2->p[ip]));
-	for (iq = 0; iq < ctl.nq; iq++)
-	  aqtd[iq] += fabs(atm1->q[iq][ip] - atm2->q[iq][ip]);
+      /* Check spatial range... */
+      if (atm1->p[ip] > p0 || atm1->p[ip] < p1
+	  || atm1->lon[ip] < lon0 || atm1->lon[ip] > lon1
+	  || atm1->lat[ip] < lat0 || atm1->lat[ip] > lat1)
+	continue;
 
-	/* Calculate relative transport deviations... */
-	if (f > 3) {
+      /* Convert coordinates... */
+      geo2cart(0, atm1->lon[ip], atm1->lat[ip], x1);
+      geo2cart(0, atm2->lon[ip], atm2->lat[ip], x2);
+      z1 = Z(atm1->p[ip]);
+      z2 = Z(atm2->p[ip]);
 
-	  /* Get trajectory lengths... */
-	  geo2cart(0, lon1[ip], lat1[ip], x0);
-	  lh1[ip] += DIST(x0, x1);
-	  lv1[ip] += fabs(Z(p1[ip]) - Z(atm1->p[ip]));
+      /* Calculate absolute transport deviations... */
+      ahtd += DIST(x1, x2);
+      avtd += fabs(z1 - z2);
+      for (iq = 0; iq < ctl.nq; iq++)
+	aqtd[iq] += fabs(atm1->q[iq][ip] - atm2->q[iq][ip]);
 
-	  geo2cart(0, lon2[ip], lat2[ip], x0);
-	  lh2[ip] += DIST(x0, x2);
-	  lv2[ip] += fabs(Z(p2[ip]) - Z(atm2->p[ip]));
+      /* Calculate relative transport deviations... */
+      if (f > 3) {
 
-	  /* Get relative transport deviations... */
-	  if (lh1[ip] + lh2[ip] > 0)
-	    rhtd += 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
-	  if (lv1[ip] + lv2[ip] > 0)
-	    rvtd += 200. * fabs(Z(atm1->p[ip]) - Z(atm2->p[ip]))
-	      / (lv1[ip] + lv2[ip]);
-	}
+	/* Get trajectory lengths... */
+	geo2cart(0, lon1_old[ip], lat1_old[ip], x0);
+	lh1[ip] += DIST(x0, x1);
+	lv1[ip] += fabs(z1_old[ip] - z1);
 
-	/* Save positions of air parcels... */
-	lon1[ip] = atm1->lon[ip];
-	lat1[ip] = atm1->lat[ip];
-	p1[ip] = atm1->p[ip];
+	geo2cart(0, lon2_old[ip], lat2_old[ip], x0);
+	lh2[ip] += DIST(x0, x2);
+	lv2[ip] += fabs(z2_old[ip] - z2);
 
-	lon2[ip] = atm2->lon[ip];
-	lat2[ip] = atm2->lat[ip];
-	p2[ip] = atm2->p[ip];
-
-	/* Increment air parcel counter... */
-	np++;
+	/* Get relative transport deviations... */
+	if (lh1[ip] + lh2[ip] > 0)
+	  rhtd += 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
+	if (lv1[ip] + lv2[ip] > 0)
+	  rvtd += 200. * fabs(z1 - z2) / (lv1[ip] + lv2[ip]);
       }
+
+      /* Save positions of air parcels... */
+      lon1_old[ip] = atm1->lon[ip];
+      lat1_old[ip] = atm1->lat[ip];
+      z1_old[ip] = z1;
+
+      lon2_old[ip] = atm2->lon[ip];
+      lat2_old[ip] = atm2->lat[ip];
+      z2_old[ip] = z2;
+
+      /* Increment air parcel counter... */
+      np++;
+    }
 
     /* Get time from filename... */
     sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
@@ -179,7 +196,7 @@ int main(
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], aqtd[iq] / np);
     }
-    fprintf(out, "\n");
+    fprintf(out, " %d\n", np);
   }
 
   /* Close file... */
@@ -188,14 +205,14 @@ int main(
   /* Free... */
   free(atm1);
   free(atm2);
-  free(lon1);
-  free(lat1);
-  free(p1);
+  free(lon1_old);
+  free(lat1_old);
+  free(z1_old);
   free(lh1);
   free(lv1);
-  free(lon2);
-  free(lat2);
-  free(p2);
+  free(lon2_old);
+  free(lat2_old);
+  free(z2_old);
   free(lh2);
   free(lv2);
 
