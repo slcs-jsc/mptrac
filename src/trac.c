@@ -276,10 +276,12 @@ int main(
 
       /* Sedimentation... */
       START_TIMER(TIMER_SEDI);
+      if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	if (gsl_finite(dt[ip]))
-	  module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
+	for (ip = 0; ip < atm->np; ip++)
+	  if (gsl_finite(dt[ip]))
+	    module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
+      }
       STOP_TIMER(TIMER_SEDI);
 
       /* Isosurface... */
@@ -1242,10 +1244,6 @@ void module_sedi(
   const double m = 4.8096e-26;
 
   double G, K, eta, lambda, p, r_p, rho, rho_p, T, v, v_p;
-
-  /* Check if parameters are available... */
-  if (ctl->qnt_r < 0 || ctl->qnt_rho < 0)
-    return;
 
   /* Convert units... */
   p = 100 * atm->p[ip];
