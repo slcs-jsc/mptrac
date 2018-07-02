@@ -238,8 +238,9 @@ int main(
 
       /* Initialize isosurface... */
       START_TIMER(TIMER_ISOSURF);
-      if (t == t0)
-	module_isosurf(&ctl, met0, met1, atm, -1);
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
+	if (t == t0)
+	  module_isosurf(&ctl, met0, met1, atm, -1);
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Advection... */
@@ -252,20 +253,25 @@ int main(
 
       /* Turbulent diffusion... */
       START_TIMER(TIMER_DIFFTURB);
+      if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
+	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	if (gsl_finite(dt[ip]))
-	  module_diffusion_turb(&ctl, atm, ip, dt[ip],
-				rng[omp_get_thread_num()]);
+	for (ip = 0; ip < atm->np; ip++)
+	  if (gsl_finite(dt[ip]))
+	    module_diffusion_turb(&ctl, atm, ip, dt[ip],
+				  rng[omp_get_thread_num()]);
+      }
       STOP_TIMER(TIMER_DIFFTURB);
 
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
+      if (ctl.turb_meso > 0) {
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	if (gsl_finite(dt[ip]))
-	  module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
-				rng[omp_get_thread_num()]);
+	for (ip = 0; ip < atm->np; ip++)
+	  if (gsl_finite(dt[ip]))
+	    module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
+				  rng[omp_get_thread_num()]);
+      }
       STOP_TIMER(TIMER_DIFFMESO);
 
       /* Sedimentation... */
@@ -278,9 +284,11 @@ int main(
 
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	module_isosurf(&ctl, met0, met1, atm, ip);
+	for (ip = 0; ip < atm->np; ip++)
+	  module_isosurf(&ctl, met0, met1, atm, ip);
+      }
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Position... */
@@ -300,10 +308,12 @@ int main(
 
       /* Decay... */
       START_TIMER(TIMER_DECAY);
+      if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	if (gsl_finite(dt[ip]))
-	  module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
+	for (ip = 0; ip < atm->np; ip++)
+	  if (gsl_finite(dt[ip]))
+	    module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
+      }
       STOP_TIMER(TIMER_DECAY);
 
       /* Write output... */
@@ -435,10 +445,6 @@ void module_decay(
 
   double ps, pt, tdec;
 
-  /* Check lifetime values... */
-  if ((ctl->tdec_trop <= 0 && ctl->tdec_strat <= 0) || ctl->qnt_m < 0)
-    return;
-
   /* Set constant lifetime... */
   if (ctl->tdec_trop == ctl->tdec_strat)
     tdec = ctl->tdec_trop;
@@ -480,100 +486,96 @@ void module_diffusion_meso(
 
   int ix, iy, iz;
 
-  /* Calculate mesoscale velocity fluctuations... */
-  if (ctl->turb_meso > 0) {
+  /* Get indices... */
+  ix = locate(met0->lon, met0->nx, atm->lon[ip]);
+  iy = locate(met0->lat, met0->ny, atm->lat[ip]);
+  iz = locate(met0->p, met0->np, atm->p[ip]);
 
-    /* Get indices... */
-    ix = locate(met0->lon, met0->nx, atm->lon[ip]);
-    iy = locate(met0->lat, met0->ny, atm->lat[ip]);
-    iz = locate(met0->p, met0->np, atm->p[ip]);
+  /* Collect local wind data... */
+  u[0] = met0->u[ix][iy][iz];
+  u[1] = met0->u[ix + 1][iy][iz];
+  u[2] = met0->u[ix][iy + 1][iz];
+  u[3] = met0->u[ix + 1][iy + 1][iz];
+  u[4] = met0->u[ix][iy][iz + 1];
+  u[5] = met0->u[ix + 1][iy][iz + 1];
+  u[6] = met0->u[ix][iy + 1][iz + 1];
+  u[7] = met0->u[ix + 1][iy + 1][iz + 1];
 
-    /* Collect local wind data... */
-    u[0] = met0->u[ix][iy][iz];
-    u[1] = met0->u[ix + 1][iy][iz];
-    u[2] = met0->u[ix][iy + 1][iz];
-    u[3] = met0->u[ix + 1][iy + 1][iz];
-    u[4] = met0->u[ix][iy][iz + 1];
-    u[5] = met0->u[ix + 1][iy][iz + 1];
-    u[6] = met0->u[ix][iy + 1][iz + 1];
-    u[7] = met0->u[ix + 1][iy + 1][iz + 1];
+  v[0] = met0->v[ix][iy][iz];
+  v[1] = met0->v[ix + 1][iy][iz];
+  v[2] = met0->v[ix][iy + 1][iz];
+  v[3] = met0->v[ix + 1][iy + 1][iz];
+  v[4] = met0->v[ix][iy][iz + 1];
+  v[5] = met0->v[ix + 1][iy][iz + 1];
+  v[6] = met0->v[ix][iy + 1][iz + 1];
+  v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
-    v[0] = met0->v[ix][iy][iz];
-    v[1] = met0->v[ix + 1][iy][iz];
-    v[2] = met0->v[ix][iy + 1][iz];
-    v[3] = met0->v[ix + 1][iy + 1][iz];
-    v[4] = met0->v[ix][iy][iz + 1];
-    v[5] = met0->v[ix + 1][iy][iz + 1];
-    v[6] = met0->v[ix][iy + 1][iz + 1];
-    v[7] = met0->v[ix + 1][iy + 1][iz + 1];
+  w[0] = met0->w[ix][iy][iz];
+  w[1] = met0->w[ix + 1][iy][iz];
+  w[2] = met0->w[ix][iy + 1][iz];
+  w[3] = met0->w[ix + 1][iy + 1][iz];
+  w[4] = met0->w[ix][iy][iz + 1];
+  w[5] = met0->w[ix + 1][iy][iz + 1];
+  w[6] = met0->w[ix][iy + 1][iz + 1];
+  w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
-    w[0] = met0->w[ix][iy][iz];
-    w[1] = met0->w[ix + 1][iy][iz];
-    w[2] = met0->w[ix][iy + 1][iz];
-    w[3] = met0->w[ix + 1][iy + 1][iz];
-    w[4] = met0->w[ix][iy][iz + 1];
-    w[5] = met0->w[ix + 1][iy][iz + 1];
-    w[6] = met0->w[ix][iy + 1][iz + 1];
-    w[7] = met0->w[ix + 1][iy + 1][iz + 1];
+  /* Get indices... */
+  ix = locate(met1->lon, met1->nx, atm->lon[ip]);
+  iy = locate(met1->lat, met1->ny, atm->lat[ip]);
+  iz = locate(met1->p, met1->np, atm->p[ip]);
 
-    /* Get indices... */
-    ix = locate(met1->lon, met1->nx, atm->lon[ip]);
-    iy = locate(met1->lat, met1->ny, atm->lat[ip]);
-    iz = locate(met1->p, met1->np, atm->p[ip]);
+  /* Collect local wind data... */
+  u[8] = met1->u[ix][iy][iz];
+  u[9] = met1->u[ix + 1][iy][iz];
+  u[10] = met1->u[ix][iy + 1][iz];
+  u[11] = met1->u[ix + 1][iy + 1][iz];
+  u[12] = met1->u[ix][iy][iz + 1];
+  u[13] = met1->u[ix + 1][iy][iz + 1];
+  u[14] = met1->u[ix][iy + 1][iz + 1];
+  u[15] = met1->u[ix + 1][iy + 1][iz + 1];
 
-    /* Collect local wind data... */
-    u[8] = met1->u[ix][iy][iz];
-    u[9] = met1->u[ix + 1][iy][iz];
-    u[10] = met1->u[ix][iy + 1][iz];
-    u[11] = met1->u[ix + 1][iy + 1][iz];
-    u[12] = met1->u[ix][iy][iz + 1];
-    u[13] = met1->u[ix + 1][iy][iz + 1];
-    u[14] = met1->u[ix][iy + 1][iz + 1];
-    u[15] = met1->u[ix + 1][iy + 1][iz + 1];
+  v[8] = met1->v[ix][iy][iz];
+  v[9] = met1->v[ix + 1][iy][iz];
+  v[10] = met1->v[ix][iy + 1][iz];
+  v[11] = met1->v[ix + 1][iy + 1][iz];
+  v[12] = met1->v[ix][iy][iz + 1];
+  v[13] = met1->v[ix + 1][iy][iz + 1];
+  v[14] = met1->v[ix][iy + 1][iz + 1];
+  v[15] = met1->v[ix + 1][iy + 1][iz + 1];
 
-    v[8] = met1->v[ix][iy][iz];
-    v[9] = met1->v[ix + 1][iy][iz];
-    v[10] = met1->v[ix][iy + 1][iz];
-    v[11] = met1->v[ix + 1][iy + 1][iz];
-    v[12] = met1->v[ix][iy][iz + 1];
-    v[13] = met1->v[ix + 1][iy][iz + 1];
-    v[14] = met1->v[ix][iy + 1][iz + 1];
-    v[15] = met1->v[ix + 1][iy + 1][iz + 1];
+  w[8] = met1->w[ix][iy][iz];
+  w[9] = met1->w[ix + 1][iy][iz];
+  w[10] = met1->w[ix][iy + 1][iz];
+  w[11] = met1->w[ix + 1][iy + 1][iz];
+  w[12] = met1->w[ix][iy][iz + 1];
+  w[13] = met1->w[ix + 1][iy][iz + 1];
+  w[14] = met1->w[ix][iy + 1][iz + 1];
+  w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
-    w[8] = met1->w[ix][iy][iz];
-    w[9] = met1->w[ix + 1][iy][iz];
-    w[10] = met1->w[ix][iy + 1][iz];
-    w[11] = met1->w[ix + 1][iy + 1][iz];
-    w[12] = met1->w[ix][iy][iz + 1];
-    w[13] = met1->w[ix + 1][iy][iz + 1];
-    w[14] = met1->w[ix][iy + 1][iz + 1];
-    w[15] = met1->w[ix + 1][iy + 1][iz + 1];
+  /* Get standard deviations of local wind data... */
+  usig = gsl_stats_sd(u, 1, 16);
+  vsig = gsl_stats_sd(v, 1, 16);
+  wsig = gsl_stats_sd(w, 1, 16);
 
-    /* Get standard deviations of local wind data... */
-    usig = gsl_stats_sd(u, 1, 16);
-    vsig = gsl_stats_sd(v, 1, 16);
-    wsig = gsl_stats_sd(w, 1, 16);
+  /* Set temporal correlations for mesoscale fluctuations... */
+  r = 1 - 2 * fabs(dt) / ctl->dt_met;
+  rs = sqrt(1 - r * r);
 
-    /* Set temporal correlations for mesoscale fluctuations... */
-    r = 1 - 2 * fabs(dt) / ctl->dt_met;
-    rs = sqrt(1 - r * r);
+  /* Calculate mesoscale wind fluctuations... */
+  atm->up[ip] = (float)
+    (r * atm->up[ip]
+     + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * usig));
+  atm->vp[ip] = (float)
+    (r * atm->vp[ip]
+     + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * vsig));
+  atm->wp[ip] = (float)
+    (r * atm->wp[ip]
+     + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * wsig));
 
-    /* Calculate mesoscale wind fluctuations... */
-    atm->up[ip] = (float)
-      (r * atm->up[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * usig));
-    atm->vp[ip] = (float)
-      (r * atm->vp[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * vsig));
-    atm->wp[ip] = (float)
-      (r * atm->wp[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * wsig));
-
-    /* Calculate air parcel displacement... */
-    atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
-    atm->lat[ip] += dy2deg(atm->vp[ip] * dt / 1000.);
-    atm->p[ip] += atm->wp[ip] * dt;
-  }
+  /* Calculate air parcel displacement... */
+  atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
+  atm->lat[ip] += dy2deg(atm->vp[ip] * dt / 1000.);
+  atm->p[ip] += atm->wp[ip] * dt;
 }
 
 /*****************************************************************************/
@@ -637,10 +639,6 @@ void module_isosurf(
   FILE *in;
 
   char line[LEN];
-
-  /* Check control parameter... */
-  if (ctl->isosurf < 1 || ctl->isosurf > 4)
-    return;
 
   /* Initialize... */
   if (ip < 0) {
