@@ -37,7 +37,7 @@ int main(
   char tstr[LEN];
 
   double ahtd, aqtd[NQ], avtd, lat0, lat1, *lat1_old, *lat2_old, *lh1, *lh2,
-    lon0, lon1, *lon1_old, *lon2_old, *lv1, *lv2, p0, p1, rhtd, rvtd, t,
+    lon0, lon1, *lon1_old, *lon2_old, *lv1, *lv2, p0, p1, rhtd, rvtd, t, t0,
     x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
 
   int ens, f, ip, iq, np, year, mon, day, hour, min;
@@ -91,13 +91,14 @@ int main(
   /* Write header... */
   fprintf(out,
 	  "# $1 = time [s]\n"
-	  "# $2 = AHTD [km]\n"
-	  "# $3 = RHTD [km]\n" "# $4 = AVTD [km]\n" "# $5 = RVTD [km]\n");
+	  "# $2 = trajectory time [s]\n"
+	  "# $3 = AHTD [km]\n"
+	  "# $4 = RHTD [km]\n" "# $5 = AVTD [km]\n" "# $6 = RVTD [km]\n");
   for (iq = 0; iq < ctl.nq; iq++)
     fprintf(out,
 	    "# $%d = AQTD (%s) [%s]\n",
-	    6 + iq, ctl.qnt_name[iq], ctl.qnt_unit[iq]);
-  fprintf(out, "# $%d = number of particles\n\n", 6 + ctl.nq);
+	    7 + iq, ctl.qnt_name[iq], ctl.qnt_unit[iq]);
+  fprintf(out, "# $%d = number of particles\n\n", 7 + ctl.nq);
 
   /* Loop over file pairs... */
   for (f = 3; f < argc; f += 2) {
@@ -189,8 +190,12 @@ int main(
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
+    /* Save initial time... */
+    if (f == 3)
+      t0 = t;
+
     /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g", t,
+    fprintf(out, "%.2f %.2f %g %g %g %g", t, t - t0,
 	    ahtd / np, rhtd / np, avtd / np, rvtd / np);
     for (iq = 0; iq < ctl.nq; iq++) {
       fprintf(out, " ");
