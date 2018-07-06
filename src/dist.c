@@ -36,9 +36,10 @@ int main(
 
   char tstr[LEN];
 
-  double ahtd, aqtd[NQ], avtd, lat0, lat1, *lat1_old, *lat2_old, *lh1, *lh2,
-    lon0, lon1, *lon1_old, *lon2_old, *lv1, *lv2, p0, p1, rhtd, rqtd[NQ],
-    rvtd, t, t0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
+  double ahtd, aqtd[NQ], atce1[NQ], atce2[NQ], avtd, lat0, lat1,
+    *lat1_old, *lat2_old, *lh1, *lh2, lon0, lon1, *lon1_old, *lon2_old,
+    *lv1, *lv2, p0, p1, *q1, *q2, rhtd, rqtd[NQ], rtce1[NQ], rtce2[NQ], rvtd,
+    t, t0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
 
   int ens, f, ip, iq, np, year, mon, day, hour, min;
 
@@ -65,6 +66,10 @@ int main(
 	NP);
   ALLOC(lv2, double,
 	NP);
+  ALLOC(q1, double,
+	NQ * NP);
+  ALLOC(q2, double,
+	NQ * NP);
 
   /* Check arguments... */
   if (argc < 5)
@@ -100,7 +105,19 @@ int main(
 	    "# $%d = RQTD (%s) [%%]\n",
 	    7 + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq],
 	    8 + 2 * iq, ctl.qnt_name[iq]);
-  fprintf(out, "# $%d = number of particles\n\n", 7 + 2 * ctl.nq);
+  for (iq = 0; iq < ctl.nq; iq++)
+    fprintf(out,
+	    "# $%d = ATCE_1 (%s) [%s]\n"
+	    "# $%d = RTCE_1 (%s) [%%]\n",
+	    7 + 2 * ctl.nq + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq],
+	    8 + 2 * ctl.nq + 2 * iq, ctl.qnt_name[iq]);
+  for (iq = 0; iq < ctl.nq; iq++)
+    fprintf(out,
+	    "# $%d = ATCE_2 (%s) [%s]\n"
+	    "# $%d = RTCE_2 (%s) [%%]\n",
+	    7 + 4 * ctl.nq + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq],
+	    8 + 4 * ctl.nq + 2 * iq, ctl.qnt_name[iq]);
+  fprintf(out, "# $%d = number of particles\n\n", 7 + 6 * ctl.nq);
 
   /* Loop over file pairs... */
   for (f = 3; f < argc; f += 2) {
@@ -120,7 +137,7 @@ int main(
     np = 0;
     ahtd = avtd = rhtd = rvtd = 0;
     for (iq = 0; iq < ctl.nq; iq++)
-      aqtd[iq] = rqtd[iq] = 0;
+      aqtd[iq] = atce1[iq] = atce2[iq] = rqtd[iq] = rtce1[iq] = rtce2[iq] = 0;
 
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
@@ -167,6 +184,16 @@ int main(
 	for (iq = 0; iq < ctl.nq; iq++)
 	  rqtd[iq] += 200. * fabs((atm1->q[iq][ip] - atm2->q[iq][ip])
 				  / (atm1->q[iq][ip] + atm2->q[iq][ip]));
+
+	/* Get tracer conservation errors... */
+	for (iq = 0; iq < ctl.nq; iq++) {
+	  atce1[iq] += fabs(atm1->q[iq][ip] - q1[iq * NP + ip]);
+	  rtce1[iq] += 200. * fabs((atm1->q[iq][ip] - q1[iq * NP + ip])
+				   / (atm1->q[iq][ip] + q1[iq * NP + ip]));
+	  atce2[iq] += fabs(atm2->q[iq][ip] - q2[iq * NP + ip]);
+	  rtce2[iq] += 200. * fabs((atm2->q[iq][ip] - q2[iq * NP + ip])
+				   / (atm2->q[iq][ip] + q2[iq * NP + ip]));
+	}
       }
 
       /* Save positions of air parcels... */
@@ -195,9 +222,15 @@ int main(
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
-    /* Save initial time... */
-    if (f == 3)
+    /* Save initial data... */
+    if (f == 3) {
       t0 = t;
+      for (iq = 0; iq < ctl.nq; iq++)
+	for (ip = 0; ip < atm1->np; ip++) {
+	  q1[iq * NP + ip] = atm1->q[iq][ip];
+	  q2[iq * NP + ip] = atm2->q[iq][ip];
+	}
+    }
 
     /* Write output... */
     fprintf(out, "%.2f %.2f %g %g %g %g", t, t - t0,
@@ -207,6 +240,18 @@ int main(
       fprintf(out, ctl.qnt_format[iq], aqtd[iq] / np);
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], rqtd[iq] / np);
+    }
+    for (iq = 0; iq < ctl.nq; iq++) {
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], atce1[iq] / np);
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], rtce1[iq] / np);
+    }
+    for (iq = 0; iq < ctl.nq; iq++) {
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], atce2[iq] / np);
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], rtce2[iq] / np);
     }
     fprintf(out, " %d\n", np);
   }
