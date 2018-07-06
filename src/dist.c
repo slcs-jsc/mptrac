@@ -37,8 +37,8 @@ int main(
   char tstr[LEN];
 
   double ahtd, aqtd[NQ], avtd, lat0, lat1, *lat1_old, *lat2_old, *lh1, *lh2,
-    lon0, lon1, *lon1_old, *lon2_old, *lv1, *lv2, p0, p1, rhtd, rvtd, t, t0,
-    x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
+    lon0, lon1, *lon1_old, *lon2_old, *lv1, *lv2, p0, p1, rhtd, rqtd[NQ],
+    rvtd, t, t0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
 
   int ens, f, ip, iq, np, year, mon, day, hour, min;
 
@@ -93,12 +93,14 @@ int main(
 	  "# $1 = time [s]\n"
 	  "# $2 = trajectory time [s]\n"
 	  "# $3 = AHTD [km]\n"
-	  "# $4 = RHTD [km]\n" "# $5 = AVTD [km]\n" "# $6 = RVTD [km]\n");
+	  "# $4 = RHTD [%%]\n" "# $5 = AVTD [km]\n" "# $6 = RVTD [%%]\n");
   for (iq = 0; iq < ctl.nq; iq++)
     fprintf(out,
-	    "# $%d = AQTD (%s) [%s]\n",
-	    7 + iq, ctl.qnt_name[iq], ctl.qnt_unit[iq]);
-  fprintf(out, "# $%d = number of particles\n\n", 7 + ctl.nq);
+	    "# $%d = AQTD (%s) [%s]\n"
+	    "# $%d = RQTD (%s) [%%]\n",
+	    7 + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq],
+	    8 + 2 * iq, ctl.qnt_name[iq]);
+  fprintf(out, "# $%d = number of particles\n\n", 7 + 2 * ctl.nq);
 
   /* Loop over file pairs... */
   for (f = 3; f < argc; f += 2) {
@@ -118,7 +120,7 @@ int main(
     np = 0;
     ahtd = avtd = rhtd = rvtd = 0;
     for (iq = 0; iq < ctl.nq; iq++)
-      aqtd[iq] = 0;
+      aqtd[iq] = rqtd[iq] = 0;
 
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
@@ -162,6 +164,9 @@ int main(
 	  rhtd += 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
 	if (lv1[ip] + lv2[ip] > 0)
 	  rvtd += 200. * fabs(z1 - z2) / (lv1[ip] + lv2[ip]);
+	for (iq = 0; iq < ctl.nq; iq++)
+	  rqtd[iq] += 200. * fabs((atm1->q[iq][ip] - atm2->q[iq][ip])
+				  / (atm1->q[iq][ip] + atm2->q[iq][ip]));
       }
 
       /* Save positions of air parcels... */
@@ -200,6 +205,8 @@ int main(
     for (iq = 0; iq < ctl.nq; iq++) {
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], aqtd[iq] / np);
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], rqtd[iq] / np);
     }
     fprintf(out, " %d\n", np);
   }
