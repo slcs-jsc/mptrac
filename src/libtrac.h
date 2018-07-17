@@ -315,6 +315,15 @@ typedef struct {
   /*! Time step of meteorological data [s]. */
   double dt_met;
 
+  /*! Stride for longitudes. */
+  int met_dx;
+
+  /*! Stride for latitudes. */
+  int met_dy;
+
+  /*! Stride for pressure levels. */
+  int met_dp;
+
   /*! Number of target pressure levels. */
   int met_np;
 
@@ -758,6 +767,11 @@ void read_met_ml2pl(
 
 /*! Create meteorological data with periodic boundary conditions. */
 void read_met_periodic(
+  met_t * met);
+
+/*! Downsampling of meteorological data. */
+void read_met_sample(
+  ctl_t * ctl,
   met_t * met);
 
 /*! Read a control parameter from file or command line. */

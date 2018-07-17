@@ -601,6 +601,9 @@ void read_ctl(
 
   /* Meteorological data... */
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
+  ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
+  ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
+  ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
     ERRMSG("Too many levels!");
@@ -876,6 +879,9 @@ void read_met(
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
 
+  /* Downsampling... */
+  read_met_sample(ctl, met);
+
   /* Close file... */
   NC(nc_close(ncid));
 }
@@ -1011,6 +1017,54 @@ void read_met_periodic(
       met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
     }
+}
+
+/*****************************************************************************/
+
+void read_met_sample(
+  ctl_t * ctl,
+  met_t * met) {
+
+  met_t *help;
+
+  int ip, ix, iy;
+
+  /* Check parameters... */
+  if (ctl->met_dp <= 1 && ctl->met_dx <= 1 && ctl->met_dy <= 1)
+    return;
+
+  /* Allocate... */
+  ALLOC(help, met_t, 1);
+
+  /* Copy data... */
+  memcpy(help, met, sizeof(met_t));
+
+  /* Downsampling... */
+  met->nx = 0;
+  for (ix = 0; ix < help->nx; ix += ctl->met_dx) {
+    met->lon[met->nx] = help->lon[ix];
+    met->ny = 0;
+    for (iy = 0; iy < help->ny; iy += ctl->met_dy) {
+      met->lat[met->ny] = help->lat[iy];
+      met->ps[met->nx][met->ny] = help->ps[ix][iy];
+      met->np = 0;
+      for (ip = 0; ip < help->np; ip += ctl->met_dp) {
+	met->p[met->np] = help->p[ip];
+	met->t[met->nx][met->ny][met->np] = help->t[ix][iy][ip];
+	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
+	met->v[met->nx][met->ny][met->np] = help->v[ix][iy][ip];
+	met->w[met->nx][met->ny][met->np] = help->w[ix][iy][ip];
+	met->h2o[met->nx][met->ny][met->np] = help->h2o[ix][iy][ip];
+	met->o3[met->nx][met->ny][met->np] = help->o3[ix][iy][ip];
+	met->np++;
+      }
+      met->ny++;
+    }
+    met->nx++;
+  }
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/
