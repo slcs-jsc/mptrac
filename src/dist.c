@@ -145,11 +145,17 @@ int main(
       /* Check ensemble ID... */
       if (ens >= 0 && ctl.qnt_ens >= 0 && atm1->q[ctl.qnt_ens][ip] != ens)
 	continue;
+      if (ens >= 0 && ctl.qnt_ens >= 0 && atm2->q[ctl.qnt_ens][ip] != ens)
+	continue;
 
       /* Check spatial range... */
       if (atm1->p[ip] > p0 || atm1->p[ip] < p1
 	  || atm1->lon[ip] < lon0 || atm1->lon[ip] > lon1
 	  || atm1->lat[ip] < lat0 || atm1->lat[ip] > lat1)
+	continue;
+      if (atm2->p[ip] > p0 || atm2->p[ip] < p1
+	  || atm2->lon[ip] < lon0 || atm2->lon[ip] > lon1
+	  || atm2->lat[ip] < lat0 || atm2->lat[ip] > lat1)
 	continue;
 
       /* Convert coordinates... */
