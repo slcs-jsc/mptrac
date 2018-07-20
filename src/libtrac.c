@@ -544,6 +544,18 @@ void read_atm(
       if (nc_inq_varid(ncid, "PV", &varid) == NC_NOERR)
 	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_pv]));
 
+    /* Check coordinates... */
+    for (ip = 0; ip < atm->np; ip++)
+      if (fabs(atm->lon[ip]) > 1000) {
+	atm->time[ip] = GSL_NAN;
+	atm->p[ip] = GSL_NAN;
+	atm->lon[ip] = GSL_NAN;
+	atm->lat[ip] = GSL_NAN;
+	for (iq = 0; iq < ctl->nq; iq++)
+	  atm->q[iq][ip] = GSL_NAN;
+      } else if (atm->lon[ip] > 180)
+	atm->lon[ip] -= 360;
+
     /* Close file... */
     NC(nc_close(ncid));
   }
