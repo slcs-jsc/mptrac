@@ -414,7 +414,11 @@ void read_atm(
 
   char line[LEN], *tok;
 
-  int iq;
+  double t0;
+
+  int dimid, ip, iq, ncid, varid;
+
+  size_t nparts;
 
   /* Init... */
   atm->np = 0;
@@ -422,35 +426,12 @@ void read_atm(
   /* Write info... */
   printf("Read atmospheric data: %s\n", filename);
 
-  /* Open file... */
-  if (!(in = fopen(filename, "r")))
-    ERRMSG("Cannot open file!");
-
-  /* Read binary data... */
-  if (ctl->atm_bin && ctl->atm_gpfile[0] == '-') {
-    FREAD(&atm->np, int,
-	  1,
-	  in);
-    FREAD(atm->time, double,
-	    (size_t) atm->np,
-	  in);
-    FREAD(atm->p, double,
-	    (size_t) atm->np,
-	  in);
-    FREAD(atm->lon, double,
-	    (size_t) atm->np,
-	  in);
-    FREAD(atm->lat, double,
-	    (size_t) atm->np,
-	  in);
-    for (iq = 0; iq < ctl->nq; iq++)
-      FREAD(atm->q[iq], double,
-	      (size_t) atm->np,
-	    in);
-  }
-
   /* Read ASCII data... */
-  else {
+  if (ctl->atm_type == 0) {
+
+    /* Open file... */
+    if (!(in = fopen(filename, "r")))
+      ERRMSG("Cannot open file!");
 
     /* Read line... */
     while (fgets(line, LEN, in)) {
@@ -470,10 +451,106 @@ void read_atm(
       if ((++atm->np) > NP)
 	ERRMSG("Too many data points!");
     }
+
+    /* Close file... */
+    fclose(in);
   }
 
-  /* Close file... */
-  fclose(in);
+  /* Read binary data... */
+  else if (ctl->atm_type == 1) {
+
+    /* Open file... */
+    if (!(in = fopen(filename, "r")))
+      ERRMSG("Cannot open file!");
+
+    /* Read data... */
+    FREAD(&atm->np, int,
+	  1,
+	  in);
+    FREAD(atm->time, double,
+	    (size_t) atm->np,
+	  in);
+    FREAD(atm->p, double,
+	    (size_t) atm->np,
+	  in);
+    FREAD(atm->lon, double,
+	    (size_t) atm->np,
+	  in);
+    FREAD(atm->lat, double,
+	    (size_t) atm->np,
+	  in);
+    for (iq = 0; iq < ctl->nq; iq++)
+      FREAD(atm->q[iq], double,
+	      (size_t) atm->np,
+	    in);
+
+    /* Close file... */
+    fclose(in);
+  }
+
+  /* Read netCDF data... */
+  else if (ctl->atm_type == 2) {
+
+    /* Open file... */
+    NC(nc_open(filename, NC_NOWRITE, &ncid));
+
+    /* Get dimensions... */
+    NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
+    NC(nc_inq_dimlen(ncid, dimid, &nparts));
+    atm->np = (int) nparts;
+    if (atm->np > NP)
+      ERRMSG("Too many particles!");
+
+    /* Get time... */
+    NC(nc_inq_varid(ncid, "time", &varid));
+    NC(nc_get_var_double(ncid, varid, &t0));
+    for (ip = 0; ip < atm->np; ip++)
+      atm->time[ip] = t0;
+
+    /* Read geolocations... */
+    NC(nc_inq_varid(ncid, "PRESS", &varid));
+    NC(nc_get_var_double(ncid, varid, atm->p));
+    NC(nc_inq_varid(ncid, "LON", &varid));
+    NC(nc_get_var_double(ncid, varid, atm->lon));
+    NC(nc_inq_varid(ncid, "LAT", &varid));
+    NC(nc_get_var_double(ncid, varid, atm->lat));
+
+    /* Read variables... */
+    if (ctl->qnt_p >= 0)
+      if (nc_inq_varid(ncid, "PRESS", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_p]));
+    if (ctl->qnt_t >= 0)
+      if (nc_inq_varid(ncid, "TEMP", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_t]));
+    if (ctl->qnt_u >= 0)
+      if (nc_inq_varid(ncid, "U", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_u]));
+    if (ctl->qnt_v >= 0)
+      if (nc_inq_varid(ncid, "V", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_v]));
+    if (ctl->qnt_w >= 0)
+      if (nc_inq_varid(ncid, "W", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_w]));
+    if (ctl->qnt_h2o >= 0)
+      if (nc_inq_varid(ncid, "H2O", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_h2o]));
+    if (ctl->qnt_o3 >= 0)
+      if (nc_inq_varid(ncid, "O3", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_o3]));
+    if (ctl->qnt_theta >= 0)
+      if (nc_inq_varid(ncid, "THETA", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_theta]));
+    if (ctl->qnt_pv >= 0)
+      if (nc_inq_varid(ncid, "PV", &varid) == NC_NOERR)
+	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_pv]));
+
+    /* Close file... */
+    NC(nc_close(ncid));
+  }
+
+  /* Error... */
+  else
+    ERRMSG("Atmospheric data type not supported!");
 
   /* Check number of points... */
   if (atm->np < 1)
@@ -648,8 +725,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
   ctl->atm_filter =
     (int) scan_ctl(filename, argc, argv, "ATM_FILTER", -1, "0", NULL);
-  ctl->atm_bin =
-    (int) scan_ctl(filename, argc, argv, "ATM_BIN", -1, "0", NULL);
+  ctl->atm_type =
+    (int) scan_ctl(filename, argc, argv, "ATM_TYPE", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -1367,67 +1444,41 @@ void write_atm(
   t0 = t - 0.5 * ctl->dt_mod;
   t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Check if gnuplot output is requested... */
-  if (ctl->atm_gpfile[0] != '-') {
-
-    /* Write info... */
-    printf("Plot atmospheric data: %s.png\n", filename);
-
-    /* Create gnuplot pipe... */
-    if (!(out = popen("gnuplot", "w")))
-      ERRMSG("Cannot create pipe to gnuplot!");
-
-    /* Set plot filename... */
-    fprintf(out, "set out \"%s.png\"\n", filename);
-
-    /* Set time string... */
-    jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
-    fprintf(out, "timestr=\"%d-%02d-%02d, %02d:%02d UTC\"\n",
-	    year, mon, day, hour, min);
-
-    /* Dump gnuplot file to pipe... */
-    if (!(in = fopen(ctl->atm_gpfile, "r")))
-      ERRMSG("Cannot open file!");
-    while (fgets(line, LEN, in))
-      fprintf(out, "%s", line);
-    fclose(in);
-  }
-
-  else {
-
-    /* Write info... */
-    printf("Write atmospheric data: %s\n", filename);
-
-    /* Create file... */
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create file!");
-  }
-
-  /* Write binary data... */
-  if (ctl->atm_bin && ctl->atm_gpfile[0] == '-') {
-    FWRITE(&atm->np, int,
-	   1,
-	   out);
-    FWRITE(atm->time, double,
-	     (size_t) atm->np,
-	   out);
-    FWRITE(atm->p, double,
-	     (size_t) atm->np,
-	   out);
-    FWRITE(atm->lon, double,
-	     (size_t) atm->np,
-	   out);
-    FWRITE(atm->lat, double,
-	     (size_t) atm->np,
-	   out);
-    for (iq = 0; iq < ctl->nq; iq++)
-      FWRITE(atm->q[iq], double,
-	       (size_t) atm->np,
-	     out);
-  }
+  /* Write info... */
+  printf("Write atmospheric data: %s\n", filename);
 
   /* Write ASCII data... */
-  else {
+  if (ctl->atm_type == 0) {
+
+    /* Check if gnuplot output is requested... */
+    if (ctl->atm_gpfile[0] != '-') {
+
+      /* Create gnuplot pipe... */
+      if (!(out = popen("gnuplot", "w")))
+	ERRMSG("Cannot create pipe to gnuplot!");
+
+      /* Set plot filename... */
+      fprintf(out, "set out \"%s.png\"\n", filename);
+
+      /* Set time string... */
+      jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+      fprintf(out, "timestr=\"%d-%02d-%02d, %02d:%02d UTC\"\n",
+	      year, mon, day, hour, min);
+
+      /* Dump gnuplot file to pipe... */
+      if (!(in = fopen(ctl->atm_gpfile, "r")))
+	ERRMSG("Cannot open file!");
+      while (fgets(line, LEN, in))
+	fprintf(out, "%s", line);
+      fclose(in);
+    }
+
+    else {
+
+      /* Create file... */
+      if (!(out = fopen(filename, "w")))
+	ERRMSG("Cannot create file!");
+    }
 
     /* Write header... */
     fprintf(out,
@@ -1455,10 +1506,46 @@ void write_atm(
       }
       fprintf(out, "\n");
     }
+
+    /* Close file... */
+    fclose(out);
   }
 
-  /* Close file... */
-  fclose(out);
+  /* Write binary data... */
+  else if (ctl->atm_type == 1) {
+
+    /* Create file... */
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write data... */
+    FWRITE(&atm->np, int,
+	   1,
+	   out);
+    FWRITE(atm->time, double,
+	     (size_t) atm->np,
+	   out);
+    FWRITE(atm->p, double,
+	     (size_t) atm->np,
+	   out);
+    FWRITE(atm->lon, double,
+	     (size_t) atm->np,
+	   out);
+    FWRITE(atm->lat, double,
+	     (size_t) atm->np,
+	   out);
+    for (iq = 0; iq < ctl->nq; iq++)
+      FWRITE(atm->q[iq], double,
+	       (size_t) atm->np,
+	     out);
+
+    /* Close file... */
+    fclose(out);
+  }
+
+  /* Error... */
+  else
+    ERRMSG("Atmospheric data type not supported!");
 }
 
 /*****************************************************************************/

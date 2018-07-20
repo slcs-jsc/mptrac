@@ -382,8 +382,8 @@ typedef struct {
   /*! Time filter for atmospheric data output (0=no, 1=yes). */
   int atm_filter;
 
-  /*! Binary I/O of atmospheric data (0=no, 1=yes). */
-  int atm_bin;
+  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). */
+  int atm_type;
 
   /*! Basename of CSI data files. */
   char csi_basename[LEN];

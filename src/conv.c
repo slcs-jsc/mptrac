@@ -44,11 +44,11 @@ int main(
   read_ctl(argv[1], argc, argv, &ctl);
 
   /* Read atmospheric data... */
-  ctl.atm_bin = atoi(argv[3]);
+  ctl.atm_type = atoi(argv[3]);
   read_atm(argv[2], &ctl, atm);
 
   /* Write atmospheric data... */
-  ctl.atm_bin = atoi(argv[5]);
+  ctl.atm_type = atoi(argv[5]);
   write_atm(argv[4], &ctl, atm, 0);
 
   /* Free... */
