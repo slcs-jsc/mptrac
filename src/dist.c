@@ -130,7 +130,8 @@ int main(
     if (atm1->np != atm2->np)
       ERRMSG("Different numbers of parcels!");
     for (ip = 0; ip < atm1->np; ip++)
-      if (atm1->time[ip] != atm2->time[ip])
+      if (gsl_finite(atm1->time[ip]) && gsl_finite(atm2->time[ip])
+	  && atm1->time[ip] != atm2->time[ip])
 	ERRMSG("Times do not match!");
 
     /* Init... */
@@ -141,6 +142,10 @@ int main(
 
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
+
+      /* Check data... */
+      if (!gsl_finite(atm1->time[ip]) || !gsl_finite(atm2->time[ip]))
+	continue;
 
       /* Check ensemble ID... */
       if (ens >= 0 && ctl.qnt_ens >= 0 && atm1->q[ctl.qnt_ens][ip] != ens)

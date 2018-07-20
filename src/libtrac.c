@@ -547,7 +547,7 @@ void read_atm(
     /* Check data... */
     for (ip = 0; ip < atm->np; ip++)
       if (fabs(atm->lon[ip]) > 400 || fabs(atm->lon[ip]) > 400
-	  || (ctl->qnt_t>=0 && fabs(atm->q[ctl->qnt_t][ip]) > 400)) {
+	  || (ctl->qnt_t >= 0 && fabs(atm->q[ctl->qnt_t][ip]) > 400)) {
 	atm->time[ip] = GSL_NAN;
 	atm->p[ip] = GSL_NAN;
 	atm->lon[ip] = GSL_NAN;
