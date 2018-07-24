@@ -163,12 +163,6 @@ int main(
 	  || atm2->lat[ip] < lat0 || atm2->lat[ip] > lat1)
 	continue;
 
-      /* Check potential vorticity... */
-      if (ctl.qnt_pv >= 0)
-	if (fabs(atm1->q[ctl.qnt_pv][ip]) <= 2
-	    || fabs(atm2->q[ctl.qnt_pv][ip]) <= 2)
-	  continue;
-
       /* Convert coordinates... */
       geo2cart(0, atm1->lon[ip], atm1->lat[ip], x1);
       geo2cart(0, atm2->lon[ip], atm2->lat[ip], x2);
