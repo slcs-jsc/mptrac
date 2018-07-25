@@ -193,17 +193,17 @@ int main(
 	if (lv1[ip] + lv2[ip] > 0)
 	  rvtd += 200. * fabs(z1 - z2) / (lv1[ip] + lv2[ip]);
 	for (iq = 0; iq < ctl.nq; iq++)
-	  rqtd[iq] += 200. * fabs((atm1->q[iq][ip] - atm2->q[iq][ip])
-				  / (atm1->q[iq][ip] + atm2->q[iq][ip]));
+	  rqtd[iq] += 200. * fabs(atm1->q[iq][ip] - atm2->q[iq][ip])
+	    / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
 
 	/* Get tracer conservation errors... */
 	for (iq = 0; iq < ctl.nq; iq++) {
 	  atce1[iq] += fabs(atm1->q[iq][ip] - q1[iq * NP + ip]);
-	  rtce1[iq] += 200. * fabs((atm1->q[iq][ip] - q1[iq * NP + ip])
-				   / (atm1->q[iq][ip] + q1[iq * NP + ip]));
+	  rtce1[iq] += 200. * fabs(atm1->q[iq][ip] - q1[iq * NP + ip])
+	    / (fabs(atm1->q[iq][ip]) + fabs(q1[iq * NP + ip]));
 	  atce2[iq] += fabs(atm2->q[iq][ip] - q2[iq * NP + ip]);
-	  rtce2[iq] += 200. * fabs((atm2->q[iq][ip] - q2[iq * NP + ip])
-				   / (atm2->q[iq][ip] + q2[iq * NP + ip]));
+	  rtce2[iq] += 200. * fabs(atm2->q[iq][ip] - q2[iq * NP + ip])
+	    / (fabs(atm2->q[iq][ip]) + fabs(q2[iq * NP + ip]));
 	}
       }
 
