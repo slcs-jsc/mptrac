@@ -754,9 +754,9 @@ void module_meteo(
 
   static int year_old, mon_old, day_old, nlon, nlat;
 
-  double a, b, c, dp, dx, dy, dtdp, dtdx, dtdy, dudp, dudy, dvdp, dvdx, ps,
-    p1, p_hno3, p_h2o, t, t1, u, u1, v, v1, w, x1, x2, h2o, o3,
-    vort, var0, var1;
+  double a, b, c, dp, dx, dy, dtdp, dtdx, dtdy, dudp, dudy, dvdp, dvdx,
+    lat0, lat1, lon0, lon1, ps, p0, p1, p_hno3, p_h2o, t, t0, t1, u, u0,
+    u1, v, v0, v1, w, x1, x2, h2o, o3, vort, var0, var1;
 
   int day, mon, year, idum, ilat, ilon;
 
@@ -804,35 +804,43 @@ void module_meteo(
   if (ctl->qnt_pv >= 0) {
 
     /* Get gradients in longitude... */
-    dvdx = 0;
-    dtdx = 0;
-    if (fabs(atm->lat[ip]) < 89.) {
-      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		      (atm->lon[ip] >=
-		       0 ? atm->lon[ip] - 1. : atm->lon[ip] + 1.),
-		      atm->lat[ip], NULL, &t1, NULL, &v1, NULL, NULL, NULL);
-      dx = 1000. * ((atm->lon[ip] >= 0 ? -1 : 1) * deg2dx(1., atm->lat[ip]));
-      dtdx = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t)) / dx;
-      dvdx = (v1 - v) / dx;
-    }
+    lat0 = atm->lat[ip];
+    if (lat0 > 89.)
+      lat0 = 89.;
+    else if (lat0 < -89)
+      lat0 = -89;
+    lon0 = atm->lon[ip] - fabs(met0->lon[1] - met0->lon[0]);
+    lon1 = atm->lon[ip] + fabs(met0->lon[1] - met0->lon[0]);
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], lon0,
+		    lat0, NULL, &t0, NULL, &v0, NULL, NULL, NULL);
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], lon1,
+		    lat0, NULL, &t1, NULL, &v1, NULL, NULL, NULL);
+    dx = 1000. * deg2dx(lon1 - lon0, lat0);
+    dtdx = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t0)) / dx;
+    dvdx = (v1 - v0) / dx;
 
     /* Get gradients in latitude... */
+    lat0 = atm->lat[ip] - fabs(met0->lat[1] - met0->lat[0]);
+    lat1 = atm->lat[ip] + fabs(met0->lat[1] - met0->lat[0]);
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    (atm->lat[ip] >=
-		     0 ? atm->lat[ip] - 1. : atm->lat[ip] + 1.), NULL, &t1,
-		    &u1, NULL, NULL, NULL, NULL);
-    dy = 1000. * ((atm->lat[ip] >= 0 ? -1 : 1) * deg2dy(1.));
-    dtdy = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t)) / dy;
-    dudy = (u1 - u) / dy;
+		    lat0, NULL, &t0, &u0, NULL, NULL, NULL, NULL);
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+		    lat1, NULL, &t1, &u1, NULL, NULL, NULL, NULL);
+    dy = 1000. * deg2dy(lat1 - lat0);
+    dtdy = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t0)) / dy;
+    dudy = (u1 - u0) / dy;
 
     /* Get gradients in pressure... */
-    p1 = 0.85 * atm->p[ip];
+    p0 = 0.93 * atm->p[ip];
+    p1 = 1. / 0.93 * atm->p[ip];
+    intpol_met_time(met0, met1, atm->time[ip], p0, atm->lon[ip],
+		    atm->lat[ip], NULL, &t0, &u0, &v0, NULL, NULL, NULL);
     intpol_met_time(met0, met1, atm->time[ip], p1, atm->lon[ip],
 		    atm->lat[ip], NULL, &t1, &u1, &v1, NULL, NULL, NULL);
-    dp = 100. * (p1 - atm->p[ip]);
-    dtdp = (THETA(p1, t1) - THETA(atm->p[ip], t)) / dp;
-    dudp = (u1 - u) / dp;
-    dvdp = (v1 - v) / dp;
+    dp = 100. * (p1 - p0);
+    dtdp = (THETA(p1, t1) - THETA(p0, t0)) / dp;
+    dudp = (u1 - u0) / dp;
+    dvdp = (v1 - v0) / dp;
 
     /* Set vorticity... */
     vort = 2 * 7.2921e-5 * sin(atm->lat[ip] * M_PI / 180.);
