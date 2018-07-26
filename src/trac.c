@@ -673,7 +673,7 @@ void module_isosurf(
 	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
 			atm->lon[ip2], atm->lat[ip2], NULL, &t, NULL, NULL,
 			NULL, NULL, NULL);
-	iso[ip2] = t * pow(P0 / atm->p[ip2], 0.286);
+	iso[ip2] = THETA(atm->p[ip2], t);
       }
 
     /* Read balloon pressure data... */
@@ -754,8 +754,9 @@ void module_meteo(
 
   static int year_old, mon_old, day_old, nlon, nlat;
 
-  double a, b, c, ps, p1, p_hno3, p_h2o, t, t1, u, u1, v, v1, w,
-    x1, x2, h2o, o3, grad, vort, var0, var1;
+  double a, b, c, dp, dx, dy, dtdp, dtdx, dtdy, dudp, dudy, dvdp, dvdx, ps,
+    p1, p_hno3, p_h2o, t, t1, u, u1, v, v1, w, x1, x2, h2o, o3,
+    vort, var0, var1;
 
   int day, mon, year, idum, ilat, ilon;
 
@@ -797,36 +798,48 @@ void module_meteo(
 
   /* Calculate potential temperature... */
   if (ctl->qnt_theta >= 0)
-    atm->q[ctl->qnt_theta][ip] = t * pow(P0 / atm->p[ip], 0.286);
+    atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
 
   /* Calculate potential vorticity... */
   if (ctl->qnt_pv >= 0) {
 
-    /* Absolute vorticity... */
-    vort = 2 * 7.2921e-5 * sin(atm->lat[ip] * M_PI / 180.);
+    /* Get gradients in longitude... */
+    dvdx = 0;
+    dtdx = 0;
     if (fabs(atm->lat[ip]) < 89.) {
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		      (atm->lon[ip] >=
 		       0 ? atm->lon[ip] - 1. : atm->lon[ip] + 1.),
-		      atm->lat[ip], NULL, NULL, NULL, &v1, NULL, NULL, NULL);
-      vort += (v1 - v) / 1000.
-	/ ((atm->lon[ip] >= 0 ? -1 : 1) * deg2dx(1., atm->lat[ip]));
+		      atm->lat[ip], NULL, &t1, NULL, &v1, NULL, NULL, NULL);
+      dx = 1000. * ((atm->lon[ip] >= 0 ? -1 : 1) * deg2dx(1., atm->lat[ip]));
+      dtdx = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t)) / dx;
+      dvdx = (v1 - v) / dx;
     }
+
+    /* Get gradients in latitude... */
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    (atm->lat[ip] >=
-		     0 ? atm->lat[ip] - 1. : atm->lat[ip] + 1.), NULL, NULL,
+		     0 ? atm->lat[ip] - 1. : atm->lat[ip] + 1.), NULL, &t1,
 		    &u1, NULL, NULL, NULL, NULL);
-    vort += (u1 - u) / 1000. / ((atm->lat[ip] >= 0 ? -1 : 1) * deg2dy(1.));
+    dy = 1000. * ((atm->lat[ip] >= 0 ? -1 : 1) * deg2dy(1.));
+    dtdy = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t)) / dy;
+    dudy = (u1 - u) / dy;
 
-    /* Potential temperature gradient... */
+    /* Get gradients in pressure... */
     p1 = 0.85 * atm->p[ip];
     intpol_met_time(met0, met1, atm->time[ip], p1, atm->lon[ip],
-		    atm->lat[ip], NULL, &t1, NULL, NULL, NULL, NULL, NULL);
-    grad = (t1 * pow(P0 / p1, 0.286) - t * pow(P0 / atm->p[ip], 0.286))
-      / (100. * (p1 - atm->p[ip]));
+		    atm->lat[ip], NULL, &t1, &u1, &v1, NULL, NULL, NULL);
+    dp = 100. * (p1 - atm->p[ip]);
+    dtdp = (THETA(p1, t1) - THETA(atm->p[ip], t)) / dp;
+    dudp = (u1 - u) / dp;
+    dvdp = (v1 - v) / dp;
+
+    /* Set vorticity... */
+    vort = 2 * 7.2921e-5 * sin(atm->lat[ip] * M_PI / 180.);
 
     /* Calculate PV... */
-    atm->q[ctl->qnt_pv][ip] = -1e6 * G0 * vort * grad;
+    atm->q[ctl->qnt_pv][ip] = 1e6 * G0 *
+      (-dtdp * (dvdx - dudy + vort) + dvdp * dtdx - dudp * dtdy);
   }
 
   /* Calculate T_ice (Marti and Mauersberger, 1993)... */

@@ -159,6 +159,9 @@
 /*! Convert altitude to pressure. */
 #define P(z) (P0*exp(-(z)/H0))
 
+/*! Calculate potential temperature. */
+#define THETA(p, t) ((t)*pow(P0/(p), 0.286))
+
 /*! Get string tokens. */
 #define TOK(line, tok, format, var) {					\
     if(((tok)=strtok((line), " \t"))) {					\
