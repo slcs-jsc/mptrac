@@ -373,14 +373,14 @@ int main(
     /* Free random number generators... */
     for (i = 0; i < NTHREADS; i++)
       gsl_rng_free(rng[i]);
-    
+
     /* Free... */
     free(atm);
     free(met0);
     free(met1);
     free(dt);
   }
-  
+
 #ifdef MPI
   /* Finalize MPI... */
   MPI_Finalize();
@@ -706,7 +706,7 @@ void module_isosurf(
   else if (ctl->isosurf == 3) {
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, &t, NULL, NULL, NULL, NULL, NULL);
-    atm->p[ip] = P0 * pow(iso[ip] / t, -1. / 0.286);
+    atm->p[ip] = 1000. * pow(iso[ip] / t, -1. / 0.286);
   }
 
   /* Interpolate pressure... */

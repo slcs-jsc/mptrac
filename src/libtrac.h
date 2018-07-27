@@ -57,9 +57,6 @@
 /*! Scale height [km]. */
 #define H0 7.0
 
-/*! Reference pressure [hPa]. */
-#define P0 1013.25
-
 /*! Mean radius of Earth [km]. */
 #define RE 6367.421
 
@@ -157,10 +154,10 @@
 	 __FILE__, __func__, __LINE__, #var, var);
 
 /*! Convert altitude to pressure. */
-#define P(z) (P0*exp(-(z)/H0))
+#define P(z) (1013.25*exp(-(z)/H0))
 
 /*! Calculate potential temperature. */
-#define THETA(p, t) ((t)*pow(P0/(p), 0.286))
+#define THETA(p, t) ((t)*pow(1000./(p), 0.286))
 
 /*! Get string tokens. */
 #define TOK(line, tok, format, var) {					\
@@ -170,7 +167,7 @@
   }
 
 /*! Convert pressure to altitude. */
-#define Z(p) (H0*log(P0/(p)))
+#define Z(p) (H0*log(1013.25/(p)))
 
 /* ------------------------------------------------------------
    Timers...

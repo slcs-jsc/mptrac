@@ -532,7 +532,7 @@ void read_atm(
       if (nc_inq_varid(ncid, "W", &varid) == NC_NOERR)
 	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_w]));
     if (ctl->qnt_h2o >= 0)
-      if (nc_inq_varid(ncid, "H2O", &varid) == NC_NOERR)
+      if (nc_inq_varid(ncid, "SH", &varid) == NC_NOERR)
 	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_h2o]));
     if (ctl->qnt_o3 >= 0)
       if (nc_inq_varid(ncid, "O3", &varid) == NC_NOERR)
@@ -554,8 +554,12 @@ void read_atm(
 	atm->lat[ip] = GSL_NAN;
 	for (iq = 0; iq < ctl->nq; iq++)
 	  atm->q[iq][ip] = GSL_NAN;
-      } else if (atm->lon[ip] > 180)
-	atm->lon[ip] -= 360;
+      } else {
+	if (ctl->qnt_h2o >= 0)
+	  atm->q[ctl->qnt_h2o][ip] *= 1.608;
+	if (atm->lon[ip] > 180)
+	  atm->lon[ip] -= 360;
+      }
 
     /* Close file... */
     NC(nc_close(ncid));
