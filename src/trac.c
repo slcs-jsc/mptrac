@@ -32,11 +32,6 @@
    Functions...
    ------------------------------------------------------------ */
 
-/*! Set simulation time interval. */
-void init_simtime(
-  ctl_t * ctl,
-  atm_t * atm);
-
 /*! Calculate advection of air parcels. */
 void module_advection(
   met_t * met0,
@@ -180,23 +175,39 @@ int main(
     ALLOC(dt, double,
 	  NP);
 
-    /* Read control parameters... */
-    sprintf(filename, "%s/%s", dirname, argv[2]);
-    read_ctl(filename, argc, argv, &ctl);
-
     /* Initialize random number generators... */
     gsl_rng_env_setup();
     if (omp_get_max_threads() > NTHREADS)
       ERRMSG("Too many threads!");
-    for (i = 0; i < NTHREADS; i++)
+    for (i = 0; i < NTHREADS; i++) {
       rng[i] = gsl_rng_alloc(gsl_rng_default);
+      gsl_rng_set(rng[i], gsl_rng_default_seed + (long unsigned) i);
+    }
+
+    /* Read control parameters... */
+    sprintf(filename, "%s/%s", dirname, argv[2]);
+    read_ctl(filename, argc, argv, &ctl);
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
     read_atm(filename, &ctl, atm);
 
-    /* Get simulation time interval... */
-    init_simtime(&ctl, atm);
+    /* Set inital and final time... */
+    if (ctl.direction == 1) {
+      if (ctl.t_start < -1e99)
+	ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
+      if (ctl.t_stop < -1e99)
+	ctl.t_stop = gsl_stats_max(atm->time, 1, (size_t) atm->np);
+    } else if (ctl.direction == -1) {
+      if (ctl.t_stop < -1e99)
+	ctl.t_stop = gsl_stats_min(atm->time, 1, (size_t) atm->np);
+      if (ctl.t_start < -1e99)
+	ctl.t_start = gsl_stats_max(atm->time, 1, (size_t) atm->np);
+    }
+
+    /* Check time... */
+    if (ctl.direction * (ctl.t_stop - ctl.t_start) <= 0)
+      ERRMSG("Nothing to do!");
 
     /* Get rounded start time... */
     if (ctl.direction == 1)
@@ -328,6 +339,21 @@ int main(
        Finalize model run...
        ------------------------------------------------------------ */
 
+    /* Report memory usage... */
+    printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
+    printf("MEMORY_METEO = %g MByte\n", 2. * sizeof(met_t) / 1024. / 1024.);
+    printf("MEMORY_DYNAMIC = %g MByte\n",
+	   4 * NP * sizeof(double) / 1024. / 1024.);
+    printf("MEMORY_STATIC = %g MByte\n",
+	   ((3 * GX * GY + 4 * GX * GY * GZ) * sizeof(double)
+	    + (EX * EY + EX * EY * EP) * sizeof(float)
+	    + (GX * GY + GX * GY * GZ) * sizeof(int)) / 1024. / 1024.);
+
+    /* Report problem size... */
+    printf("SIZE_NP = %d\n", atm->np);
+    printf("SIZE_TASKS = %d\n", size);
+    printf("SIZE_THREADS = %d\n", omp_get_max_threads());
+
     /* Report timers... */
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_TOTAL);
@@ -344,62 +370,23 @@ int main(
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
 
-    /* Report memory usage... */
-    printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
-    printf("MEMORY_METEO = %g MByte\n", 2. * sizeof(met_t) / 1024. / 1024.);
-    printf("MEMORY_DYNAMIC = %g MByte\n",
-	   4 * NP * sizeof(double) / 1024. / 1024.);
-    printf("MEMORY_STATIC = %g MByte\n",
-	   ((3 * GX * GY + 4 * GX * GY * GZ) * sizeof(double)
-	    + (EX * EY + EX * EY * EP) * sizeof(float)
-	    + (GX * GY + GX * GY * GZ) * sizeof(int)) / 1024. / 1024.);
-
-    /* Report problem size... */
-    printf("SIZE_NP = %d\n", atm->np);
-    printf("SIZE_TASKS = %d\n", size);
-    printf("SIZE_THREADS = %d\n", omp_get_max_threads());
-
     /* Free random number generators... */
     for (i = 0; i < NTHREADS; i++)
       gsl_rng_free(rng[i]);
-
+    
     /* Free... */
     free(atm);
     free(met0);
     free(met1);
     free(dt);
   }
-
+  
 #ifdef MPI
   /* Finalize MPI... */
   MPI_Finalize();
 #endif
 
   return EXIT_SUCCESS;
-}
-
-/*****************************************************************************/
-
-void init_simtime(
-  ctl_t * ctl,
-  atm_t * atm) {
-
-  /* Set inital and final time... */
-  if (ctl->direction == 1) {
-    if (ctl->t_start < -1e99)
-      ctl->t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
-    if (ctl->t_stop < -1e99)
-      ctl->t_stop = gsl_stats_max(atm->time, 1, (size_t) atm->np);
-  } else if (ctl->direction == -1) {
-    if (ctl->t_stop < -1e99)
-      ctl->t_stop = gsl_stats_min(atm->time, 1, (size_t) atm->np);
-    if (ctl->t_start < -1e99)
-      ctl->t_start = gsl_stats_max(atm->time, 1, (size_t) atm->np);
-  }
-
-  /* Check time... */
-  if (ctl->direction * (ctl->t_stop - ctl->t_start) <= 0)
-    ERRMSG("Nothing to do!");
 }
 
 /*****************************************************************************/
@@ -804,11 +791,7 @@ void module_meteo(
   if (ctl->qnt_pv >= 0) {
 
     /* Get gradients in longitude... */
-    lat0 = atm->lat[ip];
-    if (lat0 > 89.)
-      lat0 = 89.;
-    else if (lat0 < -89)
-      lat0 = -89;
+    lat0 = GSL_MIN(GSL_MAX(atm->lat[ip], -89.), 89.);
     lon0 = atm->lon[ip] - fabs(met0->lon[1] - met0->lon[0]);
     lon1 = atm->lon[ip] + fabs(met0->lon[1] - met0->lon[0]);
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], lon0,
@@ -851,14 +834,14 @@ void module_meteo(
   }
 
   /* Calculate T_ice (Marti and Mauersberger, 1993)... */
-  if (ctl->qnt_tice >= 0 || ctl->qnt_tsts >= 0)
+  if (ctl->qnt_tice >= 0)
     atm->q[ctl->qnt_tice][ip] =
       -2663.5 /
       (log10((ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] * 100.) -
        12.537);
 
   /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
-  if (ctl->qnt_tnat >= 0 || ctl->qnt_tsts >= 0) {
+  if (ctl->qnt_tnat >= 0) {
     if (ctl->psc_hno3 > 0)
       p_hno3 = ctl->psc_hno3 * atm->p[ip] / 1.333224;
     else
