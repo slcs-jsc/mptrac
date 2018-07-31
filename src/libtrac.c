@@ -546,8 +546,11 @@ void read_atm(
 
     /* Check data... */
     for (ip = 0; ip < atm->np; ip++)
-      if (fabs(atm->lon[ip]) > 400 || fabs(atm->lon[ip]) > 400
-	  || (ctl->qnt_t >= 0 && fabs(atm->q[ctl->qnt_t][ip]) > 400)) {
+      if (fabs(atm->lon[ip]) > 360 || fabs(atm->lat[ip]) > 90
+	  || (ctl->qnt_t >= 0 && fabs(atm->q[ctl->qnt_t][ip]) > 350)
+	  || (ctl->qnt_h2o >= 0 && fabs(atm->q[ctl->qnt_h2o][ip]) > 1)
+	  || (ctl->qnt_theta >= 0 && fabs(atm->q[ctl->qnt_theta][ip]) > 1e10)
+	  || (ctl->qnt_pv >= 0 && fabs(atm->q[ctl->qnt_pv][ip]) > 1e10)) {
 	atm->time[ip] = GSL_NAN;
 	atm->p[ip] = GSL_NAN;
 	atm->lon[ip] = GSL_NAN;
