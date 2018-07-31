@@ -1121,7 +1121,9 @@ void read_met_sample(
 
   met_t *help;
 
-  int ip, ix, iy;
+  float w, wsum;
+
+  int ip, ip2, ix, ix2, iy, iy2;
 
   /* Check parameters... */
   if (ctl->met_dp <= 1 && ctl->met_dx <= 1 && ctl->met_dy <= 1)
@@ -1131,7 +1133,55 @@ void read_met_sample(
   ALLOC(help, met_t, 1);
 
   /* Copy data... */
-  memcpy(help, met, sizeof(met_t));
+  help->time = met->time;
+  help->nx = met->nx;
+  help->ny = met->ny;
+  help->np = met->np;
+  memcpy(help->lon, met->lon, sizeof(met->lon));
+  memcpy(help->lat, met->lat, sizeof(met->lat));
+  memcpy(help->p, met->p, sizeof(met->p));
+
+  /* Smoothing... */
+  for (ix = 0; ix < met->nx; ix += ctl->met_dx) {
+    for (iy = 0; iy < met->ny; iy += ctl->met_dy) {
+      for (ip = 0; ip < met->np; ip += ctl->met_dp) {
+	help->ps[ix][iy] = 0;
+	help->t[ix][iy][ip] = 0;
+	help->u[ix][iy][ip] = 0;
+	help->v[ix][iy][ip] = 0;
+	help->w[ix][iy][ip] = 0;
+	help->h2o[ix][iy][ip] = 0;
+	help->o3[ix][iy][ip] = 0;
+	wsum = 0;
+	for (ix2 = GSL_MAX(ix - ctl->met_dx + 1, 0);
+	     ix2 <= GSL_MIN(ix + ctl->met_dx - 1, met->nx - 1); ix2++)
+	  for (iy2 = GSL_MAX(iy - ctl->met_dy + 1, 0);
+	       iy2 <= GSL_MIN(iy + ctl->met_dy - 1, met->ny - 1); iy2++)
+	    for (ip2 = GSL_MAX(ip - ctl->met_dp + 1, 0);
+		 ip2 <= GSL_MIN(ip + ctl->met_dp - 1, met->np - 1); ip2++) {
+	      w = (float) (1.0 - fabs(ix - ix2) / ctl->met_dx)
+		* (float) (1.0 - fabs(iy - iy2) / ctl->met_dy)
+		* (float) (1.0 - fabs(ip - ip2) / ctl->met_dp);
+	      if (ip2 == GSL_MAX(ip - ctl->met_dp + 1, 0))
+		help->ps[ix][iy] += w * met->ps[ix2][iy2];
+	      help->t[ix][iy][ip] += w * met->t[ix2][iy2][ip2];
+	      help->u[ix][iy][ip] += w * met->u[ix2][iy2][ip2];
+	      help->v[ix][iy][ip] += w * met->v[ix2][iy2][ip2];
+	      help->w[ix][iy][ip] += w * met->w[ix2][iy2][ip2];
+	      help->h2o[ix][iy][ip] += w * met->h2o[ix2][iy2][ip2];
+	      help->o3[ix][iy][ip] += w * met->o3[ix2][iy2][ip2];
+	      wsum += w;
+	    }
+	help->ps[ix][iy] /= wsum;
+	help->t[ix][iy][ip] /= wsum;
+	help->u[ix][iy][ip] /= wsum;
+	help->v[ix][iy][ip] /= wsum;
+	help->w[ix][iy][ip] /= wsum;
+	help->h2o[ix][iy][ip] /= wsum;
+	help->o3[ix][iy][ip] /= wsum;
+      }
+    }
+  }
 
   /* Downsampling... */
   met->nx = 0;
