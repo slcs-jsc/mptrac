@@ -1136,7 +1136,6 @@ void read_met_sample(
   ALLOC(help, met_t, 1);
 
   /* Copy data... */
-  help->time = met->time;
   help->nx = met->nx;
   help->ny = met->ny;
   help->np = met->np;
@@ -1165,8 +1164,7 @@ void read_met_sample(
 	      w = (float) (1.0 - fabs(ix - ix2) / ctl->met_dx)
 		* (float) (1.0 - fabs(iy - iy2) / ctl->met_dy)
 		* (float) (1.0 - fabs(ip - ip2) / ctl->met_dp);
-	      if (ip2 == GSL_MAX(ip - ctl->met_dp + 1, 0))
-		help->ps[ix][iy] += w * met->ps[ix2][iy2];
+	      help->ps[ix][iy] += w * met->ps[ix2][iy2];
 	      help->t[ix][iy][ip] += w * met->t[ix2][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix2][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix2][iy2][ip2];
