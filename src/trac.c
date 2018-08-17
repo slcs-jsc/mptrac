@@ -791,7 +791,7 @@ void module_meteo(
   if (ctl->qnt_pv >= 0) {
 
     /* Get gradients in longitude... */
-    latr = GSL_MIN(GSL_MAX(atm->lat[ip], -87.5), 87.5);
+    latr = GSL_MIN(GSL_MAX(atm->lat[ip], -89.), 89.);
     lon0 = atm->lon[ip] - (met0->lon[1] - met0->lon[0]);
     lon1 = atm->lon[ip] + (met0->lon[1] - met0->lon[0]);
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], lon0,
@@ -811,11 +811,11 @@ void module_meteo(
 		    lat1, NULL, &t1, &u1, NULL, NULL, NULL, NULL);
     dy = 1000. * deg2dy(lat1 - lat0);
     dtdy = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t0)) / dy;
-    dudy = (u1 - u0) / dy;
+    dudy = (u1 * cos(lat1 / 180. * M_PI) - u0 * cos(lat0 / 180. * M_PI)) / dy;
 
     /* Get gradients in pressure... */
-    p0 = 0.93 * atm->p[ip];
-    p1 = 1. / 0.93 * atm->p[ip];
+    p0 = atm->p[ip] * 0.93;
+    p1 = atm->p[ip] / 0.93;
     intpol_met_time(met0, met1, atm->time[ip], p0, atm->lon[ip],
 		    latr, NULL, &t0, &u0, &v0, NULL, NULL, NULL);
     intpol_met_time(met0, met1, atm->time[ip], p1, atm->lon[ip],
@@ -830,7 +830,8 @@ void module_meteo(
 
     /* Calculate PV... */
     atm->q[ctl->qnt_pv][ip] = 1e6 * G0 *
-      (-dtdp * (dvdx - dudy + vort) + dvdp * dtdx - dudp * dtdy);
+      (-dtdp * (dvdx - dudy / cos(latr / 180. * M_PI) + vort) +
+       dvdp * dtdx - dudp * dtdy);
   }
 
   /* Calculate T_ice (Marti and Mauersberger, 1993)... */
