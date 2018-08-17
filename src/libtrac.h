@@ -95,7 +95,7 @@
 #define NENS 2000
 
 /*! Maximum number of OpenMP threads. */
-#define NTHREADS 128
+#define NTHREADS 512
 
 /* ------------------------------------------------------------
    Macros...

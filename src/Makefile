@@ -2,7 +2,15 @@
 # Setup...
 # -----------------------------------------------------------------------------
 
-# Executables...
+# Load these modules before compiling and running the code:
+#
+# JURECA cluster:
+# module load GCC/7.3.0 ParaStationMPI/5.2.1-1
+#
+# JURECA booster:
+# module purge && module load Architecture/KNL GCC/7.3.0 ParaStationMPI/5.2.1-1
+
+# List of executables...
 EXC = center cluster conv dist extract init jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
 
 # Library directories...
@@ -11,31 +19,49 @@ LIBDIR = -L ../lib/build/lib
 # Include directories...
 INCDIR = -I ../lib/build/include
 
-# MPI...
-MPI = 1
+# Compile for KNL...
+#KNL = 1
+
+# Compile for MPI...
+#MPI = 1
+
+# Compile for profiling...
+#PROF = 1
 
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...
 # -----------------------------------------------------------------------------
 
-# Compiler...
+# Select compiler...
 ifdef MPI
   CC = mpicc
 else
   CC = gcc
 endif
 
-# CFLAGS...
-CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -O3 -g
+# Set CFLAGS...
+CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
-# LDFLAGS...
+# Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm 
 
-# MPI...
+# Compile for KNL...
+ifdef KNL
+  CFLAGS += -march=knl -mtune=knl
+endif
+
+# Compile for MPI...
 ifdef MPI
   CFLAGS += -DMPI
 else
   CFLAGS += -static
+endif
+
+# Compile for profiling...
+ifdef PROF
+  CFLAGS += -O2 -pg
+else
+  CFLAGS += -O3
 endif
 
 # -----------------------------------------------------------------------------
