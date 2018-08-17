@@ -12,7 +12,7 @@ LIBDIR = -L ../lib/build/lib
 INCDIR = -I ../lib/build/include
 
 # MPI...
-#MPI = 1
+MPI = 1
 
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...
@@ -62,3 +62,6 @@ doc:
 
 indent:
 	indent -br -brf -brs -bfda -ce -cdw -lp -npcs -npsl *.c *.h
+
+strip:
+	strip $(EXC)
