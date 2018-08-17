@@ -734,7 +734,7 @@ void module_meteo(
 
   static FILE *in;
 
-  static char filename[LEN], line[LEN];
+  static char filename[2 * LEN], line[LEN];
 
   static double lon[GX], lat[GY], var[GX][GY],
     rdum, rlat, rlat_old = -999, rlon, rvar;
@@ -1296,7 +1296,7 @@ void write_output(
   atm_t * atm,
   double t) {
 
-  char filename[LEN];
+  char filename[2 * LEN];
 
   double r;
 

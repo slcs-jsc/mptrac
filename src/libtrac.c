@@ -835,7 +835,7 @@ void read_met(
   char *filename,
   met_t * met) {
 
-  char cmd[LEN], levname[LEN], tstr[10];
+  char cmd[2 * LEN], levname[LEN], tstr[10];
 
   static float help[EX * EY];
 
