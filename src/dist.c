@@ -134,6 +134,16 @@ int main(
 	  && atm1->time[ip] != atm2->time[ip])
 	ERRMSG("Times do not match!");
 
+    /* Save initial data... */
+    if (f == 3) {
+      t0 = t;
+      for (iq = 0; iq < ctl.nq; iq++)
+	for (ip = 0; ip < atm1->np; ip++) {
+	  q1[iq * NP + ip] = atm1->q[iq][ip];
+	  q2[iq * NP + ip] = atm2->q[iq][ip];
+	}
+    }
+
     /* Init... */
     np = 0;
     ahtd = avtd = rhtd = rvtd = 0;
@@ -232,16 +242,6 @@ int main(
     sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 6]);
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
-
-    /* Save initial data... */
-    if (f == 3) {
-      t0 = t;
-      for (iq = 0; iq < ctl.nq; iq++)
-	for (ip = 0; ip < atm1->np; ip++) {
-	  q1[iq * NP + ip] = atm1->q[iq][ip];
-	  q2[iq * NP + ip] = atm2->q[iq][ip];
-	}
-    }
 
     /* Write output... */
     fprintf(out, "%.2f %.2f %g %g %g %g", t, t - t0,

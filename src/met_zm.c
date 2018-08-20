@@ -99,7 +99,8 @@ int main(
 	  "# $6  = zonal wind mean [m/s]\n"
 	  "# $7  = zonal wind standard deviation [m/s]\n"
 	  "# $8  = meridional wind mean [m/s]\n"
-	  "# $9  = meridional wind standard deviation [m/s]\n"
+	  "# $9  = meridional wind standard deviation [m/s]\n");
+  fprintf(out,
 	  "# $10 = horizontal wind mean [m/s]\n"
 	  "# $11 = horizontal wind standard deviation [m/s]\n"
 	  "# $12 = vertical wind mean [hPa/s]\n"
