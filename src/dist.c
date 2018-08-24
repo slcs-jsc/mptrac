@@ -133,6 +133,19 @@ int main(
       if (gsl_finite(atm1->time[ip]) && gsl_finite(atm2->time[ip])
 	  && atm1->time[ip] != atm2->time[ip])
 	ERRMSG("Times do not match!");
+    
+    /* Get time from filename... */
+    sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
+    year = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 15]);
+    mon = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 12]);
+    day = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 9]);
+    hour = atoi(tstr);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 6]);
+    min = atoi(tstr);
+    time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
     /* Save initial data... */
     if (f == 3) {
@@ -229,19 +242,6 @@ int main(
       /* Increment air parcel counter... */
       np++;
     }
-
-    /* Get time from filename... */
-    sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
-    year = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 15]);
-    mon = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 12]);
-    day = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 9]);
-    hour = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 6]);
-    min = atoi(tstr);
-    time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
     /* Write output... */
     fprintf(out, "%.2f %.2f %g %g %g %g", t, t - t0,
