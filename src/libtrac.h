@@ -629,6 +629,17 @@ void cart2geo(
   double *lon,
   double *lat);
 
+/*! Climatology of HNO3 volume mixing ratios. */
+double clim_hno3(
+  double t,
+  double lat,
+  double p);
+
+/*! Climatology of tropopause pressure. */
+double clim_tropo(
+  double t,
+  double lat);
+
 /*! Convert degrees to horizontal distance. */
 double deg2dx(
   double dlon,
@@ -834,11 +845,6 @@ void timer(
   const char *name,
   int id,
   int mode);
-
-/* Get tropopause pressure... */
-double tropopause(
-  double t,
-  double lat);
 
 /*! Write atmospheric data. */
 void write_atm(
