@@ -75,8 +75,12 @@ int main(
 	  "# $7  = zonal wind [m/s]\n"
 	  "# $8  = meridional wind [m/s]\n"
 	  "# $9  = vertical wind [hPa/s]\n"
-	  "# $10 = H2O volume mixing ratio [1]\n"
-	  "# $11 = O3 volume mixing ratio [1]\n\n");
+	  "# $10 = H2O volume mixing ratio [1]\n");
+  fprintf(out,
+	  "# $11 = O3 volume mixing ratio [1]\n"
+	  "# $12 = geopotential height [km]\n"
+	  "# $13 = surface pressure [hPa]\n"
+	  "# $14 = tropopause pressure [hPa]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -86,7 +90,8 @@ int main(
 
     /* Interpolate meteorological data... */
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, &t, &u, &v, &w, &h2o, &o3);
+		    atm->lat[ip], NULL, NULL, NULL, &t, &u, &v, &w, &h2o,
+		    &o3);
 
     /* Write data... */
     fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g\n",

@@ -133,7 +133,7 @@ int main(
       if (gsl_finite(atm1->time[ip]) && gsl_finite(atm2->time[ip])
 	  && atm1->time[ip] != atm2->time[ip])
 	ERRMSG("Times do not match!");
-    
+
     /* Get time from filename... */
     sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
     year = atoi(tstr);

@@ -239,6 +239,8 @@ void intpol_met_space(
   double lon,
   double lat,
   double *ps,
+  double *pt,
+  double *z,
   double *t,
   double *u,
   double *v,
@@ -267,6 +269,10 @@ void intpol_met_space(
   /* Interpolate... */
   if (ps != NULL)
     intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
+  if (pt != NULL)
+    intpol_met_2d(met->pt, ix, iy, wx, wy, pt);
+  if (z != NULL)
+    intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy, z);
   if (t != NULL)
     intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
   if (u != NULL)
@@ -291,6 +297,8 @@ void intpol_met_time(
   double lon,
   double lat,
   double *ps,
+  double *pt,
+  double *z,
   double *t,
   double *u,
   double *v,
@@ -298,11 +306,14 @@ void intpol_met_time(
   double *h2o,
   double *o3) {
 
-  double h2o0, h2o1, o30, o31, ps0, ps1, t0, t1, u0, u1, v0, v1, w0, w1, wt;
+  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, t0, t1, u0, u1, v0, v1,
+    w0, w1, wt, z0, z1;
 
   /* Spatial interpolation... */
   intpol_met_space(met0, p, lon, lat,
 		   ps == NULL ? NULL : &ps0,
+		   pt == NULL ? NULL : &pt0,
+		   z == NULL ? NULL : &z0,
 		   t == NULL ? NULL : &t0,
 		   u == NULL ? NULL : &u0,
 		   v == NULL ? NULL : &v0,
@@ -310,6 +321,8 @@ void intpol_met_time(
 		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
   intpol_met_space(met1, p, lon, lat,
 		   ps == NULL ? NULL : &ps1,
+		   pt == NULL ? NULL : &pt1,
+		   z == NULL ? NULL : &z1,
 		   t == NULL ? NULL : &t1,
 		   u == NULL ? NULL : &u1,
 		   v == NULL ? NULL : &v1,
@@ -322,6 +335,10 @@ void intpol_met_time(
   /* Interpolate... */
   if (ps != NULL)
     *ps = wt * (ps0 - ps1) + ps1;
+  if (pt != NULL)
+    *pt = wt * (pt0 - pt1) + pt1;
+  if (z != NULL)
+    *z = wt * (z0 - z1) + z1;
   if (t != NULL)
     *t = wt * (t0 - t1) + t1;
   if (u != NULL)
@@ -598,6 +615,8 @@ void read_ctl(
   ctl->qnt_r = -1;
   ctl->qnt_rho = -1;
   ctl->qnt_ps = -1;
+  ctl->qnt_pt = -1;
+  ctl->qnt_z = -1;
   ctl->qnt_p = -1;
   ctl->qnt_t = -1;
   ctl->qnt_u = -1;
@@ -640,6 +659,12 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "ps") == 0) {
       ctl->qnt_ps = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "pt") == 0) {
+      ctl->qnt_pt = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "z") == 0) {
+      ctl->qnt_z = iq;
+      sprintf(ctl->qnt_unit[iq], "km");
     } else if (strcmp(ctl->qnt_name[iq], "p") == 0) {
       ctl->qnt_p = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
@@ -706,6 +731,9 @@ void read_ctl(
     ERRMSG("Too many levels!");
   for (ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
+  ctl->met_tropo
+    = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "0", NULL);
+  scan_ctl(filename, argc, argv, "MET_GEOPOT", -1, "-", ctl->met_geopot);
   scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
 
   /* Isosurface parameters... */
@@ -976,6 +1004,12 @@ void read_met(
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
 
+  /* Calculate geopotential heights... */
+  read_met_geopot(ctl, met);
+
+  /* Calculate tropopause pressure... */
+  read_met_tropo(ctl, met);
+
   /* Downsampling... */
   read_met_sample(ctl, met);
 
@@ -1012,6 +1046,149 @@ void read_met_extrapolate(
 	met->o3[ix][iy][ip] = met->o3[ix][iy][ip + 1];
       }
     }
+}
+
+/*****************************************************************************/
+
+void read_met_geopot(
+  ctl_t * ctl,
+  met_t * met) {
+
+  static double topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
+
+  static int init, topo_nx = -1, topo_ny;
+
+  FILE *in;
+
+  char line[LEN];
+
+  double data[30], lat, lon, rlat, rlon, rlon_old = -999, rz, ts, z0, z1;
+
+  float help[EX][EY];
+
+  int ip, ip0, ix, ix2, ix3, iy, iy2, n, tx, ty;
+
+  /* Initialize geopotential heights... */
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++)
+      for (ip = 0; ip < met->np; ip++)
+	met->z[ix][iy][ip] = GSL_NAN;
+
+  /* Check filename... */
+  if (ctl->met_geopot[0] == '-')
+    return;
+
+  /* Read surface geopotential... */
+  if (!init) {
+
+    /* Write info... */
+    printf("Read surface geopotential: %s\n", ctl->met_geopot);
+
+    /* Open file... */
+    if (!(in = fopen(ctl->met_geopot, "r")))
+      ERRMSG("Cannot open file!");
+
+    /* Read data... */
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rz) == 3) {
+	if (rlon != rlon_old) {
+	  if ((++topo_nx) >= EX)
+	    ERRMSG("Too many longitudes!");
+	  topo_ny = 0;
+	}
+	rlon_old = rlon;
+	topo_lon[topo_nx] = rlon;
+	topo_lat[topo_ny] = rlat;
+	topo_z[topo_nx][topo_ny] = rz;
+	if ((++topo_ny) >= EY)
+	  ERRMSG("Too many latitudes!");
+      }
+    if ((++topo_nx) >= EX)
+      ERRMSG("Too many longitudes!");
+
+    /* Close file... */
+    fclose(in);
+
+    /* Check grid spacing... */
+    if (fabs(met->lon[0] - met->lon[1]) != fabs(topo_lon[0] - topo_lon[1])
+	|| fabs(met->lat[0] - met->lat[1]) != fabs(topo_lat[0] - topo_lat[1]))
+      ERRMSG("Grid spacing does not match!");
+
+    /* Set init flag... */
+    init = 1;
+  }
+
+  /* Apply hydrostatic equation to calculate geopotential heights... */
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+
+      /* Get surface height... */
+      lon = met->lon[ix];
+      if (lon < topo_lon[0])
+	lon += 360;
+      else if (lon > topo_lon[topo_nx - 1])
+	lon -= 360;
+      lat = met->lat[iy];
+      tx = locate(topo_lon, topo_nx, lon);
+      ty = locate(topo_lat, topo_ny, lat);
+      z0 = LIN(topo_lon[tx], topo_z[tx][ty],
+	       topo_lon[tx + 1], topo_z[tx + 1][ty], lon);
+      z1 = LIN(topo_lon[tx], topo_z[tx][ty + 1],
+	       topo_lon[tx + 1], topo_z[tx + 1][ty + 1], lon);
+      z0 = LIN(topo_lat[ty], z0, topo_lat[ty + 1], z1, lat);
+
+      /* Find surface pressure level... */
+      ip0 = locate(met->p, met->np, met->ps[ix][iy]);
+
+      /* Get surface temperature... */
+      ts = LIN(met->p[ip0], met->t[ix][iy][ip0],
+	       met->p[ip0 + 1], met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+
+      /* Upper part of profile... */
+      met->z[ix][iy][ip0 + 1]
+	= (float) (z0 + 8.31441 / 28.9647 / G0
+		   * 0.5 * (ts + met->t[ix][iy][ip0 + 1])
+		   * log(met->ps[ix][iy] / met->p[ip0 + 1]));
+      for (ip = ip0 + 2; ip < met->np; ip++)
+	met->z[ix][iy][ip]
+	  = (float) (met->z[ix][iy][ip - 1] + 8.31441 / 28.9647 / G0
+		     * 0.5 * (met->t[ix][iy][ip - 1] + met->t[ix][iy][ip])
+		     * log(met->p[ip - 1] / met->p[ip]));
+    }
+
+  /* Smooth fields... */
+  for (ip = 0; ip < met->np; ip++) {
+
+    /* Median filter... */
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->nx; iy++) {
+	n = 0;
+	for (ix2 = ix - 2; ix2 <= ix + 2; ix2++) {
+	  ix3 = ix2;
+	  if (ix3 < 0)
+	    ix3 += met->nx;
+	  if (ix3 >= met->nx)
+	    ix3 -= met->nx;
+	  for (iy2 = GSL_MAX(iy - 2, 0); iy2 <= GSL_MIN(iy + 2, met->ny - 1);
+	       iy2++)
+	    if (gsl_finite(met->z[ix3][iy2][ip])) {
+	      data[n] = met->z[ix3][iy2][ip];
+	      n++;
+	    }
+	}
+	if (n > 0) {
+	  gsl_sort(data, 1, (size_t) n);
+	  help[ix][iy] = (float)
+	    gsl_stats_median_from_sorted_data(data, 1, (size_t) n);
+	} else
+	  help[ix][iy] = GSL_NAN;
+      }
+
+    /* Copy data... */
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->nx; iy++)
+	met->z[ix][iy][ip] = help[ix][iy];
+  }
 }
 
 /*****************************************************************************/
@@ -1107,10 +1284,12 @@ void read_met_periodic(
   for (iy = 0; iy < met->ny; iy++)
     for (ip = 0; ip < met->np; ip++) {
       met->ps[met->nx - 1][iy] = met->ps[0][iy];
+      met->pt[met->nx - 1][iy] = met->pt[0][iy];
+      met->z[met->nx - 1][iy][ip] = met->z[0][iy][ip];
+      met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
       met->v[met->nx - 1][iy][ip] = met->v[0][iy][ip];
       met->w[met->nx - 1][iy][ip] = met->w[0][iy][ip];
-      met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
     }
@@ -1148,6 +1327,8 @@ void read_met_sample(
     for (iy = 0; iy < met->ny; iy += ctl->met_dy) {
       for (ip = 0; ip < met->np; ip += ctl->met_dp) {
 	help->ps[ix][iy] = 0;
+	help->pt[ix][iy] = 0;
+	help->z[ix][iy][ip] = 0;
 	help->t[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
@@ -1165,6 +1346,8 @@ void read_met_sample(
 		* (float) (1.0 - fabs(iy - iy2) / ctl->met_dy)
 		* (float) (1.0 - fabs(ip - ip2) / ctl->met_dp);
 	      help->ps[ix][iy] += w * met->ps[ix2][iy2];
+	      help->pt[ix][iy] += w * met->pt[ix2][iy2];
+	      help->z[ix][iy][ip] += w * met->z[ix2][iy2][ip2];
 	      help->t[ix][iy][ip] += w * met->t[ix2][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix2][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix2][iy2][ip2];
@@ -1174,7 +1357,9 @@ void read_met_sample(
 	      wsum += w;
 	    }
 	help->ps[ix][iy] /= wsum;
+	help->pt[ix][iy] /= wsum;
 	help->t[ix][iy][ip] /= wsum;
+	help->z[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
 	help->w[ix][iy][ip] /= wsum;
@@ -1192,9 +1377,11 @@ void read_met_sample(
     for (iy = 0; iy < help->ny; iy += ctl->met_dy) {
       met->lat[met->ny] = help->lat[iy];
       met->ps[met->nx][met->ny] = help->ps[ix][iy];
+      met->pt[met->nx][met->ny] = help->pt[ix][iy];
       met->np = 0;
       for (ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
+	met->z[met->nx][met->ny][met->np] = help->z[ix][iy][ip];
 	met->t[met->nx][met->ny][met->np] = help->t[ix][iy][ip];
 	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
 	met->v[met->nx][met->ny][met->np] = help->v[ix][iy][ip];
@@ -1210,6 +1397,139 @@ void read_met_sample(
 
   /* Free... */
   free(help);
+}
+
+/*****************************************************************************/
+
+void read_met_tropo(
+  ctl_t * ctl,
+  met_t * met) {
+
+  gsl_interp_accel *acc;
+
+  gsl_spline *spline;
+
+  double tt[400], tt2[400], tz[400], tz2[400];
+
+  int found, ix, iy, iz, iz2;
+
+  /* Allocate... */
+  acc = gsl_interp_accel_alloc();
+  spline = gsl_spline_alloc(gsl_interp_cspline, (size_t) met->np);
+
+  /* Do not calculate tropopause... */
+  if (ctl->met_tropo == 0)
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->ny; iy++)
+	met->pt[ix][iy] = GSL_NAN;
+
+  /* Use tropopause climatology... */
+  else if (ctl->met_tropo == 1)
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->ny; iy++)
+	met->pt[ix][iy] = tropopause(met->time, met->lat[iy]);
+
+  /* Use cold point... */
+  else if (ctl->met_tropo == 2) {
+
+    /* Loop over grid points... */
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->ny; iy++) {
+
+	/* Get temperature profile... */
+	for (iz = 0; iz < met->np; iz++) {
+	  tz[iz] = Z(met->p[iz]);
+	  tt[iz] = met->t[ix][iy][iz];
+	}
+
+	/* Interpolate temperature profile... */
+	gsl_spline_init(spline, tz, tt, (size_t) met->np);
+	for (iz = 0; iz <= 320; iz++) {
+	  tz2[iz] = 4.0 + 0.1 * iz;
+	  tt2[iz] = gsl_spline_eval(spline, tz2[iz], acc);
+	}
+
+	/* Find minimum... */
+	iz = (int) gsl_stats_min_index(tt2, 1, 321);
+	if (iz <= 0 || iz >= 320)
+	  met->pt[ix][iy] = GSL_NAN;
+	else
+	  met->pt[ix][iy] = P(tz2[iz]);
+      }
+  }
+
+  /* Use WMO definition... */
+  else if (ctl->met_tropo == 3 || ctl->met_tropo == 4) {
+
+    /* Loop over grid points... */
+    for (ix = 0; ix < met->nx; ix++)
+      for (iy = 0; iy < met->ny; iy++) {
+
+	/* Get temperature profile... */
+	for (iz = 0; iz < met->np; iz++) {
+	  tz[iz] = Z(met->p[iz]);
+	  tt[iz] = met->t[ix][iy][iz];
+	}
+
+	/* Interpolate temperature profile... */
+	gsl_spline_init(spline, tz, tt, (size_t) met->np);
+	for (iz = 0; iz <= 160; iz++) {
+	  tz2[iz] = 4.5 + 0.1 * iz;
+	  tt2[iz] = gsl_spline_eval(spline, tz2[iz], acc);
+	}
+
+	/* Find 1st tropopause... */
+	met->pt[ix][iy] = GSL_NAN;
+	for (iz = 0; iz <= 140; iz++) {
+	  found = 1;
+	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
+	    if (-(tt2[iz2] - tt2[iz]) / (tz2[iz2] - tz2[iz]) > 2.0) {
+	      found = 0;
+	      break;
+	    }
+	  if (found) {
+	    if (iz > 0 && iz < 140)
+	      met->pt[ix][iy] = P(tz2[iz]);
+	    break;
+	  }
+	}
+
+	/* Find 2nd tropopause... */
+	if (ctl->met_tropo == 4) {
+	  met->pt[ix][iy] = GSL_NAN;
+	  for (; iz <= 140; iz++) {
+	    found = 1;
+	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
+	      if (-(tt2[iz2] - tt2[iz]) / (tz2[iz2] - tz2[iz]) < 3.0) {
+		found = 0;
+		break;
+	      }
+	    if (found)
+	      break;
+	  }
+	  for (; iz <= 140; iz++) {
+	    found = 1;
+	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
+	      if (-(tt2[iz2] - tt2[iz]) / (tz2[iz2] - tz2[iz]) > 2.0) {
+		found = 0;
+		break;
+	      }
+	    if (found) {
+	      if (iz > 0 && iz < 140)
+		met->pt[ix][iy] = P(tz2[iz]);
+	      break;
+	    }
+	  }
+	}
+      }
+  }
+
+  else
+    ERRMSG("Cannot calculate tropopause!");
+
+  /* Free... */
+  gsl_spline_free(spline);
+  gsl_interp_accel_free(acc);
 }
 
 /*****************************************************************************/
@@ -2042,7 +2362,7 @@ void write_grid(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat,
+	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
 			  NULL, &temp, NULL, NULL, NULL, NULL, NULL);
 
 	  /* Calculate surface area... */
@@ -2208,7 +2528,7 @@ void write_prof(
 
 	  /* Get meteorological data... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat,
+	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
 			  NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
 
 	  /* Calculate mass mixing ratio... */

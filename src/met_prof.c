@@ -46,8 +46,8 @@ int main(
   FILE *out;
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
-    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ],
-    w, wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ];
+    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
+    wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ], pt, ptm[NZ], zg, zgm[NZ];
 
   static int i, iz, np[NZ];
 
@@ -83,13 +83,14 @@ int main(
 	ERRMSG("Too many altitudes!");
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
-	  intpol_met_space(met, P(z), lon, lat, &ps,
+	  intpol_met_space(met, P(z), lon, lat, &ps, &pt, &zg,
 			   &t, &u, &v, &w, &h2o, &o3);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
 	    timem[iz] += met->time;
 	    lonm[iz] += lon;
 	    latm[iz] += lat;
+	    zgm[iz] += zg;
 	    tm[iz] += t;
 	    um[iz] += u;
 	    vm[iz] += v;
@@ -97,6 +98,7 @@ int main(
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
 	    psm[iz] += ps;
+	    ptm[iz] += pt;
 	    np[iz]++;
 	  }
 	}
@@ -110,6 +112,7 @@ int main(
       timem[iz] /= np[iz];
       lonm[iz] /= np[iz];
       latm[iz] /= np[iz];
+      zgm[iz] /= np[iz];
       tm[iz] /= np[iz];
       um[iz] /= np[iz];
       vm[iz] /= np[iz];
@@ -117,10 +120,12 @@ int main(
       h2om[iz] /= np[iz];
       o3m[iz] /= np[iz];
       psm[iz] /= np[iz];
+      ptm[iz] /= np[iz];
     } else {
       timem[iz] = GSL_NAN;
       lonm[iz] = GSL_NAN;
       latm[iz] = GSL_NAN;
+      zgm[iz] = GSL_NAN;
       tm[iz] = GSL_NAN;
       um[iz] = GSL_NAN;
       vm[iz] = GSL_NAN;
@@ -128,6 +133,7 @@ int main(
       h2om[iz] = GSL_NAN;
       o3m[iz] = GSL_NAN;
       psm[iz] = GSL_NAN;
+      ptm[iz] = GSL_NAN;
     }
   }
 
@@ -149,14 +155,16 @@ int main(
 	  "# $9  = vertical wind [hPa/s]\n"
 	  "# $10 = H2O volume mixing ratio [1]\n"
 	  "# $11 = O3 volume mixing ratio [1]\n"
-	  "# $12 = surface pressure [hPa]\n\n");
+	  "# $12 = geopotential height [km]\n"
+	  "# $13 = surface pressure [hPa]\n"
+	  "# $14 = tropopause pressure [hPa]\n\n");
 
   /* Write data... */
   for (z = z0; z <= z1; z += dz) {
     iz = (int) ((z - z0) / dz);
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g\n",
-	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz],
-	    um[iz], vm[iz], wm[iz], h2om[iz], o3m[iz], psm[iz]);
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz], um[iz], vm[iz],
+	    wm[iz], h2om[iz], o3m[iz], zgm[iz], psm[iz], ptm[iz]);
   }
 
   /* Close file... */

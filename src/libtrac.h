@@ -37,6 +37,7 @@
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_sort.h>
+#include <gsl/gsl_spline.h>
 #include <gsl/gsl_statistics.h>
 #include <math.h>
 #include <netcdf.h>
@@ -258,6 +259,12 @@ typedef struct {
   /*! Quantity array index for surface pressure. */
   int qnt_ps;
 
+  /*! Quantity array index for tropopause pressure. */
+  int qnt_pt;
+
+  /*! Quantity array index for geopotential height. */
+  int qnt_z;
+
   /*! Quantity array index for pressure. */
   int qnt_p;
 
@@ -329,6 +336,13 @@ typedef struct {
 
   /*! Target pressure levels [hPa]. */
   double met_p[EP];
+
+  /*! Tropopause definition
+     (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd). */
+  int met_tropo;
+
+  /*! Surface geopotential data file. */
+  char met_geopot[LEN];
 
   /*! Command to stage meteo data. */
   char met_stage[LEN];
@@ -575,8 +589,14 @@ typedef struct {
   /*! Surface pressure [hPa]. */
   double ps[EX][EY];
 
+  /*! Tropopause pressure [hPa]. */
+  double pt[EX][EY];
+
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
+
+  /*! Geopotential height [km]. */
+  float z[EX][EY][EP];
 
   /*! Temperature [K]. */
   float t[EX][EY][EP];
@@ -687,6 +707,8 @@ void intpol_met_space(
   double lon,
   double lat,
   double *ps,
+  double *pt,
+  double *z,
   double *t,
   double *u,
   double *v,
@@ -703,6 +725,8 @@ void intpol_met_time(
   double lon,
   double lat,
   double *ps,
+  double *pt,
+  double *z,
   double *t,
   double *u,
   double *v,
@@ -750,6 +774,11 @@ void read_met(
 void read_met_extrapolate(
   met_t * met);
 
+/*! Calculate geopotential heights. */
+void read_met_geopot(
+  ctl_t * ctl,
+  met_t * met);
+
 /*! Read and convert variable from meteorological data file. */
 void read_met_help(
   int ncid,
@@ -771,6 +800,11 @@ void read_met_periodic(
 
 /*! Downsampling of meteorological data. */
 void read_met_sample(
+  ctl_t * ctl,
+  met_t * met);
+
+/*! Calculate tropopause pressure. */
+void read_met_tropo(
   ctl_t * ctl,
   met_t * met);
 
