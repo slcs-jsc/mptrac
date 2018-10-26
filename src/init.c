@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2018 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 

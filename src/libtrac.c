@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2018 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -1046,7 +1046,6 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_gw_var = -1;
   ctl->qnt_stat = -1;
 
   /* Read quantities... */
@@ -1118,9 +1117,6 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "tnat") == 0) {
       ctl->qnt_tnat = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "gw_var") == 0) {
-      ctl->qnt_gw_var = iq;
-      sprintf(ctl->qnt_unit[iq], "K^2");
     } else if (strcmp(ctl->qnt_name[iq], "stat") == 0) {
       ctl->qnt_stat = iq;
       sprintf(ctl->qnt_unit[iq], "-");
@@ -1179,9 +1175,6 @@ void read_ctl(
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);
   ctl->psc_hno3 =
     scan_ctl(filename, argc, argv, "PSC_HNO3", -1, "9e-9", NULL);
-
-  /* Gravity wave analysis... */
-  scan_ctl(filename, argc, argv, "GW_BASENAME", -1, "-", ctl->gw_basename);
 
   /* Output of atmospheric data... */
   scan_ctl(filename, argc, argv, "ATM_BASENAME", -1, "-", ctl->atm_basename);
@@ -1306,16 +1299,12 @@ void read_met(
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
 
     /* Try to stage meteo file... */
-    STOP_TIMER(TIMER_INPUT);
-    START_TIMER(TIMER_STAGE);
     if (ctl->met_stage[0] != '-') {
       sprintf(cmd, "%s %d %02d %02d %02d %s", ctl->met_stage,
 	      year, mon, day, hour, filename);
       if (system(cmd) != 0)
 	ERRMSG("Error while staging meteo data!");
     }
-    STOP_TIMER(TIMER_STAGE);
-    START_TIMER(TIMER_INPUT);
 
     /* Try to open again... */
     NC(nc_open(filename, NC_NOWRITE, &ncid));

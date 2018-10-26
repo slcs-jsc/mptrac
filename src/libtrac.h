@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2018 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -28,7 +28,8 @@
   
   This reference manual provides information on the algorithms
   and data structures used in the code. Further information can be found at:
-  http://www.fz-juelich.de/ias/jsc/mptrac
+
+  https://github.com/slcs-jsc/mptrac
 */
 
 #include <ctype.h>
@@ -192,7 +193,7 @@
 #define PRINT_TIMER(id)	timer(#id, id, 3)
 
 /*! Maximum number of timers. */
-#define NTIMER 13
+#define NTIMER 12
 
 /*! Timer for total runtime. */
 #define TIMER_TOTAL 0
@@ -200,38 +201,35 @@
 /*! Timer for initalization. */
 #define TIMER_INIT 1
 
-/*! Timer for file staging. */
-#define TIMER_STAGE 2
-
 /*! Timer for file input. */
-#define TIMER_INPUT 3
+#define TIMER_INPUT 2
 
 /*! Timer for file output. */
-#define TIMER_OUTPUT 4
+#define TIMER_OUTPUT 3
 
 /*! Timer for advection module. */
-#define TIMER_ADVECT 5
+#define TIMER_ADVECT 4
 
 /*! Timer for decay module. */
-#define TIMER_DECAY 6
+#define TIMER_DECAY 5
 
 /*! Timer for mesoscale diffusion module. */
-#define TIMER_DIFFMESO 7
+#define TIMER_DIFFMESO 6
 
 /*! Timer for turbulent diffusion module. */
-#define TIMER_DIFFTURB 8
+#define TIMER_DIFFTURB 7
 
 /*! Timer for isosurface module module. */
-#define TIMER_ISOSURF 9
+#define TIMER_ISOSURF 8
 
 /*! Timer for interpolation meteorological data. */
-#define TIMER_METEO 10
+#define TIMER_METEO 9
 
 /*! Timer for position module. */
-#define TIMER_POSITION 11
+#define TIMER_POSITION 10
 
 /*! Timer for sedimentation module. */
-#define TIMER_SEDI 12
+#define TIMER_SEDI 11
 
 /* ------------------------------------------------------------
    Structs...
@@ -312,9 +310,6 @@ typedef struct {
   /*! Quantity array index for station flag. */
   int qnt_stat;
 
-  /*! Quantity array index for gravity wave variances. */
-  int qnt_gw_var;
-
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
 
@@ -388,9 +383,6 @@ typedef struct {
 
   /*! HNO3 volume mixing ratio for PSC analysis. */
   double psc_hno3;
-
-  /*! Basename for gravity wave variance data. */
-  char gw_basename[LEN];
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];

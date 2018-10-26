@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copright (C) 2013-2015 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -352,7 +352,6 @@ int main(
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_INIT);
-    PRINT_TIMER(TIMER_STAGE);
     PRINT_TIMER(TIMER_INPUT);
     PRINT_TIMER(TIMER_OUTPUT);
     PRINT_TIMER(TIMER_ADVECT);
@@ -728,19 +727,7 @@ void module_meteo(
   atm_t * atm,
   int ip) {
 
-  static FILE *in;
-
-  static char filename[2 * LEN], line[LEN];
-
-  static double lon[GX], lat[GY], var[GX][GY],
-    rdum, rlat, rlat_old = -999, rlon, rvar;
-
-  static int year_old, mon_old, day_old, nlon, nlat;
-
-  double a, b, c, ps, pt, pv, p_hno3, p_h2o,
-    t, u, v, w, x1, x2, h2o, o3, var0, var1, z;
-
-  int day, mon, year, idum, ilat, ilon;
+  double a, b, c, ps, pt, pv, p_hno3, p_h2o, t, u, v, w, x1, x2, h2o, o3, z;
 
   /* Interpolate meteorological data... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
@@ -826,56 +813,6 @@ void module_meteo(
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
     atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
 				       + atm->q[ctl->qnt_tnat][ip]);
-  }
-
-  /* Read variance data for current day... */
-  if (ip == 0 && ctl->qnt_gw_var >= 0) {
-    jsec2time(atm->time[ip], &year, &mon, &day, &idum, &idum, &idum, &rdum);
-    if (year != year_old || mon != mon_old || day != day_old) {
-      year_old = year;
-      mon_old = mon;
-      day_old = day;
-      nlon = nlat = -1;
-      sprintf(filename, "%s_%d_%02d_%02d.tab",
-	      ctl->gw_basename, year, mon, day);
-      if ((in = fopen(filename, "r"))) {
-	printf("Read gravity wave data: %s\n", filename);
-	while (fgets(line, LEN, in)) {
-	  if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rvar) != 3)
-	    continue;
-	  if (rlat != rlat_old) {
-	    rlat_old = rlat;
-	    if ((++nlat) > GY)
-	      ERRMSG("Too many latitudes!");
-	    nlon = -1;
-	  }
-	  if ((++nlon) > GX)
-	    ERRMSG("Too many longitudes!");
-	  lon[nlon] = rlon;
-	  lat[nlat] = rlat;
-	  var[nlon][nlat] = GSL_MAX(0, rvar);
-	}
-	fclose(in);
-	nlat++;
-	nlon++;
-      } else
-	printf("Warning: Missing gravity wave data: %s\n", filename);
-    }
-  }
-
-  /* Interpolate variance data... */
-  if (ctl->qnt_gw_var >= 0) {
-    if (nlat >= 2 && nlon >= 2) {
-      ilat = locate(lat, nlat, atm->lat[ip]);
-      ilon = locate(lon, nlon, atm->lon[ip]);
-      var0 = LIN(lat[ilat], var[ilon][ilat],
-		 lat[ilat + 1], var[ilon][ilat + 1], atm->lat[ip]);
-      var1 = LIN(lat[ilat], var[ilon + 1][ilat],
-		 lat[ilat + 1], var[ilon + 1][ilat + 1], atm->lat[ip]);
-      atm->q[ctl->qnt_gw_var][ip]
-	= LIN(lon[ilon], var0, lon[ilon + 1], var1, atm->lon[ip]);
-    } else
-      atm->q[ctl->qnt_gw_var][ip] = GSL_NAN;
   }
 }
 
