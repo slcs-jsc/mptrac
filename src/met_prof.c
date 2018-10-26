@@ -47,7 +47,8 @@ int main(
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
-    wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ], pt, ptm[NZ], zg, zgm[NZ];
+    wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ], pt, ptm[NZ], tt, ttm[NZ],
+    zg, zgm[NZ], zt, ztm[NZ];
 
   static int i, iz, np[NZ];
 
@@ -85,6 +86,8 @@ int main(
 	for (lat = lat0; lat <= lat1; lat += dlat) {
 	  intpol_met_space(met, P(z), lon, lat, &ps, &pt, &zg,
 			   &t, &u, &v, &w, &h2o, &o3);
+	  intpol_met_space(met, pt, lon, lat, NULL, NULL, &zt,
+			   &tt, NULL, NULL, NULL, NULL, NULL);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
 	    timem[iz] += met->time;
@@ -99,6 +102,8 @@ int main(
 	    o3m[iz] += o3;
 	    psm[iz] += ps;
 	    ptm[iz] += pt;
+	    ztm[iz] += zt;
+	    ttm[iz] += zt;
 	    np[iz]++;
 	  }
 	}
@@ -121,6 +126,8 @@ int main(
       o3m[iz] /= np[iz];
       psm[iz] /= np[iz];
       ptm[iz] /= np[iz];
+      ztm[iz] /= np[iz];
+      ttm[iz] /= np[iz];
     } else {
       timem[iz] = GSL_NAN;
       lonm[iz] = GSL_NAN;
@@ -134,6 +141,8 @@ int main(
       o3m[iz] = GSL_NAN;
       psm[iz] = GSL_NAN;
       ptm[iz] = GSL_NAN;
+      ztm[iz] = GSL_NAN;
+      ttm[iz] = GSL_NAN;
     }
   }
 
@@ -152,19 +161,23 @@ int main(
 	  "# $6  = temperature [K]\n"
 	  "# $7  = zonal wind [m/s]\n"
 	  "# $8  = meridional wind [m/s]\n"
-	  "# $9  = vertical wind [hPa/s]\n"
+	  "# $9  = vertical wind [hPa/s]\n");
+  fprintf(out,
 	  "# $10 = H2O volume mixing ratio [1]\n"
 	  "# $11 = O3 volume mixing ratio [1]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = surface pressure [hPa]\n"
-	  "# $14 = tropopause pressure [hPa]\n\n");
+	  "# $14 = tropopause pressure [hPa]\n"
+	  "# $15 = tropopause geopotential height [km]\n"
+	  "# $16 = tropopause temperature [K]\n\n");
 
   /* Write data... */
   for (z = z0; z <= z1; z += dz) {
     iz = (int) ((z - z0) / dz);
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz], um[iz], vm[iz],
-	    wm[iz], h2om[iz], o3m[iz], zgm[iz], psm[iz], ptm[iz]);
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz], um[iz],
+	    vm[iz], wm[iz], h2om[iz], o3m[iz], zgm[iz], psm[iz],
+	    ptm[iz], ztm[iz], ttm[iz]);
   }
 
   /* Close file... */

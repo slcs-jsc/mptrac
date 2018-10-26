@@ -1853,14 +1853,14 @@ void read_met_tropo(
 
 	/* Interpolate temperature profile... */
 	gsl_spline_init(spline, tz, tt, (size_t) met->np);
-	for (iz = 0; iz <= 320; iz++) {
-	  tz2[iz] = 4.0 + 0.1 * iz;
+	for (iz = 0; iz <= 170; iz++) {
+	  tz2[iz] = 4.5 + 0.1 * iz;
 	  tt2[iz] = gsl_spline_eval(spline, tz2[iz], acc);
 	}
 
 	/* Find minimum... */
-	iz = (int) gsl_stats_min_index(tt2, 1, 321);
-	if (iz <= 0 || iz >= 320)
+	iz = (int) gsl_stats_min_index(tt2, 1, 171);
+	if (iz <= 0 || iz >= 170)
 	  met->pt[ix][iy] = GSL_NAN;
 	else
 	  met->pt[ix][iy] = P(tz2[iz]);
