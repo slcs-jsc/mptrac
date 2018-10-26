@@ -39,7 +39,7 @@ int main(
   double ahtd, aqtd[NQ], atce1[NQ], atce2[NQ], avtd, lat0, lat1,
     *lat1_old, *lat2_old, *lh1, *lh2, lon0, lon1, *lon1_old, *lon2_old,
     *lv1, *lv2, p0, p1, *q1, *q2, rhtd, rqtd[NQ], rtce1[NQ], rtce2[NQ], rvtd,
-    t, t0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
+    t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
 
   int ens, f, ip, iq, np, year, mon, day, hour, min;
 

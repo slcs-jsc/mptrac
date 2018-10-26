@@ -14,7 +14,7 @@
 EXC = center cluster conv dist extract init jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
 
 # Library directories...
-LIBDIR = -L ../lib/build/lib
+LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
 
 # Include directories...
 INCDIR = -I ../lib/build/include
