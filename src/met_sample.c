@@ -40,7 +40,7 @@ int main(
 
   FILE *out;
 
-  double h2o, o3, ps, pt, t, tt, u, v, w, z, zt;
+  double h2o, o3, ps, pt, pv, t, tt, u, v, w, z, zt;
 
   int ip;
 
@@ -79,10 +79,11 @@ int main(
 	  "# $10 = H2O volume mixing ratio [1]\n"
 	  "# $11 = O3 volume mixing ratio [1]\n"
 	  "# $12 = geopotential height [km]\n"
-	  "# $13 = surface pressure [hPa]\n"
-	  "# $14 = tropopause pressure [hPa]\n"
-	  "# $15 = tropopause geopotential height [km]\n"
-	  "# $16 = tropopause temperature [K]\n\n");
+	  "# $13 = potential vorticity [PVU]\n"
+	  "# $14 = surface pressure [hPa]\n"
+	  "# $15 = tropopause pressure [hPa]\n"
+	  "# $16 = tropopause geopotential height [km]\n"
+	  "# $17 = tropopause temperature [K]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -92,14 +93,15 @@ int main(
 
     /* Interpolate meteorological data... */
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &h2o, &o3);
+		    atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o,
+		    &o3);
     intpol_met_time(met0, met1, atm->time[ip], pt, atm->lon[ip], atm->lat[ip],
-		    NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL);
+		    NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL, NULL);
 
     /* Write data... */
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
-	    atm->p[ip], t, u, v, w, h2o, o3, z, ps, pt, zt, tt);
+	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt);
   }
 
   /* Close file... */

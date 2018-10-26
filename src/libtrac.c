@@ -654,6 +654,7 @@ void intpol_met_space(
   double *u,
   double *v,
   double *w,
+  double *pv,
   double *h2o,
   double *o3) {
 
@@ -690,6 +691,8 @@ void intpol_met_space(
     intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
   if (w != NULL)
     intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
+  if (pv != NULL)
+    intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy, pv);
   if (h2o != NULL)
     intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
   if (o3 != NULL)
@@ -712,11 +715,12 @@ void intpol_met_time(
   double *u,
   double *v,
   double *w,
+  double *pv,
   double *h2o,
   double *o3) {
 
-  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, t0, t1, u0, u1, v0, v1,
-    w0, w1, wt, z0, z1;
+  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, t0, t1, u0, u1,
+    v0, v1, w0, w1, wt, z0, z1;
 
   /* Spatial interpolation... */
   intpol_met_space(met0, p, lon, lat,
@@ -727,6 +731,7 @@ void intpol_met_time(
 		   u == NULL ? NULL : &u0,
 		   v == NULL ? NULL : &v0,
 		   w == NULL ? NULL : &w0,
+		   pv == NULL ? NULL : &pv0,
 		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
   intpol_met_space(met1, p, lon, lat,
 		   ps == NULL ? NULL : &ps1,
@@ -736,6 +741,7 @@ void intpol_met_time(
 		   u == NULL ? NULL : &u1,
 		   v == NULL ? NULL : &v1,
 		   w == NULL ? NULL : &w1,
+		   pv == NULL ? NULL : &pv1,
 		   h2o == NULL ? NULL : &h2o1, o3 == NULL ? NULL : &o31);
 
   /* Get weighting factor... */
@@ -756,6 +762,8 @@ void intpol_met_time(
     *v = wt * (v0 - v1) + v1;
   if (w != NULL)
     *w = wt * (w0 - w1) + w1;
+  if (pv != NULL)
+    *pv = wt * (pv0 - pv1) + pv1;
   if (h2o != NULL)
     *h2o = wt * (h2o0 - h2o1) + h2o1;
   if (o3 != NULL)
@@ -1416,6 +1424,9 @@ void read_met(
   /* Calculate geopotential heights... */
   read_met_geopot(ctl, met);
 
+  /* Calculate potential vorticity... */
+  read_met_pv(met);
+
   /* Calculate tropopause pressure... */
   read_met_tropo(ctl, met);
 
@@ -1699,9 +1710,66 @@ void read_met_periodic(
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
       met->v[met->nx - 1][iy][ip] = met->v[0][iy][ip];
       met->w[met->nx - 1][iy][ip] = met->w[0][iy][ip];
+      met->pv[met->nx - 1][iy][ip] = met->pv[0][iy][ip];
       met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
     }
+}
+
+/*****************************************************************************/
+
+void read_met_pv(
+  met_t * met) {
+
+  double dx, dy, dp, dtdx, dvdx, dtdy, dudy, dtdp, dudp, dvdp, latr, vort;
+
+  int ip, ip0, ip1, ix, ix0, ix1, iy, iy0, iy1;
+
+  /* Loop over grid points... */
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++)
+      for (ip = 0; ip < met->np; ip++) {
+
+	/* Get gradients in longitude... */
+	ix0 = GSL_MAX(ix - 1, 0);
+	ix1 = GSL_MIN(ix + 1, met->nx - 1);
+	latr = GSL_MIN(GSL_MAX(met->lat[iy], -89.), 89.);
+	dx = 1000. * deg2dx(met->lon[ix1] - met->lon[ix0], latr);
+	dtdx =
+	  (THETA(met->p[ip], met->t[ix1][iy][ip]) -
+	   THETA(met->p[ip], met->t[ix0][iy][ip])) / dx;
+	dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
+
+	/* Get gradients in latitude... */
+	iy0 = GSL_MAX(iy - 1, 0);
+	iy1 = GSL_MIN(iy + 1, met->ny - 1);
+	dy = 1000. * deg2dy(met->lat[iy1] - met->lat[iy0]);
+	dtdy =
+	  (THETA(met->p[ip], met->t[ix][iy1][ip]) -
+	   THETA(met->p[ip], met->t[ix][iy0][ip])) / dy;
+	dudy =
+	  (met->u[ix][iy1][ip] * cos(met->lat[iy1] / 180. * M_PI) -
+	   met->u[ix][iy0][ip] * cos(met->lat[iy0] / 180. * M_PI)) / dy;
+
+	/* Get gradients in pressure... */
+	ip0 = GSL_MAX(ip - 1, 0);
+	ip1 = GSL_MIN(ip + 1, met->np - 1);
+	dp = 100. * (met->p[ip1] - met->p[ip0]);
+	dtdp =
+	  (THETA(met->p[ip1], met->t[ix][iy][ip1]) -
+	   THETA(met->p[ip0], met->t[ix][iy][ip0])) / dp;
+	dudp = (met->u[ix][iy][ip1] - met->u[ix][iy][ip0]) / dp;
+	dvdp = (met->v[ix][iy][ip1] - met->v[ix][iy][ip0]) / dp;
+
+	/* Set vorticity... */
+	vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
+
+	/* Calculate PV... */
+	met->pv[ix][iy][ip] = (float)
+	  (1e6 * G0 *
+	   (-dtdp * (dvdx - dudy / cos(latr / 180. * M_PI) + vort) +
+	    dvdp * dtdx - dudp * dtdy));
+      }
 }
 
 /*****************************************************************************/
@@ -1742,6 +1810,7 @@ void read_met_sample(
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
 	help->w[ix][iy][ip] = 0;
+	help->pv[ix][iy][ip] = 0;
 	help->h2o[ix][iy][ip] = 0;
 	help->o3[ix][iy][ip] = 0;
 	wsum = 0;
@@ -1761,6 +1830,7 @@ void read_met_sample(
 	      help->u[ix][iy][ip] += w * met->u[ix2][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix2][iy2][ip2];
 	      help->w[ix][iy][ip] += w * met->w[ix2][iy2][ip2];
+	      help->pv[ix][iy][ip] += w * met->pv[ix2][iy2][ip2];
 	      help->h2o[ix][iy][ip] += w * met->h2o[ix2][iy2][ip2];
 	      help->o3[ix][iy][ip] += w * met->o3[ix2][iy2][ip2];
 	      wsum += w;
@@ -1772,6 +1842,7 @@ void read_met_sample(
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
 	help->w[ix][iy][ip] /= wsum;
+	help->pv[ix][iy][ip] /= wsum;
 	help->h2o[ix][iy][ip] /= wsum;
 	help->o3[ix][iy][ip] /= wsum;
       }
@@ -1795,6 +1866,7 @@ void read_met_sample(
 	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
 	met->v[met->nx][met->ny][met->np] = help->v[ix][iy][ip];
 	met->w[met->nx][met->ny][met->np] = help->w[ix][iy][ip];
+	met->pv[met->nx][met->ny][met->np] = help->pv[ix][iy][ip];
 	met->h2o[met->nx][met->ny][met->np] = help->h2o[ix][iy][ip];
 	met->o3[met->nx][met->ny][met->np] = help->o3[ix][iy][ip];
 	met->np++;
@@ -2632,7 +2704,7 @@ void write_grid(
 	  /* Get pressure and temperature... */
 	  press = P(z);
 	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, NULL);
+			  NULL, &temp, NULL, NULL, NULL, NULL, NULL, NULL);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * gsl_pow_2(RE * M_PI / 180.)
@@ -2798,7 +2870,7 @@ void write_prof(
 	  /* Get meteorological data... */
 	  press = P(z);
 	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
+			  NULL, &temp, NULL, NULL, NULL, NULL, &h2o, &o3);
 
 	  /* Calculate mass mixing ratio... */
 	  rho_air = 100. * press / (R0 * temp);

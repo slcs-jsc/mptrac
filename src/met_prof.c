@@ -48,7 +48,7 @@ int main(
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ], pt, ptm[NZ], tt, ttm[NZ],
-    zg, zgm[NZ], zt, ztm[NZ];
+    zg, zgm[NZ], zt, ztm[NZ], pv, pvm[NZ];
 
   static int i, iz, np[NZ];
 
@@ -85,9 +85,9 @@ int main(
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
 	  intpol_met_space(met, P(z), lon, lat, &ps, &pt, &zg,
-			   &t, &u, &v, &w, &h2o, &o3);
+			   &t, &u, &v, &w, &pv, &h2o, &o3);
 	  intpol_met_space(met, pt, lon, lat, NULL, NULL, &zt,
-			   &tt, NULL, NULL, NULL, NULL, NULL);
+			   &tt, NULL, NULL, NULL, NULL, NULL, NULL);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
 	    timem[iz] += met->time;
@@ -98,6 +98,7 @@ int main(
 	    um[iz] += u;
 	    vm[iz] += v;
 	    wm[iz] += w;
+	    pvm[iz] += pv;
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
 	    psm[iz] += ps;
@@ -122,6 +123,7 @@ int main(
       um[iz] /= np[iz];
       vm[iz] /= np[iz];
       wm[iz] /= np[iz];
+      pvm[iz] /= np[iz];
       h2om[iz] /= np[iz];
       o3m[iz] /= np[iz];
       psm[iz] /= np[iz];
@@ -137,6 +139,7 @@ int main(
       um[iz] = GSL_NAN;
       vm[iz] = GSL_NAN;
       wm[iz] = GSL_NAN;
+      pvm[iz] = GSL_NAN;
       h2om[iz] = GSL_NAN;
       o3m[iz] = GSL_NAN;
       psm[iz] = GSL_NAN;
@@ -166,17 +169,18 @@ int main(
 	  "# $10 = H2O volume mixing ratio [1]\n"
 	  "# $11 = O3 volume mixing ratio [1]\n"
 	  "# $12 = geopotential height [km]\n"
-	  "# $13 = surface pressure [hPa]\n"
-	  "# $14 = tropopause pressure [hPa]\n"
-	  "# $15 = tropopause geopotential height [km]\n"
-	  "# $16 = tropopause temperature [K]\n\n");
+	  "# $13 = potential vorticity [PVU]\n"
+	  "# $14 = surface pressure [hPa]\n"
+	  "# $15 = tropopause pressure [hPa]\n"
+	  "# $16 = tropopause geopotential height [km]\n"
+	  "# $17 = tropopause temperature [K]\n\n");
 
   /* Write data... */
   for (z = z0; z <= z1; z += dz) {
     iz = (int) ((z - z0) / dz);
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz], um[iz],
-	    vm[iz], wm[iz], h2om[iz], o3m[iz], zgm[iz], psm[iz],
+	    vm[iz], wm[iz], h2om[iz], o3m[iz], zgm[iz], pvm[iz], psm[iz],
 	    ptm[iz], ztm[iz], ttm[iz]);
   }
 

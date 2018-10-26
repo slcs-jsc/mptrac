@@ -32,7 +32,6 @@
 */
 
 #include <ctype.h>
-#include <gsl/gsl_const_mksa.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
@@ -60,6 +59,9 @@
 
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
 #define KB 1.3806504e-23
+
+/*! Standard pressure [hPa]. */
+#define P0 1013.25
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
 #define R0 287.058
@@ -161,7 +163,7 @@
 	 __FILE__, __func__, __LINE__, #var, var);
 
 /*! Convert altitude to pressure. */
-#define P(z) (1013.25*exp(-(z)/H0))
+#define P(z) (P0*exp(-(z)/H0))
 
 /*! Calculate potential temperature. */
 #define THETA(p, t) ((t)*pow(1000./(p), 0.286))
@@ -174,7 +176,7 @@
   }
 
 /*! Convert pressure to altitude. */
-#define Z(p) (H0*log(1013.25/(p)))
+#define Z(p) (H0*log(P0/(p)))
 
 /* ------------------------------------------------------------
    Timers...
@@ -598,9 +600,6 @@ typedef struct {
   /*! Tropopause pressure [hPa]. */
   double pt[EX][EY];
 
-  /*! Pressure on model levels [hPa]. */
-  float pl[EX][EY][EP];
-
   /*! Geopotential height [km]. */
   float z[EX][EY][EP];
 
@@ -616,11 +615,17 @@ typedef struct {
   /*! Vertical wind [hPa/s]. */
   float w[EX][EY][EP];
 
+  /*! Potential vorticity [PVU]. */
+  float pv[EX][EY][EP];
+
   /*! Water vapor volume mixing ratio [1]. */
   float h2o[EX][EY][EP];
 
   /*! Ozone volume mixing ratio [1]. */
   float o3[EX][EY][EP];
+
+  /*! Pressure on model levels [hPa]. */
+  float pl[EX][EY][EP];
 
 } met_t;
 
@@ -730,6 +735,7 @@ void intpol_met_space(
   double *u,
   double *v,
   double *w,
+  double *pv,
   double *h2o,
   double *o3);
 
@@ -748,6 +754,7 @@ void intpol_met_time(
   double *u,
   double *v,
   double *w,
+  double *pv,
   double *h2o,
   double *o3);
 
@@ -813,6 +820,10 @@ void read_met_ml2pl(
 
 /*! Create meteorological data with periodic boundary conditions. */
 void read_met_periodic(
+  met_t * met);
+
+/*! Calculate potential vorticity. */
+void read_met_pv(
   met_t * met);
 
 /*! Downsampling of meteorological data. */

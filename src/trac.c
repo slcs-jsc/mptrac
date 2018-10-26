@@ -397,7 +397,7 @@ void module_advection(
   /* Interpolate meteorological data... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		  atm->lon[ip], atm->lat[ip], NULL, NULL, NULL, NULL,
-		  &v[0], &v[1], &v[2], NULL, NULL);
+		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
   /* Get position of the mid point... */
   xm[0] = atm->lon[ip] + dx2deg(0.5 * dt * v[0] / 1000., atm->lat[ip]);
@@ -407,7 +407,7 @@ void module_advection(
   /* Interpolate meteorological data for mid point... */
   intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt,
 		  xm[2], xm[0], xm[1], NULL, NULL, NULL, NULL,
-		  &v[0], &v[1], &v[2], NULL, NULL);
+		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
   /* Save new position... */
   atm->time[ip] += dt;
@@ -438,7 +438,7 @@ void module_decay(
     /* Get surface pressure... */
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		    atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		    NULL, NULL, NULL, NULL, NULL);
+		    NULL, NULL, NULL, NULL, NULL, NULL);
 
     /* Get tropopause pressure... */
     pt = clim_tropo(atm->time[ip], atm->lat[ip]);
@@ -644,7 +644,7 @@ void module_isosurf(
       for (ip2 = 0; ip2 < atm->np; ip2++) {
 	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
 			atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
-			&t, NULL, NULL, NULL, NULL, NULL);
+			&t, NULL, NULL, NULL, NULL, NULL, NULL);
 	iso[ip2] = atm->p[ip2] / t;
       }
 
@@ -653,7 +653,7 @@ void module_isosurf(
       for (ip2 = 0; ip2 < atm->np; ip2++) {
 	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
 			atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
-			&t, NULL, NULL, NULL, NULL, NULL);
+			&t, NULL, NULL, NULL, NULL, NULL, NULL);
 	iso[ip2] = THETA(atm->p[ip2], t);
       }
 
@@ -693,7 +693,7 @@ void module_isosurf(
   else if (ctl->isosurf == 2) {
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL, &t,
-		    NULL, NULL, NULL, NULL, NULL);
+		    NULL, NULL, NULL, NULL, NULL, NULL);
     atm->p[ip] = iso[ip] * t;
   }
 
@@ -701,7 +701,7 @@ void module_isosurf(
   else if (ctl->isosurf == 3) {
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		    atm->lat[ip], NULL, NULL, NULL, &t,
-		    NULL, NULL, NULL, NULL, NULL);
+		    NULL, NULL, NULL, NULL, NULL, NULL);
     atm->p[ip] = 1000. * pow(iso[ip] / t, -1. / 0.286);
   }
 
@@ -737,15 +737,14 @@ void module_meteo(
 
   static int year_old, mon_old, day_old, nlon, nlat;
 
-  double a, b, c, dp, dx, dy, dtdp, dtdx, dtdy, dudp, dudy, dvdp, dvdx,
-    lat0, lat1, latr, lon0, lon1, ps, pt, p0, p1, p_hno3, p_h2o,
-    t, t0, t1, u, u0, u1, v, v0, v1, w, x1, x2, h2o, o3, vort, var0, var1, z;
+  double a, b, c, ps, pt, pv, p_hno3, p_h2o,
+    t, u, v, w, x1, x2, h2o, o3, var0, var1, z;
 
   int day, mon, year, idum, ilat, ilon;
 
   /* Interpolate meteorological data... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		  atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &h2o, &o3);
+		  atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o, &o3);
 
   /* Set surface pressure... */
   if (ctl->qnt_ps >= 0)
@@ -791,52 +790,9 @@ void module_meteo(
   if (ctl->qnt_theta >= 0)
     atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
 
-  /* Calculate potential vorticity... */
-  if (ctl->qnt_pv >= 0) {
-
-    /* Get gradients in longitude... */
-    latr = GSL_MIN(GSL_MAX(atm->lat[ip], -89.), 89.);
-    lon0 = atm->lon[ip] - (met0->lon[1] - met0->lon[0]);
-    lon1 = atm->lon[ip] + (met0->lon[1] - met0->lon[0]);
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], lon0, latr,
-		    NULL, NULL, NULL, &t0, NULL, &v0, NULL, NULL, NULL);
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], lon1, latr,
-		    NULL, NULL, NULL, &t1, NULL, &v1, NULL, NULL, NULL);
-    dx = 1000. * deg2dx(lon1 - lon0, latr);
-    dtdx = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t0)) / dx;
-    dvdx = (v1 - v0) / dx;
-
-    /* Get gradients in latitude... */
-    lat0 = latr - (met0->lat[1] - met0->lat[0]);
-    lat1 = latr + (met0->lat[1] - met0->lat[0]);
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], lat0,
-		    NULL, NULL, NULL, &t0, &u0, NULL, NULL, NULL, NULL);
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], lat1,
-		    NULL, NULL, NULL, &t1, &u1, NULL, NULL, NULL, NULL);
-    dy = 1000. * deg2dy(lat1 - lat0);
-    dtdy = (THETA(atm->p[ip], t1) - THETA(atm->p[ip], t0)) / dy;
-    dudy = (u1 * cos(lat1 / 180. * M_PI) - u0 * cos(lat0 / 180. * M_PI)) / dy;
-
-    /* Get gradients in pressure... */
-    p0 = atm->p[ip] * 0.93;
-    p1 = atm->p[ip] / 0.93;
-    intpol_met_time(met0, met1, atm->time[ip], p0, atm->lon[ip], latr,
-		    NULL, NULL, NULL, &t0, &u0, &v0, NULL, NULL, NULL);
-    intpol_met_time(met0, met1, atm->time[ip], p1, atm->lon[ip], latr,
-		    NULL, NULL, NULL, &t1, &u1, &v1, NULL, NULL, NULL);
-    dp = 100. * (p1 - p0);
-    dtdp = (THETA(p1, t1) - THETA(p0, t0)) / dp;
-    dudp = (u1 - u0) / dp;
-    dvdp = (v1 - v0) / dp;
-
-    /* Set vorticity... */
-    vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
-
-    /* Calculate PV... */
-    atm->q[ctl->qnt_pv][ip] = 1e6 * G0 *
-      (-dtdp * (dvdx - dudy / cos(latr / 180. * M_PI) + vort) +
-       dvdp * dtdx - dudp * dtdy);
-  }
+  /* Set potential vorticity... */
+  if (ctl->qnt_pv >= 0)
+    atm->q[ctl->qnt_pv][ip] = pv;
 
   /* Calculate T_ice (Marti and Mauersberger, 1993)... */
   if (ctl->qnt_tice >= 0)
@@ -958,7 +914,7 @@ void module_position(
   /* Get surface pressure... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		  atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		  NULL, NULL, NULL, NULL, NULL);
+		  NULL, NULL, NULL, NULL, NULL, NULL);
 
   /* Check pressure... */
   if (atm->p[ip] > ps)
@@ -993,7 +949,7 @@ void module_sedi(
   /* Get temperature... */
   intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		  atm->lat[ip], NULL, NULL, NULL, &T,
-		  NULL, NULL, NULL, NULL, NULL);
+		  NULL, NULL, NULL, NULL, NULL, NULL);
 
   /* Density of dry air... */
   rho = p / (R0 * T);
