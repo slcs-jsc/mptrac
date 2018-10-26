@@ -58,6 +58,12 @@
 /*! Scale height [km]. */
 #define H0 7.0
 
+/*! Boltzmann constant [kg m^2/(K s^2)]. */
+#define KB 1.3806504e-23
+
+/*! Specific gas constant of dry air [J/(kg K)]. */
+#define R0 287.058
+
 /*! Mean radius of Earth [km]. */
 #define RE 6367.421
 

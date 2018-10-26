@@ -1892,7 +1892,8 @@ void read_met_tropo(
 	for (iz = 0; iz <= 140; iz++) {
 	  found = 1;
 	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	    if (-(tt2[iz2] - tt2[iz]) / (tz2[iz2] - tz2[iz]) > 2.0) {
+	    if (1000. * G0 / R0 * log(tt2[iz2] / tt2[iz])
+		/ log(P(tz2[iz2]) / P(tz2[iz])) > 2.0) {
 	      found = 0;
 	      break;
 	    }
@@ -1909,7 +1910,8 @@ void read_met_tropo(
 	  for (; iz <= 140; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
-	      if (-(tt2[iz2] - tt2[iz]) / (tz2[iz2] - tz2[iz]) < 3.0) {
+	      if (1000. * G0 / R0 * log(tt2[iz2] / tt2[iz])
+		  / log(P(tz2[iz2]) / P(tz2[iz])) < 3.0) {
 		found = 0;
 		break;
 	      }
@@ -1919,7 +1921,8 @@ void read_met_tropo(
 	  for (; iz <= 140; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	      if (-(tt2[iz2] - tt2[iz]) / (tz2[iz2] - tz2[iz]) > 2.0) {
+	      if (1000. * G0 / R0 * log(tt2[iz2] / tt2[iz])
+		  / log(P(tz2[iz2]) / P(tz2[iz])) > 2.0) {
 		found = 0;
 		break;
 	      }
@@ -2639,7 +2642,7 @@ void write_grid(
 	  cd = grid_m[ix][iy][iz] / (1e6 * area);
 
 	  /* Calculate mass mixing ratio... */
-	  rho_air = 100. * press / (287.058 * temp);
+	  rho_air = 100. * press / (R0 * temp);
 	  mmr = grid_m[ix][iy][iz] / (rho_air * 1e6 * area * 1e3 * dz);
 
 	  /* Write output... */
@@ -2798,7 +2801,7 @@ void write_prof(
 			  NULL, &temp, NULL, NULL, NULL, &h2o, &o3);
 
 	  /* Calculate mass mixing ratio... */
-	  rho_air = 100. * press / (287.058 * temp);
+	  rho_air = 100. * press / (R0 * temp);
 	  area = dlat * dlon * gsl_pow_2(M_PI * RE / 180.)
 	    * cos(lat * M_PI / 180.);
 	  mmr = mass[ix][iy][iz] / (rho_air * area * dz * 1e9);

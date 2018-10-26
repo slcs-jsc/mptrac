@@ -980,9 +980,6 @@ void module_sedi(
   /* Coefficients for Cunningham slip-flow correction (Kasten, 1968): */
   const double A = 1.249, B = 0.42, C = 0.87;
 
-  /* Specific gas constant for dry air [J/(kg K)]: */
-  const double R = 287.058;
-
   /* Average mass of an air molecule [kg/molec]: */
   const double m = 4.8096e-26;
 
@@ -999,13 +996,13 @@ void module_sedi(
 		  NULL, NULL, NULL, NULL, NULL);
 
   /* Density of dry air... */
-  rho = p / (R * T);
+  rho = p / (R0 * T);
 
   /* Dynamic viscosity of air... */
   eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Thermal velocity of an air molecule... */
-  v = sqrt(8 * GSL_CONST_MKSA_BOLTZMANN * T / (M_PI * m));
+  v = sqrt(8 * KB * T / (M_PI * m));
 
   /* Mean free path of an air molecule... */
   lambda = 2 * eta / (rho * v);
@@ -1017,9 +1014,7 @@ void module_sedi(
   G = 1 + K * (A + B * exp(-C / K));
 
   /* Sedimentation (fall) velocity... */
-  v_p =
-    2. * gsl_pow_2(r_p) * (rho_p -
-			   rho) * GSL_CONST_MKSA_GRAV_ACCEL / (9. * eta) * G;
+  v_p = 2. * gsl_pow_2(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
 
   /* Calculate pressure change... */
   atm->p[ip] += dz2dp(v_p * dt / 1000., atm->p[ip]);
