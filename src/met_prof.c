@@ -111,44 +111,6 @@ int main(
     }
   }
 
-  /* Normalize... */
-  for (z = z0; z <= z1; z += dz) {
-    iz = (int) ((z - z0) / dz);
-    if (np[iz] > 0) {
-      timem[iz] /= np[iz];
-      lonm[iz] /= np[iz];
-      latm[iz] /= np[iz];
-      zgm[iz] /= np[iz];
-      tm[iz] /= np[iz];
-      um[iz] /= np[iz];
-      vm[iz] /= np[iz];
-      wm[iz] /= np[iz];
-      pvm[iz] /= np[iz];
-      h2om[iz] /= np[iz];
-      o3m[iz] /= np[iz];
-      psm[iz] /= np[iz];
-      ptm[iz] /= np[iz];
-      ztm[iz] /= np[iz];
-      ttm[iz] /= np[iz];
-    } else {
-      timem[iz] = GSL_NAN;
-      lonm[iz] = GSL_NAN;
-      latm[iz] = GSL_NAN;
-      zgm[iz] = GSL_NAN;
-      tm[iz] = GSL_NAN;
-      um[iz] = GSL_NAN;
-      vm[iz] = GSL_NAN;
-      wm[iz] = GSL_NAN;
-      pvm[iz] = GSL_NAN;
-      h2om[iz] = GSL_NAN;
-      o3m[iz] = GSL_NAN;
-      psm[iz] = GSL_NAN;
-      ptm[iz] = GSL_NAN;
-      ztm[iz] = GSL_NAN;
-      ttm[iz] = GSL_NAN;
-    }
-  }
-
   /* Create output file... */
   printf("Write meteorological data file: %s\n", argv[2]);
   if (!(out = fopen(argv[2], "w")))
@@ -179,9 +141,11 @@ int main(
   for (z = z0; z <= z1; z += dz) {
     iz = (int) ((z - z0) / dz);
     fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	    timem[iz], z, lonm[iz], latm[iz], P(z), tm[iz], um[iz],
-	    vm[iz], wm[iz], h2om[iz], o3m[iz], zgm[iz], pvm[iz], psm[iz],
-	    ptm[iz], ztm[iz], ttm[iz]);
+	    timem[iz] / np[iz], z, lonm[iz] / np[iz], latm[iz] / np[iz], P(z),
+	    tm[iz] / np[iz], um[iz] / np[iz], vm[iz] / np[iz],
+	    wm[iz] / np[iz], h2om[iz] / np[iz], o3m[iz] / np[iz],
+	    zgm[iz] / np[iz], pvm[iz] / np[iz], psm[iz] / np[iz],
+	    ptm[iz] / np[iz], ztm[iz] / np[iz], ttm[iz] / np[iz]);
   }
 
   /* Close file... */
