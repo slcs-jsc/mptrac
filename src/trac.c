@@ -307,9 +307,8 @@ int main(
 
       /* Meteorological data... */
       START_TIMER(TIMER_METEO);
-      module_meteo(&ctl, met0, met1, atm, 0);
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 1; ip < atm->np; ip++)
+      for (ip = 0; ip < atm->np; ip++)
 	module_meteo(&ctl, met0, met1, atm, ip);
       STOP_TIMER(TIMER_METEO);
 
