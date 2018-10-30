@@ -104,7 +104,7 @@ int main(
 	    psm[iz] += ps;
 	    ptm[iz] += pt;
 	    ztm[iz] += zt;
-	    ttm[iz] += zt;
+	    ttm[iz] += tt;
 	    np[iz]++;
 	  }
 	}
