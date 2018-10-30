@@ -994,6 +994,8 @@ void read_atm(
       } else {
 	if (ctl->qnt_h2o >= 0)
 	  atm->q[ctl->qnt_h2o][ip] *= 1.608;
+	if (ctl->qnt_pv >= 0)
+	  atm->q[ctl->qnt_pv][ip] *= 1e6;
 	if (atm->lon[ip] > 180)
 	  atm->lon[ip] -= 360;
       }
