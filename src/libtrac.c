@@ -1523,7 +1523,7 @@ void read_met_geopot(
     /* Check grid spacing... */
     if (fabs(met->lon[0] - met->lon[1]) != fabs(topo_lon[0] - topo_lon[1])
 	|| fabs(met->lat[0] - met->lat[1]) != fabs(topo_lat[0] - topo_lat[1]))
-      ERRMSG("Grid spacing does not match!");
+      printf("Warning: Grid spacing does not match!\n");
 
     /* Set init flag... */
     init = 1;
