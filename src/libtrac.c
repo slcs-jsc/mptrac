@@ -1044,6 +1044,8 @@ void read_ctl(
   ctl->qnt_h2o = -1;
   ctl->qnt_o3 = -1;
   ctl->qnt_theta = -1;
+  ctl->qnt_vh = -1;
+  ctl->qnt_vz = -1;
   ctl->qnt_pv = -1;
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
@@ -1107,6 +1109,12 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
       sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "vh") == 0) {
+      ctl->qnt_vh = iq;
+      sprintf(ctl->qnt_unit[iq], "m/s");
+    } else if (strcmp(ctl->qnt_name[iq], "vz") == 0) {
+      ctl->qnt_vz = iq;
+      sprintf(ctl->qnt_unit[iq], "m/s");
     } else if (strcmp(ctl->qnt_name[iq], "pv") == 0) {
       ctl->qnt_pv = iq;
       sprintf(ctl->qnt_unit[iq], "PVU");

@@ -772,6 +772,14 @@ void module_meteo(
   if (ctl->qnt_o3 >= 0)
     atm->q[ctl->qnt_o3][ip] = o3;
 
+  /* Calculate horizontal wind... */
+  if (ctl->qnt_vh >= 0)
+    atm->q[ctl->qnt_vh][ip] = sqrt(u * u + v * v);
+
+  /* Calculate vertical velocity... */
+  if (ctl->qnt_vz >= 0)
+    atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
+
   /* Calculate potential temperature... */
   if (ctl->qnt_theta >= 0)
     atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);

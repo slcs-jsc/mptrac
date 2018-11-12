@@ -295,6 +295,12 @@ typedef struct {
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
 
+  /*! Quantity array index for horizontal wind. */
+  int qnt_vh;
+
+  /*! Quantity array index for vertical velocity. */
+  int qnt_vz;
+
   /*! Quantity array index for potential vorticity. */
   int qnt_pv;
 

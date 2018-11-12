@@ -8,7 +8,7 @@ t0=$(../src/time2jsec 2011 6 5 0 0 0 0)
 t1=$(../src/time2jsec 2011 6 8 0 0 0 0)
 
 # Add "mass" to air parcel quantities...
-qnt="NQ 1 QNT_NAME[0] m QNT_UNIT[0] kg"
+qnt="NQ 1 QNT_NAME[0] m"
 
 # Set initial air parcel positions at 10 km height above Puyehue volcano...
 ../src/init - data/atm_init.tab $qnt \
