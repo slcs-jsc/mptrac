@@ -40,9 +40,9 @@ int main(
 
   FILE *out;
 
-  double h2o, o3, ps, pt, pv, t, tt, u, v, w, z, zt;
+  double h2o, o3, p0, p1, pref, ps, pt, pv, t, tt, u, v, w, z, zm, zref, zt;
 
-  int ip;
+  int geopot, ip, it;
 
   /* Check arguments... */
   if (argc < 4)
@@ -55,6 +55,8 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  geopot =
+    (int) scan_ctl(argv[1], argc, argv, "MET_SAMPLE_GEOPOT", -1, "0", NULL);
 
   /* Read atmospheric data... */
   read_atm(argv[3], &ctl, atm);
@@ -91,8 +93,27 @@ int main(
     /* Get meteorological data... */
     get_met(&ctl, argv[2], atm->time[ip], met0, met1);
 
+    /* Set reference pressure for interpolation... */
+    pref = atm->p[ip];
+    if (geopot) {
+      zref = Z(pref);
+      p0 = met0->p[0];
+      p1 = met0->p[met0->np - 1];
+      for (it = 0; it < 24; it++) {
+	pref = 0.5 * (p0 + p1);
+	intpol_met_time(met0, met1, atm->time[ip], pref, atm->lon[ip],
+			atm->lat[ip], NULL, NULL, &zm, NULL, NULL, NULL, NULL,
+			NULL, NULL, NULL);
+	if (zref > zm || !gsl_finite(zm))
+	  p0 = pref;
+	else
+	  p1 = pref;
+      }
+      pref = 0.5 * (p0 + p1);
+    }
+
     /* Interpolate meteorological data... */
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+    intpol_met_time(met0, met1, atm->time[ip], pref, atm->lon[ip],
 		    atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o,
 		    &o3);
     intpol_met_time(met0, met1, atm->time[ip], pt, atm->lon[ip], atm->lat[ip],
