@@ -126,7 +126,7 @@ int main(
 
   FILE *dirlist;
 
-  char dirname[LEN], filename[LEN];
+  char dirname[LEN], filename[2 * LEN];
 
   double *dt, t, t0;
 

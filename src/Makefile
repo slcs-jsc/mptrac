@@ -8,7 +8,7 @@
 # module load GCC/7.3.0 ParaStationMPI/5.2.1-1
 #
 # JURECA booster:
-# module purge && module load Architecture/KNL GCC/7.3.0 ParaStationMPI/5.2.1-1
+# module purge && module load Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 
 # List of executables...
 EXC = center cluster conv dist extract init jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
