@@ -380,7 +380,7 @@ typedef struct {
 
   /*! Vertical scaling factor for mesoscale wind fluctuations. */
   double turb_mesoz;
-  
+
   /*! Life time of particles (troposphere) [s]. */
   double tdec_trop;
 

@@ -543,12 +543,12 @@ void module_diffusion_meso(
   rs = sqrt(1 - r * r);
 
   /* Calculate horizontal mesoscale wind fluctuations... */
-  if(ctl->turb_mesox > 0) {
+  if (ctl->turb_mesox > 0) {
     atm->up[ip] = (float)
       (r * atm->up[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * usig));
     atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
-    
+
     atm->vp[ip] = (float)
       (r * atm->vp[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * vsig));
@@ -556,7 +556,7 @@ void module_diffusion_meso(
   }
 
   /* Calculate vertical mesoscale wind fluctuations... */
-  if(ctl->turb_mesoz > 0) {
+  if (ctl->turb_mesoz > 0) {
     atm->wp[ip] = (float)
       (r * atm->wp[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesoz * wsig));
