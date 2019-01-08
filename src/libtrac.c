@@ -1635,7 +1635,6 @@ void read_met_help(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
-#pragma omp parallel for default(shared) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
       for (ip = 0; ip < met->np; ip++) {
@@ -1726,9 +1725,13 @@ void read_met_pv(
   met_t * met) {
 
   double c0, c1, cr, dx, dy, dp, dtdx, dvdx, dtdy, dudy, dtdp, dudp, dvdp,
-    latr, vort, pp, pp0, pp1;
+    latr, vort, pows[EP];
 
   int ip, ip0, ip1, ix, ix0, ix1, iy, iy0, iy1;
+
+  /* Set powers... */
+  for (ip = 0; ip < met->np; ip++)
+    pows[ip] = pow(1000. / met->p[ip], 0.286);
 
   /* Loop over grid points... */
   for (ix = 0; ix < met->nx; ix++) {
@@ -1754,7 +1757,6 @@ void read_met_pv(
       vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
 
       /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(ip,ip0,ip1,dp,pp,pp0,pp1,dtdx,dvdx,dtdy,dudy,dtdp,dudp,dvdp)
       for (ip = 0; ip < met->np; ip++) {
 
 	/* Set indices... */
@@ -1763,20 +1765,19 @@ void read_met_pv(
 
 	/* Set auxiliary variables... */
 	dp = 100. * (met->p[ip1] - met->p[ip0]);
-	pp = pow(1000. / met->p[ip], 0.286);
-	pp0 = (ip == ip0 ? pp : pow(1000. / met->p[ip0], 0.286));
-	pp1 = (ip == ip1 ? pp : pow(1000. / met->p[ip1], 0.286));
 
 	/* Get gradients in longitude... */
-	dtdx = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pp / dx;
+	dtdx = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
 	dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
 
 	/* Get gradients in latitude... */
-	dtdy = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pp / dy;
+	dtdy = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
 	dudy = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Get gradients in pressure... */
-	dtdp = (met->t[ix][iy][ip1] * pp1 - met->t[ix][iy][ip0] * pp0) / dp;
+	dtdp =
+	  (met->t[ix][iy][ip1] * pows[ip1] -
+	   met->t[ix][iy][ip0] * pows[ip0]) / dp;
 	dudp = (met->u[ix][iy][ip1] - met->u[ix][iy][ip0]) / dp;
 	dvdp = (met->v[ix][iy][ip1] - met->v[ix][iy][ip0]) / dp;
 
