@@ -375,9 +375,12 @@ typedef struct {
   /*! Vertical turbulent diffusion coefficient (stratosphere) [m^2/s]. */
   double turb_dz_strat;
 
-  /*! Scaling factor for mesoscale wind fluctuations. */
-  double turb_meso;
+  /*! Horizontal scaling factor for mesoscale wind fluctuations. */
+  double turb_mesox;
 
+  /*! Vertical scaling factor for mesoscale wind fluctuations. */
+  double turb_mesoz;
+  
   /*! Life time of particles (troposphere) [s]. */
   double tdec_trop;
 

@@ -270,7 +270,7 @@ int main(
 
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
-      if (ctl.turb_meso > 0) {
+      if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
 #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
 	  if (gsl_finite(dt[ip]))
@@ -542,21 +542,26 @@ void module_diffusion_meso(
   r = 1 - 2 * fabs(dt) / ctl->dt_met;
   rs = sqrt(1 - r * r);
 
-  /* Calculate mesoscale wind fluctuations... */
-  atm->up[ip] = (float)
-    (r * atm->up[ip]
-     + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * usig));
-  atm->vp[ip] = (float)
-    (r * atm->vp[ip]
-     + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * vsig));
-  atm->wp[ip] = (float)
-    (r * atm->wp[ip]
-     + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_meso * wsig));
+  /* Calculate horizontal mesoscale wind fluctuations... */
+  if(ctl->turb_mesox > 0) {
+    atm->up[ip] = (float)
+      (r * atm->up[ip]
+       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * usig));
+    atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
+    
+    atm->vp[ip] = (float)
+      (r * atm->vp[ip]
+       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * vsig));
+    atm->lat[ip] += dy2deg(atm->vp[ip] * dt / 1000.);
+  }
 
-  /* Calculate air parcel displacement... */
-  atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
-  atm->lat[ip] += dy2deg(atm->vp[ip] * dt / 1000.);
-  atm->p[ip] += atm->wp[ip] * dt;
+  /* Calculate vertical mesoscale wind fluctuations... */
+  if(ctl->turb_mesoz > 0) {
+    atm->wp[ip] = (float)
+      (r * atm->wp[ip]
+       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesoz * wsig));
+    atm->p[ip] += atm->wp[ip] * dt;
+  }
 }
 
 /*****************************************************************************/

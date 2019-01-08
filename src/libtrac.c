@@ -1173,8 +1173,10 @@ void read_ctl(
     = scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0.0", NULL);
   ctl->turb_dz_strat
     = scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
-  ctl->turb_meso =
-    scan_ctl(filename, argc, argv, "TURB_MESO", -1, "0.16", NULL);
+  ctl->turb_mesox =
+    scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0.16", NULL);
+  ctl->turb_mesoz =
+    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
   /* Life time of particles... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
