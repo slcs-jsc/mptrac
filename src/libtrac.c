@@ -1624,22 +1624,25 @@ void read_met_help(
 
   static float help[EX * EY * EP];
 
-  int ip, ix, iy, n = 0, varid;
-
+  int ip, ix, iy, varid;
+  
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
       return;
-
+  
   /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
-
+  
   /* Copy and check data... */
-  for (ip = 0; ip < met->np; ip++)
+#pragma omp parallel for default(shared) private(ix,iy,ip)
+  for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
-      for (ix = 0; ix < met->nx; ix++) {
-	dest[ix][iy][ip] = scl * help[n++];
-	if (fabs(dest[ix][iy][ip] / scl) > 1e14)
+      for (ip = 0; ip < met->np; ip++) {
+	dest[ix][iy][ip] = help[(ip*met->ny+iy)*met->nx+ix];
+	if (fabsf(dest[ix][iy][ip]) < 1e14f)
+	  dest[ix][iy][ip] *= scl;
+	else
 	  dest[ix][iy][ip] = GSL_NAN;
       }
 }
