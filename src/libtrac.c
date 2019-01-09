@@ -1149,6 +1149,9 @@ void read_ctl(
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
+  ctl->met_sx = (int) scan_ctl(filename, argc, argv, "MET_SX", -1, "1", NULL);
+  ctl->met_sy = (int) scan_ctl(filename, argc, argv, "MET_SY", -1, "1", NULL);
+  ctl->met_sp = (int) scan_ctl(filename, argc, argv, "MET_SP", -1, "1", NULL);
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
     ERRMSG("Too many levels!");
@@ -1832,15 +1835,15 @@ void read_met_sample(
 	help->h2o[ix][iy][ip] = 0;
 	help->o3[ix][iy][ip] = 0;
 	wsum = 0;
-	for (ix2 = GSL_MAX(ix - ctl->met_dx + 1, 0);
-	     ix2 <= GSL_MIN(ix + ctl->met_dx - 1, met->nx - 1); ix2++)
-	  for (iy2 = GSL_MAX(iy - ctl->met_dy + 1, 0);
-	       iy2 <= GSL_MIN(iy + ctl->met_dy - 1, met->ny - 1); iy2++)
-	    for (ip2 = GSL_MAX(ip - ctl->met_dp + 1, 0);
-		 ip2 <= GSL_MIN(ip + ctl->met_dp - 1, met->np - 1); ip2++) {
-	      w = (float) (1.0 - fabs(ix - ix2) / ctl->met_dx)
-		* (float) (1.0 - fabs(iy - iy2) / ctl->met_dy)
-		* (float) (1.0 - fabs(ip - ip2) / ctl->met_dp);
+	for (ix2 = GSL_MAX(ix - ctl->met_sx + 1, 0);
+	     ix2 <= GSL_MIN(ix + ctl->met_sx - 1, met->nx - 1); ix2++)
+	  for (iy2 = GSL_MAX(iy - ctl->met_sy + 1, 0);
+	       iy2 <= GSL_MIN(iy + ctl->met_sy - 1, met->ny - 1); iy2++)
+	    for (ip2 = GSL_MAX(ip - ctl->met_sp + 1, 0);
+		 ip2 <= GSL_MIN(ip + ctl->met_sp - 1, met->np - 1); ip2++) {
+	      w = (float) (1.0 - fabs(ix - ix2) / ctl->met_sx)
+		* (float) (1.0 - fabs(iy - iy2) / ctl->met_sy)
+		* (float) (1.0 - fabs(ip - ip2) / ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix2][iy2];
 	      help->pt[ix][iy] += w * met->pt[ix2][iy2];
 	      help->z[ix][iy][ip] += w * met->z[ix2][iy2][ip2];

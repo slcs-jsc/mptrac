@@ -340,6 +340,15 @@ typedef struct {
   /*! Stride for pressure levels. */
   int met_dp;
 
+  /*! Smoothing for longitudes. */
+  int met_sx;
+
+  /*! Smoothing for latitudes. */
+  int met_sy;
+
+  /*! Smoothing for pressure levels. */
+  int met_sp;
+
   /*! Number of target pressure levels. */
   int met_np;
 
