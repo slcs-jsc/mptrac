@@ -1205,8 +1205,7 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
   ctl->csi_dt_out =
     scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
-  scan_ctl(filename, argc, argv, "CSI_OBSFILE", -1, "obs.tab",
-	   ctl->csi_obsfile);
+  scan_ctl(filename, argc, argv, "CSI_OBSFILE", -1, "-", ctl->csi_obsfile);
   ctl->csi_obsmin =
     scan_ctl(filename, argc, argv, "CSI_OBSMIN", -1, "0", NULL);
   ctl->csi_modmin =
@@ -2321,7 +2320,7 @@ void write_csi(
 
     /* Check quantity index for mass... */
     if (ctl->qnt_m < 0)
-      ERRMSG("Need quantity mass to analyze CSI!");
+      ERRMSG("Need quantity mass!");
 
     /* Open observation data file... */
     printf("Read CSI observation data: %s\n", ctl->csi_obsfile);
@@ -2357,7 +2356,7 @@ void write_csi(
       for (iz = 0; iz < ctl->csi_nz; iz++)
 	modmean[ix][iy][iz] = obsmean[ix][iy][iz] = obscount[ix][iy][iz] = 0;
 
-  /* Read data... */
+  /* Read observation data... */
   while (fgets(line, LEN, in)) {
 
     /* Read data... */
@@ -2623,7 +2622,7 @@ void write_grid(
 
   /* Check quantity index for mass... */
   if (ctl->qnt_m < 0)
-    ERRMSG("Need quantity mass to write grid data!");
+    ERRMSG("Need quantity mass!");
 
   /* Set time interval for output... */
   t0 = t - 0.5 * ctl->dt_mod;
@@ -2714,8 +2713,7 @@ void write_grid(
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
       for (iz = 0; iz < ctl->grid_nz; iz++)
-	if (!ctl->grid_sparse
-	    || ix == 0 || iy == 0 || iz == 0 || grid_m[ix][iy][iz] > 0) {
+	if (!ctl->grid_sparse || grid_m[ix][iy][iz] > 0) {
 
 	  /* Set coordinates... */
 	  z = ctl->grid_z0 + dz * (iz + 0.5);
@@ -2763,11 +2761,11 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], tmean[GX][GY],
-    rt, rlon, rlat, robs, t0, t1, area, dz, dlon, dlat, lon, lat, z,
-    press, temp, rho_air, mmr, h2o, o3;
+  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rz, rlon, rlat, robs,
+    t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, mmr, h2o,
+    o3;
 
-  static int init, obscount[GX][GY], ip, ix, iy, iz;
+  static int init, obscount[GX][GY], ip, ix, iy, iz, okay;
 
   /* Init... */
   if (!init) {
@@ -2786,7 +2784,7 @@ void write_prof(
     if (!(in = fopen(ctl->prof_obsfile, "r")))
       ERRMSG("Cannot open file!");
 
-    /* Create new file... */
+    /* Create new output file... */
     printf("Write profile data: %s\n", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
@@ -2819,16 +2817,16 @@ void write_prof(
     for (iy = 0; iy < ctl->prof_ny; iy++) {
       obsmean[ix][iy] = 0;
       obscount[ix][iy] = 0;
-      tmean[ix][iy] = 0;
       for (iz = 0; iz < ctl->prof_nz; iz++)
 	mass[ix][iy][iz] = 0;
     }
 
-  /* Read data... */
+  /* Read observation data... */
   while (fgets(line, LEN, in)) {
 
     /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg", &rt, &rlon, &rlat, &robs) != 4)
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
+	5)
       continue;
 
     /* Check time... */
@@ -2847,7 +2845,6 @@ void write_prof(
 
     /* Get mean observation index... */
     obsmean[ix][iy] += robs;
-    tmean[ix][iy] += rt;
     obscount[ix][iy]++;
   }
 
@@ -2877,6 +2874,14 @@ void write_prof(
     for (iy = 0; iy < ctl->prof_ny; iy++)
       if (obscount[ix][iy] > 0) {
 
+	/* Check profile... */
+	okay = 0;
+	for (iz = 0; iz < ctl->prof_nz; iz++)
+	  if (mass[ix][iy][iz] > 0)
+	    okay = 1;
+	if (!okay)
+	  continue;
+
 	/* Write output... */
 	fprintf(out, "\n");
 
@@ -2901,8 +2906,7 @@ void write_prof(
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n",
-		  tmean[ix][iy] / obscount[ix][iy],
-		  z, lon, lat, press, temp, mmr, h2o, o3,
+		  t, z, lon, lat, press, temp, mmr, h2o, o3,
 		  obsmean[ix][iy] / obscount[ix][iy]);
 	}
       }
