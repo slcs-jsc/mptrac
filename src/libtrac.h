@@ -61,11 +61,17 @@
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
 #define KB 1.3806504e-23
 
+/*! Molar mass of dry air [g/mol]. */
+#define MA 28.9644
+
 /*! Standard pressure [hPa]. */
 #define P0 1013.25
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
-#define R0 287.058
+#define RA 287.058
+
+/*! Ideal gas constant [J/(mol K)]. */
+#define RI 8.3144598
 
 /*! Mean radius of Earth [km]. */
 #define RE 6367.421
@@ -389,6 +395,9 @@ typedef struct {
 
   /*! Vertical scaling factor for mesoscale wind fluctuations. */
   double turb_mesoz;
+
+  /*! Molar mass [g/mol]. */
+  double molmass;
 
   /*! Life time of particles (troposphere) [s]. */
   double tdec_trop;

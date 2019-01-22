@@ -128,9 +128,9 @@ int main(
 
   char dirname[LEN], filename[2 * LEN];
 
-  double *dt, t, t0;
+  double *dt, t;
 
-  int i, ip, ntask = 0, rank = 0, size = 1;
+  int i, ip, ntask = -1, rank = 0, size = 1;
 
 #ifdef MPI
   /* Initialize MPI... */
@@ -186,28 +186,26 @@ int main(
     sprintf(filename, "%s/%s", dirname, argv[3]);
     read_atm(filename, &ctl, atm);
 
-    /* Set inital and final time... */
+    /* Set start time... */
     if (ctl.direction == 1) {
-      if (ctl.t_start < -1e99)
-	ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
-      if (ctl.t_stop < -1e99)
+      ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
+      if (ctl.t_stop > 1e99)
 	ctl.t_stop = gsl_stats_max(atm->time, 1, (size_t) atm->np);
-    } else if (ctl.direction == -1) {
-      if (ctl.t_stop < -1e99)
+    } else {
+      ctl.t_start = gsl_stats_max(atm->time, 1, (size_t) atm->np);
+      if (ctl.t_stop > 1e99)
 	ctl.t_stop = gsl_stats_min(atm->time, 1, (size_t) atm->np);
-      if (ctl.t_start < -1e99)
-	ctl.t_start = gsl_stats_max(atm->time, 1, (size_t) atm->np);
     }
 
-    /* Check time... */
+    /* Check time interval... */
     if (ctl.direction * (ctl.t_stop - ctl.t_start) <= 0)
       ERRMSG("Nothing to do!");
 
-    /* Get rounded start time... */
+    /* Round start time... */
     if (ctl.direction == 1)
-      t0 = floor(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
+      ctl.t_start = floor(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
     else
-      t0 = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
+      ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
 
     /* Set timers... */
     STOP_TIMER(TIMER_INIT);
@@ -217,7 +215,7 @@ int main(
        ------------------------------------------------------------ */
 
     /* Loop over timesteps... */
-    for (t = t0; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
+    for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 
       /* Adjust length of final time step... */
@@ -243,9 +241,8 @@ int main(
 
       /* Initialize isosurface... */
       START_TIMER(TIMER_ISOSURF);
-      if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-	if (t == t0)
-	  module_isosurf(&ctl, met0, met1, atm, -1);
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4 && t == ctl.t_start)
+	module_isosurf(&ctl, met0, met1, atm, -1);
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Advection... */
@@ -901,7 +898,7 @@ void module_sedi(
 		  NULL, NULL, NULL, NULL, NULL, NULL);
 
   /* Density of dry air... */
-  rho = p / (R0 * T);
+  rho = p / (RA * T);
 
   /* Dynamic viscosity of air... */
   eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);

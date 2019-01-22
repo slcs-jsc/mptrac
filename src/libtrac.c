@@ -532,11 +532,8 @@ void get_met(
 
   char filename[LEN];
 
-  static int init;
-
   /* Init... */
-  if (!init) {
-    init = 1;
+  if (t == ctl->t_start) {
 
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
     read_met(ctl, filename, met0);
@@ -1139,9 +1136,7 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
   if (ctl->direction != -1 && ctl->direction != 1)
     ERRMSG("Set DIRECTION to -1 or 1!");
-  ctl->t_start =
-    scan_ctl(filename, argc, argv, "T_START", -1, "-1e100", NULL);
-  ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "-1e100", NULL);
+  ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "1e100", NULL);
   ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "600", NULL);
 
   /* Meteorological data... */
@@ -1169,11 +1164,11 @@ void read_ctl(
 
   /* Diffusion parameters... */
   ctl->turb_dx_trop
-    = scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50.0", NULL);
+    = scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);
   ctl->turb_dx_strat
-    = scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0.0", NULL);
+    = scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0", NULL);
   ctl->turb_dz_trop
-    = scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0.0", NULL);
+    = scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0", NULL);
   ctl->turb_dz_strat
     = scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
   ctl->turb_mesox =
@@ -1181,7 +1176,8 @@ void read_ctl(
   ctl->turb_mesoz =
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
-  /* Life time of particles... */
+  /* Mass and life time... */
+  ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, "1", NULL);
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
@@ -1362,8 +1358,8 @@ void read_met(
   read_met_help(ncid, "u", "U", met, met->u, 1.0);
   read_met_help(ncid, "v", "V", met, met->v, 1.0);
   read_met_help(ncid, "w", "W", met, met->w, 0.01f);
-  read_met_help(ncid, "q", "Q", met, met->h2o, 1.608f);
-  read_met_help(ncid, "o3", "O3", met, met->o3, 0.602f);
+  read_met_help(ncid, "q", "Q", met, met->h2o, (float) (MA / 18.01528));
+  read_met_help(ncid, "o3", "O3", met, met->o3, (float) (MA / 48.00));
 
   /* Meteo data on pressure levels... */
   if (ctl->met_np <= 0) {
@@ -1503,6 +1499,7 @@ void read_met_geopot(
 
   /* Read surface geopotential... */
   if (!init) {
+    init = 1;
 
     /* Write info... */
     printf("Read surface geopotential: %s\n", ctl->met_geopot);
@@ -1536,9 +1533,6 @@ void read_met_geopot(
     if (fabs(met->lon[0] - met->lon[1]) != fabs(topo_lon[0] - topo_lon[1])
 	|| fabs(met->lat[0] - met->lat[1]) != fabs(topo_lat[0] - topo_lat[1]))
       printf("Warning: Grid spacing does not match!\n");
-
-    /* Set init flag... */
-    init = 1;
   }
 
   /* Apply hydrostatic equation to calculate geopotential heights... */
@@ -1569,12 +1563,11 @@ void read_met_geopot(
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
-	= (float) (z0 + 8.31441 / 28.9647 / G0
-		   * 0.5 * (ts + met->t[ix][iy][ip0 + 1])
+	= (float) (z0 + RI / MA / G0 * 0.5 * (ts + met->t[ix][iy][ip0 + 1])
 		   * log(met->ps[ix][iy] / met->p[ip0 + 1]));
       for (ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
-	  = (float) (met->z[ix][iy][ip - 1] + 8.31441 / 28.9647 / G0
+	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0
 		     * 0.5 * (met->t[ix][iy][ip - 1] + met->t[ix][iy][ip])
 		     * log(met->p[ip - 1] / met->p[ip]));
     }
@@ -1984,7 +1977,7 @@ void read_met_tropo(
 	for (iz = 0; iz <= 140; iz++) {
 	  found = 1;
 	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	    if (1000. * G0 / R0 * log(tt2[iz2] / tt2[iz])
+	    if (1000. * G0 / RA * log(tt2[iz2] / tt2[iz])
 		/ log(P(tz2[iz2]) / P(tz2[iz])) > 2.0) {
 	      found = 0;
 	      break;
@@ -2002,7 +1995,7 @@ void read_met_tropo(
 	  for (; iz <= 140; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
-	      if (1000. * G0 / R0 * log(tt2[iz2] / tt2[iz])
+	      if (1000. * G0 / RA * log(tt2[iz2] / tt2[iz])
 		  / log(P(tz2[iz2]) / P(tz2[iz])) < 3.0) {
 		found = 0;
 		break;
@@ -2013,7 +2006,7 @@ void read_met_tropo(
 	  for (; iz <= 140; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	      if (1000. * G0 / R0 * log(tt2[iz2] / tt2[iz])
+	      if (1000. * G0 / RA * log(tt2[iz2] / tt2[iz])
 		  / log(P(tz2[iz2]) / P(tz2[iz])) > 2.0) {
 		found = 0;
 		break;
@@ -2169,8 +2162,10 @@ void timer(
   }
 
   /* Print timer... */
-  else if (mode == 3)
+  else if (mode == 3) {
     printf("%s = %.3f s\n", name, runtime[id]);
+    runtime[id] = 0;
+  }
 }
 
 /*****************************************************************************/
@@ -2312,11 +2307,10 @@ void write_csi(
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
     rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat;
 
-  static int init, obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz;
+  static int obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz;
 
   /* Init... */
-  if (!init) {
-    init = 1;
+  if (t == ctl->t_start) {
 
     /* Check quantity index for mass... */
     if (ctl->qnt_m < 0)
@@ -2478,13 +2472,12 @@ void write_ens(
   static double dummy, ens, lat, lon, p[NENS], q[NQ][NENS],
     t0, t1, x[NENS][3], xm[3];
 
-  static int init, ip, iq;
+  static int ip, iq;
 
   static size_t i, n;
 
   /* Init... */
-  if (!init) {
-    init = 1;
+  if (t == ctl->t_start) {
 
     /* Check quantities... */
     if (ctl->qnt_ens < 0)
@@ -2611,8 +2604,8 @@ void write_grid(
 
   char line[LEN];
 
-  static double grid_m[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
-    area, rho_air, press, temp, cd, mmr, t0, t1, r;
+  static double mass[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
+    area, rho_air, press, temp, cd, vmr, t0, t1, r;
 
   static int ip, ix, iy, iz, year, mon, day, hour, min, sec;
 
@@ -2637,7 +2630,7 @@ void write_grid(
   for (ix = 0; ix < ctl->grid_nx; ix++)
     for (iy = 0; iy < ctl->grid_ny; iy++)
       for (iz = 0; iz < ctl->grid_nz; iz++)
-	grid_m[ix][iy][iz] = 0;
+	mass[ix][iy][iz] = 0;
 
   /* Average data... */
   for (ip = 0; ip < atm->np; ip++)
@@ -2654,7 +2647,7 @@ void write_grid(
 	continue;
 
       /* Add mass... */
-      grid_m[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+      mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
     }
 
   /* Check if gnuplot output is requested... */
@@ -2703,7 +2696,7 @@ void write_grid(
 	  "# $6 = layer width [km]\n"
 	  "# $7 = temperature [K]\n"
 	  "# $8 = column density [kg/m^2]\n"
-	  "# $9 = mass mixing ratio [1]\n\n");
+	  "# $9 = volume mixing ratio [1]\n\n");
 
   /* Write data... */
   for (ix = 0; ix < ctl->grid_nx; ix++) {
@@ -2713,7 +2706,7 @@ void write_grid(
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
       for (iz = 0; iz < ctl->grid_nz; iz++)
-	if (!ctl->grid_sparse || grid_m[ix][iy][iz] > 0) {
+	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0) {
 
 	  /* Set coordinates... */
 	  z = ctl->grid_z0 + dz * (iz + 0.5);
@@ -2730,15 +2723,16 @@ void write_grid(
 	    * cos(lat * M_PI / 180.);
 
 	  /* Calculate column density... */
-	  cd = grid_m[ix][iy][iz] / (1e6 * area);
+	  cd = mass[ix][iy][iz] / (1e6 * area);
 
-	  /* Calculate mass mixing ratio... */
-	  rho_air = 100. * press / (R0 * temp);
-	  mmr = grid_m[ix][iy][iz] / (rho_air * 1e6 * area * 1e3 * dz);
+	  /* Calculate volume mixing ratio... */
+	  rho_air = 100. * press / (RA * temp);
+	  vmr = MA / ctl->molmass * mass[ix][iy][iz]
+	    / (rho_air * 1e6 * area * 1e3 * dz);
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
-		  t, z, lon, lat, area, dz, temp, cd, mmr);
+		  t, z, lon, lat, area, dz, temp, cd, vmr);
 	}
     }
   }
@@ -2762,14 +2756,13 @@ void write_prof(
   static char line[LEN];
 
   static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rz, rlon, rlat, robs,
-    t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, mmr, h2o,
+    t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, vmr, h2o,
     o3;
 
-  static int init, obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int obscount[GX][GY], ip, ix, iy, iz, okay;
 
   /* Init... */
-  if (!init) {
-    init = 1;
+  if (t == ctl->t_start) {
 
     /* Check quantity index for mass... */
     if (ctl->qnt_m < 0)
@@ -2797,7 +2790,7 @@ void write_prof(
 	    "# $4  = latitude [deg]\n"
 	    "# $5  = pressure [hPa]\n"
 	    "# $6  = temperature [K]\n"
-	    "# $7  = mass mixing ratio [1]\n"
+	    "# $7  = volume mixing ratio [1]\n"
 	    "# $8  = H2O volume mixing ratio [1]\n"
 	    "# $9  = O3 volume mixing ratio [1]\n"
 	    "# $10 = mean BT index [K]\n");
@@ -2893,20 +2886,23 @@ void write_prof(
 	  lon = ctl->prof_lon0 + dlon * (ix + 0.5);
 	  lat = ctl->prof_lat0 + dlat * (iy + 0.5);
 
-	  /* Get meteorological data... */
+	  /* Get pressure and temperature... */
 	  press = P(z);
 	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
 			  NULL, &temp, NULL, NULL, NULL, NULL, &h2o, &o3);
 
-	  /* Calculate mass mixing ratio... */
-	  rho_air = 100. * press / (R0 * temp);
+	  /* Calculate surface area... */
 	  area = dlat * dlon * gsl_pow_2(M_PI * RE / 180.)
 	    * cos(lat * M_PI / 180.);
-	  mmr = mass[ix][iy][iz] / (rho_air * area * dz * 1e9);
 
+	  /* Calculate volume mixing ratio... */
+	  rho_air = 100. * press / (RA * temp);
+	  vmr = MA / ctl->molmass * mass[ix][iy][iz]
+	    / (rho_air * area * dz * 1e9);
+	  
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n",
-		  t, z, lon, lat, press, temp, mmr, h2o, o3,
+		  t, z, lon, lat, press, temp, vmr, h2o, o3,
 		  obsmean[ix][iy] / obscount[ix][iy]);
 	}
       }
@@ -2928,11 +2924,10 @@ void write_station(
 
   static double rmax2, t0, t1, x0[3], x1[3];
 
-  static int init, ip, iq;
+  static int ip, iq;
 
   /* Init... */
-  if (!init) {
-    init = 1;
+  if (t == ctl->t_start) {
 
     /* Write info... */
     printf("Write station data: %s\n", filename);
