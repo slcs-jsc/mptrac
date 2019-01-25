@@ -1493,6 +1493,7 @@ void read_met_extrapolate(
   int ip, ip0, ix, iy;
 
   /* Loop over columns... */
+#pragma omp parallel for default(shared) private(ix,iy,ip0,ip)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
 
@@ -1537,6 +1538,7 @@ void read_met_geopot(
   int ip, ip0, ix, ix2, ix3, iy, iy2, n, tx, ty;
 
   /* Initialize geopotential heights... */
+#pragma omp parallel for default(shared) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
       for (ip = 0; ip < met->np; ip++)
@@ -1585,6 +1587,7 @@ void read_met_geopot(
   }
 
   /* Apply hydrostatic equation to calculate geopotential heights... */
+#pragma omp parallel for default(shared) private(ix,iy,lon,lat,tx,ty,z0,z1,ip0,ts,ip)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
 
@@ -1622,6 +1625,7 @@ void read_met_geopot(
     }
 
   /* Smooth fields... */
+#pragma omp parallel for default(shared) private(ip,ix,iy,n,ix2,ix3,iy2,data)
   for (ip = 0; ip < met->np; ip++) {
 
     /* Median filter... */
@@ -1679,6 +1683,7 @@ void read_met_help(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
+#pragma omp parallel for default(shared) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
       for (ip = 0; ip < met->np; ip++) {
@@ -1702,6 +1707,7 @@ void read_met_ml2pl(
   int ip, ip2, ix, iy;
 
   /* Loop over columns... */
+#pragma omp parallel for default(shared) private(ix,iy,ip,p,pt,ip2,aux)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
 
@@ -1748,10 +1754,11 @@ void read_met_periodic(
   met->lon[met->nx - 1] = met->lon[met->nx - 2] + met->lon[1] - met->lon[0];
 
   /* Loop over latitudes and pressure levels... */
-  for (iy = 0; iy < met->ny; iy++)
+#pragma omp parallel for default(shared) private(iy,ip)
+  for (iy = 0; iy < met->ny; iy++) {
+    met->ps[met->nx - 1][iy] = met->ps[0][iy];
+    met->pt[met->nx - 1][iy] = met->pt[0][iy];
     for (ip = 0; ip < met->np; ip++) {
-      met->ps[met->nx - 1][iy] = met->ps[0][iy];
-      met->pt[met->nx - 1][iy] = met->pt[0][iy];
       met->z[met->nx - 1][iy][ip] = met->z[0][iy][ip];
       met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
@@ -1761,6 +1768,7 @@ void read_met_periodic(
       met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
     }
+  }
 }
 
 /*****************************************************************************/
@@ -1778,6 +1786,7 @@ void read_met_pv(
     pows[ip] = pow(1000. / met->p[ip], 0.286);
 
   /* Loop over grid points... */
+#pragma omp parallel for default(shared) private(ix,ix0,ix1,iy,iy0,iy1,latr,dx,dy,c0,c1,cr,vort,ip,ip0,ip1,dp,dtdx,dvdx,dtdy,dudy,dtdp,dudp,dvdp)
   for (ix = 0; ix < met->nx; ix++) {
 
     /* Set indices... */
@@ -2423,6 +2432,7 @@ void write_csi(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid cells... */
+#pragma omp parallel for default(shared) private(ix,iy,iz)
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++)
@@ -2461,6 +2471,7 @@ void write_csi(
   }
 
   /* Analyze model data... */
+#pragma omp parallel for default(shared) private(ip,ix,iy,iz)
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
@@ -2485,6 +2496,7 @@ void write_csi(
   }
 
   /* Analyze all grid cells... */
+#pragma omp parallel for default(shared) private(ix,iy,iz,dlon,dlat,lat,area)
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++) {
@@ -2705,12 +2717,14 @@ void write_grid(
   dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
 
   /* Initialize grid... */
+#pragma omp parallel for default(shared) private(ix,iy,iz)
   for (ix = 0; ix < ctl->grid_nx; ix++)
     for (iy = 0; iy < ctl->grid_ny; iy++)
       for (iz = 0; iz < ctl->grid_nz; iz++)
 	mass[ix][iy][iz] = 0;
 
   /* Average data... */
+#pragma omp parallel for default(shared) private(ip,ix,iy,iz)
   for (ip = 0; ip < atm->np; ip++)
     if (atm->time[ip] >= t0 && atm->time[ip] <= t1) {
 
@@ -2884,6 +2898,7 @@ void write_prof(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize... */
+#pragma omp parallel for default(shared) private(ix,iy,iz)
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++) {
       obsmean[ix][iy] = 0;
@@ -2920,6 +2935,7 @@ void write_prof(
   }
 
   /* Analyze model data... */
+#pragma omp parallel for default(shared) private(ip,ix,iy,iz)
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
@@ -2948,8 +2964,10 @@ void write_prof(
 	/* Check profile... */
 	okay = 0;
 	for (iz = 0; iz < ctl->prof_nz; iz++)
-	  if (mass[ix][iy][iz] > 0)
+	  if (mass[ix][iy][iz] > 0) {
 	    okay = 1;
+	    break;
+	  }
 	if (!okay)
 	  continue;
 
