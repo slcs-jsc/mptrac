@@ -670,6 +670,20 @@ double clim_tropo(
   double t,
   double lat);
 
+/*! Get day of year from date. */
+void day2doy(
+  int year,
+  int mon,
+  int day,
+  int *doy);
+
+/*! Get date from day of year. */
+void doy2day(
+  int year,
+  int doy,
+  int *mon,
+  int *day);
+
 /*! Convert degrees to horizontal distance. */
 double deg2dx(
   double dlon,

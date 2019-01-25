@@ -4,7 +4,9 @@ projects/
 src/center
 src/cluster
 src/conv
+src/day2doy
 src/dist
+src/doy2day
 src/extract
 src/init
 src/jsec2time
