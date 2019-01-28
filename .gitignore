@@ -9,6 +9,7 @@ src/dist
 src/doy2day
 src/extract
 src/init
+src/invert
 src/jsec2time
 src/libtrac.o
 src/match

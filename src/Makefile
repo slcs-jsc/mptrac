@@ -11,7 +11,7 @@
 # module purge && module load Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 
 # List of executables...
-EXC = center cluster conv day2doy dist doy2day extract init jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
+EXC = center cluster conv day2doy dist doy2day extract init invert jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
 
 # Library directories...
 LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
@@ -43,7 +43,7 @@ endif
 CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
 # Set LDFLAGS...
-LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm 
+LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 
 # Compile for KNL...
 ifdef KNL
