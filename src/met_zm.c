@@ -38,7 +38,7 @@ int main(
     ztm[EP][EY], tm[EP][EY], um[EP][EY], vm[EP][EY], wm[EP][EY], h2om[EP][EY],
     pvm[EP][EY], o3m[EP][EY], zm[EP][EY], zt, tt;
 
-  static int i, ip, ix, iy, np[EP][EY];
+  static int i, ip, ix, iy, np[EP][EY], npt[EP][EY];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -73,9 +73,12 @@ int main(
 	  h2om[ip][iy] += met->h2o[ix][iy][ip];
 	  o3m[ip][iy] += met->o3[ix][iy][ip];
 	  psm[ip][iy] += met->ps[ix][iy];
-	  ptm[ip][iy] += met->pt[ix][iy];
-	  ztm[ip][iy] += zt;
-	  ttm[ip][iy] += tt;
+	  if (gsl_finite(met->pt[ix][iy])) {
+	    ptm[ip][iy] += met->pt[ix][iy];
+	    ztm[ip][iy] += zt;
+	    ttm[ip][iy] += tt;
+	    npt[ip][iy]++;
+	  }
 	  np[ip][iy]++;
 	}
   }
@@ -116,8 +119,8 @@ int main(
 	      vm[ip][iy] / np[ip][iy], wm[ip][iy] / np[ip][iy],
 	      h2om[ip][iy] / np[ip][iy], o3m[ip][iy] / np[ip][iy],
 	      zm[ip][iy] / np[ip][iy], pvm[ip][iy] / np[ip][iy],
-	      psm[ip][iy] / np[ip][iy], ptm[ip][iy] / np[ip][iy],
-	      ztm[ip][iy] / np[ip][iy], ttm[ip][iy] / np[ip][iy]);
+	      psm[ip][iy] / np[ip][iy], ptm[ip][iy] / npt[ip][iy],
+	      ztm[ip][iy] / npt[ip][iy], ttm[ip][iy] / npt[ip][iy]);
   }
 
   /* Close file... */

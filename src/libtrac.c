@@ -2886,7 +2886,7 @@ void write_prof(
 	    "# $8 = H2O volume mixing ratio [1]\n"
 	    "# $9 = O3 volume mixing ratio [1]\n"
 	    "# $10 = observed BT index (mean) [K]\n"
-	    "# $11 = observed BT index (sigma) [K]");
+	    "# $11 = observed BT index (sigma) [K]\n");
 
     /* Set grid box size... */
     dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
@@ -3004,7 +3004,7 @@ void write_prof(
 		  t, z, lon, lat, press, temp, vmr, h2o, o3,
 		  obsmean[ix][iy] / obscount[ix][iy],
 		  sqrt(obsmean2[ix][iy] / obscount[ix][iy]
-		       -gsl_pow_2(obsmean[ix][iy] / obscount[ix][iy])));
+		       - gsl_pow_2(obsmean[ix][iy] / obscount[ix][iy])));
 	}
       }
 
