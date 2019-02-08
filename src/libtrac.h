@@ -369,6 +369,9 @@ typedef struct {
   /*! Surface geopotential data file. */
   char met_geopot[LEN];
 
+  /*! Time step for sampling of meteo data along trajectories [s]. */
+  double met_dt_out;
+
   /*! Command to stage meteo data. */
   char met_stage[LEN];
 

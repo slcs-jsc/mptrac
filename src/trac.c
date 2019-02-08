@@ -304,9 +304,12 @@ int main(
 
       /* Meteorological data... */
       START_TIMER(TIMER_METEO);
+      if (ctl.met_dt_out > 0
+	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0)) {
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	module_meteo(&ctl, met0, met1, atm, ip);
+	for (ip = 0; ip < atm->np; ip++)
+	  module_meteo(&ctl, met0, met1, atm, ip);
+      }
       STOP_TIMER(TIMER_METEO);
 
       /* Decay... */

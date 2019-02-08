@@ -1205,6 +1205,8 @@ void read_ctl(
     = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "MET_GEOPOT", -1, "-", ctl->met_geopot);
   scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
+  ctl->met_dt_out =
+    scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf
