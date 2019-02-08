@@ -576,7 +576,7 @@ void get_met_help(
 /*****************************************************************************/
 
 void intpol_met_2d(
-  double const array[EX][EY],
+  float const array[EX][EY],
   int const ix,
   int const iy,
   double const wx,
@@ -1419,17 +1419,17 @@ void read_met(
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
-	met->ps[ix][iy] = help[iy * met->nx + ix] / 100.;
+	met->ps[ix][iy] = (float)(help[iy * met->nx + ix] / 100.);
   } else if (nc_inq_varid(ncid, "lnsp", &varid) == NC_NOERR
 	     || nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
-	met->ps[ix][iy] = exp(help[iy * met->nx + ix]) / 100.;
+	met->ps[ix][iy] = (float)(exp(help[iy * met->nx + ix]) / 100.);
   } else
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy] = met->p[0];
+	met->ps[ix][iy] = (float)met->p[0];
 
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
@@ -1953,7 +1953,7 @@ void read_met_tropo(
   else if (ctl->met_tropo == 1)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
-	met->pt[ix][iy] = clim_tropo(met->time, met->lat[iy]);
+	met->pt[ix][iy] = (float)clim_tropo(met->time, met->lat[iy]);
 
   /* Use cold point... */
   else if (ctl->met_tropo == 2) {
@@ -1974,7 +1974,7 @@ void read_met_tropo(
 	if (iz <= 0 || iz >= 170)
 	  met->pt[ix][iy] = GSL_NAN;
 	else
-	  met->pt[ix][iy] = p2[iz];
+	  met->pt[ix][iy] = (float)p2[iz];
       }
   }
 
@@ -2004,7 +2004,7 @@ void read_met_tropo(
 	    }
 	  if (found) {
 	    if (iz > 0 && iz < 140)
-	      met->pt[ix][iy] = p2[iz];
+	      met->pt[ix][iy] = (float)p2[iz];
 	    break;
 	  }
 	}
@@ -2033,7 +2033,7 @@ void read_met_tropo(
 	      }
 	    if (found) {
 	      if (iz > 0 && iz < 140)
-		met->pt[ix][iy] = p2[iz];
+		met->pt[ix][iy] = (float)p2[iz];
 	      break;
 	    }
 	  }
@@ -2067,7 +2067,7 @@ void read_met_tropo(
 	for (iz = 0; iz <= 160; iz++)
 	  if (fabs(pv2[iz]) >= 3.5 || th2[iz] >= 380.) {
 	    if (iz > 0 && iz < 160)
-	      met->pt[ix][iy] = p2[iz];
+	      met->pt[ix][iy] = (float)p2[iz];
 	    break;
 	  }
       }

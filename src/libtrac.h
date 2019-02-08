@@ -643,10 +643,10 @@ typedef struct {
   double p[EP];
 
   /*! Surface pressure [hPa]. */
-  double ps[EX][EY];
+  float ps[EX][EY];
 
   /*! Tropopause pressure [hPa]. */
-  double pt[EX][EY];
+  float pt[EX][EY];
 
   /*! Geopotential height [km]. */
   float z[EX][EY][EP];
@@ -738,7 +738,7 @@ void get_met_help(
 
 /*! Linear interpolation of 2-D meteorological data. */
 void intpol_met_2d(
-  double const array[EX][EY],
+  float const array[EX][EY],
   int const ix,
   int const iy,
   double const wx,
