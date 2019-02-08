@@ -1,23 +1,23 @@
 /*
   This file is part of MPTRAC.
-  
+
   MPTRAC is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   MPTRAC is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
-  
+
   Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
-/*! 
+/*!
   \file
   MPTRAC library definitions.
 */
@@ -27,7 +27,7 @@
 /*****************************************************************************/
 
 void cart2geo(
-  double *x,
+  double const *x,
   double *z,
   double *lon,
   double *lat) {
@@ -43,9 +43,9 @@ void cart2geo(
 /*****************************************************************************/
 
 double clim_hno3(
-  double t,
-  double lat,
-  double p) {
+  double const t,
+  double const lat,
+  double const p) {
 
   static double secs[12] = { 1209600.00, 3888000.00, 6393600.00,
     9072000.00, 11664000.00, 14342400.00,
@@ -291,7 +291,7 @@ double clim_hno3(
   isec = locate_irr(secs, 12, sec);
   ilat = locate_reg(lats, 18, lat);
   ip = locate_irr(ps, 10, p);
-  
+
   /* Interpolate... */
   aux00 = LIN(ps[ip], hno3[isec][ilat][ip],
 	      ps[ip + 1], hno3[isec][ilat][ip + 1], p);
@@ -309,8 +309,8 @@ double clim_hno3(
 /*****************************************************************************/
 
 double clim_tropo(
-  double t,
-  double lat) {
+  double const t,
+  double const lat) {
 
   static double doys[12]
   = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
@@ -449,9 +449,9 @@ double clim_tropo(
 /*****************************************************************************/
 
 void day2doy(
-  int year,
-  int mon,
-  int day,
+  int const year,
+  int const mon,
+  int const day,
   int *doy) {
 
   int d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
@@ -467,8 +467,8 @@ void day2doy(
 /*****************************************************************************/
 
 void doy2day(
-  int year,
-  int doy,
+  int const year,
+  int const doy,
   int *mon,
   int *day) {
 
@@ -495,9 +495,9 @@ void doy2day(
 /*****************************************************************************/
 
 void geo2cart(
-  double z,
-  double lon,
-  double lat,
+  double const z,
+  double const lon,
+  double const lat,
   double *x) {
 
   double radius;
@@ -511,9 +511,9 @@ void geo2cart(
 /*****************************************************************************/
 
 void get_met(
-  ctl_t * ctl,
-  char *metbase,
-  double t,
+  ctl_t const * ctl,
+  char const * metbase,
+  double const t,
   met_t * met0,
   met_t * met1) {
 
@@ -550,11 +550,11 @@ void get_met(
 /*****************************************************************************/
 
 void get_met_help(
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
-  char *filename) {
+  double const t,
+  int const direct,
+  char const * metbase,
+  double const dt_met,
+  char * filename) {
 
   double t6, r;
 
@@ -576,11 +576,11 @@ void get_met_help(
 /*****************************************************************************/
 
 void intpol_met_2d(
-  double array[EX][EY],
-  int ix,
-  int iy,
-  double wx,
-  double wy,
+  double const array[EX][EY],
+  int const ix,
+  int const iy,
+  double const wx,
+  double const wy,
   double *var) {
 
   double aux00, aux01, aux10, aux11;
@@ -600,13 +600,13 @@ void intpol_met_2d(
 /*****************************************************************************/
 
 void intpol_met_3d(
-  float array[EX][EY][EP],
-  int ip,
-  int ix,
-  int iy,
-  double wp,
-  double wx,
-  double wy,
+  float const array[EX][EY][EP],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy,
   double *var) {
 
   double aux00, aux01, aux10, aux11;
@@ -630,10 +630,10 @@ void intpol_met_3d(
 /*****************************************************************************/
 
 void intpol_met_space(
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
+  met_t const * met,
+  double const p,
+  double const longitude,
+  double const lat,
   double *ps,
   double *pt,
   double *z,
@@ -649,6 +649,7 @@ void intpol_met_space(
 
   int ip, ix, iy;
 
+  double lon = longitude; /* work copy */
   /* Check longitude... */
   if (met->lon[met->nx - 1] > 180 && lon < 0)
     lon += 360;
@@ -689,12 +690,12 @@ void intpol_met_space(
 /*****************************************************************************/
 
 void intpol_met_time(
-  met_t * met0,
-  met_t * met1,
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  met_t const * met0,
+  met_t const * met1,
+  double const ts,
+  double const p,
+  double const lon,
+  double const lat,
   double *ps,
   double *pt,
   double *z,
@@ -760,7 +761,7 @@ void intpol_met_time(
 /*****************************************************************************/
 
 void jsec2time(
-  double jsec,
+  double const jsec,
   int *year,
   int *mon,
   int *day,
@@ -795,9 +796,9 @@ void jsec2time(
 /*****************************************************************************/
 
 int locate_irr(
-  double *xx,
-  int n,
-  double x) {
+  double const xx[],
+  int const n,
+  double const x) {
 
   int i, ilo, ihi;
 
@@ -827,9 +828,9 @@ int locate_irr(
 /*****************************************************************************/
 
 int locate_reg(
-  double *xx,
-  int n,
-  double x) {
+  double const xx[],
+  int const n,
+  double const x) {
 
   int i;
 
@@ -848,8 +849,8 @@ int locate_reg(
 /*****************************************************************************/
 
 void read_atm(
-  const char *filename,
-  ctl_t * ctl,
+  char const * filename,
+  ctl_t const * ctl,
   atm_t * atm) {
 
   FILE *in;
@@ -1024,9 +1025,9 @@ void read_atm(
 /*****************************************************************************/
 
 void read_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
+  char const * filename,
+  int const argc,
+  char const *argv[],
   ctl_t * ctl) {
 
   int ip, iq;
@@ -1292,8 +1293,8 @@ void read_ctl(
 /*****************************************************************************/
 
 void read_met(
-  ctl_t * ctl,
-  char *filename,
+  ctl_t const * ctl,
+  char const * filename,
   met_t * met) {
 
   char cmd[2 * LEN], levname[LEN], tstr[10];
@@ -1484,7 +1485,7 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met) {
 
   static double topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
@@ -1627,12 +1628,12 @@ void read_met_geopot(
 /*****************************************************************************/
 
 void read_met_help(
-  int ncid,
-  char *varname,
-  char *varname2,
-  met_t * met,
+  int const ncid,
+  char const * varname,
+  char const * varname2,
+  met_t const * met,
   float dest[EX][EY][EP],
-  float scl) {
+  float const scl) {
 
   static float help[EX * EY * EP];
 
@@ -1662,8 +1663,8 @@ void read_met_help(
 /*****************************************************************************/
 
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  ctl_t const * ctl,
+  met_t const * met,
   float var[EX][EY][EP]) {
 
   double aux[EP], p[EP], pt;
@@ -1810,7 +1811,7 @@ void read_met_pv(
 /*****************************************************************************/
 
 void read_met_sample(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met) {
 
   met_t *help;
@@ -1918,7 +1919,7 @@ void read_met_sample(
 /*****************************************************************************/
 
 void read_met_tropo(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met) {
 
   gsl_interp_accel *acc;
@@ -2083,13 +2084,13 @@ void read_met_tropo(
 /*****************************************************************************/
 
 double scan_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
-  const char *varname,
-  int arridx,
-  const char *defvalue,
-  char *value) {
+  char const * filename,
+  int const argc,
+  char const *argv[],
+  char const * varname,
+  int const arridx,
+  char const * defvalue,
+  char * value) {
 
   FILE *in = NULL;
 
@@ -2155,13 +2156,13 @@ double scan_ctl(
 /*****************************************************************************/
 
 void time2jsec(
-  int year,
-  int mon,
-  int day,
-  int hour,
-  int min,
-  int sec,
-  double remain,
+  int const year,
+  int const mon,
+  int const day,
+  int const hour,
+  int const min,
+  int const sec,
+  double const remain,
   double *jsec) {
 
   struct tm t0, t1;
@@ -2186,9 +2187,9 @@ void time2jsec(
 /*****************************************************************************/
 
 void timer(
-  const char *name,
-  int id,
-  int mode) {
+  char const * name,
+  int const id,
+  int const mode) {
 
   static double starttime[NTIMER], runtime[NTIMER];
 #ifdef LinearRegressionTimers
@@ -2257,10 +2258,10 @@ void timer(
 /*****************************************************************************/
 
 void write_atm(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t) {
 
   FILE *in, *out;
 
@@ -2381,10 +2382,10 @@ void write_atm(
 /*****************************************************************************/
 
 void write_csi(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t) {
 
   static FILE *in, *out;
 
@@ -2551,10 +2552,10 @@ void write_csi(
 /*****************************************************************************/
 
 void write_ens(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t) {
 
   static FILE *out;
 
@@ -2682,12 +2683,12 @@ void write_ens(
 /*****************************************************************************/
 
 void write_grid(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t const * atm,
+  double const t) {
 
   FILE *in, *out;
 
@@ -2835,12 +2836,12 @@ void write_grid(
 /*****************************************************************************/
 
 void write_prof(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t const * atm,
+  double const t) {
 
   static FILE *in, *out;
 
@@ -3015,10 +3016,10 @@ void write_prof(
 /*****************************************************************************/
 
 void write_station(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t * atm, /* station flags are modified */
+  double const t) {
 
   static FILE *out;
 

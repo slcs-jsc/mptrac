@@ -6,8 +6,8 @@
 #include "libtrac.h"
 
 int main(
-  int argc,
-  char *argv[]) {
+  int const argc,
+  char const *argv[]) {
 
   ctl_t ctl;
 

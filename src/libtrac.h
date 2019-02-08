@@ -1,31 +1,31 @@
 /*
   This file is part of MPTRAC.
-  
+
   MPTRAC is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   MPTRAC is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
-  
+
   Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
-/*! 
+/*!
   \file
   MPTRAC library declarations.
-  
+
   \mainpage
-  
+
   Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
   particle dispersion model for the troposphere and stratosphere.
-  
+
   This reference manual provides information on the algorithms
   and data structures used in the code. Further information can be found at:
 
@@ -88,16 +88,16 @@
 #define NP 10000000
 
 /*! Maximum number of quantities per data point. */
-#define NQ 12
+#define NQ 5 /* was 12 */
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 111
+#define EP 72 /* was 111 */
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 1201
+#define EX 368 /* was 1201 */
 
 /*! Maximum number of latitudes for meteorological data. */
-#define EY 601
+#define EY 181 /* was 601 */
 
 /*! Maximum number of longitudes for gridded data. */
 #define GX 720
@@ -683,85 +683,85 @@ typedef struct {
 
 /*! Convert Cartesian coordinates to geolocation. */
 void cart2geo(
-  double *x,
+  double const x[3],
   double *z,
   double *lon,
   double *lat);
 
 /*! Climatology of HNO3 volume mixing ratios. */
 double clim_hno3(
-  double t,
-  double lat,
-  double p);
+  double const t,
+  double const lat,
+  double const p);
 
 /*! Climatology of tropopause pressure. */
 double clim_tropo(
-  double t,
-  double lat);
+  double const t,
+  double const lat);
 
 /*! Get day of year from date. */
 void day2doy(
-  int year,
-  int mon,
-  int day,
+  int const year,
+  int const mon,
+  int const day,
   int *doy);
 
 /*! Get date from day of year. */
 void doy2day(
-  int year,
-  int doy,
+  int const year,
+  int const doy,
   int *mon,
   int *day);
 
 /*! Convert geolocation to Cartesian coordinates. */
 void geo2cart(
-  double z,
-  double lon,
-  double lat,
-  double *x);
+  double const z,
+  double const lon,
+  double const lat,
+  double x[3]);
 
 /*! Get meteorological data for given timestep. */
 void get_met(
-  ctl_t * ctl,
-  char *metbase,
-  double t,
+  ctl_t const * ctl,
+  char const * metbase,
+  double const t,
   met_t * met0,
   met_t * met1);
 
 /*! Get meteorological data for timestep. */
 void get_met_help(
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
-  char *filename);
+  double const t,
+  int const direct,
+  char const * metbase,
+  double const dt_met,
+  char * filename);
 
 /*! Linear interpolation of 2-D meteorological data. */
 void intpol_met_2d(
-  double array[EX][EY],
-  int ix,
-  int iy,
-  double wx,
-  double wy,
+  double const array[EX][EY],
+  int const ix,
+  int const iy,
+  double const wx,
+  double const wy,
   double *var);
 
 /*! Linear interpolation of 3-D meteorological data. */
 void intpol_met_3d(
-  float array[EX][EY][EP],
-  int ip,
-  int ix,
-  int iy,
-  double wp,
-  double wx,
-  double wy,
+  float const array[EX][EY][EP],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy,
   double *var);
 
 /*! Spatial interpolation of meteorological data. */
 void intpol_met_space(
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
+  met_t const * met,
+  double const p,
+  double const lon,
+  double const lat,
   double *ps,
   double *pt,
   double *z,
@@ -775,12 +775,12 @@ void intpol_met_space(
 
 /*! Temporal interpolation of meteorological data. */
 void intpol_met_time(
-  met_t * met0,
-  met_t * met1,
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  met_t const * met0,
+  met_t const * met1,
+  double const ts,
+  double const p,
+  double const lon,
+  double const lat,
   double *ps,
   double *pt,
   double *z,
@@ -794,7 +794,7 @@ void intpol_met_time(
 
 /*! Convert seconds to date. */
 void jsec2time(
-  double jsec,
+  double const jsec,
   int *year,
   int *mon,
   int *day,
@@ -805,33 +805,33 @@ void jsec2time(
 
 /*! Find array index for irregular grid. */
 int locate_irr(
-  double *xx,
-  int n,
-  double x);
+  double const xx[],
+  int const n,
+  double const x);
 
 /*! Find array index for regular grid. */
 int locate_reg(
-  double *xx,
-  int n,
-  double x);
+  double const xx[],
+  int const n,
+  double const x);
 
 /*! Read atmospheric data. */
 void read_atm(
-  const char *filename,
-  ctl_t * ctl,
+  char const * filename,
+  ctl_t const * ctl,
   atm_t * atm);
 
 /*! Read control parameters. */
 void read_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
+  char const * filename,
+  int const argc,
+  char const *argv[],
   ctl_t * ctl);
 
 /*! Read meteorological data file. */
 void read_met(
-  ctl_t * ctl,
-  char *filename,
+  ctl_t const * ctl,
+  char const * filename,
   met_t * met);
 
 /*! Extrapolate meteorological data at lower boundary. */
@@ -840,22 +840,22 @@ void read_met_extrapolate(
 
 /*! Calculate geopotential heights. */
 void read_met_geopot(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met);
 
 /*! Read and convert variable from meteorological data file. */
 void read_met_help(
-  int ncid,
-  char *varname,
-  char *varname2,
-  met_t * met,
+  int const ncid,
+  char const * varname,
+  char const * varname2,
+  met_t const * met,
   float dest[EX][EY][EP],
-  float scl);
+  float const scl);
 
 /*! Convert meteorological data from model levels to pressure levels. */
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  ctl_t const * ctl,
+  met_t const * met,
   float var[EX][EY][EP]);
 
 /*! Create meteorological data with periodic boundary conditions. */
@@ -868,83 +868,83 @@ void read_met_pv(
 
 /*! Downsampling of meteorological data. */
 void read_met_sample(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met);
 
 /*! Calculate tropopause pressure. */
 void read_met_tropo(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met);
 
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
-  const char *varname,
-  int arridx,
-  const char *defvalue,
-  char *value);
+  char const * filename,
+  int const argc,
+  char const * argv[],
+  char const * varname,
+  int const arridx,
+  char const * defvalue,
+  char * value);
 
 /*! Convert date to seconds. */
 void time2jsec(
-  int year,
-  int mon,
-  int day,
-  int hour,
-  int min,
-  int sec,
-  double remain,
+  int const year,
+  int const mon,
+  int const day,
+  int const hour,
+  int const min,
+  int const sec,
+  double const remain,
   double *jsec);
 
 /*! Measure wall-clock time. */
 void timer(
-  const char *name,
-  int id,
-  int mode);
+  char const * name,
+  int const id,
+  int const mode);
 
 /*! Write atmospheric data. */
 void write_atm(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t);
 
 /*! Write CSI data. */
 void write_csi(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t);
 
 /*! Write ensemble data. */
 void write_ens(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t);
 
 /*! Write gridded data. */
 void write_grid(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t);
+  char const * filename,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t const * atm,
+  double const t);
 
 /*! Write profile data. */
 void write_prof(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t);
+  char const * filename,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t const * atm,
+  double const t);
 
 /*! Write station data. */
 void write_station(
-  const char *filename,
-  ctl_t * ctl,
+  char const * filename,
+  ctl_t const * ctl,
   atm_t * atm,
-  double t);
+  double const t);

@@ -34,87 +34,87 @@
 
 /*! Calculate advection of air parcels. */
 void module_advection(
-  met_t * met0,
-  met_t * met1,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt);
+  int const ip,
+  double const dt);
 
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt);
+  int const ip,
+  double const dt);
 
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt,
+  int const ip,
+  double const dt,
   gsl_rng * rng);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   atm_t * atm,
-  int ip,
-  double dt,
+  int const ip,
+  double const dt,
   gsl_rng * rng);
 
 /*! Force air parcels to stay on isosurface. */
 void module_isosurf(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip);
+  int const ip);
 
 /*! Interpolate meteorological data for air parcel positions. */
 void module_meteo(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip);
+  int const ip);
 
 /*! Check position of air parcels. */
 void module_position(
-  met_t * met0,
-  met_t * met1,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip);
+  int const ip);
 
 /*! Calculate sedimentation of air parcels. */
 void module_sedi(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt);
+  int const ip,
+  double const dt);
 
 /*! Write simulation output. */
 void write_output(
-  const char *dirname,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  char const * dirname,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  double t);
+  double const t);
 
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
 
 int main(
-  int argc,
-  char *argv[]) {
+  int const argc,
+  char const *argv[]) {
 
   ctl_t ctl;
 
@@ -384,11 +384,11 @@ int main(
 /*****************************************************************************/
 
 void module_advection(
-  met_t * met0,
-  met_t * met1,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt) {
+  int const ip,
+  double const dt) {
 
   double v[3], xm[3];
 
@@ -417,12 +417,12 @@ void module_advection(
 /*****************************************************************************/
 
 void module_decay(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt) {
+  int const ip,
+  double const dt) {
 
   double ps, pt, tdec;
 
@@ -455,12 +455,12 @@ void module_decay(
 /*****************************************************************************/
 
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt,
+  int const ip,
+  double const dt,
   gsl_rng * rng) {
 
   double r, rs, u[16], v[16], w[16], usig, vsig, wsig;
@@ -567,10 +567,10 @@ void module_diffusion_meso(
 /*****************************************************************************/
 
 void module_diffusion_turb(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   atm_t * atm,
-  int ip,
-  double dt,
+  int const ip,
+  double const dt,
   gsl_rng * rng) {
 
   double dx, dz, pt, p0, p1, w;
@@ -612,11 +612,11 @@ void module_diffusion_turb(
 /*****************************************************************************/
 
 void module_isosurf(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip) {
+  int const ip) {
 
   static double *iso, *ps, t, *ts;
 
@@ -725,11 +725,11 @@ void module_isosurf(
 /*****************************************************************************/
 
 void module_meteo(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip) {
+  int const ip) {
 
   double a, b, c, ps, pt, pv, p_hno3, p_h2o, t, u, v, w, x1, x2, h2o, o3, z;
 
@@ -831,10 +831,10 @@ void module_meteo(
 /*****************************************************************************/
 
 void module_position(
-  met_t * met0,
-  met_t * met1,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip) {
+  int const ip) {
 
   double ps;
 
@@ -875,12 +875,12 @@ void module_position(
 /*****************************************************************************/
 
 void module_sedi(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
   atm_t * atm,
-  int ip,
-  double dt) {
+  int const ip,
+  double const dt) {
 
   /* Coefficients for Cunningham slip-flow correction (Kasten, 1968): */
   const double A = 1.249, B = 0.42, C = 0.87;
@@ -928,12 +928,12 @@ void module_sedi(
 /*****************************************************************************/
 
 void write_output(
-  const char *dirname,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  char const * dirname,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t * atm, /* station flags are modified in write_station */
+  double const t) {
 
   char filename[2 * LEN];
 
