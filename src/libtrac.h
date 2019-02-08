@@ -264,6 +264,25 @@
 #define TIMER_SEDI 11
 
 /* ------------------------------------------------------------
+   Enums...
+   ------------------------------------------------------------ */
+
+/*! Output in this time step?. */
+
+typedef enum {
+    UPDATE_ATM_METEO_DATA_NOT_NOW   =  0,
+    UPDATE_ATM_METEO_DATA_NEVER     =  0,
+    UPDATE_ATM_METEO_DATA_TIME_ATM  =  1,
+    UPDATE_ATM_METEO_DATA_TIME_GRID =  2,
+    UPDATE_ATM_METEO_DATA_TIME_DEP  =  3,
+    UPDATE_ATM_METEO_DATA_CSI       =  4,
+    UPDATE_ATM_METEO_DATA_ENSEMBLE  =  8,
+    UPDATE_ATM_METEO_DATA_PROFILE   = 16,
+    UPDATE_ATM_METEO_DATA_STATIONS  = 32,
+    UPDATE_ATM_METEO_DATA_ALWAYS    = 63
+}   update_atm_meteo_data_t;
+
+/* ------------------------------------------------------------
    Structs...
    ------------------------------------------------------------ */
 
@@ -948,3 +967,9 @@ void write_station(
   ctl_t const * ctl,
   atm_t * atm,
   double const t);
+
+/*! Is an update necessary? */
+update_atm_meteo_data_t 
+need_meteo_update_init(
+  ctl_t const * ctl);
+

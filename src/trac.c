@@ -1,23 +1,23 @@
 /*
   This file is part of MPTRAC.
-  
+
   MPTRAC is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   MPTRAC is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
-  
+
   Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
-/*! 
+/*!
   \file
   Lagrangian particle dispersion model.
 */
@@ -108,6 +108,16 @@ void write_output(
   atm_t * atm,
   double const t);
 
+/*! Check if module_meteo needs to be executed at all */
+update_atm_meteo_data_t need_meteo_update_at_all(
+  ctl_t const * ctl);
+
+/*! Check if module_meteo needs to be executed in this time iteration */
+update_atm_meteo_data_t need_meteo_update_now(
+  ctl_t const * ctl,
+  update_atm_meteo_data_t const static_key,
+  double const time_now);
+
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
@@ -131,6 +141,8 @@ int main(
   double *dt, t;
 
   int i, ip, ntask = -1, rank = 0, size = 1;
+
+  update_atm_meteo_data_t update_meteo_at_all = 0;
 
 #ifdef MPI
   /* Initialize MPI... */
@@ -207,6 +219,9 @@ int main(
     else
       ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
 
+    /* Check if output in general is wanted */
+    update_meteo_at_all = need_meteo_update_at_all(&ctl);
+
     /* Set timers... */
     STOP_TIMER(TIMER_INIT);
 
@@ -216,117 +231,129 @@ int main(
 
     /* Loop over timesteps... */
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
-	 t += ctl.direction * ctl.dt_mod) {
+         t += ctl.direction * ctl.dt_mod) {
 
       /* Adjust length of final time step... */
-      if (ctl.direction * (t - ctl.t_stop) > 0)
-	t = ctl.t_stop;
+      if (ctl.direction * (t - ctl.t_stop) > 0) {
+        t = ctl.t_stop;
+      }
 
       /* Set time steps for air parcels... */
-      for (ip = 0; ip < atm->np; ip++)
-	if ((ctl.direction * (atm->time[ip] - ctl.t_start) >= 0
-	     && ctl.direction * (atm->time[ip] - ctl.t_stop) <= 0
-	     && ctl.direction * (atm->time[ip] - t) < 0))
-	  dt[ip] = t - atm->time[ip];
-	else
-	  dt[ip] = GSL_NAN;
+      for (ip = 0; ip < atm->np; ip++) {
+        dt[ip] = ((ctl.direction * (atm->time[ip] - ctl.t_start) >= 0
+                && ctl.direction * (atm->time[ip] - ctl.t_stop) <= 0
+                && ctl.direction * (atm->time[ip] - t) < 0))
+                ? (t - atm->time[ip]) : (GSL_NAN);
+      }
 
       /* Get meteorological data... */
       START_TIMER(TIMER_INPUT);
       get_met(&ctl, argv[4], t, met0, met1);
       if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
-	printf("Warning: Violation of CFL criterion! Set DT_MOD <= %g s!\n",
-	       fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.);
+        printf("Warning: Violation of CFL criterion! Set DT_MOD <= %g s!\n",
+                fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.);
       STOP_TIMER(TIMER_INPUT);
 
       /* Initialize isosurface... */
       START_TIMER(TIMER_ISOSURF);
-      if (ctl.isosurf >= 1 && ctl.isosurf <= 4 && t == ctl.t_start)
-	module_isosurf(&ctl, met0, met1, atm, -1);
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4 && t == ctl.t_start) {
+        module_isosurf(&ctl, met0, met1, atm, -1);
+      }
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	if (gsl_finite(dt[ip]))
-	  module_advection(met0, met1, atm, ip, dt[ip]);
+      for (ip = 0; ip < atm->np; ip++) {
+        if (gsl_finite(dt[ip])) {
+          module_advection(met0, met1, atm, ip, dt[ip]);
+        }
+      }
       STOP_TIMER(TIMER_ADVECT);
 
       /* Turbulent diffusion... */
-      START_TIMER(TIMER_DIFFTURB);
-      if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
-	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
+      if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0 ||
+          ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
+        START_TIMER(TIMER_DIFFTURB);
 #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
-	    module_diffusion_turb(&ctl, atm, ip, dt[ip],
-				  rng[omp_get_thread_num()]);
+        for (ip = 0; ip < atm->np; ip++) {
+          if (gsl_finite(dt[ip])) {
+            module_diffusion_turb(&ctl, atm, ip, dt[ip], rng[omp_get_thread_num()]);
+          }
+        }
+        STOP_TIMER(TIMER_DIFFTURB);
       }
-      STOP_TIMER(TIMER_DIFFTURB);
 
       /* Mesoscale diffusion... */
-      START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
+        START_TIMER(TIMER_DIFFMESO);
 #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
-	    module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
-				  rng[omp_get_thread_num()]);
+        for (ip = 0; ip < atm->np; ip++) {
+          if (gsl_finite(dt[ip])) {
+            module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip], rng[omp_get_thread_num()]);
+          }
+        }
+        STOP_TIMER(TIMER_DIFFMESO);
       }
-      STOP_TIMER(TIMER_DIFFMESO);
 
       /* Sedimentation... */
-      START_TIMER(TIMER_SEDI);
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
+        START_TIMER(TIMER_SEDI);
 #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
-	    module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
+        for (ip = 0; ip < atm->np; ip++) {
+          if (gsl_finite(dt[ip])) {
+            module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
+          }
+        }
+        STOP_TIMER(TIMER_SEDI);
       }
-      STOP_TIMER(TIMER_SEDI);
 
       /* Isosurface... */
-      START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
+        START_TIMER(TIMER_ISOSURF);
 #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  module_isosurf(&ctl, met0, met1, atm, ip);
+        for (ip = 0; ip < atm->np; ip++) {
+          module_isosurf(&ctl, met0, met1, atm, ip);
+        }
+        STOP_TIMER(TIMER_ISOSURF);
       }
-      STOP_TIMER(TIMER_ISOSURF);
 
       /* Position... */
       START_TIMER(TIMER_POSITION);
 #pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	module_position(met0, met1, atm, ip);
+      for (ip = 0; ip < atm->np; ip++) {
+        module_position(met0, met1, atm, ip);
+      }
       STOP_TIMER(TIMER_POSITION);
 
       /* Meteorological data... */
-      START_TIMER(TIMER_METEO);
-      if (ctl.met_dt_out > 0
-	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0)) {
+      if (need_meteo_update_now(&ctl, update_meteo_at_all, t)) {
+        START_TIMER(TIMER_METEO);
 #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  module_meteo(&ctl, met0, met1, atm, ip);
+        for (ip = 0; ip < atm->np; ip++) {
+          module_meteo(&ctl, met0, met1, atm, ip);
+        }
+        STOP_TIMER(TIMER_METEO);
       }
-      STOP_TIMER(TIMER_METEO);
 
       /* Decay... */
-      START_TIMER(TIMER_DECAY);
       if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
+        START_TIMER(TIMER_DECAY);
 #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
-	    module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
+        for (ip = 0; ip < atm->np; ip++) {
+          if (gsl_finite(dt[ip])) {
+            module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
+          }
+        }
+        STOP_TIMER(TIMER_DECAY);
       }
-      STOP_TIMER(TIMER_DECAY);
 
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
       write_output(dirname, &ctl, met0, met1, atm, t);
       STOP_TIMER(TIMER_OUTPUT);
-    }
+
+    } /* end of Loop over timesteps */
 
     /* ------------------------------------------------------------
        Finalize model run...
@@ -981,4 +1008,34 @@ void write_output(
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
   }
+}
+
+/*****************************************************************************/
+
+update_atm_meteo_data_t need_meteo_update_now(
+  ctl_t const * ctl,
+  update_atm_meteo_data_t const static_key,
+  double const time_now) {
+  update_atm_meteo_data_t key = static_key; /* get a non-const copy */
+
+  if (key &    UPDATE_ATM_METEO_DATA_TIME_ATM)  /* bit flag for ATM is on */
+      key &= ~(UPDATE_ATM_METEO_DATA_TIME_ATM   /* switch ATM bit flag off */
+               *(0 != fmod(time_now, ctl->atm_dt_out))); /* if the modulo is non-zero */
+  if (key &    UPDATE_ATM_METEO_DATA_TIME_GRID) /* bit flag for GRID is on */
+      key &= ~(UPDATE_ATM_METEO_DATA_TIME_GRID  /* switch GRID bit flag off */
+               *(0 != fmod(time_now, ctl->grid_dt_out))); /* if the modulo is non-zero */
+  return key;
+}
+
+/*****************************************************************************/
+
+update_atm_meteo_data_t need_meteo_update_at_all(
+  ctl_t const * ctl) {
+  return
+    UPDATE_ATM_METEO_DATA_TIME_ATM  * ('-' != ctl->atm_basename[0])
+  + UPDATE_ATM_METEO_DATA_TIME_GRID * ('-' != ctl->grid_basename[0])
+  + UPDATE_ATM_METEO_DATA_CSI       * ('-' != ctl->csi_basename[0])
+  + UPDATE_ATM_METEO_DATA_ENSEMBLE  * ('-' != ctl->ens_basename[0])
+  + UPDATE_ATM_METEO_DATA_PROFILE   * ('-' != ctl->prof_basename[0])
+  + UPDATE_ATM_METEO_DATA_STATIONS  * ('-' != ctl->stat_basename[0]);
 }
