@@ -623,7 +623,7 @@ typedef struct {
   /*! Latitude [deg]. */
   double lat[NP];
 
-  /*! Quantitiy data (for various, user-defined attributes). */
+  /*! Quantity data (for various, user-defined attributes). */
   double q[NQ][NP];
 
   /*! Zonal wind perturbation [m/s]. */

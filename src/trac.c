@@ -143,6 +143,10 @@ int main(
   int i, ip, ntask = -1, rank = 0, size = 1;
 
   update_atm_meteo_data_t update_meteo_at_all = 0;
+  int do_turbulent_diffusion = 0;
+  int do_mesoscale_diffusion = 0;
+  int do_sedimentation = 0;
+  int do_decay = 0, do_isosurface = 0;
 
 #ifdef MPI
   /* Initialize MPI... */
@@ -222,6 +226,13 @@ int main(
     /* Check if output in general is wanted */
     update_meteo_at_all = need_meteo_update_at_all(&ctl);
 
+    do_turbulent_diffusion = (ctl.turb_dx_trop > 0 ||
+      ctl.turb_dz_trop > 0 || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0);
+    do_mesoscale_diffusion = (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0);
+    do_sedimentation = (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0);
+    do_decay = ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0);
+    do_isosurface = (ctl.isosurf >= 1 && ctl.isosurf <= 4);
+
     /* Set timers... */
     STOP_TIMER(TIMER_INIT);
 
@@ -239,6 +250,7 @@ int main(
       }
 
       /* Set time steps for air parcels... */
+#pragma omp parallel for default(shared) private(ip)
       for (ip = 0; ip < atm->np; ip++) {
         dt[ip] = ((ctl.direction * (atm->time[ip] - ctl.t_start) >= 0
                 && ctl.direction * (atm->time[ip] - ctl.t_stop) <= 0
@@ -272,8 +284,7 @@ int main(
       STOP_TIMER(TIMER_ADVECT);
 
       /* Turbulent diffusion... */
-      if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0 ||
-          ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
+      if (do_turbulent_diffusion) {
         START_TIMER(TIMER_DIFFTURB);
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
@@ -285,7 +296,7 @@ int main(
       }
 
       /* Mesoscale diffusion... */
-      if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
+      if (do_mesoscale_diffusion) {
         START_TIMER(TIMER_DIFFMESO);
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
@@ -297,7 +308,7 @@ int main(
       }
 
       /* Sedimentation... */
-      if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
+      if (do_sedimentation) {
         START_TIMER(TIMER_SEDI);
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
@@ -309,7 +320,7 @@ int main(
       }
 
       /* Isosurface... */
-      if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
+      if (do_isosurface) {
         START_TIMER(TIMER_ISOSURF);
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
@@ -337,7 +348,7 @@ int main(
       }
 
       /* Decay... */
-      if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
+      if (do_decay) {
         START_TIMER(TIMER_DECAY);
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
