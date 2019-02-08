@@ -637,7 +637,7 @@ void intpol_met_space(
   double *ps,
   double *pt,
   double *z,
-  double *t,
+  double *T,
   double *u,
   double *v,
   double *w,
@@ -671,8 +671,8 @@ void intpol_met_space(
     intpol_met_2d(met->pt, ix, iy, wx, wy, pt);
   if (z != NULL)
     intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy, z);
-  if (t != NULL)
-    intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
+  if (T != NULL)
+    intpol_met_3d(met->T, ip, ix, iy, wp, wx, wy, T);
   if (u != NULL)
     intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
   if (v != NULL)
@@ -699,7 +699,7 @@ void intpol_met_time(
   double *ps,
   double *pt,
   double *z,
-  double *t,
+  double *T,
   double *u,
   double *v,
   double *w,
@@ -707,7 +707,7 @@ void intpol_met_time(
   double *h2o,
   double *o3) {
 
-  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, t0, t1, u0, u1,
+  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, T0, T1, u0, u1,
     v0, v1, w0, w1, wt, z0, z1;
 
   /* Spatial interpolation... */
@@ -715,7 +715,7 @@ void intpol_met_time(
 		   ps == NULL ? NULL : &ps0,
 		   pt == NULL ? NULL : &pt0,
 		   z == NULL ? NULL : &z0,
-		   t == NULL ? NULL : &t0,
+		   T == NULL ? NULL : &T0,
 		   u == NULL ? NULL : &u0,
 		   v == NULL ? NULL : &v0,
 		   w == NULL ? NULL : &w0,
@@ -725,7 +725,7 @@ void intpol_met_time(
 		   ps == NULL ? NULL : &ps1,
 		   pt == NULL ? NULL : &pt1,
 		   z == NULL ? NULL : &z1,
-		   t == NULL ? NULL : &t1,
+		   T == NULL ? NULL : &T1,
 		   u == NULL ? NULL : &u1,
 		   v == NULL ? NULL : &v1,
 		   w == NULL ? NULL : &w1,
@@ -742,8 +742,8 @@ void intpol_met_time(
     *pt = wt * (pt0 - pt1) + pt1;
   if (z != NULL)
     *z = wt * (z0 - z1) + z1;
-  if (t != NULL)
-    *t = wt * (t0 - t1) + t1;
+  if (T != NULL)
+    *T = wt * (T0 - T1) + T1;
   if (u != NULL)
     *u = wt * (u0 - u1) + u1;
   if (v != NULL)
@@ -1368,7 +1368,7 @@ void read_met(
   NC(nc_get_var_double(ncid, varid, met->lat));
 
   /* Read meteorological data... */
-  read_met_help(ncid, "t", "T", met, met->t, 1.0);
+  read_met_help(ncid, "t", "T", met, met->T, 1.0);
   read_met_help(ncid, "u", "U", met, met->u, 1.0);
   read_met_help(ncid, "v", "V", met, met->v, 1.0);
   read_met_help(ncid, "w", "W", met, met->w, 0.01f);
@@ -1395,7 +1395,7 @@ void read_met(
     read_met_help(ncid, "pl", "PL", met, met->pl, 0.01f);
 
     /* Interpolate from model levels to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->T);
     read_met_ml2pl(ctl, met, met->u);
     read_met_ml2pl(ctl, met, met->v);
     read_met_ml2pl(ctl, met, met->w);
@@ -1464,7 +1464,7 @@ void read_met_extrapolate(
 
       /* Find lowest valid data point... */
       for (ip0 = met->np - 1; ip0 >= 0; ip0--)
-	if (!gsl_finite(met->t[ix][iy][ip0])
+	if (!gsl_finite(met->T[ix][iy][ip0])
 	    || !gsl_finite(met->u[ix][iy][ip0])
 	    || !gsl_finite(met->v[ix][iy][ip0])
 	    || !gsl_finite(met->w[ix][iy][ip0]))
@@ -1472,7 +1472,7 @@ void read_met_extrapolate(
 
       /* Extrapolate... */
       for (ip = ip0; ip >= 0; ip--) {
-	met->t[ix][iy][ip] = met->t[ix][iy][ip + 1];
+	met->T[ix][iy][ip] = met->T[ix][iy][ip + 1];
 	met->u[ix][iy][ip] = met->u[ix][iy][ip + 1];
 	met->v[ix][iy][ip] = met->v[ix][iy][ip + 1];
 	met->w[ix][iy][ip] = met->w[ix][iy][ip + 1];
@@ -1575,17 +1575,17 @@ void read_met_geopot(
       ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
       /* Get surface temperature... */
-      ts = LIN(met->p[ip0], met->t[ix][iy][ip0],
-	       met->p[ip0 + 1], met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      ts = LIN(met->p[ip0], met->T[ix][iy][ip0],
+	       met->p[ip0 + 1], met->T[ix][iy][ip0 + 1], met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
-	= (float) (z0 + RI / MA / G0 * 0.5 * (ts + met->t[ix][iy][ip0 + 1])
+	= (float) (z0 + RI / MA / G0 * 0.5 * (ts + met->T[ix][iy][ip0 + 1])
 		   * log(met->ps[ix][iy] / met->p[ip0 + 1]));
       for (ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
 	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0
-		     * 0.5 * (met->t[ix][iy][ip - 1] + met->t[ix][iy][ip])
+		     * 0.5 * (met->T[ix][iy][ip - 1] + met->T[ix][iy][ip])
 		     * log(met->p[ip - 1] / met->p[ip]));
     }
 
@@ -1725,7 +1725,7 @@ void read_met_periodic(
     met->pt[met->nx - 1][iy] = met->pt[0][iy];
     for (ip = 0; ip < met->np; ip++) {
       met->z[met->nx - 1][iy][ip] = met->z[0][iy][ip];
-      met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
+      met->T[met->nx - 1][iy][ip] = met->T[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
       met->v[met->nx - 1][iy][ip] = met->v[0][iy][ip];
       met->w[met->nx - 1][iy][ip] = met->w[0][iy][ip];
@@ -1785,17 +1785,17 @@ void read_met_pv(
 	dp = 100. * (met->p[ip1] - met->p[ip0]);
 
 	/* Get gradients in longitude... */
-	dtdx = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
+	dtdx = (met->T[ix1][iy][ip] - met->T[ix0][iy][ip]) * pows[ip] / dx;
 	dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
 
 	/* Get gradients in latitude... */
-	dtdy = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
+	dtdy = (met->T[ix][iy1][ip] - met->T[ix][iy0][ip]) * pows[ip] / dy;
 	dudy = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Get gradients in pressure... */
 	dtdp =
-	  (met->t[ix][iy][ip1] * pows[ip1] -
-	   met->t[ix][iy][ip0] * pows[ip0]) / dp;
+	  (met->T[ix][iy][ip1] * pows[ip1] -
+	   met->T[ix][iy][ip0] * pows[ip0]) / dp;
 	dudp = (met->u[ix][iy][ip1] - met->u[ix][iy][ip0]) / dp;
 	dvdp = (met->v[ix][iy][ip1] - met->v[ix][iy][ip0]) / dp;
 
@@ -1842,7 +1842,7 @@ void read_met_sample(
 	help->ps[ix][iy] = 0;
 	help->pt[ix][iy] = 0;
 	help->z[ix][iy][ip] = 0;
-	help->t[ix][iy][ip] = 0;
+	help->T[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
 	help->w[ix][iy][ip] = 0;
@@ -1862,7 +1862,7 @@ void read_met_sample(
 	      help->ps[ix][iy] += w * met->ps[ix2][iy2];
 	      help->pt[ix][iy] += w * met->pt[ix2][iy2];
 	      help->z[ix][iy][ip] += w * met->z[ix2][iy2][ip2];
-	      help->t[ix][iy][ip] += w * met->t[ix2][iy2][ip2];
+	      help->T[ix][iy][ip] += w * met->T[ix2][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix2][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix2][iy2][ip2];
 	      help->w[ix][iy][ip] += w * met->w[ix2][iy2][ip2];
@@ -1873,7 +1873,7 @@ void read_met_sample(
 	    }
 	help->ps[ix][iy] /= wsum;
 	help->pt[ix][iy] /= wsum;
-	help->t[ix][iy][ip] /= wsum;
+	help->T[ix][iy][ip] /= wsum;
 	help->z[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
@@ -1898,7 +1898,7 @@ void read_met_sample(
       for (ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
 	met->z[met->nx][met->ny][met->np] = help->z[ix][iy][ip];
-	met->t[met->nx][met->ny][met->np] = help->t[ix][iy][ip];
+	met->T[met->nx][met->ny][met->np] = help->T[ix][iy][ip];
 	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
 	met->v[met->nx][met->ny][met->np] = help->v[ix][iy][ip];
 	met->w[met->nx][met->ny][met->np] = help->w[ix][iy][ip];
@@ -1964,7 +1964,7 @@ void read_met_tropo(
 
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
-	  t[iz] = met->t[ix][iy][iz];
+	  t[iz] = met->T[ix][iy][iz];
 	gsl_spline_init(spline, z, t, (size_t) met->np);
 	for (iz = 0; iz <= 170; iz++)
 	  t2[iz] = gsl_spline_eval(spline, z2[iz], acc);
@@ -1987,7 +1987,7 @@ void read_met_tropo(
 
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
-	  t[iz] = met->t[ix][iy][iz];
+	  t[iz] = met->T[ix][iy][iz];
 	gsl_spline_init(spline, z, t, (size_t) met->np);
 	for (iz = 0; iz <= 160; iz++)
 	  t2[iz] = gsl_spline_eval(spline, z2[iz], acc);
@@ -2057,7 +2057,7 @@ void read_met_tropo(
 
 	/* Interpolate potential temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
-	  th[iz] = THETA(met->p[iz], met->t[ix][iy][iz]);
+	  th[iz] = THETA(met->p[iz], met->T[ix][iy][iz]);
 	gsl_spline_init(spline, z, th, (size_t) met->np);
 	for (iz = 0; iz <= 160; iz++)
 	  th2[iz] = gsl_spline_eval(spline, z2[iz], acc);

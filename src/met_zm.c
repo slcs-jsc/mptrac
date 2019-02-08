@@ -35,7 +35,7 @@ int main(
   FILE *out;
 
   static double timem[EP][EY], psm[EP][EY], ptm[EP][EY], ttm[EP][EY],
-    ztm[EP][EY], tm[EP][EY], um[EP][EY], vm[EP][EY], wm[EP][EY], h2om[EP][EY],
+    ztm[EP][EY], Tm[EP][EY], um[EP][EY], vm[EP][EY], wm[EP][EY], h2om[EP][EY],
     pvm[EP][EY], o3m[EP][EY], zm[EP][EY], zt, tt;
 
   static int i, ip, ix, iy, np[EP][EY], npt[EP][EY];
@@ -65,7 +65,7 @@ int main(
 			   NULL);
 	  timem[ip][iy] += met->time;
 	  zm[ip][iy] += met->z[ix][iy][ip];
-	  tm[ip][iy] += met->t[ix][iy][ip];
+	  Tm[ip][iy] += met->T[ix][iy][ip];
 	  um[ip][iy] += met->u[ix][iy][ip];
 	  vm[ip][iy] += met->v[ix][iy][ip];
 	  wm[ip][iy] += met->w[ix][iy][ip];
@@ -115,7 +115,7 @@ int main(
     for (iy = 0; iy < met->ny; iy++)
       fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[ip][iy] / np[ip][iy], Z(met->p[ip]), 0.0, met->lat[iy],
-	      met->p[ip], tm[ip][iy] / np[ip][iy], um[ip][iy] / np[ip][iy],
+	      met->p[ip], Tm[ip][iy] / np[ip][iy], um[ip][iy] / np[ip][iy],
 	      vm[ip][iy] / np[ip][iy], wm[ip][iy] / np[ip][iy],
 	      h2om[ip][iy] / np[ip][iy], o3m[ip][iy] / np[ip][iy],
 	      zm[ip][iy] / np[ip][iy], pvm[ip][iy] / np[ip][iy],

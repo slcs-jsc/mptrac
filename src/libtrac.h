@@ -589,7 +589,7 @@ typedef struct {
 /*! Atmospheric data. */
 typedef struct {
 
-  /*! Number of air pacels. */
+  /*! Number of air parcels. */
   int np;
 
   /*! Time [s]. */
@@ -652,7 +652,7 @@ typedef struct {
   float z[EX][EY][EP];
 
   /*! Temperature [K]. */
-  float t[EX][EY][EP];
+  float T[EX][EY][EP];
 
   /*! Zonal wind [m/s]. */
   float u[EX][EY][EP];
