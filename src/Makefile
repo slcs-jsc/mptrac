@@ -40,7 +40,7 @@ else
 endif
 
 # Set CFLAGS...
-CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
+CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
@@ -59,7 +59,7 @@ endif
 
 # Compile for profiling...
 ifdef PROF
-  CFLAGS += -O2 -pg
+  CFLAGS += -O2 -g -pg
 else
   CFLAGS += -O3
 endif

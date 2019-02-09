@@ -79,33 +79,29 @@ int main(
   static double rt, rt_old, rt_all[MMAX], rz[GZ], rlon, rlon_old,
     rlon_all[MMAX], rlat, rlat_old, rlat_all[MMAX], rvmr[GZ], rdum, robs,
     robs_old, robs_all[MMAX], rsig, rsig_old, rsig_all[MMAX],
-    rsim_old, rsim_all[MMAX][NMAX], sigma, chisq, tol,
-    rcond, rnorm, snorm, lambda, G_gcv;
+    rsim_old, rsim_all[MMAX][NMAX], sigma, chisq, rnorm, snorm, lambda;
 
-  static int i, j, m, n, nz, method, offset;
+  static int i, j, m, n, nz, offset;
 
-  static size_t rank, npoints = 200, reg_idx;
+  static size_t npoints = 200, reg_idx;
 
   gsl_multifit_linear_workspace *W;
 
-  gsl_matrix *C, *X;
+  gsl_matrix *X;
 
-  gsl_vector *c, *r, *w, *y, *reg_param, *rho, *eta, *G;
+  gsl_vector *c, *r, *w, *y, *reg_param, *rho, *eta;
 
   /* Check arguments... */
   if (argc < 8)
     ERRMSG
       ("Give parameters: <ctl> <dirlist> <prof.tab> <kernel.tab>"
-       " <fit.tab> <corr.tab> <res.tab>");
+       " <fit.tab> <res.tab> <lcurve.tab>");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  method =
-    (int) scan_ctl(argv[1], argc, argv, "INVERT_METHOD", -1, "2", NULL);
   offset =
     (int) scan_ctl(argv[1], argc, argv, "INVERT_OFFSET", -1, "1", NULL);
   sigma = scan_ctl(argv[1], argc, argv, "INVERT_SIGMA", -1, "0.5", NULL);
-  tol = scan_ctl(argv[1], argc, argv, "INVERT_TOL", -1, "0.001", NULL);
 
   /* Open directory list... */
   if (!(in = fopen(argv[2], "r")))
@@ -184,12 +180,9 @@ int main(
 
   /* Write info... */
   printf("Calculate least square fit...\n");
-  printf("  m= %d\n", m);
-  printf("  n= %d\n", n);
 
   /* Allocate... */
   W = gsl_multifit_linear_alloc((size_t) m, (size_t) n);
-  C = gsl_matrix_alloc((size_t) n, (size_t) n);
   X = gsl_matrix_alloc((size_t) m, (size_t) n);
   c = gsl_vector_alloc((size_t) n);
   r = gsl_vector_alloc((size_t) m);
@@ -198,7 +191,6 @@ int main(
   reg_param = gsl_vector_alloc(npoints);
   rho = gsl_vector_alloc(npoints);
   eta = gsl_vector_alloc(npoints);
-  G = gsl_vector_alloc(npoints);
 
   /* Set weights, observation vector, and prediction matrix... */
   for (i = 0; i < m; i++) {
@@ -213,88 +205,19 @@ int main(
 	gsl_matrix_set(X, (size_t) i, (size_t) j, rsim_all[i][j]);
   }
 
-  /* Truncated SVD... */
-  if (method == 1) {
+  /* Compute SVD of X... */
+  gsl_multifit_linear_svd(X, W);
 
-    /* Compute fit... */
-    gsl_multifit_wlinear_tsvd(X, w, y, tol, c, C, &chisq, &rank, W);
+  /* Calculate L-curve and find its corner... */
+  gsl_multifit_linear_lcurve(y, reg_param, rho, eta, W);
+  gsl_multifit_linear_lcorner(rho, eta, &reg_idx);
 
-    /* Write info... */
-    printf("Truncated SVD:");
-    printf("  chisq / dof = %g\n", chisq / (m - n));
-    printf("  effective rank = %lu\n", rank);
-  }
+  /* Store optimal regularization parameter... */
+  lambda = gsl_vector_get(reg_param, reg_idx);
 
-  /* Regularized LSQ... */
-  else if (method == 2) {
-
-    /* Compute SVD of X... */
-    printf("Compute SVD...\n");
-    gsl_multifit_linear_svd(X, W);
-
-    /* Get condition number... */
-    rcond = gsl_multifit_linear_rcond(W);
-    printf("  matrix condition number = %g\n", 1.0 / rcond);
-
-    /* Unregularized LSQ (lambda = 0)... */
-    gsl_multifit_linear_solve(0.0, X, y, c, &rnorm, &snorm, W);
-    chisq = pow(rnorm, 2.0);
-
-    /* Write info... */
-    printf("Unregularized LSQ:");
-    printf("  optimal lambda = %g\n", lambda);
-    printf("  residual norm = %g\n", rnorm);
-    printf("  solution norm = %g\n", snorm);
-    printf("  chisq / dof = %g\n", chisq / (m - n));
-
-    /* Calculate L-curve and find its corner... */
-    gsl_multifit_linear_lcurve(y, reg_param, rho, eta, W);
-    gsl_multifit_linear_lcorner(rho, eta, &reg_idx);
-
-    /* Store optimal regularization parameter... */
-    lambda = gsl_vector_get(reg_param, reg_idx);
-
-    /* Regularize with lambda_l... */
-    gsl_multifit_linear_solve(lambda, X, y, c, &rnorm, &snorm, W);
-    chisq = pow(rnorm, 2.0) + pow(lambda * snorm, 2.0);
-
-    /* Write info... */
-    printf("Regularization with L-curve:");
-    printf("  optimal lambda = %g\n", lambda);
-    printf("  residual norm = %g\n", rnorm);
-    printf("  solution norm = %g\n", snorm);
-    printf("  chisq / dof = %g\n", chisq / (m - n));
-    for (i = 0; i < (int) npoints; ++i)
-      printf("    l_curve: reg_param= %g rho= %g eta= %g\n",
-	     gsl_vector_get(reg_param, (size_t) i),
-	     gsl_vector_get(rho, (size_t) i),
-	     gsl_vector_get(eta, (size_t) i));
-    printf("    l_corner_point: rho= %g eta= %g\n",
-	   gsl_vector_get(rho, reg_idx), gsl_vector_get(eta, reg_idx));
-
-    /* Calculate GCV curve and find its minimum... */
-    gsl_multifit_linear_gcv(y, reg_param, G, &lambda, &G_gcv, W);
-
-    /* Regularize with lambda_gcv... */
-    gsl_multifit_linear_solve(lambda, X, y, c, &rnorm, &snorm, W);
-    chisq = pow(rnorm, 2.0) + pow(lambda * snorm, 2.0);
-
-    /* Write info... */
-    printf("Regularization with GCV curve:");
-    printf("  optimal lambda = %g\n", lambda);
-    printf("  residual norm = %g\n", rnorm);
-    printf("  solution norm = %g\n", snorm);
-    printf("  chisq / dof = %g\n", chisq / (m - n));
-    for (i = 0; i < (int) npoints; ++i)
-      printf("    gcv_curve: reg_param= %g G= %g\n",
-	     gsl_vector_get(reg_param, (size_t) i),
-	     gsl_vector_get(G, (size_t) i));
-    printf("    gcv_minimum: lambda= %g G= %g\n", lambda, G_gcv);
-  }
-
-  /* Error... */
-  else
-    ERRMSG("Unknown inversion method!");
+  /* Regularize with lambda_l... */
+  gsl_multifit_linear_solve(lambda, X, y, c, &rnorm, &snorm, W);
+  chisq = pow(rnorm, 2.0) + pow(lambda * snorm, 2.0);
 
   /* Write fit parameters... */
   if (argv[5][0] != '-') {
@@ -307,55 +230,23 @@ int main(
     /* Write header... */
     fprintf(out,
 	    "# $1 = parameter index\n"
-	    "# $2 = parameter name\n"
-	    "# $3 = parameter best fit\n"
-	    "# $4 = parameter error\n"
-	    "# $5 = chisq / (m - n)\n" "# $6 = rank\n\n");
+	    "# $2 = parameter name\n" "# $3 = parameter fit value\n\n");
     for (i = 0; i < n; i++)
-      fprintf(out, "%d %s %g %g %g %lu\n", i, wrkdir[i],
-	      gsl_vector_get(c, (size_t) i),
-	      sqrt(gsl_matrix_get(C, (size_t) i, (size_t) i)),
-	      chisq / (double) (m - n), rank);
+      fprintf(out, "%d %s %g\n", i, wrkdir[i], gsl_vector_get(c, (size_t) i));
 
     /* Close file... */
     fclose(out);
   }
 
-  /* Write correlation matrix... */
-  if (argv[6][0] != '-') {
-
-    /* Create file... */
-    printf("Write correlation matrix: %s\n", argv[6]);
-    if (!(out = fopen(argv[6], "w")))
-      ERRMSG("Cannot create file!");
-
-    /* Write header... */
-    fprintf(out,
-	    "# $1 = row index\n"
-	    "# $2 = row parameter name\n"
-	    "# $3 = column index\n"
-	    "# $4 = column parameter name\n"
-	    "# $5 = correlation coefficient\n");
-    for (i = 0; i < n; i++) {
-      fprintf(out, "\n");
-      for (j = 0; j < n; j++)
-	fprintf(out, "%d %s %d %s %g\n",
-		i, wrkdir[i], j, wrkdir[j],
-		gsl_matrix_get(C, (size_t) i, (size_t) j)
-		/ sqrt(gsl_matrix_get(C, (size_t) i, (size_t) i))
-		/ sqrt(gsl_matrix_get(C, (size_t) j, (size_t) j)));
-    }
-  }
-
   /* Write residuals... */
-  if (argv[7][0] != '-') {
+  if (argv[6][0] != '-') {
 
     /* Calculate residuals... */
     gsl_multifit_linear_residuals(X, y, c, r);
 
     /* Create file... */
-    printf("Write residuals: %s\n", argv[7]);
-    if (!(out = fopen(argv[7], "w")))
+    printf("Write residuals: %s\n", argv[6]);
+    if (!(out = fopen(argv[6], "w")))
       ERRMSG("Cannot create file!");
 
     /* Write header... */
@@ -364,7 +255,7 @@ int main(
 	    "# $2 = observation time [s]\n"
 	    "# $3 = observation longitude [deg]\n"
 	    "# $4 = observation latitude [deg]\n"
-	    "# $5 = observation [K]\n"
+	    "# $5 = observation value [K]\n"
 	    "# $6 = observation error [K]\n"
 	    "# $7 = residual (obs - sim) [K]\n\n");
 
@@ -378,9 +269,43 @@ int main(
     fclose(out);
   }
 
+  /* Write L-curve data... */
+  if (argv[7][0] != '-') {
+
+    /* Create file... */
+    printf("Write L-curve data: %s\n", argv[7]);
+    if (!(out = fopen(argv[7], "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = regularization parameter\n"
+	    "# $2 = rho\n" "# $3 = eta\n\n");
+
+    /* Write info... */
+    for (i = 0; i < (int) npoints; ++i)
+      fprintf(out, "%g %g %g\n",
+	      gsl_vector_get(reg_param, (size_t) i),
+	      gsl_vector_get(rho, (size_t) i),
+	      gsl_vector_get(eta, (size_t) i));
+
+    /* Write info... */
+    fprintf(out, "\n# m= %d\n", m);
+    fprintf(out, "# n= %d\n", n);
+    fprintf(out, "# chi^2/(m-n) = %g\n", chisq / (m - n));
+    fprintf(out, "# residual_norm = %g\n", rnorm);
+    fprintf(out, "# solution_norm = %g\n", snorm);
+    fprintf(out, "# corner_point: rho= %g eta= %g\n",
+	    gsl_vector_get(rho, reg_idx), gsl_vector_get(eta, reg_idx));
+    fprintf(out, "# optimal_lambda = %g\n", lambda);
+    fprintf(out, "# cond_number = %g\n", 1.0 / gsl_multifit_linear_rcond(W));
+
+    /* Close file... */
+    fclose(out);
+  }
+
   /* Free... */
   gsl_multifit_linear_free(W);
-  gsl_matrix_free(C);
   gsl_matrix_free(X);
   gsl_vector_free(c);
   gsl_vector_free(r);
@@ -389,7 +314,6 @@ int main(
   gsl_vector_free(reg_param);
   gsl_vector_free(rho);
   gsl_vector_free(eta);
-  gsl_vector_free(G);
 
   return EXIT_SUCCESS;
 }
