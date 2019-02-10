@@ -1,0 +1,25 @@
+before caching for DIFFMESO
+
+run 1
+TIMER_TOTAL = 52.814 s
+TIMER_DIFFMESO = 23.788 s
+TIMER_others = 29.026 s
+
+run2
+TIMER_TOTAL = 54.066 s
+TIMER_DIFFMESO = 24.303 s
+TIMER_others = 29.763 s
+
+after
+
+run 1
+TIMER_TOTAL = 34.878 s
+TIMER_DIFFMESO = 5.675 s
+TIMER_others = 29.203 s
+
+run 2
+TIMER_TOTAL = 34.367 s
+TIMER_DIFFMESO = 5.496 s
+TIMER_others = 28.871 s
+
+==> speedup by factor 4.3x

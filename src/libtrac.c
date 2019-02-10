@@ -534,6 +534,7 @@ void get_met(
 
   /* Read new data for forward trajectories... */
   if (t > met1->time && ctl->direction == 1) {
+    /* this memcopy can be avoided by a pointer swap */
     memcpy(met0, met1, sizeof(met_t));
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
     read_met(ctl, filename, met1);
@@ -541,6 +542,7 @@ void get_met(
 
   /* Read new data for backward trajectories... */
   if (t < met0->time && ctl->direction == -1) {
+    /* this memcopy can be avoided by a pointer swap */
     memcpy(met1, met0, sizeof(met_t));
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
     read_met(ctl, filename, met0);

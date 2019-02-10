@@ -57,7 +57,8 @@ void module_diffusion_meso(
   atm_t * atm,
   int const ip,
   double const dt,
-  gsl_rng * rng);
+  gsl_rng * rng,
+  double cache[EX][EY][EP][4]);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
@@ -142,11 +143,29 @@ int main(
 
   int i, ip, ntask = -1, rank = 0, size = 1;
 
+
+
   update_atm_meteo_data_t update_meteo_at_all = 0;
   int do_turbulent_diffusion = 0;
   int do_mesoscale_diffusion = 0;
   int do_sedimentation = 0;
   int do_decay = 0, do_isosurface = 0;
+
+  double (*meso_cache)[EY][EP][4]; /* allocate EX of these */
+  int ix, iy, iz, i4;
+
+  ALLOC(meso_cache, double, EX*EY*EP*4);
+  /* mark all cache entries as not computed yet */
+  for (ix = 0; ix < EX; ++ix) {
+    for (iy = 0; iy < EY; ++iy) {
+      for (iz = 0; iz < EP; ++iz) {
+        for (i4 = 0; i4 < 4; ++i4) {
+          meso_cache[ix][iy][iz][i4] = GSL_NAN;
+        }
+      }
+    }
+  }
+
 
 #ifdef MPI
   /* Initialize MPI... */
@@ -182,8 +201,7 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
-    ALLOC(dt, double,
-	  NP);
+    ALLOC(dt, double, NP);
 
     /* Initialize random number generators... */
     gsl_rng_env_setup();
@@ -301,7 +319,8 @@ int main(
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
           if (gsl_finite(dt[ip])) {
-            module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip], rng[omp_get_thread_num()]);
+            module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
+              rng[omp_get_thread_num()], meso_cache);
           }
         }
         STOP_TIMER(TIMER_DIFFMESO);
@@ -499,18 +518,42 @@ void module_diffusion_meso(
   atm_t * atm,
   int const ip,
   double const dt,
-  gsl_rng * rng) {
+  gsl_rng * rng,
+  double cache[EX][EY][EP][4]) { /* right-most dim 4 contains {tref,usig,vsig,wsig} */
 
   double r, rs, u[16], v[16], w[16], usig, vsig, wsig;
 
   int ix, iy, iz;
+
 
   /* Get indices... */
   ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
   iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
   iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
+  /* assume that met1 has the same grids! */
+/*
+  assert(locate(met1->lon, met1->nx, atm->lon[ip]) == ix);
+  assert(locate(met1->lat, met1->ny, atm->lat[ip]) == iy);
+  assert(locate(met1->p,   met1->np, atm->p[ip])   == iz);
+*/
+
+  /* take the reference time of any of the two,
+  but always take either met0 or met1 */
+
+
+if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact equality here */
+
+  /* cache hit, load data from cache cell */
+  usig = cache[ix][iy][iz][1];
+  vsig = cache[ix][iy][iz][2];
+  wsig = cache[ix][iy][iz][3];
+
+} else {
+  /* recompute sigmas and cache them */
+
   /* Collect local wind data... */
+
   u[0] = met0->u[ix][iy][iz];
   u[1] = met0->u[ix + 1][iy][iz];
   u[2] = met0->u[ix][iy + 1][iz];
@@ -519,6 +562,18 @@ void module_diffusion_meso(
   u[5] = met0->u[ix + 1][iy][iz + 1];
   u[6] = met0->u[ix][iy + 1][iz + 1];
   u[7] = met0->u[ix + 1][iy + 1][iz + 1];
+
+  u[8] = met1->u[ix][iy][iz];
+  u[9] = met1->u[ix + 1][iy][iz];
+  u[10] = met1->u[ix][iy + 1][iz];
+  u[11] = met1->u[ix + 1][iy + 1][iz];
+  u[12] = met1->u[ix][iy][iz + 1];
+  u[13] = met1->u[ix + 1][iy][iz + 1];
+  u[14] = met1->u[ix][iy + 1][iz + 1];
+  u[15] = met1->u[ix + 1][iy + 1][iz + 1];
+
+  /* Get standard deviations of local wind data... */
+  usig = gsl_stats_sd(u, 1, 16);
 
   v[0] = met0->v[ix][iy][iz];
   v[1] = met0->v[ix + 1][iy][iz];
@@ -529,30 +584,6 @@ void module_diffusion_meso(
   v[6] = met0->v[ix][iy + 1][iz + 1];
   v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
-  w[0] = met0->w[ix][iy][iz];
-  w[1] = met0->w[ix + 1][iy][iz];
-  w[2] = met0->w[ix][iy + 1][iz];
-  w[3] = met0->w[ix + 1][iy + 1][iz];
-  w[4] = met0->w[ix][iy][iz + 1];
-  w[5] = met0->w[ix + 1][iy][iz + 1];
-  w[6] = met0->w[ix][iy + 1][iz + 1];
-  w[7] = met0->w[ix + 1][iy + 1][iz + 1];
-
-  /* Get indices... */
-  ix = locate_reg(met1->lon, met1->nx, atm->lon[ip]);
-  iy = locate_reg(met1->lat, met1->ny, atm->lat[ip]);
-  iz = locate_irr(met1->p, met1->np, atm->p[ip]);
-
-  /* Collect local wind data... */
-  u[8] = met1->u[ix][iy][iz];
-  u[9] = met1->u[ix + 1][iy][iz];
-  u[10] = met1->u[ix][iy + 1][iz];
-  u[11] = met1->u[ix + 1][iy + 1][iz];
-  u[12] = met1->u[ix][iy][iz + 1];
-  u[13] = met1->u[ix + 1][iy][iz + 1];
-  u[14] = met1->u[ix][iy + 1][iz + 1];
-  u[15] = met1->u[ix + 1][iy + 1][iz + 1];
-
   v[8] = met1->v[ix][iy][iz];
   v[9] = met1->v[ix + 1][iy][iz];
   v[10] = met1->v[ix][iy + 1][iz];
@@ -561,6 +592,18 @@ void module_diffusion_meso(
   v[13] = met1->v[ix + 1][iy][iz + 1];
   v[14] = met1->v[ix][iy + 1][iz + 1];
   v[15] = met1->v[ix + 1][iy + 1][iz + 1];
+
+  /* Get standard deviations of local wind data... */
+  vsig = gsl_stats_sd(v, 1, 16);
+
+  w[0] = met0->w[ix][iy][iz];
+  w[1] = met0->w[ix + 1][iy][iz];
+  w[2] = met0->w[ix][iy + 1][iz];
+  w[3] = met0->w[ix + 1][iy + 1][iz];
+  w[4] = met0->w[ix][iy][iz + 1];
+  w[5] = met0->w[ix + 1][iy][iz + 1];
+  w[6] = met0->w[ix][iy + 1][iz + 1];
+  w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
   w[8] = met1->w[ix][iy][iz];
   w[9] = met1->w[ix + 1][iy][iz];
@@ -572,9 +615,16 @@ void module_diffusion_meso(
   w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
   /* Get standard deviations of local wind data... */
-  usig = gsl_stats_sd(u, 1, 16);
-  vsig = gsl_stats_sd(v, 1, 16);
   wsig = gsl_stats_sd(w, 1, 16);
+
+  /* store the results in the cache, update the cache time */
+  cache[ix][iy][iz][0] = met0->time;
+  cache[ix][iy][iz][1] = usig;
+  cache[ix][iy][iz][2] = vsig;
+  cache[ix][iy][iz][3] = wsig;
+
+}
+
 
   /* Set temporal correlations for mesoscale fluctuations... */
   r = 1 - 2 * fabs(dt) / ctl->dt_met;
