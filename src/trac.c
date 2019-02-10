@@ -119,6 +119,18 @@ update_atm_meteo_data_t need_meteo_update_now(
   update_atm_meteo_data_t const static_key,
   double const time_now);
 
+  double accumulate_8winds(
+    float const wind[EX][EY][EP],
+    int const ix,
+    int const iy,
+    int const iz,
+    double * sum_of_squares);
+
+double get_standard_deviation(
+  int const n,
+  double const sum,
+  double const sum_squares);
+
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
@@ -511,6 +523,32 @@ void module_decay(
 
 /*****************************************************************************/
 
+
+double get_standard_deviation(int const n, double const sum, double const sum_squares) {
+  if (n < 2) return 0;
+  return sqrt(GSL_MAX(0.0, n*sum_squares - sum*sum)/((double)n*((double)n - 1.0)));
+}
+
+double accumulate_8winds(float const wind[EX][EY][EP],
+  int const ix, int const iy, int const iz, double * sum_of_squares) {
+  double s, s2;
+  s = 0; s2 = 0;
+#define accumulate_stats(sum, sum_squares, new) \
+                                    sum += (new); \
+                            sum_squares += (new)*(new)
+  accumulate_stats(s, s2, wind[ix + 0][iy + 0][iz + 0]);
+  accumulate_stats(s, s2, wind[ix + 0][iy + 0][iz + 1]);
+  accumulate_stats(s, s2, wind[ix + 0][iy + 1][iz + 0]);
+  accumulate_stats(s, s2, wind[ix + 0][iy + 1][iz + 1]);
+  accumulate_stats(s, s2, wind[ix + 1][iy + 0][iz + 0]);
+  accumulate_stats(s, s2, wind[ix + 1][iy + 0][iz + 1]);
+  accumulate_stats(s, s2, wind[ix + 1][iy + 1][iz + 0]);
+  accumulate_stats(s, s2, wind[ix + 1][iy + 1][iz + 1]);
+#undef accumulate_stats
+  *sum_of_squares += s2;
+  return s;
+}
+
 void module_diffusion_meso(
   ctl_t const * ctl,
   met_t const * met0,
@@ -521,7 +559,12 @@ void module_diffusion_meso(
   gsl_rng * rng,
   double cache[EX][EY][EP][4]) { /* right-most dim 4 contains {tref,usig,vsig,wsig} */
 
-  double r, rs, u[16], v[16], w[16], usig, vsig, wsig;
+#ifndef EIGHT_WINDS
+  double u[16], v[16], w[16];
+#else
+  double s, ss; /* new method, results differ silghtly */
+#endif
+  double reference_time, r, rs, usig, vsig, wsig;
 
   int ix, iy, iz;
 
@@ -540,9 +583,9 @@ void module_diffusion_meso(
 
   /* take the reference time of any of the two,
   but always take either met0 or met1 */
+reference_time = met0->time;
 
-
-if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact equality here */
+if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for exact equality here */
 
   /* cache hit, load data from cache cell */
   usig = cache[ix][iy][iz][1];
@@ -553,7 +596,7 @@ if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact 
   /* recompute sigmas and cache them */
 
   /* Collect local wind data... */
-
+#ifndef EIGHT_WINDS
   u[0] = met0->u[ix][iy][iz];
   u[1] = met0->u[ix + 1][iy][iz];
   u[2] = met0->u[ix][iy + 1][iz];
@@ -574,7 +617,14 @@ if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact 
 
   /* Get standard deviations of local wind data... */
   usig = gsl_stats_sd(u, 1, 16);
+#else
+    ss = 0;
+    s = accumulate_8winds(met0->u, ix, iy, iz, &ss)
+      + accumulate_8winds(met1->u, ix, iy, iz, &ss);
+    usig = get_standard_deviation(16, s, ss);
+#endif
 
+#ifndef EIGHT_WINDS
   v[0] = met0->v[ix][iy][iz];
   v[1] = met0->v[ix + 1][iy][iz];
   v[2] = met0->v[ix][iy + 1][iz];
@@ -595,7 +645,14 @@ if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact 
 
   /* Get standard deviations of local wind data... */
   vsig = gsl_stats_sd(v, 1, 16);
+#else
+    ss = 0;
+    s = accumulate_8winds(met0->v, ix, iy, iz, &ss)
+      + accumulate_8winds(met1->v, ix, iy, iz, &ss);
+    vsig = get_standard_deviation(16, s, ss);
+#endif
 
+#ifndef EIGHT_WINDS
   w[0] = met0->w[ix][iy][iz];
   w[1] = met0->w[ix + 1][iy][iz];
   w[2] = met0->w[ix][iy + 1][iz];
@@ -616,9 +673,15 @@ if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact 
 
   /* Get standard deviations of local wind data... */
   wsig = gsl_stats_sd(w, 1, 16);
+#else
+    ss = 0;
+    s = accumulate_8winds(met0->w, ix, iy, iz, &ss)
+      + accumulate_8winds(met1->w, ix, iy, iz, &ss);
+    wsig = get_standard_deviation(16, s, ss);
+#endif
 
   /* store the results in the cache, update the cache time */
-  cache[ix][iy][iz][0] = met0->time;
+  cache[ix][iy][iz][0] = reference_time;
   cache[ix][iy][iz][1] = usig;
   cache[ix][iy][iz][2] = vsig;
   cache[ix][iy][iz][3] = wsig;
@@ -632,21 +695,18 @@ if (cache[ix][iy][iz][0] == met0->time) {  /* yes, we do test doubles for exact 
 
   /* Calculate horizontal mesoscale wind fluctuations... */
   if (ctl->turb_mesox > 0) {
-    atm->up[ip] = (float)
-      (r * atm->up[ip]
+    atm->up[ip] = (float)(r * atm->up[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * usig));
     atm->lon[ip] += DX2DEG(atm->up[ip] * dt / 1000., atm->lat[ip]);
 
-    atm->vp[ip] = (float)
-      (r * atm->vp[ip]
+    atm->vp[ip] = (float)(r * atm->vp[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * vsig));
     atm->lat[ip] += DY2DEG(atm->vp[ip] * dt / 1000.);
   }
 
   /* Calculate vertical mesoscale wind fluctuations... */
   if (ctl->turb_mesoz > 0) {
-    atm->wp[ip] = (float)
-      (r * atm->wp[ip]
+    atm->wp[ip] = (float)(r * atm->wp[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesoz * wsig));
     atm->p[ip] += atm->wp[ip] * dt;
   }
@@ -669,14 +729,15 @@ void module_diffusion_turb(
   /* Get weighting factor... */
   p1 = pt * 0.866877899;
   p0 = pt / 0.866877899;
-  if (atm->p[ip] > p0)
+  if (atm->p[ip] > p0) {
     w = 1;
-  else if (atm->p[ip] < p1)
+  } else if (atm->p[ip] < p1) {
     w = 0;
-  else
+  } else {
     w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
+  }
 
-  /* Set diffusivitiy... */
+  /* Set diffusivities... */
   dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
   dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
@@ -695,6 +756,11 @@ void module_diffusion_turb(
     atm->p[ip]
       += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
 	       / 1000., atm->p[ip]);
+  if (dz > 0) {
+    atm->p[ip] += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
+    / 1000., atm->p[ip]);
+  }
+
 }
 
 /*****************************************************************************/
