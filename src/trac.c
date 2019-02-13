@@ -398,8 +398,8 @@ void module_advection(
 		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
   /* Get position of the mid point... */
-  xm[0] = atm->lon[ip] + dx2deg(0.5 * dt * v[0] / 1000., atm->lat[ip]);
-  xm[1] = atm->lat[ip] + dy2deg(0.5 * dt * v[1] / 1000.);
+  xm[0] = atm->lon[ip] + DX2DEG(0.5 * dt * v[0] / 1000., atm->lat[ip]);
+  xm[1] = atm->lat[ip] + DY2DEG(0.5 * dt * v[1] / 1000.);
   xm[2] = atm->p[ip] + 0.5 * dt * v[2];
 
   /* Interpolate meteorological data for mid point... */
@@ -409,8 +409,8 @@ void module_advection(
 
   /* Save new position... */
   atm->time[ip] += dt;
-  atm->lon[ip] += dx2deg(dt * v[0] / 1000., xm[1]);
-  atm->lat[ip] += dy2deg(dt * v[1] / 1000.);
+  atm->lon[ip] += DX2DEG(dt * v[0] / 1000., xm[1]);
+  atm->lat[ip] += DY2DEG(dt * v[1] / 1000.);
   atm->p[ip] += dt * v[2];
 }
 
@@ -547,12 +547,12 @@ void module_diffusion_meso(
     atm->up[ip] = (float)
       (r * atm->up[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * usig));
-    atm->lon[ip] += dx2deg(atm->up[ip] * dt / 1000., atm->lat[ip]);
+    atm->lon[ip] += DX2DEG(atm->up[ip] * dt / 1000., atm->lat[ip]);
 
     atm->vp[ip] = (float)
       (r * atm->vp[ip]
        + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * vsig));
-    atm->lat[ip] += dy2deg(atm->vp[ip] * dt / 1000.);
+    atm->lat[ip] += DY2DEG(atm->vp[ip] * dt / 1000.);
   }
 
   /* Calculate vertical mesoscale wind fluctuations... */
@@ -595,17 +595,17 @@ void module_diffusion_turb(
   /* Horizontal turbulent diffusion... */
   if (dx > 0) {
     atm->lon[ip]
-      += dx2deg(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
+      += DX2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
 		/ 1000., atm->lat[ip]);
     atm->lat[ip]
-      += dy2deg(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
+      += DY2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
 		/ 1000.);
   }
 
   /* Vertical turbulent diffusion... */
   if (dz > 0)
     atm->p[ip]
-      += dz2dp(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
+      += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
 	       / 1000., atm->p[ip]);
 }
 
@@ -922,7 +922,7 @@ void module_sedi(
   v_p = 2. * gsl_pow_2(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
 
   /* Calculate pressure change... */
-  atm->p[ip] += dz2dp(v_p * dt / 1000., atm->p[ip]);
+  atm->p[ip] += DZ2DP(v_p * dt / 1000., atm->p[ip]);
 }
 
 /*****************************************************************************/

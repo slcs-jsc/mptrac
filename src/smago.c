@@ -50,16 +50,16 @@ int main(
     for (iy = 1; iy < met->ny - 1; iy++) {
       t = 0.5 * ((met->u[ix + 1][iy][ip] - met->u[ix - 1][iy][ip])
 		 / (1000. *
-		    deg2dx(met->lon[ix + 1] - met->lon[ix - 1], met->lat[iy]))
+		    DEG2DX(met->lon[ix + 1] - met->lon[ix - 1], met->lat[iy]))
 		 - (met->v[ix][iy + 1][ip] - met->v[ix][iy - 1][ip])
-		 / (1000. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1])));
+		 / (1000. * DEG2DY(met->lat[iy + 1] - met->lat[iy - 1])));
       s = 0.5 * ((met->u[ix][iy + 1][ip] - met->u[ix][iy - 1][ip])
-		 / (1000. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1]))
+		 / (1000. * DEG2DY(met->lat[iy + 1] - met->lat[iy - 1]))
 		 + (met->v[ix + 1][iy][ip] - met->v[ix - 1][iy][ip])
 		 / (1000. *
-		    deg2dx(met->lon[ix + 1] - met->lon[ix - 1],
+		    DEG2DX(met->lon[ix + 1] - met->lon[ix - 1],
 			   met->lat[iy])));
-      ls2 = gsl_pow_2(c * 500. * deg2dy(met->lat[iy + 1] - met->lat[iy - 1]));
+      ls2 = gsl_pow_2(c * 500. * DEG2DY(met->lat[iy + 1] - met->lat[iy - 1]));
       if (fabs(met->lat[iy]) > 80)
 	ls2 *= (90. - fabs(met->lat[iy])) / 10.;
       k[ix][iy] = ls2 * sqrt(2.0 * (gsl_pow_2(t) + gsl_pow_2(s)));

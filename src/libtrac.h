@@ -123,6 +123,31 @@
   if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
     ERRMSG("Out of memory!");
 
+/*! Convert degrees to zonal distance. */
+#define DEG2DX(dlon, lat)					\
+  ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
+
+/*! Convert degrees to meridional distance. */
+#define DEG2DY(dlat)				\
+  ((dlat) * M_PI * RE / 180.)
+
+/*! Convert pressure change to vertical distance. */
+#define DP2DZ(dp, p)				\
+  (- (dp) * H0 / (p))
+
+/*! Convert zonal distance to degrees. */
+#define DX2DEG(dx, lat)						\
+  (((lat) < -89.999 || (lat) > 89.999) ? 0			\
+   : (dx) * 180. / (M_PI * RE * cos((lat) / 180. * M_PI)))
+
+/*! Convert meridional distance to degrees. */
+#define DY2DEG(dy)				\
+  ((dy) * 180. / (M_PI * RE))
+
+/*! Convert vertical distance to pressure change. */
+#define DZ2DP(dz, p)				\
+  (-(dz) * (p) / H0)
+
 /*! Compute Cartesian distance between two vectors. */
 #define DIST(a, b) sqrt(DIST2(a, b))
 
@@ -687,34 +712,6 @@ void doy2day(
   int doy,
   int *mon,
   int *day);
-
-/*! Convert degrees to horizontal distance. */
-double deg2dx(
-  double dlon,
-  double lat);
-
-/*! Convert degrees to horizontal distance. */
-double deg2dy(
-  double dlat);
-
-/*! Convert pressure to vertical distance. */
-double dp2dz(
-  double dp,
-  double p);
-
-/*! Convert horizontal distance to degrees. */
-double dx2deg(
-  double dx,
-  double lat);
-
-/*! Convert horizontal distance to degrees. */
-double dy2deg(
-  double dy);
-
-/*! Convert vertical distance to pressure. */
-double dz2dp(
-  double dz,
-  double p);
 
 /*! Convert geolocation to Cartesian coordinates. */
 void geo2cart(

@@ -102,7 +102,7 @@ int main(
       atm2->p[atm2->np] = P(z0 + (z1 - z0) * gsl_rng_uniform_pos(rng));
     else
       atm2->p[atm2->np] = atm->p[ip]
-	+ dz2dp(gsl_ran_gaussian_ziggurat(rng, dz / 2.3548), atm->p[ip]);
+	+ DZ2DP(gsl_ran_gaussian_ziggurat(rng, dz / 2.3548), atm->p[ip]);
 
     /* Set horizontal position... */
     if (lon1 > lon0 && lat1 > lat0) {
@@ -110,9 +110,9 @@ int main(
       atm2->lat[atm2->np] = lat0 + (lat1 - lat0) * gsl_rng_uniform_pos(rng);
     } else {
       atm2->lon[atm2->np] = atm->lon[ip]
-	+ gsl_ran_gaussian_ziggurat(rng, dx2deg(dx, atm->lat[ip]) / 2.3548);
+	+ gsl_ran_gaussian_ziggurat(rng, DX2DEG(dx, atm->lat[ip]) / 2.3548);
       atm2->lat[atm2->np] = atm->lat[ip]
-	+ gsl_ran_gaussian_ziggurat(rng, dy2deg(dx) / 2.3548);
+	+ gsl_ran_gaussian_ziggurat(rng, DY2DEG(dx) / 2.3548);
     }
 
     /* Copy quantities... */

@@ -425,7 +425,7 @@ double clim_tropo(
    281.7, 281.1, 281.2}
   };
 
-  double doy, p0, p1, pt;
+  double doy, p0, p1;
 
   int imon, ilat;
 
@@ -443,10 +443,9 @@ double clim_tropo(
 	   lats[ilat + 1], tps[imon][ilat + 1], lat);
   p1 = LIN(lats[ilat], tps[imon + 1][ilat],
 	   lats[ilat + 1], tps[imon + 1][ilat + 1], lat);
-  pt = LIN(doys[imon], p0, doys[imon + 1], p1, doy);
 
   /* Return tropopause pressure... */
-  return pt;
+  return LIN(doys[imon], p0, doys[imon + 1], p1, doy);
 }
 
 /*****************************************************************************/
@@ -493,62 +492,6 @@ void doy2day(
     *mon = i + 1;
     *day = doy - d0[i] + 1;
   }
-}
-
-/*****************************************************************************/
-
-double deg2dx(
-  double dlon,
-  double lat) {
-
-  return dlon * M_PI * RE / 180. * cos(lat / 180. * M_PI);
-}
-
-/*****************************************************************************/
-
-double deg2dy(
-  double dlat) {
-
-  return dlat * M_PI * RE / 180.;
-}
-
-/*****************************************************************************/
-
-double dp2dz(
-  double dp,
-  double p) {
-
-  return -dp * H0 / p;
-}
-
-/*****************************************************************************/
-
-double dx2deg(
-  double dx,
-  double lat) {
-
-  /* Avoid singularity at poles... */
-  if (lat < -89.999 || lat > 89.999)
-    return 0;
-  else
-    return dx * 180. / (M_PI * RE * cos(lat / 180. * M_PI));
-}
-
-/*****************************************************************************/
-
-double dy2deg(
-  double dy) {
-
-  return dy * 180. / (M_PI * RE);
-}
-
-/*****************************************************************************/
-
-double dz2dp(
-  double dz,
-  double p) {
-
-  return -dz * p / H0;
 }
 
 /*****************************************************************************/
@@ -1804,8 +1747,8 @@ void read_met_pv(
 
       /* Set auxiliary variables... */
       latr = GSL_MIN(GSL_MAX(met->lat[iy], -89.), 89.);
-      dx = 1000. * deg2dx(met->lon[ix1] - met->lon[ix0], latr);
-      dy = 1000. * deg2dy(met->lat[iy1] - met->lat[iy0]);
+      dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
+      dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
       c0 = cos(met->lat[iy0] / 180. * M_PI);
       c1 = cos(met->lat[iy1] / 180. * M_PI);
       cr = cos(latr / 180. * M_PI);
