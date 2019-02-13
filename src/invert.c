@@ -391,7 +391,7 @@ double conv_kernel(
   /* Convolute with kernel... */
   sum = 0;
   for (ik = 0; ik < nk; ik++) {
-    iz = locate(rz, nz, z[ik]);
+    iz = locate_irr(rz, nz, z[ik]);
     sum += k[ik]
       * LIN(rz[iz], rvmr[iz], rz[iz + 1], rvmr[iz + 1], z[ik]);
   }

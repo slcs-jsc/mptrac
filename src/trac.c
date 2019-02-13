@@ -468,9 +468,9 @@ void module_diffusion_meso(
   int ix, iy, iz;
 
   /* Get indices... */
-  ix = locate(met0->lon, met0->nx, atm->lon[ip]);
-  iy = locate(met0->lat, met0->ny, atm->lat[ip]);
-  iz = locate(met0->p, met0->np, atm->p[ip]);
+  ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+  iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+  iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
   /* Collect local wind data... */
   u[0] = met0->u[ix][iy][iz];
@@ -501,9 +501,9 @@ void module_diffusion_meso(
   w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
   /* Get indices... */
-  ix = locate(met1->lon, met1->nx, atm->lon[ip]);
-  iy = locate(met1->lat, met1->ny, atm->lat[ip]);
-  iz = locate(met1->p, met1->np, atm->p[ip]);
+  ix = locate_reg(met1->lon, met1->nx, atm->lon[ip]);
+  iy = locate_reg(met1->lat, met1->ny, atm->lat[ip]);
+  iz = locate_irr(met1->p, met1->np, atm->p[ip]);
 
   /* Collect local wind data... */
   u[8] = met1->u[ix][iy][iz];
@@ -715,7 +715,7 @@ void module_isosurf(
     else if (atm->time[ip] >= ts[n - 1])
       atm->p[ip] = ps[n - 1];
     else {
-      idx = locate(ts, n, atm->time[ip]);
+      idx = locate_irr(ts, n, atm->time[ip]);
       atm->p[ip] = LIN(ts[idx], ps[idx],
 		       ts[idx + 1], ps[idx + 1], atm->time[ip]);
     }

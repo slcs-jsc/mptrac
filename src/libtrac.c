@@ -288,10 +288,10 @@ double clim_hno3(
   sec = fmod(t, 365.25 * 86400.);
 
   /* Get indices... */
-  ilat = locate(lats, 18, lat);
-  ip = locate(ps, 10, p);
-  isec = locate(secs, 12, sec);
-
+  isec = locate_irr(secs, 12, sec);
+  ilat = locate_reg(lats, 18, lat);
+  ip = locate_irr(ps, 10, p);
+  
   /* Interpolate... */
   aux00 = LIN(ps[ip], hno3[isec][ilat][ip],
 	      ps[ip + 1], hno3[isec][ilat][ip + 1], p);
@@ -435,16 +435,14 @@ double clim_tropo(
     doy += 365.25;
 
   /* Get indices... */
-  imon = locate(doys, 12, doy);
-  ilat = locate(lats, 73, lat);
+  ilat = locate_reg(lats, 73, lat);
+  imon = locate_irr(doys, 12, doy);
 
-  /* Get tropopause pressure... */
+  /* Interpolate... */
   p0 = LIN(lats[ilat], tps[imon][ilat],
 	   lats[ilat + 1], tps[imon][ilat + 1], lat);
   p1 = LIN(lats[ilat], tps[imon + 1][ilat],
 	   lats[ilat + 1], tps[imon + 1][ilat + 1], lat);
-
-  /* Return tropopause pressure... */
   return LIN(doys[imon], p0, doys[imon + 1], p1, doy);
 }
 
@@ -656,9 +654,9 @@ void intpol_met_space(
     lon += 360;
 
   /* Get indices... */
-  ip = locate(met->p, met->np, p);
-  ix = locate(met->lon, met->nx, lon);
-  iy = locate(met->lat, met->ny, lat);
+  ip = locate_irr(met->p, met->np, p);
+  ix = locate_reg(met->lon, met->nx, lon);
+  iy = locate_reg(met->lat, met->ny, lat);
 
   /* Get weights... */
   wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
@@ -796,7 +794,7 @@ void jsec2time(
 
 /*****************************************************************************/
 
-int locate(
+int locate_irr(
   double *xx,
   int n,
   double x) {
@@ -824,6 +822,27 @@ int locate(
     }
 
   return ilo;
+}
+
+/*****************************************************************************/
+
+int locate_reg(
+  double *xx,
+  int n,
+  double x) {
+
+  int i;
+
+  /* Calculate index... */
+  i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
+
+  /* Check range... */
+  if (i < 0)
+    i = 0;
+  else if (i >= n - 2)
+    i = n - 2;
+
+  return i;
 }
 
 /*****************************************************************************/
@@ -1543,8 +1562,8 @@ void read_met_geopot(
       else if (lon > topo_lon[topo_nx - 1])
 	lon -= 360;
       lat = met->lat[iy];
-      tx = locate(topo_lon, topo_nx, lon);
-      ty = locate(topo_lat, topo_ny, lat);
+      tx = locate_reg(topo_lon, topo_nx, lon);
+      ty = locate_reg(topo_lat, topo_ny, lat);
       z0 = LIN(topo_lon[tx], topo_z[tx][ty],
 	       topo_lon[tx + 1], topo_z[tx + 1][ty], lon);
       z1 = LIN(topo_lon[tx], topo_z[tx][ty + 1],
@@ -1552,7 +1571,7 @@ void read_met_geopot(
       z0 = LIN(topo_lat[ty], z0, topo_lat[ty + 1], z1, lat);
 
       /* Find surface pressure level... */
-      ip0 = locate(met->p, met->np, met->ps[ix][iy]);
+      ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
       /* Get surface temperature... */
       ts = LIN(met->p[ip0], met->t[ix][iy][ip0],
@@ -1668,7 +1687,7 @@ void read_met_ml2pl(
 	else if ((pt > p[met->np - 1] && p[1] > p[0])
 		 || (pt < p[met->np - 1] && p[1] < p[0]))
 	  pt = p[met->np - 1];
-	ip2 = locate(p, met->np, pt);
+	ip2 = locate_irr(p, met->np, pt);
 	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
 		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
       }

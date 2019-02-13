@@ -803,8 +803,14 @@ void jsec2time(
   int *sec,
   double *remain);
 
-/*! Find array index. */
-int locate(
+/*! Find array index for irregular grid. */
+int locate_irr(
+  double *xx,
+  int n,
+  double x);
+
+/*! Find array index for regular grid. */
+int locate_reg(
   double *xx,
   int n,
   double x);
