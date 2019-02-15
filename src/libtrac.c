@@ -291,7 +291,7 @@ double clim_hno3(
   isec = locate_irr(secs, 12, sec);
   ilat = locate_reg(lats, 18, lat);
   ip = locate_irr(ps, 10, p);
-  
+
   /* Interpolate... */
   aux00 = LIN(ps[ip], hno3[isec][ilat][ip],
 	      ps[ip + 1], hno3[isec][ilat][ip + 1], p);
@@ -1740,8 +1740,8 @@ void read_met_periodic(
 void read_met_pv(
   met_t * met) {
 
-  double c0, c1, cr, dx, dy, dp, dtdx, dvdx, dtdy, dudy, dtdp, dudp, dvdp,
-    latr, vort, pows[EP];
+  double c0, c1, cr, dx, dy, dp0, dp1, denom, dtdx, dvdx, dtdy, dudy,
+    dtdp, dudp, dvdp, latr, vort, pows[EP];
 
   int ip, ip0, ip1, ix, ix0, ix1, iy, iy0, iy1;
 
@@ -1750,7 +1750,7 @@ void read_met_pv(
     pows[ip] = pow(1000. / met->p[ip], 0.286);
 
   /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(ix,ix0,ix1,iy,iy0,iy1,latr,dx,dy,c0,c1,cr,vort,ip,ip0,ip1,dp,dtdx,dvdx,dtdy,dudy,dtdp,dudp,dvdp)
+#pragma omp parallel for default(shared) private(ix,ix0,ix1,iy,iy0,iy1,latr,dx,dy,c0,c1,cr,vort,ip,ip0,ip1,dp0,dp1,denom,dtdx,dvdx,dtdy,dudy,dtdp,dudp,dvdp)
   for (ix = 0; ix < met->nx; ix++) {
 
     /* Set indices... */
@@ -1776,13 +1776,6 @@ void read_met_pv(
       /* Loop over grid points... */
       for (ip = 0; ip < met->np; ip++) {
 
-	/* Set indices... */
-	ip0 = GSL_MAX(ip - 1, 0);
-	ip1 = GSL_MIN(ip + 1, met->np - 1);
-
-	/* Set auxiliary variables... */
-	dp = 100. * (met->p[ip1] - met->p[ip0]);
-
 	/* Get gradients in longitude... */
 	dtdx = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
 	dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
@@ -1791,12 +1784,35 @@ void read_met_pv(
 	dtdy = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
 	dudy = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
+	/* Set indices... */
+	ip0 = GSL_MAX(ip - 1, 0);
+	ip1 = GSL_MIN(ip + 1, met->np - 1);
+
 	/* Get gradients in pressure... */
-	dtdp =
-	  (met->t[ix][iy][ip1] * pows[ip1] -
-	   met->t[ix][iy][ip0] * pows[ip0]) / dp;
-	dudp = (met->u[ix][iy][ip1] - met->u[ix][iy][ip0]) / dp;
-	dvdp = (met->v[ix][iy][ip1] - met->v[ix][iy][ip0]) / dp;
+	dp0 = 100. * (met->p[ip] - met->p[ip0]);
+	dp1 = 100. * (met->p[ip1] - met->p[ip]);
+	if (ip != ip0 && ip != ip1) {
+	  denom = dp0 * dp1 * (dp0 + dp1);
+	  dtdp = (dp0 * dp0 * met->t[ix][iy][ip1] * pows[ip1]
+		  - dp1 * dp1 * met->t[ix][iy][ip0] * pows[ip0]
+		  + (dp1 * dp1 - dp0 * dp0) * met->t[ix][iy][ip] * pows[ip])
+	    / denom;
+	  dudp = (dp0 * dp0 * met->u[ix][iy][ip1]
+		  - dp1 * dp1 * met->u[ix][iy][ip0]
+		  + (dp1 * dp1 - dp0 * dp0) * met->u[ix][iy][ip])
+	    / denom;
+	  dvdp = (dp0 * dp0 * met->v[ix][iy][ip1]
+		  - dp1 * dp1 * met->v[ix][iy][ip0]
+		  + (dp1 * dp1 - dp0 * dp0) * met->v[ix][iy][ip])
+	    / denom;
+	} else {
+	  denom = dp0 + dp1;
+	  dtdp =
+	    (met->t[ix][iy][ip1] * pows[ip1] -
+	     met->t[ix][iy][ip0] * pows[ip0]) / denom;
+	  dudp = (met->u[ix][iy][ip1] - met->u[ix][iy][ip0]) / denom;
+	  dvdp = (met->v[ix][iy][ip1] - met->v[ix][iy][ip0]) / denom;
+	}
 
 	/* Calculate PV... */
 	met->pv[ix][iy][ip] = (float)
