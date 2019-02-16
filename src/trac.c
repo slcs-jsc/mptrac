@@ -566,13 +566,13 @@ void module_diffusion_meso(
 #endif
   double reference_time, r, rs, usig, vsig, wsig;
 
-  int ix, iy, iz;
-
+  int ix, iy, iz, iz0, iz1;
 
   /* Get indices... */
   ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
   iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-  iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+  iz0 = locate_irr(met0->p, met0->np, atm->p[ip]);
+  iz1 = locate_irr(met1->p, met1->np, atm->p[ip]); /* we can omit this extra line if we can be sure that the pressure grid is also constant over time */
 
   /* assume that met1 has the same grids! */
 /*
@@ -585,7 +585,9 @@ void module_diffusion_meso(
   but always take either met0 or met1 */
 reference_time = met0->time;
 
-if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for exact equality here */
+iz = iz0; /* check it this is a good choice */
+
+if (reference_time == cache[ix][iy][iz][0]) { /* yes, we do test doubles for exact equality here */
 
   /* cache hit, load data from cache cell */
   usig = cache[ix][iy][iz][1];
@@ -597,6 +599,7 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
 
   /* Collect local wind data... */
 #ifndef EIGHT_WINDS
+  iz = iz0;
   u[0] = met0->u[ix][iy][iz];
   u[1] = met0->u[ix + 1][iy][iz];
   u[2] = met0->u[ix][iy + 1][iz];
@@ -606,6 +609,7 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
   u[6] = met0->u[ix][iy + 1][iz + 1];
   u[7] = met0->u[ix + 1][iy + 1][iz + 1];
 
+  iz = iz1;
   u[8] = met1->u[ix][iy][iz];
   u[9] = met1->u[ix + 1][iy][iz];
   u[10] = met1->u[ix][iy + 1][iz];
@@ -625,6 +629,7 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
 #endif
 
 #ifndef EIGHT_WINDS
+  iz = iz0;
   v[0] = met0->v[ix][iy][iz];
   v[1] = met0->v[ix + 1][iy][iz];
   v[2] = met0->v[ix][iy + 1][iz];
@@ -634,6 +639,7 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
   v[6] = met0->v[ix][iy + 1][iz + 1];
   v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
+  iz = iz1;
   v[8] = met1->v[ix][iy][iz];
   v[9] = met1->v[ix + 1][iy][iz];
   v[10] = met1->v[ix][iy + 1][iz];
@@ -653,6 +659,7 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
 #endif
 
 #ifndef EIGHT_WINDS
+  iz = iz0;
   w[0] = met0->w[ix][iy][iz];
   w[1] = met0->w[ix + 1][iy][iz];
   w[2] = met0->w[ix][iy + 1][iz];
@@ -662,6 +669,7 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
   w[6] = met0->w[ix][iy + 1][iz + 1];
   w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
+  iz = iz1;
   w[8] = met1->w[ix][iy][iz];
   w[9] = met1->w[ix + 1][iy][iz];
   w[10] = met1->w[ix][iy + 1][iz];
@@ -681,13 +689,13 @@ if (cache[ix][iy][iz][0] == reference_time) {  /* yes, we do test doubles for ex
 #endif
 
   /* store the results in the cache, update the cache time */
+  iz = iz0;
   cache[ix][iy][iz][0] = reference_time;
   cache[ix][iy][iz][1] = usig;
   cache[ix][iy][iz][2] = vsig;
   cache[ix][iy][iz][3] = wsig;
 
 }
-
 
   /* Set temporal correlations for mesoscale fluctuations... */
   r = 1 - 2 * fabs(dt) / ctl->dt_met;
@@ -729,15 +737,14 @@ void module_diffusion_turb(
   /* Get weighting factor... */
   p1 = pt * 0.866877899;
   p0 = pt / 0.866877899;
-  if (atm->p[ip] > p0) {
+  if (atm->p[ip] > p0)
     w = 1;
-  } else if (atm->p[ip] < p1) {
+  else if (atm->p[ip] < p1)
     w = 0;
-  } else {
+  else
     w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
-  }
 
-  /* Set diffusivities... */
+  /* Set diffusivity... */
   dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
   dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
@@ -756,10 +763,6 @@ void module_diffusion_turb(
     atm->p[ip]
       += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
 	       / 1000., atm->p[ip]);
-  if (dz > 0) {
-    atm->p[ip] += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
-    / 1000., atm->p[ip]);
-  }
 
 }
 
