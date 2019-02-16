@@ -2191,6 +2191,14 @@ void timer(
   int mode) {
 
   static double starttime[NTIMER], runtime[NTIMER];
+#ifdef LinearRegressionTimers
+  static int numtimes[NTIMER];
+  static double squaretimes[NTIMER], correlation[NTIMER];
+
+  double a, b, denom, avgx, avgy, varx, vary;
+  int n;
+#endif
+  double elapsed;
 
   /* Check id... */
   if (id < 0 || id >= NTIMER)
@@ -2207,14 +2215,41 @@ void timer(
   /* Stop timer... */
   else if (mode == 2) {
     if (starttime[id] > 0) {
-      runtime[id] = runtime[id] + omp_get_wtime() - starttime[id];
+      elapsed = omp_get_wtime() - starttime[id];
+      runtime[id] = runtime[id] + elapsed;
       starttime[id] = -1;
+#ifdef LinearRegressionTimers
+      /* construct other accumulants */
+      squaretimes[id] += elapsed*elapsed;
+      correlation[id] += elapsed*numtimes[id];
+      ++numtimes[id];
+#endif     
     }
   }
 
   /* Print timer... */
   else if (mode == 3) {
     printf("%s = %.3f s\n", name, runtime[id]);
+#ifdef LinearRegressionTimers
+    /* display higher accumulants */
+    n = numtimes[id];
+    if (n > 1) {
+      denom = 1./GSL_MAX(n, 1);
+      avgy = denom*runtime[id]; /* average over each time */
+      vary = GSL_MAX(denom*squaretimes[id] - avgy*avgy, 0); /* variance */
+      /* linear regression coefficients a and b, the x-axis is the iteration number */
+      avgx = denom*0.5*n*(n - 1);
+      varx = denom*(n-1)*n*(2*n-1) - avgx*avgx;
+      a = (denom*correlation[id] - avgx*avgy)/varx; /* compute the slope */
+      b = avgy - a*avgx;                            /* compute the offset */
+      printf("stats for %s (miliseconds): num %d avg %.6f err %.6f off %.6f lin %.6f\n", 
+                name, n, avgy*1000, sqrt(vary)*1000, b*1000, a*1000);
+    }
+    /* clear for later usa of the same timer */
+    numtimes[id] = 0;
+    squaretimes[id] = 0;
+    correlation[id] = 0;
+#endif
     runtime[id] = 0;
   }
 }
