@@ -11,7 +11,8 @@
 # module purge && module load Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 
 # List of executables...
-EXC = center cluster conv day2doy dist doy2day extract init invert jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
+# EXC = center cluster conv day2doy dist doy2day extract init invert jsec2time match met_map met_prof met_sample met_zm smago split time2jsec trac wind
+EXC = init split trac
 
 # Library directories...
 LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64

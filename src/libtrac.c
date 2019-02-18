@@ -288,7 +288,7 @@ double clim_hno3(
   sec = fmod(t, 365.25 * 86400.);
 
   /* Get indices... */
-  isec = locate_irr(secs, 12, sec);
+  isec = locate_irr(secs, 12, sec); /* this should have 13 entries */
   ilat = locate_reg(lats, 18, lat);
   ip = locate_irr(ps, 10, p);
 

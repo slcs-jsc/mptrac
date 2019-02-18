@@ -465,28 +465,33 @@ void module_advection(
   int const ip,
   double const dt) {
 
-  double v[3], xm[3];
+  double v[3], xm[4], xo[4];
 
+  /* load old positions */
+  xo[0] = atm->lon[ip];
+  xo[1] = atm->lat[ip];
+  xo[2] = atm->p[ip];
+  xo[3] = atm->time[ip];
+  
   /* Interpolate meteorological data... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], NULL, NULL, NULL, NULL,
-		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
+  intpol_met_time(met0, met1, xo[3], xo[2], xo[0], xo[1], 
+    NULL, NULL, NULL, NULL, &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
   /* Get position of the mid point... */
-  xm[0] = atm->lon[ip] + DX2DEG(0.5 * dt * v[0] / 1000., atm->lat[ip]);
-  xm[1] = atm->lat[ip] + DY2DEG(0.5 * dt * v[1] / 1000.);
-  xm[2] = atm->p[ip] + 0.5 * dt * v[2];
+  xm[0] = xo[0] + DX2DEG(0.5 * dt * v[0] / 1000., xo[1]);
+  xm[1] = xo[1] + DY2DEG(0.5 * dt * v[1] / 1000.);
+  xm[2] = xo[2] + 0.5 * dt * v[2];
+  xm[3] = xo[3] + 0.5 * dt;
 
   /* Interpolate meteorological data for mid point... */
-  intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt,
-		  xm[2], xm[0], xm[1], NULL, NULL, NULL, NULL,
-		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
+  intpol_met_time(met0, met1, xm[3], xm[2], xm[0], xm[1], 
+    NULL, NULL, NULL, NULL, &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
   /* Save new position... */
-  atm->time[ip] += dt;
-  atm->lon[ip] += DX2DEG(dt * v[0] / 1000., xm[1]);
-  atm->lat[ip] += DY2DEG(dt * v[1] / 1000.);
-  atm->p[ip] += dt * v[2];
+  atm->lon[ip]  = xo[0] + DX2DEG(dt * v[0] / 1000., xm[1]);
+  atm->lat[ip]  = xo[1] + DY2DEG(dt * v[1] / 1000.);
+  atm->p[ip]    = xo[2] + dt * v[2];
+  atm->time[ip] = xo[3] + dt;
 }
 
 /*****************************************************************************/
@@ -999,40 +1004,54 @@ void module_position(
   atm_t * atm,
   int const ip) {
 
-  double ps;
+  double ps, lon, lon0, lat, lat0, pre, now;
 
+  /* Load... */
+  now = atm->time[ip];
+  pre = atm->p[ip];
+  lon = lon0 = atm->lon[ip];
+  lat = lat0 = atm->lat[ip];
+  
   /* Calculate modulo... */
-  atm->lon[ip] = fmod(atm->lon[ip], 360);
-  atm->lat[ip] = fmod(atm->lat[ip], 360);
+  lon = fmod(lon, 360);
+  lat = fmod(lat, 360);
 
   /* Check latitude... */
-  while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
-    if (atm->lat[ip] > 90) {
-      atm->lat[ip] = 180 - atm->lat[ip];
-      atm->lon[ip] += 180;
+  while (lat < -90 || lat > 90) {
+    if (lat > 90) {
+      lat = 180 - lat;
+      lon += 180;
     }
-    if (atm->lat[ip] < -90) {
-      atm->lat[ip] = -180 - atm->lat[ip];
-      atm->lon[ip] += 180;
+    if (lat < -90) {
+      lat = -180 - lat;
+      lon += 180;
     }
   }
 
+  /* Store corrected latitude */
+  if (lat != lat0)
+    atm->lat[ip] = lat;
+
   /* Check longitude... */
-  while (atm->lon[ip] < -180)
-    atm->lon[ip] += 360;
-  while (atm->lon[ip] >= 180)
-    atm->lon[ip] -= 360;
-
+  while (lon < -180)
+    lon += 360;
+  while (lon >= 180)
+    lon -= 360;
+  
   /* Get surface pressure... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		  NULL, NULL, NULL, NULL, NULL, NULL);
+  intpol_met_time(met0, met1, now, pre, lon, lat, 
+    &ps, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
-  /* Check pressure... */
-  if (atm->p[ip] > ps)
+  /* Store corrected longitude */
+  if (lon != lon0)
+    atm->lon[ip] = lon;
+  
+  /* Check pressure and store corrected pressure (maybe)... */
+  if (pre > ps)
     atm->p[ip] = ps;
-  else if (atm->p[ip] < met0->p[met0->np - 1])
+  else if (pre < met0->p[met0->np - 1])
     atm->p[ip] = met0->p[met0->np - 1];
+
 }
 
 /*****************************************************************************/
