@@ -107,7 +107,8 @@ void write_output(
   met_t const * met0,
   met_t const * met1,
   atm_t * atm,
-  double const t);
+  double const t,
+  update_atm_meteo_data_t const key);
 
 /*! Check if module_meteo needs to be executed at all */
 update_atm_meteo_data_t need_meteo_update_at_all(
@@ -158,6 +159,7 @@ int main(
 
 
   update_atm_meteo_data_t update_meteo_at_all = 0;
+  update_atm_meteo_data_t update_meteo_now = 0;
   int do_turbulent_diffusion = 0;
   int do_mesoscale_diffusion = 0;
   int do_sedimentation = 0;
@@ -278,6 +280,8 @@ int main(
       if (ctl.direction * (t - ctl.t_stop) > 0) {
         t = ctl.t_stop;
       }
+      
+      update_meteo_now = need_meteo_update_now(&ctl, update_meteo_at_all, t);
 
       /* Set time steps for air parcels... */
 #pragma omp parallel for default(shared) private(ip)
@@ -369,7 +373,7 @@ int main(
       STOP_TIMER(TIMER_POSITION);
 
       /* Meteorological data... */
-      if (need_meteo_update_now(&ctl, update_meteo_at_all, t)) {
+      if (update_meteo_now) {
         START_TIMER(TIMER_METEO);
 #pragma omp parallel for default(shared) private(ip)
         for (ip = 0; ip < atm->np; ip++) {
@@ -390,10 +394,12 @@ int main(
         STOP_TIMER(TIMER_DECAY);
       }
 
-      /* Write output... */
-      START_TIMER(TIMER_OUTPUT);
-      write_output(dirname, &ctl, met0, met1, atm, t);
-      STOP_TIMER(TIMER_OUTPUT);
+      if (update_meteo_now) {
+        /* Write output... */
+        START_TIMER(TIMER_OUTPUT);
+        write_output(dirname, &ctl, met0, met1, atm, t, update_meteo_now);
+        STOP_TIMER(TIMER_OUTPUT);
+      }
 
     } /* end of Loop over timesteps */
 
@@ -1090,7 +1096,8 @@ void write_output(
   met_t const * met0,
   met_t const * met1,
   atm_t * atm, /* station flags are modified in write_station */
-  double const t) {
+  double const t,
+  update_atm_meteo_data_t const key) {
 
   char filename[2 * LEN];
 
@@ -1102,39 +1109,39 @@ void write_output(
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
+  if (key & UPDATE_ATM_METEO_DATA_TIME_ATM) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
   }
 
   /* Write CSI data... */
-  if (ctl->csi_basename[0] != '-') {
+  if (key & UPDATE_ATM_METEO_DATA_CSI) {
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
   }
 
   /* Write ensemble data... */
-  if (ctl->ens_basename[0] != '-') {
+  if (key & UPDATE_ATM_METEO_DATA_ENSEMBLE) {
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
   }
 
   /* Write gridded data... */
-  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
+  if (key & UPDATE_ATM_METEO_DATA_TIME_GRID) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
   }
 
   /* Write profile data... */
-  if (ctl->prof_basename[0] != '-') {
+  if (key & UPDATE_ATM_METEO_DATA_PROFILE) {
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
   }
 
   /* Write station data... */
-  if (ctl->stat_basename[0] != '-') {
+  if (key & UPDATE_ATM_METEO_DATA_STATIONS) {
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
   }
