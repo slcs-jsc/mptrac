@@ -1526,7 +1526,7 @@ void read_met(
   NC(nc_close(ncid));
   
   /* collect the wind data in array uvw */
-  /* #pragma omp parallel for collapse(2) private(ix,iy,ip) ToDo */
+#pragma omp parallel for collapse(2) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ++ix) {
     for (iy = 0; iy < met->ny; ++iy) {
       for (ip = 0; ip < met->np; ++ip) {

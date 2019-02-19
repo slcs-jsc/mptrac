@@ -85,7 +85,7 @@
 #define LEN 5000
 
 /*! Maximum number of atmospheric data points. */
-#define NP 10000000
+#define NP 1000000
 
 /*! Maximum number of quantities per data point. */
 #define NQ 5 /* was 12 */
