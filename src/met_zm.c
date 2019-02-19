@@ -61,8 +61,7 @@ int main(
       for (iy = 0; iy < met->ny; iy++)
 	for (ip = 0; ip < met->np; ip++) {
 	  intpol_met_space(met, met->pt[ix][iy], met->lon[ix], met->lat[iy],
-			   NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL,
-			   NULL);
+          NULL, NULL, &zt, &tt, NULL, NULL, NULL);
 	  timem[ip][iy] += met->time;
 	  zm[ip][iy] += met->z[ix][iy][ip];
 	  Tm[ip][iy] += met->T[ix][iy][ip];

@@ -786,9 +786,6 @@ void intpol_met_space(
   double *pt,
   double *z,
   double *t,
-  double *u,
-  double *v,
-  double *w,
   double *pv,
   double *h2o,
   double *o3);
@@ -805,9 +802,6 @@ void intpol_met_time(
   double *pt,
   double *z,
   double *t,
-  double *u,
-  double *v,
-  double *w,
   double *pv,
   double *h2o,
   double *o3);

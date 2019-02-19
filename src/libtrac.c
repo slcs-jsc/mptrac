@@ -679,9 +679,6 @@ void intpol_met_space(
   double *pt,
   double *z,
   double *T,
-  double *u,
-  double *v,
-  double *w,
   double *pv,
   double *h2o,
   double *o3) {
@@ -714,12 +711,6 @@ void intpol_met_space(
     *z = intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy);
   if (T != NULL)
     *T = intpol_met_3d(met->T, ip, ix, iy, wp, wx, wy);
-  if (u != NULL)
-    *u = intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy);
-  if (v != NULL)
-    *v = intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy);
-  if (w != NULL)
-    *w = intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy);
   if (pv != NULL)
     *pv = intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy);
   if (h2o != NULL)
@@ -772,15 +763,11 @@ void intpol_met_time(
   double *pt,
   double *z,
   double *T,
-  double *u,
-  double *v,
-  double *w,
   double *pv,
   double *h2o,
   double *o3) {
 
-  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, T0, T1, u0, u1,
-    v0, v1, w0, w1, wt, z0, z1;
+  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, T0, T1, wt, z0, z1;
 
   /* Spatial interpolation... */
   intpol_met_space(met0, p, lon, lat,
@@ -788,21 +775,17 @@ void intpol_met_time(
 		   pt == NULL ? NULL : &pt0,
 		   z == NULL ? NULL : &z0,
 		   T == NULL ? NULL : &T0,
-		   u == NULL ? NULL : &u0,
-		   v == NULL ? NULL : &v0,
-		   w == NULL ? NULL : &w0,
 		   pv == NULL ? NULL : &pv0,
-		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
+		   h2o == NULL ? NULL : &h2o0, 
+           o3 == NULL ? NULL : &o30);
   intpol_met_space(met1, p, lon, lat,
 		   ps == NULL ? NULL : &ps1,
 		   pt == NULL ? NULL : &pt1,
 		   z == NULL ? NULL : &z1,
 		   T == NULL ? NULL : &T1,
-		   u == NULL ? NULL : &u1,
-		   v == NULL ? NULL : &v1,
-		   w == NULL ? NULL : &w1,
 		   pv == NULL ? NULL : &pv1,
-		   h2o == NULL ? NULL : &h2o1, o3 == NULL ? NULL : &o31);
+		   h2o == NULL ? NULL : &h2o1, 
+           o3 == NULL ? NULL : &o31);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
@@ -816,12 +799,6 @@ void intpol_met_time(
     *z = wt * (z0 - z1) + z1;
   if (T != NULL)
     *T = wt * (T0 - T1) + T1;
-  if (u != NULL)
-    *u = wt * (u0 - u1) + u1;
-  if (v != NULL)
-    *v = wt * (v0 - v1) + v1;
-  if (w != NULL)
-    *w = wt * (w0 - w1) + w1;
   if (pv != NULL)
     *pv = wt * (pv0 - pv1) + pv1;
   if (h2o != NULL)
@@ -846,15 +823,8 @@ void intpol_winds_time(
   double uvw0[3], uvw1[3], wt;
 
   /* Spatial interpolation... */
-#if 0  
-  intpol_met_space(met0, p, lon, lat,
-		   NULL, NULL, NULL, NULL, &uvw0[0], &uvw0[1], &uvw0[2], NULL, NULL, NULL);
-  intpol_met_space(met1, p, lon, lat,
-		   NULL, NULL, NULL, NULL, &uvw1[0], &uvw1[1], &uvw1[2], NULL, NULL, NULL);
-#else
   intpol_winds_space(met0, p, lon, lat, uvw0);
   intpol_winds_space(met1, p, lon, lat, uvw1);
-#endif
         
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
@@ -2927,8 +2897,8 @@ void write_grid(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, NULL, NULL);
+	  intpol_met_time(met0, met1, t, press, lon, lat, 
+          NULL, NULL, NULL, &temp, NULL, NULL, NULL);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * gsl_pow_2(RE * M_PI / 180.)
@@ -3107,8 +3077,8 @@ void write_prof(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, &h2o, &o3);
+	  intpol_met_time(met0, met1, t, press, lon, lat, 
+          NULL, NULL, NULL, &temp, NULL, &h2o, &o3);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * gsl_pow_2(M_PI * RE / 180.)

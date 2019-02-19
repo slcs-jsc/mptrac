@@ -70,8 +70,7 @@ int main(
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++) {
 	intpol_met_space(met, met->pt[ix][iy], met->lon[ix], met->lat[iy],
-			 NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL,
-			 NULL);
+			 NULL, NULL, &zt, &tt, NULL, NULL, NULL);
 	timem[ix][iy] += met->time;
 	zm[ix][iy] += met->z[ix][iy][ip];
 	Tm[ix][iy] += met->T[ix][iy][ip];

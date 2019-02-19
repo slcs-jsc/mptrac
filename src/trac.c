@@ -525,9 +525,8 @@ void module_decay(
   else {
 
     /* Get surface pressure... */
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		    atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip], 
+        &ps, NULL, NULL, NULL, NULL, NULL, NULL);
 
     /* Get tropopause pressure... */
     pt = clim_tropo(atm->time[ip], atm->lat[ip]);
@@ -824,18 +823,16 @@ void module_isosurf(
     /* Save density... */
     else if (ctl->isosurf == 2)
       for (ip2 = 0; ip2 < atm->np; ip2++) {
-	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
-			atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
-			&t, NULL, NULL, NULL, NULL, NULL, NULL);
+	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2], atm->lon[ip2], atm->lat[ip2], 
+        NULL, NULL, NULL, &t, NULL, NULL, NULL);
 	iso[ip2] = atm->p[ip2] / t;
       }
 
     /* Save potential temperature... */
     else if (ctl->isosurf == 3)
       for (ip2 = 0; ip2 < atm->np; ip2++) {
-	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
-			atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
-			&t, NULL, NULL, NULL, NULL, NULL, NULL);
+	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2], atm->lon[ip2], atm->lat[ip2], 
+        NULL, NULL, NULL, &t, NULL, NULL, NULL);
 	iso[ip2] = THETA(atm->p[ip2], t);
       }
 
@@ -873,17 +870,15 @@ void module_isosurf(
 
   /* Restore density... */
   else if (ctl->isosurf == 2) {
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, &t,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip], 
+        NULL, NULL, NULL, &t, NULL, NULL, NULL);
     atm->p[ip] = iso[ip] * t;
   }
 
   /* Restore potential temperature... */
   else if (ctl->isosurf == 3) {
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, &t,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip], 
+        NULL, NULL, NULL, &t, NULL, NULL, NULL);
     atm->p[ip] = 1000. * pow(iso[ip] / t, -1. / 0.286);
   }
 
@@ -910,11 +905,25 @@ void module_meteo(
   atm_t * atm,
   int const ip) {
 
-  double a, b, c, ps, pt, pv, p_hno3, p_h2o, t, u, v, w, x1, x2, h2o, o3, z;
+  double a, b, c, p_hno3, p_h2o, x1, x2;
+  double ps, pt, z, t, pv, h2o, o3, uvw[3];
+  double *_ps, *_pt, *_z, *_t, *_pv, *_h2o, *_o3;
+
+  _ps  = (ctl->qnt_ps >= 0)? &ps : NULL;
+  _pt  = (ctl->qnt_pt >= 0)? &pt : NULL;
+  _z   = (ctl->qnt_z >= 0)?  &z  : NULL;
+  _t   = (ctl->qnt_t >= 0 || ctl->qnt_theta >= 0)? &t : NULL;
+  _pv  = (ctl->qnt_pv >= 0)? &pv : NULL;
+  _h2o = (ctl->qnt_h2o >= 0 || ((ctl->qnt_tice >= 0 || ctl->qnt_tnat >= 0) && (ctl->psc_h2o <= 0)))? &h2o : NULL;
+  _o3  = (ctl->qnt_o3 >= 0)? &o3 : NULL;
 
   /* Interpolate meteorological data... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		  atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o, &o3);
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip], 
+      _ps, _pt, _z, _t, _pv, _h2o, _o3);
+
+  /* Interpolate meteorological wind data... */
+  if (ctl->qnt_u >= 0 || ctl->qnt_v >= 0 || ctl->qnt_w >= 0 || ctl->qnt_vh >= 0 || ctl->qnt_vz >= 0)
+    intpol_winds_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip], uvw);
 
   /* Set surface pressure... */
   if (ctl->qnt_ps >= 0)
@@ -938,15 +947,15 @@ void module_meteo(
 
   /* Set zonal wind... */
   if (ctl->qnt_u >= 0)
-    atm->q[ctl->qnt_u][ip] = u;
+    atm->q[ctl->qnt_u][ip] = uvw[0];
 
   /* Set meridional wind... */
   if (ctl->qnt_v >= 0)
-    atm->q[ctl->qnt_v][ip] = v;
+    atm->q[ctl->qnt_v][ip] = uvw[1];
 
   /* Set vertical velocity... */
   if (ctl->qnt_w >= 0)
-    atm->q[ctl->qnt_w][ip] = w;
+    atm->q[ctl->qnt_w][ip] = uvw[2];
 
   /* Set water vapor vmr... */
   if (ctl->qnt_h2o >= 0)
@@ -958,11 +967,11 @@ void module_meteo(
 
   /* Calculate horizontal wind... */
   if (ctl->qnt_vh >= 0)
-    atm->q[ctl->qnt_vh][ip] = sqrt(u * u + v * v);
+    atm->q[ctl->qnt_vh][ip] = sqrt(uvw[0] * uvw[0] + uvw[1] * uvw[1]);
 
   /* Calculate vertical velocity... */
   if (ctl->qnt_vz >= 0)
-    atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
+    atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * uvw[2];
 
   /* Calculate potential temperature... */
   if (ctl->qnt_theta >= 0)
@@ -1051,7 +1060,7 @@ void module_position(
   
   /* Get surface pressure... */
   intpol_met_time(met0, met1, now, pre, lon, lat, 
-    &ps, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    &ps, NULL, NULL, NULL, NULL, NULL, NULL);
 
   /* Store corrected longitude */
   if (lon != lon0)
@@ -1089,9 +1098,8 @@ void module_sedi(
   rho_p = atm->q[ctl->qnt_rho][ip];
 
   /* Get temperature... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		  atm->lat[ip], NULL, NULL, NULL, &T,
-		  NULL, NULL, NULL, NULL, NULL, NULL);
+  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip], 
+      NULL, NULL, NULL, &T, NULL, NULL, NULL);
 
   /* Density of dry air... */
   rho = p / (RA * T);
