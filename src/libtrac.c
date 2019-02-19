@@ -803,6 +803,35 @@ void intpol_met_time(
 
 /*****************************************************************************/
 
+/*****************************************************************************/
+
+void intpol_winds_time(
+  met_t const * met0,
+  met_t const * met1,
+  double const ts,
+  double const p,
+  double const lon,
+  double const lat,
+  double uvw[3]) {
+
+  double uvw0[3], uvw1[3], wt;
+
+  /* Spatial interpolation... */
+  intpol_met_space(met0, p, lon, lat,
+		   NULL, NULL, NULL, NULL, &uvw0[0], &uvw0[1], &uvw0[2], NULL, NULL, NULL);
+  intpol_met_space(met1, p, lon, lat,
+		   NULL, NULL, NULL, NULL, &uvw1[0], &uvw1[1], &uvw1[2], NULL, NULL, NULL);
+
+  /* Get weighting factor... */
+  wt = (met1->time - ts) / (met1->time - met0->time);
+
+  uvw[0] = wt * (uvw0[0] - uvw1[0]) + uvw1[0];
+  uvw[1] = wt * (uvw0[1] - uvw1[1]) + uvw1[1];
+  uvw[2] = wt * (uvw0[2] - uvw1[2]) + uvw1[2];
+}
+
+/*****************************************************************************/
+
 void jsec2time(
   double const jsec,
   int *year,
@@ -1491,6 +1520,20 @@ void read_met(
 
   /* Close file... */
   NC(nc_close(ncid));
+  
+  /* collect the wind data in array uvw */
+  /* #pragma omp parallel for collapse(2) private(ix,iy,ip) ToDo */
+  for (ix = 0; ix < met->nx; ++ix) {
+    for (iy = 0; iy < met->ny; ++iy) {
+      for (ip = 0; ip < met->np; ++ip) {
+        met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];/* ToDo / 1000.; convert from m/s to km/s */
+        met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];/* ToDo / 1000.; convert from m/s to km/s */
+        met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
+        met->uvw[ix][iy][ip][3] = 0; /* not used */
+      }
+    }
+  }
+
 }
 
 /*****************************************************************************/

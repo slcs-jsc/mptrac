@@ -477,9 +477,14 @@ void module_advection(
   xo[3] = atm->time[ip];
   
   /* Interpolate meteorological data... */
+#define NEW_v3_INTERFACE
+#ifdef  NEW_v3_INTERFACE
+  intpol_winds_time(met0, met1, xo[3], xo[2], xo[0], xo[1], v);
+#else
   intpol_met_time(met0, met1, xo[3], xo[2], xo[0], xo[1], 
     NULL, NULL, NULL, NULL, &v[0], &v[1], &v[2], NULL, NULL, NULL);
-
+#endif
+  
   /* Get position of the mid point... */
   xm[0] = xo[0] + DX2DEG(0.5 * dt * v[0] / 1000., xo[1]);
   xm[1] = xo[1] + DY2DEG(0.5 * dt * v[1] / 1000.);
@@ -487,9 +492,12 @@ void module_advection(
   xm[3] = xo[3] + 0.5 * dt;
 
   /* Interpolate meteorological data for mid point... */
+#ifdef  NEW_v3_INTERFACE
+  intpol_winds_time(met0, met1, xm[3], xm[2], xm[0], xm[1], v);
+#else
   intpol_met_time(met0, met1, xm[3], xm[2], xm[0], xm[1], 
     NULL, NULL, NULL, NULL, &v[0], &v[1], &v[2], NULL, NULL, NULL);
-
+#endif
   /* Save new position... */
   atm->lon[ip]  = xo[0] + DX2DEG(dt * v[0] / 1000., xm[1]);
   atm->lat[ip]  = xo[1] + DY2DEG(dt * v[1] / 1000.);

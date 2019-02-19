@@ -640,8 +640,9 @@ typedef struct {
 /*! Meteorological data. */
 typedef struct {
 
+  /*! winds in ToDo(units) km/s, km/s and hPa/s */
   float uvw[EX][EY][EP][4];
-    
+
   /*! Time [s]. */
   double time;
 
@@ -805,6 +806,14 @@ void intpol_met_space(
   double *h2o,
   double *o3);
 
+/*! Spatial interpolation of meteorological wind data. */
+void intpol_met_space_v3(
+  met_t const * met,
+  double const p,
+  double const lon,
+  double const lat,
+  double uvw[3]);
+
 /*! Temporal interpolation of meteorological data. */
 void intpol_met_time(
   met_t const * met0,
@@ -823,6 +832,16 @@ void intpol_met_time(
   double *pv,
   double *h2o,
   double *o3);
+
+/*! Temporal interpolation of meteorological wind data. */
+void intpol_winds_time(
+  met_t const * met0,
+  met_t const * met1,
+  double const ts,
+  double const p,
+  double const lon,
+  double const lat,
+  double uvw[3]);
 
 /*! Convert seconds to date. */
 void jsec2time(
