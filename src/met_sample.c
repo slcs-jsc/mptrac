@@ -91,7 +91,7 @@ int main(
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    get_met(&ctl, argv[2], atm->time[ip], met0, met1);
+    get_met(&ctl, argv[2], atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
     pref = atm->p[ip];

@@ -514,11 +514,11 @@ void get_met(
   ctl_t const * ctl,
   char const * metbase,
   double const t,
-  met_t * met0,
-  met_t * met1) {
+  met_t ** met0,  /* pass pointers to pointers in order to do a pointer swap */
+  met_t ** met1) {
 
   static int init;
-
+  met_t* _mets; /* temporary swap pointer */
   char filename[LEN];
 
   /* Init... */
@@ -526,26 +526,27 @@ void get_met(
     init = 1;
 
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met0);
+    read_met(ctl, filename, *met0);
 
     get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met1);
+    read_met(ctl, filename, *met1);
   }
 
+
   /* Read new data for forward trajectories... */
-  if (t > met1->time && ctl->direction == 1) {
-    /* this memcopy can be avoided by a pointer swap */
-    memcpy(met0, met1, sizeof(met_t));
+  if (t > (*met1)->time && ctl->direction == 1) {
+    /* memcopy is avoided by a pointer swap */
+    _mets = *met1; *met1 = *met0; *met0 = _mets;
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met1);
+    read_met(ctl, filename, *met1);
   }
 
   /* Read new data for backward trajectories... */
-  if (t < met0->time && ctl->direction == -1) {
-    /* this memcopy can be avoided by a pointer swap */
-    memcpy(met1, met0, sizeof(met_t));
+  if (t < (*met0)->time && ctl->direction == -1) {
+    /* memcopy is avoided by a pointer swap */
+    _mets = *met1; *met1 = *met0; *met0 = _mets;
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met0);
+    read_met(ctl, filename, *met0);
   }
 }
 
@@ -627,6 +628,46 @@ void intpol_met_3d(
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
   *var = wx * (aux00 - aux11) + aux11;
+}
+
+/*****************************************************************************/
+
+void intpol_met_3d_v3(
+  float const array[][EY][EP][4],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy,
+  double var[3]) {
+
+  double aux[2][4], ax[2][4];
+  int px, py;
+
+  /* Interpolate vertically... */
+  /* pw = 1 - wp; */
+  for(px = 0; px < 2; ++px) {
+    for(py = 0; py < 2; ++py) {
+#if 0        
+      aux[py][0] = wp * array[ix + px][iy + py][ip + 0][0] + pw * array[ix + px][iy + py][ip + 1][0];
+      aux[py][1] = wp * array[ix + px][iy + py][ip + 0][1] + pw * array[ix + px][iy + py][ip + 1][1];
+      aux[py][2] = wp * array[ix + px][iy + py][ip + 0][2] + pw * array[ix + px][iy + py][ip + 1][2];
+#else
+      aux[py][0] = wp * (array[ix + px][iy + py][ip + 0][0] - array[ix + px][iy + py][ip + 1][0]) + array[ix + px][iy + py][ip + 1][0];
+      aux[py][1] = wp * (array[ix + px][iy + py][ip + 0][1] - array[ix + px][iy + py][ip + 1][1]) + array[ix + px][iy + py][ip + 1][1];
+      aux[py][2] = wp * (array[ix + px][iy + py][ip + 0][2] - array[ix + px][iy + py][ip + 1][2]) + array[ix + px][iy + py][ip + 1][2];
+#endif
+    }
+    /* Interpolate horizontally... */
+    ax[px][0] = wy * (aux[0][0] - aux[1][0]) + aux[1][0];
+    ax[px][1] = wy * (aux[0][1] - aux[1][1]) + aux[1][1];
+    ax[px][2] = wy * (aux[0][2] - aux[1][2]) + aux[1][2];
+  }
+
+  var[0] = wx * (ax[0][0] - ax[1][0]) + ax[1][0];
+  var[1] = wx * (ax[0][1] - ax[1][1]) + ax[1][1];
+  var[2] = wx * (ax[0][2] - ax[1][2]) + ax[1][2];
 }
 
 /*****************************************************************************/

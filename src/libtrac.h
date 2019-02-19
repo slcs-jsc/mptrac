@@ -640,6 +640,8 @@ typedef struct {
 /*! Meteorological data. */
 typedef struct {
 
+  float uvw[EX][EY][EP][4];
+    
   /*! Time [s]. */
   double time;
 
@@ -681,7 +683,7 @@ typedef struct {
 
   /*! Vertical wind [hPa/s]. */
   float w[EX][EY][EP];
-
+  
   /*! Potential vorticity [PVU]. */
   float pv[EX][EY][EP];
 
@@ -744,8 +746,8 @@ void get_met(
   ctl_t const * ctl,
   char const * metbase,
   double const t,
-  met_t * met0,
-  met_t * met1);
+  met_t ** met0,
+  met_t ** met1);
 
 /*! Get meteorological data for timestep. */
 void get_met_help(
@@ -774,6 +776,17 @@ void intpol_met_3d(
   double const wx,
   double const wy,
   double *var);
+
+/*! Linear interpolation of 3-D meteorological wind data. */
+void intpol_met_3d_v3(
+  float const array[][EY][EP][4],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy,
+  double var[3]);
 
 /*! Spatial interpolation of meteorological data. */
 void intpol_met_space(
