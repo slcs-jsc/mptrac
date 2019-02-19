@@ -578,56 +578,54 @@ void get_met_help(
 
 /*****************************************************************************/
 
-void intpol_met_2d(
+double intpol_met_2d(
   float const array[EX][EY],
   int const ix,
   int const iy,
   double const wx,
-  double const wy,
-  double *var) {
+  double const wy) {
 
   double aux00, aux01, aux10, aux11;
 
   /* Set variables... */
-  aux00 = array[ix][iy];
-  aux01 = array[ix][iy + 1];
-  aux10 = array[ix + 1][iy];
+  aux00 = array[ix + 0][iy + 0];
+  aux01 = array[ix + 0][iy + 1];
+  aux10 = array[ix + 1][iy + 0];
   aux11 = array[ix + 1][iy + 1];
 
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
-  *var = wx * (aux00 - aux11) + aux11;
+  return  wx * (aux00 - aux11) + aux11;
 }
 
 /*****************************************************************************/
 
-void intpol_met_3d(
+double intpol_met_3d(
   float const array[EX][EY][EP],
   int const ip,
   int const ix,
   int const iy,
   double const wp,
   double const wx,
-  double const wy,
-  double *var) {
+  double const wy) {
 
   double aux00, aux01, aux10, aux11;
 
   /* Interpolate vertically... */
-  aux00 = wp * (array[ix][iy][ip] - array[ix][iy][ip + 1])
-    + array[ix][iy][ip + 1];
-  aux01 = wp * (array[ix][iy + 1][ip] - array[ix][iy + 1][ip + 1])
-    + array[ix][iy + 1][ip + 1];
-  aux10 = wp * (array[ix + 1][iy][ip] - array[ix + 1][iy][ip + 1])
-    + array[ix + 1][iy][ip + 1];
+  aux00 = wp * (array[ix + 0][iy + 0][ip] - array[ix + 0][iy + 0][ip + 1])
+    + array[ix + 0][iy + 0][ip + 1];
+  aux01 = wp * (array[ix + 0][iy + 1][ip] - array[ix + 0][iy + 1][ip + 1])
+    + array[ix + 0][iy + 1][ip + 1];
+  aux10 = wp * (array[ix + 1][iy + 0][ip] - array[ix + 1][iy + 0][ip + 1])
+    + array[ix + 1][iy + 0][ip + 1];
   aux11 = wp * (array[ix + 1][iy + 1][ip] - array[ix + 1][iy + 1][ip + 1])
     + array[ix + 1][iy + 1][ip + 1];
 
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
-  *var = wx * (aux00 - aux11) + aux11;
+  return  wx * (aux00 - aux11) + aux11;
 }
 
 /*****************************************************************************/
@@ -709,25 +707,25 @@ void intpol_met_space(
 
   /* Interpolate... */
   if (ps != NULL)
-    intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
+    *ps = intpol_met_2d(met->ps, ix, iy, wx, wy);
   if (pt != NULL)
-    intpol_met_2d(met->pt, ix, iy, wx, wy, pt);
+    *pt = intpol_met_2d(met->pt, ix, iy, wx, wy);
   if (z != NULL)
-    intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy, z);
+    *z = intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy);
   if (T != NULL)
-    intpol_met_3d(met->T, ip, ix, iy, wp, wx, wy, T);
+    *T = intpol_met_3d(met->T, ip, ix, iy, wp, wx, wy);
   if (u != NULL)
-    intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
+    *u = intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy);
   if (v != NULL)
-    intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
+    *v = intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy);
   if (w != NULL)
-    intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
+    *w = intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy);
   if (pv != NULL)
-    intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy, pv);
+    *pv = intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy);
   if (h2o != NULL)
-    intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
+    *h2o = intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy);
   if (o3 != NULL)
-    intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
+    *o3 = intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy);
 }
 
 /*****************************************************************************/

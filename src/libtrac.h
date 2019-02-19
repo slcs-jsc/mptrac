@@ -759,35 +759,22 @@ void get_met_help(
   char * filename);
 
 /*! Linear interpolation of 2-D meteorological data. */
-void intpol_met_2d(
+double intpol_met_2d(
   float const array[EX][EY],
   int const ix,
   int const iy,
   double const wx,
-  double const wy,
-  double *var);
+  double const wy);
 
 /*! Linear interpolation of 3-D meteorological data. */
-void intpol_met_3d(
+double intpol_met_3d(
   float const array[EX][EY][EP],
   int const ip,
   int const ix,
   int const iy,
   double const wp,
   double const wx,
-  double const wy,
-  double *var);
-
-/*! Linear interpolation of 3-D meteorological wind data. */
-void intpol_winds_3d(
-  float const array[][EY][EP][4],
-  int const ip,
-  int const ix,
-  int const iy,
-  double const wp,
-  double const wx,
-  double const wy,
-  double uvw[3]);
+  double const wy);
 
 /*! Spatial interpolation of meteorological data. */
 void intpol_met_space(
@@ -805,14 +792,6 @@ void intpol_met_space(
   double *pv,
   double *h2o,
   double *o3);
-
-/*! Spatial interpolation of meteorological wind data. */
-void intpol_winds_space(
-  met_t const * met,
-  double const p,
-  double const lon,
-  double const lat,
-  double uvw[3]);
 
 /*! Temporal interpolation of meteorological data. */
 void intpol_met_time(
@@ -832,6 +811,25 @@ void intpol_met_time(
   double *pv,
   double *h2o,
   double *o3);
+
+/*! Linear interpolation of 3-D meteorological wind data. */
+void intpol_winds_3d(
+  float const array[][EY][EP][4],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy,
+  double uvw[3]);
+
+/*! Spatial interpolation of meteorological wind data. */
+void intpol_winds_space(
+  met_t const * met,
+  double const p,
+  double const lon,
+  double const lat,
+  double uvw[3]);
 
 /*! Temporal interpolation of meteorological wind data. */
 void intpol_winds_time(
