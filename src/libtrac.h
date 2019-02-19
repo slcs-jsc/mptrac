@@ -85,19 +85,19 @@
 #define LEN 5000
 
 /*! Maximum number of atmospheric data points. */
-#define NP 1000000
+#define NP 2100000
 
 /*! Maximum number of quantities per data point. */
 #define NQ 5 /* was 12 */
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 72 /* was 111 */
+#define EP 72 /* was 66, was 111, use 112 for ERA5 data */
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 368 /* was 1201 */
+#define EX 361 /* was 361, use 1201 for ERA5 data */
 
 /*! Maximum number of latitudes for meteorological data. */
-#define EY 181 /* was 601 */
+#define EY 188 /* was 181, use 608 for ERA5 data */
 
 /*! Maximum number of longitudes for gridded data. */
 #define GX 720

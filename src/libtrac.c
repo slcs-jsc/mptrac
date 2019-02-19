@@ -2484,7 +2484,8 @@ void write_csi(
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
     rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat;
 
-  static int obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz;
+  static int obscount[GX][GY][GZ], cx, cy, cz;
+  int ip, ix, iy, iz;
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -2532,8 +2533,7 @@ void write_csi(
   while (fgets(line, LEN, in)) {
 
     /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) != 5)
       continue;
 
     /* Check time... */
@@ -2787,7 +2787,8 @@ void write_grid(
   static double mass[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
     area, rho_air, press, temp, cd, vmr, t0, t1, r;
 
-  static int ip, ix, iy, iz, year, mon, day, hour, min, sec;
+  static int year, mon, day, hour, min, sec;
+  int ip, ix, iy, iz;
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
@@ -2941,7 +2942,8 @@ void write_prof(
     rlon, rlat, robs, t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp,
     rho_air, vmr, h2o, o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int obscount[GX][GY], okay;
+  int ip, ix, iy, iz;
 
   /* Init... */
   if (t == ctl->t_start) {
