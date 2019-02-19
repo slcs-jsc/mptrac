@@ -632,7 +632,7 @@ void intpol_met_3d(
 
 /*****************************************************************************/
 
-void intpol_met_3d_v3(
+void intpol_winds_3d(
   float const array[][EY][EP][4],
   int const ip,
   int const ix,
@@ -640,7 +640,7 @@ void intpol_met_3d_v3(
   double const wp,
   double const wx,
   double const wy,
-  double var[3]) {
+  double uvw[3]) {
 
   double aux[2][4], ax[2][4];
   int px, py;
@@ -665,9 +665,9 @@ void intpol_met_3d_v3(
     ax[px][2] = wy * (aux[0][2] - aux[1][2]) + aux[1][2];
   }
 
-  var[0] = wx * (ax[0][0] - ax[1][0]) + ax[1][0];
-  var[1] = wx * (ax[0][1] - ax[1][1]) + ax[1][1];
-  var[2] = wx * (ax[0][2] - ax[1][2]) + ax[1][2];
+  uvw[0] = wx * (ax[0][0] - ax[1][0]) + ax[1][0];
+  uvw[1] = wx * (ax[0][1] - ax[1][1]) + ax[1][1];
+  uvw[2] = wx * (ax[0][2] - ax[1][2]) + ax[1][2];
 }
 
 /*****************************************************************************/
@@ -728,6 +728,37 @@ void intpol_met_space(
     intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
   if (o3 != NULL)
     intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
+}
+
+/*****************************************************************************/
+
+void intpol_winds_space(
+  met_t const * met,
+  double const p,
+  double const longitude,
+  double const lat,
+  double uvw[3]) {
+
+  double wp, wx, wy;
+
+  int ip, ix, iy;
+
+  double lon = longitude; /* work copy */
+  /* Check longitude... */
+  if (met->lon[met->nx - 1] > 180 && lon < 0)
+    lon += 360;
+
+  /* Get indices... */
+  ip = locate_irr(met->p, met->np, p);
+  ix = locate_reg(met->lon, met->nx, lon);
+  iy = locate_reg(met->lat, met->ny, lat);
+
+  /* Get weights... */
+  wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
+  wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
+  wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
+
+  intpol_winds_3d(met->uvw, ip, ix, iy, wp, wx, wy, uvw);
 }
 
 /*****************************************************************************/
@@ -817,11 +848,16 @@ void intpol_winds_time(
   double uvw0[3], uvw1[3], wt;
 
   /* Spatial interpolation... */
+#if 0  
   intpol_met_space(met0, p, lon, lat,
 		   NULL, NULL, NULL, NULL, &uvw0[0], &uvw0[1], &uvw0[2], NULL, NULL, NULL);
   intpol_met_space(met1, p, lon, lat,
 		   NULL, NULL, NULL, NULL, &uvw1[0], &uvw1[1], &uvw1[2], NULL, NULL, NULL);
-
+#else
+  intpol_winds_space(met0, p, lon, lat, uvw0);
+  intpol_winds_space(met1, p, lon, lat, uvw1);
+#endif
+        
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
 
