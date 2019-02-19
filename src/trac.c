@@ -411,7 +411,9 @@ int main(
     printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
     printf("MEMORY_METEO = %g MByte\n", 2. * sizeof(met_t) / 1024. / 1024.);
     printf("MEMORY_DYNAMIC = %g MByte\n",
-	   4 * NP * sizeof(double) / 1024. / 1024.);
+	   ( 4 * NP * sizeof(double)
+       + EX * EY * EP * 4 * sizeof(double) /* memory consumption of meso_cache */
+       )/ 1024. / 1024.);
     printf("MEMORY_STATIC = %g MByte\n",
 	   ((3 * GX * GY + 4 * GX * GY * GZ) * sizeof(double)
 	    + (EX * EY + EX * EY * EP) * sizeof(float)
@@ -446,6 +448,7 @@ int main(
     free(met0);
     free(met1);
     free(dt);
+    free(meso_cache);
   }
 
 #ifdef MPI
