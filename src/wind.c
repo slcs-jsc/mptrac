@@ -39,8 +39,8 @@ void add_text_attribute(
    ------------------------------------------------------------ */
 
 int main(
-  int argc,
-  char *argv[]) {
+  int const argc,
+  char const *argv[]) {
 
   ctl_t ctl;
 

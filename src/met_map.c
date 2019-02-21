@@ -25,8 +25,8 @@
 #include "libtrac.h"
 
 int main(
-  int argc,
-  char *argv[]) {
+  int const argc,
+  char const *argv[]) {
 
   ctl_t ctl;
 
@@ -35,7 +35,7 @@ int main(
   FILE *out;
 
   static double dz, dzmin = 1e10, z, timem[EX][EY], psm[EX][EY], ptm[EX][EY],
-    tm[EX][EY], um[EX][EY], vm[EX][EY], wm[EX][EY], h2om[EX][EY], o3m[EX][EY],
+    Tm[EX][EY], um[EX][EY], vm[EX][EY], wm[EX][EY], h2om[EX][EY], o3m[EX][EY],
     zm[EX][EY], pvm[EX][EY], zt, ztm[EX][EY], tt, ttm[EX][EY];
 
   static int i, ip, ip2, ix, iy, np[EX][EY];
@@ -70,11 +70,10 @@ int main(
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++) {
 	intpol_met_space(met, met->pt[ix][iy], met->lon[ix], met->lat[iy],
-			 NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL,
-			 NULL);
+			 NULL, NULL, &zt, &tt, NULL, NULL, NULL);
 	timem[ix][iy] += met->time;
 	zm[ix][iy] += met->z[ix][iy][ip];
-	tm[ix][iy] += met->t[ix][iy][ip];
+	Tm[ix][iy] += met->T[ix][iy][ip];
 	um[ix][iy] += met->u[ix][iy][ip];
 	vm[ix][iy] += met->v[ix][iy][ip];
 	wm[ix][iy] += met->w[ix][iy][ip];
@@ -123,7 +122,7 @@ int main(
 	fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
 		met->lon[ix] - 360.0, met->lat[iy], met->p[ip],
-		tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
+		Tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
 		h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
 		zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
@@ -134,7 +133,7 @@ int main(
 	fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
 		met->lon[ix], met->lat[iy], met->p[ip],
-		tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
+		Tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
 		h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
 		zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],

@@ -1,23 +1,23 @@
 /*
   This file is part of MPTRAC.
-  
+
   MPTRAC is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
-  
+
   MPTRAC is distributed in the hope that it will be useful,
   but WITHOUT ANY WARRANTY; without even the implied warranty of
   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
   GNU General Public License for more details.
-  
+
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
-  
+
   Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
 */
 
-/*! 
+/*!
   \file
   MPTRAC library definitions.
 */
@@ -27,7 +27,7 @@
 /*****************************************************************************/
 
 void cart2geo(
-  double *x,
+  double const *x,
   double *z,
   double *lon,
   double *lat) {
@@ -43,9 +43,9 @@ void cart2geo(
 /*****************************************************************************/
 
 double clim_hno3(
-  double t,
-  double lat,
-  double p) {
+  double const t,
+  double const lat,
+  double const p) {
 
   static double secs[12] = { 1209600.00, 3888000.00, 6393600.00,
     9072000.00, 11664000.00, 14342400.00,
@@ -288,7 +288,7 @@ double clim_hno3(
   sec = fmod(t, 365.25 * 86400.);
 
   /* Get indices... */
-  isec = locate_irr(secs, 12, sec);
+  isec = locate_irr(secs, 12, sec); /* this should have 13 entries */
   ilat = locate_reg(lats, 18, lat);
   ip = locate_irr(ps, 10, p);
 
@@ -309,8 +309,8 @@ double clim_hno3(
 /*****************************************************************************/
 
 double clim_tropo(
-  double t,
-  double lat) {
+  double const t,
+  double const lat) {
 
   static double doys[12]
   = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
@@ -449,9 +449,9 @@ double clim_tropo(
 /*****************************************************************************/
 
 void day2doy(
-  int year,
-  int mon,
-  int day,
+  int const year,
+  int const mon,
+  int const day,
   int *doy) {
 
   int d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
@@ -467,8 +467,8 @@ void day2doy(
 /*****************************************************************************/
 
 void doy2day(
-  int year,
-  int doy,
+  int const year,
+  int const doy,
   int *mon,
   int *day) {
 
@@ -495,9 +495,9 @@ void doy2day(
 /*****************************************************************************/
 
 void geo2cart(
-  double z,
-  double lon,
-  double lat,
+  double const z,
+  double const lon,
+  double const lat,
   double *x) {
 
   double radius;
@@ -511,14 +511,14 @@ void geo2cart(
 /*****************************************************************************/
 
 void get_met(
-  ctl_t * ctl,
-  char *metbase,
-  double t,
-  met_t * met0,
-  met_t * met1) {
+  ctl_t const * ctl,
+  char const * metbase,
+  double const t,
+  met_t ** met0,  /* pass pointers to pointers in order to do a pointer swap */
+  met_t ** met1) {
 
   static int init;
-
+  met_t* _mets; /* temporary swap pointer */
   char filename[LEN];
 
   /* Init... */
@@ -526,35 +526,38 @@ void get_met(
     init = 1;
 
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met0);
+    read_met(ctl, filename, *met0);
 
     get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met1);
+    read_met(ctl, filename, *met1);
   }
 
+
   /* Read new data for forward trajectories... */
-  if (t > met1->time && ctl->direction == 1) {
-    memcpy(met0, met1, sizeof(met_t));
+  if (t > (*met1)->time && ctl->direction == 1) {
+    /* memcopy is avoided by a pointer swap */
+    _mets = *met1; *met1 = *met0; *met0 = _mets;
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met1);
+    read_met(ctl, filename, *met1);
   }
 
   /* Read new data for backward trajectories... */
-  if (t < met0->time && ctl->direction == -1) {
-    memcpy(met1, met0, sizeof(met_t));
+  if (t < (*met0)->time && ctl->direction == -1) {
+    /* memcopy is avoided by a pointer swap */
+    _mets = *met1; *met1 = *met0; *met0 = _mets;
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met0);
+    read_met(ctl, filename, *met0);
   }
 }
 
 /*****************************************************************************/
 
 void get_met_help(
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
-  char *filename) {
+  double const t,
+  int const direct,
+  char const * metbase,
+  double const dt_met,
+  char * filename) {
 
   double t6, r;
 
@@ -575,72 +578,107 @@ void get_met_help(
 
 /*****************************************************************************/
 
-void intpol_met_2d(
-  double array[EX][EY],
-  int ix,
-  int iy,
-  double wx,
-  double wy,
-  double *var) {
+double intpol_met_2d(
+  float const array[EX][EY],
+  int const ix,
+  int const iy,
+  double const wx,
+  double const wy) {
 
   double aux00, aux01, aux10, aux11;
 
   /* Set variables... */
-  aux00 = array[ix][iy];
-  aux01 = array[ix][iy + 1];
-  aux10 = array[ix + 1][iy];
+  aux00 = array[ix + 0][iy + 0];
+  aux01 = array[ix + 0][iy + 1];
+  aux10 = array[ix + 1][iy + 0];
   aux11 = array[ix + 1][iy + 1];
 
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
-  *var = wx * (aux00 - aux11) + aux11;
+  return  wx * (aux00 - aux11) + aux11;
 }
 
 /*****************************************************************************/
 
-void intpol_met_3d(
-  float array[EX][EY][EP],
-  int ip,
-  int ix,
-  int iy,
-  double wp,
-  double wx,
-  double wy,
-  double *var) {
+double intpol_met_3d(
+  float const array[EX][EY][EP],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy) {
 
   double aux00, aux01, aux10, aux11;
 
   /* Interpolate vertically... */
-  aux00 = wp * (array[ix][iy][ip] - array[ix][iy][ip + 1])
-    + array[ix][iy][ip + 1];
-  aux01 = wp * (array[ix][iy + 1][ip] - array[ix][iy + 1][ip + 1])
-    + array[ix][iy + 1][ip + 1];
-  aux10 = wp * (array[ix + 1][iy][ip] - array[ix + 1][iy][ip + 1])
-    + array[ix + 1][iy][ip + 1];
+  aux00 = wp * (array[ix + 0][iy + 0][ip] - array[ix + 0][iy + 0][ip + 1])
+    + array[ix + 0][iy + 0][ip + 1];
+  aux01 = wp * (array[ix + 0][iy + 1][ip] - array[ix + 0][iy + 1][ip + 1])
+    + array[ix + 0][iy + 1][ip + 1];
+  aux10 = wp * (array[ix + 1][iy + 0][ip] - array[ix + 1][iy + 0][ip + 1])
+    + array[ix + 1][iy + 0][ip + 1];
   aux11 = wp * (array[ix + 1][iy + 1][ip] - array[ix + 1][iy + 1][ip + 1])
     + array[ix + 1][iy + 1][ip + 1];
 
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
-  *var = wx * (aux00 - aux11) + aux11;
+  return  wx * (aux00 - aux11) + aux11;
+}
+
+/*****************************************************************************/
+
+void intpol_winds_3d(
+  float const array[][EY][EP][4],
+  int const ip,
+  int const ix,
+  int const iy,
+  double const wp,
+  double const wx,
+  double const wy,
+  double uvw[3]) {
+
+  double aux[2][4], ax[2][4];
+  int px, py;
+
+  /* Interpolate vertically... */
+  /* pw = 1 - wp; */
+  for(px = 0; px < 2; ++px) {
+    for(py = 0; py < 2; ++py) {
+#if 0        
+      aux[py][0] = wp * array[ix + px][iy + py][ip + 0][0] + pw * array[ix + px][iy + py][ip + 1][0];
+      aux[py][1] = wp * array[ix + px][iy + py][ip + 0][1] + pw * array[ix + px][iy + py][ip + 1][1];
+      aux[py][2] = wp * array[ix + px][iy + py][ip + 0][2] + pw * array[ix + px][iy + py][ip + 1][2];
+#else
+      aux[py][0] = wp * (array[ix + px][iy + py][ip + 0][0] - array[ix + px][iy + py][ip + 1][0]) + array[ix + px][iy + py][ip + 1][0];
+      aux[py][1] = wp * (array[ix + px][iy + py][ip + 0][1] - array[ix + px][iy + py][ip + 1][1]) + array[ix + px][iy + py][ip + 1][1];
+      aux[py][2] = wp * (array[ix + px][iy + py][ip + 0][2] - array[ix + px][iy + py][ip + 1][2]) + array[ix + px][iy + py][ip + 1][2];
+#endif
+    }
+    /* Interpolate horizontally... */
+    ax[px][0] = wy * (aux[0][0] - aux[1][0]) + aux[1][0];
+    ax[px][1] = wy * (aux[0][1] - aux[1][1]) + aux[1][1];
+    ax[px][2] = wy * (aux[0][2] - aux[1][2]) + aux[1][2];
+  }
+
+  uvw[0] = wx * (ax[0][0] - ax[1][0]) + ax[1][0];
+  uvw[1] = wx * (ax[0][1] - ax[1][1]) + ax[1][1];
+  uvw[2] = wx * (ax[0][2] - ax[1][2]) + ax[1][2];
 }
 
 /*****************************************************************************/
 
 void intpol_met_space(
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
+  met_t const * met,
+  double const p,
+  double const longitude,
+  double const lat,
   double *ps,
   double *pt,
   double *z,
-  double *t,
-  double *u,
-  double *v,
-  double *w,
+  double *T,
   double *pv,
   double *h2o,
   double *o3) {
@@ -649,6 +687,7 @@ void intpol_met_space(
 
   int ip, ix, iy;
 
+  double lon = longitude; /* work copy */
   /* Check longitude... */
   if (met->lon[met->nx - 1] > 180 && lon < 0)
     lon += 360;
@@ -665,71 +704,88 @@ void intpol_met_space(
 
   /* Interpolate... */
   if (ps != NULL)
-    intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
+    *ps = intpol_met_2d(met->ps, ix, iy, wx, wy);
   if (pt != NULL)
-    intpol_met_2d(met->pt, ix, iy, wx, wy, pt);
+    *pt = intpol_met_2d(met->pt, ix, iy, wx, wy);
   if (z != NULL)
-    intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy, z);
-  if (t != NULL)
-    intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
-  if (u != NULL)
-    intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
-  if (v != NULL)
-    intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
-  if (w != NULL)
-    intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
+    *z = intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy);
+  if (T != NULL)
+    *T = intpol_met_3d(met->T, ip, ix, iy, wp, wx, wy);
   if (pv != NULL)
-    intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy, pv);
+    *pv = intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy);
   if (h2o != NULL)
-    intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
+    *h2o = intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy);
   if (o3 != NULL)
-    intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
+    *o3 = intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy);
+}
+
+/*****************************************************************************/
+
+void intpol_winds_space(
+  met_t const * met,
+  double const p,
+  double const longitude,
+  double const lat,
+  double uvw[3]) {
+
+  double wp, wx, wy;
+
+  int ip, ix, iy;
+
+  double lon = longitude; /* work copy */
+  /* Check longitude... */
+  if (met->lon[met->nx - 1] > 180 && lon < 0)
+    lon += 360;
+
+  /* Get indices... */
+  ip = locate_irr(met->p, met->np, p);
+  ix = locate_reg(met->lon, met->nx, lon);
+  iy = locate_reg(met->lat, met->ny, lat);
+
+  /* Get weights... */
+  wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
+  wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
+  wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
+
+  intpol_winds_3d(met->uvw, ip, ix, iy, wp, wx, wy, uvw);
 }
 
 /*****************************************************************************/
 
 void intpol_met_time(
-  met_t * met0,
-  met_t * met1,
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  met_t const * met0,
+  met_t const * met1,
+  double const ts,
+  double const p,
+  double const lon,
+  double const lat,
   double *ps,
   double *pt,
   double *z,
-  double *t,
-  double *u,
-  double *v,
-  double *w,
+  double *T,
   double *pv,
   double *h2o,
   double *o3) {
 
-  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, t0, t1, u0, u1,
-    v0, v1, w0, w1, wt, z0, z1;
+  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, T0, T1, wt, z0, z1;
 
   /* Spatial interpolation... */
   intpol_met_space(met0, p, lon, lat,
 		   ps == NULL ? NULL : &ps0,
 		   pt == NULL ? NULL : &pt0,
 		   z == NULL ? NULL : &z0,
-		   t == NULL ? NULL : &t0,
-		   u == NULL ? NULL : &u0,
-		   v == NULL ? NULL : &v0,
-		   w == NULL ? NULL : &w0,
+		   T == NULL ? NULL : &T0,
 		   pv == NULL ? NULL : &pv0,
-		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
+		   h2o == NULL ? NULL : &h2o0, 
+           o3 == NULL ? NULL : &o30);
   intpol_met_space(met1, p, lon, lat,
 		   ps == NULL ? NULL : &ps1,
 		   pt == NULL ? NULL : &pt1,
 		   z == NULL ? NULL : &z1,
-		   t == NULL ? NULL : &t1,
-		   u == NULL ? NULL : &u1,
-		   v == NULL ? NULL : &v1,
-		   w == NULL ? NULL : &w1,
+		   T == NULL ? NULL : &T1,
 		   pv == NULL ? NULL : &pv1,
-		   h2o == NULL ? NULL : &h2o1, o3 == NULL ? NULL : &o31);
+		   h2o == NULL ? NULL : &h2o1, 
+           o3 == NULL ? NULL : &o31);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
@@ -741,14 +797,8 @@ void intpol_met_time(
     *pt = wt * (pt0 - pt1) + pt1;
   if (z != NULL)
     *z = wt * (z0 - z1) + z1;
-  if (t != NULL)
-    *t = wt * (t0 - t1) + t1;
-  if (u != NULL)
-    *u = wt * (u0 - u1) + u1;
-  if (v != NULL)
-    *v = wt * (v0 - v1) + v1;
-  if (w != NULL)
-    *w = wt * (w0 - w1) + w1;
+  if (T != NULL)
+    *T = wt * (T0 - T1) + T1;
   if (pv != NULL)
     *pv = wt * (pv0 - pv1) + pv1;
   if (h2o != NULL)
@@ -759,8 +809,35 @@ void intpol_met_time(
 
 /*****************************************************************************/
 
+/*****************************************************************************/
+
+void intpol_winds_time(
+  met_t const * met0,
+  met_t const * met1,
+  double const ts,
+  double const p,
+  double const lon,
+  double const lat,
+  double uvw[3]) {
+
+  double uvw0[3], uvw1[3], wt;
+
+  /* Spatial interpolation... */
+  intpol_winds_space(met0, p, lon, lat, uvw0);
+  intpol_winds_space(met1, p, lon, lat, uvw1);
+        
+  /* Get weighting factor... */
+  wt = (met1->time - ts) / (met1->time - met0->time);
+
+  uvw[0] = wt * (uvw0[0] - uvw1[0]) + uvw1[0];
+  uvw[1] = wt * (uvw0[1] - uvw1[1]) + uvw1[1];
+  uvw[2] = wt * (uvw0[2] - uvw1[2]) + uvw1[2];
+}
+
+/*****************************************************************************/
+
 void jsec2time(
-  double jsec,
+  double const jsec,
   int *year,
   int *mon,
   int *day,
@@ -795,9 +872,9 @@ void jsec2time(
 /*****************************************************************************/
 
 int locate_irr(
-  double *xx,
-  int n,
-  double x) {
+  double const xx[],
+  int const n,
+  double const x) {
 
   int i, ilo, ihi;
 
@@ -827,9 +904,9 @@ int locate_irr(
 /*****************************************************************************/
 
 int locate_reg(
-  double *xx,
-  int n,
-  double x) {
+  double const xx[],
+  int const n,
+  double const x) {
 
   int i;
 
@@ -848,8 +925,8 @@ int locate_reg(
 /*****************************************************************************/
 
 void read_atm(
-  const char *filename,
-  ctl_t * ctl,
+  char const * filename,
+  ctl_t const * ctl,
   atm_t * atm) {
 
   FILE *in;
@@ -1024,9 +1101,9 @@ void read_atm(
 /*****************************************************************************/
 
 void read_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
+  char const * filename,
+  int const argc,
+  char const *argv[],
   ctl_t * ctl) {
 
   int ip, iq;
@@ -1292,8 +1369,8 @@ void read_ctl(
 /*****************************************************************************/
 
 void read_met(
-  ctl_t * ctl,
-  char *filename,
+  ctl_t const * ctl,
+  char const * filename,
   met_t * met) {
 
   char cmd[2 * LEN], levname[LEN], tstr[10];
@@ -1367,7 +1444,7 @@ void read_met(
   NC(nc_get_var_double(ncid, varid, met->lat));
 
   /* Read meteorological data... */
-  read_met_help(ncid, "t", "T", met, met->t, 1.0);
+  read_met_help(ncid, "t", "T", met, met->T, 1.0);
   read_met_help(ncid, "u", "U", met, met->u, 1.0);
   read_met_help(ncid, "v", "V", met, met->v, 1.0);
   read_met_help(ncid, "w", "W", met, met->w, 0.01f);
@@ -1394,7 +1471,7 @@ void read_met(
     read_met_help(ncid, "pl", "PL", met, met->pl, 0.01f);
 
     /* Interpolate from model levels to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->T);
     read_met_ml2pl(ctl, met, met->u);
     read_met_ml2pl(ctl, met, met->v);
     read_met_ml2pl(ctl, met, met->w);
@@ -1418,17 +1495,17 @@ void read_met(
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
-	met->ps[ix][iy] = help[iy * met->nx + ix] / 100.;
+	met->ps[ix][iy] = (float)(help[iy * met->nx + ix] / 100.);
   } else if (nc_inq_varid(ncid, "lnsp", &varid) == NC_NOERR
 	     || nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
     NC(nc_get_var_float(ncid, varid, help));
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
-	met->ps[ix][iy] = exp(help[iy * met->nx + ix]) / 100.;
+	met->ps[ix][iy] = (float)(exp(help[iy * met->nx + ix]) / 100.);
   } else
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy] = met->p[0];
+	met->ps[ix][iy] = (float)met->p[0];
 
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
@@ -1447,6 +1524,20 @@ void read_met(
 
   /* Close file... */
   NC(nc_close(ncid));
+  
+  /* collect the wind data in array uvw */
+#pragma omp parallel for collapse(2) private(ix,iy,ip)
+  for (ix = 0; ix < met->nx; ++ix) {
+    for (iy = 0; iy < met->ny; ++iy) {
+      for (ip = 0; ip < met->np; ++ip) {
+        met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];/* ToDo / 1000.; convert from m/s to km/s */
+        met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];/* ToDo / 1000.; convert from m/s to km/s */
+        met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
+        met->uvw[ix][iy][ip][3] = 0; /* not used */
+      }
+    }
+  }
+
 }
 
 /*****************************************************************************/
@@ -1463,7 +1554,7 @@ void read_met_extrapolate(
 
       /* Find lowest valid data point... */
       for (ip0 = met->np - 1; ip0 >= 0; ip0--)
-	if (!gsl_finite(met->t[ix][iy][ip0])
+	if (!gsl_finite(met->T[ix][iy][ip0])
 	    || !gsl_finite(met->u[ix][iy][ip0])
 	    || !gsl_finite(met->v[ix][iy][ip0])
 	    || !gsl_finite(met->w[ix][iy][ip0]))
@@ -1471,7 +1562,7 @@ void read_met_extrapolate(
 
       /* Extrapolate... */
       for (ip = ip0; ip >= 0; ip--) {
-	met->t[ix][iy][ip] = met->t[ix][iy][ip + 1];
+	met->T[ix][iy][ip] = met->T[ix][iy][ip + 1];
 	met->u[ix][iy][ip] = met->u[ix][iy][ip + 1];
 	met->v[ix][iy][ip] = met->v[ix][iy][ip + 1];
 	met->w[ix][iy][ip] = met->w[ix][iy][ip + 1];
@@ -1484,7 +1575,7 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met) {
 
   static double topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
@@ -1574,17 +1665,17 @@ void read_met_geopot(
       ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
       /* Get surface temperature... */
-      ts = LIN(met->p[ip0], met->t[ix][iy][ip0],
-	       met->p[ip0 + 1], met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      ts = LIN(met->p[ip0], met->T[ix][iy][ip0],
+	       met->p[ip0 + 1], met->T[ix][iy][ip0 + 1], met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
-	= (float) (z0 + RI / MA / G0 * 0.5 * (ts + met->t[ix][iy][ip0 + 1])
+	= (float) (z0 + RI / MA / G0 * 0.5 * (ts + met->T[ix][iy][ip0 + 1])
 		   * log(met->ps[ix][iy] / met->p[ip0 + 1]));
       for (ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
 	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0
-		     * 0.5 * (met->t[ix][iy][ip - 1] + met->t[ix][iy][ip])
+		     * 0.5 * (met->T[ix][iy][ip - 1] + met->T[ix][iy][ip])
 		     * log(met->p[ip - 1] / met->p[ip]));
     }
 
@@ -1627,12 +1718,12 @@ void read_met_geopot(
 /*****************************************************************************/
 
 void read_met_help(
-  int ncid,
-  char *varname,
-  char *varname2,
-  met_t * met,
+  int const ncid,
+  char const * varname,
+  char const * varname2,
+  met_t const * met,
   float dest[EX][EY][EP],
-  float scl) {
+  float const scl) {
 
   static float help[EX * EY * EP];
 
@@ -1662,8 +1753,8 @@ void read_met_help(
 /*****************************************************************************/
 
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  ctl_t const * ctl,
+  met_t const * met,
   float var[EX][EY][EP]) {
 
   double aux[EP], p[EP], pt;
@@ -1724,7 +1815,7 @@ void read_met_periodic(
     met->pt[met->nx - 1][iy] = met->pt[0][iy];
     for (ip = 0; ip < met->np; ip++) {
       met->z[met->nx - 1][iy][ip] = met->z[0][iy][ip];
-      met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
+      met->T[met->nx - 1][iy][ip] = met->T[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
       met->v[met->nx - 1][iy][ip] = met->v[0][iy][ip];
       met->w[met->nx - 1][iy][ip] = met->w[0][iy][ip];
@@ -1777,11 +1868,11 @@ void read_met_pv(
       for (ip = 0; ip < met->np; ip++) {
 
 	/* Get gradients in longitude... */
-	dtdx = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
+	dtdx = (met->T[ix1][iy][ip] - met->T[ix0][iy][ip]) * pows[ip] / dx;
 	dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
 
 	/* Get gradients in latitude... */
-	dtdy = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
+	dtdy = (met->T[ix][iy1][ip] - met->T[ix][iy0][ip]) * pows[ip] / dy;
 	dudy = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Set indices... */
@@ -1826,7 +1917,7 @@ void read_met_pv(
 /*****************************************************************************/
 
 void read_met_sample(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met) {
 
   met_t *help;
@@ -1857,7 +1948,7 @@ void read_met_sample(
 	help->ps[ix][iy] = 0;
 	help->pt[ix][iy] = 0;
 	help->z[ix][iy][ip] = 0;
-	help->t[ix][iy][ip] = 0;
+	help->T[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
 	help->w[ix][iy][ip] = 0;
@@ -1877,7 +1968,7 @@ void read_met_sample(
 	      help->ps[ix][iy] += w * met->ps[ix2][iy2];
 	      help->pt[ix][iy] += w * met->pt[ix2][iy2];
 	      help->z[ix][iy][ip] += w * met->z[ix2][iy2][ip2];
-	      help->t[ix][iy][ip] += w * met->t[ix2][iy2][ip2];
+	      help->T[ix][iy][ip] += w * met->T[ix2][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix2][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix2][iy2][ip2];
 	      help->w[ix][iy][ip] += w * met->w[ix2][iy2][ip2];
@@ -1888,7 +1979,7 @@ void read_met_sample(
 	    }
 	help->ps[ix][iy] /= wsum;
 	help->pt[ix][iy] /= wsum;
-	help->t[ix][iy][ip] /= wsum;
+	help->T[ix][iy][ip] /= wsum;
 	help->z[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
@@ -1913,7 +2004,7 @@ void read_met_sample(
       for (ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
 	met->z[met->nx][met->ny][met->np] = help->z[ix][iy][ip];
-	met->t[met->nx][met->ny][met->np] = help->t[ix][iy][ip];
+	met->T[met->nx][met->ny][met->np] = help->T[ix][iy][ip];
 	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
 	met->v[met->nx][met->ny][met->np] = help->v[ix][iy][ip];
 	met->w[met->nx][met->ny][met->np] = help->w[ix][iy][ip];
@@ -1934,7 +2025,7 @@ void read_met_sample(
 /*****************************************************************************/
 
 void read_met_tropo(
-  ctl_t * ctl,
+  ctl_t const * ctl,
   met_t * met) {
 
   gsl_interp_accel *acc;
@@ -1968,7 +2059,7 @@ void read_met_tropo(
   else if (ctl->met_tropo == 1)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
-	met->pt[ix][iy] = clim_tropo(met->time, met->lat[iy]);
+	met->pt[ix][iy] = (float)clim_tropo(met->time, met->lat[iy]);
 
   /* Use cold point... */
   else if (ctl->met_tropo == 2) {
@@ -1979,7 +2070,7 @@ void read_met_tropo(
 
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
-	  t[iz] = met->t[ix][iy][iz];
+	  t[iz] = met->T[ix][iy][iz];
 	gsl_spline_init(spline, z, t, (size_t) met->np);
 	for (iz = 0; iz <= 170; iz++)
 	  t2[iz] = gsl_spline_eval(spline, z2[iz], acc);
@@ -1989,7 +2080,7 @@ void read_met_tropo(
 	if (iz <= 0 || iz >= 170)
 	  met->pt[ix][iy] = GSL_NAN;
 	else
-	  met->pt[ix][iy] = p2[iz];
+	  met->pt[ix][iy] = (float)p2[iz];
       }
   }
 
@@ -2002,7 +2093,7 @@ void read_met_tropo(
 
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
-	  t[iz] = met->t[ix][iy][iz];
+	  t[iz] = met->T[ix][iy][iz];
 	gsl_spline_init(spline, z, t, (size_t) met->np);
 	for (iz = 0; iz <= 160; iz++)
 	  t2[iz] = gsl_spline_eval(spline, z2[iz], acc);
@@ -2019,7 +2110,7 @@ void read_met_tropo(
 	    }
 	  if (found) {
 	    if (iz > 0 && iz < 140)
-	      met->pt[ix][iy] = p2[iz];
+	      met->pt[ix][iy] = (float)p2[iz];
 	    break;
 	  }
 	}
@@ -2048,7 +2139,7 @@ void read_met_tropo(
 	      }
 	    if (found) {
 	      if (iz > 0 && iz < 140)
-		met->pt[ix][iy] = p2[iz];
+		met->pt[ix][iy] = (float)p2[iz];
 	      break;
 	    }
 	  }
@@ -2072,7 +2163,7 @@ void read_met_tropo(
 
 	/* Interpolate potential temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
-	  th[iz] = THETA(met->p[iz], met->t[ix][iy][iz]);
+	  th[iz] = THETA(met->p[iz], met->T[ix][iy][iz]);
 	gsl_spline_init(spline, z, th, (size_t) met->np);
 	for (iz = 0; iz <= 160; iz++)
 	  th2[iz] = gsl_spline_eval(spline, z2[iz], acc);
@@ -2082,7 +2173,7 @@ void read_met_tropo(
 	for (iz = 0; iz <= 160; iz++)
 	  if (fabs(pv2[iz]) >= 3.5 || th2[iz] >= 380.) {
 	    if (iz > 0 && iz < 160)
-	      met->pt[ix][iy] = p2[iz];
+	      met->pt[ix][iy] = (float)p2[iz];
 	    break;
 	  }
       }
@@ -2099,13 +2190,13 @@ void read_met_tropo(
 /*****************************************************************************/
 
 double scan_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
-  const char *varname,
-  int arridx,
-  const char *defvalue,
-  char *value) {
+  char const * filename,
+  int const argc,
+  char const *argv[],
+  char const * varname,
+  int const arridx,
+  char const * defvalue,
+  char * value) {
 
   FILE *in = NULL;
 
@@ -2171,13 +2262,13 @@ double scan_ctl(
 /*****************************************************************************/
 
 void time2jsec(
-  int year,
-  int mon,
-  int day,
-  int hour,
-  int min,
-  int sec,
-  double remain,
+  int const year,
+  int const mon,
+  int const day,
+  int const hour,
+  int const min,
+  int const sec,
+  double const remain,
   double *jsec) {
 
   struct tm t0, t1;
@@ -2202,11 +2293,19 @@ void time2jsec(
 /*****************************************************************************/
 
 void timer(
-  const char *name,
-  int id,
-  int mode) {
+  char const * name,
+  int const id,
+  int const mode) {
 
   static double starttime[NTIMER], runtime[NTIMER];
+#ifdef LinearRegressionTimers
+  static int numtimes[NTIMER];
+  static double squaretimes[NTIMER], correlation[NTIMER];
+
+  double a, b, denom, avgx, avgy, varx, vary;
+  int n;
+#endif
+  double elapsed;
 
   /* Check id... */
   if (id < 0 || id >= NTIMER)
@@ -2223,14 +2322,41 @@ void timer(
   /* Stop timer... */
   else if (mode == 2) {
     if (starttime[id] > 0) {
-      runtime[id] = runtime[id] + omp_get_wtime() - starttime[id];
+      elapsed = omp_get_wtime() - starttime[id];
+      runtime[id] = runtime[id] + elapsed;
       starttime[id] = -1;
+#ifdef LinearRegressionTimers
+      /* construct other accumulants */
+      squaretimes[id] += elapsed*elapsed;
+      correlation[id] += elapsed*numtimes[id];
+      ++numtimes[id];
+#endif     
     }
   }
 
   /* Print timer... */
   else if (mode == 3) {
     printf("%s = %.3f s\n", name, runtime[id]);
+#ifdef LinearRegressionTimers
+    /* display higher accumulants */
+    n = numtimes[id];
+    if (n > 1) {
+      denom = 1./GSL_MAX(n, 1);
+      avgy = denom*runtime[id]; /* average over each time */
+      vary = GSL_MAX(denom*squaretimes[id] - avgy*avgy, 0); /* variance */
+      /* linear regression coefficients a and b, the x-axis is the iteration number */
+      avgx = denom*0.5*n*(n - 1);
+      varx = denom*(n-1)*n*(2*n-1) - avgx*avgx;
+      a = (denom*correlation[id] - avgx*avgy)/varx; /* compute the slope */
+      b = avgy - a*avgx;                            /* compute the offset */
+      printf("stats for %s (miliseconds): num %d avg %.6f err %.6f off %.6f lin %.6f\n", 
+                name, n, avgy*1000, sqrt(vary)*1000, b*1000, a*1000);
+    }
+    /* clear for later usa of the same timer */
+    numtimes[id] = 0;
+    squaretimes[id] = 0;
+    correlation[id] = 0;
+#endif
     runtime[id] = 0;
   }
 }
@@ -2238,10 +2364,10 @@ void timer(
 /*****************************************************************************/
 
 void write_atm(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t) {
 
   FILE *in, *out;
 
@@ -2362,10 +2488,10 @@ void write_atm(
 /*****************************************************************************/
 
 void write_csi(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t) {
 
   static FILE *in, *out;
 
@@ -2374,7 +2500,8 @@ void write_csi(
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
     rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat;
 
-  static int obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz;
+  static int obscount[GX][GY][GZ], cx, cy, cz;
+  int ip, ix, iy, iz;
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -2422,8 +2549,7 @@ void write_csi(
   while (fgets(line, LEN, in)) {
 
     /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) != 5)
       continue;
 
     /* Check time... */
@@ -2532,10 +2658,10 @@ void write_csi(
 /*****************************************************************************/
 
 void write_ens(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t const * atm,
+  double const t) {
 
   static FILE *out;
 
@@ -2663,12 +2789,12 @@ void write_ens(
 /*****************************************************************************/
 
 void write_grid(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t const * atm,
+  double const t) {
 
   FILE *in, *out;
 
@@ -2677,7 +2803,8 @@ void write_grid(
   static double mass[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
     area, rho_air, press, temp, cd, vmr, t0, t1, r;
 
-  static int ip, ix, iy, iz, year, mon, day, hour, min, sec;
+  static int year, mon, day, hour, min, sec;
+  int ip, ix, iy, iz;
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
@@ -2787,8 +2914,8 @@ void write_grid(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, NULL, NULL);
+	  intpol_met_time(met0, met1, t, press, lon, lat, 
+          NULL, NULL, NULL, &temp, NULL, NULL, NULL);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * gsl_pow_2(RE * M_PI / 180.)
@@ -2816,12 +2943,12 @@ void write_grid(
 /*****************************************************************************/
 
 void write_prof(
-  const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  met_t const * met0,
+  met_t const * met1,
+  atm_t const * atm,
+  double const t) {
 
   static FILE *in, *out;
 
@@ -2831,7 +2958,8 @@ void write_prof(
     rlon, rlat, robs, t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp,
     rho_air, vmr, h2o, o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int obscount[GX][GY], okay;
+  int ip, ix, iy, iz;
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -2967,8 +3095,8 @@ void write_prof(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, &h2o, &o3);
+	  intpol_met_time(met0, met1, t, press, lon, lat, 
+          NULL, NULL, NULL, &temp, NULL, &h2o, &o3);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * gsl_pow_2(M_PI * RE / 180.)
@@ -2996,10 +3124,10 @@ void write_prof(
 /*****************************************************************************/
 
 void write_station(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  char const * filename,
+  ctl_t const * ctl,
+  atm_t * atm, /* station flags are modified */
+  double const t) {
 
   static FILE *out;
 

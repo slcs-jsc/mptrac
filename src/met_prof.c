@@ -36,8 +36,8 @@
    ------------------------------------------------------------ */
 
 int main(
-  int argc,
-  char *argv[]) {
+  int const argc,
+  char const *argv[]) {
 
   ctl_t ctl;
 
@@ -46,7 +46,7 @@ int main(
   FILE *out;
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
-    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
+    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], uvw[3], um[NZ], vm[NZ],
     wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ], pt, ptm[NZ], tt, ttm[NZ],
     zg, zgm[NZ], zt, ztm[NZ], pv, pvm[NZ];
 
@@ -84,20 +84,20 @@ int main(
 	ERRMSG("Too many altitudes!");
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
-	  intpol_met_space(met, P(z), lon, lat, &ps, &pt, &zg,
-			   &t, &u, &v, &w, &pv, &h2o, &o3);
-	  intpol_met_space(met, pt, lon, lat, NULL, NULL, &zt,
-			   &tt, NULL, NULL, NULL, NULL, NULL, NULL);
-	  if (gsl_finite(t) && gsl_finite(u)
-	      && gsl_finite(v) && gsl_finite(w)) {
+	  intpol_met_space(met, P(z), lon, lat, 
+          &ps, &pt, &zg, &t, &pv, &h2o, &o3);
+      intpol_winds_space(met, P(z), lon, lat, uvw);
+	  intpol_met_space(met, pt, lon, lat, 
+          NULL, NULL, &zt, &tt, NULL, NULL, NULL);
+	  if (gsl_finite(t) && gsl_finite(uvw[0]) && gsl_finite(uvw[1]) && gsl_finite(uvw[2])) {
 	    timem[iz] += met->time;
 	    lonm[iz] += lon;
 	    latm[iz] += lat;
 	    zgm[iz] += zg;
 	    tm[iz] += t;
-	    um[iz] += u;
-	    vm[iz] += v;
-	    wm[iz] += w;
+	    um[iz] += uvw[0];
+	    vm[iz] += uvw[1];
+	    wm[iz] += uvw[2];
 	    pvm[iz] += pv;
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
