@@ -517,7 +517,7 @@ void get_met(
   met_t * met0,
   met_t * met1) {
 
-  static int init;
+  static int init, ip, ix, iy;
 
   char filename[LEN];
 
@@ -545,6 +545,19 @@ void get_met(
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
     read_met(ctl, filename, met0);
   }
+
+  /* Check that grids are consistent... */
+  if (met0->nx != met1->nx || met0->ny != met1->ny || met0->np != met1->np)
+    ERRMSG("Meteo grid dimensions do not match!");
+  for (ix = 0; ix < met0->nx; ix++)
+    if (met0->lon[ix] != met1->lon[ix])
+      ERRMSG("Meteo grid longitudes do not match!");
+  for (iy = 0; iy < met0->ny; iy++)
+    if (met0->lat[iy] != met1->lat[iy])
+      ERRMSG("Meteo grid latitudes do not match!");
+  for (ip = 0; ip < met0->np; ip++)
+    if (met0->p[ip] != met1->p[ip])
+      ERRMSG("Meteo grid pressure levels do not match!");
 }
 
 /*****************************************************************************/
