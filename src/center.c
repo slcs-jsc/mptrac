@@ -106,15 +106,15 @@ int main(
       zm += Z(atm->p[ip]) / atm->np;
       lonm += atm->lon[ip] / atm->np;
       latm += atm->lat[ip] / atm->np;
-      zs += gsl_pow_2(Z(atm->p[ip])) / atm->np;
-      lons += gsl_pow_2(atm->lon[ip]) / atm->np;
-      lats += gsl_pow_2(atm->lat[ip]) / atm->np;
+      zs += SQR(Z(atm->p[ip])) / atm->np;
+      lons += SQR(atm->lon[ip]) / atm->np;
+      lats += SQR(atm->lat[ip]) / atm->np;
     }
 
     /* Normalize... */
-    zs = sqrt(zs - gsl_pow_2(zm));
-    lons = sqrt(lons - gsl_pow_2(lonm));
-    lats = sqrt(lats - gsl_pow_2(latm));
+    zs = sqrt(zs - SQR(zm));
+    lons = sqrt(lons - SQR(lonm));
+    lats = sqrt(lats - SQR(latm));
 
     /* Sort arrays... */
     gsl_sort(atm->p, 1, (size_t) atm->np);

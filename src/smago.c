@@ -59,10 +59,10 @@ int main(
 		 / (1000. *
 		    DEG2DX(met->lon[ix + 1] - met->lon[ix - 1],
 			   met->lat[iy])));
-      ls2 = gsl_pow_2(c * 500. * DEG2DY(met->lat[iy + 1] - met->lat[iy - 1]));
+      ls2 = SQR(c * 500. * DEG2DY(met->lat[iy + 1] - met->lat[iy - 1]));
       if (fabs(met->lat[iy]) > 80)
 	ls2 *= (90. - fabs(met->lat[iy])) / 10.;
-      k[ix][iy] = ls2 * sqrt(2.0 * (gsl_pow_2(t) + gsl_pow_2(s)));
+      k[ix][iy] = ls2 * sqrt(2.0 * (SQR(t) + SQR(s)));
     }
 
   /* Create output file... */

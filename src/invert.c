@@ -196,7 +196,7 @@ int main(
   for (i = 0; i < m; i++) {
     gsl_vector_set(w, (size_t) i,
 		   (!gsl_finite(rsig_all[i]) || rsig_all[i] < sigma)
-		   ? 1. / gsl_pow_2(sigma) : 1. / gsl_pow_2(rsig_all[i]));
+		   ? 1. / SQR(sigma) : 1. / SQR(rsig_all[i]));
     gsl_vector_set(y, (size_t) i, robs_all[i]);
     for (j = 0; j < n; j++)
       if (offset && j == n - 1)

@@ -146,8 +146,7 @@ int main(
 	geo2cart(0, atm->lon[ip], atm->lat[ip], x);
 	z = Z(atm->p[ip]);
 	for (is = 0; is < ns; is++) {
-	  d2 =
-	    DIST2(x, xs[f - 3][is]) + gsl_pow_2((z - zs[f - 3][is]) * 200.);
+	  d2 = DIST2(x, xs[f - 3][is]) + SQR((z - zs[f - 3][is]) * 200.);
 	  dist[ip * NS + is] += d2;
 	  rmsd[is] += d2;
 	}

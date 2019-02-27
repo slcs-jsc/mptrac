@@ -532,10 +532,10 @@ void module_diffusion_meso(
     w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
     /* Get standard deviations of local wind data... */
-    atm->cache_time[ix][iy][iz] = met0->time;
     atm->cache_usig[ix][iy][iz] = (float) gsl_stats_sd(u, 1, 16);
     atm->cache_vsig[ix][iy][iz] = (float) gsl_stats_sd(v, 1, 16);
     atm->cache_wsig[ix][iy][iz] = (float) gsl_stats_sd(w, 1, 16);
+    atm->cache_time[ix][iy][iz] = met0->time;
   }
 
   /* Set temporal correlations for mesoscale fluctuations... */
@@ -594,7 +594,7 @@ void module_diffusion_turb(
   else
     w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 
-  /* Set diffusivitiy... */
+  /* Set diffusivity... */
   dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
   dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
@@ -925,7 +925,7 @@ void module_sedi(
   G = 1 + K * (A + B * exp(-C / K));
 
   /* Sedimentation (fall) velocity... */
-  v_p = 2. * gsl_pow_2(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
+  v_p = 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
 
   /* Calculate pressure change... */
   atm->p[ip] += DZ2DP(v_p * dt / 1000., atm->p[ip]);

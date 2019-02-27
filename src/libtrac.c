@@ -2811,7 +2811,7 @@ void write_grid(
 			  NULL, &temp, NULL, NULL, NULL, NULL, NULL, NULL);
 
 	  /* Calculate surface area... */
-	  area = dlat * dlon * gsl_pow_2(RE * M_PI / 180.)
+	  area = dlat * dlon * SQR(RE * M_PI / 180.)
 	    * cos(lat * M_PI / 180.);
 
 	  /* Calculate column density... */
@@ -2933,7 +2933,7 @@ void write_prof(
 
     /* Get mean observation index... */
     obsmean[ix][iy] += robs;
-    obsmean2[ix][iy] += gsl_pow_2(robs);
+    obsmean2[ix][iy] += SQR(robs);
     obscount[ix][iy]++;
   }
 
@@ -2991,7 +2991,7 @@ void write_prof(
 			  NULL, &temp, NULL, NULL, NULL, NULL, &h2o, &o3);
 
 	  /* Calculate surface area... */
-	  area = dlat * dlon * gsl_pow_2(M_PI * RE / 180.)
+	  area = dlat * dlon * SQR(M_PI * RE / 180.)
 	    * cos(lat * M_PI / 180.);
 
 	  /* Calculate volume mixing ratio... */
@@ -3004,7 +3004,7 @@ void write_prof(
 		  t, z, lon, lat, press, temp, vmr, h2o, o3,
 		  obsmean[ix][iy] / obscount[ix][iy],
 		  sqrt(obsmean2[ix][iy] / obscount[ix][iy]
-		       - gsl_pow_2(obsmean[ix][iy] / obscount[ix][iy])));
+		       - SQR(obsmean[ix][iy] / obscount[ix][iy])));
 	}
       }
 
@@ -3049,7 +3049,7 @@ void write_station(
 
     /* Set geolocation and search radius... */
     geo2cart(0, ctl->stat_lon, ctl->stat_lat, x0);
-    rmax2 = gsl_pow_2(ctl->stat_r);
+    rmax2 = SQR(ctl->stat_r);
   }
 
   /* Set time interval for output... */

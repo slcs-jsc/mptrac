@@ -91,7 +91,7 @@
 #define NQ 12
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 111
+#define EP 112
 
 /*! Maximum number of longitudes for meteorological data. */
 #define EX 1201
@@ -197,6 +197,9 @@
 
 /*! Convert altitude to pressure. */
 #define P(z) (P0*exp(-(z)/H0))
+
+/*! Compute square. */
+#define SQR(x) ((x)*(x))
 
 /*! Calculate potential temperature. */
 #define THETA(p, t) ((t)*pow(1000./(p), 0.286))
@@ -604,7 +607,7 @@ typedef struct {
   /*! Latitude [deg]. */
   double lat[NP];
 
-  /*! Quantitiy data (for various, user-defined attributes). */
+  /*! Quantity data (for various, user-defined attributes). */
   double q[NQ][NP];
 
   /*! Zonal wind perturbation [m/s]. */
