@@ -463,7 +463,7 @@ void module_diffusion_meso(
   double dt,
   gsl_rng * rng) {
 
-  double r, rs, u[16], v[16], w[16], usig, vsig, wsig;
+  double r, rs, u[16], v[16], w[16];
 
   int ix, iy, iz;
 
@@ -472,71 +472,71 @@ void module_diffusion_meso(
   iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
   iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
-  /* Collect local wind data... */
-  u[0] = met0->u[ix][iy][iz];
-  u[1] = met0->u[ix + 1][iy][iz];
-  u[2] = met0->u[ix][iy + 1][iz];
-  u[3] = met0->u[ix + 1][iy + 1][iz];
-  u[4] = met0->u[ix][iy][iz + 1];
-  u[5] = met0->u[ix + 1][iy][iz + 1];
-  u[6] = met0->u[ix][iy + 1][iz + 1];
-  u[7] = met0->u[ix + 1][iy + 1][iz + 1];
+  /* Caching of wind standard deviations... */
+  if (atm->cache_time[ix][iy][iz] != met0->time) {
 
-  v[0] = met0->v[ix][iy][iz];
-  v[1] = met0->v[ix + 1][iy][iz];
-  v[2] = met0->v[ix][iy + 1][iz];
-  v[3] = met0->v[ix + 1][iy + 1][iz];
-  v[4] = met0->v[ix][iy][iz + 1];
-  v[5] = met0->v[ix + 1][iy][iz + 1];
-  v[6] = met0->v[ix][iy + 1][iz + 1];
-  v[7] = met0->v[ix + 1][iy + 1][iz + 1];
+    /* Collect local wind data... */
+    u[0] = met0->u[ix][iy][iz];
+    u[1] = met0->u[ix + 1][iy][iz];
+    u[2] = met0->u[ix][iy + 1][iz];
+    u[3] = met0->u[ix + 1][iy + 1][iz];
+    u[4] = met0->u[ix][iy][iz + 1];
+    u[5] = met0->u[ix + 1][iy][iz + 1];
+    u[6] = met0->u[ix][iy + 1][iz + 1];
+    u[7] = met0->u[ix + 1][iy + 1][iz + 1];
 
-  w[0] = met0->w[ix][iy][iz];
-  w[1] = met0->w[ix + 1][iy][iz];
-  w[2] = met0->w[ix][iy + 1][iz];
-  w[3] = met0->w[ix + 1][iy + 1][iz];
-  w[4] = met0->w[ix][iy][iz + 1];
-  w[5] = met0->w[ix + 1][iy][iz + 1];
-  w[6] = met0->w[ix][iy + 1][iz + 1];
-  w[7] = met0->w[ix + 1][iy + 1][iz + 1];
+    v[0] = met0->v[ix][iy][iz];
+    v[1] = met0->v[ix + 1][iy][iz];
+    v[2] = met0->v[ix][iy + 1][iz];
+    v[3] = met0->v[ix + 1][iy + 1][iz];
+    v[4] = met0->v[ix][iy][iz + 1];
+    v[5] = met0->v[ix + 1][iy][iz + 1];
+    v[6] = met0->v[ix][iy + 1][iz + 1];
+    v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
-  /* Get indices... */
-  ix = locate_reg(met1->lon, met1->nx, atm->lon[ip]);
-  iy = locate_reg(met1->lat, met1->ny, atm->lat[ip]);
-  iz = locate_irr(met1->p, met1->np, atm->p[ip]);
+    w[0] = met0->w[ix][iy][iz];
+    w[1] = met0->w[ix + 1][iy][iz];
+    w[2] = met0->w[ix][iy + 1][iz];
+    w[3] = met0->w[ix + 1][iy + 1][iz];
+    w[4] = met0->w[ix][iy][iz + 1];
+    w[5] = met0->w[ix + 1][iy][iz + 1];
+    w[6] = met0->w[ix][iy + 1][iz + 1];
+    w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
-  /* Collect local wind data... */
-  u[8] = met1->u[ix][iy][iz];
-  u[9] = met1->u[ix + 1][iy][iz];
-  u[10] = met1->u[ix][iy + 1][iz];
-  u[11] = met1->u[ix + 1][iy + 1][iz];
-  u[12] = met1->u[ix][iy][iz + 1];
-  u[13] = met1->u[ix + 1][iy][iz + 1];
-  u[14] = met1->u[ix][iy + 1][iz + 1];
-  u[15] = met1->u[ix + 1][iy + 1][iz + 1];
+    /* Collect local wind data... */
+    u[8] = met1->u[ix][iy][iz];
+    u[9] = met1->u[ix + 1][iy][iz];
+    u[10] = met1->u[ix][iy + 1][iz];
+    u[11] = met1->u[ix + 1][iy + 1][iz];
+    u[12] = met1->u[ix][iy][iz + 1];
+    u[13] = met1->u[ix + 1][iy][iz + 1];
+    u[14] = met1->u[ix][iy + 1][iz + 1];
+    u[15] = met1->u[ix + 1][iy + 1][iz + 1];
 
-  v[8] = met1->v[ix][iy][iz];
-  v[9] = met1->v[ix + 1][iy][iz];
-  v[10] = met1->v[ix][iy + 1][iz];
-  v[11] = met1->v[ix + 1][iy + 1][iz];
-  v[12] = met1->v[ix][iy][iz + 1];
-  v[13] = met1->v[ix + 1][iy][iz + 1];
-  v[14] = met1->v[ix][iy + 1][iz + 1];
-  v[15] = met1->v[ix + 1][iy + 1][iz + 1];
+    v[8] = met1->v[ix][iy][iz];
+    v[9] = met1->v[ix + 1][iy][iz];
+    v[10] = met1->v[ix][iy + 1][iz];
+    v[11] = met1->v[ix + 1][iy + 1][iz];
+    v[12] = met1->v[ix][iy][iz + 1];
+    v[13] = met1->v[ix + 1][iy][iz + 1];
+    v[14] = met1->v[ix][iy + 1][iz + 1];
+    v[15] = met1->v[ix + 1][iy + 1][iz + 1];
 
-  w[8] = met1->w[ix][iy][iz];
-  w[9] = met1->w[ix + 1][iy][iz];
-  w[10] = met1->w[ix][iy + 1][iz];
-  w[11] = met1->w[ix + 1][iy + 1][iz];
-  w[12] = met1->w[ix][iy][iz + 1];
-  w[13] = met1->w[ix + 1][iy][iz + 1];
-  w[14] = met1->w[ix][iy + 1][iz + 1];
-  w[15] = met1->w[ix + 1][iy + 1][iz + 1];
+    w[8] = met1->w[ix][iy][iz];
+    w[9] = met1->w[ix + 1][iy][iz];
+    w[10] = met1->w[ix][iy + 1][iz];
+    w[11] = met1->w[ix + 1][iy + 1][iz];
+    w[12] = met1->w[ix][iy][iz + 1];
+    w[13] = met1->w[ix + 1][iy][iz + 1];
+    w[14] = met1->w[ix][iy + 1][iz + 1];
+    w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
-  /* Get standard deviations of local wind data... */
-  usig = gsl_stats_sd(u, 1, 16);
-  vsig = gsl_stats_sd(v, 1, 16);
-  wsig = gsl_stats_sd(w, 1, 16);
+    /* Get standard deviations of local wind data... */
+    atm->cache_time[ix][iy][iz] = met0->time;
+    atm->cache_usig[ix][iy][iz] = (float) gsl_stats_sd(u, 1, 16);
+    atm->cache_vsig[ix][iy][iz] = (float) gsl_stats_sd(v, 1, 16);
+    atm->cache_wsig[ix][iy][iz] = (float) gsl_stats_sd(w, 1, 16);
+  }
 
   /* Set temporal correlations for mesoscale fluctuations... */
   r = 1 - 2 * fabs(dt) / ctl->dt_met;
@@ -546,12 +546,16 @@ void module_diffusion_meso(
   if (ctl->turb_mesox > 0) {
     atm->up[ip] = (float)
       (r * atm->up[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * usig));
+       + rs * gsl_ran_gaussian_ziggurat(rng,
+					ctl->turb_mesox *
+					atm->cache_usig[ix][iy][iz]));
     atm->lon[ip] += DX2DEG(atm->up[ip] * dt / 1000., atm->lat[ip]);
 
     atm->vp[ip] = (float)
       (r * atm->vp[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * vsig));
+       + rs * gsl_ran_gaussian_ziggurat(rng,
+					ctl->turb_mesox *
+					atm->cache_vsig[ix][iy][iz]));
     atm->lat[ip] += DY2DEG(atm->vp[ip] * dt / 1000.);
   }
 
@@ -559,7 +563,9 @@ void module_diffusion_meso(
   if (ctl->turb_mesoz > 0) {
     atm->wp[ip] = (float)
       (r * atm->wp[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesoz * wsig));
+       + rs * gsl_ran_gaussian_ziggurat(rng,
+					ctl->turb_mesoz *
+					atm->cache_wsig[ix][iy][iz]));
     atm->p[ip] += atm->wp[ip] * dt;
   }
 }

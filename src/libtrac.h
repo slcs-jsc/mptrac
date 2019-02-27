@@ -616,6 +616,18 @@ typedef struct {
   /*! Vertical velocity perturbation [hPa/s]. */
   float wp[NP];
 
+  /*! Cache for reference time of wind standard deviations. */
+  double cache_time[EX][EY][EP];
+
+  /*! Cache for zonal wind standard deviations. */
+  float cache_usig[EX][EY][EP];
+
+  /*! Cache for meridional wind standard deviations. */
+  float cache_vsig[EX][EY][EP];
+
+  /*! Cache for vertical velocity standard deviations. */
+  float cache_wsig[EX][EY][EP];
+
 } atm_t;
 
 /*! Meteorological data. */
