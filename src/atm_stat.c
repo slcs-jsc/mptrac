@@ -36,22 +36,26 @@ int main(
 
   char tstr[LEN];
 
-  double latm, lats, lonm, lons, t, zm, zs;
+  double latm, lonm, t, qm[NQ], *work, zm, *zs;
 
-  int f, ip, year, mon, day, hour, min;
+  int f, ip, iq, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
+  ALLOC(work, double,
+	NP);
+  ALLOC(zs, double,
+	NP);
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <outfile> <atm1> [<atm2> ...]");
+    ERRMSG("Give parameters: <ctl> <outfile> <param> <atm1> [<atm2> ...]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
 
   /* Write info... */
-  printf("Write center of mass data: %s\n", argv[2]);
+  printf("Write air parcel statistics: %s\n", argv[2]);
 
   /* Create output file... */
   if (!(out = fopen(argv[2], "w")))
@@ -59,67 +63,20 @@ int main(
 
   /* Write header... */
   fprintf(out,
-	  "# $1  = time [s]\n"
-	  "# $2  = altitude (mean) [km]\n"
-	  "# $3  = altitude (sigma) [km]\n"
-	  "# $4  = altitude (minimum) [km]\n"
-	  "# $5  = altitude (10%% percentile) [km]\n"
-	  "# $6  = altitude (1st quarter) [km]\n"
-	  "# $7  = altitude (median) [km]\n"
-	  "# $8  = altitude (3rd quarter) [km]\n"
-	  "# $9  = altitude (90%% percentile) [km]\n"
-	  "# $10 = altitude (maximum) [km]\n");
-  fprintf(out,
-	  "# $11 = longitude (mean) [deg]\n"
-	  "# $12 = longitude (sigma) [deg]\n"
-	  "# $13 = longitude (minimum) [deg]\n"
-	  "# $14 = longitude (10%% percentile) [deg]\n"
-	  "# $15 = longitude (1st quarter) [deg]\n"
-	  "# $16 = longitude (median) [deg]\n"
-	  "# $17 = longitude (3rd quarter) [deg]\n"
-	  "# $18 = longitude (90%% percentile) [deg]\n"
-	  "# $19 = longitude (maximum) [deg]\n");
-  fprintf(out,
-	  "# $20 = latitude (mean) [deg]\n"
-	  "# $21 = latitude (sigma) [deg]\n"
-	  "# $22 = latitude (minimum) [deg]\n"
-	  "# $23 = latitude (10%% percentile) [deg]\n"
-	  "# $24 = latitude (1st quarter) [deg]\n"
-	  "# $25 = latitude (median) [deg]\n"
-	  "# $26 = latitude (3rd quarter) [deg]\n"
-	  "# $27 = latitude (90%% percentile) [deg]\n"
-	  "# $28 = latitude (maximum) [deg]\n\n");
+	  "# $1 = time [s]\n"
+	  "# $2 = altitude (%s) [km]\n"
+	  "# $3 = longitude (%s) [deg]\n"
+	  "# $4 = latitude (%s) [deg]\n", argv[3], argv[3], argv[3]);
+  for (iq = 0; iq < ctl.nq; iq++)
+    fprintf(out, "# $%d = %s (%s) [%s]\n", iq + 5,
+	    ctl.qnt_name[iq], argv[3], ctl.qnt_unit[iq]);
+  fprintf(out, "# $%d = number of particles\n\n", ctl.nq + 5);
 
   /* Loop over files... */
-  for (f = 3; f < argc; f++) {
+  for (f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
     read_atm(argv[f], &ctl, atm);
-
-    /* Initialize... */
-    zm = zs = 0;
-    lonm = lons = 0;
-    latm = lats = 0;
-
-    /* Calculate mean and standard deviation... */
-    for (ip = 0; ip < atm->np; ip++) {
-      zm += Z(atm->p[ip]) / atm->np;
-      lonm += atm->lon[ip] / atm->np;
-      latm += atm->lat[ip] / atm->np;
-      zs += SQR(Z(atm->p[ip])) / atm->np;
-      lons += SQR(atm->lon[ip]) / atm->np;
-      lats += SQR(atm->lat[ip]) / atm->np;
-    }
-
-    /* Normalize... */
-    zs = sqrt(zs - SQR(zm));
-    lons = sqrt(lons - SQR(lonm));
-    lats = sqrt(lats - SQR(latm));
-
-    /* Sort arrays... */
-    gsl_sort(atm->p, 1, (size_t) atm->np);
-    gsl_sort(atm->lon, 1, (size_t) atm->np);
-    gsl_sort(atm->lat, 1, (size_t) atm->np);
 
     /* Get time from filename... */
     sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
@@ -134,23 +91,75 @@ int main(
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
+    /* Get heights... */
+    for (ip = 0; ip < atm->np; ip++)
+      zs[ip] = Z(atm->p[ip]);
+
+    /* Get statistics... */
+    if (strcasecmp(argv[3], "mean") == 0) {
+      zm = gsl_stats_mean(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_mean(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_mean(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_mean(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "stddev") == 0) {
+      zm = gsl_stats_sd(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_sd(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_sd(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_sd(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "min") == 0) {
+      zm = gsl_stats_min(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_min(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_min(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_min(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "max") == 0) {
+      zm = gsl_stats_max(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_max(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_max(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_max(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "skew") == 0) {
+      zm = gsl_stats_skew(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_skew(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_skew(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_skew(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "kurt") == 0) {
+      zm = gsl_stats_kurtosis(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_kurtosis(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_kurtosis(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_kurtosis(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "median") == 0) {
+      zm = gsl_stats_median(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_median(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_median(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_median(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "absdev") == 0) {
+      zm = gsl_stats_absdev(zs, 1, (size_t) atm->np);
+      lonm = gsl_stats_absdev(atm->lon, 1, (size_t) atm->np);
+      latm = gsl_stats_absdev(atm->lat, 1, (size_t) atm->np);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_absdev(atm->q[iq], 1, (size_t) atm->np);
+    } else if (strcasecmp(argv[3], "mad") == 0) {
+      zm = gsl_stats_mad0(zs, 1, (size_t) atm->np, work);
+      lonm = gsl_stats_mad0(atm->lon, 1, (size_t) atm->np, work);
+      latm = gsl_stats_mad0(atm->lat, 1, (size_t) atm->np, work);
+      for (iq = 0; iq < ctl.nq; iq++)
+	qm[iq] = gsl_stats_mad0(atm->q[iq], 1, (size_t) atm->np, work);
+    } else
+      ERRMSG("Unknown parameter!");
+
     /* Write data... */
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g "
-	    "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	    t, zm, zs, Z(atm->p[atm->np - 1]),
-	    Z(atm->p[atm->np - atm->np / 10]),
-	    Z(atm->p[atm->np - atm->np / 4]),
-	    Z(atm->p[atm->np / 2]), Z(atm->p[atm->np / 4]),
-	    Z(atm->p[atm->np / 10]), Z(atm->p[0]),
-	    lonm, lons, atm->lon[0], atm->lon[atm->np / 10],
-	    atm->lon[atm->np / 4], atm->lon[atm->np / 2],
-	    atm->lon[atm->np - atm->np / 4],
-	    atm->lon[atm->np - atm->np / 10],
-	    atm->lon[atm->np - 1],
-	    latm, lats, atm->lat[0], atm->lat[atm->np / 10],
-	    atm->lat[atm->np / 4], atm->lat[atm->np / 2],
-	    atm->lat[atm->np - atm->np / 4],
-	    atm->lat[atm->np - atm->np / 10], atm->lat[atm->np - 1]);
+    fprintf(out, "%.2f %g %g %g", t, zm, lonm, latm);
+    for (iq = 0; iq < ctl.nq; iq++) {
+      fprintf(out, " ");
+      fprintf(out, ctl.qnt_format[iq], qm[iq]);
+    }
+    fprintf(out, " %d\n", atm->np);
   }
 
   /* Close file... */
@@ -158,6 +167,8 @@ int main(
 
   /* Free... */
   free(atm);
+  free(work);
+  free(zs);
 
   return EXIT_SUCCESS;
 }

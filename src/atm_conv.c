@@ -19,7 +19,7 @@
 
 /*! 
   \file
-  Convert file format of atmospheric data files.
+  Convert file format of air parcel data files.
 */
 
 #include "libtrac.h"
