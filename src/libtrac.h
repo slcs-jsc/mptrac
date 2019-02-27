@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -34,7 +34,6 @@
 
 #include <ctype.h>
 #include <gsl/gsl_math.h>
-#include <gsl/gsl_multifit.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
 #include <gsl/gsl_sort.h>

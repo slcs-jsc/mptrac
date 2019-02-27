@@ -14,12 +14,12 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2018 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
 */
 
 /*! 
   \file
-  Calculate center of mass of air parcels.
+  Calculate air parcel statistics.
 */
 
 #include "libtrac.h"
