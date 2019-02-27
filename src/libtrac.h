@@ -740,8 +740,8 @@ void get_met(
   ctl_t * ctl,
   char *metbase,
   double t,
-  met_t * met0,
-  met_t * met1);
+  met_t ** met0,
+  met_t ** met1);
 
 /*! Get meteorological data for timestep. */
 void get_met_help(

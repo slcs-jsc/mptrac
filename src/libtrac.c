@@ -514,10 +514,12 @@ void get_met(
   ctl_t * ctl,
   char *metbase,
   double t,
-  met_t * met0,
-  met_t * met1) {
+  met_t ** met0,
+  met_t ** met1) {
 
   static int init, ip, ix, iy;
+
+  met_t *mets;
 
   char filename[LEN];
 
@@ -526,37 +528,42 @@ void get_met(
     init = 1;
 
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met0);
+    read_met(ctl, filename, *met0);
 
     get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met1);
+    read_met(ctl, filename, *met1);
   }
 
   /* Read new data for forward trajectories... */
-  if (t > met1->time && ctl->direction == 1) {
-    memcpy(met0, met1, sizeof(met_t));
+  if (t > (*met1)->time && ctl->direction == 1) {
+    mets = *met1;
+    *met1 = *met0;
+    *met0 = mets;
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met1);
+    read_met(ctl, filename, *met1);
   }
 
   /* Read new data for backward trajectories... */
-  if (t < met0->time && ctl->direction == -1) {
-    memcpy(met1, met0, sizeof(met_t));
+  if (t < (*met0)->time && ctl->direction == -1) {
+    mets = *met1;
+    *met1 = *met0;
+    *met0 = mets;
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, met0);
+    read_met(ctl, filename, *met0);
   }
 
   /* Check that grids are consistent... */
-  if (met0->nx != met1->nx || met0->ny != met1->ny || met0->np != met1->np)
+  if ((*met0)->nx != (*met1)->nx
+      || (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
     ERRMSG("Meteo grid dimensions do not match!");
-  for (ix = 0; ix < met0->nx; ix++)
-    if (met0->lon[ix] != met1->lon[ix])
+  for (ix = 0; ix < (*met0)->nx; ix++)
+    if ((*met0)->lon[ix] != (*met1)->lon[ix])
       ERRMSG("Meteo grid longitudes do not match!");
-  for (iy = 0; iy < met0->ny; iy++)
-    if (met0->lat[iy] != met1->lat[iy])
+  for (iy = 0; iy < (*met0)->ny; iy++)
+    if ((*met0)->lat[iy] != (*met1)->lat[iy])
       ERRMSG("Meteo grid latitudes do not match!");
-  for (ip = 0; ip < met0->np; ip++)
-    if (met0->p[ip] != met1->p[ip])
+  for (ip = 0; ip < (*met0)->np; ip++)
+    if ((*met0)->p[ip] != (*met1)->p[ip])
       ERRMSG("Meteo grid pressure levels do not match!");
 }
 

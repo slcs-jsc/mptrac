@@ -233,7 +233,7 @@ int main(
 
       /* Get meteorological data... */
       START_TIMER(TIMER_INPUT);
-      get_met(&ctl, argv[4], t, met0, met1);
+      get_met(&ctl, argv[4], t, &met0, &met1);
       if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
 	printf("Warning: Violation of CFL criterion! Set DT_MOD <= %g s!\n",
 	       fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.);
