@@ -41,7 +41,7 @@ int main(
     *lv1, *lv2, p0, p1, *q1, *q2, rhtd, rqtd[NQ], rtce1[NQ], rtce2[NQ], rvtd,
     t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
 
-  int ens, f, ip, iq, np, year, mon, day, hour, min;
+  int f, ip, iq, np, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -78,7 +78,6 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  ens = (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-1", NULL);
   p0 = P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
   p1 = P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
   lat0 = scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
@@ -168,12 +167,6 @@ int main(
 
       /* Check data... */
       if (!gsl_finite(atm1->time[ip]) || !gsl_finite(atm2->time[ip]))
-	continue;
-
-      /* Check ensemble ID... */
-      if (ens >= 0 && ctl.qnt_ens >= 0 && atm1->q[ctl.qnt_ens][ip] != ens)
-	continue;
-      if (ens >= 0 && ctl.qnt_ens >= 0 && atm2->q[ctl.qnt_ens][ip] != ens)
 	continue;
 
       /* Check spatial range... */
