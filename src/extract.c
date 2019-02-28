@@ -41,7 +41,7 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <outfile> <atm1> [<atm2> ...]");
+    ERRMSG("Give parameters: <ctl> <trajec.tab> <atm1> [<atm2> ...]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);

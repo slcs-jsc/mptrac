@@ -39,7 +39,7 @@ int main(
   double lat0, lat1, latm, lon0, lon1, lonm, p0, p1,
     t, t0, qm[NQ], *work, zm, *zs;
 
-  int f, ip, iq, year, mon, day, hour, min;
+  int ens, f, ip, iq, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -51,10 +51,11 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <outfile> <param> <atm1> [<atm2> ...]");
+    ERRMSG("Give parameters: <ctl> <stat.tab> <param> <atm1> [<atm2> ...]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  ens = (int) scan_ctl(argv[1], argc, argv, "STAT_ENS", -1, "-999", NULL);
   p0 = P(scan_ctl(argv[1], argc, argv, "STAT_Z0", -1, "-1000", NULL));
   p1 = P(scan_ctl(argv[1], argc, argv, "STAT_Z1", -1, "1000", NULL));
   lat0 = scan_ctl(argv[1], argc, argv, "STAT_LAT0", -1, "-1000", NULL);
@@ -72,7 +73,7 @@ int main(
   /* Write header... */
   fprintf(out,
 	  "# $1 = time [s]\n"
-	  "# $2 = trajectory time [s]\n"
+	  "# $2 = time difference [s]\n"
 	  "# $3 = altitude (%s) [km]\n"
 	  "# $4 = longitude (%s) [deg]\n"
 	  "# $5 = latitude (%s) [deg]\n", argv[3], argv[3], argv[3]);
@@ -110,6 +111,10 @@ int main(
 
       /* Check time... */
       if (!gsl_finite(atm->time[ip]))
+	continue;
+
+      /* Check ensemble index... */
+      if (ctl.qnt_ens > 0 && atm->q[ctl.qnt_ens][ip] != ens)
 	continue;
 
       /* Check spatial range... */

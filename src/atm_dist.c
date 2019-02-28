@@ -36,12 +36,12 @@ int main(
 
   char tstr[LEN];
 
-  double ahtd, aqtd[NQ], avtd, lat0, lat1,
+  double *ahtd, *aqtd, *avtd, ahtdm, aqtdm[NQ], avtdm, lat0, lat1,
     *lat1_old, *lat2_old, *lh1, *lh2, lon0, lon1, *lon1_old, *lon2_old,
-    *lv1, *lv2, p0, p1, *q1, *q2, rhtd, rqtd[NQ], rvtd,
-    t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old;
+    *lv1, *lv2, p0, p1, *rhtd, *rqtd, *rvtd, rhtdm, rqtdm[NQ], rvtdm,
+    t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work;
 
-  int f, ip, iq, np, year, mon, day, hour, min;
+  int ens, f, ip, iq, np, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -66,18 +66,29 @@ int main(
 	NP);
   ALLOC(lv2, double,
 	NP);
-  ALLOC(q1, double,
-	NQ * NP);
-  ALLOC(q2, double,
-	NQ * NP);
+  ALLOC(ahtd, double,
+	NP);
+  ALLOC(avtd, double,
+	NP);
+  ALLOC(aqtd, double,
+	NP * NQ);
+  ALLOC(rhtd, double,
+	NP);
+  ALLOC(rvtd, double,
+	NP);
+  ALLOC(rqtd, double,
+	NP * NQ);
+  ALLOC(work, double,
+	NP);
 
   /* Check arguments... */
-  if (argc < 5)
-    ERRMSG("Give parameters: <ctl> <outfile> <atm1a> <atm1b>"
+  if (argc < 6)
+    ERRMSG("Give parameters: <ctl> <dist.tab> <param> <atm1a> <atm1b>"
 	   " [<atm2a> <atm2b> ...]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  ens = (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
   p0 = P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
   p1 = P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
   lat0 = scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
@@ -95,19 +106,22 @@ int main(
   /* Write header... */
   fprintf(out,
 	  "# $1 = time [s]\n"
-	  "# $2 = trajectory time [s]\n"
-	  "# $3 = AHTD [km]\n"
-	  "# $4 = RHTD [%%]\n" "# $5 = AVTD [km]\n" "# $6 = RVTD [%%]\n");
+	  "# $2 = time difference [s]\n"
+	  "# $3 = absolute horizontal distance (%s) [km]\n"
+	  "# $4 = relative horizontal distance (%s) [%%]\n"
+	  "# $5 = absolute vertical distance (%s) [km]\n"
+	  "# $6 = relative vertical distance (%s) [%%]\n",
+	  argv[3], argv[3], argv[3], argv[3]);
   for (iq = 0; iq < ctl.nq; iq++)
     fprintf(out,
-	    "# $%d = AQTD (%s) [%s]\n"
-	    "# $%d = RQTD (%s) [%%]\n",
-	    7 + 2 * iq, ctl.qnt_name[iq], ctl.qnt_unit[iq],
-	    8 + 2 * iq, ctl.qnt_name[iq]);
+	    "# $%d = %s absolute difference (%s) [%s]\n"
+	    "# $%d = %s relative difference (%s) [%%]\n",
+	    7 + 2 * iq, ctl.qnt_name[iq], argv[3], ctl.qnt_unit[iq],
+	    8 + 2 * iq, ctl.qnt_name[iq], argv[3]);
   fprintf(out, "# $%d = number of particles\n\n", 7 + 2 * ctl.nq);
 
   /* Loop over file pairs... */
-  for (f = 3; f < argc; f += 2) {
+  for (f = 4; f < argc; f += 2) {
 
     /* Read atmopheric data... */
     read_atm(argv[f], &ctl, atm1);
@@ -115,8 +129,8 @@ int main(
 
     /* Check if structs match... */
     if (atm1->np != atm2->np)
-      ERRMSG("Different numbers of parcels!");
-    
+      ERRMSG("Different numbers of particles!");
+
     /* Get time from filename... */
     sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
     year = atoi(tstr);
@@ -130,27 +144,29 @@ int main(
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
-    /* Save initial data... */
-    if (f == 3) {
+    /* Save initial time... */
+    if (f == 4)
       t0 = t;
-      for (iq = 0; iq < ctl.nq; iq++)
-	for (ip = 0; ip < atm1->np; ip++) {
-	  q1[iq * NP + ip] = atm1->q[iq][ip];
-	  q2[iq * NP + ip] = atm2->q[iq][ip];
-	}
-    }
 
     /* Init... */
     np = 0;
-    ahtd = avtd = rhtd = rvtd = 0;
-    for (iq = 0; iq < ctl.nq; iq++)
-      aqtd[iq] = rqtd[iq] = 0;
+    for (ip = 0; ip < atm1->np; ip++) {
+      ahtd[ip] = avtd[ip] = rhtd[ip] = rvtd[ip] = 0;
+      for (iq = 0; iq < ctl.nq; iq++)
+	aqtd[iq * NP + ip] = rqtd[iq * NP + ip] = 0;
+    }
 
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
 
       /* Check data... */
       if (!gsl_finite(atm1->time[ip]) || !gsl_finite(atm2->time[ip]))
+	continue;
+
+      /* Check ensemble index... */
+      if (ctl.qnt_ens > 0
+	  && (atm1->q[ctl.qnt_ens][ip] != ens
+	      || atm2->q[ctl.qnt_ens][ip] != ens))
 	continue;
 
       /* Check spatial range... */
@@ -170,13 +186,13 @@ int main(
       z2 = Z(atm2->p[ip]);
 
       /* Calculate absolute transport deviations... */
-      ahtd += DIST(x1, x2);
-      avtd += fabs(z1 - z2);
+      ahtd[np] = DIST(x1, x2);
+      avtd[np] = z1 - z2;
       for (iq = 0; iq < ctl.nq; iq++)
-	aqtd[iq] += fabs(atm1->q[iq][ip] - atm2->q[iq][ip]);
+	aqtd[iq * NP + np] = atm1->q[iq][ip] - atm2->q[iq][ip];
 
       /* Calculate relative transport deviations... */
-      if (f > 3) {
+      if (f > 4) {
 
 	/* Get trajectory lengths... */
 	geo2cart(0, lon1_old[ip], lat1_old[ip], x0);
@@ -189,11 +205,11 @@ int main(
 
 	/* Get relative transport deviations... */
 	if (lh1[ip] + lh2[ip] > 0)
-	  rhtd += 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
+	  rhtd[np] = 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
 	if (lv1[ip] + lv2[ip] > 0)
-	  rvtd += 200. * fabs(z1 - z2) / (lv1[ip] + lv2[ip]);
+	  rvtd[np] = 200. * (z1 - z2) / (lv1[ip] + lv2[ip]);
 	for (iq = 0; iq < ctl.nq; iq++)
-	  rqtd[iq] += 200. * fabs(atm1->q[iq][ip] - atm2->q[iq][ip])
+	  rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
 	    / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
       }
 
@@ -210,14 +226,99 @@ int main(
       np++;
     }
 
+    /* Get statistics... */
+    if (strcasecmp(argv[3], "mean") == 0) {
+      ahtdm = gsl_stats_mean(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_mean(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_mean(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_mean(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_mean(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_mean(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "stddev") == 0) {
+      ahtdm = gsl_stats_sd(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_sd(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_sd(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_sd(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_sd(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_sd(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "min") == 0) {
+      ahtdm = gsl_stats_min(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_min(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_min(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_min(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_min(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_min(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "max") == 0) {
+      ahtdm = gsl_stats_max(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_max(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_max(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_max(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_max(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_max(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "skew") == 0) {
+      ahtdm = gsl_stats_skew(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_skew(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_skew(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_skew(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_skew(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_skew(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "kurt") == 0) {
+      ahtdm = gsl_stats_kurtosis(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_kurtosis(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_kurtosis(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_kurtosis(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_kurtosis(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_kurtosis(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "median") == 0) {
+      ahtdm = gsl_stats_median(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_median(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_median(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_median(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_median(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_median(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "absdev") == 0) {
+      ahtdm = gsl_stats_absdev(ahtd, 1, (size_t) np);
+      rhtdm = gsl_stats_absdev(rhtd, 1, (size_t) np);
+      avtdm = gsl_stats_absdev(avtd, 1, (size_t) np);
+      rvtdm = gsl_stats_absdev(rvtd, 1, (size_t) np);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_absdev(&aqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = gsl_stats_absdev(&rqtd[iq * NP], 1, (size_t) np);
+      }
+    } else if (strcasecmp(argv[3], "mad") == 0) {
+      ahtdm = gsl_stats_mad0(ahtd, 1, (size_t) np, work);
+      rhtdm = gsl_stats_mad0(rhtd, 1, (size_t) np, work);
+      avtdm = gsl_stats_mad0(avtd, 1, (size_t) np, work);
+      rvtdm = gsl_stats_mad0(rvtd, 1, (size_t) np, work);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_mad0(&aqtd[iq * NP], 1, (size_t) np, work);
+	rqtdm[iq] = gsl_stats_mad0(&rqtd[iq * NP], 1, (size_t) np, work);
+      }
+    } else
+      ERRMSG("Unknown parameter!");
+
     /* Write output... */
     fprintf(out, "%.2f %.2f %g %g %g %g", t, t - t0,
-	    ahtd / np, rhtd / np, avtd / np, rvtd / np);
+	    ahtdm, rhtdm, avtdm, rvtdm);
     for (iq = 0; iq < ctl.nq; iq++) {
       fprintf(out, " ");
-      fprintf(out, ctl.qnt_format[iq], aqtd[iq] / np);
+      fprintf(out, ctl.qnt_format[iq], aqtdm[iq]);
       fprintf(out, " ");
-      fprintf(out, ctl.qnt_format[iq], rqtd[iq] / np);
+      fprintf(out, ctl.qnt_format[iq], rqtdm[iq]);
     }
     fprintf(out, " %d\n", np);
   }
@@ -238,6 +339,13 @@ int main(
   free(z2_old);
   free(lh2);
   free(lv2);
+  free(ahtd);
+  free(avtd);
+  free(aqtd);
+  free(rhtd);
+  free(rvtd);
+  free(rqtd);
+  free(work);
 
   return EXIT_SUCCESS;
 }
