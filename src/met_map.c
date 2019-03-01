@@ -34,55 +34,85 @@ int main(
 
   FILE *out;
 
-  static double dz, dzmin = 1e10, z, timem[EX][EY], psm[EX][EY], ptm[EX][EY],
-    tm[EX][EY], um[EX][EY], vm[EX][EY], wm[EX][EY], h2om[EX][EY], o3m[EX][EY],
-    zm[EX][EY], pvm[EX][EY], zt, ztm[EX][EY], tt, ttm[EX][EY];
+  static double timem[EX][EY], p, ps, psm[EX][EY], pt, ptm[EX][EY], t,
+    tm[EX][EY], u, um[EX][EY], v, vm[EX][EY], w, wm[EX][EY], h2o,
+    h2om[EX][EY], o3, o3m[EX][EY], z, zm[EX][EY], pv, pvm[EX][EY], zt,
+    ztm[EX][EY], tt, ttm[EX][EY], lon, lon0, lon1, lons[EX], dlon, lat, lat0,
+    lat1, lats[EY], dlat;
 
-  static int i, ip, ip2, ix, iy, np[EX][EY];
+  static int i, ix, iy, np[EX][EY], nx, ny;
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
 
   /* Check arguments... */
-  if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
+  if (argc < 5)
+    ERRMSG("Give parameters: <ctl> <map.tab> <z> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  z = scan_ctl(argv[1], argc, argv, "Z", -1, "", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "-180", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "180", NULL);
+  dlon = scan_ctl(argv[1], argc, argv, "DLON", -1, "-999", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "-90", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "90", NULL);
+  dlat = scan_ctl(argv[1], argc, argv, "DLAT", -1, "-999", NULL);
+  p = P(atof(argv[3]));
 
   /* Loop over files... */
-  for (i = 3; i < argc; i++) {
+  for (i = 4; i < argc; i++) {
 
     /* Read meteorological data... */
     read_met(&ctl, argv[i], met);
 
-    /* Find nearest pressure level... */
-    for (ip2 = 0; ip2 < met->np; ip2++) {
-      dz = fabs(Z(met->p[ip2]) - z);
-      if (dz < dzmin) {
-	dzmin = dz;
-	ip = ip2;
-      }
+    /* Set horizontal grid... */
+    if (dlon <= 0)
+      dlon = fabs(met->lon[1] - met->lon[0]);
+    if (dlat <= 0)
+      dlat = fabs(met->lat[1] - met->lat[0]);
+    if (lon0 < -360 && lon1 > 360) {
+      lon0 = gsl_stats_min(met->lon, 1, (size_t) met->nx);
+      lon1 = gsl_stats_max(met->lon, 1, (size_t) met->nx);
+    }
+    for (lon = lon0; lon <= lon1; lon += dlon) {
+      lons[nx] = lon;
+      if ((++nx) > EX)
+	ERRMSG("Too many longitudes!");
+    }
+    if (lat0 < -90 && lat1 > 90) {
+      lat0 = gsl_stats_min(met->lat, 1, (size_t) met->ny);
+      lat1 = gsl_stats_max(met->lat, 1, (size_t) met->ny);
+    }
+    for (lat = lat0; lat <= lat1; lat += dlat) {
+      lats[ny] = lat;
+      if ((++ny) > EY)
+	ERRMSG("Too many latitudes!");
     }
 
     /* Average data... */
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++) {
-	intpol_met_space(met, met->pt[ix][iy], met->lon[ix], met->lat[iy],
-			 NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL,
-			 NULL);
+    for (ix = 0; ix < nx; ix++)
+      for (iy = 0; iy < ny; iy++) {
+
+	/* Interpolate to given log-pressure height... */
+	intpol_met_space(met, p, lons[ix], lats[iy], &ps, &pt,
+			 &z, &t, &u, &v, &w, &pv, &h2o, &o3);
+
+	/* Get tropopause data... */
+	intpol_met_space(met, pt, lons[ix], lats[iy], NULL, NULL,
+			 &zt, &tt, NULL, NULL, NULL, NULL, NULL, NULL);
+
+	/* Sum up data... */
 	timem[ix][iy] += met->time;
-	zm[ix][iy] += met->z[ix][iy][ip];
-	tm[ix][iy] += met->t[ix][iy][ip];
-	um[ix][iy] += met->u[ix][iy][ip];
-	vm[ix][iy] += met->v[ix][iy][ip];
-	wm[ix][iy] += met->w[ix][iy][ip];
-	pvm[ix][iy] += met->pv[ix][iy][ip];
-	h2om[ix][iy] += met->h2o[ix][iy][ip];
-	o3m[ix][iy] += met->o3[ix][iy][ip];
-	psm[ix][iy] += met->ps[ix][iy];
-	ptm[ix][iy] += met->pt[ix][iy];
+	zm[ix][iy] += z;
+	tm[ix][iy] += t;
+	um[ix][iy] += u;
+	vm[ix][iy] += v;
+	wm[ix][iy] += w;
+	pvm[ix][iy] += pv;
+	h2om[ix][iy] += h2o;
+	o3m[ix][iy] += o3;
+	psm[ix][iy] += ps;
+	ptm[ix][iy] += pt;
 	ztm[ix][iy] += zt;
 	ttm[ix][iy] += tt;
 	np[ix][iy]++;
@@ -116,30 +146,17 @@ int main(
 	  "# $17 = tropopause temperature [K]\n");
 
   /* Write data... */
-  for (iy = 0; iy < met->ny; iy++) {
+  for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
-    for (ix = 0; ix < met->nx; ix++)
-      if (met->lon[ix] >= 180)
-	fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-		timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
-		met->lon[ix] - 360.0, met->lat[iy], met->p[ip],
-		tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
-		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
-		h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
-		zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
-		psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy],
-		ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy]);
-    for (ix = 0; ix < met->nx; ix++)
-      if (met->lon[ix] <= 180)
-	fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-		timem[ix][iy] / np[ix][iy], Z(met->p[ip]),
-		met->lon[ix], met->lat[iy], met->p[ip],
-		tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
-		vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
-		h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
-		zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
-		psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy],
-		ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy]);
+    for (ix = 0; ix < nx; ix++)
+      fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      timem[ix][iy] / np[ix][iy], Z(p), lons[ix], lats[iy], p,
+	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
+	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
+	      h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
+	      zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
+	      psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy],
+	      ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

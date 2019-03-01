@@ -40,12 +40,12 @@ int main(
   ALLOC(atm, atm_t, 1);
 
   /* Check arguments... */
-  if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <trajec.tab> <atm1> [<atm2> ...]");
+  if (argc < 5)
+    ERRMSG("Give parameters: <ctl> <trajec.tab> <ip> <atm1> [<atm2> ...]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  ip = (int) scan_ctl(argv[1], argc, argv, "EXTRACT_IP", -1, "0", NULL);
+  ip = atoi(argv[3]);
 
   /* Write info... */
   printf("Write trajectory data: %s\n", argv[2]);
@@ -65,7 +65,7 @@ int main(
   fprintf(out, "\n");
 
   /* Loop over files... */
-  for (f = 3; f < argc; f++) {
+  for (f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
     if (!(in = fopen(argv[f], "r")))
@@ -73,6 +73,10 @@ int main(
     else
       fclose(in);
     read_atm(argv[f], &ctl, atm);
+
+    /* Check air parcel index... */
+    if (ip > atm->np)
+      ERRMSG("Air parcel index out of range!");
 
     /* Write data... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip],

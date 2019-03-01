@@ -46,7 +46,7 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <metbase> <atm_in> <sample.tab>");
+    ERRMSG("Give parameters: <ctl> <sample.tab> <metbase> <atm_in>");
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -59,11 +59,11 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "MET_SAMPLE_GEOPOT", -1, "0", NULL);
 
   /* Read atmospheric data... */
-  read_atm(argv[3], &ctl, atm);
+  read_atm(argv[4], &ctl, atm);
 
   /* Create output file... */
-  printf("Write meteorological data file: %s\n", argv[4]);
-  if (!(out = fopen(argv[4], "w")))
+  printf("Write meteorological data file: %s\n", argv[2]);
+  if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 
   /* Write header... */
@@ -91,7 +91,7 @@ int main(
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    get_met(&ctl, argv[2], atm->time[ip], &met0, &met1);
+    get_met(&ctl, argv[3], atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
     pref = atm->p[ip];
