@@ -56,7 +56,7 @@ int main(
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
   geopot =
-    (int) scan_ctl(argv[1], argc, argv, "MET_SAMPLE_GEOPOT", -1, "0", NULL);
+    (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GEOPOT", -1, "0", NULL);
 
   /* Read atmospheric data... */
   if (!read_atm(argv[4], &ctl, atm))

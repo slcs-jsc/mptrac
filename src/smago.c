@@ -47,7 +47,7 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  z = scan_ctl(argv[1], argc, argv, "Z", -1, "", NULL);
+  z = scan_ctl(argv[1], argc, argv, "SMAGO_Z", -1, "", NULL);
 
   /* Read meteorological data... */
   if (!read_met(&ctl, argv[3], met))
