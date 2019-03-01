@@ -750,6 +750,12 @@ void get_met_help(
   double dt_met,
   char *filename);
 
+/*! Replace template strings in filename. */
+void get_met_replace(
+  char *orig,
+  char *search,
+  char *repl);
+
 /*! Linear interpolation of 2-D meteorological data. */
 void intpol_met_2d(
   double array[EX][EY],

@@ -580,6 +580,8 @@ void get_met_help(
   double dt_met,
   char *filename) {
 
+  char repl[LEN];
+
   double t6, r;
 
   int year, mon, day, hour, min, sec;
@@ -594,7 +596,40 @@ void get_met_help(
   jsec2time(t6, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Set filename... */
-  sprintf(filename, "%s_%d_%02d_%02d_%02d.nc", metbase, year, mon, day, hour);
+  sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
+  sprintf(repl, "%d", year);
+  get_met_replace(filename, "YYYY", repl);
+  sprintf(repl, "%02d", mon);
+  get_met_replace(filename, "MM", repl);
+  sprintf(repl, "%02d", day);
+  get_met_replace(filename, "DD", repl);
+  sprintf(repl, "%02d", hour);
+  get_met_replace(filename, "HH", repl);
+}
+
+/*****************************************************************************/
+
+void get_met_replace(
+  char *orig,
+  char *search,
+  char *repl) {
+
+  char buffer[LEN], *ch;
+
+  int i;
+
+  /* Iterate... */
+  for (i = 0; i < 3; i++) {
+
+    /* Replace substring... */
+    if (!(ch = strstr(orig, search)))
+      return;
+    strncpy(buffer, orig, (size_t) (ch - orig));
+    buffer[ch - orig] = 0;
+    sprintf(buffer + (ch - orig), "%s%s", repl, ch + strlen(search));
+    orig[0] = 0;
+    strcpy(orig, buffer);
+  }
 }
 
 /*****************************************************************************/
