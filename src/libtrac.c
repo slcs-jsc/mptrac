@@ -1654,10 +1654,10 @@ void read_met_geopot(
     }
 
   /* Smooth fields... */
-#pragma omp parallel for default(shared) private(ip,ix,iy,n,ix2,ix3,iy2,data)
   for (ip = 0; ip < met->np; ip++) {
-
+    
     /* Median filter... */
+#pragma omp parallel for default(shared) private(ix,iy,n,ix2,ix3,iy2,data)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->nx; iy++) {
 	n = 0;
@@ -1683,6 +1683,7 @@ void read_met_geopot(
       }
 
     /* Copy data... */
+#pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->nx; iy++)
 	met->z[ix][iy][ip] = help[ix][iy];
