@@ -1359,7 +1359,7 @@ int read_met(
 
   char cmd[2 * LEN], levname[LEN], tstr[10];
 
-  static float help[EX * EY];
+  float help[EX * EY];
 
   int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
 
@@ -1700,7 +1700,7 @@ void read_met_help(
   float dest[EX][EY][EP],
   float scl) {
 
-  static float help[EX * EY * EP];
+  float *help;
 
   int ip, ix, iy, varid;
 
@@ -1708,6 +1708,9 @@ void read_met_help(
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
       return;
+
+  /* Allocate... */
+  ALLOC(help, float, met->nx * met->ny * met->np);
 
   /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
@@ -1723,6 +1726,9 @@ void read_met_help(
 	else
 	  dest[ix][iy][ip] = GSL_NAN;
       }
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/
