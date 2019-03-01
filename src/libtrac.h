@@ -830,7 +830,7 @@ int locate_reg(
   double x);
 
 /*! Read atmospheric data. */
-void read_atm(
+int read_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
@@ -843,7 +843,7 @@ void read_ctl(
   ctl_t * ctl);
 
 /*! Read meteorological data file. */
-void read_met(
+int read_met(
   ctl_t * ctl,
   char *filename,
   met_t * met);

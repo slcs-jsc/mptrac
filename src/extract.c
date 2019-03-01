@@ -32,7 +32,7 @@ int main(
 
   atm_t *atm;
 
-  FILE *in, *out;
+  FILE *out;
 
   int f, ip, iq;
 
@@ -68,11 +68,8 @@ int main(
   for (f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
-    if (!(in = fopen(argv[f], "r")))
+    if (!read_atm(argv[f], &ctl, atm))
       continue;
-    else
-      fclose(in);
-    read_atm(argv[f], &ctl, atm);
 
     /* Check air parcel index... */
     if (ip > atm->np)

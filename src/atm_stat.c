@@ -39,7 +39,7 @@ int main(
   double lat0, lat1, latm, lon0, lon1, lonm, p0, p1,
     t, t0, qm[NQ], *work, zm, *zs;
 
-  int ens, f, ip, iq, year, mon, day, hour, min;
+  int ens, f, init = 0, ip, iq, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -86,7 +86,8 @@ int main(
   for (f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
-    read_atm(argv[f], &ctl, atm);
+    if (!read_atm(argv[f], &ctl, atm))
+      continue;
 
     /* Get time from filename... */
     sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
@@ -102,8 +103,10 @@ int main(
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
     /* Save intial time... */
-    if (f == 4)
+    if (!init) {
+      init = 1;
       t0 = t;
+    }
 
     /* Filter data... */
     atm_filt->np = 0;

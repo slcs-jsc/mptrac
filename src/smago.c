@@ -50,7 +50,8 @@ int main(
   z = scan_ctl(argv[1], argc, argv, "Z", -1, "", NULL);
 
   /* Read meteorological data... */
-  read_met(&ctl, argv[3], met);
+  if (!read_met(&ctl, argv[3], met))
+    ERRMSG("Cannot open file!");
 
   /* Find nearest pressure level... */
   for (ip2 = 0; ip2 < met->np; ip2++) {

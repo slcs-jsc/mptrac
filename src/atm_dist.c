@@ -41,7 +41,7 @@ int main(
     *lv1, *lv2, p0, p1, *rhtd, *rqtd, *rvtd, rhtdm, rqtdm[NQ], rvtdm,
     t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work;
 
-  int ens, f, ip, iq, np, year, mon, day, hour, min;
+  int ens, f, init = 0, ip, iq, np, year, mon, day, hour, min;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -124,8 +124,8 @@ int main(
   for (f = 4; f < argc; f += 2) {
 
     /* Read atmopheric data... */
-    read_atm(argv[f], &ctl, atm1);
-    read_atm(argv[f + 1], &ctl, atm2);
+    if (!read_atm(argv[f], &ctl, atm1) || !read_atm(argv[f + 1], &ctl, atm2))
+      continue;
 
     /* Check if structs match... */
     if (atm1->np != atm2->np)
@@ -145,8 +145,10 @@ int main(
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
     /* Save initial time... */
-    if (f == 4)
+    if (!init) {
+      init = 1;
       t0 = t;
+    }
 
     /* Init... */
     np = 0;

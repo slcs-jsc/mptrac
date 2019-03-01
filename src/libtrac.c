@@ -528,10 +528,12 @@ void get_met(
     init = 1;
 
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, *met0);
+    if (!read_met(ctl, filename, *met0))
+      ERRMSG("Cannot open file!");
 
     get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, *met1);
+    if (!read_met(ctl, filename, *met1))
+      ERRMSG("Cannot open file!");
   }
 
   /* Read new data for forward trajectories... */
@@ -540,7 +542,8 @@ void get_met(
     *met1 = *met0;
     *met0 = mets;
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, *met1);
+    if (!read_met(ctl, filename, *met1))
+      ERRMSG("Cannot open file!");
   }
 
   /* Read new data for backward trajectories... */
@@ -549,7 +552,8 @@ void get_met(
     *met1 = *met0;
     *met0 = mets;
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
-    read_met(ctl, filename, *met0);
+    if (!read_met(ctl, filename, *met0))
+      ERRMSG("Cannot open file!");
   }
 
   /* Check that grids are consistent... */
@@ -867,7 +871,7 @@ int locate_reg(
 
 /*****************************************************************************/
 
-void read_atm(
+int read_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm) {
@@ -893,7 +897,7 @@ void read_atm(
 
     /* Open file... */
     if (!(in = fopen(filename, "r")))
-      ERRMSG("Cannot open file!");
+      return -1;
 
     /* Read line... */
     while (fgets(line, LEN, in)) {
@@ -923,12 +927,10 @@ void read_atm(
 
     /* Open file... */
     if (!(in = fopen(filename, "r")))
-      ERRMSG("Cannot open file!");
+      return -1;
 
     /* Read data... */
-    FREAD(&atm->np, int,
-	  1,
-	  in);
+    FREAD(&atm->np, int, 1, in);
     FREAD(atm->time, double,
 	    (size_t) atm->np,
 	  in);
@@ -954,7 +956,8 @@ void read_atm(
   else if (ctl->atm_type == 2) {
 
     /* Open file... */
-    NC(nc_open(filename, NC_NOWRITE, &ncid));
+    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+      return -1;
 
     /* Get dimensions... */
     NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
@@ -1039,6 +1042,9 @@ void read_atm(
   /* Check number of points... */
   if (atm->np < 1)
     ERRMSG("Can not read any data!");
+
+  /* Return success... */
+  return 0;
 }
 
 /*****************************************************************************/
@@ -1311,7 +1317,7 @@ void read_ctl(
 
 /*****************************************************************************/
 
-void read_met(
+int read_met(
   ctl_t * ctl,
   char *filename,
   met_t * met) {
@@ -1350,7 +1356,8 @@ void read_met(
     }
 
     /* Try to open again... */
-    NC(nc_open(filename, NC_NOWRITE, &ncid));
+    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+      return -1;
   }
 
   /* Get dimensions... */
@@ -1467,6 +1474,9 @@ void read_met(
 
   /* Close file... */
   NC(nc_close(ncid));
+
+  /* Return success... */
+  return 0;
 }
 
 /*****************************************************************************/

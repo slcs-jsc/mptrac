@@ -75,7 +75,8 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    read_met(&ctl, argv[i], met);
+    if (!read_met(&ctl, argv[i], met))
+      continue;
 
     /* Average... */
     for (z = z0; z <= z1; z += dz) {

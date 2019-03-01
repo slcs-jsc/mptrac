@@ -59,7 +59,8 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "MET_SAMPLE_GEOPOT", -1, "0", NULL);
 
   /* Read atmospheric data... */
-  read_atm(argv[4], &ctl, atm);
+  if (!read_atm(argv[4], &ctl, atm))
+    ERRMSG("Cannot open file!");
 
   /* Create output file... */
   printf("Write meteorological data file: %s\n", argv[2]);

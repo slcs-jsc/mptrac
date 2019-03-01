@@ -63,7 +63,8 @@ int main(
   for (i = 4; i < argc; i++) {
 
     /* Read meteorological data... */
-    read_met(&ctl, argv[i], met);
+    if (!read_met(&ctl, argv[i], met))
+      continue;
 
     /* Set horizontal grid... */
     if (dlon <= 0)

@@ -184,7 +184,8 @@ int main(
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
-    read_atm(filename, &ctl, atm);
+    if (!read_atm(filename, &ctl, atm))
+      ERRMSG("Cannot open file!");
 
     /* Set start time... */
     if (ctl.direction == 1) {

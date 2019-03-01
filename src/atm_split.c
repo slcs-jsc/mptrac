@@ -68,7 +68,8 @@ int main(
   rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Read atmospheric data... */
-  read_atm(argv[2], &ctl, atm);
+  if (!read_atm(argv[2], &ctl, atm))
+    ERRMSG("Cannot open file!");
 
   /* Get total and maximum mass... */
   if (ctl.qnt_m >= 0)

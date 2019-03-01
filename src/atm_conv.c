@@ -45,7 +45,8 @@ int main(
 
   /* Read atmospheric data... */
   ctl.atm_type = atoi(argv[3]);
-  read_atm(argv[2], &ctl, atm);
+  if (!read_atm(argv[2], &ctl, atm))
+    ERRMSG("Cannot open file!");
 
   /* Write atmospheric data... */
   ctl.atm_type = atoi(argv[5]);

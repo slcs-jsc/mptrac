@@ -54,7 +54,8 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    read_met(&ctl, argv[i], met);
+    if (!read_met(&ctl, argv[i], met))
+      continue;
 
     /* Average data... */
     for (ix = 0; ix < met->nx; ix++)
