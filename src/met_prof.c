@@ -61,15 +61,15 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  z0 = scan_ctl(argv[1], argc, argv, "Z0", -1, "0", NULL);
-  z1 = scan_ctl(argv[1], argc, argv, "Z1", -1, "60", NULL);
-  dz = scan_ctl(argv[1], argc, argv, "DZ", -1, "1", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "0", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "0", NULL);
-  dlon = scan_ctl(argv[1], argc, argv, "DLON", -1, "1", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "0", NULL);
-  dlat = scan_ctl(argv[1], argc, argv, "DLAT", -1, "1", NULL);
+  z0 = scan_ctl(argv[1], argc, argv, "PROF_Z0", -1, "0", NULL);
+  z1 = scan_ctl(argv[1], argc, argv, "PROF_Z1", -1, "60", NULL);
+  dz = scan_ctl(argv[1], argc, argv, "PROF_DZ", -1, "1", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "PROF_LON0", -1, "", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "PROF_LON1", -1, "", NULL);
+  dlon = scan_ctl(argv[1], argc, argv, "PROF_DLON", -1, "-999", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "PROF_LAT0", -1, "", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "PROF_LAT1", -1, "", NULL);
+  dlat = scan_ctl(argv[1], argc, argv, "PROF_DLAT", -1, "-999", NULL);
 
   /* Loop over input files... */
   for (i = 3; i < argc; i++) {
@@ -77,6 +77,12 @@ int main(
     /* Read meteorological data... */
     if (!read_met(&ctl, argv[i], met))
       continue;
+
+    /* Set horizontal grid spacing... */
+    if (dlon <= 0)
+      dlon = fabs(met->lon[1] - met->lon[0]);
+    if (dlat <= 0)
+      dlat = fabs(met->lat[1] - met->lat[0]);
 
     /* Average... */
     for (z = z0; z <= z1; z += dz) {

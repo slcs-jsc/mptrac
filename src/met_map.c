@@ -34,7 +34,7 @@ int main(
 
   FILE *out;
 
-  static double timem[EX][EY], p, ps, psm[EX][EY], pt, ptm[EX][EY], t,
+  static double timem[EX][EY], p0, ps, psm[EX][EY], pt, ptm[EX][EY], t,
     tm[EX][EY], u, um[EX][EY], v, vm[EX][EY], w, wm[EX][EY], h2o,
     h2om[EX][EY], o3, o3m[EX][EY], z, zm[EX][EY], pv, pvm[EX][EY], zt,
     ztm[EX][EY], tt, ttm[EX][EY], lon, lon0, lon1, lons[EX], dlon, lat, lat0,
@@ -51,13 +51,13 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  p = P(scan_ctl(argv[1], argc, argv, "Z0", -1, "", NULL));
-  lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "-180", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "180", NULL);
-  dlon = scan_ctl(argv[1], argc, argv, "DLON", -1, "-999", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "-90", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "90", NULL);
-  dlat = scan_ctl(argv[1], argc, argv, "DLAT", -1, "-999", NULL);
+  p0 = P(scan_ctl(argv[1], argc, argv, "MAP_Z0", -1, "", NULL));
+  lon0 = scan_ctl(argv[1], argc, argv, "MAP_LON0", -1, "-180", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "MAP_LON1", -1, "180", NULL);
+  dlon = scan_ctl(argv[1], argc, argv, "MAP_DLON", -1, "-999", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "MAP_LAT0", -1, "-90", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
+  dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
@@ -96,7 +96,7 @@ int main(
       for (iy = 0; iy < ny; iy++) {
 
 	/* Interpolate to given log-pressure height... */
-	intpol_met_space(met, p, lons[ix], lats[iy], &ps, &pt,
+	intpol_met_space(met, p0, lons[ix], lats[iy], &ps, &pt,
 			 &z, &t, &u, &v, &w, &pv, &h2o, &o3);
 
 	/* Get tropopause data... */
@@ -152,7 +152,7 @@ int main(
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
       fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	      timem[ix][iy] / np[ix][iy], Z(p), lons[ix], lats[iy], p,
+	      timem[ix][iy] / np[ix][iy], Z(p0), lons[ix], lats[iy], p0,
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
 	      h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
