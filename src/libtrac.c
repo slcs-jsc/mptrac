@@ -897,7 +897,7 @@ int read_atm(
 
     /* Open file... */
     if (!(in = fopen(filename, "r")))
-      return -1;
+      return 0;
 
     /* Read line... */
     while (fgets(line, LEN, in)) {
@@ -927,7 +927,7 @@ int read_atm(
 
     /* Open file... */
     if (!(in = fopen(filename, "r")))
-      return -1;
+      return 0;
 
     /* Read data... */
     FREAD(&atm->np, int, 1, in);
@@ -957,7 +957,7 @@ int read_atm(
 
     /* Open file... */
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
-      return -1;
+      return 0;
 
     /* Get dimensions... */
     NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
@@ -1044,7 +1044,7 @@ int read_atm(
     ERRMSG("Can not read any data!");
 
   /* Return success... */
-  return 0;
+  return 1;
 }
 
 /*****************************************************************************/
@@ -1346,7 +1346,7 @@ int read_met(
 
     /* Try to open again... */
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
-      return -1;
+      return 0;
   }
 
   /* Get time from filename... */
@@ -1476,7 +1476,7 @@ int read_met(
   NC(nc_close(ncid));
 
   /* Return success... */
-  return 0;
+  return 1;
 }
 
 /*****************************************************************************/
