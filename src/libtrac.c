@@ -1333,17 +1333,6 @@ int read_met(
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
-  /* Get time from filename... */
-  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
-  year = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
-  mon = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
-  day = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-  hour = atoi(tstr);
-  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
-
   /* Open netCDF file... */
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
 
@@ -1359,6 +1348,17 @@ int read_met(
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
       return -1;
   }
+
+  /* Get time from filename... */
+  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
+  year = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
+  mon = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
+  day = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+  hour = atoi(tstr);
+  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Get dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));

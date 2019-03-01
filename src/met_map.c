@@ -46,21 +46,21 @@ int main(
   ALLOC(met, met_t, 1);
 
   /* Check arguments... */
-  if (argc < 5)
-    ERRMSG("Give parameters: <ctl> <map.tab> <z> <met0> [ <met1> ... ]");
+  if (argc < 4)
+    ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  p = P(scan_ctl(argv[1], argc, argv, "Z0", -1, "", NULL));
   lon0 = scan_ctl(argv[1], argc, argv, "LON0", -1, "-180", NULL);
   lon1 = scan_ctl(argv[1], argc, argv, "LON1", -1, "180", NULL);
   dlon = scan_ctl(argv[1], argc, argv, "DLON", -1, "-999", NULL);
   lat0 = scan_ctl(argv[1], argc, argv, "LAT0", -1, "-90", NULL);
   lat1 = scan_ctl(argv[1], argc, argv, "LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "DLAT", -1, "-999", NULL);
-  p = P(atof(argv[3]));
 
   /* Loop over files... */
-  for (i = 4; i < argc; i++) {
+  for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
     if (!read_met(&ctl, argv[i], met))
@@ -75,6 +75,7 @@ int main(
       lon0 = gsl_stats_min(met->lon, 1, (size_t) met->nx);
       lon1 = gsl_stats_max(met->lon, 1, (size_t) met->nx);
     }
+    nx = ny = 0;
     for (lon = lon0; lon <= lon1; lon += dlon) {
       lons[nx] = lon;
       if ((++nx) > EX)
