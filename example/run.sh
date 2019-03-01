@@ -39,6 +39,7 @@ for f in $(ls data/atm_2011*tab) ; do
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
+set size ratio 0.75
 set pal def
 set cbra [5:15]
 set cbla "altitude [km]"
@@ -66,6 +67,7 @@ for f in $(ls data/grid*tab) ; do
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
+set size ratio 0.75
 set pm3d map
 set pal def (0 'gray90', 1 'blue', 2 'cyan', 3 'green', 4 'yellow', 5 'orange', 6 'red')
 set cbla "column density [g/m^2]"

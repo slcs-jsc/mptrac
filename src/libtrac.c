@@ -2704,15 +2704,11 @@ void write_grid(
   static double mass[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
     area, rho_air, press, temp, cd, vmr, t0, t1, r;
 
-  static int ip, ix, iy, iz, year, mon, day, hour, min, sec;
+  static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec;
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
     ERRMSG("Grid dimensions too large!");
-
-  /* Check quantity index for mass... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Need quantity mass!");
 
   /* Set time interval for output... */
   t0 = t - 0.5 * ctl->dt_mod;
@@ -2727,8 +2723,10 @@ void write_grid(
 #pragma omp parallel for default(shared) private(ix,iy,iz)
   for (ix = 0; ix < ctl->grid_nx; ix++)
     for (iy = 0; iy < ctl->grid_ny; iy++)
-      for (iz = 0; iz < ctl->grid_nz; iz++)
+      for (iz = 0; iz < ctl->grid_nz; iz++) {
 	mass[ix][iy][iz] = 0;
+	np[ix][iy][iz] = 0;
+      }
 
   /* Average data... */
 #pragma omp parallel for default(shared) private(ip,ix,iy,iz)
@@ -2746,7 +2744,9 @@ void write_grid(
 	continue;
 
       /* Add mass... */
-      mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+      if (ctl->qnt_m >= 0)
+	mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+      np[ix][iy][iz]++;
     }
 
   /* Check if gnuplot output is requested... */
@@ -2793,7 +2793,7 @@ void write_grid(
 	  "# $4 = latitude [deg]\n"
 	  "# $5 = surface area [km^2]\n"
 	  "# $6 = layer width [km]\n"
-	  "# $7 = temperature [K]\n"
+	  "# $7 = number of particles [1]\n"
 	  "# $8 = column density [kg/m^2]\n"
 	  "# $9 = volume mixing ratio [1]\n\n");
 
@@ -2830,8 +2830,8 @@ void write_grid(
 	    / (rho_air * 1e6 * area * 1e3 * dz);
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g\n",
-		  t, z, lon, lat, area, dz, temp, cd, vmr);
+	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g\n",
+		  t, z, lon, lat, area, dz, np[ix][iy][iz], cd, vmr);
 	}
     }
   }
