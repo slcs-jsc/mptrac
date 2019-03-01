@@ -68,7 +68,7 @@ int main(
   for (f = 3; f < argc; f++) {
 
     /* Read atmopheric data... */
-    if (!read_atm(argv[f], &ctl, atm) != 0)
+    if (!read_atm(argv[f], &ctl, atm))
       continue;
 
     /* Check air parcel index... */
