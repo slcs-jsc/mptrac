@@ -11,7 +11,7 @@
 # module purge && module load Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_split atm_stat day2doy doy2day extract jsec2time met_map met_prof met_sample met_zm smago time2jsec trac wind
+EXC = atm_conv atm_dist atm_init atm_split atm_stat day2doy doy2day extract jsec2time met_map met_prof met_sample met_zm time2jsec trac
 
 # Library directories...
 LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
