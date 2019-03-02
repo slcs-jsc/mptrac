@@ -634,13 +634,12 @@ void get_met_replace(
 
 /*****************************************************************************/
 
-void intpol_met_2d(
+double intpol_met_2d(
   double array[EX][EY],
   int ix,
   int iy,
   double wx,
-  double wy,
-  double *var) {
+  double wy) {
 
   double aux00, aux01, aux10, aux11;
 
@@ -653,20 +652,19 @@ void intpol_met_2d(
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
-  *var = wx * (aux00 - aux11) + aux11;
+  return wx * (aux00 - aux11) + aux11;
 }
 
 /*****************************************************************************/
 
-void intpol_met_3d(
+double intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
   int ix,
   int iy,
   double wp,
   double wx,
-  double wy,
-  double *var) {
+  double wy) {
 
   double aux00, aux01, aux10, aux11;
 
@@ -683,7 +681,7 @@ void intpol_met_3d(
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
   aux11 = wy * (aux10 - aux11) + aux11;
-  *var = wx * (aux00 - aux11) + aux11;
+  return wx * (aux00 - aux11) + aux11;
 }
 
 /*****************************************************************************/
@@ -724,25 +722,25 @@ void intpol_met_space(
 
   /* Interpolate... */
   if (ps != NULL)
-    intpol_met_2d(met->ps, ix, iy, wx, wy, ps);
+    *ps = intpol_met_2d(met->ps, ix, iy, wx, wy);
   if (pt != NULL)
-    intpol_met_2d(met->pt, ix, iy, wx, wy, pt);
+    *pt = intpol_met_2d(met->pt, ix, iy, wx, wy);
   if (z != NULL)
-    intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy, z);
+    *z = intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy);
   if (t != NULL)
-    intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy, t);
+    *t = intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy);
   if (u != NULL)
-    intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy, u);
+    *u = intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy);
   if (v != NULL)
-    intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy, v);
+    *v = intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy);
   if (w != NULL)
-    intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy, w);
+    *w = intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy);
   if (pv != NULL)
-    intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy, pv);
+    *pv = intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy);
   if (h2o != NULL)
-    intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy, h2o);
+    *h2o = intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy);
   if (o3 != NULL)
-    intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy, o3);
+    *o3 = intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy);
 }
 
 /*****************************************************************************/

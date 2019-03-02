@@ -757,24 +757,22 @@ void get_met_replace(
   char *repl);
 
 /*! Linear interpolation of 2-D meteorological data. */
-void intpol_met_2d(
+double intpol_met_2d(
   double array[EX][EY],
   int ix,
   int iy,
   double wx,
-  double wy,
-  double *var);
+  double wy);
 
 /*! Linear interpolation of 3-D meteorological data. */
-void intpol_met_3d(
+double intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
   int ix,
   int iy,
   double wp,
   double wx,
-  double wy,
-  double *var);
+  double wy);
 
 /*! Spatial interpolation of meteorological data. */
 void intpol_met_space(
