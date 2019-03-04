@@ -34,10 +34,14 @@ int main(
 
   gsl_rng *rng;
 
-  double m, mtot = 0, dt, dx, dz, mmax = 0,
-    t0, t1, z0, z1, lon0, lon1, lat0, lat1;
+  FILE *in;
 
-  int i, ip, iq, n;
+  char kernel[LEN], line[LEN];
+
+  double dt, dx, dz, k, kk[GZ], kz[GZ], kmin, kmax, m, mmax = 0, mtot = 0,
+    t0, t1, z, z0, z1, lon0, lon1, lat0, lat1;
+
+  int i, ip, iq, iz, n, nz = 0;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -62,6 +66,7 @@ int main(
   lon1 = scan_ctl(argv[1], argc, argv, "SPLIT_LON1", -1, "0", NULL);
   lat0 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT0", -1, "0", NULL);
   lat1 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT1", -1, "0", NULL);
+  scan_ctl(argv[1], argc, argv, "SPLIT_KERNEL", -1, "-", kernel);
 
   /* Init random number generator... */
   gsl_rng_env_setup();
@@ -70,6 +75,32 @@ int main(
   /* Read atmospheric data... */
   if (!read_atm(argv[2], &ctl, atm))
     ERRMSG("Cannot open file!");
+
+  /* Read kernel function... */
+  if (kernel[0] != '-') {
+
+    /* Write info... */
+    printf("Read kernel function: %s\n", kernel);
+
+    /* Open file... */
+    if (!(in = fopen(kernel, "r")))
+      ERRMSG("Cannot open file!");
+
+    /* Read data... */
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%lg %lg", &kz[nz], &kk[nz]) == 2)
+	if ((++nz) >= GZ)
+	  ERRMSG("Too many height levels!");
+
+    /* Close file... */
+    fclose(in);
+
+    /* Normalize kernel function... */
+    kmax = gsl_stats_max(kk, 1, (size_t) nz);
+    kmin = gsl_stats_min(kk, 1, (size_t) nz);
+    for (iz = 0; iz < nz; iz++)
+      kk[iz] = (kk[iz] - kmin) / (kmax - kmin);
+  }
 
   /* Get total and maximum mass... */
   if (ctl.qnt_m >= 0)
@@ -99,7 +130,14 @@ int main(
 	+ gsl_ran_gaussian_ziggurat(rng, dt / 2.3548);
 
     /* Set vertical position... */
-    if (z1 > z0)
+    if (nz > 0) {
+      do {
+	z = kmin + (kmax - kmin) * gsl_rng_uniform_pos(rng);
+	iz = locate_irr(kz, nz, z);
+	k = LIN(kz[iz], kk[iz], kz[iz + 1], kk[iz + 1], z);
+      } while (gsl_rng_uniform(rng) > k);
+      atm2->p[atm2->np] = P(z);
+    } else if (z1 > z0)
       atm2->p[atm2->np] = P(z0 + (z1 - z0) * gsl_rng_uniform_pos(rng));
     else
       atm2->p[atm2->np] = atm->p[ip]
