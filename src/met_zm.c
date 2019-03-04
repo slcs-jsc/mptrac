@@ -24,6 +24,20 @@
 
 #include "libtrac.h"
 
+/* ------------------------------------------------------------
+   Dimensions...
+   ------------------------------------------------------------ */
+
+/*! Maximum number of altitudes. */
+#define NZ 1000
+
+/*! Maximum number of latitudes. */
+#define NY 721
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
+
 int main(
   int argc,
   char *argv[]) {
@@ -34,11 +48,12 @@ int main(
 
   FILE *out;
 
-  static double timem[EP][EY], psm[EP][EY], ptm[EP][EY], ttm[EP][EY],
-    ztm[EP][EY], tm[EP][EY], um[EP][EY], vm[EP][EY], wm[EP][EY], h2om[EP][EY],
-    pvm[EP][EY], o3m[EP][EY], zm[EP][EY], zt, tt;
+  static double timem[NZ][NY], psm[NZ][NY], ptm[NZ][NY], ttm[NZ][NY],
+    ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY],
+    pvm[NZ][NY], o3m[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ], ps,
+    pt, t, u, v, w, pv, h2o, o3, lat, lat0, lat1, dlat, lats[NY];
 
-  static int i, ip, ix, iy, np[EP][EY], npt[EP][EY];
+  static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz;
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -49,6 +64,12 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  z0 = scan_ctl(argv[1], argc, argv, "ZM_Z0", -1, "-999", NULL);
+  z1 = scan_ctl(argv[1], argc, argv, "ZM_Z1", -1, "-999", NULL);
+  dz = scan_ctl(argv[1], argc, argv, "ZM_DZ", -1, "-999", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "ZM_LAT0", -1, "-90", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "ZM_LAT1", -1, "90", NULL);
+  dlat = scan_ctl(argv[1], argc, argv, "ZM_DLAT", -1, "-999", NULL);
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
@@ -57,30 +78,65 @@ int main(
     if (!read_met(&ctl, argv[i], met))
       continue;
 
-    /* Average data... */
+    /* Set vertical grid... */
+    if (z0 < 0)
+      z0 = Z(met->p[0]);
+    if (z1 < 0)
+      z1 = Z(met->p[met->np - 1]);
+    nz = 0;
+    if (dz < 0) {
+      for (iz = 0; iz < met->np; iz++)
+	if (Z(met->p[iz]) >= z0 && Z(met->p[iz]) <= z1) {
+	  plev[nz] = met->p[iz];
+	  if ((++nz) > NZ)
+	    ERRMSG("Too many pressure levels!");
+	}
+    } else
+      for (z = z0; z <= z1; z += dz) {
+	plev[nz] = P(z);
+	if ((++nz) > NZ)
+	  ERRMSG("Too many pressure levels!");
+      }
+
+    /* Set horizontal grid... */
+    if (dlat <= 0)
+      dlat = fabs(met->lat[1] - met->lat[0]);
+    ny = 0;
+    if (lat0 < -90 && lat1 > 90) {
+      lat0 = gsl_stats_min(met->lat, 1, (size_t) met->ny);
+      lat1 = gsl_stats_max(met->lat, 1, (size_t) met->ny);
+    }
+    for (lat = lat0; lat <= lat1; lat += dlat) {
+      lats[ny] = lat;
+      if ((++ny) > NY)
+	ERRMSG("Too many latitudes!");
+    }
+
+    /* Average... */
     for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++)
-	for (ip = 0; ip < met->np; ip++) {
-	  intpol_met_space(met, met->pt[ix][iy], met->lon[ix], met->lat[iy],
-			   NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL,
-			   NULL);
-	  timem[ip][iy] += met->time;
-	  zm[ip][iy] += met->z[ix][iy][ip];
-	  tm[ip][iy] += met->t[ix][iy][ip];
-	  um[ip][iy] += met->u[ix][iy][ip];
-	  vm[ip][iy] += met->v[ix][iy][ip];
-	  wm[ip][iy] += met->w[ix][iy][ip];
-	  pvm[ip][iy] += met->pv[ix][iy][ip];
-	  h2om[ip][iy] += met->h2o[ix][iy][ip];
-	  o3m[ip][iy] += met->o3[ix][iy][ip];
-	  psm[ip][iy] += met->ps[ix][iy];
-	  if (gsl_finite(met->pt[ix][iy])) {
-	    ptm[ip][iy] += met->pt[ix][iy];
-	    ztm[ip][iy] += zt;
-	    ttm[ip][iy] += tt;
-	    npt[ip][iy]++;
+      for (iy = 0; iy < ny; iy++)
+	for (iz = 0; iz < nz; iz++) {
+	  intpol_met_space(met, plev[iz], met->lon[ix], lats[iy], &ps,
+			   &pt, &z, &t, &u, &v, &w, &pv, &h2o, &o3);
+	  intpol_met_space(met, pt, met->lon[ix], lats[iy], NULL, NULL,
+			   &zt, &tt, NULL, NULL, NULL, NULL, NULL, NULL);
+	  timem[iz][iy] += met->time;
+	  zm[iz][iy] += z;
+	  tm[iz][iy] += t;
+	  um[iz][iy] += u;
+	  vm[iz][iy] += v;
+	  wm[iz][iy] += w;
+	  pvm[iz][iy] += pv;
+	  h2om[iz][iy] += h2o;
+	  o3m[iz][iy] += o3;
+	  psm[iz][iy] += ps;
+	  if (gsl_finite(pt)) {
+	    ptm[iz][iy] += pt;
+	    ztm[iz][iy] += zt;
+	    ttm[iz][iy] += tt;
+	    npt[iz][iy]++;
 	  }
-	  np[ip][iy]++;
+	  np[iz][iy]++;
 	}
   }
 
@@ -91,17 +147,16 @@ int main(
 
   /* Write header... */
   fprintf(out,
-	  "# $1  = time [s]\n"
-	  "# $2  = altitude [km]\n"
-	  "# $3  = longitude [deg]\n"
-	  "# $4  = latitude [deg]\n"
-	  "# $5  = pressure [hPa]\n"
-	  "# $6  = temperature [K]\n"
-	  "# $7  = zonal wind [m/s]\n"
-	  "# $8  = meridional wind [m/s]\n"
-	  "# $9  = vertical wind [hPa/s]\n"
-	  "# $10 = H2O volume mixing ratio [1]\n");
+	  "# $1 = time [s]\n"
+	  "# $2 = altitude [km]\n"
+	  "# $3 = longitude [deg]\n"
+	  "# $4 = latitude [deg]\n"
+	  "# $5 = pressure [hPa]\n"
+	  "# $6 = temperature [K]\n"
+	  "# $7 = zonal wind [m/s]\n"
+	  "# $8 = meridional wind [m/s]\n" "# $9 = vertical wind [hPa/s]\n");
   fprintf(out,
+	  "# $10 = H2O volume mixing ratio [1]\n"
 	  "# $11 = O3 volume mixing ratio [1]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
@@ -111,17 +166,17 @@ int main(
 	  "# $17 = tropopause temperature [K]\n");
 
   /* Write data... */
-  for (ip = 0; ip < met->np; ip++) {
+  for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
-    for (iy = 0; iy < met->ny; iy++)
+    for (iy = 0; iy < ny; iy++)
       fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	      timem[ip][iy] / np[ip][iy], Z(met->p[ip]), 0.0, met->lat[iy],
-	      met->p[ip], tm[ip][iy] / np[ip][iy], um[ip][iy] / np[ip][iy],
-	      vm[ip][iy] / np[ip][iy], wm[ip][iy] / np[ip][iy],
-	      h2om[ip][iy] / np[ip][iy], o3m[ip][iy] / np[ip][iy],
-	      zm[ip][iy] / np[ip][iy], pvm[ip][iy] / np[ip][iy],
-	      psm[ip][iy] / np[ip][iy], ptm[ip][iy] / npt[ip][iy],
-	      ztm[ip][iy] / npt[ip][iy], ttm[ip][iy] / npt[ip][iy]);
+	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
+	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
+	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
+	      h2om[iz][iy] / np[iz][iy], o3m[iz][iy] / np[iz][iy],
+	      zm[iz][iy] / np[iz][iy], pvm[iz][iy] / np[iz][iy],
+	      psm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
+	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy]);
   }
 
   /* Close file... */

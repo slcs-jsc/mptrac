@@ -19,10 +19,24 @@
 
 /*! 
   \file
-  Extract global map from meteorological data.
+  Extract map from meteorological data.
 */
 
 #include "libtrac.h"
+
+/* ------------------------------------------------------------
+   Dimensions...
+   ------------------------------------------------------------ */
+
+/*! Maximum number of longitudes. */
+#define NX 1441
+
+/*! Maximum number of latitudes. */
+#define NY 721
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -34,13 +48,13 @@ int main(
 
   FILE *out;
 
-  static double timem[EX][EY], p0, ps, psm[EX][EY], pt, ptm[EX][EY], t,
-    tm[EX][EY], u, um[EX][EY], v, vm[EX][EY], w, wm[EX][EY], h2o,
-    h2om[EX][EY], o3, o3m[EX][EY], z, zm[EX][EY], pv, pvm[EX][EY], zt,
-    ztm[EX][EY], tt, ttm[EX][EY], lon, lon0, lon1, lons[EX], dlon, lat, lat0,
-    lat1, lats[EY], dlat;
+  static double timem[NX][NY], p0, ps, psm[NX][NY], pt, ptm[NX][NY], t,
+    tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
+    h2om[NX][NY], o3, o3m[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY], zt,
+    ztm[NX][NY], tt, ttm[NX][NY], lon, lon0, lon1, lons[NX], dlon, lat, lat0,
+    lat1, lats[NY], dlat;
 
-  static int i, ix, iy, np[EX][EY], nx, ny;
+  static int i, ix, iy, np[NX][NY], nx, ny;
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -78,7 +92,7 @@ int main(
     nx = ny = 0;
     for (lon = lon0; lon <= lon1; lon += dlon) {
       lons[nx] = lon;
-      if ((++nx) > EX)
+      if ((++nx) > NX)
 	ERRMSG("Too many longitudes!");
     }
     if (lat0 < -90 && lat1 > 90) {
@@ -87,23 +101,17 @@ int main(
     }
     for (lat = lat0; lat <= lat1; lat += dlat) {
       lats[ny] = lat;
-      if ((++ny) > EY)
+      if ((++ny) > NY)
 	ERRMSG("Too many latitudes!");
     }
 
-    /* Average data... */
+    /* Average... */
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
-
-	/* Interpolate to given log-pressure height... */
 	intpol_met_space(met, p0, lons[ix], lats[iy], &ps, &pt,
 			 &z, &t, &u, &v, &w, &pv, &h2o, &o3);
-
-	/* Get tropopause data... */
 	intpol_met_space(met, pt, lons[ix], lats[iy], NULL, NULL,
 			 &zt, &tt, NULL, NULL, NULL, NULL, NULL, NULL);
-
-	/* Sum up data... */
 	timem[ix][iy] += met->time;
 	zm[ix][iy] += z;
 	tm[ix][iy] += t;
@@ -128,17 +136,16 @@ int main(
 
   /* Write header... */
   fprintf(out,
-	  "# $1  = time [s]\n"
-	  "# $2  = altitude [km]\n"
-	  "# $3  = longitude [deg]\n"
-	  "# $4  = latitude [deg]\n"
-	  "# $5  = pressure [hPa]\n"
-	  "# $6  = temperature [K]\n"
-	  "# $7  = zonal wind [m/s]\n"
-	  "# $8  = meridional wind [m/s]\n"
-	  "# $9  = vertical wind [hPa/s]\n"
-	  "# $10 = H2O volume mixing ratio [1]\n");
+	  "# $1 = time [s]\n"
+	  "# $2 = altitude [km]\n"
+	  "# $3 = longitude [deg]\n"
+	  "# $4 = latitude [deg]\n"
+	  "# $5 = pressure [hPa]\n"
+	  "# $6 = temperature [K]\n"
+	  "# $7 = zonal wind [m/s]\n"
+	  "# $8 = meridional wind [m/s]\n" "# $9 = vertical wind [hPa/s]\n");
   fprintf(out,
+	  "# $10 = H2O volume mixing ratio [1]\n"
 	  "# $11 = O3 volume mixing ratio [1]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
