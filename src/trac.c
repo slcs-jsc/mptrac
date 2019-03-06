@@ -240,6 +240,13 @@ int main(
 	       fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.);
       STOP_TIMER(TIMER_INPUT);
 
+      /* Check initial position... */
+      START_TIMER(TIMER_POSITION);
+#pragma omp parallel for default(shared) private(ip)
+      for (ip = 0; ip < atm->np; ip++)
+	module_position(met0, met1, atm, ip);
+      STOP_TIMER(TIMER_POSITION);
+
       /* Initialize isosurface... */
       START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4 && t == ctl.t_start)
@@ -296,14 +303,14 @@ int main(
       }
       STOP_TIMER(TIMER_ISOSURF);
 
-      /* Position... */
+      /* Check final position... */
       START_TIMER(TIMER_POSITION);
 #pragma omp parallel for default(shared) private(ip)
       for (ip = 0; ip < atm->np; ip++)
 	module_position(met0, met1, atm, ip);
       STOP_TIMER(TIMER_POSITION);
 
-      /* Meteorological data... */
+      /* Interpolate meteorological data... */
       START_TIMER(TIMER_METEO);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0)) {
@@ -313,7 +320,7 @@ int main(
       }
       STOP_TIMER(TIMER_METEO);
 
-      /* Decay... */
+      /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
       if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
 #pragma omp parallel for default(shared) private(ip)
@@ -867,16 +874,16 @@ void module_position(
   while (atm->lon[ip] >= 180)
     atm->lon[ip] -= 360;
 
-  /* Get surface pressure... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		  NULL, NULL, NULL, NULL, NULL, NULL);
-
   /* Check pressure... */
-  if (atm->p[ip] > ps)
-    atm->p[ip] = ps;
-  else if (atm->p[ip] < met0->p[met0->np - 1])
+  if (atm->p[ip] < met0->p[met0->np - 1])
     atm->p[ip] = met0->p[met0->np - 1];
+  else if (atm->p[ip] > 300.) {
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+		    atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
+		    NULL, NULL, NULL, NULL, NULL, NULL);
+    if (atm->p[ip] > ps)
+      atm->p[ip] = ps;
+  }
 }
 
 /*****************************************************************************/
