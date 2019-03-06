@@ -1554,6 +1554,8 @@ void read_met_geopot(
 
   static double topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
 
+  static float help[EX][EY][EP];
+
   static int init, topo_nx = -1, topo_ny;
 
   FILE *in;
@@ -1561,8 +1563,6 @@ void read_met_geopot(
   char line[LEN];
 
   double lat, lon, rlat, rlon, rlon_old = -999, rz, ts, z0, z1;
-
-  float help[EX][EY];
 
   int ip, ip0, ix, ix2, ix3, iy, iy2, n, tx, ty;
 
@@ -1654,14 +1654,12 @@ void read_met_geopot(
     }
 
   /* Smoothing... */
-  for (ip = 0; ip < met->np; ip++) {
-
-    /* Compute running mean... */
-#pragma omp parallel for default(shared) private(ix,iy,n,ix2,ix3,iy2)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared) private(ix,iy,ip,n,ix2,ix3,iy2)
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++)
+      for (ip = 0; ip < met->np; ip++) {
 	n = 0;
-	help[ix][iy] = 0;
+	help[ix][iy][ip] = 0;
 	for (ix2 = ix - dx; ix2 <= ix + dx; ix2++) {
 	  ix3 = ix2;
 	  if (ix3 < 0)
@@ -1671,22 +1669,22 @@ void read_met_geopot(
 	  for (iy2 = GSL_MAX(iy - dy, 0);
 	       iy2 <= GSL_MIN(iy + dy, met->ny - 1); iy2++)
 	    if (gsl_finite(met->z[ix3][iy2][ip])) {
-	      help[ix][iy] += met->z[ix3][iy2][ip];
+	      help[ix][iy][ip] += met->z[ix3][iy2][ip];
 	      n++;
 	    }
 	}
 	if (n > 0)
-	  help[ix][iy] /= (float) n;
+	  help[ix][iy][ip] /= (float) n;
 	else
-	  help[ix][iy] = GSL_NAN;
+	  help[ix][iy][ip] = GSL_NAN;
       }
 
-    /* Copy data... */
-#pragma omp parallel for default(shared) private(ix,iy)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++)
-	met->z[ix][iy][ip] = help[ix][iy];
-  }
+  /* Copy data... */
+#pragma omp parallel for default(shared) private(ix,iy,ip)
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++)
+      for (ip = 0; ip < met->np; ip++)
+	met->z[ix][iy][ip] = help[ix][iy][ip];
 }
 
 /*****************************************************************************/
