@@ -1550,6 +1550,8 @@ void read_met_geopot(
   ctl_t * ctl,
   met_t * met) {
 
+  const int dx = 6, dy = 4;
+
   static double topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
 
   static int init, topo_nx = -1, topo_ny;
@@ -1558,7 +1560,7 @@ void read_met_geopot(
 
   char line[LEN];
 
-  double data[30], lat, lon, rlat, rlon, rlon_old = -999, rz, ts, z0, z1;
+  double lat, lon, rlat, rlon, rlon_old = -999, rz, ts, z0, z1;
 
   float help[EX][EY];
 
@@ -1590,7 +1592,7 @@ void read_met_geopot(
     while (fgets(line, LEN, in))
       if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rz) == 3) {
 	if (rlon != rlon_old) {
-	  if ((++topo_nx) >= EX)
+	  if ((++topo_nx) > EX)
 	    ERRMSG("Too many longitudes!");
 	  topo_ny = 0;
 	}
@@ -1598,10 +1600,10 @@ void read_met_geopot(
 	topo_lon[topo_nx] = rlon;
 	topo_lat[topo_ny] = rlat;
 	topo_z[topo_nx][topo_ny] = rz;
-	if ((++topo_ny) >= EY)
+	if ((++topo_ny) > EY)
 	  ERRMSG("Too many latitudes!");
       }
-    if ((++topo_nx) >= EX)
+    if ((++topo_nx) > EX)
       ERRMSG("Too many longitudes!");
 
     /* Close file... */
@@ -1651,32 +1653,31 @@ void read_met_geopot(
 		     * log(met->p[ip - 1] / met->p[ip]));
     }
 
-  /* Smooth fields... */
+  /* Smoothing... */
   for (ip = 0; ip < met->np; ip++) {
 
-    /* Median filter... */
-#pragma omp parallel for default(shared) private(ix,iy,n,ix2,ix3,iy2,data)
+    /* Compute running mean... */
+#pragma omp parallel for default(shared) private(ix,iy,n,ix2,ix3,iy2)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++) {
 	n = 0;
-	for (ix2 = ix - 2; ix2 <= ix + 2; ix2++) {
+	help[ix][iy] = 0;
+	for (ix2 = ix - dx; ix2 <= ix + dx; ix2++) {
 	  ix3 = ix2;
 	  if (ix3 < 0)
 	    ix3 += met->nx;
-	  if (ix3 >= met->nx)
+	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
-	  for (iy2 = GSL_MAX(iy - 2, 0); iy2 <= GSL_MIN(iy + 2, met->ny - 1);
-	       iy2++)
+	  for (iy2 = GSL_MAX(iy - dy, 0);
+	       iy2 <= GSL_MIN(iy + dy, met->ny - 1); iy2++)
 	    if (gsl_finite(met->z[ix3][iy2][ip])) {
-	      data[n] = met->z[ix3][iy2][ip];
+	      help[ix][iy] += met->z[ix3][iy2][ip];
 	      n++;
 	    }
 	}
-	if (n > 0) {
-	  gsl_sort(data, 1, (size_t) n);
-	  help[ix][iy] = (float)
-	    gsl_stats_median_from_sorted_data(data, 1, (size_t) n);
-	} else
+	if (n > 0)
+	  help[ix][iy] /= (float) n;
+	else
 	  help[ix][iy] = GSL_NAN;
       }
 
