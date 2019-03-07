@@ -1,4 +1,11 @@
-# Massive-Parallel Trajectory Calculations
+# Massive-Parallel Trajectory Calculations (MPTRAC)
+
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/slcs-jsc/mptrac.svg)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/w/slcs-jsc/mptrac.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)
+![GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)
+![GitHub](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)
 
 Massive-Parallel Trajectory Calculations (MPTRAC) is a
 Lagrangian particle dispersion model for the free troposphere
