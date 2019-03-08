@@ -10,17 +10,17 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ## Features
 
-* MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given meteorological wind fields.
+* MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given wind fields.
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using a Markov chain model.
 * Additional modules are implemented to simulate the sedimentation of particles and the decay of air parcel mass.
-* Various output methods for particle, ensemble, gridded, or station data. Gnuplot interface for direct visualization.
+* Various output methods for particle, ensemble, gridded, and station data. Gnuplot interface for direct visualization.
 * MPTRAC features an MPI/OpenMP hybrid parallelization for efficient use on supercomputers.
 
 ## Getting started
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The GNU Scientific Library (https://www.gnu.org/software/gsl) is required for numerical calculations and the Unidata netCDF library (http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries can be found in the git repository.
+This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries can be found in the git repository.
 
 Start by downloading the source code from the github repository:
 
@@ -64,17 +64,17 @@ Please see the example script run.sh on how to invoke programs such as atm_init 
 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository:
 
-<img src="https://github.com/slcs-jsc/mptrac/blob/master/example/plots/atm_2011_06_07_00_00.tab.png" width="200"/>
+<img src="example/plots/atm_2011_06_07_00_00.tab.png" width="50%"/>
 
-<img src="example/plots/atm_2011_06_07_00_00.tab.png" width="200"/>
+<img src="example/plots/grid_2011_06_07_00_00.tab.png" width="50%"/>
 
 ### Further information
 
-More details on the control parameters, data structures, and algorithms can be found in the [MPTRAC reference manual](https://github.com/slcs-jsc/mptrac/blob/master/doc/refman.pdf).
+More details on the control parameters, data structures, and algorithms can be found in the [MPTRAC reference manual](doc/refman.pdf).
 
 ## Contributing
 
-We are interested in sharing MPTRAC for research applications. Please do not hesitate to contact us if you have any further questions.
+We are interested in sharing MPTRAC for operational or research applications. Please do not hesitate to contact us if you have any further questions.
 
 ## License
 
@@ -83,6 +83,6 @@ MPTRAC is distributed under the GNU GPL v3.
 ## Contact
 
 Dr. Lars Hoffmann  
-Jülich Supercomputing Centre, Forschungszentrum Jülich
-
+Jülich Supercomputing Centre
+Forschungszentrum Jülich GmbH
 e-mail: l.hoffmann@fz-juelich.de
