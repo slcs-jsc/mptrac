@@ -64,17 +64,31 @@ Please see the example script run.sh on how to invoke programs such as atm_init 
 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository:
 
-<img src="example/plots/atm_2011_06_07_00_00.tab.png" width="50%"/>
-
-<img src="example/plots/grid_2011_06_07_00_00.tab.png" width="50%"/>
+<img src="example/plots/atm_2011_06_07_00_00.tab.png" width="60%"/>
 
 ### Further information
 
-More details on the control parameters, data structures, and algorithms can be found in the [MPTRAC reference manual](doc/refman.pdf).
+More details on the data structures and algorithms can be found in the [MPTRAC reference manual](doc/refman.pdf).
+
+This is a list of papers in which MPTRAC was applied:
+
+Wu, X., Griessbach, S., and Hoffmann, L.: Long-range transport of volcanic aerosol from the 2010 Merapi tropical eruption to Antarctica, Atmos. Chem. Phys., 18, 15859-15877, https://doi.org/10.5194/acp-18-15859-2018, 2018.
+
+Rößler, T., Stein, O., Heng, Y., Baumeister, P., and Hoffmann, L.: Trajectory errors of different numerical integration schemes diagnosed with the MPTRAC advection module driven by ECMWF operational analyses, Geosci. Model Dev., 11, 575-592, https://doi.org/10.5194/gmd-11-575-2018, 2018.
+
+Wu, X., Griessbach, S., and Hoffmann, L.: Equatorward dispersion of a high-latitude volcanic plume and its relation to the Asian summer monsoon: a case study of the Sarychev eruption in 2009, Atmos. Chem. Phys., 17, 13439-13455, https://doi.org/10.5194/acp-17-13439-2017, 2017.
+
+Hoffmann, L., Hertzog, A., Rößler, T., Stein, O., and Wu, X.: Intercomparison of meteorological analyses and trajectories in the Antarctic lower stratosphere with Concordiasi superpressure balloon observations, Atmos. Chem. Phys., 17, 8045-8061, https://doi.org/10.5194/acp-17-8045-2017, 2017.
+
+Heng, Y., Hoffmann, L., Griessbach, S., Rößler, T., and Stein, O.: Inverse transport modeling of volcanic sulfur dioxide emissions using large-scale simulations, Geosci. Model Dev., 9, 1627-1645, https://doi.org/10.5194/gmd-9-1627-2016, 2016.
+
+Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein (2016), Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, doi:10.1002/2015JD023749. 
 
 ## Contributing
 
-We are interested in sharing MPTRAC for operational or research applications. Please do not hesitate to contact us if you have any further questions.
+We are interested in sharing MPTRAC for operational or research applications.
+
+Please do not hesitate to contact us if you have any further questions or need support.
 
 ## License
 
