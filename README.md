@@ -45,9 +45,11 @@ Next, change to the source directory, edit the Makefile according to your needs,
 
 The binaries will be linked statically, i.e., they can be copied to other machines. Sometimes static compilations causes problems, in particular in combination with MPI. In this case remove the '-static' flag from the CFLAGS in the Makefile and compile again.
 
+By default the code will be compiled with OpenMP parallelization. If this is not desired remove '-fopenmp' from the CFLAGS.
+
 By default we use rather strict compiler warnings. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'.
 
-The binaries will remain in the src/ directory.
+The binaries will remain in the mptrac/src/ directory.
 
 ### Try the example
 
@@ -70,7 +72,7 @@ The script generates a number of plots of the simulation output at different tim
 This is an example showing the particle position output for 7 June 2011:
 <p align="center"><img src="example/plots/atm_2011_06_07_00_00.tab.png" width="60%"/></p>
 
-### Further information
+## Further information
 
 This is the main reference for citing the MPTRAC model in scientific publications:
 

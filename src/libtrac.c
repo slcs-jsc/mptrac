@@ -1362,7 +1362,7 @@ int read_met(
   int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
 
   size_t np, nx, ny;
-  
+
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
@@ -1638,18 +1638,25 @@ void read_met_geopot(
       /* Find surface pressure level... */
       ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
-      /* Get surface temperature... */
-      ts = LIN(met->p[ip0], met->t[ix][iy][ip0],
-	       met->p[ip0 + 1], met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      /* Get surface data... */
+      ts =
+	LIN(met->p[ip0],
+	    TVIRT(met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]),
+	    met->p[ip0 + 1],
+	    TVIRT(met->t[ix][iy][ip0 + 1], met->h2o[ix][iy][ip0 + 1]),
+	    met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
-	= (float) (z0 + RI / MA / G0 * 0.5 * (ts + met->t[ix][iy][ip0 + 1])
+	= (float) (z0 + RI / MA / G0 * 0.5
+		   * (ts + TVIRT(met->t[ix][iy][ip0 + 1],
+				 met->h2o[ix][iy][ip0 + 1]))
 		   * log(met->ps[ix][iy] / met->p[ip0 + 1]));
       for (ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
-	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0
-		     * 0.5 * (met->t[ix][iy][ip - 1] + met->t[ix][iy][ip])
+	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0 * 0.5 *
+		     (TVIRT(met->t[ix][iy][ip - 1], met->h2o[ix][iy][ip - 1])
+		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
 		     * log(met->p[ip - 1] / met->p[ip]));
     }
 

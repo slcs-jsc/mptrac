@@ -210,6 +210,9 @@
     } else ERRMSG("Error while reading!");				\
   }
 
+/*! Calculate virtual temperature. */
+#define TVIRT(t, h2o) ((t)*(1.0 + 0.609133 * (h2o) * 18.01528 / MA))
+
 /*! Convert pressure to altitude. */
 #define Z(p) (H0*log(P0/(p)))
 
