@@ -2035,8 +2035,8 @@ void read_met_tropo(
 
   gsl_spline *spline;
 
-  double logp2[400], p2[400], pv[400], pv2[400], t[400], t2[400], th[400],
-    th2[400], z[400], z2[400];
+  double l2[200], p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
+    th2[200], z[EP], z2[200];
 
   int found, ix, iy, iz, iz2;
 
@@ -2050,7 +2050,7 @@ void read_met_tropo(
   for (iz = 0; iz <= 170; iz++) {
     z2[iz] = 4.5 + 0.1 * iz;
     p2[iz] = P(z2[iz]);
-    logp2[iz] = log(p2[iz]);
+    l2[iz] = log(p2[iz]);
   }
 
   /* Do not calculate tropopause... */
@@ -2108,7 +2108,7 @@ void read_met_tropo(
 	  found = 1;
 	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	    if (1000. * G0 / RA * log(t2[iz2] / t2[iz])
-		/ (logp2[iz2] - logp2[iz]) > 2.0) {
+		/ (l2[iz2] - l2[iz]) > 2.0) {
 	      found = 0;
 	      break;
 	    }
@@ -2126,7 +2126,7 @@ void read_met_tropo(
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
 	      if (1000. * G0 / RA * log(t2[iz2] / t2[iz])
-		  / (logp2[iz2] - logp2[iz]) < 3.0) {
+		  / (l2[iz2] - l2[iz]) < 3.0) {
 		found = 0;
 		break;
 	      }
@@ -2137,7 +2137,7 @@ void read_met_tropo(
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	      if (1000. * G0 / RA * log(t2[iz2] / t2[iz])
-		  / (logp2[iz2] - logp2[iz]) > 2.0) {
+		  / (l2[iz2] - l2[iz]) > 2.0) {
 		found = 0;
 		break;
 	      }
