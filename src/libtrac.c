@@ -1552,7 +1552,7 @@ void read_met_geopot(
 
   const int dx = 6, dy = 4;
 
-  static double topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
+  static double logp[EP], topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
 
   static float help[EX][EY][EP];
 
@@ -1613,22 +1613,32 @@ void read_met_geopot(
     if (fabs(met->lon[0] - met->lon[1]) != fabs(topo_lon[0] - topo_lon[1])
 	|| fabs(met->lat[0] - met->lat[1]) != fabs(topo_lat[0] - topo_lat[1]))
       printf("Warning: Grid spacing does not match!\n");
+
+    /* Calculate log pressure... */
+    for (ip = 0; ip < met->np; ip++)
+      logp[ip] = log(met->p[ip]);
   }
 
   /* Apply hydrostatic equation to calculate geopotential heights... */
 #pragma omp parallel for default(shared) private(ix,iy,lon,lat,tx,ty,z0,z1,ip0,ts,ip)
-  for (ix = 0; ix < met->nx; ix++)
+  for (ix = 0; ix < met->nx; ix++) {
+
+    /* Get longitude index... */
+    lon = met->lon[ix];
+    if (lon < topo_lon[0])
+      lon += 360;
+    else if (lon > topo_lon[topo_nx - 1])
+      lon -= 360;
+    tx = locate_reg(topo_lon, topo_nx, lon);
+
+    /* Loop over latitudes... */
     for (iy = 0; iy < met->ny; iy++) {
 
-      /* Get surface height... */
-      lon = met->lon[ix];
-      if (lon < topo_lon[0])
-	lon += 360;
-      else if (lon > topo_lon[topo_nx - 1])
-	lon -= 360;
+      /* Get latitude index... */
       lat = met->lat[iy];
-      tx = locate_reg(topo_lon, topo_nx, lon);
       ty = locate_reg(topo_lat, topo_ny, lat);
+
+      /* Get surface height... */
       z0 = LIN(topo_lon[tx], topo_z[tx][ty],
 	       topo_lon[tx + 1], topo_z[tx + 1][ty], lon);
       z1 = LIN(topo_lon[tx], topo_z[tx][ty + 1],
@@ -1651,14 +1661,15 @@ void read_met_geopot(
 	= (float) (z0 + RI / MA / G0 * 0.5
 		   * (ts + TVIRT(met->t[ix][iy][ip0 + 1],
 				 met->h2o[ix][iy][ip0 + 1]))
-		   * log(met->ps[ix][iy] / met->p[ip0 + 1]));
+		   * (log(met->ps[ix][iy]) - logp[ip0 + 1]));
       for (ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
 	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0 * 0.5 *
 		     (TVIRT(met->t[ix][iy][ip - 1], met->h2o[ix][iy][ip - 1])
 		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
-		     * log(met->p[ip - 1] / met->p[ip]));
+		     * (logp[ip - 1] - logp[ip]));
     }
+  }
 
   /* Smoothing... */
 #pragma omp parallel for default(shared) private(ix,iy,ip,n,ix2,ix3,iy2)
@@ -2024,8 +2035,8 @@ void read_met_tropo(
 
   gsl_spline *spline;
 
-  double p2[400], pv[400], pv2[400], t[400], t2[400], th[400], th2[400],
-    z[400], z2[400];
+  double logp2[400], p2[400], pv[400], pv2[400], t[400], t2[400], th[400],
+    th2[400], z[400], z2[400];
 
   int found, ix, iy, iz, iz2;
 
@@ -2039,6 +2050,7 @@ void read_met_tropo(
   for (iz = 0; iz <= 170; iz++) {
     z2[iz] = 4.5 + 0.1 * iz;
     p2[iz] = P(z2[iz]);
+    logp2[iz] = log(p2[iz]);
   }
 
   /* Do not calculate tropopause... */
@@ -2096,7 +2108,7 @@ void read_met_tropo(
 	  found = 1;
 	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	    if (1000. * G0 / RA * log(t2[iz2] / t2[iz])
-		/ log(p2[iz2] / p2[iz]) > 2.0) {
+		/ (logp2[iz2] - logp2[iz]) > 2.0) {
 	      found = 0;
 	      break;
 	    }
@@ -2114,7 +2126,7 @@ void read_met_tropo(
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
 	      if (1000. * G0 / RA * log(t2[iz2] / t2[iz])
-		  / log(p2[iz2] / p2[iz]) < 3.0) {
+		  / (logp2[iz2] - logp2[iz]) < 3.0) {
 		found = 0;
 		break;
 	      }
@@ -2125,7 +2137,7 @@ void read_met_tropo(
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	      if (1000. * G0 / RA * log(t2[iz2] / t2[iz])
-		  / log(p2[iz2] / p2[iz]) > 2.0) {
+		  / (logp2[iz2] - logp2[iz]) > 2.0) {
 		found = 0;
 		break;
 	      }
