@@ -45,8 +45,6 @@ Next, change to the source directory, edit the Makefile according to your needs,
 
 The binaries will be linked statically, i.e., they can be copied to other machines. Sometimes static compilations causes problems, in particular in combination with MPI. In this case remove the '-static' flag from the CFLAGS in the Makefile and compile again.
 
-By default the code will be compiled with OpenMP parallelization. If this is not desired remove '-fopenmp' from the CFLAGS.
-
 By default we use rather strict compiler warnings. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'.
 
 The binaries will remain in the mptrac/src/ directory.
