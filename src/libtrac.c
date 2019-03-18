@@ -2052,6 +2052,7 @@ void read_met_tropo(
 
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1)
+#pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = clim_tropo(met->time, met->lat[iy]);
