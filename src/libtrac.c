@@ -2031,18 +2031,10 @@ void read_met_tropo(
   ctl_t * ctl,
   met_t * met) {
 
-  gsl_interp_accel *acc;
-
-  gsl_spline *spline;
-
   double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
     th2[200], z[EP], z2[200];
 
   int found, ix, iy, iz, iz2;
-
-  /* Allocate... */
-  acc = gsl_interp_accel_alloc();
-  spline = gsl_spline_alloc(gsl_interp_cspline, (size_t) met->np);
 
   /* Get altitude and pressure profiles... */
   for (iz = 0; iz < met->np; iz++)
@@ -2068,15 +2060,14 @@ void read_met_tropo(
   else if (ctl->met_tropo == 2) {
 
     /* Loop over grid points... */
+#pragma omp parallel for default(shared) private(ix,iy,iz,t,t2)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++) {
 
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
-	gsl_spline_init(spline, z, t, (size_t) met->np);
-	for (iz = 0; iz <= 170; iz++)
-	  t2[iz] = gsl_spline_eval(spline, z2[iz], acc);
+	spline(z, t, met->np, z2, t2, 171);
 
 	/* Find minimum... */
 	iz = (int) gsl_stats_min_index(t2, 1, 171);
@@ -2091,15 +2082,14 @@ void read_met_tropo(
   else if (ctl->met_tropo == 3 || ctl->met_tropo == 4) {
 
     /* Loop over grid points... */
+#pragma omp parallel for default(shared) private(ix,iy,iz,iz2,t,t2,found)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++) {
 
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
-	gsl_spline_init(spline, z, t, (size_t) met->np);
-	for (iz = 0; iz <= 160; iz++)
-	  t2[iz] = gsl_spline_eval(spline, z2[iz], acc);
+	spline(z, t, met->np, z2, t2, 161);
 
 	/* Find 1st tropopause... */
 	met->pt[ix][iy] = GSL_NAN;
@@ -2154,22 +2144,19 @@ void read_met_tropo(
   else if (ctl->met_tropo == 5) {
 
     /* Loop over grid points... */
+#pragma omp parallel for default(shared) private(ix,iy,iz,pv,pv2,th,th2)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++) {
 
 	/* Interpolate potential vorticity profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  pv[iz] = met->pv[ix][iy][iz];
-	gsl_spline_init(spline, z, pv, (size_t) met->np);
-	for (iz = 0; iz <= 160; iz++)
-	  pv2[iz] = gsl_spline_eval(spline, z2[iz], acc);
+	spline(z, pv, met->np, z2, pv2, 161);
 
 	/* Interpolate potential temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  th[iz] = THETA(met->p[iz], met->t[ix][iy][iz]);
-	gsl_spline_init(spline, z, th, (size_t) met->np);
-	for (iz = 0; iz <= 160; iz++)
-	  th2[iz] = gsl_spline_eval(spline, z2[iz], acc);
+	spline(z, th, met->np, z2, th2, 161);
 
 	/* Find dynamical tropopause 3.5 PVU + 380 K */
 	met->pt[ix][iy] = GSL_NAN;
@@ -2184,10 +2171,6 @@ void read_met_tropo(
 
   else
     ERRMSG("Cannot calculate tropopause!");
-
-  /* Free... */
-  gsl_spline_free(spline);
-  gsl_interp_accel_free(acc);
 }
 
 /*****************************************************************************/
@@ -2260,6 +2243,36 @@ double scan_ctl(
   if (value != NULL)
     sprintf(value, "%s", rval);
   return atof(rval);
+}
+
+/*****************************************************************************/
+
+void spline(
+  double *x,
+  double *y,
+  int n,
+  double *x2,
+  double *y2,
+  int n2) {
+
+  gsl_interp_accel *acc;
+
+  gsl_spline *s;
+
+  int i;
+
+  /* Allocate... */
+  acc = gsl_interp_accel_alloc();
+  s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
+
+  /* Interpolate temperature profile... */
+  gsl_spline_init(s, x, y, (size_t) n);
+  for (i = 0; i < n2; i++)
+    y2[i] = gsl_spline_eval(s, x2[i], acc);
+
+  /* Free... */
+  gsl_spline_free(s);
+  gsl_interp_accel_free(acc);
 }
 
 /*****************************************************************************/

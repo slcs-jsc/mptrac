@@ -211,6 +211,7 @@ int main(
     /* Get cold point... */
     ctl.met_tropo = 2;
     read_met_tropo(&ctl, met);
+#pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
 	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
@@ -229,6 +230,7 @@ int main(
     /* Get dynamical tropopause... */
     ctl.met_tropo = 5;
     read_met_tropo(&ctl, met);
+#pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
 	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
@@ -247,6 +249,7 @@ int main(
     /* Get WMO 1st tropopause... */
     ctl.met_tropo = 3;
     read_met_tropo(&ctl, met);
+#pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
 	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
@@ -265,6 +268,7 @@ int main(
     /* Get WMO 2nd tropopause... */
     ctl.met_tropo = 4;
     read_met_tropo(&ctl, met);
+#pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
 	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,

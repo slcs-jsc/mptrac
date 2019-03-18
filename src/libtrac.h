@@ -907,6 +907,15 @@ double scan_ctl(
   const char *defvalue,
   char *value);
 
+/*! Spline interpolation. */
+void spline(
+  double *x,
+  double *y,
+  int n,
+  double *x2,
+  double *y2,
+  int n2);
+
 /*! Convert date to seconds. */
 void time2jsec(
   int year,
