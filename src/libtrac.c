@@ -1852,7 +1852,7 @@ void read_met_pv(
       iy1 = GSL_MIN(iy + 1, met->ny - 1);
 
       /* Set auxiliary variables... */
-      latr = GSL_MIN(GSL_MAX(met->lat[iy], -89.), 89.);
+      latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
       dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
       dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
       c0 = cos(met->lat[iy0] / 180. * M_PI);
@@ -1908,6 +1908,18 @@ void read_met_pv(
       }
     }
   }
+
+  /* Fix for polar regions... */
+#pragma omp parallel for default(shared) private(ix,ip)
+  for (ix = 0; ix < met->nx; ix++)
+    for (ip = 0; ip < met->np; ip++) {
+      met->pv[ix][0][ip]
+	= met->pv[ix][1][ip]
+	= met->pv[ix][2][ip];
+      met->pv[ix][met->ny - 1][ip]
+	= met->pv[ix][met->ny - 2][ip]
+	= met->pv[ix][met->ny - 3][ip];
+    }
 }
 
 /*****************************************************************************/
