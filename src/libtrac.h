@@ -213,6 +213,12 @@
 /*! Calculate virtual temperature. */
 #define TVIRT(t, h2o) ((t)*(1.0 + 0.609133 * (h2o) * 18.01528 / MA))
 
+/*! Print warning message. */
+#define WARN(msg) {							\
+    printf("\nWarning (%s, %s, l%d): %s\n\n",				\
+	   __FILE__, __func__, __LINE__, msg);				\
+  }
+
 /*! Convert pressure to altitude. */
 #define Z(p) (H0*log(P0/(p)))
 

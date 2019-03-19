@@ -236,8 +236,7 @@ int main(
       START_TIMER(TIMER_INPUT);
       get_met(&ctl, argv[4], t, &met0, &met1);
       if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
-	printf("Warning: Violation of CFL criterion! Set DT_MOD <= %g s!\n",
-	       fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.);
+	WARN("Violation of CFL criterion! Check DT_MOD!");
       STOP_TIMER(TIMER_INPUT);
 
       /* Check initial position... */
@@ -342,13 +341,20 @@ int main(
 
     /* Report memory usage... */
     printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
-    printf("MEMORY_METEO = %g MByte\n", 2. * sizeof(met_t) / 1024. / 1024.);
-    printf("MEMORY_DYNAMIC = %g MByte\n",
-	   4 * NP * sizeof(double) / 1024. / 1024.);
-    printf("MEMORY_STATIC = %g MByte\n",
-	   ((3 * GX * GY + 4 * GX * GY * GZ) * sizeof(double)
-	    + (EX * EY + EX * EY * EP) * sizeof(float)
-	    + (GX * GY + GX * GY * GZ) * sizeof(int)) / 1024. / 1024.);
+    printf("MEMORY_METEO = %g MByte\n", 2 * sizeof(met_t) / 1024. / 1024.);
+    printf("MEMORY_DYNAMIC = %g MByte\n", (sizeof(met_t)
+					   + 4 * NP * sizeof(double)
+					   +
+					   EX * EY * EP * sizeof(float)) /
+	   1024. / 1024.);
+    printf("MEMORY_STATIC = %g MByte\n", (EX * EY * sizeof(double)
+					  + EX * EY * EP * sizeof(float)
+					  + 4 * GX * GY * GZ * sizeof(double)
+					  + 2 * GX * GY * GZ * sizeof(int)
+					  + 2 * GX * GY * sizeof(double)
+					  +
+					  GX * GY * sizeof(int)) / 1024. /
+	   1024.);
 
     /* Report problem size... */
     printf("SIZE_NP = %d\n", atm->np);

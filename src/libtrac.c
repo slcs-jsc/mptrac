@@ -929,8 +929,10 @@ int read_atm(
   if (ctl->atm_type == 0) {
 
     /* Open file... */
-    if (!(in = fopen(filename, "r")))
+    if (!(in = fopen(filename, "r"))) {
+      WARN("File not found!");
       return 0;
+    }
 
     /* Read line... */
     while (fgets(line, LEN, in)) {
@@ -1389,8 +1391,10 @@ int read_met(
     }
 
     /* Try to open again... */
-    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+      WARN("File not found!");
       return 0;
+    }
   }
 
   /* Get dimensions... */
@@ -1612,7 +1616,7 @@ void read_met_geopot(
     /* Check grid spacing... */
     if (fabs(met->lon[0] - met->lon[1]) != fabs(topo_lon[0] - topo_lon[1])
 	|| fabs(met->lat[0] - met->lat[1]) != fabs(topo_lat[0] - topo_lat[1]))
-      printf("Warning: Grid spacing does not match!\n");
+      WARN("Grid spacing does not match!");
 
     /* Calculate log pressure... */
     for (ip = 0; ip < met->np; ip++)
@@ -1725,7 +1729,7 @@ void read_met_help(
       return;
 
   /* Allocate... */
-  ALLOC(help, float, met->nx * met->ny * met->np);
+  ALLOC(help, float, EX * EY * EP);
 
   /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
