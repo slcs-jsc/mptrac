@@ -19,7 +19,7 @@
 
 /*! 
   \file
-  Extract map from meteorological data.
+  Create tropopause climatology from meteorological data.
 */
 
 #include "libtrac.h"
@@ -147,7 +147,7 @@ int main(
       /* Set attributes... */
       add_text_attribute(ncid, "time", "units", "s");
       add_text_attribute(ncid, "time", "long_name",
-			 "seconds sind 2000-01-01, 00:00 UTC");
+			 "seconds since 2000-01-01, 00:00 UTC");
       add_text_attribute(ncid, "lon", "units", "degrees_east");
       add_text_attribute(ncid, "lon", "long_name", "longitude");
       add_text_attribute(ncid, "lat", "units", "degrees_north");
