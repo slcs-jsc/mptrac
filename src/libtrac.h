@@ -766,6 +766,7 @@ void get_met_replace(
   char *repl);
 
 /*! Linear interpolation of 2-D meteorological data. */
+#pragma acc routine (intpol_met_2d) seq
 double intpol_met_2d(
   double array[EX][EY],
   int ix,
@@ -774,6 +775,7 @@ double intpol_met_2d(
   double wy);
 
 /*! Linear interpolation of 3-D meteorological data. */
+#pragma acc routine (intpol_met_3d) seq
 double intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
@@ -784,6 +786,7 @@ double intpol_met_3d(
   double wy);
 
 /*! Spatial interpolation of meteorological data. */
+#pragma acc routine (intpol_met_space) seq
 void intpol_met_space(
   met_t * met,
   double p,
@@ -801,6 +804,7 @@ void intpol_met_space(
   double *o3);
 
 /*! Temporal interpolation of meteorological data. */
+#pragma acc routine (intpol_met_time) seq
 void intpol_met_time(
   met_t * met0,
   met_t * met1,
@@ -831,12 +835,14 @@ void jsec2time(
   double *remain);
 
 /*! Find array index for irregular grid. */
+#pragma acc routine seq
 int locate_irr(
   double *xx,
   int n,
   double x);
 
 /*! Find array index for regular grid. */
+#pragma acc routine seq
 int locate_reg(
   double *xx,
   int n,

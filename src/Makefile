@@ -14,7 +14,7 @@
 EXC = atm_conv atm_dist atm_init atm_split atm_stat day2doy doy2day extract jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo
 
 # Library directories...
-LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
+LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64 -L /opt/nvidia/cudatoolkit9.1/9.1.85_3.18-6.0.7.0_5.1__g2eb7c52/lib64/
 
 # Include directories...
 INCDIR = -I ../lib/build/include
@@ -36,12 +36,12 @@ INCDIR = -I ../lib/build/include
 ifdef MPI
   CC = mpicc
 else
-  CC = cc
+  CC = pgcc
 endif
 
 # Set CFLAGS...
 #CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
-CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -mp -g
+CFLAGS = $(INCDIR) -DGSL_DISABLE_DEPRACTED -acc -Minfo=accel -mp -g
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
@@ -55,7 +55,7 @@ endif
 ifdef MPI
   CFLAGS += -DMPI
 else
-  CFLAGS += -static
+  CFLAGS += -Bstatic
 endif
 
 # Compile for profiling...

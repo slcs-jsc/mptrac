@@ -37,8 +37,7 @@ void module_advection(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt);
+  double* dt);
 
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
@@ -168,6 +167,7 @@ int main(
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
+    #pragma acc data create(met0[1], met1[1], atm[1], dt[NP])
 
     /* Initialize random number generators... */
     gsl_rng_env_setup();
@@ -230,7 +230,7 @@ int main(
 	     && ctl.direction * (atm->time[ip] - t) < 0))
 	  dt[ip] = t - atm->time[ip];
 	else
-	  dt[ip] = GSL_NAN;
+	  dt[ip] = 0;
 
       /* Get meteorological data... */
       START_TIMER(TIMER_INPUT);
@@ -252,13 +252,19 @@ int main(
 	module_isosurf(&ctl, met0, met1, atm, -1);
       STOP_TIMER(TIMER_ISOSURF);
 
+      /* OpenACC preparation */
+      #pragma acc data copyin(met0[1], met1[1], atm[1], dt[NP])
+
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
-#pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	if (gsl_finite(dt[ip]))
-	  module_advection(met0, met1, atm, ip, dt[ip]);
+//#pragma omp parallel for default(shared) private(ip)
+      //for (ip = 0; ip < atm->np; ip++)
+	//if (gsl_finite(dt[ip]))
+	  module_advection(met0, met1, atm, dt);
       STOP_TIMER(TIMER_ADVECT);
+
+      /* OpenACC cleanup */
+      #pragma acc data copyout(atm[1])
 
       /* Turbulent diffusion... */
       START_TIMER(TIMER_DIFFTURB);
@@ -266,7 +272,7 @@ int main(
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
 #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
+	  if (dt[ip] != 0)
 	    module_diffusion_turb(&ctl, atm, ip, dt[ip],
 				  rng[omp_get_thread_num()]);
       }
@@ -277,7 +283,7 @@ int main(
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
 #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
+	  if (dt[ip] != 0)
 	    module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
 				  rng[omp_get_thread_num()]);
       }
@@ -288,7 +294,7 @@ int main(
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
 #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
+	  if (dt[ip] != 0)
 	    module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
       }
       STOP_TIMER(TIMER_SEDI);
@@ -324,7 +330,7 @@ int main(
       if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
 #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
-	  if (gsl_finite(dt[ip]))
+	  if (dt[ip] != 0)
 	    module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
       }
       STOP_TIMER(TIMER_DECAY);
@@ -401,31 +407,42 @@ void module_advection(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt) {
+  double* dt) {
 
-  double v[3], xm[3];
+  #pragma acc data present(met0,met1,atm,dt)
+  #pragma acc kernels
+  {
 
-  /* Interpolate meteorological data... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		  atm->lon[ip], atm->lat[ip], NULL, NULL, NULL, NULL,
-		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
+  //# pragma acc loop independent private (v, xm) gang vector
+  # pragma acc loop independent gang vector
+  for (size_t ip = 0; ip < atm->np; ip++)
+  {
+    double v[3], xm[3];
+    if (dt[ip] != 0)
+    {
+      /* Interpolate meteorological data... */
+      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+                      atm->lon[ip], atm->lat[ip], NULL, NULL, NULL, NULL,
+                      &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
-  /* Get position of the mid point... */
-  xm[0] = atm->lon[ip] + DX2DEG(0.5 * dt * v[0] / 1000., atm->lat[ip]);
-  xm[1] = atm->lat[ip] + DY2DEG(0.5 * dt * v[1] / 1000.);
-  xm[2] = atm->p[ip] + 0.5 * dt * v[2];
+      /* Get position of the mid point... */
+      xm[0] = atm->lon[ip] + DX2DEG(0.5 * dt[ip] * v[0] / 1000., atm->lat[ip]);
+      xm[1] = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v[1] / 1000.);
+      xm[2] = atm->p[ip] + 0.5 * dt[ip] * v[2];
 
-  /* Interpolate meteorological data for mid point... */
-  intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt,
-		  xm[2], xm[0], xm[1], NULL, NULL, NULL, NULL,
-		  &v[0], &v[1], &v[2], NULL, NULL, NULL);
+      /* Interpolate meteorological data for mid point... */
+      intpol_met_time(met0, met1, atm->time[ip] + 0.5 * dt[ip],
+                      xm[2], xm[0], xm[1], NULL, NULL, NULL, NULL,
+                      &v[0], &v[1], &v[2], NULL, NULL, NULL);
 
-  /* Save new position... */
-  atm->time[ip] += dt;
-  atm->lon[ip] += DX2DEG(dt * v[0] / 1000., xm[1]);
-  atm->lat[ip] += DY2DEG(dt * v[1] / 1000.);
-  atm->p[ip] += dt * v[2];
+      /* Save new position... */
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * v[0] / 1000., xm[1]);
+      atm->lat[ip] += DY2DEG(dt[ip] * v[1] / 1000.);
+      atm->p[ip] += dt[ip] * v[2];
+    }
+  }
+  } // openacc kernel
 }
 
 /*****************************************************************************/

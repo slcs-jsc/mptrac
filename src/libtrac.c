@@ -686,6 +686,7 @@ double intpol_met_3d(
 
 /*****************************************************************************/
 
+//#pragma acc routine seq
 void intpol_met_space(
   met_t * met,
   double p,
@@ -745,6 +746,7 @@ void intpol_met_space(
 
 /*****************************************************************************/
 
+//#pragma acc routine seq
 void intpol_met_time(
   met_t * met0,
   met_t * met1,
@@ -851,6 +853,7 @@ void jsec2time(
 
 /*****************************************************************************/
 
+#pragma acc routine seq
 int locate_irr(
   double *xx,
   int n,
@@ -883,6 +886,7 @@ int locate_irr(
 
 /*****************************************************************************/
 
+#pragma acc routine seq
 int locate_reg(
   double *xx,
   int n,
@@ -2068,10 +2072,12 @@ void read_met_tropo(
 
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1)
-#pragma omp parallel for default(shared) private(ix,iy)
+  {
+    #pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = clim_tropo(met->time, met->lat[iy]);
+  }
 
   /* Use cold point... */
   else if (ctl->met_tropo == 2) {
