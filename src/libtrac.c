@@ -315,14 +315,11 @@ double clim_hno3(
 
 /*****************************************************************************/
 
-double clim_tropo(
-  double t,
-  double lat) {
-
   static double doys[12]
   = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
+  #pragma acc declare copyin(doys)
 
-  static double lats[73]
+  static double lats_tropo[73]
     = { -90, -87.5, -85, -82.5, -80, -77.5, -75, -72.5, -70, -67.5,
     -65, -62.5, -60, -57.5, -55, -52.5, -50, -47.5, -45, -42.5,
     -40, -37.5, -35, -32.5, -30, -27.5, -25, -22.5, -20, -17.5,
@@ -331,6 +328,7 @@ double clim_tropo(
     45, 47.5, 50, 52.5, 55, 57.5, 60, 62.5, 65, 67.5, 70, 72.5,
     75, 77.5, 80, 82.5, 85, 87.5, 90
   };
+  #pragma acc declare copyin(lats_tropo)
 
   static double tps[12][73]
     = { {324.1, 325.6, 325, 324.3, 322.5, 319.7, 314, 307.2, 301.8, 299.6,
@@ -431,25 +429,32 @@ double clim_tropo(
    280.3, 281.8, 283, 283.3, 283.7, 283.8, 283, 282.2, 281.2, 281.4,
    281.7, 281.1, 281.2}
   };
+  #pragma acc declare copyin(tps)
+
+#pragma acc routine
+double clim_tropo(
+  double t,
+  double lat) {
 
   double doy, p0, p1;
 
   int imon, ilat;
 
   /* Get day of year... */
-  doy = fmod(t / 86400., 365.25);
+  //doy = fmod(t / 86400., 365.25);
+  doy = t/86400 - (int)(t/ 86400. / 365.25) * 365.25;
   while (doy < 0)
     doy += 365.25;
 
   /* Get indices... */
-  ilat = locate_reg(lats, 73, lat);
+  ilat = locate_reg(lats_tropo, 73, lat);
   imon = locate_irr(doys, 12, doy);
 
   /* Interpolate... */
-  p0 = LIN(lats[ilat], tps[imon][ilat],
-	   lats[ilat + 1], tps[imon][ilat + 1], lat);
-  p1 = LIN(lats[ilat], tps[imon + 1][ilat],
-	   lats[ilat + 1], tps[imon + 1][ilat + 1], lat);
+  p0 = LIN(lats_tropo[ilat], tps[imon][ilat],
+	   lats_tropo[ilat + 1], tps[imon][ilat + 1], lat);
+  p1 = LIN(lats_tropo[ilat], tps[imon + 1][ilat],
+	   lats_tropo[ilat + 1], tps[imon + 1][ilat + 1], lat);
   return LIN(doys[imon], p0, doys[imon + 1], p1, doy);
 }
 

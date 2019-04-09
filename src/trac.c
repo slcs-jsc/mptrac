@@ -45,8 +45,7 @@ void module_decay(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt);
+  double* dt);
 
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
@@ -323,18 +322,18 @@ int main(
       }
       STOP_TIMER(TIMER_METEO);
 
-      #pragma acc exit data copyout(atm[:1]) delete (met0, met1, dt)
-//////////////////////////////////////////////////////////
-
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
       if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
-#pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (dt[ip] != 0)
-	    module_decay(&ctl, met0, met1, atm, ip, dt[ip]);
+        //#pragma omp parallel for default(shared) private(ip)
+	//for (ip = 0; ip < atm->np; ip++)
+	//  if (dt[ip] != 0)
+	module_decay(&ctl, met0, met1, atm, dt);
       }
       STOP_TIMER(TIMER_DECAY);
+
+      #pragma acc data copyout(atm[:1])
+//////////////////////////////////////////////////////////
 
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
@@ -392,7 +391,7 @@ int main(
     free(met0);
     free(met1);
     free(dt);
-    #pragma acc exit data delete(ctl)
+    #pragma acc exit data delete(ctl, met0, met1, dt)
   }
 
 #ifdef MPI
@@ -454,35 +453,45 @@ void module_decay(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt) {
+  double* dt) {
 
-  double ps, pt, tdec;
+    #pragma acc data present(ctl,met0,met1,atm,dt)
+    #pragma acc kernels
+    {
+        # pragma acc loop independent gang vector
+        for (size_t ip = 0; ip < atm->np; ip++)
+        {
+            if (dt[ip] != 0)
+            {
+                double ps, pt, tdec;
 
-  /* Set constant lifetime... */
-  if (ctl->tdec_trop == ctl->tdec_strat)
-    tdec = ctl->tdec_trop;
+                /* Set constant lifetime... */
+                if (ctl->tdec_trop == ctl->tdec_strat)
+                  tdec = ctl->tdec_trop;
 
-  /* Set altitude-dependent lifetime... */
-  else {
+                /* Set altitude-dependent lifetime... */
+                else {
 
-    /* Get surface pressure... */
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		    atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
+                  /* Get surface pressure... */
+                  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+                            atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
+                            NULL, NULL, NULL, NULL, NULL, NULL);
 
-    /* Get tropopause pressure... */
-    pt = clim_tropo(atm->time[ip], atm->lat[ip]);
+                  /* Get tropopause pressure... */
+                  pt = clim_tropo(atm->time[ip], atm->lat[ip]);
 
-    /* Set lifetime... */
-    if (atm->p[ip] <= pt)
-      tdec = ctl->tdec_strat;
-    else
-      tdec = LIN(ps, ctl->tdec_trop, pt, ctl->tdec_strat, atm->p[ip]);
-  }
+                  /* Set lifetime... */
+                  if (atm->p[ip] <= pt)
+                    tdec = ctl->tdec_strat;
+                  else
+                    tdec = LIN(ps, ctl->tdec_trop, pt, ctl->tdec_strat, atm->p[ip]);
+                }
 
-  /* Calculate exponential decay... */
-  atm->q[ctl->qnt_m][ip] *= exp(-dt / tdec);
+                /* Calculate exponential decay... */
+                atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] / tdec);
+            }
+        }
+    }
 }
 
 /*****************************************************************************/

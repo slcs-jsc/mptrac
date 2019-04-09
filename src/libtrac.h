@@ -722,6 +722,7 @@ double clim_hno3(
   double p);
 
 /*! Climatology of tropopause pressure. */
+#pragma acc routine
 double clim_tropo(
   double t,
   double lat);
