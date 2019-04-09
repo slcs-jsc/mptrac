@@ -42,24 +42,22 @@ void cart2geo(
 
 /*****************************************************************************/
 
-double clim_hno3(
-  double t,
-  double lat,
-  double p) {
-
   static double secs[12] = { 1209600.00, 3888000.00, 6393600.00,
     9072000.00, 11664000.00, 14342400.00,
     16934400.00, 19612800.00, 22291200.00,
     24883200.00, 27561600.00, 30153600.00
   };
+  #pragma acc declare copyin(secs)
 
   static double lats[18] = { -85, -75, -65, -55, -45, -35, -25, -15, -5,
     5, 15, 25, 35, 45, 55, 65, 75, 85
   };
+  #pragma acc declare copyin(lats)
 
   static double ps[10] = { 4.64159, 6.81292, 10, 14.678, 21.5443,
     31.6228, 46.4159, 68.1292, 100, 146.78
   };
+  #pragma acc declare copyin(ps)
 
   static double hno3[12][18][10] = {
     {{0.782, 1.65, 2.9, 4.59, 6.71, 8.25, 7.16, 5.75, 2.9, 1.74},
@@ -279,13 +277,22 @@ double clim_hno3(
      {1.33, 2.1, 4.76, 8.78, 12.2, 11.7, 10.8, 8.68, 5.15, 2.35},
      {1.42, 2.04, 4.68, 8.92, 12.7, 12, 11.2, 8.99, 5.32, 2.33}}
   };
+  #pragma acc declare copyin(hno3)
+
+/*****************************************************************************/
+
+double clim_hno3(
+  double t,
+  double lat,
+  double p) {
 
   double aux00, aux01, aux10, aux11, sec;
 
   int ilat, ip, isec;
 
   /* Get seconds since begin of year... */
-  sec = fmod(t, 365.25 * 86400.);
+  //sec = fmod(t, 365.25 * 86400.);
+  sec = t - (int)(t / (365.25 * 86400.)) * 365.25 * 86400.;
 
   /* Get indices... */
   isec = locate_irr(secs, 12, sec);

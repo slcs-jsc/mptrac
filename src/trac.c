@@ -79,15 +79,13 @@ void module_meteo(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  int ip);
+  atm_t * atm);
 
 /*! Check position of air parcels. */
 void module_position(
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  int ip);
+  atm_t * atm);
 
 /*! Calculate sedimentation of air parcels. */
 void module_sedi(
@@ -167,7 +165,7 @@ int main(
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
-    #pragma acc data create(met0[1], met1[1], atm[1], dt[NP])
+    #pragma acc data create(met0[:1], met1[:1], atm[:1], dt[:NP])
 
     /* Initialize random number generators... */
     gsl_rng_env_setup();
@@ -181,6 +179,7 @@ int main(
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
+    #pragma acc enter data copyin(ctl)
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
@@ -239,11 +238,16 @@ int main(
 	WARN("Violation of CFL criterion! Check DT_MOD!");
       STOP_TIMER(TIMER_INPUT);
 
+//////////////////////////////////////////////////////////
+
+      /* OpenACC preparation */
+      #pragma acc enter data copyin(met0[:1], met1[:1], atm[:1], dt[:NP])
+
       /* Check initial position... */
       START_TIMER(TIMER_POSITION);
-#pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	module_position(met0, met1, atm, ip);
+      //#pragma omp parallel for default(shared) private(ip)
+      //for (ip = 0; ip < atm->np; ip++)
+      module_position(met0, met1, atm);
       STOP_TIMER(TIMER_POSITION);
 
       /* Initialize isosurface... */
@@ -252,25 +256,19 @@ int main(
 	module_isosurf(&ctl, met0, met1, atm, -1);
       STOP_TIMER(TIMER_ISOSURF);
 
-      /* OpenACC preparation */
-      #pragma acc data copyin(met0[1], met1[1], atm[1], dt[NP])
-
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
-//#pragma omp parallel for default(shared) private(ip)
+      //#pragma omp parallel for default(shared) private(ip)
       //for (ip = 0; ip < atm->np; ip++)
 	//if (gsl_finite(dt[ip]))
 	  module_advection(met0, met1, atm, dt);
       STOP_TIMER(TIMER_ADVECT);
 
-      /* OpenACC cleanup */
-      #pragma acc data copyout(atm[1])
-
       /* Turbulent diffusion... */
       START_TIMER(TIMER_DIFFTURB);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
-#pragma omp parallel for default(shared) private(ip)
+        #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
 	  if (dt[ip] != 0)
 	    module_diffusion_turb(&ctl, atm, ip, dt[ip],
@@ -281,7 +279,7 @@ int main(
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
-#pragma omp parallel for default(shared) private(ip)
+        #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
 	  if (dt[ip] != 0)
 	    module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
@@ -292,7 +290,7 @@ int main(
       /* Sedimentation... */
       START_TIMER(TIMER_SEDI);
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
-#pragma omp parallel for default(shared) private(ip)
+        #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
 	  if (dt[ip] != 0)
 	    module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
@@ -302,7 +300,7 @@ int main(
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
-#pragma omp parallel for default(shared) private(ip)
+      #pragma omp parallel for default(shared) private(ip)
 	for (ip = 0; ip < atm->np; ip++)
 	  module_isosurf(&ctl, met0, met1, atm, ip);
       }
@@ -310,20 +308,23 @@ int main(
 
       /* Check final position... */
       START_TIMER(TIMER_POSITION);
-#pragma omp parallel for default(shared) private(ip)
-      for (ip = 0; ip < atm->np; ip++)
-	module_position(met0, met1, atm, ip);
+      //#pragma omp parallel for default(shared) private(ip)
+      //for (ip = 0; ip < atm->np; ip++)
+      module_position(met0, met1, atm);
       STOP_TIMER(TIMER_POSITION);
 
       /* Interpolate meteorological data... */
       START_TIMER(TIMER_METEO);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0)) {
-#pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  module_meteo(&ctl, met0, met1, atm, ip);
+        //#pragma omp parallel for default(shared) private(ip)
+	//for (ip = 0; ip < atm->np; ip++)
+	  module_meteo(&ctl, met0, met1, atm);
       }
       STOP_TIMER(TIMER_METEO);
+
+      #pragma acc exit data copyout(atm[:1]) delete (met0, met1, dt)
+//////////////////////////////////////////////////////////
 
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
@@ -391,6 +392,7 @@ int main(
     free(met0);
     free(met1);
     free(dt);
+    #pragma acc exit data delete(ctl)
   }
 
 #ifdef MPI
@@ -765,103 +767,113 @@ void module_meteo(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  int ip) {
+  atm_t * atm) {
+    
+    #pragma acc data present(ctl, met0,met1,atm)
+    #pragma acc kernels
+    {
+      # pragma acc loop independent gang vector
+      for (size_t ip = 0; ip < atm->np; ip++)
+      {
+          double a, b, c, ps, pt, pv, p_hno3, p_h2o, t, u, v, w, x1, x2, h2o, o3, z;
 
-  double a, b, c, ps, pt, pv, p_hno3, p_h2o, t, u, v, w, x1, x2, h2o, o3, z;
+          /* Interpolate meteorological data... */
+          intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+                        atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o, &o3);
 
-  /* Interpolate meteorological data... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		  atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o, &o3);
+          /* Set surface pressure... */
+          if (ctl->qnt_ps >= 0)
+          atm->q[ctl->qnt_ps][ip] = ps;
 
-  /* Set surface pressure... */
-  if (ctl->qnt_ps >= 0)
-    atm->q[ctl->qnt_ps][ip] = ps;
+          /* Set tropopause pressure... */
+          if (ctl->qnt_pt >= 0)
+          atm->q[ctl->qnt_pt][ip] = pt;
 
-  /* Set tropopause pressure... */
-  if (ctl->qnt_pt >= 0)
-    atm->q[ctl->qnt_pt][ip] = pt;
+          /* Set pressure... */
+          if (ctl->qnt_p >= 0)
+          atm->q[ctl->qnt_p][ip] = atm->p[ip];
 
-  /* Set pressure... */
-  if (ctl->qnt_p >= 0)
-    atm->q[ctl->qnt_p][ip] = atm->p[ip];
+          /* Set geopotential height... */
+          if (ctl->qnt_z >= 0)
+          atm->q[ctl->qnt_z][ip] = z;
 
-  /* Set geopotential height... */
-  if (ctl->qnt_z >= 0)
-    atm->q[ctl->qnt_z][ip] = z;
+          /* Set temperature... */
+          if (ctl->qnt_t >= 0)
+          atm->q[ctl->qnt_t][ip] = t;
 
-  /* Set temperature... */
-  if (ctl->qnt_t >= 0)
-    atm->q[ctl->qnt_t][ip] = t;
+          /* Set zonal wind... */
+          if (ctl->qnt_u >= 0)
+          atm->q[ctl->qnt_u][ip] = u;
 
-  /* Set zonal wind... */
-  if (ctl->qnt_u >= 0)
-    atm->q[ctl->qnt_u][ip] = u;
+          /* Set meridional wind... */
+          if (ctl->qnt_v >= 0)
+          atm->q[ctl->qnt_v][ip] = v;
 
-  /* Set meridional wind... */
-  if (ctl->qnt_v >= 0)
-    atm->q[ctl->qnt_v][ip] = v;
+          /* Set vertical velocity... */
+          if (ctl->qnt_w >= 0)
+          atm->q[ctl->qnt_w][ip] = w;
 
-  /* Set vertical velocity... */
-  if (ctl->qnt_w >= 0)
-    atm->q[ctl->qnt_w][ip] = w;
+          /* Set water vapor vmr... */
+          if (ctl->qnt_h2o >= 0)
+          atm->q[ctl->qnt_h2o][ip] = h2o;
 
-  /* Set water vapor vmr... */
-  if (ctl->qnt_h2o >= 0)
-    atm->q[ctl->qnt_h2o][ip] = h2o;
+          /* Set ozone vmr... */
+          if (ctl->qnt_o3 >= 0)
+          atm->q[ctl->qnt_o3][ip] = o3;
 
-  /* Set ozone vmr... */
-  if (ctl->qnt_o3 >= 0)
-    atm->q[ctl->qnt_o3][ip] = o3;
+          /* Calculate horizontal wind... */
+          if (ctl->qnt_vh >= 0)
+          atm->q[ctl->qnt_vh][ip] = sqrt(u * u + v * v);
 
-  /* Calculate horizontal wind... */
-  if (ctl->qnt_vh >= 0)
-    atm->q[ctl->qnt_vh][ip] = sqrt(u * u + v * v);
+          /* Calculate vertical velocity... */
+          if (ctl->qnt_vz >= 0)
+          atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
 
-  /* Calculate vertical velocity... */
-  if (ctl->qnt_vz >= 0)
-    atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
+          /* Calculate potential temperature... */
+          if (ctl->qnt_theta >= 0)
+          atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
 
-  /* Calculate potential temperature... */
-  if (ctl->qnt_theta >= 0)
-    atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
+          /* Set potential vorticity... */
+          if (ctl->qnt_pv >= 0)
+          atm->q[ctl->qnt_pv][ip] = pv;
 
-  /* Set potential vorticity... */
-  if (ctl->qnt_pv >= 0)
-    atm->q[ctl->qnt_pv][ip] = pv;
+          /* Calculate T_ice (Marti and Mauersberger, 1993)... */
+          if (ctl->qnt_tice >= 0)
+          atm->q[ctl->qnt_tice][ip] =
+            -2663.5 /
+            (log10((ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] * 100.) -
+             12.537);
 
-  /* Calculate T_ice (Marti and Mauersberger, 1993)... */
-  if (ctl->qnt_tice >= 0)
-    atm->q[ctl->qnt_tice][ip] =
-      -2663.5 /
-      (log10((ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] * 100.) -
-       12.537);
+          /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
+          if (ctl->qnt_tnat >= 0) {
+          if (ctl->psc_hno3 > 0)
+            p_hno3 = ctl->psc_hno3 * atm->p[ip] / 1.333224;
+          else
+            p_hno3 = clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip])
+              * 1e-9 * atm->p[ip] / 1.333224;
+          p_h2o = (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] / 1.333224;
+          a = 0.009179 - 0.00088 * log10(p_h2o);
+          b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
+          c = -11397.0 / a;
+          x1 = (-b + sqrt(b * b - 4. * c)) / 2.;
+          x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
+          if (x1 > 0)
+            atm->q[ctl->qnt_tnat][ip] = x1;
+          if (x2 > 0)
+            atm->q[ctl->qnt_tnat][ip] = x2;
+          }
 
-  /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
-  if (ctl->qnt_tnat >= 0) {
-    if (ctl->psc_hno3 > 0)
-      p_hno3 = ctl->psc_hno3 * atm->p[ip] / 1.333224;
-    else
-      p_hno3 = clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip])
-	* 1e-9 * atm->p[ip] / 1.333224;
-    p_h2o = (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] / 1.333224;
-    a = 0.009179 - 0.00088 * log10(p_h2o);
-    b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
-    c = -11397.0 / a;
-    x1 = (-b + sqrt(b * b - 4. * c)) / 2.;
-    x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
-    if (x1 > 0)
-      atm->q[ctl->qnt_tnat][ip] = x1;
-    if (x2 > 0)
-      atm->q[ctl->qnt_tnat][ip] = x2;
+          /* Calculate T_STS (mean of T_ice and T_NAT)... */
+          if (ctl->qnt_tsts >= 0) {
+          atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
+                                             + atm->q[ctl->qnt_tnat][ip]);
+          }
+      }
   }
 
-  /* Calculate T_STS (mean of T_ice and T_NAT)... */
   if (ctl->qnt_tsts >= 0) {
-    if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
-      ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
-    atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
-				       + atm->q[ctl->qnt_tnat][ip]);
+  if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
+    ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
   }
 }
 
@@ -870,43 +882,52 @@ void module_meteo(
 void module_position(
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  int ip) {
+  atm_t * atm) {
+    
+    #pragma acc data present(met0,met1,atm)
+    #pragma acc kernels
+    {
+        # pragma acc loop independent gang vector
+        for (size_t ip = 0; ip < atm->np; ip++)
+        {
+          double ps;
 
-  double ps;
+          /* Calculate modulo... */
+          //atm->lon[ip] = fmod(atm->lon[ip], 360);
+          //atm->lat[ip] = fmod(atm->lat[ip], 360);
+          atm->lon[ip] = atm->lon[ip] - (int)(atm->lon[ip]/360) * 360;
+          atm->lat[ip] = atm->lat[ip] - (int)(atm->lat[ip]/360) * 360;
 
-  /* Calculate modulo... */
-  atm->lon[ip] = fmod(atm->lon[ip], 360);
-  atm->lat[ip] = fmod(atm->lat[ip], 360);
+          /* Check latitude... */
+          while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
+            if (atm->lat[ip] > 90) {
+              atm->lat[ip] = 180 - atm->lat[ip];
+              atm->lon[ip] += 180;
+            }
+            if (atm->lat[ip] < -90) {
+              atm->lat[ip] = -180 - atm->lat[ip];
+              atm->lon[ip] += 180;
+            }
+          }
 
-  /* Check latitude... */
-  while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
-    if (atm->lat[ip] > 90) {
-      atm->lat[ip] = 180 - atm->lat[ip];
-      atm->lon[ip] += 180;
+          /* Check longitude... */
+          while (atm->lon[ip] < -180)
+            atm->lon[ip] += 360;
+          while (atm->lon[ip] >= 180)
+            atm->lon[ip] -= 360;
+
+          /* Check pressure... */
+          if (atm->p[ip] < met0->p[met0->np - 1])
+            atm->p[ip] = met0->p[met0->np - 1];
+          else if (atm->p[ip] > 300.) {
+            intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
+                            atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
+                            NULL, NULL, NULL, NULL, NULL, NULL);
+            if (atm->p[ip] > ps)
+              atm->p[ip] = ps;
+          }
+        }
     }
-    if (atm->lat[ip] < -90) {
-      atm->lat[ip] = -180 - atm->lat[ip];
-      atm->lon[ip] += 180;
-    }
-  }
-
-  /* Check longitude... */
-  while (atm->lon[ip] < -180)
-    atm->lon[ip] += 360;
-  while (atm->lon[ip] >= 180)
-    atm->lon[ip] -= 360;
-
-  /* Check pressure... */
-  if (atm->p[ip] < met0->p[met0->np - 1])
-    atm->p[ip] = met0->p[met0->np - 1];
-  else if (atm->p[ip] > 300.) {
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-		    atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
-    if (atm->p[ip] > ps)
-      atm->p[ip] = ps;
-  }
 }
 
 /*****************************************************************************/

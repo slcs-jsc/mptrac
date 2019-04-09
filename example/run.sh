@@ -5,7 +5,7 @@ rm -rf data plots && mkdir -p data plots
 
 # Set time range of simulations...
 t0=$(../src/time2jsec 2011 6 5 0 0 0 0)
-t1=$(../src/time2jsec 2011 6 8 0 0 0 0)
+t1=$(../src/time2jsec 2011 6 5 1 0 0 0)
 
 # Add "mass" to air parcel quantities...
 qnt="NQ 1 QNT_NAME[0] m"
@@ -26,11 +26,24 @@ qnt="NQ 1 QNT_NAME[0] m"
 echo "data" > data/dirlist
 ../src/trac data/dirlist - atm_split.tab meteo/ei DT_MET 259200 $qnt \
 	    T_STOP $t1 DIRECTION 1 \
-	    ATM_BASENAME atm ATM_DT_OUT 43200 \
-	    GRID_BASENAME grid GRID_DT_OUT 43200 \
+	    ATM_BASENAME atm ATM_DT_OUT 600 \
+	    GRID_BASENAME grid GRID_DT_OUT 600 \
 	    GRID_LON0 -100 GRID_LON1 40 \
 	    GRID_LAT0 -65 GRID_LAT1 -20 \
-	    GRID_NX 280 GRID_NY 90
+	    GRID_NX 280 GRID_NY 90 \
+            TURB_DX_TROP 0 \
+            TURB_DX_STRAT 0 \
+            TURB_DZ_TROP 0 \
+            TURB_DZ_STRAT 0 \
+            TURB_MESOX 0 \
+            TURB_MESOZ 0 
+#../src/trac data/dirlist - atm_split.tab meteo/ei DT_MET 259200 $qnt \
+#	    T_STOP $t1 DIRECTION 1 \
+#	    ATM_BASENAME atm ATM_DT_OUT 43200 \
+#	    GRID_BASENAME grid GRID_DT_OUT 43200 \
+#	    GRID_LON0 -100 GRID_LON1 40 \
+#	    GRID_LAT0 -65 GRID_LAT1 -20 \
+#	    GRID_NX 280 GRID_NY 90
 
 # Use gnuplot to plot air parcels...
 for f in $(ls data/atm_2011*tab) ; do
@@ -91,4 +104,4 @@ EOF
 done
 
 # Remove data directory...
-rm -rf data
+#rm -rf data

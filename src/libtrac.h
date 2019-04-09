@@ -90,13 +90,16 @@
 #define NQ 12
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 112
+//#define EP 112
+#define EP 70
 
 /*! Maximum number of longitudes for meteorological data. */
-#define EX 1201
+//#define EX 1201
+#define EX 361
 
 /*! Maximum number of latitudes for meteorological data. */
-#define EY 601
+//#define EY 601
+#define EY 181
 
 /*! Maximum number of longitudes for gridded data. */
 #define GX 720
@@ -712,6 +715,7 @@ void cart2geo(
   double *lat);
 
 /*! Climatology of HNO3 volume mixing ratios. */
+#pragma acc routine
 double clim_hno3(
   double t,
   double lat,

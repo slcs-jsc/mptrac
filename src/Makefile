@@ -41,7 +41,7 @@ endif
 
 # Set CFLAGS...
 #CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
-CFLAGS = $(INCDIR) -DGSL_DISABLE_DEPRACTED -acc -Minfo=accel -mp -g
+CFLAGS = $(INCDIR) -DGSL_DISABLE_DEPRACTED -acc -Minfo=accel -mcmodel=medium -mp -g
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
@@ -55,7 +55,8 @@ endif
 ifdef MPI
   CFLAGS += -DMPI
 else
-  CFLAGS += -Bstatic
+  #CFLAGS += -Bstatic
+  CFLAGS += ""
 endif
 
 # Compile for profiling...
