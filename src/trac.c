@@ -283,7 +283,7 @@ int main(
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
         module_diffusion_meso(&ctl, met0, met1, atm, dt,
-                              rng[omp_get_thread_num()], rng_buffer);
+                              rng[omp_get_thread_num()], rng_buffer + 3*atm->np);
       }
       STOP_TIMER(TIMER_DIFFMESO);
 
@@ -593,16 +593,17 @@ void module_diffusion_meso(
     if (ctl->turb_mesox > 0) {
       atm->up[ip] = (float)
         (r * atm->up[ip]
-         + rs * gsl_ran_gaussian_ziggurat(rng,
-          				ctl->turb_mesox *
-          				atm->cache_usig[ix][iy][iz]));
+         + rs *
+            //gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * atm->cache_usig[ix][iy][iz]));
+            rng_buffer[3*ip] * ctl->turb_mesox * atm->cache_usig[ix][iy][iz]);
+
       atm->lon[ip] += DX2DEG(atm->up[ip] * dt[ip] / 1000., atm->lat[ip]);
 
       atm->vp[ip] = (float)
         (r * atm->vp[ip]
-         + rs * gsl_ran_gaussian_ziggurat(rng,
-          				ctl->turb_mesox *
-          				atm->cache_vsig[ix][iy][iz]));
+         + rs *
+            //gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesox * atm->cache_vsig[ix][iy][iz]));
+            rng_buffer[3*ip+1] * ctl->turb_mesox * atm->cache_vsig[ix][iy][iz]);
       atm->lat[ip] += DY2DEG(atm->vp[ip] * dt[ip] / 1000.);
     }
 
@@ -610,9 +611,9 @@ void module_diffusion_meso(
     if (ctl->turb_mesoz > 0) {
       atm->wp[ip] = (float)
         (r * atm->wp[ip]
-         + rs * gsl_ran_gaussian_ziggurat(rng,
-          				ctl->turb_mesoz *
-          				atm->cache_wsig[ix][iy][iz]));
+         + rs *
+            //gsl_ran_gaussian_ziggurat(rng, ctl->turb_mesoz * atm->cache_wsig[ix][iy][iz]));
+            rng_buffer[3*ip+2] * ctl->turb_mesoz * atm->cache_wsig[ix][iy][iz]);
       atm->p[ip] += atm->wp[ip] * dt[ip];
     }
   }
@@ -652,19 +653,22 @@ void module_diffusion_turb(
   
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
+      double stddev = sqrt(2.0 * dx * fabs(dt[ip]));
       atm->lon[ip]
-        += DX2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt[ip])))
-  		/ 1000., atm->lat[ip]);
+        //+= DX2DEG(gsl_ran_gaussian_ziggurat(rng, stddev)/1000., atm->lat[ip]);
+        += DX2DEG(rng_buffer[3*ip]*stddev/1000., atm->lat[ip]);
       atm->lat[ip]
-        += DY2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt[ip])))
-  		/ 1000.);
+        //+= DY2DEG(gsl_ran_gaussian_ziggurat(rng, stddev)/1000.);
+        += DY2DEG(rng_buffer[3*ip+1]*stddev/1000.);
     }
   
     /* Vertical turbulent diffusion... */
-    if (dz > 0)
+    if (dz > 0) {
+      double stddev = sqrt(2.0 * dz * fabs(dt[ip]));
       atm->p[ip]
-        += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt[ip])))
-  	       / 1000., atm->p[ip]);
+        //+= DZ2DP(gsl_ran_gaussian_ziggurat(rng, stddev) / 1000., atm->p[ip]);
+        += DZ2DP(rng_buffer[3*ip+2] * stddev/ 1000., atm->p[ip]);
+    }
   }
 }
 
