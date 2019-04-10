@@ -546,6 +546,7 @@ void get_met(
     get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met1))
       ERRMSG("Cannot open file!");
+    #pragma acc update device(met1[:1][:1])
   }
 
   /* Read new data for forward trajectories... */
@@ -556,6 +557,7 @@ void get_met(
     get_met_help(t, 1, metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met1))
       ERRMSG("Cannot open file!");
+    #pragma acc update device(met1[:1][:1])
   }
 
   /* Read new data for backward trajectories... */
@@ -566,6 +568,7 @@ void get_met(
     get_met_help(t, -1, metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
+    #pragma acc update device(met0[:1][:1])
   }
 
   /* Check that grids are consistent... */
