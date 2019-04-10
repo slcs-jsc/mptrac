@@ -130,7 +130,7 @@ int main(
 
   double *dt, t;
 
-  int i, ip, ntask = -1, rank = 0, size = 1;
+  int i, ntask = -1, rank = 0, size = 1;
 
 #ifdef MPI
   /* Initialize MPI... */
@@ -230,7 +230,8 @@ int main(
 	t = ctl.t_stop;
 
       /* Set time steps for air parcels... */
-      for (ip = 0; ip < atm->np; ip++)
+      #pragma acc parallel loop independent gang vector
+      for (int ip = 0; ip < atm->np; ip++)
 	if ((ctl.direction * (atm->time[ip] - ctl.t_start) >= 0
 	     && ctl.direction * (atm->time[ip] - ctl.t_stop) <= 0
 	     && ctl.direction * (atm->time[ip] - t) < 0))
