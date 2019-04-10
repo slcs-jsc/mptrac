@@ -251,8 +251,6 @@ int main(
 
       /* Check initial position... */
       START_TIMER(TIMER_POSITION);
-      //#pragma omp parallel for default(shared) private(ip)
-      //for (ip = 0; ip < atm->np; ip++)
       module_position(met0, met1, atm);
       STOP_TIMER(TIMER_POSITION);
 
@@ -264,10 +262,7 @@ int main(
 
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
-      //#pragma omp parallel for default(shared) private(ip)
-      //for (ip = 0; ip < atm->np; ip++)
-	//if (gsl_finite(dt[ip]))
-	  module_advection(met0, met1, atm, dt);
+      module_advection(met0, met1, atm, dt);
       STOP_TIMER(TIMER_ADVECT);
 
       /* Turbulent diffusion... */
@@ -308,8 +303,6 @@ int main(
 
       /* Check final position... */
       START_TIMER(TIMER_POSITION);
-      //#pragma omp parallel for default(shared) private(ip)
-      //for (ip = 0; ip < atm->np; ip++)
       module_position(met0, met1, atm);
       STOP_TIMER(TIMER_POSITION);
 
@@ -317,8 +310,6 @@ int main(
       START_TIMER(TIMER_METEO);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0)) {
-        //#pragma omp parallel for default(shared) private(ip)
-	//for (ip = 0; ip < atm->np; ip++)
 	  module_meteo(&ctl, met0, met1, atm);
       }
       STOP_TIMER(TIMER_METEO);
@@ -326,9 +317,6 @@ int main(
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
       if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
-        //#pragma omp parallel for default(shared) private(ip)
-	//for (ip = 0; ip < atm->np; ip++)
-	//  if (dt[ip] != 0)
 	module_decay(&ctl, met0, met1, atm, dt);
       }
       STOP_TIMER(TIMER_DECAY);
@@ -411,6 +399,7 @@ void module_advection(
   atm_t * atm,
   double* dt) {
 
+  //#pragma omp parallel for default(shared)
   #pragma acc data present(met0,met1,atm,dt)
   #pragma acc kernels
   {
@@ -456,6 +445,7 @@ void module_decay(
   atm_t * atm,
   double* dt) {
 
+    //#pragma omp parallel for default(shared)
     #pragma acc data present(ctl,met0,met1,atm,dt)
     #pragma acc kernels
     {
@@ -793,6 +783,7 @@ void module_meteo(
   met_t * met1,
   atm_t * atm) {
     
+    //#pragma omp parallel for default(shared)
     #pragma acc data present(ctl, met0,met1,atm)
     #pragma acc kernels
     {
@@ -908,6 +899,7 @@ void module_position(
   met_t * met1,
   atm_t * atm) {
     
+    //#pragma omp parallel for default(shared) private(ip)
     #pragma acc data present(met0,met1,atm)
     #pragma acc kernels
     {
