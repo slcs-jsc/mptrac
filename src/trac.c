@@ -283,11 +283,11 @@ int main(
       STOP_TIMER(TIMER_SEDI);
 
       /* Isosurface... */
-      START_TIMER(TIMER_ISOSURF);
-      if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
-	module_isosurf(&ctl, met0, met1, atm);
-      }
-      STOP_TIMER(TIMER_ISOSURF);
+      //START_TIMER(TIMER_ISOSURF);
+      //if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
+      //  module_isosurf(&ctl, met0, met1, atm);
+      //}
+      //STOP_TIMER(TIMER_ISOSURF);
 
       /* Check final position... */
       START_TIMER(TIMER_POSITION);
@@ -755,6 +755,8 @@ void module_isosurf(
   atm_t * atm) {
 
   //#pragma omp parallel for default(shared)
+  //#pragma acc data present(ctl,met0,met1,atm)
+  //#pragma acc parallel loop independent gang vector
   for (int ip = 0; ip < atm->np; ip++)
   {
     static double *iso, *ps, t, *ts;
@@ -977,6 +979,8 @@ void module_sedi(
   double * dt) {
 
   //#pragma omp parallel for default(shared)
+  #pragma acc data present(ctl, met0, met1, atm, dt)
+  #pragma acc parallel loop independent gang vector
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0)
   {
