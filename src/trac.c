@@ -471,6 +471,30 @@ void module_decay(
 
 /*****************************************************************************/
 
+double stats_sd(double* data, int n)
+{
+    if (n == 0) return 0;
+
+    double avg = 0;
+
+    for (int i = 0; i < n; ++i)
+        avg += data[i];
+
+    avg /= n;
+
+    double rms = 0;
+    for (int i = 0; i < n; ++i)
+    {
+        double di = data[i];
+        double diff = di - avg;
+        rms += diff * diff;
+    }
+
+    return sqrt(rms/(n-1));
+}
+
+/*****************************************************************************/
+
 void module_diffusion_meso(
   ctl_t * ctl,
   met_t * met0,
@@ -552,10 +576,18 @@ void module_diffusion_meso(
       w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
       /* Get standard deviations of local wind data... */
-      atm->cache_usig[ix][iy][iz] = (float) gsl_stats_sd(u, 1, 16);
-      atm->cache_vsig[ix][iy][iz] = (float) gsl_stats_sd(v, 1, 16);
-      atm->cache_wsig[ix][iy][iz] = (float) gsl_stats_sd(w, 1, 16);
+      //atm->cache_usig[ix][iy][iz] = (float) gsl_stats_sd(u, 1, 16);
+      //atm->cache_vsig[ix][iy][iz] = (float) gsl_stats_sd(v, 1, 16);
+      //atm->cache_wsig[ix][iy][iz] = (float) gsl_stats_sd(w, 1, 16);
+      atm->cache_usig[ix][iy][iz] = stats_sd(u, 16);
+      atm->cache_vsig[ix][iy][iz] = stats_sd(v, 16);
+      atm->cache_wsig[ix][iy][iz] = stats_sd(w, 16);
       atm->cache_time[ix][iy][iz] = met0->time;
+
+      //float test = stddev(u, 16);
+      //float ref = gsl_stats_sd(u, 1, 16);
+      //if ( fabs(test - ref) > 1e-6)
+      //   printf("stddev %.6f, %.6f \n", test, ref);
     }
 
     /* Set temporal correlations for mesoscale fluctuations... */
@@ -602,7 +634,6 @@ void module_diffusion_turb(
 
   //#pragma omp parallel for default(shared)
   #pragma acc data present(ctl,atm,dt,rng_buffer)
-  //#pragma acc kernels
   #pragma acc parallel loop independent gang vector
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0)
