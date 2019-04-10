@@ -471,6 +471,7 @@ void module_decay(
 
 /*****************************************************************************/
 
+#pragma acc routine
 double stats_sd(double* data, int n)
 {
     if (n == 0) return 0;
@@ -503,7 +504,9 @@ void module_diffusion_meso(
   double * dt,
   double * rng_buffer) {
 
-  #pragma omp parallel for default(shared)
+  //#pragma omp parallel for default(shared)
+  #pragma acc data present(ctl, met0, met1, atm, dt, rng_buffer)
+  #pragma acc parallel loop independent gang vector
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0)
   {
