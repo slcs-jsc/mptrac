@@ -164,7 +164,7 @@ int main(
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
-    #pragma acc data create(met0[:1], met1[:1], atm[:1], dt[:NP])
+    #pragma acc enter data create(met0[:1], met1[:1], atm[:1], dt[:NP])
 
     /* Initialize random number generators... */
     gsl_rng_env_setup();
@@ -239,8 +239,7 @@ int main(
 
 //////////////////////////////////////////////////////////
 
-      /* OpenACC preparation */
-      #pragma acc enter data copyin(met0[:1], met1[:1], atm[:1], dt[:NP])
+      #pragma acc update device(met0[:1], met1[:1], atm[:1], dt[:NP])
 
       /* Check initial position... */
       START_TIMER(TIMER_POSITION);
@@ -332,7 +331,7 @@ int main(
       }
       STOP_TIMER(TIMER_DECAY);
 
-      #pragma acc data copyout(atm[:1])
+      #pragma acc update host(atm[:1])
 //////////////////////////////////////////////////////////
 
       /* Write output... */
@@ -391,7 +390,7 @@ int main(
     free(met0);
     free(met1);
     free(dt);
-    #pragma acc exit data delete(ctl, met0, met1, dt)
+    #pragma acc exit data delete(atm, ctl, met0, met1, dt)
   }
 
 #ifdef MPI
