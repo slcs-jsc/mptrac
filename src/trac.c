@@ -55,7 +55,6 @@ void module_diffusion_meso(
   met_t * met1,
   atm_t * atm,
   double * dt,
-  gsl_rng * rng,
   double * rng_buffer);
 
 /*! Calculate turbulent diffusion. */
@@ -63,16 +62,20 @@ void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
   double * dt,
-  gsl_rng * rng,
   double * rng_buffer);
 
 /*! Force air parcels to stay on isosurface. */
+void module_isosurf_init(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
+
 void module_isosurf(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  int ip);
+  atm_t * atm);
 
 /*! Interpolate meteorological data for air parcel positions. */
 void module_meteo(
@@ -93,8 +96,7 @@ void module_sedi(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt);
+  double * dt);
 
 /*! Write simulation output. */
 void write_output(
@@ -119,8 +121,7 @@ int main(
 
   met_t *met0, *met1;
 
-  gsl_rng *rng[NTHREADS];
-  // store random numbers needed per timestep (6*NP)
+  // random numbers needed per timestep (6*NP)
   double *rng_buffer;
 
   FILE *dirlist;
@@ -167,19 +168,11 @@ int main(
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double, NP);
     ALLOC(rng_buffer, double, 6*NP);
-    #pragma acc enter data create(met0[:1], met1[:1], atm[:1], dt[:NP])
+    #pragma acc enter data create(met0[:1], met1[:1], atm[:1], dt[:NP], rng_buffer[:6*NP])
 
     /* Initialize random number generators... */
     init_rng();
     
-    gsl_rng_env_setup();
-    if (omp_get_max_threads() > NTHREADS)
-      ERRMSG("Too many threads!");
-    for (i = 0; i < NTHREADS; i++) {
-      rng[i] = gsl_rng_alloc(gsl_rng_default);
-      gsl_rng_set(rng[i], gsl_rng_default_seed + (long unsigned) i);
-    }
-
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
@@ -211,6 +204,12 @@ int main(
     else
       ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
 
+      /* Initialize isosurface... */
+      START_TIMER(TIMER_ISOSURF);
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4 && t == ctl.t_start)
+	module_isosurf_init(&ctl, met0, met1, atm);
+      STOP_TIMER(TIMER_ISOSURF);
+
     /* Set timers... */
     STOP_TIMER(TIMER_INIT);
 
@@ -224,6 +223,7 @@ int main(
 
       /* Generate random numbers */
       fill_rng_buffer(rng_buffer, 6*atm->np);
+      #pragma acc update device(rng_buffer[:6*NP])
 
       /* Adjust length of final time step... */
       if (ctl.direction * (t - ctl.t_stop) > 0)
@@ -254,12 +254,6 @@ int main(
       module_position(met0, met1, atm);
       STOP_TIMER(TIMER_POSITION);
 
-      /* Initialize isosurface... */
-      START_TIMER(TIMER_ISOSURF);
-      if (ctl.isosurf >= 1 && ctl.isosurf <= 4 && t == ctl.t_start)
-	module_isosurf(&ctl, met0, met1, atm, -1);
-      STOP_TIMER(TIMER_ISOSURF);
-
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
       module_advection(met0, met1, atm, dt);
@@ -269,35 +263,28 @@ int main(
       START_TIMER(TIMER_DIFFTURB);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
-	    module_diffusion_turb(&ctl, atm, dt,
-				  rng[omp_get_thread_num()], rng_buffer);
+	    module_diffusion_turb(&ctl, atm, dt, rng_buffer);
       }
       STOP_TIMER(TIMER_DIFFTURB);
 
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
-        module_diffusion_meso(&ctl, met0, met1, atm, dt,
-                              rng[omp_get_thread_num()], rng_buffer + 3*atm->np);
+        module_diffusion_meso(&ctl, met0, met1, atm, dt, rng_buffer + 3*atm->np);
       }
       STOP_TIMER(TIMER_DIFFMESO);
 
       /* Sedimentation... */
       START_TIMER(TIMER_SEDI);
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
-        #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (dt[ip] != 0)
-	    module_sedi(&ctl, met0, met1, atm, ip, dt[ip]);
+	module_sedi(&ctl, met0, met1, atm, dt);
       }
       STOP_TIMER(TIMER_SEDI);
 
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
-      #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  module_isosurf(&ctl, met0, met1, atm, ip);
+	module_isosurf(&ctl, met0, met1, atm);
       }
       STOP_TIMER(TIMER_ISOSURF);
 
@@ -371,16 +358,13 @@ int main(
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
 
-    /* Free random number generators... */
-    for (i = 0; i < NTHREADS; i++)
-      gsl_rng_free(rng[i]);
-
     /* Free... */
     free(atm);
     free(met0);
     free(met1);
     free(dt);
-    #pragma acc exit data delete(atm, ctl, met0, met1, dt)
+    free(rng_buffer);
+    #pragma acc exit data delete(atm, ctl, met0, met1, dt, rng_buffer)
   }
 
 #ifdef MPI
@@ -493,7 +477,6 @@ void module_diffusion_meso(
   met_t * met1,
   atm_t * atm,
   double * dt,
-  gsl_rng * rng,
   double * rng_buffer) {
 
   #pragma omp parallel for default(shared)
@@ -615,10 +598,12 @@ void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
   double * dt,
-  gsl_rng * rng,
   double * rng_buffer) {
 
-  #pragma omp parallel for default(shared)
+  //#pragma omp parallel for default(shared)
+  #pragma acc data present(ctl,atm,dt,rng_buffer)
+  //#pragma acc kernels
+  #pragma acc parallel loop independent gang vector
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0)
   {
@@ -664,113 +649,114 @@ void module_diffusion_turb(
 
 /*****************************************************************************/
 
+void module_isosurf_init(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm) {
+
+  static double *iso, *ps, t, *ts;
+  static int idx, ip2, n;
+  FILE *in;
+  char line[LEN];
+
+  /* Allocate... */
+  ALLOC(iso, double, NP);
+  ALLOC(ps, double, NP);
+  ALLOC(ts, double, NP);
+
+  /* Save pressure... */
+  if (ctl->isosurf == 1)
+    for (ip2 = 0; ip2 < atm->np; ip2++)
+      iso[ip2] = atm->p[ip2];
+
+  /* Save density... */
+  else if (ctl->isosurf == 2)
+    for (ip2 = 0; ip2 < atm->np; ip2++) {
+      intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
+      		atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
+      		&t, NULL, NULL, NULL, NULL, NULL, NULL);
+      iso[ip2] = atm->p[ip2] / t;
+    }
+
+  /* Save potential temperature... */
+  else if (ctl->isosurf == 3)
+    for (ip2 = 0; ip2 < atm->np; ip2++) {
+      intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
+      		atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
+      		&t, NULL, NULL, NULL, NULL, NULL, NULL);
+      iso[ip2] = THETA(atm->p[ip2], t);
+    }
+
+  /* Read balloon pressure data... */
+  else if (ctl->isosurf == 4) {
+
+    /* Write info... */
+    printf("Read balloon pressure data: %s\n", ctl->balloon);
+
+    /* Open file... */
+    if (!(in = fopen(ctl->balloon, "r")))
+      ERRMSG("Cannot open file!");
+
+    /* Read pressure time series... */
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
+        if ((++n) > NP)
+          ERRMSG("Too many data points!");
+
+    /* Check number of points... */
+    if (n < 1)
+      ERRMSG("Could not read any data!");
+
+    /* Close file... */
+    fclose(in);
+  }
+}
+
 void module_isosurf(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  int ip) {
+  atm_t * atm) {
 
-  static double *iso, *ps, t, *ts;
+  //#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+  {
+    static double *iso, *ps, t, *ts;
+    static int idx, ip2, n;
+    char line[LEN];
 
-  static int idx, ip2, n;
-
-  FILE *in;
-
-  char line[LEN];
-
-  /* Initialize... */
-  if (ip < 0) {
-
-    /* Allocate... */
-    ALLOC(iso, double,
-	  NP);
-    ALLOC(ps, double,
-	  NP);
-    ALLOC(ts, double,
-	  NP);
-
-    /* Save pressure... */
+    /* Restore pressure... */
     if (ctl->isosurf == 1)
-      for (ip2 = 0; ip2 < atm->np; ip2++)
-	iso[ip2] = atm->p[ip2];
+      atm->p[ip] = iso[ip];
 
-    /* Save density... */
-    else if (ctl->isosurf == 2)
-      for (ip2 = 0; ip2 < atm->np; ip2++) {
-	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
-			atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
-			&t, NULL, NULL, NULL, NULL, NULL, NULL);
-	iso[ip2] = atm->p[ip2] / t;
-      }
-
-    /* Save potential temperature... */
-    else if (ctl->isosurf == 3)
-      for (ip2 = 0; ip2 < atm->np; ip2++) {
-	intpol_met_time(met0, met1, atm->time[ip2], atm->p[ip2],
-			atm->lon[ip2], atm->lat[ip2], NULL, NULL, NULL,
-			&t, NULL, NULL, NULL, NULL, NULL, NULL);
-	iso[ip2] = THETA(atm->p[ip2], t);
-      }
-
-    /* Read balloon pressure data... */
-    else if (ctl->isosurf == 4) {
-
-      /* Write info... */
-      printf("Read balloon pressure data: %s\n", ctl->balloon);
-
-      /* Open file... */
-      if (!(in = fopen(ctl->balloon, "r")))
-	ERRMSG("Cannot open file!");
-
-      /* Read pressure time series... */
-      while (fgets(line, LEN, in))
-	if (sscanf(line, "%lg %lg", &ts[n], &ps[n]) == 2)
-	  if ((++n) > NP)
-	    ERRMSG("Too many data points!");
-
-      /* Check number of points... */
-      if (n < 1)
-	ERRMSG("Could not read any data!");
-
-      /* Close file... */
-      fclose(in);
+    /* Restore density... */
+    else if (ctl->isosurf == 2) {
+      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+          	    atm->lat[ip], NULL, NULL, NULL, &t,
+          	    NULL, NULL, NULL, NULL, NULL, NULL);
+      atm->p[ip] = iso[ip] * t;
     }
 
-    /* Leave initialization... */
-    return;
-  }
+    /* Restore potential temperature... */
+    else if (ctl->isosurf == 3) {
+      intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+          	    atm->lat[ip], NULL, NULL, NULL, &t,
+          	    NULL, NULL, NULL, NULL, NULL, NULL);
+      atm->p[ip] = 1000. * pow(iso[ip] / t, -1. / 0.286);
+    }
 
-  /* Restore pressure... */
-  if (ctl->isosurf == 1)
-    atm->p[ip] = iso[ip];
-
-  /* Restore density... */
-  else if (ctl->isosurf == 2) {
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, &t,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
-    atm->p[ip] = iso[ip] * t;
-  }
-
-  /* Restore potential temperature... */
-  else if (ctl->isosurf == 3) {
-    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		    atm->lat[ip], NULL, NULL, NULL, &t,
-		    NULL, NULL, NULL, NULL, NULL, NULL);
-    atm->p[ip] = 1000. * pow(iso[ip] / t, -1. / 0.286);
-  }
-
-  /* Interpolate pressure... */
-  else if (ctl->isosurf == 4) {
-    if (atm->time[ip] <= ts[0])
-      atm->p[ip] = ps[0];
-    else if (atm->time[ip] >= ts[n - 1])
-      atm->p[ip] = ps[n - 1];
-    else {
-      idx = locate_irr(ts, n, atm->time[ip]);
-      atm->p[ip] = LIN(ts[idx], ps[idx],
-		       ts[idx + 1], ps[idx + 1], atm->time[ip]);
+    /* Interpolate pressure... */
+    else if (ctl->isosurf == 4) {
+      if (atm->time[ip] <= ts[0])
+        atm->p[ip] = ps[0];
+      else if (atm->time[ip] >= ts[n - 1])
+        atm->p[ip] = ps[n - 1];
+      else {
+        idx = locate_irr(ts, n, atm->time[ip]);
+        atm->p[ip] = LIN(ts[idx], ps[idx],
+          	       ts[idx + 1], ps[idx + 1], atm->time[ip]);
+      }
     }
   }
 }
@@ -953,50 +939,55 @@ void module_sedi(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt) {
+  double * dt) {
 
-  /* Coefficients for Cunningham slip-flow correction (Kasten, 1968): */
-  const double A = 1.249, B = 0.42, C = 0.87;
+  //#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0)
+  {
 
-  /* Average mass of an air molecule [kg/molec]: */
-  const double m = 4.8096e-26;
+    /* Coefficients for Cunningham slip-flow correction (Kasten, 1968): */
+    const double A = 1.249, B = 0.42, C = 0.87;
 
-  double G, K, eta, lambda, p, r_p, rho, rho_p, T, v, v_p;
+    /* Average mass of an air molecule [kg/molec]: */
+    const double m = 4.8096e-26;
 
-  /* Convert units... */
-  p = 100 * atm->p[ip];
-  r_p = 1e-6 * atm->q[ctl->qnt_r][ip];
-  rho_p = atm->q[ctl->qnt_rho][ip];
+    double G, K, eta, lambda, p, r_p, rho, rho_p, T, v, v_p;
 
-  /* Get temperature... */
-  intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
-		  atm->lat[ip], NULL, NULL, NULL, &T,
-		  NULL, NULL, NULL, NULL, NULL, NULL);
+    /* Convert units... */
+    p = 100 * atm->p[ip];
+    r_p = 1e-6 * atm->q[ctl->qnt_r][ip];
+    rho_p = atm->q[ctl->qnt_rho][ip];
 
-  /* Density of dry air... */
-  rho = p / (RA * T);
+    /* Get temperature... */
+    intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
+          	  atm->lat[ip], NULL, NULL, NULL, &T,
+          	  NULL, NULL, NULL, NULL, NULL, NULL);
 
-  /* Dynamic viscosity of air... */
-  eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+    /* Density of dry air... */
+    rho = p / (RA * T);
 
-  /* Thermal velocity of an air molecule... */
-  v = sqrt(8 * KB * T / (M_PI * m));
+    /* Dynamic viscosity of air... */
+    eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
-  /* Mean free path of an air molecule... */
-  lambda = 2 * eta / (rho * v);
+    /* Thermal velocity of an air molecule... */
+    v = sqrt(8 * KB * T / (M_PI * m));
 
-  /* Knudsen number for air... */
-  K = lambda / r_p;
+    /* Mean free path of an air molecule... */
+    lambda = 2 * eta / (rho * v);
 
-  /* Cunningham slip-flow correction... */
-  G = 1 + K * (A + B * exp(-C / K));
+    /* Knudsen number for air... */
+    K = lambda / r_p;
 
-  /* Sedimentation (fall) velocity... */
-  v_p = 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
+    /* Cunningham slip-flow correction... */
+    G = 1 + K * (A + B * exp(-C / K));
 
-  /* Calculate pressure change... */
-  atm->p[ip] += DZ2DP(v_p * dt / 1000., atm->p[ip]);
+    /* Sedimentation (fall) velocity... */
+    v_p = 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
+
+    /* Calculate pressure change... */
+    atm->p[ip] += DZ2DP(v_p * dt[ip] / 1000., atm->p[ip]);
+  }
 }
 
 /*****************************************************************************/
