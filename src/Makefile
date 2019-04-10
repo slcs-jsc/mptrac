@@ -73,11 +73,14 @@ endif
 all: $(EXC)
 	rm -f *~
 
-$(EXC): %: %.c libtrac.o
-	$(CC) $(CFLAGS) -o $@ $< libtrac.o $(LDFLAGS)
+$(EXC): %: %.c libtrac.o rng.o
+	$(CC) $(CFLAGS) -o $@ $< libtrac.o rng.o $(LDFLAGS)
 
 libtrac.o: libtrac.c libtrac.h Makefile
 	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
+
+rng.o: rng.c rng.h Makefile
+	$(CC) $(CFLAGS) -c -o rng.o rng.c
 
 clean:
 	rm -f $(EXC) *.o *~

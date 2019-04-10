@@ -23,6 +23,7 @@
 */
 
 #include "libtrac.h"
+#include "rng.h"
 
 #ifdef MPI
 #include "mpi.h"
@@ -53,17 +54,17 @@ void module_diffusion_meso(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt,
-  gsl_rng * rng);
+  double * dt,
+  gsl_rng * rng,
+  double * rng_buffer);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
-  int ip,
-  double dt,
-  gsl_rng * rng);
+  double * dt,
+  gsl_rng * rng,
+  double * rng_buffer);
 
 /*! Force air parcels to stay on isosurface. */
 void module_isosurf(
@@ -119,6 +120,8 @@ int main(
   met_t *met0, *met1;
 
   gsl_rng *rng[NTHREADS];
+  // store random numbers needed per timestep (6*NP)
+  double *rng_buffer;
 
   FILE *dirlist;
 
@@ -162,11 +165,13 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
-    ALLOC(dt, double,
-	  NP);
+    ALLOC(dt, double, NP);
+    ALLOC(rng_buffer, double, 6*NP);
     #pragma acc enter data create(met0[:1], met1[:1], atm[:1], dt[:NP])
 
     /* Initialize random number generators... */
+    init_rng();
+    
     gsl_rng_env_setup();
     if (omp_get_max_threads() > NTHREADS)
       ERRMSG("Too many threads!");
@@ -217,6 +222,9 @@ int main(
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 
+      /* Generate random numbers */
+      fill_rng_buffer(rng_buffer, 6*atm->np);
+
       /* Adjust length of final time step... */
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
@@ -266,22 +274,16 @@ int main(
       START_TIMER(TIMER_DIFFTURB);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
-        #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (dt[ip] != 0)
-	    module_diffusion_turb(&ctl, atm, ip, dt[ip],
-				  rng[omp_get_thread_num()]);
+	    module_diffusion_turb(&ctl, atm, dt,
+				  rng[omp_get_thread_num()], rng_buffer);
       }
       STOP_TIMER(TIMER_DIFFTURB);
 
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
-        #pragma omp parallel for default(shared) private(ip)
-	for (ip = 0; ip < atm->np; ip++)
-	  if (dt[ip] != 0)
-	    module_diffusion_meso(&ctl, met0, met1, atm, ip, dt[ip],
-				  rng[omp_get_thread_num()]);
+        module_diffusion_meso(&ctl, met0, met1, atm, dt,
+                              rng[omp_get_thread_num()], rng_buffer);
       }
       STOP_TIMER(TIMER_DIFFMESO);
 
@@ -500,114 +502,119 @@ void module_diffusion_meso(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  int ip,
-  double dt,
-  gsl_rng * rng) {
+  double * dt,
+  gsl_rng * rng,
+  double * rng_buffer) {
 
-  double r, rs, u[16], v[16], w[16];
+  #pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0)
+  {
+    double r, rs, u[16], v[16], w[16];
 
-  int ix, iy, iz;
+    int ix, iy, iz;
 
-  /* Get indices... */
-  ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-  iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-  iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+    /* Get indices... */
+    ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+    iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+    iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
-  /* Caching of wind standard deviations... */
-  if (atm->cache_time[ix][iy][iz] != met0->time) {
+    /* Caching of wind standard deviations... */
+    if (atm->cache_time[ix][iy][iz] != met0->time) {
 
-    /* Collect local wind data... */
-    u[0] = met0->u[ix][iy][iz];
-    u[1] = met0->u[ix + 1][iy][iz];
-    u[2] = met0->u[ix][iy + 1][iz];
-    u[3] = met0->u[ix + 1][iy + 1][iz];
-    u[4] = met0->u[ix][iy][iz + 1];
-    u[5] = met0->u[ix + 1][iy][iz + 1];
-    u[6] = met0->u[ix][iy + 1][iz + 1];
-    u[7] = met0->u[ix + 1][iy + 1][iz + 1];
+      /* Collect local wind data... */
+      u[0] = met0->u[ix][iy][iz];
+      u[1] = met0->u[ix + 1][iy][iz];
+      u[2] = met0->u[ix][iy + 1][iz];
+      u[3] = met0->u[ix + 1][iy + 1][iz];
+      u[4] = met0->u[ix][iy][iz + 1];
+      u[5] = met0->u[ix + 1][iy][iz + 1];
+      u[6] = met0->u[ix][iy + 1][iz + 1];
+      u[7] = met0->u[ix + 1][iy + 1][iz + 1];
 
-    v[0] = met0->v[ix][iy][iz];
-    v[1] = met0->v[ix + 1][iy][iz];
-    v[2] = met0->v[ix][iy + 1][iz];
-    v[3] = met0->v[ix + 1][iy + 1][iz];
-    v[4] = met0->v[ix][iy][iz + 1];
-    v[5] = met0->v[ix + 1][iy][iz + 1];
-    v[6] = met0->v[ix][iy + 1][iz + 1];
-    v[7] = met0->v[ix + 1][iy + 1][iz + 1];
+      v[0] = met0->v[ix][iy][iz];
+      v[1] = met0->v[ix + 1][iy][iz];
+      v[2] = met0->v[ix][iy + 1][iz];
+      v[3] = met0->v[ix + 1][iy + 1][iz];
+      v[4] = met0->v[ix][iy][iz + 1];
+      v[5] = met0->v[ix + 1][iy][iz + 1];
+      v[6] = met0->v[ix][iy + 1][iz + 1];
+      v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
-    w[0] = met0->w[ix][iy][iz];
-    w[1] = met0->w[ix + 1][iy][iz];
-    w[2] = met0->w[ix][iy + 1][iz];
-    w[3] = met0->w[ix + 1][iy + 1][iz];
-    w[4] = met0->w[ix][iy][iz + 1];
-    w[5] = met0->w[ix + 1][iy][iz + 1];
-    w[6] = met0->w[ix][iy + 1][iz + 1];
-    w[7] = met0->w[ix + 1][iy + 1][iz + 1];
+      w[0] = met0->w[ix][iy][iz];
+      w[1] = met0->w[ix + 1][iy][iz];
+      w[2] = met0->w[ix][iy + 1][iz];
+      w[3] = met0->w[ix + 1][iy + 1][iz];
+      w[4] = met0->w[ix][iy][iz + 1];
+      w[5] = met0->w[ix + 1][iy][iz + 1];
+      w[6] = met0->w[ix][iy + 1][iz + 1];
+      w[7] = met0->w[ix + 1][iy + 1][iz + 1];
 
-    /* Collect local wind data... */
-    u[8] = met1->u[ix][iy][iz];
-    u[9] = met1->u[ix + 1][iy][iz];
-    u[10] = met1->u[ix][iy + 1][iz];
-    u[11] = met1->u[ix + 1][iy + 1][iz];
-    u[12] = met1->u[ix][iy][iz + 1];
-    u[13] = met1->u[ix + 1][iy][iz + 1];
-    u[14] = met1->u[ix][iy + 1][iz + 1];
-    u[15] = met1->u[ix + 1][iy + 1][iz + 1];
+      /* Collect local wind data... */
+      u[8] = met1->u[ix][iy][iz];
+      u[9] = met1->u[ix + 1][iy][iz];
+      u[10] = met1->u[ix][iy + 1][iz];
+      u[11] = met1->u[ix + 1][iy + 1][iz];
+      u[12] = met1->u[ix][iy][iz + 1];
+      u[13] = met1->u[ix + 1][iy][iz + 1];
+      u[14] = met1->u[ix][iy + 1][iz + 1];
+      u[15] = met1->u[ix + 1][iy + 1][iz + 1];
 
-    v[8] = met1->v[ix][iy][iz];
-    v[9] = met1->v[ix + 1][iy][iz];
-    v[10] = met1->v[ix][iy + 1][iz];
-    v[11] = met1->v[ix + 1][iy + 1][iz];
-    v[12] = met1->v[ix][iy][iz + 1];
-    v[13] = met1->v[ix + 1][iy][iz + 1];
-    v[14] = met1->v[ix][iy + 1][iz + 1];
-    v[15] = met1->v[ix + 1][iy + 1][iz + 1];
+      v[8] = met1->v[ix][iy][iz];
+      v[9] = met1->v[ix + 1][iy][iz];
+      v[10] = met1->v[ix][iy + 1][iz];
+      v[11] = met1->v[ix + 1][iy + 1][iz];
+      v[12] = met1->v[ix][iy][iz + 1];
+      v[13] = met1->v[ix + 1][iy][iz + 1];
+      v[14] = met1->v[ix][iy + 1][iz + 1];
+      v[15] = met1->v[ix + 1][iy + 1][iz + 1];
 
-    w[8] = met1->w[ix][iy][iz];
-    w[9] = met1->w[ix + 1][iy][iz];
-    w[10] = met1->w[ix][iy + 1][iz];
-    w[11] = met1->w[ix + 1][iy + 1][iz];
-    w[12] = met1->w[ix][iy][iz + 1];
-    w[13] = met1->w[ix + 1][iy][iz + 1];
-    w[14] = met1->w[ix][iy + 1][iz + 1];
-    w[15] = met1->w[ix + 1][iy + 1][iz + 1];
+      w[8] = met1->w[ix][iy][iz];
+      w[9] = met1->w[ix + 1][iy][iz];
+      w[10] = met1->w[ix][iy + 1][iz];
+      w[11] = met1->w[ix + 1][iy + 1][iz];
+      w[12] = met1->w[ix][iy][iz + 1];
+      w[13] = met1->w[ix + 1][iy][iz + 1];
+      w[14] = met1->w[ix][iy + 1][iz + 1];
+      w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
-    /* Get standard deviations of local wind data... */
-    atm->cache_usig[ix][iy][iz] = (float) gsl_stats_sd(u, 1, 16);
-    atm->cache_vsig[ix][iy][iz] = (float) gsl_stats_sd(v, 1, 16);
-    atm->cache_wsig[ix][iy][iz] = (float) gsl_stats_sd(w, 1, 16);
-    atm->cache_time[ix][iy][iz] = met0->time;
-  }
+      /* Get standard deviations of local wind data... */
+      atm->cache_usig[ix][iy][iz] = (float) gsl_stats_sd(u, 1, 16);
+      atm->cache_vsig[ix][iy][iz] = (float) gsl_stats_sd(v, 1, 16);
+      atm->cache_wsig[ix][iy][iz] = (float) gsl_stats_sd(w, 1, 16);
+      atm->cache_time[ix][iy][iz] = met0->time;
+    }
 
-  /* Set temporal correlations for mesoscale fluctuations... */
-  r = 1 - 2 * fabs(dt) / ctl->dt_met;
-  rs = sqrt(1 - r * r);
+    /* Set temporal correlations for mesoscale fluctuations... */
+    r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+    rs = sqrt(1 - r * r);
 
-  /* Calculate horizontal mesoscale wind fluctuations... */
-  if (ctl->turb_mesox > 0) {
-    atm->up[ip] = (float)
-      (r * atm->up[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng,
-					ctl->turb_mesox *
-					atm->cache_usig[ix][iy][iz]));
-    atm->lon[ip] += DX2DEG(atm->up[ip] * dt / 1000., atm->lat[ip]);
+    /* Calculate horizontal mesoscale wind fluctuations... */
+    if (ctl->turb_mesox > 0) {
+      atm->up[ip] = (float)
+        (r * atm->up[ip]
+         + rs * gsl_ran_gaussian_ziggurat(rng,
+          				ctl->turb_mesox *
+          				atm->cache_usig[ix][iy][iz]));
+      atm->lon[ip] += DX2DEG(atm->up[ip] * dt[ip] / 1000., atm->lat[ip]);
 
-    atm->vp[ip] = (float)
-      (r * atm->vp[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng,
-					ctl->turb_mesox *
-					atm->cache_vsig[ix][iy][iz]));
-    atm->lat[ip] += DY2DEG(atm->vp[ip] * dt / 1000.);
-  }
+      atm->vp[ip] = (float)
+        (r * atm->vp[ip]
+         + rs * gsl_ran_gaussian_ziggurat(rng,
+          				ctl->turb_mesox *
+          				atm->cache_vsig[ix][iy][iz]));
+      atm->lat[ip] += DY2DEG(atm->vp[ip] * dt[ip] / 1000.);
+    }
 
-  /* Calculate vertical mesoscale wind fluctuations... */
-  if (ctl->turb_mesoz > 0) {
-    atm->wp[ip] = (float)
-      (r * atm->wp[ip]
-       + rs * gsl_ran_gaussian_ziggurat(rng,
-					ctl->turb_mesoz *
-					atm->cache_wsig[ix][iy][iz]));
-    atm->p[ip] += atm->wp[ip] * dt;
+    /* Calculate vertical mesoscale wind fluctuations... */
+    if (ctl->turb_mesoz > 0) {
+      atm->wp[ip] = (float)
+        (r * atm->wp[ip]
+         + rs * gsl_ran_gaussian_ziggurat(rng,
+          				ctl->turb_mesoz *
+          				atm->cache_wsig[ix][iy][iz]));
+      atm->p[ip] += atm->wp[ip] * dt[ip];
+    }
   }
 }
 
@@ -616,44 +623,49 @@ void module_diffusion_meso(
 void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
-  int ip,
-  double dt,
-  gsl_rng * rng) {
+  double * dt,
+  gsl_rng * rng,
+  double * rng_buffer) {
 
-  double dx, dz, pt, p0, p1, w;
-
-  /* Get tropopause pressure... */
-  pt = clim_tropo(atm->time[ip], atm->lat[ip]);
-
-  /* Get weighting factor... */
-  p1 = pt * 0.866877899;
-  p0 = pt / 0.866877899;
-  if (atm->p[ip] > p0)
-    w = 1;
-  else if (atm->p[ip] < p1)
-    w = 0;
-  else
-    w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
-
-  /* Set diffusivity... */
-  dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
-  dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
-
-  /* Horizontal turbulent diffusion... */
-  if (dx > 0) {
-    atm->lon[ip]
-      += DX2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
-		/ 1000., atm->lat[ip]);
-    atm->lat[ip]
-      += DY2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt)))
-		/ 1000.);
+  #pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0)
+  {
+    double dx, dz, pt, p0, p1, w;
+  
+    /* Get tropopause pressure... */
+    pt = clim_tropo(atm->time[ip], atm->lat[ip]);
+  
+    /* Get weighting factor... */
+    p1 = pt * 0.866877899;
+    p0 = pt / 0.866877899;
+    if (atm->p[ip] > p0)
+      w = 1;
+    else if (atm->p[ip] < p1)
+      w = 0;
+    else
+      w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
+  
+    /* Set diffusivity... */
+    dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
+    dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
+  
+    /* Horizontal turbulent diffusion... */
+    if (dx > 0) {
+      atm->lon[ip]
+        += DX2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt[ip])))
+  		/ 1000., atm->lat[ip]);
+      atm->lat[ip]
+        += DY2DEG(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dx * fabs(dt[ip])))
+  		/ 1000.);
+    }
+  
+    /* Vertical turbulent diffusion... */
+    if (dz > 0)
+      atm->p[ip]
+        += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt[ip])))
+  	       / 1000., atm->p[ip]);
   }
-
-  /* Vertical turbulent diffusion... */
-  if (dz > 0)
-    atm->p[ip]
-      += DZ2DP(gsl_ran_gaussian_ziggurat(rng, sqrt(2.0 * dz * fabs(dt)))
-	       / 1000., atm->p[ip]);
 }
 
 /*****************************************************************************/
