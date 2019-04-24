@@ -1,4 +1,6 @@
 doc/latex/
+example/data/
+example/plots/
 lib/build/
 projects/
 src/atm_conv

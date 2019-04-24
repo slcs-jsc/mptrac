@@ -1,0 +1,33 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = absolute horizontal distance (absdev) [km]
+# $4 = relative horizontal distance (absdev) [%]
+# $5 = absolute vertical distance (absdev) [km]
+# $6 = relative vertical distance (absdev) [%]
+# $7 = t absolute difference (absdev) [K]
+# $8 = t relative difference (absdev) [%]
+# $9 = u absolute difference (absdev) [m/s]
+# $10 = u relative difference (absdev) [%]
+# $11 = v absolute difference (absdev) [m/s]
+# $12 = v relative difference (absdev) [%]
+# $13 = w absolute difference (absdev) [hPa/s]
+# $14 = w relative difference (absdev) [%]
+# $15 = z absolute difference (absdev) [km]
+# $16 = z relative difference (absdev) [%]
+# $17 = pv absolute difference (absdev) [PVU]
+# $18 = pv relative difference (absdev) [%]
+# $19 = ps absolute difference (absdev) [hPa]
+# $20 = ps relative difference (absdev) [%]
+# $21 = pt absolute difference (absdev) [hPa]
+# $22 = pt relative difference (absdev) [%]
+# $23 = m absolute difference (absdev) [kg]
+# $24 = m relative difference (absdev) [%]
+# $25 = number of particles
+
+360547200.00 0.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360590400.00 43200.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360633600.00 86400.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360676800.00 129600.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360720000.00 172800.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360763200.00 216000.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360806400.00 259200.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000

@@ -1,0 +1,33 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = absolute horizontal distance (absdev) [km]
+# $4 = relative horizontal distance (absdev) [%]
+# $5 = absolute vertical distance (absdev) [km]
+# $6 = relative vertical distance (absdev) [%]
+# $7 = t absolute difference (absdev) [K]
+# $8 = t relative difference (absdev) [%]
+# $9 = u absolute difference (absdev) [m/s]
+# $10 = u relative difference (absdev) [%]
+# $11 = v absolute difference (absdev) [m/s]
+# $12 = v relative difference (absdev) [%]
+# $13 = w absolute difference (absdev) [hPa/s]
+# $14 = w relative difference (absdev) [%]
+# $15 = z absolute difference (absdev) [km]
+# $16 = z relative difference (absdev) [%]
+# $17 = pv absolute difference (absdev) [PVU]
+# $18 = pv relative difference (absdev) [%]
+# $19 = ps absolute difference (absdev) [hPa]
+# $20 = ps relative difference (absdev) [%]
+# $21 = pt absolute difference (absdev) [hPa]
+# $22 = pt relative difference (absdev) [%]
+# $23 = m absolute difference (absdev) [kg]
+# $24 = m relative difference (absdev) [%]
+# $25 = number of particles
+
+360547200.00 0.00 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 10000
+360590400.00 43200.00 25.8496 2.45828 0.0733739 12.6964 0.334001 0.157713 0.330125 1.55034 0.414753 38.1864 4.93881e-05 29.7177 0.0653899 0.594517 0.208573 7.97922 0.889304 0.087964 0.967102 0.451556 0 0 10000
+360633600.00 86400.00 77.5974 3.73373 0.145943 19.8649 1.06567 0.501192 1.55898 8.80694 1.50905 10.6609 0.000220175 67.665 0.119209 1.09522 0.534983 20.4982 0.667939 0.0657733 1.58633 0.737896 0 0 10000
+360676800.00 129600.00 103.065 3.28816 0.211635 22.1269 0.932902 0.426006 2.94302 8.86879 2.67354 101.035 0.000231049 57.1927 0.192872 1.8066 0.348281 11.8403 0.872613 0.0865233 7.30187 3.11243 0 0 10000
+360720000.00 172800.00 212.552 4.50634 0.324145 20.8204 1.31796 0.620778 3.99566 12.414 4.72852 122.444 0.000297398 120.476 0.269926 2.37925 1.19287 41.313 2.39539 0.236219 8.48183 3.90542 0 0 10000
+360763200.00 216000.00 457.834 7.91497 0.640239 32.9296 3.06509 1.40774 8.81604 34.9667 8.29478 55.9309 0.000477449 106.212 0.52666 4.76433 1.14902 28.9422 1.66457 0.163229 6.41348 2.90576 0 0 10000
+360806400.00 259200.00 805.643 11.2409 0.742387 31.2054 4.12353 1.88948 12.4455 31.0873 7.66435 82.047 0.000517524 72.9953 0.660821 6.1505 1.50038 58.8461 7.59099 0.752698 11.9283 6.10766 0 0 10000

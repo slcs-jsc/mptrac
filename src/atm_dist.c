@@ -210,11 +210,13 @@ int main(
 	  rhtd[np] = 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
 	if (lv1[ip] + lv2[ip] > 0)
 	  rvtd[np] = 200. * (z1 - z2) / (lv1[ip] + lv2[ip]);
-	for (iq = 0; iq < ctl.nq; iq++)
-	  rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
-	    / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
       }
 
+      /* Get relative transport deviations... */
+      for (iq = 0; iq < ctl.nq; iq++)
+	rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
+	  / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
+      
       /* Save positions of air parcels... */
       lon1_old[ip] = atm1->lon[ip];
       lat1_old[ip] = atm1->lat[ip];

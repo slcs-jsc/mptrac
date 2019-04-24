@@ -68,7 +68,7 @@ Please see the example script (run.sh) on how to invoke programs such as atm_ini
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position output for 7 June 2011:
-<p align="center"><img src="example/plots/atm_2011_06_07_00_00.tab.png" width="60%"/></p>
+<p align="center"><img src="example/plots.org/atm_2011_06_07_00_00.tab.png" width="60%"/></p>
 
 ## Further information
 
@@ -77,6 +77,8 @@ This is the main reference for citing the MPTRAC model in scientific publication
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
 This is list of selected papers in which MPTRAC was applied:
+
+* Hoffmann, L., Günther, G., Li, D., Stein, O., Wu, X., Griessbach, S., Heng, Y., Konopka, P., Müller, R., Vogel, B., and Wright, J. S.: From ERA-Interim to ERA5: the considerable impact of ECMWF's next-generation reanalysis on Lagrangian transport simulations, Atmos. Chem. Phys., 19, 3097-3124, https://doi.org/10.5194/acp-19-3097-2019, 2019.
 
 * Wu, X., Griessbach, S., and Hoffmann, L.: Long-range transport of volcanic aerosol from the 2010 Merapi tropical eruption to Antarctica, Atmos. Chem. Phys., 18, 15859-15877, https://doi.org/10.5194/acp-18-15859-2018, 2018.
 
