@@ -57,8 +57,6 @@ void module_advection(
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
   ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
   double *dt);
 
@@ -322,16 +320,14 @@ int main(
 
       /* Sedimentation... */
       START_TIMER(TIMER_SEDI);
-      if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0) {
+      if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0)
 	module_sedi(&ctl, met0, met1, atm, dt);
-      }
       STOP_TIMER(TIMER_SEDI);
 
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
-      if (ctl.isosurf >= 1 && ctl.isosurf <= 4) {
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
 	module_isosurf(&ctl, met0, met1, atm);
-      }
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Check final position... */
@@ -342,16 +338,14 @@ int main(
       /* Interpolate meteorological data... */
       START_TIMER(TIMER_METEO);
       if (ctl.met_dt_out > 0
-	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0)) {
+	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
 	module_meteo(&ctl, met0, met1, atm);
-      }
       STOP_TIMER(TIMER_METEO);
 
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
-      if ((ctl.tdec_trop > 0 || ctl.tdec_strat > 0) && ctl.qnt_m >= 0) {
-	module_decay(&ctl, met0, met1, atm, dt);
-      }
+      if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0 && ctl.qnt_m >= 0)
+	module_decay(&ctl, atm, dt);
       STOP_TIMER(TIMER_DECAY);
 
       /* Write output... */
@@ -467,13 +461,11 @@ void module_advection(
 
 void module_decay(
   ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
   double *dt) {
 
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -481,29 +473,23 @@ void module_decay(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double ps, pt, tdec;
+      double p0, p1, pt, tdec, w;
 
-      /* Set constant lifetime... */
-      if (ctl->tdec_trop == ctl->tdec_strat)
-	tdec = ctl->tdec_trop;
+      /* Get tropopause pressure... */
+      pt = clim_tropo(atm->time[ip], atm->lat[ip]);
 
-      /* Set altitude-dependent lifetime... */
-      else {
+      /* Get weighting factor... */
+      p1 = pt * 0.866877899;
+      p0 = pt / 0.866877899;
+      if (atm->p[ip] > p0)
+	w = 1;
+      else if (atm->p[ip] < p1)
+	w = 0;
+      else
+	w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 
-	/* Get surface pressure... */
-	intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
-			atm->lon[ip], atm->lat[ip], &ps, NULL, NULL, NULL,
-			NULL, NULL, NULL, NULL, NULL, NULL);
-
-	/* Get tropopause pressure... */
-	pt = clim_tropo(atm->time[ip], atm->lat[ip]);
-
-	/* Set lifetime... */
-	if (atm->p[ip] <= pt)
-	  tdec = ctl->tdec_strat;
-	else
-	  tdec = LIN(ps, ctl->tdec_trop, pt, ctl->tdec_strat, atm->p[ip]);
-      }
+      /* Set lifetime... */
+      tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
       /* Calculate exponential decay... */
       atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] / tdec);

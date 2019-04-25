@@ -2,8 +2,7 @@
 
 # Setup...
 export OMP_NUM_THREADS=4
-#trac=../src
-trac=../projects/gpu/src
+trac=../src
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots
@@ -26,6 +25,18 @@ QNT_NAME[7] = pt
 QNT_NAME[8] = m
 MET_TROPO = 3
 MET_GEOPOT = meteo/ei_geopot_1deg.tab
+TDEC_TROP = 259200
+TDEC_STRAT = 259200
+DT_MET = 259200
+T_STOP = $t1
+ATM_DT_OUT = 43200
+GRID_DT_OUT = 43200
+GRID_LON0 = -90
+GRID_LON1 = 60
+GRID_LAT0 = -60
+GRID_LAT1 = -15
+GRID_NX = 300
+GRID_NY = 90
 EOF
 
 # Set initial air parcel positions...
@@ -34,42 +45,34 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 	       INIT_Z0 10.0 INIT_Z1 10.0 \
 	       INIT_LON0 -72.117 INIT_LON1 -72.117 \
 	       INIT_LAT0 -40.59 INIT_LAT1 -40.59 \
-    | tee data/log_init.tab
+    | tee data/log_init.txt
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0 \
-    | tee data/log_split.tab
+    | tee data/log_split.txt
 
 # Calculate trajectories (without diffusion)...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei \
-	   DT_MET 259200 T_STOP $t1 DIRECTION 1 \
 	   TURB_MESOX 0 TURB_MESOZ 0 \
 	   TURB_DX_TROP 0 TURB_DZ_STRAT 0 \
-	   ATM_BASENAME atm_nodiff ATM_DT_OUT 43200 \
-	   GRID_BASENAME grid_nodiff GRID_DT_OUT 43200 \
-	   GRID_LON0 -90 GRID_LON1 60 \
-	   GRID_LAT0 -60 GRID_LAT1 -15 \
-	   GRID_NX 300 GRID_NY 90 \
-    | tee data/log_trac_nodiff.tab
+	   ATM_BASENAME atm_nodiff GRID_BASENAME grid_nodiff \
+    | tee data/log_trac_nodiff.txt
 
 # Calculate trajectories (with diffusion)...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei \
-	   DT_MET 259200 T_STOP $t1 DIRECTION 1 \
-	   ATM_BASENAME atm_diff ATM_DT_OUT 43200 \
-	   GRID_BASENAME grid_diff GRID_DT_OUT 43200 \
-	   GRID_LON0 -90 GRID_LON1 60 \
-	   GRID_LAT0 -60 GRID_LAT1 -15 \
-	   GRID_NX 300 GRID_NY 90 \
-    | tee data/log_trac_diff.tab
+	   ATM_BASENAME atm_diff GRID_BASENAME grid_diff \
+    | tee data/log_trac_diff.txt
 
 # Calculate deviations...
-$trac/atm_dist data/trac.ctl data/dist_nodiff.tab absdev $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done) \
-    | tee data/log_dist_nodiff.tab
-$trac/atm_dist data/trac.ctl data/dist_diff.tab absdev $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done) \
-    | tee data/log_dist_diff.tab
+for var in mean stddev ; do
+    $trac/atm_dist data/trac.ctl data/dist_nodiff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done) \
+	| tee data/log_dist_nodiff_$var.txt
+    $trac/atm_dist data/trac.ctl data/dist_diff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done) \
+	| tee data/log_dist_diff_$var.txt
+done
 
 # Use gnuplot to plot air parcels...
 for f in $(ls data/atm_*_2011*tab) ; do
@@ -111,7 +114,7 @@ set size ratio 0.75
 set pm3d map
 set pal def (0 'gray90', 1 'blue', 2 'cyan', 3 'green', 4 'yellow', 5 'orange', 6 'red')
 set cbla "column density [g/m^2]"
-set cbra [0:10]
+set cbra [0:1]
 set xla "longitude [deg]"
 set yla "latitude [deg]"
 set xtics 30
@@ -131,13 +134,17 @@ EOF
 done
 
 # Check deviations...
-echo -e "\nDeviations from reference output (without diffusion):"
-diff -s data/dist_nodiff.tab data.org/dist_nodiff.tab
-echo -e "\nDeviations from reference output (with diffusion):"
-diff -s data/dist_diff.tab data.org/dist_diff.tab
+echo -e "\nMean deviations from reference output (without diffusion):"
+diff -s data/dist_nodiff_mean.tab data.org/dist_nodiff_mean.tab
+echo -e "\nStandard deviations from reference output (without diffusion):"
+diff -s data/dist_nodiff_stddev.tab data.org/dist_nodiff_stddev.tab
+echo -e "\nMean deviations from reference output (with diffusion):"
+diff -s data/dist_diff_mean.tab data.org/dist_diff_mean.tab
+echo -e "\nStandard deviations from reference output (with diffusion):"
+diff -s data/dist_diff_stddev.tab data.org/dist_diff_stddev.tab
 
 # Show timers...
 echo -e "\nTimers, memory usage, and problem size:"
-grep TIMER data/log_trac_diff.tab
-grep MEMORY data/log_trac_diff.tab
-grep SIZE data/log_trac_diff.tab
+grep TIMER data/log_trac_diff.txt
+grep MEMORY data/log_trac_diff.txt
+grep SIZE data/log_trac_diff.txt
