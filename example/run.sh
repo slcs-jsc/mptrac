@@ -2,7 +2,8 @@
 
 # Setup...
 export OMP_NUM_THREADS=4
-trac=../src
+#trac=../src
+trac=../projects/gpu/src
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots

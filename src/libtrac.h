@@ -164,6 +164,10 @@
     exit(EXIT_FAILURE);							\
   }
 
+/*! Compute floating point modulo. */
+#define FMOD(x, y)				\
+  ((x) - (int) ((x) / (y)) * (y))
+
 /*! Read binary data. */
 #define FREAD(ptr, type, size, out) {					\
     if(fread(ptr, sizeof(type), size, out)!=size)			\
@@ -200,7 +204,7 @@
 /*! Compute square. */
 #define SQR(x) ((x)*(x))
 
-/*! Calculate potential temperature. */
+/*! Compute potential temperature. */
 #define THETA(p, t) ((t)*pow(1000./(p), 0.286))
 
 /*! Get string tokens. */
@@ -210,7 +214,7 @@
     } else ERRMSG("Error while reading!");				\
   }
 
-/*! Calculate virtual temperature. */
+/*! Compute virtual temperature. */
 #define TVIRT(t, h2o) ((t)*(1.0 + 0.609133 * (h2o) * 18.01528 / MA))
 
 /*! Print warning message. */
@@ -627,6 +631,18 @@ typedef struct {
   /*! Vertical velocity perturbation [hPa/s]. */
   float wp[NP];
 
+  /*! Isosurface variables. */
+  double iso_var[NP];
+
+  /*! Isosurface balloon pressure [hPa]. */
+  double iso_ps[NP];
+
+  /*! Isosurface balloon time [s]. */
+  double iso_ts[NP];
+
+  /*! Isosurface balloon number of data points. */
+  int iso_n;
+
   /*! Cache for reference time of wind standard deviations. */
   double cache_time[EX][EY][EP];
 
@@ -712,12 +728,18 @@ void cart2geo(
   double *lat);
 
 /*! Climatology of HNO3 volume mixing ratios. */
+#ifdef _OPENACC
+#pragma acc routine
+#endif
 double clim_hno3(
   double t,
   double lat,
   double p);
 
 /*! Climatology of tropopause pressure. */
+#ifdef _OPENACC
+#pragma acc routine
+#endif
 double clim_tropo(
   double t,
   double lat);
@@ -766,6 +788,9 @@ void get_met_replace(
   char *repl);
 
 /*! Linear interpolation of 2-D meteorological data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_2d)
+#endif
 double intpol_met_2d(
   double array[EX][EY],
   int ix,
@@ -774,6 +799,9 @@ double intpol_met_2d(
   double wy);
 
 /*! Linear interpolation of 3-D meteorological data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_3d)
+#endif
 double intpol_met_3d(
   float array[EX][EY][EP],
   int ip,
@@ -784,6 +812,9 @@ double intpol_met_3d(
   double wy);
 
 /*! Spatial interpolation of meteorological data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_space)
+#endif
 void intpol_met_space(
   met_t * met,
   double p,
@@ -801,6 +832,9 @@ void intpol_met_space(
   double *o3);
 
 /*! Temporal interpolation of meteorological data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_time)
+#endif
 void intpol_met_time(
   met_t * met0,
   met_t * met1,
@@ -831,12 +865,18 @@ void jsec2time(
   double *remain);
 
 /*! Find array index for irregular grid. */
+#ifdef _OPENACC
+#pragma acc routine
+#endif
 int locate_irr(
   double *xx,
   int n,
   double x);
 
 /*! Find array index for regular grid. */
+#ifdef _OPENACC
+#pragma acc routine
+#endif
 int locate_reg(
   double *xx,
   int n,

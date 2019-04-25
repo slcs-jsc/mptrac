@@ -216,7 +216,7 @@ int main(
       for (iq = 0; iq < ctl.nq; iq++)
 	rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
 	  / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
-      
+
       /* Save positions of air parcels... */
       lon1_old[ip] = atm1->lon[ip];
       lat1_old[ip] = atm1->lat[ip];

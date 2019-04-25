@@ -9,6 +9,9 @@
 #
 # JURECA booster:
 # module purge && module load Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
+#
+# JUWELS GPUs:
+# module load CUDA PGI/18.7-GCC-7.3.0
 
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_split atm_stat day2doy doy2day extract jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo
@@ -19,6 +22,9 @@ LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
 # Include directories...
 INCDIR = -I ../lib/build/include
 
+# Compile for GPUs...
+#GPU = 1
+
 # Compile for KNL...
 #KNL = 1
 
@@ -28,15 +34,20 @@ INCDIR = -I ../lib/build/include
 # Compile for profiling...
 #PROF = 1
 
+# Static compilation...
+STATIC = 1
+
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...
 # -----------------------------------------------------------------------------
 
 # Select compiler...
+CC = gcc
 ifdef MPI
   CC = mpicc
-else
-  CC = gcc
+endif
+ifdef GPU
+  CC = pgcc
 endif
 
 # Set CFLAGS...
@@ -44,6 +55,13 @@ CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
+
+# Compile for GPUs...
+ifdef GPU
+  CFLAGS = $(INCDIR) -DGSL_DISABLE_DEPRACTED -mp -g -ta=tesla:cc70,pinned -Minfo=accel -mcmodel=medium
+  LDFLAGS += -lcuda -lcudart -lcurand
+  LIBDIR += -L /opt/nvidia/cudatoolkit9.1/9.1.85_3.18-6.0.7.0_5.1__g2eb7c52/lib64/
+endif
 
 # Compile for KNL...
 ifdef KNL
@@ -53,8 +71,6 @@ endif
 # Compile for MPI...
 ifdef MPI
   CFLAGS += -DMPI
-else
-  CFLAGS += -static
 endif
 
 # Compile for profiling...
@@ -62,6 +78,11 @@ ifdef PROF
   CFLAGS += -O2 -pg
 else
   CFLAGS += -O3
+endif
+
+# Static compilation...
+ifdef STATIC
+  CFLAGS += -static
 endif
 
 # -----------------------------------------------------------------------------

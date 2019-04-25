@@ -14,7 +14,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using a Markov chain model.
 * Additional modules are implemented to simulate the sedimentation of particles and the decay of air parcel mass.
 * Various output methods for particle, ensemble, gridded, and station data. Gnuplot interface for direct visualization.
-* MPTRAC features an MPI/OpenMP hybrid parallelization for efficient use on supercomputers.
+* MPTRAC features an MPI/OpenMP and MPI/GPU hybrid parallelization for efficient use on supercomputers.
 
 ## Getting started
 
@@ -76,7 +76,7 @@ This is the main reference for citing the MPTRAC model in scientific publication
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
-This is list of selected papers in which MPTRAC was applied:
+This is a list of selected papers in which MPTRAC was applied:
 
 * Hoffmann, L., Günther, G., Li, D., Stein, O., Wu, X., Griessbach, S., Heng, Y., Konopka, P., Müller, R., Vogel, B., and Wright, J. S.: From ERA-Interim to ERA5: the considerable impact of ECMWF's next-generation reanalysis on Lagrangian transport simulations, Atmos. Chem. Phys., 19, 3097-3124, https://doi.org/10.5194/acp-19-3097-2019, 2019.
 
