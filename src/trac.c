@@ -37,10 +37,10 @@
    Global variables...
    ------------------------------------------------------------ */
 
-#ifndef _OPENACC
-static gsl_rng *rng[NTHREADS];
-#else
+#ifdef _OPENACC
 static curandGenerator_t rng;
+#else
+static gsl_rng *rng[NTHREADS];
 #endif
 
 /* ------------------------------------------------------------
@@ -77,14 +77,6 @@ void module_diffusion_meso(
 void module_diffusion_rng(
   double *rs,
   size_t n);
-
-/*! Calculate standard deviation. */
-#ifdef _OPENACC
-#pragma acc routine
-#endif
-double module_diffusion_sd(
-  double *data,
-  int n);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
@@ -137,6 +129,10 @@ void write_output(
   met_t * met1,
   atm_t * atm,
   double t);
+
+/*! Update flag for simulation output. */
+void write_output_update(
+  int *updated);
 
 /* ------------------------------------------------------------
    Main...
@@ -358,6 +354,11 @@ int main(
        Finalize model run...
        ------------------------------------------------------------ */
 
+    /* Report problem size... */
+    printf("SIZE_NP = %d\n", atm->np);
+    printf("SIZE_TASKS = %d\n", size);
+    printf("SIZE_THREADS = %d\n", omp_get_max_threads());
+    
     /* Report memory usage... */
     printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
     printf("MEMORY_METEO = %g MByte\n", 2 * sizeof(met_t) / 1024. / 1024.);
@@ -374,11 +375,6 @@ int main(
 					  +
 					  GX * GY * sizeof(int)) / 1024. /
 	   1024.);
-
-    /* Report problem size... */
-    printf("SIZE_NP = %d\n", atm->np);
-    printf("SIZE_TASKS = %d\n", size);
-    printf("SIZE_THREADS = %d\n", omp_get_max_threads());
 
     /* Report timers... */
     STOP_TIMER(TIMER_TOTAL);
@@ -502,7 +498,15 @@ void module_diffusion_init(
   void) {
 
   /* Initialize random number generator... */
-#ifndef _OPENACC
+#ifdef _OPENACC
+
+  int istat;
+
+  istat = curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT);
+  istat =
+    curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync));
+
+#else
 
   gsl_rng_env_setup();
   if (omp_get_max_threads() > NTHREADS)
@@ -511,13 +515,6 @@ void module_diffusion_init(
     rng[i] = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(rng[i], gsl_rng_default_seed + (long unsigned) i);
   }
-
-#else
-
-  int istat;
-  istat = curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT);
-  istat =
-    curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync));
 
 #endif
 }
@@ -541,14 +538,12 @@ void module_diffusion_meso(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double r, r2, u[16], v[16], w[16];
-
-      int ix, iy, iz;
+      double u[16], v[16], w[16];
 
       /* Get indices... */
-      ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-      iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-      iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+      int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+      int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+      int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
       /* Caching of wind standard deviations... */
       if (atm->cache_time[ix][iy][iz] != met0->time) {
@@ -610,15 +605,15 @@ void module_diffusion_meso(
 	w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
 	/* Get standard deviations of local wind data... */
-	atm->cache_usig[ix][iy][iz] = (float) module_diffusion_sd(u, 16);
-	atm->cache_vsig[ix][iy][iz] = (float) module_diffusion_sd(v, 16);
-	atm->cache_wsig[ix][iy][iz] = (float) module_diffusion_sd(w, 16);
+	atm->cache_usig[ix][iy][iz] = (float) stddev(u, 16);
+	atm->cache_vsig[ix][iy][iz] = (float) stddev(v, 16);
+	atm->cache_wsig[ix][iy][iz] = (float) stddev(w, 16);
 	atm->cache_time[ix][iy][iz] = met0->time;
       }
 
       /* Set temporal correlations for mesoscale fluctuations... */
-      r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
-      r2 = sqrt(1 - r * r);
+      double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+      double r2 = sqrt(1 - r * r);
 
       /* Calculate horizontal mesoscale wind fluctuations... */
       if (ctl->turb_mesox > 0) {
@@ -651,48 +646,23 @@ void module_diffusion_rng(
   double *rs,
   size_t n) {
 
-#ifndef _OPENACC
+#ifdef _OPENACC
+
+#pragma acc host_data use_device(rs)
+  {
+    if (curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0)
+	!= CURAND_STATUS_SUCCESS)
+      ERRMSG("Cannot create random numbers!");
+  }
+
+#else
 
 #pragma omp parallel for default(shared)
   for (size_t i = 0; i < n; ++i)
     rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
 
-#else
-
-#pragma acc host_data use_device(rs)
-  {
-    int istat = curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0);
-    if (istat != CURAND_STATUS_SUCCESS)
-      ERRMSG("Cannot create random numbers!");
-  }
-
 #endif
 
-}
-
-/*****************************************************************************/
-
-double module_diffusion_sd(
-  double *data,
-  int n) {
-
-  if (n == 0)
-    return 0;
-
-  double avg = 0;
-
-  for (int i = 0; i < n; ++i)
-    avg += data[i];
-  avg /= n;
-
-  double rms = 0;
-  for (int i = 0; i < n; ++i) {
-    double di = data[i];
-    double diff = di - avg;
-    rms += diff * diff;
-  }
-
-  return sqrt(rms / (n - 1));
 }
 
 /*****************************************************************************/
@@ -712,14 +682,14 @@ void module_diffusion_turb(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double dx, dz, pt, p0, p1, w;
+      double w;
 
       /* Get tropopause pressure... */
-      pt = clim_tropo(atm->time[ip], atm->lat[ip]);
+      double pt = clim_tropo(atm->time[ip], atm->lat[ip]);
 
       /* Get weighting factor... */
-      p1 = pt * 0.866877899;
-      p0 = pt / 0.866877899;
+      double p1 = pt * 0.866877899;
+      double p0 = pt / 0.866877899;
       if (atm->p[ip] > p0)
 	w = 1;
       else if (atm->p[ip] < p1)
@@ -728,21 +698,21 @@ void module_diffusion_turb(
 	w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 
       /* Set diffusivity... */
-      dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
-      dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
+      double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
+      double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
       /* Horizontal turbulent diffusion... */
       if (dx > 0) {
-	double stddev = sqrt(2.0 * dx * fabs(dt[ip]));
-	atm->lon[ip] += DX2DEG(rs[3 * ip] * stddev / 1000., atm->lat[ip]);
-	atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * stddev / 1000.);
+	double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
+	atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
+	atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
       }
 
       /* Vertical turbulent diffusion... */
       if (dz > 0) {
-	double stddev = sqrt(2.0 * dz * fabs(dt[ip]));
+	double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
 	atm->p[ip]
-	  += DZ2DP(rs[3 * ip + 2] * stddev / 1000., atm->p[ip]);
+	  += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
       }
     }
 }
@@ -761,16 +731,14 @@ void module_isosurf_init(
 
   double t;
 
-  int ip;
-
   /* Save pressure... */
   if (ctl->isosurf == 1)
-    for (ip = 0; ip < atm->np; ip++)
+    for (int ip = 0; ip < atm->np; ip++)
       atm->iso_var[ip] = atm->p[ip];
 
   /* Save density... */
   else if (ctl->isosurf == 2)
-    for (ip = 0; ip < atm->np; ip++) {
+    for (int ip = 0; ip < atm->np; ip++) {
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		      atm->lon[ip], atm->lat[ip], NULL, NULL, NULL,
 		      &t, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -779,7 +747,7 @@ void module_isosurf_init(
 
   /* Save potential temperature... */
   else if (ctl->isosurf == 3)
-    for (ip = 0; ip < atm->np; ip++) {
+    for (int ip = 0; ip < atm->np; ip++) {
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		      atm->lon[ip], atm->lat[ip], NULL, NULL, NULL,
 		      &t, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -830,8 +798,6 @@ void module_isosurf(
 
     double t;
 
-    int idx;
-
     /* Restore pressure... */
     if (ctl->isosurf == 1)
       atm->p[ip] = atm->iso_var[ip];
@@ -859,7 +825,7 @@ void module_isosurf(
       else if (atm->time[ip] >= atm->iso_ts[atm->iso_n - 1])
 	atm->p[ip] = atm->iso_ps[atm->iso_n - 1];
       else {
-	idx = locate_irr(atm->iso_ts, atm->iso_n, atm->time[ip]);
+	int idx = locate_irr(atm->iso_ts, atm->iso_n, atm->time[ip]);
 	atm->p[ip] = LIN(atm->iso_ts[idx], atm->iso_ps[idx],
 			 atm->iso_ts[idx + 1], atm->iso_ps[idx + 1],
 			 atm->time[ip]);
@@ -884,7 +850,7 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double a, b, c, ps, pt, pv, p_hno3, p_h2o, t, u, v, w, x1, x2, h2o, o3, z;
+    double ps, pt, pv, t, u, v, w, h2o, o3, z;
 
     /* Interpolate meteorological data... */
     intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
@@ -956,17 +922,19 @@ void module_meteo(
 
     /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
     if (ctl->qnt_tnat >= 0) {
+      double p_hno3;
       if (ctl->psc_hno3 > 0)
 	p_hno3 = ctl->psc_hno3 * atm->p[ip] / 1.333224;
       else
 	p_hno3 = clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip])
 	  * 1e-9 * atm->p[ip] / 1.333224;
-      p_h2o = (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] / 1.333224;
-      a = 0.009179 - 0.00088 * log10(p_h2o);
-      b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
-      c = -11397.0 / a;
-      x1 = (-b + sqrt(b * b - 4. * c)) / 2.;
-      x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
+      double p_h2o =
+	(ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] / 1.333224;
+      double a = 0.009179 - 0.00088 * log10(p_h2o);
+      double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
+      double c = -11397.0 / a;
+      double x1 = (-b + sqrt(b * b - 4. * c)) / 2.;
+      double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
       if (x1 > 0)
 	atm->q[ctl->qnt_tnat][ip] = x1;
       if (x2 > 0)
@@ -1118,12 +1086,7 @@ void write_output(
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
-    if (!updated) {
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-      updated = 1;
-    }
+    write_output_update(&updated);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
@@ -1131,12 +1094,7 @@ void write_output(
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
-    if (!updated) {
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-      updated = 1;
-    }
+    write_output_update(&updated);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
@@ -1144,49 +1102,42 @@ void write_output(
 
   /* Write CSI data... */
   if (ctl->csi_basename[0] != '-') {
-    if (!updated) {
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-      updated = 1;
-    }
+    write_output_update(&updated);
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
   }
 
   /* Write ensemble data... */
   if (ctl->ens_basename[0] != '-') {
-    if (!updated) {
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-      updated = 1;
-    }
+    write_output_update(&updated);
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
   }
 
   /* Write profile data... */
   if (ctl->prof_basename[0] != '-') {
-    if (!updated) {
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-      updated = 1;
-    }
+    write_output_update(&updated);
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
   }
 
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
-    if (!updated) {
+    write_output_update(&updated);
+    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
+    write_station(filename, ctl, atm, t);
+  }
+}
+
+/*****************************************************************************/
+
+void write_output_update(
+  int *updated) {
+
+  if (!*updated) {
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      updated = 1;
-    }
-    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
-    write_station(filename, ctl, atm, t);
+    *updated = 1;
   }
 }

@@ -32,9 +32,7 @@ void cart2geo(
   double *lon,
   double *lat) {
 
-  double radius;
-
-  radius = NORM(x);
+  double radius = NORM(x);
   *lat = asin(x[2] / radius) * 180 / M_PI;
   *lon = atan2(x[1], x[0]) * 180 / M_PI;
   *z = radius - RE;
@@ -299,28 +297,28 @@ double clim_hno3(
   double lat,
   double p) {
 
-  double aux00, aux01, aux10, aux11, sec;
-
-  int ilat, ip, isec;
-
   /* Get seconds since begin of year... */
-  sec = FMOD(t, 365.25 * 86400.);
+  double sec = FMOD(t, 365.25 * 86400.);
 
   /* Get indices... */
-  isec = locate_irr(clim_hno3_secs, 12, sec);
-  ilat = locate_reg(clim_hno3_lats, 18, lat);
-  ip = locate_irr(clim_hno3_ps, 10, p);
+  int isec = locate_irr(clim_hno3_secs, 12, sec);
+  int ilat = locate_reg(clim_hno3_lats, 18, lat);
+  int ip = locate_irr(clim_hno3_ps, 10, p);
 
   /* Interpolate... */
-  aux00 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec][ilat][ip],
-	      clim_hno3_ps[ip + 1], clim_hno3_var[isec][ilat][ip + 1], p);
-  aux01 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec][ilat + 1][ip],
-	      clim_hno3_ps[ip + 1], clim_hno3_var[isec][ilat + 1][ip + 1], p);
-  aux10 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec + 1][ilat][ip],
-	      clim_hno3_ps[ip + 1], clim_hno3_var[isec + 1][ilat][ip + 1], p);
-  aux11 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec + 1][ilat + 1][ip],
-	      clim_hno3_ps[ip + 1], clim_hno3_var[isec + 1][ilat + 1][ip + 1],
-	      p);
+  double aux00 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec][ilat][ip],
+		     clim_hno3_ps[ip + 1], clim_hno3_var[isec][ilat][ip + 1],
+		     p);
+  double aux01 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec][ilat + 1][ip],
+		     clim_hno3_ps[ip + 1],
+		     clim_hno3_var[isec][ilat + 1][ip + 1], p);
+  double aux10 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec + 1][ilat][ip],
+		     clim_hno3_ps[ip + 1],
+		     clim_hno3_var[isec + 1][ilat][ip + 1], p);
+  double aux11 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec + 1][ilat + 1][ip],
+		     clim_hno3_ps[ip + 1],
+		     clim_hno3_var[isec + 1][ilat + 1][ip + 1],
+		     p);
   aux00 =
     LIN(clim_hno3_lats[ilat], aux00, clim_hno3_lats[ilat + 1], aux01, lat);
   aux11 =
@@ -460,25 +458,23 @@ double clim_tropo(
   double t,
   double lat) {
 
-  double doy, p0, p1;
-
-  int imon, ilat;
-
   /* Get day of year... */
-  doy = FMOD(t / 86400., 365.25);
+  double doy = FMOD(t / 86400., 365.25);
   while (doy < 0)
     doy += 365.25;
 
   /* Get indices... */
-  ilat = locate_reg(clim_tropo_lats, 73, lat);
-  imon = locate_irr(clim_tropo_doys, 12, doy);
+  int ilat = locate_reg(clim_tropo_lats, 73, lat);
+  int imon = locate_irr(clim_tropo_doys, 12, doy);
 
   /* Interpolate... */
-  p0 = LIN(clim_tropo_lats[ilat], clim_tropo_tps[imon][ilat],
-	   clim_tropo_lats[ilat + 1], clim_tropo_tps[imon][ilat + 1], lat);
-  p1 = LIN(clim_tropo_lats[ilat], clim_tropo_tps[imon + 1][ilat],
-	   clim_tropo_lats[ilat + 1], clim_tropo_tps[imon + 1][ilat + 1],
-	   lat);
+  double p0 = LIN(clim_tropo_lats[ilat], clim_tropo_tps[imon][ilat],
+		  clim_tropo_lats[ilat + 1], clim_tropo_tps[imon][ilat + 1],
+		  lat);
+  double p1 = LIN(clim_tropo_lats[ilat], clim_tropo_tps[imon + 1][ilat],
+		  clim_tropo_lats[ilat + 1],
+		  clim_tropo_tps[imon + 1][ilat + 1],
+		  lat);
   return LIN(clim_tropo_doys[imon], p0, clim_tropo_doys[imon + 1], p1, doy);
 }
 
@@ -536,9 +532,7 @@ void geo2cart(
   double lat,
   double *x) {
 
-  double radius;
-
-  radius = z + RE;
+  double radius = z + RE;
   x[0] = radius * cos(lat / 180 * M_PI) * cos(lon / 180 * M_PI);
   x[1] = radius * cos(lat / 180 * M_PI) * sin(lon / 180 * M_PI);
   x[2] = radius * sin(lat / 180 * M_PI);
@@ -665,10 +659,8 @@ void get_met_replace(
 
   char buffer[LEN], *ch;
 
-  int i;
-
   /* Iterate... */
-  for (i = 0; i < 3; i++) {
+  for (int i = 0; i < 3; i++) {
 
     /* Replace substring... */
     if (!(ch = strstr(orig, search)))
@@ -690,13 +682,11 @@ double intpol_met_2d(
   double wx,
   double wy) {
 
-  double aux00, aux01, aux10, aux11;
-
   /* Set variables... */
-  aux00 = array[ix][iy];
-  aux01 = array[ix][iy + 1];
-  aux10 = array[ix + 1][iy];
-  aux11 = array[ix + 1][iy + 1];
+  double aux00 = array[ix][iy];
+  double aux01 = array[ix][iy + 1];
+  double aux10 = array[ix + 1][iy];
+  double aux11 = array[ix + 1][iy + 1];
 
   /* Interpolate horizontally... */
   aux00 = wy * (aux00 - aux01) + aux01;
@@ -715,16 +705,15 @@ double intpol_met_3d(
   double wx,
   double wy) {
 
-  double aux00, aux01, aux10, aux11;
-
   /* Interpolate vertically... */
-  aux00 = wp * (array[ix][iy][ip] - array[ix][iy][ip + 1])
+  double aux00 = wp * (array[ix][iy][ip] - array[ix][iy][ip + 1])
     + array[ix][iy][ip + 1];
-  aux01 = wp * (array[ix][iy + 1][ip] - array[ix][iy + 1][ip + 1])
+  double aux01 = wp * (array[ix][iy + 1][ip] - array[ix][iy + 1][ip + 1])
     + array[ix][iy + 1][ip + 1];
-  aux10 = wp * (array[ix + 1][iy][ip] - array[ix + 1][iy][ip + 1])
+  double aux10 = wp * (array[ix + 1][iy][ip] - array[ix + 1][iy][ip + 1])
     + array[ix + 1][iy][ip + 1];
-  aux11 = wp * (array[ix + 1][iy + 1][ip] - array[ix + 1][iy + 1][ip + 1])
+  double aux11 =
+    wp * (array[ix + 1][iy + 1][ip] - array[ix + 1][iy + 1][ip + 1])
     + array[ix + 1][iy + 1][ip + 1];
 
   /* Interpolate horizontally... */
@@ -751,23 +740,19 @@ void intpol_met_space(
   double *h2o,
   double *o3) {
 
-  double wp, wx, wy;
-
-  int ip, ix, iy;
-
   /* Check longitude... */
   if (met->lon[met->nx - 1] > 180 && lon < 0)
     lon += 360;
 
   /* Get indices... */
-  ip = locate_irr(met->p, met->np, p);
-  ix = locate_reg(met->lon, met->nx, lon);
-  iy = locate_reg(met->lat, met->ny, lat);
+  int ip = locate_irr(met->p, met->np, p);
+  int ix = locate_reg(met->lon, met->nx, lon);
+  int iy = locate_reg(met->lat, met->ny, lat);
 
   /* Get weights... */
-  wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
-  wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
-  wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
+  double wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
+  double wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
+  double wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
 
   /* Interpolate... */
   if (ps != NULL)
@@ -877,8 +862,6 @@ void jsec2time(
 
   struct tm t0, *t1;
 
-  time_t jsec0;
-
   t0.tm_year = 100;
   t0.tm_mon = 0;
   t0.tm_mday = 1;
@@ -886,7 +869,7 @@ void jsec2time(
   t0.tm_min = 0;
   t0.tm_sec = 0;
 
-  jsec0 = (time_t) jsec + timegm(&t0);
+  time_t jsec0 = (time_t) jsec + timegm(&t0);
   t1 = gmtime(&jsec0);
 
   *year = t1->tm_year + 1900;
@@ -905,11 +888,9 @@ int locate_irr(
   int n,
   double x) {
 
-  int i, ilo, ihi;
-
-  ilo = 0;
-  ihi = n - 1;
-  i = (ihi + ilo) >> 1;
+  int ilo = 0;
+  int ihi = n - 1;
+  int i = (ihi + ilo) >> 1;
 
   if (xx[i] < xx[i + 1])
     while (ihi > ilo + 1) {
@@ -937,10 +918,8 @@ int locate_reg(
   int n,
   double x) {
 
-  int i;
-
   /* Calculate index... */
-  i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
+  int i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
 
   /* Check range... */
   if (i < 0)
@@ -1139,8 +1118,6 @@ void read_ctl(
   char *argv[],
   ctl_t * ctl) {
 
-  int ip, iq;
-
   /* Write info... */
   printf("\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
 	 "(executable: %s | compiled: %s, %s)\n\n",
@@ -1174,7 +1151,7 @@ void read_ctl(
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
   if (ctl->nq > NQ)
     ERRMSG("Too many quantities!");
-  for (iq = 0; iq < ctl->nq; iq++) {
+  for (int iq = 0; iq < ctl->nq; iq++) {
 
     /* Read quantity name and format... */
     scan_ctl(filename, argc, argv, "QNT_NAME", iq, "", ctl->qnt_name[iq]);
@@ -1276,7 +1253,7 @@ void read_ctl(
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
     ERRMSG("Too many levels!");
-  for (ip = 0; ip < ctl->met_np; ip++)
+  for (int ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
   ctl->met_tropo
     = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "0", NULL);
@@ -1848,8 +1825,6 @@ void read_met_ml2pl(
 void read_met_periodic(
   met_t * met) {
 
-  int ip, iy;
-
   /* Check longitudes... */
   if (!(fabs(met->lon[met->nx - 1] - met->lon[0]
 	     + met->lon[1] - met->lon[0] - 360) < 0.01))
@@ -1863,11 +1838,11 @@ void read_met_periodic(
   met->lon[met->nx - 1] = met->lon[met->nx - 2] + met->lon[1] - met->lon[0];
 
   /* Loop over latitudes and pressure levels... */
-#pragma omp parallel for default(shared) private(iy,ip)
-  for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int iy = 0; iy < met->ny; iy++) {
     met->ps[met->nx - 1][iy] = met->ps[0][iy];
     met->pt[met->nx - 1][iy] = met->pt[0][iy];
-    for (ip = 0; ip < met->np; ip++) {
+    for (int ip = 0; ip < met->np; ip++) {
       met->z[met->nx - 1][iy][ip] = met->z[0][iy][ip];
       met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
@@ -2331,20 +2306,39 @@ void spline(
 
   gsl_spline *s;
 
-  int i;
-
   /* Allocate... */
   acc = gsl_interp_accel_alloc();
   s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
 
   /* Interpolate temperature profile... */
   gsl_spline_init(s, x, y, (size_t) n);
-  for (i = 0; i < n2; i++)
+  for (int i = 0; i < n2; i++)
     y2[i] = gsl_spline_eval(s, x2[i], acc);
 
   /* Free... */
   gsl_spline_free(s);
   gsl_interp_accel_free(acc);
+}
+
+/*****************************************************************************/
+
+double stddev(
+  double *data,
+  int n) {
+
+  if (n <= 0)
+    return 0;
+
+  double avg = 0, rms = 0;
+
+  for (int i = 0; i < n; ++i)
+    avg += data[i];
+  avg /= n;
+
+  for (int i = 0; i < n; ++i)
+    rms += SQR(data[i] - avg);
+
+  return sqrt(rms / (n - 1));
 }
 
 /*****************************************************************************/
@@ -3184,8 +3178,6 @@ void write_station(
 
   static double rmax2, t0, t1, x0[3], x1[3];
 
-  static int ip, iq;
-
   /* Init... */
   if (t == ctl->t_start) {
 
@@ -3201,7 +3193,7 @@ void write_station(
 	    "# $1 = time [s]\n"
 	    "# $2 = altitude [km]\n"
 	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-    for (iq = 0; iq < ctl->nq; iq++)
+    for (int iq = 0; iq < ctl->nq; iq++)
       fprintf(out, "# $%i = %s [%s]\n", (iq + 5),
 	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
     fprintf(out, "\n");
@@ -3216,7 +3208,7 @@ void write_station(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over air parcels... */
-  for (ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
     if (atm->time[ip] < t0 || atm->time[ip] > t1)
@@ -3241,7 +3233,7 @@ void write_station(
     /* Write data... */
     fprintf(out, "%.2f %g %g %g",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip]);
-    for (iq = 0; iq < ctl->nq; iq++) {
+    for (int iq = 0; iq < ctl->nq; iq++) {
       fprintf(out, " ");
       fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
     }

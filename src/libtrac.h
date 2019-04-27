@@ -729,7 +729,7 @@ void cart2geo(
 
 /*! Climatology of HNO3 volume mixing ratios. */
 #ifdef _OPENACC
-#pragma acc routine
+#pragma acc routine (clim_hno3)
 #endif
 double clim_hno3(
   double t,
@@ -738,7 +738,7 @@ double clim_hno3(
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
-#pragma acc routine
+#pragma acc routine (clim_tropo)
 #endif
 double clim_tropo(
   double t,
@@ -866,7 +866,7 @@ void jsec2time(
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC
-#pragma acc routine
+#pragma acc routine (locate_irr)
 #endif
 int locate_irr(
   double *xx,
@@ -875,7 +875,7 @@ int locate_irr(
 
 /*! Find array index for regular grid. */
 #ifdef _OPENACC
-#pragma acc routine
+#pragma acc routine (locate_reg)
 #endif
 int locate_reg(
   double *xx,
@@ -961,6 +961,14 @@ void spline(
   double *x2,
   double *y2,
   int n2);
+
+/*! Calculate standard deviation. */
+#ifdef _OPENACC
+#pragma acc routine (stddev)
+#endif
+double stddev(
+  double *data,
+  int n);
 
 /*! Convert date to seconds. */
 void time2jsec(
