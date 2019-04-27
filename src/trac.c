@@ -70,6 +70,7 @@ void module_diffusion_meso(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  cache_t * cache,
   double *dt,
   double *rs);
 
@@ -90,14 +91,16 @@ void module_isosurf_init(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  cache_t * cache);
 
 /*! Force air parcels to stay on isosurface. */
 void module_isosurf(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  cache_t * cache);
 
 /*! Interpolate meteorological data for air parcel positions. */
 void module_meteo(
@@ -146,6 +149,8 @@ int main(
 
   atm_t *atm;
 
+  cache_t *cache;
+
   met_t *met0, *met1;
 
   FILE *dirlist;
@@ -188,15 +193,13 @@ int main(
 
     /* Allocate... */
     ALLOC(atm, atm_t, 1);
+    ALLOC(cache, cache_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
     ALLOC(rs, double,
 	  3 * NP);
-#ifdef _OPENACC
-#pragma acc enter data create(met0[:1], met1[:1], atm[:1], dt[:NP], rs[:3*NP])
-#endif
 
     /* Initialize random number generator... */
     module_diffusion_init();
@@ -204,16 +207,17 @@ int main(
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
-#ifdef _OPENACC
-#pragma acc enter data copyin(ctl)
-#endif
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
+
+    /* Copy to GPU... */
 #ifdef _OPENACC
-#pragma acc update device(atm[:1])
+#pragma acc enter data copyin(ctl)
+#pragma acc enter data create(atm[:1],cache[:1],met0[:1],met1[:1],dt[:NP],rs[:3*NP])
+#pragma acc update device(atm[:1],cache[:1])
 #endif
 
     /* Set start time... */
@@ -250,7 +254,7 @@ int main(
     /* Initialize isosurface... */
     START_TIMER(TIMER_ISOSURF);
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-      module_isosurf_init(&ctl, met0, met1, atm);
+      module_isosurf_init(&ctl, met0, met1, atm, cache);
     STOP_TIMER(TIMER_ISOSURF);
 
     /* ------------------------------------------------------------
@@ -310,7 +314,7 @@ int main(
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
 	module_diffusion_rng(rs, 3 * (size_t) atm->np);
-	module_diffusion_meso(&ctl, met0, met1, atm, dt, rs);
+	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
       }
       STOP_TIMER(TIMER_DIFFMESO);
 
@@ -323,7 +327,7 @@ int main(
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-	module_isosurf(&ctl, met0, met1, atm);
+	module_isosurf(&ctl, met0, met1, atm, cache);
       STOP_TIMER(TIMER_ISOSURF);
 
       /* Check final position... */
@@ -358,9 +362,10 @@ int main(
     printf("SIZE_NP = %d\n", atm->np);
     printf("SIZE_TASKS = %d\n", size);
     printf("SIZE_THREADS = %d\n", omp_get_max_threads());
-    
+
     /* Report memory usage... */
     printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
+    printf("MEMORY_CACHE = %g MByte\n", sizeof(cache_t) / 1024. / 1024.);
     printf("MEMORY_METEO = %g MByte\n", 2 * sizeof(met_t) / 1024. / 1024.);
     printf("MEMORY_DYNAMIC = %g MByte\n", (sizeof(met_t)
 					   + 4 * NP * sizeof(double)
@@ -393,12 +398,13 @@ int main(
 
     /* Free... */
     free(atm);
+    free(cache);
     free(met0);
     free(met1);
     free(dt);
     free(rs);
 #ifdef _OPENACC
-#pragma acc exit data delete(atm, ctl, met0, met1, dt, rs)
+#pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
 #endif
   }
 
@@ -526,11 +532,12 @@ void module_diffusion_meso(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  cache_t * cache,
   double *dt,
   double *rs) {
 
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt,rs)
+#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -546,7 +553,7 @@ void module_diffusion_meso(
       int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
       /* Caching of wind standard deviations... */
-      if (atm->cache_time[ix][iy][iz] != met0->time) {
+      if (cache->tsig[ix][iy][iz] != met0->time) {
 
 	/* Collect local wind data... */
 	u[0] = met0->u[ix][iy][iz];
@@ -605,10 +612,10 @@ void module_diffusion_meso(
 	w[15] = met1->w[ix + 1][iy + 1][iz + 1];
 
 	/* Get standard deviations of local wind data... */
-	atm->cache_usig[ix][iy][iz] = (float) stddev(u, 16);
-	atm->cache_vsig[ix][iy][iz] = (float) stddev(v, 16);
-	atm->cache_wsig[ix][iy][iz] = (float) stddev(w, 16);
-	atm->cache_time[ix][iy][iz] = met0->time;
+	cache->usig[ix][iy][iz] = (float) stddev(u, 16);
+	cache->vsig[ix][iy][iz] = (float) stddev(v, 16);
+	cache->wsig[ix][iy][iz] = (float) stddev(w, 16);
+	cache->tsig[ix][iy][iz] = met0->time;
       }
 
       /* Set temporal correlations for mesoscale fluctuations... */
@@ -617,25 +624,23 @@ void module_diffusion_meso(
 
       /* Calculate horizontal mesoscale wind fluctuations... */
       if (ctl->turb_mesox > 0) {
-	atm->up[ip] = (float)
-	  (r * atm->up[ip]
-	   + r2 * rs[3 * ip] * ctl->turb_mesox * atm->cache_usig[ix][iy][iz]);
-	atm->lon[ip] += DX2DEG(atm->up[ip] * dt[ip] / 1000., atm->lat[ip]);
+	cache->up[ip] = (float)
+	  (r * cache->up[ip]
+	   + r2 * rs[3 * ip] * ctl->turb_mesox * cache->usig[ix][iy][iz]);
+	atm->lon[ip] += DX2DEG(cache->up[ip] * dt[ip] / 1000., atm->lat[ip]);
 
-	atm->vp[ip] = (float)
-	  (r * atm->vp[ip]
-	   + r2 *
-	   rs[3 * ip + 1] * ctl->turb_mesox * atm->cache_vsig[ix][iy][iz]);
-	atm->lat[ip] += DY2DEG(atm->vp[ip] * dt[ip] / 1000.);
+	cache->vp[ip] = (float)
+	  (r * cache->vp[ip]
+	   + r2 * rs[3 * ip + 1] * ctl->turb_mesox * cache->vsig[ix][iy][iz]);
+	atm->lat[ip] += DY2DEG(cache->vp[ip] * dt[ip] / 1000.);
       }
 
       /* Calculate vertical mesoscale wind fluctuations... */
       if (ctl->turb_mesoz > 0) {
-	atm->wp[ip] = (float)
-	  (r * atm->wp[ip]
-	   + r2 *
-	   rs[3 * ip + 2] * ctl->turb_mesoz * atm->cache_wsig[ix][iy][iz]);
-	atm->p[ip] += atm->wp[ip] * dt[ip];
+	cache->wp[ip] = (float)
+	  (r * cache->wp[ip]
+	   + r2 * rs[3 * ip + 2] * ctl->turb_mesoz * cache->wsig[ix][iy][iz]);
+	atm->p[ip] += cache->wp[ip] * dt[ip];
       }
     }
 }
@@ -723,7 +728,8 @@ void module_isosurf_init(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm) {
+  atm_t * atm,
+  cache_t * cache) {
 
   FILE *in;
 
@@ -734,7 +740,7 @@ void module_isosurf_init(
   /* Save pressure... */
   if (ctl->isosurf == 1)
     for (int ip = 0; ip < atm->np; ip++)
-      atm->iso_var[ip] = atm->p[ip];
+      cache->iso_var[ip] = atm->p[ip];
 
   /* Save density... */
   else if (ctl->isosurf == 2)
@@ -742,7 +748,7 @@ void module_isosurf_init(
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		      atm->lon[ip], atm->lat[ip], NULL, NULL, NULL,
 		      &t, NULL, NULL, NULL, NULL, NULL, NULL);
-      atm->iso_var[ip] = atm->p[ip] / t;
+      cache->iso_var[ip] = atm->p[ip] / t;
     }
 
   /* Save potential temperature... */
@@ -751,7 +757,7 @@ void module_isosurf_init(
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip],
 		      atm->lon[ip], atm->lat[ip], NULL, NULL, NULL,
 		      &t, NULL, NULL, NULL, NULL, NULL, NULL);
-      atm->iso_var[ip] = THETA(atm->p[ip], t);
+      cache->iso_var[ip] = THETA(atm->p[ip], t);
     }
 
   /* Read balloon pressure data... */
@@ -766,13 +772,13 @@ void module_isosurf_init(
 
     /* Read pressure time series... */
     while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg", &(atm->iso_ts[atm->iso_n]),
-		 &(atm->iso_ps[atm->iso_n])) == 2)
-	if ((++atm->iso_n) > NP)
+      if (sscanf(line, "%lg %lg", &(cache->iso_ts[cache->iso_n]),
+		 &(cache->iso_ps[cache->iso_n])) == 2)
+	if ((++cache->iso_n) > NP)
 	  ERRMSG("Too many data points!");
 
     /* Check number of points... */
-    if (atm->iso_n < 1)
+    if (cache->iso_n < 1)
       ERRMSG("Could not read any data!");
 
     /* Close file... */
@@ -786,10 +792,11 @@ void module_isosurf(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm) {
+  atm_t * atm,
+  cache_t * cache) {
 
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm)
+#pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -800,14 +807,14 @@ void module_isosurf(
 
     /* Restore pressure... */
     if (ctl->isosurf == 1)
-      atm->p[ip] = atm->iso_var[ip];
+      atm->p[ip] = cache->iso_var[ip];
 
     /* Restore density... */
     else if (ctl->isosurf == 2) {
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		      atm->lat[ip], NULL, NULL, NULL, &t,
 		      NULL, NULL, NULL, NULL, NULL, NULL);
-      atm->p[ip] = atm->iso_var[ip] * t;
+      atm->p[ip] = cache->iso_var[ip] * t;
     }
 
     /* Restore potential temperature... */
@@ -815,19 +822,19 @@ void module_isosurf(
       intpol_met_time(met0, met1, atm->time[ip], atm->p[ip], atm->lon[ip],
 		      atm->lat[ip], NULL, NULL, NULL, &t,
 		      NULL, NULL, NULL, NULL, NULL, NULL);
-      atm->p[ip] = 1000. * pow(atm->iso_var[ip] / t, -1. / 0.286);
+      atm->p[ip] = 1000. * pow(cache->iso_var[ip] / t, -1. / 0.286);
     }
 
     /* Interpolate pressure... */
     else if (ctl->isosurf == 4) {
-      if (atm->time[ip] <= atm->iso_ts[0])
-	atm->p[ip] = atm->iso_ps[0];
-      else if (atm->time[ip] >= atm->iso_ts[atm->iso_n - 1])
-	atm->p[ip] = atm->iso_ps[atm->iso_n - 1];
+      if (atm->time[ip] <= cache->iso_ts[0])
+	atm->p[ip] = cache->iso_ps[0];
+      else if (atm->time[ip] >= cache->iso_ts[cache->iso_n - 1])
+	atm->p[ip] = cache->iso_ps[cache->iso_n - 1];
       else {
-	int idx = locate_irr(atm->iso_ts, atm->iso_n, atm->time[ip]);
-	atm->p[ip] = LIN(atm->iso_ts[idx], atm->iso_ps[idx],
-			 atm->iso_ts[idx + 1], atm->iso_ps[idx + 1],
+	int idx = locate_irr(cache->iso_ts, cache->iso_n, atm->time[ip]);
+	atm->p[ip] = LIN(cache->iso_ts[idx], cache->iso_ps[idx],
+			 cache->iso_ts[idx + 1], cache->iso_ps[idx + 1],
 			 atm->time[ip]);
       }
     }

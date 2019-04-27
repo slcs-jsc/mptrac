@@ -622,6 +622,11 @@ typedef struct {
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ][NP];
 
+} atm_t;
+
+/*! Cache data. */
+typedef struct {
+
   /*! Zonal wind perturbation [m/s]. */
   float up[NP];
 
@@ -644,18 +649,18 @@ typedef struct {
   int iso_n;
 
   /*! Cache for reference time of wind standard deviations. */
-  double cache_time[EX][EY][EP];
+  double tsig[EX][EY][EP];
 
   /*! Cache for zonal wind standard deviations. */
-  float cache_usig[EX][EY][EP];
+  float usig[EX][EY][EP];
 
   /*! Cache for meridional wind standard deviations. */
-  float cache_vsig[EX][EY][EP];
+  float vsig[EX][EY][EP];
 
   /*! Cache for vertical velocity standard deviations. */
-  float cache_wsig[EX][EY][EP];
+  float wsig[EX][EY][EP];
 
-} atm_t;
+} cache_t;
 
 /*! Meteorological data. */
 typedef struct {
