@@ -240,10 +240,10 @@
 #define PRINT_TIMER(id)	timer(#id, id, 3)
 
 /*! Maximum number of timers. */
-#define NTIMER 12
+#define NTIMER 20
 
 /*! Timer for total runtime. */
-#define TIMER_TOTAL 0
+#define TIMER_ZERO 0
 
 /*! Timer for initalization. */
 #define TIMER_INIT 1
@@ -277,6 +277,9 @@
 
 /*! Timer for sedimentation module. */
 #define TIMER_SEDI 11
+
+/*! Timer for total runtime. */
+#define TIMER_TOTAL 12
 
 /* ------------------------------------------------------------
    Structs...

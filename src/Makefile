@@ -5,13 +5,16 @@
 # Load these modules before compiling and running the code:
 #
 # JURECA cluster:
-# module load GCC/7.3.0 ParaStationMPI/5.2.1-1
+# ml GCC/7.3.0 ParaStationMPI/5.2.1-1
 #
 # JURECA booster:
-# module purge && module load Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
+# ml purge
+# ml Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 #
 # JUWELS GPUs:
-# module load CUDA PGI/18.7-GCC-7.3.0
+# ml use /p/software/juwels/otherstages
+# ml Stages/2018b
+# ml CUDA PGI
 
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_split atm_stat day2doy doy2day extract jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo
@@ -46,21 +49,18 @@ CC = gcc
 ifdef MPI
   CC = mpicc
 endif
-ifdef GPU
-  CC = pgcc
-endif
 
 # Set CFLAGS...
-CFLAGS = $(INCDIR) -DHAVE_INLINE -DGSL_DISABLE_DEPRACTED -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
+CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 
 # Compile for GPUs...
 ifdef GPU
-  CFLAGS = $(INCDIR) -DGSL_DISABLE_DEPRACTED -mp -g -ta=tesla:cc70,pinned -Minfo=accel -mcmodel=medium
+  CC = pgcc
+  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,pinned -mcmodel=medium -Minfo=accel -g
   LDFLAGS += -lcuda -lcudart -lcurand
-  LIBDIR += -L /opt/nvidia/cudatoolkit9.1/9.1.85_3.18-6.0.7.0_5.1__g2eb7c52/lib64/
 endif
 
 # Compile for KNL...

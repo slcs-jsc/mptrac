@@ -104,7 +104,7 @@ int main(
 		     fabs(cos(atm->lat[atm->np] * M_PI / 180.)));
 
 	    /* Set particle counter... */
-	    if ((++atm->np) >= NP)
+	    if ((++atm->np) > NP)
 	      ERRMSG("Too many particles!");
 	  }
 

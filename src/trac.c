@@ -38,7 +38,7 @@
    ------------------------------------------------------------ */
 
 #ifdef _OPENACC
-static curandGenerator_t rng;
+curandGenerator_t rng;
 #else
 static gsl_rng *rng[NTHREADS];
 #endif
@@ -133,10 +133,6 @@ void write_output(
   atm_t * atm,
   double t);
 
-/*! Update flag for simulation output. */
-void write_output_update(
-  int *updated);
-
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
@@ -188,6 +184,7 @@ int main(
        ------------------------------------------------------------ */
 
     /* Set timers... */
+    START_TIMER(TIMER_ZERO);
     START_TIMER(TIMER_TOTAL);
     START_TIMER(TIMER_INIT);
 
@@ -200,9 +197,6 @@ int main(
 	  NP);
     ALLOC(rs, double,
 	  3 * NP);
-
-    /* Initialize random number generator... */
-    module_diffusion_init();
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
@@ -240,6 +234,9 @@ int main(
       ctl.t_start = floor(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
     else
       ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
+
+    /* Initialize random number generator... */
+    module_diffusion_init();
 
     /* Set timers... */
     STOP_TIMER(TIMER_INIT);
@@ -382,8 +379,7 @@ int main(
 	   1024.);
 
     /* Report timers... */
-    STOP_TIMER(TIMER_TOTAL);
-    PRINT_TIMER(TIMER_TOTAL);
+    STOP_TIMER(TIMER_ZERO);
     PRINT_TIMER(TIMER_INIT);
     PRINT_TIMER(TIMER_INPUT);
     PRINT_TIMER(TIMER_OUTPUT);
@@ -395,6 +391,8 @@ int main(
     PRINT_TIMER(TIMER_METEO);
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
+    STOP_TIMER(TIMER_TOTAL);
+    PRINT_TIMER(TIMER_TOTAL);
 
     /* Free... */
     free(atm);
@@ -506,11 +504,12 @@ void module_diffusion_init(
   /* Initialize random number generator... */
 #ifdef _OPENACC
 
-  int istat;
-
-  istat = curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT);
-  istat =
-    curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync));
+  if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
+      != CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot create random number generator!");
+  if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
+      != CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot set stream for random number generator!");
 
 #else
 
@@ -1093,7 +1092,12 @@ void write_output(
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
-    write_output_update(&updated);
+    if (!updated) {
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+      updated = 1;
+    }
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
@@ -1101,7 +1105,12 @@ void write_output(
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
-    write_output_update(&updated);
+    if (!updated) {
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+      updated = 1;
+    }
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
@@ -1109,42 +1118,49 @@ void write_output(
 
   /* Write CSI data... */
   if (ctl->csi_basename[0] != '-') {
-    write_output_update(&updated);
+    if (!updated) {
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+      updated = 1;
+    }
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
   }
 
   /* Write ensemble data... */
   if (ctl->ens_basename[0] != '-') {
-    write_output_update(&updated);
+    if (!updated) {
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+      updated = 1;
+    }
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
   }
 
   /* Write profile data... */
   if (ctl->prof_basename[0] != '-') {
-    write_output_update(&updated);
+    if (!updated) {
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+      updated = 1;
+    }
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
   }
 
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
-    write_output_update(&updated);
-    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
-    write_station(filename, ctl, atm, t);
-  }
-}
-
-/*****************************************************************************/
-
-void write_output_update(
-  int *updated) {
-
-  if (!*updated) {
+    if (!updated) {
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-    *updated = 1;
+      updated = 1;
+    }
+    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
+    write_station(filename, ctl, atm, t);
   }
 }

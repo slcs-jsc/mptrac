@@ -163,7 +163,7 @@ int main(
       atm2->q[ctl.qnt_m][atm2->np] = mtot / n;
 
     /* Increment particle counter... */
-    if ((++atm2->np) >= NP)
+    if ((++atm2->np) > NP)
       ERRMSG("Too many air parcels!");
   }
 
