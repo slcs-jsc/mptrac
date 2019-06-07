@@ -12,8 +12,6 @@
 # ml Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 #
 # JUWELS GPUs:
-# ml use /p/software/juwels/otherstages
-# ml Stages/2018b
 # ml CUDA PGI
 
 # List of executables...
