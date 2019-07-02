@@ -470,6 +470,9 @@ typedef struct {
   /*! Time filter for atmospheric data output (0=no, 1=yes). */
   int atm_filter;
 
+  /*! Particle index stride for atmospheric data files. */
+  int atm_stride;
+
   /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). */
   int atm_type;
 

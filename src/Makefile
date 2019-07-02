@@ -57,7 +57,7 @@ LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 # Compile for GPUs...
 ifdef GPU
   CC = pgcc
-  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,pinned -mcmodel=medium -Minfo=accel -g
+  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,managed -mcmodel=medium -Minfo=accel -g
   LDFLAGS += -lcuda -lcudart -lcurand
 endif
 

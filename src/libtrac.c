@@ -1299,6 +1299,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "ATM_DT_OUT", -1, "86400", NULL);
   ctl->atm_filter =
     (int) scan_ctl(filename, argc, argv, "ATM_FILTER", -1, "0", NULL);
+  ctl->atm_stride =
+    (int) scan_ctl(filename, argc, argv, "ATM_STRIDE", -1, "1", NULL);
   ctl->atm_type =
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE", -1, "0", NULL);
 
@@ -2475,7 +2477,7 @@ void write_atm(
     fprintf(out, "\n");
 
     /* Write data... */
-    for (ip = 0; ip < atm->np; ip++) {
+    for (ip = 0; ip < atm->np; ip += ctl->atm_stride) {
 
       /* Check time... */
       if (ctl->atm_filter && (atm->time[ip] < t0 || atm->time[ip] > t1))
