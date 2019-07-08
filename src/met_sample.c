@@ -40,7 +40,8 @@ int main(
 
   FILE *out;
 
-  double h2o, o3, p0, p1, pref, ps, pt, pv, t, tt, u, v, w, z, zm, zref, zt;
+  double h2o, h2ot, o3, p0, p1, pref, ps, pt, pv, t, tt, u, v, w,
+    z, zm, zref, zt;
 
   int geopot, ip, it;
 
@@ -86,7 +87,8 @@ int main(
 	  "# $14 = surface pressure [hPa]\n"
 	  "# $15 = tropopause pressure [hPa]\n"
 	  "# $16 = tropopause geopotential height [km]\n"
-	  "# $17 = tropopause temperature [K]\n\n");
+	  "# $17 = tropopause temperature [K]\n"
+	  "# $18 = tropopause water vapor [ppv]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -118,12 +120,13 @@ int main(
 		    atm->lat[ip], &ps, &pt, &z, &t, &u, &v, &w, &pv, &h2o,
 		    &o3);
     intpol_met_time(met0, met1, atm->time[ip], pt, atm->lon[ip], atm->lat[ip],
-		    NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, NULL, NULL);
+		    NULL, NULL, &zt, &tt, NULL, NULL, NULL, NULL, &h2ot,
+		    NULL);
 
     /* Write data... */
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
-	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt);
+	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt, h2ot);
   }
 
   /* Close file... */

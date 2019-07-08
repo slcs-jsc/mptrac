@@ -50,9 +50,9 @@ int main(
 
   static double timem[NX][NY], p0, ps, psm[NX][NY], pt, ptm[NX][NY], t,
     tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
-    h2om[NX][NY], o3, o3m[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY], zt,
-    ztm[NX][NY], tt, ttm[NX][NY], lon, lon0, lon1, lons[NX], dlon, lat, lat0,
-    lat1, lats[NY], dlat;
+    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], z, zm[NX][NY], pv,
+    pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY], lon, lon0, lon1, lons[NX],
+    dlon, lat, lat0, lat1, lats[NY], dlat;
 
   static int i, ix, iy, np[NX][NY], nx, ny;
 
@@ -111,7 +111,7 @@ int main(
 	intpol_met_space(met, p0, lons[ix], lats[iy], &ps, &pt,
 			 &z, &t, &u, &v, &w, &pv, &h2o, &o3);
 	intpol_met_space(met, pt, lons[ix], lats[iy], NULL, NULL,
-			 &zt, &tt, NULL, NULL, NULL, NULL, NULL, NULL);
+			 &zt, &tt, NULL, NULL, NULL, NULL, &h2ot, NULL);
 	timem[ix][iy] += met->time;
 	zm[ix][iy] += z;
 	tm[ix][iy] += t;
@@ -125,6 +125,7 @@ int main(
 	ptm[ix][iy] += pt;
 	ztm[ix][iy] += zt;
 	ttm[ix][iy] += tt;
+	h2otm[ix][iy] += h2ot;
 	np[ix][iy]++;
       }
   }
@@ -152,20 +153,23 @@ int main(
 	  "# $14 = surface pressure [hPa]\n"
 	  "# $15 = tropopause pressure [hPa]\n"
 	  "# $16 = tropopause geopotential height [km]\n"
-	  "# $17 = tropopause temperature [K]\n");
+	  "# $17 = tropopause temperature [K]\n"
+	  "# $18 = tropopause water vapor [ppv]\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
-      fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+      fprintf(out,
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[ix][iy] / np[ix][iy], Z(p0), lons[ix], lats[iy], p0,
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
 	      h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
 	      zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
 	      psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy],
-	      ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy]);
+	      ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy],
+	      h2otm[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

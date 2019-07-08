@@ -47,8 +47,8 @@ int main(
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
-    wm[NZ], h2o, h2om[NZ], o3, o3m[NZ], ps, psm[NZ], pt, ptm[NZ], tt, ttm[NZ],
-    zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ];
+    wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], ps, psm[NZ], pt,
+    ptm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ];
 
   static int i, iz, np[NZ], npt[NZ], nz;
 
@@ -111,7 +111,7 @@ int main(
 	  intpol_met_space(met, plev[iz], lon, lat, &ps, &pt, &z,
 			   &t, &u, &v, &w, &pv, &h2o, &o3);
 	  intpol_met_space(met, pt, lon, lat, NULL, NULL, &zt,
-			   &tt, NULL, NULL, NULL, NULL, NULL, NULL);
+			   &tt, NULL, NULL, NULL, NULL, &h2ot, NULL);
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
 	    timem[iz] += met->time;
@@ -130,6 +130,7 @@ int main(
 	      ptm[iz] += pt;
 	      ztm[iz] += zt;
 	      ttm[iz] += tt;
+	      h2otm[iz] += h2ot;
 	      npt[iz]++;
 	    }
 	    np[iz]++;
@@ -160,17 +161,18 @@ int main(
 	  "# $14 = surface pressure [hPa]\n"
 	  "# $15 = tropopause pressure [hPa]\n"
 	  "# $16 = tropopause geopotential height [km]\n"
-	  "# $17 = tropopause temperature [K]\n\n");
+	  "# $17 = tropopause temperature [K]\n"
+	  "# $18 = tropopause water vapor [ppv]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
 	    o3m[iz] / np[iz], zm[iz] / np[iz], pvm[iz] / np[iz],
 	    psm[iz] / np[iz], ptm[iz] / npt[iz], ztm[iz] / npt[iz],
-	    ttm[iz] / npt[iz]);
+	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz]);
 
   /* Close file... */
   fclose(out);
