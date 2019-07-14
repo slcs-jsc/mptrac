@@ -2,12 +2,6 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the analysis of atmospheric transport processes in the free troposphere and stratosphere.
 
-![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/slcs-jsc/mptrac.svg)
-![GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)
-![GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)
-![GitHub](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)
-
 ## Features
 
 * MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given wind fields.
@@ -22,13 +16,13 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries can be found in the git repository.
 
-Start by downloading the source code from the github repository:
+Start by downloading the source code from the git repository:
 
-    git clone https://github.com/slcs-jsc/mptrac
+    git clone https://jugit.fz-juelich.de/slcs/mptrac
 
 To update an existing installation use:
 
-    git pull https://github.com/slcs-jsc/mptrac
+    git pull https://jugit.fz-juelich.de/slcs/mptrac
 
 ### Installation
 
