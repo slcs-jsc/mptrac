@@ -25,16 +25,6 @@
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
-   Dimensions...
-   ------------------------------------------------------------ */
-
-/*! Maximum number of longitudes. */
-#define NX 1441
-
-/*! Maximum number of latitudes. */
-#define NY 721
-
-/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -56,8 +46,8 @@ int main(
 
   met_t *met;
 
-  static double pt[NX * NY], qt[NX * NY], zt[NX * NY], tt[NX * NY], lon, lon0,
-    lon1, lons[NX], dlon, lat, lat0, lat1, lats[NY], dlat;
+  static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
+    lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat;
 
   static int init, i, ix, iy, nx, ny, nt, ncid, dims[3], timid, lonid, latid,
     clppid, clpqid, clptid, clpzid, dynpid, dynqid, dyntid, dynzid, wmo1pid,
@@ -106,7 +96,7 @@ int main(
       nx = ny = 0;
       for (lon = lon0; lon <= lon1; lon += dlon) {
 	lons[nx] = lon;
-	if ((++nx) > NX)
+	if ((++nx) > EX)
 	  ERRMSG("Too many longitudes!");
       }
       if (lat0 < -90 && lat1 > 90) {
@@ -115,7 +105,7 @@ int main(
       }
       for (lat = lat0; lat <= lat1; lat += dlat) {
 	lats[ny] = lat;
-	if ((++ny) > NY)
+	if ((++ny) > EY)
 	  ERRMSG("Too many latitudes!");
       }
 

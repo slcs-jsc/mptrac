@@ -28,23 +28,17 @@
    Dimensions...
    ------------------------------------------------------------ */
 
-/*! Maximum number of times. */
+/*! Maximum number of time steps. */
 #define NT 744
-
-/*! Maximum number of longitudes. */
-#define NX 1441
-
-/*! Maximum number of latitudes. */
-#define NY 721
 
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
 double intpol_tropo_2d(
-  float array[NX][NY],
-  double lons[NX],
-  double lats[NY],
+  float array[EX][EY],
+  double lons[EX],
+  double lats[EY],
   size_t nlon,
   size_t nlat,
   double lon,
@@ -66,12 +60,12 @@ int main(
 
   static char varname[LEN];
 
-  static double times[NT], lons[NX], lats[NY], time0, time1, z0, z1, p0, p1,
+  static double times[NT], lons[EX], lats[EY], time0, time1, z0, z1, p0, p1,
     t0, t1, q0, q1;
 
-  static float help[NX * NY], tropo_z0[NX][NY], tropo_z1[NX][NY],
-    tropo_p0[NX][NY], tropo_p1[NX][NY], tropo_t0[NX][NY],
-    tropo_t1[NX][NY], tropo_q0[NX][NY], tropo_q1[NX][NY];
+  static float help[EX * EY], tropo_z0[EX][EY], tropo_z1[EX][EY],
+    tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY],
+    tropo_t1[EX][EY], tropo_q0[EX][EY], tropo_q1[EX][EY];
 
   static int ip, iq, it, it_old = -999, dimid[10], ncid,
     varid, varid_z, varid_p, varid_t, varid_q, h2o;
@@ -104,11 +98,11 @@ int main(
     ERRMSG("Too many times!");
   NC(nc_inq_dimid(ncid, "lat", &dimid[1]));
   NC(nc_inq_dimlen(ncid, dimid[1], &nlat));
-  if (nlat > NY)
+  if (nlat > EY)
     ERRMSG("Too many latitudes!");
   NC(nc_inq_dimid(ncid, "lon", &dimid[2]));
   NC(nc_inq_dimlen(ncid, dimid[2], &nlon));
-  if (nlon > NX)
+  if (nlon > EX)
     ERRMSG("Too many longitudes!");
 
   /* Read coordinates... */
@@ -264,9 +258,9 @@ int main(
 /*****************************************************************************/
 
 double intpol_tropo_2d(
-  float array[NX][NY],
-  double lons[NX],
-  double lats[NY],
+  float array[EX][EY],
+  double lons[EX],
+  double lats[EY],
   size_t nlon,
   size_t nlat,
   double lon,
