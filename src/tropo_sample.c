@@ -74,7 +74,7 @@ int main(
     tropo_t1[NX][NY], tropo_q0[NX][NY], tropo_q1[NX][NY];
 
   static int ip, iq, it, it_old = -999, dimid[10], ncid,
-    varid, varid_z, varid_p, varid_t, varid_q;
+    varid, varid_z, varid_p, varid_t, varid_q, h2o;
 
   static size_t count[10], start[10], ntime, nlon, nlat, ilon, ilat;
 
@@ -127,7 +127,7 @@ int main(
   sprintf(varname, "%s_t", argv[4]);
   NC(nc_inq_varid(ncid, varname, &varid_t));
   sprintf(varname, "%s_q", argv[4]);
-  NC(nc_inq_varid(ncid, varname, &varid_q));
+  h2o = (nc_inq_varid(ncid, varname, &varid_q) == NC_NOERR);
 
   /* Set dimensions... */
   count[0] = 1;
@@ -162,7 +162,7 @@ int main(
     /* Check range... */
     if (atm->time[ip] < times[0] || atm->time[ip] > times[ntime - 1])
       continue;
-    
+
     /* Read data... */
     it = locate_irr(times, (int) ntime, atm->time[ip]);
     if (it != it_old) {
@@ -181,10 +181,15 @@ int main(
       for (ilon = 0; ilon < nlon; ilon++)
 	for (ilat = 0; ilat < nlat; ilat++)
 	  tropo_t0[ilon][ilat] = help[ilat * nlon + ilon];
-      NC(nc_get_vara_float(ncid, varid_q, start, count, help));
-      for (ilon = 0; ilon < nlon; ilon++)
-	for (ilat = 0; ilat < nlat; ilat++)
-	  tropo_q0[ilon][ilat] = help[ilat * nlon + ilon];
+      if (h2o) {
+	NC(nc_get_vara_float(ncid, varid_q, start, count, help));
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_q0[ilon][ilat] = help[ilat * nlon + ilon];
+      } else
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_q0[ilon][ilat] = GSL_NAN;
 
       time1 = times[it + 1];
       start[0] = (size_t) it + 1;
@@ -200,10 +205,15 @@ int main(
       for (ilon = 0; ilon < nlon; ilon++)
 	for (ilat = 0; ilat < nlat; ilat++)
 	  tropo_t1[ilon][ilat] = help[ilat * nlon + ilon];
-      NC(nc_get_vara_float(ncid, varid_q, start, count, help));
-      for (ilon = 0; ilon < nlon; ilon++)
-	for (ilat = 0; ilat < nlat; ilat++)
-	  tropo_q1[ilon][ilat] = help[ilat * nlon + ilon];
+      if (h2o) {
+	NC(nc_get_vara_float(ncid, varid_q, start, count, help));
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_q1[ilon][ilat] = help[ilat * nlon + ilon];
+      } else
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_q1[ilon][ilat] = GSL_NAN;;
     }
     it_old = it;
 
@@ -261,6 +271,12 @@ double intpol_tropo_2d(
   size_t nlat,
   double lon,
   double lat) {
+
+  /* Adjust longitude... */
+  if (lon < lons[0])
+    lon += 360;
+  else if (lon > lons[nlon - 1])
+    lon -= 360;
 
   /* Get indices... */
   int ix = locate_reg(lons, (int) nlon, lon);
