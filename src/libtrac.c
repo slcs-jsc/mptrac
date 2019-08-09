@@ -2086,7 +2086,7 @@ void read_met_tropo(
   /* Get altitude and pressure profiles... */
   for (iz = 0; iz < met->np; iz++)
     z[iz] = Z(met->p[iz]);
-  for (iz = 0; iz <= 170; iz++) {
+  for (iz = 0; iz <= 190; iz++) {
     z2[iz] = 4.5 + 0.1 * iz;
     p2[iz] = P(z2[iz]);
   }
@@ -2120,10 +2120,10 @@ void read_met_tropo(
 
 	/* Find minimum... */
 	iz = (int) gsl_stats_min_index(t2, 1, 171);
-	if (iz <= 0 || iz >= 170)
-	  met->pt[ix][iy] = GSL_NAN;
-	else
+	if (iz > 0 && iz < 170)
 	  met->pt[ix][iy] = p2[iz];
+	else
+	  met->pt[ix][iy] = GSL_NAN;
       }
   }
 
@@ -2138,11 +2138,11 @@ void read_met_tropo(
 	/* Interpolate temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
-	spline(z, t, met->np, z2, t2, 161);
+	spline(z, t, met->np, z2, t2, 191);
 
 	/* Find 1st tropopause... */
 	met->pt[ix][iy] = GSL_NAN;
-	for (iz = 0; iz <= 140; iz++) {
+	for (iz = 0; iz <= 170; iz++) {
 	  found = 1;
 	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	    if (1e3 * G0 / RA * (t2[iz2] - t2[iz]) / (t2[iz2] + t2[iz])
@@ -2151,7 +2151,7 @@ void read_met_tropo(
 	      break;
 	    }
 	  if (found) {
-	    if (iz > 0 && iz < 140)
+	    if (iz > 0 && iz < 170)
 	      met->pt[ix][iy] = p2[iz];
 	    break;
 	  }
@@ -2160,7 +2160,7 @@ void read_met_tropo(
 	/* Find 2nd tropopause... */
 	if (ctl->met_tropo == 4) {
 	  met->pt[ix][iy] = GSL_NAN;
-	  for (; iz <= 140; iz++) {
+	  for (; iz <= 170; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
 	      if (1e3 * G0 / RA * (t2[iz2] - t2[iz]) / (t2[iz2] + t2[iz])
@@ -2171,7 +2171,7 @@ void read_met_tropo(
 	    if (found)
 	      break;
 	  }
-	  for (; iz <= 140; iz++) {
+	  for (; iz <= 170; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	      if (1e3 * G0 / RA * (t2[iz2] - t2[iz]) / (t2[iz2] + t2[iz])
@@ -2180,7 +2180,7 @@ void read_met_tropo(
 		break;
 	      }
 	    if (found) {
-	      if (iz > 0 && iz < 140)
+	      if (iz > 0 && iz < 170)
 		met->pt[ix][iy] = p2[iz];
 	      break;
 	    }
@@ -2200,18 +2200,18 @@ void read_met_tropo(
 	/* Interpolate potential vorticity profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  pv[iz] = met->pv[ix][iy][iz];
-	spline(z, pv, met->np, z2, pv2, 161);
+	spline(z, pv, met->np, z2, pv2, 171);
 
 	/* Interpolate potential temperature profile... */
 	for (iz = 0; iz < met->np; iz++)
 	  th[iz] = THETA(met->p[iz], met->t[ix][iy][iz]);
-	spline(z, th, met->np, z2, th2, 161);
+	spline(z, th, met->np, z2, th2, 171);
 
 	/* Find dynamical tropopause 3.5 PVU + 380 K */
 	met->pt[ix][iy] = GSL_NAN;
-	for (iz = 0; iz <= 160; iz++)
+	for (iz = 0; iz <= 170; iz++)
 	  if (fabs(pv2[iz]) >= 3.5 || th2[iz] >= 380.) {
-	    if (iz > 0 && iz < 160)
+	    if (iz > 0 && iz < 170)
 	      met->pt[ix][iy] = p2[iz];
 	    break;
 	  }

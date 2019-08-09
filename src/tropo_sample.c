@@ -276,14 +276,12 @@ double intpol_tropo_2d(
   int ix = locate_reg(lons, (int) nlon, lon);
   int iy = locate_reg(lats, (int) nlat, lat);
 
-  /* Set variables... */
-  double aux00 = array[ix][iy];
-  double aux01 = array[ix][iy + 1];
-  double aux10 = array[ix + 1][iy];
-  double aux11 = array[ix + 1][iy + 1];
+  /* Adjust indices... */
+  if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix]))
+    ix++;
+  if (fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy]))
+    iy++;
 
   /* Interpolate horizontally... */
-  aux00 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat);
-  aux11 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat);
-  return LIN(lons[ix], aux00, lons[ix + 1], aux11, lon);
+  return array[ix][iy];
 }
