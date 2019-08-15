@@ -689,9 +689,22 @@ double intpol_met_2d(
   double aux11 = array[ix + 1][iy + 1];
 
   /* Interpolate horizontally... */
-  aux00 = wy * (aux00 - aux01) + aux01;
-  aux11 = wy * (aux10 - aux11) + aux11;
-  return wx * (aux00 - aux11) + aux11;
+  if (gsl_finite(aux00) && gsl_finite(aux01))
+    aux00 = wy * (aux00 - aux01) + aux01;
+  else if (wy < 0.5)
+    aux00 = aux01;
+  if (gsl_finite(aux10) && gsl_finite(aux11))
+    aux11 = wy * (aux10 - aux11) + aux11;
+  else if (wy > 0.5)
+    aux11 = aux10;
+  if (gsl_finite(aux00) && gsl_finite(aux11))
+    return wx * (aux00 - aux11) + aux11;
+  else {
+    if (wx > 0.5)
+      return aux00;
+    else
+      return aux11;
+  }
 }
 
 /*****************************************************************************/

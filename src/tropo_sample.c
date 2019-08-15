@@ -35,7 +35,16 @@
    Functions...
    ------------------------------------------------------------ */
 
-double intpol_tropo_2d(
+/* Linear interpolation considering missing values. */
+double intpol_help(
+  double x0,
+  double y0,
+  double x1,
+  double y1,
+  double x);
+
+/* Bilinear horizontal interpolation. */
+double intpol_2d(
   float array[EX][EY],
   double lons[EX],
   double lats[EY],
@@ -212,28 +221,28 @@ int main(
     it_old = it;
 
     /* Interpolate... */
-    z0 = intpol_tropo_2d(tropo_z0, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
-    p0 = intpol_tropo_2d(tropo_p0, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
-    t0 = intpol_tropo_2d(tropo_t0, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
-    q0 = intpol_tropo_2d(tropo_q0, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
+    z0 = intpol_2d(tropo_z0, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
+    p0 = intpol_2d(tropo_p0, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
+    t0 = intpol_2d(tropo_t0, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
+    q0 = intpol_2d(tropo_q0, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
 
-    z1 = intpol_tropo_2d(tropo_z1, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
-    p1 = intpol_tropo_2d(tropo_p1, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
-    t1 = intpol_tropo_2d(tropo_t1, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
-    q1 = intpol_tropo_2d(tropo_q1, lons, lats, nlon, nlat,
-			 atm->lon[ip], atm->lat[ip]);
+    z1 = intpol_2d(tropo_z1, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
+    p1 = intpol_2d(tropo_p1, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
+    t1 = intpol_2d(tropo_t1, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
+    q1 = intpol_2d(tropo_q1, lons, lats, nlon, nlat,
+		   atm->lon[ip], atm->lat[ip]);
 
-    z0 = LIN(time0, z0, time1, z1, atm->time[ip]);
-    p0 = LIN(time0, p0, time1, p1, atm->time[ip]);
-    t0 = LIN(time0, t0, time1, t1, atm->time[ip]);
-    q0 = LIN(time0, q0, time1, q1, atm->time[ip]);
+    z0 = intpol_help(time0, z0, time1, z1, atm->time[ip]);
+    p0 = intpol_help(time0, p0, time1, p1, atm->time[ip]);
+    t0 = intpol_help(time0, t0, time1, t1, atm->time[ip]);
+    q0 = intpol_help(time0, q0, time1, q1, atm->time[ip]);
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
@@ -257,7 +266,29 @@ int main(
 
 /*****************************************************************************/
 
-double intpol_tropo_2d(
+double intpol_help(
+  double x0,
+  double y0,
+  double x1,
+  double y1,
+  double x) {
+
+  /* Linear interpolation... */
+  if (gsl_finite(y0) && gsl_finite(y1))
+    return LIN(x0, y0, x1, y1, x);
+
+  /* Nearest neighbour... */
+  else {
+    if (fabs(x - x0) < fabs(x - x1))
+      return y0;
+    else
+      return y1;
+  }
+}
+
+/*****************************************************************************/
+
+double intpol_2d(
   float array[EX][EY],
   double lons[EX],
   double lats[EY],
@@ -265,6 +296,8 @@ double intpol_tropo_2d(
   size_t nlat,
   double lon,
   double lat) {
+
+  double aux0, aux1;
 
   /* Adjust longitude... */
   if (lon < lons[0])
@@ -276,12 +309,12 @@ double intpol_tropo_2d(
   int ix = locate_reg(lons, (int) nlon, lon);
   int iy = locate_reg(lats, (int) nlat, lat);
 
-  /* Adjust indices... */
-  if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix]))
-    ix++;
-  if (fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy]))
-    iy++;
+  /* Interpolate in longitude... */
+  aux0 = intpol_help(lons[ix], array[ix][iy],
+		     lons[ix + 1], array[ix + 1][iy], lon);
+  aux1 = intpol_help(lons[ix], array[ix][iy + 1],
+		     lons[ix + 1], array[ix + 1][iy + 1], lon);
 
-  /* Interpolate horizontally... */
-  return array[ix][iy];
+  /* Interpolate in latitude... */
+  return intpol_help(lats[iy], aux0, lats[iy + 1], aux1, lat);
 }
