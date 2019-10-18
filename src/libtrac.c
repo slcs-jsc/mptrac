@@ -2328,7 +2328,12 @@ void spline(
   /* Interpolate temperature profile... */
   gsl_spline_init(s, x, y, (size_t) n);
   for (int i = 0; i < n2; i++)
-    y2[i] = gsl_spline_eval(s, x2[i], acc);
+    if (x2[i] <= x[0])
+      y2[i] = y[0];
+    else if (x2[i] >= x[n - 1])
+      y2[i] = y[n - 1];
+    else
+      y2[i] = gsl_spline_eval(s, x2[i], acc);
 
   /* Free... */
   gsl_spline_free(s);
