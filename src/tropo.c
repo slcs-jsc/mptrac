@@ -144,9 +144,9 @@ int main(
 	NC(nc_def_var(ncid, "wmo_2nd_q", NC_FLOAT, 3, &dims[0], &wmo2qid));
 
       /* Set attributes... */
-      add_text_attribute(ncid, "time", "units", "s");
-      add_text_attribute(ncid, "time", "long_name",
-			 "seconds since 2000-01-01, 00:00 UTC");
+      add_text_attribute(ncid, "time", "units",
+			 "seconds since 2000-01-01 00:00:00 UTC");
+      add_text_attribute(ncid, "time", "long_name", "time");
       add_text_attribute(ncid, "lon", "units", "degrees_east");
       add_text_attribute(ncid, "lon", "long_name", "longitude");
       add_text_attribute(ncid, "lat", "units", "degrees_north");
