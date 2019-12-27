@@ -18,11 +18,11 @@ This documentation describes the installation of MPTRAC on a Linux system. A num
 
 Start by downloading the source code from the git repository:
 
-    git clone https://jugit.fz-juelich.de/slcs/mptrac
+    git clone https://github.com/slcs-jsc/mptrac.git
 
 To update an existing installation use:
 
-    git pull https://jugit.fz-juelich.de/slcs/mptrac
+    git pull https://github.com/slcs-jsc/mptrac.git
 
 ### Installation
 
