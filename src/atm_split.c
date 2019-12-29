@@ -39,7 +39,7 @@ int main(
   char kernel[LEN], line[LEN];
 
   double dt, dx, dz, k, kk[GZ], kz[GZ], kmin, kmax, m, mmax = 0, mtot = 0,
-    t0, t1, z, z0, z1, lon0, lon1, lat0, lat1;
+    t0, t1, z, z0, z1, lon0, lon1, lat0, lat1, zmin, zmax;
 
   int i, ip, iq, iz, n, nz = 0;
 
@@ -96,6 +96,8 @@ int main(
     fclose(in);
 
     /* Normalize kernel function... */
+    zmax = gsl_stats_max(kz, 1, (size_t) nz);
+    zmin = gsl_stats_min(kz, 1, (size_t) nz);
     kmax = gsl_stats_max(kk, 1, (size_t) nz);
     kmin = gsl_stats_min(kk, 1, (size_t) nz);
     for (iz = 0; iz < nz; iz++)
@@ -132,7 +134,7 @@ int main(
     /* Set vertical position... */
     if (nz > 0) {
       do {
-	z = kmin + (kmax - kmin) * gsl_rng_uniform_pos(rng);
+	z = zmin + (zmax - zmin) * gsl_rng_uniform_pos(rng);
 	iz = locate_irr(kz, nz, z);
 	k = LIN(kz[iz], kk[iz], kz[iz + 1], kk[iz + 1], z);
       } while (gsl_rng_uniform(rng) > k);
