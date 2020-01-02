@@ -3020,11 +3020,11 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], obsmean2[GX][GY], rt, rz,
-    rlon, rlat, robs, t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp,
-    rho_air, vmr, h2o, o3;
+  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rz, rlon, rlat, robs,
+    t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, vmr, h2o,
+    o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int obscount[GX][GY], ip, ix, iy, iz;
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -3058,8 +3058,7 @@ void write_prof(
 	    "# $7 = volume mixing ratio [1]\n"
 	    "# $8 = H2O volume mixing ratio [1]\n"
 	    "# $9 = O3 volume mixing ratio [1]\n"
-	    "# $10 = observed BT index (mean) [K]\n"
-	    "# $11 = observed BT index (sigma) [K]\n");
+	    "# $10 = observed BT index [K]\n");
 
     /* Set grid box size... */
     dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
@@ -3076,7 +3075,6 @@ void write_prof(
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++) {
       obsmean[ix][iy] = 0;
-      obsmean2[ix][iy] = 0;
       obscount[ix][iy] = 0;
       for (iz = 0; iz < ctl->prof_nz; iz++)
 	mass[ix][iy][iz] = 0;
@@ -3106,7 +3104,6 @@ void write_prof(
 
     /* Get mean observation index... */
     obsmean[ix][iy] += robs;
-    obsmean2[ix][iy] += SQR(robs);
     obscount[ix][iy]++;
   }
 
@@ -3137,16 +3134,6 @@ void write_prof(
     for (iy = 0; iy < ctl->prof_ny; iy++)
       if (obscount[ix][iy] > 0) {
 
-	/* Check profile... */
-	okay = 0;
-	for (iz = 0; iz < ctl->prof_nz; iz++)
-	  if (mass[ix][iy][iz] > 0) {
-	    okay = 1;
-	    break;
-	  }
-	if (!okay)
-	  continue;
-
 	/* Write output... */
 	fprintf(out, "\n");
 
@@ -3173,11 +3160,9 @@ void write_prof(
 	    / (rho_air * area * dz * 1e9);
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g\n",
+	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n",
 		  t, z, lon, lat, press, temp, vmr, h2o, o3,
-		  obsmean[ix][iy] / obscount[ix][iy],
-		  sqrt(obsmean2[ix][iy] / obscount[ix][iy]
-		       - SQR(obsmean[ix][iy] / obscount[ix][iy])));
+		  obsmean[ix][iy] / obscount[ix][iy]);
 	}
       }
 
