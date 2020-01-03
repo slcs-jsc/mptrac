@@ -170,7 +170,7 @@ int main(
   }
 
   /* Save data and close file... */
-  write_atm(argv[3], &ctl, atm2, atm->time[0]);
+  write_atm(argv[3], &ctl, atm2, 0);
 
   /* Free... */
   free(atm);

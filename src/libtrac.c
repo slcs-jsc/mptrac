@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2020 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -3024,7 +3024,7 @@ void write_prof(
     t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, vmr, h2o,
     o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz;
+  static int obscount[GX][GY], ip, ix, iy, iz, okay;
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -3133,6 +3133,16 @@ void write_prof(
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++)
       if (obscount[ix][iy] > 0) {
+
+	/* Check profile... */
+	okay = 0;
+	for (iz = 0; iz < ctl->prof_nz; iz++)
+	  if (mass[ix][iy][iz] > 0) {
+	    okay = 1;
+	    break;
+	  }
+	if (!okay)
+	  continue;
 
 	/* Write output... */
 	fprintf(out, "\n");

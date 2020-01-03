@@ -6,11 +6,11 @@ projects/
 src/atm_conv
 src/atm_dist
 src/atm_init
+src/atm_select
 src/atm_split
 src/atm_stat
 src/day2doy
 src/doy2day
-src/extract
 src/jsec2time
 src/libtrac.o
 src/met_map
