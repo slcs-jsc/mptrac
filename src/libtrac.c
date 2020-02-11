@@ -40,6 +40,15 @@ void cart2geo(
 
 /*****************************************************************************/
 
+int check_finite(
+  const double x) {
+  const double y = x - x;
+  int status = (y == y);
+  return status;
+}
+
+/*****************************************************************************/
+
 static double clim_hno3_secs[12] = {
   1209600.00, 3888000.00, 6393600.00,
   9072000.00, 11664000.00, 14342400.00,
@@ -689,15 +698,15 @@ double intpol_met_2d(
   double aux11 = array[ix + 1][iy + 1];
 
   /* Interpolate horizontally... */
-  if (gsl_finite(aux00) && gsl_finite(aux01))
+  if (check_finite(aux00) && check_finite(aux01))
     aux00 = wy * (aux00 - aux01) + aux01;
   else if (wy < 0.5)
     aux00 = aux01;
-  if (gsl_finite(aux10) && gsl_finite(aux11))
+  if (check_finite(aux10) && check_finite(aux11))
     aux11 = wy * (aux10 - aux11) + aux11;
   else if (wy > 0.5)
     aux11 = aux10;
-  if (gsl_finite(aux00) && gsl_finite(aux11))
+  if (check_finite(aux00) && check_finite(aux11))
     return wx * (aux00 - aux11) + aux11;
   else {
     if (wx > 0.5)
@@ -1576,10 +1585,10 @@ void read_met_extrapolate(
 
       /* Find lowest valid data point... */
       for (ip0 = met->np - 1; ip0 >= 0; ip0--)
-	if (!gsl_finite(met->t[ix][iy][ip0])
-	    || !gsl_finite(met->u[ix][iy][ip0])
-	    || !gsl_finite(met->v[ix][iy][ip0])
-	    || !gsl_finite(met->w[ix][iy][ip0]))
+	if (!check_finite(met->t[ix][iy][ip0])
+	    || !check_finite(met->u[ix][iy][ip0])
+	    || !check_finite(met->v[ix][iy][ip0])
+	    || !check_finite(met->w[ix][iy][ip0]))
 	  break;
 
       /* Extrapolate... */
@@ -1736,7 +1745,7 @@ void read_met_geopot(
 	    ix3 -= met->nx;
 	  for (iy2 = GSL_MAX(iy - dy, 0);
 	       iy2 <= GSL_MIN(iy + dy, met->ny - 1); iy2++)
-	    if (gsl_finite(met->z[ix3][iy2][ip])) {
+	    if (check_finite(met->z[ix3][iy2][ip])) {
 	      help[ix][iy][ip] += met->z[ix3][iy2][ip];
 	      n++;
 	    }

@@ -738,6 +738,13 @@ void cart2geo(
   double *lon,
   double *lat);
 
+/*! Check if x is finite. */
+#ifdef _OPENACC
+#pragma acc routine (finite)
+#endif
+int check_finite(
+  const double x);
+
 /*! Climatology of HNO3 volume mixing ratios. */
 #ifdef _OPENACC
 #pragma acc routine (clim_hno3)

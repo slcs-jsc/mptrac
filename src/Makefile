@@ -5,7 +5,7 @@
 # Load these modules before compiling and running the code:
 #
 # JURECA cluster:
-# ml GCC/7.3.0 ParaStationMPI/5.2.1-1
+# ml GCC ParaStationMPI
 #
 # JURECA booster:
 # ml purge
@@ -58,7 +58,7 @@ LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifdef GPU
   CC = pgcc
   CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,managed -mcmodel=medium -Minfo=accel -g
-  LDFLAGS += -lcuda -lcudart -lcurand
+  LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 
 # Compile for KNL...
