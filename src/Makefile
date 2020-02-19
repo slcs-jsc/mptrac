@@ -13,6 +13,7 @@
 #
 # JUWELS GPUs:
 # ml CUDA PGI
+# ml mpi/19.10/openmpi-master-cuda_10.1.105-x86
 
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo tropo_sample
@@ -42,11 +43,8 @@ STATIC = 1
 # Set flags for GNU compiler...
 # -----------------------------------------------------------------------------
 
-# Select compiler...
+# Set compiler...
 CC = gcc
-ifdef MPI
-  CC = mpicc
-endif
 
 # Set CFLAGS...
 CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
@@ -68,6 +66,7 @@ endif
 
 # Compile for MPI...
 ifdef MPI
+  CC = mpicc
   CFLAGS += -DMPI
 endif
 

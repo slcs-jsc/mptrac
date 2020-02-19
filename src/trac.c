@@ -164,6 +164,15 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
+#ifdef _OPENACC
+  /* Initialize GPUs... */
+  acc_device_t device_type = acc_get_device_type();
+  int num_devices = acc_get_num_devices(acc_device_nvidia);
+  int device_num = rank % num_devices;
+  acc_set_device_num(device_num, acc_device_nvidia);
+  acc_init(device_type);
+#endif
+
   /* Check arguments... */
   if (argc < 5)
     ERRMSG("Give parameters: <dirlist> <ctl> <atm_in> <metbase>");
