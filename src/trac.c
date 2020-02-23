@@ -124,6 +124,12 @@ void module_sedi(
   atm_t * atm,
   double *dt);
 
+/*! Calculate SO2 chemistry. */
+void module_so2_chem(
+  ctl_t * ctl,
+  atm_t * atm,
+  double *dt);
+
 /*! Write simulation output. */
 void write_output(
   const char *dirname,
@@ -354,6 +360,12 @@ int main(
 	module_decay(&ctl, atm, dt);
       STOP_TIMER(TIMER_DECAY);
 
+      /* SO2 chemistry... */
+      START_TIMER(TIMER_SO2_CHEM);
+      if (ctl.so2_chem > 0 && ctl.qnt_m >= 0 && ctl.qnt_t >= 0)
+	module_so2_chem(&ctl, atm, dt);
+      STOP_TIMER(TIMER_SO2_CHEM);
+
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
       write_output(dirname, &ctl, met0, met1, atm, t);
@@ -400,6 +412,7 @@ int main(
     PRINT_TIMER(TIMER_METEO);
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
+    PRINT_TIMER(TIMER_SO2_CHEM);
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_TOTAL);
 
@@ -1087,6 +1100,58 @@ void module_sedi(
 
       /* Calculate pressure change... */
       atm->p[ip] += DZ2DP(v_p * dt[ip] / 1000., atm->p[ip]);
+    }
+}
+
+/*****************************************************************************/
+
+void module_so2_chem(
+  ctl_t * ctl,
+  atm_t * atm,
+  double *dt) {
+
+  double a, k, k0, kinf, M, pbar, T, tdec;
+
+  /* Check quantities... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_t < 0)
+    ERRMSG("Module needs quantity temperature!");
+
+#ifdef _OPENACC
+#pragma acc data present(ctl,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      /* Set pressure and temperature... */
+      pbar = atm->p[ip] / P0;
+      T = atm->q[ctl->qnt_t][ip];
+
+      /* 
+         Calculate rate coefficient for OH + SO2 -> HOSO2 ... 
+         http://iupac.pole-ether.fr/htdocs/datasheets/pdf/SOx15_HO_SO2_M.pdf
+
+         Alternatively, these are JPL recommendations:
+         k0 = 3.3e-31 * pow(T / 300., -4.3);
+         kinf = 1.6e-12;
+       */
+      M = 7.243e21 * pbar / T;
+      k0 = 2.8e-31 * pow(T / 300., -2.6);
+      kinf = 2e-12;
+      a = log10(exp(-T / 472.));
+      k = (k0 * M * kinf) / (k0 * M + kinf)
+	* pow(10., a / (1. + SQR(log10(k0 * M / kinf)
+				 / (0.75 - 1.27 * a))));
+
+      /* Calculate lifetime... */
+      tdec = 1. / (k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+
+      /* Calculate exponential decay... */
+      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] / tdec);
     }
 }
 

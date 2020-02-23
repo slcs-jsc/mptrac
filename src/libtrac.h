@@ -278,8 +278,11 @@
 /*! Timer for sedimentation module. */
 #define TIMER_SEDI 11
 
+/*! Timer for SO2 chemistry module. */
+#define TIMER_SO2_CHEM 12
+
 /*! Timer for total runtime. */
-#define TIMER_TOTAL 12
+#define TIMER_TOTAL 13
 
 /* ------------------------------------------------------------
    Structs...
@@ -457,6 +460,9 @@ typedef struct {
 
   /*! Life time of particles (stratosphere)  [s]. */
   double tdec_strat;
+
+  /*! Calculate SO2 chemistry (0=no, 1=yes). */
+  double so2_chem;
 
   /*! H2O volume mixing ratio for PSC analysis. */
   double psc_h2o;

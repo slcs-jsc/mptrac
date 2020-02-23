@@ -2330,6 +2330,8 @@ void read_ctl(
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
+  ctl->so2_chem =
+    (int) scan_ctl(filename, argc, argv, "SO2_CHEM", -1, "0", NULL);
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);
