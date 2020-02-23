@@ -69,7 +69,7 @@ int main(
   uz = scan_ctl(argv[1], argc, argv, "INIT_UZ", -1, "0", NULL);
   ulon = scan_ctl(argv[1], argc, argv, "INIT_ULON", -1, "0", NULL);
   ulat = scan_ctl(argv[1], argc, argv, "INIT_ULAT", -1, "0", NULL);
-  even = (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "1", NULL);
+  even = (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "0", NULL);
   rep = (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
   m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
 

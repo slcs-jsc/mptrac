@@ -342,6 +342,12 @@ typedef struct {
   /*! Quantity array index for ozone vmr. */
   int qnt_o3;
 
+  /*! Quantity array index for nitric acid vmr. */
+  int qnt_hno3;
+
+  /*! Quantity array index for hydroxyl vmr. */
+  int qnt_oh;
+
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
 
@@ -750,6 +756,15 @@ int check_finite(
 #pragma acc routine (clim_hno3)
 #endif
 double clim_hno3(
+  double t,
+  double lat,
+  double p);
+
+/*! Climatology of OH number concentrations. */
+#ifdef _OPENACC
+#pragma acc routine (clim_oh)
+#endif
+double clim_oh(
   double t,
   double lat,
   double p);

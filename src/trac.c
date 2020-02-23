@@ -912,6 +912,16 @@ void module_meteo(
     if (ctl->qnt_o3 >= 0)
       atm->q[ctl->qnt_o3][ip] = o3;
 
+    /* Set nitric acid vmr... */
+    if (ctl->qnt_hno3 >= 0)
+      atm->q[ctl->qnt_hno3][ip] =
+	clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]);
+
+    /* Set hydroxyl number concentration... */
+    if (ctl->qnt_oh >= 0)
+      atm->q[ctl->qnt_oh][ip] =
+	clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]);
+
     /* Calculate horizontal wind... */
     if (ctl->qnt_vh >= 0)
       atm->q[ctl->qnt_vh][ip] = sqrt(u * u + v * v);
