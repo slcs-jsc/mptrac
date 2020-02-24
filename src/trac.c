@@ -356,13 +356,13 @@ int main(
 
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
-      if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0 && ctl.qnt_m >= 0)
+      if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	module_decay(&ctl, atm, dt);
       STOP_TIMER(TIMER_DECAY);
 
       /* SO2 chemistry... */
       START_TIMER(TIMER_SO2_CHEM);
-      if (ctl.so2_chem > 0 && ctl.qnt_m >= 0 && ctl.qnt_t >= 0)
+      if (ctl.so2_chem > 0)
 	module_so2_chem(&ctl, atm, dt);
       STOP_TIMER(TIMER_SO2_CHEM);
 
@@ -485,6 +485,10 @@ void module_decay(
   ctl_t * ctl,
   atm_t * atm,
   double *dt) {
+  
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt)
@@ -869,7 +873,12 @@ void module_meteo(
   met_t * met0,
   met_t * met1,
   atm_t * atm) {
-
+  
+  /* Check quantity flags... */
+  if (ctl->qnt_tsts >= 0)
+    if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
+      ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
+  
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
@@ -1112,12 +1121,12 @@ void module_so2_chem(
 
   double a, k, k0, kinf, M, pbar, T, tdec;
 
-  /* Check quantities... */
+  /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
   if (ctl->qnt_t < 0)
     ERRMSG("Module needs quantity temperature!");
-
+  
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector

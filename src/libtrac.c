@@ -2272,12 +2272,7 @@ void read_ctl(
     } else
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
-
-  /* Check quantity flags... */
-  if (ctl->qnt_tsts >= 0)
-    if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
-      ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
-
+  
   /* Time steps of simulation... */
   ctl->direction =
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
