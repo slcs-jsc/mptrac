@@ -67,6 +67,9 @@
 /*! Standard pressure [hPa]. */
 #define P0 1013.25
 
+/*! Standard temperature [K]. */
+#define T0 273.15
+
 /*! Specific gas constant of dry air [J/(kg K)]. */
 #define RA 287.058
 
@@ -199,13 +202,17 @@
 	 __FILE__, __func__, __LINE__, #var, var);
 
 /*! Convert altitude to pressure. */
-#define P(z) (P0*exp(-(z)/H0))
+#define P(z) (P0 * exp(-(z) / H0))
+
+/*! Compute relative humidty. */
+#define RH(p, t, h2o) (0.263 * 100. * (p) * 18.01528 / MA * (h2o)	\
+		       / exp(17.67 * ((t) - T0) / ((t) - 29.65)))
 
 /*! Compute square. */
 #define SQR(x) ((x)*(x))
 
 /*! Compute potential temperature. */
-#define THETA(p, t) ((t)*pow(1000./(p), 0.286))
+#define THETA(p, t) ((t) * pow(1000. / (p), 0.286))
 
 /*! Get string tokens. */
 #define TOK(line, tok, format, var) {					\
@@ -350,6 +357,9 @@ typedef struct {
 
   /*! Quantity array index for hydroxyl vmr. */
   int qnt_oh;
+
+  /*! Quantity array index for relative humidty. */
+  int qnt_rh;
 
   /*! Quantity array index for potential temperature. */
   int qnt_theta;

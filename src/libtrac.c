@@ -2176,6 +2176,7 @@ void read_ctl(
   ctl->qnt_o3 = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
+  ctl->qnt_rh = -1;
   ctl->qnt_theta = -1;
   ctl->qnt_vh = -1;
   ctl->qnt_vz = -1;
@@ -2245,6 +2246,9 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "oh") == 0) {
       ctl->qnt_oh = iq;
       sprintf(ctl->qnt_unit[iq], "1");
+    } else if (strcmp(ctl->qnt_name[iq], "rh") == 0) {
+      ctl->qnt_rh = iq;
+      sprintf(ctl->qnt_unit[iq], "%%");
     } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
       sprintf(ctl->qnt_unit[iq], "K");
@@ -2272,7 +2276,7 @@ void read_ctl(
     } else
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
-  
+
   /* Time steps of simulation... */
   ctl->direction =
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);

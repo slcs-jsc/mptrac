@@ -485,7 +485,7 @@ void module_decay(
   ctl_t * ctl,
   atm_t * atm,
   double *dt) {
-  
+
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
@@ -873,12 +873,12 @@ void module_meteo(
   met_t * met0,
   met_t * met1,
   atm_t * atm) {
-  
+
   /* Check quantity flags... */
   if (ctl->qnt_tsts >= 0)
     if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
-  
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
@@ -951,6 +951,10 @@ void module_meteo(
     /* Calculate vertical velocity... */
     if (ctl->qnt_vz >= 0)
       atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
+
+    /* Calculate relative humidty... */
+    if (ctl->qnt_rh >= 0)
+      atm->q[ctl->qnt_rh][ip] = RH(atm->p[ip], t, h2o);
 
     /* Calculate potential temperature... */
     if (ctl->qnt_theta >= 0)
@@ -1126,7 +1130,7 @@ void module_so2_chem(
     ERRMSG("Module needs quantity mass!");
   if (ctl->qnt_t < 0)
     ERRMSG("Module needs quantity temperature!");
-  
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
