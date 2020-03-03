@@ -1123,7 +1123,7 @@ void module_so2_chem(
   atm_t * atm,
   double *dt) {
 
-  double a, k, k0, kinf, M, pbar, T, tdec;
+  double a, b, k, k0, kinf, M, p, T;
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
@@ -1141,30 +1141,25 @@ void module_so2_chem(
     if (dt[ip] != 0) {
 
       /* Set pressure and temperature... */
-      pbar = atm->p[ip] / P0;
+      p = atm->p[ip] / P0;
       T = atm->q[ctl->qnt_t][ip];
+      
+      /* Calculate molecular density... */
+      M = 7.243e21 * p / T;
 
-      /* 
-         Calculate rate coefficient for OH + SO2 -> HOSO2 ... 
-         http://iupac.pole-ether.fr/htdocs/datasheets/pdf/SOx15_HO_SO2_M.pdf
-
-         Alternatively, these are JPL recommendations:
-         k0 = 3.3e-31 * pow(T / 300., -4.3);
-         kinf = 1.6e-12;
-       */
-      M = 7.243e21 * pbar / T;
+      /* Calculate rate coefficient for OH + SO2 -> HOSO2 ... 
+         (http://iupac.pole-ether.fr/htdocs/datasheets/pdf/SOx15_HO_SO2_M.pdf) */
       k0 = 2.8e-31 * pow(T / 300., -2.6);
       kinf = 2e-12;
       a = log10(exp(-T / 472.));
-      k = (k0 * M * kinf) / (k0 * M + kinf)
-	* pow(10., a / (1. + SQR(log10(k0 * M / kinf)
-				 / (0.75 - 1.27 * a))));
-
-      /* Calculate lifetime... */
-      tdec = 1. / (k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
-
-      /* Calculate exponential decay... */
-      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] / tdec);
+      b = k0 * M / kinf;
+      k = (b * kinf) / (b + 1.0)
+	* pow(10., a / (1. + SQR(log10(b) / (0.75 - 1.27 * a))));
+      
+      /* Calculate exponential decay...
+         (note: tdec = 1. / (k * [OH])) */
+      atm->q[ctl->qnt_m][ip] *=
+	exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
     }
 }
 
