@@ -47,11 +47,11 @@ int main(
   met_t *met;
 
   static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
-    lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat;
+    lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat, cw[3];
 
   static int init, i, ix, iy, nx, ny, nt, ncid, dims[3], timid, lonid, latid,
     clppid, clpqid, clptid, clpzid, dynpid, dynqid, dyntid, dynzid, wmo1pid,
-    wmo1qid, wmo1tid, wmo1zid, wmo2pid, wmo2qid, wmo2tid, wmo2zid, h2o;
+    wmo1qid, wmo1tid, wmo1zid, wmo2pid, wmo2qid, wmo2tid, wmo2zid, h2o, ci[3];
 
   static size_t count[10], start[10];
 
@@ -230,15 +230,17 @@ int main(
     /* Get cold point... */
     ctl.met_tropo = 2;
     read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy)
+#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
-	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
-			 &pt[iy * nx + ix], NULL, NULL, NULL,
-			 NULL, NULL, NULL, NULL, NULL);
-	intpol_met_space(met, pt[iy * nx + ix], lons[ix], lats[iy],
-			 NULL, NULL, &zt[iy * nx + ix], &tt[iy * nx + ix],
-			 NULL, NULL, NULL, NULL, &qt[iy * nx + ix], NULL);
+	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
+			    &pt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
+	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
       }
 
     /* Write data... */
@@ -251,15 +253,17 @@ int main(
     /* Get dynamical tropopause... */
     ctl.met_tropo = 5;
     read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy)
+#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
-	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
-			 &pt[iy * nx + ix], NULL, NULL, NULL,
-			 NULL, NULL, NULL, NULL, NULL);
-	intpol_met_space(met, pt[iy * nx + ix], lons[ix], lats[iy],
-			 NULL, NULL, &zt[iy * nx + ix], &tt[iy * nx + ix],
-			 NULL, NULL, NULL, NULL, &qt[iy * nx + ix], NULL);
+	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
+			    &pt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
+	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
       }
 
     /* Write data... */
@@ -272,15 +276,17 @@ int main(
     /* Get WMO 1st tropopause... */
     ctl.met_tropo = 3;
     read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy)
+#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
-	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
-			 &pt[iy * nx + ix], NULL, NULL, NULL,
-			 NULL, NULL, NULL, NULL, NULL);
-	intpol_met_space(met, pt[iy * nx + ix], lons[ix], lats[iy],
-			 NULL, NULL, &zt[iy * nx + ix], &tt[iy * nx + ix],
-			 NULL, NULL, NULL, NULL, &qt[iy * nx + ix], NULL);
+	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
+			    &pt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
+	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
       }
 
     /* Write data... */
@@ -293,15 +299,17 @@ int main(
     /* Get WMO 2nd tropopause... */
     ctl.met_tropo = 4;
     read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy)
+#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
-	intpol_met_space(met, 100, lons[ix], lats[iy], NULL,
-			 &pt[iy * nx + ix], NULL, NULL, NULL,
-			 NULL, NULL, NULL, NULL, NULL);
-	intpol_met_space(met, pt[iy * nx + ix], lons[ix], lats[iy],
-			 NULL, NULL, &zt[iy * nx + ix], &tt[iy * nx + ix],
-			 NULL, NULL, NULL, NULL, &qt[iy * nx + ix], NULL);
+	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
+			    &pt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
+	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
+	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
+			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
       }
 
     /* Write data... */

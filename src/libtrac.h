@@ -836,71 +836,69 @@ void get_met_replace(
   char *search,
   char *repl);
 
-/*! Linear interpolation of 2-D meteorological data. */
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_2d)
-#endif
-double intpol_met_2d(
-  double array[EX][EY],
-  int ix,
-  int iy,
-  double wx,
-  double wy);
-
-/*! Linear interpolation of 3-D meteorological data. */
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_3d)
-#endif
-double intpol_met_3d(
-  float array[EX][EY][EP],
-  int ip,
-  int ix,
-  int iy,
-  double wp,
-  double wx,
-  double wy);
-
 /*! Spatial interpolation of meteorological data. */
 #ifdef _OPENACC
-#pragma acc routine (intpol_met_space)
+#pragma acc routine (intpol_met_space_3d)
 #endif
-void intpol_met_space(
+void intpol_met_space_3d(
   met_t * met,
+  float array[EX][EY][EP],
   double p,
   double lon,
   double lat,
-  double *ps,
-  double *pt,
-  double *z,
-  double *t,
-  double *u,
-  double *v,
-  double *w,
-  double *pv,
-  double *h2o,
-  double *o3);
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+
+/*! Spatial interpolation of meteorological data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_space_2d)
+#endif
+void intpol_met_space_2d(
+  met_t * met,
+  double array[EX][EY],
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
 
 /*! Temporal interpolation of meteorological data. */
 #ifdef _OPENACC
-#pragma acc routine (intpol_met_time)
+#pragma acc routine (intpol_met_time_3d)
 #endif
-void intpol_met_time(
+void intpol_met_time_3d(
   met_t * met0,
+  float array0[EX][EY][EP],
   met_t * met1,
+  float array1[EX][EY][EP],
   double ts,
   double p,
   double lon,
   double lat,
-  double *ps,
-  double *pt,
-  double *z,
-  double *t,
-  double *u,
-  double *v,
-  double *w,
-  double *pv,
-  double *h2o,
-  double *o3);
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+
+/*! Temporal interpolation of meteorological data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_time_2d)
+#endif
+void intpol_met_time_2d(
+  met_t * met0,
+  double array0[EX][EY],
+  met_t * met1,
+  double array1[EX][EY],
+  double ts,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
 
 /*! Convert seconds to date. */
 void jsec2time(

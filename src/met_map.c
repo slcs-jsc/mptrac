@@ -52,9 +52,9 @@ int main(
     tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
     h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], z, zm[NX][NY], pv,
     pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY], lon, lon0, lon1, lons[NX],
-    dlon, lat, lat0, lat1, lats[NY], dlat;
+    dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
 
-  static int i, ix, iy, np[NX][NY], nx, ny;
+  static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -108,10 +108,36 @@ int main(
     /* Average... */
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
-	intpol_met_space(met, p0, lons[ix], lats[iy], &ps, &pt,
-			 &z, &t, &u, &v, &w, &pv, &h2o, &o3);
-	intpol_met_space(met, pt, lons[ix], lats[iy], NULL, NULL,
-			 &zt, &tt, NULL, NULL, NULL, NULL, &h2ot, NULL);
+
+	/* Interpolate meteo data... */
+	intpol_met_space_3d(met, met->z, p0, lons[ix], lats[iy], &z, ci, cw,
+			    1);
+	intpol_met_space_3d(met, met->t, p0, lons[ix], lats[iy], &t, ci, cw,
+			    0);
+	intpol_met_space_3d(met, met->u, p0, lons[ix], lats[iy], &u, ci, cw,
+			    0);
+	intpol_met_space_3d(met, met->v, p0, lons[ix], lats[iy], &v, ci, cw,
+			    0);
+	intpol_met_space_3d(met, met->w, p0, lons[ix], lats[iy], &w, ci, cw,
+			    0);
+	intpol_met_space_3d(met, met->pv, p0, lons[ix], lats[iy], &pv, ci,
+			    cw, 0);
+	intpol_met_space_3d(met, met->h2o, p0, lons[ix], lats[iy], &h2o, ci,
+			    cw, 0);
+	intpol_met_space_3d(met, met->o3, p0, lons[ix], lats[iy], &o3, ci,
+			    cw, 0);
+	intpol_met_space_2d(met, met->ps, lons[ix], lats[iy], &ps, ci, cw, 0);
+	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy], &pt, ci, cw, 0);
+
+	/* Interpolate tropopause data... */
+	intpol_met_space_3d(met, met->z, pt, lons[ix], lats[iy], &zt, ci, cw,
+			    1);
+	intpol_met_space_3d(met, met->t, pt, lons[ix], lats[iy], &tt, ci, cw,
+			    0);
+	intpol_met_space_3d(met, met->h2o, pt, lons[ix], lats[iy], &h2ot, ci,
+			    cw, 0);
+
+	/* Averaging... */
 	timem[ix][iy] += met->time;
 	zm[ix][iy] += z;
 	tm[ix][iy] += t;

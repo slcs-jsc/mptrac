@@ -1698,190 +1698,165 @@ void get_met_replace(
 
 /*****************************************************************************/
 
-double intpol_met_2d(
-  double array[EX][EY],
-  int ix,
-  int iy,
-  double wx,
-  double wy) {
-
-  /* Set variables... */
-  double aux00 = array[ix][iy];
-  double aux01 = array[ix][iy + 1];
-  double aux10 = array[ix + 1][iy];
-  double aux11 = array[ix + 1][iy + 1];
-
-  /* Interpolate horizontally... */
-  if (check_finite(aux00) && check_finite(aux01))
-    aux00 = wy * (aux00 - aux01) + aux01;
-  else if (wy < 0.5)
-    aux00 = aux01;
-  if (check_finite(aux10) && check_finite(aux11))
-    aux11 = wy * (aux10 - aux11) + aux11;
-  else if (wy > 0.5)
-    aux11 = aux10;
-  if (check_finite(aux00) && check_finite(aux11))
-    return wx * (aux00 - aux11) + aux11;
-  else {
-    if (wx > 0.5)
-      return aux00;
-    else
-      return aux11;
-  }
-}
-
-/*****************************************************************************/
-
-double intpol_met_3d(
-  float array[EX][EY][EP],
-  int ip,
-  int ix,
-  int iy,
-  double wp,
-  double wx,
-  double wy) {
-
-  /* Interpolate vertically... */
-  double aux00 = wp * (array[ix][iy][ip] - array[ix][iy][ip + 1])
-    + array[ix][iy][ip + 1];
-  double aux01 = wp * (array[ix][iy + 1][ip] - array[ix][iy + 1][ip + 1])
-    + array[ix][iy + 1][ip + 1];
-  double aux10 = wp * (array[ix + 1][iy][ip] - array[ix + 1][iy][ip + 1])
-    + array[ix + 1][iy][ip + 1];
-  double aux11 =
-    wp * (array[ix + 1][iy + 1][ip] - array[ix + 1][iy + 1][ip + 1])
-    + array[ix + 1][iy + 1][ip + 1];
-
-  /* Interpolate horizontally... */
-  aux00 = wy * (aux00 - aux01) + aux01;
-  aux11 = wy * (aux10 - aux11) + aux11;
-  return wx * (aux00 - aux11) + aux11;
-}
-
-/*****************************************************************************/
-
-void intpol_met_space(
+void intpol_met_space_3d(
   met_t * met,
+  float array[EX][EY][EP],
   double p,
   double lon,
   double lat,
-  double *ps,
-  double *pt,
-  double *z,
-  double *t,
-  double *u,
-  double *v,
-  double *w,
-  double *pv,
-  double *h2o,
-  double *o3) {
+  double *var,
+  int *ci,
+  double *cw,
+  int init) {
 
   /* Check longitude... */
   if (met->lon[met->nx - 1] > 180 && lon < 0)
     lon += 360;
 
-  /* Get indices... */
-  int ip = locate_irr(met->p, met->np, p);
-  int ix = locate_reg(met->lon, met->nx, lon);
-  int iy = locate_reg(met->lat, met->ny, lat);
+  /* Get interpolation indices and weights... */
+  if (init) {
+    ci[0] = locate_irr(met->p, met->np, p);
+    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[2] = locate_reg(met->lat, met->ny, lat);
+    cw[0] = (met->p[ci[0] + 1] - p)
+      / (met->p[ci[0] + 1] - met->p[ci[0]]);
+    cw[1] = (met->lon[ci[1] + 1] - lon)
+      / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
+    cw[2] = (met->lat[ci[2] + 1] - lat)
+      / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
+  }
 
-  /* Get weights... */
-  double wp = (met->p[ip + 1] - p) / (met->p[ip + 1] - met->p[ip]);
-  double wx = (met->lon[ix + 1] - lon) / (met->lon[ix + 1] - met->lon[ix]);
-  double wy = (met->lat[iy + 1] - lat) / (met->lat[iy + 1] - met->lat[iy]);
+  /* Interpolate vertically... */
+  double aux00 =
+    cw[0] * (array[ci[1]][ci[2]][ci[0]] - array[ci[1]][ci[2]][ci[0] + 1]) +
+    array[ci[1]][ci[2]][ci[0] + 1];
+  double aux01 =
+    cw[0] * (array[ci[1]][ci[2] + 1][ci[0]] -
+	     array[ci[1]][ci[2] + 1][ci[0] + 1]) + array[ci[1]][ci[2] +
+								1][ci[0] + 1];
+  double aux10 =
+    cw[0] * (array[ci[1] + 1][ci[2]][ci[0]] -
+	     array[ci[1] + 1][ci[2]][ci[0] + 1]) + array[ci[1] +
+							 1][ci[2]][ci[0] + 1];
+  double aux11 =
+    cw[0] * (array[ci[1] + 1][ci[2] + 1][ci[0]] -
+	     array[ci[1] + 1][ci[2] + 1][ci[0] + 1]) + array[ci[1] +
+							     1][ci[2] +
+								1][ci[0] + 1];
 
-  /* Interpolate... */
-  if (ps != NULL)
-    *ps = intpol_met_2d(met->ps, ix, iy, wx, wy);
-  if (pt != NULL)
-    *pt = intpol_met_2d(met->pt, ix, iy, wx, wy);
-  if (z != NULL)
-    *z = intpol_met_3d(met->z, ip, ix, iy, wp, wx, wy);
-  if (t != NULL)
-    *t = intpol_met_3d(met->t, ip, ix, iy, wp, wx, wy);
-  if (u != NULL)
-    *u = intpol_met_3d(met->u, ip, ix, iy, wp, wx, wy);
-  if (v != NULL)
-    *v = intpol_met_3d(met->v, ip, ix, iy, wp, wx, wy);
-  if (w != NULL)
-    *w = intpol_met_3d(met->w, ip, ix, iy, wp, wx, wy);
-  if (pv != NULL)
-    *pv = intpol_met_3d(met->pv, ip, ix, iy, wp, wx, wy);
-  if (h2o != NULL)
-    *h2o = intpol_met_3d(met->h2o, ip, ix, iy, wp, wx, wy);
-  if (o3 != NULL)
-    *o3 = intpol_met_3d(met->o3, ip, ix, iy, wp, wx, wy);
+  /* Interpolate horizontally... */
+  aux00 = cw[2] * (aux00 - aux01) + aux01;
+  aux11 = cw[2] * (aux10 - aux11) + aux11;
+  *var = cw[1] * (aux00 - aux11) + aux11;
+}
+
+
+/*****************************************************************************/
+
+void intpol_met_space_2d(
+  met_t * met,
+  double array[EX][EY],
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init) {
+
+  /* Check longitude... */
+  if (met->lon[met->nx - 1] > 180 && lon < 0)
+    lon += 360;
+
+  /* Get interpolation indices and weights... */
+  if (init) {
+    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[2] = locate_reg(met->lat, met->ny, lat);
+    cw[1] = (met->lon[ci[1] + 1] - lon)
+      / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
+    cw[2] = (met->lat[ci[2] + 1] - lat)
+      / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
+  }
+
+  /* Set variables... */
+  double aux00 = array[ci[1]][ci[2]];
+  double aux01 = array[ci[1]][ci[2] + 1];
+  double aux10 = array[ci[1] + 1][ci[2]];
+  double aux11 = array[ci[1] + 1][ci[2] + 1];
+
+  /* Interpolate horizontally... */
+  if (check_finite(aux00) && check_finite(aux01))
+    aux00 = cw[2] * (aux00 - aux01) + aux01;
+  else if (cw[2] < 0.5)
+    aux00 = aux01;
+  if (check_finite(aux10) && check_finite(aux11))
+    aux11 = cw[2] * (aux10 - aux11) + aux11;
+  else if (cw[2] > 0.5)
+    aux11 = aux10;
+  if (check_finite(aux00) && check_finite(aux11))
+    *var = cw[1] * (aux00 - aux11) + aux11;
+  else {
+    if (cw[1] > 0.5)
+      *var = aux00;
+    else
+      *var = aux11;
+  }
 }
 
 /*****************************************************************************/
 
-void intpol_met_time(
+void intpol_met_time_3d(
   met_t * met0,
+  float array0[EX][EY][EP],
   met_t * met1,
+  float array1[EX][EY][EP],
   double ts,
   double p,
   double lon,
   double lat,
-  double *ps,
-  double *pt,
-  double *z,
-  double *t,
-  double *u,
-  double *v,
-  double *w,
-  double *pv,
-  double *h2o,
-  double *o3) {
+  double *var,
+  int *ci,
+  double *cw,
+  int init) {
 
-  double h2o0, h2o1, o30, o31, ps0, ps1, pt0, pt1, pv0, pv1, t0, t1, u0, u1,
-    v0, v1, w0, w1, wt, z0, z1;
+  double var0, var1, wt;
 
   /* Spatial interpolation... */
-  intpol_met_space(met0, p, lon, lat,
-		   ps == NULL ? NULL : &ps0,
-		   pt == NULL ? NULL : &pt0,
-		   z == NULL ? NULL : &z0,
-		   t == NULL ? NULL : &t0,
-		   u == NULL ? NULL : &u0,
-		   v == NULL ? NULL : &v0,
-		   w == NULL ? NULL : &w0,
-		   pv == NULL ? NULL : &pv0,
-		   h2o == NULL ? NULL : &h2o0, o3 == NULL ? NULL : &o30);
-  intpol_met_space(met1, p, lon, lat,
-		   ps == NULL ? NULL : &ps1,
-		   pt == NULL ? NULL : &pt1,
-		   z == NULL ? NULL : &z1,
-		   t == NULL ? NULL : &t1,
-		   u == NULL ? NULL : &u1,
-		   v == NULL ? NULL : &v1,
-		   w == NULL ? NULL : &w1,
-		   pv == NULL ? NULL : &pv1,
-		   h2o == NULL ? NULL : &h2o1, o3 == NULL ? NULL : &o31);
+  intpol_met_space_3d(met0, array0, p, lon, lat, &var0, ci, cw, init);
+  intpol_met_space_3d(met1, array1, p, lon, lat, &var1, ci, cw, init);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
-  if (ps != NULL)
-    *ps = wt * (ps0 - ps1) + ps1;
-  if (pt != NULL)
-    *pt = wt * (pt0 - pt1) + pt1;
-  if (z != NULL)
-    *z = wt * (z0 - z1) + z1;
-  if (t != NULL)
-    *t = wt * (t0 - t1) + t1;
-  if (u != NULL)
-    *u = wt * (u0 - u1) + u1;
-  if (v != NULL)
-    *v = wt * (v0 - v1) + v1;
-  if (w != NULL)
-    *w = wt * (w0 - w1) + w1;
-  if (pv != NULL)
-    *pv = wt * (pv0 - pv1) + pv1;
-  if (h2o != NULL)
-    *h2o = wt * (h2o0 - h2o1) + h2o1;
-  if (o3 != NULL)
-    *o3 = wt * (o30 - o31) + o31;
+  *var = wt * (var0 - var1) + var1;
+}
+
+/*****************************************************************************/
+
+void intpol_met_time_2d(
+  met_t * met0,
+  double array0[EX][EY],
+  met_t * met1,
+  double array1[EX][EY],
+  double ts,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init) {
+
+  double var0, var1, wt;
+
+  /* Spatial interpolation... */
+  intpol_met_space_2d(met0, array0, lon, lat, &var0, ci, cw, init);
+  intpol_met_space_2d(met1, array1, lon, lat, &var1, ci, cw, init);
+
+  /* Get weighting factor... */
+  wt = (met1->time - ts) / (met1->time - met0->time);
+
+  /* Interpolate... */
+  *var = wt * (var0 - var1) + var1;
 }
 
 /*****************************************************************************/
@@ -3900,9 +3875,10 @@ void write_grid(
   char line[LEN];
 
   static double mass[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
-    area, rho_air, press, temp, cd, vmr, t0, t1, r;
+    area, rho_air, press, temp, cd, vmr, t0, t1, r, cw[3];
 
-  static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec;
+  static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec,
+    ci[3];
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
@@ -4012,8 +3988,8 @@ void write_grid(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, NULL, NULL);
+	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press, lon,
+			     lat, &temp, ci, cw, 1);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * SQR(RE * M_PI / 180.)
@@ -4054,9 +4030,9 @@ void write_prof(
 
   static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rz, rlon, rlat, robs,
     t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, vmr, h2o,
-    o3;
+    o3, cw[3];
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int obscount[GX][GY], ip, ix, iy, iz, okay, ci[3];
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -4189,8 +4165,12 @@ void write_prof(
 
 	  /* Get pressure and temperature... */
 	  press = P(z);
-	  intpol_met_time(met0, met1, t, press, lon, lat, NULL, NULL,
-			  NULL, &temp, NULL, NULL, NULL, NULL, &h2o, &o3);
+	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press, lon,
+			     lat, &temp, ci, cw, 1);
+	  intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, t, press, lon,
+			     lat, &h2o, ci, cw, 0);
+	  intpol_met_time_3d(met0, met0->o3, met1, met1->o3, t, press, lon,
+			     lat, &o3, ci, cw, 0);
 
 	  /* Calculate surface area... */
 	  area = dlat * dlon * SQR(M_PI * RE / 180.)

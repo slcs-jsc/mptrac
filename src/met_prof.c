@@ -48,9 +48,9 @@ int main(
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], ps, psm[NZ], pt,
-    ptm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ];
+    ptm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
 
-  static int i, iz, np[NZ], npt[NZ], nz;
+  static int i, iz, np[NZ], npt[NZ], nz, ci[3];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -108,10 +108,28 @@ int main(
     for (iz = 0; iz < nz; iz++)
       for (lon = lon0; lon <= lon1; lon += dlon)
 	for (lat = lat0; lat <= lat1; lat += dlat) {
-	  intpol_met_space(met, plev[iz], lon, lat, &ps, &pt, &z,
-			   &t, &u, &v, &w, &pv, &h2o, &o3);
-	  intpol_met_space(met, pt, lon, lat, NULL, NULL, &zt,
-			   &tt, NULL, NULL, NULL, NULL, &h2ot, NULL);
+
+	  /* Interpolate meteo data... */
+	  intpol_met_space_3d(met, met->z, plev[iz], lon, lat, &z, ci, cw, 1);
+	  intpol_met_space_3d(met, met->t, plev[iz], lon, lat, &t, ci, cw, 0);
+	  intpol_met_space_3d(met, met->u, plev[iz], lon, lat, &u, ci, cw, 0);
+	  intpol_met_space_3d(met, met->v, plev[iz], lon, lat, &v, ci, cw, 0);
+	  intpol_met_space_3d(met, met->w, plev[iz], lon, lat, &w, ci, cw, 0);
+	  intpol_met_space_3d(met, met->pv, plev[iz], lon, lat, &pv, ci, cw,
+			      0);
+	  intpol_met_space_3d(met, met->h2o, plev[iz], lon, lat, &h2o, ci, cw,
+			      0);
+	  intpol_met_space_3d(met, met->o3, plev[iz], lon, lat, &o3, ci, cw,
+			      0);
+	  intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);
+	  intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);
+
+	  /* Interpolate tropopause data... */
+	  intpol_met_space_3d(met, met->z, pt, lon, lat, &zt, ci, cw, 1);
+	  intpol_met_space_3d(met, met->t, pt, lon, lat, &tt, ci, cw, 0);
+	  intpol_met_space_3d(met, met->h2o, pt, lon, lat, &h2ot, ci, cw, 0);
+
+	  /* Averaging... */
 	  if (gsl_finite(t) && gsl_finite(u)
 	      && gsl_finite(v) && gsl_finite(w)) {
 	    timem[iz] += met->time;

@@ -52,9 +52,9 @@ int main(
     ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY],
     h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt,
     tt, plev[NZ], ps, pt, t, u, v, w, pv, h2o, h2ot, o3, lat, lat0, lat1,
-    dlat, lats[NY];
+    dlat, lats[NY], cw[3];
 
-  static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz;
+  static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -117,10 +117,38 @@ int main(
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < ny; iy++)
 	for (iz = 0; iz < nz; iz++) {
-	  intpol_met_space(met, plev[iz], met->lon[ix], lats[iy], &ps,
-			   &pt, &z, &t, &u, &v, &w, &pv, &h2o, &o3);
-	  intpol_met_space(met, pt, met->lon[ix], lats[iy], NULL, NULL,
-			   &zt, &tt, NULL, NULL, NULL, NULL, &h2ot, NULL);
+
+	  /* Interpolate meteo data... */
+	  intpol_met_space_3d(met, met->z, plev[iz], met->lon[ix],
+			      met->lat[iy], &z, ci, cw, 1);
+	  intpol_met_space_3d(met, met->t, plev[iz], met->lon[ix],
+			      met->lat[iy], &t, ci, cw, 0);
+	  intpol_met_space_3d(met, met->u, plev[iz], met->lon[ix],
+			      met->lat[iy], &u, ci, cw, 0);
+	  intpol_met_space_3d(met, met->v, plev[iz], met->lon[ix],
+			      met->lat[iy], &v, ci, cw, 0);
+	  intpol_met_space_3d(met, met->w, plev[iz], met->lon[ix],
+			      met->lat[iy], &w, ci, cw, 0);
+	  intpol_met_space_3d(met, met->pv, plev[iz], met->lon[ix],
+			      met->lat[iy], &pv, ci, cw, 0);
+	  intpol_met_space_3d(met, met->h2o, plev[iz], met->lon[ix],
+			      met->lat[iy], &h2o, ci, cw, 0);
+	  intpol_met_space_3d(met, met->o3, plev[iz], met->lon[ix],
+			      met->lat[iy], &o3, ci, cw, 0);
+	  intpol_met_space_2d(met, met->ps, met->lon[ix], met->lat[iy], &ps,
+			      ci, cw, 0);
+	  intpol_met_space_2d(met, met->pt, met->lon[ix], met->lat[iy], &pt,
+			      ci, cw, 0);
+
+	  /* Interpolate tropopause data... */
+	  intpol_met_space_3d(met, met->z, pt, met->lon[ix], met->lat[iy],
+			      &zt, ci, cw, 1);
+	  intpol_met_space_3d(met, met->t, pt, met->lon[ix], met->lat[iy],
+			      &tt, ci, cw, 0);
+	  intpol_met_space_3d(met, met->h2o, pt, met->lon[ix], met->lat[iy],
+			      &h2ot, ci, cw, 0);
+
+	  /* Averaging... */
 	  timem[iz][iy] += met->time;
 	  zm[iz][iy] += z;
 	  tm[iz][iy] += t;
