@@ -50,7 +50,8 @@ int main(
 
   static double timem[NX][NY], p0, ps, psm[NX][NY], pt, ptm[NX][NY], t,
     tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
-    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], z, zm[NX][NY], pv,
+    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
+    lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], z, zm[NX][NY], pv,
     pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY], lon, lon0, lon1, lons[NX],
     dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
 
@@ -126,6 +127,10 @@ int main(
 			    cw, 0);
 	intpol_met_space_3d(met, met->o3, p0, lons[ix], lats[iy], &o3, ci,
 			    cw, 0);
+	intpol_met_space_3d(met, met->lwc, p0, lons[ix], lats[iy], &lwc, ci,
+			    cw, 0);
+	intpol_met_space_3d(met, met->iwc, p0, lons[ix], lats[iy], &iwc, ci,
+			    cw, 0);
 	intpol_met_space_2d(met, met->ps, lons[ix], lats[iy], &ps, ci, cw, 0);
 	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy], &pt, ci, cw, 0);
 
@@ -147,6 +152,8 @@ int main(
 	pvm[ix][iy] += pv;
 	h2om[ix][iy] += h2o;
 	o3m[ix][iy] += o3;
+	lwcm[ix][iy] += lwc;
+	iwcm[ix][iy] += iwc;
 	psm[ix][iy] += ps;
 	ptm[ix][iy] += pt;
 	ztm[ix][iy] += zt;
@@ -180,14 +187,16 @@ int main(
 	  "# $15 = tropopause pressure [hPa]\n"
 	  "# $16 = tropopause geopotential height [km]\n"
 	  "# $17 = tropopause temperature [K]\n"
-	  "# $18 = tropopause water vapor [ppv]\n");
+	  "# $18 = tropopause water vapor [ppv]\n"
+	  "# $19 = cloud liquid water content [kg/kg]\n"
+	  "# $20 = cloud ice water content [kg/kg]\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[ix][iy] / np[ix][iy], Z(p0), lons[ix], lats[iy], p0,
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
@@ -195,7 +204,8 @@ int main(
 	      zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
 	      psm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy],
 	      ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy],
-	      h2otm[ix][iy] / np[ix][iy]);
+	      h2otm[ix][iy] / np[ix][iy], lwcm[ix][iy] / np[ix][iy],
+	      iwcm[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

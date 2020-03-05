@@ -40,8 +40,8 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, p0, p1, pref, ps, pt, pv, t, tt, u, v, w,
-    z, zm, zref, zt, cw[3];
+  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, pt, pv, t, tt, u, v, w, z,
+    zm, zref, zt, cw[3];
 
   int geopot, ip, it, ci[3];
 
@@ -88,7 +88,9 @@ int main(
 	  "# $15 = tropopause pressure [hPa]\n"
 	  "# $16 = tropopause geopotential height [km]\n"
 	  "# $17 = tropopause temperature [K]\n"
-	  "# $18 = tropopause water vapor [ppv]\n\n");
+	  "# $18 = tropopause water vapor [ppv]\n"
+	  "# $19 = cloud liquid water content [kg/kg]\n"
+	  "# $20 = cloud ice water content [kg/kg]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -131,6 +133,10 @@ int main(
 		       atm->lon[ip], atm->lat[ip], &h2o, ci, cw, 0);
     intpol_met_time_3d(met0, met0->o3, met1, met1->o3, atm->time[ip], pref,
 		       atm->lon[ip], atm->lat[ip], &o3, ci, cw, 0);
+    intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, atm->time[ip], pref,
+		       atm->lon[ip], atm->lat[ip], &lwc, ci, cw, 0);
+    intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, atm->time[ip], pref,
+		       atm->lon[ip], atm->lat[ip], &iwc, ci, cw, 0);
     intpol_met_time_2d(met0, met0->ps, met1, met1->ps, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], &ps, ci, cw, 0);
     intpol_met_time_2d(met0, met0->pt, met1, met1->pt, atm->time[ip],
@@ -145,9 +151,11 @@ int main(
 		       atm->lon[ip], atm->lat[ip], &h2ot, ci, cw, 0);
 
     /* Write data... */
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+    fprintf(out,
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
-	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt, h2ot);
+	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt, h2ot, lwc,
+	    iwc);
   }
 
   /* Close file... */

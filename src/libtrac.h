@@ -352,6 +352,12 @@ typedef struct {
   /*! Quantity array index for ozone vmr. */
   int qnt_o3;
 
+  /*! Quantity array index for cloud liquid water content. */
+  int qnt_lwc;
+
+  /*! Quantity array index for cloud ice water content. */
+  int qnt_iwc;
+
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
 
@@ -743,6 +749,12 @@ typedef struct {
 
   /*! Ozone volume mixing ratio [1]. */
   float o3[EX][EY][EP];
+
+  /*! Cloud liquid water content [kg/kg]. */
+  float lwc[EX][EY][EP];
+
+  /*! Cloud ice water content [kg/kg]. */
+  float iwc[EX][EY][EP];
 
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];

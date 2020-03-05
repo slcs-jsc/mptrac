@@ -903,7 +903,7 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, pt, pv, t, u, v, w, h2o, o3, z, cw[3];
+    double ps, pt, pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3];
 
     int ci[3];
 
@@ -926,6 +926,12 @@ void module_meteo(
 		       0);
     intpol_met_time_3d(met0, met0->o3, met1, met1->o3, atm->time[ip],
 		       atm->p[ip], atm->lon[ip], atm->lat[ip], &o3, ci, cw,
+		       0);
+    intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, atm->time[ip],
+		       atm->p[ip], atm->lon[ip], atm->lat[ip], &lwc, ci, cw,
+		       0);
+    intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, atm->time[ip],
+		       atm->p[ip], atm->lon[ip], atm->lat[ip], &iwc, ci, cw,
 		       0);
     intpol_met_time_2d(met0, met0->ps, met1, met1->ps, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], &ps, ci, cw, 0);
@@ -971,6 +977,14 @@ void module_meteo(
     /* Set ozone vmr... */
     if (ctl->qnt_o3 >= 0)
       atm->q[ctl->qnt_o3][ip] = o3;
+
+    /* Set cloud liquid water content... */
+    if (ctl->qnt_lwc >= 0)
+      atm->q[ctl->qnt_lwc][ip] = lwc;
+
+    /* Set cloud ice water content... */
+    if (ctl->qnt_iwc >= 0)
+      atm->q[ctl->qnt_iwc][ip] = iwc;
 
     /* Set nitric acid vmr... */
     if (ctl->qnt_hno3 >= 0)

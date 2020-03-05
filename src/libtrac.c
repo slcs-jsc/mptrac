@@ -2149,6 +2149,8 @@ void read_ctl(
   ctl->qnt_w = -1;
   ctl->qnt_h2o = -1;
   ctl->qnt_o3 = -1;
+  ctl->qnt_lwc = -1;
+  ctl->qnt_iwc = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_rh = -1;
@@ -2214,6 +2216,12 @@ void read_ctl(
       sprintf(ctl->qnt_unit[iq], "1");
     } else if (strcmp(ctl->qnt_name[iq], "o3") == 0) {
       ctl->qnt_o3 = iq;
+      sprintf(ctl->qnt_unit[iq], "1");
+    } else if (strcmp(ctl->qnt_name[iq], "lwc") == 0) {
+      ctl->qnt_lwc = iq;
+      sprintf(ctl->qnt_unit[iq], "1");
+    } else if (strcmp(ctl->qnt_name[iq], "iwc") == 0) {
+      ctl->qnt_iwc = iq;
       sprintf(ctl->qnt_unit[iq], "1");
     } else if (strcmp(ctl->qnt_name[iq], "hno3") == 0) {
       ctl->qnt_hno3 = iq;
@@ -2491,6 +2499,8 @@ int read_met(
   read_met_help(ncid, "w", "W", met, met->w, 0.01f);
   read_met_help(ncid, "q", "Q", met, met->h2o, (float) (MA / 18.01528));
   read_met_help(ncid, "o3", "O3", met, met->o3, (float) (MA / 48.00));
+  read_met_help(ncid, "clwc", "CLWC", met, met->lwc, 1.0);
+  read_met_help(ncid, "ciwc", "CIWC", met, met->iwc, 1.0);
 
   /* Meteo data on pressure levels... */
   if (ctl->met_np <= 0) {
@@ -2518,6 +2528,8 @@ int read_met(
     read_met_ml2pl(ctl, met, met->w);
     read_met_ml2pl(ctl, met, met->h2o);
     read_met_ml2pl(ctl, met, met->o3);
+    read_met_ml2pl(ctl, met, met->lwc);
+    read_met_ml2pl(ctl, met, met->iwc);
 
     /* Set pressure levels... */
     met->np = ctl->met_np;
@@ -2598,6 +2610,8 @@ void read_met_extrapolate(
 	met->w[ix][iy][ip] = met->w[ix][iy][ip + 1];
 	met->h2o[ix][iy][ip] = met->h2o[ix][iy][ip + 1];
 	met->o3[ix][iy][ip] = met->o3[ix][iy][ip + 1];
+	met->lwc[ix][iy][ip] = met->lwc[ix][iy][ip + 1];
+	met->iwc[ix][iy][ip] = met->iwc[ix][iy][ip + 1];
       }
     }
 }
@@ -2874,6 +2888,8 @@ void read_met_periodic(
       met->pv[met->nx - 1][iy][ip] = met->pv[0][iy][ip];
       met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
+      met->lwc[met->nx - 1][iy][ip] = met->lwc[0][iy][ip];
+      met->iwc[met->nx - 1][iy][ip] = met->iwc[0][iy][ip];
     }
   }
 }
@@ -3020,6 +3036,8 @@ void read_met_sample(
 	help->pv[ix][iy][ip] = 0;
 	help->h2o[ix][iy][ip] = 0;
 	help->o3[ix][iy][ip] = 0;
+	help->lwc[ix][iy][ip] = 0;
+	help->iwc[ix][iy][ip] = 0;
 	wsum = 0;
 	for (ix2 = ix - ctl->met_sx + 1; ix2 <= ix + ctl->met_sx - 1; ix2++) {
 	  ix3 = ix2;
@@ -3045,6 +3063,8 @@ void read_met_sample(
 	      help->pv[ix][iy][ip] += w * met->pv[ix3][iy2][ip2];
 	      help->h2o[ix][iy][ip] += w * met->h2o[ix3][iy2][ip2];
 	      help->o3[ix][iy][ip] += w * met->o3[ix3][iy2][ip2];
+	      help->lwc[ix][iy][ip] += w * met->lwc[ix3][iy2][ip2];
+	      help->iwc[ix][iy][ip] += w * met->iwc[ix3][iy2][ip2];
 	      wsum += w;
 	    }
 	}
@@ -3058,6 +3078,8 @@ void read_met_sample(
 	help->pv[ix][iy][ip] /= wsum;
 	help->h2o[ix][iy][ip] /= wsum;
 	help->o3[ix][iy][ip] /= wsum;
+	help->lwc[ix][iy][ip] /= wsum;
+	help->iwc[ix][iy][ip] /= wsum;
       }
     }
   }
@@ -3082,6 +3104,8 @@ void read_met_sample(
 	met->pv[met->nx][met->ny][met->np] = help->pv[ix][iy][ip];
 	met->h2o[met->nx][met->ny][met->np] = help->h2o[ix][iy][ip];
 	met->o3[met->nx][met->ny][met->np] = help->o3[ix][iy][ip];
+	met->lwc[met->nx][met->ny][met->np] = help->lwc[ix][iy][ip];
+	met->iwc[met->nx][met->ny][met->np] = help->iwc[ix][iy][ip];
 	met->np++;
       }
       met->ny++;
