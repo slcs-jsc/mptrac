@@ -2299,13 +2299,14 @@ void read_ctl(
   ctl->turb_mesoz =
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
-  /* Mass and life time... */
+  /* Species parameters... */
   ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, "1", NULL);
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
-  ctl->so2_chem =
-    (int) scan_ctl(filename, argc, argv, "SO2_CHEM", -1, "0", NULL);
+  for (int ip = 0; ip < 4; ip++)
+    ctl->oh_chem[ip]
+      = scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);

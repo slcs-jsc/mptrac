@@ -124,8 +124,8 @@ void module_sedi(
   atm_t * atm,
   double *dt);
 
-/*! Calculate SO2 chemistry. */
-void module_so2_chem(
+/*! Calculate OH chemistry. */
+void module_oh_chem(
   ctl_t * ctl,
   atm_t * atm,
   double *dt);
@@ -360,11 +360,11 @@ int main(
 	module_decay(&ctl, atm, dt);
       STOP_TIMER(TIMER_DECAY);
 
-      /* SO2 chemistry... */
-      START_TIMER(TIMER_SO2_CHEM);
-      if (ctl.so2_chem > 0)
-	module_so2_chem(&ctl, atm, dt);
-      STOP_TIMER(TIMER_SO2_CHEM);
+      /* OH chemistry... */
+      START_TIMER(TIMER_OHCHEM);
+      if (ctl.oh_chem[0] > 0)
+	module_oh_chem(&ctl, atm, dt);
+      STOP_TIMER(TIMER_OHCHEM);
 
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
@@ -412,7 +412,7 @@ int main(
     PRINT_TIMER(TIMER_METEO);
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
-    PRINT_TIMER(TIMER_SO2_CHEM);
+    PRINT_TIMER(TIMER_OHCHEM);
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_TOTAL);
 
@@ -1159,12 +1159,10 @@ void module_sedi(
 
 /*****************************************************************************/
 
-void module_so2_chem(
+void module_oh_chem(
   ctl_t * ctl,
   atm_t * atm,
   double *dt) {
-
-  double a, b, k, k0, kinf, M, p, T;
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
@@ -1181,21 +1179,18 @@ void module_so2_chem(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      /* Set pressure and temperature... */
-      p = atm->p[ip] / P0;
-      T = atm->q[ctl->qnt_t][ip];
+      /* Set pressure, temperature, and molecular density... */
+      double p = atm->p[ip] / P0;
+      double T = atm->q[ctl->qnt_t][ip];
+      double M = 7.243e21 * p / T;
 
-      /* Calculate molecular density... */
-      M = 7.243e21 * p / T;
-
-      /* Calculate rate coefficient for OH + SO2 -> HOSO2 ... 
-         (http://iupac.pole-ether.fr/htdocs/datasheets/pdf/SOx15_HO_SO2_M.pdf) */
-      k0 = 2.8e-31 * pow(T / 300., -2.6);
-      kinf = 2e-12;
-      a = log10(exp(-T / 472.));
-      b = k0 * M / kinf;
-      k = (b * kinf) / (b + 1.0)
-	* pow(10., a / (1. + SQR(log10(b) / (0.75 - 1.27 * a))));
+      /* Calculate rate coefficient for X + OH + M -> XOH + M ... */
+      double k0 = ctl->oh_chem[0] *
+	(ctl->oh_chem[1] > 0 ? pow(T / 300., -ctl->oh_chem[1]) : 1.);
+      double ki = ctl->oh_chem[2] *
+	(ctl->oh_chem[3] > 0 ? pow(T / 300., -ctl->oh_chem[3]) : 1.);
+      double c = log10(k0 * M / ki);
+      double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
       /* Calculate exponential decay...
          (note: tdec = 1. / (k * [OH])) */
