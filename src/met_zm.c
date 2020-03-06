@@ -192,8 +192,8 @@ int main(
 	  "# $7 = zonal wind [m/s]\n"
 	  "# $8 = meridional wind [m/s]\n" "# $9 = vertical wind [hPa/s]\n");
   fprintf(out,
-	  "# $10 = H2O volume mixing ratio [1]\n"
-	  "# $11 = O3 volume mixing ratio [1]\n"
+	  "# $10 = H2O volume mixing ratio [ppv]\n"
+	  "# $11 = O3 volume mixing ratio [ppv]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
 	  "# $14 = surface pressure [hPa]\n"

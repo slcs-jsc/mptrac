@@ -64,6 +64,12 @@
 /*! Molar mass of dry air [g/mol]. */
 #define MA 28.9644
 
+/*! Molar mass of water vapor [g/mol]. */
+#define MH2O 18.01528
+
+/*! Molar mass of ozone [g/mol]. */
+#define MO3 48.00
+
 /*! Standard pressure [hPa]. */
 #define P0 1013.25
 
@@ -205,7 +211,7 @@
 #define P(z) (P0 * exp(-(z) / H0))
 
 /*! Compute relative humidty. */
-#define RH(p, t, h2o) (0.263 * 100. * (p) * 18.01528 / MA * (h2o)	\
+#define RH(p, t, h2o) (0.263 * 100. * (p) * MH2O / MA * (h2o)	\
 		       / exp(17.67 * ((t) - T0) / ((t) - 29.65)))
 
 /*! Compute square. */
@@ -222,7 +228,7 @@
   }
 
 /*! Compute virtual temperature. */
-#define TVIRT(t, h2o) ((t)*(1.0 + 0.609133 * (h2o) * 18.01528 / MA))
+#define TVIRT(t, h2o) ((t) * (1.0 + 0.609133 * (h2o) * MH2O / MA))
 
 /*! Print warning message. */
 #define WARN(msg) {							\
@@ -231,7 +237,7 @@
   }
 
 /*! Convert pressure to altitude. */
-#define Z(p) (H0*log(P0/(p)))
+#define Z(p) (H0 * log(P0 / (p)))
 
 /* ------------------------------------------------------------
    Timers...
@@ -361,7 +367,7 @@ typedef struct {
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
 
-  /*! Quantity array index for hydroxyl vmr. */
+  /*! Quantity array index for hydroxyl number concentrations. */
   int qnt_oh;
 
   /*! Quantity array index for relative humidty. */

@@ -1728,21 +1728,20 @@ void intpol_met_space_3d(
 
   /* Interpolate vertically... */
   double aux00 =
-    cw[0] * (array[ci[1]][ci[2]][ci[0]] - array[ci[1]][ci[2]][ci[0] + 1]) +
-    array[ci[1]][ci[2]][ci[0] + 1];
+    cw[0] * (array[ci[1]][ci[2]][ci[0]] - array[ci[1]][ci[2]][ci[0] + 1])
+    + array[ci[1]][ci[2]][ci[0] + 1];
   double aux01 =
     cw[0] * (array[ci[1]][ci[2] + 1][ci[0]] -
-	     array[ci[1]][ci[2] + 1][ci[0] + 1]) + array[ci[1]][ci[2] +
-								1][ci[0] + 1];
+	     array[ci[1]][ci[2] + 1][ci[0] + 1])
+    + array[ci[1]][ci[2] + 1][ci[0] + 1];
   double aux10 =
     cw[0] * (array[ci[1] + 1][ci[2]][ci[0]] -
-	     array[ci[1] + 1][ci[2]][ci[0] + 1]) + array[ci[1] +
-							 1][ci[2]][ci[0] + 1];
+	     array[ci[1] + 1][ci[2]][ci[0] + 1])
+    + array[ci[1] + 1][ci[2]][ci[0] + 1];
   double aux11 =
     cw[0] * (array[ci[1] + 1][ci[2] + 1][ci[0]] -
-	     array[ci[1] + 1][ci[2] + 1][ci[0] + 1]) + array[ci[1] +
-							     1][ci[2] +
-								1][ci[0] + 1];
+	     array[ci[1] + 1][ci[2] + 1][ci[0] + 1])
+    + array[ci[1] + 1][ci[2] + 1][ci[0] + 1];
 
   /* Interpolate horizontally... */
   aux00 = cw[2] * (aux00 - aux01) + aux01;
@@ -2213,22 +2212,22 @@ void read_ctl(
       sprintf(ctl->qnt_unit[iq], "hPa/s");
     } else if (strcmp(ctl->qnt_name[iq], "h2o") == 0) {
       ctl->qnt_h2o = iq;
-      sprintf(ctl->qnt_unit[iq], "1");
+      sprintf(ctl->qnt_unit[iq], "ppv");
     } else if (strcmp(ctl->qnt_name[iq], "o3") == 0) {
       ctl->qnt_o3 = iq;
-      sprintf(ctl->qnt_unit[iq], "1");
+      sprintf(ctl->qnt_unit[iq], "ppv");
     } else if (strcmp(ctl->qnt_name[iq], "lwc") == 0) {
       ctl->qnt_lwc = iq;
-      sprintf(ctl->qnt_unit[iq], "1");
+      sprintf(ctl->qnt_unit[iq], "kg/kg");
     } else if (strcmp(ctl->qnt_name[iq], "iwc") == 0) {
       ctl->qnt_iwc = iq;
-      sprintf(ctl->qnt_unit[iq], "1");
+      sprintf(ctl->qnt_unit[iq], "kg/kg");
     } else if (strcmp(ctl->qnt_name[iq], "hno3") == 0) {
       ctl->qnt_hno3 = iq;
-      sprintf(ctl->qnt_unit[iq], "1");
+      sprintf(ctl->qnt_unit[iq], "ppv");
     } else if (strcmp(ctl->qnt_name[iq], "oh") == 0) {
       ctl->qnt_oh = iq;
-      sprintf(ctl->qnt_unit[iq], "1");
+      sprintf(ctl->qnt_unit[iq], "molec/cm^3");
     } else if (strcmp(ctl->qnt_name[iq], "rh") == 0) {
       ctl->qnt_rh = iq;
       sprintf(ctl->qnt_unit[iq], "%%");
@@ -2308,7 +2307,7 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
   /* Species parameters... */
-  ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, "1", NULL);
+  ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
@@ -2497,8 +2496,8 @@ int read_met(
   read_met_help(ncid, "u", "U", met, met->u, 1.0);
   read_met_help(ncid, "v", "V", met, met->v, 1.0);
   read_met_help(ncid, "w", "W", met, met->w, 0.01f);
-  read_met_help(ncid, "q", "Q", met, met->h2o, (float) (MA / 18.01528));
-  read_met_help(ncid, "o3", "O3", met, met->o3, (float) (MA / 48.00));
+  read_met_help(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O));
+  read_met_help(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3));
   read_met_help(ncid, "clwc", "CLWC", met, met->lwc, 1.0);
   read_met_help(ncid, "ciwc", "CIWC", met, met->iwc, 1.0);
 
@@ -2555,10 +2554,12 @@ int read_met(
     for (iy = 0; iy < met->ny; iy++)
       for (ix = 0; ix < met->nx; ix++)
 	met->ps[ix][iy] = exp(help[iy * met->nx + ix]) / 100.;
-  } else
+  } else {
+    WARN("Could not read surface pressure data!");
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = met->p[0];
+  }
 
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
@@ -2787,14 +2788,19 @@ void read_met_help(
   float dest[EX][EY][EP],
   float scl) {
 
+  char msg[LEN];
+
   float *help;
 
   int ip, ix, iy, varid;
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
+      sprintf(msg, "Could not read %s data!", varname);
+      WARN(msg);
       return;
+    }
 
   /* Allocate... */
   ALLOC(help, float, EX * EY * EP);
@@ -3994,7 +4000,7 @@ void write_grid(
 	  "# $6 = layer width [km]\n"
 	  "# $7 = number of particles [1]\n"
 	  "# $8 = column density [kg/m^2]\n"
-	  "# $9 = volume mixing ratio [1]\n\n");
+	  "# $9 = volume mixing ratio [ppv]\n\n");
 
   /* Write data... */
   for (ix = 0; ix < ctl->grid_nx; ix++) {
@@ -4025,8 +4031,8 @@ void write_grid(
 
 	  /* Calculate volume mixing ratio... */
 	  rho_air = 100. * press / (RA * temp);
-	  vmr = MA / ctl->molmass * mass[ix][iy][iz]
-	    / (rho_air * 1e6 * area * 1e3 * dz);
+	  vmr = (ctl->molmass > 0) ? MA / ctl->molmass * mass[ix][iy][iz]
+	    / (rho_air * 1e6 * area * 1e3 * dz) : GSL_NAN;
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g\n",
@@ -4070,6 +4076,10 @@ void write_prof(
     if (ctl->prof_nx > GX || ctl->prof_ny > GY || ctl->prof_nz > GZ)
       ERRMSG("Grid dimensions too large!");
 
+    /* Check molar mass... */
+    if (ctl->molmass <= 0)
+      ERRMSG("Specify molar mass!");
+
     /* Open observation data file... */
     printf("Read profile observation data: %s\n", ctl->prof_obsfile);
     if (!(in = fopen(ctl->prof_obsfile, "r")))
@@ -4088,9 +4098,9 @@ void write_prof(
 	    "# $4 = latitude [deg]\n"
 	    "# $5 = pressure [hPa]\n"
 	    "# $6 = temperature [K]\n"
-	    "# $7 = volume mixing ratio [1]\n"
-	    "# $8 = H2O volume mixing ratio [1]\n"
-	    "# $9 = O3 volume mixing ratio [1]\n"
+	    "# $7 = volume mixing ratio [ppv]\n"
+	    "# $8 = H2O volume mixing ratio [ppv]\n"
+	    "# $9 = O3 volume mixing ratio [ppv]\n"
 	    "# $10 = observed BT index [K]\n");
 
     /* Set grid box size... */
