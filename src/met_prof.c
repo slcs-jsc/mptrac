@@ -48,8 +48,8 @@ int main(
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], lwc, lwcm[NZ],
-    iwc, iwcm[NZ], ps, psm[NZ], pt, ptm[NZ], tt, ttm[NZ], zm[NZ],
-    zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
+    iwc, iwcm[NZ], ps, psm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
+    tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
 
   static int i, iz, np[NZ], npt[NZ], nz, ci[3];
 
@@ -65,11 +65,11 @@ int main(
   z0 = scan_ctl(argv[1], argc, argv, "PROF_Z0", -1, "-999", NULL);
   z1 = scan_ctl(argv[1], argc, argv, "PROF_Z1", -1, "-999", NULL);
   dz = scan_ctl(argv[1], argc, argv, "PROF_DZ", -1, "-999", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "PROF_LON0", -1, "", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "PROF_LON1", -1, "", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "PROF_LON0", -1, "0", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "PROF_LON1", -1, "0", NULL);
   dlon = scan_ctl(argv[1], argc, argv, "PROF_DLON", -1, "-999", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "PROF_LAT0", -1, "", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "PROF_LAT1", -1, "", NULL);
+  lat0 = scan_ctl(argv[1], argc, argv, "PROF_LAT0", -1, "0", NULL);
+  lat1 = scan_ctl(argv[1], argc, argv, "PROF_LAT1", -1, "0", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "PROF_DLAT", -1, "-999", NULL);
 
   /* Loop over input files... */
@@ -128,6 +128,8 @@ int main(
 			      0);
 	  intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);
 	  intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);
+	  intpol_met_space_2d(met, met->pc, lon, lat, &pc, ci, cw, 0);
+	  intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);
 
 	  /* Interpolate tropopause data... */
 	  intpol_met_space_3d(met, met->z, pt, lon, lat, &zt, ci, cw, 1);
@@ -149,6 +151,8 @@ int main(
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
 	    psm[iz] += ps;
+	    pcm[iz] += pc;
+	    clm[iz] += cl;
 	    lwcm[iz] += lwc;
 	    iwcm[iz] += iwc;
 	    if (gsl_finite(pt)) {
@@ -177,9 +181,10 @@ int main(
 	  "# $5 = pressure [hPa]\n"
 	  "# $6 = temperature [K]\n"
 	  "# $7 = zonal wind [m/s]\n"
-	  "# $8 = meridional wind [m/s]\n" "# $9 = vertical wind [hPa/s]\n");
+	  "# $8 = meridional wind [m/s]\n"
+	  "# $9 = vertical wind [hPa/s]\n"
+	  "# $10 = H2O volume mixing ratio [ppv]\n");
   fprintf(out,
-	  "# $10 = H2O volume mixing ratio [ppv]\n"
 	  "# $11 = O3 volume mixing ratio [ppv]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
@@ -189,19 +194,22 @@ int main(
 	  "# $17 = tropopause temperature [K]\n"
 	  "# $18 = tropopause water vapor [ppv]\n"
 	  "# $19 = cloud liquid water content [kg/kg]\n"
-	  "# $20 = cloud ice water content [kg/kg]\n\n");
+	  "# $20 = cloud ice water content [kg/kg]\n");
+  fprintf(out,
+	  "# $21 = cloud water content [kg/m^2]\n"
+	  "# $22 = cloud top pressure [hPa]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
 	    o3m[iz] / np[iz], zm[iz] / np[iz], pvm[iz] / np[iz],
 	    psm[iz] / np[iz], ptm[iz] / npt[iz], ztm[iz] / npt[iz],
 	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz], lwcm[iz] / np[iz],
-	    iwcm[iz] / np[iz]);
+	    iwcm[iz] / np[iz], clm[iz] / np[iz], pcm[iz] / np[iz]);
 
   /* Close file... */
   fclose(out);

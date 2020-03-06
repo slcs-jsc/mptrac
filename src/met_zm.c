@@ -48,11 +48,12 @@ int main(
 
   FILE *out;
 
-  static double timem[NZ][NY], psm[NZ][NY], ptm[NZ][NY], ttm[NZ][NY],
-    ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY],
-    h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY],
-    zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ], ps, pt, t, u, v, w, pv, h2o,
-    h2ot, o3, lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
+  static double timem[NZ][NY], psm[NZ][NY], ptm[NZ][NY], pcm[NZ][NY],
+    clm[NZ][NY], ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY],
+    wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY],
+    lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
+    ps, pt, pc, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1,
+    dlat, lats[NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -143,6 +144,10 @@ int main(
 			      ci, cw, 0);
 	  intpol_met_space_2d(met, met->pt, met->lon[ix], met->lat[iy], &pt,
 			      ci, cw, 0);
+	  intpol_met_space_2d(met, met->pc, met->lon[ix], met->lat[iy], &pc,
+			      ci, cw, 0);
+	  intpol_met_space_2d(met, met->cl, met->lon[ix], met->lat[iy], &cl,
+			      ci, cw, 0);
 
 	  /* Interpolate tropopause data... */
 	  intpol_met_space_3d(met, met->z, pt, met->lon[ix], met->lat[iy],
@@ -165,6 +170,8 @@ int main(
 	  lwcm[iz][iy] += lwc;
 	  iwcm[iz][iy] += iwc;
 	  psm[iz][iy] += ps;
+	  pcm[iz][iy] += pc;
+	  clm[iz][iy] += cl;
 	  if (gsl_finite(pt)) {
 	    ptm[iz][iy] += pt;
 	    ztm[iz][iy] += zt;
@@ -203,13 +210,16 @@ int main(
 	  "# $18 = tropopause water vapor [ppv]\n"
 	  "# $19 = cloud liquid water content [kg/kg]\n"
 	  "# $20 = cloud ice water content [kg/kg]\n");
+  fprintf(out,
+	  "# $21 = cloud water content [kg/m^2]\n"
+	  "# $22 = cloud top pressure [hPa]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
 	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
@@ -218,7 +228,8 @@ int main(
 	      psm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
 	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy],
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
-	      iwcm[iz][iy] / np[iz][iy]);
+	      iwcm[iz][iy] / np[iz][iy], clm[iz][iy] / np[iz][iy],
+	      pcm[iz][iy] / np[iz][iy]);
   }
 
   /* Close file... */

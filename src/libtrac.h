@@ -364,6 +364,9 @@ typedef struct {
   /*! Quantity array index for cloud ice water content. */
   int qnt_iwc;
 
+  /*! Quantity array index for cloud top pressure. */
+  int qnt_pc;
+
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
 
@@ -729,11 +732,17 @@ typedef struct {
   /*! Surface pressure [hPa]. */
   float ps[EX][EY];
 
+  /*! Geopotential height at the surface [km]. */
+  float zs[EX][EY];
+
   /*! Tropopause pressure [hPa]. */
   float pt[EX][EY];
 
-  /*! Geopotential height at the surface [km]. */
-  float zs[EX][EY];
+  /*! Cloud top pressure [hPa]. */
+  float pc[EX][EY];
+
+  /*! Cloud water content [kg/m^2]. */
+  float cl[EX][EY];
 
   /*! Geopotential height at model levels [km]. */
   float z[EX][EY][EP];
@@ -967,6 +976,10 @@ void read_ctl(
 int read_met(
   ctl_t * ctl,
   char *filename,
+  met_t * met);
+
+/*! Calculate cloud properties. */
+void read_met_cloud(
   met_t * met);
 
 /*! Extrapolate meteorological data at lower boundary. */

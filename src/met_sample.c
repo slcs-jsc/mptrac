@@ -40,8 +40,8 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, pt, pv, t, tt, u, v, w, z,
-    zm, zref, zt, cw[3];
+  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, pt, pc, cl, pv, t, tt, u,
+    v, w, z, zm, zref, zt, cw[3];
 
   int geopot, ip, it, ci[3];
 
@@ -78,9 +78,9 @@ int main(
 	  "# $6  = temperature [K]\n"
 	  "# $7  = zonal wind [m/s]\n"
 	  "# $8  = meridional wind [m/s]\n"
-	  "# $9  = vertical wind [hPa/s]\n");
+	  "# $9  = vertical wind [hPa/s]\n"
+	  "# $10 = H2O volume mixing ratio [ppv]\n");
   fprintf(out,
-	  "# $10 = H2O volume mixing ratio [ppv]\n"
 	  "# $11 = O3 volume mixing ratio [ppv]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
@@ -90,7 +90,10 @@ int main(
 	  "# $17 = tropopause temperature [K]\n"
 	  "# $18 = tropopause water vapor [ppv]\n"
 	  "# $19 = cloud liquid water content [kg/kg]\n"
-	  "# $20 = cloud ice water content [kg/kg]\n\n");
+	  "# $20 = cloud ice water content [kg/kg]\n");
+  fprintf(out,
+	  "# $21 = cloud water content [kg/m^2]\n"
+	  "# $22 = cloud top pressure [hPa]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -141,6 +144,10 @@ int main(
 		       atm->lon[ip], atm->lat[ip], &ps, ci, cw, 0);
     intpol_met_time_2d(met0, met0->pt, met1, met1->pt, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], &pt, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &pc, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
 
     /* Interpolate tropopause data... */
     intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip], pt,
@@ -152,10 +159,10 @@ int main(
 
     /* Write data... */
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt, h2ot, lwc,
-	    iwc);
+	    iwc, cl, pc);
   }
 
   /* Close file... */

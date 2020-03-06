@@ -903,7 +903,7 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, pt, pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3];
+    double ps, pt, pc, pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3];
 
     int ci[3];
 
@@ -937,6 +937,8 @@ void module_meteo(
 		       atm->lon[ip], atm->lat[ip], &ps, ci, cw, 0);
     intpol_met_time_2d(met0, met0->pt, met1, met1->pt, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], &pt, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &pc, ci, cw, 0);
 
     /* Set surface pressure... */
     if (ctl->qnt_ps >= 0)
@@ -985,6 +987,10 @@ void module_meteo(
     /* Set cloud ice water content... */
     if (ctl->qnt_iwc >= 0)
       atm->q[ctl->qnt_iwc][ip] = iwc;
+
+    /* Set cloud top pressure... */
+    if (ctl->qnt_pc >= 0)
+      atm->q[ctl->qnt_pc][ip] = pc;
 
     /* Set nitric acid vmr... */
     if (ctl->qnt_hno3 >= 0)

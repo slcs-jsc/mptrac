@@ -2150,6 +2150,7 @@ void read_ctl(
   ctl->qnt_o3 = -1;
   ctl->qnt_lwc = -1;
   ctl->qnt_iwc = -1;
+  ctl->qnt_pc = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_rh = -1;
@@ -2222,6 +2223,9 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "iwc") == 0) {
       ctl->qnt_iwc = iq;
       sprintf(ctl->qnt_unit[iq], "kg/kg");
+    } else if (strcmp(ctl->qnt_name[iq], "pc") == 0) {
+      ctl->qnt_pc = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
     } else if (strcmp(ctl->qnt_name[iq], "hno3") == 0) {
       ctl->qnt_hno3 = iq;
       sprintf(ctl->qnt_unit[iq], "ppv");
@@ -2281,7 +2285,7 @@ void read_ctl(
   for (int ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
   ctl->met_tropo
-    = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "0", NULL);
+    = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
@@ -2552,6 +2556,9 @@ int read_met(
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
 
+  /* Downsampling... */
+  read_met_sample(ctl, met);
+
   /* Calculate geopotential heights... */
   read_met_geopot(met);
 
@@ -2561,14 +2568,50 @@ int read_met(
   /* Calculate tropopause pressure... */
   read_met_tropo(ctl, met);
 
-  /* Downsampling... */
-  read_met_sample(ctl, met);
+  /* Calculate cloud properties... */
+  read_met_cloud(met);
 
   /* Close file... */
   NC(nc_close(ncid));
 
   /* Return success... */
   return 1;
+}
+
+/*****************************************************************************/
+
+void read_met_cloud(
+  met_t * met) {
+
+  int ix, iy, ip;
+
+  /* Loop over columns... */
+#pragma omp parallel for default(shared) private(ix,iy,ip)
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+
+      /* Init... */
+      met->pc[ix][iy] = GSL_NAN;
+      met->cl[ix][iy] = 0;
+
+      /* Loop over pressure levels... */
+      for (ip = 0; ip < met->np - 1; ip++) {
+
+	/* Check pressure... */
+	if (met->p[ip] > met->ps[ix][iy] || met->p[ip] < P(20.))
+	  continue;
+
+	/* Get cloud top pressure ... */
+	if (met->iwc[ix][iy][ip] > 0 || met->lwc[ix][iy][ip] > 0)
+	  met->pc[ix][iy] = (float) met->p[ip + 1];
+
+	/* Get cloud water... */
+	met->cl[ix][iy] += (float)
+	  (0.5 * (met->iwc[ix][iy][ip] + met->iwc[ix][iy][ip + 1]
+		  + met->lwc[ix][iy][ip] + met->lwc[ix][iy][ip + 1])
+	   * 100. * (met->p[ip] - met->p[ip + 1]) / G0);
+      }
+    }
 }
 
 /*****************************************************************************/
@@ -2662,7 +2705,7 @@ void read_met_geopot(
 		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
 		     * (logp[ip - 1] - logp[ip]));
     }
-  
+
   /* Horizontal smoothing... */
 #pragma omp parallel for default(shared) private(ix,iy,ip,n,ix2,ix3,iy2)
   for (ix = 0; ix < met->nx; ix++)
@@ -2688,7 +2731,7 @@ void read_met_geopot(
 	else
 	  help[ix][iy][ip] = GSL_NAN;
       }
-  
+
   /* Copy data... */
 #pragma omp parallel for default(shared) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ix++)
@@ -2991,14 +3034,11 @@ void read_met_sample(
     for (iy = 0; iy < met->ny; iy += ctl->met_dy) {
       for (ip = 0; ip < met->np; ip += ctl->met_dp) {
 	help->ps[ix][iy] = 0;
-	help->pt[ix][iy] = 0;
 	help->zs[ix][iy] = 0;
-	help->z[ix][iy][ip] = 0;
 	help->t[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
 	help->w[ix][iy][ip] = 0;
-	help->pv[ix][iy][ip] = 0;
 	help->h2o[ix][iy][ip] = 0;
 	help->o3[ix][iy][ip] = 0;
 	help->lwc[ix][iy][ip] = 0;
@@ -3019,14 +3059,11 @@ void read_met_sample(
 		* (float) (1.0 - fabs(iy - iy2) / ctl->met_sy)
 		* (float) (1.0 - fabs(ip - ip2) / ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix3][iy2];
-	      help->pt[ix][iy] += w * met->pt[ix3][iy2];
 	      help->zs[ix][iy] += w * met->zs[ix3][iy2];
-	      help->z[ix][iy][ip] += w * met->z[ix3][iy2][ip2];
 	      help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix3][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix3][iy2][ip2];
 	      help->w[ix][iy][ip] += w * met->w[ix3][iy2][ip2];
-	      help->pv[ix][iy][ip] += w * met->pv[ix3][iy2][ip2];
 	      help->h2o[ix][iy][ip] += w * met->h2o[ix3][iy2][ip2];
 	      help->o3[ix][iy][ip] += w * met->o3[ix3][iy2][ip2];
 	      help->lwc[ix][iy][ip] += w * met->lwc[ix3][iy2][ip2];
@@ -3035,14 +3072,11 @@ void read_met_sample(
 	    }
 	}
 	help->ps[ix][iy] /= wsum;
-	help->pt[ix][iy] /= wsum;
 	help->zs[ix][iy] /= wsum;
 	help->t[ix][iy][ip] /= wsum;
-	help->z[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
 	help->w[ix][iy][ip] /= wsum;
-	help->pv[ix][iy][ip] /= wsum;
 	help->h2o[ix][iy][ip] /= wsum;
 	help->o3[ix][iy][ip] /= wsum;
 	help->lwc[ix][iy][ip] /= wsum;
@@ -3059,17 +3093,14 @@ void read_met_sample(
     for (iy = 0; iy < help->ny; iy += ctl->met_dy) {
       met->lat[met->ny] = help->lat[iy];
       met->ps[met->nx][met->ny] = help->ps[ix][iy];
-      met->pt[met->nx][met->ny] = help->pt[ix][iy];
       met->zs[met->nx][met->ny] = help->zs[ix][iy];
       met->np = 0;
       for (ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
-	met->z[met->nx][met->ny][met->np] = help->z[ix][iy][ip];
 	met->t[met->nx][met->ny][met->np] = help->t[ix][iy][ip];
 	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
 	met->v[met->nx][met->ny][met->np] = help->v[ix][iy][ip];
 	met->w[met->nx][met->ny][met->np] = help->w[ix][iy][ip];
-	met->pv[met->nx][met->ny][met->np] = help->pv[ix][iy][ip];
 	met->h2o[met->nx][met->ny][met->np] = help->h2o[ix][iy][ip];
 	met->o3[met->nx][met->ny][met->np] = help->o3[ix][iy][ip];
 	met->lwc[met->nx][met->ny][met->np] = help->lwc[ix][iy][ip];
