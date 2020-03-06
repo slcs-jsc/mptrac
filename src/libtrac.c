@@ -1754,7 +1754,7 @@ void intpol_met_space_3d(
 
 void intpol_met_space_2d(
   met_t * met,
-  double array[EX][EY],
+  float array[EX][EY],
   double lon,
   double lat,
   double *var,
@@ -1834,9 +1834,9 @@ void intpol_met_time_3d(
 
 void intpol_met_time_2d(
   met_t * met0,
-  double array0[EX][EY],
+  float array0[EX][EY],
   met_t * met1,
-  double array1[EX][EY],
+  float array1[EX][EY],
   double ts,
   double lon,
   double lat,
@@ -2420,8 +2420,6 @@ int read_met(
 
   char cmd[2 * LEN], levname[LEN], tstr[10];
 
-  float help[EX * EY];
-
   int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
 
   size_t np, nx, ny;
@@ -2492,14 +2490,22 @@ int read_met(
   NC(nc_get_var_double(ncid, varid, met->lat));
 
   /* Read meteorological data... */
-  read_met_help(ncid, "t", "T", met, met->t, 1.0);
-  read_met_help(ncid, "u", "U", met, met->u, 1.0);
-  read_met_help(ncid, "v", "V", met, met->v, 1.0);
-  read_met_help(ncid, "w", "W", met, met->w, 0.01f);
-  read_met_help(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O));
-  read_met_help(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3));
-  read_met_help(ncid, "clwc", "CLWC", met, met->lwc, 1.0);
-  read_met_help(ncid, "ciwc", "CIWC", met, met->iwc, 1.0);
+  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0))
+    ERRMSG("Cannot read temperature!");
+  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0))
+    ERRMSG("Cannot read zonal wind!");
+  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0))
+    ERRMSG("Cannot read meridional wind!");
+  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f))
+    ERRMSG("Cannot read vertical velocity");
+  if (!read_met_help_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O)))
+    WARN("Cannot read specific humidity!");
+  if (!read_met_help_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3)))
+    WARN("Cannot read ozone data!");
+  if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0))
+    WARN("Cannot read cloud liquid water content!");
+  if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0))
+    WARN("Cannot read cloud ice water content!");
 
   /* Meteo data on pressure levels... */
   if (ctl->met_np <= 0) {
@@ -2518,7 +2524,7 @@ int read_met(
   else {
 
     /* Read pressure data from file... */
-    read_met_help(ncid, "pl", "PL", met, met->pl, 0.01f);
+    read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f);
 
     /* Interpolate from model levels to pressure levels... */
     read_met_ml2pl(ctl, met, met->t);
@@ -2542,23 +2548,17 @@ int read_met(
       ERRMSG("Pressure levels must be descending!");
 
   /* Read surface pressure... */
-  if (nc_inq_varid(ncid, "ps", &varid) == NC_NOERR
-      || nc_inq_varid(ncid, "PS", &varid) == NC_NOERR) {
-    NC(nc_get_var_float(ncid, varid, help));
-    for (iy = 0; iy < met->ny; iy++)
+  if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f)) {
+    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0)) {
+      WARN("Could not read surface pressure data!");
       for (ix = 0; ix < met->nx; ix++)
-	met->ps[ix][iy] = help[iy * met->nx + ix] / 100.;
-  } else if (nc_inq_varid(ncid, "lnsp", &varid) == NC_NOERR
-	     || nc_inq_varid(ncid, "LNSP", &varid) == NC_NOERR) {
-    NC(nc_get_var_float(ncid, varid, help));
-    for (iy = 0; iy < met->ny; iy++)
-      for (ix = 0; ix < met->nx; ix++)
-	met->ps[ix][iy] = exp(help[iy * met->nx + ix]) / 100.;
-  } else {
-    WARN("Could not read surface pressure data!");
-    for (ix = 0; ix < met->nx; ix++)
+	for (iy = 0; iy < met->ny; iy++)
+	  met->ps[ix][iy] = (float) met->p[0];
+    } else {
       for (iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy] = met->p[0];
+	for (ix = 0; ix < met->nx; ix++)
+	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+    }
   }
 
   /* Create periodic boundary conditions... */
@@ -2780,7 +2780,7 @@ void read_met_geopot(
 
 /*****************************************************************************/
 
-void read_met_help(
+int read_met_help_3d(
   int ncid,
   char *varname,
   char *varname2,
@@ -2788,19 +2788,14 @@ void read_met_help(
   float dest[EX][EY][EP],
   float scl) {
 
-  char msg[LEN];
-
   float *help;
 
   int ip, ix, iy, varid;
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
-      sprintf(msg, "Could not read %s data!", varname);
-      WARN(msg);
-      return;
-    }
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
+      return 0;
 
   /* Allocate... */
   ALLOC(help, float, EX * EY * EP);
@@ -2822,6 +2817,52 @@ void read_met_help(
 
   /* Free... */
   free(help);
+
+  /* Return... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+int read_met_help_2d(
+  int ncid,
+  char *varname,
+  char *varname2,
+  met_t * met,
+  float dest[EX][EY],
+  float scl) {
+
+  float *help;
+
+  int ix, iy, varid;
+
+  /* Check if variable exists... */
+  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
+      return 0;
+
+  /* Allocate... */
+  ALLOC(help, float, EX * EY);
+
+  /* Read data... */
+  NC(nc_get_var_float(ncid, varid, help));
+
+  /* Copy and check data... */
+#pragma omp parallel for default(shared) private(ix,iy)
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+      dest[ix][iy] = help[iy * met->nx + ix];
+      if (fabsf(dest[ix][iy]) < 1e14f)
+	dest[ix][iy] *= scl;
+      else
+	dest[ix][iy] = GSL_NAN;
+    }
+
+  /* Free... */
+  free(help);
+
+  /* Return... */
+  return 1;
 }
 
 /*****************************************************************************/
@@ -3153,7 +3194,7 @@ void read_met_tropo(
 #pragma omp parallel for default(shared) private(ix,iy)
     for (ix = 0; ix < met->nx; ix++)
       for (iy = 0; iy < met->ny; iy++)
-	met->pt[ix][iy] = clim_tropo(met->time, met->lat[iy]);
+	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy]);
   }
 
   /* Use cold point... */
@@ -3172,7 +3213,7 @@ void read_met_tropo(
 	/* Find minimum... */
 	iz = (int) gsl_stats_min_index(t2, 1, 171);
 	if (iz > 0 && iz < 170)
-	  met->pt[ix][iy] = p2[iz];
+	  met->pt[ix][iy] = (float) p2[iz];
 	else
 	  met->pt[ix][iy] = GSL_NAN;
       }
@@ -3203,7 +3244,7 @@ void read_met_tropo(
 	    }
 	  if (found) {
 	    if (iz > 0 && iz < 170)
-	      met->pt[ix][iy] = p2[iz];
+	      met->pt[ix][iy] = (float) p2[iz];
 	    break;
 	  }
 	}
@@ -3232,7 +3273,7 @@ void read_met_tropo(
 	      }
 	    if (found) {
 	      if (iz > 0 && iz < 170)
-		met->pt[ix][iy] = p2[iz];
+		met->pt[ix][iy] = (float) p2[iz];
 	      break;
 	    }
 	  }
@@ -3263,7 +3304,7 @@ void read_met_tropo(
 	for (iz = 0; iz <= 170; iz++)
 	  if (fabs(pv2[iz]) >= 3.5 || th2[iz] >= 380.) {
 	    if (iz > 0 && iz < 170)
-	      met->pt[ix][iy] = p2[iz];
+	      met->pt[ix][iy] = (float) p2[iz];
 	    break;
 	  }
       }

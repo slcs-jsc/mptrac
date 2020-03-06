@@ -727,10 +727,10 @@ typedef struct {
   double p[EP];
 
   /*! Surface pressure [hPa]. */
-  double ps[EX][EY];
+  float ps[EX][EY];
 
   /*! Tropopause pressure [hPa]. */
-  double pt[EX][EY];
+  float pt[EX][EY];
 
   /*! Geopotential height [km]. */
   float z[EX][EY][EP];
@@ -875,7 +875,7 @@ void intpol_met_space_3d(
 #endif
 void intpol_met_space_2d(
   met_t * met,
-  double array[EX][EY],
+  float array[EX][EY],
   double lon,
   double lat,
   double *var,
@@ -907,9 +907,9 @@ void intpol_met_time_3d(
 #endif
 void intpol_met_time_2d(
   met_t * met0,
-  double array0[EX][EY],
+  float array0[EX][EY],
   met_t * met1,
-  double array1[EX][EY],
+  float array1[EX][EY],
   double ts,
   double lon,
   double lat,
@@ -975,13 +975,22 @@ void read_met_geopot(
   ctl_t * ctl,
   met_t * met);
 
-/*! Read and convert variable from meteorological data file. */
-void read_met_help(
+/*! Read and convert 3D variable from meteorological data file. */
+int read_met_help_3d(
   int ncid,
   char *varname,
   char *varname2,
   met_t * met,
   float dest[EX][EY][EP],
+  float scl);
+
+/*! Read and convert 2D variable from meteorological data file. */
+int read_met_help_2d(
+  int ncid,
+  char *varname,
+  char *varname2,
+  met_t * met,
+  float dest[EX][EY],
   float scl);
 
 /*! Convert meteorological data from model levels to pressure levels. */
