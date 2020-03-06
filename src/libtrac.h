@@ -732,7 +732,10 @@ typedef struct {
   /*! Tropopause pressure [hPa]. */
   float pt[EX][EY];
 
-  /*! Geopotential height [km]. */
+  /*! Geopotential height at the surface [km]. */
+  float zs[EX][EY];
+
+  /*! Geopotential height at model levels [km]. */
   float z[EX][EY][EP];
 
   /*! Temperature [K]. */
@@ -972,7 +975,6 @@ void read_met_extrapolate(
 
 /*! Calculate geopotential heights. */
 void read_met_geopot(
-  ctl_t * ctl,
   met_t * met);
 
 /*! Read and convert 3D variable from meteorological data file. */
@@ -1010,6 +1012,11 @@ void read_met_pv(
 /*! Downsampling of meteorological data. */
 void read_met_sample(
   ctl_t * ctl,
+  met_t * met);
+
+/*! Read surface data. */
+void read_met_surface(
+  int ncid,
   met_t * met);
 
 /*! Calculate tropopause pressure. */

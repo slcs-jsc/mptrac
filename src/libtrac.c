@@ -2282,7 +2282,6 @@ void read_ctl(
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
   ctl->met_tropo
     = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "0", NULL);
-  scan_ctl(filename, argc, argv, "MET_GEOPOT", -1, "-", ctl->met_geopot);
   scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
@@ -2420,7 +2419,7 @@ int read_met(
 
   char cmd[2 * LEN], levname[LEN], tstr[10];
 
-  int ix, iy, ip, dimid, ncid, varid, year, mon, day, hour;
+  int ip, dimid, ncid, varid, year, mon, day, hour;
 
   size_t np, nx, ny;
 
@@ -2547,25 +2546,14 @@ int read_met(
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
 
-  /* Read surface pressure... */
-  if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f)) {
-    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0)) {
-      WARN("Could not read surface pressure data!");
-      for (ix = 0; ix < met->nx; ix++)
-	for (iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
-    } else {
-      for (iy = 0; iy < met->ny; iy++)
-	for (ix = 0; ix < met->nx; ix++)
-	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
-    }
-  }
+  /* Read surface data... */
+  read_met_surface(ncid, met);
 
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
 
   /* Calculate geopotential heights... */
-  read_met_geopot(ctl, met);
+  read_met_geopot(met);
 
   /* Calculate potential vorticity... */
   read_met_pv(met);
@@ -2620,24 +2608,19 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
-  ctl_t * ctl,
   met_t * met) {
 
   const int dx = 6, dy = 4;
 
-  static double logp[EP], topo_lat[EY], topo_lon[EX], topo_z[EX][EY];
-
   static float help[EX][EY][EP];
 
-  static int init, topo_nx = -1, topo_ny;
+  double logp[EP], ts, z0, cw[3];
 
-  FILE *in;
+  int ip, ip0, ix, ix2, ix3, iy, iy2, n, ci[3];
 
-  char line[LEN];
-
-  double lat, lon, rlat, rlon, rlon_old = -999, rz, ts, z0, z1;
-
-  int ip, ip0, ix, ix2, ix3, iy, iy2, n, tx, ty;
+  /* Calculate log pressure... */
+  for (ip = 0; ip < met->np; ip++)
+    logp[ip] = log(met->p[ip]);
 
   /* Initialize geopotential heights... */
 #pragma omp parallel for default(shared) private(ix,iy,ip)
@@ -2646,82 +2629,19 @@ void read_met_geopot(
       for (ip = 0; ip < met->np; ip++)
 	met->z[ix][iy][ip] = GSL_NAN;
 
-  /* Check filename... */
-  if (ctl->met_geopot[0] == '-')
-    return;
-
-  /* Read surface geopotential... */
-  if (!init) {
-    init = 1;
-
-    /* Write info... */
-    printf("Read surface geopotential: %s\n", ctl->met_geopot);
-
-    /* Open file... */
-    if (!(in = fopen(ctl->met_geopot, "r")))
-      ERRMSG("Cannot open file!");
-
-    /* Read data... */
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg %lg", &rlon, &rlat, &rz) == 3) {
-	if (rlon != rlon_old) {
-	  if ((++topo_nx) > EX)
-	    ERRMSG("Too many longitudes!");
-	  topo_ny = 0;
-	}
-	rlon_old = rlon;
-	topo_lon[topo_nx] = rlon;
-	topo_lat[topo_ny] = rlat;
-	topo_z[topo_nx][topo_ny] = rz;
-	if ((++topo_ny) > EY)
-	  ERRMSG("Too many latitudes!");
-      }
-    if ((++topo_nx) > EX)
-      ERRMSG("Too many longitudes!");
-
-    /* Close file... */
-    fclose(in);
-
-    /* Check grid spacing... */
-    if (fabs(met->lon[0] - met->lon[1]) != fabs(topo_lon[0] - topo_lon[1])
-	|| fabs(met->lat[0] - met->lat[1]) != fabs(topo_lat[0] - topo_lat[1]))
-      WARN("Grid spacing does not match!");
-
-    /* Calculate log pressure... */
-    for (ip = 0; ip < met->np; ip++)
-      logp[ip] = log(met->p[ip]);
-  }
-
   /* Apply hydrostatic equation to calculate geopotential heights... */
-#pragma omp parallel for default(shared) private(ix,iy,lon,lat,tx,ty,z0,z1,ip0,ts,ip)
-  for (ix = 0; ix < met->nx; ix++) {
-
-    /* Get longitude index... */
-    lon = met->lon[ix];
-    if (lon < topo_lon[0])
-      lon += 360;
-    else if (lon > topo_lon[topo_nx - 1])
-      lon -= 360;
-    tx = locate_reg(topo_lon, topo_nx, lon);
-
-    /* Loop over latitudes... */
+#pragma omp parallel for default(shared) private(ix,iy,z0,ip0,ts,ip,ci,cw)
+  for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
 
-      /* Get latitude index... */
-      lat = met->lat[iy];
-      ty = locate_reg(topo_lat, topo_ny, lat);
-
       /* Get surface height... */
-      z0 = LIN(topo_lon[tx], topo_z[tx][ty],
-	       topo_lon[tx + 1], topo_z[tx + 1][ty], lon);
-      z1 = LIN(topo_lon[tx], topo_z[tx][ty + 1],
-	       topo_lon[tx + 1], topo_z[tx + 1][ty + 1], lon);
-      z0 = LIN(topo_lat[ty], z0, topo_lat[ty + 1], z1, lat);
+      intpol_met_space_2d(met, met->zs, met->lon[ix], met->lat[iy], &z0, ci,
+			  cw, 1);
 
-      /* Find surface pressure level... */
+      /* Find surface pressure level index... */
       ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
-      /* Get surface data... */
+      /* Get virtual temperature at the surface... */
       ts =
 	LIN(met->p[ip0],
 	    TVIRT(met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]),
@@ -2742,9 +2662,8 @@ void read_met_geopot(
 		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
 		     * (logp[ip - 1] - logp[ip]));
     }
-  }
 
-  /* Smoothing... */
+  /* Horizontal smoothing... */
 #pragma omp parallel for default(shared) private(ix,iy,ip,n,ix2,ix3,iy2)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
@@ -3162,6 +3081,34 @@ void read_met_sample(
 
   /* Free... */
   free(help);
+}
+
+/*****************************************************************************/
+
+void read_met_surface(
+  int ncid,
+  met_t * met) {
+
+  int ix, iy;
+
+  /* Read surface pressure... */
+  if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f)) {
+    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0)) {
+      ERRMSG("Cannot not read surface pressure data!");
+      for (ix = 0; ix < met->nx; ix++)
+	for (iy = 0; iy < met->ny; iy++)
+	  met->ps[ix][iy] = (float) met->p[0];
+    } else {
+      for (iy = 0; iy < met->ny; iy++)
+	for (ix = 0; ix < met->nx; ix++)
+	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+    }
+  }
+
+  /* Read geopotential height at the surface... */
+  if (!read_met_help_2d
+      (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0))))
+    ERRMSG("Cannot read surface geopotential height!");
 }
 
 /*****************************************************************************/
