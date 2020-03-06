@@ -2662,7 +2662,7 @@ void read_met_geopot(
 		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
 		     * (logp[ip - 1] - logp[ip]));
     }
-
+  
   /* Horizontal smoothing... */
 #pragma omp parallel for default(shared) private(ix,iy,ip,n,ix2,ix3,iy2)
   for (ix = 0; ix < met->nx; ix++)
@@ -2688,7 +2688,7 @@ void read_met_geopot(
 	else
 	  help[ix][iy][ip] = GSL_NAN;
       }
-
+  
   /* Copy data... */
 #pragma omp parallel for default(shared) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ix++)
@@ -2844,14 +2844,12 @@ void read_met_periodic(
 #pragma omp parallel for default(shared)
   for (int iy = 0; iy < met->ny; iy++) {
     met->ps[met->nx - 1][iy] = met->ps[0][iy];
-    met->pt[met->nx - 1][iy] = met->pt[0][iy];
+    met->zs[met->nx - 1][iy] = met->zs[0][iy];
     for (int ip = 0; ip < met->np; ip++) {
-      met->z[met->nx - 1][iy][ip] = met->z[0][iy][ip];
       met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
       met->v[met->nx - 1][iy][ip] = met->v[0][iy][ip];
       met->w[met->nx - 1][iy][ip] = met->w[0][iy][ip];
-      met->pv[met->nx - 1][iy][ip] = met->pv[0][iy][ip];
       met->h2o[met->nx - 1][iy][ip] = met->h2o[0][iy][ip];
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
       met->lwc[met->nx - 1][iy][ip] = met->lwc[0][iy][ip];
@@ -2994,6 +2992,7 @@ void read_met_sample(
       for (ip = 0; ip < met->np; ip += ctl->met_dp) {
 	help->ps[ix][iy] = 0;
 	help->pt[ix][iy] = 0;
+	help->zs[ix][iy] = 0;
 	help->z[ix][iy][ip] = 0;
 	help->t[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
@@ -3021,6 +3020,7 @@ void read_met_sample(
 		* (float) (1.0 - fabs(ip - ip2) / ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix3][iy2];
 	      help->pt[ix][iy] += w * met->pt[ix3][iy2];
+	      help->zs[ix][iy] += w * met->zs[ix3][iy2];
 	      help->z[ix][iy][ip] += w * met->z[ix3][iy2][ip2];
 	      help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix3][iy2][ip2];
@@ -3036,6 +3036,7 @@ void read_met_sample(
 	}
 	help->ps[ix][iy] /= wsum;
 	help->pt[ix][iy] /= wsum;
+	help->zs[ix][iy] /= wsum;
 	help->t[ix][iy][ip] /= wsum;
 	help->z[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
@@ -3059,6 +3060,7 @@ void read_met_sample(
       met->lat[met->ny] = help->lat[iy];
       met->ps[met->nx][met->ny] = help->ps[ix][iy];
       met->pt[met->nx][met->ny] = help->pt[ix][iy];
+      met->zs[met->nx][met->ny] = help->zs[ix][iy];
       met->np = 0;
       for (ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
