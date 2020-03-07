@@ -741,7 +741,7 @@ typedef struct {
   /*! Cloud top pressure [hPa]. */
   float pc[EX][EY];
 
-  /*! Cloud water content [kg/m^2]. */
+  /*! Total column cloud water [kg/m^2]. */
   float cl[EX][EY];
 
   /*! Geopotential height at model levels [km]. */

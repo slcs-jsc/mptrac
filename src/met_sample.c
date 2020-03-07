@@ -92,7 +92,7 @@ int main(
 	  "# $19 = cloud liquid water content [kg/kg]\n"
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
-	  "# $21 = cloud water content [kg/m^2]\n"
+	  "# $21 = total column cloud water [kg/m^2]\n"
 	  "# $22 = cloud top pressure [hPa]\n\n");
 
   /* Loop over air parcels... */

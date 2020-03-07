@@ -3141,7 +3141,9 @@ void read_met_surface(
   /* Read geopotential height at the surface... */
   if (!read_met_help_2d
       (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0))))
-    ERRMSG("Cannot read surface geopotential height!");
+    if (!read_met_help_2d
+	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.)))
+      ERRMSG("Cannot read surface geopotential height!");
 }
 
 /*****************************************************************************/
