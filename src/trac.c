@@ -1282,8 +1282,6 @@ void module_wet_deposition(
       intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
       Is = pow(2. * cl, 1. / 0.36);
-      if (Is < 0.01)
-	continue;
 
       /* Calculate in-cloud scavenging for gases... */
       if (inside) {
@@ -1294,7 +1292,7 @@ void module_wet_deposition(
 			   0);
 
 	/* Get Henry's constant (Sander, 2015)... */
-	H = ctl->wet_depo[2] / 101.325
+	H = ctl->wet_depo[2] * 101.325
 	  * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
 
 	/* Get scavenging coefficient (Hertel et al., 1995)... */
