@@ -480,6 +480,9 @@ typedef struct {
   /*! Vertical scaling factor for mesoscale wind fluctuations. */
   double turb_mesoz;
 
+  /*! Species. */
+  char species[LEN];
+
   /*! Molar mass [g/mol]. */
   double molmass;
 

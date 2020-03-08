@@ -1222,7 +1222,8 @@ void module_oh_chem(
       /* Calculate molecular density... */
       M = 7.243e21 * (atm->p[ip] / P0) / T;
 
-      /* Calculate rate coefficient for X + OH + M -> XOH + M ... */
+      /* Calculate rate coefficient for X + OH + M -> XOH + M
+         (JPL Publication 15-10) ... */
       k0 = ctl->oh_chem[0] *
 	(ctl->oh_chem[1] > 0 ? pow(T / 300., -ctl->oh_chem[1]) : 1.);
       ki = ctl->oh_chem[2] *
@@ -1277,10 +1278,12 @@ void module_wet_deposition(
 			 0);
       inside = (iwc > 0 || lwc > 0);
 
-      /* Estimate precipitation rate... */
+      /* Estimate precipitation rate (Pisso et al., 2019)... */
       intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
       Is = pow(2. * cl, 1. / 0.36);
+      if (Is < 0.01)
+	continue;
 
       /* Calculate in-cloud scavenging for gases... */
       if (inside) {
@@ -1290,15 +1293,16 @@ void module_wet_deposition(
 			   atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
 			   0);
 
-	/* Get Henry's constant... */
-	H = ctl->wet_depo[2] * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
+	/* Get Henry's constant (Sander, 2015)... */
+	H = ctl->wet_depo[2] / 101.325
+	  * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
 
-	/* Get scavenging coefficient... */
+	/* Get scavenging coefficient (Hertel et al., 1995)... */
 	Si = 1. / ((1. - cl) / (H * RI / P0 * T) + cl);
 	lambda = 6.2 * Si * Is / 3.6e6;
       }
 
-      /* Calculate below-cloud scavenging for gases... */
+      /* Calculate below-cloud scavenging for gases (Pisso et al., 2019)... */
       else
 	lambda = ctl->wet_depo[0] * pow(Is, ctl->wet_depo[1]);
 

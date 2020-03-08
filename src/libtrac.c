@@ -33,8 +33,8 @@ void cart2geo(
   double *lat) {
 
   double radius = NORM(x);
-  *lat = asin(x[2] / radius) * 180 / M_PI;
-  *lon = atan2(x[1], x[0]) * 180 / M_PI;
+  *lat = asin(x[2] / radius) * 180. / M_PI;
+  *lon = atan2(x[1], x[0]) * 180. / M_PI;
   *z = radius - RE;
 }
 
@@ -308,32 +308,43 @@ double clim_hno3(
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
+  while (sec < 0)
+    sec += 365.25 * 86400.;
+
+  /* Check pressure... */
+  if (p < clim_hno3_ps[0])
+    p = clim_hno3_ps[0];
+  else if (p > clim_hno3_ps[9])
+    p = clim_hno3_ps[9];
 
   /* Get indices... */
   int isec = locate_irr(clim_hno3_secs, 12, sec);
   int ilat = locate_reg(clim_hno3_lats, 18, lat);
   int ip = locate_irr(clim_hno3_ps, 10, p);
 
-  /* Interpolate... */
-  double aux00 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec][ilat][ip],
-		     clim_hno3_ps[ip + 1], clim_hno3_var[isec][ilat][ip + 1],
-		     p);
-  double aux01 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec][ilat + 1][ip],
+  /* Interpolate HNO3 climatology (Froidevaux et al., 2015)... */
+  double aux00 = LIN(clim_hno3_ps[ip],
+		     clim_hno3_var[isec][ilat][ip],
+		     clim_hno3_ps[ip + 1],
+		     clim_hno3_var[isec][ilat][ip + 1], p);
+  double aux01 = LIN(clim_hno3_ps[ip],
+		     clim_hno3_var[isec][ilat + 1][ip],
 		     clim_hno3_ps[ip + 1],
 		     clim_hno3_var[isec][ilat + 1][ip + 1], p);
-  double aux10 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec + 1][ilat][ip],
+  double aux10 = LIN(clim_hno3_ps[ip],
+		     clim_hno3_var[isec + 1][ilat][ip],
 		     clim_hno3_ps[ip + 1],
 		     clim_hno3_var[isec + 1][ilat][ip + 1], p);
-  double aux11 = LIN(clim_hno3_ps[ip], clim_hno3_var[isec + 1][ilat + 1][ip],
+  double aux11 = LIN(clim_hno3_ps[ip],
+		     clim_hno3_var[isec + 1][ilat + 1][ip],
 		     clim_hno3_ps[ip + 1],
-		     clim_hno3_var[isec + 1][ilat + 1][ip + 1],
-		     p);
-  aux00 =
-    LIN(clim_hno3_lats[ilat], aux00, clim_hno3_lats[ilat + 1], aux01, lat);
-  aux11 =
-    LIN(clim_hno3_lats[ilat], aux10, clim_hno3_lats[ilat + 1], aux11, lat);
-  return LIN(clim_hno3_secs[isec], aux00, clim_hno3_secs[isec + 1], aux11,
-	     sec);
+		     clim_hno3_var[isec + 1][ilat + 1][ip + 1], p);
+  aux00 = LIN(clim_hno3_lats[ilat], aux00,
+	      clim_hno3_lats[ilat + 1], aux01, lat);
+  aux11 = LIN(clim_hno3_lats[ilat], aux10,
+	      clim_hno3_lats[ilat + 1], aux11, lat);
+  return LIN(clim_hno3_secs[isec], aux00,
+	     clim_hno3_secs[isec + 1], aux11, sec);
 }
 
 /*****************************************************************************/
@@ -1324,26 +1335,37 @@ double clim_oh(
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
+  while (sec < 0)
+    sec += 365.25 * 86400.;
+
+  /* Check pressure... */
+  if (p < clim_oh_ps[0])
+    p = clim_oh_ps[0];
+  else if (p > clim_oh_ps[33])
+    p = clim_oh_ps[33];
 
   /* Get indices... */
   int isec = locate_irr(clim_oh_secs, 12, sec);
   int ilat = locate_reg(clim_oh_lats, 18, lat);
   int ip = locate_irr(clim_oh_ps, 34, p);
 
-  /* Interpolate... */
-  double aux00 = LIN(clim_oh_ps[ip], clim_oh_var[isec][ilat][ip],
-		     clim_oh_ps[ip + 1], clim_oh_var[isec][ilat][ip + 1],
-		     p);
-  double aux01 = LIN(clim_oh_ps[ip], clim_oh_var[isec][ilat + 1][ip],
+  /* Interpolate OH climatology (Pommrich et al., 2014)... */
+  double aux00 = LIN(clim_oh_ps[ip],
+		     clim_oh_var[isec][ilat][ip],
+		     clim_oh_ps[ip + 1],
+		     clim_oh_var[isec][ilat][ip + 1], p);
+  double aux01 = LIN(clim_oh_ps[ip],
+		     clim_oh_var[isec][ilat + 1][ip],
 		     clim_oh_ps[ip + 1],
 		     clim_oh_var[isec][ilat + 1][ip + 1], p);
-  double aux10 = LIN(clim_oh_ps[ip], clim_oh_var[isec + 1][ilat][ip],
+  double aux10 = LIN(clim_oh_ps[ip],
+		     clim_oh_var[isec + 1][ilat][ip],
 		     clim_oh_ps[ip + 1],
 		     clim_oh_var[isec + 1][ilat][ip + 1], p);
-  double aux11 = LIN(clim_oh_ps[ip], clim_oh_var[isec + 1][ilat + 1][ip],
+  double aux11 = LIN(clim_oh_ps[ip],
+		     clim_oh_var[isec + 1][ilat + 1][ip],
 		     clim_oh_ps[ip + 1],
-		     clim_oh_var[isec + 1][ilat + 1][ip + 1],
-		     p);
+		     clim_oh_var[isec + 1][ilat + 1][ip + 1], p);
   aux00 = LIN(clim_oh_lats[ilat], aux00, clim_oh_lats[ilat + 1], aux01, lat);
   aux11 = LIN(clim_oh_lats[ilat], aux10, clim_oh_lats[ilat + 1], aux11, lat);
   return 1e6 * LIN(clim_oh_secs[isec], aux00,
@@ -1352,11 +1374,15 @@ double clim_oh(
 
 /*****************************************************************************/
 
-static double clim_tropo_doys[12]
-= { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
+static double clim_tropo_secs[12] = {
+  1209600.00, 3888000.00, 6393600.00,
+  9072000.00, 11664000.00, 14342400.00,
+  16934400.00, 19612800.00, 22291200.00,
+  24883200.00, 27561600.00, 30153600.00
+};
 
 #ifdef _OPENACC
-#pragma acc declare copyin(clim_tropo_doys)
+#pragma acc declare copyin(clim_tropo_secs)
 #endif
 
 static double clim_tropo_lats[73]
@@ -1481,24 +1507,25 @@ double clim_tropo(
   double t,
   double lat) {
 
-  /* Get day of year... */
-  double doy = FMOD(t / 86400., 365.25);
-  while (doy < 0)
-    doy += 365.25;
+  /* Get seconds since begin of year... */
+  double sec = FMOD(t, 365.25 * 86400.);
+  while (sec < 0)
+    sec += 365.25 * 86400.;
 
   /* Get indices... */
+  int isec = locate_irr(clim_tropo_secs, 12, sec);
   int ilat = locate_reg(clim_tropo_lats, 73, lat);
-  int imon = locate_irr(clim_tropo_doys, 12, doy);
 
-  /* Interpolate... */
-  double p0 = LIN(clim_tropo_lats[ilat], clim_tropo_tps[imon][ilat],
-		  clim_tropo_lats[ilat + 1], clim_tropo_tps[imon][ilat + 1],
-		  lat);
-  double p1 = LIN(clim_tropo_lats[ilat], clim_tropo_tps[imon + 1][ilat],
+  /* Interpolate tropopause data (NCEP/NCAR Reanalysis 1)... */
+  double p0 = LIN(clim_tropo_lats[ilat],
+		  clim_tropo_tps[isec][ilat],
 		  clim_tropo_lats[ilat + 1],
-		  clim_tropo_tps[imon + 1][ilat + 1],
-		  lat);
-  return LIN(clim_tropo_doys[imon], p0, clim_tropo_doys[imon + 1], p1, doy);
+		  clim_tropo_tps[isec][ilat + 1], lat);
+  double p1 = LIN(clim_tropo_lats[ilat],
+		  clim_tropo_tps[isec + 1][ilat],
+		  clim_tropo_lats[ilat + 1],
+		  clim_tropo_tps[isec + 1][ilat + 1], lat);
+  return LIN(clim_tropo_secs[isec], p0, clim_tropo_secs[isec + 1], p1, sec);
 }
 
 /*****************************************************************************/
@@ -1556,9 +1583,9 @@ void geo2cart(
   double *x) {
 
   double radius = z + RE;
-  x[0] = radius * cos(lat / 180 * M_PI) * cos(lon / 180 * M_PI);
-  x[1] = radius * cos(lat / 180 * M_PI) * sin(lon / 180 * M_PI);
-  x[2] = radius * sin(lat / 180 * M_PI);
+  x[0] = radius * cos(lat / 180. * M_PI) * cos(lon / 180. * M_PI);
+  x[1] = radius * cos(lat / 180. * M_PI) * sin(lon / 180. * M_PI);
+  x[2] = radius * sin(lat / 180. * M_PI);
 }
 
 /*****************************************************************************/
@@ -2284,42 +2311,57 @@ void read_ctl(
     ERRMSG("Too many levels!");
   for (int ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
-  ctl->met_tropo
-    = (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
+  ctl->met_tropo =
+    (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
 
   /* Isosurface parameters... */
-  ctl->isosurf
-    = (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
+  ctl->isosurf =
+    (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
 
   /* Diffusion parameters... */
-  ctl->turb_dx_trop
-    = scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);
-  ctl->turb_dx_strat
-    = scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0", NULL);
-  ctl->turb_dz_trop
-    = scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0", NULL);
-  ctl->turb_dz_strat
-    = scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
+  ctl->turb_dx_trop =
+    scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);
+  ctl->turb_dx_strat =
+    scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0", NULL);
+  ctl->turb_dz_trop =
+    scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0", NULL);
+  ctl->turb_dz_strat =
+    scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
   ctl->turb_mesox =
     scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0.16", NULL);
   ctl->turb_mesoz =
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
   /* Species parameters... */
-  ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
-  ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
-  ctl->tdec_strat =
-    scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
-  for (int ip = 0; ip < 4; ip++)
-    ctl->oh_chem[ip]
-      = scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
-  for (int ip = 0; ip < 4; ip++)
-    ctl->wet_depo[ip]
-      = scan_ctl(filename, argc, argv, "WET_DEPO", ip, "0", NULL);
+  scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
+  if (strcmp(ctl->species, "SO2") == 0) {
+    ctl->molmass = 64.066;
+    ctl->oh_chem[0] = 3.3e-31;	/* (JPL Publication 15-10) */
+    ctl->oh_chem[1] = 4.3;	/* (JPL Publication 15-10) */
+    ctl->oh_chem[2] = 1.6e-12;	/* (JPL Publication 15-10) */
+    ctl->oh_chem[3] = 0.0;	/* (JPL Publication 15-10) */
+    ctl->wet_depo[0] = 2.0e-05;	/* (FLEXPART v10.4) */
+    ctl->wet_depo[1] = 0.62;	/* (FLEXPART v10.4) */
+    ctl->wet_depo[2] = 1.3e-2;	/* (Sander, 2015) */
+    ctl->wet_depo[3] = 2900.0;	/* (Sander, 2015) */
+  } else {
+    ctl->molmass =
+      scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
+    ctl->tdec_trop =
+      scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
+    ctl->tdec_strat =
+      scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
+    for (int ip = 0; ip < 4; ip++)
+      ctl->oh_chem[ip] =
+	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
+    for (int ip = 0; ip < 4; ip++)
+      ctl->wet_depo[ip] =
+	scan_ctl(filename, argc, argv, "WET_DEPO", ip, "0", NULL);
+  }
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);
