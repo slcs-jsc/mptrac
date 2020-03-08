@@ -493,7 +493,7 @@ typedef struct {
   double oh_chem[4];
 
   /*! Coefficients for wet deposition (A, B, H). */
-  double wet_depo[3];
+  double wet_depo[4];
 
   /*! H2O volume mixing ratio for PSC analysis. */
   double psc_h2o;

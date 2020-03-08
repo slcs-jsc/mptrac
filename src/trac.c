@@ -378,7 +378,8 @@ int main(
 
       /* Wet deposition... */
       START_TIMER(TIMER_WETDEPO);
-      if (ctl.wet_depo[0] > 0 && ctl.wet_depo[1] > 0 && ctl.wet_depo[2] > 0)
+      if (ctl.wet_depo[0] > 0 && ctl.wet_depo[1] > 0
+	  && ctl.wet_depo[2] > 0 && ctl.wet_depo[3] > 0)
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_WETDEPO);
 
@@ -1290,10 +1291,10 @@ void module_wet_deposition(
 			   0);
 
 	/* Get Henry's constant... */
-	H = ctl->wet_depo[2];
+	H = ctl->wet_depo[2] * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
 
 	/* Get scavenging coefficient... */
-	Si = 1. / ((1. - cl) / (H * RA / 3500. * T) + cl);
+	Si = 1. / ((1. - cl) / (H * RI / P0 * T) + cl);
 	lambda = 6.2 * Si * Is / 3.6e6;
       }
 
