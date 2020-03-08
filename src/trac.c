@@ -127,6 +127,16 @@ void module_sedi(
 /*! Calculate OH chemistry. */
 void module_oh_chem(
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate wet deposition. */
+void module_wet_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   double *dt);
 
@@ -362,9 +372,15 @@ int main(
 
       /* OH chemistry... */
       START_TIMER(TIMER_OHCHEM);
-      if (ctl.oh_chem[0] > 0)
-	module_oh_chem(&ctl, atm, dt);
+      if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
+	module_oh_chem(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_OHCHEM);
+
+      /* Wet deposition... */
+      START_TIMER(TIMER_WETDEPO);
+      if (ctl.wet_depo[0] > 0 && ctl.wet_depo[1] > 0 && ctl.wet_depo[2] > 0)
+	module_wet_deposition(&ctl, met0, met1, atm, dt);
+      STOP_TIMER(TIMER_WETDEPO);
 
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
@@ -413,6 +429,7 @@ int main(
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
     PRINT_TIMER(TIMER_OHCHEM);
+    PRINT_TIMER(TIMER_WETDEPO);
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_TOTAL);
 
@@ -1051,10 +1068,9 @@ void module_meteo(
     }
 
     /* Calculate T_STS (mean of T_ice and T_NAT)... */
-    if (ctl->qnt_tsts >= 0) {
+    if (ctl->qnt_tsts >= 0)
       atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
 					 + atm->q[ctl->qnt_tnat][ip]);
-    }
   }
 }
 
@@ -1131,18 +1147,12 @@ void module_sedi(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      /* Coefficients for Cunningham slip-flow correction (Kasten, 1968): */
-      const double A = 1.249, B = 0.42, C = 0.87;
-
-      /* Average mass of an air molecule [kg/molec]: */
-      const double m = 4.8096e-26;
-
       double G, K, eta, lambda, p, r_p, rho, rho_p, T, v, v_p, cw[3];
 
       int ci[3];
 
       /* Convert units... */
-      p = 100 * atm->p[ip];
+      p = 100. * atm->p[ip];
       r_p = 1e-6 * atm->q[ctl->qnt_r][ip];
       rho_p = atm->q[ctl->qnt_rho][ip];
 
@@ -1158,16 +1168,16 @@ void module_sedi(
       eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
       /* Thermal velocity of an air molecule... */
-      v = sqrt(8 * KB * T / (M_PI * m));
+      v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
 
       /* Mean free path of an air molecule... */
-      lambda = 2 * eta / (rho * v);
+      lambda = 2. * eta / (rho * v);
 
       /* Knudsen number for air... */
       K = lambda / r_p;
 
       /* Cunningham slip-flow correction... */
-      G = 1 + K * (A + B * exp(-C / K));
+      G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
       /* Sedimentation (fall) velocity... */
       v_p = 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
@@ -1181,14 +1191,14 @@ void module_sedi(
 
 void module_oh_chem(
   ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   double *dt) {
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
-  if (ctl->qnt_t < 0)
-    ERRMSG("Module needs quantity temperature!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt)
@@ -1199,23 +1209,100 @@ void module_oh_chem(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      /* Set pressure, temperature, and molecular density... */
-      double p = atm->p[ip] / P0;
-      double T = atm->q[ctl->qnt_t][ip];
-      double M = 7.243e21 * p / T;
+      double c, k, k0, ki, M, T, cw[3];
+
+      int ci[3];
+
+      /* Get temperature... */
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			 atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
+			 1);
+
+      /* Calculate molecular density... */
+      M = 7.243e21 * (atm->p[ip] / P0) / T;
 
       /* Calculate rate coefficient for X + OH + M -> XOH + M ... */
-      double k0 = ctl->oh_chem[0] *
+      k0 = ctl->oh_chem[0] *
 	(ctl->oh_chem[1] > 0 ? pow(T / 300., -ctl->oh_chem[1]) : 1.);
-      double ki = ctl->oh_chem[2] *
+      ki = ctl->oh_chem[2] *
 	(ctl->oh_chem[3] > 0 ? pow(T / 300., -ctl->oh_chem[3]) : 1.);
-      double c = log10(k0 * M / ki);
-      double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
+      c = log10(k0 * M / ki);
+      k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
-      /* Calculate exponential decay...
-         (note: tdec = 1. / (k * [OH])) */
+      /* Calculate exponential decay... */
       atm->q[ctl->qnt_m][ip] *=
 	exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    }
+}
+
+/*****************************************************************************/
+
+void module_wet_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+
+#ifdef _OPENACC
+#pragma acc data present(ctl,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      double H, Is, Si, T, cl, lambda, iwc, lwc, pc, cw[3];
+
+      int inside, ci[3];
+
+      /* Check whether particle is below cloud top... */
+      intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
+			 atm->lon[ip], atm->lat[ip], &pc, ci, cw, 1);
+      if (atm->p[ip] <= pc)
+	continue;
+
+      /* Check whether particle is inside or below cloud... */
+      intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, atm->time[ip],
+			 atm->p[ip], atm->lon[ip], atm->lat[ip], &lwc, ci, cw,
+			 1);
+      intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, atm->time[ip],
+			 atm->p[ip], atm->lon[ip], atm->lat[ip], &iwc, ci, cw,
+			 0);
+      inside = (iwc > 0 || lwc > 0);
+
+      /* Estimate precipitation rate... */
+      intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
+			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
+      Is = pow(2. * cl, 1. / 0.36);
+
+      /* Calculate in-cloud scavenging for gases... */
+      if (inside) {
+
+	/* Get temperature... */
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			   atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
+			   0);
+
+	/* Get Henry's constant... */
+	H = ctl->wet_depo[2];
+
+	/* Get scavenging coefficient... */
+	Si = 1. / ((1. - cl) / (H * RA / 3500. * T) + cl);
+	lambda = 6.2 * Si * Is / 3.6e6;
+      }
+
+      /* Calculate below-cloud scavenging for gases... */
+      else
+	lambda = ctl->wet_depo[0] * pow(Is, ctl->wet_depo[1]);
+
+      /* Calculate exponential decay... */
+      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] * lambda);
     }
 }
 
