@@ -1266,7 +1266,7 @@ void module_wet_deposition(
       /* Check whether particle is below cloud top... */
       intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &pc, ci, cw, 1);
-      if (atm->p[ip] <= pc)
+      if (!check_finite(pc) || atm->p[ip] <= pc)
 	continue;
 
       /* Check whether particle is inside or below cloud... */
@@ -1282,6 +1282,8 @@ void module_wet_deposition(
       intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
       Is = pow(2. * cl, 1. / 0.36);
+      if (Is < 0.01)
+	continue;
 
       /* Calculate in-cloud scavenging for gases... */
       if (inside) {
