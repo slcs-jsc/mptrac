@@ -25,19 +25,19 @@ LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
 INCDIR = -I ../lib/build/include
 
 # Compile for GPUs...
-#GPU = 1
+ GPU = 1
 
 # Compile for KNL...
 #KNL = 1
 
 # Compile for MPI...
-#MPI = 1
+ MPI = 1
 
 # Compile for profiling...
 #PROF = 1
 
 # Static compilation...
-STATIC = 1
+#STATIC = 1
 
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...
