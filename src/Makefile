@@ -25,16 +25,19 @@ LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
 INCDIR = -I ../lib/build/include
 
 # Compile for GPUs...
- GPU = 1
+#GPU = 1
 
 # Compile for KNL...
 #KNL = 1
 
 # Compile for MPI...
- MPI = 1
+#MPI = 1
 
 # Compile for profiling...
 #PROF = 1
+
+# Enable NVTX
+#USE_NVTX = 1
 
 # Static compilation...
 #STATIC = 1
@@ -47,7 +50,7 @@ INCDIR = -I ../lib/build/include
 CC = gcc
 
 # Set CFLAGS...
-CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
+CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic  -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
@@ -55,7 +58,7 @@ LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 # Compile for GPUs...
 ifdef GPU
   CC = pgcc
-  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,managed -mcmodel=medium -Minfo=accel -g
+  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,lineinfo -mcmodel=medium -Minfo=accel -g
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 
@@ -80,6 +83,12 @@ endif
 # Static compilation...
 ifdef STATIC
   CFLAGS += -static
+endif
+
+# NVTX
+ifdef USE_NVTX
+  LDFLAGS += -lnvToolsExt
+  CFLAGS  += -DUSE_NVTX
 endif
 
 # -----------------------------------------------------------------------------
