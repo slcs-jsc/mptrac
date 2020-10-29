@@ -1352,7 +1352,7 @@ void module_wet_deposition(
       /* Check whether particle is below cloud top... */
       intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &pc, ci, cw, 1);
-      if (!check_finite(pc) || atm->p[ip] <= pc)
+      if (!isfinite(pc) || atm->p[ip] <= pc)
 	continue;
 
       /* Check whether particle is inside or below cloud... */

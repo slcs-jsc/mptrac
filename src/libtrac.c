@@ -40,12 +40,12 @@ void cart2geo(
 
 /*****************************************************************************/
 
-int check_finite(
-  const double x) {
-  const double y = x - x;
-  int status = (y == y);
-  return status;
-}
+// int isfinite(
+//   const double x) {
+//   const double y = x - x;
+//   int status = (y == y);
+//   return status;
+// }
 
 /*****************************************************************************/
 
@@ -1810,15 +1810,15 @@ void intpol_met_space_2d(
   double aux11 = array[ci[1] + 1][ci[2] + 1];
 
   /* Interpolate horizontally... */
-  if (check_finite(aux00) && check_finite(aux01))
+  if (isfinite(aux00) && isfinite(aux01))
     aux00 = cw[2] * (aux00 - aux01) + aux01;
   else if (cw[2] < 0.5)
     aux00 = aux01;
-  if (check_finite(aux10) && check_finite(aux11))
+  if (isfinite(aux10) && isfinite(aux11))
     aux11 = cw[2] * (aux10 - aux11) + aux11;
   else if (cw[2] > 0.5)
     aux11 = aux10;
-  if (check_finite(aux00) && check_finite(aux11))
+  if (isfinite(aux00) && isfinite(aux11))
     *var = cw[1] * (aux00 - aux11) + aux11;
   else {
     if (cw[1] > 0.5)
@@ -2673,10 +2673,10 @@ void read_met_extrapolate(
 
       /* Find lowest valid data point... */
       for (ip0 = met->np - 1; ip0 >= 0; ip0--)
-	if (!check_finite(met->t[ix][iy][ip0])
-	    || !check_finite(met->u[ix][iy][ip0])
-	    || !check_finite(met->v[ix][iy][ip0])
-	    || !check_finite(met->w[ix][iy][ip0]))
+	if (!isfinite(met->t[ix][iy][ip0])
+	    || !isfinite(met->u[ix][iy][ip0])
+	    || !isfinite(met->v[ix][iy][ip0])
+	    || !isfinite(met->w[ix][iy][ip0]))
 	  break;
 
       /* Extrapolate... */
@@ -2766,7 +2766,7 @@ void read_met_geopot(
 	    ix3 -= met->nx;
 	  for (iy2 = GSL_MAX(iy - dy, 0);
 	       iy2 <= GSL_MIN(iy + dy, met->ny - 1); iy2++)
-	    if (check_finite(met->z[ix3][iy2][ip])) {
+	    if (isfinite(met->z[ix3][iy2][ip])) {
 	      help[ix][iy][ip] += met->z[ix3][iy2][ip];
 	      n++;
 	    }
