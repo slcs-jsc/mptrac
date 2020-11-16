@@ -293,6 +293,7 @@ int main(
     else
       ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
 
+#pragma acc update device(ctl)
     /* Initialize random number generator... */
     module_diffusion_init();
 
