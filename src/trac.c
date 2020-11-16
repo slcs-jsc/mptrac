@@ -557,10 +557,10 @@ void module_advection(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      int ci[3]=0;
+      int ci[3]={0};
 
-      double dtm=0.0, v[3]=0.0, xm[3]=0.0;
-      double cw[3]=0.0;
+      double dtm=0.0, v[3]={0.0}, xm[3]={0.0};
+      double cw[3]={0.0};
 
       /* Interpolate meteorological data... */
       intpol_met_time_3d(met0, met0->u, met1, met1->u, atm->time[ip],
