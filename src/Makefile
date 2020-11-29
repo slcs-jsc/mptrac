@@ -50,7 +50,7 @@ INCDIR = -I ../lib/build/include
 CC = gcc
 
 # Set CFLAGS...
-CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic  -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
+CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
@@ -58,7 +58,7 @@ LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 # Compile for GPUs...
 ifdef GPU
   CC = pgcc
-  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,managed -Minfo=accel -g
+  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,managed -mcmodel=medium -Minfo=accel -g
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 
