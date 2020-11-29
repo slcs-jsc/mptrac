@@ -2520,7 +2520,10 @@ int read_met(
   NC(nc_inq_dimlen(ncid, dimid, &np));
   if (np == 1) {
     sprintf(levname, "lev_2");
-    NC(nc_inq_dimid(ncid, levname, &dimid));
+    if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
+      sprintf(levname, "plev");
+      nc_inq_dimid(ncid, levname, &dimid);
+    }
     NC(nc_inq_dimlen(ncid, dimid, &np));
   }
   if (np < 2 || np > EP)
@@ -2545,7 +2548,7 @@ int read_met(
   if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0))
     ERRMSG("Cannot read meridional wind!");
   if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f))
-    ERRMSG("Cannot read vertical velocity");
+    WARN("Cannot read vertical velocity");
   if (!read_met_help_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O)))
     WARN("Cannot read specific humidity!");
   if (!read_met_help_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3)))
