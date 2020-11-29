@@ -25,7 +25,7 @@ LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
 INCDIR = -I ../lib/build/include
 
 # Compile for GPUs...
-GPU = 1
+#GPU = 1
 
 # Compile for KNL...
 #KNL = 1
