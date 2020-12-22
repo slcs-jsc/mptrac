@@ -36,8 +36,11 @@ INCDIR = -I ../lib/build/include
 # Compile for profiling...
 #PROF = 1
 
+# Enable NVTX
+#USE_NVTX = 1
+
 # Static compilation...
-STATIC = 1
+#STATIC = 1
 
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...
@@ -80,6 +83,12 @@ endif
 # Static compilation...
 ifdef STATIC
   CFLAGS += -static
+endif
+
+# NVTX
+ifdef USE_NVTX
+  LDFLAGS += -lnvToolsExt
+  CFLAGS  += -DUSE_NVTX
 endif
 
 # -----------------------------------------------------------------------------

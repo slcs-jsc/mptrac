@@ -801,7 +801,7 @@ void cart2geo(
 
 /*! Check if x is finite. */
 #ifdef _OPENACC
-#pragma acc routine (finite)
+#pragma acc routine (check_finite)
 #endif
 int check_finite(
   const double x);
