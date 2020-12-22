@@ -40,7 +40,7 @@ INCDIR = -I ../lib/build/include
 #USE_NVTX = 1
 
 # Static compilation...
-#STATIC = 1
+STATIC = 1
 
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...

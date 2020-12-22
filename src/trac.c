@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2020 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -178,15 +178,15 @@ int main(
 
   int ntask = -1, rank = 0, size = 1;
 
-#ifdef MPI
   /* Initialize MPI... */
+#ifdef MPI
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-#ifdef _OPENACC
   /* Initialize GPUs... */
+#ifdef _OPENACC
 #ifdef USE_NVTX
   RANGE_PUSH("init GPUs", GRAY);
 #endif
@@ -195,11 +195,9 @@ int main(
   int device_num = rank % num_devices;
   acc_set_device_num(device_num, acc_device_nvidia);
   acc_init(device_type);
-
 #ifdef USE_NVTX
   RANGE_POP;
 #endif
-
 #endif
 
   /* Check arguments... */
@@ -228,7 +226,7 @@ int main(
 
     /* Allocate... */
 #ifdef USE_NVTX
-   RANGE_PUSH("Allocate",GRAY); 
+    RANGE_PUSH("Allocate", GRAY);
 #endif
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
@@ -239,13 +237,12 @@ int main(
     ALLOC(rs, double,
 	  3 * NP);
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
 
 #ifdef USE_NVTX
-   RANGE_PUSH("Read (I/O)",GRAY); 
+    RANGE_PUSH("Read (I/O)", GRAY);
 #endif
-
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
@@ -255,23 +252,24 @@ int main(
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
+
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
+
     /* Copy to GPU... */
 #ifdef _OPENACC
 #ifdef USE_NVTX
-   RANGE_PUSH("Copy to GPU",GRAY); 
+    RANGE_PUSH("Copy to GPU", GRAY);
 #endif
-
 #pragma acc enter data copyin(ctl)
 #pragma acc enter data create(atm[:1],cache[:1],met0[:1],met1[:1],dt[:NP],rs[:3*NP])
-    //,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
 #pragma acc update device(atm[:1],cache[:1])
 #endif
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
+
     /* Set start time... */
     if (ctl.direction == 1) {
       ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
@@ -293,7 +291,10 @@ int main(
     else
       ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
 
+#ifdef _OPENACC
 #pragma acc update device(ctl)
+#endif
+
     /* Initialize random number generator... */
     module_diffusion_init();
 
@@ -328,7 +329,7 @@ int main(
       /* Set time steps for air parcels... */
 #ifdef _OPENACC
 #ifdef USE_NVTX
-   RANGE_PUSH("Set time steps",GRAY); 
+      RANGE_PUSH("Set time steps", GRAY);
 #endif
 #pragma acc parallel loop independent gang vector present(ctl,atm,atm->time,dt)
 #endif
@@ -344,10 +345,10 @@ int main(
 	  dt[ip] = 0;
       }
 #ifdef USE_NVTX
-  RANGE_POP;
+      RANGE_POP;
 #endif
 #ifdef USE_NVTX
-   RANGE_PUSH("Get met data",GRAY); 
+      RANGE_PUSH("Get met data", GRAY);
 #endif
       /* Get meteorological data... */
       START_TIMER(TIMER_INPUT);
@@ -355,24 +356,24 @@ int main(
 	get_met(&ctl, argv[4], t, &met0, &met1);
       STOP_TIMER(TIMER_INPUT);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Check init pos",GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Check init pos", GRAY);
 #endif
       /* Check initial position... */
       START_TIMER(TIMER_POSITION);
       module_position(met0, met1, atm, dt);
       STOP_TIMER(TIMER_POSITION);
 #ifdef USE_NVTX
-   RANGE_POP;   
-   RANGE_PUSH("Advection",GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Advection", GRAY);
 #endif
       /* Advection... */
       START_TIMER(TIMER_ADVECT);
       module_advection(met0, met1, atm, dt);
       STOP_TIMER(TIMER_ADVECT);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Turbulent diffusion",GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Turbulent diffusion", GRAY);
 #endif
       /* Turbulent diffusion... */
       START_TIMER(TIMER_DIFFTURB);
@@ -383,8 +384,8 @@ int main(
       }
       STOP_TIMER(TIMER_DIFFTURB);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Mesoscale diffusion",GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Mesoscale diffusion", GRAY);
 #endif
       /* Mesoscale diffusion... */
       START_TIMER(TIMER_DIFFMESO);
@@ -394,8 +395,8 @@ int main(
       }
       STOP_TIMER(TIMER_DIFFMESO);
 #ifdef USE_NVTX
-   RANGE_POP;  
-   RANGE_PUSH("Sedimentation",GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Sedimentation", GRAY);
 #endif
       /* Sedimentation... */
       START_TIMER(TIMER_SEDI);
@@ -403,25 +404,27 @@ int main(
 	module_sedi(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_SEDI);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Isosurface", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Isosurface", GRAY);
 #endif
+
       /* Isosurface... */
       START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
 	module_isosurf(&ctl, met0, met1, atm, cache);
       STOP_TIMER(TIMER_ISOSURF);
 #ifdef USE_NVTX
-   RANGE_POP; 
-   RANGE_PUSH("Check final pos", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Check final pos", GRAY);
 #endif
+
       /* Check final position... */
       START_TIMER(TIMER_POSITION);
       module_position(met0, met1, atm, dt);
       STOP_TIMER(TIMER_POSITION);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Interpolate met data", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Interpolate met data", GRAY);
 #endif
       /* Interpolate meteorological data... */
       START_TIMER(TIMER_METEO);
@@ -430,27 +433,30 @@ int main(
 	module_meteo(&ctl, met0, met1, atm);
       STOP_TIMER(TIMER_METEO);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Decay of particle mass", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Decay of particle mass", GRAY);
 #endif
+
       /* Decay of particle mass... */
       START_TIMER(TIMER_DECAY);
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	module_decay(&ctl, atm, dt);
       STOP_TIMER(TIMER_DECAY);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("OH chem", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("OH chem", GRAY);
 #endif
+
       /* OH chemistry... */
       START_TIMER(TIMER_OHCHEM);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
 	module_oh_chem(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_OHCHEM);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Wet deposition", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Wet deposition", GRAY);
 #endif
+
       /* Wet deposition... */
       START_TIMER(TIMER_WETDEPO);
       if (ctl.wet_depo[0] > 0 && ctl.wet_depo[1] > 0
@@ -458,15 +464,16 @@ int main(
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_WETDEPO);
 #ifdef USE_NVTX
-   RANGE_POP;
-   RANGE_PUSH("Write output", GRAY); 
+      RANGE_POP;
+      RANGE_PUSH("Write output", GRAY);
 #endif
+
       /* Write output... */
       START_TIMER(TIMER_OUTPUT);
       write_output(dirname, &ctl, met0, met1, atm, t);
       STOP_TIMER(TIMER_OUTPUT);
 #ifdef USE_NVTX
-   RANGE_POP;
+      RANGE_POP;
 #endif
     }
 
@@ -485,16 +492,14 @@ int main(
     printf("MEMORY_METEO = %g MByte\n", 2 * sizeof(met_t) / 1024. / 1024.);
     printf("MEMORY_DYNAMIC = %g MByte\n", (sizeof(met_t)
 					   + 4 * NP * sizeof(double)
-					   +
-					   EX * EY * EP * sizeof(float)) /
+					   + EX * EY * EP * sizeof(float)) /
 	   1024. / 1024.);
     printf("MEMORY_STATIC = %g MByte\n", (EX * EY * sizeof(double)
 					  + EX * EY * EP * sizeof(float)
 					  + 4 * GX * GY * GZ * sizeof(double)
 					  + 2 * GX * GY * GZ * sizeof(int)
 					  + 2 * GX * GY * sizeof(double)
-					  +
-					  GX * GY * sizeof(int)) / 1024. /
+					  + GX * GY * sizeof(int)) / 1024. /
 	   1024.);
 
     /* Report timers... */
@@ -517,7 +522,7 @@ int main(
 
     /* Free... */
 #ifdef USE_NVTX
-   RANGE_PUSH("Deallocations", GRAY); 
+    RANGE_PUSH("Deallocations", GRAY);
 #endif
     free(atm);
     free(cache);
@@ -529,7 +534,7 @@ int main(
 #pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
 #endif
 #ifdef USE_NVTX
-   RANGE_POP; 
+    RANGE_POP;
 #endif
   }
 
@@ -558,10 +563,11 @@ void module_advection(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      int ci[3]={0};
+      int ci[3] = { 0 };
 
-      double dtm=0.0, v[3]={0.0}, xm[3]={0.0};
-      double cw[3]={0.0};
+      double dtm = 0.0, v[3] = { 0.0 }, xm[3] = {
+      0.0};
+      double cw[3] = { 0.0 };
 
       /* Interpolate meteorological data... */
       intpol_met_time_3d(met0, met0->u, met1, met1->u, atm->time[ip],
@@ -1422,24 +1428,24 @@ void write_output(
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
     if (!updated) {
 #ifdef USE_NVTX
-  RANGE_PUSH("W atm D2H",RED);
+      RANGE_PUSH("W atm D2H", RED);
 #endif
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
 #ifdef USE_NVTX
-  RANGE_POP;
+      RANGE_POP;
 #endif
       updated = 1;
     }
 #ifdef USE_NVTX
-  RANGE_PUSH("IO", YELLOW);
+    RANGE_PUSH("IO", YELLOW);
 #endif
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
   }
 
@@ -1447,24 +1453,24 @@ void write_output(
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     if (!updated) {
 #ifdef USE_NVTX
-  RANGE_PUSH("W grd D2H",RED);
+      RANGE_PUSH("W grd D2H", RED);
 #endif
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
 #ifdef USE_NVTX
-  RANGE_POP;
+      RANGE_POP;
 #endif
       updated = 1;
     }
 #ifdef USE_NVTX
-  RANGE_PUSH("IO", YELLOW);
+    RANGE_PUSH("IO", YELLOW);
 #endif
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
   }
 
@@ -1472,23 +1478,23 @@ void write_output(
   if (ctl->csi_basename[0] != '-') {
     if (!updated) {
 #ifdef USE_NVTX
-  RANGE_PUSH("W csi D2H",RED);
+      RANGE_PUSH("W csi D2H", RED);
 #endif
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
 #ifdef USE_NVTX
- RANGE_POP;
-#endif 
+      RANGE_POP;
+#endif
       updated = 1;
     }
 #ifdef USE_NVTX
-  RANGE_PUSH("IO", YELLOW);
+    RANGE_PUSH("IO", YELLOW);
 #endif
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
 #ifdef USE_NVTX
- RANGE_POP;
+    RANGE_POP;
 #endif
   }
 
@@ -1496,23 +1502,23 @@ void write_output(
   if (ctl->ens_basename[0] != '-') {
     if (!updated) {
 #ifdef USE_NVTX
-  RANGE_PUSH("W csi D2H",RED);
+      RANGE_PUSH("W csi D2H", RED);
 #endif
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
 #ifdef USE_NVTX
- RANGE_POP;
+      RANGE_POP;
 #endif
       updated = 1;
     }
 #ifdef USE_NVTX
-  RANGE_PUSH("IO", YELLOW);
+    RANGE_PUSH("IO", YELLOW);
 #endif
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
 #ifdef USE_NVTX
- RANGE_POP;
+    RANGE_POP;
 #endif
   }
 
@@ -1520,23 +1526,23 @@ void write_output(
   if (ctl->prof_basename[0] != '-') {
     if (!updated) {
 #ifdef USE_NVTX
-  RANGE_PUSH("W prof D2H",RED);
+      RANGE_PUSH("W prof D2H", RED);
 #endif
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
 #ifdef USE_NVTX
-  RANGE_POP;
+      RANGE_POP;
 #endif
       updated = 1;
     }
 #ifdef USE_NVTX
-  RANGE_PUSH("IO", YELLOW);
+    RANGE_PUSH("IO", YELLOW);
 #endif
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
   }
 
@@ -1544,23 +1550,23 @@ void write_output(
   if (ctl->stat_basename[0] != '-') {
     if (!updated) {
 #ifdef USE_NVTX
-  RANGE_PUSH("W st D2H",RED);
+      RANGE_PUSH("W st D2H", RED);
 #endif
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
 #ifdef USE_NVTX
-  RANGE_POP;
+      RANGE_POP;
 #endif
       updated = 1;
     }
 #ifdef USE_NVTX
-  RANGE_PUSH("IO", YELLOW);
+    RANGE_PUSH("IO", YELLOW);
 #endif
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
 #ifdef USE_NVTX
-  RANGE_POP;
+    RANGE_POP;
 #endif
   }
 }
