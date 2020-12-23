@@ -2,11 +2,11 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the analysis of atmospheric transport processes in the free troposphere and stratosphere.
 
-[GitHub tag (latest SemVer)](https://img.shields.io/github/tag/slcs-jsc/jurassic.svg)
-[GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/jurassic.svg)
-[GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/jurassic.svg)
-[GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/jurassic.svg)
-[GitHub](https://img.shields.io/github/license/slcs-jsc/jurassic.svg)
+![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/slcs-jsc/jurassic.svg)
+![GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/jurassic.svg)
+![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/jurassic.svg)
+![GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/jurassic.svg)
+![GitHub](https://img.shields.io/github/license/slcs-jsc/jurassic.svg)
 
 ## Features
 
