@@ -34,7 +34,7 @@ To update an existing installation use:
 
 First, compile the netCDF and GSL libraries needed for MPTRAC by using the build script:
 
-    cd mptrac/lib
+    cd mptrac/libs
     ./build.sh
 
 Next, change to the source directory, edit the Makefile according to your needs, and try to compile the code:

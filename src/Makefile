@@ -19,10 +19,10 @@
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo tropo_sample
 
 # Library directories...
-LIBDIR = -L ../lib/build/lib -L ../lib/build/lib64
+LIBDIR = -L ../libs/build/lib -L ../lib/build/lib64
 
 # Include directories...
-INCDIR = -I ../lib/build/include
+INCDIR = -I ../libs/build/include
 
 # Compile for GPUs...
 #GPU = 1
