@@ -4,16 +4,19 @@
 
 # Load these modules before compiling and running the code:
 #
-# JURECA cluster:
-# ml GCC ParaStationMPI
+# JUWELS cluster:
+# ml GCC/9.3.0 ParaStationMPI/5.4.7-1
 #
-# JURECA booster:
-# ml purge
-# ml Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
-#
-# JUWELS GPUs:
+# JUWELS booster:
 # ml CUDA PGI
 # ml mpi/19.10/openmpi-master-cuda_10.1.105-x86
+#
+# JURECA cluster (outdated):
+# ml GCC ParaStationMPI
+#
+# JURECA booster (outdated):
+# ml purge
+# ml Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
 
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo tropo_sample
