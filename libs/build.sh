@@ -18,9 +18,23 @@ cd $target/src/$dir \
     && make -j$threads && make check && make install && make clean \
 	|| exit
 
+# zlib...
+dir=zlib-1.2.11
+cd $target/src/$dir \
+    && ./configure --prefix=$target \
+    && make -j$threads && make check && make install && make clean \
+	|| exit
+
+# HDF5...
+dir=hdf5-1.12.0
+cd $target/src/$dir \
+    && ./configure --prefix=$target --with-zlib=$target --enable-hl \
+    && make -j$threads && make check && make install && make clean \
+	|| exit
+
 # netCDF...
 dir=netcdf-c-4.7.4
 cd $target/src/$dir \
-    && ./configure --prefix=$target --disable-dap --disable-netcdf-4 \
+    && CPPFLAGS=-I$target/include LDFLAGS=-L$target/lib ./configure --prefix=$target --disable-dap \
     && make -j$threads && make check && make install && make clean \
 	|| exit

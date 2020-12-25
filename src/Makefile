@@ -53,7 +53,7 @@ CC = gcc
 CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
 # Set LDFLAGS...
-LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
+LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lnetcdf -lhdf5_hl -lhdf5 -lm -ldl -lz
 
 # Compile for GPUs...
 ifdef GPU
