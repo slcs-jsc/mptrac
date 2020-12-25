@@ -20,7 +20,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries can be found in the git repository.
+This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf), the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5), and [zlib](http://www.zlib.net/) are needed for file-I/O. Copies of these libraries can be found in the git repository.
 
 Start by downloading the source code from the git repository:
 
@@ -32,7 +32,7 @@ To update an existing installation use:
 
 ### Installation
 
-First, compile the netCDF and GSL libraries needed for MPTRAC by using the build script:
+First, compile the GSL, netCDF, HDF5, and zlib libraries required by MPTRAC by running the build script:
 
     cd mptrac/libs
     ./build.sh
@@ -47,7 +47,7 @@ The binaries will be linked statically, i.e., they can be copied to other machin
 
 By default we use rather strict compiler warnings. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'.
 
-The binaries will remain in the mptrac/src/ directory.
+The binaries will remain located in the mptrac/src/ directory.
 
 ### Try the example
 
@@ -72,6 +72,8 @@ This is an example showing the particle position output for 7 June 2011:
 
 ## Further information
 
+More details on the data structures and algorithms can be found in the [MPTRAC reference manual](doc/refman.pdf).
+
 This is the main reference for citing the MPTRAC model in scientific publications:
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
@@ -89,8 +91,6 @@ This is a list of selected papers in which MPTRAC was applied:
 * Hoffmann, L., Hertzog, A., Rößler, T., Stein, O., and Wu, X.: Intercomparison of meteorological analyses and trajectories in the Antarctic lower stratosphere with Concordiasi superpressure balloon observations, Atmos. Chem. Phys., 17, 8045-8061, https://doi.org/10.5194/acp-17-8045-2017, 2017.
 
 * Heng, Y., Hoffmann, L., Griessbach, S., Rößler, T., and Stein, O.: Inverse transport modeling of volcanic sulfur dioxide emissions using large-scale simulations, Geosci. Model Dev., 9, 1627-1645, https://doi.org/10.5194/gmd-9-1627-2016, 2016.
-
-More details on the data structures and algorithms can be found in the [MPTRAC reference manual](doc/refman.pdf).
 
 ## Contributing
 
