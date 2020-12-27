@@ -39,7 +39,7 @@ INCDIR = -I ../libs/build/include
 # Compile for profiling...
 #PROF = 1
 
-# Enable NVTX
+# Enable NVTX...
 #USE_NVTX = 1
 
 # Static compilation...
@@ -83,15 +83,15 @@ else
   CFLAGS += -O3
 endif
 
-# Static compilation...
-ifdef STATIC
-  CFLAGS += -static
-endif
-
-# NVTX
+# NVTX...
 ifdef USE_NVTX
   LDFLAGS += -lnvToolsExt
   CFLAGS  += -DUSE_NVTX
+endif
+
+# Static compilation...
+ifdef STATIC
+  CFLAGS += -static
 endif
 
 # -----------------------------------------------------------------------------

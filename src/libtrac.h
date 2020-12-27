@@ -32,6 +32,10 @@
   https://github.com/slcs-jsc/mptrac
 */
 
+/* ------------------------------------------------------------
+   Includes...
+   ------------------------------------------------------------ */
+
 #include <ctype.h>
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
@@ -47,6 +51,15 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+
+#ifdef MPI
+#include "mpi.h"
+#endif
+
+#ifdef _OPENACC
+#include "openacc.h"
+#include "curand.h"
+#endif
 
 /* ------------------------------------------------------------
    Constants...
@@ -299,6 +312,57 @@
 
 /*! Timer for total runtime. */
 #define TIMER_TOTAL 14
+
+/* ------------------------------------------------------------
+   NVIDIA Tools Extension (NVTX)...
+   ------------------------------------------------------------ */
+
+#ifdef USE_NVTX
+#include "nvToolsExt.h"
+
+/*! Light blue color code (computation on CPUs). */
+#define NVTX_CPU 0xFFADD8E6
+
+/*! Dark blue color code (computation on GPUs). */
+#define NVTX_GPU 0xFF00008B
+
+/*! Yellow color code (data transfer from CPUs to GPUs). */
+#define NVTX_H2D 0xFFFFFF00
+
+/*! Orange color code (data transfer from GPUs to CPUs). */
+#define NVTX_D2H 0xFFFF8800
+
+/*! Light red color code (reading data). */
+#define NVTX_READ 0xFFFFCCCB
+
+/*! Dark red color code (writing data). */
+#define NVTX_WRITE 0xFF8B0000
+
+/*! Gray color code (other). */
+#define NVTX_MISC 0xFF808080
+
+/*! Macro for calling nvtxRangePushEx. */
+#define RANGE_PUSH(range_title, range_color) {		\
+    nvtxEventAttributes_t eventAttrib = {0};		\
+    eventAttrib.version = NVTX_VERSION;			\
+    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;	\
+    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII;	\
+    eventAttrib.colorType = NVTX_COLOR_ARGB;		\
+    eventAttrib.color = range_color;			\
+    eventAttrib.message.ascii = range_title;		\
+    nvtxRangePushEx(&eventAttrib);			\
+  }
+
+/*! Macro for calling nvtxRangePop. */
+#define RANGE_POP {				\
+    nvtxRangePop();				\
+  }
+#else
+
+/* Empty definitions of RANGE_PUSH and RANGE_POP... */
+#define RANGE_PUSH(range_title, range_color) {}
+#define RANGE_POP {}
+#endif
 
 /* ------------------------------------------------------------
    Structs...
