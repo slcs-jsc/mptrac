@@ -72,9 +72,7 @@ This is an example showing the particle position output for 7 June 2011:
 
 ## Further information
 
-Some information for new users and developers is collected in the [Github wiki](https://github.com/slcs-jsc/mptrac/wiki).
-
-Many details on the data structures and algorithms can be found in the [MPTRAC reference manual](https://github.com/slcs-jsc/mptrac/blob/master/docs/refman.pdf).
+More detailed information for new users and developers is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki), the [reference manual](https://github.com/slcs-jsc/mptrac/blob/master/docs/refman.pdf), and the [Sphinx documentation](http://griessbach1.pages.jsc.fz-juelich.de/mptrac-user-documentation).
 
 This is the main reference for citing the MPTRAC model in scientific publications:
 
