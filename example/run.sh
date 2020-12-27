@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Setup...
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../libs/build/lib
 export OMP_NUM_THREADS=4
 trac=../src
 
