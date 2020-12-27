@@ -5,18 +5,26 @@
 # Load these modules before compiling and running the code:
 #
 # JUWELS cluster:
-# ml GCC/9.3.0 ParaStationMPI/5.4.7-1
-#
-# JUWELS booster:
-# ml CUDA PGI
-# ml mpi/19.10/openmpi-master-cuda_10.1.105-x86
-#
-# JURECA cluster (outdated):
+# - enable MPI and disable STATIC flag
+# - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
 # ml GCC ParaStationMPI
 #
-# JURECA booster (outdated):
+# JUWELS booster:
+# - login to juwels-booster.fz-juelich.de
+# - enable GPU flag and disable STATIC flag
+# - multi-GPU usage via MPI has not been tested
+# - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
+# ml NVHPC
+#
+# JURECA-DC cluster:
+# - see JUWELS cluster
+#
+# JURECA-DC GPUs:
+# - see JUWELS booster
+#
+# JURECA-DC KNLs:
 # ml purge
-# ml Architecture/KNL GCC/8.2.0 ParaStationMPI/5.2.1-1
+# ml Architecture/KNL GCC ParaStationMPI
 
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo tropo_sample

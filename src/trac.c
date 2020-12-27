@@ -227,13 +227,13 @@ int main(
 #endif
 
     /* Read control parameters... */
-    RANGE_PUSH("Read ctl", NVTX_INPUT);
+    RANGE_PUSH("Read ctl", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
     RANGE_POP;
 
     /* Read atmospheric data... */
-    RANGE_PUSH("Read atm", NVTX_INPUT);
+    RANGE_PUSH("Read atm", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
@@ -271,7 +271,7 @@ int main(
     module_diffusion_init();
 
     /* Initialize meteorological data... */
-    RANGE_PUSH("Init meteo data", NVTX_INPUT);
+    RANGE_PUSH("Init meteo data", NVTX_READ);
     get_met(&ctl, argv[4], ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
@@ -324,7 +324,7 @@ int main(
       RANGE_POP;
 
       /* Get meteorological data... */
-      RANGE_PUSH("Get meteo data", NVTX_INPUT);
+      RANGE_PUSH("Get meteo data", NVTX_READ);
       START_TIMER(TIMER_INPUT);
       if (t != ctl.t_start)
 	get_met(&ctl, argv[4], t, &met0, &met1);
