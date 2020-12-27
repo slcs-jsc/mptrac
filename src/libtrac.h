@@ -268,9 +268,6 @@
 /*! Maximum number of timers. */
 #define NTIMER 20
 
-/*! Timer for total runtime. */
-#define TIMER_ZERO 0
-
 /*! Timer for initalization. */
 #define TIMER_INIT 1
 

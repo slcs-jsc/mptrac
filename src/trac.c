@@ -204,7 +204,6 @@ int main(
        ------------------------------------------------------------ */
 
     /* Set timers... */
-    START_TIMER(TIMER_ZERO);
     START_TIMER(TIMER_TOTAL);
     START_TIMER(TIMER_INIT);
 
@@ -458,7 +457,6 @@ int main(
 	   1024.);
 
     /* Report timers... */
-    STOP_TIMER(TIMER_ZERO);
     STOP_TIMER(TIMER_TOTAL);
     PRINT_TIMER(TIMER_INIT);
     PRINT_TIMER(TIMER_INPUT);
