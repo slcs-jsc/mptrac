@@ -11,7 +11,7 @@
 #
 # JUWELS booster:
 # - login to juwels-booster.fz-juelich.de
-# - enable GPU flag and disable STATIC flag
+# - enable MPI and GPU flags and disable STATIC flag
 # - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
 # ml NVHPC ParaStationMPI
 #
@@ -68,7 +68,7 @@ LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lnetcdf -lhdf5_hl -lhdf5 -lm -ldl
 # Compile for GPUs...
 ifdef GPU
   CC = pgcc
-  CFLAGS = $(INCDIR) -mp -ta=tesla:cc70,managed -mcmodel=medium -Minfo=accel -g
+  CFLAGS = $(INCDIR) -mp -acc -gpu=managed -mcmodel=medium -Minfo=all -g
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 

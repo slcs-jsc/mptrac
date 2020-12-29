@@ -162,7 +162,7 @@ int main(
 
   double *dt, *rs, t;
 
-  int ntask = -1, rank = 0, size = 1;
+  int num_devices = 0, ntask = -1, rank = 0, size = 1;
 
   /* Initialize MPI... */
 #ifdef MPI
@@ -177,7 +177,7 @@ int main(
 #ifdef _OPENACC
   RANGE_PUSH("Initialize GPUs", NVTX_GPU);
   acc_device_t device_type = acc_get_device_type();
-  int num_devices = acc_get_num_devices(acc_device_nvidia);
+  num_devices = acc_get_num_devices(acc_device_nvidia);
   int device_num = rank % num_devices;
   acc_set_device_num(device_num, acc_device_nvidia);
   acc_init(device_type);
@@ -437,8 +437,9 @@ int main(
 
     /* Report problem size... */
     printf("SIZE_NP = %d\n", atm->np);
-    printf("SIZE_TASKS = %d\n", size);
-    printf("SIZE_THREADS = %d\n", omp_get_max_threads());
+    printf("SIZE_MPI_TASKS = %d\n", size);
+    printf("SIZE_OMP_THREADS = %d\n", omp_get_max_threads());
+    printf("SIZE_ACC_DEVICES = %d\n", num_devices);
 
     /* Report memory usage... */
     printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);

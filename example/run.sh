@@ -1,8 +1,34 @@
 #! /bin/bash
 
+# Slurm configuation for JUWELS-Cluster...
+#SBATCH --account=slmet
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --ntasks-per-node=1
+#SBATCH --cpus-per-task=48
+#SBATCH --time=00:05:00
+#SBATCH --partition=batch
+
+## Slurm configuation for JUWELS-Booster...
+##SBATCH --account=ea_jsc
+##SBATCH --nodes=1
+##SBATCH --ntasks=1
+##SBATCH --ntasks-per-node=1
+##SBATCH --cpus-per-task=48
+##SBATCH --time=00:05:00
+##SBATCH --partition=develbooster
+##SBATCH --gres=gpu:4
+
+# Load modules (uncomment for JUWELS)...
+#ml purge
+#ml GCC ParaStationMPI gnuplot     # for MPI runs
+#ml NVHPC ParaStationMPI gnuplot   # for GPU runs
+
 # Setup...
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../libs/build/lib
-export OMP_NUM_THREADS=4
+[ "${SLURM_CPUS_PER_TASK}" ] \
+    && export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK} \
+	|| export OMP_NUM_THREADS=4
 trac=../src
 
 # Create directories...
