@@ -12,9 +12,9 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 * MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given wind fields.
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using a Markov chain model.
-* Additional modules are implemented to simulate the sedimentation of particles and the decay of air parcel mass.
+* Additional modules are implemented to simulate the sedimentation of particles, the decay of air parcel mass, OH chemistry, and wet deposition.
 * Various output methods for particle, ensemble, gridded, and station data. Gnuplot interface for direct visualization.
-* MPTRAC features an MPI/OpenMP and MPI/GPU hybrid parallelization for efficient use on supercomputers.
+* MPTRAC features an MPI/OpenMP/OpenACC hybrid parallelization for efficient use on supercomputers and GPUs.
 
 ## Getting started
 
@@ -37,17 +37,17 @@ First, compile the GSL, netCDF, HDF5, and zlib libraries required by MPTRAC by r
     cd mptrac/libs
     ./build.sh
 
-Next, change to the source directory, edit the Makefile according to your needs, and try to compile the code:
+Next, change to the source directory, edit the Makefile according to your needs, load any modules as needed on your target platform, and try to compile the code:
 
     cd mptrac/src
     emacs Makefile
     make
 
-The binaries will be linked statically, i.e., they can be copied to other machines. Sometimes static compilations causes problems, in particular in combination with MPI. In this case remove the '-static' flag from the CFLAGS in the Makefile and compile again.
+After compilation, the binaries will be located in the mptrac/src/ directory.
 
-By default we use rather strict compiler warnings. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'.
+By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, as static versions of some libraries might be missing. In this case, remove the '-static' flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
 
-The binaries will remain located in the mptrac/src/ directory.
+By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'. It should not be removed from the Makefile.
 
 ### Try the example
 
@@ -63,12 +63,20 @@ This shows how to run the example:
     cd mptrac/projects/example
     ./run.sh
 
-Please see the example script (run.sh) on how to invoke programs such as atm_init and atm_split to initialize trajectory seeds and trac to calculate the trajectories.
+Please see the example script (run.sh) on how to invoke MPTRAC programs such as 'atm_init' and 'atm_split' to initialize trajectory seeds and 'trac' to calculate the trajectories.
 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position output for 7 June 2011:
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_07_00_00.tab.png" width="60%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_05_00_00.tab.png" width="45%"/> <img src="example/plots.org/GRID_diff_2011_06_05_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> <img src="example/plots.org/GRID_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.org/GRID_diff_2011_06_05_00_00.tab.png" width="50%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="50%"/></p>
+<p align="center"><img src="example/plots.org/GRID_diff_2011_06_06_00_00.tab.png" width="50%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_07_00_00.tab.png" width="50%"/></p>
+<p align="center"><img src="example/plots.org/GRID_diff_2011_06_07_00_00.tab.png" width="50%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="50%"/></p>
+<p align="center"><img src="example/plots.org/GRID_diff_2011_06_08_00_00.tab.png" width="50%"/></p>
 
 ## Further information
 

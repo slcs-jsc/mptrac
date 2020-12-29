@@ -12,9 +12,8 @@
 # JUWELS booster:
 # - login to juwels-booster.fz-juelich.de
 # - enable GPU flag and disable STATIC flag
-# - multi-GPU usage via MPI has not been tested
 # - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
-# ml NVHPC
+# ml NVHPC ParaStationMPI
 #
 # JURECA-DC cluster:
 # - see JUWELS cluster
