@@ -46,7 +46,7 @@ INCDIR = -I ../libs/build/include
 # Compile for profiling...
 #PROF = 1
 
-# Enable NVTX...
+# Enable NVTX markers...
 #USE_NVTX = 1
 
 # Static compilation...
@@ -98,6 +98,12 @@ endif
 
 # Static compilation...
 ifdef STATIC
+ifdef GPU
+$(error Static compilation does not work for GPU)
+endif
+ifdef MPI
+$(error Static compilation does not work for MPI)
+endif
   CFLAGS += -static
 endif
 
