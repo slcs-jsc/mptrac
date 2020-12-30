@@ -85,6 +85,8 @@ This is the main reference for citing the MPTRAC model in scientific publication
 
 This is a list of selected papers in which MPTRAC was applied:
 
+* Liu, M., Huang, Y., Hoffmann, L., Huang, C., Chen, P., Heng, Y.: High-Resolution Source Estimation of Volcanic Sulfur Dioxide Emissions Using Large-Scale Transport Simulations, in: Krzhizhanovskaya V.V. et al. (eds), Computational Science – ICCS 2020, ICCS 2020, Lecture Notes in Computer Science, vol 12139, Springer, https://doi.org/10.1007/978-3-030-50420-5_5, 2020.
+
 * Hoffmann, L., Günther, G., Li, D., Stein, O., Wu, X., Griessbach, S., Heng, Y., Konopka, P., Müller, R., Vogel, B., and Wright, J. S.: From ERA-Interim to ERA5: the considerable impact of ECMWF's next-generation reanalysis on Lagrangian transport simulations, Atmos. Chem. Phys., 19, 3097-3124, https://doi.org/10.5194/acp-19-3097-2019, 2019.
 
 * Wu, X., Griessbach, S., and Hoffmann, L.: Long-range transport of volcanic aerosol from the 2010 Merapi tropical eruption to Antarctica, Atmos. Chem. Phys., 18, 15859-15877, https://doi.org/10.5194/acp-18-15859-2018, 2018.
