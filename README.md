@@ -51,7 +51,7 @@ By default, the binaries will be linked statically, i.e., they can be copied and
 
 By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'. It should not be removed from the Makefile.
 
-### Try the example
+### Run the example
 
 An example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
@@ -79,9 +79,11 @@ This is an example showing the particle position and grid output for 5-8 June 20
 
 More detailed information for new users and developers is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki), the [reference manual](https://github.com/slcs-jsc/mptrac/blob/master/docs/refman.pdf), and the [Sphinx documentation](http://griessbach1.pages.jsc.fz-juelich.de/mptrac-user-documentation).
 
-This is the main reference for citing the MPTRAC model in scientific publications:
+These are the main references for citing the MPTRAC model in scientific publications:
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
+
+* You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
 
 This is a list of selected papers in which MPTRAC was applied:
 
