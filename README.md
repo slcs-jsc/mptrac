@@ -105,7 +105,7 @@ Please do not hesitate to contact us, if you have any further questions or need 
 
 ## License
 
-MPTRAC is distributed under the GNU GPL v3.
+MPTRAC is distributed under the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
 
 ## Contact
 
