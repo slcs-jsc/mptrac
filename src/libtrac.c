@@ -2287,7 +2287,7 @@ void read_ctl(
   if (ctl->direction != -1 && ctl->direction != 1)
     ERRMSG("Set DIRECTION to -1 or 1!");
   ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "1e100", NULL);
-  ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "600", NULL);
+  ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "180", NULL);
 
   /* Meteorological data... */
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
