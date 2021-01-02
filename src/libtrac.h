@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -304,11 +304,14 @@
 /*! Timer for OH chemistry module. */
 #define TIMER_OHCHEM 12
 
+/*! Timer for dry deposition module. */
+#define TIMER_DRYDEPO 13
+
 /*! Timer for wet deposition module. */
-#define TIMER_WETDEPO 13
+#define TIMER_WETDEPO 14
 
 /*! Timer for total runtime. */
-#define TIMER_TOTAL 14
+#define TIMER_TOTAL 15
 
 /* ------------------------------------------------------------
    NVIDIA Tools Extension (NVTX)...
@@ -555,6 +558,9 @@ typedef struct {
 
   /*! Coefficients for OH chemistry (k0, n, kinf, m). */
   double oh_chem[4];
+
+  /*! Coefficients for dry deposition (v). */
+  double dry_depo[1];
 
   /*! Coefficients for wet deposition (A, B, H). */
   double wet_depo[4];
@@ -1116,6 +1122,16 @@ double scan_ctl(
   int arridx,
   const char *defvalue,
   char *value);
+
+/*! Calculate sedimentation velocity. */
+#ifdef _OPENACC
+#pragma acc routine (sedi)
+#endif
+double sedi(
+  double p,
+  double T,
+  double r_p,
+  double rho_p);
 
 /*! Spline interpolation. */
 void spline(

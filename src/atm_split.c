@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -132,18 +132,20 @@ int main(
 	+ gsl_ran_gaussian_ziggurat(rng, dt / 2.3548);
 
     /* Set vertical position... */
-    if (nz > 0) {
-      do {
-	z = zmin + (zmax - zmin) * gsl_rng_uniform_pos(rng);
-	iz = locate_irr(kz, nz, z);
-	k = LIN(kz[iz], kk[iz], kz[iz + 1], kk[iz + 1], z);
-      } while (gsl_rng_uniform(rng) > k);
-      atm2->p[atm2->np] = P(z);
-    } else if (z1 > z0)
-      atm2->p[atm2->np] = P(z0 + (z1 - z0) * gsl_rng_uniform_pos(rng));
-    else
-      atm2->p[atm2->np] = atm->p[ip]
-	+ DZ2DP(gsl_ran_gaussian_ziggurat(rng, dz / 2.3548), atm->p[ip]);
+    do {
+      if (nz > 0) {
+	do {
+	  z = zmin + (zmax - zmin) * gsl_rng_uniform_pos(rng);
+	  iz = locate_irr(kz, nz, z);
+	  k = LIN(kz[iz], kk[iz], kz[iz + 1], kk[iz + 1], z);
+	} while (gsl_rng_uniform(rng) > k);
+	atm2->p[atm2->np] = P(z);
+      } else if (z1 > z0)
+	atm2->p[atm2->np] = P(z0 + (z1 - z0) * gsl_rng_uniform_pos(rng));
+      else
+	atm2->p[atm2->np] = atm->p[ip]
+	  + DZ2DP(gsl_ran_gaussian_ziggurat(rng, dz / 2.3548), atm->p[ip]);
+    } while (atm2->p[atm2->np] < P(100.) || atm2->p[atm2->np] > P(-1.));
 
     /* Set horizontal position... */
     if (lon1 > lon0 && lat1 > lat0) {

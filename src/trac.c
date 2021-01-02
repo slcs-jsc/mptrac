@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2020 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -76,6 +76,14 @@ void module_diffusion_turb(
   atm_t * atm,
   double *dt,
   double *rs);
+
+/*! Calculate dry deposition. */
+void module_dry_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
 
 /*! Initialize isosurface module. */
 void module_isosurf_init(
@@ -414,6 +422,14 @@ int main(
       STOP_TIMER(TIMER_OHCHEM);
       RANGE_POP;
 
+      /* Dry deposition... */
+      RANGE_PUSH("Dry deposition", NVTX_GPU);
+      START_TIMER(TIMER_DRYDEPO);
+      if (ctl.dry_depo[0] > 0)
+	module_dry_deposition(&ctl, met0, met1, atm, dt);
+      STOP_TIMER(TIMER_DRYDEPO);
+      RANGE_POP;
+
       /* Wet deposition... */
       RANGE_PUSH("Wet deposition", NVTX_GPU);
       START_TIMER(TIMER_WETDEPO);
@@ -471,6 +487,7 @@ int main(
     PRINT_TIMER(TIMER_POSITION);
     PRINT_TIMER(TIMER_SEDI);
     PRINT_TIMER(TIMER_OHCHEM);
+    PRINT_TIMER(TIMER_DRYDEPO);
     PRINT_TIMER(TIMER_WETDEPO);
     PRINT_TIMER(TIMER_TOTAL);
 
@@ -824,6 +841,68 @@ void module_diffusion_turb(
 	atm->p[ip]
 	  += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
       }
+    }
+}
+
+/*****************************************************************************/
+
+void module_dry_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Width of the surface layer [hPa]. */
+  const double dp = 30.;
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+
+#ifdef _OPENACC
+#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      double dz, ps, T, v_dep, cw[3];
+
+      int ci[3];
+
+      /* Get surface pressure... */
+      intpol_met_time_2d(met0, met0->ps, met1, met1->ps, atm->time[ip],
+			 atm->lon[ip], atm->lat[ip], &ps, ci, cw, 1);
+
+      /* Check whether particle is above the surface layer... */
+      if (atm->p[ip] < ps - dp)
+	continue;
+
+      /* Set width of surface layer... */
+      dz = 1000. * (Z(ps - dp) - Z(ps));
+
+      /* Calculate sedimentation velocity for particles... */
+      if (ctl->qnt_r >= 0 && ctl->qnt_rho >= 0) {
+
+	/* Get temperature... */
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			   atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
+			   1);
+
+	/* Set deposition velocity... */
+	v_dep = sedi(atm->p[ip], T, atm->q[ctl->qnt_r][ip],
+		     atm->q[ctl->qnt_rho][ip]);
+      }
+
+      /* Use explicit sedimentation velocity for gases... */
+      else
+	v_dep = ctl->dry_depo[0];
+
+      /* Calculate loss of mass based on deposition velocity... */
+      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] * v_dep / dz);
     }
 }
 
@@ -1198,43 +1277,21 @@ void module_sedi(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double G, K, eta, lambda, p, r_p, rho, rho_p, T, v, v_p, cw[3];
+      double T, v_s, cw[3];
 
       int ci[3];
-
-      /* Convert units... */
-      p = 100. * atm->p[ip];
-      r_p = 1e-6 * atm->q[ctl->qnt_r][ip];
-      rho_p = atm->q[ctl->qnt_rho][ip];
 
       /* Get temperature... */
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
 			 atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
 			 1);
 
-      /* Density of dry air... */
-      rho = p / (RA * T);
-
-      /* Dynamic viscosity of air... */
-      eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
-
-      /* Thermal velocity of an air molecule... */
-      v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
-
-      /* Mean free path of an air molecule... */
-      lambda = 2. * eta / (rho * v);
-
-      /* Knudsen number for air... */
-      K = lambda / r_p;
-
-      /* Cunningham slip-flow correction... */
-      G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
-
-      /* Sedimentation (fall) velocity... */
-      v_p = 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
+      /* Sedimentation velocity... */
+      v_s = sedi(atm->p[ip], T, atm->q[ctl->qnt_r][ip],
+		 atm->q[ctl->qnt_rho][ip]);
 
       /* Calculate pressure change... */
-      atm->p[ip] += DZ2DP(v_p * dt[ip] / 1000., atm->p[ip]);
+      atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
     }
 }
 

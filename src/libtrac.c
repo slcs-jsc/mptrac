@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2020 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -2335,6 +2335,7 @@ void read_ctl(
     ctl->oh_chem[1] = 4.3;	/* (JPL Publication 15-10) */
     ctl->oh_chem[2] = 1.6e-12;	/* (JPL Publication 15-10) */
     ctl->oh_chem[3] = 0.0;	/* (JPL Publication 15-10) */
+    ctl->dry_depo[0] = 0.0;	/* settling velocity unknown? */
     ctl->wet_depo[0] = 2.0e-05;	/* (FLEXPART v10.4) */
     ctl->wet_depo[1] = 0.62;	/* (FLEXPART v10.4) */
     ctl->wet_depo[2] = 1.3e-2;	/* (Sander, 2015) */
@@ -2349,6 +2350,9 @@ void read_ctl(
     for (int ip = 0; ip < 4; ip++)
       ctl->oh_chem[ip] =
 	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
+    for (int ip = 0; ip < 1; ip++)
+      ctl->dry_depo[ip] =
+	scan_ctl(filename, argc, argv, "DRY_DEPO", ip, "0", NULL);
     for (int ip = 0; ip < 4; ip++)
       ctl->wet_depo[ip] =
 	scan_ctl(filename, argc, argv, "WET_DEPO", ip, "0", NULL);
@@ -3405,6 +3409,42 @@ double scan_ctl(
   if (value != NULL)
     sprintf(value, "%s", rval);
   return atof(rval);
+}
+
+/*****************************************************************************/
+
+double sedi(
+  double p,
+  double T,
+  double r_p,
+  double rho_p) {
+
+  double eta, G, K, lambda, rho, v;
+
+  /* Convert units... */
+  p *= 100.;			/* from hPa to Pa */
+  r_p *= 1e-6;			/* from microns to m */
+
+  /* Density of dry air... */
+  rho = p / (RA * T);
+
+  /* Dynamic viscosity of air... */
+  eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+
+  /* Thermal velocity of an air molecule... */
+  v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
+
+  /* Mean free path of an air molecule... */
+  lambda = 2. * eta / (rho * v);
+
+  /* Knudsen number for air... */
+  K = lambda / r_p;
+
+  /* Cunningham slip-flow correction... */
+  G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
+
+  /* Sedimentation velocity... */
+  return 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
 }
 
 /*****************************************************************************/
