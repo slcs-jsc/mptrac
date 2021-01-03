@@ -65,11 +65,20 @@
    Constants...
    ------------------------------------------------------------ */
 
+/*! Specific heat of dry air at constant pressure [J/(kg K)]. */
+#define CPD 1003.5
+
+/*! Ratio of the specific gas constant of dry air and water vapour [1]. */
+#define EPS (RA / RW)
+
 /*! Standard gravity [m/s^2]. */
 #define G0 9.80665
 
 /*! Scale height [km]. */
 #define H0 7.0
+
+/*! Heat of vaporization of water [J/kg]. */
+#define HV 2501000.
 
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
 #define KB 1.3806504e-23
@@ -89,11 +98,14 @@
 /*! Standard temperature [K]. */
 #define T0 273.15
 
+/*! Ideal gas constant [J/(mol K)]. */
+#define RI 8.3144598
+
 /*! Specific gas constant of dry air [J/(kg K)]. */
 #define RA 287.058
 
-/*! Ideal gas constant [J/(mol K)]. */
-#define RI 8.3144598
+/*! Specific gas constant of water vapour [J/(kg K)]. */
+#define RW 461.5
 
 /*! Mean radius of Earth [km]. */
 #define RE 6367.421
@@ -223,8 +235,8 @@
 /*! Convert altitude to pressure. */
 #define P(z) (P0 * exp(-(z) / H0))
 
-/*! Compute relative humidty. */
-#define RH(p, t, h2o) (0.263 * 100. * (p) * MH2O / MA * (h2o)	\
+/*! Compute relative humidity. */
+#define RH(p, t, h2o) (0.263 * 100. * (p) * MH2O / MA * (h2o)		\
 		       / exp(17.67 * ((t) - T0) / ((t) - 29.65)))
 
 /*! Compute square. */
@@ -454,6 +466,9 @@ typedef struct {
 
   /*! Quantity array index for potential vorticity. */
   int qnt_pv;
+
+  /*! Quantity array index for dew point temperature. */
+  int qnt_tdew;
 
   /*! Quantity array index for T_ice. */
   int qnt_tice;
@@ -906,6 +921,16 @@ void day2doy(
   int day,
   int *doy);
 
+
+/*! Calculate dew point temperature. */
+#ifdef _OPENACC
+#pragma acc routine (dew_point)
+#endif
+double dew_point(
+  double p,
+  double T,
+  double h2o);
+
 /*! Get date from day of year. */
 void doy2day(
   int year,
@@ -1016,6 +1041,14 @@ void jsec2time(
   int *min,
   int *sec,
   double *remain);
+
+/*! Calculate moist adiabatic lapse rate. */
+#ifdef _OPENACC
+#pragma acc routine (lapse_rate)
+#endif
+double lapse_rate(
+  double T,
+  double q);
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC

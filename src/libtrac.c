@@ -1539,6 +1539,31 @@ void day2doy(
 
 /*****************************************************************************/
 
+double dew_point(
+  double p,
+  double T,
+  double h2o) {
+
+  /*
+     Calulate dew point temperature [K] from pressure [hPa], temperature [K],
+     and water vapor vmr [1] based on Magnus-Tetens formula (Sonntag, 1990).
+     Valid range from -45°C to 60°C. Uncertainty of 0.35°C.
+
+     Reference: https://www.omnicalculator.com/physics/dew-point
+   */
+
+  /* Constants... */
+  const double a = 17.62, b = 243.12;
+
+  /* Auxiliary variable... */
+  double alpha = log(RH(p, T, h2o) / 100.) + a * (T - T0) / (b + (T - T0));
+
+  /* Return dew point temperature... */
+  return b * alpha / (a - alpha) + T0;
+}
+
+/*****************************************************************************/
+
 void doy2day(
   int year,
   int doy,
@@ -1911,6 +1936,28 @@ void jsec2time(
 
 /*****************************************************************************/
 
+double lapse_rate(
+  double T,
+  double h2o) {
+
+  /*
+     Calculate lapse rate [K/km] from temperature [K] and
+     water vapor volume mixing ratio [1].
+
+     Reference: https://en.wikipedia.org/wiki/Lapse_rate
+
+     Note: The mixing ratio of the mass of water vapour to the mass of
+     dry air, r = EPS * e / (p - e), is approximated by specific humdiity.
+   */
+
+  double r = h2o * MH2O / MA;
+
+  return 1e3 * G0 * (RA * SQR(T) + HV * r * T)
+    / (CPD * RA * SQR(T) + SQR(HV) * r * EPS);
+}
+
+/*****************************************************************************/
+
 int locate_irr(
   double *xx,
   int n,
@@ -2176,6 +2223,7 @@ void read_ctl(
   ctl->qnt_vh = -1;
   ctl->qnt_vz = -1;
   ctl->qnt_pv = -1;
+  ctl->qnt_tdew = -1;
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
@@ -2265,6 +2313,9 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "pv") == 0) {
       ctl->qnt_pv = iq;
       sprintf(ctl->qnt_unit[iq], "PVU");
+    } else if (strcmp(ctl->qnt_name[iq], "tdew") == 0) {
+      ctl->qnt_tdew = iq;
+      sprintf(ctl->qnt_unit[iq], "K");
     } else if (strcmp(ctl->qnt_name[iq], "tice") == 0) {
       ctl->qnt_tice = iq;
       sprintf(ctl->qnt_unit[iq], "K");
@@ -3465,7 +3516,7 @@ void spline(
   acc = gsl_interp_accel_alloc();
   s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
 
-  /* Interpolate temperature profile... */
+  /* Interpolate profile... */
   gsl_spline_init(s, x, y, (size_t) n);
   for (int i = 0; i < n2; i++)
     if (x2[i] <= x[0])

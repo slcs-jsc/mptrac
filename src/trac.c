@@ -1169,6 +1169,10 @@ void module_meteo(
     if (ctl->qnt_pv >= 0)
       atm->q[ctl->qnt_pv][ip] = pv;
 
+    /* Calculate dew point... */
+    if (ctl->qnt_tdew >= 0)
+      atm->q[ctl->qnt_tdew][ip] = dew_point(atm->p[ip], t, h2o);
+
     /* Calculate T_ice (Marti and Mauersberger, 1993)... */
     if (ctl->qnt_tice >= 0)
       atm->q[ctl->qnt_tice][ip] =
