@@ -51,7 +51,6 @@ QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
 MET_TROPO = 3
-MET_GEOPOT = meteo/ei_geopot_1deg.tab
 TDEC_TROP = 259200
 TDEC_STRAT = 259200
 DT_MOD = 600
