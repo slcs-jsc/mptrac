@@ -1945,12 +1945,11 @@ double lapse_rate(
      water vapor volume mixing ratio [1].
 
      Reference: https://en.wikipedia.org/wiki/Lapse_rate
-
-     Note: The mixing ratio of the mass of water vapour to the mass of
-     dry air, r = EPS * e / (p - e), is approximated by specific humdiity.
    */
 
-  double r = h2o * MH2O / MA;
+  double sh = h2o * MH2O / MA;
+
+  double r = sh / (1. - sh);
 
   return 1e3 * G0 * (RA * SQR(T) + HV * r * T)
     / (CPD * RA * SQR(T) + SQR(HV) * r * EPS);
