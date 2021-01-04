@@ -921,7 +921,6 @@ void day2doy(
   int day,
   int *doy);
 
-
 /*! Calculate dew point temperature. */
 #ifdef _OPENACC
 #pragma acc routine (dew_point)
@@ -937,6 +936,14 @@ void doy2day(
   int doy,
   int *mon,
   int *day);
+
+/*! Calculate frost point temperature. */
+#ifdef _OPENACC
+#pragma acc routine (frost_point)
+#endif
+double frost_point(
+  double p,
+  double h2o);
 
 /*! Convert geolocation to Cartesian coordinates. */
 void geo2cart(

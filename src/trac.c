@@ -1175,10 +1175,8 @@ void module_meteo(
 
     /* Calculate T_ice (Marti and Mauersberger, 1993)... */
     if (ctl->qnt_tice >= 0)
-      atm->q[ctl->qnt_tice][ip] =
-	-2663.5 /
-	(log10((ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] * 100.) -
-	 12.537);
+      atm->q[ctl->qnt_tice][ip]
+	= frost_point(atm->p[ip], (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o));
 
     /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
     if (ctl->qnt_tnat >= 0) {

@@ -1592,6 +1592,21 @@ void doy2day(
 
 /*****************************************************************************/
 
+double frost_point(
+  double p,
+  double h2o) {
+
+  /*
+     Calculate frost point temperature [K] from pressure [hPa]
+     and water vapor vmr [1] according to (Marti and Mauersberger, 1993).
+   */
+
+  /* Return frost point temperature... */
+  return -2663.5 / (log10(h2o * p * 100.) - 12.537);
+}
+
+/*****************************************************************************/
+
 void geo2cart(
   double z,
   double lon,
