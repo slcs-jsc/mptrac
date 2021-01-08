@@ -2359,12 +2359,12 @@ void read_ctl(
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
-  if(ctl->met_dx < 1 || ctl->met_dy < 1 || ctl->met_dp < 1)
+  if (ctl->met_dx < 1 || ctl->met_dy < 1 || ctl->met_dp < 1)
     ERRMSG("MET_DX, MET_DY, and MET_DP need to be greater than zero!");
   ctl->met_sx = (int) scan_ctl(filename, argc, argv, "MET_SX", -1, "1", NULL);
   ctl->met_sy = (int) scan_ctl(filename, argc, argv, "MET_SY", -1, "1", NULL);
   ctl->met_sp = (int) scan_ctl(filename, argc, argv, "MET_SP", -1, "1", NULL);
-  if(ctl->met_sx < 1 || ctl->met_sy < 1 || ctl->met_sp < 1)
+  if (ctl->met_sx < 1 || ctl->met_sy < 1 || ctl->met_sp < 1)
     ERRMSG("MET_SX, MET_SY, and MET_SP need to be greater than zero!");
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
@@ -2375,7 +2375,7 @@ void read_ctl(
     = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "6", NULL);
   ctl->met_geopot_sy
     = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "4", NULL);
-  if(ctl->met_geopot_sx < 1 || ctl->met_geopot_sy < 1)
+  if (ctl->met_geopot_sx < 1 || ctl->met_geopot_sy < 1)
     ERRMSG("MET_GEOPOT_SX and MET_GEOPOT_SY need to be greater than zero!");
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
@@ -2823,6 +2823,19 @@ void read_met_geopot(
 		     (TVIRT(met->t[ix][iy][ip - 1], met->h2o[ix][iy][ip - 1])
 		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
 		     * (logp[ip - 1] - logp[ip]));
+
+      /* Lower part of profile... */
+      met->z[ix][iy][ip0]
+	= (float) (z0 + RI / MA / G0 * 0.5
+		   * (ts + TVIRT(met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]))
+		   * (log(met->ps[ix][iy]) - logp[ip0]));
+      for (ip = ip0 - 1; ip >= 0; ip--)
+	met->z[ix][iy][ip]
+	  = (float) (met->z[ix][iy][ip + 1] + RI / MA / G0 * 0.5 *
+		     (TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip])
+		      + TVIRT(met->t[ix][iy][ip + 1],
+			      met->h2o[ix][iy][ip + 1]))
+		     * (logp[ip + 1] - logp[ip]));
     }
 
   /* Horizontal smoothing... */

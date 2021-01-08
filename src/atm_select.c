@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2020 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -49,8 +49,8 @@ int main(
   read_ctl(argv[1], argc, argv, &ctl);
   stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
-  ip0 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP0", -1, "0", NULL);
-  ip1 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP1", -1, "0", NULL);
+  ip0 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP0", -1, "-999", NULL);
+  ip1 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP1", -1, "-999", NULL);
   t0 = scan_ctl(argv[1], argc, argv, "SELECT_T0", -1, "0", NULL);
   t1 = scan_ctl(argv[1], argc, argv, "SELECT_T1", -1, "0", NULL);
   p0 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z0", -1, "0", NULL));
@@ -74,14 +74,18 @@ int main(
     if (!read_atm(argv[f], &ctl, atm))
       continue;
 
-    /* Loop over air parcels... */
-    for (ip = 0; ip < atm->np; ip += stride) {
+    /* Adjust range of air parcels... */
+    if (ip0 < 0)
+      ip0 = 0;
+    ip0 = GSL_MIN(ip0, atm->np - 1);
+    if (ip1 < 0)
+      ip1 = atm->np - 1;
+    ip1 = GSL_MIN(ip1, atm->np - 1);
+    if (ip1 < ip0)
+      ip1 = ip0;
 
-      /* Check air parcel index... */
-      if (ip0 != ip1)
-	if ((ip0 < ip1 && (ip < ip0 || ip > ip1))
-	    || (ip0 > ip1 && (ip < ip0 && ip > ip1)))
-	  continue;
+    /* Loop over air parcels... */
+    for (ip = ip0; ip <= ip1; ip += stride) {
 
       /* Check time... */
       if (t0 != t1)
