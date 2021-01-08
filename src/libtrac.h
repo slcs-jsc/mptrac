@@ -521,12 +521,15 @@ typedef struct {
   /*! Target pressure levels [hPa]. */
   double met_p[EP];
 
+  /*! Longitudinal smoothing of geopotential heights. */
+  int met_geopot_sx;
+
+  /*! Latitudinal smoothing of geopotential heights. */
+  int met_geopot_sy;
+
   /*! Tropopause definition
      (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd). */
   int met_tropo;
-
-  /*! Surface geopotential data file. */
-  char met_geopot[LEN];
 
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
@@ -1104,6 +1107,7 @@ void read_met_extrapolate(
 
 /*! Calculate geopotential heights. */
 void read_met_geopot(
+  ctl_t * ctl,
   met_t * met);
 
 /*! Read and convert 3D variable from meteorological data file. */

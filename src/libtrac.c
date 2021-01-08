@@ -2367,6 +2367,10 @@ void read_ctl(
     ERRMSG("Too many levels!");
   for (int ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
+  ctl->met_geopot_sx
+    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "6", NULL);
+  ctl->met_geopot_sy
+    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "4", NULL);
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
@@ -2668,7 +2672,7 @@ int read_met(
   read_met_sample(ctl, met);
 
   /* Calculate geopotential heights... */
-  read_met_geopot(met);
+  read_met_geopot(ctl, met);
 
   /* Calculate potential vorticity... */
   read_met_pv(met);
@@ -2759,15 +2763,16 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
+  ctl_t * ctl,
   met_t * met) {
 
-  const int dx = 6, dy = 4;
+  const int dx = ctl->met_geopot_sx, dy = ctl->met_geopot_sy;
 
-  static float help[EX][EY][EP];
+  static float help[EX][EY][EP], w, wsum;
 
   double logp[EP], ts, z0, cw[3];
 
-  int ip, ip0, ix, ix2, ix3, iy, iy2, n, ci[3];
+  int ip, ip0, ix, ix2, ix3, iy, iy2, ci[3];
 
   /* Calculate log pressure... */
   for (ip = 0; ip < met->np; ip++)
@@ -2815,27 +2820,29 @@ void read_met_geopot(
     }
 
   /* Horizontal smoothing... */
-#pragma omp parallel for default(shared) private(ix,iy,ip,n,ix2,ix3,iy2)
+#pragma omp parallel for default(shared) private(ix,iy,ip,ix2,ix3,iy2,w,wsum)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
       for (ip = 0; ip < met->np; ip++) {
-	n = 0;
+	wsum = 0;
 	help[ix][iy][ip] = 0;
-	for (ix2 = ix - dx; ix2 <= ix + dx; ix2++) {
+	for (ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ix2++) {
 	  ix3 = ix2;
 	  if (ix3 < 0)
 	    ix3 += met->nx;
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
-	  for (iy2 = GSL_MAX(iy - dy, 0);
-	       iy2 <= GSL_MIN(iy + dy, met->ny - 1); iy2++)
+	  for (iy2 = GSL_MAX(iy - dy + 1, 0);
+	       iy2 <= GSL_MIN(iy + dy - 1, met->ny - 1); iy2++)
 	    if (isfinite(met->z[ix3][iy2][ip])) {
-	      help[ix][iy][ip] += met->z[ix3][iy2][ip];
-	      n++;
+	      w = (1.0f - (float) abs(ix - ix2) / (float) dx)
+		* (1.0f - (float) abs(iy - iy2) / (float) dy);
+	      help[ix][iy][ip] += w * met->z[ix3][iy2][ip];
+	      wsum += w;
 	    }
 	}
-	if (n > 0)
-	  help[ix][iy][ip] /= (float) n;
+	if (wsum > 0)
+	  help[ix][iy][ip] /= wsum;
 	else
 	  help[ix][iy][ip] = GSL_NAN;
       }
@@ -3163,9 +3170,9 @@ void read_met_sample(
 	       iy2 <= GSL_MIN(iy + ctl->met_sy - 1, met->ny - 1); iy2++)
 	    for (ip2 = GSL_MAX(ip - ctl->met_sp + 1, 0);
 		 ip2 <= GSL_MIN(ip + ctl->met_sp - 1, met->np - 1); ip2++) {
-	      w = (float) (1.0 - abs(ix - ix2) / ctl->met_sx)
-		* (float) (1.0 - abs(iy - iy2) / ctl->met_sy)
-		* (float) (1.0 - abs(ip - ip2) / ctl->met_sp);
+	      w = (1.0f - (float) abs(ix - ix2) / (float) ctl->met_sx)
+		* (1.0f - (float) abs(iy - iy2) / (float) ctl->met_sy)
+		* (1.0f - (float) abs(ip - ip2) / (float) ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix3][iy2];
 	      help->zs[ix][iy] += w * met->zs[ix3][iy2];
 	      help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip2];
