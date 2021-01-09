@@ -1161,6 +1161,10 @@ void module_meteo(
     if (ctl->qnt_rh >= 0)
       atm->q[ctl->qnt_rh][ip] = RH(atm->p[ip], t, h2o);
 
+    /* Calculate relative humidty over ice... */
+    if (ctl->qnt_rhice >= 0)
+      atm->q[ctl->qnt_rhice][ip] = RHICE(atm->p[ip], t, h2o);
+
     /* Calculate potential temperature... */
     if (ctl->qnt_theta >= 0)
       atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
@@ -1171,12 +1175,12 @@ void module_meteo(
 
     /* Calculate dew point... */
     if (ctl->qnt_tdew >= 0)
-      atm->q[ctl->qnt_tdew][ip] = dew_point(atm->p[ip], t, h2o);
+      atm->q[ctl->qnt_tdew][ip] = TDEW(atm->p[ip], h2o);
 
     /* Calculate T_ice (Marti and Mauersberger, 1993)... */
     if (ctl->qnt_tice >= 0)
       atm->q[ctl->qnt_tice][ip]
-	= frost_point(atm->p[ip], (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o));
+	= TICE(atm->p[ip], (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o));
 
     /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
     if (ctl->qnt_tnat >= 0) {

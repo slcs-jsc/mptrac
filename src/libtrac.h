@@ -69,7 +69,7 @@
 #define CPD 1003.5
 
 /*! Ratio of the specific gas constant of dry air and water vapour [1]. */
-#define EPS (RA / RW)
+#define EPS (MH2O / MA)
 
 /*! Standard gravity [m/s^2]. */
 #define G0 9.80665
@@ -95,20 +95,17 @@
 /*! Standard pressure [hPa]. */
 #define P0 1013.25
 
-/*! Standard temperature [K]. */
-#define T0 273.15
+/*! Specific gas constant of dry air [J/(kg K)]. */
+#define RA 287.058
+
+/*! Mean radius of Earth [km]. */
+#define RE 6367.421
 
 /*! Ideal gas constant [J/(mol K)]. */
 #define RI 8.3144598
 
-/*! Specific gas constant of dry air [J/(kg K)]. */
-#define RA 287.058
-
-/*! Specific gas constant of water vapour [J/(kg K)]. */
-#define RW 461.5
-
-/*! Mean radius of Earth [km]. */
-#define RE 6367.421
+/*! Standard temperature [K]. */
+#define T0 273.15
 
 /* ------------------------------------------------------------
    Dimensions...
@@ -235,12 +232,40 @@
 /*! Convert altitude to pressure. */
 #define P(z) (P0 * exp(-(z) / H0))
 
-/*! Compute relative humidity. */
-#define RH(p, t, h2o) (0.263 * 100. * (p) * MH2O / MA * (h2o)		\
-		       / exp(17.67 * ((t) - T0) / ((t) - 29.65)))
+/*! Compute saturation pressure over water (WMO, 2018). */
+#define PS(t)							\
+  (6.112 * exp(17.62 * ((t) - T0) / (243.12 + (t) - T0)))
+
+/*! Compute saturation pressure over ice (Marti and Mauersberger, 1993). */
+#define PSICE(t)				\
+  (0.01 * pow(10., -2663.5 / (t) + 12.537))
+
+/*! Calculate partial water vapor pressure. */
+#define PW(p, h2o)					\
+  ((p) * (h2o) / (1. + (1. - EPS) * (h2o)))
+
+/*! Compute relative humidity over water. */
+#define RH(p, t, h2o)							\
+  ((p) * (h2o) / (1. + (1. - EPS) * (h2o)) / PS(t) * 100.)
+
+/*! Compute relative humidity over ice. */
+#define RHICE(p, t, h2o)						\
+  ((p) * (h2o) / (1. + (1. - EPS) * (h2o)) / PSICE(t) * 100.)
+
+/*! Compute specific humidity from water vapor volume mixing ratio. */
+#define SH(h2o) (EPS * (h2o))
 
 /*! Compute square. */
 #define SQR(x) ((x)*(x))
+
+/*! Calculate dew point temperature (WMO, 2018). */
+#define TDEW(p, h2o)				\
+  (T0 + 243.12 * log(PW((p), (h2o)) / 6.112)	\
+   / (17.62 - log(PW((p), (h2o)) / 6.112)))
+
+/*! Calculate frost point temperature (Marti and Mauersberger, 1993). */
+#define TICE(p, h2o)					\
+  (-2663.5 / (log10(100. * PW((p), (h2o))) - 12.537))
 
 /*! Compute potential temperature. */
 #define THETA(p, t) ((t) * pow(1000. / (p), 0.286))
@@ -253,7 +278,7 @@
   }
 
 /*! Compute virtual temperature. */
-#define TVIRT(t, h2o) ((t) * (1.0 + 0.609133 * (h2o) * MH2O / MA))
+#define TVIRT(t, h2o) ((t) * (1.0 + 0.609133 * SH(h2o)))
 
 /*! Print warning message. */
 #define WARN(msg) {							\
@@ -454,6 +479,9 @@ typedef struct {
 
   /*! Quantity array index for relative humidty. */
   int qnt_rh;
+
+  /*! Quantity array index for relative humidty over ice. */
+  int qnt_rhice;
 
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
@@ -924,29 +952,12 @@ void day2doy(
   int day,
   int *doy);
 
-/*! Calculate dew point temperature. */
-#ifdef _OPENACC
-#pragma acc routine (dew_point)
-#endif
-double dew_point(
-  double p,
-  double T,
-  double h2o);
-
 /*! Get date from day of year. */
 void doy2day(
   int year,
   int doy,
   int *mon,
   int *day);
-
-/*! Calculate frost point temperature. */
-#ifdef _OPENACC
-#pragma acc routine (frost_point)
-#endif
-double frost_point(
-  double p,
-  double h2o);
 
 /*! Convert geolocation to Cartesian coordinates. */
 void geo2cart(
@@ -1057,8 +1068,8 @@ void jsec2time(
 #pragma acc routine (lapse_rate)
 #endif
 double lapse_rate(
-  double T,
-  double q);
+  double t,
+  double h2o);
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC

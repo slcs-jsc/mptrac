@@ -1539,31 +1539,6 @@ void day2doy(
 
 /*****************************************************************************/
 
-double dew_point(
-  double p,
-  double T,
-  double h2o) {
-
-  /*
-     Calulate dew point temperature [K] from pressure [hPa], temperature [K],
-     and water vapor vmr [1] based on Magnus-Tetens formula (Sonntag, 1990).
-     Valid range from -45°C to 60°C. Uncertainty of 0.35°C.
-
-     Reference: https://www.omnicalculator.com/physics/dew-point
-   */
-
-  /* Constants... */
-  const double a = 17.62, b = 243.12;
-
-  /* Auxiliary variable... */
-  double alpha = log(RH(p, T, h2o) / 100.) + a * (T - T0) / (b + (T - T0));
-
-  /* Return dew point temperature... */
-  return b * alpha / (a - alpha) + T0;
-}
-
-/*****************************************************************************/
-
 void doy2day(
   int year,
   int doy,
@@ -1588,21 +1563,6 @@ void doy2day(
     *mon = i + 1;
     *day = doy - d0[i] + 1;
   }
-}
-
-/*****************************************************************************/
-
-double frost_point(
-  double p,
-  double h2o) {
-
-  /*
-     Calculate frost point temperature [K] from pressure [hPa]
-     and water vapor vmr [1] according to (Marti and Mauersberger, 1993).
-   */
-
-  /* Return frost point temperature... */
-  return -2663.5 / (log10(h2o * p * 100.) - 12.537);
 }
 
 /*****************************************************************************/
@@ -1952,7 +1912,7 @@ void jsec2time(
 /*****************************************************************************/
 
 double lapse_rate(
-  double T,
+  double t,
   double h2o) {
 
   /*
@@ -1962,12 +1922,10 @@ double lapse_rate(
      Reference: https://en.wikipedia.org/wiki/Lapse_rate
    */
 
-  double sh = h2o * MH2O / MA;
+  double r = SH(h2o) / (1. - SH(h2o));
 
-  double r = sh / (1. - sh);
-
-  return 1e3 * G0 * (RA * SQR(T) + HV * r * T)
-    / (CPD * RA * SQR(T) + SQR(HV) * r * EPS);
+  return 1e3 * G0 * (RA * SQR(t) + HV * r * t)
+    / (CPD * RA * SQR(t) + SQR(HV) * r * EPS);
 }
 
 /*****************************************************************************/
@@ -2233,6 +2191,7 @@ void read_ctl(
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_rh = -1;
+  ctl->qnt_rhice = -1;
   ctl->qnt_theta = -1;
   ctl->qnt_vh = -1;
   ctl->qnt_vz = -1;
@@ -2314,6 +2273,9 @@ void read_ctl(
       sprintf(ctl->qnt_unit[iq], "molec/cm^3");
     } else if (strcmp(ctl->qnt_name[iq], "rh") == 0) {
       ctl->qnt_rh = iq;
+      sprintf(ctl->qnt_unit[iq], "%%");
+    } else if (strcmp(ctl->qnt_name[iq], "rhice") == 0) {
+      ctl->qnt_rhice = iq;
       sprintf(ctl->qnt_unit[iq], "%%");
     } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;

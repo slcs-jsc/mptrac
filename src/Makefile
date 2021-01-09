@@ -26,7 +26,7 @@
 # ml Architecture/KNL GCC ParaStationMPI
 
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo tropo_sample
+EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day humidity jsec2time met_map met_prof met_sample met_zm time2jsec trac tropo tropo_sample
 
 # Library directories...
 LIBDIR = -L ../libs/build/lib -L ../lib/build/lib64
