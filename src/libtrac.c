@@ -3837,7 +3837,6 @@ void write_csi(
   }
 
   /* Analyze model data... */
-#pragma omp parallel for default(shared) private(ip,ix,iy,iz)
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
@@ -3862,7 +3861,7 @@ void write_csi(
   }
 
   /* Analyze all grid cells... */
-#pragma omp parallel for default(shared) private(ix,iy,iz,dlon,dlat,lat,area)
+#pragma omp parallel for default(shared) private(ix,iy,iz,dlon,dlat,lat,area) reduction(+:cx,cy,cz)
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++) {
@@ -4089,7 +4088,6 @@ void write_grid(
       }
 
   /* Average data... */
-#pragma omp parallel for default(shared) private(ip,ix,iy,iz)
   for (ip = 0; ip < atm->np; ip++)
     if (atm->time[ip] >= t0 && atm->time[ip] <= t1) {
 
@@ -4306,7 +4304,6 @@ void write_prof(
   }
 
   /* Analyze model data... */
-#pragma omp parallel for default(shared) private(ip,ix,iy,iz)
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
