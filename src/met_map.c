@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -53,8 +53,9 @@ int main(
     h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
     lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], z, zm[NX][NY], pv,
     pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY],
-    pc, pcm[NX][NY], cl, clm[NX][NY], lon, lon0, lon1, lons[NX],
-    dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
+    pc, pcm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY],
+    plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY],
+    lon, lon0, lon1, lons[NX], dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
 
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
 
@@ -136,6 +137,14 @@ int main(
 	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy], &pt, ci, cw, 0);
 	intpol_met_space_2d(met, met->pc, lons[ix], lats[iy], &pc, ci, cw, 0);
 	intpol_met_space_2d(met, met->cl, lons[ix], lats[iy], &cl, ci, cw, 0);
+	intpol_met_space_2d(met, met->plcl, lons[ix], lats[iy], &plcl, ci, cw,
+			    0);
+	intpol_met_space_2d(met, met->plfc, lons[ix], lats[iy], &plfc, ci, cw,
+			    0);
+	intpol_met_space_2d(met, met->pel, lons[ix], lats[iy], &pel, ci, cw,
+			    0);
+	intpol_met_space_2d(met, met->cape, lons[ix], lats[iy], &cape, ci, cw,
+			    0);
 
 	/* Interpolate tropopause data... */
 	intpol_met_space_3d(met, met->z, pt, lons[ix], lats[iy], &zt, ci, cw,
@@ -161,6 +170,10 @@ int main(
 	ptm[ix][iy] += pt;
 	pcm[ix][iy] += pc;
 	clm[ix][iy] += cl;
+	plclm[ix][iy] += plcl;
+	plfcm[ix][iy] += plfc;
+	pelm[ix][iy] += pel;
+	capem[ix][iy] += cape;
 	ztm[ix][iy] += zt;
 	ttm[ix][iy] += tt;
 	h2otm[ix][iy] += h2ot;
@@ -198,14 +211,19 @@ int main(
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
 	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n");
+	  "# $22 = cloud top pressure [hPa]\n"
+	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[ix][iy] / np[ix][iy], Z(p0), lons[ix], lats[iy], p0,
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
@@ -215,7 +233,9 @@ int main(
 	      ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy],
 	      h2otm[ix][iy] / np[ix][iy], lwcm[ix][iy] / np[ix][iy],
 	      iwcm[ix][iy] / np[ix][iy], clm[ix][iy] / np[ix][iy],
-	      pcm[ix][iy] / np[ix][iy]);
+	      pcm[ix][iy] / np[ix][iy], plclm[ix][iy] / np[ix][iy],
+	      plfcm[ix][iy] / np[ix][iy], pelm[ix][iy] / np[ix][iy],
+	      capem[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

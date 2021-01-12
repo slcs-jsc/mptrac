@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -49,6 +49,7 @@ int main(
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], lwc, lwcm[NZ],
     iwc, iwcm[NZ], ps, psm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
+    plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ],
     tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
 
   static int i, iz, np[NZ], npt[NZ], nz, ci[3];
@@ -130,6 +131,10 @@ int main(
 	  intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);
 	  intpol_met_space_2d(met, met->pc, lon, lat, &pc, ci, cw, 0);
 	  intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);
+	  intpol_met_space_2d(met, met->plcl, lon, lat, &plcl, ci, cw, 0);
+	  intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);
+	  intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);
+	  intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);
 
 	  /* Interpolate tropopause data... */
 	  intpol_met_space_3d(met, met->z, pt, lon, lat, &zt, ci, cw, 1);
@@ -153,6 +158,10 @@ int main(
 	    psm[iz] += ps;
 	    pcm[iz] += pc;
 	    clm[iz] += cl;
+	    plclm[iz] += plcl;
+	    plfcm[iz] += plfc;
+	    pelm[iz] += pel;
+	    capem[iz] += cape;
 	    lwcm[iz] += lwc;
 	    iwcm[iz] += iwc;
 	    if (gsl_finite(pt)) {
@@ -197,19 +206,26 @@ int main(
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
 	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n\n");
+	  "# $22 = cloud top pressure [hPa]\n\n"
+	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
 	    o3m[iz] / np[iz], zm[iz] / np[iz], pvm[iz] / np[iz],
 	    psm[iz] / np[iz], ptm[iz] / npt[iz], ztm[iz] / npt[iz],
 	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz], lwcm[iz] / np[iz],
-	    iwcm[iz] / np[iz], clm[iz] / np[iz], pcm[iz] / np[iz]);
+	    iwcm[iz] / np[iz], clm[iz] / np[iz], pcm[iz] / np[iz],
+	    plclm[iz] / np[iz], plfcm[iz] / np[iz],
+	    pelm[iz] / np[iz], capem[iz] / np[iz]);
 
   /* Close file... */
   fclose(out);

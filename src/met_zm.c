@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -49,11 +49,12 @@ int main(
   FILE *out;
 
   static double timem[NZ][NY], psm[NZ][NY], ptm[NZ][NY], pcm[NZ][NY],
-    clm[NZ][NY], ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY],
+    clm[NZ][NY], plclm[NZ][NY], plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY],
+    ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY],
     wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY],
     lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
-    ps, pt, pc, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1,
-    dlat, lats[NY], cw[3];
+    ps, pt, pc, plcl, plfc, pel, cape, cl, t, u, v, w, pv, h2o, h2ot, o3,
+    lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -148,6 +149,14 @@ int main(
 			      ci, cw, 0);
 	  intpol_met_space_2d(met, met->cl, met->lon[ix], met->lat[iy], &cl,
 			      ci, cw, 0);
+	  intpol_met_space_2d(met, met->plcl, met->lon[ix], met->lat[iy],
+			      &plcl, ci, cw, 0);
+	  intpol_met_space_2d(met, met->plfc, met->lon[ix], met->lat[iy],
+			      &plfc, ci, cw, 0);
+	  intpol_met_space_2d(met, met->pel, met->lon[ix], met->lat[iy], &pel,
+			      ci, cw, 0);
+	  intpol_met_space_2d(met, met->cape, met->lon[ix], met->lat[iy],
+			      &cape, ci, cw, 0);
 
 	  /* Interpolate tropopause data... */
 	  intpol_met_space_3d(met, met->z, pt, met->lon[ix], met->lat[iy],
@@ -172,6 +181,10 @@ int main(
 	  psm[iz][iy] += ps;
 	  pcm[iz][iy] += pc;
 	  clm[iz][iy] += cl;
+	  plclm[iz][iy] += plcl;
+	  plfcm[iz][iy] += plfc;
+	  pelm[iz][iy] += pel;
+	  capem[iz][iy] += cape;
 	  if (gsl_finite(pt)) {
 	    ptm[iz][iy] += pt;
 	    ztm[iz][iy] += zt;
@@ -212,14 +225,19 @@ int main(
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
 	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n");
+	  "# $22 = cloud top pressure [hPa]\n"
+	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
 	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
@@ -229,7 +247,9 @@ int main(
 	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy],
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
 	      iwcm[iz][iy] / np[iz][iy], clm[iz][iy] / np[iz][iy],
-	      pcm[iz][iy] / np[iz][iy]);
+	      pcm[iz][iy] / np[iz][iy], plclm[iz][iy] / np[iz][iy],
+	      plfcm[iz][iy] / np[iz][iy], pelm[iz][iy] / np[iz][iy],
+	      capem[iz][iy] / np[iz][iy]);
   }
 
   /* Close file... */

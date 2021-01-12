@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -40,8 +40,8 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, pt, pc, cl, pv, t, tt, u,
-    v, w, z, zm, zref, zt, cw[3];
+  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, pt, pc, cl,
+    plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3];
 
   int geopot, ip, it, ci[3];
 
@@ -93,7 +93,11 @@ int main(
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
 	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n\n");
+	  "# $22 = cloud top pressure [hPa]\n\n"
+	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -148,6 +152,14 @@ int main(
 		       atm->lon[ip], atm->lat[ip], &pc, ci, cw, 0);
     intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &plcl, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &plfc, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->pel, met1, met1->pel, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &pel, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->cape, met1, met1->cape, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &cape, ci, cw, 0);
 
     /* Interpolate tropopause data... */
     intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip], pt,
@@ -159,10 +171,11 @@ int main(
 
     /* Write data... */
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt, h2ot, lwc,
-	    iwc, cl, pc);
+	    iwc, cl, pc, plcl, plfc, pel, cape);
   }
 
   /* Close file... */

@@ -1922,10 +1922,9 @@ double lapse_rate(
      Reference: https://en.wikipedia.org/wiki/Lapse_rate
    */
 
-  double r = SH(h2o) / (1. - SH(h2o));
+  const double a = RA * SQR(t), r = SH(h2o) / (1. - SH(h2o));
 
-  return 1e3 * G0 * (RA * SQR(t) + HV * r * t)
-    / (CPD * RA * SQR(t) + SQR(HV) * r * EPS);
+  return 1e3 * G0 * (a + LV * r * t) / (CPD * a + SQR(LV) * r * EPS);
 }
 
 /*****************************************************************************/
@@ -2188,6 +2187,11 @@ void read_ctl(
   ctl->qnt_lwc = -1;
   ctl->qnt_iwc = -1;
   ctl->qnt_pc = -1;
+  ctl->qnt_cl = -1;
+  ctl->qnt_plcl = -1;
+  ctl->qnt_plfc = -1;
+  ctl->qnt_pel = -1;
+  ctl->qnt_cape = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_rh = -1;
@@ -2265,6 +2269,21 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "pc") == 0) {
       ctl->qnt_pc = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "cl") == 0) {
+      ctl->qnt_cl = iq;
+      sprintf(ctl->qnt_unit[iq], "kg/m^2");
+    } else if (strcmp(ctl->qnt_name[iq], "plcl") == 0) {
+      ctl->qnt_plcl = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "plfc") == 0) {
+      ctl->qnt_plfc = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "pel") == 0) {
+      ctl->qnt_pel = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "cape") == 0) {
+      ctl->qnt_cape = iq;
+      sprintf(ctl->qnt_unit[iq], "J/kg");
     } else if (strcmp(ctl->qnt_name[iq], "hno3") == 0) {
       ctl->qnt_hno3 = iq;
       sprintf(ctl->qnt_unit[iq], "ppv");
@@ -2651,11 +2670,94 @@ int read_met(
   /* Calculate cloud properties... */
   read_met_cloud(met);
 
+  /* Calculate convective available potential energy... */
+  read_met_cape(met);
+
   /* Close file... */
   NC(nc_close(ncid));
 
   /* Return success... */
   return 1;
+}
+
+/*****************************************************************************/
+
+void read_met_cape(
+  met_t * met) {
+
+  /* Vertical spacing (about 100 m)... */
+  const double pfac = 1.01439, dz0 = RI / MA / G0 * log(pfac);
+
+  /* Loop over columns... */
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
+
+      /* Get potential temperature and water vapor vmr at lowest 50 hPa... */
+      double h2o = 0, pbot, ptop, t, theta = 0;
+      int n = 0;
+      pbot = GSL_MIN(met->ps[ix][iy], met->p[0]);
+      ptop = pbot - 50.;
+      for (int ip = 0; ip < met->np; ip++) {
+	if (met->p[ip] <= pbot) {
+	  theta += THETA(met->p[ip], met->t[ix][iy][ip]);
+	  h2o += met->h2o[ix][iy][ip];
+	  n++;
+	}
+	if (met->p[ip] < ptop && n > 0)
+	  break;
+      }
+      theta /= n;
+      h2o /= n;
+
+      /* Cannot compute anything if water vapor is missing... */
+      met->plcl[ix][iy] = GSL_NAN;
+      met->plfc[ix][iy] = GSL_NAN;
+      met->pel[ix][iy] = GSL_NAN;
+      met->cape[ix][iy] = GSL_NAN;
+      if (h2o <= 0)
+	continue;
+
+      /* Find lifted condensation level (LCL)... */
+      ptop = P(20.);
+      pbot = met->ps[ix][iy];
+      do {
+	met->plcl[ix][iy] = (float) (0.5 * (pbot + ptop));
+	t = theta / pow(1000. / met->plcl[ix][iy], 0.286);
+	if (RH(met->plcl[ix][iy], t, h2o) > 100.)
+	  ptop = met->plcl[ix][iy];
+	else
+	  pbot = met->plcl[ix][iy];
+      } while (pbot - ptop > 0.1);
+
+      /* Calculate level of free convection (LFC), equilibrium level (EL),
+         and convective available potential energy (CAPE)... */
+      double dcape = 0, dcape_old, dz, h2o_env, p = met->plcl[ix][iy],
+	psat, t_env, cw[3];
+      int ci[3];
+      ptop = 0.75 * clim_tropo(met->time, met->lat[iy]);
+      met->cape[ix][iy] = 0;
+      do {
+	dz = dz0 * TVIRT(t, h2o);
+	p /= pfac;
+	t -= lapse_rate(t, h2o) * dz;
+	psat = PS(t);
+	h2o = psat / (p - (1. - EPS) * psat);
+	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
+			    &t_env, ci, cw, 1);
+	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
+			    &h2o_env, ci, cw, 0);
+	dcape_old = dcape;
+	dcape = 1e3 * G0 * (TVIRT(t, h2o) - TVIRT(t_env, h2o_env)) /
+	  TVIRT(t_env, h2o_env) * dz;
+	if (dcape > 0) {
+	  met->cape[ix][iy] += (float) dcape;
+	  if (!isfinite(met->plfc[ix][iy]))
+	    met->plfc[ix][iy] = (float) p;
+	} else if (dcape_old > 0)
+	  met->pel[ix][iy] = (float) p;
+      } while (p > ptop);
+    }
 }
 
 /*****************************************************************************/

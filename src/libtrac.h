@@ -77,8 +77,8 @@
 /*! Scale height [km]. */
 #define H0 7.0
 
-/*! Heat of vaporization of water [J/kg]. */
-#define HV 2501000.
+/*! Latent heat of vaporization of water [J/kg]. */
+#define LV 2501000.
 
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
 #define KB 1.3806504e-23
@@ -241,16 +241,16 @@
   (0.01 * pow(10., -2663.5 / (t) + 12.537))
 
 /*! Calculate partial water vapor pressure. */
-#define PW(p, h2o)					\
+#define PW(p, h2o)				\
   ((p) * (h2o) / (1. + (1. - EPS) * (h2o)))
 
 /*! Compute relative humidity over water. */
-#define RH(p, t, h2o)							\
-  ((p) * (h2o) / (1. + (1. - EPS) * (h2o)) / PS(t) * 100.)
+#define RH(p, t, h2o)				\
+  (PW(p, h2o) / PS(t) * 100.)
 
 /*! Compute relative humidity over ice. */
-#define RHICE(p, t, h2o)						\
-  ((p) * (h2o) / (1. + (1. - EPS) * (h2o)) / PSICE(t) * 100.)
+#define RHICE(p, t, h2o)			\
+  (PW(p, h2o) / PSICE(t) * 100.)
 
 /*! Compute specific humidity from water vapor volume mixing ratio. */
 #define SH(h2o) (EPS * (h2o))
@@ -278,7 +278,8 @@
   }
 
 /*! Compute virtual temperature. */
-#define TVIRT(t, h2o) ((t) * (1.0 + 0.609133 * SH(h2o)))
+#define TVIRT(t, h2o)				\
+  ((t) * (1. + (1. - EPS) * (h2o)))
 
 /*! Print warning message. */
 #define WARN(msg) {							\
@@ -470,6 +471,21 @@ typedef struct {
 
   /*! Quantity array index for cloud top pressure. */
   int qnt_pc;
+
+  /*! Quantity array idex for total column cloud water. */
+  int qnt_cl;
+
+  /*! Quantity array index for pressure at lifted condensation level (LCL). */
+  int qnt_plcl;
+
+  /*! Quantity array index for pressure at level of free convection (LCF). */
+  int qnt_plfc;
+
+  /*! Quantity array index for pressure at equilibrium level (EL). */
+  int qnt_pel;
+
+  /*! Quantity array index for convective available potential energy (CAPE). */
+  int qnt_cape;
 
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
@@ -866,6 +882,18 @@ typedef struct {
   /*! Total column cloud water [kg/m^2]. */
   float cl[EX][EY];
 
+  /*! Pressure at lifted condensation level (LCL) [hPa]. */
+  float plcl[EX][EY];
+
+  /*! Pressure at level of free convection (LFC) [hPa]. */
+  float plfc[EX][EY];
+
+  /*! Pressure at equilibrium level [hPa]. */
+  float pel[EX][EY];
+
+  /*! Convective available potential energy [J/kg]. */
+  float cape[EX][EY];
+
   /*! Geopotential height at model levels [km]. */
   float z[EX][EY][EP];
 
@@ -1106,6 +1134,10 @@ void read_ctl(
 int read_met(
   ctl_t * ctl,
   char *filename,
+  met_t * met);
+
+/*! Calculate convective available potential energy. */
+void read_met_cape(
   met_t * met);
 
 /*! Calculate cloud properties. */

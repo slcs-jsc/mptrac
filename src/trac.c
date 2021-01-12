@@ -1050,7 +1050,8 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, pt, pc, pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3];
+    double ps, pt, pc, cl, plcl, plfc, pel, cape,
+      pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3];
 
     int ci[3];
 
@@ -1086,6 +1087,16 @@ void module_meteo(
 		       atm->lon[ip], atm->lat[ip], &pt, ci, cw, 0);
     intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], &pc, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &plcl, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &plfc, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->pel, met1, met1->pel, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &pel, ci, cw, 0);
+    intpol_met_time_2d(met0, met0->cape, met1, met1->cape, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], &cape, ci, cw, 0);
 
     /* Set surface pressure... */
     if (ctl->qnt_ps >= 0)
@@ -1138,6 +1149,26 @@ void module_meteo(
     /* Set cloud top pressure... */
     if (ctl->qnt_pc >= 0)
       atm->q[ctl->qnt_pc][ip] = pc;
+
+    /* Set total column cloud water... */
+    if (ctl->qnt_cl >= 0)
+      atm->q[ctl->qnt_cl][ip] = cl;
+
+    /* Set pressure at lifted condensation level... */
+    if (ctl->qnt_plcl >= 0)
+      atm->q[ctl->qnt_plcl][ip] = plcl;
+
+    /* Set pressure at level of free convection... */
+    if (ctl->qnt_plfc >= 0)
+      atm->q[ctl->qnt_plfc][ip] = plfc;
+
+    /* Set pressure at equilibrium level... */
+    if (ctl->qnt_pel >= 0)
+      atm->q[ctl->qnt_pel][ip] = pel;
+
+    /* Set convective available potential energy... */
+    if (ctl->qnt_cape >= 0)
+      atm->q[ctl->qnt_cape][ip] = cape;
 
     /* Set nitric acid vmr... */
     if (ctl->qnt_hno3 >= 0)
