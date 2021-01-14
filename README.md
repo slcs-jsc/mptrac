@@ -22,7 +22,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf), the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5), and [zlib](http://www.zlib.net/) are needed for file-I/O. Copies of these libraries can be found in the git repository.
+This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf), the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5), and [zlib](http://www.zlib.net/) are needed for file-I/O. Copies of these libraries can be found in the MPTRAC git repository.
 
 Start by downloading the source code from the git repository:
 
@@ -37,9 +37,13 @@ To update an existing installation use:
 First, compile the GSL, netCDF, HDF5, and zlib libraries required by MPTRAC by running the build script:
 
     cd mptrac/libs
-    ./build.sh
+    ./build.sh <nc3|nc4>
 
-Next, change to the source directory, edit the Makefile according to your needs, load any modules as needed on your target platform, and try to compile the code:
+Please select "nc3", if you want to use netCDF classic files, or "nc4", if you want to use both, netCDF classic and netCDF-4 data files. The HDF5 and zlib libraries are needed only for netCDF-4. Sometimes, the compilation of netCDF-4 may fail, and netCDF classic might be used as a fail back option in this case.
+
+Next, change to the source directory and edit the Makefile according to your needs. In particular, comment or uncomment the "USE_NC4" flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the "./libs/build/" directories.
+
+Load any modules that are needed on your target platform, and try to compile the code:
 
     cd mptrac/src
     emacs Makefile
@@ -49,7 +53,7 @@ After compilation, the binaries will be located in the mptrac/src/ directory.
 
 By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, as static versions of some libraries might be missing. In this case, remove the '-static' flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
 
-By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'. It should not be removed from the Makefile.
+By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'. It should not be removed from the Makefile, unless you know what you are doing.
 
 ### Run the example
 
@@ -85,21 +89,7 @@ These are the main references for citing the MPTRAC model in scientific publicat
 
 * You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
 
-This is a list of selected papers in which MPTRAC was applied:
-
-* Liu, M., Huang, Y., Hoffmann, L., Huang, C., Chen, P., Heng, Y.: High-Resolution Source Estimation of Volcanic Sulfur Dioxide Emissions Using Large-Scale Transport Simulations, in: Krzhizhanovskaya V.V. et al. (eds), Computational Science – ICCS 2020, ICCS 2020, Lecture Notes in Computer Science, vol 12139, Springer, https://doi.org/10.1007/978-3-030-50420-5_5, 2020.
-
-* Hoffmann, L., Günther, G., Li, D., Stein, O., Wu, X., Griessbach, S., Heng, Y., Konopka, P., Müller, R., Vogel, B., and Wright, J. S.: From ERA-Interim to ERA5: the considerable impact of ECMWF's next-generation reanalysis on Lagrangian transport simulations, Atmos. Chem. Phys., 19, 3097-3124, https://doi.org/10.5194/acp-19-3097-2019, 2019.
-
-* Wu, X., Griessbach, S., and Hoffmann, L.: Long-range transport of volcanic aerosol from the 2010 Merapi tropical eruption to Antarctica, Atmos. Chem. Phys., 18, 15859-15877, https://doi.org/10.5194/acp-18-15859-2018, 2018.
-
-* Rößler, T., Stein, O., Heng, Y., Baumeister, P., and Hoffmann, L.: Trajectory errors of different numerical integration schemes diagnosed with the MPTRAC advection module driven by ECMWF operational analyses, Geosci. Model Dev., 11, 575-592, https://doi.org/10.5194/gmd-11-575-2018, 2018.
-
-* Wu, X., Griessbach, S., and Hoffmann, L.: Equatorward dispersion of a high-latitude volcanic plume and its relation to the Asian summer monsoon: a case study of the Sarychev eruption in 2009, Atmos. Chem. Phys., 17, 13439-13455, https://doi.org/10.5194/acp-17-13439-2017, 2017.
-
-* Hoffmann, L., Hertzog, A., Rößler, T., Stein, O., and Wu, X.: Intercomparison of meteorological analyses and trajectories in the Antarctic lower stratosphere with Concordiasi superpressure balloon observations, Atmos. Chem. Phys., 17, 8045-8061, https://doi.org/10.5194/acp-17-8045-2017, 2017.
-
-* Heng, Y., Hoffmann, L., Griessbach, S., Rößler, T., and Stein, O.: Inverse transport modeling of volcanic sulfur dioxide emissions using large-scale simulations, Geosci. Model Dev., 9, 1627-1645, https://doi.org/10.5194/gmd-9-1627-2016, 2016.
+A list of selected papers can be found in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki/References).
 
 ## Contributing
 
@@ -113,7 +103,7 @@ MPTRAC is distributed under the [GNU General Public License v3.0](https://github
 
 ## Contact
 
-Dr. Lars Hoffmann  
+Lars Hoffmann  
 
 Jülich Supercomputing Centre, Forschungszentrum Jülich
 
