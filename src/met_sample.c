@@ -93,11 +93,13 @@ int main(
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
 	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n\n"
+	  "# $22 = cloud top pressure [hPa]\n"
 	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
 	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
 	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
-	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n"
+	  "# $27 = relative humidity over water [%%]\n"
+	  "# $28 = relative humidity over ice [%%]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -172,10 +174,11 @@ int main(
     /* Write data... */
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
-	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt, h2ot, lwc,
-	    iwc, cl, pc, plcl, plfc, pel, cape);
+	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, pt, zt, tt,
+	    h2ot, lwc, iwc, cl, pc, plcl, plfc, pel, cape,
+	    RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o));
   }
 
   /* Close file... */

@@ -206,17 +206,19 @@ int main(
 	  "# $20 = cloud ice water content [kg/kg]\n");
   fprintf(out,
 	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n\n"
+	  "# $22 = cloud top pressure [hPa]\n"
 	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
 	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
 	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
-	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n"
+	  "# $27 = relative humidity over water [%%]\n"
+	  "# $28 = relative humidity over ice [%%]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -225,7 +227,9 @@ int main(
 	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz], lwcm[iz] / np[iz],
 	    iwcm[iz] / np[iz], clm[iz] / np[iz], pcm[iz] / np[iz],
 	    plclm[iz] / np[iz], plfcm[iz] / np[iz],
-	    pelm[iz] / np[iz], capem[iz] / np[iz]);
+	    pelm[iz] / np[iz], capem[iz] / np[iz],
+	    RH(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
+	    RHICE(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]));
 
   /* Close file... */
   fclose(out);

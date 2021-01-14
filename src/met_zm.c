@@ -229,7 +229,9 @@ int main(
 	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
 	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
 	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
-	  "# $26 = convective available potential energy (CAPE) [J/kg]\n");
+	  "# $26 = convective available potential energy (CAPE) [J/kg]\n"
+	  "# $27 = relative humidity over water [%%]\n"
+	  "# $28 = relative humidity over ice [%%]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
@@ -237,7 +239,7 @@ int main(
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
 	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
@@ -249,7 +251,11 @@ int main(
 	      iwcm[iz][iy] / np[iz][iy], clm[iz][iy] / np[iz][iy],
 	      pcm[iz][iy] / np[iz][iy], plclm[iz][iy] / np[iz][iy],
 	      plfcm[iz][iy] / np[iz][iy], pelm[iz][iy] / np[iz][iy],
-	      capem[iz][iy] / np[iz][iy]);
+	      capem[iz][iy] / np[iz][iy],
+	      RH(plev[iz], tm[iz][iy] / np[iz][iy],
+		 h2om[iz][iy] / np[iz][iy]),
+	      RHICE(plev[iz], tm[iz][iy] / np[iz][iy],
+		    h2om[iz][iy] / np[iz][iy]));
   }
 
   /* Close file... */
