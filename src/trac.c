@@ -45,6 +45,15 @@ void module_advection(
   atm_t * atm,
   double *dt);
 
+/*! Calculate convection of air parcels. */
+void module_convection(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt,
+  double *rs);
+
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
   ctl_t * ctl,
@@ -68,7 +77,8 @@ void module_diffusion_meso(
 /*! Generate random numbers. */
 void module_diffusion_rng(
   double *rs,
-  size_t n);
+  size_t n,
+  int method);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
@@ -358,7 +368,7 @@ int main(
       START_TIMER(TIMER_DIFFTURB);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
-	module_diffusion_rng(rs, 3 * (size_t) atm->np);
+	module_diffusion_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_turb(&ctl, atm, dt, rs);
       }
       STOP_TIMER(TIMER_DIFFTURB);
@@ -368,10 +378,20 @@ int main(
       RANGE_PUSH("Mesoscale diffusion", NVTX_GPU);
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
-	module_diffusion_rng(rs, 3 * (size_t) atm->np);
+	module_diffusion_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
       }
       STOP_TIMER(TIMER_DIFFMESO);
+      RANGE_POP;
+
+      /* Convection... */
+      RANGE_PUSH("Convection", NVTX_GPU);
+      START_TIMER(TIMER_CONVECT);
+      if (ctl.conv_cape >= 0) {
+	module_diffusion_rng(rs, (size_t) atm->np, 0);
+	module_convection(&ctl, met0, met1, atm, dt, rs);
+      }
+      STOP_TIMER(TIMER_CONVECT);
       RANGE_POP;
 
       /* Sedimentation... */
@@ -479,6 +499,7 @@ int main(
     PRINT_TIMER(TIMER_INPUT);
     PRINT_TIMER(TIMER_OUTPUT);
     PRINT_TIMER(TIMER_ADVECT);
+    PRINT_TIMER(TIMER_CONVECT);
     PRINT_TIMER(TIMER_DECAY);
     PRINT_TIMER(TIMER_DIFFMESO);
     PRINT_TIMER(TIMER_DIFFTURB);
@@ -539,8 +560,8 @@ void module_advection(
       int ci[3] = { 0 };
 
       double dtm = 0.0, v[3] = { 0.0 }, xm[3] = {
+      0.0}, cw[3] = {
       0.0};
-      double cw[3] = { 0.0 };
 
       /* Interpolate meteorological data... */
       intpol_met_time_3d(met0, met0->u, met1, met1->u, atm->time[ip],
@@ -573,6 +594,54 @@ void module_advection(
       atm->lon[ip] += DX2DEG(dt[ip] * v[0] / 1000., xm[1]);
       atm->lat[ip] += DY2DEG(dt[ip] * v[1] / 1000.);
       atm->p[ip] += dt[ip] * v[2];
+    }
+}
+
+/*****************************************************************************/
+
+void module_convection(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt,
+  double *rs) {
+
+#ifdef _OPENACC
+#pragma acc data present(ctl,met0,met1,atm,dt,rs)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      double cape, pel, ps, cw[3] = { 0.0 };
+
+      int ci[3] = { 0 };
+
+      /* Interpolate CAPE... */
+      intpol_met_time_2d(met0, met0->cape, met1, met1->cape, atm->time[ip],
+			 atm->lon[ip], atm->lat[ip], &cape, ci, cw, 1);
+
+      /* Check threshold... */
+      if (isfinite(cape) && cape >= ctl->conv_cape) {
+
+	/* Interpolate equilibrium level... */
+	intpol_met_time_2d(met0, met0->pel, met1, met1->pel, atm->time[ip],
+			   atm->lon[ip], atm->lat[ip], &pel, ci, cw, 0);
+
+	/* Check whether particle is above cloud top... */
+	if (!isfinite(pel) || atm->p[ip] < pel)
+	  continue;
+
+	/* Interpolate surface pressure... */
+	intpol_met_time_2d(met0, met0->ps, met1, met1->ps, atm->time[ip],
+			   atm->lon[ip], atm->lat[ip], &ps, ci, cw, 0);
+
+	/* Redistribute particle in cloud column... */
+	atm->p[ip] = ps + (pel - ps) * rs[ip];
+      }
     }
 }
 
@@ -771,23 +840,43 @@ void module_diffusion_meso(
 
 void module_diffusion_rng(
   double *rs,
-  size_t n) {
+  size_t n,
+  int method) {
 
 #ifdef _OPENACC
 
 #pragma acc host_data use_device(rs)
   {
-    if (curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0)
-	!= CURAND_STATUS_SUCCESS)
-      ERRMSG("Cannot create random numbers!");
+    /* Uniform distribution... */
+    if (method == 0) {
+      if (curandGenerateUniform(rng, rs, n)
+	  != CURAND_STATUS_SUCCESS)
+	ERRMSG("Cannot create random numbers!");
+    }
+
+    /* Normal distribution... */
+    else if (method == 1) {
+      if (curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0)
+	  != CURAND_STATUS_SUCCESS)
+	ERRMSG("Cannot create random numbers!");
+    }
   }
 
 #else
 
+  /* Uniform distribution... */
+  if (method == 0) {
 #pragma omp parallel for default(shared)
-  for (size_t i = 0; i < n; ++i)
-    rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+    for (size_t i = 0; i < n; ++i)
+      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
+  }
 
+  /* Normal distribution... */
+  else if (method == 1) {
+#pragma omp parallel for default(shared)
+    for (size_t i = 0; i < n; ++i)
+      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+  }
 #endif
 
 }
@@ -869,9 +958,9 @@ void module_dry_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double dz, ps, T, v_dep, cw[3];
+      double dz, ps, T, v_dep, cw[3] = { 0.0 };
 
-      int ci[3];
+      int ci[3] = { 0 };
 
       /* Get surface pressure... */
       intpol_met_time_2d(met0, met0->ps, met1, met1->ps, atm->time[ip],
@@ -919,9 +1008,9 @@ void module_isosurf_init(
 
   char line[LEN];
 
-  double t, cw[3];
+  double t, cw[3] = { 0.0 };
 
-  int ci[3];
+  int ci[3] = { 0 };
 
   /* Save pressure... */
   if (ctl->isosurf == 1)
@@ -989,9 +1078,9 @@ void module_isosurf(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double t, cw[3];
+    double t, cw[3] = { 0.0 };
 
-    int ci[3];
+    int ci[3] = { 0 };
 
     /* Restore pressure... */
     if (ctl->isosurf == 1)
@@ -1051,9 +1140,9 @@ void module_meteo(
   for (int ip = 0; ip < atm->np; ip++) {
 
     double ps, pt, pc, cl, plcl, plfc, pel, cape,
-      pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3];
+      pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3] = { 0.0 };
 
-    int ci[3];
+    int ci[3] = { 0 };
 
     /* Interpolate meteorological data... */
     intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip],
@@ -1258,9 +1347,9 @@ void module_position(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double ps, cw[3];
+      double ps, cw[3] = { 0.0 };
 
-      int ci[3];
+      int ci[3] = { 0 };
 
       /* Calculate modulo... */
       atm->lon[ip] = FMOD(atm->lon[ip], 360.);
@@ -1314,9 +1403,9 @@ void module_sedi(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double T, v_s, cw[3];
+      double T, v_s, cw[3] = { 0.0 };
 
-      int ci[3];
+      int ci[3] = { 0 };
 
       /* Get temperature... */
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
@@ -1354,9 +1443,9 @@ void module_oh_chem(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double c, k, k0, ki, M, T, cw[3];
+      double c, k, k0, ki, M, T, cw[3] = { 0.0 };
 
-      int ci[3];
+      int ci[3] = { 0 };
 
       /* Get temperature... */
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
@@ -1403,9 +1492,9 @@ void module_wet_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double H, Is, Si, T, cl, lambda, iwc, lwc, pc, cw[3];
+      double H, Is, Si, T, cl, lambda, iwc, lwc, pc, cw[3] = { 0.0 };
 
-      int inside, ci[3];
+      int inside, ci[3] = { 0 };
 
       /* Check whether particle is below cloud top... */
       intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],

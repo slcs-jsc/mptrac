@@ -2383,6 +2383,10 @@ void read_ctl(
   ctl->turb_mesoz =
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
+  /* Convection... */
+  ctl->conv_cape =
+    scan_ctl(filename, argc, argv, "CONV_CAPE", -1, "-999", NULL);
+
   /* Species parameters... */
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
   if (strcmp(ctl->species, "SO2") == 0) {

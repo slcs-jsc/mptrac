@@ -318,38 +318,41 @@
 /*! Timer for advection module. */
 #define TIMER_ADVECT 4
 
+/*! Timer for convction module. */
+#define TIMER_CONVECT 5
+
 /*! Timer for decay module. */
-#define TIMER_DECAY 5
+#define TIMER_DECAY 6
 
 /*! Timer for mesoscale diffusion module. */
-#define TIMER_DIFFMESO 6
+#define TIMER_DIFFMESO 7
 
 /*! Timer for turbulent diffusion module. */
-#define TIMER_DIFFTURB 7
+#define TIMER_DIFFTURB 8
 
 /*! Timer for isosurface module module. */
-#define TIMER_ISOSURF 8
+#define TIMER_ISOSURF 9
 
 /*! Timer for interpolation meteorological data. */
-#define TIMER_METEO 9
+#define TIMER_METEO 10
 
 /*! Timer for position module. */
-#define TIMER_POSITION 10
+#define TIMER_POSITION 11
 
 /*! Timer for sedimentation module. */
-#define TIMER_SEDI 11
+#define TIMER_SEDI 12
 
 /*! Timer for OH chemistry module. */
-#define TIMER_OHCHEM 12
+#define TIMER_OHCHEM 13
 
 /*! Timer for dry deposition module. */
-#define TIMER_DRYDEPO 13
+#define TIMER_DRYDEPO 14
 
 /*! Timer for wet deposition module. */
-#define TIMER_WETDEPO 14
+#define TIMER_WETDEPO 15
 
 /*! Timer for total runtime. */
-#define TIMER_TOTAL 15
+#define TIMER_TOTAL 16
 
 /* ------------------------------------------------------------
    NVIDIA Tools Extension (NVTX)...
@@ -605,6 +608,9 @@ typedef struct {
 
   /*! Vertical scaling factor for mesoscale wind fluctuations. */
   double turb_mesoz;
+
+  /*! CAPE threshold for convection module [J/kg]. */
+  double conv_cape;
 
   /*! Species. */
   char species[LEN];
