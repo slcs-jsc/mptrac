@@ -453,8 +453,8 @@ int main(
       /* Wet deposition... */
       RANGE_PUSH("Wet deposition", NVTX_GPU);
       START_TIMER(TIMER_WETDEPO);
-      if (ctl.wet_depo[0] > 0 && ctl.wet_depo[1] > 0
-	  && ctl.wet_depo[2] > 0 && ctl.wet_depo[3] > 0)
+      if ((ctl.wet_depo[0] > 0 || ctl.wet_depo[2] > 0)
+	  && (ctl.wet_depo[4] > 0 || ctl.wet_depo[6] > 0))
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_WETDEPO);
       RANGE_POP;
@@ -1492,7 +1492,7 @@ void module_wet_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double H, Is, Si, T, cl, lambda, iwc, lwc, pc, cw[3] = { 0.0 };
+      double dz, H, Is, T, cl, lambda = 0, iwc, lwc, pc, cw[3] = { 0.0 };
 
       int inside, ci[3] = { 0 };
 
@@ -1500,6 +1500,13 @@ void module_wet_deposition(
       intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &pc, ci, cw, 1);
       if (!isfinite(pc) || atm->p[ip] <= pc)
+	continue;
+
+      /* Estimate precipitation rate (Pisso et al., 2019)... */
+      intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
+			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
+      Is = pow(2. * cl, 1. / 0.36);
+      if (Is < 0.01)
 	continue;
 
       /* Check whether particle is inside or below cloud... */
@@ -1511,35 +1518,61 @@ void module_wet_deposition(
 			 0);
       inside = (iwc > 0 || lwc > 0);
 
-      /* Estimate precipitation rate (Pisso et al., 2019)... */
-      intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
-			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
-      Is = pow(2. * cl, 1. / 0.36);
-      if (Is < 0.01)
-	continue;
-
-      /* Calculate in-cloud scavenging for gases... */
+      /* Calculate in-cloud scavenging coefficient... */
       if (inside) {
 
-	/* Get temperature... */
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
-			   0);
+	/* Use exponential dependency for particles... */
+	if (ctl->wet_depo[0] > 0)
+	  lambda = ctl->wet_depo[0] * pow(Is, ctl->wet_depo[1]);
 
-	/* Get Henry's constant (Sander, 2015)... */
-	H = ctl->wet_depo[2] * 101.325
-	  * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
+	/* Use Henry's law for gases... */
+	else if (ctl->wet_depo[2] > 0) {
 
-	/* Get scavenging coefficient (Hertel et al., 1995)... */
-	Si = 1. / ((1. - cl) / (H * RI / P0 * T) + cl);
-	lambda = 6.2 * Si * Is / 3.6e6;
+	  /* Get temperature... */
+	  intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			     atm->p[ip], atm->lon[ip], atm->lat[ip], &T,
+			     ci, cw, 0);
+
+	  /* Get Henry's constant (Sander, 2015)... */
+	  H = ctl->wet_depo[2]
+	    * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
+
+	  /* Estimate depth of cloud layer... */
+	  dz = 1e3 * Z(pc);
+
+	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	  lambda = H * RI * T * Is / 3.6e6 * dz;
+	}
       }
 
-      /* Calculate below-cloud scavenging for gases (Pisso et al., 2019)... */
-      else
-	lambda = ctl->wet_depo[0] * pow(Is, ctl->wet_depo[1]);
+      /* Calculate below-cloud scavenging coefficient... */
+      else {
 
-      /* Calculate exponential decay... */
+	/* Use exponential dependency for particles... */
+	if (ctl->wet_depo[4] > 0)
+	  lambda = ctl->wet_depo[4] * pow(Is, ctl->wet_depo[5]);
+
+	/* Use Henry's law for gases... */
+	else if (ctl->wet_depo[6] > 0) {
+
+	  /* Get temperature... */
+	  intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			     atm->p[ip], atm->lon[ip], atm->lat[ip], &T,
+			     ci, cw, 0);
+
+	  /* Get Henry's constant (Sander, 2015)... */
+	  H = ctl->wet_depo[6]
+	    * exp(ctl->wet_depo[7] * (1. / T - 1. / 298.15));
+
+	  /* Estimate depth of cloud layer... */
+	  dz = 1e3 * Z(pc);
+
+	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	  lambda = H * RI * T * Is / 3.6e6 * dz;
+	}
+      }
+
+      /* Calculate exponential decay of mass... */
       atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] * lambda);
     }
 }

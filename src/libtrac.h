@@ -630,8 +630,8 @@ typedef struct {
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
-  /*! Coefficients for wet deposition (A, B, H). */
-  double wet_depo[4];
+  /*! Coefficients for wet deposition (Ai, Bi, Hi, Ci, Ab, Bb, Hb, Cb). */
+  double wet_depo[8];
 
   /*! H2O volume mixing ratio for PSC analysis. */
   double psc_h2o;

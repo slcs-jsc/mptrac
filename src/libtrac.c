@@ -2395,11 +2395,10 @@ void read_ctl(
     ctl->oh_chem[1] = 4.3;	/* (JPL Publication 15-10) */
     ctl->oh_chem[2] = 1.6e-12;	/* (JPL Publication 15-10) */
     ctl->oh_chem[3] = 0.0;	/* (JPL Publication 15-10) */
-    ctl->dry_depo[0] = 0.0;	/* settling velocity unknown? */
-    ctl->wet_depo[0] = 2.0e-05;	/* (FLEXPART v10.4) */
-    ctl->wet_depo[1] = 0.62;	/* (FLEXPART v10.4) */
     ctl->wet_depo[2] = 1.3e-2;	/* (Sander, 2015) */
     ctl->wet_depo[3] = 2900.0;	/* (Sander, 2015) */
+    ctl->wet_depo[6] = 1.3e-2;	/* (Sander, 2015) */
+    ctl->wet_depo[7] = 2900.0;	/* (Sander, 2015) */
   } else {
     ctl->molmass =
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
@@ -2413,7 +2412,7 @@ void read_ctl(
     for (int ip = 0; ip < 1; ip++)
       ctl->dry_depo[ip] =
 	scan_ctl(filename, argc, argv, "DRY_DEPO", ip, "0", NULL);
-    for (int ip = 0; ip < 4; ip++)
+    for (int ip = 0; ip < 8; ip++)
       ctl->wet_depo[ip] =
 	scan_ctl(filename, argc, argv, "WET_DEPO", ip, "0", NULL);
   }
