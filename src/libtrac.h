@@ -96,7 +96,7 @@
 #define P0 1013.25
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
-#define RA 287.058
+#define RA (1e3 * RI / MA)
 
 /*! Mean radius of Earth [km]. */
 #define RE 6367.421
@@ -233,7 +233,7 @@
 #define P(z) (P0 * exp(-(z) / H0))
 
 /*! Compute saturation pressure over water (WMO, 2018). */
-#define PS(t)							\
+#define PSAT(t)							\
   (6.112 * exp(17.62 * ((t) - T0) / (243.12 + (t) - T0)))
 
 /*! Compute saturation pressure over ice (Marti and Mauersberger, 1993). */
@@ -246,7 +246,7 @@
 
 /*! Compute relative humidity over water. */
 #define RH(p, t, h2o)				\
-  (PW(p, h2o) / PS(t) * 100.)
+  (PW(p, h2o) / PSAT(t) * 100.)
 
 /*! Compute relative humidity over ice. */
 #define RHICE(p, t, h2o)			\
@@ -496,7 +496,19 @@ typedef struct {
   /*! Quantity array index for hydroxyl number concentrations. */
   int qnt_oh;
 
-  /*! Quantity array index for relative humidty. */
+  /*! Quantity array index for saturation pressure over water. */
+  int qnt_psat;
+
+  /*! Quantity array index for saturation pressure over ice. */
+  int qnt_psice;
+
+  /*! Quantity array index for partial water vapor pressure. */
+  int qnt_pw;
+
+  /*! Quantity array index for specific humidty. */
+  int qnt_sh;
+
+  /*! Quantity array index for relative humidty over water. */
   int qnt_rh;
 
   /*! Quantity array index for relative humidty over ice. */
@@ -504,6 +516,12 @@ typedef struct {
 
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
+
+  /*! Quantity array index for virtual temperature. */
+  int qnt_tvirt;
+
+  /*! Quantity array index for lapse rate. */
+  int qnt_lapse;
 
   /*! Quantity array index for horizontal wind. */
   int qnt_vh;

@@ -560,8 +560,10 @@ void module_advection(
       int ci[3] = { 0 };
 
       double dtm = 0.0, v[3] = { 0.0 }, xm[3] = {
-      0.0}, cw[3] = {
-      0.0};
+	0.0
+      }, cw[3] = {
+	0.0
+      };
 
       /* Interpolate meteorological data... */
       intpol_met_time_3d(met0, met0->u, met1, met1->u, atm->time[ip],
@@ -1277,6 +1279,22 @@ void module_meteo(
     if (ctl->qnt_vz >= 0)
       atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
 
+    /* Calculate saturation pressure over water... */
+    if (ctl->qnt_psat >= 0)
+      atm->q[ctl->qnt_psat][ip] = PSAT(t);
+
+    /* Calculate saturation pressure over ice... */
+    if (ctl->qnt_psice >= 0)
+      atm->q[ctl->qnt_psice][ip] = PSICE(t);
+
+    /* Calculate partial water vapor pressure... */
+    if (ctl->qnt_pw >= 0)
+      atm->q[ctl->qnt_pw][ip] = PW(atm->p[ip], h2o);
+
+    /* Calculate specific humidity... */
+    if (ctl->qnt_sh >= 0)
+      atm->q[ctl->qnt_sh][ip] = SH(h2o);
+
     /* Calculate relative humidty... */
     if (ctl->qnt_rh >= 0)
       atm->q[ctl->qnt_rh][ip] = RH(atm->p[ip], t, h2o);
@@ -1288,6 +1306,14 @@ void module_meteo(
     /* Calculate potential temperature... */
     if (ctl->qnt_theta >= 0)
       atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
+
+    /* Calculate virtual temperature... */
+    if (ctl->qnt_tvirt >= 0)
+      atm->q[ctl->qnt_tvirt][ip] = TVIRT(t, h2o);
+
+    /* Calculate lapse rate... */
+    if (ctl->qnt_lapse >= 0)
+      atm->q[ctl->qnt_lapse][ip] = lapse_rate(t, h2o);
 
     /* Set potential vorticity... */
     if (ctl->qnt_pv >= 0)

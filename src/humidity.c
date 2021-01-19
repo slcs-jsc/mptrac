@@ -40,7 +40,7 @@ int main(
   /* Convert time... */
   printf("p= %g T= %g H2O= %g SH= %g PS= %g RH= %g Tdew= %g"
 	 " PSice= %g RHice= %g Tice= %g lapse= %g\n",
-	 p, t, h2o, SH(h2o), PS(t), RH(p, t, h2o), TDEW(p, h2o),
+	 p, t, h2o, SH(h2o), PSAT(t), RH(p, t, h2o), TDEW(p, h2o),
 	 PSICE(t), RHICE(p, t, h2o), TICE(p, h2o), lapse_rate(t, h2o));
 
   return EXIT_SUCCESS;

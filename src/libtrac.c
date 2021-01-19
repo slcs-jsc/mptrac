@@ -2039,7 +2039,9 @@ int read_atm(
       return 0;
 
     /* Read data... */
-    FREAD(&atm->np, int, 1, in);
+    FREAD(&atm->np, int,
+	  1,
+	  in);
     FREAD(atm->time, double,
 	    (size_t) atm->np,
 	  in);
@@ -2194,9 +2196,15 @@ void read_ctl(
   ctl->qnt_cape = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
+  ctl->qnt_psat = -1;
+  ctl->qnt_psice = -1;
+  ctl->qnt_pw = -1;
+  ctl->qnt_sh = -1;
   ctl->qnt_rh = -1;
   ctl->qnt_rhice = -1;
   ctl->qnt_theta = -1;
+  ctl->qnt_tvirt = -1;
+  ctl->qnt_lapse = -1;
   ctl->qnt_vh = -1;
   ctl->qnt_vz = -1;
   ctl->qnt_pv = -1;
@@ -2290,6 +2298,18 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "oh") == 0) {
       ctl->qnt_oh = iq;
       sprintf(ctl->qnt_unit[iq], "molec/cm^3");
+    } else if (strcmp(ctl->qnt_name[iq], "psat") == 0) {
+      ctl->qnt_psat = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "psice") == 0) {
+      ctl->qnt_psice = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "pw") == 0) {
+      ctl->qnt_pw = iq;
+      sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcmp(ctl->qnt_name[iq], "sh") == 0) {
+      ctl->qnt_sh = iq;
+      sprintf(ctl->qnt_unit[iq], "kg/kg");
     } else if (strcmp(ctl->qnt_name[iq], "rh") == 0) {
       ctl->qnt_rh = iq;
       sprintf(ctl->qnt_unit[iq], "%%");
@@ -2299,6 +2319,12 @@ void read_ctl(
     } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
       sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "tvirt") == 0) {
+      ctl->qnt_tvirt = iq;
+      sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcmp(ctl->qnt_name[iq], "lapse") == 0) {
+      ctl->qnt_lapse = iq;
+      sprintf(ctl->qnt_unit[iq], "K/km");
     } else if (strcmp(ctl->qnt_name[iq], "vh") == 0) {
       ctl->qnt_vh = iq;
       sprintf(ctl->qnt_unit[iq], "m/s");
@@ -2744,7 +2770,7 @@ void read_met_cape(
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
 	t -= lapse_rate(t, h2o) * dz;
-	psat = PS(t);
+	psat = PSAT(t);
 	h2o = psat / (p - (1. - EPS) * psat);
 	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
 			    &t_env, ci, cw, 1);
@@ -2961,7 +2987,8 @@ int read_met_help_3d(
       return 0;
 
   /* Allocate... */
-  ALLOC(help, float, EX * EY * EP);
+  ALLOC(help, float,
+	EX * EY * EP);
 
   /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
@@ -3005,7 +3032,8 @@ int read_met_help_2d(
       return 0;
 
   /* Allocate... */
-  ALLOC(help, float, EX * EY);
+  ALLOC(help, float,
+	EX * EY);
 
   /* Read data... */
   NC(nc_get_var_float(ncid, varid, help));
