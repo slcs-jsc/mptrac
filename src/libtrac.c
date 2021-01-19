@@ -2226,127 +2226,127 @@ void read_ctl(
 	     ctl->qnt_format[iq]);
 
     /* Try to identify quantity... */
-    if (strcmp(ctl->qnt_name[iq], "ens") == 0) {
+    if (strcasecmp(ctl->qnt_name[iq], "ens") == 0) {
       ctl->qnt_ens = iq;
       sprintf(ctl->qnt_unit[iq], "-");
-    } else if (strcmp(ctl->qnt_name[iq], "m") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "m") == 0) {
       ctl->qnt_m = iq;
       sprintf(ctl->qnt_unit[iq], "kg");
-    } else if (strcmp(ctl->qnt_name[iq], "r") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "r") == 0) {
       ctl->qnt_r = iq;
       sprintf(ctl->qnt_unit[iq], "m");
-    } else if (strcmp(ctl->qnt_name[iq], "rho") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "rho") == 0) {
       ctl->qnt_rho = iq;
       sprintf(ctl->qnt_unit[iq], "kg/m^3");
-    } else if (strcmp(ctl->qnt_name[iq], "ps") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "ps") == 0) {
       ctl->qnt_ps = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "pt") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "pt") == 0) {
       ctl->qnt_pt = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "z") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "z") == 0) {
       ctl->qnt_z = iq;
       sprintf(ctl->qnt_unit[iq], "km");
-    } else if (strcmp(ctl->qnt_name[iq], "p") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "p") == 0) {
       ctl->qnt_p = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "t") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "t") == 0) {
       ctl->qnt_t = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "u") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "u") == 0) {
       ctl->qnt_u = iq;
       sprintf(ctl->qnt_unit[iq], "m/s");
-    } else if (strcmp(ctl->qnt_name[iq], "v") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "v") == 0) {
       ctl->qnt_v = iq;
       sprintf(ctl->qnt_unit[iq], "m/s");
-    } else if (strcmp(ctl->qnt_name[iq], "w") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "w") == 0) {
       ctl->qnt_w = iq;
       sprintf(ctl->qnt_unit[iq], "hPa/s");
-    } else if (strcmp(ctl->qnt_name[iq], "h2o") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "h2o") == 0) {
       ctl->qnt_h2o = iq;
       sprintf(ctl->qnt_unit[iq], "ppv");
-    } else if (strcmp(ctl->qnt_name[iq], "o3") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "o3") == 0) {
       ctl->qnt_o3 = iq;
       sprintf(ctl->qnt_unit[iq], "ppv");
-    } else if (strcmp(ctl->qnt_name[iq], "lwc") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "lwc") == 0) {
       ctl->qnt_lwc = iq;
       sprintf(ctl->qnt_unit[iq], "kg/kg");
-    } else if (strcmp(ctl->qnt_name[iq], "iwc") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "iwc") == 0) {
       ctl->qnt_iwc = iq;
       sprintf(ctl->qnt_unit[iq], "kg/kg");
-    } else if (strcmp(ctl->qnt_name[iq], "pc") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "pc") == 0) {
       ctl->qnt_pc = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "cl") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "cl") == 0) {
       ctl->qnt_cl = iq;
       sprintf(ctl->qnt_unit[iq], "kg/m^2");
-    } else if (strcmp(ctl->qnt_name[iq], "plcl") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "plcl") == 0) {
       ctl->qnt_plcl = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "plfc") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "plfc") == 0) {
       ctl->qnt_plfc = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "pel") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "pel") == 0) {
       ctl->qnt_pel = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "cape") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "cape") == 0) {
       ctl->qnt_cape = iq;
       sprintf(ctl->qnt_unit[iq], "J/kg");
-    } else if (strcmp(ctl->qnt_name[iq], "hno3") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "hno3") == 0) {
       ctl->qnt_hno3 = iq;
       sprintf(ctl->qnt_unit[iq], "ppv");
-    } else if (strcmp(ctl->qnt_name[iq], "oh") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "oh") == 0) {
       ctl->qnt_oh = iq;
       sprintf(ctl->qnt_unit[iq], "molec/cm^3");
-    } else if (strcmp(ctl->qnt_name[iq], "psat") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "psat") == 0) {
       ctl->qnt_psat = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "psice") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "psice") == 0) {
       ctl->qnt_psice = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "pw") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "pw") == 0) {
       ctl->qnt_pw = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
-    } else if (strcmp(ctl->qnt_name[iq], "sh") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "sh") == 0) {
       ctl->qnt_sh = iq;
       sprintf(ctl->qnt_unit[iq], "kg/kg");
-    } else if (strcmp(ctl->qnt_name[iq], "rh") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "rh") == 0) {
       ctl->qnt_rh = iq;
       sprintf(ctl->qnt_unit[iq], "%%");
-    } else if (strcmp(ctl->qnt_name[iq], "rhice") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "rhice") == 0) {
       ctl->qnt_rhice = iq;
       sprintf(ctl->qnt_unit[iq], "%%");
-    } else if (strcmp(ctl->qnt_name[iq], "theta") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "tvirt") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "tvirt") == 0) {
       ctl->qnt_tvirt = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "lapse") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "lapse") == 0) {
       ctl->qnt_lapse = iq;
       sprintf(ctl->qnt_unit[iq], "K/km");
-    } else if (strcmp(ctl->qnt_name[iq], "vh") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "vh") == 0) {
       ctl->qnt_vh = iq;
       sprintf(ctl->qnt_unit[iq], "m/s");
-    } else if (strcmp(ctl->qnt_name[iq], "vz") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "vz") == 0) {
       ctl->qnt_vz = iq;
       sprintf(ctl->qnt_unit[iq], "m/s");
-    } else if (strcmp(ctl->qnt_name[iq], "pv") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "pv") == 0) {
       ctl->qnt_pv = iq;
       sprintf(ctl->qnt_unit[iq], "PVU");
-    } else if (strcmp(ctl->qnt_name[iq], "tdew") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "tdew") == 0) {
       ctl->qnt_tdew = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "tice") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "tice") == 0) {
       ctl->qnt_tice = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "tsts") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "tsts") == 0) {
       ctl->qnt_tsts = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "tnat") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "tnat") == 0) {
       ctl->qnt_tnat = iq;
       sprintf(ctl->qnt_unit[iq], "K");
-    } else if (strcmp(ctl->qnt_name[iq], "stat") == 0) {
+    } else if (strcasecmp(ctl->qnt_name[iq], "stat") == 0) {
       ctl->qnt_stat = iq;
       sprintf(ctl->qnt_unit[iq], "-");
     } else
@@ -2415,7 +2415,7 @@ void read_ctl(
 
   /* Species parameters... */
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
-  if (strcmp(ctl->species, "SO2") == 0) {
+  if (strcasecmp(ctl->species, "SO2") == 0) {
     ctl->molmass = 64.066;
     ctl->oh_chem[0] = 3.3e-31;	/* (JPL Publication 15-10) */
     ctl->oh_chem[1] = 4.3;	/* (JPL Publication 15-10) */
