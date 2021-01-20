@@ -1978,6 +1978,26 @@ int locate_reg(
 
 /*****************************************************************************/
 
+double nat_temperature(
+  double p,
+  double h2o,
+  double hno3) {
+
+  double p_hno3 = hno3 * p / 1.333224;
+  double p_h2o = h2o * p / 1.333224;
+  double a = 0.009179 - 0.00088 * log10(p_h2o);
+  double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
+  double c = -11397.0 / a;
+  double tnat = (-b + sqrt(b * b - 4. * c)) / 2.;
+  double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
+  if (x2 > 0)
+    tnat = x2;
+
+  return tnat;
+}
+
+/*****************************************************************************/
+
 int read_atm(
   const char *filename,
   ctl_t * ctl,

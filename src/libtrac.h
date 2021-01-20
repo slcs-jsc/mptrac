@@ -1143,6 +1143,15 @@ int locate_reg(
   int n,
   double x);
 
+/*! Calculate NAT existence temperature. */
+#ifdef _OPENACC
+#pragma acc routine (nat_temperature)
+#endif
+double nat_temperature(
+  double p,
+  double h2o,
+  double hno3);
+
 /*! Read atmospheric data. */
 int read_atm(
   const char *filename,

@@ -551,9 +551,7 @@ void module_advection(
 
       int ci[3] = { 0 };
 
-      double cw[3] = { 0.0 };
-
-      double u, v, w;
+      double u, v, w, cw[3] = { 0.0 };
 
       /* Interpolate meteorological data... */
       INTPOL_3D(u, 1);
@@ -1052,7 +1050,6 @@ void module_meteo(
     INTPOL_3D(o3, 0);
     INTPOL_3D(lwc, 0);
     INTPOL_3D(iwc, 0);
-
     INTPOL_2D(ps, 0);
     INTPOL_2D(pt, 0);
     INTPOL_2D(pc, 0);
@@ -1062,133 +1059,47 @@ void module_meteo(
     INTPOL_2D(pel, 0);
     INTPOL_2D(cape, 0);
 
-    /* Set surface pressure... */
+    /* Set quantities... */
     METEO_SET(qnt_ps, ps);
-
-    /* Set tropopause pressure... */
     METEO_SET(qnt_pt, pt);
-
-    /* Set pressure... */
     METEO_SET(qnt_p, atm->p[ip]);
-
-    /* Set geopotential height... */
     METEO_SET(qnt_z, z);
-
-    /* Set temperature... */
     METEO_SET(qnt_t, t);
-
-    /* Set zonal wind... */
     METEO_SET(qnt_u, u);
-
-    /* Set meridional wind... */
     METEO_SET(qnt_v, v);
-
-    /* Set vertical velocity... */
     METEO_SET(qnt_w, w);
-
-    /* Set water vapor vmr... */
     METEO_SET(qnt_h2o, h2o);
-
-    /* Set ozone vmr... */
     METEO_SET(qnt_o3, o3);
-
-    /* Set cloud liquid water content... */
     METEO_SET(qnt_lwc, lwc);
-
-    /* Set cloud ice water content... */
     METEO_SET(qnt_iwc, iwc);
-
-    /* Set cloud top pressure... */
     METEO_SET(qnt_pc, pc);
-
-    /* Set total column cloud water... */
     METEO_SET(qnt_cl, cl);
-
-    /* Set pressure at lifted condensation level... */
     METEO_SET(qnt_plcl, plcl);
-
-    /* Set pressure at level of free convection... */
     METEO_SET(qnt_plfc, plfc);
-
-    /* Set pressure at equilibrium level... */
     METEO_SET(qnt_pel, pel);
-
-    /* Set convective available potential energy... */
     METEO_SET(qnt_cape, cape);
-
-    /* Set nitric acid vmr... */
     METEO_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
-
-    /* Set hydroxyl number concentration... */
     METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
-
-    /* Calculate horizontal wind... */
     METEO_SET(qnt_vh, sqrt(u * u + v * v));
-
-    /* Calculate vertical velocity... */
     METEO_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
-
-    /* Calculate saturation pressure over water... */
     METEO_SET(qnt_psat, PSAT(t));
-
-    /* Calculate saturation pressure over ice... */
     METEO_SET(qnt_psice, PSICE(t));
-
-    /* Calculate partial water vapor pressure... */
     METEO_SET(qnt_pw, PW(atm->p[ip], h2o));
-
-    /* Calculate specific humidity... */
     METEO_SET(qnt_sh, SH(h2o));
-
-    /* Calculate relative humidty... */
     METEO_SET(qnt_rh, RH(atm->p[ip], t, h2o));
-
-    /* Calculate relative humidty over ice... */
     METEO_SET(qnt_rhice, RHICE(atm->p[ip], t, h2o));
-
-    /* Calculate potential temperature... */
     METEO_SET(qnt_theta, THETA(atm->p[ip], t));
-
-    /* Calculate virtual temperature... */
     METEO_SET(qnt_tvirt, TVIRT(t, h2o));
-
-    /* Calculate lapse rate... */
     METEO_SET(qnt_lapse, lapse_rate(t, h2o));
-
-    /* Set potential vorticity... */
     METEO_SET(qnt_pv, pv);
-
-    /* Calculate dew point... */
     METEO_SET(qnt_tdew, TDEW(atm->p[ip], h2o));
-
-    /* Calculate T_ice (Marti and Mauersberger, 1993)... */
-    METEO_SET(qnt_tice,
-	      TICE(atm->p[ip], (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o)));
-
-    /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
-    if (ctl->qnt_tnat >= 0) {
-      double p_hno3;
-      if (ctl->psc_hno3 > 0)
-	p_hno3 = ctl->psc_hno3 * atm->p[ip] / 1.333224;
-      else
-	p_hno3 = clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip])
-	  * 1e-9 * atm->p[ip] / 1.333224;
-      double p_h2o =
-	(ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o) * atm->p[ip] / 1.333224;
-      double a = 0.009179 - 0.00088 * log10(p_h2o);
-      double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
-      double c = -11397.0 / a;
-      double x1 = (-b + sqrt(b * b - 4. * c)) / 2.;
-      double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
-      if (x1 > 0)
-	atm->q[ctl->qnt_tnat][ip] = x1;
-      if (x2 > 0)
-	atm->q[ctl->qnt_tnat][ip] = x2;
-    }
-
-    /* Calculate T_STS (mean of T_ice and T_NAT)... */
-    METEO_SET(qnt_tsts, 0.5 * (atm->q[ctl->qnt_tice][ip]
-			       + atm->q[ctl->qnt_tnat][ip]));
+    METEO_SET(qnt_tice, TICE(atm->p[ip], h2o));
+    METEO_SET(qnt_tnat,
+	      nat_temperature(atm->p[ip], h2o,
+			      clim_hno3(atm->time[ip], atm->lat[ip],
+					atm->p[ip]) * 1e-9));
+    METEO_SET(qnt_tsts,
+	      0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
 }
 
