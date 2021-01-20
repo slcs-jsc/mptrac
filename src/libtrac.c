@@ -1914,14 +1914,14 @@ void jsec2time(
 double lapse_rate(
   double t,
   double h2o) {
-  
+
   /*
-    Calculate moist adiabatic lapse rate [K/km] from temperature [K]
-    and water vapor volume mixing ratio [1].
-    
-    Reference: https://en.wikipedia.org/wiki/Lapse_rate
-  */
-  
+     Calculate moist adiabatic lapse rate [K/km] from temperature [K]
+     and water vapor volume mixing ratio [1].
+
+     Reference: https://en.wikipedia.org/wiki/Lapse_rate
+   */
+
   const double a = RA * SQR(t), r = SH(h2o) / (1. - SH(h2o));
 
   return 1e3 * G0 * (a + LV * r * t) / (CPD * a + SQR(LV) * r * EPS);
@@ -2901,7 +2901,7 @@ void read_met_geopot(
 
   static float help[EX][EY][EP], w, wsum;
 
-  double logp[EP], ts, z0, cw[3];
+  double h2os, logp[EP], ts, z0, cw[3];
 
   int ip, ip0, ix, ix2, ix3, iy, iy2, ci[3];
 
@@ -2928,39 +2928,37 @@ void read_met_geopot(
       /* Find surface pressure level index... */
       ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
-      /* Get virtual temperature at the surface... */
+      /* Get temperature and water vapor vmr at the surface... */
       ts =
-	LIN(met->p[ip0],
-	    TVIRT(met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]),
-	    met->p[ip0 + 1],
-	    TVIRT(met->t[ix][iy][ip0 + 1], met->h2o[ix][iy][ip0 + 1]),
-	    met->ps[ix][iy]);
+	LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
+	    met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      h2os =
+	LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
+	    met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
-	= (float) (z0 + RI / MA / G0 * 0.5
-		   * (ts + TVIRT(met->t[ix][iy][ip0 + 1],
-				 met->h2o[ix][iy][ip0 + 1]))
-		   * (log(met->ps[ix][iy]) - logp[ip0 + 1]));
+	= (float) (z0 +
+		   ZDIFF(log(met->ps[ix][iy]), ts, h2os, logp[ip0 + 1],
+			 met->t[ix][iy][ip0 + 1], met->h2o[ix][iy][ip0 + 1]));
       for (ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
-	  = (float) (met->z[ix][iy][ip - 1] + RI / MA / G0 * 0.5 *
-		     (TVIRT(met->t[ix][iy][ip - 1], met->h2o[ix][iy][ip - 1])
-		      + TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip]))
-		     * (logp[ip - 1] - logp[ip]));
+	  = (float) (met->z[ix][iy][ip - 1] +
+		     ZDIFF(logp[ip - 1], met->t[ix][iy][ip - 1],
+			   met->h2o[ix][iy][ip - 1], logp[ip],
+			   met->t[ix][iy][ip], met->h2o[ix][iy][ip]));
 
       /* Lower part of profile... */
       met->z[ix][iy][ip0]
-	= (float) (z0 + RI / MA / G0 * 0.5
-		   * (ts + TVIRT(met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]))
-		   * (log(met->ps[ix][iy]) - logp[ip0]));
+	= (float) (z0 +
+		   ZDIFF(log(met->ps[ix][iy]), ts, h2os, logp[ip0],
+			 met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]));
       for (ip = ip0 - 1; ip >= 0; ip--)
 	met->z[ix][iy][ip]
-	  = (float) (met->z[ix][iy][ip + 1] + RI / MA / G0 * 0.5 *
-		     (TVIRT(met->t[ix][iy][ip], met->h2o[ix][iy][ip])
-		      + TVIRT(met->t[ix][iy][ip + 1],
-			      met->h2o[ix][iy][ip + 1]))
-		     * (logp[ip + 1] - logp[ip]));
+	  = (float) (met->z[ix][iy][ip + 1] +
+		     ZDIFF(logp[ip + 1], met->t[ix][iy][ip + 1],
+			   met->h2o[ix][iy][ip + 1], logp[ip],
+			   met->t[ix][iy][ip], met->h2o[ix][iy][ip]));
     }
 
   /* Horizontal smoothing... */

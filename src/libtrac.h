@@ -263,7 +263,7 @@
 
 /*! Calculate lapse rate between pressure levels. */
 #define LAPSE(p1, t1, p2, t2)						\
-  (1e3 * G0 / RA * (t2 - t1) / (t2 + t1) * (p2 + p1) / (p2 - p1))
+  (1e3 * G0 / RA * ((t2) - (t1)) / ((t2) + (t1)) * ((p2) + (p1)) / ((p2) - (p1)))
 
 /*! Compute linear interpolation. */
 #define LIN(x0, y0, x1, y1, x)			\
@@ -343,6 +343,10 @@
 
 /*! Convert pressure to altitude. */
 #define Z(p) (H0 * log(P0 / (p)))
+
+/*! Calculate geopotential height difference. */
+#define ZDIFF(lnp0, t0, h2o0, lnp1, t1, h2o1)				\
+  (RI / MA / G0 * 0.5 * (TVIRT((t0), (h2o0)) + TVIRT((t1), (h2o1))) * ((lnp0) - (lnp1)))
 
 /* ------------------------------------------------------------
    Timers...
