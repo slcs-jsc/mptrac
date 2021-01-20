@@ -126,50 +126,7 @@ int main(
     }
 
     /* Interpolate meteo data... */
-    intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &z, ci, cw, 1);
-    intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &t, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->u, met1, met1->u, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &u, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->v, met1, met1->v, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &v, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->w, met1, met1->w, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &w, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->pv, met1, met1->pv, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &pv, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &h2o, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->o3, met1, met1->o3, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &o3, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &lwc, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, atm->time[ip], pref,
-		       atm->lon[ip], atm->lat[ip], &iwc, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->ps, met1, met1->ps, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &ps, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->pt, met1, met1->pt, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &pt, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->pc, met1, met1->pc, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &pc, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &plcl, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &plfc, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->pel, met1, met1->pel, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &pel, ci, cw, 0);
-    intpol_met_time_2d(met0, met0->cape, met1, met1->cape, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], &cape, ci, cw, 0);
-
-    /* Interpolate tropopause data... */
-    intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip], pt,
-		       atm->lon[ip], atm->lat[ip], &zt, ci, cw, 1);
-    intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip], pt,
-		       atm->lon[ip], atm->lat[ip], &tt, ci, cw, 0);
-    intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, atm->time[ip], pt,
-		       atm->lon[ip], atm->lat[ip], &h2ot, ci, cw, 0);
+    INTPOL_TIME_ALL(atm->time[ip], pref, atm->lon[ip], atm->lat[ip]);
 
     /* Write data... */
     fprintf(out,

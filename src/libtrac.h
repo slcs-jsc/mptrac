@@ -211,6 +211,56 @@
       ERRMSG("Error while writing!");					\
   }
 
+/*! Spatial interpolation of all meteo data. */
+#define INTPOL_SPACE_ALL(p, lon, lat) {					\
+  intpol_met_space_3d(met, met->z, p, lon, lat, &z, ci, cw, 1);		\
+  intpol_met_space_3d(met, met->t, p, lon,lat, &t, ci, cw, 0);		\
+  intpol_met_space_3d(met, met->u, p, lon, lat, &u, ci, cw, 0);		\
+  intpol_met_space_3d(met, met->v, p, lon, lat, &v, ci, cw, 0);		\
+  intpol_met_space_3d(met, met->w, p, lon, lat, &w, ci, cw, 0);		\
+  intpol_met_space_3d(met, met->pv, p, lon, lat, &pv, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->h2o, p, lon, lat, &h2o, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->o3, p, lon, lat, &o3, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->lwc, p, lon, lat, &lwc, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->pc, lon, lat, &pc, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->plcl, lon, lat, &plcl, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->z, pt, lon, lat, &zt, ci, cw, 1);	\
+  intpol_met_space_3d(met, met->t, pt, lon, lat, &tt, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->h2o, pt, lon, lat, &h2ot, ci, cw, 0);	\
+  }
+
+/*! Temperoal interpolation of all meteo data. */
+#define INTPOL_TIME_ALL(time, p, lon, lat) {				\
+  intpol_met_time_3d(met0, met0->z, met1, met1->z, time, p, lon, lat, &z, ci, cw, 1); \
+  intpol_met_time_3d(met0, met0->t, met1, met1->t, time, p, lon, lat, &t, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->u, met1, met1->u, time, p, lon, lat, &u, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->v, met1, met1->v, time, p, lon, lat, &v, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->w, met1, met1->w, time, p, lon, lat, &w, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->pv, met1, met1->pv, time, p, lon, lat, &pv, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, p, lon, lat, &h2o, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->o3, met1, met1->o3, time, p, lon, lat, &o3, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pc, met1, met1->pc, time, lon, lat, &pc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->z, met1, met1->z, time, pt, lon, lat, &zt, ci, cw, 1); \
+  intpol_met_time_3d(met0, met0->t, met1, met1->t, time, pt, lon, lat, &tt, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, pt, lon, lat, &h2ot, ci, cw, 0); \
+  }
+
 /*! Compute linear interpolation. */
 #define LIN(x0, y0, x1, y1, x)			\
   ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
@@ -443,6 +493,15 @@ typedef struct {
 
   /*! Quantity array index for tropopause pressure. */
   int qnt_pt;
+
+  /*! Quantity array index for tropopause temperature. */
+  int qnt_tt;
+
+  /*! Quantity array index for tropopause geopotential height. */
+  int qnt_zt;
+
+  /*! Quantity array index for tropopause water vapor vmr. */
+  int qnt_h2ot;
 
   /*! Quantity array index for geopotential height. */
   int qnt_z;

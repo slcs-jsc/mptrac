@@ -1034,34 +1034,20 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, pt, pc, cl, plcl, plfc, pel, cape,
-      pv, t, u, v, w, h2o, o3, lwc, iwc, z, cw[3] = { 0.0 };
+    double ps, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
+      u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt, cw[3] = { 0.0 };
 
     int ci[3] = { 0 };
 
     /* Interpolate meteorological data... */
-    INTPOL_3D(z, 1);
-    INTPOL_3D(t, 0);
-    INTPOL_3D(u, 0);
-    INTPOL_3D(v, 0);
-    INTPOL_3D(w, 0);
-    INTPOL_3D(pv, 0);
-    INTPOL_3D(h2o, 0);
-    INTPOL_3D(o3, 0);
-    INTPOL_3D(lwc, 0);
-    INTPOL_3D(iwc, 0);
-    INTPOL_2D(ps, 0);
-    INTPOL_2D(pt, 0);
-    INTPOL_2D(pc, 0);
-    INTPOL_2D(cl, 0);
-    INTPOL_2D(plcl, 0);
-    INTPOL_2D(plfc, 0);
-    INTPOL_2D(pel, 0);
-    INTPOL_2D(cape, 0);
+    INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Set quantities... */
     METEO_SET(qnt_ps, ps);
     METEO_SET(qnt_pt, pt);
+    METEO_SET(qnt_tt, tt);
+    METEO_SET(qnt_zt, zt);
+    METEO_SET(qnt_h2ot, h2ot);
     METEO_SET(qnt_p, atm->p[ip]);
     METEO_SET(qnt_z, z);
     METEO_SET(qnt_t, t);

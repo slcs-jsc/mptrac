@@ -2198,6 +2198,9 @@ void read_ctl(
   ctl->qnt_rho = -1;
   ctl->qnt_ps = -1;
   ctl->qnt_pt = -1;
+  ctl->qnt_tt = -1;
+  ctl->qnt_zt = -1;
+  ctl->qnt_h2ot = -1;
   ctl->qnt_z = -1;
   ctl->qnt_p = -1;
   ctl->qnt_t = -1;
@@ -2264,6 +2267,15 @@ void read_ctl(
     } else if (strcasecmp(ctl->qnt_name[iq], "pt") == 0) {
       ctl->qnt_pt = iq;
       sprintf(ctl->qnt_unit[iq], "hPa");
+    } else if (strcasecmp(ctl->qnt_name[iq], "tt") == 0) {
+      ctl->qnt_tt = iq;
+      sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcasecmp(ctl->qnt_name[iq], "zt") == 0) {
+      ctl->qnt_zt = iq;
+      sprintf(ctl->qnt_unit[iq], "km");
+    } else if (strcasecmp(ctl->qnt_name[iq], "h2ot") == 0) {
+      ctl->qnt_h2ot = iq;
+      sprintf(ctl->qnt_unit[iq], "ppv");
     } else if (strcasecmp(ctl->qnt_name[iq], "z") == 0) {
       ctl->qnt_z = iq;
       sprintf(ctl->qnt_unit[iq], "km");
