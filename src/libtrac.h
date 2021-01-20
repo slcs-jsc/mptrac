@@ -383,7 +383,7 @@
 #define NVTX_MISC 0xFF808080
 
 /*! Macro for calling nvtxRangePushEx. */
-#define RANGE_PUSH(range_title, range_color) {		\
+#define NVTX_PUSH(range_title, range_color) {		\
     nvtxEventAttributes_t eventAttrib = {0};		\
     eventAttrib.version = NVTX_VERSION;			\
     eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;	\
@@ -395,14 +395,14 @@
   }
 
 /*! Macro for calling nvtxRangePop. */
-#define RANGE_POP {				\
+#define NVTX_POP {				\
     nvtxRangePop();				\
   }
 #else
 
-/* Empty definitions of RANGE_PUSH and RANGE_POP... */
-#define RANGE_PUSH(range_title, range_color) {}
-#define RANGE_POP {}
+/* Empty definitions of NVTX_PUSH and NVTX_POP... */
+#define NVTX_PUSH(range_title, range_color) {}
+#define NVTX_POP {}
 #endif
 
 /* ------------------------------------------------------------

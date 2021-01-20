@@ -35,6 +35,19 @@ static gsl_rng *rng[NTHREADS];
 #endif
 
 /* ------------------------------------------------------------
+   Macros...
+   ------------------------------------------------------------ */
+
+/*! Macro to set quantity values. */
+#define METEO_SET(qnt, val)			\
+  if (ctl->qnt >= 0)				\
+    atm->q[ctl->qnt][ip] = val;
+
+/*! Update atmospheric data on host device. */
+#define UPDATE_ATM				\
+  }
+
+/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -60,10 +73,6 @@ void module_decay(
   atm_t * atm,
   double *dt);
 
-/*! Initialize random number generator... */
-void module_diffusion_init(
-  void);
-
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
   ctl_t * ctl,
@@ -73,12 +82,6 @@ void module_diffusion_meso(
   cache_t * cache,
   double *dt,
   double *rs);
-
-/*! Generate random numbers. */
-void module_diffusion_rng(
-  double *rs,
-  size_t n,
-  int method);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
@@ -124,6 +127,16 @@ void module_position(
   met_t * met1,
   atm_t * atm,
   double *dt);
+
+/*! Initialize random number generator... */
+void module_rng_init(
+  void);
+
+/*! Generate random numbers. */
+void module_rng(
+  double *rs,
+  size_t n,
+  int method);
 
 /*! Calculate sedimentation of air parcels. */
 void module_sedi(
@@ -184,22 +197,22 @@ int main(
 
   /* Initialize MPI... */
 #ifdef MPI
-  RANGE_PUSH("Initialize MPI", NVTX_CPU);
+  NVTX_PUSH("Initialize MPI", NVTX_CPU);
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  RANGE_POP;
+  NVTX_POP;
 #endif
 
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  RANGE_PUSH("Initialize GPUs", NVTX_GPU);
+  NVTX_PUSH("Initialize GPUs", NVTX_GPU);
   acc_device_t device_type = acc_get_device_type();
   num_devices = acc_get_num_devices(acc_device_nvidia);
   int device_num = rank % num_devices;
   acc_set_device_num(device_num, acc_device_nvidia);
   acc_init(device_type);
-  RANGE_POP;
+  NVTX_POP;
 #endif
 
   /* Check arguments... */
@@ -226,7 +239,7 @@ int main(
     START_TIMER(TIMER_INIT);
 
     /* Allocate... */
-    RANGE_PUSH("Allocate", NVTX_CPU);
+    NVTX_PUSH("Allocate", NVTX_CPU);
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(met0, met_t, 1);
@@ -235,27 +248,27 @@ int main(
 	  NP);
     ALLOC(rs, double,
 	  3 * NP);
-    RANGE_POP;
+    NVTX_POP;
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
-    RANGE_PUSH("Create data region", NVTX_GPU);
+    NVTX_PUSH("Create data region", NVTX_GPU);
 #pragma acc enter data create(atm[:1],cache[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
-    RANGE_POP;
+    NVTX_POP;
 #endif
 
     /* Read control parameters... */
-    RANGE_PUSH("Read ctl", NVTX_READ);
+    NVTX_PUSH("Read ctl", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
-    RANGE_POP;
+    NVTX_POP;
 
     /* Read atmospheric data... */
-    RANGE_PUSH("Read atm", NVTX_READ);
+    NVTX_PUSH("Read atm", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
-    RANGE_POP;
+    NVTX_POP;
 
     /* Set start time... */
     if (ctl.direction == 1) {
@@ -280,32 +293,32 @@ int main(
 
     /* Update GPU... */
 #ifdef _OPENACC
-    RANGE_PUSH("Update device", NVTX_H2D);
+    NVTX_PUSH("Update device", NVTX_H2D);
 #pragma acc update device(atm[:1],ctl)
-    RANGE_POP;
+    NVTX_POP;
 #endif
 
     /* Initialize random number generator... */
-    module_diffusion_init();
+    module_rng_init();
 
     /* Initialize meteorological data... */
-    RANGE_PUSH("Init meteo data", NVTX_READ);
+    NVTX_PUSH("Init meteo data", NVTX_READ);
     get_met(&ctl, argv[4], ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
-    RANGE_POP;
+    NVTX_POP;
 
     /* Initialize isosurface... */
-    RANGE_PUSH("Init isosurface...", NVTX_CPU);
+    NVTX_PUSH("Init isosurface...", NVTX_CPU);
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
-    RANGE_POP;
+    NVTX_POP;
 
     /* Update GPU... */
 #ifdef _OPENACC
-    RANGE_PUSH("Update device", NVTX_H2D);
+    NVTX_PUSH("Update device", NVTX_H2D);
 #pragma acc update device(cache[:1])
-    RANGE_POP;
+    NVTX_POP;
 #endif
 
     /* Set timers... */
@@ -324,7 +337,7 @@ int main(
 	t = ctl.t_stop;
 
       /* Set time steps for air parcels... */
-      RANGE_PUSH("Set time steps", NVTX_GPU);
+      NVTX_PUSH("Set time steps", NVTX_GPU);
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector present(ctl,atm,atm->time,dt)
 #endif
@@ -339,132 +352,132 @@ int main(
 	else
 	  dt[ip] = 0;
       }
-      RANGE_POP;
+      NVTX_POP;
 
       /* Get meteorological data... */
-      RANGE_PUSH("Get meteo data", NVTX_READ);
+      NVTX_PUSH("Get meteo data", NVTX_READ);
       START_TIMER(TIMER_INPUT);
       if (t != ctl.t_start)
 	get_met(&ctl, argv[4], t, &met0, &met1);
       STOP_TIMER(TIMER_INPUT);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Check initial positions... */
-      RANGE_PUSH("Check initial positions", NVTX_GPU);
+      NVTX_PUSH("Check initial positions", NVTX_GPU);
       START_TIMER(TIMER_POSITION);
       module_position(met0, met1, atm, dt);
       STOP_TIMER(TIMER_POSITION);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Advection... */
-      RANGE_PUSH("Advection", NVTX_GPU);
+      NVTX_PUSH("Advection", NVTX_GPU);
       START_TIMER(TIMER_ADVECT);
       module_advection(met0, met1, atm, dt);
       STOP_TIMER(TIMER_ADVECT);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Turbulent diffusion... */
-      RANGE_PUSH("Turbulent diffusion", NVTX_GPU);
+      NVTX_PUSH("Turbulent diffusion", NVTX_GPU);
       START_TIMER(TIMER_DIFFTURB);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
-	module_diffusion_rng(rs, 3 * (size_t) atm->np, 1);
+	module_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_turb(&ctl, atm, dt, rs);
       }
       STOP_TIMER(TIMER_DIFFTURB);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Mesoscale diffusion... */
-      RANGE_PUSH("Mesoscale diffusion", NVTX_GPU);
+      NVTX_PUSH("Mesoscale diffusion", NVTX_GPU);
       START_TIMER(TIMER_DIFFMESO);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
-	module_diffusion_rng(rs, 3 * (size_t) atm->np, 1);
+	module_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
       }
       STOP_TIMER(TIMER_DIFFMESO);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Convection... */
-      RANGE_PUSH("Convection", NVTX_GPU);
+      NVTX_PUSH("Convection", NVTX_GPU);
       START_TIMER(TIMER_CONVECT);
       if (ctl.conv_cape >= 0) {
-	module_diffusion_rng(rs, (size_t) atm->np, 0);
+	module_rng(rs, (size_t) atm->np, 0);
 	module_convection(&ctl, met0, met1, atm, dt, rs);
       }
       STOP_TIMER(TIMER_CONVECT);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Sedimentation... */
-      RANGE_PUSH("Sedimentation", NVTX_GPU);
+      NVTX_PUSH("Sedimentation", NVTX_GPU);
       START_TIMER(TIMER_SEDI);
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0)
 	module_sedi(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_SEDI);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Isosurface... */
-      RANGE_PUSH("Isosurface", NVTX_GPU);
+      NVTX_PUSH("Isosurface", NVTX_GPU);
       START_TIMER(TIMER_ISOSURF);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
 	module_isosurf(&ctl, met0, met1, atm, cache);
       STOP_TIMER(TIMER_ISOSURF);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Check final positions... */
-      RANGE_PUSH("Check final positions", NVTX_GPU);
+      NVTX_PUSH("Check final positions", NVTX_GPU);
       START_TIMER(TIMER_POSITION);
       module_position(met0, met1, atm, dt);
       STOP_TIMER(TIMER_POSITION);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Interpolate meteorological data... */
-      RANGE_PUSH("Interpolate meteo data", NVTX_GPU);
+      NVTX_PUSH("Interpolate meteo data", NVTX_GPU);
       START_TIMER(TIMER_METEO);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
 	module_meteo(&ctl, met0, met1, atm);
       STOP_TIMER(TIMER_METEO);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Decay of particle mass... */
-      RANGE_PUSH("Decay of particle mass", NVTX_GPU);
+      NVTX_PUSH("Decay of particle mass", NVTX_GPU);
       START_TIMER(TIMER_DECAY);
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	module_decay(&ctl, atm, dt);
       STOP_TIMER(TIMER_DECAY);
-      RANGE_POP;
+      NVTX_POP;
 
       /* OH chemistry... */
-      RANGE_PUSH("OH chem", NVTX_GPU);
+      NVTX_PUSH("OH chem", NVTX_GPU);
       START_TIMER(TIMER_OHCHEM);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
 	module_oh_chem(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_OHCHEM);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Dry deposition... */
-      RANGE_PUSH("Dry deposition", NVTX_GPU);
+      NVTX_PUSH("Dry deposition", NVTX_GPU);
       START_TIMER(TIMER_DRYDEPO);
       if (ctl.dry_depo[0] > 0)
 	module_dry_deposition(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_DRYDEPO);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Wet deposition... */
-      RANGE_PUSH("Wet deposition", NVTX_GPU);
+      NVTX_PUSH("Wet deposition", NVTX_GPU);
       START_TIMER(TIMER_WETDEPO);
       if ((ctl.wet_depo[0] > 0 || ctl.wet_depo[2] > 0)
 	  && (ctl.wet_depo[4] > 0 || ctl.wet_depo[6] > 0))
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
       STOP_TIMER(TIMER_WETDEPO);
-      RANGE_POP;
+      NVTX_POP;
 
       /* Write output... */
-      RANGE_PUSH("Write output", NVTX_WRITE);
+      NVTX_PUSH("Write output", NVTX_WRITE);
       START_TIMER(TIMER_OUTPUT);
       write_output(dirname, &ctl, met0, met1, atm, t);
       STOP_TIMER(TIMER_OUTPUT);
-      RANGE_POP;
+      NVTX_POP;
     }
 
     /* ------------------------------------------------------------
@@ -513,28 +526,28 @@ int main(
     PRINT_TIMER(TIMER_TOTAL);
 
     /* Free... */
-    RANGE_PUSH("Deallocations", NVTX_CPU);
+    NVTX_PUSH("Deallocations", NVTX_CPU);
     free(atm);
     free(cache);
     free(met0);
     free(met1);
     free(dt);
     free(rs);
-    RANGE_POP;
+    NVTX_POP;
 
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
-    RANGE_PUSH("Delete data region", NVTX_GPU);
+    NVTX_PUSH("Delete data region", NVTX_GPU);
 #pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
-    RANGE_POP;
+    NVTX_POP;
 #endif
   }
 
   /* Finalize MPI... */
 #ifdef MPI
-  RANGE_PUSH("Finalize MPI", NVTX_CPU);
+  NVTX_PUSH("Finalize MPI", NVTX_CPU);
   MPI_Finalize();
-  RANGE_POP;
+  NVTX_POP;
 #endif
 
   return EXIT_SUCCESS;
@@ -559,11 +572,7 @@ void module_advection(
 
       int ci[3] = { 0 };
 
-      double dtm = 0.0, v[3] = { 0.0 }, xm[3] = {
-	0.0
-      }, cw[3] = {
-	0.0
-      };
+      double v[3] = { 0.0 }, xm[3] = { 0.0 }, cw[3] = { 0.0 };
 
       /* Interpolate meteorological data... */
       intpol_met_time_3d(met0, met0->u, met1, met1->u, atm->time[ip],
@@ -577,7 +586,7 @@ void module_advection(
 			 cw, 0);
 
       /* Get position of the mid point... */
-      dtm = atm->time[ip] + 0.5 * dt[ip];
+      double dtm = atm->time[ip] + 0.5 * dt[ip];
       xm[0] =
 	atm->lon[ip] + DX2DEG(0.5 * dt[ip] * v[0] / 1000., atm->lat[ip]);
       xm[1] = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v[1] / 1000.);
@@ -667,14 +676,13 @@ void module_decay(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double p0, p1, pt, tdec, w;
-
       /* Get tropopause pressure... */
-      pt = clim_tropo(atm->time[ip], atm->lat[ip]);
+      double pt = clim_tropo(atm->time[ip], atm->lat[ip]);
 
       /* Get weighting factor... */
-      p1 = pt * 0.866877899;
-      p0 = pt / 0.866877899;
+      double w;
+      double p1 = pt * 0.866877899;
+      double p0 = pt / 0.866877899;
       if (atm->p[ip] > p0)
 	w = 1;
       else if (atm->p[ip] < p1)
@@ -683,39 +691,11 @@ void module_decay(
 	w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 
       /* Set lifetime... */
-      tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
+      double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
       /* Calculate exponential decay... */
       atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] / tdec);
     }
-}
-
-/*****************************************************************************/
-
-void module_diffusion_init(
-  void) {
-
-  /* Initialize random number generator... */
-#ifdef _OPENACC
-
-  if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
-      != CURAND_STATUS_SUCCESS)
-    ERRMSG("Cannot create random number generator!");
-  if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
-      != CURAND_STATUS_SUCCESS)
-    ERRMSG("Cannot set stream for random number generator!");
-
-#else
-
-  gsl_rng_env_setup();
-  if (omp_get_max_threads() > NTHREADS)
-    ERRMSG("Too many threads!");
-  for (int i = 0; i < NTHREADS; i++) {
-    rng[i] = gsl_rng_alloc(gsl_rng_default);
-    gsl_rng_set(rng[i], gsl_rng_default_seed + (long unsigned) i);
-  }
-
-#endif
 }
 
 /*****************************************************************************/
@@ -840,51 +820,6 @@ void module_diffusion_meso(
 
 /*****************************************************************************/
 
-void module_diffusion_rng(
-  double *rs,
-  size_t n,
-  int method) {
-
-#ifdef _OPENACC
-
-#pragma acc host_data use_device(rs)
-  {
-    /* Uniform distribution... */
-    if (method == 0) {
-      if (curandGenerateUniform(rng, rs, n)
-	  != CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
-    }
-
-    /* Normal distribution... */
-    else if (method == 1) {
-      if (curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0)
-	  != CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
-    }
-  }
-
-#else
-
-  /* Uniform distribution... */
-  if (method == 0) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
-  }
-
-  /* Normal distribution... */
-  else if (method == 1) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
-  }
-#endif
-
-}
-
-/*****************************************************************************/
-
 void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
@@ -900,12 +835,11 @@ void module_diffusion_turb(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double w;
-
       /* Get tropopause pressure... */
       double pt = clim_tropo(atm->time[ip], atm->lat[ip]);
 
       /* Get weighting factor... */
+      double w;
       double p1 = pt * 0.866877899;
       double p0 = pt / 0.866877899;
       if (atm->p[ip] > p0)
@@ -960,7 +894,7 @@ void module_dry_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double dz, ps, T, v_dep, cw[3] = { 0.0 };
+      double ps, t, v_dep, cw[3] = { 0.0 };
 
       int ci[3] = { 0 };
 
@@ -973,18 +907,18 @@ void module_dry_deposition(
 	continue;
 
       /* Set width of surface layer... */
-      dz = 1000. * (Z(ps - dp) - Z(ps));
+      double dz = 1000. * (Z(ps - dp) - Z(ps));
 
       /* Calculate sedimentation velocity for particles... */
       if (ctl->qnt_r >= 0 && ctl->qnt_rho >= 0) {
 
 	/* Get temperature... */
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
+			   atm->p[ip], atm->lon[ip], atm->lat[ip], &t, ci, cw,
 			   1);
 
 	/* Set deposition velocity... */
-	v_dep = sedi(atm->p[ip], T, atm->q[ctl->qnt_r][ip],
+	v_dep = sedi(atm->p[ip], t, atm->q[ctl->qnt_r][ip],
 		     atm->q[ctl->qnt_rho][ip]);
       }
 
@@ -1190,143 +1124,106 @@ void module_meteo(
 		       atm->lon[ip], atm->lat[ip], &cape, ci, cw, 0);
 
     /* Set surface pressure... */
-    if (ctl->qnt_ps >= 0)
-      atm->q[ctl->qnt_ps][ip] = ps;
-
+    METEO_SET(qnt_ps, ps);
+    
     /* Set tropopause pressure... */
-    if (ctl->qnt_pt >= 0)
-      atm->q[ctl->qnt_pt][ip] = pt;
+    METEO_SET(qnt_pt, pt);
 
     /* Set pressure... */
-    if (ctl->qnt_p >= 0)
-      atm->q[ctl->qnt_p][ip] = atm->p[ip];
+    METEO_SET(qnt_p, atm->p[ip]);
 
     /* Set geopotential height... */
-    if (ctl->qnt_z >= 0)
-      atm->q[ctl->qnt_z][ip] = z;
+    METEO_SET(qnt_z, z);
 
     /* Set temperature... */
-    if (ctl->qnt_t >= 0)
-      atm->q[ctl->qnt_t][ip] = t;
+    METEO_SET(qnt_t, t);
 
     /* Set zonal wind... */
-    if (ctl->qnt_u >= 0)
-      atm->q[ctl->qnt_u][ip] = u;
+    METEO_SET(qnt_u, u);
 
     /* Set meridional wind... */
-    if (ctl->qnt_v >= 0)
-      atm->q[ctl->qnt_v][ip] = v;
+    METEO_SET(qnt_v, v);
 
     /* Set vertical velocity... */
-    if (ctl->qnt_w >= 0)
-      atm->q[ctl->qnt_w][ip] = w;
+    METEO_SET(qnt_w, w);
 
     /* Set water vapor vmr... */
-    if (ctl->qnt_h2o >= 0)
-      atm->q[ctl->qnt_h2o][ip] = h2o;
+    METEO_SET(qnt_h2o, h2o);
 
     /* Set ozone vmr... */
-    if (ctl->qnt_o3 >= 0)
-      atm->q[ctl->qnt_o3][ip] = o3;
+    METEO_SET(qnt_o3, o3);
 
     /* Set cloud liquid water content... */
-    if (ctl->qnt_lwc >= 0)
-      atm->q[ctl->qnt_lwc][ip] = lwc;
+    METEO_SET(qnt_lwc, lwc);
 
     /* Set cloud ice water content... */
-    if (ctl->qnt_iwc >= 0)
-      atm->q[ctl->qnt_iwc][ip] = iwc;
+    METEO_SET(qnt_iwc, iwc);
 
     /* Set cloud top pressure... */
-    if (ctl->qnt_pc >= 0)
-      atm->q[ctl->qnt_pc][ip] = pc;
+    METEO_SET(qnt_pc, pc);
 
     /* Set total column cloud water... */
-    if (ctl->qnt_cl >= 0)
-      atm->q[ctl->qnt_cl][ip] = cl;
+    METEO_SET(qnt_cl, cl);
 
     /* Set pressure at lifted condensation level... */
-    if (ctl->qnt_plcl >= 0)
-      atm->q[ctl->qnt_plcl][ip] = plcl;
+    METEO_SET(qnt_plcl, plcl);
 
     /* Set pressure at level of free convection... */
-    if (ctl->qnt_plfc >= 0)
-      atm->q[ctl->qnt_plfc][ip] = plfc;
+    METEO_SET(qnt_plfc, plfc);
 
     /* Set pressure at equilibrium level... */
-    if (ctl->qnt_pel >= 0)
-      atm->q[ctl->qnt_pel][ip] = pel;
+    METEO_SET(qnt_pel, pel);
 
     /* Set convective available potential energy... */
-    if (ctl->qnt_cape >= 0)
-      atm->q[ctl->qnt_cape][ip] = cape;
+    METEO_SET(qnt_cape, cape);
 
     /* Set nitric acid vmr... */
-    if (ctl->qnt_hno3 >= 0)
-      atm->q[ctl->qnt_hno3][ip] =
-	clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]);
+    METEO_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
 
     /* Set hydroxyl number concentration... */
-    if (ctl->qnt_oh >= 0)
-      atm->q[ctl->qnt_oh][ip] =
-	clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]);
+    METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
 
     /* Calculate horizontal wind... */
-    if (ctl->qnt_vh >= 0)
-      atm->q[ctl->qnt_vh][ip] = sqrt(u * u + v * v);
+    METEO_SET(qnt_vh, sqrt(u * u + v * v));
 
     /* Calculate vertical velocity... */
-    if (ctl->qnt_vz >= 0)
-      atm->q[ctl->qnt_vz][ip] = -1e3 * H0 / atm->p[ip] * w;
+    METEO_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
 
     /* Calculate saturation pressure over water... */
-    if (ctl->qnt_psat >= 0)
-      atm->q[ctl->qnt_psat][ip] = PSAT(t);
+    METEO_SET(qnt_psat, PSAT(t));
 
     /* Calculate saturation pressure over ice... */
-    if (ctl->qnt_psice >= 0)
-      atm->q[ctl->qnt_psice][ip] = PSICE(t);
+    METEO_SET(qnt_psice, PSICE(t));
 
     /* Calculate partial water vapor pressure... */
-    if (ctl->qnt_pw >= 0)
-      atm->q[ctl->qnt_pw][ip] = PW(atm->p[ip], h2o);
+    METEO_SET(qnt_pw, PW(atm->p[ip], h2o));
 
     /* Calculate specific humidity... */
-    if (ctl->qnt_sh >= 0)
-      atm->q[ctl->qnt_sh][ip] = SH(h2o);
+    METEO_SET(qnt_sh, SH(h2o));
 
     /* Calculate relative humidty... */
-    if (ctl->qnt_rh >= 0)
-      atm->q[ctl->qnt_rh][ip] = RH(atm->p[ip], t, h2o);
+    METEO_SET(qnt_rh, RH(atm->p[ip], t, h2o));
 
     /* Calculate relative humidty over ice... */
-    if (ctl->qnt_rhice >= 0)
-      atm->q[ctl->qnt_rhice][ip] = RHICE(atm->p[ip], t, h2o);
+    METEO_SET(qnt_rhice, RHICE(atm->p[ip], t, h2o));
 
     /* Calculate potential temperature... */
-    if (ctl->qnt_theta >= 0)
-      atm->q[ctl->qnt_theta][ip] = THETA(atm->p[ip], t);
+    METEO_SET(qnt_theta, THETA(atm->p[ip], t));
 
     /* Calculate virtual temperature... */
-    if (ctl->qnt_tvirt >= 0)
-      atm->q[ctl->qnt_tvirt][ip] = TVIRT(t, h2o);
+    METEO_SET(qnt_tvirt, TVIRT(t, h2o));
 
     /* Calculate lapse rate... */
-    if (ctl->qnt_lapse >= 0)
-      atm->q[ctl->qnt_lapse][ip] = lapse_rate(t, h2o);
+    METEO_SET(qnt_lapse, lapse_rate(t, h2o));
 
     /* Set potential vorticity... */
-    if (ctl->qnt_pv >= 0)
-      atm->q[ctl->qnt_pv][ip] = pv;
+    METEO_SET(qnt_pv, pv);
 
     /* Calculate dew point... */
-    if (ctl->qnt_tdew >= 0)
-      atm->q[ctl->qnt_tdew][ip] = TDEW(atm->p[ip], h2o);
+    METEO_SET(qnt_tdew, TDEW(atm->p[ip], h2o));
 
     /* Calculate T_ice (Marti and Mauersberger, 1993)... */
-    if (ctl->qnt_tice >= 0)
-      atm->q[ctl->qnt_tice][ip]
-	= TICE(atm->p[ip], (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o));
+    METEO_SET(qnt_tice, TICE(atm->p[ip], (ctl->psc_h2o > 0 ? ctl->psc_h2o : h2o)));
 
     /* Calculate T_NAT (Hanson and Mauersberger, 1988)... */
     if (ctl->qnt_tnat >= 0) {
@@ -1350,9 +1247,8 @@ void module_meteo(
     }
 
     /* Calculate T_STS (mean of T_ice and T_NAT)... */
-    if (ctl->qnt_tsts >= 0)
-      atm->q[ctl->qnt_tsts][ip] = 0.5 * (atm->q[ctl->qnt_tice][ip]
-					 + atm->q[ctl->qnt_tnat][ip]);
+    METEO_SET(qnt_tsts, 0.5 * (atm->q[ctl->qnt_tice][ip]
+			       + atm->q[ctl->qnt_tnat][ip]));
   }
 }
 
@@ -1413,6 +1309,79 @@ void module_position(
 
 /*****************************************************************************/
 
+void module_rng_init(
+  void) {
+
+  /* Initialize random number generator... */
+#ifdef _OPENACC
+
+  if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
+      != CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot create random number generator!");
+  if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
+      != CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot set stream for random number generator!");
+
+#else
+
+  gsl_rng_env_setup();
+  if (omp_get_max_threads() > NTHREADS)
+    ERRMSG("Too many threads!");
+  for (int i = 0; i < NTHREADS; i++) {
+    rng[i] = gsl_rng_alloc(gsl_rng_default);
+    gsl_rng_set(rng[i], gsl_rng_default_seed + (long unsigned) i);
+  }
+
+#endif
+}
+
+/*****************************************************************************/
+
+void module_rng(
+  double *rs,
+  size_t n,
+  int method) {
+
+#ifdef _OPENACC
+
+#pragma acc host_data use_device(rs)
+  {
+    /* Uniform distribution... */
+    if (method == 0) {
+      if (curandGenerateUniform(rng, rs, n)
+	  != CURAND_STATUS_SUCCESS)
+	ERRMSG("Cannot create random numbers!");
+    }
+
+    /* Normal distribution... */
+    else if (method == 1) {
+      if (curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0)
+	  != CURAND_STATUS_SUCCESS)
+	ERRMSG("Cannot create random numbers!");
+    }
+  }
+
+#else
+
+  /* Uniform distribution... */
+  if (method == 0) {
+#pragma omp parallel for default(shared)
+    for (size_t i = 0; i < n; ++i)
+      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
+  }
+
+  /* Normal distribution... */
+  else if (method == 1) {
+#pragma omp parallel for default(shared)
+    for (size_t i = 0; i < n; ++i)
+      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+  }
+#endif
+
+}
+
+/*****************************************************************************/
+
 void module_sedi(
   ctl_t * ctl,
   met_t * met0,
@@ -1429,17 +1398,17 @@ void module_sedi(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double T, v_s, cw[3] = { 0.0 };
+      double t, v_s, cw[3] = { 0.0 };
 
       int ci[3] = { 0 };
 
       /* Get temperature... */
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			 atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
+			 atm->p[ip], atm->lon[ip], atm->lat[ip], &t, ci, cw,
 			 1);
 
       /* Sedimentation velocity... */
-      v_s = sedi(atm->p[ip], T, atm->q[ctl->qnt_r][ip],
+      v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_r][ip],
 		 atm->q[ctl->qnt_rho][ip]);
 
       /* Calculate pressure change... */
@@ -1469,26 +1438,26 @@ void module_oh_chem(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double c, k, k0, ki, M, T, cw[3] = { 0.0 };
+      double cw[3] = { 0.0 }, t;
 
       int ci[3] = { 0 };
 
       /* Get temperature... */
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			 atm->p[ip], atm->lon[ip], atm->lat[ip], &T, ci, cw,
+			 atm->p[ip], atm->lon[ip], atm->lat[ip], &t, ci, cw,
 			 1);
 
       /* Calculate molecular density... */
-      M = 7.243e21 * (atm->p[ip] / P0) / T;
+      double M = 7.243e21 * (atm->p[ip] / P0) / t;
 
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 15-10) ... */
-      k0 = ctl->oh_chem[0] *
-	(ctl->oh_chem[1] > 0 ? pow(T / 300., -ctl->oh_chem[1]) : 1.);
-      ki = ctl->oh_chem[2] *
-	(ctl->oh_chem[3] > 0 ? pow(T / 300., -ctl->oh_chem[3]) : 1.);
-      c = log10(k0 * M / ki);
-      k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
+      double k0 = ctl->oh_chem[0] *
+	(ctl->oh_chem[1] > 0 ? pow(t / 300., -ctl->oh_chem[1]) : 1.);
+      double ki = ctl->oh_chem[2] *
+	(ctl->oh_chem[3] > 0 ? pow(t / 300., -ctl->oh_chem[3]) : 1.);
+      double c = log10(k0 * M / ki);
+      double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
       /* Calculate exponential decay... */
       atm->q[ctl->qnt_m][ip] *=
@@ -1518,7 +1487,7 @@ void module_wet_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double dz, H, Is, T, cl, lambda = 0, iwc, lwc, pc, cw[3] = { 0.0 };
+      double cl, dz, h, lambda = 0, t, iwc, lwc, pc, cw[3] = { 0.0 };
 
       int inside, ci[3] = { 0 };
 
@@ -1531,7 +1500,7 @@ void module_wet_deposition(
       /* Estimate precipitation rate (Pisso et al., 2019)... */
       intpol_met_time_2d(met0, met0->cl, met1, met1->cl, atm->time[ip],
 			 atm->lon[ip], atm->lat[ip], &cl, ci, cw, 0);
-      Is = pow(2. * cl, 1. / 0.36);
+      double Is = pow(2. * cl, 1. / 0.36);
       if (Is < 0.01)
 	continue;
 
@@ -1556,18 +1525,18 @@ void module_wet_deposition(
 
 	  /* Get temperature... */
 	  intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			     atm->p[ip], atm->lon[ip], atm->lat[ip], &T,
+			     atm->p[ip], atm->lon[ip], atm->lat[ip], &t,
 			     ci, cw, 0);
 
 	  /* Get Henry's constant (Sander, 2015)... */
-	  H = ctl->wet_depo[2]
-	    * exp(ctl->wet_depo[3] * (1. / T - 1. / 298.15));
+	  h = ctl->wet_depo[2]
+	    * exp(ctl->wet_depo[3] * (1. / t - 1. / 298.15));
 
 	  /* Estimate depth of cloud layer... */
 	  dz = 1e3 * Z(pc);
 
 	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
-	  lambda = H * RI * T * Is / 3.6e6 * dz;
+	  lambda = h * RI * t * Is / 3.6e6 * dz;
 	}
       }
 
@@ -1583,18 +1552,18 @@ void module_wet_deposition(
 
 	  /* Get temperature... */
 	  intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			     atm->p[ip], atm->lon[ip], atm->lat[ip], &T,
+			     atm->p[ip], atm->lon[ip], atm->lat[ip], &t,
 			     ci, cw, 0);
 
 	  /* Get Henry's constant (Sander, 2015)... */
-	  H = ctl->wet_depo[6]
-	    * exp(ctl->wet_depo[7] * (1. / T - 1. / 298.15));
+	  h = ctl->wet_depo[6]
+	    * exp(ctl->wet_depo[7] * (1. / t - 1. / 298.15));
 
 	  /* Estimate depth of cloud layer... */
 	  dz = 1e3 * Z(pc);
 
 	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
-	  lambda = H * RI * T * Is / 3.6e6 * dz;
+	  lambda = h * RI * t * Is / 3.6e6 * dz;
 	}
       }
 
@@ -1625,98 +1594,98 @@ void write_output(
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
     if (!updated) {
-      RANGE_PUSH("Update host", NVTX_D2H);
+      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      RANGE_POP;
+      NVTX_POP;
       updated = 1;
     }
-    RANGE_PUSH("Write atm data", NVTX_WRITE);
+    NVTX_PUSH("Write atm data", NVTX_WRITE);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
-    RANGE_POP;
+    NVTX_POP;
   }
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     if (!updated) {
-      RANGE_PUSH("Update host", NVTX_D2H);
+      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      RANGE_POP;
+      NVTX_POP;
       updated = 1;
     }
-    RANGE_PUSH("Write grid data", NVTX_WRITE);
+    NVTX_PUSH("Write grid data", NVTX_WRITE);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
-    RANGE_POP;
+    NVTX_POP;
   }
 
   /* Write CSI data... */
   if (ctl->csi_basename[0] != '-') {
     if (!updated) {
-      RANGE_PUSH("Update host", NVTX_D2H);
+      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      RANGE_POP;
+      NVTX_POP;
       updated = 1;
     }
-    RANGE_PUSH("Write CSI data", NVTX_WRITE);
+    NVTX_PUSH("Write CSI data", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
-    RANGE_POP;
+    NVTX_POP;
   }
 
   /* Write ensemble data... */
   if (ctl->ens_basename[0] != '-') {
     if (!updated) {
-      RANGE_PUSH("Update host", NVTX_D2H);
+      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      RANGE_POP;
+      NVTX_POP;
       updated = 1;
     }
-    RANGE_PUSH("Write ensemble data", NVTX_WRITE);
+    NVTX_PUSH("Write ensemble data", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
-    RANGE_POP;
+    NVTX_POP;
   }
 
   /* Write profile data... */
   if (ctl->prof_basename[0] != '-') {
     if (!updated) {
-      RANGE_PUSH("Update host", NVTX_D2H);
+      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      RANGE_POP;
+      NVTX_POP;
       updated = 1;
     }
-    RANGE_PUSH("Write profile data", NVTX_WRITE);
+    NVTX_PUSH("Write profile data", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
-    RANGE_POP;
+    NVTX_POP;
   }
 
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
     if (!updated) {
-      RANGE_PUSH("Update host", NVTX_D2H);
+      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-      RANGE_POP;
+      NVTX_POP;
       updated = 1;
     }
-    RANGE_PUSH("Write station data", NVTX_WRITE);
+    NVTX_PUSH("Write station data", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
-    RANGE_POP;
+    NVTX_POP;
   }
 }
