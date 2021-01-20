@@ -14,7 +14,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 * MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given wind fields.
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using a Markov chain model.
-* Additional modules are implemented to simulate the sedimentation of particles, radioactive decay, OH chemistry, dry deposition, and wet deposition.
+* Additional modules are implemented to simulate the convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
 * Various output methods for particle, ensemble, gridded, and station data. Gnuplot interface for direct visualization.
 * MPTRAC features an MPI/OpenMP/OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
 

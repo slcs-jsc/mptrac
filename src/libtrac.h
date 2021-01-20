@@ -295,10 +295,12 @@
    ------------------------------------------------------------ */
 
 /*! Starts a timer. */
-#define START_TIMER(id)	timer(#id, id, 1)
+#define START_TIMER(id, color)			\
+  {NVTX_PUSH(#id, color); timer(#id, id, 1);}
 
 /*! Stops a timer. */
-#define STOP_TIMER(id) timer(#id, id, 2)
+#define STOP_TIMER(id)				\
+  {timer(#id, id, 2); NVTX_POP;}
 
 /*! Prints a timer name and its time. */
 #define PRINT_TIMER(id)	timer(#id, id, 3)

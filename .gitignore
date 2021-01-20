@@ -11,7 +11,6 @@ src/atm_split
 src/atm_stat
 src/day2doy
 src/doy2day
-src/humidity
 src/jsec2time
 src/libtrac.o
 src/met_map
