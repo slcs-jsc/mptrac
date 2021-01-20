@@ -1914,14 +1914,14 @@ void jsec2time(
 double lapse_rate(
   double t,
   double h2o) {
-
+  
   /*
-     Calculate lapse rate [K/km] from temperature [K] and
-     water vapor volume mixing ratio [1].
-
-     Reference: https://en.wikipedia.org/wiki/Lapse_rate
-   */
-
+    Calculate moist adiabatic lapse rate [K/km] from temperature [K]
+    and water vapor volume mixing ratio [1].
+    
+    Reference: https://en.wikipedia.org/wiki/Lapse_rate
+  */
+  
   const double a = RA * SQR(t), r = SH(h2o) / (1. - SH(h2o));
 
   return 1e3 * G0 * (a + LV * r * t) / (CPD * a + SQR(LV) * r * EPS);
@@ -3480,8 +3480,7 @@ void read_met_tropo(
 	for (iz = 0; iz <= 170; iz++) {
 	  found = 1;
 	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	    if (1e3 * G0 / RA * (t2[iz2] - t2[iz]) / (t2[iz2] + t2[iz])
-		* (p2[iz2] + p2[iz]) / (p2[iz2] - p2[iz]) > 2.0) {
+	    if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
 	      found = 0;
 	      break;
 	    }
@@ -3498,8 +3497,7 @@ void read_met_tropo(
 	  for (; iz <= 170; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
-	      if (1e3 * G0 / RA * (t2[iz2] - t2[iz]) / (t2[iz2] + t2[iz])
-		  * (p2[iz2] + p2[iz]) / (p2[iz2] - p2[iz]) < 3.0) {
+	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) < 3.0) {
 		found = 0;
 		break;
 	      }
@@ -3509,8 +3507,7 @@ void read_met_tropo(
 	  for (; iz <= 170; iz++) {
 	    found = 1;
 	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	      if (1e3 * G0 / RA * (t2[iz2] - t2[iz]) / (t2[iz2] + t2[iz])
-		  * (p2[iz2] + p2[iz]) / (p2[iz2] - p2[iz]) > 2.0) {
+	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
 		found = 0;
 		break;
 	      }

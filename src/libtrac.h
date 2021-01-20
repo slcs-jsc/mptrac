@@ -261,6 +261,10 @@
   intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, pt, lon, lat, &h2ot, ci, cw, 0); \
   }
 
+/*! Calculate lapse rate between pressure levels. */
+#define LAPSE(p1, t1, p2, t2)						\
+  (1e3 * G0 / RA * (t2 - t1) / (t2 + t1) * (p2 + p1) / (p2 - p1))
+
 /*! Compute linear interpolation. */
 #define LIN(x0, y0, x1, y1, x)			\
   ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
