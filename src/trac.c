@@ -204,24 +204,25 @@ int main(
 
   int num_devices = 0, ntask = -1, rank = 0, size = 1;
 
+  /* Initialize NVTX... */
+  NVTX_PUSH("START", NVTX_CPU);
+
   /* Initialize MPI... */
 #ifdef MPI
-  NVTX_PUSH("Initialize MPI", NVTX_CPU);
+  SELECT_TIMER("INIT_MPI", NVTX_CPU);
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  NVTX_POP;
 #endif
 
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  NVTX_PUSH("Initialize GPUs", NVTX_GPU);
+  SELECT_TIMER("INIT_GPUS", NVTX_GPU);
   acc_device_t device_type = acc_get_device_type();
   num_devices = acc_get_num_devices(acc_device_nvidia);
   int device_num = rank % num_devices;
   acc_set_device_num(device_num, acc_device_nvidia);
   acc_init(device_type);
-  NVTX_POP;
 #endif
 
   /* Check arguments... */
@@ -243,12 +244,8 @@ int main(
        Initialize model run...
        ------------------------------------------------------------ */
 
-    /* Set timers... */
-    START_TIMER(TIMER_TOTAL, NVTX_CPU);
-    START_TIMER(TIMER_INIT, NVTX_CPU);
-
     /* Allocate... */
-    NVTX_PUSH("Allocate", NVTX_CPU);
+    SELECT_TIMER("ALLOC", NVTX_CPU);
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(met0, met_t, 1);
@@ -257,29 +254,26 @@ int main(
 	  NP);
     ALLOC(rs, double,
 	  3 * NP);
-    NVTX_POP;
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
-    NVTX_PUSH("Create data region", NVTX_GPU);
+    SELECT_TIMER("CREATE_DATA_REGION", NVTX_GPU);
 #pragma acc enter data create(atm[:1],cache[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
-    NVTX_POP;
 #endif
 
     /* Read control parameters... */
-    NVTX_PUSH("Read ctl", NVTX_READ);
+    SELECT_TIMER("READ_CTL", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
-    NVTX_POP;
 
     /* Read atmospheric data... */
-    NVTX_PUSH("Read atm", NVTX_READ);
+    SELECT_TIMER("READ_ATM", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
-    NVTX_POP;
 
     /* Set start time... */
+    SELECT_TIMER("TIMESTEPS", NVTX_CPU);
     if (ctl.direction == 1) {
       ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
       if (ctl.t_stop > 1e99)
@@ -302,36 +296,30 @@ int main(
 
     /* Update GPU... */
 #ifdef _OPENACC
-    NVTX_PUSH("Update device", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", NVTX_H2D);
 #pragma acc update device(atm[:1],ctl)
-    NVTX_POP;
 #endif
 
     /* Initialize random number generator... */
+    SELECT_TIMER("INIT_RNG", NVTX_CPU);
     module_rng_init();
 
     /* Initialize meteorological data... */
-    NVTX_PUSH("Init meteo data", NVTX_READ);
+    SELECT_TIMER("READ_METEO", NVTX_READ);
     get_met(&ctl, argv[4], ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
-    NVTX_POP;
 
     /* Initialize isosurface... */
-    NVTX_PUSH("Init isosurface...", NVTX_CPU);
+    SELECT_TIMER("INIT_ISOSURF", NVTX_CPU);
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
-    NVTX_POP;
 
     /* Update GPU... */
 #ifdef _OPENACC
-    NVTX_PUSH("Update device", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", NVTX_H2D);
 #pragma acc update device(cache[:1])
-    NVTX_POP;
 #endif
-
-    /* Set timers... */
-    STOP_TIMER(TIMER_INIT);
 
     /* ------------------------------------------------------------
        Loop over timesteps...
@@ -346,7 +334,7 @@ int main(
 	t = ctl.t_stop;
 
       /* Set time steps for air parcels... */
-      NVTX_PUSH("Set time steps", NVTX_GPU);
+      SELECT_TIMER("TIMESTEPS", NVTX_GPU);
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector present(ctl,atm,atm->time,dt)
 #endif
@@ -361,102 +349,86 @@ int main(
 	else
 	  dt[ip] = 0;
       }
-      NVTX_POP;
 
       /* Get meteorological data... */
-      START_TIMER(TIMER_INPUT, NVTX_READ);
+      SELECT_TIMER("READ_METEO", NVTX_READ);
       if (t != ctl.t_start)
 	get_met(&ctl, argv[4], t, &met0, &met1);
-      STOP_TIMER(TIMER_INPUT);
 
       /* Check initial positions... */
-      START_TIMER(TIMER_POSITION, NVTX_GPU);
+      SELECT_TIMER("POSITION", NVTX_GPU);
       module_position(met0, met1, atm, dt);
-      STOP_TIMER(TIMER_POSITION);
 
       /* Advection... */
-      START_TIMER(TIMER_ADVECT, NVTX_GPU);
+      SELECT_TIMER("ADVECTION", NVTX_GPU);
       module_advection(met0, met1, atm, dt);
-      STOP_TIMER(TIMER_ADVECT);
 
       /* Turbulent diffusion... */
-      START_TIMER(TIMER_DIFFTURB, NVTX_GPU);
+      SELECT_TIMER("TURBDIFF", NVTX_GPU);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
 	module_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_turb(&ctl, atm, dt, rs);
       }
-      STOP_TIMER(TIMER_DIFFTURB);
 
       /* Mesoscale diffusion... */
-      START_TIMER(TIMER_DIFFMESO, NVTX_GPU);
+      SELECT_TIMER("TURBMESO", NVTX_GPU);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
 	module_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
       }
-      STOP_TIMER(TIMER_DIFFMESO);
 
       /* Convection... */
-      START_TIMER(TIMER_CONVECT, NVTX_GPU);
+      SELECT_TIMER("CONVECT", NVTX_GPU);
       if (ctl.conv_cape >= 0) {
 	module_rng(rs, (size_t) atm->np, 0);
 	module_convection(&ctl, met0, met1, atm, dt, rs);
       }
-      STOP_TIMER(TIMER_CONVECT);
 
       /* Sedimentation... */
-      START_TIMER(TIMER_SEDI, NVTX_GPU);
+      SELECT_TIMER("SEDI", NVTX_GPU);
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0)
 	module_sedi(&ctl, met0, met1, atm, dt);
-      STOP_TIMER(TIMER_SEDI);
 
       /* Isosurface... */
-      START_TIMER(TIMER_ISOSURF, NVTX_GPU);
+      SELECT_TIMER("ISOSURF", NVTX_GPU);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
 	module_isosurf(&ctl, met0, met1, atm, cache);
-      STOP_TIMER(TIMER_ISOSURF);
 
       /* Check final positions... */
-      START_TIMER(TIMER_POSITION, NVTX_GPU);
+      SELECT_TIMER("POSITION", NVTX_GPU);
       module_position(met0, met1, atm, dt);
-      STOP_TIMER(TIMER_POSITION);
 
       /* Interpolate meteorological data... */
-      START_TIMER(TIMER_METEO, NVTX_GPU);
+      SELECT_TIMER("METEO", NVTX_GPU);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
 	module_meteo(&ctl, met0, met1, atm);
-      STOP_TIMER(TIMER_METEO);
 
       /* Decay of particle mass... */
-      START_TIMER(TIMER_DECAY, NVTX_GPU);
+      SELECT_TIMER("DECAY", NVTX_GPU);
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	module_decay(&ctl, atm, dt);
-      STOP_TIMER(TIMER_DECAY);
 
       /* OH chemistry... */
-      START_TIMER(TIMER_OHCHEM, NVTX_GPU);
+      SELECT_TIMER("OHCHEM", NVTX_GPU);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
 	module_oh_chem(&ctl, met0, met1, atm, dt);
-      STOP_TIMER(TIMER_OHCHEM);
 
       /* Dry deposition... */
-      START_TIMER(TIMER_DRYDEPO, NVTX_GPU);
+      SELECT_TIMER("DRYDEPO", NVTX_GPU);
       if (ctl.dry_depo[0] > 0)
 	module_dry_deposition(&ctl, met0, met1, atm, dt);
-      STOP_TIMER(TIMER_DRYDEPO);
 
       /* Wet deposition... */
-      START_TIMER(TIMER_WETDEPO, NVTX_GPU);
+      SELECT_TIMER("WETDEPO", NVTX_GPU);
       if ((ctl.wet_depo[0] > 0 || ctl.wet_depo[2] > 0)
 	  && (ctl.wet_depo[4] > 0 || ctl.wet_depo[6] > 0))
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
-      STOP_TIMER(TIMER_WETDEPO);
 
       /* Write output... */
-      START_TIMER(TIMER_OUTPUT, NVTX_WRITE);
+      SELECT_TIMER("OUTPUT", NVTX_WRITE);
       write_output(dirname, &ctl, met0, met1, atm, t);
-      STOP_TIMER(TIMER_OUTPUT);
     }
 
     /* ------------------------------------------------------------
@@ -485,49 +457,32 @@ int main(
 					  + GX * GY * sizeof(int)) / 1024. /
 	   1024.);
 
-    /* Report timers... */
-    STOP_TIMER(TIMER_TOTAL);
-    PRINT_TIMER(TIMER_INIT);
-    PRINT_TIMER(TIMER_INPUT);
-    PRINT_TIMER(TIMER_OUTPUT);
-    PRINT_TIMER(TIMER_ADVECT);
-    PRINT_TIMER(TIMER_CONVECT);
-    PRINT_TIMER(TIMER_DECAY);
-    PRINT_TIMER(TIMER_DIFFMESO);
-    PRINT_TIMER(TIMER_DIFFTURB);
-    PRINT_TIMER(TIMER_ISOSURF);
-    PRINT_TIMER(TIMER_METEO);
-    PRINT_TIMER(TIMER_POSITION);
-    PRINT_TIMER(TIMER_SEDI);
-    PRINT_TIMER(TIMER_OHCHEM);
-    PRINT_TIMER(TIMER_DRYDEPO);
-    PRINT_TIMER(TIMER_WETDEPO);
-    PRINT_TIMER(TIMER_TOTAL);
+    /* Delete data region on GPUs... */
+#ifdef _OPENACC
+    SELECT_TIMER("DELETE_DATA_REGION", NVTX_GPU);
+#pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
+#endif
 
     /* Free... */
-    NVTX_PUSH("Deallocations", NVTX_CPU);
+    SELECT_TIMER("FREE", NVTX_CPU);
     free(atm);
     free(cache);
     free(met0);
     free(met1);
     free(dt);
     free(rs);
-    NVTX_POP;
 
-    /* Delete data region on GPUs... */
-#ifdef _OPENACC
-    NVTX_PUSH("Delete data region", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
-    NVTX_POP;
-#endif
+    /* Report timers... */
+    PRINT_TIMERS;
   }
 
   /* Finalize MPI... */
 #ifdef MPI
-  NVTX_PUSH("Finalize MPI", NVTX_CPU);
   MPI_Finalize();
-  NVTX_POP;
 #endif
+
+  /* Finalize NVTX... */
+  NVTX_POP;
 
   return EXIT_SUCCESS;
 }
@@ -1416,98 +1371,86 @@ void write_output(
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
     if (!updated) {
-      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-      NVTX_POP;
       updated = 1;
     }
-    NVTX_PUSH("Write atm data", NVTX_WRITE);
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
-    NVTX_POP;
   }
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     if (!updated) {
-      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-      NVTX_POP;
       updated = 1;
     }
-    NVTX_PUSH("Write grid data", NVTX_WRITE);
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
-    NVTX_POP;
   }
 
   /* Write CSI data... */
   if (ctl->csi_basename[0] != '-') {
     if (!updated) {
-      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-      NVTX_POP;
       updated = 1;
     }
-    NVTX_PUSH("Write CSI data", NVTX_WRITE);
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
-    NVTX_POP;
   }
 
   /* Write ensemble data... */
   if (ctl->ens_basename[0] != '-') {
     if (!updated) {
-      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-      NVTX_POP;
       updated = 1;
     }
-    NVTX_PUSH("Write ensemble data", NVTX_WRITE);
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
-    NVTX_POP;
   }
 
   /* Write profile data... */
   if (ctl->prof_basename[0] != '-') {
     if (!updated) {
-      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-      NVTX_POP;
       updated = 1;
     }
-    NVTX_PUSH("Write profile data", NVTX_WRITE);
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
-    NVTX_POP;
   }
 
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
     if (!updated) {
-      NVTX_PUSH("Update host", NVTX_D2H);
 #ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-      NVTX_POP;
       updated = 1;
     }
-    NVTX_PUSH("Write station data", NVTX_WRITE);
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
-    NVTX_POP;
   }
 }

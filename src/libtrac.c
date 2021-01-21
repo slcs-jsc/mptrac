@@ -3749,35 +3749,44 @@ void time2jsec(
 
 void timer(
   const char *name,
-  int id,
-  int mode) {
+  int output) {
 
-  static double starttime[NTIMER], runtime[NTIMER];
+  static char namelist[NTIMER][100];
 
-  /* Check id... */
-  if (id < 0 || id >= NTIMER)
-    ERRMSG("Too many timers!");
+  static double runtime[NTIMER], t0, t1;
 
-  /* Start timer... */
-  if (mode == 1) {
-    if (starttime[id] <= 0)
-      starttime[id] = omp_get_wtime();
-    else
-      ERRMSG("Timer already started!");
+  static int it = -1, nt;
+
+  /* Get time... */
+  t1 = omp_get_wtime();
+
+  /* Add elapsed timer to old timer... */
+  if (it >= 0)
+    runtime[it] += t1 - t0;
+
+  /* Identify ID of new timer... */
+  for (it = 0; it < nt; it++)
+    if (strcasecmp(name, namelist[it]) == 0)
+      break;
+
+  /* Check whether this is a new timer... */
+  if (it >= nt) {
+    sprintf(namelist[it], "%s", name);
+    if ((++nt) > NTIMER)
+      ERRMSG("Too many timers!");
   }
 
-  /* Stop timer... */
-  else if (mode == 2) {
-    if (starttime[id] > 0) {
-      runtime[id] = runtime[id] + omp_get_wtime() - starttime[id];
-      starttime[id] = -1;
-    }
-  }
+  /* Save starting time... */
+  t0 = t1;
 
-  /* Print timer... */
-  else if (mode == 3) {
-    printf("%s = %.3f s\n", name, runtime[id]);
-    runtime[id] = 0;
+  /* Report timers... */
+  if (output) {
+    for (int it2 = 0; it2 < nt; it2++)
+      printf("TIMER_%s = %.3f s\n", namelist[it2], runtime[it2]);
+    double total = 0.0;
+    for (int it2 = 0; it2 < nt; it2++)
+      total += runtime[it2];
+    printf("TIMER_TOTAL = %.3f s\n", total);
   }
 }
 

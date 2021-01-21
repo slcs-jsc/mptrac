@@ -352,67 +352,20 @@
    Timers...
    ------------------------------------------------------------ */
 
-/*! Starts a timer. */
-#define START_TIMER(id, color)			\
-  {NVTX_PUSH(#id, color); timer(#id, id, 1);}
-
-/*! Stops a timer. */
-#define STOP_TIMER(id)				\
-  {timer(#id, id, 2); NVTX_POP;}
-
-/*! Prints a timer name and its time. */
-#define PRINT_TIMER(id)	timer(#id, id, 3)
-
 /*! Maximum number of timers. */
-#define NTIMER 20
+#define NTIMER 100
 
-/*! Timer for initalization. */
-#define TIMER_INIT 1
+/*! Select timer. */
+#define SELECT_TIMER(id, color)	{		\
+    NVTX_POP;					\
+    NVTX_PUSH(id, color);			\
+    timer(id, 0);				\
+  }
 
-/*! Timer for file input. */
-#define TIMER_INPUT 2
-
-/*! Timer for file output. */
-#define TIMER_OUTPUT 3
-
-/*! Timer for advection module. */
-#define TIMER_ADVECT 4
-
-/*! Timer for convction module. */
-#define TIMER_CONVECT 5
-
-/*! Timer for decay module. */
-#define TIMER_DECAY 6
-
-/*! Timer for mesoscale diffusion module. */
-#define TIMER_DIFFMESO 7
-
-/*! Timer for turbulent diffusion module. */
-#define TIMER_DIFFTURB 8
-
-/*! Timer for isosurface module module. */
-#define TIMER_ISOSURF 9
-
-/*! Timer for interpolation meteorological data. */
-#define TIMER_METEO 10
-
-/*! Timer for position module. */
-#define TIMER_POSITION 11
-
-/*! Timer for sedimentation module. */
-#define TIMER_SEDI 12
-
-/*! Timer for OH chemistry module. */
-#define TIMER_OHCHEM 13
-
-/*! Timer for dry deposition module. */
-#define TIMER_DRYDEPO 14
-
-/*! Timer for wet deposition module. */
-#define TIMER_WETDEPO 15
-
-/*! Timer for total runtime. */
-#define TIMER_TOTAL 16
+/*! Print timers. */
+#define PRINT_TIMERS {				\
+    timer("END", 1);				\
+  }
 
 /* ------------------------------------------------------------
    NVIDIA Tools Extension (NVTX)...
@@ -1353,8 +1306,7 @@ void time2jsec(
 /*! Measure wall-clock time. */
 void timer(
   const char *name,
-  int id,
-  int mode);
+  int output);
 
 /*! Write atmospheric data. */
 void write_atm(
