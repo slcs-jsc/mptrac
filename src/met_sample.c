@@ -46,8 +46,8 @@ int main(
   int geopot, ip, it, ci[3];
 
   /* Check arguments... */
-  if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <sample.tab> <metbase> <atm_in>");
+  if (argc < 3)
+    ERRMSG("Give parameters: <ctl> <sample.tab> <atm_in>");
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -60,7 +60,7 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GEOPOT", -1, "0", NULL);
 
   /* Read atmospheric data... */
-  if (!read_atm(argv[4], &ctl, atm))
+  if (!read_atm(argv[3], &ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Create output file... */
@@ -105,7 +105,7 @@ int main(
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    get_met(&ctl, argv[3], atm->time[ip], &met0, &met1);
+    get_met(&ctl, atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
     pref = atm->p[ip];

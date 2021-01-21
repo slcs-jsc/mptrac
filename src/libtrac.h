@@ -355,17 +355,21 @@
 /*! Maximum number of timers. */
 #define NTIMER 100
 
-/*! Select timer. */
-#define SELECT_TIMER(id, color)	{		\
-    NVTX_POP;					\
-    NVTX_PUSH(id, color);			\
-    timer(id, 0);				\
-  }
-
 /*! Print timers. */
-#define PRINT_TIMERS {				\
-    timer("END", 1);				\
-  }
+#define PRINT_TIMERS				\
+  timer("END", 1);
+
+/*! Select timer. */
+#define SELECT_TIMER(id, color)				\
+  {NVTX_POP; NVTX_PUSH(id, color); timer(id, 0);}
+
+/*! Start timers. */
+#define START_TIMERS				\
+  NVTX_PUSH("START", NVTX_CPU);
+
+/*! Stop timers. */
+#define STOP_TIMERS				\
+  NVTX_POP;
 
 /* ------------------------------------------------------------
    NVIDIA Tools Extension (NVTX)...
@@ -580,6 +584,9 @@ typedef struct {
 
   /*! Time step of simulation [s]. */
   double dt_mod;
+
+  /*! Basename for meteorological data. */
+  char metbase[LEN];
 
   /*! Time step of meteorological data [s]. */
   double dt_met;
@@ -1043,7 +1050,6 @@ void geo2cart(
 /*! Get meteorological data for given timestep. */
 void get_met(
   ctl_t * ctl,
-  char *metbase,
   double t,
   met_t ** met0,
   met_t ** met1);

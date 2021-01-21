@@ -1583,7 +1583,6 @@ void geo2cart(
 
 void get_met(
   ctl_t * ctl,
-  char *metbase,
   double t,
   met_t ** met0,
   met_t ** met1) {
@@ -1598,11 +1597,12 @@ void get_met(
   if (t == ctl->t_start || !init) {
     init = 1;
 
-    get_met_help(t, -1, metbase, ctl->dt_met, filename);
+    get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
 
-    get_met_help(t + 1.0 * ctl->direction, 1, metbase, ctl->dt_met, filename);
+    get_met_help(t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
+		 filename);
     if (!read_met(ctl, filename, *met1))
       ERRMSG("Cannot open file!");
 #ifdef _OPENACC
@@ -1617,7 +1617,7 @@ void get_met(
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
-    get_met_help(t, 1, metbase, ctl->dt_met, filename);
+    get_met_help(t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met1))
       ERRMSG("Cannot open file!");
 #ifdef _OPENACC
@@ -1631,7 +1631,7 @@ void get_met(
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
-    get_met_help(t, -1, metbase, ctl->dt_met, filename);
+    get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
 #ifdef _OPENACC
@@ -2394,6 +2394,7 @@ void read_ctl(
   ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "180", NULL);
 
   /* Meteorological data... */
+  scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "21600", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);

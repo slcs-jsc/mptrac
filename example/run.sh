@@ -50,6 +50,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
+METBASE = meteo/ei
 MET_TROPO = 3
 TDEC_TROP = 259200
 TDEC_STRAT = 259200
@@ -81,7 +82,7 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 
 # Calculate trajectories (without diffusion)...
 echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei \
+$trac/trac data/dirlist trac.ctl atm_split.tab \
 	   TURB_MESOX 0 TURB_MESOZ 0 \
 	   TURB_DX_TROP 0 TURB_DZ_STRAT 0 \
 	   ATM_BASENAME atm_nodiff GRID_BASENAME grid_nodiff \
@@ -89,7 +90,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei \
 
 # Calculate trajectories (with diffusion)...
 echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei \
+$trac/trac data/dirlist trac.ctl atm_split.tab \
 	   ATM_BASENAME atm_diff GRID_BASENAME grid_diff \
     | tee data/log_trac_diff.txt
 

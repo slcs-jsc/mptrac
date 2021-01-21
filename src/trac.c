@@ -204,8 +204,8 @@ int main(
 
   int num_devices = 0, ntask = -1, rank = 0, size = 1;
 
-  /* Initialize NVTX... */
-  NVTX_PUSH("START", NVTX_CPU);
+  /* Start timers... */
+  START_TIMERS;
 
   /* Initialize MPI... */
 #ifdef MPI
@@ -226,8 +226,8 @@ int main(
 #endif
 
   /* Check arguments... */
-  if (argc < 5)
-    ERRMSG("Give parameters: <dirlist> <ctl> <atm_in> <metbase>");
+  if (argc < 4)
+    ERRMSG("Give parameters: <dirlist> <ctl> <atm_in>");
 
   /* Open directory list... */
   if (!(dirlist = fopen(argv[1], "r")))
@@ -306,7 +306,7 @@ int main(
 
     /* Initialize meteorological data... */
     SELECT_TIMER("READ_METEO", NVTX_READ);
-    get_met(&ctl, argv[4], ctl.t_start, &met0, &met1);
+    get_met(&ctl, ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
@@ -353,7 +353,7 @@ int main(
       /* Get meteorological data... */
       SELECT_TIMER("READ_METEO", NVTX_READ);
       if (t != ctl.t_start)
-	get_met(&ctl, argv[4], t, &met0, &met1);
+	get_met(&ctl, t, &met0, &met1);
 
       /* Check initial positions... */
       SELECT_TIMER("POSITION", NVTX_GPU);
@@ -481,8 +481,8 @@ int main(
   MPI_Finalize();
 #endif
 
-  /* Finalize NVTX... */
-  NVTX_POP;
+  /* Stop timers... */
+  STOP_TIMERS;
 
   return EXIT_SUCCESS;
 }
