@@ -628,9 +628,6 @@ typedef struct {
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
 
-  /*! Command to stage meteo data. */
-  char met_stage[LEN];
-
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;
@@ -1214,6 +1211,13 @@ void read_met_geopot(
   ctl_t * ctl,
   met_t * met);
 
+/*! Read coordinates of meteorological data. */
+void read_met_grid(
+  char *filename,
+  int ncid,
+  ctl_t * ctl,
+  met_t * met);
+
 /*! Read and convert 3D variable from meteorological data file. */
 int read_met_help_3d(
   int ncid,
@@ -1231,6 +1235,12 @@ int read_met_help_2d(
   met_t * met,
   float dest[EX][EY],
   float scl);
+
+/* Read meteorological data on vertical levels. */
+void read_met_levels(
+  int ncid,
+  ctl_t * ctl,
+  met_t * met);
 
 /*! Convert meteorological data from model levels to pressure levels. */
 void read_met_ml2pl(

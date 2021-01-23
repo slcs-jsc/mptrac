@@ -2419,7 +2419,6 @@ void read_ctl(
     ERRMSG("MET_GEOPOT_SX and MET_GEOPOT_SY need to be greater than zero!");
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
-  scan_ctl(filename, argc, argv, "MET_STAGE", -1, "-", ctl->met_stage);
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
 
@@ -2579,137 +2578,25 @@ int read_met(
   char *filename,
   met_t * met) {
 
-  char cmd[2 * LEN], levname[LEN], tstr[10];
-
-  int ip, dimid, ncid, varid, year, mon, day, hour;
-
-  size_t np, nx, ny;
+  int ncid;
 
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
-  /* Get time from filename... */
-  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
-  year = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
-  mon = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
-  day = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-  hour = atoi(tstr);
-  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
-
   /* Open netCDF file... */
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-
-    /* Try to stage meteo file... */
-    if (ctl->met_stage[0] != '-') {
-      sprintf(cmd, "%s %d %02d %02d %02d %s", ctl->met_stage,
-	      year, mon, day, hour, filename);
-      if (system(cmd) != 0)
-	ERRMSG("Error while staging meteo data!");
-    }
-
-    /* Try to open again... */
-    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-      WARN("File not found!");
-      return 0;
-    }
+    WARN("File not found!");
+    return 0;
   }
 
-  /* Get dimensions... */
-  NC(nc_inq_dimid(ncid, "lon", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nx));
-  if (nx < 2 || nx > EX)
-    ERRMSG("Number of longitudes out of range!");
+  /* Read coordinates of meteorological data... */
+  read_met_grid(filename, ncid, ctl, met);
 
-  NC(nc_inq_dimid(ncid, "lat", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &ny));
-  if (ny < 2 || ny > EY)
-    ERRMSG("Number of latitudes out of range!");
+  /* Read meteo data on vertical levels... */
+  read_met_levels(ncid, ctl, met);
 
-  sprintf(levname, "lev");
-  NC(nc_inq_dimid(ncid, levname, &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &np));
-  if (np == 1) {
-    sprintf(levname, "lev_2");
-    if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
-      sprintf(levname, "plev");
-      nc_inq_dimid(ncid, levname, &dimid);
-    }
-    NC(nc_inq_dimlen(ncid, dimid, &np));
-  }
-  if (np < 2 || np > EP)
-    ERRMSG("Number of levels out of range!");
-
-  /* Store dimensions... */
-  met->np = (int) np;
-  met->nx = (int) nx;
-  met->ny = (int) ny;
-
-  /* Get horizontal grid... */
-  NC(nc_inq_varid(ncid, "lon", &varid));
-  NC(nc_get_var_double(ncid, varid, met->lon));
-  NC(nc_inq_varid(ncid, "lat", &varid));
-  NC(nc_get_var_double(ncid, varid, met->lat));
-
-  /* Read meteorological data... */
-  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0))
-    ERRMSG("Cannot read temperature!");
-  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0))
-    ERRMSG("Cannot read zonal wind!");
-  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0))
-    ERRMSG("Cannot read meridional wind!");
-  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f))
-    WARN("Cannot read vertical velocity");
-  if (!read_met_help_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O)))
-    WARN("Cannot read specific humidity!");
-  if (!read_met_help_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3)))
-    WARN("Cannot read ozone data!");
-  if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0))
-    WARN("Cannot read cloud liquid water content!");
-  if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0))
-    WARN("Cannot read cloud ice water content!");
-
-  /* Meteo data on pressure levels... */
-  if (ctl->met_np <= 0) {
-
-    /* Read pressure levels from file... */
-    NC(nc_inq_varid(ncid, levname, &varid));
-    NC(nc_get_var_double(ncid, varid, met->p));
-    for (ip = 0; ip < met->np; ip++)
-      met->p[ip] /= 100.;
-
-    /* Extrapolate data for lower boundary... */
-    read_met_extrapolate(met);
-  }
-
-  /* Meteo data on model levels... */
-  else {
-
-    /* Read pressure data from file... */
-    read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f);
-
-    /* Interpolate from model levels to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
-    read_met_ml2pl(ctl, met, met->u);
-    read_met_ml2pl(ctl, met, met->v);
-    read_met_ml2pl(ctl, met, met->w);
-    read_met_ml2pl(ctl, met, met->h2o);
-    read_met_ml2pl(ctl, met, met->o3);
-    read_met_ml2pl(ctl, met, met->lwc);
-    read_met_ml2pl(ctl, met, met->iwc);
-
-    /* Set pressure levels... */
-    met->np = ctl->met_np;
-    for (ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
-  }
-
-  /* Check ordering of pressure levels... */
-  for (ip = 1; ip < met->np; ip++)
-    if (met->p[ip - 1] < met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
+  /* Extrapolate data for lower boundary... */
+  read_met_extrapolate(met);
 
   /* Read surface data... */
   read_met_surface(ncid, met);
@@ -3000,6 +2887,88 @@ void read_met_geopot(
 
 /*****************************************************************************/
 
+void read_met_grid(
+  char *filename,
+  int ncid,
+  ctl_t * ctl,
+  met_t * met) {
+
+  char levname[LEN], tstr[10];
+
+  int dimid, ip, varid, year, mon, day, hour;
+
+  size_t np, nx, ny;
+
+  /* Get time from filename... */
+  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
+  year = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
+  mon = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
+  day = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+  hour = atoi(tstr);
+  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
+
+  /* Get grid dimensions... */
+  NC(nc_inq_dimid(ncid, "lon", &dimid));
+  NC(nc_inq_dimlen(ncid, dimid, &nx));
+  if (nx < 2 || nx > EX)
+    ERRMSG("Number of longitudes out of range!");
+
+  NC(nc_inq_dimid(ncid, "lat", &dimid));
+  NC(nc_inq_dimlen(ncid, dimid, &ny));
+  if (ny < 2 || ny > EY)
+    ERRMSG("Number of latitudes out of range!");
+
+  sprintf(levname, "lev");
+  NC(nc_inq_dimid(ncid, levname, &dimid));
+  NC(nc_inq_dimlen(ncid, dimid, &np));
+  if (np == 1) {
+    sprintf(levname, "lev_2");
+    if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
+      sprintf(levname, "plev");
+      nc_inq_dimid(ncid, levname, &dimid);
+    }
+    NC(nc_inq_dimlen(ncid, dimid, &np));
+  }
+  if (np < 2 || np > EP)
+    ERRMSG("Number of levels out of range!");
+
+  /* Store dimensions... */
+  met->np = (int) np;
+  met->nx = (int) nx;
+  met->ny = (int) ny;
+
+  /* Read longitudes and latitudes... */
+  NC(nc_inq_varid(ncid, "lon", &varid));
+  NC(nc_get_var_double(ncid, varid, met->lon));
+  NC(nc_inq_varid(ncid, "lat", &varid));
+  NC(nc_get_var_double(ncid, varid, met->lat));
+
+  /* Read pressure levels... */
+  if (ctl->met_np <= 0) {
+    NC(nc_inq_varid(ncid, levname, &varid));
+    NC(nc_get_var_double(ncid, varid, met->p));
+    for (ip = 0; ip < met->np; ip++)
+      met->p[ip] /= 100.;
+  }
+
+  /* Set pressure levels... */
+  else {
+    met->np = ctl->met_np;
+    for (ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
+  }
+
+  /* Check ordering of pressure levels... */
+  for (ip = 1; ip < met->np; ip++)
+    if (met->p[ip - 1] < met->p[ip])
+      ERRMSG("Pressure levels must be descending!");
+}
+
+/*****************************************************************************/
+
 int read_met_help_3d(
   int ncid,
   char *varname,
@@ -3085,6 +3054,50 @@ int read_met_help_2d(
 
   /* Return... */
   return 1;
+}
+
+/*****************************************************************************/
+
+void read_met_levels(
+  int ncid,
+  ctl_t * ctl,
+  met_t * met) {
+
+  /* Read meteorological data... */
+  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0))
+    ERRMSG("Cannot read temperature!");
+  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0))
+    ERRMSG("Cannot read zonal wind!");
+  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0))
+    ERRMSG("Cannot read meridional wind!");
+  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f))
+    WARN("Cannot read vertical velocity");
+  if (!read_met_help_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O)))
+    WARN("Cannot read specific humidity!");
+  if (!read_met_help_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3)))
+    WARN("Cannot read ozone data!");
+  if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0))
+    WARN("Cannot read cloud liquid water content!");
+  if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0))
+    WARN("Cannot read cloud ice water content!");
+
+  /* Transfer from model level to pressure levels... */
+  if (ctl->met_np > 0) {
+
+    /* Read pressure on model levels... */
+    if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f))
+      ERRMSG("Cannot read pressure on model levels!");
+
+    /* Vertical interpolate from model to pressure levels... */
+    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->u);
+    read_met_ml2pl(ctl, met, met->v);
+    read_met_ml2pl(ctl, met, met->w);
+    read_met_ml2pl(ctl, met, met->h2o);
+    read_met_ml2pl(ctl, met, met->o3);
+    read_met_ml2pl(ctl, met, met->lwc);
+    read_met_ml2pl(ctl, met, met->iwc);
+  }
 }
 
 /*****************************************************************************/
