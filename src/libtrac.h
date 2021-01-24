@@ -225,15 +225,15 @@
   intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
   intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);		\
   intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->zt, lon, lat, &zt, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->h2ot, lon, lat, &h2ot, ci, cw, 0);	\
   intpol_met_space_2d(met, met->pc, lon, lat, &pc, ci, cw, 0);		\
   intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);		\
   intpol_met_space_2d(met, met->plcl, lon, lat, &plcl, ci, cw, 0);	\
   intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);	\
   intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
   intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->z, pt, lon, lat, &zt, ci, cw, 1);	\
-  intpol_met_space_3d(met, met->t, pt, lon, lat, &tt, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->h2o, pt, lon, lat, &h2ot, ci, cw, 0);	\
   }
 
 /*! Temperoal interpolation of all meteo data. */
@@ -250,15 +250,15 @@
   intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->h2ot, met1, met1->h2ot, time, lon, lat, &h2ot, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pc, met1, met1->pc, time, lon, lat, &pc, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->z, met1, met1->z, time, pt, lon, lat, &zt, ci, cw, 1); \
-  intpol_met_time_3d(met0, met0->t, met1, met1->t, time, pt, lon, lat, &tt, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, pt, lon, lat, &h2ot, ci, cw, 0); \
   }
 
 /*! Calculate lapse rate between pressure levels. */
@@ -926,6 +926,15 @@ typedef struct {
   /*! Tropopause pressure [hPa]. */
   float pt[EX][EY];
 
+  /*! Tropopause temperature [K]. */
+  float tt[EX][EY];
+
+  /*! Tropopause geopotential height [km]. */
+  float zt[EX][EY];
+
+  /*! Tropopause water vapor vmr [ppv]. */
+  float h2ot[EX][EY];
+
   /*! Cloud top pressure [hPa]. */
   float pc[EX][EY];
 
@@ -1266,7 +1275,7 @@ void read_met_surface(
   int ncid,
   met_t * met);
 
-/*! Calculate tropopause pressure. */
+/*! Calculate tropopause data. */
 void read_met_tropo(
   ctl_t * ctl,
   met_t * met);

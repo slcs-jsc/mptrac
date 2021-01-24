@@ -2613,7 +2613,7 @@ int read_met(
   /* Calculate potential vorticity... */
   read_met_pv(met);
 
-  /* Calculate tropopause pressure... */
+  /* Calculate tropopause data... */
   read_met_tropo(ctl, met);
 
   /* Calculate cloud properties... */
@@ -3425,10 +3425,10 @@ void read_met_tropo(
   ctl_t * ctl,
   met_t * met) {
 
-  double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
-    th2[200], z[EP], z2[200];
+  double h2ot, p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
+    th2[200], tt, z[EP], z2[200], zt, cw[3];
 
-  int found, ix, iy, iz, iz2;
+  int found, ix, iy, iz, iz2, ci[3];
 
   /* Get altitude and pressure profiles... */
   for (iz = 0; iz < met->np; iz++)
@@ -3564,6 +3564,21 @@ void read_met_tropo(
 
   else
     ERRMSG("Cannot calculate tropopause!");
+
+  /* Interpolate temperature, geopotential height, and water vapor vmr... */
+#pragma omp parallel for default(shared) private(ix,iy,tt,zt,h2ot,ci,cw)
+  for (ix = 0; ix < met->nx; ix++)
+    for (iy = 0; iy < met->ny; iy++) {
+      intpol_met_space_3d(met, met->t, met->pt[ix][iy], met->lon[ix],
+			  met->lat[iy], &tt, ci, cw, 1);
+      intpol_met_space_3d(met, met->z, met->pt[ix][iy], met->lon[ix],
+			  met->lat[iy], &zt, ci, cw, 0);
+      intpol_met_space_3d(met, met->h2o, met->pt[ix][iy], met->lon[ix],
+			  met->lat[iy], &h2ot, ci, cw, 0);
+      met->tt[ix][iy] = (float) tt;
+      met->zt[ix][iy] = (float) zt;
+      met->h2ot[ix][iy] = (float) h2ot;
+    }
 }
 
 /*****************************************************************************/
