@@ -1645,13 +1645,13 @@ void get_met(
       || (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
     ERRMSG("Meteo grid dimensions do not match!");
   for (ix = 0; ix < (*met0)->nx; ix++)
-    if ((*met0)->lon[ix] != (*met1)->lon[ix])
+    if (fabs((*met0)->lon[ix] - (*met1)->lon[ix]) > 0.001)
       ERRMSG("Meteo grid longitudes do not match!");
   for (iy = 0; iy < (*met0)->ny; iy++)
-    if ((*met0)->lat[iy] != (*met1)->lat[iy])
+    if (fabs((*met0)->lat[iy] - (*met1)->lat[iy]) > 0.001)
       ERRMSG("Meteo grid latitudes do not match!");
   for (ip = 0; ip < (*met0)->np; ip++)
-    if ((*met0)->p[ip] != (*met1)->p[ip])
+    if (fabs((*met0)->p[ip] - (*met1)->p[ip]) > 0.001)
       ERRMSG("Meteo grid pressure levels do not match!");
 }
 
