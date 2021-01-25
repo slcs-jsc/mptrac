@@ -3417,6 +3417,18 @@ void read_met_surface(
     if (!read_met_help_2d
 	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.)))
       ERRMSG("Cannot read surface geopotential height!");
+
+  /* Read temperature at the surface... */
+  if (!read_met_help_2d(ncid, "t2m", "T2M", met, met->ts, 1.0))
+    WARN("Cannot read surface temperature!");
+
+  /* Read zonal wind at the surface... */
+  if (!read_met_help_2d(ncid, "u10m", "U10M", met, met->us, 1.0))
+    WARN("Cannot read surface zonal wind!");
+
+  /* Read meridional wind at the surface... */
+  if (!read_met_help_2d(ncid, "v10m", "V10M", met, met->vs, 1.0))
+    WARN("Cannot read surface meridional wind!");
 }
 
 /*****************************************************************************/

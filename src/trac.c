@@ -989,7 +989,7 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
+    double ps, ts, zs, us, vs, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
       u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt, cw[3] = { 0.0 };
 
     int ci[3] = { 0 };
@@ -999,6 +999,10 @@ void module_meteo(
 
     /* Set quantities... */
     METEO_SET(qnt_ps, ps);
+    METEO_SET(qnt_ts, ts);
+    METEO_SET(qnt_zs, zs);
+    METEO_SET(qnt_us, us);
+    METEO_SET(qnt_vs, vs);
     METEO_SET(qnt_pt, pt);
     METEO_SET(qnt_tt, tt);
     METEO_SET(qnt_zt, zt);

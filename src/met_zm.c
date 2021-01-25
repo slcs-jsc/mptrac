@@ -48,13 +48,14 @@ int main(
 
   FILE *out;
 
-  static double timem[NZ][NY], psm[NZ][NY], ptm[NZ][NY], pcm[NZ][NY],
+  static double timem[NZ][NY], psm[NZ][NY], tsm[NZ][NY], zsm[NZ][NY],
+    usm[NZ][NY], vsm[NZ][NY], ptm[NZ][NY], pcm[NZ][NY],
     clm[NZ][NY], plclm[NZ][NY], plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY],
     ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY],
     wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY],
     lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
-    ps, pt, pc, plcl, plfc, pel, cape, cl, t, u, v, w, pv, h2o, h2ot, o3,
-    lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
+    ps, ts, zs, us, vs, pt, pc, plcl, plfc, pel, cape, cl, t, u, v, w, pv,
+    h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -136,6 +137,10 @@ int main(
 	  lwcm[iz][iy] += lwc;
 	  iwcm[iz][iy] += iwc;
 	  psm[iz][iy] += ps;
+	  tsm[iz][iy] += ts;
+	  zsm[iz][iy] += zs;
+	  usm[iz][iy] += us;
+	  vsm[iz][iy] += vs;
 	  pcm[iz][iy] += pc;
 	  clm[iz][iy] += cl;
 	  plclm[iz][iy] += plcl;
@@ -167,42 +172,50 @@ int main(
 	  "# $5 = pressure [hPa]\n"
 	  "# $6 = temperature [K]\n"
 	  "# $7 = zonal wind [m/s]\n"
-	  "# $8 = meridional wind [m/s]\n" "# $9 = vertical wind [hPa/s]\n");
+	  "# $8 = meridional wind [m/s]\n"
+	  "# $9 = vertical wind [hPa/s]\n"
+	  "# $10 = H2O volume mixing ratio [ppv]\n");
   fprintf(out,
-	  "# $10 = H2O volume mixing ratio [ppv]\n"
 	  "# $11 = O3 volume mixing ratio [ppv]\n"
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
 	  "# $14 = surface pressure [hPa]\n"
-	  "# $15 = tropopause pressure [hPa]\n"
-	  "# $16 = tropopause geopotential height [km]\n"
-	  "# $17 = tropopause temperature [K]\n"
-	  "# $18 = tropopause water vapor [ppv]\n"
-	  "# $19 = cloud liquid water content [kg/kg]\n"
-	  "# $20 = cloud ice water content [kg/kg]\n");
+	  "# $15 = surface temperature [K]\n"
+	  "# $16 = surface geopotential height [km]\n"
+	  "# $17 = surface zonal wind [m/s]\n"
+	  "# $18 = surface meridional wind [m/s]\n"
+	  "# $19 = tropopause pressure [hPa]\n"
+	  "# $20 = tropopause geopotential height [km]\n");
   fprintf(out,
-	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n"
-	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
-	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
-	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
-	  "# $26 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $27 = relative humidity over water [%%]\n"
-	  "# $28 = relative humidity over ice [%%]\n");
+	  "# $21 = tropopause temperature [K]\n"
+	  "# $22 = tropopause water vapor [ppv]\n"
+	  "# $23 = cloud liquid water content [kg/kg]\n"
+	  "# $24 = cloud ice water content [kg/kg]\n"
+	  "# $25 = total column cloud water [kg/m^2]\n"
+	  "# $26 = cloud top pressure [hPa]\n"
+	  "# $27 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $28 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $29 = pressure at equilibrium level (EL) [hPa]\n"
+	  "# $30 = convective available potential energy (CAPE) [J/kg]\n");
+  fprintf(out,
+	  "# $31 = relative humidity over water [%%]\n"
+	  "# $32 = relative humidity over ice [%%]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
 	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
 	      h2om[iz][iy] / np[iz][iy], o3m[iz][iy] / np[iz][iy],
 	      zm[iz][iy] / np[iz][iy], pvm[iz][iy] / np[iz][iy],
-	      psm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
+	      psm[iz][iy] / np[iz][iy], tsm[iz][iy] / np[iz][iy],
+	      zsm[iz][iy] / np[iz][iy], usm[iz][iy] / np[iz][iy],
+	      vsm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
 	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy],
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
 	      iwcm[iz][iy] / np[iz][iy], clm[iz][iy] / np[iz][iy],

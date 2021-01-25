@@ -47,7 +47,7 @@ INCDIR = -I ../libs/build/include
 #PROF = 1
 
 # Enable netCDF-4...
-#USE_NC4 = 1
+USE_NC4 = 1
 
 # Enable NVTX markers...
 #USE_NVTX = 1

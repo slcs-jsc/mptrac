@@ -121,7 +121,7 @@
 #define NQ 12
 
 /*! Maximum number of pressure levels for meteorological data. */
-#define EP 112
+#define EP 140
 
 /*! Maximum number of longitudes for meteorological data. */
 #define EX 1201
@@ -224,6 +224,10 @@
   intpol_met_space_3d(met, met->lwc, p, lon, lat, &lwc, ci, cw, 0);	\
   intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
   intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->ts, lon, lat, &ts, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);		\
   intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->zt, lon, lat, &zt, ci, cw, 0);		\
@@ -249,6 +253,10 @@
   intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
   intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
@@ -455,6 +463,18 @@ typedef struct {
 
   /*! Quantity array index for surface pressure. */
   int qnt_ps;
+
+  /*! Quantity array index for surface temperature. */
+  int qnt_ts;
+
+  /*! Quantity array index for surface geopotential height. */
+  int qnt_zs;
+
+  /*! Quantity array index for surface zonal wind. */
+  int qnt_us;
+
+  /*! Quantity array index for surface meridional wind. */
+  int qnt_vs;
 
   /*! Quantity array index for tropopause pressure. */
   int qnt_pt;
@@ -920,8 +940,17 @@ typedef struct {
   /*! Surface pressure [hPa]. */
   float ps[EX][EY];
 
-  /*! Geopotential height at the surface [km]. */
+  /*! Surface temperature [K]. */
+  float ts[EX][EY];
+
+  /*! Surface geopotential height [km]. */
   float zs[EX][EY];
+
+  /*! Surface zonal wind [m/s]. */
+  float us[EX][EY];
+
+  /*! Surface meridional wind [m/s]. */
+  float vs[EX][EY];
 
   /*! Tropopause pressure [hPa]. */
   float pt[EX][EY];

@@ -48,7 +48,8 @@ int main(
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], lwc, lwcm[NZ],
-    iwc, iwcm[NZ], ps, psm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
+    iwc, iwcm[NZ], ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ],
+    vs, vsm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
     plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ],
     tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
 
@@ -129,6 +130,10 @@ int main(
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
 	    psm[iz] += ps;
+	    tsm[iz] += ts;
+	    zsm[iz] += zs;
+	    usm[iz] += us;
+	    vsm[iz] += vs;
 	    pcm[iz] += pc;
 	    clm[iz] += cl;
 	    plclm[iz] += plcl;
@@ -171,35 +176,41 @@ int main(
 	  "# $12 = geopotential height [km]\n"
 	  "# $13 = potential vorticity [PVU]\n"
 	  "# $14 = surface pressure [hPa]\n"
-	  "# $15 = tropopause pressure [hPa]\n"
-	  "# $16 = tropopause geopotential height [km]\n"
-	  "# $17 = tropopause temperature [K]\n"
-	  "# $18 = tropopause water vapor [ppv]\n"
-	  "# $19 = cloud liquid water content [kg/kg]\n"
-	  "# $20 = cloud ice water content [kg/kg]\n");
+	  "# $15 = surface temperature [K]\n"
+	  "# $16 = surface geopotential height [km]\n"
+	  "# $17 = surface zonal wind [m/s]\n"
+	  "# $18 = surface meridional wind [m/s]\n"
+	  "# $19 = tropopause pressure [hPa]\n"
+	  "# $20 = tropopause geopotential height [km]\n");
   fprintf(out,
-	  "# $21 = total column cloud water [kg/m^2]\n"
-	  "# $22 = cloud top pressure [hPa]\n"
-	  "# $23 = pressure at lifted condensation level (LCL) [hPa]\n"
-	  "# $24 = pressure at level of free convection (LFC) [hPa]\n"
-	  "# $25 = pressure at equilibrium level (EL) [hPa]\n"
-	  "# $26 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $27 = relative humidity over water [%%]\n"
-	  "# $28 = relative humidity over ice [%%]\n\n");
+	  "# $21 = tropopause temperature [K]\n"
+	  "# $22 = tropopause water vapor [ppv]\n"
+	  "# $23 = cloud liquid water content [kg/kg]\n"
+	  "# $24 = cloud ice water content [kg/kg]\n"
+	  "# $25 = total column cloud water [kg/m^2]\n"
+	  "# $26 = cloud top pressure [hPa]\n"
+	  "# $27 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $28 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $29 = pressure at equilibrium level (EL) [hPa]\n"
+	  "# $30 = convective available potential energy (CAPE) [J/kg]\n");
+  fprintf(out,
+	  "# $31 = relative humidity over water [%%]\n"
+	  "# $32 = relative humidity over ice [%%]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
 	    o3m[iz] / np[iz], zm[iz] / np[iz], pvm[iz] / np[iz],
-	    psm[iz] / np[iz], ptm[iz] / npt[iz], ztm[iz] / npt[iz],
-	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz], lwcm[iz] / np[iz],
-	    iwcm[iz] / np[iz], clm[iz] / np[iz], pcm[iz] / np[iz],
-	    plclm[iz] / np[iz], plfcm[iz] / np[iz],
+	    psm[iz] / np[iz], tsm[iz] / np[iz], zsm[iz] / np[iz],
+	    usm[iz] / np[iz], vsm[iz] / np[iz], ptm[iz] / npt[iz],
+	    ztm[iz] / npt[iz], ttm[iz] / npt[iz], h2otm[iz] / npt[iz],
+	    lwcm[iz] / np[iz], iwcm[iz] / np[iz], clm[iz] / np[iz],
+	    pcm[iz] / np[iz], plclm[iz] / np[iz], plfcm[iz] / np[iz],
 	    pelm[iz] / np[iz], capem[iz] / np[iz],
 	    RH(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
 	    RHICE(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]));
