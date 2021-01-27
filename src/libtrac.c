@@ -2197,6 +2197,10 @@ void read_ctl(
   ctl->qnt_r = -1;
   ctl->qnt_rho = -1;
   ctl->qnt_ps = -1;
+  ctl->qnt_ts = -1;
+  ctl->qnt_zs = -1;
+  ctl->qnt_us = -1;
+  ctl->qnt_vs = -1;
   ctl->qnt_pt = -1;
   ctl->qnt_tt = -1;
   ctl->qnt_zt = -1;
