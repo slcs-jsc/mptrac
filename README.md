@@ -2,19 +2,19 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the analysis of atmospheric transport processes in the troposphere and stratosphere.
 
-![GitHub release (latest by date)](https://img.shields.io/github/v/release/slcs-jsc/mptrac)
-![GitHub commits since latest release (by SemVer)](https://img.shields.io/github/commits-since/slcs-jsc/mptrac/latest)
-![GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)
-![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)
-![GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)
-![GitHub](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)
+[![GitHub release (latest by date)](https://img.shields.io/github/v/release/slcs-jsc/mptrac)](https://github.com/slcs-jsc/mptrac/releases)
+[![GitHub commits since latest release (by SemVer)](https://img.shields.io/github/commits-since/slcs-jsc/mptrac/latest)](https://github.com/slcs-jsc/mptrac/commits/master)
+[![GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/commits/master)
+[![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
+[![GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
+[![GitHub](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
 
 ## Features
 
 * MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given wind fields.
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using a Markov chain model.
-* Additional modules are implemented to simulate the convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
+* Additional modules are implemented to simulate convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
 * Various output methods for particle, ensemble, gridded, and station data. Gnuplot interface for direct visualization.
 * MPTRAC features an MPI/OpenMP/OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
 
