@@ -38,7 +38,7 @@ if [ $1 = "nc4" ] ; then
     dir=hdf5-1.12.0
     cd $target/src/$dir \
 	&& ./configure --prefix=$target --with-zlib=$target --enable-hl \
-	&& make -j$threads && make check && make install && make clean \
+	&& make -j$threads ; make -j$threads && make check && make install && make clean \
 	    || exit
 fi
 
