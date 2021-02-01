@@ -14,12 +14,12 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
   \file
-  Sample tropopause climatology.
+  Sample tropopause data set.
 */
 
 #include "libtrac.h"
@@ -35,21 +35,17 @@
    Functions...
    ------------------------------------------------------------ */
 
-/* Linear interpolation considering missing values. */
-double intpol_help(
-  double x0,
-  double y0,
-  double x1,
-  double y1,
-  double x);
-
-/* Bilinear horizontal interpolation. */
-double intpol_2d(
-  float array[EX][EY],
+/*! 3-D linear interpolation of tropopause data. */
+double intpol_tropo_3d(
+  double time0,
+  float array0[EX][EY],
+  double time1,
+  float array1[EX][EY],
   double lons[EX],
   double lats[EY],
   size_t nlon,
   size_t nlat,
+  double time,
   double lon,
   double lat);
 
@@ -69,8 +65,7 @@ int main(
 
   static char varname[LEN];
 
-  static double times[NT], lons[EX], lats[EY], time0, time1, z0, z1, p0, p1,
-    t0, t1, q0, q1;
+  static double times[NT], lons[EX], lats[EY], time0, time1, z0, p0, t0, q0;
 
   static float help[EX * EY], tropo_z0[EX][EY], tropo_z1[EX][EY],
     tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY],
@@ -221,28 +216,18 @@ int main(
     it_old = it;
 
     /* Interpolate... */
-    z0 = intpol_2d(tropo_z0, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-    p0 = intpol_2d(tropo_p0, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-    t0 = intpol_2d(tropo_t0, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-    q0 = intpol_2d(tropo_q0, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-
-    z1 = intpol_2d(tropo_z1, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-    p1 = intpol_2d(tropo_p1, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-    t1 = intpol_2d(tropo_t1, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-    q1 = intpol_2d(tropo_q1, lons, lats, nlon, nlat,
-		   atm->lon[ip], atm->lat[ip]);
-
-    z0 = intpol_help(time0, z0, time1, z1, atm->time[ip]);
-    p0 = intpol_help(time0, p0, time1, p1, atm->time[ip]);
-    t0 = intpol_help(time0, t0, time1, t1, atm->time[ip]);
-    q0 = intpol_help(time0, q0, time1, q1, atm->time[ip]);
+    z0 = intpol_tropo_3d(time0, tropo_z0, time1, tropo_z1,
+			 lons, lats, nlon, nlat,
+			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    p0 = intpol_tropo_3d(time0, tropo_p0, time1, tropo_p1,
+			 lons, lats, nlon, nlat,
+			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    t0 = intpol_tropo_3d(time0, tropo_t0, time1, tropo_t1,
+			 lons, lats, nlon, nlat,
+			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    q0 = intpol_tropo_3d(time0, tropo_q0, time1, tropo_q1,
+			 lons, lats, nlon, nlat,
+			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
@@ -266,38 +251,20 @@ int main(
 
 /*****************************************************************************/
 
-double intpol_help(
-  double x0,
-  double y0,
-  double x1,
-  double y1,
-  double x) {
-
-  /* Linear interpolation... */
-  if (gsl_finite(y0) && gsl_finite(y1))
-    return LIN(x0, y0, x1, y1, x);
-
-  /* Nearest neighbour... */
-  else {
-    if (fabs(x - x0) < fabs(x - x1))
-      return y0;
-    else
-      return y1;
-  }
-}
-
-/*****************************************************************************/
-
-double intpol_2d(
-  float array[EX][EY],
+double intpol_tropo_3d(
+  double time0,
+  float array0[EX][EY],
+  double time1,
+  float array1[EX][EY],
   double lons[EX],
   double lats[EY],
   size_t nlon,
   size_t nlat,
+  double time,
   double lon,
   double lat) {
 
-  double aux0, aux1;
+  double sum, w, wsum;
 
   /* Adjust longitude... */
   if (lon < lons[0])
@@ -309,12 +276,102 @@ double intpol_2d(
   int ix = locate_reg(lons, (int) nlon, lon);
   int iy = locate_reg(lats, (int) nlat, lat);
 
-  /* Interpolate in longitude... */
-  aux0 = intpol_help(lons[ix], array[ix][iy],
-		     lons[ix + 1], array[ix + 1][iy], lon);
-  aux1 = intpol_help(lons[ix], array[ix][iy + 1],
-		     lons[ix + 1], array[ix + 1][iy + 1], lon);
+  /* Init... */
+  sum = 0;
+  wsum = 0;
 
-  /* Interpolate in latitude... */
-  return intpol_help(lats[iy], aux0, lats[iy + 1], aux1, lat);
+  /* Interpolate... */
+  if (isfinite(array0[ix][iy])) {
+    w = (lons[ix + 1] - lon) * (lats[iy + 1] - lat) * (time1 - time);
+    sum += w * array0[ix][iy];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
+	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
+	&& fabs(time - time0) < fabs(time - time1))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array0[ix + 1][iy])) {
+    w = (lon - lons[ix]) * (lats[iy + 1] - lat) * (time1 - time);
+    sum += w * array0[ix + 1][iy];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
+	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
+	&& fabs(time - time0) < fabs(time - time1))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array0[ix][iy + 1])) {
+    w = (lons[ix + 1] - lon) * (lat - lats[iy]) * (time1 - time);
+    sum += w * array0[ix][iy + 1];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
+	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
+	&& fabs(time - time0) < fabs(time - time1))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array0[ix + 1][iy + 1])) {
+    w = (lon - lons[ix]) * (lat - lats[iy]) * (time1 - time);
+    sum += w * array0[ix + 1][iy + 1];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
+	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
+	&& fabs(time - time0) < fabs(time - time1))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array1[ix][iy])) {
+    w = (lons[ix + 1] - lon) * (lats[iy + 1] - lat) * (time - time0);
+    sum += w * array1[ix][iy];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
+	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
+	&& fabs(time - time1) < fabs(time - time0))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array1[ix + 1][iy])) {
+    w = (lon - lons[ix]) * (lats[iy + 1] - lat) * (time - time0);
+    sum += w * array1[ix + 1][iy];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
+	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
+	&& fabs(time - time1) < fabs(time - time0))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array1[ix][iy + 1])) {
+    w = (lons[ix + 1] - lon) * (lat - lats[iy]) * (time - time0);
+    sum += w * array1[ix][iy + 1];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
+	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
+	&& fabs(time - time1) < fabs(time - time0))
+      sum += GSL_NAN;
+  }
+
+  if (isfinite(array1[ix + 1][iy + 1])) {
+    w = (lon - lons[ix]) * (lat - lats[iy]) * (time - time0);
+    sum += w * array1[ix + 1][iy + 1];
+    wsum += w;
+  } else {
+    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
+	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
+	&& fabs(time - time1) < fabs(time - time0))
+      sum += GSL_NAN;
+  }
+
+  /* Return value... */
+  if (wsum > 0)
+    return sum / wsum;
+  else
+    return GSL_NAN;
 }

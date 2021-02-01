@@ -14,12 +14,12 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
   \file
-  Create tropopause climatology from meteorological data.
+  Create tropopause data set from meteorological data.
 */
 
 #include "libtrac.h"
