@@ -39,15 +39,18 @@
 double intpol_tropo_3d(
   double time0,
   float array0[EX][EY],
+  float arrayz0[EX][EY],
   double time1,
   float array1[EX][EY],
+  float arrayz1[EX][EY],
   double lons[EX],
   double lats[EY],
   size_t nlon,
   size_t nlat,
   double time,
   double lon,
-  double lat);
+  double lat,
+  double deltaz);
 
 /* ------------------------------------------------------------
    Main...
@@ -65,7 +68,8 @@ int main(
 
   static char varname[LEN];
 
-  static double times[NT], lons[EX], lats[EY], time0, time1, z0, p0, t0, q0;
+  static double times[NT], lons[EX], lats[EY], time0, time1, z0, p0, t0, q0,
+    deltaz;
 
   static float help[EX * EY], tropo_z0[EX][EY], tropo_z1[EX][EY],
     tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY],
@@ -85,6 +89,8 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  deltaz =
+    scan_ctl(argv[1], argc, argv, "TROPO_SAMPLE_DELTAZ", -1, "-999", NULL);
 
   /* Read atmospheric data... */
   if (!read_atm(argv[5], &ctl, atm))
@@ -216,18 +222,22 @@ int main(
     it_old = it;
 
     /* Interpolate... */
-    z0 = intpol_tropo_3d(time0, tropo_z0, time1, tropo_z1,
-			 lons, lats, nlon, nlat,
-			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
-    p0 = intpol_tropo_3d(time0, tropo_p0, time1, tropo_p1,
-			 lons, lats, nlon, nlat,
-			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
-    t0 = intpol_tropo_3d(time0, tropo_t0, time1, tropo_t1,
-			 lons, lats, nlon, nlat,
-			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
-    q0 = intpol_tropo_3d(time0, tropo_q0, time1, tropo_q1,
-			 lons, lats, nlon, nlat,
-			 atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    z0 =
+      intpol_tropo_3d(time0, tropo_z0, tropo_z0, time1, tropo_z1, tropo_z1,
+		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		      atm->lat[ip], deltaz);
+    p0 =
+      intpol_tropo_3d(time0, tropo_p0, tropo_z0, time1, tropo_p1, tropo_z1,
+		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		      atm->lat[ip], deltaz);
+    t0 =
+      intpol_tropo_3d(time0, tropo_t0, tropo_z0, time1, tropo_t1, tropo_z1,
+		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		      atm->lat[ip], deltaz);
+    q0 =
+      intpol_tropo_3d(time0, tropo_q0, tropo_z0, time1, tropo_q1, tropo_z1,
+		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		      atm->lat[ip], deltaz);
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
@@ -254,15 +264,18 @@ int main(
 double intpol_tropo_3d(
   double time0,
   float array0[EX][EY],
+  float arrayz0[EX][EY],
   double time1,
   float array1[EX][EY],
+  float arrayz1[EX][EY],
   double lons[EX],
   double lats[EY],
   size_t nlon,
   size_t nlat,
   double time,
   double lon,
-  double lat) {
+  double lat,
+  double deltaz) {
 
   double sum, w, wsum;
 
@@ -275,6 +288,18 @@ double intpol_tropo_3d(
   /* Get indices... */
   int ix = locate_reg(lons, (int) nlon, lon);
   int iy = locate_reg(lats, (int) nlat, lat);
+
+  /* Check gradients... */
+  if (deltaz > 0)
+    if (fabs(arrayz0[ix + 1][iy] - arrayz0[ix][iy]) > deltaz
+	|| fabs(arrayz0[ix + 1][iy + 1] - arrayz0[ix][iy + 1]) > deltaz
+	|| fabs(arrayz0[ix][iy + 1] - arrayz0[ix][iy]) > deltaz
+	|| fabs(arrayz0[ix + 1][iy + 1] - arrayz0[ix + 1][iy]) > deltaz
+	|| fabs(arrayz1[ix + 1][iy] - arrayz1[ix][iy]) > deltaz
+	|| fabs(arrayz1[ix + 1][iy + 1] - arrayz1[ix][iy + 1]) > deltaz
+	|| fabs(arrayz1[ix][iy + 1] - arrayz1[ix][iy]) > deltaz
+	|| fabs(arrayz1[ix + 1][iy + 1] - arrayz1[ix + 1][iy]) > deltaz)
+      return GSL_NAN;
 
   /* Init... */
   sum = 0;
