@@ -50,13 +50,13 @@ int main(
 
   static double timem[NX][NY], p0, ps, psm[NX][NY], ts, tsm[NX][NY],
     zs, zsm[NX][NY], us, usm[NX][NY], vs, vsm[NX][NY], pt, ptm[NX][NY], t,
-    tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
-    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
-    lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], z, zm[NX][NY], pv,
-    pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY],
-    pc, pcm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY],
-    plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY],
-    lon, lon0, lon1, lons[NX], dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
+    pm[NX][NY], tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
+    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], lwc, lwcm[NX][NY],
+    iwc, iwcm[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY],
+    tt, ttm[NX][NY], pc, pcm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY],
+    plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY], theta,
+    ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
+    lat, lat0, lat1, lats[NY], dlat, cw[3];
 
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
 
@@ -76,6 +76,7 @@ int main(
   lat0 = scan_ctl(argv[1], argc, argv, "MAP_LAT0", -1, "-90", NULL);
   lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
+  theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
@@ -113,12 +114,28 @@ int main(
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
 
+	/* Find pressure level for given theta level... */
+	if (theta > 0) {
+	  ptop = met->p[met->np - 1];
+	  pbot = met->p[0];
+	  do {
+	    p0 = 0.5 * (ptop + pbot);
+	    intpol_met_space_3d(met, met->t, p0, lons[ix], lats[iy],
+				&t0, ci, cw, 1);
+	    if (THETA(p0, t0) > theta)
+	      ptop = p0;
+	    else
+	      pbot = p0;
+	  } while (fabs(ptop - pbot) > 1e-5);
+	}
+
 	/* Interpolate meteo data... */
 	INTPOL_SPACE_ALL(p0, lons[ix], lats[iy]);
 
 	/* Averaging... */
 	timem[ix][iy] += met->time;
 	zm[ix][iy] += z;
+	pm[ix][iy] += p0;
 	tm[ix][iy] += t;
 	um[ix][iy] += u;
 	vm[ix][iy] += v;
@@ -197,7 +214,8 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	      timem[ix][iy] / np[ix][iy], Z(p0), lons[ix], lats[iy], p0,
+	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
+	      lons[ix], lats[iy], pm[ix][iy] / np[ix][iy],
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
 	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
 	      h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
@@ -211,8 +229,10 @@ int main(
 	      pcm[ix][iy] / np[ix][iy], plclm[ix][iy] / np[ix][iy],
 	      plfcm[ix][iy] / np[ix][iy], pelm[ix][iy] / np[ix][iy],
 	      capem[ix][iy] / np[ix][iy],
-	      RH(p0, tm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]),
-	      RHICE(p0, tm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]));
+	      RH(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
+		 h2om[ix][iy] / np[ix][iy]),
+	      RHICE(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
+		    h2om[ix][iy] / np[ix][iy]));
   }
 
   /* Close file... */

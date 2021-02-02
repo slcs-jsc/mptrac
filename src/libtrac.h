@@ -214,7 +214,7 @@
 /*! Spatial interpolation of all meteo data. */
 #define INTPOL_SPACE_ALL(p, lon, lat) {					\
   intpol_met_space_3d(met, met->z, p, lon, lat, &z, ci, cw, 1);		\
-  intpol_met_space_3d(met, met->t, p, lon,lat, &t, ci, cw, 0);		\
+  intpol_met_space_3d(met, met->t, p, lon, lat, &t, ci, cw, 0);		\
   intpol_met_space_3d(met, met->u, p, lon, lat, &u, ci, cw, 0);		\
   intpol_met_space_3d(met, met->v, p, lon, lat, &v, ci, cw, 0);		\
   intpol_met_space_3d(met, met->w, p, lon, lat, &w, ci, cw, 0);		\
