@@ -118,7 +118,7 @@
 #define NP 10000000
 
 /*! Maximum number of quantities per data point. */
-#define NQ 12
+#define NQ 15
 
 /*! Maximum number of pressure levels for meteorological data. */
 #define EP 140
