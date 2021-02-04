@@ -3973,7 +3973,7 @@ void write_csi(
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
     rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat,
-    x[10000000], y[10000000], work[20000000];
+    x[1000000], y[1000000], work[2000000];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
 
@@ -4085,7 +4085,6 @@ void write_csi(
   }
 
   /* Analyze all grid cells... */
-  n = 0;
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++) {
@@ -4124,7 +4123,7 @@ void write_csi(
 		|| modmean[ix][iy][iz] >= ctl->csi_modmin)) {
 	  x[n] = modmean[ix][iy][iz];
 	  y[n] = obsmean[ix][iy][iz];
-	  if ((++n) > 10000000)
+	  if ((++n) > 1000000)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
       }
@@ -4143,13 +4142,17 @@ void write_csi(
     double cx_rd = (ct > 0) ? (1. * nobs * nfor) / ct : GSL_NAN;
     double ets = (cx + cy + cz - cx_rd > 0) ?
       (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : GSL_NAN;
-    double rho_p = gsl_stats_correlation(x, 1, y, 1, (size_t) n);
-    double rho_s = gsl_stats_spearman(x, 1, y, 1, (size_t) n, work);
+    double rho_p =
+      (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : GSL_NAN;
+    double rho_s =
+      (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : GSL_NAN;
     for (int i = 0; i < n; i++)
       work[i] = x[i] - y[i];
-    double mean = gsl_stats_mean(work, 1, (size_t) n);
-    double rmse = gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n, 0.0);
-    double absdev = gsl_stats_absdev_m(work, 1, (size_t) n, 0.0);
+    double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : GSL_NAN;
+    double rmse = (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
+							 0.0) : GSL_NAN;
+    double absdev =
+      (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : GSL_NAN;
 
     /* Write... */
     fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %d\n",
