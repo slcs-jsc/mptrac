@@ -3972,9 +3972,10 @@ void write_csi(
   static char line[LEN];
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
-    rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat;
+    rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat,
+    x[10000000], y[10000000], work[20000000];
 
-  static int obscount[GX][GY][GZ], cx, cy, cz, ip, ix, iy, iz;
+  static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -4001,10 +4002,19 @@ void write_csi(
 	    "# $4 = number of false alarms (cz)\n"
 	    "# $5 = number of observations (cx + cy)\n"
 	    "# $6 = number of forecasts (cx + cz)\n"
-	    "# $7 = bias (forecasts/observations) [%%]\n"
+	    "# $7 = bias (ratio of forecasts and observations) [%%]\n"
 	    "# $8 = probability of detection (POD) [%%]\n"
 	    "# $9 = false alarm rate (FAR) [%%]\n"
-	    "# $10 = critical success index (CSI) [%%]\n\n");
+	    "# $10 = critical success index (CSI) [%%]\n");
+    fprintf(out,
+	    "# $11 = hits associated with random chance\n"
+	    "# $12 = equitable threat score (ETS) [%%]\n"
+	    "# $13 = Pearson linear correlation coefficient\n"
+	    "# $14 = Spearman rank-order correlation coefficient\n"
+	    "# $15 = column density mean error (F - O) [kg/m^2]\n"
+	    "# $16 = column density root mean square error (RMSE) [kg/m^2]\n"
+	    "# $17 = column density mean absolute error [kg/m^2]\n"
+	    "# $18 = number of data points\n\n");
   }
 
   /* Set time interval... */
@@ -4075,7 +4085,7 @@ void write_csi(
   }
 
   /* Analyze all grid cells... */
-#pragma omp parallel for default(shared) private(ix,iy,iz,dlon,dlat,lat,area) reduction(+:cx,cy,cz)
+  n = 0;
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++) {
@@ -4096,6 +4106,7 @@ void write_csi(
 
 	/* Calculate CSI... */
 	if (obscount[ix][iy][iz] > 0) {
+	  ct++;
 	  if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
 	      modmean[ix][iy][iz] >= ctl->csi_modmin)
 	    cx++;
@@ -4106,21 +4117,47 @@ void write_csi(
 		   modmean[ix][iy][iz] >= ctl->csi_modmin)
 	    cz++;
 	}
+
+	/* Save data for other verification statistics... */
+	if (obscount[ix][iy][iz] > 0
+	    && (obsmean[ix][iy][iz] >= ctl->csi_obsmin
+		|| modmean[ix][iy][iz] >= ctl->csi_modmin)) {
+	  x[n] = modmean[ix][iy][iz];
+	  y[n] = obsmean[ix][iy][iz];
+	  if ((++n) > 10000000)
+	    ERRMSG("Too many data points to calculate statistics!");
+	}
       }
 
   /* Write output... */
   if (fmod(t, ctl->csi_dt_out) == 0) {
 
+    /* Calculate verification statistics
+       (https://www.cawcr.gov.au/projects/verification/) ... */
+    int nobs = cx + cy;
+    int nfor = cx + cz;
+    double bias = (nobs > 0) ? 100. * nfor / nobs : GSL_NAN;
+    double pod = (nobs > 0) ? (100. * cx) / nobs : GSL_NAN;
+    double far = (nfor > 0) ? (100. * cz) / nfor : GSL_NAN;
+    double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : GSL_NAN;
+    double cx_rd = (ct > 0) ? (1. * nobs * nfor) / ct : GSL_NAN;
+    double ets = (cx + cy + cz - cx_rd > 0) ?
+      (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : GSL_NAN;
+    double rho_p = gsl_stats_correlation(x, 1, y, 1, (size_t) n);
+    double rho_s = gsl_stats_spearman(x, 1, y, 1, (size_t) n, work);
+    for (int i = 0; i < n; i++)
+      work[i] = x[i] - y[i];
+    double mean = gsl_stats_mean(work, 1, (size_t) n);
+    double rmse = gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n, 0.0);
+    double absdev = gsl_stats_absdev_m(work, 1, (size_t) n, 0.0);
+
     /* Write... */
-    fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g\n",
-	    t, cx, cy, cz, cx + cy, cx + cz,
-	    (cx + cy > 0) ? 100. * (cx + cz) / (cx + cy) : GSL_NAN,
-	    (cx + cy > 0) ? (100. * cx) / (cx + cy) : GSL_NAN,
-	    (cx + cz > 0) ? (100. * cz) / (cx + cz) : GSL_NAN,
-	    (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : GSL_NAN);
+    fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %d\n",
+	    t, cx, cy, cz, nobs, nfor, bias, pod, far, csi, cx_rd, ets,
+	    rho_p, rho_s, mean, rmse, absdev, n);
 
     /* Set counters to zero... */
-    cx = cy = cz = 0;
+    n = ct = cx = cy = cz = 0;
   }
 
   /* Close file... */
