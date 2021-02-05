@@ -4313,24 +4313,43 @@ void write_grid(
 
   char line[LEN];
 
-  static double mass[GX][GY][GZ], z, dz, lon, dlon, lat, dlat,
-    area, rho_air, press, temp, cd, vmr, t0, t1, r, cw[3];
+  static double mass[GX][GY][GZ], z[GZ], dz, lon[GX], dlon, lat[GY], dlat,
+    area[GY], rho_air, press[GZ], temp, cd, vmr, t0, t1, r, cw[3];
 
   static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec,
     ci[3];
 
-  /* Check dimensions... */
-  if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
-    ERRMSG("Grid dimensions too large!");
+  /* Init... */
+  if (t == ctl->t_start) {
+
+    /* Check dimensions... */
+    if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
+      ERRMSG("Grid dimensions too large!");
+
+    /* Set grid box size... */
+    dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
+    dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
+    dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+
+    /* Set vertical coordinates... */
+    for (iz = 0; iz < ctl->grid_nz; iz++) {
+      z[iz] = ctl->grid_z0 + dz * (iz + 0.5);
+      press[iz] = P(z[iz]);
+    }
+
+    /* Set horizontal coordinates... */
+    for (ix = 0; ix < ctl->grid_nx; ix++)
+      lon[ix] = ctl->grid_lon0 + dlon * (ix + 0.5);
+    for (iy = 0; iy < ctl->grid_ny; iy++) {
+      lat[iy] = ctl->grid_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+	* cos(lat[iy] * M_PI / 180.);
+    }
+  }
 
   /* Set time interval for output... */
   t0 = t - 0.5 * ctl->dt_mod;
   t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Set grid box size... */
-  dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
-  dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
-  dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
 
   /* Initialize grid... */
 #pragma omp parallel for default(shared) private(ix,iy,iz)
@@ -4419,31 +4438,24 @@ void write_grid(
       for (iz = 0; iz < ctl->grid_nz; iz++)
 	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0) {
 
-	  /* Set coordinates... */
-	  z = ctl->grid_z0 + dz * (iz + 0.5);
-	  lon = ctl->grid_lon0 + dlon * (ix + 0.5);
-	  lat = ctl->grid_lat0 + dlat * (iy + 0.5);
-
-	  /* Get pressure and temperature... */
-	  press = P(z);
-	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press, lon,
-			     lat, &temp, ci, cw, 1);
-
-	  /* Calculate surface area... */
-	  area = dlat * dlon * SQR(RE * M_PI / 180.)
-	    * cos(lat * M_PI / 180.);
+	  /* Get temperature... */
+	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
+			     lon[ix], lat[iy], &temp, ci, cw, 1);
 
 	  /* Calculate column density... */
-	  cd = mass[ix][iy][iz] / (1e6 * area);
+	  cd = mass[ix][iy][iz] / (1e6 * area[iy]);
 
 	  /* Calculate volume mixing ratio... */
-	  rho_air = 100. * press / (RA * temp);
-	  vmr = (ctl->molmass > 0) ? MA / ctl->molmass * mass[ix][iy][iz]
-	    / (rho_air * 1e6 * area * 1e3 * dz) : GSL_NAN;
+	  if (ctl->molmass > 0) {
+	    rho_air = 100. * press[iz] / (RA * temp);
+	    vmr = MA / ctl->molmass * mass[ix][iy][iz]
+	      / (rho_air * 1e6 * area[iy] * 1e3 * dz);
+	  } else
+	    vmr = GSL_NAN;
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g\n",
-		  t, z, lon, lat, area, dz, np[ix][iy][iz], cd, vmr);
+	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g\n", t, z[iz],
+		  lon[ix], lat[iy], area[iy], dz, np[ix][iy][iz], cd, vmr);
 	}
     }
   }
