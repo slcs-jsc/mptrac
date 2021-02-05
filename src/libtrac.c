@@ -3971,8 +3971,8 @@ void write_csi(
 
   static char line[LEN];
 
-  static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ],
-    rt, rz, rlon, rlat, robs, t0, t1, area, dlon, dlat, lat,
+  static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old = -1e99,
+    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz, lat,
     x[1000000], y[1000000], work[2000000];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
@@ -3983,6 +3983,17 @@ void write_csi(
     /* Check quantity index for mass... */
     if (ctl->qnt_m < 0)
       ERRMSG("Need quantity mass!");
+
+    /* Set grid box size... */
+    dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
+    dlon = (ctl->csi_lon1 - ctl->csi_lon0) / ctl->csi_nx;
+    dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
+
+    /* Set horizontal coordinates... */
+    for (iy = 0; iy < ctl->csi_ny; iy++) {
+      lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat * M_PI / 180.);
+    }
 
     /* Open observation data file... */
     printf("Read CSI observation data: %s\n", ctl->csi_obsfile);
@@ -4041,14 +4052,14 @@ void write_csi(
       continue;
     if (rt > t1)
       break;
+    if (rt < rt_old)
+      ERRMSG("Time must be ascending!");
+    rt_old = rt;
 
     /* Calculate indices... */
-    ix = (int) ((rlon - ctl->csi_lon0)
-		/ (ctl->csi_lon1 - ctl->csi_lon0) * ctl->csi_nx);
-    iy = (int) ((rlat - ctl->csi_lat0)
-		/ (ctl->csi_lat1 - ctl->csi_lat0) * ctl->csi_ny);
-    iz = (int) ((rz - ctl->csi_z0)
-		/ (ctl->csi_z1 - ctl->csi_z0) * ctl->csi_nz);
+    ix = (int) ((rlon - ctl->csi_lon0) / dlon);
+    iy = (int) ((rlat - ctl->csi_lat0) / dlat);
+    iz = (int) ((rz - ctl->csi_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->csi_nx ||
@@ -4068,12 +4079,9 @@ void write_csi(
       continue;
 
     /* Get indices... */
-    ix = (int) ((atm->lon[ip] - ctl->csi_lon0)
-		/ (ctl->csi_lon1 - ctl->csi_lon0) * ctl->csi_nx);
-    iy = (int) ((atm->lat[ip] - ctl->csi_lat0)
-		/ (ctl->csi_lat1 - ctl->csi_lat0) * ctl->csi_ny);
-    iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0)
-		/ (ctl->csi_z1 - ctl->csi_z0) * ctl->csi_nz);
+    ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
+    iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
+    iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->csi_nx ||
@@ -4094,14 +4102,8 @@ void write_csi(
 	  obsmean[ix][iy][iz] /= obscount[ix][iy][iz];
 
 	/* Calculate column density... */
-	if (modmean[ix][iy][iz] > 0) {
-	  dlon = (ctl->csi_lon1 - ctl->csi_lon0) / ctl->csi_nx;
-	  dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
-	  lat = ctl->csi_lat0 + dlat * (iy + 0.5);
-	  area = dlat * M_PI * RE / 180. * dlon * M_PI * RE / 180.
-	    * cos(lat * M_PI / 180.);
-	  modmean[ix][iy][iz] /= (1e6 * area);
-	}
+	if (modmean[ix][iy][iz] > 0)
+	  modmean[ix][iy][iz] /= (1e6 * area[iy]);
 
 	/* Calculate CSI... */
 	if (obscount[ix][iy][iz] > 0) {
