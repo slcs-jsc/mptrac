@@ -4480,9 +4480,9 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rz, rlon, rlat, robs,
-    t0, t1, area, dz, dlon, dlat, lon, lat, z, press, temp, rho_air, vmr, h2o,
-    o3, cw[3];
+  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old = -1e99,
+    rz, rlon, rlat, robs, t0, t1, area, dz, dlon, dlat, lon, lat,
+    z, press, temp, rho_air, vmr, h2o, o3, cw[3];
 
   static int obscount[GX][GY], ip, ix, iy, iz, okay, ci[3];
 
@@ -4557,6 +4557,9 @@ void write_prof(
       continue;
     if (rt > t1)
       break;
+    if (rt < rt_old)
+      ERRMSG("Time must be ascending!");
+    rt_old = rt;
 
     /* Calculate indices... */
     ix = (int) ((rlon - ctl->prof_lon0) / dlon);
