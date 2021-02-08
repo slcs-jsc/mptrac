@@ -36,13 +36,11 @@
    ------------------------------------------------------------ */
 
 /*! 3-D linear interpolation of tropopause data. */
-double intpol_tropo_3d(
+void intpol_tropo_3d(
   double time0,
   float array0[EX][EY],
-  float arrayz0[EX][EY],
   double time1,
   float array1[EX][EY],
-  float arrayz1[EX][EY],
   double lons[EX],
   double lats[EY],
   size_t nlon,
@@ -50,7 +48,9 @@ double intpol_tropo_3d(
   double time,
   double lon,
   double lat,
-  double deltaz);
+  int method,
+  double *var,
+  double *sigma);
 
 /* ------------------------------------------------------------
    Main...
@@ -68,14 +68,14 @@ int main(
 
   static char varname[LEN];
 
-  static double times[NT], lons[EX], lats[EY], time0, time1, z0, p0, t0, q0,
-    deltaz;
+  static double times[NT], lons[EX], lats[EY], time0, time1, z0, z0sig,
+    p0, p0sig, t0, t0sig, q0, q0sig;
 
   static float help[EX * EY], tropo_z0[EX][EY], tropo_z1[EX][EY],
     tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY],
     tropo_t1[EX][EY], tropo_q0[EX][EY], tropo_q1[EX][EY];
 
-  static int ip, iq, it, it_old = -999, dimid[10], ncid,
+  static int ip, iq, it, it_old = -999, method, dimid[10], ncid,
     varid, varid_z, varid_p, varid_t, varid_q, h2o;
 
   static size_t count[10], start[10], ntime, nlon, nlat, ilon, ilat;
@@ -89,8 +89,8 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  deltaz =
-    scan_ctl(argv[1], argc, argv, "TROPO_SAMPLE_DELTAZ", -1, "-999", NULL);
+  method =
+    (int) scan_ctl(argv[1], argc, argv, "TROPO_SAMPLE_METHOD", -1, "1", NULL);
 
   /* Read atmospheric data... */
   if (!read_atm(argv[5], &ctl, atm))
@@ -154,7 +154,12 @@ int main(
   fprintf(out, "# $%d = tropopause height [km]\n", 5 + ctl.nq);
   fprintf(out, "# $%d = tropopause pressure [hPa]\n", 6 + ctl.nq);
   fprintf(out, "# $%d = tropopause temperature [K]\n", 7 + ctl.nq);
-  fprintf(out, "# $%d = tropopause water vapor [ppv]\n\n", 8 + ctl.nq);
+  fprintf(out, "# $%d = tropopause water vapor [ppv]\n", 8 + ctl.nq);
+  fprintf(out, "# $%d = tropopause height (sigma) [km]\n", 9 + ctl.nq);
+  fprintf(out, "# $%d = tropopause pressure (sigma) [hPa]\n", 10 + ctl.nq);
+  fprintf(out, "# $%d = tropopause temperature (sigma) [K]\n", 11 + ctl.nq);
+  fprintf(out, "# $%d = tropopause water vapor (sigma) [ppv]\n\n",
+	  12 + ctl.nq);
 
   /* Loop over particles... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -222,22 +227,18 @@ int main(
     it_old = it;
 
     /* Interpolate... */
-    z0 =
-      intpol_tropo_3d(time0, tropo_z0, tropo_z0, time1, tropo_z1, tropo_z1,
-		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
-		      atm->lat[ip], deltaz);
-    p0 =
-      intpol_tropo_3d(time0, tropo_p0, tropo_z0, time1, tropo_p1, tropo_z1,
-		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
-		      atm->lat[ip], deltaz);
-    t0 =
-      intpol_tropo_3d(time0, tropo_t0, tropo_z0, time1, tropo_t1, tropo_z1,
-		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
-		      atm->lat[ip], deltaz);
-    q0 =
-      intpol_tropo_3d(time0, tropo_q0, tropo_z0, time1, tropo_q1, tropo_z1,
-		      lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
-		      atm->lat[ip], deltaz);
+    intpol_tropo_3d(time0, tropo_z0, time1, tropo_z1,
+		    lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		    atm->lat[ip], method, &z0, &z0sig);
+    intpol_tropo_3d(time0, tropo_p0, time1, tropo_p1,
+		    lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		    atm->lat[ip], method, &p0, &p0sig);
+    intpol_tropo_3d(time0, tropo_t0, time1, tropo_t1,
+		    lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		    atm->lat[ip], method, &t0, &t0sig);
+    intpol_tropo_3d(time0, tropo_q0, time1, tropo_q1,
+		    lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		    atm->lat[ip], method, &q0, &q0sig);
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
@@ -246,7 +247,8 @@ int main(
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], atm->q[iq][ip]);
     }
-    fprintf(out, " %g %g %g %g\n", z0, p0, t0, q0);
+    fprintf(out, " %g %g %g %g %g %g %g %g\n",
+	    z0, p0, t0, q0, z0sig, p0sig, t0sig, q0sig);
   }
 
   /* Close files... */
@@ -261,13 +263,11 @@ int main(
 
 /*****************************************************************************/
 
-double intpol_tropo_3d(
+void intpol_tropo_3d(
   double time0,
   float array0[EX][EY],
-  float arrayz0[EX][EY],
   double time1,
   float array1[EX][EY],
-  float arrayz1[EX][EY],
   double lons[EX],
   double lats[EY],
   size_t nlon,
@@ -275,9 +275,13 @@ double intpol_tropo_3d(
   double time,
   double lon,
   double lat,
-  double deltaz) {
+  int method,
+  double *var,
+  double *sigma) {
 
-  double sum, w, wsum;
+  double aux0, aux1, aux00, aux01, aux10, aux11, mean = 0;
+
+  int n = 0;
 
   /* Adjust longitude... */
   if (lon < lons[0])
@@ -289,114 +293,63 @@ double intpol_tropo_3d(
   int ix = locate_reg(lons, (int) nlon, lon);
   int iy = locate_reg(lats, (int) nlat, lat);
 
-  /* Check gradients... */
-  if (deltaz > 0)
-    if (fabs(arrayz0[ix + 1][iy] - arrayz0[ix][iy]) > deltaz
-	|| fabs(arrayz0[ix + 1][iy + 1] - arrayz0[ix][iy + 1]) > deltaz
-	|| fabs(arrayz0[ix][iy + 1] - arrayz0[ix][iy]) > deltaz
-	|| fabs(arrayz0[ix + 1][iy + 1] - arrayz0[ix + 1][iy]) > deltaz
-	|| fabs(arrayz1[ix + 1][iy] - arrayz1[ix][iy]) > deltaz
-	|| fabs(arrayz1[ix + 1][iy + 1] - arrayz1[ix][iy + 1]) > deltaz
-	|| fabs(arrayz1[ix][iy + 1] - arrayz1[ix][iy]) > deltaz
-	|| fabs(arrayz1[ix + 1][iy + 1] - arrayz1[ix + 1][iy]) > deltaz)
-      return GSL_NAN;
+  /* Calculate standard deviation... */
+  *sigma = 0;
+  for (int dx = 0; dx < 2; dx++)
+    for (int dy = 0; dy < 2; dy++) {
+      if (isfinite(array0[ix + dx][iy + dy])) {
+	mean += array0[ix + dx][iy + dy];
+	*sigma += SQR(array0[ix + dx][iy + dy]);
+	n++;
+      }
+      if (isfinite(array1[ix + dx][iy + dy])) {
+	mean += array1[ix + dx][iy + dy];
+	*sigma += SQR(array1[ix + dx][iy + dy]);
+	n++;
+      }
+    }
+  if (n > 0)
+    *sigma = sqrt(GSL_MAX(*sigma / n - SQR(mean / n), 0.0));
 
-  /* Init... */
-  sum = 0;
-  wsum = 0;
+  /* Linear interpolation... */
+  if (method == 1 && isfinite(array0[ix][iy])
+      && isfinite(array0[ix][iy + 1])
+      && isfinite(array0[ix + 1][iy])
+      && isfinite(array0[ix + 1][iy + 1])
+      && isfinite(array1[ix][iy])
+      && isfinite(array1[ix][iy + 1])
+      && isfinite(array1[ix + 1][iy])
+      && isfinite(array1[ix + 1][iy + 1])) {
 
-  /* Interpolate... */
-  if (isfinite(array0[ix][iy])) {
-    w = (lons[ix + 1] - lon) * (lats[iy + 1] - lat) * (time1 - time);
-    sum += w * array0[ix][iy];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
-	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
-	&& fabs(time - time0) < fabs(time - time1))
-      sum += GSL_NAN;
+    aux00 = LIN(lons[ix], array0[ix][iy],
+		lons[ix + 1], array0[ix + 1][iy], lon);
+    aux01 = LIN(lons[ix], array0[ix][iy + 1],
+		lons[ix + 1], array0[ix + 1][iy + 1], lon);
+    aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat);
+
+    aux10 = LIN(lons[ix], array1[ix][iy],
+		lons[ix + 1], array1[ix + 1][iy], lon);
+    aux11 = LIN(lons[ix], array1[ix][iy + 1],
+		lons[ix + 1], array1[ix + 1][iy + 1], lon);
+    aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat);
+
+    *var = LIN(time0, aux0, time1, aux1, time);
   }
 
-  if (isfinite(array0[ix + 1][iy])) {
-    w = (lon - lons[ix]) * (lats[iy + 1] - lat) * (time1 - time);
-    sum += w * array0[ix + 1][iy];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
-	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
-	&& fabs(time - time0) < fabs(time - time1))
-      sum += GSL_NAN;
-  }
+  /* Nearest neighbor interpolation... */
+  else {
+    aux00 = NN(lons[ix], array0[ix][iy],
+	       lons[ix + 1], array0[ix + 1][iy], lon);
+    aux01 = NN(lons[ix], array0[ix][iy + 1],
+	       lons[ix + 1], array0[ix + 1][iy + 1], lon);
+    aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat);
 
-  if (isfinite(array0[ix][iy + 1])) {
-    w = (lons[ix + 1] - lon) * (lat - lats[iy]) * (time1 - time);
-    sum += w * array0[ix][iy + 1];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
-	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
-	&& fabs(time - time0) < fabs(time - time1))
-      sum += GSL_NAN;
-  }
+    aux10 = NN(lons[ix], array1[ix][iy],
+	       lons[ix + 1], array1[ix + 1][iy], lon);
+    aux11 = NN(lons[ix], array1[ix][iy + 1],
+	       lons[ix + 1], array1[ix + 1][iy + 1], lon);
+    aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat);
 
-  if (isfinite(array0[ix + 1][iy + 1])) {
-    w = (lon - lons[ix]) * (lat - lats[iy]) * (time1 - time);
-    sum += w * array0[ix + 1][iy + 1];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
-	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
-	&& fabs(time - time0) < fabs(time - time1))
-      sum += GSL_NAN;
+    *var = NN(time0, aux0, time1, aux1, time);
   }
-
-  if (isfinite(array1[ix][iy])) {
-    w = (lons[ix + 1] - lon) * (lats[iy + 1] - lat) * (time - time0);
-    sum += w * array1[ix][iy];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
-	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
-	&& fabs(time - time1) < fabs(time - time0))
-      sum += GSL_NAN;
-  }
-
-  if (isfinite(array1[ix + 1][iy])) {
-    w = (lon - lons[ix]) * (lats[iy + 1] - lat) * (time - time0);
-    sum += w * array1[ix + 1][iy];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
-	&& fabs(lat - lats[iy]) < fabs(lat - lats[iy + 1])
-	&& fabs(time - time1) < fabs(time - time0))
-      sum += GSL_NAN;
-  }
-
-  if (isfinite(array1[ix][iy + 1])) {
-    w = (lons[ix + 1] - lon) * (lat - lats[iy]) * (time - time0);
-    sum += w * array1[ix][iy + 1];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix]) < fabs(lon - lons[ix + 1])
-	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
-	&& fabs(time - time1) < fabs(time - time0))
-      sum += GSL_NAN;
-  }
-
-  if (isfinite(array1[ix + 1][iy + 1])) {
-    w = (lon - lons[ix]) * (lat - lats[iy]) * (time - time0);
-    sum += w * array1[ix + 1][iy + 1];
-    wsum += w;
-  } else {
-    if (fabs(lon - lons[ix + 1]) < fabs(lon - lons[ix])
-	&& fabs(lat - lats[iy + 1]) < fabs(lat - lats[iy])
-	&& fabs(time - time1) < fabs(time - time0))
-      sum += GSL_NAN;
-  }
-
-  /* Return value... */
-  if (wsum > 0)
-    return sum / wsum;
-  else
-    return GSL_NAN;
 }

@@ -283,6 +283,10 @@
       ERRMSG(nc_strerror(cmd));			     \
   }
 
+/*! Compute nearest neighbor interpolation. */
+#define NN(x0, y0, x1, y1, x)				\
+  (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))
+
 /*! Compute norm of a vector. */
 #define NORM(a) sqrt(DOTP(a, a))
 
