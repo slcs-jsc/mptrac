@@ -2410,6 +2410,8 @@ void read_ctl(
   ctl->met_sp = (int) scan_ctl(filename, argc, argv, "MET_SP", -1, "1", NULL);
   if (ctl->met_sx < 1 || ctl->met_sy < 1 || ctl->met_sp < 1)
     ERRMSG("MET_SX, MET_SY, and MET_SP need to be greater than zero!");
+  ctl->met_detrend =
+    scan_ctl(filename, argc, argv, "MET_DETREND", -1, "-999", NULL);
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
     ERRMSG("Too many levels!");
@@ -2626,6 +2628,9 @@ int read_met(
   /* Calculate convective available potential energy... */
   read_met_cape(met);
 
+  /* Detrending... */
+  read_met_detrend(ctl, met);
+
   /* Close file... */
   NC(nc_close(ncid));
 
@@ -2747,6 +2752,106 @@ void read_met_cloud(
 	   * 100. * (met->p[ip] - met->p[ip + 1]) / G0);
       }
     }
+}
+
+/*****************************************************************************/
+
+void read_met_detrend(
+  ctl_t * ctl,
+  met_t * met) {
+
+  met_t *help;
+
+  /* Check parameters... */
+  if (ctl->met_detrend <= 0)
+    return;
+
+  /* Allocate... */
+  ALLOC(help, met_t, 1);
+
+  /* Calculate standard deviation... */
+  double sigma = ctl->met_detrend / 2.355;
+  double tssq = 2. * SQR(sigma);
+
+  /* Calculate box size in latitude... */
+  int sy = (int) (3. * DY2DEG(sigma) / fabs(met->lat[1] - met->lat[0]));
+  sy = GSL_MIN(GSL_MAX(1, sy), met->ny / 2);
+
+  /* Calculate background... */
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++) {
+    for (int iy = 0; iy < met->ny; iy++) {
+
+      /* Calculate Cartesian coordinates... */
+      double x0[3];
+      geo2cart(0.0, met->lon[ix], met->lat[iy], x0);
+
+      /* Calculate box size in longitude... */
+      int sx =
+	(int) (3. * DX2DEG(sigma, met->lat[iy]) /
+	       fabs(met->lon[1] - met->lon[0]));
+      sx = GSL_MIN(GSL_MAX(1, sx), met->nx / 2);
+
+      /* Init... */
+      float wsum = 0;
+      for (int ip = 0; ip < met->np; ip++) {
+	help->t[ix][iy][ip] = 0;
+	help->u[ix][iy][ip] = 0;
+	help->v[ix][iy][ip] = 0;
+	help->w[ix][iy][ip] = 0;
+      }
+
+      /* Loop over neighboring grid points... */
+      for (int ix2 = ix - sx; ix2 <= ix + sx; ix2++) {
+	int ix3 = ix2;
+	if (ix3 < 0)
+	  ix3 += met->nx;
+	else if (ix3 >= met->nx)
+	  ix3 -= met->nx;
+	for (int iy2 = GSL_MAX(iy - sy, 0);
+	     iy2 <= GSL_MIN(iy + sy, met->ny - 1); iy2++) {
+
+	  /* Calculate Cartesian coordinates... */
+	  double x1[3];
+	  geo2cart(0.0, met->lon[ix3], met->lat[iy2], x1);
+
+	  /* Calculate weighting factor... */
+	  float w = (float) exp(-DIST2(x0, x1) / tssq);
+
+	  /* Add data... */
+	  wsum += w;
+	  for (int ip = 0; ip < met->np; ip++) {
+	    help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip];
+	    help->u[ix][iy][ip] += w * met->u[ix3][iy2][ip];
+	    help->v[ix][iy][ip] += w * met->v[ix3][iy2][ip];
+	    help->w[ix][iy][ip] += w * met->w[ix3][iy2][ip];
+	  }
+	}
+      }
+
+      /* Normalize... */
+      for (int ip = 0; ip < met->np; ip++) {
+	help->t[ix][iy][ip] /= wsum;
+	help->u[ix][iy][ip] /= wsum;
+	help->v[ix][iy][ip] /= wsum;
+	help->w[ix][iy][ip] /= wsum;
+      }
+    }
+  }
+
+  /* Subtract background... */
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++) {
+	met->t[ix][iy][ip] -= help->t[ix][iy][ip];
+	met->u[ix][iy][ip] -= help->u[ix][iy][ip];
+	met->v[ix][iy][ip] -= help->v[ix][iy][ip];
+	met->w[ix][iy][ip] -= help->w[ix][iy][ip];
+      }
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/

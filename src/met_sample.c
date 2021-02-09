@@ -41,9 +41,10 @@ int main(
   FILE *out;
 
   double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pt, pc,
-    cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3];
+    cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3],
+    time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;
 
-  int geopot, ip, it, ci[3];
+  int geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];
 
   /* Check arguments... */
   if (argc < 3)
@@ -58,6 +59,14 @@ int main(
   read_ctl(argv[1], argc, argv, &ctl);
   geopot =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GEOPOT", -1, "0", NULL);
+  grid_time =
+    (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_TIME", -1, "0", NULL);
+  grid_z =
+    (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_Z", -1, "0", NULL);
+  grid_lon =
+    (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LON", -1, "0", NULL);
+  grid_lat =
+    (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LAT", -1, "0", NULL);
 
   /* Read atmospheric data... */
   if (!read_atm(argv[3], &ctl, atm))
@@ -132,6 +141,18 @@ int main(
 
     /* Interpolate meteo data... */
     INTPOL_TIME_ALL(atm->time[ip], pref, atm->lon[ip], atm->lat[ip]);
+
+    /* Make blank lines... */
+    if (ip == 0
+	|| (grid_time && atm->time[ip] != time_old)
+	|| (grid_z && atm->p[ip] != p_old)
+	|| (grid_lon && atm->lon[ip] != lon_old)
+	|| (grid_lat && atm->lat[ip] != lat_old))
+      fprintf(out, "\n");
+    time_old = atm->time[ip];
+    p_old = atm->p[ip];
+    lon_old = atm->lon[ip];
+    lat_old = atm->lat[ip];
 
     /* Write data... */
     fprintf(out,

@@ -633,6 +633,9 @@ typedef struct {
   /*! Smoothing for pressure levels. */
   int met_sp;
 
+  /*! FWHM of horizontal Gaussian used for detrending [km]. */
+  double met_detrend;
+
   /*! Number of target pressure levels. */
   int met_np;
 
@@ -1242,6 +1245,11 @@ void read_met_cape(
 
 /*! Calculate cloud properties. */
 void read_met_cloud(
+  met_t * met);
+
+/*! Apply detrendig method to temperature and winds. */
+void read_met_detrend(
+  ctl_t * ctl,
   met_t * met);
 
 /*! Extrapolate meteorological data at lower boundary. */
