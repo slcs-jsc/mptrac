@@ -4902,7 +4902,7 @@ void write_sample(
       vmr = GSL_NAN;
 
     /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", t, rz, rlon, rlat,
+    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", rt, rz, rlon, rlat,
 	    area, ctl->sample_dz, np, cd, vmr, robs);
 
     /* Check time... */
