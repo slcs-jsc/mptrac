@@ -1444,6 +1444,20 @@ void write_output(
     write_prof(filename, ctl, met0, met1, atm, t);
   }
 
+  /* Write sample data... */
+  if (ctl->sample_basename[0] != '-') {
+    if (!updated) {
+#ifdef _OPENACC
+      SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
+#pragma acc update host(atm[:1])
+#endif
+      updated = 1;
+    }
+    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
+    write_sample(filename, ctl, met0, met1, atm, t);
+  }
+
   /* Write station data... */
   if (ctl->stat_basename[0] != '-') {
     if (!updated) {

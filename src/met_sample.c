@@ -143,8 +143,7 @@ int main(
     INTPOL_TIME_ALL(atm->time[ip], pref, atm->lon[ip], atm->lat[ip]);
 
     /* Make blank lines... */
-    if (ip == 0
-	|| (grid_time && atm->time[ip] != time_old)
+    if (ip == 0 || (grid_time && atm->time[ip] != time_old)
 	|| (grid_z && atm->p[ip] != p_old)
 	|| (grid_lon && atm->lon[ip] != lon_old)
 	|| (grid_lat && atm->lat[ip] != lat_old))

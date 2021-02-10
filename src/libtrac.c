@@ -2569,6 +2569,16 @@ void read_ctl(
   ctl->prof_ny =
     (int) scan_ctl(filename, argc, argv, "PROF_NY", -1, "180", NULL);
 
+  /* Output of sample data... */
+  scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
+	   ctl->sample_basename);
+  scan_ctl(filename, argc, argv, "SAMPLE_OBSFILE", -1, "-",
+	   ctl->sample_obsfile);
+  ctl->sample_dx =
+    scan_ctl(filename, argc, argv, "SAMPLE_DX", -1, "50", NULL);
+  ctl->sample_dz =
+    scan_ctl(filename, argc, argv, "SAMPLE_DZ", -1, "-999", NULL);
+
   /* Output of station data... */
   scan_ctl(filename, argc, argv, "STAT_BASENAME", -1, "-",
 	   ctl->stat_basename);
@@ -4752,9 +4762,159 @@ void write_prof(
 	}
       }
 
-  /* Close file... */
-  if (t == ctl->t_stop)
+  /* Close files... */
+  if (t == ctl->t_stop) {
+    fclose(in);
     fclose(out);
+  }
+}
+
+/*****************************************************************************/
+
+void write_sample(
+  const char *filename,
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t) {
+
+  static FILE *in, *out;
+
+  static char line[LEN];
+
+  static double area, dlat, rmax2, t0, t1, rt, rt_old, rz, rlon, rlat, robs;
+
+  /* Init... */
+  if (t == ctl->t_start) {
+
+    /* Open observation data file... */
+    printf("Read sample observation data: %s\n", ctl->sample_obsfile);
+    if (!(in = fopen(ctl->sample_obsfile, "r")))
+      ERRMSG("Cannot open file!");
+
+    /* Create new file... */
+    printf("Write sample data: %s\n", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write header... */
+    fprintf(out,
+	    "# $1 = time [s]\n"
+	    "# $2 = altitude [km]\n"
+	    "# $3 = longitude [deg]\n"
+	    "# $4 = latitude [deg]\n"
+	    "# $5 = surface area [km^2]\n"
+	    "# $6 = layer width [km]\n"
+	    "# $7 = number of particles [1]\n"
+	    "# $8 = column density [kg/m^2]\n"
+	    "# $9 = volume mixing ratio [ppv]\n"
+	    "# $10 = observed BT index [K]\n\n");
+
+    /* Set latitude range, squared radius, and area... */
+    dlat = DY2DEG(ctl->sample_dx);
+    rmax2 = SQR(ctl->sample_dx);
+    area = M_PI * rmax2;
+  }
+
+  /* Set time interval for output... */
+  t0 = t - 0.5 * ctl->dt_mod;
+  t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Read observation data... */
+  while (fgets(line, LEN, in)) {
+
+    /* Read data... */
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
+	5)
+      continue;
+
+    /* Check time... */
+    if (rt < t0)
+      continue;
+    if (rt < rt_old)
+      ERRMSG("Time must be ascending!");
+    rt_old = rt;
+
+    /* Calculate Cartesian coordinates... */
+    double x0[3];
+    geo2cart(0, rlon, rlat, x0);
+
+    /* Set pressure range... */
+    double rp = P(rz);
+    double ptop = P(rz + ctl->sample_dz);
+    double pbot = P(rz - ctl->sample_dz);
+
+    /* Init... */
+    double mass = 0;
+    int np = 0;
+
+    /* Loop over air parcels... */
+#pragma omp parallel for default(shared) reduction(+:mass,np)
+    for (int ip = 0; ip < atm->np; ip++) {
+
+      /* Check time... */
+      if (atm->time[ip] < t0 || atm->time[ip] > t1)
+	continue;
+
+      /* Check latitude... */
+      if (fabs(rlat - atm->lat[ip]) > dlat)
+	continue;
+
+      /* Check horizontal distance... */
+      double x1[3];
+      geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
+      if (DIST2(x0, x1) > rmax2)
+	continue;
+
+      /* Check pressure... */
+      if (ctl->sample_dz > 0)
+	if (atm->p[ip] > pbot || atm->p[ip] < ptop)
+	  continue;
+
+      /* Add mass... */
+      mass += atm->q[ctl->qnt_m][ip];
+      np++;
+    }
+
+    /* Calculate column density... */
+    double cd = mass / (1e6 * area);
+
+    /* Calculate volume mixing ratio... */
+    double rho_air, vmr = 0;
+    if (ctl->molmass > 0 && ctl->sample_dz > 0) {
+      if (mass > 0) {
+
+	/* Get temperature... */
+	int ci[3];
+	double temp, cw[3];
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt, rp,
+			   rlon, rlat, &temp, ci, cw, 1);
+
+	/* Get density of air... */
+	rho_air = 100. * rp / (RA * temp);
+
+	/* Get volume mixing ratio... */
+	vmr = MA / ctl->molmass * mass
+	  / (rho_air * 1e6 * area * 1e3 * ctl->sample_dz);
+      }
+    } else
+      vmr = GSL_NAN;
+
+    /* Write output... */
+    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", t, rz, rlon, rlat,
+	    area, ctl->sample_dz, np, cd, vmr, robs);
+
+    /* Check time... */
+    if (rt >= t1)
+      break;
+  }
+
+  /* Close files... */
+  if (t == ctl->t_stop) {
+    fclose(in);
+    fclose(out);
+  }
 }
 
 /*****************************************************************************/
