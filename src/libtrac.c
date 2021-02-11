@@ -1703,7 +1703,7 @@ void get_met_replace(
   /* Iterate... */
   for (int i = 0; i < 3; i++) {
 
-    /* Replace substring... */
+    /* Replace sub-string... */
     if (!(ch = strstr(orig, search)))
       return;
     strncpy(buffer, orig, (size_t) (ch - orig));
@@ -3200,14 +3200,14 @@ void read_met_levels(
   if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0))
     WARN("Cannot read cloud ice water content!");
 
-  /* Transfer from model level to pressure levels... */
+  /* Transfer from model levels to pressure levels... */
   if (ctl->met_np > 0) {
 
     /* Read pressure on model levels... */
     if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f))
       ERRMSG("Cannot read pressure on model levels!");
 
-    /* Vertical interpolate from model to pressure levels... */
+    /* Vertical interpolation from model to pressure levels... */
     read_met_ml2pl(ctl, met, met->t);
     read_met_ml2pl(ctl, met, met->u);
     read_met_ml2pl(ctl, met, met->v);
@@ -4171,6 +4171,10 @@ void write_csi(
       ERRMSG("Time must be ascending!");
     rt_old = rt;
 
+    /* Check observation data... */
+    if (!isfinite(robs))
+      continue;
+
     /* Calculate indices... */
     ix = (int) ((rlon - ctl->csi_lon0) / dlon);
     iy = (int) ((rlat - ctl->csi_lat0) / dlat);
@@ -4551,18 +4555,25 @@ void write_grid(
       for (iz = 0; iz < ctl->grid_nz; iz++)
 	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0) {
 
-	  /* Get temperature... */
-	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
-			     lon[ix], lat[iy], &temp, ci, cw, 1);
-
 	  /* Calculate column density... */
 	  cd = mass[ix][iy][iz] / (1e6 * area[iy]);
 
 	  /* Calculate volume mixing ratio... */
+	  vmr = 0;
 	  if (ctl->molmass > 0) {
-	    rho_air = 100. * press[iz] / (RA * temp);
-	    vmr = MA / ctl->molmass * mass[ix][iy][iz]
-	      / (rho_air * 1e6 * area[iy] * 1e3 * dz);
+	    if (mass[ix][iy][iz] > 0) {
+
+	      /* Get temperature... */
+	      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
+				 lon[ix], lat[iy], &temp, ci, cw, 1);
+
+	      /* Calculate density of air... */
+	      rho_air = 100. * press[iz] / (RA * temp);
+
+	      /* Calculate volume mixing ratio... */
+	      vmr = MA / ctl->molmass * mass[ix][iy][iz]
+		/ (rho_air * 1e6 * area[iy] * 1e3 * dz);
+	    }
 	  } else
 	    vmr = GSL_NAN;
 
@@ -4686,6 +4697,10 @@ void write_prof(
     if (rt < rt_old)
       ERRMSG("Time must be ascending!");
     rt_old = rt;
+
+    /* Check observation data... */
+    if (!isfinite(robs))
+      continue;
 
     /* Calculate indices... */
     ix = (int) ((rlon - ctl->prof_lon0) / dlon);
@@ -4873,7 +4888,8 @@ void write_sample(
 	  continue;
 
       /* Add mass... */
-      mass += atm->q[ctl->qnt_m][ip];
+      if (ctl->qnt_m >= 0)
+	mass += atm->q[ctl->qnt_m][ip];
       np++;
     }
 
@@ -4891,10 +4907,10 @@ void write_sample(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt, rp,
 			   rlon, rlat, &temp, ci, cw, 1);
 
-	/* Get density of air... */
+	/* Calculate density of air... */
 	rho_air = 100. * rp / (RA * temp);
 
-	/* Get volume mixing ratio... */
+	/* Calculate volume mixing ratio... */
 	vmr = MA / ctl->molmass * mass
 	  / (rho_air * 1e6 * area * 1e3 * ctl->sample_dz);
       }

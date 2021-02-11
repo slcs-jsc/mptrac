@@ -68,7 +68,7 @@
 /*! Specific heat of dry air at constant pressure [J/(kg K)]. */
 #define CPD 1003.5
 
-/*! Ratio of the specific gas constant of dry air and water vapour [1]. */
+/*! Ratio of the specific gas constant of dry air and water vapor [1]. */
 #define EPS (MH2O / MA)
 
 /*! Standard gravity [m/s^2]. */
@@ -240,7 +240,7 @@
   intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
   }
 
-/*! Temperoal interpolation of all meteo data. */
+/*! Temporal interpolation of all meteo data. */
 #define INTPOL_TIME_ALL(time, p, lon, lat) {				\
   intpol_met_time_3d(met0, met0->z, met1, met1->z, time, p, lon, lat, &z, ci, cw, 1); \
   intpol_met_time_3d(met0, met0->t, met1, met1->t, time, p, lon, lat, &t, ci, cw, 0); \
@@ -525,7 +525,7 @@ typedef struct {
   /*! Quantity array index for cloud top pressure. */
   int qnt_pc;
 
-  /*! Quantity array idex for total column cloud water. */
+  /*! Quantity array index for total column cloud water. */
   int qnt_cl;
 
   /*! Quantity array index for pressure at lifted condensation level (LCL). */
@@ -555,13 +555,13 @@ typedef struct {
   /*! Quantity array index for partial water vapor pressure. */
   int qnt_pw;
 
-  /*! Quantity array index for specific humidty. */
+  /*! Quantity array index for specific humidity. */
   int qnt_sh;
 
-  /*! Quantity array index for relative humidty over water. */
+  /*! Quantity array index for relative humidity over water. */
   int qnt_rh;
 
-  /*! Quantity array index for relative humidty over ice. */
+  /*! Quantity array index for relative humidity over ice. */
   int qnt_rhice;
 
   /*! Quantity array index for potential temperature. */
@@ -874,7 +874,7 @@ typedef struct {
 /*! Atmospheric data. */
 typedef struct {
 
-  /*! Number of air pacels. */
+  /*! Number of air parcels. */
   int np;
 
   /*! Time [s]. */
@@ -1101,14 +1101,14 @@ void geo2cart(
   double lat,
   double *x);
 
-/*! Get meteorological data for given timestep. */
+/*! Get meteorological data for given time step. */
 void get_met(
   ctl_t * ctl,
   double t,
   met_t ** met0,
   met_t ** met1);
 
-/*! Get meteorological data for timestep. */
+/*! Get meteorological data for time step. */
 void get_met_help(
   double t,
   int direct,
@@ -1259,7 +1259,7 @@ void read_met_cape(
 void read_met_cloud(
   met_t * met);
 
-/*! Apply detrendig method to temperature and winds. */
+/*! Apply detrending method to temperature and winds. */
 void read_met_detrend(
   ctl_t * ctl,
   met_t * met);
