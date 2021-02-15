@@ -698,6 +698,9 @@ typedef struct {
   /*! Coefficients for OH chemistry (k0, n, kinf, m). */
   double oh_chem[4];
 
+  /*! beta parameter for diurnal variablity of OH*/
+  double oh_chem_beta;
+
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
@@ -1440,3 +1443,9 @@ void write_station(
   ctl_t * ctl,
   atm_t * atm,
   double t);
+
+/*! Calculate solar zenith angle*/
+double sza(
+   double sec,
+   double lon,
+   double lat);
