@@ -301,7 +301,6 @@ int main(
 #endif
 
     /* Initialize random number generator... */
-    SELECT_TIMER("INIT_RNG", NVTX_CPU);
     module_rng_init();
 
     /* Initialize meteorological data... */
@@ -311,7 +310,6 @@ int main(
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
     /* Initialize isosurface... */
-    SELECT_TIMER("INIT_ISOSURF", NVTX_CPU);
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
@@ -356,15 +354,12 @@ int main(
 	get_met(&ctl, t, &met0, &met1);
 
       /* Check initial positions... */
-      SELECT_TIMER("POSITION", NVTX_GPU);
       module_position(met0, met1, atm, dt);
 
       /* Advection... */
-      SELECT_TIMER("ADVECTION", NVTX_GPU);
       module_advection(met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
-      SELECT_TIMER("TURBDIFF", NVTX_GPU);
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
 	module_rng(rs, 3 * (size_t) atm->np, 1);
@@ -372,62 +367,51 @@ int main(
       }
 
       /* Mesoscale diffusion... */
-      SELECT_TIMER("TURBMESO", NVTX_GPU);
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
 	module_rng(rs, 3 * (size_t) atm->np, 1);
 	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
       }
 
       /* Convection... */
-      SELECT_TIMER("CONVECT", NVTX_GPU);
       if (ctl.conv_cape >= 0) {
 	module_rng(rs, (size_t) atm->np, 0);
 	module_convection(&ctl, met0, met1, atm, dt, rs);
       }
 
       /* Sedimentation... */
-      SELECT_TIMER("SEDI", NVTX_GPU);
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0)
 	module_sedi(&ctl, met0, met1, atm, dt);
 
       /* Isosurface... */
-      SELECT_TIMER("ISOSURF", NVTX_GPU);
       if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
 	module_isosurf(&ctl, met0, met1, atm, cache);
 
       /* Check final positions... */
-      SELECT_TIMER("POSITION", NVTX_GPU);
       module_position(met0, met1, atm, dt);
-
+      
       /* Interpolate meteorological data... */
-      SELECT_TIMER("METEO", NVTX_GPU);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
 	module_meteo(&ctl, met0, met1, atm);
 
       /* Decay of particle mass... */
-      SELECT_TIMER("DECAY", NVTX_GPU);
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	module_decay(&ctl, atm, dt);
 
       /* OH chemistry... */
-      SELECT_TIMER("OHCHEM", NVTX_GPU);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
 	module_oh_chem(&ctl, met0, met1, atm, dt);
 
       /* Dry deposition... */
-      SELECT_TIMER("DRYDEPO", NVTX_GPU);
       if (ctl.dry_depo[0] > 0)
 	module_dry_deposition(&ctl, met0, met1, atm, dt);
 
       /* Wet deposition... */
-      SELECT_TIMER("WETDEPO", NVTX_GPU);
       if ((ctl.wet_depo[0] > 0 || ctl.wet_depo[2] > 0)
 	  && (ctl.wet_depo[4] > 0 || ctl.wet_depo[6] > 0))
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
 
       /* Write output... */
-      SELECT_TIMER("OUTPUT", NVTX_WRITE);
       write_output(dirname, &ctl, met0, met1, atm, t);
     }
 
@@ -495,6 +479,9 @@ void module_advection(
   atm_t * atm,
   double *dt) {
 
+  /* Set timer... */
+  SELECT_TIMER("ADVECTION", NVTX_GPU);
+  
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -546,6 +533,9 @@ void module_convection(
   double *dt,
   double *rs) {
 
+  /* Set timer... */
+  SELECT_TIMER("CONVECTION", NVTX_GPU);
+	
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -587,6 +577,9 @@ void module_decay(
   ctl_t * ctl,
   atm_t * atm,
   double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("DECAY", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
@@ -634,6 +627,9 @@ void module_diffusion_meso(
   double *dt,
   double *rs) {
 
+  /* Set timer... */
+  SELECT_TIMER("TURBMESO", NVTX_GPU);
+  
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -751,6 +747,9 @@ void module_diffusion_turb(
   double *dt,
   double *rs) {
 
+  /* Set timer... */
+  SELECT_TIMER("TURBDIFF", NVTX_GPU);
+  
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -803,6 +802,9 @@ void module_dry_deposition(
   atm_t * atm,
   double *dt) {
 
+  /* Set timer... */
+  SELECT_TIMER("DRYDEPO", NVTX_GPU);
+    
   /* Width of the surface layer [hPa]. */
   const double dp = 30.;
 
@@ -870,6 +872,9 @@ void module_isosurf_init(
 
   int ci[3] = { 0 };
 
+  /* Set timer... */
+  SELECT_TIMER("ISOSURF_INIT", NVTX_GPU);
+  
   /* Save pressure... */
   if (ctl->isosurf == 1)
     for (int ip = 0; ip < atm->np; ip++)
@@ -924,6 +929,9 @@ void module_isosurf(
   atm_t * atm,
   cache_t * cache) {
 
+  /* Set timer... */
+  SELECT_TIMER("ISOSURF", NVTX_GPU);
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
@@ -975,6 +983,9 @@ void module_meteo(
   met_t * met0,
   met_t * met1,
   atm_t * atm) {
+
+  /* Set timer... */
+  SELECT_TIMER("METEO", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_tsts >= 0)
@@ -1056,6 +1067,9 @@ void module_position(
   atm_t * atm,
   double *dt) {
 
+  /* Set timer... */
+  SELECT_TIMER("POSITION", NVTX_GPU);
+	
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1107,6 +1121,9 @@ void module_position(
 void module_rng_init(
   void) {
 
+  /* Set timer... */
+  SELECT_TIMER("RNG_INIT", NVTX_CPU);
+      
   /* Initialize random number generator... */
 #ifdef _OPENACC
 
@@ -1184,6 +1201,9 @@ void module_sedi(
   atm_t * atm,
   double *dt) {
 
+  /* Set timer... */
+  SELECT_TIMER("SEDI", NVTX_GPU);
+	
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1217,6 +1237,9 @@ void module_oh_chem(
   met_t * met1,
   atm_t * atm,
   double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("OHCHEM", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
@@ -1265,6 +1288,9 @@ void module_wet_deposition(
   atm_t * atm,
   double *dt) {
 
+  /* Set timer... */
+  SELECT_TIMER("WETDEPO", NVTX_GPU);
+	
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
@@ -1381,7 +1407,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_ATM", NVTX_WRITE);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
@@ -1396,7 +1422,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_GRID", NVTX_WRITE);
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
@@ -1411,7 +1437,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_CSI", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
   }
@@ -1425,7 +1451,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_ENS", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
   }
@@ -1439,7 +1465,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_PROF", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
   }
@@ -1453,7 +1479,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_SAMPLE", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
     write_sample(filename, ctl, met0, met1, atm, t);
   }
@@ -1467,7 +1493,7 @@ void write_output(
 #endif
       updated = 1;
     }
-    SELECT_TIMER("OUTPUT", NVTX_WRITE);
+    SELECT_TIMER("WRITE_STATION", NVTX_WRITE);
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
   }

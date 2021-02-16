@@ -34,6 +34,21 @@ trac=../src
 # Create directories...
 rm -rf data plots && mkdir -p data plots
 
+# Download meteo data...
+[ -s meteo/ei_2011_06_05_00.nc ] || download=1
+[ -s meteo/ei_2011_06_06_00.nc ] || download=1
+[ -s meteo/ei_2011_06_07_00.nc ] || download=1
+[ -s meteo/ei_2011_06_08_00.nc ] || download=1
+if [ "$download" = "1" ] ; then
+    echo "Downloading meteo data (this may take a few minutes)..."
+    mkdir -p meteo \
+	&& wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_example_data.zip \
+	&& unzip erai_example_data.zip \
+	&& mv ei*nc meteo \
+	&& rm erai_example_data.zip \
+	    || exit
+fi
+
 # Set time range of simulations...
 t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
 t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
@@ -51,11 +66,9 @@ QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
 METBASE = meteo/ei
-MET_TROPO = 3
 TDEC_TROP = 259200
 TDEC_STRAT = 259200
-DT_MOD = 600
-DT_MET = 259200
+DT_MET = 86400
 T_STOP = $t1
 ATM_DT_OUT = 43200
 GRID_DT_OUT = 43200
@@ -72,37 +85,31 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 	       INIT_T0 $t0 INIT_T1 $t0 \
 	       INIT_Z0 10.0 INIT_Z1 10.0 \
 	       INIT_LON0 -72.117 INIT_LON1 -72.117 \
-	       INIT_LAT0 -40.59 INIT_LAT1 -40.59 \
-    | tee data/log_init.txt
+	       INIT_LAT0 -40.59 INIT_LAT1 -40.59
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0 \
-    | tee data/log_split.txt
+		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
 
 # Calculate trajectories (without diffusion)...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
 	   TURB_MESOX 0 TURB_MESOZ 0 \
 	   TURB_DX_TROP 0 TURB_DZ_STRAT 0 \
-	   ATM_BASENAME atm_nodiff GRID_BASENAME grid_nodiff \
-    | tee data/log_trac_nodiff.txt
+	   ATM_BASENAME atm_nodiff GRID_BASENAME grid_nodiff
 
 # Calculate trajectories (with diffusion)...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm_diff GRID_BASENAME grid_diff \
-    | tee data/log_trac_diff.txt
+	   ATM_BASENAME atm_diff GRID_BASENAME grid_diff
 
 # Calculate deviations...
 for var in mean stddev ; do
-    $trac/atm_dist data/trac.ctl data/dist_nodiff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done) \
-	| tee data/log_dist_nodiff_$var.txt
-    $trac/atm_dist data/trac.ctl data/dist_diff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done) \
-	| tee data/log_dist_diff_$var.txt
+    $trac/atm_dist data/trac.ctl data/dist_nodiff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done)
+    $trac/atm_dist data/trac.ctl data/dist_diff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done)
 done
 
-# Use gnuplot to plot air parcels...
+# Plot air parcel data...
 for f in $(ls data/atm_*_2011*tab) ; do
     echo "Plot $f ..."
     t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $3"-"$4"-"$5", "$6":"$7" UTC"}')
@@ -131,7 +138,7 @@ e
 EOF
 done
 
-# Use gnuplot to plot grid data...
+# Plot grid data...
 for f in $(ls data/grid_*_2011*tab) ; do
     echo "Plot $f ..."
     t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $3"-"$4"-"$5", "$6":"$7" UTC"}')
@@ -170,9 +177,3 @@ echo -e "\nMean deviations from reference output (with diffusion):"
 diff -s data/dist_diff_mean.tab data.org/dist_diff_mean.tab
 echo -e "\nStandard deviations from reference output (with diffusion):"
 diff -s data/dist_diff_stddev.tab data.org/dist_diff_stddev.tab
-
-# Show timers...
-echo -e "\nTimers, memory usage, and problem size:"
-grep TIMER data/log_trac_diff.txt
-grep MEMORY data/log_trac_diff.txt
-grep SIZE data/log_trac_diff.txt
