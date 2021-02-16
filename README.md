@@ -59,7 +59,7 @@ By default we use rather strict compiler warnings to catch problems. All warning
 
 An example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-It is recommended that you create a project directory for testing the example and also to store other experiments:
+It is recommended that you create a project directory for testing the example and also to store the results of other experiments:
 
     mkdir -p mptrac/projects
 
@@ -69,15 +69,27 @@ This shows how to run the example:
     cd mptrac/projects/example
     ./run.sh
 
+At first call, the run script will download meteorological input data from a data server. This step may take a while as the input data comprise several hundred MByte. The input data are saved for later runs and need to be downloaded only once.
+
 Please see the example script (run.sh) on how to invoke MPTRAC programs such as 'atm_init' and 'atm_split' to initialize trajectory seeds and 'trac' to calculate the trajectories.
 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position and grid output for 5-8 June 2011:
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_05_00_00.tab.png" width="45%"/> &ndash;<img src="example/plots.org/grid_diff_2011_06_05_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_05_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_05_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="example/plots.org/atm_diff_2011_06_07_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_07_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
+
+Another script is provided to sample the meteorological input data and derived quantities:
+
+    ./sample.sh
+
+The output is verified by comparison with reference data and various map plots are created:
+<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_t.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_h2o.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_o3.png" width="30%"/></p>
+<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_u.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_v.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_w.png" width="30%"/></p>
+<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_cape.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_tccw.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_rhice.png" width="30%"/></p>
+<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_z.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_pv.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_zt.png" width="30%"/></p>
 
 ## Further information
 
