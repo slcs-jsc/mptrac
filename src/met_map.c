@@ -205,15 +205,17 @@ int main(
 	  "# $30 = convective available potential energy (CAPE) [J/kg]\n");
   fprintf(out,
 	  "# $31 = relative humidity over water [%%]\n"
-	  "# $32 = relative humidity over ice [%%]\n");
-
+	  "# $32 = relative humidity over ice [%%]\n"
+	  "# $33 = dew point temperature [K]\n"
+	  "# $34 = frost point temperature [K]\n");
+  
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
 	      lons[ix], lats[iy], pm[ix][iy] / np[ix][iy],
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
@@ -232,9 +234,11 @@ int main(
 	      RH(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
 		 h2om[ix][iy] / np[ix][iy]),
 	      RHICE(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
-		    h2om[ix][iy] / np[ix][iy]));
+		    h2om[ix][iy] / np[ix][iy]),
+	      TDEW(pm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]),
+	      TICE(pm[ix][iy] / np[ix][iy],  h2om[ix][iy] / np[ix][iy]));
   }
-
+  
   /* Close file... */
   fclose(out);
 

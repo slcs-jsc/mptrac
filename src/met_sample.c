@@ -113,7 +113,9 @@ int main(
 	  "# $30 = convective available potential energy (CAPE) [J/kg]\n");
   fprintf(out,
 	  "# $31 = relative humidity over water [%%]\n"
-	  "# $32 = relative humidity over ice [%%]\n");
+	  "# $32 = relative humidity over ice [%%]\n"
+	  "# $33 = dew point temperature [K]\n"
+	  "# $34 = frost point temperature [K]\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -156,11 +158,12 @@ int main(
     /* Write data... */
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
 	    pt, zt, tt, h2ot, lwc, iwc, cl, pc, plcl, plfc, pel, cape,
-	    RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o));
+	    RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
+	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o));
   }
 
   /* Close file... */
