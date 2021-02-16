@@ -1593,6 +1593,9 @@ void get_met(
 
   char filename[LEN];
 
+  /* Set timer... */
+  SELECT_TIMER("GET_MET", NVTX_READ);
+  
   /* Init... */
   if (t == ctl->t_start || !init) {
     init = 1;
@@ -2013,6 +2016,9 @@ int read_atm(
 
   size_t nparts;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_ATM", NVTX_READ);
+  
   /* Init... */
   atm->np = 0;
 
@@ -2186,6 +2192,9 @@ void read_ctl(
   char *argv[],
   ctl_t * ctl) {
 
+  /* Set timer... */
+  SELECT_TIMER("READ_CTL", NVTX_READ);
+  
   /* Write info... */
   printf("\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
 	 "(executable: %s | compiled: %s, %s)\n\n",
@@ -2595,7 +2604,7 @@ int read_met(
   met_t * met) {
 
   int ncid;
-
+  
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
@@ -2653,6 +2662,9 @@ int read_met(
 void read_met_cape(
   met_t * met) {
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_CAPE", NVTX_READ);
+    
   /* Vertical spacing (about 100 m)... */
   const double pfac = 1.01439, dz0 = RI / MA / G0 * log(pfac);
 
@@ -2735,6 +2747,9 @@ void read_met_cloud(
 
   int ix, iy, ip;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_CLOUD", NVTX_READ);
+
   /* Loop over columns... */
 #pragma omp parallel for default(shared) private(ix,iy,ip)
   for (ix = 0; ix < met->nx; ix++)
@@ -2775,6 +2790,9 @@ void read_met_detrend(
   /* Check parameters... */
   if (ctl->met_detrend <= 0)
     return;
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_DETREND", NVTX_READ);
 
   /* Allocate... */
   ALLOC(help, met_t, 1);
@@ -2871,6 +2889,9 @@ void read_met_extrapolate(
 
   int ip, ip0, ix, iy;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_EXTRAPOLATE", NVTX_READ);
+
   /* Loop over columns... */
 #pragma omp parallel for default(shared) private(ix,iy,ip0,ip)
   for (ix = 0; ix < met->nx; ix++)
@@ -2911,6 +2932,9 @@ void read_met_geopot(
   double h2os, logp[EP], ts, z0, cw[3];
 
   int ip, ip0, ix, ix2, ix3, iy, iy2, ci[3];
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_GEOPOT", NVTX_READ);
 
   /* Calculate log pressure... */
   for (ip = 0; ip < met->np; ip++)
@@ -3018,6 +3042,9 @@ void read_met_grid(
 
   size_t np, nx, ny;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_GRID", NVTX_READ);
+
   /* Get time from filename... */
   sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
   year = atoi(tstr);
@@ -3099,7 +3126,7 @@ int read_met_help_3d(
   float *help;
 
   int ip, ix, iy, varid;
-
+  
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
@@ -3144,7 +3171,7 @@ int read_met_help_2d(
   float *help;
 
   int ix, iy, varid;
-
+  
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
@@ -3181,6 +3208,9 @@ void read_met_levels(
   int ncid,
   ctl_t * ctl,
   met_t * met) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_LEVELS", NVTX_READ);
 
   /* Read meteorological data... */
   if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0))
@@ -3230,6 +3260,9 @@ void read_met_ml2pl(
 
   int ip, ip2, ix, iy;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_ML2PL", NVTX_READ);
+
   /* Loop over columns... */
 #pragma omp parallel for default(shared) private(ix,iy,ip,p,pt,ip2,aux)
   for (ix = 0; ix < met->nx; ix++)
@@ -3262,6 +3295,9 @@ void read_met_ml2pl(
 
 void read_met_periodic(
   met_t * met) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_PERIODIC", NVTX_READ);
 
   /* Check longitudes... */
   if (!(fabs(met->lon[met->nx - 1] - met->lon[0]
@@ -3302,6 +3338,9 @@ void read_met_pv(
     dtdp, dudp, dvdp, latr, vort, pows[EP];
 
   int ip, ip0, ip1, ix, ix0, ix1, iy, iy0, iy1;
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_PV", NVTX_READ);
 
   /* Set powers... */
   for (ip = 0; ip < met->np; ip++)
@@ -3410,6 +3449,9 @@ void read_met_sample(
       && ctl->met_sp <= 1 && ctl->met_sx <= 1 && ctl->met_sy <= 1)
     return;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_SAMPLE", NVTX_READ);
+
   /* Allocate... */
   ALLOC(help, met_t, 1);
 
@@ -3516,6 +3558,9 @@ void read_met_surface(
 
   int ix, iy;
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_SURFACE", NVTX_READ);
+
   /* Read surface pressure... */
   if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f)) {
     if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0)) {
@@ -3560,6 +3605,9 @@ void read_met_tropo(
     th2[200], tt, z[EP], z2[200], zt, cw[3];
 
   int found, ix, iy, iz, iz2, ci[3];
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_TROPO", NVTX_READ);
 
   /* Get altitude and pressure profiles... */
   for (iz = 0; iz < met->np; iz++)
@@ -3966,6 +4014,9 @@ void write_atm(
 
   int ip, iq, year, mon, day, hour, min, sec;
 
+  /* Set timer... */
+  SELECT_TIMER("WRITE_ATM", NVTX_WRITE);
+
   /* Set time interval for output... */
   t0 = t - 0.5 * ctl->dt_mod;
   t1 = t + 0.5 * ctl->dt_mod;
@@ -4091,6 +4142,9 @@ void write_csi(
     x[1000000], y[1000000], work[2000000];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_CSI", NVTX_WRITE);
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -4306,6 +4360,9 @@ void write_ens(
 
   static size_t i, n;
 
+  /* Set timer... */
+  SELECT_TIMER("WRITE_ENS", NVTX_WRITE);
+
   /* Init... */
   if (t == ctl->t_start) {
 
@@ -4439,6 +4496,9 @@ void write_grid(
 
   static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec,
     ci[3];
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_GRID", NVTX_WRITE);
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
@@ -4607,6 +4667,9 @@ void write_prof(
     z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3, cw[3];
 
   static int obscount[GX][GY], ip, ix, iy, iz, okay, ci[3];
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_PROF", NVTX_WRITE);
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -4800,6 +4863,9 @@ void write_sample(
 
   static double area, dlat, rmax2, t0, t1, rt, rt_old, rz, rlon, rlat, robs;
 
+  /* Set timer... */
+  SELECT_TIMER("WRITE_SAMPLE", NVTX_WRITE);
+
   /* Init... */
   if (t == ctl->t_start) {
 
@@ -4944,6 +5010,9 @@ void write_station(
   static FILE *out;
 
   static double rmax2, t0, t1, x0[3], x1[3];
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_STATION", NVTX_WRITE);
 
   /* Init... */
   if (t == ctl->t_start) {
