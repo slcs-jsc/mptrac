@@ -869,7 +869,7 @@ void module_isosurf_init(
   int ci[3] = { 0 };
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF_INIT", NVTX_GPU);
+  SELECT_TIMER("MODULE_ISOSURF", NVTX_GPU);
   
   /* Save pressure... */
   if (ctl->isosurf == 1)
@@ -1118,7 +1118,7 @@ void module_rng_init(
   void) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_RNG_INIT", NVTX_GPU);
+  SELECT_TIMER("MODULE_RNG", NVTX_GPU);
       
   /* Initialize random number generator... */
 #ifdef _OPENACC
