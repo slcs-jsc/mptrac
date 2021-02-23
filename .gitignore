@@ -17,6 +17,7 @@ src/libtrac.o
 src/met_map
 src/met_prof
 src/met_sample
+src/met_spec
 src/met_zm
 src/time2jsec
 src/trac

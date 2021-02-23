@@ -269,7 +269,7 @@ int main(
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
-    
+
     /* Set start time... */
     SELECT_TIMER("TIMESTEPS", NVTX_CPU);
     if (ctl.direction == 1) {
@@ -384,7 +384,7 @@ int main(
 
       /* Check final positions... */
       module_position(met0, met1, atm, dt);
-      
+
       /* Interpolate meteorological data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
@@ -477,7 +477,7 @@ void module_advection(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", NVTX_GPU);
-  
+
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -531,7 +531,7 @@ void module_convection(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", NVTX_GPU);
-	
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -625,7 +625,7 @@ void module_diffusion_meso(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBMESO", NVTX_GPU);
-  
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -745,7 +745,7 @@ void module_diffusion_turb(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", NVTX_GPU);
-  
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -800,7 +800,7 @@ void module_dry_deposition(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", NVTX_GPU);
-    
+
   /* Width of the surface layer [hPa]. */
   const double dp = 30.;
 
@@ -870,7 +870,7 @@ void module_isosurf_init(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", NVTX_GPU);
-  
+
   /* Save pressure... */
   if (ctl->isosurf == 1)
     for (int ip = 0; ip < atm->np; ip++)
@@ -1065,7 +1065,7 @@ void module_position(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", NVTX_GPU);
-	
+
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1119,7 +1119,7 @@ void module_rng_init(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_RNG", NVTX_GPU);
-      
+
   /* Initialize random number generator... */
 #ifdef _OPENACC
 
@@ -1152,7 +1152,7 @@ void module_rng(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_RNG", NVTX_GPU);
-  
+
 #ifdef _OPENACC
 
 #pragma acc host_data use_device(rs)
@@ -1202,7 +1202,7 @@ void module_sedi(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", NVTX_GPU);
-	
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1289,7 +1289,7 @@ void module_wet_deposition(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_WETDEPO", NVTX_GPU);
-	
+
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");

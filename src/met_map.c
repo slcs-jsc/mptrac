@@ -208,7 +208,7 @@ int main(
 	  "# $32 = relative humidity over ice [%%]\n"
 	  "# $33 = dew point temperature [K]\n"
 	  "# $34 = frost point temperature [K]\n");
-  
+
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
@@ -236,9 +236,9 @@ int main(
 	      RHICE(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
 		    h2om[ix][iy] / np[ix][iy]),
 	      TDEW(pm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]),
-	      TICE(pm[ix][iy] / np[ix][iy],  h2om[ix][iy] / np[ix][iy]));
+	      TICE(pm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]));
   }
-  
+
   /* Close file... */
   fclose(out);
 

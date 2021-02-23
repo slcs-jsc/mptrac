@@ -1595,7 +1595,7 @@ void get_met(
 
   /* Set timer... */
   SELECT_TIMER("GET_MET", NVTX_READ);
-  
+
   /* Init... */
   if (t == ctl->t_start || !init) {
     init = 1;
@@ -2018,7 +2018,7 @@ int read_atm(
 
   /* Set timer... */
   SELECT_TIMER("READ_ATM", NVTX_READ);
-  
+
   /* Init... */
   atm->np = 0;
 
@@ -2194,7 +2194,7 @@ void read_ctl(
 
   /* Set timer... */
   SELECT_TIMER("READ_CTL", NVTX_READ);
-  
+
   /* Write info... */
   printf("\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
 	 "(executable: %s | compiled: %s, %s)\n\n",
@@ -2604,7 +2604,7 @@ int read_met(
   met_t * met) {
 
   int ncid;
-  
+
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
@@ -2664,7 +2664,7 @@ void read_met_cape(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", NVTX_READ);
-    
+
   /* Vertical spacing (about 100 m)... */
   const double pfac = 1.01439, dz0 = RI / MA / G0 * log(pfac);
 
@@ -3126,7 +3126,7 @@ int read_met_help_3d(
   float *help;
 
   int ip, ix, iy, varid;
-  
+
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
@@ -3171,7 +3171,7 @@ int read_met_help_2d(
   float *help;
 
   int ix, iy, varid;
-  
+
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
