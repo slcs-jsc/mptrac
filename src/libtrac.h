@@ -1014,7 +1014,7 @@ typedef struct {
   /*! Meridional wind [m/s]. */
   float v[EX][EY][EP];
 
-  /*! Vertical wind [hPa/s]. */
+  /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
 
   /*! Potential vorticity [PVU]. */

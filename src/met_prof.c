@@ -169,7 +169,7 @@ int main(
 	  "# $6 = temperature [K]\n"
 	  "# $7 = zonal wind [m/s]\n"
 	  "# $8 = meridional wind [m/s]\n"
-	  "# $9 = vertical wind [hPa/s]\n"
+	  "# $9 = vertical velocity [hPa/s]\n"
 	  "# $10 = H2O volume mixing ratio [ppv]\n");
   fprintf(out,
 	  "# $11 = O3 volume mixing ratio [ppv]\n"
