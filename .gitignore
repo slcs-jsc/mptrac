@@ -13,6 +13,7 @@ src/atm_stat
 src/day2doy
 src/doy2day
 src/jsec2time
+src/lapse
 src/libtrac.o
 src/met_map
 src/met_prof
