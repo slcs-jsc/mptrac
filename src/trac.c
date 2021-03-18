@@ -1231,7 +1231,7 @@ void module_oh_chem(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double cw[3] = { 0.0 }, t, sza;
+      double cw[3] = { 0.0 }, t;
 
       int ci[3] = { 0 };
 
@@ -1251,14 +1251,9 @@ void module_oh_chem(
       double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
       /* Calculate exponential decay... */
-      atm->q[ctl->qnt_m][ip] *=
-	  exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]) * exp(-ctl->oh_chem_beta / cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
-      /*if (fmod(atm->time[ip],86400)>21600 && fmod(atm->time[ip],86400)<64800)
-          sza=M_PI/4;
-      else
-          sza=2*M_PI/360*145;
-      atm->q[ctl->qnt_m][ip] *=
-	  exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]) * exp(-ctl->oh_chem_beta / cos(sza)));*/
+      if  (sza(atm->time[ip], atm->lon[ip], atm->lat[ip])<M_PI/2 && sza(atm->time[ip], atm->lon[ip], atm->lat[ip])>-M_PI/2)       
+        atm->q[ctl->qnt_m][ip] *=
+	    exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) * exp(-ctl->oh_chem_beta /cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
     }
 }
 

@@ -56,7 +56,7 @@ int main(
     tt, ttm[NX][NY], pc, pcm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY],
     plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY], theta,
     ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
-    lat, lat0, lat1, lats[NY], dlat, cw[3];
+    lat, lat0, lat1, lats[NY], dlat, cw[3], oh[NX][NY], oh_diurnal[NX][NY], oh_diurnal_correct[NX][NY],EXP_func[NX][NY];
 
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
 
@@ -161,7 +161,17 @@ int main(
 	ttm[ix][iy] += tt;
 	h2otm[ix][iy] += h2ot;
 	np[ix][iy]++;
-      }
+    oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy]) ;
+    if  (sza(met->time, lons[ix], lats[iy])<M_PI/2)
+    {  
+        oh_diurnal[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy]) * exp(-0.6 /cos(sza(met->time, lons[ix], lats[iy])));
+        oh_diurnal_correct[ix][iy] +=
+            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy]) / diurnal_correct(0.6, met->time, lats[iy]) * 
+            exp(-0.6 /cos(sza(met->time, lons[ix], lats[iy])));
+        EXP_func[ix][iy] += exp(-0.6 /cos(sza(met->time, lons[ix], lats[iy])));
+    }
+         
+        }
   }
 
   /* Create output file... */
@@ -205,7 +215,11 @@ int main(
 	  "# $30 = convective available potential energy (CAPE) [J/kg]\n");
   fprintf(out,
 	  "# $31 = relative humidity over water [%%]\n"
-	  "# $32 = relative humidity over ice [%%]\n");
+	  "# $32 = relative humidity over ice [%%]\n"
+      "# $33 = oh climatology[%%]\n"
+      "# $34 = diurnal variable oh climatology[%%]\n"
+      "# $35 = corrected diurnal variable oh climatology[%%]\n"
+      "# $36 = diurnal variable exp function[%%]\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
@@ -213,7 +227,7 @@ int main(
     for (ix = 0; ix < nx; ix++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g \n",
 	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
 	      lons[ix], lats[iy], pm[ix][iy] / np[ix][iy],
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
@@ -232,7 +246,8 @@ int main(
 	      RH(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
 		 h2om[ix][iy] / np[ix][iy]),
 	      RHICE(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
-		    h2om[ix][iy] / np[ix][iy]));
+		    h2om[ix][iy] / np[ix][iy]), 
+          oh[ix][iy] / np[ix][iy], oh_diurnal[ix][iy] / np[ix][iy], oh_diurnal_correct[ix][iy] / np[ix][iy], EXP_func[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

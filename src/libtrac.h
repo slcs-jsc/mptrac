@@ -1449,3 +1449,9 @@ double sza(
    double sec,
    double lon,
    double lat);
+
+/*Using the trapezoidal method to calculate the average integral value */
+double diurnal_correct(
+    double beta, 
+    double time, 
+    double lat);

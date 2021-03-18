@@ -2470,11 +2470,11 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
     ctl->tdec_strat =
       scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
+    ctl->oh_chem_beta =
+      scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
     for (int ip = 0; ip < 4; ip++)
       ctl->oh_chem[ip] =
 	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
-    ctl->oh_chem_beta =
-      scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
     for (int ip = 0; ip < 1; ip++)
       ctl->dry_depo[ip] =
 	scan_ctl(filename, argc, argv, "DRY_DEPO", ip, "0", NULL);
@@ -5052,9 +5052,25 @@ double sza(
    /* Convert latitude... */
    lat *= M_PI / 180;
 
-   /* Return solar zenith angle [deg]... */
+   /* Return solar zenith angle [rad]... */
    return acos(sin(lat) * sin(dec) +
-               cos(lat) * cos(dec) * cos(h)) * 180 / M_PI;
+               cos(lat) * cos(dec) * cos(h));
+}
+
+/*****************************************************************************/
+
+double diurnal_correct(double beta, double time, double lat)
+{
+    int j;
+    double sum=0;    
+    for (j=-180;j<180;j++)  
+       {
+          if  (sza(time, j, lat)<M_PI/2)
+            {
+               sum+=exp(-beta/cos(sza(time, j, lat)));
+            }
+       }
+    return (sum/360);
 }
 
 /*****************************************************************************/
