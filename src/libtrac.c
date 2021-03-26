@@ -5067,7 +5067,11 @@ double diurnal_correct(double beta, double time, double lat)
        {
           if  (sza(time, j, lat)<M_PI/2)
             {
-               sum+=exp(-beta/cos(sza(time, j, lat)));
+               sum+= exp(-beta/cos(sza(time, j, lat)));     
+            }
+          else
+            {
+                sum+= 1e-3;
             }
        }
     return (sum/360);

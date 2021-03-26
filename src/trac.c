@@ -1250,10 +1250,19 @@ void module_oh_chem(
       double c = log10(k0 * M / ki);
       double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
-      /* Calculate exponential decay... */
-      if  (sza(atm->time[ip], atm->lon[ip], atm->lat[ip])<M_PI/2 && sza(atm->time[ip], atm->lon[ip], atm->lat[ip])>-M_PI/2)       
+      /* Calculate exponential decay...    unit: k [cm3 mol–1 s–1]; clim_oh [mol-1 cm3]*/
+      if  (sza(atm->time[ip], atm->lon[ip], atm->lat[ip])<M_PI/2)  
+        {     
         atm->q[ctl->qnt_m][ip] *=
-	    exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) * exp(-ctl->oh_chem_beta /cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
+	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
+              * exp(-ctl->oh_chem_beta / cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
+        }
+      else
+        {
+        atm->q[ctl->qnt_m][ip] *=
+	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
+              * 1e-3);
+        }
     }
 }
 
