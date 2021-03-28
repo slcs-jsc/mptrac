@@ -308,6 +308,12 @@ double clim_hno3(
   else if (p > clim_hno3_ps[9])
     p = clim_hno3_ps[9];
 
+  /* Check latitude... */
+  if (lat < clim_hno3_lats[0])
+    lat = clim_hno3_lats[0];
+  else if (lat > clim_hno3_lats[17])
+    lat = clim_hno3_lats[17];
+
   /* Get indices... */
   int isec = locate_irr(clim_hno3_secs, 12, sec);
   int ilat = locate_reg(clim_hno3_lats, 18, lat);
@@ -334,8 +340,9 @@ double clim_hno3(
 	      clim_hno3_lats[ilat + 1], aux01, lat);
   aux11 = LIN(clim_hno3_lats[ilat], aux10,
 	      clim_hno3_lats[ilat + 1], aux11, lat);
-  return LIN(clim_hno3_secs[isec], aux00,
-	     clim_hno3_secs[isec + 1], aux11, sec);
+  aux00 = LIN(clim_hno3_secs[isec], aux00,
+	      clim_hno3_secs[isec + 1], aux11, sec);
+  return GSL_MAX(aux00, 0.0);
 }
 
 /*****************************************************************************/
@@ -1335,6 +1342,12 @@ double clim_oh(
   else if (p > clim_oh_ps[33])
     p = clim_oh_ps[33];
 
+  /* Check latitude... */
+  if (lat < clim_oh_lats[0])
+    lat = clim_oh_lats[0];
+  else if (lat > clim_oh_lats[17])
+    lat = clim_oh_lats[17];
+
   /* Get indices... */
   int isec = locate_irr(clim_oh_secs, 12, sec);
   int ilat = locate_reg(clim_oh_lats, 18, lat);
@@ -1359,8 +1372,8 @@ double clim_oh(
 		     clim_oh_var[isec + 1][ilat + 1][ip + 1], p);
   aux00 = LIN(clim_oh_lats[ilat], aux00, clim_oh_lats[ilat + 1], aux01, lat);
   aux11 = LIN(clim_oh_lats[ilat], aux10, clim_oh_lats[ilat + 1], aux11, lat);
-  return 1e6 * LIN(clim_oh_secs[isec], aux00,
-		   clim_oh_secs[isec + 1], aux11, sec);
+  aux00 = LIN(clim_oh_secs[isec], aux00, clim_oh_secs[isec + 1], aux11, sec);
+  return GSL_MAX(1e6 * aux00, 0.0);
 }
 
 /*****************************************************************************/
