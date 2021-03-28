@@ -2687,10 +2687,10 @@ void read_met_cape(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Get potential temperature and water vapor vmr at lowest 50 hPa... */
-      double h2o = 0, pbot, ptop, t, theta = 0;
       int n = 0;
-      pbot = GSL_MIN(met->ps[ix][iy], met->p[0]);
-      ptop = pbot - 50.;
+      double h2o = 0, t, theta = 0;
+      double pbot = GSL_MIN(met->ps[ix][iy], met->p[0]);
+      double ptop = pbot - 50.;
       for (int ip = 0; ip < met->np; ip++) {
 	if (met->p[ip] <= pbot) {
 	  theta += THETA(met->p[ip], met->t[ix][iy][ip]);
@@ -2726,8 +2726,7 @@ void read_met_cape(
       /* Calculate level of free convection (LFC), equilibrium level (EL),
          and convective available potential energy (CAPE)... */
       double dcape = 0, dcape_old, dz, h2o_env, p = met->plcl[ix][iy],
-	psat, t_env, cw[3];
-      int ci[3];
+	psat, t_env;
       ptop = 0.75 * clim_tropo(met->time, met->lat[iy]);
       met->cape[ix][iy] = 0;
       do {
@@ -2736,6 +2735,7 @@ void read_met_cape(
 	t -= lapse_rate(t, h2o) * dz;
 	psat = PSAT(t);
 	h2o = psat / (p - (1. - EPS) * psat);
+	INTPOL_INIT;
 	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
 			    &t_env, ci, cw, 1);
 	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
@@ -2758,22 +2758,20 @@ void read_met_cape(
 void read_met_cloud(
   met_t * met) {
 
-  int ix, iy, ip;
-
   /* Set timer... */
   SELECT_TIMER("READ_MET_CLOUD", NVTX_READ);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared) private(ix,iy,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
 
       /* Init... */
       met->pc[ix][iy] = GSL_NAN;
       met->cl[ix][iy] = 0;
 
       /* Loop over pressure levels... */
-      for (ip = 0; ip < met->np - 1; ip++) {
+      for (int ip = 0; ip < met->np - 1; ip++) {
 
 	/* Check pressure... */
 	if (met->p[ip] > met->ps[ix][iy] || met->p[ip] < P(20.))
@@ -2942,9 +2940,9 @@ void read_met_geopot(
 
   static float help[EX][EY][EP], w, wsum;
 
-  double h2os, logp[EP], ts, z0, cw[3];
+  double h2os, logp[EP], ts, z0;
 
-  int ip, ip0, ix, ix2, ix3, iy, iy2, ci[3];
+  int ip, ip0, ix, ix2, ix3, iy, iy2;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GEOPOT", NVTX_READ);
@@ -2961,11 +2959,12 @@ void read_met_geopot(
 	met->z[ix][iy][ip] = GSL_NAN;
 
   /* Apply hydrostatic equation to calculate geopotential heights... */
-#pragma omp parallel for default(shared) private(ix,iy,z0,ip0,ts,ip,ci,cw)
+#pragma omp parallel for default(shared) private(ix,iy,z0,ip0,ts,ip)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
 
       /* Get surface height... */
+      INTPOL_INIT;
       intpol_met_space_2d(met, met->zs, met->lon[ix], met->lat[iy], &z0, ci,
 			  cw, 1);
 
@@ -3615,9 +3614,9 @@ void read_met_tropo(
   met_t * met) {
 
   double h2ot, p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
-    th2[200], tt, z[EP], z2[200], zt, cw[3];
+    th2[200], tt, z[EP], z2[200], zt;
 
-  int found, ix, iy, iz, iz2, ci[3];
+  int found, ix, iy, iz, iz2;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_TROPO", NVTX_READ);
@@ -3758,9 +3757,10 @@ void read_met_tropo(
     ERRMSG("Cannot calculate tropopause!");
 
   /* Interpolate temperature, geopotential height, and water vapor vmr... */
-#pragma omp parallel for default(shared) private(ix,iy,tt,zt,h2ot,ci,cw)
+#pragma omp parallel for default(shared) private(ix,iy,tt,zt,h2ot)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
+      INTPOL_INIT;
       intpol_met_space_3d(met, met->t, met->pt[ix][iy], met->lon[ix],
 			  met->lat[iy], &tt, ci, cw, 1);
       intpol_met_space_3d(met, met->z, met->pt[ix][iy], met->lon[ix],
@@ -4505,10 +4505,9 @@ void write_grid(
   char line[LEN];
 
   static double mass[GX][GY][GZ], z[GZ], dz, lon[GX], dlon, lat[GY], dlat,
-    area[GY], rho_air, press[GZ], temp, cd, vmr, t0, t1, r, cw[3];
+    area[GY], rho_air, press[GZ], temp, cd, vmr, t0, t1, r;
 
-  static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec,
-    ci[3];
+  static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_GRID", NVTX_WRITE);
@@ -4637,6 +4636,7 @@ void write_grid(
 	    if (mass[ix][iy][iz] > 0) {
 
 	      /* Get temperature... */
+	      INTPOL_INIT;
 	      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
 				 lon[ix], lat[iy], &temp, ci, cw, 1);
 
@@ -4677,9 +4677,9 @@ void write_prof(
 
   static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old = -1e99,
     rz, rlon, rlat, robs, t0, t1, area[GY], dz, dlon, dlat, lon[GX], lat[GY],
-    z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3, cw[3];
+    z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay, ci[3];
+  static int obscount[GX][GY], ip, ix, iy, iz, okay;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_PROF", NVTX_WRITE);
@@ -4834,6 +4834,7 @@ void write_prof(
 	for (iz = 0; iz < ctl->prof_nz; iz++) {
 
 	  /* Get pressure and temperature... */
+	  INTPOL_INIT;
 	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
 			     lon[ix], lat[iy], &temp, ci, cw, 1);
 	  intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, t, press[iz],
@@ -4976,18 +4977,18 @@ void write_sample(
     double cd = mass / (1e6 * area);
 
     /* Calculate volume mixing ratio... */
-    double rho_air, vmr = 0;
+    double vmr = 0;
     if (ctl->molmass > 0 && ctl->sample_dz > 0) {
       if (mass > 0) {
 
 	/* Get temperature... */
-	int ci[3];
-	double temp, cw[3];
+	double temp;
+	INTPOL_INIT;
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt, rp,
 			   rlon, rlat, &temp, ci, cw, 1);
 
 	/* Calculate density of air... */
-	rho_air = 100. * rp / (RA * temp);
+	double rho_air = 100. * rp / (RA * temp);
 
 	/* Calculate volume mixing ratio... */
 	vmr = MA / ctl->molmass * mass

@@ -35,28 +35,6 @@ static gsl_rng *rng[NTHREADS];
 #endif
 
 /* ------------------------------------------------------------
-   Macros...
-   ------------------------------------------------------------ */
-
-/*! Macro to set quantity values. */
-#define METEO_SET(qnt, val)			\
-  if (ctl->qnt >= 0)				\
-    atm->q[ctl->qnt][ip] = val;
-
-/*! Macro for 2-D interpolation of meteo data. */
-#define INTPOL_2D(var, init)						\
-  intpol_met_time_2d(met0, met0->var, met1, met1->var,			\
-		     atm->time[ip], atm->lon[ip], atm->lat[ip],		\
-		     &var, ci, cw, init);
-
-/*! Macro for 3-D interpolation of meteo data. */
-#define INTPOL_3D(var, init)						\
-  intpol_met_time_3d(met0, met0->var, met1, met1->var,			\
-		     atm->time[ip], atm->p[ip],				\
-		     atm->lon[ip], atm->lat[ip],			\
-		     &var, ci, cw, init);
-
-/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -487,11 +465,10 @@ void module_advection(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      int ci[3] = { 0 };
-
-      double u, v, w, cw[3] = { 0.0 };
+      double u, v, w;
 
       /* Interpolate meteorological data... */
+      INTPOL_INIT;
       INTPOL_3D(u, 1);
       INTPOL_3D(v, 0);
       INTPOL_3D(w, 0);
@@ -541,11 +518,10 @@ void module_convection(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double cape, pel, ps, cw[3] = { 0.0 };
-
-      int ci[3] = { 0 };
+      double cape, pel, ps;
 
       /* Interpolate CAPE... */
+      INTPOL_INIT;
       INTPOL_2D(cape, 1);
 
       /* Check threshold... */
@@ -817,11 +793,10 @@ void module_dry_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double ps, t, v_dep, cw[3] = { 0.0 };
-
-      int ci[3] = { 0 };
+      double ps, t, v_dep;
 
       /* Get surface pressure... */
+      INTPOL_INIT;
       INTPOL_2D(ps, 1);
 
       /* Check whether particle is above the surface layer... */
@@ -864,12 +839,13 @@ void module_isosurf_init(
 
   char line[LEN];
 
-  double t, cw[3] = { 0.0 };
-
-  int ci[3] = { 0 };
+  double t;
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", NVTX_GPU);
+
+  /* Init... */
+  INTPOL_INIT;
 
   /* Save pressure... */
   if (ctl->isosurf == 1)
@@ -936,9 +912,10 @@ void module_isosurf(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double t, cw[3] = { 0.0 };
+    double t;
 
-    int ci[3] = { 0 };
+    /* Init... */
+    INTPOL_INIT;
 
     /* Restore pressure... */
     if (ctl->isosurf == 1)
@@ -997,61 +974,60 @@ void module_meteo(
   for (int ip = 0; ip < atm->np; ip++) {
 
     double ps, ts, zs, us, vs, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
-      u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt, cw[3] = { 0.0 };
-
-    int ci[3] = { 0 };
+      u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
 
     /* Interpolate meteorological data... */
+    INTPOL_INIT;
     INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Set quantities... */
-    METEO_SET(qnt_ps, ps);
-    METEO_SET(qnt_ts, ts);
-    METEO_SET(qnt_zs, zs);
-    METEO_SET(qnt_us, us);
-    METEO_SET(qnt_vs, vs);
-    METEO_SET(qnt_pt, pt);
-    METEO_SET(qnt_tt, tt);
-    METEO_SET(qnt_zt, zt);
-    METEO_SET(qnt_h2ot, h2ot);
-    METEO_SET(qnt_p, atm->p[ip]);
-    METEO_SET(qnt_z, z);
-    METEO_SET(qnt_t, t);
-    METEO_SET(qnt_u, u);
-    METEO_SET(qnt_v, v);
-    METEO_SET(qnt_w, w);
-    METEO_SET(qnt_h2o, h2o);
-    METEO_SET(qnt_o3, o3);
-    METEO_SET(qnt_lwc, lwc);
-    METEO_SET(qnt_iwc, iwc);
-    METEO_SET(qnt_pc, pc);
-    METEO_SET(qnt_cl, cl);
-    METEO_SET(qnt_plcl, plcl);
-    METEO_SET(qnt_plfc, plfc);
-    METEO_SET(qnt_pel, pel);
-    METEO_SET(qnt_cape, cape);
-    METEO_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    METEO_SET(qnt_vh, sqrt(u * u + v * v));
-    METEO_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
-    METEO_SET(qnt_psat, PSAT(t));
-    METEO_SET(qnt_psice, PSICE(t));
-    METEO_SET(qnt_pw, PW(atm->p[ip], h2o));
-    METEO_SET(qnt_sh, SH(h2o));
-    METEO_SET(qnt_rh, RH(atm->p[ip], t, h2o));
-    METEO_SET(qnt_rhice, RHICE(atm->p[ip], t, h2o));
-    METEO_SET(qnt_theta, THETA(atm->p[ip], t));
-    METEO_SET(qnt_tvirt, TVIRT(t, h2o));
-    METEO_SET(qnt_lapse, lapse_rate(t, h2o));
-    METEO_SET(qnt_pv, pv);
-    METEO_SET(qnt_tdew, TDEW(atm->p[ip], h2o));
-    METEO_SET(qnt_tice, TICE(atm->p[ip], h2o));
-    METEO_SET(qnt_tnat,
-	      nat_temperature(atm->p[ip], h2o,
-			      clim_hno3(atm->time[ip], atm->lat[ip],
-					atm->p[ip]) * 1e-9));
-    METEO_SET(qnt_tsts,
-	      0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
+    ATM_SET(qnt_ps, ps);
+    ATM_SET(qnt_ts, ts);
+    ATM_SET(qnt_zs, zs);
+    ATM_SET(qnt_us, us);
+    ATM_SET(qnt_vs, vs);
+    ATM_SET(qnt_pt, pt);
+    ATM_SET(qnt_tt, tt);
+    ATM_SET(qnt_zt, zt);
+    ATM_SET(qnt_h2ot, h2ot);
+    ATM_SET(qnt_p, atm->p[ip]);
+    ATM_SET(qnt_z, z);
+    ATM_SET(qnt_t, t);
+    ATM_SET(qnt_u, u);
+    ATM_SET(qnt_v, v);
+    ATM_SET(qnt_w, w);
+    ATM_SET(qnt_h2o, h2o);
+    ATM_SET(qnt_o3, o3);
+    ATM_SET(qnt_lwc, lwc);
+    ATM_SET(qnt_iwc, iwc);
+    ATM_SET(qnt_pc, pc);
+    ATM_SET(qnt_cl, cl);
+    ATM_SET(qnt_plcl, plcl);
+    ATM_SET(qnt_plfc, plfc);
+    ATM_SET(qnt_pel, pel);
+    ATM_SET(qnt_cape, cape);
+    ATM_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    ATM_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    ATM_SET(qnt_vh, sqrt(u * u + v * v));
+    ATM_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
+    ATM_SET(qnt_psat, PSAT(t));
+    ATM_SET(qnt_psice, PSICE(t));
+    ATM_SET(qnt_pw, PW(atm->p[ip], h2o));
+    ATM_SET(qnt_sh, SH(h2o));
+    ATM_SET(qnt_rh, RH(atm->p[ip], t, h2o));
+    ATM_SET(qnt_rhice, RHICE(atm->p[ip], t, h2o));
+    ATM_SET(qnt_theta, THETA(atm->p[ip], t));
+    ATM_SET(qnt_tvirt, TVIRT(t, h2o));
+    ATM_SET(qnt_lapse, lapse_rate(t, h2o));
+    ATM_SET(qnt_pv, pv);
+    ATM_SET(qnt_tdew, TDEW(atm->p[ip], h2o));
+    ATM_SET(qnt_tice, TICE(atm->p[ip], h2o));
+    ATM_SET(qnt_tnat,
+	    nat_temperature(atm->p[ip], h2o,
+			    clim_hno3(atm->time[ip], atm->lat[ip],
+				      atm->p[ip]) * 1e-9));
+    ATM_SET(qnt_tsts,
+	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
 }
 
@@ -1074,10 +1050,6 @@ void module_position(
 #endif
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
-
-      double ps, cw[3] = { 0.0 };
-
-      int ci[3] = { 0 };
 
       /* Calculate modulo... */
       atm->lon[ip] = FMOD(atm->lon[ip], 360.);
@@ -1105,6 +1077,8 @@ void module_position(
       if (atm->p[ip] < met0->p[met0->np - 1])
 	atm->p[ip] = met0->p[met0->np - 1];
       else if (atm->p[ip] > 300.) {
+	double ps;
+	INTPOL_INIT;
 	INTPOL_2D(ps, 1);
 	if (atm->p[ip] > ps)
 	  atm->p[ip] = ps;
@@ -1212,16 +1186,14 @@ void module_sedi(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double t, v_s, cw[3] = { 0.0 };
-
-      int ci[3] = { 0 };
-
       /* Get temperature... */
+      double t;
+      INTPOL_INIT;
       INTPOL_3D(t, 1);
 
       /* Sedimentation velocity... */
-      v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_r][ip],
-		 atm->q[ctl->qnt_rho][ip]);
+      double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_r][ip],
+			atm->q[ctl->qnt_rho][ip]);
 
       /* Calculate pressure change... */
       atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
@@ -1253,11 +1225,9 @@ void module_oh_chem(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double cw[3] = { 0.0 }, t;
-
-      int ci[3] = { 0 };
-
       /* Get temperature... */
+      double t;
+      INTPOL_INIT;
       INTPOL_3D(t, 1);
 
       /* Calculate molecular density... */
@@ -1303,11 +1273,12 @@ void module_wet_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double cl, dz, h, lambda = 0, t, iwc, lwc, pc, cw[3] = { 0.0 };
+      double cl, dz, h, lambda = 0, t, iwc, lwc, pc;
 
-      int inside, ci[3] = { 0 };
+      int inside;
 
       /* Check whether particle is below cloud top... */
+      INTPOL_INIT;
       INTPOL_2D(pc, 1);
       if (!isfinite(pc) || atm->p[ip] <= pc)
 	continue;

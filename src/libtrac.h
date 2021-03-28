@@ -154,6 +154,11 @@
   if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
     ERRMSG("Out of memory!");
 
+/*! Set quantity value. */
+#define ATM_SET(qnt, val)			\
+  if (ctl->qnt >= 0)				\
+    atm->q[ctl->qnt][ip] = val;
+
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
@@ -211,6 +216,23 @@
     if(fwrite(ptr, sizeof(type), size, out)!=size)			\
       ERRMSG("Error while writing!");					\
   }
+
+/*! Initialize cache variables for interpolation. */
+#define INTPOL_INIT				\
+  double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
+
+/*! 2-D interpolation of a meteo variable. */
+#define INTPOL_2D(var, init)						\
+  intpol_met_time_2d(met0, met0->var, met1, met1->var,			\
+		     atm->time[ip], atm->lon[ip], atm->lat[ip],		\
+		     &var, ci, cw, init);
+
+/*! 3-D interpolation of a meteo variable. */
+#define INTPOL_3D(var, init)						\
+  intpol_met_time_3d(met0, met0->var, met1, met1->var,			\
+		     atm->time[ip], atm->p[ip],				\
+		     atm->lon[ip], atm->lat[ip],			\
+		     &var, ci, cw, init);
 
 /*! Spatial interpolation of all meteo data. */
 #define INTPOL_SPACE_ALL(p, lon, lat) {					\
