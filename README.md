@@ -22,9 +22,9 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries can be found in the MPTRAC git repository.
+This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make, and wget) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. A script is provided to download these libraries from the Internet to compile them for usage with MPTRAC.
 
-Start by downloading the source code from the git repository:
+Start by downloading the MPTRAC source code from the git repository:
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
@@ -34,24 +34,29 @@ To update an existing installation use:
 
 ### Installation
 
-First, compile the GSL and netCDF libraries required by MPTRAC by running the build script:
+First, download and compile the GSL and netCDF libraries required by MPTRAC by running the library build script:
 
     cd mptrac/libs
     ./build.sh
 
-Next, change to the source directory and edit the Makefile according to your needs. You may want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the "./libs/build/" directories.
-
-Load any modules that are needed on your target platform, and try to compile the code:
+Next, change to the source directory and edit the Makefile according to your needs.
 
     cd mptrac/src
     emacs Makefile
+
+You may want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the directories created by the library build script.
+
+To make use of the MPI parallelization of MPTRAC, the MPI flag needs to be uncommented in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the GPU flag needs to be uncommented. The PGI Compiler Suite will be required for to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+
+Load any modules that are needed on your target platform, and try to compile the code:
+
     make
 
-After compilation, the binaries will be located in the mptrac/src/ directory.
+After compilation, the binaries will remain located in the mptrac/src/ directory.
 
-By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, as static versions of some libraries might be missing. In this case, remove the '-static' flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
+By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC. In this case, remove the '-static' flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
 
-By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'. It should not be removed from the Makefile, unless you know what you are doing.
+By default rather strict compiler warnings are used to catch problems. Furthermore, all warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror' in the CFLAGS. It should not be removed from the Makefile, unless you know what you are doing.
 
 ### Run the example
 
@@ -60,28 +65,26 @@ An example is provided, illustrating how to simulate the dispersion of volcanic 
 It is recommended that you create a project directory for testing the example and also to store the results of other experiments:
 
     mkdir -p mptrac/projects
+    cp -a mptrac/example mptrac/projects
 
 This shows how to run the example:
 
-    cp -a mptrac/example mptrac/projects
     cd mptrac/projects/example
     ./run.sh
 
-At first call, the run script will download meteorological input data from a data server. This step may take a while as the input data comprise several hundred MByte. The input data are saved for later runs and need to be retrieved only once.
+At first call, the run script will download meteorological input data from a data server. This step may take a while as the meteorological input data comprise several hundred MBytes. The input data are saved for later runs and need to be retrieved only once.
 
 Please see the example script (run.sh) on how to invoke MPTRAC programs such as 'atm_init' and 'atm_split' to initialize trajectory seeds and 'trac' to calculate the trajectories.
 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position and grid output for 5-8 June 2011:
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_05_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_05_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_07_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_07_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &nbsp; <img src="example/plots.org/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &nbsp; <img src="example/plots.org/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
 
 ## Further information
 
-More detailed information for new users and developers is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki), the [reference manual](https://github.com/slcs-jsc/mptrac/blob/master/docs/refman.pdf), and the [Sphinx documentation](http://griessbach1.pages.jsc.fz-juelich.de/mptrac-user-documentation).
+More detailed information is provided in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki), the [reference manual](https://github.com/slcs-jsc/mptrac/blob/master/docs/refman.pdf), and the [Sphinx documentation](http://griessbach1.pages.jsc.fz-juelich.de/mptrac-user-documentation).
 
 These are the main references for citing the MPTRAC model in scientific publications:
 

@@ -2,6 +2,7 @@ docs/latex/
 example/data/
 example/meteo/
 example/plots/
+libs/*.tar.gz
 libs/build/
 projects/
 src/atm_conv

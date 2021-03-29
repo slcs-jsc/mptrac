@@ -35,16 +35,12 @@ trac=../src
 rm -rf data plots && mkdir -p data plots
 
 # Download meteo data...
-[ -s meteo/ei_2011_06_05_00.nc ] || download=1
-[ -s meteo/ei_2011_06_06_00.nc ] || download=1
-[ -s meteo/ei_2011_06_07_00.nc ] || download=1
-[ -s meteo/ei_2011_06_08_00.nc ] || download=1
-if [ "$download" = "1" ] ; then
-    echo "Downloading meteo data (this may take a few minutes)..."
+if [ ! -d meteo ] ; then
+    echo "Downloading meteo data (this may take a while)..."
     mkdir -p meteo \
 	&& wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_example_data.zip \
 	&& unzip erai_example_data.zip \
-	&& mv ei*nc meteo \
+	&& mv ei*nc wcl.tab meteo \
 	&& rm erai_example_data.zip \
 	    || exit
 fi
@@ -131,7 +127,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "wcl.tab" u 1:2 w l lt -1 t "", \
+    "meteo/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -161,7 +157,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "meteo/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e
