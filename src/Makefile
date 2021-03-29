@@ -46,9 +46,6 @@ INCDIR = -I ../libs/build/include
 # Compile for profiling...
 #PROF = 1
 
-# Enable netCDF-4...
-USE_NC4 = 1
-
 # Enable NVTX markers...
 #USE_NVTX = 1
 
@@ -67,9 +64,6 @@ CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes
 
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
-ifdef USE_NC4
-  LDFLAGS +=  -lhdf5_hl -lhdf5 -lm -ldl -lz
-endif
 
 # Compile for GPUs...
 ifdef GPU

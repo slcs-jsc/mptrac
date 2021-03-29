@@ -22,7 +22,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf), the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5), and [zlib](http://www.zlib.net/) are needed for file-I/O. Copies of these libraries can be found in the MPTRAC git repository.
+This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries can be found in the MPTRAC git repository.
 
 Start by downloading the source code from the git repository:
 
@@ -34,14 +34,12 @@ To update an existing installation use:
 
 ### Installation
 
-First, compile the GSL, netCDF, HDF5, and zlib libraries required by MPTRAC by running the build script:
+First, compile the GSL and netCDF libraries required by MPTRAC by running the build script:
 
     cd mptrac/libs
-    ./build.sh <nc3|nc4>
+    ./build.sh
 
-Please select "nc3", if you want to use netCDF classic files, or "nc4", if you want to use both, netCDF classic and netCDF-4 data files. The HDF5 and zlib libraries are needed only for netCDF-4. Sometimes, the compilation of netCDF-4 may fail, and netCDF classic might be used as a fail back option in this case.
-
-Next, change to the source directory and edit the Makefile according to your needs. In particular, comment or uncomment the "USE_NC4" flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the "./libs/build/" directories.
+Next, change to the source directory and edit the Makefile according to your needs. You may want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the "./libs/build/" directories.
 
 Load any modules that are needed on your target platform, and try to compile the code:
 
@@ -69,7 +67,7 @@ This shows how to run the example:
     cd mptrac/projects/example
     ./run.sh
 
-At first call, the run script will download meteorological input data from a data server. This step may take a while as the input data comprise several hundred MByte. The input data are saved for later runs and need to be downloaded only once.
+At first call, the run script will download meteorological input data from a data server. This step may take a while as the input data comprise several hundred MByte. The input data are saved for later runs and need to be retrieved only once.
 
 Please see the example script (run.sh) on how to invoke MPTRAC programs such as 'atm_init' and 'atm_split' to initialize trajectory seeds and 'trac' to calculate the trajectories.
 
@@ -80,16 +78,6 @@ This is an example showing the particle position and grid output for 5-8 June 20
 <p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="example/plots.org/atm_diff_2011_06_07_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_07_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
-
-Another script is provided to sample the meteorological input data and derived quantities:
-
-    ./sample.sh
-
-The output is verified by comparison with reference data and various map plots are created:
-<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_t.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_h2o.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_o3.png" width="30%"/></p>
-<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_u.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_v.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_w.png" width="30%"/></p>
-<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_cape.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_tccw.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_rhice.png" width="30%"/></p>
-<p align="center"><img src="example/plots.org/map_2011_06_05_00_240hPa_z.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_pv.png" width="30%"/> &ndash; <img src="example/plots.org/map_2011_06_05_00_240hPa_zt.png" width="30%"/></p>
 
 ## Further information
 
