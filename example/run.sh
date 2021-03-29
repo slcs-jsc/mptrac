@@ -25,11 +25,11 @@
 #ml NVHPC ParaStationMPI gnuplot   # for GPU runs
 
 # Setup...
+trac=../src
 export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../libs/build/lib
 [ "${SLURM_CPUS_PER_TASK}" ] \
     && export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK} \
 	|| export OMP_NUM_THREADS=4
-trac=../src
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots
@@ -37,12 +37,15 @@ rm -rf data plots && mkdir -p data plots
 # Download meteo data...
 if [ ! -d meteo ] ; then
     echo "Downloading meteo data (this may take a while)..."
-    mkdir -p meteo \
-	&& wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_example_data.zip \
-	&& unzip erai_example_data.zip \
-	&& mv ei*nc wcl.tab meteo \
-	&& rm erai_example_data.zip \
-	    || exit
+    wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_data.zip \
+	&& unzip erai_data.zip && rm erai_data.zip || exit
+fi
+
+# Download reference data...
+if [ ! -d plots.ref ] ; then
+    echo "Downloading reference data (this may take a while)..."
+    wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/reference_data.zip \
+	&& unzip reference_data.zip && rm reference_data.zip || exit
 fi
 
 # Set time range of simulations...
@@ -101,8 +104,8 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 
 # Calculate deviations...
 for var in mean stddev ; do
-    $trac/atm_dist data/trac.ctl data/dist_nodiff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done)
-    $trac/atm_dist data/trac.ctl data/dist_diff_$var.tab $var $(for f in $(ls data.org/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done)
+    $trac/atm_dist data/trac.ctl data/dist_nodiff_$var.tab $var $(for f in $(ls data.ref/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done)
+    $trac/atm_dist data/trac.ctl data/dist_diff_$var.tab $var $(for f in $(ls data.ref/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done)
 done
 
 # Plot air parcel data...
@@ -166,10 +169,10 @@ done
 
 # Check deviations...
 echo -e "\nMean deviations from reference output (without diffusion):"
-diff -s data/dist_nodiff_mean.tab data.org/dist_nodiff_mean.tab
+diff -s data/dist_nodiff_mean.tab data.ref/dist_nodiff_mean.tab
 echo -e "\nStandard deviations from reference output (without diffusion):"
-diff -s data/dist_nodiff_stddev.tab data.org/dist_nodiff_stddev.tab
+diff -s data/dist_nodiff_stddev.tab data.ref/dist_nodiff_stddev.tab
 echo -e "\nMean deviations from reference output (with diffusion):"
-diff -s data/dist_diff_mean.tab data.org/dist_diff_mean.tab
+diff -s data/dist_diff_mean.tab data.ref/dist_diff_mean.tab
 echo -e "\nStandard deviations from reference output (with diffusion):"
-diff -s data/dist_diff_stddev.tab data.org/dist_diff_stddev.tab
+diff -s data/dist_diff_stddev.tab data.ref/dist_diff_stddev.tab
