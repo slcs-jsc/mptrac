@@ -50,9 +50,11 @@ To make use of the MPI parallelization of MPTRAC, the MPI flag needs to be uncom
 
 Load any modules that are needed on your target platform, and try to compile the code:
 
-    make
+    make [-j8]
 
-After compilation, the binaries will remain located in the mptrac/src/ directory.
+The argument -j is optional. It can be used to specify the number of threads for parallel compilation.
+
+After compilation, the binaries can be found in the mptrac/src/ directory.
 
 By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC. In this case, remove the '-static' flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
 
@@ -79,8 +81,8 @@ Please see the example script (run.sh) on how to invoke MPTRAC programs such as 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position and grid output for 5-8 June 2011:
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &nbsp; <img src="example/plots.org/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &nbsp; <img src="example/plots.org/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="docs/images/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &nbsp; <img src="docs/images/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="docs/images/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &nbsp; <img src="docs/images/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
 
 ## Further information
 
