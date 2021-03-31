@@ -13,6 +13,10 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
+    - name: Installs
+      run: sudo apt-get install doxygen graphviz wget
+    - name: libs
+      run: cd libs ; ./build.sh
     - name: make
       run: cd src ; make
     - name: make check
