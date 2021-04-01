@@ -16,7 +16,7 @@ jobs:
     - name: install
       run: sudo apt-get install wget gnuplot
     - name: libs
-      run: cd libs ; ./build.sh
+      run: cd libs ; ./build.sh nc4
     - name: make
       run: cd src ; make
     - name: example
