@@ -83,9 +83,9 @@ Please see the example script (run.sh) on how to invoke MPTRAC programs such as 
 The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position and grid output for 6 to 8 June 2011:
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_06_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_07_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_07_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.org/atm_diff_2011_06_08_00_00.tab.png" width="45%"/> &ndash; <img src="example/plots.org/grid_diff_2011_06_08_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.ref/atm_2011_06_07_00_00.tab.png" width="45%"/> &emsp; <img src="example/plots.ref/grid_2011_06_07_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
 
 ## Further information
 
