@@ -39,14 +39,14 @@ First, compile the GSL, netCDF, HDF5, and zlib libraries required by MPTRAC by r
     cd mptrac/libs
     ./build.sh <nc2|nc4>
 
-Please select "nc2", if you want to use only meteorological data files in the netCDF classic format, or select "nc4", if you want to use both, netCDF classic and netCDF-4 data files. The HDF5 and zlib libraries are needed only for netCDF-4. Sometimes, the compilation of netCDF-4 may fail, and netCDF classic might be used as a fail back option in this case.
+Please select `nc2`, if you want to use only meteorological data files in the netCDF classic format, or select `nc4`, if you want to use both, netCDF classic and netCDF-4 data files. The HDF5 and zlib libraries are needed only for netCDF-4. Sometimes, the compilation of netCDF-4 may fail, and netCDF classic might be used as a fail back option in this case.
 
 Next, change to the source directory and edit the Makefile according to your needs.
 
     cd mptrac/src
     emacs Makefile
 
-In particular, comment or uncomment the "NC4" flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the "../libs/build/lib" and "../libs/build/include", respectively.
+In particular, comment or uncomment the `NC4` flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the GSL and netCDF libraries are located on your system. By default, LIBDIR and INCDIR will point to the `../libs/build/lib` and `../libs/build/include`, respectively.
 
 To make use of the MPI parallelization of MPTRAC, the MPI flag needs to be uncommented in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the GPU flag needs to be uncommented. The PGI Compiler Suite will be required for to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
 
@@ -54,13 +54,13 @@ Load any software modules that might also be needed on your target platform, and
 
     make [-j8]
 
-The argument "-j" is optional. It can be used to specify number of parallel threads used to speed up compilation.
+The argument `-j` is optional. It can be used to specify number of parallel threads used to speed up compilation.
 
 After compilation, the MPTRAC binaries are located in the mptrac/src/ directory.
 
-By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, as static versions of some libraries might be missing. In this case, remove the '-static' flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
+By default, the binaries will be linked statically, i.e., they can be copied and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, as static versions of some libraries might be missing. In this case, remove the `-static` flag from the CFLAGS in the Makefile and compile again. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the mptrac/libs/build/lib directory.
 
-By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag '-Werror'. It should not be removed from the Makefile, unless you know what you are doing.
+By default we use rather strict compiler warnings to catch problems. All warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag `-Werror`. It should not be removed from the Makefile, unless you know what you are doing.
 
 ### Run the example
 
@@ -78,9 +78,9 @@ This shows how to run the example:
 
 At first call, the run script will download meteorological input data from a data server. This step may take a while as the input data comprise several hundred MByte. The input data are saved for later runs and need to be downloaded only once.
 
-Please see the example script (run.sh) on how to invoke MPTRAC programs such as 'atm_init' and 'atm_split' to initialize trajectory seeds and 'trac' to calculate the trajectories.
+Please see the example script (run.sh) on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
 
-The script generates a number of plots of the simulation output at different times after the eruption by means of 'gnuplot'. These plots should look similar to the output already provided in the repository.
+The script generates a number of plots of the simulation output at different times after the eruption by means of `gnuplot`. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position and grid output for 6 to 8 June 2011:
 <p align="center"><img src="example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
