@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Slurm configuation for JUWELS-Cluster...
+# Slurm configuration for JUWELS-Cluster...
 #SBATCH --account=slmet
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
@@ -9,7 +9,7 @@
 #SBATCH --time=00:05:00
 #SBATCH --partition=batch
 
-## Slurm configuation for JUWELS-Booster...
+## Slurm configuration for JUWELS-Booster...
 ##SBATCH --account=ea_jsc
 ##SBATCH --nodes=1
 ##SBATCH --ntasks=1
@@ -21,8 +21,9 @@
 
 # Load modules (uncomment for JUWELS)...
 #ml purge
-#ml GCC ParaStationMPI gnuplot     # for MPI runs
-#ml NVHPC ParaStationMPI gnuplot   # for GPU runs
+#ml gnuplot
+#ml GCC ParaStationMPI     # for MPI runs
+#ml NVHPC ParaStationMPI   # for GPU runs
 
 # Setup...
 trac=../src
@@ -39,13 +40,6 @@ if [ ! -d meteo ] ; then
     echo "Downloading meteo data (this may take a while)..."
     wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_data.zip \
 	&& unzip erai_data.zip && rm erai_data.zip || exit
-fi
-
-# Download reference data...
-if [ ! -d plots.ref ] ; then
-    echo "Downloading reference data (this may take a while)..."
-    wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/reference_data.zip \
-	&& unzip reference_data.zip && rm reference_data.zip || exit
 fi
 
 # Set time range of simulations...
@@ -69,8 +63,6 @@ TDEC_TROP = 259200
 TDEC_STRAT = 259200
 DT_MET = 86400
 T_STOP = $t1
-ATM_DT_OUT = 43200
-GRID_DT_OUT = 43200
 GRID_LON0 = -90
 GRID_LON1 = 60
 GRID_LAT0 = -60
@@ -90,26 +82,14 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
 
-# Calculate trajectories (without diffusion)...
+# Calculate trajectories...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   TURB_MESOX 0 TURB_MESOZ 0 \
-	   TURB_DX_TROP 0 TURB_DZ_STRAT 0 \
-	   ATM_BASENAME atm_nodiff GRID_BASENAME grid_nodiff
-
-# Calculate trajectories (with diffusion)...
-echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm_diff GRID_BASENAME grid_diff
-
-# Calculate deviations...
-for var in mean stddev ; do
-    $trac/atm_dist data/trac.ctl data/dist_nodiff_$var.tab $var $(for f in $(ls data.ref/atm_nodiff_2011_*tab) ; do echo data/$(basename $f) $f ; done)
-    $trac/atm_dist data/trac.ctl data/dist_diff_$var.tab $var $(for f in $(ls data.ref/atm_nodiff_2011_*tab) ; do echo data/$(basename $f | sed s/nodiff/diff/g) $f ; done)
-done
+	   ATM_BASENAME atm GRID_BASENAME grid
 
 # Plot air parcel data...
-for f in $(ls data/atm_*_2011*tab) ; do
+echo
+for f in $(ls data/atm_2011*tab) ; do
     echo "Plot $f ..."
     t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $3"-"$4"-"$5", "$6":"$7" UTC"}')
     gnuplot <<EOF
@@ -138,14 +118,14 @@ EOF
 done
 
 # Plot grid data...
-for f in $(ls data/grid_*_2011*tab) ; do
+for f in $(ls data/grid_2011*tab) ; do
     echo "Plot $f ..."
     t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $3"-"$4"-"$5", "$6":"$7" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
 set size ratio 0.75
-set pm3d map
+set pm3d map interp 4,4
 set pal def (0 'gray90', 1 'blue', 2 'cyan', 3 'green', 4 'yellow', 5 'orange', 6 'red')
 set cbla "column density [g/m^2]"
 set cbra [0:1]
@@ -167,12 +147,12 @@ e
 EOF
 done
 
-# Check deviations...
-echo -e "\nMean deviations from reference output (without diffusion):"
-diff -s data/dist_nodiff_mean.tab data.ref/dist_nodiff_mean.tab
-echo -e "\nStandard deviations from reference output (without diffusion):"
-diff -s data/dist_nodiff_stddev.tab data.ref/dist_nodiff_stddev.tab
-echo -e "\nMean deviations from reference output (with diffusion):"
-diff -s data/dist_diff_mean.tab data.ref/dist_diff_mean.tab
-echo -e "\nStandard deviations from reference output (with diffusion):"
-diff -s data/dist_diff_stddev.tab data.ref/dist_diff_stddev.tab
+# Compare atm and grid file...
+echo
+error=0
+for f in $(ls data.ref/atm*tab) $(ls data.ref/grid*tab) ; do
+    diff -q -s data/$(basename $f) $f
+    [ $? -ne 0 ] && error=1
+done
+[ $error -ne 0 ] && echo "test: FAILED" || echo "test: OK"
+exit $error

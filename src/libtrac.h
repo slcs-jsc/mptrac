@@ -410,7 +410,7 @@
    NVIDIA Tools Extension (NVTX)...
    ------------------------------------------------------------ */
 
-#ifdef USE_NVTX
+#ifdef NVTX
 #include "nvToolsExt.h"
 
 /*! Light blue color code (computation on CPUs). */

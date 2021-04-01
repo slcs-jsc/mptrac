@@ -1,8 +1,7 @@
 docs/latex/
-example/data*/
-example/plots*/
+example/data/
+example/plots/
 example/meteo/
-libs/*.tar.gz
 libs/build/
 projects/
 src/atm_conv
