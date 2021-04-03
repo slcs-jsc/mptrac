@@ -38,7 +38,7 @@ rm -rf data plots && mkdir -p data plots
 # Download meteo data...
 if [ ! -d meteo ] ; then
     echo "Downloading meteo data (this may take a while)..."
-    wget https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_data.zip \
+    wget --progress=dot:mega https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_data.zip \
 	&& unzip erai_data.zip && rm erai_data.zip || exit
 fi
 
