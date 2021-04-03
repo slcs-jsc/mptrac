@@ -7,7 +7,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 [![GitHub last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/commits/master)
 [![GitHub code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
 [![GitHub top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
-[![GitHub workflow](https://github.com/slcs-jsc/mptrac/actions/workflows/c-cpp.yml/badge.svg)](https://github.com/slcs-jsc/mptrac/actions)
+[![GitHub workflow](https://github.com/slcs-jsc/mptrac/actions/workflows/test_case.yml/badge.svg)](https://github.com/slcs-jsc/mptrac/actions)
 [![license](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 [![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
 
