@@ -19,11 +19,14 @@ jobs:
         # Working directory
         working-directory: "./src" # default is .
     
+    - name: ls
+      run: pwd ; ls ; cd docs ; pwd ; ls ; cd html ; pwd ; ls
+    
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         # Default Doxyfile build documentation to html directory. 
         # Change the directory if changes in Doxyfile
-        publish_dir: ./docs/html
+        publish_dir: ./html
         
