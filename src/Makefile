@@ -68,7 +68,9 @@ CFLAGS = $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes
 # Set LDFLAGS...
 LDFLAGS = $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifdef NC4
-  LDFLAGS +=  -lhdf5_hl -lhdf5 -lm -ldl -lz
+  ifdef STATIC
+    LDFLAGS +=  -lhdf5_hl -lhdf5 -lm -ldl -lz
+  endif
 endif
 
 # Compile for GPUs...
@@ -104,12 +106,12 @@ endif
 
 # Static compilation...
 ifdef STATIC
-ifdef GPU
-$(error Static compilation does not work for GPU)
-endif
-ifdef MPI
-$(error Static compilation does not work for MPI)
-endif
+  ifdef GPU
+    $(error Static compilation does not work for GPU)
+  endif
+  ifdef MPI
+    $(error Static compilation does not work for MPI)
+  endif
   CFLAGS += -static
 endif
 
