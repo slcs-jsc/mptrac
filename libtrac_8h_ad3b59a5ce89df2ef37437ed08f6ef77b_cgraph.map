@@ -1,0 +1,4 @@
+<map id="read_met_grid" name="read_met_grid">
+<area shape="rect" id="node1" title="Read coordinates of meteorological data." alt="" coords="5,5,109,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a5d463df05933155742519c4f0e7b1953" title="Convert date to seconds." alt="" coords="157,5,236,32"/>
+</map>

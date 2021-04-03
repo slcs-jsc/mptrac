@@ -1,0 +1,8 @@
+<map id="read_met_tropo" name="read_met_tropo">
+<area shape="rect" id="node1" title="Calculate tropopause data." alt="" coords="5,56,117,83"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="197,5,279,32"/>
+<area shape="rect" id="node4" href="$libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteorological data." alt="" coords="165,56,311,83"/>
+<area shape="rect" id="node6" href="$libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="210,107,266,133"/>
+<area shape="rect" id="node3" href="$libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="363,5,437,32"/>
+<area shape="rect" id="node5" href="$libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="359,56,441,83"/>
+</map>

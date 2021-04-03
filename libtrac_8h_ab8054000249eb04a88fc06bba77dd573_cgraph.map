@@ -1,0 +1,4 @@
+<map id="read_ctl" name="read_ctl">
+<area shape="rect" id="node1" title="Read control parameters." alt="" coords="5,5,73,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#ad42c44913b360d00d45282d96dad493b" title="Read a control parameter from file or command line." alt="" coords="121,5,192,32"/>
+</map>
