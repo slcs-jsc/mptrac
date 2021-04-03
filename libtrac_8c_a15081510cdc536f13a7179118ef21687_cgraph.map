@@ -1,5 +1,5 @@
 <map id="read_met_levels" name="read_met_levels">
-<area shape="rect" id="node1" title=" " alt="" coords="5,31,123,57"/>
+<area shape="rect" id="node1" title="Read meteorological data on vertical levels." alt="" coords="5,31,123,57"/>
 <area shape="rect" id="node2" href="$libtrac_8c.html#a36db5be03286c9077788e850481f0e83" title="Read and convert 3D variable from meteorological data file." alt="" coords="171,5,299,32"/>
 <area shape="rect" id="node3" href="$libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="177,56,292,83"/>
 <area shape="rect" id="node4" href="$libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="347,56,421,83"/>

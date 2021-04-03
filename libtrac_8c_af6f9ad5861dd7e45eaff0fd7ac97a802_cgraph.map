@@ -6,7 +6,7 @@
 <area shape="rect" id="node11" href="$libtrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolate meteorological data at lower boundary." alt="" coords="129,448,276,475"/>
 <area shape="rect" id="node12" href="$libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="141,56,264,83"/>
 <area shape="rect" id="node14" href="$libtrac_8c.html#ad3b59a5ce89df2ef37437ed08f6ef77b" title="Read coordinates of meteorological data." alt="" coords="151,499,255,525"/>
-<area shape="rect" id="node16" href="$libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title=" " alt="" coords="144,296,261,323"/>
+<area shape="rect" id="node16" href="$libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="144,296,261,323"/>
 <area shape="rect" id="node19" href="$libtrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Create meteorological data with periodic boundary conditions." alt="" coords="139,549,267,576"/>
 <area shape="rect" id="node20" href="$libtrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculate potential vorticity." alt="" coords="154,600,251,627"/>
 <area shape="rect" id="node21" href="$libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81" title="Downsampling of meteorological data." alt="" coords="140,651,265,677"/>
