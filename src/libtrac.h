@@ -20,7 +20,9 @@
 /*! 
   \file
   MPTRAC library declarations.
-  
+*/
+
+/*! 
   \mainpage
   
   Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
@@ -1321,7 +1323,7 @@ int read_met_help_2d(
   float dest[EX][EY],
   float scl);
 
-/* Read meteorological data on vertical levels. */
+/*! Read meteorological data on vertical levels. */
 void read_met_levels(
   int ncid,
   ctl_t * ctl,
