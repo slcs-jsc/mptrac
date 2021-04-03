@@ -15,9 +15,9 @@ jobs:
       uses: mattnotmitt/doxygen-action@v1.1.0
       with:
         # Path to Doxyfile
-        doxyfile-path: "./src/Doxyfile" # default is ./Doxyfile
+        doxyfile-path: "./Doxyfile" # default is ./Doxyfile
         # Working directory
-        working-directory: "./docs" # default is .
+        working-directory: "./src" # default is .
     
     - name: Deploy
       uses: peaceiris/actions-gh-pages@v3
