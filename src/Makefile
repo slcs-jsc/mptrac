@@ -53,7 +53,7 @@ NC4 = 1
 #NVTX = 1
 
 # Static compilation...
-STATIC = 1
+#STATIC = 1
 
 # -----------------------------------------------------------------------------
 # Set flags for GNU compiler...
