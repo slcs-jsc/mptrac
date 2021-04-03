@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install
-      run: sudo apt-get install libgsl-dev libnetcdf-dev wget gnuplot
+      run: sudo apt-get update ; sudo apt-get install wget gnuplot libgsl-dev libnetcdf-dev
 #    - name: libs
 #      run: cd libs ; ./build.sh nc4
     - name: make
