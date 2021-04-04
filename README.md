@@ -12,13 +12,6 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 [![license](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 [![doi](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
 
-
-![test](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/doxygen?label=doxygen)
-
-![test2](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/testcase?label=test%20case)
-
-
-
 ## Features
 
 * MPTRAC calculates particle trajectories by solving the kinematic equation of motion using given wind fields.
