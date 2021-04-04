@@ -90,7 +90,7 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for new users and developers is collected here:
+More detailed information for new users and developers of MPTRAC is collected here:
 
 * [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki)
 
