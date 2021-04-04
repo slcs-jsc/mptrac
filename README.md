@@ -7,8 +7,8 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 [![last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/commits/master)
 [![code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
 [![top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
-[![test case](https://github.com/slcs-jsc/mptrac/actions/workflows/test_case.yml/badge.svg)](https://github.com/slcs-jsc/mptrac/actions)
-[![doxygen](https://github.com/slcs-jsc/mptrac/actions/workflows/doxygen.yml/badge.svg)](https://slcs-jsc.github.io/mptrac)
+[![test case](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/testcase?label=test%20case)](https://github.com/slcs-jsc/mptrac/actions)
+[![doxygen](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/doxygen?label=doxygen)](https://slcs-jsc.github.io/mptrac)
 [![license](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 [![doi](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
 
