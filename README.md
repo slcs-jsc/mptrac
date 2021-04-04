@@ -90,7 +90,11 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for new users and developers is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki) and the [reference manual](https://slcs-jsc.github.io/mptrac).
+More detailed information for new users and developers is collected here:
+
+* [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki)
+
+* [reference manual](https://slcs-jsc.github.io/mptrac)
 
 These are the main references for citing the MPTRAC model in scientific publications:
 
