@@ -2447,6 +2447,12 @@ void read_ctl(
     ERRMSG("MET_GEOPOT_SX and MET_GEOPOT_SY need to be greater than zero!");
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
+  if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
+    ERRMSG("Set MET_TROPO = 0 ... 5!");
+  ctl->met_cloud
+    = (int) scan_ctl(filename, argc, argv, "MET_CLOUD", -1, "1", NULL);
+  if (ctl->met_cloud < 0 || ctl->met_cloud > 3)
+    ERRMSG("Set MET_CLOUD = 0 ... 3!");
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
 
@@ -3133,7 +3139,8 @@ int read_met_help_3d(
   char *varname2,
   met_t * met,
   float dest[EX][EY][EP],
-  float scl) {
+  float scl,
+  int init) {
 
   float *help;
 
@@ -3156,9 +3163,10 @@ int read_met_help_3d(
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++)
       for (ip = 0; ip < met->np; ip++) {
-	dest[ix][iy][ip] = help[(ip * met->ny + iy) * met->nx + ix];
-	if (fabsf(dest[ix][iy][ip]) < 1e14f)
-	  dest[ix][iy][ip] *= scl;
+	if (init)
+	  dest[ix][iy][ip] = 0;
+	if (fabsf(help[(ip * met->ny + iy) * met->nx + ix]) < 1e14f)
+	  dest[ix][iy][ip] += scl * help[(ip * met->ny + iy) * met->nx + ix];
 	else
 	  dest[ix][iy][ip] = GSL_NAN;
       }
@@ -3178,7 +3186,8 @@ int read_met_help_2d(
   char *varname2,
   met_t * met,
   float dest[EX][EY],
-  float scl) {
+  float scl,
+  int init) {
 
   float *help;
 
@@ -3200,9 +3209,10 @@ int read_met_help_2d(
 #pragma omp parallel for default(shared) private(ix,iy)
   for (ix = 0; ix < met->nx; ix++)
     for (iy = 0; iy < met->ny; iy++) {
-      dest[ix][iy] = help[iy * met->nx + ix];
-      if (fabsf(dest[ix][iy]) < 1e14f)
-	dest[ix][iy] *= scl;
+      if (init)
+	dest[ix][iy] = 0;
+      if (fabsf(help[iy * met->nx + ix]) < 1e14f)
+	dest[ix][iy] += scl * help[iy * met->nx + ix];
       else
 	dest[ix][iy] = GSL_NAN;
     }
@@ -3225,28 +3235,40 @@ void read_met_levels(
   SELECT_TIMER("READ_MET_LEVELS", NVTX_READ);
 
   /* Read meteorological data... */
-  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0))
+  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0, 1))
     ERRMSG("Cannot read temperature!");
-  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0))
+  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
     ERRMSG("Cannot read zonal wind!");
-  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0))
+  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
     ERRMSG("Cannot read meridional wind!");
-  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f))
+  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
     WARN("Cannot read vertical velocity");
-  if (!read_met_help_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O)))
+  if (!read_met_help_3d
+      (ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
     WARN("Cannot read specific humidity!");
-  if (!read_met_help_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3)))
+  if (!read_met_help_3d
+      (ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
     WARN("Cannot read ozone data!");
-  if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0))
-    WARN("Cannot read cloud liquid water content!");
-  if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0))
-    WARN("Cannot read cloud ice water content!");
+  if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
+    if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
+      WARN("Cannot read cloud liquid water content!");
+    if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
+      WARN("Cannot read cloud ice water content!");
+  }
+  if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+    if (!read_met_help_3d
+	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
+      WARN("Cannot read cloud rain water content!");
+    if (!read_met_help_3d
+	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
+      WARN("Cannot read cloud snow water content!");
+  }
 
   /* Transfer from model levels to pressure levels... */
   if (ctl->met_np > 0) {
 
     /* Read pressure on model levels... */
-    if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f))
+    if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
       ERRMSG("Cannot read pressure on model levels!");
 
     /* Vertical interpolation from model to pressure levels... */
@@ -3574,8 +3596,8 @@ void read_met_surface(
   SELECT_TIMER("READ_MET_SURFACE", NVTX_READ);
 
   /* Read surface pressure... */
-  if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f)) {
-    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0)) {
+  if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0, 1)) {
       ERRMSG("Cannot not read surface pressure data!");
       for (ix = 0; ix < met->nx; ix++)
 	for (iy = 0; iy < met->ny; iy++)
@@ -3589,21 +3611,21 @@ void read_met_surface(
 
   /* Read geopotential height at the surface... */
   if (!read_met_help_2d
-      (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0))))
+      (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
     if (!read_met_help_2d
-	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.)))
+	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
       ERRMSG("Cannot read surface geopotential height!");
 
   /* Read temperature at the surface... */
-  if (!read_met_help_2d(ncid, "t2m", "T2M", met, met->ts, 1.0))
+  if (!read_met_help_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
-  if (!read_met_help_2d(ncid, "u10m", "U10M", met, met->us, 1.0))
+  if (!read_met_help_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
-  if (!read_met_help_2d(ncid, "v10m", "V10M", met, met->vs, 1.0))
+  if (!read_met_help_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
     WARN("Cannot read surface meridional wind!");
 }
 

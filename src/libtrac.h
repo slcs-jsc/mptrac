@@ -674,8 +674,11 @@ typedef struct {
   int met_geopot_sy;
 
   /*! Tropopause definition
-     (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd). */
+     (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). */
   int met_tropo;
+
+  /*! Cloud data (0=none, 1=LWC+IWC, 2=RWC+SWC, 3=all). */
+  double met_cloud;
 
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
@@ -1312,7 +1315,8 @@ int read_met_help_3d(
   char *varname2,
   met_t * met,
   float dest[EX][EY][EP],
-  float scl);
+  float scl,
+  int init);
 
 /*! Read and convert 2D variable from meteorological data file. */
 int read_met_help_2d(
@@ -1321,7 +1325,8 @@ int read_met_help_2d(
   char *varname2,
   met_t * met,
   float dest[EX][EY],
-  float scl);
+  float scl,
+  int init);
 
 /*! Read meteorological data on vertical levels. */
 void read_met_levels(
