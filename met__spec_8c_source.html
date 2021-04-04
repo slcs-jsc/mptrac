@@ -120,7 +120,7 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="line"><a name="l00028"></a><span class="lineno">   28</span>&#160;<span class="comment">   Dimensions...</span></div>
 <div class="line"><a name="l00029"></a><span class="lineno">   29</span>&#160;<span class="comment">   ------------------------------------------------------------ */</span></div>
 <div class="line"><a name="l00030"></a><span class="lineno">   30</span>&#160; </div>
-<div class="line"><a name="l00032"></a><span class="lineno">   32</span>&#160;<span class="preprocessor">#define PMAX EX</span></div>
+<div class="line"><a name="l00032"></a><span class="lineno"><a class="line" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">   32</a></span>&#160;<span class="preprocessor">#define PMAX EX</span></div>
 <div class="line"><a name="l00033"></a><span class="lineno">   33</span>&#160; </div>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160;<span class="comment">/* ------------------------------------------------------------</span></div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;<span class="comment">   Functions...</span></div>
@@ -145,15 +145,15 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160; </div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160;  FILE *out;</div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160; </div>
-<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;  <span class="keyword">static</span> <span class="keywordtype">double</span> cutImag[PMAX], cutReal[PMAX], lx[PMAX], A[PMAX], phi[PMAX],</div>
+<div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;  <span class="keyword">static</span> <span class="keywordtype">double</span> cutImag[<a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>], cutReal[<a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>], lx[<a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>], A[<a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>], phi[<a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>],</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;    wavemax;</div>
 <div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160; </div>
 <div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;  <span class="comment">/* Allocate... */</span></div>
-<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;  ALLOC(met, <a class="code" href="structmet__t.html">met_t</a>, 1);</div>
+<div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;  <a class="code" href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(met, <a class="code" href="structmet__t.html">met_t</a>, 1);</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160; </div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><a name="l00064"></a><span class="lineno">   64</span>&#160;  <span class="keywordflow">if</span> (argc &lt; 4)</div>
-<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    ERRMSG(<span class="stringliteral">&quot;Give parameters: &lt;ctl&gt; &lt;spec.tab&gt; &lt;met0&gt;&quot;</span>);</div>
+<div class="line"><a name="l00065"></a><span class="lineno">   65</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Give parameters: &lt;ctl&gt; &lt;spec.tab&gt; &lt;met0&gt;&quot;</span>);</div>
 <div class="line"><a name="l00066"></a><span class="lineno">   66</span>&#160; </div>
 <div class="line"><a name="l00067"></a><span class="lineno">   67</span>&#160;  <span class="comment">/* Read control parameters... */</span></div>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160;  <a class="code" href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573">read_ctl</a>(argv[1], argc, argv, &amp;ctl);</div>
@@ -162,12 +162,12 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160; </div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160;  <span class="comment">/* Read meteorological data... */</span></div>
 <div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;  <span class="keywordflow">if</span> (!<a class="code" href="libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802">read_met</a>(&amp;ctl, argv[3], met))</div>
-<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    ERRMSG(<span class="stringliteral">&quot;Cannot read meteo data!&quot;</span>);</div>
+<div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot read meteo data!&quot;</span>);</div>
 <div class="line"><a name="l00075"></a><span class="lineno">   75</span>&#160; </div>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;  <span class="comment">/* Create output file... */</span></div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  printf(<span class="stringliteral">&quot;Write spectral data file: %s\n&quot;</span>, argv[2]);</div>
 <div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;  <span class="keywordflow">if</span> (!(out = fopen(argv[2], <span class="stringliteral">&quot;w&quot;</span>)))</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    ERRMSG(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160; </div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;  <span class="comment">/* Write header... */</span></div>
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160;  fprintf(out,</div>
@@ -203,7 +203,7 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;<span class="comment">         A(x) = A[0] + A[1] * cos(2 pi x / lx[1] + phi[1]) + A[2] * cos...</span></div>
 <div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;<span class="comment">       */</span></div>
 <div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ix = 0; ix &lt; met-&gt;<a class="code" href="structmet__t.html#a2bbd96a0a7184bc730c14323a067a760">nx</a>; ix++) {</div>
-<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;        lx[ix] = DEG2DX(met-&gt;<a class="code" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[met-&gt;<a class="code" href="structmet__t.html#a2bbd96a0a7184bc730c14323a067a760">nx</a> - 1] - met-&gt;<a class="code" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[0], met-&gt;<a class="code" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy])</div>
+<div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;        lx[ix] = <a class="code" href="libtrac_8h.html#af32eb4cf0330afcdd3e0f3d195737a3c">DEG2DX</a>(met-&gt;<a class="code" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[met-&gt;<a class="code" href="structmet__t.html#a2bbd96a0a7184bc730c14323a067a760">nx</a> - 1] - met-&gt;<a class="code" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[0], met-&gt;<a class="code" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy])</div>
 <div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;          / ((ix &lt; met-&gt;<a class="code" href="structmet__t.html#a2bbd96a0a7184bc730c14323a067a760">nx</a> / 2) ? (<span class="keywordtype">double</span>) ix : -(double) (met-&gt;<a class="code" href="structmet__t.html#a2bbd96a0a7184bc730c14323a067a760">nx</a> - ix));</div>
 <div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;        A[ix] = (ix == 0 ? 1.0 : 2.0) / (met-&gt;<a class="code" href="structmet__t.html#a2bbd96a0a7184bc730c14323a067a760">nx</a>)</div>
 <div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;          * sqrt(gsl_pow_2(cutReal[ix]) + gsl_pow_2(cutImag[ix]));</div>
@@ -212,7 +212,7 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;      }</div>
 <div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160; </div>
 <div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;      <span class="comment">/* Write data... */</span></div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;      fprintf(out, <span class="stringliteral">&quot;%.2f %g %g %g&quot;</span>, met-&gt;<a class="code" href="structmet__t.html#acf9d509f67dbc7ad8119d40a2757285f">time</a>, Z(met-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[ip]), 0.0,</div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;      fprintf(out, <span class="stringliteral">&quot;%.2f %g %g %g&quot;</span>, met-&gt;<a class="code" href="structmet__t.html#acf9d509f67dbc7ad8119d40a2757285f">time</a>, <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(met-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[ip]), 0.0,</div>
 <div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;              met-&gt;<a class="code" href="structmet__t.html#af7b2d03415a8164a3e0a29da55a9f371">lat</a>[iy]);</div>
 <div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;      <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ix = 0; ix &lt;= wavemax; ix++)</div>
 <div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;        fprintf(out, <span class="stringliteral">&quot; %g %g %g&quot;</span>, lx[ix], A[ix], phi[ix]);</div>
@@ -239,13 +239,13 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;  gsl_fft_complex_wavetable *wavetable;</div>
 <div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;  gsl_fft_complex_workspace *workspace;</div>
 <div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160; </div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;  <span class="keywordtype">double</span> data[2 * PMAX];</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;  <span class="keywordtype">double</span> data[2 * <a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>];</div>
 <div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160; </div>
 <div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;  <span class="keywordtype">int</span> i;</div>
 <div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160; </div>
 <div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;  <span class="comment">/* Check size... */</span></div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;  <span class="keywordflow">if</span> (n &gt; PMAX)</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    ERRMSG(<span class="stringliteral">&quot;Too many data points!&quot;</span>);</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;  <span class="keywordflow">if</span> (n &gt; <a class="code" href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a>)</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Too many data points!&quot;</span>);</div>
 <div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160; </div>
 <div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;  <span class="comment">/* Allocate... */</span></div>
 <div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;  wavetable = gsl_fft_complex_wavetable_alloc((<span class="keywordtype">size_t</span>) n);</div>
@@ -274,7 +274,12 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div class="ttc" id="alibtrac_8c_html_ad42c44913b360d00d45282d96dad493b"><div class="ttname"><a href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Read a control parameter from file or command line.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03778">libtrac.c:3778</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_af6f9ad5861dd7e45eaff0fd7ac97a802"><div class="ttname"><a href="libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802">read_met</a></div><div class="ttdeci">int read_met(ctl_t *ctl, char *filename, met_t *met)</div><div class="ttdoc">Read meteorological data file.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l02614">libtrac.c:2614</a></div></div>
 <div class="ttc" id="alibtrac_8h_html"><div class="ttname"><a href="libtrac_8h.html">libtrac.h</a></div><div class="ttdoc">MPTRAC library declarations.</div></div>
+<div class="ttc" id="alibtrac_8h_html_a58b4f1573922a1f73dd4bf014fd441bf"><div class="ttname"><a href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a></div><div class="ttdeci">#define Z(p)</div><div class="ttdoc">Convert pressure to altitude.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00382">libtrac.h:382</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a9aee3e5daf3b1051597d21ab093adbd0"><div class="ttname"><a href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a></div><div class="ttdeci">#define ALLOC(ptr, type, n)</div><div class="ttdoc">Allocate and clear memory.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00155">libtrac.h:155</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_aaf13ca5350992cd9c7c460a076d8fda9"><div class="ttname"><a href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(msg)</div><div class="ttdoc">Print error message and quit program.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00200">libtrac.h:200</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_af32eb4cf0330afcdd3e0f3d195737a3c"><div class="ttname"><a href="libtrac_8h.html#af32eb4cf0330afcdd3e0f3d195737a3c">DEG2DX</a></div><div class="ttdeci">#define DEG2DX(dlon, lat)</div><div class="ttdoc">Convert degrees to zonal distance.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00165">libtrac.h:165</a></div></div>
 <div class="ttc" id="amet__spec_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="met__spec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="met__spec_8c_source.html#l00047">met_spec.c:47</a></div></div>
+<div class="ttc" id="amet__spec_8c_html_a44c07e59a1dddb477c7989ad091bffc4"><div class="ttname"><a href="met__spec_8c.html#a44c07e59a1dddb477c7989ad091bffc4">PMAX</a></div><div class="ttdeci">#define PMAX</div><div class="ttdoc">Maximum number of data points for spectral analysis.</div><div class="ttdef"><b>Definition:</b> <a href="met__spec_8c_source.html#l00032">met_spec.c:32</a></div></div>
 <div class="ttc" id="amet__spec_8c_html_a48b5c3ccaf39126de8e504baeb032ab8"><div class="ttname"><a href="met__spec_8c.html#a48b5c3ccaf39126de8e504baeb032ab8">fft_help</a></div><div class="ttdeci">void fft_help(double *fcReal, double *fcImag, int n)</div><div class="ttdef"><b>Definition:</b> <a href="met__spec_8c_source.html#l00143">met_spec.c:143</a></div></div>
 <div class="ttc" id="astructctl__t_html"><div class="ttname"><a href="structctl__t.html">ctl_t</a></div><div class="ttdoc">Control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00467">libtrac.h:467</a></div></div>
 <div class="ttc" id="astructmet__t_html"><div class="ttname"><a href="structmet__t.html">met_t</a></div><div class="ttdoc">Meteorological data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00961">libtrac.h:961</a></div></div>
@@ -292,7 +297,7 @@ $(document).ready(function(){initNavTree('met__spec_8c_source.html',''); initRes
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="met__spec_8c.html">met_spec.c</a></li>
-    <li class="footer">Generated on Sat Apr 3 2021 16:32:40 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Sun Apr 4 2021 07:21:57 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>

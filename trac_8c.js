@@ -16,6 +16,5 @@ var trac_8c =
     [ "module_oh_chem", "trac_8c.html#a7bc76c57d25c7d8eaa0f803d423802df", null ],
     [ "module_wet_deposition", "trac_8c.html#a288d5a40bb7cd1626ce343ff884fb64d", null ],
     [ "write_output", "trac_8c.html#aebf12c1e87751c2142d687d509921a19", null ],
-    [ "main", "trac_8c.html#a0ddf1224851353fc92bfbff6f499fa97", null ],
-    [ "rng", "trac_8c.html#a05b24783503838880903c3214fc6d666", null ]
+    [ "main", "trac_8c.html#a0ddf1224851353fc92bfbff6f499fa97", null ]
 ];

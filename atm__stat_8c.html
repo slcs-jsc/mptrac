@@ -100,7 +100,8 @@ $(document).ready(function(){initNavTree('atm__stat_8c.html',''); initResizable(
 
 <p>Calculate air parcel statistics.  
 <a href="#details">More...</a></p>
-
+<div class="textblock"><code>#include &quot;<a class="el" href="libtrac_8h_source.html">libtrac.h</a>&quot;</code><br />
+</div>
 <p><a href="atm__stat_8c_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="func-members"></a>
@@ -148,30 +149,30 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00034"></a><span class="lineno">   34</span>&#160; </div>
 <div class="line"><a name="l00035"></a><span class="lineno">   35</span>&#160;  FILE *out;</div>
 <div class="line"><a name="l00036"></a><span class="lineno">   36</span>&#160; </div>
-<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">char</span> tstr[LEN];</div>
+<div class="line"><a name="l00037"></a><span class="lineno">   37</span>&#160;  <span class="keywordtype">char</span> tstr[<a class="code" href="libtrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>];</div>
 <div class="line"><a name="l00038"></a><span class="lineno">   38</span>&#160; </div>
 <div class="line"><a name="l00039"></a><span class="lineno">   39</span>&#160;  <span class="keywordtype">double</span> lat0, lat1, latm, lon0, lon1, lonm, p0, p1,</div>
-<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    t, t0, qm[NQ], *work, zm, *zs;</div>
+<div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160;    t, t0, qm[<a class="code" href="libtrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a>], *work, zm, *zs;</div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160; </div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160;  <span class="keywordtype">int</span> ens, f, init = 0, ip, iq, year, mon, day, hour, min;</div>
 <div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160; </div>
 <div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;  <span class="comment">/* Allocate... */</span></div>
-<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;  ALLOC(atm, <a class="code" href="structatm__t.html">atm_t</a>, 1);</div>
-<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;  ALLOC(atm_filt, <a class="code" href="structatm__t.html">atm_t</a>, 1);</div>
-<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;  ALLOC(work, <span class="keywordtype">double</span>,</div>
-<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        NP);</div>
-<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;  ALLOC(zs, <span class="keywordtype">double</span>,</div>
-<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;        NP);</div>
+<div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;  <a class="code" href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(atm, <a class="code" href="structatm__t.html">atm_t</a>, 1);</div>
+<div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160;  <a class="code" href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(atm_filt, <a class="code" href="structatm__t.html">atm_t</a>, 1);</div>
+<div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;  <a class="code" href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(work, <span class="keywordtype">double</span>,</div>
+<div class="line"><a name="l00048"></a><span class="lineno">   48</span>&#160;        <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
+<div class="line"><a name="l00049"></a><span class="lineno">   49</span>&#160;  <a class="code" href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a>(zs, <span class="keywordtype">double</span>,</div>
+<div class="line"><a name="l00050"></a><span class="lineno">   50</span>&#160;        <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>);</div>
 <div class="line"><a name="l00051"></a><span class="lineno">   51</span>&#160; </div>
 <div class="line"><a name="l00052"></a><span class="lineno">   52</span>&#160;  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><a name="l00053"></a><span class="lineno">   53</span>&#160;  <span class="keywordflow">if</span> (argc &lt; 4)</div>
-<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    ERRMSG(<span class="stringliteral">&quot;Give parameters: &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]&quot;</span>);</div>
+<div class="line"><a name="l00054"></a><span class="lineno">   54</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Give parameters: &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]&quot;</span>);</div>
 <div class="line"><a name="l00055"></a><span class="lineno">   55</span>&#160; </div>
 <div class="line"><a name="l00056"></a><span class="lineno">   56</span>&#160;  <span class="comment">/* Read control parameters... */</span></div>
 <div class="line"><a name="l00057"></a><span class="lineno">   57</span>&#160;  <a class="code" href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573">read_ctl</a>(argv[1], argc, argv, &amp;ctl);</div>
 <div class="line"><a name="l00058"></a><span class="lineno">   58</span>&#160;  ens = (int) <a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_ENS&quot;</span>, -1, <span class="stringliteral">&quot;-999&quot;</span>, NULL);</div>
-<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;  p0 = P(<a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_Z0&quot;</span>, -1, <span class="stringliteral">&quot;-1000&quot;</span>, NULL));</div>
-<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;  p1 = P(<a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_Z1&quot;</span>, -1, <span class="stringliteral">&quot;1000&quot;</span>, NULL));</div>
+<div class="line"><a name="l00059"></a><span class="lineno">   59</span>&#160;  p0 = <a class="code" href="libtrac_8h.html#a5e1d0f42ad38aba63907665ccdd43b86">P</a>(<a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_Z0&quot;</span>, -1, <span class="stringliteral">&quot;-1000&quot;</span>, NULL));</div>
+<div class="line"><a name="l00060"></a><span class="lineno">   60</span>&#160;  p1 = <a class="code" href="libtrac_8h.html#a5e1d0f42ad38aba63907665ccdd43b86">P</a>(<a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_Z1&quot;</span>, -1, <span class="stringliteral">&quot;1000&quot;</span>, NULL));</div>
 <div class="line"><a name="l00061"></a><span class="lineno">   61</span>&#160;  lat0 = <a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_LAT0&quot;</span>, -1, <span class="stringliteral">&quot;-1000&quot;</span>, NULL);</div>
 <div class="line"><a name="l00062"></a><span class="lineno">   62</span>&#160;  lat1 = <a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_LAT1&quot;</span>, -1, <span class="stringliteral">&quot;1000&quot;</span>, NULL);</div>
 <div class="line"><a name="l00063"></a><span class="lineno">   63</span>&#160;  lon0 = <a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;STAT_LON0&quot;</span>, -1, <span class="stringliteral">&quot;-1000&quot;</span>, NULL);</div>
@@ -182,7 +183,7 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00068"></a><span class="lineno">   68</span>&#160; </div>
 <div class="line"><a name="l00069"></a><span class="lineno">   69</span>&#160;  <span class="comment">/* Create output file... */</span></div>
 <div class="line"><a name="l00070"></a><span class="lineno">   70</span>&#160;  <span class="keywordflow">if</span> (!(out = fopen(argv[2], <span class="stringliteral">&quot;w&quot;</span>)))</div>
-<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    ERRMSG(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
+<div class="line"><a name="l00071"></a><span class="lineno">   71</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create file!&quot;</span>);</div>
 <div class="line"><a name="l00072"></a><span class="lineno">   72</span>&#160; </div>
 <div class="line"><a name="l00073"></a><span class="lineno">   73</span>&#160;  <span class="comment">/* Write header... */</span></div>
 <div class="line"><a name="l00074"></a><span class="lineno">   74</span>&#160;  fprintf(out,</div>
@@ -252,7 +253,7 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160; </div>
 <div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;    <span class="comment">/* Get heights... */</span></div>
 <div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;    <span class="keywordflow">for</span> (ip = 0; ip &lt; atm_filt-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;      zs[ip] = Z(atm_filt-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;      zs[ip] = <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm_filt-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
 <div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160; </div>
 <div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;    <span class="comment">/* Get statistics... */</span></div>
 <div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;    <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;mean&quot;</span>) == 0) {</div>
@@ -312,7 +313,7 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00198"></a><span class="lineno">  198</span>&#160;        qm[iq] =</div>
 <div class="line"><a name="l00199"></a><span class="lineno">  199</span>&#160;          gsl_stats_mad0(atm_filt-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[iq], 1, (<span class="keywordtype">size_t</span>) atm_filt-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>, work);</div>
 <div class="line"><a name="l00200"></a><span class="lineno">  200</span>&#160;    } <span class="keywordflow">else</span></div>
-<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;      ERRMSG(<span class="stringliteral">&quot;Unknown parameter!&quot;</span>);</div>
+<div class="line"><a name="l00201"></a><span class="lineno">  201</span>&#160;      <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Unknown parameter!&quot;</span>);</div>
 <div class="line"><a name="l00202"></a><span class="lineno">  202</span>&#160; </div>
 <div class="line"><a name="l00203"></a><span class="lineno">  203</span>&#160;    <span class="comment">/* Write data... */</span></div>
 <div class="line"><a name="l00204"></a><span class="lineno">  204</span>&#160;    fprintf(out, <span class="stringliteral">&quot;%.2f %.2f %g %g %g&quot;</span>, t, t - t0, zm, lonm, latm);</div>
@@ -338,6 +339,13 @@ Functions</h2></td></tr>
 <div class="ttc" id="alibtrac_8c_html_a5d463df05933155742519c4f0e7b1953"><div class="ttname"><a href="libtrac_8c.html#a5d463df05933155742519c4f0e7b1953">time2jsec</a></div><div class="ttdeci">void time2jsec(int year, int mon, int day, int hour, int min, int sec, double remain, double *jsec)</div><div class="ttdoc">Convert date to seconds.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03940">libtrac.c:3940</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_ab8054000249eb04a88fc06bba77dd573"><div class="ttname"><a href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573">read_ctl</a></div><div class="ttdeci">void read_ctl(const char *filename, int argc, char *argv[], ctl_t *ctl)</div><div class="ttdoc">Read control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l02202">libtrac.c:2202</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_ad42c44913b360d00d45282d96dad493b"><div class="ttname"><a href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Read a control parameter from file or command line.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03778">libtrac.c:3778</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a05b49c662c073f89e86804f7856622a0"><div class="ttname"><a href="libtrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a></div><div class="ttdeci">#define LEN</div><div class="ttdoc">Maximum length of ASCII data lines.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00118">libtrac.h:118</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a58b4f1573922a1f73dd4bf014fd441bf"><div class="ttname"><a href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a></div><div class="ttdeci">#define Z(p)</div><div class="ttdoc">Convert pressure to altitude.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00382">libtrac.h:382</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a5e1d0f42ad38aba63907665ccdd43b86"><div class="ttname"><a href="libtrac_8h.html#a5e1d0f42ad38aba63907665ccdd43b86">P</a></div><div class="ttdeci">#define P(z)</div><div class="ttdoc">Convert altitude to pressure.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00324">libtrac.h:324</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a68c2775fc4d7385df9c7bb96d23b482b"><div class="ttname"><a href="libtrac_8h.html#a68c2775fc4d7385df9c7bb96d23b482b">NQ</a></div><div class="ttdeci">#define NQ</div><div class="ttdoc">Maximum number of quantities per data point.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00124">libtrac.h:124</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a9aee3e5daf3b1051597d21ab093adbd0"><div class="ttname"><a href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a></div><div class="ttdeci">#define ALLOC(ptr, type, n)</div><div class="ttdoc">Allocate and clear memory.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00155">libtrac.h:155</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_aaf13ca5350992cd9c7c460a076d8fda9"><div class="ttname"><a href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(msg)</div><div class="ttdoc">Print error message and quit program.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00200">libtrac.h:200</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_ab04c88bedc6b2be8ddfe7aa8d3e93f06"><div class="ttname"><a href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a></div><div class="ttdeci">#define NP</div><div class="ttdoc">Maximum number of atmospheric data points.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00121">libtrac.h:121</a></div></div>
 <div class="ttc" id="astructatm__t_html"><div class="ttname"><a href="structatm__t.html">atm_t</a></div><div class="ttdoc">Atmospheric data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00900">libtrac.h:900</a></div></div>
 <div class="ttc" id="astructatm__t_html_a05da6b99657d420d7bf4b37a392b048c"><div class="ttname"><a href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">atm_t::time</a></div><div class="ttdeci">double time[NP]</div><div class="ttdoc">Time [s].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00906">libtrac.h:906</a></div></div>
 <div class="ttc" id="astructatm__t_html_a25ef7d304d5cfa54c5af30192620373b"><div class="ttname"><a href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">atm_t::lat</a></div><div class="ttdeci">double lat[NP]</div><div class="ttdoc">Latitude [deg].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00915">libtrac.h:915</a></div></div>
@@ -372,7 +380,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="atm__stat_8c.html">atm_stat.c</a></li>
-    <li class="footer">Generated on Sat Apr 3 2021 16:32:40 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Sun Apr 4 2021 07:21:57 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
