@@ -70,6 +70,7 @@ var structctl__t =
     [ "met_geopot_sx", "structctl__t.html#a416596b692cca87f14e83f851db35e29", null ],
     [ "met_geopot_sy", "structctl__t.html#a2ec0ba6ad9f46184228f1a1784596218", null ],
     [ "met_tropo", "structctl__t.html#a5303a68a713ead5d3e144ec4183a9a86", null ],
+    [ "met_cloud", "structctl__t.html#a245d6234487cee400778142c1b9320a9", null ],
     [ "met_dt_out", "structctl__t.html#a1f07329a9333e6af8f00ff9727d774ce", null ],
     [ "isosurf", "structctl__t.html#a4438b70bfa3ff0fe6cc36f3d0086e301", null ],
     [ "balloon", "structctl__t.html#a1aee054abc8c3fbaa1f6828f78f4e2f5", null ],
