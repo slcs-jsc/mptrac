@@ -154,5 +154,4 @@ for f in $(ls data.ref/atm*tab) $(ls data.ref/grid*tab) ; do
     diff -q -s data/$(basename $f) $f
     [ $? -ne 0 ] && error=1
 done
-[ $error -ne 0 ] && echo "test: FAILED" || echo "test: OK"
 exit $error
