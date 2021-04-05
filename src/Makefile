@@ -135,7 +135,7 @@ dist:
 	zip mptrac_`date +"%y%m%d%H%M"`.zip Doxyfile Makefile *.c *.h
 
 doc:
-	mkdir -p ../docs && doxygen && cd ../docs/latex && make && mv refman.pdf ..
+	cd ../docs && doxygen && cd ../docs/latex && make
 
 indent:
 	indent -br -brf -brs -bfda -ce -cdw -lp -npcs -npsl *.c *.h

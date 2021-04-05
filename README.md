@@ -48,9 +48,9 @@ Next, change to the source directory and edit the Makefile according to your nee
     cd mptrac/src
     emacs Makefile
 
-In particular, comment or uncomment the `NC4` flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the libraries are located on your system. By default, LIBDIR and INCDIR will point to `../libs/build/lib` and `../libs/build/include`, respectively.
+In particular, enable or disable the `NC4` flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the libraries are located on your system. By default, LIBDIR and INCDIR will point to `../libs/build/lib` and `../libs/build/include`, respectively.
 
-To make use of the MPI parallelization of MPTRAC, the MPI flag needs to be uncommented in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the GPU flag needs to be uncommented. The PGI Compiler Suite will be required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+To make use of the MPI parallelization of MPTRAC, the MPI flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the GPU flag needs to be enabled. The PGI Compiler Suite will be required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
 
 Load any software modules that might also be needed on your target platform, and try to compile the code:
 
