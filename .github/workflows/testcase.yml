@@ -13,9 +13,7 @@ jobs:
     - uses: actions/checkout@v2
     - name: install
       run: sudo apt-get update ; sudo apt-get install wget gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
-#    - name: libs
-#      run: cd libs ; ./build.sh nc4
     - name: make
-      run: cd src ; make
+      run: cd src ; make STATIC 0
     - name: example
       run: cd example ; ./run.sh
