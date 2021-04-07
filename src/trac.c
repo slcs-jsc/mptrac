@@ -1229,10 +1229,10 @@ void module_oh_chem(
       double t;
       INTPOL_INIT;
       INTPOL_3D(t, 1);
-
-      /* Calculate molecular density... */
-      double M = 7.243e21 * (atm->p[ip] / P0) / t;
-
+      
+      /* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
+      double M = 7.243e21 * (atm->p[ip] / 1000.) / t;
+      
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 15-10) ... */
       double k0 = ctl->oh_chem[0] *
