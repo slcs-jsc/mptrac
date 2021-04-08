@@ -463,7 +463,7 @@
    Structs...
    ------------------------------------------------------------ */
 
-/*! Control parameters. */
+/*! Control parameters.  */
 typedef struct {
 	
   /*! Chunksizehint for nc__open */
