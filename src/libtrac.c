@@ -2411,6 +2411,12 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
+  /* IO parameter */
+  ctl->chunkszhint =
+    (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000", NULL);
+  ctl->read_mode =
+    (char) scan_ctl(filename, argc, argv, "READMODE", -1, "NC_NOWRITE", NULL);
+
   /* Time steps of simulation... */
   ctl->direction =
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
@@ -2623,12 +2629,14 @@ int read_met(
   met_t * met) {
 
   int ncid;
+  
+  //size_t chunkszhint=81920000;
 
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
   /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+  if (nc__open(filename, ctl->read_mode,&ctl->chunkszhint, &ncid) != NC_NOERR) {
     WARN("File not found!");
     return 0;
   }
