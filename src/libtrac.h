@@ -465,10 +465,10 @@
 
 /*! Control parameters.  */
 typedef struct {
-	
+
   /*! Chunksizehint for nc__open */
   size_t chunkszhint;
-  
+
   /*! Chunksizehint for nc__open */
   char read_mode;
 
@@ -688,7 +688,7 @@ typedef struct {
 
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
-  
+
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;
