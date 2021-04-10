@@ -2411,7 +2411,7 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
-  /* IO parameter */
+  /* netCDF I/O parameters... */
   ctl->chunkszhint =
     (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
 		      NULL);

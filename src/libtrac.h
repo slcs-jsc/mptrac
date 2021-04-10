@@ -115,46 +115,76 @@
    ------------------------------------------------------------ */
 
 /*! Maximum length of ASCII data lines. */
+#ifndef LEN
 #define LEN 5000
+#endif
 
 /*! Maximum number of atmospheric data points. */
+#ifndef NP
 #define NP 10000000
+#endif
 
 /*! Maximum number of quantities per data point. */
+#ifndef NQ
 #define NQ 15
+#endif
 
 /*! Maximum number of pressure levels for meteorological data. */
+#ifndef EP
 #define EP 140
+#endif
 
 /*! Maximum number of longitudes for meteorological data. */
+#ifndef EX
 #define EX 1201
+#endif
 
 /*! Maximum number of latitudes for meteorological data. */
+#ifndef EY
 #define EY 601
+#endif
 
 /*! Maximum number of longitudes for gridded data. */
+#ifndef GX
 #define GX 720
+#endif
 
 /*! Maximum number of latitudes for gridded data. */
+#ifndef GY
 #define GY 360
+#endif
 
 /*! Maximum number of altitudes for gridded data. */
+#ifndef GZ
 #define GZ 100
+#endif
 
 /*! Maximum number of data points for ensemble analysis. */
+#ifndef NENS
 #define NENS 2000
+#endif
 
 /*! Maximum number of OpenMP threads. */
+#ifndef NTHREADS
 #define NTHREADS 512
+#endif
 
 /* ------------------------------------------------------------
    Macros...
    ------------------------------------------------------------ */
 
 /*! Allocate and clear memory. */
+#ifdef _OPENACC
+#define ALLOC(ptr, type, n)				\
+  if(acc_get_num_devices(acc_device_nvidia) <= 0)	\
+    ERRMSG("Not running on a GPU device!");		\
+  if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)	\
+    ERRMSG("Out of memory!");
+#else
 #define ALLOC(ptr, type, n)				 \
   if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
     ERRMSG("Out of memory!");
+#endif
 
 /*! Set quantity value. */
 #define ATM_SET(qnt, val)			\
@@ -463,13 +493,13 @@
    Structs...
    ------------------------------------------------------------ */
 
-/*! Control parameters.  */
+/*! Control parameters. */
 typedef struct {
 
-  /*! Chunksizehint for nc__open */
+  /*! Chunk size hint for nc__open. */
   size_t chunkszhint;
 
-  /*! Chunksizehint for nc__open */
+  /*! Read mode for nc__open. */
   char read_mode;
 
   /*! Number of quantities. */

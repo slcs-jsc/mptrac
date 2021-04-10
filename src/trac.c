@@ -196,10 +196,12 @@ int main(
   /* Initialize GPUs... */
 #ifdef _OPENACC
   SELECT_TIMER("ACC_INIT", NVTX_GPU);
-  acc_device_t device_type = acc_get_device_type();
   num_devices = acc_get_num_devices(acc_device_nvidia);
+  if (num_devices <= 0)
+    ERRMSG("Not running on a GPU device!");
   int device_num = rank % num_devices;
   acc_set_device_num(device_num, acc_device_nvidia);
+  acc_device_t device_type = acc_get_device_type();
   acc_init(device_type);
 #endif
 
@@ -231,7 +233,7 @@ int main(
     ALLOC(dt, double,
 	  NP);
     ALLOC(rs, double,
-	  3 * NP);
+	  3 * NP + 1);
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
@@ -1133,14 +1135,14 @@ void module_rng(
   {
     /* Uniform distribution... */
     if (method == 0) {
-      if (curandGenerateUniformDouble(rng, rs, n)
+      if (curandGenerateUniformDouble(rng, rs, (n < 4 ? 4 : n))
 	  != CURAND_STATUS_SUCCESS)
 	ERRMSG("Cannot create random numbers!");
     }
 
     /* Normal distribution... */
     else if (method == 1) {
-      if (curandGenerateNormalDouble(rng, rs, n, 0.0, 1.0)
+      if (curandGenerateNormalDouble(rng, rs, (n < 4 ? 4 : n), 0.0, 1.0)
 	  != CURAND_STATUS_SUCCESS)
 	ERRMSG("Cannot create random numbers!");
     }

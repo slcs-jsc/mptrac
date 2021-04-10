@@ -63,7 +63,7 @@ STATIC ?= 1
 CC ?= gcc
 
 # Set CFLAGS...
-CFLAGS ?= $(INCDIR) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
+CFLAGS ?= $(INCDIR) $(DEFINES) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
 
 # Set LDFLAGS...
 LDFLAGS ?= $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
@@ -76,7 +76,7 @@ endif
 # Compile for GPUs...
 ifeq ($(GPU),1)
   CC = pgcc
-  CFLAGS = $(INCDIR) -mp -acc -gpu=managed -mcmodel=medium -Minfo=all -g
+  CFLAGS = $(INCDIR) $(DEFINES) -mp -acc -gpu=managed -mcmodel=medium -Minfo=all -g
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 
