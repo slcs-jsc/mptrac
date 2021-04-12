@@ -4,41 +4,32 @@
 
 # Load these modules before compiling and running the code:
 #
-# JUWELS cluster:
+# JURECA and JUWELS clusters:
+#
 # - enable MPI and disable STATIC flag
 # - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
+# ml purge
 # ml GCC ParaStationMPI
 #
-# JUWELS booster:
+# JURECA and JUWELS GPUs:
+#
 # - login to juwels-booster.fz-juelich.de
 # - enable MPI and GPU flags and disable STATIC flag
 # - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
-# ml NVHPC ParaStationMPI
-#
-# JURECA-DC cluster:
-# - see JUWELS cluster
-#
-# JURECA-DC GPUs:
-# - see JUWELS booster
-#
-# JURECA-DC KNLs:
 # ml purge
-# ml Architecture/KNL GCC ParaStationMPI
+# ml NVHPC ParaStationMPI
 
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time lapse met_map met_prof met_sample met_spec met_zm time2jsec trac tropo tropo_sample
 
 # Library directories...
-LIBDIR ?= -L ../libs/build/lib -L ../lib/build/lib64
+LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 
 # Include directories...
-INCDIR ?= -I ../libs/build/include
+INCDIR += -I ../libs/build/include
 
 # Compile for GPUs...
 GPU ?= 0
-
-# Compile for KNL...
-KNL ?= 0
 
 # Compile for MPI...
 MPI ?= 0
@@ -56,33 +47,34 @@ NVTX ?= 0
 STATIC ?= 1
 
 # -----------------------------------------------------------------------------
-# Set flags for GNU compiler...
+# Set compiler flags...
 # -----------------------------------------------------------------------------
 
-# Set compiler...
-CC ?= gcc
-
 # Set CFLAGS...
-CFLAGS ?= $(INCDIR) $(DEFINES) -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp -g
+CFLAGS += $(INCDIR) $(DEFINES) -g
+ifeq ($(CC),pgcc)
+  CFLAGS += -mp -mcmodel=medium -Minfo=all
+else
+  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+endif
 
 # Set LDFLAGS...
-LDFLAGS ?= $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
+LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifeq ($(NC4),1)
   ifeq ($(STATIC),1)
-    LDFLAGS +=  -lhdf5_hl -lhdf5 -lm -ldl -lz
+    LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
   endif
 endif
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
-  CC = pgcc
-  CFLAGS = $(INCDIR) $(DEFINES) -mp -acc -gpu=managed -mcmodel=medium -Minfo=all -g
+  ifeq ($(CC),pgcc)
+    CFLAGS += -acc -gpu=managed
+  else
+#    CFLAGS += -fopenacc -foffload=-lm
+    CFLAGS += -fopenacc
+  endif
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
-endif
-
-# Compile for KNL...
-ifeq ($(KNL),1)
-  CFLAGS += -march=knl -mtune=knl
 endif
 
 # Compile for MPI...
@@ -100,8 +92,8 @@ endif
 
 # NVTX...
 ifeq ($(NVTX),1)
-  LDFLAGS += -lnvToolsExt
   CFLAGS  += -DNVTX
+  LDFLAGS += -lnvToolsExt
 endif
 
 # Static compilation...
