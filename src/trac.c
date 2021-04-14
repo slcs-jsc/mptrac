@@ -1360,16 +1360,16 @@ void write_output(
   met_t * met1,
   atm_t * atm,
   double t) {
-  
+
   char filename[2 * LEN];
-  
+
   double r;
-  
+
   int year, mon, day, hour, min, sec;
-  
+
   /* Get time... */
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
-  
+
   /* Update host... */
 #ifdef _OPENACC
   if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
@@ -1377,43 +1377,43 @@ void write_output(
       || ctl->csi_basename[0] != '-' || ctl->ens_basename[0] != '-'
       || ctl->prof_basename[0] != '-' || ctl->sample_basename[0] != '-'
       || ctl->stat_basename[0] != '-') {
-    SELECT_TIMER("UPDATE_HOST", NVTX_D2H);    
+    SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
 #pragma acc update host(atm[:1])
   }
 #endif
-  
+
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min);
     write_atm(filename, ctl, atm, t);
   }
-  
+
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
 	    dirname, ctl->grid_basename, year, mon, day, hour, min);
     write_grid(filename, ctl, met0, met1, atm, t);
   }
-  
+
   /* Write CSI data... */
   if (ctl->csi_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
   }
-  
+
   /* Write ensemble data... */
   if (ctl->ens_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
     write_ens(filename, ctl, atm, t);
   }
-  
+
   /* Write profile data... */
   if (ctl->prof_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
     write_prof(filename, ctl, met0, met1, atm, t);
   }
-  
+
   /* Write sample data... */
   if (ctl->sample_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);

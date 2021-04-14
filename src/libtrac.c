@@ -1600,7 +1600,7 @@ void get_met(
   met_t ** met0,
   met_t ** met1) {
 
-  static int init, ip, ix, iy;
+  static int init;
 
   met_t *mets;
 
@@ -1660,13 +1660,13 @@ void get_met(
   if ((*met0)->nx != (*met1)->nx
       || (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
     ERRMSG("Meteo grid dimensions do not match!");
-  for (ix = 0; ix < (*met0)->nx; ix++)
+  for (int ix = 0; ix < (*met0)->nx; ix++)
     if (fabs((*met0)->lon[ix] - (*met1)->lon[ix]) > 0.001)
       ERRMSG("Meteo grid longitudes do not match!");
-  for (iy = 0; iy < (*met0)->ny; iy++)
+  for (int iy = 0; iy < (*met0)->ny; iy++)
     if (fabs((*met0)->lat[iy] - (*met1)->lat[iy]) > 0.001)
       ERRMSG("Meteo grid latitudes do not match!");
-  for (ip = 0; ip < (*met0)->np; ip++)
+  for (int ip = 0; ip < (*met0)->np; ip++)
     if (fabs((*met0)->p[ip] - (*met1)->p[ip]) > 0.001)
       ERRMSG("Meteo grid pressure levels do not match!");
 }
@@ -2025,7 +2025,7 @@ int read_atm(
 
   double t0;
 
-  int dimid, ip, iq, ncid, varid;
+  int dimid, ncid, varid;
 
   size_t nparts;
 
@@ -2055,7 +2055,7 @@ int read_atm(
       TOK(NULL, tok, "%lg", atm->p[atm->np]);
       TOK(NULL, tok, "%lg", atm->lon[atm->np]);
       TOK(NULL, tok, "%lg", atm->lat[atm->np]);
-      for (iq = 0; iq < ctl->nq; iq++)
+      for (int iq = 0; iq < ctl->nq; iq++)
 	TOK(NULL, tok, "%lg", atm->q[iq][atm->np]);
 
       /* Convert altitude to pressure... */
@@ -2093,7 +2093,7 @@ int read_atm(
     FREAD(atm->lat, double,
 	    (size_t) atm->np,
 	  in);
-    for (iq = 0; iq < ctl->nq; iq++)
+    for (int iq = 0; iq < ctl->nq; iq++)
       FREAD(atm->q[iq], double,
 	      (size_t) atm->np,
 	    in);
@@ -2119,7 +2119,7 @@ int read_atm(
     /* Get time... */
     NC(nc_inq_varid(ncid, "time", &varid));
     NC(nc_get_var_double(ncid, varid, &t0));
-    for (ip = 0; ip < atm->np; ip++)
+    for (int ip = 0; ip < atm->np; ip++)
       atm->time[ip] = t0;
 
     /* Read geolocations... */
@@ -2160,7 +2160,7 @@ int read_atm(
 	NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_pv]));
 
     /* Check data... */
-    for (ip = 0; ip < atm->np; ip++)
+    for (int ip = 0; ip < atm->np; ip++)
       if (fabs(atm->lon[ip]) > 360 || fabs(atm->lat[ip]) > 90
 	  || (ctl->qnt_t >= 0 && fabs(atm->q[ctl->qnt_t][ip]) > 350)
 	  || (ctl->qnt_h2o >= 0 && fabs(atm->q[ctl->qnt_h2o][ip]) > 1)
@@ -2170,7 +2170,7 @@ int read_atm(
 	atm->p[ip] = GSL_NAN;
 	atm->lon[ip] = GSL_NAN;
 	atm->lat[ip] = GSL_NAN;
-	for (iq = 0; iq < ctl->nq; iq++)
+	for (int iq = 0; iq < ctl->nq; iq++)
 	  atm->q[iq][ip] = GSL_NAN;
       } else {
 	if (ctl->qnt_h2o >= 0)
@@ -2914,17 +2914,16 @@ void read_met_detrend(
 void read_met_extrapolate(
   met_t * met) {
 
-  int ip, ip0, ix, iy;
-
   /* Set timer... */
   SELECT_TIMER("READ_MET_EXTRAPOLATE", NVTX_READ);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared) private(ix,iy,ip0,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
 
       /* Find lowest valid data point... */
+      int ip0;
       for (ip0 = met->np - 1; ip0 >= 0; ip0--)
 	if (!isfinite(met->t[ix][iy][ip0])
 	    || !isfinite(met->u[ix][iy][ip0])
@@ -2933,7 +2932,7 @@ void read_met_extrapolate(
 	  break;
 
       /* Extrapolate... */
-      for (ip = ip0; ip >= 0; ip--) {
+      for (int ip = ip0; ip >= 0; ip--) {
 	met->t[ix][iy][ip] = met->t[ix][iy][ip + 1];
 	met->u[ix][iy][ip] = met->u[ix][iy][ip + 1];
 	met->v[ix][iy][ip] = met->v[ix][iy][ip + 1];
@@ -2954,53 +2953,51 @@ void read_met_geopot(
 
   const int dx = ctl->met_geopot_sx, dy = ctl->met_geopot_sy;
 
-  static float help[EX][EY][EP], w, wsum;
+  static float help[EX][EY][EP];
 
-  double h2os, logp[EP], ts, z0;
-
-  int ip, ip0, ix, ix2, ix3, iy, iy2;
+  double logp[EP];
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GEOPOT", NVTX_READ);
 
   /* Calculate log pressure... */
-  for (ip = 0; ip < met->np; ip++)
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < met->np; ip++)
     logp[ip] = log(met->p[ip]);
 
   /* Initialize geopotential heights... */
-#pragma omp parallel for default(shared) private(ix,iy,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++)
-      for (ip = 0; ip < met->np; ip++)
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
 	met->z[ix][iy][ip] = GSL_NAN;
 
   /* Apply hydrostatic equation to calculate geopotential heights... */
-#pragma omp parallel for default(shared) private(ix,iy,z0,ip0,ts,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
 
       /* Get surface height... */
+      double z0;
       INTPOL_INIT;
       intpol_met_space_2d(met, met->zs, met->lon[ix], met->lat[iy], &z0, ci,
 			  cw, 1);
 
       /* Find surface pressure level index... */
-      ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
+      int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
 
       /* Get temperature and water vapor vmr at the surface... */
-      ts =
-	LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
-	    met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
-      h2os =
-	LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
-	    met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
+		      met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      double h2os = LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
+			met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
 	= (float) (z0 +
 		   ZDIFF(log(met->ps[ix][iy]), ts, h2os, logp[ip0 + 1],
 			 met->t[ix][iy][ip0 + 1], met->h2o[ix][iy][ip0 + 1]));
-      for (ip = ip0 + 2; ip < met->np; ip++)
+      for (int ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
 	  = (float) (met->z[ix][iy][ip - 1] +
 		     ZDIFF(logp[ip - 1], met->t[ix][iy][ip - 1],
@@ -3012,7 +3009,7 @@ void read_met_geopot(
 	= (float) (z0 +
 		   ZDIFF(log(met->ps[ix][iy]), ts, h2os, logp[ip0],
 			 met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]));
-      for (ip = ip0 - 1; ip >= 0; ip--)
+      for (int ip = ip0 - 1; ip >= 0; ip--)
 	met->z[ix][iy][ip]
 	  = (float) (met->z[ix][iy][ip + 1] +
 		     ZDIFF(logp[ip + 1], met->t[ix][iy][ip + 1],
@@ -3021,22 +3018,22 @@ void read_met_geopot(
     }
 
   /* Horizontal smoothing... */
-#pragma omp parallel for default(shared) private(ix,iy,ip,ix2,ix3,iy2,w,wsum)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++)
-      for (ip = 0; ip < met->np; ip++) {
-	wsum = 0;
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++) {
+	float wsum = 0;
 	help[ix][iy][ip] = 0;
-	for (ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ix2++) {
-	  ix3 = ix2;
+	for (int ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ix2++) {
+	  int ix3 = ix2;
 	  if (ix3 < 0)
 	    ix3 += met->nx;
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
-	  for (iy2 = GSL_MAX(iy - dy + 1, 0);
+	  for (int iy2 = GSL_MAX(iy - dy + 1, 0);
 	       iy2 <= GSL_MIN(iy + dy - 1, met->ny - 1); iy2++)
 	    if (isfinite(met->z[ix3][iy2][ip])) {
-	      w = (1.0f - (float) abs(ix - ix2) / (float) dx)
+	      float w = (1.0f - (float) abs(ix - ix2) / (float) dx)
 		* (1.0f - (float) abs(iy - iy2) / (float) dy);
 	      help[ix][iy][ip] += w * met->z[ix3][iy2][ip];
 	      wsum += w;
@@ -3049,10 +3046,10 @@ void read_met_geopot(
       }
 
   /* Copy data... */
-#pragma omp parallel for default(shared) private(ix,iy,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++)
-      for (ip = 0; ip < met->np; ip++)
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
 	met->z[ix][iy][ip] = help[ix][iy][ip];
 }
 
@@ -3066,7 +3063,7 @@ void read_met_grid(
 
   char levname[LEN], tstr[10];
 
-  int dimid, ip, varid, year, mon, day, hour;
+  int dimid, varid;
 
   size_t np, nx, ny;
 
@@ -3075,13 +3072,13 @@ void read_met_grid(
 
   /* Get time from filename... */
   sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
-  year = atoi(tstr);
+  int year = atoi(tstr);
   sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
-  mon = atoi(tstr);
+  int mon = atoi(tstr);
   sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
-  day = atoi(tstr);
+  int day = atoi(tstr);
   sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-  hour = atoi(tstr);
+  int hour = atoi(tstr);
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Get grid dimensions... */
@@ -3124,19 +3121,19 @@ void read_met_grid(
   if (ctl->met_np <= 0) {
     NC(nc_inq_varid(ncid, levname, &varid));
     NC(nc_get_var_double(ncid, varid, met->p));
-    for (ip = 0; ip < met->np; ip++)
+    for (int ip = 0; ip < met->np; ip++)
       met->p[ip] /= 100.;
   }
 
   /* Set pressure levels... */
   else {
     met->np = ctl->met_np;
-    for (ip = 0; ip < met->np; ip++)
+    for (int ip = 0; ip < met->np; ip++)
       met->p[ip] = ctl->met_p[ip];
   }
 
   /* Check ordering of pressure levels... */
-  for (ip = 1; ip < met->np; ip++)
+  for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
 }
@@ -3154,7 +3151,7 @@ int read_met_help_3d(
 
   float *help;
 
-  int ip, ix, iy, varid;
+  int varid;
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
@@ -3169,10 +3166,10 @@ int read_met_help_3d(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
-#pragma omp parallel for default(shared) private(ix,iy,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++)
-      for (ip = 0; ip < met->np; ip++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++) {
 	if (init)
 	  dest[ix][iy][ip] = 0;
 	if (fabsf(help[(ip * met->ny + iy) * met->nx + ix]) < 1e14f)
@@ -3201,7 +3198,7 @@ int read_met_help_2d(
 
   float *help;
 
-  int ix, iy, varid;
+  int varid;
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
@@ -3216,9 +3213,9 @@ int read_met_help_2d(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
-#pragma omp parallel for default(shared) private(ix,iy)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
       if (init)
 	dest[ix][iy] = 0;
       if (fabsf(help[iy * met->nx + ix]) < 1e14f)
@@ -3300,37 +3297,35 @@ void read_met_ml2pl(
   met_t * met,
   float var[EX][EY][EP]) {
 
-  double aux[EP], p[EP], pt;
-
-  int ip, ip2, ix, iy;
+  double aux[EP], p[EP];
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_ML2PL", NVTX_READ);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared) private(ix,iy,ip,p,pt,ip2,aux)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared) private(aux,p)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
 
       /* Copy pressure profile... */
-      for (ip = 0; ip < met->np; ip++)
+      for (int ip = 0; ip < met->np; ip++)
 	p[ip] = met->pl[ix][iy][ip];
 
       /* Interpolate... */
-      for (ip = 0; ip < ctl->met_np; ip++) {
-	pt = ctl->met_p[ip];
+      for (int ip = 0; ip < ctl->met_np; ip++) {
+	double pt = ctl->met_p[ip];
 	if ((pt > p[0] && p[0] > p[1]) || (pt < p[0] && p[0] < p[1]))
 	  pt = p[0];
 	else if ((pt > p[met->np - 1] && p[1] > p[0])
 		 || (pt < p[met->np - 1] && p[1] < p[0]))
 	  pt = p[met->np - 1];
-	ip2 = locate_irr(p, met->np, pt);
+	int ip2 = locate_irr(p, met->np, pt);
 	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
 		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
       }
 
       /* Copy data... */
-      for (ip = 0; ip < ctl->met_np; ip++)
+      for (int ip = 0; ip < ctl->met_np; ip++)
 	var[ix][iy][ip] = (float) aux[ip];
     }
 }
@@ -3378,62 +3373,64 @@ void read_met_periodic(
 void read_met_pv(
   met_t * met) {
 
-  double c0, c1, cr, dx, dy, dp0, dp1, denom, dtdx, dvdx, dtdy, dudy,
-    dtdp, dudp, dvdp, latr, vort, pows[EP];
-
-  int ip, ip0, ip1, ix, ix0, ix1, iy, iy0, iy1;
+  double pows[EP];
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PV", NVTX_READ);
 
   /* Set powers... */
-  for (ip = 0; ip < met->np; ip++)
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < met->np; ip++)
     pows[ip] = pow(1000. / met->p[ip], 0.286);
 
   /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(ix,ix0,ix1,iy,iy0,iy1,latr,dx,dy,c0,c1,cr,vort,ip,ip0,ip1,dp0,dp1,denom,dtdx,dvdx,dtdy,dudy,dtdp,dudp,dvdp)
-  for (ix = 0; ix < met->nx; ix++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++) {
 
     /* Set indices... */
-    ix0 = GSL_MAX(ix - 1, 0);
-    ix1 = GSL_MIN(ix + 1, met->nx - 1);
+    int ix0 = GSL_MAX(ix - 1, 0);
+    int ix1 = GSL_MIN(ix + 1, met->nx - 1);
 
     /* Loop over grid points... */
-    for (iy = 0; iy < met->ny; iy++) {
+    for (int iy = 0; iy < met->ny; iy++) {
 
       /* Set indices... */
-      iy0 = GSL_MAX(iy - 1, 0);
-      iy1 = GSL_MIN(iy + 1, met->ny - 1);
+      int iy0 = GSL_MAX(iy - 1, 0);
+      int iy1 = GSL_MIN(iy + 1, met->ny - 1);
 
       /* Set auxiliary variables... */
-      latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
-      dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
-      dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
-      c0 = cos(met->lat[iy0] / 180. * M_PI);
-      c1 = cos(met->lat[iy1] / 180. * M_PI);
-      cr = cos(latr / 180. * M_PI);
-      vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
+      double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
+      double dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
+      double dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
+      double c0 = cos(met->lat[iy0] / 180. * M_PI);
+      double c1 = cos(met->lat[iy1] / 180. * M_PI);
+      double cr = cos(latr / 180. * M_PI);
+      double vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
 
       /* Loop over grid points... */
-      for (ip = 0; ip < met->np; ip++) {
+      for (int ip = 0; ip < met->np; ip++) {
 
 	/* Get gradients in longitude... */
-	dtdx = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
-	dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
+	double dtdx
+	  = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
+	double dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
 
 	/* Get gradients in latitude... */
-	dtdy = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
-	dudy = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
+	double dtdy
+	  = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
+	double dudy
+	  = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Set indices... */
-	ip0 = GSL_MAX(ip - 1, 0);
-	ip1 = GSL_MIN(ip + 1, met->np - 1);
+	int ip0 = GSL_MAX(ip - 1, 0);
+	int ip1 = GSL_MIN(ip + 1, met->np - 1);
 
 	/* Get gradients in pressure... */
-	dp0 = 100. * (met->p[ip] - met->p[ip0]);
-	dp1 = 100. * (met->p[ip1] - met->p[ip]);
+	double dtdp, dudp, dvdp;
+	double dp0 = 100. * (met->p[ip] - met->p[ip0]);
+	double dp1 = 100. * (met->p[ip1] - met->p[ip]);
 	if (ip != ip0 && ip != ip1) {
-	  denom = dp0 * dp1 * (dp0 + dp1);
+	  double denom = dp0 * dp1 * (dp0 + dp1);
 	  dtdp = (dp0 * dp0 * met->t[ix][iy][ip1] * pows[ip1]
 		  - dp1 * dp1 * met->t[ix][iy][ip0] * pows[ip0]
 		  + (dp1 * dp1 - dp0 * dp0) * met->t[ix][iy][ip] * pows[ip])
@@ -3447,7 +3444,7 @@ void read_met_pv(
 		  + (dp1 * dp1 - dp0 * dp0) * met->v[ix][iy][ip])
 	    / denom;
 	} else {
-	  denom = dp0 + dp1;
+	  double denom = dp0 + dp1;
 	  dtdp =
 	    (met->t[ix][iy][ip1] * pows[ip1] -
 	     met->t[ix][iy][ip0] * pows[ip0]) / denom;
@@ -3464,9 +3461,9 @@ void read_met_pv(
   }
 
   /* Fix for polar regions... */
-#pragma omp parallel for default(shared) private(ix,ip)
-  for (ix = 0; ix < met->nx; ix++)
-    for (ip = 0; ip < met->np; ip++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int ip = 0; ip < met->np; ip++) {
       met->pv[ix][0][ip]
 	= met->pv[ix][1][ip]
 	= met->pv[ix][2][ip];
@@ -3483,10 +3480,6 @@ void read_met_sample(
   met_t * met) {
 
   met_t *help;
-
-  float w, wsum;
-
-  int ip, ip2, ix, ix2, ix3, iy, iy2;
 
   /* Check parameters... */
   if (ctl->met_dp <= 1 && ctl->met_dx <= 1 && ctl->met_dy <= 1
@@ -3508,9 +3501,9 @@ void read_met_sample(
   memcpy(help->p, met->p, sizeof(met->p));
 
   /* Smoothing... */
-  for (ix = 0; ix < met->nx; ix += ctl->met_dx) {
-    for (iy = 0; iy < met->ny; iy += ctl->met_dy) {
-      for (ip = 0; ip < met->np; ip += ctl->met_dp) {
+  for (int ix = 0; ix < met->nx; ix += ctl->met_dx) {
+    for (int iy = 0; iy < met->ny; iy += ctl->met_dy) {
+      for (int ip = 0; ip < met->np; ip += ctl->met_dp) {
 	help->ps[ix][iy] = 0;
 	help->zs[ix][iy] = 0;
 	help->t[ix][iy][ip] = 0;
@@ -3521,19 +3514,20 @@ void read_met_sample(
 	help->o3[ix][iy][ip] = 0;
 	help->lwc[ix][iy][ip] = 0;
 	help->iwc[ix][iy][ip] = 0;
-	wsum = 0;
-	for (ix2 = ix - ctl->met_sx + 1; ix2 <= ix + ctl->met_sx - 1; ix2++) {
-	  ix3 = ix2;
+	float wsum = 0;
+	for (int ix2 = ix - ctl->met_sx + 1; ix2 <= ix + ctl->met_sx - 1;
+	     ix2++) {
+	  int ix3 = ix2;
 	  if (ix3 < 0)
 	    ix3 += met->nx;
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
 
-	  for (iy2 = GSL_MAX(iy - ctl->met_sy + 1, 0);
+	  for (int iy2 = GSL_MAX(iy - ctl->met_sy + 1, 0);
 	       iy2 <= GSL_MIN(iy + ctl->met_sy - 1, met->ny - 1); iy2++)
-	    for (ip2 = GSL_MAX(ip - ctl->met_sp + 1, 0);
+	    for (int ip2 = GSL_MAX(ip - ctl->met_sp + 1, 0);
 		 ip2 <= GSL_MIN(ip + ctl->met_sp - 1, met->np - 1); ip2++) {
-	      w = (1.0f - (float) abs(ix - ix2) / (float) ctl->met_sx)
+	      float w = (1.0f - (float) abs(ix - ix2) / (float) ctl->met_sx)
 		* (1.0f - (float) abs(iy - iy2) / (float) ctl->met_sy)
 		* (1.0f - (float) abs(ip - ip2) / (float) ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix3][iy2];
@@ -3565,15 +3559,15 @@ void read_met_sample(
 
   /* Downsampling... */
   met->nx = 0;
-  for (ix = 0; ix < help->nx; ix += ctl->met_dx) {
+  for (int ix = 0; ix < help->nx; ix += ctl->met_dx) {
     met->lon[met->nx] = help->lon[ix];
     met->ny = 0;
-    for (iy = 0; iy < help->ny; iy += ctl->met_dy) {
+    for (int iy = 0; iy < help->ny; iy += ctl->met_dy) {
       met->lat[met->ny] = help->lat[iy];
       met->ps[met->nx][met->ny] = help->ps[ix][iy];
       met->zs[met->nx][met->ny] = help->zs[ix][iy];
       met->np = 0;
-      for (ip = 0; ip < help->np; ip += ctl->met_dp) {
+      for (int ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
 	met->t[met->nx][met->ny][met->np] = help->t[ix][iy][ip];
 	met->u[met->nx][met->ny][met->np] = help->u[ix][iy][ip];
@@ -3600,8 +3594,6 @@ void read_met_surface(
   int ncid,
   met_t * met) {
 
-  int ix, iy;
-
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", NVTX_READ);
 
@@ -3609,12 +3601,12 @@ void read_met_surface(
   if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
     if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0, 1)) {
       ERRMSG("Cannot not read surface pressure data!");
-      for (ix = 0; ix < met->nx; ix++)
-	for (iy = 0; iy < met->ny; iy++)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
 	  met->ps[ix][iy] = (float) met->p[0];
     } else {
-      for (iy = 0; iy < met->ny; iy++)
-	for (ix = 0; ix < met->nx; ix++)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
 	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
     }
   }
@@ -3645,33 +3637,34 @@ void read_met_tropo(
   ctl_t * ctl,
   met_t * met) {
 
-  double h2ot, p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
-    th2[200], tt, z[EP], z2[200], zt;
-
-  int found, ix, iy, iz, iz2;
+  double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
+    th2[200], z[EP], z2[200];
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_TROPO", NVTX_READ);
 
   /* Get altitude and pressure profiles... */
-  for (iz = 0; iz < met->np; iz++)
+#pragma omp parallel for default(shared)
+  for (int iz = 0; iz < met->np; iz++)
     z[iz] = Z(met->p[iz]);
-  for (iz = 0; iz <= 190; iz++) {
+#pragma omp parallel for default(shared)
+  for (int iz = 0; iz <= 190; iz++) {
     z2[iz] = 4.5 + 0.1 * iz;
     p2[iz] = P(z2[iz]);
   }
 
   /* Do not calculate tropopause... */
   if (ctl->met_tropo == 0)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++)
+#pragma omp parallel for default(shared)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = GSL_NAN;
 
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1) {
-#pragma omp parallel for default(shared) private(ix,iy)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++)
+#pragma omp parallel for default(shared)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy]);
   }
 
@@ -3679,17 +3672,17 @@ void read_met_tropo(
   else if (ctl->met_tropo == 2) {
 
     /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(ix,iy,iz,t,t2)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared) private(t,t2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
 
 	/* Interpolate temperature profile... */
-	for (iz = 0; iz < met->np; iz++)
+	for (int iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
 	spline(z, t, met->np, z2, t2, 171);
 
 	/* Find minimum... */
-	iz = (int) gsl_stats_min_index(t2, 1, 171);
+	int iz = (int) gsl_stats_min_index(t2, 1, 171);
 	if (iz > 0 && iz < 170)
 	  met->pt[ix][iy] = (float) p2[iz];
 	else
@@ -3701,11 +3694,12 @@ void read_met_tropo(
   else if (ctl->met_tropo == 3 || ctl->met_tropo == 4) {
 
     /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(ix,iy,iz,iz2,t,t2,found)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared) private(t,t2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
 
 	/* Interpolate temperature profile... */
+	int iz;
 	for (iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
 	spline(z, t, met->np, z2, t2, 191);
@@ -3713,8 +3707,8 @@ void read_met_tropo(
 	/* Find 1st tropopause... */
 	met->pt[ix][iy] = GSL_NAN;
 	for (iz = 0; iz <= 170; iz++) {
-	  found = 1;
-	  for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
+	  int found = 1;
+	  for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	    if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
 	      found = 0;
 	      break;
@@ -3730,8 +3724,8 @@ void read_met_tropo(
 	if (ctl->met_tropo == 4) {
 	  met->pt[ix][iy] = GSL_NAN;
 	  for (; iz <= 170; iz++) {
-	    found = 1;
-	    for (iz2 = iz + 1; iz2 <= iz + 10; iz2++)
+	    int found = 1;
+	    for (int iz2 = iz + 1; iz2 <= iz + 10; iz2++)
 	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) < 3.0) {
 		found = 0;
 		break;
@@ -3740,8 +3734,8 @@ void read_met_tropo(
 	      break;
 	  }
 	  for (; iz <= 170; iz++) {
-	    found = 1;
-	    for (iz2 = iz + 1; iz2 <= iz + 20; iz2++)
+	    int found = 1;
+	    for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
 	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
 		found = 0;
 		break;
@@ -3760,23 +3754,23 @@ void read_met_tropo(
   else if (ctl->met_tropo == 5) {
 
     /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(ix,iy,iz,pv,pv2,th,th2)
-    for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared) private(pv,pv2,th,th2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
 
 	/* Interpolate potential vorticity profile... */
-	for (iz = 0; iz < met->np; iz++)
+	for (int iz = 0; iz < met->np; iz++)
 	  pv[iz] = met->pv[ix][iy][iz];
 	spline(z, pv, met->np, z2, pv2, 171);
 
 	/* Interpolate potential temperature profile... */
-	for (iz = 0; iz < met->np; iz++)
+	for (int iz = 0; iz < met->np; iz++)
 	  th[iz] = THETA(met->p[iz], met->t[ix][iy][iz]);
 	spline(z, th, met->np, z2, th2, 171);
 
-	/* Find dynamical tropopause 3.5 PVU + 380 K */
+	/* Find dynamical tropopause (3.5 PVU and 380 K)... */
 	met->pt[ix][iy] = GSL_NAN;
-	for (iz = 0; iz <= 170; iz++)
+	for (int iz = 0; iz <= 170; iz++)
 	  if (fabs(pv2[iz]) >= 3.5 || th2[iz] >= 380.) {
 	    if (iz > 0 && iz < 170)
 	      met->pt[ix][iy] = (float) p2[iz];
@@ -3789,9 +3783,10 @@ void read_met_tropo(
     ERRMSG("Cannot calculate tropopause!");
 
   /* Interpolate temperature, geopotential height, and water vapor vmr... */
-#pragma omp parallel for default(shared) private(ix,iy,tt,zt,h2ot)
-  for (ix = 0; ix < met->nx; ix++)
-    for (iy = 0; iy < met->ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
+      double h2ot, tt, zt;
       INTPOL_INIT;
       intpol_met_space_3d(met, met->t, met->pt[ix][iy], met->lon[ix],
 			  met->lat[iy], &tt, ci, cw, 1);
