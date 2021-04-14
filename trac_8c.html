@@ -1878,109 +1878,72 @@ Here is the call graph for this function:</div>
 
 <p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01356">1356</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
 <div class="fragment"><div class="line"><a name="l01362"></a><span class="lineno"> 1362</span>&#160;            {</div>
-<div class="line"><a name="l01363"></a><span class="lineno"> 1363</span>&#160; </div>
+<div class="line"><a name="l01363"></a><span class="lineno"> 1363</span>&#160;  </div>
 <div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;  <span class="keywordtype">char</span> filename[2 * <a class="code" href="libtrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>];</div>
-<div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160; </div>
+<div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160;  </div>
 <div class="line"><a name="l01366"></a><span class="lineno"> 1366</span>&#160;  <span class="keywordtype">double</span> r;</div>
-<div class="line"><a name="l01367"></a><span class="lineno"> 1367</span>&#160; </div>
-<div class="line"><a name="l01368"></a><span class="lineno"> 1368</span>&#160;  <span class="keywordtype">int</span> year, mon, day, hour, min, sec, updated = 0;</div>
-<div class="line"><a name="l01369"></a><span class="lineno"> 1369</span>&#160; </div>
+<div class="line"><a name="l01367"></a><span class="lineno"> 1367</span>&#160;  </div>
+<div class="line"><a name="l01368"></a><span class="lineno"> 1368</span>&#160;  <span class="keywordtype">int</span> year, mon, day, hour, min, sec;</div>
+<div class="line"><a name="l01369"></a><span class="lineno"> 1369</span>&#160;  </div>
 <div class="line"><a name="l01370"></a><span class="lineno"> 1370</span>&#160;  <span class="comment">/* Get time... */</span></div>
 <div class="line"><a name="l01371"></a><span class="lineno"> 1371</span>&#160;  <a class="code" href="libtrac_8c.html#aa6699ff1f931aa8913d3f5ae608b2582">jsec2time</a>(t, &amp;year, &amp;mon, &amp;day, &amp;hour, &amp;min, &amp;sec, &amp;r);</div>
-<div class="line"><a name="l01372"></a><span class="lineno"> 1372</span>&#160; </div>
-<div class="line"><a name="l01373"></a><span class="lineno"> 1373</span>&#160;  <span class="comment">/* Write atmospheric data... */</span></div>
-<div class="line"><a name="l01374"></a><span class="lineno"> 1374</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0) {</div>
-<div class="line"><a name="l01375"></a><span class="lineno"> 1375</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01376"></a><span class="lineno"> 1376</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01377"></a><span class="lineno"> 1377</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01378"></a><span class="lineno"> 1378</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01379"></a><span class="lineno"> 1379</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01380"></a><span class="lineno"> 1380</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01381"></a><span class="lineno"> 1381</span>&#160;    }</div>
-<div class="line"><a name="l01382"></a><span class="lineno"> 1382</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
-<div class="line"><a name="l01383"></a><span class="lineno"> 1383</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>, year, mon, day, hour, min);</div>
-<div class="line"><a name="l01384"></a><span class="lineno"> 1384</span>&#160;    <a class="code" href="libtrac_8c.html#a6f8a7ad670fbfe7dd4ed81f66695db6f">write_atm</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01385"></a><span class="lineno"> 1385</span>&#160;  }</div>
-<div class="line"><a name="l01386"></a><span class="lineno"> 1386</span>&#160; </div>
-<div class="line"><a name="l01387"></a><span class="lineno"> 1387</span>&#160;  <span class="comment">/* Write gridded data... */</span></div>
-<div class="line"><a name="l01388"></a><span class="lineno"> 1388</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0) {</div>
-<div class="line"><a name="l01389"></a><span class="lineno"> 1389</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01390"></a><span class="lineno"> 1390</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01391"></a><span class="lineno"> 1391</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01392"></a><span class="lineno"> 1392</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01393"></a><span class="lineno"> 1393</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;    }</div>
-<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
-<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>, year, mon, day, hour, min);</div>
-<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;    <a class="code" href="libtrac_8c.html#a59757e2569c3f96f57e291fdbe3ddc29">write_grid</a>(filename, ctl, met0, met1, atm, t);</div>
-<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;  }</div>
-<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160; </div>
-<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;  <span class="comment">/* Write CSI data... */</span></div>
-<div class="line"><a name="l01402"></a><span class="lineno"> 1402</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01403"></a><span class="lineno"> 1403</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01404"></a><span class="lineno"> 1404</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01405"></a><span class="lineno"> 1405</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01406"></a><span class="lineno"> 1406</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01407"></a><span class="lineno"> 1407</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01408"></a><span class="lineno"> 1408</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01409"></a><span class="lineno"> 1409</span>&#160;    }</div>
-<div class="line"><a name="l01410"></a><span class="lineno"> 1410</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>);</div>
-<div class="line"><a name="l01411"></a><span class="lineno"> 1411</span>&#160;    <a class="code" href="libtrac_8c.html#a70ca26c59c2fca1fda54a29dfd3625b6">write_csi</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01412"></a><span class="lineno"> 1412</span>&#160;  }</div>
-<div class="line"><a name="l01413"></a><span class="lineno"> 1413</span>&#160; </div>
-<div class="line"><a name="l01414"></a><span class="lineno"> 1414</span>&#160;  <span class="comment">/* Write ensemble data... */</span></div>
-<div class="line"><a name="l01415"></a><span class="lineno"> 1415</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01416"></a><span class="lineno"> 1416</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01417"></a><span class="lineno"> 1417</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01418"></a><span class="lineno"> 1418</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01419"></a><span class="lineno"> 1419</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01420"></a><span class="lineno"> 1420</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160;    }</div>
-<div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>);</div>
-<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;    <a class="code" href="libtrac_8c.html#af5d8dfa5fe43fa2bf192ee4a7b821b1f">write_ens</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;  }</div>
-<div class="line"><a name="l01426"></a><span class="lineno"> 1426</span>&#160; </div>
-<div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;  <span class="comment">/* Write profile data... */</span></div>
-<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01429"></a><span class="lineno"> 1429</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01430"></a><span class="lineno"> 1430</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01431"></a><span class="lineno"> 1431</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01432"></a><span class="lineno"> 1432</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01433"></a><span class="lineno"> 1433</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01434"></a><span class="lineno"> 1434</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01435"></a><span class="lineno"> 1435</span>&#160;    }</div>
-<div class="line"><a name="l01436"></a><span class="lineno"> 1436</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>);</div>
-<div class="line"><a name="l01437"></a><span class="lineno"> 1437</span>&#160;    <a class="code" href="libtrac_8c.html#af2d95b1eb426ead1c25fe5f198f476c9">write_prof</a>(filename, ctl, met0, met1, atm, t);</div>
-<div class="line"><a name="l01438"></a><span class="lineno"> 1438</span>&#160;  }</div>
-<div class="line"><a name="l01439"></a><span class="lineno"> 1439</span>&#160; </div>
-<div class="line"><a name="l01440"></a><span class="lineno"> 1440</span>&#160;  <span class="comment">/* Write sample data... */</span></div>
-<div class="line"><a name="l01441"></a><span class="lineno"> 1441</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01442"></a><span class="lineno"> 1442</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01443"></a><span class="lineno"> 1443</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01444"></a><span class="lineno"> 1444</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01445"></a><span class="lineno"> 1445</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01446"></a><span class="lineno"> 1446</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01447"></a><span class="lineno"> 1447</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01448"></a><span class="lineno"> 1448</span>&#160;    }</div>
-<div class="line"><a name="l01449"></a><span class="lineno"> 1449</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>);</div>
-<div class="line"><a name="l01450"></a><span class="lineno"> 1450</span>&#160;    <a class="code" href="libtrac_8c.html#a684686ab1a1db21abc1c65b66d9db10a">write_sample</a>(filename, ctl, met0, met1, atm, t);</div>
-<div class="line"><a name="l01451"></a><span class="lineno"> 1451</span>&#160;  }</div>
-<div class="line"><a name="l01452"></a><span class="lineno"> 1452</span>&#160; </div>
-<div class="line"><a name="l01453"></a><span class="lineno"> 1453</span>&#160;  <span class="comment">/* Write station data... */</span></div>
-<div class="line"><a name="l01454"></a><span class="lineno"> 1454</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01455"></a><span class="lineno"> 1455</span>&#160;    <span class="keywordflow">if</span> (!updated) {</div>
-<div class="line"><a name="l01456"></a><span class="lineno"> 1456</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01457"></a><span class="lineno"> 1457</span>&#160;      <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01458"></a><span class="lineno"> 1458</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01459"></a><span class="lineno"> 1459</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01460"></a><span class="lineno"> 1460</span>&#160;      updated = 1;</div>
-<div class="line"><a name="l01461"></a><span class="lineno"> 1461</span>&#160;    }</div>
-<div class="line"><a name="l01462"></a><span class="lineno"> 1462</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>);</div>
-<div class="line"><a name="l01463"></a><span class="lineno"> 1463</span>&#160;    <a class="code" href="libtrac_8c.html#a6afa769139ff29d1aa185e317f2f69c7">write_station</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01464"></a><span class="lineno"> 1464</span>&#160;  }</div>
-<div class="line"><a name="l01465"></a><span class="lineno"> 1465</span>&#160;}</div>
+<div class="line"><a name="l01372"></a><span class="lineno"> 1372</span>&#160;  </div>
+<div class="line"><a name="l01373"></a><span class="lineno"> 1373</span>&#160;  <span class="comment">/* Update host... */</span></div>
+<div class="line"><a name="l01374"></a><span class="lineno"> 1374</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01375"></a><span class="lineno"> 1375</span>&#160;  <span class="keywordflow">if</span> ((ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0)</div>
+<div class="line"><a name="l01376"></a><span class="lineno"> 1376</span>&#160;      || (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0)</div>
+<div class="line"><a name="l01377"></a><span class="lineno"> 1377</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> || ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span></div>
+<div class="line"><a name="l01378"></a><span class="lineno"> 1378</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> || ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span></div>
+<div class="line"><a name="l01379"></a><span class="lineno"> 1379</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01380"></a><span class="lineno"> 1380</span>&#160;    <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);    </div>
+<div class="line"><a name="l01381"></a><span class="lineno"> 1381</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
+<div class="line"><a name="l01382"></a><span class="lineno"> 1382</span>&#160;  }</div>
+<div class="line"><a name="l01383"></a><span class="lineno"> 1383</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01384"></a><span class="lineno"> 1384</span>&#160;  </div>
+<div class="line"><a name="l01385"></a><span class="lineno"> 1385</span>&#160;  <span class="comment">/* Write atmospheric data... */</span></div>
+<div class="line"><a name="l01386"></a><span class="lineno"> 1386</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0) {</div>
+<div class="line"><a name="l01387"></a><span class="lineno"> 1387</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
+<div class="line"><a name="l01388"></a><span class="lineno"> 1388</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>, year, mon, day, hour, min);</div>
+<div class="line"><a name="l01389"></a><span class="lineno"> 1389</span>&#160;    <a class="code" href="libtrac_8c.html#a6f8a7ad670fbfe7dd4ed81f66695db6f">write_atm</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01390"></a><span class="lineno"> 1390</span>&#160;  }</div>
+<div class="line"><a name="l01391"></a><span class="lineno"> 1391</span>&#160;  </div>
+<div class="line"><a name="l01392"></a><span class="lineno"> 1392</span>&#160;  <span class="comment">/* Write gridded data... */</span></div>
+<div class="line"><a name="l01393"></a><span class="lineno"> 1393</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0) {</div>
+<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
+<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>, year, mon, day, hour, min);</div>
+<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;    <a class="code" href="libtrac_8c.html#a59757e2569c3f96f57e291fdbe3ddc29">write_grid</a>(filename, ctl, met0, met1, atm, t);</div>
+<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;  }</div>
+<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;  </div>
+<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;  <span class="comment">/* Write CSI data... */</span></div>
+<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>);</div>
+<div class="line"><a name="l01402"></a><span class="lineno"> 1402</span>&#160;    <a class="code" href="libtrac_8c.html#a70ca26c59c2fca1fda54a29dfd3625b6">write_csi</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01403"></a><span class="lineno"> 1403</span>&#160;  }</div>
+<div class="line"><a name="l01404"></a><span class="lineno"> 1404</span>&#160;  </div>
+<div class="line"><a name="l01405"></a><span class="lineno"> 1405</span>&#160;  <span class="comment">/* Write ensemble data... */</span></div>
+<div class="line"><a name="l01406"></a><span class="lineno"> 1406</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01407"></a><span class="lineno"> 1407</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>);</div>
+<div class="line"><a name="l01408"></a><span class="lineno"> 1408</span>&#160;    <a class="code" href="libtrac_8c.html#af5d8dfa5fe43fa2bf192ee4a7b821b1f">write_ens</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01409"></a><span class="lineno"> 1409</span>&#160;  }</div>
+<div class="line"><a name="l01410"></a><span class="lineno"> 1410</span>&#160;  </div>
+<div class="line"><a name="l01411"></a><span class="lineno"> 1411</span>&#160;  <span class="comment">/* Write profile data... */</span></div>
+<div class="line"><a name="l01412"></a><span class="lineno"> 1412</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01413"></a><span class="lineno"> 1413</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>);</div>
+<div class="line"><a name="l01414"></a><span class="lineno"> 1414</span>&#160;    <a class="code" href="libtrac_8c.html#af2d95b1eb426ead1c25fe5f198f476c9">write_prof</a>(filename, ctl, met0, met1, atm, t);</div>
+<div class="line"><a name="l01415"></a><span class="lineno"> 1415</span>&#160;  }</div>
+<div class="line"><a name="l01416"></a><span class="lineno"> 1416</span>&#160;  </div>
+<div class="line"><a name="l01417"></a><span class="lineno"> 1417</span>&#160;  <span class="comment">/* Write sample data... */</span></div>
+<div class="line"><a name="l01418"></a><span class="lineno"> 1418</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01419"></a><span class="lineno"> 1419</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>);</div>
+<div class="line"><a name="l01420"></a><span class="lineno"> 1420</span>&#160;    <a class="code" href="libtrac_8c.html#a684686ab1a1db21abc1c65b66d9db10a">write_sample</a>(filename, ctl, met0, met1, atm, t);</div>
+<div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;  }</div>
+<div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160; </div>
+<div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;  <span class="comment">/* Write station data... */</span></div>
+<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>);</div>
+<div class="line"><a name="l01426"></a><span class="lineno"> 1426</span>&#160;    <a class="code" href="libtrac_8c.html#a6afa769139ff29d1aa185e317f2f69c7">write_station</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;  }</div>
+<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8c_html_a59757e2569c3f96f57e291fdbe3ddc29"><div class="ttname"><a href="libtrac_8c.html#a59757e2569c3f96f57e291fdbe3ddc29">write_grid</a></div><div class="ttdeci">void write_grid(const char *filename, ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double t)</div><div class="ttdoc">Write gridded data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l04527">libtrac.c:4527</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_a684686ab1a1db21abc1c65b66d9db10a"><div class="ttname"><a href="libtrac_8c.html#a684686ab1a1db21abc1c65b66d9db10a">write_sample</a></div><div class="ttdeci">void write_sample(const char *filename, ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double t)</div><div class="ttdoc">Write sample data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l04898">libtrac.c:4898</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_a6afa769139ff29d1aa185e317f2f69c7"><div class="ttname"><a href="libtrac_8c.html#a6afa769139ff29d1aa185e317f2f69c7">write_station</a></div><div class="ttdeci">void write_station(const char *filename, ctl_t *ctl, atm_t *atm, double t)</div><div class="ttdoc">Write station data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l05050">libtrac.c:5050</a></div></div>
@@ -2437,7 +2400,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="trac_8c.html">trac.c</a></li>
-    <li class="footer">Generated on Mon Apr 12 2021 19:39:56 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Wed Apr 14 2021 18:01:28 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
