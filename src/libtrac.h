@@ -500,7 +500,7 @@ typedef struct {
   size_t chunkszhint;
 
   /*! Read mode for nc__open. */
-  char read_mode;
+  int read_mode;
 
   /*! Number of quantities. */
   int nq;

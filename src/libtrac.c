@@ -2416,7 +2416,7 @@ void read_ctl(
     (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
 		      NULL);
   ctl->read_mode =
-    (char) scan_ctl(filename, argc, argv, "READMODE", -1, "NC_NOWRITE", NULL);
+    (int) scan_ctl(filename, argc, argv, "READMODE", -1, "0", NULL);
 
   /* Time steps of simulation... */
   ctl->direction =
@@ -2631,8 +2631,6 @@ int read_met(
 
   int ncid;
 
-  //size_t chunkszhint=81920000;
-
   /* Write info... */
   printf("Read meteorological data: %s\n", filename);
 
@@ -2642,6 +2640,8 @@ int read_met(
     WARN("File not found!");
     return 0;
   }
+  printf("CHUNKSIZE = %lu Byte (%g MByte)\n", ctl->chunkszhint,
+	 (double) ctl->chunkszhint / 1024. / 1024.);
 
   /* Read coordinates of meteorological data... */
   read_met_grid(filename, ncid, ctl, met);
@@ -3163,7 +3163,13 @@ int read_met_help_3d(
 	EX * EY * EP);
 
   /* Read data... */
+  double t0 = omp_get_wtime();
   NC(nc_get_var_float(ncid, varid, help));
+  double dt = omp_get_wtime() - t0;
+  double sd = (double) sizeof(float) * (double) (met->np * met->nx * met->ny)
+    / 1024. / 1024;
+  printf("BANDWIDTH = %g MByte/sec (var: %s, size: %g MByte)\n",
+	 sd / dt, varname, sd);
 
   /* Copy and check data... */
 #pragma omp parallel for default(shared)
@@ -3210,7 +3216,13 @@ int read_met_help_2d(
 	EX * EY);
 
   /* Read data... */
+  double t0 = omp_get_wtime();
   NC(nc_get_var_float(ncid, varid, help));
+  double dt = omp_get_wtime() - t0;
+  double sd = (double) sizeof(float) * (double) (met->nx * met->ny)
+    / 1024. / 1024;
+  printf("BANDWIDTH = %g MByte/sec (var: %s, size: %g MByte)\n",
+	 sd / dt, varname, sd);
 
   /* Copy and check data... */
 #pragma omp parallel for default(shared)
