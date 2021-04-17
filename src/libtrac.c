@@ -3355,6 +3355,9 @@ void read_met_periodic(
   for (int iy = 0; iy < met->ny; iy++) {
     met->ps[met->nx - 1][iy] = met->ps[0][iy];
     met->zs[met->nx - 1][iy] = met->zs[0][iy];
+    met->ts[met->nx - 1][iy] = met->ts[0][iy];
+    met->us[met->nx - 1][iy] = met->us[0][iy];
+    met->vs[met->nx - 1][iy] = met->vs[0][iy];
     for (int ip = 0; ip < met->np; ip++) {
       met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
@@ -3506,6 +3509,9 @@ void read_met_sample(
       for (int ip = 0; ip < met->np; ip += ctl->met_dp) {
 	help->ps[ix][iy] = 0;
 	help->zs[ix][iy] = 0;
+	help->ts[ix][iy] = 0;
+	help->us[ix][iy] = 0;
+	help->vs[ix][iy] = 0;
 	help->t[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
@@ -3532,6 +3538,9 @@ void read_met_sample(
 		* (1.0f - (float) abs(ip - ip2) / (float) ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix3][iy2];
 	      help->zs[ix][iy] += w * met->zs[ix3][iy2];
+	      help->ts[ix][iy] += w * met->ts[ix3][iy2];
+	      help->us[ix][iy] += w * met->us[ix3][iy2];
+	      help->vs[ix][iy] += w * met->vs[ix3][iy2];
 	      help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix3][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix3][iy2][ip2];
@@ -3545,6 +3554,9 @@ void read_met_sample(
 	}
 	help->ps[ix][iy] /= wsum;
 	help->zs[ix][iy] /= wsum;
+	help->ts[ix][iy] /= wsum;
+	help->us[ix][iy] /= wsum;
+	help->vs[ix][iy] /= wsum;
 	help->t[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
@@ -3566,6 +3578,9 @@ void read_met_sample(
       met->lat[met->ny] = help->lat[iy];
       met->ps[met->nx][met->ny] = help->ps[ix][iy];
       met->zs[met->nx][met->ny] = help->zs[ix][iy];
+      met->ts[met->nx][met->ny] = help->ts[ix][iy];
+      met->us[met->nx][met->ny] = help->us[ix][iy];
+      met->vs[met->nx][met->ny] = help->vs[ix][iy];
       met->np = 0;
       for (int ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
@@ -3599,17 +3614,17 @@ void read_met_surface(
 
   /* Read surface pressure... */
   if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
-    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0, 1)) {
+    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
       ERRMSG("Cannot not read surface pressure data!");
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
     } else {
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
     }
-  }
+  } else
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->ps[ix][iy] = (float) met->p[0];
 
   /* Read geopotential height at the surface... */
   if (!read_met_help_2d
