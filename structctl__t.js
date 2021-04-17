@@ -1,7 +1,7 @@
 var structctl__t =
 [
     [ "chunkszhint", "structctl__t.html#abcfda1d37b13a5a28b13988a9673b8df", null ],
-    [ "read_mode", "structctl__t.html#a61e58d0da82c3440f500d7494d3e3033", null ],
+    [ "read_mode", "structctl__t.html#a797dc709951f1405daec11d5ed11ea40", null ],
     [ "nq", "structctl__t.html#af189b70e15b3ed95191357717b80a2cc", null ],
     [ "qnt_name", "structctl__t.html#a8a96f7d7b47b13cf7359afb9f513f690", null ],
     [ "qnt_unit", "structctl__t.html#a7dadf2efadc0802bd2c77aa8c39908dc", null ],

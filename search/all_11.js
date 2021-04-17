@@ -20,7 +20,7 @@ var searchData=
   ['read_5fmet_5fsample_292',['read_met_sample',['../libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81',1,'read_met_sample(ctl_t *ctl, met_t *met):&#160;libtrac.c'],['../libtrac_8h.html#a6a49f49a3a974cda1f9b0ff261d34c81',1,'read_met_sample(ctl_t *ctl, met_t *met):&#160;libtrac.c']]],
   ['read_5fmet_5fsurface_293',['read_met_surface',['../libtrac_8c.html#ab79cc2c3c9d98a812ab86a1da4f38618',1,'read_met_surface(int ncid, met_t *met):&#160;libtrac.c'],['../libtrac_8h.html#ab79cc2c3c9d98a812ab86a1da4f38618',1,'read_met_surface(int ncid, met_t *met):&#160;libtrac.c']]],
   ['read_5fmet_5ftropo_294',['read_met_tropo',['../libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb',1,'read_met_tropo(ctl_t *ctl, met_t *met):&#160;libtrac.c'],['../libtrac_8h.html#a6ceaf0d3e1f6785ca075fadb590bafcb',1,'read_met_tropo(ctl_t *ctl, met_t *met):&#160;libtrac.c']]],
-  ['read_5fmode_295',['read_mode',['../structctl__t.html#a61e58d0da82c3440f500d7494d3e3033',1,'ctl_t']]],
+  ['read_5fmode_295',['read_mode',['../structctl__t.html#a797dc709951f1405daec11d5ed11ea40',1,'ctl_t']]],
   ['rh_296',['RH',['../libtrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2',1,'libtrac.h']]],
   ['rhice_297',['RHICE',['../libtrac_8h.html#a9431567784929c9e462e16f393e04088',1,'libtrac.h']]],
   ['ri_298',['RI',['../libtrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e',1,'libtrac.h']]]

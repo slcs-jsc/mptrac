@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['read_5fmode_616',['read_mode',['../structctl__t.html#a61e58d0da82c3440f500d7494d3e3033',1,'ctl_t']]]
+  ['read_5fmode_616',['read_mode',['../structctl__t.html#a797dc709951f1405daec11d5ed11ea40',1,'ctl_t']]]
 ];
