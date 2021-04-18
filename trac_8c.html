@@ -1325,40 +1325,42 @@ Here is the call graph for this function:</div>
 <div class="line"><a name="l01053"></a><span class="lineno"> 1053</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
 <div class="line"><a name="l01054"></a><span class="lineno"> 1054</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
 <div class="line"><a name="l01055"></a><span class="lineno"> 1055</span>&#160; </div>
-<div class="line"><a name="l01056"></a><span class="lineno"> 1056</span>&#160;      <span class="comment">/* Calculate modulo... */</span></div>
-<div class="line"><a name="l01057"></a><span class="lineno"> 1057</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] = <a class="code" href="libtrac_8h.html#aff4e721b49a057c4e4a3a6f56cc06469">FMOD</a>(atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], 360.);</div>
-<div class="line"><a name="l01058"></a><span class="lineno"> 1058</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] = <a class="code" href="libtrac_8h.html#aff4e721b49a057c4e4a3a6f56cc06469">FMOD</a>(atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], 360.);</div>
+<div class="line"><a name="l01056"></a><span class="lineno"> 1056</span>&#160;      <span class="comment">/* Init... */</span></div>
+<div class="line"><a name="l01057"></a><span class="lineno"> 1057</span>&#160;      <span class="keywordtype">double</span> ps;</div>
+<div class="line"><a name="l01058"></a><span class="lineno"> 1058</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
 <div class="line"><a name="l01059"></a><span class="lineno"> 1059</span>&#160; </div>
-<div class="line"><a name="l01060"></a><span class="lineno"> 1060</span>&#160;      <span class="comment">/* Check latitude... */</span></div>
-<div class="line"><a name="l01061"></a><span class="lineno"> 1061</span>&#160;      <span class="keywordflow">while</span> (atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; -90 || atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; 90) {</div>
-<div class="line"><a name="l01062"></a><span class="lineno"> 1062</span>&#160;        <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; 90) {</div>
-<div class="line"><a name="l01063"></a><span class="lineno"> 1063</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] = 180 - atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
-<div class="line"><a name="l01064"></a><span class="lineno"> 1064</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] += 180;</div>
-<div class="line"><a name="l01065"></a><span class="lineno"> 1065</span>&#160;        }</div>
-<div class="line"><a name="l01066"></a><span class="lineno"> 1066</span>&#160;        <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; -90) {</div>
-<div class="line"><a name="l01067"></a><span class="lineno"> 1067</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] = -180 - atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
+<div class="line"><a name="l01060"></a><span class="lineno"> 1060</span>&#160;      <span class="comment">/* Calculate modulo... */</span></div>
+<div class="line"><a name="l01061"></a><span class="lineno"> 1061</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] = <a class="code" href="libtrac_8h.html#aff4e721b49a057c4e4a3a6f56cc06469">FMOD</a>(atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], 360.);</div>
+<div class="line"><a name="l01062"></a><span class="lineno"> 1062</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] = <a class="code" href="libtrac_8h.html#aff4e721b49a057c4e4a3a6f56cc06469">FMOD</a>(atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], 360.);</div>
+<div class="line"><a name="l01063"></a><span class="lineno"> 1063</span>&#160; </div>
+<div class="line"><a name="l01064"></a><span class="lineno"> 1064</span>&#160;      <span class="comment">/* Check latitude... */</span></div>
+<div class="line"><a name="l01065"></a><span class="lineno"> 1065</span>&#160;      <span class="keywordflow">while</span> (atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; -90 || atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; 90) {</div>
+<div class="line"><a name="l01066"></a><span class="lineno"> 1066</span>&#160;        <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &gt; 90) {</div>
+<div class="line"><a name="l01067"></a><span class="lineno"> 1067</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] = 180 - atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
 <div class="line"><a name="l01068"></a><span class="lineno"> 1068</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] += 180;</div>
 <div class="line"><a name="l01069"></a><span class="lineno"> 1069</span>&#160;        }</div>
-<div class="line"><a name="l01070"></a><span class="lineno"> 1070</span>&#160;      }</div>
-<div class="line"><a name="l01071"></a><span class="lineno"> 1071</span>&#160; </div>
-<div class="line"><a name="l01072"></a><span class="lineno"> 1072</span>&#160;      <span class="comment">/* Check longitude... */</span></div>
-<div class="line"><a name="l01073"></a><span class="lineno"> 1073</span>&#160;      <span class="keywordflow">while</span> (atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &lt; -180)</div>
-<div class="line"><a name="l01074"></a><span class="lineno"> 1074</span>&#160;        atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] += 360;</div>
-<div class="line"><a name="l01075"></a><span class="lineno"> 1075</span>&#160;      <span class="keywordflow">while</span> (atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &gt;= 180)</div>
-<div class="line"><a name="l01076"></a><span class="lineno"> 1076</span>&#160;        atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] -= 360;</div>
-<div class="line"><a name="l01077"></a><span class="lineno"> 1077</span>&#160; </div>
-<div class="line"><a name="l01078"></a><span class="lineno"> 1078</span>&#160;      <span class="comment">/* Check pressure... */</span></div>
-<div class="line"><a name="l01079"></a><span class="lineno"> 1079</span>&#160;      <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt; met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[met0-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1])</div>
-<div class="line"><a name="l01080"></a><span class="lineno"> 1080</span>&#160;        atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] = met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[met0-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1];</div>
-<div class="line"><a name="l01081"></a><span class="lineno"> 1081</span>&#160;      <span class="keywordflow">else</span> <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; 300.) {</div>
-<div class="line"><a name="l01082"></a><span class="lineno"> 1082</span>&#160;        <span class="keywordtype">double</span> ps;</div>
-<div class="line"><a name="l01083"></a><span class="lineno"> 1083</span>&#160;        <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
-<div class="line"><a name="l01084"></a><span class="lineno"> 1084</span>&#160;        <a class="code" href="libtrac_8h.html#ab4d615b798ce84f6ee2eb42df3c90998">INTPOL_2D</a>(ps, 1);</div>
-<div class="line"><a name="l01085"></a><span class="lineno"> 1085</span>&#160;        <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; ps)</div>
-<div class="line"><a name="l01086"></a><span class="lineno"> 1086</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] = ps;</div>
-<div class="line"><a name="l01087"></a><span class="lineno"> 1087</span>&#160;      }</div>
-<div class="line"><a name="l01088"></a><span class="lineno"> 1088</span>&#160;    }</div>
-<div class="line"><a name="l01089"></a><span class="lineno"> 1089</span>&#160;}</div>
+<div class="line"><a name="l01070"></a><span class="lineno"> 1070</span>&#160;        <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] &lt; -90) {</div>
+<div class="line"><a name="l01071"></a><span class="lineno"> 1071</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] = -180 - atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
+<div class="line"><a name="l01072"></a><span class="lineno"> 1072</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] += 180;</div>
+<div class="line"><a name="l01073"></a><span class="lineno"> 1073</span>&#160;        }</div>
+<div class="line"><a name="l01074"></a><span class="lineno"> 1074</span>&#160;      }</div>
+<div class="line"><a name="l01075"></a><span class="lineno"> 1075</span>&#160; </div>
+<div class="line"><a name="l01076"></a><span class="lineno"> 1076</span>&#160;      <span class="comment">/* Check longitude... */</span></div>
+<div class="line"><a name="l01077"></a><span class="lineno"> 1077</span>&#160;      <span class="keywordflow">while</span> (atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &lt; -180)</div>
+<div class="line"><a name="l01078"></a><span class="lineno"> 1078</span>&#160;        atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] += 360;</div>
+<div class="line"><a name="l01079"></a><span class="lineno"> 1079</span>&#160;      <span class="keywordflow">while</span> (atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] &gt;= 180)</div>
+<div class="line"><a name="l01080"></a><span class="lineno"> 1080</span>&#160;        atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] -= 360;</div>
+<div class="line"><a name="l01081"></a><span class="lineno"> 1081</span>&#160; </div>
+<div class="line"><a name="l01082"></a><span class="lineno"> 1082</span>&#160;      <span class="comment">/* Check pressure... */</span></div>
+<div class="line"><a name="l01083"></a><span class="lineno"> 1083</span>&#160;      <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt; met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[met0-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1])</div>
+<div class="line"><a name="l01084"></a><span class="lineno"> 1084</span>&#160;        atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] = met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[met0-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1];</div>
+<div class="line"><a name="l01085"></a><span class="lineno"> 1085</span>&#160;      <span class="keywordflow">else</span> <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; 300.) {</div>
+<div class="line"><a name="l01086"></a><span class="lineno"> 1086</span>&#160;        <a class="code" href="libtrac_8h.html#ab4d615b798ce84f6ee2eb42df3c90998">INTPOL_2D</a>(ps, 1);</div>
+<div class="line"><a name="l01087"></a><span class="lineno"> 1087</span>&#160;        <span class="keywordflow">if</span> (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &gt; ps)</div>
+<div class="line"><a name="l01088"></a><span class="lineno"> 1088</span>&#160;          atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] = ps;</div>
+<div class="line"><a name="l01089"></a><span class="lineno"> 1089</span>&#160;      }</div>
+<div class="line"><a name="l01090"></a><span class="lineno"> 1090</span>&#160;    }</div>
+<div class="line"><a name="l01091"></a><span class="lineno"> 1091</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8h_html_aff4e721b49a057c4e4a3a6f56cc06469"><div class="ttname"><a href="libtrac_8h.html#aff4e721b49a057c4e4a3a6f56cc06469">FMOD</a></div><div class="ttdeci">#define FMOD(x, y)</div><div class="ttdoc">Compute floating point modulo.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00237">libtrac.h:237</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1381,34 +1383,34 @@ Here is the call graph for this function:</div>
 
 <p>Initialize random number generator... </p>
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01093">1093</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><a name="l01094"></a><span class="lineno"> 1094</span>&#160;        {</div>
-<div class="line"><a name="l01095"></a><span class="lineno"> 1095</span>&#160; </div>
-<div class="line"><a name="l01096"></a><span class="lineno"> 1096</span>&#160;  <span class="comment">/* Set timer... */</span></div>
-<div class="line"><a name="l01097"></a><span class="lineno"> 1097</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_RNG&quot;</span>, NVTX_GPU);</div>
-<div class="line"><a name="l01098"></a><span class="lineno"> 1098</span>&#160; </div>
-<div class="line"><a name="l01099"></a><span class="lineno"> 1099</span>&#160;  <span class="comment">/* Initialize random number generator... */</span></div>
-<div class="line"><a name="l01100"></a><span class="lineno"> 1100</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01101"></a><span class="lineno"> 1101</span>&#160; </div>
-<div class="line"><a name="l01102"></a><span class="lineno"> 1102</span>&#160;  <span class="keywordflow">if</span> (curandCreateGenerator(&amp;rng, CURAND_RNG_PSEUDO_DEFAULT)</div>
-<div class="line"><a name="l01103"></a><span class="lineno"> 1103</span>&#160;      != CURAND_STATUS_SUCCESS)</div>
-<div class="line"><a name="l01104"></a><span class="lineno"> 1104</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create random number generator!&quot;</span>);</div>
-<div class="line"><a name="l01105"></a><span class="lineno"> 1105</span>&#160;  <span class="keywordflow">if</span> (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))</div>
-<div class="line"><a name="l01106"></a><span class="lineno"> 1106</span>&#160;      != CURAND_STATUS_SUCCESS)</div>
-<div class="line"><a name="l01107"></a><span class="lineno"> 1107</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot set stream for random number generator!&quot;</span>);</div>
-<div class="line"><a name="l01108"></a><span class="lineno"> 1108</span>&#160; </div>
-<div class="line"><a name="l01109"></a><span class="lineno"> 1109</span>&#160;<span class="preprocessor">#else</span></div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01095">1095</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><a name="l01096"></a><span class="lineno"> 1096</span>&#160;        {</div>
+<div class="line"><a name="l01097"></a><span class="lineno"> 1097</span>&#160; </div>
+<div class="line"><a name="l01098"></a><span class="lineno"> 1098</span>&#160;  <span class="comment">/* Set timer... */</span></div>
+<div class="line"><a name="l01099"></a><span class="lineno"> 1099</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_RNG&quot;</span>, NVTX_GPU);</div>
+<div class="line"><a name="l01100"></a><span class="lineno"> 1100</span>&#160; </div>
+<div class="line"><a name="l01101"></a><span class="lineno"> 1101</span>&#160;  <span class="comment">/* Initialize random number generator... */</span></div>
+<div class="line"><a name="l01102"></a><span class="lineno"> 1102</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01103"></a><span class="lineno"> 1103</span>&#160; </div>
+<div class="line"><a name="l01104"></a><span class="lineno"> 1104</span>&#160;  <span class="keywordflow">if</span> (curandCreateGenerator(&amp;rng, CURAND_RNG_PSEUDO_DEFAULT)</div>
+<div class="line"><a name="l01105"></a><span class="lineno"> 1105</span>&#160;      != CURAND_STATUS_SUCCESS)</div>
+<div class="line"><a name="l01106"></a><span class="lineno"> 1106</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create random number generator!&quot;</span>);</div>
+<div class="line"><a name="l01107"></a><span class="lineno"> 1107</span>&#160;  <span class="keywordflow">if</span> (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))</div>
+<div class="line"><a name="l01108"></a><span class="lineno"> 1108</span>&#160;      != CURAND_STATUS_SUCCESS)</div>
+<div class="line"><a name="l01109"></a><span class="lineno"> 1109</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot set stream for random number generator!&quot;</span>);</div>
 <div class="line"><a name="l01110"></a><span class="lineno"> 1110</span>&#160; </div>
-<div class="line"><a name="l01111"></a><span class="lineno"> 1111</span>&#160;  gsl_rng_env_setup();</div>
-<div class="line"><a name="l01112"></a><span class="lineno"> 1112</span>&#160;  <span class="keywordflow">if</span> (omp_get_max_threads() &gt; <a class="code" href="libtrac_8h.html#a51ca9914034cd3e92903476fd4eebbd6">NTHREADS</a>)</div>
-<div class="line"><a name="l01113"></a><span class="lineno"> 1113</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Too many threads!&quot;</span>);</div>
-<div class="line"><a name="l01114"></a><span class="lineno"> 1114</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; <a class="code" href="libtrac_8h.html#a51ca9914034cd3e92903476fd4eebbd6">NTHREADS</a>; i++) {</div>
-<div class="line"><a name="l01115"></a><span class="lineno"> 1115</span>&#160;    rng[i] = gsl_rng_alloc(gsl_rng_default);</div>
-<div class="line"><a name="l01116"></a><span class="lineno"> 1116</span>&#160;    gsl_rng_set(rng[i], gsl_rng_default_seed + (<span class="keywordtype">long</span> <span class="keywordtype">unsigned</span>) i);</div>
-<div class="line"><a name="l01117"></a><span class="lineno"> 1117</span>&#160;  }</div>
-<div class="line"><a name="l01118"></a><span class="lineno"> 1118</span>&#160; </div>
-<div class="line"><a name="l01119"></a><span class="lineno"> 1119</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01120"></a><span class="lineno"> 1120</span>&#160;}</div>
+<div class="line"><a name="l01111"></a><span class="lineno"> 1111</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l01112"></a><span class="lineno"> 1112</span>&#160; </div>
+<div class="line"><a name="l01113"></a><span class="lineno"> 1113</span>&#160;  gsl_rng_env_setup();</div>
+<div class="line"><a name="l01114"></a><span class="lineno"> 1114</span>&#160;  <span class="keywordflow">if</span> (omp_get_max_threads() &gt; <a class="code" href="libtrac_8h.html#a51ca9914034cd3e92903476fd4eebbd6">NTHREADS</a>)</div>
+<div class="line"><a name="l01115"></a><span class="lineno"> 1115</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Too many threads!&quot;</span>);</div>
+<div class="line"><a name="l01116"></a><span class="lineno"> 1116</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 0; i &lt; <a class="code" href="libtrac_8h.html#a51ca9914034cd3e92903476fd4eebbd6">NTHREADS</a>; i++) {</div>
+<div class="line"><a name="l01117"></a><span class="lineno"> 1117</span>&#160;    rng[i] = gsl_rng_alloc(gsl_rng_default);</div>
+<div class="line"><a name="l01118"></a><span class="lineno"> 1118</span>&#160;    gsl_rng_set(rng[i], gsl_rng_default_seed + (<span class="keywordtype">long</span> <span class="keywordtype">unsigned</span>) i);</div>
+<div class="line"><a name="l01119"></a><span class="lineno"> 1119</span>&#160;  }</div>
+<div class="line"><a name="l01120"></a><span class="lineno"> 1120</span>&#160; </div>
+<div class="line"><a name="l01121"></a><span class="lineno"> 1121</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01122"></a><span class="lineno"> 1122</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8h_html_a51ca9914034cd3e92903476fd4eebbd6"><div class="ttname"><a href="libtrac_8h.html#a51ca9914034cd3e92903476fd4eebbd6">NTHREADS</a></div><div class="ttdeci">#define NTHREADS</div><div class="ttdoc">Maximum number of OpenMP threads.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00169">libtrac.h:169</a></div></div>
 </div><!-- fragment -->
 </div>
@@ -1447,49 +1449,49 @@ Here is the call graph for this function:</div>
 
 <p>Generate random numbers. </p>
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01124">1124</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><a name="l01127"></a><span class="lineno"> 1127</span>&#160;              {</div>
-<div class="line"><a name="l01128"></a><span class="lineno"> 1128</span>&#160; </div>
-<div class="line"><a name="l01129"></a><span class="lineno"> 1129</span>&#160;  <span class="comment">/* Set timer... */</span></div>
-<div class="line"><a name="l01130"></a><span class="lineno"> 1130</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_RNG&quot;</span>, NVTX_GPU);</div>
-<div class="line"><a name="l01131"></a><span class="lineno"> 1131</span>&#160; </div>
-<div class="line"><a name="l01132"></a><span class="lineno"> 1132</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01126">1126</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><a name="l01129"></a><span class="lineno"> 1129</span>&#160;              {</div>
+<div class="line"><a name="l01130"></a><span class="lineno"> 1130</span>&#160; </div>
+<div class="line"><a name="l01131"></a><span class="lineno"> 1131</span>&#160;  <span class="comment">/* Set timer... */</span></div>
+<div class="line"><a name="l01132"></a><span class="lineno"> 1132</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_RNG&quot;</span>, NVTX_GPU);</div>
 <div class="line"><a name="l01133"></a><span class="lineno"> 1133</span>&#160; </div>
-<div class="line"><a name="l01134"></a><span class="lineno"> 1134</span>&#160;<span class="preprocessor">#pragma acc host_data use_device(rs)</span></div>
-<div class="line"><a name="l01135"></a><span class="lineno"> 1135</span>&#160;  {</div>
-<div class="line"><a name="l01136"></a><span class="lineno"> 1136</span>&#160;    <span class="comment">/* Uniform distribution... */</span></div>
-<div class="line"><a name="l01137"></a><span class="lineno"> 1137</span>&#160;    <span class="keywordflow">if</span> (method == 0) {</div>
-<div class="line"><a name="l01138"></a><span class="lineno"> 1138</span>&#160;      <span class="keywordflow">if</span> (curandGenerateUniformDouble(rng, rs, (n &lt; 4 ? 4 : n))</div>
-<div class="line"><a name="l01139"></a><span class="lineno"> 1139</span>&#160;          != CURAND_STATUS_SUCCESS)</div>
-<div class="line"><a name="l01140"></a><span class="lineno"> 1140</span>&#160;        <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create random numbers!&quot;</span>);</div>
-<div class="line"><a name="l01141"></a><span class="lineno"> 1141</span>&#160;    }</div>
-<div class="line"><a name="l01142"></a><span class="lineno"> 1142</span>&#160; </div>
-<div class="line"><a name="l01143"></a><span class="lineno"> 1143</span>&#160;    <span class="comment">/* Normal distribution... */</span></div>
-<div class="line"><a name="l01144"></a><span class="lineno"> 1144</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (method == 1) {</div>
-<div class="line"><a name="l01145"></a><span class="lineno"> 1145</span>&#160;      <span class="keywordflow">if</span> (curandGenerateNormalDouble(rng, rs, (n &lt; 4 ? 4 : n), 0.0, 1.0)</div>
-<div class="line"><a name="l01146"></a><span class="lineno"> 1146</span>&#160;          != CURAND_STATUS_SUCCESS)</div>
-<div class="line"><a name="l01147"></a><span class="lineno"> 1147</span>&#160;        <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create random numbers!&quot;</span>);</div>
-<div class="line"><a name="l01148"></a><span class="lineno"> 1148</span>&#160;    }</div>
-<div class="line"><a name="l01149"></a><span class="lineno"> 1149</span>&#160;  }</div>
-<div class="line"><a name="l01150"></a><span class="lineno"> 1150</span>&#160; </div>
-<div class="line"><a name="l01151"></a><span class="lineno"> 1151</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l01134"></a><span class="lineno"> 1134</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01135"></a><span class="lineno"> 1135</span>&#160; </div>
+<div class="line"><a name="l01136"></a><span class="lineno"> 1136</span>&#160;<span class="preprocessor">#pragma acc host_data use_device(rs)</span></div>
+<div class="line"><a name="l01137"></a><span class="lineno"> 1137</span>&#160;  {</div>
+<div class="line"><a name="l01138"></a><span class="lineno"> 1138</span>&#160;    <span class="comment">/* Uniform distribution... */</span></div>
+<div class="line"><a name="l01139"></a><span class="lineno"> 1139</span>&#160;    <span class="keywordflow">if</span> (method == 0) {</div>
+<div class="line"><a name="l01140"></a><span class="lineno"> 1140</span>&#160;      <span class="keywordflow">if</span> (curandGenerateUniformDouble(rng, rs, (n &lt; 4 ? 4 : n))</div>
+<div class="line"><a name="l01141"></a><span class="lineno"> 1141</span>&#160;          != CURAND_STATUS_SUCCESS)</div>
+<div class="line"><a name="l01142"></a><span class="lineno"> 1142</span>&#160;        <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create random numbers!&quot;</span>);</div>
+<div class="line"><a name="l01143"></a><span class="lineno"> 1143</span>&#160;    }</div>
+<div class="line"><a name="l01144"></a><span class="lineno"> 1144</span>&#160; </div>
+<div class="line"><a name="l01145"></a><span class="lineno"> 1145</span>&#160;    <span class="comment">/* Normal distribution... */</span></div>
+<div class="line"><a name="l01146"></a><span class="lineno"> 1146</span>&#160;    <span class="keywordflow">else</span> <span class="keywordflow">if</span> (method == 1) {</div>
+<div class="line"><a name="l01147"></a><span class="lineno"> 1147</span>&#160;      <span class="keywordflow">if</span> (curandGenerateNormalDouble(rng, rs, (n &lt; 4 ? 4 : n), 0.0, 1.0)</div>
+<div class="line"><a name="l01148"></a><span class="lineno"> 1148</span>&#160;          != CURAND_STATUS_SUCCESS)</div>
+<div class="line"><a name="l01149"></a><span class="lineno"> 1149</span>&#160;        <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Cannot create random numbers!&quot;</span>);</div>
+<div class="line"><a name="l01150"></a><span class="lineno"> 1150</span>&#160;    }</div>
+<div class="line"><a name="l01151"></a><span class="lineno"> 1151</span>&#160;  }</div>
 <div class="line"><a name="l01152"></a><span class="lineno"> 1152</span>&#160; </div>
-<div class="line"><a name="l01153"></a><span class="lineno"> 1153</span>&#160;  <span class="comment">/* Uniform distribution... */</span></div>
-<div class="line"><a name="l01154"></a><span class="lineno"> 1154</span>&#160;  <span class="keywordflow">if</span> (method == 0) {</div>
-<div class="line"><a name="l01155"></a><span class="lineno"> 1155</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
-<div class="line"><a name="l01156"></a><span class="lineno"> 1156</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; n; ++i)</div>
-<div class="line"><a name="l01157"></a><span class="lineno"> 1157</span>&#160;      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);</div>
-<div class="line"><a name="l01158"></a><span class="lineno"> 1158</span>&#160;  }</div>
-<div class="line"><a name="l01159"></a><span class="lineno"> 1159</span>&#160; </div>
-<div class="line"><a name="l01160"></a><span class="lineno"> 1160</span>&#160;  <span class="comment">/* Normal distribution... */</span></div>
-<div class="line"><a name="l01161"></a><span class="lineno"> 1161</span>&#160;  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (method == 1) {</div>
-<div class="line"><a name="l01162"></a><span class="lineno"> 1162</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
-<div class="line"><a name="l01163"></a><span class="lineno"> 1163</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; n; ++i)</div>
-<div class="line"><a name="l01164"></a><span class="lineno"> 1164</span>&#160;      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);</div>
-<div class="line"><a name="l01165"></a><span class="lineno"> 1165</span>&#160;  }</div>
-<div class="line"><a name="l01166"></a><span class="lineno"> 1166</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01167"></a><span class="lineno"> 1167</span>&#160; </div>
-<div class="line"><a name="l01168"></a><span class="lineno"> 1168</span>&#160;}</div>
+<div class="line"><a name="l01153"></a><span class="lineno"> 1153</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l01154"></a><span class="lineno"> 1154</span>&#160; </div>
+<div class="line"><a name="l01155"></a><span class="lineno"> 1155</span>&#160;  <span class="comment">/* Uniform distribution... */</span></div>
+<div class="line"><a name="l01156"></a><span class="lineno"> 1156</span>&#160;  <span class="keywordflow">if</span> (method == 0) {</div>
+<div class="line"><a name="l01157"></a><span class="lineno"> 1157</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
+<div class="line"><a name="l01158"></a><span class="lineno"> 1158</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; n; ++i)</div>
+<div class="line"><a name="l01159"></a><span class="lineno"> 1159</span>&#160;      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);</div>
+<div class="line"><a name="l01160"></a><span class="lineno"> 1160</span>&#160;  }</div>
+<div class="line"><a name="l01161"></a><span class="lineno"> 1161</span>&#160; </div>
+<div class="line"><a name="l01162"></a><span class="lineno"> 1162</span>&#160;  <span class="comment">/* Normal distribution... */</span></div>
+<div class="line"><a name="l01163"></a><span class="lineno"> 1163</span>&#160;  <span class="keywordflow">else</span> <span class="keywordflow">if</span> (method == 1) {</div>
+<div class="line"><a name="l01164"></a><span class="lineno"> 1164</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
+<div class="line"><a name="l01165"></a><span class="lineno"> 1165</span>&#160;    <span class="keywordflow">for</span> (<span class="keywordtype">size_t</span> i = 0; i &lt; n; ++i)</div>
+<div class="line"><a name="l01166"></a><span class="lineno"> 1166</span>&#160;      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);</div>
+<div class="line"><a name="l01167"></a><span class="lineno"> 1167</span>&#160;  }</div>
+<div class="line"><a name="l01168"></a><span class="lineno"> 1168</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01169"></a><span class="lineno"> 1169</span>&#160; </div>
+<div class="line"><a name="l01170"></a><span class="lineno"> 1170</span>&#160;}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -1539,34 +1541,34 @@ Here is the call graph for this function:</div>
 
 <p>Calculate sedimentation of air parcels. </p>
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01172">1172</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><a name="l01177"></a><span class="lineno"> 1177</span>&#160;              {</div>
-<div class="line"><a name="l01178"></a><span class="lineno"> 1178</span>&#160; </div>
-<div class="line"><a name="l01179"></a><span class="lineno"> 1179</span>&#160;  <span class="comment">/* Set timer... */</span></div>
-<div class="line"><a name="l01180"></a><span class="lineno"> 1180</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_SEDI&quot;</span>, NVTX_GPU);</div>
-<div class="line"><a name="l01181"></a><span class="lineno"> 1181</span>&#160; </div>
-<div class="line"><a name="l01182"></a><span class="lineno"> 1182</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01183"></a><span class="lineno"> 1183</span>&#160;<span class="preprocessor">#pragma acc data present(ctl,met0,met1,atm,dt)</span></div>
-<div class="line"><a name="l01184"></a><span class="lineno"> 1184</span>&#160;<span class="preprocessor">#pragma acc parallel loop independent gang vector</span></div>
-<div class="line"><a name="l01185"></a><span class="lineno"> 1185</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l01186"></a><span class="lineno"> 1186</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
-<div class="line"><a name="l01187"></a><span class="lineno"> 1187</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01188"></a><span class="lineno"> 1188</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
-<div class="line"><a name="l01189"></a><span class="lineno"> 1189</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
-<div class="line"><a name="l01190"></a><span class="lineno"> 1190</span>&#160; </div>
-<div class="line"><a name="l01191"></a><span class="lineno"> 1191</span>&#160;      <span class="comment">/* Get temperature... */</span></div>
-<div class="line"><a name="l01192"></a><span class="lineno"> 1192</span>&#160;      <span class="keywordtype">double</span> t;</div>
-<div class="line"><a name="l01193"></a><span class="lineno"> 1193</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
-<div class="line"><a name="l01194"></a><span class="lineno"> 1194</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 1);</div>
-<div class="line"><a name="l01195"></a><span class="lineno"> 1195</span>&#160; </div>
-<div class="line"><a name="l01196"></a><span class="lineno"> 1196</span>&#160;      <span class="comment">/* Sedimentation velocity... */</span></div>
-<div class="line"><a name="l01197"></a><span class="lineno"> 1197</span>&#160;      <span class="keywordtype">double</span> v_s = <a class="code" href="libtrac_8c.html#a902f2084cd9e32988dd731f636d3bba0">sedi</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a66a8068ab6ffd764f3d5d26f4d50b969">qnt_r</a>][ip],</div>
-<div class="line"><a name="l01198"></a><span class="lineno"> 1198</span>&#160;                        atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a850b57e663a4a8cde2952ecdad2c905f">qnt_rho</a>][ip]);</div>
-<div class="line"><a name="l01199"></a><span class="lineno"> 1199</span>&#160; </div>
-<div class="line"><a name="l01200"></a><span class="lineno"> 1200</span>&#160;      <span class="comment">/* Calculate pressure change... */</span></div>
-<div class="line"><a name="l01201"></a><span class="lineno"> 1201</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] += <a class="code" href="libtrac_8h.html#a8d7cc5a9d3263cea4b432e83ab58c286">DZ2DP</a>(v_s * dt[ip] / 1000., atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
-<div class="line"><a name="l01202"></a><span class="lineno"> 1202</span>&#160;    }</div>
-<div class="line"><a name="l01203"></a><span class="lineno"> 1203</span>&#160;}</div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01174">1174</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><a name="l01179"></a><span class="lineno"> 1179</span>&#160;              {</div>
+<div class="line"><a name="l01180"></a><span class="lineno"> 1180</span>&#160; </div>
+<div class="line"><a name="l01181"></a><span class="lineno"> 1181</span>&#160;  <span class="comment">/* Set timer... */</span></div>
+<div class="line"><a name="l01182"></a><span class="lineno"> 1182</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_SEDI&quot;</span>, NVTX_GPU);</div>
+<div class="line"><a name="l01183"></a><span class="lineno"> 1183</span>&#160; </div>
+<div class="line"><a name="l01184"></a><span class="lineno"> 1184</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01185"></a><span class="lineno"> 1185</span>&#160;<span class="preprocessor">#pragma acc data present(ctl,met0,met1,atm,dt)</span></div>
+<div class="line"><a name="l01186"></a><span class="lineno"> 1186</span>&#160;<span class="preprocessor">#pragma acc parallel loop independent gang vector</span></div>
+<div class="line"><a name="l01187"></a><span class="lineno"> 1187</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l01188"></a><span class="lineno"> 1188</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
+<div class="line"><a name="l01189"></a><span class="lineno"> 1189</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01190"></a><span class="lineno"> 1190</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
+<div class="line"><a name="l01191"></a><span class="lineno"> 1191</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
+<div class="line"><a name="l01192"></a><span class="lineno"> 1192</span>&#160; </div>
+<div class="line"><a name="l01193"></a><span class="lineno"> 1193</span>&#160;      <span class="comment">/* Get temperature... */</span></div>
+<div class="line"><a name="l01194"></a><span class="lineno"> 1194</span>&#160;      <span class="keywordtype">double</span> t;</div>
+<div class="line"><a name="l01195"></a><span class="lineno"> 1195</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
+<div class="line"><a name="l01196"></a><span class="lineno"> 1196</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 1);</div>
+<div class="line"><a name="l01197"></a><span class="lineno"> 1197</span>&#160; </div>
+<div class="line"><a name="l01198"></a><span class="lineno"> 1198</span>&#160;      <span class="comment">/* Sedimentation velocity... */</span></div>
+<div class="line"><a name="l01199"></a><span class="lineno"> 1199</span>&#160;      <span class="keywordtype">double</span> v_s = <a class="code" href="libtrac_8c.html#a902f2084cd9e32988dd731f636d3bba0">sedi</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a66a8068ab6ffd764f3d5d26f4d50b969">qnt_r</a>][ip],</div>
+<div class="line"><a name="l01200"></a><span class="lineno"> 1200</span>&#160;                        atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a850b57e663a4a8cde2952ecdad2c905f">qnt_rho</a>][ip]);</div>
+<div class="line"><a name="l01201"></a><span class="lineno"> 1201</span>&#160; </div>
+<div class="line"><a name="l01202"></a><span class="lineno"> 1202</span>&#160;      <span class="comment">/* Calculate pressure change... */</span></div>
+<div class="line"><a name="l01203"></a><span class="lineno"> 1203</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] += <a class="code" href="libtrac_8h.html#a8d7cc5a9d3263cea4b432e83ab58c286">DZ2DP</a>(v_s * dt[ip] / 1000., atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]);</div>
+<div class="line"><a name="l01204"></a><span class="lineno"> 1204</span>&#160;    }</div>
+<div class="line"><a name="l01205"></a><span class="lineno"> 1205</span>&#160;}</div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
@@ -1625,47 +1627,47 @@ Here is the call graph for this function:</div>
 
 <p>Calculate OH chemistry. </p>
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01207">1207</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><a name="l01212"></a><span class="lineno"> 1212</span>&#160;              {</div>
-<div class="line"><a name="l01213"></a><span class="lineno"> 1213</span>&#160; </div>
-<div class="line"><a name="l01214"></a><span class="lineno"> 1214</span>&#160;  <span class="comment">/* Set timer... */</span></div>
-<div class="line"><a name="l01215"></a><span class="lineno"> 1215</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_OHCHEM&quot;</span>, NVTX_GPU);</div>
-<div class="line"><a name="l01216"></a><span class="lineno"> 1216</span>&#160; </div>
-<div class="line"><a name="l01217"></a><span class="lineno"> 1217</span>&#160;  <span class="comment">/* Check quantity flags... */</span></div>
-<div class="line"><a name="l01218"></a><span class="lineno"> 1218</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a> &lt; 0)</div>
-<div class="line"><a name="l01219"></a><span class="lineno"> 1219</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Module needs quantity mass!&quot;</span>);</div>
-<div class="line"><a name="l01220"></a><span class="lineno"> 1220</span>&#160; </div>
-<div class="line"><a name="l01221"></a><span class="lineno"> 1221</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01222"></a><span class="lineno"> 1222</span>&#160;<span class="preprocessor">#pragma acc data present(ctl,met0,met1,atm,dt)</span></div>
-<div class="line"><a name="l01223"></a><span class="lineno"> 1223</span>&#160;<span class="preprocessor">#pragma acc parallel loop independent gang vector</span></div>
-<div class="line"><a name="l01224"></a><span class="lineno"> 1224</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l01225"></a><span class="lineno"> 1225</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
-<div class="line"><a name="l01226"></a><span class="lineno"> 1226</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01227"></a><span class="lineno"> 1227</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
-<div class="line"><a name="l01228"></a><span class="lineno"> 1228</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
-<div class="line"><a name="l01229"></a><span class="lineno"> 1229</span>&#160; </div>
-<div class="line"><a name="l01230"></a><span class="lineno"> 1230</span>&#160;      <span class="comment">/* Get temperature... */</span></div>
-<div class="line"><a name="l01231"></a><span class="lineno"> 1231</span>&#160;      <span class="keywordtype">double</span> t;</div>
-<div class="line"><a name="l01232"></a><span class="lineno"> 1232</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
-<div class="line"><a name="l01233"></a><span class="lineno"> 1233</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 1);</div>
-<div class="line"><a name="l01234"></a><span class="lineno"> 1234</span>&#160; </div>
-<div class="line"><a name="l01235"></a><span class="lineno"> 1235</span>&#160;      <span class="comment">/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */</span></div>
-<div class="line"><a name="l01236"></a><span class="lineno"> 1236</span>&#160;      <span class="keywordtype">double</span> M = 7.243e21 * (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] / 1000.) / t;</div>
-<div class="line"><a name="l01237"></a><span class="lineno"> 1237</span>&#160; </div>
-<div class="line"><a name="l01238"></a><span class="lineno"> 1238</span>&#160;      <span class="comment">/* Calculate rate coefficient for X + OH + M -&gt; XOH + M</span></div>
-<div class="line"><a name="l01239"></a><span class="lineno"> 1239</span>&#160;<span class="comment">         (JPL Publication 15-10) ... */</span></div>
-<div class="line"><a name="l01240"></a><span class="lineno"> 1240</span>&#160;      <span class="keywordtype">double</span> k0 = ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[0] *</div>
-<div class="line"><a name="l01241"></a><span class="lineno"> 1241</span>&#160;        (ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[1] &gt; 0 ? pow(t / 300., -ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[1]) : 1.);</div>
-<div class="line"><a name="l01242"></a><span class="lineno"> 1242</span>&#160;      <span class="keywordtype">double</span> ki = ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[2] *</div>
-<div class="line"><a name="l01243"></a><span class="lineno"> 1243</span>&#160;        (ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[3] &gt; 0 ? pow(t / 300., -ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[3]) : 1.);</div>
-<div class="line"><a name="l01244"></a><span class="lineno"> 1244</span>&#160;      <span class="keywordtype">double</span> c = log10(k0 * M / ki);</div>
-<div class="line"><a name="l01245"></a><span class="lineno"> 1245</span>&#160;      <span class="keywordtype">double</span> k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));</div>
-<div class="line"><a name="l01246"></a><span class="lineno"> 1246</span>&#160; </div>
-<div class="line"><a name="l01247"></a><span class="lineno"> 1247</span>&#160;      <span class="comment">/* Calculate exponential decay... */</span></div>
-<div class="line"><a name="l01248"></a><span class="lineno"> 1248</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a>][ip] *=</div>
-<div class="line"><a name="l01249"></a><span class="lineno"> 1249</span>&#160;        exp(-dt[ip] * k * <a class="code" href="libtrac_8c.html#a15c645d504dac10658b98aafd8c2cbe2">clim_oh</a>(atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]));</div>
-<div class="line"><a name="l01250"></a><span class="lineno"> 1250</span>&#160;    }</div>
-<div class="line"><a name="l01251"></a><span class="lineno"> 1251</span>&#160;}</div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01209">1209</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><a name="l01214"></a><span class="lineno"> 1214</span>&#160;              {</div>
+<div class="line"><a name="l01215"></a><span class="lineno"> 1215</span>&#160; </div>
+<div class="line"><a name="l01216"></a><span class="lineno"> 1216</span>&#160;  <span class="comment">/* Set timer... */</span></div>
+<div class="line"><a name="l01217"></a><span class="lineno"> 1217</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_OHCHEM&quot;</span>, NVTX_GPU);</div>
+<div class="line"><a name="l01218"></a><span class="lineno"> 1218</span>&#160; </div>
+<div class="line"><a name="l01219"></a><span class="lineno"> 1219</span>&#160;  <span class="comment">/* Check quantity flags... */</span></div>
+<div class="line"><a name="l01220"></a><span class="lineno"> 1220</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a> &lt; 0)</div>
+<div class="line"><a name="l01221"></a><span class="lineno"> 1221</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Module needs quantity mass!&quot;</span>);</div>
+<div class="line"><a name="l01222"></a><span class="lineno"> 1222</span>&#160; </div>
+<div class="line"><a name="l01223"></a><span class="lineno"> 1223</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01224"></a><span class="lineno"> 1224</span>&#160;<span class="preprocessor">#pragma acc data present(ctl,met0,met1,atm,dt)</span></div>
+<div class="line"><a name="l01225"></a><span class="lineno"> 1225</span>&#160;<span class="preprocessor">#pragma acc parallel loop independent gang vector</span></div>
+<div class="line"><a name="l01226"></a><span class="lineno"> 1226</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l01227"></a><span class="lineno"> 1227</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
+<div class="line"><a name="l01228"></a><span class="lineno"> 1228</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01229"></a><span class="lineno"> 1229</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
+<div class="line"><a name="l01230"></a><span class="lineno"> 1230</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
+<div class="line"><a name="l01231"></a><span class="lineno"> 1231</span>&#160; </div>
+<div class="line"><a name="l01232"></a><span class="lineno"> 1232</span>&#160;      <span class="comment">/* Get temperature... */</span></div>
+<div class="line"><a name="l01233"></a><span class="lineno"> 1233</span>&#160;      <span class="keywordtype">double</span> t;</div>
+<div class="line"><a name="l01234"></a><span class="lineno"> 1234</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
+<div class="line"><a name="l01235"></a><span class="lineno"> 1235</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 1);</div>
+<div class="line"><a name="l01236"></a><span class="lineno"> 1236</span>&#160; </div>
+<div class="line"><a name="l01237"></a><span class="lineno"> 1237</span>&#160;      <span class="comment">/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */</span></div>
+<div class="line"><a name="l01238"></a><span class="lineno"> 1238</span>&#160;      <span class="keywordtype">double</span> M = 7.243e21 * (atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] / 1000.) / t;</div>
+<div class="line"><a name="l01239"></a><span class="lineno"> 1239</span>&#160; </div>
+<div class="line"><a name="l01240"></a><span class="lineno"> 1240</span>&#160;      <span class="comment">/* Calculate rate coefficient for X + OH + M -&gt; XOH + M</span></div>
+<div class="line"><a name="l01241"></a><span class="lineno"> 1241</span>&#160;<span class="comment">         (JPL Publication 15-10) ... */</span></div>
+<div class="line"><a name="l01242"></a><span class="lineno"> 1242</span>&#160;      <span class="keywordtype">double</span> k0 = ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[0] *</div>
+<div class="line"><a name="l01243"></a><span class="lineno"> 1243</span>&#160;        (ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[1] &gt; 0 ? pow(t / 300., -ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[1]) : 1.);</div>
+<div class="line"><a name="l01244"></a><span class="lineno"> 1244</span>&#160;      <span class="keywordtype">double</span> ki = ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[2] *</div>
+<div class="line"><a name="l01245"></a><span class="lineno"> 1245</span>&#160;        (ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[3] &gt; 0 ? pow(t / 300., -ctl-&gt;<a class="code" href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">oh_chem</a>[3]) : 1.);</div>
+<div class="line"><a name="l01246"></a><span class="lineno"> 1246</span>&#160;      <span class="keywordtype">double</span> c = log10(k0 * M / ki);</div>
+<div class="line"><a name="l01247"></a><span class="lineno"> 1247</span>&#160;      <span class="keywordtype">double</span> k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));</div>
+<div class="line"><a name="l01248"></a><span class="lineno"> 1248</span>&#160; </div>
+<div class="line"><a name="l01249"></a><span class="lineno"> 1249</span>&#160;      <span class="comment">/* Calculate exponential decay... */</span></div>
+<div class="line"><a name="l01250"></a><span class="lineno"> 1250</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a>][ip] *=</div>
+<div class="line"><a name="l01251"></a><span class="lineno"> 1251</span>&#160;        exp(-dt[ip] * k * <a class="code" href="libtrac_8c.html#a15c645d504dac10658b98aafd8c2cbe2">clim_oh</a>(atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]));</div>
+<div class="line"><a name="l01252"></a><span class="lineno"> 1252</span>&#160;    }</div>
+<div class="line"><a name="l01253"></a><span class="lineno"> 1253</span>&#160;}</div>
 <div class="ttc" id="astructctl__t_html_a3a6b353625c774d90aa5286e69f1fc5f"><div class="ttname"><a href="structctl__t.html#a3a6b353625c774d90aa5286e69f1fc5f">ctl_t::oh_chem</a></div><div class="ttdeci">double oh_chem[4]</div><div class="ttdoc">Coefficients for OH chemistry (k0, n, kinf, m).</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00763">libtrac.h:763</a></div></div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
@@ -1725,100 +1727,100 @@ Here is the call graph for this function:</div>
 
 <p>Calculate wet deposition. </p>
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01255">1255</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><a name="l01260"></a><span class="lineno"> 1260</span>&#160;              {</div>
-<div class="line"><a name="l01261"></a><span class="lineno"> 1261</span>&#160; </div>
-<div class="line"><a name="l01262"></a><span class="lineno"> 1262</span>&#160;  <span class="comment">/* Set timer... */</span></div>
-<div class="line"><a name="l01263"></a><span class="lineno"> 1263</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_WETDEPO&quot;</span>, NVTX_GPU);</div>
-<div class="line"><a name="l01264"></a><span class="lineno"> 1264</span>&#160; </div>
-<div class="line"><a name="l01265"></a><span class="lineno"> 1265</span>&#160;  <span class="comment">/* Check quantity flags... */</span></div>
-<div class="line"><a name="l01266"></a><span class="lineno"> 1266</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a> &lt; 0)</div>
-<div class="line"><a name="l01267"></a><span class="lineno"> 1267</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Module needs quantity mass!&quot;</span>);</div>
-<div class="line"><a name="l01268"></a><span class="lineno"> 1268</span>&#160; </div>
-<div class="line"><a name="l01269"></a><span class="lineno"> 1269</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01270"></a><span class="lineno"> 1270</span>&#160;<span class="preprocessor">#pragma acc data present(ctl,met0,met1,atm,dt)</span></div>
-<div class="line"><a name="l01271"></a><span class="lineno"> 1271</span>&#160;<span class="preprocessor">#pragma acc parallel loop independent gang vector</span></div>
-<div class="line"><a name="l01272"></a><span class="lineno"> 1272</span>&#160;<span class="preprocessor">#else</span></div>
-<div class="line"><a name="l01273"></a><span class="lineno"> 1273</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
-<div class="line"><a name="l01274"></a><span class="lineno"> 1274</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01275"></a><span class="lineno"> 1275</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
-<div class="line"><a name="l01276"></a><span class="lineno"> 1276</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
-<div class="line"><a name="l01277"></a><span class="lineno"> 1277</span>&#160; </div>
-<div class="line"><a name="l01278"></a><span class="lineno"> 1278</span>&#160;      <span class="keywordtype">double</span> cl, dz, h, lambda = 0, t, iwc, lwc, pc;</div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01257">1257</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><a name="l01262"></a><span class="lineno"> 1262</span>&#160;              {</div>
+<div class="line"><a name="l01263"></a><span class="lineno"> 1263</span>&#160; </div>
+<div class="line"><a name="l01264"></a><span class="lineno"> 1264</span>&#160;  <span class="comment">/* Set timer... */</span></div>
+<div class="line"><a name="l01265"></a><span class="lineno"> 1265</span>&#160;  <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;MODULE_WETDEPO&quot;</span>, NVTX_GPU);</div>
+<div class="line"><a name="l01266"></a><span class="lineno"> 1266</span>&#160; </div>
+<div class="line"><a name="l01267"></a><span class="lineno"> 1267</span>&#160;  <span class="comment">/* Check quantity flags... */</span></div>
+<div class="line"><a name="l01268"></a><span class="lineno"> 1268</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a> &lt; 0)</div>
+<div class="line"><a name="l01269"></a><span class="lineno"> 1269</span>&#160;    <a class="code" href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a>(<span class="stringliteral">&quot;Module needs quantity mass!&quot;</span>);</div>
+<div class="line"><a name="l01270"></a><span class="lineno"> 1270</span>&#160; </div>
+<div class="line"><a name="l01271"></a><span class="lineno"> 1271</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01272"></a><span class="lineno"> 1272</span>&#160;<span class="preprocessor">#pragma acc data present(ctl,met0,met1,atm,dt)</span></div>
+<div class="line"><a name="l01273"></a><span class="lineno"> 1273</span>&#160;<span class="preprocessor">#pragma acc parallel loop independent gang vector</span></div>
+<div class="line"><a name="l01274"></a><span class="lineno"> 1274</span>&#160;<span class="preprocessor">#else</span></div>
+<div class="line"><a name="l01275"></a><span class="lineno"> 1275</span>&#160;<span class="preprocessor">#pragma omp parallel for default(shared)</span></div>
+<div class="line"><a name="l01276"></a><span class="lineno"> 1276</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01277"></a><span class="lineno"> 1277</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++)</div>
+<div class="line"><a name="l01278"></a><span class="lineno"> 1278</span>&#160;    <span class="keywordflow">if</span> (dt[ip] != 0) {</div>
 <div class="line"><a name="l01279"></a><span class="lineno"> 1279</span>&#160; </div>
-<div class="line"><a name="l01280"></a><span class="lineno"> 1280</span>&#160;      <span class="keywordtype">int</span> inside;</div>
+<div class="line"><a name="l01280"></a><span class="lineno"> 1280</span>&#160;      <span class="keywordtype">double</span> cl, dz, h, lambda = 0, t, iwc, lwc, pc;</div>
 <div class="line"><a name="l01281"></a><span class="lineno"> 1281</span>&#160; </div>
-<div class="line"><a name="l01282"></a><span class="lineno"> 1282</span>&#160;      <span class="comment">/* Check whether particle is below cloud top... */</span></div>
-<div class="line"><a name="l01283"></a><span class="lineno"> 1283</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
-<div class="line"><a name="l01284"></a><span class="lineno"> 1284</span>&#160;      <a class="code" href="libtrac_8h.html#ab4d615b798ce84f6ee2eb42df3c90998">INTPOL_2D</a>(pc, 1);</div>
-<div class="line"><a name="l01285"></a><span class="lineno"> 1285</span>&#160;      <span class="keywordflow">if</span> (!isfinite(pc) || atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt;= pc)</div>
-<div class="line"><a name="l01286"></a><span class="lineno"> 1286</span>&#160;        <span class="keywordflow">continue</span>;</div>
-<div class="line"><a name="l01287"></a><span class="lineno"> 1287</span>&#160; </div>
-<div class="line"><a name="l01288"></a><span class="lineno"> 1288</span>&#160;      <span class="comment">/* Estimate precipitation rate (Pisso et al., 2019)... */</span></div>
-<div class="line"><a name="l01289"></a><span class="lineno"> 1289</span>&#160;      <a class="code" href="libtrac_8h.html#ab4d615b798ce84f6ee2eb42df3c90998">INTPOL_2D</a>(cl, 0);</div>
-<div class="line"><a name="l01290"></a><span class="lineno"> 1290</span>&#160;      <span class="keywordtype">double</span> Is = pow(2. * cl, 1. / 0.36);</div>
-<div class="line"><a name="l01291"></a><span class="lineno"> 1291</span>&#160;      <span class="keywordflow">if</span> (Is &lt; 0.01)</div>
-<div class="line"><a name="l01292"></a><span class="lineno"> 1292</span>&#160;        <span class="keywordflow">continue</span>;</div>
-<div class="line"><a name="l01293"></a><span class="lineno"> 1293</span>&#160; </div>
-<div class="line"><a name="l01294"></a><span class="lineno"> 1294</span>&#160;      <span class="comment">/* Check whether particle is inside or below cloud... */</span></div>
-<div class="line"><a name="l01295"></a><span class="lineno"> 1295</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(lwc, 1);</div>
-<div class="line"><a name="l01296"></a><span class="lineno"> 1296</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(iwc, 0);</div>
-<div class="line"><a name="l01297"></a><span class="lineno"> 1297</span>&#160;      inside = (iwc &gt; 0 || lwc &gt; 0);</div>
-<div class="line"><a name="l01298"></a><span class="lineno"> 1298</span>&#160; </div>
-<div class="line"><a name="l01299"></a><span class="lineno"> 1299</span>&#160;      <span class="comment">/* Calculate in-cloud scavenging coefficient... */</span></div>
-<div class="line"><a name="l01300"></a><span class="lineno"> 1300</span>&#160;      <span class="keywordflow">if</span> (inside) {</div>
-<div class="line"><a name="l01301"></a><span class="lineno"> 1301</span>&#160; </div>
-<div class="line"><a name="l01302"></a><span class="lineno"> 1302</span>&#160;        <span class="comment">/* Use exponential dependency for particles... */</span></div>
-<div class="line"><a name="l01303"></a><span class="lineno"> 1303</span>&#160;        <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[0] &gt; 0)</div>
-<div class="line"><a name="l01304"></a><span class="lineno"> 1304</span>&#160;          lambda = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[0] * pow(Is, ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[1]);</div>
-<div class="line"><a name="l01305"></a><span class="lineno"> 1305</span>&#160; </div>
-<div class="line"><a name="l01306"></a><span class="lineno"> 1306</span>&#160;        <span class="comment">/* Use Henry&#39;s law for gases... */</span></div>
-<div class="line"><a name="l01307"></a><span class="lineno"> 1307</span>&#160;        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[2] &gt; 0) {</div>
-<div class="line"><a name="l01308"></a><span class="lineno"> 1308</span>&#160; </div>
-<div class="line"><a name="l01309"></a><span class="lineno"> 1309</span>&#160;          <span class="comment">/* Get temperature... */</span></div>
-<div class="line"><a name="l01310"></a><span class="lineno"> 1310</span>&#160;          <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 0);</div>
-<div class="line"><a name="l01311"></a><span class="lineno"> 1311</span>&#160; </div>
-<div class="line"><a name="l01312"></a><span class="lineno"> 1312</span>&#160;          <span class="comment">/* Get Henry&#39;s constant (Sander, 2015)... */</span></div>
-<div class="line"><a name="l01313"></a><span class="lineno"> 1313</span>&#160;          h = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[2]</div>
-<div class="line"><a name="l01314"></a><span class="lineno"> 1314</span>&#160;            * exp(ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[3] * (1. / t - 1. / 298.15));</div>
-<div class="line"><a name="l01315"></a><span class="lineno"> 1315</span>&#160; </div>
-<div class="line"><a name="l01316"></a><span class="lineno"> 1316</span>&#160;          <span class="comment">/* Estimate depth of cloud layer... */</span></div>
-<div class="line"><a name="l01317"></a><span class="lineno"> 1317</span>&#160;          dz = 1e3 * <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(pc);</div>
-<div class="line"><a name="l01318"></a><span class="lineno"> 1318</span>&#160; </div>
-<div class="line"><a name="l01319"></a><span class="lineno"> 1319</span>&#160;          <span class="comment">/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */</span></div>
-<div class="line"><a name="l01320"></a><span class="lineno"> 1320</span>&#160;          lambda = h * <a class="code" href="libtrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e">RI</a> * t * Is / 3.6e6 * dz;</div>
-<div class="line"><a name="l01321"></a><span class="lineno"> 1321</span>&#160;        }</div>
-<div class="line"><a name="l01322"></a><span class="lineno"> 1322</span>&#160;      }</div>
-<div class="line"><a name="l01323"></a><span class="lineno"> 1323</span>&#160; </div>
-<div class="line"><a name="l01324"></a><span class="lineno"> 1324</span>&#160;      <span class="comment">/* Calculate below-cloud scavenging coefficient... */</span></div>
-<div class="line"><a name="l01325"></a><span class="lineno"> 1325</span>&#160;      <span class="keywordflow">else</span> {</div>
-<div class="line"><a name="l01326"></a><span class="lineno"> 1326</span>&#160; </div>
-<div class="line"><a name="l01327"></a><span class="lineno"> 1327</span>&#160;        <span class="comment">/* Use exponential dependency for particles... */</span></div>
-<div class="line"><a name="l01328"></a><span class="lineno"> 1328</span>&#160;        <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[4] &gt; 0)</div>
-<div class="line"><a name="l01329"></a><span class="lineno"> 1329</span>&#160;          lambda = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[4] * pow(Is, ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[5]);</div>
-<div class="line"><a name="l01330"></a><span class="lineno"> 1330</span>&#160; </div>
-<div class="line"><a name="l01331"></a><span class="lineno"> 1331</span>&#160;        <span class="comment">/* Use Henry&#39;s law for gases... */</span></div>
-<div class="line"><a name="l01332"></a><span class="lineno"> 1332</span>&#160;        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[6] &gt; 0) {</div>
-<div class="line"><a name="l01333"></a><span class="lineno"> 1333</span>&#160; </div>
-<div class="line"><a name="l01334"></a><span class="lineno"> 1334</span>&#160;          <span class="comment">/* Get temperature... */</span></div>
-<div class="line"><a name="l01335"></a><span class="lineno"> 1335</span>&#160;          <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 0);</div>
-<div class="line"><a name="l01336"></a><span class="lineno"> 1336</span>&#160; </div>
-<div class="line"><a name="l01337"></a><span class="lineno"> 1337</span>&#160;          <span class="comment">/* Get Henry&#39;s constant (Sander, 2015)... */</span></div>
-<div class="line"><a name="l01338"></a><span class="lineno"> 1338</span>&#160;          h = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[6]</div>
-<div class="line"><a name="l01339"></a><span class="lineno"> 1339</span>&#160;            * exp(ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[7] * (1. / t - 1. / 298.15));</div>
-<div class="line"><a name="l01340"></a><span class="lineno"> 1340</span>&#160; </div>
-<div class="line"><a name="l01341"></a><span class="lineno"> 1341</span>&#160;          <span class="comment">/* Estimate depth of cloud layer... */</span></div>
-<div class="line"><a name="l01342"></a><span class="lineno"> 1342</span>&#160;          dz = 1e3 * <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(pc);</div>
-<div class="line"><a name="l01343"></a><span class="lineno"> 1343</span>&#160; </div>
-<div class="line"><a name="l01344"></a><span class="lineno"> 1344</span>&#160;          <span class="comment">/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */</span></div>
-<div class="line"><a name="l01345"></a><span class="lineno"> 1345</span>&#160;          lambda = h * <a class="code" href="libtrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e">RI</a> * t * Is / 3.6e6 * dz;</div>
-<div class="line"><a name="l01346"></a><span class="lineno"> 1346</span>&#160;        }</div>
-<div class="line"><a name="l01347"></a><span class="lineno"> 1347</span>&#160;      }</div>
-<div class="line"><a name="l01348"></a><span class="lineno"> 1348</span>&#160; </div>
-<div class="line"><a name="l01349"></a><span class="lineno"> 1349</span>&#160;      <span class="comment">/* Calculate exponential decay of mass... */</span></div>
-<div class="line"><a name="l01350"></a><span class="lineno"> 1350</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a>][ip] *= exp(-dt[ip] * lambda);</div>
-<div class="line"><a name="l01351"></a><span class="lineno"> 1351</span>&#160;    }</div>
-<div class="line"><a name="l01352"></a><span class="lineno"> 1352</span>&#160;}</div>
+<div class="line"><a name="l01282"></a><span class="lineno"> 1282</span>&#160;      <span class="keywordtype">int</span> inside;</div>
+<div class="line"><a name="l01283"></a><span class="lineno"> 1283</span>&#160; </div>
+<div class="line"><a name="l01284"></a><span class="lineno"> 1284</span>&#160;      <span class="comment">/* Check whether particle is below cloud top... */</span></div>
+<div class="line"><a name="l01285"></a><span class="lineno"> 1285</span>&#160;      <a class="code" href="libtrac_8h.html#a3a1d95aec47889277a6bf1e25f366c24">INTPOL_INIT</a>;</div>
+<div class="line"><a name="l01286"></a><span class="lineno"> 1286</span>&#160;      <a class="code" href="libtrac_8h.html#ab4d615b798ce84f6ee2eb42df3c90998">INTPOL_2D</a>(pc, 1);</div>
+<div class="line"><a name="l01287"></a><span class="lineno"> 1287</span>&#160;      <span class="keywordflow">if</span> (!isfinite(pc) || atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] &lt;= pc)</div>
+<div class="line"><a name="l01288"></a><span class="lineno"> 1288</span>&#160;        <span class="keywordflow">continue</span>;</div>
+<div class="line"><a name="l01289"></a><span class="lineno"> 1289</span>&#160; </div>
+<div class="line"><a name="l01290"></a><span class="lineno"> 1290</span>&#160;      <span class="comment">/* Estimate precipitation rate (Pisso et al., 2019)... */</span></div>
+<div class="line"><a name="l01291"></a><span class="lineno"> 1291</span>&#160;      <a class="code" href="libtrac_8h.html#ab4d615b798ce84f6ee2eb42df3c90998">INTPOL_2D</a>(cl, 0);</div>
+<div class="line"><a name="l01292"></a><span class="lineno"> 1292</span>&#160;      <span class="keywordtype">double</span> Is = pow(2. * cl, 1. / 0.36);</div>
+<div class="line"><a name="l01293"></a><span class="lineno"> 1293</span>&#160;      <span class="keywordflow">if</span> (Is &lt; 0.01)</div>
+<div class="line"><a name="l01294"></a><span class="lineno"> 1294</span>&#160;        <span class="keywordflow">continue</span>;</div>
+<div class="line"><a name="l01295"></a><span class="lineno"> 1295</span>&#160; </div>
+<div class="line"><a name="l01296"></a><span class="lineno"> 1296</span>&#160;      <span class="comment">/* Check whether particle is inside or below cloud... */</span></div>
+<div class="line"><a name="l01297"></a><span class="lineno"> 1297</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(lwc, 1);</div>
+<div class="line"><a name="l01298"></a><span class="lineno"> 1298</span>&#160;      <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(iwc, 0);</div>
+<div class="line"><a name="l01299"></a><span class="lineno"> 1299</span>&#160;      inside = (iwc &gt; 0 || lwc &gt; 0);</div>
+<div class="line"><a name="l01300"></a><span class="lineno"> 1300</span>&#160; </div>
+<div class="line"><a name="l01301"></a><span class="lineno"> 1301</span>&#160;      <span class="comment">/* Calculate in-cloud scavenging coefficient... */</span></div>
+<div class="line"><a name="l01302"></a><span class="lineno"> 1302</span>&#160;      <span class="keywordflow">if</span> (inside) {</div>
+<div class="line"><a name="l01303"></a><span class="lineno"> 1303</span>&#160; </div>
+<div class="line"><a name="l01304"></a><span class="lineno"> 1304</span>&#160;        <span class="comment">/* Use exponential dependency for particles... */</span></div>
+<div class="line"><a name="l01305"></a><span class="lineno"> 1305</span>&#160;        <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[0] &gt; 0)</div>
+<div class="line"><a name="l01306"></a><span class="lineno"> 1306</span>&#160;          lambda = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[0] * pow(Is, ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[1]);</div>
+<div class="line"><a name="l01307"></a><span class="lineno"> 1307</span>&#160; </div>
+<div class="line"><a name="l01308"></a><span class="lineno"> 1308</span>&#160;        <span class="comment">/* Use Henry&#39;s law for gases... */</span></div>
+<div class="line"><a name="l01309"></a><span class="lineno"> 1309</span>&#160;        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[2] &gt; 0) {</div>
+<div class="line"><a name="l01310"></a><span class="lineno"> 1310</span>&#160; </div>
+<div class="line"><a name="l01311"></a><span class="lineno"> 1311</span>&#160;          <span class="comment">/* Get temperature... */</span></div>
+<div class="line"><a name="l01312"></a><span class="lineno"> 1312</span>&#160;          <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 0);</div>
+<div class="line"><a name="l01313"></a><span class="lineno"> 1313</span>&#160; </div>
+<div class="line"><a name="l01314"></a><span class="lineno"> 1314</span>&#160;          <span class="comment">/* Get Henry&#39;s constant (Sander, 2015)... */</span></div>
+<div class="line"><a name="l01315"></a><span class="lineno"> 1315</span>&#160;          h = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[2]</div>
+<div class="line"><a name="l01316"></a><span class="lineno"> 1316</span>&#160;            * exp(ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[3] * (1. / t - 1. / 298.15));</div>
+<div class="line"><a name="l01317"></a><span class="lineno"> 1317</span>&#160; </div>
+<div class="line"><a name="l01318"></a><span class="lineno"> 1318</span>&#160;          <span class="comment">/* Estimate depth of cloud layer... */</span></div>
+<div class="line"><a name="l01319"></a><span class="lineno"> 1319</span>&#160;          dz = 1e3 * <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(pc);</div>
+<div class="line"><a name="l01320"></a><span class="lineno"> 1320</span>&#160; </div>
+<div class="line"><a name="l01321"></a><span class="lineno"> 1321</span>&#160;          <span class="comment">/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */</span></div>
+<div class="line"><a name="l01322"></a><span class="lineno"> 1322</span>&#160;          lambda = h * <a class="code" href="libtrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e">RI</a> * t * Is / 3.6e6 * dz;</div>
+<div class="line"><a name="l01323"></a><span class="lineno"> 1323</span>&#160;        }</div>
+<div class="line"><a name="l01324"></a><span class="lineno"> 1324</span>&#160;      }</div>
+<div class="line"><a name="l01325"></a><span class="lineno"> 1325</span>&#160; </div>
+<div class="line"><a name="l01326"></a><span class="lineno"> 1326</span>&#160;      <span class="comment">/* Calculate below-cloud scavenging coefficient... */</span></div>
+<div class="line"><a name="l01327"></a><span class="lineno"> 1327</span>&#160;      <span class="keywordflow">else</span> {</div>
+<div class="line"><a name="l01328"></a><span class="lineno"> 1328</span>&#160; </div>
+<div class="line"><a name="l01329"></a><span class="lineno"> 1329</span>&#160;        <span class="comment">/* Use exponential dependency for particles... */</span></div>
+<div class="line"><a name="l01330"></a><span class="lineno"> 1330</span>&#160;        <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[4] &gt; 0)</div>
+<div class="line"><a name="l01331"></a><span class="lineno"> 1331</span>&#160;          lambda = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[4] * pow(Is, ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[5]);</div>
+<div class="line"><a name="l01332"></a><span class="lineno"> 1332</span>&#160; </div>
+<div class="line"><a name="l01333"></a><span class="lineno"> 1333</span>&#160;        <span class="comment">/* Use Henry&#39;s law for gases... */</span></div>
+<div class="line"><a name="l01334"></a><span class="lineno"> 1334</span>&#160;        <span class="keywordflow">else</span> <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[6] &gt; 0) {</div>
+<div class="line"><a name="l01335"></a><span class="lineno"> 1335</span>&#160; </div>
+<div class="line"><a name="l01336"></a><span class="lineno"> 1336</span>&#160;          <span class="comment">/* Get temperature... */</span></div>
+<div class="line"><a name="l01337"></a><span class="lineno"> 1337</span>&#160;          <a class="code" href="libtrac_8h.html#a48e10ecee070acb7be2df6a8ca3d9764">INTPOL_3D</a>(t, 0);</div>
+<div class="line"><a name="l01338"></a><span class="lineno"> 1338</span>&#160; </div>
+<div class="line"><a name="l01339"></a><span class="lineno"> 1339</span>&#160;          <span class="comment">/* Get Henry&#39;s constant (Sander, 2015)... */</span></div>
+<div class="line"><a name="l01340"></a><span class="lineno"> 1340</span>&#160;          h = ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[6]</div>
+<div class="line"><a name="l01341"></a><span class="lineno"> 1341</span>&#160;            * exp(ctl-&gt;<a class="code" href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">wet_depo</a>[7] * (1. / t - 1. / 298.15));</div>
+<div class="line"><a name="l01342"></a><span class="lineno"> 1342</span>&#160; </div>
+<div class="line"><a name="l01343"></a><span class="lineno"> 1343</span>&#160;          <span class="comment">/* Estimate depth of cloud layer... */</span></div>
+<div class="line"><a name="l01344"></a><span class="lineno"> 1344</span>&#160;          dz = 1e3 * <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(pc);</div>
+<div class="line"><a name="l01345"></a><span class="lineno"> 1345</span>&#160; </div>
+<div class="line"><a name="l01346"></a><span class="lineno"> 1346</span>&#160;          <span class="comment">/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */</span></div>
+<div class="line"><a name="l01347"></a><span class="lineno"> 1347</span>&#160;          lambda = h * <a class="code" href="libtrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e">RI</a> * t * Is / 3.6e6 * dz;</div>
+<div class="line"><a name="l01348"></a><span class="lineno"> 1348</span>&#160;        }</div>
+<div class="line"><a name="l01349"></a><span class="lineno"> 1349</span>&#160;      }</div>
+<div class="line"><a name="l01350"></a><span class="lineno"> 1350</span>&#160; </div>
+<div class="line"><a name="l01351"></a><span class="lineno"> 1351</span>&#160;      <span class="comment">/* Calculate exponential decay of mass... */</span></div>
+<div class="line"><a name="l01352"></a><span class="lineno"> 1352</span>&#160;      atm-&gt;<a class="code" href="structatm__t.html#aa1c8de5772120f4a283c9cedcbe43fb7">q</a>[ctl-&gt;<a class="code" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a>][ip] *= exp(-dt[ip] * lambda);</div>
+<div class="line"><a name="l01353"></a><span class="lineno"> 1353</span>&#160;    }</div>
+<div class="line"><a name="l01354"></a><span class="lineno"> 1354</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8h_html_a7e71def3baefc10ec36f1dd48da4050e"><div class="ttname"><a href="libtrac_8h.html#a7e71def3baefc10ec36f1dd48da4050e">RI</a></div><div class="ttdeci">#define RI</div><div class="ttdoc">Ideal gas constant [J/(mol K)].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00108">libtrac.h:108</a></div></div>
 <div class="ttc" id="astructctl__t_html_a8382680958531ce0b0f64849dcc87da3"><div class="ttname"><a href="structctl__t.html#a8382680958531ce0b0f64849dcc87da3">ctl_t::wet_depo</a></div><div class="ttdeci">double wet_depo[8]</div><div class="ttdoc">Coefficients for wet deposition (Ai, Bi, Hi, Ci, Ab, Bb, Hb, Cb).</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00769">libtrac.h:769</a></div></div>
 </div><!-- fragment -->
@@ -1876,74 +1878,74 @@ Here is the call graph for this function:</div>
 
 <p>Write simulation output. </p>
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01356">1356</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><a name="l01362"></a><span class="lineno"> 1362</span>&#160;            {</div>
-<div class="line"><a name="l01363"></a><span class="lineno"> 1363</span>&#160; </div>
-<div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;  <span class="keywordtype">char</span> filename[2 * <a class="code" href="libtrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>];</div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l01358">1358</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><a name="l01364"></a><span class="lineno"> 1364</span>&#160;            {</div>
 <div class="line"><a name="l01365"></a><span class="lineno"> 1365</span>&#160; </div>
-<div class="line"><a name="l01366"></a><span class="lineno"> 1366</span>&#160;  <span class="keywordtype">double</span> r;</div>
+<div class="line"><a name="l01366"></a><span class="lineno"> 1366</span>&#160;  <span class="keywordtype">char</span> filename[2 * <a class="code" href="libtrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>];</div>
 <div class="line"><a name="l01367"></a><span class="lineno"> 1367</span>&#160; </div>
-<div class="line"><a name="l01368"></a><span class="lineno"> 1368</span>&#160;  <span class="keywordtype">int</span> year, mon, day, hour, min, sec;</div>
+<div class="line"><a name="l01368"></a><span class="lineno"> 1368</span>&#160;  <span class="keywordtype">double</span> r;</div>
 <div class="line"><a name="l01369"></a><span class="lineno"> 1369</span>&#160; </div>
-<div class="line"><a name="l01370"></a><span class="lineno"> 1370</span>&#160;  <span class="comment">/* Get time... */</span></div>
-<div class="line"><a name="l01371"></a><span class="lineno"> 1371</span>&#160;  <a class="code" href="libtrac_8c.html#aa6699ff1f931aa8913d3f5ae608b2582">jsec2time</a>(t, &amp;year, &amp;mon, &amp;day, &amp;hour, &amp;min, &amp;sec, &amp;r);</div>
-<div class="line"><a name="l01372"></a><span class="lineno"> 1372</span>&#160; </div>
-<div class="line"><a name="l01373"></a><span class="lineno"> 1373</span>&#160;  <span class="comment">/* Update host... */</span></div>
-<div class="line"><a name="l01374"></a><span class="lineno"> 1374</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
-<div class="line"><a name="l01375"></a><span class="lineno"> 1375</span>&#160;  <span class="keywordflow">if</span> ((ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0)</div>
-<div class="line"><a name="l01376"></a><span class="lineno"> 1376</span>&#160;      || (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0)</div>
-<div class="line"><a name="l01377"></a><span class="lineno"> 1377</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> || ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span></div>
-<div class="line"><a name="l01378"></a><span class="lineno"> 1378</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> || ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span></div>
-<div class="line"><a name="l01379"></a><span class="lineno"> 1379</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01380"></a><span class="lineno"> 1380</span>&#160;    <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
-<div class="line"><a name="l01381"></a><span class="lineno"> 1381</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
-<div class="line"><a name="l01382"></a><span class="lineno"> 1382</span>&#160;  }</div>
-<div class="line"><a name="l01383"></a><span class="lineno"> 1383</span>&#160;<span class="preprocessor">#endif</span></div>
-<div class="line"><a name="l01384"></a><span class="lineno"> 1384</span>&#160; </div>
-<div class="line"><a name="l01385"></a><span class="lineno"> 1385</span>&#160;  <span class="comment">/* Write atmospheric data... */</span></div>
-<div class="line"><a name="l01386"></a><span class="lineno"> 1386</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0) {</div>
-<div class="line"><a name="l01387"></a><span class="lineno"> 1387</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
-<div class="line"><a name="l01388"></a><span class="lineno"> 1388</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>, year, mon, day, hour, min);</div>
-<div class="line"><a name="l01389"></a><span class="lineno"> 1389</span>&#160;    <a class="code" href="libtrac_8c.html#a6f8a7ad670fbfe7dd4ed81f66695db6f">write_atm</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01390"></a><span class="lineno"> 1390</span>&#160;  }</div>
-<div class="line"><a name="l01391"></a><span class="lineno"> 1391</span>&#160; </div>
-<div class="line"><a name="l01392"></a><span class="lineno"> 1392</span>&#160;  <span class="comment">/* Write gridded data... */</span></div>
-<div class="line"><a name="l01393"></a><span class="lineno"> 1393</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0) {</div>
-<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
-<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>, year, mon, day, hour, min);</div>
-<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;    <a class="code" href="libtrac_8c.html#a59757e2569c3f96f57e291fdbe3ddc29">write_grid</a>(filename, ctl, met0, met1, atm, t);</div>
-<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;  }</div>
-<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160; </div>
-<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;  <span class="comment">/* Write CSI data... */</span></div>
-<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>);</div>
-<div class="line"><a name="l01402"></a><span class="lineno"> 1402</span>&#160;    <a class="code" href="libtrac_8c.html#a70ca26c59c2fca1fda54a29dfd3625b6">write_csi</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01403"></a><span class="lineno"> 1403</span>&#160;  }</div>
-<div class="line"><a name="l01404"></a><span class="lineno"> 1404</span>&#160; </div>
-<div class="line"><a name="l01405"></a><span class="lineno"> 1405</span>&#160;  <span class="comment">/* Write ensemble data... */</span></div>
-<div class="line"><a name="l01406"></a><span class="lineno"> 1406</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01407"></a><span class="lineno"> 1407</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>);</div>
-<div class="line"><a name="l01408"></a><span class="lineno"> 1408</span>&#160;    <a class="code" href="libtrac_8c.html#af5d8dfa5fe43fa2bf192ee4a7b821b1f">write_ens</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01409"></a><span class="lineno"> 1409</span>&#160;  }</div>
-<div class="line"><a name="l01410"></a><span class="lineno"> 1410</span>&#160; </div>
-<div class="line"><a name="l01411"></a><span class="lineno"> 1411</span>&#160;  <span class="comment">/* Write profile data... */</span></div>
-<div class="line"><a name="l01412"></a><span class="lineno"> 1412</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01413"></a><span class="lineno"> 1413</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>);</div>
-<div class="line"><a name="l01414"></a><span class="lineno"> 1414</span>&#160;    <a class="code" href="libtrac_8c.html#af2d95b1eb426ead1c25fe5f198f476c9">write_prof</a>(filename, ctl, met0, met1, atm, t);</div>
-<div class="line"><a name="l01415"></a><span class="lineno"> 1415</span>&#160;  }</div>
-<div class="line"><a name="l01416"></a><span class="lineno"> 1416</span>&#160; </div>
-<div class="line"><a name="l01417"></a><span class="lineno"> 1417</span>&#160;  <span class="comment">/* Write sample data... */</span></div>
-<div class="line"><a name="l01418"></a><span class="lineno"> 1418</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01419"></a><span class="lineno"> 1419</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>);</div>
-<div class="line"><a name="l01420"></a><span class="lineno"> 1420</span>&#160;    <a class="code" href="libtrac_8c.html#a684686ab1a1db21abc1c65b66d9db10a">write_sample</a>(filename, ctl, met0, met1, atm, t);</div>
-<div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;  }</div>
-<div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160; </div>
-<div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;  <span class="comment">/* Write station data... */</span></div>
-<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
-<div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>);</div>
-<div class="line"><a name="l01426"></a><span class="lineno"> 1426</span>&#160;    <a class="code" href="libtrac_8c.html#a6afa769139ff29d1aa185e317f2f69c7">write_station</a>(filename, ctl, atm, t);</div>
-<div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;  }</div>
-<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;}</div>
+<div class="line"><a name="l01370"></a><span class="lineno"> 1370</span>&#160;  <span class="keywordtype">int</span> year, mon, day, hour, min, sec;</div>
+<div class="line"><a name="l01371"></a><span class="lineno"> 1371</span>&#160; </div>
+<div class="line"><a name="l01372"></a><span class="lineno"> 1372</span>&#160;  <span class="comment">/* Get time... */</span></div>
+<div class="line"><a name="l01373"></a><span class="lineno"> 1373</span>&#160;  <a class="code" href="libtrac_8c.html#aa6699ff1f931aa8913d3f5ae608b2582">jsec2time</a>(t, &amp;year, &amp;mon, &amp;day, &amp;hour, &amp;min, &amp;sec, &amp;r);</div>
+<div class="line"><a name="l01374"></a><span class="lineno"> 1374</span>&#160; </div>
+<div class="line"><a name="l01375"></a><span class="lineno"> 1375</span>&#160;  <span class="comment">/* Update host... */</span></div>
+<div class="line"><a name="l01376"></a><span class="lineno"> 1376</span>&#160;<span class="preprocessor">#ifdef _OPENACC</span></div>
+<div class="line"><a name="l01377"></a><span class="lineno"> 1377</span>&#160;  <span class="keywordflow">if</span> ((ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0)</div>
+<div class="line"><a name="l01378"></a><span class="lineno"> 1378</span>&#160;      || (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0)</div>
+<div class="line"><a name="l01379"></a><span class="lineno"> 1379</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> || ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span></div>
+<div class="line"><a name="l01380"></a><span class="lineno"> 1380</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> || ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span></div>
+<div class="line"><a name="l01381"></a><span class="lineno"> 1381</span>&#160;      || ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01382"></a><span class="lineno"> 1382</span>&#160;    <a class="code" href="libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150">SELECT_TIMER</a>(<span class="stringliteral">&quot;UPDATE_HOST&quot;</span>, NVTX_D2H);</div>
+<div class="line"><a name="l01383"></a><span class="lineno"> 1383</span>&#160;<span class="preprocessor">#pragma acc update host(atm[:1])</span></div>
+<div class="line"><a name="l01384"></a><span class="lineno"> 1384</span>&#160;  }</div>
+<div class="line"><a name="l01385"></a><span class="lineno"> 1385</span>&#160;<span class="preprocessor">#endif</span></div>
+<div class="line"><a name="l01386"></a><span class="lineno"> 1386</span>&#160; </div>
+<div class="line"><a name="l01387"></a><span class="lineno"> 1387</span>&#160;  <span class="comment">/* Write atmospheric data... */</span></div>
+<div class="line"><a name="l01388"></a><span class="lineno"> 1388</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#aad4b256a00136fe4181077c2b02b0f45">atm_dt_out</a>) == 0) {</div>
+<div class="line"><a name="l01389"></a><span class="lineno"> 1389</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
+<div class="line"><a name="l01390"></a><span class="lineno"> 1390</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a8b2706a512ce6a279091d8ff1b192346">atm_basename</a>, year, mon, day, hour, min);</div>
+<div class="line"><a name="l01391"></a><span class="lineno"> 1391</span>&#160;    <a class="code" href="libtrac_8c.html#a6f8a7ad670fbfe7dd4ed81f66695db6f">write_atm</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01392"></a><span class="lineno"> 1392</span>&#160;  }</div>
+<div class="line"><a name="l01393"></a><span class="lineno"> 1393</span>&#160; </div>
+<div class="line"><a name="l01394"></a><span class="lineno"> 1394</span>&#160;  <span class="comment">/* Write gridded data... */</span></div>
+<div class="line"><a name="l01395"></a><span class="lineno"> 1395</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span> &amp;&amp; fmod(t, ctl-&gt;<a class="code" href="structctl__t.html#afe05b16d3cfa511feb4673706f6606ff">grid_dt_out</a>) == 0) {</div>
+<div class="line"><a name="l01396"></a><span class="lineno"> 1396</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s_%04d_%02d_%02d_%02d_%02d.tab&quot;</span>,</div>
+<div class="line"><a name="l01397"></a><span class="lineno"> 1397</span>&#160;            dirname, ctl-&gt;<a class="code" href="structctl__t.html#a65f18a2f1aa44522f78fc364a0ffaf68">grid_basename</a>, year, mon, day, hour, min);</div>
+<div class="line"><a name="l01398"></a><span class="lineno"> 1398</span>&#160;    <a class="code" href="libtrac_8c.html#a59757e2569c3f96f57e291fdbe3ddc29">write_grid</a>(filename, ctl, met0, met1, atm, t);</div>
+<div class="line"><a name="l01399"></a><span class="lineno"> 1399</span>&#160;  }</div>
+<div class="line"><a name="l01400"></a><span class="lineno"> 1400</span>&#160; </div>
+<div class="line"><a name="l01401"></a><span class="lineno"> 1401</span>&#160;  <span class="comment">/* Write CSI data... */</span></div>
+<div class="line"><a name="l01402"></a><span class="lineno"> 1402</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01403"></a><span class="lineno"> 1403</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a605a1904f8ff49d178ac462f8fbecc3a">csi_basename</a>);</div>
+<div class="line"><a name="l01404"></a><span class="lineno"> 1404</span>&#160;    <a class="code" href="libtrac_8c.html#a70ca26c59c2fca1fda54a29dfd3625b6">write_csi</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01405"></a><span class="lineno"> 1405</span>&#160;  }</div>
+<div class="line"><a name="l01406"></a><span class="lineno"> 1406</span>&#160; </div>
+<div class="line"><a name="l01407"></a><span class="lineno"> 1407</span>&#160;  <span class="comment">/* Write ensemble data... */</span></div>
+<div class="line"><a name="l01408"></a><span class="lineno"> 1408</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01409"></a><span class="lineno"> 1409</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a94b0a51a5281e718f4fbd38bf5b4d340">ens_basename</a>);</div>
+<div class="line"><a name="l01410"></a><span class="lineno"> 1410</span>&#160;    <a class="code" href="libtrac_8c.html#af5d8dfa5fe43fa2bf192ee4a7b821b1f">write_ens</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01411"></a><span class="lineno"> 1411</span>&#160;  }</div>
+<div class="line"><a name="l01412"></a><span class="lineno"> 1412</span>&#160; </div>
+<div class="line"><a name="l01413"></a><span class="lineno"> 1413</span>&#160;  <span class="comment">/* Write profile data... */</span></div>
+<div class="line"><a name="l01414"></a><span class="lineno"> 1414</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01415"></a><span class="lineno"> 1415</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#a1a4c8aa3a46d5a54c6ef2ca4eefdf3a1">prof_basename</a>);</div>
+<div class="line"><a name="l01416"></a><span class="lineno"> 1416</span>&#160;    <a class="code" href="libtrac_8c.html#af2d95b1eb426ead1c25fe5f198f476c9">write_prof</a>(filename, ctl, met0, met1, atm, t);</div>
+<div class="line"><a name="l01417"></a><span class="lineno"> 1417</span>&#160;  }</div>
+<div class="line"><a name="l01418"></a><span class="lineno"> 1418</span>&#160; </div>
+<div class="line"><a name="l01419"></a><span class="lineno"> 1419</span>&#160;  <span class="comment">/* Write sample data... */</span></div>
+<div class="line"><a name="l01420"></a><span class="lineno"> 1420</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01421"></a><span class="lineno"> 1421</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#aa974f483b6ccf931730d2d929eee2b51">sample_basename</a>);</div>
+<div class="line"><a name="l01422"></a><span class="lineno"> 1422</span>&#160;    <a class="code" href="libtrac_8c.html#a684686ab1a1db21abc1c65b66d9db10a">write_sample</a>(filename, ctl, met0, met1, atm, t);</div>
+<div class="line"><a name="l01423"></a><span class="lineno"> 1423</span>&#160;  }</div>
+<div class="line"><a name="l01424"></a><span class="lineno"> 1424</span>&#160; </div>
+<div class="line"><a name="l01425"></a><span class="lineno"> 1425</span>&#160;  <span class="comment">/* Write station data... */</span></div>
+<div class="line"><a name="l01426"></a><span class="lineno"> 1426</span>&#160;  <span class="keywordflow">if</span> (ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>[0] != <span class="charliteral">&#39;-&#39;</span>) {</div>
+<div class="line"><a name="l01427"></a><span class="lineno"> 1427</span>&#160;    sprintf(filename, <span class="stringliteral">&quot;%s/%s.tab&quot;</span>, dirname, ctl-&gt;<a class="code" href="structctl__t.html#af784e18ace4cd191ae100a7df4955b6b">stat_basename</a>);</div>
+<div class="line"><a name="l01428"></a><span class="lineno"> 1428</span>&#160;    <a class="code" href="libtrac_8c.html#a6afa769139ff29d1aa185e317f2f69c7">write_station</a>(filename, ctl, atm, t);</div>
+<div class="line"><a name="l01429"></a><span class="lineno"> 1429</span>&#160;  }</div>
+<div class="line"><a name="l01430"></a><span class="lineno"> 1430</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8c_html_a59757e2569c3f96f57e291fdbe3ddc29"><div class="ttname"><a href="libtrac_8c.html#a59757e2569c3f96f57e291fdbe3ddc29">write_grid</a></div><div class="ttdeci">void write_grid(const char *filename, ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double t)</div><div class="ttdoc">Write gridded data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l04549">libtrac.c:4549</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_a684686ab1a1db21abc1c65b66d9db10a"><div class="ttname"><a href="libtrac_8c.html#a684686ab1a1db21abc1c65b66d9db10a">write_sample</a></div><div class="ttdeci">void write_sample(const char *filename, ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double t)</div><div class="ttdoc">Write sample data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l04920">libtrac.c:4920</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_a6afa769139ff29d1aa185e317f2f69c7"><div class="ttname"><a href="libtrac_8c.html#a6afa769139ff29d1aa185e317f2f69c7">write_station</a></div><div class="ttdeci">void write_station(const char *filename, ctl_t *ctl, atm_t *atm, double t)</div><div class="ttdoc">Write station data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l05072">libtrac.c:5072</a></div></div>
@@ -2318,22 +2320,22 @@ Here is the call graph for this function:</div>
 <div class="ttc" id="astructctl__t_html_a718d3200f867d9018369f12f66464807"><div class="ttname"><a href="structctl__t.html#a718d3200f867d9018369f12f66464807">ctl_t::dt_mod</a></div><div class="ttdeci">double dt_mod</div><div class="ttdoc">Time step of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00671">libtrac.h:671</a></div></div>
 <div class="ttc" id="astructctl__t_html_aee3354b4dacf5d89944ae0b7faaa12c6"><div class="ttname"><a href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">ctl_t::t_start</a></div><div class="ttdeci">double t_start</div><div class="ttdoc">Start time of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00665">libtrac.h:665</a></div></div>
 <div class="ttc" id="astructmet__t_html"><div class="ttname"><a href="structmet__t.html">met_t</a></div><div class="ttdoc">Meteorological data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01000">libtrac.h:1000</a></div></div>
-<div class="ttc" id="atrac_8c_html_a1d7701a95a327a1833ef16620838e71d"><div class="ttname"><a href="trac_8c.html#a1d7701a95a327a1833ef16620838e71d">module_sedi</a></div><div class="ttdeci">void module_sedi(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate sedimentation of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01172">trac.c:1172</a></div></div>
-<div class="ttc" id="atrac_8c_html_a288d5a40bb7cd1626ce343ff884fb64d"><div class="ttname"><a href="trac_8c.html#a288d5a40bb7cd1626ce343ff884fb64d">module_wet_deposition</a></div><div class="ttdeci">void module_wet_deposition(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate wet deposition.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01255">trac.c:1255</a></div></div>
+<div class="ttc" id="atrac_8c_html_a1d7701a95a327a1833ef16620838e71d"><div class="ttname"><a href="trac_8c.html#a1d7701a95a327a1833ef16620838e71d">module_sedi</a></div><div class="ttdeci">void module_sedi(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate sedimentation of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01174">trac.c:1174</a></div></div>
+<div class="ttc" id="atrac_8c_html_a288d5a40bb7cd1626ce343ff884fb64d"><div class="ttname"><a href="trac_8c.html#a288d5a40bb7cd1626ce343ff884fb64d">module_wet_deposition</a></div><div class="ttdeci">void module_wet_deposition(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate wet deposition.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01257">trac.c:1257</a></div></div>
 <div class="ttc" id="atrac_8c_html_a3e85f80ece2fbf3a680fc5a9c5f48ee0"><div class="ttname"><a href="trac_8c.html#a3e85f80ece2fbf3a680fc5a9c5f48ee0">module_meteo</a></div><div class="ttdeci">void module_meteo(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm)</div><div class="ttdoc">Interpolate meteorological data for air parcel positions.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00956">trac.c:956</a></div></div>
 <div class="ttc" id="atrac_8c_html_a4ea699a6e807b99bde5b5b235154965d"><div class="ttname"><a href="trac_8c.html#a4ea699a6e807b99bde5b5b235154965d">module_decay</a></div><div class="ttdeci">void module_decay(ctl_t *ctl, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate exponential decay of particle mass.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00550">trac.c:550</a></div></div>
 <div class="ttc" id="atrac_8c_html_a5155cd65e749a71845646d8e4eaba8ce"><div class="ttname"><a href="trac_8c.html#a5155cd65e749a71845646d8e4eaba8ce">module_advection</a></div><div class="ttdeci">void module_advection(met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate advection of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00452">trac.c:452</a></div></div>
-<div class="ttc" id="atrac_8c_html_a6ac625b4389d9c8c440342e137c57a81"><div class="ttname"><a href="trac_8c.html#a6ac625b4389d9c8c440342e137c57a81">module_rng</a></div><div class="ttdeci">void module_rng(double *rs, size_t n, int method)</div><div class="ttdoc">Generate random numbers.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01124">trac.c:1124</a></div></div>
-<div class="ttc" id="atrac_8c_html_a7bc76c57d25c7d8eaa0f803d423802df"><div class="ttname"><a href="trac_8c.html#a7bc76c57d25c7d8eaa0f803d423802df">module_oh_chem</a></div><div class="ttdeci">void module_oh_chem(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate OH chemistry.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01207">trac.c:1207</a></div></div>
+<div class="ttc" id="atrac_8c_html_a6ac625b4389d9c8c440342e137c57a81"><div class="ttname"><a href="trac_8c.html#a6ac625b4389d9c8c440342e137c57a81">module_rng</a></div><div class="ttdeci">void module_rng(double *rs, size_t n, int method)</div><div class="ttdoc">Generate random numbers.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01126">trac.c:1126</a></div></div>
+<div class="ttc" id="atrac_8c_html_a7bc76c57d25c7d8eaa0f803d423802df"><div class="ttname"><a href="trac_8c.html#a7bc76c57d25c7d8eaa0f803d423802df">module_oh_chem</a></div><div class="ttdeci">void module_oh_chem(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate OH chemistry.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01209">trac.c:1209</a></div></div>
 <div class="ttc" id="atrac_8c_html_a89f73517dcfd3b7158b9c6c6e66838ec"><div class="ttname"><a href="trac_8c.html#a89f73517dcfd3b7158b9c6c6e66838ec">module_position</a></div><div class="ttdeci">void module_position(met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Check position of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01038">trac.c:1038</a></div></div>
-<div class="ttc" id="atrac_8c_html_a8ae4aac9bace1826c17e4e26397d2c9e"><div class="ttname"><a href="trac_8c.html#a8ae4aac9bace1826c17e4e26397d2c9e">module_rng_init</a></div><div class="ttdeci">void module_rng_init(void)</div><div class="ttdoc">Initialize random number generator...</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01093">trac.c:1093</a></div></div>
+<div class="ttc" id="atrac_8c_html_a8ae4aac9bace1826c17e4e26397d2c9e"><div class="ttname"><a href="trac_8c.html#a8ae4aac9bace1826c17e4e26397d2c9e">module_rng_init</a></div><div class="ttdeci">void module_rng_init(void)</div><div class="ttdoc">Initialize random number generator...</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01095">trac.c:1095</a></div></div>
 <div class="ttc" id="atrac_8c_html_a907789b8edbc9ca32637ca13396de789"><div class="ttname"><a href="trac_8c.html#a907789b8edbc9ca32637ca13396de789">module_isosurf</a></div><div class="ttdeci">void module_isosurf(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, cache_t *cache)</div><div class="ttdoc">Force air parcels to stay on isosurface.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00899">trac.c:899</a></div></div>
 <div class="ttc" id="atrac_8c_html_a94be7f97f770dfcd783e8ced0aa8e629"><div class="ttname"><a href="trac_8c.html#a94be7f97f770dfcd783e8ced0aa8e629">module_isosurf_init</a></div><div class="ttdeci">void module_isosurf_init(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, cache_t *cache)</div><div class="ttdoc">Initialize isosurface module.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00833">trac.c:833</a></div></div>
 <div class="ttc" id="atrac_8c_html_a9a6ba19e5c74160151ae3f26785daeff"><div class="ttname"><a href="trac_8c.html#a9a6ba19e5c74160151ae3f26785daeff">module_dry_deposition</a></div><div class="ttdeci">void module_dry_deposition(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt)</div><div class="ttdoc">Calculate dry deposition.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00772">trac.c:772</a></div></div>
 <div class="ttc" id="atrac_8c_html_a9c603155b7f99c25ff5d59dfd37942a8"><div class="ttname"><a href="trac_8c.html#a9c603155b7f99c25ff5d59dfd37942a8">module_diffusion_turb</a></div><div class="ttdeci">void module_diffusion_turb(ctl_t *ctl, atm_t *atm, double *dt, double *rs)</div><div class="ttdoc">Calculate turbulent diffusion.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00718">trac.c:718</a></div></div>
 <div class="ttc" id="atrac_8c_html_ad89c50ca0fa9258e086d457a72463346"><div class="ttname"><a href="trac_8c.html#ad89c50ca0fa9258e086d457a72463346">module_convection</a></div><div class="ttdeci">void module_convection(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double *dt, double *rs)</div><div class="ttdoc">Calculate convection of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00503">trac.c:503</a></div></div>
 <div class="ttc" id="atrac_8c_html_add049d36bf3caca319c1fb71e6fdc2b2"><div class="ttname"><a href="trac_8c.html#add049d36bf3caca319c1fb71e6fdc2b2">module_diffusion_meso</a></div><div class="ttdeci">void module_diffusion_meso(ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, cache_t *cache, double *dt, double *rs)</div><div class="ttdoc">Calculate mesoscale diffusion.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l00595">trac.c:595</a></div></div>
-<div class="ttc" id="atrac_8c_html_aebf12c1e87751c2142d687d509921a19"><div class="ttname"><a href="trac_8c.html#aebf12c1e87751c2142d687d509921a19">write_output</a></div><div class="ttdeci">void write_output(const char *dirname, ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double t)</div><div class="ttdoc">Write simulation output.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01356">trac.c:1356</a></div></div>
+<div class="ttc" id="atrac_8c_html_aebf12c1e87751c2142d687d509921a19"><div class="ttname"><a href="trac_8c.html#aebf12c1e87751c2142d687d509921a19">write_output</a></div><div class="ttdeci">void write_output(const char *dirname, ctl_t *ctl, met_t *met0, met_t *met1, atm_t *atm, double t)</div><div class="ttdoc">Write simulation output.</div><div class="ttdef"><b>Definition:</b> <a href="trac_8c_source.html#l01358">trac.c:1358</a></div></div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
@@ -2400,7 +2402,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="trac_8c.html">trac.c</a></li>
-    <li class="footer">Generated on Sat Apr 17 2021 16:13:52 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Sun Apr 18 2021 10:58:54 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
