@@ -1053,6 +1053,10 @@ void module_position(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
+      /* Init... */
+      double ps;
+      INTPOL_INIT;
+
       /* Calculate modulo... */
       atm->lon[ip] = FMOD(atm->lon[ip], 360.);
       atm->lat[ip] = FMOD(atm->lat[ip], 360.);
@@ -1079,8 +1083,6 @@ void module_position(
       if (atm->p[ip] < met0->p[met0->np - 1])
 	atm->p[ip] = met0->p[met0->np - 1];
       else if (atm->p[ip] > 300.) {
-	double ps;
-	INTPOL_INIT;
 	INTPOL_2D(ps, 1);
 	if (atm->p[ip] > ps)
 	  atm->p[ip] = ps;
