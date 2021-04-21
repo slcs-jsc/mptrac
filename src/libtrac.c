@@ -2485,6 +2485,10 @@ void read_ctl(
   /* Convection... */
   ctl->conv_cape =
     scan_ctl(filename, argc, argv, "CONV_CAPE", -1, "-999", NULL);
+  ctl->conv_mix_bot
+    = (int) scan_ctl(filename, argc, argv, "CONV_MIX_BOT", -1, "1", NULL);
+  ctl->conv_mix_top
+    = (int) scan_ctl(filename, argc, argv, "CONV_MIX_TOP", -1, "1", NULL);
 
   /* Species parameters... */
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);

@@ -517,7 +517,7 @@ void module_convection(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double cape, pel, ps;
+      double cape, pbot, pel, ps, ptop;
 
       /* Interpolate CAPE... */
       INTPOL_INIT;
@@ -533,11 +533,17 @@ void module_convection(
 	if (!isfinite(pel) || atm->p[ip] < pel)
 	  continue;
 
-	/* Interpolate surface pressure... */
-	INTPOL_2D(ps, 0);
+	/* Set pressure range for mixing... */
+	pbot = ptop = atm->p[ip];
+	if (ctl->conv_mix_bot == 1) {
+	  INTPOL_2D(ps, 0);
+	  pbot = ps;
+	}
+	if (ctl->conv_mix_top == 1)
+	  ptop = pel;
 
-	/* Redistribute particle in cloud column... */
-	atm->p[ip] = ps + (pel - ps) * rs[ip];
+	/* Mix in entire in cloud column... */
+	atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
       }
     }
 }
