@@ -337,22 +337,16 @@ int main(
 
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
-	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0) {
-	module_rng(rs, 3 * (size_t) atm->np, 1);
+	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
 	module_diffusion_turb(&ctl, atm, dt, rs);
-      }
 
       /* Mesoscale diffusion... */
-      if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0) {
-	module_rng(rs, 3 * (size_t) atm->np, 1);
+      if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
 	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
-      }
 
       /* Convection... */
-      if (ctl.conv_cape >= 0) {
-	module_rng(rs, (size_t) atm->np, 0);
+      if (ctl.conv_cape >= 0)
 	module_convection(&ctl, met0, met1, atm, dt, rs);
-      }
 
       /* Sedimentation... */
       if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0)
@@ -511,6 +505,9 @@ void module_convection(
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", NVTX_GPU);
 
+  /* Create random numbers... */
+  module_rng(rs, (size_t) atm->np, 0);
+
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
@@ -603,6 +600,9 @@ void module_diffusion_meso(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBMESO", NVTX_GPU);
+
+  /* Create random numbers... */
+  module_rng(rs, 3 * (size_t) atm->np, 1);
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
@@ -723,6 +723,9 @@ void module_diffusion_turb(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", NVTX_GPU);
+
+  /* Create random numbers... */
+  module_rng(rs, 3 * (size_t) atm->np, 1);
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt,rs)
@@ -1095,9 +1098,6 @@ void module_position(
 void module_rng_init(
   void) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_RNG", NVTX_GPU);
-
   /* Initialize random number generator... */
 #ifdef _OPENACC
 
@@ -1127,9 +1127,6 @@ void module_rng(
   double *rs,
   size_t n,
   int method) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_RNG", NVTX_GPU);
 
 #ifdef _OPENACC
 
