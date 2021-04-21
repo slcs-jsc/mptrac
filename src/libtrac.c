@@ -2965,28 +2965,17 @@ void read_met_geopot(
   for (int ip = 0; ip < met->np; ip++)
     logp[ip] = log(met->p[ip]);
 
-  /* Initialize geopotential heights... */
-#pragma omp parallel for default(shared)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++)
-	met->z[ix][iy][ip] = GSL_NAN;
-
   /* Apply hydrostatic equation to calculate geopotential heights... */
 #pragma omp parallel for default(shared)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
-      /* Get surface height... */
-      double z0;
-      INTPOL_INIT;
-      intpol_met_space_2d(met, met->zs, met->lon[ix], met->lat[iy], &z0, ci,
-			  cw, 1);
-
-      /* Find surface pressure level index... */
-      int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
+      /* Get surface height and pressure... */
+      double zs = met->zs[ix][iy];
+      double lnps = log(met->ps[ix][iy]);
 
       /* Get temperature and water vapor vmr at the surface... */
+      int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
       double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
 		      met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
       double h2os = LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
@@ -2994,8 +2983,8 @@ void read_met_geopot(
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
-	= (float) (z0 +
-		   ZDIFF(log(met->ps[ix][iy]), ts, h2os, logp[ip0 + 1],
+	= (float) (zs +
+		   ZDIFF(lnps, ts, h2os, logp[ip0 + 1],
 			 met->t[ix][iy][ip0 + 1], met->h2o[ix][iy][ip0 + 1]));
       for (int ip = ip0 + 2; ip < met->np; ip++)
 	met->z[ix][iy][ip]
@@ -3006,8 +2995,8 @@ void read_met_geopot(
 
       /* Lower part of profile... */
       met->z[ix][iy][ip0]
-	= (float) (z0 +
-		   ZDIFF(log(met->ps[ix][iy]), ts, h2os, logp[ip0],
+	= (float) (zs +
+		   ZDIFF(lnps, ts, h2os, logp[ip0],
 			 met->t[ix][iy][ip0], met->h2o[ix][iy][ip0]));
       for (int ip = ip0 - 1; ip >= 0; ip--)
 	met->z[ix][iy][ip]
