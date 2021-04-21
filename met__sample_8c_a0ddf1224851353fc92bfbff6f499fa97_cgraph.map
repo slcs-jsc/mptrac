@@ -1,36 +1,35 @@
 <map id="main" name="main">
 <area shape="rect" id="node1" title=" " alt="" coords="5,487,56,513"/>
 <area shape="rect" id="node2" href="$libtrac_8c.html#a2e3bbbd05021b43203c83a8a81d9ae1c" title="Get meteorological data for given time step." alt="" coords="107,385,177,412"/>
-<area shape="rect" id="node31" href="$libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18" title="Temporal interpolation of meteorological data." alt="" coords="228,461,363,488"/>
-<area shape="rect" id="node32" href="$libtrac_8c.html#a10ab9cbb20f7bacc7bad573191f7cabb" title="Read atmospheric data." alt="" coords="104,487,180,513"/>
-<area shape="rect" id="node33" href="$libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573" title="Read control parameters." alt="" coords="108,537,176,564"/>
-<area shape="rect" id="node34" href="$libtrac_8c.html#ad42c44913b360d00d45282d96dad493b" title="Read a control parameter from file or command line." alt="" coords="260,563,331,589"/>
+<area shape="rect" id="node30" href="$libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18" title="Temporal interpolation of meteorological data." alt="" coords="228,461,363,488"/>
+<area shape="rect" id="node31" href="$libtrac_8c.html#a10ab9cbb20f7bacc7bad573191f7cabb" title="Read atmospheric data." alt="" coords="104,487,180,513"/>
+<area shape="rect" id="node32" href="$libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573" title="Read control parameters." alt="" coords="108,537,176,564"/>
+<area shape="rect" id="node33" href="$libtrac_8c.html#ad42c44913b360d00d45282d96dad493b" title="Read a control parameter from file or command line." alt="" coords="260,563,331,589"/>
 <area shape="rect" id="node3" href="$libtrac_8c.html#aa0c58f85ea7abc175737176da82f2939" title="Get meteorological data for time step." alt="" coords="245,56,345,83"/>
 <area shape="rect" id="node6" href="$libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802" title="Read meteorological data file." alt="" coords="257,385,333,412"/>
 <area shape="rect" id="node4" href="$libtrac_8c.html#ac54a92b848d49b96ef6091df37b552f2" title="Replace template strings in filename." alt="" coords="425,56,543,83"/>
 <area shape="rect" id="node5" href="$libtrac_8c.html#aa6699ff1f931aa8913d3f5ae608b2582" title="Convert seconds to date." alt="" coords="445,5,523,32"/>
 <area shape="rect" id="node7" href="$libtrac_8c.html#a85f08c269c7e7e500296ca74255daa41" title="Calculate convective available potential energy." alt="" coords="429,613,539,640"/>
-<area shape="rect" id="node13" href="$libtrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculate cloud properties." alt="" coords="427,309,541,336"/>
-<area shape="rect" id="node14" href="$libtrac_8c.html#a95998555c31d67b672339a2332f7ee1c" title="Apply detrending method to temperature and winds." alt="" coords="421,259,547,285"/>
-<area shape="rect" id="node16" href="$libtrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolate meteorological data at lower boundary." alt="" coords="411,411,557,437"/>
-<area shape="rect" id="node17" href="$libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="423,461,545,488"/>
-<area shape="rect" id="node19" href="$libtrac_8c.html#ad3b59a5ce89df2ef37437ed08f6ef77b" title="Read coordinates of meteorological data." alt="" coords="432,157,536,184"/>
-<area shape="rect" id="node21" href="$libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="425,360,543,387"/>
-<area shape="rect" id="node24" href="$libtrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Create meteorological data with periodic boundary conditions." alt="" coords="420,563,548,589"/>
-<area shape="rect" id="node25" href="$libtrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculate potential vorticity." alt="" coords="435,664,533,691"/>
-<area shape="rect" id="node26" href="$libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81" title="Downsampling of meteorological data." alt="" coords="421,107,547,133"/>
-<area shape="rect" id="node27" href="$libtrac_8c.html#ab79cc2c3c9d98a812ab86a1da4f38618" title="Read surface data." alt="" coords="421,208,547,235"/>
-<area shape="rect" id="node29" href="$libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb" title="Calculate tropopause data." alt="" coords="428,512,540,539"/>
-<area shape="rect" id="node8" href="$libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="637,563,719,589"/>
+<area shape="rect" id="node13" href="$libtrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculate cloud properties." alt="" coords="427,107,541,133"/>
+<area shape="rect" id="node14" href="$libtrac_8c.html#a95998555c31d67b672339a2332f7ee1c" title="Apply detrending method to temperature and winds." alt="" coords="421,157,547,184"/>
+<area shape="rect" id="node16" href="$libtrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolate meteorological data at lower boundary." alt="" coords="411,208,557,235"/>
+<area shape="rect" id="node17" href="$libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="617,512,739,539"/>
+<area shape="rect" id="node18" href="$libtrac_8c.html#ad3b59a5ce89df2ef37437ed08f6ef77b" title="Read coordinates of meteorological data." alt="" coords="432,309,536,336"/>
+<area shape="rect" id="node20" href="$libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="425,259,543,285"/>
+<area shape="rect" id="node23" href="$libtrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Create meteorological data with periodic boundary conditions." alt="" coords="420,360,548,387"/>
+<area shape="rect" id="node24" href="$libtrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculate potential vorticity." alt="" coords="435,461,533,488"/>
+<area shape="rect" id="node25" href="$libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81" title="Downsampling of meteorological data." alt="" coords="421,512,547,539"/>
+<area shape="rect" id="node26" href="$libtrac_8c.html#ab79cc2c3c9d98a812ab86a1da4f38618" title="Read surface data." alt="" coords="421,411,547,437"/>
+<area shape="rect" id="node28" href="$libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb" title="Calculate tropopause data." alt="" coords="428,664,540,691"/>
+<area shape="rect" id="node8" href="$libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="637,613,719,640"/>
 <area shape="rect" id="node10" href="$libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteorological data." alt="" coords="605,664,751,691"/>
-<area shape="rect" id="node12" href="$libtrac_8c.html#a644688d92918b4870920e89b10acd9e6" title="Calculate moist adiabatic lapse rate." alt="" coords="637,613,719,640"/>
-<area shape="rect" id="node9" href="$libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="803,487,877,513"/>
-<area shape="rect" id="node11" href="$libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="799,563,881,589"/>
-<area shape="rect" id="node15" href="$libtrac_8c.html#ad97e04e82009975d18fa256cd977da76" title="Convert geolocation to Cartesian coordinates." alt="" coords="642,259,714,285"/>
-<area shape="rect" id="node18" href="$libtrac_8c.html#adafd1410822189cadee393d5cec50a59" title="Spatial interpolation of meteorological data." alt="" coords="605,461,751,488"/>
-<area shape="rect" id="node20" href="$libtrac_8c.html#a5d463df05933155742519c4f0e7b1953" title="Convert date to seconds." alt="" coords="639,157,717,184"/>
-<area shape="rect" id="node22" href="$libtrac_8c.html#a53932a369d5c9ceaa5a3aefc3b3445c8" title="Read and convert 3D variable from meteorological data file." alt="" coords="614,309,742,336"/>
-<area shape="rect" id="node23" href="$libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="621,360,735,387"/>
-<area shape="rect" id="node28" href="$libtrac_8c.html#a3278e8f4ddcca49d9d7ceb0685565e31" title="Read and convert 2D variable from meteorological data file." alt="" coords="614,208,742,235"/>
-<area shape="rect" id="node30" href="$libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="650,512,706,539"/>
+<area shape="rect" id="node12" href="$libtrac_8c.html#a644688d92918b4870920e89b10acd9e6" title="Calculate moist adiabatic lapse rate." alt="" coords="637,563,719,589"/>
+<area shape="rect" id="node9" href="$libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="803,563,877,589"/>
+<area shape="rect" id="node11" href="$libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="799,664,881,691"/>
+<area shape="rect" id="node15" href="$libtrac_8c.html#ad97e04e82009975d18fa256cd977da76" title="Convert geolocation to Cartesian coordinates." alt="" coords="642,157,714,184"/>
+<area shape="rect" id="node19" href="$libtrac_8c.html#a5d463df05933155742519c4f0e7b1953" title="Convert date to seconds." alt="" coords="639,335,717,361"/>
+<area shape="rect" id="node21" href="$libtrac_8c.html#a53932a369d5c9ceaa5a3aefc3b3445c8" title="Read and convert 3D variable from meteorological data file." alt="" coords="614,233,742,260"/>
+<area shape="rect" id="node22" href="$libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="621,284,735,311"/>
+<area shape="rect" id="node27" href="$libtrac_8c.html#a3278e8f4ddcca49d9d7ceb0685565e31" title="Read and convert 2D variable from meteorological data file." alt="" coords="614,411,742,437"/>
+<area shape="rect" id="node29" href="$libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="650,715,706,741"/>
 </map>

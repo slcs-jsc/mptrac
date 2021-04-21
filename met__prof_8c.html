@@ -358,7 +358,7 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00228"></a><span class="lineno">  228</span>&#160;  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
 <div class="line"><a name="l00229"></a><span class="lineno">  229</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8c_html_ab8054000249eb04a88fc06bba77dd573"><div class="ttname"><a href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573">read_ctl</a></div><div class="ttdeci">void read_ctl(const char *filename, int argc, char *argv[], ctl_t *ctl)</div><div class="ttdoc">Read control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l02202">libtrac.c:2202</a></div></div>
-<div class="ttc" id="alibtrac_8c_html_ad42c44913b360d00d45282d96dad493b"><div class="ttname"><a href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Read a control parameter from file or command line.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03832">libtrac.c:3832</a></div></div>
+<div class="ttc" id="alibtrac_8c_html_ad42c44913b360d00d45282d96dad493b"><div class="ttname"><a href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Read a control parameter from file or command line.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03834">libtrac.c:3834</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_af6f9ad5861dd7e45eaff0fd7ac97a802"><div class="ttname"><a href="libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802">read_met</a></div><div class="ttdeci">int read_met(ctl_t *ctl, char *filename, met_t *met)</div><div class="ttdoc">Read meteorological data file.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l02627">libtrac.c:2627</a></div></div>
 <div class="ttc" id="alibtrac_8h_html_a2db66d3f79b89cb80d81f0ff4b8104be"><div class="ttname"><a href="libtrac_8h.html#a2db66d3f79b89cb80d81f0ff4b8104be">INTPOL_SPACE_ALL</a></div><div class="ttdeci">#define INTPOL_SPACE_ALL(p, lon, lat)</div><div class="ttdoc">Spatial interpolation of all meteo data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00270">libtrac.h:270</a></div></div>
 <div class="ttc" id="alibtrac_8h_html_a58b4f1573922a1f73dd4bf014fd441bf"><div class="ttname"><a href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a></div><div class="ttdeci">#define Z(p)</div><div class="ttdoc">Convert pressure to altitude.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00412">libtrac.h:412</a></div></div>
@@ -386,30 +386,29 @@ Here is the call graph for this function:</div>
 <area shape="rect" href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573" title="Read control parameters." alt="" coords="108,5,176,32"/>
 <area shape="rect" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b" title="Read a control parameter from file or command line." alt="" coords="266,5,337,32"/>
 <area shape="rect" href="libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802" title="Read meteorological data file." alt="" coords="104,309,180,336"/>
-<area shape="rect" href="libtrac_8c.html#a85f08c269c7e7e500296ca74255daa41" title="Calculate convective available potential energy." alt="" coords="246,309,357,336"/>
+<area shape="rect" href="libtrac_8c.html#a85f08c269c7e7e500296ca74255daa41" title="Calculate convective available potential energy." alt="" coords="246,259,357,285"/>
 <area shape="rect" href="libtrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculate cloud properties." alt="" coords="244,411,359,437"/>
 <area shape="rect" href="libtrac_8c.html#a95998555c31d67b672339a2332f7ee1c" title="Apply detrending method to temperature and winds." alt="" coords="238,461,365,488"/>
 <area shape="rect" href="libtrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolate meteorological data at lower boundary." alt="" coords="228,512,375,539"/>
-<area shape="rect" href="libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="240,360,363,387"/>
+<area shape="rect" href="libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="434,411,557,437"/>
 <area shape="rect" href="libtrac_8c.html#ad3b59a5ce89df2ef37437ed08f6ef77b" title="Read coordinates of meteorological data." alt="" coords="249,563,353,589"/>
-<area shape="rect" href="libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="243,208,360,235"/>
+<area shape="rect" href="libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="243,309,360,336"/>
 <area shape="rect" href="libtrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Create meteorological data with periodic boundary conditions." alt="" coords="237,613,365,640"/>
 <area shape="rect" href="libtrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculate potential vorticity." alt="" coords="253,56,350,83"/>
 <area shape="rect" href="libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81" title="Downsampling of meteorological data." alt="" coords="239,107,364,133"/>
 <area shape="rect" href="libtrac_8c.html#ab79cc2c3c9d98a812ab86a1da4f38618" title="Read surface data." alt="" coords="238,157,365,184"/>
-<area shape="rect" href="libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb" title="Calculate tropopause data." alt="" coords="245,259,357,285"/>
-<area shape="rect" href="libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="454,259,537,285"/>
-<area shape="rect" href="libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteorological data." alt="" coords="423,309,568,336"/>
-<area shape="rect" href="libtrac_8c.html#a644688d92918b4870920e89b10acd9e6" title="Calculate moist adiabatic lapse rate." alt="" coords="454,360,537,387"/>
-<area shape="rect" href="libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="620,284,695,311"/>
-<area shape="rect" href="libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="616,411,699,437"/>
-<area shape="rect" href="libtrac_8c.html#ad97e04e82009975d18fa256cd977da76" title="Convert geolocation to Cartesian coordinates." alt="" coords="459,512,531,539"/>
-<area shape="rect" href="libtrac_8c.html#adafd1410822189cadee393d5cec50a59" title="Spatial interpolation of meteorological data." alt="" coords="423,461,568,488"/>
+<area shape="rect" href="libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb" title="Calculate tropopause data." alt="" coords="245,208,357,235"/>
+<area shape="rect" href="libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="454,208,537,235"/>
+<area shape="rect" href="libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteorological data." alt="" coords="423,157,568,184"/>
+<area shape="rect" href="libtrac_8c.html#a644688d92918b4870920e89b10acd9e6" title="Calculate moist adiabatic lapse rate." alt="" coords="454,259,537,285"/>
+<area shape="rect" href="libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="620,259,695,285"/>
+<area shape="rect" href="libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="616,157,699,184"/>
+<area shape="rect" href="libtrac_8c.html#ad97e04e82009975d18fa256cd977da76" title="Convert geolocation to Cartesian coordinates." alt="" coords="459,461,531,488"/>
 <area shape="rect" href="libtrac_8c.html#a5d463df05933155742519c4f0e7b1953" title="Convert date to seconds." alt="" coords="456,563,535,589"/>
-<area shape="rect" href="libtrac_8c.html#a53932a369d5c9ceaa5a3aefc3b3445c8" title="Read and convert 3D variable from meteorological data file." alt="" coords="431,107,559,133"/>
-<area shape="rect" href="libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="438,157,553,184"/>
+<area shape="rect" href="libtrac_8c.html#a53932a369d5c9ceaa5a3aefc3b3445c8" title="Read and convert 3D variable from meteorological data file." alt="" coords="431,360,559,387"/>
+<area shape="rect" href="libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="438,309,553,336"/>
 <area shape="rect" href="libtrac_8c.html#a3278e8f4ddcca49d9d7ceb0685565e31" title="Read and convert 2D variable from meteorological data file." alt="" coords="431,56,559,83"/>
-<area shape="rect" href="libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="467,208,523,235"/>
+<area shape="rect" href="libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="467,107,523,133"/>
 </map>
 </div>
 
@@ -421,7 +420,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="met__prof_8c.html">met_prof.c</a></li>
-    <li class="footer">Generated on Wed Apr 21 2021 10:38:32 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Wed Apr 21 2021 11:28:11 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
