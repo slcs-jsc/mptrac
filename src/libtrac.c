@@ -3006,26 +3006,38 @@ void read_met_geopot(
 			   met->t[ix][iy][ip], met->h2o[ix][iy][ip]));
     }
 
+  /* Check control parameters... */
+  if (dx <= 0 || dy <= 0)
+    return;
+
+  /* Calculate weights for smoothing... */
+  float w[dx + 1][dy + 1];
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix <= dx; ix++)
+    for (int iy = 0; iy < dy; iy++)
+      w[ix][iy] = (1.0f - (float) ix / (float) dx)
+	* (1.0f - (float) iy / (float) dy);
+
   /* Horizontal smoothing... */
 #pragma omp parallel for default(shared)
   for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
+    for (int iy = 0; iy < met->ny; iy++) {
+      int iy0 = GSL_MAX(iy - dy + 1, 0);
+      int iy1 = GSL_MIN(iy + dy - 1, met->ny - 1);
       for (int ip = 0; ip < met->np; ip++) {
 	float wsum = 0;
 	help[ix][iy][ip] = 0;
-	for (int ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ix2++) {
+	for (int ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ++ix2) {
 	  int ix3 = ix2;
 	  if (ix3 < 0)
 	    ix3 += met->nx;
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
-	  for (int iy2 = GSL_MAX(iy - dy + 1, 0);
-	       iy2 <= GSL_MIN(iy + dy - 1, met->ny - 1); iy2++)
+	  for (int iy2 = iy0; iy2 <= iy1; ++iy2)
 	    if (isfinite(met->z[ix3][iy2][ip])) {
-	      float w = (1.0f - (float) abs(ix - ix2) / (float) dx)
-		* (1.0f - (float) abs(iy - iy2) / (float) dy);
-	      help[ix][iy][ip] += w * met->z[ix3][iy2][ip];
-	      wsum += w;
+	      help[ix][iy][ip]
+		+= w[abs(ix - ix2)][abs(iy - iy2)] * met->z[ix3][iy2][ip];
+	      wsum += w[abs(ix - ix2)][abs(iy - iy2)];
 	    }
 	}
 	if (wsum > 0)
@@ -3033,6 +3045,7 @@ void read_met_geopot(
 	else
 	  help[ix][iy][ip] = GSL_NAN;
       }
+    }
 
   /* Copy data... */
 #pragma omp parallel for default(shared)
