@@ -2450,8 +2450,6 @@ void read_ctl(
     = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "6", NULL);
   ctl->met_geopot_sy
     = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "4", NULL);
-  if (ctl->met_geopot_sx < 1 || ctl->met_geopot_sy < 1)
-    ERRMSG("MET_GEOPOT_SX and MET_GEOPOT_SY need to be greater than zero!");
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
@@ -2957,7 +2955,7 @@ void read_met_geopot(
 
   const int dx = ctl->met_geopot_sx, dy = ctl->met_geopot_sy;
 
-  static float help[EX][EY][EP];
+  static float help[EP][EX][EY];
 
   double logp[EP];
 
@@ -3015,22 +3013,28 @@ void read_met_geopot(
     return;
 
   /* Calculate weights for smoothing... */
-  float w[dx + 1][dy + 1];
+  float ws[dx + 1][dy + 1];
 #pragma omp parallel for default(shared)
   for (int ix = 0; ix <= dx; ix++)
     for (int iy = 0; iy < dy; iy++)
-      w[ix][iy] = (1.0f - (float) ix / (float) dx)
+      ws[ix][iy] = (1.0f - (float) ix / (float) dx)
 	* (1.0f - (float) iy / (float) dy);
 
-  /* Horizontal smoothing... */
-#pragma omp parallel for default(shared)
+  /* Copy data... */
+#pragma omp parallel for default(shared) collapse(3)
   for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++) {
-      int iy0 = GSL_MAX(iy - dy + 1, 0);
-      int iy1 = GSL_MIN(iy + dy - 1, met->ny - 1);
-      for (int ip = 0; ip < met->np; ip++) {
-	float wsum = 0;
-	help[ix][iy][ip] = 0;
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
+	help[ip][ix][iy] = met->z[ix][iy][ip];
+
+  /* Horizontal smoothing... */
+#pragma omp parallel for default(shared) collapse(3)
+  for (int ip = 0; ip < met->np; ip++)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+	float res = 0, wsum = 0;
+	int iy0 = GSL_MAX(iy - dy + 1, 0);
+	int iy1 = GSL_MIN(iy + dy - 1, met->ny - 1);
 	for (int ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ++ix2) {
 	  int ix3 = ix2;
 	  if (ix3 < 0)
@@ -3038,25 +3042,17 @@ void read_met_geopot(
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
 	  for (int iy2 = iy0; iy2 <= iy1; ++iy2)
-	    if (isfinite(met->z[ix3][iy2][ip])) {
-	      help[ix][iy][ip]
-		+= w[abs(ix - ix2)][abs(iy - iy2)] * met->z[ix3][iy2][ip];
-	      wsum += w[abs(ix - ix2)][abs(iy - iy2)];
+	    if (isfinite(help[ip][ix3][iy2])) {
+	      float w = ws[abs(ix - ix2)][abs(iy - iy2)];
+	      res += w * help[ip][ix3][iy2];
+	      wsum += w;
 	    }
 	}
 	if (wsum > 0)
-	  help[ix][iy][ip] /= wsum;
+	  met->z[ix][iy][ip] = res / wsum;
 	else
-	  help[ix][iy][ip] = GSL_NAN;
+	  met->z[ix][iy][ip] = GSL_NAN;
       }
-    }
-
-  /* Copy data... */
-#pragma omp parallel for default(shared)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++)
-	met->z[ix][iy][ip] = help[ix][iy][ip];
 }
 
 /*****************************************************************************/

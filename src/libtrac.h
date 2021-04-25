@@ -746,10 +746,10 @@ typedef struct {
 
   /*! CAPE threshold for convection module [J/kg]. */
   double conv_cape;
-  
+
   /*! Lower level for mixing (0=particle pressure, 1=surface). */
   int conv_mix_bot;
-  
+
   /*! Upper level for mixing (0=particle pressure, 1=EL). */
   int conv_mix_top;
 
