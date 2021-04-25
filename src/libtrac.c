@@ -2447,9 +2447,9 @@ void read_ctl(
   for (int ip = 0; ip < ctl->met_np; ip++)
     ctl->met_p[ip] = scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
   ctl->met_geopot_sx
-    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "6", NULL);
+    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
   ctl->met_geopot_sy
-    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "4", NULL);
+    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "-1", NULL);
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
@@ -2953,11 +2953,11 @@ void read_met_geopot(
   ctl_t * ctl,
   met_t * met) {
 
-  const int dx = ctl->met_geopot_sx, dy = ctl->met_geopot_sy;
-
   static float help[EP][EX][EY];
 
   double logp[EP];
+
+  int dx = ctl->met_geopot_sx, dy = ctl->met_geopot_sy;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GEOPOT", NVTX_READ);
@@ -3009,8 +3009,19 @@ void read_met_geopot(
     }
 
   /* Check control parameters... */
-  if (dx <= 0 || dy <= 0)
+  if (dx == 0 || dy == 0)
     return;
+
+  /* Default smoothing parameters... */
+  if (dx < 0 || dy < 0) {
+    if (fabs(met->lon[1] - met->lon[0]) < 0.5) {
+      dx = 3;
+      dy = 2;
+    } else {
+      dx = 6;
+      dy = 4;
+    }
+  }
 
   /* Calculate weights for smoothing... */
   float ws[dx + 1][dy + 1];
