@@ -2642,8 +2642,6 @@ int read_met(
     WARN("File not found!");
     return 0;
   }
-  printf("CHUNKSIZE = %lu Byte (%g MByte)\n", ctl->chunkszhint,
-	 (double) ctl->chunkszhint / 1024. / 1024.);
 
   /* Read coordinates of meteorological data... */
   read_met_grid(filename, ncid, ctl, met);
@@ -3176,13 +3174,7 @@ int read_met_help_3d(
 	EX * EY * EP);
 
   /* Read data... */
-  double t0 = omp_get_wtime();
   NC(nc_get_var_float(ncid, varid, help));
-  double dt = omp_get_wtime() - t0;
-  double sd = (double) sizeof(float) * (double) (met->np * met->nx * met->ny)
-    / 1024. / 1024;
-  printf("BANDWIDTH = %g MByte/sec (var: %s, size: %g MByte)\n",
-	 sd / dt, varname, sd);
 
   /* Copy and check data... */
 #pragma omp parallel for default(shared)
@@ -3229,13 +3221,7 @@ int read_met_help_2d(
 	EX * EY);
 
   /* Read data... */
-  double t0 = omp_get_wtime();
   NC(nc_get_var_float(ncid, varid, help));
-  double dt = omp_get_wtime() - t0;
-  double sd = (double) sizeof(float) * (double) (met->nx * met->ny)
-    / 1024. / 1024;
-  printf("BANDWIDTH = %g MByte/sec (var: %s, size: %g MByte)\n",
-	 sd / dt, varname, sd);
 
   /* Copy and check data... */
 #pragma omp parallel for default(shared)
@@ -4574,7 +4560,8 @@ void write_grid(
   static double mass[GX][GY][GZ], z[GZ], dz, lon[GX], dlon, lat[GY], dlat,
     area[GY], rho_air, press[GZ], temp, cd, vmr, t0, t1, r;
 
-  static int ip, ix, iy, iz, np[GX][GY][GZ], year, mon, day, hour, min, sec;
+  static int ip, ix, *ixs, iy, *iys, iz, *izs, np[GX][GY][GZ], year, mon, day,
+    hour, min, sec;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_GRID", NVTX_WRITE);
@@ -4589,6 +4576,7 @@ void write_grid(
   dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
 
   /* Set vertical coordinates... */
+#pragma omp parallel for default(shared) private(iz)
   for (iz = 0; iz < ctl->grid_nz; iz++) {
     z[iz] = ctl->grid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
@@ -4597,6 +4585,7 @@ void write_grid(
   /* Set horizontal coordinates... */
   for (ix = 0; ix < ctl->grid_nx; ix++)
     lon[ix] = ctl->grid_lon0 + dlon * (ix + 0.5);
+#pragma omp parallel for default(shared) private(iy)
   for (iy = 0; iy < ctl->grid_ny; iy++) {
     lat[iy] = ctl->grid_lat0 + dlat * (iy + 0.5);
     area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
@@ -4616,25 +4605,39 @@ void write_grid(
 	np[ix][iy][iz] = 0;
       }
 
+  /* Allocate... */
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+
+  /* Get indices... */
+#pragma omp parallel for default(shared) private(ip)
+  for (ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->grid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->grid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->grid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->grid_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->grid_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->grid_nz)
+      izs[ip] = -1;
+  }
+
   /* Average data... */
   for (ip = 0; ip < atm->np; ip++)
-    if (atm->time[ip] >= t0 && atm->time[ip] <= t1) {
-
-      /* Get index... */
-      ix = (int) ((atm->lon[ip] - ctl->grid_lon0) / dlon);
-      iy = (int) ((atm->lat[ip] - ctl->grid_lat0) / dlat);
-      iz = (int) ((Z(atm->p[ip]) - ctl->grid_z0) / dz);
-
-      /* Check indices... */
-      if (ix < 0 || ix >= ctl->grid_nx ||
-	  iy < 0 || iy >= ctl->grid_ny || iz < 0 || iz >= ctl->grid_nz)
-	continue;
-
-      /* Add mass... */
+    if (izs[ip] >= 0) {
+      np[ixs[ip]][iys[ip]][izs[ip]]++;
       if (ctl->qnt_m >= 0)
-	mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
-      np[ix][iy][iz]++;
+	mass[ixs[ip]][iys[ip]][izs[ip]] += atm->q[ctl->qnt_m][ip];
     }
+
+  /* Free... */
+  free(ixs);
+  free(iys);
+  free(izs);
 
   /* Check if gnuplot output is requested... */
   if (ctl->grid_gpfile[0] != '-') {
