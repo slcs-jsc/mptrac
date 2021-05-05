@@ -345,7 +345,8 @@ int main(
 	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
 
       /* Convection... */
-      if (ctl.conv_cape >= 0)
+      if (ctl.conv_cape >= 0
+	  && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
 	module_convection(&ctl, met0, met1, atm, dt, rs);
 
       /* Sedimentation... */
