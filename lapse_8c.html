@@ -242,7 +242,7 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00076"></a><span class="lineno">   76</span>&#160;    (int) <a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;LAPSE_Z1&quot;</span>, -1, <span class="stringliteral">&quot;100&quot;</span>, NULL);</div>
 <div class="line"><a name="l00077"></a><span class="lineno">   77</span>&#160;  <span class="keywordtype">int</span> intpol =</div>
 <div class="line"><a name="l00078"></a><span class="lineno">   78</span>&#160;    (int) <a class="code" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a>(argv[1], argc, argv, <span class="stringliteral">&quot;LAPSE_INTPOL&quot;</span>, -1, <span class="stringliteral">&quot;1&quot;</span>, NULL);</div>
-<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160;  </div>
+<div class="line"><a name="l00079"></a><span class="lineno">   79</span>&#160; </div>
 <div class="line"><a name="l00080"></a><span class="lineno">   80</span>&#160;  <span class="comment">/* Loop over files... */</span></div>
 <div class="line"><a name="l00081"></a><span class="lineno">   81</span>&#160;  <span class="keywordflow">for</span> (<span class="keywordtype">int</span> i = 3; i &lt; argc; i++) {</div>
 <div class="line"><a name="l00082"></a><span class="lineno">   82</span>&#160; </div>
@@ -269,14 +269,14 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00103"></a><span class="lineno">  103</span>&#160;        <span class="comment">/* Interpolate temperature profile... */</span></div>
 <div class="line"><a name="l00104"></a><span class="lineno">  104</span>&#160;        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt; met-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a>; iz++)</div>
 <div class="line"><a name="l00105"></a><span class="lineno">  105</span>&#160;          t[iz] = met-&gt;<a class="code" href="structmet__t.html#a60fe66c30f0f0b5abdb46f220e3137cf">t</a>[ix][iy][iz];</div>
-<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        <span class="keywordflow">if</span>(intpol == 1)</div>
+<div class="line"><a name="l00106"></a><span class="lineno">  106</span>&#160;        if (intpol == 1)</div>
 <div class="line"><a name="l00107"></a><span class="lineno">  107</span>&#160;          <a class="code" href="libtrac_8c.html#abf56302090eabae3dba3b761170c9d21">spline</a>(z, t, met-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a>, z2, t2, 251);</div>
 <div class="line"><a name="l00108"></a><span class="lineno">  108</span>&#160;        <span class="keywordflow">else</span></div>
 <div class="line"><a name="l00109"></a><span class="lineno">  109</span>&#160;          <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt;= 250; iz++) {</div>
 <div class="line"><a name="l00110"></a><span class="lineno">  110</span>&#160;            <span class="keywordtype">int</span> idx = <a class="code" href="libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777">locate_irr</a>(z, met-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a>, z2[iz]);</div>
-<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;            t2[iz] = <a class="code" href="libtrac_8h.html#aebaef4a0f8136be064bf1d29ce1ced83">LIN</a>(z2[idx], t2[idx], z2[idx+1], t2[idx+1], z2[iz]);</div>
+<div class="line"><a name="l00111"></a><span class="lineno">  111</span>&#160;            t2[iz] = <a class="code" href="libtrac_8h.html#aebaef4a0f8136be064bf1d29ce1ced83">LIN</a>(z[idx], t[idx], z[idx + 1], t[idx + 1], z2[iz]);</div>
 <div class="line"><a name="l00112"></a><span class="lineno">  112</span>&#160;          }</div>
-<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160;        </div>
+<div class="line"><a name="l00113"></a><span class="lineno">  113</span>&#160; </div>
 <div class="line"><a name="l00114"></a><span class="lineno">  114</span>&#160;        <span class="comment">/* Loop over vertical levels... */</span></div>
 <div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;        <span class="keywordflow">for</span> (<span class="keywordtype">int</span> iz = 0; iz &lt;= 250; iz++) {</div>
 <div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160; </div>
@@ -454,7 +454,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="lapse_8c.html">lapse.c</a></li>
-    <li class="footer">Generated on Fri May 14 2021 21:07:08 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Fri May 14 2021 21:14:49 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
