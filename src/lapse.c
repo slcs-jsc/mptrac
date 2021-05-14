@@ -76,7 +76,7 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_Z1", -1, "100", NULL);
   int intpol =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_INTPOL", -1, "1", NULL);
-  
+
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
 
@@ -103,14 +103,14 @@ int main(
 	/* Interpolate temperature profile... */
 	for (int iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
-	if(intpol == 1)
+	if (intpol == 1)
 	  spline(z, t, met->np, z2, t2, 251);
 	else
 	  for (int iz = 0; iz <= 250; iz++) {
 	    int idx = locate_irr(z, met->np, z2[iz]);
-	    t2[iz] = LIN(z2[idx], t2[idx], z2[idx+1], t2[idx+1], z2[iz]);
+	    t2[iz] = LIN(z[idx], t[idx], z[idx + 1], t[idx + 1], z2[iz]);
 	  }
-	
+
 	/* Loop over vertical levels... */
 	for (int iz = 0; iz <= 250; iz++) {
 
