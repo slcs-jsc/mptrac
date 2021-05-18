@@ -872,6 +872,9 @@ typedef struct {
   /*! Search radius around station [km]. */
   double stat_r;
 
+  /*! Filename of OH climatology*/
+  char clim_oh_filename[LEN];
+
 } ctl_t;
 
 /*! Atmospheric data. */
@@ -1073,7 +1076,8 @@ double clim_hno3(
 double clim_oh(
   double t,
   double lat,
-  double p);
+  double p,
+  char *filename);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC

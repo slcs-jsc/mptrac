@@ -350,7 +350,7 @@ static double clim_oh_secs[12] = {
 #ifdef _OPENACC
 #pragma acc declare copyin(clim_oh_secs)
 #endif
-
+/*
 static double clim_oh_lats[18] = {
   -85, -75, -65, -55, -45, -35, -25, -15, -5,
   5, 15, 25, 35, 45, 55, 65, 75, 85
@@ -1318,27 +1318,66 @@ static double clim_oh_var[12][18][34] = {
 #ifdef _OPENACC
 #pragma acc declare copyin(clim_oh_var)
 #endif
-
+*/
 double clim_oh(
   double t,
   double lat,
-  double p) {
-
+  double p,
+  char * filename) {
+  
+  int ncid,dimid,varid,ix,iy,iz;
+  size_t np,nlat;
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
+  double *clim_oh_ps, *clim_oh_lats, *clim_oh_var_pointer;
+ 
+
   while (sec < 0)
     sec += 365.25 * 86400.;
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) 
+  {
+    WARN("File not found!");
+    return 0;
+  }
+  NC(nc_inq_dimid(ncid, "press", &dimid));
+  NC(nc_inq_dimlen(ncid, dimid, &np));
 
+  ALLOC(clim_oh_ps,double,np);
+  NC(nc_inq_varid(ncid, "press", &varid));
+  NC(nc_get_var_double(ncid, varid, clim_oh_ps));
   /* Check pressure... */
   if (p < clim_oh_ps[0])
     p = clim_oh_ps[0];
-  else if (p > clim_oh_ps[33])
-    p = clim_oh_ps[33];
+  else if (p > clim_oh_ps[np])
+    p = clim_oh_ps[np];
+
+  NC(nc_inq_dimid(ncid, "lat", &dimid));
+  NC(nc_inq_dimlen(ncid, dimid, &nlat));
+
+  ALLOC(clim_oh_lats,double,nlat);
+  NC(nc_inq_varid(ncid, "lat", &varid));
+  NC(nc_get_var_double(ncid, varid, clim_oh_lats));
+
+  /* Check latitude... */
+  if (lat < clim_oh_lats[0])
+    lat = clim_oh_lats[0];
+  else if (lat > clim_oh_lats[nlat])
+    lat = clim_oh_lats[nlat];
 
   /* Get indices... */
   int isec = locate_irr(clim_oh_secs, 12, sec);
-  int ilat = locate_reg(clim_oh_lats, 18, lat);
-  int ip = locate_irr(clim_oh_ps, 34, p);
+  int ilat = locate_reg(clim_oh_lats, (int)nlat, lat);
+  int ip = locate_irr(clim_oh_ps, (int)np, p);
+
+  NC(nc_inq_varid(ncid, "OH", &varid));
+  ALLOC(clim_oh_var_pointer,double,nlat*np*12);
+  NC(nc_get_var_double(ncid, varid, clim_oh_var_pointer));
+
+  double clim_oh_var[EX][EY][EP];
+  for (ix = 0; ix < isec; ix++)
+    for (iy = 0; iy <ilat; iy++)
+      for (iz = 0; iz < ip; iz++) {
+       clim_oh_var[ix][iy][iz] = clim_oh_var_pointer[(iz * ilat + iy) * isec + ix];}
 
   /* Interpolate OH climatology (Pommrich et al., 2014)... */
   double aux00 = LIN(clim_oh_ps[ip],
@@ -1359,8 +1398,12 @@ double clim_oh(
 		     clim_oh_var[isec + 1][ilat + 1][ip + 1], p);
   aux00 = LIN(clim_oh_lats[ilat], aux00, clim_oh_lats[ilat + 1], aux01, lat);
   aux11 = LIN(clim_oh_lats[ilat], aux10, clim_oh_lats[ilat + 1], aux11, lat);
-  return 1e6 * LIN(clim_oh_secs[isec], aux00,
-		   clim_oh_secs[isec + 1], aux11, sec);
+  aux00 = LIN(clim_oh_secs[isec], aux00, clim_oh_secs[isec + 1], aux11, sec);
+
+  free(clim_oh_lats);
+  free(clim_oh_ps);
+  free(clim_oh_var_pointer);
+  return GSL_MAX(1e6 * aux00, 0.0);
 }
 
 /*****************************************************************************/
@@ -2587,6 +2630,9 @@ void read_ctl(
   ctl->stat_lon = scan_ctl(filename, argc, argv, "STAT_LON", -1, "0", NULL);
   ctl->stat_lat = scan_ctl(filename, argc, argv, "STAT_LAT", -1, "0", NULL);
   ctl->stat_r = scan_ctl(filename, argc, argv, "STAT_R", -1, "50", NULL);
+  
+  scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1, "-",
+	   ctl->clim_oh_filename); 
 }
 
 /*****************************************************************************/

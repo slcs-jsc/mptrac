@@ -54,12 +54,12 @@ int main(
     h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], lwc, lwcm[NX][NY],
     iwc, iwcm[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY],
     tt, ttm[NX][NY], pc, pcm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY],
-    plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY], theta,
+    plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY], theta, beta,
     ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
     lat, lat0, lat1, lats[NY], dlat, cw[3], oh[NX][NY], oh_diurnal[NX][NY], oh_diurnal_correct[NX][NY],EXP_func[NX][NY], correct_func[NX][NY];
 
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
-
+  char *clim_oh_filename ="/p/project/cslmet/liu14/mptrac/projects/oh_map/test/radical_species_climatology.nc" ;
   /* Allocate... */
   ALLOC(met, met_t, 1);
 
@@ -77,7 +77,8 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
   theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
-
+  beta = scan_ctl(argv[1], argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
+   
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
 
@@ -161,24 +162,24 @@ int main(
 	ttm[ix][iy] += tt;
 	h2otm[ix][iy] += h2ot;
 	np[ix][iy]++;
-    oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy]) ;
+    oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy], clim_oh_filename) ;
     if  (sza(met->time, lons[ix], lats[iy])<M_PI/2)
     {  
-        oh_diurnal[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy]) * exp(-0.6 /cos(sza(met->time, lons[ix], lats[iy])));
+        oh_diurnal[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], clim_oh_filename) * exp(-beta /cos(sza(met->time, lons[ix], lats[iy])));
         oh_diurnal_correct[ix][iy] +=
-            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy]) / diurnal_correct(0.6, met->time, lats[iy]) * 
-            exp(-0.6 /cos(sza(met->time, lons[ix], lats[iy])));
-        EXP_func[ix][iy] +=  exp(-0.6 /cos(sza(met->time, lons[ix], lats[iy])));
+            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],clim_oh_filename) / diurnal_correct(beta, met->time, lats[iy]) * 
+            exp(-beta /cos(sza(met->time, lons[ix], lats[iy])));
+        EXP_func[ix][iy] +=  exp(-beta /cos(sza(met->time, lons[ix], lats[iy])));
     }
     else
     {   
         oh_diurnal_correct[ix][iy] +=
-            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy]) / diurnal_correct(0.6, met->time, lats[iy]) * 
+            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], clim_oh_filename) / diurnal_correct(beta, met->time, lats[iy]) * 
             1e-6;
         EXP_func[ix][iy] += 1e-3;
     }
     
-    correct_func[ix][iy] +=diurnal_correct(0.6, met->time, lats[iy]);
+    correct_func[ix][iy] +=diurnal_correct(beta, met->time, lats[iy]);
          
         }
   }
