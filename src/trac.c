@@ -1029,7 +1029,7 @@ void module_meteo(
     ATM_SET(qnt_rh, RH(atm->p[ip], t, h2o));
     ATM_SET(qnt_rhice, RHICE(atm->p[ip], t, h2o));
     ATM_SET(qnt_theta, THETA(atm->p[ip], t));
-    ATM_SET(qnt_zeta, ZETA(atm->p[ip], t));
+    ATM_SET(qnt_zeta, ZETA(ps, atm->p[ip], t));
     ATM_SET(qnt_tvirt, TVIRT(t, h2o));
     ATM_SET(qnt_lapse, lapse_rate(t, h2o));
     ATM_SET(qnt_pv, pv);

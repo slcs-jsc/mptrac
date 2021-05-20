@@ -416,9 +416,9 @@
   (RI / MA / G0 * 0.5 * (TVIRT((t0), (h2o0)) + TVIRT((t1), (h2o1)))	\
    * ((lnp0) - (lnp1)))
 
-/*! Compute zeta vertical coordinate. */
-#define ZETA(p, t)							\
-  (((p) <= 100. ? 1. : sin(M_PI / 2. * (P0 - (p)) / (P0 - 100.)))	\
+/*! Calculate zeta vertical coordinate. */
+#define ZETA(ps, p, t)							\
+  (((p) <= 300. ? 1. : sin(M_PI / 2. * ((ps) - (p)) / ((ps) - 300.)))	\
    * THETA((p), (t)))
 
 /* ------------------------------------------------------------
