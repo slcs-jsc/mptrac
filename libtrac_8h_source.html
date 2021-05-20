@@ -429,8 +429,8 @@ $(document).ready(function(){initNavTree('libtrac_8h_source.html',''); initResiz
 <div class="line"><a name="l00416"></a><span class="lineno">  416</span>&#160;<span class="preprocessor">  (RI / MA / G0 * 0.5 * (TVIRT((t0), (h2o0)) + TVIRT((t1), (h2o1)))     \</span></div>
 <div class="line"><a name="l00417"></a><span class="lineno">  417</span>&#160;<span class="preprocessor">   * ((lnp0) - (lnp1)))</span></div>
 <div class="line"><a name="l00418"></a><span class="lineno">  418</span>&#160; </div>
-<div class="line"><a name="l00420"></a><span class="lineno"><a class="line" href="libtrac_8h.html#a977605bf7306ae3b9b5cddbd35e5708d">  420</a></span>&#160;<span class="preprocessor">#define ZETA(p, t)                                                      \</span></div>
-<div class="line"><a name="l00421"></a><span class="lineno">  421</span>&#160;<span class="preprocessor">  (((p) &lt;= 100. ? 1. : sin(M_PI / 2. * (P0 - (p)) / (P0 - 100.)))       \</span></div>
+<div class="line"><a name="l00420"></a><span class="lineno"><a class="line" href="libtrac_8h.html#a90ee947c906d48ce71affad259ac991d">  420</a></span>&#160;<span class="preprocessor">#define ZETA(ps, p, t)                                                  \</span></div>
+<div class="line"><a name="l00421"></a><span class="lineno">  421</span>&#160;<span class="preprocessor">  (((p) &lt;= 300. ? 1. : sin(M_PI / 2. * ((ps) - (p)) / ((ps) - 300.)))   \</span></div>
 <div class="line"><a name="l00422"></a><span class="lineno">  422</span>&#160;<span class="preprocessor">   * THETA((p), (t)))</span></div>
 <div class="line"><a name="l00423"></a><span class="lineno">  423</span>&#160; </div>
 <div class="line"><a name="l00424"></a><span class="lineno">  424</span>&#160;<span class="comment">/* ------------------------------------------------------------</span></div>
@@ -1466,7 +1466,7 @@ $(document).ready(function(){initNavTree('libtrac_8h_source.html',''); initResiz
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="libtrac_8h.html">libtrac.h</a></li>
-    <li class="footer">Generated on Thu May 20 2021 11:50:39 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Thu May 20 2021 14:05:07 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>

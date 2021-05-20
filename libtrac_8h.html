@@ -339,9 +339,9 @@ Macros</h2></td></tr>
 <tr class="memitem:a8c73522db5d14433bd9ad2bd45d0de5f"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="libtrac_8h.html#a8c73522db5d14433bd9ad2bd45d0de5f">ZDIFF</a>(lnp0,  t0,  h2o0,  lnp1,  t1,  h2o1)</td></tr>
 <tr class="memdesc:a8c73522db5d14433bd9ad2bd45d0de5f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate geopotential height difference.  <a href="libtrac_8h.html#a8c73522db5d14433bd9ad2bd45d0de5f">More...</a><br /></td></tr>
 <tr class="separator:a8c73522db5d14433bd9ad2bd45d0de5f"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a977605bf7306ae3b9b5cddbd35e5708d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="libtrac_8h.html#a977605bf7306ae3b9b5cddbd35e5708d">ZETA</a>(p,  t)</td></tr>
-<tr class="memdesc:a977605bf7306ae3b9b5cddbd35e5708d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Compute zeta vertical coordinate.  <a href="libtrac_8h.html#a977605bf7306ae3b9b5cddbd35e5708d">More...</a><br /></td></tr>
-<tr class="separator:a977605bf7306ae3b9b5cddbd35e5708d"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a90ee947c906d48ce71affad259ac991d"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="libtrac_8h.html#a90ee947c906d48ce71affad259ac991d">ZETA</a>(ps,  p,  t)</td></tr>
+<tr class="memdesc:a90ee947c906d48ce71affad259ac991d"><td class="mdescLeft">&#160;</td><td class="mdescRight">Calculate zeta vertical coordinate.  <a href="libtrac_8h.html#a90ee947c906d48ce71affad259ac991d">More...</a><br /></td></tr>
+<tr class="separator:a90ee947c906d48ce71affad259ac991d"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ab14495ae1f9667df5d198613bcc8d092"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="libtrac_8h.html#ab14495ae1f9667df5d198613bcc8d092">NTIMER</a>&#160;&#160;&#160;100</td></tr>
 <tr class="memdesc:ab14495ae1f9667df5d198613bcc8d092"><td class="mdescLeft">&#160;</td><td class="mdescRight">Maximum number of timers.  <a href="libtrac_8h.html#ab14495ae1f9667df5d198613bcc8d092">More...</a><br /></td></tr>
 <tr class="separator:ab14495ae1f9667df5d198613bcc8d092"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -2436,8 +2436,8 @@ Functions</h2></td></tr>
 
 </div>
 </div>
-<a id="a977605bf7306ae3b9b5cddbd35e5708d"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a977605bf7306ae3b9b5cddbd35e5708d">&#9670;&nbsp;</a></span>ZETA</h2>
+<a id="a90ee947c906d48ce71affad259ac991d"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a90ee947c906d48ce71affad259ac991d">&#9670;&nbsp;</a></span>ZETA</h2>
 
 <div class="memitem">
 <div class="memproto">
@@ -2445,6 +2445,12 @@ Functions</h2></td></tr>
         <tr>
           <td class="memname">#define ZETA</td>
           <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">ps, </td>
+        </tr>
+        <tr>
+          <td class="paramkey"></td>
+          <td></td>
           <td class="paramtype">&#160;</td>
           <td class="paramname">p, </td>
         </tr>
@@ -2461,12 +2467,11 @@ Functions</h2></td></tr>
         </tr>
       </table>
 </div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">  (((p) &lt;= 100. ? 1. : sin(M_PI / 2. * (<a class="code" href="libtrac_8h.html#a1583b00a62bc1138f99bbfcd8ef81a6a">P0</a> - (p)) / (<a class="code" href="libtrac_8h.html#a1583b00a62bc1138f99bbfcd8ef81a6a">P0</a> - 100.)))       \</div>
+<b>Value:</b><div class="fragment"><div class="line">  (((p) &lt;= 300. ? 1. : sin(M_PI / 2. * ((ps) - (p)) / ((ps) - 300.)))   \</div>
 <div class="line">   * <a class="code" href="libtrac_8h.html#a7d6c988afa363960f9cb5f3b589d2ae4">THETA</a>((p), (t)))</div>
-<div class="ttc" id="alibtrac_8h_html_a1583b00a62bc1138f99bbfcd8ef81a6a"><div class="ttname"><a href="libtrac_8h.html#a1583b00a62bc1138f99bbfcd8ef81a6a">P0</a></div><div class="ttdeci">#define P0</div><div class="ttdoc">Standard pressure [hPa].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00099">libtrac.h:99</a></div></div>
 <div class="ttc" id="alibtrac_8h_html_a7d6c988afa363960f9cb5f3b589d2ae4"><div class="ttname"><a href="libtrac_8h.html#a7d6c988afa363960f9cb5f3b589d2ae4">THETA</a></div><div class="ttdeci">#define THETA(p, t)</div><div class="ttdoc">Compute potential temperature.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00392">libtrac.h:392</a></div></div>
 </div><!-- fragment -->
-<p>Compute zeta vertical coordinate. </p>
+<p>Calculate zeta vertical coordinate. </p>
 
 <p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00420">420</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
@@ -8843,7 +8848,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="libtrac_8h.html">libtrac.h</a></li>
-    <li class="footer">Generated on Thu May 20 2021 11:50:39 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Thu May 20 2021 14:05:08 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
