@@ -2252,6 +2252,7 @@ void read_ctl(
   ctl->qnt_rh = -1;
   ctl->qnt_rhice = -1;
   ctl->qnt_theta = -1;
+  ctl->qnt_zeta = -1;
   ctl->qnt_tvirt = -1;
   ctl->qnt_lapse = -1;
   ctl->qnt_vh = -1;
@@ -2376,6 +2377,9 @@ void read_ctl(
       sprintf(ctl->qnt_unit[iq], "%%");
     } else if (strcasecmp(ctl->qnt_name[iq], "theta") == 0) {
       ctl->qnt_theta = iq;
+      sprintf(ctl->qnt_unit[iq], "K");
+    } else if (strcasecmp(ctl->qnt_name[iq], "zeta") == 0) {
+      ctl->qnt_zeta = iq;
       sprintf(ctl->qnt_unit[iq], "K");
     } else if (strcasecmp(ctl->qnt_name[iq], "tvirt") == 0) {
       ctl->qnt_tvirt = iq;

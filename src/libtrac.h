@@ -413,7 +413,13 @@
 
 /*! Calculate geopotential height difference. */
 #define ZDIFF(lnp0, t0, h2o0, lnp1, t1, h2o1)				\
-  (RI / MA / G0 * 0.5 * (TVIRT((t0), (h2o0)) + TVIRT((t1), (h2o1))) * ((lnp0) - (lnp1)))
+  (RI / MA / G0 * 0.5 * (TVIRT((t0), (h2o0)) + TVIRT((t1), (h2o1)))	\
+   * ((lnp0) - (lnp1)))
+
+/*! Compute zeta vertical coordinate. */
+#define ZETA(p, t)							\
+  (((p) <= 100. ? 1. : sin(M_PI / 2. * (P0 - (p)) / (P0 - 100.)))	\
+   * THETA((p), (t)))
 
 /* ------------------------------------------------------------
    Timers...
@@ -627,6 +633,9 @@ typedef struct {
 
   /*! Quantity array index for potential temperature. */
   int qnt_theta;
+
+  /*! Quantity array index for zeta vertical coordinate. */
+  int qnt_zeta;
 
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
