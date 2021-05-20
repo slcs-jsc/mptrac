@@ -61,7 +61,7 @@ NVTX ?= 0
 
 # Set CFLAGS...
 CFLAGS += $(INCDIR) $(DEFINES) $(OPT) -g
-ifeq ($(CC),nvcc)
+ifeq ($(CC),pgcc)
   CFLAGS += -mp -mcmodel=medium
 else
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
@@ -77,13 +77,13 @@ endif
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
-  ifeq ($(CC),nvcc)
+  ifeq ($(CC),pgcc)
     CFLAGS += -acc
     ifeq ($(GPUMEM),1)
       CFLAGS += -gpu=managed
     endif
   else
-    CFLAGS += -fopenacc -foffload=-lm
+    $(error GPU compilation requires pgcc)
   endif
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
@@ -96,7 +96,7 @@ endif
 
 # Optimization information...
 ifeq ($(INFO),1)
-  ifeq ($(CC),nvcc)
+  ifeq ($(CC),pgcc)
     CFLAGS += -Minfo=all
   else
     CFLAGS += -fopt-info
