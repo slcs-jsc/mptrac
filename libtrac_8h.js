@@ -71,6 +71,7 @@ var libtrac_8h =
     [ "WARN", "libtrac_8h.html#a108d6c5c51dd46e82a62b262394f0242", null ],
     [ "Z", "libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf", null ],
     [ "ZDIFF", "libtrac_8h.html#a8c73522db5d14433bd9ad2bd45d0de5f", null ],
+    [ "ZETA", "libtrac_8h.html#a977605bf7306ae3b9b5cddbd35e5708d", null ],
     [ "NTIMER", "libtrac_8h.html#ab14495ae1f9667df5d198613bcc8d092", null ],
     [ "PRINT_TIMERS", "libtrac_8h.html#ab84d08f557a59406c2b0969300937769", null ],
     [ "SELECT_TIMER", "libtrac_8h.html#a59eb8093a0ffb18a26cf5a65dc6c8150", null ],
