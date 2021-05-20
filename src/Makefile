@@ -28,32 +28,41 @@ LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 # Include directories...
 INCDIR += -I ../libs/build/include
 
+# Enable netCDF-4...
+NC4 ?= 1
+
 # Compile for GPUs...
 GPU ?= 0
+
+# Use managed memory for GPUs...
+GPUMEM ?= 1
 
 # Compile for MPI...
 MPI ?= 0
 
+# Static compilation...
+STATIC ?= 1
+
+# Optimization flags...
+OPT ?= -O3
+
+# Optimization information...
+INFO ?= 0
+
 # Compile for profiling...
 PROF ?= 0
 
-# Enable netCDF-4...
-NC4 ?= 1
-
 # Enable NVTX markers...
 NVTX ?= 0
-
-# Static compilation...
-STATIC ?= 1
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
 
 # Set CFLAGS...
-CFLAGS += $(INCDIR) $(DEFINES) -g
-ifeq ($(CC),pgcc)
-  CFLAGS += -mp -mcmodel=medium -Minfo=all
+CFLAGS += $(INCDIR) $(DEFINES) $(OPT) -g
+ifeq ($(CC),nvcc)
+  CFLAGS += -mp -mcmodel=medium
 else
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 endif
@@ -68,11 +77,13 @@ endif
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
-  ifeq ($(CC),pgcc)
-    CFLAGS += -acc -gpu=managed
+  ifeq ($(CC),nvcc)
+    CFLAGS += -acc
+    ifeq ($(GPUMEM),1)
+      CFLAGS += -gpu=managed
+    endif
   else
-#    CFLAGS += -fopenacc -foffload=-lm
-    CFLAGS += -fopenacc
+    CFLAGS += -fopenacc -foffload=-lm
   endif
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
@@ -83,11 +94,18 @@ ifeq ($(MPI),1)
   CFLAGS += -DMPI
 endif
 
+# Optimization information...
+ifeq ($(INFO),1)
+  ifeq ($(CC),nvcc)
+    CFLAGS += -Minfo=all
+  else
+    CFLAGS += -fopt-info
+  endif
+endif
+
 # Compile for profiling...
 ifeq ($(PROF),1)
-  CFLAGS += -O2 -pg
-else
-  CFLAGS += -O3
+  CFLAGS += -pg
 endif
 
 # NVTX...

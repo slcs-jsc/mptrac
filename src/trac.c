@@ -819,7 +819,7 @@ void module_dry_deposition(
       double dz = 1000. * (Z(ps - dp) - Z(ps));
 
       /* Calculate sedimentation velocity for particles... */
-      if (ctl->qnt_r >= 0 && ctl->qnt_rho >= 0) {
+      if (ctl->qnt_r > 0 && ctl->qnt_rho > 0) {
 
 	/* Get temperature... */
 	INTPOL_3D(t, 1);
