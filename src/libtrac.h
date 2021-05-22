@@ -527,6 +527,9 @@ typedef struct {
   /*! Quantity array index for mass. */
   int qnt_m;
 
+  /*! Quantity array index for volume mixing ratio. */
+  int qnt_vmr;
+
   /*! Quantity array index for particle density. */
   int qnt_rho;
 
@@ -768,6 +771,9 @@ typedef struct {
 
   /*! Boundary conditions mass per particle [kg]. */
   double bound_mass;
+
+  /*! Boundary conditions volume mixing ratio [ppv]. */
+  double bound_vmr;
 
   /*! Boundary conditions minimum longitude [deg]. */
   double bound_lat0;

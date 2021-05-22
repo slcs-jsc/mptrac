@@ -35,7 +35,7 @@ int main(
   gsl_rng *rng;
 
   double dt, dz, dlon, dlat, lat0, lat1, lon0, lon1, t0, t1, z0, z1,
-    t, z, lon, lat, st, sz, slon, slat, sx, ut, uz, ulon, ulat, m;
+    t, z, lon, lat, st, sz, slon, slat, sx, ut, uz, ulon, ulat, m, vmr;
 
   int even, ip, irep, rep;
 
@@ -72,6 +72,7 @@ int main(
   even = (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "0", NULL);
   rep = (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
   m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
+  vmr = scan_ctl(argv[1], argc, argv, "INIT_VMR", -1, "0", NULL);
 
   /* Initialize random number generator... */
   gsl_rng_env_setup();
@@ -116,6 +117,11 @@ int main(
   if (ctl.qnt_m >= 0)
     for (ip = 0; ip < atm->np; ip++)
       atm->q[ctl.qnt_m][ip] = m / atm->np;
+
+  /* Initialize volume mixing ratio... */
+  if (ctl.qnt_vmr >= 0)
+    for (ip = 0; ip < atm->np; ip++)
+      atm->q[ctl.qnt_vmr][ip] = vmr;
 
   /* Save data... */
   write_atm(argv[2], &ctl, atm, 0);

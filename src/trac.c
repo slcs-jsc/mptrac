@@ -518,8 +518,8 @@ void module_bound_cond(
   SELECT_TIMER("MODULE_BOUNDCOND", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
@@ -533,8 +533,7 @@ void module_bound_cond(
       double ps;
 
       /* Check latitude and pressure range... */
-      if (atm->lat[ip] < ctl->bound_lat0
-	  || atm->lat[ip] > ctl->bound_lat1
+      if (atm->lat[ip] < ctl->bound_lat0 || atm->lat[ip] > ctl->bound_lat1
 	  || atm->p[ip] > ctl->bound_p0 || atm->p[ip] < ctl->bound_p1)
 	continue;
 
@@ -550,8 +549,11 @@ void module_bound_cond(
 	  continue;
       }
 
-      /* Set mass... */
-      atm->q[ctl->qnt_m][ip] = ctl->bound_mass;
+      /* Set mass and volume mixing ratio... */
+      if (ctl->qnt_m >= 0)
+	atm->q[ctl->qnt_m][ip] = ctl->bound_mass;
+      if (ctl->qnt_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] = ctl->bound_vmr;
     }
 }
 
@@ -622,8 +624,8 @@ void module_decay(
   SELECT_TIMER("MODULE_DECAY", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,atm,dt)
@@ -652,7 +654,11 @@ void module_decay(
       double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
       /* Calculate exponential decay... */
-      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] / tdec);
+      double aux = exp(-dt[ip] / tdec);
+      if (ctl->qnt_m >= 0)
+	atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
 
@@ -855,8 +861,8 @@ void module_dry_deposition(
   const double dp = 30.;
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
@@ -896,7 +902,11 @@ void module_dry_deposition(
 	v_dep = ctl->dry_depo[0];
 
       /* Calculate loss of mass based on deposition velocity... */
-      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] * v_dep / dz);
+      double aux = exp(-dt[ip] * v_dep / dz);
+      if (ctl->qnt_m >= 0)
+	atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
 
@@ -1284,8 +1294,8 @@ void module_oh_chem(
   SELECT_TIMER("MODULE_OHCHEM", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
@@ -1314,8 +1324,12 @@ void module_oh_chem(
       double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
       /* Calculate exponential decay... */
-      atm->q[ctl->qnt_m][ip] *=
-	exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+      double aux
+	= exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+      if (ctl->qnt_m >= 0)
+	atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
 
@@ -1332,8 +1346,8 @@ void module_wet_deposition(
   SELECT_TIMER("MODULE_WETDEPO", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
@@ -1416,7 +1430,11 @@ void module_wet_deposition(
       }
 
       /* Calculate exponential decay of mass... */
-      atm->q[ctl->qnt_m][ip] *= exp(-dt[ip] * lambda);
+      double aux = exp(-dt[ip] * lambda);
+      if (ctl->qnt_m >= 0)
+	atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
 

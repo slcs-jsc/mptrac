@@ -2216,6 +2216,7 @@ void read_ctl(
   /* Initialize quantity indices... */
   ctl->qnt_ens = -1;
   ctl->qnt_m = -1;
+  ctl->qnt_vmr = -1;
   ctl->qnt_r = -1;
   ctl->qnt_rho = -1;
   ctl->qnt_ps = -1;
@@ -2282,6 +2283,9 @@ void read_ctl(
     } else if (strcasecmp(ctl->qnt_name[iq], "m") == 0) {
       ctl->qnt_m = iq;
       sprintf(ctl->qnt_unit[iq], "kg");
+    } else if (strcasecmp(ctl->qnt_name[iq], "vmr") == 0) {
+      ctl->qnt_vmr = iq;
+      sprintf(ctl->qnt_unit[iq], "ppv");
     } else if (strcasecmp(ctl->qnt_name[iq], "r") == 0) {
       ctl->qnt_r = iq;
       sprintf(ctl->qnt_unit[iq], "m");
@@ -2496,6 +2500,8 @@ void read_ctl(
   /* Boundary conditions... */
   ctl->bound_mass =
     scan_ctl(filename, argc, argv, "BOUND_MASS", -1, "-999", NULL);
+  ctl->bound_vmr =
+    scan_ctl(filename, argc, argv, "BOUND_VMR", -1, "-999", NULL);
   ctl->bound_lat0 =
     scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-90", NULL);
   ctl->bound_lat1 =
@@ -4576,8 +4582,9 @@ void write_grid(
 
   char line[LEN];
 
-  static double mass[GX][GY][GZ], z[GZ], dz, lon[GX], dlon, lat[GY], dlat,
-    area[GY], rho_air, press[GZ], temp, cd, vmr, t0, t1, r;
+  static double mass[GX][GY][GZ], vmr[GX][GY][GZ], vmr_expl, vmr_impl,
+    z[GZ], dz, lon[GX], dlon, lat[GY], dlat, area[GY], rho_air,
+    press[GZ], temp, cd, t0, t1, r;
 
   static int ip, ix, *ixs, iy, *iys, iz, *izs, np[GX][GY][GZ], year, mon, day,
     hour, min, sec;
@@ -4621,6 +4628,7 @@ void write_grid(
     for (iy = 0; iy < ctl->grid_ny; iy++)
       for (iz = 0; iz < ctl->grid_nz; iz++) {
 	mass[ix][iy][iz] = 0;
+	vmr[ix][iy][iz] = 0;
 	np[ix][iy][iz] = 0;
       }
 
@@ -4651,6 +4659,8 @@ void write_grid(
       np[ixs[ip]][iys[ip]][izs[ip]]++;
       if (ctl->qnt_m >= 0)
 	mass[ixs[ip]][iys[ip]][izs[ip]] += atm->q[ctl->qnt_m][ip];
+      if (ctl->qnt_vmr >= 0)
+	vmr[ixs[ip]][iys[ip]][izs[ip]] += atm->q[ctl->qnt_vmr][ip];
     }
 
   /* Free... */
@@ -4703,8 +4713,9 @@ void write_grid(
 	  "# $5 = surface area [km^2]\n"
 	  "# $6 = layer width [km]\n"
 	  "# $7 = number of particles [1]\n"
-	  "# $8 = column density [kg/m^2]\n"
-	  "# $9 = volume mixing ratio [ppv]\n\n");
+	  "# $8 = column density (implicit) [kg/m^2]\n"
+	  "# $9 = volume mixing ratio (implicit) [ppv]\n"
+	  "# $10 = volume mixing ratio (explicit) [ppv]\n\n");
 
   /* Write data... */
   for (ix = 0; ix < ctl->grid_nx; ix++) {
@@ -4714,14 +4725,17 @@ void write_grid(
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
       for (iz = 0; iz < ctl->grid_nz; iz++)
-	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0) {
+	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0 || vmr[ix][iy][iz] > 0) {
 
 	  /* Calculate column density... */
-	  cd = mass[ix][iy][iz] / (1e6 * area[iy]);
+	  if (ctl->qnt_m >= 0)
+	    cd = mass[ix][iy][iz] / (1e6 * area[iy]);
+	  else
+	    cd = GSL_NAN;
 
-	  /* Calculate volume mixing ratio... */
-	  vmr = 0;
-	  if (ctl->molmass > 0) {
+	  /* Calculate volume mixing ratio (implicit)... */
+	  if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
+	    vmr_impl = 0;
 	    if (mass[ix][iy][iz] > 0) {
 
 	      /* Get temperature... */
@@ -4733,15 +4747,22 @@ void write_grid(
 	      rho_air = 100. * press[iz] / (RA * temp);
 
 	      /* Calculate volume mixing ratio... */
-	      vmr = MA / ctl->molmass * mass[ix][iy][iz]
+	      vmr_impl = MA / ctl->molmass * mass[ix][iy][iz]
 		/ (rho_air * 1e6 * area[iy] * 1e3 * dz);
 	    }
 	  } else
-	    vmr = GSL_NAN;
+	    vmr_impl = GSL_NAN;
+
+	  /* Calculate volume mixing ratio (explicit)... */
+	  if (ctl->qnt_vmr >= 0 && np[ix][iy][iz] > 0)
+	    vmr_expl = vmr[ix][iy][iz] / np[ix][iy][iz];
+	  else
+	    vmr_expl = GSL_NAN;
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g\n", t, z[iz],
-		  lon[ix], lat[iy], area[iy], dz, np[ix][iy][iz], cd, vmr);
+	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", t, z[iz],
+		  lon[ix], lat[iy], area[iy], dz, np[ix][iy][iz], cd,
+		  vmr_impl, vmr_expl);
 	}
     }
   }
