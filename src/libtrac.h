@@ -766,6 +766,24 @@ typedef struct {
   /*! Upper level for mixing (0=particle pressure, 1=EL). */
   int conv_mix_top;
 
+  /*! Boundary conditions mass per particle [kg]. */
+  double bound_mass;
+
+  /*! Boundary conditions minimum longitude [deg]. */
+  double bound_lat0;
+
+  /*! Boundary conditions maximum longitude [deg]. */
+  double bound_lat1;
+
+  /*! Boundary conditions bottom pressure [hPa]. */
+  double bound_p0;
+
+  /*! Boundary conditions top pressure [hPa]. */
+  double bound_p1;
+
+  /*! Boundary conditions delta to surface pressure [hPa]. */
+  double bound_dps;
+
   /*! Species. */
   char species[LEN];
 

@@ -45,6 +45,14 @@ void module_advection(
   atm_t * atm,
   double *dt);
 
+/*! Apply boundary conditions. */
+void module_bound_cond(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
 /*! Calculate convection of air parcels. */
 void module_convection(
   ctl_t * ctl,
@@ -382,6 +390,10 @@ int main(
 	  && (ctl.wet_depo[4] > 0 || ctl.wet_depo[6] > 0))
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
 
+      /* Boundary conditions... */
+      if (ctl.bound_mass > 0)
+	module_bound_cond(&ctl, met0, met1, atm, dt);
+
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
     }
@@ -490,6 +502,56 @@ void module_advection(
       atm->lon[ip] += DX2DEG(dt[ip] * u / 1000., xm1);
       atm->lat[ip] += DY2DEG(dt[ip] * v / 1000.);
       atm->p[ip] += dt[ip] * w;
+    }
+}
+
+/*****************************************************************************/
+
+void module_bound_cond(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_BOUNDCOND", NVTX_GPU);
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+
+#ifdef _OPENACC
+#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      double ps;
+
+      /* Check latitude and pressure range... */
+      if (atm->lat[ip] < ctl->bound_lat0
+	  || atm->lat[ip] > ctl->bound_lat1
+	  || atm->p[ip] > ctl->bound_p0 || atm->p[ip] < ctl->bound_p1)
+	continue;
+
+      /* Check surface layer... */
+      if (ctl->bound_dps > 0) {
+
+	/* Get surface pressure... */
+	INTPOL_INIT;
+	INTPOL_2D(ps, 1);
+
+	/* Check whether particle is above the surface layer... */
+	if (atm->p[ip] < ps - ctl->bound_dps)
+	  continue;
+      }
+
+      /* Set mass... */
+      atm->q[ctl->qnt_m][ip] = ctl->bound_mass;
     }
 }
 

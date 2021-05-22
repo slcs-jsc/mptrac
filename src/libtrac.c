@@ -2493,6 +2493,20 @@ void read_ctl(
   ctl->conv_mix_top
     = (int) scan_ctl(filename, argc, argv, "CONV_MIX_TOP", -1, "1", NULL);
 
+  /* Boundary conditions... */
+  ctl->bound_mass =
+    scan_ctl(filename, argc, argv, "BOUND_MASS", -1, "-999", NULL);
+  ctl->bound_lat0 =
+    scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-90", NULL);
+  ctl->bound_lat1 =
+    scan_ctl(filename, argc, argv, "BOUND_LAT1", -1, "90", NULL);
+  ctl->bound_p0 =
+    scan_ctl(filename, argc, argv, "BOUND_P0", -1, "1e10", NULL);
+  ctl->bound_p1 =
+    scan_ctl(filename, argc, argv, "BOUND_P1", -1, "-1e10", NULL);
+  ctl->bound_dps =
+    scan_ctl(filename, argc, argv, "BOUND_DPS", -1, "-999", NULL);
+
   /* Species parameters... */
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
   if (strcasecmp(ctl->species, "SO2") == 0) {
