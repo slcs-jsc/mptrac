@@ -391,7 +391,7 @@ int main(
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
 
       /* Boundary conditions... */
-      if (ctl.bound_mass > 0)
+      if (ctl.bound_mass > 0 || ctl.bound_vmr > 0)
 	module_bound_cond(&ctl, met0, met1, atm, dt);
 
       /* Write output... */
