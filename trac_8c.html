@@ -2380,7 +2380,7 @@ Here is the call graph for this function:</div>
 <div class="line"><a name="l00391"></a><span class="lineno">  391</span>&#160;        <a class="code" href="trac_8c.html#a288d5a40bb7cd1626ce343ff884fb64d">module_wet_deposition</a>(&amp;ctl, met0, met1, atm, dt);</div>
 <div class="line"><a name="l00392"></a><span class="lineno">  392</span>&#160; </div>
 <div class="line"><a name="l00393"></a><span class="lineno">  393</span>&#160;      <span class="comment">/* Boundary conditions... */</span></div>
-<div class="line"><a name="l00394"></a><span class="lineno">  394</span>&#160;      <span class="keywordflow">if</span> (ctl.<a class="code" href="structctl__t.html#a25a01ebb0fcff6040d0003b88b13cdec">bound_mass</a> &gt; 0)</div>
+<div class="line"><a name="l00394"></a><span class="lineno">  394</span>&#160;      <span class="keywordflow">if</span> (ctl.<a class="code" href="structctl__t.html#a25a01ebb0fcff6040d0003b88b13cdec">bound_mass</a> &gt; 0 || ctl.<a class="code" href="structctl__t.html#a4f7014dad580e4e745c910187468807c">bound_vmr</a> &gt; 0)</div>
 <div class="line"><a name="l00395"></a><span class="lineno">  395</span>&#160;        <a class="code" href="trac_8c.html#a3a2885df908ec4fcdaecda26faba8001">module_bound_cond</a>(&amp;ctl, met0, met1, atm, dt);</div>
 <div class="line"><a name="l00396"></a><span class="lineno">  396</span>&#160; </div>
 <div class="line"><a name="l00397"></a><span class="lineno">  397</span>&#160;      <span class="comment">/* Write output... */</span></div>
@@ -2548,7 +2548,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="trac_8c.html">trac.c</a></li>
-    <li class="footer">Generated on Sat May 22 2021 21:55:43 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Sat May 22 2021 22:50:05 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
