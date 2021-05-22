@@ -6,5 +6,6 @@ var searchData=
   ['bound_5flat1_19',['bound_lat1',['../structctl__t.html#a3488ff97025f12fbe161d85b09ddc33e',1,'ctl_t']]],
   ['bound_5fmass_20',['bound_mass',['../structctl__t.html#a25a01ebb0fcff6040d0003b88b13cdec',1,'ctl_t']]],
   ['bound_5fp0_21',['bound_p0',['../structctl__t.html#aa1419e1cd3c485e89a5166c7e1f19caf',1,'ctl_t']]],
-  ['bound_5fp1_22',['bound_p1',['../structctl__t.html#a44cbf78eb4bbb11036922bc40faa2b4b',1,'ctl_t']]]
+  ['bound_5fp1_22',['bound_p1',['../structctl__t.html#a44cbf78eb4bbb11036922bc40faa2b4b',1,'ctl_t']]],
+  ['bound_5fvmr_23',['bound_vmr',['../structctl__t.html#a4f7014dad580e4e745c910187468807c',1,'ctl_t']]]
 ];

@@ -129,6 +129,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a084c47554ce3d8b615dfabc9abbb26d1"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">qnt_m</a></td></tr>
 <tr class="memdesc:a084c47554ce3d8b615dfabc9abbb26d1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quantity array index for mass.  <a href="structctl__t.html#a084c47554ce3d8b615dfabc9abbb26d1">More...</a><br /></td></tr>
 <tr class="separator:a084c47554ce3d8b615dfabc9abbb26d1"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a323dd04f9b74b6bef349e3a91b649568"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a323dd04f9b74b6bef349e3a91b649568">qnt_vmr</a></td></tr>
+<tr class="memdesc:a323dd04f9b74b6bef349e3a91b649568"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quantity array index for volume mixing ratio.  <a href="structctl__t.html#a323dd04f9b74b6bef349e3a91b649568">More...</a><br /></td></tr>
+<tr class="separator:a323dd04f9b74b6bef349e3a91b649568"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a850b57e663a4a8cde2952ecdad2c905f"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a850b57e663a4a8cde2952ecdad2c905f">qnt_rho</a></td></tr>
 <tr class="memdesc:a850b57e663a4a8cde2952ecdad2c905f"><td class="mdescLeft">&#160;</td><td class="mdescRight">Quantity array index for particle density.  <a href="structctl__t.html#a850b57e663a4a8cde2952ecdad2c905f">More...</a><br /></td></tr>
 <tr class="separator:a850b57e663a4a8cde2952ecdad2c905f"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -369,6 +372,9 @@ Data Fields</h2></td></tr>
 <tr class="memitem:a25a01ebb0fcff6040d0003b88b13cdec"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a25a01ebb0fcff6040d0003b88b13cdec">bound_mass</a></td></tr>
 <tr class="memdesc:a25a01ebb0fcff6040d0003b88b13cdec"><td class="mdescLeft">&#160;</td><td class="mdescRight">Boundary conditions mass per particle [kg].  <a href="structctl__t.html#a25a01ebb0fcff6040d0003b88b13cdec">More...</a><br /></td></tr>
 <tr class="separator:a25a01ebb0fcff6040d0003b88b13cdec"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a4f7014dad580e4e745c910187468807c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a4f7014dad580e4e745c910187468807c">bound_vmr</a></td></tr>
+<tr class="memdesc:a4f7014dad580e4e745c910187468807c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Boundary conditions volume mixing ratio [ppv].  <a href="structctl__t.html#a4f7014dad580e4e745c910187468807c">More...</a><br /></td></tr>
+<tr class="separator:a4f7014dad580e4e745c910187468807c"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a686563c65fdd2d03d15cfdddf294584c"><td class="memItemLeft" align="right" valign="top">double&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structctl__t.html#a686563c65fdd2d03d15cfdddf294584c">bound_lat0</a></td></tr>
 <tr class="memdesc:a686563c65fdd2d03d15cfdddf294584c"><td class="mdescLeft">&#160;</td><td class="mdescRight">Boundary conditions minimum longitude [deg].  <a href="structctl__t.html#a686563c65fdd2d03d15cfdddf294584c">More...</a><br /></td></tr>
 <tr class="separator:a686563c65fdd2d03d15cfdddf294584c"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -720,6 +726,24 @@ Data Fields</h2></td></tr>
 
 </div>
 </div>
+<a id="a323dd04f9b74b6bef349e3a91b649568"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a323dd04f9b74b6bef349e3a91b649568">&#9670;&nbsp;</a></span>qnt_vmr</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">int ctl_t::qnt_vmr</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Quantity array index for volume mixing ratio. </p>
+
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00531">531</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+
+</div>
+</div>
 <a id="a850b57e663a4a8cde2952ecdad2c905f"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a850b57e663a4a8cde2952ecdad2c905f">&#9670;&nbsp;</a></span>qnt_rho</h2>
 
@@ -734,7 +758,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for particle density. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00531">531</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00534">534</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -752,7 +776,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for particle radius. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00534">534</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00537">537</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -770,7 +794,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00537">537</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00540">540</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -788,7 +812,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00540">540</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00543">543</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -806,7 +830,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface geopotential height. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00543">543</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00546">546</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -824,7 +848,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface zonal wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00546">546</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00549">549</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -842,7 +866,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for surface meridional wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00549">549</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00552">552</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -860,7 +884,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00552">552</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00555">555</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -878,7 +902,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00555">555</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00558">558</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -896,7 +920,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause geopotential height. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00558">558</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00561">561</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -914,7 +938,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for tropopause water vapor vmr. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00561">561</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00564">564</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -932,7 +956,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for geopotential height. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00564">564</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00567">567</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -950,7 +974,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00567">567</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00570">570</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -968,7 +992,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00570">570</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00573">573</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -986,7 +1010,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for zonal wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00573">573</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00576">576</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1004,7 +1028,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for meridional wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00576">576</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00579">579</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1022,7 +1046,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for vertical velocity. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00579">579</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00582">582</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1040,7 +1064,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for water vapor vmr. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00582">582</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00585">585</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1058,7 +1082,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for ozone vmr. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00585">585</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00588">588</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1076,7 +1100,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud liquid water content. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00588">588</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00591">591</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1094,7 +1118,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud ice water content. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00591">591</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00594">594</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1112,7 +1136,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for cloud top pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00594">594</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00597">597</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1130,7 +1154,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for total column cloud water. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00597">597</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00600">600</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1148,7 +1172,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure at lifted condensation level (LCL). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00600">600</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00603">603</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1166,7 +1190,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure at level of free convection (LCF). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00603">603</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00606">606</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1184,7 +1208,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for pressure at equilibrium level (EL). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00606">606</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00609">609</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1202,7 +1226,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for convective available potential energy (CAPE). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00609">609</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00612">612</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1220,7 +1244,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for nitric acid vmr. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00612">612</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00615">615</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1238,7 +1262,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for hydroxyl number concentrations. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00615">615</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00618">618</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1256,7 +1280,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for saturation pressure over water. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00618">618</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00621">621</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1274,7 +1298,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for saturation pressure over ice. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00621">621</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00624">624</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1292,7 +1316,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for partial water vapor pressure. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00624">624</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00627">627</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1310,7 +1334,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for specific humidity. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00627">627</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00630">630</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1328,7 +1352,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for relative humidity over water. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00630">630</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00633">633</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1346,7 +1370,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for relative humidity over ice. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00633">633</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00636">636</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1364,7 +1388,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for potential temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00636">636</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00639">639</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1382,7 +1406,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for zeta vertical coordinate. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00639">639</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00642">642</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1400,7 +1424,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for virtual temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00642">642</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00645">645</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1418,7 +1442,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for lapse rate. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00645">645</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00648">648</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1436,7 +1460,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for horizontal wind. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00648">648</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00651">651</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1454,7 +1478,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for vertical velocity. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00651">651</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00654">654</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1472,7 +1496,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for potential vorticity. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00654">654</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00657">657</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1490,7 +1514,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for dew point temperature. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00657">657</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00660">660</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1508,7 +1532,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for T_ice. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00660">660</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00663">663</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1526,7 +1550,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for T_STS. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00663">663</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00666">666</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1544,7 +1568,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for T_NAT. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00666">666</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00669">669</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1562,7 +1586,7 @@ Data Fields</h2></td></tr>
 
 <p>Quantity array index for station flag. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00669">669</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00672">672</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1580,7 +1604,7 @@ Data Fields</h2></td></tr>
 
 <p>Direction flag (1=forward calculation, -1=backward calculation). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00672">672</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00675">675</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1598,7 +1622,7 @@ Data Fields</h2></td></tr>
 
 <p>Start time of simulation [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00675">675</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00678">678</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1616,7 +1640,7 @@ Data Fields</h2></td></tr>
 
 <p>Stop time of simulation [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00678">678</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00681">681</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1634,7 +1658,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step of simulation [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00681">681</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00684">684</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1652,7 +1676,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename for meteorological data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00684">684</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00687">687</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1670,7 +1694,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step of meteorological data [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00687">687</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00690">690</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1688,7 +1712,7 @@ Data Fields</h2></td></tr>
 
 <p>Stride for longitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00690">690</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00693">693</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1706,7 +1730,7 @@ Data Fields</h2></td></tr>
 
 <p>Stride for latitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00693">693</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00696">696</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1724,7 +1748,7 @@ Data Fields</h2></td></tr>
 
 <p>Stride for pressure levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00696">696</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00699">699</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1742,7 +1766,7 @@ Data Fields</h2></td></tr>
 
 <p>Smoothing for longitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00699">699</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00702">702</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1760,7 +1784,7 @@ Data Fields</h2></td></tr>
 
 <p>Smoothing for latitudes. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00702">702</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00705">705</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1778,7 +1802,7 @@ Data Fields</h2></td></tr>
 
 <p>Smoothing for pressure levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00705">705</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00708">708</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1796,7 +1820,7 @@ Data Fields</h2></td></tr>
 
 <p>FWHM of horizontal Gaussian used for detrending [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00708">708</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00711">711</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1814,7 +1838,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of target pressure levels. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00711">711</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00714">714</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1832,7 +1856,7 @@ Data Fields</h2></td></tr>
 
 <p>Target pressure levels [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00714">714</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00717">717</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1850,7 +1874,7 @@ Data Fields</h2></td></tr>
 
 <p>Longitudinal smoothing of geopotential heights. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00717">717</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00720">720</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1868,7 +1892,7 @@ Data Fields</h2></td></tr>
 
 <p>Latitudinal smoothing of geopotential heights. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00720">720</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00723">723</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1886,7 +1910,7 @@ Data Fields</h2></td></tr>
 
 <p>Tropopause definition (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00724">724</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00727">727</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1904,7 +1928,7 @@ Data Fields</h2></td></tr>
 
 <p>Cloud data (0=none, 1=LWC+IWC, 2=RWC+SWC, 3=all). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00727">727</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00730">730</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1922,7 +1946,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for sampling of meteo data along trajectories [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00730">730</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00733">733</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1940,7 +1964,7 @@ Data Fields</h2></td></tr>
 
 <p>Isosurface parameter (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00734">734</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00737">737</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1958,7 +1982,7 @@ Data Fields</h2></td></tr>
 
 <p>Balloon position filename. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00737">737</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00740">740</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1976,7 +2000,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00740">740</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00743">743</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -1994,7 +2018,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal turbulent diffusion coefficient (stratosphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00743">743</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00746">746</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2012,7 +2036,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical turbulent diffusion coefficient (troposphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00746">746</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00749">749</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2030,7 +2054,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical turbulent diffusion coefficient (stratosphere) [m^2/s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00749">749</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00752">752</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2048,7 +2072,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal scaling factor for mesoscale wind fluctuations. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00752">752</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00755">755</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2066,7 +2090,7 @@ Data Fields</h2></td></tr>
 
 <p>Vertical scaling factor for mesoscale wind fluctuations. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00755">755</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00758">758</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2084,7 +2108,7 @@ Data Fields</h2></td></tr>
 
 <p>CAPE threshold for convection module [J/kg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00758">758</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00761">761</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2102,7 +2126,7 @@ Data Fields</h2></td></tr>
 
 <p>Time interval for convection module [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00761">761</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00764">764</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2120,7 +2144,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower level for mixing (0=particle pressure, 1=surface). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00764">764</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00767">767</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2138,7 +2162,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper level for mixing (0=particle pressure, 1=EL). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00767">767</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00770">770</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2156,7 +2180,25 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions mass per particle [kg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00770">770</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00773">773</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+
+</div>
+</div>
+<a id="a4f7014dad580e4e745c910187468807c"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a4f7014dad580e4e745c910187468807c">&#9670;&nbsp;</a></span>bound_vmr</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">double ctl_t::bound_vmr</td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Boundary conditions volume mixing ratio [ppv]. </p>
+
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00776">776</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2174,7 +2216,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions minimum longitude [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00773">773</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00779">779</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2192,7 +2234,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions maximum longitude [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00776">776</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00782">782</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2210,7 +2252,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions bottom pressure [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00779">779</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00785">785</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2228,7 +2270,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions top pressure [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00782">782</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00788">788</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2246,7 +2288,7 @@ Data Fields</h2></td></tr>
 
 <p>Boundary conditions delta to surface pressure [hPa]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00785">785</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00791">791</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2264,7 +2306,7 @@ Data Fields</h2></td></tr>
 
 <p>Species. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00788">788</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00794">794</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2282,7 +2324,7 @@ Data Fields</h2></td></tr>
 
 <p>Molar mass [g/mol]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00791">791</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00797">797</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2300,7 +2342,7 @@ Data Fields</h2></td></tr>
 
 <p>Life time of particles (troposphere) [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00794">794</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00800">800</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2318,7 +2360,7 @@ Data Fields</h2></td></tr>
 
 <p>Life time of particles (stratosphere) [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00797">797</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00803">803</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2336,7 +2378,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for OH chemistry (k0, n, kinf, m). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00800">800</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00806">806</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2354,7 +2396,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for dry deposition (v). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00803">803</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00809">809</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2372,7 +2414,7 @@ Data Fields</h2></td></tr>
 
 <p>Coefficients for wet deposition (Ai, Bi, Hi, Ci, Ab, Bb, Hb, Cb). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00806">806</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00812">812</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2390,7 +2432,7 @@ Data Fields</h2></td></tr>
 
 <p>H2O volume mixing ratio for PSC analysis. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00809">809</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00815">815</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2408,7 +2450,7 @@ Data Fields</h2></td></tr>
 
 <p>HNO3 volume mixing ratio for PSC analysis. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00812">812</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00818">818</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2426,7 +2468,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of atmospheric data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00815">815</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00821">821</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2444,7 +2486,7 @@ Data Fields</h2></td></tr>
 
 <p>Gnuplot file for atmospheric data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00818">818</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00824">824</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2462,7 +2504,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for atmospheric data output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00821">821</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00827">827</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2480,7 +2522,7 @@ Data Fields</h2></td></tr>
 
 <p>Time filter for atmospheric data output (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00824">824</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00830">830</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2498,7 +2540,7 @@ Data Fields</h2></td></tr>
 
 <p>Particle index stride for atmospheric data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00827">827</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00833">833</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2516,7 +2558,7 @@ Data Fields</h2></td></tr>
 
 <p>Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00830">830</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00836">836</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2534,7 +2576,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of CSI data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00833">833</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00839">839</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2552,7 +2594,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for CSI data output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00836">836</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00842">842</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2570,7 +2612,7 @@ Data Fields</h2></td></tr>
 
 <p>Observation data file for CSI analysis. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00839">839</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00845">845</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2588,7 +2630,7 @@ Data Fields</h2></td></tr>
 
 <p>Minimum observation index to trigger detection. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00842">842</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00848">848</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2606,7 +2648,7 @@ Data Fields</h2></td></tr>
 
 <p>Minimum column density to trigger detection [kg/m^2]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00845">845</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00851">851</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2624,7 +2666,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of gridded CSI data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00848">848</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00854">854</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2642,7 +2684,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of gridded CSI data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00851">851</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00857">857</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2660,7 +2702,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of gridded CSI data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00854">854</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00860">860</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2678,7 +2720,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of gridded CSI data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00857">857</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00863">863</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2696,7 +2738,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00860">860</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00866">866</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2714,7 +2756,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00863">863</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00869">869</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2732,7 +2774,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of gridded CSI data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00866">866</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00872">872</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2750,7 +2792,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00869">869</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00875">875</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2768,7 +2810,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of gridded CSI data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00872">872</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00878">878</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2786,7 +2828,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of grid data files. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00875">875</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00881">881</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2804,7 +2846,7 @@ Data Fields</h2></td></tr>
 
 <p>Gnuplot file for gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00878">878</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00884">884</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2822,7 +2864,7 @@ Data Fields</h2></td></tr>
 
 <p>Time step for gridded data output [s]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00881">881</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00887">887</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2840,7 +2882,7 @@ Data Fields</h2></td></tr>
 
 <p>Sparse output in grid data files (0=no, 1=yes). </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00884">884</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00890">890</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2858,7 +2900,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00887">887</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00893">893</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2876,7 +2918,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of gridded data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00890">890</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00896">896</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2894,7 +2936,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of gridded data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00893">893</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00899">899</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2912,7 +2954,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00896">896</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00902">902</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2930,7 +2972,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00899">899</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00905">905</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2948,7 +2990,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00902">902</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00908">908</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2966,7 +3008,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of gridded data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00905">905</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00911">911</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -2984,7 +3026,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00908">908</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00914">914</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3002,7 +3044,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of gridded data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00911">911</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00917">917</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3020,7 +3062,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename for profile output file. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00914">914</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00920">920</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3038,7 +3080,7 @@ Data Fields</h2></td></tr>
 
 <p>Observation data file for profile output. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00917">917</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00923">923</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3056,7 +3098,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of altitudes of gridded profile data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00920">920</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00926">926</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3074,7 +3116,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower altitude of gridded profile data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00923">923</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00929">929</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3092,7 +3134,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper altitude of gridded profile data [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00926">926</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00932">932</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3110,7 +3152,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of longitudes of gridded profile data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00929">929</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00935">935</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3128,7 +3170,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower longitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00932">932</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00938">938</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3146,7 +3188,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper longitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00935">935</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00941">941</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3164,7 +3206,7 @@ Data Fields</h2></td></tr>
 
 <p>Number of latitudes of gridded profile data. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00938">938</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00944">944</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3182,7 +3224,7 @@ Data Fields</h2></td></tr>
 
 <p>Lower latitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00941">941</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00947">947</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3200,7 +3242,7 @@ Data Fields</h2></td></tr>
 
 <p>Upper latitude of gridded profile data [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00944">944</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00950">950</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3218,7 +3260,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of ensemble data file. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00947">947</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00953">953</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3236,7 +3278,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of sample data file. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00950">950</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00956">956</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3254,7 +3296,7 @@ Data Fields</h2></td></tr>
 
 <p>Observation data file for sample output. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00953">953</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00959">959</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3272,7 +3314,7 @@ Data Fields</h2></td></tr>
 
 <p>Horizontal radius for sample output [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00956">956</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00962">962</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3290,7 +3332,7 @@ Data Fields</h2></td></tr>
 
 <p>Layer width for sample output [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00959">959</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00965">965</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3308,7 +3350,7 @@ Data Fields</h2></td></tr>
 
 <p>Basename of station data file. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00962">962</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00968">968</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3326,7 +3368,7 @@ Data Fields</h2></td></tr>
 
 <p>Longitude of station [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00965">965</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00971">971</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3344,7 +3386,7 @@ Data Fields</h2></td></tr>
 
 <p>Latitude of station [deg]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00968">968</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00974">974</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3362,7 +3404,7 @@ Data Fields</h2></td></tr>
 
 <p>Search radius around station [km]. </p>
 
-<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00971">971</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
+<p class="definition">Definition at line <a class="el" href="libtrac_8h_source.html#l00977">977</a> of file <a class="el" href="libtrac_8h_source.html">libtrac.h</a>.</p>
 
 </div>
 </div>
@@ -3375,7 +3417,7 @@ Data Fields</h2></td></tr>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="structctl__t.html">ctl_t</a></li>
-    <li class="footer">Generated on Sat May 22 2021 17:18:13 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Sat May 22 2021 21:55:43 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
