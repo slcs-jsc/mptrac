@@ -2224,6 +2224,7 @@ void read_ctl(
   ctl->qnt_zs = -1;
   ctl->qnt_us = -1;
   ctl->qnt_vs = -1;
+  ctl->qnt_pbl = -1;
   ctl->qnt_pt = -1;
   ctl->qnt_tt = -1;
   ctl->qnt_zt = -1;
@@ -2691,6 +2692,9 @@ int read_met(
 
   /* Calculate potential vorticity... */
   read_met_pv(met);
+
+  /* Calculate boundary layer data... */
+  read_met_pbl(met);
 
   /* Calculate tropopause data... */
   read_met_tropo(ctl, met);
@@ -3363,6 +3367,75 @@ void read_met_ml2pl(
       /* Copy data... */
       for (int ip = 0; ip < ctl->met_np; ip++)
 	var[ix][iy][ip] = (float) aux[ip];
+    }
+}
+
+/*****************************************************************************/
+
+void read_met_pbl(
+  met_t * met) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_PBL", NVTX_READ);
+
+  /* Parameters used to estimate the height of the PBL
+     (e.g., Vogelezang and Holtslag, 1996; Seidel et al., 2012)... */
+  const double rib_crit = 0.25, dz = 0.05, umin = 5.0;
+
+  /* Loop over grid points... */
+#pragma omp parallel for default(shared)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
+
+      /* Set bottom level of PBL... */
+      double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
+
+      /* Find lowest level near the bottom... */
+      int ip;
+      for (ip = 1; ip < met->np; ip++)
+	if (met->p[ip] < pbl_bot)
+	  break;
+
+      /* Get near surface data... */
+      double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
+		      met->p[ip], met->z[ix][iy][ip], pbl_bot);
+      double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
+		      met->p[ip], met->t[ix][iy][ip], pbl_bot);
+      double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
+		      met->p[ip], met->u[ix][iy][ip], pbl_bot);
+      double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
+		      met->p[ip], met->v[ix][iy][ip], pbl_bot);
+      double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
+			met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
+      double tvs = THETAVIRT(pbl_bot, ts, h2os);
+
+      /* Init... */
+      double rib, rib_old = 0, vh2;
+
+      /* Loop over levels... */
+      for (; ip < met->np; ip++) {
+
+	/* Get squared horizontal wind speed... */
+	vh2 = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
+	vh2 = GSL_MAX(vh2, SQR(umin));
+
+	/* Calculate bulk Richardson number... */
+	rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	  * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
+		       met->h2o[ix][iy][ip]) - tvs) / vh2;
+
+	/* Check for critical value... */
+	if (rib >= rib_crit) {
+	  met->pbl[ix][iy] = (float) (LIN(rib_old, met->p[ip - 1],
+					  rib, met->p[ip], rib_crit));
+	  if (met->pbl[ix][iy] > pbl_bot)
+	    met->pbl[ix][iy] = (float) pbl_bot;
+	  break;
+	}
+
+	/* Save Richardson number... */
+	rib_old = rib;
+      }
     }
 }
 

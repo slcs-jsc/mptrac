@@ -40,8 +40,8 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pt, pc,
-    cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3],
+  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pbl, pt,
+    pc, cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3],
     time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;
 
   int geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];
@@ -115,7 +115,8 @@ int main(
 	  "# $31 = relative humidity over water [%%]\n"
 	  "# $32 = relative humidity over ice [%%]\n"
 	  "# $33 = dew point temperature [K]\n"
-	  "# $34 = frost point temperature [K]\n");
+	  "# $34 = frost point temperature [K]\n"
+	  "# $35 = boundary layer pressure [hPa]\n\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -158,12 +159,12 @@ int main(
     /* Write data... */
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
 	    pt, zt, tt, h2ot, lwc, iwc, cl, pc, plcl, plfc, pel, cape,
 	    RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
-	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o));
+	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o), pbl);
   }
 
   /* Close file... */

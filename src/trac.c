@@ -1057,8 +1057,8 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, ts, zs, us, vs, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
-      u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
+    double ps, ts, zs, us, vs, pbl, pt, pc, cl, plcl, plfc, pel, cape, pv, t,
+      tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
 
     /* Interpolate meteorological data... */
     INTPOL_INIT;
@@ -1070,6 +1070,7 @@ void module_meteo(
     ATM_SET(qnt_zs, zs);
     ATM_SET(qnt_us, us);
     ATM_SET(qnt_vs, vs);
+    ATM_SET(qnt_pbl, pbl);
     ATM_SET(qnt_pt, pt);
     ATM_SET(qnt_tt, tt);
     ATM_SET(qnt_zt, zt);

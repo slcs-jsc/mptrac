@@ -217,14 +217,16 @@
   (-(dz) * (p) / H0)
 
 /*! Compute Cartesian distance between two vectors. */
-#define DIST(a, b) sqrt(DIST2(a, b))
+#define DIST(a, b) \
+  sqrt(DIST2(a, b))
 
 /*! Compute squared distance between two vectors. */
 #define DIST2(a, b)                                                     \
   ((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1])+(a[2]-b[2])*(a[2]-b[2]))
 
 /*! Compute dot product of two vectors. */
-#define DOTP(a, b) (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+#define DOTP(a, b) \
+  (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 
 /*! Print error message and quit program. */
 #define ERRMSG(msg) {							\
@@ -250,7 +252,7 @@
   }
 
 /*! Initialize cache variables for interpolation. */
-#define INTPOL_INIT				\
+#define INTPOL_INIT						\
   double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
 
 /*! 2-D interpolation of a meteo variable. */
@@ -283,6 +285,7 @@
   intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);		\
   intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);		\
   intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->pbl, lon, lat, &pbl, ci, cw, 0);	\
   intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->zt, lon, lat, &zt, ci, cw, 0);		\
@@ -312,6 +315,7 @@
   intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
@@ -326,7 +330,8 @@
 
 /*! Calculate lapse rate between pressure levels. */
 #define LAPSE(p1, t1, p2, t2)						\
-  (1e3 * G0 / RA * ((t2) - (t1)) / ((t2) + (t1)) * ((p2) + (p1)) / ((p2) - (p1)))
+  (1e3 * G0 / RA * ((t2) - (t1)) / ((t2) + (t1))			\
+   * ((p2) + (p1)) / ((p2) - (p1)))
 
 /*! Compute linear interpolation. */
 #define LIN(x0, y0, x1, y1, x)			\
@@ -343,7 +348,8 @@
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))
 
 /*! Compute norm of a vector. */
-#define NORM(a) sqrt(DOTP(a, a))
+#define NORM(a) \
+  sqrt(DOTP(a, a))
 
 /*! Print macro for debugging. */
 #define PRINT(format, var)						\
@@ -351,7 +357,8 @@
 	 __FILE__, __func__, __LINE__, #var, var);
 
 /*! Convert altitude to pressure. */
-#define P(z) (P0 * exp(-(z) / H0))
+#define P(z)					\
+  (P0 * exp(-(z) / H0))
 
 /*! Compute saturation pressure over water (WMO, 2018). */
 #define PSAT(t)							\
@@ -374,10 +381,12 @@
   (PW(p, h2o) / PSICE(t) * 100.)
 
 /*! Compute specific humidity from water vapor volume mixing ratio. */
-#define SH(h2o) (EPS * (h2o))
+#define SH(h2o)					\
+  (EPS * (h2o))
 
 /*! Compute square. */
-#define SQR(x) ((x)*(x))
+#define SQR(x)					\
+  ((x)*(x))
 
 /*! Calculate dew point temperature (WMO, 2018). */
 #define TDEW(p, h2o)				\
@@ -389,7 +398,12 @@
   (-2663.5 / (log10(100. * PW((p), (h2o))) - 12.537))
 
 /*! Compute potential temperature. */
-#define THETA(p, t) ((t) * pow(1000. / (p), 0.286))
+#define THETA(p, t)				\
+  ((t) * pow(1000. / (p), 0.286))
+
+/*! Compute virtual potential temperature. */
+#define THETAVIRT(p, t, h2o)			\
+  (TVIRT(THETA((p), (t)), (h2o)))
 
 /*! Get string tokens. */
 #define TOK(line, tok, format, var) {					\
@@ -400,7 +414,7 @@
 
 /*! Compute virtual temperature. */
 #define TVIRT(t, h2o)				\
-  ((t) * (1. + (1. - EPS) * (h2o)))
+    ((t) * (1. + (1. - EPS) * (h2o)))
 
 /*! Print warning message. */
 #define WARN(msg) {							\
@@ -409,7 +423,8 @@
   }
 
 /*! Convert pressure to altitude. */
-#define Z(p) (H0 * log(P0 / (p)))
+#define Z(p)					\
+  (H0 * log(P0 / (p)))
 
 /*! Calculate geopotential height difference. */
 #define ZDIFF(lnp0, t0, h2o0, lnp1, t1, h2o1)				\
@@ -550,6 +565,9 @@ typedef struct {
 
   /*! Quantity array index for surface meridional wind. */
   int qnt_vs;
+
+  /*! Quantity array index for boundary layer pressure. */
+  int qnt_pbl;
 
   /*! Quantity array index for tropopause pressure. */
   int qnt_pt;
@@ -1078,6 +1096,9 @@ typedef struct {
   /*! Surface meridional wind [m/s]. */
   float vs[EX][EY];
 
+  /*! Boundary layer pressure [hPa]. */
+  float pbl[EX][EY];
+
   /*! Tropopause pressure [hPa]. */
   float pt[EX][EY];
 
@@ -1418,6 +1439,10 @@ void read_met_ml2pl(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP]);
+
+/*! Calculate pressure of the boundary layer. */
+void read_met_pbl(
+  met_t * met);
 
 /*! Create meteorological data with periodic boundary conditions. */
 void read_met_periodic(

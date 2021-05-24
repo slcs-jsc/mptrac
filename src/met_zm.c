@@ -49,13 +49,13 @@ int main(
   FILE *out;
 
   static double timem[NZ][NY], psm[NZ][NY], tsm[NZ][NY], zsm[NZ][NY],
-    usm[NZ][NY], vsm[NZ][NY], ptm[NZ][NY], pcm[NZ][NY],
+    usm[NZ][NY], vsm[NZ][NY], pblm[NZ][NY], ptm[NZ][NY], pcm[NZ][NY],
     clm[NZ][NY], plclm[NZ][NY], plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY],
     ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY],
     wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY],
     lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
-    ps, ts, zs, us, vs, pt, pc, plcl, plfc, pel, cape, cl, t, u, v, w, pv,
-    h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
+    ps, ts, zs, us, vs, pbl, pt, pc, plcl, plfc, pel, cape, cl, t, u, v, w,
+    pv, h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -141,6 +141,7 @@ int main(
 	  zsm[iz][iy] += zs;
 	  usm[iz][iy] += us;
 	  vsm[iz][iy] += vs;
+	  pblm[iz][iy] += pbl;
 	  pcm[iz][iy] += pc;
 	  clm[iz][iy] += cl;
 	  plclm[iz][iy] += plcl;
@@ -201,7 +202,8 @@ int main(
 	  "# $31 = relative humidity over water [%%]\n"
 	  "# $32 = relative humidity over ice [%%]\n"
 	  "# $33 = dew point temperature [K]\n"
-	  "# $34 = frost point temperature [K]\n");
+	  "# $34 = frost point temperature [K]\n"
+	  "# $35 = boundary layer pressure [hPa]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
@@ -209,7 +211,7 @@ int main(
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
 	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
@@ -229,7 +231,8 @@ int main(
 	      RHICE(plev[iz], tm[iz][iy] / np[iz][iy],
 		    h2om[iz][iy] / np[iz][iy]),
 	      TDEW(plev[iz], h2om[iz][iy] / np[iz][iy]),
-	      TICE(plev[iz], h2om[iz][iy] / np[iz][iy]));
+	      TICE(plev[iz], h2om[iz][iy] / np[iz][iy]),
+	      pblm[iz][iy] / np[iz][iy]);
   }
 
   /* Close file... */

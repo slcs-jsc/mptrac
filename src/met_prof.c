@@ -49,7 +49,7 @@ int main(
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], lwc, lwcm[NZ],
     iwc, iwcm[NZ], ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ],
-    vs, vsm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
+    vs, vsm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
     plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ],
     tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
 
@@ -134,6 +134,7 @@ int main(
 	    zsm[iz] += zs;
 	    usm[iz] += us;
 	    vsm[iz] += vs;
+	    pblm[iz] += pbl;
 	    pcm[iz] += pc;
 	    clm[iz] += cl;
 	    plclm[iz] += plcl;
@@ -197,13 +198,14 @@ int main(
 	  "# $31 = relative humidity over water [%%]\n"
 	  "# $32 = relative humidity over ice [%%]\n"
 	  "# $33 = dew point temperature [K]\n"
-	  "# $34 = frost point temperature [K]\n\n");
+	  "# $34 = frost point temperature [K]\n"
+	  "# $35 = boundary layer pressure [hPa]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -217,7 +219,7 @@ int main(
 	    RH(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
 	    RHICE(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
 	    TDEW(plev[iz], h2om[iz] / np[iz]),
-	    TICE(plev[iz], h2om[iz] / np[iz]));
+	    TICE(plev[iz], h2om[iz] / np[iz]), pblm[iz] / np[iz]);
 
   /* Close file... */
   fclose(out);
