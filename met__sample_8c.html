@@ -151,8 +151,8 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00040"></a><span class="lineno">   40</span>&#160; </div>
 <div class="line"><a name="l00041"></a><span class="lineno">   41</span>&#160;  FILE *out;</div>
 <div class="line"><a name="l00042"></a><span class="lineno">   42</span>&#160; </div>
-<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  <span class="keywordtype">double</span> h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pt, pc,</div>
-<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3],</div>
+<div class="line"><a name="l00043"></a><span class="lineno">   43</span>&#160;  <span class="keywordtype">double</span> h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pbl, pt,</div>
+<div class="line"><a name="l00044"></a><span class="lineno">   44</span>&#160;    pc, cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt, cw[3],</div>
 <div class="line"><a name="l00045"></a><span class="lineno">   45</span>&#160;    time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;</div>
 <div class="line"><a name="l00046"></a><span class="lineno">   46</span>&#160; </div>
 <div class="line"><a name="l00047"></a><span class="lineno">   47</span>&#160;  <span class="keywordtype">int</span> geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];</div>
@@ -226,129 +226,131 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00115"></a><span class="lineno">  115</span>&#160;          <span class="stringliteral">&quot;# $31 = relative humidity over water [%%]\n&quot;</span></div>
 <div class="line"><a name="l00116"></a><span class="lineno">  116</span>&#160;          <span class="stringliteral">&quot;# $32 = relative humidity over ice [%%]\n&quot;</span></div>
 <div class="line"><a name="l00117"></a><span class="lineno">  117</span>&#160;          <span class="stringliteral">&quot;# $33 = dew point temperature [K]\n&quot;</span></div>
-<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;          <span class="stringliteral">&quot;# $34 = frost point temperature [K]\n&quot;</span>);</div>
-<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160; </div>
-<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160;  <span class="comment">/* Loop over air parcels... */</span></div>
-<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;  <span class="keywordflow">for</span> (ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++) {</div>
-<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160; </div>
-<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160;    <span class="comment">/* Get meteorological data... */</span></div>
-<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;    <a class="code" href="libtrac_8c.html#a2e3bbbd05021b43203c83a8a81d9ae1c">get_met</a>(&amp;ctl, atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], &amp;met0, &amp;met1);</div>
-<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160; </div>
-<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160;    <span class="comment">/* Set reference pressure for interpolation... */</span></div>
-<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;    pref = atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip];</div>
-<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;    <span class="keywordflow">if</span> (geopot) {</div>
-<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;      zref = <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(pref);</div>
-<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;      p0 = met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[0];</div>
-<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;      p1 = met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[met0-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1];</div>
-<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;      <span class="keywordflow">for</span> (it = 0; it &lt; 24; it++) {</div>
-<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;        pref = 0.5 * (p0 + p1);</div>
-<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;        <a class="code" href="libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18">intpol_met_time_3d</a>(met0, met0-&gt;<a class="code" href="structmet__t.html#aaaa04cf36044fcc02d518fe667d63bb3">z</a>, met1, met1-&gt;<a class="code" href="structmet__t.html#aaaa04cf36044fcc02d518fe667d63bb3">z</a>, atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], pref,</div>
-<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;                           atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], &amp;zm, ci, cw, 1);</div>
-<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;        <span class="keywordflow">if</span> (zref &gt; zm || !gsl_finite(zm))</div>
-<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;          p0 = pref;</div>
-<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;        <span class="keywordflow">else</span></div>
-<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;          p1 = pref;</div>
-<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;      }</div>
-<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;      pref = 0.5 * (p0 + p1);</div>
-<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;    }</div>
-<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160; </div>
-<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160;    <span class="comment">/* Interpolate meteo data... */</span></div>
-<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;    <a class="code" href="libtrac_8h.html#a983e27f3f3845d3e6bc38716aab60cdd">INTPOL_TIME_ALL</a>(atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], pref, atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip]);</div>
-<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160; </div>
-<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160;    <span class="comment">/* Make blank lines... */</span></div>
-<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;    <span class="keywordflow">if</span> (ip == 0 || (grid_time &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip] != time_old)</div>
-<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;        || (grid_z &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] != p_old)</div>
-<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;        || (grid_lon &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] != lon_old)</div>
-<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        || (grid_lat &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] != lat_old))</div>
-<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;      fprintf(out, <span class="stringliteral">&quot;\n&quot;</span>);</div>
-<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;    time_old = atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip];</div>
-<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;    p_old = atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip];</div>
-<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;    lon_old = atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip];</div>
-<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;    lat_old = atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
-<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160; </div>
-<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160;    <span class="comment">/* Write data... */</span></div>
-<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    fprintf(out,</div>
-<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;            <span class="stringliteral">&quot;%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g&quot;</span></div>
-<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;            <span class="stringliteral">&quot; %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n&quot;</span>,</div>
-<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;            atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]), atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip],</div>
-<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;            atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,</div>
-<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;            pt, zt, tt, h2ot, lwc, iwc, cl, pc, plcl, plfc, pel, cape,</div>
-<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;            <a class="code" href="libtrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2">RH</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, h2o), <a class="code" href="libtrac_8h.html#a9431567784929c9e462e16f393e04088">RHICE</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, h2o),</div>
-<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;            <a class="code" href="libtrac_8h.html#accf0b870a4ce9e19153c59f88898543a">TDEW</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], h2o), <a class="code" href="libtrac_8h.html#a879f63fc7d15755d06ff79084410b6c9">TICE</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], h2o));</div>
-<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;  }</div>
-<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160; </div>
-<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160;  <span class="comment">/* Close file... */</span></div>
-<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;  fclose(out);</div>
-<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160; </div>
-<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160;  <span class="comment">/* Free... */</span></div>
-<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;  free(atm);</div>
-<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;  free(met0);</div>
-<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;  free(met1);</div>
-<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160; </div>
-<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160;  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
-<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;}</div>
+<div class="line"><a name="l00118"></a><span class="lineno">  118</span>&#160;          <span class="stringliteral">&quot;# $34 = frost point temperature [K]\n&quot;</span></div>
+<div class="line"><a name="l00119"></a><span class="lineno">  119</span>&#160;          <span class="stringliteral">&quot;# $35 = boundary layer pressure [hPa]\n\n&quot;</span>);</div>
+<div class="line"><a name="l00120"></a><span class="lineno">  120</span>&#160; </div>
+<div class="line"><a name="l00121"></a><span class="lineno">  121</span>&#160;  <span class="comment">/* Loop over air parcels... */</span></div>
+<div class="line"><a name="l00122"></a><span class="lineno">  122</span>&#160;  <span class="keywordflow">for</span> (ip = 0; ip &lt; atm-&gt;<a class="code" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>; ip++) {</div>
+<div class="line"><a name="l00123"></a><span class="lineno">  123</span>&#160; </div>
+<div class="line"><a name="l00124"></a><span class="lineno">  124</span>&#160;    <span class="comment">/* Get meteorological data... */</span></div>
+<div class="line"><a name="l00125"></a><span class="lineno">  125</span>&#160;    <a class="code" href="libtrac_8c.html#a2e3bbbd05021b43203c83a8a81d9ae1c">get_met</a>(&amp;ctl, atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], &amp;met0, &amp;met1);</div>
+<div class="line"><a name="l00126"></a><span class="lineno">  126</span>&#160; </div>
+<div class="line"><a name="l00127"></a><span class="lineno">  127</span>&#160;    <span class="comment">/* Set reference pressure for interpolation... */</span></div>
+<div class="line"><a name="l00128"></a><span class="lineno">  128</span>&#160;    pref = atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip];</div>
+<div class="line"><a name="l00129"></a><span class="lineno">  129</span>&#160;    <span class="keywordflow">if</span> (geopot) {</div>
+<div class="line"><a name="l00130"></a><span class="lineno">  130</span>&#160;      zref = <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(pref);</div>
+<div class="line"><a name="l00131"></a><span class="lineno">  131</span>&#160;      p0 = met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[0];</div>
+<div class="line"><a name="l00132"></a><span class="lineno">  132</span>&#160;      p1 = met0-&gt;<a class="code" href="structmet__t.html#affbacae5925ff68007396b525622ee34">p</a>[met0-&gt;<a class="code" href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">np</a> - 1];</div>
+<div class="line"><a name="l00133"></a><span class="lineno">  133</span>&#160;      <span class="keywordflow">for</span> (it = 0; it &lt; 24; it++) {</div>
+<div class="line"><a name="l00134"></a><span class="lineno">  134</span>&#160;        pref = 0.5 * (p0 + p1);</div>
+<div class="line"><a name="l00135"></a><span class="lineno">  135</span>&#160;        <a class="code" href="libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18">intpol_met_time_3d</a>(met0, met0-&gt;<a class="code" href="structmet__t.html#aaaa04cf36044fcc02d518fe667d63bb3">z</a>, met1, met1-&gt;<a class="code" href="structmet__t.html#aaaa04cf36044fcc02d518fe667d63bb3">z</a>, atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], pref,</div>
+<div class="line"><a name="l00136"></a><span class="lineno">  136</span>&#160;                           atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip], &amp;zm, ci, cw, 1);</div>
+<div class="line"><a name="l00137"></a><span class="lineno">  137</span>&#160;        <span class="keywordflow">if</span> (zref &gt; zm || !gsl_finite(zm))</div>
+<div class="line"><a name="l00138"></a><span class="lineno">  138</span>&#160;          p0 = pref;</div>
+<div class="line"><a name="l00139"></a><span class="lineno">  139</span>&#160;        <span class="keywordflow">else</span></div>
+<div class="line"><a name="l00140"></a><span class="lineno">  140</span>&#160;          p1 = pref;</div>
+<div class="line"><a name="l00141"></a><span class="lineno">  141</span>&#160;      }</div>
+<div class="line"><a name="l00142"></a><span class="lineno">  142</span>&#160;      pref = 0.5 * (p0 + p1);</div>
+<div class="line"><a name="l00143"></a><span class="lineno">  143</span>&#160;    }</div>
+<div class="line"><a name="l00144"></a><span class="lineno">  144</span>&#160; </div>
+<div class="line"><a name="l00145"></a><span class="lineno">  145</span>&#160;    <span class="comment">/* Interpolate meteo data... */</span></div>
+<div class="line"><a name="l00146"></a><span class="lineno">  146</span>&#160;    <a class="code" href="libtrac_8h.html#a983e27f3f3845d3e6bc38716aab60cdd">INTPOL_TIME_ALL</a>(atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], pref, atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip]);</div>
+<div class="line"><a name="l00147"></a><span class="lineno">  147</span>&#160; </div>
+<div class="line"><a name="l00148"></a><span class="lineno">  148</span>&#160;    <span class="comment">/* Make blank lines... */</span></div>
+<div class="line"><a name="l00149"></a><span class="lineno">  149</span>&#160;    <span class="keywordflow">if</span> (ip == 0 || (grid_time &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip] != time_old)</div>
+<div class="line"><a name="l00150"></a><span class="lineno">  150</span>&#160;        || (grid_z &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip] != p_old)</div>
+<div class="line"><a name="l00151"></a><span class="lineno">  151</span>&#160;        || (grid_lon &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip] != lon_old)</div>
+<div class="line"><a name="l00152"></a><span class="lineno">  152</span>&#160;        || (grid_lat &amp;&amp; atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip] != lat_old))</div>
+<div class="line"><a name="l00153"></a><span class="lineno">  153</span>&#160;      fprintf(out, <span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><a name="l00154"></a><span class="lineno">  154</span>&#160;    time_old = atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip];</div>
+<div class="line"><a name="l00155"></a><span class="lineno">  155</span>&#160;    p_old = atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip];</div>
+<div class="line"><a name="l00156"></a><span class="lineno">  156</span>&#160;    lon_old = atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip];</div>
+<div class="line"><a name="l00157"></a><span class="lineno">  157</span>&#160;    lat_old = atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip];</div>
+<div class="line"><a name="l00158"></a><span class="lineno">  158</span>&#160; </div>
+<div class="line"><a name="l00159"></a><span class="lineno">  159</span>&#160;    <span class="comment">/* Write data... */</span></div>
+<div class="line"><a name="l00160"></a><span class="lineno">  160</span>&#160;    fprintf(out,</div>
+<div class="line"><a name="l00161"></a><span class="lineno">  161</span>&#160;            <span class="stringliteral">&quot;%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g&quot;</span></div>
+<div class="line"><a name="l00162"></a><span class="lineno">  162</span>&#160;            <span class="stringliteral">&quot; %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n&quot;</span>,</div>
+<div class="line"><a name="l00163"></a><span class="lineno">  163</span>&#160;            atm-&gt;<a class="code" href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">time</a>[ip], <a class="code" href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip]), atm-&gt;<a class="code" href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">lon</a>[ip], atm-&gt;<a class="code" href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">lat</a>[ip],</div>
+<div class="line"><a name="l00164"></a><span class="lineno">  164</span>&#160;            atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,</div>
+<div class="line"><a name="l00165"></a><span class="lineno">  165</span>&#160;            pt, zt, tt, h2ot, lwc, iwc, cl, pc, plcl, plfc, pel, cape,</div>
+<div class="line"><a name="l00166"></a><span class="lineno">  166</span>&#160;            <a class="code" href="libtrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2">RH</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, h2o), <a class="code" href="libtrac_8h.html#a9431567784929c9e462e16f393e04088">RHICE</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], t, h2o),</div>
+<div class="line"><a name="l00167"></a><span class="lineno">  167</span>&#160;            <a class="code" href="libtrac_8h.html#accf0b870a4ce9e19153c59f88898543a">TDEW</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], h2o), <a class="code" href="libtrac_8h.html#a879f63fc7d15755d06ff79084410b6c9">TICE</a>(atm-&gt;<a class="code" href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">p</a>[ip], h2o), pbl);</div>
+<div class="line"><a name="l00168"></a><span class="lineno">  168</span>&#160;  }</div>
+<div class="line"><a name="l00169"></a><span class="lineno">  169</span>&#160; </div>
+<div class="line"><a name="l00170"></a><span class="lineno">  170</span>&#160;  <span class="comment">/* Close file... */</span></div>
+<div class="line"><a name="l00171"></a><span class="lineno">  171</span>&#160;  fclose(out);</div>
+<div class="line"><a name="l00172"></a><span class="lineno">  172</span>&#160; </div>
+<div class="line"><a name="l00173"></a><span class="lineno">  173</span>&#160;  <span class="comment">/* Free... */</span></div>
+<div class="line"><a name="l00174"></a><span class="lineno">  174</span>&#160;  free(atm);</div>
+<div class="line"><a name="l00175"></a><span class="lineno">  175</span>&#160;  free(met0);</div>
+<div class="line"><a name="l00176"></a><span class="lineno">  176</span>&#160;  free(met1);</div>
+<div class="line"><a name="l00177"></a><span class="lineno">  177</span>&#160; </div>
+<div class="line"><a name="l00178"></a><span class="lineno">  178</span>&#160;  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
+<div class="line"><a name="l00179"></a><span class="lineno">  179</span>&#160;}</div>
 <div class="ttc" id="alibtrac_8c_html_a10ab9cbb20f7bacc7bad573191f7cabb"><div class="ttname"><a href="libtrac_8c.html#a10ab9cbb20f7bacc7bad573191f7cabb">read_atm</a></div><div class="ttdeci">int read_atm(const char *filename, ctl_t *ctl, atm_t *atm)</div><div class="ttdoc">Read atmospheric data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l02017">libtrac.c:2017</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_a2e3bbbd05021b43203c83a8a81d9ae1c"><div class="ttname"><a href="libtrac_8c.html#a2e3bbbd05021b43203c83a8a81d9ae1c">get_met</a></div><div class="ttdeci">void get_met(ctl_t *ctl, double t, met_t **met0, met_t **met1)</div><div class="ttdoc">Get meteorological data for given time step.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l01597">libtrac.c:1597</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_a45e1b76bdf16030222665374ecc02e18"><div class="ttname"><a href="libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18">intpol_met_time_3d</a></div><div class="ttdeci">void intpol_met_time_3d(met_t *met0, float array0[EX][EY][EP], met_t *met1, float array1[EX][EY][EP], double ts, double p, double lon, double lat, double *var, int *ci, double *cw, int init)</div><div class="ttdoc">Temporal interpolation of meteorological data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l01840">libtrac.c:1840</a></div></div>
 <div class="ttc" id="alibtrac_8c_html_ab8054000249eb04a88fc06bba77dd573"><div class="ttname"><a href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573">read_ctl</a></div><div class="ttdeci">void read_ctl(const char *filename, int argc, char *argv[], ctl_t *ctl)</div><div class="ttdoc">Read control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l02202">libtrac.c:2202</a></div></div>
-<div class="ttc" id="alibtrac_8c_html_ad42c44913b360d00d45282d96dad493b"><div class="ttname"><a href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Read a control parameter from file or command line.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03856">libtrac.c:3856</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_a58b4f1573922a1f73dd4bf014fd441bf"><div class="ttname"><a href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a></div><div class="ttdeci">#define Z(p)</div><div class="ttdoc">Convert pressure to altitude.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00412">libtrac.h:412</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_a879f63fc7d15755d06ff79084410b6c9"><div class="ttname"><a href="libtrac_8h.html#a879f63fc7d15755d06ff79084410b6c9">TICE</a></div><div class="ttdeci">#define TICE(p, h2o)</div><div class="ttdoc">Calculate frost point temperature (Marti and Mauersberger, 1993).</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00388">libtrac.h:388</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_a9431567784929c9e462e16f393e04088"><div class="ttname"><a href="libtrac_8h.html#a9431567784929c9e462e16f393e04088">RHICE</a></div><div class="ttdeci">#define RHICE(p, t, h2o)</div><div class="ttdoc">Compute relative humidity over ice.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00373">libtrac.h:373</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_a983e27f3f3845d3e6bc38716aab60cdd"><div class="ttname"><a href="libtrac_8h.html#a983e27f3f3845d3e6bc38716aab60cdd">INTPOL_TIME_ALL</a></div><div class="ttdeci">#define INTPOL_TIME_ALL(time, p, lon, lat)</div><div class="ttdoc">Temporal interpolation of all meteo data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00299">libtrac.h:299</a></div></div>
+<div class="ttc" id="alibtrac_8c_html_ad42c44913b360d00d45282d96dad493b"><div class="ttname"><a href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b">scan_ctl</a></div><div class="ttdeci">double scan_ctl(const char *filename, int argc, char *argv[], const char *varname, int arridx, const char *defvalue, char *value)</div><div class="ttdoc">Read a control parameter from file or command line.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8c_source.html#l03929">libtrac.c:3929</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a58b4f1573922a1f73dd4bf014fd441bf"><div class="ttname"><a href="libtrac_8h.html#a58b4f1573922a1f73dd4bf014fd441bf">Z</a></div><div class="ttdeci">#define Z(p)</div><div class="ttdoc">Convert pressure to altitude.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00426">libtrac.h:426</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a879f63fc7d15755d06ff79084410b6c9"><div class="ttname"><a href="libtrac_8h.html#a879f63fc7d15755d06ff79084410b6c9">TICE</a></div><div class="ttdeci">#define TICE(p, h2o)</div><div class="ttdoc">Calculate frost point temperature (Marti and Mauersberger, 1993).</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00397">libtrac.h:397</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a9431567784929c9e462e16f393e04088"><div class="ttname"><a href="libtrac_8h.html#a9431567784929c9e462e16f393e04088">RHICE</a></div><div class="ttdeci">#define RHICE(p, t, h2o)</div><div class="ttdoc">Compute relative humidity over ice.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00380">libtrac.h:380</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_a983e27f3f3845d3e6bc38716aab60cdd"><div class="ttname"><a href="libtrac_8h.html#a983e27f3f3845d3e6bc38716aab60cdd">INTPOL_TIME_ALL</a></div><div class="ttdeci">#define INTPOL_TIME_ALL(time, p, lon, lat)</div><div class="ttdoc">Temporal interpolation of all meteo data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00302">libtrac.h:302</a></div></div>
 <div class="ttc" id="alibtrac_8h_html_a9aee3e5daf3b1051597d21ab093adbd0"><div class="ttname"><a href="libtrac_8h.html#a9aee3e5daf3b1051597d21ab093adbd0">ALLOC</a></div><div class="ttdeci">#define ALLOC(ptr, type, n)</div><div class="ttdoc">Allocate and clear memory.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00184">libtrac.h:184</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_aaf13ca5350992cd9c7c460a076d8fda9"><div class="ttname"><a href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(msg)</div><div class="ttdoc">Print error message and quit program.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00230">libtrac.h:230</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_ab72fd70a37f29f2192b751999b6c7cc2"><div class="ttname"><a href="libtrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2">RH</a></div><div class="ttdeci">#define RH(p, t, h2o)</div><div class="ttdoc">Compute relative humidity over water.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00369">libtrac.h:369</a></div></div>
-<div class="ttc" id="alibtrac_8h_html_accf0b870a4ce9e19153c59f88898543a"><div class="ttname"><a href="libtrac_8h.html#accf0b870a4ce9e19153c59f88898543a">TDEW</a></div><div class="ttdeci">#define TDEW(p, h2o)</div><div class="ttdoc">Calculate dew point temperature (WMO, 2018).</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00383">libtrac.h:383</a></div></div>
-<div class="ttc" id="astructatm__t_html"><div class="ttname"><a href="structatm__t.html">atm_t</a></div><div class="ttdoc">Atmospheric data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00982">libtrac.h:982</a></div></div>
-<div class="ttc" id="astructatm__t_html_a05da6b99657d420d7bf4b37a392b048c"><div class="ttname"><a href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">atm_t::time</a></div><div class="ttdeci">double time[NP]</div><div class="ttdoc">Time [s].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00988">libtrac.h:988</a></div></div>
-<div class="ttc" id="astructatm__t_html_a25ef7d304d5cfa54c5af30192620373b"><div class="ttname"><a href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">atm_t::lat</a></div><div class="ttdeci">double lat[NP]</div><div class="ttdoc">Latitude [deg].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00997">libtrac.h:997</a></div></div>
-<div class="ttc" id="astructatm__t_html_a2c8ffb598109120ed6d1f8e79aeb3ff8"><div class="ttname"><a href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">atm_t::lon</a></div><div class="ttdeci">double lon[NP]</div><div class="ttdoc">Longitude [deg].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00994">libtrac.h:994</a></div></div>
-<div class="ttc" id="astructatm__t_html_a473366004c7195d5c455373296ee1833"><div class="ttname"><a href="structatm__t.html#a473366004c7195d5c455373296ee1833">atm_t::np</a></div><div class="ttdeci">int np</div><div class="ttdoc">Number of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00985">libtrac.h:985</a></div></div>
-<div class="ttc" id="astructatm__t_html_ae769ef14e4824d35f47ad9dec75a4087"><div class="ttname"><a href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">atm_t::p</a></div><div class="ttdeci">double p[NP]</div><div class="ttdoc">Pressure [hPa].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00991">libtrac.h:991</a></div></div>
-<div class="ttc" id="astructctl__t_html"><div class="ttname"><a href="structctl__t.html">ctl_t</a></div><div class="ttdoc">Control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00504">libtrac.h:504</a></div></div>
-<div class="ttc" id="astructmet__t_html"><div class="ttname"><a href="structmet__t.html">met_t</a></div><div class="ttdoc">Meteorological data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01043">libtrac.h:1043</a></div></div>
-<div class="ttc" id="astructmet__t_html_a5d4eb4cd28aa5db1ec672368921c0b8f"><div class="ttname"><a href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">met_t::np</a></div><div class="ttdeci">int np</div><div class="ttdoc">Number of pressure levels.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01055">libtrac.h:1055</a></div></div>
-<div class="ttc" id="astructmet__t_html_aaaa04cf36044fcc02d518fe667d63bb3"><div class="ttname"><a href="structmet__t.html#aaaa04cf36044fcc02d518fe667d63bb3">met_t::z</a></div><div class="ttdeci">float z[EX][EY][EP]</div><div class="ttdoc">Geopotential height at model levels [km].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01112">libtrac.h:1112</a></div></div>
-<div class="ttc" id="astructmet__t_html_affbacae5925ff68007396b525622ee34"><div class="ttname"><a href="structmet__t.html#affbacae5925ff68007396b525622ee34">met_t::p</a></div><div class="ttdeci">double p[EP]</div><div class="ttdoc">Pressure [hPa].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01064">libtrac.h:1064</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_aaf13ca5350992cd9c7c460a076d8fda9"><div class="ttname"><a href="libtrac_8h.html#aaf13ca5350992cd9c7c460a076d8fda9">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(msg)</div><div class="ttdoc">Print error message and quit program.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00232">libtrac.h:232</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_ab72fd70a37f29f2192b751999b6c7cc2"><div class="ttname"><a href="libtrac_8h.html#ab72fd70a37f29f2192b751999b6c7cc2">RH</a></div><div class="ttdeci">#define RH(p, t, h2o)</div><div class="ttdoc">Compute relative humidity over water.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00376">libtrac.h:376</a></div></div>
+<div class="ttc" id="alibtrac_8h_html_accf0b870a4ce9e19153c59f88898543a"><div class="ttname"><a href="libtrac_8h.html#accf0b870a4ce9e19153c59f88898543a">TDEW</a></div><div class="ttdeci">#define TDEW(p, h2o)</div><div class="ttdoc">Calculate dew point temperature (WMO, 2018).</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00392">libtrac.h:392</a></div></div>
+<div class="ttc" id="astructatm__t_html"><div class="ttname"><a href="structatm__t.html">atm_t</a></div><div class="ttdoc">Atmospheric data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01000">libtrac.h:1000</a></div></div>
+<div class="ttc" id="astructatm__t_html_a05da6b99657d420d7bf4b37a392b048c"><div class="ttname"><a href="structatm__t.html#a05da6b99657d420d7bf4b37a392b048c">atm_t::time</a></div><div class="ttdeci">double time[NP]</div><div class="ttdoc">Time [s].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01006">libtrac.h:1006</a></div></div>
+<div class="ttc" id="astructatm__t_html_a25ef7d304d5cfa54c5af30192620373b"><div class="ttname"><a href="structatm__t.html#a25ef7d304d5cfa54c5af30192620373b">atm_t::lat</a></div><div class="ttdeci">double lat[NP]</div><div class="ttdoc">Latitude [deg].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01015">libtrac.h:1015</a></div></div>
+<div class="ttc" id="astructatm__t_html_a2c8ffb598109120ed6d1f8e79aeb3ff8"><div class="ttname"><a href="structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8">atm_t::lon</a></div><div class="ttdeci">double lon[NP]</div><div class="ttdoc">Longitude [deg].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01012">libtrac.h:1012</a></div></div>
+<div class="ttc" id="astructatm__t_html_a473366004c7195d5c455373296ee1833"><div class="ttname"><a href="structatm__t.html#a473366004c7195d5c455373296ee1833">atm_t::np</a></div><div class="ttdeci">int np</div><div class="ttdoc">Number of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01003">libtrac.h:1003</a></div></div>
+<div class="ttc" id="astructatm__t_html_ae769ef14e4824d35f47ad9dec75a4087"><div class="ttname"><a href="structatm__t.html#ae769ef14e4824d35f47ad9dec75a4087">atm_t::p</a></div><div class="ttdeci">double p[NP]</div><div class="ttdoc">Pressure [hPa].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01009">libtrac.h:1009</a></div></div>
+<div class="ttc" id="astructctl__t_html"><div class="ttname"><a href="structctl__t.html">ctl_t</a></div><div class="ttdoc">Control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l00519">libtrac.h:519</a></div></div>
+<div class="ttc" id="astructmet__t_html"><div class="ttname"><a href="structmet__t.html">met_t</a></div><div class="ttdoc">Meteorological data.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01061">libtrac.h:1061</a></div></div>
+<div class="ttc" id="astructmet__t_html_a5d4eb4cd28aa5db1ec672368921c0b8f"><div class="ttname"><a href="structmet__t.html#a5d4eb4cd28aa5db1ec672368921c0b8f">met_t::np</a></div><div class="ttdeci">int np</div><div class="ttdoc">Number of pressure levels.</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01073">libtrac.h:1073</a></div></div>
+<div class="ttc" id="astructmet__t_html_aaaa04cf36044fcc02d518fe667d63bb3"><div class="ttname"><a href="structmet__t.html#aaaa04cf36044fcc02d518fe667d63bb3">met_t::z</a></div><div class="ttdeci">float z[EX][EY][EP]</div><div class="ttdoc">Geopotential height at model levels [km].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01133">libtrac.h:1133</a></div></div>
+<div class="ttc" id="astructmet__t_html_affbacae5925ff68007396b525622ee34"><div class="ttname"><a href="structmet__t.html#affbacae5925ff68007396b525622ee34">met_t::p</a></div><div class="ttdeci">double p[EP]</div><div class="ttdoc">Pressure [hPa].</div><div class="ttdef"><b>Definition:</b> <a href="libtrac_8h_source.html#l01082">libtrac.h:1082</a></div></div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
 <div class="center"><img src="met__sample_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph.png" border="0" usemap="#amet__sample_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph" alt=""/></div>
 <map name="amet__sample_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph" id="amet__sample_8c_a0ddf1224851353fc92bfbff6f499fa97_cgraph">
-<area shape="rect" title=" " alt="" coords="5,487,56,513"/>
-<area shape="rect" href="libtrac_8c.html#a2e3bbbd05021b43203c83a8a81d9ae1c" title="Get meteorological data for given time step." alt="" coords="107,385,177,412"/>
-<area shape="rect" href="libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18" title="Temporal interpolation of meteorological data." alt="" coords="228,461,363,488"/>
-<area shape="rect" href="libtrac_8c.html#a10ab9cbb20f7bacc7bad573191f7cabb" title="Read atmospheric data." alt="" coords="104,487,180,513"/>
-<area shape="rect" href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573" title="Read control parameters." alt="" coords="108,537,176,564"/>
-<area shape="rect" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b" title="Read a control parameter from file or command line." alt="" coords="260,563,331,589"/>
-<area shape="rect" href="libtrac_8c.html#aa0c58f85ea7abc175737176da82f2939" title="Get meteorological data for time step." alt="" coords="245,56,345,83"/>
-<area shape="rect" href="libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802" title="Read meteorological data file." alt="" coords="257,385,333,412"/>
-<area shape="rect" href="libtrac_8c.html#ac54a92b848d49b96ef6091df37b552f2" title="Replace template strings in filename." alt="" coords="425,56,543,83"/>
-<area shape="rect" href="libtrac_8c.html#aa6699ff1f931aa8913d3f5ae608b2582" title="Convert seconds to date." alt="" coords="445,5,523,32"/>
-<area shape="rect" href="libtrac_8c.html#a85f08c269c7e7e500296ca74255daa41" title="Calculate convective available potential energy." alt="" coords="429,613,539,640"/>
-<area shape="rect" href="libtrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculate cloud properties." alt="" coords="427,107,541,133"/>
-<area shape="rect" href="libtrac_8c.html#a95998555c31d67b672339a2332f7ee1c" title="Apply detrending method to temperature and winds." alt="" coords="421,157,547,184"/>
-<area shape="rect" href="libtrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolate meteorological data at lower boundary." alt="" coords="411,208,557,235"/>
-<area shape="rect" href="libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="617,512,739,539"/>
-<area shape="rect" href="libtrac_8c.html#ad3b59a5ce89df2ef37437ed08f6ef77b" title="Read coordinates of meteorological data." alt="" coords="432,309,536,336"/>
-<area shape="rect" href="libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="425,259,543,285"/>
-<area shape="rect" href="libtrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Create meteorological data with periodic boundary conditions." alt="" coords="420,360,548,387"/>
-<area shape="rect" href="libtrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculate potential vorticity." alt="" coords="435,461,533,488"/>
-<area shape="rect" href="libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81" title="Downsampling of meteorological data." alt="" coords="421,512,547,539"/>
-<area shape="rect" href="libtrac_8c.html#ab79cc2c3c9d98a812ab86a1da4f38618" title="Read surface data." alt="" coords="421,411,547,437"/>
-<area shape="rect" href="libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb" title="Calculate tropopause data." alt="" coords="428,664,540,691"/>
-<area shape="rect" href="libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="637,613,719,640"/>
-<area shape="rect" href="libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteorological data." alt="" coords="605,664,751,691"/>
-<area shape="rect" href="libtrac_8c.html#a644688d92918b4870920e89b10acd9e6" title="Calculate moist adiabatic lapse rate." alt="" coords="637,563,719,589"/>
-<area shape="rect" href="libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="803,563,877,589"/>
-<area shape="rect" href="libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="799,664,881,691"/>
-<area shape="rect" href="libtrac_8c.html#ad97e04e82009975d18fa256cd977da76" title="Convert geolocation to Cartesian coordinates." alt="" coords="642,157,714,184"/>
-<area shape="rect" href="libtrac_8c.html#a5d463df05933155742519c4f0e7b1953" title="Convert date to seconds." alt="" coords="639,335,717,361"/>
-<area shape="rect" href="libtrac_8c.html#a53932a369d5c9ceaa5a3aefc3b3445c8" title="Read and convert 3D variable from meteorological data file." alt="" coords="614,233,742,260"/>
-<area shape="rect" href="libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="621,284,735,311"/>
-<area shape="rect" href="libtrac_8c.html#a3278e8f4ddcca49d9d7ceb0685565e31" title="Read and convert 2D variable from meteorological data file." alt="" coords="614,411,742,437"/>
-<area shape="rect" href="libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="650,715,706,741"/>
+<area shape="rect" title=" " alt="" coords="5,352,56,379"/>
+<area shape="rect" href="libtrac_8c.html#a2e3bbbd05021b43203c83a8a81d9ae1c" title="Get meteorological data for given time step." alt="" coords="107,301,177,328"/>
+<area shape="rect" href="libtrac_8c.html#a45e1b76bdf16030222665374ecc02e18" title="Temporal interpolation of meteorological data." alt="" coords="228,23,363,49"/>
+<area shape="rect" href="libtrac_8c.html#a10ab9cbb20f7bacc7bad573191f7cabb" title="Read atmospheric data." alt="" coords="104,352,180,379"/>
+<area shape="rect" href="libtrac_8c.html#ab8054000249eb04a88fc06bba77dd573" title="Read control parameters." alt="" coords="108,453,176,480"/>
+<area shape="rect" href="libtrac_8c.html#ad42c44913b360d00d45282d96dad493b" title="Read a control parameter from file or command line." alt="" coords="260,453,331,480"/>
+<area shape="rect" href="libtrac_8c.html#aa0c58f85ea7abc175737176da82f2939" title="Get meteorological data for time step." alt="" coords="245,99,345,125"/>
+<area shape="rect" href="libtrac_8c.html#af6f9ad5861dd7e45eaff0fd7ac97a802" title="Read meteorological data file." alt="" coords="257,403,333,429"/>
+<area shape="rect" href="libtrac_8c.html#ac54a92b848d49b96ef6091df37b552f2" title="Replace template strings in filename." alt="" coords="425,48,543,75"/>
+<area shape="rect" href="libtrac_8c.html#aa6699ff1f931aa8913d3f5ae608b2582" title="Convert seconds to date." alt="" coords="445,99,523,125"/>
+<area shape="rect" href="libtrac_8c.html#a85f08c269c7e7e500296ca74255daa41" title="Calculate convective available potential energy." alt="" coords="429,149,539,176"/>
+<area shape="rect" href="libtrac_8c.html#a1b20694a5f995be231b64a5121eab7a9" title="Calculate cloud properties." alt="" coords="427,200,541,227"/>
+<area shape="rect" href="libtrac_8c.html#a95998555c31d67b672339a2332f7ee1c" title="Apply detrending method to temperature and winds." alt="" coords="421,352,547,379"/>
+<area shape="rect" href="libtrac_8c.html#a089d9c0099e3fc6944c2a48667362ca0" title="Extrapolate meteorological data at lower boundary." alt="" coords="411,301,557,328"/>
+<area shape="rect" href="libtrac_8c.html#aeaaa3090b6f7f9f471fbd24392304341" title="Calculate geopotential heights." alt="" coords="617,504,739,531"/>
+<area shape="rect" href="libtrac_8c.html#ad3b59a5ce89df2ef37437ed08f6ef77b" title="Read coordinates of meteorological data." alt="" coords="432,403,536,429"/>
+<area shape="rect" href="libtrac_8c.html#a15081510cdc536f13a7179118ef21687" title="Read meteorological data on vertical levels." alt="" coords="425,707,543,733"/>
+<area shape="rect" href="libtrac_8c.html#a5ea707d2282eb7750fd4e9b4de10c1e0" title="Calculate pressure of the boundary layer." alt="" coords="434,453,534,480"/>
+<area shape="rect" href="libtrac_8c.html#a38f91765df8eb0a66fb3a6408dca0600" title="Create meteorological data with periodic boundary conditions." alt="" coords="420,504,548,531"/>
+<area shape="rect" href="libtrac_8c.html#ac2c90884cb02bf90f095ff36f41e020a" title="Calculate potential vorticity." alt="" coords="435,605,533,632"/>
+<area shape="rect" href="libtrac_8c.html#a6a49f49a3a974cda1f9b0ff261d34c81" title="Downsampling of meteorological data." alt="" coords="421,656,547,683"/>
+<area shape="rect" href="libtrac_8c.html#ab79cc2c3c9d98a812ab86a1da4f38618" title="Read surface data." alt="" coords="421,757,547,784"/>
+<area shape="rect" href="libtrac_8c.html#a6ceaf0d3e1f6785ca075fadb590bafcb" title="Calculate tropopause data." alt="" coords="428,251,540,277"/>
+<area shape="rect" href="libtrac_8c.html#aa1bbfa26d1182cb932745f09f9b97a8c" title="Climatology of tropopause pressure." alt="" coords="637,251,719,277"/>
+<area shape="rect" href="libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteorological data." alt="" coords="605,200,751,227"/>
+<area shape="rect" href="libtrac_8c.html#a644688d92918b4870920e89b10acd9e6" title="Calculate moist adiabatic lapse rate." alt="" coords="637,149,719,176"/>
+<area shape="rect" href="libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777" title="Find array index for irregular grid." alt="" coords="803,377,877,404"/>
+<area shape="rect" href="libtrac_8c.html#a843622b433d83623ab59d6cb5021636b" title="Find array index for regular grid." alt="" coords="799,200,881,227"/>
+<area shape="rect" href="libtrac_8c.html#ad97e04e82009975d18fa256cd977da76" title="Convert geolocation to Cartesian coordinates." alt="" coords="642,352,714,379"/>
+<area shape="rect" href="libtrac_8c.html#a5d463df05933155742519c4f0e7b1953" title="Convert date to seconds." alt="" coords="639,403,717,429"/>
+<area shape="rect" href="libtrac_8c.html#a53932a369d5c9ceaa5a3aefc3b3445c8" title="Read and convert 3D variable from meteorological data file." alt="" coords="614,656,742,683"/>
+<area shape="rect" href="libtrac_8c.html#a3cdb424353dfdea020de7512894ef08f" title="Convert meteorological data from model levels to pressure levels." alt="" coords="621,707,735,733"/>
+<area shape="rect" href="libtrac_8c.html#a3278e8f4ddcca49d9d7ceb0685565e31" title="Read and convert 2D variable from meteorological data file." alt="" coords="614,757,742,784"/>
+<area shape="rect" href="libtrac_8c.html#abf56302090eabae3dba3b761170c9d21" title="Spline interpolation." alt="" coords="650,301,706,328"/>
 </map>
 </div>
 
@@ -360,7 +362,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="met__sample_8c.html">met_sample.c</a></li>
-    <li class="footer">Generated on Sat May 22 2021 22:50:05 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Mon May 24 2021 21:32:47 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
