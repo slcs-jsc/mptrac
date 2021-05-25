@@ -125,7 +125,7 @@ void module_position(
 
 /*! Initialize random number generator... */
 void module_rng_init(
-  void);
+  int ntask);
 
 /*! Generate random numbers. */
 void module_rng(
@@ -287,7 +287,7 @@ int main(
 #endif
 
     /* Initialize random number generator... */
-    module_rng_init();
+    module_rng_init(ntask);
 
     /* Initialize meteorological data... */
     get_met(&ctl, ctl.t_start, &met0, &met1);
@@ -1177,7 +1177,7 @@ void module_position(
 /*****************************************************************************/
 
 void module_rng_init(
-  void) {
+  int ntask) {
 
   /* Initialize random number generator... */
 #ifdef _OPENACC
@@ -1185,6 +1185,9 @@ void module_rng_init(
   if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
+  if (curandSetPseudoRandomGeneratorSeed(&rng, ntask)
+      != CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot set seed for random number generator!");
   if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set stream for random number generator!");
@@ -1196,7 +1199,8 @@ void module_rng_init(
     ERRMSG("Too many threads!");
   for (int i = 0; i < NTHREADS; i++) {
     rng[i] = gsl_rng_alloc(gsl_rng_default);
-    gsl_rng_set(rng[i], gsl_rng_default_seed + (long unsigned) i);
+    gsl_rng_set(rng[i], gsl_rng_default_seed
+		+ (long unsigned) (ntask * NTHREADS + i));
   }
 
 #endif
