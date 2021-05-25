@@ -11,7 +11,7 @@ var trac_8c =
     [ "module_isosurf", "trac_8c.html#a907789b8edbc9ca32637ca13396de789", null ],
     [ "module_meteo", "trac_8c.html#a3e85f80ece2fbf3a680fc5a9c5f48ee0", null ],
     [ "module_position", "trac_8c.html#a89f73517dcfd3b7158b9c6c6e66838ec", null ],
-    [ "module_rng_init", "trac_8c.html#a8ae4aac9bace1826c17e4e26397d2c9e", null ],
+    [ "module_rng_init", "trac_8c.html#a34704f73a61f2e7830081f0b010b0ad3", null ],
     [ "module_rng", "trac_8c.html#a6ac625b4389d9c8c440342e137c57a81", null ],
     [ "module_sedi", "trac_8c.html#a1d7701a95a327a1833ef16620838e71d", null ],
     [ "module_oh_chem", "trac_8c.html#a7bc76c57d25c7d8eaa0f803d423802df", null ],
