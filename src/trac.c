@@ -1024,7 +1024,7 @@ void module_meteo(
     METEO_SET(qnt_pel, pel);
     METEO_SET(qnt_cape, cape);
     METEO_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl->clim_oh_filename));
+    METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl));
     METEO_SET(qnt_vh, sqrt(u * u + v * v));
     METEO_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     METEO_SET(qnt_psat, PSAT(t));
@@ -1254,13 +1254,13 @@ void module_oh_chem(
       if  (sza(atm->time[ip], atm->lon[ip], atm->lat[ip])<M_PI/2)  
         {     
         atm->q[ctl->qnt_m][ip] *=
-	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl->clim_oh_filename) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
+	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
               * exp(-ctl->oh_chem_beta / cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
         }
       else
         {
         atm->q[ctl->qnt_m][ip] *=
-	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl->clim_oh_filename) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
+	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
               * 1e-3);
         }
     }

@@ -1323,7 +1323,7 @@ double clim_oh(
   double t,
   double lat,
   double p,
-  char * filename) {
+  ctl_t * ctl) {
   
   int ncid,dimid,varid,ix,iy,iz;
   size_t np,nlat;
@@ -1334,11 +1334,10 @@ double clim_oh(
 
   while (sec < 0)
     sec += 365.25 * 86400.;
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) 
-  {
-    WARN("File not found!");
-    return 0;
-  }
+
+   //if (nc_open(ctl->clim_oh_filename, NC_NOWRITE, &ncid) != NC_NOERR) 
+   // printf("Read OH climatology: %s\n", ctl->clim_oh_filename);
+  NC(nc_open(ctl->clim_oh_filename, NC_NOWRITE, &ncid) );
   NC(nc_inq_dimid(ncid, "press", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &np));
 

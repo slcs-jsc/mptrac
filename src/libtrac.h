@@ -1077,7 +1077,7 @@ double clim_oh(
   double t,
   double lat,
   double p,
-  char *filename);
+  ctl_t * ctl);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
