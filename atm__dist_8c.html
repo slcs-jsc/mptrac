@@ -400,23 +400,23 @@ Functions</h2></td></tr>
 <div class="line"><a name="l00285"></a><span class="lineno">  285</span>&#160;        aqtdm[iq] = gsl_stats_kurtosis(&amp;aqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
 <div class="line"><a name="l00286"></a><span class="lineno">  286</span>&#160;        rqtdm[iq] = gsl_stats_kurtosis(&amp;rqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
 <div class="line"><a name="l00287"></a><span class="lineno">  287</span>&#160;      }</div>
-<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;median&quot;</span>) == 0) {</div>
-<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;      ahtdm = gsl_stats_median(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;      rhtdm = gsl_stats_median(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;      avtdm = gsl_stats_median(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;      rvtdm = gsl_stats_median(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00288"></a><span class="lineno">  288</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;absdev&quot;</span>) == 0) {</div>
+<div class="line"><a name="l00289"></a><span class="lineno">  289</span>&#160;      ahtdm = gsl_stats_absdev_m(ahtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><a name="l00290"></a><span class="lineno">  290</span>&#160;      rhtdm = gsl_stats_absdev_m(rhtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><a name="l00291"></a><span class="lineno">  291</span>&#160;      avtdm = gsl_stats_absdev_m(avtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><a name="l00292"></a><span class="lineno">  292</span>&#160;      rvtdm = gsl_stats_absdev_m(rvtd, 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
 <div class="line"><a name="l00293"></a><span class="lineno">  293</span>&#160;      <span class="keywordflow">for</span> (iq = 0; iq &lt; ctl.<a class="code" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;        aqtdm[iq] = gsl_stats_median(&amp;aqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;        rqtdm[iq] = gsl_stats_median(&amp;rqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00294"></a><span class="lineno">  294</span>&#160;        aqtdm[iq] = gsl_stats_absdev_m(&amp;aqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
+<div class="line"><a name="l00295"></a><span class="lineno">  295</span>&#160;        rqtdm[iq] = gsl_stats_absdev_m(&amp;rqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np, 0.0);</div>
 <div class="line"><a name="l00296"></a><span class="lineno">  296</span>&#160;      }</div>
-<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;absdev&quot;</span>) == 0) {</div>
-<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;      ahtdm = gsl_stats_absdev(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;      rhtdm = gsl_stats_absdev(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;      avtdm = gsl_stats_absdev(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;      rvtdm = gsl_stats_absdev(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00297"></a><span class="lineno">  297</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;median&quot;</span>) == 0) {</div>
+<div class="line"><a name="l00298"></a><span class="lineno">  298</span>&#160;      ahtdm = gsl_stats_median(ahtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00299"></a><span class="lineno">  299</span>&#160;      rhtdm = gsl_stats_median(rhtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00300"></a><span class="lineno">  300</span>&#160;      avtdm = gsl_stats_median(avtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00301"></a><span class="lineno">  301</span>&#160;      rvtdm = gsl_stats_median(rvtd, 1, (<span class="keywordtype">size_t</span>) np);</div>
 <div class="line"><a name="l00302"></a><span class="lineno">  302</span>&#160;      <span class="keywordflow">for</span> (iq = 0; iq &lt; ctl.<a class="code" href="structctl__t.html#af189b70e15b3ed95191357717b80a2cc">nq</a>; iq++) {</div>
-<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;        aqtdm[iq] = gsl_stats_absdev(&amp;aqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
-<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;        rqtdm[iq] = gsl_stats_absdev(&amp;rqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00303"></a><span class="lineno">  303</span>&#160;        aqtdm[iq] = gsl_stats_median(&amp;aqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
+<div class="line"><a name="l00304"></a><span class="lineno">  304</span>&#160;        rqtdm[iq] = gsl_stats_median(&amp;rqtd[iq * <a class="code" href="libtrac_8h.html#ab04c88bedc6b2be8ddfe7aa8d3e93f06">NP</a>], 1, (<span class="keywordtype">size_t</span>) np);</div>
 <div class="line"><a name="l00305"></a><span class="lineno">  305</span>&#160;      }</div>
 <div class="line"><a name="l00306"></a><span class="lineno">  306</span>&#160;    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcasecmp(argv[3], <span class="stringliteral">&quot;mad&quot;</span>) == 0) {</div>
 <div class="line"><a name="l00307"></a><span class="lineno">  307</span>&#160;      ahtdm = gsl_stats_mad0(ahtd, 1, (<span class="keywordtype">size_t</span>) np, work);</div>
@@ -516,7 +516,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="atm__dist_8c.html">atm_dist.c</a></li>
-    <li class="footer">Generated on Tue May 25 2021 18:51:48 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Wed May 26 2021 11:54:07 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
