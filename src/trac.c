@@ -1185,7 +1185,7 @@ void module_rng_init(
   if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
-  if (curandSetPseudoRandomGeneratorSeed(&rng, ntask)
+  if (curandSetPseudoRandomGeneratorSeed(rng, ntask)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set seed for random number generator!");
   if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
