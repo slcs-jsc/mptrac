@@ -285,6 +285,15 @@ int main(
 	aqtdm[iq] = gsl_stats_kurtosis(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_kurtosis(&rqtd[iq * NP], 1, (size_t) np);
       }
+    } else if (strcasecmp(argv[3], "absdev") == 0) {
+      ahtdm = gsl_stats_absdev_m(ahtd, 1, (size_t) np, 0.0);
+      rhtdm = gsl_stats_absdev_m(rhtd, 1, (size_t) np, 0.0);
+      avtdm = gsl_stats_absdev_m(avtd, 1, (size_t) np, 0.0);
+      rvtdm = gsl_stats_absdev_m(rvtd, 1, (size_t) np, 0.0);
+      for (iq = 0; iq < ctl.nq; iq++) {
+	aqtdm[iq] = gsl_stats_absdev_m(&aqtd[iq * NP], 1, (size_t) np, 0.0);
+	rqtdm[iq] = gsl_stats_absdev_m(&rqtd[iq * NP], 1, (size_t) np, 0.0);
+      }
     } else if (strcasecmp(argv[3], "median") == 0) {
       ahtdm = gsl_stats_median(ahtd, 1, (size_t) np);
       rhtdm = gsl_stats_median(rhtd, 1, (size_t) np);
@@ -293,15 +302,6 @@ int main(
       for (iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_median(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_median(&rqtd[iq * NP], 1, (size_t) np);
-      }
-    } else if (strcasecmp(argv[3], "absdev") == 0) {
-      ahtdm = gsl_stats_absdev(ahtd, 1, (size_t) np);
-      rhtdm = gsl_stats_absdev(rhtd, 1, (size_t) np);
-      avtdm = gsl_stats_absdev(avtd, 1, (size_t) np);
-      rvtdm = gsl_stats_absdev(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
-	aqtdm[iq] = gsl_stats_absdev(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_absdev(&rqtd[iq * NP], 1, (size_t) np);
       }
     } else if (strcasecmp(argv[3], "mad") == 0) {
       ahtdm = gsl_stats_mad0(ahtd, 1, (size_t) np, work);
