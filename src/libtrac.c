@@ -1325,7 +1325,7 @@ double clim_oh(
   double p,
   ctl_t * ctl) {
   
-  int ncid,dimid,varid,ix,iy,iz;
+  int ncid,dimid1,varid1,dimid2,varid2,varid3,ix,iy,iz;
   size_t np,nlat;
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -1338,24 +1338,24 @@ double clim_oh(
    //if (nc_open(ctl->clim_oh_filename, NC_NOWRITE, &ncid) != NC_NOERR) 
    // printf("Read OH climatology: %s\n", ctl->clim_oh_filename);
   NC(nc_open(ctl->clim_oh_filename, NC_NOWRITE, &ncid) );
-  NC(nc_inq_dimid(ncid, "press", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &np));
+  NC(nc_inq_dimid(ncid, "press", &dimid1));
+  NC(nc_inq_dimlen(ncid, dimid1, &np));
 
   ALLOC(clim_oh_ps,double,np);
-  NC(nc_inq_varid(ncid, "press", &varid));
-  NC(nc_get_var_double(ncid, varid, clim_oh_ps));
+  NC(nc_inq_varid(ncid, "press", &varid1));
+  NC(nc_get_var_double(ncid, varid1, clim_oh_ps));
   /* Check pressure... */
   if (p < clim_oh_ps[0])
     p = clim_oh_ps[0];
   else if (p > clim_oh_ps[np])
     p = clim_oh_ps[np];
 
-  NC(nc_inq_dimid(ncid, "lat", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nlat));
+  NC(nc_inq_dimid(ncid, "lat", &dimid2));
+  NC(nc_inq_dimlen(ncid, dimid2, &nlat));
 
   ALLOC(clim_oh_lats,double,nlat);
-  NC(nc_inq_varid(ncid, "lat", &varid));
-  NC(nc_get_var_double(ncid, varid, clim_oh_lats));
+  NC(nc_inq_varid(ncid, "lat", &varid2));
+  NC(nc_get_var_double(ncid, varid2, clim_oh_lats));
 
   /* Check latitude... */
   if (lat < clim_oh_lats[0])
@@ -1368,9 +1368,9 @@ double clim_oh(
   int ilat = locate_reg(clim_oh_lats, (int)nlat, lat);
   int ip = locate_irr(clim_oh_ps, (int)np, p);
 
-  NC(nc_inq_varid(ncid, "OH", &varid));
+  NC(nc_inq_varid(ncid, "OH", &varid3));
   ALLOC(clim_oh_var_pointer,double,nlat*np*12);
-  NC(nc_get_var_double(ncid, varid, clim_oh_var_pointer));
+  NC(nc_get_var_double(ncid, varid3, clim_oh_var_pointer));
 
   double clim_oh_var[EX][EY][EP];
   for (ix = 0; ix < isec; ix++)
@@ -1402,7 +1402,9 @@ double clim_oh(
   free(clim_oh_lats);
   free(clim_oh_ps);
   free(clim_oh_var_pointer);
-  return GSL_MAX(1e6 * aux00, 0.0);
+  NC(nc_close(ncid));
+  //return GSL_MAX( aux00, 0.0);
+  return aux00;
 }
 
 /*****************************************************************************/
