@@ -1855,7 +1855,7 @@ void intpol_met_time_3d(
 
   /* Spatial interpolation... */
   intpol_met_space_3d(met0, array0, p, lon, lat, &var0, ci, cw, init);
-  intpol_met_space_3d(met1, array1, p, lon, lat, &var1, ci, cw, init);
+  intpol_met_space_3d(met1, array1, p, lon, lat, &var1, ci, cw, 0);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
@@ -1883,7 +1883,7 @@ void intpol_met_time_2d(
 
   /* Spatial interpolation... */
   intpol_met_space_2d(met0, array0, lon, lat, &var0, ci, cw, init);
-  intpol_met_space_2d(met1, array1, lon, lat, &var1, ci, cw, init);
+  intpol_met_space_2d(met1, array1, lon, lat, &var1, ci, cw, 0);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
