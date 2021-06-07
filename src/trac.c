@@ -1065,54 +1065,54 @@ void module_meteo(
     INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Set quantities... */
-    ATM_SET(qnt_ps, ps);
-    ATM_SET(qnt_ts, ts);
-    ATM_SET(qnt_zs, zs);
-    ATM_SET(qnt_us, us);
-    ATM_SET(qnt_vs, vs);
-    ATM_SET(qnt_pbl, pbl);
-    ATM_SET(qnt_pt, pt);
-    ATM_SET(qnt_tt, tt);
-    ATM_SET(qnt_zt, zt);
-    ATM_SET(qnt_h2ot, h2ot);
-    ATM_SET(qnt_p, atm->p[ip]);
-    ATM_SET(qnt_z, z);
-    ATM_SET(qnt_t, t);
-    ATM_SET(qnt_u, u);
-    ATM_SET(qnt_v, v);
-    ATM_SET(qnt_w, w);
-    ATM_SET(qnt_h2o, h2o);
-    ATM_SET(qnt_o3, o3);
-    ATM_SET(qnt_lwc, lwc);
-    ATM_SET(qnt_iwc, iwc);
-    ATM_SET(qnt_pc, pc);
-    ATM_SET(qnt_cl, cl);
-    ATM_SET(qnt_plcl, plcl);
-    ATM_SET(qnt_plfc, plfc);
-    ATM_SET(qnt_pel, pel);
-    ATM_SET(qnt_cape, cape);
-    ATM_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    ATM_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    ATM_SET(qnt_vh, sqrt(u * u + v * v));
-    ATM_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
-    ATM_SET(qnt_psat, PSAT(t));
-    ATM_SET(qnt_psice, PSICE(t));
-    ATM_SET(qnt_pw, PW(atm->p[ip], h2o));
-    ATM_SET(qnt_sh, SH(h2o));
-    ATM_SET(qnt_rh, RH(atm->p[ip], t, h2o));
-    ATM_SET(qnt_rhice, RHICE(atm->p[ip], t, h2o));
-    ATM_SET(qnt_theta, THETA(atm->p[ip], t));
-    ATM_SET(qnt_zeta, ZETA(ps, atm->p[ip], t));
-    ATM_SET(qnt_tvirt, TVIRT(t, h2o));
-    ATM_SET(qnt_lapse, lapse_rate(t, h2o));
-    ATM_SET(qnt_pv, pv);
-    ATM_SET(qnt_tdew, TDEW(atm->p[ip], h2o));
-    ATM_SET(qnt_tice, TICE(atm->p[ip], h2o));
-    ATM_SET(qnt_tnat,
+    SET_ATM(qnt_ps, ps);
+    SET_ATM(qnt_ts, ts);
+    SET_ATM(qnt_zs, zs);
+    SET_ATM(qnt_us, us);
+    SET_ATM(qnt_vs, vs);
+    SET_ATM(qnt_pbl, pbl);
+    SET_ATM(qnt_pt, pt);
+    SET_ATM(qnt_tt, tt);
+    SET_ATM(qnt_zt, zt);
+    SET_ATM(qnt_h2ot, h2ot);
+    SET_ATM(qnt_p, atm->p[ip]);
+    SET_ATM(qnt_z, z);
+    SET_ATM(qnt_t, t);
+    SET_ATM(qnt_u, u);
+    SET_ATM(qnt_v, v);
+    SET_ATM(qnt_w, w);
+    SET_ATM(qnt_h2o, h2o);
+    SET_ATM(qnt_o3, o3);
+    SET_ATM(qnt_lwc, lwc);
+    SET_ATM(qnt_iwc, iwc);
+    SET_ATM(qnt_pc, pc);
+    SET_ATM(qnt_cl, cl);
+    SET_ATM(qnt_plcl, plcl);
+    SET_ATM(qnt_plfc, plfc);
+    SET_ATM(qnt_pel, pel);
+    SET_ATM(qnt_cape, cape);
+    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_vh, sqrt(u * u + v * v));
+    SET_ATM(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
+    SET_ATM(qnt_psat, PSAT(t));
+    SET_ATM(qnt_psice, PSICE(t));
+    SET_ATM(qnt_pw, PW(atm->p[ip], h2o));
+    SET_ATM(qnt_sh, SH(h2o));
+    SET_ATM(qnt_rh, RH(atm->p[ip], t, h2o));
+    SET_ATM(qnt_rhice, RHICE(atm->p[ip], t, h2o));
+    SET_ATM(qnt_theta, THETA(atm->p[ip], t));
+    SET_ATM(qnt_zeta, ZETA(ps, atm->p[ip], t));
+    SET_ATM(qnt_tvirt, TVIRT(t, h2o));
+    SET_ATM(qnt_lapse, lapse_rate(t, h2o));
+    SET_ATM(qnt_pv, pv);
+    SET_ATM(qnt_tdew, TDEW(atm->p[ip], h2o));
+    SET_ATM(qnt_tice, TICE(atm->p[ip], h2o));
+    SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
 				      atm->p[ip]) * 1e-9));
-    ATM_SET(qnt_tsts,
+    SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
 }

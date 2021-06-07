@@ -186,11 +186,6 @@
     ERRMSG("Out of memory!");
 #endif
 
-/*! Set quantity value. */
-#define ATM_SET(qnt, val)			\
-  if (ctl->qnt >= 0)				\
-    atm->q[ctl->qnt][ip] = val;
-
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
@@ -379,6 +374,18 @@
 /*! Compute relative humidity over ice. */
 #define RHICE(p, t, h2o)			\
   (PW(p, h2o) / PSICE(t) * 100.)
+
+/*! Set atmospheric quantity value. */
+#define SET_ATM(qnt, val)			\
+  if (ctl->qnt >= 0)				\
+    atm->q[ctl->qnt][ip] = val;
+
+/*! Set atmospheric quantity index. */
+#define SET_QNT(qnt, name, unit)			\
+  if (strcasecmp(ctl->qnt_name[iq], name) == 0) {	\
+    ctl->qnt = iq;					\
+    sprintf(ctl->qnt_unit[iq], unit);			\
+  } else
 
 /*! Compute specific humidity from water vapor volume mixing ratio. */
 #define SH(h2o)					\
