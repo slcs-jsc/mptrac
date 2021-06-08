@@ -2634,7 +2634,7 @@ void read_met_cape(
   const double pfac = 1.01439, dz0 = RI / MA / G0 * log(pfac);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -2714,7 +2714,7 @@ void read_met_cloud(
   SELECT_TIMER("READ_MET_CLOUD", NVTX_READ);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -2769,7 +2769,7 @@ void read_met_detrend(
   sy = GSL_MIN(GSL_MAX(1, sy), met->ny / 2);
 
   /* Calculate background... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++) {
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -2831,7 +2831,7 @@ void read_met_detrend(
   }
 
   /* Subtract background... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(3)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++) {
@@ -2854,7 +2854,7 @@ void read_met_extrapolate(
   SELECT_TIMER("READ_MET_EXTRAPOLATE", NVTX_READ);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -2902,7 +2902,7 @@ void read_met_geopot(
     logp[ip] = log(met->p[ip]);
 
   /* Apply hydrostatic equation to calculate geopotential heights... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -2959,7 +2959,7 @@ void read_met_geopot(
 
   /* Calculate weights for smoothing... */
   float ws[dx + 1][dy + 1];
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix <= dx; ix++)
     for (int iy = 0; iy < dy; iy++)
       ws[ix][iy] = (1.0f - (float) ix / (float) dx)
@@ -3113,7 +3113,7 @@ int read_met_help_3d(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(3)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++) {
@@ -3160,7 +3160,7 @@ int read_met_help_2d(
   NC(nc_get_var_float(ncid, varid, help));
 
   /* Copy and check data... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
       if (init)
@@ -3250,7 +3250,7 @@ void read_met_ml2pl(
   SELECT_TIMER("READ_MET_ML2PL", NVTX_READ);
 
   /* Loop over columns... */
-#pragma omp parallel for default(shared) private(aux,p)
+#pragma omp parallel for default(shared) private(aux,p) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -3290,7 +3290,7 @@ void read_met_pbl(
   const double rib_crit = 0.25, dz = 0.05, umin = 5.0;
 
   /* Loop over grid points... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -3686,14 +3686,14 @@ void read_met_tropo(
 
   /* Do not calculate tropopause... */
   if (ctl->met_tropo == 0)
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = GSL_NAN;
 
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1) {
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy]);
@@ -3703,7 +3703,7 @@ void read_met_tropo(
   else if (ctl->met_tropo == 2) {
 
     /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(t,t2)
+#pragma omp parallel for default(shared) private(t,t2) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 
@@ -3725,7 +3725,7 @@ void read_met_tropo(
   else if (ctl->met_tropo == 3 || ctl->met_tropo == 4) {
 
     /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(t,t2)
+#pragma omp parallel for default(shared) private(t,t2) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 
@@ -3785,7 +3785,7 @@ void read_met_tropo(
   else if (ctl->met_tropo == 5) {
 
     /* Loop over grid points... */
-#pragma omp parallel for default(shared) private(pv,pv2,th,th2)
+#pragma omp parallel for default(shared) private(pv,pv2,th,th2) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 
@@ -3814,7 +3814,7 @@ void read_met_tropo(
     ERRMSG("Cannot calculate tropopause!");
 
   /* Interpolate temperature, geopotential height, and water vapor vmr... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
       double h2ot, tt, zt;
@@ -4273,7 +4273,7 @@ void write_csi(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid cells... */
-#pragma omp parallel for default(shared) private(ix,iy,iz)
+#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++)
@@ -4603,7 +4603,7 @@ void write_grid(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid... */
-#pragma omp parallel for default(shared) private(ix,iy,iz)
+#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
   for (ix = 0; ix < ctl->grid_nx; ix++)
     for (iy = 0; iy < ctl->grid_ny; iy++)
       for (iz = 0; iz < ctl->grid_nz; iz++) {
@@ -4838,7 +4838,7 @@ void write_prof(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize... */
-#pragma omp parallel for default(shared) private(ix,iy,iz)
+#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(2)
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++) {
       obsmean[ix][iy] = 0;
