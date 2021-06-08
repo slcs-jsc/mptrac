@@ -10,10 +10,9 @@ var searchData=
   ['atm_5fgpfile_7',['atm_gpfile',['../structctl__t.html#a06975fa14d8c7f7813bf83fa4166f819',1,'ctl_t']]],
   ['atm_5finit_2ec_8',['atm_init.c',['../atm__init_8c.html',1,'']]],
   ['atm_5fselect_2ec_9',['atm_select.c',['../atm__select_8c.html',1,'']]],
-  ['atm_5fset_10',['ATM_SET',['../libtrac_8h.html#aaad5cee6178621bd600e121144fc2e0e',1,'libtrac.h']]],
-  ['atm_5fsplit_2ec_11',['atm_split.c',['../atm__split_8c.html',1,'']]],
-  ['atm_5fstat_2ec_12',['atm_stat.c',['../atm__stat_8c.html',1,'']]],
-  ['atm_5fstride_13',['atm_stride',['../structctl__t.html#aa98efec197e5a7bf0abd5f30ba44de72',1,'ctl_t']]],
-  ['atm_5ft_14',['atm_t',['../structatm__t.html',1,'']]],
-  ['atm_5ftype_15',['atm_type',['../structctl__t.html#a2509f56c50085b3d0f47c495da91b248',1,'ctl_t']]]
+  ['atm_5fsplit_2ec_10',['atm_split.c',['../atm__split_8c.html',1,'']]],
+  ['atm_5fstat_2ec_11',['atm_stat.c',['../atm__stat_8c.html',1,'']]],
+  ['atm_5fstride_12',['atm_stride',['../structctl__t.html#aa98efec197e5a7bf0abd5f30ba44de72',1,'ctl_t']]],
+  ['atm_5ft_13',['atm_t',['../structatm__t.html',1,'']]],
+  ['atm_5ftype_14',['atm_type',['../structctl__t.html#a2509f56c50085b3d0f47c495da91b248',1,'ctl_t']]]
 ];
