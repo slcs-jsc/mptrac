@@ -1459,3 +1459,9 @@ double diurnal_correct(
     double beta, 
     double time, 
     double lat);
+/*
+static float ***clim_ohvar(
+  int ncid, 
+  size_t np,
+  size_t nlat
+);*/

@@ -204,6 +204,8 @@ int main(
 
   int num_devices = 0, ntask = -1, rank = 0, size = 1;
 
+  printf("trac start\n");
+
   /* Start timers... */
   START_TIMERS;
 
@@ -413,7 +415,7 @@ int main(
       /* OH chemistry... */
       SELECT_TIMER("OHCHEM", NVTX_GPU);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
-	module_oh_chem(&ctl, met0, met1, atm, dt);
+	      module_oh_chem(&ctl, met0, met1, atm, dt);
 
       /* Dry deposition... */
       SELECT_TIMER("DRYDEPO", NVTX_GPU);
@@ -483,6 +485,8 @@ int main(
 
   /* Stop timers... */
   STOP_TIMERS;
+
+  printf("trac end");
 
   return EXIT_SUCCESS;
 }
@@ -1218,6 +1222,8 @@ void module_oh_chem(
   atm_t * atm,
   double *dt) {
 
+    printf("module_oh_chem start\n");
+
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
@@ -1264,6 +1270,7 @@ void module_oh_chem(
               * 1e-3);
         }
     }
+  printf("module_oh_chem end\n");
 }
 
 /*****************************************************************************/
