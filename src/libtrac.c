@@ -2425,10 +2425,10 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
   if (strcasecmp(ctl->species, "SO2") == 0) {
     ctl->molmass = 64.066;
-    ctl->oh_chem[0] = 3.3e-31;	/* (JPL Publication 15-10) */
-    ctl->oh_chem[1] = 4.3;	/* (JPL Publication 15-10) */
-    ctl->oh_chem[2] = 1.6e-12;	/* (JPL Publication 15-10) */
-    ctl->oh_chem[3] = 0.0;	/* (JPL Publication 15-10) */
+    ctl->oh_chem[0] = 2.9e-31;	/* (JPL Publication 19-05) */
+    ctl->oh_chem[1] = 4.1;	/* (JPL Publication 19-05) */
+    ctl->oh_chem[2] = 1.7e-12;	/* (JPL Publication 19-05) */
+    ctl->oh_chem[3] = -0.2;	/* (JPL Publication 19-05) */
     ctl->wet_depo[2] = 1.3e-2;	/* (Sander, 2015) */
     ctl->wet_depo[3] = 2900.0;	/* (Sander, 2015) */
     ctl->wet_depo[6] = 1.3e-2;	/* (Sander, 2015) */
