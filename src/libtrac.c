@@ -2370,8 +2370,23 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
     ERRMSG("Set MET_TROPO = 0 ... 5!");
-  ctl->met_cloud
-    = (int) scan_ctl(filename, argc, argv, "MET_CLOUD", -1, "1", NULL);
+  ctl->met_tropo_lapse =
+    scan_ctl(filename, argc, argv, "MET_TROPO_LAPSE", -1, "2.0", NULL);
+  ctl->met_tropo_nlev =
+    (int) scan_ctl(filename, argc, argv, "MET_TROPO_NLEV", -1, "20", NULL);
+  ctl->met_tropo_lapse_sep =
+    scan_ctl(filename, argc, argv, "MET_TROPO_LAPSE_SEP", -1, "3.0", NULL);
+  ctl->met_tropo_nlev_sep =
+    (int) scan_ctl(filename, argc, argv, "MET_TROPO_NLEV_SEP", -1, "10",
+		   NULL);
+  ctl->met_tropo_pv =
+    scan_ctl(filename, argc, argv, "MET_TROPO_PV", -1, "3.5", NULL);
+  ctl->met_tropo_theta =
+    scan_ctl(filename, argc, argv, "MET_TROPO_THETA", -1, "380", NULL);
+  ctl->met_tropo_spline =
+    (int) scan_ctl(filename, argc, argv, "MET_TROPO_SPLINE", -1, "1", NULL);
+  ctl->met_cloud =
+    (int) scan_ctl(filename, argc, argv, "MET_CLOUD", -1, "1", NULL);
   if (ctl->met_cloud < 0 || ctl->met_cloud > 3)
     ERRMSG("Set MET_CLOUD = 0 ... 3!");
   ctl->met_dt_out =
@@ -3710,7 +3725,7 @@ void read_met_tropo(
 	/* Interpolate temperature profile... */
 	for (int iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
-	spline(z, t, met->np, z2, t2, 171);
+	spline(z, t, met->np, z2, t2, 171, ctl->met_tropo_spline);
 
 	/* Find minimum... */
 	int iz = (int) gsl_stats_min_index(t2, 1, 171);
@@ -3733,14 +3748,15 @@ void read_met_tropo(
 	int iz;
 	for (iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
-	spline(z, t, met->np, z2, t2, 191);
+	spline(z, t, met->np, z2, t2, 191, ctl->met_tropo_spline);
 
 	/* Find 1st tropopause... */
 	met->pt[ix][iy] = GSL_NAN;
 	for (iz = 0; iz <= 170; iz++) {
 	  int found = 1;
-	  for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	    if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
+	  for (int iz2 = iz + 1; iz2 <= iz + ctl->met_tropo_nlev; iz2++)
+	    if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) >
+		ctl->met_tropo_lapse) {
 	      found = 0;
 	      break;
 	    }
@@ -3756,8 +3772,9 @@ void read_met_tropo(
 	  met->pt[ix][iy] = GSL_NAN;
 	  for (; iz <= 170; iz++) {
 	    int found = 1;
-	    for (int iz2 = iz + 1; iz2 <= iz + 10; iz2++)
-	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) < 3.0) {
+	    for (int iz2 = iz + 1; iz2 <= iz + ctl->met_tropo_nlev_sep; iz2++)
+	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) <
+		  ctl->met_tropo_lapse_sep) {
 		found = 0;
 		break;
 	      }
@@ -3766,8 +3783,9 @@ void read_met_tropo(
 	  }
 	  for (; iz <= 170; iz++) {
 	    int found = 1;
-	    for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
-	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
+	    for (int iz2 = iz + 1; iz2 <= iz + ctl->met_tropo_nlev; iz2++)
+	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) >
+		  ctl->met_tropo_lapse) {
 		found = 0;
 		break;
 	      }
@@ -3792,17 +3810,18 @@ void read_met_tropo(
 	/* Interpolate potential vorticity profile... */
 	for (int iz = 0; iz < met->np; iz++)
 	  pv[iz] = met->pv[ix][iy][iz];
-	spline(z, pv, met->np, z2, pv2, 171);
+	spline(z, pv, met->np, z2, pv2, 171, ctl->met_tropo_spline);
 
 	/* Interpolate potential temperature profile... */
 	for (int iz = 0; iz < met->np; iz++)
 	  th[iz] = THETA(met->p[iz], met->t[ix][iy][iz]);
-	spline(z, th, met->np, z2, th2, 171);
+	spline(z, th, met->np, z2, th2, 171, ctl->met_tropo_spline);
 
-	/* Find dynamical tropopause (3.5 PVU and 380 K)... */
+	/* Find dynamical tropopause... */
 	met->pt[ix][iy] = GSL_NAN;
 	for (int iz = 0; iz <= 170; iz++)
-	  if (fabs(pv2[iz]) >= 3.5 || th2[iz] >= 380.) {
+	  if (fabs(pv2[iz]) >= ctl->met_tropo_pv
+	      || th2[iz] >= ctl->met_tropo_theta) {
 	    if (iz > 0 && iz < 170)
 	      met->pt[ix][iy] = (float) p2[iz];
 	    break;
@@ -3947,29 +3966,45 @@ void spline(
   int n,
   double *x2,
   double *y2,
-  int n2) {
+  int n2,
+  int method) {
 
-  gsl_interp_accel *acc;
+  /* Cubic spline interpolation... */
+  if (method == 1) {
 
-  gsl_spline *s;
+    /* Allocate... */
+    gsl_interp_accel *acc;
+    gsl_spline *s;
+    acc = gsl_interp_accel_alloc();
+    s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
 
-  /* Allocate... */
-  acc = gsl_interp_accel_alloc();
-  s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
+    /* Interpolate profile... */
+    gsl_spline_init(s, x, y, (size_t) n);
+    for (int i = 0; i < n2; i++)
+      if (x2[i] <= x[0])
+	y2[i] = y[0];
+      else if (x2[i] >= x[n - 1])
+	y2[i] = y[n - 1];
+      else
+	y2[i] = gsl_spline_eval(s, x2[i], acc);
 
-  /* Interpolate profile... */
-  gsl_spline_init(s, x, y, (size_t) n);
-  for (int i = 0; i < n2; i++)
-    if (x2[i] <= x[0])
-      y2[i] = y[0];
-    else if (x2[i] >= x[n - 1])
-      y2[i] = y[n - 1];
-    else
-      y2[i] = gsl_spline_eval(s, x2[i], acc);
+    /* Free... */
+    gsl_spline_free(s);
+    gsl_interp_accel_free(acc);
+  }
 
-  /* Free... */
-  gsl_spline_free(s);
-  gsl_interp_accel_free(acc);
+  /* Linear interpolation... */
+  else {
+    for (int i = 0; i < n2; i++)
+      if (x2[i] <= x[0])
+	y2[i] = y[0];
+      else if (x2[i] >= x[n - 1])
+	y2[i] = y[n - 1];
+      else {
+	int idx = locate_irr(x, n, x2[i]);
+	y2[i] = LIN(x[idx], y[idx], x2[idx], y2[idx], x2[i]);
+      }
+  }
 }
 
 /*****************************************************************************/

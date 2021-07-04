@@ -104,7 +104,7 @@ int main(
 	for (int iz = 0; iz < met->np; iz++)
 	  t[iz] = met->t[ix][iy][iz];
 	if (intpol == 1)
-	  spline(z, t, met->np, z2, t2, 251);
+	  spline(z, t, met->np, z2, t2, 251, ctl.met_tropo_spline);
 	else
 	  for (int iz = 0; iz <= 250; iz++) {
 	    int idx = locate_irr(z, met->np, z2[iz]);
