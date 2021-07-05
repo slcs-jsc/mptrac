@@ -4002,7 +4002,7 @@ void spline(
 	y2[i] = y[n - 1];
       else {
 	int idx = locate_irr(x, n, x2[i]);
-	y2[i] = LIN(x[idx], y[idx], x2[idx], y2[idx], x2[i]);
+	y2[i] = LIN(x[idx], y[idx], x[idx + 1], y[idx + 1], x2[i]);
       }
   }
 }
