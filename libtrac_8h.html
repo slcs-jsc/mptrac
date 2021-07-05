@@ -7314,7 +7314,7 @@ Here is the call graph for this function:</div>
 <div class="line"><a name="l04002"></a><span class="lineno"> 4002</span>&#160;        y2[i] = y[n - 1];</div>
 <div class="line"><a name="l04003"></a><span class="lineno"> 4003</span>&#160;      <span class="keywordflow">else</span> {</div>
 <div class="line"><a name="l04004"></a><span class="lineno"> 4004</span>&#160;        <span class="keywordtype">int</span> idx = <a class="code" href="libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777">locate_irr</a>(x, n, x2[i]);</div>
-<div class="line"><a name="l04005"></a><span class="lineno"> 4005</span>&#160;        y2[i] = <a class="code" href="libtrac_8h.html#aebaef4a0f8136be064bf1d29ce1ced83">LIN</a>(x[idx], y[idx], x2[idx], y2[idx], x2[i]);</div>
+<div class="line"><a name="l04005"></a><span class="lineno"> 4005</span>&#160;        y2[i] = <a class="code" href="libtrac_8h.html#aebaef4a0f8136be064bf1d29ce1ced83">LIN</a>(x[idx], y[idx], x[idx + 1], y[idx + 1], x2[i]);</div>
 <div class="line"><a name="l04006"></a><span class="lineno"> 4006</span>&#160;      }</div>
 <div class="line"><a name="l04007"></a><span class="lineno"> 4007</span>&#160;  }</div>
 <div class="line"><a name="l04008"></a><span class="lineno"> 4008</span>&#160;}</div>
@@ -9026,7 +9026,7 @@ Here is the call graph for this function:</div>
 <div id="nav-path" class="navpath"><!-- id is needed for treeview function! -->
   <ul>
     <li class="navelem"><a class="el" href="dir_68267d1309a1af8e8297ef4c3efbcdba.html">src</a></li><li class="navelem"><a class="el" href="libtrac_8h.html">libtrac.h</a></li>
-    <li class="footer">Generated on Sun Jul 4 2021 18:27:16 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
+    <li class="footer">Generated on Mon Jul 5 2021 20:20:02 for MPTRAC by <a href="https://www.doxygen.org/index.html"><img class="footer" src="doxygen.svg" width="104" height="31" alt="doxygen"/></a> 1.9.1 </li>
   </ul>
 </div>
 </body>
