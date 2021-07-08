@@ -1372,9 +1372,10 @@ void read_clim_oh(
     for (iy = 0; iy < clim->oh_np; iy++)
       for (iz = 0; iz < clim->oh_ny; iz++){ 
        clim->oh[ix][iy][iz] = clim_oh_var_pointer[iy * clim->oh_ny + iz+ ix*clim->oh_np*clim->oh_ny];
-        printf("clim_oh_var[%zu][%zu][%zu]=%g\n",ix,iy,iz,clim->oh[ix][iy][iz]);
-        printf("clim_oh_ps[%zu]=%g\n",iy,clim->oh_p[iy]);
-        printf("clim_oh_lats[%zu]=%g\n",iz,clim->oh_lat[iz]);}
+        //printf("clim_oh_var[%zu][%zu][%zu]=%g\n",ix,iy,iz,clim->oh[ix][iy][iz]);
+        //printf("clim_oh_ps[%zu]=%g\n",iy,clim->oh_p[iy]);
+        //printf("clim_oh_lats[%zu]=%g\n",iz,clim->oh_lat[iz]);
+        }
   
   NC(nc_close(ncid));
   printf("nc file close\n");
