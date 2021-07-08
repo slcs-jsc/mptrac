@@ -128,7 +128,8 @@ void module_meteo(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  clim_t *clim);
 
 /*! Check position of air parcels. */
 void module_position(
@@ -161,6 +162,7 @@ void module_oh_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  clim_t * clim,
   double *dt);
 
 /*! Calculate wet deposition. */
@@ -191,6 +193,8 @@ int main(
   ctl_t ctl;
 
   atm_t *atm;
+
+  clim_t *clim;
 
   cache_t *cache;
 
@@ -249,6 +253,7 @@ int main(
     /* Allocate... */
     SELECT_TIMER("ALLOC", NVTX_CPU);
     ALLOC(atm, atm_t, 1);
+    ALLOC(clim,clim_t,1);
     ALLOC(cache, cache_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
@@ -405,7 +410,7 @@ int main(
       SELECT_TIMER("METEO", NVTX_GPU);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, met0, met1, atm);
+	module_meteo(&ctl, met0, met1, atm,clim);
 
       /* Decay of particle mass... */
       SELECT_TIMER("DECAY", NVTX_GPU);
@@ -415,7 +420,7 @@ int main(
       /* OH chemistry... */
       SELECT_TIMER("OHCHEM", NVTX_GPU);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
-	      module_oh_chem(&ctl, met0, met1, atm, dt);
+	      module_oh_chem(&ctl, met0, met1, atm, clim, dt);
 
       /* Dry deposition... */
       SELECT_TIMER("DRYDEPO", NVTX_GPU);
@@ -473,6 +478,7 @@ int main(
     free(met1);
     free(dt);
     free(rs);
+    free(clim);
 
     /* Report timers... */
     PRINT_TIMERS;
@@ -978,7 +984,10 @@ void module_meteo(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm) {
+  atm_t * atm,
+  clim_t *clim) {
+
+   
 
   /* Check quantity flags... */
   if (ctl->qnt_tsts >= 0)
@@ -995,6 +1004,7 @@ void module_meteo(
 
     double ps, ts, zs, us, vs, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
       u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt, cw[3] = { 0.0 };
+  
 
     int ci[3] = { 0 };
 
@@ -1028,7 +1038,7 @@ void module_meteo(
     METEO_SET(qnt_pel, pel);
     METEO_SET(qnt_cape, cape);
     METEO_SET(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl));
+    METEO_SET(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim));
     METEO_SET(qnt_vh, sqrt(u * u + v * v));
     METEO_SET(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     METEO_SET(qnt_psat, PSAT(t));
@@ -1220,13 +1230,21 @@ void module_oh_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  clim_t * clim,
   double *dt) {
 
-    printf("module_oh_chem start\n");
-
+    static int ini;
+  
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
+
+    if (!ini){
+      printf("%d",ini);
+      ini = 1;
+      read_clim_oh(ctl->clim_oh_filename, clim);
+      printf("read zonal mean OH climatology,ini = %d\n", ini);
+    }
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
@@ -1260,17 +1278,16 @@ void module_oh_chem(
       if  (sza(atm->time[ip], atm->lon[ip], atm->lat[ip])<M_PI/2)  
         {     
         atm->q[ctl->qnt_m][ip] *=
-	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
+	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
               * exp(-ctl->oh_chem_beta / cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
         }
       else
         {
         atm->q[ctl->qnt_m][ip] *=
-	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], ctl) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
-              * 1e-3);
+	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
+              * exp(-ctl->oh_chem_beta *100));
         }
     }
-  printf("module_oh_chem end\n");
 }
 
 /*****************************************************************************/

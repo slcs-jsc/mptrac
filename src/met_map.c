@@ -46,6 +46,8 @@ int main(
 
   met_t *met;
 
+  clim_t *clim;
+
   FILE *out;
 
   static double timem[NX][NY], p0, ps, psm[NX][NY], ts, tsm[NX][NY],
@@ -61,13 +63,15 @@ int main(
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
     /* Allocate... */
   ALLOC(met, met_t, 1);
-
+  ALLOC(clim, clim_t, 1);
+  
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
+  read_clim_oh(ctl.clim_oh_filename, clim);
   p0 = P(scan_ctl(argv[1], argc, argv, "MAP_Z0", -1, "10", NULL));
   lon0 = scan_ctl(argv[1], argc, argv, "MAP_LON0", -1, "-180", NULL);
   lon1 = scan_ctl(argv[1], argc, argv, "MAP_LON1", -1, "180", NULL);
@@ -76,7 +80,6 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
   theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
-  //beta = scan_ctl(argv[1], argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
    
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
@@ -161,18 +164,18 @@ int main(
 	ttm[ix][iy] += tt;
 	h2otm[ix][iy] += h2ot;
 	np[ix][iy]++;
-    oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy], &ctl) ;
+    oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy], clim) ;
     if  (sza(met->time, lons[ix], lats[iy])<M_PI/2)
     {  
-        oh_diurnal[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], &ctl) * exp(-ctl.oh_chem_beta /cos(sza(met->time, lons[ix], lats[iy])));
+        oh_diurnal[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], clim) * exp(-ctl.oh_chem_beta /cos(sza(met->time, lons[ix], lats[iy])));
         oh_diurnal_correct[ix][iy] +=
-            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],&ctl) / diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]) * 
+            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],clim) / diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]) * 
             exp(-ctl.oh_chem_beta /cos(sza(met->time, lons[ix], lats[iy])));
     }
     else
     {   
         oh_diurnal_correct[ix][iy] +=
-            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], &ctl) / diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]) * 
+            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], clim) / diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]) * 
             1e-6;
     }
     
@@ -261,6 +264,7 @@ int main(
 
   /* Free... */
   free(met);
+  free(clim);
 
   return EXIT_SUCCESS;
 }

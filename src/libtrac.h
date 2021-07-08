@@ -144,6 +144,23 @@
 /*! Maximum number of OpenMP threads. */
 #define NTHREADS 512
 
+/*! Maximum number of latitudes for climatological data. */
+#ifndef CY
+#define CY 50
+#endif
+
+/*! Maximum number of pressure levels for climatological data. */
+#ifndef CP
+#define CP 40
+#endif
+
+/*! Maximum number of time steps for climatological data. */
+#ifndef CT
+#define CT 12
+#endif
+
+
+
 /* ------------------------------------------------------------
    Macros...
    ------------------------------------------------------------ */
@@ -1042,6 +1059,30 @@ typedef struct {
 
 } met_t;
 
+/*! Climatological data. */
+typedef struct {
+
+  /*! Number of OH data timesteps. */
+  size_t oh_nt;
+  /*! Number of OH data latitudes. */
+  size_t oh_ny;
+
+  /*! Number of OH data pressure levels. */
+  size_t oh_np;
+
+  /*! OH data time steps [s]. */
+  double oh_time[CT];
+
+  /*! OH data latitudes [deg]. */
+  double oh_lat[CY];
+
+  /*! OH data pressure levels [hPa]. */
+  double oh_p[CP];
+  /*! OH data concentration [molec/cm^3]. */
+  double oh[CT][CP][CY];
+} clim_t;
+
+
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
@@ -1069,6 +1110,10 @@ double clim_hno3(
   double lat,
   double p);
 
+void read_clim_oh(
+  char *filename,
+  clim_t *clim);
+
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
@@ -1077,7 +1122,7 @@ double clim_oh(
   double t,
   double lat,
   double p,
-  ctl_t * ctl);
+  clim_t *clim) ;
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
@@ -1459,9 +1504,4 @@ double diurnal_correct(
     double beta, 
     double time, 
     double lat);
-/*
-static float ***clim_ohvar(
-  int ncid, 
-  size_t np,
-  size_t nlat
-);*/
+
