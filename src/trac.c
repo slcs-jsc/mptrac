@@ -1244,7 +1244,11 @@ void module_oh_chem(
       ini = 1;
       read_clim_oh(ctl->clim_oh_filename, clim);
       printf("read zonal mean OH climatology,ini = %d\n", ini);
+    #ifdef _OPENACC
+    #pragma acc declare copyin(clim)
+    #endif
     }
+
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)

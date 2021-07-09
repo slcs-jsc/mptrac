@@ -1320,26 +1320,6 @@ static double clim_oh_var[12][18][34] = {
 #endif
 */
 
-/*
-static float ***clim_ohvar(
-  int ncid, 
-  size_t np,
-  size_t nlat
-){
-  float ***ohvar, *clim_oh_var_pointer;
-  int  varid,ix,iy,iz;
-  NC(nc_inq_varid(ncid, "OH", &varid));
-  ALLOC(clim_oh_var_pointer,float,nlat*np*12);
-  NC(nc_get_var_float(ncid, varid, clim_oh_var_pointer));
-  ALLOC(ohvar,float,12);
- for (ix = 0; ix < 12; ix++){
-    ALLOC(ohvar[ix],float,np);
-    for (iy = 0; iy < (int)np; iy++){
-      ALLOC(ohvar[ix][iy],float,nlat);
-      for (iz = 0; iz < (int)nlat; iz++) 
-       ohvar[ix][iy][iz] = clim_oh_var_pointer[iy * (int)nlat + iz+ ix* (int)np* (int)nlat];}}
-  return ohvar;
-}*/
 
 
 void read_clim_oh(
