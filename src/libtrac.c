@@ -3025,6 +3025,8 @@ void read_met_grid(
 
   char levname[LEN], tstr[10];
 
+  double rtime;
+
   int dimid, varid;
 
   size_t np, nx, ny;
@@ -3042,6 +3044,14 @@ void read_met_grid(
   sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
   int hour = atoi(tstr);
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
+
+  /* Check time information... */
+  if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
+    NC(nc_get_var_double(ncid, varid, &rtime));
+    if (fabs(year * 10000. + mon * 100. + day + hour / 24. - rtime) > 1.0)
+      WARN("Time information in meteo file does not match filename!");
+  } else
+    WARN("Time information in meteo file is missing!");
 
   /* Get grid dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
@@ -3211,7 +3221,7 @@ void read_met_levels(
   if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
     ERRMSG("Cannot read meridional wind!");
   if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
-    WARN("Cannot read vertical velocity");
+    WARN("Cannot read vertical velocity!");
   if (!read_met_help_3d
       (ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
     WARN("Cannot read specific humidity!");
