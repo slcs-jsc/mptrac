@@ -102,13 +102,9 @@ These are the main references for citing the MPTRAC model in scientific publicat
 
 * You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
 
-A [list of selected papers](https://github.com/slcs-jsc/mptrac/wiki/References) is also available from the GitHub wiki.
-
 ## Contributing
 
-We are interested in sharing MPTRAC for operational or research applications.
-
-Please do not hesitate to contact us, if you have any further questions or need support.
+We are interested in sharing MPTRAC for operational or research applications. Please do not hesitate to contact us, if you have any further questions or need support.
 
 ## License
 
