@@ -90,17 +90,13 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for new users and developers of MPTRAC is collected here:
-
-* [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki)
-
-* [reference manual](https://slcs-jsc.github.io/mptrac)
-
 These are the main references for citing the MPTRAC model in scientific publications:
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
 * You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
+
+More detailed information for new users and developers of MPTRAC is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
 ## Contributing
 
