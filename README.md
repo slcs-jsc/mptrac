@@ -108,7 +108,7 @@ MPTRAC is distributed under the [GNU General Public License v3.0](https://github
 
 ## Contact
 
-Lars Hoffmann  
+Dr. Lars Hoffmann
 
 Jülich Supercomputing Centre, Forschungszentrum Jülich
 
