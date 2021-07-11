@@ -211,13 +211,6 @@
 #define DOTP(a, b) \
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 
-/*! Print error message and quit program. */
-#define ERRMSG(msg) {							\
-    printf("\nError (%s, %s, l%d): %s\n\n",				\
-	   __FILE__, __func__, __LINE__, msg);				\
-    exit(EXIT_FAILURE);							\
-  }
-
 /*! Compute floating point modulo. */
 #define FMOD(x, y)				\
   ((x) - (int) ((x) / (y)) * (y))
@@ -322,9 +315,10 @@
 
 /*! Execute netCDF library command and check result. */
 #define NC(cmd) {				     \
-    if((cmd)!=NC_NOERR)				     \
-      ERRMSG(nc_strerror(cmd));			     \
-  }
+  int nc_result=(cmd);				     \
+  if(nc_result!=NC_NOERR)			     \
+    ERRMSG("%s", nc_strerror(nc_result));	     \
+}
 
 /*! Compute nearest neighbor interpolation. */
 #define NN(x0, y0, x1, y1, x)				\
@@ -333,11 +327,6 @@
 /*! Compute norm of a vector. */
 #define NORM(a) \
   sqrt(DOTP(a, a))
-
-/*! Print macro for debugging. */
-#define PRINT(format, var)						\
-  printf("Print (%s, %s, l%d): %s= "format"\n",				\
-	 __FILE__, __func__, __LINE__, #var, var);
 
 /*! Convert altitude to pressure. */
 #define P(z)					\
@@ -411,12 +400,6 @@
 #define TVIRT(t, h2o)				\
     ((t) * (1. + (1. - EPS) * (h2o)))
 
-/*! Print warning message. */
-#define WARN(msg) {							\
-    printf("\nWarning (%s, %s, l%d): %s\n\n",				\
-	   __FILE__, __func__, __LINE__, msg);				\
-  }
-
 /*! Convert pressure to altitude. */
 #define Z(p)					\
   (H0 * log(P0 / (p)))
@@ -433,6 +416,43 @@
    * THETA((p), (t)))
 
 /* ------------------------------------------------------------
+   Log messages...
+   ------------------------------------------------------------ */
+
+/*! Level of log messages (0=none, 1=basic, 2=detailed, 3=debug). */
+#ifndef LOGLEV
+#define LOGLEV 2
+#endif
+
+/*! Print log message. */
+#define LOG(level, ...) {						\
+    if(level >= 2)							\
+      printf("  ");							\
+    if(level <= LOGLEV) {						\
+      printf(__VA_ARGS__);						\
+      printf("\n");							\
+    }									\
+  }
+
+/*! Print warning message. */
+#define WARN(...) {							\
+    printf("\nWarning (%s, %s, l%d): ", __FILE__, __func__, __LINE__);	\
+    LOG(0, __VA_ARGS__);						\
+  }
+
+/*! Print error message and quit program. */
+#define ERRMSG(...) {							\
+    printf("\nError (%s, %s, l%d): ", __FILE__, __func__, __LINE__);	\
+    LOG(0, __VA_ARGS__);						\
+    exit(EXIT_FAILURE);							\
+  }
+
+/*! Print macro for debugging. */
+#define PRINT(format, var)						\
+  printf("Print (%s, %s, l%d): %s= "format"\n",				\
+	 __FILE__, __func__, __LINE__, #var, var);
+
+/* ------------------------------------------------------------
    Timers...
    ------------------------------------------------------------ */
 
@@ -444,8 +464,11 @@
   timer("END", 1);
 
 /*! Select timer. */
-#define SELECT_TIMER(id, color)				\
-  {NVTX_POP; NVTX_PUSH(id, color); timer(id, 0);}
+#define SELECT_TIMER(id, color) {					\
+    NVTX_POP;								\
+    NVTX_PUSH(id, color);						\
+    timer(id, 0);							\
+  }
 
 /*! Start timers. */
 #define START_TIMERS				\

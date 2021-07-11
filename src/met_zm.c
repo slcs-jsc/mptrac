@@ -160,7 +160,7 @@ int main(
   }
 
   /* Create output file... */
-  printf("Write meteorological data file: %s\n", argv[2]);
+  LOG(1, "Write meteorological data file: %s", argv[2]);
   if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 

@@ -80,7 +80,7 @@ int main(
   if (kernel[0] != '-') {
 
     /* Write info... */
-    printf("Read kernel function: %s\n", kernel);
+    LOG(1, "Read kernel function: %s", kernel);
 
     /* Open file... */
     if (!(in = fopen(kernel, "r")))

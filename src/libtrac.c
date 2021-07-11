@@ -2036,7 +2036,7 @@ int read_atm(
   atm->np = 0;
 
   /* Write info... */
-  printf("Read atmospheric data: %s\n", filename);
+  LOG(1, "Read atmospheric data: %s", filename);
 
   /* Read ASCII data... */
   if (ctl->atm_type == 0) {
@@ -2209,9 +2209,8 @@ void read_ctl(
   SELECT_TIMER("READ_CTL", NVTX_READ);
 
   /* Write info... */
-  printf("\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
-	 "(executable: %s | compiled: %s, %s)\n\n",
-	 argv[0], __DATE__, __TIME__);
+  LOG(1, "\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
+      "(executable: %s | compiled: %s, %s)\n", argv[0], __DATE__, __TIME__);
 
   /* Initialize quantity indices... */
   ctl->qnt_ens = -1;
@@ -2582,7 +2581,7 @@ int read_met(
   int ncid;
 
   /* Write info... */
-  printf("Read meteorological data: %s\n", filename);
+  LOG(1, "Read meteorological data: %s", filename);
 
   /* Open netCDF file... */
   if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
@@ -2644,6 +2643,7 @@ void read_met_cape(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", NVTX_READ);
+  LOG(2, "Calculate CAPE...");
 
   /* Vertical spacing (about 100 m)... */
   const double pfac = 1.01439, dz0 = RI / MA / G0 * log(pfac);
@@ -2727,6 +2727,7 @@ void read_met_cloud(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CLOUD", NVTX_READ);
+  LOG(2, "Calculate cloud data...");
 
   /* Loop over columns... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -2771,6 +2772,7 @@ void read_met_detrend(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_DETREND", NVTX_READ);
+  LOG(2, "Detrend meteo data...");
 
   /* Allocate... */
   ALLOC(help, met_t, 1);
@@ -2867,6 +2869,7 @@ void read_met_extrapolate(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_EXTRAPOLATE", NVTX_READ);
+  LOG(2, "Extrapolate meteo data...");
 
   /* Loop over columns... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -2910,6 +2913,7 @@ void read_met_geopot(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GEOPOT", NVTX_READ);
+  LOG(2, "Calculate geopotential heights...");
 
   /* Calculate log pressure... */
 #pragma omp parallel for default(shared)
@@ -3025,14 +3029,15 @@ void read_met_grid(
 
   char levname[LEN], tstr[10];
 
-  double rtime;
+  double rtime, r2;
 
-  int dimid, varid;
+  int dimid, varid, year2, mon2, day2, hour2, min2, sec2;
 
   size_t np, nx, ny;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GRID", NVTX_READ);
+  LOG(2, "Read meteo grid information...");
 
   /* Get time from filename... */
   sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
@@ -3045,6 +3050,11 @@ void read_met_grid(
   int hour = atoi(tstr);
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
+  /* Check time... */
+  jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
+  LOG(2, "Time from filename: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+      met->time, year2, mon2, day2, hour2, min2);
+
   /* Check time information... */
   if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
     NC(nc_get_var_double(ncid, varid, &rtime));
@@ -3056,11 +3066,13 @@ void read_met_grid(
   /* Get grid dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nx));
+  LOG(2, "Number of longitudes: %lu", nx);
   if (nx < 2 || nx > EX)
     ERRMSG("Number of longitudes out of range!");
 
   NC(nc_inq_dimid(ncid, "lat", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &ny));
+  LOG(2, "Number of latitudes: %lu", ny);
   if (ny < 2 || ny > EY)
     ERRMSG("Number of latitudes out of range!");
 
@@ -3075,6 +3087,7 @@ void read_met_grid(
     }
     NC(nc_inq_dimlen(ncid, dimid, &np));
   }
+  LOG(2, "Number of levels: %lu", np);
   if (np < 2 || np > EP)
     ERRMSG("Number of levels out of range!");
 
@@ -3086,8 +3099,12 @@ void read_met_grid(
   /* Read longitudes and latitudes... */
   NC(nc_inq_varid(ncid, "lon", &varid));
   NC(nc_get_var_double(ncid, varid, met->lon));
+  LOG(2, "Longitudes: %g, %g ... %g deg",
+      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
   NC(nc_inq_varid(ncid, "lat", &varid));
   NC(nc_get_var_double(ncid, varid, met->lat));
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
@@ -3095,19 +3112,9 @@ void read_met_grid(
     NC(nc_get_var_double(ncid, varid, met->p));
     for (int ip = 0; ip < met->np; ip++)
       met->p[ip] /= 100.;
+    LOG(2, "Pressure levels: %g, %g ... %g hPa",
+	met->p[0], met->p[1], met->p[met->np - 1]);
   }
-
-  /* Set pressure levels... */
-  else {
-    met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
-  }
-
-  /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++)
-    if (met->p[ip - 1] < met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
 }
 
 /*****************************************************************************/
@@ -3127,8 +3134,13 @@ int read_met_help_3d(
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
+      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
       return 0;
+    } else {
+      LOG(2, "Read 3-D variable: %s", varname2);
+  } else
+    LOG(2, "Read 3-D variable: %s", varname);
 
   /* Allocate... */
   ALLOC(help, float,
@@ -3174,8 +3186,13 @@ int read_met_help_2d(
 
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
+      WARN("Cannot read 2-D variable: %s or %s", varname, varname2);
       return 0;
+    } else {
+      LOG(2, "Read 2-D variable: %s", varname2);
+  } else
+    LOG(2, "Read 2-D variable: %s", varname);
 
   /* Allocate... */
   ALLOC(help, float,
@@ -3212,6 +3229,7 @@ void read_met_levels(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_LEVELS", NVTX_READ);
+  LOG(2, "Read level data...");
 
   /* Read meteorological data... */
   if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0, 1))
@@ -3259,7 +3277,17 @@ void read_met_levels(
     read_met_ml2pl(ctl, met, met->o3);
     read_met_ml2pl(ctl, met, met->lwc);
     read_met_ml2pl(ctl, met, met->iwc);
+
+    /* Set new pressure levels... */
+    met->np = ctl->met_np;
+    for (int ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
   }
+
+  /* Check ordering of pressure levels... */
+  for (int ip = 1; ip < met->np; ip++)
+    if (met->p[ip - 1] < met->p[ip])
+      ERRMSG("Pressure levels must be descending!");
 }
 
 /*****************************************************************************/
@@ -3273,6 +3301,7 @@ void read_met_ml2pl(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_ML2PL", NVTX_READ);
+  LOG(2, "Interpolate meteo data to pressure levels...");
 
   /* Loop over columns... */
 #pragma omp parallel for default(shared) private(aux,p) collapse(2)
@@ -3309,6 +3338,7 @@ void read_met_pbl(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PBL", NVTX_READ);
+  LOG(2, "Calculate planetary boundary layer...");
 
   /* Parameters used to estimate the height of the PBL
      (e.g., Vogelezang and Holtslag, 1996; Seidel et al., 2012)... */
@@ -3378,6 +3408,7 @@ void read_met_periodic(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PERIODIC", NVTX_READ);
+  LOG(2, "Apply periodic boundary conditions...");
 
   /* Check longitudes... */
   if (!(fabs(met->lon[met->nx - 1] - met->lon[0]
@@ -3421,6 +3452,7 @@ void read_met_pv(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PV", NVTX_READ);
+  LOG(2, "Calculate potential vorticity...");
 
   /* Set powers... */
 #pragma omp parallel for default(shared)
@@ -3532,6 +3564,7 @@ void read_met_sample(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SAMPLE", NVTX_READ);
+  LOG(2, "Downsampling of meteo data...");
 
   /* Allocate... */
   ALLOC(help, met_t, 1);
@@ -3652,20 +3685,20 @@ void read_met_surface(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", NVTX_READ);
+  LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
-  if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
-    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
-      ERRMSG("Cannot not read surface pressure data!");
-    } else {
+  if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
+    if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+      WARN("Cannot not read surface pressure data (use lowest level)!");
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+	  met->ps[ix][iy] = (float) met->p[0];
     }
   } else
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy] = (float) met->p[0];
+	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
 
   /* Read geopotential height at the surface... */
   if (!read_met_help_2d
@@ -3698,6 +3731,7 @@ void read_met_tropo(
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_TROPO", NVTX_READ);
+  LOG(2, "Calculate tropopause...");
 
   /* Get altitude and pressure profiles... */
 #pragma omp parallel for default(shared)
@@ -3874,7 +3908,7 @@ double scan_ctl(
   FILE *in = NULL;
 
   char dummy[LEN], fullname1[LEN], fullname2[LEN], line[LEN],
-    msg[2 * LEN], rvarname[LEN], rval[LEN];
+    rvarname[LEN], rval[LEN];
 
   int contain = 0, i;
 
@@ -3917,14 +3951,12 @@ double scan_ctl(
   if (!contain) {
     if (strlen(defvalue) > 0)
       sprintf(rval, "%s", defvalue);
-    else {
-      sprintf(msg, "Missing variable %s!\n", fullname1);
-      ERRMSG(msg);
-    }
+    else
+      ERRMSG("Missing variable %s!\n", fullname1);
   }
 
   /* Write info... */
-  printf("%s = %s\n", fullname1, rval);
+  LOG(1, "%s = %s", fullname1, rval);
 
   /* Return values... */
   if (value != NULL)
@@ -4106,11 +4138,11 @@ void timer(
   /* Report timers... */
   if (output) {
     for (int it2 = 0; it2 < nt; it2++)
-      printf("TIMER_%s = %.3f s\n", namelist[it2], runtime[it2]);
+      LOG(1, "TIMER_%s = %.3f s", namelist[it2], runtime[it2]);
     double total = 0.0;
     for (int it2 = 0; it2 < nt; it2++)
       total += runtime[it2];
-    printf("TIMER_TOTAL = %.3f s\n", total);
+    LOG(1, "TIMER_TOTAL = %.3f s", total);
   }
 }
 
@@ -4138,7 +4170,7 @@ void write_atm(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Write info... */
-  printf("Write atmospheric data: %s\n", filename);
+  LOG(1, "Write atmospheric data: %s", filename);
 
   /* Write ASCII data... */
   if (ctl->atm_type == 0) {
@@ -4270,12 +4302,12 @@ void write_csi(
       ERRMSG("Need quantity mass!");
 
     /* Open observation data file... */
-    printf("Read CSI observation data: %s\n", ctl->csi_obsfile);
+    LOG(1, "Read CSI observation data: %s", ctl->csi_obsfile);
     if (!(in = fopen(ctl->csi_obsfile, "r")))
       ERRMSG("Cannot open file!");
 
     /* Create new file... */
-    printf("Write CSI data: %s\n", filename);
+    LOG(1, "Write CSI data: %s", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
@@ -4487,7 +4519,7 @@ void write_ens(
       ERRMSG("Missing ensemble IDs!");
 
     /* Create new file... */
-    printf("Write ensemble data: %s\n", filename);
+    LOG(1, "Write ensemble data: %s", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
@@ -4697,7 +4729,7 @@ void write_grid(
   if (ctl->grid_gpfile[0] != '-') {
 
     /* Write info... */
-    printf("Plot grid data: %s.png\n", filename);
+    LOG(1, "Plot grid data: %s.png", filename);
 
     /* Create gnuplot pipe... */
     if (!(out = popen("gnuplot", "w")))
@@ -4722,7 +4754,7 @@ void write_grid(
   else {
 
     /* Write info... */
-    printf("Write grid data: %s\n", filename);
+    LOG(1, "Write grid data: %s", filename);
 
     /* Create file... */
     if (!(out = fopen(filename, "w")))
@@ -4835,12 +4867,12 @@ void write_prof(
       ERRMSG("Specify molar mass!");
 
     /* Open observation data file... */
-    printf("Read profile observation data: %s\n", ctl->prof_obsfile);
+    LOG(1, "Read profile observation data: %s", ctl->prof_obsfile);
     if (!(in = fopen(ctl->prof_obsfile, "r")))
       ERRMSG("Cannot open file!");
 
     /* Create new output file... */
-    printf("Write profile data: %s\n", filename);
+    LOG(1, "Write profile data: %s", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
@@ -5019,12 +5051,12 @@ void write_sample(
   if (t == ctl->t_start) {
 
     /* Open observation data file... */
-    printf("Read sample observation data: %s\n", ctl->sample_obsfile);
+    LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
     if (!(in = fopen(ctl->sample_obsfile, "r")))
       ERRMSG("Cannot open file!");
 
     /* Create new file... */
-    printf("Write sample data: %s\n", filename);
+    LOG(1, "Write sample data: %s", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
@@ -5167,7 +5199,7 @@ void write_station(
   if (t == ctl->t_start) {
 
     /* Write info... */
-    printf("Write station data: %s\n", filename);
+    LOG(1, "Write station data: %s", filename);
 
     /* Create new file... */
     if (!(out = fopen(filename, "w")))

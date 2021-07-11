@@ -403,26 +403,26 @@ int main(
        ------------------------------------------------------------ */
 
     /* Report problem size... */
-    printf("SIZE_NP = %d\n", atm->np);
-    printf("SIZE_MPI_TASKS = %d\n", size);
-    printf("SIZE_OMP_THREADS = %d\n", omp_get_max_threads());
-    printf("SIZE_ACC_DEVICES = %d\n", num_devices);
+    LOG(1, "SIZE_NP = %d", atm->np);
+    LOG(1, "SIZE_MPI_TASKS = %d", size);
+    LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
+    LOG(1, "SIZE_ACC_DEVICES = %d", num_devices);
 
     /* Report memory usage... */
-    printf("MEMORY_ATM = %g MByte\n", sizeof(atm_t) / 1024. / 1024.);
-    printf("MEMORY_CACHE = %g MByte\n", sizeof(cache_t) / 1024. / 1024.);
-    printf("MEMORY_METEO = %g MByte\n", 2 * sizeof(met_t) / 1024. / 1024.);
-    printf("MEMORY_DYNAMIC = %g MByte\n", (sizeof(met_t)
-					   + 4 * NP * sizeof(double)
-					   + EX * EY * EP * sizeof(float)) /
-	   1024. / 1024.);
-    printf("MEMORY_STATIC = %g MByte\n", (EX * EY * sizeof(double)
-					  + EX * EY * EP * sizeof(float)
-					  + 4 * GX * GY * GZ * sizeof(double)
-					  + 2 * GX * GY * GZ * sizeof(int)
-					  + 2 * GX * GY * sizeof(double)
-					  + GX * GY * sizeof(int)) / 1024. /
-	   1024.);
+    LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
+    LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
+    LOG(1, "MEMORY_METEO = %g MByte", 2 * sizeof(met_t) / 1024. / 1024.);
+    LOG(1, "MEMORY_DYNAMIC = %g MByte", (sizeof(met_t)
+					 + 4 * NP * sizeof(double)
+					 + EX * EY * EP * sizeof(float)) /
+	1024. / 1024.);
+    LOG(1, "MEMORY_STATIC = %g MByte", (EX * EY * sizeof(double)
+					+ EX * EY * EP * sizeof(float)
+					+ 4 * GX * GY * GZ * sizeof(double)
+					+ 2 * GX * GY * GZ * sizeof(int)
+					+ 2 * GX * GY * sizeof(double)
+					+ GX * GY * sizeof(int)) / 1024. /
+	1024.);
 
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
@@ -954,7 +954,7 @@ void module_isosurf_init(
   else if (ctl->isosurf == 4) {
 
     /* Write info... */
-    printf("Read balloon pressure data: %s\n", ctl->balloon);
+    LOG(1, "Read balloon pressure data: %s", ctl->balloon);
 
     /* Open file... */
     if (!(in = fopen(ctl->balloon, "r")))
