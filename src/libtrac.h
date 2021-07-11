@@ -22,18 +22,6 @@
   MPTRAC library declarations.
 */
 
-/*! 
-  \mainpage
-  
-  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
-  particle dispersion model for the troposphere and stratosphere.
-  
-  This reference manual provides information on the algorithms
-  and data structures used in the code.
-
-  Further information can be found at: https://github.com/slcs-jsc/mptrac
-*/
-
 /* ------------------------------------------------------------
    Includes...
    ------------------------------------------------------------ */
