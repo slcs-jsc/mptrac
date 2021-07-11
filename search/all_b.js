@@ -11,7 +11,9 @@ var searchData=
   ['lin_134',['LIN',['../libtrac_8h.html#aebaef4a0f8136be064bf1d29ce1ced83',1,'libtrac.h']]],
   ['locate_5firr_135',['locate_irr',['../libtrac_8c.html#a2413fa8c4fe9309a2f833393a0022777',1,'locate_irr(double *xx, int n, double x):&#160;libtrac.c'],['../libtrac_8h.html#a2413fa8c4fe9309a2f833393a0022777',1,'locate_irr(double *xx, int n, double x):&#160;libtrac.c']]],
   ['locate_5freg_136',['locate_reg',['../libtrac_8c.html#a843622b433d83623ab59d6cb5021636b',1,'locate_reg(double *xx, int n, double x):&#160;libtrac.c'],['../libtrac_8h.html#a843622b433d83623ab59d6cb5021636b',1,'locate_reg(double *xx, int n, double x):&#160;libtrac.c']]],
-  ['lon_137',['lon',['../structmet__t.html#a85df96bff71dfa55576a995234a87b8f',1,'met_t::lon()'],['../structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8',1,'atm_t::lon()']]],
-  ['lv_138',['LV',['../libtrac_8h.html#a60ac8f6cd3cf230202ce5aba9df2d6e1',1,'libtrac.h']]],
-  ['lwc_139',['lwc',['../structmet__t.html#a40590e0c0c66a5a1f6903a474de87ee0',1,'met_t']]]
+  ['log_137',['LOG',['../libtrac_8h.html#acaa1c3fa56061380a29889d703236251',1,'libtrac.h']]],
+  ['loglev_138',['LOGLEV',['../libtrac_8h.html#aa0c49f3ada06708693de9e60b449964c',1,'libtrac.h']]],
+  ['lon_139',['lon',['../structmet__t.html#a85df96bff71dfa55576a995234a87b8f',1,'met_t::lon()'],['../structatm__t.html#a2c8ffb598109120ed6d1f8e79aeb3ff8',1,'atm_t::lon()']]],
+  ['lv_140',['LV',['../libtrac_8h.html#a60ac8f6cd3cf230202ce5aba9df2d6e1',1,'libtrac.h']]],
+  ['lwc_141',['lwc',['../structmet__t.html#a40590e0c0c66a5a1f6903a474de87ee0',1,'met_t']]]
 ];
