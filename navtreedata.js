@@ -25,6 +25,18 @@
 var NAVTREE =
 [
   [ "MPTRAC", "index.html", [
+    [ "Introduction", "Introduction.html", [
+      [ "Features", "Introduction.html#autotoc_md0", null ],
+      [ "Getting started", "Introduction.html#autotoc_md1", [
+        [ "Prerequisites", "Introduction.html#autotoc_md2", null ],
+        [ "Installation", "Introduction.html#autotoc_md3", null ],
+        [ "Run the example", "Introduction.html#autotoc_md4", null ]
+      ] ],
+      [ "Further information", "Introduction.html#autotoc_md5", null ],
+      [ "Contributing", "Introduction.html#autotoc_md6", null ],
+      [ "License", "Introduction.html#autotoc_md7", null ],
+      [ "Contact", "Introduction.html#autotoc_md8", null ]
+    ] ],
     [ "Data Structures", "annotated.html", [
       [ "Data Structures", "annotated.html", "annotated_dup" ],
       [ "Data Structure Index", "classes.html", null ],
@@ -46,9 +58,9 @@ var NAVTREE =
 
 var NAVTREEINDEX =
 [
-"annotated.html",
-"libtrac_8h.html#ab14495ae1f9667df5d198613bcc8d092",
-"structmet__t.html#a2bbd96a0a7184bc730c14323a067a760"
+"Introduction.html",
+"libtrac_8h.html#a9dc4ad97697d8ec71d3c18402364e66e",
+"structctl__t.html#af89d6bfcdbc4250e2d30dd7e453b3048"
 ];
 
 var SYNCONMSG = 'click to disable panel synchronisation';
