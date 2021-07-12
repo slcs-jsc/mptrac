@@ -129,7 +129,7 @@ void module_meteo(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  clim_t *clim);
+  clim_t * clim);
 
 /*! Check position of air parcels. */
 void module_position(
@@ -253,7 +253,7 @@ int main(
     /* Allocate... */
     SELECT_TIMER("ALLOC", NVTX_CPU);
     ALLOC(atm, atm_t, 1);
-    ALLOC(clim,clim_t,1);
+    ALLOC(clim, clim_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
@@ -265,7 +265,7 @@ int main(
     /* Create data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", NVTX_GPU);
-#pragma acc enter data create(atm[:1],cache[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
+#pragma acc enter data create(atm[:1],clim[:1],cache[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
 #endif
 
     /* Read control parameters... */
@@ -273,6 +273,9 @@ int main(
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
 
+    /* Read climatological data... */
+    clim_oh_init(ctl.clim_oh_filename, clim);
+    
     /* Read atmospheric data... */
     SELECT_TIMER("READ_ATM", NVTX_READ);
     sprintf(filename, "%s/%s", dirname, argv[3]);
@@ -410,7 +413,7 @@ int main(
       SELECT_TIMER("METEO", NVTX_GPU);
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, met0, met1, atm,clim);
+	module_meteo(&ctl, met0, met1, atm, clim);
 
       /* Decay of particle mass... */
       SELECT_TIMER("DECAY", NVTX_GPU);
@@ -420,7 +423,7 @@ int main(
       /* OH chemistry... */
       SELECT_TIMER("OHCHEM", NVTX_GPU);
       if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
-	      module_oh_chem(&ctl, met0, met1, atm, clim, dt);
+	module_oh_chem(&ctl, met0, met1, atm, clim, dt);
 
       /* Dry deposition... */
       SELECT_TIMER("DRYDEPO", NVTX_GPU);
@@ -467,7 +470,7 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
+#pragma acc exit data delete(ctl,atm,clim,cache,met0,met1,dt,rs)
 #endif
 
     /* Free... */
@@ -985,9 +988,7 @@ void module_meteo(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  clim_t *clim) {
-
-   
+  clim_t * clim) {
 
   /* Check quantity flags... */
   if (ctl->qnt_tsts >= 0)
@@ -1004,7 +1005,7 @@ void module_meteo(
 
     double ps, ts, zs, us, vs, pt, pc, cl, plcl, plfc, pel, cape, pv, t, tt,
       u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt, cw[3] = { 0.0 };
-  
+
 
     int ci[3] = { 0 };
 
@@ -1232,26 +1233,13 @@ void module_oh_chem(
   atm_t * atm,
   clim_t * clim,
   double *dt) {
-
-    static int ini;
   
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
-
-    if (!ini){
-      printf("%d",ini);
-      ini = 1;
-      read_clim_oh(ctl->clim_oh_filename, clim);
-      printf("read zonal mean OH climatology,ini = %d\n", ini);
-    #ifdef _OPENACC
-    #pragma acc declare copyin(clim)
-    #endif
-    }
-
-
+  
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc data present(clim,ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1260,15 +1248,15 @@ void module_oh_chem(
     if (dt[ip] != 0) {
 
       double cw[3] = { 0.0 }, t;
-
+      
       int ci[3] = { 0 };
-
+      
       /* Get temperature... */
       INTPOL_3D(t, 1);
-
+      
       /* Calculate molecular density... */
       double M = 7.243e21 * (atm->p[ip] / P0) / t;
-
+      
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 15-10) ... */
       double k0 = ctl->oh_chem[0] *
@@ -1278,19 +1266,30 @@ void module_oh_chem(
       double c = log10(k0 * M / ki);
       double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
 
-      /* Calculate exponential decay...    unit: k [cm3 mol–1 s–1]; clim_oh [mol-1 cm3]*/
-      if  (sza(atm->time[ip], atm->lon[ip], atm->lat[ip])<M_PI/2)  
-        {     
-        atm->q[ctl->qnt_m][ip] *=
-	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
-              * exp(-ctl->oh_chem_beta / cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
-        }
-      else
-        {
-        atm->q[ctl->qnt_m][ip] *=
-	          exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim) / diurnal_correct(ctl->oh_chem_beta, atm->time[ip], atm->lat[ip]) 
-              * exp(-ctl->oh_chem_beta *100));
-        }
+
+      /* TODO: Calling clim_oh_diurnal() here all the time is not very
+	 efficient. Can you do this correction once when the
+	 OH data are initialized in clim_oh_init? */
+      
+      
+      /* Calculate exponential decay...
+	 (units: k [cm3 mol–1 s–1], clim_oh [mol-1 cm3]) */
+      if (sza(atm->time[ip], atm->lon[ip], atm->lat[ip]) < M_PI / 2) {
+	atm->q[ctl->qnt_m][ip] *=
+	  exp(-dt[ip] * k *
+	      clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim)
+	      / clim_oh_diurnal(ctl->oh_chem_beta,
+				atm->time[ip], atm->lat[ip])
+	      * exp(-ctl->oh_chem_beta /
+		    cos(sza(atm->time[ip], atm->lon[ip], atm->lat[ip]))));
+      } else {
+	atm->q[ctl->qnt_m][ip] *=
+	  exp(-dt[ip] * k *
+	      clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip], clim)
+	      / clim_oh_diurnal(ctl->oh_chem_beta,
+				atm->time[ip], atm->lat[ip])
+	      * exp(-ctl->oh_chem_beta * 100));
+      }
     }
 }
 

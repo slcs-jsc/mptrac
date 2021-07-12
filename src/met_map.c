@@ -58,20 +58,21 @@ int main(
     tt, ttm[NX][NY], pc, pcm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY],
     plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape, capem[NX][NY], theta,
     ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
-    lat, lat0, lat1, lats[NY], dlat, cw[3], oh[NX][NY], oh_diurnal[NX][NY], oh_diurnal_correct[NX][NY], correct_func[NX][NY];
+    lat, lat0, lat1, lats[NY], dlat, cw[3], oh[NX][NY], oh_diurnal[NX][NY],
+    oh_diurnal_correct[NX][NY], correct_func[NX][NY];
 
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
-    /* Allocate... */
+  
+  /* Allocate... */
   ALLOC(met, met_t, 1);
   ALLOC(clim, clim_t, 1);
-  
+
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  read_clim_oh(ctl.clim_oh_filename, clim);
   p0 = P(scan_ctl(argv[1], argc, argv, "MAP_Z0", -1, "10", NULL));
   lon0 = scan_ctl(argv[1], argc, argv, "MAP_LON0", -1, "-180", NULL);
   lon1 = scan_ctl(argv[1], argc, argv, "MAP_LON1", -1, "180", NULL);
@@ -80,7 +81,10 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
   theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
-   
+
+  /* Initialize OH climatology... */
+  clim_oh_init(ctl.clim_oh_filename, clim);
+  
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
 
@@ -164,24 +168,28 @@ int main(
 	ttm[ix][iy] += tt;
 	h2otm[ix][iy] += h2ot;
 	np[ix][iy]++;
-    oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy], clim) ;
-    if  (sza(met->time, lons[ix], lats[iy])<M_PI/2)
-    {  
-        oh_diurnal[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], clim) * exp(-ctl.oh_chem_beta /cos(sza(met->time, lons[ix], lats[iy])));
-        oh_diurnal_correct[ix][iy] +=
-            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],clim) / diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]) * 
-            exp(-ctl.oh_chem_beta /cos(sza(met->time, lons[ix], lats[iy])));
-    }
-    else
-    {   
-        oh_diurnal_correct[ix][iy] +=
-            clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy], clim) / diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]) * 
-            1e-6;
-    }
-    
-    correct_func[ix][iy] +=diurnal_correct(ctl.oh_chem_beta, met->time, lats[iy]);
-         
-        }
+	oh[ix][iy] += clim_oh(met->time, lats[iy], pm[ix][iy], clim);
+	if (sza(met->time, lons[ix], lats[iy]) < M_PI / 2) {
+	  oh_diurnal[ix][iy] +=
+	    clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],
+		    clim) * exp(-ctl.oh_chem_beta /
+				cos(sza(met->time, lons[ix], lats[iy])));
+	  oh_diurnal_correct[ix][iy] +=
+	    clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],
+		    clim) / clim_oh_diurnal(ctl.oh_chem_beta, met->time,
+					    lats[iy]) *
+	    exp(-ctl.oh_chem_beta / cos(sza(met->time, lons[ix], lats[iy])));
+	} else {
+	  oh_diurnal_correct[ix][iy] +=
+	    clim_oh(met->time, lats[iy], pm[ix][iy] / np[ix][iy],
+		    clim) / clim_oh_diurnal(ctl.oh_chem_beta, met->time,
+					    lats[iy]) * 1e-6;
+	}
+
+	correct_func[ix][iy] +=
+	  clim_oh_diurnal(ctl.oh_chem_beta, met->time, lats[iy]);
+
+      }
   }
 
   /* Create output file... */
@@ -226,9 +234,9 @@ int main(
   fprintf(out,
 	  "# $31 = relative humidity over water [%%]\n"
 	  "# $32 = relative humidity over ice [%%]\n"
-      "# $33 = oh climatology[%%]\n"
-      "# $34 = diurnal variable oh climatology[%%]\n"
-      "# $35 = corrected diurnal variable oh climatology[%%]\n");
+	  "# $33 = oh climatology[%%]\n"
+	  "# $34 = diurnal variable oh climatology[%%]\n"
+	  "# $35 = corrected diurnal variable oh climatology[%%]\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
@@ -255,8 +263,9 @@ int main(
 	      RH(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
 		 h2om[ix][iy] / np[ix][iy]),
 	      RHICE(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
-		    h2om[ix][iy] / np[ix][iy]), 
-          oh[ix][iy] / np[ix][iy], oh_diurnal[ix][iy] / np[ix][iy], oh_diurnal_correct[ix][iy] / np[ix][iy]);
+		    h2om[ix][iy] / np[ix][iy]),
+	      oh[ix][iy] / np[ix][iy], oh_diurnal[ix][iy] / np[ix][iy],
+	      oh_diurnal_correct[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

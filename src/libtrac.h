@@ -711,13 +711,16 @@ typedef struct {
 
   /*! Life time of particles (stratosphere)  [s]. */
   double tdec_strat;
-
+  
+  /*! Filename of OH climatology. */
+  char clim_oh_filename[LEN];
+  
   /*! Coefficients for OH chemistry (k0, n, kinf, m). */
   double oh_chem[4];
-
-  /*! beta parameter for diurnal variablity of OH*/
+  
+  /*! Beta parameter for diurnal variablity of OH. */
   double oh_chem_beta;
-
+  
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
@@ -889,9 +892,6 @@ typedef struct {
   /*! Search radius around station [km]. */
   double stat_r;
 
-  /*! Filename of OH climatology*/
-  char clim_oh_filename[LEN];
-
 } ctl_t;
 
 /*! Atmospheric data. */
@@ -954,6 +954,32 @@ typedef struct {
   float wsig[EX][EY][EP];
 
 } cache_t;
+
+/*! Climatological data. */
+typedef struct {
+  
+  /*! Number of OH data timesteps. */
+  int oh_nt;
+  
+  /*! Number of OH data latitudes. */
+  int oh_ny;
+  
+  /*! Number of OH data pressure levels. */
+  int oh_np;
+  
+  /*! OH data time steps [s]. */
+  double oh_time[CT];
+  
+  /*! OH data latitudes [deg]. */
+  double oh_lat[CY];
+  
+  /*! OH data pressure levels [hPa]. */
+  double oh_p[CP];
+  
+  /*! OH data concentration [molec/cm^3]. */
+  double oh[CT][CP][CY];
+  
+} clim_t;
 
 /*! Meteorological data. */
 typedef struct {
@@ -1059,30 +1085,6 @@ typedef struct {
 
 } met_t;
 
-/*! Climatological data. */
-typedef struct {
-
-  /*! Number of OH data timesteps. */
-  size_t oh_nt;
-  /*! Number of OH data latitudes. */
-  size_t oh_ny;
-
-  /*! Number of OH data pressure levels. */
-  size_t oh_np;
-
-  /*! OH data time steps [s]. */
-  double oh_time[CT];
-
-  /*! OH data latitudes [deg]. */
-  double oh_lat[CY];
-
-  /*! OH data pressure levels [hPa]. */
-  double oh_p[CP];
-  /*! OH data concentration [molec/cm^3]. */
-  double oh[CT][CP][CY];
-} clim_t;
-
-
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
@@ -1110,10 +1112,6 @@ double clim_hno3(
   double lat,
   double p);
 
-void read_clim_oh(
-  char *filename,
-  clim_t *clim);
-
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
@@ -1122,7 +1120,21 @@ double clim_oh(
   double t,
   double lat,
   double p,
-  clim_t *clim) ;
+  clim_t * clim);
+
+/*! Apply day/night correction to OH climatology. */
+#ifdef _OPENACC
+#pragma acc routine (clim_oh_diurnal)
+#endif
+double clim_oh_diurnal(
+  double beta,
+  double time,
+  double lat);
+
+/*! Initialization function for OH climatology. */
+void clim_oh_init(
+  char *filename,
+  clim_t * clim);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
@@ -1422,6 +1434,15 @@ double stddev(
   double *data,
   int n);
 
+/*! Calculate solar zenith angle. */
+#ifdef _OPENACC
+#pragma acc routine (sza)
+#endif
+double sza(
+  double sec,
+  double lon,
+  double lat);
+
 /*! Convert date to seconds. */
 void time2jsec(
   int year,
@@ -1492,16 +1513,3 @@ void write_station(
   ctl_t * ctl,
   atm_t * atm,
   double t);
-
-/*! Calculate solar zenith angle*/
-double sza(
-   double sec,
-   double lon,
-   double lat);
-
-/*Using the trapezoidal method to calculate the average integral value */
-double diurnal_correct(
-    double beta, 
-    double time, 
-    double lat);
-
