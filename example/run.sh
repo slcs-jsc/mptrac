@@ -27,7 +27,7 @@
 
 # Setup...
 trac=../src
-export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../libs/build/lib
+export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
 [ "${SLURM_CPUS_PER_TASK}" ] \
     && export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK} \
 	|| export OMP_NUM_THREADS=4
