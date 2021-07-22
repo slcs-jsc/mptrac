@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -39,7 +39,7 @@ int main(
   double *ahtd, *aqtd, *avtd, ahtdm, aqtdm[NQ], avtdm, lat0, lat1,
     *lat1_old, *lat2_old, *lh1, *lh2, lon0, lon1, *lon1_old, *lon2_old,
     *lv1, *lv2, p0, p1, *rhtd, *rqtd, *rvtd, rhtdm, rqtdm[NQ], rvtdm,
-    t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work;
+    t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work, zscore;
 
   int ens, f, init = 0, ip, iq, np, year, mon, day, hour, min;
 
@@ -95,6 +95,7 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "DIST_LAT1", -1, "1000", NULL);
   lon0 = scan_ctl(argv[1], argc, argv, "DIST_LON0", -1, "-1000", NULL);
   lon1 = scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
+  zscore = scan_ctl(argv[1], argc, argv, "DIST_ZSCORE", -1, "-999", NULL);
 
   /* Write info... */
   LOG(1, "Write transport deviations: %s", argv[2]);
@@ -228,6 +229,33 @@ int main(
 
       /* Increment air parcel counter... */
       np++;
+    }
+
+    /* Filter data... */
+    if (zscore > 0 && np > 1) {
+
+      /* Get means and standard deviations of transport deviations... */
+      size_t n = (size_t) np;
+      double muh = gsl_stats_mean(ahtd, 1, n);
+      double muv = gsl_stats_mean(avtd, 1, n);
+      double sigh = gsl_stats_sd(ahtd, 1, n);
+      double sigv = gsl_stats_sd(avtd, 1, n);
+
+      /* Filter data... */
+      np = 0;
+      for (size_t i = 0; i < n; i++)
+	if (fabs((ahtd[i] - muh) / sigh) < zscore
+	    && fabs((avtd[i] - muv) / sigv) < zscore) {
+	  ahtd[np] = ahtd[i];
+	  rhtd[np] = rhtd[i];
+	  avtd[np] = avtd[i];
+	  rvtd[np] = rvtd[i];
+	  for (iq = 0; iq < ctl.nq; iq++) {
+	    aqtd[iq * NP + np] = aqtd[iq * NP + (int) i];
+	    rqtd[iq * NP + np] = rqtd[iq * NP + (int) i];
+	  }
+	  np++;
+	}
     }
 
     /* Get statistics... */
