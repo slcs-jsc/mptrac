@@ -2538,6 +2538,10 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "PROF_BASENAME", -1, "-",
 	   ctl->prof_basename);
   scan_ctl(filename, argc, argv, "PROF_OBSFILE", -1, "-", ctl->prof_obsfile);
+  ctl->prof_obsstat =
+    (int) scan_ctl(filename, argc, argv, "PROF_OBSSTAT", -1, "1", NULL);
+  ctl->prof_obscount =
+    (int) scan_ctl(filename, argc, argv, "PROF_OBSCOUNT", -1, "1", NULL);
   ctl->prof_z0 = scan_ctl(filename, argc, argv, "PROF_Z0", -1, "0", NULL);
   ctl->prof_z1 = scan_ctl(filename, argc, argv, "PROF_Z1", -1, "60", NULL);
   ctl->prof_nz =
@@ -4956,7 +4960,14 @@ void write_prof(
       continue;
 
     /* Get mean observation index... */
-    obsmean[ix][iy] += robs;
+    if (ctl->prof_obsstat == 1)
+      obsmean[ix][iy] += robs;
+
+    /* Get maximum observation index... */
+    else if (ctl->prof_obsstat == 2)
+      obsmean[ix][iy] = GSL_MAX(obsmean[ix][iy], robs);
+
+    /* Count observations... */
     obscount[ix][iy]++;
   }
 
@@ -4984,7 +4995,7 @@ void write_prof(
   /* Extract profiles... */
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++)
-      if (obscount[ix][iy] > 0) {
+      if (obscount[ix][iy] >= ctl->prof_obscount) {
 
 	/* Check profile... */
 	okay = 0;
@@ -5017,9 +5028,10 @@ void write_prof(
 	    / (rho_air * area[iy] * dz * 1e9);
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n",
-		  t, z[iz], lon[ix], lat[iy], press[iz], temp, vmr, h2o, o3,
-		  obsmean[ix][iy] / obscount[ix][iy]);
+	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n", t, z[iz], lon[ix],
+		  lat[iy], press[iz], temp, vmr, h2o, o3,
+		  ctl->prof_obsstat ==
+		  1 ? obsmean[ix][iy] / obscount[ix][iy] : obsmean[ix][iy]);
 	}
       }
 
