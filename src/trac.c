@@ -1313,6 +1313,7 @@ void module_oh_chem(
 
       /* Get temperature... */
       double t;
+      double k;
       INTPOL_INIT;
       INTPOL_3D(t, 1);
 
@@ -1324,11 +1325,11 @@ void module_oh_chem(
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 15-10) ... */
       double k0 = ctl->oh_chem[0] *
-	(ctl->oh_chem[1] > 0 ? pow(t / 300., -ctl->oh_chem[1]) : 1.);
+	(ctl->oh_chem[1] > 0 ? pow(t / 298., -ctl->oh_chem[1]) : 1.);
       double ki = ctl->oh_chem[2] *
-	(ctl->oh_chem[3] > 0 ? pow(t / 300., -ctl->oh_chem[3]) : 1.);
+	(ctl->oh_chem[3] > 0 ? pow(t / 298., -ctl->oh_chem[3]) : 1.);
       double c = log10(k0 * M / ki);
-      double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
+       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     } else if (ctl->oh_chem_reaction == 2){
        k =   ctl->oh_chem[0] * exp(- ctl->oh_chem[1] *  t);    
       } else
