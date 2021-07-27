@@ -1033,6 +1033,9 @@ typedef struct {
   /*! Search radius around station [km]. */
   double stat_r;
 
+  /*! Reaction type of OH chemical module*/
+  int oh_chem_reaction;
+
 } ctl_t;
 
 /*! Atmospheric data. */

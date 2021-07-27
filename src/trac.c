@@ -378,7 +378,7 @@ int main(
 	module_decay(&ctl, atm, dt);
 
       /* OH chemistry... */
-      if (ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
+      if (ctl.oh_chem_reaction!=0&&ctl.oh_chem[0] > 0 && ctl.oh_chem[2] > 0)
 	module_oh_chem(&ctl, met0, met1, atm, dt);
 
       /* Dry deposition... */
@@ -1316,6 +1316,8 @@ void module_oh_chem(
       INTPOL_INIT;
       INTPOL_3D(t, 1);
 
+      if (ctl->oh_chem_reaction == 3){
+
       /* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
       double M = 7.243e21 * (atm->p[ip] / 1000.) / t;
 
@@ -1327,6 +1329,10 @@ void module_oh_chem(
 	(ctl->oh_chem[3] > 0 ? pow(t / 300., -ctl->oh_chem[3]) : 1.);
       double c = log10(k0 * M / ki);
       double k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
+    } else if (ctl->oh_chem_reaction == 2){
+       k =   ctl->oh_chem[0] * exp(- ctl->oh_chem[1] *  t);    
+      } else
+      ERRMSG("No such reaction type!");
 
       /* Calculate exponential decay... */
       double aux
