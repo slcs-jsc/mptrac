@@ -2455,7 +2455,7 @@ void read_ctl(
     ctl->tdec_strat =
       scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
     ctl->oh_chem_reaction =
-      (int)scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
+      (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
     for (int ip = 0; ip < 4; ip++)
       ctl->oh_chem[ip] =
 	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);

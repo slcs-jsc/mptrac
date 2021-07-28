@@ -859,7 +859,10 @@ typedef struct {
   /*! Life time of particles (stratosphere)  [s]. */
   double tdec_strat;
 
-  /*! Coefficients for OH chemistry (k0, n, kinf, m). */
+  /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
+  int oh_chem_reaction;
+
+  /*! Coefficients for OH reaction rate (A, E/R or k0, n, kinf, m). */
   double oh_chem[4];
 
   /*! Coefficients for dry deposition (v). */
@@ -1038,9 +1041,6 @@ typedef struct {
 
   /*! Search radius around station [km]. */
   double stat_r;
-
-  /*! Reaction type of OH chemical module*/
-  int oh_chem_reaction;
 
 } ctl_t;
 
