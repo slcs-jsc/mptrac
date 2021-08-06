@@ -4851,7 +4851,7 @@ void write_prof(
     rz, rlon, rlat, robs, t0, t1, area[GY], dz, dlon, dlat, lon[GX], lat[GY],
     z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz;
+  static int obscount[GX][GY], ip, ix, iy, iz, okay;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_PROF", NVTX_WRITE);
@@ -4991,6 +4991,16 @@ void write_prof(
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++)
       if (obscount[ix][iy] >= 1) {
+
+	/* Check profile... */
+	okay = 0;
+	for (iz = 0; iz < ctl->prof_nz; iz++)
+	  if (mass[ix][iy][iz] > 0) {
+	    okay = 1;
+	    break;
+	  }
+	if (!okay)
+	  continue;
 
 	/* Write output... */
 	fprintf(out, "\n");
