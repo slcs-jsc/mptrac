@@ -1042,6 +1042,12 @@ typedef struct {
   /*! Search radius around station [km]. */
   double stat_r;
 
+  /*! Start time for station output [s]. */
+  double stat_t0;
+
+  /*! Stop time for station output [s]. */
+  double stat_t1;
+
 } ctl_t;
 
 /*! Atmospheric data. */

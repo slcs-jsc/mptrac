@@ -2575,6 +2575,9 @@ void read_ctl(
   ctl->stat_lon = scan_ctl(filename, argc, argv, "STAT_LON", -1, "0", NULL);
   ctl->stat_lat = scan_ctl(filename, argc, argv, "STAT_LAT", -1, "0", NULL);
   ctl->stat_r = scan_ctl(filename, argc, argv, "STAT_R", -1, "50", NULL);
+  ctl->stat_t0 =
+    scan_ctl(filename, argc, argv, "STAT_T0", -1, "-1e100", NULL);
+  ctl->stat_t1 = scan_ctl(filename, argc, argv, "STAT_T1", -1, "1e100", NULL);
 }
 
 /*****************************************************************************/
@@ -5243,6 +5246,10 @@ void write_station(
 
     /* Check time... */
     if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
+
+    /* Check time range for station output... */
+    if (atm->time[ip] < ctl->stat_t0 || atm->time[ip] > ctl->stat_t1)
       continue;
 
     /* Check station flag... */
