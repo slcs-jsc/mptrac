@@ -2538,10 +2538,6 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "PROF_BASENAME", -1, "-",
 	   ctl->prof_basename);
   scan_ctl(filename, argc, argv, "PROF_OBSFILE", -1, "-", ctl->prof_obsfile);
-  ctl->prof_obsstat =
-    (int) scan_ctl(filename, argc, argv, "PROF_OBSSTAT", -1, "1", NULL);
-  ctl->prof_obscount =
-    (int) scan_ctl(filename, argc, argv, "PROF_OBSCOUNT", -1, "1", NULL);
   ctl->prof_z0 = scan_ctl(filename, argc, argv, "PROF_Z0", -1, "0", NULL);
   ctl->prof_z1 = scan_ctl(filename, argc, argv, "PROF_Z1", -1, "60", NULL);
   ctl->prof_nz =
@@ -4855,7 +4851,7 @@ void write_prof(
     rz, rlon, rlat, robs, t0, t1, area[GY], dz, dlon, dlat, lon[GX], lat[GY],
     z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int obscount[GX][GY], ip, ix, iy, iz;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_PROF", NVTX_WRITE);
@@ -4896,7 +4892,8 @@ void write_prof(
 	    "# $7 = volume mixing ratio [ppv]\n"
 	    "# $8 = H2O volume mixing ratio [ppv]\n"
 	    "# $9 = O3 volume mixing ratio [ppv]\n"
-	    "# $10 = observed BT index [K]\n");
+	    "# $10 = observed BT index [K]\n"
+	    "# $11 = number of observations\n");
 
     /* Set grid box size... */
     dz = (ctl->prof_z1 - ctl->prof_z0) / ctl->prof_nz;
@@ -4963,12 +4960,7 @@ void write_prof(
       continue;
 
     /* Get mean observation index... */
-    if (ctl->prof_obsstat == 1)
-      obsmean[ix][iy] += robs;
-
-    /* Get maximum observation index... */
-    else if (ctl->prof_obsstat == 2)
-      obsmean[ix][iy] = GSL_MAX(obsmean[ix][iy], robs);
+    obsmean[ix][iy] += robs;
 
     /* Count observations... */
     obscount[ix][iy]++;
@@ -4998,17 +4990,7 @@ void write_prof(
   /* Extract profiles... */
   for (ix = 0; ix < ctl->prof_nx; ix++)
     for (iy = 0; iy < ctl->prof_ny; iy++)
-      if (obscount[ix][iy] >= ctl->prof_obscount) {
-
-	/* Check profile... */
-	okay = 0;
-	for (iz = 0; iz < ctl->prof_nz; iz++)
-	  if (mass[ix][iy][iz] > 0) {
-	    okay = 1;
-	    break;
-	  }
-	if (!okay)
-	  continue;
+      if (obscount[ix][iy] >= 1) {
 
 	/* Write output... */
 	fprintf(out, "\n");
@@ -5031,10 +5013,9 @@ void write_prof(
 	    / (rho_air * area[iy] * dz * 1e9);
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g\n", t, z[iz], lon[ix],
-		  lat[iy], press[iz], temp, vmr, h2o, o3,
-		  ctl->prof_obsstat ==
-		  1 ? obsmean[ix][iy] / obscount[ix][iy] : obsmean[ix][iy]);
+	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d\n",
+		  t, z[iz], lon[ix], lat[iy], press[iz], temp, vmr, h2o, o3,
+		  obsmean[ix][iy] / obscount[ix][iy], obscount[ix][iy]);
 	}
       }
 

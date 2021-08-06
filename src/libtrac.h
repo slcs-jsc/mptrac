@@ -982,12 +982,6 @@ typedef struct {
   /*! Observation data file for profile output. */
   char prof_obsfile[LEN];
 
-  /*! Statistics of observation index (1=mean, 2=max). */
-  int prof_obsstat;
-
-  /*! Minimum number of observations per grid box. */
-  int prof_obscount;
-
   /*! Number of altitudes of gridded profile data. */
   int prof_nz;
 
