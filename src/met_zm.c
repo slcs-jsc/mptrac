@@ -55,7 +55,8 @@ int main(
     wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY],
     lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
     ps, ts, zs, us, vs, pbl, pt, pc, plcl, plfc, pel, cape, cl, t, u, v, w,
-    pv, h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1, dlat, lats[NY], cw[3];
+    pv, h2o, h2ot, o3, lwc, iwc, lat, lat0, lat1, dlat, lats[NY],
+    lon0, lon1, lonm[NZ][NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -71,6 +72,8 @@ int main(
   z0 = scan_ctl(argv[1], argc, argv, "ZM_Z0", -1, "-999", NULL);
   z1 = scan_ctl(argv[1], argc, argv, "ZM_Z1", -1, "-999", NULL);
   dz = scan_ctl(argv[1], argc, argv, "ZM_DZ", -1, "-999", NULL);
+  lon0 = scan_ctl(argv[1], argc, argv, "ZM_LON0", -1, "-360", NULL);
+  lon1 = scan_ctl(argv[1], argc, argv, "ZM_LON1", -1, "360", NULL);
   lat0 = scan_ctl(argv[1], argc, argv, "ZM_LAT0", -1, "-90", NULL);
   lat1 = scan_ctl(argv[1], argc, argv, "ZM_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "ZM_DLAT", -1, "-999", NULL);
@@ -118,45 +121,47 @@ int main(
 
     /* Average... */
     for (ix = 0; ix < met->nx; ix++)
-      for (iy = 0; iy < ny; iy++)
-	for (iz = 0; iz < nz; iz++) {
+      if (met->lon[ix] >= lon0 && met->lon[ix] <= lon1)
+	for (iy = 0; iy < ny; iy++)
+	  for (iz = 0; iz < nz; iz++) {
 
-	  /* Interpolate meteo data... */
-	  INTPOL_SPACE_ALL(plev[iz], met->lon[ix], met->lat[iy]);
+	    /* Interpolate meteo data... */
+	    INTPOL_SPACE_ALL(plev[iz], met->lon[ix], met->lat[iy]);
 
-	  /* Averaging... */
-	  timem[iz][iy] += met->time;
-	  zm[iz][iy] += z;
-	  tm[iz][iy] += t;
-	  um[iz][iy] += u;
-	  vm[iz][iy] += v;
-	  wm[iz][iy] += w;
-	  pvm[iz][iy] += pv;
-	  h2om[iz][iy] += h2o;
-	  o3m[iz][iy] += o3;
-	  lwcm[iz][iy] += lwc;
-	  iwcm[iz][iy] += iwc;
-	  psm[iz][iy] += ps;
-	  tsm[iz][iy] += ts;
-	  zsm[iz][iy] += zs;
-	  usm[iz][iy] += us;
-	  vsm[iz][iy] += vs;
-	  pblm[iz][iy] += pbl;
-	  pcm[iz][iy] += pc;
-	  clm[iz][iy] += cl;
-	  plclm[iz][iy] += plcl;
-	  plfcm[iz][iy] += plfc;
-	  pelm[iz][iy] += pel;
-	  capem[iz][iy] += cape;
-	  if (gsl_finite(pt)) {
-	    ptm[iz][iy] += pt;
-	    ztm[iz][iy] += zt;
-	    ttm[iz][iy] += tt;
-	    h2otm[iz][iy] += h2ot;
-	    npt[iz][iy]++;
+	    /* Averaging... */
+	    timem[iz][iy] += met->time;
+	    lonm[iz][iy] += met->lon[ix];
+	    zm[iz][iy] += z;
+	    tm[iz][iy] += t;
+	    um[iz][iy] += u;
+	    vm[iz][iy] += v;
+	    wm[iz][iy] += w;
+	    pvm[iz][iy] += pv;
+	    h2om[iz][iy] += h2o;
+	    o3m[iz][iy] += o3;
+	    lwcm[iz][iy] += lwc;
+	    iwcm[iz][iy] += iwc;
+	    psm[iz][iy] += ps;
+	    tsm[iz][iy] += ts;
+	    zsm[iz][iy] += zs;
+	    usm[iz][iy] += us;
+	    vsm[iz][iy] += vs;
+	    pblm[iz][iy] += pbl;
+	    pcm[iz][iy] += pc;
+	    clm[iz][iy] += cl;
+	    plclm[iz][iy] += plcl;
+	    plfcm[iz][iy] += plfc;
+	    pelm[iz][iy] += pel;
+	    capem[iz][iy] += cape;
+	    if (gsl_finite(pt)) {
+	      ptm[iz][iy] += pt;
+	      ztm[iz][iy] += zt;
+	      ttm[iz][iy] += tt;
+	      h2otm[iz][iy] += h2ot;
+	      npt[iz][iy]++;
+	    }
+	    np[iz][iy]++;
 	  }
-	  np[iz][iy]++;
-	}
   }
 
   /* Create output file... */
@@ -212,7 +217,8 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-	      timem[iz][iy] / np[iz][iy], Z(plev[iz]), 0.0, lats[iy],
+	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
+	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
 	      vm[iz][iy] / np[iz][iy], wm[iz][iy] / np[iz][iy],
 	      h2om[iz][iy] / np[iz][iy], o3m[iz][iy] / np[iz][iy],
