@@ -4290,7 +4290,7 @@ void write_csi(
 
   static char line[LEN];
 
-  static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old = -1e99,
+  static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
     rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz, lat,
     x[1000000], y[1000000], work[2000000];
 
@@ -4310,6 +4310,9 @@ void write_csi(
     LOG(1, "Read CSI observation data: %s", ctl->csi_obsfile);
     if (!(in = fopen(ctl->csi_obsfile, "r")))
       ERRMSG("Cannot open file!");
+
+    /* Initialize time for file input... */
+    rt_old = -1e99;
 
     /* Create new file... */
     LOG(1, "Write CSI data: %s", filename);
@@ -4847,9 +4850,9 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old = -1e99,
-    rz, rlon, rlat, robs, t0, t1, area[GY], dz, dlon, dlat, lon[GX], lat[GY],
-    z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3;
+  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old,
+    rz, rlon, rlat, robs, t0, t1, area[GY], dz, dlon, dlat,
+    lon[GX], lat[GY], z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3;
 
   static int obscount[GX][GY], ip, ix, iy, iz, okay;
 
@@ -4875,6 +4878,9 @@ void write_prof(
     LOG(1, "Read profile observation data: %s", ctl->prof_obsfile);
     if (!(in = fopen(ctl->prof_obsfile, "r")))
       ERRMSG("Cannot open file!");
+
+    /* Initialize time for file input... */
+    rt_old = -1e99;
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -5062,6 +5068,9 @@ void write_sample(
     LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
     if (!(in = fopen(ctl->sample_obsfile, "r")))
       ERRMSG("Cannot open file!");
+
+    /* Initialize time for file input... */
+    rt_old = -1e99;
 
     /* Create new file... */
     LOG(1, "Write sample data: %s", filename);
