@@ -22,6 +22,8 @@ src/met_prof
 src/met_sample
 src/met_spec
 src/met_zm
+src/sedi
+src/subgrid
 src/time2jsec
 src/trac
 src/tropo
