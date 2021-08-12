@@ -2437,16 +2437,62 @@ void read_ctl(
 
   /* Species parameters... */
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
-  if (strcasecmp(ctl->species, "SO2") == 0) {
+  if (strcasecmp(ctl->species, "CF2Cl2") == 0) {
+    ctl->molmass = 120.907;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 3e-5;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 3500.0;
+  } else if (strcasecmp(ctl->species, "CFCl3") == 0) {
+    ctl->molmass = 137.359;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.1e-4;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 3300.0;
+  } else if (strcasecmp(ctl->species, "CH4") == 0) {
+    ctl->molmass = 16.043;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.4e-5;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 1600.0;
+  } else if (strcasecmp(ctl->species, "CO") == 0) {
+    ctl->molmass = 28.01;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 9.7e-6;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 1300.0;
+  } else if (strcasecmp(ctl->species, "CO2") == 0) {
+    ctl->molmass = 44.009;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 3.3e-4;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
+  } else if (strcasecmp(ctl->species, "N2O") == 0) {
+    ctl->molmass = 44.013;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 2.4e-4;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 2600.;
+  } else if (strcasecmp(ctl->species, "NH3") == 0) {
+    ctl->molmass = 17.031;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 5.9e-1;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 4200.0;
+  } else if (strcasecmp(ctl->species, "HNO3") == 0) {
+    ctl->molmass = 63.012;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 2.1e3;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 8700.0;
+  } else if (strcasecmp(ctl->species, "NO") == 0) {
+    ctl->molmass = 30.006;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.9e-5;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 1600.0;
+  } else if (strcasecmp(ctl->species, "NO2") == 0) {
+    ctl->molmass = 46.005;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.2e-4;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
+  } else if (strcasecmp(ctl->species, "O3") == 0) {
+    ctl->molmass = 47.997;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 1e-4;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 2800.0;
+  } else if (strcasecmp(ctl->species, "SF6") == 0) {
+    ctl->molmass = 146.048;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 2.4e-6;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 3100.0;
+  } else if (strcasecmp(ctl->species, "SO2") == 0) {
     ctl->molmass = 64.066;
-    ctl->oh_chem[0] = 2.9e-31;	/* (JPL Publication 19-05) */
-    ctl->oh_chem[1] = 4.1;	/* (JPL Publication 19-05) */
-    ctl->oh_chem[2] = 1.7e-12;	/* (JPL Publication 19-05) */
-    ctl->oh_chem[3] = -0.2;	/* (JPL Publication 19-05) */
-    ctl->wet_depo[2] = 1.3e-2;	/* (Sander, 2015) */
-    ctl->wet_depo[3] = 2900.0;	/* (Sander, 2015) */
-    ctl->wet_depo[6] = 1.3e-2;	/* (Sander, 2015) */
-    ctl->wet_depo[7] = 2900.0;	/* (Sander, 2015) */
+    ctl->oh_chem[0] = 2.9e-31;
+    ctl->oh_chem[1] = 4.1;
+    ctl->oh_chem[2] = 1.7e-12;
+    ctl->oh_chem[3] = -0.2;
+    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.3e-2;
+    ctl->wet_depo[3] = ctl->wet_depo[7] = 2900.0;
   } else {
     ctl->molmass =
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
