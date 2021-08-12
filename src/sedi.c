@@ -28,7 +28,7 @@ int main(
   int argc,
   char *argv[]) {
 
-  double p, T, r_p, rho_p;
+  double eta, p, T, r_p, rho, Re, rho_p, vs;
 
   /* Check arguments... */
   if (argc < 5)
@@ -40,8 +40,20 @@ int main(
   r_p = atof(argv[3]);
   rho_p = atof(argv[4]);
 
+  /* Calculate sedimentation velocity... */
+  vs = sedi(p, T, r_p, rho_p);
+
+  /* Density of dry air [kg / m^3]... */
+  rho = 100. * p / (RA * T);
+
+  /* Dynamic viscosity of air [kg / (m s)]... */
+  eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+
+  /* Particle Reynolds number... */
+  Re = 2e-6 * r_p * vs * rho / eta;
+
   /* Convert... */
-  printf("%g\n", sedi(p, T, r_p, rho_p));
+  printf("%g %g\n", vs, Re);
 
   return EXIT_SUCCESS;
 }

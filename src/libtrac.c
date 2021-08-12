@@ -4024,31 +4024,31 @@ double sedi(
   double rho_p) {
 
   double eta, G, K, lambda, rho, v;
-  
+
   /* Convert pressure from hPa to Pa... */
   p *= 100.;
-  
+
   /* Convert particle radius from microns to m... */
   r_p *= 1e-6;
 
   /* Density of dry air [kg / m^3]... */
   rho = p / (RA * T);
-  
+
   /* Dynamic viscosity of air [kg / (m s)]... */
   eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
-  
+
   /* Thermal velocity of an air molecule [m / s]... */
   v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
-  
+
   /* Mean free path of an air molecule [m]... */
   lambda = 2. * eta / (rho * v);
-  
+
   /* Knudsen number for air (dimensionless)... */
   K = lambda / r_p;
-  
+
   /* Cunningham slip-flow correction (dimensionless)... */
   G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
-  
+
   /* Sedimentation velocity [m / s]... */
   return 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
 }
