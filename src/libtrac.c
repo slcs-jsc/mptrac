@@ -1817,21 +1817,23 @@ void intpol_met_space_2d(
   double aux11 = array[ci[1] + 1][ci[2] + 1];
 
   /* Interpolate horizontally... */
-  if (isfinite(aux00) && isfinite(aux01))
+  if (isfinite(aux00) && isfinite(aux01)
+      && isfinite(aux10) && isfinite(aux11)) {
     aux00 = cw[2] * (aux00 - aux01) + aux01;
-  else if (cw[2] < 0.5)
-    aux00 = aux01;
-  if (isfinite(aux10) && isfinite(aux11))
     aux11 = cw[2] * (aux10 - aux11) + aux11;
-  else if (cw[2] > 0.5)
-    aux11 = aux10;
-  if (isfinite(aux00) && isfinite(aux11))
     *var = cw[1] * (aux00 - aux11) + aux11;
-  else {
-    if (cw[1] > 0.5)
-      *var = aux00;
-    else
-      *var = aux11;
+  } else {
+    if (cw[2] < 0.5) {
+      if (cw[1] < 0.5)
+	*var = aux11;
+      else
+	*var = aux01;
+    } else {
+      if (cw[1] < 0.5)
+	*var = aux10;
+      else
+	*var = aux00;
+    }
   }
 }
 
@@ -1889,7 +1891,12 @@ void intpol_met_time_2d(
   wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
-  *var = wt * (var0 - var1) + var1;
+  if (isfinite(var0) && isfinite(var1))
+    *var = wt * (var0 - var1) + var1;
+  else if (wt < 0.5)
+    *var = var1;
+  else
+    *var = var0;
 }
 
 /*****************************************************************************/
