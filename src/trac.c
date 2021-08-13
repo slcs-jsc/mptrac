@@ -1316,9 +1316,13 @@ void module_oh_chem(
       INTPOL_INIT;
       INTPOL_3D(t, 1);
 
-      /* Calculate bimolecular reaction rate... */
+      /* Use constant reaction rate... */
       double k;
-      if (ctl->oh_chem_reaction == 2)
+      if (ctl->oh_chem_reaction == 1)
+	k = ctl->oh_chem[0];
+
+      /* Calculate bimolecular reaction rate... */
+      else if (ctl->oh_chem_reaction == 2)
 	k = ctl->oh_chem[0] * exp(-ctl->oh_chem[1] / t);
 
       /* Calculate termolecular reaction rate... */

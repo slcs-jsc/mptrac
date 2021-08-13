@@ -2447,10 +2447,18 @@ void read_ctl(
     ctl->wet_depo[3] = ctl->wet_depo[7] = 3300.0;
   } else if (strcasecmp(ctl->species, "CH4") == 0) {
     ctl->molmass = 16.043;
+    ctl->oh_chem_reaction = 2;
+    ctl->oh_chem[0] = 2.45e-12;
+    ctl->oh_chem[1] = 1775;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 1.4e-5;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 1600.0;
   } else if (strcasecmp(ctl->species, "CO") == 0) {
     ctl->molmass = 28.01;
+    ctl->oh_chem_reaction = 3;
+    ctl->oh_chem[0] = 6.9e-33;
+    ctl->oh_chem[1] = 2.1;
+    ctl->oh_chem[2] = 1.1e-12;
+    ctl->oh_chem[3] = -1.3;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 9.7e-6;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 1300.0;
   } else if (strcasecmp(ctl->species, "CO2") == 0) {
@@ -2463,6 +2471,9 @@ void read_ctl(
     ctl->wet_depo[3] = ctl->wet_depo[7] = 2600.;
   } else if (strcasecmp(ctl->species, "NH3") == 0) {
     ctl->molmass = 17.031;
+    ctl->oh_chem_reaction = 2;
+    ctl->oh_chem[0] = 1.7e-12;
+    ctl->oh_chem[1] = 710;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 5.9e-1;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 4200.0;
   } else if (strcasecmp(ctl->species, "HNO3") == 0) {
@@ -2471,14 +2482,27 @@ void read_ctl(
     ctl->wet_depo[3] = ctl->wet_depo[7] = 8700.0;
   } else if (strcasecmp(ctl->species, "NO") == 0) {
     ctl->molmass = 30.006;
+    ctl->oh_chem_reaction = 3;
+    ctl->oh_chem[0] = 7.1e-31;
+    ctl->oh_chem[1] = 2.6;
+    ctl->oh_chem[2] = 3.6e-11;
+    ctl->oh_chem[3] = 0.1;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 1.9e-5;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 1600.0;
   } else if (strcasecmp(ctl->species, "NO2") == 0) {
     ctl->molmass = 46.005;
+    ctl->oh_chem_reaction = 3;
+    ctl->oh_chem[0] = 1.8e-30;
+    ctl->oh_chem[1] = 3.0;
+    ctl->oh_chem[2] = 2.8e-11;
+    ctl->oh_chem[3] = 0.0;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 1.2e-4;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
   } else if (strcasecmp(ctl->species, "O3") == 0) {
     ctl->molmass = 47.997;
+    ctl->oh_chem_reaction = 2;
+    ctl->oh_chem[0] = 1.7e-12;
+    ctl->oh_chem[1] = 940;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 1e-4;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 2800.0;
   } else if (strcasecmp(ctl->species, "SF6") == 0) {
@@ -2487,6 +2511,7 @@ void read_ctl(
     ctl->wet_depo[3] = ctl->wet_depo[7] = 3100.0;
   } else if (strcasecmp(ctl->species, "SO2") == 0) {
     ctl->molmass = 64.066;
+    ctl->oh_chem_reaction = 3;
     ctl->oh_chem[0] = 2.9e-31;
     ctl->oh_chem[1] = 4.1;
     ctl->oh_chem[2] = 1.7e-12;
