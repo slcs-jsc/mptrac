@@ -557,6 +557,9 @@ typedef struct {
   /*! Quantity array index for ensemble IDs. */
   int qnt_ens;
 
+  /*! Quantity array index for station flag. */
+  int qnt_stat;
+
   /*! Quantity array index for mass. */
   int qnt_m;
 
@@ -703,9 +706,6 @@ typedef struct {
 
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
-
-  /*! Quantity array index for station flag. */
-  int qnt_stat;
 
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;

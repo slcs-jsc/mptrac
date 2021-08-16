@@ -2221,6 +2221,7 @@ void read_ctl(
 
   /* Initialize quantity indices... */
   ctl->qnt_ens = -1;
+  ctl->qnt_stat = -1;
   ctl->qnt_m = -1;
   ctl->qnt_vmr = -1;
   ctl->qnt_r = -1;
@@ -2270,7 +2271,6 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_stat = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -2285,11 +2285,17 @@ void read_ctl(
 
     /* Try to identify quantity... */
     SET_QNT(qnt_ens, "ens", "-")
+      SET_QNT(qnt_stat, "stat", "-")
       SET_QNT(qnt_m, "m", "kg")
       SET_QNT(qnt_vmr, "vmr", "ppv")
-      SET_QNT(qnt_r, "r", "m")
+      SET_QNT(qnt_r, "r", "microns")
       SET_QNT(qnt_rho, "rho", "kg/m^3")
       SET_QNT(qnt_ps, "ps", "hPa")
+      SET_QNT(qnt_ts, "ts", "K")
+      SET_QNT(qnt_zs, "zs", "km")
+      SET_QNT(qnt_us, "us", "m/s")
+      SET_QNT(qnt_vs, "vs", "m/s")
+      SET_QNT(qnt_pbl, "pbl", "hPa")
       SET_QNT(qnt_pt, "pt", "hPa")
       SET_QNT(qnt_tt, "tt", "K")
       SET_QNT(qnt_zt, "zt", "km")
@@ -2329,7 +2335,6 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "K")
       SET_QNT(qnt_tsts, "tsts", "K")
       SET_QNT(qnt_tnat, "tnat", "K")
-      SET_QNT(qnt_stat, "stat", "-")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
