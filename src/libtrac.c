@@ -2936,7 +2936,7 @@ void read_met_detrend(
   }
 
   /* Subtract background... */
-#pragma omp parallel for default(shared) collapse(2)
+#pragma omp parallel for default(shared) collapse(3)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++) {
@@ -3073,7 +3073,7 @@ void read_met_geopot(
 	* (1.0f - (float) iy / (float) dy);
 
   /* Copy data... */
-#pragma omp parallel for default(shared) collapse(2)
+#pragma omp parallel for default(shared) collapse(3)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
@@ -4441,7 +4441,7 @@ void write_csi(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid cells... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(2)
+#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
   for (ix = 0; ix < ctl->csi_nx; ix++)
     for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++)
@@ -4771,7 +4771,7 @@ void write_grid(
   t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(2)
+#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
   for (ix = 0; ix < ctl->grid_nx; ix++)
     for (iy = 0; iy < ctl->grid_ny; iy++)
       for (iz = 0; iz < ctl->grid_nz; iz++) {
