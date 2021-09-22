@@ -1317,7 +1317,7 @@ void module_oh_chem(
       INTPOL_3D(t, 1);
 
       /* Use constant reaction rate... */
-      double k;
+      double k = GSL_NAN;
       if (ctl->oh_chem_reaction == 1)
 	k = ctl->oh_chem[0];
 
@@ -1340,10 +1340,6 @@ void module_oh_chem(
 	double c = log10(k0 * M / ki);
 	k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
       }
-
-      /* Undefined... */
-      else
-	ERRMSG("No such reaction type!");
 
       /* Calculate exponential decay... */
       double aux
