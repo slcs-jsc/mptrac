@@ -1418,7 +1418,7 @@ void module_wet_deposition(
 	  dz = 1e3 * Z(pc);
 
 	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
-	  lambda = h * RI * t * Is / 3.6e6 * dz;
+	  lambda = h * RI * t * Is / 3.6e6 / dz;
 	}
       }
 
@@ -1443,7 +1443,7 @@ void module_wet_deposition(
 	  dz = 1e3 * Z(pc);
 
 	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
-	  lambda = h * RI * t * Is / 3.6e6 * dz;
+	  lambda = h * RI * t * Is / 3.6e6 / dz;
 	}
       }
 
