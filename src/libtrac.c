@@ -4236,6 +4236,29 @@ void timer(
 
 /*****************************************************************************/
 
+double tropo_weight(
+  double t,
+  double lat,
+  double p) {
+
+  /* Get tropopause pressure... */
+  double pt = clim_tropo(t, lat);
+
+  /* Get pressure range... */
+  double p1 = pt * 0.866877899;
+  double p0 = pt / 0.866877899;
+
+  /* Get weighting factor... */
+  if (p > p0)
+    return 1;
+  else if (p < p1)
+    return 0;
+  else
+    return LIN(p0, 1.0, p1, 0.0, p);
+}
+
+/*****************************************************************************/
+
 void write_atm(
   const char *filename,
   ctl_t * ctl,

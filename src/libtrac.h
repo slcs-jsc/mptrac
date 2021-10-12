@@ -1572,6 +1572,15 @@ void timer(
   const char *name,
   int output);
 
+/*! Get weighting factor based on tropopause distance. */
+#ifdef _OPENACC
+#pragma acc routine (tropo_weight)
+#endif
+double tropo_weight(
+  double t,
+  double lat,
+  double p);
+
 /*! Write atmospheric data. */
 void write_atm(
   const char *filename,

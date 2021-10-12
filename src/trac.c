@@ -636,19 +636,8 @@ void module_decay(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      /* Get tropopause pressure... */
-      double pt = clim_tropo(atm->time[ip], atm->lat[ip]);
-
       /* Get weighting factor... */
-      double w;
-      double p1 = pt * 0.866877899;
-      double p0 = pt / 0.866877899;
-      if (atm->p[ip] > p0)
-	w = 1;
-      else if (atm->p[ip] < p1)
-	w = 0;
-      else
-	w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
 
       /* Set lifetime... */
       double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -811,19 +800,8 @@ void module_diffusion_turb(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      /* Get tropopause pressure... */
-      double pt = clim_tropo(atm->time[ip], atm->lat[ip]);
-
       /* Get weighting factor... */
-      double w;
-      double p1 = pt * 0.866877899;
-      double p0 = pt / 0.866877899;
-      if (atm->p[ip] > p0)
-	w = 1;
-      else if (atm->p[ip] < p1)
-	w = 0;
-      else
-	w = LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
 
       /* Set diffusivity... */
       double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
