@@ -2246,7 +2246,8 @@ void read_ctl(
   ctl->qnt_o3 = -1;
   ctl->qnt_lwc = -1;
   ctl->qnt_iwc = -1;
-  ctl->qnt_pc = -1;
+  ctl->qnt_pct = -1;
+  ctl->qnt_pcb = -1;
   ctl->qnt_cl = -1;
   ctl->qnt_plcl = -1;
   ctl->qnt_plfc = -1;
@@ -2310,7 +2311,8 @@ void read_ctl(
       SET_QNT(qnt_o3, "o3", "ppv")
       SET_QNT(qnt_lwc, "lwc", "kg/kg")
       SET_QNT(qnt_iwc, "iwc", "kg/kg")
-      SET_QNT(qnt_pc, "pc", "hPa")
+      SET_QNT(qnt_pct, "pct", "hPa")
+      SET_QNT(qnt_pcb, "pcb", "hPa")
       SET_QNT(qnt_cl, "cl", "kg/m^2")
       SET_QNT(qnt_plcl, "plcl", "hPa")
       SET_QNT(qnt_plfc, "plfc", "hPa")
@@ -2823,7 +2825,8 @@ void read_met_cloud(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Init... */
-      met->pc[ix][iy] = GSL_NAN;
+      met->pct[ix][iy] = GSL_NAN;
+      met->pcb[ix][iy] = GSL_NAN;
       met->cl[ix][iy] = 0;
 
       /* Loop over pressure levels... */
@@ -2833,9 +2836,18 @@ void read_met_cloud(
 	if (met->p[ip] > met->ps[ix][iy] || met->p[ip] < P(20.))
 	  continue;
 
-	/* Get cloud top pressure ... */
-	if (met->iwc[ix][iy][ip] > 0 || met->lwc[ix][iy][ip] > 0)
-	  met->pc[ix][iy] = (float) met->p[ip + 1];
+	/* Check ice water and liquid water content... */
+	if (met->iwc[ix][iy][ip] > 0 || met->lwc[ix][iy][ip] > 0) {
+
+	  /* Get cloud top pressure ... */
+	  met->pct[ix][iy]
+	    = (float) (0.5 * (met->p[ip] + (float) met->p[ip + 1]));
+
+	  /* Get cloud bottom pressure ... */
+	  if (!isfinite(met->pcb[ix][iy]))
+	    met->pcb[ix][iy]
+	      = (float) (0.5 * (met->p[ip] + met->p[GSL_MAX(ip - 1, 0)]));
+	}
 
 	/* Get cloud water... */
 	met->cl[ix][iy] += (float)

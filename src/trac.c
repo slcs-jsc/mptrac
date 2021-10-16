@@ -1035,8 +1035,8 @@ void module_meteo(
 #endif
   for (int ip = 0; ip < atm->np; ip++) {
 
-    double ps, ts, zs, us, vs, pbl, pt, pc, cl, plcl, plfc, pel, cape, pv, t,
-      tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
+    double ps, ts, zs, us, vs, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape,
+      pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
 
     /* Interpolate meteorological data... */
     INTPOL_INIT;
@@ -1063,7 +1063,8 @@ void module_meteo(
     SET_ATM(qnt_o3, o3);
     SET_ATM(qnt_lwc, lwc);
     SET_ATM(qnt_iwc, iwc);
-    SET_ATM(qnt_pc, pc);
+    SET_ATM(qnt_pct, pct);
+    SET_ATM(qnt_pcb, pcb);
     SET_ATM(qnt_cl, cl);
     SET_ATM(qnt_plcl, plcl);
     SET_ATM(qnt_plfc, plfc);
@@ -1354,15 +1355,18 @@ void module_wet_deposition(
   for (int ip = 0; ip < atm->np; ip++)
     if (dt[ip] != 0) {
 
-      double cl, dz, h, lambda = 0, t, iwc, lwc, pc;
+      double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
 
       int inside;
 
       /* Check whether particle is below cloud top... */
       INTPOL_INIT;
-      INTPOL_2D(pc, 1);
-      if (!isfinite(pc) || atm->p[ip] <= pc)
+      INTPOL_2D(pct, 1);
+      if (!isfinite(pct) || atm->p[ip] <= pct)
 	continue;
+
+      /* Get cloud bottom pressure... */
+      INTPOL_2D(pcb, 0);
 
       /* Estimate precipitation rate (Pisso et al., 2019)... */
       INTPOL_2D(cl, 0);
@@ -1393,7 +1397,7 @@ void module_wet_deposition(
 	    * exp(ctl->wet_depo[3] * (1. / t - 1. / 298.15));
 
 	  /* Estimate depth of cloud layer... */
-	  dz = 1e3 * Z(pc);
+	  dz = 1e3 * (Z(pct) - Z(pcb));
 
 	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	  lambda = h * RI * t * Is / 3.6e6 / dz;
@@ -1418,7 +1422,7 @@ void module_wet_deposition(
 	    * exp(ctl->wet_depo[7] * (1. / t - 1. / 298.15));
 
 	  /* Estimate depth of cloud layer... */
-	  dz = 1e3 * Z(pc);
+	  dz = 1e3 * (Z(pct) - Z(pcb));
 
 	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	  lambda = h * RI * t * Is / 3.6e6 / dz;

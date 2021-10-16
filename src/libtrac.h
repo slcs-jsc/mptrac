@@ -269,7 +269,8 @@
   intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->zt, lon, lat, &zt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->h2ot, lon, lat, &h2ot, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->pc, lon, lat, &pc, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->pct, lon, lat, &pct, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->pcb, lon, lat, &pcb, ci, cw, 0);	\
   intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);		\
   intpol_met_space_2d(met, met->plcl, lon, lat, &plcl, ci, cw, 0);	\
   intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);	\
@@ -299,7 +300,8 @@
   intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->h2ot, met1, met1->h2ot, time, lon, lat, &h2ot, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->pc, met1, met1->pc, time, lon, lat, &pc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pct, met1, met1->pct, time, lon, lat, &pct, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pcb, met1, met1->pcb, time, lon, lat, &pcb, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
@@ -636,7 +638,10 @@ typedef struct {
   int qnt_iwc;
 
   /*! Quantity array index for cloud top pressure. */
-  int qnt_pc;
+  int qnt_pct;
+
+  /*! Quantity array index for cloud bottom pressure. */
+  int qnt_pcb;
 
   /*! Quantity array index for total column cloud water. */
   int qnt_cl;
@@ -1163,7 +1168,10 @@ typedef struct {
   float h2ot[EX][EY];
 
   /*! Cloud top pressure [hPa]. */
-  float pc[EX][EY];
+  float pct[EX][EY];
+
+  /*! Cloud bottom pressure [hPa]. */
+  float pcb[EX][EY];
 
   /*! Total column cloud water [kg/m^2]. */
   float cl[EX][EY];

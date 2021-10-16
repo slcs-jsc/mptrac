@@ -49,9 +49,10 @@ int main(
     lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
     wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], lwc, lwcm[NZ],
     iwc, iwcm[NZ], ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ],
-    vs, vsm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pc, pcm[NZ], cl, clm[NZ],
-    plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ],
-    tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], cw[3];
+    vs, vsm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ],
+    cl, clm[NZ], plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ],
+    cape, capem[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ],
+    plev[NZ], cw[3];
 
   static int i, iz, np[NZ], npt[NZ], nz, ci[3];
 
@@ -135,7 +136,8 @@ int main(
 	    usm[iz] += us;
 	    vsm[iz] += vs;
 	    pblm[iz] += pbl;
-	    pcm[iz] += pc;
+	    pctm[iz] += pct;
+	    pcbm[iz] += pcb;
 	    clm[iz] += cl;
 	    plclm[iz] += plcl;
 	    plfcm[iz] += plfc;
@@ -190,22 +192,23 @@ int main(
 	  "# $24 = cloud ice water content [kg/kg]\n"
 	  "# $25 = total column cloud water [kg/m^2]\n"
 	  "# $26 = cloud top pressure [hPa]\n"
-	  "# $27 = pressure at lifted condensation level (LCL) [hPa]\n"
-	  "# $28 = pressure at level of free convection (LFC) [hPa]\n"
-	  "# $29 = pressure at equilibrium level (EL) [hPa]\n"
-	  "# $30 = convective available potential energy (CAPE) [J/kg]\n");
+	  "# $27 = cloud bottom pressure [hPa]\n"
+	  "# $28 = pressure at lifted condensation level (LCL) [hPa]\n"
+	  "# $29 = pressure at level of free convection (LFC) [hPa]\n"
+	  "# $30 = pressure at equilibrium level (EL) [hPa]\n");
   fprintf(out,
-	  "# $31 = relative humidity over water [%%]\n"
-	  "# $32 = relative humidity over ice [%%]\n"
-	  "# $33 = dew point temperature [K]\n"
-	  "# $34 = frost point temperature [K]\n"
-	  "# $35 = boundary layer pressure [hPa]\n\n");
+	  "# $31 = convective available potential energy (CAPE) [J/kg]\n"
+	  "# $32 = relative humidity over water [%%]\n"
+	  "# $33 = relative humidity over ice [%%]\n"
+	  "# $34 = dew point temperature [K]\n"
+	  "# $35 = frost point temperature [K]\n"
+	  "# $36 = boundary layer pressure [hPa]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -214,8 +217,8 @@ int main(
 	    usm[iz] / np[iz], vsm[iz] / np[iz], ptm[iz] / npt[iz],
 	    ztm[iz] / npt[iz], ttm[iz] / npt[iz], h2otm[iz] / npt[iz],
 	    lwcm[iz] / np[iz], iwcm[iz] / np[iz], clm[iz] / np[iz],
-	    pcm[iz] / np[iz], plclm[iz] / np[iz], plfcm[iz] / np[iz],
-	    pelm[iz] / np[iz], capem[iz] / np[iz],
+	    pctm[iz] / np[iz], pcbm[iz] / np[iz], plclm[iz] / np[iz],
+	    plfcm[iz] / np[iz], pelm[iz] / np[iz], capem[iz] / np[iz],
 	    RH(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
 	    RHICE(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
 	    TDEW(plev[iz], h2om[iz] / np[iz]),
