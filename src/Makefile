@@ -36,7 +36,7 @@ NC4 ?= 1
 GPU ?= 0
 
 # Use managed memory for GPUs...
-GPUMEM ?= 1
+GPUMEM ?= 0
 
 # Compile for MPI...
 MPI ?= 0
