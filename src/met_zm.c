@@ -126,7 +126,7 @@ int main(
 	  for (iz = 0; iz < nz; iz++) {
 
 	    /* Interpolate meteo data... */
-	    INTPOL_SPACE_ALL(plev[iz], met->lon[ix], met->lat[iy]);
+	    INTPOL_SPACE_ALL(plev[iz], met->lon[ix], lats[iy]);
 
 	    /* Averaging... */
 	    timem[iz][iy] += met->time;
