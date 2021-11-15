@@ -52,10 +52,12 @@ int main(
     zsm[NX][NY], us, usm[NX][NY], vs, vsm[NX][NY], pbl, pblm[NX][NY], pt,
     ptm[NX][NY], t, pm[NX][NY], tm[NX][NY], u, um[NX][NY], v, vm[NX][NY],
     w, wm[NX][NY], h2o, h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
+    hno3m[NX][NY], ohm[NX][NY], tdewm[NX][NY], ticem[NX][NY], tnatm[NX][NY],
     lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY],
     zt, ztm[NX][NY], tt, ttm[NX][NY], pct, pctm[NX][NY], pcb, pcbm[NX][NY],
     cl, clm[NX][NY], plcl, plclm[NX][NY], plfc, plfcm[NX][NY],
-    pel, pelm[NX][NY], cape, capem[NX][NY], theta, ptop, pbot, t0,
+    pel, pelm[NX][NY], cape, capem[NX][NY], rhm[NX][NY], rhicem[NX][NY],
+    theta, ptop, pbot, t0,
     lon, lon0, lon1, lons[NX], dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
 
   static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
@@ -162,6 +164,14 @@ int main(
 	ztm[ix][iy] += zt;
 	ttm[ix][iy] += tt;
 	h2otm[ix][iy] += h2ot;
+	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0);
+	tnatm[ix][iy] +=
+	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0));
+	ohm[ix][iy] += clim_oh(met->time, lats[iy], p0);
+	rhm[ix][iy] += RH(p0, t, h2o);
+	rhicem[ix][iy] += RHICE(p0, t, h2o);
+	tdewm[ix][iy] += TDEW(p0, h2o);
+	ticem[ix][iy] += TICE(p0, h2o);
 	np[ix][iy]++;
       }
   }
@@ -211,15 +221,18 @@ int main(
 	  "# $33 = relative humidity over ice [%%]\n"
 	  "# $34 = dew point temperature [K]\n"
 	  "# $35 = frost point temperature [K]\n"
-	  "# $36 = boundary layer pressure [hPa]\n");
+	  "# $36 = NAT temperature [K]\n"
+	  "# $37 = HNO3 volume mixing ratio [ppv]\n"
+	  "# $38 = OH concentration [molec/cm^3]\n"
+	  "# $39 = boundary layer pressure [hPa]\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
 	      lons[ix], lats[iy], pm[ix][iy] / np[ix][iy],
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
@@ -235,13 +248,10 @@ int main(
 	      pctm[ix][iy] / np[ix][iy], pcbm[ix][iy] / np[ix][iy],
 	      plclm[ix][iy] / np[ix][iy], plfcm[ix][iy] / np[ix][iy],
 	      pelm[ix][iy] / np[ix][iy], capem[ix][iy] / np[ix][iy],
-	      RH(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
-		 h2om[ix][iy] / np[ix][iy]),
-	      RHICE(pm[ix][iy] / np[ix][iy], tm[ix][iy] / np[ix][iy],
-		    h2om[ix][iy] / np[ix][iy]),
-	      TDEW(pm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]),
-	      TICE(pm[ix][iy] / np[ix][iy], h2om[ix][iy] / np[ix][iy]),
-	      pblm[ix][iy] / np[ix][iy]);
+	      rhm[ix][iy] / np[ix][iy], rhicem[ix][iy] / np[ix][iy],
+	      tdewm[ix][iy] / np[ix][iy], ticem[ix][iy] / np[ix][iy],
+	      tnatm[ix][iy] / np[ix][iy], hno3m[ix][iy] / np[ix][iy],
+	      ohm[ix][iy] / np[ix][iy], pblm[ix][iy] / np[ix][iy]);
   }
 
   /* Close file... */

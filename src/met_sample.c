@@ -117,7 +117,10 @@ int main(
 	  "# $33 = relative humidity over ice [%%]\n"
 	  "# $34 = dew point temperature [K]\n"
 	  "# $35 = frost point temperature [K]\n"
-	  "# $36 = boundary layer pressure [hPa]\n\n");
+	  "# $36 = NAT temperature [K]\n"
+	  "# $37 = HNO3 volume mixing ratio [ppv]\n"
+	  "# $38 = OH concentration [molec/cm^3]\n"
+	  "# $39 = boundary layer pressure [hPa]\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -160,12 +163,18 @@ int main(
     /* Write data... */
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
 	    pt, zt, tt, h2ot, lwc, iwc, cl, pct, pcb, plcl, plfc, pel, cape,
 	    RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
-	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o), pbl);
+	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
+	    nat_temperature(atm->p[ip], h2o,
+			    clim_hno3(atm->time[ip], atm->lat[ip],
+				      atm->p[ip])), clim_hno3(atm->time[ip],
+							      atm->lat[ip],
+							      atm->p[ip]),
+	    clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]), pbl);
   }
 
   /* Close file... */

@@ -52,7 +52,8 @@ int main(
     vs, vsm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ],
     cl, clm[NZ], plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ],
     cape, capem[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ],
-    plev[NZ], cw[3];
+    plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ], tnatm[NZ],
+    hno3m[NZ], ohm[NZ], cw[3];
 
   static int i, iz, np[NZ], npt[NZ], nz, ci[3];
 
@@ -152,6 +153,15 @@ int main(
 	      h2otm[iz] += h2ot;
 	      npt[iz]++;
 	    }
+	    rhm[iz] += RH(plev[iz], t, h2o);
+	    rhicem[iz] += RHICE(plev[iz], t, h2o);
+	    tdewm[iz] += TDEW(plev[iz], h2o);
+	    ticem[iz] += TICE(plev[iz], h2o);
+	    hno3m[iz] += clim_hno3(met->time, lat, plev[iz]);
+	    tnatm[iz] +=
+	      nat_temperature(plev[iz], h2o,
+			      clim_hno3(met->time, lat, plev[iz]));
+	    ohm[iz] += clim_oh(met->time, lat, plev[iz]);
 	    np[iz]++;
 	  }
 	}
@@ -202,13 +212,16 @@ int main(
 	  "# $33 = relative humidity over ice [%%]\n"
 	  "# $34 = dew point temperature [K]\n"
 	  "# $35 = frost point temperature [K]\n"
-	  "# $36 = boundary layer pressure [hPa]\n\n");
+	  "# $36 = NAT temperature [K]\n"
+	  "# $37 = HNO3 volume mixing ratio [ppv]\n"
+	  "# $38 = OH concentration [molec/cm^3]\n"
+	  "# $39 = boundary layer pressure [hPa]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -219,10 +232,9 @@ int main(
 	    lwcm[iz] / np[iz], iwcm[iz] / np[iz], clm[iz] / np[iz],
 	    pctm[iz] / np[iz], pcbm[iz] / np[iz], plclm[iz] / np[iz],
 	    plfcm[iz] / np[iz], pelm[iz] / np[iz], capem[iz] / np[iz],
-	    RH(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
-	    RHICE(plev[iz], tm[iz] / np[iz], h2om[iz] / np[iz]),
-	    TDEW(plev[iz], h2om[iz] / np[iz]),
-	    TICE(plev[iz], h2om[iz] / np[iz]), pblm[iz] / np[iz]);
+	    rhm[iz] / np[iz], rhicem[iz] / np[iz], tdewm[iz] / np[iz],
+	    ticem[iz] / np[iz], tnatm[iz] / np[iz], hno3m[iz] / np[iz],
+	    ohm[iz] / np[iz], pblm[iz] / np[iz]);
 
   /* Close file... */
   fclose(out);

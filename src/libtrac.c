@@ -342,7 +342,9 @@ double clim_hno3(
 	      clim_hno3_lats[ilat + 1], aux11, lat);
   aux00 = LIN(clim_hno3_secs[isec], aux00,
 	      clim_hno3_secs[isec + 1], aux11, sec);
-  return GSL_MAX(aux00, 0.0);
+
+  /* Convert from ppb to ppv... */
+  return GSL_MAX(1e-9 * aux00, 0.0);
 }
 
 /*****************************************************************************/

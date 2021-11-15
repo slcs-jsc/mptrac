@@ -1090,7 +1090,7 @@ void module_meteo(
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip]) * 1e-9));
+				      atm->p[ip])));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
