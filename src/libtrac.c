@@ -2008,6 +2008,10 @@ double nat_temperature(
   double h2o,
   double hno3) {
 
+  /* Check water vapor vmr... */
+  h2o = GSL_MAX(h2o, 0.1e-6);
+
+  /* Calculate T_NAT... */
   double p_hno3 = hno3 * p / 1.333224;
   double p_h2o = h2o * p / 1.333224;
   double a = 0.009179 - 0.00088 * log10(p_h2o);

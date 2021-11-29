@@ -346,8 +346,9 @@
   (0.01 * pow(10., -2663.5 / (t) + 12.537))
 
 /*! Calculate partial water vapor pressure. */
-#define PW(p, h2o)				\
-  ((p) * (h2o) / (1. + (1. - EPS) * (h2o)))
+#define PW(p, h2o)					\
+  ((p) * GSL_MAX((h2o), 0.1e-6)				\
+   / (1. + (1. - EPS) * GSL_MAX((h2o), 0.1e-6)))
 
 /*! Compute relative humidity over water. */
 #define RH(p, t, h2o)				\
@@ -371,7 +372,7 @@
 
 /*! Compute specific humidity from water vapor volume mixing ratio. */
 #define SH(h2o)					\
-  (EPS * (h2o))
+  (EPS * GSL_MAX((h2o), 0.1e-6))
 
 /*! Compute square. */
 #define SQR(x)					\
@@ -391,8 +392,8 @@
   ((t) * pow(1000. / (p), 0.286))
 
 /*! Compute virtual potential temperature. */
-#define THETAVIRT(p, t, h2o)			\
-  (TVIRT(THETA((p), (t)), (h2o)))
+#define THETAVIRT(p, t, h2o)				\
+  (TVIRT(THETA((p), (t)), GSL_MAX((h2o), 0.1e-6)))
 
 /*! Get string tokens. */
 #define TOK(line, tok, format, var) {					\
@@ -402,8 +403,8 @@
   }
 
 /*! Compute virtual temperature. */
-#define TVIRT(t, h2o)				\
-    ((t) * (1. + (1. - EPS) * (h2o)))
+#define TVIRT(t, h2o)					\
+  ((t) * (1. + (1. - EPS) * GSL_MAX((h2o), 0.1e-6)))
 
 /*! Convert pressure to altitude. */
 #define Z(p)					\
