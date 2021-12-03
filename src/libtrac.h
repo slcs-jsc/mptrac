@@ -895,7 +895,7 @@ typedef struct {
   /*! Time step for atmospheric data output [s]. */
   double atm_dt_out;
 
-  /*! Time filter for atmospheric data output (0=no, 1=yes). */
+  /*! Time filter for atmospheric data output (0=none, 1=missval, 2=remove). */
   int atm_filter;
 
   /*! Particle index stride for atmospheric data files. */

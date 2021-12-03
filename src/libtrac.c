@@ -4348,7 +4348,7 @@ void write_atm(
     for (ip = 0; ip < atm->np; ip += ctl->atm_stride) {
 
       /* Check time... */
-      if (ctl->atm_filter && (atm->time[ip] < t0 || atm->time[ip] > t1))
+      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
 	continue;
 
       /* Write output... */
@@ -4356,7 +4356,11 @@ void write_atm(
 	      atm->lon[ip], atm->lat[ip]);
       for (iq = 0; iq < ctl->nq; iq++) {
 	fprintf(out, " ");
-	fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
+	if (ctl->atm_filter == 1
+	    && (atm->time[ip] < t0 || atm->time[ip] > t1))
+	  fprintf(out, ctl->qnt_format[iq], GSL_NAN);
+	else
+	  fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
       }
       fprintf(out, "\n");
     }
