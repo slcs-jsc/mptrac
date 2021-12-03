@@ -1631,7 +1631,7 @@ void get_met(
   }
 
   /* Read new data for forward trajectories... */
-  if (t > (*met1)->time && ctl->direction == 1) {
+  if (t > (*met1)->time) {
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
@@ -1645,7 +1645,7 @@ void get_met(
   }
 
   /* Read new data for backward trajectories... */
-  if (t < (*met0)->time && ctl->direction == -1) {
+  if (t < (*met0)->time) {
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
