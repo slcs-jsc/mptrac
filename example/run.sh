@@ -1,22 +1,22 @@
 #! /bin/bash
 
 # Slurm configuration for JUWELS-Cluster...
-#SBATCH --account=slmet
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
 #SBATCH --cpus-per-task=48
 #SBATCH --time=00:05:00
+#SBATCH --account=slmet
 #SBATCH --partition=batch
 
 ## Slurm configuration for JUWELS-Booster...
-##SBATCH --account=ea_jsc
 ##SBATCH --nodes=1
 ##SBATCH --ntasks=1
 ##SBATCH --ntasks-per-node=1
 ##SBATCH --cpus-per-task=48
 ##SBATCH --time=00:05:00
-##SBATCH --partition=develbooster
+##SBATCH --account=slmet
+##SBATCH --partition=booster
 ##SBATCH --gres=gpu:4
 
 # Load modules (uncomment for JUWELS)...
@@ -29,19 +29,13 @@
 trac=../src
 if [ $# -eq 4 ] ; then
 
-    # Meteo data file...
+    # Individual test case...
     metfile=$1
-
-    # Time step of meteo data...
     dtmet=$2
-
-    # Number of particles...
     np=$3
-
-    # Number of OpenMP threads...
     nthreads=$4
 else
-
+    
     # Default test case...
     metfile=erai_24h.zip
     dtmet=86400
@@ -64,8 +58,9 @@ if [ ! -d $metdir ] ; then
 	&& unzip $metfile && rm $metfile || exit
     cd -
 fi
+metbase=$(basename $(ls $metdir/*.nc | head -1) | awk 'BEGIN{FS="_"}{print $1}')
 
-# Set time range of simulations...
+# Set time range of simulation...
 t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
 t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
@@ -81,7 +76,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = $metdir/ei
+METBASE = $metdir/$metbase
 TDEC_TROP = 259200
 TDEC_STRAT = 259200
 DT_MET = $dtmet
