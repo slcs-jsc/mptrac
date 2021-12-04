@@ -27,19 +27,42 @@
 
 # Setup...
 trac=../src
+if [ $# -eq 4 ] ; then
+
+    # Meteo data file...
+    metfile=$1
+
+    # Time step of meteo data...
+    dtmet=$2
+
+    # Number of particles...
+    np=$3
+
+    # Number of OpenMP threads...
+    nthreads=$4
+else
+
+    # Default test case...
+    metfile=erai_24h.zip
+    dtmet=86400
+    np=10000
+    [ "${SLURM_CPUS_PER_TASK}" ] \
+	&& nthreads=${SLURM_CPUS_PER_TASK} || nthreads=4
+fi
 export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
-[ "${SLURM_CPUS_PER_TASK}" ] \
-    && export OMP_NUM_THREADS=${SLURM_CPUS_PER_TASK} \
-	|| export OMP_NUM_THREADS=4
+export OMP_NUM_THREADS=$nthreads
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots
 
 # Download meteo data...
-if [ ! -d meteo ] ; then
+metdir=meteo_$(basename $metfile .zip)
+if [ ! -d $metdir ] ; then
     echo "Downloading meteo data (this may take a while)..."
-    wget --progress=dot:mega https://datapub.fz-juelich.de/slcs/mptrac/data/example/erai_data.zip \
-	&& unzip erai_data.zip && rm erai_data.zip || exit
+    mkdir -p $metdir && cd $metdir || exit
+    wget --progress=dot:mega https://datapub.fz-juelich.de/slcs/mptrac/data/example/$metfile \
+	&& unzip $metfile && rm $metfile || exit
+    cd -
 fi
 
 # Set time range of simulations...
@@ -58,10 +81,10 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = meteo/ei
+METBASE = $metdir/ei
 TDEC_TROP = 259200
 TDEC_STRAT = 259200
-DT_MET = 86400
+DT_MET = $dtmet
 T_STOP = $t1
 GRID_LON0 = -90
 GRID_LON1 = 60
@@ -80,7 +103,7 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
+		SPLIT_N $np SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
 
 # Calculate trajectories...
 echo "data" > data/dirlist
@@ -110,7 +133,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "meteo/wcl.tab" u 1:2 w l lt -1 t "", \
+    "$metdir/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -140,7 +163,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "meteo/wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "$metdir/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e

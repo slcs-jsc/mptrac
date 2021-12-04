@@ -3,7 +3,7 @@ docs/html/
 docs/latex/
 example/data/
 example/plots/
-example/meteo/
+example/meteo*/
 libs/build/
 projects/
 src/atm_conv
