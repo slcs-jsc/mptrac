@@ -2206,6 +2206,33 @@ int read_atm(
   if (atm->np < 1)
     ERRMSG("Can not read any data!");
 
+  /* Write info... */
+  LOG(2, "Number of particles: %d", atm->np);
+  LOG(2, "Time range: %.2f ... %.2f s",
+      gsl_stats_min(atm->time, 1, (size_t) atm->np),
+      gsl_stats_max(atm->time, 1, (size_t) atm->np));
+  LOG(2, "Altitude range: %g ... %g km",
+      Z(gsl_stats_max(atm->p, 1, (size_t) atm->np)),
+      Z(gsl_stats_min(atm->p, 1, (size_t) atm->np)));
+  LOG(2, "Pressure range: %g ... %g hPa",
+      gsl_stats_min(atm->p, 1, (size_t) atm->np),
+      gsl_stats_max(atm->p, 1, (size_t) atm->np));
+  LOG(2, "Longitude range: %g ... %g deg",
+      gsl_stats_min(atm->lon, 1, (size_t) atm->np),
+      gsl_stats_max(atm->lon, 1, (size_t) atm->np));
+  LOG(2, "Latitude range: %g ... %g deg",
+      gsl_stats_min(atm->lat, 1, (size_t) atm->np),
+      gsl_stats_max(atm->lat, 1, (size_t) atm->np));
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    char msg[LEN];
+    sprintf(msg, "Quantity %s range: %s ... %s %s",
+	    ctl->qnt_name[iq], ctl->qnt_format[iq],
+	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
+    LOG(2, msg,
+	gsl_stats_min(atm->q[iq], 1, (size_t) atm->np),
+	gsl_stats_max(atm->q[iq], 1, (size_t) atm->np));
+  }
+
   /* Return success... */
   return 1;
 }
@@ -3219,6 +3246,8 @@ void read_met_grid(
     NC(nc_get_var_double(ncid, varid, met->p));
     for (int ip = 0; ip < met->np; ip++)
       met->p[ip] /= 100.;
+    LOG(2, "Altitude levels: %g, %g ... %g km",
+	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
     LOG(2, "Pressure levels: %g, %g ... %g hPa",
 	met->p[0], met->p[1], met->p[met->np - 1]);
   }
@@ -4290,7 +4319,7 @@ void write_atm(
 
   double r, t0, t1;
 
-  int ip, iq, year, mon, day, hour, min, sec;
+  int year, mon, day, hour, min, sec;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_ATM", NVTX_WRITE);
@@ -4340,13 +4369,13 @@ void write_atm(
 	    "# $1 = time [s]\n"
 	    "# $2 = altitude [km]\n"
 	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-    for (iq = 0; iq < ctl->nq; iq++)
+    for (int iq = 0; iq < ctl->nq; iq++)
       fprintf(out, "# $%i = %s [%s]\n", iq + 5, ctl->qnt_name[iq],
 	      ctl->qnt_unit[iq]);
     fprintf(out, "\n");
 
     /* Write data... */
-    for (ip = 0; ip < atm->np; ip += ctl->atm_stride) {
+    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
 
       /* Check time... */
       if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
@@ -4355,7 +4384,7 @@ void write_atm(
       /* Write output... */
       fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
 	      atm->lon[ip], atm->lat[ip]);
-      for (iq = 0; iq < ctl->nq; iq++) {
+      for (int iq = 0; iq < ctl->nq; iq++) {
 	fprintf(out, " ");
 	if (ctl->atm_filter == 1
 	    && (atm->time[ip] < t0 || atm->time[ip] > t1))
@@ -4393,7 +4422,7 @@ void write_atm(
     FWRITE(atm->lat, double,
 	     (size_t) atm->np,
 	   out);
-    for (iq = 0; iq < ctl->nq; iq++)
+    for (int iq = 0; iq < ctl->nq; iq++)
       FWRITE(atm->q[iq], double,
 	       (size_t) atm->np,
 	     out);
@@ -4405,6 +4434,33 @@ void write_atm(
   /* Error... */
   else
     ERRMSG("Atmospheric data type not supported!");
+
+  /* Write info... */
+  LOG(2, "Number of particles: %d", atm->np);
+  LOG(2, "Time range: %.2f ... %.2f s",
+      gsl_stats_min(atm->time, 1, (size_t) atm->np),
+      gsl_stats_max(atm->time, 1, (size_t) atm->np));
+  LOG(2, "Altitude range: %g ... %g km",
+      Z(gsl_stats_max(atm->p, 1, (size_t) atm->np)),
+      Z(gsl_stats_min(atm->p, 1, (size_t) atm->np)));
+  LOG(2, "Pressure range: %g ... %g hPa",
+      gsl_stats_min(atm->p, 1, (size_t) atm->np),
+      gsl_stats_max(atm->p, 1, (size_t) atm->np));
+  LOG(2, "Longitude range: %g ... %g deg",
+      gsl_stats_min(atm->lon, 1, (size_t) atm->np),
+      gsl_stats_max(atm->lon, 1, (size_t) atm->np));
+  LOG(2, "Latitude range: %g ... %g deg",
+      gsl_stats_min(atm->lat, 1, (size_t) atm->np),
+      gsl_stats_max(atm->lat, 1, (size_t) atm->np));
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    char msg[LEN];
+    sprintf(msg, "Quantity %s range: %s ... %s %s",
+	    ctl->qnt_name[iq], ctl->qnt_format[iq],
+	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
+    LOG(2, msg,
+	gsl_stats_min(atm->q[iq], 1, (size_t) atm->np),
+	gsl_stats_max(atm->q[iq], 1, (size_t) atm->np));
+  }
 }
 
 /*****************************************************************************/
