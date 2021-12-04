@@ -54,7 +54,7 @@ metdir=meteo_$(basename $metfile .zip)
 if [ ! -d $metdir ] ; then
     echo "Downloading meteo data (this may take a while)..."
     mkdir -p $metdir && cd $metdir || exit
-    wget --progress=dot:mega https://datapub.fz-juelich.de/slcs/mptrac/data/example/$metfile \
+    wget --progress=dot:giga https://datapub.fz-juelich.de/slcs/mptrac/data/example/$metfile \
 	&& unzip $metfile && rm $metfile || exit
     cd -
 fi
