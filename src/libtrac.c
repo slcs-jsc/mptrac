@@ -2223,7 +2223,8 @@ void read_ctl(
 
   /* Write info... */
   LOG(1, "\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
-      "(executable: %s | compiled: %s, %s)\n", argv[0], __DATE__, __TIME__);
+      "(executable: %s | version: %s | compiled: %s, %s)\n",
+      argv[0], VERSION, __DATE__, __TIME__);
 
   /* Initialize quantity indices... */
   ctl->qnt_ens = -1;
