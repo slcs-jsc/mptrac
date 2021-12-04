@@ -467,13 +467,13 @@
 
 /*! Print timers. */
 #define PRINT_TIMERS				\
-  timer("END", 1);
+  timer("END", "END", 1);
 
 /*! Select timer. */
-#define SELECT_TIMER(id, color) {					\
+#define SELECT_TIMER(id, group, color) {				\
     NVTX_POP;								\
     NVTX_PUSH(id, color);						\
-    timer(id, 0);							\
+    timer(id, group, 0);						\
   }
 
 /*! Start timers. */
@@ -508,9 +508,6 @@
 
 /*! Dark red color code (writing data). */
 #define NVTX_WRITE 0xFF8B0000
-
-/*! Gray color code (other). */
-#define NVTX_MISC 0xFF808080
 
 /*! Macro for calling nvtxRangePushEx. */
 #define NVTX_PUSH(range_title, range_color) {		\
@@ -1579,6 +1576,7 @@ void time2jsec(
 /*! Measure wall-clock time. */
 void timer(
   const char *name,
+  const char *group,
   int output);
 
 /*! Get weighting factor based on tropopause distance. */

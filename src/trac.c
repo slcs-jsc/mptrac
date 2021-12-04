@@ -195,7 +195,7 @@ int main(
 
   /* Initialize MPI... */
 #ifdef MPI
-  SELECT_TIMER("MPI_INIT", NVTX_CPU);
+  SELECT_TIMER("MPI_INIT", "INIT", NVTX_CPU);
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -203,7 +203,7 @@ int main(
 
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  SELECT_TIMER("ACC_INIT", NVTX_GPU);
+  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
   num_devices = acc_get_num_devices(acc_device_nvidia);
   if (num_devices <= 0)
     ERRMSG("Not running on a GPU device!");
@@ -233,7 +233,7 @@ int main(
        ------------------------------------------------------------ */
 
     /* Allocate... */
-    SELECT_TIMER("ALLOC", NVTX_CPU);
+    SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(met0, met_t, 1);
@@ -245,7 +245,7 @@ int main(
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
-    SELECT_TIMER("CREATE_DATA_REGION", NVTX_GPU);
+    SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc enter data create(atm[:1],cache[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
 #endif
 
@@ -259,7 +259,7 @@ int main(
       ERRMSG("Cannot open file!");
 
     /* Set start time... */
-    SELECT_TIMER("TIMESTEPS", NVTX_CPU);
+    SELECT_TIMER("TIMESTEPS", "PHYSICS", NVTX_CPU);
     if (ctl.direction == 1) {
       ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
       if (ctl.t_stop > 1e99)
@@ -282,7 +282,7 @@ int main(
 
     /* Update GPU... */
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1],ctl)
 #endif
 
@@ -300,7 +300,7 @@ int main(
 
     /* Update GPU... */
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(cache[:1])
 #endif
 
@@ -317,7 +317,7 @@ int main(
 	t = ctl.t_stop;
 
       /* Set time steps for air parcels... */
-      SELECT_TIMER("TIMESTEPS", NVTX_GPU);
+      SELECT_TIMER("TIMESTEPS", "PHYSICS", NVTX_GPU);
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector present(ctl,atm,atm->time,dt)
 #endif
@@ -426,12 +426,12 @@ int main(
 
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
-    SELECT_TIMER("DELETE_DATA_REGION", NVTX_GPU);
+    SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
 #endif
 
     /* Free... */
-    SELECT_TIMER("FREE", NVTX_CPU);
+    SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
     free(atm);
     free(cache);
     free(met0);
@@ -463,7 +463,7 @@ void module_advection(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", NVTX_GPU);
+  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
@@ -515,7 +515,7 @@ void module_bound_cond(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_BOUNDCOND", NVTX_GPU);
+  SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -568,7 +568,7 @@ void module_convection(
   double *rs) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CONVECTION", NVTX_GPU);
+  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
   module_rng(rs, (size_t) atm->np, 0);
@@ -621,7 +621,7 @@ void module_decay(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DECAY", NVTX_GPU);
+  SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -663,7 +663,7 @@ void module_diffusion_meso(
   double *rs) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TURBMESO", NVTX_GPU);
+  SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
   module_rng(rs, 3 * (size_t) atm->np, 1);
@@ -786,7 +786,7 @@ void module_diffusion_turb(
   double *rs) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TURBDIFF", NVTX_GPU);
+  SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
   module_rng(rs, 3 * (size_t) atm->np, 1);
@@ -833,7 +833,7 @@ void module_dry_deposition(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DRYDEPO", NVTX_GPU);
+  SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
 
   /* Width of the surface layer [hPa]. */
   const double dp = 30.;
@@ -904,7 +904,7 @@ void module_isosurf_init(
   double t;
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF", NVTX_GPU);
+  SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
   /* Init... */
   INTPOL_INIT;
@@ -964,7 +964,7 @@ void module_isosurf(
   cache_t * cache) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF", NVTX_GPU);
+  SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,cache)
@@ -1020,7 +1020,7 @@ void module_meteo(
   atm_t * atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_METEO", NVTX_GPU);
+  SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_tsts >= 0)
@@ -1105,7 +1105,7 @@ void module_position(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_POSITION", NVTX_GPU);
+  SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
@@ -1240,7 +1240,7 @@ void module_sedi(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SEDI", NVTX_GPU);
+  SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
 
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
@@ -1275,7 +1275,7 @@ void module_oh_chem(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_OHCHEM", NVTX_GPU);
+  SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -1340,7 +1340,7 @@ void module_wet_deposition(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_WETDEPO", NVTX_GPU);
+  SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -1464,7 +1464,7 @@ void write_output(
       || ctl->csi_basename[0] != '-' || ctl->ens_basename[0] != '-'
       || ctl->prof_basename[0] != '-' || ctl->sample_basename[0] != '-'
       || ctl->stat_basename[0] != '-') {
-    SELECT_TIMER("UPDATE_HOST", NVTX_D2H);
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
   }
 #endif
