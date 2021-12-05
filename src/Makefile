@@ -69,9 +69,9 @@ DEFINES += -DVERSION=\"$(VERSION)\"
 # Set CC and CFLAGS...
 CFLAGS += $(INCDIR) $(DEFINES) $(OPT) -g
 ifeq ($(GPU),1)
-  CC = pgcc
+  CC = nvc
   CFLAGS += -mp -mcmodel=medium -acc
-else ifeq ($(CC),pgcc)
+else ifeq ($(CC),nvc)
   CFLAGS += -mp -mcmodel=medium
 else
   CC = gcc
@@ -102,7 +102,7 @@ endif
 
 # Optimization information...
 ifeq ($(INFO),1)
-  ifeq ($(CC),pgcc)
+  ifeq ($(CC),nvc)
     CFLAGS += -Minfo=all
   else
     CFLAGS += -fopt-info
