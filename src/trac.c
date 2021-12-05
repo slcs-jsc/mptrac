@@ -116,6 +116,14 @@ void module_meteo(
   met_t * met1,
   atm_t * atm);
 
+/*! Calculate OH chemistry. */
+void module_oh_chem(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
 /*! Check position of air parcels. */
 void module_position(
   met_t * met0,
@@ -141,13 +149,17 @@ void module_sedi(
   atm_t * atm,
   double *dt);
 
-/*! Calculate OH chemistry. */
-void module_oh_chem(
+/*! Calculate time steps. */
+void module_timesteps(
   ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
-  double *dt);
+  double *dt,
+  double t);
+
+/*! Initialize timesteps. */
+void module_timesteps_init(
+  ctl_t * ctl,
+  atm_t * atm);
 
 /*! Calculate wet deposition. */
 void module_wet_deposition(
@@ -258,27 +270,8 @@ int main(
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
 
-    /* Set start time... */
-    SELECT_TIMER("TIMESTEPS", "PHYSICS", NVTX_CPU);
-    if (ctl.direction == 1) {
-      ctl.t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
-      if (ctl.t_stop > 1e99)
-	ctl.t_stop = gsl_stats_max(atm->time, 1, (size_t) atm->np);
-    } else {
-      ctl.t_start = gsl_stats_max(atm->time, 1, (size_t) atm->np);
-      if (ctl.t_stop > 1e99)
-	ctl.t_stop = gsl_stats_min(atm->time, 1, (size_t) atm->np);
-    }
-
-    /* Check time interval... */
-    if (ctl.direction * (ctl.t_stop - ctl.t_start) <= 0)
-      ERRMSG("Nothing to do! Check T_STOP and DIRECTION!");
-
-    /* Round start time... */
-    if (ctl.direction == 1)
-      ctl.t_start = floor(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
-    else
-      ctl.t_start = ceil(ctl.t_start / ctl.dt_mod) * ctl.dt_mod;
+    /* Initialize timesteps... */
+    module_timesteps_init(&ctl, atm);
 
     /* Update GPU... */
 #ifdef _OPENACC
@@ -1098,6 +1091,71 @@ void module_meteo(
 
 /*****************************************************************************/
 
+void module_oh_chem(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
+
+#ifdef _OPENACC
+#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      /* Get temperature... */
+      double t;
+      INTPOL_INIT;
+      INTPOL_3D(t, 1);
+
+      /* Use constant reaction rate... */
+      double k = GSL_NAN;
+      if (ctl->oh_chem_reaction == 1)
+	k = ctl->oh_chem[0];
+
+      /* Calculate bimolecular reaction rate... */
+      else if (ctl->oh_chem_reaction == 2)
+	k = ctl->oh_chem[0] * exp(-ctl->oh_chem[1] / t);
+
+      /* Calculate termolecular reaction rate... */
+      if (ctl->oh_chem_reaction == 3) {
+
+	/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
+	double M = 7.243e21 * (atm->p[ip] / 1000.) / t;
+
+	/* Calculate rate coefficient for X + OH + M -> XOH + M
+	   (JPL Publication 19-05) ... */
+	double k0 = ctl->oh_chem[0] *
+	  (ctl->oh_chem[1] > 0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
+	double ki = ctl->oh_chem[2] *
+	  (ctl->oh_chem[3] > 0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
+	double c = log10(k0 * M / ki);
+	k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
+      }
+
+      /* Calculate exponential decay... */
+      double aux
+	= exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+      if (ctl->qnt_m >= 0)
+	atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] *= aux;
+    }
+}
+
+/*****************************************************************************/
+
 void module_position(
   met_t * met0,
   met_t * met1,
@@ -1267,67 +1325,60 @@ void module_sedi(
 
 /*****************************************************************************/
 
-void module_oh_chem(
+void module_timesteps(
   ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
-  double *dt) {
+  double *dt,
+  double t) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
-
-  /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
-    ERRMSG("Module needs quantity mass or volume mixing ratio!");
+  SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
 
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < atm->np; ip++)
-    if (dt[ip] != 0) {
+  for (int ip = 0; ip < atm->np; ip++) {
+    if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
+	 && ctl->direction * (atm->time[ip] - ctl->t_stop) <= 0
+	 && ctl->direction * (atm->time[ip] - t) < 0))
+      dt[ip] = t - atm->time[ip];
+    else
+      dt[ip] = 0.0;
+  }
+}
 
-      /* Get temperature... */
-      double t;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
+/*****************************************************************************/
 
-      /* Use constant reaction rate... */
-      double k = GSL_NAN;
-      if (ctl->oh_chem_reaction == 1)
-	k = ctl->oh_chem[0];
+void module_timesteps_init(
+  ctl_t * ctl,
+  atm_t * atm) {
 
-      /* Calculate bimolecular reaction rate... */
-      else if (ctl->oh_chem_reaction == 2)
-	k = ctl->oh_chem[0] * exp(-ctl->oh_chem[1] / t);
+  /* Set timer... */
+  SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
 
-      /* Calculate termolecular reaction rate... */
-      if (ctl->oh_chem_reaction == 3) {
+  /* Set start time... */
+  if (ctl->direction == 1) {
+    ctl->t_start = gsl_stats_min(atm->time, 1, (size_t) atm->np);
+    if (ctl->t_stop > 1e99)
+      ctl->t_stop = gsl_stats_max(atm->time, 1, (size_t) atm->np);
+  } else {
+    ctl->t_start = gsl_stats_max(atm->time, 1, (size_t) atm->np);
+    if (ctl->t_stop > 1e99)
+      ctl->t_stop = gsl_stats_min(atm->time, 1, (size_t) atm->np);
+  }
 
-	/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-	double M = 7.243e21 * (atm->p[ip] / 1000.) / t;
+  /* Check time interval... */
+  if (ctl->direction * (ctl->t_stop - ctl->t_start) <= 0)
+    ERRMSG("Nothing to do! Check T_STOP and DIRECTION!");
 
-	/* Calculate rate coefficient for X + OH + M -> XOH + M
-	   (JPL Publication 19-05) ... */
-	double k0 = ctl->oh_chem[0] *
-	  (ctl->oh_chem[1] > 0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
-	double ki = ctl->oh_chem[2] *
-	  (ctl->oh_chem[3] > 0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
-	double c = log10(k0 * M / ki);
-	k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
-      }
-
-      /* Calculate exponential decay... */
-      double aux
-	= exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
-      if (ctl->qnt_m >= 0)
-	atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] *= aux;
-    }
+  /* Round start time... */
+  if (ctl->direction == 1)
+    ctl->t_start = floor(ctl->t_start / ctl->dt_mod) * ctl->dt_mod;
+  else
+    ctl->t_start = ceil(ctl->t_start / ctl->dt_mod) * ctl->dt_mod;
 }
 
 /*****************************************************************************/
