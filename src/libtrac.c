@@ -1745,15 +1745,19 @@ void intpol_met_space_3d(
   double *cw,
   int init) {
 
-  /* Check longitude... */
-  if (met->lon[met->nx - 1] > 180 && lon < 0)
-    lon += 360;
-
-  /* Get interpolation indices and weights... */
+  /* Initialize interpolation... */
   if (init) {
+
+    /* Check longitude... */
+    if (met->lon[met->nx - 1] > 180 && lon < 0)
+      lon += 360;
+
+    /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
     ci[1] = locate_reg(met->lon, met->nx, lon);
     ci[2] = locate_reg(met->lat, met->ny, lat);
+
+    /* Get interpolation weights... */
     cw[0] = (met->p[ci[0] + 1] - p)
       / (met->p[ci[0] + 1] - met->p[ci[0]]);
     cw[1] = (met->lon[ci[1] + 1] - lon)
@@ -1798,14 +1802,18 @@ void intpol_met_space_2d(
   double *cw,
   int init) {
 
-  /* Check longitude... */
-  if (met->lon[met->nx - 1] > 180 && lon < 0)
-    lon += 360;
-
-  /* Get interpolation indices and weights... */
+  /* Initialize interpolation... */
   if (init) {
+
+    /* Check longitude... */
+    if (met->lon[met->nx - 1] > 180 && lon < 0)
+      lon += 360;
+
+    /* Get interpolation indices... */
     ci[1] = locate_reg(met->lon, met->nx, lon);
     ci[2] = locate_reg(met->lat, met->ny, lat);
+
+    /* Get interpolation weights... */
     cw[1] = (met->lon[ci[1] + 1] - lon)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
     cw[2] = (met->lat[ci[2] + 1] - lat)
