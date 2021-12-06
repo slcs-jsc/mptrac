@@ -33,7 +33,7 @@ fi
 
 # Set environment...
 export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
-[ $4 -gt 0 ] || export OMP_NUM_THREADS=$4
+[ $4 -gt 0 ] && export OMP_NUM_THREADS=$4
 
 # Set variables...
 trac=../src
