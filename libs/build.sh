@@ -45,12 +45,12 @@ fi
 # netCDF...
 dir=netcdf-c-4.8.1
 cd $target/src/$dir \
-    && CPPFLAGS=-I$target/include LDFLAGS=-L$target/lib ./configure --prefix=$target --disable-dap $([ $1 != "nc4" ] && echo "--disable-netcdf-4") \
+    && CPPFLAGS=-I$target/include LDFLAGS=-L$target/lib ./configure --prefix=$target --disable-dap --disable-nczarr $([ $1 != "nc4" ] && echo "--disable-netcdf-4") \
     && make -j$threads && make check && make install && make clean \
 	|| exit
 
 # Summary...
 echo -e "\n***** gsl-config *****\n"
-./build/bin/gsl-config --libs --cflags --version
+$target/bin/gsl-config --libs --cflags --version
 echo -e "\n***** nc-config *****"
-./build/bin/nc-config --all
+$target/bin/nc-config --all
