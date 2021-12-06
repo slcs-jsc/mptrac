@@ -16,4 +16,4 @@ jobs:
     - name: make
       run: cd src ; make STATIC=0
     - name: example
-      run: cd example ; ./run.sh
+      run: cd example ; ./run.sh erai 86400 10000 4
