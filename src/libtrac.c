@@ -2577,10 +2577,6 @@ void read_ctl(
   } else {
     ctl->molmass =
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
-    ctl->tdec_trop =
-      scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
-    ctl->tdec_strat =
-      scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
     ctl->oh_chem_reaction =
       (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
     for (int ip = 0; ip < 4; ip++)
@@ -2593,6 +2589,9 @@ void read_ctl(
       ctl->wet_depo[ip] =
 	scan_ctl(filename, argc, argv, "WET_DEPO", ip, "0", NULL);
   }
+  ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
+  ctl->tdec_strat =
+    scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);

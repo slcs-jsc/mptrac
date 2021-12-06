@@ -384,7 +384,7 @@ int main(
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
 
       /* Boundary conditions... */
-      if (ctl.bound_mass > 0 || ctl.bound_vmr > 0)
+      if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0)
 	module_bound_cond(&ctl, met0, met1, atm, dt);
 
       /* Write output... */
@@ -543,9 +543,9 @@ void module_bound_cond(
       }
 
       /* Set mass and volume mixing ratio... */
-      if (ctl->qnt_m >= 0)
+      if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
 	atm->q[ctl->qnt_m][ip] = ctl->bound_mass;
-      if (ctl->qnt_vmr >= 0)
+      if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] = ctl->bound_vmr;
     }
 }
