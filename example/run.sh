@@ -25,42 +25,37 @@
 #ml GCC ParaStationMPI     # for MPI runs
 #ml NVHPC ParaStationMPI   # for GPU runs
 
-# Setup...
-trac=../src
-if [ $# -eq 4 ] ; then
-
-    # Individual test case...
-    metfile=$1
-    dtmet=$2
-    np=$3
-    nthreads=$4
-else
-    
-    # Default test case...
-    metfile=erai_24h.zip
-    dtmet=86400
-    np=10000
-    [ "${SLURM_CPUS_PER_TASK}" ] \
-	&& nthreads=${SLURM_CPUS_PER_TASK} || nthreads=4
+# Check arguments...
+if [ $# -ne 4 ] ; then
+    echo "usage: $0 <meteo> <dtmet> <np> <nthreads>"
+    exit
 fi
-export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=$nthreads
 
-# Create directories...
-rm -rf data plots && mkdir -p data plots
+# Set environment...
+export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
+[ $4 -gt 0 ] || export OMP_NUM_THREADS=$4
+
+# Set variables...
+trac=../src
+meteo=$1
+dtmet=$2
+np=$3
 
 # Download meteo data...
-metdir=meteo_$(basename $metfile .zip)
+metdir=meteo_${meteo}_${dtmet}s
 if [ ! -d $metdir ] ; then
     echo "Downloading meteo data (this may take a while)..."
     mkdir -p $metdir && cd $metdir || exit
-    wget --progress=dot:giga https://datapub.fz-juelich.de/slcs/mptrac/data/example/$metfile \
-	&& unzip $metfile && rm $metfile || exit
+    wget --progress=dot:giga https://datapub.fz-juelich.de/slcs/mptrac/data/test_case/${meteo}_${dtmet}s.zip \
+	&& unzip ${meteo}_${dtmet}s.zip && rm ${meteo}_${dtmet}s.zip || exit
     cd -
 fi
 metbase=$(basename $(ls $metdir/*.nc | head -1) | awk 'BEGIN{FS="_"}{print $1}')
 
-# Set time range of simulation...
+# Create directories...
+rm -rf data plots && mkdir -p data plots
+
+# Set timestep and timerange of simulation...
 t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
 t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
@@ -168,7 +163,7 @@ done
 # Compare atm and grid file...
 echo
 error=0
-for f in $(ls data.ref/atm*tab) $(ls data.ref/grid*tab) ; do
+for f in $(ls data.ref/atm*tab data.ref/grid*tab) ; do
     diff -q -s data/$(basename $f) $f
     [ $? -ne 0 ] && error=1
 done

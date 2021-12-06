@@ -145,7 +145,7 @@ libtrac.o: libtrac.c libtrac.h Makefile
 	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
 
 check: all
-	cd ../example && ./run.sh
+	cd ../example && ./run.sh erai 86400 10000 4
 
 clean:
 	rm -f $(EXC) *.o *~
