@@ -309,22 +309,8 @@ int main(
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
 
-      /* Set time steps for air parcels... */
-      SELECT_TIMER("TIMESTEPS", "PHYSICS", NVTX_GPU);
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector present(ctl,atm,atm->time,dt)
-#endif
-      for (int ip = 0; ip < atm->np; ip++) {
-	double atmtime = atm->time[ip];
-	double tstart = ctl.t_start;
-	double tstop = ctl.t_stop;
-	int dir = ctl.direction;
-	if ((dir * (atmtime - tstart) >= 0 && dir * (atmtime - tstop) <= 0
-	     && dir * (atmtime - t) < 0))
-	  dt[ip] = t - atmtime;
-	else
-	  dt[ip] = 0;
-      }
+      /* Set time steps of air parcels... */
+      module_timesteps(&ctl, atm, dt, t);
 
       /* Get meteorological data... */
       if (t != ctl.t_start)
