@@ -61,7 +61,7 @@ NVTX ?= 0
 # -----------------------------------------------------------------------------
 
 # Get git version...
-VERSION := "$(shell git describe --abbrev=4 --dirty --always --tags)"
+VERSION ?= "$(shell git describe --abbrev=4 --dirty --always --tags)"
 
 # Set defines...
 DEFINES += -DVERSION=\"$(VERSION)\"
