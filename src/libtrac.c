@@ -2002,11 +2002,11 @@ int locate_reg(
 
   /* Check range... */
   if (i < 0)
-    i = 0;
-  else if (i >= n - 2)
-    i = n - 2;
-
-  return i;
+    return 0;
+  else if (i > n - 2)
+    return n - 2;
+  else
+    return i;
 }
 
 /*****************************************************************************/
