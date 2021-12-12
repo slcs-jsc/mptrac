@@ -1606,7 +1606,7 @@ void get_met(
 
   met_t *mets;
 
-  char filename[LEN];
+  char cachefile[LEN], cmd[2 * LEN], filename[LEN];
 
   /* Set timer... */
   SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
@@ -1615,47 +1615,78 @@ void get_met(
   if (t == ctl->t_start || !init) {
     init = 1;
 
+    /* Read meteo data... */
     get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
-
+    
     get_met_help(t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
 		 filename);
     if (!read_met(ctl, filename, *met1))
       ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
 #ifdef _OPENACC
     met_t *met0up = *met0;
     met_t *met1up = *met1;
 #pragma acc update device(met0up[:1],met1up[:1])
 #endif
+
+    /* Caching... */
+    get_met_help(t + 1.1 * ctl->dt_met * ctl->direction, ctl->direction,
+		 ctl->metbase, ctl->dt_met, cachefile);
+    sprintf(cmd, "cat %s > /dev/null &", cachefile);
+    LOG(1, "Caching: %s (result: %d)", cachefile, system(cmd));
   }
 
   /* Read new data for forward trajectories... */
   if (t > (*met1)->time) {
+
+    /* Pointer swap... */
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
+    
+    /* Read new meteo data... */
     get_met_help(t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met1))
       ERRMSG("Cannot open file!");
+    
+    /* Update GPU... */
 #ifdef _OPENACC
     met_t *met1up = *met1;
 #pragma acc update device(met1up[:1])
 #endif
+    
+    /* Caching... */
+    get_met_help(t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met, cachefile);
+    sprintf(cmd, "cat %s > /dev/null &", cachefile);
+    LOG(1, "Caching: %s (result: %d)", cachefile, system(cmd));
   }
 
   /* Read new data for backward trajectories... */
   if (t < (*met0)->time) {
+
+    /* Pointer swap... */
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
+
+    /* Read new meteo data... */
     get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
 #ifdef _OPENACC
     met_t *met0up = *met0;
 #pragma acc update device(met0up[:1])
 #endif
+
+    /* Caching... */
+    get_met_help(t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met, cachefile);
+    sprintf(cmd, "cat %s > /dev/null &", cachefile);
+    LOG(1, "Caching: %s (result: %d)", cachefile, system(cmd));
   }
 
   /* Check that grids are consistent... */
