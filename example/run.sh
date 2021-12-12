@@ -1,6 +1,6 @@
 #! /bin/bash
 
-# Slurm configuration for JUWELS-Cluster...
+# Example Slurm configuration for JUWELS Cluster...
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --ntasks-per-node=1
@@ -9,48 +9,41 @@
 #SBATCH --account=slmet
 #SBATCH --partition=batch
 
-## Slurm configuration for JUWELS-Booster...
+## Example Slurm configuration for JUWELS Booster...
 ##SBATCH --nodes=1
 ##SBATCH --ntasks=1
 ##SBATCH --ntasks-per-node=1
-##SBATCH --cpus-per-task=48
+##SBATCH --cpus-per-task=12
 ##SBATCH --time=00:05:00
 ##SBATCH --account=slmet
 ##SBATCH --partition=booster
 ##SBATCH --gres=gpu:4
 
-# Load modules (uncomment for JUWELS)...
+# Load modules (as needed)...
 #ml purge
-#ml gnuplot
 #ml GCC ParaStationMPI     # for MPI runs
 #ml NVHPC ParaStationMPI   # for GPU runs
-
-# Check arguments...
-if [ $# -ne 4 ] ; then
-    echo "usage: $0 <meteo> <dtmet> <np> <nthreads>"
-    exit
-fi
+#ml gnuplot
 
 # Set environment...
 export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
-[ $4 -gt 0 ] && export OMP_NUM_THREADS=$4
+export OMP_NUM_THREADS=4
 
 # Set variables...
 trac=../src
-meteo=$1
-dtmet=$2
-np=$3
+metfile=erai_86400s.zip
+metbase=meteo/ei
+dtmet=86400
+np=10000
 
 # Download meteo data...
-metdir=meteo_${meteo}_${dtmet}s
-if [ ! -d $metdir ] ; then
-    echo "Downloading meteo data (this may take a while)..."
-    mkdir -p $metdir && cd $metdir || exit
-    wget --progress=dot:giga https://datapub.fz-juelich.de/slcs/mptrac/data/test_case/${meteo}_${dtmet}s.zip \
-	&& unzip ${meteo}_${dtmet}s.zip && rm ${meteo}_${dtmet}s.zip || exit
+if [ ! -d meteo ] ; then
+    echo "Downloading $metfile (this may take a while)..."
+    mkdir -p meteo && cd meteo || exit
+    wget --progress=dot:giga https://datapub.fz-juelich.de/slcs/mptrac/data/test_case/$metfile \
+	&& unzip $metfile && rm $metfile || exit
     cd -
 fi
-metbase=$(basename $(ls $metdir/*.nc | head -1) | awk 'BEGIN{FS="_"}{print $1}')
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots
@@ -71,7 +64,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = $metdir/$metbase
+METBASE = meteo/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
 BOUND_MASS = 0.0
@@ -128,7 +121,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "$metdir/wcl.tab" u 1:2 w l lt -1 t "", \
+    "meteo/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -158,14 +151,14 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "$metdir/wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "meteo/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e
 EOF
 done
 
-# Compare atm and grid file...
+# Compare files...
 echo
 error=0
 for f in $(ls data.ref/atm*tab data.ref/grid*tab) ; do
