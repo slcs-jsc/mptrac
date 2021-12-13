@@ -1633,10 +1633,14 @@ void get_met(
 #endif
 
     /* Caching... */
-    get_met_help(t + 1.1 * ctl->dt_met * ctl->direction, ctl->direction,
-		 ctl->metbase, ctl->dt_met, cachefile);
-    sprintf(cmd, "cat %s > /dev/null &", cachefile);
-    LOG(1, "Caching: %s (result: %d)", cachefile, system(cmd));
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(t + 1.1 * ctl->dt_met * ctl->direction, ctl->direction,
+		   ctl->metbase, ctl->dt_met, cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
   }
 
   /* Read new data for forward trajectories... */
@@ -1659,9 +1663,13 @@ void get_met(
 #endif
 
     /* Caching... */
-    get_met_help(t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met, cachefile);
-    sprintf(cmd, "cat %s > /dev/null &", cachefile);
-    LOG(1, "Caching: %s (result: %d)", cachefile, system(cmd));
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met, cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
   }
 
   /* Read new data for backward trajectories... */
@@ -1684,9 +1692,13 @@ void get_met(
 #endif
 
     /* Caching... */
-    get_met_help(t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met, cachefile);
-    sprintf(cmd, "cat %s > /dev/null &", cachefile);
-    LOG(1, "Caching: %s (result: %d)", cachefile, system(cmd));
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met, cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
   }
 
   /* Check that grids are consistent... */
@@ -2477,6 +2489,8 @@ void read_ctl(
     ERRMSG("Set MET_CLOUD = 0 ... 3!");
   ctl->met_dt_out =
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
+  ctl->met_cache =
+    (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "1", NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf =

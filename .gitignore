@@ -6,6 +6,7 @@ example/plots/
 example/meteo*/
 libs/build/
 projects/
+src/*.o
 src/atm_conv
 src/atm_dist
 src/atm_init

@@ -795,6 +795,9 @@ typedef struct {
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
 
+  /*! Preload meteo data into disk cache (0=no, 1=yes). */
+  double met_cache;
+
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;
