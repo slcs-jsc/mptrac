@@ -797,10 +797,7 @@ typedef struct {
 
   /*! Preload meteo data into disk cache (0=no, 1=yes). */
   double met_cache;
-
-  /*! Use packed meteo data (0=no, 1=yes). */
-  double met_packed;
-
+  
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;
@@ -1474,7 +1471,6 @@ void read_met_grid(
 /*! Read and convert 3D variable from meteorological data file. */
 int read_met_help_3d(
   int ncid,
-  ctl_t * ctl,
   char *varname,
   char *varname2,
   met_t * met,
@@ -1485,7 +1481,6 @@ int read_met_help_3d(
 /*! Read and convert 2D variable from meteorological data file. */
 int read_met_help_2d(
   int ncid,
-  ctl_t * ctl,
   char *varname,
   char *varname2,
   met_t * met,
@@ -1525,7 +1520,6 @@ void read_met_sample(
 /*! Read surface data. */
 void read_met_surface(
   int ncid,
-  ctl_t * ctl,
   met_t * met);
 
 /*! Calculate tropopause data. */

@@ -2491,8 +2491,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
   ctl->met_cache =
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
-  ctl->met_packed =
-    (int) scan_ctl(filename, argc, argv, "MET_PACKED", -1, "0", NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf =
@@ -2778,7 +2776,7 @@ int read_met(
   read_met_extrapolate(met);
 
   /* Read surface data... */
-  read_met_surface(ncid, ctl, met);
+  read_met_surface(ncid, met);
 
   /* Create periodic boundary conditions... */
   read_met_periodic(met);
@@ -3311,13 +3309,14 @@ void read_met_grid(
 
 int read_met_help_3d(
   int ncid,
-  ctl_t * ctl,
   char *varname,
   char *varname2,
   met_t * met,
   float dest[EX][EY][EP],
   float scl,
   int init) {
+
+  float offset, scalfac;
 
   int varid;
 
@@ -3332,12 +3331,12 @@ int read_met_help_3d(
     LOG(2, "Read 3-D variable: %s", varname);
 
   /* Read packed data... */
-  if (ctl->met_packed) {
+  if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
 
-    /* Get attributes... */
-    float offset, scalfac;
-    NC(nc_get_att_float(ncid, varid, "add_offset", &offset));
-    NC(nc_get_att_float(ncid, varid, "scale_factor", &scalfac));
+    /* Write info... */
+    LOG(2, "Packed: scale_factor= %g / add_offset= %g", scalfac, offset);
 
     /* Allocate... */
     short *help;
@@ -3401,13 +3400,14 @@ int read_met_help_3d(
 
 int read_met_help_2d(
   int ncid,
-  ctl_t * ctl,
   char *varname,
   char *varname2,
   met_t * met,
   float dest[EX][EY],
   float scl,
   int init) {
+
+  float offset, scalfac;
 
   int varid;
 
@@ -3422,12 +3422,12 @@ int read_met_help_2d(
     LOG(2, "Read 2-D variable: %s", varname);
 
   /* Read packed data... */
-  if (ctl->met_packed) {
+  if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
 
-    /* Get attributes... */
-    float offset, scalfac;
-    NC(nc_get_att_float(ncid, varid, "add_offset", &offset));
-    NC(nc_get_att_float(ncid, varid, "scale_factor", &scalfac));
+    /* Write info... */
+    LOG(2, "Packed: scale_factor= %g / add_offset= %g", scalfac, offset);
 
     /* Allocate... */
     short *help;
@@ -3495,32 +3495,32 @@ void read_met_levels(
   LOG(2, "Read level data...");
 
   /* Read meteorological data... */
-  if (!read_met_help_3d(ncid, ctl, "t", "T", met, met->t, 1.0, 1))
+  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0, 1))
     ERRMSG("Cannot read temperature!");
-  if (!read_met_help_3d(ncid, ctl, "u", "U", met, met->u, 1.0, 1))
+  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
     ERRMSG("Cannot read zonal wind!");
-  if (!read_met_help_3d(ncid, ctl, "v", "V", met, met->v, 1.0, 1))
+  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
     ERRMSG("Cannot read meridional wind!");
-  if (!read_met_help_3d(ncid, ctl, "w", "W", met, met->w, 0.01f, 1))
+  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
     WARN("Cannot read vertical velocity!");
   if (!read_met_help_3d
-      (ncid, ctl, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
+      (ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
     WARN("Cannot read specific humidity!");
   if (!read_met_help_3d
-      (ncid, ctl, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
+      (ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
     WARN("Cannot read ozone data!");
   if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
-    if (!read_met_help_3d(ncid, ctl, "clwc", "CLWC", met, met->lwc, 1.0, 1))
+    if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
       WARN("Cannot read cloud liquid water content!");
-    if (!read_met_help_3d(ncid, ctl, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
+    if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
       WARN("Cannot read cloud ice water content!");
   }
   if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
     if (!read_met_help_3d
-	(ncid, ctl, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
+	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
       WARN("Cannot read cloud rain water content!");
     if (!read_met_help_3d
-	(ncid, ctl, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
+	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
       WARN("Cannot read cloud snow water content!");
   }
 
@@ -3528,7 +3528,7 @@ void read_met_levels(
   if (ctl->met_np > 0) {
 
     /* Read pressure on model levels... */
-    if (!read_met_help_3d(ncid, ctl, "pl", "PL", met, met->pl, 0.01f, 1))
+    if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
       ERRMSG("Cannot read pressure on model levels!");
 
     /* Vertical interpolation from model to pressure levels... */
@@ -3944,7 +3944,6 @@ void read_met_sample(
 
 void read_met_surface(
   int ncid,
-  ctl_t * ctl,
   met_t * met) {
 
   /* Set timer... */
@@ -3952,8 +3951,8 @@ void read_met_surface(
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
-  if (!read_met_help_2d(ncid, ctl, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
-    if (!read_met_help_2d(ncid, ctl, "ps", "PS", met, met->ps, 0.01f, 1)) {
+  if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
+    if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
       WARN("Cannot not read surface pressure data (use lowest level)!");
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
@@ -3966,21 +3965,21 @@ void read_met_surface(
 
   /* Read geopotential height at the surface... */
   if (!read_met_help_2d
-      (ncid, ctl, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
+      (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
     if (!read_met_help_2d
-	(ncid, ctl, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
+	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
       ERRMSG("Cannot read surface geopotential height!");
 
   /* Read temperature at the surface... */
-  if (!read_met_help_2d(ncid, ctl, "t2m", "T2M", met, met->ts, 1.0, 1))
+  if (!read_met_help_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
-  if (!read_met_help_2d(ncid, ctl, "u10m", "U10M", met, met->us, 1.0, 1))
+  if (!read_met_help_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
-  if (!read_met_help_2d(ncid, ctl, "v10m", "V10M", met, met->vs, 1.0, 1))
+  if (!read_met_help_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
     WARN("Cannot read surface meridional wind!");
 }
 
