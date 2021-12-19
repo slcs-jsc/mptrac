@@ -3343,6 +3343,13 @@ int read_met_help_3d(
     ALLOC(help, short,
 	  EX * EY * EP);
 
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
     /* Read data... */
     NC(nc_get_var_short(ncid, varid, help));
 
@@ -3350,12 +3357,13 @@ int read_met_help_3d(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
-	  float aux
-	    = help[(ip * met->ny + iy) * met->nx + ix] * scalfac + offset;
 	  if (init)
 	    dest[ix][iy][ip] = 0;
-	  if (fabsf(aux) < 1e14f)
-	    dest[ix][iy][ip] += scl * aux;
+	  short aux = help[(ip * met->ny + iy) * met->nx + ix];
+	  if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	      && (missval == 0 || (missval != 0 && aux != missval))
+	      && fabsf(aux * scalfac + offset) < 1e14f)
+	    dest[ix][iy][ip] += scl * (aux * scalfac + offset);
 	  else
 	    dest[ix][iy][ip] = GSL_NAN;
 	}
@@ -3372,6 +3380,13 @@ int read_met_help_3d(
     ALLOC(help, float,
 	  EX * EY * EP);
 
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
 
@@ -3381,9 +3396,11 @@ int read_met_help_3d(
 	for (int ip = 0; ip < met->np; ip++) {
 	  if (init)
 	    dest[ix][iy][ip] = 0;
-	  if (fabsf(help[(ip * met->ny + iy) * met->nx + ix]) < 1e14f)
-	    dest[ix][iy][ip] +=
-	      scl * help[(ip * met->ny + iy) * met->nx + ix];
+	  float aux = help[(ip * met->ny + iy) * met->nx + ix];
+	  if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	      && (missval == 0 || (missval != 0 && aux != missval))
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy][ip] += scl * aux;
 	  else
 	    dest[ix][iy][ip] = GSL_NAN;
 	}
@@ -3434,17 +3451,26 @@ int read_met_help_2d(
     ALLOC(help, short,
 	  EX * EY * EP);
 
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
     /* Read data... */
     NC(nc_get_var_short(ncid, varid, help));
 
     /* Copy and check data... */
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
-	float aux = help[iy * met->nx + ix] * scalfac + offset;
 	if (init)
 	  dest[ix][iy] = 0;
-	if (fabsf(aux) < 1e14f)
-	  dest[ix][iy] += scl * aux;
+	short aux = help[iy * met->nx + ix];
+	if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	    && (missval == 0 || (missval != 0 && aux != missval))
+	    && fabsf(aux * scalfac + offset) < 1e14f)
+	  dest[ix][iy] += scl * (aux * scalfac + offset);
 	else
 	  dest[ix][iy] = GSL_NAN;
       }
@@ -3461,6 +3487,13 @@ int read_met_help_2d(
     ALLOC(help, float,
 	  EX * EY);
 
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
 
@@ -3469,8 +3502,11 @@ int read_met_help_2d(
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	if (fabsf(help[iy * met->nx + ix]) < 1e14f)
-	  dest[ix][iy] += scl * help[iy * met->nx + ix];
+	float aux = help[iy * met->nx + ix];
+	if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	    && (missval == 0 || (missval != 0 && aux != missval))
+	    && fabsf(aux) < 1e14f)
+	  dest[ix][iy] += scl * aux;
 	else
 	  dest[ix][iy] = GSL_NAN;
       }
