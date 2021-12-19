@@ -3316,6 +3316,8 @@ int read_met_help_3d(
   float scl,
   int init) {
 
+  char varsel[LEN];
+
   float offset, scalfac;
 
   int varid;
@@ -3326,17 +3328,14 @@ int read_met_help_3d(
       WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
       return 0;
     } else {
-      LOG(2, "Read 3-D variable: %s", varname2);
+      sprintf(varsel, "%s", varname2);
   } else
-    LOG(2, "Read 3-D variable: %s", varname);
+    sprintf(varsel, "%s", varname);
 
   /* Read packed data... */
   if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
       && nc_get_att_float(ncid, varid, "scale_factor",
 			  &scalfac) == NC_NOERR) {
-
-    /* Write info... */
-    LOG(2, "Packed: scale_factor= %g / add_offset= %g", scalfac, offset);
 
     /* Allocate... */
     short *help;
@@ -3349,6 +3348,11 @@ int read_met_help_3d(
       fillval = 0;
     if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
       missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s "
+	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
 
     /* Read data... */
     NC(nc_get_var_short(ncid, varid, help));
@@ -3387,6 +3391,10 @@ int read_met_help_3d(
     if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
       missval = 0;
 
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
 
@@ -3424,6 +3432,8 @@ int read_met_help_2d(
   float scl,
   int init) {
 
+  char varsel[LEN];
+
   float offset, scalfac;
 
   int varid;
@@ -3431,12 +3441,12 @@ int read_met_help_2d(
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
-      WARN("Cannot read 2-D variable: %s or %s", varname, varname2);
+      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
       return 0;
     } else {
-      LOG(2, "Read 2-D variable: %s", varname2);
+      sprintf(varsel, "%s", varname2);
   } else
-    LOG(2, "Read 2-D variable: %s", varname);
+    sprintf(varsel, "%s", varname);
 
   /* Read packed data... */
   if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
@@ -3457,6 +3467,11 @@ int read_met_help_2d(
       fillval = 0;
     if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
       missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s"
+	" (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
 
     /* Read data... */
     NC(nc_get_var_short(ncid, varid, help));
@@ -3493,6 +3508,10 @@ int read_met_help_2d(
       fillval = 0;
     if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
       missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
 
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
