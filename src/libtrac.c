@@ -2258,30 +2258,24 @@ int read_atm(
     ERRMSG("Can not read any data!");
 
   /* Write info... */
+  double mini, maxi;
   LOG(2, "Number of particles: %d", atm->np);
-  LOG(2, "Time range: %.2f ... %.2f s",
-      gsl_stats_min(atm->time, 1, (size_t) atm->np),
-      gsl_stats_max(atm->time, 1, (size_t) atm->np));
-  LOG(2, "Altitude range: %g ... %g km",
-      Z(gsl_stats_max(atm->p, 1, (size_t) atm->np)),
-      Z(gsl_stats_min(atm->p, 1, (size_t) atm->np)));
-  LOG(2, "Pressure range: %g ... %g hPa",
-      gsl_stats_min(atm->p, 1, (size_t) atm->np),
-      gsl_stats_max(atm->p, 1, (size_t) atm->np));
-  LOG(2, "Longitude range: %g ... %g deg",
-      gsl_stats_min(atm->lon, 1, (size_t) atm->np),
-      gsl_stats_max(atm->lon, 1, (size_t) atm->np));
-  LOG(2, "Latitude range: %g ... %g deg",
-      gsl_stats_min(atm->lat, 1, (size_t) atm->np),
-      gsl_stats_max(atm->lat, 1, (size_t) atm->np));
+  gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
+  LOG(2, "Altitude range: %g ... %g km", Z(mini), Z(maxi));
+  LOG(2, "Pressure range: %g ... %g hPa", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
   for (int iq = 0; iq < ctl->nq; iq++) {
     char msg[LEN];
     sprintf(msg, "Quantity %s range: %s ... %s %s",
 	    ctl->qnt_name[iq], ctl->qnt_format[iq],
 	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
-    LOG(2, msg,
-	gsl_stats_min(atm->q[iq], 1, (size_t) atm->np),
-	gsl_stats_max(atm->q[iq], 1, (size_t) atm->np));
+    gsl_stats_minmax(&mini, &maxi, atm->q[iq], 1, (size_t) atm->np);
+    LOG(2, msg, mini, maxi);
   }
 
   /* Return success... */
@@ -3358,6 +3352,7 @@ int read_met_help_3d(
     NC(nc_get_var_short(ncid, varid, help));
 
     /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
@@ -3399,6 +3394,7 @@ int read_met_help_3d(
     NC(nc_get_var_float(ncid, varid, help));
 
     /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
@@ -3477,6 +3473,7 @@ int read_met_help_2d(
     NC(nc_get_var_short(ncid, varid, help));
 
     /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
@@ -3517,6 +3514,7 @@ int read_met_help_2d(
     NC(nc_get_var_float(ncid, varid, help));
 
     /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
@@ -4635,30 +4633,24 @@ void write_atm(
     ERRMSG("Atmospheric data type not supported!");
 
   /* Write info... */
+  double mini, maxi;
   LOG(2, "Number of particles: %d", atm->np);
-  LOG(2, "Time range: %.2f ... %.2f s",
-      gsl_stats_min(atm->time, 1, (size_t) atm->np),
-      gsl_stats_max(atm->time, 1, (size_t) atm->np));
-  LOG(2, "Altitude range: %g ... %g km",
-      Z(gsl_stats_max(atm->p, 1, (size_t) atm->np)),
-      Z(gsl_stats_min(atm->p, 1, (size_t) atm->np)));
-  LOG(2, "Pressure range: %g ... %g hPa",
-      gsl_stats_min(atm->p, 1, (size_t) atm->np),
-      gsl_stats_max(atm->p, 1, (size_t) atm->np));
-  LOG(2, "Longitude range: %g ... %g deg",
-      gsl_stats_min(atm->lon, 1, (size_t) atm->np),
-      gsl_stats_max(atm->lon, 1, (size_t) atm->np));
-  LOG(2, "Latitude range: %g ... %g deg",
-      gsl_stats_min(atm->lat, 1, (size_t) atm->np),
-      gsl_stats_max(atm->lat, 1, (size_t) atm->np));
+  gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
+  LOG(2, "Altitude range: %g ... %g km", Z(mini), Z(maxi));
+  LOG(2, "Pressure range: %g ... %g hPa", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
   for (int iq = 0; iq < ctl->nq; iq++) {
     char msg[LEN];
     sprintf(msg, "Quantity %s range: %s ... %s %s",
 	    ctl->qnt_name[iq], ctl->qnt_format[iq],
 	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
-    LOG(2, msg,
-	gsl_stats_min(atm->q[iq], 1, (size_t) atm->np),
-	gsl_stats_max(atm->q[iq], 1, (size_t) atm->np));
+    gsl_stats_minmax(&mini, &maxi, atm->q[iq], 1, (size_t) atm->np);
+    LOG(2, msg, mini, maxi);
   }
 }
 
