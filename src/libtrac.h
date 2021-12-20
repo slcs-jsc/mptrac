@@ -1561,8 +1561,8 @@ void spline(
 #ifdef _OPENACC
 #pragma acc routine (stddev)
 #endif
-double stddev(
-  double *data,
+float stddev(
+  float *data,
   int n);
 
 /*! Convert date to seconds. */

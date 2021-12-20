@@ -4369,23 +4369,21 @@ void spline(
 
 /*****************************************************************************/
 
-double stddev(
-  double *data,
+float stddev(
+  float *data,
   int n) {
 
   if (n <= 0)
     return 0;
 
-  double avg = 0, rms = 0;
+  float mean = 0, var = 0;
 
-  for (int i = 0; i < n; ++i)
-    avg += data[i];
-  avg /= n;
+  for (int i = 0; i < n; ++i) {
+    mean += data[i];
+    var += SQR(data[i]);
+  }
 
-  for (int i = 0; i < n; ++i)
-    rms += SQR(data[i] - avg);
-
-  return sqrt(rms / (n - 1));
+  return sqrtf(var / (float) n - SQR(mean / (float) n));
 }
 
 /*****************************************************************************/

@@ -661,7 +661,7 @@ void module_diffusion_meso(
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
-      double u[16], v[16], w[16];
+      float u[16], v[16], w[16];
 
       /* Get indices... */
       int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
@@ -672,65 +672,24 @@ void module_diffusion_meso(
       if (cache->tsig[ix][iy][iz] != met0->time) {
 
 	/* Collect local wind data... */
-	u[0] = met0->u[ix][iy][iz];
-	u[1] = met0->u[ix + 1][iy][iz];
-	u[2] = met0->u[ix][iy + 1][iz];
-	u[3] = met0->u[ix + 1][iy + 1][iz];
-	u[4] = met0->u[ix][iy][iz + 1];
-	u[5] = met0->u[ix + 1][iy][iz + 1];
-	u[6] = met0->u[ix][iy + 1][iz + 1];
-	u[7] = met0->u[ix + 1][iy + 1][iz + 1];
-
-	v[0] = met0->v[ix][iy][iz];
-	v[1] = met0->v[ix + 1][iy][iz];
-	v[2] = met0->v[ix][iy + 1][iz];
-	v[3] = met0->v[ix + 1][iy + 1][iz];
-	v[4] = met0->v[ix][iy][iz + 1];
-	v[5] = met0->v[ix + 1][iy][iz + 1];
-	v[6] = met0->v[ix][iy + 1][iz + 1];
-	v[7] = met0->v[ix + 1][iy + 1][iz + 1];
-
-	w[0] = met0->w[ix][iy][iz];
-	w[1] = met0->w[ix + 1][iy][iz];
-	w[2] = met0->w[ix][iy + 1][iz];
-	w[3] = met0->w[ix + 1][iy + 1][iz];
-	w[4] = met0->w[ix][iy][iz + 1];
-	w[5] = met0->w[ix + 1][iy][iz + 1];
-	w[6] = met0->w[ix][iy + 1][iz + 1];
-	w[7] = met0->w[ix + 1][iy + 1][iz + 1];
-
-	/* Collect local wind data... */
-	u[8] = met1->u[ix][iy][iz];
-	u[9] = met1->u[ix + 1][iy][iz];
-	u[10] = met1->u[ix][iy + 1][iz];
-	u[11] = met1->u[ix + 1][iy + 1][iz];
-	u[12] = met1->u[ix][iy][iz + 1];
-	u[13] = met1->u[ix + 1][iy][iz + 1];
-	u[14] = met1->u[ix][iy + 1][iz + 1];
-	u[15] = met1->u[ix + 1][iy + 1][iz + 1];
-
-	v[8] = met1->v[ix][iy][iz];
-	v[9] = met1->v[ix + 1][iy][iz];
-	v[10] = met1->v[ix][iy + 1][iz];
-	v[11] = met1->v[ix + 1][iy + 1][iz];
-	v[12] = met1->v[ix][iy][iz + 1];
-	v[13] = met1->v[ix + 1][iy][iz + 1];
-	v[14] = met1->v[ix][iy + 1][iz + 1];
-	v[15] = met1->v[ix + 1][iy + 1][iz + 1];
-
-	w[8] = met1->w[ix][iy][iz];
-	w[9] = met1->w[ix + 1][iy][iz];
-	w[10] = met1->w[ix][iy + 1][iz];
-	w[11] = met1->w[ix + 1][iy + 1][iz];
-	w[12] = met1->w[ix][iy][iz + 1];
-	w[13] = met1->w[ix + 1][iy][iz + 1];
-	w[14] = met1->w[ix][iy + 1][iz + 1];
-	w[15] = met1->w[ix + 1][iy + 1][iz + 1];
+	int n = 0;
+	for (int i = 0; i < 2; i++)
+	  for (int j = 0; j < 2; j++)
+	    for (int k = 0; k < 2; k++) {
+	      u[n] = met0->u[ix + i][iy + j][iz + k];
+	      v[n] = met0->v[ix + i][iy + j][iz + k];
+	      w[n] = met0->w[ix + i][iy + j][iz + k];
+	      n++;
+	      u[n] = met1->u[ix + i][iy + j][iz + k];
+	      v[n] = met1->v[ix + i][iy + j][iz + k];
+	      w[n] = met1->w[ix + i][iy + j][iz + k];
+	      n++;
+	    }
 
 	/* Get standard deviations of local wind data... */
-	cache->usig[ix][iy][iz] = (float) stddev(u, 16);
-	cache->vsig[ix][iy][iz] = (float) stddev(v, 16);
-	cache->wsig[ix][iy][iz] = (float) stddev(w, 16);
+	cache->usig[ix][iy][iz] = stddev(u, n);
+	cache->vsig[ix][iy][iz] = stddev(v, n);
+	cache->wsig[ix][iy][iz] = stddev(w, n);
 	cache->tsig[ix][iy][iz] = met0->time;
       }
 

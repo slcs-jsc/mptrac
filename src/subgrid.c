@@ -38,7 +38,9 @@ int main(
 
   FILE *out;
 
-  static double usig[EP][EY], vsig[EP][EY], wsig[EP][EY], u[16], v[16], w[16];
+  static double usig[EP][EY], vsig[EP][EY], wsig[EP][EY];
+
+  static float u[16], v[16], w[16];
 
   static int i, ix, iy, iz, n[EP][EY];
 
@@ -87,15 +89,22 @@ int main(
 	  v[6] = met0->v[ix][iy + 1][iz + 1];
 	  v[7] = met0->v[ix + 1][iy + 1][iz + 1];
 
-	  w[0] = 1e3 * DP2DZ(met0->w[ix][iy][iz], met0->p[iz]);
-	  w[1] = 1e3 * DP2DZ(met0->w[ix + 1][iy][iz], met0->p[iz]);
-	  w[2] = 1e3 * DP2DZ(met0->w[ix][iy + 1][iz], met0->p[iz]);
-	  w[3] = 1e3 * DP2DZ(met0->w[ix + 1][iy + 1][iz], met0->p[iz]);
-	  w[4] = 1e3 * DP2DZ(met0->w[ix][iy][iz + 1], met0->p[iz + 1]);
-	  w[5] = 1e3 * DP2DZ(met0->w[ix + 1][iy][iz + 1], met0->p[iz + 1]);
-	  w[6] = 1e3 * DP2DZ(met0->w[ix][iy + 1][iz + 1], met0->p[iz + 1]);
+	  w[0] = (float) (1e3 * DP2DZ(met0->w[ix][iy][iz], met0->p[iz]));
+	  w[1] = (float) (1e3 * DP2DZ(met0->w[ix + 1][iy][iz], met0->p[iz]));
+	  w[2] = (float) (1e3 * DP2DZ(met0->w[ix][iy + 1][iz], met0->p[iz]));
+	  w[3] =
+	    (float) (1e3 * DP2DZ(met0->w[ix + 1][iy + 1][iz], met0->p[iz]));
+	  w[4] =
+	    (float) (1e3 * DP2DZ(met0->w[ix][iy][iz + 1], met0->p[iz + 1]));
+	  w[5] =
+	    (float) (1e3 *
+		     DP2DZ(met0->w[ix + 1][iy][iz + 1], met0->p[iz + 1]));
+	  w[6] =
+	    (float) (1e3 *
+		     DP2DZ(met0->w[ix][iy + 1][iz + 1], met0->p[iz + 1]));
 	  w[7] =
-	    1e3 * DP2DZ(met0->w[ix + 1][iy + 1][iz + 1], met0->p[iz + 1]);
+	    (float) (1e3 *
+		     DP2DZ(met0->w[ix + 1][iy + 1][iz + 1], met0->p[iz + 1]));
 
 	  /* Collect local wind data... */
 	  u[8] = met1->u[ix][iy][iz];
@@ -116,15 +125,22 @@ int main(
 	  v[14] = met1->v[ix][iy + 1][iz + 1];
 	  v[15] = met1->v[ix + 1][iy + 1][iz + 1];
 
-	  w[8] = 1e3 * DP2DZ(met1->w[ix][iy][iz], met1->p[iz]);
-	  w[9] = 1e3 * DP2DZ(met1->w[ix + 1][iy][iz], met1->p[iz]);
-	  w[10] = 1e3 * DP2DZ(met1->w[ix][iy + 1][iz], met1->p[iz]);
-	  w[11] = 1e3 * DP2DZ(met1->w[ix + 1][iy + 1][iz], met1->p[iz]);
-	  w[12] = 1e3 * DP2DZ(met1->w[ix][iy][iz + 1], met1->p[iz + 1]);
-	  w[13] = 1e3 * DP2DZ(met1->w[ix + 1][iy][iz + 1], met1->p[iz + 1]);
-	  w[14] = 1e3 * DP2DZ(met1->w[ix][iy + 1][iz + 1], met1->p[iz + 1]);
+	  w[8] = (float) (1e3 * DP2DZ(met1->w[ix][iy][iz], met1->p[iz]));
+	  w[9] = (float) (1e3 * DP2DZ(met1->w[ix + 1][iy][iz], met1->p[iz]));
+	  w[10] = (float) (1e3 * DP2DZ(met1->w[ix][iy + 1][iz], met1->p[iz]));
+	  w[11] =
+	    (float) (1e3 * DP2DZ(met1->w[ix + 1][iy + 1][iz], met1->p[iz]));
+	  w[12] =
+	    (float) (1e3 * DP2DZ(met1->w[ix][iy][iz + 1], met1->p[iz + 1]));
+	  w[13] =
+	    (float) (1e3 *
+		     DP2DZ(met1->w[ix + 1][iy][iz + 1], met1->p[iz + 1]));
+	  w[14] =
+	    (float) (1e3 *
+		     DP2DZ(met1->w[ix][iy + 1][iz + 1], met1->p[iz + 1]));
 	  w[15] =
-	    1e3 * DP2DZ(met1->w[ix + 1][iy + 1][iz + 1], met1->p[iz + 1]);
+	    (float) (1e3 *
+		     DP2DZ(met1->w[ix + 1][iy + 1][iz + 1], met1->p[iz + 1]));
 
 	  /* Get standard deviations of local wind data... */
 	  usig[iz][iy] += stddev(u, 16);
