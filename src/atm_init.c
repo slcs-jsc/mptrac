@@ -34,8 +34,8 @@ int main(
 
   gsl_rng *rng;
 
-  double dt, dz, dlon, dlat, lat0, lat1, lon0, lon1, t0, t1, z0, z1,
-    t, z, lon, lat, st, sz, slon, slat, sx, ut, uz, ulon, ulat, m, vmr;
+  double dt, dz, dlon, dlat, lat0, lat1, lon0, lon1, t0, t1, z0, z1, t, z,
+    lon, lat, st, sz, slon, slat, sx, ut, uz, ulon, ulat, m, vmr, bellrad;
 
   int even, ip, irep, rep;
 
@@ -73,6 +73,7 @@ int main(
   rep = (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
   m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
   vmr = scan_ctl(argv[1], argc, argv, "INIT_VMR", -1, "0", NULL);
+  bellrad = scan_ctl(argv[1], argc, argv, "INIT_BELLRAD", -1, "0", NULL);
 
   /* Initialize random number generator... */
   gsl_rng_env_setup();
@@ -104,6 +105,22 @@ int main(
 	    } while (even && gsl_rng_uniform(rng) >
 		     fabs(cos(atm->lat[atm->np] * M_PI / 180.)));
 
+	    /* Apply cosine bell (Williamson et al., 1992)... */
+	    if (bellrad > 0) {
+	      double x0[3], x1[3];
+	      geo2cart(0.0, 0.5 * (lon0 + lon1), 0.5 * (lat0 + lat1), x0);
+	      geo2cart(0.0, atm->lon[atm->np], atm->lat[atm->np], x1);
+	      double rad = RE * acos(DOTP(x0, x1) / NORM(x0) / NORM(x1));
+	      if (rad > bellrad)
+		continue;
+	      if (ctl.qnt_m >= 0)
+		atm->q[ctl.qnt_m][atm->np] =
+		  0.5 * (1. + cos(M_PI * rad / bellrad));
+	      if (ctl.qnt_vmr >= 0)
+		atm->q[ctl.qnt_vmr][atm->np] =
+		  0.5 * (1. + cos(M_PI * rad / bellrad));
+	    }
+
 	    /* Set particle counter... */
 	    if ((++atm->np) > NP)
 	      ERRMSG("Too many particles!");
@@ -114,12 +131,12 @@ int main(
     ERRMSG("Did not create any air parcels!");
 
   /* Initialize mass... */
-  if (ctl.qnt_m >= 0)
+  if (ctl.qnt_m >= 0 && bellrad <= 0)
     for (ip = 0; ip < atm->np; ip++)
       atm->q[ctl.qnt_m][ip] = m / atm->np;
 
   /* Initialize volume mixing ratio... */
-  if (ctl.qnt_vmr >= 0)
+  if (ctl.qnt_vmr >= 0 && bellrad <= 0)
     for (ip = 0; ip < atm->np; ip++)
       atm->q[ctl.qnt_vmr][ip] = vmr;
 
