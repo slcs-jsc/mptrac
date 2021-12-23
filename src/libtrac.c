@@ -4487,6 +4487,12 @@ double tropo_weight(
   /* Get tropopause pressure... */
   double pt = clim_tropo(t, lat);
 
+  /* Check pressure range... */
+  if (p > 338.7)
+    return 1;
+  else if (p < 98.07)
+    return 0;
+
   /* Get pressure range... */
   double p1 = pt * 0.866877899;
   double p0 = pt / 0.866877899;
