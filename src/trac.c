@@ -669,9 +669,6 @@ void module_diffusion_meso(
       /* Caching of wind standard deviations... */
       if (cache->tsig[ix][iy][iz] != met0->time) {
 
-	/* Save new time... */
-	cache->tsig[ix][iy][iz] = met0->time;
-
 	/* Collect local wind data... */
 	int n = 0;
 	float u[16], v[16], w[16];
@@ -692,6 +689,9 @@ void module_diffusion_meso(
 	cache->uvwsig[ix][iy][iz][0] = stddev(u, n);
 	cache->uvwsig[ix][iy][iz][1] = stddev(v, n);
 	cache->uvwsig[ix][iy][iz][2] = stddev(w, n);
+
+	/* Save new time... */
+	cache->tsig[ix][iy][iz] = met0->time;
       }
 
       /* Set temporal correlations for mesoscale fluctuations... */
