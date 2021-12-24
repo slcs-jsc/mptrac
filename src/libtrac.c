@@ -4483,7 +4483,7 @@ double tropo_weight(
   double t,
   double lat,
   double p) {
-  
+
   /* Get tropopause pressure... */
   double pt = clim_tropo(t, lat);
 

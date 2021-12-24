@@ -671,6 +671,9 @@ void module_diffusion_meso(
       /* Caching of wind standard deviations... */
       if (cache->tsig[ix][iy][iz] != met0->time) {
 
+	/* Save new time... */
+	cache->tsig[ix][iy][iz] = met0->time;
+
 	/* Collect local wind data... */
 	int n = 0;
 	for (int i = 0; i < 2; i++)
@@ -687,10 +690,9 @@ void module_diffusion_meso(
 	    }
 
 	/* Get standard deviations of local wind data... */
-	cache->usig[ix][iy][iz] = stddev(u, n);
-	cache->vsig[ix][iy][iz] = stddev(v, n);
-	cache->wsig[ix][iy][iz] = stddev(w, n);
-	cache->tsig[ix][iy][iz] = met0->time;
+	cache->uvwsig[ix][iy][iz][0] = stddev(u, n);
+	cache->uvwsig[ix][iy][iz][1] = stddev(v, n);
+	cache->uvwsig[ix][iy][iz][2] = stddev(w, n);
       }
 
       /* Set temporal correlations for mesoscale fluctuations... */
@@ -699,23 +701,27 @@ void module_diffusion_meso(
 
       /* Calculate horizontal mesoscale wind fluctuations... */
       if (ctl->turb_mesox > 0) {
-	cache->up[ip] = (float)
-	  (r * cache->up[ip]
-	   + r2 * rs[3 * ip] * ctl->turb_mesox * cache->usig[ix][iy][iz]);
-	atm->lon[ip] += DX2DEG(cache->up[ip] * dt[ip] / 1000., atm->lat[ip]);
+	cache->uvwp[ip][0] = (float)
+	  (r * cache->uvwp[ip][0]
+	   +
+	   r2 * rs[3 * ip] * ctl->turb_mesox * cache->uvwsig[ix][iy][iz][0]);
+	atm->lon[ip] +=
+	  DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
-	cache->vp[ip] = (float)
-	  (r * cache->vp[ip]
-	   + r2 * rs[3 * ip + 1] * ctl->turb_mesox * cache->vsig[ix][iy][iz]);
-	atm->lat[ip] += DY2DEG(cache->vp[ip] * dt[ip] / 1000.);
+	cache->uvwp[ip][1] = (float)
+	  (r * cache->uvwp[ip][1]
+	   + r2 * rs[3 * ip +
+		     1] * ctl->turb_mesox * cache->uvwsig[ix][iy][iz][1]);
+	atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
       }
 
       /* Calculate vertical mesoscale wind fluctuations... */
       if (ctl->turb_mesoz > 0) {
-	cache->wp[ip] = (float)
-	  (r * cache->wp[ip]
-	   + r2 * rs[3 * ip + 2] * ctl->turb_mesoz * cache->wsig[ix][iy][iz]);
-	atm->p[ip] += cache->wp[ip] * dt[ip];
+	cache->uvwp[ip][2] = (float)
+	  (r * cache->uvwp[ip][2]
+	   + r2 * rs[3 * ip +
+		     2] * ctl->turb_mesoz * cache->uvwsig[ix][iy][iz][2]);
+	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
       }
     }
 }

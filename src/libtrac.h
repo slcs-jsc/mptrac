@@ -1079,14 +1079,14 @@ typedef struct {
 /*! Cache data. */
 typedef struct {
 
-  /*! Zonal wind perturbation [m/s]. */
-  float up[NP];
+  /*! Cache for reference time of wind standard deviations. */
+  double tsig[EX][EY][EP];
 
-  /*! Meridional wind perturbation [m/s]. */
-  float vp[NP];
+  /*! Cache for wind standard deviations. */
+  float uvwsig[EX][EY][EP][3];
 
-  /*! Vertical velocity perturbation [hPa/s]. */
-  float wp[NP];
+  /*! Wind perturbations [m/s]. */
+  float uvwp[NP][3];
 
   /*! Isosurface variables. */
   double iso_var[NP];
@@ -1099,18 +1099,6 @@ typedef struct {
 
   /*! Isosurface balloon number of data points. */
   int iso_n;
-
-  /*! Cache for reference time of wind standard deviations. */
-  double tsig[EX][EY][EP];
-
-  /*! Cache for zonal wind standard deviations. */
-  float usig[EX][EY][EP];
-
-  /*! Cache for meridional wind standard deviations. */
-  float vsig[EX][EY][EP];
-
-  /*! Cache for vertical velocity standard deviations. */
-  float wsig[EX][EY][EP];
 
 } cache_t;
 
