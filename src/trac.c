@@ -661,8 +661,6 @@ void module_diffusion_meso(
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
-      float u[16], v[16], w[16];
-
       /* Get indices... */
       int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
       int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
@@ -676,6 +674,7 @@ void module_diffusion_meso(
 
 	/* Collect local wind data... */
 	int n = 0;
+	float u[16], v[16], w[16];
 	for (int i = 0; i < 2; i++)
 	  for (int j = 0; j < 2; j++)
 	    for (int k = 0; k < 2; k++) {
