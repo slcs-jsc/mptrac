@@ -29,21 +29,8 @@
 export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=4
 
-# Set variables...
+# Setup...
 trac=../src
-metfile=erai_86400s.zip
-metbase=meteo/ei
-dtmet=86400
-np=10000
-
-# Download meteo data...
-if [ ! -d meteo ] ; then
-    echo "Downloading $metfile (this may take a while)..."
-    mkdir -p meteo && cd meteo || exit
-    wget --progress=dot:giga https://datapub.fz-juelich.de/slcs/mptrac/data/test_case/$metfile \
-	&& unzip $metfile && rm $metfile || exit
-    cd -
-fi
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots
@@ -64,7 +51,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = $metbase
+METBASE = meteo/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
 BOUND_MASS = 0.0
@@ -72,7 +59,7 @@ BOUND_DPS = 100.0
 CONV_CAPE = 0.0
 TDEC_TROP = 259200.0
 TDEC_STRAT = 259200.0
-DT_MET = $dtmet
+DT_MET = 86400.0
 T_STOP = $t1
 GRID_LON0 = -90
 GRID_LON1 = 60
@@ -91,7 +78,7 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N $np SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
+		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
 
 # Calculate trajectories...
 echo "data" > data/dirlist
