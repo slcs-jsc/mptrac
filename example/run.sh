@@ -28,10 +28,6 @@
 # Set environment...
 export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=4
-echo "hostname:"
-hostname --fqdn
-echo "IP address:"
-ip a
 
 # Setup...
 trac=../src
