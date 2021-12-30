@@ -589,7 +589,16 @@ void module_convection(
 	if (ctl->conv_mix_top == 1)
 	  ptop = pel;
 
-	/* Mix in entire in cloud column... */
+	/* Limit vertical velocity... */
+	if (ctl->conv_vmax > 0) {
+	  double z = Z(atm->p[ip]);
+	  double pmax = P(z - ctl->conv_vmax * dt[ip] / 1000.);
+	  double pmin = P(z + ctl->conv_vmax * dt[ip] / 1000.);
+	  ptop = GSL_MAX(ptop, pmin);
+	  pbot = GSL_MIN(pbot, pmax);
+	}
+
+	/* Vertical mixing... */
 	atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
       }
     }
