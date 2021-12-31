@@ -2332,6 +2332,7 @@ void read_ctl(
   ctl->qnt_plfc = -1;
   ctl->qnt_pel = -1;
   ctl->qnt_cape = -1;
+  ctl->qnt_cin = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_psat = -1;
@@ -2397,6 +2398,7 @@ void read_ctl(
       SET_QNT(qnt_plfc, "plfc", "hPa")
       SET_QNT(qnt_pel, "pel", "hPa")
       SET_QNT(qnt_cape, "cape", "J/kg")
+      SET_QNT(qnt_cin, "cin", "J/kg")
       SET_QNT(qnt_hno3, "hno3", "ppv")
       SET_QNT(qnt_oh, "oh", "molec/cm^3")
       SET_QNT(qnt_psat, "psat", "hPa")
@@ -2847,6 +2849,7 @@ void read_met_cape(
       met->plfc[ix][iy] = GSL_NAN;
       met->pel[ix][iy] = GSL_NAN;
       met->cape[ix][iy] = GSL_NAN;
+      met->cin[ix][iy] = GSL_NAN;
       if (h2o <= 0)
 	continue;
 
@@ -2862,19 +2865,37 @@ void read_met_cape(
 	  pbot = met->plcl[ix][iy];
       } while (pbot - ptop > 0.1);
 
+      /* Calculate CIN up to LCL... */
+      INTPOL_INIT;
+      double dcape, dcape_old, dz, psat, h2o_env, t_env;
+      double p = met->ps[ix][iy];
+      met->cape[ix][iy] = met->cin[ix][iy] = 0;
+      do {
+	dz = dz0 * TVIRT(t, h2o);
+	p /= pfac;
+	t = theta / pow(1000. / p, 0.286);
+	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
+			    &t_env, ci, cw, 1);
+	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
+			    &h2o_env, ci, cw, 0);
+	dcape = 1e3 * G0 * (TVIRT(t, h2o) - TVIRT(t_env, h2o_env)) /
+	  TVIRT(t_env, h2o_env) * dz;
+	if (dcape < 0)
+	  met->cin[ix][iy] += fabsf((float) dcape);
+      } while (p > met->plcl[ix][iy]);
+
       /* Calculate level of free convection (LFC), equilibrium level (EL),
          and convective available potential energy (CAPE)... */
-      double dcape = 0, dcape_old, dz, h2o_env, p = met->plcl[ix][iy],
-	psat, t_env;
+      dcape = 0;
+      p = met->plcl[ix][iy];
+      t = theta / pow(1000. / p, 0.286);
       ptop = 0.75 * clim_tropo(met->time, met->lat[iy]);
-      met->cape[ix][iy] = 0;
       do {
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
 	t -= lapse_rate(t, h2o) * dz;
 	psat = PSAT(t);
 	h2o = psat / (p - (1. - EPS) * psat);
-	INTPOL_INIT;
 	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
 			    &t_env, ci, cw, 1);
 	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
@@ -2888,7 +2909,13 @@ void read_met_cape(
 	    met->plfc[ix][iy] = (float) p;
 	} else if (dcape_old > 0)
 	  met->pel[ix][iy] = (float) p;
+	if (dcape < 0 && !isfinite(met->plfc[ix][iy]))
+	  met->cin[ix][iy] += fabsf((float) dcape);
       } while (p > ptop);
+
+      /* Check results... */
+      if(!isfinite(met->plfc[ix][iy]) || !isfinite(met->pel[ix][iy]))
+	met->cape[ix][iy] = met->cin[ix][iy] = 0.0;
     }
 }
 

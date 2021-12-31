@@ -276,6 +276,7 @@
   intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);	\
   intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
   intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->cin, lon, lat, &cin, ci, cw, 0);	\
   }
 
 /*! Temporal interpolation of all meteo data. */
@@ -307,6 +308,7 @@
   intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
   }
 
 /*! Calculate lapse rate between pressure levels. */
@@ -655,6 +657,9 @@ typedef struct {
 
   /*! Quantity array index for convective available potential energy (CAPE). */
   int qnt_cape;
+
+  /*! Quantity array index for convective inhibition (CIN). */
+  int qnt_cin;
 
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
@@ -1179,6 +1184,9 @@ typedef struct {
 
   /*! Convective available potential energy [J/kg]. */
   float cape[EX][EY];
+
+  /*! Convective inhibition [J/kg]. */
+  float cin[EX][EY];
 
   /*! Geopotential height at model levels [km]. */
   float z[EX][EY][EP];

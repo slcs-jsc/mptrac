@@ -51,9 +51,9 @@ int main(
     iwc, iwcm[NZ], ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ],
     vs, vsm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ],
     cl, clm[NZ], plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ],
-    cape, capem[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ],
-    plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ], tnatm[NZ],
-    hno3m[NZ], ohm[NZ], cw[3];
+    cape, capem[NZ], cin, cinm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ],
+    pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ],
+    tnatm[NZ], hno3m[NZ], ohm[NZ], cw[3];
 
   static int i, iz, np[NZ], npt[NZ], nz, ci[3];
 
@@ -144,6 +144,7 @@ int main(
 	    plfcm[iz] += plfc;
 	    pelm[iz] += pel;
 	    capem[iz] += cape;
+	    cinm[iz] += cin;
 	    lwcm[iz] += lwc;
 	    iwcm[iz] += iwc;
 	    if (gsl_finite(pt)) {
@@ -208,20 +209,21 @@ int main(
 	  "# $30 = pressure at equilibrium level (EL) [hPa]\n");
   fprintf(out,
 	  "# $31 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $32 = relative humidity over water [%%]\n"
-	  "# $33 = relative humidity over ice [%%]\n"
-	  "# $34 = dew point temperature [K]\n"
-	  "# $35 = frost point temperature [K]\n"
-	  "# $36 = NAT temperature [K]\n"
-	  "# $37 = HNO3 volume mixing ratio [ppv]\n"
-	  "# $38 = OH concentration [molec/cm^3]\n"
-	  "# $39 = boundary layer pressure [hPa]\n\n");
+	  "# $32 = convective inhibition (CIN) [J/kg]\n"
+	  "# $33 = relative humidity over water [%%]\n"
+	  "# $34 = relative humidity over ice [%%]\n"
+	  "# $35 = dew point temperature [K]\n"
+	  "# $36 = frost point temperature [K]\n"
+	  "# $37 = NAT temperature [K]\n"
+	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
+	  "# $39 = OH concentration [molec/cm^3]\n"
+	  "# $40 = boundary layer pressure [hPa]\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -232,9 +234,9 @@ int main(
 	    lwcm[iz] / np[iz], iwcm[iz] / np[iz], clm[iz] / np[iz],
 	    pctm[iz] / np[iz], pcbm[iz] / np[iz], plclm[iz] / np[iz],
 	    plfcm[iz] / np[iz], pelm[iz] / np[iz], capem[iz] / np[iz],
-	    rhm[iz] / np[iz], rhicem[iz] / np[iz], tdewm[iz] / np[iz],
-	    ticem[iz] / np[iz], tnatm[iz] / np[iz], hno3m[iz] / np[iz],
-	    ohm[iz] / np[iz], pblm[iz] / np[iz]);
+	    cinm[iz] / np[iz], rhm[iz] / np[iz], rhicem[iz] / np[iz],
+	    tdewm[iz] / np[iz], ticem[iz] / np[iz], tnatm[iz] / np[iz],
+	    hno3m[iz] / np[iz], ohm[iz] / np[iz], pblm[iz] / np[iz]);
 
   /* Close file... */
   fclose(out);

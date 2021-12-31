@@ -41,8 +41,8 @@ int main(
   FILE *out;
 
   double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pbl, pt,
-    pct, pcb, cl, plcl, plfc, pel, cape, pv, t, tt, u, v, w, z, zm, zref, zt,
-    cw[3], time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;
+    pct, pcb, cl, plcl, plfc, pel, cape, cin, pv, t, tt, u, v, w, z, zm, zref,
+    zt, cw[3], time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;
 
   int geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];
 
@@ -113,14 +113,15 @@ int main(
 	  "# $30 = pressure at equilibrium level (EL) [hPa]\n");
   fprintf(out,
 	  "# $31 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $32 = relative humidity over water [%%]\n"
-	  "# $33 = relative humidity over ice [%%]\n"
-	  "# $34 = dew point temperature [K]\n"
-	  "# $35 = frost point temperature [K]\n"
-	  "# $36 = NAT temperature [K]\n"
-	  "# $37 = HNO3 volume mixing ratio [ppv]\n"
-	  "# $38 = OH concentration [molec/cm^3]\n"
-	  "# $39 = boundary layer pressure [hPa]\n");
+	  "# $32 = convective inhibition (CIN) [J/kg]\n"
+	  "# $33 = relative humidity over water [%%]\n"
+	  "# $34 = relative humidity over ice [%%]\n"
+	  "# $35 = dew point temperature [K]\n"
+	  "# $36 = frost point temperature [K]\n"
+	  "# $37 = NAT temperature [K]\n"
+	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
+	  "# $39 = OH concentration [molec/cm^3]\n"
+	  "# $40 = boundary layer pressure [hPa]\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -163,11 +164,11 @@ int main(
     /* Write data... */
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
 	    pt, zt, tt, h2ot, lwc, iwc, cl, pct, pcb, plcl, plfc, pel, cape,
-	    RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
+	    cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],

@@ -51,13 +51,13 @@ int main(
   static double timem[NZ][NY], psm[NZ][NY], tsm[NZ][NY], zsm[NZ][NY],
     usm[NZ][NY], vsm[NZ][NY], pblm[NZ][NY], ptm[NZ][NY], pctm[NZ][NY],
     pcbm[NZ][NY], clm[NZ][NY], plclm[NZ][NY], plfcm[NZ][NY], pelm[NZ][NY],
-    capem[NZ][NY], ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY],
-    vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY],
-    o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY], rhm[NZ][NY],
-    rhicem[NZ][NY], tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY],
+    capem[NZ][NY], cinm[NZ][NY], ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY],
+    um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY],
+    pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY],
+    rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY],
     hno3m[NZ][NY], ohm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
     ps, ts, zs, us, vs, pbl, pt, pct, pcb, plcl, plfc, pel,
-    cape, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc,
+    cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc,
     lat, lat0, lat1, dlat, lats[NY], lon0, lon1, lonm[NZ][NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
@@ -156,6 +156,7 @@ int main(
 	    plfcm[iz][iy] += plfc;
 	    pelm[iz][iy] += pel;
 	    capem[iz][iy] += cape;
+	    cinm[iz][iy] += cin;
 	    if (gsl_finite(pt)) {
 	      ptm[iz][iy] += pt;
 	      ztm[iz][iy] += zt;
@@ -217,14 +218,15 @@ int main(
 	  "# $30 = pressure at equilibrium level (EL) [hPa]\n");
   fprintf(out,
 	  "# $31 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $32 = relative humidity over water [%%]\n"
-	  "# $33 = relative humidity over ice [%%]\n"
-	  "# $34 = dew point temperature [K]\n"
-	  "# $35 = frost point temperature [K]\n"
-	  "# $36 = NAT temperature [K]\n"
-	  "# $37 = HNO3 volume mixing ratio [ppv]\n"
-	  "# $38 = OH concentration [molec/cm^3]\n"
-	  "# $39 = boundary layer pressure [hPa]\n");
+	  "# $32 = convective inhibition (CIN) [J/kg]\n"
+	  "# $33 = relative humidity over water [%%]\n"
+	  "# $34 = relative humidity over ice [%%]\n"
+	  "# $35 = dew point temperature [K]\n"
+	  "# $36 = frost point temperature [K]\n"
+	  "# $37 = NAT temperature [K]\n"
+	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
+	  "# $39 = OH concentration [molec/cm^3]\n"
+	  "# $40 = boundary layer pressure [hPa]\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
@@ -232,7 +234,7 @@ int main(
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
@@ -248,10 +250,11 @@ int main(
 	      pctm[iz][iy] / np[iz][iy], pcbm[iz][iy] / np[iz][iy],
 	      plclm[iz][iy] / np[iz][iy], plfcm[iz][iy] / np[iz][iy],
 	      pelm[iz][iy] / np[iz][iy], capem[iz][iy] / np[iz][iy],
-	      rhm[iz][iy] / np[iz][iy], rhicem[iz][iy] / np[iz][iy],
-	      tdewm[iz][iy] / np[iz][iy], ticem[iz][iy] / np[iz][iy],
-	      tnatm[iz][iy] / np[iz][iy], hno3m[iz][iy] / np[iz][iy],
-	      ohm[iz][iy] / np[iz][iy], pblm[iz][iy] / np[iz][iy]);
+	      cinm[iz][iy] / np[iz][iy], rhm[iz][iy] / np[iz][iy],
+	      rhicem[iz][iy] / np[iz][iy], tdewm[iz][iy] / np[iz][iy],
+	      ticem[iz][iy] / np[iz][iy], tnatm[iz][iy] / np[iz][iy],
+	      hno3m[iz][iy] / np[iz][iy], ohm[iz][iy] / np[iz][iy],
+	      pblm[iz][iy] / np[iz][iy]);
   }
 
   /* Close file... */
