@@ -564,7 +564,7 @@ void module_convection(
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
-      double cape, pbot, pel, ps, ptop;
+      double cape, cin, pbot, pel, ps, ptop;
 
       /* Interpolate CAPE... */
       INTPOL_INIT;
@@ -572,6 +572,13 @@ void module_convection(
 
       /* Check threshold... */
       if (isfinite(cape) && cape >= ctl->conv_cape) {
+
+	/* Check CIN... */
+	if (ctl->conv_cin > 0) {
+	  INTPOL_2D(cin, 0);
+	  if (isfinite(cin) && cin >= ctl->conv_cin)
+	    continue;
+	}
 
 	/* Interpolate equilibrium level... */
 	INTPOL_2D(pel, 0);

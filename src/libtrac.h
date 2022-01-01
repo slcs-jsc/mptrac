@@ -831,6 +831,9 @@ typedef struct {
   /*! CAPE threshold for convection module [J/kg]. */
   double conv_cape;
 
+  /*! CIN threshold for convection module [J/kg]. */
+  double conv_cin;
+
   /*! Maximum vertical velocity for convection module [m/s]. */
   double conv_vmax;
 

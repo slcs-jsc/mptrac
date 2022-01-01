@@ -2510,6 +2510,8 @@ void read_ctl(
   /* Convection... */
   ctl->conv_cape
     = scan_ctl(filename, argc, argv, "CONV_CAPE", -1, "-999", NULL);
+  ctl->conv_cin
+    = scan_ctl(filename, argc, argv, "CONV_CIN", -1, "-999", NULL);
   ctl->conv_vmax
     = scan_ctl(filename, argc, argv, "CONV_VMAX", -1, "-999", NULL);
   ctl->conv_dt = scan_ctl(filename, argc, argv, "CONV_DT", -1, "-999", NULL);
@@ -2914,8 +2916,8 @@ void read_met_cape(
       } while (p > ptop);
 
       /* Check results... */
-      if(!isfinite(met->plfc[ix][iy]) || !isfinite(met->pel[ix][iy]))
-	met->cape[ix][iy] = met->cin[ix][iy] = 0.0;
+      if (!isfinite(met->plfc[ix][iy]))
+	met->cin[ix][iy] = GSL_NAN;
     }
 }
 
