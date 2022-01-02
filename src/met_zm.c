@@ -60,7 +60,8 @@ int main(
     cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc,
     lat, lat0, lat1, dlat, lats[NY], lon0, lon1, lonm[NZ][NY], cw[3];
 
-  static int i, ix, iy, iz, np[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
+  static int i, ix, iy, iz, np[NZ][NY], npc[NZ][NY], npt[NZ][NY], ny, nz,
+    ci[3];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -152,11 +153,14 @@ int main(
 	    pctm[iz][iy] += pct;
 	    pcbm[iz][iy] += pcb;
 	    clm[iz][iy] += cl;
-	    plclm[iz][iy] += plcl;
-	    plfcm[iz][iy] += plfc;
-	    pelm[iz][iy] += pel;
-	    capem[iz][iy] += cape;
-	    cinm[iz][iy] += cin;
+	    if (gsl_finite(plfc) && gsl_finite(pel)) {
+	      plclm[iz][iy] += plcl;
+	      plfcm[iz][iy] += plfc;
+	      pelm[iz][iy] += pel;
+	      capem[iz][iy] += cape;
+	      cinm[iz][iy] += cin;
+	      npc[iz][iy]++;
+	    }
 	    if (gsl_finite(pt)) {
 	      ptm[iz][iy] += pt;
 	      ztm[iz][iy] += zt;
@@ -248,9 +252,9 @@ int main(
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
 	      iwcm[iz][iy] / np[iz][iy], clm[iz][iy] / np[iz][iy],
 	      pctm[iz][iy] / np[iz][iy], pcbm[iz][iy] / np[iz][iy],
-	      plclm[iz][iy] / np[iz][iy], plfcm[iz][iy] / np[iz][iy],
-	      pelm[iz][iy] / np[iz][iy], capem[iz][iy] / np[iz][iy],
-	      cinm[iz][iy] / np[iz][iy], rhm[iz][iy] / np[iz][iy],
+	      plclm[iz][iy] / npc[iz][iy], plfcm[iz][iy] / npc[iz][iy],
+	      pelm[iz][iy] / npc[iz][iy], capem[iz][iy] / npc[iz][iy],
+	      cinm[iz][iy] / npc[iz][iy], rhm[iz][iy] / np[iz][iy],
 	      rhicem[iz][iy] / np[iz][iy], tdewm[iz][iy] / np[iz][iy],
 	      ticem[iz][iy] / np[iz][iy], tnatm[iz][iy] / np[iz][iy],
 	      hno3m[iz][iy] / np[iz][iy], ohm[iz][iy] / np[iz][iy],

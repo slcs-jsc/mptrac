@@ -55,7 +55,7 @@ int main(
     pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ],
     tnatm[NZ], hno3m[NZ], ohm[NZ], cw[3];
 
-  static int i, iz, np[NZ], npt[NZ], nz, ci[3];
+  static int i, iz, np[NZ], npc[NZ], npt[NZ], nz, ci[3];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -131,6 +131,8 @@ int main(
 	    pvm[iz] += pv;
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
+	    lwcm[iz] += lwc;
+	    iwcm[iz] += iwc;
 	    psm[iz] += ps;
 	    tsm[iz] += ts;
 	    zsm[iz] += zs;
@@ -140,13 +142,14 @@ int main(
 	    pctm[iz] += pct;
 	    pcbm[iz] += pcb;
 	    clm[iz] += cl;
-	    plclm[iz] += plcl;
-	    plfcm[iz] += plfc;
-	    pelm[iz] += pel;
-	    capem[iz] += cape;
-	    cinm[iz] += cin;
-	    lwcm[iz] += lwc;
-	    iwcm[iz] += iwc;
+	    if (gsl_finite(plfc) && gsl_finite(pel)) {
+	      plclm[iz] += plcl;
+	      plfcm[iz] += plfc;
+	      pelm[iz] += pel;
+	      capem[iz] += cape;
+	      cinm[iz] += cin;
+	      npc[iz]++;
+	    }
 	    if (gsl_finite(pt)) {
 	      ptm[iz] += pt;
 	      ztm[iz] += zt;
@@ -232,9 +235,9 @@ int main(
 	    usm[iz] / np[iz], vsm[iz] / np[iz], ptm[iz] / npt[iz],
 	    ztm[iz] / npt[iz], ttm[iz] / npt[iz], h2otm[iz] / npt[iz],
 	    lwcm[iz] / np[iz], iwcm[iz] / np[iz], clm[iz] / np[iz],
-	    pctm[iz] / np[iz], pcbm[iz] / np[iz], plclm[iz] / np[iz],
-	    plfcm[iz] / np[iz], pelm[iz] / np[iz], capem[iz] / np[iz],
-	    cinm[iz] / np[iz], rhm[iz] / np[iz], rhicem[iz] / np[iz],
+	    pctm[iz] / np[iz], pcbm[iz] / np[iz], plclm[iz] / npc[iz],
+	    plfcm[iz] / npc[iz], pelm[iz] / npc[iz], capem[iz] / npc[iz],
+	    cinm[iz] / npc[iz], rhm[iz] / np[iz], rhicem[iz] / np[iz],
 	    tdewm[iz] / np[iz], ticem[iz] / np[iz], tnatm[iz] / np[iz],
 	    hno3m[iz] / np[iz], ohm[iz] / np[iz], pblm[iz] / np[iz]);
 

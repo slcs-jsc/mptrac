@@ -60,7 +60,7 @@ int main(
     rhm[NX][NY], rhicem[NX][NY], theta, ptop, pbot, t0,
     lon, lon0, lon1, lons[NX], dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
 
-  static int i, ix, iy, np[NX][NY], nx, ny, ci[3];
+  static int i, ix, iy, np[NX][NY], npc[NX][NY], npt[NX][NY], nx, ny, ci[3];
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
@@ -153,18 +153,24 @@ int main(
 	usm[ix][iy] += us;
 	vsm[ix][iy] += vs;
 	pblm[ix][iy] += pbl;
-	ptm[ix][iy] += pt;
 	pctm[ix][iy] += pct;
 	pcbm[ix][iy] += pcb;
 	clm[ix][iy] += cl;
-	plclm[ix][iy] += plcl;
-	plfcm[ix][iy] += plfc;
-	pelm[ix][iy] += pel;
-	capem[ix][iy] += cape;
-	cinm[ix][iy] += cin;
-	ztm[ix][iy] += zt;
-	ttm[ix][iy] += tt;
-	h2otm[ix][iy] += h2ot;
+	if (gsl_finite(plfc) && gsl_finite(pel)) {
+	  plclm[ix][iy] += plcl;
+	  plfcm[ix][iy] += plfc;
+	  pelm[ix][iy] += pel;
+	  capem[ix][iy] += cape;
+	  cinm[ix][iy] += cin;
+	  npc[ix][iy]++;
+	}
+	if (gsl_finite(pt)) {
+	  ptm[ix][iy] += pt;
+	  ztm[ix][iy] += zt;
+	  ttm[ix][iy] += tt;
+	  h2otm[ix][iy] += h2ot;
+	  npt[ix][iy]++;
+	}
 	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0);
 	tnatm[ix][iy] +=
 	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0));
@@ -243,14 +249,14 @@ int main(
 	      zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
 	      psm[ix][iy] / np[ix][iy], tsm[ix][iy] / np[ix][iy],
 	      zsm[ix][iy] / np[ix][iy], usm[ix][iy] / np[ix][iy],
-	      vsm[ix][iy] / np[ix][iy], ptm[ix][iy] / np[ix][iy],
-	      ztm[ix][iy] / np[ix][iy], ttm[ix][iy] / np[ix][iy],
-	      h2otm[ix][iy] / np[ix][iy], lwcm[ix][iy] / np[ix][iy],
+	      vsm[ix][iy] / np[ix][iy], ptm[ix][iy] / npt[ix][iy],
+	      ztm[ix][iy] / npt[ix][iy], ttm[ix][iy] / npt[ix][iy],
+	      h2otm[ix][iy] / npt[ix][iy], lwcm[ix][iy] / np[ix][iy],
 	      iwcm[ix][iy] / np[ix][iy], clm[ix][iy] / np[ix][iy],
 	      pctm[ix][iy] / np[ix][iy], pcbm[ix][iy] / np[ix][iy],
-	      plclm[ix][iy] / np[ix][iy], plfcm[ix][iy] / np[ix][iy],
-	      pelm[ix][iy] / np[ix][iy], capem[ix][iy] / np[ix][iy],
-	      cinm[ix][iy] / np[ix][iy], rhm[ix][iy] / np[ix][iy],
+	      plclm[ix][iy] / npc[ix][iy], plfcm[ix][iy] / npc[ix][iy],
+	      pelm[ix][iy] / npc[ix][iy], capem[ix][iy] / npc[ix][iy],
+	      cinm[ix][iy] / npc[ix][iy], rhm[ix][iy] / np[ix][iy],
 	      rhicem[ix][iy] / np[ix][iy], tdewm[ix][iy] / np[ix][iy],
 	      ticem[ix][iy] / np[ix][iy], tnatm[ix][iy] / np[ix][iy],
 	      hno3m[ix][iy] / np[ix][iy], ohm[ix][iy] / np[ix][iy],
