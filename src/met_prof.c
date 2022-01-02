@@ -220,13 +220,18 @@ int main(
 	  "# $37 = NAT temperature [K]\n"
 	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
 	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = boundary layer pressure [hPa]\n\n");
+	  "# $40 = boundary layer pressure [hPa]\n");
+  fprintf(out,
+	  "# $41 = number of data points\n"
+	  "# $42 = number of tropopause data points\n"
+	  "# $43 = number of CAPE data points\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -239,7 +244,8 @@ int main(
 	    plfcm[iz] / npc[iz], pelm[iz] / npc[iz], capem[iz] / npc[iz],
 	    cinm[iz] / npc[iz], rhm[iz] / np[iz], rhicem[iz] / np[iz],
 	    tdewm[iz] / np[iz], ticem[iz] / np[iz], tnatm[iz] / np[iz],
-	    hno3m[iz] / np[iz], ohm[iz] / np[iz], pblm[iz] / np[iz]);
+	    hno3m[iz] / np[iz], ohm[iz] / np[iz], pblm[iz] / np[iz],
+	    np[iz], npt[iz], npc[iz]);
 
   /* Close file... */
   fclose(out);

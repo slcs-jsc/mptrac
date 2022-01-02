@@ -231,14 +231,19 @@ int main(
 	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
 	  "# $39 = OH concentration [molec/cm^3]\n"
 	  "# $40 = boundary layer pressure [hPa]\n");
+  fprintf(out,
+	  "# $41 = number of data points\n"
+	  "# $42 = number of tropopause data points\n"
+	  "# $43 = number of CAPE data points\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
@@ -258,7 +263,8 @@ int main(
 	      rhicem[iz][iy] / np[iz][iy], tdewm[iz][iy] / np[iz][iy],
 	      ticem[iz][iy] / np[iz][iy], tnatm[iz][iy] / np[iz][iy],
 	      hno3m[iz][iy] / np[iz][iy], ohm[iz][iy] / np[iz][iy],
-	      pblm[iz][iy] / np[iz][iy]);
+	      pblm[iz][iy] / np[iz][iy], np[iz][iy],
+	      npt[iz][iy], npc[iz][iy]);
   }
 
   /* Close file... */
