@@ -597,10 +597,11 @@ void module_convection(
 	  ptop = pel;
 
 	/* Limit vertical velocity... */
-	if (ctl->conv_vmax > 0) {
+	if (ctl->conv_wmax > 0 || ctl->conv_wcape) {
 	  double z = Z(atm->p[ip]);
-	  double pmax = P(z - ctl->conv_vmax * dt[ip] / 1000.);
-	  double pmin = P(z + ctl->conv_vmax * dt[ip] / 1000.);
+	  double wmax = (ctl->conv_wcape) ? sqrt(2. * cape) : ctl->conv_wmax;
+	  double pmax = P(z - wmax * dt[ip] / 1000.);
+	  double pmin = P(z + wmax * dt[ip] / 1000.);
 	  ptop = GSL_MAX(ptop, pmin);
 	  pbot = GSL_MIN(pbot, pmax);
 	}

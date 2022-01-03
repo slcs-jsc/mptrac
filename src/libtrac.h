@@ -835,7 +835,10 @@ typedef struct {
   double conv_cin;
 
   /*! Maximum vertical velocity for convection module [m/s]. */
-  double conv_vmax;
+  double conv_wmax;
+
+  /*! Limit vertical velocity based on CAPE (0=no, 1=yes). */
+  double conv_wcape;
 
   /*! Time interval for convection module [s]. */
   double conv_dt;
