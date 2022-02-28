@@ -2493,6 +2493,10 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
 
+  /* Reflection... */
+  ctl->reflect =
+    (int) scan_ctl(filename, argc, argv, "REFLECT", -1, "0", NULL);
+
   /* Diffusion parameters... */
   ctl->turb_dx_trop =
     scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);

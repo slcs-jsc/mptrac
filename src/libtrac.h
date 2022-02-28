@@ -810,6 +810,9 @@ typedef struct {
   /*! Balloon position filename. */
   char balloon[LEN];
 
+  /*! Reflection of particles at top and bottom boundary (0=no, 1=yes). */
+  int reflect;
+
   /*! Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. */
   double turb_dx_trop;
 

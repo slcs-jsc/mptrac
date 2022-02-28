@@ -126,6 +126,7 @@ void module_oh_chem(
 
 /*! Check position of air parcels. */
 void module_position(
+  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -317,7 +318,7 @@ int main(
 	get_met(&ctl, t, &met0, &met1);
 
       /* Check initial positions... */
-      module_position(met0, met1, atm, dt);
+      module_position(&ctl, met0, met1, atm, dt);
 
       /* Advection... */
       module_advection(met0, met1, atm, dt);
@@ -345,7 +346,7 @@ int main(
 	module_isosurf(&ctl, met0, met1, atm, cache);
 
       /* Check final positions... */
-      module_position(met0, met1, atm, dt);
+      module_position(&ctl, met0, met1, atm, dt);
 
       /* Interpolate meteorological data... */
       if (ctl.met_dt_out > 0
@@ -1135,6 +1136,7 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
+  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -1180,12 +1182,19 @@ void module_position(
 	atm->lon[ip] -= 360;
 
       /* Check pressure... */
-      if (atm->p[ip] < met0->p[met0->np - 1])
-	atm->p[ip] = met0->p[met0->np - 1];
-      else if (atm->p[ip] > 300.) {
+      if (atm->p[ip] < met0->p[met0->np - 1]) {
+	if (ctl->reflect)
+	  atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
+	else
+	  atm->p[ip] = met0->p[met0->np - 1];
+      } else if (atm->p[ip] > 300.) {
 	INTPOL_2D(ps, 1);
-	if (atm->p[ip] > ps)
-	  atm->p[ip] = ps;
+	if (atm->p[ip] > ps) {
+	  if (ctl->reflect)
+	    atm->p[ip] = 2. * ps - atm->p[ip];
+	  else
+	    atm->p[ip] = ps;
+	}
       }
     }
 }
