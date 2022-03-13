@@ -38,8 +38,15 @@ static gsl_rng *rng[NTHREADS];
    Functions...
    ------------------------------------------------------------ */
 
-/*! Calculate advection of air parcels. */
-void module_advection(
+/*! Calculate advection of air parcels (mipoint method). */
+void module_advect_mp(
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate advection of air parcels (Runge-Kutta). */
+void module_advect_rk(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -321,7 +328,10 @@ int main(
       module_position(&ctl, met0, met1, atm, dt);
 
       /* Advection... */
-      module_advection(met0, met1, atm, dt);
+      if (ctl.advect == 0)
+	module_advect_mp(met0, met1, atm, dt);
+      else
+	module_advect_rk(met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
@@ -436,7 +446,7 @@ int main(
 
 /*****************************************************************************/
 
-void module_advection(
+void module_advect_mp(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -483,6 +493,71 @@ void module_advection(
       atm->lon[ip] += DX2DEG(dt[ip] * u / 1000., xm1);
       atm->lat[ip] += DY2DEG(dt[ip] * v / 1000.);
       atm->p[ip] += dt[ip] * w;
+    }
+}
+
+/*****************************************************************************/
+
+void module_advect_rk(
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
+
+  const int np = atm->np;
+#ifdef _OPENACC
+#pragma acc data present(met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (dt[ip] != 0) {
+
+      /* Init... */
+      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
+      INTPOL_INIT;
+
+      /* Loop over integration nodes... */
+      for (int i = 0; i < 4; i++) {
+
+	/* Set position... */
+	if (i == 0) {
+	  dts = 0.0;
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->p[ip];
+	} else {
+	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->p[ip] + dts * w[i - 1];
+	}
+
+	/* Interpolate meteo data... */
+	double tm = atm->time[ip] + dts;
+	intpol_met_time_3d(met0, met0->u, met1, met1->u, tm, x[2], x[0], x[1],
+			   &u[i], ci, cw, 1);
+	intpol_met_time_3d(met0, met0->v, met1, met1->v, tm, x[2], x[0], x[1],
+			   &v[i], ci, cw, 0);
+	intpol_met_time_3d(met0, met0->w, met1, met1->w, tm, x[2], x[0], x[1],
+			   &w[i], ci, cw, 0);
+
+	/* Get mean wind... */
+	double k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	um += k * u[i];
+	vm += k * v[i];
+	wm += k * w[i];
+      }
+
+      /* Set new position... */
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000., atm->lat[ip]);
+      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+      atm->p[ip] += dt[ip] * wm;
     }
 }
 
