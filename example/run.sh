@@ -89,7 +89,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 echo
 for f in $(ls data/atm_2011*tab) ; do
     echo "Plot $f ..."
-    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $3"-"$4"-"$5", "$6":"$7" UTC"}')
+    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
@@ -118,7 +118,7 @@ done
 # Plot grid data...
 for f in $(ls data/grid_2011*tab) ; do
     echo "Plot $f ..."
-    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $3"-"$4"-"$5", "$6":"$7" UTC"}')
+    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
