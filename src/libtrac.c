@@ -3397,8 +3397,8 @@ int read_met_help_3d(
 	  if (init)
 	    dest[ix][iy][ip] = 0;
 	  short aux = help[(ip * met->ny + iy) * met->nx + ix];
-	  if ((fillval == 0 || (fillval != 0 && aux != fillval))
-	      && (missval == 0 || (missval != 0 && aux != missval))
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
 	      && fabsf(aux * scalfac + offset) < 1e14f)
 	    dest[ix][iy][ip] += scl * (aux * scalfac + offset);
 	  else
@@ -3439,8 +3439,8 @@ int read_met_help_3d(
 	  if (init)
 	    dest[ix][iy][ip] = 0;
 	  float aux = help[(ip * met->ny + iy) * met->nx + ix];
-	  if ((fillval == 0 || (fillval != 0 && aux != fillval))
-	      && (missval == 0 || (missval != 0 && aux != missval))
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
 	    dest[ix][iy][ip] += scl * aux;
 	  else
@@ -3517,8 +3517,8 @@ int read_met_help_2d(
 	if (init)
 	  dest[ix][iy] = 0;
 	short aux = help[iy * met->nx + ix];
-	if ((fillval == 0 || (fillval != 0 && aux != fillval))
-	    && (missval == 0 || (missval != 0 && aux != missval))
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
 	    && fabsf(aux * scalfac + offset) < 1e14f)
 	  dest[ix][iy] += scl * (aux * scalfac + offset);
 	else
@@ -3558,8 +3558,8 @@ int read_met_help_2d(
 	if (init)
 	  dest[ix][iy] = 0;
 	float aux = help[iy * met->nx + ix];
-	if ((fillval == 0 || (fillval != 0 && aux != fillval))
-	    && (missval == 0 || (missval != 0 && aux != missval))
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f)
 	  dest[ix][iy] += scl * aux;
 	else
