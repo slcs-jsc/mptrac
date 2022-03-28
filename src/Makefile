@@ -150,6 +150,9 @@ check: all
 clean:
 	rm -f $(EXC) *.o *~
 
+cppcheck: all
+	cd ../ && cppcheck --enable=all ./src
+
 dist:
 	zip mptrac_`date +"%y%m%d%H%M"`.zip Doxyfile Makefile *.c *.h
 

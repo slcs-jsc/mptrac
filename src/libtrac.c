@@ -1542,8 +1542,9 @@ void day2doy(
   int day,
   int *doy) {
 
-  int d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
-  int d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
+  const int
+    d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 },
+    d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
 
   /* Get day of year... */
   if (year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
@@ -1560,19 +1561,21 @@ void doy2day(
   int *mon,
   int *day) {
 
-  int d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
-  int d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
+  const int
+    d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 },
+    d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
+
   int i;
 
   /* Get month and day... */
   if (year % 400 == 0 || (year % 100 != 0 && year % 4 == 0)) {
-    for (i = 11; i >= 0; i--)
+    for (i = 11; i > 0; i--)
       if (d0l[i] <= doy)
 	break;
     *mon = i + 1;
     *day = doy - d0l[i] + 1;
   } else {
-    for (i = 11; i >= 0; i--)
+    for (i = 11; i > 0; i--)
       if (d0[i] <= doy)
 	break;
     *mon = i + 1;
@@ -2085,8 +2088,6 @@ int read_atm(
 
   FILE *in;
 
-  char line[LEN], *tok;
-
   double t0;
 
   int dimid, ncid, varid;
@@ -2112,9 +2113,11 @@ int read_atm(
     }
 
     /* Read line... */
+    char line[LEN];
     while (fgets(line, LEN, in)) {
 
       /* Read data... */
+      char *tok;
       TOK(line, tok, "%lg", atm->time[atm->np]);
       TOK(NULL, tok, "%lg", atm->p[atm->np]);
       TOK(NULL, tok, "%lg", atm->lon[atm->np]);
@@ -3284,13 +3287,13 @@ void read_met_grid(
   /* Get grid dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nx));
-  LOG(2, "Number of longitudes: %lu", nx);
+  LOG(2, "Number of longitudes: %zu", nx);
   if (nx < 2 || nx > EX)
     ERRMSG("Number of longitudes out of range!");
 
   NC(nc_inq_dimid(ncid, "lat", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &ny));
-  LOG(2, "Number of latitudes: %lu", ny);
+  LOG(2, "Number of latitudes: %zu", ny);
   if (ny < 2 || ny > EY)
     ERRMSG("Number of latitudes out of range!");
 
@@ -3305,7 +3308,7 @@ void read_met_grid(
     }
     NC(nc_inq_dimlen(ncid, dimid, &np));
   }
-  LOG(2, "Number of levels: %lu", np);
+  LOG(2, "Number of levels: %zu", np);
   if (np < 2 || np > EP)
     ERRMSG("Number of levels out of range!");
 
@@ -3726,13 +3729,14 @@ void read_met_pbl(
       double tvs = THETAVIRT(pbl_bot, ts, h2os);
 
       /* Init... */
-      double rib, rib_old = 0, vh2;
+      double rib, rib_old = 0;
 
       /* Loop over levels... */
       for (; ip < met->np; ip++) {
 
 	/* Get squared horizontal wind speed... */
-	vh2 = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
+	double vh2
+	  = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
 	vh2 = GSL_MAX(vh2, SQR(umin));
 
 	/* Calculate bulk Richardson number... */
@@ -4998,7 +5002,7 @@ void write_ens(
 	  fprintf(out, " ");
 	  fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
 	}
-	fprintf(out, " %lu\n", n);
+	fprintf(out, " %zu\n", n);
       }
 
       /* Init new ensemble... */
@@ -5037,7 +5041,7 @@ void write_ens(
       fprintf(out, " ");
       fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
     }
-    fprintf(out, " %lu\n", n);
+    fprintf(out, " %zu\n", n);
   }
 
   /* Close file... */

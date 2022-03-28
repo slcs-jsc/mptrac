@@ -40,7 +40,7 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, lwc, iwc, p0, p1, pref, ps, ts, zs, us, vs, pbl, pt,
+  double h2o, h2ot, o3, lwc, iwc, p0, p1, ps, ts, zs, us, vs, pbl, pt,
     pct, pcb, cl, plcl, plfc, pel, cape, cin, pv, t, tt, u, v, w, z, zm, zref,
     zt, cw[3], time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;
 
@@ -130,7 +130,7 @@ int main(
     get_met(&ctl, atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
-    pref = atm->p[ip];
+    double pref = atm->p[ip];
     if (geopot) {
       zref = Z(pref);
       p0 = met0->p[0];

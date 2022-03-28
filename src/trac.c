@@ -640,7 +640,7 @@ void module_convection(
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
-      double cape, cin, pbot, pel, ps, ptop;
+      double cape, cin, pel, ps;
 
       /* Interpolate CAPE... */
       INTPOL_INIT;
@@ -664,7 +664,8 @@ void module_convection(
 	  continue;
 
 	/* Set pressure range for mixing... */
-	pbot = ptop = atm->p[ip];
+	double pbot = atm->p[ip];
+	double ptop = atm->p[ip];
 	if (ctl->conv_mix_bot == 1) {
 	  INTPOL_2D(ps, 0);
 	  pbot = ps;
