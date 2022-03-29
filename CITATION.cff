@@ -18,6 +18,9 @@ identifiers:
     value: 10.5194/gmd-2021-382
     description: Reference paper.
   - type: doi
+    value: 10.1002/2015JD023749
+    description: Reference paper.
+  - type: doi
     value: 10.5281/zenodo.4400597
     description: Latest release on Zenodo.
   - type: url
