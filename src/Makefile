@@ -147,11 +147,14 @@ libtrac.o: libtrac.c libtrac.h Makefile
 check: all
 	cd ../example && ./run.sh
 
+check_cppcheck:
+	cppcheck --enable=all ./
+
+check_lizard:
+	lizard -s cyclomatic_complexity
+
 clean:
 	rm -f $(EXC) *.o *~
-
-cppcheck:
-	cppcheck --enable=all ./
 
 dist:
 	zip mptrac_`date +"%y%m%d%H%M"`.zip Doxyfile Makefile *.c *.h
@@ -164,9 +167,6 @@ indent:
 
 install: all
 	mkdir -p $(DESTDIR) && cp $(EXC) $(DESTDIR)
-
-lizard:
-	lizard -s cyclomatic_complexity
 
 strip:
 	strip $(EXC)
