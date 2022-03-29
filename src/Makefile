@@ -165,5 +165,8 @@ indent:
 install: all
 	mkdir -p $(DESTDIR) && cp $(EXC) $(DESTDIR)
 
+lizard:
+	lizard -s cyclomatic_complexity
+
 strip:
 	strip $(EXC)
