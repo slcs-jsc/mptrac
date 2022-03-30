@@ -53,6 +53,9 @@ INFO ?= 0
 # Compile for profiling...
 PROF ?= 0
 
+# Compile for coverage report...
+COV ?= 0
+
 # Enable NVTX markers...
 NVTX ?= 0
 
@@ -114,6 +117,11 @@ ifeq ($(PROF),1)
   CFLAGS += -pg
 endif
 
+# Compile for coverage...
+ifeq ($(COV),1)
+  CFLAGS += -ftest-coverage -fprofile-arcs
+endif
+
 # NVTX...
 ifeq ($(NVTX),1)
   CFLAGS  += -DNVTX
@@ -154,7 +162,7 @@ check_lizard:
 	lizard -s cyclomatic_complexity
 
 clean:
-	rm -f $(EXC) *.o *~
+	rm -f $(EXC) *.o *.gcda *.gcno *.gcov *~
 
 dist:
 	zip mptrac_`date +"%y%m%d%H%M"`.zip Doxyfile Makefile *.c *.h

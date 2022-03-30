@@ -1,0 +1,23 @@
+name: Codecov
+on: [push, pull_request]
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch
+        uses: actions/checkout@master
+      - name: Install
+        run: |
+	  sudo apt-get update
+	  sudo apt-get install wget gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+      - name: Test
+        run: |
+          cd ./src
+	  make STATIC=0 COV=1
+	  make check
+          gcov -abcfu trac.c
+      - name: Upload
+        uses: codecov/codecov-action@v2
+        with:
+          files: ./src/trac.c.gcov
+	  

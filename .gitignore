@@ -30,3 +30,6 @@ src/trac
 src/tropo
 src/tropo_sample
 src/wind
+src/*.gcno
+src/*.gcda
+src/*.gcov
