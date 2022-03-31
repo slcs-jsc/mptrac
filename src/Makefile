@@ -155,6 +155,10 @@ libtrac.o: libtrac.c libtrac.h Makefile
 check: all
 	cd ../example && ./run.sh
 
+check_coverage:
+	lcov --capture --directory . --output-file=coverage.info
+	genhtml coverage.info --legend --frames --output-directory=coverage
+
 check_cppcheck:
 	cppcheck --enable=all ./
 
@@ -162,7 +166,7 @@ check_lizard:
 	lizard -s cyclomatic_complexity
 
 clean:
-	rm -f $(EXC) *.o *.gcda *.gcno *.gcov *~
+	rm -rf $(EXC) *.o *.gcda *.gcno *.gcov coverage* *~
 
 dist:
 	zip mptrac_`date +"%y%m%d%H%M"`.zip Doxyfile Makefile *.c *.h

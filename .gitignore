@@ -33,3 +33,4 @@ src/wind
 src/*.gcno
 src/*.gcda
 src/*.gcov
+src/coverage*
