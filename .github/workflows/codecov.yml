@@ -11,8 +11,8 @@ jobs:
     - name: install
       run: sudo apt-get update ; sudo apt-get install wget gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
     - name: test
-      run: cd ./src ; make STATIC=0 COV=1 ; make check ; gcov -abcfu trac.c
+      run: cd ./src ; make STATIC=0 COV=1 ; make check ; gcov -abcfu *.c
     - name: upload
       uses: codecov/codecov-action@v2
       with:
-        files: ./src/trac.c.gcov
+        files: ./src/*.c.gcov
