@@ -71,7 +71,7 @@ EOF
 
 # Set initial air parcel positions...
 $trac/atm_init data/trac.ctl data/atm_init.tab \
-	       INIT_T0 $t0 INIT_T1 $t0 \
+	       INIT_T0 "$t0" INIT_T1 "$t0" \
 	       INIT_Z0 10.0 INIT_Z1 10.0 \
 	       INIT_LON0 -72.117 INIT_LON1 -72.117 \
 	       INIT_LAT0 -40.59 INIT_LAT1 -40.59
@@ -89,7 +89,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 echo
 for f in $(ls data/atm_2011*tab) ; do
     echo "Plot $f ..."
-    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
+    t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
@@ -118,7 +118,7 @@ done
 # Plot grid data...
 for f in $(ls data/grid_2011*tab) ; do
     echo "Plot $f ..."
-    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
+    t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
