@@ -33,7 +33,7 @@ Commands to install the necessary software on Ubuntu Linux:
     sudo apt-get update
     sudo apt-get install gcc git make gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
 
-Additional software being recommended for code developement:
+Additional software being recommended for code development:
 
     sudo apt-get install cppcheck doxygen graphviz indent lcov
 
