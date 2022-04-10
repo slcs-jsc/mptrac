@@ -63,9 +63,9 @@ In particular, you might want to check:
 
 * By default, the MPTRAC binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, e.g., in combination with dynamically compiled netCDF and GSL libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag in the Makefile and remember to set the `LD_LIBRARY_PATH` to include the libraries.
 
-* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library such as (OpenMPI)[https://www.open-mpi.org/] or (MPICH)[https://www.mpich.org/].
+* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library such as [OpenMPI](https://www.open-mpi.org) or [MPICH](https://www.mpich.org).
 
-* To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The (NVIDIA HPC SDK)[https://developer.nvidia.com/hpc-sdk] will be required to compile the GPU code.
+* To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The [NVIDIA HPC SDK](https://developer.nvidia.com/hpc-sdk) will be required to compile the GPU code.
 
 Try to compile the code:
 
