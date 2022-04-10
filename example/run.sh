@@ -149,7 +149,7 @@ done
 echo
 error=0
 for f in $(ls data.ref/atm*tab data.ref/grid*tab) ; do
-    diff -q -s data/$(basename $f) $f
+    diff -q -s data/$(basename "$f") "$f"
     [ $? -ne 0 ] && error=1
 done
 exit $error
