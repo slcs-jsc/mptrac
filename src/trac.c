@@ -242,7 +242,7 @@ int main(
     ERRMSG("Cannot open directory list!");
 
   /* Loop over directories... */
-  while (fscanf(dirlist, "%s", dirname) != EOF) {
+  while (fscanf(dirlist, "%5000s", dirname) != EOF) {
 
     /* MPI parallelization... */
     if ((++ntask) % size != rank)
