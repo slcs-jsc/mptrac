@@ -26,7 +26,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries are provided in the MPTRAC git repository.
+This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries are provided in the MPTRAC git repository. The graphing utility [gnuplot](http://www.gnuplot.info) is recommend for visualization.
 
 Start by downloading the MPTRAC source code from the git repository:
 
@@ -38,33 +38,38 @@ To update an existing installation use:
 
 ### Installation
 
-First, compile the GSL and netCDF library required by MPTRAC by running the build script:
+First, install the GSL and netCDF library required by MPTRAC.
+
+It is recommended to install the libraries provided along with MPTRAC by running the build script:
 
     cd mptrac/libs
     ./build.sh <nc2|nc4>
 
 Please select `nc2`, if you want to use meteorological data files in netCDF classic format, or select `nc4`, if you want to be able to use both, netCDF classic and netCDF-4. Compilation of the HDF5 and zlib libraries will be required for netCDF-4.
 
+If the installation of the libraries fails, you may try to install them via a software manager. For example, on Ubuntu Linux please use:
+
+    sudo apt-get update
+    sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+
 Next, change to the source directory and edit the Makefile according to your needs.
 
     cd mptrac/src
     emacs Makefile
 
-In particular, enable or disable the `NC4` flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the LIBDIR and INCDIR paths to point to the directories where the libraries are located on your system.
+In particular, enable or disable the `NC4` flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the `LIBDIR` and `INCDIR` paths to point to the directories where the libraries are located on your system.
 
-To make use of the MPI parallelization of MPTRAC, the MPI flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the GPU flag needs to be enabled. The PGI Compiler Suite will be required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The NVIDIA HPC SDK will be required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
 
-Load any software modules that might also be needed on your target platform, and try to compile the code:
+By default, the binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, or when using netCDF and GSL libraries installed by a software manager. In this case, disable the `STATIC` flag in the Makefile and set the `LD_LIBRARY_PATH` to include the `mptrac/libs/build/lib` directory.
+
+Load any software modules that might be needed on your target platform, and try to compile the code:
 
     make [-j4]
 
 The argument `-j` is optional. It can be used to specify the number of parallel threads to speed up compilation.
 
-After compilation, the MPTRAC binaries are located in the mptrac/src/ directory.
-
-By default, the binaries will be linked statically, i.e., they can be copied to and run on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC. In this case, disable static compilation in the Makefile. To run dynamically linked binaries, the LD_LIBRARY_PATH needs to be set to include the `mptrac/libs/build/lib directory`.
-
-By default we apply rather strict compiler warnings to catch problems. Also, all warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag `-Werror`. It should not be removed from the CFLAGS in the Makefile, unless you know what you are doing.
+After compilation, the MPTRAC binaries are located in the `mptrac/src/` directory.
 
 ### Run the example
 
@@ -96,7 +101,7 @@ More detailed information for new users and developers of MPTRAC is collected in
 
 These are the main references for citing the MPTRAC model in scientific publications:
 
-* Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on Graphics Processing Units (GPUs), Geosci. Model Dev. Discuss. [preprint], https://doi.org/10.5194/gmd-2021-382, in review, 2021.
+* Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022.
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
