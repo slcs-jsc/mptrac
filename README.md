@@ -71,13 +71,9 @@ Try to compile the code:
 
     make
 
-To run a test case of the installation, please use:
+To run a test case to check the installation, please use:
 
     make check
-
-After compilation, the MPTRAC binaries are located in the directory `mptrac/src/`. To install them to `/usr/local/bin` (or another directory specified by `DESTDIR`), please use:
-
-    make install
 
 ### Run the example
 
