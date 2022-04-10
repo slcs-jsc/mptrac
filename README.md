@@ -26,56 +26,64 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries are provided in the MPTRAC git repository. The graphing utility [gnuplot](http://www.gnuplot.info) is recommend for visualization.
+This documentation describes the installation of MPTRAC on a Linux system. Some standard tools (e.g., gcc, git, make) are needed for compilation and installation. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. The graphing utility [gnuplot](http://www.gnuplot.info) is recommend for visualization.
+
+Commands to install the necessary software on Ubuntu Linux:
+
+    sudo apt-get update
+    sudo apt-get install gcc git make gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+
+Additional software being recommended for code developement:
+
+    sudo apt-get install cppcheck doxygen graphviz indent lcov
+
+### Installation
 
 Start by downloading the MPTRAC source code from the git repository:
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
-To update an existing installation use:
+To update an existing installation, please use:
 
     git pull https://github.com/slcs-jsc/mptrac.git
 
-### Installation
-
-First, install the GSL and netCDF library required by MPTRAC.
-
-It is recommended to install the libraries provided along with MPTRAC by running the build script:
+In case the GSL and netCDF libraries are missing on your system, it is recommended to install the versions of the libraries provided along with MPTRAC by running the library build script:
 
     cd mptrac/libs
-    ./build.sh <nc2|nc4>
-
-Please select `nc2`, if you want to use meteorological data files in netCDF classic format, or select `nc4`, if you want to be able to use both, netCDF classic and netCDF-4. Compilation of the HDF5 and zlib libraries will be required for netCDF-4.
-
-If the installation of the libraries fails, you may try to install them via a software manager. For example, on Ubuntu Linux please use:
-
-    sudo apt-get update
-    sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+    ./build.sh
 
 Next, change to the source directory and edit the Makefile according to your needs.
 
     cd mptrac/src
     emacs Makefile
 
-In particular, enable or disable the `NC4` flag, depending on whether you want to use netCDF classic or netCDF-4 data files. You may also want to edit the `LIBDIR` and `INCDIR` paths to point to the directories where the libraries are located on your system.
+In particular, you might want to check:
 
-To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library to be installed or loaded as a module. To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The NVIDIA HPC SDK will be required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+* Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL and netCDF libraries are located on your system.
 
-By default, the binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, in particular in combination with MPI and OpenACC, or when using netCDF and GSL libraries installed by a software manager. In this case, disable the `STATIC` flag in the Makefile and set the `LD_LIBRARY_PATH` to include the `mptrac/libs/build/lib` directory.
+* By default, the MPTRAC binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, e.g., in combination with dynamically compiled netCDF and GSL libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag in the Makefile and remember to set the `LD_LIBRARY_PATH` to include the libraries.
 
-Load any software modules that might be needed on your target platform, and try to compile the code:
+* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled in the Makefile. Further steps of the installation will require an MPI library such as (OpenMPI)[https://www.open-mpi.org/] or (MPICH)[https://www.mpich.org/].
 
-    make [-j4]
+* To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The (NVIDIA HPC SDK)[https://developer.nvidia.com/hpc-sdk] will be required to compile the GPU code.
 
-The argument `-j` is optional. It can be used to specify the number of parallel threads to speed up compilation.
+Try to compile the code:
 
-After compilation, the MPTRAC binaries are located in the `mptrac/src/` directory.
+    make
+
+To run a test case of the installation, please use:
+
+    make check
+
+After compilation, the MPTRAC binaries are located in the directory `mptrac/src/`. To install them to `/usr/local/bin` (or another directory specified by `DESTDIR`), please use:
+
+    make install
 
 ### Run the example
 
 An example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-It is recommended that you create a project directory for testing the example and to store the results also of other experiments:
+It is recommended that you create a project directory for testing the example and also to store the results of other experiments:
 
     mkdir -p mptrac/projects
     cp -a mptrac/example mptrac/projects
@@ -85,9 +93,7 @@ This shows how to run the example:
     cd mptrac/projects/example
     ./run.sh
 
-At the first call, the run script will download meteorological input data from a data server. This step may take a while as the input data comprise several hundred MByte in size. The input data are saved for later runs and need to be downloaded only once.
-
-Please see the example script (run.sh) on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
+Please see the example script `run.sh` on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
 
 The script generates a number of plots of the simulation output at different time steps after the eruption by means of `gnuplot`. These plots should look similar to the output already provided in the repository.
 

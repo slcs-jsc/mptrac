@@ -29,14 +29,8 @@ INCDIR += -I ../libs/build/include
 # Library directories...
 LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 
-# Enable netCDF-4...
-NC4 ?= 1
-
 # Compile for GPUs...
 GPU ?= 0
-
-# Use managed memory for GPUs...
-GPUMEM ?= 0
 
 # Compile for MPI...
 MPI ?= 0
@@ -80,17 +74,12 @@ endif
 
 # Set LDFLAGS...
 LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
-ifeq ($(NC4),1)
-  ifeq ($(STATIC),1)
-    LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
-  endif
+ifeq ($(STATIC),1)
+  LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif
 
 # Additional flags for GPUs...
 ifeq ($(GPU),1)
-  ifeq ($(GPUMEM),1)
-    CFLAGS += -gpu=managed
-  endif
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
 endif
 
