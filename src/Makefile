@@ -153,8 +153,9 @@ check: all
 	cd ../example && ./run.sh
 
 check_coverage:
-	lcov --capture --directory . --output-file=coverage.info
+	lcov --capture --directory . --output-file=coverage.info ; \
 	genhtml coverage.info --legend --frames --output-directory=coverage
+	gcov -abcfu *.c
 
 check_cppcheck:
 	cppcheck --enable=all ./
