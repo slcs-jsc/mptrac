@@ -37,7 +37,7 @@ int main(
   char tstr[LEN];
 
   double lat0, lat1, latm, lon0, lon1, lonm, p0, p1,
-    t, t0, qm[NQ], *work, zm, *zs;
+    t, t0 = GSL_NAN, qm[NQ], *work, zm, *zs;
 
   int ens, f, init = 0, ip, iq, year, mon, day, hour, min;
 
