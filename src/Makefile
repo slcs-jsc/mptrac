@@ -20,6 +20,9 @@
 # List of executables...
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time lapse met_map met_prof met_sample met_spec met_zm time2jsec sedi subgrid tnat trac tropo tropo_sample wind
 
+# List of tests...
+TESTS = puyehue sampling
+
 # Installation directory...
 DESTDIR ?= ../bin
 
@@ -135,11 +138,21 @@ all: $(EXC)
 $(EXC): %: %.c libtrac.o
 	$(CC) $(CFLAGS) -o $@ $< libtrac.o $(LDFLAGS)
 
+$(TESTS): all
+	cd ../tests/$@ ; ./run.sh \
+	&& (echo "\nTest \"$@\" passed!") \
+	|| (echo "\nTest \"$@\" failed!" ; exit 1)
+
 libtrac.o: libtrac.c libtrac.h Makefile
 	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
 
 check: all
-	cd ../example && ./run.sh
+	for test in $(TESTS) ; do \
+	  (cd ../tests/$$test ; ./run.sh \
+	   && echo "\nTest \"$$test\" passed!" \
+	   || (echo "\nTest \"$$test\" failed!" ; exit 1)) ; \
+	done ; \
+	echo "\nAll tests passed!"
 
 check_coverage:
 	lcov --capture --directory . --output-file=coverage.info ; \
