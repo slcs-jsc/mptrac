@@ -1,0 +1,10 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = absolute horizontal distance (median) [km]
+# $4 = relative horizontal distance (median) [%]
+# $5 = absolute vertical distance (median) [km]
+# $6 = relative vertical distance (median) [%]
+# $7 = number of particles
+
+0.00 0.00 0 0 0 0 6715
+86400.00 86400.00 8812.53 200 -0.4287 -200 4493

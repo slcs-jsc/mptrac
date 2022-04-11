@@ -145,6 +145,11 @@ int main(
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
+    /* Check time... */
+    if (year < 1900 || year > 2100 || mon < 1 || mon > 12 || day < 1
+	|| day > 31 || hour < 0 || hour > 23 || min < 0 || min > 59)
+      ERRMSG("Cannot read time from filename!");
+
     /* Save initial time... */
     if (!init) {
       init = 1;

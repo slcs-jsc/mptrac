@@ -3272,6 +3272,9 @@ void read_met_grid(
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Check time... */
+  if (year < 1900 || year > 2100 || mon < 1 || mon > 12
+      || day < 1 || day > 31 || hour < 0 || hour > 23)
+    ERRMSG("Cannot read time from filename!");
   jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
   LOG(2, "Time from filename: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);

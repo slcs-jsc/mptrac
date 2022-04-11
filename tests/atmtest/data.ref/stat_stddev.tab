@@ -1,0 +1,8 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = altitude (stddev) [km]
+# $4 = longitude (stddev) [deg]
+# $5 = latitude (stddev) [deg]
+# $6 = number of particles
+
+0.00 0.00 14.3625 86.5779 36.7255 6715

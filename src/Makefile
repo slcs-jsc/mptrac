@@ -21,7 +21,7 @@
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time lapse met_map met_prof met_sample met_spec met_zm time2jsec sedi subgrid tnat trac tropo tropo_sample wind
 
 # List of tests...
-TESTS = puyehue sampling
+TESTS = atmtest puyehue sampling
 
 # Installation directory...
 DESTDIR ?= ../bin

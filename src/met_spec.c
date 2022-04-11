@@ -19,7 +19,7 @@
 
 /*! 
   \file
-  Extract zonal mean from meteorological data.
+  Spectral analysis of meteorological data.
 */
 
 #include "libtrac.h"
