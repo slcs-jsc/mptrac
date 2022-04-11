@@ -34,6 +34,6 @@ src/*.gcno
 src/*.gcda
 src/*.gcov
 src/coverage*
-tests/atmtest/data/
-tests/mettest/data/
+tests/atm_test/data/
+tests/met_test/data/
 tests/puyehue/data/
