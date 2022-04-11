@@ -1,4 +1,4 @@
-name: testcase
+name: tests
 
 on:
   push:
