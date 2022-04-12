@@ -1,3 +1,4 @@
+mptrac_*.tgz
 bin/
 docs/html/
 docs/latex/
@@ -15,15 +16,15 @@ src/atm_stat
 src/day2doy
 src/doy2day
 src/jsec2time
-src/lapse
 src/libtrac.o
+src/met_lapse
 src/met_map
 src/met_prof
 src/met_sample
 src/met_spec
+src/met_subgrid
 src/met_zm
 src/sedi
-src/subgrid
 src/time2jsec
 src/tnat
 src/trac

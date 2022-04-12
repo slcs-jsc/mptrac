@@ -2,23 +2,8 @@
 # Setup...
 # -----------------------------------------------------------------------------
 
-# Load these modules before compiling and running the code in Juelich:
-#
-# JURECA and JUWELS clusters:
-# - enable MPI and disable STATIC flag
-# - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
-# ml purge
-# ml GCC ParaStationMPI
-#
-# JURECA and JUWELS GPUs:
-# - login to juwels-booster.fz-juelich.de
-# - enable MPI and GPU flags and disable STATIC flag
-# - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
-# ml purge
-# ml NVHPC ParaStationMPI
-
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time lapse met_map met_prof met_sample met_spec met_zm time2jsec sedi subgrid tnat trac tropo tropo_sample wind
+EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample wind
 
 # List of tests...
 TESTS = atm_test met_test puyehue
@@ -169,16 +154,19 @@ clean:
 	rm -rf $(EXC) *.o *.gcda *.gcno *.gcov coverage* *~
 
 dist:
-	zip mptrac_`date +"%y%m%d%H%M"`.zip Doxyfile Makefile *.c *.h
+	cd ..  && tar cvfz mptrac_$(VERSION).tgz bin/* docs/Doxyfile docs/refman.pdf example/* libs/build.sh libs/*bz2 src/* tests/*
 
 doc:
-	cd ../docs && doxygen && cd ../docs/latex && make
+	cd ../docs && doxygen && cd latex && make && cp refman.pdf ..
 
 indent:
 	indent -br -brf -brs -bfda -ce -cdw -lp -npcs -npsl *.c *.h
 
-install: all
+install:
 	mkdir -p $(DESTDIR) && cp $(EXC) $(DESTDIR)
 
 strip:
 	strip $(EXC)
+
+uninstall:
+	cd $(DESTDIR) && rm $(EXC)
