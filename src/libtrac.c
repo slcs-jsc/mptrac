@@ -2266,8 +2266,8 @@ int read_atm(
   gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
   LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
-  LOG(2, "Altitude range: %g ... %g km", Z(mini), Z(maxi));
-  LOG(2, "Pressure range: %g ... %g hPa", mini, maxi);
+  LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
+  LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
   gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
   LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
@@ -4681,8 +4681,8 @@ void write_atm(
   gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
   LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
-  LOG(2, "Altitude range: %g ... %g km", Z(mini), Z(maxi));
-  LOG(2, "Pressure range: %g ... %g hPa", mini, maxi);
+  LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
+  LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
   gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
   LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);

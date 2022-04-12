@@ -117,44 +117,40 @@ endif
 # Targets...
 # -----------------------------------------------------------------------------
 
+.PHONY : all check clean coverage cppcheck dist doc indent \
+           install lizard strip uninstall
+
 all: $(EXC)
 	rm -f *~
 
 $(EXC): %: %.c libtrac.o
 	$(CC) $(CFLAGS) -o $@ $< libtrac.o $(LDFLAGS)
 
+check: $(TESTS)
+
 $(TESTS): all
 	cd ../tests/$@ ; ./run.sh \
-	&& (echo "\nTest \"$@\" passed!") \
-	|| (echo "\nTest \"$@\" failed!" ; exit 1)
+	  && (echo "\nTest \"$@\" passed!") \
+	  || (echo "\nTest \"$@\" failed!" ; exit 1)
 
 libtrac.o: libtrac.c libtrac.h Makefile
 	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
 
-check: all
-	for test in $(TESTS) ; do \
-	  (cd ../tests/$$test ; ./run.sh \
-	   && echo "\nTest \"$$test\" passed!" \
-	   || (echo "\nTest \"$$test\" failed!" ; exit 1)) ; \
-	done ; \
-	echo "\nAll tests passed!"
+clean:
+	rm -rf $(EXC) *.o *.gcda *.gcno *.gcov coverage* *~
 
-check_coverage:
+coverage:
 	lcov --capture --directory . --output-file=coverage.info ; \
 	genhtml coverage.info --legend --frames --output-directory=coverage
 	gcov -abcfu *.c
 
-check_cppcheck:
+cppcheck:
 	cppcheck --enable=all ./
 
-check_lizard:
-	lizard -s cyclomatic_complexity
-
-clean:
-	rm -rf $(EXC) *.o *.gcda *.gcno *.gcov coverage* *~
-
 dist:
-	cd ..  && tar cvfz mptrac_$(VERSION).tgz bin/* docs/Doxyfile docs/refman.pdf example/* libs/build.sh libs/*bz2 src/* tests/*
+	cd ..  && tar cvfz mptrac_$(VERSION).tgz bin/* \
+          docs/Doxyfile docs/refman.pdf example/* \
+          libs/build.sh libs/*bz2 src/* tests/*
 
 doc:
 	cd ../docs && doxygen && cd latex && make && cp refman.pdf ..
@@ -164,6 +160,9 @@ indent:
 
 install:
 	mkdir -p $(DESTDIR) && cp $(EXC) $(DESTDIR)
+
+lizard:
+	lizard -s cyclomatic_complexity
 
 strip:
 	strip $(EXC)

@@ -14,6 +14,6 @@ jobs:
     - name: install
       run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
     - name: make
-      run: cd src ; make STATIC=0
+      run: cd src ; STATIC=0 make
     - name: check
-      run: cd src ; make check
+      run: cd src ; STATIC=0 make check
