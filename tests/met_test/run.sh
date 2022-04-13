@@ -10,7 +10,8 @@ trac=../../src
 # Create directories...
 rm -rf data && mkdir -p data
 
-# Sample map, profile, zonal mean, and spectral data...
+# Sampling tools...
+$trac/met_lapse - data/lapse.tab ../data/ei_2011_06_05_00.nc
 $trac/met_map - data/map.tab ../data/ei_2011_06_05_00.nc \
 	      MAP_LON0 -180 MAP_LON1 180 MAP_DLON 6 \
 	      MAP_LAT0 -90 MAP_LAT1 90 MAP_DLAT 4 \
@@ -27,6 +28,9 @@ $trac/met_zm - data/zm.tab ../data/ei_2011_06_05_00.nc \
 	     TROPO 5
 $trac/met_spec - data/spec.tab ../data/ei_2011_06_05_00.nc \
 	       SPEC_WAVEMAX 3
+$trac/met_subgrid - data/subgrid.tab \
+		  ../data/ei_2011_06_05_00.nc \
+		  ../data/ei_2011_06_06_00.nc
 
 # Create init file for sampling...
 tm=$($trac/time2jsec 2011 6 5 12 0 0 0)

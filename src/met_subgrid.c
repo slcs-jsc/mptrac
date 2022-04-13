@@ -51,7 +51,7 @@ int main(
   /* Check arguments... */
   if (argc < 4 && argc % 2 != 0)
     ERRMSG
-      ("Give parameters: <ctl> <zm.tab> <met0> <met1> [ <met0> <met1> ... ]");
+      ("Give parameters: <ctl> <subgrid.tab> <met0> <met1> [ <met0> <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
