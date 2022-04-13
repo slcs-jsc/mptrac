@@ -51,7 +51,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = meteo/ei
+METBASE = ../tests/data/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
 BOUND_MASS = 0.0
@@ -108,7 +108,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "meteo/wcl.tab" u 1:2 w l lt -1 t "", \
+    "../data/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -138,7 +138,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "meteo/wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e
