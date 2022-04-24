@@ -51,7 +51,7 @@ int main(
 
   /* Particle Reynolds number... */
   Re = 2e-6 * r_p * vs * rho / eta;
-  
+
   /* Write output... */
   printf("    p= %g hPa\n", p);
   printf("    T= %g K\n", T);
@@ -59,6 +59,6 @@ int main(
   printf("rho_p= %g kg/m^3\n", rho_p);
   printf("  v_s= %g m/s\n", vs);
   printf("   Re= %g\n", Re);
-  
+
   return EXIT_SUCCESS;
 }

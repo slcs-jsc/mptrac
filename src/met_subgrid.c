@@ -60,9 +60,9 @@ int main(
   for (i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
-    if (!read_met(&ctl, argv[i], met0))
+    if (!read_met(argv[i], &ctl, met0))
       ERRMSG("Cannot open file!");
-    if (!read_met(&ctl, argv[i + 1], met1))
+    if (!read_met(argv[i + 1], &ctl, met1))
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */

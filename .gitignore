@@ -17,6 +17,7 @@ src/day2doy
 src/doy2day
 src/jsec2time
 src/libtrac.o
+src/met_conv
 src/met_lapse
 src/met_map
 src/met_prof

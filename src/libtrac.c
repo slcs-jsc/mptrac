@@ -1620,12 +1620,12 @@ void get_met(
 
     /* Read meteo data... */
     get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(ctl, filename, *met0))
+    if (!read_met(filename, ctl, *met0))
       ERRMSG("Cannot open file!");
 
     get_met_help(t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
 		 filename);
-    if (!read_met(ctl, filename, *met1))
+    if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
@@ -1656,7 +1656,7 @@ void get_met(
 
     /* Read new meteo data... */
     get_met_help(t, 1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(ctl, filename, *met1))
+    if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
@@ -1685,7 +1685,7 @@ void get_met(
 
     /* Read new meteo data... */
     get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(ctl, filename, *met0))
+    if (!read_met(filename, ctl, *met0))
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
@@ -2439,9 +2439,11 @@ void read_ctl(
   ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "1e100", NULL);
   ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "180", NULL);
 
-  /* Meteorological data... */
+  /* Meteo data... */
   scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "3600", NULL);
+  ctl->met_type =
+    (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
@@ -2760,66 +2762,198 @@ void read_ctl(
 /*****************************************************************************/
 
 int read_met(
-  ctl_t * ctl,
   char *filename,
+  ctl_t * ctl,
   met_t * met) {
 
-  int ncid;
-
   /* Write info... */
-  LOG(1, "Read meteorological data: %s", filename);
+  LOG(1, "Read meteo data: %s", filename);
 
-  /* Open netCDF file... */
-  if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
-      NC_NOERR) {
-    WARN("File not found!");
-    return 0;
+  /* Read netCDF data... */
+  if (ctl->met_type == 0) {
+
+    int ncid;
+
+    /* Open netCDF file... */
+    if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
+	NC_NOERR) {
+      WARN("File not found!");
+      return 0;
+    }
+
+    /* Read coordinates of meteo data... */
+    read_met_grid(filename, ncid, ctl, met);
+
+    /* Read meteo data on vertical levels... */
+    read_met_levels(ncid, ctl, met);
+
+    /* Extrapolate data for lower boundary... */
+    read_met_extrapolate(met);
+
+    /* Read surface data... */
+    read_met_surface(ncid, met);
+
+    /* Create periodic boundary conditions... */
+    read_met_periodic(met);
+
+    /* Downsampling... */
+    read_met_sample(ctl, met);
+
+    /* Calculate geopotential heights... */
+    read_met_geopot(ctl, met);
+
+    /* Calculate potential vorticity... */
+    read_met_pv(met);
+
+    /* Calculate boundary layer data... */
+    read_met_pbl(met);
+
+    /* Calculate tropopause data... */
+    read_met_tropo(ctl, met);
+
+    /* Calculate cloud properties... */
+    read_met_cloud(met);
+
+    /* Calculate convective available potential energy... */
+    read_met_cape(met);
+
+    /* Detrending... */
+    read_met_detrend(ctl, met);
+
+    /* Close file... */
+    NC(nc_close(ncid));
   }
 
-  /* Read coordinates of meteorological data... */
-  read_met_grid(filename, ncid, ctl, met);
+  /* Read binary data... */
+  else if (ctl->met_type == 1) {
 
-  /* Read meteo data on vertical levels... */
-  read_met_levels(ncid, ctl, met);
+    FILE *in;
 
-  /* Extrapolate data for lower boundary... */
-  read_met_extrapolate(met);
+    /* Open file... */
+    if (!(in = fopen(filename, "r")))
+      ERRMSG("Cannot open file!");
 
-  /* Read surface data... */
-  read_met_surface(ncid, met);
+    /* Read grid data... */
+    FREAD(&met->time, double,
+	  1,
+	  in);
+    FREAD(&met->nx, int,
+	  1,
+	  in);
+    FREAD(&met->ny, int,
+	  1,
+	  in);
+    FREAD(&met->np, int,
+	  1,
+	  in);
+    FREAD(met->lon, double,
+	    (size_t) met->nx,
+	  in);
+    FREAD(met->lat, double,
+	    (size_t) met->ny,
+	  in);
+    FREAD(met->p, double,
+	    (size_t) met->np,
+	  in);
 
-  /* Create periodic boundary conditions... */
-  read_met_periodic(met);
+    /* Write surface data... */
+    read_met_bin_2d(in, met, met->ps);
+    read_met_bin_2d(in, met, met->ts);
+    read_met_bin_2d(in, met, met->zs);
+    read_met_bin_2d(in, met, met->us);
+    read_met_bin_2d(in, met, met->vs);
+    read_met_bin_2d(in, met, met->pbl);
+    read_met_bin_2d(in, met, met->pt);
+    read_met_bin_2d(in, met, met->tt);
+    read_met_bin_2d(in, met, met->zt);
+    read_met_bin_2d(in, met, met->h2ot);
+    read_met_bin_2d(in, met, met->pct);
+    read_met_bin_2d(in, met, met->pcb);
+    read_met_bin_2d(in, met, met->cl);
+    read_met_bin_2d(in, met, met->plcl);
+    read_met_bin_2d(in, met, met->plfc);
+    read_met_bin_2d(in, met, met->pel);
+    read_met_bin_2d(in, met, met->cape);
+    read_met_bin_2d(in, met, met->cin);
 
-  /* Downsampling... */
-  read_met_sample(ctl, met);
+    /* Write level data... */
+    read_met_bin_3d(in, met, met->z);
+    read_met_bin_3d(in, met, met->t);
+    read_met_bin_3d(in, met, met->u);
+    read_met_bin_3d(in, met, met->v);
+    read_met_bin_3d(in, met, met->w);
+    read_met_bin_3d(in, met, met->pv);
+    read_met_bin_3d(in, met, met->h2o);
+    read_met_bin_3d(in, met, met->o3);
+    read_met_bin_3d(in, met, met->lwc);
+    read_met_bin_3d(in, met, met->iwc);
+    read_met_bin_3d(in, met, met->pl);	/* not needed? */
 
-  /* Calculate geopotential heights... */
-  read_met_geopot(ctl, met);
+    /* Close file... */
+    fclose(in);
+  }
 
-  /* Calculate potential vorticity... */
-  read_met_pv(met);
-
-  /* Calculate boundary layer data... */
-  read_met_pbl(met);
-
-  /* Calculate tropopause data... */
-  read_met_tropo(ctl, met);
-
-  /* Calculate cloud properties... */
-  read_met_cloud(met);
-
-  /* Calculate convective available potential energy... */
-  read_met_cape(met);
-
-  /* Detrending... */
-  read_met_detrend(ctl, met);
-
-  /* Close file... */
-  NC(nc_close(ncid));
+  /* Not implemented... */
+  else
+    ERRMSG("MET_TYPE not implemented!");
 
   /* Return success... */
   return 1;
+}
+
+/*****************************************************************************/
+
+void read_met_bin_2d(
+  FILE * in,
+  met_t * met,
+  float var[EX][EY]) {
+
+  float *help;
+
+  /* Allocate... */
+  ALLOC(help, float,
+	EX * EY);
+
+  /* Read... */
+  FREAD(help, float,
+	  (size_t) (met->nx * met->ny),
+	in);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      var[ix][iy] = help[ix * met->ny + iy];
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
+void read_met_bin_3d(
+  FILE * in,
+  met_t * met,
+  float var[EX][EY][EP]) {
+
+  float *help;
+
+  /* Allocate... */
+  ALLOC(help, float,
+	EX * EY * EP);
+
+  /* Read... */
+  FREAD(help, float,
+	  (size_t) (met->nx * met->ny * met->np),
+	in);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
+	var[ix][iy][ip] = help[(ix * met->ny + iy) * met->np + ip];
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/
@@ -3345,125 +3479,116 @@ void read_met_grid(
 
 /*****************************************************************************/
 
-int read_met_help_3d(
+void read_met_levels(
   int ncid,
-  char *varname,
-  char *varname2,
-  met_t * met,
-  float dest[EX][EY][EP],
-  float scl,
-  int init) {
+  ctl_t * ctl,
+  met_t * met) {
 
-  char varsel[LEN];
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
+  LOG(2, "Read level data...");
 
-  float offset, scalfac;
-
-  int varid;
-
-  /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
-      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
-      return 0;
-    } else {
-      sprintf(varsel, "%s", varname2);
-  } else
-    sprintf(varsel, "%s", varname);
-
-  /* Read packed data... */
-  if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
-
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s "
-	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  if (init)
-	    dest[ix][iy][ip] = 0;
-	  short aux = help[(ip * met->ny + iy) * met->nx + ix];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux * scalfac + offset) < 1e14f)
-	    dest[ix][iy][ip] += scl * (aux * scalfac + offset);
-	  else
-	    dest[ix][iy][ip] = GSL_NAN;
-	}
-
-    /* Free... */
-    free(help);
+  /* Read meteo data... */
+  if (!read_met_nc_3d(ncid, "t", "T", met, met->t, 1.0, 1))
+    ERRMSG("Cannot read temperature!");
+  if (!read_met_nc_3d(ncid, "u", "U", met, met->u, 1.0, 1))
+    ERRMSG("Cannot read zonal wind!");
+  if (!read_met_nc_3d(ncid, "v", "V", met, met->v, 1.0, 1))
+    ERRMSG("Cannot read meridional wind!");
+  if (!read_met_nc_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
+    WARN("Cannot read vertical velocity!");
+  if (!read_met_nc_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
+    WARN("Cannot read specific humidity!");
+  if (!read_met_nc_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
+    WARN("Cannot read ozone data!");
+  if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
+    if (!read_met_nc_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
+      WARN("Cannot read cloud liquid water content!");
+    if (!read_met_nc_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
+      WARN("Cannot read cloud ice water content!");
+  }
+  if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+    if (!read_met_nc_3d
+	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
+      WARN("Cannot read cloud rain water content!");
+    if (!read_met_nc_3d
+	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
+      WARN("Cannot read cloud snow water content!");
   }
 
-  /* Unpacked data... */
-  else {
+  /* Transfer from model levels to pressure levels... */
+  if (ctl->met_np > 0) {
 
-    /* Allocate... */
-    float *help;
-    ALLOC(help, float,
-	  EX * EY * EP);
+    /* Read pressure on model levels... */
+    if (!read_met_nc_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
+      ERRMSG("Cannot read pressure on model levels!");
 
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
+    /* Vertical interpolation from model to pressure levels... */
+    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->u);
+    read_met_ml2pl(ctl, met, met->v);
+    read_met_ml2pl(ctl, met, met->w);
+    read_met_ml2pl(ctl, met, met->h2o);
+    read_met_ml2pl(ctl, met, met->o3);
+    read_met_ml2pl(ctl, met, met->lwc);
+    read_met_ml2pl(ctl, met, met->iwc);
 
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-
-    /* Read data... */
-    NC(nc_get_var_float(ncid, varid, help));
-
-    /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  if (init)
-	    dest[ix][iy][ip] = 0;
-	  float aux = help[(ip * met->ny + iy) * met->nx + ix];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f)
-	    dest[ix][iy][ip] += scl * aux;
-	  else
-	    dest[ix][iy][ip] = GSL_NAN;
-	}
-
-    /* Free... */
-    free(help);
+    /* Set new pressure levels... */
+    met->np = ctl->met_np;
+    for (int ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
   }
 
-  /* Return... */
-  return 1;
+  /* Check ordering of pressure levels... */
+  for (int ip = 1; ip < met->np; ip++)
+    if (met->p[ip - 1] < met->p[ip])
+      ERRMSG("Pressure levels must be descending!");
 }
 
 /*****************************************************************************/
 
-int read_met_help_2d(
+void read_met_ml2pl(
+  ctl_t * ctl,
+  met_t * met,
+  float var[EX][EY][EP]) {
+
+  double aux[EP], p[EP];
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_ML2PL", "METPROC", NVTX_READ);
+  LOG(2, "Interpolate meteo data to pressure levels...");
+
+  /* Loop over columns... */
+#pragma omp parallel for default(shared) private(aux,p) collapse(2)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++) {
+
+      /* Copy pressure profile... */
+      for (int ip = 0; ip < met->np; ip++)
+	p[ip] = met->pl[ix][iy][ip];
+
+      /* Interpolate... */
+      for (int ip = 0; ip < ctl->met_np; ip++) {
+	double pt = ctl->met_p[ip];
+	if ((pt > p[0] && p[0] > p[1]) || (pt < p[0] && p[0] < p[1]))
+	  pt = p[0];
+	else if ((pt > p[met->np - 1] && p[1] > p[0])
+		 || (pt < p[met->np - 1] && p[1] < p[0]))
+	  pt = p[met->np - 1];
+	int ip2 = locate_irr(p, met->np, pt);
+	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
+		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
+      }
+
+      /* Copy data... */
+      for (int ip = 0; ip < ctl->met_np; ip++)
+	var[ix][iy][ip] = (float) aux[ip];
+    }
+}
+
+/*****************************************************************************/
+
+int read_met_nc_2d(
   int ncid,
   char *varname,
   char *varname2,
@@ -3582,113 +3707,120 @@ int read_met_help_2d(
 
 /*****************************************************************************/
 
-void read_met_levels(
+int read_met_nc_3d(
   int ncid,
-  ctl_t * ctl,
-  met_t * met) {
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
-  LOG(2, "Read level data...");
-
-  /* Read meteorological data... */
-  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0, 1))
-    ERRMSG("Cannot read temperature!");
-  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
-    ERRMSG("Cannot read zonal wind!");
-  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
-    ERRMSG("Cannot read meridional wind!");
-  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
-    WARN("Cannot read vertical velocity!");
-  if (!read_met_help_3d
-      (ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
-    WARN("Cannot read specific humidity!");
-  if (!read_met_help_3d
-      (ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
-    WARN("Cannot read ozone data!");
-  if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
-    if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
-      WARN("Cannot read cloud liquid water content!");
-    if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
-      WARN("Cannot read cloud ice water content!");
-  }
-  if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
-    if (!read_met_help_3d
-	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud rain water content!");
-    if (!read_met_help_3d
-	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud snow water content!");
-  }
-
-  /* Transfer from model levels to pressure levels... */
-  if (ctl->met_np > 0) {
-
-    /* Read pressure on model levels... */
-    if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
-      ERRMSG("Cannot read pressure on model levels!");
-
-    /* Vertical interpolation from model to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
-    read_met_ml2pl(ctl, met, met->u);
-    read_met_ml2pl(ctl, met, met->v);
-    read_met_ml2pl(ctl, met, met->w);
-    read_met_ml2pl(ctl, met, met->h2o);
-    read_met_ml2pl(ctl, met, met->o3);
-    read_met_ml2pl(ctl, met, met->lwc);
-    read_met_ml2pl(ctl, met, met->iwc);
-
-    /* Set new pressure levels... */
-    met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
-  }
-
-  /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++)
-    if (met->p[ip - 1] < met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
-}
-
-/*****************************************************************************/
-
-void read_met_ml2pl(
-  ctl_t * ctl,
+  char *varname,
+  char *varname2,
   met_t * met,
-  float var[EX][EY][EP]) {
+  float dest[EX][EY][EP],
+  float scl,
+  int init) {
 
-  double aux[EP], p[EP];
+  char varsel[LEN];
 
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_ML2PL", "METPROC", NVTX_READ);
-  LOG(2, "Interpolate meteo data to pressure levels...");
+  float offset, scalfac;
 
-  /* Loop over columns... */
-#pragma omp parallel for default(shared) private(aux,p) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++) {
+  int varid;
 
-      /* Copy pressure profile... */
-      for (int ip = 0; ip < met->np; ip++)
-	p[ip] = met->pl[ix][iy][ip];
+  /* Check if variable exists... */
+  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
+      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
+      return 0;
+    } else {
+      sprintf(varsel, "%s", varname2);
+  } else
+    sprintf(varsel, "%s", varname);
 
-      /* Interpolate... */
-      for (int ip = 0; ip < ctl->met_np; ip++) {
-	double pt = ctl->met_p[ip];
-	if ((pt > p[0] && p[0] > p[1]) || (pt < p[0] && p[0] < p[1]))
-	  pt = p[0];
-	else if ((pt > p[met->np - 1] && p[1] > p[0])
-		 || (pt < p[met->np - 1] && p[1] < p[0]))
-	  pt = p[met->np - 1];
-	int ip2 = locate_irr(p, met->np, pt);
-	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
-		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
-      }
+  /* Read packed data... */
+  if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
 
-      /* Copy data... */
-      for (int ip = 0; ip < ctl->met_np; ip++)
-	var[ix][iy][ip] = (float) aux[ip];
-    }
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s "
+	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
+
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 0; ip < met->np; ip++) {
+	  if (init)
+	    dest[ix][iy][ip] = 0;
+	  short aux = help[(ip * met->ny + iy) * met->nx + ix];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux * scalfac + offset) < 1e14f)
+	    dest[ix][iy][ip] += scl * (aux * scalfac + offset);
+	  else
+	    dest[ix][iy][ip] = GSL_NAN;
+	}
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Unpacked data... */
+  else {
+
+    /* Allocate... */
+    float *help;
+    ALLOC(help, float,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
+    /* Read data... */
+    NC(nc_get_var_float(ncid, varid, help));
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 0; ip < met->np; ip++) {
+	  if (init)
+	    dest[ix][iy][ip] = 0;
+	  float aux = help[(ip * met->ny + iy) * met->nx + ix];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy][ip] += scl * aux;
+	  else
+	    dest[ix][iy][ip] = GSL_NAN;
+	}
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Return... */
+  return 1;
 }
 
 /*****************************************************************************/
@@ -4049,8 +4181,8 @@ void read_met_surface(
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
-  if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
-    if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+  if (!read_met_nc_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
+    if (!read_met_nc_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
       WARN("Cannot not read surface pressure data (use lowest level)!");
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
@@ -4062,22 +4194,22 @@ void read_met_surface(
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
 
   /* Read geopotential height at the surface... */
-  if (!read_met_help_2d
+  if (!read_met_nc_2d
       (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
-    if (!read_met_help_2d
+    if (!read_met_nc_2d
 	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
       WARN("Cannot read surface geopotential height!");
 
   /* Read temperature at the surface... */
-  if (!read_met_help_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
+  if (!read_met_nc_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
-  if (!read_met_help_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
+  if (!read_met_nc_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
-  if (!read_met_help_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
+  if (!read_met_nc_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
     WARN("Cannot read surface meridional wind!");
 }
 
@@ -5253,6 +5385,150 @@ void write_grid(
 
   /* Close file... */
   fclose(out);
+}
+
+/*****************************************************************************/
+
+int write_met(
+  char *filename,
+  ctl_t * ctl,
+  met_t * met) {
+
+  FILE *out;
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
+
+  /* Write info... */
+  LOG(1, "Write meteo data: %s", filename);
+
+  /* Write binary... */
+  if (ctl->met_type == 1) {
+
+    /* Create file... */
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write grid data... */
+    FWRITE(&met->time, double,
+	   1,
+	   out);
+    FWRITE(&met->nx, int,
+	   1,
+	   out);
+    FWRITE(&met->ny, int,
+	   1,
+	   out);
+    FWRITE(&met->np, int,
+	   1,
+	   out);
+    FWRITE(met->lon, double,
+	     (size_t) met->nx,
+	   out);
+    FWRITE(met->lat, double,
+	     (size_t) met->ny,
+	   out);
+    FWRITE(met->p, double,
+	     (size_t) met->np,
+	   out);
+
+    /* Write surface data... */
+    write_met_bin_2d(out, met, met->ps);
+    write_met_bin_2d(out, met, met->ts);
+    write_met_bin_2d(out, met, met->zs);
+    write_met_bin_2d(out, met, met->us);
+    write_met_bin_2d(out, met, met->vs);
+    write_met_bin_2d(out, met, met->pbl);
+    write_met_bin_2d(out, met, met->pt);
+    write_met_bin_2d(out, met, met->tt);
+    write_met_bin_2d(out, met, met->zt);
+    write_met_bin_2d(out, met, met->h2ot);
+    write_met_bin_2d(out, met, met->pct);
+    write_met_bin_2d(out, met, met->pcb);
+    write_met_bin_2d(out, met, met->cl);
+    write_met_bin_2d(out, met, met->plcl);
+    write_met_bin_2d(out, met, met->plfc);
+    write_met_bin_2d(out, met, met->pel);
+    write_met_bin_2d(out, met, met->cape);
+    write_met_bin_2d(out, met, met->cin);
+
+    /* Write level data... */
+    write_met_bin_3d(out, met, met->z);
+    write_met_bin_3d(out, met, met->t);
+    write_met_bin_3d(out, met, met->u);
+    write_met_bin_3d(out, met, met->v);
+    write_met_bin_3d(out, met, met->w);
+    write_met_bin_3d(out, met, met->pv);
+    write_met_bin_3d(out, met, met->h2o);
+    write_met_bin_3d(out, met, met->o3);
+    write_met_bin_3d(out, met, met->lwc);
+    write_met_bin_3d(out, met, met->iwc);
+    write_met_bin_3d(out, met, met->pl);	/* not needed? */
+
+    /* Close file... */
+    fclose(out);
+  }
+
+  /* Not implemented... */
+  else
+    ERRMSG("MET_TYPE not implemented!");
+
+  return 0;
+}
+
+/*****************************************************************************/
+
+void write_met_bin_2d(
+  FILE * out,
+  met_t * met,
+  float var[EX][EY]) {
+
+  float *help;
+
+  /* Allocate... */
+  ALLOC(help, float,
+	EX * EY);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      help[ix * met->ny + iy] = var[ix][iy];
+
+  /* Write... */
+  FWRITE(help, float,
+	   (size_t) (met->nx * met->ny),
+	 out);
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
+void write_met_bin_3d(
+  FILE * out,
+  met_t * met,
+  float var[EX][EY][EP]) {
+
+  float *help;
+
+  /* Allocate... */
+  ALLOC(help, float,
+	EX * EY * EP);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
+	help[(ix * met->ny + iy) * met->np + ip] = var[ix][iy][ip];
+
+  /* Write... */
+  FWRITE(help, float,
+	   (size_t) (met->nx * met->ny * met->np),
+	 out);
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/
