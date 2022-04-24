@@ -1323,6 +1323,7 @@ void get_met(
 
 /*! Get meteo data for time step. */
 void get_met_help(
+  ctl_t * ctl,
   double t,
   int direct,
   char *metbase,

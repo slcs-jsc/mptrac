@@ -1619,11 +1619,11 @@ void get_met(
     init = 1;
 
     /* Read meteo data... */
-    get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
+    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, *met0))
       ERRMSG("Cannot open file!");
 
-    get_met_help(t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
+    get_met_help(ctl, t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
 		 filename);
     if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
@@ -1637,8 +1637,8 @@ void get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(t + 1.1 * ctl->dt_met * ctl->direction, ctl->direction,
-		   ctl->metbase, ctl->dt_met, cachefile);
+      get_met_help(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
+		   ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -1655,7 +1655,7 @@ void get_met(
     *met0 = mets;
 
     /* Read new meteo data... */
-    get_met_help(t, 1, ctl->metbase, ctl->dt_met, filename);
+    get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
 
@@ -1667,7 +1667,8 @@ void get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met, cachefile);
+      get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
+		   cachefile);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -1684,7 +1685,7 @@ void get_met(
     *met0 = mets;
 
     /* Read new meteo data... */
-    get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename);
+    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, *met0))
       ERRMSG("Cannot open file!");
 
@@ -1696,7 +1697,8 @@ void get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met, cachefile);
+      get_met_help(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
+		   cachefile);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -1722,6 +1724,7 @@ void get_met(
 /*****************************************************************************/
 
 void get_met_help(
+  ctl_t * ctl,
   double t,
   int direct,
   char *metbase,
@@ -1744,7 +1747,8 @@ void get_met_help(
   jsec2time(t6, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Set filename... */
-  sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
+  sprintf(filename, "%s_YYYY_MM_DD_HH.%s", metbase,
+	  ctl->met_type == 0 ? "nc" : "bin");
   sprintf(repl, "%d", year);
   get_met_replace(filename, "YYYY", repl);
   sprintf(repl, "%02d", mon);
@@ -2144,6 +2148,14 @@ int read_atm(
     if (!(in = fopen(filename, "r")))
       return 0;
 
+    /* Read version of binary data... */
+    int version;
+    FREAD(&version, int,
+	  1,
+	  in);
+    if (version != 100)
+      ERRMSG("Version of binary data does not match!");
+
     /* Read data... */
     FREAD(&atm->np, int,
 	  1,
@@ -2164,6 +2176,14 @@ int read_atm(
       FREAD(atm->q[iq], double,
 	      (size_t) atm->np,
 	    in);
+
+    /* Read final flag... */
+    int final;
+    FREAD(&final, int,
+	  1,
+	  in);
+    if (final != 999)
+      ERRMSG("Error while reading binary data!");
 
     /* Close file... */
     fclose(in);
@@ -2829,32 +2849,78 @@ int read_met(
 
     FILE *in;
 
+    double r;
+
+    int year, mon, day, hour, min, sec;
+
+    /* Set timer... */
+    SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
+
     /* Open file... */
     if (!(in = fopen(filename, "r")))
       ERRMSG("Cannot open file!");
 
-    /* Read grid data... */
+    /* Read version of binary data... */
+    int version;
+    FREAD(&version, int,
+	  1,
+	  in);
+    if (version != 100)
+      ERRMSG("Version of binary data does not match!");
+
+    /* Read time... */
     FREAD(&met->time, double,
 	  1,
 	  in);
+    jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
+    LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+	met->time, year, mon, day, hour, min);
+    if (year < 1900 || year > 2100 || mon < 1 || mon > 12
+	|| day < 1 || day > 31 || hour < 0 || hour > 23)
+      ERRMSG("Error while reading time!");
+
+    /* Read dimensions... */
     FREAD(&met->nx, int,
 	  1,
 	  in);
+    LOG(2, "Number of longitudes: %d", met->nx);
+    if (met->nx < 2 || met->nx > EX)
+      ERRMSG("Number of longitudes out of range!");
+
     FREAD(&met->ny, int,
 	  1,
 	  in);
+    LOG(2, "Number of latitudes: %d", met->ny);
+    if (met->ny < 2 || met->ny > EY)
+      ERRMSG("Number of latitudes out of range!");
+
     FREAD(&met->np, int,
 	  1,
 	  in);
+    LOG(2, "Number of levels: %d", met->np);
+    if (met->np < 2 || met->np > EP)
+      ERRMSG("Number of levels out of range!");
+
+    /* Read grid... */
     FREAD(met->lon, double,
 	    (size_t) met->nx,
 	  in);
+    LOG(2, "Longitudes: %g, %g ... %g deg",
+	met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+
     FREAD(met->lat, double,
 	    (size_t) met->ny,
 	  in);
+    LOG(2, "Latitudes: %g, %g ... %g deg",
+	met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+
     FREAD(met->p, double,
 	    (size_t) met->np,
 	  in);
+    LOG(2, "Altitude levels: %g, %g ... %g km",
+	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
+    LOG(2, "Pressure levels: %g, %g ... %g hPa",
+	met->p[0], met->p[1], met->p[met->np - 1]);
 
     /* Write surface data... */
     read_met_bin_2d(in, met, met->ps);
@@ -2887,7 +2953,14 @@ int read_met(
     read_met_bin_3d(in, met, met->o3);
     read_met_bin_3d(in, met, met->lwc);
     read_met_bin_3d(in, met, met->iwc);
-    read_met_bin_3d(in, met, met->pl);	/* not needed? */
+
+    /* Read final flag... */
+    int final;
+    FREAD(&final, int,
+	  1,
+	  in);
+    if (final != 999)
+      ERRMSG("Error while reading binary data!");
 
     /* Close file... */
     fclose(in);
@@ -3395,13 +3468,14 @@ void read_met_grid(
   LOG(2, "Read meteo grid information...");
 
   /* Get time from filename... */
-  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
+  size_t len = strlen(filename);
+  sprintf(tstr, "%.4s", &filename[len - 16]);
   int year = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
+  sprintf(tstr, "%.2s", &filename[len - 11]);
   int mon = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
+  sprintf(tstr, "%.2s", &filename[len - 8]);
   int day = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+  sprintf(tstr, "%.2s", &filename[len - 5]);
   int hour = atoi(tstr);
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
@@ -3410,7 +3484,7 @@ void read_met_grid(
       || day < 1 || day > 31 || hour < 0 || hour > 23)
     ERRMSG("Cannot read time from filename!");
   jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
-  LOG(2, "Time from filename: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);
 
   /* Check time information... */
@@ -4778,6 +4852,12 @@ void write_atm(
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
+    /* Write version... */
+    int version = 100;
+    FWRITE(&version, int,
+	   1,
+	   out);
+
     /* Write data... */
     FWRITE(&atm->np, int,
 	   1,
@@ -4798,6 +4878,12 @@ void write_atm(
       FWRITE(atm->q[iq], double,
 	       (size_t) atm->np,
 	     out);
+
+    /* Write final flag... */
+    int final = 999;
+    FWRITE(&final, int,
+	   1,
+	   out);
 
     /* Close file... */
     fclose(out);
@@ -5409,6 +5495,12 @@ int write_met(
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
+    /* Write version... */
+    int version = 100;
+    FWRITE(&version, int,
+	   1,
+	   out);
+
     /* Write grid data... */
     FWRITE(&met->time, double,
 	   1,
@@ -5463,7 +5555,12 @@ int write_met(
     write_met_bin_3d(out, met, met->o3);
     write_met_bin_3d(out, met, met->lwc);
     write_met_bin_3d(out, met, met->iwc);
-    write_met_bin_3d(out, met, met->pl);	/* not needed? */
+
+    /* Write final flag... */
+    int final = 999;
+    FWRITE(&final, int,
+	   1,
+	   out);
 
     /* Close file... */
     fclose(out);
