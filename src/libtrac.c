@@ -4772,7 +4772,9 @@ float stddev(
     var += SQR(data[i]);
   }
 
-  return sqrtf(var / (float) n - SQR(mean / (float) n));
+  var = var / (float) n - SQR(mean / (float) n);
+
+  return (var > 0 ? sqrtf(var) : 0);
 }
 
 /*****************************************************************************/
