@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -1839,7 +1839,6 @@ void intpol_met_space_3d(
   *var = cw[1] * (aux00 - aux11) + aux11;
 }
 
-
 /*****************************************************************************/
 
 void intpol_met_space_2d(
@@ -1895,6 +1894,107 @@ void intpol_met_space_2d(
 	*var = aux00;
     }
   }
+}
+
+/*****************************************************************************/
+
+void intpol_met_space_uvw(
+  met_t * met,
+  double p,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *w,
+  int *ci,
+  double *cw,
+  int init) {
+
+  /* Initialize interpolation... */
+  if (init) {
+
+    /* Check longitude... */
+    if (met->lon[met->nx - 1] > 180 && lon < 0)
+      lon += 360;
+
+    /* Get interpolation indices... */
+    ci[0] = locate_irr(met->p, met->np, p);
+    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[2] = locate_reg(met->lat, met->ny, lat);
+
+    /* Get interpolation weights... */
+    cw[0] = (met->p[ci[0] + 1] - p)
+      / (met->p[ci[0] + 1] - met->p[ci[0]]);
+    cw[1] = (met->lon[ci[1] + 1] - lon)
+      / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
+    cw[2] = (met->lat[ci[2] + 1] - lat)
+      / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
+  }
+
+  /* Interpolate vertically... */
+  double u00 =
+    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][0] -
+	     met->uvw[ci[1]][ci[2]][ci[0] + 1][0])
+    + met->uvw[ci[1]][ci[2]][ci[0] + 1][0];
+  double u01 =
+    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][0] -
+	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][0])
+    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][0];
+  double u10 =
+    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][0] -
+	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][0])
+    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][0];
+  double u11 =
+    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][0] -
+	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][0])
+    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][0];
+
+  double v00 =
+    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][1] -
+	     met->uvw[ci[1]][ci[2]][ci[0] + 1][1])
+    + met->uvw[ci[1]][ci[2]][ci[0] + 1][1];
+  double v01 =
+    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][1] -
+	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][1])
+    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][1];
+  double v10 =
+    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][1] -
+	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][1])
+    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][1];
+  double v11 =
+    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][1] -
+	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][1])
+    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][1];
+
+  double w00 =
+    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][2] -
+	     met->uvw[ci[1]][ci[2]][ci[0] + 1][2])
+    + met->uvw[ci[1]][ci[2]][ci[0] + 1][2];
+  double w01 =
+    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][2] -
+	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][2])
+    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][2];
+  double w10 =
+    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][2] -
+	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][2])
+    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][2];
+  double w11 =
+    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][2] -
+	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][2])
+    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][2];
+
+  /* Interpolate horizontally... */
+  u00 = cw[2] * (u00 - u01) + u01;
+  u11 = cw[2] * (u10 - u11) + u11;
+  *u = cw[1] * (u00 - u11) + u11;
+
+  v00 = cw[2] * (v00 - v01) + v01;
+  v11 = cw[2] * (v10 - v11) + v11;
+  *v = cw[1] * (v00 - v11) + v11;
+
+  w00 = cw[2] * (w00 - w01) + w01;
+  w11 = cw[2] * (w10 - w11) + w11;
+  *w = cw[1] * (w00 - w11) + w11;
 }
 
 /*****************************************************************************/
@@ -1957,6 +2057,35 @@ void intpol_met_time_2d(
     *var = var1;
   else
     *var = var0;
+}
+
+/*****************************************************************************/
+
+void intpol_met_time_uvw(
+  met_t * met0,
+  met_t * met1,
+  double ts,
+  double p,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *w) {
+
+  double u0, u1, v0, v1, w0, w1, wt;
+
+  /* Spatial interpolation... */
+  INTPOL_INIT;
+  intpol_met_space_uvw(met0, p, lon, lat, &u0, &v0, &w0, ci, cw, 1);
+  intpol_met_space_uvw(met1, p, lon, lat, &u1, &v1, &w1, ci, cw, 0);
+
+  /* Get weighting factor... */
+  wt = (met1->time - ts) / (met1->time - met0->time);
+
+  /* Interpolate... */
+  *u = wt * (u0 - u1) + u1;
+  *v = wt * (v0 - v1) + v1;
+  *w = wt * (w0 - w1) + w1;
 }
 
 /*****************************************************************************/
@@ -2969,6 +3098,15 @@ int read_met(
   /* Not implemented... */
   else
     ERRMSG("MET_TYPE not implemented!");
+
+  /* Copy wind data to cache... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++) {
+	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
+	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
+	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
+      }
 
   /* Return success... */
   return 1;

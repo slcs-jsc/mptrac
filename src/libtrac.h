@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -824,7 +824,7 @@ typedef struct {
   /*! Balloon position filename. */
   char balloon[LEN];
 
-  /*! Advection scheme (0=midpoint, 1=Runge-Kutta). */
+  /*! Advection scheme (0=midpoint, 1=midpoint+cache, 2=Runge-Kutta). */
   int advect;
 
   /*! Reflection of particles at top and bottom boundary (0=no, 1=yes). */
@@ -1229,6 +1229,9 @@ typedef struct {
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
 
+  /*! Cache for wind data. */
+  float uvw[EX][EY][EP][3];
+
   /*! Potential vorticity [PVU]. */
   float pv[EX][EY][EP];
 
@@ -1365,6 +1368,22 @@ void intpol_met_space_2d(
   double *cw,
   int init);
 
+/*! Spatial interpolation of meteo data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_space_uvw)
+#endif
+void intpol_met_space_uvw(
+  met_t * met,
+  double p,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *w,
+  int *ci,
+  double *cw,
+  int init);
+
 /*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_3d)
@@ -1399,6 +1418,21 @@ void intpol_met_time_2d(
   int *ci,
   double *cw,
   int init);
+
+/*! Temporal interpolation of meteo data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_time_uvw)
+#endif
+void intpol_met_time_uvw(
+  met_t * met0,
+  met_t * met1,
+  double ts,
+  double p,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *w);
 
 /*! Convert seconds to date. */
 void jsec2time(
