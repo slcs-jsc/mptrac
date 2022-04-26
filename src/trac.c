@@ -685,16 +685,16 @@ void module_check_atm(
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
+#pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
-    int okay = 1;
-    if (!isfinite(atm->time[ip]) || !isfinite(atm->p[ip])
-	|| !isfinite(atm->lon[ip]) || !isfinite(atm->lat[ip]))
-      okay = 0;
+    int okay = (isfinite(atm->time[ip]) && isfinite(atm->p[ip])
+		&& isfinite(atm->lon[ip]) && isfinite(atm->lat[ip]));
     for (int iq = 0; iq < ctl->nq; iq++)
       if (!isfinite(atm->q[iq][ip]))
 	okay = 0;
     if (!okay)
-      ERRMSG("atm check failed: ip= %d, t= %.2f, p= %g, lon= %g, lat= %g",
+      ERRMSG("Check of atmospheric data failed: "
+	     "ip= %d, t= %.2f, p= %g, lon= %g, lat= %g",
 	     ip, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
   }
 }

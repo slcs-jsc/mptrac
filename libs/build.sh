@@ -5,7 +5,7 @@ target=$(rm -rf build && mkdir -p build && cd build && pwd)
 threads=$(cat /proc/cpuinfo | grep processor | wc -l)
 
 # Prepare directories...
-mkdir -p $target/src $target/bin $target/lib $target/man/man1 \
+mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 \
     && cp *tar.bz2 $target/src \
     && cd $target/src \
     && for f in $(ls *tar.bz2) ; do tar xvjf $f ; done \
@@ -25,7 +25,16 @@ cd $target/src/$dir \
     && make -j$threads && make check && make install && make clean \
 	|| exit
 
-    # HDF5...
+# zfp...
+dir=zfp-0.5.5
+cd $target/src/$dir \
+    && make && make test \
+    && cp -a bin/* $target/bin/ \
+    && cp -a include/* $target/include/ \
+    && cp -a lib/* $target/lib/ \
+	|| exit
+
+# HDF5...
 dir=hdf5-1.12.1
 cd $target/src/$dir \
     && ./configure --prefix=$target --with-zlib=$target --enable-hl \
