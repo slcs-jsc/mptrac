@@ -814,33 +814,19 @@ void module_diffusion_meso(
       int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
       int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
-      /* Caching of wind standard deviations... */
-      if (cache->tsig[ix][iy][iz] != met0->time) {
-
-	/* Collect local wind data... */
-	int n = 0;
-	float u[16], v[16], w[16];
-	for (int i = 0; i < 2; i++)
-	  for (int j = 0; j < 2; j++)
-	    for (int k = 0; k < 2; k++) {
-	      u[n] = met0->u[ix + i][iy + j][iz + k];
-	      v[n] = met0->v[ix + i][iy + j][iz + k];
-	      w[n] = met0->w[ix + i][iy + j][iz + k];
-	      n++;
-	      u[n] = met1->u[ix + i][iy + j][iz + k];
-	      v[n] = met1->v[ix + i][iy + j][iz + k];
-	      w[n] = met1->w[ix + i][iy + j][iz + k];
-	      n++;
-	    }
-
-	/* Get standard deviations of local wind data... */
-	cache->uvwsig[ix][iy][iz][0] = stddev(u, n);
-	cache->uvwsig[ix][iy][iz][1] = stddev(v, n);
-	cache->uvwsig[ix][iy][iz][2] = stddev(w, n);
-
-	/* Save new time... */
-	cache->tsig[ix][iy][iz] = met0->time;
-      }
+      /* Get standard deviations of local wind data... */
+      double umean = 0.5 * (met0->uvwmean[ix][iy][iz][0]
+			    + met1->uvwmean[ix][iy][iz][0]);
+      double usig = sqrt(0.5 * (met0->uvwvar[ix][iy][iz][0]
+				+ met1->uvwvar[ix][iy][iz][0]) - SQR(umean));
+      double vmean = 0.5 * (met0->uvwmean[ix][iy][iz][1]
+			    + met1->uvwmean[ix][iy][iz][1]);
+      double vsig = sqrt(0.5 * (met0->uvwvar[ix][iy][iz][1]
+				+ met1->uvwvar[ix][iy][iz][1]) - SQR(vmean));
+      double wmean = 0.5 * (met0->uvwmean[ix][iy][iz][2]
+			    + met1->uvwmean[ix][iy][iz][2]);
+      double wsig = sqrt(0.5 * (met0->uvwvar[ix][iy][iz][2]
+				+ met1->uvwvar[ix][iy][iz][2]) - SQR(wmean));
 
       /* Set temporal correlations for mesoscale fluctuations... */
       double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
@@ -850,15 +836,13 @@ void module_diffusion_meso(
       if (ctl->turb_mesox > 0) {
 	cache->uvwp[ip][0] = (float)
 	  (r * cache->uvwp[ip][0]
-	   +
-	   r2 * rs[3 * ip] * ctl->turb_mesox * cache->uvwsig[ix][iy][iz][0]);
+	   + r2 * rs[3 * ip] * ctl->turb_mesox * usig);
 	atm->lon[ip] +=
 	  DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
 	cache->uvwp[ip][1] = (float)
 	  (r * cache->uvwp[ip][1]
-	   + r2 * rs[3 * ip +
-		     1] * ctl->turb_mesox * cache->uvwsig[ix][iy][iz][1]);
+	   + r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
 	atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
       }
 
@@ -866,8 +850,7 @@ void module_diffusion_meso(
       if (ctl->turb_mesoz > 0) {
 	cache->uvwp[ip][2] = (float)
 	  (r * cache->uvwp[ip][2]
-	   + r2 * rs[3 * ip +
-		     2] * ctl->turb_mesoz * cache->uvwsig[ix][iy][iz][2]);
+	   + r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
 	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
       }
     }

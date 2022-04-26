@@ -1113,15 +1113,6 @@ typedef struct {
 /*! Cache data. */
 typedef struct {
 
-  /*! Cache for reference time of wind standard deviations. */
-  double tsig[EX][EY][EP];
-
-  /*! Cache for wind standard deviations. */
-  float uvwsig[EX][EY][EP][3];
-
-  /*! Wind perturbations [m/s]. */
-  float uvwp[NP][3];
-
   /*! Isosurface variables. */
   double iso_var[NP];
 
@@ -1133,6 +1124,9 @@ typedef struct {
 
   /*! Isosurface balloon number of data points. */
   int iso_n;
+
+  /*! Wind perturbations [m/s]. */
+  float uvwp[NP][3];
 
 } cache_t;
 
@@ -1229,9 +1223,6 @@ typedef struct {
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
 
-  /*! Cache for wind data. */
-  float uvw[EX][EY][EP][3];
-
   /*! Potential vorticity [PVU]. */
   float pv[EX][EY][EP];
 
@@ -1249,6 +1240,15 @@ typedef struct {
 
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
+
+  /*! Cache for wind data. */
+  float uvw[EX][EY][EP][3];
+
+  /*! Cache for mean wind. */
+  float uvwmean[EX][EY][EP][3];
+
+  /*! Cache for wind variances. */
+  float uvwvar[EX][EY][EP][3];
 
 } met_t;
 
@@ -1597,6 +1597,10 @@ void read_met_surface(
 /*! Calculate tropopause data. */
 void read_met_tropo(
   ctl_t * ctl,
+  met_t * met);
+
+/*! Calculate wind variances. */
+void read_met_wind(
   met_t * met);
 
 /*! Read a control parameter from file or command line. */

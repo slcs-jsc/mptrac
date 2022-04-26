@@ -1766,12 +1766,13 @@ void get_met_replace(
   char *search,
   char *repl) {
 
-  char buffer[LEN], *ch;
+  char buffer[LEN];
 
   /* Iterate... */
   for (int i = 0; i < 3; i++) {
 
     /* Replace sub-string... */
+    char *ch;
     if (!(ch = strstr(orig, search)))
       return;
     strncpy(buffer, orig, (size_t) (ch - orig));
@@ -3099,14 +3100,8 @@ int read_met(
   else
     ERRMSG("MET_TYPE not implemented!");
 
-  /* Copy wind data to cache... */
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++) {
-	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
-	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
-	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
-      }
+  /* Calculate wind variances... */
+  read_met_wind(met);
 
   /* Return success... */
   return 1;
@@ -3224,7 +3219,7 @@ void read_met_cape(
 
       /* Calculate CIN up to LCL... */
       INTPOL_INIT;
-      double dcape, dcape_old, dz, psat, h2o_env, t_env;
+      double dcape, dz, h2o_env, t_env;
       double p = met->ps[ix][iy];
       met->cape[ix][iy] = met->cin[ix][iy] = 0;
       do {
@@ -3251,13 +3246,13 @@ void read_met_cape(
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
 	t -= lapse_rate(t, h2o) * dz;
-	psat = PSAT(t);
+	double psat = PSAT(t);
 	h2o = psat / (p - (1. - EPS) * psat);
 	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
 			    &t_env, ci, cw, 1);
 	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
 			    &h2o_env, ci, cw, 0);
-	dcape_old = dcape;
+	double dcape_old = dcape;
 	dcape = 1e3 * G0 * (TVIRT(t, h2o) - TVIRT(t_env, h2o_env)) /
 	  TVIRT(t_env, h2o_env) * dz;
 	if (dcape > 0) {
@@ -4076,7 +4071,7 @@ void read_met_pbl(
       double tvs = THETAVIRT(pbl_bot, ts, h2os);
 
       /* Init... */
-      double rib, rib_old = 0;
+      double rib_old = 0;
 
       /* Loop over levels... */
       for (; ip < met->np; ip++) {
@@ -4087,7 +4082,7 @@ void read_met_pbl(
 	vh2 = GSL_MAX(vh2, SQR(umin));
 
 	/* Calculate bulk Richardson number... */
-	rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
 	  * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
 		       met->h2o[ix][iy][ip]) - tvs) / vh2;
 
@@ -4601,6 +4596,55 @@ void read_met_tropo(
 
 /*****************************************************************************/
 
+void read_met_wind(
+  met_t * met) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_WIND", "METPROC", NVTX_READ);
+  LOG(2, "Calculate wind variances...");
+
+  /* Copy wind data to cache... */
+#pragma omp parallel for default(shared) collapse(2)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++) {
+	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
+	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
+	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
+      }
+
+  /* Calculate variances... */
+#pragma omp parallel for default(shared) collapse(2)
+  for (int ix = 0; ix < met->nx - 1; ix++)
+    for (int iy = 0; iy < met->ny - 1; iy++)
+      for (int ip = 0; ip < met->np - 1; ip++) {
+
+	/* Init... */
+	for (int i = 0; i < 3; i++)
+	  met->uvwmean[ix][iy][ip][i] = met->uvwvar[ix][iy][ip][i] = 0;
+
+	/* Compute mean and variance... */
+	for (int i = 0; i < 2; i++)
+	  for (int j = 0; j < 2; j++)
+	    for (int k = 0; k < 2; k++) {
+	      met->uvwmean[ix][iy][ip][0]
+		+= met->u[ix + i][iy + j][ip + k] / 8.f;
+	      met->uvwvar[ix][iy][ip][0]
+		+= SQR(met->u[ix + i][iy + j][ip + k]) / 8.f;
+	      met->uvwmean[ix][iy][ip][1]
+		+= met->v[ix + i][iy + j][ip + k] / 8.f;
+	      met->uvwvar[ix][iy][ip][1]
+		+= SQR(met->v[ix + i][iy + j][ip + k]) / 8.f;
+	      met->uvwmean[ix][iy][ip][2]
+		+= met->w[ix + i][iy + j][ip + k] / 8.f;
+	      met->uvwvar[ix][iy][ip][2]
+		+= SQR(met->w[ix + i][iy + j][ip + k]) / 8.f;
+	    }
+      }
+}
+
+/*****************************************************************************/
+
 double scan_ctl(
   const char *filename,
   int argc,
@@ -4612,8 +4656,7 @@ double scan_ctl(
 
   FILE *in = NULL;
 
-  char dummy[LEN], fullname1[LEN], fullname2[LEN], line[LEN],
-    rvarname[LEN], rval[LEN];
+  char fullname1[LEN], fullname2[LEN], rval[LEN];
 
   int contain = 0, i;
 
@@ -4632,14 +4675,17 @@ double scan_ctl(
   }
 
   /* Read data... */
-  if (in != NULL)
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%s %s %s", rvarname, dummy, rval) == 3)
+  if (in != NULL) {
+    char dummy[LEN], line[LEN], rvarname[LEN];
+    while (fgets(line, LEN, in)) {
+      if (sscanf(line, "%4999s %4999s %4999s", rvarname, dummy, rval) == 3)
 	if (strcasecmp(rvarname, fullname1) == 0 ||
 	    strcasecmp(rvarname, fullname2) == 0) {
 	  contain = 1;
 	  break;
 	}
+    }
+  }
   for (i = 1; i < argc - 1; i++)
     if (strcasecmp(argv[i], fullname1) == 0 ||
 	strcasecmp(argv[i], fullname2) == 0) {
@@ -4899,9 +4945,7 @@ void write_atm(
   atm_t * atm,
   double t) {
 
-  FILE *in, *out;
-
-  char line[LEN];
+  FILE *out;
 
   double r, t0, t1;
 
@@ -4936,8 +4980,10 @@ void write_atm(
 	      year, mon, day, hour, min);
 
       /* Dump gnuplot file to pipe... */
+      FILE *in;
       if (!(in = fopen(ctl->atm_gpfile, "r")))
 	ERRMSG("Cannot open file!");
+      char line[LEN];
       while (fgets(line, LEN, in))
 	fprintf(out, "%s", line);
       fclose(in);
@@ -5068,7 +5114,7 @@ void write_csi(
   static char line[LEN];
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
-    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz, lat,
+    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz,
     x[1000000], y[1000000], work[2000000];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
@@ -5125,7 +5171,7 @@ void write_csi(
 
     /* Set horizontal coordinates... */
     for (iy = 0; iy < ctl->csi_ny; iy++) {
-      lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat * M_PI / 180.);
     }
   }
@@ -5620,8 +5666,6 @@ int write_met(
   ctl_t * ctl,
   met_t * met) {
 
-  FILE *out;
-
   /* Set timer... */
   SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
 
@@ -5632,6 +5676,7 @@ int write_met(
   if (ctl->met_type == 1) {
 
     /* Create file... */
+    FILE *out;
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
