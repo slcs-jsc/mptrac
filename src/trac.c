@@ -67,6 +67,11 @@ void module_bound_cond(
   atm_t * atm,
   double *dt);
 
+/*! Check atmospheric data. */
+void module_check_atm(
+  ctl_t * ctl,
+  atm_t * atm);
+
 /*! Calculate convection of air parcels. */
 void module_convection(
   ctl_t * ctl,
@@ -666,6 +671,32 @@ void module_bound_cond(
       if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] = ctl->bound_vmr;
     }
+}
+
+/*****************************************************************************/
+
+void module_check_atm(
+  ctl_t * ctl,
+  atm_t * atm) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CHECK_ATM", "PHYSICS", NVTX_GPU);
+
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+  for (int ip = 0; ip < atm->np; ip++) {
+    int okay = 1;
+    if (!isfinite(atm->time[ip]) || !isfinite(atm->p[ip])
+	|| !isfinite(atm->lon[ip]) || !isfinite(atm->lat[ip]))
+      okay = 0;
+    for (int iq = 0; iq < ctl->nq; iq++)
+      if (!isfinite(atm->q[iq][ip]))
+	okay = 0;
+    if (!okay)
+      ERRMSG("atm check failed: ip= %d, t= %.2f, p= %g, lon= %g, lat= %g",
+	     ip, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
+  }
 }
 
 /*****************************************************************************/
