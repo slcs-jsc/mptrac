@@ -1536,6 +1536,88 @@ double clim_tropo(
 
 /*****************************************************************************/
 
+#ifdef ZFP
+void compress_zfp(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  double tolerance,
+  int decompress,
+  FILE * inout) {
+
+  zfp_type type;		/* array scalar type */
+  zfp_field *field;		/* array meta data */
+  zfp_stream *zfp;		/* compressed stream */
+  void *buffer;			/* storage for compressed stream */
+  size_t bufsize;		/* byte size of compressed buffer */
+  bitstream *stream;		/* bit stream to write to or read from */
+  size_t zfpsize;		/* byte size of compressed stream */
+
+  /* Allocate meta data for the 3D array a[nz][ny][nx]... */
+  type = zfp_type_float;
+  field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
+
+  /* Allocate meta data for a compressed stream... */
+  zfp = zfp_stream_open(NULL);
+
+  /* Set compression mode and parameters via one of three functions... */
+  /*  zfp_stream_set_rate(zfp, rate, type, 3, 0); */
+  /*  zfp_stream_set_precision(zfp, precision); */
+  zfp_stream_set_accuracy(zfp, tolerance);
+
+  /* Allocate buffer for compressed data... */
+  bufsize = zfp_stream_maximum_size(zfp, field);
+  buffer = malloc(bufsize);
+
+  /* Associate bit stream with allocated buffer... */
+  stream = stream_open(buffer, bufsize);
+  zfp_stream_set_bit_stream(zfp, stream);
+  zfp_stream_rewind(zfp);
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+    FREAD(&zfpsize, size_t,
+	  1,
+	  inout);
+    if (fread(buffer, 1, zfpsize, inout) != zfpsize)
+      ERRMSG("Error while reading zfp data!");
+    if (!zfp_decompress(zfp, field)) {
+      ERRMSG("Decompression failed!");
+    }
+    LOG(2, "Read 3-D variable: %s (compressed, TOL= %g, RATIO= %g %%)",
+	varname, tolerance,
+	(100. * (double) zfpsize) / (double) (nx * ny * nz));
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+    zfpsize = zfp_compress(zfp, field);
+    if (!zfpsize) {
+      ERRMSG("Compression failed!");
+    } else {
+      FWRITE(&zfpsize, size_t,
+	     1,
+	     inout);
+      if (fwrite(buffer, 1, zfpsize, inout) != zfpsize)
+	ERRMSG("Error while writing zfp data!");
+    }
+    LOG(2, "Write 3-D variable: %s (compressed, TOL= %g, RATIO= %g %%)",
+	varname, tolerance,
+	(100. * (double) zfpsize) / (double) (nx * ny * nz));
+  }
+
+  /* Free... */
+  zfp_field_free(field);
+  zfp_stream_close(zfp);
+  stream_close(stream);
+  free(buffer);
+}
+#endif
+
+/*****************************************************************************/
+
 void day2doy(
   int year,
   int mon,
@@ -1747,8 +1829,12 @@ void get_met_help(
   jsec2time(t6, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Set filename... */
-  sprintf(filename, "%s_YYYY_MM_DD_HH.%s", metbase,
-	  ctl->met_type == 0 ? "nc" : "bin");
+  if (ctl->met_type == 0)
+    sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
+  else if (ctl->met_type == 1)
+    sprintf(filename, "%s_YYYY_MM_DD_HH.bin", metbase);
+  else if (ctl->met_type == 2)
+    sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
   sprintf(repl, "%d", year);
   get_met_replace(filename, "YYYY", repl);
   sprintf(repl, "%02d", mon);
@@ -2242,7 +2328,7 @@ int read_atm(
 
     /* Open file... */
     if (!(in = fopen(filename, "r"))) {
-      WARN("File not found!");
+      WARN("Cannot open file!");
       return 0;
     }
 
@@ -2284,7 +2370,7 @@ int read_atm(
 	  1,
 	  in);
     if (version != 100)
-      ERRMSG("Version of binary data does not match!");
+      ERRMSG("Wrong version of binary data!");
 
     /* Read data... */
     FREAD(&atm->np, int,
@@ -2927,7 +3013,7 @@ int read_met(
     /* Open netCDF file... */
     if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
 	NC_NOERR) {
-      WARN("File not found!");
+      WARN("Cannot open file!");
       return 0;
     }
 
@@ -2975,7 +3061,7 @@ int read_met(
   }
 
   /* Read binary data... */
-  else if (ctl->met_type == 1) {
+  else if (ctl->met_type == 1 || ctl->met_type == 2) {
 
     FILE *in;
 
@@ -2987,16 +3073,19 @@ int read_met(
     SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
 
     /* Open file... */
-    if (!(in = fopen(filename, "r")))
-      ERRMSG("Cannot open file!");
+    if (!(in = fopen(filename, "r"))) {
+      WARN("Cannot open file!");
+      return 0;
+    }
 
     /* Read version of binary data... */
     int version;
     FREAD(&version, int,
 	  1,
 	  in);
-    if (version != 100)
-      ERRMSG("Version of binary data does not match!");
+    if ((ctl->met_type == 1 && version != 100)
+	|| (ctl->met_type == 2 && version != -100))
+      ERRMSG("Wrong version of binary data, check MET_TYPE!");
 
     /* Read time... */
     FREAD(&met->time, double,
@@ -3053,36 +3142,36 @@ int read_met(
 	met->p[0], met->p[1], met->p[met->np - 1]);
 
     /* Write surface data... */
-    read_met_bin_2d(in, met, met->ps);
-    read_met_bin_2d(in, met, met->ts);
-    read_met_bin_2d(in, met, met->zs);
-    read_met_bin_2d(in, met, met->us);
-    read_met_bin_2d(in, met, met->vs);
-    read_met_bin_2d(in, met, met->pbl);
-    read_met_bin_2d(in, met, met->pt);
-    read_met_bin_2d(in, met, met->tt);
-    read_met_bin_2d(in, met, met->zt);
-    read_met_bin_2d(in, met, met->h2ot);
-    read_met_bin_2d(in, met, met->pct);
-    read_met_bin_2d(in, met, met->pcb);
-    read_met_bin_2d(in, met, met->cl);
-    read_met_bin_2d(in, met, met->plcl);
-    read_met_bin_2d(in, met, met->plfc);
-    read_met_bin_2d(in, met, met->pel);
-    read_met_bin_2d(in, met, met->cape);
-    read_met_bin_2d(in, met, met->cin);
+    read_met_bin_2d(in, met, met->ps, "PS");
+    read_met_bin_2d(in, met, met->ts, "TS");
+    read_met_bin_2d(in, met, met->zs, "ZS");
+    read_met_bin_2d(in, met, met->us, "US");
+    read_met_bin_2d(in, met, met->vs, "VS");
+    read_met_bin_2d(in, met, met->pbl, "PBL");
+    read_met_bin_2d(in, met, met->pt, "PT");
+    read_met_bin_2d(in, met, met->tt, "TT");
+    read_met_bin_2d(in, met, met->zt, "ZT");
+    read_met_bin_2d(in, met, met->h2ot, "H2OT");
+    read_met_bin_2d(in, met, met->pct, "PCT");
+    read_met_bin_2d(in, met, met->pcb, "PCB");
+    read_met_bin_2d(in, met, met->cl, "CL");
+    read_met_bin_2d(in, met, met->plcl, "PLCL");
+    read_met_bin_2d(in, met, met->plfc, "PLFC");
+    read_met_bin_2d(in, met, met->pel, "PEL");
+    read_met_bin_2d(in, met, met->cape, "CAPE");
+    read_met_bin_2d(in, met, met->cin, "CIN");
 
     /* Write level data... */
-    read_met_bin_3d(in, met, met->z);
-    read_met_bin_3d(in, met, met->t);
-    read_met_bin_3d(in, met, met->u);
-    read_met_bin_3d(in, met, met->v);
-    read_met_bin_3d(in, met, met->w);
-    read_met_bin_3d(in, met, met->pv);
-    read_met_bin_3d(in, met, met->h2o);
-    read_met_bin_3d(in, met, met->o3);
-    read_met_bin_3d(in, met, met->lwc);
-    read_met_bin_3d(in, met, met->iwc);
+    read_met_bin_3d(in, ctl, met, met->z, "Z", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->t, "T", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->u, "U", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->v, "V", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->w, "W", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->pv, "PV", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->o3, "O3", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 1e-3);
 
     /* Read final flag... */
     int final;
@@ -3112,7 +3201,8 @@ int read_met(
 void read_met_bin_2d(
   FILE * in,
   met_t * met,
-  float var[EX][EY]) {
+  float var[EX][EY],
+  char *varname) {
 
   float *help;
 
@@ -3120,7 +3210,8 @@ void read_met_bin_2d(
   ALLOC(help, float,
 	EX * EY);
 
-  /* Read... */
+  /* Read uncompressed... */
+  LOG(2, "Read 2-D variable: %s (uncompressed)", varname);
   FREAD(help, float,
 	  (size_t) (met->nx * met->ny),
 	in);
@@ -3138,8 +3229,11 @@ void read_met_bin_2d(
 
 void read_met_bin_3d(
   FILE * in,
+  ctl_t * ctl,
   met_t * met,
-  float var[EX][EY][EP]) {
+  float var[EX][EY][EP],
+  char *varname,
+  double tolerance) {
 
   float *help;
 
@@ -3147,10 +3241,23 @@ void read_met_bin_3d(
   ALLOC(help, float,
 	EX * EY * EP);
 
-  /* Read... */
-  FREAD(help, float,
-	  (size_t) (met->nx * met->ny * met->np),
-	in);
+  /* Read uncompressed data... */
+  if (ctl->met_type == 1) {
+    LOG(2, "Read 3-D variable: %s (uncompressed)", varname);
+    FREAD(help, float,
+	    (size_t) (met->nx * met->ny * met->np),
+	  in);
+  }
+
+  /* Read compressed data... */
+  else {
+#ifdef ZFP
+    compress_zfp(varname, help, met->np, met->ny, met->nx, tolerance, 1, in);
+#else
+    ERRMSG("zfp compression not supported!");
+    PRINT("%g", tolerance);
+#endif
+  }
 
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
@@ -3824,9 +3931,6 @@ int read_met_nc_2d(
   if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
       && nc_get_att_float(ncid, varid, "scale_factor",
 			  &scalfac) == NC_NOERR) {
-
-    /* Write info... */
-    LOG(2, "Packed: scale_factor= %g / add_offset= %g", scalfac, offset);
 
     /* Allocate... */
     short *help;
@@ -5673,7 +5777,7 @@ int write_met(
   LOG(1, "Write meteo data: %s", filename);
 
   /* Write binary... */
-  if (ctl->met_type == 1) {
+  if (ctl->met_type == 1 || ctl->met_type == 2) {
 
     /* Create file... */
     FILE *out;
@@ -5681,7 +5785,7 @@ int write_met(
       ERRMSG("Cannot create file!");
 
     /* Write version... */
-    int version = 100;
+    int version = (ctl->met_type == 1 ? 100 : -100);
     FWRITE(&version, int,
 	   1,
 	   out);
@@ -5710,36 +5814,36 @@ int write_met(
 	   out);
 
     /* Write surface data... */
-    write_met_bin_2d(out, met, met->ps);
-    write_met_bin_2d(out, met, met->ts);
-    write_met_bin_2d(out, met, met->zs);
-    write_met_bin_2d(out, met, met->us);
-    write_met_bin_2d(out, met, met->vs);
-    write_met_bin_2d(out, met, met->pbl);
-    write_met_bin_2d(out, met, met->pt);
-    write_met_bin_2d(out, met, met->tt);
-    write_met_bin_2d(out, met, met->zt);
-    write_met_bin_2d(out, met, met->h2ot);
-    write_met_bin_2d(out, met, met->pct);
-    write_met_bin_2d(out, met, met->pcb);
-    write_met_bin_2d(out, met, met->cl);
-    write_met_bin_2d(out, met, met->plcl);
-    write_met_bin_2d(out, met, met->plfc);
-    write_met_bin_2d(out, met, met->pel);
-    write_met_bin_2d(out, met, met->cape);
-    write_met_bin_2d(out, met, met->cin);
+    write_met_bin_2d(out, met, met->ps, "PS");
+    write_met_bin_2d(out, met, met->ts, "TS");
+    write_met_bin_2d(out, met, met->zs, "ZS");
+    write_met_bin_2d(out, met, met->us, "US");
+    write_met_bin_2d(out, met, met->vs, "VS");
+    write_met_bin_2d(out, met, met->pbl, "PBL");
+    write_met_bin_2d(out, met, met->pt, "PT");
+    write_met_bin_2d(out, met, met->tt, "TT");
+    write_met_bin_2d(out, met, met->zt, "ZT");
+    write_met_bin_2d(out, met, met->h2ot, "H2OT");
+    write_met_bin_2d(out, met, met->pct, "PCT");
+    write_met_bin_2d(out, met, met->pcb, "PCB");
+    write_met_bin_2d(out, met, met->cl, "CL");
+    write_met_bin_2d(out, met, met->plcl, "PLCL");
+    write_met_bin_2d(out, met, met->plfc, "PLFC");
+    write_met_bin_2d(out, met, met->pel, "PEL");
+    write_met_bin_2d(out, met, met->cape, "CAPE");
+    write_met_bin_2d(out, met, met->cin, "CIN");
 
     /* Write level data... */
-    write_met_bin_3d(out, met, met->z);
-    write_met_bin_3d(out, met, met->t);
-    write_met_bin_3d(out, met, met->u);
-    write_met_bin_3d(out, met, met->v);
-    write_met_bin_3d(out, met, met->w);
-    write_met_bin_3d(out, met, met->pv);
-    write_met_bin_3d(out, met, met->h2o);
-    write_met_bin_3d(out, met, met->o3);
-    write_met_bin_3d(out, met, met->lwc);
-    write_met_bin_3d(out, met, met->iwc);
+    write_met_bin_3d(out, ctl, met, met->z, "Z", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->t, "T", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->u, "U", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->v, "V", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->w, "W", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->pv, "PV", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->o3, "O3", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 1e-3);
 
     /* Write final flag... */
     int final = 999;
@@ -5763,7 +5867,8 @@ int write_met(
 void write_met_bin_2d(
   FILE * out,
   met_t * met,
-  float var[EX][EY]) {
+  float var[EX][EY],
+  char *varname) {
 
   float *help;
 
@@ -5776,7 +5881,8 @@ void write_met_bin_2d(
     for (int iy = 0; iy < met->ny; iy++)
       help[ix * met->ny + iy] = var[ix][iy];
 
-  /* Write... */
+  /* Write uncompressed data... */
+  LOG(2, "Write 2-D variable: %s (uncompressed)", varname);
   FWRITE(help, float,
 	   (size_t) (met->nx * met->ny),
 	 out);
@@ -5789,8 +5895,11 @@ void write_met_bin_2d(
 
 void write_met_bin_3d(
   FILE * out,
+  ctl_t * ctl,
   met_t * met,
-  float var[EX][EY][EP]) {
+  float var[EX][EY][EP],
+  char *varname,
+  double tolerance) {
 
   float *help;
 
@@ -5804,10 +5913,23 @@ void write_met_bin_3d(
       for (int ip = 0; ip < met->np; ip++)
 	help[(ix * met->ny + iy) * met->np + ip] = var[ix][iy][ip];
 
-  /* Write... */
-  FWRITE(help, float,
-	   (size_t) (met->nx * met->ny * met->np),
-	 out);
+  /* Write uncompressed data... */
+  if (ctl->met_type == 1) {
+    LOG(2, "Write 3-D variable: %s (uncompressed)", varname);
+    FWRITE(help, float,
+	     (size_t) (met->nx * met->ny * met->np),
+	   out);
+  }
+
+  /* Write compressed data... */
+  else {
+#ifdef ZFP
+    compress_zfp(varname, help, met->np, met->ny, met->nx, tolerance, 0, out);
+#else
+    ERRMSG("zfp compression not supported!");
+    PRINT("%g", tolerance);
+#endif
+  }
 
   /* Free... */
   free(help);

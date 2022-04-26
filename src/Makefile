@@ -41,6 +41,9 @@ COV ?= 0
 # Enable NVTX markers...
 NVTX ?= 0
 
+# Enable zfp compression...
+ZFP ?= 0
+
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -57,7 +60,7 @@ else ifeq ($(CC),nvc)
   CFLAGS += -mp -mcmodel=medium
 else
   CC = gcc
-  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wstrict-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 endif
 
 # Set LDFLAGS...
@@ -100,6 +103,12 @@ endif
 ifeq ($(NVTX),1)
   CFLAGS  += -DNVTX
   LDFLAGS += -lnvToolsExt
+endif
+
+# zfp compression...
+ifeq ($(ZFP),1)
+  LDFLAGS += -lzfp
+  CFLAGS += -DZFP
 endif
 
 # Static compilation...

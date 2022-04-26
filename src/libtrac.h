@@ -21,6 +21,7 @@
   \file
   MPTRAC library declarations.
 */
+
 /*! 
   \mainpage
   
@@ -64,6 +65,10 @@
 #ifdef _OPENACC
 #include "openacc.h"
 #include "curand.h"
+#endif
+
+#ifdef ZFP
+#include "zfp.h"
 #endif
 
 /* ------------------------------------------------------------
@@ -747,7 +752,7 @@ typedef struct {
   /*! Time step of meteo data [s]. */
   double dt_met;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary). */
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=zfp). */
   int met_type;
 
   /*! Stride for longitudes. */
@@ -1296,6 +1301,20 @@ double clim_tropo(
   double t,
   double lat);
 
+
+/*! Compress or decompress array. */
+#ifdef ZFP
+void compress_zfp(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  double tolerance,
+  int decompress,
+  FILE * inout);
+#endif
+
 /*! Get day of year from date. */
 void day2doy(
   int year,
@@ -1503,13 +1522,17 @@ int read_met(
 void read_met_bin_2d(
   FILE * out,
   met_t * met,
-  float var[EX][EY]);
+  float var[EX][EY],
+  char *varname);
 
 /*! Read 3-D meteo variable. */
 void read_met_bin_3d(
-  FILE * out,
+  FILE * in,
+  ctl_t * ctl,
   met_t * met,
-  float var[EX][EY][EP]);
+  float var[EX][EY][EP],
+  char *varname,
+  double tolerance);
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
@@ -1707,13 +1730,17 @@ int write_met(
 void write_met_bin_2d(
   FILE * out,
   met_t * met,
-  float var[EX][EY]);
+  float var[EX][EY],
+  char *varname);
 
 /*! Write 3-D meteo variable. */
 void write_met_bin_3d(
   FILE * out,
+  ctl_t * ctl,
   met_t * met,
-  float var[EX][EY][EP]);
+  float var[EX][EY][EP],
+  char *varname,
+  double tolerance);
 
 /*! Write profile data. */
 void write_prof(
