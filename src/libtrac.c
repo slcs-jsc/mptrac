@@ -1543,6 +1543,7 @@ void compress_zfp(
   int nx,
   int ny,
   int nz,
+  int precision,
   double tolerance,
   int decompress,
   FILE * inout) {
@@ -1564,8 +1565,14 @@ void compress_zfp(
 
   /* Set compression mode and parameters via one of three functions... */
   /*  zfp_stream_set_rate(zfp, rate, type, 3, 0); */
-  /*  zfp_stream_set_precision(zfp, precision); */
-  zfp_stream_set_accuracy(zfp, tolerance);
+  int actual_prec = 0;
+  double actual_tol = 0;
+  if (precision > 0)
+    actual_prec = (int) zfp_stream_set_precision(zfp, (uint) precision);
+  else if (tolerance > 0)
+    actual_tol = zfp_stream_set_accuracy(zfp, tolerance);
+  else
+    ERRMSG("Set precision or tolerance!");
 
   /* Allocate buffer for compressed data... */
   bufsize = zfp_stream_maximum_size(zfp, field);
@@ -1586,8 +1593,9 @@ void compress_zfp(
     if (!zfp_decompress(zfp, field)) {
       ERRMSG("Decompression failed!");
     }
-    LOG(2, "Read 3-D variable: %s (compressed, TOL= %g, RATIO= %g %%)",
-	varname, tolerance,
+    LOG(2, "Read 3-D variable: %s "
+	"(compressed, PREC= %d, TOL= %g, RATIO= %g %%)",
+	varname, actual_prec, actual_tol,
 	(100. * (double) zfpsize) / (double) (nx * ny * nz));
   }
 
@@ -1603,8 +1611,9 @@ void compress_zfp(
       if (fwrite(buffer, 1, zfpsize, inout) != zfpsize)
 	ERRMSG("Error while writing zfp data!");
     }
-    LOG(2, "Write 3-D variable: %s (compressed, TOL= %g, RATIO= %g %%)",
-	varname, tolerance,
+    LOG(2, "Write 3-D variable: %s "
+	"(compressed, PREC= %d, TOL= %g, RATIO= %g %%)",
+	varname, actual_prec, actual_tol,
 	(100. * (double) zfpsize) / (double) (nx * ny * nz));
   }
 
@@ -3162,16 +3171,16 @@ int read_met(
     read_met_bin_2d(in, met, met->cin, "CIN");
 
     /* Write level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->t, "T", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->u, "U", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->v, "V", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->w, "W", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->pv, "PV", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->o3, "O3", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 1e-3);
-    read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 1e-3);
+    read_met_bin_3d(in, ctl, met, met->z, "Z", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->t, "T", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->u, "U", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->v, "V", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->w, "W", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->pv, "PV", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->o3, "O3", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 8, 0);
 
     /* Read final flag... */
     int final;
@@ -3233,6 +3242,7 @@ void read_met_bin_3d(
   met_t * met,
   float var[EX][EY][EP],
   char *varname,
+  int precision,
   double tolerance) {
 
   float *help;
@@ -3252,10 +3262,11 @@ void read_met_bin_3d(
   /* Read compressed data... */
   else {
 #ifdef ZFP
-    compress_zfp(varname, help, met->np, met->ny, met->nx, tolerance, 1, in);
+    compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
+		 tolerance, 1, in);
 #else
     ERRMSG("zfp compression not supported!");
-    PRINT("%g", tolerance);
+    LOG(3, "%d %g", precision, tolerance);
 #endif
   }
 
@@ -5834,16 +5845,16 @@ int write_met(
     write_met_bin_2d(out, met, met->cin, "CIN");
 
     /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->t, "T", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->u, "U", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->v, "V", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->w, "W", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->pv, "PV", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->o3, "O3", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 1e-3);
-    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 1e-3);
+    write_met_bin_3d(out, ctl, met, met->z, "Z", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->t, "T", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->u, "U", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->v, "V", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->w, "W", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->pv, "PV", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->o3, "O3", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 8, 0);
 
     /* Write final flag... */
     int final = 999;
@@ -5899,6 +5910,7 @@ void write_met_bin_3d(
   met_t * met,
   float var[EX][EY][EP],
   char *varname,
+  int precision,
   double tolerance) {
 
   float *help;
@@ -5924,10 +5936,11 @@ void write_met_bin_3d(
   /* Write compressed data... */
   else {
 #ifdef ZFP
-    compress_zfp(varname, help, met->np, met->ny, met->nx, tolerance, 0, out);
+    compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
+		 tolerance, 0, out);
 #else
     ERRMSG("zfp compression not supported!");
-    PRINT("%g", tolerance);
+    LOG(3, "%d %g", precision, tolerance);
 #endif
   }
 

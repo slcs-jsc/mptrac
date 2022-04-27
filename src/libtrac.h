@@ -1310,6 +1310,7 @@ void compress_zfp(
   int nx,
   int ny,
   int nz,
+  int precision,
   double tolerance,
   int decompress,
   FILE * inout);
@@ -1532,6 +1533,7 @@ void read_met_bin_3d(
   met_t * met,
   float var[EX][EY][EP],
   char *varname,
+  int precision,
   double tolerance);
 
 /*! Calculate convective available potential energy. */
@@ -1740,6 +1742,7 @@ void write_met_bin_3d(
   met_t * met,
   float var[EX][EY][EP],
   char *varname,
+  int precision,
   double tolerance);
 
 /*! Write profile data. */
