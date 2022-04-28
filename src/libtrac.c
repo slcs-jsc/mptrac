@@ -3171,8 +3171,8 @@ int read_met(
     read_met_bin_2d(in, met, met->cin, "CIN");
 
     /* Write level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->t, "T", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->z, "Z", 0, 0.5);
+    read_met_bin_3d(in, ctl, met, met->t, "T", 0, 5.0);
     read_met_bin_3d(in, ctl, met, met->u, "U", 8, 0);
     read_met_bin_3d(in, ctl, met, met->v, "V", 8, 0);
     read_met_bin_3d(in, ctl, met, met->w, "W", 8, 0);
@@ -5845,8 +5845,8 @@ int write_met(
     write_met_bin_2d(out, met, met->cin, "CIN");
 
     /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->t, "T", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, 0.5);
+    write_met_bin_3d(out, ctl, met, met->t, "T", 0, 5.0);
     write_met_bin_3d(out, ctl, met, met->u, "U", 8, 0);
     write_met_bin_3d(out, ctl, met, met->v, "V", 8, 0);
     write_met_bin_3d(out, ctl, met, met->w, "W", 8, 0);
