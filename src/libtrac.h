@@ -1306,6 +1306,14 @@ double clim_tropo(
   double t,
   double lat);
 
+
+void compress_round(
+  float *array,
+  int n,
+  int digits);
+
+
+
 /*! Compress or decompress array with zfp. */
 #ifdef ZFP
 void compress_zfp(

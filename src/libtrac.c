@@ -1536,6 +1536,21 @@ double clim_tropo(
 
 /*****************************************************************************/
 
+void compress_round(
+  float *array,
+  int n,
+  int digits) {
+
+#pragma omp parallel for default(shared)
+  for (int i = 0; i < n; i++)
+    if (array[i] != 0.0) {
+      double factor = pow(10.0, digits - ceil(log10(fabs(array[i]))));
+      array[i] = (float) (round(array[i] * factor) / factor);
+    }
+}
+
+/*****************************************************************************/
+
 #ifdef ZFP
 void compress_zfp(
   char *varname,
@@ -1658,6 +1673,9 @@ void compress_zlib(
 
   /* Compress array and output compressed stream... */
   else {
+
+    // compress_round(array, nx*ny*nz, 2);
+
     if (compress(compr, &comprLen, uncompr, uncomprLen) != Z_OK) {
       ERRMSG("Compression failed!");
     } else {
