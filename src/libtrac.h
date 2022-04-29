@@ -57,6 +57,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include "zlib.h"
 
 #ifdef MPI
 #include "mpi.h"
@@ -752,7 +753,7 @@ typedef struct {
   /*! Time step of meteo data [s]. */
   double dt_met;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=zfp). */
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=zlib, 3=zfp). */
   int met_type;
 
   /*! Stride for longitudes. */
@@ -1301,8 +1302,7 @@ double clim_tropo(
   double t,
   double lat);
 
-
-/*! Compress or decompress array. */
+/*! Compress or decompress array with zfp. */
 #ifdef ZFP
 void compress_zfp(
   char *varname,
@@ -1315,6 +1315,16 @@ void compress_zfp(
   int decompress,
   FILE * inout);
 #endif
+
+/*! Compress or decompress array with zlib. */
+void compress_zlib(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int decompress,
+  FILE * inout);
 
 /*! Get day of year from date. */
 void day2doy(

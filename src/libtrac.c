@@ -1563,8 +1563,7 @@ void compress_zfp(
   /* Allocate meta data for a compressed stream... */
   zfp = zfp_stream_open(NULL);
 
-  /* Set compression mode and parameters via one of three functions... */
-  /*  zfp_stream_set_rate(zfp, rate, type, 3, 0); */
+  /* Set compression mode... */
   int actual_prec = 0;
   double actual_tol = 0;
   if (precision > 0)
@@ -1594,7 +1593,7 @@ void compress_zfp(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s "
-	"(compressed, PREC= %d, TOL= %g, RATIO= %g %%)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
 	varname, actual_prec, actual_tol,
 	(100. * (double) zfpsize) / (double) (nx * ny * nz));
   }
@@ -1612,7 +1611,7 @@ void compress_zfp(
 	ERRMSG("Error while writing zfp data!");
     }
     LOG(2, "Write 3-D variable: %s "
-	"(compressed, PREC= %d, TOL= %g, RATIO= %g %%)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
 	varname, actual_prec, actual_tol,
 	(100. * (double) zfpsize) / (double) (nx * ny * nz));
   }
@@ -1624,6 +1623,55 @@ void compress_zfp(
   free(buffer);
 }
 #endif
+
+/*****************************************************************************/
+
+void compress_zlib(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int decompress,
+  FILE * inout) {
+
+  /* Gwt buffer sizes... */
+  uLong uncomprLen =
+    (ulong) nx * (ulong) ny * (ulong) nz * (ulong) sizeof(float);
+  uLong comprLen = compressBound(uncomprLen);
+
+  /* Allocate... */
+  Byte *compr = (Byte *) calloc((uInt) comprLen, 1);
+  Byte *uncompr = (Byte *) array;
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+    FREAD(&comprLen, uLong, 1, inout);
+    if (fread(compr, 1, comprLen, inout) != comprLen)
+      ERRMSG("Error while reading zfp data!");
+    if (uncompress(uncompr, &uncomprLen, compr, comprLen) != Z_OK) {
+      ERRMSG("Decompression failed!");
+    }
+    LOG(2, "Read 3-D variable: %s (zlib, RATIO= %g %%)",
+	varname, (100. * (double) comprLen) / (double) uncomprLen);
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+    if (compress(compr, &comprLen, uncompr, uncomprLen) != Z_OK) {
+      ERRMSG("Compression failed!");
+    } else {
+      FWRITE(&comprLen, uLong, 1, inout);
+      if (fwrite(compr, 1, comprLen, inout) != comprLen)
+	ERRMSG("Error while writing zlib data!");
+    }
+    LOG(2, "Write 3-D variable: %s (zlib, RATIO= %g %%)",
+	varname, (100. * (double) comprLen) / (double) uncomprLen);
+  }
+
+  /* Free... */
+  free(compr);
+}
 
 /*****************************************************************************/
 
@@ -1843,6 +1891,8 @@ void get_met_help(
   else if (ctl->met_type == 1)
     sprintf(filename, "%s_YYYY_MM_DD_HH.bin", metbase);
   else if (ctl->met_type == 2)
+    sprintf(filename, "%s_YYYY_MM_DD_HH.zlb", metbase);
+  else if (ctl->met_type == 3)
     sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
   sprintf(repl, "%d", year);
   get_met_replace(filename, "YYYY", repl);
@@ -2373,7 +2423,7 @@ int read_atm(
     if (!(in = fopen(filename, "r")))
       return 0;
 
-    /* Read version of binary data... */
+    /* Check version of binary data... */
     int version;
     FREAD(&version, int,
 	  1,
@@ -3070,7 +3120,7 @@ int read_met(
   }
 
   /* Read binary data... */
-  else if (ctl->met_type == 1 || ctl->met_type == 2) {
+  else if (ctl->met_type == 1 || ctl->met_type == 2 || ctl->met_type == 3) {
 
     FILE *in;
 
@@ -3087,14 +3137,21 @@ int read_met(
       return 0;
     }
 
-    /* Read version of binary data... */
+    /* Check type of binary data... */
+    int met_type;
+    FREAD(&met_type, int,
+	  1,
+	  in);
+    if (met_type != ctl->met_type)
+      ERRMSG("Wrong MET_TYPE of binary data!");
+
+    /* Check version of binary data... */
     int version;
     FREAD(&version, int,
 	  1,
 	  in);
-    if ((ctl->met_type == 1 && version != 100)
-	|| (ctl->met_type == 2 && version != -100))
-      ERRMSG("Wrong version of binary data, check MET_TYPE!");
+    if (version != 100)
+      ERRMSG("Wrong version of binary data!");
 
     /* Read time... */
     FREAD(&met->time, double,
@@ -3259,8 +3316,12 @@ void read_met_bin_3d(
 	  in);
   }
 
-  /* Read compressed data... */
-  else {
+  /* Read zlib data... */
+  else if (ctl->met_type == 2)
+    compress_zlib(varname, help, met->np, met->ny, met->nx, 1, in);
+
+  /* Read zfp data... */
+  else if (ctl->met_type == 3) {
 #ifdef ZFP
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 1, in);
@@ -5153,7 +5214,7 @@ void write_atm(
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
-    /* Write version... */
+    /* Write version of binary data... */
     int version = 100;
     FWRITE(&version, int,
 	   1,
@@ -5788,15 +5849,20 @@ int write_met(
   LOG(1, "Write meteo data: %s", filename);
 
   /* Write binary... */
-  if (ctl->met_type == 1 || ctl->met_type == 2) {
+  if (ctl->met_type == 1 || ctl->met_type == 2 || ctl->met_type == 3) {
 
     /* Create file... */
     FILE *out;
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
-    /* Write version... */
-    int version = (ctl->met_type == 1 ? 100 : -100);
+    /* Write type of binary data... */
+    FWRITE(&ctl->met_type, int,
+	   1,
+	   out);
+
+    /* Write version of binary data... */
+    int version = 100;
     FWRITE(&version, int,
 	   1,
 	   out);
@@ -5933,8 +5999,12 @@ void write_met_bin_3d(
 	   out);
   }
 
-  /* Write compressed data... */
-  else {
+  /* Write zlib data... */
+  else if (ctl->met_type == 2)
+    compress_zlib(varname, help, met->np, met->ny, met->nx, 0, out);
+
+  /* Write zfp data... */
+  else if (ctl->met_type == 3) {
 #ifdef ZFP
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 0, out);
