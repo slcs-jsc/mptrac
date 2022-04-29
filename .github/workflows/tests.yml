@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: install
-      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev zlib1g-dev
     - name: make
       run: cd src ; STATIC=0 make
     - name: check
