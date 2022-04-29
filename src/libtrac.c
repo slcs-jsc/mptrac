@@ -3418,6 +3418,7 @@ void read_met_bin_3d(
   }
 
   /* Copy data... */
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
@@ -6072,6 +6073,7 @@ void write_met_bin_3d(
 	EX * EY * EP);
 
   /* Copy data... */
+#pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
