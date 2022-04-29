@@ -34,6 +34,15 @@ cd $target/src/$dir \
     && cp -a lib/* $target/lib/ \
 	|| exit
 
+# zstd...
+dir=zstd-1.5.2
+cd $target/src/$dir \
+    && make -j$threads && make check \
+    && cp -a lib/libzstd* $target/lib/ \
+    && cp -a lib/*.h $target/include/ \
+    && make clean \
+	|| exit
+
 # HDF5...
 dir=hdf5-1.12.1
 cd $target/src/$dir \

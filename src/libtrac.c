@@ -1635,7 +1635,7 @@ void compress_zlib(
   int decompress,
   FILE * inout) {
 
-  /* Gwt buffer sizes... */
+  /* Get buffer sizes... */
   uLong uncomprLen =
     (ulong) nx * (ulong) ny * (ulong) nz * (ulong) sizeof(float);
   uLong comprLen = compressBound(uncomprLen);
@@ -1648,7 +1648,7 @@ void compress_zlib(
   if (decompress) {
     FREAD(&comprLen, uLong, 1, inout);
     if (fread(compr, 1, comprLen, inout) != comprLen)
-      ERRMSG("Error while reading zfp data!");
+      ERRMSG("Error while reading zlib data!");
     if (uncompress(uncompr, &uncomprLen, compr, comprLen) != Z_OK) {
       ERRMSG("Decompression failed!");
     }
@@ -1672,6 +1672,63 @@ void compress_zlib(
   /* Free... */
   free(compr);
 }
+
+/*****************************************************************************/
+
+#ifdef ZSTD
+void compress_zstd(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int decompress,
+  FILE * inout) {
+
+  /* Get buffer sizes... */
+  size_t uncomprLen = (size_t) nx * (size_t) ny * (size_t) nz * sizeof(float);
+  size_t comprLen = ZSTD_compressBound(uncomprLen);
+  size_t compsize;
+
+  /* Allocate... */
+  Byte *compr = (Byte *) calloc((uInt) comprLen, 1);
+  Byte *uncompr = (Byte *) array;
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+    FREAD(&comprLen, size_t,
+	  1,
+	  inout);
+    if (fread(compr, 1, comprLen, inout) != comprLen)
+      ERRMSG("Error while reading zstd data!");
+    compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
+    if (ZSTD_isError(compsize)) {
+      ERRMSG("Decompression failed!");
+    }
+    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)",
+	varname, (100. * (double) comprLen) / (double) uncomprLen);
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+    compsize = ZSTD_compress(compr, comprLen, uncompr, uncomprLen, 0);
+    if (ZSTD_isError(compsize)) {
+      ERRMSG("Compression failed!");
+    } else {
+      FWRITE(&compsize, size_t,
+	     1,
+	     inout);
+      if (fwrite(compr, 1, compsize, inout) != compsize)
+	ERRMSG("Error while writing zstd data!");
+    }
+    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)",
+	varname, (100. * (double) compsize) / (double) uncomprLen);
+  }
+
+  /* Free... */
+  free(compr);
+}
+#endif
 
 /*****************************************************************************/
 
@@ -1891,9 +1948,11 @@ void get_met_help(
   else if (ctl->met_type == 1)
     sprintf(filename, "%s_YYYY_MM_DD_HH.bin", metbase);
   else if (ctl->met_type == 2)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.zlb", metbase);
+    sprintf(filename, "%s_YYYY_MM_DD_HH.zlib", metbase);
   else if (ctl->met_type == 3)
     sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
+  else if (ctl->met_type == 4)
+    sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
   sprintf(repl, "%d", year);
   get_met_replace(filename, "YYYY", repl);
   sprintf(repl, "%02d", mon);
@@ -3120,7 +3179,7 @@ int read_met(
   }
 
   /* Read binary data... */
-  else if (ctl->met_type == 1 || ctl->met_type == 2 || ctl->met_type == 3) {
+  else if (ctl->met_type >= 1 && ctl->met_type <= 4) {
 
     FILE *in;
 
@@ -3328,6 +3387,15 @@ void read_met_bin_3d(
 #else
     ERRMSG("zfp compression not supported!");
     LOG(3, "%d %g", precision, tolerance);
+#endif
+  }
+
+  /* Read zstd data... */
+  else if (ctl->met_type == 4) {
+#ifdef ZSTD
+    compress_zstd(varname, help, met->np, met->ny, met->nx, 1, in);
+#else
+    ERRMSG("zstd compression not supported!");
 #endif
   }
 
@@ -5849,7 +5917,7 @@ int write_met(
   LOG(1, "Write meteo data: %s", filename);
 
   /* Write binary... */
-  if (ctl->met_type == 1 || ctl->met_type == 2 || ctl->met_type == 3) {
+  if (ctl->met_type >= 1 && ctl->met_type <= 4) {
 
     /* Create file... */
     FILE *out;
@@ -6011,6 +6079,15 @@ void write_met_bin_3d(
 #else
     ERRMSG("zfp compression not supported!");
     LOG(3, "%d %g", precision, tolerance);
+#endif
+  }
+
+  /* Write zstd data... */
+  else if (ctl->met_type == 4) {
+#ifdef ZSTD
+    compress_zstd(varname, help, met->np, met->ny, met->nx, 0, out);
+#else
+    ERRMSG("zstd compression not supported!");
 #endif
   }
 
