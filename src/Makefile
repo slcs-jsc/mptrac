@@ -44,6 +44,9 @@ NVTX ?= 0
 # Enable zfp compression...
 ZFP ?= 0
 
+# Enable zstd compression...
+ZSTD ?= 0
+
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -64,7 +67,7 @@ else
 endif
 
 # Set LDFLAGS...
-LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
+LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm -lz
 ifeq ($(STATIC),1)
   LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif
@@ -109,6 +112,12 @@ endif
 ifeq ($(ZFP),1)
   LDFLAGS += -lzfp
   CFLAGS += -DZFP
+endif
+
+# zstd compression...
+ifeq ($(ZSTD),1)
+  LDFLAGS += -lzstd
+  CFLAGS += -DZSTD
 endif
 
 # Static compilation...
