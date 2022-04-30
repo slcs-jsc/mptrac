@@ -1509,15 +1509,7 @@ void module_sort(
   int swapped;
   do {
     swapped = 0;
-#pragma omp parallel for default(shared)
-    for (int ip = 0; ip < np - 1; ip += 2)
-      if (idx[ip] > idx[ip + 1]) {
-	SWAP(idx[ip], idx[ip + 1], int);
-	SWAP(p[ip], p[ip + 1], int);
-	swapped = 1;
-      }
-#pragma omp parallel for default(shared)
-    for (int ip = 1; ip < np - 1; ip += 2)
+    for (int ip = 0; ip < np - 1; ++ip)
       if (idx[ip] > idx[ip + 1]) {
 	SWAP(idx[ip], idx[ip + 1], int);
 	SWAP(p[ip], p[ip + 1], int);
