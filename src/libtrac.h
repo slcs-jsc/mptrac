@@ -401,6 +401,10 @@
 #define SQR(x)					\
   ((x)*(x))
 
+/*! Swap macro. */
+#define SWAP(x, y, type)				\
+  do {type tmp = x; x = y; y = tmp;} while(0);
+
 /*! Calculate dew point temperature (WMO, 2018). */
 #define TDEW(p, h2o)				\
   (T0 + 243.12 * log(PW((p), (h2o)) / 6.112)	\
@@ -826,6 +830,9 @@ typedef struct {
 
   /*! Preload meteo data into disk cache (0=no, 1=yes). */
   int met_cache;
+
+  /*! Time step for sorting of particle data [s]. */
+  double atm_dt_sort;
 
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */

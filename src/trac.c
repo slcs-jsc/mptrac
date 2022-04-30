@@ -169,6 +169,12 @@ void module_sedi(
   atm_t * atm,
   double *dt);
 
+/*! Sort particles according to box index. */
+void module_sort(
+  ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm);
+
 /*! Calculate time steps. */
 void module_timesteps(
   ctl_t * ctl,
@@ -335,6 +341,10 @@ int main(
       /* Get meteorological data... */
       if (t != ctl.t_start)
 	get_met(&ctl, t, &met0, &met1);
+
+      /* Sort particles... */
+      if (ctl.atm_dt_sort > 0 && fmod(t, ctl.atm_dt_sort) == 0)
+	module_sort(&ctl, met0, atm);
 
       /* Check initial positions... */
       module_position(&ctl, met0, met1, atm, dt);
@@ -1454,6 +1464,91 @@ void module_sedi(
       /* Calculate pressure change... */
       atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
     }
+}
+
+/*****************************************************************************/
+
+void module_sort(
+  ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  int *idx, *p;
+  ALLOC(idx, int,
+	NP);
+  ALLOC(p, int,
+	NP);
+
+  /* Update host... */
+#ifdef _OPENACC
+#pragma acc update host(atm[:1])
+#endif
+
+  SELECT_TIMER("MODULE_SORT_INDEX", "PHYSICS", NVTX_GPU);
+
+  /* Get box index... */
+  const int np = atm->np;
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < np; ip++) {
+    p[ip] = ip;
+    idx[ip] =
+      (locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny
+       + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
+      + locate_irr(met0->p, met0->np, atm->p[ip]);
+  }
+
+
+  SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
+
+
+  /* Sort particles according to box index... */
+  int swapped;
+  do {
+    swapped = 0;
+#pragma omp parallel for default(shared)
+    for (int ip = 0; ip < np - 1; ip += 2)
+      if (idx[ip] > idx[ip + 1]) {
+	SWAP(idx[ip], idx[ip + 1], int);
+	SWAP(p[ip], p[ip + 1], int);
+	swapped = 1;
+      }
+#pragma omp parallel for default(shared)
+    for (int ip = 1; ip < np - 1; ip += 2)
+      if (idx[ip] > idx[ip + 1]) {
+	SWAP(idx[ip], idx[ip + 1], int);
+	SWAP(p[ip], p[ip + 1], int);
+	swapped = 1;
+      }
+  } while (swapped);
+
+
+  SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
+
+
+  /* Swap data... */
+  for (int ip = 0; ip < np; ip++)
+    if (ip != p[ip]) {
+      SWAP(atm->time[ip], atm->time[p[ip]], double);
+      SWAP(atm->p[ip], atm->p[p[ip]], double);
+      SWAP(atm->lon[ip], atm->lon[p[ip]], double);
+      SWAP(atm->lat[ip], atm->lat[p[ip]], double);
+      for (int iq = 0; iq < ctl->nq; iq++)
+	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
+      p[ip] = ip;
+    }
+
+  /* Update device... */
+#ifdef _OPENACC
+#pragma acc update device(atm[:1])
+#endif
+
+  /* Free... */
+  free(idx);
+  free(p);
 }
 
 /*****************************************************************************/
