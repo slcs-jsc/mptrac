@@ -1503,38 +1503,31 @@ void module_sort(
        + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
-
-  /* Loop over blocks... */
+  
+  
+  SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
+  
+  
+  /* Sort particles according to box index... */
+  gsl_sort_index(p, idx, 1, (size_t) np);
+  
+  
+  SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
+  
+  
+  /* Swap data... */
 #pragma omp parallel for default(shared)
-  for (int ip0 = 0; ip0 < np; ip0 += ctl->sort_blocksize) {
-
-    /* Adjust blocksize... */
-    int blocksize = GSL_MIN(ctl->sort_blocksize, np - ip0);
-
-    
-    SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
-
-    
-    /* Sort particles according to box index... */
-    gsl_sort_index(&p[ip0], &idx[ip0], 1, (size_t) blocksize);
-
-    
-    SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
-
-
-    /* Swap data... */
-    for (int ip = ip0; ip < ip0 + blocksize; ip++)
-      if ((size_t) ip != p[ip]) {
-	SWAP(atm->time[ip], atm->time[p[ip]], double);
-	SWAP(atm->p[ip], atm->p[p[ip]], double);
-	SWAP(atm->lon[ip], atm->lon[p[ip]], double);
-	SWAP(atm->lat[ip], atm->lat[p[ip]], double);
-	for (int iq = 0; iq < ctl->nq; iq++)
-	  SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
-	p[ip] = (size_t) ip;
-      }
-  }
-
+  for (int ip = 0; ip < np; ip++)
+    if ((size_t) ip != p[ip]) {
+      SWAP(atm->time[ip], atm->time[p[ip]], double);
+      SWAP(atm->p[ip], atm->p[p[ip]], double);
+      SWAP(atm->lon[ip], atm->lon[p[ip]], double);
+      SWAP(atm->lat[ip], atm->lat[p[ip]], double);
+      for (int iq = 0; iq < ctl->nq; iq++)
+	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
+      p[ip] = (size_t) ip;
+    }
+  
   /* Update device... */
 #ifdef _OPENACC
 #pragma acc update device(atm[:1])

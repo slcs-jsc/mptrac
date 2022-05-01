@@ -834,9 +834,6 @@ typedef struct {
   /*! Time step for sorting of particle data [s]. */
   double sort_dt;
 
-  /*! Block size for sorting of particle data. */
-  int sort_blocksize;
-
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
   int isosurf;
