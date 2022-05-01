@@ -1475,23 +1475,17 @@ void module_sort(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
-
+  
   /* Allocate... */
   double *idx;
   size_t *p;
-  ALLOC(idx, double,
-	NP);
-  ALLOC(p, size_t,
-	NP);
-
+  ALLOC(idx, double, NP);
+  ALLOC(p, size_t, NP);
+  
   /* Update host... */
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-
-  
-  SELECT_TIMER("MODULE_SORT_INDEX", "PHYSICS", NVTX_GPU);
-
   
   /* Get box index... */
   const int np = atm->np;
@@ -1504,16 +1498,33 @@ void module_sort(
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
   
-  
-  SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
-  
-  
   /* Sort particles according to box index... */
   gsl_sort_index(p, idx, 1, (size_t) np);
+
+#if 0
   
+  /* TODO: The even-odd sorting method below is not OpenMP-parallelized
+     as NVC complains about data dependency of the loops? */
+  int swapped;
+  do {
+    swapped=0;
+#pragma omp parallel for default(shared)
+    for(int ip=0; ip<np-1; ip+=2)
+      if(idx[ip]>idx[ip+1]) {
+        SWAP(idx[ip], idx[ip+1], double);
+        SWAP(p[ip], p[ip+1], size_t);
+        swapped=1;
+      }
+#pragma omp parallel for default(shared)
+    for(int ip=1; ip<np-1; ip+=2)
+      if(idx[ip]>idx[ip+1]) {
+        SWAP(idx[ip], idx[ip+1], double);
+        SWAP(p[ip], p[ip+1], size_t);
+        swapped=1;
+      }
+  } while(swapped);
   
-  SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
-  
+#endif  
   
   /* Swap data... */
 #pragma omp parallel for default(shared)
