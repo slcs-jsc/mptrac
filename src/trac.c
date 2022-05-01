@@ -1489,8 +1489,10 @@ void module_sort(
 #pragma acc update host(atm[:1])
 #endif
 
+  
   SELECT_TIMER("MODULE_SORT_INDEX", "PHYSICS", NVTX_GPU);
 
+  
   /* Get box index... */
   const int np = atm->np;
 #pragma omp parallel for default(shared)
@@ -1507,17 +1509,16 @@ void module_sort(
   for (int ip0 = 0; ip0 < np; ip0 += ctl->sort_blocksize) {
 
     /* Adjust blocksize... */
-    int blocksize = GSL_MAX(ctl->sort_blocksize, np - ip0);
+    int blocksize = GSL_MIN(ctl->sort_blocksize, np - ip0);
 
-
-    PRINT("%d", blocksize);
-
-
+    
     SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
 
+    
     /* Sort particles according to box index... */
     gsl_sort_index(&p[ip0], &idx[ip0], 1, (size_t) blocksize);
 
+    
     SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
 
 
@@ -1533,7 +1534,6 @@ void module_sort(
 	p[ip] = (size_t) ip;
       }
   }
-
 
   /* Update device... */
 #ifdef _OPENACC
