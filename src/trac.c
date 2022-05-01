@@ -1477,10 +1477,11 @@ void module_sort(
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-  int *idx, *p;
-  ALLOC(idx, int,
+  double *idx;
+  size_t *p;
+  ALLOC(idx, double,
 	NP);
-  ALLOC(p, int,
+  ALLOC(p, size_t,
 	NP);
 
   /* Update host... */
@@ -1494,28 +1495,36 @@ void module_sort(
   const int np = atm->np;
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < np; ip++) {
-    p[ip] = ip;
-    idx[ip] =
+    p[ip] = (size_t) ip;
+    idx[ip] = (double)
       (locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny
        + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
 
-
   SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
 
 
+  PRINT("%g", idx[p[0]]);
+  PRINT("%g", idx[p[1]]);
+  PRINT("%g", idx[p[2]]);
+  PRINT("%g", idx[p[np - 3]]);
+  PRINT("%g", idx[p[np - 2]]);
+  PRINT("%g", idx[p[np - 1]]);
+
+
   /* Sort particles according to box index... */
-  int swapped;
-  do {
-    swapped = 0;
-    for (int ip = 0; ip < np - 1; ++ip)
-      if (idx[ip] > idx[ip + 1]) {
-	SWAP(idx[ip], idx[ip + 1], int);
-	SWAP(p[ip], p[ip + 1], int);
-	swapped = 1;
-      }
-  } while (swapped);
+  gsl_sort_index(p, idx, 1, (size_t) np);
+
+
+  PRINT("%g", idx[p[0]]);
+  PRINT("%g", idx[p[1]]);
+  PRINT("%g", idx[p[2]]);
+  PRINT("%g", idx[p[np - 3]]);
+  PRINT("%g", idx[p[np - 2]]);
+  PRINT("%g", idx[p[np - 1]]);
+
+
 
 
   SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
@@ -1523,14 +1532,14 @@ void module_sort(
 
   /* Swap data... */
   for (int ip = 0; ip < np; ip++)
-    if (ip != p[ip]) {
+    if ((size_t) ip != p[ip]) {
       SWAP(atm->time[ip], atm->time[p[ip]], double);
       SWAP(atm->p[ip], atm->p[p[ip]], double);
       SWAP(atm->lon[ip], atm->lon[p[ip]], double);
       SWAP(atm->lat[ip], atm->lat[p[ip]], double);
       for (int iq = 0; iq < ctl->nq; iq++)
 	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
-      p[ip] = ip;
+      p[ip] = (size_t) ip;
     }
 
   /* Update device... */
