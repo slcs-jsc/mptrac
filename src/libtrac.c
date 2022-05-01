@@ -2866,8 +2866,10 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
 
   /* Sorting...... */
-  ctl->atm_dt_sort
-    = scan_ctl(filename, argc, argv, "ATM_DT_SORT", -1, "-999", NULL);
+  ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
+  ctl->sort_blocksize = (int) scan_ctl(filename, argc, argv,
+				       "SORT_BLOCKSIZE", -1, "10000000",
+				       NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf =

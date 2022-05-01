@@ -343,7 +343,7 @@ int main(
 	get_met(&ctl, t, &met0, &met1);
 
       /* Sort particles... */
-      if (ctl.atm_dt_sort > 0 && fmod(t, ctl.atm_dt_sort) == 0)
+      if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	module_sort(&ctl, met0, atm);
 
       /* Check initial positions... */
@@ -1502,45 +1502,38 @@ void module_sort(
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
 
-  SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
+  /* Loop over blocks... */
+#pragma omp parallel for default(shared)
+  for (int ip0 = 0; ip0 < np; ip0 += ctl->sort_blocksize) {
+
+    /* Adjust blocksize... */
+    int blocksize = GSL_MAX(ctl->sort_blocksize, np - ip0);
 
 
-  PRINT("%g", idx[p[0]]);
-  PRINT("%g", idx[p[1]]);
-  PRINT("%g", idx[p[2]]);
-  PRINT("%g", idx[p[np - 3]]);
-  PRINT("%g", idx[p[np - 2]]);
-  PRINT("%g", idx[p[np - 1]]);
+    PRINT("%d", blocksize);
 
 
-  /* Sort particles according to box index... */
-  gsl_sort_index(p, idx, 1, (size_t) np);
+    SELECT_TIMER("MODULE_SORT_GETPERM", "PHYSICS", NVTX_GPU);
+
+    /* Sort particles according to box index... */
+    gsl_sort_index(&p[ip0], &idx[ip0], 1, (size_t) blocksize);
+
+    SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
 
 
-  PRINT("%g", idx[p[0]]);
-  PRINT("%g", idx[p[1]]);
-  PRINT("%g", idx[p[2]]);
-  PRINT("%g", idx[p[np - 3]]);
-  PRINT("%g", idx[p[np - 2]]);
-  PRINT("%g", idx[p[np - 1]]);
+    /* Swap data... */
+    for (int ip = ip0; ip < ip0 + blocksize; ip++)
+      if ((size_t) ip != p[ip]) {
+	SWAP(atm->time[ip], atm->time[p[ip]], double);
+	SWAP(atm->p[ip], atm->p[p[ip]], double);
+	SWAP(atm->lon[ip], atm->lon[p[ip]], double);
+	SWAP(atm->lat[ip], atm->lat[p[ip]], double);
+	for (int iq = 0; iq < ctl->nq; iq++)
+	  SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
+	p[ip] = (size_t) ip;
+      }
+  }
 
-
-
-
-  SELECT_TIMER("MODULE_SORT_SWAPDATA", "PHYSICS", NVTX_GPU);
-
-
-  /* Swap data... */
-  for (int ip = 0; ip < np; ip++)
-    if ((size_t) ip != p[ip]) {
-      SWAP(atm->time[ip], atm->time[p[ip]], double);
-      SWAP(atm->p[ip], atm->p[p[ip]], double);
-      SWAP(atm->lon[ip], atm->lon[p[ip]], double);
-      SWAP(atm->lat[ip], atm->lat[p[ip]], double);
-      for (int iq = 0; iq < ctl->nq; iq++)
-	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
-      p[ip] = (size_t) ip;
-    }
 
   /* Update device... */
 #ifdef _OPENACC
