@@ -76,6 +76,10 @@
 #include "zstd.h"
 #endif
 
+#ifdef LZ4
+#include "lz4.h"
+#endif
+
 /* ------------------------------------------------------------
    Constants...
    ------------------------------------------------------------ */
@@ -761,7 +765,7 @@ typedef struct {
   /*! Time step of meteo data [s]. */
   double dt_met;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=zlib, 3=zfp, 4=zstd). */
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=zlib, 3=zfp, 4=zstd, 5=lz4). */
   int met_type;
 
   /*! Stride for longitudes. */
@@ -1345,9 +1349,21 @@ void compress_zlib(
   int decompress,
   FILE * inout);
 
-/*! Compress or decompress array with zsts. */
+/*! Compress or decompress array with zstd. */
 #ifdef ZSTD
 void compress_zstd(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int decompress,
+  FILE * inout);
+#endif
+
+/*! Compress or decompress array with lz4. */
+#ifdef LZ4
+void compress_lz4(
   char *varname,
   float *array,
   int nx,

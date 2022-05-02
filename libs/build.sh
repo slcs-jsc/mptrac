@@ -43,6 +43,15 @@ cd $target/src/$dir \
     && make clean \
 	|| exit
 
+# lz4...
+dir=lz4-1.9.3
+cd $target/src/$dir \
+    && make -j$threads && make check \
+    && cp -a lib/lib* $target/lib/ \
+    && cp -a lib/*.h $target/include/ \
+    && make clean \
+	|| exit
+
 # HDF5...
 dir=hdf5-1.12.1
 cd $target/src/$dir \

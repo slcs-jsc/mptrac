@@ -1750,6 +1750,58 @@ void compress_zstd(
 
 /*****************************************************************************/
 
+#ifdef LZ4
+void compress_lz4(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int decompress,
+  FILE * inout) {
+  
+  /* Get buffer sizes... */
+  int uncomprLen = nx * ny * nz * (int)sizeof(float);
+  int comprLen = LZ4_compressBound(uncomprLen);
+  
+  /* Allocate... */
+  char *compr = (char *) calloc((uInt) comprLen, 1);
+  char *uncompr = (char *) array;
+  
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+    FREAD(&comprLen, int, 1, inout);
+    if (fread(compr, 1, (size_t)comprLen, inout) != (size_t)comprLen)
+      ERRMSG("Error while reading LZ4 data!");
+    if(!LZ4_decompress_safe(compr, uncompr, comprLen, uncomprLen)) {
+      ERRMSG("Decompression failed!");
+    }
+    LOG(2, "Read 3-D variable: %s (LZ4, RATIO= %g %%)",
+	varname, (100. * (double) comprLen) / (double) uncomprLen);
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+    int compsize
+      = LZ4_compress_default(uncompr, compr, uncomprLen, comprLen);
+    if (compsize <= 0) {
+      ERRMSG("Compression failed!");
+    } else {
+      FWRITE(&compsize, int, 1, inout);
+      if (fwrite(compr, 1, (size_t)compsize, inout) != (size_t)compsize)
+	ERRMSG("Error while writing LZ4 data!");
+    }
+    LOG(2, "Write 3-D variable: %s (LZ4, RATIO= %g %%)",
+	varname, (100. * (double) compsize) / (double) uncomprLen);
+  }
+
+  /* Free... */
+  free(compr);
+}
+#endif
+
+/*****************************************************************************/
+
 void day2doy(
   int year,
   int mon,
@@ -1971,6 +2023,8 @@ void get_met_help(
     sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
   else if (ctl->met_type == 4)
     sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
+  else if (ctl->met_type == 5)
+    sprintf(filename, "%s_YYYY_MM_DD_HH.lz4", metbase);
   sprintf(repl, "%d", year);
   get_met_replace(filename, "YYYY", repl);
   sprintf(repl, "%02d", mon);
@@ -3200,7 +3254,7 @@ int read_met(
   }
 
   /* Read binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 4) {
+  else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
     FILE *in;
 
@@ -3287,7 +3341,7 @@ int read_met(
     LOG(2, "Pressure levels: %g, %g ... %g hPa",
 	met->p[0], met->p[1], met->p[met->np - 1]);
 
-    /* Write surface data... */
+    /* Read surface data... */
     read_met_bin_2d(in, met, met->ps, "PS");
     read_met_bin_2d(in, met, met->ts, "TS");
     read_met_bin_2d(in, met, met->zs, "ZS");
@@ -3307,7 +3361,7 @@ int read_met(
     read_met_bin_2d(in, met, met->cape, "CAPE");
     read_met_bin_2d(in, met, met->cin, "CIN");
 
-    /* Write level data... */
+    /* Read level data... */
     read_met_bin_3d(in, ctl, met, met->z, "Z", 0, 0.5);
     read_met_bin_3d(in, ctl, met, met->t, "T", 0, 5.0);
     read_met_bin_3d(in, ctl, met, met->u, "U", 8, 0);
@@ -3417,6 +3471,15 @@ void read_met_bin_3d(
     compress_zstd(varname, help, met->np, met->ny, met->nx, 1, in);
 #else
     ERRMSG("zstd compression not supported!");
+#endif
+  }
+
+  /* Read lz4 data... */
+  else if (ctl->met_type == 5) {
+#ifdef LZ4
+    compress_lz4(varname, help, met->np, met->ny, met->nx, 1, in);
+#else
+    ERRMSG("LZ4 compression not supported!");
 #endif
   }
 
@@ -5939,7 +6002,7 @@ int write_met(
   LOG(1, "Write meteo data: %s", filename);
 
   /* Write binary... */
-  if (ctl->met_type >= 1 && ctl->met_type <= 4) {
+  if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
     /* Create file... */
     FILE *out;
@@ -6111,6 +6174,15 @@ void write_met_bin_3d(
     compress_zstd(varname, help, met->np, met->ny, met->nx, 0, out);
 #else
     ERRMSG("zstd compression not supported!");
+#endif
+  }
+
+  /* Write LZ4 data... */
+  else if (ctl->met_type == 5) {
+#ifdef LZ4
+    compress_lz4(varname, help, met->np, met->ny, met->nx, 0, out);
+#else
+    ERRMSG("LZ4 compression not supported!");
 #endif
   }
 
