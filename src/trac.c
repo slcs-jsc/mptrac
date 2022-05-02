@@ -856,18 +856,30 @@ void module_diffusion_meso(
       int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
       /* Get standard deviations of local wind data... */
-      double umean = 0.5 * (met0->uvwmean[ix][iy][iz][0]
-			    + met1->uvwmean[ix][iy][iz][0]);
-      double usig = sqrt(0.5 * (met0->uvwvar[ix][iy][iz][0]
-				+ met1->uvwvar[ix][iy][iz][0]) - SQR(umean));
-      double vmean = 0.5 * (met0->uvwmean[ix][iy][iz][1]
-			    + met1->uvwmean[ix][iy][iz][1]);
-      double vsig = sqrt(0.5 * (met0->uvwvar[ix][iy][iz][1]
-				+ met1->uvwvar[ix][iy][iz][1]) - SQR(vmean));
-      double wmean = 0.5 * (met0->uvwmean[ix][iy][iz][2]
-			    + met1->uvwmean[ix][iy][iz][2]);
-      double wsig = sqrt(0.5 * (met0->uvwvar[ix][iy][iz][2]
-				+ met1->uvwvar[ix][iy][iz][2]) - SQR(wmean));
+      float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
+      for (int i = 0; i < 2; i++)
+	for (int j = 0; j < 2; j++)
+	  for (int k = 0; k < 2; k++) {
+	    umean += met0->uvw[ix + i][iy + j][iz + k][0];
+	    usig += SQR(met0->uvw[ix + i][iy + j][iz + k][0]);
+	    vmean += met0->uvw[ix + i][iy + j][iz + k][1];
+	    vsig += SQR(met0->uvw[ix + i][iy + j][iz + k][1]);
+	    wmean += met0->uvw[ix + i][iy + j][iz + k][2];
+	    wsig += SQR(met0->uvw[ix + i][iy + j][iz + k][2]);
+
+	    umean += met1->uvw[ix + i][iy + j][iz + k][0];
+	    usig += SQR(met1->uvw[ix + i][iy + j][iz + k][0]);
+	    vmean += met1->uvw[ix + i][iy + j][iz + k][1];
+	    vsig += SQR(met1->uvw[ix + i][iy + j][iz + k][1]);
+	    wmean += met1->uvw[ix + i][iy + j][iz + k][2];
+	    wsig += SQR(met1->uvw[ix + i][iy + j][iz + k][2]);
+	  }
+      usig = usig / 16.f - SQR(umean / 16.f);
+      usig = (usig > 0 ? sqrtf(usig) : 0);
+      vsig = vsig / 16.f - SQR(vmean / 16.f);
+      vsig = (vsig > 0 ? sqrtf(vsig) : 0);
+      wsig = wsig / 16.f - SQR(wmean / 16.f);
+      wsig = (wsig > 0 ? sqrtf(wsig) : 0);
 
       /* Set temporal correlations for mesoscale fluctuations... */
       double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
@@ -1475,18 +1487,20 @@ void module_sort(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
-  
+
   /* Allocate... */
   double *idx;
   size_t *p;
-  ALLOC(idx, double, NP);
-  ALLOC(p, size_t, NP);
-  
+  ALLOC(idx, double,
+	NP);
+  ALLOC(p, size_t,
+	NP);
+
   /* Update host... */
 #ifdef _OPENACC
 #pragma acc update host(atm[:1])
 #endif
-  
+
   /* Get box index... */
   const int np = atm->np;
 #pragma omp parallel for default(shared)
@@ -1497,35 +1511,35 @@ void module_sort(
        + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
-  
+
   /* Sort particles according to box index... */
   gsl_sort_index(p, idx, 1, (size_t) np);
 
 #if 0
-  
+
   /* TODO: The even-odd sorting method below is not OpenMP-parallelized
      as NVC complains about data dependency of the loops? */
   int swapped;
   do {
-    swapped=0;
+    swapped = 0;
 #pragma omp parallel for default(shared)
-    for(int ip=0; ip<np-1; ip+=2)
-      if(idx[ip]>idx[ip+1]) {
-        SWAP(idx[ip], idx[ip+1], double);
-        SWAP(p[ip], p[ip+1], size_t);
-        swapped=1;
+    for (int ip = 0; ip < np - 1; ip += 2)
+      if (idx[ip] > idx[ip + 1]) {
+	SWAP(idx[ip], idx[ip + 1], double);
+	SWAP(p[ip], p[ip + 1], size_t);
+	swapped = 1;
       }
 #pragma omp parallel for default(shared)
-    for(int ip=1; ip<np-1; ip+=2)
-      if(idx[ip]>idx[ip+1]) {
-        SWAP(idx[ip], idx[ip+1], double);
-        SWAP(p[ip], p[ip+1], size_t);
-        swapped=1;
+    for (int ip = 1; ip < np - 1; ip += 2)
+      if (idx[ip] > idx[ip + 1]) {
+	SWAP(idx[ip], idx[ip + 1], double);
+	SWAP(p[ip], p[ip + 1], size_t);
+	swapped = 1;
       }
-  } while(swapped);
-  
-#endif  
-  
+  } while (swapped);
+
+#endif
+
   /* Swap data... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < np; ip++)
@@ -1538,7 +1552,7 @@ void module_sort(
 	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
       p[ip] = (size_t) ip;
     }
-  
+
   /* Update device... */
 #ifdef _OPENACC
 #pragma acc update device(atm[:1])

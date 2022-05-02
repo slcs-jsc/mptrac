@@ -1759,21 +1759,23 @@ void compress_lz4(
   int nz,
   int decompress,
   FILE * inout) {
-  
+
   /* Get buffer sizes... */
-  int uncomprLen = nx * ny * nz * (int)sizeof(float);
+  int uncomprLen = nx * ny * nz * (int) sizeof(float);
   int comprLen = LZ4_compressBound(uncomprLen);
-  
+
   /* Allocate... */
   char *compr = (char *) calloc((uInt) comprLen, 1);
   char *uncompr = (char *) array;
-  
+
   /* Read compressed stream and decompress array... */
   if (decompress) {
-    FREAD(&comprLen, int, 1, inout);
-    if (fread(compr, 1, (size_t)comprLen, inout) != (size_t)comprLen)
+    FREAD(&comprLen, int,
+	  1,
+	  inout);
+    if (fread(compr, 1, (size_t) comprLen, inout) != (size_t) comprLen)
       ERRMSG("Error while reading LZ4 data!");
-    if(!LZ4_decompress_safe(compr, uncompr, comprLen, uncomprLen)) {
+    if (!LZ4_decompress_safe(compr, uncompr, comprLen, uncomprLen)) {
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s (LZ4, RATIO= %g %%)",
@@ -1782,13 +1784,14 @@ void compress_lz4(
 
   /* Compress array and output compressed stream... */
   else {
-    int compsize
-      = LZ4_compress_default(uncompr, compr, uncomprLen, comprLen);
+    int compsize = LZ4_compress_default(uncompr, compr, uncomprLen, comprLen);
     if (compsize <= 0) {
       ERRMSG("Compression failed!");
     } else {
-      FWRITE(&compsize, int, 1, inout);
-      if (fwrite(compr, 1, (size_t)compsize, inout) != (size_t)compsize)
+      FWRITE(&compsize, int,
+	     1,
+	     inout);
+      if (fwrite(compr, 1, (size_t) compsize, inout) != (size_t) compsize)
 	ERRMSG("Error while writing LZ4 data!");
     }
     LOG(2, "Write 3-D variable: %s (LZ4, RATIO= %g %%)",
@@ -2921,7 +2924,7 @@ void read_ctl(
 
   /* Sorting...... */
   ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
-  
+
   /* Isosurface parameters... */
   ctl->isosurf =
     (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
@@ -3389,8 +3392,15 @@ int read_met(
   else
     ERRMSG("MET_TYPE not implemented!");
 
-  /* Calculate wind variances... */
-  read_met_wind(met);
+  /* Copy wind data to cache... */
+#pragma omp parallel for default(shared) collapse(2)
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++) {
+	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
+	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
+	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
+      }
 
   /* Return success... */
   return 1;
@@ -4921,55 +4931,6 @@ void read_met_tropo(
       met->zt[ix][iy] = (float) zt;
       met->h2ot[ix][iy] = (float) h2ot;
     }
-}
-
-/*****************************************************************************/
-
-void read_met_wind(
-  met_t * met) {
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_WIND", "METPROC", NVTX_READ);
-  LOG(2, "Calculate wind variances...");
-
-  /* Copy wind data to cache... */
-#pragma omp parallel for default(shared) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++) {
-	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
-	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
-	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
-      }
-
-  /* Calculate variances... */
-#pragma omp parallel for default(shared) collapse(2)
-  for (int ix = 0; ix < met->nx - 1; ix++)
-    for (int iy = 0; iy < met->ny - 1; iy++)
-      for (int ip = 0; ip < met->np - 1; ip++) {
-
-	/* Init... */
-	for (int i = 0; i < 3; i++)
-	  met->uvwmean[ix][iy][ip][i] = met->uvwvar[ix][iy][ip][i] = 0;
-
-	/* Compute mean and variance... */
-	for (int i = 0; i < 2; i++)
-	  for (int j = 0; j < 2; j++)
-	    for (int k = 0; k < 2; k++) {
-	      met->uvwmean[ix][iy][ip][0]
-		+= met->u[ix + i][iy + j][ip + k] / 8.f;
-	      met->uvwvar[ix][iy][ip][0]
-		+= SQR(met->u[ix + i][iy + j][ip + k]) / 8.f;
-	      met->uvwmean[ix][iy][ip][1]
-		+= met->v[ix + i][iy + j][ip + k] / 8.f;
-	      met->uvwvar[ix][iy][ip][1]
-		+= SQR(met->v[ix + i][iy + j][ip + k]) / 8.f;
-	      met->uvwmean[ix][iy][ip][2]
-		+= met->w[ix + i][iy + j][ip + k] / 8.f;
-	      met->uvwvar[ix][iy][ip][2]
-		+= SQR(met->w[ix + i][iy + j][ip + k]) / 8.f;
-	    }
-      }
 }
 
 /*****************************************************************************/

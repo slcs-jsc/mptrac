@@ -1265,12 +1265,6 @@ typedef struct {
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
 
-  /*! Cache for mean wind. */
-  float uvwmean[EX][EY][EP][3];
-
-  /*! Cache for wind variances. */
-  float uvwvar[EX][EY][EP][3];
-
 } met_t;
 
 /* ------------------------------------------------------------
@@ -1679,10 +1673,6 @@ void read_met_surface(
 /*! Calculate tropopause data. */
 void read_met_tropo(
   ctl_t * ctl,
-  met_t * met);
-
-/*! Calculate wind variances. */
-void read_met_wind(
   met_t * met);
 
 /*! Read a control parameter from file or command line. */
