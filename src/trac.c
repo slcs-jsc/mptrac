@@ -532,15 +532,19 @@ void module_advect_rk(
       for (int i = 0; i < 4; i++) {
 
 	/* Set position... */
-	if (i == 0)
+	if (i == 0) {
 	  dts = 0.0;
-	else
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->p[ip];
+	} else {
 	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
-	x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	x[2] = atm->p[ip] + dts * w[i - 1];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->p[ip] + dts * w[i - 1];
+	}
 	double tm = atm->time[ip] + dts;
-	
+
 	/* Interpolate meteo data... */
 	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
 			    &u[i], &v[i], &w[i]);
