@@ -47,9 +47,6 @@ ZFP ?= 0
 # Enable zstd compression...
 ZSTD ?= 0
 
-# Enable LZ4 compression...
-LZ4 ?= 0
-
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -121,12 +118,6 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
-endif
-
-# LZ4 compression...
-ifeq ($(LZ4),1)
-  LDFLAGS += -llz4
-  CFLAGS += -DLZ4
 endif
 
 # Static compilation...

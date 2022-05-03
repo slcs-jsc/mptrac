@@ -57,7 +57,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include "zlib.h"
 
 #ifdef MPI
 #include "mpi.h"
@@ -74,10 +73,6 @@
 
 #ifdef ZSTD
 #include "zstd.h"
-#endif
-
-#ifdef LZ4
-#include "lz4.h"
 #endif
 
 /* ------------------------------------------------------------
@@ -765,7 +760,7 @@ typedef struct {
   /*! Time step of meteo data [s]. */
   double dt_met;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=zlib, 3=zfp, 4=zstd, 5=lz4). */
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;
 
   /*! Stride for longitudes. */
@@ -1311,13 +1306,14 @@ double clim_tropo(
   double t,
   double lat);
 
-
-void compress_round(
+/*! Pack or unpack array. */
+void compress_pack(
+  char *varname,
   float *array,
-  int n,
-  int digits);
-
-
+  size_t nxy,
+  size_t nz,
+  int decompress,
+  FILE * inout);
 
 /*! Compress or decompress array with zfp. */
 #ifdef ZFP
@@ -1333,36 +1329,12 @@ void compress_zfp(
   FILE * inout);
 #endif
 
-/*! Compress or decompress array with zlib. */
-void compress_zlib(
-  char *varname,
-  float *array,
-  int nx,
-  int ny,
-  int nz,
-  int decompress,
-  FILE * inout);
-
 /*! Compress or decompress array with zstd. */
 #ifdef ZSTD
 void compress_zstd(
   char *varname,
   float *array,
-  int nx,
-  int ny,
-  int nz,
-  int decompress,
-  FILE * inout);
-#endif
-
-/*! Compress or decompress array with lz4. */
-#ifdef LZ4
-void compress_lz4(
-  char *varname,
-  float *array,
-  int nx,
-  int ny,
-  int nz,
+  size_t n,
   int decompress,
   FILE * inout);
 #endif

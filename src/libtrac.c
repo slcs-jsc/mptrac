@@ -1536,17 +1536,95 @@ double clim_tropo(
 
 /*****************************************************************************/
 
-void compress_round(
+void compress_pack(
+  char *varname,
   float *array,
-  int n,
-  int digits) {
+  size_t nxy,
+  size_t nz,
+  int decompress,
+  FILE * inout) {
 
+  double min[EP], max[EP], off[EP], scl[EP];
+
+  short *sarray;
+
+  /* Allocate... */
+  ALLOC(sarray, short,
+	nxy * nz);
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
+	varname, 100. * sizeof(short) / sizeof(float));
+
+    /* Read data... */
+    FREAD(&scl, double,
+	  nz,
+	  inout);
+    FREAD(&off, double,
+	  nz,
+	  inout);
+    FREAD(sarray, short,
+	  nxy * nz,
+	  inout);
+
+    /* Convert to float... */
 #pragma omp parallel for default(shared)
-  for (int i = 0; i < n; i++)
-    if (array[i] != 0.0) {
-      double factor = pow(10.0, digits - ceil(log10(fabs(array[i]))));
-      array[i] = (float) (round(array[i] * factor) / factor);
+    for (size_t ixy = 0; ixy < nxy; ixy++)
+      for (size_t iz = 0; iz < nz; iz++)
+	array[ixy * nz + iz]
+	  = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+
+    /* Write info... */
+    LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
+	varname, 100. * sizeof(short) / sizeof(float));
+
+    /* Get range... */
+    for (size_t iz = 0; iz < nz; iz++) {
+      min[iz] = array[iz];
+      max[iz] = array[iz];
     }
+    for (size_t ixy = 1; ixy < nxy; ixy++)
+      for (size_t iz = 0; iz < nz; iz++) {
+	if (array[ixy * nz + iz] < min[iz])
+	  min[iz] = array[ixy * nz + iz];
+	if (array[ixy * nz + iz] > max[iz])
+	  max[iz] = array[ixy * nz + iz];
+      }
+
+    /* Get offset and scaling factor... */
+    for (size_t iz = 0; iz < nz; iz++) {
+      scl[iz] = (max[iz] - min[iz]) / 65533.;
+      off[iz] = min[iz] - scl[iz];
+    }
+
+    /* Convert to short... */
+#pragma omp parallel for default(shared)
+    for (size_t ixy = 1; ixy < nxy; ixy++)
+      for (size_t iz = 0; iz < nz; iz++)
+	sarray[ixy * nz + iz]
+	  = (short) ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
+
+    /* Write data... */
+    FWRITE(&scl, double,
+	   nz,
+	   inout);
+    FWRITE(&off, double,
+	   nz,
+	   inout);
+    FWRITE(sarray, short,
+	   nxy * nz,
+	   inout);
+  }
+
+  /* Free... */
+  free(sarray);
 }
 
 /*****************************************************************************/
@@ -1641,76 +1719,22 @@ void compress_zfp(
 
 /*****************************************************************************/
 
-void compress_zlib(
-  char *varname,
-  float *array,
-  int nx,
-  int ny,
-  int nz,
-  int decompress,
-  FILE * inout) {
-
-  /* Get buffer sizes... */
-  uLong uncomprLen =
-    (ulong) nx * (ulong) ny * (ulong) nz * (ulong) sizeof(float);
-  uLong comprLen = compressBound(uncomprLen);
-
-  /* Allocate... */
-  Byte *compr = (Byte *) calloc((uInt) comprLen, 1);
-  Byte *uncompr = (Byte *) array;
-
-  /* Read compressed stream and decompress array... */
-  if (decompress) {
-    FREAD(&comprLen, uLong, 1, inout);
-    if (fread(compr, 1, comprLen, inout) != comprLen)
-      ERRMSG("Error while reading zlib data!");
-    if (uncompress(uncompr, &uncomprLen, compr, comprLen) != Z_OK) {
-      ERRMSG("Decompression failed!");
-    }
-    LOG(2, "Read 3-D variable: %s (zlib, RATIO= %g %%)",
-	varname, (100. * (double) comprLen) / (double) uncomprLen);
-  }
-
-  /* Compress array and output compressed stream... */
-  else {
-
-    // compress_round(array, nx*ny*nz, 2);
-
-    if (compress(compr, &comprLen, uncompr, uncomprLen) != Z_OK) {
-      ERRMSG("Compression failed!");
-    } else {
-      FWRITE(&comprLen, uLong, 1, inout);
-      if (fwrite(compr, 1, comprLen, inout) != comprLen)
-	ERRMSG("Error while writing zlib data!");
-    }
-    LOG(2, "Write 3-D variable: %s (zlib, RATIO= %g %%)",
-	varname, (100. * (double) comprLen) / (double) uncomprLen);
-  }
-
-  /* Free... */
-  free(compr);
-}
-
-/*****************************************************************************/
-
 #ifdef ZSTD
 void compress_zstd(
   char *varname,
   float *array,
-  int nx,
-  int ny,
-  int nz,
+  size_t n,
   int decompress,
   FILE * inout) {
 
   /* Get buffer sizes... */
-  size_t uncomprLen = (size_t) nx * (size_t) ny * (size_t) nz * sizeof(float);
+  size_t uncomprLen = n * sizeof(float);
   size_t comprLen = ZSTD_compressBound(uncomprLen);
   size_t compsize;
 
   /* Allocate... */
-  Byte *compr = (Byte *) calloc((uInt) comprLen, 1);
-  Byte *uncompr = (Byte *) array;
+  char *compr = (char *) calloc((uint) comprLen, 1);
+  char *uncompr = (char *) array;
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
@@ -1740,61 +1764,6 @@ void compress_zstd(
 	ERRMSG("Error while writing zstd data!");
     }
     LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) compsize) / (double) uncomprLen);
-  }
-
-  /* Free... */
-  free(compr);
-}
-#endif
-
-/*****************************************************************************/
-
-#ifdef LZ4
-void compress_lz4(
-  char *varname,
-  float *array,
-  int nx,
-  int ny,
-  int nz,
-  int decompress,
-  FILE * inout) {
-
-  /* Get buffer sizes... */
-  int uncomprLen = nx * ny * nz * (int) sizeof(float);
-  int comprLen = LZ4_compressBound(uncomprLen);
-
-  /* Allocate... */
-  char *compr = (char *) calloc((uInt) comprLen, 1);
-  char *uncompr = (char *) array;
-
-  /* Read compressed stream and decompress array... */
-  if (decompress) {
-    FREAD(&comprLen, int,
-	  1,
-	  inout);
-    if (fread(compr, 1, (size_t) comprLen, inout) != (size_t) comprLen)
-      ERRMSG("Error while reading LZ4 data!");
-    if (!LZ4_decompress_safe(compr, uncompr, comprLen, uncomprLen)) {
-      ERRMSG("Decompression failed!");
-    }
-    LOG(2, "Read 3-D variable: %s (LZ4, RATIO= %g %%)",
-	varname, (100. * (double) comprLen) / (double) uncomprLen);
-  }
-
-  /* Compress array and output compressed stream... */
-  else {
-    int compsize = LZ4_compress_default(uncompr, compr, uncomprLen, comprLen);
-    if (compsize <= 0) {
-      ERRMSG("Compression failed!");
-    } else {
-      FWRITE(&compsize, int,
-	     1,
-	     inout);
-      if (fwrite(compr, 1, (size_t) compsize, inout) != (size_t) compsize)
-	ERRMSG("Error while writing LZ4 data!");
-    }
-    LOG(2, "Write 3-D variable: %s (LZ4, RATIO= %g %%)",
 	varname, (100. * (double) compsize) / (double) uncomprLen);
   }
 
@@ -2021,13 +1990,11 @@ void get_met_help(
   else if (ctl->met_type == 1)
     sprintf(filename, "%s_YYYY_MM_DD_HH.bin", metbase);
   else if (ctl->met_type == 2)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.zlib", metbase);
+    sprintf(filename, "%s_YYYY_MM_DD_HH.pck", metbase);
   else if (ctl->met_type == 3)
     sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
   else if (ctl->met_type == 4)
     sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
-  else if (ctl->met_type == 5)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.lz4", metbase);
   sprintf(repl, "%d", year);
   get_met_replace(filename, "YYYY", repl);
   sprintf(repl, "%02d", mon);
@@ -3462,9 +3429,10 @@ void read_met_bin_3d(
 	  in);
   }
 
-  /* Read zlib data... */
+  /* Read packed data... */
   else if (ctl->met_type == 2)
-    compress_zlib(varname, help, met->np, met->ny, met->nx, 1, in);
+    compress_pack(varname, help, (size_t) (met->ny * met->nx),
+		  (size_t) met->np, 1, in);
 
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
@@ -3480,18 +3448,10 @@ void read_met_bin_3d(
   /* Read zstd data... */
   else if (ctl->met_type == 4) {
 #ifdef ZSTD
-    compress_zstd(varname, help, met->np, met->ny, met->nx, 1, in);
+    compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 1,
+		  in);
 #else
     ERRMSG("zstd compression not supported!");
-#endif
-  }
-
-  /* Read lz4 data... */
-  else if (ctl->met_type == 5) {
-#ifdef LZ4
-    compress_lz4(varname, help, met->np, met->ny, met->nx, 1, in);
-#else
-    ERRMSG("LZ4 compression not supported!");
 #endif
   }
 
@@ -6116,9 +6076,10 @@ void write_met_bin_3d(
 	   out);
   }
 
-  /* Write zlib data... */
+  /* Write packed data... */
   else if (ctl->met_type == 2)
-    compress_zlib(varname, help, met->np, met->ny, met->nx, 0, out);
+    compress_pack(varname, help, (size_t) (met->ny * met->nx),
+		  (size_t) met->np, 0, out);
 
   /* Write zfp data... */
   else if (ctl->met_type == 3) {
@@ -6134,18 +6095,10 @@ void write_met_bin_3d(
   /* Write zstd data... */
   else if (ctl->met_type == 4) {
 #ifdef ZSTD
-    compress_zstd(varname, help, met->np, met->ny, met->nx, 0, out);
+    compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 0,
+		  out);
 #else
     ERRMSG("zstd compression not supported!");
-#endif
-  }
-
-  /* Write LZ4 data... */
-  else if (ctl->met_type == 5) {
-#ifdef LZ4
-    compress_lz4(varname, help, met->np, met->ny, met->nx, 0, out);
-#else
-    ERRMSG("LZ4 compression not supported!");
 #endif
   }
 
