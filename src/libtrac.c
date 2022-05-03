@@ -3226,7 +3226,7 @@ int read_met(
   }
 
   /* Read binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
+  else if (ctl->met_type >= 1 && ctl->met_type <= 4) {
 
     FILE *in;
 
@@ -5925,7 +5925,7 @@ int write_met(
   LOG(1, "Write meteo data: %s", filename);
 
   /* Write binary... */
-  if (ctl->met_type >= 1 && ctl->met_type <= 5) {
+  if (ctl->met_type >= 1 && ctl->met_type <= 4) {
 
     /* Create file... */
     FILE *out;
