@@ -45,13 +45,6 @@ void module_advect_mp(
   atm_t * atm,
   double *dt);
 
-/*! Calculate advection of air parcels (mipoint method + cache). */
-void module_advect_mp_cache(
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
 /*! Calculate advection of air parcels (Runge-Kutta). */
 void module_advect_rk(
   met_t * met0,
@@ -353,8 +346,6 @@ int main(
       if (ctl.advect == 0)
 	module_advect_mp(met0, met1, atm, dt);
       else if (ctl.advect == 1)
-	module_advect_mp_cache(met0, met1, atm, dt);
-      else if (ctl.advect == 2)
 	module_advect_rk(met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
@@ -471,58 +462,6 @@ int main(
 /*****************************************************************************/
 
 void module_advect_mp(
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
-
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
-
-      double u, v, w;
-
-      /* Interpolate meteorological data... */
-      INTPOL_INIT;
-      INTPOL_3D(u, 1);
-      INTPOL_3D(v, 0);
-      INTPOL_3D(w, 0);
-
-      /* Get position of the mid point... */
-      double dtm = atm->time[ip] + 0.5 * dt[ip];
-      double xm0 =
-	atm->lon[ip] + DX2DEG(0.5 * dt[ip] * u / 1000., atm->lat[ip]);
-      double xm1 = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v / 1000.);
-      double xm2 = atm->p[ip] + 0.5 * dt[ip] * w;
-
-      /* Interpolate meteorological data for mid point... */
-      intpol_met_time_3d(met0, met0->u, met1, met1->u,
-			 dtm, xm2, xm0, xm1, &u, ci, cw, 1);
-      intpol_met_time_3d(met0, met0->v, met1, met1->v,
-			 dtm, xm2, xm0, xm1, &v, ci, cw, 0);
-      intpol_met_time_3d(met0, met0->w, met1, met1->w,
-			 dtm, xm2, xm0, xm1, &w, ci, cw, 0);
-
-      /* Save new position... */
-      atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * u / 1000., xm1);
-      atm->lat[ip] += DY2DEG(dt[ip] * v / 1000.);
-      atm->p[ip] += dt[ip] * w;
-    }
-}
-
-/*****************************************************************************/
-
-void module_advect_mp_cache(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
