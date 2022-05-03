@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -121,7 +121,7 @@ void module_isosurf(
   atm_t * atm,
   cache_t * cache);
 
-/*! Interpolate meteorological data for air parcel positions. */
+/*! Interpolate meteo data for air parcel positions. */
 void module_meteo(
   ctl_t * ctl,
   met_t * met0,
@@ -301,7 +301,7 @@ int main(
     /* Initialize random number generator... */
     module_rng_init(ntask);
 
-    /* Initialize meteorological data... */
+    /* Initialize meteo data... */
     get_met(&ctl, ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
@@ -331,7 +331,7 @@ int main(
       /* Set time steps of air parcels... */
       module_timesteps(&ctl, atm, dt, t);
 
-      /* Get meteorological data... */
+      /* Get meteo data... */
       if (t != ctl.t_start)
 	get_met(&ctl, t, &met0, &met1);
 
@@ -373,7 +373,7 @@ int main(
       /* Check final positions... */
       module_position(&ctl, met0, met1, atm, dt);
 
-      /* Interpolate meteorological data... */
+      /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
 	module_meteo(&ctl, met0, met1, atm);
@@ -482,7 +482,7 @@ void module_advect_mp(
 
       double u, v, w;
 
-      /* Interpolate meteorological data... */
+      /* Interpolate meteo data... */
       intpol_met_time_uvw(met0, met1, atm->time[ip], atm->p[ip],
 			  atm->lon[ip], atm->lat[ip], &u, &v, &w);
 
@@ -493,7 +493,7 @@ void module_advect_mp(
       double xm1 = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v / 1000.);
       double xm2 = atm->p[ip] + 0.5 * dt[ip] * w;
 
-      /* Interpolate meteorological data for mid point... */
+      /* Interpolate meteo data for mid point... */
       intpol_met_time_uvw(met0, met1, dtm, xm2, xm0, xm1, &u, &v, &w);
 
       /* Save new position... */
@@ -527,32 +527,23 @@ void module_advect_rk(
 
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
-      INTPOL_INIT;
 
       /* Loop over integration nodes... */
       for (int i = 0; i < 4; i++) {
 
 	/* Set position... */
-	if (i == 0) {
+	if (i == 0)
 	  dts = 0.0;
-	  x[0] = atm->lon[ip];
-	  x[1] = atm->lat[ip];
-	  x[2] = atm->p[ip];
-	} else {
+	else
 	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
-	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	  x[2] = atm->p[ip] + dts * w[i - 1];
-	}
-
-	/* Interpolate meteo data... */
+	x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	x[2] = atm->p[ip] + dts * w[i - 1];
 	double tm = atm->time[ip] + dts;
-	intpol_met_time_3d(met0, met0->u, met1, met1->u, tm, x[2], x[0], x[1],
-			   &u[i], ci, cw, 1);
-	intpol_met_time_3d(met0, met0->v, met1, met1->v, tm, x[2], x[0], x[1],
-			   &v[i], ci, cw, 0);
-	intpol_met_time_3d(met0, met0->w, met1, met1->w, tm, x[2], x[0], x[1],
-			   &w[i], ci, cw, 0);
+	
+	/* Interpolate meteo data... */
+	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
+			    &u[i], &v[i], &w[i]);
 
 	/* Get mean wind... */
 	double k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
@@ -1113,7 +1104,7 @@ void module_meteo(
     double ps, ts, zs, us, vs, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape,
       cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
 
-    /* Interpolate meteorological data... */
+    /* Interpolate meteo data... */
     INTPOL_INIT;
     INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
 
