@@ -3010,6 +3010,8 @@ void read_ctl(
     ctl->molmass = 44.009;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 3.3e-4;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
+  } else if (strcasecmp(ctl->species, "H2O") == 0) {
+    ctl->molmass = 18.01528;
   } else if (strcasecmp(ctl->species, "N2O") == 0) {
     ctl->molmass = 44.013;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 2.4e-4;
