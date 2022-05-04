@@ -150,6 +150,11 @@
 #define GZ 100
 #endif
 
+/*! Maximum number of altitudes for mixing grid. */
+#ifndef MZ
+#define MZ 100
+#endif
+
 /*! Maximum number of data points for ensemble analysis. */
 #ifndef NENS
 #define NENS 2000
@@ -541,6 +546,37 @@
 /*! Control parameters. */
 typedef struct {
 
+  ///////////////////////////////////////////////////////////////
+
+  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta) */
+  int vert_coord_ap;
+
+  /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
+  int vert_coord_met;
+
+  /*! Vertical velocity (0=kinematic, 1=diabatic)*/
+  int vert_vel; 
+
+  /*! Read MPTRAC or CLaMS meteo data. (0=MPTRAC, 1=CLaMS)*/
+  int clams_met_data;
+
+  /*! Mixing parameters. They are read from the CLaMS input */
+  
+  double nzeta;
+  double zeta_min;
+  double zeta_max;
+  double lat_min;
+  double lat_max;
+  double lat_down;
+  double lat_up;
+  double r_coarse;
+  double r_high;
+  
+  double zeta_grid[MZ];
+  double zeta_delta[MZ];
+
+  ///////////////////////////////////////////////////////////////
+
   /*! Chunk size hint for nc__open. */
   size_t chunkszhint;
 
@@ -921,7 +957,7 @@ typedef struct {
   /*! Particle index stride for atmospheric data files. */
   int atm_stride;
 
-  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). */
+  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS netCDF). */
   int atm_type;
 
   /*! Basename of CSI data files. */
@@ -1091,6 +1127,9 @@ typedef struct {
   /*! Latitude [deg]. */
   double lat[NP];
 
+  /*! Zeta [K] */
+  double zeta[NP];
+
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ][NP];
 
@@ -1233,6 +1272,15 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
+  /*! Zeta [K] */
+  float zeta[EX][EY][EP];
+
+  /*! Zeta dot */
+  float zeta_dot[EX][EY][EP];
+
+  /*! pressure field in pressure levels*/
+  float patp[EX][EY][EP];
+
 } met_t;
 
 /* ------------------------------------------------------------
@@ -1313,7 +1361,8 @@ void get_met_help(
   int direct,
   char *metbase,
   double dt_met,
-  char *filename);
+  char *filename,
+  ctl_t * ctl);
 
 /*! Replace template strings in filename. */
 void get_met_replace(
@@ -1531,7 +1580,7 @@ void read_met_sample(
 /*! Read surface data. */
 void read_met_surface(
   int ncid,
-  met_t * met);
+  met_t * met, ctl_t * ctl);
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
@@ -1656,5 +1705,61 @@ void write_station(
   ctl_t * ctl,
   atm_t * atm,
   double t);
+  /*Interpolate ap positions */
+double intpol_ap_ml2pl(
+   met_t* met,
+   double lon_ap,
+   double lat_ap,
+   double zeta_ap);
+   
+/*Interpolate ap positions at midpoint */
+double intpol_ap_ml2pl_time(
+   met_t* met,
+   met_t* met1,
+   double lon_ap,
+   double lat_ap,
+   double zeta_ap,
+   double tdm);
+   
+/*locate vertical index */
+int locate_vert(met_t* met,
+  int lon_ap_ind, 
+  int lat_ap_ind, 
+  double zeta_ap); 
+   
+/*Interpolate with zeta coordinates */
+void intpol_met_space_3d_ap_coord(
+  met_t* met,
+  float array[EX][EY][EP],
+  double zeta_ap,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+ 
+/*Interpolate with zeta coordinates in time */  
+void intpol_met_time_3d_ap_coord(
+  met_t * met0,
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float array1[EX][EY][EP],
+  double ts,
+  double zeta,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+
+/* interpolate atmosphere */ 
+  void intpol_atm(met_t * met0,
+   met_t * met1,
+   atm_t * atm);
+
+/* check monotonocity and correct it */
+void check_monotonocity(met_t * met);
 
 #endif /* LIBTRAC_H */

@@ -6,7 +6,7 @@
 #
 # JURECA and JUWELS clusters:
 # - enable MPI and disable STATIC flag
-# - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
+# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/p/project/cslmet/clemens1/mptrac/libs/build/lib
 # ml purge
 # ml GCC ParaStationMPI
 #
@@ -18,7 +18,7 @@
 # ml NVHPC ParaStationMPI
 
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time lapse met_map met_prof met_sample met_spec met_zm time2jsec sedi subgrid tnat trac tropo tropo_sample wind
+EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time lapse met_map met_prof met_sample met_spec met_zm time2jsec sedi subgrid tnat trac tropo tropo_sample wind met_zeta_check met_interpol_check 
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -39,10 +39,10 @@ GPU ?= 0
 GPUMEM ?= 0
 
 # Compile for MPI...
-MPI ?= 0
+MPI ?= 1
 
 # Static compilation...
-STATIC ?= 1
+STATIC ?= 0
 
 # Optimization flags...
 OPT ?= -O3
