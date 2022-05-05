@@ -30,3 +30,7 @@ src/trac
 src/tropo
 src/tropo_sample
 src/wind
+src/met_zeta_check
+src/met_interpol_check
+mix/bmix
+mix/mix
