@@ -554,14 +554,14 @@ typedef struct {
   /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
   int vert_coord_met;
 
-  /*! Vertical velocity (0=kinematic, 1=diabatic)*/
-  int vert_vel; 
+  /*! Vertical velocity (0=kinematic, 1=diabatic) */
+  int vert_vel;
 
-  /*! Read MPTRAC or CLaMS meteo data. (0=MPTRAC, 1=CLaMS)*/
+  /*! Read MPTRAC or CLaMS meteo data. (0=MPTRAC, 1=CLaMS) */
   int clams_met_data;
 
   /*! Mixing parameters. They are read from the CLaMS input */
-  
+
   double nzeta;
   double zeta_min;
   double zeta_max;
@@ -571,7 +571,7 @@ typedef struct {
   double lat_up;
   double r_coarse;
   double r_high;
-  
+
   double zeta_grid[MZ];
   double zeta_delta[MZ];
 
@@ -1278,7 +1278,7 @@ typedef struct {
   /*! Zeta dot */
   float zeta_dot[EX][EY][EP];
 
-  /*! pressure field in pressure levels*/
+  /*! pressure field in pressure levels */
   float patp[EX][EY][EP];
 
 } met_t;
@@ -1580,7 +1580,8 @@ void read_met_sample(
 /*! Read surface data. */
 void read_met_surface(
   int ncid,
-  met_t * met, ctl_t * ctl);
+  met_t * met,
+  ctl_t * ctl);
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
@@ -1707,29 +1708,30 @@ void write_station(
   double t);
   /*Interpolate ap positions */
 double intpol_ap_ml2pl(
-   met_t* met,
-   double lon_ap,
-   double lat_ap,
-   double zeta_ap);
-   
+  met_t * met,
+  double lon_ap,
+  double lat_ap,
+  double zeta_ap);
+
 /*Interpolate ap positions at midpoint */
 double intpol_ap_ml2pl_time(
-   met_t* met,
-   met_t* met1,
-   double lon_ap,
-   double lat_ap,
-   double zeta_ap,
-   double tdm);
-   
+  met_t * met,
+  met_t * met1,
+  double lon_ap,
+  double lat_ap,
+  double zeta_ap,
+  double tdm);
+
 /*locate vertical index */
-int locate_vert(met_t* met,
-  int lon_ap_ind, 
-  int lat_ap_ind, 
-  double zeta_ap); 
-   
+int locate_vert(
+  met_t * met,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double zeta_ap);
+
 /*Interpolate with zeta coordinates */
 void intpol_met_space_3d_ap_coord(
-  met_t* met,
+  met_t * met,
   float array[EX][EY][EP],
   double zeta_ap,
   double lon,
@@ -1738,8 +1740,8 @@ void intpol_met_space_3d_ap_coord(
   int *ci,
   double *cw,
   int init);
- 
-/*Interpolate with zeta coordinates in time */  
+
+/*Interpolate with zeta coordinates in time */
 void intpol_met_time_3d_ap_coord(
   met_t * met0,
   float array0[EX][EY][EP],
@@ -1754,12 +1756,14 @@ void intpol_met_time_3d_ap_coord(
   double *cw,
   int init);
 
-/* interpolate atmosphere */ 
-  void intpol_atm(met_t * met0,
-   met_t * met1,
-   atm_t * atm);
+/* interpolate atmosphere */
+void intpol_atm(
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
 
 /* check monotonocity and correct it */
-void check_monotonocity(met_t * met);
+void check_monotonocity(
+  met_t * met);
 
 #endif /* LIBTRAC_H */

@@ -1668,7 +1668,8 @@ void get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met, cachefile, ctl);
+      get_met_help(t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met, cachefile,
+		   ctl);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -1685,7 +1686,7 @@ void get_met(
     *met0 = mets;
 
     /* Read new meteo data... */
-    get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename,ctl);
+    get_met_help(t, -1, ctl->metbase, ctl->dt_met, filename, ctl);
     if (!read_met(ctl, filename, *met0))
       ERRMSG("Cannot open file!");
 
@@ -1697,7 +1698,8 @@ void get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met, cachefile,ctl);
+      get_met_help(t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met, cachefile,
+		   ctl);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -1728,7 +1730,7 @@ void get_met_help(
   char *metbase,
   double dt_met,
   char *filename,
-  ctl_t *ctl) {
+  ctl_t * ctl) {
 
   char repl[LEN];
 
@@ -1746,30 +1748,28 @@ void get_met_help(
   jsec2time(t6, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Set filename... */
-  if (ctl->clams_met_data==0)
-  {
-  sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
-  sprintf(repl, "%d", year);
-  get_met_replace(filename, "YYYY", repl);
-  sprintf(repl, "%02d", mon);
-  get_met_replace(filename, "MM", repl);
-  sprintf(repl, "%02d", day);
-  get_met_replace(filename, "DD", repl);
-  sprintf(repl, "%02d", hour);
-  get_met_replace(filename, "HH", repl);
-  }
-  else{
-  sprintf(filename, "%s_YYMMDDHH.nc", metbase);
-  sprintf(repl, "%d", year);
-  get_met_replace(filename, "YYYY", repl);
-  sprintf(repl, "%d", year%100);
-  get_met_replace(filename, "YY", repl);
-  sprintf(repl, "%02d", mon);
-  get_met_replace(filename, "MM", repl);
-  sprintf(repl, "%02d", day);
-  get_met_replace(filename, "DD", repl);
-  sprintf(repl, "%02d", hour);
-  get_met_replace(filename, "HH", repl);
+  if (ctl->clams_met_data == 0) {
+    sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
+    sprintf(repl, "%d", year);
+    get_met_replace(filename, "YYYY", repl);
+    sprintf(repl, "%02d", mon);
+    get_met_replace(filename, "MM", repl);
+    sprintf(repl, "%02d", day);
+    get_met_replace(filename, "DD", repl);
+    sprintf(repl, "%02d", hour);
+    get_met_replace(filename, "HH", repl);
+  } else {
+    sprintf(filename, "%s_YYMMDDHH.nc", metbase);
+    sprintf(repl, "%d", year);
+    get_met_replace(filename, "YYYY", repl);
+    sprintf(repl, "%d", year % 100);
+    get_met_replace(filename, "YY", repl);
+    sprintf(repl, "%02d", mon);
+    get_met_replace(filename, "MM", repl);
+    sprintf(repl, "%02d", day);
+    get_met_replace(filename, "DD", repl);
+    sprintf(repl, "%02d", hour);
+    get_met_replace(filename, "HH", repl);
   }
 }
 
@@ -2140,10 +2140,11 @@ int read_atm(
       TOK(NULL, tok, "%lg", atm->p[atm->np]);
       TOK(NULL, tok, "%lg", atm->lon[atm->np]);
       TOK(NULL, tok, "%lg", atm->lat[atm->np]);
-            
-      if (ctl->vert_coord_ap==1){
-         TOK(NULL, tok, "%lg", atm->zeta[atm->np]);}
-      
+
+      if (ctl->vert_coord_ap == 1) {
+	TOK(NULL, tok, "%lg", atm->zeta[atm->np]);
+      }
+
       for (int iq = 0; iq < ctl->nq; iq++)
 	TOK(NULL, tok, "%lg", atm->q[iq][atm->np]);
 
@@ -2278,89 +2279,95 @@ int read_atm(
     /* Open file... */
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
       return 0;
-    
+
     /* Get dimensions... */
     NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
     NC(nc_inq_dimlen(ncid, dimid, &nparts));
-    
+
     atm->np = (int) nparts;
     if (atm->np > NP)
       ERRMSG("Too many particles!");
-    
+
     /* Get time... */
-    if(nc_inq_varid(ncid, "TIME_INIT", &varid)==NC_NOERR){
-    NC(nc_get_var_double(ncid, varid, atm->time));
-    }
-    else{
-    printf("WARNING: TIME_INIT not found use time instead!\n");
-    double time_init;
-    NC(nc_inq_varid(ncid, "time", &varid));
-    NC(nc_get_var_double(ncid, varid, &time_init));
-    for (int i =0; i<atm->np;i++)
-    {
-      atm->time[i] = time_init;
-    }
+    if (nc_inq_varid(ncid, "TIME_INIT", &varid) == NC_NOERR) {
+      NC(nc_get_var_double(ncid, varid, atm->time));
+    } else {
+      printf("WARNING: TIME_INIT not found use time instead!\n");
+      double time_init;
+      NC(nc_inq_varid(ncid, "time", &varid));
+      NC(nc_get_var_double(ncid, varid, &time_init));
+      for (int i = 0; i < atm->np; i++) {
+	atm->time[i] = time_init;
+      }
 
 
     }
-    
+
     /* Read geolocations... */
 
 
-      if (ctl->vert_coord_ap==1)
-    {
-     	 NC(nc_inq_varid(ncid,"ZETA",&varid));
-       NC(nc_get_var_double(ncid, varid, atm->zeta));
-       if(nc_inq_varid(ncid,"PRESS",&varid)==NC_NOERR){
-    	 NC(nc_get_var_double(ncid, varid, atm->p));
-    	 }
-    	 else{
-    	 WARN("Initial data does not contain PRESS!\n"); 
-       }
-    } else
-    {
-       NC(nc_inq_varid(ncid, "PRESS", &varid));
-       NC(nc_get_var_double(ncid, varid, atm->p));
-    	 if(nc_inq_varid(ncid,"ZETA",&varid)==NC_NOERR){
-    	 NC(nc_get_var_double(ncid, varid, atm->zeta));
-    	 }
-    	 else{
-    	 WARN("Initial data does not contain ZETA!"); 
-    	 }         
+    if (ctl->vert_coord_ap == 1) {
+      NC(nc_inq_varid(ncid, "ZETA", &varid));
+      NC(nc_get_var_double(ncid, varid, atm->zeta));
+      if (nc_inq_varid(ncid, "PRESS", &varid) == NC_NOERR) {
+	NC(nc_get_var_double(ncid, varid, atm->p));
+      } else {
+	WARN("Initial data does not contain PRESS!\n");
+      }
+    } else {
+      NC(nc_inq_varid(ncid, "PRESS", &varid));
+      NC(nc_get_var_double(ncid, varid, atm->p));
+      if (nc_inq_varid(ncid, "ZETA", &varid) == NC_NOERR) {
+	NC(nc_get_var_double(ncid, varid, atm->zeta));
+      } else {
+	WARN("Initial data does not contain ZETA!");
+      }
     }
     NC(nc_inq_varid(ncid, "LON", &varid));
     NC(nc_get_var_double(ncid, varid, atm->lon));
     NC(nc_inq_varid(ncid, "LAT", &varid));
     NC(nc_get_var_double(ncid, varid, atm->lat));
 
-    /*Read Variables and define Variable index...*/
-    
+    /*Read Variables and define Variable index... */
+
     /* Read attributes... */
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_nzetas",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_nzetas",&ctl->nzeta));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_zeta_min",NULL,NULL) == NC_NOERR)	
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_zeta_min",&ctl->zeta_min));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_zeta_max",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_zeta_max",&ctl->zeta_max));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_lat_up",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_lat_up",&ctl->lat_up));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_lat_down",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_lat_down",&ctl->lat_down));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_lat_min",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_lat_min",&ctl->lat_min));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_lat_max",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_lat_max",&ctl->lat_max));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_r_coarse",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_r_coarse",&ctl->r_coarse));
-    if (nc_inq_att(ncid,NC_GLOBAL,"exp_POS_r_high",NULL,NULL) == NC_NOERR)
-    	NC(nc_get_att_double(ncid, NC_GLOBAL,"exp_POS_r_high",&ctl->r_high));
-    
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_nzetas", NULL, NULL) == NC_NOERR)
+      NC(nc_get_att_double(ncid, NC_GLOBAL, "exp_POS_nzetas", &ctl->nzeta));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_zeta_min", NULL, NULL) ==
+	NC_NOERR)
+      NC(nc_get_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_zeta_min", &ctl->zeta_min));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_zeta_max", NULL, NULL) ==
+	NC_NOERR)
+      NC(nc_get_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_zeta_max", &ctl->zeta_max));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_lat_up", NULL, NULL) == NC_NOERR)
+      NC(nc_get_att_double(ncid, NC_GLOBAL, "exp_POS_lat_up", &ctl->lat_up));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_lat_down", NULL, NULL) ==
+	NC_NOERR)
+      NC(nc_get_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_down", &ctl->lat_down));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_lat_min", NULL, NULL) ==
+	NC_NOERR)
+      NC(nc_get_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_min", &ctl->lat_min));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_lat_max", NULL, NULL) ==
+	NC_NOERR)
+      NC(nc_get_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_max", &ctl->lat_max));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_r_coarse", NULL, NULL) ==
+	NC_NOERR)
+      NC(nc_get_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_r_coarse", &ctl->r_coarse));
+    if (nc_inq_att(ncid, NC_GLOBAL, "exp_POS_r_high", NULL, NULL) == NC_NOERR)
+      NC(nc_get_att_double(ncid, NC_GLOBAL, "exp_POS_r_high", &ctl->r_high));
+
     /* Read mixing grid... */
     if (nc_inq_varid(ncid, "ZETA_DELTA", &varid) == NC_NOERR)
-    	NC(nc_get_var_double(ncid, varid,ctl->zeta_delta));
+      NC(nc_get_var_double(ncid, varid, ctl->zeta_delta));
     if (nc_inq_varid(ncid, "ZETA_GRID", &varid) == NC_NOERR)
-    	NC(nc_get_var_double(ncid, varid,ctl->zeta_grid));
-    
+      NC(nc_get_var_double(ncid, varid, ctl->zeta_grid));
+
     /* Close file... */
     NC(nc_close(ncid));
   }
@@ -2377,9 +2384,8 @@ int read_atm(
   LOG(2, "Number of particles: %d", atm->np);
   gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
   LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
-  if (ctl->vert_coord_ap==1)
-  {
-    gsl_stats_minmax(&mini, &maxi, atm->zeta, 1, (size_t) atm->np);   
+  if (ctl->vert_coord_ap == 1) {
+    gsl_stats_minmax(&mini, &maxi, atm->zeta, 1, (size_t) atm->np);
     LOG(2, "ZETA range: %.2f ... %.2f K", mini, maxi);
   }
   gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
@@ -2545,7 +2551,7 @@ void read_ctl(
   ctl->chunkszhint =
     (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
 		      NULL);
-  ctl->read_mode = 
+  ctl->read_mode =
     (int) scan_ctl(filename, argc, argv, "READMODE", -1, "0", NULL);
 
   /* Vertical coordinates and velocities... */
@@ -2553,9 +2559,9 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
   ctl->vert_coord_met =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
-  ctl->vert_vel = 
+  ctl->vert_vel =
     (int) scan_ctl(filename, argc, argv, "VERT_VEL", -1, "0", NULL);
-  ctl->clams_met_data = 
+  ctl->clams_met_data =
     (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
 
   /* Time steps of simulation... */
@@ -3380,63 +3386,57 @@ void read_met_grid(
   double rtime, r2;
 
   int dimid, varid, year2, mon2, day2, hour2, min2, sec2;
-  int year, mon, day, hour; 
+  int year, mon, day, hour;
   size_t np, nx, ny;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GRID", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
-  if (ctl->clams_met_data==0)
-  {
-  
-  /* Get time from filename... */
-  sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
-  year = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
-  mon = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
-  day = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-  hour = atoi(tstr);
+  if (ctl->clams_met_data == 0) {
 
-  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
+    /* Get time from filename... */
+    sprintf(tstr, "%.4s", &filename[strlen(filename) - 16]);
+    year = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 11]);
+    mon = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 8]);
+    day = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+    hour = atoi(tstr);
 
-  /* Check time information... */
-  if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
-    NC(nc_get_var_double(ncid, varid, &rtime));
-    if (fabs(year * 10000. + mon * 100. + day + hour / 24. - rtime) > 1.0)
-      WARN("Time information in meteo file does not match filename!");
-  } else
-    WARN("Time information in meteo file is missing!");
+    time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
+    /* Check time information... */
+    if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
+      NC(nc_get_var_double(ncid, varid, &rtime));
+      if (fabs(year * 10000. + mon * 100. + day + hour / 24. - rtime) > 1.0)
+	WARN("Time information in meteo file does not match filename!");
+    } else
+      WARN("Time information in meteo file is missing!");
+
+  } else {
+    if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
+      NC(nc_get_var_double(ncid, varid, &rtime));
+    }
+    // Distinguish between the two centuries, where reanalysis is availiable...
+    if (rtime < 0) {
+      sprintf(tstr, "19%.2s", &filename[strlen(filename) - 11]);
+      year = atoi(tstr);
+    } else {
+      sprintf(tstr, "20%.2s", &filename[strlen(filename) - 11]);
+      year = atoi(tstr);
+    }
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 9]);
+    mon = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 7]);
+    day = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+    hour = atoi(tstr);
+
+    time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
   }
-  else
-  {
-  if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
-  NC(nc_get_var_double(ncid, varid, &rtime));}
 
-  // Distinguish between the two centuries, where reanalysis is availiable...
-  if (rtime<0)
-  	{
-  	sprintf(tstr, "19%.2s", &filename[strlen(filename) - 11]);
-  	year = atoi(tstr); 
-  	}
-  else
-  	{
-  	sprintf(tstr, "20%.2s", &filename[strlen(filename) - 11]);
-  	year = atoi(tstr); 
-  	}
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 9]);
-  mon = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 7]);
-  day = atoi(tstr);
-  sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-  hour = atoi(tstr);
-
-  time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
-  }
-  
   /* Check time... */
   jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
   LOG(2, "Time from filename: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
@@ -3457,15 +3457,12 @@ void read_met_grid(
   if (ny < 2 || ny > EY)
     ERRMSG("Number of latitudes out of range!");
 
-  if (ctl->vert_coord_met==0)
-  	{
-    sprintf(levname, "lev");  
-    }
-  else
-  	{
-  	sprintf(levname, "hybrid");
-  	printf("Meteorological data is in hybrid coordinates.");
-  	}  
+  if (ctl->vert_coord_met == 0) {
+    sprintf(levname, "lev");
+  } else {
+    sprintf(levname, "hybrid");
+    printf("Meteorological data is in hybrid coordinates.");
+  }
 
   NC(nc_inq_dimid(ncid, levname, &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &np));
@@ -3500,19 +3497,18 @@ void read_met_grid(
   if (ctl->met_np <= 0) {
     NC(nc_inq_varid(ncid, levname, &varid));
     NC(nc_get_var_double(ncid, varid, met->p));
-     if (ctl->vert_coord_met==0)
-    {
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] /= 100.;
-    LOG(2, "Altitude levels: %g, %g ... %g km",
-	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
-    LOG(2, "Pressure levels: %g, %g ... %g hPa",
-	met->p[0], met->p[1], met->p[met->np - 1]);
-    }else{
+    if (ctl->vert_coord_met == 0) {
+      for (int ip = 0; ip < met->np; ip++)
+	met->p[ip] /= 100.;
+      LOG(2, "Altitude levels: %g, %g ... %g km",
+	  Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
+      LOG(2, "Pressure levels: %g, %g ... %g hPa",
+	  met->p[0], met->p[1], met->p[met->np - 1]);
+    } else {
       printf("WARNING!: Using hybrid levels instead of pressure levels!");
-    LOG(2, "Hybrid levels: %g, %g ... %g",
-	met->p[0], met->p[1], met->p[met->np - 1]);
-	}
+      LOG(2, "Hybrid levels: %g, %g ... %g",
+	  met->p[0], met->p[1], met->p[met->np - 1]);
+    }
   }
 }
 
@@ -3764,137 +3760,133 @@ void read_met_levels(
   SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
   LOG(2, "Read level data...");
 
-  if (ctl->clams_met_data==0)
-  {
-  /* Read meteorological data... */
-  if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0, 1))
-    ERRMSG("Cannot read temperature!");
-  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
-    ERRMSG("Cannot read zonal wind!");
-  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
-    ERRMSG("Cannot read meridional wind!");
-  if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
-    WARN("Cannot read vertical velocity!");
-  if (!read_met_help_3d
-      (ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
-    WARN("Cannot read specific humidity!");
-  if (!read_met_help_3d
-      (ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
-    WARN("Cannot read ozone data!");
-  if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
-    if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
-      WARN("Cannot read cloud liquid water content!");
-    if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
-      WARN("Cannot read cloud ice water content!");
-  }
-  if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+  if (ctl->clams_met_data == 0) {
+    /* Read meteorological data... */
+    if (!read_met_help_3d(ncid, "t", "T", met, met->t, 1.0, 1))
+      ERRMSG("Cannot read temperature!");
+    if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
+      ERRMSG("Cannot read zonal wind!");
+    if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
+      ERRMSG("Cannot read meridional wind!");
+    if (!read_met_help_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
+      WARN("Cannot read vertical velocity!");
     if (!read_met_help_3d
-	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud rain water content!");
+	(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
+      WARN("Cannot read specific humidity!");
     if (!read_met_help_3d
-	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud snow water content!");
-  }
-
-  /* Transfer from model levels to pressure levels... */
-  if (ctl->met_np > 0) {
-
-    /* Read pressure on model levels... */
-    if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
-      ERRMSG("Cannot read pressure on model levels!");
-
-    /* Vertical interpolation from model to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
-    read_met_ml2pl(ctl, met, met->u);
-    read_met_ml2pl(ctl, met, met->v);
-    read_met_ml2pl(ctl, met, met->w);
-    read_met_ml2pl(ctl, met, met->h2o);
-    read_met_ml2pl(ctl, met, met->o3);
-    read_met_ml2pl(ctl, met, met->lwc);
-    read_met_ml2pl(ctl, met, met->iwc);
-
-    /* Set new pressure levels... */
-    met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
-  }
-  }
-  else if(ctl->clams_met_data==1)
-  {
-      /* Read meteorological data... */
-  if (!read_met_help_3d(ncid, "t", "TEMP", met, met->t, 1.0, 1))
-    ERRMSG("Cannot read temperature!");
-  if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
-    ERRMSG("Cannot read zonal wind!");
-  if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
-    ERRMSG("Cannot read meridional wind!");
-  if (!read_met_help_3d(ncid, "ZETA", "zeta", met, met->zeta, 1.0, 1))
-    WARN("Cannot read ZETA in meteo data!");
-
-  if (ctl->vert_vel==0)
-  	{if (!read_met_help_3d(ncid, "W","OMEGA", met, met->w, 0.01f, 1))
-  		WARN("Cannot read vertical velocity!");}
-  else if (ctl->vert_vel==1)
-  	{if (!read_met_help_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
-    		WARN("Cannot read vertical velocity!");
-     if (!read_met_help_3d(ncid, "ZETA_DOT_TOT", "zeta_dot_clr", met, met->zeta_dot, 0.00001157407f, 1))
-    		WARN("Cannot read vertical velocity!");
+	(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
+      WARN("Cannot read ozone data!");
+    if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
+      if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
+	WARN("Cannot read cloud liquid water content!");
+      if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
+	WARN("Cannot read cloud ice water content!");
     }
-  if (!read_met_help_3d
-      (ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
-    WARN("Cannot read specific humidity!");
-  if (!read_met_help_3d
-      (ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
-    WARN("Cannot read ozone data!");
-  if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
-    if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
-      WARN("Cannot read cloud liquid water content!");
-    if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
-      WARN("Cannot read cloud ice water content!");
-  }
-  if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+    if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+      if (!read_met_help_3d
+	  (ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
+	WARN("Cannot read cloud rain water content!");
+      if (!read_met_help_3d
+	  (ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
+	WARN("Cannot read cloud snow water content!");
+    }
+
+    /* Transfer from model levels to pressure levels... */
+    if (ctl->met_np > 0) {
+
+      /* Read pressure on model levels... */
+      if (!read_met_help_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
+	ERRMSG("Cannot read pressure on model levels!");
+
+      /* Vertical interpolation from model to pressure levels... */
+      read_met_ml2pl(ctl, met, met->t);
+      read_met_ml2pl(ctl, met, met->u);
+      read_met_ml2pl(ctl, met, met->v);
+      read_met_ml2pl(ctl, met, met->w);
+      read_met_ml2pl(ctl, met, met->h2o);
+      read_met_ml2pl(ctl, met, met->o3);
+      read_met_ml2pl(ctl, met, met->lwc);
+      read_met_ml2pl(ctl, met, met->iwc);
+
+      /* Set new pressure levels... */
+      met->np = ctl->met_np;
+      for (int ip = 0; ip < met->np; ip++)
+	met->p[ip] = ctl->met_p[ip];
+    }
+  } else if (ctl->clams_met_data == 1) {
+    /* Read meteorological data... */
+    if (!read_met_help_3d(ncid, "t", "TEMP", met, met->t, 1.0, 1))
+      ERRMSG("Cannot read temperature!");
+    if (!read_met_help_3d(ncid, "u", "U", met, met->u, 1.0, 1))
+      ERRMSG("Cannot read zonal wind!");
+    if (!read_met_help_3d(ncid, "v", "V", met, met->v, 1.0, 1))
+      ERRMSG("Cannot read meridional wind!");
+    if (!read_met_help_3d(ncid, "ZETA", "zeta", met, met->zeta, 1.0, 1))
+      WARN("Cannot read ZETA in meteo data!");
+
+    if (ctl->vert_vel == 0) {
+      if (!read_met_help_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
+	WARN("Cannot read vertical velocity!");
+    } else if (ctl->vert_vel == 1) {
+      if (!read_met_help_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
+	WARN("Cannot read vertical velocity!");
+      if (!read_met_help_3d
+	  (ncid, "ZETA_DOT_TOT", "zeta_dot_clr", met, met->zeta_dot,
+	   0.00001157407f, 1))
+	WARN("Cannot read vertical velocity!");
+    }
     if (!read_met_help_3d
-	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud rain water content!");
+	(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
+      WARN("Cannot read specific humidity!");
     if (!read_met_help_3d
-	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud snow water content!");
-  }
+	(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
+      WARN("Cannot read ozone data!");
+    if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
+      if (!read_met_help_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
+	WARN("Cannot read cloud liquid water content!");
+      if (!read_met_help_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
+	WARN("Cannot read cloud ice water content!");
+    }
+    if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+      if (!read_met_help_3d
+	  (ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
+	WARN("Cannot read cloud rain water content!");
+      if (!read_met_help_3d
+	  (ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
+	WARN("Cannot read cloud snow water content!");
+    }
 
-  /* Transfer from model levels to pressure levels... */
-  if (ctl->met_np > 0) {
+    /* Transfer from model levels to pressure levels... */
+    if (ctl->met_np > 0) {
 
-    /* Read pressure on model levels... */
-    if (!read_met_help_3d(ncid, "pl","PRESS", met, met->pl, 1.0, 1))
-      ERRMSG("Cannot read pressure on model levels!");
+      /* Read pressure on model levels... */
+      if (!read_met_help_3d(ncid, "pl", "PRESS", met, met->pl, 1.0, 1))
+	ERRMSG("Cannot read pressure on model levels!");
 
-    /* Vertical interpolation from model to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
-    read_met_ml2pl(ctl, met, met->u);
-    read_met_ml2pl(ctl, met, met->v);
-    read_met_ml2pl(ctl, met, met->w);
-    read_met_ml2pl(ctl, met, met->h2o);
-    read_met_ml2pl(ctl, met, met->o3);
-    read_met_ml2pl(ctl, met, met->lwc);
-    read_met_ml2pl(ctl, met, met->iwc);
+      /* Vertical interpolation from model to pressure levels... */
+      read_met_ml2pl(ctl, met, met->t);
+      read_met_ml2pl(ctl, met, met->u);
+      read_met_ml2pl(ctl, met, met->v);
+      read_met_ml2pl(ctl, met, met->w);
+      read_met_ml2pl(ctl, met, met->h2o);
+      read_met_ml2pl(ctl, met, met->o3);
+      read_met_ml2pl(ctl, met, met->lwc);
+      read_met_ml2pl(ctl, met, met->iwc);
 
-    /* Set new pressure levels... */
-    met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
+      /* Set new pressure levels... */
+      met->np = ctl->met_np;
+      for (int ip = 0; ip < met->np; ip++)
+	met->p[ip] = ctl->met_p[ip];
 
-    /* Create a pressure field... */
-      for (int i = 0; i<met->nx;i++)
-       for (int j = 0; j<met->ny;j++)
-         for (int k = 0; k<met->np;k++)
-          {
-          met->patp[i][j][k]=(float) met->p[k];
-          met->patp[i][j][k]=(float) met->p[k];
-          }
-  }
-  }
-  else
-  {
+      /* Create a pressure field... */
+      for (int i = 0; i < met->nx; i++)
+	for (int j = 0; j < met->ny; j++)
+	  for (int k = 0; k < met->np; k++) {
+	    met->patp[i][j][k] = (float) met->p[k];
+	    met->patp[i][j][k] = (float) met->p[k];
+	  }
+    }
+  } else {
     printf("Meteo Data format unknown!");
   }
 
@@ -4295,39 +4287,38 @@ void read_met_sample(
 
 void read_met_surface(
   int ncid,
-  met_t * met, ctl_t* ctl) {
+  met_t * met,
+  ctl_t * ctl) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
-  if (ctl->clams_met_data==0)  
-  {
-  if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
-    if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
-      WARN("Cannot not read surface pressure data (use lowest level)!");
+  if (ctl->clams_met_data == 0) {
+    if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
+      if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+	WARN("Cannot not read surface pressure data (use lowest level)!");
+	for (int ix = 0; ix < met->nx; ix++)
+	  for (int iy = 0; iy < met->ny; iy++)
+	    met->ps[ix][iy] = (float) (met->p[0] / 100.);
+      }
+    } else
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) (met->p[0]/100.);
-    }
-  } else
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	      met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
-  }
-  else
-  {
-  if (!read_met_help_2d(ncid, "sp", "SP", met, met->ps, 0.01f, 1)) {
-    if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
-      WARN("Cannot not read surface pressure data (use lowest HYBRID level)!");
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
+	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+  } else {
+    if (!read_met_help_2d(ncid, "sp", "SP", met, met->ps, 0.01f, 1)) {
+      if (!read_met_help_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+	WARN
+	  ("Cannot not read surface pressure data (use lowest HYBRID level)!");
+	for (int ix = 0; ix < met->nx; ix++)
+	  for (int iy = 0; iy < met->ny; iy++)
+	    met->ps[ix][iy] = (float) met->p[0];
+      }
     }
   }
-  }
-  
+
 
 
 
@@ -4944,218 +4935,253 @@ void write_atm(
 
   /* Write a netcdf4 file in CLaMS style */
   else if (ctl->atm_type == 3) {
-     double r_start, r_stop;
-     int year_start, mon_start, day_start, hour_start, min_start, sec_start;
-     int year_stop, mon_stop, day_stop, hour_stop, min_stop, sec_stop;
-     char filename_out[2*LEN]  = "./traj_fix_3d_YYYYMMDDHH_YYYYMMDDHH.nc"; 
-  
-     int ncid,varid,tid,pid,cid,zid;
-     int dim_ids[2]; 
-   
-     /* time, nparc */
-     size_t hysl_start[2];
-     size_t hysl_count[2];
-  
-     /* Vertical coordinate attribute... */
-     const char* vertcoor = "zeta";
-     size_t vc_name_size = strlen(vertcoor);  
-  
-     /* Determine start and stop times of calculation... */
-     jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
-     jsec2time(ctl->t_start, &year_start, &mon_start, &day_start, &hour_start, &min_start, &sec_start, &r_start);
-     jsec2time(ctl->t_stop, &year_stop, &mon_stop, &day_stop, &hour_stop, &min_stop, &sec_stop, &r_stop);
-  
-     sprintf(filename_out,"./traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc",year_start % 100,mon_start,day_start,hour_start,year_stop % 100,mon_stop,day_stop,hour_stop);
- 
-     printf("Write traj file: %s\n", filename_out);
-    
-     /* Define hyperslap for the traj_file... */
-     hysl_start[0]=out_cnt;
-     hysl_start[1]=0;
-     hysl_count[0]=1;
-     hysl_count[1]=(size_t)atm->np;
-  
-    /* Create the file at the first timestep */   
-     if(out_cnt==0)
-  	  {
-      
-       nc_create(filename_out,NC_CLOBBER,&ncid);
-   
-       /* Define dimensions... */
-       NC(nc_def_dim(ncid,"time",NC_UNLIMITED,&tid));
-       NC(nc_def_dim(ncid,"NPARTS",(size_t)atm->np,&pid));
-       NC(nc_def_dim(ncid,"TMDT",7,&cid));
-      
-       dim_ids[0]=tid;
-       dim_ids[1]=pid;
-  
-       /* Define Variables and their Attributes... */
-       NC(nc_def_var(ncid, "time", NC_DOUBLE,1,&tid, &varid));
-       NC(nc_put_att_text(ncid,varid,"long_name",strlen("Time"),"Time"));
-       NC(nc_put_att_text(ncid,varid,"units",strlen("seconds since 2000-01-01 00:00:00 UTC"),"seconds since 2000-01-01 00:00:00 UTC"));
-      
-       NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 2, dim_ids, &varid));
-       NC(nc_put_att_text(ncid,varid,"long_name",strlen("Latitude"),"Latitude"));
-       NC(nc_put_att_text(ncid,varid,"units",strlen("deg"),"deg"));
-      
-       NC(nc_def_var(ncid, "LON", NC_DOUBLE, 2, dim_ids, &varid));
-       NC(nc_put_att_text(ncid,varid,"long_name",strlen("Longitude"),"Longitude"));
-       NC(nc_put_att_text(ncid,varid,"units",strlen("deg"),"deg"));
-      
-       NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 2, dim_ids, &varid));
-       NC(nc_put_att_text(ncid,varid,"long_name",strlen("Pressure"),"Pressure"));
-       NC(nc_put_att_text(ncid,varid,"units",strlen("hPa"),"hPa"));
-      
-       NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 2, dim_ids, &varid));
-       NC(nc_put_att_text(ncid,varid,"long_name",strlen("Zeta"),"Zeta"));
-       NC(nc_put_att_text(ncid,varid,"units",strlen("K"),"K"));
+    double r_start, r_stop;
+    int year_start, mon_start, day_start, hour_start, min_start, sec_start;
+    int year_stop, mon_stop, day_stop, hour_stop, min_stop, sec_stop;
+    char filename_out[2 * LEN] = "./traj_fix_3d_YYYYMMDDHH_YYYYMMDDHH.nc";
 
-       /* Define optional Variables */
-       for (int i = 0; i<ctl->nq; i++)
-        {
-          NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
-          NC(nc_put_att_text(ncid,varid,"units",strlen(ctl->qnt_unit[i]),ctl->qnt_unit[i]));
-        }
-      
-       /* Define Global Attributes... */
-       NC(nc_put_att_text(ncid,NC_GLOBAL,"exp_VERTCOOR_name",vc_name_size,vertcoor));
-       NC(nc_put_att_text(ncid,NC_GLOBAL,"model",strlen("MPTRAC"),"MPTRAC"));
-      
-       /* End Definitions... */
-       NC(nc_enddef(ncid));
-       NC(nc_close(ncid));
-	}
-	
-  /* Increment global counter to change hyperslap... */
-  out_cnt=out_cnt+1;
-    
-  /* Open the File... */ 
-  NC(nc_open(filename_out,NC_WRITE,&ncid));
-     
-  /* Inquire variable IDs and put data into file... */      
-  NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->time));
-  
-  NC(nc_inq_varid(ncid, "LAT", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->lat));
-  
-  NC(nc_inq_varid(ncid, "LON", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->lon));
-  
-  NC(nc_inq_varid(ncid, "PRESS", &varid));	
-  NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->p));
-  
-  if (ctl->vert_coord_ap==1){
-      NC(nc_inq_varid(ncid, "ZETA", &varid));
-      NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->zeta));
-  }
-  else if (ctl->qnt_zeta>=0){
-      NC(nc_inq_varid(ncid, "ZETA", &varid));
-      NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->q[ctl->qnt_zeta]));
-  }
+    int ncid, varid, tid, pid, cid, zid;
+    int dim_ids[2];
 
-  for (int i = 0; i<ctl->nq; i++)
-        {
-          NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
-          NC(nc_put_vara(ncid, varid, hysl_start,hysl_count,atm->q[i]));
-        }
-    
-  NC(nc_close(ncid)); 
-  
-  /* At the last time step create the init_fix_YYYYMMDDHH file... */
-  if ( (year==year_stop) & (mon==mon_stop) & (day==day_stop) & (hour==hour_stop)) {
-      
-      char filename_init[2*LEN] = "./init_fix_YYYYMMDDHH.nc";     
-                  
-      sprintf(filename_init,"./init_fix_%02d%02d%02d%02d.nc",year_stop % 100,mon_stop,day_stop,hour_stop);	
-      printf("Write init file: %s\n", filename_init);
-  	
-      nc_create(filename_init,NC_CLOBBER,&ncid);
-   
+    /* time, nparc */
+    size_t hysl_start[2];
+    size_t hysl_count[2];
+
+    /* Vertical coordinate attribute... */
+    const char *vertcoor = "zeta";
+    size_t vc_name_size = strlen(vertcoor);
+
+    /* Determine start and stop times of calculation... */
+    jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+    jsec2time(ctl->t_start, &year_start, &mon_start, &day_start, &hour_start,
+	      &min_start, &sec_start, &r_start);
+    jsec2time(ctl->t_stop, &year_stop, &mon_stop, &day_stop, &hour_stop,
+	      &min_stop, &sec_stop, &r_stop);
+
+    sprintf(filename_out,
+	    "./traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc",
+	    year_start % 100, mon_start, day_start, hour_start,
+	    year_stop % 100, mon_stop, day_stop, hour_stop);
+
+    printf("Write traj file: %s\n", filename_out);
+
+    /* Define hyperslap for the traj_file... */
+    hysl_start[0] = out_cnt;
+    hysl_start[1] = 0;
+    hysl_count[0] = 1;
+    hysl_count[1] = (size_t) atm->np;
+
+    /* Create the file at the first timestep */
+    if (out_cnt == 0) {
+
+      nc_create(filename_out, NC_CLOBBER, &ncid);
+
       /* Define dimensions... */
-      NC(nc_def_dim(ncid,"time",1,&tid));
-      NC(nc_def_dim(ncid,"NPARTS",(size_t)atm->np,&pid));
-      NC(nc_def_dim(ncid,"NZETAS",(size_t)ctl->nzeta,&zid));
+      NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
+      NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
+      NC(nc_def_dim(ncid, "TMDT", 7, &cid));
 
-      dim_ids[0]=tid;
-      dim_ids[1]=pid;
-      
+      dim_ids[0] = tid;
+      dim_ids[1] = pid;
+
       /* Define Variables and their Attributes... */
-      NC(nc_def_var(ncid, "time", NC_DOUBLE,1,&tid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Time"),"Time"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("seconds since 2000-01-01 00:00:00 UTC"),"seconds since 2000-01-01 00:00:00 UTC"));
-      
-      NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 1, &pid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Latitude"),"Latitude"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("deg"),"deg"));
-      
-      NC(nc_def_var(ncid, "LON", NC_DOUBLE, 1, &pid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Longitude"),"Longitude"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("deg"),"deg"));
-      
-      NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 1, &pid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Pressure"),"Pressure"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("hPa"),"hPa"));
-      
-      NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 1, &pid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Zeta"),"Zeta"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("K"),"K"));
-  
-      NC(nc_def_var(ncid, "ZETA_GRID", NC_DOUBLE, 1, &zid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Zeta levels"),"Zeta levels"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("K"),"K"));
-      
-      NC(nc_def_var(ncid, "ZETA_DELTA", NC_DOUBLE, 1, &zid, &varid));
-      NC(nc_put_att_text(ncid,varid,"long_name",strlen("Width of zeta levels"),"Width of zeta levels"));
-      NC(nc_put_att_text(ncid,varid,"units",strlen("K"),"K"));
+      NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
+      NC(nc_put_att_text(ncid, varid, "long_name", strlen("Time"), "Time"));
+      NC(nc_put_att_text
+	 (ncid, varid, "units",
+	  strlen("seconds since 2000-01-01 00:00:00 UTC"),
+	  "seconds since 2000-01-01 00:00:00 UTC"));
+
+      NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 2, dim_ids, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Latitude"), "Latitude"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("deg"), "deg"));
+
+      NC(nc_def_var(ncid, "LON", NC_DOUBLE, 2, dim_ids, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Longitude"), "Longitude"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("deg"), "deg"));
+
+      NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 2, dim_ids, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Pressure"), "Pressure"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("hPa"), "hPa"));
+
+      NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 2, dim_ids, &varid));
+      NC(nc_put_att_text(ncid, varid, "long_name", strlen("Zeta"), "Zeta"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("K"), "K"));
 
       /* Define optional Variables */
-       for (int i = 0; i<ctl->nq; i++)
-        {
-          NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
-          NC(nc_put_att_text(ncid,varid,"units",strlen(ctl->qnt_unit[i]),ctl->qnt_unit[i]));
-        }
+      for (int i = 0; i < ctl->nq; i++) {
+	NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
+	NC(nc_put_att_text
+	   (ncid, varid, "units", strlen(ctl->qnt_unit[i]),
+	    ctl->qnt_unit[i]));
+      }
 
-      /* Put Global Attributes into File... */
-      NC(nc_put_att_text(ncid,NC_GLOBAL,"exp_VERTCOOR_name",vc_name_size,vertcoor));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_zeta_min",NC_DOUBLE,1,&ctl->zeta_min));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_zeta_max",NC_DOUBLE,1,&ctl->zeta_max));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_nzetas",NC_DOUBLE,1,&ctl->nzeta));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_lat_down",NC_DOUBLE,1,&ctl->lat_down));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_lat_up",NC_DOUBLE,1,&ctl->lat_up));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_lat_min",NC_DOUBLE,1,&ctl->lat_min));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_lat_max",NC_DOUBLE,1,&ctl->lat_max));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_r_coarse",NC_DOUBLE,1,&ctl->r_coarse));
-      NC(nc_put_att_double(ncid,NC_GLOBAL,"exp_POS_r_high",NC_DOUBLE,1,&ctl->r_high));
-      NC(nc_put_att_text(ncid,NC_GLOBAL,"model",strlen("MPTRAC"),"MPTRAC"));
-      
+      /* Define Global Attributes... */
+      NC(nc_put_att_text
+	 (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
+      NC(nc_put_att_text
+	 (ncid, NC_GLOBAL, "model", strlen("MPTRAC"), "MPTRAC"));
+
       /* End Definitions... */
       NC(nc_enddef(ncid));
-          
-      /* Inquire variable IDs and put data into file... */  
-      NC(nc_inq_varid(ncid, "time", &varid));   
-      NC(nc_put_var_double(ncid, varid,atm->time)); 
-      NC(nc_inq_varid(ncid, "LAT", &varid));
-      NC(nc_put_var_double(ncid, varid,atm->lat));
-      NC(nc_inq_varid(ncid, "LON", &varid));
-      NC(nc_put_var_double(ncid, varid,atm->lon));
-      NC(nc_inq_varid(ncid, "PRESS", &varid));
-      NC(nc_put_var_double(ncid, varid,atm->p));
-      NC(nc_inq_varid(ncid, "ZETA", &varid));
-      NC(nc_put_var_double(ncid, varid,atm->q[ctl->qnt_zeta]));	
-      NC(nc_inq_varid(ncid, "ZETA_GRID", &varid));
-      NC(nc_put_var_double(ncid, varid,ctl->zeta_grid)); 
-      NC(nc_inq_varid(ncid, "ZETA_DELTA", &varid));
-      NC(nc_put_var_double(ncid, varid,ctl->zeta_delta));
-
-      for (int i = 0; i<ctl->nq; i++)
-      {
-        NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
-        NC(nc_put_var_double(ncid, varid, atm->q[i]));
-      }
-    
       NC(nc_close(ncid));
+    }
+
+    /* Increment global counter to change hyperslap... */
+    out_cnt = out_cnt + 1;
+
+    /* Open the File... */
+    NC(nc_open(filename_out, NC_WRITE, &ncid));
+
+    /* Inquire variable IDs and put data into file... */
+    NC(nc_inq_varid(ncid, "time", &varid));
+    NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->time));
+
+    NC(nc_inq_varid(ncid, "LAT", &varid));
+    NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->lat));
+
+    NC(nc_inq_varid(ncid, "LON", &varid));
+    NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->lon));
+
+    NC(nc_inq_varid(ncid, "PRESS", &varid));
+    NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->p));
+
+    if (ctl->vert_coord_ap == 1) {
+      NC(nc_inq_varid(ncid, "ZETA", &varid));
+      NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->zeta));
+    } else if (ctl->qnt_zeta >= 0) {
+      NC(nc_inq_varid(ncid, "ZETA", &varid));
+      NC(nc_put_vara
+	 (ncid, varid, hysl_start, hysl_count, atm->q[ctl->qnt_zeta]));
+    }
+
+    for (int i = 0; i < ctl->nq; i++) {
+      NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
+      NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->q[i]));
+    }
+
+    NC(nc_close(ncid));
+
+    /* At the last time step create the init_fix_YYYYMMDDHH file... */
+    if ((year == year_stop) & (mon == mon_stop) & (day == day_stop) & (hour ==
+								       hour_stop))
+    {
+
+      char filename_init[2 * LEN] = "./init_fix_YYYYMMDDHH.nc";
+
+      sprintf(filename_init, "./init_fix_%02d%02d%02d%02d.nc",
+	      year_stop % 100, mon_stop, day_stop, hour_stop);
+      printf("Write init file: %s\n", filename_init);
+
+      nc_create(filename_init, NC_CLOBBER, &ncid);
+
+      /* Define dimensions... */
+      NC(nc_def_dim(ncid, "time", 1, &tid));
+      NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
+      NC(nc_def_dim(ncid, "NZETAS", (size_t) ctl->nzeta, &zid));
+
+      dim_ids[0] = tid;
+      dim_ids[1] = pid;
+
+      /* Define Variables and their Attributes... */
+      NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
+      NC(nc_put_att_text(ncid, varid, "long_name", strlen("Time"), "Time"));
+      NC(nc_put_att_text
+	 (ncid, varid, "units",
+	  strlen("seconds since 2000-01-01 00:00:00 UTC"),
+	  "seconds since 2000-01-01 00:00:00 UTC"));
+
+      NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 1, &pid, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Latitude"), "Latitude"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("deg"), "deg"));
+
+      NC(nc_def_var(ncid, "LON", NC_DOUBLE, 1, &pid, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Longitude"), "Longitude"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("deg"), "deg"));
+
+      NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 1, &pid, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Pressure"), "Pressure"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("hPa"), "hPa"));
+
+      NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 1, &pid, &varid));
+      NC(nc_put_att_text(ncid, varid, "long_name", strlen("Zeta"), "Zeta"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("K"), "K"));
+
+      NC(nc_def_var(ncid, "ZETA_GRID", NC_DOUBLE, 1, &zid, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Zeta levels"), "Zeta levels"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("K"), "K"));
+
+      NC(nc_def_var(ncid, "ZETA_DELTA", NC_DOUBLE, 1, &zid, &varid));
+      NC(nc_put_att_text
+	 (ncid, varid, "long_name", strlen("Width of zeta levels"),
+	  "Width of zeta levels"));
+      NC(nc_put_att_text(ncid, varid, "units", strlen("K"), "K"));
+
+      /* Define optional Variables */
+      for (int i = 0; i < ctl->nq; i++) {
+	NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
+	NC(nc_put_att_text
+	   (ncid, varid, "units", strlen(ctl->qnt_unit[i]),
+	    ctl->qnt_unit[i]));
       }
+
+      /* Put Global Attributes into File... */
+      NC(nc_put_att_text
+	 (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_zeta_min", NC_DOUBLE, 1, &ctl->zeta_min));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_zeta_max", NC_DOUBLE, 1, &ctl->zeta_max));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_nzetas", NC_DOUBLE, 1, &ctl->nzeta));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_down", NC_DOUBLE, 1, &ctl->lat_down));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_up", NC_DOUBLE, 1, &ctl->lat_up));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_min", NC_DOUBLE, 1, &ctl->lat_min));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_lat_max", NC_DOUBLE, 1, &ctl->lat_max));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_r_coarse", NC_DOUBLE, 1, &ctl->r_coarse));
+      NC(nc_put_att_double
+	 (ncid, NC_GLOBAL, "exp_POS_r_high", NC_DOUBLE, 1, &ctl->r_high));
+      NC(nc_put_att_text
+	 (ncid, NC_GLOBAL, "model", strlen("MPTRAC"), "MPTRAC"));
+
+      /* End Definitions... */
+      NC(nc_enddef(ncid));
+
+      /* Inquire variable IDs and put data into file... */
+      NC(nc_inq_varid(ncid, "time", &varid));
+      NC(nc_put_var_double(ncid, varid, atm->time));
+      NC(nc_inq_varid(ncid, "LAT", &varid));
+      NC(nc_put_var_double(ncid, varid, atm->lat));
+      NC(nc_inq_varid(ncid, "LON", &varid));
+      NC(nc_put_var_double(ncid, varid, atm->lon));
+      NC(nc_inq_varid(ncid, "PRESS", &varid));
+      NC(nc_put_var_double(ncid, varid, atm->p));
+      NC(nc_inq_varid(ncid, "ZETA", &varid));
+      NC(nc_put_var_double(ncid, varid, atm->q[ctl->qnt_zeta]));
+      NC(nc_inq_varid(ncid, "ZETA_GRID", &varid));
+      NC(nc_put_var_double(ncid, varid, ctl->zeta_grid));
+      NC(nc_inq_varid(ncid, "ZETA_DELTA", &varid));
+      NC(nc_put_var_double(ncid, varid, ctl->zeta_delta));
+
+      for (int i = 0; i < ctl->nq; i++) {
+	NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
+	NC(nc_put_var_double(ncid, varid, atm->q[i]));
+      }
+
+      NC(nc_close(ncid));
+    }
   }
 
   /* Error... */
@@ -5167,9 +5193,8 @@ void write_atm(
   LOG(2, "Number of particles: %d", atm->np);
   gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
   LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
-    if (ctl->vert_coord_ap==1)
-  {
-    gsl_stats_minmax(&mini, &maxi, atm->zeta, 1, (size_t) atm->np);   
+  if (ctl->vert_coord_ap == 1) {
+    gsl_stats_minmax(&mini, &maxi, atm->zeta, 1, (size_t) atm->np);
     LOG(2, "ZETA range: %.4f ... %.4f K", mini, maxi);
   }
   gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
@@ -6200,58 +6225,58 @@ void write_station(
 
 /*****************************************************************************/
 
-int locate_vert(met_t* met,int lon_ap_ind, int lat_ap_ind, double zeta_ap) 
-  {
+int locate_vert(
+  met_t * met,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double zeta_ap) {
   //printf("locate_vert\n");
-  double* zetalev;
+  double *zetalev;
   int ind[4];
-  
-  ALLOC(zetalev,double,NP);
+
+  ALLOC(zetalev, double,
+	NP);
 
   /* find pressure index for zeta value... */
   //TODO: Maybe it is faster if I check if the ap in the box and quit if it is already found in here...
   // And I need to address the issues of Zeta inversions...
 
-		for (int i=0;i<met->np;i++)
-		{
-		  zetalev[i] =  met->zeta[lon_ap_ind][lat_ap_ind][i];
-      //printf("%f\n",zetalev[i]);
-		}
-	
-		ind[0]=locate_irr(zetalev, met->np,zeta_ap);
+  for (int i = 0; i < met->np; i++) {
+    zetalev[i] = met->zeta[lon_ap_ind][lat_ap_ind][i];
+    //printf("%f\n",zetalev[i]);
+  }
 
-  	for (int i=0;i<met->np;i++)
-		{
-		  zetalev[i] =  met->zeta[lon_ap_ind+1][lat_ap_ind][i];
-      //printf("%f\n",zetalev[i]);
-		}
+  ind[0] = locate_irr(zetalev, met->np, zeta_ap);
 
-    ind[1]=locate_irr(zetalev, met->np,zeta_ap);
+  for (int i = 0; i < met->np; i++) {
+    zetalev[i] = met->zeta[lon_ap_ind + 1][lat_ap_ind][i];
+    //printf("%f\n",zetalev[i]);
+  }
 
-    for (int i=0;i<met->np;i++)
-		{
-		  zetalev[i] =  met->zeta[lon_ap_ind][lat_ap_ind+1][i];
-      //printf("%f\n",zetalev[i]);
-		}
+  ind[1] = locate_irr(zetalev, met->np, zeta_ap);
 
-    ind[2]=locate_irr(zetalev, met->np,zeta_ap);
+  for (int i = 0; i < met->np; i++) {
+    zetalev[i] = met->zeta[lon_ap_ind][lat_ap_ind + 1][i];
+    //printf("%f\n",zetalev[i]);
+  }
 
-      		for (int i=0;i<met->np;i++)
-		{
-		  zetalev[i] =  met->zeta[lon_ap_ind+1][lat_ap_ind+1][i];
-      //printf("%f\n",zetalev[i]);
-		}
+  ind[2] = locate_irr(zetalev, met->np, zeta_ap);
 
-    ind[3]=locate_irr(zetalev, met->np,zeta_ap);
+  for (int i = 0; i < met->np; i++) {
+    zetalev[i] = met->zeta[lon_ap_ind + 1][lat_ap_ind + 1][i];
+    //printf("%f\n",zetalev[i]);
+  }
 
-    
-	
+  ind[3] = locate_irr(zetalev, met->np, zeta_ap);
+
+
+
   free(zetalev);
-  
+
   //Check if ind are all the same ... 
   //if (ind[3]!=ind[2] || ind[3]!=ind[1] || ind[3]!=ind[0] || ind[2]!=ind[1] || ind[2]!=ind[0] || ind[1]!=ind[0]){
-  //	printf("WARNING:%d,%d,%d,%d\n",ind[0],ind[1],ind[2],ind[3]);}
-  
+  //    printf("WARNING:%d,%d,%d,%d\n",ind[0],ind[1],ind[2],ind[3]);}
+
   //printf("%d\n",ind[0]);
   return ind[0];
 }
@@ -6259,106 +6284,128 @@ int locate_vert(met_t* met,int lon_ap_ind, int lat_ap_ind, double zeta_ap)
 /*****************************************************************************/
 
 double intpol_ap_ml2pl(
-	met_t* met,
-	double lon_ap,
-	double lat_ap, 
-	double zeta_ap) {
-  double p_ap, cw[3], zeta_tmp; 
-  double* zetalev;
+  met_t * met,
+  double lon_ap,
+  double lat_ap,
+  double zeta_ap) {
+  double p_ap, cw[3], zeta_tmp;
+  double *zetalev;
   int ci[3], c0;
   //printf("WARNING:This is wrong if time is between two meteo data times...!!!");
-  ALLOC(zetalev,double,NP);  
+  ALLOC(zetalev, double,
+	NP);
 
   /* Interpolate zeta profile along pressure levels... */
-  for (int i=0;i<met->np;i++)
-    {
-  	 intpol_met_space_3d(met,met->zeta, met->p[i], lon_ap, lat_ap, &zeta_tmp, ci, cw, 1); 
- 	   zetalev[i] = zeta_tmp; 
-    }
-  
+  for (int i = 0; i < met->np; i++) {
+    intpol_met_space_3d(met, met->zeta, met->p[i], lon_ap, lat_ap, &zeta_tmp,
+			ci, cw, 1);
+    zetalev[i] = zeta_tmp;
+  }
+
   /* Convert zeta of AP into pressure by a linear interpolation ... */
   c0 = locate_irr(zetalev, met->np, zeta_ap);
-  if (c0==0)
-	  {
-	   p_ap = (met->p[c0+1]-met->p[c0])/(zetalev[c0+1]-zetalev[c0])*(zeta_ap-zetalev[c0])+met->p[c0];
-	  }
-  else if (c0==met->np)
-	  {
-	   p_ap = (met->p[c0]-met->p[c0-1])/(zetalev[c0]-zetalev[c0-1])*(zeta_ap-zetalev[c0-1])+met->p[c0-1];
-	  }
-  else
-	  {
-    double hs = zetalev[c0]-zetalev[c0-1];
-    double hd = zetalev[c0+1]-zetalev[c0];
-    double fd = met->p[c0+1];
+  if (c0 == 0) {
+    p_ap =
+      (met->p[c0 + 1] - met->p[c0]) / (zetalev[c0 + 1] -
+				       zetalev[c0]) * (zeta_ap -
+						       zetalev[c0]) +
+      met->p[c0];
+  } else if (c0 == met->np) {
+    p_ap =
+      (met->p[c0] - met->p[c0 - 1]) / (zetalev[c0] -
+				       zetalev[c0 - 1]) * (zeta_ap -
+							   zetalev[c0 - 1]) +
+      met->p[c0 - 1];
+  } else {
+    double hs = zetalev[c0] - zetalev[c0 - 1];
+    double hd = zetalev[c0 + 1] - zetalev[c0];
+    double fd = met->p[c0 + 1];
     double fc = met->p[c0];
-    double fs = met->p[c0-1];
-    p_ap = (hs*hs*fd+(hd*hd-hs*hs)*fc+hd*hd*fs)/(hs*hd*(hd+hs));
-	  //p_ap = (met->p[c0+1]-met->p[c0-1])/(zetalev[c0+1]-zetalev[c0-1])*(zeta_ap-zetalev[c0-1])+met->p[c0-1];
-	  }
+    double fs = met->p[c0 - 1];
+    p_ap =
+      (hs * hs * fd + (hd * hd - hs * hs) * fc +
+       hd * hd * fs) / (hs * hd * (hd + hs));
+    //p_ap = (met->p[c0+1]-met->p[c0-1])/(zetalev[c0+1]-zetalev[c0-1])*(zeta_ap-zetalev[c0-1])+met->p[c0-1];
+  }
 
   free(zetalev);
 
   /* Take model boundaries into account ... */
-  if (p_ap>met->p[0])
-   	{	
-	  return met->p[0];}
-  else{
-  return p_ap;}
+  if (p_ap > met->p[0]) {
+    return met->p[0];
+  } else {
+    return p_ap;
+  }
 }
 
 /*****************************************************************************/
 
-double intpol_ap_ml2pl_time(met_t* met, met_t* met1, double lon_ap, double lat_ap, double zeta_ap, double dtm)
-{
+double intpol_ap_ml2pl_time(
+  met_t * met,
+  met_t * met1,
+  double lon_ap,
+  double lat_ap,
+  double zeta_ap,
+  double dtm) {
 //printf("intpol_ap_ml2pl_mid_point\n");
-double p_ap, cw[3],zeta_tmp;
-double* zetalev; 
-int ci[3], c0;
+  double p_ap, cw[3], zeta_tmp;
+  double *zetalev;
+  int ci[3], c0;
 
-ALLOC(zetalev,double,NP);
-  
-for (int i=0;i<met->np;i++)
-  {	
- 	// use data for interpolation ... 
-  	intpol_met_time_3d(met, met->zeta, met1, met1->zeta, dtm, met->p[i], lon_ap, lat_ap, &zeta_tmp, ci, cw, 1);
-  	zetalev[i] = zeta_tmp; 
+  ALLOC(zetalev, double,
+	NP);
+
+  for (int i = 0; i < met->np; i++) {
+    // use data for interpolation ... 
+    intpol_met_time_3d(met, met->zeta, met1, met1->zeta, dtm, met->p[i],
+		       lon_ap, lat_ap, &zeta_tmp, ci, cw, 1);
+    zetalev[i] = zeta_tmp;
   }
- 
-/* remove parts that are not monotonic... */ 
+
+/* remove parts that are not monotonic... */
 // for (int i=1;i<met->np;i++)
 // {
 // int j=0;
 // while(zetalev[i-1]>=zetalev[i])
-//   		{
-//   		zetalev[i] = 0.5*(zetalev[i-1]+zetalev[i+1+j]); 
-// 		j=j+1;
-//   		}
+//              {
+//              zetalev[i] = 0.5*(zetalev[i-1]+zetalev[i+1+j]); 
+//              j=j+1;
+//              }
 //if(j>0){printf("WARNING: Nonmonotonic ZETA(p)!!!:%d\n",j);}
 //}
 
 /* Convert zeta of AP into pressure... */
-c0 = locate_irr(zetalev, met->np, zeta_ap);
+  c0 = locate_irr(zetalev, met->np, zeta_ap);
 
-if (c0==0)
-{
-p_ap = (met->p[c0+1]-met->p[c0])/(zetalev[c0+1]-zetalev[c0])*(zeta_ap-zetalev[c0])+met->p[c0];
-}
-else if (c0==met->np-1)
-{
-p_ap = (met->p[c0]-met->p[c0-1])/(zetalev[c0]-zetalev[c0-1])*(zeta_ap-zetalev[c0-1])+met->p[c0-1];
-}
-else
-{
-p_ap = (met->p[c0+1]-met->p[c0-1])/(zetalev[c0+1]-zetalev[c0-1])*(zeta_ap-zetalev[c0-1])+met->p[c0-1];
-}
+  if (c0 == 0) {
+    p_ap =
+      (met->p[c0 + 1] - met->p[c0]) / (zetalev[c0 + 1] -
+				       zetalev[c0]) * (zeta_ap -
+						       zetalev[c0]) +
+      met->p[c0];
+  } else if (c0 == met->np - 1) {
+    p_ap =
+      (met->p[c0] - met->p[c0 - 1]) / (zetalev[c0] -
+				       zetalev[c0 - 1]) * (zeta_ap -
+							   zetalev[c0 - 1]) +
+      met->p[c0 - 1];
+  } else {
+    p_ap =
+      (met->p[c0 + 1] - met->p[c0 - 1]) / (zetalev[c0 + 1] -
+					   zetalev[c0 - 1]) * (zeta_ap -
+							       zetalev[c0 -
+								       1]) +
+      met->p[c0 - 1];
+  }
 
-free(zetalev);
+  free(zetalev);
 
-if (p_ap>met->p[0])
-	{return met->p[0];}
-else{return p_ap;}
-	
+  if (p_ap > met->p[0]) {
+    return met->p[0];
+  } else {
+    return p_ap;
+  }
+
 }
 
 
@@ -6373,8 +6420,7 @@ void intpol_met_space_3d_ap_coord(
   double *var,
   int *ci,
   double *cw,
-  int init)
-{
+  int init) {
 
 // for(int i=0; i<EP;i++)
 // {
@@ -6395,25 +6441,28 @@ void intpol_met_space_3d_ap_coord(
     /* Get interpolation indices... */
     ci[1] = locate_reg(met->lon, met->nx, lon);
     ci[2] = locate_reg(met->lat, met->ny, lat);
-    ci[0] = locate_vert(met,ci[1],ci[2],zeta_ap);
+    ci[0] = locate_vert(met, ci[1], ci[2], zeta_ap);
     //TODO: Here we need the vertical index from the zeta value
     /* Get interpolation weights... */
     // TODO: Here I have to switch from p to zeta ... do i need a minus sign?, do I need four version of cw[0]?
-   
+
     cw[0] = (met->zeta[ci[1]][ci[2]][ci[0] + 1] - zeta_ap)
       / (met->zeta[ci[1]][ci[2]][ci[0] + 1] - met->zeta[ci[1]][ci[2]][ci[0]]);
     cw[3] = (met->zeta[ci[1]][ci[2] + 1][ci[0] + 1] - zeta_ap)
-      / (met->zeta[ci[1]][ci[2] + 1][ci[0] + 1] - met->zeta[ci[1]][ci[2] + 1][ci[0]]);
+      / (met->zeta[ci[1]][ci[2] + 1][ci[0] + 1] -
+	 met->zeta[ci[1]][ci[2] + 1][ci[0]]);
     cw[4] = (met->zeta[ci[1] + 1][ci[2]][ci[0] + 1] - zeta_ap)
-      / (met->zeta[ci[1] + 1][ci[2]][ci[0] + 1] - met->zeta[ci[1] + 1][ci[2]][ci[0]]);
-    
+      / (met->zeta[ci[1] + 1][ci[2]][ci[0] + 1] -
+	 met->zeta[ci[1] + 1][ci[2]][ci[0]]);
+
     cw[5] = (met->zeta[ci[1] + 1][ci[2] + 1][ci[0] + 1] - zeta_ap)
-      / (met->zeta[ci[1] + 1][ci[2] + 1][ci[0] + 1] - met->zeta[ci[1] + 1][ci[2] + 1][ci[0]]);
-      
-     cw[1] = (met->lon[ci[1] + 1] - lon)
-       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
-     cw[2] = (met->lat[ci[2] + 1] - lat)
-       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
+      / (met->zeta[ci[1] + 1][ci[2] + 1][ci[0] + 1] -
+	 met->zeta[ci[1] + 1][ci[2] + 1][ci[0]]);
+
+    cw[1] = (met->lon[ci[1] + 1] - lon)
+      / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
+    cw[2] = (met->lat[ci[2] + 1] - lat)
+      / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
   }
 
   /* Interpolate vertically... */
@@ -6460,8 +6509,10 @@ void intpol_met_time_3d_ap_coord(
   double var0, var1, wt;
 
   /* Spatial interpolation... */
-  intpol_met_space_3d_ap_coord(met0, array0, zeta, lon, lat, &var0, ci, cw_apc, init);
-  intpol_met_space_3d_ap_coord(met1, array1, zeta, lon, lat, &var1, ci, cw_apc, init);
+  intpol_met_space_3d_ap_coord(met0, array0, zeta, lon, lat, &var0, ci,
+			       cw_apc, init);
+  intpol_met_space_3d_ap_coord(met1, array1, zeta, lon, lat, &var1, ci,
+			       cw_apc, init);
 
   /* Get weighting factor... */
   wt = (met1->time - ts) / (met1->time - met0->time);
@@ -6472,31 +6523,37 @@ void intpol_met_time_3d_ap_coord(
 
 /*****************************************************************************/
 
-void intpol_atm(met_t * met0, met_t * met1, atm_t * atm)
-{
-    
-for (int i=0;i<atm->np;i++)
-  {	
-    atm->p[i]=intpol_ap_ml2pl_time(met0, met1, atm->lon[i],atm->lat[i],  atm->zeta[i], atm->time[i]);
+void intpol_atm(
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm) {
+
+  for (int i = 0; i < atm->np; i++) {
+    atm->p[i] =
+      intpol_ap_ml2pl_time(met0, met1, atm->lon[i], atm->lat[i], atm->zeta[i],
+			   atm->time[i]);
   }
 
 }
 
 /*****************************************************************************/
 
-void check_monotonocity(met_t * met)
-{
+void check_monotonocity(
+  met_t * met) {
   //printf("Check zeta for vertical monotonocity and correct if needed.\n");
-   for (int i=0;i<met->nx;i++)
-    for (int j=0;j<met->ny;j++)
-      for (int k=1;k<met->np;k++)
-        if ((met->zeta[i][j][k-1]>=met->zeta[i][j][k]) & (met->zeta[i][j][k-1]>0.0) & (met->zeta[i][j][k]>0.0))
-          {
-            int l=0;
-            while(met->zeta[i][j][k-1]>=met->zeta[i][j][k+l])
-	            l=l+1;
-            float w=(float)(met->p[k]-met->p[k-1])/(float)(met->p[k+l]-met->p[k-1]);
-            float d=(met->zeta[i][j][k+l]-met->zeta[i][j][k-1]);
-            met->zeta[i][j][k]=d*w+met->zeta[i][j][k-1]; 
-          }
+  for (int i = 0; i < met->nx; i++)
+    for (int j = 0; j < met->ny; j++)
+      for (int k = 1; k < met->np; k++)
+	if ((met->zeta[i][j][k - 1] >=
+	     met->zeta[i][j][k]) & (met->zeta[i][j][k - 1] >
+				    0.0) & (met->zeta[i][j][k] > 0.0)) {
+	  int l = 0;
+	  while (met->zeta[i][j][k - 1] >= met->zeta[i][j][k + l])
+	    l = l + 1;
+	  float w =
+	    (float) (met->p[k] - met->p[k - 1]) / (float) (met->p[k + l] -
+							   met->p[k - 1]);
+	  float d = (met->zeta[i][j][k + l] - met->zeta[i][j][k - 1]);
+	  met->zeta[i][j][k] = d * w + met->zeta[i][j][k - 1];
+	}
 }
