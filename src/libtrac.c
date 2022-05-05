@@ -2461,6 +2461,52 @@ double nat_temperature(
 
 /*****************************************************************************/
 
+void quicksort(
+  int arr[],
+  int brr[],
+  int low,
+  int high) {
+
+  if (low < high) {
+    int pi = quicksort_partition(arr, brr, low, high);
+
+#pragma omp task firstprivate(arr,brr,low,pi)
+    {
+      quicksort(arr, brr, low, pi - 1);
+    }
+
+    // #pragma omp task firstprivate(arr,brr,high,pi)
+    {
+      quicksort(arr, brr, pi + 1, high);
+    }
+  }
+}
+
+/*****************************************************************************/
+
+int quicksort_partition(
+  int arr[],
+  int brr[],
+  int low,
+  int high) {
+
+  int pivot = arr[high];
+  int i = (low - 1);
+
+  for (int j = low; j <= high - 1; j++)
+    if (arr[j] <= pivot) {
+      i++;
+      SWAP(arr[i], arr[j], int);
+      SWAP(brr[i], brr[j], int);
+    }
+  SWAP(arr[high], arr[i + 1], int);
+  SWAP(brr[high], brr[i + 1], int);
+
+  return (i + 1);
+}
+
+/*****************************************************************************/
+
 int read_atm(
   const char *filename,
   ctl_t * ctl,

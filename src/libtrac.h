@@ -1523,6 +1523,20 @@ double nat_temperature(
   double h2o,
   double hno3);
 
+/*! Parallel quicksort. */
+void quicksort(
+  int arr[],
+  int brr[],
+  int low,
+  int high);
+
+/*! Partition function for quicksort. */
+int quicksort_partition(
+  int arr[],
+  int brr[],
+  int low,
+  int high);
+
 /*! Read atmospheric data. */
 int read_atm(
   const char *filename,

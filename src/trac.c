@@ -1423,11 +1423,10 @@ void module_sort(
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-  double *idx;
-  size_t *p;
-  ALLOC(idx, double,
+  int *idx, *p;
+  ALLOC(idx, int,
 	NP);
-  ALLOC(p, size_t,
+  ALLOC(p, int,
 	NP);
 
   /* Update host... */
@@ -1439,15 +1438,21 @@ void module_sort(
   const int np = atm->np;
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < np; ip++) {
-    p[ip] = (size_t) ip;
-    idx[ip] = (double)
+    p[ip] = ip;
+    idx[ip] =
       (locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny
        + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
-
+  
   /* Sort particles according to box index... */
-  gsl_sort_index(p, idx, 1, (size_t) np);
+#pragma omp parallel
+  {
+#pragma omp single nowait
+    quicksort(idx, p, 0, np - 1);
+  }
+  
+  // gsl_sort_index(p, idx, 1, (size_t) np);
 
 #if 0
 
@@ -1459,15 +1464,15 @@ void module_sort(
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < np - 1; ip += 2)
       if (idx[ip] > idx[ip + 1]) {
-	SWAP(idx[ip], idx[ip + 1], double);
-	SWAP(p[ip], p[ip + 1], size_t);
+	SWAP(idx[ip], idx[ip + 1], int);
+	SWAP(p[ip], p[ip + 1], int);
 	swapped = 1;
       }
 #pragma omp parallel for default(shared)
     for (int ip = 1; ip < np - 1; ip += 2)
       if (idx[ip] > idx[ip + 1]) {
-	SWAP(idx[ip], idx[ip + 1], double);
-	SWAP(p[ip], p[ip + 1], size_t);
+	SWAP(idx[ip], idx[ip + 1], int);
+	SWAP(p[ip], p[ip + 1], int);
 	swapped = 1;
       }
   } while (swapped);
@@ -1477,14 +1482,14 @@ void module_sort(
   /* Swap data... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < np; ip++)
-    if ((size_t) ip != p[ip]) {
+    if (ip != p[ip]) {
       SWAP(atm->time[ip], atm->time[p[ip]], double);
       SWAP(atm->p[ip], atm->p[p[ip]], double);
       SWAP(atm->lon[ip], atm->lon[p[ip]], double);
       SWAP(atm->lat[ip], atm->lat[p[ip]], double);
       for (int iq = 0; iq < ctl->nq; iq++)
 	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
-      p[ip] = (size_t) ip;
+      p[ip] = ip;
     }
 
   /* Update device... */
