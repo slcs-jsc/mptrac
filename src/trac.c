@@ -60,11 +60,6 @@ void module_bound_cond(
   atm_t * atm,
   double *dt);
 
-/*! Check atmospheric data. */
-void module_check_atm(
-  ctl_t * ctl,
-  atm_t * atm);
-
 /*! Calculate convection of air parcels. */
 void module_convection(
   ctl_t * ctl,
@@ -615,32 +610,6 @@ void module_bound_cond(
       if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] = ctl->bound_vmr;
     }
-}
-
-/*****************************************************************************/
-
-void module_check_atm(
-  ctl_t * ctl,
-  atm_t * atm) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_CHECK_ATM", "PHYSICS", NVTX_GPU);
-
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
-    int okay = (isfinite(atm->time[ip]) && isfinite(atm->p[ip])
-		&& isfinite(atm->lon[ip]) && isfinite(atm->lat[ip]));
-    for (int iq = 0; iq < ctl->nq; iq++)
-      if (!isfinite(atm->q[iq][ip]))
-	okay = 0;
-    if (!okay)
-      ERRMSG("Check of atmospheric data failed: "
-	     "ip= %d, t= %.2f, p= %g, lon= %g, lat= %g",
-	     ip, atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
-  }
 }
 
 /*****************************************************************************/
@@ -1444,40 +1413,13 @@ void module_sort(
        + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
       + locate_irr(met0->p, met0->np, atm->p[ip]);
   }
-  
+
   /* Sort particles according to box index... */
 #pragma omp parallel
   {
 #pragma omp single nowait
     quicksort(idx, p, 0, np - 1);
   }
-  
-  // gsl_sort_index(p, idx, 1, (size_t) np);
-
-#if 0
-
-  /* TODO: The even-odd sorting method below is not OpenMP-parallelized
-     as NVC complains about data dependency of the loops? */
-  int swapped;
-  do {
-    swapped = 0;
-#pragma omp parallel for default(shared)
-    for (int ip = 0; ip < np - 1; ip += 2)
-      if (idx[ip] > idx[ip + 1]) {
-	SWAP(idx[ip], idx[ip + 1], int);
-	SWAP(p[ip], p[ip + 1], int);
-	swapped = 1;
-      }
-#pragma omp parallel for default(shared)
-    for (int ip = 1; ip < np - 1; ip += 2)
-      if (idx[ip] > idx[ip + 1]) {
-	SWAP(idx[ip], idx[ip + 1], int);
-	SWAP(p[ip], p[ip + 1], int);
-	swapped = 1;
-      }
-  } while (swapped);
-
-#endif
 
   /* Swap data... */
 #pragma omp parallel for default(shared)

@@ -46,7 +46,6 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
-#include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_statistics.h>
 #include <math.h>
