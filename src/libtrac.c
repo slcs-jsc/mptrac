@@ -6362,17 +6362,6 @@ double intpol_ap_ml2pl_time(
     zetalev[i] = zeta_tmp;
   }
 
-/* remove parts that are not monotonic... */
-// for (int i=1;i<met->np;i++)
-// {
-// int j=0;
-// while(zetalev[i-1]>=zetalev[i])
-//              {
-//              zetalev[i] = 0.5*(zetalev[i-1]+zetalev[i+1+j]); 
-//              j=j+1;
-//              }
-//if(j>0){printf("WARNING: Nonmonotonic ZETA(p)!!!:%d\n",j);}
-//}
 
 /* Convert zeta of AP into pressure... */
   c0 = locate_irr(zetalev, met->np, zeta_ap);
@@ -6422,15 +6411,6 @@ void intpol_met_space_3d_ap_coord(
   double *cw,
   int init) {
 
-// for(int i=0; i<EP;i++)
-// {
-//   //printf("%f\n",array[ci[1]][ci[2]][i]);
-//   //printf("%f\n",array[ci[1]+1][ci[2]][i]);
-//   //printf("%f\n",array[ci[1]][ci[2]+1][i]);
-//   //printf("%f\n",array[ci[1]+1][ci[2]+1][i]);
-// }
-
-
 
 /* Initialize interpolation... */
   if (init) {
@@ -6442,9 +6422,10 @@ void intpol_met_space_3d_ap_coord(
     ci[1] = locate_reg(met->lon, met->nx, lon);
     ci[2] = locate_reg(met->lat, met->ny, lat);
     ci[0] = locate_vert(met, ci[1], ci[2], zeta_ap);
-    //TODO: Here we need the vertical index from the zeta value
+    //TODO: How to proceed when vertical indizes differ for the four columns?
+    // Do I have to use a individual vertical indize for every column?
     /* Get interpolation weights... */
-    // TODO: Here I have to switch from p to zeta ... do i need a minus sign?, do I need four version of cw[0]?
+    //  Here I had to switch from p to zeta .
 
     cw[0] = (met->zeta[ci[1]][ci[2]][ci[0] + 1] - zeta_ap)
       / (met->zeta[ci[1]][ci[2]][ci[0] + 1] - met->zeta[ci[1]][ci[2]][ci[0]]);
@@ -6466,7 +6447,7 @@ void intpol_met_space_3d_ap_coord(
   }
 
   /* Interpolate vertically... */
-  //TODO: Here I have to use the new weights...
+  // Here I had to use the new weights...
   double aux00 =
     cw[0] * (array[ci[1]][ci[2]][ci[0]] - array[ci[1]][ci[2]][ci[0] + 1])
     + array[ci[1]][ci[2]][ci[0] + 1];

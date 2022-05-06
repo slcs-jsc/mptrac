@@ -412,7 +412,7 @@ int main(
       if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0)
 	module_bound_cond(&ctl, met0, met1, atm, dt);
 
-      for (int ip = 0; ip < atm->np; ip++) {
+      /*for (int ip = 0; ip < atm->np; ip++) {
 	INTPOL_INIT;
 	if (ip == 1) {
 	  printf("%f\n", atm->p[ip]);
@@ -423,7 +423,7 @@ int main(
 	if (ip == 1) {
 	  printf("%f\n", atm->zeta[ip]);
 	}
-      }
+      }*/
 
 
       /* Write output... */
@@ -679,7 +679,7 @@ void module_advect_mp_dia(
       /* Make a step in zeta coordinates and interpolate to p */
       atm->zeta[ip] += dt[ip] * zeta_dot;
       //if (ip==1){printf("%f\n", atm->zeta[ip]);}
-      if (ip == 1) {
+      if (ip == 756) {
 	printf("%f\n", atm->zeta[ip]);
       }
       //atm->p[ip] = intpol_ap_ml2pl_time(met0,met1,atm->lon[ip],atm->lat[ip],atm->zeta[ip],atm->time[ip]); 
@@ -688,9 +688,9 @@ void module_advect_mp_dia(
 				  atm->time[ip], atm->zeta[ip], atm->lon[ip],
 				  atm->lat[ip], &atm->p[ip], ci_apc, cw_apc,
 				  1);
-      if (ip == 1) {
-	printf("%f\n", atm->p[ip]);
-      }
+      //if (ip == 756) {
+//	printf("%f\n", atm->p[ip]);
+  //    }
     }
   }
 }
@@ -1217,7 +1217,9 @@ void module_meteo(
 
     /* Interpolate meteorological data... */
     INTPOL_INIT;
-    INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
+    double cw_apc[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
+    INTPOL_TIME_ALL_ZETA(atm->time[ip], atm->zeta[ip], atm->lon[ip], atm->lat[ip]);
+    //INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
     /* Set quantities... */
     SET_ATM(qnt_ps, ps);
     SET_ATM(qnt_ts, ts);

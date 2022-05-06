@@ -315,6 +315,38 @@
   intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
   }
+  
+/*! Temporal interpolation of all meteo data. */
+#define INTPOL_TIME_ALL_ZETA(time, zeta, lon, lat) {				\
+  intpol_met_time_3d_ap_coord(met0, met0->z, met1, met1->z, time, zeta, lon, lat, &z, ci, cw_apc, 1); \
+  intpol_met_time_3d_ap_coord(met0, met0->t, met1, met1->t, time, zeta, lon, lat, &t, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->u, met1, met1->u, time, zeta, lon, lat, &u, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->v, met1, met1->v, time, zeta, lon, lat, &v, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->w, met1, met1->w, time, zeta, lon, lat, &w, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->pv, met1, met1->pv, time, zeta, lon, lat, &pv, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->h2o, met1, met1->h2o, time, zeta, lon, lat, &h2o, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->o3, met1, met1->o3, time, zeta, lon, lat, &o3, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->lwc, met1, met1->lwc, time, zeta, lon, lat, &lwc, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->iwc, met1, met1->iwc, time, zeta, lon, lat, &iwc, ci, cw_apc, 0); \
+  intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->h2ot, met1, met1->h2ot, time, lon, lat, &h2ot, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pct, met1, met1->pct, time, lon, lat, &pct, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pcb, met1, met1->pcb, time, lon, lat, &pcb, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
+  }
 
 /*! Calculate lapse rate between pressure levels. */
 #define LAPSE(p1, t1, p2, t2)						\
