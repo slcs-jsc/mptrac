@@ -1422,7 +1422,6 @@ void module_sort(
   }
 
   /* Swap data... */
-#pragma omp parallel for default(shared)
   for (int ip = 0; ip < np; ip++)
     if (ip != p[ip]) {
       SWAP(atm->time[ip], atm->time[p[ip]], double);
