@@ -169,6 +169,11 @@
 #define GZ 100
 #endif
 
+/*! Maximum number of altitudes for mixing grid. */
+#ifndef MZ
+#define MZ 100
+#endif
+
 /*! Maximum number of data points for ensemble analysis. */
 #ifndef NENS
 #define NENS 2000
@@ -310,6 +315,38 @@
   intpol_met_time_3d(met0, met0->o3, met1, met1->o3, time, p, lon, lat, &o3, ci, cw, 0); \
   intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
   intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->h2ot, met1, met1->h2ot, time, lon, lat, &h2ot, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pct, met1, met1->pct, time, lon, lat, &pct, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pcb, met1, met1->pcb, time, lon, lat, &pcb, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
+  }
+  
+/*! Temporal interpolation of all meteo data. */
+#define INTPOL_TIME_ALL_ZETA(time, zeta, lon, lat) {				\
+  intpol_met_time_3d_ap_coord(met0, met0->z, met1, met1->z, time, zeta, lon, lat, &z, ci, cw_apc, 1); \
+  intpol_met_time_3d_ap_coord(met0, met0->t, met1, met1->t, time, zeta, lon, lat, &t, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->u, met1, met1->u, time, zeta, lon, lat, &u, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->v, met1, met1->v, time, zeta, lon, lat, &v, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->w, met1, met1->w, time, zeta, lon, lat, &w, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->pv, met1, met1->pv, time, zeta, lon, lat, &pv, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->h2o, met1, met1->h2o, time, zeta, lon, lat, &h2o, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->o3, met1, met1->o3, time, zeta, lon, lat, &o3, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->lwc, met1, met1->lwc, time, zeta, lon, lat, &lwc, ci, cw_apc, 0); \
+  intpol_met_time_3d_ap_coord(met0, met0->iwc, met1, met1->iwc, time, zeta, lon, lat, &iwc, ci, cw_apc, 0); \
   intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
@@ -563,6 +600,37 @@
 
 /*! Control parameters. */
 typedef struct {
+
+  ///////////////////////////////////////////////////////////////
+
+  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta) */
+  int vert_coord_ap;
+
+  /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
+  int vert_coord_met;
+
+  /*! Vertical velocity (0=kinematic, 1=diabatic) */
+  int vert_vel;
+
+  /*! Read MPTRAC or CLaMS meteo data. (0=MPTRAC, 1=CLaMS) */
+  int clams_met_data;
+
+  /*! Mixing parameters. They are read from the CLaMS input */
+
+  double nzeta;
+  double zeta_min;
+  double zeta_max;
+  double lat_min;
+  double lat_max;
+  double lat_down;
+  double lat_up;
+  double r_coarse;
+  double r_high;
+
+  double zeta_grid[MZ];
+  double zeta_delta[MZ];
+
+  ///////////////////////////////////////////////////////////////
 
   /*! Chunk size hint for nc__open. */
   size_t chunkszhint;
@@ -950,7 +1018,7 @@ typedef struct {
   /*! Particle index stride for atmospheric data files. */
   int atm_stride;
 
-  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). */
+  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS netCDF). */
   int atm_type;
 
   /*! Basename of CSI data files. */
@@ -1120,6 +1188,9 @@ typedef struct {
   /*! Latitude [deg]. */
   double lat[NP];
 
+  /*! Zeta [K] */
+  double zeta[NP];
+
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ][NP];
 
@@ -1256,6 +1327,15 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
+  /*! Zeta [K] */
+  float zeta[EX][EY][EP];
+
+  /*! Zeta dot */
+  float zeta_dot[EX][EY][EP];
+
+  /*! pressure field in pressure levels */
+  float patp[EX][EY][EP];
+
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
 
@@ -1373,7 +1453,8 @@ void get_met_help(
   int direct,
   char *metbase,
   double dt_met,
-  char *filename);
+  char *filename,
+  ctl_t * ctl);
 
 /*! Replace template strings in filename. */
 void get_met_replace(
@@ -1653,7 +1734,8 @@ void read_met_sample(
 /*! Read surface data. */
 void read_met_surface(
   int ncid,
-  met_t * met);
+  met_t * met,
+  ctl_t * ctl);
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
@@ -1801,5 +1883,64 @@ void write_station(
   ctl_t * ctl,
   atm_t * atm,
   double t);
+  /*Interpolate ap positions */
+double intpol_ap_ml2pl(
+  met_t * met,
+  double lon_ap,
+  double lat_ap,
+  double zeta_ap);
+
+/*Interpolate ap positions at midpoint */
+double intpol_ap_ml2pl_time(
+  met_t * met,
+  met_t * met1,
+  double lon_ap,
+  double lat_ap,
+  double zeta_ap,
+  double tdm);
+
+/*locate vertical index */
+int locate_vert(
+  met_t * met,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double zeta_ap);
+
+/*Interpolate with zeta coordinates */
+void intpol_met_space_3d_ap_coord(
+  met_t * met,
+  float array[EX][EY][EP],
+  double zeta_ap,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+
+/*Interpolate with zeta coordinates in time */
+void intpol_met_time_3d_ap_coord(
+  met_t * met0,
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float array1[EX][EY][EP],
+  double ts,
+  double zeta,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+
+/* interpolate atmosphere */
+void intpol_atm(
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
+
+/* check monotonocity and correct it */
+void check_monotonocity(
+  met_t * met);
 
 #endif /* LIBTRAC_H */
