@@ -39,10 +39,10 @@ GPU ?= 0
 GPUMEM ?= 0
 
 # Compile for MPI...
-MPI ?= 1
+MPI ?= 0
 
 # Static compilation...
-STATIC ?= 0
+STATIC ?= 1
 
 # Optimization flags...
 OPT ?= -O3
