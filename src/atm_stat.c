@@ -37,7 +37,7 @@ int main(
   char tstr[LEN];
 
   double lat0, lat1, latm, lon0, lon1, lonm, p0, p1,
-    t, t0, qm[NQ], *work, zm, *zs;
+    t, t0 = GSL_NAN, qm[NQ], *work, zm, *zs;
 
   int ens, f, init = 0, ip, iq, year, mon, day, hour, min;
 
@@ -90,19 +90,25 @@ int main(
       continue;
 
     /* Get time from filename... */
-    sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
+    size_t len = strlen(argv[f]);
+    sprintf(tstr, "%.4s", &argv[f][len - 20]);
     year = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 15]);
+    sprintf(tstr, "%.2s", &argv[f][len - 15]);
     mon = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 12]);
+    sprintf(tstr, "%.2s", &argv[f][len - 12]);
     day = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 9]);
+    sprintf(tstr, "%.2s", &argv[f][len - 9]);
     hour = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 6]);
+    sprintf(tstr, "%.2s", &argv[f][len - 6]);
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
 
-    /* Save intial time... */
+    /* Check time... */
+    if (year < 1900 || year > 2100 || mon < 1 || mon > 12 || day < 1
+	|| day > 31 || hour < 0 || hour > 23 || min < 0 || min > 59)
+      ERRMSG("Cannot read time from filename!");
+
+    /* Save initial time... */
     if (!init) {
       init = 1;
       t0 = t;

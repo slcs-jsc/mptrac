@@ -1,0 +1,42 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: Massive-Parallel Trajectory Calculations (MPTRAC)
+message: >-
+  If you use this software, please cite it using the
+  metadata from this file.
+type: software
+authors:
+  - given-names: Lars
+    family-names: Hoffmann
+    email: l.hoffmann@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
+    orcid: 'https://orcid.org/0000-0003-3773-4377'
+identifiers:
+  - type: doi
+    value: 10.5194/gmd-2021-382
+    description: Reference paper.
+  - type: doi
+    value: 10.1002/2015JD023749
+    description: Reference paper.
+  - type: doi
+    value: 10.5281/zenodo.4400597
+    description: Latest release on Zenodo.
+  - type: url
+    value: 'https://github.com/slcs-jsc/mptrac'
+    description: Software repository on GitHub.
+abstract: >-
+  Massive-Parallel Trajectory Calculations (MPTRAC)
+  is a Lagrangian particle dispersion model for the
+  analysis of atmospheric transport processes in the
+  free troposphere and stratosphere.
+keywords:
+  - atmospheric science
+  - meteorology
+  - transport model
+  - trajectories
+  - dispersion
+  - troposphere
+  - stratosphere
+license: GPL-3.0

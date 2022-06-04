@@ -14,12 +14,24 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
   \file
   MPTRAC library declarations.
+*/
+
+/*! 
+  \mainpage
+  
+  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
+  particle dispersion model for the free troposphere and stratosphere.
+  
+  This reference manual provides information on the algorithms
+  and data structures used in the code.
+
+  Further information can be found at: https://github.com/slcs-jsc/mptrac
 */
 
 #ifndef LIBTRAC_H
@@ -34,7 +46,6 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
-#include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_statistics.h>
 #include <math.h>
@@ -53,6 +64,14 @@
 #ifdef _OPENACC
 #include "openacc.h"
 #include "curand.h"
+#endif
+
+#ifdef ZFP
+#include "zfp.h"
+#endif
+
+#ifdef ZSTD
+#include "zstd.h"
 #endif
 
 /* ------------------------------------------------------------
@@ -120,17 +139,17 @@
 #define NQ 15
 #endif
 
-/*! Maximum number of pressure levels for meteorological data. */
+/*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
 #define EP 140
 #endif
 
-/*! Maximum number of longitudes for meteorological data. */
+/*! Maximum number of longitudes for meteo data. */
 #ifndef EX
 #define EX 1201
 #endif
 
-/*! Maximum number of latitudes for meteorological data. */
+/*! Maximum number of latitudes for meteo data. */
 #ifndef EY
 #define EY 601
 #endif
@@ -416,6 +435,10 @@
 /*! Compute square. */
 #define SQR(x)					\
   ((x)*(x))
+
+/*! Swap macro. */
+#define SWAP(x, y, type)				\
+  do {type tmp = x; x = y; y = tmp;} while(0);
 
 /*! Calculate dew point temperature (WMO, 2018). */
 #define TDEW(p, h2o)				\
@@ -798,11 +821,14 @@ typedef struct {
   /*! Time step of simulation [s]. */
   double dt_mod;
 
-  /*! Basename for meteorological data. */
+  /*! Basename for meteo data. */
   char metbase[LEN];
 
-  /*! Time step of meteorological data [s]. */
+  /*! Time step of meteo data [s]. */
   double dt_met;
+
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  int met_type;
 
   /*! Stride for longitudes. */
   int met_dx;
@@ -869,7 +895,10 @@ typedef struct {
   double met_dt_out;
 
   /*! Preload meteo data into disk cache (0=no, 1=yes). */
-  double met_cache;
+  int met_cache;
+
+  /*! Time step for sorting of particle data [s]. */
+  double sort_dt;
 
   /*! Isosurface parameter
      (0=none, 1=pressure, 2=density, 3=theta, 4=balloon). */
@@ -1170,15 +1199,6 @@ typedef struct {
 /*! Cache data. */
 typedef struct {
 
-  /*! Cache for reference time of wind standard deviations. */
-  double tsig[EX][EY][EP];
-
-  /*! Cache for wind standard deviations. */
-  float uvwsig[EX][EY][EP][3];
-
-  /*! Wind perturbations [m/s]. */
-  float uvwp[NP][3];
-
   /*! Isosurface variables. */
   double iso_var[NP];
 
@@ -1191,9 +1211,12 @@ typedef struct {
   /*! Isosurface balloon number of data points. */
   int iso_n;
 
+  /*! Wind perturbations [m/s]. */
+  float uvwp[NP][3];
+
 } cache_t;
 
-/*! Meteorological data. */
+/*! Meteo data. */
 typedef struct {
 
   /*! Time [s]. */
@@ -1313,6 +1336,9 @@ typedef struct {
   /*! pressure field in pressure levels */
   float patp[EX][EY][EP];
 
+  /*! Cache for wind data. */
+  float uvw[EX][EY][EP][3];
+
 } met_t;
 
 /* ------------------------------------------------------------
@@ -1359,6 +1385,39 @@ double clim_tropo(
   double t,
   double lat);
 
+/*! Pack or unpack array. */
+void compress_pack(
+  char *varname,
+  float *array,
+  size_t nxy,
+  size_t nz,
+  int decompress,
+  FILE * inout);
+
+/*! Compress or decompress array with zfp. */
+#ifdef ZFP
+void compress_zfp(
+  char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int precision,
+  double tolerance,
+  int decompress,
+  FILE * inout);
+#endif
+
+/*! Compress or decompress array with zstd. */
+#ifdef ZSTD
+void compress_zstd(
+  char *varname,
+  float *array,
+  size_t n,
+  int decompress,
+  FILE * inout);
+#endif
+
 /*! Get day of year from date. */
 void day2doy(
   int year,
@@ -1380,15 +1439,16 @@ void geo2cart(
   double lat,
   double *x);
 
-/*! Get meteorological data for given time step. */
+/*! Get meteo data for given time step. */
 void get_met(
   ctl_t * ctl,
   double t,
   met_t ** met0,
   met_t ** met1);
 
-/*! Get meteorological data for time step. */
+/*! Get meteo data for time step. */
 void get_met_help(
+  ctl_t * ctl,
   double t,
   int direct,
   char *metbase,
@@ -1402,7 +1462,7 @@ void get_met_replace(
   char *search,
   char *repl);
 
-/*! Spatial interpolation of meteorological data. */
+/*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_3d)
 #endif
@@ -1417,7 +1477,7 @@ void intpol_met_space_3d(
   double *cw,
   int init);
 
-/*! Spatial interpolation of meteorological data. */
+/*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_2d)
 #endif
@@ -1431,7 +1491,23 @@ void intpol_met_space_2d(
   double *cw,
   int init);
 
-/*! Temporal interpolation of meteorological data. */
+/*! Spatial interpolation of meteo data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_space_uvw)
+#endif
+void intpol_met_space_uvw(
+  met_t * met,
+  double p,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *w,
+  int *ci,
+  double *cw,
+  int init);
+
+/*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_3d)
 #endif
@@ -1449,7 +1525,7 @@ void intpol_met_time_3d(
   double *cw,
   int init);
 
-/*! Temporal interpolation of meteorological data. */
+/*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_2d)
 #endif
@@ -1465,6 +1541,21 @@ void intpol_met_time_2d(
   int *ci,
   double *cw,
   int init);
+
+/*! Temporal interpolation of meteo data. */
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_time_uvw)
+#endif
+void intpol_met_time_uvw(
+  met_t * met0,
+  met_t * met1,
+  double ts,
+  double p,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *w);
 
 /*! Convert seconds to date. */
 void jsec2time(
@@ -1512,6 +1603,20 @@ double nat_temperature(
   double h2o,
   double hno3);
 
+/*! Parallel quicksort. */
+void quicksort(
+  int arr[],
+  int brr[],
+  int low,
+  int high);
+
+/*! Partition function for quicksort. */
+int quicksort_partition(
+  int arr[],
+  int brr[],
+  int low,
+  int high);
+
 /*! Read atmospheric data. */
 int read_atm(
   const char *filename,
@@ -1525,11 +1630,28 @@ void read_ctl(
   char *argv[],
   ctl_t * ctl);
 
-/*! Read meteorological data file. */
+/*! Read meteo data file. */
 int read_met(
-  ctl_t * ctl,
   char *filename,
+  ctl_t * ctl,
   met_t * met);
+
+/*! Read 2-D meteo variable. */
+void read_met_bin_2d(
+  FILE * out,
+  met_t * met,
+  float var[EX][EY],
+  char *varname);
+
+/*! Read 3-D meteo variable. */
+void read_met_bin_3d(
+  FILE * in,
+  ctl_t * ctl,
+  met_t * met,
+  float var[EX][EY][EP],
+  char *varname,
+  int precision,
+  double tolerance);
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
@@ -1544,7 +1666,7 @@ void read_met_detrend(
   ctl_t * ctl,
   met_t * met);
 
-/*! Extrapolate meteorological data at lower boundary. */
+/*! Extrapolate meteo data at lower boundary. */
 void read_met_extrapolate(
   met_t * met);
 
@@ -1553,25 +1675,27 @@ void read_met_geopot(
   ctl_t * ctl,
   met_t * met);
 
-/*! Read coordinates of meteorological data. */
+/*! Read coordinates of meteo data. */
 void read_met_grid(
   char *filename,
   int ncid,
   ctl_t * ctl,
   met_t * met);
 
-/*! Read and convert 3D variable from meteorological data file. */
-int read_met_help_3d(
+/*! Read meteo data on vertical levels. */
+void read_met_levels(
   int ncid,
-  char *varname,
-  char *varname2,
-  met_t * met,
-  float dest[EX][EY][EP],
-  float scl,
-  int init);
+  ctl_t * ctl,
+  met_t * met);
 
-/*! Read and convert 2D variable from meteorological data file. */
-int read_met_help_2d(
+/*! Convert meteo data from model levels to pressure levels. */
+void read_met_ml2pl(
+  ctl_t * ctl,
+  met_t * met,
+  float var[EX][EY][EP]);
+
+/*! Read and convert 2D variable from meteo data file. */
+int read_met_nc_2d(
   int ncid,
   char *varname,
   char *varname2,
@@ -1580,23 +1704,21 @@ int read_met_help_2d(
   float scl,
   int init);
 
-/*! Read meteorological data on vertical levels. */
-void read_met_levels(
+/*! Read and convert 3D variable from meteo data file. */
+int read_met_nc_3d(
   int ncid,
-  ctl_t * ctl,
-  met_t * met);
-
-/*! Convert meteorological data from model levels to pressure levels. */
-void read_met_ml2pl(
-  ctl_t * ctl,
+  char *varname,
+  char *varname2,
   met_t * met,
-  float var[EX][EY][EP]);
+  float dest[EX][EY][EP],
+  float scl,
+  int init);
 
 /*! Calculate pressure of the boundary layer. */
 void read_met_pbl(
   met_t * met);
 
-/*! Create meteorological data with periodic boundary conditions. */
+/*! Create meteo data with periodic boundary conditions. */
 void read_met_periodic(
   met_t * met);
 
@@ -1604,7 +1726,7 @@ void read_met_periodic(
 void read_met_pv(
   met_t * met);
 
-/*! Downsampling of meteorological data. */
+/*! Downsampling of meteo data. */
 void read_met_sample(
   ctl_t * ctl,
   met_t * met);
@@ -1713,6 +1835,29 @@ void write_grid(
   met_t * met1,
   atm_t * atm,
   double t);
+
+/*! Read meteo data file. */
+int write_met(
+  char *filename,
+  ctl_t * ctl,
+  met_t * met);
+
+/*! Write 2-D meteo variable. */
+void write_met_bin_2d(
+  FILE * out,
+  met_t * met,
+  float var[EX][EY],
+  char *varname);
+
+/*! Write 3-D meteo variable. */
+void write_met_bin_3d(
+  FILE * out,
+  ctl_t * ctl,
+  met_t * met,
+  float var[EX][EY][EP],
+  char *varname,
+  int precision,
+  double tolerance);
 
 /*! Write profile data. */
 void write_prof(

@@ -51,7 +51,7 @@ int main(
   /* Check arguments... */
   if (argc < 4 && argc % 2 != 0)
     ERRMSG
-      ("Give parameters: <ctl> <zm.tab> <met0> <met1> [ <met0> <met1> ... ]");
+      ("Give parameters: <ctl> <subgrid.tab> <met0> <met1> [ <met0> <met1> ... ]");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
@@ -60,9 +60,9 @@ int main(
   for (i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
-    if (!read_met(&ctl, argv[i], met0))
+    if (!read_met(argv[i], &ctl, met0))
       ERRMSG("Cannot open file!");
-    if (!read_met(&ctl, argv[i + 1], met1))
+    if (!read_met(argv[i + 1], &ctl, met1))
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */

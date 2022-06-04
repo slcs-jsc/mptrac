@@ -19,7 +19,7 @@
 
 /*! 
   \file
-  Extract zonal mean from meteorological data.
+  Spectral analysis of meteorological data.
 */
 
 #include "libtrac.h"
@@ -70,7 +70,7 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "SPEC_WAVEMAX", -1, "7", NULL);
 
   /* Read meteorological data... */
-  if (!read_met(&ctl, argv[3], met))
+  if (!read_met(argv[3], &ctl, met))
     ERRMSG("Cannot read meteo data!");
 
   /* Create output file... */

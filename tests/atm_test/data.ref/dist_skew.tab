@@ -1,0 +1,10 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = absolute horizontal distance (skew) [km]
+# $4 = relative horizontal distance (skew) [%]
+# $5 = absolute vertical distance (skew) [km]
+# $6 = relative vertical distance (skew) [%]
+# $7 = number of particles
+
+0.00 0.00 -nan -nan -nan -nan 6715
+86400.00 86400.00 -0.502443 0.0631116 -0.0110929 0.0271468 4493

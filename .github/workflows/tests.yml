@@ -1,0 +1,19 @@
+name: tests
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: install
+      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+    - name: make
+      run: cd src ; STATIC=0 make
+    - name: check
+      run: cd src ; STATIC=0 make check

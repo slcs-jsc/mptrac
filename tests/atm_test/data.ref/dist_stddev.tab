@@ -1,0 +1,10 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = absolute horizontal distance (stddev) [km]
+# $4 = relative horizontal distance (stddev) [%]
+# $5 = absolute vertical distance (stddev) [km]
+# $6 = relative vertical distance (stddev) [%]
+# $7 = number of particles
+
+0.00 0.00 0 0 0 0 6715
+86400.00 86400.00 3024.65 1.06692e-14 20.3754 200.004 4493

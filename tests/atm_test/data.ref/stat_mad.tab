@@ -1,0 +1,8 @@
+# $1 = time [s]
+# $2 = time difference [s]
+# $3 = altitude (mad) [km]
+# $4 = longitude (mad) [deg]
+# $5 = latitude (mad) [deg]
+# $6 = number of particles
+
+0.00 0.00 12.3523 74.2629 29.1874 6715
