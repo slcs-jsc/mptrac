@@ -5,7 +5,6 @@ docs/latex/
 example/data/
 example/plots/
 libs/build/
-mix/
 projects/
 src/*.o
 src/atm_conv
@@ -19,14 +18,12 @@ src/doy2day
 src/jsec2time
 src/libtrac.o
 src/met_conv
-src/met_interpol_check
 src/met_lapse
 src/met_map
 src/met_prof
 src/met_sample
 src/met_spec
 src/met_subgrid
-src/met_zeta_check
 src/met_zm
 src/sedi
 src/time2jsec

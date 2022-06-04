@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_conv met_interpol_check met_lapse met_map met_prof met_sample met_spec met_subgrid met_zeta_check met_zm time2jsec sedi tnat trac tropo tropo_sample wind
+EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample wind
 
 # List of tests...
 TESTS = atm_test met_test puyehue tools_test

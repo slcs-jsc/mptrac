@@ -45,13 +45,6 @@ void module_advect_mp(
   atm_t * atm,
   double *dt);
 
-/*! Calculate advection of air parcels (mipoint method). */
-void module_advect_mp_dia(
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
 /*! Calculate advection of air parcels (Runge-Kutta). */
 void module_advect_rk(
   met_t * met0,
@@ -308,13 +301,6 @@ int main(
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
-    //* Check if zeta coordinates are monoton...*/
-    if (ctl.vert_coord_ap == 1) {
-      //intpol_atm(met0,met1,atm);
-      check_monotonocity(met0);
-      check_monotonocity(met1);
-    }
-
     /* Initialize isosurface... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
@@ -344,13 +330,6 @@ int main(
       if (t != ctl.t_start)
 	get_met(&ctl, t, &met0, &met1);
 
-      /* Check if zeta coordinates are monoton...*/
-      if (ctl.vert_coord_ap == 1) {
-	//intpol_atm(met0,met1,atm);
-	check_monotonocity(met0);
-	check_monotonocity(met1);
-      }
-
       /* Sort particles... */
       if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	module_sort(&ctl, met0, atm);
@@ -359,17 +338,10 @@ int main(
       module_position(&ctl, met0, met1, atm, dt);
 
       /* Advection... */
-      if (ctl.vert_vel == 0) {
-	if (ctl.advect == 0)
-	  module_advect_mp(met0, met1, atm, dt);
-	else
-	  module_advect_rk(met0, met1, atm, dt);
-      } else {
-	if (ctl.advect == 0)
-	  module_advect_mp_dia(met0, met1, atm, dt);
-	else
-	  ERRMSG("Runge-Kutta not implemented for diabatic velocities!");
-      }
+      if (ctl.advect == 0)
+	module_advect_mp(met0, met1, atm, dt);
+      else if (ctl.advect == 1)
+	module_advect_rk(met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
@@ -421,20 +393,6 @@ int main(
       /* Boundary conditions... */
       if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0)
 	module_bound_cond(&ctl, met0, met1, atm, dt);
-
-      /*for (int ip = 0; ip < atm->np; ip++) {
-	INTPOL_INIT;
-	if (ip == 1) {
-	  printf("%f\n", atm->p[ip]);
-	}
-	intpol_met_time_3d(met0, met0->zeta, met1, met1->zeta, atm->time[ip],
-			   atm->p[ip], atm->lon[ip], atm->lat[ip],
-			   &atm->zeta[ip], ci, cw, 1);
-	if (ip == 1) {
-	  printf("%f\n", atm->zeta[ip]);
-	}
-      }*/
-
 
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
@@ -603,98 +561,6 @@ void module_advect_rk(
 
 /*****************************************************************************/
 
-void module_advect_mp_dia(
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
-
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-
-  for (int ip = 0; ip < np; ip++) {
-    if (dt[ip] != 0) {
-
-      double u, v, zeta_dot;
-
-      /* Interpolate meteorological data... */
-      int ci[3] = { 0, 0, 0 };
-      double cw_apc[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-      intpol_met_time_3d_ap_coord(met0, met0->u, met1, met1->u,
-				  atm->time[ip], atm->zeta[ip], atm->lon[ip],
-				  atm->lat[ip], &u, ci, cw_apc, 1);
-      intpol_met_time_3d_ap_coord(met0, met0->v, met1, met1->v, atm->time[ip],
-				  atm->zeta[ip], atm->lon[ip], atm->lat[ip],
-				  &v, ci, cw_apc, 0);
-      intpol_met_time_3d_ap_coord(met0, met0->zeta_dot, met1, met1->zeta_dot,
-				  atm->time[ip], atm->zeta[ip], atm->lon[ip],
-				  atm->lat[ip], &zeta_dot, ci, cw_apc, 0);
-
-      /* Get position of the mid point... */
-      double dtm = atm->time[ip] + 0.5 * dt[ip];
-      double xm0 =
-	atm->lon[ip] + DX2DEG(0.5 * dt[ip] * u / 1000., atm->lat[ip]);
-      double xm1 = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v / 1000.);
-
-      //if (ip==1){printf("%f\n", atm->zeta[ip]);}
-      /*make the step in zeta_coordinates ... */
-      double xm2_zeta = atm->zeta[ip] + 0.5 * dt[ip] * zeta_dot;
-
-      //double xm2 = intpol_ap_ml2pl_mid_point(met0,met1,xm0,xm1,xm2_zeta, dtm);
-
-      //if (ip==1){printf("%f\n", xm2_zeta);}
-      // // Using zeta ...      
-      intpol_met_time_3d_ap_coord(met0, met0->u, met1, met1->u,
-				  dtm, xm2_zeta, xm0, xm1, &u, ci, cw_apc, 1);
-      intpol_met_time_3d_ap_coord(met0, met0->v, met1, met1->v,
-				  dtm, xm2_zeta, xm0, xm1, &v, ci, cw_apc, 0);
-      intpol_met_time_3d_ap_coord(met0, met0->zeta_dot, met1, met1->zeta_dot,
-				  dtm, xm2_zeta, xm0, xm1, &zeta_dot, ci,
-				  cw_apc, 0);
-
-      // /* Interpolate meteorological data for mid point... */
-      // // Using pressure ... 
-      // intpol_met_time_3d(met0, met0->u, met1, met1->u,
-      //  dtm, xm2, xm0, xm1, &u, ci, cw, 1);
-      // intpol_met_time_3d(met0, met0->v, met1, met1->v,
-      //  dtm, xm2, xm0, xm1, &v, ci, cw, 0);
-      // intpol_met_time_3d(met0, met0->w, met1, met1->w,
-      //  dtm, xm2, xm0, xm1, &w, ci, cw, 0);
-
-      /* Save new position... */
-      atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * u / 1000., xm1);
-      atm->lat[ip] += DY2DEG(dt[ip] * v / 1000.);
-
-      /* Make a step in zeta coordinates and interpolate to p */
-      atm->zeta[ip] += dt[ip] * zeta_dot;
-      //if (ip==1){printf("%f\n", atm->zeta[ip]);}
-      if (ip == 756) {
-	printf("%f\n", atm->zeta[ip]);
-      }
-      //atm->p[ip] = intpol_ap_ml2pl_time(met0,met1,atm->lon[ip],atm->lat[ip],atm->zeta[ip],atm->time[ip]); 
-      int ci_apc[3] = { 0, 0, 0 };
-      intpol_met_time_3d_ap_coord(met0, met0->patp, met1, met1->patp,
-				  atm->time[ip], atm->zeta[ip], atm->lon[ip],
-				  atm->lat[ip], &atm->p[ip], ci_apc, cw_apc,
-				  1);
-      //if (ip == 756) {
-//	printf("%f\n", atm->p[ip]);
-  //    }
-    }
-  }
-}
-
-/*****************************************************************************/
-
 void module_bound_cond(
   ctl_t * ctl,
   met_t * met0,
@@ -758,8 +624,10 @@ void module_convection(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+
   /* Create random numbers... */
   module_rng(rs, (size_t) atm->np, 0);
+
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt,rs)
@@ -1211,9 +1079,8 @@ void module_meteo(
 
     /* Interpolate meteo data... */
     INTPOL_INIT;
-    double cw_apc[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
-    INTPOL_TIME_ALL_ZETA(atm->time[ip], atm->zeta[ip], atm->lon[ip], atm->lat[ip]);
-    //INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
+    INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
+
     /* Set quantities... */
     SET_ATM(qnt_ps, ps);
     SET_ATM(qnt_ts, ts);
@@ -1346,6 +1213,7 @@ void module_position(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
+
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
@@ -1353,7 +1221,7 @@ void module_position(
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++) {
+  for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
       /* Init... */
@@ -1398,7 +1266,6 @@ void module_position(
 	}
       }
     }
-  }
 }
 
 /*****************************************************************************/
