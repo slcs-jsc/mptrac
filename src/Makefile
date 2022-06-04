@@ -6,7 +6,7 @@
 #
 # JURECA and JUWELS clusters:
 # - enable MPI and disable STATIC flag
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
+# - export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:<...>/libs/build/lib
 # ml purge
 # ml GCC ParaStationMPI
 #
