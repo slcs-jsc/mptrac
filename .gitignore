@@ -4,6 +4,7 @@ docs/latex/
 example/data/
 example/plots/
 libs/build/
+mix/
 projects/
 src/*.o
 src/atm_conv
@@ -32,5 +33,3 @@ src/tropo_sample
 src/wind
 src/met_zeta_check
 src/met_interpol_check
-mix/bmix
-mix/mix
