@@ -51,7 +51,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = ../tests/data/ei
+METBASE = meteo/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
 BOUND_MASS = 0.0
@@ -71,7 +71,7 @@ EOF
 
 # Set initial air parcel positions...
 $trac/atm_init data/trac.ctl data/atm_init.tab \
-	       INIT_T0 "$t0" INIT_T1 "$t0" \
+	       INIT_T0 $t0 INIT_T1 $t0 \
 	       INIT_Z0 10.0 INIT_Z1 10.0 \
 	       INIT_LON0 -72.117 INIT_LON1 -72.117 \
 	       INIT_LAT0 -40.59 INIT_LAT1 -40.59
@@ -89,7 +89,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 echo
 for f in $(ls data/atm_2011*tab) ; do
     echo "Plot $f ..."
-    t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
+    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
@@ -108,7 +108,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "../data/wcl.tab" u 1:2 w l lt -1 t "", \
+    "meteo/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -118,7 +118,7 @@ done
 # Plot grid data...
 for f in $(ls data/grid_2011*tab) ; do
     echo "Plot $f ..."
-    t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
+    t=$(basename $f .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
 set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
@@ -138,7 +138,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "meteo/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e
@@ -149,7 +149,7 @@ done
 echo
 error=0
 for f in $(ls data.ref/atm*tab data.ref/grid*tab) ; do
-    diff -q -s data/$(basename "$f") "$f"
+    diff -q -s data/$(basename $f) $f
     [ $? -ne 0 ] && error=1
 done
 exit $error

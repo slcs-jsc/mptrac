@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -1540,253 +1540,14 @@ double clim_tropo(
 
 /*****************************************************************************/
 
-void compress_pack(
-  char *varname,
-  float *array,
-  size_t nxy,
-  size_t nz,
-  int decompress,
-  FILE * inout) {
-
-  double min[EP], max[EP], off[EP], scl[EP];
-
-  short *sarray;
-
-  /* Allocate... */
-  ALLOC(sarray, short,
-	nxy * nz);
-
-  /* Read compressed stream and decompress array... */
-  if (decompress) {
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(short) / sizeof(float));
-
-    /* Read data... */
-    FREAD(&scl, double,
-	  nz,
-	  inout);
-    FREAD(&off, double,
-	  nz,
-	  inout);
-    FREAD(sarray, short,
-	  nxy * nz,
-	  inout);
-
-    /* Convert to float... */
-#pragma omp parallel for default(shared)
-    for (size_t ixy = 0; ixy < nxy; ixy++)
-      for (size_t iz = 0; iz < nz; iz++)
-	array[ixy * nz + iz]
-	  = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
-  }
-
-  /* Compress array and output compressed stream... */
-  else {
-
-    /* Write info... */
-    LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(short) / sizeof(float));
-
-    /* Get range... */
-    for (size_t iz = 0; iz < nz; iz++) {
-      min[iz] = array[iz];
-      max[iz] = array[iz];
-    }
-    for (size_t ixy = 1; ixy < nxy; ixy++)
-      for (size_t iz = 0; iz < nz; iz++) {
-	if (array[ixy * nz + iz] < min[iz])
-	  min[iz] = array[ixy * nz + iz];
-	if (array[ixy * nz + iz] > max[iz])
-	  max[iz] = array[ixy * nz + iz];
-      }
-
-    /* Get offset and scaling factor... */
-    for (size_t iz = 0; iz < nz; iz++) {
-      scl[iz] = (max[iz] - min[iz]) / 65533.;
-      off[iz] = min[iz] - scl[iz];
-    }
-
-    /* Convert to short... */
-#pragma omp parallel for default(shared)
-    for (size_t ixy = 1; ixy < nxy; ixy++)
-      for (size_t iz = 0; iz < nz; iz++)
-	sarray[ixy * nz + iz]
-	  = (short) ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
-
-    /* Write data... */
-    FWRITE(&scl, double,
-	   nz,
-	   inout);
-    FWRITE(&off, double,
-	   nz,
-	   inout);
-    FWRITE(sarray, short,
-	   nxy * nz,
-	   inout);
-  }
-
-  /* Free... */
-  free(sarray);
-}
-
-/*****************************************************************************/
-
-#ifdef ZFP
-void compress_zfp(
-  char *varname,
-  float *array,
-  int nx,
-  int ny,
-  int nz,
-  int precision,
-  double tolerance,
-  int decompress,
-  FILE * inout) {
-
-  zfp_type type;		/* array scalar type */
-  zfp_field *field;		/* array meta data */
-  zfp_stream *zfp;		/* compressed stream */
-  void *buffer;			/* storage for compressed stream */
-  size_t bufsize;		/* byte size of compressed buffer */
-  bitstream *stream;		/* bit stream to write to or read from */
-  size_t zfpsize;		/* byte size of compressed stream */
-
-  /* Allocate meta data for the 3D array a[nz][ny][nx]... */
-  type = zfp_type_float;
-  field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
-
-  /* Allocate meta data for a compressed stream... */
-  zfp = zfp_stream_open(NULL);
-
-  /* Set compression mode... */
-  int actual_prec = 0;
-  double actual_tol = 0;
-  if (precision > 0)
-    actual_prec = (int) zfp_stream_set_precision(zfp, (uint) precision);
-  else if (tolerance > 0)
-    actual_tol = zfp_stream_set_accuracy(zfp, tolerance);
-  else
-    ERRMSG("Set precision or tolerance!");
-
-  /* Allocate buffer for compressed data... */
-  bufsize = zfp_stream_maximum_size(zfp, field);
-  buffer = malloc(bufsize);
-
-  /* Associate bit stream with allocated buffer... */
-  stream = stream_open(buffer, bufsize);
-  zfp_stream_set_bit_stream(zfp, stream);
-  zfp_stream_rewind(zfp);
-
-  /* Read compressed stream and decompress array... */
-  if (decompress) {
-    FREAD(&zfpsize, size_t,
-	  1,
-	  inout);
-    if (fread(buffer, 1, zfpsize, inout) != zfpsize)
-      ERRMSG("Error while reading zfp data!");
-    if (!zfp_decompress(zfp, field)) {
-      ERRMSG("Decompression failed!");
-    }
-    LOG(2, "Read 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
-	varname, actual_prec, actual_tol,
-	(100. * (double) zfpsize) / (double) (nx * ny * nz));
-  }
-
-  /* Compress array and output compressed stream... */
-  else {
-    zfpsize = zfp_compress(zfp, field);
-    if (!zfpsize) {
-      ERRMSG("Compression failed!");
-    } else {
-      FWRITE(&zfpsize, size_t,
-	     1,
-	     inout);
-      if (fwrite(buffer, 1, zfpsize, inout) != zfpsize)
-	ERRMSG("Error while writing zfp data!");
-    }
-    LOG(2, "Write 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
-	varname, actual_prec, actual_tol,
-	(100. * (double) zfpsize) / (double) (nx * ny * nz));
-  }
-
-  /* Free... */
-  zfp_field_free(field);
-  zfp_stream_close(zfp);
-  stream_close(stream);
-  free(buffer);
-}
-#endif
-
-/*****************************************************************************/
-
-#ifdef ZSTD
-void compress_zstd(
-  char *varname,
-  float *array,
-  size_t n,
-  int decompress,
-  FILE * inout) {
-
-  /* Get buffer sizes... */
-  size_t uncomprLen = n * sizeof(float);
-  size_t comprLen = ZSTD_compressBound(uncomprLen);
-  size_t compsize;
-
-  /* Allocate... */
-  char *compr = (char *) calloc((uint) comprLen, 1);
-  char *uncompr = (char *) array;
-
-  /* Read compressed stream and decompress array... */
-  if (decompress) {
-    FREAD(&comprLen, size_t,
-	  1,
-	  inout);
-    if (fread(compr, 1, comprLen, inout) != comprLen)
-      ERRMSG("Error while reading zstd data!");
-    compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
-    if (ZSTD_isError(compsize)) {
-      ERRMSG("Decompression failed!");
-    }
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) comprLen) / (double) uncomprLen);
-  }
-
-  /* Compress array and output compressed stream... */
-  else {
-    compsize = ZSTD_compress(compr, comprLen, uncompr, uncomprLen, 0);
-    if (ZSTD_isError(compsize)) {
-      ERRMSG("Compression failed!");
-    } else {
-      FWRITE(&compsize, size_t,
-	     1,
-	     inout);
-      if (fwrite(compr, 1, compsize, inout) != compsize)
-	ERRMSG("Error while writing zstd data!");
-    }
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) compsize) / (double) uncomprLen);
-  }
-
-  /* Free... */
-  free(compr);
-}
-#endif
-
-/*****************************************************************************/
-
 void day2doy(
   int year,
   int mon,
   int day,
   int *doy) {
 
-  const int
-    d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 },
-    d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
+  int d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
+  int d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
 
   /* Get day of year... */
   if (year % 400 == 0 || (year % 100 != 0 && year % 4 == 0))
@@ -1803,21 +1564,19 @@ void doy2day(
   int *mon,
   int *day) {
 
-  const int
-    d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 },
-    d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
-
+  int d0[12] = { 1, 32, 60, 91, 121, 152, 182, 213, 244, 274, 305, 335 };
+  int d0l[12] = { 1, 32, 61, 92, 122, 153, 183, 214, 245, 275, 306, 336 };
   int i;
 
   /* Get month and day... */
   if (year % 400 == 0 || (year % 100 != 0 && year % 4 == 0)) {
-    for (i = 11; i > 0; i--)
+    for (i = 11; i >= 0; i--)
       if (d0l[i] <= doy)
 	break;
     *mon = i + 1;
     *day = doy - d0l[i] + 1;
   } else {
-    for (i = 11; i > 0; i--)
+    for (i = 11; i >= 0; i--)
       if (d0[i] <= doy)
 	break;
     *mon = i + 1;
@@ -1966,7 +1725,6 @@ void get_met(
 /*****************************************************************************/
 
 void get_met_help(
-  ctl_t * ctl,
   double t,
   int direct,
   char *metbase,
@@ -2022,13 +1780,12 @@ void get_met_replace(
   char *search,
   char *repl) {
 
-  char buffer[LEN];
+  char buffer[LEN], *ch;
 
   /* Iterate... */
   for (int i = 0; i < 3; i++) {
 
     /* Replace sub-string... */
-    char *ch;
     if (!(ch = strstr(orig, search)))
       return;
     strncpy(buffer, orig, (size_t) (ch - orig));
@@ -2096,6 +1853,7 @@ void intpol_met_space_3d(
   *var = cw[1] * (aux00 - aux11) + aux11;
 }
 
+
 /*****************************************************************************/
 
 void intpol_met_space_2d(
@@ -2151,107 +1909,6 @@ void intpol_met_space_2d(
 	*var = aux00;
     }
   }
-}
-
-/*****************************************************************************/
-
-void intpol_met_space_uvw(
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *w,
-  int *ci,
-  double *cw,
-  int init) {
-
-  /* Initialize interpolation... */
-  if (init) {
-
-    /* Check longitude... */
-    if (met->lon[met->nx - 1] > 180 && lon < 0)
-      lon += 360;
-
-    /* Get interpolation indices... */
-    ci[0] = locate_irr(met->p, met->np, p);
-    ci[1] = locate_reg(met->lon, met->nx, lon);
-    ci[2] = locate_reg(met->lat, met->ny, lat);
-
-    /* Get interpolation weights... */
-    cw[0] = (met->p[ci[0] + 1] - p)
-      / (met->p[ci[0] + 1] - met->p[ci[0]]);
-    cw[1] = (met->lon[ci[1] + 1] - lon)
-      / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
-    cw[2] = (met->lat[ci[2] + 1] - lat)
-      / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
-  }
-
-  /* Interpolate vertically... */
-  double u00 =
-    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][0] -
-	     met->uvw[ci[1]][ci[2]][ci[0] + 1][0])
-    + met->uvw[ci[1]][ci[2]][ci[0] + 1][0];
-  double u01 =
-    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][0] -
-	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][0])
-    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][0];
-  double u10 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][0] -
-	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][0])
-    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][0];
-  double u11 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][0] -
-	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][0])
-    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][0];
-
-  double v00 =
-    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][1] -
-	     met->uvw[ci[1]][ci[2]][ci[0] + 1][1])
-    + met->uvw[ci[1]][ci[2]][ci[0] + 1][1];
-  double v01 =
-    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][1] -
-	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][1])
-    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][1];
-  double v10 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][1] -
-	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][1])
-    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][1];
-  double v11 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][1] -
-	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][1])
-    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][1];
-
-  double w00 =
-    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][2] -
-	     met->uvw[ci[1]][ci[2]][ci[0] + 1][2])
-    + met->uvw[ci[1]][ci[2]][ci[0] + 1][2];
-  double w01 =
-    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][2] -
-	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][2])
-    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][2];
-  double w10 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][2] -
-	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][2])
-    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][2];
-  double w11 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][2] -
-	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][2])
-    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][2];
-
-  /* Interpolate horizontally... */
-  u00 = cw[2] * (u00 - u01) + u01;
-  u11 = cw[2] * (u10 - u11) + u11;
-  *u = cw[1] * (u00 - u11) + u11;
-
-  v00 = cw[2] * (v00 - v01) + v01;
-  v11 = cw[2] * (v10 - v11) + v11;
-  *v = cw[1] * (v00 - v11) + v11;
-
-  w00 = cw[2] * (w00 - w01) + w01;
-  w11 = cw[2] * (w10 - w11) + w11;
-  *w = cw[1] * (w00 - w11) + w11;
 }
 
 /*****************************************************************************/
@@ -2314,35 +1971,6 @@ void intpol_met_time_2d(
     *var = var1;
   else
     *var = var0;
-}
-
-/*****************************************************************************/
-
-void intpol_met_time_uvw(
-  met_t * met0,
-  met_t * met1,
-  double ts,
-  double p,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *w) {
-
-  double u0, u1, v0, v1, w0, w1, wt;
-
-  /* Spatial interpolation... */
-  INTPOL_INIT;
-  intpol_met_space_uvw(met0, p, lon, lat, &u0, &v0, &w0, ci, cw, 1);
-  intpol_met_space_uvw(met1, p, lon, lat, &u1, &v1, &w1, ci, cw, 0);
-
-  /* Get weighting factor... */
-  wt = (met1->time - ts) / (met1->time - met0->time);
-
-  /* Interpolate... */
-  *u = wt * (u0 - u1) + u1;
-  *v = wt * (v0 - v1) + v1;
-  *w = wt * (w0 - w1) + w1;
 }
 
 /*****************************************************************************/
@@ -2471,58 +2099,14 @@ double nat_temperature(
 
 /*****************************************************************************/
 
-void quicksort(
-  int arr[],
-  int brr[],
-  int low,
-  int high) {
-
-  if (low < high) {
-    int pi = quicksort_partition(arr, brr, low, high);
-
-#pragma omp task firstprivate(arr,brr,low,pi)
-    {
-      quicksort(arr, brr, low, pi - 1);
-    }
-
-    // #pragma omp task firstprivate(arr,brr,high,pi)
-    {
-      quicksort(arr, brr, pi + 1, high);
-    }
-  }
-}
-
-/*****************************************************************************/
-
-int quicksort_partition(
-  int arr[],
-  int brr[],
-  int low,
-  int high) {
-
-  int pivot = arr[high];
-  int i = (low - 1);
-
-  for (int j = low; j <= high - 1; j++)
-    if (arr[j] <= pivot) {
-      i++;
-      SWAP(arr[i], arr[j], int);
-      SWAP(brr[i], brr[j], int);
-    }
-  SWAP(arr[high], arr[i + 1], int);
-  SWAP(brr[high], brr[i + 1], int);
-
-  return (i + 1);
-}
-
-/*****************************************************************************/
-
 int read_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm) {
 
   FILE *in;
+
+  char line[LEN], *tok;
 
   double t0;
 
@@ -2544,16 +2128,14 @@ int read_atm(
 
     /* Open file... */
     if (!(in = fopen(filename, "r"))) {
-      WARN("Cannot open file!");
+      WARN("File not found!");
       return 0;
     }
 
     /* Read line... */
-    char line[LEN];
     while (fgets(line, LEN, in)) {
 
       /* Read data... */
-      char *tok;
       TOK(line, tok, "%lg", atm->time[atm->np]);
       TOK(NULL, tok, "%lg", atm->p[atm->np]);
       TOK(NULL, tok, "%lg", atm->lon[atm->np]);
@@ -2585,14 +2167,6 @@ int read_atm(
     if (!(in = fopen(filename, "r")))
       return 0;
 
-    /* Check version of binary data... */
-    int version;
-    FREAD(&version, int,
-	  1,
-	  in);
-    if (version != 100)
-      ERRMSG("Wrong version of binary data!");
-
     /* Read data... */
     FREAD(&atm->np, int,
 	  1,
@@ -2613,14 +2187,6 @@ int read_atm(
       FREAD(atm->q[iq], double,
 	      (size_t) atm->np,
 	    in);
-
-    /* Read final flag... */
-    int final;
-    FREAD(&final, int,
-	  1,
-	  in);
-    if (final != 999)
-      ERRMSG("Error while reading binary data!");
 
     /* Close file... */
     fclose(in);
@@ -2823,8 +2389,8 @@ int read_atm(
     LOG(2, "ZETA range: %.2f ... %.2f K", mini, maxi);
   }
   gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
-  LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
-  LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
+  LOG(2, "Altitude range: %g ... %g km", Z(mini), Z(maxi));
+  LOG(2, "Pressure range: %g ... %g hPa", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
   LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
@@ -3006,11 +2572,9 @@ void read_ctl(
   ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "1e100", NULL);
   ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "180", NULL);
 
-  /* Meteo data... */
+  /* Meteorological data... */
   scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "3600", NULL);
-  ctl->met_type =
-    (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
@@ -3059,9 +2623,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
   ctl->met_cache =
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
-
-  /* Sorting...... */
-  ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
 
   /* Isosurface parameters... */
   ctl->isosurf =
@@ -3148,8 +2709,6 @@ void read_ctl(
     ctl->molmass = 44.009;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 3.3e-4;
     ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
-  } else if (strcasecmp(ctl->species, "H2O") == 0) {
-    ctl->molmass = 18.01528;
   } else if (strcasecmp(ctl->species, "N2O") == 0) {
     ctl->molmass = 44.013;
     ctl->wet_depo[2] = ctl->wet_depo[6] = 2.4e-4;
@@ -3334,307 +2893,66 @@ void read_ctl(
 /*****************************************************************************/
 
 int read_met(
-  char *filename,
   ctl_t * ctl,
+  char *filename,
   met_t * met) {
 
+  int ncid;
+
   /* Write info... */
-  LOG(1, "Read meteo data: %s", filename);
+  LOG(1, "Read meteorological data: %s", filename);
 
-  /* Read netCDF data... */
-  if (ctl->met_type == 0) {
-
-    int ncid;
-
-    /* Open netCDF file... */
-    if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
-	NC_NOERR) {
-      WARN("Cannot open file!");
-      return 0;
-    }
-
-    /* Read coordinates of meteo data... */
-    read_met_grid(filename, ncid, ctl, met);
-
-    /* Read meteo data on vertical levels... */
-    read_met_levels(ncid, ctl, met);
-
-    /* Extrapolate data for lower boundary... */
-    read_met_extrapolate(met);
-
-    /* Read surface data... */
-    read_met_surface(ncid, met);
-
-    /* Create periodic boundary conditions... */
-    read_met_periodic(met);
-
-    /* Downsampling... */
-    read_met_sample(ctl, met);
-
-    /* Calculate geopotential heights... */
-    read_met_geopot(ctl, met);
-
-    /* Calculate potential vorticity... */
-    read_met_pv(met);
-
-    /* Calculate boundary layer data... */
-    read_met_pbl(met);
-
-    /* Calculate tropopause data... */
-    read_met_tropo(ctl, met);
-
-    /* Calculate cloud properties... */
-    read_met_cloud(met);
-
-    /* Calculate convective available potential energy... */
-    read_met_cape(met);
-
-    /* Detrending... */
-    read_met_detrend(ctl, met);
-
-    /* Close file... */
-    NC(nc_close(ncid));
+  /* Open netCDF file... */
+  if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
+      NC_NOERR) {
+    WARN("File not found!");
+    return 0;
   }
 
-  /* Read binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 4) {
+  /* Read coordinates of meteorological data... */
+  read_met_grid(filename, ncid, ctl, met);
 
-    FILE *in;
+  /* Read meteo data on vertical levels... */
+  read_met_levels(ncid, ctl, met);
 
-    double r;
+  /* Extrapolate data for lower boundary... */
+  read_met_extrapolate(met);
 
-    int year, mon, day, hour, min, sec;
+  /* Read surface data... */
+  read_met_surface(ncid, met, ctl);
 
-    /* Set timer... */
-    SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
+  /* Create periodic boundary conditions... */
+  read_met_periodic(met);
 
-    /* Open file... */
-    if (!(in = fopen(filename, "r"))) {
-      WARN("Cannot open file!");
-      return 0;
-    }
+  /* Downsampling... */
+  read_met_sample(ctl, met);
 
-    /* Check type of binary data... */
-    int met_type;
-    FREAD(&met_type, int,
-	  1,
-	  in);
-    if (met_type != ctl->met_type)
-      ERRMSG("Wrong MET_TYPE of binary data!");
+  /* Calculate geopotential heights... */
+  read_met_geopot(ctl, met);
 
-    /* Check version of binary data... */
-    int version;
-    FREAD(&version, int,
-	  1,
-	  in);
-    if (version != 100)
-      ERRMSG("Wrong version of binary data!");
+  /* Calculate potential vorticity... */
+  read_met_pv(met);
 
-    /* Read time... */
-    FREAD(&met->time, double,
-	  1,
-	  in);
-    jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
-    LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-	met->time, year, mon, day, hour, min);
-    if (year < 1900 || year > 2100 || mon < 1 || mon > 12
-	|| day < 1 || day > 31 || hour < 0 || hour > 23)
-      ERRMSG("Error while reading time!");
+  /* Calculate boundary layer data... */
+  read_met_pbl(met);
 
-    /* Read dimensions... */
-    FREAD(&met->nx, int,
-	  1,
-	  in);
-    LOG(2, "Number of longitudes: %d", met->nx);
-    if (met->nx < 2 || met->nx > EX)
-      ERRMSG("Number of longitudes out of range!");
+  /* Calculate tropopause data... */
+  read_met_tropo(ctl, met);
 
-    FREAD(&met->ny, int,
-	  1,
-	  in);
-    LOG(2, "Number of latitudes: %d", met->ny);
-    if (met->ny < 2 || met->ny > EY)
-      ERRMSG("Number of latitudes out of range!");
+  /* Calculate cloud properties... */
+  read_met_cloud(met);
 
-    FREAD(&met->np, int,
-	  1,
-	  in);
-    LOG(2, "Number of levels: %d", met->np);
-    if (met->np < 2 || met->np > EP)
-      ERRMSG("Number of levels out of range!");
+  /* Calculate convective available potential energy... */
+  read_met_cape(met);
 
-    /* Read grid... */
-    FREAD(met->lon, double,
-	    (size_t) met->nx,
-	  in);
-    LOG(2, "Longitudes: %g, %g ... %g deg",
-	met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+  /* Detrending... */
+  read_met_detrend(ctl, met);
 
-    FREAD(met->lat, double,
-	    (size_t) met->ny,
-	  in);
-    LOG(2, "Latitudes: %g, %g ... %g deg",
-	met->lat[0], met->lat[1], met->lat[met->ny - 1]);
-
-    FREAD(met->p, double,
-	    (size_t) met->np,
-	  in);
-    LOG(2, "Altitude levels: %g, %g ... %g km",
-	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
-    LOG(2, "Pressure levels: %g, %g ... %g hPa",
-	met->p[0], met->p[1], met->p[met->np - 1]);
-
-    /* Read surface data... */
-    read_met_bin_2d(in, met, met->ps, "PS");
-    read_met_bin_2d(in, met, met->ts, "TS");
-    read_met_bin_2d(in, met, met->zs, "ZS");
-    read_met_bin_2d(in, met, met->us, "US");
-    read_met_bin_2d(in, met, met->vs, "VS");
-    read_met_bin_2d(in, met, met->pbl, "PBL");
-    read_met_bin_2d(in, met, met->pt, "PT");
-    read_met_bin_2d(in, met, met->tt, "TT");
-    read_met_bin_2d(in, met, met->zt, "ZT");
-    read_met_bin_2d(in, met, met->h2ot, "H2OT");
-    read_met_bin_2d(in, met, met->pct, "PCT");
-    read_met_bin_2d(in, met, met->pcb, "PCB");
-    read_met_bin_2d(in, met, met->cl, "CL");
-    read_met_bin_2d(in, met, met->plcl, "PLCL");
-    read_met_bin_2d(in, met, met->plfc, "PLFC");
-    read_met_bin_2d(in, met, met->pel, "PEL");
-    read_met_bin_2d(in, met, met->cape, "CAPE");
-    read_met_bin_2d(in, met, met->cin, "CIN");
-
-    /* Read level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z", 0, 0.5);
-    read_met_bin_3d(in, ctl, met, met->t, "T", 0, 5.0);
-    read_met_bin_3d(in, ctl, met, met->u, "U", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->v, "V", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->w, "W", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->pv, "PV", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->o3, "O3", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 8, 0);
-
-    /* Read final flag... */
-    int final;
-    FREAD(&final, int,
-	  1,
-	  in);
-    if (final != 999)
-      ERRMSG("Error while reading binary data!");
-
-    /* Close file... */
-    fclose(in);
-  }
-
-  /* Not implemented... */
-  else
-    ERRMSG("MET_TYPE not implemented!");
-
-  /* Copy wind data to cache... */
-#pragma omp parallel for default(shared) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++) {
-	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
-	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
-	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
-      }
+  /* Close file... */
+  NC(nc_close(ncid));
 
   /* Return success... */
   return 1;
-}
-
-/*****************************************************************************/
-
-void read_met_bin_2d(
-  FILE * in,
-  met_t * met,
-  float var[EX][EY],
-  char *varname) {
-
-  float *help;
-
-  /* Allocate... */
-  ALLOC(help, float,
-	EX * EY);
-
-  /* Read uncompressed... */
-  LOG(2, "Read 2-D variable: %s (uncompressed)", varname);
-  FREAD(help, float,
-	  (size_t) (met->nx * met->ny),
-	in);
-
-  /* Copy data... */
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      var[ix][iy] = help[ix * met->ny + iy];
-
-  /* Free... */
-  free(help);
-}
-
-/*****************************************************************************/
-
-void read_met_bin_3d(
-  FILE * in,
-  ctl_t * ctl,
-  met_t * met,
-  float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance) {
-
-  float *help;
-
-  /* Allocate... */
-  ALLOC(help, float,
-	EX * EY * EP);
-
-  /* Read uncompressed data... */
-  if (ctl->met_type == 1) {
-    LOG(2, "Read 3-D variable: %s (uncompressed)", varname);
-    FREAD(help, float,
-	    (size_t) (met->nx * met->ny * met->np),
-	  in);
-  }
-
-  /* Read packed data... */
-  else if (ctl->met_type == 2)
-    compress_pack(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, 1, in);
-
-  /* Read zfp data... */
-  else if (ctl->met_type == 3) {
-#ifdef ZFP
-    compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
-		 tolerance, 1, in);
-#else
-    ERRMSG("zfp compression not supported!");
-    LOG(3, "%d %g", precision, tolerance);
-#endif
-  }
-
-  /* Read zstd data... */
-  else if (ctl->met_type == 4) {
-#ifdef ZSTD
-    compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 1,
-		  in);
-#else
-    ERRMSG("zstd compression not supported!");
-#endif
-  }
-
-  /* Copy data... */
-#pragma omp parallel for default(shared) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++)
-	var[ix][iy][ip] = help[(ix * met->ny + iy) * met->np + ip];
-
-  /* Free... */
-  free(help);
 }
 
 /*****************************************************************************/
@@ -3694,7 +3012,7 @@ void read_met_cape(
 
       /* Calculate CIN up to LCL... */
       INTPOL_INIT;
-      double dcape, dz, h2o_env, t_env;
+      double dcape, dcape_old, dz, psat, h2o_env, t_env;
       double p = met->ps[ix][iy];
       met->cape[ix][iy] = met->cin[ix][iy] = 0;
       do {
@@ -3721,13 +3039,13 @@ void read_met_cape(
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
 	t -= lapse_rate(t, h2o) * dz;
-	double psat = PSAT(t);
+	psat = PSAT(t);
 	h2o = psat / (p - (1. - EPS) * psat);
 	intpol_met_space_3d(met, met->t, p, met->lon[ix], met->lat[iy],
 			    &t_env, ci, cw, 1);
 	intpol_met_space_3d(met, met->h2o, p, met->lon[ix], met->lat[iy],
 			    &h2o_env, ci, cw, 0);
-	double dcape_old = dcape;
+	dcape_old = dcape;
 	dcape = 1e3 * G0 * (TVIRT(t, h2o) - TVIRT(t_env, h2o_env)) /
 	  TVIRT(t_env, h2o_env) * dz;
 	if (dcape > 0) {
@@ -4120,23 +3438,22 @@ void read_met_grid(
   }
 
   /* Check time... */
-  if (year < 1900 || year > 2100 || mon < 1 || mon > 12
-      || day < 1 || day > 31 || hour < 0 || hour > 23)
-    ERRMSG("Cannot read time from filename!");
   jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
-  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+  LOG(2, "Time from filename: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);
+
+
 
   /* Get grid dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nx));
-  LOG(2, "Number of longitudes: %zu", nx);
+  LOG(2, "Number of longitudes: %lu", nx);
   if (nx < 2 || nx > EX)
     ERRMSG("Number of longitudes out of range!");
 
   NC(nc_inq_dimid(ncid, "lat", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &ny));
-  LOG(2, "Number of latitudes: %zu", ny);
+  LOG(2, "Number of latitudes: %lu", ny);
   if (ny < 2 || ny > EY)
     ERRMSG("Number of latitudes out of range!");
 
@@ -4157,7 +3474,7 @@ void read_met_grid(
     }
     NC(nc_inq_dimlen(ncid, dimid, &np));
   }
-  LOG(2, "Number of levels: %zu", np);
+  LOG(2, "Number of levels: %lu", np);
   if (np < 2 || np > EP)
     ERRMSG("Number of levels out of range!");
 
@@ -4197,232 +3514,7 @@ void read_met_grid(
 
 /*****************************************************************************/
 
-void read_met_levels(
-  int ncid,
-  ctl_t * ctl,
-  met_t * met) {
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
-  LOG(2, "Read level data...");
-
-  /* Read meteo data... */
-  if (!read_met_nc_3d(ncid, "t", "T", met, met->t, 1.0, 1))
-    ERRMSG("Cannot read temperature!");
-  if (!read_met_nc_3d(ncid, "u", "U", met, met->u, 1.0, 1))
-    ERRMSG("Cannot read zonal wind!");
-  if (!read_met_nc_3d(ncid, "v", "V", met, met->v, 1.0, 1))
-    ERRMSG("Cannot read meridional wind!");
-  if (!read_met_nc_3d(ncid, "w", "W", met, met->w, 0.01f, 1))
-    WARN("Cannot read vertical velocity!");
-  if (!read_met_nc_3d(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
-    WARN("Cannot read specific humidity!");
-  if (!read_met_nc_3d(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
-    WARN("Cannot read ozone data!");
-  if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
-    if (!read_met_nc_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
-      WARN("Cannot read cloud liquid water content!");
-    if (!read_met_nc_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
-      WARN("Cannot read cloud ice water content!");
-  }
-  if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
-    if (!read_met_nc_3d
-	(ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud rain water content!");
-    if (!read_met_nc_3d
-	(ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
-      WARN("Cannot read cloud snow water content!");
-  }
-
-  /* Transfer from model levels to pressure levels... */
-  if (ctl->met_np > 0) {
-
-    /* Read pressure on model levels... */
-    if (!read_met_nc_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
-      ERRMSG("Cannot read pressure on model levels!");
-
-    /* Vertical interpolation from model to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
-    read_met_ml2pl(ctl, met, met->u);
-    read_met_ml2pl(ctl, met, met->v);
-    read_met_ml2pl(ctl, met, met->w);
-    read_met_ml2pl(ctl, met, met->h2o);
-    read_met_ml2pl(ctl, met, met->o3);
-    read_met_ml2pl(ctl, met, met->lwc);
-    read_met_ml2pl(ctl, met, met->iwc);
-
-    /* Set new pressure levels... */
-    met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
-  }
-
-  /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++)
-    if (met->p[ip - 1] < met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
-}
-
-/*****************************************************************************/
-
-void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
-  float var[EX][EY][EP]) {
-
-  double aux[EP], p[EP];
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_ML2PL", "METPROC", NVTX_READ);
-  LOG(2, "Interpolate meteo data to pressure levels...");
-
-  /* Loop over columns... */
-#pragma omp parallel for default(shared) private(aux,p) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++) {
-
-      /* Copy pressure profile... */
-      for (int ip = 0; ip < met->np; ip++)
-	p[ip] = met->pl[ix][iy][ip];
-
-      /* Interpolate... */
-      for (int ip = 0; ip < ctl->met_np; ip++) {
-	double pt = ctl->met_p[ip];
-	if ((pt > p[0] && p[0] > p[1]) || (pt < p[0] && p[0] < p[1]))
-	  pt = p[0];
-	else if ((pt > p[met->np - 1] && p[1] > p[0])
-		 || (pt < p[met->np - 1] && p[1] < p[0]))
-	  pt = p[met->np - 1];
-	int ip2 = locate_irr(p, met->np, pt);
-	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
-		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
-      }
-
-      /* Copy data... */
-      for (int ip = 0; ip < ctl->met_np; ip++)
-	var[ix][iy][ip] = (float) aux[ip];
-    }
-}
-
-/*****************************************************************************/
-
-int read_met_nc_2d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  met_t * met,
-  float dest[EX][EY],
-  float scl,
-  int init) {
-
-  char varsel[LEN];
-
-  float offset, scalfac;
-
-  int varid;
-
-  /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
-      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
-      return 0;
-    } else {
-      sprintf(varsel, "%s", varname2);
-  } else
-    sprintf(varsel, "%s", varname);
-
-  /* Read packed data... */
-  if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
-
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 2-D variable: %s"
-	" (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++) {
-	if (init)
-	  dest[ix][iy] = 0;
-	short aux = help[iy * met->nx + ix];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux * scalfac + offset) < 1e14f)
-	  dest[ix][iy] += scl * (aux * scalfac + offset);
-	else
-	  dest[ix][iy] = GSL_NAN;
-      }
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Unpacked data... */
-  else {
-
-    /* Allocate... */
-    float *help;
-    ALLOC(help, float,
-	  EX * EY);
-
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-
-    /* Read data... */
-    NC(nc_get_var_float(ncid, varid, help));
-
-    /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++) {
-	if (init)
-	  dest[ix][iy] = 0;
-	float aux = help[iy * met->nx + ix];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux) < 1e14f)
-	  dest[ix][iy] += scl * aux;
-	else
-	  dest[ix][iy] = GSL_NAN;
-      }
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Return... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-int read_met_nc_3d(
+int read_met_help_3d(
   int ncid,
   char *varname,
   char *varname2,
@@ -4480,8 +3572,8 @@ int read_met_nc_3d(
 	  if (init)
 	    dest[ix][iy][ip] = 0;
 	  short aux = help[(ip * met->ny + iy) * met->nx + ix];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
+	  if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	      && (missval == 0 || (missval != 0 && aux != missval))
 	      && fabsf(aux * scalfac + offset) < 1e14f)
 	    dest[ix][iy][ip] += scl * (aux * scalfac + offset);
 	  else
@@ -4522,13 +3614,132 @@ int read_met_nc_3d(
 	  if (init)
 	    dest[ix][iy][ip] = 0;
 	  float aux = help[(ip * met->ny + iy) * met->nx + ix];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
+	  if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	      && (missval == 0 || (missval != 0 && aux != missval))
 	      && fabsf(aux) < 1e14f)
 	    dest[ix][iy][ip] += scl * aux;
 	  else
 	    dest[ix][iy][ip] = GSL_NAN;
 	}
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Return... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+int read_met_help_2d(
+  int ncid,
+  char *varname,
+  char *varname2,
+  met_t * met,
+  float dest[EX][EY],
+  float scl,
+  int init) {
+
+  char varsel[LEN];
+
+  float offset, scalfac;
+
+  int varid;
+
+  /* Check if variable exists... */
+  if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
+      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
+      return 0;
+    } else {
+      sprintf(varsel, "%s", varname2);
+  } else
+    sprintf(varsel, "%s", varname);
+
+  /* Read packed data... */
+  if (nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
+
+    /* Write info... */
+    LOG(2, "Packed: scale_factor= %g / add_offset= %g", scalfac, offset);
+
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s"
+	" (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
+
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+	if (init)
+	  dest[ix][iy] = 0;
+	short aux = help[iy * met->nx + ix];
+	if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	    && (missval == 0 || (missval != 0 && aux != missval))
+	    && fabsf(aux * scalfac + offset) < 1e14f)
+	  dest[ix][iy] += scl * (aux * scalfac + offset);
+	else
+	  dest[ix][iy] = GSL_NAN;
+      }
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Unpacked data... */
+  else {
+
+    /* Allocate... */
+    float *help;
+    ALLOC(help, float,
+	  EX * EY);
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
+    /* Read data... */
+    NC(nc_get_var_float(ncid, varid, help));
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+	if (init)
+	  dest[ix][iy] = 0;
+	float aux = help[iy * met->nx + ix];
+	if ((fillval == 0 || (fillval != 0 && aux != fillval))
+	    && (missval == 0 || (missval != 0 && aux != missval))
+	    && fabsf(aux) < 1e14f)
+	  dest[ix][iy] += scl * aux;
+	else
+	  dest[ix][iy] = GSL_NAN;
+      }
 
     /* Free... */
     free(help);
@@ -4767,18 +3978,17 @@ void read_met_pbl(
       double tvs = THETAVIRT(pbl_bot, ts, h2os);
 
       /* Init... */
-      double rib_old = 0;
+      double rib, rib_old = 0, vh2;
 
       /* Loop over levels... */
       for (; ip < met->np; ip++) {
 
 	/* Get squared horizontal wind speed... */
-	double vh2
-	  = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
+	vh2 = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
 	vh2 = GSL_MAX(vh2, SQR(umin));
 
 	/* Calculate bulk Richardson number... */
-	double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
 	  * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
 		       met->h2o[ix][iy][ip]) - tvs) / vh2;
 
@@ -5083,7 +4293,7 @@ void read_met_surface(
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
   LOG(2, "Read surface data...");
-  
+
   /* Read surface pressure... */
   if (ctl->clams_met_data == 0) {
     if (!read_met_help_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
@@ -5108,24 +4318,28 @@ void read_met_surface(
       }
     }
   }
-  
+
+
+
+
+
   /* Read geopotential height at the surface... */
-  if (!read_met_nc_2d
+  if (!read_met_help_2d
       (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
-    if (!read_met_nc_2d
+    if (!read_met_help_2d
 	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
       WARN("Cannot read surface geopotential height!");
 
   /* Read temperature at the surface... */
-  if (!read_met_nc_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
+  if (!read_met_help_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
-  if (!read_met_nc_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
+  if (!read_met_help_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
-  if (!read_met_nc_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
+  if (!read_met_help_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
     WARN("Cannot read surface meridional wind!");
 }
 
@@ -5316,7 +4530,8 @@ double scan_ctl(
 
   FILE *in = NULL;
 
-  char fullname1[LEN], fullname2[LEN], rval[LEN];
+  char dummy[LEN], fullname1[LEN], fullname2[LEN], line[LEN],
+    rvarname[LEN], rval[LEN];
 
   int contain = 0, i;
 
@@ -5335,17 +4550,14 @@ double scan_ctl(
   }
 
   /* Read data... */
-  if (in != NULL) {
-    char dummy[LEN], line[LEN], rvarname[LEN];
-    while (fgets(line, LEN, in)) {
-      if (sscanf(line, "%4999s %4999s %4999s", rvarname, dummy, rval) == 3)
+  if (in != NULL)
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%s %s %s", rvarname, dummy, rval) == 3)
 	if (strcasecmp(rvarname, fullname1) == 0 ||
 	    strcasecmp(rvarname, fullname2) == 0) {
 	  contain = 1;
 	  break;
 	}
-    }
-  }
   for (i = 1; i < argc - 1; i++)
     if (strcasecmp(argv[i], fullname1) == 0 ||
 	strcasecmp(argv[i], fullname2) == 0) {
@@ -5478,9 +4690,7 @@ float stddev(
     var += SQR(data[i]);
   }
 
-  var = var / (float) n - SQR(mean / (float) n);
-
-  return (var > 0 ? sqrtf(var) : 0);
+  return sqrtf(var / (float) n - SQR(mean / (float) n));
 }
 
 /*****************************************************************************/
@@ -5605,7 +4815,9 @@ void write_atm(
   atm_t * atm,
   double t) {
 
-  FILE *out;
+  FILE *in, *out;
+
+  char line[LEN];
 
   double r, t0, t1;
 
@@ -5640,10 +4852,8 @@ void write_atm(
 	      year, mon, day, hour, min);
 
       /* Dump gnuplot file to pipe... */
-      FILE *in;
       if (!(in = fopen(ctl->atm_gpfile, "r")))
 	ERRMSG("Cannot open file!");
-      char line[LEN];
       while (fgets(line, LEN, in))
 	fprintf(out, "%s", line);
       fclose(in);
@@ -5698,12 +4908,6 @@ void write_atm(
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
-    /* Write version of binary data... */
-    int version = 100;
-    FWRITE(&version, int,
-	   1,
-	   out);
-
     /* Write data... */
     FWRITE(&atm->np, int,
 	   1,
@@ -5724,12 +4928,6 @@ void write_atm(
       FWRITE(atm->q[iq], double,
 	       (size_t) atm->np,
 	     out);
-
-    /* Write final flag... */
-    int final = 999;
-    FWRITE(&final, int,
-	   1,
-	   out);
 
     /* Close file... */
     fclose(out);
@@ -6000,8 +5198,8 @@ void write_atm(
     LOG(2, "ZETA range: %.4f ... %.4f K", mini, maxi);
   }
   gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
-  LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
-  LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
+  LOG(2, "Altitude range: %g ... %g km", Z(mini), Z(maxi));
+  LOG(2, "Pressure range: %g ... %g hPa", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
   LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
@@ -6029,8 +5227,8 @@ void write_csi(
   static char line[LEN];
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
-    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz,
-    x[1000000], y[1000000];
+    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz, lat,
+    x[1000000], y[1000000], work[2000000];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
 
@@ -6086,7 +5284,7 @@ void write_csi(
 
     /* Set horizontal coordinates... */
     for (iy = 0; iy < ctl->csi_ny; iy++) {
-      double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      lat = ctl->csi_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat * M_PI / 180.);
     }
   }
@@ -6202,7 +5400,6 @@ void write_csi(
 
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
-    static double work[2000000];
     int nobs = cx + cy;
     int nfor = cx + cz;
     double bias = (nobs > 0) ? 100. * nfor / nobs : GSL_NAN;
@@ -6325,7 +5522,7 @@ void write_ens(
 	  fprintf(out, " ");
 	  fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
 	}
-	fprintf(out, " %zu\n", n);
+	fprintf(out, " %lu\n", n);
       }
 
       /* Init new ensemble... */
@@ -6364,7 +5561,7 @@ void write_ens(
       fprintf(out, " ");
       fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
     }
-    fprintf(out, " %zu\n", n);
+    fprintf(out, " %lu\n", n);
   }
 
   /* Close file... */
@@ -6573,201 +5770,6 @@ void write_grid(
 
   /* Close file... */
   fclose(out);
-}
-
-/*****************************************************************************/
-
-int write_met(
-  char *filename,
-  ctl_t * ctl,
-  met_t * met) {
-
-  /* Set timer... */
-  SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
-
-  /* Write info... */
-  LOG(1, "Write meteo data: %s", filename);
-
-  /* Write binary... */
-  if (ctl->met_type >= 1 && ctl->met_type <= 4) {
-
-    /* Create file... */
-    FILE *out;
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create file!");
-
-    /* Write type of binary data... */
-    FWRITE(&ctl->met_type, int,
-	   1,
-	   out);
-
-    /* Write version of binary data... */
-    int version = 100;
-    FWRITE(&version, int,
-	   1,
-	   out);
-
-    /* Write grid data... */
-    FWRITE(&met->time, double,
-	   1,
-	   out);
-    FWRITE(&met->nx, int,
-	   1,
-	   out);
-    FWRITE(&met->ny, int,
-	   1,
-	   out);
-    FWRITE(&met->np, int,
-	   1,
-	   out);
-    FWRITE(met->lon, double,
-	     (size_t) met->nx,
-	   out);
-    FWRITE(met->lat, double,
-	     (size_t) met->ny,
-	   out);
-    FWRITE(met->p, double,
-	     (size_t) met->np,
-	   out);
-
-    /* Write surface data... */
-    write_met_bin_2d(out, met, met->ps, "PS");
-    write_met_bin_2d(out, met, met->ts, "TS");
-    write_met_bin_2d(out, met, met->zs, "ZS");
-    write_met_bin_2d(out, met, met->us, "US");
-    write_met_bin_2d(out, met, met->vs, "VS");
-    write_met_bin_2d(out, met, met->pbl, "PBL");
-    write_met_bin_2d(out, met, met->pt, "PT");
-    write_met_bin_2d(out, met, met->tt, "TT");
-    write_met_bin_2d(out, met, met->zt, "ZT");
-    write_met_bin_2d(out, met, met->h2ot, "H2OT");
-    write_met_bin_2d(out, met, met->pct, "PCT");
-    write_met_bin_2d(out, met, met->pcb, "PCB");
-    write_met_bin_2d(out, met, met->cl, "CL");
-    write_met_bin_2d(out, met, met->plcl, "PLCL");
-    write_met_bin_2d(out, met, met->plfc, "PLFC");
-    write_met_bin_2d(out, met, met->pel, "PEL");
-    write_met_bin_2d(out, met, met->cape, "CAPE");
-    write_met_bin_2d(out, met, met->cin, "CIN");
-
-    /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, 0.5);
-    write_met_bin_3d(out, ctl, met, met->t, "T", 0, 5.0);
-    write_met_bin_3d(out, ctl, met, met->u, "U", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->v, "V", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->w, "W", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->pv, "PV", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->o3, "O3", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 8, 0);
-
-    /* Write final flag... */
-    int final = 999;
-    FWRITE(&final, int,
-	   1,
-	   out);
-
-    /* Close file... */
-    fclose(out);
-  }
-
-  /* Not implemented... */
-  else
-    ERRMSG("MET_TYPE not implemented!");
-
-  return 0;
-}
-
-/*****************************************************************************/
-
-void write_met_bin_2d(
-  FILE * out,
-  met_t * met,
-  float var[EX][EY],
-  char *varname) {
-
-  float *help;
-
-  /* Allocate... */
-  ALLOC(help, float,
-	EX * EY);
-
-  /* Copy data... */
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      help[ix * met->ny + iy] = var[ix][iy];
-
-  /* Write uncompressed data... */
-  LOG(2, "Write 2-D variable: %s (uncompressed)", varname);
-  FWRITE(help, float,
-	   (size_t) (met->nx * met->ny),
-	 out);
-
-  /* Free... */
-  free(help);
-}
-
-/*****************************************************************************/
-
-void write_met_bin_3d(
-  FILE * out,
-  ctl_t * ctl,
-  met_t * met,
-  float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance) {
-
-  float *help;
-
-  /* Allocate... */
-  ALLOC(help, float,
-	EX * EY * EP);
-
-  /* Copy data... */
-#pragma omp parallel for default(shared) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++)
-	help[(ix * met->ny + iy) * met->np + ip] = var[ix][iy][ip];
-
-  /* Write uncompressed data... */
-  if (ctl->met_type == 1) {
-    LOG(2, "Write 3-D variable: %s (uncompressed)", varname);
-    FWRITE(help, float,
-	     (size_t) (met->nx * met->ny * met->np),
-	   out);
-  }
-
-  /* Write packed data... */
-  else if (ctl->met_type == 2)
-    compress_pack(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, 0, out);
-
-  /* Write zfp data... */
-  else if (ctl->met_type == 3) {
-#ifdef ZFP
-    compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
-		 tolerance, 0, out);
-#else
-    ERRMSG("zfp compression not supported!");
-    LOG(3, "%d %g", precision, tolerance);
-#endif
-  }
-
-  /* Write zstd data... */
-  else if (ctl->met_type == 4) {
-#ifdef ZSTD
-    compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 0,
-		  out);
-#else
-    ERRMSG("zstd compression not supported!");
-#endif
-  }
-
-  /* Free... */
-  free(help);
 }
 
 /*****************************************************************************/

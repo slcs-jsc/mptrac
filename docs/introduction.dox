@@ -1,28 +1,17 @@
-# Massive-Parallel Trajectory Calculations (MPTRAC)
+/*! \page Introduction Introduction
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the analysis of atmospheric transport processes in the troposphere and stratosphere.
+# Features
 
-[![release (latest by date)](https://img.shields.io/github/v/release/slcs-jsc/mptrac)](https://github.com/slcs-jsc/mptrac/releases)
-[![commits since latest release (by SemVer)](https://img.shields.io/github/commits-since/slcs-jsc/mptrac/latest)](https://github.com/slcs-jsc/mptrac/commits/master)
-[![last commit](https://img.shields.io/github/last-commit/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/commits/master)
-[![code size in bytes](https://img.shields.io/github/languages/code-size/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
-[![top language](https://img.shields.io/github/languages/top/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/tree/master/src)
-[![test case](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/testcase?label=test%20case)](https://github.com/slcs-jsc/mptrac/actions)
-[![doxygen](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/doxygen?label=doxygen)](https://slcs-jsc.github.io/mptrac)
-[![license](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
-[![doi](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
+  - MPTRAC is a Lagrangian particle dispersion model for the analysis of atmospheric transport processes in the troposphere and stratosphere.
+  - MPTRAC calculates particle trajectories by solving the kinematic equation of motion using given wind fields.
+  - Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
+  - Additional modules are implemented to simulate convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
+  - Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
+  - MPTRAC features an MPI/OpenMP/OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
 
-## Features
+# Getting started
 
-* MPTRAC calculates particle trajectories by solving the kinematic equation of motion using given wind fields.
-* Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
-* Additional modules are implemented to simulate convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
-* Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
-* MPTRAC features an MPI/OpenMP/OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
-
-## Getting started
-
-### Prerequisites
+## Prerequisites
 
 This documentation describes the installation of MPTRAC on a Linux system. A number of standard tools (gcc, git, make) and software libraries are needed to install MPTRAC. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. Copies of these libraries are provided in the MPTRAC git repository.
 
@@ -34,7 +23,7 @@ To update an existing installation use:
 
     git pull https://github.com/slcs-jsc/mptrac.git
 
-### Installation
+## Installation
 
 First, compile the GSL and netCDF library required by MPTRAC by running the build script:
 
@@ -64,7 +53,7 @@ By default, the binaries will be linked statically, i.e., they can be copied to 
 
 By default we apply rather strict compiler warnings to catch problems. Also, all warning messages will be turned into errors and no binaries will be produced. This behavior is enforced by the flag `-Werror`. It should not be removed from the CFLAGS in the Makefile, unless you know what you are doing.
 
-### Run the example
+## Run the example
 
 An example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
@@ -84,29 +73,25 @@ Please see the example script (run.sh) on how to invoke MPTRAC programs such as 
 
 The script generates a number of plots of the simulation output at different time steps after the eruption by means of `gnuplot`. These plots should look similar to the output already provided in the repository.
 
-This is an example showing the particle position and grid output on 6th and 8th of June 2011:
-<p align="center"><img src="example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
-
-## Further information
+# Further information
 
 These are the main references for citing the MPTRAC model in scientific publications:
 
-* Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
+* Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, [https://doi.org/10.1002/2015JD023749](https://doi.org/10.1002/2015JD023749), 2016. 
 
-* You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
+* You can cite the source code of MPTRAC by using the DOI [https://doi.org/10.5281/zenodo.4400597](https://doi.org/10.5281/zenodo.4400597). This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
 
 More detailed information for new users and developers of MPTRAC is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
-## Contributing
+# Contributing
 
 We are interested in sharing MPTRAC for operational and research applications. Please do not hesitate to contact us, if you have any further questions or need support.
 
-## License
+# License
 
 MPTRAC is distributed under the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
 
-## Contact
+# Contact
 
 Dr. Lars Hoffmann
 
@@ -115,3 +100,5 @@ Jülich Supercomputing Centre, Forschungszentrum Jülich
 e-mail: l.hoffmann@fz-juelich.de
 
 website: https://www.fz-juelich.de/ias/jsc/slcs
+
+*/

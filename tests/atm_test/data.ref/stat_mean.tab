@@ -1,8 +1,0 @@
-# $1 = time [s]
-# $2 = time difference [s]
-# $3 = altitude (mean) [km]
-# $4 = longitude (mean) [deg]
-# $5 = latitude (mean) [deg]
-# $6 = number of particles
-
-0.00 0.00 29.6577 0.989787 0.0354417 6715

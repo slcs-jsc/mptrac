@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -123,7 +123,7 @@ void module_isosurf(
   atm_t * atm,
   cache_t * cache);
 
-/*! Interpolate meteo data for air parcel positions. */
+/*! Interpolate meteorological data for air parcel positions. */
 void module_meteo(
   ctl_t * ctl,
   met_t * met0,
@@ -163,12 +163,6 @@ void module_sedi(
   met_t * met1,
   atm_t * atm,
   double *dt);
-
-/*! Sort particles according to box index. */
-void module_sort(
-  ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm);
 
 /*! Calculate time steps. */
 void module_timesteps(
@@ -255,7 +249,7 @@ int main(
     ERRMSG("Cannot open directory list!");
 
   /* Loop over directories... */
-  while (fscanf(dirlist, "%4999s", dirname) != EOF) {
+  while (fscanf(dirlist, "%s", dirname) != EOF) {
 
     /* MPI parallelization... */
     if ((++ntask) % size != rank)
@@ -303,7 +297,7 @@ int main(
     /* Initialize random number generator... */
     module_rng_init(ntask);
 
-    /* Initialize meteo data... */
+    /* Initialize meteorological data... */
     get_met(&ctl, ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
@@ -340,20 +334,16 @@ int main(
       /* Set time steps of air parcels... */
       module_timesteps(&ctl, atm, dt, t);
 
-      /* Get meteo data... */
+      /* Get meteorological data... */
       if (t != ctl.t_start)
 	get_met(&ctl, t, &met0, &met1);
 
-      /* Check if zeta coordinates are monoton...*/
+      //* Check if zeta coordinates are monoton...*/
       if (ctl.vert_coord_ap == 1) {
 	//intpol_atm(met0,met1,atm);
 	check_monotonocity(met0);
 	check_monotonocity(met1);
       }
-
-      /* Sort particles... */
-      if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
-	module_sort(&ctl, met0, atm);
 
       /* Check initial positions... */
       module_position(&ctl, met0, met1, atm, dt);
@@ -396,7 +386,7 @@ int main(
       /* Check final positions... */
       module_position(&ctl, met0, met1, atm, dt);
 
-      /* Interpolate meteo data... */
+      /* Interpolate meteorological data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
 	module_meteo(&ctl, met0, met1, atm);
@@ -519,9 +509,11 @@ void module_advect_mp(
 
       double u, v, w;
 
-      /* Interpolate meteo data... */
-      intpol_met_time_uvw(met0, met1, atm->time[ip], atm->p[ip],
-			  atm->lon[ip], atm->lat[ip], &u, &v, &w);
+      /* Interpolate meteorological data... */
+      INTPOL_INIT;
+      INTPOL_3D(u, 1);
+      INTPOL_3D(v, 0);
+      INTPOL_3D(w, 0);
 
       /* Get position of the mid point... */
       double dtm = atm->time[ip] + 0.5 * dt[ip];
@@ -530,8 +522,13 @@ void module_advect_mp(
       double xm1 = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v / 1000.);
       double xm2 = atm->p[ip] + 0.5 * dt[ip] * w;
 
-      /* Interpolate meteo data for mid point... */
-      intpol_met_time_uvw(met0, met1, dtm, xm2, xm0, xm1, &u, &v, &w);
+      /* Interpolate meteorological data for mid point... */
+      intpol_met_time_3d(met0, met0->u, met1, met1->u,
+			 dtm, xm2, xm0, xm1, &u, ci, cw, 1);
+      intpol_met_time_3d(met0, met0->v, met1, met1->v,
+			 dtm, xm2, xm0, xm1, &v, ci, cw, 0);
+      intpol_met_time_3d(met0, met0->w, met1, met1->w,
+			 dtm, xm2, xm0, xm1, &w, ci, cw, 0);
 
       /* Save new position... */
       atm->time[ip] += dt[ip];
@@ -564,6 +561,7 @@ void module_advect_rk(
 
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
+      INTPOL_INIT;
 
       /* Loop over integration nodes... */
       for (int i = 0; i < 4; i++) {
@@ -580,11 +578,15 @@ void module_advect_rk(
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->p[ip] + dts * w[i - 1];
 	}
-	double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data... */
-	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
-			    &u[i], &v[i], &w[i]);
+	double tm = atm->time[ip] + dts;
+	intpol_met_time_3d(met0, met0->u, met1, met1->u, tm, x[2], x[0], x[1],
+			   &u[i], ci, cw, 1);
+	intpol_met_time_3d(met0, met0->v, met1, met1->v, tm, x[2], x[0], x[1],
+			   &v[i], ci, cw, 0);
+	intpol_met_time_3d(met0, met0->w, met1, met1->w, tm, x[2], x[0], x[1],
+			   &w[i], ci, cw, 0);
 
 	/* Get mean wind... */
 	double k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
@@ -770,7 +772,7 @@ void module_convection(
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
-      double cape, cin, pel, ps;
+      double cape, cin, pbot, pel, ps, ptop;
 
       /* Interpolate CAPE... */
       INTPOL_INIT;
@@ -794,8 +796,7 @@ void module_convection(
 	  continue;
 
 	/* Set pressure range for mixing... */
-	double pbot = atm->p[ip];
-	double ptop = atm->p[ip];
+	pbot = ptop = atm->p[ip];
 	if (ctl->conv_mix_bot == 1) {
 	  INTPOL_2D(ps, 0);
 	  pbot = ps;
@@ -890,31 +891,33 @@ void module_diffusion_meso(
       int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
       int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
-      /* Get standard deviations of local wind data... */
-      float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
-      for (int i = 0; i < 2; i++)
-	for (int j = 0; j < 2; j++)
-	  for (int k = 0; k < 2; k++) {
-	    umean += met0->uvw[ix + i][iy + j][iz + k][0];
-	    usig += SQR(met0->uvw[ix + i][iy + j][iz + k][0]);
-	    vmean += met0->uvw[ix + i][iy + j][iz + k][1];
-	    vsig += SQR(met0->uvw[ix + i][iy + j][iz + k][1]);
-	    wmean += met0->uvw[ix + i][iy + j][iz + k][2];
-	    wsig += SQR(met0->uvw[ix + i][iy + j][iz + k][2]);
+      /* Caching of wind standard deviations... */
+      if (cache->tsig[ix][iy][iz] != met0->time) {
 
-	    umean += met1->uvw[ix + i][iy + j][iz + k][0];
-	    usig += SQR(met1->uvw[ix + i][iy + j][iz + k][0]);
-	    vmean += met1->uvw[ix + i][iy + j][iz + k][1];
-	    vsig += SQR(met1->uvw[ix + i][iy + j][iz + k][1]);
-	    wmean += met1->uvw[ix + i][iy + j][iz + k][2];
-	    wsig += SQR(met1->uvw[ix + i][iy + j][iz + k][2]);
-	  }
-      usig = usig / 16.f - SQR(umean / 16.f);
-      usig = (usig > 0 ? sqrtf(usig) : 0);
-      vsig = vsig / 16.f - SQR(vmean / 16.f);
-      vsig = (vsig > 0 ? sqrtf(vsig) : 0);
-      wsig = wsig / 16.f - SQR(wmean / 16.f);
-      wsig = (wsig > 0 ? sqrtf(wsig) : 0);
+	/* Collect local wind data... */
+	int n = 0;
+	float u[16], v[16], w[16];
+	for (int i = 0; i < 2; i++)
+	  for (int j = 0; j < 2; j++)
+	    for (int k = 0; k < 2; k++) {
+	      u[n] = met0->u[ix + i][iy + j][iz + k];
+	      v[n] = met0->v[ix + i][iy + j][iz + k];
+	      w[n] = met0->w[ix + i][iy + j][iz + k];
+	      n++;
+	      u[n] = met1->u[ix + i][iy + j][iz + k];
+	      v[n] = met1->v[ix + i][iy + j][iz + k];
+	      w[n] = met1->w[ix + i][iy + j][iz + k];
+	      n++;
+	    }
+
+	/* Get standard deviations of local wind data... */
+	cache->uvwsig[ix][iy][iz][0] = stddev(u, n);
+	cache->uvwsig[ix][iy][iz][1] = stddev(v, n);
+	cache->uvwsig[ix][iy][iz][2] = stddev(w, n);
+
+	/* Save new time... */
+	cache->tsig[ix][iy][iz] = met0->time;
+      }
 
       /* Set temporal correlations for mesoscale fluctuations... */
       double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
@@ -924,13 +927,15 @@ void module_diffusion_meso(
       if (ctl->turb_mesox > 0) {
 	cache->uvwp[ip][0] = (float)
 	  (r * cache->uvwp[ip][0]
-	   + r2 * rs[3 * ip] * ctl->turb_mesox * usig);
+	   +
+	   r2 * rs[3 * ip] * ctl->turb_mesox * cache->uvwsig[ix][iy][iz][0]);
 	atm->lon[ip] +=
 	  DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
 	cache->uvwp[ip][1] = (float)
 	  (r * cache->uvwp[ip][1]
-	   + r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
+	   + r2 * rs[3 * ip +
+		     1] * ctl->turb_mesox * cache->uvwsig[ix][iy][iz][1]);
 	atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
       }
 
@@ -938,7 +943,8 @@ void module_diffusion_meso(
       if (ctl->turb_mesoz > 0) {
 	cache->uvwp[ip][2] = (float)
 	  (r * cache->uvwp[ip][2]
-	   + r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
+	   + r2 * rs[3 * ip +
+		     2] * ctl->turb_mesoz * cache->uvwsig[ix][iy][iz][2]);
 	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
       }
     }
@@ -1209,7 +1215,7 @@ void module_meteo(
     double ps, ts, zs, us, vs, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape,
       cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
 
-    /* Interpolate meteo data... */
+    /* Interpolate meteorological data... */
     INTPOL_INIT;
     double cw_apc[6] = { 0.0, 0.0, 0.0, 0.0, 0.0, 0.0 };
     INTPOL_TIME_ALL_ZETA(atm->time[ip], atm->zeta[ip], atm->lon[ip], atm->lat[ip]);
@@ -1512,68 +1518,6 @@ void module_sedi(
       /* Calculate pressure change... */
       atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
     }
-}
-
-/*****************************************************************************/
-
-void module_sort(
-  ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  int *idx, *p;
-  ALLOC(idx, int,
-	NP);
-  ALLOC(p, int,
-	NP);
-
-  /* Update host... */
-#ifdef _OPENACC
-#pragma acc update host(atm[:1])
-#endif
-
-  /* Get box index... */
-  const int np = atm->np;
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-    p[ip] = ip;
-    idx[ip] =
-      (locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny
-       + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
-      + locate_irr(met0->p, met0->np, atm->p[ip]);
-  }
-
-  /* Sort particles according to box index... */
-#pragma omp parallel
-  {
-#pragma omp single nowait
-    quicksort(idx, p, 0, np - 1);
-  }
-
-  /* Swap data... */
-  for (int ip = 0; ip < np; ip++)
-    if (ip != p[ip]) {
-      SWAP(atm->time[ip], atm->time[p[ip]], double);
-      SWAP(atm->p[ip], atm->p[p[ip]], double);
-      SWAP(atm->lon[ip], atm->lon[p[ip]], double);
-      SWAP(atm->lat[ip], atm->lat[p[ip]], double);
-      for (int iq = 0; iq < ctl->nq; iq++)
-	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
-      p[ip] = ip;
-    }
-
-  /* Update device... */
-#ifdef _OPENACC
-#pragma acc update device(atm[:1])
-#endif
-
-  /* Free... */
-  free(idx);
-  free(p);
 }
 
 /*****************************************************************************/

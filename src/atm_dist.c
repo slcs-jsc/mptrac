@@ -133,23 +133,17 @@ int main(
       ERRMSG("Different numbers of particles!");
 
     /* Get time from filename... */
-    size_t len = strlen(argv[f]);
-    sprintf(tstr, "%.4s", &argv[f][len - 20]);
+    sprintf(tstr, "%.4s", &argv[f][strlen(argv[f]) - 20]);
     year = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 15]);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 15]);
     mon = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 12]);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 12]);
     day = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 9]);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 9]);
     hour = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 6]);
+    sprintf(tstr, "%.2s", &argv[f][strlen(argv[f]) - 6]);
     min = atoi(tstr);
     time2jsec(year, mon, day, hour, min, 0, 0, &t);
-
-    /* Check time... */
-    if (year < 1900 || year > 2100 || mon < 1 || mon > 12 || day < 1
-	|| day > 31 || hour < 0 || hour > 23 || min < 0 || min > 59)
-      ERRMSG("Cannot read time from filename!");
 
     /* Save initial time... */
     if (!init) {

@@ -46,11 +46,11 @@ int main(
   double tnat = nat_temperature(p, h2o, hno3);
 
   /* Write output... */
-  printf("     p= %g hPa\n", p);
-  printf(" q_H2O= %g ppv\n", h2o);
+  printf("p= %g hPa\n", p);
+  printf("q_H2O= %g ppv\n", h2o);
   printf("q_HNO3= %g ppv\n", hno3);
-  printf(" T_ice= %g K\n", tice);
-  printf(" T_NAT= %g K\n", tnat);
+  printf("T_ice= %g K\n", tice);
+  printf("T_NAT= %g K\n", tnat);
 
   return EXIT_SUCCESS;
 }

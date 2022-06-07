@@ -77,7 +77,7 @@ int main(
 
     /* Read meteorological data... */
     ctl.met_tropo = 0;
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(&ctl, argv[i], met))
       continue;
 
     /* Set horizontal grid... */

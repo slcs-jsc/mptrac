@@ -80,7 +80,7 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(&ctl, argv[i], met))
       continue;
 
     /* Set vertical grid... */
