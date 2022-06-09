@@ -38,6 +38,8 @@ int main(
 
   met_t *met0, *met1;
 
+  clim_t *clim;
+
   FILE *out;
 
   double h2o, h2ot, o3, lwc, iwc, p0, p1, ps, ts, zs, us, vs, pbl, pt,
@@ -54,6 +56,7 @@ int main(
   ALLOC(atm, atm_t, 1);
   ALLOC(met0, met_t, 1);
   ALLOC(met1, met_t, 1);
+  ALLOC(clim, clim_t, 1);
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
@@ -71,6 +74,9 @@ int main(
   /* Read atmospheric data... */
   if (!read_atm(argv[3], &ctl, atm))
     ERRMSG("Cannot open file!");
+
+  /* Initialize OH climatology... */
+  clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
 
   /* Create output file... */
   LOG(1, "Write meteorological data file: %s", argv[2]);
@@ -175,7 +181,9 @@ int main(
 				      atm->p[ip])), clim_hno3(atm->time[ip],
 							      atm->lat[ip],
 							      atm->p[ip]),
-	    clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]), pbl);
+	    clim_oh_diurnal(&ctl, atm->time[ip], atm->p[ip], atm->lon[ip],
+			    atm->lat[ip], clim)
+	    , pbl);
   }
 
   /* Close file... */
@@ -185,6 +193,7 @@ int main(
   free(atm);
   free(met0);
   free(met1);
+  free(clim);
 
   return EXIT_SUCCESS;
 }

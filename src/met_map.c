@@ -46,6 +46,8 @@ int main(
 
   met_t *met;
 
+  clim_t *clim;
+
   FILE *out;
 
   static double timem[NX][NY], p0, ps, psm[NX][NY], ts, tsm[NX][NY], zs,
@@ -64,6 +66,7 @@ int main(
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
+  ALLOC(clim, clim_t, 1);
 
   /* Check arguments... */
   if (argc < 4)
@@ -79,6 +82,13 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
   theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
+
+  /* Initialize OH climatology... */
+  clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
+
+  printf("TTT: %g\n", clim_oh_diurnal(&ctl, 0, 100, 90, 45, clim));
+  printf("clim_oh: %g\n", clim_oh(0, 45, 100, clim));
+
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
@@ -175,7 +185,8 @@ int main(
 	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0);
 	tnatm[ix][iy] +=
 	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0));
-	ohm[ix][iy] += clim_oh(met->time, lats[iy], p0);
+	ohm[ix][iy] +=
+	  clim_oh_diurnal(&ctl, met->time, p0, lons[ix], lats[iy], clim);
 	rhm[ix][iy] += RH(p0, t, h2o);
 	rhicem[ix][iy] += RHICE(p0, t, h2o);
 	tdewm[ix][iy] += TDEW(p0, h2o);
@@ -275,6 +286,7 @@ int main(
 
   /* Free... */
   free(met);
+  free(clim);
 
   return EXIT_SUCCESS;
 }

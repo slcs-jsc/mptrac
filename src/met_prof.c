@@ -43,6 +43,8 @@ int main(
 
   met_t *met;
 
+  clim_t *clim;
+
   FILE *out;
 
   static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
@@ -59,6 +61,7 @@ int main(
 
   /* Allocate... */
   ALLOC(met, met_t, 1);
+  ALLOC(clim, clim_t, 1);
 
   /* Check arguments... */
   if (argc < 4)
@@ -75,6 +78,9 @@ int main(
   lat0 = scan_ctl(argv[1], argc, argv, "PROF_LAT0", -1, "0", NULL);
   lat1 = scan_ctl(argv[1], argc, argv, "PROF_LAT1", -1, "0", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "PROF_DLAT", -1, "-999", NULL);
+
+  /* Initialize OH climatology... */
+  clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
 
   /* Loop over input files... */
   for (i = 3; i < argc; i++) {
@@ -166,7 +172,8 @@ int main(
 	    tnatm[iz] +=
 	      nat_temperature(plev[iz], h2o,
 			      clim_hno3(met->time, lat, plev[iz]));
-	    ohm[iz] += clim_oh(met->time, lat, plev[iz]);
+	    ohm[iz] +=
+	      clim_oh_diurnal(&ctl, met->time, plev[iz], lon, lat, clim);
 	    np[iz]++;
 	  }
 	}
@@ -253,6 +260,7 @@ int main(
 
   /* Free... */
   free(met);
+  free(clim);
 
   return EXIT_SUCCESS;
 }

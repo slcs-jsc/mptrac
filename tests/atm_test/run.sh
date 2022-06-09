@@ -32,8 +32,8 @@ $trac/atm_init - data/atm2_2000_01_02_00_00.tab \
 	       INIT_EVENLY 1 INIT_REP 10000
 
 # Convert...
-$trac/atm_conv - data/atm_2000_01_01_00_00.tab 0 data/atm_bin.tab 1
-$trac/atm_conv - data/atm_bin.tab 1 data/atm_ascii.tab 0
+$trac/atm_conv - data/atm_2000_01_01_00_00.tab 0 data/atm.bin 1
+$trac/atm_conv - data/atm.bin 1 data/atm_ascii.tab 0
 diff -s data/atm_ascii.tab data/atm_2000_01_01_00_00.tab || exit 1
 
 # Select...

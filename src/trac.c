@@ -121,7 +121,8 @@ void module_meteo(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  clim_t * clim);
 
 /*! Calculate OH chemistry. */
 void module_oh_chem(
@@ -129,6 +130,7 @@ void module_oh_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  clim_t * clim,
   double *dt);
 
 /*! Check position of air parcels. */
@@ -204,6 +206,8 @@ int main(
 
   atm_t *atm;
 
+  clim_t *clim;
+
   cache_t *cache;
 
   met_t *met0, *met1;
@@ -268,6 +272,7 @@ int main(
 	  NP);
     ALLOC(rs, double,
 	  3 * NP + 1);
+    ALLOC(clim, clim_t, 1);
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
@@ -278,6 +283,11 @@ int main(
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
+
+    /* Initialize the OH climatology... */
+    if (ctl.oh_chem_reaction != 0)
+      /* Read climatological data... */
+      clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
@@ -371,7 +381,7 @@ int main(
       /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, met0, met1, atm);
+	module_meteo(&ctl, met0, met1, atm, clim);
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -379,7 +389,7 @@ int main(
 
       /* OH chemistry... */
       if (ctl.oh_chem_reaction != 0)
-	module_oh_chem(&ctl, met0, met1, atm, dt);
+	module_oh_chem(&ctl, met0, met1, atm, clim, dt);
 
       /* Dry deposition... */
       if (ctl.dry_depo[0] > 0)
@@ -436,6 +446,7 @@ int main(
     free(cache);
     free(met0);
     free(met1);
+    free(clim);
     free(dt);
     free(rs);
 
@@ -1055,7 +1066,8 @@ void module_meteo(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm) {
+  atm_t * atm,
+  clim_t * clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -1111,7 +1123,9 @@ void module_meteo(
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
     SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
-    SET_ATM(qnt_oh, clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_oh,
+	    clim_oh_diurnal(ctl, atm->time[ip], atm->p[ip], atm->lon[ip],
+			    atm->lat[ip], clim));
     SET_ATM(qnt_vh, sqrt(u * u + v * v));
     SET_ATM(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     SET_ATM(qnt_psat, PSAT(t));
@@ -1143,6 +1157,7 @@ void module_oh_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  clim_t * clim,
   double *dt) {
 
   /* Set timer... */
@@ -1193,8 +1208,10 @@ void module_oh_chem(
       }
 
       /* Calculate exponential decay... */
-      double aux
-	= exp(-dt[ip] * k * clim_oh(atm->time[ip], atm->lat[ip], atm->p[ip]));
+      double rate_coef =
+	k * clim_oh_diurnal(ctl, atm->time[ip], atm->p[ip], atm->lon[ip],
+			    atm->lat[ip], clim);
+      double aux = exp(-dt[ip] * rate_coef);
       if (ctl->qnt_m >= 0)
 	atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_vmr >= 0)
