@@ -476,7 +476,7 @@ void clim_oh_init(
   /* Check to see the pressure data are in correct order,
      1000, 900, 800, ... hPa (descending) */
   if (clim->oh_p[0] < clim->oh_p[1])
-    ERRMSG("Pressure data is not in correct order");
+    ERRMSG("Pressure data is not ascending!");
 
   /* Read latitudes... */
   NC(nc_inq_dimid(ncid, "lat", &dimid));
@@ -490,7 +490,7 @@ void clim_oh_init(
   /* Check to see the latitude data are in correct order,
      -90, -85, ... 90 deg (ascending) */
   if (clim->oh_lat[0] > clim->oh_lat[1])
-    ERRMSG("latitude data is not in correct order");
+    ERRMSG("Latitude data is not descending!");
 
   /* Set time data (for monthly means)... */
   clim->oh_nt = CT;
@@ -512,7 +512,7 @@ void clim_oh_init(
   NC(nc_inq_dimid(ncid, "time", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nt));
   if ((int) nt != 12)
-    ERRMSG("Wrong length of time dimension!")
+    ERRMSG("The time dimension is not monthly!")
       /* Read OH data... */
       NC(nc_inq_varid(ncid, "OH", &varid));
   ALLOC(help, double,
