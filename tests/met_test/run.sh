@@ -15,7 +15,8 @@ $trac/met_lapse - data/lapse.tab ../data/ei_2011_06_05_00.nc
 $trac/met_map - data/map.tab ../data/ei_2011_06_05_00.nc \
 	      MAP_LON0 -180 MAP_LON1 180 MAP_DLON 6 \
 	      MAP_LAT0 -90 MAP_LAT1 90 MAP_DLAT 4 \
-	      MAP_THETA 380 TROPO 3
+	      MAP_THETA 380 TROPO 3 \
+		  OH_CHEM_BETA 0.6
 $trac/met_prof - data/prof.tab ../data/ei_2011_06_05_00.nc \
 	       PROF_Z0 0 PROF_Z1 60 PROF_DZ 0.1 \
 	       PROF_LON0 20 PROF_LON1 30 PROF_DLON 1 \
