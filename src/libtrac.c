@@ -403,6 +403,7 @@ double clim_oh(
 }
 
 /*****************************************************************************/
+
 double clim_oh_diurnal(
   ctl_t * ctl,
   double t,
@@ -410,36 +411,13 @@ double clim_oh_diurnal(
   double lon,
   double lat,
   clim_t * clim) {
+  
   if (sza(t, lon, lat) <= M_PI / 2. * 89. / 90.)
     return clim_oh(t, lat, p, clim)
       * exp(-ctl->oh_chem_beta / cos(sza(t, lon, lat)));
   else
     return clim_oh(t, lat, p, clim)
       * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
-}
-
-/*****************************************************************************/
-
-double clim_oh_init_help(
-  double beta,
-  double time,
-  double lat) {
-
-  double aux, lon, sum = 0;
-
-  int n = 0;			//, m=0;
-
-  /* Integrate day/night correction factor over longitude... */
-  for (lon = -180; lon < 180; lon += 1) {
-
-    aux = sza(time, lon, lat);
-    if (aux <= M_PI / 2. * 85. / 90.)
-      sum += exp(-beta / cos(aux));
-    else
-      sum += exp(-beta / cos(M_PI / 2. * 85. / 90.));
-    n++;
-  }
-  return sum / (double) n;
 }
 
 /*****************************************************************************/
@@ -531,6 +509,29 @@ void clim_oh_init(
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
+double clim_oh_init_help(
+  double beta,
+  double time,
+  double lat) {
+  
+  double aux, lon, sum = 0;
+  
+  int n = 0;
+  
+  /* Integrate day/night correction factor over longitude... */
+  for (lon = -180; lon < 180; lon += 1) {
+    aux = sza(time, lon, lat);
+    if (aux <= M_PI / 2. * 85. / 90.)
+      sum += exp(-beta / cos(aux));
+    else
+      sum += exp(-beta / cos(M_PI / 2. * 85. / 90.));
+    n++;
+  }
+  return sum / (double) n;
 }
 
 /*****************************************************************************/

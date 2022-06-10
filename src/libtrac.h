@@ -1146,6 +1146,26 @@ typedef struct {
 
 } atm_t;
 
+/*! Cache data. */
+typedef struct {
+
+  /*! Isosurface variables. */
+  double iso_var[NP];
+
+  /*! Isosurface balloon pressure [hPa]. */
+  double iso_ps[NP];
+
+  /*! Isosurface balloon time [s]. */
+  double iso_ts[NP];
+
+  /*! Isosurface balloon number of data points. */
+  int iso_n;
+
+  /*! Wind perturbations [m/s]. */
+  float uvwp[NP][3];
+
+} cache_t;
+
 /*! Climatological data. */
 typedef struct {
 
@@ -1190,27 +1210,8 @@ typedef struct {
 
   /*! H2O2 data concentration [molec/cm^3]. */
   double h2o2[CT][CP][CY];
+
 } clim_t;
-
-/*! Cache data. */
-typedef struct {
-
-  /*! Isosurface variables. */
-  double iso_var[NP];
-
-  /*! Isosurface balloon pressure [hPa]. */
-  double iso_ps[NP];
-
-  /*! Isosurface balloon time [s]. */
-  double iso_ts[NP];
-
-  /*! Isosurface balloon number of data points. */
-  int iso_n;
-
-  /*! Wind perturbations [m/s]. */
-  float uvwp[NP][3];
-
-} cache_t;
 
 /*! Meteo data. */
 typedef struct {
@@ -1365,22 +1366,10 @@ double clim_oh(
   double p,
   clim_t * clim);
 
-/*! Apply day/night correction to OH climatology. */
-#ifdef _OPENACC
-#pragma acc routine (clim_oh_init_help)
-#endif
-double clim_oh_init_help(
-  double beta,
-  double time,
-  double lat);
-
-/*! Initialization function for OH climatology. */
-void clim_oh_init(
-  char *filename,
-  clim_t * clim,
-  ctl_t * ctl);
-
 /*! Climatology of OH number concentrations with diurnal variation*/
+#ifdef _OPENACC
+#pragma acc routine (clim_oh_diurnal)
+#endif
 double clim_oh_diurnal(
   ctl_t * ctl,
   double t,
@@ -1388,6 +1377,18 @@ double clim_oh_diurnal(
   double lon,
   double lat,
   clim_t * clim);
+
+/*! Initialization function for OH climatology. */
+void clim_oh_init(
+  char *filename,
+  clim_t * clim,
+  ctl_t * ctl);
+
+/*! Apply diurnal correction to OH climatology. */
+double clim_oh_init_help(
+  double beta,
+  double time,
+  double lat);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
