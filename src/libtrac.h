@@ -902,8 +902,14 @@ typedef struct {
   /*! Boundary conditions mass per particle [kg]. */
   double bound_mass;
 
+  /*! Boundary conditions mass per particle trend [kg/s]. */
+  double bound_mass_trend;
+
   /*! Boundary conditions volume mixing ratio [ppv]. */
   double bound_vmr;
+
+  /*! Boundary conditions volume mixing ratio trend [ppv/s]. */
+  double bound_vmr_trend;
 
   /*! Boundary conditions minimum longitude [deg]. */
   double bound_lat0;

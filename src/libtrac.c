@@ -2136,8 +2136,12 @@ void read_ctl(
   /* Boundary conditions... */
   ctl->bound_mass =
     scan_ctl(filename, argc, argv, "BOUND_MASS", -1, "-999", NULL);
+  ctl->bound_mass_trend =
+    scan_ctl(filename, argc, argv, "BOUND_MASS_TREND", -1, "0", NULL);
   ctl->bound_vmr =
     scan_ctl(filename, argc, argv, "BOUND_VMR", -1, "-999", NULL);
+  ctl->bound_vmr_trend =
+    scan_ctl(filename, argc, argv, "BOUND_VMR_TREND", -1, "0", NULL);
   ctl->bound_lat0 =
     scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-90", NULL);
   ctl->bound_lat1 =
