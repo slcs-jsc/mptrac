@@ -4382,7 +4382,7 @@ void timer(
     for (int i = 0; i < nname; i++)
       LOG(1, "TIMER_%s = %.3f s", names[i], rt_name[i]);
     for (int i = 0; i < ngroup; i++)
-      LOG(1, "TIMER_%s = %.3f s", groups[i], rt_group[i]);
+      LOG(1, "TIMER_GROUP_%s = %.3f s", groups[i], rt_group[i]);
     double total = 0.0;
     for (int i = 0; i < nname; i++)
       total += rt_name[i];
