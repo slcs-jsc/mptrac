@@ -206,9 +206,9 @@ int main(
 
   atm_t *atm;
 
-  clim_t *clim;
-
   cache_t *cache;
+
+  clim_t *clim;
 
   met_t *met0, *met1;
 
@@ -266,28 +266,26 @@ int main(
     SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
+    ALLOC(clim, clim_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
     ALLOC(rs, double,
 	  3 * NP + 1);
-    ALLOC(clim, clim_t, 1);
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc enter data create(atm[:1],cache[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
+#pragma acc enter data create(atm[:1],cache[:1],clim[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
 #endif
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
 
-    /* Initialize the OH climatology... */
-    if (ctl.oh_chem_reaction != 0)
-      /* Read climatological data... */
-      clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
+    /* Read climatological data... */
+    read_clim(&ctl, clim);
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
@@ -300,7 +298,7 @@ int main(
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1],ctl)
+#pragma acc update device(atm[:1],clim[:1],ctl)
 #endif
 
     /* Initialize random number generator... */
@@ -421,6 +419,7 @@ int main(
     /* Report memory usage... */
     LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
+    LOG(1, "MEMORY_CLIM = %g MByte", sizeof(clim_t) / 1024. / 1024.);
     LOG(1, "MEMORY_METEO = %g MByte", 2 * sizeof(met_t) / 1024. / 1024.);
     LOG(1, "MEMORY_DYNAMIC = %g MByte", (sizeof(met_t)
 					 + 4 * NP * sizeof(double)
@@ -437,16 +436,16 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,met0,met1,dt,rs)
+#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
 #endif
 
     /* Free... */
     SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
     free(atm);
     free(cache);
+    free(clim);
     free(met0);
     free(met1);
-    free(clim);
     free(dt);
     free(rs);
 
@@ -1081,7 +1080,7 @@ void module_meteo(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm)
+#pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1171,7 +1170,7 @@ void module_oh_chem(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)

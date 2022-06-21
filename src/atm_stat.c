@@ -64,7 +64,7 @@ int main(
   lon1 = scan_ctl(argv[1], argc, argv, "STAT_LON1", -1, "1000", NULL);
 
   /* Write info... */
-  printf("Write air parcel statistics: %s\n", argv[2]);
+  LOG(1, "Write air parcel statistics: %s", argv[2]);
 
   /* Create output file... */
   if (!(out = fopen(argv[2], "w")))

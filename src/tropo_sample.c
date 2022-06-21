@@ -97,7 +97,7 @@ int main(
     ERRMSG("Cannot open file!");
 
   /* Open tropopause file... */
-  printf("Read tropopause data: %s\n", argv[3]);
+  LOG(1, "Read tropopause data: %s", argv[3]);
   if (nc_open(argv[3], NC_NOWRITE, &ncid) != NC_NOERR)
     ERRMSG("Cannot open file!");
 
@@ -139,7 +139,7 @@ int main(
   count[2] = nlon;
 
   /* Create file... */
-  printf("Write tropopause sample data: %s\n", argv[2]);
+  LOG(1, "Write tropopause sample data: %s", argv[2]);
   if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 

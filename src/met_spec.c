@@ -74,7 +74,7 @@ int main(
     ERRMSG("Cannot read meteo data!");
 
   /* Create output file... */
-  printf("Write spectral data file: %s\n", argv[2]);
+  LOG(1, "Write spectral data file: %s", argv[2]);
   if (!(out = fopen(argv[2], "w")))
     ERRMSG("Cannot create file!");
 

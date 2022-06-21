@@ -84,8 +84,8 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "ZM_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "ZM_DLAT", -1, "-999", NULL);
 
-  /* Initialize OH climatology... */
-  clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {

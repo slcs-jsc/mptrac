@@ -110,7 +110,7 @@ int main(
       }
 
       /* Create netCDF file... */
-      printf("Write tropopause data file: %s\n", argv[2]);
+      LOG(1, "Write tropopause data file: %s", argv[2]);
       NC(nc_create(argv[2], NC_CLOBBER, &ncid));
 
       /* Create dimensions... */

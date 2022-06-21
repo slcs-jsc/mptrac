@@ -411,13 +411,13 @@ double clim_oh_diurnal(
   double lon,
   double lat,
   clim_t * clim) {
-  
-  if (sza(t, lon, lat) <= M_PI / 2. * 89. / 90.)
-    return clim_oh(t, lat, p, clim)
-      * exp(-ctl->oh_chem_beta / cos(sza(t, lon, lat)));
+
+  double oh = clim_oh(t, lat, p, clim), sza2 = sza(t, lon, lat);
+
+  if (sza2 <= M_PI / 2. * 89. / 90.)
+    return oh * exp(-ctl->oh_chem_beta / cos(sza2));
   else
-    return clim_oh(t, lat, p, clim)
-      * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
+    return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
 }
 
 /*****************************************************************************/
@@ -427,19 +427,19 @@ void clim_oh_init(
   clim_t * clim,
   ctl_t * ctl) {
 
-  int ncid, dimid, varid, it, iy, iz, nOH;
+  int ncid, dimid, varid;
 
   size_t np, nlat, nt;
 
   double *help;
 
   /* Write info... */
-  printf("Read OH data: %s\n", filename);
+  LOG(1, "Read OH data: %s", filename);
 
   /* Open netCDF file... */
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("No OH climatology data is provided!")
-      return;
+    WARN("OH climatology data is missing!");
+    return;
   }
 
   /* Read pressure data... */
@@ -451,8 +451,8 @@ void clim_oh_init(
   NC(nc_inq_varid(ncid, "press", &varid));
   NC(nc_get_var_double(ncid, varid, clim->oh_p));
 
-  /* Check to see the pressure data are in correct order,
-     1000, 900, 800, ... hPa (descending) */
+  /* Check whether pressure data are in correct order,
+     1000, 900, 800, ... hPa (descending). */
   if (clim->oh_p[0] < clim->oh_p[1])
     ERRMSG("Pressure data is not ascending!");
 
@@ -465,12 +465,12 @@ void clim_oh_init(
   NC(nc_inq_varid(ncid, "lat", &varid));
   NC(nc_get_var_double(ncid, varid, clim->oh_lat));
 
-  /* Check to see the latitude data are in correct order,
+  /* Check whether latitudes are in correct order,
      -90, -85, ... 90 deg (ascending) */
   if (clim->oh_lat[0] > clim->oh_lat[1])
     ERRMSG("Latitude data is not descending!");
 
-  /* Set time data (for monthly means)... */
+  /* Set time data for monthly means... */
   clim->oh_nt = CT;
   clim->oh_time[0] = 1209600.00;
   clim->oh_time[1] = 3888000.00;
@@ -485,27 +485,26 @@ void clim_oh_init(
   clim->oh_time[10] = 27561600.00;
   clim->oh_time[11] = 30153600.00;
 
-  /*Check if the OH netCDF data files provides monthly data,
+  /* Check whether the OH netCDF data file provides monthly data,
      i.e., make sure there are 12 (= CT) time steps in the data file. */
   NC(nc_inq_dimid(ncid, "time", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nt));
   if ((int) nt != 12)
-    ERRMSG("The time dimension is not monthly!")
-      /* Read OH data... */
-      NC(nc_inq_varid(ncid, "OH", &varid));
+    ERRMSG("The time dimension is not monthly!");
+
+  /* Read OH data... */
+  NC(nc_inq_varid(ncid, "OH", &varid));
   ALLOC(help, double,
 	clim->oh_ny * clim->oh_np * clim->oh_nt);
   NC(nc_get_var_double(ncid, varid, help));
-  nc_inq_varnatts(ncid, varid, &nOH);
-
-  for (it = 0; it < clim->oh_nt; it++)
-    for (iz = 0; iz < clim->oh_np; iz++)
-      for (iy = 0; iy < clim->oh_ny; iy++)
+  for (int it = 0; it < clim->oh_nt; it++)
+    for (int iz = 0; iz < clim->oh_np; iz++)
+      for (int iy = 0; iy < clim->oh_ny; iy++)
 	clim->oh[it][iz][iy] =
 	  help[it * clim->oh_np * clim->oh_ny + iz * clim->oh_ny + iy]
 	  / clim_oh_init_help(ctl->oh_chem_beta, clim->oh_time[it],
 			      clim->oh_lat[iy]);
-  printf("help:%g\n", help[0]);
+  free(help);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
@@ -517,11 +516,11 @@ double clim_oh_init_help(
   double beta,
   double time,
   double lat) {
-  
+
   double aux, lon, sum = 0;
-  
+
   int n = 0;
-  
+
   /* Integrate day/night correction factor over longitude... */
   for (lon = -180; lon < 180; lon += 1) {
     aux = sza(time, lon, lat);
@@ -1881,6 +1880,20 @@ int read_atm(
 
   /* Return success... */
   return 1;
+}
+
+/*****************************************************************************/
+
+void read_clim(
+  ctl_t * ctl,
+  clim_t * clim) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_CLIM", "INPUT", NVTX_READ);
+
+  /* Read OH climatology... */
+  clim_oh_init(ctl->clim_oh_filename, clim, ctl);
+
 }
 
 /*****************************************************************************/

@@ -75,8 +75,8 @@ int main(
   if (!read_atm(argv[3], &ctl, atm))
     ERRMSG("Cannot open file!");
 
-  /* Initialize OH climatology... */
-  clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
 
   /* Create output file... */
   LOG(1, "Write meteorological data file: %s", argv[2]);

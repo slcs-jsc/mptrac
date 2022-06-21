@@ -83,12 +83,8 @@ int main(
   dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
   theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
 
-  /* Initialize OH climatology... */
-  clim_oh_init(ctl.clim_oh_filename, clim, &ctl);
-
-  printf("TTT: %g\n", clim_oh_diurnal(&ctl, 0, 100, 90, 45, clim));
-  printf("clim_oh: %g\n", clim_oh(0, 45, 100, clim));
-
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
 
   /* Loop over files... */
   for (i = 3; i < argc; i++) {

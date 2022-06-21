@@ -1372,7 +1372,7 @@ double clim_oh(
   double p,
   clim_t * clim);
 
-/*! Climatology of OH number concentrations with diurnal variation*/
+/*! Climatology of OH number concentrations with diurnal variation. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh_diurnal)
 #endif
@@ -1640,6 +1640,11 @@ int read_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
+
+/*! Read climatological data. */
+void read_clim(
+  ctl_t * ctl,
+  clim_t * clim);
 
 /*! Read control parameters. */
 void read_ctl(
