@@ -119,18 +119,18 @@ void module_isosurf(
 /*! Interpolate meteo data for air parcel positions. */
 void module_meteo(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  clim_t * clim);
+  atm_t * atm);
 
 /*! Calculate OH chemistry. */
 void module_oh_chem(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  clim_t * clim,
   double *dt);
 
 /*! Check position of air parcels. */
@@ -379,7 +379,7 @@ int main(
       /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, met0, met1, atm, clim);
+	module_meteo(&ctl, clim, met0, met1, atm);
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -387,7 +387,7 @@ int main(
 
       /* OH chemistry... */
       if (ctl.oh_chem_reaction != 0)
-	module_oh_chem(&ctl, met0, met1, atm, clim, dt);
+	module_oh_chem(&ctl, clim, met0, met1, atm, dt);
 
       /* Dry deposition... */
       if (ctl.dry_depo[0] > 0)
@@ -1065,10 +1065,10 @@ void module_isosurf(
 
 void module_meteo(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  clim_t * clim) {
+  atm_t * atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -1125,8 +1125,8 @@ void module_meteo(
     SET_ATM(qnt_cin, cin);
     SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_oh,
-	    clim_oh_diurnal(ctl, atm->time[ip], atm->p[ip], atm->lon[ip],
-			    atm->lat[ip], clim));
+	    clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
+			    atm->lon[ip], atm->lat[ip]));
     SET_ATM(qnt_vh, sqrt(u * u + v * v));
     SET_ATM(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     SET_ATM(qnt_psat, PSAT(t));
@@ -1155,10 +1155,10 @@ void module_meteo(
 
 void module_oh_chem(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  clim_t * clim,
   double *dt) {
 
   /* Set timer... */
@@ -1210,8 +1210,9 @@ void module_oh_chem(
 
       /* Calculate exponential decay... */
       double rate_coef =
-	k * clim_oh_diurnal(ctl, atm->time[ip], atm->p[ip], atm->lon[ip],
-			    atm->lat[ip], clim);
+	k * clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
+			    atm->lon[ip],
+			    atm->lat[ip]);
       double aux = exp(-dt[ip] * rate_coef);
       if (ctl->qnt_m >= 0)
 	atm->q[ctl->qnt_m][ip] *= aux;

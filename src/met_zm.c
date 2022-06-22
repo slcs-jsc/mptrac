@@ -184,8 +184,8 @@ int main(
 	      nat_temperature(plev[iz], h2o,
 			      clim_hno3(met->time, lats[iy], plev[iz]));
 	    ohm[iz][iy] +=
-	      clim_oh_diurnal(&ctl, met->time, plev[iz], met->lon[ix],
-			      lats[iy], clim);
+	      clim_oh_diurnal(&ctl, clim, met->time, plev[iz], met->lon[ix],
+			      lats[iy]);
 	    np[iz][iy]++;
 	  }
   }

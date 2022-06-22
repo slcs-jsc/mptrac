@@ -350,10 +350,10 @@ double clim_hno3(
 /*****************************************************************************/
 
 double clim_oh(
+  clim_t * clim,
   double t,
   double lat,
-  double p,
-  clim_t * clim) {
+  double p) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -406,13 +406,13 @@ double clim_oh(
 
 double clim_oh_diurnal(
   ctl_t * ctl,
+  clim_t * clim,
   double t,
   double p,
   double lon,
-  double lat,
-  clim_t * clim) {
+  double lat) {
 
-  double oh = clim_oh(t, lat, p, clim), sza2 = sza(t, lon, lat);
+  double oh = clim_oh(clim, t, lat, p), sza2 = sza(t, lon, lat);
 
   if (sza2 <= M_PI / 2. * 89. / 90.)
     return oh * exp(-ctl->oh_chem_beta / cos(sza2));
@@ -423,9 +423,8 @@ double clim_oh_diurnal(
 /*****************************************************************************/
 
 void clim_oh_init(
-  char *filename,
-  clim_t * clim,
-  ctl_t * ctl) {
+  ctl_t * ctl,
+  clim_t * clim) {
 
   int ncid, dimid, varid;
 
@@ -434,10 +433,10 @@ void clim_oh_init(
   double *help;
 
   /* Write info... */
-  LOG(1, "Read OH data: %s", filename);
+  LOG(1, "Read OH data: %s", ctl->clim_oh_filename);
 
   /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+  if (nc_open(ctl->clim_oh_filename, NC_NOWRITE, &ncid) != NC_NOERR) {
     WARN("OH climatology data is missing!");
     return;
   }
@@ -1892,7 +1891,7 @@ void read_clim(
   SELECT_TIMER("READ_CLIM", "INPUT", NVTX_READ);
 
   /* Read OH climatology... */
-  clim_oh_init(ctl->clim_oh_filename, clim, ctl);
+  clim_oh_init(ctl, clim);
 
 }
 

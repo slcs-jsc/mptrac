@@ -1367,10 +1367,10 @@ double clim_hno3(
 #pragma acc routine (clim_oh)
 #endif
 double clim_oh(
+  clim_t * clim,
   double t,
   double lat,
-  double p,
-  clim_t * clim);
+  double p);
 
 /*! Climatology of OH number concentrations with diurnal variation. */
 #ifdef _OPENACC
@@ -1378,17 +1378,16 @@ double clim_oh(
 #endif
 double clim_oh_diurnal(
   ctl_t * ctl,
+  clim_t * clim,
   double t,
   double p,
   double lon,
-  double lat,
-  clim_t * clim);
+  double lat);
 
 /*! Initialization function for OH climatology. */
 void clim_oh_init(
-  char *filename,
-  clim_t * clim,
-  ctl_t * ctl);
+  ctl_t * ctl,
+  clim_t * clim);
 
 /*! Apply diurnal correction to OH climatology. */
 double clim_oh_init_help(
