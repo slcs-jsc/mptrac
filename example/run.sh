@@ -53,6 +53,7 @@ QNT_NAME[7] = pt
 QNT_NAME[8] = m
 METBASE = ../tests/data/ei
 MET_DT_OUT = 86400.0
+CLIM_OH_FILENAME = ../data/radical_species_climatology.nc
 SPECIES = SO2
 BOUND_MASS = 0.0
 BOUND_DPS = 100.0
