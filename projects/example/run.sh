@@ -1,36 +1,11 @@
 #! /bin/bash
 
-# Example Slurm configuration for JUWELS Cluster...
-#SBATCH --nodes=1
-#SBATCH --ntasks=1
-#SBATCH --ntasks-per-node=1
-#SBATCH --cpus-per-task=48
-#SBATCH --time=00:05:00
-#SBATCH --account=slmet
-#SBATCH --partition=batch
-
-## Example Slurm configuration for JUWELS Booster...
-##SBATCH --nodes=1
-##SBATCH --ntasks=1
-##SBATCH --ntasks-per-node=1
-##SBATCH --cpus-per-task=12
-##SBATCH --time=00:05:00
-##SBATCH --account=slmet
-##SBATCH --partition=booster
-##SBATCH --gres=gpu:4
-
-# Load modules (as needed)...
-#ml purge
-#ml GCC ParaStationMPI     # for MPI runs
-#ml NVHPC ParaStationMPI   # for GPU runs
-#ml gnuplot
-
 # Set environment...
-export LD_LIBRARY_PATH=../libs/build/lib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=4
 
 # Setup...
-trac=../src
+trac=../../src
 
 # Create directories...
 rm -rf data plots && mkdir -p data plots
@@ -51,9 +26,9 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
-METBASE = ../tests/data/ei
+METBASE = ../../tests/data/ei
 MET_DT_OUT = 86400.0
-CLIM_OH_FILENAME = ../data/radical_species_climatology.nc
+CLIM_OH_FILENAME = ../../data/radical_species_climatology.nc
 SPECIES = SO2
 BOUND_MASS = 0.0
 BOUND_DPS = 100.0
@@ -109,7 +84,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "../data/wcl.tab" u 1:2 w l lt -1 t "", \
+    "../../data/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -139,7 +114,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "../../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e

@@ -2,10 +2,11 @@ mptrac_*.tgz
 bin/
 docs/html/
 docs/latex/
-example/data/
-example/plots/
 libs/build/
-projects/
+projects/*
+projects/example/data/
+projects/example/plots/
+!projects/example/
 src/*.o
 src/atm_conv
 src/atm_dist

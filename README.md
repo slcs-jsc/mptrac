@@ -26,16 +26,23 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system. Some standard tools (e.g., gcc, git, make) are needed for compilation and installation. The [GNU Scientific Library](https://www.gnu.org/software/gsl) is required for numerical calculations and the [Unidata netCDF library](http://www.unidata.ucar.edu/software/netcdf) is needed for file-I/O. The graphing utility [gnuplot](http://www.gnuplot.info) is recommend for visualization.
+This documentation describes the installation of MPTRAC on a Linux system.
 
-Commands to install the necessary software on Ubuntu Linux:
+The following software dependencies are mandatory:
 
-    sudo apt-get update
-    sudo apt-get install gcc git make gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+* the distributed version control system [Git](https://git-scm.com/)
+* the C compiler of the [GNU Compiler Collection](https://gcc.gnu.org)
+* the [GNU Make](https://www.gnu.org/software/make) build tool
+* the [GNU Scientific Library](https://www.gnu.org/software/gsl) for numerical calculations
+* the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
 
-Additional software being recommended for code development:
+Optionally, the following software is required to enable further capabilities:
 
-    sudo apt-get install cppcheck doxygen graphviz indent lcov
+* the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
+* the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to support netCDF4
+* the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
+* the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
+* an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStation MPI](https://github.com/ParaStation/psmpi) for HPC support
 
 ### Installation
 
@@ -47,7 +54,7 @@ To update an existing installation, please use:
 
     git pull https://github.com/slcs-jsc/mptrac.git
 
-In case the GSL and netCDF libraries are missing on your system, it is recommended to install the versions of the libraries provided along with MPTRAC by running the library build script:
+In case the GSL and netCDF libraries are missing on your system, it is recommended to install the versions of the libraries provided along with MPTRAC by running the build script:
 
     cd mptrac/libs
     ./build.sh
@@ -63,28 +70,26 @@ In particular, you might want to check:
 
 * By default, the MPTRAC binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the libraries.
 
-* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled. Further steps will require an MPI library such as [OpenMPI](https://www.open-mpi.org) or [MPICH](https://www.mpich.org). To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The [NVIDIA HPC SDK](https://developer.nvidia.com/hpc-sdk) will be required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled. Further steps will require an MPI library such as OpenMPI to be available. To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The NVIDIA HPC SDK is required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
 
 Next, try to compile the code:
 
     make
 
-To run a test case to check the installation, please use:
+To run the test cases to check the installation, please use:
 
     make check
 
 ### Run the example
 
-An example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
+A simple example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-It is recommended that you create a project directory for testing the example and also to store the results of other experiments:
-
-    mkdir -p mptrac/projects
-    cp -a mptrac/example mptrac/projects
-    
-This shows how to run the example:
+The example can be found in the project directory, which can also be used results of other simulation and experiments with MPTRAC:
 
     cd mptrac/projects/example
+
+The simulation is conducted via a shell script:
+
     ./run.sh
 
 Please see the example script `run.sh` on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
