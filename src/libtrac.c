@@ -2268,8 +2268,7 @@ void read_ctl(
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
-	   "../../data/clams_radical_species.nc",
-	   ctl->clim_oh_filename);
+	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);

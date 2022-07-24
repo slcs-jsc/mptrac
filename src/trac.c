@@ -1411,7 +1411,10 @@ void module_sort(
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
+  double *help;
   int *idx, *p;
+  ALLOC(help, double,
+	NP);
   ALLOC(idx, int,
 	NP);
   ALLOC(p, int,
@@ -1440,17 +1443,24 @@ void module_sort(
     quicksort(idx, p, 0, np - 1);
   }
 
-  /* Swap data... */
+  /* Sort data... */
   for (int ip = 0; ip < np; ip++)
-    if (ip != p[ip]) {
-      SWAP(atm->time[ip], atm->time[p[ip]], double);
-      SWAP(atm->p[ip], atm->p[p[ip]], double);
-      SWAP(atm->lon[ip], atm->lon[p[ip]], double);
-      SWAP(atm->lat[ip], atm->lat[p[ip]], double);
-      for (int iq = 0; iq < ctl->nq; iq++)
-	SWAP(atm->q[iq][ip], atm->q[iq][p[ip]], double);
-      p[ip] = ip;
-    }
+    help[ip] = atm->time[p[ip]];
+  memcpy(atm->time, help, (size_t) atm->np * sizeof(double));
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->p[p[ip]];
+  memcpy(atm->p, help, (size_t) atm->np * sizeof(double));
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->lon[p[ip]];
+  memcpy(atm->lon, help, (size_t) atm->np * sizeof(double));
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->lat[p[ip]];
+  memcpy(atm->lat, help, (size_t) atm->np * sizeof(double));
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    for (int ip = 0; ip < np; ip++)
+      help[ip] = atm->q[iq][p[ip]];
+    memcpy(atm->q[iq], help, (size_t) atm->np * sizeof(double));
+  }
 
   /* Update device... */
 #ifdef _OPENACC
@@ -1458,6 +1468,7 @@ void module_sort(
 #endif
 
   /* Free... */
+  free(help);
   free(idx);
   free(p);
 }
