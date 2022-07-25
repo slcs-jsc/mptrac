@@ -6,6 +6,7 @@ libs/build/
 projects/*
 projects/example/data/
 projects/example/plots/
+!projects/data/
 !projects/example/
 src/*.o
 src/atm_conv
