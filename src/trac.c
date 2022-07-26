@@ -1422,7 +1422,9 @@ void module_sort(
 
   /* Update host... */
 #ifdef _OPENACC
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
+  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 #endif
 
   /* Get box index... */
@@ -1461,12 +1463,14 @@ void module_sort(
       help[ip] = atm->q[iq][p[ip]];
     memcpy(atm->q[iq], help, (size_t) atm->np * sizeof(double));
   }
-
+  
   /* Update device... */
 #ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1])
+  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 #endif
-
+  
   /* Free... */
   free(help);
   free(idx);
