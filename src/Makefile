@@ -26,6 +26,10 @@ MPI ?= 0
 # Static compilation...
 STATIC ?= 1
 
+# ASYNCIO enables asunc IO for GPUs
+
+ASYNCIO ?= 0
+
 # Optimization flags...
 OPT ?= -O3
 
@@ -129,6 +133,11 @@ ifeq ($(STATIC),1)
     $(error Static compilation does not work for MPI)
   endif
   CFLAGS += -static
+endif
+
+# asyncIO
+ifeq ($(ASYNCIO),1)
+  CFLAGS += -DASYNCIO
 endif
 
 # -----------------------------------------------------------------------------
