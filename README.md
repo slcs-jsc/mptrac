@@ -26,7 +26,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This documentation describes the installation of MPTRAC on a Linux system.
+This README file describes the installation of MPTRAC on a Linux system.
 
 The following software dependencies are mandatory:
 
@@ -36,13 +36,15 @@ The following software dependencies are mandatory:
 * the [GNU Scientific Library](https://www.gnu.org/software/gsl) for numerical calculations
 * the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
 
-Optionally, the following software is required to enable further capabilities:
+Optionally, the following software is required to enable further capabilities of MPTRAC:
 
 * the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
 * the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to support netCDF4
 * the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
 * the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
 * an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStation MPI](https://github.com/ParaStation/psmpi) for HPC support
+
+Some of the software is provided along with the MPTRAC repository, please see next section.
 
 ### Installation
 
@@ -54,7 +56,7 @@ To update an existing installation, please use:
 
     git pull https://github.com/slcs-jsc/mptrac.git
 
-In case the GSL and netCDF libraries are missing on your system, it is recommended to install the versions of the libraries provided along with MPTRAC by running the build script:
+Several libraries provided along with MPTRAC can be compiled and installed by running the build script:
 
     cd mptrac/libs
     ./build.sh
@@ -84,17 +86,14 @@ To run the test cases to check the installation, please use:
 
 A simple example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-The example can be found in the project directory, which can also be used results of other simulation and experiments with MPTRAC:
+The example can be found in the project directory. The project directory also be used to store results of other simulation and experiments with MPTRAC. The simulation is controlled by a shell script:
 
     cd mptrac/projects/example
-
-The simulation is conducted via a shell script:
-
     ./run.sh
 
-Please see the example script `run.sh` on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
+Please see the script `run.sh` on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
 
-The script generates a number of plots of the simulation output at different time steps after the eruption by means of `gnuplot`. These plots should look similar to the output already provided in the repository.
+The script generates a number of plots of the simulation output at different time steps after the eruption by means of the `gnuplot` graphing tool. These plots should look similar to the output already provided in the repository.
 
 This is an example showing the particle position and grid output on 6th and 8th of June 2011:
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>

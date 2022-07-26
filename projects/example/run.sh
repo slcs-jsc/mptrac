@@ -84,7 +84,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
-    "../../data/wcl.tab" u 1:2 w l lt -1 t "", \
+    "../data/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
 e
@@ -114,7 +114,7 @@ set yra [-60:-15]
 set grid
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
-    "../../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
+    "../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0
 e
