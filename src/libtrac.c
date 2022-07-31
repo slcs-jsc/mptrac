@@ -1916,8 +1916,8 @@ void read_ctl(
   ctl->qnt_stat = -1;
   ctl->qnt_m = -1;
   ctl->qnt_vmr = -1;
-  ctl->qnt_r = -1;
-  ctl->qnt_rho = -1;
+  ctl->qnt_rp = -1;
+  ctl->qnt_rhop = -1;
   ctl->qnt_ps = -1;
   ctl->qnt_ts = -1;
   ctl->qnt_zs = -1;
@@ -1982,8 +1982,8 @@ void read_ctl(
       SET_QNT(qnt_stat, "stat", "-")
       SET_QNT(qnt_m, "m", "kg")
       SET_QNT(qnt_vmr, "vmr", "ppv")
-      SET_QNT(qnt_r, "r", "microns")
-      SET_QNT(qnt_rho, "rho", "kg/m^3")
+      SET_QNT(qnt_rp, "rp", "microns")
+      SET_QNT(qnt_rhop, "rhop", "kg/m^3")
       SET_QNT(qnt_ps, "ps", "hPa")
       SET_QNT(qnt_ts, "ts", "K")
       SET_QNT(qnt_zs, "zs", "km")
@@ -4194,8 +4194,8 @@ double scan_ctl(
 double sedi(
   double p,
   double T,
-  double r_p,
-  double rho_p) {
+  double rp,
+  double rhop) {
 
   double eta, G, K, lambda, rho, v;
 
@@ -4203,7 +4203,7 @@ double sedi(
   p *= 100.;
 
   /* Convert particle radius from microns to m... */
-  r_p *= 1e-6;
+  rp *= 1e-6;
 
   /* Density of dry air [kg / m^3]... */
   rho = p / (RA * T);
@@ -4218,13 +4218,13 @@ double sedi(
   lambda = 2. * eta / (rho * v);
 
   /* Knudsen number for air (dimensionless)... */
-  K = lambda / r_p;
+  K = lambda / rp;
 
   /* Cunningham slip-flow correction (dimensionless)... */
   G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
   /* Sedimentation velocity [m / s]... */
-  return 2. * SQR(r_p) * (rho_p - rho) * G0 / (9. * eta) * G;
+  return 2. * SQR(rp) * (rhop - rho) * G0 / (9. * eta) * G;
 }
 
 /*****************************************************************************/

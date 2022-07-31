@@ -366,7 +366,7 @@ int main(
 	module_convection(&ctl, met0, met1, atm, dt, rs);
 
       /* Sedimentation... */
-      if (ctl.qnt_r >= 0 && ctl.qnt_rho >= 0)
+      if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)
 	module_sedi(&ctl, met0, met1, atm, dt);
 
       /* Isosurface... */
@@ -914,14 +914,14 @@ void module_dry_deposition(
       double dz = 1000. * (Z(ps - dp) - Z(ps));
 
       /* Calculate sedimentation velocity for particles... */
-      if (ctl->qnt_r > 0 && ctl->qnt_rho > 0) {
+      if (ctl->qnt_rp > 0 && ctl->qnt_rhop > 0) {
 
 	/* Get temperature... */
 	INTPOL_3D(t, 1);
 
 	/* Set deposition velocity... */
-	v_dep = sedi(atm->p[ip], t, atm->q[ctl->qnt_r][ip],
-		     atm->q[ctl->qnt_rho][ip]);
+	v_dep = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
+		     atm->q[ctl->qnt_rhop][ip]);
       }
 
       /* Use explicit sedimentation velocity for gases... */
@@ -1392,8 +1392,8 @@ void module_sedi(
       INTPOL_3D(t, 1);
 
       /* Sedimentation velocity... */
-      double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_r][ip],
-			atm->q[ctl->qnt_rho][ip]);
+      double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
+			atm->q[ctl->qnt_rhop][ip]);
 
       /* Calculate pressure change... */
       atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
@@ -1463,14 +1463,14 @@ void module_sort(
       help[ip] = atm->q[iq][p[ip]];
     memcpy(atm->q[iq], help, (size_t) atm->np * sizeof(double));
   }
-  
+
   /* Update device... */
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1])
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 #endif
-  
+
   /* Free... */
   free(help);
   free(idx);

@@ -609,11 +609,11 @@ typedef struct {
   /*! Quantity array index for volume mixing ratio. */
   int qnt_vmr;
 
-  /*! Quantity array index for particle density. */
-  int qnt_rho;
-
   /*! Quantity array index for particle radius. */
-  int qnt_r;
+  int qnt_rp;
+
+  /*! Quantity array index for particle density. */
+  int qnt_rhop;
 
   /*! Quantity array index for surface pressure. */
   int qnt_ps;
@@ -1780,8 +1780,8 @@ double scan_ctl(
 double sedi(
   double p,
   double T,
-  double r_p,
-  double rho_p);
+  double rp,
+  double rhop);
 
 /*! Spline interpolation. */
 void spline(
