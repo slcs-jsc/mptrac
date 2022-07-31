@@ -1105,9 +1105,10 @@ void module_meteo(
     SET_ATM(qnt_tt, tt);
     SET_ATM(qnt_zt, zt);
     SET_ATM(qnt_h2ot, h2ot);
-    SET_ATM(qnt_p, atm->p[ip]);
     SET_ATM(qnt_z, z);
+    SET_ATM(qnt_p, atm->p[ip]);
     SET_ATM(qnt_t, t);
+    SET_ATM(qnt_rho, RHO(atm->p[ip], t));
     SET_ATM(qnt_u, u);
     SET_ATM(qnt_v, v);
     SET_ATM(qnt_w, w);

@@ -1931,6 +1931,7 @@ void read_ctl(
   ctl->qnt_z = -1;
   ctl->qnt_p = -1;
   ctl->qnt_t = -1;
+  ctl->qnt_rho = -1;
   ctl->qnt_u = -1;
   ctl->qnt_v = -1;
   ctl->qnt_w = -1;
@@ -1997,6 +1998,7 @@ void read_ctl(
       SET_QNT(qnt_z, "z", "km")
       SET_QNT(qnt_p, "p", "hPa")
       SET_QNT(qnt_t, "t", "K")
+      SET_QNT(qnt_rho, "rho", "kg/m^3")
       SET_QNT(qnt_u, "u", "m/s")
       SET_QNT(qnt_v, "v", "m/s")
       SET_QNT(qnt_w, "w", "hPa/s")

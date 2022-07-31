@@ -394,6 +394,10 @@
 #define RHICE(p, t, h2o)			\
   (PW(p, h2o) / PSICE(t) * 100.)
 
+/*! Compute density of air. */
+#define RHO(p, t)				\
+  (100. * (p) / (RA * (t)))
+
 /*! Set atmospheric quantity value. */
 #define SET_ATM(qnt, val)			\
   if (ctl->qnt >= 0)				\
@@ -653,6 +657,9 @@ typedef struct {
 
   /*! Quantity array index for temperature. */
   int qnt_t;
+
+  /*! Quantity array index for density of air. */
+  int qnt_rho;
 
   /*! Quantity array index for zonal wind. */
   int qnt_u;

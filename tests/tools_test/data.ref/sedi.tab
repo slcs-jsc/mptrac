@@ -3,6 +3,7 @@
     T= 200 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 1.24361e-06 m/s
    Re= 3.2757e-08
 
@@ -10,6 +11,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 2.49156e-06 m/s
    Re= 6.56285e-08
 
@@ -17,6 +19,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 4.98747e-06 m/s
    Re= 1.31371e-07
 
@@ -24,6 +27,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 8.61745e-05 m/s
    Re= 2.26986e-05
 
@@ -31,6 +35,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 0.00017265 m/s
    Re= 4.54766e-05
 
@@ -38,6 +43,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 0.000345602 m/s
    Re= 9.10326e-05
 
@@ -45,6 +51,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 0.00825091 m/s
    Re= 0.0217331
 
@@ -52,6 +59,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 0.0165307 m/s
    Re= 0.0435423
 
@@ -59,6 +67,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 0.0330902 m/s
    Re= 0.0871605
 
@@ -66,6 +75,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 0.821426 m/s
    Re= 21.6366
 
@@ -73,6 +83,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 1.64572 m/s
    Re= 43.3488
 
@@ -80,6 +91,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.74181 kg/m^3
   v_s= 3.29432 m/s
    Re= 86.7733
 
@@ -87,6 +99,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 1.16569e-06 m/s
    Re= 2.03227e-08
 
@@ -94,6 +107,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 2.33464e-06 m/s
    Re= 4.07022e-08
 
@@ -101,6 +115,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 4.67254e-06 m/s
    Re= 8.14612e-08
 
@@ -108,6 +123,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 7.25306e-05 m/s
    Re= 1.2645e-05
 
@@ -115,6 +131,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 0.000145264 m/s
    Re= 2.53254e-05
 
@@ -122,6 +139,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 0.000290731 m/s
    Re= 5.0686e-05
 
@@ -129,6 +147,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 0.00684297 m/s
    Re= 0.01193
 
@@ -136,6 +155,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 0.0137051 m/s
    Re= 0.0238934
 
@@ -143,6 +163,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 0.0274293 m/s
    Re= 0.0478202
 
@@ -150,6 +171,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 0.680196 m/s
    Re= 11.8586
 
@@ -157,6 +179,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 1.36229 m/s
    Re= 23.7502
 
@@ -164,6 +187,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.39345 kg/m^3
   v_s= 2.72649 m/s
    Re= 47.5336
 
@@ -171,6 +195,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 1.13342e-06 m/s
    Re= 1.42195e-08
 
@@ -178,6 +203,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 2.26948e-06 m/s
    Re= 2.84721e-08
 
@@ -185,6 +211,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 4.5416e-06 m/s
    Re= 5.69772e-08
 
@@ -192,6 +219,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 6.37186e-05 m/s
    Re= 7.99389e-06
 
@@ -199,6 +227,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 0.000127585 m/s
    Re= 1.60064e-05
 
@@ -206,6 +235,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 0.000255319 m/s
    Re= 3.20314e-05
 
@@ -213,6 +243,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 0.00592241 m/s
    Re= 0.00743003
 
@@ -220,6 +251,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 0.0118586 m/s
    Re= 0.0148774
 
@@ -227,6 +259,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 0.023731 m/s
    Re= 0.029772
 
@@ -234,6 +267,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 0.587747 m/s
    Re= 7.37364
 
@@ -241,6 +275,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 1.17686 m/s
    Re= 14.7645
 
@@ -248,6 +283,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 1.16121 kg/m^3
   v_s= 2.35509 m/s
    Re= 29.5461
 
@@ -255,6 +291,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 6.01268e-06 m/s
    Re= 1.58376e-08
 
@@ -262,6 +299,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 1.20275e-05 m/s
    Re= 3.16807e-08
 
@@ -269,6 +307,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 2.4057e-05 m/s
    Re= 6.33669e-08
 
@@ -276,6 +315,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.000124752 m/s
    Re= 3.286e-06
 
@@ -283,6 +323,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.000249547 m/s
    Re= 6.57315e-06
 
@@ -290,6 +331,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.000499138 m/s
    Re= 1.31475e-05
 
@@ -297,6 +339,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.00864457 m/s
    Re= 0.002277
 
@@ -304,6 +347,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.0172921 m/s
    Re= 0.0045548
 
@@ -311,6 +355,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.0345873 m/s
    Re= 0.0091104
 
@@ -318,6 +363,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 0.827687 m/s
    Re= 2.18015
 
@@ -325,6 +371,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 1.65566 m/s
    Re= 4.36106
 
@@ -332,6 +379,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.174181 kg/m^3
   v_s= 3.31161 m/s
    Re= 8.72289
 
@@ -339,6 +387,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 6.55574e-06 m/s
    Re= 1.14293e-08
 
@@ -346,6 +395,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 1.31133e-05 m/s
    Re= 2.28618e-08
 
@@ -353,6 +403,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 2.62284e-05 m/s
    Re= 4.57267e-08
 
@@ -360,6 +411,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.000116862 m/s
    Re= 2.03738e-06
 
@@ -367,6 +419,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.000233758 m/s
    Re= 4.07533e-06
 
@@ -374,6 +427,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.000467548 m/s
    Re= 8.15123e-06
 
@@ -381,6 +435,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.00727131 m/s
    Re= 0.00126768
 
@@ -388,6 +443,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.0145446 m/s
    Re= 0.00253572
 
@@ -395,6 +451,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.0290913 m/s
    Re= 0.00507178
 
@@ -402,6 +459,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 0.686018 m/s
    Re= 1.19601
 
@@ -409,6 +467,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 1.37223 m/s
    Re= 2.39234
 
@@ -416,6 +475,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.139345 kg/m^3
   v_s= 2.74465 m/s
    Re= 4.78502
 
@@ -423,6 +483,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 7.0737e-06 m/s
    Re= 8.87439e-09
 
@@ -430,6 +491,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 1.4149e-05 m/s
    Re= 1.77508e-08
 
@@ -437,6 +499,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 2.82997e-05 m/s
    Re= 3.55037e-08
 
@@ -444,6 +507,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.00011358 m/s
    Re= 1.42493e-06
 
@@ -451,6 +515,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.000227186 m/s
    Re= 2.85018e-06
 
@@ -458,6 +523,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.000454398 m/s
    Re= 5.7007e-06
 
@@ -465,6 +531,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.00638521 m/s
    Re= 0.000801063
 
@@ -472,6 +539,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.0127719 m/s
    Re= 0.00160231
 
@@ -479,6 +547,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.0255453 m/s
    Re= 0.00320481
 
@@ -486,6 +555,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 0.593482 m/s
    Re= 0.74456
 
@@ -493,6 +563,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 1.1871 m/s
    Re= 1.48929
 
@@ -500,6 +571,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.116121 kg/m^3
   v_s= 2.37434 m/s
    Re= 2.97876
 
@@ -507,6 +579,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 5.51366e-05 m/s
    Re= 1.45232e-08
 
@@ -514,6 +587,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.000110275 m/s
    Re= 2.90468e-08
 
@@ -521,6 +595,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.000220552 m/s
    Re= 5.80941e-08
 
@@ -528,6 +603,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.000601457 m/s
    Re= 1.58425e-06
 
@@ -535,6 +611,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.00120293 m/s
    Re= 3.16856e-06
 
@@ -542,6 +619,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.00240589 m/s
    Re= 6.33718e-06
 
@@ -549,6 +627,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.0124791 m/s
    Re= 0.000328704
 
@@ -556,6 +635,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.0249587 m/s
    Re= 0.000657418
 
@@ -563,6 +643,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.0499177 m/s
    Re= 0.00131485
 
@@ -570,6 +651,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 0.864728 m/s
    Re= 0.227772
 
@@ -577,6 +659,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 1.72949 m/s
    Re= 0.455552
 
@@ -584,6 +667,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0174181 kg/m^3
   v_s= 3.459 m/s
    Re= 0.911111
 
@@ -591,6 +675,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 6.14914e-05 m/s
    Re= 1.07204e-08
 
@@ -598,6 +683,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.000122985 m/s
    Re= 2.14412e-08
 
@@ -605,6 +691,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.000245971 m/s
    Re= 4.28826e-08
 
@@ -612,6 +699,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.000655738 m/s
    Re= 1.14322e-06
 
@@ -619,6 +707,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.00131149 m/s
    Re= 2.28646e-06
 
@@ -626,6 +715,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.00262301 m/s
    Re= 4.57296e-06
 
@@ -633,6 +723,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.0116892 m/s
    Re= 0.000203789
 
@@ -640,6 +731,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.0233787 m/s
    Re= 0.000407584
 
@@ -647,6 +739,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.0467577 m/s
    Re= 0.000815174
 
@@ -654,6 +747,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 0.727313 m/s
    Re= 0.1268
 
@@ -661,6 +755,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 1.45465 m/s
    Re= 0.253603
 
@@ -668,6 +763,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0139345 kg/m^3
   v_s= 2.90931 m/s
    Re= 0.50721
 
@@ -675,6 +771,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 6.72596e-05 m/s
    Re= 8.43814e-09
 
@@ -682,6 +779,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.000134521 m/s
    Re= 1.68765e-08
 
@@ -689,6 +787,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.000269043 m/s
    Re= 3.37531e-08
 
@@ -696,6 +795,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.000707518 m/s
    Re= 8.87624e-07
 
@@ -703,6 +803,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.00141505 m/s
    Re= 1.77527e-06
 
@@ -710,6 +811,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.00283012 m/s
    Re= 3.55056e-06
 
@@ -717,6 +819,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.0113603 m/s
    Re= 0.000142522
 
@@ -724,6 +827,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.0227209 m/s
    Re= 0.000285048
 
@@ -731,6 +835,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.0454422 m/s
    Re= 0.0005701
 
@@ -738,6 +843,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 0.638654 m/s
    Re= 0.0801231
 
@@ -745,6 +851,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 1.27732 m/s
    Re= 0.160248
 
@@ -752,6 +859,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.0116121 kg/m^3
   v_s= 2.55466 m/s
    Re= 0.320498
 
@@ -759,6 +867,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.000546646 m/s
    Re= 1.43988e-08
 
@@ -766,6 +875,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.00109329 m/s
    Re= 2.87977e-08
 
@@ -773,6 +883,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.00218659 m/s
    Re= 5.75954e-08
 
@@ -780,6 +891,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.00551384 m/s
    Re= 1.45236e-06
 
@@ -787,6 +899,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.0110277 m/s
    Re= 2.90473e-06
 
@@ -794,6 +907,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.0220554 m/s
    Re= 5.80946e-06
 
@@ -801,6 +915,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.0601475 m/s
    Re= 0.00015843
 
@@ -808,6 +923,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.120295 m/s
    Re= 0.000316861
 
@@ -815,6 +931,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 0.240591 m/s
    Re= 0.000633723
 
@@ -822,6 +939,7 @@ rho_p= 2000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 1.24795 m/s
    Re= 0.0328714
 
@@ -829,6 +947,7 @@ rho_p= 500 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 2.4959 m/s
    Re= 0.0657429
 
@@ -836,6 +955,7 @@ rho_p= 1000 kg/m^3
     T= 200 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00174181 kg/m^3
   v_s= 4.99181 m/s
    Re= 0.131486
 
@@ -843,6 +963,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.000611017 m/s
    Re= 1.06525e-08
 
@@ -850,6 +971,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.00122204 m/s
    Re= 2.1305e-08
 
@@ -857,6 +979,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.00244407 m/s
    Re= 4.261e-08
 
@@ -864,6 +987,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.0061493 m/s
    Re= 1.07207e-06
 
@@ -871,6 +995,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.0122986 m/s
    Re= 2.14414e-06
 
@@ -878,6 +1003,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.0245972 m/s
    Re= 4.28829e-06
 
@@ -885,6 +1011,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.0655755 m/s
    Re= 0.000114324
 
@@ -892,6 +1019,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.131151 m/s
    Re= 0.000228649
 
@@ -899,6 +1027,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 0.262302 m/s
    Re= 0.000457298
 
@@ -906,6 +1035,7 @@ rho_p= 2000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 1.16895 m/s
    Re= 0.0203794
 
@@ -913,6 +1043,7 @@ rho_p= 500 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 2.3379 m/s
    Re= 0.0407589
 
@@ -920,6 +1051,7 @@ rho_p= 1000 kg/m^3
     T= 250 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00139345 kg/m^3
   v_s= 4.6758 m/s
    Re= 0.081518
 
@@ -927,6 +1059,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.000669235 m/s
    Re= 8.39597e-09
 
@@ -934,6 +1067,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.00133847 m/s
    Re= 1.6792e-08
 
@@ -941,6 +1075,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 0.1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.00267695 m/s
    Re= 3.35839e-08
 
@@ -948,6 +1083,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.0067261 m/s
    Re= 8.43831e-07
 
@@ -955,6 +1091,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.0134522 m/s
    Re= 1.68766e-06
 
@@ -962,6 +1099,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 1 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.0269045 m/s
    Re= 3.37533e-06
 
@@ -969,6 +1107,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.0707532 m/s
    Re= 8.87643e-05
 
@@ -976,6 +1115,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.141507 m/s
    Re= 0.000177529
 
@@ -983,6 +1123,7 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 10 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 0.283013 m/s
    Re= 0.000355058
 
@@ -990,6 +1131,7 @@ rho_p= 2000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 500 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 1.13606 m/s
    Re= 0.0142525
 
@@ -997,6 +1139,7 @@ rho_p= 500 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 1000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 2.27212 m/s
    Re= 0.0285051
 
@@ -1004,5 +1147,6 @@ rho_p= 1000 kg/m^3
     T= 300 K
   r_p= 100 microns
 rho_p= 2000 kg/m^3
+rho_a= 0.00116121 kg/m^3
   v_s= 4.54424 m/s
    Re= 0.0570103
