@@ -2171,19 +2171,19 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);
   if (strcasecmp(ctl->species, "CF2Cl2") == 0) {
     ctl->molmass = 120.907;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 3e-5;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 3500.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 3e-5;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 3500.0;
   } else if (strcasecmp(ctl->species, "CFCl3") == 0) {
     ctl->molmass = 137.359;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.1e-4;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 3300.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.1e-4;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 3300.0;
   } else if (strcasecmp(ctl->species, "CH4") == 0) {
     ctl->molmass = 16.043;
     ctl->oh_chem_reaction = 2;
     ctl->oh_chem[0] = 2.45e-12;
     ctl->oh_chem[1] = 1775;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.4e-5;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 1600.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.4e-5;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 1600.0;
   } else if (strcasecmp(ctl->species, "CO") == 0) {
     ctl->molmass = 28.01;
     ctl->oh_chem_reaction = 3;
@@ -2191,29 +2191,29 @@ void read_ctl(
     ctl->oh_chem[1] = 2.1;
     ctl->oh_chem[2] = 1.1e-12;
     ctl->oh_chem[3] = -1.3;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 9.7e-6;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 1300.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 9.7e-6;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 1300.0;
   } else if (strcasecmp(ctl->species, "CO2") == 0) {
     ctl->molmass = 44.009;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 3.3e-4;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 3.3e-4;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2400.0;
   } else if (strcasecmp(ctl->species, "H2O") == 0) {
     ctl->molmass = 18.01528;
   } else if (strcasecmp(ctl->species, "N2O") == 0) {
     ctl->molmass = 44.013;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 2.4e-4;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 2600.;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 2.4e-4;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2600.;
   } else if (strcasecmp(ctl->species, "NH3") == 0) {
     ctl->molmass = 17.031;
     ctl->oh_chem_reaction = 2;
     ctl->oh_chem[0] = 1.7e-12;
     ctl->oh_chem[1] = 710;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 5.9e-1;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 4200.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 5.9e-1;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 4200.0;
   } else if (strcasecmp(ctl->species, "HNO3") == 0) {
     ctl->molmass = 63.012;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 2.1e3;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 8700.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 2.1e3;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 8700.0;
   } else if (strcasecmp(ctl->species, "NO") == 0) {
     ctl->molmass = 30.006;
     ctl->oh_chem_reaction = 3;
@@ -2221,8 +2221,8 @@ void read_ctl(
     ctl->oh_chem[1] = 2.6;
     ctl->oh_chem[2] = 3.6e-11;
     ctl->oh_chem[3] = 0.1;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.9e-5;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 1600.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.9e-5;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 1600.0;
   } else if (strcasecmp(ctl->species, "NO2") == 0) {
     ctl->molmass = 46.005;
     ctl->oh_chem_reaction = 3;
@@ -2230,19 +2230,19 @@ void read_ctl(
     ctl->oh_chem[1] = 3.0;
     ctl->oh_chem[2] = 2.8e-11;
     ctl->oh_chem[3] = 0.0;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.2e-4;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 2400.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.2e-4;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2400.0;
   } else if (strcasecmp(ctl->species, "O3") == 0) {
     ctl->molmass = 47.997;
     ctl->oh_chem_reaction = 2;
     ctl->oh_chem[0] = 1.7e-12;
     ctl->oh_chem[1] = 940;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 1e-4;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 2800.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1e-4;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2800.0;
   } else if (strcasecmp(ctl->species, "SF6") == 0) {
     ctl->molmass = 146.048;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 2.4e-6;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 3100.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 2.4e-6;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 3100.0;
   } else if (strcasecmp(ctl->species, "SO2") == 0) {
     ctl->molmass = 64.066;
     ctl->oh_chem_reaction = 3;
@@ -2250,8 +2250,8 @@ void read_ctl(
     ctl->oh_chem[1] = 4.1;
     ctl->oh_chem[2] = 1.7e-12;
     ctl->oh_chem[3] = -0.2;
-    ctl->wet_depo[2] = ctl->wet_depo[6] = 1.3e-2;
-    ctl->wet_depo[3] = ctl->wet_depo[7] = 2900.0;
+    ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.3e-2;
+    ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2900.0;
   } else {
     ctl->molmass =
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
@@ -2263,10 +2263,25 @@ void read_ctl(
     for (int ip = 0; ip < 1; ip++)
       ctl->dry_depo[ip] =
 	scan_ctl(filename, argc, argv, "DRY_DEPO", ip, "0", NULL);
-    for (int ip = 0; ip < 8; ip++)
-      ctl->wet_depo[ip] =
-	scan_ctl(filename, argc, argv, "WET_DEPO", ip, "0", NULL);
+    ctl->wet_depo_ic_a = 
+      scan_ctl(filename, argc, argv, "WET_DEPO_IC_A", -1, "0", NULL);
+    ctl->wet_depo_ic_b = 
+      scan_ctl(filename, argc, argv, "WET_DEPO_IC_B", -1, "0", NULL);      
+    ctl->wet_depo_bc_a = 
+      scan_ctl(filename, argc, argv, "WET_DEPO_BC_A", -1, "0", NULL);    
+    ctl->wet_depo_bc_b = 
+      scan_ctl(filename, argc, argv, "WET_DEPO_BC_B", -1, "0", NULL);    
+    for (int ip = 0; ip < 3; ip++)
+      ctl->wet_depo_ic_h[ip] =
+	      scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, "0", NULL);
+    for (int ip = 0; ip < 1; ip++)
+      ctl->wet_depo_bc_h[ip] =
+	      scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, "0", NULL);
   }
+  ctl->wet_depo_ic_ratio_ret = 
+    scan_ctl(filename, argc, argv, "WET_DEPO_IC_RATIO_RET", -1, "1", NULL);   
+  ctl->wet_depo_bc_ratio_ret = 
+    scan_ctl(filename, argc, argv, "WET_DEPO_BC_RATIO_RET", -1, "1", NULL);
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,

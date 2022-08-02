@@ -394,8 +394,8 @@ int main(
 	module_dry_deposition(&ctl, met0, met1, atm, dt);
 
       /* Wet deposition... */
-      if ((ctl.wet_depo[0] > 0 || ctl.wet_depo[2] > 0)
-	  && (ctl.wet_depo[4] > 0 || ctl.wet_depo[6] > 0))
+      if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
+	  && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
 	module_wet_deposition(&ctl, met0, met1, atm, dt);
 
       /* Boundary conditions... */
@@ -1539,6 +1539,8 @@ void module_timesteps_init(
 
 /*****************************************************************************/
 
+#if 0
+
 void module_wet_deposition(
   ctl_t * ctl,
   met_t * met0,
@@ -1643,6 +1645,142 @@ void module_wet_deposition(
 	atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
+    }
+}
+
+#endif
+
+/*****************************************************************************/
+
+void module_wet_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+//  SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
+
+  const int np = atm->np;
+#ifdef _OPENACC
+#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (dt[ip] != 0) {
+
+      double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
+
+      int inside;
+
+      /* Check whether particle is below cloud top... */
+      INTPOL_INIT;
+      INTPOL_2D(pct, 1);
+      if (!isfinite(pct) || atm->p[ip] <= pct)
+	continue;
+
+      /* Get cloud bottom pressure... */
+      INTPOL_2D(pcb, 0);
+
+      /* Estimate precipitation rate (Pisso et al., 2019)... */
+      INTPOL_2D(cl, 0);
+      double Is = pow(2. * cl, 1. / 0.36);
+      if (Is < 0.01)
+	continue;
+
+      /* Check whether particle is inside or below cloud... */
+      INTPOL_3D(lwc, 1);
+      INTPOL_3D(iwc, 0);
+      inside = (iwc > 0 || lwc > 0);
+      
+      INTPOL_3D(t, 0);
+
+      /* Calculate in-cloud scavenging coefficient... */
+      if (inside) {
+      /* Calculate retention factor according to the given retention ratio... */
+        double eta;
+        if (t>273.15)
+          eta = 1;
+        else if (t<=238.15)
+          eta = ctl->wet_depo_ic_ratio_ret;
+        else
+          eta = LIN(273.15, 1, 238.15,ctl->wet_depo_ic_ratio_ret, t);
+
+	    /* Use exponential dependency for particles ... */
+        if (ctl->wet_depo_ic_a > 0)
+          lambda = ctl->wet_depo_ic_a * pow(Is, ctl->wet_depo_ic_b) * eta;
+
+      /* Use Henry's law for gases... */
+        else if (ctl->wet_depo_ic_h[0] > 0) {
+
+      /* Get temperature... */
+          INTPOL_3D(t, 0);
+
+	    /* Get Henry's constant (Sander, 2015)... */
+	        h = ctl->wet_depo_ic_h[0]
+	         * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / 298.15));
+      /* Use effective Henry's constant for SO2 (Berglen, 2004), (Simpson, 2012)... */
+          if (ctl->wet_depo_ic_h[2]>0){
+            double H_ion = pow(10, ctl->wet_depo_ic_h[2]* (-1));
+            double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
+            double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
+            h *= (1 + K_1 / H_ion + K_1 * K_2 / pow(H_ion,2));
+          }
+      /* Estimate depth of cloud layer... */
+          dz = 1e3 * (Z(pct) - Z(pcb));
+
+      /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+          lambda = h * RI * t * Is / 3.6e6 / dz * eta;
+        }
+      }
+
+      /* Calculate below-cloud scavenging coefficient... */
+      else {
+      
+      /* Calculate retention factor according to the given retention ratio... */
+        double eta;
+        if (t>270)
+          eta = 1;
+        else
+          eta = ctl->wet_depo_bc_ratio_ret;
+
+	    /* Use exponential dependency for particles... */
+        if (ctl->wet_depo_bc_a > 0)
+          lambda = ctl->wet_depo_bc_a * pow(Is, ctl->wet_depo_bc_b) * eta;
+
+      /* Use Henry's law for gases... */
+        else if (ctl->wet_depo_bc_h[0] > 0) {
+
+      /* Get temperature... */
+          INTPOL_3D(t, 0);
+
+	    /* Get Henry's constant (Sander, 2015)... */
+          h = ctl->wet_depo_bc_h[0]
+            * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
+
+	    /* Estimate depth of cloud layer... */
+	        dz = 1e3 * (Z(pct) - Z(pcb));
+
+	    /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	        lambda = h * RI * t * Is / 3.6e6 / dz * eta;
+	      }
+      }
+
+      /* Calculate exponential decay of mass... */
+      double aux = exp(-dt[ip] * lambda);
+      //if (ctl->qnt_mloss_wet >= 0 && ctl->qnt_m >= 0)
+      //  atm->q[ctl->qnt_mloss_wet][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      if (ctl->qnt_m >= 0)
+	      atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+	      atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
 
