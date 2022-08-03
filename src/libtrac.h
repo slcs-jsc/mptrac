@@ -960,34 +960,29 @@ typedef struct {
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
-#if 0
-  /*! Coefficients for wet deposition (Ai, Bi, Hi, Ci, Ab, Bb, Hb, Cb). */
-  double wet_depo[8];
-#endif
-
-  /*! Coefficient A for wet deposition below cloud (exponential form). (Ai, Bi, Hi, Ci, Ab, Bb, Hb, Cb). */
+  /*! Coefficient A for wet deposition below cloud (exponential form). */
   double wet_depo_bc_a;
 
-  /*! Coefficient B for wet deposition below cloud (exponential form). */ 
+  /*! Coefficient B for wet deposition below cloud (exponential form). */
   double wet_depo_bc_b;
 
-  /*! Coefficient A for wet deposition in cloud (exponential form). */ 
+  /*! Coefficient A for wet deposition in cloud (exponential form). */
   double wet_depo_ic_a;
 
-  /*! Coefficient B for wet deposition in cloud (exponential form). */ 
+  /*! Coefficient B for wet deposition in cloud (exponential form). */
   double wet_depo_ic_b;
 
-  /*! Coefficients for wet deposition in cloud (Henry's law equilibrium form): Hb, Cb, pH */
+  /*! Coefficients for wet deposition in cloud (Henry's law: Hb, Cb, pH). */
   double wet_depo_ic_h[3];
 
-  /*! Coefficients for wet deposition below cloud (Henry's law equilibrium form): Hb, Cb, pH */
+  /*! Coefficients for wet deposition below cloud (Henry's law: Hb, Cb). */
   double wet_depo_bc_h[2];
 
   /*! Coefficients for wet deposition in cloud: retention ratio. */
-  double wet_depo_ic_ratio_ret;
+  double wet_depo_ic_ret_ratio;
 
   /*! Coefficients for wet deposition below cloud: retention ratio. */
-  double wet_depo_bc_ratio_ret; 
+  double wet_depo_bc_ret_ratio;
 
   /*! H2O volume mixing ratio for PSC analysis. */
   double psc_h2o;

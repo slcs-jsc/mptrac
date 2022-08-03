@@ -2263,25 +2263,25 @@ void read_ctl(
     for (int ip = 0; ip < 1; ip++)
       ctl->dry_depo[ip] =
 	scan_ctl(filename, argc, argv, "DRY_DEPO", ip, "0", NULL);
-    ctl->wet_depo_ic_a = 
+    ctl->wet_depo_ic_a =
       scan_ctl(filename, argc, argv, "WET_DEPO_IC_A", -1, "0", NULL);
-    ctl->wet_depo_ic_b = 
-      scan_ctl(filename, argc, argv, "WET_DEPO_IC_B", -1, "0", NULL);      
-    ctl->wet_depo_bc_a = 
-      scan_ctl(filename, argc, argv, "WET_DEPO_BC_A", -1, "0", NULL);    
-    ctl->wet_depo_bc_b = 
-      scan_ctl(filename, argc, argv, "WET_DEPO_BC_B", -1, "0", NULL);    
+    ctl->wet_depo_ic_b =
+      scan_ctl(filename, argc, argv, "WET_DEPO_IC_B", -1, "0", NULL);
+    ctl->wet_depo_bc_a =
+      scan_ctl(filename, argc, argv, "WET_DEPO_BC_A", -1, "0", NULL);
+    ctl->wet_depo_bc_b =
+      scan_ctl(filename, argc, argv, "WET_DEPO_BC_B", -1, "0", NULL);
     for (int ip = 0; ip < 3; ip++)
       ctl->wet_depo_ic_h[ip] =
-	      scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, "0", NULL);
+	scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, "0", NULL);
     for (int ip = 0; ip < 1; ip++)
       ctl->wet_depo_bc_h[ip] =
-	      scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, "0", NULL);
+	scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, "0", NULL);
   }
-  ctl->wet_depo_ic_ratio_ret = 
-    scan_ctl(filename, argc, argv, "WET_DEPO_IC_RATIO_RET", -1, "1", NULL);   
-  ctl->wet_depo_bc_ratio_ret = 
-    scan_ctl(filename, argc, argv, "WET_DEPO_BC_RATIO_RET", -1, "1", NULL);
+  ctl->wet_depo_ic_ret_ratio =
+    scan_ctl(filename, argc, argv, "WET_DEPO_IC_RET_RATIO", -1, "1", NULL);
+  ctl->wet_depo_bc_ret_ratio =
+    scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
