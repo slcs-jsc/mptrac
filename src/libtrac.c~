@@ -1881,11 +1881,11 @@ int read_atm(
       NC(nc_inq_varid(ncid, "ZETA", &varid));
       NC(nc_get_var_double(ncid, varid, atm->zeta));
       if (nc_inq_varid(ncid, "PRESS", &varid) == NC_NOERR) {
-	NC(nc_get_var_double(ncid, varid, atm->p));
+	     NC(nc_get_var_double(ncid, varid, atm->p));
       } else {
-	WARN("Initial data does not contain PRESS!\n");
+	      WARN("Initial data does not contain PRESS!\n");
       }
-    } else {
+      } else {
       NC(nc_inq_varid(ncid, "PRESS", &varid));
       NC(nc_get_var_double(ncid, varid, atm->p));
       if (nc_inq_varid(ncid, "ZETA", &varid) == NC_NOERR) {
@@ -2099,7 +2099,7 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "READMODE", -1, "0", NULL);
 
 
-  /* Vertical coordinates and velocities... */
+   /* Vertical coordinates and velocities... */
   ctl->vert_coord_ap =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
   ctl->vert_coord_met =
@@ -4674,7 +4674,7 @@ void write_atm(
     fclose(out);
 
   }
-  /* Write a netcdf4 file in CLaMS style */
+    /* Write a netcdf4 file in CLaMS style */
   else if (ctl->atm_type == 3) {
 
     /* Global Counter... */
@@ -4878,8 +4878,7 @@ void write_atm(
       }
 
       /* Put Global Attributes into File... */
-      NC(nc_put_att_text
-	 (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
+      NC(nc_put_att_text(ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
 
       /* End Definitions... */
       NC(nc_enddef(ncid));
@@ -4929,8 +4928,7 @@ void write_atm(
     LOG(2, msg, mini, maxi);
   }
 
-}
-
+  }
 /*****************************************************************************/
 
 void write_csi(
