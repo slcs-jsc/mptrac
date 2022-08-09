@@ -577,6 +577,16 @@
 #endif
 
 /* ------------------------------------------------------------
+   Thrust...
+   ------------------------------------------------------------ */
+
+/*! Wrapper to Thrust sorting function. */
+void thrustSortWrapper(
+  double *__restrict__ c,
+  int n,
+  int *__restrict__ index);
+
+/* ------------------------------------------------------------
    Structs...
    ------------------------------------------------------------ */
 
@@ -1669,14 +1679,14 @@ double nat_temperature(
 
 /*! Parallel quicksort. */
 void quicksort(
-  int arr[],
+  double arr[],
   int brr[],
   int low,
   int high);
 
 /*! Partition function for quicksort. */
 int quicksort_partition(
-  int arr[],
+  double arr[],
   int brr[],
   int low,
   int high);

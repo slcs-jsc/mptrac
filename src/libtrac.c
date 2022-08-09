@@ -1616,7 +1616,7 @@ double nat_temperature(
 /*****************************************************************************/
 
 void quicksort(
-  int arr[],
+  double arr[],
   int brr[],
   int low,
   int high) {
@@ -1639,21 +1639,21 @@ void quicksort(
 /*****************************************************************************/
 
 int quicksort_partition(
-  int arr[],
+  double arr[],
   int brr[],
   int low,
   int high) {
 
-  int pivot = arr[high];
+  double pivot = arr[high];
   int i = (low - 1);
 
   for (int j = low; j <= high - 1; j++)
     if (arr[j] <= pivot) {
       i++;
-      SWAP(arr[i], arr[j], int);
+      SWAP(arr[i], arr[j], double);
       SWAP(brr[i], brr[j], int);
     }
-  SWAP(arr[high], arr[i + 1], int);
+  SWAP(arr[high], arr[i + 1], double);
   SWAP(brr[high], brr[i + 1], int);
 
   return (i + 1);

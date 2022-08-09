@@ -41,6 +41,9 @@ COV ?= 0
 # Enable NVTX markers...
 NVTX ?= 0
 
+# Enable Thrust library...
+THRUST ?= 0
+
 # Enable zfp compression...
 ZFP ?= 0
 
@@ -106,6 +109,16 @@ endif
 ifeq ($(NVTX),1)
   CFLAGS  += -DNVTX
   LDFLAGS += -lnvToolsExt
+endif
+
+# Thrust...
+ifeq ($(THRUST),1)
+  ifeq ($(GPU),1)
+    CFLAGS += -c++libs
+    LDFLAGS += ../libs/build/lib/thrustSortWrapper.o
+  else
+    $(error Thrust library only available for GPU)
+  endif
 endif
 
 # zfp compression...

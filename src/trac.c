@@ -1412,70 +1412,128 @@ void module_sort(
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-  double *help;
-  int *idx, *p;
-  ALLOC(help, double,
-	NP);
-  ALLOC(idx, int,
-	NP);
-  ALLOC(p, int,
-	NP);
+  const int np = atm->np;
+  double *restrict const help = (double *) malloc((size_t) np * sizeof(double));	// why restrict const?   do we have to alloc help,a,p if it is only needed on the GPU?
+  double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
+  int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
 
-  /* Update host... */
 #ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
+#pragma acc enter data create(a[0:np], p[0:np], help[0:np])
+#pragma acc data present(ctl,met0,atm,a,p,help)	// does a,p,help need to be declared present if it was just created?
 #endif
 
   /* Get box index... */
-  const int np = atm->np;
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-    p[ip] = ip;
-    idx[ip] =
-      (locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny
-       + locate_reg(met0->lat, met0->ny, atm->lat[ip])) * met0->np
-      + locate_irr(met0->p, met0->np, atm->p[ip]);
-  }
-
-  /* Sort particles according to box index... */
-#pragma omp parallel
-  {
-#pragma omp single nowait
-    quicksort(idx, p, 0, np - 1);
-  }
-
-  /* Sort data... */
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->time[p[ip]];
-  memcpy(atm->time, help, (size_t) atm->np * sizeof(double));
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->p[p[ip]];
-  memcpy(atm->p, help, (size_t) atm->np * sizeof(double));
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->lon[p[ip]];
-  memcpy(atm->lon, help, (size_t) atm->np * sizeof(double));
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->lat[p[ip]];
-  memcpy(atm->lat, help, (size_t) atm->np * sizeof(double));
-  for (int iq = 0; iq < ctl->nq; iq++) {
-    for (int ip = 0; ip < np; ip++)
-      help[ip] = atm->q[iq][p[ip]];
-    memcpy(atm->q[iq], help, (size_t) atm->np * sizeof(double));
-  }
-
-  /* Update device... */
 #ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++) {
+    a[ip] =
+      (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
+		 locate_reg(met0->lat, met0->ny,
+			    atm->lat[ip])) * met0->np + locate_irr(met0->p,
+								   met0->np,
+								   atm->p
+								   [ip]));
+    p[ip] = ip;
+  }
+
+  /* Sorting... */
+#ifdef _OPENACC
+  {
+#ifdef THRUST
+    {
+#pragma acc host_data use_device(a, p)	// Is this still necessary? (and how about np?)
+      thrustSortWrapper(a, np, p);
+    }
+#else
+    {
+#pragma acc update host(a[0:np], p[0:np])
+#pragma omp parallel
+      {
+#pragma omp single nowait
+	quicksort(a, p, 0, np - 1);
+      }
+#pragma acc update device(a[0:np], p[0:np])
+    }
+#endif
+  }
+#else
+  {
+#pragma omp parallel
+    {
+#pragma omp single nowait
+      quicksort(a, p, 0, np - 1);
+    }
+  }
 #endif
 
+  /* Sort data... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->time[p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    atm->time[ip] = help[ip];
+
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->p[p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    atm->p[ip] = help[ip];
+
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->lon[p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    atm->lon[ip] = help[ip];
+
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = atm->lat[p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    atm->lat[ip] = help[ip];
+
+  for (int iq = 0; iq < ctl->nq; iq++) {
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+    for (int ip = 0; ip < np; ip++)
+      help[ip] = atm->q[iq][p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+    for (int ip = 0; ip < np; ip++)
+      atm->q[iq][ip] = help[ip];
+  }
+
   /* Free... */
-  free(help);
-  free(idx);
+#ifdef _OPENACC
+#pragma acc exit data delete(a,p,help)
+#endif
+  free(a);
   free(p);
+  free(help);
 }
 
 /*****************************************************************************/
