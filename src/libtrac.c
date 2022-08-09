@@ -1967,6 +1967,7 @@ void read_ctl(
       argv[0], VERSION, __DATE__, __TIME__);
 
   /* Initialize quantity indices... */
+  ctl->qnt_idx = -1;
   ctl->qnt_ens = -1;
   ctl->qnt_stat = -1;
   ctl->qnt_m = -1;
@@ -2034,7 +2035,8 @@ void read_ctl(
 	     ctl->qnt_format[iq]);
 
     /* Try to identify quantity... */
-    SET_QNT(qnt_ens, "ens", "-")
+    SET_QNT(qnt_idx, "idx", "-")
+      SET_QNT(qnt_ens, "ens", "-")
       SET_QNT(qnt_stat, "stat", "-")
       SET_QNT(qnt_m, "m", "kg")
       SET_QNT(qnt_vmr, "vmr", "ppv")

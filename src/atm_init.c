@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -139,6 +139,11 @@ int main(
   if (ctl.qnt_vmr >= 0 && bellrad <= 0)
     for (ip = 0; ip < atm->np; ip++)
       atm->q[ctl.qnt_vmr][ip] = vmr;
+
+  /* Initialize air parcel index... */
+  if (ctl.qnt_idx >= 0)
+    for (ip = 0; ip < atm->np; ip++)
+      atm->q[ctl.qnt_idx][ip] = ip;
 
   /* Save data... */
   write_atm(argv[2], &ctl, atm, 0);

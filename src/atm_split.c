@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -165,6 +165,10 @@ int main(
     /* Adjust mass... */
     if (ctl.qnt_m >= 0)
       atm2->q[ctl.qnt_m][atm2->np] = mtot / n;
+
+    /* Adjust air parcel index... */
+    if (ctl.qnt_idx >= 0)
+      atm2->q[ctl.qnt_idx][atm2->np] = atm2->np;
 
     /* Increment particle counter... */
     if ((++atm2->np) > NP)

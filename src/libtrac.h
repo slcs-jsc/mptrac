@@ -627,6 +627,9 @@ typedef struct {
   /*! Quantity output format. */
   char qnt_format[NQ][LEN];
 
+  /*! Quantity array index for air parcel IDs. */
+  int qnt_idx;
+
   /*! Quantity array index for ensemble IDs. */
   int qnt_ens;
 
