@@ -114,7 +114,7 @@ endif
 # Thrust...
 ifeq ($(THRUST),1)
   ifeq ($(GPU),1)
-    CFLAGS += -c++libs
+    CFLAGS += -DTHRUST -c++libs
     LDFLAGS += ../libs/build/lib/thrustSortWrapper.o
   else
     $(error Thrust library only available for GPU)
