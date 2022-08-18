@@ -47,27 +47,15 @@ static double clim_hno3_secs[12] = {
   24883200.00, 27561600.00, 30153600.00
 };
 
-#ifdef _OPENACC
-#pragma acc declare copyin(clim_hno3_secs)
-#endif
-
 static double clim_hno3_lats[18] = {
   -85, -75, -65, -55, -45, -35, -25, -15, -5,
   5, 15, 25, 35, 45, 55, 65, 75, 85
 };
 
-#ifdef _OPENACC
-#pragma acc declare copyin(clim_hno3_lats)
-#endif
-
 static double clim_hno3_ps[10] = {
   4.64159, 6.81292, 10, 14.678, 21.5443,
   31.6228, 46.4159, 68.1292, 100, 146.78
 };
-
-#ifdef _OPENACC
-#pragma acc declare copyin(clim_hno3_ps)
-#endif
 
 static double clim_hno3_var[12][18][10] = {
   {{0.782, 1.65, 2.9, 4.59, 6.71, 8.25, 7.16, 5.75, 2.9, 1.74},
@@ -289,7 +277,7 @@ static double clim_hno3_var[12][18][10] = {
 };
 
 #ifdef _OPENACC
-#pragma acc declare copyin(clim_hno3_var)
+#pragma acc declare copyin(clim_hno3_secs,clim_hno3_lats,clim_hno3_ps,clim_hno3_var)
 #endif
 
 double clim_hno3(
@@ -541,10 +529,6 @@ static double clim_tropo_secs[12] = {
   24883200.00, 27561600.00, 30153600.00
 };
 
-#ifdef _OPENACC
-#pragma acc declare copyin(clim_tropo_secs)
-#endif
-
 static double clim_tropo_lats[73]
   = { -90, -87.5, -85, -82.5, -80, -77.5, -75, -72.5, -70, -67.5,
   -65, -62.5, -60, -57.5, -55, -52.5, -50, -47.5, -45, -42.5,
@@ -554,10 +538,6 @@ static double clim_tropo_lats[73]
   45, 47.5, 50, 52.5, 55, 57.5, 60, 62.5, 65, 67.5, 70, 72.5,
   75, 77.5, 80, 82.5, 85, 87.5, 90
 };
-
-#ifdef _OPENACC
-#pragma acc declare copyin(clim_tropo_lats)
-#endif
 
 static double clim_tropo_tps[12][73]
   = { {324.1, 325.6, 325, 324.3, 322.5, 319.7, 314, 307.2, 301.8, 299.6,
@@ -660,7 +640,7 @@ static double clim_tropo_tps[12][73]
 };
 
 #ifdef _OPENACC
-#pragma acc declare copyin(clim_tropo_tps)
+#pragma acc declare copyin(clim_tropo_secs,clim_tropo_lats,clim_tropo_tps)
 #endif
 
 double clim_tropo(

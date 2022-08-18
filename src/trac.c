@@ -165,6 +165,12 @@ void module_sort(
   met_t * met0,
   atm_t * atm);
 
+/*! Helper function for sorting module. */
+void module_sort_help(
+  double *a,
+  int *p,
+  int np);
+
 /*! Calculate time steps. */
 void module_timesteps(
   ctl_t * ctl,
@@ -1413,13 +1419,12 @@ void module_sort(
 
   /* Allocate... */
   const int np = atm->np;
-  double *restrict const help = (double *) malloc((size_t) np * sizeof(double));	// why restrict const?   do we have to alloc help,a,p if it is only needed on the GPU?
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
 
 #ifdef _OPENACC
-#pragma acc enter data create(a[0:np], p[0:np], help[0:np])
-#pragma acc data present(ctl,met0,atm,a,p,help)	// does a,p,help need to be declared present if it was just created?
+#pragma acc enter data create(a[0:np],p[0:np])
+#pragma acc data present(ctl,met0,atm,a,p)
 #endif
 
   /* Get box index... */
@@ -1444,7 +1449,7 @@ void module_sort(
   {
 #ifdef THRUST
     {
-#pragma acc host_data use_device(a, p)	// Is this still necessary? (and how about np?)
+#pragma acc host_data use_device(a, p)
       thrustSortWrapper(a, np, p);
     }
 #else
@@ -1470,69 +1475,50 @@ void module_sort(
 #endif
 
   /* Sort data... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->time[p[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    atm->time[ip] = help[ip];
-
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->p[p[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    atm->p[ip] = help[ip];
-
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->lon[p[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    atm->lon[ip] = help[ip];
-
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    help[ip] = atm->lat[p[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    atm->lat[ip] = help[ip];
-
-  for (int iq = 0; iq < ctl->nq; iq++) {
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-    for (int ip = 0; ip < np; ip++)
-      help[ip] = atm->q[iq][p[ip]];
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-    for (int ip = 0; ip < np; ip++)
-      atm->q[iq][ip] = help[ip];
-  }
+  module_sort_help(atm->time, p, np);
+  module_sort_help(atm->p, p, np);
+  module_sort_help(atm->lon, p, np);
+  module_sort_help(atm->lat, p, np);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    module_sort_help(atm->q[iq], p, np);
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete(a,p,help)
+#pragma acc exit data delete(a,p)
 #endif
   free(a);
   free(p);
+}
+
+/*****************************************************************************/
+
+void module_sort_help(
+  double *a,
+  int *p,
+  int np) {
+
+  /* Allocate... */
+  double *restrict const help =
+    (double *) malloc((size_t) np * sizeof(double));
+
+  /* Reordering of array... */
+#ifdef _OPENACC
+#pragma acc enter data create(help[0:np])
+#pragma acc data present(a,p,help)
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    help[ip] = a[p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    a[ip] = help[ip];
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(help)
+#endif
   free(help);
 }
 
