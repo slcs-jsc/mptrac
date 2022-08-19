@@ -237,6 +237,14 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
+  // TODO: Revise this code block, simply initialize all the four GPU devices on the compute node?
+  // 1 node = 1 MPI task uses 48 OpenMP threads and 4 GPU devices
+  // for ( idev ... ) {
+  //   acc_set_device_num(idev) ;
+  //   ...
+  //   acc_init()...
+  // }
+  
   /* Initialize GPUs... */
 #ifdef _OPENACC
   SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
@@ -280,6 +288,10 @@ int main(
     ALLOC(rs, double,
 	  3 * NP + 1);
 
+    
+    // TODO: create the data region on all 4 GPUs...
+    // for-loop over devices... create data region
+    
     /* Create data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
@@ -301,6 +313,11 @@ int main(
     /* Initialize timesteps... */
     module_timesteps_init(&ctl, atm);
 
+
+    // TODO: create the data region on all 4 GPUs...
+    // for-loop over devices... create data region
+
+    
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -319,6 +336,11 @@ int main(
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
+
+    // TODO: create the data region on all 4 GPUs...
+    // for-loop over devices... create data region
+
+    
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -353,6 +375,12 @@ int main(
 
       /* Advection... */
       if (ctl.advect == 0)
+
+
+	// TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
+	// maybe with omp prallel for or via omp tasks?
+
+
 	module_advect_mp(met0, met1, atm, dt);
       else if (ctl.advect == 1)
 	module_advect_rk(met0, met1, atm, dt);
@@ -439,6 +467,11 @@ int main(
 					+ GX * GY * sizeof(int)) / 1024. /
 	1024.);
 
+    
+    // TODO: create the data region on all 4 GPUs...
+    // for-loop over devices... create data region
+
+    
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
@@ -472,15 +505,28 @@ int main(
 
 /*****************************************************************************/
 
+
+// TODO: apply OpenMP parallelisation outside of the modules?
+
+
 void module_advect_mp(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  double *dt
+
+  // TODO:
+  // maybe add particle range here to allow to select subset of the full particle loop:
+  // int ip0, int ip1
+  
+		      ) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
+
+
+  
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(met0,met1,atm,dt)
@@ -488,6 +534,15 @@ void module_advect_mp(
 #else
 #pragma omp parallel for default(shared)
 #endif
+
+
+
+  // TODO:
+  // split loop over all particles (0...np-1) into 4 blocks, (0...np/4, np/4+1...2*np/4, 2*np/4+1 ... 3*np/4, 3*np/4+1... np-1)
+  // reduce the loop counters to calulate only a sub-range: for (int ip = ip0; ip < ip1; ip++)
+  // idea: use OpenMP to calculate the 4 blocks of the particle loop in parallel
+  
+  
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 

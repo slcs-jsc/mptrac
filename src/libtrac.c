@@ -276,6 +276,9 @@ static double clim_hno3_var[12][18][10] = {
    {1.42, 2.04, 4.68, 8.92, 12.7, 12, 11.2, 8.99, 5.32, 2.33}}
 };
 
+
+// TODO: copy the global variables clim_hno3_secs, ... to _all_ devices
+
 #ifdef _OPENACC
 #pragma acc declare copyin(clim_hno3_secs,clim_hno3_lats,clim_hno3_ps,clim_hno3_var)
 #endif
@@ -639,6 +642,9 @@ static double clim_tropo_tps[12][73]
  281.7, 281.1, 281.2}
 };
 
+
+// TODO: copy the global variables clim_tropo_secs, ... to _all_ devices
+
 #ifdef _OPENACC
 #pragma acc declare copyin(clim_tropo_secs,clim_tropo_lats,clim_tropo_tps)
 #endif
@@ -1000,6 +1006,14 @@ void get_met(
     if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
 
+
+    // TODO: Update meteorological data met0, met1 on _all_ GPUs
+    // for(idev=0 ; idev < num_devices; idev++) {
+    //   acc_set_device(idev)
+    //   #pragma acc update ..
+    // }
+    
+    
     /* Update GPU... */
 #ifdef _OPENACC
     met_t *met0up = *met0;
@@ -1031,6 +1045,14 @@ void get_met(
     if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
 
+
+    // TODO: Update meteorological data met1 on _all_ GPUs
+    // for(idev=0 ; idev < num_devices; idev++) {
+    //   acc_set_device(idev)
+    //   #pragma acc update ..
+    // }
+
+    
     /* Update GPU... */
 #ifdef _OPENACC
     met_t *met1up = *met1;
@@ -1061,6 +1083,15 @@ void get_met(
     if (!read_met(filename, ctl, *met0))
       ERRMSG("Cannot open file!");
 
+
+    
+    // TODO: Update meteorological data met0 on _all_ GPUs
+    // for(idev=0 ; idev < num_devices; idev++) {
+    //   acc_set_device(idev)
+    //   #pragma acc update ..
+    // }
+
+    
     /* Update GPU... */
 #ifdef _OPENACC
     met_t *met0up = *met0;
