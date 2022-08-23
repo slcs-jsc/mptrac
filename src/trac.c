@@ -292,13 +292,17 @@ int main(
 	  3 * NP + 1);
 
     
-    // TODO: create the data region on all 4 GPUs...
+    // TODO: [-] create the data region on all 4 GPUs...
     // for-loop over devices... create data region
     
     /* Create data region on GPUs... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc enter data create(atm[:1],cache[:1],clim[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
+    #pragma acc enter data create(atm[:1],cache[:1],clim[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
+}
 #endif
 
     /* Read control parameters... */
