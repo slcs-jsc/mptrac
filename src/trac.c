@@ -348,14 +348,18 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
 
-    // TODO: create the data region on all 4 GPUs...
+    // TODO: [-] create the data region on all 4 GPUs...
     // for-loop over devices... create data region
 
     
-    /* Update GPU... */
+    /* Update all GPUs ... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(cache[:1])
+    #pragma acc update device(cache[:1])
+}
 #endif
 
     /* ------------------------------------------------------------
