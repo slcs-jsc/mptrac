@@ -237,7 +237,7 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  // TODO: Revise this code block, simply initialize all the four GPU devices on the compute node?
+  // TODO: [-] Revise this code block, simply initialize all the four GPU devices on the compute node?
   // 1 node = 1 MPI task uses 48 OpenMP threads and 4 GPU devices
   // for ( idev ... ) {
   //   acc_set_device_num(idev) ;
@@ -247,14 +247,17 @@ int main(
   
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
   num_devices = acc_get_num_devices(acc_device_nvidia);
   if (num_devices <= 0)
     ERRMSG("Not running on a GPU device!");
-  int device_num = rank % num_devices;
-  acc_set_device_num(device_num, acc_device_nvidia);
-  acc_device_t device_type = acc_get_device_type();
-  acc_init(device_type);
+
+  for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
+    SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
+    acc_device_t device_type = acc_get_device_type();
+    acc_init(device_type);
+  }
 #endif
 
   /* Check arguments... */
