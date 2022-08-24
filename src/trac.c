@@ -483,14 +483,19 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 	1024.);
 
     
-    // TODO: create the data region on all 4 GPUs...
+    // TODO: [-]create the data region on all 4 GPUs...
     // for-loop over devices... create data region
 
     
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
+    #pragma acc wait
+    #pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
+}
 #endif
 
     /* Free... */
