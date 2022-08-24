@@ -546,12 +546,16 @@ void module_advect_mp(
 
 
 
-  
-  const int np = atm->np;
+    int idx = 0;
 #ifdef _OPENACC
+    int device_num = acc_get_device_num(acc_device_nvidia);
+    const int np = (atm->np/4) * (device_num + 1);
+    idx = (atm->np/4) * device_num;
+
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
+    const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
 
@@ -563,7 +567,7 @@ void module_advect_mp(
   // idea: use OpenMP to calculate the 4 blocks of the particle loop in parallel
   
   
-  for (int ip = 0; ip < np; ip++)
+  for (int ip = idx; ip < np; ip++)
     if (dt[ip] != 0) {
 
       double u, v, w;
