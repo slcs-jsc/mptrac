@@ -27,6 +27,7 @@
 /* ------------------------------------------------------------
    Global variables...
    ------------------------------------------------------------ */
+static int num_devices = 0;
 
 #ifdef _OPENACC
 curandGenerator_t rng;
@@ -224,7 +225,7 @@ int main(
 
   double *dt, *rs, t;
 
-  int num_devices = 0, ntask = -1, rank = 0, size = 1;
+  int ntask = -1, rank = 0, size = 1;
 
   /* Start timers... */
   START_TIMERS;
@@ -394,6 +395,11 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 
 	// TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
 	// maybe with omp prallel for or via omp tasks?
+#ifdef _OPENACC
+    #pragma omp parallel num_threads(num_devices) {
+     int device_num = omp_get_thread_num();
+     acc_set_device_num(device_num, acc_device_nvidia);
+#endif
 
 
 	module_advect_mp(met0, met1, atm, dt);
@@ -453,6 +459,10 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
+
+#ifdef _OPENACC
+        }
+#endif
     }
 
     /* ------------------------------------------------------------
@@ -544,13 +554,11 @@ void module_advect_mp(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-
-
-    int idx = 0;
+  int idx = 0;
 #ifdef _OPENACC
-    int device_num = acc_get_device_num(acc_device_nvidia);
-    const int np = (atm->np/4) * (device_num + 1);
-    idx = (atm->np/4) * device_num;
+  int device_num = acc_get_device_num(acc_device_nvidia);
+  const int np = (atm->np/num_devices) * (device_num + 1);
+  idx = (atm->np/num_devices) * device_num;
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
