@@ -1405,7 +1405,7 @@ typedef struct {
 
 /*! HNO3 Volume Climatological initial data. */
 __attribute__((unused))
-static clim_hno3_t clim_hno3_init_data = {
+static const clim_hno3_t clim_hno3_init_data = {
         {
                 1209600.00, 3888000.00, 6393600.00,
                 9072000.00, 11664000.00, 14342400.00,
