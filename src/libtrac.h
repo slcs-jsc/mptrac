@@ -1396,7 +1396,7 @@ typedef struct {
 } met_t;
 
 /*! HNO3 Volume Climatological initial data. */
-const struct {
+static const struct {
     double secs[12];
     double clim_hno3_lats[18];
     double clim_hno3_ps[10];
@@ -1644,7 +1644,7 @@ typedef struct {
 } clim_tropo_t;
 
 /*! Tropopause Pressure Climatological initial data. */
-clim_tropo_t clim_tropo_init_data = {
+static clim_tropo_t clim_tropo_init_data = {
         {
                 1209600.00, 3888000.00, 6393600.00,
                 9072000.00, 11664000.00, 14342400.00,
