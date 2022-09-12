@@ -287,7 +287,7 @@ double clim_hno3(
   double t,
   double lat,
   double p,
-  clim_hno3_t *clim_hno3_obj) {
+  const clim_hno3_t *clim_hno3_obj) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -653,7 +653,7 @@ double clim_oh_init_help(
 double clim_tropo(
   double t,
   double lat,
-  clim_tropo_t *clim_tropo_obj ) {
+  const clim_tropo_t *clim_tropo_obj ) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -1556,7 +1556,7 @@ double lapse_rate(
 /*****************************************************************************/
 
 int locate_irr(
-  double *xx,
+  const double *xx,
   int n,
   double x) {
 
@@ -1586,7 +1586,7 @@ int locate_irr(
 /*****************************************************************************/
 
 int locate_reg(
-  double *xx,
+  const double *xx,
   int n,
   double x) {
 
@@ -2790,7 +2790,7 @@ void read_met_bin_3d(
 
 void read_met_cape(
         met_t *met,
-        clim_tropo_t *clim_tropo_obj) {
+        const clim_tropo_t *clim_tropo_obj) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);

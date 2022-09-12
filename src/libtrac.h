@@ -1649,7 +1649,7 @@ typedef struct {
 
 /*! Tropopause Pressure Climatological initial data. */
 __attribute__((unused))
-static clim_tropo_t clim_tropo_init_data = {
+static const clim_tropo_t clim_tropo_init_data = {
         {
                 1209600.00, 3888000.00, 6393600.00,
                 9072000.00, 11664000.00, 14342400.00,
@@ -1790,7 +1790,7 @@ double clim_hno3(
   double t,
   double lat,
   double p,
-  clim_hno3_t *clim_hno3_obj);
+  const clim_hno3_t *clim_hno3_obj);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
@@ -1832,7 +1832,7 @@ double clim_oh_init_help(
 double clim_tropo(
   double t,
   double lat,
-  clim_tropo_t *clim_tropo_obj);
+  const clim_tropo_t *clim_tropo_obj);
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -2029,7 +2029,7 @@ double lapse_rate(
 #pragma acc routine (locate_irr)
 #endif
 int locate_irr(
-  double *xx,
+  const double *xx,
   int n,
   double x);
 
@@ -2038,7 +2038,7 @@ int locate_irr(
 #pragma acc routine (locate_reg)
 #endif
 int locate_reg(
-  double *xx,
+  const double *xx,
   int n,
   double x);
 
@@ -2107,7 +2107,9 @@ void read_met_bin_3d(
   double tolerance);
 
 /*! Calculate convective available potential energy. */
-void read_met_cape(met_t *met, clim_tropo_t *clim_tropo_obj);
+void read_met_cape(
+  met_t *met,
+  const clim_tropo_t *clim_tropo_obj);
 
 /*! Calculate cloud properties. */
 void read_met_cloud(
