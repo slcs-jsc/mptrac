@@ -213,6 +213,8 @@ int main(
 
   clim_tropo_t *clim_tropo_obj;
 
+  clim_hno3_t *clim_hno3_obj;
+
   FILE *dirlist;
 
   char dirname[LEN], filename[2 * LEN];
@@ -279,6 +281,7 @@ int main(
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
     ALLOC(clim_tropo_obj, clim_tropo_t, 1);
+    ALLOC(clim_hno3_obj, clim_hno3_t , 1);
     ALLOC(dt, double,
 	  NP);
     ALLOC(rs, double,
@@ -296,6 +299,9 @@ int main(
 
     /* Initialise Tropopause Pressure Climatological struct */
     *clim_tropo_obj = clim_tropo_init_data;
+
+    /* Initialise HNO3 Volume Climatological. */
+    clim_hno3_obj = &clim_hno3_init_data;
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
