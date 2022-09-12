@@ -484,7 +484,8 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
+#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt, \
+                             rs,clim_hno3_obj,clim_tropo_obj)
 #endif
 
     /* Free... */
@@ -496,6 +497,8 @@ int main(
     free(met1);
     free(dt);
     free(rs);
+    free(clim_hno3_obj);
+    free(clim_tropo_obj);
 
     /* Report timers... */
     PRINT_TIMERS;
