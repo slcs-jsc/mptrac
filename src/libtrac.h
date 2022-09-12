@@ -1395,13 +1395,13 @@ typedef struct {
 
 } met_t;
 
-/*! HNO3 Volume Climatological. */
+/*! HNO3 Volume Climatological struct. */
 typedef struct {
     double secs[12];
-    double clim_hno3_lats[18];
-    double clim_hno3_ps[10];
-    double clim_hno3_var[12][18][10];
-}clim_hno3_t;
+    double lats[18];
+    double ps[10];
+    double var[12][18][10];
+} clim_hno3_t;
 
 /*! HNO3 Volume Climatological initial data. */
 __attribute__((unused))
@@ -1789,7 +1789,8 @@ int check_finite(
 double clim_hno3(
   double t,
   double lat,
-  double p);
+  double p,
+  clim_hno3_t *clim_hno3_obj);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC

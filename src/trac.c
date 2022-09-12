@@ -115,7 +115,8 @@ void module_meteo(
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  clim_hno3_t * clim_hno3_obj);
 
 /*! Calculate OH chemistry. */
 void module_oh_chem(
@@ -294,7 +295,10 @@ int main(
     /* Create data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc enter data create(atm[:1],cache[:1],clim[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP],clim_tropo_obj[:1])
+#pragma acc enter data create(atm[:1],cache[:1],clim[:1], \
+                              ctl,met0[:1],met1[:1],dt[:NP], \
+                              rs[:3*NP],clim_tropo_obj[:1], \
+                              clim_hno3_obj[:1])
 #endif
 
     /* Initialise Tropopause Pressure Climatological struct */
@@ -418,7 +422,7 @@ int main(
       /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, clim, met0, met1, atm);
+	module_meteo(&ctl, clim, met0, met1, atm, clim_hno3_obj);
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -1132,7 +1136,8 @@ void module_meteo(
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm) {
+  atm_t * atm,
+  clim_hno3_t * clim_hno3_obj) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -1144,7 +1149,7 @@ void module_meteo(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,clim,met0,met1,atm)
+#pragma acc data present(ctl,clim,met0,met1,atm,clim_hno3_obj)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1188,7 +1193,7 @@ void module_meteo(
     SET_ATM(qnt_pel, pel);
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
-    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip], clim_hno3_obj));
     SET_ATM(qnt_oh,
 	    clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
 			    atm->lon[ip], atm->lat[ip]));
@@ -1210,7 +1215,7 @@ void module_meteo(
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip])));
+				      atm->p[ip], clim_hno3_obj)));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }

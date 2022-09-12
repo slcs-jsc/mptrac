@@ -178,9 +178,9 @@ int main(
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip])), clim_hno3(atm->time[ip],
+				      atm->p[ip], &clim_hno3_init_data)), clim_hno3(atm->time[ip],
 							      atm->lat[ip],
-							      atm->p[ip]),
+							      atm->p[ip], &clim_hno3_init_data),
 	    clim_oh_diurnal(&ctl, clim, atm->time[ip], atm->p[ip],
 			    atm->lon[ip], atm->lat[ip]), pbl);
   }

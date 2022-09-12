@@ -168,10 +168,10 @@ int main(
 	    rhicem[iz] += RHICE(plev[iz], t, h2o);
 	    tdewm[iz] += TDEW(plev[iz], h2o);
 	    ticem[iz] += TICE(plev[iz], h2o);
-	    hno3m[iz] += clim_hno3(met->time, lat, plev[iz]);
+	    hno3m[iz] += clim_hno3(met->time, lat, plev[iz], &clim_hno3_init_data);
 	    tnatm[iz] +=
 	      nat_temperature(plev[iz], h2o,
-			      clim_hno3(met->time, lat, plev[iz]));
+			      clim_hno3(met->time, lat, plev[iz], &clim_hno3_init_data));
 	    ohm[iz] +=
 	      clim_oh_diurnal(&ctl, clim, met->time, plev[iz], lon, lat);
 	    np[iz]++;
