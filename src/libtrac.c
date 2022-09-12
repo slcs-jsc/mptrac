@@ -651,7 +651,8 @@ double clim_oh_init_help(
 
 double clim_tropo(
   double t,
-  double lat) {
+  double lat,
+  clim_tropo_t *clim_tropo_obj ) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -659,19 +660,19 @@ double clim_tropo(
     sec += 365.25 * 86400.;
 
   /* Get indices... */
-  int isec = locate_irr(clim_tropo_secs, 12, sec);
-  int ilat = locate_reg(clim_tropo_lats, 73, lat);
+  int isec = locate_irr(clim_tropo_obj->secs, 12, sec);
+  int ilat = locate_reg(clim_tropo_obj->lats, 73, lat);
 
   /* Interpolate tropopause data (NCEP/NCAR Reanalysis 1)... */
-  double p0 = LIN(clim_tropo_lats[ilat],
-		  clim_tropo_tps[isec][ilat],
-		  clim_tropo_lats[ilat + 1],
-		  clim_tropo_tps[isec][ilat + 1], lat);
-  double p1 = LIN(clim_tropo_lats[ilat],
-		  clim_tropo_tps[isec + 1][ilat],
-		  clim_tropo_lats[ilat + 1],
-		  clim_tropo_tps[isec + 1][ilat + 1], lat);
-  return LIN(clim_tropo_secs[isec], p0, clim_tropo_secs[isec + 1], p1, sec);
+  double p0 = LIN(clim_tropo_obj->lats[ilat],
+                  clim_tropo_obj->tps[isec][ilat],
+                  clim_tropo_obj->lats[ilat + 1],
+                  clim_tropo_obj->tps[isec][ilat + 1], lat);
+  double p1 = LIN(clim_tropo_obj->lats[ilat],
+                  clim_tropo_obj->tps[isec + 1][ilat],
+                  clim_tropo_obj->lats[ilat + 1],
+                  clim_tropo_obj->tps[isec + 1][ilat + 1], lat);
+  return LIN(clim_tropo_obj->secs[isec], p0, clim_tropo_obj->secs[isec + 1], p1, sec);
 }
 
 /*****************************************************************************/
@@ -2534,7 +2535,7 @@ int read_met(
     read_met_cloud(met);
 
     /* Calculate convective available potential energy... */
-    read_met_cape(met);
+      read_met_cape(met, &clim_tropo_init_data);
 
     /* Detrending... */
     read_met_detrend(ctl, met);
@@ -2787,7 +2788,8 @@ void read_met_bin_3d(
 /*****************************************************************************/
 
 void read_met_cape(
-  met_t * met) {
+        met_t *met,
+        clim_tropo_t *clim_tropo_obj) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
@@ -2863,7 +2865,7 @@ void read_met_cape(
       dcape = 0;
       p = met->plcl[ix][iy];
       t = theta / pow(1000. / p, 0.286);
-      ptop = 0.75 * clim_tropo(met->time, met->lat[iy]);
+      ptop = 0.75 * clim_tropo(met->time, met->lat[iy], clim_tropo_obj);
       do {
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
@@ -4074,7 +4076,7 @@ void read_met_tropo(
 #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
-	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy]);
+	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy], &clim_tropo_init_data);
   }
 
   /* Use cold point... */
@@ -4529,12 +4531,13 @@ void timer(
 /*****************************************************************************/
 
 double tropo_weight(
-  double t,
-  double lat,
-  double p) {
+        double t,
+        double lat,
+        double p,
+        clim_tropo_t *clim_tropo_obj) {
 
   /* Get tropopause pressure... */
-  double pt = clim_tropo(t, lat);
+  double pt = clim_tropo(t, lat, clim_tropo_obj);
 
   /* Get pressure range... */
   double p1 = pt * 0.866877899;
