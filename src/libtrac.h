@@ -1396,12 +1396,14 @@ typedef struct {
 } met_t;
 
 /*! HNO3 Volume Climatological initial data. */
-static const struct {
+typedef struct {
     double secs[12];
     double clim_hno3_lats[18];
     double clim_hno3_ps[10];
     double clim_hno3_var[12][18][10];
-}clim_hno3_init_data = {
+}clim_hno3_t;
+
+static clim_hno3_t clim_hno3_init_data = {
         {
                 1209600.00, 3888000.00, 6393600.00,
                 9072000.00, 11664000.00, 14342400.00,
