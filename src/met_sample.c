@@ -168,6 +168,7 @@ int main(
     lat_old = atm->lat[ip];
 
     /* Write data... */
+    const clim_hno3_t clim_hno3_init_data = get_clim_hno3_init_data();
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",

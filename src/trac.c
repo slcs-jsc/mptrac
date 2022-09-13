@@ -34,6 +34,8 @@ curandGenerator_t rng;
 static gsl_rng *rng[NTHREADS];
 #endif
 
+
+
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
@@ -302,10 +304,10 @@ int main(
 #endif
 
     /* Initialise Tropopause Pressure Climatological struct */
-    *clim_tropo_obj = clim_tropo_init_data;
+    *clim_tropo_obj = get_clim_tropo_init_data();
 
     /* Initialise HNO3 Volume Climatological. */
-    *clim_hno3_obj = clim_hno3_init_data;
+    *clim_hno3_obj = get_clim_hno3_init_data();
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);

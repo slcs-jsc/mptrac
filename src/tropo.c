@@ -227,9 +227,12 @@ int main(
     count[2] = (size_t) nx;
     NC(nc_put_vara_double(ncid, timid, start, count, &met->time));
 
+    /* Obtain Initial tropopause data... */
+    clim_tropo_t clim_tropo_init_data = get_clim_tropo_init_data();
+
     /* Get cold point... */
     ctl.met_tropo = 2;
-    read_met_tropo(&ctl, met);
+    read_met_tropo(&ctl, met, &clim_tropo_init_data);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
@@ -252,7 +255,7 @@ int main(
 
     /* Get dynamical tropopause... */
     ctl.met_tropo = 5;
-    read_met_tropo(&ctl, met);
+      read_met_tropo(&ctl, met, &clim_tropo_init_data);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
@@ -275,7 +278,7 @@ int main(
 
     /* Get WMO 1st tropopause... */
     ctl.met_tropo = 3;
-    read_met_tropo(&ctl, met);
+      read_met_tropo(&ctl, met, &clim_tropo_init_data);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
@@ -298,7 +301,7 @@ int main(
 
     /* Get WMO 2nd tropopause... */
     ctl.met_tropo = 4;
-    read_met_tropo(&ctl, met);
+      read_met_tropo(&ctl, met, &clim_tropo_init_data);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {

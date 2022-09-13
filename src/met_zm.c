@@ -179,6 +179,7 @@ int main(
 	    rhicem[iz][iy] += RHICE(plev[iz], t, h2o);
 	    tdewm[iz][iy] += TDEW(plev[iz], h2o);
 	    ticem[iz][iy] += TICE(plev[iz], h2o);
+        const clim_hno3_t clim_hno3_init_data = get_clim_hno3_init_data();
 	    hno3m[iz][iy] += clim_hno3(met->time, lats[iy], plev[iz], &clim_hno3_init_data);
 	    tnatm[iz][iy] +=
 	      nat_temperature(plev[iz], h2o,

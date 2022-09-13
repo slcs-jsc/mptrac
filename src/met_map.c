@@ -178,6 +178,7 @@ int main(
 	  h2otm[ix][iy] += h2ot;
 	  npt[ix][iy]++;
 	}
+    const clim_hno3_t clim_hno3_init_data = get_clim_hno3_init_data();
 	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0, &clim_hno3_init_data);
 	tnatm[ix][iy] +=
 	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0, &clim_hno3_init_data));
