@@ -1277,6 +1277,14 @@ typedef struct {
   /*! H2O2 data concentration [molec/cm^3]. */
   double h2o2[CT][CP][CY];
 
+  double hno3_secs[12];
+  double hno3_lats[18];
+  double hno3_ps[10];
+  double hno3_var[12][18][10];
+
+  double tropo_secs[12];
+  double tropo_lats[73];
+  double tropo_tps[12][73];
 } clim_t;
 
 /*! Meteo data. */
@@ -1395,20 +1403,20 @@ typedef struct {
 
 } met_t;
 
-/*! HNO3 Volume Climatological struct. */
-typedef struct {
-    double secs[12];
-    double lats[18];
-    double ps[10];
-    double var[12][18][10];
-} clim_hno3_t;
-
-/*! Tropopause Pressure Climatological struct. */
-typedef struct {
-    double secs[12];
-    double lats[73];
-    double tps[12][73];
-} clim_tropo_t;
+///*! HNO3 Volume Climatological struct. */
+//typedef struct {
+//    double secs[12];
+//    double lats[18];
+//    double ps[10];
+//    double var[12][18][10];
+//} clim_hno3_t;
+//
+///*! Tropopause Pressure Climatological struct. */
+//typedef struct {
+//    double secs[12];
+//    double lats[73];
+//    double tps[12][73];
+//} clim_tropo_t;
 
 /* ------------------------------------------------------------
    Functions...
@@ -1439,10 +1447,10 @@ int check_finite(
 #pragma acc routine (clim_hno3)
 #endif
 double clim_hno3(
-  double t,
-  double lat,
-  double p,
-  const clim_hno3_t *clim_hno3_obj);
+        double t,
+        double lat,
+        double p,
+        const clim_t *clim);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
@@ -1482,9 +1490,9 @@ double clim_oh_init_help(
 #pragma acc routine (clim_tropo)
 #endif
 double clim_tropo(
-  double t,
-  double lat,
-  const clim_tropo_t *clim_tropo_obj);
+        double t,
+        double lat,
+        const clim_t *clim);
 
 /*! Pack or unpack array. */
 void compress_pack(

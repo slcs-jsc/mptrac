@@ -401,10 +401,10 @@ void cart2geo(
 /*****************************************************************************/
 
 double clim_hno3(
-  double t,
-  double lat,
-  double p,
-  const clim_hno3_t *clim_hno3_obj) {
+        double t,
+        double lat,
+        double p,
+        const clim_t *clim) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -412,45 +412,45 @@ double clim_hno3(
     sec += 365.25 * 86400.;
 
   /* Check pressure... */
-  if (p < clim_hno3_obj->ps[0])
-    p = clim_hno3_obj->ps[0];
-  else if (p > clim_hno3_obj->ps[9])
-    p = clim_hno3_obj->ps[9];
+  if (p < clim->hno3_ps[0])
+    p = clim->hno3_ps[0];
+  else if (p > clim->hno3_ps[9])
+    p = clim->hno3_ps[9];
 
   /* Check latitude... */
-  if (lat < clim_hno3_obj->lats[0])
-    lat = clim_hno3_obj->lats[0];
-  else if (lat > clim_hno3_obj->lats[17])
-    lat = clim_hno3_obj->lats[17];
+  if (lat < clim->hno3_lats[0])
+    lat = clim->hno3_lats[0];
+  else if (lat > clim->hno3_lats[17])
+    lat = clim->hno3_lats[17];
 
   /* Get indices... */
-  int isec = locate_irr(clim_hno3_obj->secs, 12, sec);
-  int ilat = locate_reg(clim_hno3_obj->lats, 18, lat);
-  int ip = locate_irr(clim_hno3_obj->ps, 10, p);
+  int isec = locate_irr(clim->hno3_secs, 12, sec);
+  int ilat = locate_reg(clim->hno3_lats, 18, lat);
+  int ip = locate_irr(clim->hno3_ps, 10, p);
 
   /* Interpolate HNO3 climatology (Froidevaux et al., 2015)... */
-  double aux00 = LIN(clim_hno3_obj->ps[ip],
-                     clim_hno3_obj->var[isec][ilat][ip],
-                     clim_hno3_obj->ps[ip + 1],
-                     clim_hno3_obj->var[isec][ilat][ip + 1], p);
-  double aux01 = LIN(clim_hno3_obj->ps[ip],
-                     clim_hno3_obj->var[isec][ilat + 1][ip],
-                     clim_hno3_obj->ps[ip + 1],
-                     clim_hno3_obj->var[isec][ilat + 1][ip + 1], p);
-  double aux10 = LIN(clim_hno3_obj->ps[ip],
-                     clim_hno3_obj->var[isec + 1][ilat][ip],
-                     clim_hno3_obj->ps[ip + 1],
-                     clim_hno3_obj->var[isec + 1][ilat][ip + 1], p);
-  double aux11 = LIN(clim_hno3_obj->ps[ip],
-                     clim_hno3_obj->var[isec + 1][ilat + 1][ip],
-                     clim_hno3_obj->ps[ip + 1],
-                     clim_hno3_obj->var[isec + 1][ilat + 1][ip + 1], p);
-  aux00 = LIN(clim_hno3_obj->lats[ilat], aux00,
-              clim_hno3_obj->lats[ilat + 1], aux01, lat);
-  aux11 = LIN(clim_hno3_obj->lats[ilat], aux10,
-              clim_hno3_obj->lats[ilat + 1], aux11, lat);
-  aux00 = LIN(clim_hno3_obj->secs[isec], aux00,
-              clim_hno3_obj->secs[isec + 1], aux11, sec);
+  double aux00 = LIN(clim->hno3_ps[ip],
+                     clim->hno3_var[isec][ilat][ip],
+                     clim->hno3_ps[ip + 1],
+                     clim->hno3_var[isec][ilat][ip + 1], p);
+  double aux01 = LIN(clim->hno3_ps[ip],
+                     clim->hno3_var[isec][ilat + 1][ip],
+                     clim->hno3_ps[ip + 1],
+                     clim->hno3_var[isec][ilat + 1][ip + 1], p);
+  double aux10 = LIN(clim->hno3_ps[ip],
+                     clim->hno3_var[isec + 1][ilat][ip],
+                     clim->hno3_ps[ip + 1],
+                     clim->hno3_var[isec + 1][ilat][ip + 1], p);
+  double aux11 = LIN(clim->hno3_ps[ip],
+                     clim->hno3_var[isec + 1][ilat + 1][ip],
+                     clim->hno3_ps[ip + 1],
+                     clim->hno3_var[isec + 1][ilat + 1][ip + 1], p);
+  aux00 = LIN(clim->hno3_lats[ilat], aux00,
+              clim->hno3_lats[ilat + 1], aux01, lat);
+  aux11 = LIN(clim->hno3_lats[ilat], aux10,
+              clim->hno3_lats[ilat + 1], aux11, lat);
+  aux00 = LIN(clim->hno3_secs[isec], aux00,
+              clim->hno3_secs[isec + 1], aux11, sec);
 
   /* Convert from ppb to ppv... */
   return GSL_MAX(1e-9 * aux00, 0.0);
@@ -644,9 +644,9 @@ double clim_oh_init_help(
 /*****************************************************************************/
 
 double clim_tropo(
-  double t,
-  double lat,
-  const clim_tropo_t *clim_tropo_obj ) {
+        double t,
+        double lat,
+        const clim_t *clim ) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -654,19 +654,19 @@ double clim_tropo(
     sec += 365.25 * 86400.;
 
   /* Get indices... */
-  int isec = locate_irr(clim_tropo_obj->secs, 12, sec);
-  int ilat = locate_reg(clim_tropo_obj->lats, 73, lat);
+  int isec = locate_irr(clim->tropo_secs, 12, sec);
+  int ilat = locate_reg(clim->tropo_lats, 73, lat);
 
   /* Interpolate tropopause data (NCEP/NCAR Reanalysis 1)... */
-  double p0 = LIN(clim_tropo_obj->lats[ilat],
-                  clim_tropo_obj->tps[isec][ilat],
-                  clim_tropo_obj->lats[ilat + 1],
-                  clim_tropo_obj->tps[isec][ilat + 1], lat);
-  double p1 = LIN(clim_tropo_obj->lats[ilat],
-                  clim_tropo_obj->tps[isec + 1][ilat],
-                  clim_tropo_obj->lats[ilat + 1],
-                  clim_tropo_obj->tps[isec + 1][ilat + 1], lat);
-  return LIN(clim_tropo_obj->secs[isec], p0, clim_tropo_obj->secs[isec + 1], p1, sec);
+  double p0 = LIN(clim->tropo_lats[ilat],
+                  clim->tropo_tps[isec][ilat],
+                  clim->tropo_lats[ilat + 1],
+                  clim->tropo_tps[isec][ilat + 1], lat);
+  double p1 = LIN(clim->tropo_lats[ilat],
+                  clim->tropo_tps[isec + 1][ilat],
+                  clim->tropo_lats[ilat + 1],
+                  clim->tropo_tps[isec + 1][ilat + 1], lat);
+  return LIN(clim->tropo_secs[isec], p0, clim->tropo_secs[isec + 1], p1, sec);
 }
 
 /*****************************************************************************/
