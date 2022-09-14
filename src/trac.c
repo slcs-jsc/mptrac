@@ -303,12 +303,6 @@ int main(
                               clim_hno3_obj[:1])
 #endif
 
-    /* Initialise Tropopause Pressure Climatological struct */
-    *clim_tropo_obj = set_clim_tropo_init_data(NULL);
-
-    /* Initialise HNO3 Volume Climatological. */
-    *clim_hno3_obj = set_clim_hno3_init_data(NULL);
-
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);

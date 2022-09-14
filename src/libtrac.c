@@ -1962,6 +1962,11 @@ void read_clim(
   /* Read OH climatology... */
   clim_oh_init(ctl, clim);
 
+  /* Initialise Tropopause Pressure Climatological struct */
+  set_clim_tropo_init_data(clim);
+
+  /* Initialise HNO3 Volume Climatological. */
+  set_clim_hno3_init_data(clim);
 }
 
 /*****************************************************************************/
