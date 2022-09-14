@@ -72,7 +72,7 @@ void module_convection(
   double *rs);
 
 /*! Calculate exponential decay of particle mass. */
-void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_tropo_t *clim_tropo);
+void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_t *clim);
 
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
@@ -85,7 +85,7 @@ void module_diffusion_meso(
   double *rs);
 
 /*! Calculate turbulent diffusion. */
-void module_diffusion_turb(ctl_t *ctl, atm_t *atm, double *dt, double *rs, clim_tropo_t *clim_tropo);
+void module_diffusion_turb(ctl_t *ctl, atm_t *atm, double *dt, double *rs, clim_t *clim);
 
 /*! Calculate dry deposition. */
 void module_dry_deposition(
@@ -112,13 +112,7 @@ void module_isosurf(
   cache_t * cache);
 
 /*! Interpolate meteo data for air parcel positions. */
-void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  clim_hno3_t * clim_hno3_obj);
+void module_meteo(ctl_t *ctl, clim_t *clim, met_t *met0, met_t *met1, atm_t *atm);
 
 /*! Calculate OH chemistry. */
 void module_oh_chem(
@@ -214,10 +208,6 @@ int main(
 
   met_t *met0, *met1;
 
-  clim_tropo_t *clim_tropo_obj;
-
-  clim_hno3_t *clim_hno3_obj;
-
   FILE *dirlist;
 
   char dirname[LEN], filename[2 * LEN];
@@ -283,8 +273,6 @@ int main(
     ALLOC(clim, clim_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
-    ALLOC(clim_tropo_obj, clim_tropo_t, 1);
-    ALLOC(clim_hno3_obj, clim_hno3_t , 1);
     ALLOC(dt, double,
 	  NP);
     ALLOC(rs, double,
@@ -299,8 +287,7 @@ int main(
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc enter data create(atm[:1],cache[:1],clim[:1], \
                               ctl,met0[:1],met1[:1],dt[:NP], \
-                              rs[:3*NP],clim_tropo_obj[:1], \
-                              clim_hno3_obj[:1])
+                              rs[:3*NP])
 #endif
 
     /* Read control parameters... */
@@ -393,7 +380,7 @@ int main(
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
-          module_diffusion_turb(&ctl, atm, dt, rs, clim_tropo_obj);
+          module_diffusion_turb(&ctl, atm, dt, rs, clim);
 
       /* Mesoscale diffusion... */
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
@@ -418,11 +405,11 @@ int main(
       /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, clim, met0, met1, atm, clim_hno3_obj);
+          module_meteo(&ctl, clim, met0, met1, atm);
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
-          module_decay(&ctl, atm, dt, clim_tropo_obj);
+          module_decay(&ctl, atm, dt, clim);
 
       /* OH chemistry... */
       if (ctl.oh_chem_reaction != 0)
@@ -480,8 +467,7 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt, \
-                             rs,clim_hno3_obj,clim_tropo_obj)
+#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
 #endif
 
     /* Free... */
@@ -493,8 +479,6 @@ int main(
     free(met1);
     free(dt);
     free(rs);
-    free(clim_hno3_obj);
-    free(clim_tropo_obj);
 
     /* Report timers... */
     PRINT_TIMERS;
@@ -770,7 +754,7 @@ void module_convection(
 
 /*****************************************************************************/
 
-void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_tropo_t *clim_tropo) {
+void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -790,7 +774,7 @@ void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_tropo_t *clim_tropo) 
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim_tropo);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim);
 
       /* Set lifetime... */
       double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -897,7 +881,7 @@ void module_diffusion_turb(
         atm_t *atm,
         double *dt,
         double *rs,
-        clim_tropo_t *clim_tropo) {
+        clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
@@ -916,7 +900,7 @@ void module_diffusion_turb(
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim_tropo);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim);
 
       /* Set diffusivity... */
       double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
@@ -1131,12 +1115,11 @@ void module_isosurf(
 /*****************************************************************************/
 
 void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  clim_hno3_t * clim_hno3_obj) {
+    ctl_t *ctl,
+    clim_t *clim,
+    met_t *met0,
+    met_t *met1,
+    atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -1192,7 +1175,7 @@ void module_meteo(
     SET_ATM(qnt_pel, pel);
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
-    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip], clim_hno3_obj));
+    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip], clim));
     SET_ATM(qnt_oh,
 	    clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
 			    atm->lon[ip], atm->lat[ip]));
@@ -1214,7 +1197,7 @@ void module_meteo(
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip], clim_hno3_obj)));
+				      atm->p[ip], clim)));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
