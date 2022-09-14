@@ -228,7 +228,7 @@ int main(
     NC(nc_put_vara_double(ncid, timid, start, count, &met->time));
 
     /* Obtain Initial tropopause data... */
-    clim_tropo_t clim_tropo_init_data = get_clim_tropo_init_data();
+    clim_tropo_t clim_tropo_init_data = set_clim_tropo_init_data(NULL);
 
     /* Get cold point... */
     ctl.met_tropo = 2;

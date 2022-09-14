@@ -1403,30 +1403,15 @@ typedef struct {
 
 } met_t;
 
-///*! HNO3 Volume Climatological struct. */
-//typedef struct {
-//    double secs[12];
-//    double lats[18];
-//    double ps[10];
-//    double var[12][18][10];
-//} clim_hno3_t;
-//
-///*! Tropopause Pressure Climatological struct. */
-//typedef struct {
-//    double secs[12];
-//    double lats[73];
-//    double tps[12][73];
-//} clim_tropo_t;
-
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
 /*! Get HNO3 Volume Climatological initial data. */
-clim_hno3_t get_clim_hno3_init_data(void);
+void set_clim_hno3_init_data(clim_t *clim);
 
 /*! Get Tropopause Pressure Climatological initial data. */
-clim_tropo_t get_clim_tropo_init_data(void);
+void set_clim_tropo_init_data(clim_t *clim);
 
 /*! Convert Cartesian coordinates to geolocation. */
 void cart2geo(
