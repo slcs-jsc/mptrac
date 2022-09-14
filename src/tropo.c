@@ -46,6 +46,8 @@ int main(
 
   met_t *met;
 
+  clim_t clim;
+
   static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
     lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat, cw[3];
 
@@ -72,12 +74,16 @@ int main(
   dlat = scan_ctl(argv[1], argc, argv, "TROPO_DLAT", -1, "-999", NULL);
   h2o = (int) scan_ctl(argv[1], argc, argv, "TROPO_H2O", -1, "1", NULL);
 
+
+  /* Obtain some initial clim_tropo data */
+  set_clim_tropo_init_data(&clim);
+
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
     ctl.met_tropo = 0;
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, met, &clim))
       continue;
 
     /* Set horizontal grid... */
@@ -227,12 +233,9 @@ int main(
     count[2] = (size_t) nx;
     NC(nc_put_vara_double(ncid, timid, start, count, &met->time));
 
-    /* Obtain Initial tropopause data... */
-    clim_tropo_t clim_tropo_init_data = set_clim_tropo_init_data(NULL);
-
     /* Get cold point... */
     ctl.met_tropo = 2;
-    read_met_tropo(&ctl, met, &clim_tropo_init_data);
+    read_met_tropo(&ctl, met, &clim);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
@@ -255,7 +258,7 @@ int main(
 
     /* Get dynamical tropopause... */
     ctl.met_tropo = 5;
-      read_met_tropo(&ctl, met, &clim_tropo_init_data);
+      read_met_tropo(&ctl, met, &clim);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
@@ -278,7 +281,7 @@ int main(
 
     /* Get WMO 1st tropopause... */
     ctl.met_tropo = 3;
-      read_met_tropo(&ctl, met, &clim_tropo_init_data);
+      read_met_tropo(&ctl, met, &clim);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {
@@ -301,7 +304,7 @@ int main(
 
     /* Get WMO 2nd tropopause... */
     ctl.met_tropo = 4;
-      read_met_tropo(&ctl, met, &clim_tropo_init_data);
+      read_met_tropo(&ctl, met, &clim);
 #pragma omp parallel for default(shared) private(ix,iy,ci,cw)
     for (ix = 0; ix < nx; ix++)
       for (iy = 0; iy < ny; iy++) {

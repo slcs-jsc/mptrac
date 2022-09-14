@@ -91,7 +91,7 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, met, clim))
       continue;
 
     /* Set vertical grid... */
@@ -179,11 +179,10 @@ int main(
 	    rhicem[iz][iy] += RHICE(plev[iz], t, h2o);
 	    tdewm[iz][iy] += TDEW(plev[iz], h2o);
 	    ticem[iz][iy] += TICE(plev[iz], h2o);
-        const clim_hno3_t clim_hno3_init_data = set_clim_hno3_init_data(NULL);
-	    hno3m[iz][iy] += clim_hno3(met->time, lats[iy], plev[iz], &clim_hno3_init_data);
+	    hno3m[iz][iy] += clim_hno3(met->time, lats[iy], plev[iz], clim);
 	    tnatm[iz][iy] +=
 	      nat_temperature(plev[iz], h2o,
-			      clim_hno3(met->time, lats[iy], plev[iz], &clim_hno3_init_data));
+			      clim_hno3(met->time, lats[iy], plev[iz], clim));
 	    ohm[iz][iy] +=
 	      clim_oh_diurnal(&ctl, clim, met->time, plev[iz], met->lon[ix],
 			      lats[iy]);

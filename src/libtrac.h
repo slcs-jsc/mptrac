@@ -1534,11 +1534,7 @@ void geo2cart(
   double *x);
 
 /*! Get meteo data for given time step. */
-void get_met(
-  ctl_t * ctl,
-  double t,
-  met_t ** met0,
-  met_t ** met1);
+void get_met(ctl_t *ctl, double t, met_t **met0, met_t **met1, const clim_t *clim);
 
 /*! Get meteo data for time step. */
 void get_met_help(
@@ -1729,10 +1725,7 @@ void read_ctl(
   ctl_t * ctl);
 
 /*! Read meteo data file. */
-int read_met(
-  char *filename,
-  ctl_t * ctl,
-  met_t * met);
+int read_met(char *filename, ctl_t *ctl, met_t *met, const clim_t *clim);
 
 /*! Read 2-D meteo variable. */
 void read_met_bin_2d(
@@ -1753,8 +1746,8 @@ void read_met_bin_3d(
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
-  met_t *met,
-  const clim_tropo_t *clim_tropo_obj);
+        met_t *met,
+        const clim_t *clim);
 
 /*! Calculate cloud properties. */
 void read_met_cloud(
@@ -1837,9 +1830,9 @@ void read_met_surface(
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
-  ctl_t *ctl,
-  met_t *met,
-  const clim_tropo_t *clim_tropo_init_data);
+        ctl_t *ctl,
+        met_t *met,
+        const clim_t *clim);
 
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
@@ -1909,7 +1902,7 @@ void timer(
 #ifdef _OPENACC
 #pragma acc routine (tropo_weight)
 #endif
-double tropo_weight(double t, double lat, double p, clim_tropo_t *clim_tropo);
+double tropo_weight(double t, double lat, double p, clim_t *clim);
 
 /*! Write atmospheric data. */
 void write_atm(

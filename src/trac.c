@@ -320,7 +320,7 @@ int main(
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-    get_met(&ctl, ctl.t_start, &met0, &met1);
+      get_met(&ctl, ctl.t_start, &met0, &met1, clim);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
@@ -356,7 +356,7 @@ int main(
 
       /* Get meteo data... */
       if (t != ctl.t_start)
-	get_met(&ctl, t, &met0, &met1);
+          get_met(&ctl, t, &met0, &met1, clim);
 
       /* Sort particles... */
       if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)

@@ -32,6 +32,8 @@ int main(
 
   met_t *met;
 
+  clim_t clim;
+
   /* Check arguments... */
   if (argc < 6)
     ERRMSG("Give parameters: <ctl> <met_in> <met_in_type>"
@@ -43,9 +45,12 @@ int main(
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
 
+  /* Obtain some initial clim_tropo data */
+  set_clim_tropo_init_data(&clim);
+
   /* Read meteo data... */
   ctl.met_type = atoi(argv[3]);
-  if (!read_met(argv[2], &ctl, met))
+  if (!read_met(argv[2], &ctl, met, &clim))
     ERRMSG("Cannot open file!");
 
   /* Write meteo data... */

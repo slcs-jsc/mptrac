@@ -981,10 +981,11 @@ void geo2cart(
 /*****************************************************************************/
 
 void get_met(
-  ctl_t * ctl,
-  double t,
-  met_t ** met0,
-  met_t ** met1) {
+        ctl_t *ctl,
+        double t,
+        met_t **met0,
+        met_t **met1,
+        const clim_t *clim) {
 
   static int init;
 
@@ -1001,12 +1002,12 @@ void get_met(
 
     /* Read meteo data... */
     get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, *met0))
+    if (!read_met(filename, ctl, *met0, clim))
       ERRMSG("Cannot open file!");
 
     get_met_help(ctl, t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
 		 filename);
-    if (!read_met(filename, ctl, *met1))
+    if (!read_met(filename, ctl, *met1, clim))
       ERRMSG("Cannot open file!");
 
 
@@ -1045,7 +1046,7 @@ void get_met(
 
     /* Read new meteo data... */
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, *met1))
+    if (!read_met(filename, ctl, *met1, clim))
       ERRMSG("Cannot open file!");
 
 
@@ -1083,7 +1084,7 @@ void get_met(
 
     /* Read new meteo data... */
     get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, *met0))
+    if (!read_met(filename, ctl, *met0, clim))
       ERRMSG("Cannot open file!");
 
 
@@ -2489,9 +2490,10 @@ void read_ctl(
 /*****************************************************************************/
 
 int read_met(
-  char *filename,
-  ctl_t * ctl,
-  met_t * met) {
+    char *filename,
+    ctl_t *ctl,
+    met_t *met,
+    const clim_t *clim) {
 
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
@@ -2535,17 +2537,14 @@ int read_met(
     /* Calculate boundary layer data... */
     read_met_pbl(met);
 
-    /* Obtain Initial tropopause data... */
-    clim_tropo_t clim_tropo_init_data = set_clim_tropo_init_data(NULL);
-
     /* Calculate tropopause data... */
-    read_met_tropo(ctl, met, &clim_tropo_init_data);
+    read_met_tropo(ctl, met, clim);
 
     /* Calculate cloud properties... */
     read_met_cloud(met);
 
     /* Calculate convective available potential energy... */
-      read_met_cape(met, &clim_tropo_init_data);
+    read_met_cape(met, clim);
 
     /* Detrending... */
     read_met_detrend(ctl, met);
@@ -2799,7 +2798,7 @@ void read_met_bin_3d(
 
 void read_met_cape(
         met_t *met,
-        const clim_tropo_t *clim_tropo_obj) {
+        const clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
@@ -2875,7 +2874,7 @@ void read_met_cape(
       dcape = 0;
       p = met->plcl[ix][iy];
       t = theta / pow(1000. / p, 0.286);
-      ptop = 0.75 * clim_tropo(met->time, met->lat[iy], clim_tropo_obj);
+      ptop = 0.75 * clim_tropo(met->time, met->lat[iy], clim);
       do {
 	dz = dz0 * TVIRT(t, h2o);
 	p /= pfac;
@@ -4054,9 +4053,9 @@ void read_met_surface(
 /*****************************************************************************/
 
 void read_met_tropo(
-   ctl_t *ctl,
-   met_t *met,
-   const clim_tropo_t *clim_tropo_init_data) {
+        ctl_t *ctl,
+        met_t *met,
+        const clim_t *clim) {
 
   double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
     th2[200], z[EP], z2[200];
@@ -4087,7 +4086,7 @@ void read_met_tropo(
 #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
-	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy], clim_tropo_init_data);
+	met->pt[ix][iy] = (float) clim_tropo(met->time, met->lat[iy], clim);
   }
 
   /* Use cold point... */
@@ -4545,10 +4544,10 @@ double tropo_weight(
         double t,
         double lat,
         double p,
-        clim_tropo_t *clim_tropo_obj) {
+        clim_t *clim) {
 
   /* Get tropopause pressure... */
-  double pt = clim_tropo(t, lat, clim_tropo_obj);
+  double pt = clim_tropo(t, lat, clim);
 
   /* Get pressure range... */
   double p1 = pt * 0.866877899;

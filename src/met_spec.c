@@ -52,6 +52,8 @@ int main(
 
   met_t *met;
 
+  clim_t clim;
+
   FILE *out;
 
   static double cutImag[PMAX], cutReal[PMAX], lx[PMAX], A[PMAX], phi[PMAX],
@@ -69,8 +71,12 @@ int main(
   wavemax =
     (int) scan_ctl(argv[1], argc, argv, "SPEC_WAVEMAX", -1, "7", NULL);
 
+
+  /* Obtain some initial clim_tropo data */
+  set_clim_tropo_init_data(&clim);
+
   /* Read meteorological data... */
-  if (!read_met(argv[3], &ctl, met))
+  if (!read_met(argv[3], &ctl, met, &clim))
     ERRMSG("Cannot read meteo data!");
 
   /* Create output file... */

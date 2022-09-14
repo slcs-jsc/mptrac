@@ -90,7 +90,7 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, met, clim))
       continue;
 
     /* Set horizontal grid... */
@@ -178,10 +178,9 @@ int main(
 	  h2otm[ix][iy] += h2ot;
 	  npt[ix][iy]++;
 	}
-    const clim_hno3_t clim_hno3_init_data = set_clim_hno3_init_data(NULL);
-	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0, &clim_hno3_init_data);
+	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0, clim);
 	tnatm[ix][iy] +=
-	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0, &clim_hno3_init_data));
+	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0, clim));
 	ohm[ix][iy] +=
 	  clim_oh_diurnal(&ctl, clim, met->time, p0, lons[ix], lats[iy]);
 	rhm[ix][iy] += RH(p0, t, h2o);
