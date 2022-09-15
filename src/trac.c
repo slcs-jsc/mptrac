@@ -396,7 +396,8 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 	// TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
 	// maybe with omp prallel for or via omp tasks?
 #ifdef _OPENACC
-    #pragma omp parallel num_threads(num_devices) {
+#pragma omp parallel num_threads(num_devices)
+{
      int device_num = omp_get_thread_num();
      acc_set_device_num(device_num, acc_device_nvidia);
 #endif
