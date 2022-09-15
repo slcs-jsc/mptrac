@@ -1131,7 +1131,7 @@ void module_meteo(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,clim,met0,met1,atm,clim_hno3_obj)
+#pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
