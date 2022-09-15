@@ -36,6 +36,8 @@ int main(
 
   met_t *met0, *met1;
 
+  clim_t clim;
+
   FILE *out;
 
   static double usig[EP][EY], vsig[EP][EY], wsig[EP][EY];
@@ -56,13 +58,17 @@ int main(
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
 
+
+  /* Obtain some initial clim_tropo data */
+  set_clim_tropo_init_data(&clim);
+
   /* Loop over data files... */
   for (i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met0))
+    if (!read_met(argv[i], &ctl, met0, &clim))
       ERRMSG("Cannot open file!");
-    if (!read_met(argv[i + 1], &ctl, met1))
+    if (!read_met(argv[i + 1], &ctl, met1, &clim))
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */

@@ -51,6 +51,8 @@ int main(
 
   FILE *out;
 
+  clim_t clim;
+
   static double p2[1000], t[1000], t2[1000], z[1000], z2[1000], lat_mean,
     z_mean;
 
@@ -77,11 +79,14 @@ int main(
   int intpol =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_INTPOL", -1, "1", NULL);
 
+  /* Obtain some initial clim_tropo data */
+  set_clim_tropo_init_data(&clim);
+
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, met, &clim))
       continue;
 
     /* Get altitude and pressure profiles... */

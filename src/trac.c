@@ -74,7 +74,8 @@ void module_convection(
 void module_decay(
   ctl_t * ctl,
   atm_t * atm,
-  double *dt);
+  double *dt,
+  clim_t *clim);
 
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
@@ -91,7 +92,8 @@ void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
   double *dt,
-  double *rs);
+  double *rs,
+  clim_t *clim);
 
 /*! Calculate dry deposition. */
 void module_dry_deposition(
@@ -238,7 +240,7 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  // TODO: [-] Revise this code block, simply initialize all the four GPU devices on the compute node?
+  // TODO: Revise this code block, simply initialize all the four GPU devices on the compute node?
   // 1 node = 1 MPI task uses 48 OpenMP threads and 4 GPU devices
   // for ( idev ... ) {
   //   acc_set_device_num(idev) ;
@@ -293,7 +295,7 @@ int main(
 	  3 * NP + 1);
 
     
-    // TODO: [-] create the data region on all 4 GPUs...
+    // TODO: create the data region on all 4 GPUs...
     // for-loop over devices... create data region
     
     /* Create data region on GPUs... */
@@ -322,7 +324,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     module_timesteps_init(&ctl, atm);
 
 
-    // TODO: [-] create the data region on all 4 GPUs...
+    // TODO: create the data region on all 4 GPUs...
     // for-loop over devices... create data region
 
     
@@ -340,7 +342,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-    get_met(&ctl, ctl.t_start, &met0, &met1);
+      get_met(&ctl, ctl.t_start, &met0, &met1, clim);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
@@ -349,7 +351,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
 
-    // TODO: [-] create the data region on all 4 GPUs...
+    // TODO: create the data region on all 4 GPUs...
     // for-loop over devices... create data region
 
     
@@ -380,7 +382,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 
       /* Get meteo data... */
       if (t != ctl.t_start)
-	get_met(&ctl, t, &met0, &met1);
+          get_met(&ctl, t, &met0, &met1, clim);
 
       /* Sort particles... */
       if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
@@ -408,7 +410,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
-	module_diffusion_turb(&ctl, atm, dt, rs);
+          module_diffusion_turb(&ctl, atm, dt, rs, clim);
 
       /* Mesoscale diffusion... */
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
@@ -433,11 +435,11 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, clim, met0, met1, atm);
+          module_meteo(&ctl, clim, met0, met1, atm);
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
-	module_decay(&ctl, atm, dt);
+          module_decay(&ctl, atm, dt, clim);
 
       /* OH chemistry... */
       if (ctl.oh_chem_reaction != 0)
@@ -492,7 +494,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 	1024.);
 
     
-    // TODO: [-]create the data region on all 4 GPUs...
+    // TODO: create the data region on all 4 GPUs...
     // for-loop over devices... create data region
 
     
@@ -811,7 +813,8 @@ void module_convection(
 void module_decay(
   ctl_t * ctl,
   atm_t * atm,
-  double *dt) {
+  double *dt,
+  clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -836,7 +839,7 @@ void module_decay(
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim);
 
       /* Set lifetime... */
       double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -947,7 +950,8 @@ void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
   double *dt,
-  double *rs) {
+  double *rs,
+  clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
@@ -971,7 +975,7 @@ void module_diffusion_turb(
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim);
 
       /* Set diffusivity... */
       double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
@@ -1261,7 +1265,7 @@ void module_meteo(
     SET_ATM(qnt_pel, pel);
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
-    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip], clim));
     SET_ATM(qnt_oh,
 	    clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
 			    atm->lon[ip], atm->lat[ip]));
@@ -1283,7 +1287,7 @@ void module_meteo(
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip])));
+				      atm->p[ip], clim)));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
