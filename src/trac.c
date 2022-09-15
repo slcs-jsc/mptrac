@@ -386,12 +386,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	module_sort(&ctl, met0, atm);
 
-      /* Check initial positions... */
-      module_position(&ctl, met0, met1, atm, dt);
-
-      /* Advection... */
-      if (ctl.advect == 0)
-
 
 	// TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
 	// maybe with omp prallel for or via omp tasks?
@@ -402,10 +396,14 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
      acc_set_device_num(device_num, acc_device_nvidia);
 #endif
 
+    /* Check initial positions... */
+    module_position(&ctl, met0, met1, atm, dt);
 
-	module_advect_mp(met0, met1, atm, dt);
-      else if (ctl.advect == 1)
-	module_advect_rk(met0, met1, atm, dt);
+    /* Advection... */
+    if (ctl.advect == 0)
+        module_advect_mp(met0, met1, atm, dt);
+    else if (ctl.advect == 1)
+        module_advect_rk(met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
