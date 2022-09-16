@@ -27,7 +27,7 @@
 /* ------------------------------------------------------------
    Global variables...
    ------------------------------------------------------------ */
-static int num_devices = 0;
+int num_devices = 0;
 
 #ifdef _OPENACC
 curandGenerator_t rng;
