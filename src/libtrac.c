@@ -989,6 +989,8 @@ void get_met(
 
   static int init;
 
+  int num_devices;
+
   met_t *mets;
 
   char cachefile[LEN], cmd[2 * LEN], filename[LEN];
@@ -1020,7 +1022,7 @@ void get_met(
     
     /* Update GPU... */
 #ifdef _OPENACC
-  int num_devices = acc_get_num_devices(acc_device_nvidia);
+  num_devices = acc_get_num_devices(acc_device_nvidia);
   for(int device_num = 0; device_num < num_devices; device_num++) {
     acc_set_device_num(device_num, acc_device_nvidia);
 
@@ -1064,6 +1066,7 @@ void get_met(
     
     /* Update GPU... */
 #ifdef _OPENACC
+  printf("**===--------------> NUM OF DEVICES IS %d.\n", num_devices);
   for(int device_num = 0; device_num < num_devices; device_num++) {
     acc_set_device_num(device_num, acc_device_nvidia);
     met_t *met1up = *met1;
@@ -1106,6 +1109,7 @@ void get_met(
     
     /* Update GPU... */
 #ifdef _OPENACC
+  printf("**===--------------> NUM OF DEVICES IS %d.\n", num_devices);
   for(int device_num = 0; device_num < num_devices; device_num++) {
     acc_set_device_num(device_num, acc_device_nvidia);
     met_t *met0up = *met0;
