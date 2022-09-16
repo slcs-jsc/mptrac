@@ -1020,6 +1020,7 @@ void get_met(
     
     /* Update GPU... */
 #ifdef _OPENACC
+  int num_devices = acc_get_num_devices(acc_device_nvidia);
   for(int device_num = 0; device_num < num_devices; device_num++) {
     acc_set_device_num(device_num, acc_device_nvidia);
 
