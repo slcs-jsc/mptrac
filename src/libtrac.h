@@ -590,6 +590,13 @@ void thrustSortWrapper(
    Structs...
    ------------------------------------------------------------ */
 
+/*! Random Numbers */
+typedef struct {
+    double convection[NP]; /* Random numbers for calculating convection of air parcels */
+    double diff_meso[3*NP]; /* Random numbers for calculating mesoscale diffusion. */
+    double diff_turb[3*NP]; /* Random numbers for calculating turbulent diffusion. */
+} randoms_t;
+
 /*! Control parameters. */
 typedef struct {
 
