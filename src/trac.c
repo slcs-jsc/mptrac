@@ -64,28 +64,28 @@ void module_bound_cond(
 
 /*! Calculate convection of air parcels. */
 void module_convection(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt,
-  double *rs);
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        double *dt,
+        const randoms_t *random_nums);
 
 /*! Calculate exponential decay of particle mass. */
 void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_t *clim);
 
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  double *dt,
-  double *rs);
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        cache_t * cache,
+        double *dt,
+        const randoms_t *random_nums);
 
 /*! Calculate turbulent diffusion. */
-void module_diffusion_turb(ctl_t *ctl, atm_t *atm, double *dt, double *rs, clim_t *clim);
+void module_diffusion_turb(ctl_t *ctl, atm_t *atm, double *dt, const randoms_t *random_nums, clim_t *clim);
 
 /*! Calculate dry deposition. */
 void module_dry_deposition(
@@ -388,16 +388,16 @@ int main(
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
-          module_diffusion_turb(&ctl, atm, dt, rs, clim);
+          module_diffusion_turb(&ctl, atm, dt, &random_nums, clim);
 
       /* Mesoscale diffusion... */
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
-	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
+	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, &random_nums);
 
       /* Convection... */
       if (ctl.conv_cape >= 0
 	  && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
-	module_convection(&ctl, met0, met1, atm, dt, rs);
+	module_convection(&ctl, met0, met1, atm, dt, &random_nums);
 
       /* Sedimentation... */
       if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)
@@ -475,7 +475,7 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
+#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs,random_nums)
 #endif
 
     /* Free... */
@@ -727,22 +727,19 @@ void module_bound_cond(
 /*****************************************************************************/
 
 void module_convection(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt,
-  double *rs) {
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        double *dt,
+        const randoms_t *random_nums) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
 
-  /* Create random numbers... */
-  module_rng(rs, (size_t) atm->np, 0);
-
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt,rs)
+#pragma acc data present(ctl,met0,met1,atm,dt,rs,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -794,7 +791,7 @@ void module_convection(
 	}
 
 	/* Vertical mixing... */
-	atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
+	atm->p[ip] = pbot + (ptop - pbot) * random_nums->convection[ip];
       }
     }
 }
@@ -838,23 +835,20 @@ void module_decay(ctl_t *ctl, atm_t *atm, double *dt, clim_t *clim) {
 /*****************************************************************************/
 
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  double *dt,
-  double *rs) {
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        cache_t * cache,
+        double *dt,
+        const randoms_t *random_nums) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
 
-  /* Create random numbers... */
-  module_rng(rs, 3 * (size_t) atm->np, 1);
-
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
+#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -901,13 +895,13 @@ void module_diffusion_meso(
       if (ctl->turb_mesox > 0) {
 	cache->uvwp[ip][0] = (float)
 	  (r * cache->uvwp[ip][0]
-	   + r2 * rs[3 * ip] * ctl->turb_mesox * usig);
+	   + r2 * random_nums->diff_meso[3 * ip] * ctl->turb_mesox * usig);
 	atm->lon[ip] +=
 	  DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
 	cache->uvwp[ip][1] = (float)
 	  (r * cache->uvwp[ip][1]
-	   + r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
+	   + r2 * random_nums->diff_meso[3 * ip + 1] * ctl->turb_mesox * vsig);
 	atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
       }
 
@@ -915,7 +909,7 @@ void module_diffusion_meso(
       if (ctl->turb_mesoz > 0) {
 	cache->uvwp[ip][2] = (float)
 	  (r * cache->uvwp[ip][2]
-	   + r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
+	   + r2 * random_nums->diff_meso[3 * ip + 2] * ctl->turb_mesoz * wsig);
 	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
       }
     }
@@ -927,18 +921,15 @@ void module_diffusion_turb(
         ctl_t *ctl,
         atm_t *atm,
         double *dt,
-        double *rs,
+        const randoms_t *random_nums,
         clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
 
-  /* Create random numbers... */
-  module_rng(rs, 3 * (size_t) atm->np, 1);
-
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,atm,dt,rs)
+#pragma acc data present(ctl,atm,dt,rs,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -956,15 +947,15 @@ void module_diffusion_turb(
       /* Horizontal turbulent diffusion... */
       if (dx > 0) {
 	double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
-	atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
-	atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
+	atm->lon[ip] += DX2DEG(random_nums->diff_turb[3 * ip] * sigma / 1000., atm->lat[ip]);
+	atm->lat[ip] += DY2DEG(random_nums->diff_turb[3 * ip + 1] * sigma / 1000.);
       }
 
       /* Vertical turbulent diffusion... */
       if (dz > 0) {
 	double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
 	atm->p[ip]
-	  += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
+	  += DZ2DP(random_nums->diff_turb[3 * ip + 2] * sigma / 1000., atm->p[ip]);
       }
     }
 }
