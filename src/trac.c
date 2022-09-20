@@ -190,6 +190,9 @@ void write_output(
   atm_t * atm,
   double t);
 
+/*! Generate ALL random numbers: */
+void generate_random_nums(randoms_t *random_num, ulong count);
+
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
@@ -209,6 +212,8 @@ int main(
   met_t *met0, *met1;
 
   FILE *dirlist;
+
+  randoms_t random_nums;
 
   char dirname[LEN], filename[2 * LEN];
 
@@ -287,7 +292,7 @@ int main(
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc enter data create(atm[:1],cache[:1],clim[:1], \
                               ctl,met0[:1],met1[:1],dt[:NP], \
-                              rs[:3*NP])
+                              rs[:3*NP],random_nums)
 #endif
 
     /* Read control parameters... */
@@ -364,6 +369,9 @@ int main(
 
       /* Check initial positions... */
       module_position(&ctl, met0, met1, atm, dt);
+
+    /* Generate ALL random numbers: */
+    generate_random_nums(&random_nums, (ulong) atm->np);
 
       /* Advection... */
       if (ctl.advect == 0)
@@ -493,6 +501,45 @@ int main(
   STOP_TIMERS;
 
   return EXIT_SUCCESS;
+}
+
+void generate_random_nums(randoms_t *random_num, ulong count) {
+
+#ifdef _OPENACC
+
+// TODO: this creates the random numbers on one device, loop it to all devices. Show device num in error msg
+#pragma acc host_data use_device(random_num)
+{
+  /* Convection */
+  if (curandGenerateUniformDouble(rng, random_num->convection, (count < 4 ? 4 : count))
+                          != CURAND_STATUS_SUCCESS)
+      ERRMSG("==---NEW---== Cannot create random numbers!");
+
+  /* Mesoscale diffusion */ 
+  if (curandGenerateNormalDouble(rng, random_num->diff_meso, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
+                          != CURAND_STATUS_SUCCESS)
+      ERRMSG("==---NEW---== Cannot create random numbers!");
+
+  /* Turbulent diffusion */
+  if (curandGenerateNormalDouble(rng, random_num->diff_turb, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
+                          != CURAND_STATUS_SUCCESS)
+      ERRMSG("==---NEW---== Cannot create random numbers!");
+
+}
+
+#else
+
+#pragma omp parallel for default(shared)
+    for (size_t i = 0; i < 3 * count; ++i) {
+        if (i < count)
+            random_num->convection[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
+
+        random_num->diff_meso[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+        random_num->diff_turb[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+    }
+
+#endif
+
 }
 
 /*****************************************************************************/
