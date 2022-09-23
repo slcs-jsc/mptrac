@@ -336,6 +336,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1],clim[:1],ctl)
+}
 #endif
 
     /* Initialize random number generator... */
@@ -362,6 +363,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(cache[:1])
+}
 #endif
 
     /* ------------------------------------------------------------
