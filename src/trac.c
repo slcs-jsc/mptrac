@@ -135,12 +135,6 @@ void module_position(
 void module_rng_init(
   int ntask);
 
-/*! Generate random numbers. */
-void module_rng(
-  double *rs,
-  size_t n,
-  int method);
-
 /*! Calculate sedimentation of air parcels. */
 void module_sedi(
   ctl_t * ctl,
@@ -217,7 +211,7 @@ int main(
 
   char dirname[LEN], filename[2 * LEN];
 
-  double *dt, *rs, t;
+  double *dt, t;
 
   int num_devices = 0, ntask = -1, rank = 0, size = 1;
 
@@ -281,8 +275,6 @@ int main(
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
-    ALLOC(rs, double,
-	  3 * NP + 1);
 
     
     // TODO: create the data region on all 4 GPUs...
@@ -293,7 +285,7 @@ int main(
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc enter data create(atm[:1],cache[:1],clim[:1], \
                               ctl,met0[:1],met1[:1],dt[:NP], \
-                              rs[:3*NP],random_nums)
+                              random_nums)
 #endif
 
     /* Read control parameters... */
@@ -476,7 +468,7 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs,random_nums)
+#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,random_nums)
 #endif
 
     /* Free... */
@@ -487,7 +479,6 @@ int main(
     free(met0);
     free(met1);
     free(dt);
-    free(rs);
 #ifdef _OPENACC
     free(rng);
 #endif
@@ -745,7 +736,7 @@ void module_convection(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt,rs,random_nums)
+#pragma acc data present(ctl,met0,met1,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -854,7 +845,7 @@ void module_diffusion_meso(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs,random_nums)
+#pragma acc data present(ctl,met0,met1,atm,cache,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -935,7 +926,7 @@ void module_diffusion_turb(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,atm,dt,rs,random_nums)
+#pragma acc data present(ctl,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1390,7 +1381,7 @@ void module_rng_init(
 
   /* Initialize random number generator... */
 #ifdef _OPENACC
-  for(int dev_id = 0; dev_id < acc_get_num_devices(acc_device_nvidia); ++i){
+  for(int dev_id = 0; dev_id < acc_get_num_devices(acc_device_nvidia); ++dev_id){
   if (curandCreateGenerator(rng + dev_id, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
@@ -1413,51 +1404,6 @@ void module_rng_init(
   }
 
 #endif
-}
-
-/*****************************************************************************/
-
-void module_rng(
-  double *rs,
-  size_t n,
-  int method) {
-
-#ifdef _OPENACC
-
-#pragma acc host_data use_device(rs)
-  {
-    /* Uniform distribution... */
-    if (method == 0) {
-      if (curandGenerateUniformDouble(rng, rs, (n < 4 ? 4 : n))
-	  != CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
-    }
-
-    /* Normal distribution... */
-    else if (method == 1) {
-      if (curandGenerateNormalDouble(rng, rs, (n < 4 ? 4 : n), 0.0, 1.0)
-	  != CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
-    }
-  }
-
-#else
-
-  /* Uniform distribution... */
-  if (method == 0) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
-  }
-
-  /* Normal distribution... */
-  else if (method == 1) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
-  }
-#endif
-
 }
 
 /*****************************************************************************/
