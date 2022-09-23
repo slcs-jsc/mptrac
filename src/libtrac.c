@@ -989,7 +989,9 @@ void get_met(
 
   static int init;
 
+#ifdef _OPENACC
   int num_devices;
+#endif
 
   met_t *mets;
 
