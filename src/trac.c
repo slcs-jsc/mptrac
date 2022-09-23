@@ -29,7 +29,7 @@
    ------------------------------------------------------------ */
 
 #ifdef _OPENACC
-curandGenerator_t rng;
+curandGenerator_t *rng; /* Holds unique random generators for devices */
 #else
 static gsl_rng *rng[NTHREADS];
 #endif
@@ -250,6 +250,7 @@ int main(
   acc_set_device_num(device_num, acc_device_nvidia);
   acc_device_t device_type = acc_get_device_type();
   acc_init(device_type);
+  ALLOC(rng, curandGenerator_t, num_devices);
 #endif
 
   /* Check arguments... */
@@ -487,7 +488,9 @@ int main(
     free(met1);
     free(dt);
     free(rs);
-
+#ifdef _OPENACC
+    free(rng);
+#endif
     /* Report timers... */
     PRINT_TIMERS;
   }
@@ -508,20 +511,23 @@ void generate_random_nums(randoms_t *random_num, ulong count) {
 #ifdef _OPENACC
 
 // TODO: this creates the random numbers on one device, loop it to all devices. Show device num in error msg
+
+    //TODO: for MULTI-GPU: loop over num_dev and set current device (they are all already initialised)
+    int dev_id = 0;
 #pragma acc host_data use_device(random_num)
 {
   /* Convection */
-  if (curandGenerateUniformDouble(rng, random_num->convection, (count < 4 ? 4 : count))
+  if (curandGenerateUniformDouble(*(rng + dev_id), random_num->convection, (count < 4 ? 4 : count))
                           != CURAND_STATUS_SUCCESS)
       ERRMSG("==---NEW---== Cannot create random numbers!");
 
   /* Mesoscale diffusion */ 
-  if (curandGenerateNormalDouble(rng, random_num->diff_meso, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
+  if (curandGenerateNormalDouble(*(rng + dev_id), random_num->diff_meso, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
                           != CURAND_STATUS_SUCCESS)
       ERRMSG("==---NEW---== Cannot create random numbers!");
 
   /* Turbulent diffusion */
-  if (curandGenerateNormalDouble(rng, random_num->diff_turb, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
+  if (curandGenerateNormalDouble(*(rng + dev_id), random_num->diff_turb, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
                           != CURAND_STATUS_SUCCESS)
       ERRMSG("==---NEW---== Cannot create random numbers!");
 
@@ -1384,17 +1390,17 @@ void module_rng_init(
 
   /* Initialize random number generator... */
 #ifdef _OPENACC
-
-  if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
+  for(int dev_id = 0; dev_id < acc_get_num_devices(acc_device_nvidia); ++i){
+  if (curandCreateGenerator(rng + dev_id, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
-  if (curandSetPseudoRandomGeneratorSeed(rng, ntask)
+  if (curandSetPseudoRandomGeneratorSeed(*(rng + dev_id), ntask + 83*dev_id)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set seed for random number generator!");
-  if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
+  if (curandSetStream(*(rng + dev_id), (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set stream for random number generator!");
-
+  }
 #else
 
   gsl_rng_env_setup();
