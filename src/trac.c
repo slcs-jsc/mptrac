@@ -1002,7 +1002,7 @@ void module_diffusion_turb(
   const int np = (atm->np/num_devices) * (device_num + 1);
   idx = (atm->np/num_devices) * device_num;
 
-#pragma acc data present(ctl,atm,dt,rs)
+#pragma acc data present(ctl,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
   const int np = atm->np;
