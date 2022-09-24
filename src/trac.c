@@ -509,6 +509,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,random_nums)
+}
 #endif
 
     /* Free... */
