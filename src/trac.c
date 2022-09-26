@@ -601,16 +601,14 @@ void module_advect_mp(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-    const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
 
@@ -622,7 +620,7 @@ void module_advect_mp(
   // idea: use OpenMP to calculate the 4 blocks of the particle loop in parallel
   
   
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double u, v, w;
@@ -660,19 +658,17 @@ void module_advect_rk(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Init... */
@@ -730,19 +726,17 @@ void module_bound_cond(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
   #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double ps;
@@ -787,19 +781,17 @@ void module_convection(
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double cape, cin, pel, ps;
@@ -866,19 +858,17 @@ void module_decay(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
@@ -910,19 +900,17 @@ void module_diffusion_meso(
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
 
-    int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,met0,met1,atm,cache,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get indices... */
@@ -996,19 +984,17 @@ void module_diffusion_turb(
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
 
-    int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
@@ -1053,19 +1039,17 @@ void module_dry_deposition(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double ps, t, v_dep;
@@ -1183,19 +1167,17 @@ void module_isosurf(
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
-  int init = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  init = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = init; ip < np; ip++) {
+  for (ulong ip = start; ip < end; ip++) {
 
     double t;
 
@@ -1251,19 +1233,17 @@ void module_meteo(
     if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++) {
+  for (ulong ip = start; ip < end; ip++) {
 
     double ps, ts, zs, us, vs, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape,
       cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
@@ -1347,19 +1327,17 @@ void module_oh_chem(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get temperature... */
@@ -1417,19 +1395,17 @@ void module_position(
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Init... */
@@ -1520,19 +1496,17 @@ void module_sedi(
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get temperature... */
@@ -1675,14 +1649,17 @@ void module_timesteps(
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
+
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++) {
+  for (ulong ip = start; ip < end; ip++) {
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
 	 && ctl->direction * (atm->time[ip] - ctl->t_stop) <= 0
 	 && ctl->direction * (atm->time[ip] - t) < 0))
@@ -1739,19 +1716,17 @@ void module_wet_deposition(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  int idx = 0;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  int device_num = acc_get_device_num(acc_device_nvidia);
-  const int np = (atm->np/num_devices) * (device_num + 1);
-  idx = (atm->np/num_devices) * device_num;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             start, end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
-  const int np = atm->np;
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = idx; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
