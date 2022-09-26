@@ -6174,3 +6174,26 @@ void write_station(
   if (t == ctl->t_stop)
     fclose(out);
 }
+
+#ifdef _OPENACC
+// TODO: write a proper "UNIT" test for this
+void calc_device_workload_range(
+        ulong data_size,
+        int device_num,
+        ulong *start_idx,
+        ulong *end_idx) {
+
+    ulong num_devices = num_devices = acc_get_num_devices(acc_device_nvidia);
+    if (data_size / num_devices)
+    WARN("The size of the atmospheric data: %lu is not "
+         "a multiple of the number of device: %lu. The workload "
+         "distribution will be uneven!!!", data_size, num_devices);
+
+    *start_idx = (data_size/num_devices) * (ulong) device_num;
+    ulong end = (data_size/num_devices) * ((ulong) (device_num + 1));
+    if (end <= data_size)
+        *end_idx = end;
+    else
+        *end_idx = data_size;
+}
+#endif

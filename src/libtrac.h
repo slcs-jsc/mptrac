@@ -1413,6 +1413,14 @@ typedef struct {
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
+#ifdef _OPENACC
+/*! Calculate the workload range for each device. */
+void calc_device_workload_range(
+        ulong data_size,
+        int device_num,
+        ulong *start_idx,
+        ulong *end_idx);
+#endif
 
 /*! Get HNO3 Volume Climatological initial data. */
 void set_clim_hno3_init_data(clim_t *clim);
