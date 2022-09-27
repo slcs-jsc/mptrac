@@ -604,7 +604,7 @@ void module_advect_mp(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -661,7 +661,7 @@ void module_advect_rk(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -729,7 +729,7 @@ void module_bound_cond(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
   #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -784,7 +784,7 @@ void module_convection(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
@@ -861,7 +861,7 @@ void module_decay(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -903,7 +903,7 @@ void module_diffusion_meso(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,cache,dt,random_nums)
 #pragma acc parallel loop independent gang vector
@@ -987,7 +987,7 @@ void module_diffusion_turb(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
@@ -1042,7 +1042,7 @@ void module_dry_deposition(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1170,7 +1170,7 @@ void module_isosurf(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
@@ -1236,7 +1236,7 @@ void module_meteo(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
@@ -1330,7 +1330,7 @@ void module_oh_chem(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1398,7 +1398,7 @@ void module_position(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1499,7 +1499,7 @@ void module_sedi(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1652,7 +1652,7 @@ void module_timesteps(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1719,7 +1719,7 @@ void module_wet_deposition(
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             start, end);
+                             &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
