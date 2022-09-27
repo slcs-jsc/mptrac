@@ -590,6 +590,13 @@ void thrustSortWrapper(
    Structs...
    ------------------------------------------------------------ */
 
+/*! Random Numbers */
+typedef struct {
+    double convection[NP]; /* Random numbers for calculating convection of air parcels */
+    double diff_meso[3*NP]; /* Random numbers for calculating mesoscale diffusion. */
+    double diff_turb[3*NP]; /* Random numbers for calculating turbulent diffusion. */
+} randoms_t;
+
 /*! Control parameters. */
 typedef struct {
 
@@ -1406,6 +1413,14 @@ typedef struct {
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
+#ifdef _OPENACC
+/*! Calculate the workload range for each device. */
+void calc_device_workload_range(
+        ulong data_size,
+        int device_num,
+        ulong *start_idx,
+        ulong *end_idx);
+#endif
 
 /*! Get HNO3 Volume Climatological initial data. */
 void set_clim_hno3_init_data(clim_t *clim);
