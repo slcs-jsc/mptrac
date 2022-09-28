@@ -465,6 +465,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
 
+// TODO Put OMP barrier here
 #ifdef _OPENACC
         }
 #endif
@@ -1874,7 +1875,10 @@ void write_output(
             atm->zeta[start:end],atm->lon[start:end],atm->lat[start:end], \
             atm->q[0:NQ][start:end])
   }
+// TODO: put OMP barrier here
 #endif
+
+// TODO: Use only one OMP thread (first one) for all below
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
