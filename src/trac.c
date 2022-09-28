@@ -396,7 +396,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
           get_met(&ctl, t, &met0, &met1, clim);
 
       /* Sort particles... */
-      if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
+      if (0 && ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	module_sort(&ctl, met0, atm);
 
     /* Check initial positions... */
