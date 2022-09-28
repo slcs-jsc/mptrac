@@ -1871,8 +1871,10 @@ void write_output(
   calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
                              &start, &end);
 #pragma acc update host(atm->np,atm->time[start:end],atm->p[start:end], \
-            atm->zeta[start:end],atm->lon[start:end],atm->lat[start:end], \
-            atm->q[NQ][start:end])
+            atm->zeta[start:end],atm->lon[start:end],atm->lat[start:end])
+
+  for(ulong i = 0; i < NQ; ++i)
+      #pragma acc update host(atm->q[i][start:end])
   }
 #endif
 
