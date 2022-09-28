@@ -1866,7 +1866,13 @@ void write_output(
       || ctl->prof_basename[0] != '-' || ctl->sample_basename[0] != '-'
       || ctl->stat_basename[0] != '-') {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
+
+  ulong start = 0, end = NP;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+#pragma acc update host(atm->np,atm->time[start:end],atm->p[start:end], \
+            atm->zeta[start:end],atm->lon[start:end],atm->lat[start:end], \
+            atm->q[NQ][start:end])
   }
 #endif
 
