@@ -374,6 +374,16 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 
+
+        // TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
+        // maybe with omp prallel for or via omp tasks?
+#ifdef _OPENACC
+#pragma omp parallel num_threads(num_devices)
+{
+     int device_num = omp_get_thread_num();
+     acc_set_device_num(device_num, acc_device_nvidia);
+#endif
+
       /* Adjust length of final time step... */
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
@@ -388,16 +398,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       /* Sort particles... */
       if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	module_sort(&ctl, met0, atm);
-
-
-	// TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
-	// maybe with omp prallel for or via omp tasks?
-#ifdef _OPENACC
-#pragma omp parallel num_threads(num_devices)
-{
-     int device_num = omp_get_thread_num();
-     acc_set_device_num(device_num, acc_device_nvidia);
-#endif
 
     /* Check initial positions... */
     module_position(&ctl, met0, met1, atm, dt);
