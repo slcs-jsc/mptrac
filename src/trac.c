@@ -284,7 +284,9 @@ int main(
        ------------------------------------------------------------ */
 
     /* Allocate... */
+#ifdef _OPENACC
     SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
+#endif
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
@@ -657,7 +659,8 @@ void module_advect_rk(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
+  char id[50] =  "MODULE_ADVECTION";
+  SELECT_TIMER(add_device_num(id, 50), "PHYSICS", NVTX_GPU);
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
@@ -721,7 +724,8 @@ void module_bound_cond(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
+  char id[50] =  "MODULE_BOUNDCOND";
+  SELECT_TIMER(add_device_num(id, 50), "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -780,7 +784,8 @@ void module_convection(
         const randoms_t *random_nums) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+  char id[50] =  "MODULE_CONVECTION";
+  SELECT_TIMER(add_device_num(id, 50), "PHYSICS", NVTX_GPU);
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC

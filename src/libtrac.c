@@ -6197,3 +6197,17 @@ void calc_device_workload_range(
         *end_idx = data_size;
 }
 #endif
+
+const char *add_device_num(char *id, ulong maxlen) {
+    char *text;
+    ALLOC(text, char, maxlen);
+    int dev_num = -1;
+#ifdef _OPENACC
+    dev_num = acc_get_device_num(acc_device_nvidia);
+#endif
+    snprintf(text, maxlen, "%s__DEV_%d", id, dev_num);
+    memcpy(id, text, maxlen);
+    free(text);
+    return id;
+}
+

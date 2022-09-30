@@ -1413,6 +1413,10 @@ typedef struct {
 /* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
+
+/*! Append to the timer ID, the device num. (`-1` if num_devices is 0).*/
+const char *add_device_num(char *id, ulong maxlen);
+
 #ifdef _OPENACC
 /*! Calculate the workload range for each device. */
 void calc_device_workload_range(
