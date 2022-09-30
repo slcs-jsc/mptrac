@@ -4508,6 +4508,10 @@ void timer(
 
   static int iname = -1, igroup = -1, nname, ngroup;
 
+  // Only measure time for thread 0
+  if(omp_get_thread_num() != 0)
+    return;
+  
   /* Get time... */
   t1 = omp_get_wtime();
 
