@@ -367,10 +367,9 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 	 t += ctl.direction * ctl.dt_mod) {
 
 #ifdef _OPENACC
-#pragma omp parallel num_threads(num_devices)
-{
-     int device_num = omp_get_thread_num();
-     acc_set_device_num(device_num, acc_device_nvidia);
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
 #endif
 
       /* Adjust length of final time step... */
