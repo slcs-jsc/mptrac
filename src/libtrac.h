@@ -741,6 +741,9 @@ typedef struct {
   /*! Quantity array index for hydroxyl number concentrations. */
   int qnt_oh;
 
+  /*! Quantity array index for implicity volumn mixing ratio. */
+  int qnt_vmrimpl;
+
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
 
@@ -976,6 +979,9 @@ typedef struct {
 
   /*! Filename of OH climatology. */
   char clim_oh_filename[LEN];
+
+  /*! Filename of h2o2 climatology. */
+  char clim_h2o2_filename[LEN];
 
   /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
   int oh_chem_reaction;
@@ -1432,6 +1438,16 @@ double clim_oh(
   double lat,
   double p);
 
+ /*! Climatology of h2o2 number concentrations. */
+#ifdef _OPENACC
+#pragma acc routine (clim_h2o2)
+#endif
+double clim_h2o2(
+  double t,
+  double lat,
+  double p,
+  clim_t * clim); 
+
 /*! Climatology of OH number concentrations with diurnal variation. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh_diurnal)
@@ -1454,6 +1470,11 @@ double clim_oh_init_help(
   double beta,
   double time,
   double lat);
+
+/*! Initialization function for h2o2 climatology. */
+void clim_h2o2_init(
+  ctl_t * ctl,
+  clim_t * clim);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC

@@ -133,6 +133,15 @@ void module_oh_chem(
   atm_t * atm,
   double *dt);
 
+/*! Calculate H2O2 chemistry. */
+void module_h2o2_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double * dt);
+
 /*! Check position of air parcels. */
 void module_position(
   ctl_t * ctl,
@@ -394,6 +403,10 @@ int main(
       /* OH chemistry... */
       if (ctl.oh_chem_reaction != 0)
 	module_oh_chem(&ctl, clim, met0, met1, atm, dt);
+
+      /* H2O2 chemistry (For SO2 aqueous phase oxidation)... */
+      if (strcmp(ctl.clim_h2o2_filename,"-") != 0)
+  module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 
       /* Dry deposition... */
       if (ctl.dry_depo[0] > 0)
@@ -1227,6 +1240,88 @@ void module_oh_chem(
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
+
+/*****************************************************************************/
+
+void module_h2o2_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  //SELECT_TIMER("MODULE_OHCHEM", NVTX_GPU);
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
+  if (ctl->qnt_vmrimpl < 0)
+    ERRMSG("Module needs quantity implicit volume mixing ratio")
+
+#ifdef _OPENACC
+#pragma acc data present(clim,ctl,met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  
+
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0) {
+
+      /* Check whether particle is below cloud top... */
+      INTPOL_INIT;
+      double pct;
+      INTPOL_2D(pct, 1);
+      if (!isfinite(pct) || atm->p[ip] <= pct)
+	      continue;
+      int inside;
+      double lwc, iwc;
+        /* Check whether particle is inside or below cloud... */
+      INTPOL_3D(lwc, 1);
+      INTPOL_3D(iwc, 0);
+      inside = (lwc > 0 || iwc > 0);
+
+      if (inside){
+
+      /* Get temperature... */
+      double t;
+      double rate_coef;
+      INTPOL_3D(t, 0);
+
+
+      /* Reaction rate (Berglen et al  2004)... */
+      double k ;
+      k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15))  ; //Maass  1999 unit:M^(-2)
+      /*Henry constant of  SO2*/
+      double H_SO2;
+      H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+      double K_1S;
+      K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15)); //unit:M
+      /*Henry constant of  h2o2*/
+      double H_h2o2;
+      H_h2o2 = 8.3e2 * exp(7600 * (1/t-1/ 298.15)) * RI * t ;
+      /*Concentration of h2o2(Barth et al 1989)*/
+      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9; //vmr unit: ppbv
+      double h2o2 = H_h2o2 * clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip], clim) * 0.59 
+            * exp(-0.233 * SO2) ; 
+      /*volumn water content in cloud m^3 m^(-3)*/
+      double CWC;
+      CWC = (lwc+iwc) * 28.9644/18.02;
+      /* Calculate exponential decay... (Rolph et al 1992)*/ 
+	       rate_coef =
+	       1000 / 6.02214e23 * k * K_1S * h2o2  * H_SO2  * CWC;
+
+      double aux = exp(-dt[ip] * rate_coef);
+      if (ctl->qnt_m >= 0)
+        atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_vmr >= 0)
+        atm->q[ctl->qnt_vmr][ip] *= aux;
+        }
+      }
+    }
 
 /*****************************************************************************/
 
