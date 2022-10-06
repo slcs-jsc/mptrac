@@ -744,6 +744,15 @@ typedef struct {
   /*! Quantity array index for implicity volumn mixing ratio. */
   int qnt_vmrimpl;
 
+  /*! Quantity array index for total mass loss due to oh chemistry module. */
+  int qnt_mloss_oh;
+
+  /*! Quantity array index for total mass loss due to h2o2 chemistry module. */
+  int qnt_mloss_h2o2;
+
+  /*! Quantity array index for total mass loss due to wet deposition module. */
+  int qnt_mloss_wet;
+
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
 
@@ -994,6 +1003,9 @@ typedef struct {
 
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
+
+  /*! Coefficient for precipitation calculation*/
+  double wet_depo_pre[2];
 
   /*! Coefficient A for wet deposition below cloud (exponential form). */
   double wet_depo_bc_a;

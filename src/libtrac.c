@@ -2131,6 +2131,9 @@ void read_ctl(
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_vmrimpl = -1; 
+  ctl->qnt_mloss_oh = -1;
+  ctl->qnt_mloss_wet = -1;
+  ctl->qnt_mloss_h2o2 = -1; 
   ctl->qnt_psat = -1;
   ctl->qnt_psice = -1;
   ctl->qnt_pw = -1;
@@ -2200,6 +2203,9 @@ void read_ctl(
       SET_QNT(qnt_hno3, "hno3", "ppv")
       SET_QNT(qnt_oh, "oh", "molec/cm^3")
       SET_QNT(qnt_vmrimpl, "vmrimpl", "ppv")
+      SET_QNT(qnt_mloss_oh, "mloss_oh", "kg")
+      SET_QNT(qnt_mloss_wet, "mloss_wet", "kg")
+      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "kg")
       SET_QNT(qnt_psat, "psat", "hPa")
       SET_QNT(qnt_psice, "psice", "hPa")
       SET_QNT(qnt_pw, "pw", "hPa")
@@ -2473,6 +2479,10 @@ void read_ctl(
       ctl->wet_depo_bc_h[ip] =
 	scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, "0", NULL);
   }
+  ctl->wet_depo_pre[0] =
+    scan_ctl(filename, argc, argv, "WET_DEPO_PRE", 0, "0.5", NULL);
+  ctl->wet_depo_pre[1] =
+    scan_ctl(filename, argc, argv, "WET_DEPO_PRE", 1, "0.36", NULL);
   ctl->wet_depo_ic_ret_ratio =
     scan_ctl(filename, argc, argv, "WET_DEPO_IC_RET_RATIO", -1, "1", NULL);
   ctl->wet_depo_bc_ret_ratio =

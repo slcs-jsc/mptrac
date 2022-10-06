@@ -1234,6 +1234,8 @@ void module_oh_chem(
 			    atm->lon[ip],
 			    atm->lat[ip]);
       double aux = exp(-dt[ip] * rate_coef);
+      if (ctl->qnt_mloss_oh >= 0 && ctl->qnt_m >= 0)
+  atm->q[ctl->qnt_mloss_oh][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
       if (ctl->qnt_m >= 0)
 	atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_vmr >= 0)
@@ -1315,6 +1317,8 @@ void module_h2o2_chem(
 	       1000 / 6.02214e23 * k * K_1S * h2o2  * H_SO2  * CWC;
 
       double aux = exp(-dt[ip] * rate_coef);
+      if (ctl->qnt_mloss_h2o2 >= 0 && ctl->qnt_m >= 0)
+        atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
       if (ctl->qnt_m >= 0)
         atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_vmr >= 0)
@@ -1717,7 +1721,7 @@ void module_wet_deposition(
 
       /* Estimate precipitation rate (Pisso et al., 2019)... */
       INTPOL_2D(cl, 0);
-      double Is = pow(2. * cl, 1. / 0.36);
+      double Is = pow(1./ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
       if (Is < 0.01)
 	continue;
 
@@ -1805,6 +1809,8 @@ void module_wet_deposition(
 
       /* Calculate exponential decay of mass... */
       double aux = exp(-dt[ip] * lambda);
+      if (ctl->qnt_mloss_wet >= 0 && ctl->qnt_m >= 0)
+        atm->q[ctl->qnt_mloss_wet][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
       if (ctl->qnt_m >= 0)
 	atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_vmr >= 0)
