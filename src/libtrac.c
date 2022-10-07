@@ -1016,7 +1016,7 @@ void get_met(
 
     /* Update GPU... */
 #ifdef _OPENACC
-  num_devices = acc_get_num_devices(acc_device_nvidia);
+  num_devices = 1; /*acc_get_num_devices(acc_device_nvidia);*/
   for(int device_num = 0; device_num < num_devices; device_num++) {
     acc_set_device_num(device_num, acc_device_nvidia);
 
@@ -6162,7 +6162,7 @@ void calc_device_workload_range(
         ulong *start_idx,
         ulong *end_idx) {
 
-    ulong num_devices = num_devices = acc_get_num_devices(acc_device_nvidia);
+    ulong num_devices = 1; /*num_devices = acc_get_num_devices(acc_device_nvidia);*/
     if (data_size / num_devices)
     WARN("The size of the atmospheric data: %lu is not "
          "a multiple of the number of device: %lu. The workload "
