@@ -593,21 +593,17 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
-  ///////////////////////////////////////////////////////////////
-
-  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta) */
+  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
   int vert_coord_ap;
 
   /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
   int vert_coord_met;
 
-  /*! Vertical velocity (0=kinematic, 1=diabatic) */
+  /*! Vertical velocity (0=kinematic, 1=diabatic). */
   int vert_vel;
 
-  /*! Read MPTRAC or CLaMS meteo data. (0=MPTRAC, 1=CLaMS) */
+  /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
   int clams_met_data;
-
-  ///////////////////////////////////////////////////////////////
 
   /*! Chunk size hint for nc__open. */
   size_t chunkszhint;
@@ -1004,7 +1000,7 @@ typedef struct {
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
-  /*! Coefficient for precipitation calculation*/
+  /*! Coefficient for precipitation calculation */
   double wet_depo_pre[2];
 
   /*! Coefficient A for wet deposition below cloud (exponential form). */
@@ -1052,7 +1048,7 @@ typedef struct {
   /*! Particle index stride for atmospheric data files. */
   int atm_stride;
 
-  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). */
+  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
   int atm_type;
 
   /*! Basename of CSI data files. */
@@ -1389,7 +1385,7 @@ typedef struct {
 
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
- 
+
   /*! Potential vorticity [PVU]. */
   float pv[EX][EY][EP];
 
@@ -1410,8 +1406,8 @@ typedef struct {
 
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
-  
-   /*! Zeta [K]. */
+
+  /*! Zeta [K]. */
   float zeta[EX][EY][EP];
 
   /*! Vertical velocity [K/s]. */
@@ -1467,7 +1463,7 @@ double clim_h2o2(
   double t,
   double lat,
   double p,
-  clim_t * clim); 
+  clim_t * clim);
 
 /*! Climatology of OH number concentrations with diurnal variation. */
 #ifdef _OPENACC
