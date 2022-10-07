@@ -1262,24 +1262,29 @@ void get_met_help(
   jsec2time(t6, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Set filename... */
-  if (ctl->met_type == 0)
+  if (ctl->clams_met_data == 0) {
     sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
-  else if (ctl->met_type == 1)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.bin", metbase);
-  else if (ctl->met_type == 2)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.pck", metbase);
-  else if (ctl->met_type == 3)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
-  else if (ctl->met_type == 4)
-    sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
-  sprintf(repl, "%d", year);
-  get_met_replace(filename, "YYYY", repl);
-  sprintf(repl, "%02d", mon);
-  get_met_replace(filename, "MM", repl);
-  sprintf(repl, "%02d", day);
-  get_met_replace(filename, "DD", repl);
-  sprintf(repl, "%02d", hour);
-  get_met_replace(filename, "HH", repl);
+    sprintf(repl, "%d", year);
+    get_met_replace(filename, "YYYY", repl);
+    sprintf(repl, "%02d", mon);
+    get_met_replace(filename, "MM", repl);
+    sprintf(repl, "%02d", day);
+    get_met_replace(filename, "DD", repl);
+    sprintf(repl, "%02d", hour);
+    get_met_replace(filename, "HH", repl);
+  } else {
+    sprintf(filename, "%s_YYMMDDHH.nc", metbase);
+    sprintf(repl, "%d", year);
+    get_met_replace(filename, "YYYY", repl);
+    sprintf(repl, "%d", year % 100);
+    get_met_replace(filename, "YY", repl);
+    sprintf(repl, "%02d", mon);
+    get_met_replace(filename, "MM", repl);
+    sprintf(repl, "%02d", day);
+    get_met_replace(filename, "DD", repl);
+    sprintf(repl, "%02d", hour);
+    get_met_replace(filename, "HH", repl);
+  }
 }
 
 /*****************************************************************************/
@@ -2638,7 +2643,7 @@ int read_met(
     read_met_extrapolate(met);
 
     /* Read surface data... */
-    read_met_surface(ncid, met);
+    read_met_surface(ncid, met,ctl);
 
     /* Create periodic boundary conditions... */
     read_met_periodic(met);
@@ -3343,23 +3348,25 @@ void read_met_grid(
   double rtime, r2;
 
   int dimid, varid, year2, mon2, day2, hour2, min2, sec2;
-
+  int year, mon, day, hour;
   size_t np, nx, ny;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GRID", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
+  
+  if (ctl->clams_met_data == 0) {
 
   /* Get time from filename... */
   size_t len = strlen(filename);
   sprintf(tstr, "%.4s", &filename[len - 16]);
-  int year = atoi(tstr);
+  year = atoi(tstr);
   sprintf(tstr, "%.2s", &filename[len - 11]);
-  int mon = atoi(tstr);
+  mon = atoi(tstr);
   sprintf(tstr, "%.2s", &filename[len - 8]);
-  int day = atoi(tstr);
+  day = atoi(tstr);
   sprintf(tstr, "%.2s", &filename[len - 5]);
-  int hour = atoi(tstr);
+  hour = atoi(tstr);
   time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
 
   /* Check time... */
@@ -3377,6 +3384,27 @@ void read_met_grid(
       WARN("Time information in meteo file does not match filename!");
   } else
     WARN("Time information in meteo file is missing!");
+  } else {
+    if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
+      NC(nc_get_var_double(ncid, varid, &rtime));
+    }
+    // Distinguish between the two centuries, where reanalysis is availiable...
+    if (rtime < 0) {
+      sprintf(tstr, "19%.2s", &filename[strlen(filename) - 11]);
+      year = atoi(tstr);
+    } else {
+      sprintf(tstr, "20%.2s", &filename[strlen(filename) - 11]);
+      year = atoi(tstr);
+    }
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 9]);
+    mon = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 7]);
+    day = atoi(tstr);
+    sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
+    hour = atoi(tstr);
+
+    time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
+  }
 
   /* Get grid dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
@@ -3391,7 +3419,13 @@ void read_met_grid(
   if (ny < 2 || ny > EY)
     ERRMSG("Number of latitudes out of range!");
 
-  sprintf(levname, "lev");
+  if (ctl->vert_coord_met == 0) {
+    sprintf(levname, "lev");
+  } else {
+    sprintf(levname, "hybrid");
+    printf("Meteorological data is in hybrid coordinates.");
+  }
+
   NC(nc_inq_dimid(ncid, levname, &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &np));
   if (np == 1) {
@@ -3445,6 +3479,7 @@ void read_met_levels(
   SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
   LOG(2, "Read level data...");
 
+  if (ctl->clams_met_data == 0) {
   /* Read meteo data... */
   if (!read_met_nc_3d(ncid, "t", "T", met, met->t, 1.0, 1))
     ERRMSG("Cannot read temperature!");
@@ -3494,6 +3529,93 @@ void read_met_levels(
     met->np = ctl->met_np;
     for (int ip = 0; ip < met->np; ip++)
       met->p[ip] = ctl->met_p[ip];
+    }
+      
+  }  else if (ctl->clams_met_data == 1) {
+    /* Read meteorological data... */
+    if (!read_met_nc_3d(ncid, "t", "TEMP", met, met->t, 1.0, 1))
+      ERRMSG("Cannot read temperature!");
+    if (!read_met_nc_3d(ncid, "u", "U", met, met->u, 1.0, 1))
+      ERRMSG("Cannot read zonal wind!");
+    if (!read_met_nc_3d(ncid, "v", "V", met, met->v, 1.0, 1))
+      ERRMSG("Cannot read meridional wind!");
+    if (!read_met_nc_3d(ncid, "ZETA", "zeta", met, met->zeta, 1.0, 1))
+      WARN("Cannot read ZETA in meteo data!");
+
+    if (ctl->vert_vel == 0) {
+      if (!read_met_nc_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
+	WARN("Cannot read vertical velocity!");
+    } else if (ctl->vert_vel == 1) {
+      if (!read_met_nc_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
+	WARN("Cannot read vertical velocity!");
+      if (!read_met_nc_3d
+	  (ncid, "ZETA_DOT_TOT", "zeta_dot_clr", met, met->zeta_dot,
+	   0.00001157407f, 1))
+	   {
+     	  if (!read_met_nc_3d
+	  (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", met, met->zeta_dot,
+	   0.00001157407f, 1))   
+	 {WARN("Cannot read vertical velocity!");}
+	  }
+    }
+    if (!read_met_nc_3d
+	(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
+      WARN("Cannot read specific humidity!");
+    if (!read_met_nc_3d
+	(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
+      WARN("Cannot read ozone data!");
+    if (ctl->met_cloud == 1 || ctl->met_cloud == 3) {
+      if (!read_met_nc_3d(ncid, "clwc", "CLWC", met, met->lwc, 1.0, 1))
+	WARN("Cannot read cloud liquid water content!");
+      if (!read_met_nc_3d(ncid, "ciwc", "CIWC", met, met->iwc, 1.0, 1))
+	WARN("Cannot read cloud ice water content!");
+    }
+    if (ctl->met_cloud == 2 || ctl->met_cloud == 3) {
+      if (!read_met_nc_3d
+	  (ncid, "crwc", "CRWC", met, met->lwc, 1.0, ctl->met_cloud == 2))
+	WARN("Cannot read cloud rain water content!");
+      if (!read_met_nc_3d
+	  (ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
+	WARN("Cannot read cloud snow water content!");
+    }
+
+    /* Transfer from model levels to pressure levels... */
+    if (ctl->met_np > 0) {
+
+      /* Read pressure on model levels... */
+      if (!read_met_nc_3d(ncid, "pl", "PRESS", met, met->pl, 1.0, 1))
+	ERRMSG("Cannot read pressure on model levels!");
+
+      /* Vertical interpolation from model to pressure levels... */
+      read_met_ml2pl(ctl, met, met->t);
+      read_met_ml2pl(ctl, met, met->u);
+      read_met_ml2pl(ctl, met, met->v);
+      read_met_ml2pl(ctl, met, met->w);
+      read_met_ml2pl(ctl, met, met->h2o);
+      read_met_ml2pl(ctl, met, met->o3);
+      read_met_ml2pl(ctl, met, met->lwc);
+      read_met_ml2pl(ctl, met, met->iwc);
+
+      if (ctl->vert_vel == 1)
+        {
+           read_met_ml2pl(ctl, met, met->zeta);
+           read_met_ml2pl(ctl, met, met->zeta_dot);
+        }
+                
+      /* Set new pressure levels... */
+      met->np = ctl->met_np;
+      for (int ip = 0; ip < met->np; ip++)
+	met->p[ip] = ctl->met_p[ip];
+	
+      /* Create a pressure field... */
+      for (int i = 0; i < met->nx; i++)
+	for (int j = 0; j < met->ny; j++)
+	  for (int k = 0; k < met->np; k++) {
+	    met->patp[i][j][k] = (float) met->p[k];
+	  }
+    }
+  } else {
+    printf("Meteo Data format unknown!");
   }
 
   /* Check ordering of pressure levels... */
@@ -4128,13 +4250,15 @@ void read_met_sample(
 
 void read_met_surface(
   int ncid,
-  met_t * met) {
+  met_t * met,
+  ctl_t * ctl) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
+  if (ctl->clams_met_data == 0) {
   if (!read_met_nc_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
     if (!read_met_nc_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
       WARN("Cannot not read surface pressure data (use lowest level)!");
@@ -4146,6 +4270,19 @@ void read_met_surface(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+  } else {
+    if (!read_met_nc_2d(ncid, "sp", "SP", met, met->ps, 0.01f, 1)) {
+      if (!read_met_nc_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+	WARN
+	  ("Cannot not read surface pressure data (use lowest HYBRID level)!");
+	for (int ix = 0; ix < met->nx; ix++)
+	  for (int iy = 0; iy < met->ny; iy++)
+	  {
+	    met->ps[ix][iy] = (float) met->p[0];
+	   }
+      }
+    }
+  }
 
   /* Read geopotential height at the surface... */
   if (!read_met_nc_2d

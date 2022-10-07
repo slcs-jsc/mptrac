@@ -1389,7 +1389,7 @@ typedef struct {
 
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
-
+ 
   /*! Potential vorticity [PVU]. */
   float pv[EX][EY][EP];
 
@@ -1410,6 +1410,15 @@ typedef struct {
 
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
+  
+   /*! Zeta [K]. */
+  float zeta[EX][EY][EP];
+
+  /*! Vertical velocity [K/s]. */
+  float zeta_dot[EX][EY][EP];
+
+  /*! Pressure field in pressure levels [hPa]. */
+  float patp[EX][EY][EP];
 
 } met_t;
 
@@ -1849,7 +1858,8 @@ void read_met_sample(
 /*! Read surface data. */
 void read_met_surface(
   int ncid,
-  met_t * met);
+  met_t * met,
+  ctl_t * ctl);
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
