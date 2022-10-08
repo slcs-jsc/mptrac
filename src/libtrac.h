@@ -1404,8 +1404,8 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
-  /*! Cache for wind data. */
-  float uvw[EX][EY][EP][3];
+  /*! Pressure field in pressure levels [hPa]. */
+  float patp[EX][EY][EP];
 
   /*! Zeta [K]. */
   float zeta[EX][EY][EP];
@@ -1413,8 +1413,11 @@ typedef struct {
   /*! Vertical velocity [K/s]. */
   float zeta_dot[EX][EY][EP];
 
-  /*! Pressure field in pressure levels [hPa]. */
-  float patp[EX][EY][EP];
+  /*! Cache for wind data. */
+  float uvw[EX][EY][EP][3];
+
+  /*! Auxiliary variable. */
+  float help[EX][EY][EP];
 
 } met_t;
 
