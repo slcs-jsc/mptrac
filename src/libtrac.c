@@ -1816,17 +1816,17 @@ int read_atm(
 
   /* Read ASCII data... */
   if (ctl->atm_type == 0) {
-    
+
     /* Open file... */
     if (!(in = fopen(filename, "r"))) {
       WARN("Cannot open file!");
       return 0;
     }
-    
+
     /* Read line... */
     char line[LEN];
     while (fgets(line, LEN, in)) {
-      
+
       /* Read data... */
       char *tok;
       TOK(line, tok, "%lg", atm->time[atm->np]);
@@ -1843,18 +1843,18 @@ int read_atm(
       if ((++atm->np) > NP)
 	ERRMSG("Too many data points!");
     }
-    
+
     /* Close file... */
     fclose(in);
   }
-  
+
   /* Read binary data... */
   else if (ctl->atm_type == 1) {
-    
+
     /* Open file... */
     if (!(in = fopen(filename, "r")))
       return 0;
-    
+
     /* Check version of binary data... */
     int version;
     FREAD(&version, int,
@@ -1895,14 +1895,14 @@ int read_atm(
     /* Close file... */
     fclose(in);
   }
-  
+
   /* Read netCDF data... */
   else if (ctl->atm_type == 2) {
-    
+
     /* Open file... */
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
       return 0;
-    
+
     /* Get dimensions... */
     NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
     NC(nc_inq_dimlen(ncid, dimid, &nparts));
@@ -1981,7 +1981,7 @@ int read_atm(
 
   /* Read CLaMS pos file... */
   else if (ctl->atm_type == 3) {
-    
+
     /* Open file... */
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
       return 0;
@@ -2083,7 +2083,7 @@ void read_clim(
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-')
     clim_oh_init(ctl, clim);
-  
+
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
     clim_h2o2_init(ctl, clim);
@@ -2502,7 +2502,7 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "WET_DEPO_IC_RET_RATIO", -1, "1", NULL);
   ctl->wet_depo_bc_ret_ratio =
     scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
-  
+
   /* OH chemistry... */
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
@@ -3373,7 +3373,7 @@ void read_met_grid(
 
   /* MPTRAC meteo files... */
   if (ctl->clams_met_data == 0) {
-    
+
     /* Get time from filename... */
     size_t len = strlen(filename);
     sprintf(tstr, "%.4s", &filename[len - 16]);
@@ -3385,7 +3385,7 @@ void read_met_grid(
     sprintf(tstr, "%.2s", &filename[len - 5]);
     hour = atoi(tstr);
     time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
-    
+
     /* Check time information from data file... */
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
       NC(nc_get_var_double(ncid, varid, &rtime));
@@ -3394,23 +3394,21 @@ void read_met_grid(
     } else
       WARN("Time information in meteo file is missing!");
   }
-  
+
   /* CLaMS meteo files... */
   else {
-    
+
     /* Read time from file... */
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
       NC(nc_get_var_double(ncid, varid, &rtime));
     }
-    
+
     /* Get time from filename (considering the century)... */
-    if (rtime < 0) {
+    if (rtime < 0)
       sprintf(tstr, "19%.2s", &filename[strlen(filename) - 11]);
-      year = atoi(tstr);
-    } else {
+    else
       sprintf(tstr, "20%.2s", &filename[strlen(filename) - 11]);
-      year = atoi(tstr);
-    }
+    year = atoi(tstr);
     sprintf(tstr, "%.2s", &filename[strlen(filename) - 9]);
     mon = atoi(tstr);
     sprintf(tstr, "%.2s", &filename[strlen(filename) - 7]);
@@ -3419,7 +3417,7 @@ void read_met_grid(
     hour = atoi(tstr);
     time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
   }
-  
+
   /* Check time... */
   if (year < 1900 || year > 2100 || mon < 1 || mon > 12
       || day < 1 || day > 31 || hour < 0 || hour > 23)
@@ -3427,7 +3425,7 @@ void read_met_grid(
   jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
   LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);
-  
+
   /* Get grid dimensions... */
   NC(nc_inq_dimid(ncid, "lon", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nx));
@@ -3447,7 +3445,6 @@ void read_met_grid(
     sprintf(levname, "hybrid");
     printf("Meteorological data is in hybrid coordinates.");
   }
-
   NC(nc_inq_dimid(ncid, levname, &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &np));
   if (np == 1) {
@@ -3503,7 +3500,7 @@ void read_met_levels(
 
   /* MPTRAC meteo data... */
   if (ctl->clams_met_data == 0) {
-    
+
     /* Read meteo data... */
     if (!read_met_nc_3d(ncid, "t", "T", met, met->t, 1.0, 1))
       ERRMSG("Cannot read temperature!");
@@ -3533,14 +3530,14 @@ void read_met_levels(
 	  (ncid, "cswc", "CSWC", met, met->iwc, 1.0, ctl->met_cloud == 2))
 	WARN("Cannot read cloud snow water content!");
     }
-    
+
     /* Transfer from model levels to pressure levels... */
     if (ctl->met_np > 0) {
 
       /* Read pressure on model levels... */
       if (!read_met_nc_3d(ncid, "pl", "PL", met, met->pl, 0.01f, 1))
 	ERRMSG("Cannot read pressure on model levels!");
-      
+
       /* Vertical interpolation from model to pressure levels... */
       read_met_ml2pl(ctl, met, met->t);
       read_met_ml2pl(ctl, met, met->u);
@@ -3561,7 +3558,7 @@ void read_met_levels(
 
   /* CLaMS meteo data... */
   else if (ctl->clams_met_data == 1) {
-    
+
     /* Read meteorological data... */
     if (!read_met_nc_3d(ncid, "t", "TEMP", met, met->t, 1.0, 1))
       ERRMSG("Cannot read temperature!");
@@ -3569,14 +3566,11 @@ void read_met_levels(
       ERRMSG("Cannot read zonal wind!");
     if (!read_met_nc_3d(ncid, "v", "V", met, met->v, 1.0, 1))
       ERRMSG("Cannot read meridional wind!");
+    if (!read_met_nc_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
+      WARN("Cannot read vertical velocity!");
     if (!read_met_nc_3d(ncid, "ZETA", "zeta", met, met->zeta, 1.0, 1))
       WARN("Cannot read ZETA in meteo data!");
-    if (ctl->vert_vel == 0) {
-      if (!read_met_nc_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
-	WARN("Cannot read vertical velocity!");
-    } else if (ctl->vert_vel == 1) {
-      if (!read_met_nc_3d(ncid, "W", "OMEGA", met, met->w, 0.01f, 1))
-	WARN("Cannot read vertical velocity!");
+    if (ctl->vert_vel == 1) {
       if (!read_met_nc_3d
 	  (ncid, "ZETA_DOT_TOT", "zeta_dot_clr", met, met->zeta_dot,
 	   0.00001157407f, 1)) {
@@ -3588,7 +3582,7 @@ void read_met_levels(
       }
     }
     if (!read_met_nc_3d
-	(ncid, "q", "Q", met, met->h2o, (float) (MA / MH2O), 1))
+	(ncid, "sh", "SH", met, met->h2o, (float) (MA / MH2O), 1))
       WARN("Cannot read specific humidity!");
     if (!read_met_nc_3d
 	(ncid, "o3", "O3", met, met->o3, (float) (MA / MO3), 1))
@@ -3643,7 +3637,7 @@ void read_met_levels(
     }
   } else
     ERRMSG("Meteo data format unknown!");
-  
+
   /* Check ordering of pressure levels... */
   for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
@@ -4285,7 +4279,7 @@ void read_met_surface(
 
   /* MPTRAC meteo data... */
   if (ctl->clams_met_data == 0) {
-    
+
     /* Read surface pressure... */
     if (!read_met_nc_2d(ncid, "lnsp", "LNSP", met, met->ps, 1.0f, 1)) {
       if (!read_met_nc_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
@@ -4298,40 +4292,57 @@ void read_met_surface(
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+
+    /* Read geopotential height at the surface... */
+    if (!read_met_nc_2d
+	(ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
+      if (!read_met_nc_2d
+	  (ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
+	WARN("Cannot read surface geopotential height!");
+
+    /* Read temperature at the surface... */
+    if (!read_met_nc_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
+      WARN("Cannot read surface temperature!");
+
+    /* Read zonal wind at the surface... */
+    if (!read_met_nc_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
+      WARN("Cannot read surface zonal wind!");
+
+    /* Read meridional wind at the surface... */
+    if (!read_met_nc_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
+      WARN("Cannot read surface meridional wind!");
   }
 
   /* CLaMS meteo data... */
   else {
-    if (!read_met_nc_2d(ncid, "sp", "SP", met, met->ps, 0.01f, 1)) {
-      if (!read_met_nc_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
-	WARN
-	  ("Cannot not read surface pressure data (use lowest HYBRID level)!");
-	for (int ix = 0; ix < met->nx; ix++)
-	  for (int iy = 0; iy < met->ny; iy++) {
-	    met->ps[ix][iy] = (float) met->p[0];
-	  }
-      }
+
+    /* Read surface pressure... */
+    if (!read_met_nc_2d(ncid, "ps", "PS", met, met->ps, 0.01f, 1)) {
+      WARN("Cannot not read surface pressure data (use lowest level)!");
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  met->ps[ix][iy] = (float) met->p[0];
     }
-  }
-  
-  /* Read geopotential height at the surface... */
-  if (!read_met_nc_2d
-      (ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
+
+    /* Read geopotential height at the surface... */
     if (!read_met_nc_2d
-	(ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
-      WARN("Cannot read surface geopotential height!");
+	(ncid, "z", "Z", met, met->zs, (float) (1. / (1000. * G0)), 1))
+      if (!read_met_nc_2d
+	  (ncid, "zm", "ZM", met, met->zs, (float) (1. / 1000.), 1))
+	WARN("Cannot read surface geopotential height!");
 
-  /* Read temperature at the surface... */
-  if (!read_met_nc_2d(ncid, "t2m", "T2M", met, met->ts, 1.0, 1))
-    WARN("Cannot read surface temperature!");
+    /* Read temperature at the surface... */
+    if (!read_met_nc_2d(ncid, "t2", "T2", met, met->ts, 1.0, 1))
+      WARN("Cannot read surface temperature!");
 
-  /* Read zonal wind at the surface... */
-  if (!read_met_nc_2d(ncid, "u10m", "U10M", met, met->us, 1.0, 1))
-    WARN("Cannot read surface zonal wind!");
+    /* Read zonal wind at the surface... */
+    if (!read_met_nc_2d(ncid, "u10", "U10", met, met->us, 1.0, 1))
+      WARN("Cannot read surface zonal wind!");
 
-  /* Read meridional wind at the surface... */
-  if (!read_met_nc_2d(ncid, "v10m", "V10M", met, met->vs, 1.0, 1))
-    WARN("Cannot read surface meridional wind!");
+    /* Read meridional wind at the surface... */
+    if (!read_met_nc_2d(ncid, "v10", "V10", met, met->vs, 1.0, 1))
+      WARN("Cannot read surface meridional wind!");
+  }
 }
 
 /*****************************************************************************/
@@ -5029,14 +5040,14 @@ void write_atm(
 
       /* Create file... */
       nc_create(filename_out, NC_CLOBBER, &ncid);
-      
+
       /* Define dimensions... */
       NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
       NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
       NC(nc_def_dim(ncid, "TMDT", 7, &cid));
       dim_ids[0] = tid;
       dim_ids[1] = pid;
-      
+
       /* Define variables and their attributes... */
       NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
       NC(nc_put_att_text(ncid, varid, "long_name", strlen("Time"), "Time"));
@@ -5077,12 +5088,12 @@ void write_atm(
 	 (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
       NC(nc_put_att_text
 	 (ncid, NC_GLOBAL, "model", strlen("MPTRAC"), "MPTRAC"));
-      
+
       /* End definitions... */
       NC(nc_enddef(ncid));
       NC(nc_close(ncid));
     }
-    
+
     /* Increment global counter to change hyperslap... */
     out_cnt = out_cnt + 1;
 
@@ -5092,10 +5103,10 @@ void write_atm(
     /* Inquire variable IDs and put data into file... */
     NC(nc_inq_varid(ncid, "time", &varid));
     NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->time));
-    
+
     NC(nc_inq_varid(ncid, "LAT", &varid));
     NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->lat));
-    
+
     NC(nc_inq_varid(ncid, "LON", &varid));
     NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->lon));
 
@@ -5118,7 +5129,7 @@ void write_atm(
 
     /* Close file... */
     NC(nc_close(ncid));
-    
+
     /* At the last time step create the init_fix_YYYYMMDDHH file... */
     if ((year == year_stop) && (mon == mon_stop)
 	&& (day == day_stop) && (hour == hour_stop)) {
@@ -5131,7 +5142,7 @@ void write_atm(
 
       /* Create file... */
       nc_create(filename_init, NC_CLOBBER, &ncid);
-      
+
       /* Define dimensions... */
       NC(nc_def_dim(ncid, "time", 1, &tid));
       NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
@@ -5183,14 +5194,14 @@ void write_atm(
 	   (ncid, varid, "units", strlen(ctl->qnt_unit[i]),
 	    ctl->qnt_unit[i]));
       }
-      
+
       /* Put global attributes into file... */
       NC(nc_put_att_text
 	 (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
 
       /* End definitions... */
       NC(nc_enddef(ncid));
-      
+
       /* Inquire variable IDs and put data into file... */
       NC(nc_inq_varid(ncid, "time", &varid));
       NC(nc_put_var_double(ncid, varid, atm->time));
@@ -5209,7 +5220,7 @@ void write_atm(
       NC(nc_close(ncid));
     }
   }
-  
+
   /* Error... */
   else
     ERRMSG("Atmospheric data type not supported!");
