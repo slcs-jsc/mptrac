@@ -1455,16 +1455,6 @@ double clim_oh(
   double lat,
   double p);
 
- /*! Climatology of h2o2 number concentrations. */
-#ifdef _OPENACC
-#pragma acc routine (clim_h2o2)
-#endif
-double clim_h2o2(
-  double t,
-  double lat,
-  double p,
-  clim_t * clim);
-
 /*! Climatology of OH number concentrations with diurnal variation. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh_diurnal)
@@ -1488,7 +1478,17 @@ double clim_oh_init_help(
   double time,
   double lat);
 
-/*! Initialization function for h2o2 climatology. */
+/*! Climatology of H2O2 number concentrations. */
+#ifdef _OPENACC
+#pragma acc routine (clim_h2o2)
+#endif
+double clim_h2o2(
+  double t,
+  double lat,
+  double p,
+  clim_t * clim);
+
+/*! Initialization function for H2O2 climatology. */
 void clim_h2o2_init(
   ctl_t * ctl,
   clim_t * clim);

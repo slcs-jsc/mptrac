@@ -392,64 +392,6 @@ double clim_oh(
 
 /*****************************************************************************/
 
-double clim_h2o2(
-  double t,
-  double lat,
-  double p,
-  clim_t * clim) {
-
-  /* Get seconds since begin of year... */
-  double sec = FMOD(t, 365.25 * 86400.);
-  while (sec < 0)
-    sec += 365.25 * 86400.;
-
-  /* Check pressure... */
-  if (p < clim->h2o2_p[clim->h2o2_np - 1])
-    p = clim->h2o2_p[clim->h2o2_np - 1];
-  else if (p > clim->h2o2_p[0])
-    p = clim->h2o2_p[0];
-
-  /* Check latitude... */
-  if (lat < clim->h2o2_lat[0])
-    lat = clim->h2o2_lat[0];
-  else if (lat > clim->h2o2_lat[clim->h2o2_ny - 1])
-    lat = clim->h2o2_lat[clim->h2o2_ny - 1];
-
-  /* Get indices... */
-  int isec = locate_irr(clim->h2o2_time, clim->h2o2_nt, sec);
-  int ilat = locate_reg(clim->h2o2_lat, clim->h2o2_ny, lat);
-  int ip = locate_irr(clim->h2o2_p, clim->h2o2_np, p);
-
-  /* Interpolate H2O2 climatology... */
-  double aux00 = LIN(clim->h2o2_p[ip],
-		     clim->h2o2[isec][ip][ilat],
-		     clim->h2o2_p[ip + 1],
-		     clim->h2o2[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->h2o2_p[ip],
-		     clim->h2o2[isec][ip][ilat + 1],
-		     clim->h2o2_p[ip + 1],
-		     clim->h2o2[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->h2o2_p[ip],
-		     clim->h2o2[isec + 1][ip][ilat],
-		     clim->h2o2_p[ip + 1],
-		     clim->h2o2[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->h2o2_p[ip],
-		     clim->h2o2[isec + 1][ip][ilat + 1],
-		     clim->h2o2_p[ip + 1],
-		     clim->h2o2[isec + 1][ip + 1][ilat + 1], p);
-  aux00 =
-    LIN(clim->h2o2_lat[ilat], aux00, clim->h2o2_lat[ilat + 1], aux01, lat);
-  aux11 =
-    LIN(clim->h2o2_lat[ilat], aux10, clim->h2o2_lat[ilat + 1], aux11, lat);
-  aux00 =
-    LIN(clim->h2o2_time[isec], aux00, clim->h2o2_time[isec + 1], aux11, sec);
-
-  return GSL_MAX(aux00, 0.0);
-}
-
-
-/*****************************************************************************/
-
 double clim_oh_diurnal(
   ctl_t * ctl,
   clim_t * clim,
@@ -580,6 +522,63 @@ double clim_oh_init_help(
 
 /*****************************************************************************/
 
+double clim_h2o2(
+  double t,
+  double lat,
+  double p,
+  clim_t * clim) {
+
+  /* Get seconds since begin of year... */
+  double sec = FMOD(t, 365.25 * 86400.);
+  while (sec < 0)
+    sec += 365.25 * 86400.;
+
+  /* Check pressure... */
+  if (p < clim->h2o2_p[clim->h2o2_np - 1])
+    p = clim->h2o2_p[clim->h2o2_np - 1];
+  else if (p > clim->h2o2_p[0])
+    p = clim->h2o2_p[0];
+
+  /* Check latitude... */
+  if (lat < clim->h2o2_lat[0])
+    lat = clim->h2o2_lat[0];
+  else if (lat > clim->h2o2_lat[clim->h2o2_ny - 1])
+    lat = clim->h2o2_lat[clim->h2o2_ny - 1];
+
+  /* Get indices... */
+  int isec = locate_irr(clim->h2o2_time, clim->h2o2_nt, sec);
+  int ilat = locate_reg(clim->h2o2_lat, clim->h2o2_ny, lat);
+  int ip = locate_irr(clim->h2o2_p, clim->h2o2_np, p);
+
+  /* Interpolate H2O2 climatology... */
+  double aux00 = LIN(clim->h2o2_p[ip],
+		     clim->h2o2[isec][ip][ilat],
+		     clim->h2o2_p[ip + 1],
+		     clim->h2o2[isec][ip + 1][ilat], p);
+  double aux01 = LIN(clim->h2o2_p[ip],
+		     clim->h2o2[isec][ip][ilat + 1],
+		     clim->h2o2_p[ip + 1],
+		     clim->h2o2[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(clim->h2o2_p[ip],
+		     clim->h2o2[isec + 1][ip][ilat],
+		     clim->h2o2_p[ip + 1],
+		     clim->h2o2[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(clim->h2o2_p[ip],
+		     clim->h2o2[isec + 1][ip][ilat + 1],
+		     clim->h2o2_p[ip + 1],
+		     clim->h2o2[isec + 1][ip + 1][ilat + 1], p);
+  aux00 =
+    LIN(clim->h2o2_lat[ilat], aux00, clim->h2o2_lat[ilat + 1], aux01, lat);
+  aux11 =
+    LIN(clim->h2o2_lat[ilat], aux10, clim->h2o2_lat[ilat + 1], aux11, lat);
+  aux00 =
+    LIN(clim->h2o2_time[isec], aux00, clim->h2o2_time[isec + 1], aux11, sec);
+
+  return GSL_MAX(aux00, 0.0);
+}
+
+/*****************************************************************************/
+
 void clim_h2o2_init(
   ctl_t * ctl,
   clim_t * clim) {
@@ -609,9 +608,9 @@ void clim_h2o2_init(
   NC(nc_get_var_double(ncid, varid, clim->h2o2_p));
 
   /* Check to see the pressure data are in correct order,
-     1000, 900, 800, ... hPa (descending) */
+     1000, 900, 800, ... hPa (descending)... */
   if (clim->h2o2_p[0] < clim->h2o2_p[1])
-    ERRMSG("Pressure data is not in correct order");
+    ERRMSG("Pressure data is not in correct order!");
 
   /* Read latitudes... */
   NC(nc_inq_dimid(ncid, "lat", &dimid));
@@ -623,9 +622,9 @@ void clim_h2o2_init(
   NC(nc_get_var_double(ncid, varid, clim->h2o2_lat));
 
   /* Check to see the latitude data are in correct order,
-     -90, -85, ... 90 deg (ascending) */
+     -90, -85, ... 90 deg (ascending)... */
   if (clim->h2o2_lat[0] > clim->h2o2_lat[1])
-    ERRMSG("latitude data is not in correct order");
+    ERRMSG("Latitude data is not in correct order!");
 
   /* Set time data (for monthly means)... */
   clim->h2o2_nt = CT;
@@ -643,7 +642,7 @@ void clim_h2o2_init(
   clim->h2o2_time[11] = 30153600.00;
 
   /* Check whether the OH netCDF data file provides monthly data,
-     i.e., make sure there are 12 (= CT) time steps in the data file. */
+     i.e., make sure there are 12 (= CT) time steps in the data file... */
   NC(nc_inq_dimid(ncid, "time", &dimid));
   NC(nc_inq_dimlen(ncid, dimid, &nt));
   if ((int) nt != 12)
@@ -654,7 +653,6 @@ void clim_h2o2_init(
   ALLOC(help, double,
 	clim->h2o2_ny * clim->h2o2_np * clim->h2o2_nt);
   NC(nc_get_var_double(ncid, varid, help));
-
   for (it = 0; it < clim->h2o2_nt; it++)
     for (iz = 0; iz < clim->h2o2_np; iz++)
       for (iy = 0; iy < clim->h2o2_ny; iy++)
@@ -2083,10 +2081,12 @@ void read_clim(
   SELECT_TIMER("READ_CLIM", "INPUT", NVTX_READ);
 
   /* Read OH climatology... */
-  clim_oh_init(ctl, clim);
-  if (strcmp(ctl->clim_h2o2_filename, "-") != 0)
+  if (ctl->clim_oh_filename[0] != '-')
+    clim_oh_init(ctl, clim);
+  
+  /* Read H2O2 climatology... */
+  if (ctl->clim_h2o2_filename[0] != '-')
     clim_h2o2_init(ctl, clim);
-
 }
 
 /*****************************************************************************/
@@ -2492,6 +2492,8 @@ void read_ctl(
       ctl->wet_depo_bc_h[ip] =
 	scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, "0", NULL);
   }
+
+  /* Wet deposition... */
   ctl->wet_depo_pre[0] =
     scan_ctl(filename, argc, argv, "WET_DEPO_PRE", 0, "0.5", NULL);
   ctl->wet_depo_pre[1] =
@@ -2500,12 +2502,18 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "WET_DEPO_IC_RET_RATIO", -1, "1", NULL);
   ctl->wet_depo_bc_ret_ratio =
     scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
+  
+  /* OH chemistry... */
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
 	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
+
+  /* H2O2 chemistry... */
   scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1, "-",
 	   ctl->clim_h2o2_filename);
+
+  /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
   ctl->tdec_strat =
     scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
