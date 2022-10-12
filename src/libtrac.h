@@ -1741,6 +1741,30 @@ int read_atm(
   ctl_t * ctl,
   atm_t * atm);
 
+/*! Read atmospheric data in ASCII format. */
+int read_atm_asc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in binary format. */
+int read_atm_bin(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in CLaMS format. */
+int read_atm_clams(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in netCDF format. */
+int read_atm_nc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
 /*! Read climatological data. */
 void read_clim(
   ctl_t * ctl,
@@ -1941,6 +1965,25 @@ double tropo_weight(
 /*! Write atmospheric data. */
 void write_atm(
   const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
+/*! Write atmospheric data in ASCII format. */
+void write_atm_asc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
+/*! Write atmospheric data in binary format. */
+void write_atm_bin(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Write atmospheric data in CLaMS format. */
+void write_atm_clams(
   ctl_t * ctl,
   atm_t * atm,
   double t);
