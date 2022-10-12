@@ -33,6 +33,7 @@ src/tnat
 src/trac
 src/tropo
 src/tropo_sample
+src/tropo_zm
 src/wind
 src/*.gcno
 src/*.gcda
