@@ -361,6 +361,28 @@
     ERRMSG("%s", nc_strerror(nc_result));	     \
 }
 
+/*! Read netCDF double array. */
+#define NC_GET_DOUBLE(varname, ptr, force) {			\
+    if(force) {							\
+      NC(nc_inq_varid(ncid, varname, &varid));			\
+      NC(nc_get_var_double(ncid, varid, ptr));			\
+    } else {							\
+      if(nc_inq_varid(ncid, varname, &varid) == NC_NOERR) {	\
+	NC(nc_get_var_double(ncid, varid, ptr));		\
+      } else							\
+	WARN("netCDF variable %s is missing!", varname);	\
+    }								\
+  }
+
+/*! Read netCDF dimension. */
+#define NC_INQ_DIM(dimname, ptr, min, max) {		\
+    int dimid;						\
+    NC(nc_inq_dimid(ncid, dimname, &dimid));		\
+    NC(nc_inq_dimlen(ncid, dimid, ptr));		\
+    if ((*ptr) < (min) || (*ptr) > (max))		\
+      ERRMSG("Dimension %s is out of range!", dimname);	\
+  }
+
 /*! Compute nearest neighbor interpolation. */
 #define NN(x0, y0, x1, y1, x)				\
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))

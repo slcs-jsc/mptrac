@@ -414,7 +414,7 @@ void clim_oh_init(
   ctl_t * ctl,
   clim_t * clim) {
 
-  int ncid, dimid, varid;
+  int ncid, varid;
 
   size_t np, nlat, nt;
 
@@ -430,13 +430,9 @@ void clim_oh_init(
   }
 
   /* Read pressure data... */
-  NC(nc_inq_dimid(ncid, "press", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &np));
+  NC_INQ_DIM("press", &np, 2, CP);
   clim->oh_np = (int) np;
-  if (clim->oh_np > CP)
-    ERRMSG("Too many pressure levels!");
-  NC(nc_inq_varid(ncid, "press", &varid));
-  NC(nc_get_var_double(ncid, varid, clim->oh_p));
+  NC_GET_DOUBLE("press", clim->oh_p, 1);
 
   /* Check whether pressure data are in correct order,
      1000, 900, 800, ... hPa (descending). */
@@ -444,14 +440,10 @@ void clim_oh_init(
     ERRMSG("Pressure data is not ascending!");
 
   /* Read latitudes... */
-  NC(nc_inq_dimid(ncid, "lat", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nlat));
+  NC_INQ_DIM("lat", &nlat, 2, CY);
   clim->oh_ny = (int) nlat;
-  if (clim->oh_ny > CY)
-    ERRMSG("Too many latitudes!");
-  NC(nc_inq_varid(ncid, "lat", &varid));
-  NC(nc_get_var_double(ncid, varid, clim->oh_lat));
-
+  NC_GET_DOUBLE("lat", clim->oh_lat, 1);
+  
   /* Check whether latitudes are in correct order,
      -90, -85, ... 90 deg (ascending) */
   if (clim->oh_lat[0] > clim->oh_lat[1])
@@ -474,16 +466,12 @@ void clim_oh_init(
 
   /* Check whether the OH netCDF data file provides monthly data,
      i.e., make sure there are 12 (= CT) time steps in the data file. */
-  NC(nc_inq_dimid(ncid, "time", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nt));
-  if ((int) nt != 12)
-    ERRMSG("The time dimension is not monthly!");
-
+  NC_INQ_DIM("time", &nt, 12, 12);
+  
   /* Read OH data... */
-  NC(nc_inq_varid(ncid, "OH", &varid));
   ALLOC(help, double,
 	clim->oh_ny * clim->oh_np * clim->oh_nt);
-  NC(nc_get_var_double(ncid, varid, help));
+  NC_GET_DOUBLE("OH", help, 1);
   for (int it = 0; it < clim->oh_nt; it++)
     for (int iz = 0; iz < clim->oh_np; iz++)
       for (int iy = 0; iy < clim->oh_ny; iy++)
@@ -583,7 +571,7 @@ void clim_h2o2_init(
   ctl_t * ctl,
   clim_t * clim) {
 
-  int ncid, dimid, varid, it, iy, iz;
+  int ncid, varid, it, iy, iz;
 
   size_t np, nlat, nt;
 
@@ -599,28 +587,20 @@ void clim_h2o2_init(
   }
 
   /* Read pressure data... */
-  NC(nc_inq_dimid(ncid, "press", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &np));
+  NC_INQ_DIM("press", &np, 2, CP);
   clim->h2o2_np = (int) np;
-  if (clim->h2o2_np > CP)
-    ERRMSG("Too many pressure levels!");
-  NC(nc_inq_varid(ncid, "press", &varid));
-  NC(nc_get_var_double(ncid, varid, clim->h2o2_p));
-
+  NC_GET_DOUBLE("press", clim->h2o2_p, 1);
+  
   /* Check to see the pressure data are in correct order,
      1000, 900, 800, ... hPa (descending)... */
   if (clim->h2o2_p[0] < clim->h2o2_p[1])
     ERRMSG("Pressure data is not in correct order!");
 
   /* Read latitudes... */
-  NC(nc_inq_dimid(ncid, "lat", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nlat));
+  NC_INQ_DIM("lat", &nlat, 2, CY);
   clim->h2o2_ny = (int) nlat;
-  if (clim->h2o2_ny > CY)
-    ERRMSG("Too many latitudes!");
-  NC(nc_inq_varid(ncid, "lat", &varid));
-  NC(nc_get_var_double(ncid, varid, clim->h2o2_lat));
-
+  NC_GET_DOUBLE("lat", clim->h2o2_lat, 1);
+  
   /* Check to see the latitude data are in correct order,
      -90, -85, ... 90 deg (ascending)... */
   if (clim->h2o2_lat[0] > clim->h2o2_lat[1])
@@ -643,16 +623,12 @@ void clim_h2o2_init(
 
   /* Check whether the OH netCDF data file provides monthly data,
      i.e., make sure there are 12 (= CT) time steps in the data file... */
-  NC(nc_inq_dimid(ncid, "time", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nt));
-  if ((int) nt != 12)
-    ERRMSG("The time dimension is not monthly!");
-
+  NC_INQ_DIM("time", &nt, 12, 12);
+  
   /* Read data... */
-  NC(nc_inq_varid(ncid, "h2o2", &varid));
   ALLOC(help, double,
 	clim->h2o2_ny * clim->h2o2_np * clim->h2o2_nt);
-  NC(nc_get_var_double(ncid, varid, help));
+  NC_GET_DOUBLE("h2o2", help, 1);
   for (it = 0; it < clim->h2o2_nt; it++)
     for (iz = 0; iz < clim->h2o2_np; iz++)
       for (iy = 0; iy < clim->h2o2_ny; iy++)
@@ -1970,27 +1946,23 @@ int read_atm_clams(
 
   size_t nparts;
 
-  int dimid, ncid, varid;
+  int ncid, varid;
 
   /* Open file... */
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
     return 0;
 
   /* Get dimensions... */
-  NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nparts));
+  NC_INQ_DIM("NPARTS", &nparts, 1, NP);
   atm->np = (int) nparts;
-  if (atm->np > NP)
-    ERRMSG("Too many particles!");
-
+  
   /* Get time... */
   if (nc_inq_varid(ncid, "TIME_INIT", &varid) == NC_NOERR) {
     NC(nc_get_var_double(ncid, varid, atm->time));
   } else {
-    printf("WARNING: TIME_INIT not found use time instead!\n");
+    WARN("TIME_INIT not found use time instead!");
     double time_init;
-    NC(nc_inq_varid(ncid, "time", &varid));
-    NC(nc_get_var_double(ncid, varid, &time_init));
+    NC_GET_DOUBLE("time", &time_init, 1);
     for (int i = 0; i < atm->np; i++) {
       atm->time[i] = time_init;
     }
@@ -1998,31 +1970,19 @@ int read_atm_clams(
 
   /* Read zeta coordinate, pressure is optional... */
   if (ctl->vert_coord_ap == 1) {
-    NC(nc_inq_varid(ncid, "ZETA", &varid));
-    NC(nc_get_var_double(ncid, varid, atm->zeta));
-    if (nc_inq_varid(ncid, "PRESS", &varid) == NC_NOERR) {
-      NC(nc_get_var_double(ncid, varid, atm->p));
-    } else {
-      WARN("Initial data does not contain PRESS!\n");
-    }
+    NC_GET_DOUBLE("ZETA", atm->zeta, 1);
+    NC_GET_DOUBLE("PRESS", atm->p, 0);
   }
 
   /* Read pressure, zeta coordinate is optional... */
   else {
-    NC(nc_inq_varid(ncid, "PRESS", &varid));
-    NC(nc_get_var_double(ncid, varid, atm->p));
-    if (nc_inq_varid(ncid, "ZETA", &varid) == NC_NOERR) {
-      NC(nc_get_var_double(ncid, varid, atm->zeta));
-    } else {
-      WARN("Initial data does not contain ZETA!");
-    }
+    NC_GET_DOUBLE("PRESS", atm->p, 1);
+    NC_GET_DOUBLE("ZETA", atm->zeta, 0);
   }
 
   /* Read longitude and latitude... */
-  NC(nc_inq_varid(ncid, "LON", &varid));
-  NC(nc_get_var_double(ncid, varid, atm->lon));
-  NC(nc_inq_varid(ncid, "LAT", &varid));
-  NC(nc_get_var_double(ncid, varid, atm->lat));
+  NC_GET_DOUBLE("LON", atm->lon, 1);
+  NC_GET_DOUBLE("LAT", atm->lat, 1);
 
   /* Close file... */
   NC(nc_close(ncid));
@@ -2040,62 +2000,46 @@ int read_atm_nc(
 
   size_t nparts;
 
-  int dimid, ncid, varid;
+  int ncid, varid;
 
   /* Open file... */
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
     return 0;
 
   /* Get dimensions... */
-  NC(nc_inq_dimid(ncid, "NPARTS", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nparts));
+  NC_INQ_DIM("NPARTS", &nparts, 1, NP);
   atm->np = (int) nparts;
-  if (atm->np > NP)
-    ERRMSG("Too many particles!");
-
+  
   /* Get time... */
   double t0;
-  NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_get_var_double(ncid, varid, &t0));
+  NC_GET_DOUBLE("time", &t0, 1);
   for (int ip = 0; ip < atm->np; ip++)
     atm->time[ip] = t0;
 
   /* Read geolocations... */
-  NC(nc_inq_varid(ncid, "PRESS", &varid));
-  NC(nc_get_var_double(ncid, varid, atm->p));
-  NC(nc_inq_varid(ncid, "LON", &varid));
-  NC(nc_get_var_double(ncid, varid, atm->lon));
-  NC(nc_inq_varid(ncid, "LAT", &varid));
-  NC(nc_get_var_double(ncid, varid, atm->lat));
+  NC_GET_DOUBLE("PRESS", atm->p, 1);
+  NC_GET_DOUBLE("LON", atm->lon, 1);
+  NC_GET_DOUBLE("LAT", atm->lat, 1);
 
   /* Read variables... */
   if (ctl->qnt_p >= 0)
-    if (nc_inq_varid(ncid, "PRESS", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_p]));
+    NC_GET_DOUBLE("PRESS", atm->q[ctl->qnt_p], 0);
   if (ctl->qnt_t >= 0)
-    if (nc_inq_varid(ncid, "TEMP", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_t]));
+    NC_GET_DOUBLE("TEMP", atm->q[ctl->qnt_t], 0);
   if (ctl->qnt_u >= 0)
-    if (nc_inq_varid(ncid, "U", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_u]));
+    NC_GET_DOUBLE("U", atm->q[ctl->qnt_u], 0);
   if (ctl->qnt_v >= 0)
-    if (nc_inq_varid(ncid, "V", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_v]));
+    NC_GET_DOUBLE("V", atm->q[ctl->qnt_v], 0);
   if (ctl->qnt_w >= 0)
-    if (nc_inq_varid(ncid, "W", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_w]));
+    NC_GET_DOUBLE("W", atm->q[ctl->qnt_w], 0);
   if (ctl->qnt_h2o >= 0)
-    if (nc_inq_varid(ncid, "SH", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_h2o]));
+    NC_GET_DOUBLE("SH", atm->q[ctl->qnt_h2o], 0);
   if (ctl->qnt_o3 >= 0)
-    if (nc_inq_varid(ncid, "O3", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_o3]));
+    NC_GET_DOUBLE("O3", atm->q[ctl->qnt_o3], 0);
   if (ctl->qnt_theta >= 0)
-    if (nc_inq_varid(ncid, "THETA", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_theta]));
+    NC_GET_DOUBLE("THETA", atm->q[ctl->qnt_theta], 0);
   if (ctl->qnt_pv >= 0)
-    if (nc_inq_varid(ncid, "PV", &varid) == NC_NOERR)
-      NC(nc_get_var_double(ncid, varid, atm->q[ctl->qnt_pv]));
+    NC_GET_DOUBLE("PV", atm->q[ctl->qnt_pv], 0);
 
   /* Check data... */
   for (int ip = 0; ip < atm->np; ip++)
@@ -3418,7 +3362,7 @@ void read_met_grid(
 
   double rtime, r2;
 
-  int dimid, varid, year2, mon2, day2, hour2, min2, sec2;
+  int varid, year2, mon2, day2, hour2, min2, sec2;
   int year, mon, day, hour;
   size_t np, nx, ny;
 
@@ -3454,9 +3398,7 @@ void read_met_grid(
   else {
 
     /* Read time from file... */
-    if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
-      NC(nc_get_var_double(ncid, varid, &rtime));
-    }
+    NC_GET_DOUBLE("time", &rtime, 0);
 
     /* Get time from filename (considering the century)... */
     if (rtime < 0)
@@ -3482,17 +3424,11 @@ void read_met_grid(
       met->time, year2, mon2, day2, hour2, min2);
 
   /* Get grid dimensions... */
-  NC(nc_inq_dimid(ncid, "lon", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &nx));
+  NC_INQ_DIM("lon", &nx, 2, EX);
   LOG(2, "Number of longitudes: %zu", nx);
-  if (nx < 2 || nx > EX)
-    ERRMSG("Number of longitudes out of range!");
-
-  NC(nc_inq_dimid(ncid, "lat", &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &ny));
+  
+  NC_INQ_DIM("lat", &ny, 2, EY);
   LOG(2, "Number of latitudes: %zu", ny);
-  if (ny < 2 || ny > EY)
-    ERRMSG("Number of latitudes out of range!");
 
   if (ctl->vert_coord_met == 0) {
     sprintf(levname, "lev");
@@ -3500,9 +3436,9 @@ void read_met_grid(
     sprintf(levname, "hybrid");
     printf("Meteorological data is in hybrid coordinates.");
   }
-  NC(nc_inq_dimid(ncid, levname, &dimid));
-  NC(nc_inq_dimlen(ncid, dimid, &np));
+  NC_INQ_DIM(levname, &np, 1, EP);
   if (np == 1) {
+    int dimid;
     sprintf(levname, "lev_2");
     if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
       sprintf(levname, "plev");
@@ -3520,19 +3456,16 @@ void read_met_grid(
   met->ny = (int) ny;
 
   /* Read longitudes and latitudes... */
-  NC(nc_inq_varid(ncid, "lon", &varid));
-  NC(nc_get_var_double(ncid, varid, met->lon));
+  NC_GET_DOUBLE("lon", met->lon, 1);
   LOG(2, "Longitudes: %g, %g ... %g deg",
       met->lon[0], met->lon[1], met->lon[met->nx - 1]);
-  NC(nc_inq_varid(ncid, "lat", &varid));
-  NC(nc_get_var_double(ncid, varid, met->lat));
+  NC_GET_DOUBLE("lat", met->lat, 1);
   LOG(2, "Latitudes: %g, %g ... %g deg",
       met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
-    NC(nc_inq_varid(ncid, levname, &varid));
-    NC(nc_get_var_double(ncid, varid, met->p));
+    NC_GET_DOUBLE(levname, met->p, 1);
     for (int ip = 0; ip < met->np; ip++)
       met->p[ip] /= 100.;
     LOG(2, "Altitude levels: %g, %g ... %g km",
@@ -5107,19 +5040,18 @@ void write_atm_clams(
   /* Global Counter... */
   static size_t out_cnt = 0;
 
+  char filename_out[2 * LEN] = "./traj_fix_3d_YYYYMMDDHH_YYYYMMDDHH.nc";
+  
   double r, r_start, r_stop;
+  
   int year, mon, day, hour, min, sec;
   int year_start, mon_start, day_start, hour_start, min_start, sec_start;
   int year_stop, mon_stop, day_stop, hour_stop, min_stop, sec_stop;
-  char filename_out[2 * LEN] = "./traj_fix_3d_YYYYMMDDHH_YYYYMMDDHH.nc";
-
-  int ncid, varid, tid, pid, cid, zid;
-  int dim_ids[2];
-
+  int ncid, varid, tid, pid, cid, zid, dim_ids[2];
+  
   /* time, nparc */
-  size_t hysl_start[2];
-  size_t hysl_count[2];
-
+  size_t start[2], count[2];
+  
   /* Vertical coordinate attribute... */
   const char *vertcoor = "zeta";
   size_t vc_name_size = strlen(vertcoor);
@@ -5139,10 +5071,10 @@ void write_atm_clams(
   printf("Write traj file: %s\n", filename_out);
 
   /* Define hyperslap for the traj_file... */
-  hysl_start[0] = out_cnt;
-  hysl_start[1] = 0;
-  hysl_count[0] = 1;
-  hysl_count[1] = (size_t) atm->np;
+  start[0] = out_cnt;
+  start[1] = 0;
+  count[0] = 1;
+  count[1] = (size_t) atm->np;
 
   /* Create the file at the first timestep... */
   if (out_cnt == 0) {
@@ -5209,29 +5141,29 @@ void write_atm_clams(
 
   /* Inquire variable IDs and put data into file... */
   NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->time));
+  NC(nc_put_vara(ncid, varid, start, count, atm->time));
 
   NC(nc_inq_varid(ncid, "LAT", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->lat));
+  NC(nc_put_vara(ncid, varid, start, count, atm->lat));
 
   NC(nc_inq_varid(ncid, "LON", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->lon));
+  NC(nc_put_vara(ncid, varid, start, count, atm->lon));
 
   NC(nc_inq_varid(ncid, "PRESS", &varid));
-  NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->p));
+  NC(nc_put_vara(ncid, varid, start, count, atm->p));
 
   if (ctl->vert_coord_ap == 1) {
     NC(nc_inq_varid(ncid, "ZETA", &varid));
-    NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->zeta));
+    NC(nc_put_vara(ncid, varid, start, count, atm->zeta));
   } else if (ctl->qnt_zeta >= 0) {
     NC(nc_inq_varid(ncid, "ZETA", &varid));
     NC(nc_put_vara
-       (ncid, varid, hysl_start, hysl_count, atm->q[ctl->qnt_zeta]));
+       (ncid, varid, start, count, atm->q[ctl->qnt_zeta]));
   }
 
   for (int i = 0; i < ctl->nq; i++) {
     NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
-    NC(nc_put_vara(ncid, varid, hysl_start, hysl_count, atm->q[i]));
+    NC(nc_put_vara(ncid, varid, start, count, atm->q[i]));
   }
 
   /* Close file... */

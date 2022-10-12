@@ -86,10 +86,8 @@ int main(
       ERRMSG("Too many longitudes!");
 
     /* Read coordinates... */
-    NC(nc_inq_varid(ncid, "lat", &varid));
-    NC(nc_get_var_double(ncid, varid, lats));
-    NC(nc_inq_varid(ncid, "lon", &varid));
-    NC(nc_get_var_double(ncid, varid, lons));
+    NC_GET_DOUBLE("lat", lats, 1);
+    NC_GET_DOUBLE("lon", lons, 1);
 
     /* Get variable indices... */
     sprintf(varname, "%s_z", argv[3]);
