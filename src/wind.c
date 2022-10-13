@@ -41,8 +41,10 @@ int main(
 
   static float *dataT, *dataU, *dataV, *dataW;
 
-  static int ncid, varid, dims[4], timid, levid, latid, lonid, tid, uid, vid,
-    wid, idx, ix, iy, iz, nx, ny, nz, year, mon, day, hour, min, sec;
+  static int ncid, varid, dims[4], idx, ix, iy, iz, nx, ny, nz,
+    year, mon, day, hour, min, sec;
+
+  static size_t start[4], count[4];
 
   /* Allocate... */
   ALLOC(dataT, float,
@@ -93,34 +95,31 @@ int main(
   NC(nc_def_dim(ncid, "lev", (size_t) nz, &dims[1]));
   NC(nc_def_dim(ncid, "lat", (size_t) ny, &dims[2]));
   NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[3]));
-
+  
   /* Create variables... */
-  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &timid));
-  NC(nc_def_var(ncid, "lev", NC_DOUBLE, 1, &dims[1], &levid));
-  NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &dims[2], &latid));
-  NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &dims[3], &lonid));
-  NC(nc_def_var(ncid, "T", NC_FLOAT, 4, &dims[0], &tid));
-  NC(nc_def_var(ncid, "U", NC_FLOAT, 4, &dims[0], &uid));
-  NC(nc_def_var(ncid, "V", NC_FLOAT, 4, &dims[0], &vid));
-  NC(nc_def_var(ncid, "W", NC_FLOAT, 4, &dims[0], &wid));
+  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &varid));
+  NC_PUT_ATT("time", "time", "day as %Y%m%d.%f");
 
-  /* Set attributes... */
-  NC_PUT_ATT("time", "long_name", "time");
-  NC_PUT_ATT("time", "units", "day as %Y%m%d.%f");
-  NC_PUT_ATT("lon", "long_name", "longitude");
-  NC_PUT_ATT("lon", "units", "degrees_east");
-  NC_PUT_ATT("lat", "long_name", "latitude");
-  NC_PUT_ATT("lat", "units", "degrees_north");
-  NC_PUT_ATT("lev", "long_name", "air_pressure");
-  NC_PUT_ATT("lev", "units", "Pa");
-  NC_PUT_ATT("T", "long_name", "Temperature");
-  NC_PUT_ATT("T", "units", "K");
-  NC_PUT_ATT("U", "long_name", "U velocity");
-  NC_PUT_ATT("U", "units", "m s**-1");
-  NC_PUT_ATT("V", "long_name", "V velocity");
-  NC_PUT_ATT("V", "units", "m s**-1");
-  NC_PUT_ATT("W", "long_name", "Vertical velocity");
-  NC_PUT_ATT("W", "units", "Pa s**-1");
+  NC(nc_def_var(ncid, "lev", NC_DOUBLE, 1, &dims[1], &varid));
+  NC_PUT_ATT("lev", "air_pressure", "Pa");
+
+  NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &dims[2], &varid));
+  NC_PUT_ATT("lat", "latitude", "degrees_north");
+
+  NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &dims[3], &varid));
+  NC_PUT_ATT("lon", "longitude", "degrees_east");
+
+  NC(nc_def_var(ncid, "T", NC_FLOAT, 4, &dims[0], &varid));
+  NC_PUT_ATT("T", "Temperature", "K");
+
+  NC(nc_def_var(ncid, "U", NC_FLOAT, 4, &dims[0], &varid));
+  NC_PUT_ATT("U", "U velocity", "m s**-1");
+
+  NC(nc_def_var(ncid, "V", NC_FLOAT, 4, &dims[0], &varid));
+  NC_PUT_ATT("V", "V velocity", "m s**-1");
+
+  NC(nc_def_var(ncid, "W", NC_FLOAT, 4, &dims[0], &varid));
+  NC_PUT_ATT("W", "Vertical velocity", "Pa s**-1");
 
   /* End definition... */
   NC(nc_enddef(ncid));
@@ -134,11 +133,11 @@ int main(
     dataZ[iz] = 100. * P(LIN(0.0, z0, nz - 1.0, z1, iz));
 
   /* Write coordinates... */
-  NC(nc_put_var_double(ncid, timid, &t0));
-  NC(nc_put_var_double(ncid, levid, dataZ));
-  NC(nc_put_var_double(ncid, lonid, dataLon));
-  NC(nc_put_var_double(ncid, latid, dataLat));
-
+  NC_PUT_DOUBLE("time", &t0, 0);
+  NC_PUT_DOUBLE("lev", dataZ, 0);
+  NC_PUT_DOUBLE("lat", dataLat, 0);
+  NC_PUT_DOUBLE("lon", dataLon, 0);
+  
   /* Create wind fields (Williamson et al., 1992)... */
   for (ix = 0; ix < nx; ix++)
     for (iy = 0; iy < ny; iy++)
@@ -155,12 +154,12 @@ int main(
 			      * sin(alpha * M_PI / 180.0));
       }
 
-  /* Write wind data... */
-  NC(nc_put_var_float(ncid, tid, dataT));
-  NC(nc_put_var_float(ncid, uid, dataU));
-  NC(nc_put_var_float(ncid, vid, dataV));
-  NC(nc_put_var_float(ncid, wid, dataW));
-
+  /* Write data... */
+  NC_PUT_FLOAT("T", dataT, 0);
+  NC_PUT_FLOAT("U", dataU, 0);
+  NC_PUT_FLOAT("V", dataV, 0);
+  NC_PUT_FLOAT("W", dataW, 0);
+  
   /* Close file... */
   NC(nc_close(ncid));
 

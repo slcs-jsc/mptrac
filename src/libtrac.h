@@ -384,9 +384,30 @@
   }
 
 /*! Set netCDF attributes. */
-#define NC_PUT_ATT(varname, attrname, text) {				\
+#define NC_PUT_ATT(varname, long_name, units) {				\
     NC(nc_inq_varid(ncid, varname, &varid));				\
-    NC(nc_put_att_text(ncid, varid, attrname, strlen(text), text));	\
+    NC(nc_put_att_text(ncid, varid, "long_name", strlen(long_name), long_name)); \
+    NC(nc_put_att_text(ncid, varid, "units", strlen(units), units));	\
+  }
+
+/*! Write netCDF double array. */
+#define NC_PUT_DOUBLE(varname, ptr, hyperslab) {		\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara(ncid, varid, start, count, ptr));		\
+    } else {							\
+      NC(nc_put_var_double(ncid, varid, ptr));			\
+    }								\
+  }
+
+/*! Write netCDF float array. */
+#define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara(ncid, varid, start, count, ptr));		\
+    } else {							\
+      NC(nc_put_var_float(ncid, varid, ptr));			\
+    }								\
   }
 
 /*! Compute nearest neighbor interpolation. */

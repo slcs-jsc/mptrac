@@ -437,7 +437,7 @@ void clim_oh_init(
   /* Check whether pressure data are in correct order,
      1000, 900, 800, ... hPa (descending). */
   if (clim->oh_p[0] < clim->oh_p[1])
-    ERRMSG("Pressure data is not ascending!");
+    ERRMSG("Pressure data is not descending!");
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &nlat, 2, CY);
@@ -447,7 +447,7 @@ void clim_oh_init(
   /* Check whether latitudes are in correct order,
      -90, -85, ... 90 deg (ascending) */
   if (clim->oh_lat[0] > clim->oh_lat[1])
-    ERRMSG("Latitude data is not descending!");
+    ERRMSG("Latitude data is not ascending!");
 
   /* Set time data for monthly means... */
   clim->oh_nt = CT;
@@ -5091,29 +5091,24 @@ void write_atm_clams(
 
     /* Define variables and their attributes... */
     NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
-    NC_PUT_ATT("time", "units", "seconds since 2000-01-01 00:00:00 UTC");
-    NC_PUT_ATT("time", "long_name", "Time");
+    NC_PUT_ATT("time", "Time", "seconds since 2000-01-01 00:00:00 UTC");
 
     NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("LAT", "units", "deg");
-    NC_PUT_ATT("LAT", "long_name", "Latitude");
+    NC_PUT_ATT("LAT", "Latitude", "deg");
 
     NC(nc_def_var(ncid, "LON", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("LON", "units", "deg");
-    NC_PUT_ATT("LON", "long_name", "Longitude");
+    NC_PUT_ATT("LON", "Longitude", "deg");
 
     NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("PRESS", "units", "hPa");
-    NC_PUT_ATT("PRESS", "long_name", "Pressure");
+    NC_PUT_ATT("PRESS", "Pressure", "hPa");
 
     NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("ZETA", "units", "K");
-    NC_PUT_ATT("ZETA", "long_name", "Zeta");
+    NC_PUT_ATT("ZETA", "Zeta", "K");
 
     /* Define optional variables... */
     for (int i = 0; i < ctl->nq; i++) {
       NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
-      NC_PUT_ATT(ctl->qnt_name[i], "units", ctl->qnt_unit[i]);
+      NC_PUT_ATT(ctl->qnt_name[i], ctl->qnt_name[i], ctl->qnt_unit[i]);
     }
 
     /* Define global attributes... */
@@ -5132,32 +5127,19 @@ void write_atm_clams(
   /* Open file... */
   NC(nc_open(filename_out, NC_WRITE, &ncid));
 
-  /* Inquire variable IDs and put data into file... */
-  NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_put_vara(ncid, varid, start, count, atm->time));
-
-  NC(nc_inq_varid(ncid, "LAT", &varid));
-  NC(nc_put_vara(ncid, varid, start, count, atm->lat));
-
-  NC(nc_inq_varid(ncid, "LON", &varid));
-  NC(nc_put_vara(ncid, varid, start, count, atm->lon));
-
-  NC(nc_inq_varid(ncid, "PRESS", &varid));
-  NC(nc_put_vara(ncid, varid, start, count, atm->p));
-
+  /* Write data... */
+  NC_PUT_DOUBLE("time", atm->time, 1);
+  NC_PUT_DOUBLE("LAT", atm->lat, 1);
+  NC_PUT_DOUBLE("LON", atm->lon, 1);
+  NC_PUT_DOUBLE("PRESS", atm->p, 1);
   if (ctl->vert_coord_ap == 1) {
-    NC(nc_inq_varid(ncid, "ZETA", &varid));
-    NC(nc_put_vara(ncid, varid, start, count, atm->zeta));
+    NC_PUT_DOUBLE("ZETA", atm->zeta, 1);
   } else if (ctl->qnt_zeta >= 0) {
-    NC(nc_inq_varid(ncid, "ZETA", &varid));
-    NC(nc_put_vara(ncid, varid, start, count, atm->q[ctl->qnt_zeta]));
+    NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1);
   }
-
-  for (int i = 0; i < ctl->nq; i++) {
-    NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
-    NC(nc_put_vara(ncid, varid, start, count, atm->q[i]));
-  }
-
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 1);
+  
   /* Close file... */
   NC(nc_close(ncid));
 
@@ -5182,61 +5164,49 @@ void write_atm_clams(
 
     /* Define variables and their attributes... */
     NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
-    NC_PUT_ATT("time", "units", "seconds since 2000-01-01 00:00:00 UTC");
-    NC_PUT_ATT("time", "long_name", "Time");
-    
+    NC_PUT_ATT("time", "Time", "seconds since 2000-01-01 00:00:00 UTC");
+
     NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("LAT", "units", "deg");
-    NC_PUT_ATT("LAT", "long_name", "Latitude");
-    
+    NC_PUT_ATT("LAT", "Latitude", "deg");
+
     NC(nc_def_var(ncid, "LON", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("LON", "units", "deg");
-    NC_PUT_ATT("LON", "long_name", "Longitude");
-    
+    NC_PUT_ATT("LON", "Longitude", "deg");
+
     NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("PRESS", "units", "hPa");
-    NC_PUT_ATT("PRESS", "long_name", "Pressure");
-    
+    NC_PUT_ATT("PRESS", "Pressure", "hPa");
+
     NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("ZETA", "units", "K");
-    NC_PUT_ATT("ZETA", "long_name", "Zeta");
-    
+    NC_PUT_ATT("ZETA", "Zeta", "K");
+
     NC(nc_def_var(ncid, "ZETA_GRID", NC_DOUBLE, 1, &zid, &varid));
-    NC_PUT_ATT("ZETA_GRID", "units", "K");
-    NC_PUT_ATT("ZETA_GRID", "long_name", "Zeta levels");
-    
+    NC_PUT_ATT("ZETA_GRID", "Zeta levels", "K");
+
     NC(nc_def_var(ncid, "ZETA_DELTA", NC_DOUBLE, 1, &zid, &varid));
-    NC_PUT_ATT("ZETA_DELTA", "units", "K");
-    NC_PUT_ATT("ZETA_DELTA", "long_name", "Width of zeta levels");
-    
+    NC_PUT_ATT("ZETA_DELTA", "Width of zeta levels", "K");
+
     /* Define optional variables... */
     for (int i = 0; i < ctl->nq; i++) {
       NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
-      NC_PUT_ATT(ctl->qnt_name[i], "units", ctl->qnt_unit[i]);
+      NC_PUT_ATT(ctl->qnt_name[i], ctl->qnt_name[i], ctl->qnt_unit[i]);
     }
-    
+
     /* Put global attributes into file... */
     NC(nc_put_att_text
        (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
-    
+
     /* End definitions... */
     NC(nc_enddef(ncid));
 
-    /* Inquire variable IDs and put data into file... */
-    NC(nc_inq_varid(ncid, "time", &varid));
-    NC(nc_put_var_double(ncid, varid, atm->time));
-    NC(nc_inq_varid(ncid, "LAT", &varid));
-    NC(nc_put_var_double(ncid, varid, atm->lat));
-    NC(nc_inq_varid(ncid, "LON", &varid));
-    NC(nc_put_var_double(ncid, varid, atm->lon));
-    NC(nc_inq_varid(ncid, "PRESS", &varid));
-    NC(nc_put_var_double(ncid, varid, atm->p));
-    NC(nc_inq_varid(ncid, "ZETA", &varid));
-    NC(nc_put_var_double(ncid, varid, atm->q[ctl->qnt_zeta]));
-    for (int i = 0; i < ctl->nq; i++) {
-      NC(nc_inq_varid(ncid, ctl->qnt_name[i], &varid));
-      NC(nc_put_var_double(ncid, varid, atm->q[i]));
-    }
+    /* Write data... */
+    NC_PUT_DOUBLE("time", atm->time, 0);
+    NC_PUT_DOUBLE("LAT", atm->lat, 0);
+    NC_PUT_DOUBLE("LON", atm->lon, 0);
+    NC_PUT_DOUBLE("PRESS", atm->p, 0);
+    NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 0);
+    for (int iq = 0; iq < ctl->nq; iq++)
+      NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
+
+    /* Close file... */
     NC(nc_close(ncid));
   }
 }
