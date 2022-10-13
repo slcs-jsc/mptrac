@@ -929,7 +929,10 @@ typedef struct {
   int met_tropo_spline;
 
   /*! Cloud data (0=none, 1=LWC+IWC, 2=RWC+SWC, 3=all). */
-  double met_cloud;
+  int met_cloud;
+
+  /*! Minimum cloud ice water content [kg/kg]. */
+  double met_cloud_min;
 
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
@@ -1855,6 +1858,7 @@ void read_met_cape(
 
 /*! Calculate cloud properties. */
 void read_met_cloud(
+  ctl_t * ctl,
   met_t * met);
 
 /*! Apply detrending method to temperature and winds. */

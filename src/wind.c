@@ -95,7 +95,7 @@ int main(
   NC(nc_def_dim(ncid, "lev", (size_t) nz, &dims[1]));
   NC(nc_def_dim(ncid, "lat", (size_t) ny, &dims[2]));
   NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[3]));
-  
+
   /* Create variables... */
   NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &varid));
   NC_PUT_ATT("time", "time", "day as %Y%m%d.%f");
@@ -137,7 +137,7 @@ int main(
   NC_PUT_DOUBLE("lev", dataZ, 0);
   NC_PUT_DOUBLE("lat", dataLat, 0);
   NC_PUT_DOUBLE("lon", dataLon, 0);
-  
+
   /* Create wind fields (Williamson et al., 1992)... */
   for (ix = 0; ix < nx; ix++)
     for (iy = 0; iy < ny; iy++)
@@ -159,7 +159,7 @@ int main(
   NC_PUT_FLOAT("U", dataU, 0);
   NC_PUT_FLOAT("V", dataV, 0);
   NC_PUT_FLOAT("W", dataW, 0);
-  
+
   /* Close file... */
   NC(nc_close(ncid));
 

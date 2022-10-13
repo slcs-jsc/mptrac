@@ -211,7 +211,7 @@ int main(
     NC_PUT_DOUBLE("clp_t", tt, 1);
     if (h2o)
       NC_PUT_DOUBLE("clp_q", qt, 1);
-    
+
     /* Get dynamical tropopause... */
     ctl.met_tropo = 5;
     read_met_tropo(&ctl, met);
