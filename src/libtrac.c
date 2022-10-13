@@ -425,7 +425,7 @@ void clim_oh_init(
 
   /* Open netCDF file... */
   if (nc_open(ctl->clim_oh_filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("OH climatology data is missing!");
+    WARN("OH climatology data are missing!");
     return;
   }
 
@@ -434,20 +434,18 @@ void clim_oh_init(
   clim->oh_np = (int) np;
   NC_GET_DOUBLE("press", clim->oh_p, 1);
 
-  /* Check whether pressure data are in correct order,
-     1000, 900, 800, ... hPa (descending). */
+  /* Check ordering of pressure data... */
   if (clim->oh_p[0] < clim->oh_p[1])
-    ERRMSG("Pressure data is not descending!");
+    ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &nlat, 2, CY);
   clim->oh_ny = (int) nlat;
   NC_GET_DOUBLE("lat", clim->oh_lat, 1);
 
-  /* Check whether latitudes are in correct order,
-     -90, -85, ... 90 deg (ascending) */
+  /* Check ordering of latitudes... */
   if (clim->oh_lat[0] > clim->oh_lat[1])
-    ERRMSG("Latitude data is not ascending!");
+    ERRMSG("Latitude data are not ascending!");
 
   /* Set time data for monthly means... */
   clim->oh_nt = CT;
@@ -464,8 +462,7 @@ void clim_oh_init(
   clim->oh_time[10] = 27561600.00;
   clim->oh_time[11] = 30153600.00;
 
-  /* Check whether the OH netCDF data file provides monthly data,
-     i.e., make sure there are 12 (= CT) time steps in the data file. */
+  /* Check number of timesteps... */
   NC_INQ_DIM("time", &nt, 12, 12);
 
   /* Read OH data... */
@@ -578,11 +575,11 @@ void clim_h2o2_init(
   double *help;
 
   /* Write info... */
-  LOG(1, "Read OH data: %s", ctl->clim_oh_filename);
+  LOG(1, "Read H2O2 data: %s", ctl->clim_h2o2_filename);
 
   /* Open netCDF file... */
   if (nc_open(ctl->clim_h2o2_filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("H2O2 climatology data is missing!");
+    WARN("H2O2 climatology data are missing!");
     return;
   }
 
@@ -591,20 +588,18 @@ void clim_h2o2_init(
   clim->h2o2_np = (int) np;
   NC_GET_DOUBLE("press", clim->h2o2_p, 1);
 
-  /* Check to see the pressure data are in correct order,
-     1000, 900, 800, ... hPa (descending)... */
+  /* Check ordering of pressure data... */
   if (clim->h2o2_p[0] < clim->h2o2_p[1])
-    ERRMSG("Pressure data is not in correct order!");
+    ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &nlat, 2, CY);
   clim->h2o2_ny = (int) nlat;
   NC_GET_DOUBLE("lat", clim->h2o2_lat, 1);
 
-  /* Check to see the latitude data are in correct order,
-     -90, -85, ... 90 deg (ascending)... */
+  /* Check ordering of latitude data... */
   if (clim->h2o2_lat[0] > clim->h2o2_lat[1])
-    ERRMSG("Latitude data is not in correct order!");
+    ERRMSG("Latitude data are not ascending!");
 
   /* Set time data (for monthly means)... */
   clim->h2o2_nt = CT;
@@ -621,8 +616,7 @@ void clim_h2o2_init(
   clim->h2o2_time[10] = 27561600.00;
   clim->h2o2_time[11] = 30153600.00;
 
-  /* Check whether the OH netCDF data file provides monthly data,
-     i.e., make sure there are 12 (= CT) time steps in the data file... */
+  /* Check number of timesteps... */
   NC_INQ_DIM("time", &nt, 12, 12);
 
   /* Read data... */
@@ -2145,8 +2139,10 @@ void read_ctl(
   ctl->qnt_oh = -1;
   ctl->qnt_vmrimpl = -1;
   ctl->qnt_mloss_oh = -1;
-  ctl->qnt_mloss_wet = -1;
   ctl->qnt_mloss_h2o2 = -1;
+  ctl->qnt_mloss_wet = -1;
+  ctl->qnt_mloss_dry = -1;
+  ctl->qnt_mloss_decay = -1;
   ctl->qnt_psat = -1;
   ctl->qnt_psice = -1;
   ctl->qnt_pw = -1;
@@ -2217,8 +2213,10 @@ void read_ctl(
       SET_QNT(qnt_oh, "oh", "molec/cm^3")
       SET_QNT(qnt_vmrimpl, "vmrimpl", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "kg")
-      SET_QNT(qnt_mloss_wet, "mloss_wet", "kg")
       SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "kg")
+      SET_QNT(qnt_mloss_wet, "mloss_wet", "kg")
+      SET_QNT(qnt_mloss_dry, "mloss_dry", "kg")
+      SET_QNT(qnt_mloss_decay, "mloss_decay", "kg")
       SET_QNT(qnt_psat, "psat", "hPa")
       SET_QNT(qnt_psice, "psice", "hPa")
       SET_QNT(qnt_pw, "pw", "hPa")

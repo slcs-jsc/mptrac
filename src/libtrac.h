@@ -789,14 +789,20 @@ typedef struct {
   /*! Quantity array index for implicity volumn mixing ratio. */
   int qnt_vmrimpl;
 
-  /*! Quantity array index for total mass loss due to oh chemistry module. */
+  /*! Quantity array index for total mass loss due to OH chemistry. */
   int qnt_mloss_oh;
 
-  /*! Quantity array index for total mass loss due to h2o2 chemistry module. */
+  /*! Quantity array index for total mass loss due to H2O2 chemistry. */
   int qnt_mloss_h2o2;
 
-  /*! Quantity array index for total mass loss due to wet deposition module. */
+  /*! Quantity array index for total mass loss due to wet deposition. */
   int qnt_mloss_wet;
+
+  /*! Quantity array index for total mass loss due to dry deposition. */
+  int qnt_mloss_dry;
+
+  /*! Quantity array index for total mass loss due to exponential decax. */
+  int qnt_mloss_decay;
 
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
@@ -1037,7 +1043,7 @@ typedef struct {
   /*! Filename of OH climatology. */
   char clim_oh_filename[LEN];
 
-  /*! Filename of h2o2 climatology. */
+  /*! Filename of H2O2 climatology. */
   char clim_h2o2_filename[LEN];
 
   /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
@@ -1052,7 +1058,7 @@ typedef struct {
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
-  /*! Coefficient for precipitation calculation */
+  /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
 
   /*! Coefficient A for wet deposition below cloud (exponential form). */
@@ -1319,7 +1325,7 @@ typedef struct {
   /*! OH data pressure levels [hPa]. */
   double oh_p[CP];
 
-  /*! OH data concentration [molec/cm^3]. */
+  /*! OH data number concentrations [molec/cm^3]. */
   double oh[CT][CP][CY];
 
   /*! Number of H2O2 data timesteps. */
@@ -1340,7 +1346,7 @@ typedef struct {
   /*! H2O2 data pressure levels [hPa]. */
   double h2o2_p[CP];
 
-  /*! H2O2 data concentration [molec/cm^3]. */
+  /*! H2O2 data number concentrations [molec/cm^3]. */
   double h2o2[CT][CP][CY];
 
 } clim_t;

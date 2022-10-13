@@ -750,8 +750,12 @@ void module_decay(
 
       /* Calculate exponential decay... */
       double aux = exp(-dt[ip] / tdec);
-      if (ctl->qnt_m >= 0)
+      if (ctl->qnt_m >= 0) {
 	atm->q[ctl->qnt_m][ip] *= aux;
+	if (ctl->qnt_mloss_decay >= 0)
+	  atm->q[ctl->qnt_mloss_decay][ip]
+	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
@@ -949,8 +953,12 @@ void module_dry_deposition(
 
       /* Calculate loss of mass based on deposition velocity... */
       double aux = exp(-dt[ip] * v_dep / dz);
-      if (ctl->qnt_m >= 0)
+      if (ctl->qnt_m >= 0) {
 	atm->q[ctl->qnt_m][ip] *= aux;
+	if (ctl->qnt_mloss_dry >= 0)
+	  atm->q[ctl->qnt_mloss_dry][ip]
+	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
@@ -1234,10 +1242,12 @@ void module_oh_chem(
 			    atm->lon[ip],
 			    atm->lat[ip]);
       double aux = exp(-dt[ip] * rate_coef);
-      if (ctl->qnt_mloss_oh >= 0 && ctl->qnt_m >= 0)
-	atm->q[ctl->qnt_mloss_oh][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
-      if (ctl->qnt_m >= 0)
+      if (ctl->qnt_m >= 0) {
 	atm->q[ctl->qnt_m][ip] *= aux;
+	if (ctl->qnt_mloss_oh >= 0)
+	  atm->q[ctl->qnt_mloss_oh][ip]
+	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
@@ -1260,7 +1270,7 @@ void module_h2o2_chem(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
   if (ctl->qnt_vmrimpl < 0)
-    ERRMSG("Module needs quantity implicit volume mixing ratio");
+    ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
   const int np = atm->np;
 #ifdef _OPENACC
@@ -1271,27 +1281,19 @@ void module_h2o2_chem(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
-
-      /* Check whether particle is below cloud top... */
-      double pct;
-      INTPOL_INIT;
-      INTPOL_2D(pct, 1);
-      if (!isfinite(pct) || atm->p[ip] <= pct)
-	continue;
-
-      /* Check whether particle is inside or below cloud... */
-      int inside;
+      
+      /* Check whether particle is inside cloud... */
       double lwc, iwc;
+      INTPOL_INIT;
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
-      inside = (lwc > 0 || iwc > 0);
-      if (inside) {
-
+      if (lwc > 0 || iwc > 0) {
+	
 	/* Get temperature... */
 	double t;
 	INTPOL_3D(t, 0);
 
-	/* Reaction rate (Berglen et al  2004)... */
+	/* Reaction rate (Berglen et al., 2004)... */
 	double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit:M^(-2)
 
 	/* Henry constant of SO2... */
@@ -1301,7 +1303,7 @@ void module_h2o2_chem(
 	/* Henry constant of H2O2... */
 	double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
-	/* Concentration of H2O2 (Barth et al 1989)... */
+	/* Concentration of H2O2 (Barth et al., 1989)... */
 	double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
 	double h2o2 = H_h2o2
 	  * clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip],
@@ -1310,14 +1312,15 @@ void module_h2o2_chem(
 	/* Volume water content in cloud [m^3 m^(-3)]... */
 	double CWC = (lwc + iwc) * 28.9644 / 18.02;
 
-	/* Calculate exponential decay (Rolph et al 1992)... */
+	/* Calculate exponential decay (Rolph et al., 1992)... */
 	double rate_coef = 1000 / 6.02214e23 * k * K_1S * h2o2 * H_SO2 * CWC;
 	double aux = exp(-dt[ip] * rate_coef);
-	if (ctl->qnt_mloss_h2o2 >= 0 && ctl->qnt_m >= 0)
-	  atm->q[ctl->qnt_mloss_h2o2][ip] +=
-	    atm->q[ctl->qnt_m][ip] * (1 - aux);
-	if (ctl->qnt_m >= 0)
+	if (ctl->qnt_m >= 0) {
 	  atm->q[ctl->qnt_m][ip] *= aux;
+	  if (ctl->qnt_mloss_h2o2 >= 0)
+	    atm->q[ctl->qnt_mloss_h2o2][ip] +=
+	      atm->q[ctl->qnt_m][ip] * (1 - aux);
+	}
 	if (ctl->qnt_vmr >= 0)
 	  atm->q[ctl->qnt_vmr][ip] *= aux;
       }
@@ -1807,10 +1810,12 @@ void module_wet_deposition(
 
       /* Calculate exponential decay of mass... */
       double aux = exp(-dt[ip] * lambda);
-      if (ctl->qnt_mloss_wet >= 0 && ctl->qnt_m >= 0)
-	atm->q[ctl->qnt_mloss_wet][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
-      if (ctl->qnt_m >= 0)
+      if (ctl->qnt_m >= 0) {
 	atm->q[ctl->qnt_m][ip] *= aux;
+	if (ctl->qnt_mloss_wet >= 0)
+	  atm->q[ctl->qnt_mloss_wet][ip]
+	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
