@@ -1963,8 +1963,8 @@ int read_atm_clams(
     WARN("TIME_INIT not found use time instead!");
     double time_init;
     NC_GET_DOUBLE("time", &time_init, 1);
-    for (int i = 0; i < atm->np; i++) {
-      atm->time[i] = time_init;
+    for (int ip = 0; ip < atm->np; ip++) {
+      atm->time[ip] = time_init;
     }
   }
 
@@ -5062,14 +5062,14 @@ void write_atm_clams(
 	    &min_start, &sec_start, &r_start);
   jsec2time(ctl->t_stop, &year_stop, &mon_stop, &day_stop, &hour_stop,
 	    &min_stop, &sec_stop, &r_stop);
-
+  
   /* Set filename... */
   sprintf(filename_out,
 	  "./traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc",
 	  year_start % 100, mon_start, day_start, hour_start,
 	  year_stop % 100, mon_stop, day_stop, hour_stop);
   printf("Write traj file: %s\n", filename_out);
-
+  
   /* Define hyperslap for the traj_file... */
   start[0] = out_cnt;
   start[1] = 0;
@@ -5081,52 +5081,52 @@ void write_atm_clams(
 
     /* Create file... */
     nc_create(filename_out, NC_CLOBBER, &ncid);
-
+    
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
     NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
     NC(nc_def_dim(ncid, "TMDT", 7, &cid));
     dim_ids[0] = tid;
     dim_ids[1] = pid;
-
+    
     /* Define variables and their attributes... */
     NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
     NC_PUT_ATT("time", "Time", "seconds since 2000-01-01 00:00:00 UTC");
-
+    
     NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 2, dim_ids, &varid));
     NC_PUT_ATT("LAT", "Latitude", "deg");
 
     NC(nc_def_var(ncid, "LON", NC_DOUBLE, 2, dim_ids, &varid));
     NC_PUT_ATT("LON", "Longitude", "deg");
-
+    
     NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 2, dim_ids, &varid));
     NC_PUT_ATT("PRESS", "Pressure", "hPa");
-
+    
     NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 2, dim_ids, &varid));
     NC_PUT_ATT("ZETA", "Zeta", "K");
-
+    
     /* Define optional variables... */
-    for (int i = 0; i < ctl->nq; i++) {
-      NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
-      NC_PUT_ATT(ctl->qnt_name[i], ctl->qnt_name[i], ctl->qnt_unit[i]);
+    for (int iq = 0; iq < ctl->nq; iq++) {
+      NC(nc_def_var(ncid, ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids, &varid));
+      NC_PUT_ATT(ctl->qnt_name[iq], ctl->qnt_name[iq], ctl->qnt_unit[iq]);
     }
-
+    
     /* Define global attributes... */
     NC(nc_put_att_text
        (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
     NC(nc_put_att_text(ncid, NC_GLOBAL, "model", strlen("MPTRAC"), "MPTRAC"));
-
+    
     /* End definitions... */
     NC(nc_enddef(ncid));
     NC(nc_close(ncid));
   }
-
+  
   /* Increment global counter to change hyperslap... */
-  out_cnt = out_cnt + 1;
-
+  out_cnt++;
+  
   /* Open file... */
   NC(nc_open(filename_out, NC_WRITE, &ncid));
-
+  
   /* Write data... */
   NC_PUT_DOUBLE("time", atm->time, 1);
   NC_PUT_DOUBLE("LAT", atm->lat, 1);
@@ -5185,9 +5185,9 @@ void write_atm_clams(
     NC_PUT_ATT("ZETA_DELTA", "Width of zeta levels", "K");
 
     /* Define optional variables... */
-    for (int i = 0; i < ctl->nq; i++) {
-      NC(nc_def_var(ncid, ctl->qnt_name[i], NC_DOUBLE, 2, dim_ids, &varid));
-      NC_PUT_ATT(ctl->qnt_name[i], ctl->qnt_name[i], ctl->qnt_unit[i]);
+    for (int iq = 0; iq < ctl->nq; iq++) {
+      NC(nc_def_var(ncid, ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids, &varid));
+      NC_PUT_ATT(ctl->qnt_name[iq], ctl->qnt_name[iq], ctl->qnt_unit[iq]);
     }
 
     /* Put global attributes into file... */
@@ -5205,7 +5205,7 @@ void write_atm_clams(
     NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
-
+    
     /* Close file... */
     NC(nc_close(ncid));
   }
