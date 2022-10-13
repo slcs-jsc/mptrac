@@ -25,16 +25,6 @@
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
-   Functions...
-   ------------------------------------------------------------ */
-
-void add_text_attribute(
-  int ncid,
-  char *varname,
-  char *attrname,
-  char *text);
-
-/* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
 
@@ -51,8 +41,8 @@ int main(
 
   static float *dataT, *dataU, *dataV, *dataW;
 
-  static int ncid, dims[4], timid, levid, latid, lonid, tid, uid, vid, wid,
-    idx, ix, iy, iz, nx, ny, nz, year, mon, day, hour, min, sec;
+  static int ncid, varid, dims[4], timid, levid, latid, lonid, tid, uid, vid,
+    wid, idx, ix, iy, iz, nx, ny, nz, year, mon, day, hour, min, sec;
 
   /* Allocate... */
   ALLOC(dataT, float,
@@ -115,22 +105,22 @@ int main(
   NC(nc_def_var(ncid, "W", NC_FLOAT, 4, &dims[0], &wid));
 
   /* Set attributes... */
-  add_text_attribute(ncid, "time", "long_name", "time");
-  add_text_attribute(ncid, "time", "units", "day as %Y%m%d.%f");
-  add_text_attribute(ncid, "lon", "long_name", "longitude");
-  add_text_attribute(ncid, "lon", "units", "degrees_east");
-  add_text_attribute(ncid, "lat", "long_name", "latitude");
-  add_text_attribute(ncid, "lat", "units", "degrees_north");
-  add_text_attribute(ncid, "lev", "long_name", "air_pressure");
-  add_text_attribute(ncid, "lev", "units", "Pa");
-  add_text_attribute(ncid, "T", "long_name", "Temperature");
-  add_text_attribute(ncid, "T", "units", "K");
-  add_text_attribute(ncid, "U", "long_name", "U velocity");
-  add_text_attribute(ncid, "U", "units", "m s**-1");
-  add_text_attribute(ncid, "V", "long_name", "V velocity");
-  add_text_attribute(ncid, "V", "units", "m s**-1");
-  add_text_attribute(ncid, "W", "long_name", "Vertical velocity");
-  add_text_attribute(ncid, "W", "units", "Pa s**-1");
+  NC_PUT_ATT("time", "long_name", "time");
+  NC_PUT_ATT("time", "units", "day as %Y%m%d.%f");
+  NC_PUT_ATT("lon", "long_name", "longitude");
+  NC_PUT_ATT("lon", "units", "degrees_east");
+  NC_PUT_ATT("lat", "long_name", "latitude");
+  NC_PUT_ATT("lat", "units", "degrees_north");
+  NC_PUT_ATT("lev", "long_name", "air_pressure");
+  NC_PUT_ATT("lev", "units", "Pa");
+  NC_PUT_ATT("T", "long_name", "Temperature");
+  NC_PUT_ATT("T", "units", "K");
+  NC_PUT_ATT("U", "long_name", "U velocity");
+  NC_PUT_ATT("U", "units", "m s**-1");
+  NC_PUT_ATT("V", "long_name", "V velocity");
+  NC_PUT_ATT("V", "units", "m s**-1");
+  NC_PUT_ATT("W", "long_name", "Vertical velocity");
+  NC_PUT_ATT("W", "units", "Pa s**-1");
 
   /* End definition... */
   NC(nc_enddef(ncid));
@@ -181,18 +171,4 @@ int main(
   free(dataW);
 
   return EXIT_SUCCESS;
-}
-
-/*****************************************************************************/
-
-void add_text_attribute(
-  int ncid,
-  char *varname,
-  char *attrname,
-  char *text) {
-
-  int varid;
-
-  NC(nc_inq_varid(ncid, varname, &varid));
-  NC(nc_put_att_text(ncid, varid, attrname, strlen(text), text));
 }

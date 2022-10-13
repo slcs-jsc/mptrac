@@ -383,6 +383,12 @@
       ERRMSG("Dimension %s is out of range!", dimname);	\
   }
 
+/*! Set netCDF attributes. */
+#define NC_PUT_ATT(varname, attrname, text) {				\
+    NC(nc_inq_varid(ncid, varname, &varid));				\
+    NC(nc_put_att_text(ncid, varid, attrname, strlen(text), text));	\
+  }
+
 /*! Compute nearest neighbor interpolation. */
 #define NN(x0, y0, x1, y1, x)				\
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))

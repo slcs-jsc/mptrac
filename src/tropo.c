@@ -25,16 +25,6 @@
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
-   Functions...
-   ------------------------------------------------------------ */
-
-void add_text_attribute(
-  int ncid,
-  char *varname,
-  char *attrname,
-  char *text);
-
-/* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
 
@@ -49,9 +39,10 @@ int main(
   static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
     lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat, cw[3];
 
-  static int init, i, ix, iy, nx, ny, nt, ncid, dims[3], timid, lonid, latid,
-    clppid, clpqid, clptid, clpzid, dynpid, dynqid, dyntid, dynzid, wmo1pid,
-    wmo1qid, wmo1tid, wmo1zid, wmo2pid, wmo2qid, wmo2tid, wmo2zid, h2o, ci[3];
+  static int init, i, ix, iy, nx, ny, nt, ncid, varid, dims[3], timid, lonid,
+    latid, clppid, clpqid, clptid, clpzid, dynpid, dynqid, dyntid, dynzid,
+    wmo1pid, wmo1qid, wmo1tid, wmo1zid, wmo2pid, wmo2qid, wmo2tid, wmo2zid,
+    h2o, ci[3];
 
   static size_t count[10], start[10];
 
@@ -144,70 +135,57 @@ int main(
 	NC(nc_def_var(ncid, "wmo_2nd_q", NC_FLOAT, 3, &dims[0], &wmo2qid));
 
       /* Set attributes... */
-      add_text_attribute(ncid, "time", "units",
-			 "seconds since 2000-01-01 00:00:00 UTC");
-      add_text_attribute(ncid, "time", "long_name", "time");
-      add_text_attribute(ncid, "lon", "units", "degrees_east");
-      add_text_attribute(ncid, "lon", "long_name", "longitude");
-      add_text_attribute(ncid, "lat", "units", "degrees_north");
-      add_text_attribute(ncid, "lat", "long_name", "latitude");
+      NC_PUT_ATT("time", "units", "seconds since 2000-01-01 00:00:00 UTC");
+      NC_PUT_ATT("time", "long_name", "time");
+      NC_PUT_ATT("lon", "units", "degrees_east");
+      NC_PUT_ATT("lon", "long_name", "longitude");
+      NC_PUT_ATT("lat", "units", "degrees_north");
+      NC_PUT_ATT("lat", "long_name", "latitude");
 
-      add_text_attribute(ncid, "clp_z", "units", "km");
-      add_text_attribute(ncid, "clp_z", "long_name", "cold point height");
-      add_text_attribute(ncid, "clp_p", "units", "hPa");
-      add_text_attribute(ncid, "clp_p", "long_name", "cold point pressure");
-      add_text_attribute(ncid, "clp_t", "units", "K");
-      add_text_attribute(ncid, "clp_t", "long_name",
-			 "cold point temperature");
+      NC_PUT_ATT("clp_z", "units", "km");
+      NC_PUT_ATT("clp_z", "long_name", "cold point height");
+      NC_PUT_ATT("clp_p", "units", "hPa");
+      NC_PUT_ATT("clp_p", "long_name", "cold point pressure");
+      NC_PUT_ATT("clp_t", "units", "K");
+      NC_PUT_ATT("clp_t", "long_name", "cold point temperature");
       if (h2o) {
-	add_text_attribute(ncid, "clp_q", "units", "ppv");
-	add_text_attribute(ncid, "clp_q", "long_name",
-			   "cold point water vapor");
+	NC_PUT_ATT("clp_q", "units", "ppv");
+	NC_PUT_ATT("clp_q", "long_name", "cold point water vapor");
       }
 
-      add_text_attribute(ncid, "dyn_z", "units", "km");
-      add_text_attribute(ncid, "dyn_z", "long_name",
-			 "dynamical tropopause height");
-      add_text_attribute(ncid, "dyn_p", "units", "hPa");
-      add_text_attribute(ncid, "dyn_p", "long_name",
-			 "dynamical tropopause pressure");
-      add_text_attribute(ncid, "dyn_t", "units", "K");
-      add_text_attribute(ncid, "dyn_t", "long_name",
-			 "dynamical tropopause temperature");
+      NC_PUT_ATT("dyn_z", "units", "km");
+      NC_PUT_ATT("dyn_z", "long_name", "dynamical tropopause height");
+      NC_PUT_ATT("dyn_p", "units", "hPa");
+      NC_PUT_ATT("dyn_p", "long_name", "dynamical tropopause pressure");
+      NC_PUT_ATT("dyn_t", "units", "K");
+      NC_PUT_ATT("dyn_t", "long_name", "dynamical tropopause temperature");
       if (h2o) {
-	add_text_attribute(ncid, "dyn_q", "units", "ppv");
-	add_text_attribute(ncid, "dyn_q", "long_name",
-			   "dynamical tropopause water vapor");
+	NC_PUT_ATT("dyn_q", "units", "ppv");
+	NC_PUT_ATT("dyn_q", "long_name", "dynamical tropopause water vapor");
       }
 
-      add_text_attribute(ncid, "wmo_1st_z", "units", "km");
-      add_text_attribute(ncid, "wmo_1st_z", "long_name",
-			 "WMO 1st tropopause height");
-      add_text_attribute(ncid, "wmo_1st_p", "units", "hPa");
-      add_text_attribute(ncid, "wmo_1st_p", "long_name",
-			 "WMO 1st tropopause pressure");
-      add_text_attribute(ncid, "wmo_1st_t", "units", "K");
-      add_text_attribute(ncid, "wmo_1st_t", "long_name",
-			 "WMO 1st tropopause temperature");
+      NC_PUT_ATT("wmo_1st_z", "units", "km");
+      NC_PUT_ATT("wmo_1st_z", "long_name", "WMO 1st tropopause height");
+      NC_PUT_ATT("wmo_1st_p", "units", "hPa");
+      NC_PUT_ATT("wmo_1st_p", "long_name", "WMO 1st tropopause pressure");
+      NC_PUT_ATT("wmo_1st_t", "units", "K");
+      NC_PUT_ATT("wmo_1st_t", "long_name", "WMO 1st tropopause temperature");
       if (h2o) {
-	add_text_attribute(ncid, "wmo_1st_q", "units", "ppv");
-	add_text_attribute(ncid, "wmo_1st_q", "long_name",
-			   "WMO 1st tropopause water vapor");
+	NC_PUT_ATT("wmo_1st_q", "units", "ppv");
+	NC_PUT_ATT("wmo_1st_q", "long_name",
+		   "WMO 1st tropopause water vapor");
       }
 
-      add_text_attribute(ncid, "wmo_2nd_z", "units", "km");
-      add_text_attribute(ncid, "wmo_2nd_z", "long_name",
-			 "WMO 2nd tropopause height");
-      add_text_attribute(ncid, "wmo_2nd_p", "units", "hPa");
-      add_text_attribute(ncid, "wmo_2nd_p", "long_name",
-			 "WMO 2nd tropopause pressure");
-      add_text_attribute(ncid, "wmo_2nd_t", "units", "K");
-      add_text_attribute(ncid, "wmo_2nd_t", "long_name",
-			 "WMO 2nd tropopause temperature");
+      NC_PUT_ATT("wmo_2nd_z", "units", "km");
+      NC_PUT_ATT("wmo_2nd_z", "long_name", "WMO 2nd tropopause height");
+      NC_PUT_ATT("wmo_2nd_p", "units", "hPa");
+      NC_PUT_ATT("wmo_2nd_p", "long_name", "WMO 2nd tropopause pressure");
+      NC_PUT_ATT("wmo_2nd_t", "units", "K");
+      NC_PUT_ATT("wmo_2nd_t", "long_name", "WMO 2nd tropopause temperature");
       if (h2o) {
-	add_text_attribute(ncid, "wmo_2nd_q", "units", "ppv");
-	add_text_attribute(ncid, "wmo_2nd_q", "long_name",
-			   "WMO 2nd tropopause water vapor");
+	NC_PUT_ATT("wmo_2nd_q", "units", "ppv");
+	NC_PUT_ATT("wmo_2nd_q", "long_name",
+		   "WMO 2nd tropopause water vapor");
       }
 
       /* End definition... */
@@ -330,18 +308,4 @@ int main(
   free(met);
 
   return EXIT_SUCCESS;
-}
-
-/*****************************************************************************/
-
-void add_text_attribute(
-  int ncid,
-  char *varname,
-  char *attrname,
-  char *text) {
-
-  int varid;
-
-  NC(nc_inq_varid(ncid, varname, &varid));
-  NC(nc_put_att_text(ncid, varid, attrname, strlen(text), text));
 }
