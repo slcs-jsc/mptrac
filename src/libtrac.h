@@ -876,6 +876,9 @@ typedef struct {
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;
 
+  /*! Check netCDF scaling factors (0=no, 1=yes). */
+  int met_nc_scale;
+
   /*! Stride for longitudes. */
   int met_dx;
 
@@ -1905,6 +1908,7 @@ int read_met_nc_2d(
   int ncid,
   char *varname,
   char *varname2,
+  ctl_t * ctl,
   met_t * met,
   float dest[EX][EY],
   float scl,
@@ -1915,6 +1919,7 @@ int read_met_nc_3d(
   int ncid,
   char *varname,
   char *varname2,
+  ctl_t * ctl,
   met_t * met,
   float dest[EX][EY][EP],
   float scl,
