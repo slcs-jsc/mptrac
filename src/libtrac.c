@@ -2318,7 +2318,7 @@ void read_ctl(
   ctl->met_cache =
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
 
-  /* Sorting...... */
+  /* Sorting... */
   ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
 
   /* Isosurface parameters... */

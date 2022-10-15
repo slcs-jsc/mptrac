@@ -1281,14 +1281,14 @@ void module_h2o2_chem(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
-      
+
       /* Check whether particle is inside cloud... */
       double lwc, iwc;
       INTPOL_INIT;
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
       if (lwc > 0 || iwc > 0) {
-	
+
 	/* Get temperature... */
 	double t;
 	INTPOL_3D(t, 0);

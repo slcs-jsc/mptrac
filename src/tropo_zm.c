@@ -148,7 +148,10 @@ int main(
       for (ilat = 0; ilat < nlat; ilat++)
 	for (ilon = 0; ilon < nlon; ilon++) {
 	  nt[ilat]++;
-	  if (gsl_finite(tropo_z0[ilon][ilat])) {
+	  if (isfinite(tropo_z0[ilon][ilat])
+	      && isfinite(tropo_p0[ilon][ilat])
+	      && isfinite(tropo_t0[ilon][ilat])
+	      && isfinite(tropo_q0[ilon][ilat])) {
 	    zm[ilat] += tropo_z0[ilon][ilat];
 	    zs[ilat] += SQR(tropo_z0[ilon][ilat]);
 	    pm[ilat] += tropo_p0[ilon][ilat];
