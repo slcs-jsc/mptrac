@@ -241,7 +241,17 @@ int main(
 
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  num_devices = 1; /*acc_get_num_devices(acc_device_nvidia);*/
+  /* If num of devices is supplied set it */
+  if (argc > 4) {
+     num_devices = strtol(argv[4], NULL, 10);
+     set_num_devices(num_devices);
+     USE_ALL_GPUS = false;
+     LOG(1, "NUMBER OF GPU PER PROCESS IS %d", num_devices);
+     LOG(1, "NUMBER OF GPU AVAILABLE IS %d", acc_get_num_devices(acc_device_nvidia));
+  } else {
+    num_devices = acc_get_num_devices(acc_device_nvidia);
+    set_num_devices(num_devices);
+}
   if (num_devices <= 0)
     ERRMSG("Not running on a GPU device!");
 

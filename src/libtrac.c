@@ -990,7 +990,7 @@ void get_met(
   static int init;
 
 #ifdef _OPENACC
-  static int num_devices;
+  static int num_devices = 0;
 #endif
 
   met_t *mets;
