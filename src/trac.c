@@ -239,14 +239,6 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  // TODO: Revise this code block, simply initialize all the four GPU devices on the compute node?
-  // 1 node = 1 MPI task uses 48 OpenMP threads and 4 GPU devices
-  // for ( idev ... ) {
-  //   acc_set_device_num(idev) ;
-  //   ...
-  //   acc_init()...
-  // }
-  
   /* Initialize GPUs... */
 #ifdef _OPENACC
   num_devices = acc_get_num_devices(acc_device_nvidia);
@@ -295,10 +287,6 @@ int main(
     ALLOC(dt, double,
 	  NP);
 
-    
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-    
     /* Create data region on GPUs... */
 #ifdef _OPENACC
 for(int device_num = 0; device_num < num_devices; device_num++) {
@@ -326,11 +314,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     /* Initialize timesteps... */
     module_timesteps_init(&ctl, atm);
 
-
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-
-    
     /* Update all GPUs... */
 #ifdef _OPENACC
 for(int device_num = 0; device_num < num_devices; device_num++) {
@@ -353,11 +336,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
-
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-
-    
     /* Update all GPUs ... */
 #ifdef _OPENACC
 for(int device_num = 0; device_num < num_devices; device_num++) {
@@ -376,9 +354,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 
-
-        // TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
-        // maybe with omp prallel for or via omp tasks?
 #ifdef _OPENACC
 #pragma omp parallel num_threads(num_devices)
 {
@@ -467,7 +442,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
 
-// TODO Put OMP barrier here
 #ifdef _OPENACC
         }
 #endif
@@ -500,11 +474,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 					+ GX * GY * sizeof(int)) / 1024. /
 	1024.);
 
-    
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-
-    
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
 for(int device_num = 0; device_num < num_devices; device_num++) {
@@ -545,9 +514,6 @@ void generate_random_nums(randoms_t *random_num, ulong count) {
 
 #ifdef _OPENACC
 
-// TODO: this creates the random numbers on one device, loop it to all devices. Show device num in error msg
-
-    //TODO: for MULTI-GPU: loop over num_dev and set current device (they are all already initialised)
     int dev_id = 0;
 #pragma acc host_data use_device(random_num)
 {
@@ -585,21 +551,12 @@ void generate_random_nums(randoms_t *random_num, ulong count) {
 
 /*****************************************************************************/
 
-
-// TODO: apply OpenMP parallelisation outside of the modules?
-
-
 void module_advect_mp(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double *dt
-
-  // TODO:
-  // maybe add particle range here to allow to select subset of the full particle loop:
-  // int ip0, int ip1
-  
-		      ) {
+) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
@@ -615,14 +572,6 @@ void module_advect_mp(
 #pragma omp parallel for default(shared)
 #endif
 
-
-
-  // TODO:
-  // split loop over all particles (0...np-1) into 4 blocks, (0...np/4, np/4+1...2*np/4, 2*np/4+1 ... 3*np/4, 3*np/4+1... np-1)
-  // reduce the loop counters to calulate only a sub-range: for (int ip = ip0; ip < ip1; ip++)
-  // idea: use OpenMP to calculate the 4 blocks of the particle loop in parallel
-  
-  
   for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 

@@ -1014,14 +1014,6 @@ void get_met(
     if (!read_met(filename, ctl, *met1, clim))
       ERRMSG("Cannot open file!");
 
-
-    // TODO: Update meteorological data met0, met1 on _all_ GPUs
-    // for(idev=0 ; idev < num_devices; idev++) {
-    //   acc_set_device(idev)
-    //   #pragma acc update ..
-    // }
-    
-    
     /* Update GPU... */
 #ifdef _OPENACC
   num_devices = acc_get_num_devices(acc_device_nvidia);
@@ -1058,14 +1050,6 @@ void get_met(
     if (!read_met(filename, ctl, *met1, clim))
       ERRMSG("Cannot open file!");
 
-
-    // TODO: Update meteorological data met1 on _all_ GPUs
-    // for(idev=0 ; idev < num_devices; idev++) {
-    //   acc_set_device(idev)
-    //   #pragma acc update ..
-    // }
-
-    
     /* Update GPU... */
 #ifdef _OPENACC
   printf("**===--------------> NUM OF DEVICES IS %d.\n", num_devices);
@@ -1100,15 +1084,6 @@ void get_met(
     if (!read_met(filename, ctl, *met0, clim))
       ERRMSG("Cannot open file!");
 
-
-    
-    // TODO: Update meteorological data met0 on _all_ GPUs
-    // for(idev=0 ; idev < num_devices; idev++) {
-    //   acc_set_device(idev)
-    //   #pragma acc update ..
-    // }
-
-    
     /* Update GPU... */
 #ifdef _OPENACC
   printf("**===--------------> NUM OF DEVICES IS %d.\n", num_devices);
