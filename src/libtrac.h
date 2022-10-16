@@ -1414,6 +1414,11 @@ typedef struct {
    Functions...
    ------------------------------------------------------------ */
 
+#ifdef _OPENACC
+/* Updates num_devices in libtrac.c*/
+void set_num_devices(int value);
+#endif
+
 /*! Append to the timer ID, the device num. (`-1` if num_devices is 0).*/
 const char *add_device_num(char *id, ulong maxlen);
 

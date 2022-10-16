@@ -990,7 +990,7 @@ void get_met(
   static int init;
 
 #ifdef _OPENACC
-  int num_devices;
+  static int num_devices;
 #endif
 
   met_t *mets;
@@ -6186,7 +6186,12 @@ const char *add_device_num(char *id, ulong maxlen) {
 #endif
     snprintf(text, maxlen, "%s__DEV_%d", id, dev_num);
     memcpy(id, text, maxlen);
-    free(text);
+    free(text);#ifdef _OPENACC
     return id;
 }
 
+#ifdef _OPENACC
+void set_num_devices(int value) {
+ num_devices = value;
+}
+#endif
