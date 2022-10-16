@@ -3702,7 +3702,7 @@ int read_met_nc_2d(
   /* Check if variable exists... */
   if (nc_inq_varid(ncid, varname, &varid) != NC_NOERR)
     if (nc_inq_varid(ncid, varname2, &varid) != NC_NOERR) {
-      WARN("Cannot read 3-D variable: %s or %s", varname, varname2);
+      WARN("Cannot read 2-D variable: %s or %s", varname, varname2);
       return 0;
     } else {
       sprintf(varsel, "%s", varname2);
