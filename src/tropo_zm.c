@@ -151,7 +151,7 @@ int main(
 	  if (isfinite(tropo_z0[ilon][ilat])
 	      && isfinite(tropo_p0[ilon][ilat])
 	      && isfinite(tropo_t0[ilon][ilat])
-	      && isfinite(tropo_q0[ilon][ilat])) {
+	      && (!h2o || isfinite(tropo_q0[ilon][ilat]))) {
 	    zm[ilat] += tropo_z0[ilon][ilat];
 	    zs[ilat] += SQR(tropo_z0[ilon][ilat]);
 	    pm[ilat] += tropo_p0[ilon][ilat];
