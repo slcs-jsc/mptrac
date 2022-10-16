@@ -394,7 +394,7 @@
 #define NC_PUT_DOUBLE(varname, ptr, hyperslab) {		\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
-      NC(nc_put_vara(ncid, varid, start, count, ptr));		\
+      NC(nc_put_vara_double(ncid, varid, start, count, ptr));	\
     } else {							\
       NC(nc_put_var_double(ncid, varid, ptr));			\
     }								\
@@ -404,7 +404,7 @@
 #define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
-      NC(nc_put_vara(ncid, varid, start, count, ptr));		\
+      NC(nc_put_vara_float(ncid, varid, start, count, ptr));	\
     } else {							\
       NC(nc_put_var_float(ncid, varid, ptr));			\
     }								\
