@@ -6186,7 +6186,7 @@ const char *add_device_num(char *id, ulong maxlen) {
 #endif
     snprintf(text, maxlen, "%s__DEV_%d", id, dev_num);
     memcpy(id, text, maxlen);
-    free(text);#ifdef _OPENACC
+    free(text);
     return id;
 }
 
