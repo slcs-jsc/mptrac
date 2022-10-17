@@ -22,6 +22,7 @@
   Lagrangian particle dispersion model.
 */
 
+#include <stdbool.h>
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
@@ -241,17 +242,17 @@ int main(
 
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  /* If num of devices is supplied set it */
-  if (argc > 4) {
-     num_devices = strtol(argv[4], NULL, 10);
-     set_num_devices(num_devices);
-     USE_ALL_GPUS = false;
-     LOG(1, "NUMBER OF GPU PER PROCESS IS %d", num_devices);
-     LOG(1, "NUMBER OF GPU AVAILABLE IS %d", acc_get_num_devices(acc_device_nvidia));
-  } else {
-    num_devices = acc_get_num_devices(acc_device_nvidia);
+    /* Set Number of devices per process */
+    num_devices = strtol(argv[1], NULL, 10);
     set_num_devices(num_devices);
-}
+    if (num_devices < 0) {
+        num_devices = acc_get_num_devices(acc_device_nvidia);
+        set_num_devices(num_devices);
+    }
+
+    LOG(1, "NUMBER OF GPU PER PROCESS IS %d", num_devices);
+    LOG(1, "NUMBER OF GPU AVAILABLE IS %d", acc_get_num_devices(acc_device_nvidia));
+
   if (num_devices <= 0)
     ERRMSG("Not running on a GPU device!");
 
@@ -270,8 +271,9 @@ int main(
   if (argc < 4)
     ERRMSG("Give parameters: <dirlist> <ctl> <atm_in>");
 
+
   /* Open directory list... */
-  if (!(dirlist = fopen(argv[1], "r")))
+  if (!(dirlist = fopen(argv[2], "r")))
     ERRMSG("Cannot open directory list!");
 
   /* Loop over directories... */
@@ -310,14 +312,14 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 #endif
 
     /* Read control parameters... */
-    sprintf(filename, "%s/%s", dirname, argv[2]);
+    sprintf(filename, "%s/%s", dirname, argv[3]);
     read_ctl(filename, argc, argv, &ctl);
 
     /* Read climatological data... */
     read_clim(&ctl, clim);
 
     /* Read atmospheric data... */
-    sprintf(filename, "%s/%s", dirname, argv[3]);
+    sprintf(filename, "%s/%s", dirname, argv[4]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
 

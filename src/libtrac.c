@@ -4260,7 +4260,7 @@ double scan_ctl(
 	}
     }
   }
-  for (i = 1; i < argc - 1; i++)
+  for (i = 2; i < argc - 1; i++)
     if (strcasecmp(argv[i], fullname1) == 0 ||
 	strcasecmp(argv[i], fullname2) == 0) {
       sprintf(rval, "%s", argv[i + 1]);
