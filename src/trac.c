@@ -1424,8 +1424,7 @@ void module_rng_init(
 
   /* Initialize random number generator... */
 #ifdef _OPENACC
-/*for(int dev_id = 0; dev_id < acc_get_num_devices(acc_device_nvidia); ++dev_id){*/
- for(int dev_id = 0; dev_id < 1; ++dev_id){
+ for(int dev_id = 0; dev_id < num_devices; ++dev_id){
   if (curandCreateGenerator(rng + dev_id, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
