@@ -4784,23 +4784,31 @@ void timer(
 
   static char names[NTIMER][100], groups[NTIMER][100];
 
-  static double rt_name[NTIMER], rt_group[NTIMER], t0, t1;
+  static double rt_name[NTIMER], rt_group[NTIMER],
+    rt_min[NTIMER], rt_max[NTIMER], dt, t0, t1;
 
-  static int iname = -1, igroup = -1, nname, ngroup;
+  static int iname = -1, igroup = -1, nname, ngroup, ct_name[NTIMER];
 
   /* Get time... */
   t1 = omp_get_wtime();
+  dt = t1 - t0;
 
   /* Add elapsed time to current timers... */
-  if (iname >= 0)
-    rt_name[iname] += t1 - t0;
+  if (iname >= 0) {
+    rt_name[iname] += dt;
+    rt_min[iname] = (ct_name[iname] <= 0 ? dt : GSL_MIN(rt_min[iname], dt));
+    rt_max[iname] = (ct_name[iname] <= 0 ? dt : GSL_MAX(rt_max[iname], dt));
+    ct_name[iname]++;
+  }
   if (igroup >= 0)
     rt_group[igroup] += t1 - t0;
 
   /* Report timers... */
   if (output) {
     for (int i = 0; i < nname; i++)
-      LOG(1, "TIMER_%s = %.3f s", names[i], rt_name[i]);
+      LOG(1, "TIMER_%s = %.3f s    (min= %g s, mean= %g s,"
+	  " max= %g s, n= %d)", names[i], rt_name[i], rt_min[i],
+	  rt_name[i] / ct_name[i], rt_max[i], ct_name[i]);
     for (int i = 0; i < ngroup; i++)
       LOG(1, "TIMER_GROUP_%s = %.3f s", groups[i], rt_group[i]);
     double total = 0.0;
