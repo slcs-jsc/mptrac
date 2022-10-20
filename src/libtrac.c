@@ -6162,7 +6162,7 @@ void calc_device_workload_range(
         ulong *start_idx,
         ulong *end_idx) {
 
-    if (data_size / num_devices)
+    if (data_size % num_devices)
     WARN("The size of the atmospheric data: %lu is not "
          "a multiple of the number of device: %lu. The workload "
          "distribution will be uneven!!!", data_size, num_devices);
