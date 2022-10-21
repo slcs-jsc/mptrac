@@ -28,7 +28,7 @@
 /* ------------------------------------------------------------
    Global variables...
    ------------------------------------------------------------ */
-static int num_devices = 0;
+static int num_devices = -1;
 
 #ifdef _OPENACC
 curandGenerator_t *rng; /* Holds unique random generators for devices */
@@ -243,7 +243,22 @@ int main(
   /* Initialize GPUs... */
 #ifdef _OPENACC
     /* Set Number of devices per process */
-    num_devices = strtol(argv[1], NULL, 10);
+    FILE *int_file = NULL;
+    int value = 0;
+    if (!(int_file = fopen("num_devices", "r"))) {
+      WARN("Cannot open file - 'num_devices'! All avialable devices will be used");
+    }
+    else if (EOF == fscanf(int_file, "%d", &value)) {
+      WARN("Cannot read value from the file - 'num_devices'! All avialable devices will be used");
+    }
+    else if (value > acc_get_num_devices(acc_device_nvidia)) {
+      WARN("Number of devices can't be highier than the number of available devices! All avialable devices will be used");
+    }
+    else {
+            num_devices = value;
+            set_num_devices(value);
+    }
+
     set_num_devices(num_devices);
     if (num_devices < 0) {
         num_devices = acc_get_num_devices(acc_device_nvidia);
@@ -273,7 +288,7 @@ int main(
 
 
   /* Open directory list... */
-  if (!(dirlist = fopen(argv[2], "r")))
+  if (!(dirlist = fopen(argv[1], "r")))
     ERRMSG("Cannot open directory list!");
 
   /* Loop over directories... */
@@ -312,14 +327,14 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 #endif
 
     /* Read control parameters... */
-    sprintf(filename, "%s/%s", dirname, argv[3]);
+    sprintf(filename, "%s/%s", dirname, argv[2]);
     read_ctl(filename, argc, argv, &ctl);
 
     /* Read climatological data... */
     read_clim(&ctl, clim);
 
     /* Read atmospheric data... */
-    sprintf(filename, "%s/%s", dirname, argv[4]);
+    sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
       ERRMSG("Cannot open file!");
 
