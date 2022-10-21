@@ -22,14 +22,16 @@
   Lagrangian particle dispersion model.
 */
 
+#include <stdbool.h>
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
    Global variables...
    ------------------------------------------------------------ */
+static int num_devices = -1;
 
 #ifdef _OPENACC
-curandGenerator_t rng;
+curandGenerator_t *rng; /* Holds unique random generators for devices */
 #else
 static gsl_rng *rng[NTHREADS];
 #endif
@@ -62,35 +64,37 @@ void module_bound_cond(
 
 /*! Calculate convection of air parcels. */
 void module_convection(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt,
-  double *rs);
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        double *dt,
+        const randoms_t *random_nums);
 
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
   ctl_t * ctl,
   atm_t * atm,
-  double *dt);
+  double *dt,
+  clim_t *clim);
 
 /*! Calculate mesoscale diffusion. */
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  double *dt,
-  double *rs);
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        cache_t * cache,
+        double *dt,
+        const randoms_t *random_nums);
 
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
   ctl_t * ctl,
   atm_t * atm,
   double *dt,
-  double *rs);
+  const randoms_t *random_nums,
+  clim_t *clim);
 
 /*! Calculate dry deposition. */
 void module_dry_deposition(
@@ -145,12 +149,6 @@ void module_position(
 void module_rng_init(
   int ntask);
 
-/*! Generate random numbers. */
-void module_rng(
-  double *rs,
-  size_t n,
-  int method);
-
 /*! Calculate sedimentation of air parcels. */
 void module_sedi(
   ctl_t * ctl,
@@ -200,6 +198,9 @@ void write_output(
   atm_t * atm,
   double t);
 
+/*! Generate ALL random numbers: */
+void generate_random_nums(randoms_t *random_num, ulong count);
+
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
@@ -220,11 +221,13 @@ int main(
 
   FILE *dirlist;
 
+  randoms_t random_nums;
+
   char dirname[LEN], filename[2 * LEN];
 
-  double *dt, *rs, t;
+  double *dt, t;
 
-  int num_devices = 0, ntask = -1, rank = 0, size = 1;
+  int ntask = -1, rank = 0, size = 1;
 
   /* Start timers... */
   START_TIMERS;
@@ -237,29 +240,52 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 #endif
 
-  // TODO: Revise this code block, simply initialize all the four GPU devices on the compute node?
-  // 1 node = 1 MPI task uses 48 OpenMP threads and 4 GPU devices
-  // for ( idev ... ) {
-  //   acc_set_device_num(idev) ;
-  //   ...
-  //   acc_init()...
-  // }
-  
   /* Initialize GPUs... */
 #ifdef _OPENACC
-  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
-  num_devices = acc_get_num_devices(acc_device_nvidia);
+    /* Set Number of devices per process */
+    FILE *int_file = NULL;
+    int value = 0;
+    if (!(int_file = fopen("num_devices", "r"))) {
+      WARN("Cannot open file - 'num_devices'! All avialable devices will be used");
+    }
+    else if (EOF == fscanf(int_file, "%d", &value)) {
+      WARN("Cannot read value from the file - 'num_devices'! All avialable devices will be used");
+    }
+    else if (value > acc_get_num_devices(acc_device_nvidia)) {
+      WARN("Number of devices can't be highier than the number of available devices! All avialable devices will be used");
+    }
+    else {
+            num_devices = value;
+            set_num_devices(value);
+    }
+
+    set_num_devices(num_devices);
+    if (num_devices < 0) {
+        num_devices = acc_get_num_devices(acc_device_nvidia);
+        set_num_devices(num_devices);
+    }
+
+    LOG(1, "NUMBER OF GPU PER PROCESS IS %d", num_devices);
+    LOG(1, "NUMBER OF GPU AVAILABLE IS %d", acc_get_num_devices(acc_device_nvidia));
+
   if (num_devices <= 0)
     ERRMSG("Not running on a GPU device!");
-  int device_num = rank % num_devices;
-  acc_set_device_num(device_num, acc_device_nvidia);
-  acc_device_t device_type = acc_get_device_type();
-  acc_init(device_type);
+
+  for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
+    SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
+    acc_device_t device_type = acc_get_device_type();
+    acc_init(device_type);
+  }
+
+  ALLOC(rng, curandGenerator_t, num_devices);
 #endif
 
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Give parameters: <dirlist> <ctl> <atm_in>");
+
 
   /* Open directory list... */
   if (!(dirlist = fopen(argv[1], "r")))
@@ -277,7 +303,9 @@ int main(
        ------------------------------------------------------------ */
 
     /* Allocate... */
+#ifdef _OPENACC
     SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
+#endif
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
@@ -285,17 +313,17 @@ int main(
     ALLOC(met1, met_t, 1);
     ALLOC(dt, double,
 	  NP);
-    ALLOC(rs, double,
-	  3 * NP + 1);
 
-    
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-    
     /* Create data region on GPUs... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc enter data create(atm[:1],cache[:1],clim[:1],ctl,met0[:1],met1[:1],dt[:NP],rs[:3*NP])
+#pragma acc enter data create(atm[:1],cache[:1],clim[:1], \
+                              ctl,met0[:1],met1[:1],dt[:NP], \
+                              random_nums)
+}
 #endif
 
     /* Read control parameters... */
@@ -313,22 +341,21 @@ int main(
     /* Initialize timesteps... */
     module_timesteps_init(&ctl, atm);
 
-
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-
-    
-    /* Update GPU... */
+    /* Update all GPUs... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1],clim[:1],ctl)
+}
 #endif
 
     /* Initialize random number generator... */
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-    get_met(&ctl, ctl.t_start, &met0, &met1);
+      get_met(&ctl, ctl.t_start, &met0, &met1, clim);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
@@ -336,15 +363,14 @@ int main(
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
-
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-
-    
-    /* Update GPU... */
+    /* Update all GPUs ... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(cache[:1])
+}
 #endif
 
     /* ------------------------------------------------------------
@@ -355,6 +381,13 @@ int main(
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 
+#ifdef _OPENACC
+#pragma omp parallel num_threads(num_devices)
+{
+    int device_num = omp_get_thread_num();
+    acc_set_device_num(device_num, acc_device_nvidia);
+#endif
+
       /* Adjust length of final time step... */
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
@@ -364,40 +397,37 @@ int main(
 
       /* Get meteo data... */
       if (t != ctl.t_start)
-	get_met(&ctl, t, &met0, &met1);
+          get_met(&ctl, t, &met0, &met1, clim);
 
       /* Sort particles... */
-      if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
+      if (0 && ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	module_sort(&ctl, met0, atm);
 
-      /* Check initial positions... */
-      module_position(&ctl, met0, met1, atm, dt);
+    /* Check initial positions... */
+    module_position(&ctl, met0, met1, atm, dt);
 
-      /* Advection... */
-      if (ctl.advect == 0)
+    /* Generate ALL random numbers: */
+    generate_random_nums(&random_nums, (ulong) atm->np);
 
-
-	// TODO: Add OpenMP pragma to parallelize the loop over the GPU devices and particle subranges???
-	// maybe with omp prallel for or via omp tasks?
-
-
-	module_advect_mp(met0, met1, atm, dt);
-      else if (ctl.advect == 1)
-	module_advect_rk(met0, met1, atm, dt);
+    /* Advection... */
+    if (ctl.advect == 0)
+        module_advect_mp(met0, met1, atm, dt);
+    else if (ctl.advect == 1)
+        module_advect_rk(met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
-	module_diffusion_turb(&ctl, atm, dt, rs);
+          module_diffusion_turb(&ctl, atm, dt, &random_nums, clim);
 
       /* Mesoscale diffusion... */
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
-	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
+	module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, &random_nums);
 
       /* Convection... */
       if (ctl.conv_cape >= 0
 	  && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
-	module_convection(&ctl, met0, met1, atm, dt, rs);
+	module_convection(&ctl, met0, met1, atm, dt, &random_nums);
 
       /* Sedimentation... */
       if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)
@@ -413,11 +443,11 @@ int main(
       /* Interpolate meteo data... */
       if (ctl.met_dt_out > 0
 	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
-	module_meteo(&ctl, clim, met0, met1, atm);
+          module_meteo(&ctl, clim, met0, met1, atm);
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
-	module_decay(&ctl, atm, dt);
+          module_decay(&ctl, atm, dt, clim);
 
       /* OH chemistry... */
       if (ctl.oh_chem_reaction != 0)
@@ -438,6 +468,10 @@ int main(
 
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
+
+#ifdef _OPENACC
+        }
+#endif
     }
 
     /* ------------------------------------------------------------
@@ -467,15 +501,14 @@ int main(
 					+ GX * GY * sizeof(int)) / 1024. /
 	1024.);
 
-    
-    // TODO: create the data region on all 4 GPUs...
-    // for-loop over devices... create data region
-
-    
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
+for(int device_num = 0; device_num < num_devices; device_num++) {
+    acc_set_device_num(device_num, acc_device_nvidia);
+
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,rs)
+#pragma acc exit data delete(ctl,atm,cache,clim,met0,met1,dt,random_nums)
+}
 #endif
 
     /* Free... */
@@ -486,8 +519,9 @@ int main(
     free(met0);
     free(met1);
     free(dt);
-    free(rs);
-
+#ifdef _OPENACC
+    free(rng);
+#endif
     /* Report timers... */
     PRINT_TIMERS;
   }
@@ -503,47 +537,69 @@ int main(
   return EXIT_SUCCESS;
 }
 
+void generate_random_nums(randoms_t *random_num, ulong count) {
+
+#ifdef _OPENACC
+
+    int dev_id = 0;
+#pragma acc host_data use_device(random_num)
+{
+  /* Convection */
+  if (curandGenerateUniformDouble(*(rng + dev_id), random_num->convection, (count < 4 ? 4 : count))
+                          != CURAND_STATUS_SUCCESS)
+      ERRMSG("==---NEW---== Cannot create random numbers!");
+
+  /* Mesoscale diffusion */
+  if (curandGenerateNormalDouble(*(rng + dev_id), random_num->diff_meso, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
+                          != CURAND_STATUS_SUCCESS)
+      ERRMSG("==---NEW---== Cannot create random numbers!");
+
+  /* Turbulent diffusion */
+  if (curandGenerateNormalDouble(*(rng + dev_id), random_num->diff_turb, (3*count < 4 ? 4 : 3*count), 0.0, 1.0)
+                          != CURAND_STATUS_SUCCESS)
+      ERRMSG("==---NEW---== Cannot create random numbers!");
+
+}
+
+#else
+
+#pragma omp parallel for default(shared)
+    for (size_t i = 0; i < 3 * count; ++i) {
+        if (i < count)
+            random_num->convection[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
+
+        random_num->diff_meso[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+        random_num->diff_turb[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
+    }
+
+#endif
+
+}
+
 /*****************************************************************************/
-
-
-// TODO: apply OpenMP parallelisation outside of the modules?
-
 
 void module_advect_mp(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double *dt
-
-  // TODO:
-  // maybe add particle range here to allow to select subset of the full particle loop:
-  // int ip0, int ip1
-  
-		      ) {
+) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-
-
-  
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
 
-
-
-  // TODO:
-  // split loop over all particles (0...np-1) into 4 blocks, (0...np/4, np/4+1...2*np/4, 2*np/4+1 ... 3*np/4, 3*np/4+1... np-1)
-  // reduce the loop counters to calulate only a sub-range: for (int ip = ip0; ip < ip1; ip++)
-  // idea: use OpenMP to calculate the 4 blocks of the particle loop in parallel
-  
-  
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double u, v, w;
@@ -579,16 +635,20 @@ void module_advect_rk(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
+  char id[50] =  "MODULE_ADVECTION";
+  SELECT_TIMER(add_device_num(id, 50), "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Init... */
@@ -640,20 +700,24 @@ void module_bound_cond(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
+  char id[50] =  "MODULE_BOUNDCOND";
+  SELECT_TIMER(add_device_num(id, 50), "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
+  #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double ps;
@@ -688,27 +752,28 @@ void module_bound_cond(
 /*****************************************************************************/
 
 void module_convection(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt,
-  double *rs) {
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        double *dt,
+        const randoms_t *random_nums) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+  char id[50] =  "MODULE_CONVECTION";
+  SELECT_TIMER(add_device_num(id, 50), "PHYSICS", NVTX_GPU);
 
-  /* Create random numbers... */
-  module_rng(rs, (size_t) atm->np, 0);
-
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt,rs)
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
+#pragma acc data present(ctl,met0,met1,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double cape, cin, pel, ps;
@@ -755,7 +820,7 @@ void module_convection(
 	}
 
 	/* Vertical mixing... */
-	atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
+	atm->p[ip] = pbot + (ptop - pbot) * random_nums->convection[ip];
       }
     }
 }
@@ -765,7 +830,8 @@ void module_convection(
 void module_decay(
   ctl_t * ctl,
   atm_t * atm,
-  double *dt) {
+  double *dt,
+  clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -774,18 +840,21 @@ void module_decay(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim);
 
       /* Set lifetime... */
       double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -802,28 +871,28 @@ void module_decay(
 /*****************************************************************************/
 
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  double *dt,
-  double *rs) {
+        ctl_t * ctl,
+        met_t * met0,
+        met_t * met1,
+        atm_t * atm,
+        cache_t * cache,
+        double *dt,
+        const randoms_t *random_nums) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
 
-  /* Create random numbers... */
-  module_rng(rs, 3 * (size_t) atm->np, 1);
-
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
+#pragma acc data present(ctl,met0,met1,atm,cache,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get indices... */
@@ -865,13 +934,13 @@ void module_diffusion_meso(
       if (ctl->turb_mesox > 0) {
 	cache->uvwp[ip][0] = (float)
 	  (r * cache->uvwp[ip][0]
-	   + r2 * rs[3 * ip] * ctl->turb_mesox * usig);
+	   + r2 * random_nums->diff_meso[3 * ip] * ctl->turb_mesox * usig);
 	atm->lon[ip] +=
 	  DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
 	cache->uvwp[ip][1] = (float)
 	  (r * cache->uvwp[ip][1]
-	   + r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
+	   + r2 * random_nums->diff_meso[3 * ip + 1] * ctl->turb_mesox * vsig);
 	atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
       }
 
@@ -879,7 +948,7 @@ void module_diffusion_meso(
       if (ctl->turb_mesoz > 0) {
 	cache->uvwp[ip][2] = (float)
 	  (r * cache->uvwp[ip][2]
-	   + r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
+	   + r2 * random_nums->diff_meso[3 * ip + 2] * ctl->turb_mesoz * wsig);
 	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
       }
     }
@@ -888,29 +957,30 @@ void module_diffusion_meso(
 /*****************************************************************************/
 
 void module_diffusion_turb(
-  ctl_t * ctl,
-  atm_t * atm,
-  double *dt,
-  double *rs) {
+        ctl_t *ctl,
+        atm_t *atm,
+        double *dt,
+        const randoms_t *random_nums,
+        clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
 
-  /* Create random numbers... */
-  module_rng(rs, 3 * (size_t) atm->np, 1);
-
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,atm,dt,rs)
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
+#pragma acc data present(ctl,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
+      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip], clim);
 
       /* Set diffusivity... */
       double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
@@ -919,15 +989,15 @@ void module_diffusion_turb(
       /* Horizontal turbulent diffusion... */
       if (dx > 0) {
 	double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
-	atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
-	atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
+	atm->lon[ip] += DX2DEG(random_nums->diff_turb[3 * ip] * sigma / 1000., atm->lat[ip]);
+	atm->lat[ip] += DY2DEG(random_nums->diff_turb[3 * ip + 1] * sigma / 1000.);
       }
 
       /* Vertical turbulent diffusion... */
       if (dz > 0) {
 	double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
 	atm->p[ip]
-	  += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
+	  += DZ2DP(random_nums->diff_turb[3 * ip + 2] * sigma / 1000., atm->p[ip]);
       }
     }
 }
@@ -951,14 +1021,17 @@ void module_dry_deposition(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double ps, t, v_dep;
@@ -1076,14 +1149,17 @@ void module_isosurf(
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++) {
+  for (ulong ip = start; ip < end; ip++) {
 
     double t;
 
@@ -1125,11 +1201,11 @@ void module_isosurf(
 /*****************************************************************************/
 
 void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm) {
+    ctl_t *ctl,
+    clim_t *clim,
+    met_t *met0,
+    met_t *met1,
+    atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -1139,14 +1215,17 @@ void module_meteo(
     if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++) {
+  for (ulong ip = start; ip < end; ip++) {
 
     double ps, ts, zs, us, vs, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape,
       cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, z, zt;
@@ -1185,7 +1264,7 @@ void module_meteo(
     SET_ATM(qnt_pel, pel);
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
-    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_hno3, clim_hno3(atm->time[ip], atm->lat[ip], atm->p[ip], clim));
     SET_ATM(qnt_oh,
 	    clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
 			    atm->lon[ip], atm->lat[ip]));
@@ -1207,7 +1286,7 @@ void module_meteo(
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip])));
+				      atm->p[ip], clim)));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
@@ -1230,14 +1309,17 @@ void module_oh_chem(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get temperature... */
@@ -1295,14 +1377,17 @@ void module_position(
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Init... */
@@ -1356,17 +1441,17 @@ void module_rng_init(
 
   /* Initialize random number generator... */
 #ifdef _OPENACC
-
-  if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT)
+ for(int dev_id = 0; dev_id < num_devices; ++dev_id){
+  if (curandCreateGenerator(rng + dev_id, CURAND_RNG_PSEUDO_DEFAULT)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
-  if (curandSetPseudoRandomGeneratorSeed(rng, ntask)
+  if (curandSetPseudoRandomGeneratorSeed(*(rng + dev_id), ntask + 83*dev_id)
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set seed for random number generator!");
-  if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
+  if (curandSetStream(*(rng + dev_id), (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set stream for random number generator!");
-
+  }
 #else
 
   gsl_rng_env_setup();
@@ -1383,51 +1468,6 @@ void module_rng_init(
 
 /*****************************************************************************/
 
-void module_rng(
-  double *rs,
-  size_t n,
-  int method) {
-
-#ifdef _OPENACC
-
-#pragma acc host_data use_device(rs)
-  {
-    /* Uniform distribution... */
-    if (method == 0) {
-      if (curandGenerateUniformDouble(rng, rs, (n < 4 ? 4 : n))
-	  != CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
-    }
-
-    /* Normal distribution... */
-    else if (method == 1) {
-      if (curandGenerateNormalDouble(rng, rs, (n < 4 ? 4 : n), 0.0, 1.0)
-	  != CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
-    }
-  }
-
-#else
-
-  /* Uniform distribution... */
-  if (method == 0) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
-  }
-
-  /* Normal distribution... */
-  else if (method == 1) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
-  }
-#endif
-
-}
-
-/*****************************************************************************/
-
 void module_sedi(
   ctl_t * ctl,
   met_t * met0,
@@ -1438,14 +1478,17 @@ void module_sedi(
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       /* Get temperature... */
@@ -1588,14 +1631,17 @@ void module_timesteps(
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++) {
+  for (ulong ip = start; ip < end; ip++) {
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
 	 && ctl->direction * (atm->time[ip] - ctl->t_stop) <= 0
 	 && ctl->direction * (atm->time[ip] - t) < 0))
@@ -1652,14 +1698,17 @@ void module_wet_deposition(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
+  ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (ulong ip = start; ip < end; ip++)
     if (dt[ip] != 0) {
 
       double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
@@ -1799,9 +1848,18 @@ void write_output(
       || ctl->prof_basename[0] != '-' || ctl->sample_basename[0] != '-'
       || ctl->stat_basename[0] != '-') {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
+
+  ulong start = 0, end = NP;
+  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
+                             &start, &end);
+#pragma acc update host(atm->np,atm->time[start:end],atm->p[start:end], \
+            atm->zeta[start:end],atm->lon[start:end],atm->lat[start:end], \
+            atm->q[0:NQ][start:end])
   }
+// TODO: put OMP barrier here
 #endif
+
+// TODO: Use only one OMP thread (first one) for all below
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {

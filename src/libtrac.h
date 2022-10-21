@@ -590,6 +590,13 @@ void thrustSortWrapper(
    Structs...
    ------------------------------------------------------------ */
 
+/*! Random Numbers */
+typedef struct {
+    double convection[NP]; /* Random numbers for calculating convection of air parcels */
+    double diff_meso[3*NP]; /* Random numbers for calculating mesoscale diffusion. */
+    double diff_turb[3*NP]; /* Random numbers for calculating turbulent diffusion. */
+} randoms_t;
+
 /*! Control parameters. */
 typedef struct {
 
@@ -1277,6 +1284,14 @@ typedef struct {
   /*! H2O2 data concentration [molec/cm^3]. */
   double h2o2[CT][CP][CY];
 
+  double hno3_secs[12];
+  double hno3_lats[18];
+  double hno3_ps[10];
+  double hno3_var[12][18][10];
+
+  double tropo_secs[12];
+  double tropo_lats[73];
+  double tropo_tps[12][73];
 } clim_t;
 
 /*! Meteo data. */
@@ -1399,6 +1414,29 @@ typedef struct {
    Functions...
    ------------------------------------------------------------ */
 
+#ifdef _OPENACC
+/* Updates num_devices in libtrac.c*/
+void set_num_devices(int value);
+#endif
+
+/*! Append to the timer ID, the device num. (`-1` if num_devices is 0).*/
+const char *add_device_num(char *id, ulong maxlen);
+
+#ifdef _OPENACC
+/*! Calculate the workload range for each device. */
+void calc_device_workload_range(
+        ulong data_size,
+        int device_num,
+        ulong *start_idx,
+        ulong *end_idx);
+#endif
+
+/*! Get HNO3 Volume Climatological initial data. */
+void set_clim_hno3_init_data(clim_t *clim);
+
+/*! Get Tropopause Pressure Climatological initial data. */
+void set_clim_tropo_init_data(clim_t *clim);
+
 /*! Convert Cartesian coordinates to geolocation. */
 void cart2geo(
   double *x,
@@ -1418,9 +1456,10 @@ int check_finite(
 #pragma acc routine (clim_hno3)
 #endif
 double clim_hno3(
-  double t,
-  double lat,
-  double p);
+        double t,
+        double lat,
+        double p,
+        const clim_t *clim);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
@@ -1460,8 +1499,9 @@ double clim_oh_init_help(
 #pragma acc routine (clim_tropo)
 #endif
 double clim_tropo(
-  double t,
-  double lat);
+        double t,
+        double lat,
+        const clim_t *clim);
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -1518,11 +1558,7 @@ void geo2cart(
   double *x);
 
 /*! Get meteo data for given time step. */
-void get_met(
-  ctl_t * ctl,
-  double t,
-  met_t ** met0,
-  met_t ** met1);
+void get_met(ctl_t *ctl, double t, met_t **met0, met_t **met1, const clim_t *clim);
 
 /*! Get meteo data for time step. */
 void get_met_help(
@@ -1658,7 +1694,7 @@ double lapse_rate(
 #pragma acc routine (locate_irr)
 #endif
 int locate_irr(
-  double *xx,
+  const double *xx,
   int n,
   double x);
 
@@ -1667,7 +1703,7 @@ int locate_irr(
 #pragma acc routine (locate_reg)
 #endif
 int locate_reg(
-  double *xx,
+  const double *xx,
   int n,
   double x);
 
@@ -1713,10 +1749,7 @@ void read_ctl(
   ctl_t * ctl);
 
 /*! Read meteo data file. */
-int read_met(
-  char *filename,
-  ctl_t * ctl,
-  met_t * met);
+int read_met(char *filename, ctl_t *ctl, met_t *met, const clim_t *clim);
 
 /*! Read 2-D meteo variable. */
 void read_met_bin_2d(
@@ -1737,7 +1770,8 @@ void read_met_bin_3d(
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
-  met_t * met);
+        met_t *met,
+        const clim_t *clim);
 
 /*! Calculate cloud properties. */
 void read_met_cloud(
@@ -1820,8 +1854,9 @@ void read_met_surface(
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
-  ctl_t * ctl,
-  met_t * met);
+        ctl_t *ctl,
+        met_t *met,
+        const clim_t *clim);
 
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
@@ -1891,10 +1926,7 @@ void timer(
 #ifdef _OPENACC
 #pragma acc routine (tropo_weight)
 #endif
-double tropo_weight(
-  double t,
-  double lat,
-  double p);
+double tropo_weight(double t, double lat, double p, clim_t *clim);
 
 /*! Write atmospheric data. */
 void write_atm(

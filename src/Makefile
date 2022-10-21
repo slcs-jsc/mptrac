@@ -61,7 +61,7 @@ VERSION ?= $(shell git describe --abbrev=4 --dirty --always --tags)
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
 ifeq ($(GPU),1)
   CC = nvc
-  CFLAGS += -mp -mcmodel=medium -acc
+  CFLAGS += -mp -mcmodel=medium -acc -gpu=deepcopy
 else ifeq ($(CC),nvc)
   CFLAGS += -mp -mcmodel=medium
 else
