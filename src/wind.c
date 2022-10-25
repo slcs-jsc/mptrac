@@ -37,7 +37,7 @@ int main(
   static char filename[LEN];
 
   static double r, t0, z0, z1, dataLon[EX], dataLat[EY], dataZ[EP],
-    u0, u1, alpha;
+    u0, u1, w0, alpha;
 
   static float *dataT, *dataU, *dataV, *dataW;
 
@@ -70,6 +70,7 @@ int main(
   z1 = scan_ctl(argv[1], argc, argv, "WIND_Z1", -1, "60", NULL);
   u0 = scan_ctl(argv[1], argc, argv, "WIND_U0", -1, "38.587660177302", NULL);
   u1 = scan_ctl(argv[1], argc, argv, "WIND_U1", -1, "38.587660177302", NULL);
+  w0 = scan_ctl(argv[1], argc, argv, "WIND_W0", -1, "0", NULL);
   alpha = scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
 
   /* Check dimensions... */
@@ -152,6 +153,7 @@ int main(
 	dataV[idx] = (float) (-LIN(0.0, u0, nz - 1.0, u1, iz)
 			      * sin(dataLon[ix] * M_PI / 180.0)
 			      * sin(alpha * M_PI / 180.0));
+	dataW[idx] = (float) DZ2DP(1e-3 * w0, dataZ[iz]);
       }
 
   /* Write data... */
