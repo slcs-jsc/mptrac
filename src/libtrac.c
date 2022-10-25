@@ -1104,12 +1104,13 @@ void get_met(
     init = 1;
 
     /* Read meteo data... */
-    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
+    get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
+		 ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, *met0))
       ERRMSG("Cannot open file!");
 
-    get_met_help(ctl, t + 1.0 * ctl->direction, 1, ctl->metbase, ctl->dt_met,
-		 filename);
+    get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
+		 ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, *met1))
       ERRMSG("Cannot open file!");
 
