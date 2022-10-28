@@ -79,46 +79,74 @@
    ------------------------------------------------------------ */
 
 /*! Specific heat of dry air at constant pressure [J/(kg K)]. */
+#ifndef CPD
 #define CPD 1003.5
+#endif
 
 /*! Ratio of the specific gas constant of dry air and water vapor [1]. */
+#ifndef EPS
 #define EPS (MH2O / MA)
+#endif
 
 /*! Standard gravity [m/s^2]. */
+#ifndef G0
 #define G0 9.80665
+#endif
 
 /*! Scale height [km]. */
+#ifndef H0
 #define H0 7.0
+#endif
 
 /*! Latent heat of vaporization of water [J/kg]. */
+#ifndef LV
 #define LV 2501000.
+#endif
 
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
+#ifndef KB
 #define KB 1.3806504e-23
+#endif
 
 /*! Molar mass of dry air [g/mol]. */
+#ifndef MA
 #define MA 28.9644
+#endif
 
 /*! Molar mass of water vapor [g/mol]. */
+#ifndef MH2O
 #define MH2O 18.01528
+#endif
 
 /*! Molar mass of ozone [g/mol]. */
+#ifndef MO3
 #define MO3 48.00
+#endif
 
 /*! Standard pressure [hPa]. */
+#ifndef P0
 #define P0 1013.25
+#endif
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
+#ifndef RA
 #define RA (1e3 * RI / MA)
+#endif
 
 /*! Mean radius of Earth [km]. */
+#ifndef RE
 #define RE 6367.421
+#endif
 
 /*! Ideal gas constant [J/(mol K)]. */
+#ifndef RI
 #define RI 8.3144598
+#endif
 
 /*! Standard temperature [K]. */
+#ifndef T0
 #define T0 273.15
+#endif
 
 /* ------------------------------------------------------------
    Dimensions...
