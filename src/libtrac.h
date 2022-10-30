@@ -1026,6 +1026,9 @@ typedef struct {
   /*! Time interval for convection module [s]. */
   double conv_dt;
 
+  /*! Type of vertical mixing (0=pressure, 1=density). */
+  int conv_mix;
+
   /*! Lower level for mixing (0=particle pressure, 1=surface). */
   int conv_mix_bot;
 
