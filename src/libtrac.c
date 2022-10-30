@@ -628,6 +628,7 @@ void clim_h2o2_init(
       for (iy = 0; iy < clim->h2o2_ny; iy++)
 	clim->h2o2[it][iz][iy] =
 	  help[it * clim->h2o2_np * clim->h2o2_ny + iz * clim->h2o2_ny + iy];
+  free(help);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
