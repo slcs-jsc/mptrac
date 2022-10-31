@@ -50,6 +50,9 @@ ZFP ?= 0
 # Enable zstd compression...
 ZSTD ?= 0
 
+# Enable UVW cache...
+UVW ?= 1
+
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -131,6 +134,11 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
+endif
+
+# UVW cache...
+ifeq ($(UVW),1)
+  CFLAGS += -DUVW
 endif
 
 # Static compilation...

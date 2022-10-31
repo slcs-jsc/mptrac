@@ -1510,8 +1510,10 @@ typedef struct {
   /*! Vertical velocity [K/s]. */
   float zeta_dot[EX][EY][EP];
 
+#ifdef UVW
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
+#endif
 
 } met_t;
 
@@ -1704,6 +1706,7 @@ void intpol_met_space_2d(
   int init);
 
 /*! Spatial interpolation of meteo data. */
+#ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_uvw)
 #endif
@@ -1718,6 +1721,7 @@ void intpol_met_space_uvw(
   int *ci,
   double *cw,
   int init);
+#endif
 
 /*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
@@ -1755,6 +1759,7 @@ void intpol_met_time_2d(
   int init);
 
 /*! Temporal interpolation of meteo data. */
+#ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_uvw)
 #endif
@@ -1768,6 +1773,7 @@ void intpol_met_time_uvw(
   double *u,
   double *v,
   double *w);
+#endif
 
 /*! Convert seconds to date. */
 void jsec2time(
