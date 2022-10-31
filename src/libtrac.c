@@ -2344,7 +2344,9 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
 
   /* Advection parameters... */
-  ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "0", NULL);
+  ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "2", NULL);
+  if (!(ctl->advect == 1 || ctl->advect == 2 || ctl->advect == 4))
+    ERRMSG("Set ADVECT to 1, 2, or 4!");
   ctl->reflect =
     (int) scan_ctl(filename, argc, argv, "REFLECT", -1, "0", NULL);
 

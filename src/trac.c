@@ -38,15 +38,9 @@ static gsl_rng *rng[NTHREADS];
    Functions...
    ------------------------------------------------------------ */
 
-/*! Calculate advection of air parcels (mipoint method). */
-void module_advect_mp(
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
-/*! Calculate advection of air parcels (Runge-Kutta). */
-void module_advect_rk(
+/*! Calculate advection of air parcels. */
+void module_advect(
+  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -361,10 +355,7 @@ int main(
       module_position(&ctl, met0, met1, atm, dt);
 
       /* Advection... */
-      if (ctl.advect == 0)
-	module_advect_mp(met0, met1, atm, dt);
-      else if (ctl.advect == 1)
-	module_advect_rk(met0, met1, atm, dt);
+      module_advect(&ctl, met0, met1, atm, dt);
 
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
@@ -484,7 +475,8 @@ int main(
 
 /*****************************************************************************/
 
-void module_advect_mp(
+void module_advect(
+  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -495,68 +487,7 @@ void module_advect_mp(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
-
-      double u, v, w;
-
-      /* Interpolate meteo data... */
-#ifdef UVW
-      intpol_met_time_uvw(met0, met1, atm->time[ip], atm->p[ip],
-			  atm->lon[ip], atm->lat[ip], &u, &v, &w);
-#else
-      INTPOL_INIT;
-      INTPOL_3D(u, 1);
-      INTPOL_3D(v, 0);
-      INTPOL_3D(w, 0);
-#endif
-
-      /* Get position of the mid point... */
-      double dtm = atm->time[ip] + 0.5 * dt[ip];
-      double xm0 =
-	atm->lon[ip] + DX2DEG(0.5 * dt[ip] * u / 1000., atm->lat[ip]);
-      double xm1 = atm->lat[ip] + DY2DEG(0.5 * dt[ip] * v / 1000.);
-      double xm2 = atm->p[ip] + 0.5 * dt[ip] * w;
-
-      /* Interpolate meteo data for mid point... */
-#ifdef UVW
-      intpol_met_time_uvw(met0, met1, dtm, xm2, xm0, xm1, &u, &v, &w);
-#else
-      intpol_met_time_3d(met0, met0->u, met1, met1->u, dtm,
-			 xm2, xm0, xm1, &u, ci, cw, 1);
-      intpol_met_time_3d(met0, met0->v, met1, met1->v, dtm,
-			 xm2, xm0, xm1, &v, ci, cw, 0);
-      intpol_met_time_3d(met0, met0->w, met1, met1->w, dtm,
-			 xm2, xm0, xm1, &w, ci, cw, 0);
-#endif
-
-      /* Save new position... */
-      atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * u / 1000., xm1);
-      atm->lat[ip] += DY2DEG(dt[ip] * v / 1000.);
-      atm->p[ip] += dt[ip] * w;
-    }
-}
-
-/*****************************************************************************/
-
-void module_advect_rk(
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
-
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(met0,met1,atm,dt)
+#pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -568,7 +499,7 @@ void module_advect_rk(
       double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
 
       /* Loop over integration nodes... */
-      for (int i = 0; i < 4; i++) {
+      for (int i = 0; i < ctl->advect; i++) {
 
 	/* Set position... */
 	if (i == 0) {
@@ -593,13 +524,17 @@ void module_advect_rk(
 	intpol_met_time_3d(met0, met0->u, met1, met1->u, tm,
 			   x[2], x[0], x[1], &u[i], ci, cw, 1);
 	intpol_met_time_3d(met0, met0->v, met1, met1->v, tm,
-			   x[2], x[0], x[1], &v[i], ci, cw, 1);
+			   x[2], x[0], x[1], &v[i], ci, cw, 0);
 	intpol_met_time_3d(met0, met0->w, met1, met1->w, tm,
-			   x[2], x[0], x[1], &w[i], ci, cw, 1);
+			   x[2], x[0], x[1], &w[i], ci, cw, 0);
 #endif
 
 	/* Get mean wind... */
-	double k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	double k = 1.0;
+	if (ctl->advect == 2)
+	  k = (i == 0 ? 0.0 : 1.0);
+	else if (ctl->advect == 4)
+	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
 	um += k * u[i];
 	vm += k * v[i];
 	wm += k * w[i];
@@ -607,7 +542,8 @@ void module_advect_rk(
 
       /* Set new position... */
       atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000., atm->lat[ip]);
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
       atm->p[ip] += dt[ip] * wm;
     }
