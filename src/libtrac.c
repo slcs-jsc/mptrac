@@ -5426,7 +5426,7 @@ void write_csi(
 
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
-    static double work[2*NCSI];
+    static double work[2 * NCSI];
     int nobs = cx + cy;
     int nfor = cx + cz;
     double bias = (nobs > 0) ? 100. * nfor / nobs : GSL_NAN;
@@ -5701,7 +5701,7 @@ void write_grid(
 	  MA / ctl->molmass * mass[ixs[ip]][iys[ip]][izs[ip]]
 	  / (rho_air * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
-  
+
   /* Free... */
   free(ixs);
   free(iys);
