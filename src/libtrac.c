@@ -4330,13 +4330,19 @@ void read_met_surface(
 
     /* Read geopotential height at the surface
        (use lowermost level of 3-D data field)... */
+    float *help;
+    ALLOC(help, float,
+	  EX * EY * EP);
+    memcpy(help, met->pl, sizeof(met->pl));
     if (!read_met_nc_3d
-	(ncid, "gph", "GPH", ctl, met, met->help, (float) (1e-3 / G0), 1)) {
+	(ncid, "gph", "GPH", ctl, met, met->pl, (float) (1e-3 / G0), 1)) {
       ERRMSG("Cannot read geopotential height!");
     } else
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
-	  met->zs[ix][iy] = met->help[ix][iy][0];
+	  met->zs[ix][iy] = met->pl[ix][iy][0];
+    memcpy(met->pl, help, sizeof(met->pl));
+    free(help);
 
     /* Read temperature at the surface... */
     if (!read_met_nc_2d(ncid, "t2", "T2", ctl, met, met->ts, 1.0, 1))

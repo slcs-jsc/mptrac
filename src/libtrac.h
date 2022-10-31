@@ -1508,9 +1508,6 @@ typedef struct {
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
 
-  /*! Auxiliary variable. */
-  float help[EX][EY][EP];
-
 } met_t;
 
 /* ------------------------------------------------------------
