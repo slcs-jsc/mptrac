@@ -5254,8 +5254,7 @@ void write_csi(
   static char line[LEN];
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
-    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz,
-    x[1000000], y[1000000];
+    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz, x[NCSI], y[NCSI];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
 
@@ -5417,7 +5416,7 @@ void write_csi(
 		|| modmean[ix][iy][iz] >= ctl->csi_modmin)) {
 	  x[n] = modmean[ix][iy][iz];
 	  y[n] = obsmean[ix][iy][iz];
-	  if ((++n) > 1000000)
+	  if ((++n) > NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
       }
@@ -5427,7 +5426,7 @@ void write_csi(
 
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
-    static double work[2000000];
+    static double work[2*NCSI];
     int nobs = cx + cy;
     int nfor = cx + cz;
     double bias = (nobs > 0) ? 100. * nfor / nobs : GSL_NAN;
@@ -5702,8 +5701,7 @@ void write_grid(
 	  MA / ctl->molmass * mass[ixs[ip]][iys[ip]][izs[ip]]
 	  / (rho_air * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
-
-
+  
   /* Free... */
   free(ixs);
   free(iys);

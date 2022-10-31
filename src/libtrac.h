@@ -167,6 +167,11 @@
 #define NQ 15
 #endif
 
+/*! Maximum number of data points for CSI calculation. */
+#ifndef NCSI
+#define NCSI 1000000
+#endif
+
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
 #define EP 140
@@ -1463,7 +1468,7 @@ typedef struct {
   /*! Convective inhibition [J/kg]. */
   float cin[EX][EY];
 
-  /*! Geopotential height at model levels [km]. */
+  /*! Geopotential height [km]. */
   float z[EX][EY][EP];
 
   /*! Temperature [K]. */
