@@ -1346,6 +1346,18 @@ typedef struct {
 /*! Climatological data. */
 typedef struct {
 
+  /*! HNO3 data time steps [s]. */
+  double hno3_time[12];
+
+  /*! HNO3 data latitudes [deg]. */
+  double hno3_lat[18];
+
+  /*! HNO3 data pressure levels [hPa]. */
+  double hno3_p[10];
+
+  /*! HNO3 data number concentrations [molec/cm^3]. */
+  double hno3[12][18][10];
+
   /*! Number of OH data timesteps. */
   int oh_nt;
 
@@ -1540,9 +1552,14 @@ int check_finite(
 #pragma acc routine (clim_hno3)
 #endif
 double clim_hno3(
+  clim_t * clim,
   double t,
   double lat,
   double p);
+
+/*! Initialization function for HNO3 climatology. */
+void clim_hno3_init(
+  clim_t * clim);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC

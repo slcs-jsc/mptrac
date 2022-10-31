@@ -178,9 +178,9 @@ int main(
 	  h2otm[ix][iy] += h2ot;
 	  npt[ix][iy]++;
 	}
-	hno3m[ix][iy] += clim_hno3(met->time, lats[iy], p0);
+	hno3m[ix][iy] += clim_hno3(clim, met->time, lats[iy], p0);
 	tnatm[ix][iy] +=
-	  nat_temperature(p0, h2o, clim_hno3(met->time, lats[iy], p0));
+	  nat_temperature(p0, h2o, clim_hno3(clim, met->time, lats[iy], p0));
 	ohm[ix][iy] +=
 	  clim_oh_diurnal(&ctl, clim, met->time, p0, lons[ix], lats[iy]);
 	rhm[ix][iy] += RH(p0, t, h2o);
