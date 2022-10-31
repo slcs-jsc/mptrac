@@ -25,6 +25,23 @@
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+void get_tropo(
+  int met_tropo,
+  ctl_t * ctl,
+  met_t * met,
+  double *lons,
+  int nx,
+  double *lats,
+  int ny,
+  double *pt,
+  double *zt,
+  double *tt,
+  double *qt);
+
+/* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
 
@@ -37,9 +54,9 @@ int main(
   met_t *met;
 
   static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
-    lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat, cw[3];
+    lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat;
 
-  static int init, i, ix, iy, nx, ny, nt, ncid, varid, dims[3], h2o, ci[3];
+  static int init, i, nx, ny, nt, ncid, varid, dims[3], h2o;
 
   static size_t count[10], start[10];
 
@@ -109,22 +126,17 @@ int main(
       /* Create variables... */
       NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &varid));
       NC_PUT_ATT("time", "time", "seconds since 2000-01-01 00:00:00 UTC");
-
       NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &dims[1], &varid));
       NC_PUT_ATT("lat", "latitude", "degrees_north");
-
       NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &dims[2], &varid));
       NC_PUT_ATT("lon", "longitude", "degrees_east");
 
       NC(nc_def_var(ncid, "clp_z", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("clp_z", "cold point height", "km");
-
       NC(nc_def_var(ncid, "clp_p", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("clp_p", "cold point pressure", "hPa");
-
       NC(nc_def_var(ncid, "clp_t", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("clp_t", "cold point temperature", "K");
-
       if (h2o) {
 	NC(nc_def_var(ncid, "clp_q", NC_FLOAT, 3, &dims[0], &varid));
 	NC_PUT_ATT("clp_q", "cold point water vapor", "ppv");
@@ -132,13 +144,10 @@ int main(
 
       NC(nc_def_var(ncid, "dyn_z", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("dyn_z", "dynamical tropopause height", "km");
-
       NC(nc_def_var(ncid, "dyn_p", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("dyn_p", "dynamical tropopause pressure", "hPa");
-
       NC(nc_def_var(ncid, "dyn_t", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("dyn_t", "dynamical tropopause temperature", "K");
-
       if (h2o) {
 	NC(nc_def_var(ncid, "dyn_q", NC_FLOAT, 3, &dims[0], &varid));
 	NC_PUT_ATT("dyn_q", "dynamical tropopause water vapor", "ppv");
@@ -146,13 +155,10 @@ int main(
 
       NC(nc_def_var(ncid, "wmo_1st_z", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("wmo_1st_z", "WMO 1st tropopause height", "km");
-
       NC(nc_def_var(ncid, "wmo_1st_p", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("wmo_1st_p", "WMO 1st tropopause pressure", "hPa");
-
       NC(nc_def_var(ncid, "wmo_1st_t", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("wmo_1st_t", "WMO 1st tropopause temperature", "K");
-
       if (h2o) {
 	NC(nc_def_var(ncid, "wmo_1st_q", NC_FLOAT, 3, &dims[0], &varid));
 	NC_PUT_ATT("wmo_1st_q", "WMO 1st tropopause water vapor", "ppv");
@@ -160,13 +166,10 @@ int main(
 
       NC(nc_def_var(ncid, "wmo_2nd_z", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("wmo_2nd_z", "WMO 2nd tropopause height", "km");
-
       NC(nc_def_var(ncid, "wmo_2nd_p", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("wmo_2nd_p", "WMO 2nd tropopause pressure", "hPa");
-
       NC(nc_def_var(ncid, "wmo_2nd_t", NC_FLOAT, 3, &dims[0], &varid));
       NC_PUT_ATT("wmo_2nd_t", "WMO 2nd tropopause temperature", "K");
-
       if (h2o) {
 	NC(nc_def_var(ncid, "wmo_2nd_q", NC_FLOAT, 3, &dims[0], &varid));
 	NC_PUT_ATT("wmo_2nd_q", "WMO 2nd tropopause water vapor", "ppv");
@@ -190,22 +193,7 @@ int main(
     NC_PUT_DOUBLE("time", &met->time, 1);
 
     /* Get cold point... */
-    ctl.met_tropo = 2;
-    read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
-    for (ix = 0; ix < nx; ix++)
-      for (iy = 0; iy < ny; iy++) {
-	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
-			    &pt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
-	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
-      }
-
-    /* Write data... */
+    get_tropo(2, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("clp_z", zt, 1);
     NC_PUT_DOUBLE("clp_p", pt, 1);
     NC_PUT_DOUBLE("clp_t", tt, 1);
@@ -213,22 +201,7 @@ int main(
       NC_PUT_DOUBLE("clp_q", qt, 1);
 
     /* Get dynamical tropopause... */
-    ctl.met_tropo = 5;
-    read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
-    for (ix = 0; ix < nx; ix++)
-      for (iy = 0; iy < ny; iy++) {
-	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
-			    &pt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
-	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
-      }
-
-    /* Write data... */
+    get_tropo(5, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("dyn_z", zt, 1);
     NC_PUT_DOUBLE("dyn_p", pt, 1);
     NC_PUT_DOUBLE("dyn_t", tt, 1);
@@ -236,22 +209,7 @@ int main(
       NC_PUT_DOUBLE("dyn_q", qt, 1);
 
     /* Get WMO 1st tropopause... */
-    ctl.met_tropo = 3;
-    read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
-    for (ix = 0; ix < nx; ix++)
-      for (iy = 0; iy < ny; iy++) {
-	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
-			    &pt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
-	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
-      }
-
-    /* Write data... */
+    get_tropo(3, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("wmo_1st_z", zt, 1);
     NC_PUT_DOUBLE("wmo_1st_p", pt, 1);
     NC_PUT_DOUBLE("wmo_1st_t", tt, 1);
@@ -259,22 +217,7 @@ int main(
       NC_PUT_DOUBLE("wmo_1st_q", qt, 1);
 
     /* Get WMO 2nd tropopause... */
-    ctl.met_tropo = 4;
-    read_met_tropo(&ctl, met);
-#pragma omp parallel for default(shared) private(ix,iy,ci,cw)
-    for (ix = 0; ix < nx; ix++)
-      for (iy = 0; iy < ny; iy++) {
-	intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
-			    &pt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &zt[iy * nx + ix], ci, cw, 1);
-	intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &tt[iy * nx + ix], ci, cw, 0);
-	intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
-			    lats[iy], &qt[iy * nx + ix], ci, cw, 0);
-      }
-
-    /* Write data... */
+    get_tropo(4, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("wmo_2nd_z", zt, 1);
     NC_PUT_DOUBLE("wmo_2nd_p", pt, 1);
     NC_PUT_DOUBLE("wmo_2nd_t", tt, 1);
@@ -292,4 +235,37 @@ int main(
   free(met);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+void get_tropo(
+  int met_tropo,
+  ctl_t * ctl,
+  met_t * met,
+  double *lons,
+  int nx,
+  double *lats,
+  int ny,
+  double *pt,
+  double *zt,
+  double *tt,
+  double *qt) {
+
+  INTPOL_INIT;
+
+  ctl->met_tropo = met_tropo;
+  read_met_tropo(ctl, met);
+#pragma omp parallel for default(shared) private(ci,cw)
+  for (int ix = 0; ix < nx; ix++)
+    for (int iy = 0; iy < ny; iy++) {
+      intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
+			  &pt[iy * nx + ix], ci, cw, 1);
+      intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &zt[iy * nx + ix], ci, cw, 1);
+      intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &tt[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &qt[iy * nx + ix], ci, cw, 0);
+    }
 }
