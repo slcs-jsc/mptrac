@@ -1235,7 +1235,16 @@ void get_met_help(
 
   /* Set filename of MPTRAC meteo files... */
   if (ctl->clams_met_data == 0) {
-    sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
+    if (ctl->met_type == 0)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
+    else if (ctl->met_type == 1)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.bin", metbase);
+    else if (ctl->met_type == 2)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.pck", metbase);
+    else if (ctl->met_type == 3)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
+    else if (ctl->met_type == 4)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
