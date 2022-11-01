@@ -2165,7 +2165,7 @@ void read_ctl(
 	     ctl->qnt_longname[iq]);
     scan_ctl(filename, argc, argv, "QNT_FORMAT", iq, "%g",
 	     ctl->qnt_format[iq]);
-    
+
     /* Try to identify quantity... */
     SET_QNT(qnt_idx, "idx", "particle index", "-")
       SET_QNT(qnt_ens, "ens", "ensemble index", "-")
@@ -2201,16 +2201,21 @@ void read_ctl(
       SET_QNT(qnt_plcl, "plcl", "lifted condensation level", "hPa")
       SET_QNT(qnt_plfc, "plfc", "level of free convection", "hPa")
       SET_QNT(qnt_pel, "pel", "equilibrium level", "hPa")
-      SET_QNT(qnt_cape, "cape", "convective available potential energy", "J/kg")
+      SET_QNT(qnt_cape, "cape", "convective available potential energy",
+	      "J/kg")
       SET_QNT(qnt_cin, "cin", "convective inhibition", "J/kg")
       SET_QNT(qnt_hno3, "hno3", "nitric acid", "ppv")
       SET_QNT(qnt_oh, "oh", "hydroxyl radical", "molec/cm^3")
       SET_QNT(qnt_vmrimpl, "vmrimpl", "volume mixing ratio (implicit)", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
-      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry", "kg")
-      SET_QNT(qnt_mloss_wet, "mloss_wet", "mass loss due to wet deposition", "kg")
-      SET_QNT(qnt_mloss_dry, "mloss_dry", "mass loss due to dry deposition", "kg")
-      SET_QNT(qnt_mloss_decay, "mloss_decay", "mass loss due to exponential decay", "kg")
+      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",
+	      "kg")
+      SET_QNT(qnt_mloss_wet, "mloss_wet", "mass loss due to wet deposition",
+	      "kg")
+      SET_QNT(qnt_mloss_dry, "mloss_dry", "mass loss due to dry deposition",
+	      "kg")
+      SET_QNT(qnt_mloss_decay, "mloss_decay",
+	      "mass loss due to exponential decay", "kg")
       SET_QNT(qnt_psat, "psat", "saturation pressure over water", "hPa")
       SET_QNT(qnt_psice, "psice", "saturation pressure over ice", "hPa")
       SET_QNT(qnt_pw, "pw", "partial water vapor pressure", "hPa")
@@ -2230,7 +2235,7 @@ void read_ctl(
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
-  
+
   /* netCDF I/O parameters... */
   ctl->chunkszhint =
     (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
@@ -4611,31 +4616,26 @@ double sedi(
   double rp,
   double rhop) {
 
-  double eta, G, K, lambda, rho, v;
-
-  /* Convert pressure from hPa to Pa... */
-  p *= 100.;
-
   /* Convert particle radius from microns to m... */
   rp *= 1e-6;
 
   /* Density of dry air [kg / m^3]... */
-  rho = p / (RA * T);
+  double rho = RHO(p, T);
 
   /* Dynamic viscosity of air [kg / (m s)]... */
-  eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+  double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Thermal velocity of an air molecule [m / s]... */
-  v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
+  double v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
 
   /* Mean free path of an air molecule [m]... */
-  lambda = 2. * eta / (rho * v);
+  double lambda = 2. * eta / (rho * v);
 
   /* Knudsen number for air (dimensionless)... */
-  K = lambda / rp;
+  double K = lambda / rp;
 
   /* Cunningham slip-flow correction (dimensionless)... */
-  G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
+  double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
   /* Sedimentation velocity [m / s]... */
   return 2. * SQR(rp) * (rhop - rho) * G0 / (9. * eta) * G;
@@ -5310,7 +5310,7 @@ void write_csi(
   static char line[LEN];
 
   static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
-    rz, rlon, rlat, robs, t0, t1, area[GY], dlon, dlat, dz, x[NCSI], y[NCSI];
+    rz, rlon, rlat, robs, area[GY], dlon, dlat, dz, x[NCSI], y[NCSI];
 
   static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
 
@@ -5372,8 +5372,8 @@ void write_csi(
   }
 
   /* Set time interval... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid cells... */
 #pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
@@ -5528,8 +5528,7 @@ void write_ens(
 
   static FILE *out;
 
-  static double dummy, ens, lat, lon, p[NENS], q[NQ][NENS],
-    t0, t1, x[NENS][3], xm[3];
+  static double dummy, ens, lat, lon, p[NENS], q[NQ][NENS], x[NENS][3], xm[3];
 
   static int ip, iq;
 
@@ -5565,8 +5564,8 @@ void write_ens(
   }
 
   /* Set time interval... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Init... */
   ens = GSL_NAN;
@@ -5666,51 +5665,52 @@ void write_grid(
 
   char line[LEN];
 
-  static double mass[GX][GY][GZ], vmr[GX][GY][GZ], vmr_expl, vmr_impl,
-    z[GZ], dz, lon[GX], dlon, lat[GY], dlat, area[GY], rho_air,
-    press[GZ], temp, cd, t0, t1, r;
+  static double mass[GX][GY][GZ], vmr[GX][GY][GZ], z[GZ], lon[GX], lat[GY],
+    area[GY], press[GZ], temp;
 
-  static int ip, ix, *ixs, iy, *iys, iz, *izs, np[GX][GY][GZ], year, mon, day,
-    hour, min, sec;
+  static int *ixs, *iys, *izs, np[GX][GY][GZ];
 
   /* Set timer... */
   SELECT_TIMER("WRITE_GRID", "OUTPUT", NVTX_WRITE);
+
+  /* Write info... */
+  LOG(1, "Write grid data: %s", filename);
 
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
     ERRMSG("Grid dimensions too large!");
 
   /* Set grid box size... */
-  dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
-  dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
-  dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+  double dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
+  double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
+  double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
 
   /* Set vertical coordinates... */
-#pragma omp parallel for default(shared) private(iz)
-  for (iz = 0; iz < ctl->grid_nz; iz++) {
+#pragma omp parallel for default(shared)
+  for (int iz = 0; iz < ctl->grid_nz; iz++) {
     z[iz] = ctl->grid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
 
   /* Set horizontal coordinates... */
-  for (ix = 0; ix < ctl->grid_nx; ix++)
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
     lon[ix] = ctl->grid_lon0 + dlon * (ix + 0.5);
-#pragma omp parallel for default(shared) private(iy)
-  for (iy = 0; iy < ctl->grid_ny; iy++) {
+#pragma omp parallel for default(shared)
+  for (int iy = 0; iy < ctl->grid_ny; iy++) {
     lat[iy] = ctl->grid_lat0 + dlat * (iy + 0.5);
     area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
       * cos(lat[iy] * M_PI / 180.);
   }
 
   /* Set time interval for output... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize grid... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
-  for (ix = 0; ix < ctl->grid_nx; ix++)
-    for (iy = 0; iy < ctl->grid_ny; iy++)
-      for (iz = 0; iz < ctl->grid_nz; iz++) {
+#pragma omp parallel for default(shared) collapse(3)
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    for (int iy = 0; iy < ctl->grid_ny; iy++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++) {
 	mass[ix][iy][iz] = 0;
 	vmr[ix][iy][iz] = 0;
 	np[ix][iy][iz] = 0;
@@ -5725,8 +5725,8 @@ void write_grid(
 	atm->np);
 
   /* Get indices... */
-#pragma omp parallel for default(shared) private(ip)
-  for (ip = 0; ip < atm->np; ip++) {
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->grid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->grid_lat0) / dlat);
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->grid_z0) / dz);
@@ -5738,7 +5738,7 @@ void write_grid(
   }
 
   /* Average data... */
-  for (ip = 0; ip < atm->np; ip++)
+  for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
       np[ixs[ip]][iys[ip]][izs[ip]]++;
       if (ctl->qnt_m >= 0)
@@ -5746,16 +5746,17 @@ void write_grid(
       if (ctl->qnt_vmr >= 0)
 	vmr[ixs[ip]][iys[ip]][izs[ip]] += atm->q[ctl->qnt_vmr][ip];
     }
+
+  /* Get implicit vmr per particle... */
   if (ctl->qnt_vmrimpl >= 0)
-    for (ip = 0; ip < atm->np; ip++)
+    for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0) {
 	INTPOL_INIT;
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
-	rho_air = 100. * press[izs[ip]] / (RA * temp);
 	atm->q[ctl->qnt_vmrimpl][ip] =
 	  MA / ctl->molmass * mass[ixs[ip]][iys[ip]][izs[ip]]
-	  / (rho_air * 1e6 * area[iys[ip]] * 1e3 * dz);
+	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
 
   /* Free... */
@@ -5766,9 +5767,6 @@ void write_grid(
   /* Check if gnuplot output is requested... */
   if (ctl->grid_gpfile[0] != '-') {
 
-    /* Write info... */
-    LOG(1, "Plot grid data: %s.png", filename);
-
     /* Create gnuplot pipe... */
     if (!(out = popen("gnuplot", "w")))
       ERRMSG("Cannot create pipe to gnuplot!");
@@ -5777,6 +5775,8 @@ void write_grid(
     fprintf(out, "set out \"%s.png\"\n", filename);
 
     /* Set time string... */
+    double r;
+    int year, mon, day, hour, min, sec;
     jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
     fprintf(out, "timestr=\"%d-%02d-%02d, %02d:%02d UTC\"\n",
 	    year, mon, day, hour, min);
@@ -5790,9 +5790,6 @@ void write_grid(
   }
 
   else {
-
-    /* Write info... */
-    LOG(1, "Write grid data: %s", filename);
 
     /* Create file... */
     if (!(out = fopen(filename, "w")))
@@ -5813,22 +5810,22 @@ void write_grid(
 	  "# $10 = volume mixing ratio (explicit) [ppv]\n\n");
 
   /* Write data... */
-  for (ix = 0; ix < ctl->grid_nx; ix++) {
+  for (int ix = 0; ix < ctl->grid_nx; ix++) {
     if (ix > 0 && ctl->grid_ny > 1 && !ctl->grid_sparse)
       fprintf(out, "\n");
-    for (iy = 0; iy < ctl->grid_ny; iy++) {
+    for (int iy = 0; iy < ctl->grid_ny; iy++) {
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
-      for (iz = 0; iz < ctl->grid_nz; iz++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++)
 	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0 || vmr[ix][iy][iz] > 0) {
 
 	  /* Calculate column density... */
+	  double cd = GSL_NAN;
 	  if (ctl->qnt_m >= 0)
 	    cd = mass[ix][iy][iz] / (1e6 * area[iy]);
-	  else
-	    cd = GSL_NAN;
 
 	  /* Calculate volume mixing ratio (implicit)... */
+	  double vmr_impl = GSL_NAN;
 	  if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
 	    vmr_impl = 0;
 	    if (mass[ix][iy][iz] > 0) {
@@ -5838,21 +5835,16 @@ void write_grid(
 	      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
 				 lon[ix], lat[iy], &temp, ci, cw, 1);
 
-	      /* Calculate density of air... */
-	      rho_air = 100. * press[iz] / (RA * temp);
-
 	      /* Calculate volume mixing ratio... */
 	      vmr_impl = MA / ctl->molmass * mass[ix][iy][iz]
-		/ (rho_air * 1e6 * area[iy] * 1e3 * dz);
+		/ (RHO(press[iz], temp) * 1e6 * area[iy] * 1e3 * dz);
 	    }
-	  } else
-	    vmr_impl = GSL_NAN;
+	  }
 
 	  /* Calculate volume mixing ratio (explicit)... */
+	  double vmr_expl = GSL_NAN;
 	  if (ctl->qnt_vmr >= 0 && np[ix][iy][iz] > 0)
 	    vmr_expl = vmr[ix][iy][iz] / np[ix][iy][iz];
-	  else
-	    vmr_expl = GSL_NAN;
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", t, z[iz],
@@ -6075,9 +6067,9 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old,
-    rz, rlon, rlat, robs, t0, t1, area[GY], dz, dlon, dlat,
-    lon[GX], lat[GY], z[GZ], press[GZ], temp, rho_air, vmr, h2o, o3;
+  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old, rz, rlon, rlat,
+    robs, area[GY], dz, dlon, dlat, lon[GX], lat[GY], z[GZ], press[GZ],
+    temp, vmr, h2o, o3;
 
   static int obscount[GX][GY], ip, ix, iy, iz, okay;
 
@@ -6148,8 +6140,8 @@ void write_prof(
   }
 
   /* Set time interval... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Initialize... */
 #pragma omp parallel for default(shared) private(ix,iy,iz) collapse(2)
@@ -6239,7 +6231,7 @@ void write_prof(
 	/* Loop over altitudes... */
 	for (iz = 0; iz < ctl->prof_nz; iz++) {
 
-	  /* Get pressure and temperature... */
+	  /* Get temperature, water vapor, and ozone... */
 	  INTPOL_INIT;
 	  intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
 			     lon[ix], lat[iy], &temp, ci, cw, 1);
@@ -6249,9 +6241,8 @@ void write_prof(
 			     lon[ix], lat[iy], &o3, ci, cw, 0);
 
 	  /* Calculate volume mixing ratio... */
-	  rho_air = 100. * press[iz] / (RA * temp);
 	  vmr = MA / ctl->molmass * mass[ix][iy][iz]
-	    / (rho_air * area[iy] * dz * 1e9);
+	    / (RHO(press[iz], temp) * area[iy] * dz * 1e9);
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d\n",
@@ -6281,7 +6272,7 @@ void write_sample(
 
   static char line[LEN];
 
-  static double area, dlat, rmax2, t0, t1, rt, rt_old, rz, rlon, rlat, robs;
+  static double area, dlat, rmax2, rt, rt_old, rz, rlon, rlat, robs;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_SAMPLE", "OUTPUT", NVTX_WRITE);
@@ -6322,8 +6313,8 @@ void write_sample(
   }
 
   /* Set time interval for output... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Read observation data... */
   while (fgets(line, LEN, in)) {
@@ -6396,12 +6387,9 @@ void write_sample(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt, rp,
 			   rlon, rlat, &temp, ci, cw, 1);
 
-	/* Calculate density of air... */
-	double rho_air = 100. * rp / (RA * temp);
-
 	/* Calculate volume mixing ratio... */
 	vmr = MA / ctl->molmass * mass
-	  / (rho_air * 1e6 * area * 1e3 * ctl->sample_dz);
+	  / (RHO(rp, temp) * 1e6 * area * 1e3 * ctl->sample_dz);
       }
     } else
       vmr = GSL_NAN;
@@ -6432,7 +6420,7 @@ void write_station(
 
   static FILE *out;
 
-  static double rmax2, t0, t1, x0[3], x1[3];
+  static double rmax2, x0[3], x1[3];
 
   /* Set timer... */
   SELECT_TIMER("WRITE_STATION", "OUTPUT", NVTX_WRITE);
@@ -6463,8 +6451,8 @@ void write_station(
   }
 
   /* Set time interval for output... */
-  t0 = t - 0.5 * ctl->dt_mod;
-  t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over air parcels... */
   for (int ip = 0; ip < atm->np; ip++) {
