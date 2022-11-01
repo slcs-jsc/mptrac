@@ -34,6 +34,8 @@ int main(
 
   ctl_t ctl;
 
+  clim_t *clim;
+
   met_t *met0, *met1;
 
   FILE *out;
@@ -45,6 +47,7 @@ int main(
   static int i, ix, iy, iz, n[EP][EY];
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(met0, met_t, 1);
   ALLOC(met1, met_t, 1);
 
@@ -56,13 +59,16 @@ int main(
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
 
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
+
   /* Loop over data files... */
   for (i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met0))
+    if (!read_met(argv[i], &ctl, clim, met0))
       ERRMSG("Cannot open file!");
-    if (!read_met(argv[i + 1], &ctl, met1))
+    if (!read_met(argv[i + 1], &ctl, clim, met1))
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */
@@ -191,6 +197,7 @@ int main(
   fclose(out);
 
   /* Free... */
+  free(clim);
   free(met0);
   free(met1);
 

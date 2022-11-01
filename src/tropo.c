@@ -31,6 +31,7 @@
 void get_tropo(
   int met_tropo,
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met,
   double *lons,
   int nx,
@@ -51,6 +52,8 @@ int main(
 
   ctl_t ctl;
 
+  clim_t *clim;
+
   met_t *met;
 
   static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
@@ -61,6 +64,7 @@ int main(
   static size_t count[10], start[10];
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
 
   /* Check arguments... */
@@ -77,12 +81,15 @@ int main(
   dlat = scan_ctl(argv[1], argc, argv, "TROPO_DLAT", -1, "-999", NULL);
   h2o = (int) scan_ctl(argv[1], argc, argv, "TROPO_H2O", -1, "1", NULL);
 
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
+
   /* Loop over files... */
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
     ctl.met_tropo = 0;
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Set horizontal grid... */
@@ -193,7 +200,7 @@ int main(
     NC_PUT_DOUBLE("time", &met->time, 1);
 
     /* Get cold point... */
-    get_tropo(2, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(2, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("clp_z", zt, 1);
     NC_PUT_DOUBLE("clp_p", pt, 1);
     NC_PUT_DOUBLE("clp_t", tt, 1);
@@ -201,7 +208,7 @@ int main(
       NC_PUT_DOUBLE("clp_q", qt, 1);
 
     /* Get dynamical tropopause... */
-    get_tropo(5, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(5, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("dyn_z", zt, 1);
     NC_PUT_DOUBLE("dyn_p", pt, 1);
     NC_PUT_DOUBLE("dyn_t", tt, 1);
@@ -209,7 +216,7 @@ int main(
       NC_PUT_DOUBLE("dyn_q", qt, 1);
 
     /* Get WMO 1st tropopause... */
-    get_tropo(3, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(3, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("wmo_1st_z", zt, 1);
     NC_PUT_DOUBLE("wmo_1st_p", pt, 1);
     NC_PUT_DOUBLE("wmo_1st_t", tt, 1);
@@ -217,7 +224,7 @@ int main(
       NC_PUT_DOUBLE("wmo_1st_q", qt, 1);
 
     /* Get WMO 2nd tropopause... */
-    get_tropo(4, &ctl, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(4, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
     NC_PUT_DOUBLE("wmo_2nd_z", zt, 1);
     NC_PUT_DOUBLE("wmo_2nd_p", pt, 1);
     NC_PUT_DOUBLE("wmo_2nd_t", tt, 1);
@@ -232,6 +239,7 @@ int main(
   NC(nc_close(ncid));
 
   /* Free... */
+  free(clim);
   free(met);
 
   return EXIT_SUCCESS;
@@ -242,6 +250,7 @@ int main(
 void get_tropo(
   int met_tropo,
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met,
   double *lons,
   int nx,
@@ -255,7 +264,7 @@ void get_tropo(
   INTPOL_INIT;
 
   ctl->met_tropo = met_tropo;
-  read_met_tropo(ctl, met);
+  read_met_tropo(ctl, clim, met);
 #pragma omp parallel for default(shared) private(ci,cw)
   for (int ix = 0; ix < nx; ix++)
     for (int iy = 0; iy < ny; iy++) {

@@ -41,9 +41,9 @@ int main(
 
   ctl_t ctl;
 
-  met_t *met;
-
   clim_t *clim;
+
+  met_t *met;
 
   FILE *out;
 
@@ -60,8 +60,8 @@ int main(
   static int i, iz, np[NZ], npc[NZ], npt[NZ], nz, ci[3];
 
   /* Allocate... */
-  ALLOC(met, met_t, 1);
   ALLOC(clim, clim_t, 1);
+  ALLOC(met, met_t, 1);
 
   /* Check arguments... */
   if (argc < 4)
@@ -86,7 +86,7 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Set vertical grid... */
@@ -259,8 +259,8 @@ int main(
   fclose(out);
 
   /* Free... */
-  free(met);
   free(clim);
+  free(met);
 
   return EXIT_SUCCESS;
 }

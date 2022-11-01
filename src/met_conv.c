@@ -30,6 +30,8 @@ int main(
 
   ctl_t ctl;
 
+  clim_t *clim;
+
   met_t *met;
 
   /* Check arguments... */
@@ -38,14 +40,18 @@ int main(
 	   " <met_out> <met_out_type>");
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
 
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
+
   /* Read meteo data... */
   ctl.met_type = atoi(argv[3]);
-  if (!read_met(argv[2], &ctl, met))
+  if (!read_met(argv[2], &ctl, clim, met))
     ERRMSG("Cannot open file!");
 
   /* Write meteo data... */
@@ -53,6 +59,7 @@ int main(
   write_met(argv[4], &ctl, met);
 
   /* Free... */
+  free(clim);
   free(met);
 
   return EXIT_SUCCESS;

@@ -1346,58 +1346,67 @@ typedef struct {
 /*! Climatological data. */
 typedef struct {
 
-  /*! HNO3 data time steps [s]. */
+  /*! Tropopause time steps [s]. */
+  double tropo_time[12];
+
+  /*! Tropopause latitudes [deg]. */
+  double tropo_lat[73];
+
+  /*! Tropopause pressure values [hPa]. */
+  double tropo[12][73];
+
+  /*! HNO3 time steps [s]. */
   double hno3_time[12];
 
-  /*! HNO3 data latitudes [deg]. */
+  /*! HNO3 latitudes [deg]. */
   double hno3_lat[18];
 
-  /*! HNO3 data pressure levels [hPa]. */
+  /*! HNO3 pressure levels [hPa]. */
   double hno3_p[10];
 
-  /*! HNO3 data number concentrations [molec/cm^3]. */
+  /*! HNO3 volume mixing ratios [ppv]. */
   double hno3[12][18][10];
 
-  /*! Number of OH data timesteps. */
+  /*! Number of OH timesteps. */
   int oh_nt;
 
-  /*! Number of OH data latitudes. */
+  /*! Number of OH latitudes. */
   int oh_ny;
 
-  /*! Number of OH data pressure levels. */
+  /*! Number of OH pressure levels. */
   int oh_np;
 
-  /*! OH data time steps [s]. */
+  /*! OH time steps [s]. */
   double oh_time[CT];
 
-  /*! OH data latitudes [deg]. */
+  /*! OH latitudes [deg]. */
   double oh_lat[CY];
 
-  /*! OH data pressure levels [hPa]. */
+  /*! OH pressure levels [hPa]. */
   double oh_p[CP];
 
-  /*! OH data number concentrations [molec/cm^3]. */
+  /*! OH number concentrations [molec/cm^3]. */
   double oh[CT][CP][CY];
 
-  /*! Number of H2O2 data timesteps. */
+  /*! Number of H2O2 timesteps. */
   int h2o2_nt;
 
-  /*! Number of H2O2 data latitudes. */
+  /*! Number of H2O2 latitudes. */
   int h2o2_ny;
 
-  /*! Number of H2O2 data pressure levels. */
+  /*! Number of H2O2 pressure levels. */
   int h2o2_np;
 
-  /*! H2O2 data time steps [s]. */
+  /*! H2O2 time steps [s]. */
   double h2o2_time[CT];
 
-  /*! H2O2 data latitudes [deg]. */
+  /*! H2O2 latitudes [deg]. */
   double h2o2_lat[CY];
 
-  /*! H2O2 data pressure levels [hPa]. */
+  /*! H2O2 pressure levels [hPa]. */
   double h2o2_p[CP];
 
-  /*! H2O2 data number concentrations [molec/cm^3]. */
+  /*! H2O2 number concentrations [molec/cm^3]. */
   double h2o2[CT][CP][CY];
 
 } clim_t;
@@ -1614,8 +1623,13 @@ void clim_h2o2_init(
 #pragma acc routine (clim_tropo)
 #endif
 double clim_tropo(
+  clim_t * clim,
   double t,
   double lat);
+
+/*! Initialize tropopause climatology. */
+void clim_tropo_init(
+  clim_t * clim);
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -1674,6 +1688,7 @@ void geo2cart(
 /*! Get meteo data for given time step. */
 void get_met(
   ctl_t * ctl,
+  clim_t * clim,
   double t,
   met_t ** met0,
   met_t ** met1);
@@ -1898,6 +1913,7 @@ void read_ctl(
 int read_met(
   char *filename,
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met);
 
 /*! Read 2-D meteo variable. */
@@ -1919,6 +1935,7 @@ void read_met_bin_3d(
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
+  clim_t * clim,
   met_t * met);
 
 /*! Calculate cloud properties. */
@@ -2007,6 +2024,7 @@ void read_met_surface(
 /*! Calculate tropopause data. */
 void read_met_tropo(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met);
 
 /*! Read a control parameter from file or command line. */
@@ -2078,6 +2096,7 @@ void timer(
 #pragma acc routine (tropo_weight)
 #endif
 double tropo_weight(
+  clim_t * clim,
   double t,
   double lat,
   double p);

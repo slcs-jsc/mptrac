@@ -66,6 +66,7 @@ void module_convection(
 /*! Calculate exponential decay of particle mass. */
 void module_decay(
   ctl_t * ctl,
+  clim_t * clim,
   atm_t * atm,
   double *dt);
 
@@ -82,6 +83,7 @@ void module_diffusion_meso(
 /*! Calculate turbulent diffusion. */
 void module_diffusion_turb(
   ctl_t * ctl,
+  clim_t * clim,
   atm_t * atm,
   double *dt,
   double *rs);
@@ -314,7 +316,7 @@ int main(
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-    get_met(&ctl, ctl.t_start, &met0, &met1);
+    get_met(&ctl, clim, ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
@@ -345,7 +347,7 @@ int main(
 
       /* Get meteo data... */
       if (t != ctl.t_start)
-	get_met(&ctl, t, &met0, &met1);
+	get_met(&ctl, clim, t, &met0, &met1);
 
       /* Sort particles... */
       if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
@@ -360,7 +362,7 @@ int main(
       /* Turbulent diffusion... */
       if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
-	module_diffusion_turb(&ctl, atm, dt, rs);
+	module_diffusion_turb(&ctl, clim, atm, dt, rs);
 
       /* Mesoscale diffusion... */
       if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
@@ -389,7 +391,7 @@ int main(
 
       /* Decay of particle mass... */
       if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
-	module_decay(&ctl, atm, dt);
+	module_decay(&ctl, clim, atm, dt);
 
       /* OH chemistry... */
       if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
@@ -709,6 +711,7 @@ void module_convection(
 
 void module_decay(
   ctl_t * ctl,
+  clim_t * clim,
   atm_t * atm,
   double *dt) {
 
@@ -721,7 +724,7 @@ void module_decay(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,atm,dt)
+#pragma acc data present(ctl,clim,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -730,7 +733,7 @@ void module_decay(
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
+      double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
       /* Set lifetime... */
       double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -854,6 +857,7 @@ void module_diffusion_meso(
 
 void module_diffusion_turb(
   ctl_t * ctl,
+  clim_t * clim,
   atm_t * atm,
   double *dt,
   double *rs) {
@@ -866,7 +870,7 @@ void module_diffusion_turb(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl,atm,dt,rs)
+#pragma acc data present(ctl,clim,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -875,7 +879,7 @@ void module_diffusion_turb(
     if (dt[ip] != 0) {
 
       /* Get weighting factor... */
-      double w = tropo_weight(atm->time[ip], atm->lat[ip], atm->p[ip]);
+      double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
       /* Set diffusivity... */
       double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
