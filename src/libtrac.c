@@ -2021,7 +2021,7 @@ int read_atm_nc(
   ctl_t * ctl,
   atm_t * atm) {
 
-  size_t nparts;
+  size_t np;
 
   int ncid, varid;
 
@@ -2030,61 +2030,18 @@ int read_atm_nc(
     return 0;
 
   /* Get dimensions... */
-  NC_INQ_DIM("NPARTS", &nparts, 1, NP);
-  atm->np = (int) nparts;
-
-  /* Get time... */
-  double t0;
-  NC_GET_DOUBLE("time", &t0, 1);
-  for (int ip = 0; ip < atm->np; ip++)
-    atm->time[ip] = t0;
+  NC_INQ_DIM("obs", &np, 1, NP);
+  atm->np = (int) np;
 
   /* Read geolocations... */
-  NC_GET_DOUBLE("PRESS", atm->p, 1);
-  NC_GET_DOUBLE("LON", atm->lon, 1);
-  NC_GET_DOUBLE("LAT", atm->lat, 1);
+  NC_GET_DOUBLE("time", atm->time, 1);
+  NC_GET_DOUBLE("press", atm->p, 1);
+  NC_GET_DOUBLE("lon", atm->lon, 1);
+  NC_GET_DOUBLE("lat", atm->lat, 1);
 
   /* Read variables... */
-  if (ctl->qnt_p >= 0)
-    NC_GET_DOUBLE("PRESS", atm->q[ctl->qnt_p], 0);
-  if (ctl->qnt_t >= 0)
-    NC_GET_DOUBLE("TEMP", atm->q[ctl->qnt_t], 0);
-  if (ctl->qnt_u >= 0)
-    NC_GET_DOUBLE("U", atm->q[ctl->qnt_u], 0);
-  if (ctl->qnt_v >= 0)
-    NC_GET_DOUBLE("V", atm->q[ctl->qnt_v], 0);
-  if (ctl->qnt_w >= 0)
-    NC_GET_DOUBLE("W", atm->q[ctl->qnt_w], 0);
-  if (ctl->qnt_h2o >= 0)
-    NC_GET_DOUBLE("SH", atm->q[ctl->qnt_h2o], 0);
-  if (ctl->qnt_o3 >= 0)
-    NC_GET_DOUBLE("O3", atm->q[ctl->qnt_o3], 0);
-  if (ctl->qnt_theta >= 0)
-    NC_GET_DOUBLE("THETA", atm->q[ctl->qnt_theta], 0);
-  if (ctl->qnt_pv >= 0)
-    NC_GET_DOUBLE("PV", atm->q[ctl->qnt_pv], 0);
-
-  /* Check data... */
-  for (int ip = 0; ip < atm->np; ip++)
-    if (fabs(atm->lon[ip]) > 360 || fabs(atm->lat[ip]) > 90
-	|| (ctl->qnt_t >= 0 && fabs(atm->q[ctl->qnt_t][ip]) > 350)
-	|| (ctl->qnt_h2o >= 0 && fabs(atm->q[ctl->qnt_h2o][ip]) > 1)
-	|| (ctl->qnt_theta >= 0 && fabs(atm->q[ctl->qnt_theta][ip]) > 1e10)
-	|| (ctl->qnt_pv >= 0 && fabs(atm->q[ctl->qnt_pv][ip]) > 1e10)) {
-      atm->time[ip] = GSL_NAN;
-      atm->p[ip] = GSL_NAN;
-      atm->lon[ip] = GSL_NAN;
-      atm->lat[ip] = GSL_NAN;
-      for (int iq = 0; iq < ctl->nq; iq++)
-	atm->q[iq][ip] = GSL_NAN;
-    } else {
-      if (ctl->qnt_h2o >= 0)
-	atm->q[ctl->qnt_h2o][ip] *= 1.608;
-      if (ctl->qnt_pv >= 0)
-	atm->q[ctl->qnt_pv][ip] *= 1e6;
-      if (atm->lon[ip] > 180)
-	atm->lon[ip] -= 360;
-    }
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_GET_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
 
   /* Close file... */
   NC(nc_close(ncid));
@@ -2204,74 +2161,76 @@ void read_ctl(
 
     /* Read quantity name and format... */
     scan_ctl(filename, argc, argv, "QNT_NAME", iq, "", ctl->qnt_name[iq]);
+    scan_ctl(filename, argc, argv, "QNT_LONGNAME", iq, ctl->qnt_name[iq],
+	     ctl->qnt_longname[iq]);
     scan_ctl(filename, argc, argv, "QNT_FORMAT", iq, "%g",
 	     ctl->qnt_format[iq]);
-
+    
     /* Try to identify quantity... */
-    SET_QNT(qnt_idx, "idx", "-")
-      SET_QNT(qnt_ens, "ens", "-")
-      SET_QNT(qnt_stat, "stat", "-")
-      SET_QNT(qnt_m, "m", "kg")
-      SET_QNT(qnt_vmr, "vmr", "ppv")
-      SET_QNT(qnt_rp, "rp", "microns")
-      SET_QNT(qnt_rhop, "rhop", "kg/m^3")
-      SET_QNT(qnt_ps, "ps", "hPa")
-      SET_QNT(qnt_ts, "ts", "K")
-      SET_QNT(qnt_zs, "zs", "km")
-      SET_QNT(qnt_us, "us", "m/s")
-      SET_QNT(qnt_vs, "vs", "m/s")
-      SET_QNT(qnt_pbl, "pbl", "hPa")
-      SET_QNT(qnt_pt, "pt", "hPa")
-      SET_QNT(qnt_tt, "tt", "K")
-      SET_QNT(qnt_zt, "zt", "km")
-      SET_QNT(qnt_h2ot, "h2ot", "ppv")
-      SET_QNT(qnt_z, "z", "km")
-      SET_QNT(qnt_p, "p", "hPa")
-      SET_QNT(qnt_t, "t", "K")
-      SET_QNT(qnt_rho, "rho", "kg/m^3")
-      SET_QNT(qnt_u, "u", "m/s")
-      SET_QNT(qnt_v, "v", "m/s")
-      SET_QNT(qnt_w, "w", "hPa/s")
-      SET_QNT(qnt_h2o, "h2o", "ppv")
-      SET_QNT(qnt_o3, "o3", "ppv")
-      SET_QNT(qnt_lwc, "lwc", "kg/kg")
-      SET_QNT(qnt_iwc, "iwc", "kg/kg")
-      SET_QNT(qnt_pct, "pct", "hPa")
-      SET_QNT(qnt_pcb, "pcb", "hPa")
-      SET_QNT(qnt_cl, "cl", "kg/m^2")
-      SET_QNT(qnt_plcl, "plcl", "hPa")
-      SET_QNT(qnt_plfc, "plfc", "hPa")
-      SET_QNT(qnt_pel, "pel", "hPa")
-      SET_QNT(qnt_cape, "cape", "J/kg")
-      SET_QNT(qnt_cin, "cin", "J/kg")
-      SET_QNT(qnt_hno3, "hno3", "ppv")
-      SET_QNT(qnt_oh, "oh", "molec/cm^3")
-      SET_QNT(qnt_vmrimpl, "vmrimpl", "ppv")
-      SET_QNT(qnt_mloss_oh, "mloss_oh", "kg")
-      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "kg")
-      SET_QNT(qnt_mloss_wet, "mloss_wet", "kg")
-      SET_QNT(qnt_mloss_dry, "mloss_dry", "kg")
-      SET_QNT(qnt_mloss_decay, "mloss_decay", "kg")
-      SET_QNT(qnt_psat, "psat", "hPa")
-      SET_QNT(qnt_psice, "psice", "hPa")
-      SET_QNT(qnt_pw, "pw", "hPa")
-      SET_QNT(qnt_sh, "sh", "kg/kg")
-      SET_QNT(qnt_rh, "rh", "%%")
-      SET_QNT(qnt_rhice, "rhice", "%%")
-      SET_QNT(qnt_theta, "theta", "K")
-      SET_QNT(qnt_zeta, "zeta", "K")
-      SET_QNT(qnt_tvirt, "tvirt", "K")
-      SET_QNT(qnt_lapse, "lapse", "K/km")
-      SET_QNT(qnt_vh, "vh", "m/s")
-      SET_QNT(qnt_vz, "vz", "m/s")
-      SET_QNT(qnt_pv, "pv", "PVU")
-      SET_QNT(qnt_tdew, "tdew", "K")
-      SET_QNT(qnt_tice, "tice", "K")
-      SET_QNT(qnt_tsts, "tsts", "K")
-      SET_QNT(qnt_tnat, "tnat", "K")
+    SET_QNT(qnt_idx, "idx", "particle index", "-")
+      SET_QNT(qnt_ens, "ens", "ensemble index", "-")
+      SET_QNT(qnt_stat, "stat", "station flag", "-")
+      SET_QNT(qnt_m, "m", "mass", "kg")
+      SET_QNT(qnt_vmr, "vmr", "volume mixing ratio", "ppv")
+      SET_QNT(qnt_rp, "rp", "particle radius", "microns")
+      SET_QNT(qnt_rhop, "rhop", "particle density", "kg/m^3")
+      SET_QNT(qnt_ps, "ps", "surface pressure", "hPa")
+      SET_QNT(qnt_ts, "ts", "surface temperature", "K")
+      SET_QNT(qnt_zs, "zs", "surface height", "km")
+      SET_QNT(qnt_us, "us", "surface zonal wind", "m/s")
+      SET_QNT(qnt_vs, "vs", "surface meridional wind", "m/s")
+      SET_QNT(qnt_pbl, "pbl", "planetary boundary layer", "hPa")
+      SET_QNT(qnt_pt, "pt", "tropopause pressure", "hPa")
+      SET_QNT(qnt_tt, "tt", "tropopause temperature", "K")
+      SET_QNT(qnt_zt, "zt", "tropopause geopotential height", "km")
+      SET_QNT(qnt_h2ot, "h2ot", "tropopause water vapor", "ppv")
+      SET_QNT(qnt_z, "z", "geopotential height", "km")
+      SET_QNT(qnt_p, "p", "pressure", "hPa")
+      SET_QNT(qnt_t, "t", "temperature", "K")
+      SET_QNT(qnt_rho, "rho", "air density", "kg/m^3")
+      SET_QNT(qnt_u, "u", "zonal wind", "m/s")
+      SET_QNT(qnt_v, "v", "meridional wind", "m/s")
+      SET_QNT(qnt_w, "w", "vertical velocity", "hPa/s")
+      SET_QNT(qnt_h2o, "h2o", "water vapor", "ppv")
+      SET_QNT(qnt_o3, "o3", "ozone", "ppv")
+      SET_QNT(qnt_lwc, "lwc", "cloud ice water content", "kg/kg")
+      SET_QNT(qnt_iwc, "iwc", "cloud liquid water content", "kg/kg")
+      SET_QNT(qnt_pct, "pct", "cloud top pressure", "hPa")
+      SET_QNT(qnt_pcb, "pcb", "cloud bottom pressure", "hPa")
+      SET_QNT(qnt_cl, "cl", "total column cloud water", "kg/m^2")
+      SET_QNT(qnt_plcl, "plcl", "lifted condensation level", "hPa")
+      SET_QNT(qnt_plfc, "plfc", "level of free convection", "hPa")
+      SET_QNT(qnt_pel, "pel", "equilibrium level", "hPa")
+      SET_QNT(qnt_cape, "cape", "convective available potential energy", "J/kg")
+      SET_QNT(qnt_cin, "cin", "convective inhibition", "J/kg")
+      SET_QNT(qnt_hno3, "hno3", "nitric acid", "ppv")
+      SET_QNT(qnt_oh, "oh", "hydroxyl radical", "molec/cm^3")
+      SET_QNT(qnt_vmrimpl, "vmrimpl", "volume mixing ratio (implicit)", "ppv")
+      SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
+      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry", "kg")
+      SET_QNT(qnt_mloss_wet, "mloss_wet", "mass loss due to wet deposition", "kg")
+      SET_QNT(qnt_mloss_dry, "mloss_dry", "mass loss due to dry deposition", "kg")
+      SET_QNT(qnt_mloss_decay, "mloss_decay", "mass loss due to exponential decay", "kg")
+      SET_QNT(qnt_psat, "psat", "saturation pressure over water", "hPa")
+      SET_QNT(qnt_psice, "psice", "saturation pressure over ice", "hPa")
+      SET_QNT(qnt_pw, "pw", "partial water vapor pressure", "hPa")
+      SET_QNT(qnt_sh, "sh", "specific humidity", "kg/kg")
+      SET_QNT(qnt_rh, "rh", "relative humidity", "%%")
+      SET_QNT(qnt_rhice, "rhice", "relative humidity over ice", "%%")
+      SET_QNT(qnt_theta, "theta", "potential temperature", "K")
+      SET_QNT(qnt_zeta, "zeta", "zeta coordinate", "K")
+      SET_QNT(qnt_tvirt, "tvirt", "virtual temperature", "K")
+      SET_QNT(qnt_lapse, "lapse", "temperature lapse rate", "K/km")
+      SET_QNT(qnt_vh, "vh", "horizontal velocity", "m/s")
+      SET_QNT(qnt_vz, "vz", "vertical velocity", "m/s")
+      SET_QNT(qnt_pv, "pv", "potential vorticity", "PVU")
+      SET_QNT(qnt_tdew, "tdew", "dew point temperature", "K")
+      SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
+      SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
+      SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
-
+  
   /* netCDF I/O parameters... */
   ctl->chunkszhint =
     (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
@@ -4939,6 +4898,10 @@ void write_atm(
   else if (ctl->atm_type == 1)
     write_atm_bin(filename, ctl, atm);
 
+  /* Write netCDF data... */
+  else if (ctl->atm_type == 2)
+    write_atm_nc(filename, ctl, atm);
+
   /* Write CLaMS data... */
   else if (ctl->atm_type == 3)
     write_atm_clams(ctl, atm, t);
@@ -5280,6 +5243,58 @@ void write_atm_clams(
     /* Close file... */
     NC(nc_close(ncid));
   }
+}
+
+/*****************************************************************************/
+
+void write_atm_nc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm) {
+
+  int ncid, obsid, varid;
+
+  size_t start[2], count[2];
+
+  /* Create file... */
+  nc_create(filename, NC_CLOBBER, &ncid);
+
+  /* Define dimensions... */
+  NC(nc_def_dim(ncid, "obs", (size_t) atm->np, &obsid));
+
+  /* Define variables and their attributes... */
+  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &obsid, &varid));
+  NC_PUT_ATT("time", "time", "seconds since 2000-01-01 00:00:00 UTC");
+  NC(nc_def_var(ncid, "press", NC_DOUBLE, 1, &obsid, &varid));
+  NC_PUT_ATT("press", "pressure", "hPa");
+  NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &obsid, &varid));
+  NC_PUT_ATT("lon", "longitude", "degrees_east");
+  NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &obsid, &varid));
+  NC_PUT_ATT("lat", "latitude", "degrees_north");
+
+  /* Define optional variables... */
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    NC(nc_def_var(ncid, ctl->qnt_name[iq], NC_DOUBLE, 1, &obsid, &varid));
+    NC_PUT_ATT(ctl->qnt_name[iq], ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
+  }
+
+  /* Define global attributes... */
+  NC(nc_put_att_text(ncid, NC_GLOBAL, "featureType",
+		     strlen("point"), "point"));
+
+  /* End definitions... */
+  NC(nc_enddef(ncid));
+
+  /* Write data... */
+  NC_PUT_DOUBLE("time", atm->time, 0);
+  NC_PUT_DOUBLE("press", atm->p, 0);
+  NC_PUT_DOUBLE("lon", atm->lon, 0);
+  NC_PUT_DOUBLE("lat", atm->lat, 0);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
+
+  /* Close file... */
+  NC(nc_close(ncid));
 }
 
 /*****************************************************************************/

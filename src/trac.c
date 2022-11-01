@@ -1839,7 +1839,7 @@ void write_output(
   atm_t * atm,
   double t) {
 
-  char filename[2 * LEN];
+  char ext[10], filename[2 * LEN];
 
   double r;
 
@@ -1862,8 +1862,14 @@ void write_output(
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    dirname, ctl->atm_basename, year, mon, day, hour, min);
+    if (ctl->atm_type == 0)
+      sprintf(ext, "tab");
+    else if (ctl->atm_type == 1)
+      sprintf(ext, "bin");
+    else if (ctl->atm_type == 2)
+      sprintf(ext, "nc");
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
     write_atm(filename, ctl, atm, t);
   }
 

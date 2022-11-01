@@ -486,9 +486,10 @@
     atm->q[ctl->qnt][ip] = val;
 
 /*! Set atmospheric quantity index. */
-#define SET_QNT(qnt, name, unit)			\
+#define SET_QNT(qnt, name, longname, unit)		\
   if (strcasecmp(ctl->qnt_name[iq], name) == 0) {	\
     ctl->qnt = iq;					\
+    sprintf(ctl->qnt_longname[iq], longname);		\
     sprintf(ctl->qnt_unit[iq], unit);			\
   } else
 
@@ -698,6 +699,9 @@ typedef struct {
 
   /*! Quantity names. */
   char qnt_name[NQ][LEN];
+
+  /*! Quantity long names. */
+  char qnt_longname[NQ][LEN];
 
   /*! Quantity units. */
   char qnt_unit[NQ][LEN];
@@ -2126,6 +2130,12 @@ void write_atm_clams(
   ctl_t * ctl,
   atm_t * atm,
   double t);
+
+/*! Write atmospheric data in netCDF format. */
+void write_atm_nc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
 
 /*! Write CSI data. */
 void write_csi(
