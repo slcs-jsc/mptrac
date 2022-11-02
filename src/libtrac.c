@@ -54,19 +54,19 @@ double clim_hno3(
   /* Check pressure... */
   if (p < clim->hno3_p[0])
     p = clim->hno3_p[0];
-  else if (p > clim->hno3_p[9])
-    p = clim->hno3_p[9];
+  else if (p > clim->hno3_p[clim->hno3_np - 1])
+    p = clim->hno3_p[clim->hno3_np - 1];
 
   /* Check latitude... */
   if (lat < clim->hno3_lat[0])
     lat = clim->hno3_lat[0];
-  else if (lat > clim->hno3_lat[17])
-    lat = clim->hno3_lat[17];
+  else if (lat > clim->hno3_lat[clim->hno3_nlat - 1])
+    lat = clim->hno3_lat[clim->hno3_nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim->hno3_time, 12, sec);
-  int ilat = locate_reg(clim->hno3_lat, 18, lat);
-  int ip = locate_irr(clim->hno3_p, 10, p);
+  int isec = locate_irr(clim->hno3_time, clim->hno3_ntime, sec);
+  int ilat = locate_reg(clim->hno3_lat, clim->hno3_nlat, lat);
+  int ip = locate_irr(clim->hno3_p, clim->hno3_np, p);
 
   /* Interpolate HNO3 climatology (Froidevaux et al., 2015)... */
   double aux00 = LIN(clim->hno3_p[ip],
@@ -101,6 +101,7 @@ double clim_hno3(
 void clim_hno3_init(
   clim_t * clim) {
 
+  clim->hno3_ntime = 12;
   double hno3_time[12] = {
     1209600.00, 3888000.00, 6393600.00,
     9072000.00, 11664000.00, 14342400.00,
@@ -109,12 +110,14 @@ void clim_hno3_init(
   };
   memcpy(clim->hno3_time, hno3_time, sizeof(clim->hno3_time));
 
+  clim->hno3_nlat = 18;
   double hno3_lat[18] = {
     -85, -75, -65, -55, -45, -35, -25, -15, -5,
     5, 15, 25, 35, 45, 55, 65, 75, 85
   };
   memcpy(clim->hno3_lat, hno3_lat, sizeof(clim->hno3_lat));
 
+  clim->hno3_np = 10;
   double hno3_p[10] = {
     4.64159, 6.81292, 10, 14.678, 21.5443,
     31.6228, 46.4159, 68.1292, 100, 146.78
@@ -364,12 +367,12 @@ double clim_oh(
   /* Check latitude... */
   if (lat < clim->oh_lat[0])
     lat = clim->oh_lat[0];
-  else if (lat > clim->oh_lat[clim->oh_ny - 1])
-    lat = clim->oh_lat[clim->oh_ny - 1];
+  else if (lat > clim->oh_lat[clim->oh_nlat - 1])
+    lat = clim->oh_lat[clim->oh_nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim->oh_time, clim->oh_nt, sec);
-  int ilat = locate_reg(clim->oh_lat, clim->oh_ny, lat);
+  int isec = locate_irr(clim->oh_time, clim->oh_ntime, sec);
+  int ilat = locate_reg(clim->oh_lat, clim->oh_nlat, lat);
   int ip = locate_irr(clim->oh_p, clim->oh_np, p);
 
   /* Interpolate OH climatology... */
@@ -447,7 +450,7 @@ void clim_oh_init(
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &nlat, 2, CY);
-  clim->oh_ny = (int) nlat;
+  clim->oh_nlat = (int) nlat;
   NC_GET_DOUBLE("lat", clim->oh_lat, 1);
 
   /* Check ordering of latitudes... */
@@ -455,7 +458,7 @@ void clim_oh_init(
     ERRMSG("Latitude data are not ascending!");
 
   /* Set time data for monthly means... */
-  clim->oh_nt = CT;
+  clim->oh_ntime = 12;
   clim->oh_time[0] = 1209600.00;
   clim->oh_time[1] = 3888000.00;
   clim->oh_time[2] = 6393600.00;
@@ -474,13 +477,13 @@ void clim_oh_init(
 
   /* Read OH data... */
   ALLOC(help, double,
-	clim->oh_ny * clim->oh_np * clim->oh_nt);
+	clim->oh_nlat * clim->oh_np * clim->oh_ntime);
   NC_GET_DOUBLE("OH", help, 1);
-  for (int it = 0; it < clim->oh_nt; it++)
+  for (int it = 0; it < clim->oh_ntime; it++)
     for (int iz = 0; iz < clim->oh_np; iz++)
-      for (int iy = 0; iy < clim->oh_ny; iy++)
+      for (int iy = 0; iy < clim->oh_nlat; iy++)
 	clim->oh[it][iz][iy] =
-	  help[ARRAY_3D(it, iz, clim->oh_np, iy, clim->oh_ny)]
+	  help[ARRAY_3D(it, iz, clim->oh_np, iy, clim->oh_nlat)]
 	  / clim_oh_init_help(ctl->oh_chem_beta, clim->oh_time[it],
 			      clim->oh_lat[iy]);
   free(help);
@@ -534,12 +537,12 @@ double clim_h2o2(
   /* Check latitude... */
   if (lat < clim->h2o2_lat[0])
     lat = clim->h2o2_lat[0];
-  else if (lat > clim->h2o2_lat[clim->h2o2_ny - 1])
-    lat = clim->h2o2_lat[clim->h2o2_ny - 1];
+  else if (lat > clim->h2o2_lat[clim->h2o2_nlat - 1])
+    lat = clim->h2o2_lat[clim->h2o2_nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim->h2o2_time, clim->h2o2_nt, sec);
-  int ilat = locate_reg(clim->h2o2_lat, clim->h2o2_ny, lat);
+  int isec = locate_irr(clim->h2o2_time, clim->h2o2_ntime, sec);
+  int ilat = locate_reg(clim->h2o2_lat, clim->h2o2_nlat, lat);
   int ip = locate_irr(clim->h2o2_p, clim->h2o2_np, p);
 
   /* Interpolate H2O2 climatology... */
@@ -601,7 +604,7 @@ void clim_h2o2_init(
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &nlat, 2, CY);
-  clim->h2o2_ny = (int) nlat;
+  clim->h2o2_nlat = (int) nlat;
   NC_GET_DOUBLE("lat", clim->h2o2_lat, 1);
 
   /* Check ordering of latitude data... */
@@ -609,7 +612,7 @@ void clim_h2o2_init(
     ERRMSG("Latitude data are not ascending!");
 
   /* Set time data (for monthly means)... */
-  clim->h2o2_nt = CT;
+  clim->h2o2_ntime = 12;
   clim->h2o2_time[0] = 1209600.00;
   clim->h2o2_time[1] = 3888000.00;
   clim->h2o2_time[2] = 6393600.00;
@@ -628,13 +631,13 @@ void clim_h2o2_init(
 
   /* Read data... */
   ALLOC(help, double,
-	clim->h2o2_ny * clim->h2o2_np * clim->h2o2_nt);
+	clim->h2o2_nlat * clim->h2o2_np * clim->h2o2_ntime);
   NC_GET_DOUBLE("h2o2", help, 1);
-  for (it = 0; it < clim->h2o2_nt; it++)
+  for (it = 0; it < clim->h2o2_ntime; it++)
     for (iz = 0; iz < clim->h2o2_np; iz++)
-      for (iy = 0; iy < clim->h2o2_ny; iy++)
+      for (iy = 0; iy < clim->h2o2_nlat; iy++)
 	clim->h2o2[it][iz][iy] =
-	  help[ARRAY_3D(it, iz, clim->h2o2_np, iy, clim->h2o2_ny)];
+	  help[ARRAY_3D(it, iz, clim->h2o2_np, iy, clim->h2o2_nlat)];
   free(help);
 
   /* Close netCDF file... */
@@ -654,8 +657,8 @@ double clim_tropo(
     sec += 365.25 * 86400.;
 
   /* Get indices... */
-  int isec = locate_irr(clim->tropo_time, 12, sec);
-  int ilat = locate_reg(clim->tropo_lat, 73, lat);
+  int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
+  int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
 
   /* Interpolate tropopause data (NCEP/NCAR Reanalysis 1)... */
   double p0 = LIN(clim->tropo_lat[ilat],
@@ -674,6 +677,7 @@ double clim_tropo(
 void clim_tropo_init(
   clim_t * clim) {
 
+  clim->tropo_ntime = 12;
   double tropo_time[12] = {
     1209600.00, 3888000.00, 6393600.00,
     9072000.00, 11664000.00, 14342400.00,
@@ -682,6 +686,7 @@ void clim_tropo_init(
   };
   memcpy(clim->tropo_time, tropo_time, sizeof(clim->tropo_time));
 
+  clim->tropo_nlat = 73;
   double tropo_lat[73] = {
     -90, -87.5, -85, -82.5, -80, -77.5, -75, -72.5, -70, -67.5,
     -65, -62.5, -60, -57.5, -55, -52.5, -50, -47.5, -45, -42.5,

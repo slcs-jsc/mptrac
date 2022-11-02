@@ -1374,6 +1374,12 @@ typedef struct {
 /*! Climatological data. */
 typedef struct {
 
+  /*! Number of tropopause timesteps. */
+  int tropo_ntime;
+
+  /*! Number of tropopause latitudes. */
+  int tropo_nlat;
+
   /*! Tropopause time steps [s]. */
   double tropo_time[12];
 
@@ -1382,6 +1388,15 @@ typedef struct {
 
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
+
+  /*! Number of HNO3 timesteps. */
+  int hno3_ntime;
+
+  /*! Number of HNO3 latitudes. */
+  int hno3_nlat;
+
+  /*! Number of HNO3 pressure levels. */
+  int hno3_np;
 
   /*! HNO3 time steps [s]. */
   double hno3_time[12];
@@ -1396,10 +1411,10 @@ typedef struct {
   double hno3[12][18][10];
 
   /*! Number of OH timesteps. */
-  int oh_nt;
+  int oh_ntime;
 
   /*! Number of OH latitudes. */
-  int oh_ny;
+  int oh_nlat;
 
   /*! Number of OH pressure levels. */
   int oh_np;
@@ -1417,10 +1432,10 @@ typedef struct {
   double oh[CT][CP][CY];
 
   /*! Number of H2O2 timesteps. */
-  int h2o2_nt;
+  int h2o2_ntime;
 
   /*! Number of H2O2 latitudes. */
-  int h2o2_ny;
+  int h2o2_nlat;
 
   /*! Number of H2O2 pressure levels. */
   int h2o2_np;
