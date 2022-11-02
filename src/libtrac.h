@@ -433,9 +433,10 @@
 
 /*! Read netCDF dimension. */
 #define NC_INQ_DIM(dimname, ptr, min, max) {		\
-    int dimid;						\
+    int dimid; size_t naux;				\
     NC(nc_inq_dimid(ncid, dimname, &dimid));		\
-    NC(nc_inq_dimlen(ncid, dimid, ptr));		\
+    NC(nc_inq_dimlen(ncid, dimid, &naux));		\
+    *ptr = (int)naux;					\
     if ((*ptr) < (min) || (*ptr) > (max))		\
       ERRMSG("Dimension %s is out of range!", dimname);	\
   }

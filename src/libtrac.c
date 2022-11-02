@@ -424,9 +424,7 @@ void clim_oh_init(
   ctl_t * ctl,
   clim_t * clim) {
 
-  int ncid, varid;
-
-  size_t np, nlat, nt;
+  int nt, ncid, varid;
 
   double *help;
 
@@ -440,8 +438,7 @@ void clim_oh_init(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &np, 2, CP);
-  clim->oh_np = (int) np;
+  NC_INQ_DIM("press", &clim->oh_np, 2, CP);
   NC_GET_DOUBLE("press", clim->oh_p, 1);
 
   /* Check ordering of pressure data... */
@@ -449,8 +446,7 @@ void clim_oh_init(
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &nlat, 2, CY);
-  clim->oh_nlat = (int) nlat;
+  NC_INQ_DIM("lat", &clim->oh_nlat, 2, CY);
   NC_GET_DOUBLE("lat", clim->oh_lat, 1);
 
   /* Check ordering of latitudes... */
@@ -578,9 +574,7 @@ void clim_h2o2_init(
   ctl_t * ctl,
   clim_t * clim) {
 
-  int ncid, varid, it, iy, iz;
-
-  size_t np, nlat, nt;
+  int ncid, varid, it, iy, iz, nt;
 
   double *help;
 
@@ -594,8 +588,7 @@ void clim_h2o2_init(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &np, 2, CP);
-  clim->h2o2_np = (int) np;
+  NC_INQ_DIM("press", &clim->h2o2_np, 2, CP);
   NC_GET_DOUBLE("press", clim->h2o2_p, 1);
 
   /* Check ordering of pressure data... */
@@ -603,8 +596,7 @@ void clim_h2o2_init(
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &nlat, 2, CY);
-  clim->h2o2_nlat = (int) nlat;
+  NC_INQ_DIM("lat", &clim->h2o2_nlat, 2, CY);
   NC_GET_DOUBLE("lat", clim->h2o2_lat, 1);
 
   /* Check ordering of latitude data... */
@@ -1972,8 +1964,6 @@ int read_atm_clams(
   ctl_t * ctl,
   atm_t * atm) {
 
-  size_t nparts;
-
   int ncid, varid;
 
   /* Open file... */
@@ -1981,8 +1971,7 @@ int read_atm_clams(
     return 0;
 
   /* Get dimensions... */
-  NC_INQ_DIM("NPARTS", &nparts, 1, NP);
-  atm->np = (int) nparts;
+  NC_INQ_DIM("NPARTS", &atm->np, 1, NP);
 
   /* Get time... */
   if (nc_inq_varid(ncid, "TIME_INIT", &varid) == NC_NOERR) {
@@ -2026,8 +2015,6 @@ int read_atm_nc(
   ctl_t * ctl,
   atm_t * atm) {
 
-  size_t np;
-
   int ncid, varid;
 
   /* Open file... */
@@ -2035,8 +2022,7 @@ int read_atm_nc(
     return 0;
 
   /* Get dimensions... */
-  NC_INQ_DIM("obs", &np, 1, NP);
-  atm->np = (int) np;
+  NC_INQ_DIM("obs", &atm->np, 1, NP);
 
   /* Read geolocations... */
   NC_GET_DOUBLE("time", atm->time, 1);
@@ -3378,9 +3364,9 @@ void read_met_grid(
 
   double rtime, r2;
 
-  int varid, year2, mon2, day2, hour2, min2, sec2;
-  int year, mon, day, hour;
-  size_t np, nx, ny;
+  int varid, year2, mon2, day2, hour2, min2, sec2, year, mon, day, hour;
+
+  size_t np;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_GRID", "INPUT", NVTX_READ);
@@ -3440,11 +3426,11 @@ void read_met_grid(
       met->time, year2, mon2, day2, hour2, min2);
 
   /* Get grid dimensions... */
-  NC_INQ_DIM("lon", &nx, 2, EX);
-  LOG(2, "Number of longitudes: %zu", nx);
+  NC_INQ_DIM("lon", &met->nx, 2, EX);
+  LOG(2, "Number of longitudes: %d", met->nx);
 
-  NC_INQ_DIM("lat", &ny, 2, EY);
-  LOG(2, "Number of latitudes: %zu", ny);
+  NC_INQ_DIM("lat", &met->ny, 2, EY);
+  LOG(2, "Number of latitudes: %d", met->ny);
 
   if (ctl->vert_coord_met == 0) {
     sprintf(levname, "lev");
@@ -3452,8 +3438,8 @@ void read_met_grid(
     sprintf(levname, "hybrid");
     printf("Meteorological data is in hybrid coordinates.");
   }
-  NC_INQ_DIM(levname, &np, 1, EP);
-  if (np == 1) {
+  NC_INQ_DIM(levname, &met->np, 1, EP);
+  if (met->np == 1) {
     int dimid;
     sprintf(levname, "lev_2");
     if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
@@ -3461,15 +3447,11 @@ void read_met_grid(
       nc_inq_dimid(ncid, levname, &dimid);
     }
     NC(nc_inq_dimlen(ncid, dimid, &np));
+    met->np = (int) np;
   }
-  LOG(2, "Number of levels: %zu", np);
-  if (np < 2 || np > EP)
+  LOG(2, "Number of levels: %d", met->np);
+  if (met->np < 2 || met->np > EP)
     ERRMSG("Number of levels out of range!");
-
-  /* Store dimensions... */
-  met->np = (int) np;
-  met->nx = (int) nx;
-  met->ny = (int) ny;
 
   /* Read longitudes and latitudes... */
   NC_GET_DOUBLE("lon", met->lon, 1);
