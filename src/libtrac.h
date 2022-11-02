@@ -244,6 +244,14 @@
     ERRMSG("Out of memory!");
 #endif
 
+/*! Get 2-D array index. */
+#define ARRAY_2D(ix, iy, ny)			\
+  ((ix) * (ny) + (iy))
+
+/*! Get 3-D array index. */
+#define ARRAY_3D(ix, iy, ny, iz, nz)		\
+  (((ix)*(ny) + (iy)) * (nz) + (iz))
+
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))

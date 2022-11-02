@@ -2872,7 +2872,7 @@ void read_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      var[ix][iy] = help[ix * met->ny + iy];
+      var[ix][iy] = help[ARRAY_2D(ix, iy, met->ny)];
 
   /* Free... */
   free(help);
@@ -2934,7 +2934,7 @@ void read_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	var[ix][iy][ip] = help[(ix * met->ny + iy) * met->np + ip];
+	var[ix][iy][ip] = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 
   /* Free... */
   free(help);
@@ -5979,7 +5979,7 @@ void write_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      help[ix * met->ny + iy] = var[ix][iy];
+      help[ARRAY_2D(ix, iy, met->ny)] = var[ix][iy];
 
   /* Write uncompressed data... */
   LOG(2, "Write 2-D variable: %s (uncompressed)", varname);
@@ -6013,7 +6013,7 @@ void write_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	help[(ix * met->ny + iy) * met->np + ip] = var[ix][iy][ip];
+	help[ARRAY_3D(ix, iy, met->ny, ip, met->np)] = var[ix][iy][ip];
 
   /* Write uncompressed data... */
   if (ctl->met_type == 1) {
