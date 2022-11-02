@@ -2872,7 +2872,7 @@ void read_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      var[ix][iy] = help[ARRAY_2D(ix, iy, met->ny)];
+      var[ix][iy] = help[ARRAY_2D_MET(ix, iy)];
 
   /* Free... */
   free(help);
@@ -2934,7 +2934,7 @@ void read_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	var[ix][iy][ip] = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	var[ix][iy][ip] = help[ARRAY_3D_MET(ix, iy, ip)];
 
   /* Free... */
   free(help);
@@ -5665,10 +5665,9 @@ void write_grid(
 
   char line[LEN];
 
-  static double mass[GX][GY][GZ], vmr[GX][GY][GZ], z[GZ], lon[GX], lat[GY],
-    area[GY], press[GZ], temp;
+  static double *mass, *vmr, z[GZ], lon[GX], lat[GY], area[GY], press[GZ];
 
-  static int *ixs, *iys, *izs, np[GX][GY][GZ];
+  static int *ixs, *iys, *izs, *np;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_GRID", "OUTPUT", NVTX_WRITE);
@@ -5679,6 +5678,20 @@ void write_grid(
   /* Check dimensions... */
   if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
     ERRMSG("Grid dimensions too large!");
+
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(vmr, double,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(np, int,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
 
   /* Set grid box size... */
   double dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
@@ -5711,18 +5724,10 @@ void write_grid(
   for (int ix = 0; ix < ctl->grid_nx; ix++)
     for (int iy = 0; iy < ctl->grid_ny; iy++)
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
-	mass[ix][iy][iz] = 0;
-	vmr[ix][iy][iz] = 0;
-	np[ix][iy][iz] = 0;
+	mass[ARRAY_3D_GRID(ix, iy, iz)] = 0;
+	vmr[ARRAY_3D_GRID(ix, iy, iz)] = 0;
+	np[ARRAY_3D_GRID(ix, iy, iz)] = 0;
       }
-
-  /* Allocate... */
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
 
   /* Get indices... */
 #pragma omp parallel for default(shared)
@@ -5740,29 +5745,27 @@ void write_grid(
   /* Average data... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-      np[ixs[ip]][iys[ip]][izs[ip]]++;
+      np[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]++;
       if (ctl->qnt_m >= 0)
-	mass[ixs[ip]][iys[ip]][izs[ip]] += atm->q[ctl->qnt_m][ip];
+	mass[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
+	  += atm->q[ctl->qnt_m][ip];
       if (ctl->qnt_vmr >= 0)
-	vmr[ixs[ip]][iys[ip]][izs[ip]] += atm->q[ctl->qnt_vmr][ip];
+	vmr[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
+	  += atm->q[ctl->qnt_vmr][ip];
     }
 
   /* Get implicit vmr per particle... */
   if (ctl->qnt_vmrimpl >= 0)
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0) {
+	double temp;
 	INTPOL_INIT;
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
-	atm->q[ctl->qnt_vmrimpl][ip] =
-	  MA / ctl->molmass * mass[ixs[ip]][iys[ip]][izs[ip]]
+	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass
+	  * mass[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
-
-  /* Free... */
-  free(ixs);
-  free(iys);
-  free(izs);
 
   /* Check if gnuplot output is requested... */
   if (ctl->grid_gpfile[0] != '-') {
@@ -5817,45 +5820,57 @@ void write_grid(
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
       for (int iz = 0; iz < ctl->grid_nz; iz++)
-	if (!ctl->grid_sparse || mass[ix][iy][iz] > 0 || vmr[ix][iy][iz] > 0) {
+	if (!ctl->grid_sparse
+	    || mass[ARRAY_3D_GRID(ix, iy, iz)] > 0
+	    || vmr[ARRAY_3D_GRID(ix, iy, iz)] > 0) {
 
 	  /* Calculate column density... */
 	  double cd = GSL_NAN;
 	  if (ctl->qnt_m >= 0)
-	    cd = mass[ix][iy][iz] / (1e6 * area[iy]);
+	    cd = mass[ARRAY_3D_GRID(ix, iy, iz)] / (1e6 * area[iy]);
 
 	  /* Calculate volume mixing ratio (implicit)... */
 	  double vmr_impl = GSL_NAN;
 	  if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
 	    vmr_impl = 0;
-	    if (mass[ix][iy][iz] > 0) {
+	    if (mass[ARRAY_3D_GRID(ix, iy, iz)] > 0) {
 
 	      /* Get temperature... */
+	      double temp;
 	      INTPOL_INIT;
 	      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
 				 lon[ix], lat[iy], &temp, ci, cw, 1);
 
 	      /* Calculate volume mixing ratio... */
-	      vmr_impl = MA / ctl->molmass * mass[ix][iy][iz]
+	      vmr_impl = MA / ctl->molmass * mass[ARRAY_3D_GRID(ix, iy, iz)]
 		/ (RHO(press[iz], temp) * 1e6 * area[iy] * 1e3 * dz);
 	    }
 	  }
 
 	  /* Calculate volume mixing ratio (explicit)... */
 	  double vmr_expl = GSL_NAN;
-	  if (ctl->qnt_vmr >= 0 && np[ix][iy][iz] > 0)
-	    vmr_expl = vmr[ix][iy][iz] / np[ix][iy][iz];
+	  if (ctl->qnt_vmr >= 0 && np[ARRAY_3D_GRID(ix, iy, iz)] > 0)
+	    vmr_expl = vmr[ARRAY_3D_GRID(ix, iy, iz)]
+	      / np[ARRAY_3D_GRID(ix, iy, iz)];
 
 	  /* Write output... */
-	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", t, z[iz],
-		  lon[ix], lat[iy], area[iy], dz, np[ix][iy][iz], cd,
-		  vmr_impl, vmr_expl);
+	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n",
+		  t, z[iz], lon[ix], lat[iy], area[iy], dz,
+		  np[ARRAY_3D_GRID(ix, iy, iz)], cd, vmr_impl, vmr_expl);
 	}
     }
   }
 
   /* Close file... */
   fclose(out);
+
+  /* Free... */
+  free(mass);
+  free(vmr);
+  free(np);
+  free(ixs);
+  free(iys);
+  free(izs);
 }
 
 /*****************************************************************************/
@@ -5979,7 +5994,7 @@ void write_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      help[ARRAY_2D(ix, iy, met->ny)] = var[ix][iy];
+      help[ARRAY_2D_MET(ix, iy)] = var[ix][iy];
 
   /* Write uncompressed data... */
   LOG(2, "Write 2-D variable: %s (uncompressed)", varname);
@@ -6013,7 +6028,7 @@ void write_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	help[ARRAY_3D(ix, iy, met->ny, ip, met->np)] = var[ix][iy][ip];
+	help[ARRAY_3D_MET(ix, iy, ip)] = var[ix][iy][ip];
 
   /* Write uncompressed data... */
   if (ctl->met_type == 1) {
