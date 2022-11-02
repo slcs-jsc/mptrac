@@ -5073,10 +5073,6 @@ void write_atm_clams(
   /* time, nparc */
   size_t start[2], count[2];
 
-  /* Vertical coordinate attribute... */
-  const char *vertcoor = "zeta";
-  size_t vc_name_size = strlen(vertcoor);
-
   /* Determine start and stop times of calculation... */
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
   jsec2time(ctl->t_start, &year_start, &mon_start, &day_start, &hour_start,
@@ -5111,31 +5107,19 @@ void write_atm_clams(
     dim_ids[1] = pid;
 
     /* Define variables and their attributes... */
-    NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
-    NC_PUT_ATT("time", "Time", "seconds since 2000-01-01 00:00:00 UTC");
-
-    NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("LAT", "Latitude", "deg");
-
-    NC(nc_def_var(ncid, "LON", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("LON", "Longitude", "deg");
-
-    NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("PRESS", "Pressure", "hPa");
-
-    NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 2, dim_ids, &varid));
-    NC_PUT_ATT("ZETA", "Zeta", "K");
-
-    /* Define optional variables... */
-    for (int iq = 0; iq < ctl->nq; iq++) {
-      NC(nc_def_var(ncid, ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids, &varid));
-      NC_PUT_ATT(ctl->qnt_name[iq], ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-    }
+    NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
+	       "seconds since 2000-01-01 00:00:00 UTC");
+    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg");
+    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg");
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa");
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K");
+    for (int iq = 0; iq < ctl->nq; iq++)
+      NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
 
     /* Define global attributes... */
-    NC(nc_put_att_text
-       (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
-    NC(nc_put_att_text(ncid, NC_GLOBAL, "model", strlen("MPTRAC"), "MPTRAC"));
+    NC_PUT_ATT("exp_VERTCOOR_name", "zeta");
+    NC_PUT_ATT("model", "MPTRAC");
 
     /* End definitions... */
     NC(nc_enddef(ncid));
@@ -5184,36 +5168,21 @@ void write_atm_clams(
     dim_ids[1] = pid;
 
     /* Define variables and their attributes... */
-    NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &tid, &varid));
-    NC_PUT_ATT("time", "Time", "seconds since 2000-01-01 00:00:00 UTC");
+    NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
+	       "seconds since 2000-01-01 00:00:00 UTC");
+    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
+    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+    NC_DEF_VAR("ZETA_GRID", NC_DOUBLE, 1, &zid, "levels", "K");
+    NC_DEF_VAR("ZETA_DELTA", NC_DOUBLE, 1, &zid, "Width of zeta levels", "K");
+    for (int iq = 0; iq < ctl->nq; iq++)
+      NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
 
-    NC(nc_def_var(ncid, "LAT", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("LAT", "Latitude", "deg");
-
-    NC(nc_def_var(ncid, "LON", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("LON", "Longitude", "deg");
-
-    NC(nc_def_var(ncid, "PRESS", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("PRESS", "Pressure", "hPa");
-
-    NC(nc_def_var(ncid, "ZETA", NC_DOUBLE, 1, &pid, &varid));
-    NC_PUT_ATT("ZETA", "Zeta", "K");
-
-    NC(nc_def_var(ncid, "ZETA_GRID", NC_DOUBLE, 1, &zid, &varid));
-    NC_PUT_ATT("ZETA_GRID", "Zeta levels", "K");
-
-    NC(nc_def_var(ncid, "ZETA_DELTA", NC_DOUBLE, 1, &zid, &varid));
-    NC_PUT_ATT("ZETA_DELTA", "Width of zeta levels", "K");
-
-    /* Define optional variables... */
-    for (int iq = 0; iq < ctl->nq; iq++) {
-      NC(nc_def_var(ncid, ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids, &varid));
-      NC_PUT_ATT(ctl->qnt_name[iq], ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-    }
-
-    /* Put global attributes into file... */
-    NC(nc_put_att_text
-       (ncid, NC_GLOBAL, "exp_VERTCOOR_name", vc_name_size, vertcoor));
+    /* Define global attributes... */
+    NC_PUT_ATT("exp_VERTCOOR_name", "zeta");
+    NC_PUT_ATT("model", "MPTRAC");
 
     /* End definitions... */
     NC(nc_enddef(ncid));
@@ -5250,24 +5219,17 @@ void write_atm_nc(
   NC(nc_def_dim(ncid, "obs", (size_t) atm->np, &obsid));
 
   /* Define variables and their attributes... */
-  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &obsid, &varid));
-  NC_PUT_ATT("time", "time", "seconds since 2000-01-01 00:00:00 UTC");
-  NC(nc_def_var(ncid, "press", NC_DOUBLE, 1, &obsid, &varid));
-  NC_PUT_ATT("press", "pressure", "hPa");
-  NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &obsid, &varid));
-  NC_PUT_ATT("lon", "longitude", "degrees_east");
-  NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &obsid, &varid));
-  NC_PUT_ATT("lat", "latitude", "degrees_north");
-
-  /* Define optional variables... */
-  for (int iq = 0; iq < ctl->nq; iq++) {
-    NC(nc_def_var(ncid, ctl->qnt_name[iq], NC_DOUBLE, 1, &obsid, &varid));
-    NC_PUT_ATT(ctl->qnt_name[iq], ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
-  }
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &obsid, "time",
+	     "seconds since 2000-01-01 00:00:00 UTC");
+  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa");
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east");
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 1, &obsid,
+	       ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
 
   /* Define global attributes... */
-  NC(nc_put_att_text(ncid, NC_GLOBAL, "featureType",
-		     strlen("point"), "point"));
+  NC_PUT_ATT("featureType", "point");
 
   /* End definitions... */
   NC(nc_enddef(ncid));

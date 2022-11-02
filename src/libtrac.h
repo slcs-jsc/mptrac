@@ -418,6 +418,13 @@
     ERRMSG("%s", nc_strerror(nc_result));	     \
 }
 
+/*! Define netCDF variable. */
+#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
+    NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
+    NC(nc_put_att_text(ncid, varid, "long_name", strlen(long_name), long_name)); \
+    NC(nc_put_att_text(ncid, varid, "units", strlen(units), units));	\
+  }
+
 /*! Read netCDF double array. */
 #define NC_GET_DOUBLE(varname, ptr, force) {			\
     if(force) {							\
@@ -441,13 +448,6 @@
       ERRMSG("Dimension %s is out of range!", dimname);	\
   }
 
-/*! Set netCDF attributes. */
-#define NC_PUT_ATT(varname, long_name, units) {				\
-    NC(nc_inq_varid(ncid, varname, &varid));				\
-    NC(nc_put_att_text(ncid, varid, "long_name", strlen(long_name), long_name)); \
-    NC(nc_put_att_text(ncid, varid, "units", strlen(units), units));	\
-  }
-
 /*! Write netCDF double array. */
 #define NC_PUT_DOUBLE(varname, ptr, hyperslab) {		\
     NC(nc_inq_varid(ncid, varname, &varid));			\
@@ -457,6 +457,10 @@
       NC(nc_put_var_double(ncid, varid, ptr));			\
     }								\
   }
+
+/*! Set netCDF global attribute. */
+#define NC_PUT_ATT(attname, text)					\
+  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strlen(text), text));
 
 /*! Write netCDF float array. */
 #define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\

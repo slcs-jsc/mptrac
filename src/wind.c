@@ -98,29 +98,14 @@ int main(
   NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[3]));
 
   /* Create variables... */
-  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &varid));
-  NC_PUT_ATT("time", "time", "day as %Y%m%d.%f");
-
-  NC(nc_def_var(ncid, "lev", NC_DOUBLE, 1, &dims[1], &varid));
-  NC_PUT_ATT("lev", "air_pressure", "Pa");
-
-  NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &dims[2], &varid));
-  NC_PUT_ATT("lat", "latitude", "degrees_north");
-
-  NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &dims[3], &varid));
-  NC_PUT_ATT("lon", "longitude", "degrees_east");
-
-  NC(nc_def_var(ncid, "T", NC_FLOAT, 4, &dims[0], &varid));
-  NC_PUT_ATT("T", "Temperature", "K");
-
-  NC(nc_def_var(ncid, "U", NC_FLOAT, 4, &dims[0], &varid));
-  NC_PUT_ATT("U", "U velocity", "m s**-1");
-
-  NC(nc_def_var(ncid, "V", NC_FLOAT, 4, &dims[0], &varid));
-  NC_PUT_ATT("V", "V velocity", "m s**-1");
-
-  NC(nc_def_var(ncid, "W", NC_FLOAT, 4, &dims[0], &varid));
-  NC_PUT_ATT("W", "Vertical velocity", "Pa s**-1");
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time", "day as %Y%m%d.%f");
+  NC_DEF_VAR("lev", NC_DOUBLE, 1, &dims[1], "air_pressure", "Pa");
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[2], "latitude", "degrees_north");
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[3], "longitude", "degrees_east");
+  NC_DEF_VAR("T", NC_FLOAT, 4, &dims[0], "Temperature", "K");
+  NC_DEF_VAR("U", NC_FLOAT, 4, &dims[0], "zonal wind", "m s**-1");
+  NC_DEF_VAR("V", NC_FLOAT, 4, &dims[0], "meridional wind", "m s**-1");
+  NC_DEF_VAR("W", NC_FLOAT, 4, &dims[0], "vertical velocity", "Pa s**-1");
 
   /* End definition... */
   NC(nc_enddef(ncid));

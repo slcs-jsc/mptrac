@@ -51,10 +51,10 @@ int main(
   static float help[EX * EY], tropo_z0[EX][EY], tropo_p0[EX][EY],
     tropo_t0[EX][EY], tropo_q0[EX][EY];
 
-  static int dimid[10], ncid, varid, varid_z, varid_p, varid_t, varid_q, h2o,
-    n[EY], nt[EY], year, mon, day, init;
+  static int ncid, varid, varid_z, varid_p, varid_t, varid_q, h2o,
+    n[EY], nt[EY], year, mon, day, init, ntime, nlon, nlat, ilon, ilat;
 
-  static size_t count[10], start[10], ntime, nlon, nlat, ilon, ilat;
+  static size_t count[10], start[10];
 
   /* Check arguments... */
   if (argc < 5)
@@ -72,18 +72,9 @@ int main(
       ERRMSG("Cannot open file!");
 
     /* Get dimensions... */
-    NC(nc_inq_dimid(ncid, "time", &dimid[0]));
-    NC(nc_inq_dimlen(ncid, dimid[0], &ntime));
-    if (ntime > NT)
-      ERRMSG("Too many times!");
-    NC(nc_inq_dimid(ncid, "lat", &dimid[1]));
-    NC(nc_inq_dimlen(ncid, dimid[1], &nlat));
-    if (nlat > EY)
-      ERRMSG("Too many latitudes!");
-    NC(nc_inq_dimid(ncid, "lon", &dimid[2]));
-    NC(nc_inq_dimlen(ncid, dimid[2], &nlon));
-    if (nlon > EX)
-      ERRMSG("Too many longitudes!");
+    NC_INQ_DIM("time", &ntime, 1, NT);
+    NC_INQ_DIM("lat", &nlat, 1, EY);
+    NC_INQ_DIM("lon", &nlon, 1, EX);
 
     /* Read coordinates... */
     NC_GET_DOUBLE("lat", lats, 1);
@@ -101,11 +92,11 @@ int main(
 
     /* Set dimensions... */
     count[0] = 1;
-    count[1] = nlat;
-    count[2] = nlon;
+    count[1] = (size_t) nlat;
+    count[2] = (size_t) nlon;
 
     /* Loop over time steps... */
-    for (size_t it = 0; it < ntime; it++) {
+    for (int it = 0; it < ntime; it++) {
 
       /* Get time from filename... */
       if (!init) {

@@ -131,56 +131,49 @@ int main(
       NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[2]));
 
       /* Create variables... */
-      NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &varid));
-      NC_PUT_ATT("time", "time", "seconds since 2000-01-01 00:00:00 UTC");
-      NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &dims[1], &varid));
-      NC_PUT_ATT("lat", "latitude", "degrees_north");
-      NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &dims[2], &varid));
-      NC_PUT_ATT("lon", "longitude", "degrees_east");
+      NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time",
+		 "seconds since 2000-01-01 00:00:00 UTC");
+      NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[1], "latitude", "degrees_north");
+      NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[2], "longitude", "degrees_east");
 
-      NC(nc_def_var(ncid, "clp_z", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("clp_z", "cold point height", "km");
-      NC(nc_def_var(ncid, "clp_p", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("clp_p", "cold point pressure", "hPa");
-      NC(nc_def_var(ncid, "clp_t", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("clp_t", "cold point temperature", "K");
-      if (h2o) {
-	NC(nc_def_var(ncid, "clp_q", NC_FLOAT, 3, &dims[0], &varid));
-	NC_PUT_ATT("clp_q", "cold point water vapor", "ppv");
-      }
+      NC_DEF_VAR("clp_z", NC_FLOAT, 3, &dims[0], "cold point height", "km");
+      NC_DEF_VAR("clp_p", NC_FLOAT, 3, &dims[0], "cold point pressure",
+		 "hPa");
+      NC_DEF_VAR("clp_t", NC_FLOAT, 3, &dims[0], "cold point temperature",
+		 "K");
+      if (h2o)
+	NC_DEF_VAR("clp_q", NC_FLOAT, 3, &dims[0], "cold point water vapor",
+		   "ppv");
 
-      NC(nc_def_var(ncid, "dyn_z", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("dyn_z", "dynamical tropopause height", "km");
-      NC(nc_def_var(ncid, "dyn_p", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("dyn_p", "dynamical tropopause pressure", "hPa");
-      NC(nc_def_var(ncid, "dyn_t", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("dyn_t", "dynamical tropopause temperature", "K");
-      if (h2o) {
-	NC(nc_def_var(ncid, "dyn_q", NC_FLOAT, 3, &dims[0], &varid));
-	NC_PUT_ATT("dyn_q", "dynamical tropopause water vapor", "ppv");
-      }
+      NC_DEF_VAR("dyn_z", NC_FLOAT, 3, &dims[0],
+		 "dynamical tropopause height", "km");
+      NC_DEF_VAR("dyn_p", NC_FLOAT, 3, &dims[0],
+		 "dynamical tropopause pressure", "hPa");
+      NC_DEF_VAR("dyn_t", NC_FLOAT, 3, &dims[0],
+		 "dynamical tropopause temperature", "K");
+      if (h2o)
+	NC_DEF_VAR("dyn_q", NC_FLOAT, 3, &dims[0],
+		   "dynamical tropopause water vapor", "ppv");
 
-      NC(nc_def_var(ncid, "wmo_1st_z", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("wmo_1st_z", "WMO 1st tropopause height", "km");
-      NC(nc_def_var(ncid, "wmo_1st_p", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("wmo_1st_p", "WMO 1st tropopause pressure", "hPa");
-      NC(nc_def_var(ncid, "wmo_1st_t", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("wmo_1st_t", "WMO 1st tropopause temperature", "K");
-      if (h2o) {
-	NC(nc_def_var(ncid, "wmo_1st_q", NC_FLOAT, 3, &dims[0], &varid));
-	NC_PUT_ATT("wmo_1st_q", "WMO 1st tropopause water vapor", "ppv");
-      }
+      NC_DEF_VAR("wmo_1st_z", NC_FLOAT, 3, &dims[0],
+		 "WMO 1st tropopause height", "km");
+      NC_DEF_VAR("wmo_1st_p", NC_FLOAT, 3, &dims[0],
+		 "WMO 1st tropopause pressure", "hPa");
+      NC_DEF_VAR("wmo_1st_t", NC_FLOAT, 3, &dims[0],
+		 "WMO 1st tropopause temperature", "K");
+      if (h2o)
+	NC_DEF_VAR("wmo_1st_q", NC_FLOAT, 3, &dims[0],
+		   "WMO 1st tropopause water vapor", "ppv");
 
-      NC(nc_def_var(ncid, "wmo_2nd_z", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("wmo_2nd_z", "WMO 2nd tropopause height", "km");
-      NC(nc_def_var(ncid, "wmo_2nd_p", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("wmo_2nd_p", "WMO 2nd tropopause pressure", "hPa");
-      NC(nc_def_var(ncid, "wmo_2nd_t", NC_FLOAT, 3, &dims[0], &varid));
-      NC_PUT_ATT("wmo_2nd_t", "WMO 2nd tropopause temperature", "K");
-      if (h2o) {
-	NC(nc_def_var(ncid, "wmo_2nd_q", NC_FLOAT, 3, &dims[0], &varid));
-	NC_PUT_ATT("wmo_2nd_q", "WMO 2nd tropopause water vapor", "ppv");
-      }
+      NC_DEF_VAR("wmo_2nd_z", NC_FLOAT, 3, &dims[0],
+		 "WMO 2nd tropopause height", "km");
+      NC_DEF_VAR("wmo_2nd_p", NC_FLOAT, 3, &dims[0],
+		 "WMO 2nd tropopause pressure", "hPa");
+      NC_DEF_VAR("wmo_2nd_t", NC_FLOAT, 3, &dims[0],
+		 "WMO 2nd tropopause temperature", "K");
+      if (h2o)
+	NC_DEF_VAR("wmo_2nd_q", NC_FLOAT, 3, &dims[0],
+		   "WMO 2nd tropopause water vapor", "ppv");
 
       /* End definition... */
       NC(nc_enddef(ncid));
