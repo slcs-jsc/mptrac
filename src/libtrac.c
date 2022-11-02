@@ -480,7 +480,7 @@ void clim_oh_init(
     for (int iz = 0; iz < clim->oh_np; iz++)
       for (int iy = 0; iy < clim->oh_ny; iy++)
 	clim->oh[it][iz][iy] =
-	  help[it * clim->oh_np * clim->oh_ny + iz * clim->oh_ny + iy]
+	  help[ARRAY_3D(it, iz, clim->oh_np, iy, clim->oh_ny)]
 	  / clim_oh_init_help(ctl->oh_chem_beta, clim->oh_time[it],
 			      clim->oh_lat[iy]);
   free(help);
@@ -634,7 +634,7 @@ void clim_h2o2_init(
     for (iz = 0; iz < clim->h2o2_np; iz++)
       for (iy = 0; iy < clim->h2o2_ny; iy++)
 	clim->h2o2[it][iz][iy] =
-	  help[it * clim->h2o2_np * clim->h2o2_ny + iz * clim->h2o2_ny + iy];
+	  help[ARRAY_3D(it, iz, clim->h2o2_np, iy, clim->h2o2_ny)];
   free(help);
 
   /* Close netCDF file... */
@@ -3748,7 +3748,7 @@ int read_met_nc_2d(
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	short aux = help[iy * met->nx + ix];
+	short aux = help[ARRAY_2D(iy, ix, met->nx)];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux * scalfac + offset) < 1e14f)
@@ -3789,7 +3789,7 @@ int read_met_nc_2d(
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	float aux = help[iy * met->nx + ix];
+	float aux = help[ARRAY_2D(iy, ix, met->nx)];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f)
@@ -3867,7 +3867,7 @@ int read_met_nc_3d(
 	for (int ip = 0; ip < met->np; ip++) {
 	  if (init)
 	    dest[ix][iy][ip] = 0;
-	  short aux = help[(ip * met->ny + iy) * met->nx + ix];
+	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux * scalfac + offset) < 1e14f)
@@ -3909,7 +3909,7 @@ int read_met_nc_3d(
 	for (int ip = 0; ip < met->np; ip++) {
 	  if (init)
 	    dest[ix][iy][ip] = 0;
-	  float aux = help[(ip * met->ny + iy) * met->nx + ix];
+	  float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
