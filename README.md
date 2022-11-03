@@ -87,7 +87,7 @@ To run the test cases to check the installation, please use:
 
 A simple example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-The example can be found in the project directory. The project directory also be used to store results of other simulation and experiments with MPTRAC. The simulation is controlled by a shell script:
+The example can be found in the project directory. The project directory can also be used to store results of other simulation and experiments with MPTRAC. The simulation is controlled by a shell script:
 
     cd mptrac/projects/example
     ./run.sh

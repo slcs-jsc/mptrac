@@ -1,11 +1,12 @@
 site_name: MPTRAC
-site_url: https://example.com/
+site_url: https://mptrac.readthedocs.io
 repo_url: https://github.com/slcs-jsc/mptrac
 docs_dir: manual
 
 nav:
     - Home: index.md
     - User manual:
+        - Installation: installation.md
         - Quickstart: quickstart.md
         - Applications: applications.md
         - Control parameters: control-parameters.md
