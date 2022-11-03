@@ -10,6 +10,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 [![codacy](https://api.codacy.com/project/badge/Grade/a9de7b2239f843b884d2a4eb583726c9)](https://app.codacy.com/gh/slcs-jsc/mptrac?utm_source=github.com&utm_medium=referral&utm_content=slcs-jsc/mptrac&utm_campaign=Badge_Grade_Settings)
 [![codecov](https://codecov.io/gh/slcs-jsc/mptrac/branch/master/graph/badge.svg?token=4X6IEHWUBJ)](https://codecov.io/gh/slcs-jsc/mptrac)
 [![tests](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/tests?label=tests)](https://github.com/slcs-jsc/mptrac/actions)
+[![Documentation Status](https://readthedocs.org/projects/mptrac/badge/?version=latest)](http://mptrac.readthedocs.io)
 [![doxygen](https://img.shields.io/github/workflow/status/slcs-jsc/mptrac/doxygen?label=doxygen)](https://slcs-jsc.github.io/mptrac)
 [![license](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 [![doi](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
@@ -101,7 +102,7 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for new users and developers of MPTRAC is collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
+More detailed information for new users and developers is provided in the [MPTRAC user manual](http://mptrac.readthedocs.io) and collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
 These are the main references for citing the MPTRAC model in scientific publications:
 
