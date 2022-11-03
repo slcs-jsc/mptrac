@@ -5835,6 +5835,16 @@ int write_met(
   /* Write info... */
   LOG(1, "Write meteo data: %s", filename);
 
+  /* Check compression flags... */
+#ifndef ZFP
+  if (ctl->met_type == 3)
+    ERRMSG("zfp compression not supported!");
+#endif
+#ifndef ZSTD
+  if (ctl->met_type == 4)
+    ERRMSG("zstd compression not supported!");
+#endif
+
   /* Write binary... */
   if (ctl->met_type >= 1 && ctl->met_type <= 4) {
 
@@ -5919,10 +5929,6 @@ int write_met(
     fclose(out);
   }
 
-  /* Not implemented... */
-  else
-    ERRMSG("MET_TYPE not implemented!");
-
   return 0;
 }
 
@@ -5993,24 +5999,23 @@ void write_met_bin_3d(
 		  (size_t) met->np, 0, out);
 
   /* Write zfp data... */
-  else if (ctl->met_type == 3) {
 #ifdef ZFP
+  else if (ctl->met_type == 3)
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 0, out);
-#else
-    ERRMSG("zfp compression not supported!");
-    LOG(3, "%d %g", precision, tolerance);
 #endif
-  }
 
   /* Write zstd data... */
-  else if (ctl->met_type == 4) {
 #ifdef ZSTD
+  else if (ctl->met_type == 4)
     compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 0,
 		  out);
-#else
-    ERRMSG("zstd compression not supported!");
 #endif
+
+  /* Unknown method... */
+  else {
+    ERRMSG("MET_TYPE not supported!");
+    LOG(3, "%d %g", precision, tolerance);
   }
 
   /* Free... */
