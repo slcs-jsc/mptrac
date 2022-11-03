@@ -157,6 +157,6 @@ Remove all files except for those that currently exist:
 
 ## Further reading
 
-[Git Handbook](https://guides.github.com/introduction/git-handbook)
+- [Git Handbook](https://guides.github.com/introduction/git-handbook)
 
-[GitHub Git Cheat Sheet](https://training.github.com/downloads/github-git-cheat-sheet.pdf)
+- [GitHub Git Cheat Sheet](https://training.github.com/downloads/github-git-cheat-sheet.pdf)

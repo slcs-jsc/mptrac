@@ -32,6 +32,6 @@ Alternatively, MPTRAC has also been used on the [JURECA-DC system](https://apps.
 
 ## Further Reading
 
-* https://www.mpi-forum.org/
-* https://www.openmp.org/
-* https://www.openacc.org/
+- [MPI Forum](https://www.mpi-forum.org/)
+- [OpenMP](https://www.openmp.org/)
+- [OpenACC](https://www.openacc.org/)

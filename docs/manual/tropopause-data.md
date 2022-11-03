@@ -50,6 +50,6 @@ Tropopause data files for various meteorological reanalyses can be found in the 
 
 ## References
 
-WMO tropopause definition: https://library.wmo.int/doc_num.php?explnum_id=6960
+- [WMO tropopause definition](https://library.wmo.int/doc_num.php?explnum_id=6960)
 
-NCEP/NCAR Reanalysis-1: https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.pressure.html
+- [NCEP/NCAR Reanalysis-1](https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.pressure.html)

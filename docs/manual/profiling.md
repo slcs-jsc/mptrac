@@ -104,8 +104,6 @@ After the execution, you can visualize .qdrep files in nsys-ui. Take a look at "
 
 ## Further reading
 
-https://en.wikipedia.org/wiki/Profiling_(computer_programming)
+- [Nsight Systems documentation](https://developer.nvidia.com/nsight-systems)
 
-https://developer.nvidia.com/nsight-systems
-
-http://sourceware.org/binutils/docs/gprof
+- [gprof manual](http://sourceware.org/binutils/docs/gprof)
