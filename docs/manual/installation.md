@@ -1,6 +1,6 @@
 # Installation
 
-Here we describe the installation of MPTRAC on a Linux system. The installation comprises (i) that all prerequisites are being met, (ii) downloading the source code from the GitHub repository, (iii) the compilation of the source code, and (iv) conducting checks to confirm the integrity of the installation.
+Here we describe the installation of MPTRAC on a Linux system. The installation comprises several steps, i.e. to meet the prerequisites, downloading the source code from the GitHub repository, the compilation of the source code, and conducting checks to confirm the integrity of the installation.
 
 ## Prerequisites
 
