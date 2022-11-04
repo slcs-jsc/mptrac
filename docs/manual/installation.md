@@ -4,7 +4,7 @@ Here we describe the installation of MPTRAC on a Linux system. The installation 
 
 ## Prerequisites
 
-The following software dependencies are mandatory to compile and install MPTRAC:
+The following software dependencies need to be met to compile and install MPTRAC:
 
 * the distributed version control system [Git](https://git-scm.com/)
 * the C compiler of the [GNU Compiler Collection](https://gcc.gnu.org)
@@ -56,7 +56,7 @@ To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be ena
 
 Finally, use `make` in the source directory to compile the code. Please carefully check the logs of the compilation process for any warnings or errors.
 
-## Run the test cases
+## Running the test cases
 
 Please run the test cases in order to check the installation:
 

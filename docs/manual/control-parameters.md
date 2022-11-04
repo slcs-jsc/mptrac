@@ -2,6 +2,8 @@
 
 The MPTRAC apps are controlled by means of a control parameter file or by specifying control parameters as command line arguments. A complete [list of control parameters](https://slcs-jsc.github.io/mptrac/structctl__t.html) can be found in the Doxygen manual.
 
+In most cases, defaukt values for control parameters will be used, if no calue is explicitly specified. Please carefully check the log output of the MPTRAC tools to make sure the control parameter values are selected as desired.
+
 ## Control parameter file
 
 Example of a control parameter file:
@@ -26,9 +28,7 @@ GRID_NX = 300
 GRID_NY = 90
 ```
 
-Note that blanks before and after the equal sign are mandatory!
-
-Array index starts counting from zero, a[0], a[1], ..., like in C.
+Note that blanks before and after the equal sign are mandatory. Array indices start counting from zero, i.e, a[0], a[1], ..., like in C. You can use the minus sign to indicate that no control parameter file is being used.
 
 ## Command line arguments
 
@@ -40,8 +40,4 @@ Control parameters can also be specified via the command line:
                INIT_LAT0 -40.59 INIT_LAT1 -40.59
 ```
 
-Command line arguments have priority over the values given in the control parameter file `trac.ctl'.
-
-Use the minus sign to indicate that no control parameter file is used.
-
-In most cases, a default value will be used, if no control parameter is given. Check the log output of the MPTRAC apps to make sure the control parameter values are selected as desired.
+Command line arguments have priority over the values given in the control parameter file.

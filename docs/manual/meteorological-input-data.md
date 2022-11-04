@@ -43,9 +43,6 @@ For ERA5 a different set of [a and be level coeffients](https://www.ecmwf.int/en
 The CDO tools can be used to perform the vertical interpolation from model levels to pressure levels and to convert from grib to netCDF file format. For example:
 
 ```
-    # load modules...
-    module load Intel ParaStationMPI CDO
-
     # merge surface and model level grib files...
     cdo -P 8 merge 2020010100_sf.grb 2020010100_ml.grb merge.grib
 

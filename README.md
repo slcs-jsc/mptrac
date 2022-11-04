@@ -102,7 +102,7 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for new users and developers is provided in the [MPTRAC user manual](http://mptrac.readthedocs.io) and collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
+More detailed information for users and developers is provided in the [user manual](http://mptrac.readthedocs.io) and the [wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
 These are the main references for citing the MPTRAC model in scientific publications:
 
@@ -129,5 +129,3 @@ Dr. Lars Hoffmann
 Jülich Supercomputing Centre, Forschungszentrum Jülich
 
 e-mail: l.hoffmann@fz-juelich.de
-
-website: https://www.fz-juelich.de/ias/jsc/slcs

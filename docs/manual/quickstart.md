@@ -13,9 +13,8 @@ Please see the script `run.sh` on how to invoke MPTRAC programs such as `atm_ini
 
 The script generates a number of plots of the simulation output at different time steps after the eruption by means of the `gnuplot` graphing tool. These plots should look similar to the output already provided in the repository.
 
-This is an example showing the particle position and grid output on 6th and 8th of June 2011:
-<p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
+This is an example showing the particle output on 6th to 8th of June 2011:
+![MPTRAC particle output for Puyehue simulation](img/puyehue.png)
 
 ## Further information
 
