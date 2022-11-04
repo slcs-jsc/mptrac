@@ -1,16 +1,14 @@
 # Links
 
-## Information for users
-
-* [MPTRAC GitHub repository](https://github.com/slcs-jsc/mptrac)
+These links provide further information for users of MPTRAC:
 
 * [README file](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
 
 * [User manual](http://mptrac.readthedocs.io)
 
-## Informaton for developers
-
 * [Doxygen manual](https://slcs-jsc.github.io/mptrac)
+
+These links provide further informaton for developers of MPTRAC:
 
 * [Nightly builds](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds)
 
