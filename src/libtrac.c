@@ -5614,9 +5614,9 @@ void write_grid(
 
   char line[LEN];
 
-  static double *mass, *vmr, z[GZ], lon[GX], lat[GY], area[GY], press[GZ];
+  double *cd, *mass, *vmr_expl, *vmr_impl, *z, *lon, *lat, *area, *press;
 
-  static int *ixs, *iys, *izs, *np;
+  int *ixs, *iys, *izs, *np;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_GRID", "OUTPUT", NVTX_WRITE);
@@ -5624,15 +5624,25 @@ void write_grid(
   /* Write info... */
   LOG(1, "Write grid data: %s", filename);
 
-  /* Check dimensions... */
-  if (ctl->grid_nx > GX || ctl->grid_ny > GY || ctl->grid_nz > GZ)
-    ERRMSG("Grid dimensions too large!");
-
   /* Allocate... */
+  ALLOC(cd, double,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(mass, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-  ALLOC(vmr, double,
+  ALLOC(vmr_expl, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(vmr_impl, double,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(z, double,
+	ctl->grid_nz);
+  ALLOC(lon, double,
+	ctl->grid_nx);
+  ALLOC(lat, double,
+	ctl->grid_ny);
+  ALLOC(area, double,
+	ctl->grid_ny);
+  ALLOC(press, double,
+	ctl->grid_nz);
   ALLOC(np, int,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(ixs, int,
@@ -5668,17 +5678,7 @@ void write_grid(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Initialize grid... */
-#pragma omp parallel for default(shared) collapse(3)
-  for (int ix = 0; ix < ctl->grid_nx; ix++)
-    for (int iy = 0; iy < ctl->grid_ny; iy++)
-      for (int iz = 0; iz < ctl->grid_nz; iz++) {
-	mass[ARRAY_3D_GRID(ix, iy, iz)] = 0;
-	vmr[ARRAY_3D_GRID(ix, iy, iz)] = 0;
-	np[ARRAY_3D_GRID(ix, iy, iz)] = 0;
-      }
-
-  /* Get indices... */
+  /* Get grid box indices... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->grid_lon0) / dlon);
@@ -5694,13 +5694,12 @@ void write_grid(
   /* Average data... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-      np[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]++;
+      int idx = ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip]);
+      np[idx]++;
       if (ctl->qnt_m >= 0)
-	mass[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
-	  += atm->q[ctl->qnt_m][ip];
+	mass[idx] += atm->q[ctl->qnt_m][ip];
       if (ctl->qnt_vmr >= 0)
-	vmr[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
-	  += atm->q[ctl->qnt_vmr][ip];
+	vmr_expl[idx] += atm->q[ctl->qnt_vmr][ip];
     }
 
   /* Get implicit vmr per particle... */
@@ -5714,6 +5713,44 @@ void write_grid(
 	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass
 	  * mass[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
+      }
+
+  /* Calculate column density and vmr... */
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    for (int iy = 0; iy < ctl->grid_ny; iy++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++) {
+
+	/* Get grid index... */
+	int idx = ARRAY_3D_GRID(ix, iy, iz);
+
+	/* Calculate column density... */
+	cd[idx] = GSL_NAN;
+	if (ctl->qnt_m >= 0)
+	  cd[idx] = mass[idx] / (1e6 * area[iy]);
+
+	/* Calculate volume mixing ratio (implicit)... */
+	vmr_impl[idx] = GSL_NAN;
+	if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
+	  vmr_impl[idx] = 0;
+	  if (mass[idx] > 0) {
+
+	    /* Get temperature... */
+	    double temp;
+	    INTPOL_INIT;
+	    intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
+			       lon[ix], lat[iy], &temp, ci, cw, 1);
+
+	    /* Calculate volume mixing ratio... */
+	    vmr_impl[idx] = MA / ctl->molmass * mass[idx]
+	      / (RHO(press[iz], temp) * 1e6 * area[iy] * 1e3 * dz);
+	  }
+	}
+
+	/* Calculate volume mixing ratio (explicit)... */
+	if (ctl->qnt_vmr >= 0 && np[idx] > 0)
+	  vmr_expl[idx] /= np[idx];
+	else
+	  vmr_expl[idx] = GSL_NAN;
       }
 
   /* Check if gnuplot output is requested... */
@@ -5768,45 +5805,13 @@ void write_grid(
     for (int iy = 0; iy < ctl->grid_ny; iy++) {
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
-      for (int iz = 0; iz < ctl->grid_nz; iz++)
-	if (!ctl->grid_sparse
-	    || mass[ARRAY_3D_GRID(ix, iy, iz)] > 0
-	    || vmr[ARRAY_3D_GRID(ix, iy, iz)] > 0) {
-
-	  /* Calculate column density... */
-	  double cd = GSL_NAN;
-	  if (ctl->qnt_m >= 0)
-	    cd = mass[ARRAY_3D_GRID(ix, iy, iz)] / (1e6 * area[iy]);
-
-	  /* Calculate volume mixing ratio (implicit)... */
-	  double vmr_impl = GSL_NAN;
-	  if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
-	    vmr_impl = 0;
-	    if (mass[ARRAY_3D_GRID(ix, iy, iz)] > 0) {
-
-	      /* Get temperature... */
-	      double temp;
-	      INTPOL_INIT;
-	      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[iz],
-				 lon[ix], lat[iy], &temp, ci, cw, 1);
-
-	      /* Calculate volume mixing ratio... */
-	      vmr_impl = MA / ctl->molmass * mass[ARRAY_3D_GRID(ix, iy, iz)]
-		/ (RHO(press[iz], temp) * 1e6 * area[iy] * 1e3 * dz);
-	    }
-	  }
-
-	  /* Calculate volume mixing ratio (explicit)... */
-	  double vmr_expl = GSL_NAN;
-	  if (ctl->qnt_vmr >= 0 && np[ARRAY_3D_GRID(ix, iy, iz)] > 0)
-	    vmr_expl = vmr[ARRAY_3D_GRID(ix, iy, iz)]
-	      / np[ARRAY_3D_GRID(ix, iy, iz)];
-
-	  /* Write output... */
+      for (int iz = 0; iz < ctl->grid_nz; iz++) {
+	int idx = ARRAY_3D_GRID(ix, iy, iz);
+	if (!ctl->grid_sparse || mass[idx] > 0 || vmr_expl[idx] > 0)
 	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n",
 		  t, z[iz], lon[ix], lat[iy], area[iy], dz,
-		  np[ARRAY_3D_GRID(ix, iy, iz)], cd, vmr_impl, vmr_expl);
-	}
+		  np[idx], cd[idx], vmr_impl[idx], vmr_expl[idx]);
+      }
     }
   }
 
@@ -5814,8 +5819,15 @@ void write_grid(
   fclose(out);
 
   /* Free... */
+  free(cd);
   free(mass);
-  free(vmr);
+  free(vmr_expl);
+  free(vmr_impl);
+  free(z);
+  free(lon);
+  free(lat);
+  free(area);
+  free(press);
   free(np);
   free(ixs);
   free(iys);
