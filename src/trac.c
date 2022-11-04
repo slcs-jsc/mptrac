@@ -913,7 +913,7 @@ void module_dry_deposition(
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
 
-  /* Width of the surface layer [hPa]. */
+  /* Depth of the surface layer [hPa]. */
   const double dp = 30.;
 
   /* Check quantity flags... */
@@ -940,7 +940,7 @@ void module_dry_deposition(
       if (atm->p[ip] < ps - dp)
 	continue;
 
-      /* Set width of surface layer... */
+      /* Set depth of surface layer... */
       double dz = 1000. * (Z(ps - dp) - Z(ps));
 
       /* Calculate sedimentation velocity for particles... */
@@ -1875,8 +1875,9 @@ void write_output(
 
   /* Write gridded data... */
   if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    dirname, ctl->grid_basename, year, mon, day, hour, min);
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->grid_basename, year, mon, day, hour, min,
+	    ctl->grid_type == 0 ? "tab" : "nc");
     write_grid(filename, ctl, met0, met1, atm, t);
   }
 

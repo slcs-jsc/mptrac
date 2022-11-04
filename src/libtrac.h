@@ -458,6 +458,16 @@
     }								\
   }
 
+/*! Write netCDF integer array. */
+#define NC_PUT_INT(varname, ptr, hyperslab) {		\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara_int(ncid, varid, start, count, ptr));	\
+    } else {							\
+      NC(nc_put_var_int(ncid, varid, ptr));			\
+    }								\
+  }
+
 /*! Set netCDF global attribute. */
 #define NC_PUT_ATT(attname, text)					\
   NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strlen(text), text));
@@ -985,13 +995,13 @@ typedef struct {
   /*! WMO tropopause lapse rate [K/km]. */
   double met_tropo_lapse;
 
-  /*! WMO tropopause layer width (number of levels). */
+  /*! WMO tropopause layer depth (number of levels). */
   int met_tropo_nlev;
 
   /*! WMO tropopause separation layer lapse rate [K/km]. */
   double met_tropo_lapse_sep;
 
-  /*! WMO tropopause separation layer width (number of levels). */
+  /*! WMO tropopause separation layer depth (number of levels). */
   int met_tropo_nlev_sep;
 
   /*! Dyanmical tropopause potential vorticity threshold [PVU]. */
@@ -1262,6 +1272,9 @@ typedef struct {
   /*! Upper latitude of gridded data [deg]. */
   double grid_lat1;
 
+  /*! Type of grid data files (0=ASCII, 1=netCDF). */
+  int grid_type;
+
   /*! Basename for profile output file. */
   char prof_basename[LEN];
 
@@ -1307,7 +1320,7 @@ typedef struct {
   /*! Horizontal radius for sample output [km]. */
   double sample_dx;
 
-  /*! Layer width for sample output [km]. */
+  /*! Layer depth for sample output [km]. */
   double sample_dz;
 
   /*! Basename of station data file. */
@@ -2203,6 +2216,37 @@ void write_grid(
   met_t * met1,
   atm_t * atm,
   double t);
+
+/*! Write gridded data in ASCII format. */
+void write_grid_asc(
+  const char *filename,
+  ctl_t * ctl,
+  double *cd,
+  double *mass,
+  double *vmr_expl,
+  double *vmr_impl,
+  double t,
+  double *z,
+  double *lon,
+  double *lat,
+  double *area,
+  double dz,
+  int *np);
+
+/*! Write gridded data in netCDF format. */
+void write_grid_nc(
+  const char *filename,
+  ctl_t * ctl,
+  double *cd,
+  double *vmr_expl,
+  double *vmr_impl,
+  double t,
+  double *z,
+  double *lon,
+  double *lat,
+  double *area,
+  double dz,
+  int *np);
 
 /*! Read meteo data file. */
 int write_met(

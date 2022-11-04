@@ -2579,6 +2579,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_LAT1", -1, "90", NULL);
   ctl->grid_ny =
     (int) scan_ctl(filename, argc, argv, "GRID_NY", -1, "180", NULL);
+  ctl->grid_type =
+    (int) scan_ctl(filename, argc, argv, "GRID_TYPE", -1, "0", NULL);
 
   /* Output of profile data... */
   scan_ctl(filename, argc, argv, "PROF_BASENAME", -1, "-",
@@ -5610,10 +5612,6 @@ void write_grid(
   atm_t * atm,
   double t) {
 
-  FILE *in, *out;
-
-  char line[LEN];
-
   double *cd, *mass, *vmr_expl, *vmr_impl, *z, *lon, *lat, *area, *press;
 
   int *ixs, *iys, *izs, *np;
@@ -5753,6 +5751,57 @@ void write_grid(
 	  vmr_expl[idx] = GSL_NAN;
       }
 
+  /* Write ASCII data... */
+  if (ctl->grid_type == 0)
+    write_grid_asc(filename, ctl, cd, mass, vmr_expl, vmr_impl,
+		   t, z, lon, lat, area, dz, np);
+
+  /* Write netCDF data... */
+  else if (ctl->grid_type == 1)
+    write_grid_nc(filename, ctl, cd, vmr_expl, vmr_impl,
+		  t, z, lon, lat, area, dz, np);
+
+  /* Error message... */
+  else
+    ERRMSG("Grid data format GRID_TYPE unknown!");
+
+  /* Free... */
+  free(cd);
+  free(mass);
+  free(vmr_expl);
+  free(vmr_impl);
+  free(z);
+  free(lon);
+  free(lat);
+  free(area);
+  free(press);
+  free(np);
+  free(ixs);
+  free(iys);
+  free(izs);
+}
+
+/*****************************************************************************/
+
+void write_grid_asc(
+  const char *filename,
+  ctl_t * ctl,
+  double *cd,
+  double *mass,
+  double *vmr_expl,
+  double *vmr_impl,
+  double t,
+  double *z,
+  double *lon,
+  double *lat,
+  double *area,
+  double dz,
+  int *np) {
+
+  FILE *in, *out;
+
+  char line[LEN];
+
   /* Check if gnuplot output is requested... */
   if (ctl->grid_gpfile[0] != '-') {
 
@@ -5792,7 +5841,7 @@ void write_grid(
 	  "# $3 = longitude [deg]\n"
 	  "# $4 = latitude [deg]\n"
 	  "# $5 = surface area [km^2]\n"
-	  "# $6 = layer width [km]\n"
+	  "# $6 = layer depth [km]\n"
 	  "# $7 = number of particles [1]\n"
 	  "# $8 = column density (implicit) [kg/m^2]\n"
 	  "# $9 = volume mixing ratio (implicit) [ppv]\n"
@@ -5817,21 +5866,70 @@ void write_grid(
 
   /* Close file... */
   fclose(out);
+}
 
-  /* Free... */
-  free(cd);
-  free(mass);
-  free(vmr_expl);
-  free(vmr_impl);
-  free(z);
-  free(lon);
-  free(lat);
-  free(area);
-  free(press);
-  free(np);
-  free(ixs);
-  free(iys);
-  free(izs);
+/*****************************************************************************/
+
+void write_grid_nc(
+  const char *filename,
+  ctl_t * ctl,
+  double *cd,
+  double *vmr_expl,
+  double *vmr_impl,
+  double t,
+  double *z,
+  double *lon,
+  double *lat,
+  double *area,
+  double dz,
+  int *np) {
+
+  int ncid, dimid[10], varid;
+
+  size_t start[2], count[2];
+
+  /* Create file... */
+  nc_create(filename, NC_CLOBBER, &ncid);
+
+  /* Define dimensions... */
+  NC(nc_def_dim(ncid, "time", 1, &dimid[0]));
+  NC(nc_def_dim(ncid, "lon", (size_t) ctl->grid_nx, &dimid[1]));
+  NC(nc_def_dim(ncid, "lat", (size_t) ctl->grid_ny, &dimid[2]));
+  NC(nc_def_dim(ncid, "z", (size_t) ctl->grid_nz, &dimid[3]));
+  NC(nc_def_dim(ncid, "dz", 1, &dimid[4]));
+
+  /* Define variables and their attributes... */
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &dimid[0], "time",
+	     "seconds since 2000-01-01 00:00:00 UTC");
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[1], "longitude", "degrees_east");
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[2], "latitude", "degrees_north");
+  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[3], "altitude", "km");
+  NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2");
+  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[4], "layer depth", "km");
+  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2");
+  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
+	     "volume mixing ratio (implicit)", "ppv");
+  NC_DEF_VAR("vmr_expl", NC_FLOAT, 4, dimid,
+	     "volume mixing ratio (explicit)", "ppv");
+  NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1");
+
+  /* End definitions... */
+  NC(nc_enddef(ncid));
+
+  /* Write data... */
+  NC_PUT_DOUBLE("time", &t, 0);
+  NC_PUT_DOUBLE("lon", lon, 0);
+  NC_PUT_DOUBLE("lat", lat, 0);
+  NC_PUT_DOUBLE("z", z, 0);
+  NC_PUT_DOUBLE("area", area, 0);
+  NC_PUT_DOUBLE("dz", &dz, 0);
+  NC_PUT_DOUBLE("cd", cd, 0);
+  NC_PUT_DOUBLE("vmr_impl", vmr_impl, 0);
+  NC_PUT_DOUBLE("vmr_expl", vmr_expl, 0);
+  NC_PUT_INT("np", np, 0);
+
+  /* Close file... */
+  NC(nc_close(ncid));
 }
 
 /*****************************************************************************/
@@ -6281,7 +6379,7 @@ void write_sample(
 	    "# $3 = longitude [deg]\n"
 	    "# $4 = latitude [deg]\n"
 	    "# $5 = surface area [km^2]\n"
-	    "# $6 = layer width [km]\n"
+	    "# $6 = layer depth [km]\n"
 	    "# $7 = number of particles [1]\n"
 	    "# $8 = column density [kg/m^2]\n"
 	    "# $9 = volume mixing ratio [ppv]\n"
