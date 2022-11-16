@@ -215,6 +215,7 @@ int main(
 
 #ifdef ASYNCIO
   met_t *met0TMP, *met1TMP, *mets;
+  ctl_t ctlTMP;
 #endif
 
   FILE *dirlist;
@@ -288,7 +289,7 @@ int main(
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #ifdef ASYNCIO
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP], rs[:3 * NP])
+#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl,ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP], rs[:3 * NP])
 #else
 #pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], dt[:NP], rs[:3 * NP])
 #endif
@@ -319,17 +320,23 @@ int main(
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-    get_met(&ctl, ctl.t_start, &met0, &met1);
+
+#ifdef ASYNCIO
+    ctlTMP = ctl;
+#endif
+        get_met(&ctl, ctl.t_start, &met0, &met1);
+
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
 
 #ifdef ASYNCIO
-    get_met(&ctl, ctl.t_start + (ctl.direction * ctl.dt_mod), &met0TMP, &met1TMP);
+    get_met(&ctlTMP, ctlTMP.t_start, &met0TMP, &met1TMP);
 #endif
 
-    /* Initialize isosurface... */
-    if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-      module_isosurf_init(&ctl, met0, met1, atm, cache);
+        /* Initialize isosurface... */
+        if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
+        module_isosurf_init(&ctl, met0, met1, atm, cache);
+
 
       /* Update GPU... */
 #ifdef _OPENACC
@@ -368,7 +375,7 @@ int main(
 #pragma omp barrier
             if (omp_get_thread_num() == 0)
             {
-              omp_set_num_threads(ompTrdnum);
+            
               if (t != ctl.t_start)
               {
                 // Pointer swap
@@ -445,7 +452,6 @@ int main(
               if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0)
                 module_bound_cond(&ctl, met0, met1, atm, dt);
 
-              /* Write output... */
               write_output(dirname, &ctl, met0, met1, atm, t);
 #ifdef ASYNCIO
             }
@@ -453,9 +459,8 @@ int main(
             {
               omp_set_num_threads(ompTrdnum);
               if (ctl.direction * (t - ctl.t_stop + ctl.direction * ctl.dt_mod) < ctl.dt_mod)
-              {
                 get_met(&ctl, t + (ctl.direction * ctl.dt_mod), &met0TMP, &met1TMP);
-              }
+                
             }
 
           }
