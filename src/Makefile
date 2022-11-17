@@ -3,10 +3,10 @@
 # -----------------------------------------------------------------------------
 
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample wind
+EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test met_test tools_test trac_test
+TESTS = atm_test compress_test met_test tools_test trac_test tropo_test
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -45,11 +45,17 @@ COV ?= 0
 # Enable NVTX markers...
 NVTX ?= 0
 
+# Enable Thrust library...
+THRUST ?= 0
+
 # Enable zfp compression...
 ZFP ?= 0
 
 # Enable zstd compression...
 ZSTD ?= 0
+
+# Enable UVW cache...
+UVW ?= 1
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...
@@ -112,6 +118,16 @@ ifeq ($(NVTX),1)
   LDFLAGS += -lnvToolsExt
 endif
 
+# Thrust...
+ifeq ($(THRUST),1)
+  ifeq ($(GPU),1)
+    CFLAGS += -DTHRUST -c++libs
+    LDFLAGS += -lthrustsort
+  else
+    $(error Thrust library only available for GPU)
+  endif
+endif
+
 # zfp compression...
 ifeq ($(ZFP),1)
   LDFLAGS += -lzfp
@@ -122,6 +138,11 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
+endif
+
+# UVW cache...
+ifeq ($(UVW),1)
+  CFLAGS += -DUVW
 endif
 
 # Static compilation...

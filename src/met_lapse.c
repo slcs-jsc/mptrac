@@ -47,6 +47,8 @@ int main(
 
   ctl_t ctl;
 
+  clim_t *clim;
+
   met_t *met;
 
   FILE *out;
@@ -58,6 +60,7 @@ int main(
     nhist_max, nhist_min, nhist_mean, nhist_sig, np;
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
 
   /* Check arguments... */
@@ -77,11 +80,14 @@ int main(
   int intpol =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_INTPOL", -1, "1", NULL);
 
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
+
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, met))
+    if (!read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Get altitude and pressure profiles... */
@@ -217,6 +223,7 @@ int main(
   fclose(out);
 
   /* Free... */
+  free(clim);
   free(met);
 
   return EXIT_SUCCESS;

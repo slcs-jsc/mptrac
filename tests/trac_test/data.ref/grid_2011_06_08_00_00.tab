@@ -3,7 +3,7 @@
 # $3 = longitude [deg]
 # $4 = latitude [deg]
 # $5 = surface area [km^2]
-# $6 = layer width [km]
+# $6 = layer depth [km]
 # $7 = number of particles [1]
 # $8 = column density (implicit) [kg/m^2]
 # $9 = volume mixing ratio (implicit) [ppv]

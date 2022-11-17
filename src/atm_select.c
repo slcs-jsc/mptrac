@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -35,7 +35,7 @@ int main(
   double lat0, lat1, lon0, lon1, p0, p1, r, r0, r1, rlon, rlat, t0, t1, x0[3],
     x1[3];
 
-  int f, ip, ip0, ip1, iq, stride;
+  int f, ip, idx0, idx1, ip0, ip1, iq, stride;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -49,6 +49,8 @@ int main(
   read_ctl(argv[1], argc, argv, &ctl);
   stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
+  idx0 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX0", -1, "-999", NULL);
+  idx1 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX1", -1, "-999", NULL);
   ip0 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP0", -1, "-999", NULL);
   ip1 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP1", -1, "-999", NULL);
   t0 = scan_ctl(argv[1], argc, argv, "SELECT_T0", -1, "0", NULL);
@@ -86,6 +88,11 @@ int main(
 
     /* Loop over air parcels... */
     for (ip = ip0; ip <= ip1; ip += stride) {
+
+      /* Check air parcel index... */
+      if (ctl.qnt_idx >= 0 && idx0 >= 0 && idx1 >= 0)
+	if (atm->q[ctl.qnt_idx][ip] < idx0 || atm->q[ctl.qnt_idx][ip] > idx1)
+	  continue;
 
       /* Check time... */
       if (t0 != t1)

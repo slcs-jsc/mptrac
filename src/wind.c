@@ -25,16 +25,6 @@
 #include "libtrac.h"
 
 /* ------------------------------------------------------------
-   Functions...
-   ------------------------------------------------------------ */
-
-void add_text_attribute(
-  int ncid,
-  char *varname,
-  char *attrname,
-  char *text);
-
-/* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
 
@@ -47,12 +37,14 @@ int main(
   static char filename[LEN];
 
   static double r, t0, z0, z1, dataLon[EX], dataLat[EY], dataZ[EP],
-    u0, u1, alpha;
+    u0, u1, w0, alpha;
 
   static float *dataT, *dataU, *dataV, *dataW;
 
-  static int ncid, dims[4], timid, levid, latid, lonid, tid, uid, vid, wid,
-    idx, ix, iy, iz, nx, ny, nz, year, mon, day, hour, min, sec;
+  static int ncid, varid, dims[4], idx, ix, iy, iz, nx, ny, nz,
+    year, mon, day, hour, min, sec;
+
+  static size_t start[4], count[4];
 
   /* Allocate... */
   ALLOC(dataT, float,
@@ -78,6 +70,7 @@ int main(
   z1 = scan_ctl(argv[1], argc, argv, "WIND_Z1", -1, "60", NULL);
   u0 = scan_ctl(argv[1], argc, argv, "WIND_U0", -1, "38.587660177302", NULL);
   u1 = scan_ctl(argv[1], argc, argv, "WIND_U1", -1, "38.587660177302", NULL);
+  w0 = scan_ctl(argv[1], argc, argv, "WIND_W0", -1, "0", NULL);
   alpha = scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
 
   /* Check dimensions... */
@@ -105,32 +98,14 @@ int main(
   NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[3]));
 
   /* Create variables... */
-  NC(nc_def_var(ncid, "time", NC_DOUBLE, 1, &dims[0], &timid));
-  NC(nc_def_var(ncid, "lev", NC_DOUBLE, 1, &dims[1], &levid));
-  NC(nc_def_var(ncid, "lat", NC_DOUBLE, 1, &dims[2], &latid));
-  NC(nc_def_var(ncid, "lon", NC_DOUBLE, 1, &dims[3], &lonid));
-  NC(nc_def_var(ncid, "T", NC_FLOAT, 4, &dims[0], &tid));
-  NC(nc_def_var(ncid, "U", NC_FLOAT, 4, &dims[0], &uid));
-  NC(nc_def_var(ncid, "V", NC_FLOAT, 4, &dims[0], &vid));
-  NC(nc_def_var(ncid, "W", NC_FLOAT, 4, &dims[0], &wid));
-
-  /* Set attributes... */
-  add_text_attribute(ncid, "time", "long_name", "time");
-  add_text_attribute(ncid, "time", "units", "day as %Y%m%d.%f");
-  add_text_attribute(ncid, "lon", "long_name", "longitude");
-  add_text_attribute(ncid, "lon", "units", "degrees_east");
-  add_text_attribute(ncid, "lat", "long_name", "latitude");
-  add_text_attribute(ncid, "lat", "units", "degrees_north");
-  add_text_attribute(ncid, "lev", "long_name", "air_pressure");
-  add_text_attribute(ncid, "lev", "units", "Pa");
-  add_text_attribute(ncid, "T", "long_name", "Temperature");
-  add_text_attribute(ncid, "T", "units", "K");
-  add_text_attribute(ncid, "U", "long_name", "U velocity");
-  add_text_attribute(ncid, "U", "units", "m s**-1");
-  add_text_attribute(ncid, "V", "long_name", "V velocity");
-  add_text_attribute(ncid, "V", "units", "m s**-1");
-  add_text_attribute(ncid, "W", "long_name", "Vertical velocity");
-  add_text_attribute(ncid, "W", "units", "Pa s**-1");
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time", "day as %Y%m%d.%f");
+  NC_DEF_VAR("lev", NC_DOUBLE, 1, &dims[1], "air_pressure", "Pa");
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[2], "latitude", "degrees_north");
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[3], "longitude", "degrees_east");
+  NC_DEF_VAR("T", NC_FLOAT, 4, &dims[0], "Temperature", "K");
+  NC_DEF_VAR("U", NC_FLOAT, 4, &dims[0], "zonal wind", "m s**-1");
+  NC_DEF_VAR("V", NC_FLOAT, 4, &dims[0], "meridional wind", "m s**-1");
+  NC_DEF_VAR("W", NC_FLOAT, 4, &dims[0], "vertical velocity", "Pa s**-1");
 
   /* End definition... */
   NC(nc_enddef(ncid));
@@ -144,10 +119,10 @@ int main(
     dataZ[iz] = 100. * P(LIN(0.0, z0, nz - 1.0, z1, iz));
 
   /* Write coordinates... */
-  NC(nc_put_var_double(ncid, timid, &t0));
-  NC(nc_put_var_double(ncid, levid, dataZ));
-  NC(nc_put_var_double(ncid, lonid, dataLon));
-  NC(nc_put_var_double(ncid, latid, dataLat));
+  NC_PUT_DOUBLE("time", &t0, 0);
+  NC_PUT_DOUBLE("lev", dataZ, 0);
+  NC_PUT_DOUBLE("lat", dataLat, 0);
+  NC_PUT_DOUBLE("lon", dataLon, 0);
 
   /* Create wind fields (Williamson et al., 1992)... */
   for (ix = 0; ix < nx; ix++)
@@ -163,13 +138,14 @@ int main(
 	dataV[idx] = (float) (-LIN(0.0, u0, nz - 1.0, u1, iz)
 			      * sin(dataLon[ix] * M_PI / 180.0)
 			      * sin(alpha * M_PI / 180.0));
+	dataW[idx] = (float) DZ2DP(1e-3 * w0, dataZ[iz]);
       }
 
-  /* Write wind data... */
-  NC(nc_put_var_float(ncid, tid, dataT));
-  NC(nc_put_var_float(ncid, uid, dataU));
-  NC(nc_put_var_float(ncid, vid, dataV));
-  NC(nc_put_var_float(ncid, wid, dataW));
+  /* Write data... */
+  NC_PUT_FLOAT("T", dataT, 0);
+  NC_PUT_FLOAT("U", dataU, 0);
+  NC_PUT_FLOAT("V", dataV, 0);
+  NC_PUT_FLOAT("W", dataW, 0);
 
   /* Close file... */
   NC(nc_close(ncid));
@@ -181,18 +157,4 @@ int main(
   free(dataW);
 
   return EXIT_SUCCESS;
-}
-
-/*****************************************************************************/
-
-void add_text_attribute(
-  int ncid,
-  char *varname,
-  char *attrname,
-  char *text) {
-
-  int varid;
-
-  NC(nc_inq_varid(ncid, varname, &varid));
-  NC(nc_put_att_text(ncid, varid, attrname, strlen(text), text));
 }

@@ -34,11 +34,11 @@ int main(
 
   ctl_t ctl;
 
+  clim_t *clim;
+
   atm_t *atm;
 
   met_t *met0, *met1;
-
-  clim_t *clim;
 
   FILE *out;
 
@@ -53,10 +53,10 @@ int main(
     ERRMSG("Give parameters: <ctl> <sample.tab> <atm_in>");
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(atm, atm_t, 1);
   ALLOC(met0, met_t, 1);
   ALLOC(met1, met_t, 1);
-  ALLOC(clim, clim_t, 1);
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
@@ -71,12 +71,12 @@ int main(
   grid_lat =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LAT", -1, "0", NULL);
 
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
+
   /* Read atmospheric data... */
   if (!read_atm(argv[3], &ctl, atm))
     ERRMSG("Cannot open file!");
-
-  /* Read climatological data... */
-  read_clim(&ctl, clim);
 
   /* Create output file... */
   LOG(1, "Write meteorological data file: %s", argv[2]);
@@ -133,7 +133,7 @@ int main(
   for (ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    get_met(&ctl, atm->time[ip], &met0, &met1);
+    get_met(&ctl, clim, atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
     double pref = atm->p[ip];
@@ -177,8 +177,9 @@ int main(
 	    cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
-			    clim_hno3(atm->time[ip], atm->lat[ip],
-				      atm->p[ip])), clim_hno3(atm->time[ip],
+			    clim_hno3(clim, atm->time[ip], atm->lat[ip],
+				      atm->p[ip])), clim_hno3(clim,
+							      atm->time[ip],
 							      atm->lat[ip],
 							      atm->p[ip]),
 	    clim_oh_diurnal(&ctl, clim, atm->time[ip], atm->p[ip],
@@ -189,10 +190,10 @@ int main(
   fclose(out);
 
   /* Free... */
+  free(clim);
   free(atm);
   free(met0);
   free(met1);
-  free(clim);
 
   return EXIT_SUCCESS;
 }

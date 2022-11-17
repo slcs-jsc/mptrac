@@ -79,46 +79,74 @@
    ------------------------------------------------------------ */
 
 /*! Specific heat of dry air at constant pressure [J/(kg K)]. */
+#ifndef CPD
 #define CPD 1003.5
+#endif
 
 /*! Ratio of the specific gas constant of dry air and water vapor [1]. */
+#ifndef EPS
 #define EPS (MH2O / MA)
+#endif
 
 /*! Standard gravity [m/s^2]. */
+#ifndef G0
 #define G0 9.80665
+#endif
 
 /*! Scale height [km]. */
+#ifndef H0
 #define H0 7.0
+#endif
 
 /*! Latent heat of vaporization of water [J/kg]. */
+#ifndef LV
 #define LV 2501000.
+#endif
 
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
+#ifndef KB
 #define KB 1.3806504e-23
+#endif
 
 /*! Molar mass of dry air [g/mol]. */
+#ifndef MA
 #define MA 28.9644
+#endif
 
 /*! Molar mass of water vapor [g/mol]. */
+#ifndef MH2O
 #define MH2O 18.01528
+#endif
 
 /*! Molar mass of ozone [g/mol]. */
+#ifndef MO3
 #define MO3 48.00
+#endif
 
 /*! Standard pressure [hPa]. */
+#ifndef P0
 #define P0 1013.25
+#endif
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
+#ifndef RA
 #define RA (1e3 * RI / MA)
+#endif
 
 /*! Mean radius of Earth [km]. */
+#ifndef RE
 #define RE 6367.421
+#endif
 
 /*! Ideal gas constant [J/(mol K)]. */
+#ifndef RI
 #define RI 8.3144598
+#endif
 
 /*! Standard temperature [K]. */
+#ifndef T0
 #define T0 273.15
+#endif
 
 /* ------------------------------------------------------------
    Dimensions...
@@ -137,6 +165,11 @@
 /*! Maximum number of quantities per data point. */
 #ifndef NQ
 #define NQ 15
+#endif
+
+/*! Maximum number of data points for CSI calculation. */
+#ifndef NCSI
+#define NCSI 1000000
 #endif
 
 /*! Maximum number of pressure levels for meteo data. */
@@ -210,6 +243,30 @@
   if((ptr=calloc((size_t)(n), sizeof(type)))==NULL)      \
     ERRMSG("Out of memory!");
 #endif
+
+/*! Get 2-D array index. */
+#define ARRAY_2D(ix, iy, ny)			\
+  ((ix) * (ny) + (iy))
+
+/*! Get 3-D array index. */
+#define ARRAY_3D(ix, iy, ny, iz, nz)		\
+  (((ix)*(ny) + (iy)) * (nz) + (iz))
+
+/*! Get 2-D array index for grid data. */
+#define ARRAY_2D_GRID(ix, iy)			\
+  ARRAY_2D(ix, iy, ctl->grid_ny)
+
+/*! Get 3-D array index for grid data. */
+#define ARRAY_3D_GRID(ix, iy, iz)			\
+  ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)
+
+/*! Get 2-D array index for meteo data. */
+#define ARRAY_2D_MET(ix, iy)			\
+  ARRAY_2D(ix, iy, met->ny)
+
+/*! Get 3-D array index for meteo data. */
+#define ARRAY_3D_MET(ix, iy, ip)		\
+  ARRAY_3D(ix, iy, met->ny, ip, met->np)
 
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
@@ -361,6 +418,70 @@
     ERRMSG("%s", nc_strerror(nc_result));	     \
 }
 
+/*! Define netCDF variable. */
+#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
+    NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
+    NC(nc_put_att_text(ncid, varid, "long_name", strlen(long_name), long_name)); \
+    NC(nc_put_att_text(ncid, varid, "units", strlen(units), units));	\
+  }
+
+/*! Read netCDF double array. */
+#define NC_GET_DOUBLE(varname, ptr, force) {			\
+    if(force) {							\
+      NC(nc_inq_varid(ncid, varname, &varid));			\
+      NC(nc_get_var_double(ncid, varid, ptr));			\
+    } else {							\
+      if(nc_inq_varid(ncid, varname, &varid) == NC_NOERR) {	\
+	NC(nc_get_var_double(ncid, varid, ptr));		\
+      } else							\
+	WARN("netCDF variable %s is missing!", varname);	\
+    }								\
+  }
+
+/*! Read netCDF dimension. */
+#define NC_INQ_DIM(dimname, ptr, min, max) {		\
+    int dimid; size_t naux;				\
+    NC(nc_inq_dimid(ncid, dimname, &dimid));		\
+    NC(nc_inq_dimlen(ncid, dimid, &naux));		\
+    *ptr = (int)naux;					\
+    if ((*ptr) < (min) || (*ptr) > (max))		\
+      ERRMSG("Dimension %s is out of range!", dimname);	\
+  }
+
+/*! Write netCDF double array. */
+#define NC_PUT_DOUBLE(varname, ptr, hyperslab) {		\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara_double(ncid, varid, start, count, ptr));	\
+    } else {							\
+      NC(nc_put_var_double(ncid, varid, ptr));			\
+    }								\
+  }
+
+/*! Write netCDF integer array. */
+#define NC_PUT_INT(varname, ptr, hyperslab) {		\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara_int(ncid, varid, start, count, ptr));	\
+    } else {							\
+      NC(nc_put_var_int(ncid, varid, ptr));			\
+    }								\
+  }
+
+/*! Set netCDF global attribute. */
+#define NC_PUT_ATT(attname, text)					\
+  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strlen(text), text));
+
+/*! Write netCDF float array. */
+#define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara_float(ncid, varid, start, count, ptr));	\
+    } else {							\
+      NC(nc_put_var_float(ncid, varid, ptr));			\
+    }								\
+  }
+
 /*! Compute nearest neighbor interpolation. */
 #define NN(x0, y0, x1, y1, x)				\
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))
@@ -394,15 +515,20 @@
 #define RHICE(p, t, h2o)			\
   (PW(p, h2o) / PSICE(t) * 100.)
 
+/*! Compute density of air. */
+#define RHO(p, t)				\
+  (100. * (p) / (RA * (t)))
+
 /*! Set atmospheric quantity value. */
 #define SET_ATM(qnt, val)			\
   if (ctl->qnt >= 0)				\
     atm->q[ctl->qnt][ip] = val;
 
 /*! Set atmospheric quantity index. */
-#define SET_QNT(qnt, name, unit)			\
+#define SET_QNT(qnt, name, longname, unit)		\
   if (strcasecmp(ctl->qnt_name[iq], name) == 0) {	\
     ctl->qnt = iq;					\
+    sprintf(ctl->qnt_longname[iq], longname);		\
     sprintf(ctl->qnt_unit[iq], unit);			\
   } else
 
@@ -573,11 +699,33 @@
 #endif
 
 /* ------------------------------------------------------------
+   Thrust...
+   ------------------------------------------------------------ */
+
+/*! Wrapper to Thrust sorting function. */
+void thrustSortWrapper(
+  double *__restrict__ c,
+  int n,
+  int *__restrict__ index);
+
+/* ------------------------------------------------------------
    Structs...
    ------------------------------------------------------------ */
 
 /*! Control parameters. */
 typedef struct {
+
+  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
+  int vert_coord_ap;
+
+  /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
+  int vert_coord_met;
+
+  /*! Vertical velocity (0=kinematic, 1=diabatic). */
+  int vert_vel;
+
+  /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
+  int clams_met_data;
 
   /*! Chunk size hint for nc__open. */
   size_t chunkszhint;
@@ -591,11 +739,17 @@ typedef struct {
   /*! Quantity names. */
   char qnt_name[NQ][LEN];
 
+  /*! Quantity long names. */
+  char qnt_longname[NQ][LEN];
+
   /*! Quantity units. */
   char qnt_unit[NQ][LEN];
 
   /*! Quantity output format. */
   char qnt_format[NQ][LEN];
+
+  /*! Quantity array index for air parcel IDs. */
+  int qnt_idx;
 
   /*! Quantity array index for ensemble IDs. */
   int qnt_ens;
@@ -609,11 +763,11 @@ typedef struct {
   /*! Quantity array index for volume mixing ratio. */
   int qnt_vmr;
 
-  /*! Quantity array index for particle density. */
-  int qnt_rho;
-
   /*! Quantity array index for particle radius. */
-  int qnt_r;
+  int qnt_rp;
+
+  /*! Quantity array index for particle density. */
+  int qnt_rhop;
 
   /*! Quantity array index for surface pressure. */
   int qnt_ps;
@@ -653,6 +807,9 @@ typedef struct {
 
   /*! Quantity array index for temperature. */
   int qnt_t;
+
+  /*! Quantity array index for density of air. */
+  int qnt_rho;
 
   /*! Quantity array index for zonal wind. */
   int qnt_u;
@@ -704,6 +861,24 @@ typedef struct {
 
   /*! Quantity array index for hydroxyl number concentrations. */
   int qnt_oh;
+
+  /*! Quantity array index for implicity volumn mixing ratio. */
+  int qnt_vmrimpl;
+
+  /*! Quantity array index for total mass loss due to OH chemistry. */
+  int qnt_mloss_oh;
+
+  /*! Quantity array index for total mass loss due to H2O2 chemistry. */
+  int qnt_mloss_h2o2;
+
+  /*! Quantity array index for total mass loss due to wet deposition. */
+  int qnt_mloss_wet;
+
+  /*! Quantity array index for total mass loss due to dry deposition. */
+  int qnt_mloss_dry;
+
+  /*! Quantity array index for total mass loss due to exponential decax. */
+  int qnt_mloss_decay;
 
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
@@ -777,6 +952,9 @@ typedef struct {
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;
 
+  /*! Check netCDF scaling factors (0=no, 1=yes). */
+  int met_nc_scale;
+
   /*! Stride for longitudes. */
   int met_dx;
 
@@ -817,13 +995,13 @@ typedef struct {
   /*! WMO tropopause lapse rate [K/km]. */
   double met_tropo_lapse;
 
-  /*! WMO tropopause layer width (number of levels). */
+  /*! WMO tropopause layer depth (number of levels). */
   int met_tropo_nlev;
 
   /*! WMO tropopause separation layer lapse rate [K/km]. */
   double met_tropo_lapse_sep;
 
-  /*! WMO tropopause separation layer width (number of levels). */
+  /*! WMO tropopause separation layer depth (number of levels). */
   int met_tropo_nlev_sep;
 
   /*! Dyanmical tropopause potential vorticity threshold [PVU]. */
@@ -836,7 +1014,10 @@ typedef struct {
   int met_tropo_spline;
 
   /*! Cloud data (0=none, 1=LWC+IWC, 2=RWC+SWC, 3=all). */
-  double met_cloud;
+  int met_cloud;
+
+  /*! Minimum cloud ice water content [kg/kg]. */
+  double met_cloud_min;
 
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
@@ -854,7 +1035,7 @@ typedef struct {
   /*! Balloon position filename. */
   char balloon[LEN];
 
-  /*! Advection scheme (0=midpoint, 1=Runge-Kutta). */
+  /*! Advection scheme (1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
 
   /*! Reflection of particles at top and bottom boundary (0=no, 1=yes). */
@@ -892,6 +1073,9 @@ typedef struct {
 
   /*! Time interval for convection module [s]. */
   double conv_dt;
+
+  /*! Type of vertical mixing (0=pressure, 1=density). */
+  int conv_mix;
 
   /*! Lower level for mixing (0=particle pressure, 1=surface). */
   int conv_mix_bot;
@@ -941,6 +1125,9 @@ typedef struct {
   /*! Filename of OH climatology. */
   char clim_oh_filename[LEN];
 
+  /*! Filename of H2O2 climatology. */
+  char clim_h2o2_filename[LEN];
+
   /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
   int oh_chem_reaction;
 
@@ -953,8 +1140,32 @@ typedef struct {
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 
-  /*! Coefficients for wet deposition (Ai, Bi, Hi, Ci, Ab, Bb, Hb, Cb). */
-  double wet_depo[8];
+  /*! Coefficients for precipitation calculation. */
+  double wet_depo_pre[2];
+
+  /*! Coefficient A for wet deposition below cloud (exponential form). */
+  double wet_depo_bc_a;
+
+  /*! Coefficient B for wet deposition below cloud (exponential form). */
+  double wet_depo_bc_b;
+
+  /*! Coefficient A for wet deposition in cloud (exponential form). */
+  double wet_depo_ic_a;
+
+  /*! Coefficient B for wet deposition in cloud (exponential form). */
+  double wet_depo_ic_b;
+
+  /*! Coefficients for wet deposition in cloud (Henry's law: Hb, Cb, pH). */
+  double wet_depo_ic_h[3];
+
+  /*! Coefficients for wet deposition below cloud (Henry's law: Hb, Cb). */
+  double wet_depo_bc_h[2];
+
+  /*! Coefficients for wet deposition in cloud: retention ratio. */
+  double wet_depo_ic_ret_ratio;
+
+  /*! Coefficients for wet deposition below cloud: retention ratio. */
+  double wet_depo_bc_ret_ratio;
 
   /*! H2O volume mixing ratio for PSC analysis. */
   double psc_h2o;
@@ -977,7 +1188,7 @@ typedef struct {
   /*! Particle index stride for atmospheric data files. */
   int atm_stride;
 
-  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF). */
+  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
   int atm_type;
 
   /*! Basename of CSI data files. */
@@ -1061,6 +1272,9 @@ typedef struct {
   /*! Upper latitude of gridded data [deg]. */
   double grid_lat1;
 
+  /*! Type of grid data files (0=ASCII, 1=netCDF). */
+  int grid_type;
+
   /*! Basename for profile output file. */
   char prof_basename[LEN];
 
@@ -1106,7 +1320,7 @@ typedef struct {
   /*! Horizontal radius for sample output [km]. */
   double sample_dx;
 
-  /*! Layer width for sample output [km]. */
+  /*! Layer depth for sample output [km]. */
   double sample_dz;
 
   /*! Basename of station data file. */
@@ -1140,6 +1354,9 @@ typedef struct {
 
   /*! Pressure [hPa]. */
   double p[NP];
+
+  /*! Zeta [K]. */
+  double zeta[NP];
 
   /*! Longitude [deg]. */
   double lon[NP];
@@ -1175,46 +1392,82 @@ typedef struct {
 /*! Climatological data. */
 typedef struct {
 
-  /*! Number of OH data timesteps. */
-  int oh_nt;
+  /*! Number of tropopause timesteps. */
+  int tropo_ntime;
 
-  /*! Number of OH data latitudes. */
-  int oh_ny;
+  /*! Number of tropopause latitudes. */
+  int tropo_nlat;
 
-  /*! Number of OH data pressure levels. */
+  /*! Tropopause time steps [s]. */
+  double tropo_time[12];
+
+  /*! Tropopause latitudes [deg]. */
+  double tropo_lat[73];
+
+  /*! Tropopause pressure values [hPa]. */
+  double tropo[12][73];
+
+  /*! Number of HNO3 timesteps. */
+  int hno3_ntime;
+
+  /*! Number of HNO3 latitudes. */
+  int hno3_nlat;
+
+  /*! Number of HNO3 pressure levels. */
+  int hno3_np;
+
+  /*! HNO3 time steps [s]. */
+  double hno3_time[12];
+
+  /*! HNO3 latitudes [deg]. */
+  double hno3_lat[18];
+
+  /*! HNO3 pressure levels [hPa]. */
+  double hno3_p[10];
+
+  /*! HNO3 volume mixing ratios [ppv]. */
+  double hno3[12][18][10];
+
+  /*! Number of OH timesteps. */
+  int oh_ntime;
+
+  /*! Number of OH latitudes. */
+  int oh_nlat;
+
+  /*! Number of OH pressure levels. */
   int oh_np;
 
-  /*! OH data time steps [s]. */
+  /*! OH time steps [s]. */
   double oh_time[CT];
 
-  /*! OH data latitudes [deg]. */
+  /*! OH latitudes [deg]. */
   double oh_lat[CY];
 
-  /*! OH data pressure levels [hPa]. */
+  /*! OH pressure levels [hPa]. */
   double oh_p[CP];
 
-  /*! OH data concentration [molec/cm^3]. */
+  /*! OH number concentrations [molec/cm^3]. */
   double oh[CT][CP][CY];
 
-  /*! Number of H2O2 data timesteps. */
-  int h2o2_nt;
+  /*! Number of H2O2 timesteps. */
+  int h2o2_ntime;
 
-  /*! Number of H2O2 data latitudes. */
-  int h2o2_ny;
+  /*! Number of H2O2 latitudes. */
+  int h2o2_nlat;
 
-  /*! Number of H2O2 data pressure levels. */
+  /*! Number of H2O2 pressure levels. */
   int h2o2_np;
 
-  /*! H2O2 data time steps [s]. */
+  /*! H2O2 time steps [s]. */
   double h2o2_time[CT];
 
-  /*! H2O2 data latitudes [deg]. */
+  /*! H2O2 latitudes [deg]. */
   double h2o2_lat[CY];
 
-  /*! H2O2 data pressure levels [hPa]. */
+  /*! H2O2 pressure levels [hPa]. */
   double h2o2_p[CP];
 
-  /*! H2O2 data concentration [molec/cm^3]. */
+  /*! H2O2 number concentrations [molec/cm^3]. */
   double h2o2[CT][CP][CY];
 
 } clim_t;
@@ -1297,7 +1550,7 @@ typedef struct {
   /*! Convective inhibition [J/kg]. */
   float cin[EX][EY];
 
-  /*! Geopotential height at model levels [km]. */
+  /*! Geopotential height [km]. */
   float z[EX][EY][EP];
 
   /*! Temperature [K]. */
@@ -1330,8 +1583,19 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
+  /*! Pressure field in pressure levels [hPa]. */
+  float patp[EX][EY][EP];
+
+  /*! Zeta [K]. */
+  float zeta[EX][EY][EP];
+
+  /*! Vertical velocity [K/s]. */
+  float zeta_dot[EX][EY][EP];
+
+#ifdef UVW
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
+#endif
 
 } met_t;
 
@@ -1358,9 +1622,14 @@ int check_finite(
 #pragma acc routine (clim_hno3)
 #endif
 double clim_hno3(
+  clim_t * clim,
   double t,
   double lat,
   double p);
+
+/*! Initialization function for HNO3 climatology. */
+void clim_hno3_init(
+  clim_t * clim);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
@@ -1395,13 +1664,33 @@ double clim_oh_init_help(
   double time,
   double lat);
 
+/*! Climatology of H2O2 number concentrations. */
+#ifdef _OPENACC
+#pragma acc routine (clim_h2o2)
+#endif
+double clim_h2o2(
+  double t,
+  double lat,
+  double p,
+  clim_t * clim);
+
+/*! Initialization function for H2O2 climatology. */
+void clim_h2o2_init(
+  ctl_t * ctl,
+  clim_t * clim);
+
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
 #pragma acc routine (clim_tropo)
 #endif
 double clim_tropo(
+  clim_t * clim,
   double t,
   double lat);
+
+/*! Initialize tropopause climatology. */
+void clim_tropo_init(
+  clim_t * clim);
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -1460,6 +1749,7 @@ void geo2cart(
 /*! Get meteo data for given time step. */
 void get_met(
   ctl_t * ctl,
+  clim_t * clim,
   double t,
   met_t ** met0,
   met_t ** met1);
@@ -1509,6 +1799,7 @@ void intpol_met_space_2d(
   int init);
 
 /*! Spatial interpolation of meteo data. */
+#ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_uvw)
 #endif
@@ -1523,6 +1814,7 @@ void intpol_met_space_uvw(
   int *ci,
   double *cw,
   int init);
+#endif
 
 /*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
@@ -1560,6 +1852,7 @@ void intpol_met_time_2d(
   int init);
 
 /*! Temporal interpolation of meteo data. */
+#ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_uvw)
 #endif
@@ -1573,6 +1866,7 @@ void intpol_met_time_uvw(
   double *u,
   double *v,
   double *w);
+#endif
 
 /*! Convert seconds to date. */
 void jsec2time(
@@ -1622,20 +1916,44 @@ double nat_temperature(
 
 /*! Parallel quicksort. */
 void quicksort(
-  int arr[],
+  double arr[],
   int brr[],
   int low,
   int high);
 
 /*! Partition function for quicksort. */
 int quicksort_partition(
-  int arr[],
+  double arr[],
   int brr[],
   int low,
   int high);
 
 /*! Read atmospheric data. */
 int read_atm(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in ASCII format. */
+int read_atm_asc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in binary format. */
+int read_atm_bin(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in CLaMS format. */
+int read_atm_clams(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Read atmospheric data in netCDF format. */
+int read_atm_nc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
@@ -1656,6 +1974,7 @@ void read_ctl(
 int read_met(
   char *filename,
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met);
 
 /*! Read 2-D meteo variable. */
@@ -1677,10 +1996,12 @@ void read_met_bin_3d(
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
+  clim_t * clim,
   met_t * met);
 
 /*! Calculate cloud properties. */
 void read_met_cloud(
+  ctl_t * ctl,
   met_t * met);
 
 /*! Apply detrending method to temperature and winds. */
@@ -1721,6 +2042,7 @@ int read_met_nc_2d(
   int ncid,
   char *varname,
   char *varname2,
+  ctl_t * ctl,
   met_t * met,
   float dest[EX][EY],
   float scl,
@@ -1731,6 +2053,7 @@ int read_met_nc_3d(
   int ncid,
   char *varname,
   char *varname2,
+  ctl_t * ctl,
   met_t * met,
   float dest[EX][EY][EP],
   float scl,
@@ -1756,11 +2079,13 @@ void read_met_sample(
 /*! Read surface data. */
 void read_met_surface(
   int ncid,
-  met_t * met);
+  met_t * met,
+  ctl_t * ctl);
 
 /*! Calculate tropopause data. */
 void read_met_tropo(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met);
 
 /*! Read a control parameter from file or command line. */
@@ -1780,8 +2105,8 @@ double scan_ctl(
 double sedi(
   double p,
   double T,
-  double r_p,
-  double rho_p);
+  double rp,
+  double rhop);
 
 /*! Spline interpolation. */
 void spline(
@@ -1832,6 +2157,7 @@ void timer(
 #pragma acc routine (tropo_weight)
 #endif
 double tropo_weight(
+  clim_t * clim,
   double t,
   double lat,
   double p);
@@ -1842,6 +2168,31 @@ void write_atm(
   ctl_t * ctl,
   atm_t * atm,
   double t);
+
+/*! Write atmospheric data in ASCII format. */
+void write_atm_asc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
+/*! Write atmospheric data in binary format. */
+void write_atm_bin(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Write atmospheric data in CLaMS format. */
+void write_atm_clams(
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
+/*! Write atmospheric data in netCDF format. */
+void write_atm_nc(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
 
 /*! Write CSI data. */
 void write_csi(
@@ -1865,6 +2216,37 @@ void write_grid(
   met_t * met1,
   atm_t * atm,
   double t);
+
+/*! Write gridded data in ASCII format. */
+void write_grid_asc(
+  const char *filename,
+  ctl_t * ctl,
+  double *cd,
+  double *mass,
+  double *vmr_expl,
+  double *vmr_impl,
+  double t,
+  double *z,
+  double *lon,
+  double *lat,
+  double *area,
+  double dz,
+  int *np);
+
+/*! Write gridded data in netCDF format. */
+void write_grid_nc(
+  const char *filename,
+  ctl_t * ctl,
+  double *cd,
+  double *vmr_expl,
+  double *vmr_impl,
+  double t,
+  double *z,
+  double *lon,
+  double *lat,
+  double *area,
+  double dz,
+  int *np);
 
 /*! Read meteo data file. */
 int write_met(

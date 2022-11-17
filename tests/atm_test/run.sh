@@ -33,8 +33,12 @@ $trac/atm_init - data/atm2_2000_01_02_00_00.tab \
 
 # Convert...
 $trac/atm_conv - data/atm_2000_01_01_00_00.tab 0 data/atm.bin 1
-$trac/atm_conv - data/atm.bin 1 data/atm_ascii.tab 0
-diff -s data/atm_ascii.tab data/atm_2000_01_01_00_00.tab || exit 1
+$trac/atm_conv - data/atm.bin 1 data/atm_ascii_from_bin.tab 0
+diff -s data/atm_ascii_from_bin.tab data/atm_2000_01_01_00_00.tab || exit 1
+
+$trac/atm_conv - data/atm_2000_01_01_00_00.tab 0 data/atm.nc 2
+$trac/atm_conv - data/atm.nc 2 data/atm_ascii_from_nc.tab 0
+diff -s data/atm_ascii_from_nc.tab data/atm_2000_01_01_00_00.tab || exit 1
 
 # Select...
 $trac/atm_select - data/atm_select.tab data/atm_2000_01_01_00_00.tab \

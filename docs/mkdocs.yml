@@ -1,0 +1,25 @@
+site_name: MPTRAC
+site_url: https://mptrac.readthedocs.io
+repo_url: https://github.com/slcs-jsc/mptrac
+docs_dir: manual
+
+nav:
+    - Home: index.md
+    - User manual:
+        - Installation: installation.md
+        - Quickstart: quickstart.md
+        - Applications: applications.md
+        - Control parameters: control-parameters.md
+        - Meteorological input data: meteorological-input-data.md
+        - Model output data: model-output-data.md
+        - Model physics: model-physics.md
+        - Tropopause data: tropopause-data.md
+    - Developer manual:
+        - Code development: code-development.md
+        - Parallelization: parallelization.md
+        - Profiling: profiling.md
+    - Further information:
+        - References: references.md
+        - Links: links.md
+
+theme: readthedocs

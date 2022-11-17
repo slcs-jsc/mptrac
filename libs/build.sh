@@ -18,6 +18,12 @@ cd $target/src/$dir \
     && make -j$threads && make check && make install && make clean \
 	|| exit
 
+# Thrust sort...
+dir=thrustsort-1.0
+cd $target/src/$dir \
+    && cp -a libthrustsort.a $target/lib/ \
+	|| exit
+
 # zlib...
 dir=zlib-1.2.12
 cd $target/src/$dir \

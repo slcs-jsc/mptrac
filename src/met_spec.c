@@ -50,6 +50,8 @@ int main(
 
   ctl_t ctl;
 
+  clim_t *clim;
+
   met_t *met;
 
   FILE *out;
@@ -58,6 +60,7 @@ int main(
     wavemax;
 
   /* Allocate... */
+  ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
 
   /* Check arguments... */
@@ -69,8 +72,11 @@ int main(
   wavemax =
     (int) scan_ctl(argv[1], argc, argv, "SPEC_WAVEMAX", -1, "7", NULL);
 
+  /* Read climatological data... */
+  read_clim(&ctl, clim);
+
   /* Read meteorological data... */
-  if (!read_met(argv[3], &ctl, met))
+  if (!read_met(argv[3], &ctl, clim, met))
     ERRMSG("Cannot read meteo data!");
 
   /* Create output file... */
@@ -133,6 +139,7 @@ int main(
   fclose(out);
 
   /* Free... */
+  free(clim);
   free(met);
 
   return EXIT_SUCCESS;

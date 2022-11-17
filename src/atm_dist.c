@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -168,14 +168,19 @@ int main(
     /* Loop over air parcels... */
     for (ip = 0; ip < atm1->np; ip++) {
 
-      /* Check data... */
-      if (!gsl_finite(atm1->time[ip]) || !gsl_finite(atm2->time[ip]))
-	continue;
+      /* Check air parcel index... */
+      if (ctl.qnt_idx > 0
+	  && (atm1->q[ctl.qnt_idx][ip] != atm2->q[ctl.qnt_idx][ip]))
+	ERRMSG("Air parcel index does not match!");
 
       /* Check ensemble index... */
       if (ctl.qnt_ens > 0
 	  && (atm1->q[ctl.qnt_ens][ip] != ens
 	      || atm2->q[ctl.qnt_ens][ip] != ens))
+	continue;
+
+      /* Check time... */
+      if (!gsl_finite(atm1->time[ip]) || !gsl_finite(atm2->time[ip]))
 	continue;
 
       /* Check spatial range... */

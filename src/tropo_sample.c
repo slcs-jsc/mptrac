@@ -43,8 +43,8 @@ void intpol_tropo_3d(
   float array1[EX][EY],
   double lons[EX],
   double lats[EY],
-  size_t nlon,
-  size_t nlat,
+  int nlon,
+  int nlat,
   double time,
   double lon,
   double lat,
@@ -75,10 +75,10 @@ int main(
     tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY],
     tropo_t1[EX][EY], tropo_q0[EX][EY], tropo_q1[EX][EY];
 
-  static int ip, iq, it, it_old = -999, method, dimid[10], ncid,
-    varid, varid_z, varid_p, varid_t, varid_q, h2o;
+  static int ip, iq, it, it_old = -999, method, ncid, varid, varid_z,
+    varid_p, varid_t, varid_q, h2o, ntime, nlon, nlat, ilon, ilat;
 
-  static size_t count[10], start[10], ntime, nlon, nlat, ilon, ilat;
+  static size_t count[10], start[10];
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -102,26 +102,14 @@ int main(
     ERRMSG("Cannot open file!");
 
   /* Get dimensions... */
-  NC(nc_inq_dimid(ncid, "time", &dimid[0]));
-  NC(nc_inq_dimlen(ncid, dimid[0], &ntime));
-  if (ntime > NT)
-    ERRMSG("Too many times!");
-  NC(nc_inq_dimid(ncid, "lat", &dimid[1]));
-  NC(nc_inq_dimlen(ncid, dimid[1], &nlat));
-  if (nlat > EY)
-    ERRMSG("Too many latitudes!");
-  NC(nc_inq_dimid(ncid, "lon", &dimid[2]));
-  NC(nc_inq_dimlen(ncid, dimid[2], &nlon));
-  if (nlon > EX)
-    ERRMSG("Too many longitudes!");
+  NC_INQ_DIM("time", &ntime, 1, NT);
+  NC_INQ_DIM("lat", &nlat, 1, EY);
+  NC_INQ_DIM("lon", &nlon, 1, EX);
 
   /* Read coordinates... */
-  NC(nc_inq_varid(ncid, "time", &varid));
-  NC(nc_get_var_double(ncid, varid, times));
-  NC(nc_inq_varid(ncid, "lat", &varid));
-  NC(nc_get_var_double(ncid, varid, lats));
-  NC(nc_inq_varid(ncid, "lon", &varid));
-  NC(nc_get_var_double(ncid, varid, lons));
+  NC_GET_DOUBLE("time", times, 1);
+  NC_GET_DOUBLE("lat", lats, 1);
+  NC_GET_DOUBLE("lon", lons, 1);
 
   /* Get variable indices... */
   sprintf(varname, "%s_z", argv[4]);
@@ -135,8 +123,8 @@ int main(
 
   /* Set dimensions... */
   count[0] = 1;
-  count[1] = nlat;
-  count[2] = nlon;
+  count[1] = (size_t) nlat;
+  count[2] = (size_t) nlon;
 
   /* Create file... */
   LOG(1, "Write tropopause sample data: %s", argv[2]);
@@ -270,8 +258,8 @@ void intpol_tropo_3d(
   float array1[EX][EY],
   double lons[EX],
   double lats[EY],
-  size_t nlon,
-  size_t nlat,
+  int nlon,
+  int nlat,
   double time,
   double lon,
   double lat,
