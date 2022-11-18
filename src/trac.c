@@ -815,10 +815,10 @@ void module_decay(
       /* Calculate exponential decay... */
       double aux = exp(-dt[ip] / tdec);
       if (ctl->qnt_m >= 0) {
-	atm->q[ctl->qnt_m][ip] *= aux;
 	if (ctl->qnt_mloss_decay >= 0)
 	  atm->q[ctl->qnt_mloss_decay][ip]
 	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+	atm->q[ctl->qnt_m][ip] *= aux;
       }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1034,10 +1034,10 @@ void module_dry_deposition(
       /* Calculate loss of mass based on deposition velocity... */
       double aux = exp(-dt[ip] * v_dep / dz);
       if (ctl->qnt_m >= 0) {
-	atm->q[ctl->qnt_m][ip] *= aux;
 	if (ctl->qnt_mloss_dry >= 0)
 	  atm->q[ctl->qnt_mloss_dry][ip]
 	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+	atm->q[ctl->qnt_m][ip] *= aux;
       }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1324,10 +1324,10 @@ void module_oh_chem(
 			    atm->lat[ip]);
       double aux = exp(-dt[ip] * rate_coef);
       if (ctl->qnt_m >= 0) {
-	atm->q[ctl->qnt_m][ip] *= aux;
 	if (ctl->qnt_mloss_oh >= 0)
 	  atm->q[ctl->qnt_mloss_oh][ip]
 	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+	atm->q[ctl->qnt_m][ip] *= aux;
       }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1397,10 +1397,10 @@ void module_h2o2_chem(
 	double rate_coef = 1000 / 6.02214e23 * k * K_1S * h2o2 * H_SO2 * CWC;
 	double aux = exp(-dt[ip] * rate_coef);
 	if (ctl->qnt_m >= 0) {
-	  atm->q[ctl->qnt_m][ip] *= aux;
 	  if (ctl->qnt_mloss_h2o2 >= 0)
 	    atm->q[ctl->qnt_mloss_h2o2][ip] +=
 	      atm->q[ctl->qnt_m][ip] * (1 - aux);
+	  atm->q[ctl->qnt_m][ip] *= aux;
 	}
 	if (ctl->qnt_vmr >= 0)
 	  atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1891,10 +1891,10 @@ void module_wet_deposition(
       /* Calculate exponential decay of mass... */
       double aux = exp(-dt[ip] * lambda);
       if (ctl->qnt_m >= 0) {
-	atm->q[ctl->qnt_m][ip] *= aux;
 	if (ctl->qnt_mloss_wet >= 0)
 	  atm->q[ctl->qnt_mloss_wet][ip]
 	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
+	atm->q[ctl->qnt_m][ip] *= aux;
       }
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
