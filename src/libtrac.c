@@ -1130,7 +1130,7 @@ void get_met(
 #ifdef _OPENACC
     met_t *met0up = *met0;
     met_t *met1up = *met1;
-#ifdef ASYNCIO 
+#ifdef ASYNCIO
 #pragma acc update device(met0up[:1],met1up[:1]) async(5)
 #else
 #pragma acc update device(met0up[:1],met1up[:1])
@@ -1213,20 +1213,20 @@ void get_met(
     }
   }
   /* Check that grids are consistent... */
-  if ((*met0)->nx != 0 && (*met1)->nx != 0)
-    {if ((*met0)->nx != (*met1)->nx
-        || (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
+  if ((*met0)->nx != 0 && (*met1)->nx != 0) {
+    if ((*met0)->nx != (*met1)->nx
+	|| (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
       ERRMSG("Meteo grid dimensions do not match!");
     for (int ix = 0; ix < (*met0)->nx; ix++)
       if (fabs((*met0)->lon[ix] - (*met1)->lon[ix]) > 0.001)
-        ERRMSG("Meteo grid longitudes do not match!");
+	ERRMSG("Meteo grid longitudes do not match!");
     for (int iy = 0; iy < (*met0)->ny; iy++)
       if (fabs((*met0)->lat[iy] - (*met1)->lat[iy]) > 0.001)
-        ERRMSG("Meteo grid latitudes do not match!");
+	ERRMSG("Meteo grid latitudes do not match!");
     for (int ip = 0; ip < (*met0)->np; ip++)
       if (fabs((*met0)->p[ip] - (*met1)->p[ip]) > 0.001)
-        ERRMSG("Meteo grid pressure levels do not match!");
-    }
+	ERRMSG("Meteo grid pressure levels do not match!");
+  }
 }
 
 /*****************************************************************************/
