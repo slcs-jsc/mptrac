@@ -26,8 +26,7 @@ MPI ?= 0
 # Static compilation...
 STATIC ?= 1
 
-# ASYNCIO enables asunc IO for GPUs
-
+# Enable async IO for GPUs...
 ASYNCIO ?= 0
 
 # Optimization flags...
@@ -156,8 +155,11 @@ ifeq ($(STATIC),1)
   CFLAGS += -static
 endif
 
-# asyncIO
+# asyncIO...
 ifeq ($(ASYNCIO),1)
+  ifneq ($(GPU),1)
+    $(error Async-I/O requires compilation for GPUs)
+  endif
   CFLAGS += -DASYNCIO
 endif
 
