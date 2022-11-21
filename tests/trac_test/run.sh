@@ -46,12 +46,10 @@ GRID_NY = 90
 SAMPLE_DZ = 100
 STAT_LON = -22
 STAT_LAT = -40
-STAT_R = 50
 EOF
 
-# Create observations file...
-tobs=$($trac/time2jsec 2011 6 7 0 0 0 0)
-echo | awk -v tobs=$tobs '{
+# Create observation file...
+echo | awk -v tobs=$($trac/time2jsec 2011 6 7 0 0 0 0) '{
   for(lon=-25; lon<=-15; lon+=0.5)
     for(lat=-50; lat<=-25; lat+=1)
       printf("%.2f %g %g %g %g\n", tobs, 0, lon, lat, 0)
