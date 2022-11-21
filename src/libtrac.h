@@ -207,6 +207,11 @@
 #define NENS 2000
 #endif
 
+/*! Maximum number of observation data points. */
+#ifndef NOBS
+#define NOBS 10000000
+#endif
+
 /*! Maximum number of OpenMP threads. */
 #ifndef NTHREADS
 #define NTHREADS 512

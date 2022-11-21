@@ -16,7 +16,7 @@ t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
-NQ = 9
+NQ = 10
 QNT_NAME[0] = t
 QNT_NAME[1] = u
 QNT_NAME[2] = v
@@ -26,6 +26,7 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
+QNT_NAME[9] = stat
 METBASE = ../data/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
@@ -42,7 +43,19 @@ GRID_LAT0 = -60
 GRID_LAT1 = -15
 GRID_NX = 300
 GRID_NY = 90
+SAMPLE_DZ = 100
+STAT_LON = -22
+STAT_LAT = -40
+STAT_R = 50
 EOF
+
+# Create observations file...
+tobs=$($trac/time2jsec 2011 6 7 0 0 0 0)
+echo | awk -v tobs=$tobs '{
+  for(lon=-25; lon<=-15; lon+=0.5)
+    for(lat=-50; lat<=-25; lat+=1)
+      printf("%.2f %g %g %g %g\n", tobs, 0, lon, lat, 0)
+}' > data/obs.tab
 
 # Set initial air parcel positions...
 $trac/atm_init data/trac.ctl data/atm_init.tab \
@@ -58,7 +71,8 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 # Calculate trajectories...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm GRID_BASENAME grid
+	   ATM_BASENAME atm GRID_BASENAME grid STAT_BASENAME station \
+           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
 
 # Compare files...
 echo -e "\nCompare results..."

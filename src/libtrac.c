@@ -6361,7 +6361,9 @@ void write_sample(
 
   static char line[LEN];
 
-  static double area, dlat, rmax2, rt, rt_old, rz, rlon, rlat, robs;
+  static double area, dlat, rmax2, *rt, *rz, *rlon, *rlat, *robs;
+
+  static int nobs;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_SAMPLE", "OUTPUT", NVTX_WRITE);
@@ -6369,15 +6371,34 @@ void write_sample(
   /* Init... */
   if (t == ctl->t_start) {
 
+    /* Allocate... */
+    ALLOC(rt, double,
+	  NOBS);
+    ALLOC(rz, double,
+	  NOBS);
+    ALLOC(rlon, double,
+	  NOBS);
+    ALLOC(rlat, double,
+	  NOBS);
+    ALLOC(robs, double,
+	  NOBS);
+
     /* Open observation data file... */
     LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
     if (!(in = fopen(ctl->sample_obsfile, "r")))
       ERRMSG("Cannot open file!");
 
-    /* Initialize time for file input... */
-    rt_old = -1e99;
+    /* Read observations... */
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[nobs], &rz[nobs],
+		 &rlon[nobs], &rlat[nobs], &robs[nobs]) == 5)
+	if ((++nobs) >= NOBS)
+	  ERRMSG("Too many observations!");
 
-    /* Create new file... */
+    /* Close observation data file... */
+    fclose(in);
+
+    /* Create output file... */
     LOG(1, "Write sample data: %s", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
@@ -6405,29 +6426,25 @@ void write_sample(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Read observation data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
-      continue;
+  /* Loop over observations... */
+  for (int i = 0; i < nobs; i++) {
 
     /* Check time... */
-    if (rt < t0)
+    if (rt[i] < t0)
       continue;
-    if (rt < rt_old)
+    if (rt[i] >= t1)
+      break;
+    if (i > 0 && rt[i] < rt[i - 1])
       ERRMSG("Time must be ascending!");
-    rt_old = rt;
 
     /* Calculate Cartesian coordinates... */
     double x0[3];
-    geo2cart(0, rlon, rlat, x0);
+    geo2cart(0, rlon[i], rlat[i], x0);
 
     /* Set pressure range... */
-    double rp = P(rz);
-    double ptop = P(rz + ctl->sample_dz);
-    double pbot = P(rz - ctl->sample_dz);
+    double rp = P(rz[i]);
+    double ptop = P(rz[i] + ctl->sample_dz);
+    double pbot = P(rz[i] - ctl->sample_dz);
 
     /* Init... */
     double mass = 0;
@@ -6442,7 +6459,7 @@ void write_sample(
 	continue;
 
       /* Check latitude... */
-      if (fabs(rlat - atm->lat[ip]) > dlat)
+      if (fabs(rlat[i] - atm->lat[ip]) > dlat)
 	continue;
 
       /* Check horizontal distance... */
@@ -6473,8 +6490,8 @@ void write_sample(
 	/* Get temperature... */
 	double temp;
 	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt, rp,
-			   rlon, rlat, &temp, ci, cw, 1);
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt[i], rp,
+			   rlon[i], rlat[i], &temp, ci, cw, 1);
 
 	/* Calculate volume mixing ratio... */
 	vmr = MA / ctl->molmass * mass
@@ -6484,18 +6501,22 @@ void write_sample(
       vmr = GSL_NAN;
 
     /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", rt, rz, rlon, rlat,
-	    area, ctl->sample_dz, np, cd, vmr, robs);
-
-    /* Check time... */
-    if (rt >= t1)
-      break;
+    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", rt[i], rz[i],
+	    rlon[i], rlat[i], area, ctl->sample_dz, np, cd, vmr, robs[i]);
   }
 
-  /* Close files... */
+  /* Finalize...... */
   if (t == ctl->t_stop) {
-    fclose(in);
+
+    /* Close output file... */
     fclose(out);
+
+    /* Free... */
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
   }
 }
 
