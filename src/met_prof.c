@@ -174,7 +174,7 @@ int main(
 			      clim_hno3(clim, met->time, lat, plev[iz]));
 	    ohm[iz] +=
 	      clim_oh_diurnal(&ctl, clim, met->time, plev[iz], lon, lat);
-	    h2o2m[iz] += clim_h2o2(met->time, lat, plev[iz], clim);
+	    h2o2m[iz] += clim_h2o2(clim, met->time, lat, plev[iz]);
 	    np[iz]++;
 	  }
 	}

@@ -185,7 +185,7 @@ int main(
 							      atm->p[ip]),
 	    clim_oh_diurnal(&ctl, clim, atm->time[ip], atm->p[ip],
 			    atm->lon[ip], atm->lat[ip]),
-	    clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip], clim), pbl);
+	    clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]), pbl);
   }
 
   /* Close file... */

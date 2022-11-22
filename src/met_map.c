@@ -183,7 +183,7 @@ int main(
 	  nat_temperature(p0, h2o, clim_hno3(clim, met->time, lats[iy], p0));
 	ohm[ix][iy] +=
 	  clim_oh_diurnal(&ctl, clim, met->time, p0, lons[ix], lats[iy]);
-	h2o2m[ix][iy] += clim_h2o2(met->time, lats[iy], p0, clim);
+	h2o2m[ix][iy] += clim_h2o2(clim, met->time, lats[iy], p0);
 	rhm[ix][iy] += RH(p0, t, h2o);
 	rhicem[ix][iy] += RHICE(p0, t, h2o);
 	tdewm[ix][iy] += TDEW(p0, h2o);

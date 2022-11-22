@@ -514,10 +514,10 @@ double clim_oh_init_help(
 /*****************************************************************************/
 
 double clim_h2o2(
+  clim_t * clim,
   double t,
   double lat,
-  double p,
-  clim_t * clim) {
+  double p) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);

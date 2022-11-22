@@ -1677,10 +1677,10 @@ double clim_oh_init_help(
 #pragma acc routine (clim_h2o2)
 #endif
 double clim_h2o2(
+  clim_t * clim,
   double t,
   double lat,
-  double p,
-  clim_t * clim);
+  double p);
 
 /*! Initialization function for H2O2 climatology. */
 void clim_h2o2_init(

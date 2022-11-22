@@ -1387,8 +1387,8 @@ void module_h2o2_chem(
 	/* Concentration of H2O2 (Barth et al., 1989)... */
 	double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
 	double h2o2 = H_h2o2
-	  * clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip],
-		      clim) * 0.59 * exp(-0.233 * SO2);
+	  * clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip])
+	  * 0.59 * exp(-0.233 * SO2);
 
 	/* Volume water content in cloud [m^3 m^(-3)]... */
 	double CWC = (lwc + iwc) * 28.9644 / 18.02;
