@@ -70,7 +70,8 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
 	   ATM_BASENAME atm GRID_BASENAME grid STAT_BASENAME station \
-           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
+           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab
 
 # Compare files...
 echo -e "\nCompare results..."

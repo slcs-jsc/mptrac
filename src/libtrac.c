@@ -6159,11 +6159,10 @@ void write_prof(
 
   static char line[LEN];
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old, rz, rlon, rlat,
-    robs, area[GY], dz, dlon, dlat, lon[GX], lat[GY], z[GZ], press[GZ],
-    temp, vmr, h2o, o3;
+  static double *mass, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
+    dz, dlon, dlat, *lon, *lat, *z, *press, temp, vmr, h2o, o3;
 
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int nobs, *obscount, ip, okay;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_PROF", "OUTPUT", NVTX_WRITE);
@@ -6175,21 +6174,46 @@ void write_prof(
     if (ctl->qnt_m < 0)
       ERRMSG("Need quantity mass!");
 
-    /* Check dimensions... */
-    if (ctl->prof_nx > GX || ctl->prof_ny > GY || ctl->prof_nz > GZ)
-      ERRMSG("Grid dimensions too large!");
-
     /* Check molar mass... */
     if (ctl->molmass <= 0)
       ERRMSG("Specify molar mass!");
 
+    /* Allocate... */
+    ALLOC(lon, double,
+	  ctl->prof_nx);
+    ALLOC(lat, double,
+	  ctl->prof_ny);
+    ALLOC(area, double,
+	  ctl->prof_ny);
+    ALLOC(z, double,
+	  ctl->prof_nz);
+    ALLOC(press, double,
+	  ctl->prof_nz);
+    ALLOC(rt, double,
+	  NOBS);
+    ALLOC(rz, double,
+	  NOBS);
+    ALLOC(rlon, double,
+	  NOBS);
+    ALLOC(rlat, double,
+	  NOBS);
+    ALLOC(robs, double,
+	  NOBS);
+
     /* Open observation data file... */
-    LOG(1, "Read profile observation data: %s", ctl->prof_obsfile);
-    if (!(in = fopen(ctl->prof_obsfile, "r")))
+    LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
+    if (!(in = fopen(ctl->sample_obsfile, "r")))
       ERRMSG("Cannot open file!");
 
-    /* Initialize time for file input... */
-    rt_old = -1e99;
+    /* Read observations... */
+    while (fgets(line, LEN, in))
+      if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[nobs], &rz[nobs],
+		 &rlon[nobs], &rlat[nobs], &robs[nobs]) == 5)
+	if ((++nobs) >= NOBS)
+	  ERRMSG("Too many observations!");
+
+    /* Close observation data file... */
+    fclose(in);
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -6216,15 +6240,15 @@ void write_prof(
     dlat = (ctl->prof_lat1 - ctl->prof_lat0) / ctl->prof_ny;
 
     /* Set vertical coordinates... */
-    for (iz = 0; iz < ctl->prof_nz; iz++) {
+    for (int iz = 0; iz < ctl->prof_nz; iz++) {
       z[iz] = ctl->prof_z0 + dz * (iz + 0.5);
       press[iz] = P(z[iz]);
     }
 
     /* Set horizontal coordinates... */
-    for (ix = 0; ix < ctl->prof_nx; ix++)
+    for (int ix = 0; ix < ctl->prof_nx; ix++)
       lon[ix] = ctl->prof_lon0 + dlon * (ix + 0.5);
-    for (iy = 0; iy < ctl->prof_ny; iy++) {
+    for (int iy = 0; iy < ctl->prof_ny; iy++) {
       lat[iy] = ctl->prof_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
 	* cos(lat[iy] * M_PI / 180.);
@@ -6235,50 +6259,43 @@ void write_prof(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Initialize... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(2)
-  for (ix = 0; ix < ctl->prof_nx; ix++)
-    for (iy = 0; iy < ctl->prof_ny; iy++) {
-      obsmean[ix][iy] = 0;
-      obscount[ix][iy] = 0;
-      for (iz = 0; iz < ctl->prof_nz; iz++)
-	mass[ix][iy][iz] = 0;
-    }
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->prof_nx * ctl->prof_ny * ctl->prof_nz);
+  ALLOC(obsmean, double,
+	ctl->prof_nx * ctl->prof_ny);
+  ALLOC(obscount, int,
+	ctl->prof_nx * ctl->prof_ny);
 
-  /* Read observation data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
-      continue;
+  /* Loop over observations... */
+  for (int i = 0; i < nobs; i++) {
 
     /* Check time... */
-    if (rt < t0)
+    if (rt[i] < t0)
       continue;
-    if (rt > t1)
+    if (rt[i] >= t1)
       break;
-    if (rt < rt_old)
+    if (i > 0 && rt[i] < rt[i - 1])
       ERRMSG("Time must be ascending!");
-    rt_old = rt;
 
     /* Check observation data... */
-    if (!isfinite(robs))
+    if (!isfinite(robs[i]))
       continue;
 
     /* Calculate indices... */
-    ix = (int) ((rlon - ctl->prof_lon0) / dlon);
-    iy = (int) ((rlat - ctl->prof_lat0) / dlat);
+    int ix = (int) ((rlon[i] - ctl->prof_lon0) / dlon);
+    int iy = (int) ((rlat[i] - ctl->prof_lat0) / dlat);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->prof_nx || iy < 0 || iy >= ctl->prof_ny)
       continue;
 
     /* Get mean observation index... */
-    obsmean[ix][iy] += robs;
+    int idx = ARRAY_2D(ix, iy, ctl->prof_ny);
+    obsmean[idx] += robs[i];
 
     /* Count observations... */
-    obscount[ix][iy]++;
+    obscount[idx]++;
   }
 
   /* Analyze model data... */
@@ -6289,9 +6306,9 @@ void write_prof(
       continue;
 
     /* Get indices... */
-    ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
-    iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
-    iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
+    int ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
+    int iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
+    int iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->prof_nx ||
@@ -6299,21 +6316,25 @@ void write_prof(
       continue;
 
     /* Get total mass in grid cell... */
-    mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+    int idx = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+    mass[idx] += atm->q[ctl->qnt_m][ip];
   }
 
   /* Extract profiles... */
-  for (ix = 0; ix < ctl->prof_nx; ix++)
-    for (iy = 0; iy < ctl->prof_ny; iy++)
-      if (obscount[ix][iy] >= 1) {
+  for (int ix = 0; ix < ctl->prof_nx; ix++)
+    for (int iy = 0; iy < ctl->prof_ny; iy++) {
+      int idx2 = ARRAY_2D(ix, iy, ctl->prof_ny);
+      if (obscount[idx2] > 0) {
 
 	/* Check profile... */
 	okay = 0;
-	for (iz = 0; iz < ctl->prof_nz; iz++)
-	  if (mass[ix][iy][iz] > 0) {
+	for (int iz = 0; iz < ctl->prof_nz; iz++) {
+	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+	  if (mass[idx3] > 0) {
 	    okay = 1;
 	    break;
 	  }
+	}
 	if (!okay)
 	  continue;
 
@@ -6321,7 +6342,7 @@ void write_prof(
 	fprintf(out, "\n");
 
 	/* Loop over altitudes... */
-	for (iz = 0; iz < ctl->prof_nz; iz++) {
+	for (int iz = 0; iz < ctl->prof_nz; iz++) {
 
 	  /* Get temperature, water vapor, and ozone... */
 	  INTPOL_INIT;
@@ -6333,20 +6354,40 @@ void write_prof(
 			     lon[ix], lat[iy], &o3, ci, cw, 0);
 
 	  /* Calculate volume mixing ratio... */
-	  vmr = MA / ctl->molmass * mass[ix][iy][iz]
+	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+	  vmr = MA / ctl->molmass * mass[idx3]
 	    / (RHO(press[iz], temp) * area[iy] * dz * 1e9);
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d\n",
 		  t, z[iz], lon[ix], lat[iy], press[iz], temp, vmr, h2o, o3,
-		  obsmean[ix][iy] / obscount[ix][iy], obscount[ix][iy]);
+		  obsmean[idx2] / obscount[idx2], obscount[idx2]);
 	}
       }
+    }
 
-  /* Close files... */
+  /* Free... */
+  free(mass);
+  free(obsmean);
+  free(obscount);
+
+  /* Finalize... */
   if (t == ctl->t_stop) {
-    fclose(in);
+
+    /* Close output file... */
     fclose(out);
+
+    /* Free... */
+    free(lon);
+    free(lat);
+    free(area);
+    free(z);
+    free(press);
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
   }
 }
 
