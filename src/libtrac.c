@@ -101,6 +101,9 @@ double clim_hno3(
 void clim_hno3_init(
   clim_t * clim) {
 
+  /* Write info... */
+  LOG(1, "Initialize HNO3 data...");
+
   clim->hno3_ntime = 12;
   double hno3_time[12] = {
     1209600.00, 3888000.00, 6393600.00,
@@ -343,6 +346,33 @@ void clim_hno3_init(
      {1.42, 2.04, 4.68, 8.92, 12.7, 12, 11.2, 8.99, 5.32, 2.33}}
   };
   memcpy(clim->hno3, hno3, sizeof(clim->hno3));
+
+  /* Get range... */
+  double hno3min = 1e99, hno3max = -1e99;
+  for (int it = 0; it < clim->hno3_ntime; it++)
+    for (int iz = 0; iz < clim->hno3_np; iz++)
+      for (int iy = 0; iy < clim->hno3_nlat; iy++) {
+	hno3min = GSL_MIN(hno3min, clim->hno3[it][iy][iz]);
+	hno3max = GSL_MAX(hno3max, clim->hno3[it][iy][iz]);
+      }
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->hno3_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->hno3_time[0], clim->hno3_time[1],
+      clim->hno3_time[clim->hno3_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->hno3_np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(clim->hno3_p[0]), Z(clim->hno3_p[1]),
+      Z(clim->hno3_p[clim->hno3_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->hno3_p[0],
+      clim->hno3_p[1], clim->hno3_p[clim->hno3_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->hno3_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->hno3_lat[0], clim->hno3_lat[1],
+      clim->hno3_lat[clim->hno3_nlat - 1]);
+  LOG(2, "HNO3 concentration range: %g ... %g ppv", 1e-9 * hno3min,
+      1e-9 * hno3max);
 }
 
 /*****************************************************************************/
@@ -426,7 +456,7 @@ void clim_oh_init(
 
   int nt, ncid, varid;
 
-  double *help;
+  double *help, ohmin = 1e99, ohmax = -1e99;
 
   /* Write info... */
   LOG(1, "Read OH data: %s", ctl->clim_oh_filename);
@@ -477,15 +507,32 @@ void clim_oh_init(
   NC_GET_DOUBLE("OH", help, 1);
   for (int it = 0; it < clim->oh_ntime; it++)
     for (int iz = 0; iz < clim->oh_np; iz++)
-      for (int iy = 0; iy < clim->oh_nlat; iy++)
+      for (int iy = 0; iy < clim->oh_nlat; iy++) {
 	clim->oh[it][iz][iy] =
 	  help[ARRAY_3D(it, iz, clim->oh_np, iy, clim->oh_nlat)]
 	  / clim_oh_init_help(ctl->oh_chem_beta, clim->oh_time[it],
 			      clim->oh_lat[iy]);
+	ohmin = GSL_MIN(ohmin, clim->oh[it][iz][iy]);
+	ohmax = GSL_MAX(ohmax, clim->oh[it][iz][iy]);
+      }
   free(help);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->oh_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->oh_time[0], clim->oh_time[1], clim->oh_time[clim->oh_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->oh_np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(clim->oh_p[0]), Z(clim->oh_p[1]), Z(clim->oh_p[clim->oh_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa",
+      clim->oh_p[0], clim->oh_p[1], clim->oh_p[clim->oh_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->oh_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->oh_lat[0], clim->oh_lat[1], clim->oh_lat[clim->oh_nlat - 1]);
+  LOG(2, "OH concentration range: %g ... %g molec/cm^3", ohmin, ohmax);
 }
 
 /*****************************************************************************/
@@ -576,7 +623,7 @@ void clim_h2o2_init(
 
   int ncid, varid, it, iy, iz, nt;
 
-  double *help;
+  double *help, h2o2min = 1e99, h2o2max = -1e99;
 
   /* Write info... */
   LOG(1, "Read H2O2 data: %s", ctl->clim_h2o2_filename);
@@ -627,13 +674,33 @@ void clim_h2o2_init(
   NC_GET_DOUBLE("h2o2", help, 1);
   for (it = 0; it < clim->h2o2_ntime; it++)
     for (iz = 0; iz < clim->h2o2_np; iz++)
-      for (iy = 0; iy < clim->h2o2_nlat; iy++)
+      for (iy = 0; iy < clim->h2o2_nlat; iy++) {
 	clim->h2o2[it][iz][iy] =
 	  help[ARRAY_3D(it, iz, clim->h2o2_np, iy, clim->h2o2_nlat)];
+	h2o2min = GSL_MIN(h2o2min, clim->h2o2[it][iz][iy]);
+	h2o2max = GSL_MAX(h2o2max, clim->h2o2[it][iz][iy]);
+      }
   free(help);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->h2o2_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->h2o2_time[0], clim->h2o2_time[1],
+      clim->h2o2_time[clim->h2o2_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->h2o2_np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(clim->h2o2_p[0]), Z(clim->h2o2_p[1]),
+      Z(clim->h2o2_p[clim->h2o2_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->h2o2_p[0],
+      clim->h2o2_p[1], clim->h2o2_p[clim->h2o2_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->h2o2_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->h2o2_lat[0], clim->h2o2_lat[1],
+      clim->h2o2_lat[clim->h2o2_nlat - 1]);
+  LOG(2, "H2O2 concentration range: %g ... %g molec/cm^3", h2o2min, h2o2max);
 }
 
 /*****************************************************************************/
@@ -668,6 +735,9 @@ double clim_tropo(
 
 void clim_tropo_init(
   clim_t * clim) {
+
+  /* Write info... */
+  LOG(1, "Initialize tropopause data...");
 
   clim->tropo_ntime = 12;
   double tropo_time[12] = {
@@ -790,6 +860,27 @@ void clim_tropo_init(
      281.7, 281.1, 281.2}
   };
   memcpy(clim->tropo, tropo, sizeof(clim->tropo));
+
+  /* Get range... */
+  double tropomin = 1e99, tropomax = -1e99;
+  for (int it = 0; it < clim->tropo_ntime; it++)
+    for (int iy = 0; iy < clim->tropo_nlat; iy++) {
+      tropomin = GSL_MIN(tropomin, clim->tropo[it][iy]);
+      tropomax = GSL_MAX(tropomax, clim->tropo[it][iy]);
+    }
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->tropo_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->tropo_time[0], clim->tropo_time[1],
+      clim->tropo_time[clim->tropo_ntime - 1]);
+  LOG(2, "Number of latitudes: %d", clim->tropo_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->tropo_lat[0], clim->tropo_lat[1],
+      clim->tropo_lat[clim->tropo_nlat - 1]);
+  LOG(2, "Tropopause altitude range: %g ... %g hPa", Z(tropomax),
+      Z(tropomin));
+  LOG(2, "Tropopause pressure range: %g ... %g hPa", tropomin, tropomax);
 }
 
 /*****************************************************************************/
