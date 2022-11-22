@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -57,8 +57,8 @@ int main(
     um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY],
     pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY],
     rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY],
-    hno3m[NZ][NY], ohm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
-    ps, ts, zs, us, vs, pbl, pt, pct, pcb, plcl, plfc, pel,
+    hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY], z, z0, z1, dz, zt, tt,
+    plev[NZ], ps, ts, zs, us, vs, pbl, pt, pct, pcb, plcl, plfc, pel,
     cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc,
     lat, lat0, lat1, dlat, lats[NY], lon0, lon1, lonm[NZ][NY], cw[3];
 
@@ -186,6 +186,7 @@ int main(
 	    ohm[iz][iy] +=
 	      clim_oh_diurnal(&ctl, clim, met->time, plev[iz], met->lon[ix],
 			      lats[iy]);
+	    h2o2m[iz][iy] += clim_h2o2(met->time, lats[iy], plev[iz], clim);
 	    np[iz][iy]++;
 	  }
   }
@@ -239,19 +240,20 @@ int main(
 	  "# $37 = NAT temperature [K]\n"
 	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
 	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = boundary layer pressure [hPa]\n");
+	  "# $40 = H2O2 concentration [molec/cm^3]\n");
   fprintf(out,
-	  "# $41 = number of data points\n"
-	  "# $42 = number of tropopause data points\n"
-	  "# $43 = number of CAPE data points\n");
+	  "# $41 = boundary layer pressure [hPa]\n"
+	  "# $42 = number of data points\n"
+	  "# $43 = number of tropopause data points\n"
+	  "# $44 = number of CAPE data points\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      "%g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
@@ -272,8 +274,8 @@ int main(
 	      rhicem[iz][iy] / np[iz][iy], tdewm[iz][iy] / np[iz][iy],
 	      ticem[iz][iy] / np[iz][iy], tnatm[iz][iy] / np[iz][iy],
 	      hno3m[iz][iy] / np[iz][iy], ohm[iz][iy] / np[iz][iy],
-	      pblm[iz][iy] / np[iz][iy], np[iz][iy],
-	      npt[iz][iy], npc[iz][iy]);
+	      h2o2m[iz][iy] / np[iz][iy], pblm[iz][iy] / np[iz][iy],
+	      np[iz][iy], npt[iz][iy], npc[iz][iy]);
   }
 
   /* Close file... */

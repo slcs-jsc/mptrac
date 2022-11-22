@@ -2476,6 +2476,9 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
     ctl->oh_chem_reaction =
       (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
+    ctl->h2o2_chem_reaction =
+      (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0",
+		     NULL);
     for (int ip = 0; ip < 4; ip++)
       ctl->oh_chem[ip] =
 	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
@@ -2515,8 +2518,8 @@ void read_ctl(
 	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
 
   /* H2O2 chemistry... */
-  scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1, "-",
-	   ctl->clim_h2o2_filename);
+  scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1,
+	   "../../data/cams_H2O2.nc", ctl->clim_h2o2_filename);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
