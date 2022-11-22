@@ -2096,6 +2096,16 @@ void read_met_tropo(
   clim_t * clim,
   met_t * met);
 
+/*! Read observation data. */
+void read_obs(
+  char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs);
+
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
   const char *filename,

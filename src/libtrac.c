@@ -4631,6 +4631,57 @@ void read_met_tropo(
 
 /*****************************************************************************/
 
+void read_obs(
+  char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs) {
+
+  FILE *in;
+
+  char line[LEN];
+
+  /* Open observation data file... */
+  LOG(1, "Read observation data: %s", filename);
+  if (!(in = fopen(filename, "r")))
+    ERRMSG("Cannot open file!");
+
+  /* Read observations... */
+  while (fgets(line, LEN, in))
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[*nobs], &rz[*nobs],
+	       &rlon[*nobs], &rlat[*nobs], &robs[*nobs]) == 5)
+      if ((++(*nobs)) >= NOBS)
+	ERRMSG("Too many observations!");
+
+  /* Close observation data file... */
+  fclose(in);
+
+  /* Check time... */
+  for (int i = 1; i < *nobs; i++)
+    if (rt[i] < rt[i - 1])
+      ERRMSG("Time must be ascending!");
+
+  /* Write info... */
+  int n = *nobs;
+  double mini, maxi;
+  LOG(2, "Number of observations: %d", *nobs);
+  gsl_stats_minmax(&mini, &maxi, rt, 1, (size_t) n);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rz, 1, (size_t) n);
+  LOG(2, "Altitude range: %g ... %g km", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlon, 1, (size_t) n);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlat, 1, (size_t) n);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
+  LOG(2, "Observation range: %g ... %g", mini, maxi);
+}
+
+/*****************************************************************************/
+
 double scan_ctl(
   const char *filename,
   int argc,
@@ -6246,9 +6297,7 @@ void write_prof(
   atm_t * atm,
   double t) {
 
-  static FILE *in, *out;
-
-  static char line[LEN];
+  static FILE *out;
 
   static double *mass, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
     dz, dlon, dlat, *lon, *lat, *z, *press, temp, vmr, h2o, o3;
@@ -6291,20 +6340,8 @@ void write_prof(
     ALLOC(robs, double,
 	  NOBS);
 
-    /* Open observation data file... */
-    LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
-    if (!(in = fopen(ctl->sample_obsfile, "r")))
-      ERRMSG("Cannot open file!");
-
-    /* Read observations... */
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[nobs], &rz[nobs],
-		 &rlon[nobs], &rlat[nobs], &robs[nobs]) == 5)
-	if ((++nobs) >= NOBS)
-	  ERRMSG("Too many observations!");
-
-    /* Close observation data file... */
-    fclose(in);
+    /* Read observation data... */
+    read_obs(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -6364,10 +6401,8 @@ void write_prof(
     /* Check time... */
     if (rt[i] < t0)
       continue;
-    if (rt[i] >= t1)
+    else if (rt[i] >= t1)
       break;
-    if (i > 0 && rt[i] < rt[i - 1])
-      ERRMSG("Time must be ascending!");
 
     /* Check observation data... */
     if (!isfinite(robs[i]))
@@ -6492,9 +6527,7 @@ void write_sample(
   atm_t * atm,
   double t) {
 
-  static FILE *in, *out;
-
-  static char line[LEN];
+  static FILE *out;
 
   static double area, dlat, rmax2, *rt, *rz, *rlon, *rlat, *robs;
 
@@ -6518,20 +6551,8 @@ void write_sample(
     ALLOC(robs, double,
 	  NOBS);
 
-    /* Open observation data file... */
-    LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
-    if (!(in = fopen(ctl->sample_obsfile, "r")))
-      ERRMSG("Cannot open file!");
-
-    /* Read observations... */
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[nobs], &rz[nobs],
-		 &rlon[nobs], &rlat[nobs], &robs[nobs]) == 5)
-	if ((++nobs) >= NOBS)
-	  ERRMSG("Too many observations!");
-
-    /* Close observation data file... */
-    fclose(in);
+    /* Read observation data... */
+    read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create output file... */
     LOG(1, "Write sample data: %s", filename);
@@ -6567,10 +6588,8 @@ void write_sample(
     /* Check time... */
     if (rt[i] < t0)
       continue;
-    if (rt[i] >= t1)
+    else if (rt[i] >= t1)
       break;
-    if (i > 0 && rt[i] < rt[i - 1])
-      ERRMSG("Time must be ascending!");
 
     /* Calculate Cartesian coordinates... */
     double x0[3];
