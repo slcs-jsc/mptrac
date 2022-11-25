@@ -2969,7 +2969,7 @@ void read_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      var[ix][iy] = help[ARRAY_2D_MET(ix, iy)];
+      var[ix][iy] = help[ARRAY_2D(ix, iy, met->ny)];
 
   /* Free... */
   free(help);
@@ -3031,7 +3031,7 @@ void read_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	var[ix][iy][ip] = help[ARRAY_3D_MET(ix, iy, ip)];
+	var[ix][iy][ip] = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 
   /* Free... */
   free(help);
@@ -5866,7 +5866,8 @@ void write_grid(
   /* Average data... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-      int idx = ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip]);
+      int idx =
+	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
       np[idx]++;
       if (ctl->qnt_m >= 0)
 	mass[idx] += atm->q[ctl->qnt_m][ip];
@@ -5883,7 +5884,9 @@ void write_grid(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass
-	  * mass[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
+	  *
+	  mass[ARRAY_3D
+	       (ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz)]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
 
@@ -5893,7 +5896,7 @@ void write_grid(
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
 
 	/* Get grid index... */
-	int idx = ARRAY_3D_GRID(ix, iy, iz);
+	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 
 	/* Calculate column density... */
 	cd[idx] = GSL_NAN;
@@ -6029,7 +6032,7 @@ void write_grid_asc(
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
-	int idx = ARRAY_3D_GRID(ix, iy, iz);
+	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 	if (!ctl->grid_sparse || mass[idx] > 0 || vmr_expl[idx] > 0)
 	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n",
 		  t, z[iz], lon[ix], lat[iy], area[iy], dz,
@@ -6233,7 +6236,7 @@ void write_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      help[ARRAY_2D_MET(ix, iy)] = var[ix][iy];
+      help[ARRAY_2D(ix, iy, met->ny)] = var[ix][iy];
 
   /* Write uncompressed data... */
   LOG(2, "Write 2-D variable: %s (uncompressed)", varname);
@@ -6267,7 +6270,7 @@ void write_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	help[ARRAY_3D_MET(ix, iy, ip)] = var[ix][iy][ip];
+	help[ARRAY_3D(ix, iy, met->ny, ip, met->np)] = var[ix][iy][ip];
 
   /* Write uncompressed data... */
   if (ctl->met_type == 1) {

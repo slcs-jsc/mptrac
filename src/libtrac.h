@@ -242,22 +242,6 @@
 #define ARRAY_3D(ix, iy, ny, iz, nz)		\
   (((ix)*(ny) + (iy)) * (nz) + (iz))
 
-/*! Get 2-D array index for grid data. */
-#define ARRAY_2D_GRID(ix, iy)			\
-  ARRAY_2D(ix, iy, ctl->grid_ny)
-
-/*! Get 3-D array index for grid data. */
-#define ARRAY_3D_GRID(ix, iy, iz)			\
-  ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)
-
-/*! Get 2-D array index for meteo data. */
-#define ARRAY_2D_MET(ix, iy)			\
-  ARRAY_2D(ix, iy, met->ny)
-
-/*! Get 3-D array index for meteo data. */
-#define ARRAY_3D_MET(ix, iy, ip)		\
-  ARRAY_3D(ix, iy, met->ny, ip, met->np)
-
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
