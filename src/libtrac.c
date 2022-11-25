@@ -5429,6 +5429,8 @@ void write_csi(
       ERRMSG("Need quantity mass!");
 
     /* Allocate... */
+    ALLOC(area, double,
+	  ctl->csi_ny);
     ALLOC(rt, double,
 	  NOBS);
     ALLOC(rz, double,
@@ -5493,8 +5495,6 @@ void write_csi(
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
   ALLOC(obscount, int,
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
-  ALLOC(area, double,
-	ctl->grid_ny);
 
   /* Loop over observations... */
   for (int i = 0; i < nobs; i++) {
@@ -5626,7 +5626,6 @@ void write_csi(
   free(modmean);
   free(obsmean);
   free(obscount);
-  free(area);
 
   /* Finalize... */
   if (t == ctl->t_stop) {
@@ -5635,6 +5634,7 @@ void write_csi(
     fclose(out);
 
     /* Free... */
+    free(area);
     free(rt);
     free(rz);
     free(rlon);

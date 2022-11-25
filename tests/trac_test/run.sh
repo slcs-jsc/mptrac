@@ -37,6 +37,8 @@ TDEC_TROP = 259200.0
 TDEC_STRAT = 259200.0
 DT_MET = 86400.0
 T_STOP = $t1
+CSI_OBSMIN = 1e-5
+CSI_MODMIN = 1e-5
 GRID_LON0 = -90
 GRID_LON1 = 60
 GRID_LAT0 = -60
@@ -51,8 +53,13 @@ EOF
 # Create observation file...
 echo | awk -v tobs=$($trac/time2jsec 2011 6 7 0 0 0 0) '{
   for(lon=-25; lon<=-15; lon+=0.5)
-    for(lat=-50; lat<=-25; lat+=1)
-      printf("%.2f %g %g %g %g\n", tobs, 0, lon, lat, 0)
+    for(lat=-50; lat<=-25; lat+=1) {
+      if(lon>=-24 && lon<=-21 && lat>=-36 && lat<=-28)
+        obs=0.005
+      else
+        obs=0
+      printf("%.2f %g %g %g %g\n", tobs, 0, lon, lat, obs)
+    }
 }' > data/obs.tab
 
 # Set initial air parcel positions...
@@ -70,8 +77,9 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
 	   ATM_BASENAME atm GRID_BASENAME grid STAT_BASENAME station \
-           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
-	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab
+	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
+           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
 
 # Compare files...
 echo -e "\nCompare results..."
