@@ -5411,14 +5411,12 @@ void write_csi(
   atm_t * atm,
   double t) {
 
-  static FILE *in, *out;
+  static FILE *out;
 
-  static char line[LEN];
+  static double *modmean, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
+    dlon, dlat, dz, x[NCSI], y[NCSI];
 
-  static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
-    rz, rlon, rlat, robs, area[GY], dlon, dlat, dz, x[NCSI], y[NCSI];
-
-  static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
+  static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_CSI", "OUTPUT", NVTX_WRITE);
@@ -5430,13 +5428,20 @@ void write_csi(
     if (ctl->qnt_m < 0)
       ERRMSG("Need quantity mass!");
 
-    /* Open observation data file... */
-    LOG(1, "Read CSI observation data: %s", ctl->csi_obsfile);
-    if (!(in = fopen(ctl->csi_obsfile, "r")))
-      ERRMSG("Cannot open file!");
+    /* Allocate... */
+    ALLOC(rt, double,
+	  NOBS);
+    ALLOC(rz, double,
+	  NOBS);
+    ALLOC(rlon, double,
+	  NOBS);
+    ALLOC(rlat, double,
+	  NOBS);
+    ALLOC(robs, double,
+	  NOBS);
 
-    /* Initialize time for file input... */
-    rt_old = -1e99;
+    /* Read observation data... */
+    read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new file... */
     LOG(1, "Write CSI data: %s", filename);
@@ -5481,38 +5486,33 @@ void write_csi(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Initialize grid cells... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
-  for (ix = 0; ix < ctl->csi_nx; ix++)
-    for (iy = 0; iy < ctl->csi_ny; iy++)
-      for (iz = 0; iz < ctl->csi_nz; iz++)
-	modmean[ix][iy][iz] = obsmean[ix][iy][iz] = obscount[ix][iy][iz] = 0;
+  /* Allocate... */
+  ALLOC(modmean, double,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obsmean, double,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obscount, int,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(area, double,
+	ctl->grid_ny);
 
-  /* Read observation data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
-      continue;
+  /* Loop over observations... */
+  for (int i = 0; i < nobs; i++) {
 
     /* Check time... */
-    if (rt < t0)
+    if (rt[i] < t0)
       continue;
-    if (rt > t1)
+    else if (rt[i] >= t1)
       break;
-    if (rt < rt_old)
-      ERRMSG("Time must be ascending!");
-    rt_old = rt;
 
     /* Check observation data... */
-    if (!isfinite(robs))
+    if (!isfinite(robs[i]))
       continue;
 
     /* Calculate indices... */
-    ix = (int) ((rlon - ctl->csi_lon0) / dlon);
-    iy = (int) ((rlat - ctl->csi_lat0) / dlat);
-    iz = (int) ((rz - ctl->csi_z0) / dz);
+    ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
+    iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
+    iz = (int) ((rz[i] - ctl->csi_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->csi_nx ||
@@ -5520,8 +5520,9 @@ void write_csi(
       continue;
 
     /* Get mean observation index... */
-    obsmean[ix][iy][iz] += robs;
-    obscount[ix][iy][iz]++;
+    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    obsmean[idx] += robs[i];
+    obscount[idx]++;
   }
 
   /* Analyze model data... */
@@ -5542,7 +5543,8 @@ void write_csi(
       continue;
 
     /* Get total mass in grid cell... */
-    modmean[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    modmean[idx] += atm->q[ctl->qnt_m][ip];
   }
 
   /* Analyze all grid cells... */
@@ -5551,33 +5553,34 @@ void write_csi(
       for (iz = 0; iz < ctl->csi_nz; iz++) {
 
 	/* Calculate mean observation index... */
-	if (obscount[ix][iy][iz] > 0)
-	  obsmean[ix][iy][iz] /= obscount[ix][iy][iz];
+	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+	if (obscount[idx] > 0)
+	  obsmean[idx] /= obscount[idx];
 
 	/* Calculate column density... */
-	if (modmean[ix][iy][iz] > 0)
-	  modmean[ix][iy][iz] /= (1e6 * area[iy]);
+	if (modmean[idx] > 0)
+	  modmean[idx] /= (1e6 * area[iy]);
 
 	/* Calculate CSI... */
-	if (obscount[ix][iy][iz] > 0) {
+	if (obscount[idx] > 0) {
 	  ct++;
-	  if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
-	      modmean[ix][iy][iz] >= ctl->csi_modmin)
+	  if (obsmean[idx] >= ctl->csi_obsmin &&
+	      modmean[idx] >= ctl->csi_modmin)
 	    cx++;
-	  else if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
-		   modmean[ix][iy][iz] < ctl->csi_modmin)
+	  else if (obsmean[idx] >= ctl->csi_obsmin &&
+		   modmean[idx] < ctl->csi_modmin)
 	    cy++;
-	  else if (obsmean[ix][iy][iz] < ctl->csi_obsmin &&
-		   modmean[ix][iy][iz] >= ctl->csi_modmin)
+	  else if (obsmean[idx] < ctl->csi_obsmin &&
+		   modmean[idx] >= ctl->csi_modmin)
 	    cz++;
 	}
 
 	/* Save data for other verification statistics... */
-	if (obscount[ix][iy][iz] > 0
-	    && (obsmean[ix][iy][iz] >= ctl->csi_obsmin
-		|| modmean[ix][iy][iz] >= ctl->csi_modmin)) {
-	  x[n] = modmean[ix][iy][iz];
-	  y[n] = obsmean[ix][iy][iz];
+	if (obscount[idx] > 0
+	    && (obsmean[idx] >= ctl->csi_obsmin
+		|| modmean[idx] >= ctl->csi_modmin)) {
+	  x[n] = modmean[idx];
+	  y[n] = obsmean[idx];
 	  if ((++n) > NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
@@ -5589,13 +5592,13 @@ void write_csi(
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
     static double work[2 * NCSI];
-    int nobs = cx + cy;
-    int nfor = cx + cz;
-    double bias = (nobs > 0) ? 100. * nfor / nobs : GSL_NAN;
-    double pod = (nobs > 0) ? (100. * cx) / nobs : GSL_NAN;
-    double far = (nfor > 0) ? (100. * cz) / nfor : GSL_NAN;
+    int n_obs = cx + cy;
+    int n_for = cx + cz;
+    double bias = (n_obs > 0) ? 100. * n_for / n_obs : GSL_NAN;
+    double pod = (n_obs > 0) ? (100. * cx) / n_obs : GSL_NAN;
+    double far = (n_for > 0) ? (100. * cz) / n_for : GSL_NAN;
     double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : GSL_NAN;
-    double cx_rd = (ct > 0) ? (1. * nobs * nfor) / ct : GSL_NAN;
+    double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : GSL_NAN;
     double ets = (cx + cy + cz - cx_rd > 0) ?
       (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : GSL_NAN;
     double rho_p =
@@ -5612,16 +5615,32 @@ void write_csi(
 
     /* Write... */
     fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %d\n",
-	    t, cx, cy, cz, nobs, nfor, bias, pod, far, csi, cx_rd, ets,
+	    t, cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets,
 	    rho_p, rho_s, mean, rmse, absdev, n);
 
     /* Set counters to zero... */
     n = ct = cx = cy = cz = 0;
   }
 
-  /* Close file... */
-  if (t == ctl->t_stop)
+  /* Free... */
+  free(modmean);
+  free(obsmean);
+  free(obscount);
+  free(area);
+
+  /* Finalize... */
+  if (t == ctl->t_stop) {
+
+    /* Close output file... */
     fclose(out);
+
+    /* Free... */
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
+  }
 }
 
 /*****************************************************************************/
@@ -6419,8 +6438,6 @@ void write_prof(
     /* Get mean observation index... */
     int idx = ARRAY_2D(ix, iy, ctl->prof_ny);
     obsmean[idx] += robs[i];
-
-    /* Count observations... */
     obscount[idx]++;
   }
 

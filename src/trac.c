@@ -503,12 +503,8 @@ int main(
 					 + 4 * NP * sizeof(double)
 					 + EX * EY * EP * sizeof(float)) /
 	1024. / 1024.);
-    LOG(1, "MEMORY_STATIC = %g MByte", (EX * EY * EP * sizeof(float)
-					+ 5 * GX * GY * GZ * sizeof(double)
-					+ 2 * GX * GY * GZ * sizeof(int)
-					+ GX * GY * sizeof(double)
-					+ GX * GY * sizeof(int)) / 1024. /
-	1024.);
+    LOG(1, "MEMORY_STATIC = %g MByte", (EX * EY * EP * sizeof(float)) /
+	1024. / 1024.);
 
     /* Delete data region on GPUs... */
 #ifdef _OPENACC

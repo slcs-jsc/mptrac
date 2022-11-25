@@ -187,21 +187,6 @@
 #define EY 601
 #endif
 
-/*! Maximum number of longitudes for gridded data. */
-#ifndef GX
-#define GX 720
-#endif
-
-/*! Maximum number of latitudes for gridded data. */
-#ifndef GY
-#define GY 360
-#endif
-
-/*! Maximum number of altitudes for gridded data. */
-#ifndef GZ
-#define GZ 100
-#endif
-
 /*! Maximum number of data points for ensemble analysis. */
 #ifndef NENS
 #define NENS 2000

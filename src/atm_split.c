@@ -38,7 +38,7 @@ int main(
 
   char kernel[LEN], line[LEN];
 
-  double dt, dx, dz, k, kk[GZ], kz[GZ], kmin, kmax, m, mmax = 0, mtot = 0,
+  double dt, dx, dz, k, kk[EP], kz[EP], kmin, kmax, m, mmax = 0, mtot = 0,
     t0, t1, z, z0, z1, lon0, lon1, lat0, lat1, zmin, zmax;
 
   int i, ip, iq, iz, n, nz = 0;
@@ -89,7 +89,7 @@ int main(
     /* Read data... */
     while (fgets(line, LEN, in))
       if (sscanf(line, "%lg %lg", &kz[nz], &kk[nz]) == 2)
-	if ((++nz) >= GZ)
+	if ((++nz) >= EP)
 	  ERRMSG("Too many height levels!");
 
     /* Close file... */
