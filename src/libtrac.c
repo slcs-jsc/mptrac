@@ -5930,7 +5930,7 @@ void write_grid(
 
   /* Write ASCII data... */
   if (ctl->grid_type == 0)
-    write_grid_asc(filename, ctl, cd, mass, vmr_expl, vmr_impl,
+    write_grid_asc(filename, ctl, cd, vmr_expl, vmr_impl,
 		   t, z, lon, lat, area, dz, np);
 
   /* Write netCDF data... */
@@ -5964,7 +5964,6 @@ void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *mass,
   double *vmr_expl,
   double *vmr_impl,
   double t,
@@ -6033,7 +6032,7 @@ void write_grid_asc(
 	fprintf(out, "\n");
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
 	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
-	if (!ctl->grid_sparse || mass[idx] > 0 || vmr_expl[idx] > 0)
+	if (!ctl->grid_sparse || vmr_expl[idx] > 0 || vmr_impl[idx] > 0)
 	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n",
 		  t, z[iz], lon[ix], lat[iy], area[iy], dz,
 		  np[idx], cd[idx], vmr_impl[idx], vmr_expl[idx]);

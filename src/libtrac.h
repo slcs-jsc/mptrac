@@ -2209,7 +2209,6 @@ void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *mass,
   double *vmr_expl,
   double *vmr_impl,
   double t,
