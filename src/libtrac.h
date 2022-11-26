@@ -1210,6 +1210,12 @@ typedef struct {
   /*! Upper latitude of gridded CSI data [deg]. */
   double csi_lat1;
 
+  /*! Basename of ensemble data file. */
+  char ens_basename[LEN];
+
+  /*! Time step for ensemble output [s]. */
+  double ens_dt_out;
+
   /*! Basename of grid data files. */
   char grid_basename[LEN];
 
@@ -1284,9 +1290,6 @@ typedef struct {
 
   /*! Upper latitude of gridded profile data [deg]. */
   double prof_lat1;
-
-  /*! Basename of ensemble data file. */
-  char ens_basename[LEN];
 
   /*! Basename of sample data file. */
   char sample_basename[LEN];

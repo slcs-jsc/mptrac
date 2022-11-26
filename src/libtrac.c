@@ -2658,6 +2658,8 @@ void read_ctl(
 
   /* Output of ensemble data... */
   scan_ctl(filename, argc, argv, "ENS_BASENAME", -1, "-", ctl->ens_basename);
+  ctl->ens_dt_out =
+    scan_ctl(filename, argc, argv, "ENS_DT_OUT", -1, "86400", NULL);
 
   /* Output of grid data... */
   scan_ctl(filename, argc, argv, "GRID_BASENAME", -1, "-",
@@ -5653,127 +5655,91 @@ void write_ens(
 
   static FILE *out;
 
-  static double dummy, ens, lat, lon, p[NENS], q[NQ][NENS], x[NENS][3], xm[3];
+  static double dummy, lat, lon, qm[NQ][NENS], qs[NQ][NENS], xm[NENS][3],
+    x[3], zm[NENS];
 
-  static int ip, iq;
-
-  static size_t i, n;
+  static int n[NENS];
 
   /* Set timer... */
   SELECT_TIMER("WRITE_ENS", "OUTPUT", NVTX_WRITE);
 
-  /* Init... */
-  if (t == ctl->t_start) {
-
-    /* Check quantities... */
-    if (ctl->qnt_ens < 0)
-      ERRMSG("Missing ensemble IDs!");
-
-    /* Create new file... */
-    LOG(1, "Write ensemble data: %s", filename);
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create file!");
-
-    /* Write header... */
-    fprintf(out,
-	    "# $1 = time [s]\n"
-	    "# $2 = altitude [km]\n"
-	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-    for (iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%d = %s (mean) [%s]\n", 5 + iq,
-	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-    for (iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%d = %s (sigma) [%s]\n", 5 + ctl->nq + iq,
-	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-    fprintf(out, "# $%d = number of members\n\n", 5 + 2 * ctl->nq);
-  }
+  /* Check quantities... */
+  if (ctl->qnt_ens < 0)
+    ERRMSG("Missing ensemble IDs!");
 
   /* Set time interval... */
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Init... */
-  ens = GSL_NAN;
-  n = 0;
+  for (int i = 0; i < NENS; i++) {
+    for (int iq = 0; iq < ctl->nq; iq++)
+      qm[iq][i] = qs[iq][i] = 0;
+    xm[i][0] = xm[i][1] = xm[i][2] = zm[i] = 0;
+    n[i] = 0;
+  }
 
   /* Loop over air parcels... */
-  for (ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
     if (atm->time[ip] < t0 || atm->time[ip] > t1)
       continue;
 
-    /* Check ensemble id... */
-    if (atm->q[ctl->qnt_ens][ip] != ens) {
+    /* Check ensemble ID... */
+    if (atm->q[ctl->qnt_ens][ip] < 0 || atm->q[ctl->qnt_ens][ip] >= NENS)
+      ERRMSG("Ensemble ID is out of range!");
 
-      /* Write results... */
-      if (n > 0) {
+    /* Get means... */
+    geo2cart(0, atm->lon[ip], atm->lat[ip], x);
+    for (int iq = 0; iq < ctl->nq; iq++) {
+      qm[iq][ctl->qnt_ens] += atm->q[iq][ip];
+      qs[iq][ctl->qnt_ens] += SQR(atm->q[iq][ip]);
+    }
+    xm[ctl->qnt_ens][0] += x[0];
+    xm[ctl->qnt_ens][1] += x[1];
+    xm[ctl->qnt_ens][2] += x[2];
+    zm[ctl->qnt_ens] += Z(atm->p[ip]);
+    n[ctl->qnt_ens]++;
+  }
 
-	/* Get mean position... */
-	xm[0] = xm[1] = xm[2] = 0;
-	for (i = 0; i < n; i++) {
-	  xm[0] += x[i][0] / (double) n;
-	  xm[1] += x[i][1] / (double) n;
-	  xm[2] += x[i][2] / (double) n;
-	}
-	cart2geo(xm, &dummy, &lon, &lat);
-	fprintf(out, "%.2f %g %g %g", t, Z(gsl_stats_mean(p, 1, n)), lon,
-		lat);
+  /* Create file... */
+  LOG(1, "Write ensemble data: %s", filename);
+  if (!(out = fopen(filename, "w")))
+    ERRMSG("Cannot create file!");
 
-	/* Get quantity statistics... */
-	for (iq = 0; iq < ctl->nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl->qnt_format[iq], gsl_stats_mean(q[iq], 1, n));
-	}
-	for (iq = 0; iq < ctl->nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
-	}
-	fprintf(out, " %zu\n", n);
+  /* Write header... */
+  fprintf(out,
+	  "# $1 = time [s]\n"
+	  "# $2 = altitude [km]\n"
+	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    fprintf(out, "# $%d = %s (mean) [%s]\n", 5 + iq,
+	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    fprintf(out, "# $%d = %s (sigma) [%s]\n", 5 + ctl->nq + iq,
+	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+  fprintf(out, "# $%d = number of members\n\n", 5 + 2 * ctl->nq);
+
+  /* Write data... */
+  for (int i = 0; i < NENS; i++)
+    if (n[i] > 0) {
+      cart2geo(xm[i], &dummy, &lon, &lat);
+      fprintf(out, "%.2f %g %g %g", t, zm[i] / n[i], lon, lat);
+      for (int iq = 0; iq < ctl->nq; iq++) {
+	fprintf(out, " ");
+	fprintf(out, ctl->qnt_format[iq], qm[iq][i] / n[i]);
       }
-
-      /* Init new ensemble... */
-      ens = atm->q[ctl->qnt_ens][ip];
-      n = 0;
+      for (int iq = 0; iq < ctl->nq; iq++) {
+	fprintf(out, " ");
+	double var = qs[iq][i] / n[i] - SQR(qm[iq][i] / n[i]);
+	fprintf(out, ctl->qnt_format[iq], (var > 0 ? sqrt(var) : 0));
+      }
+      fprintf(out, " %d\n", n[i]);
     }
-
-    /* Save data... */
-    p[n] = atm->p[ip];
-    geo2cart(0, atm->lon[ip], atm->lat[ip], x[n]);
-    for (iq = 0; iq < ctl->nq; iq++)
-      q[iq][n] = atm->q[iq][ip];
-    if ((++n) >= NENS)
-      ERRMSG("Too many data points!");
-  }
-
-  /* Write results... */
-  if (n > 0) {
-
-    /* Get mean position... */
-    xm[0] = xm[1] = xm[2] = 0;
-    for (i = 0; i < n; i++) {
-      xm[0] += x[i][0] / (double) n;
-      xm[1] += x[i][1] / (double) n;
-      xm[2] += x[i][2] / (double) n;
-    }
-    cart2geo(xm, &dummy, &lon, &lat);
-    fprintf(out, "%.2f %g %g %g", t, Z(gsl_stats_mean(p, 1, n)), lon, lat);
-
-    /* Get quantity statistics... */
-    for (iq = 0; iq < ctl->nq; iq++) {
-      fprintf(out, " ");
-      fprintf(out, ctl->qnt_format[iq], gsl_stats_mean(q[iq], 1, n));
-    }
-    for (iq = 0; iq < ctl->nq; iq++) {
-      fprintf(out, " ");
-      fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
-    }
-    fprintf(out, " %zu\n", n);
-  }
 
   /* Close file... */
-  if (t == ctl->t_stop)
-    fclose(out);
+  fclose(out);
 }
 
 /*****************************************************************************/

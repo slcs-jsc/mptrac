@@ -1920,9 +1920,9 @@ void write_output(
 #ifdef _OPENACC
   if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
-      || ctl->csi_basename[0] != '-' || ctl->ens_basename[0] != '-'
-      || ctl->prof_basename[0] != '-' || ctl->sample_basename[0] != '-'
-      || ctl->stat_basename[0] != '-') {
+      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
+      || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
+      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-') {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
   }
@@ -1956,8 +1956,9 @@ void write_output(
   }
 
   /* Write ensemble data... */
-  if (ctl->ens_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
+  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->ens_basename, year, mon, day, hour, min);
     write_ens(filename, ctl, atm, t);
   }
 
