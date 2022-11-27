@@ -1784,8 +1784,6 @@ void module_wet_deposition(
 
       double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
 
-      int inside;
-
       /* Check whether particle is below cloud top... */
       INTPOL_INIT;
       INTPOL_2D(pct, 1);
@@ -1801,12 +1799,13 @@ void module_wet_deposition(
 	pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
       if (Is < 0.01)
 	continue;
-
+      
       /* Check whether particle is inside or below cloud... */
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
-      inside = (iwc > 0 || lwc > 0);
-
+      int inside = (iwc > 0 || lwc > 0);
+      
+      /* Get temperature... */
       INTPOL_3D(t, 0);
 
       /* Calculate in-cloud scavenging coefficient... */
@@ -1827,9 +1826,6 @@ void module_wet_deposition(
 
 	/* Use Henry's law for gases... */
 	else if (ctl->wet_depo_ic_h[0] > 0) {
-
-	  /* Get temperature... */
-	  INTPOL_3D(t, 0);
 
 	  /* Get Henry's constant (Sander, 2015)... */
 	  h = ctl->wet_depo_ic_h[0]
@@ -1868,9 +1864,6 @@ void module_wet_deposition(
 
 	/* Use Henry's law for gases... */
 	else if (ctl->wet_depo_bc_h[0] > 0) {
-
-	  /* Get temperature... */
-	  INTPOL_3D(t, 0);
 
 	  /* Get Henry's constant (Sander, 2015)... */
 	  h = ctl->wet_depo_bc_h[0]
