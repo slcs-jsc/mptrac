@@ -5857,6 +5857,7 @@ void write_grid(
       }
 
   /* Calculate column density and vmr... */
+#pragma omp parallel for default(shared)
   for (int ix = 0; ix < ctl->grid_nx; ix++)
     for (int iy = 0; iy < ctl->grid_ny; iy++)
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
