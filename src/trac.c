@@ -381,13 +381,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
     for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 
-#ifdef _OPENACC
-#pragma omp parallel num_threads(num_devices)
-{
-    int device_num = omp_get_thread_num();
-    acc_set_device_num(device_num, acc_device_nvidia);
-#endif
-
       /* Adjust length of final time step... */
       if (ctl.direction * (t - ctl.t_stop) > 0)
 	t = ctl.t_stop;
@@ -400,7 +393,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
           get_met(&ctl, t, &met0, &met1, clim);
 
       /* Sort particles... */
-      if (0 && ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
+      if (0 && ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)    //TODO: reENABLE sorting here
 	module_sort(&ctl, met0, atm);
 
     /* Check initial positions... */
@@ -469,9 +462,6 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
       /* Write output... */
       write_output(dirname, &ctl, met0, met1, atm, t);
 
-#ifdef _OPENACC
-        }
-#endif
     }
 
     /* ------------------------------------------------------------
@@ -540,8 +530,11 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 void generate_random_nums(randoms_t *random_num, ulong count) {
 
 #ifdef _OPENACC
+#pragma omp parallel num_threads(num_devices)
+{
+    int dev_id = omp_get_thread_num();
+    acc_set_device_num(dev_id, acc_device_nvidia);
 
-    int dev_id = 0;
 #pragma acc host_data use_device(random_num)
 {
   /* Convection */
@@ -560,7 +553,7 @@ void generate_random_nums(randoms_t *random_num, ulong count) {
       ERRMSG("==---NEW---== Cannot create random numbers!");
 
 }
-
+}
 #else
 
 #pragma omp parallel for default(shared)
@@ -590,8 +583,11 @@ void module_advect_mp(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -624,6 +620,9 @@ void module_advect_mp(
       atm->lat[ip] += DY2DEG(dt[ip] * v / 1000.);
       atm->p[ip] += dt[ip] * w;
     }
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -640,8 +639,11 @@ void module_advect_rk(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+    int device_num = omp_get_thread_num();
+    acc_set_device_num(device_num, acc_device_nvidia);
+    calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -688,6 +690,10 @@ void module_advect_rk(
       atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
       atm->p[ip] += dt[ip] * wm;
     }
+
+#ifdef _OPENACC
+        }
+#endif
 }
 
 /*****************************************************************************/
@@ -709,10 +715,13 @@ void module_bound_cond(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
-  #pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -747,6 +756,10 @@ void module_bound_cond(
 	atm->q[ctl->qnt_vmr][ip] = ctl->bound_vmr
 	  + ctl->bound_vmr_trend * atm->time[ip];
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -765,8 +778,11 @@ void module_convection(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
@@ -823,6 +839,10 @@ void module_convection(
 	atm->p[ip] = pbot + (ptop - pbot) * random_nums->convection[ip];
       }
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -842,8 +862,11 @@ void module_decay(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -866,6 +889,10 @@ void module_decay(
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -884,8 +911,11 @@ void module_diffusion_meso(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,cache,dt,random_nums)
 #pragma acc parallel loop independent gang vector
@@ -952,6 +982,10 @@ void module_diffusion_meso(
 	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
       }
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -968,8 +1002,11 @@ void module_diffusion_turb(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,atm,dt,random_nums)
 #pragma acc parallel loop independent gang vector
@@ -1000,6 +1037,10 @@ void module_diffusion_turb(
 	  += DZ2DP(random_nums->diff_turb[3 * ip + 2] * sigma / 1000., atm->p[ip]);
       }
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1023,8 +1064,11 @@ void module_dry_deposition(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1069,6 +1113,10 @@ void module_dry_deposition(
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1151,8 +1199,11 @@ void module_isosurf(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
@@ -1196,6 +1247,10 @@ void module_isosurf(
       }
     }
   }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1217,8 +1272,11 @@ void module_meteo(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
@@ -1290,6 +1348,10 @@ void module_meteo(
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1311,8 +1373,11 @@ void module_oh_chem(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1363,6 +1428,10 @@ void module_oh_chem(
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1379,8 +1448,11 @@ void module_position(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1432,6 +1504,10 @@ void module_position(
 	}
       }
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1480,8 +1556,11 @@ void module_sedi(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1503,6 +1582,10 @@ void module_sedi(
       /* Calculate pressure change... */
       atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1633,8 +1716,11 @@ void module_timesteps(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1649,6 +1735,10 @@ void module_timesteps(
     else
       dt[ip] = 0.0;
   }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1700,8 +1790,11 @@ void module_wet_deposition(
 
   ulong start = 0, end = (ulong) atm->np;
 #ifdef _OPENACC
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 
 #pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
@@ -1819,6 +1912,10 @@ void module_wet_deposition(
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
+
+#ifdef _OPENACC
+}
+#endif
 }
 
 /*****************************************************************************/
@@ -1849,13 +1946,17 @@ void write_output(
       || ctl->stat_basename[0] != '-') {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 
+#pragma omp parallel num_threads(num_devices)
+{
+  int device_num = omp_get_thread_num();
+  acc_set_device_num(device_num, acc_device_nvidia);
   ulong start = 0, end = NP;
-  calc_device_workload_range(atm->np, acc_get_device_num(acc_device_nvidia),
-                             &start, &end);
+  calc_device_workload_range(atm->np, device_num, &start, &end);
 #pragma acc update host(atm->np,atm->time[start:end],atm->p[start:end], \
             atm->zeta[start:end],atm->lon[start:end],atm->lat[start:end], \
             atm->q[0:NQ][start:end])
-  }
+}
+}
 // TODO: put OMP barrier here
 #endif
 
