@@ -1017,13 +1017,14 @@ void get_met(
 
     /* Update GPU... */
 #ifdef _OPENACC
-  for(int device_num = 0; device_num < num_devices; device_num++) {
+#pragma omp parallel num_threads(num_devices)
+{
+    int device_num = omp_get_thread_num();
     acc_set_device_num(device_num, acc_device_nvidia);
-
     met_t *met0up = *met0;
     met_t *met1up = *met1;
 #pragma acc update device(met0up[:1],met1up[:1])
-  }
+}
 #endif
 
     /* Caching... */
@@ -1053,11 +1054,14 @@ void get_met(
     /* Update GPU... */
 #ifdef _OPENACC
   printf("**===--------------> NUM OF DEVICES IS %d.\n", num_devices);
-  for(int device_num = 0; device_num < num_devices; device_num++) {
+
+#pragma omp parallel num_threads(num_devices)
+{
+    int device_num = omp_get_thread_num();
     acc_set_device_num(device_num, acc_device_nvidia);
     met_t *met1up = *met1;
 #pragma acc update device(met1up[:1])
-  }
+}
 #endif
 
     /* Caching... */
@@ -1087,11 +1091,14 @@ void get_met(
     /* Update GPU... */
 #ifdef _OPENACC
   printf("**===--------------> NUM OF DEVICES IS %d.\n", num_devices);
-  for(int device_num = 0; device_num < num_devices; device_num++) {
+
+#pragma omp parallel num_threads(num_devices)
+{
+    int device_num = omp_get_thread_num();
     acc_set_device_num(device_num, acc_device_nvidia);
     met_t *met0up = *met0;
 #pragma acc update device(met0up[:1])
-  }
+}
 #endif
 
     /* Caching... */
