@@ -530,7 +530,7 @@ for(int device_num = 0; device_num < num_devices; device_num++) {
 void generate_random_nums(randoms_t *random_num, ulong count) {
 
 #ifdef _OPENACC
-#pragma omp parallel num_threads(num_devices)
+#pragma omp parallel num_threads(num_devices) firstprivate(random_num)
 {
     int dev_id = omp_get_thread_num();
     acc_set_device_num(dev_id, acc_device_nvidia);
