@@ -12,8 +12,8 @@ jobs:
     steps:
     - uses: actions/checkout@v3
     - name: install
-      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev libzstd-dev
     - name: make
-      run: cd src ; STATIC=0 make
+      run: cd src ; make STATIC=0 ZSTD=1
     - name: check
-      run: cd src ; STATIC=0 make check
+      run: cd src ; make check
