@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Set environment...
+ml GCC ParaStationMPI      # for MPI runs
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=4
 
@@ -59,7 +60,7 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 # Calculate trajectories...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm GRID_BASENAME grid
+	   ATM_BASENAME atm GRID_BASENAME grid 
 
 # Plot air parcel data...
 echo

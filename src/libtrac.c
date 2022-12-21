@@ -2517,6 +2517,8 @@ void read_ctl(
   /* H2O2 chemistry... */
   scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1, "-",
 	   ctl->clim_h2o2_filename);
+  ctl->h2o2_chem_cc = 
+    scan_ctl(filename, argc, argv, "H2O2_CHEM_CC", -1, "1", NULL);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);

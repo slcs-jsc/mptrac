@@ -1137,6 +1137,9 @@ typedef struct {
   /*! Beta parameter for diurnal variablity of OH. */
   double oh_chem_beta;
 
+  /*! Cloud cover parameter for H2O2 chemistry. */
+  double h2o2_chem_cc;
+
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
 

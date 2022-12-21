@@ -1353,6 +1353,10 @@ void module_h2o2_chem(
   if (ctl->qnt_vmrimpl < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
+  /* Initialize random number generator... */
+  gsl_rng_env_setup();
+  gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
+
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(clim,ctl,met0,met1,atm,dt)
@@ -1368,43 +1372,49 @@ void module_h2o2_chem(
       INTPOL_INIT;
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
-      if (lwc > 0 || iwc > 0) {
+      if (!(lwc > 0 || iwc > 0))
+        continue;
+      double random = gsl_rng_uniform(r);
+      if (random > ctl->h2o2_chem_cc)
+        continue; 
+      if (atm->q[ctl->qnt_vmrimpl][ip]==0)
+        continue;
 
-	/* Get temperature... */
-	double t;
-	INTPOL_3D(t, 0);
+      /* Get temperature... */
+      double t;
+      INTPOL_3D(t, 0);
 
-	/* Reaction rate (Berglen et al., 2004)... */
-	double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit:M^(-2)
+      /* Reaction rate (Berglen et al., 2004)... */
+      double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit:M^(-2)
 
-	/* Henry constant of SO2... */
-	double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-	double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
+      /* Henry constant of SO2... */
+      double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
 
-	/* Henry constant of H2O2... */
-	double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+      /* Henry constant of H2O2... */
+      double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
-	/* Concentration of H2O2 (Barth et al., 1989)... */
-	double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
-	double h2o2 = H_h2o2
-	  * clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip],
-		      clim) * 0.59 * exp(-0.233 * SO2);
+      /* Concentration of H2O2 (Barth et al., 1989)... */
+      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
+      double h2o2 = H_h2o2
+        * clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip],
+              clim) * 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23; //unit:M
+      double rho_air = 100 * atm->p[ip] / (RA * t);
+      /* Volume water content in cloud [m^3 m^(-3)]... */
+      double CWC = lwc*rho_air/1000 + iwc * rho_air/920;
 
-	/* Volume water content in cloud [m^3 m^(-3)]... */
-	double CWC = (lwc + iwc) * 28.9644 / 18.02;
-
-	/* Calculate exponential decay (Rolph et al., 1992)... */
-	double rate_coef = 1000 / 6.02214e23 * k * K_1S * h2o2 * H_SO2 * CWC;
-	double aux = exp(-dt[ip] * rate_coef);
-	if (ctl->qnt_m >= 0) {
-	  if (ctl->qnt_mloss_h2o2 >= 0)
-	    atm->q[ctl->qnt_mloss_h2o2][ip] +=
-	      atm->q[ctl->qnt_m][ip] * (1 - aux);
-	  atm->q[ctl->qnt_m][ip] *= aux;
-	}
-	if (ctl->qnt_vmr >= 0)
-	  atm->q[ctl->qnt_vmr][ip] *= aux;
+      /* Calculate exponential decay (Rolph et al., 1992)... */
+      double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
+      double aux = exp(-dt[ip] * rate_coef);
+      if (ctl->qnt_m >= 0) {
+        if (ctl->qnt_mloss_h2o2 >= 0)
+          atm->q[ctl->qnt_mloss_h2o2][ip] +=
+            atm->q[ctl->qnt_m][ip] * (1 - aux);
+        atm->q[ctl->qnt_m][ip] *= aux;
       }
+      if (ctl->qnt_vmr >= 0)
+        atm->q[ctl->qnt_vmr][ip] *= aux;
+      
     }
 }
 
