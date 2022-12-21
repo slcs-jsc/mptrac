@@ -450,7 +450,7 @@ int main(
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-	  if (ctl.clim_h2o2_filename[0] != '-')
+	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0)
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* Dry deposition... */
@@ -503,12 +503,8 @@ int main(
 					 + 4 * NP * sizeof(double)
 					 + EX * EY * EP * sizeof(float)) /
 	1024. / 1024.);
-    LOG(1, "MEMORY_STATIC = %g MByte", (EX * EY * EP * sizeof(float)
-					+ 5 * GX * GY * GZ * sizeof(double)
-					+ 2 * GX * GY * GZ * sizeof(int)
-					+ GX * GY * sizeof(double)
-					+ GX * GY * sizeof(int)) / 1024. /
-	1024.);
+    LOG(1, "MEMORY_STATIC = %g MByte", (EX * EY * EP * sizeof(float)) /
+	1024. / 1024.);
 
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
@@ -1798,8 +1794,6 @@ void module_wet_deposition(
 
       double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
 
-      int inside;
-
       /* Check whether particle is below cloud top... */
       INTPOL_INIT;
       INTPOL_2D(pct, 1);
@@ -1815,12 +1809,13 @@ void module_wet_deposition(
 	pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
       if (Is < 0.01)
 	continue;
-
+      
       /* Check whether particle is inside or below cloud... */
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
-      inside = (iwc > 0 || lwc > 0);
-
+      int inside = (iwc > 0 || lwc > 0);
+      
+      /* Get temperature... */
       INTPOL_3D(t, 0);
 
       /* Calculate in-cloud scavenging coefficient... */
@@ -1841,9 +1836,6 @@ void module_wet_deposition(
 
 	/* Use Henry's law for gases... */
 	else if (ctl->wet_depo_ic_h[0] > 0) {
-
-	  /* Get temperature... */
-	  INTPOL_3D(t, 0);
 
 	  /* Get Henry's constant (Sander, 2015)... */
 	  h = ctl->wet_depo_ic_h[0]
@@ -1882,9 +1874,6 @@ void module_wet_deposition(
 
 	/* Use Henry's law for gases... */
 	else if (ctl->wet_depo_bc_h[0] > 0) {
-
-	  /* Get temperature... */
-	  INTPOL_3D(t, 0);
 
 	  /* Get Henry's constant (Sander, 2015)... */
 	  h = ctl->wet_depo_bc_h[0]
@@ -1934,9 +1923,9 @@ void write_output(
 #ifdef _OPENACC
   if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
-      || ctl->csi_basename[0] != '-' || ctl->ens_basename[0] != '-'
-      || ctl->prof_basename[0] != '-' || ctl->sample_basename[0] != '-'
-      || ctl->stat_basename[0] != '-') {
+      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
+      || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
+      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-') {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
   }
@@ -1970,8 +1959,9 @@ void write_output(
   }
 
   /* Write ensemble data... */
-  if (ctl->ens_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->ens_basename);
+  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->ens_basename, year, mon, day, hour, min);
     write_ens(filename, ctl, atm, t);
   }
 

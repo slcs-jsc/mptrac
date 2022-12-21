@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -127,7 +127,8 @@ int main(
 	  "# $37 = NAT temperature [K]\n"
 	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
 	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = boundary layer pressure [hPa]\n");
+	  "# $40 = H2O2 concentration [molec/cm^3]\n"
+	  "# $41 = boundary layer pressure [hPa]\n");
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -169,7 +170,7 @@ int main(
 
     /* Write data... */
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
@@ -183,7 +184,8 @@ int main(
 							      atm->lat[ip],
 							      atm->p[ip]),
 	    clim_oh_diurnal(&ctl, clim, atm->time[ip], atm->p[ip],
-			    atm->lon[ip], atm->lat[ip]), pbl);
+			    atm->lon[ip], atm->lat[ip]),
+	    clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]), pbl);
   }
 
   /* Close file... */

@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -55,7 +55,7 @@ int main(
     cl, clm[NZ], plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ],
     cape, capem[NZ], cin, cinm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ],
     pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ],
-    tnatm[NZ], hno3m[NZ], ohm[NZ], cw[3];
+    tnatm[NZ], hno3m[NZ], ohm[NZ], h2o2m[NZ], cw[3];
 
   static int i, iz, np[NZ], npc[NZ], npt[NZ], nz, ci[3];
 
@@ -174,6 +174,7 @@ int main(
 			      clim_hno3(clim, met->time, lat, plev[iz]));
 	    ohm[iz] +=
 	      clim_oh_diurnal(&ctl, clim, met->time, plev[iz], lon, lat);
+	    h2o2m[iz] += clim_h2o2(clim, met->time, lat, plev[iz]);
 	    np[iz]++;
 	  }
 	}
@@ -228,18 +229,19 @@ int main(
 	  "# $37 = NAT temperature [K]\n"
 	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
 	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = boundary layer pressure [hPa]\n");
+	  "# $40 = H2O2 concentration [molec/cm^3]\n");
   fprintf(out,
-	  "# $41 = number of data points\n"
-	  "# $42 = number of tropopause data points\n"
-	  "# $43 = number of CAPE data points\n\n");
+	  "# $41 = boundary layer pressure [hPa]\n"
+	  "# $42 = number of data points\n"
+	  "# $43 = number of tropopause data points\n"
+	  "# $44 = number of CAPE data points\n\n");
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %d %d %d\n",
+	    " %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -252,8 +254,8 @@ int main(
 	    plfcm[iz] / npc[iz], pelm[iz] / npc[iz], capem[iz] / npc[iz],
 	    cinm[iz] / npc[iz], rhm[iz] / np[iz], rhicem[iz] / np[iz],
 	    tdewm[iz] / np[iz], ticem[iz] / np[iz], tnatm[iz] / np[iz],
-	    hno3m[iz] / np[iz], ohm[iz] / np[iz], pblm[iz] / np[iz],
-	    np[iz], npt[iz], npc[iz]);
+	    hno3m[iz] / np[iz], ohm[iz] / np[iz], h2o2m[iz] / np[iz],
+	    pblm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
 
   /* Close file... */
   fclose(out);

@@ -101,6 +101,9 @@ double clim_hno3(
 void clim_hno3_init(
   clim_t * clim) {
 
+  /* Write info... */
+  LOG(1, "Initialize HNO3 data...");
+
   clim->hno3_ntime = 12;
   double hno3_time[12] = {
     1209600.00, 3888000.00, 6393600.00,
@@ -343,6 +346,33 @@ void clim_hno3_init(
      {1.42, 2.04, 4.68, 8.92, 12.7, 12, 11.2, 8.99, 5.32, 2.33}}
   };
   memcpy(clim->hno3, hno3, sizeof(clim->hno3));
+
+  /* Get range... */
+  double hno3min = 1e99, hno3max = -1e99;
+  for (int it = 0; it < clim->hno3_ntime; it++)
+    for (int iz = 0; iz < clim->hno3_np; iz++)
+      for (int iy = 0; iy < clim->hno3_nlat; iy++) {
+	hno3min = GSL_MIN(hno3min, clim->hno3[it][iy][iz]);
+	hno3max = GSL_MAX(hno3max, clim->hno3[it][iy][iz]);
+      }
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->hno3_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->hno3_time[0], clim->hno3_time[1],
+      clim->hno3_time[clim->hno3_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->hno3_np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(clim->hno3_p[0]), Z(clim->hno3_p[1]),
+      Z(clim->hno3_p[clim->hno3_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->hno3_p[0],
+      clim->hno3_p[1], clim->hno3_p[clim->hno3_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->hno3_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->hno3_lat[0], clim->hno3_lat[1],
+      clim->hno3_lat[clim->hno3_nlat - 1]);
+  LOG(2, "HNO3 concentration range: %g ... %g ppv", 1e-9 * hno3min,
+      1e-9 * hno3max);
 }
 
 /*****************************************************************************/
@@ -426,7 +456,7 @@ void clim_oh_init(
 
   int nt, ncid, varid;
 
-  double *help;
+  double *help, ohmin = 1e99, ohmax = -1e99;
 
   /* Write info... */
   LOG(1, "Read OH data: %s", ctl->clim_oh_filename);
@@ -477,15 +507,32 @@ void clim_oh_init(
   NC_GET_DOUBLE("OH", help, 1);
   for (int it = 0; it < clim->oh_ntime; it++)
     for (int iz = 0; iz < clim->oh_np; iz++)
-      for (int iy = 0; iy < clim->oh_nlat; iy++)
+      for (int iy = 0; iy < clim->oh_nlat; iy++) {
 	clim->oh[it][iz][iy] =
 	  help[ARRAY_3D(it, iz, clim->oh_np, iy, clim->oh_nlat)]
 	  / clim_oh_init_help(ctl->oh_chem_beta, clim->oh_time[it],
 			      clim->oh_lat[iy]);
+	ohmin = GSL_MIN(ohmin, clim->oh[it][iz][iy]);
+	ohmax = GSL_MAX(ohmax, clim->oh[it][iz][iy]);
+      }
   free(help);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->oh_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->oh_time[0], clim->oh_time[1], clim->oh_time[clim->oh_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->oh_np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(clim->oh_p[0]), Z(clim->oh_p[1]), Z(clim->oh_p[clim->oh_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa",
+      clim->oh_p[0], clim->oh_p[1], clim->oh_p[clim->oh_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->oh_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->oh_lat[0], clim->oh_lat[1], clim->oh_lat[clim->oh_nlat - 1]);
+  LOG(2, "OH concentration range: %g ... %g molec/cm^3", ohmin, ohmax);
 }
 
 /*****************************************************************************/
@@ -514,10 +561,10 @@ double clim_oh_init_help(
 /*****************************************************************************/
 
 double clim_h2o2(
+  clim_t * clim,
   double t,
   double lat,
-  double p,
-  clim_t * clim) {
+  double p) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -576,7 +623,7 @@ void clim_h2o2_init(
 
   int ncid, varid, it, iy, iz, nt;
 
-  double *help;
+  double *help, h2o2min = 1e99, h2o2max = -1e99;
 
   /* Write info... */
   LOG(1, "Read H2O2 data: %s", ctl->clim_h2o2_filename);
@@ -627,13 +674,33 @@ void clim_h2o2_init(
   NC_GET_DOUBLE("h2o2", help, 1);
   for (it = 0; it < clim->h2o2_ntime; it++)
     for (iz = 0; iz < clim->h2o2_np; iz++)
-      for (iy = 0; iy < clim->h2o2_nlat; iy++)
+      for (iy = 0; iy < clim->h2o2_nlat; iy++) {
 	clim->h2o2[it][iz][iy] =
 	  help[ARRAY_3D(it, iz, clim->h2o2_np, iy, clim->h2o2_nlat)];
+	h2o2min = GSL_MIN(h2o2min, clim->h2o2[it][iz][iy]);
+	h2o2max = GSL_MAX(h2o2max, clim->h2o2[it][iz][iy]);
+      }
   free(help);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->h2o2_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->h2o2_time[0], clim->h2o2_time[1],
+      clim->h2o2_time[clim->h2o2_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->h2o2_np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(clim->h2o2_p[0]), Z(clim->h2o2_p[1]),
+      Z(clim->h2o2_p[clim->h2o2_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->h2o2_p[0],
+      clim->h2o2_p[1], clim->h2o2_p[clim->h2o2_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->h2o2_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->h2o2_lat[0], clim->h2o2_lat[1],
+      clim->h2o2_lat[clim->h2o2_nlat - 1]);
+  LOG(2, "H2O2 concentration range: %g ... %g molec/cm^3", h2o2min, h2o2max);
 }
 
 /*****************************************************************************/
@@ -668,6 +735,9 @@ double clim_tropo(
 
 void clim_tropo_init(
   clim_t * clim) {
+
+  /* Write info... */
+  LOG(1, "Initialize tropopause data...");
 
   clim->tropo_ntime = 12;
   double tropo_time[12] = {
@@ -790,6 +860,27 @@ void clim_tropo_init(
      281.7, 281.1, 281.2}
   };
   memcpy(clim->tropo, tropo, sizeof(clim->tropo));
+
+  /* Get range... */
+  double tropomin = 1e99, tropomax = -1e99;
+  for (int it = 0; it < clim->tropo_ntime; it++)
+    for (int iy = 0; iy < clim->tropo_nlat; iy++) {
+      tropomin = GSL_MIN(tropomin, clim->tropo[it][iy]);
+      tropomax = GSL_MAX(tropomax, clim->tropo[it][iy]);
+    }
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->tropo_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->tropo_time[0], clim->tropo_time[1],
+      clim->tropo_time[clim->tropo_ntime - 1]);
+  LOG(2, "Number of latitudes: %d", clim->tropo_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->tropo_lat[0], clim->tropo_lat[1],
+      clim->tropo_lat[clim->tropo_nlat - 1]);
+  LOG(2, "Tropopause altitude range: %g ... %g hPa", Z(tropomax),
+      Z(tropomin));
+  LOG(2, "Tropopause pressure range: %g ... %g hPa", tropomin, tropomax);
 }
 
 /*****************************************************************************/
@@ -804,10 +895,10 @@ void compress_pack(
 
   double min[EP], max[EP], off[EP], scl[EP];
 
-  short *sarray;
+  unsigned short *sarray;
 
   /* Allocate... */
-  ALLOC(sarray, short,
+  ALLOC(sarray, unsigned short,
 	nxy * nz);
 
   /* Read compressed stream and decompress array... */
@@ -815,7 +906,7 @@ void compress_pack(
 
     /* Write info... */
     LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(short) / sizeof(float));
+	varname, 100. * sizeof(unsigned short) / sizeof(float));
 
     /* Read data... */
     FREAD(&scl, double,
@@ -824,7 +915,7 @@ void compress_pack(
     FREAD(&off, double,
 	  nz,
 	  inout);
-    FREAD(sarray, short,
+    FREAD(sarray, unsigned short,
 	  nxy * nz,
 	  inout);
 
@@ -841,7 +932,7 @@ void compress_pack(
 
     /* Write info... */
     LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(short) / sizeof(float));
+	varname, 100. * sizeof(unsigned short) / sizeof(float));
 
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
@@ -859,15 +950,18 @@ void compress_pack(
     /* Get offset and scaling factor... */
     for (size_t iz = 0; iz < nz; iz++) {
       scl[iz] = (max[iz] - min[iz]) / 65533.;
-      off[iz] = min[iz] - scl[iz];
+      off[iz] = min[iz];
     }
 
     /* Convert to short... */
 #pragma omp parallel for default(shared)
-    for (size_t ixy = 1; ixy < nxy; ixy++)
+    for (size_t ixy = 0; ixy < nxy; ixy++)
       for (size_t iz = 0; iz < nz; iz++)
-	sarray[ixy * nz + iz]
-	  = (short) ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
+	if (scl[iz] != 0)
+	  sarray[ixy * nz + iz] = (unsigned short)
+	    ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
+	else
+	  sarray[ixy * nz + iz] = 0;
 
     /* Write data... */
     FWRITE(&scl, double,
@@ -876,7 +970,7 @@ void compress_pack(
     FWRITE(&off, double,
 	   nz,
 	   inout);
-    FWRITE(sarray, short,
+    FWRITE(sarray, unsigned short,
 	   nxy * nz,
 	   inout);
   }
@@ -2476,6 +2570,9 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
     ctl->oh_chem_reaction =
       (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
+    ctl->h2o2_chem_reaction =
+      (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0",
+		     NULL);
     for (int ip = 0; ip < 4; ip++)
       ctl->oh_chem[ip] =
 	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
@@ -2515,10 +2612,10 @@ void read_ctl(
 	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
 
   /* H2O2 chemistry... */
-  scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1, "-",
-	   ctl->clim_h2o2_filename);
   ctl->h2o2_chem_cc = 
     scan_ctl(filename, argc, argv, "H2O2_CHEM_CC", -1, "1", NULL);
+  scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1,
+	   "../../data/cams_H2O2.nc", ctl->clim_h2o2_filename);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
@@ -2566,6 +2663,8 @@ void read_ctl(
 
   /* Output of ensemble data... */
   scan_ctl(filename, argc, argv, "ENS_BASENAME", -1, "-", ctl->ens_basename);
+  ctl->ens_dt_out =
+    scan_ctl(filename, argc, argv, "ENS_DT_OUT", -1, "86400", NULL);
 
   /* Output of grid data... */
   scan_ctl(filename, argc, argv, "GRID_BASENAME", -1, "-",
@@ -2877,7 +2976,7 @@ void read_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      var[ix][iy] = help[ARRAY_2D_MET(ix, iy)];
+      var[ix][iy] = help[ARRAY_2D(ix, iy, met->ny)];
 
   /* Free... */
   free(help);
@@ -2939,7 +3038,7 @@ void read_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	var[ix][iy][ip] = help[ARRAY_3D_MET(ix, iy, ip)];
+	var[ix][iy][ip] = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 
   /* Free... */
   free(help);
@@ -4539,6 +4638,57 @@ void read_met_tropo(
 
 /*****************************************************************************/
 
+void read_obs(
+  char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs) {
+
+  FILE *in;
+
+  char line[LEN];
+
+  /* Open observation data file... */
+  LOG(1, "Read observation data: %s", filename);
+  if (!(in = fopen(filename, "r")))
+    ERRMSG("Cannot open file!");
+
+  /* Read observations... */
+  while (fgets(line, LEN, in))
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[*nobs], &rz[*nobs],
+	       &rlon[*nobs], &rlat[*nobs], &robs[*nobs]) == 5)
+      if ((++(*nobs)) >= NOBS)
+	ERRMSG("Too many observations!");
+
+  /* Close observation data file... */
+  fclose(in);
+
+  /* Check time... */
+  for (int i = 1; i < *nobs; i++)
+    if (rt[i] < rt[i - 1])
+      ERRMSG("Time must be ascending!");
+
+  /* Write info... */
+  int n = *nobs;
+  double mini, maxi;
+  LOG(2, "Number of observations: %d", *nobs);
+  gsl_stats_minmax(&mini, &maxi, rt, 1, (size_t) n);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rz, 1, (size_t) n);
+  LOG(2, "Altitude range: %g ... %g km", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlon, 1, (size_t) n);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlat, 1, (size_t) n);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
+  LOG(2, "Observation range: %g ... %g", mini, maxi);
+}
+
+/*****************************************************************************/
+
 double scan_ctl(
   const char *filename,
   int argc,
@@ -5268,14 +5418,12 @@ void write_csi(
   atm_t * atm,
   double t) {
 
-  static FILE *in, *out;
+  static FILE *out;
 
-  static char line[LEN];
+  static double *modmean, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
+    dlon, dlat, dz, x[NCSI], y[NCSI];
 
-  static double modmean[GX][GY][GZ], obsmean[GX][GY][GZ], rt, rt_old,
-    rz, rlon, rlat, robs, area[GY], dlon, dlat, dz, x[NCSI], y[NCSI];
-
-  static int obscount[GX][GY][GZ], ct, cx, cy, cz, ip, ix, iy, iz, n;
+  static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_CSI", "OUTPUT", NVTX_WRITE);
@@ -5287,13 +5435,22 @@ void write_csi(
     if (ctl->qnt_m < 0)
       ERRMSG("Need quantity mass!");
 
-    /* Open observation data file... */
-    LOG(1, "Read CSI observation data: %s", ctl->csi_obsfile);
-    if (!(in = fopen(ctl->csi_obsfile, "r")))
-      ERRMSG("Cannot open file!");
+    /* Allocate... */
+    ALLOC(area, double,
+	  ctl->csi_ny);
+    ALLOC(rt, double,
+	  NOBS);
+    ALLOC(rz, double,
+	  NOBS);
+    ALLOC(rlon, double,
+	  NOBS);
+    ALLOC(rlat, double,
+	  NOBS);
+    ALLOC(robs, double,
+	  NOBS);
 
-    /* Initialize time for file input... */
-    rt_old = -1e99;
+    /* Read observation data... */
+    read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new file... */
     LOG(1, "Write CSI data: %s", filename);
@@ -5338,38 +5495,31 @@ void write_csi(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Initialize grid cells... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(3)
-  for (ix = 0; ix < ctl->csi_nx; ix++)
-    for (iy = 0; iy < ctl->csi_ny; iy++)
-      for (iz = 0; iz < ctl->csi_nz; iz++)
-	modmean[ix][iy][iz] = obsmean[ix][iy][iz] = obscount[ix][iy][iz] = 0;
+  /* Allocate... */
+  ALLOC(modmean, double,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obsmean, double,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obscount, int,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
 
-  /* Read observation data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
-      continue;
+  /* Loop over observations... */
+  for (int i = 0; i < nobs; i++) {
 
     /* Check time... */
-    if (rt < t0)
+    if (rt[i] < t0)
       continue;
-    if (rt > t1)
+    else if (rt[i] >= t1)
       break;
-    if (rt < rt_old)
-      ERRMSG("Time must be ascending!");
-    rt_old = rt;
 
     /* Check observation data... */
-    if (!isfinite(robs))
+    if (!isfinite(robs[i]))
       continue;
 
     /* Calculate indices... */
-    ix = (int) ((rlon - ctl->csi_lon0) / dlon);
-    iy = (int) ((rlat - ctl->csi_lat0) / dlat);
-    iz = (int) ((rz - ctl->csi_z0) / dz);
+    ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
+    iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
+    iz = (int) ((rz[i] - ctl->csi_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->csi_nx ||
@@ -5377,8 +5527,9 @@ void write_csi(
       continue;
 
     /* Get mean observation index... */
-    obsmean[ix][iy][iz] += robs;
-    obscount[ix][iy][iz]++;
+    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    obsmean[idx] += robs[i];
+    obscount[idx]++;
   }
 
   /* Analyze model data... */
@@ -5399,7 +5550,8 @@ void write_csi(
       continue;
 
     /* Get total mass in grid cell... */
-    modmean[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    modmean[idx] += atm->q[ctl->qnt_m][ip];
   }
 
   /* Analyze all grid cells... */
@@ -5408,33 +5560,34 @@ void write_csi(
       for (iz = 0; iz < ctl->csi_nz; iz++) {
 
 	/* Calculate mean observation index... */
-	if (obscount[ix][iy][iz] > 0)
-	  obsmean[ix][iy][iz] /= obscount[ix][iy][iz];
+	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+	if (obscount[idx] > 0)
+	  obsmean[idx] /= obscount[idx];
 
 	/* Calculate column density... */
-	if (modmean[ix][iy][iz] > 0)
-	  modmean[ix][iy][iz] /= (1e6 * area[iy]);
+	if (modmean[idx] > 0)
+	  modmean[idx] /= (1e6 * area[iy]);
 
 	/* Calculate CSI... */
-	if (obscount[ix][iy][iz] > 0) {
+	if (obscount[idx] > 0) {
 	  ct++;
-	  if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
-	      modmean[ix][iy][iz] >= ctl->csi_modmin)
+	  if (obsmean[idx] >= ctl->csi_obsmin &&
+	      modmean[idx] >= ctl->csi_modmin)
 	    cx++;
-	  else if (obsmean[ix][iy][iz] >= ctl->csi_obsmin &&
-		   modmean[ix][iy][iz] < ctl->csi_modmin)
+	  else if (obsmean[idx] >= ctl->csi_obsmin &&
+		   modmean[idx] < ctl->csi_modmin)
 	    cy++;
-	  else if (obsmean[ix][iy][iz] < ctl->csi_obsmin &&
-		   modmean[ix][iy][iz] >= ctl->csi_modmin)
+	  else if (obsmean[idx] < ctl->csi_obsmin &&
+		   modmean[idx] >= ctl->csi_modmin)
 	    cz++;
 	}
 
 	/* Save data for other verification statistics... */
-	if (obscount[ix][iy][iz] > 0
-	    && (obsmean[ix][iy][iz] >= ctl->csi_obsmin
-		|| modmean[ix][iy][iz] >= ctl->csi_modmin)) {
-	  x[n] = modmean[ix][iy][iz];
-	  y[n] = obsmean[ix][iy][iz];
+	if (obscount[idx] > 0
+	    && (obsmean[idx] >= ctl->csi_obsmin
+		|| modmean[idx] >= ctl->csi_modmin)) {
+	  x[n] = modmean[idx];
+	  y[n] = obsmean[idx];
 	  if ((++n) > NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
@@ -5446,13 +5599,13 @@ void write_csi(
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
     static double work[2 * NCSI];
-    int nobs = cx + cy;
-    int nfor = cx + cz;
-    double bias = (nobs > 0) ? 100. * nfor / nobs : GSL_NAN;
-    double pod = (nobs > 0) ? (100. * cx) / nobs : GSL_NAN;
-    double far = (nfor > 0) ? (100. * cz) / nfor : GSL_NAN;
+    int n_obs = cx + cy;
+    int n_for = cx + cz;
+    double bias = (n_obs > 0) ? 100. * n_for / n_obs : GSL_NAN;
+    double pod = (n_obs > 0) ? (100. * cx) / n_obs : GSL_NAN;
+    double far = (n_for > 0) ? (100. * cz) / n_for : GSL_NAN;
     double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : GSL_NAN;
-    double cx_rd = (ct > 0) ? (1. * nobs * nfor) / ct : GSL_NAN;
+    double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : GSL_NAN;
     double ets = (cx + cy + cz - cx_rd > 0) ?
       (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : GSL_NAN;
     double rho_p =
@@ -5469,16 +5622,32 @@ void write_csi(
 
     /* Write... */
     fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %d\n",
-	    t, cx, cy, cz, nobs, nfor, bias, pod, far, csi, cx_rd, ets,
+	    t, cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets,
 	    rho_p, rho_s, mean, rmse, absdev, n);
 
     /* Set counters to zero... */
     n = ct = cx = cy = cz = 0;
   }
 
-  /* Close file... */
-  if (t == ctl->t_stop)
+  /* Free... */
+  free(modmean);
+  free(obsmean);
+  free(obscount);
+
+  /* Finalize... */
+  if (t == ctl->t_stop) {
+
+    /* Close output file... */
     fclose(out);
+
+    /* Free... */
+    free(area);
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
+  }
 }
 
 /*****************************************************************************/
@@ -5491,127 +5660,91 @@ void write_ens(
 
   static FILE *out;
 
-  static double dummy, ens, lat, lon, p[NENS], q[NQ][NENS], x[NENS][3], xm[3];
+  static double dummy, lat, lon, qm[NQ][NENS], qs[NQ][NENS], xm[NENS][3],
+    x[3], zm[NENS];
 
-  static int ip, iq;
-
-  static size_t i, n;
+  static int n[NENS];
 
   /* Set timer... */
   SELECT_TIMER("WRITE_ENS", "OUTPUT", NVTX_WRITE);
 
-  /* Init... */
-  if (t == ctl->t_start) {
-
-    /* Check quantities... */
-    if (ctl->qnt_ens < 0)
-      ERRMSG("Missing ensemble IDs!");
-
-    /* Create new file... */
-    LOG(1, "Write ensemble data: %s", filename);
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create file!");
-
-    /* Write header... */
-    fprintf(out,
-	    "# $1 = time [s]\n"
-	    "# $2 = altitude [km]\n"
-	    "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-    for (iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%d = %s (mean) [%s]\n", 5 + iq,
-	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-    for (iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%d = %s (sigma) [%s]\n", 5 + ctl->nq + iq,
-	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-    fprintf(out, "# $%d = number of members\n\n", 5 + 2 * ctl->nq);
-  }
+  /* Check quantities... */
+  if (ctl->qnt_ens < 0)
+    ERRMSG("Missing ensemble IDs!");
 
   /* Set time interval... */
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Init... */
-  ens = GSL_NAN;
-  n = 0;
+  for (int i = 0; i < NENS; i++) {
+    for (int iq = 0; iq < ctl->nq; iq++)
+      qm[iq][i] = qs[iq][i] = 0;
+    xm[i][0] = xm[i][1] = xm[i][2] = zm[i] = 0;
+    n[i] = 0;
+  }
 
   /* Loop over air parcels... */
-  for (ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
     if (atm->time[ip] < t0 || atm->time[ip] > t1)
       continue;
 
-    /* Check ensemble id... */
-    if (atm->q[ctl->qnt_ens][ip] != ens) {
+    /* Check ensemble ID... */
+    if (atm->q[ctl->qnt_ens][ip] < 0 || atm->q[ctl->qnt_ens][ip] >= NENS)
+      ERRMSG("Ensemble ID is out of range!");
 
-      /* Write results... */
-      if (n > 0) {
+    /* Get means... */
+    geo2cart(0, atm->lon[ip], atm->lat[ip], x);
+    for (int iq = 0; iq < ctl->nq; iq++) {
+      qm[iq][ctl->qnt_ens] += atm->q[iq][ip];
+      qs[iq][ctl->qnt_ens] += SQR(atm->q[iq][ip]);
+    }
+    xm[ctl->qnt_ens][0] += x[0];
+    xm[ctl->qnt_ens][1] += x[1];
+    xm[ctl->qnt_ens][2] += x[2];
+    zm[ctl->qnt_ens] += Z(atm->p[ip]);
+    n[ctl->qnt_ens]++;
+  }
 
-	/* Get mean position... */
-	xm[0] = xm[1] = xm[2] = 0;
-	for (i = 0; i < n; i++) {
-	  xm[0] += x[i][0] / (double) n;
-	  xm[1] += x[i][1] / (double) n;
-	  xm[2] += x[i][2] / (double) n;
-	}
-	cart2geo(xm, &dummy, &lon, &lat);
-	fprintf(out, "%.2f %g %g %g", t, Z(gsl_stats_mean(p, 1, n)), lon,
-		lat);
+  /* Create file... */
+  LOG(1, "Write ensemble data: %s", filename);
+  if (!(out = fopen(filename, "w")))
+    ERRMSG("Cannot create file!");
 
-	/* Get quantity statistics... */
-	for (iq = 0; iq < ctl->nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl->qnt_format[iq], gsl_stats_mean(q[iq], 1, n));
-	}
-	for (iq = 0; iq < ctl->nq; iq++) {
-	  fprintf(out, " ");
-	  fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
-	}
-	fprintf(out, " %zu\n", n);
+  /* Write header... */
+  fprintf(out,
+	  "# $1 = time [s]\n"
+	  "# $2 = altitude [km]\n"
+	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    fprintf(out, "# $%d = %s (mean) [%s]\n", 5 + iq,
+	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    fprintf(out, "# $%d = %s (sigma) [%s]\n", 5 + ctl->nq + iq,
+	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+  fprintf(out, "# $%d = number of members\n\n", 5 + 2 * ctl->nq);
+
+  /* Write data... */
+  for (int i = 0; i < NENS; i++)
+    if (n[i] > 0) {
+      cart2geo(xm[i], &dummy, &lon, &lat);
+      fprintf(out, "%.2f %g %g %g", t, zm[i] / n[i], lon, lat);
+      for (int iq = 0; iq < ctl->nq; iq++) {
+	fprintf(out, " ");
+	fprintf(out, ctl->qnt_format[iq], qm[iq][i] / n[i]);
       }
-
-      /* Init new ensemble... */
-      ens = atm->q[ctl->qnt_ens][ip];
-      n = 0;
+      for (int iq = 0; iq < ctl->nq; iq++) {
+	fprintf(out, " ");
+	double var = qs[iq][i] / n[i] - SQR(qm[iq][i] / n[i]);
+	fprintf(out, ctl->qnt_format[iq], (var > 0 ? sqrt(var) : 0));
+      }
+      fprintf(out, " %d\n", n[i]);
     }
-
-    /* Save data... */
-    p[n] = atm->p[ip];
-    geo2cart(0, atm->lon[ip], atm->lat[ip], x[n]);
-    for (iq = 0; iq < ctl->nq; iq++)
-      q[iq][n] = atm->q[iq][ip];
-    if ((++n) >= NENS)
-      ERRMSG("Too many data points!");
-  }
-
-  /* Write results... */
-  if (n > 0) {
-
-    /* Get mean position... */
-    xm[0] = xm[1] = xm[2] = 0;
-    for (i = 0; i < n; i++) {
-      xm[0] += x[i][0] / (double) n;
-      xm[1] += x[i][1] / (double) n;
-      xm[2] += x[i][2] / (double) n;
-    }
-    cart2geo(xm, &dummy, &lon, &lat);
-    fprintf(out, "%.2f %g %g %g", t, Z(gsl_stats_mean(p, 1, n)), lon, lat);
-
-    /* Get quantity statistics... */
-    for (iq = 0; iq < ctl->nq; iq++) {
-      fprintf(out, " ");
-      fprintf(out, ctl->qnt_format[iq], gsl_stats_mean(q[iq], 1, n));
-    }
-    for (iq = 0; iq < ctl->nq; iq++) {
-      fprintf(out, " ");
-      fprintf(out, ctl->qnt_format[iq], gsl_stats_sd(q[iq], 1, n));
-    }
-    fprintf(out, " %zu\n", n);
-  }
 
   /* Close file... */
-  if (t == ctl->t_stop)
-    fclose(out);
+  fclose(out);
 }
 
 /*****************************************************************************/
@@ -5704,7 +5837,8 @@ void write_grid(
   /* Average data... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-      int idx = ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip]);
+      int idx =
+	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
       np[idx]++;
       if (ctl->qnt_m >= 0)
 	mass[idx] += atm->q[ctl->qnt_m][ip];
@@ -5721,17 +5855,20 @@ void write_grid(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass
-	  * mass[ARRAY_3D_GRID(ixs[ip], iys[ip], izs[ip])]
+	  *
+	  mass[ARRAY_3D
+	       (ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz)]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
 
   /* Calculate column density and vmr... */
+#pragma omp parallel for default(shared)
   for (int ix = 0; ix < ctl->grid_nx; ix++)
     for (int iy = 0; iy < ctl->grid_ny; iy++)
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
 
 	/* Get grid index... */
-	int idx = ARRAY_3D_GRID(ix, iy, iz);
+	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 
 	/* Calculate column density... */
 	cd[idx] = GSL_NAN;
@@ -5765,7 +5902,7 @@ void write_grid(
 
   /* Write ASCII data... */
   if (ctl->grid_type == 0)
-    write_grid_asc(filename, ctl, cd, mass, vmr_expl, vmr_impl,
+    write_grid_asc(filename, ctl, cd, vmr_expl, vmr_impl,
 		   t, z, lon, lat, area, dz, np);
 
   /* Write netCDF data... */
@@ -5799,7 +5936,6 @@ void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *mass,
   double *vmr_expl,
   double *vmr_impl,
   double t,
@@ -5867,8 +6003,8 @@ void write_grid_asc(
       if (iy > 0 && ctl->grid_nz > 1 && !ctl->grid_sparse)
 	fprintf(out, "\n");
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
-	int idx = ARRAY_3D_GRID(ix, iy, iz);
-	if (!ctl->grid_sparse || mass[idx] > 0 || vmr_expl[idx] > 0)
+	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
+	if (!ctl->grid_sparse || vmr_expl[idx] > 0 || vmr_impl[idx] > 0)
 	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n",
 		  t, z[iz], lon[ix], lat[iy], area[iy], dz,
 		  np[idx], cd[idx], vmr_impl[idx], vmr_expl[idx]);
@@ -6071,7 +6207,7 @@ void write_met_bin_2d(
   /* Copy data... */
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      help[ARRAY_2D_MET(ix, iy)] = var[ix][iy];
+      help[ARRAY_2D(ix, iy, met->ny)] = var[ix][iy];
 
   /* Write uncompressed data... */
   LOG(2, "Write 2-D variable: %s (uncompressed)", varname);
@@ -6105,7 +6241,7 @@ void write_met_bin_3d(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	help[ARRAY_3D_MET(ix, iy, ip)] = var[ix][iy][ip];
+	help[ARRAY_3D(ix, iy, met->ny, ip, met->np)] = var[ix][iy][ip];
 
   /* Write uncompressed data... */
   if (ctl->met_type == 1) {
@@ -6154,15 +6290,12 @@ void write_prof(
   atm_t * atm,
   double t) {
 
-  static FILE *in, *out;
+  static FILE *out;
 
-  static char line[LEN];
+  static double *mass, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
+    dz, dlon, dlat, *lon, *lat, *z, *press, temp, vmr, h2o, o3;
 
-  static double mass[GX][GY][GZ], obsmean[GX][GY], rt, rt_old, rz, rlon, rlat,
-    robs, area[GY], dz, dlon, dlat, lon[GX], lat[GY], z[GZ], press[GZ],
-    temp, vmr, h2o, o3;
-
-  static int obscount[GX][GY], ip, ix, iy, iz, okay;
+  static int nobs, *obscount, ip, okay;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_PROF", "OUTPUT", NVTX_WRITE);
@@ -6174,21 +6307,34 @@ void write_prof(
     if (ctl->qnt_m < 0)
       ERRMSG("Need quantity mass!");
 
-    /* Check dimensions... */
-    if (ctl->prof_nx > GX || ctl->prof_ny > GY || ctl->prof_nz > GZ)
-      ERRMSG("Grid dimensions too large!");
-
     /* Check molar mass... */
     if (ctl->molmass <= 0)
       ERRMSG("Specify molar mass!");
 
-    /* Open observation data file... */
-    LOG(1, "Read profile observation data: %s", ctl->prof_obsfile);
-    if (!(in = fopen(ctl->prof_obsfile, "r")))
-      ERRMSG("Cannot open file!");
+    /* Allocate... */
+    ALLOC(lon, double,
+	  ctl->prof_nx);
+    ALLOC(lat, double,
+	  ctl->prof_ny);
+    ALLOC(area, double,
+	  ctl->prof_ny);
+    ALLOC(z, double,
+	  ctl->prof_nz);
+    ALLOC(press, double,
+	  ctl->prof_nz);
+    ALLOC(rt, double,
+	  NOBS);
+    ALLOC(rz, double,
+	  NOBS);
+    ALLOC(rlon, double,
+	  NOBS);
+    ALLOC(rlat, double,
+	  NOBS);
+    ALLOC(robs, double,
+	  NOBS);
 
-    /* Initialize time for file input... */
-    rt_old = -1e99;
+    /* Read observation data... */
+    read_obs(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -6215,15 +6361,15 @@ void write_prof(
     dlat = (ctl->prof_lat1 - ctl->prof_lat0) / ctl->prof_ny;
 
     /* Set vertical coordinates... */
-    for (iz = 0; iz < ctl->prof_nz; iz++) {
+    for (int iz = 0; iz < ctl->prof_nz; iz++) {
       z[iz] = ctl->prof_z0 + dz * (iz + 0.5);
       press[iz] = P(z[iz]);
     }
 
     /* Set horizontal coordinates... */
-    for (ix = 0; ix < ctl->prof_nx; ix++)
+    for (int ix = 0; ix < ctl->prof_nx; ix++)
       lon[ix] = ctl->prof_lon0 + dlon * (ix + 0.5);
-    for (iy = 0; iy < ctl->prof_ny; iy++) {
+    for (int iy = 0; iy < ctl->prof_ny; iy++) {
       lat[iy] = ctl->prof_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
 	* cos(lat[iy] * M_PI / 180.);
@@ -6234,50 +6380,39 @@ void write_prof(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Initialize... */
-#pragma omp parallel for default(shared) private(ix,iy,iz) collapse(2)
-  for (ix = 0; ix < ctl->prof_nx; ix++)
-    for (iy = 0; iy < ctl->prof_ny; iy++) {
-      obsmean[ix][iy] = 0;
-      obscount[ix][iy] = 0;
-      for (iz = 0; iz < ctl->prof_nz; iz++)
-	mass[ix][iy][iz] = 0;
-    }
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->prof_nx * ctl->prof_ny * ctl->prof_nz);
+  ALLOC(obsmean, double,
+	ctl->prof_nx * ctl->prof_ny);
+  ALLOC(obscount, int,
+	ctl->prof_nx * ctl->prof_ny);
 
-  /* Read observation data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
-      continue;
+  /* Loop over observations... */
+  for (int i = 0; i < nobs; i++) {
 
     /* Check time... */
-    if (rt < t0)
+    if (rt[i] < t0)
       continue;
-    if (rt > t1)
+    else if (rt[i] >= t1)
       break;
-    if (rt < rt_old)
-      ERRMSG("Time must be ascending!");
-    rt_old = rt;
 
     /* Check observation data... */
-    if (!isfinite(robs))
+    if (!isfinite(robs[i]))
       continue;
 
     /* Calculate indices... */
-    ix = (int) ((rlon - ctl->prof_lon0) / dlon);
-    iy = (int) ((rlat - ctl->prof_lat0) / dlat);
+    int ix = (int) ((rlon[i] - ctl->prof_lon0) / dlon);
+    int iy = (int) ((rlat[i] - ctl->prof_lat0) / dlat);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->prof_nx || iy < 0 || iy >= ctl->prof_ny)
       continue;
 
     /* Get mean observation index... */
-    obsmean[ix][iy] += robs;
-
-    /* Count observations... */
-    obscount[ix][iy]++;
+    int idx = ARRAY_2D(ix, iy, ctl->prof_ny);
+    obsmean[idx] += robs[i];
+    obscount[idx]++;
   }
 
   /* Analyze model data... */
@@ -6288,9 +6423,9 @@ void write_prof(
       continue;
 
     /* Get indices... */
-    ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
-    iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
-    iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
+    int ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
+    int iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
+    int iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->prof_nx ||
@@ -6298,21 +6433,25 @@ void write_prof(
       continue;
 
     /* Get total mass in grid cell... */
-    mass[ix][iy][iz] += atm->q[ctl->qnt_m][ip];
+    int idx = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+    mass[idx] += atm->q[ctl->qnt_m][ip];
   }
 
   /* Extract profiles... */
-  for (ix = 0; ix < ctl->prof_nx; ix++)
-    for (iy = 0; iy < ctl->prof_ny; iy++)
-      if (obscount[ix][iy] >= 1) {
+  for (int ix = 0; ix < ctl->prof_nx; ix++)
+    for (int iy = 0; iy < ctl->prof_ny; iy++) {
+      int idx2 = ARRAY_2D(ix, iy, ctl->prof_ny);
+      if (obscount[idx2] > 0) {
 
 	/* Check profile... */
 	okay = 0;
-	for (iz = 0; iz < ctl->prof_nz; iz++)
-	  if (mass[ix][iy][iz] > 0) {
+	for (int iz = 0; iz < ctl->prof_nz; iz++) {
+	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+	  if (mass[idx3] > 0) {
 	    okay = 1;
 	    break;
 	  }
+	}
 	if (!okay)
 	  continue;
 
@@ -6320,7 +6459,7 @@ void write_prof(
 	fprintf(out, "\n");
 
 	/* Loop over altitudes... */
-	for (iz = 0; iz < ctl->prof_nz; iz++) {
+	for (int iz = 0; iz < ctl->prof_nz; iz++) {
 
 	  /* Get temperature, water vapor, and ozone... */
 	  INTPOL_INIT;
@@ -6332,20 +6471,40 @@ void write_prof(
 			     lon[ix], lat[iy], &o3, ci, cw, 0);
 
 	  /* Calculate volume mixing ratio... */
-	  vmr = MA / ctl->molmass * mass[ix][iy][iz]
+	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+	  vmr = MA / ctl->molmass * mass[idx3]
 	    / (RHO(press[iz], temp) * area[iy] * dz * 1e9);
 
 	  /* Write output... */
 	  fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d\n",
 		  t, z[iz], lon[ix], lat[iy], press[iz], temp, vmr, h2o, o3,
-		  obsmean[ix][iy] / obscount[ix][iy], obscount[ix][iy]);
+		  obsmean[idx2] / obscount[idx2], obscount[idx2]);
 	}
       }
+    }
 
-  /* Close files... */
+  /* Free... */
+  free(mass);
+  free(obsmean);
+  free(obscount);
+
+  /* Finalize... */
   if (t == ctl->t_stop) {
-    fclose(in);
+
+    /* Close output file... */
     fclose(out);
+
+    /* Free... */
+    free(lon);
+    free(lat);
+    free(area);
+    free(z);
+    free(press);
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
   }
 }
 
@@ -6359,11 +6518,11 @@ void write_sample(
   atm_t * atm,
   double t) {
 
-  static FILE *in, *out;
+  static FILE *out;
 
-  static char line[LEN];
+  static double area, dlat, rmax2, *rt, *rz, *rlon, *rlat, *robs;
 
-  static double area, dlat, rmax2, rt, rt_old, rz, rlon, rlat, robs;
+  static int nobs;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_SAMPLE", "OUTPUT", NVTX_WRITE);
@@ -6371,15 +6530,22 @@ void write_sample(
   /* Init... */
   if (t == ctl->t_start) {
 
-    /* Open observation data file... */
-    LOG(1, "Read sample observation data: %s", ctl->sample_obsfile);
-    if (!(in = fopen(ctl->sample_obsfile, "r")))
-      ERRMSG("Cannot open file!");
+    /* Allocate... */
+    ALLOC(rt, double,
+	  NOBS);
+    ALLOC(rz, double,
+	  NOBS);
+    ALLOC(rlon, double,
+	  NOBS);
+    ALLOC(rlat, double,
+	  NOBS);
+    ALLOC(robs, double,
+	  NOBS);
 
-    /* Initialize time for file input... */
-    rt_old = -1e99;
+    /* Read observation data... */
+    read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
-    /* Create new file... */
+    /* Create output file... */
     LOG(1, "Write sample data: %s", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
@@ -6407,29 +6573,23 @@ void write_sample(
   double t0 = t - 0.5 * ctl->dt_mod;
   double t1 = t + 0.5 * ctl->dt_mod;
 
-  /* Read observation data... */
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt, &rz, &rlon, &rlat, &robs) !=
-	5)
-      continue;
+  /* Loop over observations... */
+  for (int i = 0; i < nobs; i++) {
 
     /* Check time... */
-    if (rt < t0)
+    if (rt[i] < t0)
       continue;
-    if (rt < rt_old)
-      ERRMSG("Time must be ascending!");
-    rt_old = rt;
+    else if (rt[i] >= t1)
+      break;
 
     /* Calculate Cartesian coordinates... */
     double x0[3];
-    geo2cart(0, rlon, rlat, x0);
+    geo2cart(0, rlon[i], rlat[i], x0);
 
     /* Set pressure range... */
-    double rp = P(rz);
-    double ptop = P(rz + ctl->sample_dz);
-    double pbot = P(rz - ctl->sample_dz);
+    double rp = P(rz[i]);
+    double ptop = P(rz[i] + ctl->sample_dz);
+    double pbot = P(rz[i] - ctl->sample_dz);
 
     /* Init... */
     double mass = 0;
@@ -6444,7 +6604,7 @@ void write_sample(
 	continue;
 
       /* Check latitude... */
-      if (fabs(rlat - atm->lat[ip]) > dlat)
+      if (fabs(rlat[i] - atm->lat[ip]) > dlat)
 	continue;
 
       /* Check horizontal distance... */
@@ -6475,8 +6635,8 @@ void write_sample(
 	/* Get temperature... */
 	double temp;
 	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt, rp,
-			   rlon, rlat, &temp, ci, cw, 1);
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, rt[i], rp,
+			   rlon[i], rlat[i], &temp, ci, cw, 1);
 
 	/* Calculate volume mixing ratio... */
 	vmr = MA / ctl->molmass * mass
@@ -6486,18 +6646,22 @@ void write_sample(
       vmr = GSL_NAN;
 
     /* Write output... */
-    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", rt, rz, rlon, rlat,
-	    area, ctl->sample_dz, np, cd, vmr, robs);
-
-    /* Check time... */
-    if (rt >= t1)
-      break;
+    fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", rt[i], rz[i],
+	    rlon[i], rlat[i], area, ctl->sample_dz, np, cd, vmr, robs[i]);
   }
 
-  /* Close files... */
+  /* Finalize...... */
   if (t == ctl->t_stop) {
-    fclose(in);
+
+    /* Close output file... */
     fclose(out);
+
+    /* Free... */
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
   }
 }
 

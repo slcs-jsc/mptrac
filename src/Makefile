@@ -178,7 +178,7 @@ $(EXC): %: %.c libtrac.o
 
 check: $(TESTS)
 
-$(TESTS): all
+$(TESTS) gpu_test: all
 	cd ../tests/$@ ; ./run.sh \
 	  && (echo "\nTest \"$@\" passed!") \
 	  || (echo "\nTest \"$@\" failed!" ; exit 1)

@@ -187,24 +187,14 @@
 #define EY 601
 #endif
 
-/*! Maximum number of longitudes for gridded data. */
-#ifndef GX
-#define GX 720
-#endif
-
-/*! Maximum number of latitudes for gridded data. */
-#ifndef GY
-#define GY 360
-#endif
-
-/*! Maximum number of altitudes for gridded data. */
-#ifndef GZ
-#define GZ 100
-#endif
-
 /*! Maximum number of data points for ensemble analysis. */
 #ifndef NENS
 #define NENS 2000
+#endif
+
+/*! Maximum number of observation data points. */
+#ifndef NOBS
+#define NOBS 10000000
 #endif
 
 /*! Maximum number of OpenMP threads. */
@@ -251,22 +241,6 @@
 /*! Get 3-D array index. */
 #define ARRAY_3D(ix, iy, ny, iz, nz)		\
   (((ix)*(ny) + (iy)) * (nz) + (iz))
-
-/*! Get 2-D array index for grid data. */
-#define ARRAY_2D_GRID(ix, iy)			\
-  ARRAY_2D(ix, iy, ctl->grid_ny)
-
-/*! Get 3-D array index for grid data. */
-#define ARRAY_3D_GRID(ix, iy, iz)			\
-  ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)
-
-/*! Get 2-D array index for meteo data. */
-#define ARRAY_2D_MET(ix, iy)			\
-  ARRAY_2D(ix, iy, met->ny)
-
-/*! Get 3-D array index for meteo data. */
-#define ARRAY_3D_MET(ix, iy, ip)		\
-  ARRAY_3D(ix, iy, met->ny, ip, met->np)
 
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
@@ -1139,6 +1113,9 @@ typedef struct {
 
   /*! Cloud cover parameter for H2O2 chemistry. */
   double h2o2_chem_cc;
+  
+  /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
+  int h2o2_chem_reaction;
 
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];
@@ -1236,6 +1213,12 @@ typedef struct {
   /*! Upper latitude of gridded CSI data [deg]. */
   double csi_lat1;
 
+  /*! Basename of ensemble data file. */
+  char ens_basename[LEN];
+
+  /*! Time step for ensemble output [s]. */
+  double ens_dt_out;
+
   /*! Basename of grid data files. */
   char grid_basename[LEN];
 
@@ -1310,9 +1293,6 @@ typedef struct {
 
   /*! Upper latitude of gridded profile data [deg]. */
   double prof_lat1;
-
-  /*! Basename of ensemble data file. */
-  char ens_basename[LEN];
 
   /*! Basename of sample data file. */
   char sample_basename[LEN];
@@ -1672,10 +1652,10 @@ double clim_oh_init_help(
 #pragma acc routine (clim_h2o2)
 #endif
 double clim_h2o2(
+  clim_t * clim,
   double t,
   double lat,
-  double p,
-  clim_t * clim);
+  double p);
 
 /*! Initialization function for H2O2 climatology. */
 void clim_h2o2_init(
@@ -2091,6 +2071,16 @@ void read_met_tropo(
   clim_t * clim,
   met_t * met);
 
+/*! Read observation data. */
+void read_obs(
+  char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs);
+
 /*! Read a control parameter from file or command line. */
 double scan_ctl(
   const char *filename,
@@ -2225,7 +2215,6 @@ void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *mass,
   double *vmr_expl,
   double *vmr_impl,
   double t,

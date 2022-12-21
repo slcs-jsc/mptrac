@@ -46,6 +46,7 @@ cd $target/src/$dir \
     && make -j$threads && make check \
     && cp -a lib/libzstd* $target/lib/ \
     && cp -a lib/*.h $target/include/ \
+    && ln -sf $target/lib/libzstd.so.1.5.2 $target/lib/libzstd.so \
     && make clean \
 	|| exit
 

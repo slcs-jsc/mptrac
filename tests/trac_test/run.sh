@@ -16,7 +16,7 @@ t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
-NQ = 9
+NQ = 11
 QNT_NAME[0] = t
 QNT_NAME[1] = u
 QNT_NAME[2] = v
@@ -26,6 +26,8 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
+QNT_NAME[9] = stat
+QNT_NAME[10] = ens
 METBASE = ../data/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
@@ -36,13 +38,30 @@ TDEC_TROP = 259200.0
 TDEC_STRAT = 259200.0
 DT_MET = 86400.0
 T_STOP = $t1
+CSI_OBSMIN = 1e-5
+CSI_MODMIN = 1e-5
 GRID_LON0 = -90
 GRID_LON1 = 60
 GRID_LAT0 = -60
 GRID_LAT1 = -15
 GRID_NX = 300
 GRID_NY = 90
+SAMPLE_DZ = 100
+STAT_LON = -22
+STAT_LAT = -40
 EOF
+
+# Create observation file...
+echo | awk -v tobs=$($trac/time2jsec 2011 6 7 0 0 0 0) '{
+  for(lon=-25; lon<=-15; lon+=0.5)
+    for(lat=-50; lat<=-25; lat+=1) {
+      if(lon>=-24 && lon<=-21 && lat>=-36 && lat<=-28)
+        obs=0.005
+      else
+        obs=0
+      printf("%.2f %g %g %g %g\n", tobs, 0, lon, lat, obs)
+    }
+}' > data/obs.tab
 
 # Set initial air parcel positions...
 $trac/atm_init data/trac.ctl data/atm_init.tab \
@@ -58,7 +77,11 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 # Calculate trajectories...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm GRID_BASENAME grid
+	   ATM_BASENAME atm GRID_BASENAME grid \
+	   ENS_BASENAME ens STAT_BASENAME station \
+	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
+           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
 
 # Compare files...
 echo -e "\nCompare results..."

@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -54,10 +54,10 @@ int main(
     zsm[NX][NY], us, usm[NX][NY], vs, vsm[NX][NY], pbl, pblm[NX][NY], pt,
     ptm[NX][NY], t, pm[NX][NY], tm[NX][NY], u, um[NX][NY], v, vm[NX][NY],
     w, wm[NX][NY], h2o, h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
-    hno3m[NX][NY], ohm[NX][NY], tdewm[NX][NY], ticem[NX][NY], tnatm[NX][NY],
-    lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY],
-    zt, ztm[NX][NY], tt, ttm[NX][NY], pct, pctm[NX][NY], pcb, pcbm[NX][NY],
-    cl, clm[NX][NY], plcl, plclm[NX][NY], plfc, plfcm[NX][NY],
+    hno3m[NX][NY], ohm[NX][NY], h2o2m[NX][NY], tdewm[NX][NY], ticem[NX][NY],
+    tnatm[NX][NY], lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], z, zm[NX][NY], pv,
+    pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY], pct, pctm[NX][NY], pcb,
+    pcbm[NX][NY], cl, clm[NX][NY], plcl, plclm[NX][NY], plfc, plfcm[NX][NY],
     pel, pelm[NX][NY], cape, capem[NX][NY], cin, cinm[NX][NY],
     rhm[NX][NY], rhicem[NX][NY], theta, ptop, pbot, t0,
     lon, lon0, lon1, lons[NX], dlon, lat, lat0, lat1, lats[NY], dlat, cw[3];
@@ -183,6 +183,7 @@ int main(
 	  nat_temperature(p0, h2o, clim_hno3(clim, met->time, lats[iy], p0));
 	ohm[ix][iy] +=
 	  clim_oh_diurnal(&ctl, clim, met->time, p0, lons[ix], lats[iy]);
+	h2o2m[ix][iy] += clim_h2o2(clim, met->time, lats[iy], p0);
 	rhm[ix][iy] += RH(p0, t, h2o);
 	rhicem[ix][iy] += RHICE(p0, t, h2o);
 	tdewm[ix][iy] += TDEW(p0, h2o);
@@ -240,11 +241,12 @@ int main(
 	  "# $37 = NAT temperature [K]\n"
 	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
 	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = boundary layer pressure [hPa]\n");
+	  "# $40 = H2O2 concentration [molec/cm^3]\n");
   fprintf(out,
-	  "# $41 = number of data points\n"
-	  "# $42 = number of tropopause data points\n"
-	  "# $43 = number of CAPE data points\n");
+	  "# $41 = boundary layer pressure [hPa]\n"
+	  "# $42 = number of data points\n"
+	  "# $43 = number of tropopause data points\n"
+	  "# $44 = number of CAPE data points\n");
 
   /* Write data... */
   for (iy = 0; iy < ny; iy++) {
@@ -253,7 +255,7 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
 	      lons[ix], lats[iy], pm[ix][iy] / np[ix][iy],
 	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
@@ -273,8 +275,8 @@ int main(
 	      rhicem[ix][iy] / np[ix][iy], tdewm[ix][iy] / np[ix][iy],
 	      ticem[ix][iy] / np[ix][iy], tnatm[ix][iy] / np[ix][iy],
 	      hno3m[ix][iy] / np[ix][iy], ohm[ix][iy] / np[ix][iy],
-	      pblm[ix][iy] / np[ix][iy], np[ix][iy],
-	      npt[ix][iy], npc[ix][iy]);
+	      h2o2m[ix][iy] / np[ix][iy], pblm[ix][iy] / np[ix][iy],
+	      np[ix][iy], npt[ix][iy], npc[ix][iy]);
   }
 
   /* Close file... */

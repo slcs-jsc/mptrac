@@ -12,7 +12,22 @@ authors:
     family-names: Hoffmann
     email: l.hoffmann@fz-juelich.de
     affiliation: Forschungszentrum Jülich
-    orcid: 'https://orcid.org/0000-0003-3773-4377'
+    orcid: 'https://orcid.org/0000-0003-3773-4377' 
+  - given-names: Jan
+    family-names: Clemens
+    email: j.clemens@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
+    orcid: 'https://orcid.org/0000-0002-2422-9454'
+  - given-names: Mingzhao
+    family-names: Liu
+    email: mi.liu@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
+    orcid: 'https://orcid.org/0000-0001-7314-9568'
+  - given-names: Kaveh
+    family-names: Haghighi Mood
+    email: k.haghighi.mood@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
+    orcid: 'https://orcid.org/0000-0002-8578-4961'
 identifiers:
   - type: doi
     value: 10.5194/gmd-2021-382

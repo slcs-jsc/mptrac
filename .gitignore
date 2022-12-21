@@ -41,6 +41,7 @@ src/*.gcov
 src/coverage*
 tests/atm_test/data/
 tests/compress_test/data/
+tests/gpu_test/data/
 tests/met_test/data/
 tests/tools_test/data/
 tests/trac_test/data/
