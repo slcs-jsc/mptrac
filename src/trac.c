@@ -1393,10 +1393,11 @@ void module_h2o2_chem(
       /* Concentration of H2O2 (Barth et al., 1989)... */
       double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
       double h2o2 = H_h2o2
-        * clim_h2o2(atm->time[ip], atm->lat[ip], atm->p[ip],
-              clim) * 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23; //unit:M
-      double rho_air = 100 * atm->p[ip] / (RA * t);
+        * clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip])
+        * 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23; //unit:M
+
       /* Volume water content in cloud [m^3 m^(-3)]... */
+      double rho_air = 100 * atm->p[ip] / (RA * t);
       double CWC = lwc*rho_air/1000 + iwc * rho_air/920;
 
       /* Calculate exponential decay (Rolph et al., 1992)... */
@@ -1407,10 +1408,9 @@ void module_h2o2_chem(
           atm->q[ctl->qnt_mloss_h2o2][ip] +=
             atm->q[ctl->qnt_m][ip] * (1 - aux);
         atm->q[ctl->qnt_m][ip] *= aux;
-      }
+        }
       if (ctl->qnt_vmr >= 0)
-        atm->q[ctl->qnt_vmr][ip] *= aux;
-      
+        atm->q[ctl->qnt_vmr][ip] *= aux;    
     }
 }
 
