@@ -895,10 +895,10 @@ void compress_pack(
 
   double min[EP], max[EP], off[EP], scl[EP];
 
-  short *sarray;
+  unsigned short *sarray;
 
   /* Allocate... */
-  ALLOC(sarray, short,
+  ALLOC(sarray, unsigned short,
 	nxy * nz);
 
   /* Read compressed stream and decompress array... */
@@ -906,7 +906,7 @@ void compress_pack(
 
     /* Write info... */
     LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(short) / sizeof(float));
+	varname, 100. * sizeof(unsigned short) / sizeof(float));
 
     /* Read data... */
     FREAD(&scl, double,
@@ -915,7 +915,7 @@ void compress_pack(
     FREAD(&off, double,
 	  nz,
 	  inout);
-    FREAD(sarray, short,
+    FREAD(sarray, unsigned short,
 	  nxy * nz,
 	  inout);
 
@@ -932,7 +932,7 @@ void compress_pack(
 
     /* Write info... */
     LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(short) / sizeof(float));
+	varname, 100. * sizeof(unsigned short) / sizeof(float));
 
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
@@ -950,15 +950,18 @@ void compress_pack(
     /* Get offset and scaling factor... */
     for (size_t iz = 0; iz < nz; iz++) {
       scl[iz] = (max[iz] - min[iz]) / 65533.;
-      off[iz] = min[iz] - scl[iz];
+      off[iz] = min[iz];
     }
 
     /* Convert to short... */
 #pragma omp parallel for default(shared)
-    for (size_t ixy = 1; ixy < nxy; ixy++)
+    for (size_t ixy = 0; ixy < nxy; ixy++)
       for (size_t iz = 0; iz < nz; iz++)
-	sarray[ixy * nz + iz]
-	  = (short) ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
+	if (scl[iz] != 0)
+	  sarray[ixy * nz + iz] = (unsigned short)
+	    ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
+	else
+	  sarray[ixy * nz + iz] = 0;
 
     /* Write data... */
     FWRITE(&scl, double,
@@ -967,7 +970,7 @@ void compress_pack(
     FWRITE(&off, double,
 	   nz,
 	   inout);
-    FWRITE(sarray, short,
+    FWRITE(sarray, unsigned short,
 	   nxy * nz,
 	   inout);
   }
