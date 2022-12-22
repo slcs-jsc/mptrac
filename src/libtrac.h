@@ -1113,7 +1113,7 @@ typedef struct {
 
   /*! Cloud cover parameter for H2O2 chemistry. */
   double h2o2_chem_cc;
-  
+
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
 

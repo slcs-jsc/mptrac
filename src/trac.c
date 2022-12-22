@@ -136,7 +136,8 @@ void module_h2o2_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  double *dt,
+  double *rs);
 
 /*! Check position of air parcels. */
 void module_position(
@@ -329,15 +330,12 @@ int main(
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-
 #ifdef ASYNCIO
     ctlTMP = ctl;
 #endif
-
     get_met(&ctl, clim, ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
-
 #ifdef ASYNCIO
     get_met(&ctlTMP, clim, ctlTMP.t_start, &met0TMP, &met1TMP);
 #endif
@@ -345,7 +343,6 @@ int main(
     /* Initialize isosurface... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
-
 
     /* Update GPU... */
 #ifdef _OPENACC
@@ -378,18 +375,17 @@ int main(
 	module_timesteps(&ctl, atm, dt, t);
 
 	/* Get meteo data... */
-
 #ifdef ASYNCIO
 #pragma acc wait(5)
 #pragma omp barrier
 	if (omp_get_thread_num() == 0) {
 
+	  /* Pointer swap... */
 	  if (t != ctl.t_start) {
-	    // Pointer swap
 	    mets = met0;
 	    met0 = met0TMP;
 	    met0TMP = mets;
-
+	    
 	    mets = met1;
 	    met1 = met1TMP;
 	    met1TMP = mets;
@@ -399,11 +395,11 @@ int main(
 	  if (t != ctl.t_start)
 	    get_met(&ctl, clim, t, &met0, &met1);
 #endif
-
+	  
 	  /* Sort particles... */
 	  if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	    module_sort(&ctl, met0, atm);
-
+	  
 	  /* Check initial positions... */
 	  module_position(&ctl, met0, met1, atm, dt);
 
@@ -451,7 +447,7 @@ int main(
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0)
-	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
+	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt, rs);
 
 	  /* Dry deposition... */
 	  if (ctl.dry_depo[0] > 0)
@@ -475,25 +471,24 @@ int main(
 	    get_met(&ctl, clim, t + (ctl.direction * ctl.dt_mod), &met0TMP,
 		    &met1TMP);
 	}
-
       }
 #endif
     }
-
+    
 #ifdef ASYNCIO
     omp_set_num_threads(ompTrdnum);
 #endif
-
+    
     /* ------------------------------------------------------------
        Finalize model run...
        ------------------------------------------------------------ */
-
+    
     /* Report problem size... */
     LOG(1, "SIZE_NP = %d", atm->np);
     LOG(1, "SIZE_MPI_TASKS = %d", size);
     LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
     LOG(1, "SIZE_ACC_DEVICES = %d", num_devices);
-
+    
     /* Report memory usage... */
     LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
@@ -1338,7 +1333,8 @@ void module_h2o2_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  double *dt,
+  double *rs) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
@@ -1348,14 +1344,13 @@ void module_h2o2_chem(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
   if (ctl->qnt_vmrimpl < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
-
-  /* Initialize random number generator... */
-  gsl_rng_env_setup();
-  gsl_rng *r = gsl_rng_alloc(gsl_rng_default);
-
+  
+  /* Create random numbers... */
+  module_rng(rs, (size_t) atm->np, 0);
+  
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(clim,ctl,met0,met1,atm,dt)
+#pragma acc data present(clim,ctl,met0,met1,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1369,48 +1364,51 @@ void module_h2o2_chem(
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
       if (!(lwc > 0 || iwc > 0))
-        continue;
-      double random = gsl_rng_uniform(r);
-      if (random > ctl->h2o2_chem_cc)
-        continue; 
-      if (atm->q[ctl->qnt_vmrimpl][ip]==0)
-        continue;
+	continue;
+
+      /* Check cloud cover... */
+      if (rs[ip] > ctl->h2o2_chem_cc)
+	continue;
+
+      /* Check implicit volume mixing ratio... */
+      if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
+	continue;
 
       /* Get temperature... */
       double t;
       INTPOL_3D(t, 0);
 
       /* Reaction rate (Berglen et al., 2004)... */
-      double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit:M^(-2)
+      double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));  // Maass  1999 unit: M^(-2)
 
       /* Henry constant of SO2... */
       double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
+      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));  // unit: M
 
       /* Henry constant of H2O2... */
       double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
       /* Concentration of H2O2 (Barth et al., 1989)... */
-      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
+      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;  // vmr unit: ppbv
       double h2o2 = H_h2o2
-        * clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip])
-        * 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23; //unit:M
+	* clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip])
+	* 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23; // unit: M
 
       /* Volume water content in cloud [m^3 m^(-3)]... */
       double rho_air = 100 * atm->p[ip] / (RA * t);
-      double CWC = lwc*rho_air/1000 + iwc * rho_air/920;
+      double CWC = lwc * rho_air / 1000 + iwc * rho_air / 920;
 
       /* Calculate exponential decay (Rolph et al., 1992)... */
       double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
       double aux = exp(-dt[ip] * rate_coef);
       if (ctl->qnt_m >= 0) {
-        if (ctl->qnt_mloss_h2o2 >= 0)
-          atm->q[ctl->qnt_mloss_h2o2][ip] +=
-            atm->q[ctl->qnt_m][ip] * (1 - aux);
-        atm->q[ctl->qnt_m][ip] *= aux;
-        }
+	if (ctl->qnt_mloss_h2o2 >= 0)
+	  atm->q[ctl->qnt_mloss_h2o2][ip] +=
+	    atm->q[ctl->qnt_m][ip] * (1 - aux);
+	atm->q[ctl->qnt_m][ip] *= aux;
+      }
       if (ctl->qnt_vmr >= 0)
-        atm->q[ctl->qnt_vmr][ip] *= aux;    
+	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
 }
 
@@ -1809,12 +1807,12 @@ void module_wet_deposition(
 	pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
       if (Is < 0.01)
 	continue;
-      
+
       /* Check whether particle is inside or below cloud... */
       INTPOL_3D(lwc, 1);
       INTPOL_3D(iwc, 0);
       int inside = (iwc > 0 || lwc > 0);
-      
+
       /* Get temperature... */
       INTPOL_3D(t, 0);
 
