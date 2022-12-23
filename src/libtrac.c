@@ -2448,13 +2448,9 @@ void read_ctl(
     = scan_ctl(filename, argc, argv, "CONV_CAPE", -1, "-999", NULL);
   ctl->conv_cin
     = scan_ctl(filename, argc, argv, "CONV_CIN", -1, "-999", NULL);
-  ctl->conv_wmax
-    = scan_ctl(filename, argc, argv, "CONV_WMAX", -1, "-999", NULL);
-  ctl->conv_wcape
-    = (int) scan_ctl(filename, argc, argv, "CONV_WCAPE", -1, "0", NULL);
   ctl->conv_dt = scan_ctl(filename, argc, argv, "CONV_DT", -1, "-999", NULL);
   ctl->conv_mix
-    = (int) scan_ctl(filename, argc, argv, "CONV_MIX", -1, "0", NULL);
+    = (int) scan_ctl(filename, argc, argv, "CONV_MIX", -1, "1", NULL);
   ctl->conv_mix_bot
     = (int) scan_ctl(filename, argc, argv, "CONV_MIX_BOT", -1, "1", NULL);
   ctl->conv_mix_top

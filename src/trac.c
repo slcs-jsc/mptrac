@@ -462,6 +462,7 @@ int main(
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
+	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
 #ifdef ASYNCIO
 	} else {
@@ -729,17 +730,7 @@ void module_convection(
 	}
 	if (ctl->conv_mix_top == 1)
 	  ptop = pel;
-
-	/* Limit vertical velocity... */
-	if (ctl->conv_wmax > 0 || ctl->conv_wcape) {
-	  double z = Z(atm->p[ip]);
-	  double wmax = (ctl->conv_wcape) ? sqrt(2. * cape) : ctl->conv_wmax;
-	  double pmax = P(z - wmax * dt[ip] / 1000.);
-	  double pmin = P(z + wmax * dt[ip] / 1000.);
-	  ptop = GSL_MAX(ptop, pmin);
-	  pbot = GSL_MIN(pbot, pmax);
-	}
-
+	
 	/* Vertical mixing based on pressure... */
 	if (ctl->conv_mix == 0)
 	  atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
