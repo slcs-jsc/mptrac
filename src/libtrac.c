@@ -2475,6 +2475,12 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "BOUND_P1", -1, "-1e10", NULL);
   ctl->bound_dps =
     scan_ctl(filename, argc, argv, "BOUND_DPS", -1, "-999", NULL);
+  ctl->bound_dzs =
+    scan_ctl(filename, argc, argv, "BOUND_DZS", -1, "-999", NULL);
+  ctl->bound_zetas =
+    scan_ctl(filename, argc, argv, "BOUND_ZETAS", -1, "-999", NULL);
+  ctl->bound_pbl =
+    (int) scan_ctl(filename, argc, argv, "BOUND_PBL", -1, "0", NULL);
 
   /* Species parameters... */
   scan_ctl(filename, argc, argv, "SPECIES", -1, "-", ctl->species);

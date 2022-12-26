@@ -1038,7 +1038,7 @@ typedef struct {
 
   /*! CIN threshold for convection module [J/kg]. */
   double conv_cin;
-  
+
   /*! Time interval for convection module [s]. */
   double conv_dt;
 
@@ -1075,8 +1075,17 @@ typedef struct {
   /*! Boundary conditions top pressure [hPa]. */
   double bound_p1;
 
-  /*! Boundary conditions delta to surface pressure [hPa]. */
+  /*! Boundary conditions surface layer depth [hPa]. */
   double bound_dps;
+
+  /*! Boundary conditions surface layer depth [km]. */
+  double bound_dzs;
+
+  /*! Boundary conditions surface layer zeta [K]. */
+  double bound_zetas;
+
+  /*! Boundary conditions planetary boundary layer (0=no, 1=yes). */
+  int bound_pbl;
 
   /*! Species. */
   char species[LEN];

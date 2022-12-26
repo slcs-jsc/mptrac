@@ -385,7 +385,7 @@ int main(
 	    mets = met0;
 	    met0 = met0TMP;
 	    met0TMP = mets;
-	    
+
 	    mets = met1;
 	    met1 = met1TMP;
 	    met1TMP = mets;
@@ -395,11 +395,11 @@ int main(
 	  if (t != ctl.t_start)
 	    get_met(&ctl, clim, t, &met0, &met1);
 #endif
-	  
+
 	  /* Sort particles... */
 	  if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	    module_sort(&ctl, met0, atm);
-	  
+
 	  /* Check initial positions... */
 	  module_position(&ctl, met0, met1, atm, dt);
 
@@ -475,21 +475,21 @@ int main(
       }
 #endif
     }
-    
+
 #ifdef ASYNCIO
     omp_set_num_threads(ompTrdnum);
 #endif
-    
+
     /* ------------------------------------------------------------
        Finalize model run...
        ------------------------------------------------------------ */
-    
+
     /* Report problem size... */
     LOG(1, "SIZE_NP = %d", atm->np);
     LOG(1, "SIZE_MPI_TASKS = %d", size);
     LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
     LOG(1, "SIZE_ACC_DEVICES = %d", num_devices);
-    
+
     /* Report memory usage... */
     LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
@@ -643,23 +643,42 @@ void module_bound_cond(
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
 
-      double ps;
-
       /* Check latitude and pressure range... */
       if (atm->lat[ip] < ctl->bound_lat0 || atm->lat[ip] > ctl->bound_lat1
 	  || atm->p[ip] > ctl->bound_p0 || atm->p[ip] < ctl->bound_p1)
 	continue;
 
       /* Check surface layer... */
-      if (ctl->bound_dps > 0) {
+      if (ctl->bound_dps > 0 || ctl->bound_dzs > 0 || ctl->bound_zetas > 0) {
 
 	/* Get surface pressure... */
+	double ps;
 	INTPOL_INIT;
 	INTPOL_2D(ps, 1);
 
-	/* Check whether particle is above the surface layer... */
-	if (atm->p[ip] < ps - ctl->bound_dps)
+	/* Check pressure... */
+	if (ctl->bound_dps > 0 && atm->p[ip] < ps - ctl->bound_dps)
 	  continue;
+
+	/* Check height... */
+	if (ctl->bound_dzs > 0 && Z(atm->p[ip]) > Z(ps) + ctl->bound_dzs)
+	  continue;
+
+	/* Check zeta range... */
+	if (ctl->bound_zetas > 0) {
+	  double t;
+	  INTPOL_3D(t, 1);
+	  if (ZETA(ps, atm->p[ip], t) > ctl->bound_zetas)
+	    continue;
+	}
+
+	/* Check planetary boundary layer... */
+	if (ctl->bound_pbl) {
+	  double pbl;
+	  INTPOL_2D(pbl, 0);
+	  if (atm->p[ip] < pbl)
+	    continue;
+	}
       }
 
       /* Set mass and volume mixing ratio... */
@@ -730,7 +749,7 @@ void module_convection(
 	}
 	if (ctl->conv_mix_top == 1)
 	  ptop = pel;
-	
+
 	/* Vertical mixing based on pressure... */
 	if (ctl->conv_mix == 0)
 	  atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
@@ -1335,10 +1354,10 @@ void module_h2o2_chem(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
   if (ctl->qnt_vmrimpl < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
-  
+
   /* Create random numbers... */
   module_rng(rs, (size_t) atm->np, 0);
-  
+
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(clim,ctl,met0,met1,atm,dt,rs)
@@ -1370,20 +1389,20 @@ void module_h2o2_chem(
       INTPOL_3D(t, 0);
 
       /* Reaction rate (Berglen et al., 2004)... */
-      double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));  // Maass  1999 unit: M^(-2)
+      double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit: M^(-2)
 
       /* Henry constant of SO2... */
       double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));  // unit: M
+      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
 
       /* Henry constant of H2O2... */
       double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
       /* Concentration of H2O2 (Barth et al., 1989)... */
-      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;  // vmr unit: ppbv
+      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
       double h2o2 = H_h2o2
 	* clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip])
-	* 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23; // unit: M
+	* 0.59 * exp(-0.687 * SO2) * 1000 / 6.02214e23;	// unit: M
 
       /* Volume water content in cloud [m^3 m^(-3)]... */
       double rho_air = 100 * atm->p[ip] / (RA * t);
