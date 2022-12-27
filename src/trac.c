@@ -649,7 +649,8 @@ void module_bound_cond(
 	continue;
 
       /* Check surface layer... */
-      if (ctl->bound_dps > 0 || ctl->bound_dzs > 0 || ctl->bound_zetas > 0) {
+      if (ctl->bound_dps > 0 || ctl->bound_dzs > 0
+	  || ctl->bound_zetas > 0 || ctl->bound_pbl) {
 
 	/* Get surface pressure... */
 	double ps;
