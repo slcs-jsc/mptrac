@@ -6034,28 +6034,36 @@ void write_grid_nc(
   double dz,
   int *np) {
 
-  int ncid, dimid[10], varid;
+  double *help;
+
+  int *help2, ncid, dimid[10], varid;
 
   size_t start[2], count[2];
+
+  /* Allocate... */
+  ALLOC(help, double,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  ALLOC(help2, int,
+	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
 
   /* Create file... */
   nc_create(filename, NC_CLOBBER, &ncid);
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &dimid[0]));
-  NC(nc_def_dim(ncid, "lon", (size_t) ctl->grid_nx, &dimid[1]));
+  NC(nc_def_dim(ncid, "z", (size_t) ctl->grid_nz, &dimid[1]));
   NC(nc_def_dim(ncid, "lat", (size_t) ctl->grid_ny, &dimid[2]));
-  NC(nc_def_dim(ncid, "z", (size_t) ctl->grid_nz, &dimid[3]));
+  NC(nc_def_dim(ncid, "lon", (size_t) ctl->grid_nx, &dimid[3]));
   NC(nc_def_dim(ncid, "dz", 1, &dimid[4]));
 
   /* Define variables and their attributes... */
   NC_DEF_VAR("time", NC_DOUBLE, 1, &dimid[0], "time",
 	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[1], "longitude", "degrees_east");
+  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[1], "altitude", "km");
   NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[2], "latitude", "degrees_north");
-  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[3], "altitude", "km");
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[3], "longitude", "degrees_east");
+  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km");
   NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2");
-  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[4], "layer depth", "km");
   NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2");
   NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
 	     "volume mixing ratio (implicit)", "ppv");
@@ -6073,13 +6081,41 @@ void write_grid_nc(
   NC_PUT_DOUBLE("z", z, 0);
   NC_PUT_DOUBLE("area", area, 0);
   NC_PUT_DOUBLE("dz", &dz, 0);
-  NC_PUT_DOUBLE("cd", cd, 0);
-  NC_PUT_DOUBLE("vmr_impl", vmr_impl, 0);
-  NC_PUT_DOUBLE("vmr_expl", vmr_expl, 0);
-  NC_PUT_INT("np", np, 0);
+
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    for (int iy = 0; iy < ctl->grid_ny; iy++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++)
+	help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	  cd[ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+  NC_PUT_DOUBLE("cd", help, 0);
+
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    for (int iy = 0; iy < ctl->grid_ny; iy++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++)
+	help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	  vmr_impl[ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+  NC_PUT_DOUBLE("vmr_impl", help, 0);
+
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    for (int iy = 0; iy < ctl->grid_ny; iy++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++)
+	help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	  vmr_expl[ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+  NC_PUT_DOUBLE("vmr_expl", help, 0);
+
+  for (int ix = 0; ix < ctl->grid_nx; ix++)
+    for (int iy = 0; iy < ctl->grid_ny; iy++)
+      for (int iz = 0; iz < ctl->grid_nz; iz++)
+	help2[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	  np[ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+  NC_PUT_INT("np", help2, 0);
 
   /* Close file... */
   NC(nc_close(ncid));
+
+  /* Free... */
+  free(help);
+  free(help2);
 }
 
 /*****************************************************************************/
