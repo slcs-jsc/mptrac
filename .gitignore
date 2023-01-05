@@ -15,6 +15,7 @@ src/atm_init
 src/atm_select
 src/atm_split
 src/atm_stat
+src/cape
 src/day2doy
 src/doy2day
 src/jsec2time
