@@ -1264,6 +1264,33 @@ typedef struct {
   /*! Type of grid data files (0=ASCII, 1=netCDF). */
   int grid_type;
 
+  /*! Number of altitudes of gridded data. */
+  int chemgrid_nz;
+
+  /*! Lower altitude of gridded data [km]. */
+  double chemgrid_z0;
+
+  /*! Upper altitude of gridded data [km]. */
+  double chemgrid_z1;
+
+  /*! Number of longitudes of gridded data. */
+  int chemgrid_nx;
+
+  /*! Lower longitude of gridded data [deg]. */
+  double chemgrid_lon0;
+
+  /*! Upper longitude of gridded data [deg]. */
+  double chemgrid_lon1;
+
+  /*! Number of latitudes of gridded data. */
+  int chemgrid_ny;
+
+  /*! Lower latitude of gridded data [deg]. */
+  double chemgrid_lat0;
+
+  /*! Upper latitude of gridded data [deg]. */
+  double chemgrid_lat1;
+
   /*! Basename for profile output file. */
   char prof_basename[LEN];
 
@@ -1664,6 +1691,14 @@ double clim_h2o2(
 void clim_h2o2_init(
   ctl_t * ctl,
   clim_t * clim);
+
+/*! write grid value into atm quantity value */
+void module_chemgrid(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC

@@ -705,6 +705,108 @@ void clim_h2o2_init(
 
 /*****************************************************************************/
 
+void module_chemgrid(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t) {  
+  
+  double *mass, *z, *lon, *lat, *press, *area;
+
+  int *ixs, *iys, *izs;
+
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  ALLOC(z, double,
+	ctl->chemgrid_nz);
+  ALLOC(lon, double,
+	ctl->chemgrid_nx);
+  ALLOC(lat, double,
+	ctl->chemgrid_ny);
+  ALLOC(area, double,
+	ctl->chemgrid_ny);
+  ALLOC(press, double,
+	ctl->chemgrid_nz);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+
+  /* Set grid box size... */    
+  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+
+    /* Set vertical coordinates... */
+#pragma omp parallel for default(shared) 
+  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
+    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
+    press[iz] = P(z[iz]);
+  }
+
+  /* Set horizontal coordinates... */
+  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#pragma omp parallel for default(shared) 
+  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+      * cos(lat[iy] * M_PI / 180.);
+  }
+
+  /* Set time interval for output... */
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+      izs[ip] = -1;
+  }
+
+  /* Average data... */
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+      if (ctl->qnt_m >= 0)
+	      mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)] 
+        += atm->q[ctl->qnt_m][ip];
+    }
+
+  for (int ip = 0; ip < atm->np; ip++)
+      if (izs[ip] >= 0) {
+      double temp;
+      INTPOL_INIT;
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
+        lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+	    atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
+	    mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	    / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
+      }
+  /* Free... */
+  free(mass);
+  free(z);
+  free(lon);
+  free(lat);
+  free(area);
+  free(press);
+  free(ixs);
+  free(iys);
+  free(izs);
+}
+
+/*****************************************************************************/
+
 double clim_tropo(
   clim_t * clim,
   double t,
@@ -2694,6 +2796,25 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "GRID_NY", -1, "180", NULL);
   ctl->grid_type =
     (int) scan_ctl(filename, argc, argv, "GRID_TYPE", -1, "0", NULL);
+
+  /*Grid data in Chemgrid module...*/
+
+  ctl->chemgrid_z0 = scan_ctl(filename, argc, argv, "CHEMGRID_Z0", -1, "0", NULL);
+  ctl->chemgrid_z1 = scan_ctl(filename, argc, argv, "CHEMGRID_Z1", -1, "100", NULL);
+  ctl->chemgrid_nz =
+    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "1", NULL);
+  ctl->chemgrid_lon0 =
+    scan_ctl(filename, argc, argv, "CHEMGRID_LON0", -1, "-180", NULL);
+  ctl->chemgrid_lon1 =
+    scan_ctl(filename, argc, argv, "CHEMGRID_LON1", -1, "180", NULL);
+  ctl->chemgrid_nx =
+    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NX", -1, "360", NULL);
+  ctl->chemgrid_lat0 =
+    scan_ctl(filename, argc, argv, "CHEMGRID_LAT0", -1, "-90", NULL);
+  ctl->chemgrid_lat1 =
+    scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
+  ctl->chemgrid_ny =
+    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
 
   /* Output of profile data... */
   scan_ctl(filename, argc, argv, "PROF_BASENAME", -1, "-",
@@ -5848,7 +5969,7 @@ void write_grid(
 	vmr_expl[idx] += atm->q[ctl->qnt_vmr][ip];
     }
 
-  /* Get implicit vmr per particle... */
+  /* Get implicit vmr per particle... 
   if (ctl->qnt_vmrimpl >= 0)
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0) {
@@ -5861,7 +5982,7 @@ void write_grid(
 	  mass[ARRAY_3D
 	       (ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz)]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
-      }
+      }*/
 
   /* Calculate column density and vmr... */
 #pragma omp parallel for default(shared)
