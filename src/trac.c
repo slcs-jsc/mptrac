@@ -1372,11 +1372,10 @@ void module_h2o2_chem(
     if (dt[ip] != 0) {
 
       /* Check whether particle is inside cloud... */
-      double lwc, iwc;
+      double lwc;
       INTPOL_INIT;
       INTPOL_3D(lwc, 1);
-      INTPOL_3D(iwc, 0);
-      if (!(lwc > 0 || iwc > 0))
+      if (!(lwc > 0))
 	continue;
 
       /* Check cloud cover... */
@@ -1409,7 +1408,7 @@ void module_h2o2_chem(
 
       /* Volume water content in cloud [m^3 m^(-3)]... */
       double rho_air = 100 * atm->p[ip] / (RA * t);
-      double CWC = lwc * rho_air / 1000 + iwc * rho_air / 920;
+      double CWC = lwc * rho_air / 1000;
 
       /* Calculate exponential decay (Rolph et al., 1992)... */
       double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
