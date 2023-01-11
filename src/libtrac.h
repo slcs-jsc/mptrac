@@ -433,7 +433,7 @@
   }
 
 /*! Write netCDF integer array. */
-#define NC_PUT_INT(varname, ptr, hyperslab) {		\
+#define NC_PUT_INT(varname, ptr, hyperslab) {			\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
       NC(nc_put_vara_int(ncid, varid, start, count, ptr));	\
@@ -442,8 +442,14 @@
     }								\
   }
 
+/*! Set netCDF attribute. */
+#define NC_PUT_ATT(varname, attname, text) {				\
+    NC(nc_inq_varid(ncid, varname, &varid));				\
+    NC(nc_put_att_text(ncid, varid, attname, strlen(text), text));	\
+  }
+
 /*! Set netCDF global attribute. */
-#define NC_PUT_ATT(attname, text)					\
+#define NC_PUT_ATT_GLOBAL(attname, text)				\
   NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strlen(text), text));
 
 /*! Write netCDF float array. */

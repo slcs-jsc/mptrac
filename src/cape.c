@@ -34,6 +34,8 @@ int main(
 
   met_t *met;
 
+  char tstr[LEN];
+
   float help[EX * EY];
 
   int dims[10], ncid, varid;
@@ -80,6 +82,38 @@ int main(
 	     "convective inhibition", "J kg**-1");
   NC_DEF_VAR("PEL_MPT", NC_FLOAT, 3, dims,
 	     "pressure at equilibrium level", "hPa");
+
+  /* Get current time... */
+  time_t t = time(NULL);
+  struct tm tm = *localtime(&t);
+  sprintf(tstr, "%d-%02d-%02d %02d:%02d:%02d",
+	  tm.tm_year + 1900, tm.tm_mon + 1, tm.tm_mday,
+	  tm.tm_hour, tm.tm_min, tm.tm_sec);
+
+  /* Set additional attributes... */
+  NC_PUT_ATT("CAPE_MPT", "creator_of_parameter", "MPTRAC");
+  NC_PUT_ATT("CIN_MPT", "creator_of_parameter", "MPTRAC");
+  NC_PUT_ATT("PEL_MPT", "creator_of_parameter", "MPTRAC");
+
+  NC_PUT_ATT("CAPE_MPT", "param_creation_time", tstr);
+  NC_PUT_ATT("CIN_MPT", "param_creation_time", tstr);
+  NC_PUT_ATT("PEL_MPT", "param_creation_time", tstr);
+
+  NC_PUT_ATT("CAPE_MPT", "param_modification_time", tstr);
+  NC_PUT_ATT("CIN_MPT", "param_modification_time", tstr);
+  NC_PUT_ATT("PEL_MPT", "param_modification_time", tstr);
+
+  NC_PUT_ATT("CAPE_MPT", "flag", "NONE");
+  NC_PUT_ATT("CIN_MPT", "flag", "NONE");
+  NC_PUT_ATT("PEL_MPT", "flag", "NONE");
+
+  float miss[1] = { GSL_NAN };
+  NC(nc_inq_varid(ncid, "CAPE_MPT", &varid));
+  NC(nc_put_att_float(ncid, varid, "missing_value", NC_FLOAT, 1, miss));
+  NC(nc_inq_varid(ncid, "CIN_MPT", &varid));
+  NC(nc_put_att_float(ncid, varid, "missing_value", NC_FLOAT, 1, miss));
+  NC(nc_inq_varid(ncid, "PEL_MPT", &varid));
+  NC(nc_put_att_float(ncid, varid, "missing_value", NC_FLOAT, 1, miss));
 
   /* End define mode... */
   NC(nc_enddef(ncid));
