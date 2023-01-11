@@ -446,10 +446,10 @@ int main(
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0){
+	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0) {
 	    module_chemgrid(&ctl, met0, met1, atm, t);
-      module_h2o2_chem(&ctl, clim, met0, met1, atm, dt, rs);
-    }
+	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt, rs);
+	  }
 
 	  /* Dry deposition... */
 	  if (ctl.dry_depo[0] > 0)
