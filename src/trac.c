@@ -139,6 +139,14 @@ void module_h2o2_chem(
   double *dt,
   double *rs);
 
+/*! Interpolate to chemistry grid. */
+void module_chemgrid(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t);
+
 /*! Check position of air parcels. */
 void module_position(
   ctl_t * ctl,
@@ -1422,6 +1430,128 @@ void module_h2o2_chem(
       if (ctl->qnt_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
+}
+
+/*****************************************************************************/
+
+void module_chemgrid(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t) {
+
+  double *mass, *z, *lon, *lat, *press, *area;
+
+  int *ixs, *iys, *izs;
+
+  /* Update host... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+#endif
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  ALLOC(z, double,
+	ctl->chemgrid_nz);
+  ALLOC(lon, double,
+	ctl->chemgrid_nx);
+  ALLOC(lat, double,
+	ctl->chemgrid_ny);
+  ALLOC(area, double,
+	ctl->chemgrid_ny);
+  ALLOC(press, double,
+	ctl->chemgrid_nz);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+
+  /* Set grid box size... */
+  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+
+  /* Set vertical coordinates... */
+#pragma omp parallel for default(shared)
+  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
+    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
+    press[iz] = P(z[iz]);
+  }
+
+  /* Set horizontal coordinates... */
+  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#pragma omp parallel for default(shared)
+  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+      * cos(lat[iy] * M_PI / 180.);
+  }
+
+  /* Set time interval for output... */
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+      izs[ip] = -1;
+  }
+
+  /* Average data... */
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+      if (ctl->qnt_m >= 0)
+	mass[ARRAY_3D
+	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	  += atm->q[ctl->qnt_m][ip];
+    }
+
+  /* Interpolate volume mixing ratio... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+      double temp;
+      INTPOL_INIT;
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
+			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+      atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
+	mass[ARRAY_3D
+	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	/ (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
+    }
+
+  /* Free... */
+  free(mass);
+  free(z);
+  free(lon);
+  free(lat);
+  free(area);
+  free(press);
+  free(ixs);
+  free(iys);
+  free(izs);
+
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
 }
 
 /*****************************************************************************/
