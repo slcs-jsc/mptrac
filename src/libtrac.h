@@ -851,33 +851,6 @@ typedef struct {
   /*! Quantity array index for total mass loss due to H2O2 chemistry. */
   int qnt_mloss_h2o2;
 
-  /*! Number of altitudes of chemistry grid. */
-  int chemgrid_nz;
-
-  /*! Lower altitude of chemistry grid [km]. */
-  double chemgrid_z0;
-
-  /*! Upper altitude of chemistry grid [km]. */
-  double chemgrid_z1;
-
-  /*! Number of longitudes of chemistry grid. */
-  int chemgrid_nx;
-
-  /*! Lower longitude of chemistry grid [deg]. */
-  double chemgrid_lon0;
-
-  /*! Upper longitude of chemistry grid [deg]. */
-  double chemgrid_lon1;
-
-  /*! Number of latitudes of chemistry grid. */
-  int chemgrid_ny;
-
-  /*! Lower latitude of chemistry grid [deg]. */
-  double chemgrid_lat0;
-
-  /*! Upper latitude of chemistry grid [deg]. */
-  double chemgrid_lat1;
-
   /*! Quantity array index for total mass loss due to wet deposition. */
   int qnt_mloss_wet;
 
@@ -1152,6 +1125,33 @@ typedef struct {
 
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
+
+  /*! Number of altitudes of chemistry grid. */
+  int chemgrid_nz;
+
+  /*! Lower altitude of chemistry grid [km]. */
+  double chemgrid_z0;
+
+  /*! Upper altitude of chemistry grid [km]. */
+  double chemgrid_z1;
+
+  /*! Number of longitudes of chemistry grid. */
+  int chemgrid_nx;
+
+  /*! Lower longitude of chemistry grid [deg]. */
+  double chemgrid_lon0;
+
+  /*! Upper longitude of chemistry grid [deg]. */
+  double chemgrid_lon1;
+
+  /*! Number of latitudes of chemistry grid. */
+  int chemgrid_ny;
+
+  /*! Lower latitude of chemistry grid [deg]. */
+  double chemgrid_lat0;
+
+  /*! Upper latitude of chemistry grid [deg]. */
+  double chemgrid_lat1;
 
   /*! Coefficients for dry deposition (v). */
   double dry_depo[1];

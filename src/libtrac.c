@@ -1254,6 +1254,7 @@ void get_met(
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, clim, *met1))
       ERRMSG("Cannot open file!");
+
     /* Update GPU... */
 #ifdef _OPENACC
     met_t *met1up = *met1;
@@ -1263,6 +1264,7 @@ void get_met(
 #pragma acc update device(met1up[:1])
 #endif
 #endif
+
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
       get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,

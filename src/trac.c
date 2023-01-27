@@ -243,7 +243,7 @@ int main(
 
   double *dt, *rs, t;
 
-  int num_devices = 0, ntask = -1, rank = 0, size = 1;
+  int ntask = -1, rank = 0, size = 1;
 
   /* Start timers... */
   START_TIMERS;
@@ -259,11 +259,10 @@ int main(
   /* Initialize GPUs... */
 #ifdef _OPENACC
   SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
-  num_devices = acc_get_num_devices(acc_device_nvidia);
-  if (num_devices <= 0)
+  if (acc_get_num_devices(acc_device_nvidia) <= 0)
     ERRMSG("Not running on a GPU device!");
-  int device_num = rank % num_devices;
-  acc_set_device_num(device_num, acc_device_nvidia);
+  acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
+		     acc_device_nvidia);
   acc_device_t device_type = acc_get_device_type();
   acc_init(device_type);
 #endif
@@ -498,7 +497,9 @@ int main(
     LOG(1, "SIZE_NP = %d", atm->np);
     LOG(1, "SIZE_MPI_TASKS = %d", size);
     LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
-    LOG(1, "SIZE_ACC_DEVICES = %d", num_devices);
+#ifdef _OPENACC
+    LOG(1, "SIZE_ACC_DEVICES = %d", acc_get_num_devices(acc_device_nvidia));
+#endif
 
     /* Report memory usage... */
     LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
@@ -1454,6 +1455,12 @@ void module_chemgrid(
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_vmrimpl < 0)
+    ERRMSG("Module needs quantity implicit volume mixing ratio!");
+
   /* Allocate... */
   ALLOC(mass, double,
 	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
@@ -1515,12 +1522,10 @@ void module_chemgrid(
 
   /* Average data... */
   for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0) {
-      if (ctl->qnt_m >= 0)
-	mass[ARRAY_3D
-	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	  += atm->q[ctl->qnt_m][ip];
-    }
+    if (izs[ip] >= 0)
+      mass[ARRAY_3D
+	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	+= atm->q[ctl->qnt_m][ip];
 
   /* Interpolate volume mixing ratio... */
 #pragma omp parallel for default(shared)
