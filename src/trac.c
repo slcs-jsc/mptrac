@@ -1745,7 +1745,7 @@ void module_sort(
   atm_t * atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_SORT", "MEMORY", NVTX_GPU);
 
   /* Allocate... */
   const int np = atm->np;
