@@ -26,6 +26,21 @@
 
 /*****************************************************************************/
 
+double buoyancy_frequency(
+  double p0,
+  double t0,
+  double p1,
+  double t1) {
+
+  double theta0 = THETA(p0, t0);
+  double theta1 = THETA(p1, t1);
+  double dz = RI / MA / G0 * 0.5 * (t0 + t1) * (log(p0) - log(p1));
+
+  return sqrt(2. * G0 / (theta0 + theta1) * (theta1 - theta0) / dz);
+}
+
+/*****************************************************************************/
+
 void cart2geo(
   double *x,
   double *z,

@@ -1622,6 +1622,13 @@ typedef struct {
    Functions...
    ------------------------------------------------------------ */
 
+/*! Calculate buoyancy frequency. */
+double buoyancy_frequency(
+  double p0,
+  double t0,
+  double p1,
+  double t1);
+
 /*! Convert Cartesian coordinates to geolocation. */
 void cart2geo(
   double *x,
