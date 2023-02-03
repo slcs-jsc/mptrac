@@ -12,6 +12,8 @@ This is a list of selected papers in which MPTRAC was applied:
 
 Cai, Z., Griessbach, S., and Hoffmann, L.: Improved estimation of volcanic SO2 injections from satellite retrievals and Lagrangian transport simulations: the 2019 Raikoke eruption, Atmos. Chem. Phys., 22, 6787–6809, <https://doi.org/10.5194/acp-22-6787-2022>, 2022.
 
+Mishra, M.K., Hoffmann, L., Thapliyal, P.K.: Investigations on the Global Spread of the Hunga Tonga-Hunga Ha’apai Volcanic Eruption Using Space-Based Observations and Lagrangian Transport Simulations. Atmosphere, 13, 2055, <https://doi.org/10.3390/atmos13122055>, 2022.
+
 Smoydzin, L. and Hoor, P.: Contribution of Asian emissions to upper tropospheric CO over the remote Pacific, Atmos. Chem. Phys., 22, 7193–7206, <https://doi.org/10.5194/acp-22-7193-2022>, 2022.
 
 Liu, M., Huang, Y., Hoffmann, L., Huang, C., Chen, P., Heng, Y.: High-Resolution Source Estimation of Volcanic Sulfur Dioxide Emissions Using Large-Scale Transport Simulations, in: Krzhizhanovskaya V.V. et al. (eds), Computational Science – ICCS 2020, ICCS 2020, Lecture Notes in Computer Science, vol 12139, Springer, <https://doi.org/10.1007/978-3-030-50420-5_5>, 2020.
