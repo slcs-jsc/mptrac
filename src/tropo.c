@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -40,7 +40,10 @@ void get_tropo(
   double *pt,
   double *zt,
   double *tt,
-  double *qt);
+  double *qt,
+  double *o3t,
+  double *ps,
+  double *zs);
 
 /* ------------------------------------------------------------
    Main...
@@ -56,10 +59,11 @@ int main(
 
   met_t *met;
 
-  static double pt[EX * EY], qt[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0,
-    lon1, lons[EX], dlon, lat, lat0, lat1, lats[EY], dlat;
+  static double ps[EX * EY], pt[EX * EY], qt[EX * EY], o3t[EX * EY],
+    zs[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0, lon1, lons[EX], dlon,
+    lat, lat0, lat1, lats[EY], dlat;
 
-  static int init, i, nx, ny, nt, ncid, varid, dims[3], h2o;
+  static int init, i, nx, ny, nt, ncid, varid, dims[3], h2o, o3;
 
   static size_t count[10], start[10];
 
@@ -80,6 +84,7 @@ int main(
   lat1 = scan_ctl(argv[1], argc, argv, "TROPO_LAT1", -1, "90", NULL);
   dlat = scan_ctl(argv[1], argc, argv, "TROPO_DLAT", -1, "-999", NULL);
   h2o = (int) scan_ctl(argv[1], argc, argv, "TROPO_H2O", -1, "1", NULL);
+  o3 = (int) scan_ctl(argv[1], argc, argv, "TROPO_O3", -1, "1", NULL);
 
   /* Read climatological data... */
   read_clim(&ctl, clim);
@@ -144,6 +149,9 @@ int main(
       if (h2o)
 	NC_DEF_VAR("clp_q", NC_FLOAT, 3, &dims[0], "cold point water vapor",
 		   "ppv");
+      if (o3)
+	NC_DEF_VAR("clp_o3", NC_FLOAT, 3, &dims[0], "cold point ozone",
+		   "ppv");
 
       NC_DEF_VAR("dyn_z", NC_FLOAT, 3, &dims[0],
 		 "dynamical tropopause height", "km");
@@ -154,6 +162,9 @@ int main(
       if (h2o)
 	NC_DEF_VAR("dyn_q", NC_FLOAT, 3, &dims[0],
 		   "dynamical tropopause water vapor", "ppv");
+      if (o3)
+	NC_DEF_VAR("dyn_o3", NC_FLOAT, 3, &dims[0],
+		   "dynamical tropopause ozone", "ppv");
 
       NC_DEF_VAR("wmo_1st_z", NC_FLOAT, 3, &dims[0],
 		 "WMO 1st tropopause height", "km");
@@ -164,6 +175,9 @@ int main(
       if (h2o)
 	NC_DEF_VAR("wmo_1st_q", NC_FLOAT, 3, &dims[0],
 		   "WMO 1st tropopause water vapor", "ppv");
+      if (o3)
+	NC_DEF_VAR("wmo_1st_o3", NC_FLOAT, 3, &dims[0],
+		   "WMO 1st tropopause ozone", "ppv");
 
       NC_DEF_VAR("wmo_2nd_z", NC_FLOAT, 3, &dims[0],
 		 "WMO 2nd tropopause height", "km");
@@ -174,6 +188,12 @@ int main(
       if (h2o)
 	NC_DEF_VAR("wmo_2nd_q", NC_FLOAT, 3, &dims[0],
 		   "WMO 2nd tropopause water vapor", "ppv");
+      if (o3)
+	NC_DEF_VAR("wmo_2nd_o3", NC_FLOAT, 3, &dims[0],
+		   "WMO 2nd tropopause ozone", "ppv");
+
+      NC_DEF_VAR("ps", NC_FLOAT, 3, &dims[0], "surface pressure", "hPa");
+      NC_DEF_VAR("zs", NC_FLOAT, 3, &dims[0], "surface height", "km");
 
       /* End definition... */
       NC(nc_enddef(ncid));
@@ -193,36 +213,52 @@ int main(
     NC_PUT_DOUBLE("time", &met->time, 1);
 
     /* Get cold point... */
-    get_tropo(2, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(2, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt, o3t, ps,
+	      zs);
     NC_PUT_DOUBLE("clp_z", zt, 1);
     NC_PUT_DOUBLE("clp_p", pt, 1);
     NC_PUT_DOUBLE("clp_t", tt, 1);
     if (h2o)
       NC_PUT_DOUBLE("clp_q", qt, 1);
+    if (o3)
+      NC_PUT_DOUBLE("clp_o3", o3t, 1);
 
     /* Get dynamical tropopause... */
-    get_tropo(5, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(5, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt, o3t, ps,
+	      zs);
     NC_PUT_DOUBLE("dyn_z", zt, 1);
     NC_PUT_DOUBLE("dyn_p", pt, 1);
     NC_PUT_DOUBLE("dyn_t", tt, 1);
     if (h2o)
       NC_PUT_DOUBLE("dyn_q", qt, 1);
+    if (o3)
+      NC_PUT_DOUBLE("dyn_o3", o3t, 1);
 
     /* Get WMO 1st tropopause... */
-    get_tropo(3, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(3, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt, o3t, ps,
+	      zs);
     NC_PUT_DOUBLE("wmo_1st_z", zt, 1);
     NC_PUT_DOUBLE("wmo_1st_p", pt, 1);
     NC_PUT_DOUBLE("wmo_1st_t", tt, 1);
     if (h2o)
       NC_PUT_DOUBLE("wmo_1st_q", qt, 1);
+    if (o3)
+      NC_PUT_DOUBLE("wmo_1st_o3", o3t, 1);
 
     /* Get WMO 2nd tropopause... */
-    get_tropo(4, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt);
+    get_tropo(4, &ctl, clim, met, lons, nx, lats, ny, pt, zt, tt, qt, o3t, ps,
+	      zs);
     NC_PUT_DOUBLE("wmo_2nd_z", zt, 1);
     NC_PUT_DOUBLE("wmo_2nd_p", pt, 1);
     NC_PUT_DOUBLE("wmo_2nd_t", tt, 1);
     if (h2o)
       NC_PUT_DOUBLE("wmo_2nd_q", qt, 1);
+    if (o3)
+      NC_PUT_DOUBLE("wmo_2nd_o3", o3t, 1);
+
+    /* Write surface data... */
+    NC_PUT_DOUBLE("ps", ps, 1);
+    NC_PUT_DOUBLE("zs", zs, 1);
 
     /* Increment time step counter... */
     nt++;
@@ -252,7 +288,10 @@ void get_tropo(
   double *pt,
   double *zt,
   double *tt,
-  double *qt) {
+  double *qt,
+  double *o3t,
+  double *ps,
+  double *zs) {
 
   INTPOL_INIT;
 
@@ -263,11 +302,17 @@ void get_tropo(
     for (int iy = 0; iy < ny; iy++) {
       intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
 			  &pt[iy * nx + ix], ci, cw, 1);
+      intpol_met_space_2d(met, met->ps, lons[ix], lats[iy],
+			  &ps[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_2d(met, met->zs, lons[ix], lats[iy],
+			  &zs[iy * nx + ix], ci, cw, 0);
       intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
 			  lats[iy], &zt[iy * nx + ix], ci, cw, 1);
       intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
 			  lats[iy], &tt[iy * nx + ix], ci, cw, 0);
       intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
 			  lats[iy], &qt[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_3d(met, met->o3, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &o3t[iy * nx + ix], ci, cw, 0);
     }
 }

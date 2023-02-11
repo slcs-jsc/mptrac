@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -69,14 +69,15 @@ int main(
   static char varname[LEN];
 
   static double times[NT], lons[EX], lats[EY], time0, time1, z0, z0sig,
-    p0, p0sig, t0, t0sig, q0, q0sig;
+    p0, p0sig, t0, t0sig, q0, q0sig, o30, o30sig;
 
   static float help[EX * EY], tropo_z0[EX][EY], tropo_z1[EX][EY],
-    tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY],
-    tropo_t1[EX][EY], tropo_q0[EX][EY], tropo_q1[EX][EY];
+    tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY], tropo_t1[EX][EY],
+    tropo_q0[EX][EY], tropo_q1[EX][EY], tropo_o30[EX][EY], tropo_o31[EX][EY];
 
-  static int ip, iq, it, it_old = -999, method, ncid, varid, varid_z,
-    varid_p, varid_t, varid_q, h2o, ntime, nlon, nlat, ilon, ilat;
+  static int ip, iq, it, it_old =
+    -999, method, ncid, varid, varid_z, varid_p, varid_t, varid_q, varid_o3,
+    h2o, o3, ntime, nlon, nlat, ilon, ilat;
 
   static size_t count[10], start[10];
 
@@ -120,6 +121,8 @@ int main(
   NC(nc_inq_varid(ncid, varname, &varid_t));
   sprintf(varname, "%s_q", argv[4]);
   h2o = (nc_inq_varid(ncid, varname, &varid_q) == NC_NOERR);
+  sprintf(varname, "%s_o3", argv[4]);
+  o3 = (nc_inq_varid(ncid, varname, &varid_o3) == NC_NOERR);
 
   /* Set dimensions... */
   count[0] = 1;
@@ -139,15 +142,16 @@ int main(
   for (iq = 0; iq < ctl.nq; iq++)
     fprintf(out, "# $%i = %s [%s]\n", iq + 5, ctl.qnt_name[iq],
 	    ctl.qnt_unit[iq]);
-  fprintf(out, "# $%d = tropopause height [km]\n", 5 + ctl.nq);
-  fprintf(out, "# $%d = tropopause pressure [hPa]\n", 6 + ctl.nq);
-  fprintf(out, "# $%d = tropopause temperature [K]\n", 7 + ctl.nq);
-  fprintf(out, "# $%d = tropopause water vapor [ppv]\n", 8 + ctl.nq);
-  fprintf(out, "# $%d = tropopause height (sigma) [km]\n", 9 + ctl.nq);
-  fprintf(out, "# $%d = tropopause pressure (sigma) [hPa]\n", 10 + ctl.nq);
-  fprintf(out, "# $%d = tropopause temperature (sigma) [K]\n", 11 + ctl.nq);
-  fprintf(out, "# $%d = tropopause water vapor (sigma) [ppv]\n\n",
-	  12 + ctl.nq);
+  fprintf(out, "# $%d = tropopause height (mean) [km]\n", 5 + ctl.nq);
+  fprintf(out, "# $%d = tropopause pressure (mean) [hPa]\n", 6 + ctl.nq);
+  fprintf(out, "# $%d = tropopause temperature (mean) [K]\n", 7 + ctl.nq);
+  fprintf(out, "# $%d = tropopause water vapor (mean) [ppv]\n", 8 + ctl.nq);
+  fprintf(out, "# $%d = tropopause ozone (mean) [ppv]\n", 9 + ctl.nq);
+  fprintf(out, "# $%d = tropopause height (sigma) [km]\n", 10 + ctl.nq);
+  fprintf(out, "# $%d = tropopause pressure (sigma) [hPa]\n", 11 + ctl.nq);
+  fprintf(out, "# $%d = tropopause temperature (sigma) [K]\n", 12 + ctl.nq);
+  fprintf(out, "# $%d = tropopause water vapor (sigma) [ppv]\n", 13 + ctl.nq);
+  fprintf(out, "# $%d = tropopause ozone (sigma) [ppv]\n\n", 14 + ctl.nq);
 
   /* Loop over particles... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -187,6 +191,15 @@ int main(
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
 	    tropo_q0[ilon][ilat] = GSL_NAN;
+      if (o3) {
+	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_o30[ilon][ilat] = help[ilat * nlon + ilon];
+      } else
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_o30[ilon][ilat] = GSL_NAN;
 
       time1 = times[it + 1];
       start[0] = (size_t) it + 1;
@@ -211,6 +224,15 @@ int main(
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
 	    tropo_q1[ilon][ilat] = GSL_NAN;;
+      if (o3) {
+	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_o31[ilon][ilat] = help[ilat * nlon + ilon];
+      } else
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_o31[ilon][ilat] = GSL_NAN;;
     }
     it_old = it;
 
@@ -227,6 +249,9 @@ int main(
     intpol_tropo_3d(time0, tropo_q0, time1, tropo_q1,
 		    lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
 		    atm->lat[ip], method, &q0, &q0sig);
+    intpol_tropo_3d(time0, tropo_o30, time1, tropo_o31,
+		    lons, lats, nlon, nlat, atm->time[ip], atm->lon[ip],
+		    atm->lat[ip], method, &o30, &o30sig);
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
@@ -235,8 +260,8 @@ int main(
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], atm->q[iq][ip]);
     }
-    fprintf(out, " %g %g %g %g %g %g %g %g\n",
-	    z0, p0, t0, q0, z0sig, p0sig, t0sig, q0sig);
+    fprintf(out, " %g %g %g %g %g %g %g %g %g %g\n",
+	    z0, p0, t0, q0, o30, z0sig, p0sig, t0sig, q0sig, o30sig);
   }
 
   /* Close files... */

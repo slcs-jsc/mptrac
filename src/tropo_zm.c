@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -46,13 +46,13 @@ int main(
   static char tstr[LEN], varname[LEN];
 
   static double time0, lons[EX], lats[EY], zm[EY], zs[EY], pm[EY],
-    ps[EY], tm[EY], ts[EY], qm[EY], qs[EY];
+    ps[EY], tm[EY], ts[EY], qm[EY], qs[EY], o3m[EY], o3s[EY];
 
   static float help[EX * EY], tropo_z0[EX][EY], tropo_p0[EX][EY],
-    tropo_t0[EX][EY], tropo_q0[EX][EY];
+    tropo_t0[EX][EY], tropo_q0[EX][EY], tropo_o30[EX][EY];
 
-  static int ncid, varid, varid_z, varid_p, varid_t, varid_q, h2o,
-    n[EY], nt[EY], year, mon, day, init, ntime, nlon, nlat, ilon, ilat;
+  static int ncid, varid, varid_z, varid_p, varid_t, varid_q, varid_o3, h2o,
+    o3, n[EY], nt[EY], year, mon, day, init, ntime, nlon, nlat, ilon, ilat;
 
   static size_t count[10], start[10];
 
@@ -89,6 +89,8 @@ int main(
     NC(nc_inq_varid(ncid, varname, &varid_t));
     sprintf(varname, "%s_q", argv[3]);
     h2o = (nc_inq_varid(ncid, varname, &varid_q) == NC_NOERR);
+    sprintf(varname, "%s_o3", argv[3]);
+    o3 = (nc_inq_varid(ncid, varname, &varid_o3) == NC_NOERR);
 
     /* Set dimensions... */
     count[0] = 1;
@@ -134,6 +136,15 @@ int main(
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
 	    tropo_q0[ilon][ilat] = GSL_NAN;
+      if (o3) {
+	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_o30[ilon][ilat] = help[ilat * nlon + ilon];
+      } else
+	for (ilon = 0; ilon < nlon; ilon++)
+	  for (ilat = 0; ilat < nlat; ilat++)
+	    tropo_o30[ilon][ilat] = GSL_NAN;
 
       /* Averaging... */
       for (ilat = 0; ilat < nlat; ilat++)
@@ -142,7 +153,8 @@ int main(
 	  if (isfinite(tropo_z0[ilon][ilat])
 	      && isfinite(tropo_p0[ilon][ilat])
 	      && isfinite(tropo_t0[ilon][ilat])
-	      && (!h2o || isfinite(tropo_q0[ilon][ilat]))) {
+	      && (!h2o || isfinite(tropo_q0[ilon][ilat]))
+	      && (!o3 || isfinite(tropo_o30[ilon][ilat]))) {
 	    zm[ilat] += tropo_z0[ilon][ilat];
 	    zs[ilat] += SQR(tropo_z0[ilon][ilat]);
 	    pm[ilat] += tropo_p0[ilon][ilat];
@@ -151,6 +163,8 @@ int main(
 	    ts[ilat] += SQR(tropo_t0[ilon][ilat]);
 	    qm[ilat] += tropo_q0[ilon][ilat];
 	    qs[ilat] += SQR(tropo_q0[ilon][ilat]);
+	    o3m[ilat] += tropo_o30[ilon][ilat];
+	    o3s[ilat] += SQR(tropo_o30[ilon][ilat]);
 	    n[ilat]++;
 	  }
 	}
@@ -167,6 +181,7 @@ int main(
       pm[ilat] /= n[ilat];
       tm[ilat] /= n[ilat];
       qm[ilat] /= n[ilat];
+      o3m[ilat] /= n[ilat];
       double aux = zs[ilat] / n[ilat] - SQR(zm[ilat]);
       zs[ilat] = aux > 0 ? sqrt(aux) : 0.0;
       aux = ps[ilat] / n[ilat] - SQR(pm[ilat]);
@@ -175,6 +190,8 @@ int main(
       ts[ilat] = aux > 0 ? sqrt(aux) : 0.0;
       aux = qs[ilat] / n[ilat] - SQR(qm[ilat]);
       qs[ilat] = aux > 0 ? sqrt(aux) : 0.0;
+      aux = o3s[ilat] / n[ilat] - SQR(o3m[ilat]);
+      o3s[ilat] = aux > 0 ? sqrt(aux) : 0.0;
     }
 
   /* Create file... */
@@ -190,18 +207,21 @@ int main(
 	  "# $4 = tropopause pressure (mean) [hPa]\n"
 	  "# $5 = tropopause temperature (mean) [K]\n"
 	  "# $6 = tropopause water vapor (mean) [ppv]\n"
-	  "# $7 = tropopause height (sigma) [km]\n"
-	  "# $8 = tropopause pressure (sigma) [hPa]\n"
-	  "# $9 = tropopause temperature (sigma) [K]\n"
-	  "# $10 = tropopause water vapor (sigma) [ppv]\n"
-	  "# $11 = number of data points\n"
-	  "# $12 = occurrence frequency [%%]\n\n");
+	  "# $7 = tropopause ozone (mean) [ppv]\n"
+	  "# $8 = tropopause height (sigma) [km]\n"
+	  "# $9 = tropopause pressure (sigma) [hPa]\n"
+	  "# $10 = tropopause temperature (sigma) [K]\n"
+	  "# $11 = tropopause water vapor (sigma) [ppv]\n"
+	  "# $12 = tropopause ozone (sigma) [ppv]\n"
+	  "# $13 = number of data points\n"
+	  "# $14 = occurrence frequency [%%]\n\n");
 
   /* Write output... */
   for (ilat = 0; ilat < nlat; ilat++)
-    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %d %g\n", time0, lats[ilat],
-	    zm[ilat], pm[ilat], tm[ilat], qm[ilat], zs[ilat], ps[ilat],
-	    ts[ilat], qs[ilat], n[ilat], 100. * n[ilat] / nt[ilat]);
+    fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %d %g\n",
+	    time0, lats[ilat], zm[ilat], pm[ilat], tm[ilat], qm[ilat],
+	    o3m[ilat], zs[ilat], ps[ilat], ts[ilat], qs[ilat], o3s[ilat],
+	    n[ilat], 100. * n[ilat] / nt[ilat]);
 
   /* Close files... */
   fclose(out);
