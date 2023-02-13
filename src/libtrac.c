@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -4433,15 +4433,15 @@ void read_met_surface(
 	if (!read_met_nc_2d(ncid, "sp", "SP", ctl, met, met->ps, 0.01f, 1)) {
 	  WARN("Cannot not read surface pressure data (use lowest level)!");
 	  for (int ix = 0; ix < met->nx; ix++)
-	  for (int iy = 0; iy < met->ny; iy++)
-	    met->ps[ix][iy] = (float) met->p[0];
-      }
+	    for (int iy = 0; iy < met->ny; iy++)
+	      met->ps[ix][iy] = (float) met->p[0];
+	}
       }
     } else
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
-    
+
     /* Read geopotential height at the surface... */
     if (!read_met_nc_2d
 	(ncid, "z", "Z", ctl, met, met->zs, (float) (1. / (1000. * G0)), 1))

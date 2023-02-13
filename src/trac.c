@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -189,6 +189,7 @@ void module_sort_help(
 void module_timesteps(
   ctl_t * ctl,
   atm_t * atm,
+  met_t * met0,
   double *dt,
   double t);
 
@@ -379,7 +380,7 @@ int main(
 	  t = ctl.t_stop;
 
 	/* Set time steps of air parcels... */
-	module_timesteps(&ctl, atm, dt, t);
+	module_timesteps(&ctl, atm, met0, dt, t);
 
 	/* Get meteo data... */
 #ifdef ASYNCIO
@@ -1857,13 +1858,19 @@ void module_sort_help(
 void module_timesteps(
   ctl_t * ctl,
   atm_t * atm,
+  met_t * met0,
   double *dt,
   double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
+  const double latmin = gsl_stats_min(met0->lat, 1, (size_t) met0->ny),
+    latmax = gsl_stats_max(met0->lat, 1, (size_t) met0->ny);
+
+  const int np = atm->np,
+    local = (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
+
 #ifdef _OPENACC
 #pragma acc data present(ctl, atm, dt)
 #pragma acc parallel loop independent gang vector
@@ -1871,11 +1878,19 @@ void module_timesteps(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
+
+    /* Set time step for each air parcel... */
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
 	 && ctl->direction * (atm->time[ip] - ctl->t_stop) <= 0
 	 && ctl->direction * (atm->time[ip] - t) < 0))
       dt[ip] = t - atm->time[ip];
     else
+      dt[ip] = 0.0;
+
+    /* Check horizontal boundaries of local data... */
+    if (local && (atm->lon[ip] <= met0->lon[0]
+		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
+		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
       dt[ip] = 0.0;
   }
 }
