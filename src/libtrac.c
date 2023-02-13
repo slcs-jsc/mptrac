@@ -3585,11 +3585,12 @@ void read_met_grid(
   LOG(2, "Number of latitudes: %d", met->ny);
 
   if (ctl->vert_coord_met == 0) {
+    int dimid;
     sprintf(levname, "lev");
-  } else {
+    if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR)
+      sprintf(levname, "plev");
+  } else
     sprintf(levname, "hybrid");
-    printf("Meteorological data is in hybrid coordinates.");
-  }
   NC_INQ_DIM(levname, &met->np, 1, EP);
   if (met->np == 1) {
     int dimid;
