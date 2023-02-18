@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -41,16 +41,13 @@ int main(
   double h2o = atof(argv[2]);
   double hno3 = atof(argv[3]);
 
-  /* Calculate T_ice and T_NAT... */
-  double tice = TICE(p, h2o);
-  double tnat = nat_temperature(p, h2o, hno3);
-
   /* Write output... */
   printf("     p= %g hPa\n", p);
   printf(" q_H2O= %g ppv\n", h2o);
   printf("q_HNO3= %g ppv\n", hno3);
-  printf(" T_ice= %g K\n", tice);
-  printf(" T_NAT= %g K\n", tnat);
+  printf(" T_dew= %g K\n", TDEW(p, h2o));
+  printf(" T_ice= %g K\n", TICE(p, h2o));
+  printf(" T_NAT= %g K\n", nat_temperature(p, h2o, hno3));
 
   return EXIT_SUCCESS;
 }
