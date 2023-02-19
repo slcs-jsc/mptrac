@@ -22,4 +22,4 @@ nav:
         - References: references.md
         - Links: links.md
 
-theme: readthedocs
+theme: mkdocs
