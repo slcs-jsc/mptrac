@@ -1,7 +1,8 @@
 site_name: MPTRAC
-site_url: https://mptrac.readthedocs.io
+site_url: https://slcs-jsc.github.io/mptrac/
 repo_url: https://github.com/slcs-jsc/mptrac
 docs_dir: manual
+theme: readthedocs
 
 nav:
     - Home: index.md
@@ -21,5 +22,3 @@ nav:
     - Further information:
         - References: references.md
         - Links: links.md
-
-theme: readthedocs

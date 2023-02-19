@@ -8,9 +8,11 @@ Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian tran
 
 You can cite the source code of MPTRAC by using the DOI <https://doi.org/10.5281/zenodo.4400597>. This DOI represents all versions of MPTRAC, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the Zenodo web site.
 
-This is a list of selected papers in which MPTRAC was applied:
+This is a list of papers in which MPTRAC was applied:
 
 Cai, Z., Griessbach, S., and Hoffmann, L.: Improved estimation of volcanic SO2 injections from satellite retrievals and Lagrangian transport simulations: the 2019 Raikoke eruption, Atmos. Chem. Phys., 22, 6787–6809, <https://doi.org/10.5194/acp-22-6787-2022>, 2022.
+
+Hoffmann, L. and Spang, R.: An assessment of tropopause characteristics of the ERA5 and ERA-Interim meteorological reanalyses, Atmos. Chem. Phys., 22, 4019–4046, https://doi.org/10.5194/acp-22-4019-2022, 2022.
 
 Mishra, M.K., Hoffmann, L., Thapliyal, P.K.: Investigations on the Global Spread of the Hunga Tonga-Hunga Ha’apai Volcanic Eruption Using Space-Based Observations and Lagrangian Transport Simulations. Atmosphere, 13, 2055, <https://doi.org/10.3390/atmos13122055>, 2022.
 
