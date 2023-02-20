@@ -2,7 +2,7 @@ site_name: MPTRAC
 site_url: https://slcs-jsc.github.io/mptrac/
 repo_url: https://github.com/slcs-jsc/mptrac
 docs_dir: manual
-theme: readthedocs
+theme: material
 
 nav:
     - Home: index.md
