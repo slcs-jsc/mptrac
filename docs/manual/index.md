@@ -18,7 +18,7 @@ These are some of the most important features of the MPTRAC model:
 
 * MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
 
-* MPTRAC is distributed open source under the terms and conditions of the GNU GPL v3.
+* Distributed open source under the terms and conditions of the GNU GPL.
 
 ## Contact
 
