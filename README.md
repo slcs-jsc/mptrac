@@ -22,7 +22,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 * Additional modules are implemented to simulate convection, sedimentation, exponential decay, gas and aqueous phase chemistry, wet and dry deposition.
 * Meteo data pre-processing code to calculate boundary layer, convective available potential energy, geopotential heights, potential vorticity, and tropopause data.
 * Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
-* MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
+* MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
 * Distributed open source under the terms and conditions of the GNU GPL.
 
 ## Getting started
