@@ -16,7 +16,7 @@ These are some of the most important features of the MPTRAC model:
 
 * Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
 
-* MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
+* MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
 
 * Distributed open source under the terms and conditions of the GNU GPL.
 
