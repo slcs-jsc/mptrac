@@ -1154,8 +1154,11 @@ typedef struct {
   /*! Upper latitude of chemistry grid [deg]. */
   double chemgrid_lat1;
 
-  /*! Coefficients for dry deposition (v). */
-  double dry_depo[1];
+  /*! Dry deposition surface layer [hPa]. */
+  double dry_depo_dp;
+
+  /*! Dry deposition velocity [m/s]. */
+  double dry_depo_vdep;
 
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];

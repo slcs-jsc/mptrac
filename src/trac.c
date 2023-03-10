@@ -460,7 +460,7 @@ int main(
 	  }
 
 	  /* Dry deposition... */
-	  if (ctl.dry_depo[0] > 0)
+	  if (ctl.dry_depo_vdep > 0)
 	    module_dry_deposition(&ctl, met0, met1, atm, dt);
 
 	  /* Wet deposition... */
@@ -1000,9 +1000,6 @@ void module_dry_deposition(
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
 
-  /* Depth of the surface layer [hPa]. */
-  const double dp = 30.;
-
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
@@ -1024,11 +1021,11 @@ void module_dry_deposition(
       INTPOL_2D(ps, 1);
 
       /* Check whether particle is above the surface layer... */
-      if (atm->p[ip] < ps - dp)
+      if (atm->p[ip] < ps - ctl->dry_depo_dp)
 	continue;
 
       /* Set depth of surface layer... */
-      double dz = 1000. * (Z(ps - dp) - Z(ps));
+      double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
 
       /* Calculate sedimentation velocity for particles... */
       if (ctl->qnt_rp > 0 && ctl->qnt_rhop > 0) {
@@ -1043,7 +1040,7 @@ void module_dry_deposition(
 
       /* Use explicit sedimentation velocity for gases... */
       else
-	v_dep = ctl->dry_depo[0];
+	v_dep = ctl->dry_depo_vdep;
 
       /* Calculate loss of mass based on deposition velocity... */
       double aux = exp(-dt[ip] * v_dep / dz);
@@ -1887,7 +1884,7 @@ void module_timesteps(
     else
       dt[ip] = 0.0;
 
-    /* Check horizontal boundaries of local data... */
+    /* Check horizontal boundaries of local meteo data... */
     if (local && (atm->lon[ip] <= met0->lon[0]
 		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
 		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
