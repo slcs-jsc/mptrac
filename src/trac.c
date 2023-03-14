@@ -1743,7 +1743,7 @@ void module_sort(
   atm_t * atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SORT", "MEMORY", NVTX_GPU);
+  SELECT_TIMER("MODULE_SORT_BOXINDEX", "MEMORY", NVTX_GPU);
 
   /* Allocate... */
   const int np = atm->np;
@@ -1771,6 +1771,9 @@ void module_sort(
 								   [ip]));
     p[ip] = ip;
   }
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_SORT_THRUST", "MEMORY", NVTX_GPU);
 
   /* Sorting... */
 #ifdef _OPENACC
@@ -1801,6 +1804,9 @@ void module_sort(
     }
   }
 #endif
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_SORT_REORDERING", "MEMORY", NVTX_GPU);
 
   /* Sort data... */
   module_sort_help(atm->time, p, np);
