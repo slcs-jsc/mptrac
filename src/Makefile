@@ -117,13 +117,14 @@ ifeq ($(NVTX),1)
   LDFLAGS += -lnvToolsExt
 endif
 
-# Thrust...
+# Thrust... 
 ifeq ($(THRUST),1)
   ifeq ($(GPU),1)
-    CFLAGS += -DTHRUST -c++libs
-    LDFLAGS += -lthrustsort
+    CFLAGS += -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast
+    LDFLAGS += -lthrustsort_gpu
   else
-    $(error Thrust library only available for GPU)
+    CFLAGS += -DTHRUST 
+    LDFLAGS += -lthrustsort_cpu -L$(CUDA_PATH)/lib64 -lcudart -lstdc++ -lgomp 
   endif
 endif
 
