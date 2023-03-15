@@ -19,9 +19,9 @@ cd $target/src/$dir \
 	|| exit
 
 # Thrust sort...
-dir=thrustsort-1.0
+dir=thrustsort-1.2
 cd $target/src/$dir \
-    && cp -a libthrustsort.a $target/lib/ \
+    && cp -a libthrustsort_gpu.a libthrustsort_cpu.a $target/lib/ \
 	|| exit
 
 # zlib...
