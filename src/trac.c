@@ -1797,12 +1797,20 @@ void module_sort(
   }
 #else
   {
+#ifdef THRUST
+{
+  thrustSortWrapper(a, np, p);
+}
+#else
+{
 #pragma omp parallel
     {
 #pragma omp single nowait
       quicksort(a, p, 0, np - 1);
     }
   }
+#endif
+}
 #endif
 
   /* Sort data... */
