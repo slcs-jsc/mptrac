@@ -2,215 +2,251 @@
      p= 1000 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 201.232 K
+ T_dew= 197.072 K
+ T_ice= 201.385 K
  T_NAT= 205.827 K
 
      p= 1000 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 201.232 K
+ T_dew= 197.072 K
+ T_ice= 201.385 K
  T_NAT= 207.994 K
 
      p= 1000 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 201.232 K
+ T_dew= 197.072 K
+ T_ice= 201.385 K
  T_NAT= 209.281 K
 
      p= 1000 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 205.915 K
+ T_dew= 201.713 K
+ T_ice= 206.058 K
  T_NAT= 209.058 K
 
      p= 1000 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 205.915 K
+ T_dew= 201.713 K
+ T_ice= 206.058 K
  T_NAT= 211.292 K
 
      p= 1000 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 205.915 K
+ T_dew= 201.713 K
+ T_ice= 206.058 K
  T_NAT= 212.621 K
 
      p= 1000 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 208.757 K
+ T_dew= 204.548 K
+ T_ice= 208.894 K
  T_NAT= 210.996 K
 
      p= 1000 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 208.757 K
+ T_dew= 204.548 K
+ T_ice= 208.894 K
  T_NAT= 213.272 K
 
      p= 1000 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 208.757 K
+ T_dew= 204.548 K
+ T_ice= 208.894 K
  T_NAT= 214.625 K
 
      p= 100 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 187.096 K
+ T_dew= 183.31 K
+ T_ice= 187.28 K
  T_NAT= 192.612 K
 
      p= 100 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 187.096 K
+ T_dew= 183.31 K
+ T_ice= 187.28 K
  T_NAT= 194.513 K
 
      p= 100 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 187.096 K
+ T_dew= 183.31 K
+ T_ice= 187.28 K
  T_NAT= 195.642 K
 
      p= 100 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 191.138 K
+ T_dew= 187.208 K
+ T_ice= 191.313 K
  T_NAT= 195.434 K
 
      p= 100 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 191.138 K
+ T_dew= 187.208 K
+ T_ice= 191.313 K
  T_NAT= 197.391 K
 
      p= 100 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 191.138 K
+ T_dew= 187.208 K
+ T_ice= 191.313 K
  T_NAT= 198.553 K
 
      p= 100 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 193.584 K
+ T_dew= 189.582 K
+ T_ice= 193.754 K
  T_NAT= 197.124 K
 
      p= 100 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 193.584 K
+ T_dew= 189.582 K
+ T_ice= 193.754 K
  T_NAT= 199.114 K
 
      p= 100 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 193.584 K
+ T_dew= 189.582 K
+ T_ice= 193.754 K
  T_NAT= 200.297 K
 
      p= 10 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 174.817 K
+ T_dew= 171.642 K
+ T_ice= 175.025 K
  T_NAT= 180.997 K
 
      p= 10 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 174.817 K
+ T_dew= 171.642 K
+ T_ice= 175.025 K
  T_NAT= 182.678 K
 
      p= 10 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 174.817 K
+ T_dew= 171.642 K
+ T_ice= 175.025 K
  T_NAT= 183.676 K
 
      p= 10 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 178.34 K
+ T_dew= 174.963 K
+ T_ice= 178.542 K
  T_NAT= 183.483 K
 
      p= 10 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 178.34 K
+ T_dew= 174.963 K
+ T_ice= 178.542 K
  T_NAT= 185.211 K
 
      p= 10 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 178.34 K
+ T_dew= 174.963 K
+ T_ice= 178.542 K
  T_NAT= 186.236 K
 
      p= 10 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 180.468 K
+ T_dew= 176.979 K
+ T_ice= 180.665 K
  T_NAT= 184.97 K
 
      p= 10 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 180.468 K
+ T_dew= 176.979 K
+ T_ice= 180.665 K
  T_NAT= 186.725 K
 
      p= 10 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 180.468 K
+ T_dew= 176.979 K
+ T_ice= 180.665 K
  T_NAT= 187.767 K
 
      p= 1 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 164.049 K
+ T_dew= 161.625 K
+ T_ice= 164.28 K
  T_NAT= 170.707 K
 
      p= 1 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 164.049 K
+ T_dew= 161.625 K
+ T_ice= 164.28 K
  T_NAT= 172.205 K
 
      p= 1 hPa
  q_H2O= 2e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 164.049 K
+ T_dew= 161.625 K
+ T_ice= 164.28 K
  T_NAT= 173.092 K
 
      p= 1 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 167.148 K
+ T_dew= 164.488 K
+ T_ice= 167.373 K
  T_NAT= 172.914 K
 
      p= 1 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 167.148 K
+ T_dew= 164.488 K
+ T_ice= 167.373 K
  T_NAT= 174.45 K
 
      p= 1 hPa
  q_H2O= 4e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 167.148 K
+ T_dew= 164.488 K
+ T_ice= 167.373 K
  T_NAT= 175.361 K
 
      p= 1 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 1e-09 ppv
- T_ice= 169.016 K
+ T_dew= 166.222 K
+ T_ice= 169.237 K
  T_NAT= 174.232 K
 
      p= 1 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 4e-09 ppv
- T_ice= 169.016 K
+ T_dew= 166.222 K
+ T_ice= 169.237 K
  T_NAT= 175.792 K
 
      p= 1 hPa
  q_H2O= 6e-06 ppv
 q_HNO3= 9e-09 ppv
- T_ice= 169.016 K
+ T_dew= 166.222 K
+ T_ice= 169.237 K
  T_NAT= 176.717 K

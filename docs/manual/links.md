@@ -4,9 +4,9 @@ These links provide further information for users of MPTRAC:
 
 * [README file](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
 
-* [User manual](http://mptrac.readthedocs.io)
+* [User manual](https://slcs-jsc.github.io/mptrac)
 
-* [Doxygen manual](https://slcs-jsc.github.io/mptrac)
+* [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen)
 
 These links provide further informaton for developers of MPTRAC:
 

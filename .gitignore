@@ -2,6 +2,7 @@ mptrac_*.tgz
 bin/
 docs/html/
 docs/latex/
+docs/site/
 libs/build/
 projects/*
 projects/example/data/

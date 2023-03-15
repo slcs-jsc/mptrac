@@ -2595,9 +2595,10 @@ void read_ctl(
     for (int ip = 0; ip < 4; ip++)
       ctl->oh_chem[ip] =
 	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
-    for (int ip = 0; ip < 1; ip++)
-      ctl->dry_depo[ip] =
-	scan_ctl(filename, argc, argv, "DRY_DEPO", ip, "0", NULL);
+    ctl->dry_depo_vdep =
+      scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
+    ctl->dry_depo_dp =
+      scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
     ctl->wet_depo_ic_a =
       scan_ctl(filename, argc, argv, "WET_DEPO_IC_A", -1, "0", NULL);
     ctl->wet_depo_ic_b =

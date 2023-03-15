@@ -10,8 +10,8 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 [![codacy](https://api.codacy.com/project/badge/Grade/a9de7b2239f843b884d2a4eb583726c9)](https://app.codacy.com/gh/slcs-jsc/mptrac?utm_source=github.com&utm_medium=referral&utm_content=slcs-jsc/mptrac&utm_campaign=Badge_Grade_Settings)
 [![codecov](https://codecov.io/gh/slcs-jsc/mptrac/branch/master/graph/badge.svg?token=4X6IEHWUBJ)](https://codecov.io/gh/slcs-jsc/mptrac)
 [![tests](https://img.shields.io/github/actions/workflow/status/slcs-jsc/mptrac/tests.yml?branch=master&label=tests)](https://github.com/slcs-jsc/mptrac/actions)
-[![Documentation Status](https://readthedocs.org/projects/mptrac/badge/?version=latest)](http://mptrac.readthedocs.io)
-[![doxygen](https://img.shields.io/github/actions/workflow/status/slcs-jsc/mptrac/doxygen.yml?branch=master&label=doxygen)](https://slcs-jsc.github.io/mptrac)
+[![mkdocs](https://img.shields.io/github/actions/workflow/status/slcs-jsc/mptrac/mkdocs.yml?branch=master&label=mkdocs)](https://slcs-jsc.github.io/mptrac)
+[![doxygen](https://img.shields.io/github/actions/workflow/status/slcs-jsc/mptrac/doxygen.yml?branch=master&label=doxygen)](https://slcs-jsc.github.io/mptrac/doxygen)
 [![license](https://img.shields.io/github/license/slcs-jsc/mptrac.svg)](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 [![doi](https://zenodo.org/badge/DOI/10.5281/zenodo.4400597.svg)](https://doi.org/10.5281/zenodo.4400597)
 
@@ -19,9 +19,11 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 * MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given horizontal wind and vertical velocity fields.
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
-* Additional modules are implemented to simulate convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
+* Additional modules are implemented to simulate convection, sedimentation, exponential decay, gas and aqueous phase chemistry, wet and dry deposition.
+* Meteo data pre-processing code to calculate boundary layer, convective available potential energy, geopotential heights, potential vorticity, and tropopause data.
 * Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
-* MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
+* MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
+* Distributed open source under the terms and conditions of the GNU GPL.
 
 ## Getting started
 
@@ -102,7 +104,7 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for users and developers is provided in the [user manual](http://mptrac.readthedocs.io) and the [wiki](https://github.com/slcs-jsc/mptrac/wiki).
+More detailed information for users and developers is provided in the [user manual](https://slcs-jsc.github.io/mptrac) and the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
 
 These are the main references for citing the MPTRAC model in scientific publications:
 
@@ -110,7 +112,7 @@ These are the main references for citing the MPTRAC model in scientific publicat
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
-* You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the zenodo web site.
+* You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the Zenodo web site.
 
 Please see the [citation file](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff) for further information.
 

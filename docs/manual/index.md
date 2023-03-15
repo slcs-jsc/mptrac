@@ -10,13 +10,15 @@ These are some of the most important features of the MPTRAC model:
 
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
 
-* Additional modules are implemented to simulate convection, sedimentation, radioactive decay, hydroxyl chemistry, dry deposition, and wet deposition.
+* Additional modules are implemented to simulate convection, sedimentation, exponential decay, gas and aqueous phase chemistry, wet and dry deposition.
+
+* Meteo data pre-processing code to calculate boundary layer, convective available potential energy, geopotential heights, potential vorticity, and tropopause data.
 
 * Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
 
-* MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for efficient use on HPC and GPU systems.
+* MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
 
-* MPTRAC is distributed open source under the GNU GPL and available from the [MPTRAC GitHub repository](https://github.com/slcs-jsc/mptrac).
+* Distributed open source under the terms and conditions of the GNU GPL.
 
 ## Contact
 

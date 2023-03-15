@@ -478,9 +478,9 @@
 #define PSAT(t)							\
   (6.112 * exp(17.62 * ((t) - T0) / (243.12 + (t) - T0)))
 
-/*! Compute saturation pressure over ice (Marti and Mauersberger, 1993). */
+/*! Compute saturation pressure over ice (WMO, 2018). */
 #define PSICE(t)				\
-  (0.01 * pow(10., -2663.5 / (t) + 12.537))
+  (6.112 * exp(22.46 * ((t) - T0) / (272.62 + (t) - T0)))
 
 /*! Calculate partial water vapor pressure. */
 #define PW(p, h2o)					\
@@ -529,9 +529,10 @@
   (T0 + 243.12 * log(PW((p), (h2o)) / 6.112)	\
    / (17.62 - log(PW((p), (h2o)) / 6.112)))
 
-/*! Calculate frost point temperature (Marti and Mauersberger, 1993). */
-#define TICE(p, h2o)					\
-  (-2663.5 / (log10(100. * PW((p), (h2o))) - 12.537))
+/*! Calculate frost point temperature (WMO, 2018). */
+#define TICE(p, h2o)				\
+  (T0 + 272.62 * log(PW((p), (h2o)) / 6.112)	\
+   / (22.46 - log(PW((p), (h2o)) / 6.112)))
 
 /*! Compute potential temperature. */
 #define THETA(p, t)				\
@@ -1153,8 +1154,11 @@ typedef struct {
   /*! Upper latitude of chemistry grid [deg]. */
   double chemgrid_lat1;
 
-  /*! Coefficients for dry deposition (v). */
-  double dry_depo[1];
+  /*! Dry deposition surface layer [hPa]. */
+  double dry_depo_dp;
+
+  /*! Dry deposition velocity [m/s]. */
+  double dry_depo_vdep;
 
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
