@@ -2401,6 +2401,8 @@ void read_ctl(
     = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
   ctl->met_geopot_sy
     = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "-1", NULL);
+  ctl->met_relhum
+    = (int) scan_ctl(filename, argc, argv, "MET_RELHUM", -1, "0", NULL);
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
@@ -3671,6 +3673,18 @@ void read_met_levels(
 	  (ncid, "cswc", "CSWC", ctl, met, met->iwc, 1.0,
 	   ctl->met_cloud == 2))
 	WARN("Cannot read cloud snow water content!");
+    }
+    if (ctl->met_relhum) {
+      if (!read_met_nc_3d(ncid, "rh", "RH", ctl, met, met->h2o, 0.01f, 1))
+	WARN("Cannot read relative humidity!");
+#pragma omp parallel for default(shared) collapse(2)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++) {
+	    double pw = met->h2o[ix][iy][ip] * PSAT(met->t[ix][iy][ip]);
+	    met->h2o[ix][iy][ip] =
+	      (float) (pw / (met->p[ip] - (1.0 - EPS) * pw));
+	  }
     }
 
     /* Transfer from model levels to pressure levels... */

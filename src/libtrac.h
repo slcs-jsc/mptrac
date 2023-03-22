@@ -969,6 +969,9 @@ typedef struct {
   /*! Latitudinal smoothing of geopotential heights. */
   int met_geopot_sy;
 
+  /*! Try to read relative humidity (0=no, 1=yes). */
+  int met_relhum;
+
   /*! Tropopause definition
      (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). */
   int met_tropo;
