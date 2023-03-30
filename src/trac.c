@@ -1848,15 +1848,19 @@ void module_sort_help(
 #pragma acc enter data create(help[0:np])
 #pragma acc data present(a,p,help)
 #pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++)
     help[ip] = a[p[ip]];
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)  
 #endif
   for (int ip = 0; ip < np; ip++)
     a[ip] = help[ip];
-
+  
   /* Free... */
 #ifdef _OPENACC
 #pragma acc exit data delete(help)
