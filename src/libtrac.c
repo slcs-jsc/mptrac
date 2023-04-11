@@ -2779,6 +2779,44 @@ void read_ctl(
 
 /*****************************************************************************/
 
+void read_kernel(
+  char *filename,
+  double kz[EP],
+  double kw[EP],
+  int *nz) {
+
+  /* Write info... */
+  LOG(1, "Read kernel function: %s", filename);
+
+  /* Open file... */
+  FILE *in;
+  if (!(in = fopen(filename, "r")))
+    ERRMSG("Cannot open file!");
+
+  /* Read data... */
+  char line[LEN];
+  int n = 0;
+  while (fgets(line, LEN, in))
+    if (sscanf(line, "%lg %lg", &kz[n], &kw[n]) == 2)
+      if ((++n) >= EP)
+	ERRMSG("Too many height levels!");
+  
+  /* Close file... */
+  fclose(in);
+  
+  /* Check number of data points... */
+  *nz = n;  
+  if(n < 2)
+    ERRMSG("Not enough height levels!");
+  
+  /* Normalize kernel function... */
+  double kmax = gsl_stats_max(kw, 1, (size_t) n);
+  for (int iz = 0; iz < n; iz++)
+    kw[iz] /= kmax;
+}
+
+/*****************************************************************************/
+
 int read_met(
   char *filename,
   ctl_t * ctl,

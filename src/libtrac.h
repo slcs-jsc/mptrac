@@ -2003,6 +2003,13 @@ void read_ctl(
   char *argv[],
   ctl_t * ctl);
 
+/*! Read kernel data file. */
+void read_kernel(
+  char *filename,
+  double kz[EP],
+  double kw[EP],
+  int *nz);
+
 /*! Read meteo data file. */
 int read_met(
   char *filename,

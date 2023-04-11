@@ -1856,11 +1856,11 @@ void module_sort_help(
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
-#pragma omp parallel for default(shared)  
+#pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++)
     a[ip] = help[ip];
-  
+
   /* Free... */
 #ifdef _OPENACC
 #pragma acc exit data delete(help)

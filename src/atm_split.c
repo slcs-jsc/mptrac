@@ -14,12 +14,12 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
   \file
-  Split air parcels into a larger number of parcels.
+  Split air parcels into a larger set of parcels.
 */
 
 #include "libtrac.h"
@@ -34,12 +34,10 @@ int main(
 
   gsl_rng *rng;
 
-  FILE *in;
+  char kernel[LEN];
 
-  char kernel[LEN], line[LEN];
-
-  double dt, dx, dz, k, kk[EP], kz[EP], kmin, kmax, m, mmax = 0, mtot = 0,
-    t0, t1, z, z0, z1, lon0, lon1, lat0, lat1, zmin, zmax;
+  double dt, dx, dz, k, kk[EP], kz[EP], m, mmax = 0, mtot = 0, t0, t1,
+    z, z0, z1, lon0, lon1, lat0, lat1, zmin = 0, zmax = 0;
 
   int i, ip, iq, iz, n, nz = 0;
 
@@ -78,30 +76,9 @@ int main(
 
   /* Read kernel function... */
   if (kernel[0] != '-') {
-
-    /* Write info... */
-    LOG(1, "Read kernel function: %s", kernel);
-
-    /* Open file... */
-    if (!(in = fopen(kernel, "r")))
-      ERRMSG("Cannot open file!");
-
-    /* Read data... */
-    while (fgets(line, LEN, in))
-      if (sscanf(line, "%lg %lg", &kz[nz], &kk[nz]) == 2)
-	if ((++nz) >= EP)
-	  ERRMSG("Too many height levels!");
-
-    /* Close file... */
-    fclose(in);
-
-    /* Normalize kernel function... */
+    read_kernel(kernel, kz, kk, &nz);
     zmax = gsl_stats_max(kz, 1, (size_t) nz);
     zmin = gsl_stats_min(kz, 1, (size_t) nz);
-    kmax = gsl_stats_max(kk, 1, (size_t) nz);
-    kmin = gsl_stats_min(kk, 1, (size_t) nz);
-    for (iz = 0; iz < nz; iz++)
-      kk[iz] = (kk[iz] - kmin) / (kmax - kmin);
   }
 
   /* Get total and maximum mass... */
