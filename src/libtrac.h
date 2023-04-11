@@ -1340,6 +1340,9 @@ typedef struct {
   /*! Basename of sample data file. */
   char sample_basename[LEN];
 
+  /*! Kernel data file for sample output. */
+  char sample_kernel[LEN];
+
   /*! Observation data file for sample output. */
   char sample_obsfile[LEN];
 

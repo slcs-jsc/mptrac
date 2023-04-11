@@ -2759,6 +2759,8 @@ void read_ctl(
   /* Output of sample data... */
   scan_ctl(filename, argc, argv, "SAMPLE_BASENAME", -1, "-",
 	   ctl->sample_basename);
+  scan_ctl(filename, argc, argv, "SAMPLE_KERNEL", -1, "-",
+	   ctl->sample_kernel);
   scan_ctl(filename, argc, argv, "SAMPLE_OBSFILE", -1, "-",
 	   ctl->sample_obsfile);
   ctl->sample_dx =
@@ -2797,18 +2799,21 @@ void read_kernel(
   char line[LEN];
   int n = 0;
   while (fgets(line, LEN, in))
-    if (sscanf(line, "%lg %lg", &kz[n], &kw[n]) == 2)
+    if (sscanf(line, "%lg %lg", &kz[n], &kw[n]) == 2) {
+      if (n > 0 && kz[n] < kz[n - 1])
+	ERRMSG("Height levels must be ascending!");
       if ((++n) >= EP)
 	ERRMSG("Too many height levels!");
-  
+    }
+
   /* Close file... */
   fclose(in);
-  
+
   /* Check number of data points... */
-  *nz = n;  
-  if(n < 2)
+  *nz = n;
+  if (n < 2)
     ERRMSG("Not enough height levels!");
-  
+
   /* Normalize kernel function... */
   double kmax = gsl_stats_max(kw, 1, (size_t) n);
   for (int iz = 0; iz < n; iz++)
@@ -6636,9 +6641,10 @@ void write_sample(
 
   static FILE *out;
 
-  static double area, dlat, rmax2, *rt, *rz, *rlon, *rlat, *robs;
+  static double area, dlat, rmax2, *rt, *rz, *rlon, *rlat, *robs, kz[EP],
+    kw[EP];
 
-  static int nobs;
+  static int nobs, nz;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_SAMPLE", "OUTPUT", NVTX_WRITE);
@@ -6660,6 +6666,10 @@ void write_sample(
 
     /* Read observation data... */
     read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+
+    /* Read kernel data... */
+    if (ctl->sample_kernel[0] != '-')
+      read_kernel(ctl->sample_kernel, kz, kw, &nz);
 
     /* Create output file... */
     LOG(1, "Write sample data: %s", filename);
@@ -6735,8 +6745,22 @@ void write_sample(
 	  continue;
 
       /* Add mass... */
-      if (ctl->qnt_m >= 0)
-	mass += atm->q[ctl->qnt_m][ip];
+      if (ctl->qnt_m >= 0) {
+	if (nz < 2)
+	  mass += atm->q[ctl->qnt_m][ip];
+	else {
+	  double w = 0, z = Z(atm->p[ip]);
+	  if (z < kz[0])
+	    w = kw[0];
+	  else if (z > kz[nz - 1])
+	    w = kw[nz - 1];
+	  else {
+	    int idx = locate_irr(kz, nz, z);
+	    w = LIN(kz[idx], kw[idx], kz[idx + 1], kw[idx + 1], z);
+	  }
+	  mass += w * atm->q[ctl->qnt_m][ip];
+	}
+      }
       np++;
     }
 
