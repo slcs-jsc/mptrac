@@ -1265,6 +1265,9 @@ typedef struct {
   /*! Basename of grid data files. */
   char grid_basename[LEN];
 
+  /*! Kernel data file for grid output. */
+  char grid_kernel[LEN];
+
   /*! Gnuplot file for gridded data. */
   char grid_gpfile[LEN];
 

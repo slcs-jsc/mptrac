@@ -2737,6 +2737,7 @@ void read_ctl(
   /* Output of grid data... */
   scan_ctl(filename, argc, argv, "GRID_BASENAME", -1, "-",
 	   ctl->grid_basename);
+  scan_ctl(filename, argc, argv, "GRID_KERNEL", -1, "-", ctl->grid_kernel);
   scan_ctl(filename, argc, argv, "GRID_GPFILE", -1, "-", ctl->grid_gpfile);
   ctl->grid_dt_out =
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
@@ -5883,6 +5884,10 @@ void write_grid(
   atm_t * atm,
   double t) {
 
+  static double kz[EP], kw[EP];
+
+  static int nk;
+
   double *cd, *mass, *vmr_expl, *vmr_impl, *z, *lon, *lat, *area, *press;
 
   int *ixs, *iys, *izs, *np;
@@ -5892,6 +5897,14 @@ void write_grid(
 
   /* Write info... */
   LOG(1, "Write grid data: %s", filename);
+
+  /* Init... */
+  if (t == ctl->t_start) {
+
+    /* Read kernel data... */
+    if (ctl->grid_kernel[0] != '-')
+      read_kernel(ctl->grid_kernel, kz, kw, &nk);
+  }
 
   /* Allocate... */
   ALLOC(cd, double,
@@ -5967,9 +5980,11 @@ void write_grid(
 	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
       np[idx]++;
       if (ctl->qnt_m >= 0)
-	mass[idx] += atm->q[ctl->qnt_m][ip];
+	mass[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
+	  * atm->q[ctl->qnt_m][ip];
       if (ctl->qnt_vmr >= 0)
-	vmr_expl[idx] += atm->q[ctl->qnt_vmr][ip];
+	vmr_expl[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
+	  * atm->q[ctl->qnt_vmr][ip];
     }
 
   /* Calculate column density and vmr... */
@@ -6250,7 +6265,7 @@ int write_met(
     ERRMSG("zstd compression not supported!");
 #endif
 
-  /* Write binary... */
+  /* Write binary data... */
   if (ctl->met_type >= 1 && ctl->met_type <= 4) {
 
     /* Create file... */
