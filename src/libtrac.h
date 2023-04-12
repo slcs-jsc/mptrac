@@ -1217,7 +1217,10 @@ typedef struct {
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
-  /*! Time step for CSI data output [s]. */
+  /*! Kernel data file for CSI output. */
+  char csi_kernel[LEN];
+
+  /*! Time step for CSI output [s]. */
   double csi_dt_out;
 
   /*! Observation data file for CSI analysis. */

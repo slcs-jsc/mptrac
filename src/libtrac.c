@@ -2709,6 +2709,7 @@ void read_ctl(
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
+  scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
     scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
   scan_ctl(filename, argc, argv, "CSI_OBSFILE", -1, "-", ctl->csi_obsfile);
@@ -5548,9 +5549,9 @@ void write_csi(
   static FILE *out;
 
   static double *modmean, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
-    dlon, dlat, dz, x[NCSI], y[NCSI];
+    dlon, dlat, dz, x[NCSI], y[NCSI], kz[EP], kw[EP];
 
-  static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs;
+  static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs, nk;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_CSI", "OUTPUT", NVTX_WRITE);
@@ -5578,6 +5579,10 @@ void write_csi(
 
     /* Read observation data... */
     read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+
+    /* Read kernel data... */
+    if (ctl->csi_kernel[0] != '-')
+      read_kernel(ctl->csi_kernel, kz, kw, &nk);
 
     /* Create new file... */
     LOG(1, "Write CSI data: %s", filename);
@@ -5678,7 +5683,8 @@ void write_csi(
 
     /* Get total mass in grid cell... */
     int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-    modmean[idx] += atm->q[ctl->qnt_m][ip];
+    modmean[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
+      * atm->q[ctl->qnt_m][ip];
   }
 
   /* Analyze all grid cells... */
