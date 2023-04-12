@@ -1,7 +1,6 @@
 #! /bin/bash
 
 # Set environment...
-ml GCC ParaStationMPI      # for MPI runs
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export OMP_NUM_THREADS=4
 
@@ -11,12 +10,13 @@ trac=../../src
 # Create directories...
 rm -rf data plots && mkdir -p data plots
 
-# Set timestep and timerange of simulation...
+# Set time range of simulation...
 t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
 t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
+# Set quantities...
 NQ = 9
 QNT_NAME[0] = t
 QNT_NAME[1] = u
@@ -27,23 +27,35 @@ QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
 QNT_NAME[8] = m
+
+# Meteorological input data...
 METBASE = ../../tests/data/ei
+DT_MET = 86400.0
+
+# Sampling frequency of meteo data along the trajectories...
 MET_DT_OUT = 86400.0
-CLIM_OH_FILENAME = ../../data/clams_radical_species.nc
+
+# Select model default parameters for sulfur dioxide...
 SPECIES = SO2
-BOUND_MASS = 0.0
-BOUND_DPS = 100.0
-CONV_CAPE = 0.0
+
+# Apply exponential lifetime to air parcel mass...
 TDEC_TROP = 259200.0
 TDEC_STRAT = 259200.0
-DT_MET = 86400.0
-T_STOP = $t1
+
+# Switch on extreme convection parametrization...
+CONV_CAPE = 0.0
+
+# Activate air parcel output...
+ATM_BASENAME = atm
+
+# Activate grid output...
+GRID_BASENAME = grid
 GRID_LON0 = -90
 GRID_LON1 = 60
-GRID_LAT0 = -60
-GRID_LAT1 = -15
 GRID_NX = 300
-GRID_NY = 90
+GRID_LAT0 = -65
+GRID_LAT1 = -15
+GRID_NY = 100
 EOF
 
 # Set initial air parcel positions...
@@ -59,8 +71,7 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 
 # Calculate trajectories...
 echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm GRID_BASENAME grid 
+$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP $t1
 
 # Plot air parcel data...
 echo
@@ -69,20 +80,26 @@ for f in $(ls data/atm_2011*tab) ; do
     t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
-set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
+set term pngcairo truecolor crop linewidth 2 font "Helvetica,24" size 1440,900
 set size ratio 0.75
-set pal def
+set grid lw 0.75
+
+set cbla "Altitude [km]"
 set cbra [5:15]
-set cbla "altitude [km]"
-set xla "longitude [deg]"
-set yla "latitude [deg]"
-set xtics 30
-set ytics 10
-set mxtics 6
-set mytics 5
+set pal def
+
+set xtics geographic
+set format x "%D°%E"
 set xra [-90:60]
-set yra [-60:-15]
-set grid
+set xtics 30
+set mxtics 6
+
+set ytics geographic
+set format y "%D°%N"
+set yra [-65:-15]
+set ytics 10
+set mytics 5
+
 set title "MPTRAC | $t"
 plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
     "../data/wcl.tab" u 1:2 w l lt -1 t "", \
@@ -98,21 +115,27 @@ for f in $(ls data/grid_2011*tab) ; do
     t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
 set out "plots/$(basename $f).png"
-set term png truecolor crop linewidth 2 font "Helvetica" 24 size 1440,900
+set term pngcairo truecolor crop linewidth 2 font "Helvetica,24" size 1440,900
 set size ratio 0.75
+set grid lw 0.75
+
 set pm3d map interp 4,4
 set pal def (0 'gray90', 1 'blue', 2 'cyan', 3 'green', 4 'yellow', 5 'orange', 6 'red')
-set cbla "column density [g/m^2]"
+set cbla "Column density [g/m^2]"
 set cbra [0:1]
-set xla "longitude [deg]"
-set yla "latitude [deg]"
-set xtics 30
-set ytics 10
-set mxtics 6
-set mytics 5
+
+set xtics geographic
+set format x "%D°%E"
 set xra [-90:60]
-set yra [-60:-15]
-set grid
+set xtics 30
+set mxtics 6
+
+set ytics geographic
+set format y "%D°%N"
+set yra [-65:-15]
+set ytics 10
+set mytics 5
+
 set title "MPTRAC | $t"
 splot "$f" u 3:4:(1e3*\$8) t "", \
     "../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
