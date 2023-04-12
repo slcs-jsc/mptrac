@@ -1915,6 +1915,16 @@ void jsec2time(
   int *sec,
   double *remain);
 
+/*! Get weighting factor from kernel function. */
+#ifdef _OPENACC
+#pragma acc routine (kernel_weight)
+#endif
+double kernel_weight(
+  double kz[EP],
+  double kw[EP],
+  int nk,
+  double p);
+
 /*! Calculate moist adiabatic lapse rate. */
 #ifdef _OPENACC
 #pragma acc routine (lapse_rate)
@@ -2011,7 +2021,7 @@ void read_kernel(
   char *filename,
   double kz[EP],
   double kw[EP],
-  int *nz);
+  int *nk);
 
 /*! Read meteo data file. */
 int read_met(

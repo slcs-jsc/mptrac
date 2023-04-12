@@ -1772,6 +1772,32 @@ void jsec2time(
 
 /*****************************************************************************/
 
+double kernel_weight(
+  double kz[EP],
+  double kw[EP],
+  int nk,
+  double p) {
+
+  /* Check number of data points... */
+  if (nk < 2)
+    return 1.0;
+
+  /* Get altitude... */
+  double z = Z(p);
+
+  /* Get weighting factor... */
+  if (z < kz[0])
+    return kw[0];
+  else if (z > kz[nk - 1])
+    return kw[nk - 1];
+  else {
+    int idx = locate_irr(kz, nk, z);
+    return LIN(kz[idx], kw[idx], kz[idx + 1], kw[idx + 1], z);
+  }
+}
+
+/*****************************************************************************/
+
 double lapse_rate(
   double t,
   double h2o) {
@@ -2785,7 +2811,7 @@ void read_kernel(
   char *filename,
   double kz[EP],
   double kw[EP],
-  int *nz) {
+  int *nk) {
 
   /* Write info... */
   LOG(1, "Read kernel function: %s", filename);
@@ -2810,7 +2836,7 @@ void read_kernel(
   fclose(in);
 
   /* Check number of data points... */
-  *nz = n;
+  *nk = n;
   if (n < 2)
     ERRMSG("Not enough height levels!");
 
@@ -6644,7 +6670,7 @@ void write_sample(
   static double area, dlat, rmax2, *rt, *rz, *rlon, *rlat, *robs, kz[EP],
     kw[EP];
 
-  static int nobs, nz;
+  static int nobs, nk;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_SAMPLE", "OUTPUT", NVTX_WRITE);
@@ -6669,7 +6695,7 @@ void write_sample(
 
     /* Read kernel data... */
     if (ctl->sample_kernel[0] != '-')
-      read_kernel(ctl->sample_kernel, kz, kw, &nz);
+      read_kernel(ctl->sample_kernel, kz, kw, &nk);
 
     /* Create output file... */
     LOG(1, "Write sample data: %s", filename);
@@ -6745,22 +6771,9 @@ void write_sample(
 	  continue;
 
       /* Add mass... */
-      if (ctl->qnt_m >= 0) {
-	if (nz < 2)
-	  mass += atm->q[ctl->qnt_m][ip];
-	else {
-	  double w = 0, z = Z(atm->p[ip]);
-	  if (z < kz[0])
-	    w = kw[0];
-	  else if (z > kz[nz - 1])
-	    w = kw[nz - 1];
-	  else {
-	    int idx = locate_irr(kz, nz, z);
-	    w = LIN(kz[idx], kw[idx], kz[idx + 1], kw[idx + 1], z);
-	  }
-	  mass += w * atm->q[ctl->qnt_m][ip];
-	}
-      }
+      if (ctl->qnt_m >= 0)
+	mass +=
+	  kernel_weight(kz, kw, nk, atm->p[ip]) * atm->q[ctl->qnt_m][ip];
       np++;
     }
 

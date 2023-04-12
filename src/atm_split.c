@@ -36,10 +36,10 @@ int main(
 
   char kernel[LEN];
 
-  double dt, dx, dz, k, kk[EP], kz[EP], m, mmax = 0, mtot = 0, t0, t1,
+  double dt, dx, dz, k, kw[EP], kz[EP], m, mmax = 0, mtot = 0, t0, t1,
     z, z0, z1, lon0, lon1, lat0, lat1, zmin = 0, zmax = 0;
 
-  int i, ip, iq, iz, n, nz = 0;
+  int i, ip, iq, n, nk = 0;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -76,9 +76,9 @@ int main(
 
   /* Read kernel function... */
   if (kernel[0] != '-') {
-    read_kernel(kernel, kz, kk, &nz);
-    zmax = gsl_stats_max(kz, 1, (size_t) nz);
-    zmin = gsl_stats_min(kz, 1, (size_t) nz);
+    read_kernel(kernel, kz, kw, &nk);
+    zmax = gsl_stats_max(kz, 1, (size_t) nk);
+    zmin = gsl_stats_min(kz, 1, (size_t) nk);
   }
 
   /* Get total and maximum mass... */
@@ -110,11 +110,10 @@ int main(
 
     /* Set vertical position... */
     do {
-      if (nz > 0) {
+      if (nk > 0) {
 	do {
 	  z = zmin + (zmax - zmin) * gsl_rng_uniform_pos(rng);
-	  iz = locate_irr(kz, nz, z);
-	  k = LIN(kz[iz], kk[iz], kz[iz + 1], kk[iz + 1], z);
+	  k = kernel_weight(kz, kw, nk, P(z));
 	} while (gsl_rng_uniform(rng) > k);
 	atm2->p[atm2->np] = P(z);
       } else if (z1 > z0)
