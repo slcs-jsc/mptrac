@@ -34,14 +34,12 @@ int main(
 
   FILE *out;
 
-  char tstr[LEN];
-
   double *ahtd, *aqtd, *avtd, ahtdm, aqtdm[NQ], avtdm, lat0, lat1,
     *lat1_old, *lat2_old, *lh1, *lh2, lon0, lon1, *lon1_old, *lon2_old,
     *lv1, *lv2, p0, p1, *rhtd, *rqtd, *rvtd, rhtdm, rqtdm[NQ], rvtdm,
     t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work, zscore;
 
-  int ens, f, init = 0, ip, iq, np, year, mon, day, hour, min;
+  int ens, f, init = 0, ip, iq, np;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -133,23 +131,7 @@ int main(
       ERRMSG("Different numbers of particles!");
 
     /* Get time from filename... */
-    size_t len = strlen(argv[f]);
-    sprintf(tstr, "%.4s", &argv[f][len - 20]);
-    year = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 15]);
-    mon = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 12]);
-    day = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 9]);
-    hour = atoi(tstr);
-    sprintf(tstr, "%.2s", &argv[f][len - 6]);
-    min = atoi(tstr);
-    time2jsec(year, mon, day, hour, min, 0, 0, &t);
-
-    /* Check time... */
-    if (year < 1900 || year > 2100 || mon < 1 || mon > 12 || day < 1
-	|| day > 31 || hour < 0 || hour > 23 || min < 0 || min > 59)
-      ERRMSG("Cannot read time from filename!");
+    t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
 
     /* Save initial time... */
     if (!init) {

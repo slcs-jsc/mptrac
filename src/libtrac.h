@@ -2221,6 +2221,11 @@ void timer(
   const char *group,
   int output);
 
+/*! Extract time information from filename. */
+double time_from_filename(
+  const char *filename,
+  int offset);
+
 /*! Get weighting factor based on tropopause distance. */
 #ifdef _OPENACC
 #pragma acc routine (tropo_weight)

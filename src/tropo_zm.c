@@ -43,7 +43,7 @@ int main(
 
   static FILE *out;
 
-  static char tstr[LEN], varname[LEN];
+  static char varname[LEN];
 
   static double time0, lons[EX], lats[EY], zm[EY], zs[EY], pm[EY],
     ps[EY], tm[EY], ts[EY], qm[EY], qs[EY], o3m[EY], o3s[EY];
@@ -52,7 +52,7 @@ int main(
     tropo_t0[EX][EY], tropo_q0[EX][EY], tropo_o30[EX][EY];
 
   static int ncid, varid, varid_z, varid_p, varid_t, varid_q, varid_o3, h2o,
-    o3, n[EY], nt[EY], year, mon, day, init, ntime, nlon, nlat, ilon, ilat;
+    o3, n[EY], nt[EY], init, ntime, nlon, nlat, ilon, ilat;
 
   static size_t count[10], start[10];
 
@@ -103,14 +103,7 @@ int main(
       /* Get time from filename... */
       if (!init) {
 	init = 1;
-	size_t len = strlen(argv[iarg]);
-	sprintf(tstr, "%.4s", &argv[iarg][len - 13]);
-	year = atoi(tstr);
-	sprintf(tstr, "%.2s", &argv[iarg][len - 8]);
-	mon = atoi(tstr);
-	sprintf(tstr, "%.2s", &argv[iarg][len - 5]);
-	day = atoi(tstr);
-	time2jsec(year, mon, day, 0, 0, 0, 0, &time0);
+	time0 = time_from_filename(argv[iarg], 13);
       }
 
       /* Read data... */

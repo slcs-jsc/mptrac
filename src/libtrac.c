@@ -3588,9 +3588,10 @@ void read_met_grid(
 
   char levname[LEN], tstr[10];
 
-  double rtime, r2;
+  double rtime, r, r2;
 
-  int varid, year2, mon2, day2, hour2, min2, sec2, year, mon, day, hour;
+  int varid, year2, mon2, day2, hour2, min2, sec2,
+    year, mon, day, hour, min, sec;
 
   size_t np;
 
@@ -3602,18 +3603,10 @@ void read_met_grid(
   if (ctl->clams_met_data == 0) {
 
     /* Get time from filename... */
-    size_t len = strlen(filename);
-    sprintf(tstr, "%.4s", &filename[len - 16]);
-    year = atoi(tstr);
-    sprintf(tstr, "%.2s", &filename[len - 11]);
-    mon = atoi(tstr);
-    sprintf(tstr, "%.2s", &filename[len - 8]);
-    day = atoi(tstr);
-    sprintf(tstr, "%.2s", &filename[len - 5]);
-    hour = atoi(tstr);
-    time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
+    met->time = time_from_filename(filename, 16);
 
     /* Check time information from data file... */
+    jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
       NC(nc_get_var_double(ncid, varid, &rtime));
       if (fabs(year * 10000. + mon * 100. + day + hour / 24. - rtime) > 1.0)
@@ -5129,6 +5122,41 @@ void timer(
 
   /* Save starting time... */
   t0 = t1;
+}
+
+/*****************************************************************************/
+
+double time_from_filename(
+  const char *filename,
+  int offset) {
+
+  char tstr[10];
+
+  double t;
+
+  /* Get time from filename... */
+  int len = (int) strlen(filename);
+  sprintf(tstr, "%.4s", &filename[len - offset]);
+  int year = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[len - offset + 5]);
+  int mon = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[len - offset + 8]);
+  int day = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[len - offset + 11]);
+  int hour = atoi(tstr);
+  sprintf(tstr, "%.2s", &filename[len - offset + 14]);
+  int min = atoi(tstr);
+
+  /* Check time... */
+  if (year < 1900 || year > 2100 || mon < 1 || mon > 12 || day < 1
+      || day > 31 || hour < 0 || hour > 23 || min < 0 || min > 59)
+    ERRMSG("Cannot read time from filename!");
+
+  /* Convert time to Julian seconds... */
+  time2jsec(year, mon, day, hour, min, 0, 0.0, &t);
+
+  /* Return time... */
+  return t;
 }
 
 /*****************************************************************************/
