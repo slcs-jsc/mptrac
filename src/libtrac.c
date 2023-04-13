@@ -5417,7 +5417,7 @@ void write_atm_clams(
   if (out_cnt == 0) {
 
     /* Create file... */
-    nc_create(filename_out, NC_CLOBBER, &ncid);
+    NC(nc_create(filename_out, NC_CLOBBER, &ncid));
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
@@ -5479,7 +5479,7 @@ void write_atm_clams(
     printf("Write init file: %s\n", filename_init);
 
     /* Create file... */
-    nc_create(filename_init, NC_CLOBBER, &ncid);
+    NC(nc_create(filename_init, NC_CLOBBER, &ncid));
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -5533,7 +5533,7 @@ void write_atm_nc(
   size_t start[2], count[2];
 
   /* Create file... */
-  nc_create(filename, NC_CLOBBER, &ncid);
+  NC(nc_create(filename, NC_CLOBBER, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "obs", (size_t) atm->np, &obsid));
@@ -6205,7 +6205,7 @@ void write_grid_nc(
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
 
   /* Create file... */
-  nc_create(filename, NC_CLOBBER, &ncid);
+  NC(nc_create(filename, NC_CLOBBER, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &dimid[0]));
