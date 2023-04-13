@@ -135,7 +135,7 @@ int main(
   NC_PUT_FLOAT("PEL_MPT", help, 0);
 
   /* Close file... */
-  nc_close(ncid);
+  NC(nc_close(ncid));
 
   /* Free... */
   free(clim);

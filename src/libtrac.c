@@ -3664,7 +3664,7 @@ void read_met_grid(
     sprintf(levname, "lev_2");
     if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
       sprintf(levname, "plev");
-      nc_inq_dimid(ncid, levname, &dimid);
+      NC(nc_inq_dimid(ncid, levname, &dimid));
     }
     NC(nc_inq_dimlen(ncid, dimid, &np));
     met->np = (int) np;
