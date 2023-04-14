@@ -42,9 +42,10 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, lwc, iwc, p0, p1, ps, ts, zs, us, vs, pbl, pt,
-    pct, pcb, cl, plcl, plfc, pel, cape, cin, pv, t, tt, u, v, w, z, zm, zref,
-    zt, cw[3], time_old = -999, p_old = -999, lon_old = -999, lat_old = -999;
+  double h2o, h2ot, o3, lwc, iwc, cc, p0, p1, ps, ts, zs, us, vs, lsm, sst,
+    pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, pv, t, tt, u, v, w,
+    z, zm, zref, zt, cw[3], time_old = -999, p_old = -999, lon_old = -999,
+    lat_old = -999;
 
   int geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];
 
@@ -84,51 +85,7 @@ int main(
     ERRMSG("Cannot create file!");
 
   /* Write header... */
-  fprintf(out,
-	  "# $1 = time [s]\n"
-	  "# $2 = altitude [km]\n"
-	  "# $3 = longitude [deg]\n"
-	  "# $4 = latitude [deg]\n"
-	  "# $5 = pressure [hPa]\n"
-	  "# $6 = temperature [K]\n"
-	  "# $7 = zonal wind [m/s]\n"
-	  "# $8 = meridional wind [m/s]\n"
-	  "# $9 = vertical velocity [hPa/s]\n"
-	  "# $10 = H2O volume mixing ratio [ppv]\n");
-  fprintf(out,
-	  "# $11 = O3 volume mixing ratio [ppv]\n"
-	  "# $12 = geopotential height [km]\n"
-	  "# $13 = potential vorticity [PVU]\n"
-	  "# $14 = surface pressure [hPa]\n"
-	  "# $15 = surface temperature [K]\n"
-	  "# $16 = surface geopotential height [km]\n"
-	  "# $17 = surface zonal wind [m/s]\n"
-	  "# $18 = surface meridional wind [m/s]\n"
-	  "# $19 = tropopause pressure [hPa]\n"
-	  "# $20 = tropopause geopotential height [km]\n");
-  fprintf(out,
-	  "# $21 = tropopause temperature [K]\n"
-	  "# $22 = tropopause water vapor [ppv]\n"
-	  "# $23 = cloud liquid water content [kg/kg]\n"
-	  "# $24 = cloud ice water content [kg/kg]\n"
-	  "# $25 = total column cloud water [kg/m^2]\n"
-	  "# $26 = cloud top pressure [hPa]\n"
-	  "# $27 = cloud bottom pressure [hPa]\n"
-	  "# $28 = pressure at lifted condensation level (LCL) [hPa]\n"
-	  "# $29 = pressure at level of free convection (LFC) [hPa]\n"
-	  "# $30 = pressure at equilibrium level (EL) [hPa]\n");
-  fprintf(out,
-	  "# $31 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $32 = convective inhibition (CIN) [J/kg]\n"
-	  "# $33 = relative humidity over water [%%]\n"
-	  "# $34 = relative humidity over ice [%%]\n"
-	  "# $35 = dew point temperature [K]\n"
-	  "# $36 = frost point temperature [K]\n"
-	  "# $37 = NAT temperature [K]\n"
-	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
-	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = H2O2 concentration [molec/cm^3]\n"
-	  "# $41 = boundary layer pressure [hPa]\n");
+  MET_HEADER;
 
   /* Loop over air parcels... */
   for (ip = 0; ip < atm->np; ip++) {
@@ -170,12 +127,13 @@ int main(
 
     /* Write data... */
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
-	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
-	    pt, zt, tt, h2ot, lwc, iwc, cl, pct, pcb, plcl, plfc, pel, cape,
-	    cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
+	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs, lsm,
+	    sst, pt, zt, tt, h2ot, lwc, iwc, cc, cl, pct, pcb, plcl, plfc,
+	    pel, cape, cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(clim, atm->time[ip], atm->lat[ip],

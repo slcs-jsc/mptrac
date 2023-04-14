@@ -51,16 +51,17 @@ int main(
   FILE *out;
 
   static double timem[NZ][NY], psm[NZ][NY], tsm[NZ][NY], zsm[NZ][NY],
-    usm[NZ][NY], vsm[NZ][NY], pblm[NZ][NY], ptm[NZ][NY], pctm[NZ][NY],
-    pcbm[NZ][NY], clm[NZ][NY], plclm[NZ][NY], plfcm[NZ][NY], pelm[NZ][NY],
-    capem[NZ][NY], cinm[NZ][NY], ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY],
-    um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY], h2otm[NZ][NY],
-    pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY], zm[NZ][NY],
-    rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY],
-    hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY], z, z0, z1, dz, zt, tt,
-    plev[NZ], ps, ts, zs, us, vs, pbl, pt, pct, pcb, plcl, plfc, pel,
-    cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc,
-    lat, lat0, lat1, dlat, lats[NY], lon0, lon1, lonm[NZ][NY], cw[3];
+    usm[NZ][NY], vsm[NZ][NY], lsmm[NZ][NY], sstm[NZ][NY], pblm[NZ][NY],
+    ptm[NZ][NY], pctm[NZ][NY], pcbm[NZ][NY], clm[NZ][NY], plclm[NZ][NY],
+    plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY], cinm[NZ][NY], ttm[NZ][NY],
+    ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY],
+    h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY],
+    ccm[NZ][NY], zm[NZ][NY], rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY],
+    ticem[NZ][NY], tnatm[NZ][NY], hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY],
+    z, z0, z1, dz, zt, tt, plev[NZ], ps, ts, zs, us, vs, lsm, sst, pbl, pt,
+    pct, pcb, plcl, plfc, pel, cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3,
+    lwc, iwc, cc, lat, lat0, lat1, dlat, lats[NY], lon0, lon1,
+    lonm[NZ][NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npc[NZ][NY], npt[NZ][NY], ny, nz,
     ci[3];
@@ -150,11 +151,14 @@ int main(
 	    o3m[iz][iy] += o3;
 	    lwcm[iz][iy] += lwc;
 	    iwcm[iz][iy] += iwc;
+	    ccm[iz][iy] += cc;
 	    psm[iz][iy] += ps;
 	    tsm[iz][iy] += ts;
 	    zsm[iz][iy] += zs;
 	    usm[iz][iy] += us;
 	    vsm[iz][iy] += vs;
+	    lsmm[iz][iy] += lsm;
+	    sstm[iz][iy] += sst;
 	    pblm[iz][iy] += pbl;
 	    pctm[iz][iy] += pct;
 	    pcbm[iz][iy] += pcb;
@@ -197,63 +201,15 @@ int main(
     ERRMSG("Cannot create file!");
 
   /* Write header... */
-  fprintf(out,
-	  "# $1 = time [s]\n"
-	  "# $2 = altitude [km]\n"
-	  "# $3 = longitude [deg]\n"
-	  "# $4 = latitude [deg]\n"
-	  "# $5 = pressure [hPa]\n"
-	  "# $6 = temperature [K]\n"
-	  "# $7 = zonal wind [m/s]\n"
-	  "# $8 = meridional wind [m/s]\n"
-	  "# $9 = vertical velocity [hPa/s]\n"
-	  "# $10 = H2O volume mixing ratio [ppv]\n");
-  fprintf(out,
-	  "# $11 = O3 volume mixing ratio [ppv]\n"
-	  "# $12 = geopotential height [km]\n"
-	  "# $13 = potential vorticity [PVU]\n"
-	  "# $14 = surface pressure [hPa]\n"
-	  "# $15 = surface temperature [K]\n"
-	  "# $16 = surface geopotential height [km]\n"
-	  "# $17 = surface zonal wind [m/s]\n"
-	  "# $18 = surface meridional wind [m/s]\n"
-	  "# $19 = tropopause pressure [hPa]\n"
-	  "# $20 = tropopause geopotential height [km]\n");
-  fprintf(out,
-	  "# $21 = tropopause temperature [K]\n"
-	  "# $22 = tropopause water vapor [ppv]\n"
-	  "# $23 = cloud liquid water content [kg/kg]\n"
-	  "# $24 = cloud ice water content [kg/kg]\n"
-	  "# $25 = total column cloud water [kg/m^2]\n"
-	  "# $26 = cloud top pressure [hPa]\n"
-	  "# $27 = cloud bottom pressure [hPa]\n"
-	  "# $28 = pressure at lifted condensation level (LCL) [hPa]\n"
-	  "# $29 = pressure at level of free convection (LFC) [hPa]\n"
-	  "# $30 = pressure at equilibrium level (EL) [hPa]\n");
-  fprintf(out,
-	  "# $31 = convective available potential energy (CAPE) [J/kg]\n"
-	  "# $32 = convective inhibition (CIN) [J/kg]\n"
-	  "# $33 = relative humidity over water [%%]\n"
-	  "# $34 = relative humidity over ice [%%]\n"
-	  "# $35 = dew point temperature [K]\n"
-	  "# $36 = frost point temperature [K]\n"
-	  "# $37 = NAT temperature [K]\n"
-	  "# $38 = HNO3 volume mixing ratio [ppv]\n"
-	  "# $39 = OH concentration [molec/cm^3]\n"
-	  "# $40 = H2O2 concentration [molec/cm^3]\n");
-  fprintf(out,
-	  "# $41 = boundary layer pressure [hPa]\n"
-	  "# $42 = number of data points\n"
-	  "# $43 = number of tropopause data points\n"
-	  "# $44 = number of CAPE data points\n");
+  MET_HEADER;
 
   /* Write data... */
   for (iz = 0; iz < nz; iz++) {
     fprintf(out, "\n");
     for (iy = 0; iy < ny; iy++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
@@ -263,18 +219,20 @@ int main(
 	      zm[iz][iy] / np[iz][iy], pvm[iz][iy] / np[iz][iy],
 	      psm[iz][iy] / np[iz][iy], tsm[iz][iy] / np[iz][iy],
 	      zsm[iz][iy] / np[iz][iy], usm[iz][iy] / np[iz][iy],
-	      vsm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
+	      vsm[iz][iy] / np[iz][iy], lsmm[iz][iy] / np[iz][iy],
+	      sstm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
 	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy],
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
-	      iwcm[iz][iy] / np[iz][iy], clm[iz][iy] / np[iz][iy],
-	      pctm[iz][iy] / np[iz][iy], pcbm[iz][iy] / np[iz][iy],
-	      plclm[iz][iy] / npc[iz][iy], plfcm[iz][iy] / npc[iz][iy],
-	      pelm[iz][iy] / npc[iz][iy], capem[iz][iy] / npc[iz][iy],
-	      cinm[iz][iy] / npc[iz][iy], rhm[iz][iy] / np[iz][iy],
-	      rhicem[iz][iy] / np[iz][iy], tdewm[iz][iy] / np[iz][iy],
-	      ticem[iz][iy] / np[iz][iy], tnatm[iz][iy] / np[iz][iy],
-	      hno3m[iz][iy] / np[iz][iy], ohm[iz][iy] / np[iz][iy],
-	      h2o2m[iz][iy] / np[iz][iy], pblm[iz][iy] / np[iz][iy],
+	      iwcm[iz][iy] / np[iz][iy], ccm[iz][iy] / np[iz][iy],
+	      clm[iz][iy] / np[iz][iy], pctm[iz][iy] / np[iz][iy],
+	      pcbm[iz][iy] / np[iz][iy], plclm[iz][iy] / npc[iz][iy],
+	      plfcm[iz][iy] / npc[iz][iy], pelm[iz][iy] / npc[iz][iy],
+	      capem[iz][iy] / npc[iz][iy], cinm[iz][iy] / npc[iz][iy],
+	      rhm[iz][iy] / np[iz][iy], rhicem[iz][iy] / np[iz][iy],
+	      tdewm[iz][iy] / np[iz][iy], ticem[iz][iy] / np[iz][iy],
+	      tnatm[iz][iy] / np[iz][iy], hno3m[iz][iy] / np[iz][iy],
+	      ohm[iz][iy] / np[iz][iy], h2o2m[iz][iy] / np[iz][iy],
+	      pblm[iz][iy] / np[iz][iy],
 	      np[iz][iy], npt[iz][iy], npc[iz][iy]);
   }
 

@@ -2241,6 +2241,8 @@ void read_ctl(
   ctl->qnt_zs = -1;
   ctl->qnt_us = -1;
   ctl->qnt_vs = -1;
+  ctl->qnt_lsm = -1;
+  ctl->qnt_sst = -1;
   ctl->qnt_pbl = -1;
   ctl->qnt_pt = -1;
   ctl->qnt_tt = -1;
@@ -2257,6 +2259,7 @@ void read_ctl(
   ctl->qnt_o3 = -1;
   ctl->qnt_lwc = -1;
   ctl->qnt_iwc = -1;
+  ctl->qnt_cc = -1;
   ctl->qnt_pct = -1;
   ctl->qnt_pcb = -1;
   ctl->qnt_cl = -1;
@@ -2317,6 +2320,8 @@ void read_ctl(
       SET_QNT(qnt_zs, "zs", "surface height", "km")
       SET_QNT(qnt_us, "us", "surface zonal wind", "m/s")
       SET_QNT(qnt_vs, "vs", "surface meridional wind", "m/s")
+      SET_QNT(qnt_lsm, "lsm", "land-sea mask", "1")
+      SET_QNT(qnt_sst, "sst", "sea surface temperature", "K")
       SET_QNT(qnt_pbl, "pbl", "planetary boundary layer", "hPa")
       SET_QNT(qnt_pt, "pt", "tropopause pressure", "hPa")
       SET_QNT(qnt_tt, "tt", "tropopause temperature", "K")
@@ -2333,6 +2338,7 @@ void read_ctl(
       SET_QNT(qnt_o3, "o3", "ozone", "ppv")
       SET_QNT(qnt_lwc, "lwc", "cloud ice water content", "kg/kg")
       SET_QNT(qnt_iwc, "iwc", "cloud liquid water content", "kg/kg")
+      SET_QNT(qnt_cc, "cc", "cloud cover", "1")
       SET_QNT(qnt_pct, "pct", "cloud top pressure", "hPa")
       SET_QNT(qnt_pcb, "pcb", "cloud bottom pressure", "hPa")
       SET_QNT(qnt_cl, "cl", "total column cloud water", "kg/m^2")
@@ -2945,7 +2951,7 @@ int read_met(
     FREAD(&version, int,
 	  1,
 	  in);
-    if (version != 100)
+    if (version != 100 || version != 101)
       ERRMSG("Wrong version of binary data!");
 
     /* Read time... */
@@ -3008,6 +3014,10 @@ int read_met(
     read_met_bin_2d(in, met, met->zs, "ZS");
     read_met_bin_2d(in, met, met->us, "US");
     read_met_bin_2d(in, met, met->vs, "VS");
+    if (version == 101) {
+      read_met_bin_2d(in, met, met->lsm, "LSM");
+      read_met_bin_2d(in, met, met->sst, "SST");
+    }
     read_met_bin_2d(in, met, met->pbl, "PBL");
     read_met_bin_2d(in, met, met->pt, "PT");
     read_met_bin_2d(in, met, met->tt, "TT");
@@ -3033,6 +3043,8 @@ int read_met(
     read_met_bin_3d(in, ctl, met, met->o3, "O3", 8, 0);
     read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 8, 0);
     read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 8, 0);
+    if (version == 101)
+      read_met_bin_3d(in, ctl, met, met->cc, "CC", 8, 0);
 
     /* Read final flag... */
     int final;
@@ -3454,6 +3466,7 @@ void read_met_extrapolate(
 	met->o3[ix][iy][ip] = met->o3[ix][iy][ip + 1];
 	met->lwc[ix][iy][ip] = met->lwc[ix][iy][ip + 1];
 	met->iwc[ix][iy][ip] = met->iwc[ix][iy][ip + 1];
+	met->cc[ix][iy][ip] = met->cc[ix][iy][ip + 1];
       }
     }
 }
@@ -3719,6 +3732,18 @@ void read_met_levels(
     if (!read_met_nc_3d
 	(ncid, "q", "Q", ctl, met, met->h2o, (float) (MA / MH2O), 1))
       WARN("Cannot read specific humidity!");
+    if (ctl->met_relhum) {
+      if (!read_met_nc_3d(ncid, "rh", "RH", ctl, met, met->h2o, 0.01f, 1))
+	WARN("Cannot read relative humidity!");
+#pragma omp parallel for default(shared) collapse(2)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++) {
+	    double pw = met->h2o[ix][iy][ip] * PSAT(met->t[ix][iy][ip]);
+	    met->h2o[ix][iy][ip] =
+	      (float) (pw / (met->p[ip] - (1.0 - EPS) * pw));
+	  }
+    }
     if (!read_met_nc_3d
 	(ncid, "o3", "O3", ctl, met, met->o3, (float) (MA / MO3), 1))
       WARN("Cannot read ozone data!");
@@ -3738,18 +3763,8 @@ void read_met_levels(
 	   ctl->met_cloud == 2))
 	WARN("Cannot read cloud snow water content!");
     }
-    if (ctl->met_relhum) {
-      if (!read_met_nc_3d(ncid, "rh", "RH", ctl, met, met->h2o, 0.01f, 1))
-	WARN("Cannot read relative humidity!");
-#pragma omp parallel for default(shared) collapse(2)
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ip = 0; ip < met->np; ip++) {
-	    double pw = met->h2o[ix][iy][ip] * PSAT(met->t[ix][iy][ip]);
-	    met->h2o[ix][iy][ip] =
-	      (float) (pw / (met->p[ip] - (1.0 - EPS) * pw));
-	  }
-    }
+    if (!read_met_nc_3d(ncid, "cc", "CC", ctl, met, met->cc, 1.0, 1))
+      WARN("Cannot read cloud cover!");
 
     /* Transfer from model levels to pressure levels... */
     if (ctl->met_np > 0) {
@@ -3767,6 +3782,7 @@ void read_met_levels(
       read_met_ml2pl(ctl, met, met->o3);
       read_met_ml2pl(ctl, met, met->lwc);
       read_met_ml2pl(ctl, met, met->iwc);
+      read_met_ml2pl(ctl, met, met->cc);
 
       /* Set new pressure levels... */
       met->np = ctl->met_np;
@@ -3823,6 +3839,8 @@ void read_met_levels(
 	   ctl->met_cloud == 2))
 	WARN("Cannot read cloud snow water content!");
     }
+    if (!read_met_nc_3d(ncid, "cc", "CC", ctl, met, met->cc, 1.0, 1))
+      WARN("Cannot read cloud cover!");
 
     /* Transfer from model levels to pressure levels... */
     if (ctl->met_np > 0) {
@@ -3840,6 +3858,7 @@ void read_met_levels(
       read_met_ml2pl(ctl, met, met->o3);
       read_met_ml2pl(ctl, met, met->lwc);
       read_met_ml2pl(ctl, met, met->iwc);
+      read_met_ml2pl(ctl, met, met->cc);
       if (ctl->vert_vel == 1) {
 	read_met_ml2pl(ctl, met, met->zeta);
 	read_met_ml2pl(ctl, met, met->zeta_dot);
@@ -4245,6 +4264,8 @@ void read_met_periodic(
     met->ts[met->nx - 1][iy] = met->ts[0][iy];
     met->us[met->nx - 1][iy] = met->us[0][iy];
     met->vs[met->nx - 1][iy] = met->vs[0][iy];
+    met->lsm[met->nx - 1][iy] = met->lsm[0][iy];
+    met->sst[met->nx - 1][iy] = met->sst[0][iy];
     for (int ip = 0; ip < met->np; ip++) {
       met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
@@ -4254,6 +4275,7 @@ void read_met_periodic(
       met->o3[met->nx - 1][iy][ip] = met->o3[0][iy][ip];
       met->lwc[met->nx - 1][iy][ip] = met->lwc[0][iy][ip];
       met->iwc[met->nx - 1][iy][ip] = met->iwc[0][iy][ip];
+      met->cc[met->nx - 1][iy][ip] = met->cc[0][iy][ip];
     }
   }
 }
@@ -4401,6 +4423,8 @@ void read_met_sample(
 	help->ts[ix][iy] = 0;
 	help->us[ix][iy] = 0;
 	help->vs[ix][iy] = 0;
+	help->lsm[ix][iy] = 0;
+	help->sst[ix][iy] = 0;
 	help->t[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
@@ -4409,6 +4433,7 @@ void read_met_sample(
 	help->o3[ix][iy][ip] = 0;
 	help->lwc[ix][iy][ip] = 0;
 	help->iwc[ix][iy][ip] = 0;
+	help->cc[ix][iy][ip] = 0;
 	float wsum = 0;
 	for (int ix2 = ix - ctl->met_sx + 1; ix2 <= ix + ctl->met_sx - 1;
 	     ix2++) {
@@ -4430,6 +4455,8 @@ void read_met_sample(
 	      help->ts[ix][iy] += w * met->ts[ix3][iy2];
 	      help->us[ix][iy] += w * met->us[ix3][iy2];
 	      help->vs[ix][iy] += w * met->vs[ix3][iy2];
+	      help->lsm[ix][iy] += w * met->lsm[ix3][iy2];
+	      help->sst[ix][iy] += w * met->sst[ix3][iy2];
 	      help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix3][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix3][iy2][ip2];
@@ -4438,6 +4465,7 @@ void read_met_sample(
 	      help->o3[ix][iy][ip] += w * met->o3[ix3][iy2][ip2];
 	      help->lwc[ix][iy][ip] += w * met->lwc[ix3][iy2][ip2];
 	      help->iwc[ix][iy][ip] += w * met->iwc[ix3][iy2][ip2];
+	      help->cc[ix][iy][ip] += w * met->cc[ix3][iy2][ip2];
 	      wsum += w;
 	    }
 	}
@@ -4446,6 +4474,8 @@ void read_met_sample(
 	help->ts[ix][iy] /= wsum;
 	help->us[ix][iy] /= wsum;
 	help->vs[ix][iy] /= wsum;
+	help->lsm[ix][iy] /= wsum;
+	help->sst[ix][iy] /= wsum;
 	help->t[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
@@ -4454,6 +4484,7 @@ void read_met_sample(
 	help->o3[ix][iy][ip] /= wsum;
 	help->lwc[ix][iy][ip] /= wsum;
 	help->iwc[ix][iy][ip] /= wsum;
+	help->cc[ix][iy][ip] /= wsum;
       }
     }
   }
@@ -4470,6 +4501,8 @@ void read_met_sample(
       met->ts[met->nx][met->ny] = help->ts[ix][iy];
       met->us[met->nx][met->ny] = help->us[ix][iy];
       met->vs[met->nx][met->ny] = help->vs[ix][iy];
+      met->lsm[met->nx][met->ny] = help->lsm[ix][iy];
+      met->sst[met->nx][met->ny] = help->sst[ix][iy];
       met->np = 0;
       for (int ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
@@ -4481,6 +4514,7 @@ void read_met_sample(
 	met->o3[met->nx][met->ny][met->np] = help->o3[ix][iy][ip];
 	met->lwc[met->nx][met->ny][met->np] = help->lwc[ix][iy][ip];
 	met->iwc[met->nx][met->ny][met->np] = help->iwc[ix][iy][ip];
+	met->cc[met->nx][met->ny][met->np] = help->cc[ix][iy][ip];
 	met->np++;
       }
       met->ny++;
@@ -4539,6 +4573,14 @@ void read_met_surface(
     /* Read meridional wind at the surface... */
     if (!read_met_nc_2d(ncid, "v10m", "V10M", ctl, met, met->vs, 1.0, 1))
       WARN("Cannot read surface meridional wind!");
+
+    /* Read land-sea mask... */
+    if (!read_met_nc_2d(ncid, "lsm", "LSM", ctl, met, met->lsm, 1.0, 1))
+      WARN("Cannot read land-sea mask!");
+
+    /* Read sea surface temperature... */
+    if (!read_met_nc_2d(ncid, "sst", "SST", ctl, met, met->sst, 1.0, 1))
+      WARN("Cannot read sea surface temperature!");
   }
 
   /* CLaMS meteo data... */
@@ -4579,6 +4621,14 @@ void read_met_surface(
     /* Read meridional wind at the surface... */
     if (!read_met_nc_2d(ncid, "v10", "V10", ctl, met, met->vs, 1.0, 1))
       WARN("Cannot read surface meridional wind!");
+
+    /* Read land-sea mask... */
+    if (!read_met_nc_2d(ncid, "lsm", "LSM", ctl, met, met->lsm, 1.0, 1))
+      WARN("Cannot read land-sea mask!");
+
+    /* Read meridional wind at the surface... */
+    if (!read_met_nc_2d(ncid, "sst", "SST", ctl, met, met->sst, 1.0, 1))
+      WARN("Cannot read sea surface temperature!");
   }
 }
 
@@ -6313,7 +6363,7 @@ int write_met(
 	   out);
 
     /* Write version of binary data... */
-    int version = 100;
+    int version = 101;
     FWRITE(&version, int,
 	   1,
 	   out);
@@ -6347,6 +6397,8 @@ int write_met(
     write_met_bin_2d(out, met, met->zs, "ZS");
     write_met_bin_2d(out, met, met->us, "US");
     write_met_bin_2d(out, met, met->vs, "VS");
+    write_met_bin_2d(out, met, met->lsm, "LSM");
+    write_met_bin_2d(out, met, met->sst, "SST");
     write_met_bin_2d(out, met, met->pbl, "PBL");
     write_met_bin_2d(out, met, met->pt, "PT");
     write_met_bin_2d(out, met, met->tt, "TT");
@@ -6372,6 +6424,7 @@ int write_met(
     write_met_bin_3d(out, ctl, met, met->o3, "O3", 8, 0);
     write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 8, 0);
     write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->cc, "CC", 8, 0);
 
     /* Write final flag... */
     int final = 999;

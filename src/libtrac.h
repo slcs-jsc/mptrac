@@ -324,11 +324,14 @@
   intpol_met_space_3d(met, met->o3, p, lon, lat, &o3, ci, cw, 0);	\
   intpol_met_space_3d(met, met->lwc, p, lon, lat, &lwc, ci, cw, 0);	\
   intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
+  intpol_met_space_3d(met, met->cc, p, lon, lat, &cc, ci, cw, 0);	\
   intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);		\
   intpol_met_space_2d(met, met->ts, lon, lat, &ts, ci, cw, 0);		\
   intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);		\
   intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);		\
   intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);		\
+  intpol_met_space_2d(met, met->lsm, lon, lat, &lsm, ci, cw, 0);	\
+  intpol_met_space_2d(met, met->sst, lon, lat, &sst, ci, cw, 0);	\
   intpol_met_space_2d(met, met->pbl, lon, lat, &pbl, ci, cw, 0);	\
   intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);		\
   intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);		\
@@ -356,11 +359,14 @@
   intpol_met_time_3d(met0, met0->o3, met1, met1->o3, time, p, lon, lat, &o3, ci, cw, 0); \
   intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
   intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
+  intpol_met_time_3d(met0, met0->cc, met1, met1->cc, time, p, lon, lat, &cc, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->lsm, met1, met1->lsm, time, lon, lat, &lsm, ci, cw, 0); \
+  intpol_met_time_2d(met0, met0->sst, met1, met1->sst, time, lon, lat, &sst, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
   intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
@@ -384,6 +390,62 @@
 /*! Compute linear interpolation. */
 #define LIN(x0, y0, x1, y1, x)			\
   ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
+
+
+/*! Write header for meteo data files. */
+#define MET_HEADER							\
+  fprintf(out,								\
+	  "# $1 = time [s]\n"						\
+	  "# $2 = altitude [km]\n"					\
+	  "# $3 = longitude [deg]\n"					\
+	  "# $4 = latitude [deg]\n"					\
+	  "# $5 = pressure [hPa]\n"					\
+	  "# $6 = temperature [K]\n"					\
+	  "# $7 = zonal wind [m/s]\n"					\
+	  "# $8 = meridional wind [m/s]\n"				\
+	  "# $9 = vertical velocity [hPa/s]\n"				\
+	  "# $10 = H2O volume mixing ratio [ppv]\n");			\
+  fprintf(out,								\
+	  "# $11 = O3 volume mixing ratio [ppv]\n"			\
+	  "# $12 = geopotential height [km]\n"				\
+	  "# $13 = potential vorticity [PVU]\n"				\
+	  "# $14 = surface pressure [hPa]\n"				\
+	  "# $15 = surface temperature [K]\n"				\
+	  "# $16 = surface geopotential height [km]\n"			\
+	  "# $17 = surface zonal wind [m/s]\n"				\
+	  "# $18 = surface meridional wind [m/s]\n"			\
+    	  "# $19 = land-sea mask [1]\n"					\
+    	  "# $20 = sea surface temperature [K]\n");			\
+  fprintf(out,								\
+	  "# $21 = tropopause pressure [hPa]\n"				\
+	  "# $22 = tropopause geopotential height [km]\n"		\
+	  "# $23 = tropopause temperature [K]\n"			\
+	  "# $24 = tropopause water vapor [ppv]\n"			\
+	  "# $25 = cloud liquid water content [kg/kg]\n"		\
+	  "# $26 = cloud ice water content [kg/kg]\n"			\
+	  "# $27 = cloud cover [1]\n"					\
+	  "# $28 = total column cloud water [kg/m^2]\n"			\
+	  "# $29 = cloud top pressure [hPa]\n"				\
+	  "# $30 = cloud bottom pressure [hPa]\n");			\
+  fprintf(out,								\
+	  "# $31 = pressure at lifted condensation level (LCL) [hPa]\n"	\
+	  "# $32 = pressure at level of free convection (LFC) [hPa]\n"	\
+	  "# $33 = pressure at equilibrium level (EL) [hPa]\n"		\
+	  "# $34 = convective available potential energy (CAPE) [J/kg]\n" \
+	  "# $35 = convective inhibition (CIN) [J/kg]\n"		\
+	  "# $36 = relative humidity over water [%%]\n"			\
+	  "# $37 = relative humidity over ice [%%]\n"			\
+	  "# $38 = dew point temperature [K]\n"				\
+	  "# $39 = frost point temperature [K]\n"			\
+	  "# $40 = NAT temperature [K]\n");				\
+  fprintf(out,								\
+	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
+	  "# $42 = OH concentration [molec/cm^3]\n"			\
+	  "# $43 = H2O2 concentration [molec/cm^3]\n"			\
+	  "# $44 = boundary layer pressure [hPa]\n"			\
+	  "# $45 = number of data points\n"				\
+	  "# $46 = number of tropopause data points\n"			\
+	  "# $47 = number of CAPE data points\n");			\
 
 /*! Execute netCDF library command and check result. */
 #define NC(cmd) {				     \
@@ -765,6 +827,12 @@ typedef struct {
   /*! Quantity array index for surface meridional wind. */
   int qnt_vs;
 
+  /*! Quantity array index for land-sea mask. */
+  int qnt_lsm;
+
+  /*! Quantity array index for sea surface temperature. */
+  int qnt_sst;
+
   /*! Quantity array index for boundary layer pressure. */
   int qnt_pbl;
 
@@ -812,6 +880,9 @@ typedef struct {
 
   /*! Quantity array index for cloud ice water content. */
   int qnt_iwc;
+
+  /*! Quantity array index for cloud cover. */
+  int qnt_cc;
 
   /*! Quantity array index for cloud top pressure. */
   int qnt_pct;
@@ -1546,6 +1617,12 @@ typedef struct {
   /*! Surface meridional wind [m/s]. */
   float vs[EX][EY];
 
+  /*! Land-sea mask [1]. */
+  float lsm[EX][EY];
+
+  /*! Sea surface temperature [K]. */
+  float sst[EX][EY];
+
   /*! Boundary layer pressure [hPa]. */
   float pbl[EX][EY];
 
@@ -1614,6 +1691,9 @@ typedef struct {
 
   /*! Cloud ice water content [kg/kg]. */
   float iwc[EX][EY][EP];
+
+  /*! Cloud cover [1]. */
+  float cc[EX][EY][EP];
 
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
