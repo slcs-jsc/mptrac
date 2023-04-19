@@ -4579,7 +4579,7 @@ void read_met_surface(
       WARN("Cannot read land-sea mask!");
 
     /* Read sea surface temperature... */
-    if (!read_met_nc_2d(ncid, "sst", "SST", ctl, met, met->sst, 1.0, 1))
+    if (!read_met_nc_2d(ncid, "sstk", "SSTK", ctl, met, met->sst, 1.0, 1))
       WARN("Cannot read sea surface temperature!");
   }
 
@@ -4626,8 +4626,8 @@ void read_met_surface(
     if (!read_met_nc_2d(ncid, "lsm", "LSM", ctl, met, met->lsm, 1.0, 1))
       WARN("Cannot read land-sea mask!");
 
-    /* Read meridional wind at the surface... */
-    if (!read_met_nc_2d(ncid, "sst", "SST", ctl, met, met->sst, 1.0, 1))
+    /* Read sea surface temperature... */
+    if (!read_met_nc_2d(ncid, "sstk", "SSTK", ctl, met, met->sst, 1.0, 1))
       WARN("Cannot read sea surface temperature!");
   }
 }
