@@ -2951,7 +2951,7 @@ int read_met(
     FREAD(&version, int,
 	  1,
 	  in);
-    if (version != 100 || version != 101)
+    if (version != 100 && version != 101)
       ERRMSG("Wrong version of binary data!");
 
     /* Read time... */
