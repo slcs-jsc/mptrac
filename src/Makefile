@@ -76,7 +76,7 @@ else
 endif
 
 # Set LDFLAGS...
-LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
+LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm -lkpp_so2
 ifeq ($(STATIC),1)
   LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif

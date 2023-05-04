@@ -133,6 +133,12 @@
 #define RA (1e3 * RI / MA)
 #endif
 
+/*! Avogadro constant. */
+#ifndef AVO
+#define AVO 6.02214076e23
+#endif
+
+
 /*! Mean radius of Earth [km]. */
 #ifndef RE
 #define RE 6367.421
@@ -983,6 +989,15 @@ typedef struct {
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
 
+  /*! Quantity array index for SO2 concentration. */
+  int qnt_Cso2;
+
+  /*! Quantity array index for h2o2 concentration. */
+  int qnt_Ch2o2;
+
+  /*! Quantity array index for ho2 concentration. */
+  int qnt_Cho2;
+
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
 
@@ -1186,6 +1201,9 @@ typedef struct {
   /*! Filename of H2O2 climatology. */
   char clim_h2o2_filename[LEN];
 
+  /*! Filename of HO2 climatology. */
+  char clim_ho2_filename[LEN];
+
   /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
   int oh_chem_reaction;
 
@@ -1200,6 +1218,9 @@ typedef struct {
 
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
+
+	/*! Switch for chemistry reaction. */
+	int chemistry;
 
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
@@ -1227,6 +1248,13 @@ typedef struct {
 
   /*! Upper latitude of chemistry grid [deg]. */
   double chemgrid_lat1;
+
+  /*! Interparcel exchange parameter in troposphere. */
+  double interparc_trop;
+
+  /*! Interparcel exchange parameter in stratosphere. */
+  double interparc_strat;
+
 
   /*! Dry deposition surface layer [hPa]. */
   double dry_depo_dp;
@@ -1576,6 +1604,27 @@ typedef struct {
   /*! H2O2 number concentrations [molec/cm^3]. */
   double h2o2[CT][CP][CY];
 
+  /*! Number of HO2 timesteps. */
+  int ho2_ntime;
+
+  /*! Number of HO2 latitudes. */
+  int ho2_nlat;
+
+  /*! Number of HO2 pressure levels. */
+  int ho2_np;
+
+  /*! HO2 time steps [s]. */
+  double ho2_time[CT];
+
+  /*! HO2 latitudes [deg]. */
+  double ho2_lat[CY];
+
+  /*! HO2 pressure levels [hPa]. */
+  double ho2_p[CP];
+
+  /*! HO2 number concentrations [molec/cm^3]. */
+  double ho2[CT][CP][CY];
+
 } clim_t;
 
 /*! Meteo data. */
@@ -1798,6 +1847,21 @@ double clim_h2o2(
 
 /*! Initialization function for H2O2 climatology. */
 void clim_h2o2_init(
+  ctl_t * ctl,
+  clim_t * clim);
+
+/*! Climatology of HO2 number concentrations. */
+#ifdef _OPENACC
+#pragma acc routine (clim_ho2)
+#endif
+double clim_ho2(
+  clim_t * clim,
+  double t,
+  double lat,
+  double p);
+
+/*! Initialization function for HO2 climatology. */
+void clim_ho2_init(
   ctl_t * ctl,
   clim_t * clim);
 

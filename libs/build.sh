@@ -64,6 +64,13 @@ cd $target/src/$dir \
     && make -j$threads && make check && make install && make clean \
 	|| exit
 
+# so2chem...
+dir=KPP
+export KPP_HOME=$target/src/$dir
+export KPP_FLEX_LIB_DIR=$target/src/$dir
+cd $target/src/$dir/so2chem \
+		&& ../bin/kpp so2chem.kpp && make lib && cp libkpp_so2.a $target/lib && cp *.h $target/include
+
 # Summary...
 echo -e "\n***** gsl-config *****\n"
 $target/bin/gsl-config --libs --cflags --version
