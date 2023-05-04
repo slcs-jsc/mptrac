@@ -1,0 +1,23 @@
+# $1 = time [s]
+# $2 = number of hits (cx)
+# $3 = number of misses (cy)
+# $4 = number of false alarms (cz)
+# $5 = number of observations (cx + cy)
+# $6 = number of forecasts (cx + cz)
+# $7 = bias (ratio of forecasts and observations) [%]
+# $8 = probability of detection (POD) [%]
+# $9 = false alarm rate (FAR) [%]
+# $10 = critical success index (CSI) [%]
+# $11 = hits associated with random chance
+# $12 = equitable threat score (ETS) [%]
+# $13 = Pearson linear correlation coefficient
+# $14 = Spearman rank-order correlation coefficient
+# $15 = column density mean error (F - O) [kg/m^2]
+# $16 = column density root mean square error (RMSE) [kg/m^2]
+# $17 = column density mean absolute error [kg/m^2]
+# $18 = number of data points
+
+360547200.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan 0
+360633600.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan 0
+360720000.00 30 6 29 36 59 163.889 83.3333 49.1525 46.1538 7.42657 39.2081 0.467586 0.498737 -0.00169518 0.00267583 0.00190496 65
+360806400.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan 0
