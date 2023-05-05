@@ -6,7 +6,7 @@
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test compress_test met_test tools_test trac_test tropo_test chem_test
+TESTS = atm_test compress_test met_test tools_test trac_test tropo_test
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -45,7 +45,7 @@ NVTX ?= 0
 UVW ?= 1
 
 # Enable KPP chemistry module...
-KPP ?= 1
+KPP ?= 0
 
 # Enable async IO for GPUs (experimental)...
 ASYNCIO ?= 0
@@ -80,7 +80,7 @@ else
 endif
 
 # Set LDFLAGS...
-LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm -lkpp_so2
+LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifeq ($(STATIC),1)
   LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif
@@ -149,15 +149,10 @@ ifeq ($(UVW),1)
   CFLAGS += -DUVW
 endif
 
-# Static compilation...
-ifeq ($(STATIC),1)
-  ifeq ($(GPU),1)
-    $(error Static compilation does not work for GPU)
-  endif
-  ifeq ($(MPI),1)
-    $(error Static compilation does not work for MPI)
-  endif
-  CFLAGS += -static
+# KPP chemistry...
+ifeq ($(KPP),1)
+  CFLAGS += -DKPP
+  LDFLAGS += -lkpp_so2
 endif
 
 # asyncIO...
@@ -168,9 +163,15 @@ ifeq ($(ASYNCIO),1)
   CFLAGS += -DASYNCIO
 endif
 
-# KPP chemistry...
-ifeq ($(KPP),1)
-	LDFLAGS += -lkpp_so2
+# Static compilation...
+ifeq ($(STATIC),1)
+  ifeq ($(GPU),1)
+    $(error Static compilation does not work for GPU)
+  endif
+  ifeq ($(MPI),1)
+    $(error Static compilation does not work for MPI)
+  endif
+  CFLAGS += -static
 endif
 
 # -----------------------------------------------------------------------------
@@ -188,7 +189,7 @@ $(EXC): %: %.c libtrac.o
 
 check: $(TESTS)
 
-$(TESTS) gpu_test chem_test: all
+$(TESTS) chem_test gpu_test: all
 	cd ../tests/$@ ; ./run.sh \
 	  && (echo "\nTest \"$@\" passed!") \
 	  || (echo "\nTest \"$@\" failed!" ; exit 1)

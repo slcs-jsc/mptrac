@@ -852,14 +852,12 @@ void clim_ho2_init(
       clim->ho2_time[clim->ho2_ntime - 1]);
   LOG(2, "Number of pressure levels: %d", clim->ho2_np);
   LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(clim->ho2_p[0]), Z(clim->ho2_p[1]),
-      Z(clim->ho2_p[clim->ho2_np - 1]));
+      Z(clim->ho2_p[0]), Z(clim->ho2_p[1]), Z(clim->ho2_p[clim->ho2_np - 1]));
   LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->ho2_p[0],
       clim->ho2_p[1], clim->ho2_p[clim->ho2_np - 1]);
   LOG(2, "Number of latitudes: %d", clim->ho2_nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      clim->ho2_lat[0], clim->ho2_lat[1],
-      clim->ho2_lat[clim->ho2_nlat - 1]);
+      clim->ho2_lat[0], clim->ho2_lat[1], clim->ho2_lat[clim->ho2_nlat - 1]);
   LOG(2, "HO2 concentration range: %g ... %g molec/cm^3", ho2min, ho2max);
 }
 
@@ -2442,8 +2440,8 @@ void read_ctl(
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
   ctl->qnt_Cso2 = -1;
-	ctl->qnt_Ch2o2 = -1;
-	ctl->qnt_Cho2 = -1;
+  ctl->qnt_Ch2o2 = -1;
+  ctl->qnt_Cho2 = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -2528,9 +2526,9 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-			SET_QNT(qnt_Cso2, "Cso2", "particle SO2 concentration", "mole/cm3")
-			SET_QNT(qnt_Ch2o2, "Ch2o2", "particle H2O2 concentration", "mole/cm3")
-			SET_QNT(qnt_Ch2o2, "Cho2", "particle HO2 concentration", "mole/cm3")
+      SET_QNT(qnt_Cso2, "Cso2", "particle SO2 concentration", "mole/cm3")
+      SET_QNT(qnt_Ch2o2, "Ch2o2", "particle H2O2 concentration", "mole/cm3")
+      SET_QNT(qnt_Ch2o2, "Cho2", "particle HO2 concentration", "mole/cm3")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
@@ -2775,8 +2773,8 @@ void read_ctl(
   } else {
     ctl->molmass =
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
-		ctl->chemistry = 
-			(int) scan_ctl(filename, argc, argv, "CHEMISTRY", -1, "0", NULL);
+    ctl->chemistry =
+      (int) scan_ctl(filename, argc, argv, "CHEMISTRY", -1, "0", NULL);
     ctl->oh_chem_reaction =
       (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
     ctl->h2o2_chem_reaction =
@@ -2827,8 +2825,8 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1,
 	   "../../data/cams_H2O2.nc", ctl->clim_h2o2_filename);
 
-	scan_ctl(filename, argc, argv, "CLIM_HO2_FILENAME", -1,
-		"../../data/clams_radical_species.nc", ctl->clim_ho2_filename);
+  scan_ctl(filename, argc, argv, "CLIM_HO2_FILENAME", -1,
+	   "../../data/clams_radical_species.nc", ctl->clim_ho2_filename);
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
@@ -2849,10 +2847,12 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
-  ctl->interparc_trop = 
-    (double) scan_ctl(filename, argc, argv, "INTERPARC_TROP", -1, "1e-3", NULL);
-  ctl->interparc_strat = 
-    (double) scan_ctl(filename, argc, argv, "INTERPARC_STRAT", -1, "1e-6", NULL);
+  ctl->interparc_trop =
+    (double) scan_ctl(filename, argc, argv, "INTERPARC_TROP", -1, "1e-3",
+		      NULL);
+  ctl->interparc_strat =
+    (double) scan_ctl(filename, argc, argv, "INTERPARC_STRAT", -1, "1e-6",
+		      NULL);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);

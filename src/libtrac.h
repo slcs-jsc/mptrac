@@ -1219,8 +1219,8 @@ typedef struct {
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
 
-	/*! Switch for chemistry reaction. */
-	int chemistry;
+  /*! Switch for chemistry reaction. */
+  int chemistry;
 
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
