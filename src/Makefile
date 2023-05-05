@@ -44,6 +44,9 @@ NVTX ?= 0
 # Enable UVW cache...
 UVW ?= 1
 
+# Enable KPP chemistry module...
+KPP ?= 1
+
 # Enable async IO for GPUs (experimental)...
 ASYNCIO ?= 0
 
@@ -55,6 +58,7 @@ ZFP ?= 0
 
 # Enable zstd compression (experimental)...
 ZSTD ?= 0
+
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...
@@ -164,6 +168,11 @@ ifeq ($(ASYNCIO),1)
   CFLAGS += -DASYNCIO
 endif
 
+# KPP chemistry...
+ifeq ($(KPP),1)
+	LDFLAGS += -lkpp_so2
+endif
+
 # -----------------------------------------------------------------------------
 # Targets...
 # -----------------------------------------------------------------------------
@@ -179,7 +188,7 @@ $(EXC): %: %.c libtrac.o
 
 check: $(TESTS)
 
-$(TESTS) gpu_test: all
+$(TESTS) gpu_test chem_test: all
 	cd ../tests/$@ ; ./run.sh \
 	  && (echo "\nTest \"$@\" passed!") \
 	  || (echo "\nTest \"$@\" failed!" ; exit 1)
