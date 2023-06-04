@@ -23,11 +23,6 @@
 */
 
 #include "libtrac.h"
-#ifdef KPP
-#include "so2chem_Parameters.h"
-#include "so2chem_Global.h"
-#include "so2chem_Sparse.h"
-#endif
 
 /* ------------------------------------------------------------
    Global variables...
@@ -1619,27 +1614,19 @@ void module_chemgrid(
 /*****************************************************************************/
 
 #ifdef KPP
-double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
 
-#pragma omp threadprivate(KaqSO2_H2O2,KSO2_OH, KHO2_HO2)
-double C[NSPEC];		/* Concentration of all species */
-double *VAR = &C[0];
-double *FIX = &C[3];
-double RCONST[NREACT];		/* Rate constants (global) */
-double TIME;			/* Current integration time */
-double SUN;			/* Sunlight intensity between [0,1] */
-double TEMP;			/* Temperature */
-double TSTART;			/* Integration start time */
-double TEND;			/* Integration end time */
-double DT;			/* Integration step */
-double ATOL[NVAR];		/* Absolute tolerance */
-double RTOL[NVAR];		/* Relative tolerance */
-double STEPMIN;			/* Lower bound for integration step */
-double STEPMAX;			/* Upper bound for integration step */
-double CFACTOR;			/* Conversion factor for concentration units */
+#include "so2chem_Parameters.h"
+#include "so2chem_Global.h"
+#include "so2chem_Sparse.h"
 
-#pragma omp threadprivate(RCONST,ATOL,RTOL, STEPMIN)
-#pragma omp threadprivate(VAR,FIX)
+void Initialize_user(
+	ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+	int ip
+);
 
 void module_chemistry(
   ctl_t * ctl,
@@ -1655,60 +1642,18 @@ void module_chemistry(
   const int np = atm->np;
 
   /*Loop over particles... */
-#pragma omp parallel for firstprivate(C)	// private(C,VAR,FIX)//KaqSO2_H2O2,KSO2_OH)
+#pragma omp parallel for firstprivate(C)	
   for (int ip = 0; ip < np; ip++) {
     if (dt[ip] > 0) {
       VAR = &C[0];
       FIX = &C[3];
 
       /*Initialize... */
-      if (ctl->qnt_Cso2 < 0)
-	ERRMSG("Quantity variable Cso2 needed!")
-	  VAR[ind_SO2] = atm->q[ctl->qnt_Cso2][ip];
-      if (ctl->qnt_Ch2o2 > 0)
-	VAR[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip];
-      FIX[indf_OH] = clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
-				     atm->lon[ip], atm->lat[ip]);
-      FIX[indf_HO2] = clim_ho2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
-
-      /* Get temperature... */
-      double t, lwc;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
-      INTPOL_3D(lwc, 1);
-
-      /* Reaction rate (Berglen et al., 2004)... */
-      /* Maass  1999 unit: M^(-2) s-1 to {mole/cm3}^(-2) s-1. Third order coef. */
-      double k =
-	9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15)) / SQR(AVO * 1e-3);
-
-      /* Henry constant of SO2... */
-      double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15)) * AVO * 1e-3;	// unit: mole/cm3
-
-      /* Henry constant of H2O2... */
-      double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
-
-      /* Volume water content in cloud [m^3 m^(-3)]... */
-      double rho_air = 100 * atm->p[ip] / (RA * t);
-      double CWC = lwc * rho_air / 1000;
-
-      KaqSO2_H2O2 = k * K_1S * H_SO2 * H_h2o2 * CWC;	//Unit: (mole/cm3)^-1  s-1
-
-      /* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-      double M = 7.243e21 * (atm->p[ip] / 1000.) / t;
-
-      /* Calculate rate coefficient for X + OH + M -> XOH + M
-         (JPL Publication 19-05) ... */
-      double k0 = 2.9e-31 * (4.1 > 0 ? pow(298. / t, 4.1) : 1.);
-      double ki = 1.7e-12 * (-0.2 > 0 ? pow(298. / t, -0.2) : 1.);
-      double c = log10(k0 * M / ki);
-      KSO2_OH = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));	//(mole/cm3)^(-1)  s-1, effective 2nd order coef
-
-      KHO2_HO2 = 3e-13 * exp(460 / t);
+			Initialize_user(ctl, clim, met0, met1, atm, ip);
+      
       for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-4;
-	ATOL[i] = 1.0e-3;
+				RTOL[i] = 1.0e-4;
+				ATOL[i] = 1.0e-3;
       }
       /*Integrate... */
       INTEGRATE(0, dt[ip]);
