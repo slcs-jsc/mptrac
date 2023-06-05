@@ -1615,9 +1615,9 @@ void module_chemgrid(
 
 #ifdef KPP
 
-#include "so2chem_Parameters.h"
-#include "so2chem_Global.h"
-#include "so2chem_Sparse.h"
+#include "chem_Parameters.h"
+#include "chem_Global.h"
+#include "chem_Sparse.h"
 
 void Initialize_user(
 	ctl_t * ctl,

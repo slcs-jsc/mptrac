@@ -152,7 +152,7 @@ endif
 # KPP chemistry...
 ifeq ($(KPP),1)
   CFLAGS += -DKPP
-  LDFLAGS += -lkpp_so2
+  LDFLAGS += -lkpp
 endif
 
 # asyncIO...
