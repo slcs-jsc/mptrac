@@ -468,6 +468,8 @@ int main(
 	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt, rs);
 	  }
+
+	  /* KPP chemistry... */
 #ifdef KPP
 	  if (ctl.chemistry == 1) {
 	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
@@ -1476,7 +1478,9 @@ void module_chemgrid(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
-
+  if (ctl->molmass < 0)   /* TODO: is it okay to check this here? */
+    ERRMSG("SPECIES MOLAR MASS is not defined!");
+  
   /* Allocate... */
   ALLOC(mass, double,
 	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
@@ -1542,48 +1546,52 @@ void module_chemgrid(
       mass[ARRAY_3D
 	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
 	+= atm->q[ctl->qnt_m][ip];
-
+  
   /* Assign the grid data to air parcels ... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-
-      if (ctl->molmass < 0)
-	ERRMSG("SPECIES MOLAR MASS is not defined!")
-	double temp;
-      INTPOL_INIT;
-
-      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
-			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+      
       /* Get weighting factor... */
       double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
-      /* Set Interparcel exchange parameter (Collins et al. 1997)... */
+      /* Set interparcel exchange parameter (Collins et al. 1997)... */   /* TODO: rename "interparc_*" as "chemgrid_mixparam_*" ?  */
       double para_mixing =
 	w * ctl->interparc_trop + (1 - w) * ctl->interparc_strat;
-      if (ctl->qnt_vmrimpl > 0)
+      if (ctl->qnt_vmrimpl > 0) {
+
+	/* Inteprolate temperature... */
+	double temp;
+	INTPOL_INIT;
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
+			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+	
 	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
 	  mass[ARRAY_3D
 	       (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
 		ctl->chemgrid_nz)]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
+      }
 
+      /* Calculate SO2 concentration... */  /* TODO: move this to KPP code package? */
       if (ctl->qnt_Cso2 > 0) {
 	double Cso2_grid = AVO * mass[ARRAY_3D
 				      (ixs[ip], iys[ip], ctl->chemgrid_ny,
 				       izs[ip], ctl->chemgrid_nz)]
-	  / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: mole/cm3
+	  / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
 	if (atm->q[ctl->qnt_Cso2][ip] == 0)
 	  /*Initialize parcel concentration quantity... */
-	  atm->q[ctl->qnt_Cso2][ip] = Cso2_grid;	//Unit: mole/cm3
+	  atm->q[ctl->qnt_Cso2][ip] = Cso2_grid;	//Unit: molec/cm3
 	else
 	  /*Bring the parcel concentration quantity closer to grid background datsa */
 	  atm->q[ctl->qnt_Cso2][ip] +=
 	    (Cso2_grid - atm->q[ctl->qnt_Cso2][ip]) * para_mixing;
       }
+
+      /* Calculate H2O2 concentration... */
       if (ctl->qnt_Ch2o2 > 0)	//{
 	if (atm->q[ctl->qnt_Ch2o2][ip] == 0)
-	  atm->q[ctl->qnt_Ch2o2][ip] = clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);	//Unit: mole/cm3
+	  atm->q[ctl->qnt_Ch2o2][ip] = clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);	//Unit: molec/cm3
       // else
       //   atm->q[ctl->qnt_Ch2o2][ip] += (clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]) - 
       //     atm->q[ctl->qnt_Ch2o2][ip]) * para_mixing;}
@@ -1628,6 +1636,7 @@ void Initialize_user(
 	int ip
 );
 
+/* TODO: rename as module_kpp_chem */
 void module_chemistry(
   ctl_t * ctl,
   clim_t * clim,
@@ -1657,8 +1666,8 @@ void module_chemistry(
       }
       /*Integrate... */
       INTEGRATE(0, dt[ip]);
-      /*Output to air parcel.. */
-
+      
+      /*Output to air parcel.. */   /* TODO: move this to KPP code package? */
       if (ctl->qnt_Ch2o2 > 0)
 	atm->q[ctl->qnt_Ch2o2][ip] = VAR[ind_H2O2];
       if (atm->q[ctl->qnt_Cso2][ip] != 0) {

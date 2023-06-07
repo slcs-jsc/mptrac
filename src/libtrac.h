@@ -935,7 +935,7 @@ typedef struct {
   /*! Quantity array index for total mass loss due to dry deposition. */
   int qnt_mloss_dry;
 
-  /*! Quantity array index for total mass loss due to exponential decax. */
+  /*! Quantity array index for total mass loss due to exponential decay. */
   int qnt_mloss_decay;
 
   /*! Quantity array index for saturation pressure over water. */
@@ -1219,7 +1219,7 @@ typedef struct {
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
 
-  /*! Switch for chemistry reaction. */
+  /*! Switch for chemistry reaction. TODO: rename this as "kpp_chem" (0=off, 1=SO2 scheme, 2=CO scheme, ... ???) */
   int chemistry;
 
   /*! Number of altitudes of chemistry grid. */

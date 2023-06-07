@@ -2439,7 +2439,7 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_Cso2 = -1;
+  ctl->qnt_Cso2 = -1;    /* TODO: change names from "qnt_Cso2" to "qnt_so2", etc... Think about the units (but don't try to unify them)... */
   ctl->qnt_Ch2o2 = -1;
   ctl->qnt_Cho2 = -1;
 
@@ -2526,7 +2526,7 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-      SET_QNT(qnt_Cso2, "Cso2", "particle SO2 concentration", "mole/cm3")
+      SET_QNT(qnt_Cso2, "Cso2", "particle SO2 concentration", "mole/cm3")   /* TODO: change unit to "molec/cm3"  */
       SET_QNT(qnt_Ch2o2, "Ch2o2", "particle H2O2 concentration", "mole/cm3")
       SET_QNT(qnt_Ch2o2, "Cho2", "particle HO2 concentration", "mole/cm3")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
