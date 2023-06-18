@@ -455,10 +455,10 @@ double clim_oh_diurnal(
   double lon,
   double lat) {
 
-  double oh = clim_oh(clim, t, lat, p), sza2 = sza(t, lon, lat);
+  double oh = clim_oh(clim, t, lat, p), sza = sza_calc(t, lon, lat);
 
-  if (sza2 <= M_PI / 2. * 89. / 90.)
-    return oh * exp(-ctl->oh_chem_beta / cos(sza2));
+  if (sza <= M_PI / 2. * 89. / 90.)
+    return oh * exp(-ctl->oh_chem_beta / cos(sza));
   else
     return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
 }
@@ -563,7 +563,7 @@ double clim_oh_init_help(
 
   /* Integrate day/night correction factor over longitude... */
   for (lon = -180; lon < 180; lon += 1) {
-    aux = sza(time, lon, lat);
+    aux = sza_calc(time, lon, lat);
     if (aux <= M_PI / 2. * 85. / 90.)
       sum += exp(-beta / cos(aux));
     else
@@ -2439,7 +2439,7 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_Cso2 = -1;    /* TODO: change names from "qnt_Cso2" to "qnt_so2", etc... Think about the units (but don't try to unify them)... */
+  ctl->qnt_Cx = -1;    /* TODO: change names from "qnt_Cso2" to "qnt_so2", etc... Think about the units (but don't try to unify them)... */
   ctl->qnt_Ch2o2 = -1;
   ctl->qnt_Cho2 = -1;
 
@@ -2526,9 +2526,9 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-      SET_QNT(qnt_Cso2, "Cso2", "particle SO2 concentration", "mole/cm3")   /* TODO: change unit to "molec/cm3"  */
-      SET_QNT(qnt_Ch2o2, "Ch2o2", "particle H2O2 concentration", "mole/cm3")
-      SET_QNT(qnt_Ch2o2, "Cho2", "particle HO2 concentration", "mole/cm3")
+      SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm3")   
+      SET_QNT(qnt_Ch2o2, "Ch2o2", "particle H2O2 concentration", "molec/cm3")
+      SET_QNT(qnt_Ch2o2, "Cho2", "particle HO2 concentration", "molec/cm3")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
@@ -2773,8 +2773,8 @@ void read_ctl(
   } else {
     ctl->molmass =
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
-    ctl->chemistry =
-      (int) scan_ctl(filename, argc, argv, "CHEMISTRY", -1, "0", NULL);
+    ctl->kpp_chem =
+      (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
     ctl->oh_chem_reaction =
       (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
     ctl->h2o2_chem_reaction =
@@ -2847,11 +2847,11 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
-  ctl->interparc_trop =
-    (double) scan_ctl(filename, argc, argv, "INTERPARC_TROP", -1, "1e-3",
+  ctl->chemgrid_mixparam_trop =
+    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1, "1e-3",
 		      NULL);
-  ctl->interparc_strat =
-    (double) scan_ctl(filename, argc, argv, "INTERPARC_STRAT", -1, "1e-6",
+  ctl->chemgrid_mixparam_strat =
+    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1, "1e-6",
 		      NULL);
 
   /* Exponential decay... */
@@ -5198,7 +5198,7 @@ float stddev(
 
 /*****************************************************************************/
 
-double sza(
+double sza_calc(
   double sec,
   double lon,
   double lat) {

@@ -64,12 +64,12 @@ cd $target/src/$dir \
     && make -j$threads && make check && make install && make clean \
 	|| exit
 
-# Chemistry using KPP...
-dir=KPP
-export KPP_HOME=$target/src/$dir
-export KPP_FLEX_LIB_DIR=$target/src/$dir
-cd $target/src/$dir/mptrac-chem \
-		&& ../bin/kpp chem.kpp && make lib && cp libkpp.a $target/lib && cp *.h $target/include
+# # Chemistry using KPP...
+# dir=KPP
+# export KPP_HOME=$target/src/$dir
+# export KPP_FLEX_LIB_DIR=$target/src/$dir
+# cd $target/src/$dir/mptrac-chem \
+# 		&& ../bin/kpp chem.kpp && make lib && cp libkpp.a $target/lib && cp *.h $target/include
 
 # Summary...
 echo -e "\n***** gsl-config *****\n"

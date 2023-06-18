@@ -989,8 +989,8 @@ typedef struct {
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
 
-  /*! Quantity array index for SO2 concentration. */
-  int qnt_Cso2;
+  /*! Quantity array index for trace species x concentration. */
+  int qnt_Cx;
 
   /*! Quantity array index for h2o2 concentration. */
   int qnt_Ch2o2;
@@ -1219,8 +1219,8 @@ typedef struct {
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
 
-  /*! Switch for chemistry reaction. TODO: rename this as "kpp_chem" (0=off, 1=SO2 scheme, 2=CO scheme, ... ???) */
-  int chemistry;
+  /*! Switch for kpp chemistry module. (0=off, 1=on) */
+  int kpp_chem;
 
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
@@ -1250,10 +1250,10 @@ typedef struct {
   double chemgrid_lat1;
 
   /*! Interparcel exchange parameter in troposphere. */
-  double interparc_trop;
+  double chemgrid_mixparam_trop;
 
   /*! Interparcel exchange parameter in stratosphere. */
-  double interparc_strat;
+  double chemgrid_mixparam_strat;
 
 
   /*! Dry deposition surface layer [hPa]. */
@@ -2343,7 +2343,7 @@ float stddev(
 #ifdef _OPENACC
 #pragma acc routine (sza)
 #endif
-double sza(
+double sza_calc(
   double sec,
   double lon,
   double lat);

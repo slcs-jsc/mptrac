@@ -140,16 +140,22 @@ void module_h2o2_chem(
   double *rs);
 
 /*! Interpolate to chemistry grid. */
-void module_chemgrid(
+void module_kpp_chemgrid(
   ctl_t * ctl,
   clim_t * clim,
+  atm_t * atm,
+  double t);
+
+/*! Interpolate to chemistry grid. */
+void qnt_vmrimpl_calc(
+  ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double t);
 
 /*! Chemistry module. */
-void module_chemistry(
+void module_kpp_chem(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -465,15 +471,15 @@ int main(
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0) {
-	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
+	    qnt_vmrimpl_calc(&ctl, met0, met1, atm, t);
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt, rs);
 	  }
 
 	  /* KPP chemistry... */
 #ifdef KPP
-	  if (ctl.chemistry == 1) {
-	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
-	    module_chemistry(&ctl, clim, met0, met1, atm, dt);
+	  if (ctl.kpp_chem == 1) {
+	    module_kpp_chemgrid(&ctl, clim, atm, t);
+	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
 
@@ -1338,11 +1344,12 @@ void module_oh_chem(
 
 	/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
 	double M = 7.243e21 * (atm->p[ip] / 1000.) / t;
+	// double M = AVO / RI * 1e-6 * (atm->p[ip] * 100) / t ; /*TODO: replace the formula of M? */
 
 	/* Calculate rate coefficient for X + OH + M -> XOH + M
 	   (JPL Publication 19-05) ... */
 	double k0 = ctl->oh_chem[0] *
-	  (ctl->oh_chem[1] > 0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
+	  (ctl->oh_chem[1] > 0 ? pow(298. / t, ctl->oh_chem[1]) : 1.); /*TODO: remove the judgement*/
 	double ki = ctl->oh_chem[2] *
 	  (ctl->oh_chem[3] > 0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
 	double c = log10(k0 * M / ki);
@@ -1435,7 +1442,8 @@ void module_h2o2_chem(
 	* 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: M
 
       /* Volume water content in cloud [m^3 m^(-3)]... */
-      double rho_air = 100 * atm->p[ip] / (RA * t);
+      double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000; 
+			//MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
       double CWC = lwc * rho_air / 1000;
 
       /* Calculate exponential decay (Rolph et al., 1992)... */
@@ -1454,9 +1462,8 @@ void module_h2o2_chem(
 
 /*****************************************************************************/
 
-void module_chemgrid(
+void qnt_vmrimpl_calc(
   ctl_t * ctl,
-  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -1473,12 +1480,12 @@ void module_chemgrid(
 #endif
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("QNT_VMRIMPL_CALC", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
-  if (ctl->molmass < 0)   /* TODO: is it okay to check this here? */
+  if (ctl->molmass < 0)   
     ERRMSG("SPECIES MOLAR MASS is not defined!");
   
   /* Allocate... */
@@ -1551,13 +1558,7 @@ void module_chemgrid(
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-      
-      /* Get weighting factor... */
-      double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
-      /* Set interparcel exchange parameter (Collins et al. 1997)... */   /* TODO: rename "interparc_*" as "chemgrid_mixparam_*" ?  */
-      double para_mixing =
-	w * ctl->interparc_trop + (1 - w) * ctl->interparc_strat;
       if (ctl->qnt_vmrimpl > 0) {
 
 	/* Inteprolate temperature... */
@@ -1572,34 +1573,7 @@ void module_chemgrid(
 		ctl->chemgrid_nz)]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
       }
-
-      /* Calculate SO2 concentration... */  /* TODO: move this to KPP code package? */
-      if (ctl->qnt_Cso2 > 0) {
-	double Cso2_grid = AVO * mass[ARRAY_3D
-				      (ixs[ip], iys[ip], ctl->chemgrid_ny,
-				       izs[ip], ctl->chemgrid_nz)]
-	  / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
-	if (atm->q[ctl->qnt_Cso2][ip] == 0)
-	  /*Initialize parcel concentration quantity... */
-	  atm->q[ctl->qnt_Cso2][ip] = Cso2_grid;	//Unit: molec/cm3
-	else
-	  /*Bring the parcel concentration quantity closer to grid background datsa */
-	  atm->q[ctl->qnt_Cso2][ip] +=
-	    (Cso2_grid - atm->q[ctl->qnt_Cso2][ip]) * para_mixing;
-      }
-
-      /* Calculate H2O2 concentration... */
-      if (ctl->qnt_Ch2o2 > 0)	//{
-	if (atm->q[ctl->qnt_Ch2o2][ip] == 0)
-	  atm->q[ctl->qnt_Ch2o2][ip] = clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);	//Unit: molec/cm3
-      // else
-      //   atm->q[ctl->qnt_Ch2o2][ip] += (clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]) - 
-      //     atm->q[ctl->qnt_Ch2o2][ip]) * para_mixing;}
-      if (ctl->qnt_Cho2 > 0)
-	if (atm->q[ctl->qnt_Cho2][ip] == 0)
-	  atm->q[ctl->qnt_Cho2][ip] =
-	    clim_ho2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
-    }
+		}
 
   /* Free... */
   free(mass);
@@ -1619,6 +1593,8 @@ void module_chemgrid(
 #endif
 }
 
+
+
 /*****************************************************************************/
 
 #ifdef KPP
@@ -1627,7 +1603,9 @@ void module_chemgrid(
 #include "chem_Global.h"
 #include "chem_Sparse.h"
 
-void Initialize_user(
+void INTEGRATE( double TIN, double TOUT );
+
+void kppchem_initialize(
 	ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -1636,8 +1614,189 @@ void Initialize_user(
 	int ip
 );
 
-/* TODO: rename as module_kpp_chem */
-void module_chemistry(
+void kppchem_output2atm(
+	atm_t * atm,
+	ctl_t * ctl, 
+	int ip);
+
+void kpp_chemgrid_mass2concen(
+	atm_t * atm,
+	ctl_t * ctl,
+	double * mass, 
+	double * area,
+	int * ixs,
+	int * iys,
+	int * izs,
+	double param_mixing,
+	double dz,
+	int ip, 
+	int qnt_index);
+
+void kppchem_init_qntvar(
+	ctl_t * ctl,
+	atm_t * atm,
+	clim_t * clim,
+	int ip
+);
+
+double param_mixing_calc(
+	ctl_t * ctl,
+	clim_t * clim,
+	atm_t * atm,
+	int ip);
+
+void kpp_chemgrid_mass2concen(
+	atm_t * atm,
+	ctl_t * ctl,
+	double * mass, 
+	double * area,
+	int * ixs,
+	int * iys,
+	int * izs,
+	double param_mixing,
+	double dz,
+	int ip, 
+	int qnt_index){
+		
+	if (qnt_index > 0) 
+	{
+		double C_grid = AVO * mass[ARRAY_3D
+					(ixs[ip], iys[ip], ctl->chemgrid_ny,
+						izs[ip], ctl->chemgrid_nz)]
+					/ (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
+		if (atm->q[qnt_index][ip] == 0)
+			/*Initialize parcel concentration quantity... */
+			atm->q[qnt_index][ip] = C_grid;	//Unit: molec/cm3
+		else
+			/*Bring the parcel concentration quantity closer to grid background datsa */
+			atm->q[qnt_index][ip] +=
+			(C_grid - atm->q[qnt_index][ip]) * param_mixing;
+	}
+	else
+		ERRMSG("Quantity variable %s is not defined!", ctl->qnt_name[qnt_index]);
+}
+
+double param_mixing_calc(
+	ctl_t * ctl,
+	clim_t * clim,
+	atm_t * atm,
+	int ip){
+
+	double param_mixing;
+	if (ctl->chemgrid_mixparam_trop < 1 || ctl->chemgrid_mixparam_strat < 1){
+		/* Get weighting factor... */
+		double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+
+		/* Set interparcel exchange parameter (Collins et al. 1997)... */   /* TODO: rename "interparc_*" as "chemgrid_mixparam_*" ?  */
+			param_mixing =
+			w * ctl->chemgrid_mixparam_trop + (1 - w) * ctl->chemgrid_mixparam_strat;
+	}
+	else
+			param_mixing = 1;
+	return param_mixing;
+}
+
+void module_kpp_chemgrid(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double t) {
+
+  double *mass, *lat, *area;
+
+  int *ixs, *iys, *izs;
+
+  /* Update host... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+#endif
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_KPP_CHEMGRID", "PHYSICS", NVTX_GPU);
+  
+  /* Allocate... */
+	ALLOC(mass, double,
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  ALLOC(lat, double,
+	ctl->chemgrid_ny);
+  ALLOC(area, double,
+	ctl->chemgrid_ny);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+
+  /* Set grid box size... */
+  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+
+#pragma omp parallel for default(shared)
+  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+      * cos(lat[iy] * M_PI / 180.);
+  }
+
+  /* Set time interval for output... */
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+      izs[ip] = -1;
+  }
+
+  /* Average data... */
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0)
+			if (ctl->qnt_m >= 0){
+				/* Check quantity flags... */
+  			if (ctl->molmass < 0)   
+    			ERRMSG("SPECIES MOLAR MASS is not defined!");
+      	mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+				+= atm->q[ctl->qnt_m][ip];
+			}
+
+  /* Assign the grid data to air parcels ... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+			if (ctl->qnt_m >= 0)
+				kpp_chemgrid_mass2concen(atm, ctl, mass, area, ixs, iys, izs,
+					param_mixing_calc(ctl, clim, atm, ip), dz, ip, ctl->qnt_Cx);
+		
+	/* Initializae quantity concentration variables. */
+			kppchem_init_qntvar(ctl, atm, clim, ip);
+		}
+
+  /* Free... */
+  free(mass);
+  free(lat);
+  free(area);
+  free(ixs);
+  free(iys);
+  free(izs);
+
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
+}
+
+void module_kpp_chem(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -1646,7 +1805,7 @@ void module_chemistry(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEMISTRY", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
   const int np = atm->np;
 
@@ -1655,10 +1814,10 @@ void module_chemistry(
   for (int ip = 0; ip < np; ip++) {
     if (dt[ip] > 0) {
       VAR = &C[0];
-      FIX = &C[3];
+      FIX = &C[NVAR];
 
       /*Initialize... */
-			Initialize_user(ctl, clim, met0, met1, atm, ip);
+			kppchem_initialize(ctl, clim, met0, met1, atm, ip);
       
       for (int i = 0; i < NVAR; i++) {
 				RTOL[i] = 1.0e-4;
@@ -1667,13 +1826,9 @@ void module_chemistry(
       /*Integrate... */
       INTEGRATE(0, dt[ip]);
       
-      /*Output to air parcel.. */   /* TODO: move this to KPP code package? */
-      if (ctl->qnt_Ch2o2 > 0)
-	atm->q[ctl->qnt_Ch2o2][ip] = VAR[ind_H2O2];
-      if (atm->q[ctl->qnt_Cso2][ip] != 0) {
-	atm->q[ctl->qnt_m][ip] *= VAR[ind_SO2] / atm->q[ctl->qnt_Cso2][ip];
-	atm->q[ctl->qnt_Cso2][ip] = VAR[ind_SO2];
-      }
+      /*Output to air parcel.. */   
+			kppchem_output2atm(atm, ctl, ip);
+
     }
   }
 }

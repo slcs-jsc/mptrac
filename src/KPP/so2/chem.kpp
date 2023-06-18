@@ -1,0 +1,143 @@
+#INTEGRATOR rosenbrock
+#LANGUAGE   C
+#DRIVER     none
+#HESSIAN      on                    { Do not create the Hessian matrix           }
+#MEX          off                    { MEX is for Matlab, so skip it              }
+#STOICMAT     on                    { Do not create stoichiometric matrix        }
+
+#DEFVAR
+SO2   =   IGNORE;
+H2O2  =   IGNORE;
+SO4   =   IGNORE;
+
+#DEFFIX
+OH    =   IGNORE;
+HO2 	= 	IGNORE;
+
+#LOOKAT SO2;
+#MONITOR SO2;
+
+#EQUATIONS
+SO2 + H2O2          = SO4                : KaqSO2_H2O2;
+SO2 + OH            = SO4                : KSO2_OH;
+HO2 + HO2 					= H2O2							 : KHO2_HO2;
+
+#INLINE C_GLOBAL
+
+extern double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
+
+#pragma omp threadprivate(KaqSO2_H2O2,KSO2_OH, KHO2_HO2,RCONST,RTOL,ATOL,STEPMIN,VAR,FIX,TEMP)
+
+#ENDINLINE
+
+#INLINE C_RATES
+#include "libtrac.h"
+
+double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
+{
+  double K0, K1, Kf;
+
+  K0 = (double)A0 * pow( (298.0/TEMP), (double)B0 ) * M;
+  K1 = (double)A1 * pow( (298.0/TEMP), (double)B1 );
+  Kf = (K0/(1.0+K0/K1)) *
+    pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0/K1)),2 ) ) ) );
+
+  return (double)Kf;
+}
+
+double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
+
+void kppchem_initialize(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+	int ip
+){
+
+    VAR[ind_SO2] = atm->q[ctl->qnt_Cx][ip];
+      if (ctl->qnt_Ch2o2 >= 0)
+    VAR[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip];
+      FIX[indf_OH] = clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
+             atm->lon[ip], atm->lat[ip]);
+      FIX[indf_HO2] = clim_ho2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+
+      /* Get temperature... */
+      double t, lwc;
+      INTPOL_INIT;
+      INTPOL_3D(t, 1);
+      INTPOL_3D(lwc, 1);
+			TEMP = t;
+
+      /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
+      double M = AVO / RI * 1e-6 * (atm->p[ip] * 100) / t ;  // M = p/RT
+
+      /* Reaction rate (Berglen et al., 2004)... */
+      /* Rate of aqueous phase oxidation of SO2 with H2O2. (Maass et al. 1999)  */
+      double k =
+        9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15)) / SQR(AVO * 1e-3); //unit: M^(-2) s-1 to {mole/cm3}^(-2) s-1. Third order coef.
+
+      /* Henry constant of SO2... */
+      double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15)) * AVO * 1e-3;	// unit: molec/cm3
+
+      /* Henry constant of H2O2... */
+      double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+
+      /* Volume water content in cloud [m^3 m^(-3)]... */
+      double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000; 
+			//MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
+      double CWC = lwc * rho_air / 1000;
+
+      KaqSO2_H2O2 = k * K_1S * H_SO2 * H_h2o2 * CWC;	//Unit: (molec/cm3)^-1  s-1
+
+
+
+      /* Calculate rate coefficient for X + OH + M -> XOH + M
+         (JPL Publication 19-05) ... */
+			KSO2_OH = k3rd_jpl(M, 2.9e-31, 4.1, 1.7e-12, -0.2); //(molec/cm3)^(-1)  s-1, effective 2nd order coef
+			KHO2_HO2 = ARR_ab(3e-13, -460) + ARR_ab(2.1e-33 * M, -920) ;
+
+}
+#ENDINLINE
+
+
+
+#INLINE C_UTIL
+
+#include "libtrac.h"
+
+void kppchem_output2atm(
+	atm_t * atm,
+	ctl_t * ctl, 
+	int ip){
+	
+		/*Output to air parcel.. */
+    if (ctl->qnt_Ch2o2 >= 0)
+			atm->q[ctl->qnt_Ch2o2][ip] = VAR[ind_H2O2];
+    if (atm->q[ctl->qnt_Cx][ip] != 0) {
+			atm->q[ctl->qnt_m][ip] *= VAR[ind_SO2] / atm->q[ctl->qnt_Cx][ip];
+			atm->q[ctl->qnt_Cx][ip] = VAR[ind_SO2];
+		}
+}
+
+void kppchem_init_qntvar(
+	ctl_t * ctl,
+	atm_t * atm,
+	clim_t * clim,
+	int ip
+){
+
+	if (ctl->qnt_Ch2o2 >= 0)	
+	if (atm->q[ctl->qnt_Ch2o2][ip] == 0)
+		atm->q[ctl->qnt_Ch2o2][ip] = clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);	//Unit: molec/cm3
+if (ctl->qnt_Cho2 >= 0)
+	if (atm->q[ctl->qnt_Cho2][ip] == 0)
+		atm->q[ctl->qnt_Cho2][ip] =
+			clim_ho2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+}
+
+
+#ENDINLINE
+

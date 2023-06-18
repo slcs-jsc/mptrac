@@ -2,7 +2,7 @@
 
 # Set environment...
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=24
+export OMP_NUM_THREADS=1
 
 # Setup...
 trac=../../src
@@ -28,12 +28,12 @@ QNT_NAME[7] = pt
 QNT_NAME[8] = m
 QNT_NAME[9] = stat
 QNT_NAME[10] = ens
-QNT_NAME[11] = Cso2
+QNT_NAME[11] = Cx
 QNT_NAME[12] = Ch2o2
 QNT_NAME[13] = Cho2
 METBASE = ../data/ei
 MET_DT_OUT = 86400.0
-CHEMISTRY = 1
+KPP_CHEM = 1
 CHEMGRID_LON0 = -90
 CHEMGRID_LON1 = 60
 CHEMGRID_LAT0 = -60

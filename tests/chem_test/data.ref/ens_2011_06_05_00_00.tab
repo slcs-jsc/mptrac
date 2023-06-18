@@ -13,9 +13,9 @@
 # $13 = m (mean) [kg]
 # $14 = stat (mean) [-]
 # $15 = ens (mean) [-]
-# $16 = Cso2 (mean) [mole/cm3]
-# $17 = Ch2o2 (mean) [mole/cm3]
-# $18 = Cho2 (mean) [mole/cm3]
+# $16 = Cx (mean) [molec/cm3]
+# $17 = Ch2o2 (mean) [molec/cm3]
+# $18 = Cho2 (mean) [molec/cm3]
 # $19 = t (sigma) [K]
 # $20 = u (sigma) [m/s]
 # $21 = v (sigma) [m/s]
@@ -27,9 +27,9 @@
 # $27 = m (sigma) [kg]
 # $28 = stat (sigma) [-]
 # $29 = ens (sigma) [-]
-# $30 = Cso2 (sigma) [mole/cm3]
-# $31 = Ch2o2 (sigma) [mole/cm3]
-# $32 = Cho2 (sigma) [mole/cm3]
+# $30 = Cx (sigma) [molec/cm3]
+# $31 = Ch2o2 (sigma) [molec/cm3]
+# $32 = Cho2 (sigma) [molec/cm3]
 # $33 = number of members
 
 360547200.00 10.0082 -72.1179 -40.5921 218.428 24.2316 -20.4681 -0.001457 10.4858 -4.47645 921.318 240.278 100000 0 0 1.13282e+09 0 4.1603e+08 0.941071 0.761167 1.05446 0.000124326 0.390649 0.74686 9.34687 0.985354 0 0 0 7.879e+08 0 8.93982e+07 10000

@@ -13,8 +13,8 @@
 # $13 = m [kg]
 # $14 = stat [-]
 # $15 = ens [-]
-# $16 = Cso2 [mole/cm3]
-# $17 = Ch2o2 [mole/cm3]
-# $18 = Cho2 [mole/cm3]
+# $16 = Cx [molec/cm3]
+# $17 = Ch2o2 [molec/cm3]
+# $18 = Cho2 [molec/cm3]
 
 360547200.00 10 -72.117 -40.59 0 0 0 0 0 0 0 0 0 0 0 0 0 0
