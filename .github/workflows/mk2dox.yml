@@ -24,7 +24,7 @@ jobs:
       - name: debugging
         run: echo `pwd`
       - name: preparing_doxygen
-        uses: mattnotmitt/doxygen-action@v1.9.1
+        uses: mattnotmitt/doxygen-action@v1.9.4
         with:
             doxyfile-path: ./Doxyfile
             working-directory: docs
