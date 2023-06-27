@@ -26,6 +26,7 @@ jobs:
         with:
             doxyfile-path: "./Doxyfile"
             working-directory: "./docs"
+      - name: debugging
         run: echo `pwd`
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v3
