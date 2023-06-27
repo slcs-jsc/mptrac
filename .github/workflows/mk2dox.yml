@@ -1,11 +1,11 @@
-name: mk2dox
-
 on:
   push:
-    branches: [ master ]
+    branches: 
+      - master
 
 jobs:
-  deployment:
+
+  deploying_mkdoc:
     runs-on: ubuntu-latest
     steps:
       - name: mkdocs
@@ -16,7 +16,10 @@ jobs:
       - name: installing mkdocs
         run: pip install mkdocs ; pip install mkdocs-material
         run: cd docs ; mkdocs gh-deploy --force --clean --verbose
-
+        
+  deploying_doxygen:
+    runs-on: ubuntu-latest
+    steps:
     - name: doxygen
        uses: mattnotmitt/doxygen-action@v1.9
        with:
