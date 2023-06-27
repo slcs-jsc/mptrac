@@ -5,7 +5,7 @@ on:
     branches: [ master ]
 
 jobs:
-  deploy:
+  deployment:
     runs-on: ubuntu-latest
     steps:
       - name: mkdocs
@@ -13,8 +13,9 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: 3.x
-      - run: pip install mkdocs ; pip install mkdocs-material
-      - run: cd docs ; mkdocs gh-deploy --force --clean --verbose
+      - name: installing mkdocs
+        run: pip install mkdocs ; pip install mkdocs-material
+        run: cd docs ; mkdocs gh-deploy --force --clean --verbose
 
     - name: doxygen
        uses: mattnotmitt/doxygen-action@v1.9
