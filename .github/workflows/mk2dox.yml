@@ -15,7 +15,7 @@ jobs:
         with:
           python-version: 3.x
       - name: installing_mkdocs
-        run: echo `pwd`; pip install mkdocs ; pip install mkdocs-material; 
+        run: pip install mkdocs ; pip install mkdocs-material; 
              cd docs ; mkdocs gh-deploy --force --clean --verbose
         
   deploying_doxygen:
@@ -26,7 +26,7 @@ jobs:
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.1
         with:
-            doxyfile-path: "./Doxyfile"
+            doxyfile-path: "docs/Doxyfile"
             working-directory: "docs"
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v3
