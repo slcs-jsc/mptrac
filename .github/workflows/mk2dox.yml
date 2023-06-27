@@ -22,12 +22,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: debugging
-        run: echo `pwd`
+        run: echo `pwd`; echo `ls`
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
             doxyfile-path: 'Doxyfile'
-            working-directory: './docs'
+            working-directory: 'docs'
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v3
         with:
