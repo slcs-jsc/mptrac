@@ -21,6 +21,8 @@ jobs:
   deploying_doxygen:
     runs-on: ubuntu-latest
     steps:
+      - name: checking_out
+        uses: actions/checkout@v3
       - name: debugging
         run: echo `pwd`; echo `ls`
       - name: preparing_doxygen
