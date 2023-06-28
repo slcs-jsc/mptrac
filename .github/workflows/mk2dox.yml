@@ -20,11 +20,12 @@ jobs:
         
   deploying_doxygen:
     runs-on: ubuntu-latest
+    needs: deploying_mkdoc
     steps:
       - name: checking_out
         uses: actions/checkout@v3
       - name: debugging
-        run: echo `pwd`; echo `ls`
+        run: echo `pwd`; echo `ls` ; echo `ls *`
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
