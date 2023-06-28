@@ -25,18 +25,18 @@ jobs:
       - name: checking_out
         uses: actions/checkout@v3
       - name: debugging
-        run: echo `pwd`; echo `ls docs` ; echo `ls -lrt docs/*`
+        run: echo `pwd`; echo `ls docs` ; echo `ls docs/*`
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
             doxyfile-path: 'Doxyfile'
             working-directory: 'docs'
       - name: debugging_2
-        run: echo `pwd`; echo `ls -lrt docs` ; echo `ls -lrt docs/*`
+        run: echo `pwd`; echo `ls docs` ; echo `ls docs/*`
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v3
         with:
             github_token: ${{ secrets.GITHUB_TOKEN }}
-            publish_dir: ./docs/html
+            publish_dir: ./docs/docs
             destination_dir: doxygen
 
