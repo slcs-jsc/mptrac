@@ -25,7 +25,7 @@ jobs:
       - name: checking_out
         uses: actions/checkout@v3
       - name: debugging
-        run: echo `pwd`; echo `ls` ; echo `ls *`
+        run: echo `pwd`; echo `ls docs` ; echo `ls -lrt docs/*`
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
