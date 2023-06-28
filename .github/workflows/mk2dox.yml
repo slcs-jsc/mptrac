@@ -31,6 +31,8 @@ jobs:
         with:
             doxyfile-path: 'Doxyfile'
             working-directory: 'docs'
+      - name: debugging_2
+        run: echo `pwd`; echo `ls -lrt docs` ; echo `ls -lrt docs/*`
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v3
         with:
