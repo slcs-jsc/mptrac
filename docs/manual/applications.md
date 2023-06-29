@@ -12,7 +12,7 @@ The tools day2doy, doy2day, jsec2time, and time2jsec are used for time conversio
 
 The tools lapse, tropo, and tropo_sample can be used to determine lapse rate statistics and to prepare and sample tropopause data files.
 
-Please see the [list of files in the doxygen manual](https://slcs-jsc.github.io/mptrac/files.html) for more information.
+Please see the [list of files in the doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/files.html) for more information.
 
 ## Workflows
 
