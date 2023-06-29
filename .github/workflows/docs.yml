@@ -22,7 +22,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploying_mkdoc
     steps:
-      - name: checking_out
+      - name: doxygen
         uses: actions/checkout@v3
       - name: debugging
         run: echo `pwd`; echo `ls docs` ; echo `ls docs/*`
