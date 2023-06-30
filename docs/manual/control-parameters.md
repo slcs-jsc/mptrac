@@ -1,6 +1,6 @@
 # Control parameters
 
-The MPTRAC apps are controlled by means of a control parameter file or by specifying control parameters as command line arguments. A complete [list of control parameters](https://slcs-jsc.github.io/mptrac/structctl_t.html) can be found in the Doxygen manual.
+The MPTRAC apps are controlled by means of a control parameter file or by specifying control parameters as command line arguments. A complete [list of control parameters](https://slcs-jsc.github.io/mptrac/doxygen/structctl_t.html) can be found in the Doxygen manual.
 
 In most cases, default values for control parameters will be used, if no value is explicitly specified. Please carefully check the log output of the MPTRAC tools to make sure the control parameter values are selected as desired.
 
