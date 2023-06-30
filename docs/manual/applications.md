@@ -12,7 +12,7 @@ The tools day2doy, doy2day, jsec2time, and time2jsec are used for time conversio
 
 The tools lapse, tropo, and tropo_sample can be used to determine lapse rate statistics and to prepare and sample tropopause data files.
 
-Please see the [list of files in the doxygen manual](https://slcs-jsc.github.io/mptrac/files.html) for more information.
+Please see the [list of files in the doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/files.html) for more information.
 
 ## Workflows
 
@@ -50,4 +50,4 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
            ATM_BASENAME atm GRID_BASENAME grid
 ```
 
-Please see the wiki page on [[Control parameters]] for more information on the control file trac.ctl and the control parameters.
+Please see the wiki page on [Control parameters](https://github.com/slcs-jsc/mptrac/blob/documentation/docs/manual/control-parameters.md) for more information on the control file trac.ctl and the control parameters.
