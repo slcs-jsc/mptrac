@@ -17,15 +17,15 @@ t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
 NQ = 14
-QNT_NAME[0] = t
-QNT_NAME[1] = u
-QNT_NAME[2] = v
-QNT_NAME[3] = w
-QNT_NAME[4] = z
-QNT_NAME[5] = pv
-QNT_NAME[6] = ps
-QNT_NAME[7] = pt
-QNT_NAME[8] = m
+QNT_NAME[0] = m
+QNT_NAME[1] = t
+QNT_NAME[2] = u
+QNT_NAME[3] = v
+QNT_NAME[4] = w
+QNT_NAME[5] = z
+QNT_NAME[6] = pv
+QNT_NAME[7] = ps
+QNT_NAME[8] = pt
 QNT_NAME[9] = stat
 QNT_NAME[10] = ens
 QNT_NAME[11] = Cx
@@ -40,9 +40,9 @@ CHEMGRID_LAT0 = -60
 CHEMGRID_LAT1 = -15
 CHEMGRID_Z0 = 0
 CHEMGRID_Z1 = 20
-CHEMGRID_NZ = 100
-CHEMGRID_NX = 300
-CHEMGRID_NY = 90
+CHEMGRID_NZ = 20
+CHEMGRID_NX = 150
+CHEMGRID_NY = 45
 MOLMASS = 64
 BOUND_MASS = 0.0
 BOUND_DPS = 100.0
@@ -94,7 +94,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 	   ENS_BASENAME ens STAT_BASENAME station \
 	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
 	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
-           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
+     SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
 
 # Compare files...
 echo -e "\nCompare results..."

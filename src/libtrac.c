@@ -720,11 +720,12 @@ void clim_h2o2_init(
 
 /*****************************************************************************/
 
-double clim_ho2(
+double clim_var(
   clim_t * clim,
   double t,
   double lat,
-  double p) {
+  double p,
+	double clim_var[CT][CP][CY]) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -732,113 +733,115 @@ double clim_ho2(
     sec += 365.25 * 86400.;
 
   /* Check pressure... */
-  if (p < clim->ho2_p[clim->ho2_np - 1])
-    p = clim->ho2_p[clim->ho2_np - 1];
-  else if (p > clim->ho2_p[0])
-    p = clim->ho2_p[0];
+  if (p < clim->clim_p[clim->clim_np - 1])
+    p = clim->clim_p[clim->clim_np - 1];
+  else if (p > clim->clim_p[0])
+    p = clim->clim_p[0];
 
   /* Check latitude... */
-  if (lat < clim->ho2_lat[0])
-    lat = clim->ho2_lat[0];
-  else if (lat > clim->ho2_lat[clim->ho2_nlat - 1])
-    lat = clim->ho2_lat[clim->ho2_nlat - 1];
+  if (lat < clim->clim_lat[0])
+    lat = clim->clim_lat[0];
+  else if (lat > clim->clim_lat[clim->clim_nlat - 1])
+    lat = clim->clim_lat[clim->clim_nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim->ho2_time, clim->ho2_ntime, sec);
-  int ilat = locate_reg(clim->ho2_lat, clim->ho2_nlat, lat);
-  int ip = locate_irr(clim->ho2_p, clim->ho2_np, p);
+  int isec = locate_irr(clim->clim_time, clim->clim_ntime, sec);
+  int ilat = locate_reg(clim->clim_lat, clim->clim_nlat, lat);
+  int ip = locate_irr(clim->clim_p, clim->clim_np, p);
 
-  /* Interpolate ho2 climatology... */
-  double aux00 = LIN(clim->ho2_p[ip],
-		     clim->ho2[isec][ip][ilat],
-		     clim->ho2_p[ip + 1],
-		     clim->ho2[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->ho2_p[ip],
-		     clim->ho2[isec][ip][ilat + 1],
-		     clim->ho2_p[ip + 1],
-		     clim->ho2[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->ho2_p[ip],
-		     clim->ho2[isec + 1][ip][ilat],
-		     clim->ho2_p[ip + 1],
-		     clim->ho2[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->ho2_p[ip],
-		     clim->ho2[isec + 1][ip][ilat + 1],
-		     clim->ho2_p[ip + 1],
-		     clim->ho2[isec + 1][ip + 1][ilat + 1], p);
+  /* Interpolate climatology variable... */
+  double aux00 = LIN(clim->clim_p[ip],
+		     clim_var[isec][ip][ilat],
+		     clim->clim_p[ip + 1],
+		     clim_var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(clim->clim_p[ip],
+		     clim_var[isec][ip][ilat + 1],
+		     clim->clim_p[ip + 1],
+		     clim_var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(clim->clim_p[ip],
+		     clim_var[isec + 1][ip][ilat],
+		     clim->clim_p[ip + 1],
+		     clim_var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(clim->clim_p[ip],
+		     clim_var[isec + 1][ip][ilat + 1],
+		     clim->clim_p[ip + 1],
+		     clim_var[isec + 1][ip + 1][ilat + 1], p);
   aux00 =
-    LIN(clim->ho2_lat[ilat], aux00, clim->ho2_lat[ilat + 1], aux01, lat);
+    LIN(clim->clim_lat[ilat], aux00, clim->clim_lat[ilat + 1], aux01, lat);
   aux11 =
-    LIN(clim->ho2_lat[ilat], aux10, clim->ho2_lat[ilat + 1], aux11, lat);
+    LIN(clim->clim_lat[ilat], aux10, clim->clim_lat[ilat + 1], aux11, lat);
   aux00 =
-    LIN(clim->ho2_time[isec], aux00, clim->ho2_time[isec + 1], aux11, sec);
+    LIN(clim->clim_time[isec], aux00, clim->clim_time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
 
 /*****************************************************************************/
 
-void clim_ho2_init(
-  ctl_t * ctl,
-  clim_t * clim) {
+void clim_var_init(
+  clim_t * clim,
+	char *varname,
+	char *filename,
+	double clim_var[CT][CP][CY]) {
 
   int ncid, varid, it, iy, iz, nt;
 
-  double *help, ho2min = 1e99, ho2max = -1e99;
+  double *help, varmin = 1e99, varmax = -1e99;
 
   /* Write info... */
-  LOG(1, "Read HO2 data: %s", ctl->clim_ho2_filename);
+  LOG(1, "Read %s data: %s", varname, filename);
 
   /* Open netCDF file... */
-  if (nc_open(ctl->clim_ho2_filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("HO2 climatology data are missing!");
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("%s climatology data are missing!", varname);
     return;
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &clim->ho2_np, 2, CP);
-  NC_GET_DOUBLE("press", clim->ho2_p, 1);
+  NC_INQ_DIM("press", &clim->clim_np, 2, CP);
+  NC_GET_DOUBLE("press", clim->clim_p, 1);
 
   /* Check ordering of pressure data... */
-  if (clim->ho2_p[0] < clim->ho2_p[1])
+  if (clim->clim_p[0] < clim->clim_p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &clim->ho2_nlat, 2, CY);
-  NC_GET_DOUBLE("lat", clim->ho2_lat, 1);
+  NC_INQ_DIM("lat", &clim->clim_nlat, 2, CY);
+  NC_GET_DOUBLE("lat", clim->clim_lat, 1);
 
   /* Check ordering of latitude data... */
-  if (clim->ho2_lat[0] > clim->ho2_lat[1])
+  if (clim->clim_lat[0] > clim->clim_lat[1])
     ERRMSG("Latitude data are not ascending!");
 
   /* Set time data (for monthly means)... */
-  clim->ho2_ntime = 12;
-  clim->ho2_time[0] = 1209600.00;
-  clim->ho2_time[1] = 3888000.00;
-  clim->ho2_time[2] = 6393600.00;
-  clim->ho2_time[3] = 9072000.00;
-  clim->ho2_time[4] = 11664000.00;
-  clim->ho2_time[5] = 14342400.00;
-  clim->ho2_time[6] = 16934400.00;
-  clim->ho2_time[7] = 19612800.00;
-  clim->ho2_time[8] = 22291200.00;
-  clim->ho2_time[9] = 24883200.00;
-  clim->ho2_time[10] = 27561600.00;
-  clim->ho2_time[11] = 30153600.00;
+  clim->clim_ntime = 12;
+  clim->clim_time[0] = 1209600.00;
+  clim->clim_time[1] = 3888000.00;
+  clim->clim_time[2] = 6393600.00;
+  clim->clim_time[3] = 9072000.00;
+  clim->clim_time[4] = 11664000.00;
+  clim->clim_time[5] = 14342400.00;
+  clim->clim_time[6] = 16934400.00;
+  clim->clim_time[7] = 19612800.00;
+  clim->clim_time[8] = 22291200.00;
+  clim->clim_time[9] = 24883200.00;
+  clim->clim_time[10] = 27561600.00;
+  clim->clim_time[11] = 30153600.00;
 
   /* Check number of timesteps... */
   NC_INQ_DIM("time", &nt, 12, 12);
 
   /* Read data... */
   ALLOC(help, double,
-	clim->ho2_nlat * clim->ho2_np * clim->ho2_ntime);
-  NC_GET_DOUBLE("HO2", help, 1);
-  for (it = 0; it < clim->ho2_ntime; it++)
-    for (iz = 0; iz < clim->ho2_np; iz++)
-      for (iy = 0; iy < clim->ho2_nlat; iy++) {
-	clim->ho2[it][iz][iy] =
-	  help[ARRAY_3D(it, iz, clim->ho2_np, iy, clim->ho2_nlat)];
-	ho2min = GSL_MIN(ho2min, clim->ho2[it][iz][iy]);
-	ho2max = GSL_MAX(ho2max, clim->ho2[it][iz][iy]);
+	clim->clim_nlat * clim->clim_np * clim->clim_ntime);
+  NC_GET_DOUBLE(varname, help, 1);
+  for (it = 0; it < clim->clim_ntime; it++)
+    for (iz = 0; iz < clim->clim_np; iz++)
+      for (iy = 0; iy < clim->clim_nlat; iy++) {
+	clim_var[it][iz][iy] =
+	  help[ARRAY_3D(it, iz, clim->clim_np, iy, clim->clim_nlat)];
+	varmin = GSL_MIN(varmin, clim_var[it][iz][iy]);
+	varmax = GSL_MAX(varmax, clim_var[it][iz][iy]);
       }
   free(help);
 
@@ -846,19 +849,19 @@ void clim_ho2_init(
   NC(nc_close(ncid));
 
   /* Write info... */
-  LOG(2, "Number of time steps: %d", clim->ho2_ntime);
+  LOG(2, "Number of time steps: %d", clim->clim_ntime);
   LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-      clim->ho2_time[0], clim->ho2_time[1],
-      clim->ho2_time[clim->ho2_ntime - 1]);
-  LOG(2, "Number of pressure levels: %d", clim->ho2_np);
+      clim->clim_time[0], clim->clim_time[1],
+      clim->clim_time[clim->clim_ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", clim->clim_np);
   LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(clim->ho2_p[0]), Z(clim->ho2_p[1]), Z(clim->ho2_p[clim->ho2_np - 1]));
-  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->ho2_p[0],
-      clim->ho2_p[1], clim->ho2_p[clim->ho2_np - 1]);
-  LOG(2, "Number of latitudes: %d", clim->ho2_nlat);
+      Z(clim->clim_p[0]), Z(clim->clim_p[1]), Z(clim->clim_p[clim->clim_np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->clim_p[0],
+      clim->clim_p[1], clim->clim_p[clim->clim_np - 1]);
+  LOG(2, "Number of latitudes: %d", clim->clim_nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      clim->ho2_lat[0], clim->ho2_lat[1], clim->ho2_lat[clim->ho2_nlat - 1]);
-  LOG(2, "HO2 concentration range: %g ... %g molec/cm^3", ho2min, ho2max);
+      clim->clim_lat[0], clim->clim_lat[1], clim->clim_lat[clim->clim_nlat - 1]);
+  LOG(2, "%s concentration range: %g ... %g molec/cm^3", varname, varmin, varmax);
 }
 
 /*****************************************************************************/
@@ -2348,14 +2351,20 @@ void read_clim(
 
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-')
-    clim_oh_init(ctl, clim);
+    	clim_oh_init(ctl, clim);
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
     clim_h2o2_init(ctl, clim);
-
-  if (ctl->clim_ho2_filename[0] != '-')
-    clim_ho2_init(ctl, clim);
+	
+	#ifdef KPP
+  	if (ctl->clim_radical_filename[0] != '-'){
+    	clim_var_init(clim, "HO2", ctl->clim_radical_filename, clim->ho2);
+			clim_var_init(clim, "O(1D)", ctl->clim_radical_filename, clim->o1d);
+		}
+		if ((ctl->clim_radical_filename[0] != '-') && (ctl->oh_chem_beta == 0))
+			clim_var_init(clim, "OH", ctl->clim_radical_filename, clim->oh);	
+	#endif
 }
 
 /*****************************************************************************/
@@ -2439,9 +2448,19 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_Cx = -1;    /* TODO: change names from "qnt_Cso2" to "qnt_so2", etc... Think about the units (but don't try to unify them)... */
-  ctl->qnt_Ch2o2 = -1;
-  ctl->qnt_Cho2 = -1;
+  ctl->qnt_Cx = -1;    
+  ctl->qnt_Coh = -1;
+	ctl->qnt_Cho2 = -1;
+	ctl->qnt_Co1d = -1;
+	ctl->qnt_Ch = -1;
+	ctl->qnt_Co3p = -1;  
+	ctl->qnt_Ch2o2 = -1;
+  ctl->qnt_Co3 = -1;
+	ctl->qnt_Cn2o = -1;
+	ctl->qnt_Cccl3f = -1;
+	ctl->qnt_Cccl2f2 = -1;
+	ctl->qnt_Ccclf3 = -1;
+	ctl->qnt_Cco = -1;	
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -2527,8 +2546,19 @@ void read_ctl(
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
       SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm3")   
-      SET_QNT(qnt_Ch2o2, "Ch2o2", "particle H2O2 concentration", "molec/cm3")
-      SET_QNT(qnt_Ch2o2, "Cho2", "particle HO2 concentration", "molec/cm3")
+			SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm3")
+      SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm3")
+			SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm3")
+			SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm3")
+			SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm3")
+      SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm3")
+      SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm3")
+      SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm3")
+      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration", "molec/cm3")
+      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2(CFC-12) concentration", "molec/cm3")
+      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3(CFC-13) concentration", "molec/cm3")
+      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm3")
+
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
@@ -2775,6 +2805,8 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
     ctl->kpp_chem =
       (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
+    ctl->kppchem_bound =
+      (int) scan_ctl(filename, argc, argv, "KPPCHEM_BOUND", -1, "0", NULL);
     ctl->oh_chem_reaction =
       (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
     ctl->h2o2_chem_reaction =
@@ -2825,8 +2857,8 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1,
 	   "../../data/cams_H2O2.nc", ctl->clim_h2o2_filename);
 
-  scan_ctl(filename, argc, argv, "CLIM_HO2_FILENAME", -1,
-	   "../../data/clams_radical_species.nc", ctl->clim_ho2_filename);
+  scan_ctl(filename, argc, argv, "CLIM_RADICAL_FILENAME", -1,
+	   "../../data/clams_radical_species.nc", ctl->clim_radical_filename);
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =

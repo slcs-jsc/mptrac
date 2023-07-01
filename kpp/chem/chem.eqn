@@ -1,0 +1,66 @@
+#DEFVAR
+o3p			=   IGNORE;
+o1d			=   IGNORE;
+h				=  	IGNORE;
+oh			=   IGNORE;
+ho2			=   IGNORE;
+h2o2		=   IGNORE;
+o3			=   IGNORE;
+n2o			=   IGNORE;
+ccl3f		=   IGNORE;
+ccl2f2	=   IGNORE;
+cclf3		=   IGNORE;
+ch4			=   IGNORE;
+co2			=   IGNORE;
+co			=  	IGNORE;
+
+#DEFFIX
+o2    =   IGNORE;
+h2 		= 	IGNORE;
+n2		=   IGNORE;
+h2o		=   IGNORE;
+
+#LOOKAT o3;
+#MONITOR o3;
+
+#EQUATIONS
+o3p + o2      = o3														: ko3p_o2_M;
+o3p + o3 			= o2 + o2												:	ko3p_o3;
+o1d + o2      = o3p + o2   		    				   	: ko1d_o2;
+o1d + o3			= 1.5o2 + o3p										: ko1d_o3;				
+{o1d + h2			= oh + h												: ko1d_h2;}
+o1d + h2o			= oh + oh												: ko1d_h2o;
+o1d + n2			= o3p + n2											: ko1d_n2;
+o1d + n2     	= n2o														: ko1d_n2_2;
+o1d + n2o			= PROD													: ko1d_n2o;
+{o1d + ch4			= PROD + oh											: ko1d_ch4;}
+{o1d + co2			= o3p + co2											: ko1d_co2;}
+o1d + ccl3f		= 0.1o3p + 0.1ccl3f + PROD			: ko1d_ccl3f;
+o1d + ccl2f2	=	0.14o3p + 0.14ccl2f2 + PROD		: ko1d_ccl2f2;
+o1d + cclf3		= 0.18o3p + 0.18cclf3 + PROD		: ko1d_cclf3;
+{o3p + oh			= o2 + h												: ko3p_oh;}
+o3p + ho2     = oh + o2												: ko3p_ho2;
+o3p + h2o2		= oh + ho2											: ko3p_h2o2;
+{h + o2	    	= ho2														: kh_o2_M;
+h + o3				= oh + o2												: kh_o3;
+h + ho2				= 2oh														: kh_ho2;
+h + ho2				= o3p + h2o											: kh_ho2_2;
+h + ho2				= h2 + o2												: kh_ho2_3;}
+oh + o3				= ho2 + o2											: koh_o3;
+oh + oh				= h2o + o3p											: koh_oh;
+oh + oh     	= h2o2													: koh_oh_M;
+oh + ho2			= h2o	+ o2											: koh_ho2;
+oh + h2o2 		= h2o + ho2											: koh_h2o2;
+{oh + co				= PROD													: koh_co;}
+ho2 + o3			= oh + 2o2											: kho2_o3;
+ho2 + ho2			= h2o2 + o2											: kho2_ho2;
+
+o2 + hv 			= o3p + o3p											: ko2_hv;
+o3 + hv 			= o1d														: ko3_hv1;
+o3 + hv 			= o3p + o2											: ko3_hv2;
+ho2 + hv			= o3p + oh 											: kho2_hv;
+{h2o + hv 			= h + oh												: kh2o_hv;}
+h2o2 + hv 		= oh + o1d											: kh2o2_hv;
+n2o + hv 			= o1d														: kn2o_hv;
+ccl3f + hv		= PROD													: kccl3f_hv;
+ccl2f2 + hv		= PROD													: kcl2f2_hv;

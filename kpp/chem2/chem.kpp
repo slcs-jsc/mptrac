@@ -1,0 +1,256 @@
+#INTEGRATOR rosenbrock
+#LANGUAGE   C
+#DRIVER     none
+#HESSIAN      off                   
+#MEX          off                   
+#STOICMAT     off      
+
+#INCLUDE chem2.eqn 
+
+#INLINE C_GLOBAL
+
+extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
+							ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
+							ko1d_ccl2f2, ko1d_cclf3, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
+							kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
+							koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2,		\
+							ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
+							kccl3f_hv, kcl2f2_hv;
+
+#pragma omp threadprivate(ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
+													ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
+													ko1d_ccl2f2, ko1d_cclf3, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
+													kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
+													koh_ho2, koh_h2o2, kho2_o3, kho2_ho2,		\
+													ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
+													kccl3f_hv, kcl2f2_hv,		\
+													RCONST,RTOL,ATOL,STEPMIN,VAR,FIX,TEMP)
+									
+#define SET_VAR(ind_spec, qnt_index) 			\
+	if (qnt_index >= 0) 				\
+		VAR[ind_spec] = atm->q[qnt_index][ip]; 
+
+#define VAR2atm(ind_spec, qnt_index)			\
+	if (qnt_index >= 0) 				\
+		atm->q[qnt_index][ip] = VAR[ind_spec];	
+
+/*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
+#define roeth_photol(a, b, c, sza) 				\
+	(c*sza < M_PI/2 ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
+
+#define INIT_CQNT(qnt_index, climptr_varname) 			\
+	if (qnt_index >= 0) 			\
+		atm->q[qnt_index][ip] = 			\
+			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], climptr_varname);
+	
+#ENDINLINE
+
+#INLINE C_RATES
+#include "libtrac.h"
+
+/*Formula for the effective second-order rate constant for 
+	termolecular reactions (NASA JPL 19-5)... */
+double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
+{
+  double K0, K1, Kf;
+
+  K0 = (double)A0 * pow( (298.0/TEMP), (double)B0 ) * M;
+  K1 = (double)A1 * pow( (298.0/TEMP), (double)B1 );
+  Kf = (K0/(1.0+K0/K1)) *
+    pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0/K1)),2 ) ) ) );
+
+  return (double)Kf;
+}
+
+/*Formula for the effective second-order rate constant for
+	chemical activation reactions (NASA JPL 19-5)... */
+
+double  kcar_jpl (  float M, float A0, float B0, float A1, float B1, float A2, float B2)
+{
+  double K0, K1, Kf, Kca;
+
+  K0 = (double)A0 * pow( (298.0/TEMP), (double)B0 ) * M;
+  K1 = (double)A1 * pow( (298.0/TEMP), (double)B1 );
+  Kf = (K0/(1.0+K0/K1)) *
+    pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0/K1)),2 ) ) ) );
+	Kca = A2 * exp(-B2/TEMP) * (1 - (Kf/K1));
+
+  return (double)(Kf + Kca);
+}
+
+
+
+double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,
+				ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,
+				ko1d_ccl2f2, ko1d_cclf3, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 
+				kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,
+				koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2,
+				ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,
+				kccl3f_hv, kcl2f2_hv;
+
+void kppchem_initialize(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+	int ip
+){
+		/* Get Meteological variables... */
+		double t, h2o;
+		INTPOL_INIT;
+		INTPOL_3D(t, 1);
+		INTPOL_3D(h2o, 1);
+		TEMP = t;
+
+		/* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
+		double M = AVO * 1e-6 * (atm->p[ip] * 100) / (RI * t);  // M = p/RT
+
+		/* Calculate solar zenith angle [deg] */
+		double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+
+		SET_VAR(ind_o3p, ctl->qnt_Co3p);
+		SET_VAR(ind_o1d, ctl->qnt_Co1d);
+
+		SET_VAR(ind_oh, ctl->qnt_Coh);
+		SET_VAR(ind_ho2, ctl->qnt_Cho2);
+		SET_VAR(ind_o3, ctl->qnt_Co3);
+		SET_VAR(ind_n2o, ctl->qnt_Cn2o);
+		SET_VAR(ind_ccl3f, ctl->qnt_Cccl3f);
+		SET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2);
+		SET_VAR(ind_cclf3, ctl->qnt_Ccclf3);
+		//SET_VAR(ind_co, ctl->qnt_Cco);
+
+		FIX[ind_h2o] = h2o * M;
+
+		/* Reaction rate ... */
+		ko3p_o2_M = k3rd_jpl(M, 6.1e-34, 2.4, 0, 0);
+		ko3p_o3 = ARR_ab(8e-12, 2060);
+		ko1d_o2 = ARR_ab(3.3e-11, -55);
+		ko1d_o3 = ARR_ab(2.4e-10, 0);
+		ko1d_h2 = ARR_ab(1.2e-10, 0);
+		ko1d_h2o = ARR_ab(1.63e-10, -60);
+		ko1d_n2 = ARR_ab(2.15e-11, -110);
+		ko1d_n2_2 = k3rd_jpl(M, 2.8e-36, 0.9, 0, 0);
+		ko1d_n2o = ARR_ab(1.19e-10, -20);
+		ko1d_ch4 = ARR_ab(1.75e-10, 0);
+		ko1d_co2 = ARR_ab(7.5e-11, -115);
+		ko1d_ccl3f = ARR_ab(2.3e-10, 0);
+		ko1d_ccl2f2 = ARR_ab(1.4e-10, -25);
+		ko1d_cclf3 = ARR_ab(8.7e-11, 0);
+		ko3p_oh = ARR_ab(1.8e-11, -180);
+		ko3p_ho2 = ARR_ab(3e-11, -200);
+		ko3p_h2o2 = ARR_ab(1.4e-12, 2000);
+		kh_o2_M = k3rd_jpl(M, 5.3e-32, 1.8, 9.5e-11, -0.4); 
+		kh_o3 = ARR_ab(1.4e-10, 470);
+		kh_ho2 = ARR_ab(7.2e-11, 0);
+		kh_ho2_2 = ARR_ab(1.6e-12, 0);
+		kh_ho2_3 = ARR_ab(6.9e-12, 0);
+		koh_o3 = ARR_ab(1.7e-12, 940);
+		koh_oh = ARR_ab(1.8e-12, 0);
+		koh_oh_M = k3rd_jpl(M, 6.9e-31, 1.0, 2.6e-11, 0);
+		koh_ho2 = ARR_ab(4.8e-11, -250);
+		koh_h2o2 = 1.8e-12;
+		koh_co = kcar_jpl(M, 6.9e-33, 2.1, 1.1e-12, -1.3, 1.85e-13, 65);
+		kho2_o3 = ARR_ab(1e-14, 490);
+		kho2_ho2 = ARR_ab(3e-13, -460) + ARR_ab(2.1e-33 * M, -920) ;
+		
+		/* Photolysis reaction rate ... */
+		ko2_hv = roeth_photol(1.15e-11, 6.51657, 0.75717, sza);
+		ko3_hv1 = roeth_photol(1.37e-4, 1.38520, 0.90333, sza);
+		ko3_hv2 = roeth_photol(1.12E-03, 0.49409, 0.87117, sza);
+		kho2_hv = roeth_photol(6.83E-06, 6.43722, 0.75746, sza);
+		kh2o_hv = roeth_photol(1.79E-10, 7.70686, 0.75420, sza);
+		kh2o2_hv = roeth_photol( 2.60E-05, 0.53675, 0.89531, sza);
+		kn2o_hv = roeth_photol(1.61E-08, 6.21077, 0.76015, sza);
+		kccl3f_hv = roeth_photol(6.79E-07, 6.25031, 0.75941, sza);
+		kcl2f2_hv = roeth_photol(2.81E-08, 6.47452, 0.75909, sza);
+}
+#ENDINLINE
+
+#INLINE C_UTIL
+
+#include "libtrac.h"
+
+void kppchem_output2atm(
+	atm_t * atm,
+	ctl_t * ctl, 
+	int ip){
+	
+		/*Output to air parcel.. */
+
+		VAR2atm(ind_o3p, ctl->qnt_Co3p)
+		VAR2atm(ind_o1d, ctl->qnt_Co1d)
+		VAR2atm(ind_h2o2, ctl->qnt_Ch2o2)
+		VAR2atm(ind_oh, ctl->qnt_Coh)
+		VAR2atm(ind_ho2, ctl->qnt_Cho2)
+		VAR2atm(ind_o3, ctl->qnt_Co3)
+		VAR2atm(ind_n2o, ctl->qnt_Cn2o)
+		VAR2atm(ind_ccl3f, ctl->qnt_Cccl3f)
+		VAR2atm(ind_ccl2f2, ctl->qnt_Cccl2f2)
+		VAR2atm(ind_cclf3, ctl->qnt_Ccclf3)
+		//VAR2atm(ind_co, ctl->qnt_Cco)
+}
+
+void kppchem_init_cqnt_clim(
+	ctl_t * ctl,
+	atm_t * atm,
+	clim_t * clim,
+	int ip){	
+		atm->q[ctl->qnt_Cho2][ip] = 			
+			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->ho2);
+		atm->q[ctl->qnt_Co1d][ip] = 			
+			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->o1d);
+		atm->q[ctl->qnt_Coh][ip] = 			
+			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->oh);
+
+}
+
+void kppchem_init_cqnt_met(
+ctl_t * ctl,
+atm_t * atm,
+met_t * met0,
+met_t * met1,
+int ip){
+	INTPOL_INIT;
+	double o3;
+  INTPOL_3D(o3,1)
+	atm->q[ctl->qnt_Co3][ip] = o3;
+	
+}
+
+void interparc_mixing(
+	ctl_t * ctl,
+	atm_t * atm,
+	clim_t * clim,
+	int *ixs,
+	int *iys,	
+	int *izs){
+
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3p);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co1d);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch2o2);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Coh);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cho2);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cn2o);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl3f);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl2f2);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ccclf3);	
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cco);		
+}
+
+void kppchem_bound_cond(
+	ctl_t * ctl,
+	atm_t * atm,
+	int ip){
+	if (ctl->qnt_Cccl3f>=0)
+			atm->q[ctl->qnt_Cccl3f][ip] = 1e7;
+	if (ctl->qnt_Cco>=0)
+			atm->q[ctl->qnt_Cco][ip] = 1e7;
+}
+
+#ENDINLINE
+
+
