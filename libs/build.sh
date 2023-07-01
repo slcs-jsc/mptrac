@@ -1,8 +1,8 @@
 #! /bin/bash
 
 # Setup...
-target=$(rm -rf build && mkdir -p build && cd build && pwd)
-threads=$(cat /proc/cpuinfo | grep processor | wc -l)
+rm -rf build
+target=$(mkdir -p build && cd build && pwd)
 
 # Prepare directories...
 mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 \
@@ -15,7 +15,7 @@ mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 \
 dir=gsl-2.7
 cd $target/src/$dir \
     && ./configure --prefix=$target \
-    && make -j$threads && make check && make install && make clean \
+    && make -j && make check && make install && make clean \
 	|| exit
 
 # Thrust sort...
@@ -28,7 +28,7 @@ cd $target/src/$dir \
 dir=zlib-1.2.12
 cd $target/src/$dir \
     && ./configure --prefix=$target \
-    && make -j$threads && make check && make install && make clean \
+    && make -j && make check && make install && make clean \
 	|| exit
 
 # zfp...
@@ -43,7 +43,7 @@ cd $target/src/$dir \
 # zstd...
 dir=zstd-1.5.2
 cd $target/src/$dir \
-    && make -j$threads && make check \
+    && make -j && make check \
     && cp -a lib/libzstd* $target/lib/ \
     && cp -a lib/*.h $target/include/ \
     && ln -sf $target/lib/libzstd.so.1.5.2 $target/lib/libzstd.so \
@@ -54,14 +54,14 @@ cd $target/src/$dir \
 dir=hdf5-1.12.1
 cd $target/src/$dir \
     && ./configure --prefix=$target --with-zlib=$target --enable-hl \
-    && make -j$threads ; make -j$threads && make check && make install && make clean \
+    && make -j ; make -j && make check && make install && make clean \
 	|| exit
 
 # netCDF...
 dir=netcdf-c-4.8.1
 cd $target/src/$dir \
     && CPPFLAGS=-I$target/include LDFLAGS=-L$target/lib ./configure --prefix=$target --disable-dap --disable-nczarr \
-    && make -j$threads && make check && make install && make clean \
+    && make -j && make check && make install && make clean \
 	|| exit
 
 # # Chemistry using KPP...

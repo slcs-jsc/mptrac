@@ -2576,11 +2576,11 @@ void kppchem_output2atm(
 void kpp_chemgrid_mass2concen(
 	atm_t * atm,
 	ctl_t * ctl,
-	double * mass, 
-	double * area,
-	int * ixs,
-	int * iys,
-	int * izs,
+	double *mass, 
+	double *area,
+	int *ixs,
+	int *iys,
+	int *izs,
 	double dz,
 	int ip, 
 	int qnt_index);

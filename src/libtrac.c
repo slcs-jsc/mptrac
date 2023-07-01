@@ -2545,19 +2545,19 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-      SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm3")   
-			SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm3")
-      SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm3")
-			SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm3")
-			SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm3")
-			SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm3")
-      SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm3")
-      SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm3")
-      SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm3")
-      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration", "molec/cm3")
-      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2(CFC-12) concentration", "molec/cm3")
-      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3(CFC-13) concentration", "molec/cm3")
-      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm3")
+      SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm^3")   
+			SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm^3")
+      SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm^3")
+			SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm^3")
+			SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm^3")
+			SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm^3")
+      SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm^3")
+      SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
+      SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
+      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration", "molec/cm^3")
+      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2(CFC-12) concentration", "molec/cm^3")
+      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3(CFC-13) concentration", "molec/cm^3")
+      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
 
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
@@ -2880,11 +2880,11 @@ void read_ctl(
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
   ctl->chemgrid_mixparam_trop =
-    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1, "1e-3",
-		      NULL);
+    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1,
+		      "1e-3", NULL);
   ctl->chemgrid_mixparam_strat =
-    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1, "1e-6",
-		      NULL);
+    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1,
+		      "1e-6", NULL);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);

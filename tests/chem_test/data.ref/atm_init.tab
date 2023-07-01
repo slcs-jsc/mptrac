@@ -13,8 +13,8 @@
 # $13 = pt [hPa]
 # $14 = stat [-]
 # $15 = ens [-]
-# $16 = Cx [molec/cm3]
-# $17 = Ch2o2 [molec/cm3]
-# $18 = Cho2 [molec/cm3]
+# $16 = Cx [molec/cm^3]
+# $17 = Ch2o2 [molec/cm^3]
+# $18 = Cho2 [molec/cm^3]
 
 360547200.00 10 -72.117 -40.59 0 0 0 0 0 0 0 0 0 0 0 0 0 0
