@@ -1679,10 +1679,9 @@ void interparc_mixing_help(
 			if (count[i] > 0)
 				cmean[i] /=	count[i];		
 					
-		#pragma omp parallel for
+		#pragma omp parallel for 
 		for (int ip = 0; ip < atm->np; ip++)
-			if ((izs[ip] >= 0) && 
-			(cmean[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)] > 0)){
+			if (izs[ip] >= 0){
 			
 				atm->q[qnt_idx][ip] += 
 					(cmean[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)] 
@@ -1730,7 +1729,7 @@ void module_kpp_chemgrid(
   double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for default(shared) 
   for (int ip = 0; ip < atm->np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
@@ -1744,7 +1743,7 @@ void module_kpp_chemgrid(
 
   /* Initializae quantity concentration variables. */
   static int init[NP]={0};
-  #pragma omp parallel for
+  #pragma omp parallel for default(shared) 
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0)
         if (!init[ip]){
@@ -1766,7 +1765,7 @@ void module_kpp_chemgrid(
     ALLOC(area, double,
       ctl->chemgrid_ny);
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) 
     for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
       lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
@@ -1779,7 +1778,7 @@ void module_kpp_chemgrid(
       mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
         += atm->q[ctl->qnt_m][ip];
 
-  #pragma omp parallel for default(shared)
+  #pragma omp parallel for default(shared) 
     for (int ip = 0; ip < atm->np; ip++){
       if (izs[ip] >= 0){
         if (ctl->qnt_m >= 0)
@@ -1807,6 +1806,10 @@ void module_kpp_chemgrid(
 #endif
 }
 
+// double C[NSPEC];                        /* Concentration of all species */
+// double *VAR;
+// double *FIX;
+
 void module_kpp_chem(
   ctl_t * ctl,
   clim_t * clim,
@@ -1820,32 +1823,38 @@ void module_kpp_chem(
   
   const int np = atm->np;
 
+
   /* Loop over particles... */
-  #pragma omp parallel for firstprivate(C)	
+  #pragma omp parallel for //firstprivate(C)//private(VAR,FIX) //
   for (int ip = 0; ip < np; ip++) {
-    if (dt[ip] > 1e-6) {
-      VAR = &C[0];
-      FIX = &C[NVAR];
+    if (dt[ip] > 0) {
+      // VAR = &C[0];
+      // FIX = &C[NVAR];
+			ALLOC(VAR, double, NVAR);
+			ALLOC(FIX, double, NFIX);
 
       STEPMIN = 0;
       STEPMAX = 900.0;
 
       /* Set relative & absolute tolerances... */
       for (int i = 0; i < NVAR; i++) {
-				RTOL[i] = 1.0e-4;
+        RTOL[i] = 1.0e-4;
         ATOL[i] = 1.0e-3;
       }
 
     /*Initialize... */
     kppchem_initialize(ctl, clim, met0, met1, atm, ip);
-
     /*Integrate... */
     INTEGRATE(atm->time[ip]-dt[ip], atm->time[ip]);
     /*Output to air parcel.. */ 
     kppchem_output2atm(atm, ctl, ip);
 
+		free(VAR);
+		free(FIX);
+
     }
   }
+
 }
 #endif
 

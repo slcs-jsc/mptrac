@@ -2,7 +2,7 @@
 
 # Set environment...
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=1
+export OMP_NUM_THREADS=24
 
 # Setup...
 trac=../../src

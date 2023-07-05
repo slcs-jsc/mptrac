@@ -97,7 +97,7 @@ void kppchem_initialize(
 	int ip
 ){
 		/* Get Meteological variables... */
-		double t,  h2o;
+		double t, h2o;
 		INTPOL_INIT;
 		INTPOL_3D(t, 1);
 		// INTPOL_3D(lwc, 1);
@@ -115,7 +115,7 @@ void kppchem_initialize(
     SET_VAR(ind_h2o2, ctl->qnt_Ch2o2);
 		SET_VAR(ind_oh, ctl->qnt_Coh);
 		SET_VAR(ind_ho2, ctl->qnt_Cho2);
-		//SET_VAR(ind_h, ctl->qnt_Ch);
+		SET_VAR(ind_h, ctl->qnt_Ch);
 		SET_VAR(ind_o3, ctl->qnt_Co3);
 		SET_VAR(ind_n2o, ctl->qnt_Cn2o);
 		SET_VAR(ind_ccl3f, ctl->qnt_Cccl3f);
@@ -123,7 +123,7 @@ void kppchem_initialize(
 		SET_VAR(ind_cclf3, ctl->qnt_Ccclf3);
 		//SET_VAR(ind_co, ctl->qnt_Cco);
 
-		FIX[ind_h2o] = h2o * M;
+		FIX[indf_h2o] = h2o * M;
 
 		//VAR[ind_ch4] = 0;
 		//VAR[ind_co2] = 0;
@@ -189,7 +189,7 @@ void kppchem_output2atm(
 		VAR2atm(ind_h2o2, ctl->qnt_Ch2o2)
 		VAR2atm(ind_oh, ctl->qnt_Coh)
 		VAR2atm(ind_ho2, ctl->qnt_Cho2)
-		//VAR2atm(ind_h, ctl->qnt_Ch)
+		VAR2atm(ind_h, ctl->qnt_Ch)
 		VAR2atm(ind_o3, ctl->qnt_Co3)
 		VAR2atm(ind_n2o, ctl->qnt_Cn2o)
 		VAR2atm(ind_ccl3f, ctl->qnt_Cccl3f)
@@ -219,10 +219,13 @@ atm_t * atm,
 met_t * met0,
 met_t * met1,
 int ip){
-	INTPOL_INIT;
-	double o3;
-  INTPOL_3D(o3,1)
-	atm->q[ctl->qnt_Co3][ip] = o3;
+	//INTPOL_INIT;
+	//double o3, t;
+  //INTPOL_3D(o3,1)
+	//INTPOL_3D(t,1)
+			/* Calculate air molecular density ... */
+	//double M = MOLEC_DEN_AIR(atm->p[ip], t);  
+	//atm->q[ctl->qnt_Co3][ip] = o3 * M;
 }
 
 void interparc_mixing(
