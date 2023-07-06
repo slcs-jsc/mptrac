@@ -998,29 +998,29 @@ typedef struct {
   int qnt_Cx;
 
   /*! Quantity array index for each species molecular concentration. */
-	int qnt_Coh;
+  int qnt_Coh;
 
-	int qnt_Cho2;
+  int qnt_Cho2;
 
-	int qnt_Co1d;
+  int qnt_Co1d;
 
-	int qnt_Ch;
+  int qnt_Ch;
 
-	int qnt_Co3p;
+  int qnt_Co3p;
 
   int qnt_Ch2o2;
 
-	int qnt_Co3;
+  int qnt_Co3;
 
-	int qnt_Cn2o;
+  int qnt_Cn2o;
 
-	int qnt_Cccl3f;
+  int qnt_Cccl3f;
 
-	int qnt_Cccl2f2;
+  int qnt_Cccl2f2;
 
-	int qnt_Ccclf3;
+  int qnt_Ccclf3;
 
-	int qnt_Cco;
+  int qnt_Cco;
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
 
@@ -1245,8 +1245,8 @@ typedef struct {
   /*! Switch for kpp chemistry module. (0=off, 1=on) */
   int kpp_chem;
 
-	/*! Switch for boundary condition for kpp chemistry module */
-	int kppchem_bound;
+  /*! Switch for boundary condition for kpp chemistry module */
+  int kppchem_bound;
 
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
@@ -1651,7 +1651,7 @@ typedef struct {
   /*! HO2 number concentrations [molec/cm^3]. */
   double ho2[CT][CP][CY];
 
-	/*! O(1D) number concentrations [molec/cm^3]. */
+  /*! O(1D) number concentrations [molec/cm^3]. */
   double o1d[CT][CP][CY];
 
 } clim_t;
@@ -1836,22 +1836,12 @@ void clim_hno3_init(
 #pragma acc routine (clim_oh)
 #endif
 double clim_oh(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p);
-
-/*! Climatology of OH number concentrations with diurnal variation. */
-#ifdef _OPENACC
-#pragma acc routine (clim_oh_diurnal)
-#endif
-double clim_oh_diurnal(
   ctl_t * ctl,
   clim_t * clim,
   double t,
-  double p,
   double lon,
-  double lat);
+  double lat,
+  double p);
 
 /*! Initialization function for OH climatology. */
 void clim_oh_init(
@@ -1888,14 +1878,14 @@ double clim_var(
   double t,
   double lat,
   double p,
-	double clim_var[CT][CP][CY]);
+  double clim_var[CT][CP][CY]);
 
 /*! Initialization function for HO2 climatology. */
 void clim_var_init(
   clim_t * clim,
-	char * varname,
-	char * filename,
-	double clim_var[CT][CP][CY]);
+  char *varname,
+  char *filename,
+  double clim_var[CT][CP][CY]);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC
@@ -2546,72 +2536,71 @@ void write_station(
   double t);
 
 void interparc_mixing_help(
-	ctl_t * ctl,
-	atm_t * atm,
-	clim_t * clim,
-	int *ixs,
-	int *iys,	
-	int *izs,
-	int qnt_idx);
+  ctl_t * ctl,
+  atm_t * atm,
+  clim_t * clim,
+  int *ixs,
+  int *iys,
+  int *izs,
+  int qnt_idx);
 
 void kppchem_bound_cond(
-	ctl_t * ctl,
-	atm_t * atm,
-	met_t * met0,
-	met_t * met1,
-	int ip);
+  ctl_t * ctl,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
+  int ip);
 
 void kppchem_initialize(
-	ctl_t * ctl,
+  ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-	int ip
-);
+  int ip);
 
 void kppchem_output2atm(
-	atm_t * atm,
-	ctl_t * ctl, 
-	int ip);
+  atm_t * atm,
+  ctl_t * ctl,
+  int ip);
 
 void kpp_chemgrid_mass2concen(
-	atm_t * atm,
-	ctl_t * ctl,
-	double *mass, 
-	double *area,
-	int *ixs,
-	int *iys,
-	int *izs,
-	double dz,
-	int ip, 
-	int qnt_index);
+  atm_t * atm,
+  ctl_t * ctl,
+  double *mass,
+  double *area,
+  int *ixs,
+  int *iys,
+  int *izs,
+  double dz,
+  int ip,
+  int qnt_index);
 
 void kppchem_init_cqnt_clim(
-	ctl_t * ctl,
-	atm_t * atm,
-	clim_t * clim,
-	int ip);
+  ctl_t * ctl,
+  atm_t * atm,
+  clim_t * clim,
+  int ip);
 
 void kppchem_init_cqnt_met(
-ctl_t * ctl,
-atm_t * atm,
-met_t * met0,
-met_t * met1,
-int ip);
+  ctl_t * ctl,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
+  int ip);
 
 double param_mixing_calc(
-	ctl_t * ctl,
-	clim_t * clim,
-	atm_t * atm,
-	int ip);
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  int ip);
 
-void interparc_mixing(	
-	ctl_t * ctl,
-	atm_t * atm,
-	clim_t * clim,
-	int *ixs,
-	int *iys,	
-	int *izs);
+void interparc_mixing(
+  ctl_t * ctl,
+  atm_t * atm,
+  clim_t * clim,
+  int *ixs,
+  int *iys,
+  int *izs);
 
 #endif /* LIBTRAC_H */

@@ -3,6 +3,11 @@ bin/
 docs/html/
 docs/latex/
 docs/site/
+kpp/*/Makefile_chem
+kpp/*/*.a
+kpp/*/*.c
+kpp/*/*.h
+kpp/*/*.log
 libs/build/
 projects/*
 projects/example/data/

@@ -393,8 +393,10 @@ void clim_hno3_init(
 /*****************************************************************************/
 
 double clim_oh(
+  ctl_t * ctl,
   clim_t * clim,
   double t,
+  double lon,
   double lat,
   double p) {
 
@@ -442,28 +444,23 @@ double clim_oh(
   aux00 =
     LIN(clim->oh_time[isec], aux00, clim->oh_time[isec + 1], aux11, sec);
 
+  /* Apply diurnal correction... */
+  if (ctl->oh_chem_beta != 0) {
+    double oh = aux00, sza = sza_calc(t, lon, lat);
+
+    if (sza <= M_PI / 2. * 89. / 90.)
+      return oh * exp(-ctl->oh_chem_beta / cos(sza));
+    else
+      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
+  }
+
   return GSL_MAX(aux00, 0.0);
 }
 
 /*****************************************************************************/
 
-double clim_oh_diurnal(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  double p,
-  double lon,
-  double lat) {
 
-  double oh = clim_oh(clim, t, lat, p), sza = sza_calc(t, lon, lat);
-
-  if (sza <= M_PI / 2. * 89. / 90.)
-    return oh * exp(-ctl->oh_chem_beta / cos(sza));
-  else
-    return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
-}
-
-/*****************************************************************************/
+// TODO: Remove this function, only keep scaling correction for day/night...
 
 void clim_oh_init(
   ctl_t * ctl,
@@ -725,7 +722,7 @@ double clim_var(
   double t,
   double lat,
   double p,
-	double clim_var[CT][CP][CY]) {
+  double clim_var[CT][CP][CY]) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -780,9 +777,9 @@ double clim_var(
 
 void clim_var_init(
   clim_t * clim,
-	char *varname,
-	char *filename,
-	double clim_var[CT][CP][CY]) {
+  char *varname,
+  char *filename,
+  double clim_var[CT][CP][CY]) {
 
   int ncid, varid, it, iy, iz, nt;
 
@@ -855,13 +852,16 @@ void clim_var_init(
       clim->clim_time[clim->clim_ntime - 1]);
   LOG(2, "Number of pressure levels: %d", clim->clim_np);
   LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(clim->clim_p[0]), Z(clim->clim_p[1]), Z(clim->clim_p[clim->clim_np - 1]));
+      Z(clim->clim_p[0]), Z(clim->clim_p[1]),
+      Z(clim->clim_p[clim->clim_np - 1]));
   LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->clim_p[0],
       clim->clim_p[1], clim->clim_p[clim->clim_np - 1]);
   LOG(2, "Number of latitudes: %d", clim->clim_nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      clim->clim_lat[0], clim->clim_lat[1], clim->clim_lat[clim->clim_nlat - 1]);
-  LOG(2, "%s concentration range: %g ... %g molec/cm^3", varname, varmin, varmax);
+      clim->clim_lat[0], clim->clim_lat[1],
+      clim->clim_lat[clim->clim_nlat - 1]);
+  LOG(2, "%s concentration range: %g ... %g molec/cm^3", varname, varmin,
+      varmax);
 }
 
 /*****************************************************************************/
@@ -2351,21 +2351,20 @@ void read_clim(
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    clim_h2o2_init(ctl, clim);
-	
-
-	if (ctl->clim_radical_filename[0] != '-'){   //TODO: use different filename for each species
-		clim_var_init(clim, "HO2", ctl->clim_radical_filename, clim->ho2);
-		clim_var_init(clim, "O(1D)", ctl->clim_radical_filename, clim->o1d);	
-		//clim_var_init(clim, "H2O2", ctl->clim_radical_filename) TODO
-	}
+    clim_h2o2_init(ctl, clim);	//clim_var_init(clim, "H2O2", ctl->clim_radical_filename) TODO
 
   /* Read OH climatology... */
-  if ((ctl->clim_oh_filename[0] != '-') && (ctl->oh_chem_beta != 0))
-		clim_oh_init(ctl, clim);  //TODO: rename to clim_diurnaloh_init
-	else 
-		clim_var_init(clim, "OH", ctl->clim_radical_filename, clim->oh);
+  if (ctl->clim_oh_filename[0] != '-')
+    clim_var_init(clim, "OH", ctl->clim_radical_filename, clim->oh);
+  // TODO:
+  // if (ctl->oh_chem_beta != 0)
+  //   clim_oh_diurnal_correction();
 
+  /* Read HO2 climatology... */
+  clim_var_init(clim, "HO2", ctl->clim_radical_filename, clim->ho2);
+
+  /* Read O(1D) climatology... */
+  clim_var_init(clim, "O(1D)", ctl->clim_radical_filename, clim->o1d);
 }
 
 /*****************************************************************************/
@@ -2449,19 +2448,19 @@ void read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_Cx = -1;    
+  ctl->qnt_Cx = -1;
   ctl->qnt_Coh = -1;
-	ctl->qnt_Cho2 = -1;
-	ctl->qnt_Co1d = -1;
-	ctl->qnt_Ch = -1;
-	ctl->qnt_Co3p = -1;  
-	ctl->qnt_Ch2o2 = -1;
+  ctl->qnt_Cho2 = -1;
+  ctl->qnt_Co1d = -1;
+  ctl->qnt_Ch = -1;
+  ctl->qnt_Co3p = -1;
+  ctl->qnt_Ch2o2 = -1;
   ctl->qnt_Co3 = -1;
-	ctl->qnt_Cn2o = -1;
-	ctl->qnt_Cccl3f = -1;
-	ctl->qnt_Cccl2f2 = -1;
-	ctl->qnt_Ccclf3 = -1;
-	ctl->qnt_Cco = -1;	
+  ctl->qnt_Cn2o = -1;
+  ctl->qnt_Cccl3f = -1;
+  ctl->qnt_Cccl2f2 = -1;
+  ctl->qnt_Ccclf3 = -1;
+  ctl->qnt_Cco = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -2546,20 +2545,22 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-      SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm^3")   
-			SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm^3")
+      SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm^3")
+      SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm^3")
       SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm^3")
-			SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm^3")
-			SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm^3")
-			SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm^3")
+      SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm^3")
+      SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm^3")
+      SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm^3")
       SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm^3")
       SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
-      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration", "molec/cm^3")
-      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2(CFC-12) concentration", "molec/cm^3")
-      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3(CFC-13) concentration", "molec/cm^3")
+      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration",
+	      "molec/cm^3")
+      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2(CFC-12) concentration",
+	      "molec/cm^3")
+      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3(CFC-13) concentration",
+	      "molec/cm^3")
       SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
-
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
