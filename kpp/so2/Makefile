@@ -10,20 +10,17 @@ MEX  = mex
 
 HEADERS = chem_Global.h  chem_Parameters.h  chem_Sparse.h
 
-SPSRC = chem_JacobianSP.c \
-	chem_HessianSP.c  \
-	chem_StoichiomSP.c
+SPSRC = chem_JacobianSP.c 
 
-SPOBJ = chem_JacobianSP.o \
-	chem_HessianSP.o  \
-	chem_StoichiomSP.o
+
+SPOBJ = chem_JacobianSP.o 
 
 
 SRC =   chem_Main.c      chem_Integrator.c   \
 	chem_Function.c  chem_Initialize.c   \
 	chem_Jacobian.c  chem_LinearAlgebra.c\
-	chem_Rates.c     chem_Hessian.c      \
-	chem_Stoichiom.c chem_Util.c         \
+	chem_Rates.c         \
+	chem_Util.c         \
 	chem_Monitor.c
 
 OBJ =  	chem_Main.o chem_Integrator.o chem_Function.o \
