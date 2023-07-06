@@ -732,7 +732,7 @@ void module_bound_cond(
 		// if (ctl->qnt_Cccl3f>=0 && ctl->kppchem_bound == 1)
 		// 	atm->q[ctl->qnt_Cccl3f][ip] = 1e5;
 		if (ctl->kppchem_bound == 1)
-			kppchem_bound_cond(ctl, atm, ip);
+			kppchem_bound_cond(ctl, atm, met0, met1, ip);
 	#endif
     }
 }
@@ -1793,7 +1793,8 @@ void module_kpp_chemgrid(
   }
 
   /* Calculate the inter-parcel exchange between parcel and backgroud */
-  interparc_mixing(ctl, atm, clim, ixs, iys, izs);
+	//if (izs[ip] >= 0) TODO
+	  interparc_mixing(ctl, atm, clim, ixs, iys, izs);
 
   free(ixs);
   free(iys);
@@ -1825,7 +1826,7 @@ void module_kpp_chem(
 
 
   /* Loop over particles... */
-  #pragma omp parallel for //firstprivate(C)//private(VAR,FIX) //
+  #pragma omp parallel for 
   for (int ip = 0; ip < np; ip++) {
     if (dt[ip] > 0) {
       // VAR = &C[0];

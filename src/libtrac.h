@@ -2557,6 +2557,8 @@ void interparc_mixing_help(
 void kppchem_bound_cond(
 	ctl_t * ctl,
 	atm_t * atm,
+	met_t * met0,
+	met_t * met1,
 	int ip);
 
 void kppchem_initialize(

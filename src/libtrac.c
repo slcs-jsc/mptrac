@@ -2350,21 +2350,21 @@ void read_clim(
   clim_hno3_init(clim);
 
   /* Read OH climatology... */
-  if (ctl->clim_oh_filename[0] != '-')
-    	clim_oh_init(ctl, clim);
+  if ((ctl->clim_oh_filename[0] != '-') && (ctl->oh_chem_beta != 0))
+    	clim_oh_init(ctl, clim);  //TODO: rename to clim_diurnaloh_init
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
     clim_h2o2_init(ctl, clim);
 	
-	#ifdef KPP
-  	if (ctl->clim_radical_filename[0] != '-'){
-    	clim_var_init(clim, "HO2", ctl->clim_radical_filename, clim->ho2);
-			clim_var_init(clim, "O(1D)", ctl->clim_radical_filename, clim->o1d);
-		}
-		if ((ctl->clim_radical_filename[0] != '-') && (ctl->oh_chem_beta == 0))
-			clim_var_init(clim, "OH", ctl->clim_radical_filename, clim->oh);	
-	#endif
+
+	if (ctl->clim_radical_filename[0] != '-'){   //TODO: use different filename for each species
+		clim_var_init(clim, "HO2", ctl->clim_radical_filename, clim->ho2);
+		clim_var_init(clim, "O(1D)", ctl->clim_radical_filename, clim->o1d);
+		clim_var_init(clim, "OH", ctl->clim_radical_filename, clim->oh);	
+		//clim_var_init(clim, "H2O2", ctl->clim_radical_filename) TODO
+	}
+
 }
 
 /*****************************************************************************/
