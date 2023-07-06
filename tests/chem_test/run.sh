@@ -2,7 +2,7 @@
 
 # Set environment...
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=24
+export OMP_NUM_THREADS=4
 
 # Setup...
 trac=../../src
@@ -44,24 +44,11 @@ CHEMGRID_NZ = 20
 CHEMGRID_NX = 150
 CHEMGRID_NY = 45
 MOLMASS = 64
-BOUND_MASS = 0.0
-BOUND_DPS = 100.0
 CONV_CAPE = 0.0
 TDEC_TROP = 259200.0
 TDEC_STRAT = 259200.0
 DT_MET = 86400.0
 T_STOP = $t1
-CSI_OBSMIN = 1e-5
-CSI_MODMIN = 1e-5
-GRID_LON0 = -90
-GRID_LON1 = 60
-GRID_LAT0 = -60
-GRID_LAT1 = -15
-GRID_NX = 300
-GRID_NY = 90
-SAMPLE_DZ = 100
-STAT_LON = -22
-STAT_LAT = -40
 EOF
 
 # Create observation file...
@@ -85,16 +72,12 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N 1e4 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
+		SPLIT_N 1e3 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
 
 # Calculate trajectories...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm GRID_BASENAME grid \
-	   ENS_BASENAME ens STAT_BASENAME station \
-	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
-	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
-     SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
+	   ATM_BASENAME atm 
 
 # Compare files...
 echo -e "\nCompare results..."
