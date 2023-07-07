@@ -66,3 +66,7 @@ The [Global Forecast System (GFS)](https://www.ncdc.noaa.gov/data-access/model-d
 ## MeteoCloud data archive in Jülich
 
 For registered users and collaboration partners at the Jülich Supercomputing Centre, Germany, a number of meteorological data sets are readily available for MPTRAC in netCDF file format. The data sets are stored in the [MeteoCloud data archive](https://datapub.fz-juelich.de/slcs/meteocloud) in Jülich. Please contact us in order to inquire about getting access to the data.
+
+## Interoperability with CLaMS data 
+
+MPTRAC can read meteorological data that follows the data format guidelines for the CLaMS. This option can be set true with the parameter: CLAMS_MET_DATA = 1.
