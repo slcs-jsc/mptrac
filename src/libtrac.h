@@ -1549,6 +1549,30 @@ typedef struct {
 
 } cache_t;
 
+typedef struct {
+  /*! Number of climatological data timesteps. */
+  int clim_ntime;
+
+  /*! Number of climatological data latitudes. */
+  int clim_nlat;
+
+  /*! Number of climatological data pressure levels. */
+  int clim_np;
+
+  /*! HO2 time steps [s]. */
+  double clim_time[CT];
+
+  /*! HO2 latitudes [deg]. */
+  double clim_lat[CY];
+
+  /*! climatological data pressure levels [hPa]. */
+  double clim_p[CP];
+
+  /*! OH number concentrations [molec/cm^3]. */
+  double var[CT][CP][CY];
+
+} clim_var_t;
+
 /*! Climatological data. */
 typedef struct {
 
@@ -1588,73 +1612,83 @@ typedef struct {
   /*! HNO3 volume mixing ratios [ppv]. */
   double hno3[12][18][10];
 
-  /*! Number of OH timesteps. */
-  int oh_ntime;
+  // /*! Number of OH timesteps. */ TODO: delete
+  // int oh_ntime;
 
-  /*! Number of OH latitudes. */
-  int oh_nlat;
+  // /*! Number of OH latitudes. */
+  // int oh_nlat;
 
-  /*! Number of OH pressure levels. */
-  int oh_np;
+  // /*! Number of OH pressure levels. */
+  // int oh_np;
 
-  /*! OH time steps [s]. */
-  double oh_time[CT];
+  // /*! OH time steps [s]. */
+  // double oh_time[CT];
 
-  /*! OH latitudes [deg]. */
-  double oh_lat[CY];
+  // /*! OH latitudes [deg]. */
+  // double oh_lat[CY];
 
-  /*! OH pressure levels [hPa]. */
-  double oh_p[CP];
+  // /*! OH pressure levels [hPa]. */
+  // double oh_p[CP];
 
-  /*! OH number concentrations [molec/cm^3]. */
-  double oh[CT][CP][CY];
+  // /*! OH number concentrations [molec/cm^3]. */
+  // double oh[CT][CP][CY];
 
-  /*! Number of H2O2 timesteps. */
-  int h2o2_ntime;
+	clim_var_t * clim_oh_t;
+	
+	clim_var_t * clim_h2o2_t;
 
-  /*! Number of H2O2 latitudes. */
-  int h2o2_nlat;
+	clim_var_t * clim_ho2_t;
+	
+	clim_var_t * clim_o1d_t;
 
-  /*! Number of H2O2 pressure levels. */
-  int h2o2_np;
+  // /*! Number of H2O2 timesteps. */ TODO: delete
+  // int h2o2_ntime;
 
-  /*! H2O2 time steps [s]. */
-  double h2o2_time[CT];
+  // /*! Number of H2O2 latitudes. */
+  // int h2o2_nlat;
 
-  /*! H2O2 latitudes [deg]. */
-  double h2o2_lat[CY];
+  // /*! Number of H2O2 pressure levels. */
+  // int h2o2_np;
 
-  /*! H2O2 pressure levels [hPa]. */
-  double h2o2_p[CP];
+  // /*! H2O2 time steps [s]. */
+  // double h2o2_time[CT];
 
-  /*! H2O2 number concentrations [molec/cm^3]. */
-  double h2o2[CT][CP][CY];
+  // /*! H2O2 latitudes [deg]. */
+  // double h2o2_lat[CY];
 
-  /*! Number of climatological data timesteps. */
-  int clim_ntime;
+  // /*! H2O2 pressure levels [hPa]. */
+  // double h2o2_p[CP];
 
-  /*! Number of climatological data latitudes. */
-  int clim_nlat;
+  // /*! H2O2 number concentrations [molec/cm^3]. */
+  // double h2o2[CT][CP][CY];
 
-  /*! Number of climatological data pressure levels. */
-  int clim_np;
+  // /*! Number of climatological data timesteps. */
+  // int clim_ntime;
 
-  /*! HO2 time steps [s]. */
-  double clim_time[CT];
+  // /*! Number of climatological data latitudes. */
+  // int clim_nlat;
 
-  /*! HO2 latitudes [deg]. */
-  double clim_lat[CY];
+  // /*! Number of climatological data pressure levels. */
+  // int clim_np;
 
-  /*! climatological data pressure levels [hPa]. */
-  double clim_p[CP];
+  // /*! HO2 time steps [s]. */
+  // double clim_time[CT];
 
-  /*! HO2 number concentrations [molec/cm^3]. */
-  double ho2[CT][CP][CY];
+  // /*! HO2 latitudes [deg]. */
+  // double clim_lat[CY];
 
-  /*! O(1D) number concentrations [molec/cm^3]. */
-  double o1d[CT][CP][CY];
+  // /*! climatological data pressure levels [hPa]. */
+  // double clim_p[CP];
+
+  // /*! HO2 number concentrations [molec/cm^3]. */
+  // double ho2[CT][CP][CY];
+
+  // /*! O(1D) number concentrations [molec/cm^3]. */
+  // double o1d[CT][CP][CY];
 
 } clim_t;
+
+
 
 /*! Meteo data. */
 typedef struct {
@@ -1844,9 +1878,9 @@ double clim_oh(
   double p);
 
 /*! Initialization function for OH climatology. */
-void clim_oh_init(
+void clim_oh_diurnal_correction(
   ctl_t * ctl,
-  clim_t * clim);
+  clim_t * clim) ;
 
 /*! Apply diurnal correction to OH climatology. */
 double clim_oh_init_help(
@@ -1864,28 +1898,28 @@ double clim_h2o2(
   double lat,
   double p);
 
-/*! Initialization function for H2O2 climatology. */
-void clim_h2o2_init(
-  ctl_t * ctl,
-  clim_t * clim);
+// /*! Initialization function for H2O2 climatology. */ //TODO:delete
+// void clim_h2o2_init(
+//   ctl_t * ctl,
+//   clim_t * clim);
 
-/*! Climatology of radical number concentrations. */
+/*! Climatology of radical number concentrations 
+	(can only be used with a specified resolution of
+	18 latitude lavels, 34 press levels and 12 time levels). */
 #ifdef _OPENACC
 #pragma acc routine (clim_var)
 #endif
 double clim_var(
-  clim_t * clim,
+  clim_var_t * clim_var_tn,
   double t,
   double lat,
-  double p,
-  double clim_var[CT][CP][CY]);
+  double p);
 
-/*! Initialization function for HO2 climatology. */
+/*! Initialization function for clim_var(). */
 void clim_var_init(
-  clim_t * clim,
+  clim_var_t * clim_var_tn,
   char *varname,
-  char *filename,
-  double clim_var[CT][CP][CY]);
+  char *filename);
 
 /*! Climatology of tropopause pressure. */
 #ifdef _OPENACC

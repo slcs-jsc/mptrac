@@ -310,6 +310,10 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
+		ALLOC(clim->clim_oh_t, clim_var_t, 1);
+		ALLOC(clim->clim_h2o2_t, clim_var_t, 1);
+		ALLOC(clim->clim_o1d_t, clim_var_t, 1);
+		ALLOC(clim->clim_ho2_t, clim_var_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
 #ifdef ASYNCIO
@@ -556,6 +560,10 @@ int main(
     SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
     free(atm);
     free(cache);
+    free(clim->clim_oh_t);
+    free(clim->clim_h2o2_t);
+    free(clim->clim_o1d_t);
+    free(clim->clim_ho2_t);
     free(clim);
     free(met0);
     free(met1);
