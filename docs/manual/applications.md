@@ -2,11 +2,11 @@
 
 ## Applications
 
-The MPTRAC model comes with a number of individual programs or applications. The most important app of MPTRAC is the tool trac, which is used to conduct the trajectory calculations.
+The MPTRAC model comes with a number of individual programs or applications. The most important app of MPTRAC is the tool [trac](https://github.com/slcs-jsc/mptrac/docs/manual/apps/trac.md), which is used to conduct the trajectory calculations.
 
 The apps met_map, met_prof, and met_zm can be used to extract global maps, vertical profiles, and zonal means from meteorological data. The app met_sample can be used to sample the meteo data at individual locations in space and time.
 
-The app atm_conv can be used to convert between different file formats of the particle data (ASCII, binary, netCDF). The app atm_dist can be used to calculate transport deviations between trajectory sets. The app atm_init can be used to create particle data files with initial trajectory seeds. The app atm_select can extract subsets of the particle data, like individual trajectories. The app atm_split can split sets of particles into larger sets, retaining their total mass. The app atm_stat calculates trajectory statistics, for example, the mean position.
+The app [atm_conv](https://github.com/slcs-jsc/mptrac/docs/manual/apps/atm-conv.md) can be used to convert between different file formats of the particle data (ASCII, binary, netCDF). The app atm_dist can be used to calculate transport deviations between trajectory sets. The app atm_init can be used to create particle data files with initial trajectory seeds. The app atm_select can extract subsets of the particle data, like individual trajectories. The app atm_split can split sets of particles into larger sets, retaining their total mass. The app atm_stat calculates trajectory statistics, for example, the mean position.
 
 The tools day2doy, doy2day, jsec2time, and time2jsec are used for time conversion. In particular, they can be used to determine the day of the year (doy) for a given date and convert between a UTC time (YYYY-MM-DD, HH:MM:SS) and the absolute time in seconds since 2000-01-01, 00:00 UTC (the internal time coordinate of MPTRAC).
 
