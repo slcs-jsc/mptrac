@@ -10,6 +10,12 @@ You can cite the source code of MPTRAC by using the DOI <https://doi.org/10.5281
 
 This is a list of papers in which MPTRAC was applied:
 
+Clemens, J., Vogel, B., Hoffmann, L., Griessbach, S., Thomas, N., Fadnavis, S., Müller, R., Peter, T., and Ploeger, F.: Identification of source regions of the Asian Tropopause Aerosol Layer on the Indian subcontinent in August 2016, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2022-1462, 2023.
+
+Hoffmann, L., Konopka, P., Clemens, J., and Vogel, B.: Lagrangian transport simulations using the extreme convection parametrization: an assessment for the ECMWF reanalyses, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2023-72, 2023.
+
+Liu, M., Hoffmann, L., Griessbach, S., Cai, Z., Heng, Y., and Wu, X.: Improved representation of volcanic sulfur dioxide depletion in Lagrangian transport simulations: a case study with MPTRAC v2.4, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2022-1480, 2023. 
+
 Cai, Z., Griessbach, S., and Hoffmann, L.: Improved estimation of volcanic SO2 injections from satellite retrievals and Lagrangian transport simulations: the 2019 Raikoke eruption, Atmos. Chem. Phys., 22, 6787–6809, <https://doi.org/10.5194/acp-22-6787-2022>, 2022.
 
 Hoffmann, L. and Spang, R.: An assessment of tropopause characteristics of the ERA5 and ERA-Interim meteorological reanalyses, Atmos. Chem. Phys., 22, 4019–4046, https://doi.org/10.5194/acp-22-4019-2022, 2022.
