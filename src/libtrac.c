@@ -593,50 +593,43 @@ double clim_oh(
     sec += 365.25 * 86400.;
 
   /* Check pressure range... */
-  if (p < clim->clim_oh_t.clim_p[clim->clim_oh_t.clim_np - 1])
-    p = clim->clim_oh_t.clim_p[clim->clim_oh_t.clim_np - 1];
-  else if (p > clim->clim_oh_t.clim_p[0])
-    p = clim->clim_oh_t.clim_p[0];
+  if (p < clim->oh.p[clim->oh.np - 1])
+    p = clim->oh.p[clim->oh.np - 1];
+  else if (p > clim->oh.p[0])
+    p = clim->oh.p[0];
 
   /* Check latitude range... */
-  if (lat < clim->clim_oh_t.clim_lat[0])
-    lat = clim->clim_oh_t.clim_lat[0];
-  else if (lat > clim->clim_oh_t.clim_lat[clim->clim_oh_t.clim_nlat - 1])
-    lat = clim->clim_oh_t.clim_lat[clim->clim_oh_t.clim_nlat - 1];
+  if (lat < clim->oh.lat[0])
+    lat = clim->oh.lat[0];
+  else if (lat > clim->oh.lat[clim->oh.nlat - 1])
+    lat = clim->oh.lat[clim->oh.nlat - 1];
 
   /* Get indices... */
-  int isec =
-    locate_irr(clim->clim_oh_t.clim_time, clim->clim_oh_t.clim_ntime, sec);
-  int ilat =
-    locate_reg(clim->clim_oh_t.clim_lat, clim->clim_oh_t.clim_nlat, lat);
-  int ip = locate_irr(clim->clim_oh_t.clim_p, clim->clim_oh_t.clim_np, p);
+  int isec = locate_irr(clim->oh.time, clim->oh.ntime, sec);
+  int ilat = locate_reg(clim->oh.lat, clim->oh.nlat, lat);
+  int ip = locate_irr(clim->oh.p, clim->oh.np, p);
 
   /* Interpolate OH data... */
-  double aux00 = LIN(clim->clim_oh_t.clim_p[ip],
-		     clim->clim_oh_t.var[isec][ip][ilat],
-		     clim->clim_oh_t.clim_p[ip + 1],
-		     clim->clim_oh_t.var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->clim_oh_t.clim_p[ip],
-		     clim->clim_oh_t.var[isec][ip][ilat + 1],
-		     clim->clim_oh_t.clim_p[ip + 1],
-		     clim->clim_oh_t.var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->clim_oh_t.clim_p[ip],
-		     clim->clim_oh_t.var[isec + 1][ip][ilat],
-		     clim->clim_oh_t.clim_p[ip + 1],
-		     clim->clim_oh_t.var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->clim_oh_t.clim_p[ip],
-		     clim->clim_oh_t.var[isec + 1][ip][ilat + 1],
-		     clim->clim_oh_t.clim_p[ip + 1],
-		     clim->clim_oh_t.var[isec + 1][ip + 1][ilat + 1], p);
+  double aux00 = LIN(clim->oh.p[ip],
+		     clim->oh.var[isec][ip][ilat],
+		     clim->oh.p[ip + 1],
+		     clim->oh.var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(clim->oh.p[ip],
+		     clim->oh.var[isec][ip][ilat + 1],
+		     clim->oh.p[ip + 1],
+		     clim->oh.var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(clim->oh.p[ip],
+		     clim->oh.var[isec + 1][ip][ilat],
+		     clim->oh.p[ip + 1],
+		     clim->oh.var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(clim->oh.p[ip],
+		     clim->oh.var[isec + 1][ip][ilat + 1],
+		     clim->oh.p[ip + 1],
+		     clim->oh.var[isec + 1][ip + 1][ilat + 1], p);
+  aux00 = LIN(clim->oh.lat[ilat], aux00, clim->oh.lat[ilat + 1], aux01, lat);
+  aux11 = LIN(clim->oh.lat[ilat], aux10, clim->oh.lat[ilat + 1], aux11, lat);
   aux00 =
-    LIN(clim->clim_oh_t.clim_lat[ilat], aux00,
-	clim->clim_oh_t.clim_lat[ilat + 1], aux01, lat);
-  aux11 =
-    LIN(clim->clim_oh_t.clim_lat[ilat], aux10,
-	clim->clim_oh_t.clim_lat[ilat + 1], aux11, lat);
-  aux00 =
-    LIN(clim->clim_oh_t.clim_time[isec], aux00,
-	clim->clim_oh_t.clim_time[isec + 1], aux11, sec);
+    LIN(clim->oh.time[isec], aux00, clim->oh.time[isec + 1], aux11, sec);
 
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
@@ -656,9 +649,9 @@ void clim_oh_diurnal_correction(
   clim_t * clim) {
 
   /* Loop over climatology data points... */
-  for (int it = 0; it < clim->clim_oh_t.clim_ntime; it++)
-    for (int iz = 0; iz < clim->clim_oh_t.clim_np; iz++)
-      for (int iy = 0; iy < clim->clim_oh_t.clim_nlat; iy++) {
+  for (int it = 0; it < clim->oh.ntime; it++)
+    for (int iz = 0; iz < clim->oh.np; iz++)
+      for (int iy = 0; iy < clim->oh.nlat; iy++) {
 
 	/* Init... */
 	int n = 0;
@@ -666,8 +659,7 @@ void clim_oh_diurnal_correction(
 
 	/* Integrate day/night correction factor over longitude... */
 	for (double lon = -180; lon < 180; lon += 1) {
-	  double sza = sza_calc(clim->clim_oh_t.clim_time[it],
-				lon, clim->clim_oh_t.clim_lat[iy]);
+	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
 	  if (sza <= M_PI / 2. * 85. / 90.)
 	    sum += exp(-ctl->oh_chem_beta / cos(sza));
 	  else
@@ -676,7 +668,7 @@ void clim_oh_diurnal_correction(
 	}
 
 	/* Apply scaling factor to OH data... */
-	clim->clim_oh_t.var[it][iz][iy] /= (sum / (double) n);
+	clim->oh.var[it][iz][iy] /= (sum / (double) n);
       }
 }
 
@@ -694,52 +686,45 @@ double clim_h2o2(
     sec += 365.25 * 86400.;
 
   /* Check pressure... */
-  if (p < clim->clim_h2o2_t.clim_p[clim->clim_h2o2_t.clim_np - 1])
-    p = clim->clim_h2o2_t.clim_p[clim->clim_h2o2_t.clim_np - 1];
-  else if (p > clim->clim_h2o2_t.clim_p[0])
-    p = clim->clim_h2o2_t.clim_p[0];
+  if (p < clim->h2o2.p[clim->h2o2.np - 1])
+    p = clim->h2o2.p[clim->h2o2.np - 1];
+  else if (p > clim->h2o2.p[0])
+    p = clim->h2o2.p[0];
 
   /* Check latitude... */
-  if (lat < clim->clim_h2o2_t.clim_lat[0])
-    lat = clim->clim_h2o2_t.clim_lat[0];
-  else if (lat > clim->clim_h2o2_t.clim_lat[clim->clim_h2o2_t.clim_nlat - 1])
-    lat = clim->clim_h2o2_t.clim_lat[clim->clim_h2o2_t.clim_nlat - 1];
+  if (lat < clim->h2o2.lat[0])
+    lat = clim->h2o2.lat[0];
+  else if (lat > clim->h2o2.lat[clim->h2o2.nlat - 1])
+    lat = clim->h2o2.lat[clim->h2o2.nlat - 1];
 
   /* Get indices... */
-  int isec =
-    locate_irr(clim->clim_h2o2_t.clim_time, clim->clim_h2o2_t.clim_ntime,
-	       sec);
-  int ilat =
-    locate_reg(clim->clim_h2o2_t.clim_lat, clim->clim_h2o2_t.clim_nlat,
-	       lat);
-  int ip = locate_irr(clim->clim_h2o2_t.clim_p, clim->clim_h2o2_t.clim_np, p);
+  int isec = locate_irr(clim->h2o2.time, clim->h2o2.ntime, sec);
+  int ilat = locate_reg(clim->h2o2.lat, clim->h2o2.nlat, lat);
+  int ip = locate_irr(clim->h2o2.p, clim->h2o2.np, p);
 
   /* Interpolate H2O2 climatology... */
-  double aux00 = LIN(clim->clim_h2o2_t.clim_p[ip],
-		     clim->clim_h2o2_t.var[isec][ip][ilat],
-		     clim->clim_h2o2_t.clim_p[ip + 1],
-		     clim->clim_h2o2_t.var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->clim_h2o2_t.clim_p[ip],
-		     clim->clim_h2o2_t.var[isec][ip][ilat + 1],
-		     clim->clim_h2o2_t.clim_p[ip + 1],
-		     clim->clim_h2o2_t.var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->clim_h2o2_t.clim_p[ip],
-		     clim->clim_h2o2_t.var[isec + 1][ip][ilat],
-		     clim->clim_h2o2_t.clim_p[ip + 1],
-		     clim->clim_h2o2_t.var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->clim_h2o2_t.clim_p[ip],
-		     clim->clim_h2o2_t.var[isec + 1][ip][ilat + 1],
-		     clim->clim_h2o2_t.clim_p[ip + 1],
-		     clim->clim_h2o2_t.var[isec + 1][ip + 1][ilat + 1], p);
+  double aux00 = LIN(clim->h2o2.p[ip],
+		     clim->h2o2.var[isec][ip][ilat],
+		     clim->h2o2.p[ip + 1],
+		     clim->h2o2.var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(clim->h2o2.p[ip],
+		     clim->h2o2.var[isec][ip][ilat + 1],
+		     clim->h2o2.p[ip + 1],
+		     clim->h2o2.var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(clim->h2o2.p[ip],
+		     clim->h2o2.var[isec + 1][ip][ilat],
+		     clim->h2o2.p[ip + 1],
+		     clim->h2o2.var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(clim->h2o2.p[ip],
+		     clim->h2o2.var[isec + 1][ip][ilat + 1],
+		     clim->h2o2.p[ip + 1],
+		     clim->h2o2.var[isec + 1][ip + 1][ilat + 1], p);
   aux00 =
-    LIN(clim->clim_h2o2_t.clim_lat[ilat], aux00,
-	clim->clim_h2o2_t.clim_lat[ilat + 1], aux01, lat);
+    LIN(clim->h2o2.lat[ilat], aux00, clim->h2o2.lat[ilat + 1], aux01, lat);
   aux11 =
-    LIN(clim->clim_h2o2_t.clim_lat[ilat], aux10,
-	clim->clim_h2o2_t.clim_lat[ilat + 1], aux11, lat);
+    LIN(clim->h2o2.lat[ilat], aux10, clim->h2o2.lat[ilat + 1], aux11, lat);
   aux00 =
-    LIN(clim->clim_h2o2_t.clim_time[isec], aux00,
-	clim->clim_h2o2_t.clim_time[isec + 1], aux11, sec);
+    LIN(clim->h2o2.time[isec], aux00, clim->h2o2.time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
@@ -747,7 +732,7 @@ double clim_h2o2(
 /*****************************************************************************/
 
 double clim_var(
-  clim_var_t * clim_var_tn,
+  clim_var_t * var,
   double t,
   double lat,
   double p) {
@@ -758,48 +743,42 @@ double clim_var(
     sec += 365.25 * 86400.;
 
   /* Check pressure range... */
-  if (p < clim_var_tn->clim_p[clim_var_tn->clim_np - 1])
-    p = clim_var_tn->clim_p[clim_var_tn->clim_np - 1];
-  else if (p > clim_var_tn->clim_p[0])
-    p = clim_var_tn->clim_p[0];
+  if (p < var->p[var->np - 1])
+    p = var->p[var->np - 1];
+  else if (p > var->p[0])
+    p = var->p[0];
 
   /* Check latitude range... */
-  if (lat < clim_var_tn->clim_lat[0])
-    lat = clim_var_tn->clim_lat[0];
-  else if (lat > clim_var_tn->clim_lat[clim_var_tn->clim_nlat - 1])
-    lat = clim_var_tn->clim_lat[clim_var_tn->clim_nlat - 1];
+  if (lat < var->lat[0])
+    lat = var->lat[0];
+  else if (lat > var->lat[var->nlat - 1])
+    lat = var->lat[var->nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim_var_tn->clim_time, clim_var_tn->clim_ntime, sec);
-  int ilat = locate_reg(clim_var_tn->clim_lat, clim_var_tn->clim_nlat, lat);
-  int ip = locate_irr(clim_var_tn->clim_p, clim_var_tn->clim_np, p);
+  int isec = locate_irr(var->time, var->ntime, sec);
+  int ilat = locate_reg(var->lat, var->nlat, lat);
+  int ip = locate_irr(var->p, var->np, p);
 
   /* Interpolate climatology data... */
-  double aux00 = LIN(clim_var_tn->clim_p[ip],
-		     clim_var_tn->var[isec][ip][ilat],
-		     clim_var_tn->clim_p[ip + 1],
-		     clim_var_tn->var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim_var_tn->clim_p[ip],
-		     clim_var_tn->var[isec][ip][ilat + 1],
-		     clim_var_tn->clim_p[ip + 1],
-		     clim_var_tn->var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim_var_tn->clim_p[ip],
-		     clim_var_tn->var[isec + 1][ip][ilat],
-		     clim_var_tn->clim_p[ip + 1],
-		     clim_var_tn->var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim_var_tn->clim_p[ip],
-		     clim_var_tn->var[isec + 1][ip][ilat + 1],
-		     clim_var_tn->clim_p[ip + 1],
-		     clim_var_tn->var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 =
-    LIN(clim_var_tn->clim_lat[ilat], aux00, clim_var_tn->clim_lat[ilat + 1],
-	aux01, lat);
-  aux11 =
-    LIN(clim_var_tn->clim_lat[ilat], aux10, clim_var_tn->clim_lat[ilat + 1],
-	aux11, lat);
-  aux00 =
-    LIN(clim_var_tn->clim_time[isec], aux00, clim_var_tn->clim_time[isec + 1],
-	aux11, sec);
+  double aux00 = LIN(var->p[ip],
+		     var->var[isec][ip][ilat],
+		     var->p[ip + 1],
+		     var->var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(var->p[ip],
+		     var->var[isec][ip][ilat + 1],
+		     var->p[ip + 1],
+		     var->var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(var->p[ip],
+		     var->var[isec + 1][ip][ilat],
+		     var->p[ip + 1],
+		     var->var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(var->p[ip],
+		     var->var[isec + 1][ip][ilat + 1],
+		     var->p[ip + 1],
+		     var->var[isec + 1][ip + 1][ilat + 1], p);
+  aux00 = LIN(var->lat[ilat], aux00, var->lat[ilat + 1], aux01, lat);
+  aux11 = LIN(var->lat[ilat], aux10, var->lat[ilat + 1], aux11, lat);
+  aux00 = LIN(var->time[isec], aux00, var->time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
@@ -807,7 +786,7 @@ double clim_var(
 /*****************************************************************************/
 
 void clim_var_init(
-  clim_var_t * clim_var_tn,
+  clim_var_t * var,
   char *varname,
   char *filename) {
 
@@ -825,52 +804,49 @@ void clim_var_init(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &clim_var_tn->clim_np, 2, CP);
-  NC_GET_DOUBLE("press", clim_var_tn->clim_p, 1);
+  NC_INQ_DIM("press", &var->np, 2, CP);
+  NC_GET_DOUBLE("press", var->p, 1);
 
   /* Check ordering of pressure data... */
-  if (clim_var_tn->clim_p[0] < clim_var_tn->clim_p[1])
+  if (var->p[0] < var->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &clim_var_tn->clim_nlat, 2, CY);
-  NC_GET_DOUBLE("lat", clim_var_tn->clim_lat, 1);
+  NC_INQ_DIM("lat", &var->nlat, 2, CY);
+  NC_GET_DOUBLE("lat", var->lat, 1);
 
   /* Check ordering of latitude data... */
-  if (clim_var_tn->clim_lat[0] > clim_var_tn->clim_lat[1])
+  if (var->lat[0] > var->lat[1])
     ERRMSG("Latitude data are not ascending!");
 
   /* Set time data (for monthly means)... */
-  clim_var_tn->clim_ntime = 12;
-  clim_var_tn->clim_time[0] = 1209600.00;
-  clim_var_tn->clim_time[1] = 3888000.00;
-  clim_var_tn->clim_time[2] = 6393600.00;
-  clim_var_tn->clim_time[3] = 9072000.00;
-  clim_var_tn->clim_time[4] = 11664000.00;
-  clim_var_tn->clim_time[5] = 14342400.00;
-  clim_var_tn->clim_time[6] = 16934400.00;
-  clim_var_tn->clim_time[7] = 19612800.00;
-  clim_var_tn->clim_time[8] = 22291200.00;
-  clim_var_tn->clim_time[9] = 24883200.00;
-  clim_var_tn->clim_time[10] = 27561600.00;
-  clim_var_tn->clim_time[11] = 30153600.00;
+  var->ntime = 12;
+  var->time[0] = 1209600.00;
+  var->time[1] = 3888000.00;
+  var->time[2] = 6393600.00;
+  var->time[3] = 9072000.00;
+  var->time[4] = 11664000.00;
+  var->time[5] = 14342400.00;
+  var->time[6] = 16934400.00;
+  var->time[7] = 19612800.00;
+  var->time[8] = 22291200.00;
+  var->time[9] = 24883200.00;
+  var->time[10] = 27561600.00;
+  var->time[11] = 30153600.00;
 
   /* Check number of timesteps... */
   NC_INQ_DIM("time", &nt, 12, 12);
 
   /* Read data... */
   ALLOC(help, double,
-	clim_var_tn->clim_nlat * clim_var_tn->clim_np *
-	clim_var_tn->clim_ntime);
+	var->nlat * var->np * var->ntime);
   NC_GET_DOUBLE(varname, help, 1);
-  for (it = 0; it < clim_var_tn->clim_ntime; it++)
-    for (iz = 0; iz < clim_var_tn->clim_np; iz++)
-      for (iy = 0; iy < clim_var_tn->clim_nlat; iy++) {
-	clim_var_tn->var[it][iz][iy] =
-	  help[ARRAY_3D
-	       (it, iz, clim_var_tn->clim_np, iy, clim_var_tn->clim_nlat)];
-	varmin = GSL_MIN(varmin, clim_var_tn->var[it][iz][iy]);
-	varmax = GSL_MAX(varmax, clim_var_tn->var[it][iz][iy]);
+  for (it = 0; it < var->ntime; it++)
+    for (iz = 0; iz < var->np; iz++)
+      for (iy = 0; iy < var->nlat; iy++) {
+	var->var[it][iz][iy] = help[ARRAY_3D(it, iz, var->np, iy, var->nlat)];
+	varmin = GSL_MIN(varmin, var->var[it][iz][iy]);
+	varmax = GSL_MAX(varmax, var->var[it][iz][iy]);
       }
   free(help);
 
@@ -878,20 +854,17 @@ void clim_var_init(
   NC(nc_close(ncid));
 
   /* Write info... */
-  LOG(2, "Number of time steps: %d", clim_var_tn->clim_ntime);
+  LOG(2, "Number of time steps: %d", var->ntime);
   LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-      clim_var_tn->clim_time[0], clim_var_tn->clim_time[1],
-      clim_var_tn->clim_time[clim_var_tn->clim_ntime - 1]);
-  LOG(2, "Number of pressure levels: %d", clim_var_tn->clim_np);
+      var->time[0], var->time[1], var->time[var->ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", var->np);
   LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(clim_var_tn->clim_p[0]), Z(clim_var_tn->clim_p[1]),
-      Z(clim_var_tn->clim_p[clim_var_tn->clim_np - 1]));
-  LOG(2, "Pressure levels: %g, %g ... %g hPa", clim_var_tn->clim_p[0],
-      clim_var_tn->clim_p[1], clim_var_tn->clim_p[clim_var_tn->clim_np - 1]);
-  LOG(2, "Number of latitudes: %d", clim_var_tn->clim_nlat);
+      Z(var->p[0]), Z(var->p[1]), Z(var->p[var->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", var->p[0],
+      var->p[1], var->p[var->np - 1]);
+  LOG(2, "Number of latitudes: %d", var->nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      clim_var_tn->clim_lat[0], clim_var_tn->clim_lat[1],
-      clim_var_tn->clim_lat[clim_var_tn->clim_nlat - 1]);
+      var->lat[0], var->lat[1], var->lat[var->nlat - 1]);
   LOG(2, "%s concentration range: %g ... %g molec/cm^3", varname, varmin,
       varmax);
 }
@@ -2203,22 +2176,22 @@ void read_clim(
 
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-') {
-    clim_var_init(&clim->clim_oh_t, "OH", ctl->clim_oh_filename);
+    clim_var_init(&clim->oh, "OH", ctl->clim_oh_filename);
     if (ctl->oh_chem_beta > 0)
       clim_oh_diurnal_correction(ctl, clim);
   }
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    clim_var_init(&clim->clim_h2o2_t, "h2o2", ctl->clim_h2o2_filename);
+    clim_var_init(&clim->h2o2, "h2o2", ctl->clim_h2o2_filename);
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
-    clim_var_init(&clim->clim_ho2_t, "HO2", ctl->clim_ho2_filename);
+    clim_var_init(&clim->ho2, "HO2", ctl->clim_ho2_filename);
 
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
-    clim_var_init(&clim->clim_o1d_t, "O(1D)", ctl->clim_o1d_filename);
+    clim_var_init(&clim->o1d, "O(1D)", ctl->clim_o1d_filename);
 }
 
 /*****************************************************************************/

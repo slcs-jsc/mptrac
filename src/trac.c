@@ -1750,7 +1750,7 @@ void module_kpp_chemgrid(
       izs[ip] = -1;
   }
 
-  /* Initializae quantity concentration variables. */
+  /* Initialize quantity concentration variables... */
   static int init[NP] = { 0 };
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
@@ -1766,6 +1766,7 @@ void module_kpp_chemgrid(
     if (ctl->molmass < 0)
       ERRMSG("SPECIES MOLAR MASS is not defined!");
     double *mass, *area, *lat;
+
     /* Allocate... */
     ALLOC(mass, double,
 	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
@@ -1817,10 +1818,6 @@ void module_kpp_chemgrid(
 #endif
 }
 
-// double C[NSPEC];                        /* Concentration of all species */
-// double *VAR;
-// double *FIX;
-
 void module_kpp_chem(
   ctl_t * ctl,
   clim_t * clim,
@@ -1832,15 +1829,13 @@ void module_kpp_chem(
   /* Set timer... */
   SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-
-
   /* Loop over particles... */
+  const int np = atm->np;
 #pragma omp parallel for
   for (int ip = 0; ip < np; ip++) {
     if (dt[ip] > 0) {
-      // VAR = &C[0];
-      // FIX = &C[NVAR];
+
+      /* Set species... */
       ALLOC(VAR, double,
 	    NVAR);
       ALLOC(FIX, double,
@@ -1855,20 +1850,22 @@ void module_kpp_chem(
 	ATOL[i] = 1.0e-3;
       }
 
-      /*Initialize... */
+      /* Initialize... */
       kppchem_initialize(ctl, clim, met0, met1, atm, ip);
-      /*Integrate... */
+
+      /* Integrate... */
       INTEGRATE(atm->time[ip] - dt[ip], atm->time[ip]);
-      /*Output to air parcel.. */
+
+      /* Output to air parcel.. */
       kppchem_output2atm(atm, ctl, ip);
 
+      /* Free... */
       free(VAR);
       free(FIX);
-
     }
   }
-
 }
+
 #endif
 
 /*****************************************************************************/

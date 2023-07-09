@@ -1568,22 +1568,22 @@ typedef struct {
 typedef struct {
 
   /*! Number of climatological data timesteps. */
-  int clim_ntime;
+  int ntime;
 
   /*! Number of climatological data latitudes. */
-  int clim_nlat;
+  int nlat;
 
   /*! Number of climatological data pressure levels. */
-  int clim_np;
+  int np;
 
   /*! Climatological data time steps [s]. */
-  double clim_time[CT];
+  double time[CT];
 
   /*! Climatological data latitudes [deg]. */
-  double clim_lat[CY];
+  double lat[CY];
 
   /*! Climatological data pressure levels [hPa]. */
-  double clim_p[CP];
+  double p[CP];
 
   /*! Climatological data concentrations [molec/cm^3]. */
   double var[CT][CP][CY];
@@ -1629,23 +1629,17 @@ typedef struct {
   /*! HNO3 volume mixing ratios [ppv]. */
   double hno3[12][18][10];
 
-
-  // TODO: check code for memory leak, as clim_var_t structs are not allocated?
-
-  // TODO: also check whether data transfer on GPUs works fine?
-
-
   /*! OH climatology data. */
-  clim_var_t clim_oh_t;
+  clim_var_t oh;
 
   /*! H2O climatology data. */
-  clim_var_t clim_h2o2_t;
+  clim_var_t h2o2;
 
   /*! HO2 climatology data. */
-  clim_var_t clim_ho2_t;
+  clim_var_t ho2;
 
   /*! O(1D) climatology data. */
-  clim_var_t clim_o1d_t;
+  clim_var_t o1d;
 
 } clim_t;
 
@@ -1869,14 +1863,14 @@ double clim_h2o2(
 #pragma acc routine (clim_var)
 #endif
 double clim_var(
-  clim_var_t * clim_var_tn,
+  clim_var_t * var,
   double t,
   double lat,
   double p);
 
 /*! Initialization function for a single variable. */
 void clim_var_init(
-  clim_var_t * clim_var_tn,
+  clim_var_t * var,
   char *varname,
   char *filename);
 
