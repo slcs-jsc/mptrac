@@ -55,6 +55,189 @@ void cart2geo(
 
 /*****************************************************************************/
 
+double clim_tropo(
+  clim_t * clim,
+  double t,
+  double lat) {
+
+  /* Get seconds since begin of year... */
+  double sec = FMOD(t, 365.25 * 86400.);
+  while (sec < 0)
+    sec += 365.25 * 86400.;
+
+  /* Get indices... */
+  int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
+  int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
+
+  /* Interpolate tropopause pressure... */
+  double p0 = LIN(clim->tropo_lat[ilat],
+		  clim->tropo[isec][ilat],
+		  clim->tropo_lat[ilat + 1],
+		  clim->tropo[isec][ilat + 1], lat);
+  double p1 = LIN(clim->tropo_lat[ilat],
+		  clim->tropo[isec + 1][ilat],
+		  clim->tropo_lat[ilat + 1],
+		  clim->tropo[isec + 1][ilat + 1], lat);
+  return LIN(clim->tropo_time[isec], p0, clim->tropo_time[isec + 1], p1, sec);
+}
+
+/*****************************************************************************/
+
+void clim_tropo_init(
+  clim_t * clim) {
+
+  /* Write info... */
+  LOG(1, "Initialize tropopause data...");
+
+  /* Set time [s]... */
+  clim->tropo_ntime = 12;
+  double tropo_time[12] = {
+    1209600.00, 3888000.00, 6393600.00,
+    9072000.00, 11664000.00, 14342400.00,
+    16934400.00, 19612800.00, 22291200.00,
+    24883200.00, 27561600.00, 30153600.00
+  };
+  memcpy(clim->tropo_time, tropo_time, sizeof(clim->tropo_time));
+
+  /* Set latitudes [deg]... */
+  clim->tropo_nlat = 73;
+  double tropo_lat[73] = {
+    -90, -87.5, -85, -82.5, -80, -77.5, -75, -72.5, -70, -67.5,
+    -65, -62.5, -60, -57.5, -55, -52.5, -50, -47.5, -45, -42.5,
+    -40, -37.5, -35, -32.5, -30, -27.5, -25, -22.5, -20, -17.5,
+    -15, -12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5,
+    15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40, 42.5,
+    45, 47.5, 50, 52.5, 55, 57.5, 60, 62.5, 65, 67.5, 70, 72.5,
+    75, 77.5, 80, 82.5, 85, 87.5, 90
+  };
+  memcpy(clim->tropo_lat, tropo_lat, sizeof(clim->tropo_lat));
+
+  /* Set tropopause pressure [hPa] (NCEP/NCAR Reanalysis 1)... */
+  double tropo[12][73] = {
+    {324.1, 325.6, 325, 324.3, 322.5, 319.7, 314, 307.2, 301.8, 299.6,
+     297.1, 292.2, 285.6, 276.1, 264, 248.9, 231.9, 213.5, 194.4,
+     175.3, 157, 140.4, 126.7, 116.3, 109.5, 105.4, 103, 101.4, 100.4,
+     99.69, 99.19, 98.84, 98.56, 98.39, 98.39, 98.42, 98.44, 98.54,
+     98.68, 98.81, 98.89, 98.96, 99.12, 99.65, 101.4, 105.4, 113.5, 128,
+     152.1, 184.7, 214, 234.1, 247.3, 255.8, 262.6, 267.7, 271.7, 275,
+     277.2, 279, 280.1, 280.4, 280.6, 280.1, 279.3, 278.3, 276.8, 275.8,
+     275.3, 275.6, 275.4, 274.1, 273.5},
+    {337.3, 338.7, 337.8, 336.4, 333, 328.8, 321.1, 312.6, 306.6, 303.7,
+     300.2, 293.8, 285.4, 273.8, 259.6, 242.7, 224.4, 205.2, 186, 167.5,
+     150.3, 135, 122.8, 113.9, 108.2, 104.7, 102.5, 101.1, 100.2, 99.42,
+     98.88, 98.52, 98.25, 98.09, 98.07, 98.1, 98.12, 98.2, 98.25, 98.27,
+     98.26, 98.27, 98.36, 98.79, 100.2, 104.2, 113.7, 131.2, 159.5, 193,
+     220.4, 238.1, 250.2, 258.1, 264.7, 269.7, 273.7, 277.3, 280.2, 282.8,
+     284.9, 286.5, 288.1, 288.8, 289, 288.5, 287.2, 286.3, 286.1, 287.2,
+     287.5, 286.2, 285.8},
+    {335, 336, 335.7, 335.1, 332.3, 328.1, 320.6, 311.8, 305.1, 301.9,
+     297.6, 290, 280.4, 268.3, 254.6, 239.6, 223.9, 207.9, 192.2, 176.9,
+     161.7, 146.4, 132.2, 120.6, 112.3, 107.2, 104.3, 102.4, 101.3,
+     100.4, 99.86, 99.47, 99.16, 98.97, 98.94, 98.97, 99, 99.09, 99.2,
+     99.31, 99.35, 99.41, 99.51, 99.86, 101.1, 104.9, 114.3, 131, 156.8,
+     186.3, 209.3, 224.6, 236.8, 246.3, 254.9, 262.3, 268.8, 274.8,
+     279.9, 284.6, 288.6, 291.6, 294.9, 297.5, 299.8, 301.8, 303.1,
+     304.3, 304.9, 306, 306.6, 306.2, 306},
+    {306.2, 306.7, 305.7, 307.1, 307.3, 306.4, 301.8, 296.2, 292.4,
+     290.3, 287.1, 280.9, 273.4, 264.3, 254.1, 242.8, 231, 219, 207.2,
+     195.5, 183.3, 169.7, 154.7, 138.7, 124.1, 113.6, 107.8, 104.7,
+     102.8, 101.7, 100.9, 100.4, 100, 99.79, 99.7, 99.66, 99.68, 99.79,
+     99.94, 100.2, 100.5, 100.9, 101.4, 102.1, 103.4, 107, 115.2, 129.1,
+     148.7, 171, 190.8, 205.6, 218.4, 229.4, 239.6, 248.6, 256.5,
+     263.7, 270.3, 276.6, 282.6, 288.1, 294.5, 300.4, 306.3, 311.4,
+     315.1, 318.3, 320.3, 322.2, 322.8, 321.5, 321.1},
+    {266.5, 264.9, 260.8, 261, 262, 263, 261.3, 259.7, 259.2, 259.8,
+     260.1, 258.6, 256.7, 253.6, 249.5, 243.9, 237.4, 230, 222.1, 213.9,
+     205, 194.4, 180.4, 161.8, 140.7, 122.9, 112.1, 106.7, 104.1, 102.7,
+     101.8, 101.4, 101.1, 101, 101, 101, 101.1, 101.2, 101.5, 101.9,
+     102.4, 103, 103.8, 104.9, 106.8, 110.1, 115.6, 124, 135.2, 148.9,
+     165.2, 181.3, 198, 211.8, 223.5, 233.8, 242.9, 251.5, 259, 266.2,
+     273.1, 279.2, 286.2, 292.8, 299.6, 306, 311.1, 315.5, 318.8, 322.6,
+     325.3, 325.8, 325.8},
+    {220.1, 218.1, 210.8, 207.2, 207.6, 210.5, 211.4, 213.5, 217.3,
+     222.4, 227.9, 232.8, 237.4, 240.8, 242.8, 243, 241.5, 238.6, 234.2,
+     228.5, 221, 210.7, 195.1, 172.9, 147.8, 127.6, 115.6, 109.9, 107.1,
+     105.7, 105, 104.8, 104.8, 104.9, 105, 105.1, 105.3, 105.5, 105.8,
+     106.4, 107, 107.6, 108.1, 108.8, 110, 111.8, 114.2, 117.4, 121.6,
+     127.9, 137.3, 151.2, 169.5, 189, 205.8, 218.9, 229.1, 237.8, 245,
+     251.5, 257.1, 262.3, 268.2, 274, 280.4, 286.7, 292.4, 297.9, 302.9,
+     308.5, 312.2, 313.1, 313.3},
+    {187.4, 184.5, 173.3, 166.1, 165.4, 167.8, 169.6, 173.6, 179.6,
+     187.9, 198.9, 210, 220.5, 229.2, 235.7, 239.9, 241.8, 241.6, 239.6,
+     235.8, 229.4, 218.6, 200.9, 175.9, 149.4, 129.4, 118.3, 113.1,
+     110.8, 109.7, 109.3, 109.4, 109.7, 110, 110.2, 110.4, 110.5, 110.7,
+     111, 111.4, 111.8, 112.1, 112.3, 112.7, 113.2, 113.9, 115, 116.4,
+     117.9, 120.4, 124.1, 130.9, 142.2, 159.6, 179.6, 198.5, 212.9,
+     224.2, 232.7, 239.1, 243.8, 247.7, 252.4, 257.3, 263.2, 269.5,
+     275.4, 281.1, 286.3, 292, 296.3, 298.2, 298.8},
+    {166, 166.4, 155.7, 148.3, 147.1, 149, 152.1, 157, 163.6, 172.4,
+     185.3, 199.2, 212.6, 224, 233.2, 239.6, 243.3, 244.6, 243.6, 240.3,
+     233.9, 222.6, 203.7, 177, 149.5, 129.7, 119, 114, 111.7, 110.7,
+     110.3, 110.3, 110.6, 110.9, 111.1, 111.3, 111.5, 111.6, 111.9,
+     112.2, 112.5, 112.6, 112.8, 113, 113.4, 114, 115.1, 116.5, 118.3,
+     120.9, 124.4, 130.2, 139.4, 154.6, 173.8, 193.1, 208.1, 220.4,
+     230.1, 238.2, 244.7, 249.5, 254.5, 259.3, 264.5, 269.4, 273.7,
+     278.2, 282.6, 287.4, 290.9, 292.5, 293},
+    {171.9, 172.8, 166.2, 162.3, 161.4, 162.5, 165.2, 169.6, 175.3,
+     183.1, 193.8, 205.9, 218.3, 229.6, 238.5, 244.3, 246.9, 246.7,
+     243.8, 238.4, 230.2, 217.9, 199.6, 174.9, 148.9, 129.8, 119.5,
+     114.8, 112.3, 110.9, 110.3, 110.1, 110.2, 110.3, 110.4, 110.5,
+     110.6, 110.8, 111, 111.4, 111.8, 112, 112.2, 112.4, 112.9, 113.6,
+     114.7, 116.3, 118.4, 121.9, 127.1, 136.1, 149.8, 168.4, 186.9,
+     203.3, 217, 229.1, 238.7, 247, 254, 259.3, 264.3, 268.3, 272.5,
+     276.6, 280.4, 284.4, 288.4, 293.3, 297.2, 298.7, 299.1},
+    {191.6, 192.2, 189, 188.1, 190.2, 193.7, 197.8, 202.9, 208.5,
+     215.6, 224.2, 233.1, 241.2, 247.3, 250.8, 251.3, 248.9, 244.2,
+     237.3, 228.4, 217.2, 202.9, 184.5, 162.5, 140.7, 124.8, 116.2,
+     111.8, 109.4, 107.9, 107, 106.7, 106.6, 106.6, 106.7, 106.7,
+     106.8, 107, 107.4, 108, 108.7, 109.3, 109.8, 110.4, 111.2,
+     112.4, 114.2, 116.9, 121.1, 127.9, 139.3, 155.2, 173.6, 190.7,
+     206.1, 220.1, 232.3, 243, 251.8, 259.2, 265.7, 270.6, 275.3,
+     279.3, 283.3, 286.9, 289.7, 292.8, 296.1, 300.5, 303.9, 304.8,
+     305.1},
+    {241.5, 239.6, 236.8, 237.4, 239.4, 242.3, 244.2, 246.4, 249.2,
+     253.6, 258.6, 262.7, 264.8, 264.2, 260.6, 254.1, 245.5, 235.3,
+     223.9, 211.7, 198.3, 183.1, 165.6, 147.1, 130.5, 118.7, 111.9,
+     108.1, 105.8, 104.3, 103.4, 102.8, 102.5, 102.4, 102.5, 102.5,
+     102.5, 102.7, 103.1, 103.8, 104.6, 105.4, 106.1, 107, 108.2,
+     109.9, 112.8, 117.5, 126, 140.4, 161, 181.9, 201.2, 216.8, 230.4,
+     241.8, 251.4, 259.9, 266.9, 272.8, 277.4, 280.4, 282.9, 284.6,
+     286.1, 287.4, 288.3, 289.5, 290.9, 294.2, 296.9, 297.5, 297.6},
+    {301.2, 300.3, 296.6, 295.4, 295, 294.3, 291.2, 287.4, 284.9, 284.7,
+     284.1, 281.5, 277.1, 270.4, 261.7, 250.6, 237.6, 223.1, 207.9, 192,
+     175.8, 158.8, 142.1, 127.6, 116.8, 109.9, 106, 103.6, 102.1, 101.1,
+     100.4, 99.96, 99.6, 99.37, 99.32, 99.32, 99.31, 99.46, 99.77, 100.2,
+     100.7, 101.3, 101.8, 102.7, 104.1, 106.8, 111.9, 121, 136.7, 160,
+     186.9, 209.9, 228.1, 241.2, 251.5, 259.5, 265.7, 270.9, 274.8, 278,
+     280.3, 281.8, 283, 283.3, 283.7, 283.8, 283, 282.2, 281.2, 281.4,
+     281.7, 281.1, 281.2}
+  };
+  memcpy(clim->tropo, tropo, sizeof(clim->tropo));
+
+  /* Get range... */
+  double tropomin = 1e99, tropomax = -1e99;
+  for (int it = 0; it < clim->tropo_ntime; it++)
+    for (int iy = 0; iy < clim->tropo_nlat; iy++) {
+      tropomin = GSL_MIN(tropomin, clim->tropo[it][iy]);
+      tropomax = GSL_MAX(tropomax, clim->tropo[it][iy]);
+    }
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", clim->tropo_ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      clim->tropo_time[0], clim->tropo_time[1],
+      clim->tropo_time[clim->tropo_ntime - 1]);
+  LOG(2, "Number of latitudes: %d", clim->tropo_nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      clim->tropo_lat[0], clim->tropo_lat[1],
+      clim->tropo_lat[clim->tropo_nlat - 1]);
+  LOG(2, "Tropopause altitude range: %g ... %g hPa", Z(tropomax),
+      Z(tropomin));
+  LOG(2, "Tropopause pressure range: %g ... %g hPa", tropomin, tropomax);
+}
+
+/*****************************************************************************/
+
 double clim_hno3(
   clim_t * clim,
   double t,
@@ -66,13 +249,13 @@ double clim_hno3(
   while (sec < 0)
     sec += 365.25 * 86400.;
 
-  /* Check pressure... */
+  /* Check pressure range... */
   if (p < clim->hno3_p[0])
     p = clim->hno3_p[0];
   else if (p > clim->hno3_p[clim->hno3_np - 1])
     p = clim->hno3_p[clim->hno3_np - 1];
 
-  /* Check latitude... */
+  /* Check latitude range... */
   if (lat < clim->hno3_lat[0])
     lat = clim->hno3_lat[0];
   else if (lat > clim->hno3_lat[clim->hno3_nlat - 1])
@@ -83,7 +266,7 @@ double clim_hno3(
   int ilat = locate_reg(clim->hno3_lat, clim->hno3_nlat, lat);
   int ip = locate_irr(clim->hno3_p, clim->hno3_np, p);
 
-  /* Interpolate HNO3 climatology (Froidevaux et al., 2015)... */
+  /* Interpolate HNO3 data... */
   double aux00 = LIN(clim->hno3_p[ip],
 		     clim->hno3[isec][ilat][ip],
 		     clim->hno3_p[ip + 1],
@@ -119,6 +302,7 @@ void clim_hno3_init(
   /* Write info... */
   LOG(1, "Initialize HNO3 data...");
 
+  /* Set time... */
   clim->hno3_ntime = 12;
   double hno3_time[12] = {
     1209600.00, 3888000.00, 6393600.00,
@@ -128,6 +312,7 @@ void clim_hno3_init(
   };
   memcpy(clim->hno3_time, hno3_time, sizeof(clim->hno3_time));
 
+  /* Set latitudes... */
   clim->hno3_nlat = 18;
   double hno3_lat[18] = {
     -85, -75, -65, -55, -45, -35, -25, -15, -5,
@@ -135,6 +320,7 @@ void clim_hno3_init(
   };
   memcpy(clim->hno3_lat, hno3_lat, sizeof(clim->hno3_lat));
 
+  /* Set pressure levels... */
   clim->hno3_np = 10;
   double hno3_p[10] = {
     4.64159, 6.81292, 10, 14.678, 21.5443,
@@ -142,6 +328,7 @@ void clim_hno3_init(
   };
   memcpy(clim->hno3_p, hno3_p, sizeof(clim->hno3_p));
 
+  /* Set HNO3 vmrs (Froidevaux et al., 2015)... */
   double hno3[12][18][10] = {
     {{0.782, 1.65, 2.9, 4.59, 6.71, 8.25, 7.16, 5.75, 2.9, 1.74},
      {0.529, 1.64, 2.76, 4.55, 6.58, 8, 6.99, 5.55, 2.68, 1.57},
@@ -405,95 +592,92 @@ double clim_oh(
   while (sec < 0)
     sec += 365.25 * 86400.;
 
-  /* Check pressure... */
-  if (p < clim->clim_oh_t->clim_p[clim->clim_oh_t->clim_np - 1])
-    p = clim->clim_oh_t->clim_p[clim->clim_oh_t->clim_np - 1];
-  else if (p > clim->clim_oh_t->clim_p[0])
-    p = clim->clim_oh_t->clim_p[0];
+  /* Check pressure range... */
+  if (p < clim->clim_oh_t.clim_p[clim->clim_oh_t.clim_np - 1])
+    p = clim->clim_oh_t.clim_p[clim->clim_oh_t.clim_np - 1];
+  else if (p > clim->clim_oh_t.clim_p[0])
+    p = clim->clim_oh_t.clim_p[0];
 
-  /* Check latitude... */
-  if (lat < clim->clim_oh_t->clim_lat[0])
-    lat = clim->clim_oh_t->clim_lat[0];
-  else if (lat > clim->clim_oh_t->clim_lat[clim->clim_oh_t->clim_nlat - 1])
-    lat = clim->clim_oh_t->clim_lat[clim->clim_oh_t->clim_nlat - 1];
+  /* Check latitude range... */
+  if (lat < clim->clim_oh_t.clim_lat[0])
+    lat = clim->clim_oh_t.clim_lat[0];
+  else if (lat > clim->clim_oh_t.clim_lat[clim->clim_oh_t.clim_nlat - 1])
+    lat = clim->clim_oh_t.clim_lat[clim->clim_oh_t.clim_nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim->clim_oh_t->clim_time, clim->clim_oh_t->clim_ntime, sec);
-  int ilat = locate_reg(clim->clim_oh_t->clim_lat, clim->clim_oh_t->clim_nlat, lat);
-  int ip = locate_irr(clim->clim_oh_t->clim_p, clim->clim_oh_t->clim_np, p);
+  int isec =
+    locate_irr(clim->clim_oh_t.clim_time, clim->clim_oh_t.clim_ntime, sec);
+  int ilat =
+    locate_reg(clim->clim_oh_t.clim_lat, clim->clim_oh_t.clim_nlat, lat);
+  int ip = locate_irr(clim->clim_oh_t.clim_p, clim->clim_oh_t.clim_np, p);
 
-  /* Interpolate OH climatology... */
-  double aux00 = LIN(clim->clim_oh_t->clim_p[ip],
-		     clim->clim_oh_t->var[isec][ip][ilat],
-		     clim->clim_oh_t->clim_p[ip + 1],
-		     clim->clim_oh_t->var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->clim_oh_t->clim_p[ip],
-		     clim->clim_oh_t->var[isec][ip][ilat + 1],
-		     clim->clim_oh_t->clim_p[ip + 1],
-		     clim->clim_oh_t->var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->clim_oh_t->clim_p[ip],
-		     clim->clim_oh_t->var[isec + 1][ip][ilat],
-		     clim->clim_oh_t->clim_p[ip + 1],
-		     clim->clim_oh_t->var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->clim_oh_t->clim_p[ip],
-		     clim->clim_oh_t->var[isec + 1][ip][ilat + 1],
-		     clim->clim_oh_t->clim_p[ip + 1],
-		     clim->clim_oh_t->var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 = LIN(clim->clim_oh_t->clim_lat[ilat], aux00, clim->clim_oh_t->clim_lat[ilat + 1], aux01, lat);
-  aux11 = LIN(clim->clim_oh_t->clim_lat[ilat], aux10, clim->clim_oh_t->clim_lat[ilat + 1], aux11, lat);
+  /* Interpolate OH data... */
+  double aux00 = LIN(clim->clim_oh_t.clim_p[ip],
+		     clim->clim_oh_t.var[isec][ip][ilat],
+		     clim->clim_oh_t.clim_p[ip + 1],
+		     clim->clim_oh_t.var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(clim->clim_oh_t.clim_p[ip],
+		     clim->clim_oh_t.var[isec][ip][ilat + 1],
+		     clim->clim_oh_t.clim_p[ip + 1],
+		     clim->clim_oh_t.var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(clim->clim_oh_t.clim_p[ip],
+		     clim->clim_oh_t.var[isec + 1][ip][ilat],
+		     clim->clim_oh_t.clim_p[ip + 1],
+		     clim->clim_oh_t.var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(clim->clim_oh_t.clim_p[ip],
+		     clim->clim_oh_t.var[isec + 1][ip][ilat + 1],
+		     clim->clim_oh_t.clim_p[ip + 1],
+		     clim->clim_oh_t.var[isec + 1][ip + 1][ilat + 1], p);
   aux00 =
-    LIN(clim->clim_oh_t->clim_time[isec], aux00, clim->clim_oh_t->clim_time[isec + 1], aux11, sec);
+    LIN(clim->clim_oh_t.clim_lat[ilat], aux00,
+	clim->clim_oh_t.clim_lat[ilat + 1], aux01, lat);
+  aux11 =
+    LIN(clim->clim_oh_t.clim_lat[ilat], aux10,
+	clim->clim_oh_t.clim_lat[ilat + 1], aux11, lat);
+  aux00 =
+    LIN(clim->clim_oh_t.clim_time[isec], aux00,
+	clim->clim_oh_t.clim_time[isec + 1], aux11, sec);
 
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
     double oh = aux00, sza = sza_calc(t, lon, lat);
-
-    if (sza <= M_PI / 2. * 89. / 90.)
+    if (sza <= M_PI / 2. * 89. / 90.)	// TODO: this uses an SZA threshold of 89 deg, but clim_oh_diurnal_correction() uses 85 deg? -> define a constant/macro for it?
       return oh * exp(-ctl->oh_chem_beta / cos(sza));
     else
       return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 89. / 90.));
-  }
-
-  return GSL_MAX(aux00, 0.0);
+  } else
+    return GSL_MAX(aux00, 0.0);
 }
 
 /*****************************************************************************/
-
-
-// TODO: Remove this function, only keep scaling correction for day/night...
 
 void clim_oh_diurnal_correction(
   ctl_t * ctl,
   clim_t * clim) {
 
-  for (int it = 0; it < clim->clim_oh_t->clim_ntime; it++)
-    for (int iz = 0; iz < clim->clim_oh_t->clim_np; iz++)
-      for (int iy = 0; iy < clim->clim_oh_t->clim_nlat; iy++) 
-	clim->clim_oh_t->var[it][iz][iy] /= clim_oh_init_help(ctl->oh_chem_beta, clim->clim_oh_t->clim_time[it],
-			      clim->clim_oh_t->clim_lat[iy]);
-}
+  /* Loop over climatology data points... */
+  for (int it = 0; it < clim->clim_oh_t.clim_ntime; it++)
+    for (int iz = 0; iz < clim->clim_oh_t.clim_np; iz++)
+      for (int iy = 0; iy < clim->clim_oh_t.clim_nlat; iy++) {
 
-/*****************************************************************************/
+	/* Init... */
+	int n = 0;
+	double sum = 0;
 
-double clim_oh_init_help(
-  double beta,
-  double time,
-  double lat) {
+	/* Integrate day/night correction factor over longitude... */
+	for (double lon = -180; lon < 180; lon += 1) {
+	  double sza = sza_calc(clim->clim_oh_t.clim_time[it],
+				lon, clim->clim_oh_t.clim_lat[iy]);
+	  if (sza <= M_PI / 2. * 85. / 90.)
+	    sum += exp(-ctl->oh_chem_beta / cos(sza));
+	  else
+	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+	  n++;
+	}
 
-  double aux, lon, sum = 0;
-
-  int n = 0;
-
-  /* Integrate day/night correction factor over longitude... */
-  for (lon = -180; lon < 180; lon += 1) {
-    aux = sza_calc(time, lon, lat);
-    if (aux <= M_PI / 2. * 85. / 90.)
-      sum += exp(-beta / cos(aux));
-    else
-      sum += exp(-beta / cos(M_PI / 2. * 85. / 90.));
-    n++;
-  }
-  return sum / (double) n;
+	/* Apply scaling factor to OH data... */
+	clim->clim_oh_t.var[it][iz][iy] /= (sum / (double) n);
+      }
 }
 
 /*****************************************************************************/
@@ -510,136 +694,55 @@ double clim_h2o2(
     sec += 365.25 * 86400.;
 
   /* Check pressure... */
-  if (p < clim->clim_h2o2_t->clim_p[clim->clim_h2o2_t->clim_np - 1])
-    p = clim->clim_h2o2_t->clim_p[clim->clim_h2o2_t->clim_np - 1];
-  else if (p > clim->clim_h2o2_t->clim_p[0])
-    p = clim->clim_h2o2_t->clim_p[0];
+  if (p < clim->clim_h2o2_t.clim_p[clim->clim_h2o2_t.clim_np - 1])
+    p = clim->clim_h2o2_t.clim_p[clim->clim_h2o2_t.clim_np - 1];
+  else if (p > clim->clim_h2o2_t.clim_p[0])
+    p = clim->clim_h2o2_t.clim_p[0];
 
   /* Check latitude... */
-  if (lat < clim->clim_h2o2_t->clim_lat[0])
-    lat = clim->clim_h2o2_t->clim_lat[0];
-  else if (lat > clim->clim_h2o2_t->clim_lat[clim->clim_h2o2_t->clim_nlat - 1])
-    lat = clim->clim_h2o2_t->clim_lat[clim->clim_h2o2_t->clim_nlat - 1];
+  if (lat < clim->clim_h2o2_t.clim_lat[0])
+    lat = clim->clim_h2o2_t.clim_lat[0];
+  else if (lat > clim->clim_h2o2_t.clim_lat[clim->clim_h2o2_t.clim_nlat - 1])
+    lat = clim->clim_h2o2_t.clim_lat[clim->clim_h2o2_t.clim_nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(clim->clim_h2o2_t->clim_time, clim->clim_h2o2_t->clim_ntime, sec);
-  int ilat = locate_reg(clim->clim_h2o2_t->clim_lat, clim->clim_h2o2_t->clim_nlat, lat);
-  int ip = locate_irr(clim->clim_h2o2_t->clim_p, clim->clim_h2o2_t->clim_np, p);
+  int isec =
+    locate_irr(clim->clim_h2o2_t.clim_time, clim->clim_h2o2_t.clim_ntime,
+	       sec);
+  int ilat =
+    locate_reg(clim->clim_h2o2_t.clim_lat, clim->clim_h2o2_t.clim_nlat,
+	       lat);
+  int ip = locate_irr(clim->clim_h2o2_t.clim_p, clim->clim_h2o2_t.clim_np, p);
 
   /* Interpolate H2O2 climatology... */
-  double aux00 = LIN(clim->clim_h2o2_t->clim_p[ip],
-		     clim->clim_h2o2_t->var[isec][ip][ilat],
-		     clim->clim_h2o2_t->clim_p[ip + 1],
-		     clim->clim_h2o2_t->var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->clim_h2o2_t->clim_p[ip],
-		     clim->clim_h2o2_t->var[isec][ip][ilat + 1],
-		     clim->clim_h2o2_t->clim_p[ip + 1],
-		     clim->clim_h2o2_t->var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->clim_h2o2_t->clim_p[ip],
-		     clim->clim_h2o2_t->var[isec + 1][ip][ilat],
-		     clim->clim_h2o2_t->clim_p[ip + 1],
-		     clim->clim_h2o2_t->var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->clim_h2o2_t->clim_p[ip],
-		     clim->clim_h2o2_t->var[isec + 1][ip][ilat + 1],
-		     clim->clim_h2o2_t->clim_p[ip + 1],
-		     clim->clim_h2o2_t->var[isec + 1][ip + 1][ilat + 1], p);
+  double aux00 = LIN(clim->clim_h2o2_t.clim_p[ip],
+		     clim->clim_h2o2_t.var[isec][ip][ilat],
+		     clim->clim_h2o2_t.clim_p[ip + 1],
+		     clim->clim_h2o2_t.var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(clim->clim_h2o2_t.clim_p[ip],
+		     clim->clim_h2o2_t.var[isec][ip][ilat + 1],
+		     clim->clim_h2o2_t.clim_p[ip + 1],
+		     clim->clim_h2o2_t.var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(clim->clim_h2o2_t.clim_p[ip],
+		     clim->clim_h2o2_t.var[isec + 1][ip][ilat],
+		     clim->clim_h2o2_t.clim_p[ip + 1],
+		     clim->clim_h2o2_t.var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(clim->clim_h2o2_t.clim_p[ip],
+		     clim->clim_h2o2_t.var[isec + 1][ip][ilat + 1],
+		     clim->clim_h2o2_t.clim_p[ip + 1],
+		     clim->clim_h2o2_t.var[isec + 1][ip + 1][ilat + 1], p);
   aux00 =
-    LIN(clim->clim_h2o2_t->clim_lat[ilat], aux00, clim->clim_h2o2_t->clim_lat[ilat + 1], aux01, lat);
+    LIN(clim->clim_h2o2_t.clim_lat[ilat], aux00,
+	clim->clim_h2o2_t.clim_lat[ilat + 1], aux01, lat);
   aux11 =
-    LIN(clim->clim_h2o2_t->clim_lat[ilat], aux10, clim->clim_h2o2_t->clim_lat[ilat + 1], aux11, lat);
+    LIN(clim->clim_h2o2_t.clim_lat[ilat], aux10,
+	clim->clim_h2o2_t.clim_lat[ilat + 1], aux11, lat);
   aux00 =
-    LIN(clim->clim_h2o2_t->clim_time[isec], aux00, clim->clim_h2o2_t->clim_time[isec + 1], aux11, sec);
+    LIN(clim->clim_h2o2_t.clim_time[isec], aux00,
+	clim->clim_h2o2_t.clim_time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
-
-/*****************************************************************************/
-
-// void clim_h2o2_init(
-//   ctl_t * ctl,
-//   clim_t * clim) {
-
-//   int ncid, varid, it, iy, iz, nt;
-
-//   double *help, h2o2min = 1e99, h2o2max = -1e99;
-
-//   /* Write info... */
-//   LOG(1, "Read H2O2 data: %s", ctl->clim_h2o2_filename);
-
-//   /* Open netCDF file... */
-//   if (nc_open(ctl->clim_h2o2_filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-//     WARN("H2O2 climatology data are missing!");
-//     return;
-//   }
-
-//   /* Read pressure data... */
-//   NC_INQ_DIM("press", &clim->h2o2_np, 2, CP);
-//   NC_GET_DOUBLE("press", clim->h2o2_p, 1);
-
-//   /* Check ordering of pressure data... */
-//   if (clim->h2o2_p[0] < clim->h2o2_p[1])
-//     ERRMSG("Pressure data are not descending!");
-
-//   /* Read latitudes... */
-//   NC_INQ_DIM("lat", &clim->h2o2_nlat, 2, CY);
-//   NC_GET_DOUBLE("lat", clim->h2o2_lat, 1);
-
-//   /* Check ordering of latitude data... */
-//   if (clim->h2o2_lat[0] > clim->h2o2_lat[1])
-//     ERRMSG("Latitude data are not ascending!");
-
-//   /* Set time data (for monthly means)... */
-//   clim->h2o2_ntime = 12;
-//   clim->h2o2_time[0] = 1209600.00;
-//   clim->h2o2_time[1] = 3888000.00;
-//   clim->h2o2_time[2] = 6393600.00;
-//   clim->h2o2_time[3] = 9072000.00;
-//   clim->h2o2_time[4] = 11664000.00;
-//   clim->h2o2_time[5] = 14342400.00;
-//   clim->h2o2_time[6] = 16934400.00;
-//   clim->h2o2_time[7] = 19612800.00;
-//   clim->h2o2_time[8] = 22291200.00;
-//   clim->h2o2_time[9] = 24883200.00;
-//   clim->h2o2_time[10] = 27561600.00;
-//   clim->h2o2_time[11] = 30153600.00;
-
-//   /* Check number of timesteps... */
-//   NC_INQ_DIM("time", &nt, 12, 12);
-
-//   /* Read data... */
-//   ALLOC(help, double,
-// 	clim->h2o2_nlat * clim->h2o2_np * clim->h2o2_ntime);
-//   NC_GET_DOUBLE("h2o2", help, 1);
-//   for (it = 0; it < clim->h2o2_ntime; it++)
-//     for (iz = 0; iz < clim->h2o2_np; iz++)
-//       for (iy = 0; iy < clim->h2o2_nlat; iy++) {
-// 	clim->h2o2[it][iz][iy] =
-// 	  help[ARRAY_3D(it, iz, clim->h2o2_np, iy, clim->h2o2_nlat)];
-// 	h2o2min = GSL_MIN(h2o2min, clim->h2o2[it][iz][iy]);
-// 	h2o2max = GSL_MAX(h2o2max, clim->h2o2[it][iz][iy]);
-//       }
-//   free(help);
-
-//   /* Close netCDF file... */
-//   NC(nc_close(ncid));
-
-//   /* Write info... */
-//   LOG(2, "Number of time steps: %d", clim->h2o2_ntime);
-//   LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-//       clim->h2o2_time[0], clim->h2o2_time[1],
-//       clim->h2o2_time[clim->h2o2_ntime - 1]);
-//   LOG(2, "Number of pressure levels: %d", clim->h2o2_np);
-//   LOG(2, "Altitude levels: %g, %g ... %g km",
-//       Z(clim->h2o2_p[0]), Z(clim->h2o2_p[1]),
-//       Z(clim->h2o2_p[clim->h2o2_np - 1]));
-//   LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->h2o2_p[0],
-//       clim->h2o2_p[1], clim->h2o2_p[clim->h2o2_np - 1]);
-//   LOG(2, "Number of latitudes: %d", clim->h2o2_nlat);
-//   LOG(2, "Latitudes: %g, %g ... %g deg",
-//       clim->h2o2_lat[0], clim->h2o2_lat[1],
-//       clim->h2o2_lat[clim->h2o2_nlat - 1]);
-//   LOG(2, "H2O2 concentration range: %g ... %g molec/cm^3", h2o2min, h2o2max);
-// }
 
 /*****************************************************************************/
 
@@ -654,13 +757,13 @@ double clim_var(
   while (sec < 0)
     sec += 365.25 * 86400.;
 
-  /* Check pressure... */
+  /* Check pressure range... */
   if (p < clim_var_tn->clim_p[clim_var_tn->clim_np - 1])
     p = clim_var_tn->clim_p[clim_var_tn->clim_np - 1];
   else if (p > clim_var_tn->clim_p[0])
     p = clim_var_tn->clim_p[0];
 
-  /* Check latitude... */
+  /* Check latitude range... */
   if (lat < clim_var_tn->clim_lat[0])
     lat = clim_var_tn->clim_lat[0];
   else if (lat > clim_var_tn->clim_lat[clim_var_tn->clim_nlat - 1])
@@ -671,7 +774,7 @@ double clim_var(
   int ilat = locate_reg(clim_var_tn->clim_lat, clim_var_tn->clim_nlat, lat);
   int ip = locate_irr(clim_var_tn->clim_p, clim_var_tn->clim_np, p);
 
-  /* Interpolate climatology variable... */
+  /* Interpolate climatology data... */
   double aux00 = LIN(clim_var_tn->clim_p[ip],
 		     clim_var_tn->var[isec][ip][ilat],
 		     clim_var_tn->clim_p[ip + 1],
@@ -689,11 +792,14 @@ double clim_var(
 		     clim_var_tn->clim_p[ip + 1],
 		     clim_var_tn->var[isec + 1][ip + 1][ilat + 1], p);
   aux00 =
-    LIN(clim_var_tn->clim_lat[ilat], aux00, clim_var_tn->clim_lat[ilat + 1], aux01, lat);
+    LIN(clim_var_tn->clim_lat[ilat], aux00, clim_var_tn->clim_lat[ilat + 1],
+	aux01, lat);
   aux11 =
-    LIN(clim_var_tn->clim_lat[ilat], aux10, clim_var_tn->clim_lat[ilat + 1], aux11, lat);
+    LIN(clim_var_tn->clim_lat[ilat], aux10, clim_var_tn->clim_lat[ilat + 1],
+	aux11, lat);
   aux00 =
-    LIN(clim_var_tn->clim_time[isec], aux00, clim_var_tn->clim_time[isec + 1], aux11, sec);
+    LIN(clim_var_tn->clim_time[isec], aux00, clim_var_tn->clim_time[isec + 1],
+	aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
@@ -754,13 +860,15 @@ void clim_var_init(
 
   /* Read data... */
   ALLOC(help, double,
-	clim_var_tn->clim_nlat * clim_var_tn->clim_np * clim_var_tn->clim_ntime);
+	clim_var_tn->clim_nlat * clim_var_tn->clim_np *
+	clim_var_tn->clim_ntime);
   NC_GET_DOUBLE(varname, help, 1);
   for (it = 0; it < clim_var_tn->clim_ntime; it++)
     for (iz = 0; iz < clim_var_tn->clim_np; iz++)
       for (iy = 0; iy < clim_var_tn->clim_nlat; iy++) {
 	clim_var_tn->var[it][iz][iy] =
-	  help[ARRAY_3D(it, iz, clim_var_tn->clim_np, iy, clim_var_tn->clim_nlat)];
+	  help[ARRAY_3D
+	       (it, iz, clim_var_tn->clim_np, iy, clim_var_tn->clim_nlat)];
 	varmin = GSL_MIN(varmin, clim_var_tn->var[it][iz][iy]);
 	varmax = GSL_MAX(varmax, clim_var_tn->var[it][iz][iy]);
       }
@@ -786,275 +894,6 @@ void clim_var_init(
       clim_var_tn->clim_lat[clim_var_tn->clim_nlat - 1]);
   LOG(2, "%s concentration range: %g ... %g molec/cm^3", varname, varmin,
       varmax);
-}
-
-// void clim_var_init(
-//   clim_t * clim,
-//   char *varname,
-//   char *filename,
-//   double clim_varptr[CT][CP][CY]) {
-
-//   int ncid, varid, it, iy, iz, nt;
-
-//   double *help, varmin = 1e99, varmax = -1e99;
-
-//   /* Write info... */
-//   LOG(1, "Read %s data: %s", varname, filename);
-
-//   /* Open netCDF file... */
-//   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-//     WARN("%s climatology data are missing!", varname);
-//     return;
-//   }
-
-//   /* Read pressure data... */
-//   NC_INQ_DIM("press", &clim->clim_np, 2, CP);
-//   NC_GET_DOUBLE("press", clim->clim_p, 1);
-
-//   /* Check ordering of pressure data... */
-//   if (clim->clim_p[0] < clim->clim_p[1])
-//     ERRMSG("Pressure data are not descending!");
-
-//   /* Read latitudes... */
-//   NC_INQ_DIM("lat", &clim->clim_nlat, 2, CY);
-//   NC_GET_DOUBLE("lat", clim->clim_lat, 1);
-
-//   /* Check ordering of latitude data... */
-//   if (clim->clim_lat[0] > clim->clim_lat[1])
-//     ERRMSG("Latitude data are not ascending!");
-
-//   /* Set time data (for monthly means)... */
-//   clim->clim_ntime = 12;
-//   clim->clim_time[0] = 1209600.00;
-//   clim->clim_time[1] = 3888000.00;
-//   clim->clim_time[2] = 6393600.00;
-//   clim->clim_time[3] = 9072000.00;
-//   clim->clim_time[4] = 11664000.00;
-//   clim->clim_time[5] = 14342400.00;
-//   clim->clim_time[6] = 16934400.00;
-//   clim->clim_time[7] = 19612800.00;
-//   clim->clim_time[8] = 22291200.00;
-//   clim->clim_time[9] = 24883200.00;
-//   clim->clim_time[10] = 27561600.00;
-//   clim->clim_time[11] = 30153600.00;
-
-//   /* Check number of timesteps... */
-//   NC_INQ_DIM("time", &nt, 12, 12);
-
-//   /* Read data... */
-//   ALLOC(help, double,
-// 	clim->clim_nlat * clim->clim_np * clim->clim_ntime);
-//   NC_GET_DOUBLE(varname, help, 1);
-//   for (it = 0; it < clim->clim_ntime; it++)
-//     for (iz = 0; iz < clim->clim_np; iz++)
-//       for (iy = 0; iy < clim->clim_nlat; iy++) {
-// 	clim_varptr[it][iz][iy] =
-// 	  help[ARRAY_3D(it, iz, clim->clim_np, iy, clim->clim_nlat)];
-// 	varmin = GSL_MIN(varmin, clim_varptr[it][iz][iy]);
-// 	varmax = GSL_MAX(varmax, clim_varptr[it][iz][iy]);
-//       }
-//   free(help);
-
-//   /* Close netCDF file... */
-//   NC(nc_close(ncid));
-
-//   /* Write info... */
-//   LOG(2, "Number of time steps: %d", clim->clim_ntime);
-//   LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-//       clim->clim_time[0], clim->clim_time[1],
-//       clim->clim_time[clim->clim_ntime - 1]);
-//   LOG(2, "Number of pressure levels: %d", clim->clim_np);
-//   LOG(2, "Altitude levels: %g, %g ... %g km",
-//       Z(clim->clim_p[0]), Z(clim->clim_p[1]),
-//       Z(clim->clim_p[clim->clim_np - 1]));
-//   LOG(2, "Pressure levels: %g, %g ... %g hPa", clim->clim_p[0],
-//       clim->clim_p[1], clim->clim_p[clim->clim_np - 1]);
-//   LOG(2, "Number of latitudes: %d", clim->clim_nlat);
-//   LOG(2, "Latitudes: %g, %g ... %g deg",
-//       clim->clim_lat[0], clim->clim_lat[1],
-//       clim->clim_lat[clim->clim_nlat - 1]);
-//   LOG(2, "%s concentration range: %g ... %g molec/cm^3", varname, varmin,
-//       varmax);
-// }
-
-/*****************************************************************************/
-
-double clim_tropo(
-  clim_t * clim,
-  double t,
-  double lat) {
-
-  /* Get seconds since begin of year... */
-  double sec = FMOD(t, 365.25 * 86400.);
-  while (sec < 0)
-    sec += 365.25 * 86400.;
-
-  /* Get indices... */
-  int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
-  int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
-
-  /* Interpolate tropopause data (NCEP/NCAR Reanalysis 1)... */
-  double p0 = LIN(clim->tropo_lat[ilat],
-		  clim->tropo[isec][ilat],
-		  clim->tropo_lat[ilat + 1],
-		  clim->tropo[isec][ilat + 1], lat);
-  double p1 = LIN(clim->tropo_lat[ilat],
-		  clim->tropo[isec + 1][ilat],
-		  clim->tropo_lat[ilat + 1],
-		  clim->tropo[isec + 1][ilat + 1], lat);
-  return LIN(clim->tropo_time[isec], p0, clim->tropo_time[isec + 1], p1, sec);
-}
-
-/*****************************************************************************/
-
-void clim_tropo_init(
-  clim_t * clim) {
-
-  /* Write info... */
-  LOG(1, "Initialize tropopause data...");
-
-  clim->tropo_ntime = 12;
-  double tropo_time[12] = {
-    1209600.00, 3888000.00, 6393600.00,
-    9072000.00, 11664000.00, 14342400.00,
-    16934400.00, 19612800.00, 22291200.00,
-    24883200.00, 27561600.00, 30153600.00
-  };
-  memcpy(clim->tropo_time, tropo_time, sizeof(clim->tropo_time));
-
-  clim->tropo_nlat = 73;
-  double tropo_lat[73] = {
-    -90, -87.5, -85, -82.5, -80, -77.5, -75, -72.5, -70, -67.5,
-    -65, -62.5, -60, -57.5, -55, -52.5, -50, -47.5, -45, -42.5,
-    -40, -37.5, -35, -32.5, -30, -27.5, -25, -22.5, -20, -17.5,
-    -15, -12.5, -10, -7.5, -5, -2.5, 0, 2.5, 5, 7.5, 10, 12.5,
-    15, 17.5, 20, 22.5, 25, 27.5, 30, 32.5, 35, 37.5, 40, 42.5,
-    45, 47.5, 50, 52.5, 55, 57.5, 60, 62.5, 65, 67.5, 70, 72.5,
-    75, 77.5, 80, 82.5, 85, 87.5, 90
-  };
-  memcpy(clim->tropo_lat, tropo_lat, sizeof(clim->tropo_lat));
-
-  double tropo[12][73] = {
-    {324.1, 325.6, 325, 324.3, 322.5, 319.7, 314, 307.2, 301.8, 299.6,
-     297.1, 292.2, 285.6, 276.1, 264, 248.9, 231.9, 213.5, 194.4,
-     175.3, 157, 140.4, 126.7, 116.3, 109.5, 105.4, 103, 101.4, 100.4,
-     99.69, 99.19, 98.84, 98.56, 98.39, 98.39, 98.42, 98.44, 98.54,
-     98.68, 98.81, 98.89, 98.96, 99.12, 99.65, 101.4, 105.4, 113.5, 128,
-     152.1, 184.7, 214, 234.1, 247.3, 255.8, 262.6, 267.7, 271.7, 275,
-     277.2, 279, 280.1, 280.4, 280.6, 280.1, 279.3, 278.3, 276.8, 275.8,
-     275.3, 275.6, 275.4, 274.1, 273.5},
-    {337.3, 338.7, 337.8, 336.4, 333, 328.8, 321.1, 312.6, 306.6, 303.7,
-     300.2, 293.8, 285.4, 273.8, 259.6, 242.7, 224.4, 205.2, 186, 167.5,
-     150.3, 135, 122.8, 113.9, 108.2, 104.7, 102.5, 101.1, 100.2, 99.42,
-     98.88, 98.52, 98.25, 98.09, 98.07, 98.1, 98.12, 98.2, 98.25, 98.27,
-     98.26, 98.27, 98.36, 98.79, 100.2, 104.2, 113.7, 131.2, 159.5, 193,
-     220.4, 238.1, 250.2, 258.1, 264.7, 269.7, 273.7, 277.3, 280.2, 282.8,
-     284.9, 286.5, 288.1, 288.8, 289, 288.5, 287.2, 286.3, 286.1, 287.2,
-     287.5, 286.2, 285.8},
-    {335, 336, 335.7, 335.1, 332.3, 328.1, 320.6, 311.8, 305.1, 301.9,
-     297.6, 290, 280.4, 268.3, 254.6, 239.6, 223.9, 207.9, 192.2, 176.9,
-     161.7, 146.4, 132.2, 120.6, 112.3, 107.2, 104.3, 102.4, 101.3,
-     100.4, 99.86, 99.47, 99.16, 98.97, 98.94, 98.97, 99, 99.09, 99.2,
-     99.31, 99.35, 99.41, 99.51, 99.86, 101.1, 104.9, 114.3, 131, 156.8,
-     186.3, 209.3, 224.6, 236.8, 246.3, 254.9, 262.3, 268.8, 274.8,
-     279.9, 284.6, 288.6, 291.6, 294.9, 297.5, 299.8, 301.8, 303.1,
-     304.3, 304.9, 306, 306.6, 306.2, 306},
-    {306.2, 306.7, 305.7, 307.1, 307.3, 306.4, 301.8, 296.2, 292.4,
-     290.3, 287.1, 280.9, 273.4, 264.3, 254.1, 242.8, 231, 219, 207.2,
-     195.5, 183.3, 169.7, 154.7, 138.7, 124.1, 113.6, 107.8, 104.7,
-     102.8, 101.7, 100.9, 100.4, 100, 99.79, 99.7, 99.66, 99.68, 99.79,
-     99.94, 100.2, 100.5, 100.9, 101.4, 102.1, 103.4, 107, 115.2, 129.1,
-     148.7, 171, 190.8, 205.6, 218.4, 229.4, 239.6, 248.6, 256.5,
-     263.7, 270.3, 276.6, 282.6, 288.1, 294.5, 300.4, 306.3, 311.4,
-     315.1, 318.3, 320.3, 322.2, 322.8, 321.5, 321.1},
-    {266.5, 264.9, 260.8, 261, 262, 263, 261.3, 259.7, 259.2, 259.8,
-     260.1, 258.6, 256.7, 253.6, 249.5, 243.9, 237.4, 230, 222.1, 213.9,
-     205, 194.4, 180.4, 161.8, 140.7, 122.9, 112.1, 106.7, 104.1, 102.7,
-     101.8, 101.4, 101.1, 101, 101, 101, 101.1, 101.2, 101.5, 101.9,
-     102.4, 103, 103.8, 104.9, 106.8, 110.1, 115.6, 124, 135.2, 148.9,
-     165.2, 181.3, 198, 211.8, 223.5, 233.8, 242.9, 251.5, 259, 266.2,
-     273.1, 279.2, 286.2, 292.8, 299.6, 306, 311.1, 315.5, 318.8, 322.6,
-     325.3, 325.8, 325.8},
-    {220.1, 218.1, 210.8, 207.2, 207.6, 210.5, 211.4, 213.5, 217.3,
-     222.4, 227.9, 232.8, 237.4, 240.8, 242.8, 243, 241.5, 238.6, 234.2,
-     228.5, 221, 210.7, 195.1, 172.9, 147.8, 127.6, 115.6, 109.9, 107.1,
-     105.7, 105, 104.8, 104.8, 104.9, 105, 105.1, 105.3, 105.5, 105.8,
-     106.4, 107, 107.6, 108.1, 108.8, 110, 111.8, 114.2, 117.4, 121.6,
-     127.9, 137.3, 151.2, 169.5, 189, 205.8, 218.9, 229.1, 237.8, 245,
-     251.5, 257.1, 262.3, 268.2, 274, 280.4, 286.7, 292.4, 297.9, 302.9,
-     308.5, 312.2, 313.1, 313.3},
-    {187.4, 184.5, 173.3, 166.1, 165.4, 167.8, 169.6, 173.6, 179.6,
-     187.9, 198.9, 210, 220.5, 229.2, 235.7, 239.9, 241.8, 241.6, 239.6,
-     235.8, 229.4, 218.6, 200.9, 175.9, 149.4, 129.4, 118.3, 113.1,
-     110.8, 109.7, 109.3, 109.4, 109.7, 110, 110.2, 110.4, 110.5, 110.7,
-     111, 111.4, 111.8, 112.1, 112.3, 112.7, 113.2, 113.9, 115, 116.4,
-     117.9, 120.4, 124.1, 130.9, 142.2, 159.6, 179.6, 198.5, 212.9,
-     224.2, 232.7, 239.1, 243.8, 247.7, 252.4, 257.3, 263.2, 269.5,
-     275.4, 281.1, 286.3, 292, 296.3, 298.2, 298.8},
-    {166, 166.4, 155.7, 148.3, 147.1, 149, 152.1, 157, 163.6, 172.4,
-     185.3, 199.2, 212.6, 224, 233.2, 239.6, 243.3, 244.6, 243.6, 240.3,
-     233.9, 222.6, 203.7, 177, 149.5, 129.7, 119, 114, 111.7, 110.7,
-     110.3, 110.3, 110.6, 110.9, 111.1, 111.3, 111.5, 111.6, 111.9,
-     112.2, 112.5, 112.6, 112.8, 113, 113.4, 114, 115.1, 116.5, 118.3,
-     120.9, 124.4, 130.2, 139.4, 154.6, 173.8, 193.1, 208.1, 220.4,
-     230.1, 238.2, 244.7, 249.5, 254.5, 259.3, 264.5, 269.4, 273.7,
-     278.2, 282.6, 287.4, 290.9, 292.5, 293},
-    {171.9, 172.8, 166.2, 162.3, 161.4, 162.5, 165.2, 169.6, 175.3,
-     183.1, 193.8, 205.9, 218.3, 229.6, 238.5, 244.3, 246.9, 246.7,
-     243.8, 238.4, 230.2, 217.9, 199.6, 174.9, 148.9, 129.8, 119.5,
-     114.8, 112.3, 110.9, 110.3, 110.1, 110.2, 110.3, 110.4, 110.5,
-     110.6, 110.8, 111, 111.4, 111.8, 112, 112.2, 112.4, 112.9, 113.6,
-     114.7, 116.3, 118.4, 121.9, 127.1, 136.1, 149.8, 168.4, 186.9,
-     203.3, 217, 229.1, 238.7, 247, 254, 259.3, 264.3, 268.3, 272.5,
-     276.6, 280.4, 284.4, 288.4, 293.3, 297.2, 298.7, 299.1},
-    {191.6, 192.2, 189, 188.1, 190.2, 193.7, 197.8, 202.9, 208.5,
-     215.6, 224.2, 233.1, 241.2, 247.3, 250.8, 251.3, 248.9, 244.2,
-     237.3, 228.4, 217.2, 202.9, 184.5, 162.5, 140.7, 124.8, 116.2,
-     111.8, 109.4, 107.9, 107, 106.7, 106.6, 106.6, 106.7, 106.7,
-     106.8, 107, 107.4, 108, 108.7, 109.3, 109.8, 110.4, 111.2,
-     112.4, 114.2, 116.9, 121.1, 127.9, 139.3, 155.2, 173.6, 190.7,
-     206.1, 220.1, 232.3, 243, 251.8, 259.2, 265.7, 270.6, 275.3,
-     279.3, 283.3, 286.9, 289.7, 292.8, 296.1, 300.5, 303.9, 304.8,
-     305.1},
-    {241.5, 239.6, 236.8, 237.4, 239.4, 242.3, 244.2, 246.4, 249.2,
-     253.6, 258.6, 262.7, 264.8, 264.2, 260.6, 254.1, 245.5, 235.3,
-     223.9, 211.7, 198.3, 183.1, 165.6, 147.1, 130.5, 118.7, 111.9,
-     108.1, 105.8, 104.3, 103.4, 102.8, 102.5, 102.4, 102.5, 102.5,
-     102.5, 102.7, 103.1, 103.8, 104.6, 105.4, 106.1, 107, 108.2,
-     109.9, 112.8, 117.5, 126, 140.4, 161, 181.9, 201.2, 216.8, 230.4,
-     241.8, 251.4, 259.9, 266.9, 272.8, 277.4, 280.4, 282.9, 284.6,
-     286.1, 287.4, 288.3, 289.5, 290.9, 294.2, 296.9, 297.5, 297.6},
-    {301.2, 300.3, 296.6, 295.4, 295, 294.3, 291.2, 287.4, 284.9, 284.7,
-     284.1, 281.5, 277.1, 270.4, 261.7, 250.6, 237.6, 223.1, 207.9, 192,
-     175.8, 158.8, 142.1, 127.6, 116.8, 109.9, 106, 103.6, 102.1, 101.1,
-     100.4, 99.96, 99.6, 99.37, 99.32, 99.32, 99.31, 99.46, 99.77, 100.2,
-     100.7, 101.3, 101.8, 102.7, 104.1, 106.8, 111.9, 121, 136.7, 160,
-     186.9, 209.9, 228.1, 241.2, 251.5, 259.5, 265.7, 270.9, 274.8, 278,
-     280.3, 281.8, 283, 283.3, 283.7, 283.8, 283, 282.2, 281.2, 281.4,
-     281.7, 281.1, 281.2}
-  };
-  memcpy(clim->tropo, tropo, sizeof(clim->tropo));
-
-  /* Get range... */
-  double tropomin = 1e99, tropomax = -1e99;
-  for (int it = 0; it < clim->tropo_ntime; it++)
-    for (int iy = 0; iy < clim->tropo_nlat; iy++) {
-      tropomin = GSL_MIN(tropomin, clim->tropo[it][iy]);
-      tropomax = GSL_MAX(tropomax, clim->tropo[it][iy]);
-    }
-
-  /* Write info... */
-  LOG(2, "Number of time steps: %d", clim->tropo_ntime);
-  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-      clim->tropo_time[0], clim->tropo_time[1],
-      clim->tropo_time[clim->tropo_ntime - 1]);
-  LOG(2, "Number of latitudes: %d", clim->tropo_nlat);
-  LOG(2, "Latitudes: %g, %g ... %g deg",
-      clim->tropo_lat[0], clim->tropo_lat[1],
-      clim->tropo_lat[clim->tropo_nlat - 1]);
-  LOG(2, "Tropopause altitude range: %g ... %g hPa", Z(tropomax),
-      Z(tropomin));
-  LOG(2, "Tropopause pressure range: %g ... %g hPa", tropomin, tropomax);
 }
 
 /*****************************************************************************/
@@ -2362,24 +2201,24 @@ void read_clim(
   /* Init HNO3 climatology... */
   clim_hno3_init(clim);
 
+  /* Read OH climatology... */
+  if (ctl->clim_oh_filename[0] != '-') {
+    clim_var_init(&clim->clim_oh_t, "OH", ctl->clim_oh_filename);
+    if (ctl->oh_chem_beta > 0)
+      clim_oh_diurnal_correction(ctl, clim);
+  }
+
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-		clim_var_init(clim->clim_h2o2_t, "h2o2", ctl->clim_h2o2_filename);
-    // clim_h2o2_init(ctl, clim);
-
-  /* Read OH climatology... */
-  if (ctl->clim_oh_filename[0] != '-')
-		clim_var_init(clim->clim_oh_t, "OH", ctl->clim_radical_filename);
-    // clim_var_init(clim_oh, "OH", ctl->clim_radical_filename, clim->oh);
-  // TODO:
-  if (ctl->oh_chem_beta > 0)
-    clim_oh_diurnal_correction(ctl, clim);
+    clim_var_init(&clim->clim_h2o2_t, "h2o2", ctl->clim_h2o2_filename);
 
   /* Read HO2 climatology... */
-  clim_var_init(clim->clim_ho2_t, "HO2", ctl->clim_radical_filename);
+  if (ctl->clim_ho2_filename[0] != '-')
+    clim_var_init(&clim->clim_ho2_t, "HO2", ctl->clim_ho2_filename);
 
   /* Read O(1D) climatology... */
-  clim_var_init(clim->clim_o1d_t, "O(1D)", ctl->clim_radical_filename);
+  if (ctl->clim_o1d_filename[0] != '-')
+    clim_var_init(&clim->clim_o1d_t, "O(1D)", ctl->clim_o1d_filename);
 }
 
 /*****************************************************************************/
@@ -2865,17 +2704,20 @@ void read_ctl(
   /* OH chemistry... */
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
-  scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
-	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
 
   /* H2O2 chemistry... */
   ctl->h2o2_chem_cc =
     scan_ctl(filename, argc, argv, "H2O2_CHEM_CC", -1, "1", NULL);
+
+  /* Climatological data... */
+  scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
+	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
   scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1,
 	   "../../data/cams_H2O2.nc", ctl->clim_h2o2_filename);
-
-  scan_ctl(filename, argc, argv, "CLIM_RADICAL_FILENAME", -1,
-	   "../../data/clams_radical_species.nc", ctl->clim_radical_filename);
+  scan_ctl(filename, argc, argv, "CLIM_HO2_FILENAME", -1,
+	   "../../data/clams_radical_species.nc", ctl->clim_ho2_filename);
+  scan_ctl(filename, argc, argv, "CLIM_O1D_FILENAME", -1,
+	   "../../data/clams_radical_species.nc", ctl->clim_o1d_filename);
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =

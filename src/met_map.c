@@ -68,10 +68,6 @@ int main(
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
-  ALLOC(clim->clim_oh_t, clim_var_t, 1);
-  ALLOC(clim->clim_h2o2_t, clim_var_t, 1);
-  ALLOC(clim->clim_o1d_t, clim_var_t, 1);
-  ALLOC(clim->clim_ho2_t, clim_var_t, 1);
   ALLOC(met, met_t, 1);
 
   /* Check arguments... */
@@ -245,10 +241,6 @@ int main(
   fclose(out);
 
   /* Free... */
-  free(clim->clim_oh_t);
-  free(clim->clim_h2o2_t);
-  free(clim->clim_o1d_t);
-  free(clim->clim_ho2_t);
   free(clim);
   free(met);
 

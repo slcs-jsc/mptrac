@@ -310,10 +310,6 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
-		ALLOC(clim->clim_oh_t, clim_var_t, 1);
-		ALLOC(clim->clim_h2o2_t, clim_var_t, 1);
-		ALLOC(clim->clim_o1d_t, clim_var_t, 1);
-		ALLOC(clim->clim_ho2_t, clim_var_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
 #ifdef ASYNCIO
@@ -329,7 +325,7 @@ int main(
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #ifdef ASYNCIO
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl,ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP], rs[:3 * NP])
+#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP], rs[:3 * NP])
 #else
 #pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], dt[:NP], rs[:3 * NP])
 #endif
@@ -560,10 +556,6 @@ int main(
     SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
     free(atm);
     free(cache);
-    free(clim->clim_oh_t);
-    free(clim->clim_h2o2_t);
-    free(clim->clim_o1d_t);
-    free(clim->clim_ho2_t);
     free(clim);
     free(met0);
     free(met1);
