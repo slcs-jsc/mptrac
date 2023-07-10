@@ -635,7 +635,10 @@ double clim_oh(
   double oh = GSL_MAX(aux00, 0.0);
   if (ctl->oh_chem_beta > 0) {
     double sza = sza_calc(t, lon, lat);
-    return (sza < M_PI / 2. ? oh * exp(-ctl->oh_chem_beta / cos(sza)) : 0);
+    if (sza <= M_PI / 2. * 85. / 90.)
+      return oh * exp(-ctl->oh_chem_beta / cos(sza));
+    else
+      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
   } else
     return oh;
 }
@@ -656,12 +659,12 @@ void clim_oh_diurnal_correction(
 	double sum = 0;
 
 	/* Integrate day/night correction factor over longitude... */
-	for (double lon = -180; lon < 180; lon += 1) {
+	for (double lon = -180; lon < 180; lon += 1.0) {
 	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  if (sza < M_PI / 2.)
+	  if (sza <= M_PI / 2. * 85. / 90.)
 	    sum += exp(-ctl->oh_chem_beta / cos(sza));
 	  else
-	    sum += 1;
+	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
 	  n++;
 	}
 
