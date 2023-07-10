@@ -15,15 +15,17 @@ The required arguments to run atm_dist are as follows:
 
 Statistical paramters that can be calculated are:
 
-* absdev
 * mean
 * stddv
 * min
 * max
+* skew
+* kurt
+* absdev
 * median
 * mad
 
-The here used statistics are the gnu statistic library. More informati on the [gnu statistics library](https://www.gnu.org/software/gsl/doc/html/statistics.html) can be found on their webpage. 
+The here used statistics are the gnu statistic library. More information on the [gnu statistics library](https://www.gnu.org/software/gsl/doc/html/statistics.html) can be found on their webpage. 
 
 An example command line for running atm_dist looks like as follows:
 
@@ -32,7 +34,6 @@ An example command line for running atm_dist looks like as follows:
 ```
 
 Note: The command line needs to be adjusted to the respective directories were the files (or executables in case of atm_dist) are located. 
-Currently, transport deviations with atm_dist can (for the time being) only be caluculated for the ASCCI output files (.tab files) 
 
 Additional paramters that can be used when running atm_dist are:
 
