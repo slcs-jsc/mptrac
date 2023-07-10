@@ -1863,7 +1863,7 @@ double clim_h2o2(
 #pragma acc routine (clim_var)
 #endif
 double clim_var(
-  clim_var_t var,
+  clim_var_t * var,
   double t,
   double lat,
   double p);

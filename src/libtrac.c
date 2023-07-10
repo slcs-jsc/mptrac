@@ -634,9 +634,8 @@ double clim_oh(
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
     double oh = aux00, sza = sza_calc(t, lon, lat);
-		return (sza < M_PI / 2. ? oh * exp(-ctl->oh_chem_beta / cos(sza)) : 0);
-  } 
-	else
+    return (sza < M_PI / 2. ? oh * exp(-ctl->oh_chem_beta / cos(sza)) : 0);
+  } else
     return GSL_MAX(aux00, 0.0);
 }
 
@@ -658,10 +657,10 @@ void clim_oh_diurnal_correction(
 	/* Integrate day/night correction factor over longitude... */
 	for (double lon = -180; lon < 180; lon += 1) {
 	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-		if (sza < M_PI / 2.)
-			sum += exp(-ctl->oh_chem_beta / cos(sza));
-		else
-			sum += 1;
+	  if (sza < M_PI / 2.)
+	    sum += exp(-ctl->oh_chem_beta / cos(sza));
+	  else
+	    sum += 1;
 	  n++;
 	}
 
@@ -730,7 +729,7 @@ double clim_h2o2(
 /*****************************************************************************/
 
 double clim_var(
-  clim_var_t var,
+  clim_var_t * var,
   double t,
   double lat,
   double p) {
@@ -741,42 +740,42 @@ double clim_var(
     sec += 365.25 * 86400.;
 
   /* Check pressure range... */
-  if (p < var.p[var.np - 1])
-    p = var.p[var.np - 1];
-  else if (p > var.p[0])
-    p = var.p[0];
+  if (p < var->p[var->np - 1])
+    p = var->p[var->np - 1];
+  else if (p > var->p[0])
+    p = var->p[0];
 
   /* Check latitude range... */
-  if (lat < var.lat[0])
-    lat = var.lat[0];
-  else if (lat > var.lat[var.nlat - 1])
-    lat = var.lat[var.nlat - 1];
+  if (lat < var->lat[0])
+    lat = var->lat[0];
+  else if (lat > var->lat[var->nlat - 1])
+    lat = var->lat[var->nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(var.time, var.ntime, sec);
-  int ilat = locate_reg(var.lat, var.nlat, lat);
-  int ip = locate_irr(var.p, var.np, p);
+  int isec = locate_irr(var->time, var->ntime, sec);
+  int ilat = locate_reg(var->lat, var->nlat, lat);
+  int ip = locate_irr(var->p, var->np, p);
 
   /* Interpolate climatology data... */
-  double aux00 = LIN(var.p[ip],
-		     var.var[isec][ip][ilat],
-		     var.p[ip + 1],
-		     var.var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(var.p[ip],
-		     var.var[isec][ip][ilat + 1],
-		     var.p[ip + 1],
-		     var.var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(var.p[ip],
-		     var.var[isec + 1][ip][ilat],
-		     var.p[ip + 1],
-		     var.var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(var.p[ip],
-		     var.var[isec + 1][ip][ilat + 1],
-		     var.p[ip + 1],
-		     var.var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 = LIN(var.lat[ilat], aux00, var.lat[ilat + 1], aux01, lat);
-  aux11 = LIN(var.lat[ilat], aux10, var.lat[ilat + 1], aux11, lat);
-  aux00 = LIN(var.time[isec], aux00, var.time[isec + 1], aux11, sec);
+  double aux00 = LIN(var->p[ip],
+		     var->var[isec][ip][ilat],
+		     var->p[ip + 1],
+		     var->var[isec][ip + 1][ilat], p);
+  double aux01 = LIN(var->p[ip],
+		     var->var[isec][ip][ilat + 1],
+		     var->p[ip + 1],
+		     var->var[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(var->p[ip],
+		     var->var[isec + 1][ip][ilat],
+		     var->p[ip + 1],
+		     var->var[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(var->p[ip],
+		     var->var[isec + 1][ip][ilat + 1],
+		     var->p[ip + 1],
+		     var->var[isec + 1][ip + 1][ilat + 1], p);
+  aux00 = LIN(var->lat[ilat], aux00, var->lat[ilat + 1], aux01, lat);
+  aux11 = LIN(var->lat[ilat], aux10, var->lat[ilat + 1], aux11, lat);
+  aux00 = LIN(var->time[isec], aux00, var->time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
