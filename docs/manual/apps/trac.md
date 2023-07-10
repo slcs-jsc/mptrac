@@ -33,6 +33,10 @@ $ ./trac data/dirlist trac.ctl atm_split.tab meteo/ei ATM_BASENAME atm_diff GRID
 
 The following control parameters are effective in trac:
 
-Todo
+**Todo**
 
-add flaglist here …. 
+**add flaglist here ….** 
+
+A full list can be found in the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/structctl__t.html).
+
+**Note: However, in the doxygen are so far no default values etc. provided.**
