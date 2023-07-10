@@ -632,11 +632,12 @@ double clim_oh(
     LIN(clim->oh.time[isec], aux00, clim->oh.time[isec + 1], aux11, sec);
 
   /* Apply diurnal correction... */
+  double oh = GSL_MAX(aux00, 0.0);
   if (ctl->oh_chem_beta > 0) {
-    double oh = aux00, sza = sza_calc(t, lon, lat);
+    double sza = sza_calc(t, lon, lat);
     return (sza < M_PI / 2. ? oh * exp(-ctl->oh_chem_beta / cos(sza)) : 0);
   } else
-    return GSL_MAX(aux00, 0.0);
+    return oh;
 }
 
 /*****************************************************************************/
@@ -1785,9 +1786,9 @@ double lapse_rate(
 /*****************************************************************************/
 
 int locate_irr(
-  double *xx,
-  int n,
-  double x) {
+  const double *xx,
+  const int n,
+  const double x) {
 
   int ilo = 0;
   int ihi = n - 1;
@@ -1815,9 +1816,9 @@ int locate_irr(
 /*****************************************************************************/
 
 int locate_reg(
-  double *xx,
-  int n,
-  double x) {
+  const double *xx,
+  const int n,
+  const double x) {
 
   /* Calculate index... */
   int i = (int) ((x - xx[0]) / (xx[1] - xx[0]));

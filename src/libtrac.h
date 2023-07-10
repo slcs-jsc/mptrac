@@ -2084,18 +2084,18 @@ double lapse_rate(
 #pragma acc routine (locate_irr)
 #endif
 int locate_irr(
-  double *xx,
-  int n,
-  double x);
+  const double *xx,
+  const int n,
+  const double x);
 
 /*! Find array index for regular grid. */
 #ifdef _OPENACC
 #pragma acc routine (locate_reg)
 #endif
 int locate_reg(
-  double *xx,
-  int n,
-  double x);
+  const double *xx,
+  const int n,
+  const double x);
 
 /*! Calculate NAT existence temperature. */
 #ifdef _OPENACC
