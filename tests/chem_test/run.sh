@@ -72,7 +72,7 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N 1e3 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
+		SPLIT_N 100 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
 
 # Calculate trajectories...
 echo "data" > data/dirlist
