@@ -10,7 +10,7 @@ trac=../../src
 # Create directories...
 rm -rf data && mkdir -p data
 
-echo "time..."
+echo "checking time..."
 (for year in 1900 1980 2000 2020 2100 ; do
     for mon in 1 7 12 ; do
 	for day in 1 15 31 ; do
@@ -22,9 +22,9 @@ echo "time..."
 	    done
 	done
     done
-done) | tee data/time.tab
+done) > data/time.tab
 
-echo "sedi..."
+echo "checking sedi..."
 (for p in 1000 100 10 1 ; do
     for t in 200 250 300 ; do
 	for rp in 0.1 1 10 100 ; do
@@ -34,9 +34,9 @@ echo "sedi..."
 	    done
 	done
     done
-done) | tee data/sedi.tab
+done) > data/sedi.tab
 
-echo "tnat..."
+echo "checking tnat..."
 (for p in 1000 100 10 1 ; do
     for h2o in 2e-6 4e-6 6e-6 ; do
 	for hno3 in 1e-9 4e-9 9e-9 ; do
@@ -44,7 +44,7 @@ echo "tnat..."
 	    $trac/tnat $p $h2o $hno3
 	done
     done
-done) | tee data/tnat.tab
+done) > data/tnat.tab
 
 # Compare files...
 echo -e "\nCompare results..."
