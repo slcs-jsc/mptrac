@@ -84,6 +84,11 @@ int main(
   for (f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
+    FILE *in;
+    if (!(in = fopen(argv[f], "r")))
+      continue;
+    else
+      fclose(in);
     if (!read_atm(argv[f], &ctl, atm))
       continue;
 

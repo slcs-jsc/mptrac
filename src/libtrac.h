@@ -683,11 +683,11 @@
 
 #define SET_VAR(ind_spec, qnt_index) 			\
 	if (qnt_index >= 0) 				\
-		VAR[ind_spec] = atm->q[qnt_index][ip]; 
+		VAR[ind_spec] = atm->q[qnt_index][ip];
 
 #define VAR2atm(ind_spec, qnt_index)			\
 	if (qnt_index >= 0) 				\
-		atm->q[qnt_index][ip] = VAR[ind_spec];	
+		atm->q[qnt_index][ip] = VAR[ind_spec];
 
 /*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
 #define roeth_photol(a, b, c, sza) 				\
