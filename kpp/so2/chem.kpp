@@ -60,10 +60,10 @@ void kppchem_initialize(
     VAR[ind_SO2] = atm->q[ctl->qnt_Cx][ip];
       if (ctl->qnt_Ch2o2 >= 0)
     VAR[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip];
-		//FIX[indf_OH]	= clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->oh);
-		FIX[indf_OH] = clim_oh_diurnal(ctl, clim, atm->time[ip], atm->p[ip],
-		       atm->lon[ip], atm->lat[ip]);
-      FIX[indf_HO2] = clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->ho2);
+		//FIX[indf_OH]	= clim_var(clim->oh, atm->time[ip], atm->lat[ip], atm->p[ip]);
+		FIX[indf_OH] = clim_oh(ctl, clim, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], atm->p[ip]);
+      FIX[indf_HO2] = clim_var(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
       /* Get temperature... */
       double t, lwc;
@@ -130,14 +130,9 @@ void kppchem_init_cqnt_clim(
 	clim_t * clim,
 	int ip
 ){
-	
-	if (ctl->qnt_Ch2o2 >= 0)	
-		atm->q[ctl->qnt_Ch2o2][ip] = 
-			clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);	
-			//Unit: molec/cm3
-	if (ctl->qnt_Cho2 >= 0)
-		atm->q[ctl->qnt_Cho2][ip] =
-			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->ho2);
+
+	INIT_CQNT(ctl->qnt_Ch2o2, clim->h2o2);
+	INIT_CQNT(ctl->qnt_Cho2, clim->ho2);
 }
 
 void kppchem_init_cqnt_met(

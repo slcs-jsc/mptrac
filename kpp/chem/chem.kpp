@@ -25,23 +25,6 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
 													ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
 													kccl3f_hv, kcl2f2_hv,		\
 													RCONST,RTOL,ATOL,STEPMIN,STEPMAX,VAR,FIX,TEMP)
-									
-#define SET_VAR(ind_spec, qnt_index) 			\
-	if (qnt_index >= 0) 				\
-		VAR[ind_spec] = atm->q[qnt_index][ip]; 
-
-#define VAR2atm(ind_spec, qnt_index)			\
-	if (qnt_index >= 0) 				\
-		atm->q[qnt_index][ip] = VAR[ind_spec];	
-
-/*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
-#define roeth_photol(a, b, c, sza) 				\
-	(c*sza < M_PI / 2. * 89. / 90. ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
-
-#define INIT_CQNT(qnt_index, climptr_varname) 			\
-	if (qnt_index >= 0) 			\
-		atm->q[qnt_index][ip] = 			\
-			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], climptr_varname);
 	
 #ENDINLINE
 
@@ -97,10 +80,10 @@ void kppchem_initialize(
 	int ip
 ){
 		/* Get Meteological variables... */
-		double t, h2o;
+		double t, h2o, o3;
 		INTPOL_INIT;
 		INTPOL_3D(t, 1);
-		// INTPOL_3D(lwc, 1);
+		INTPOL_3D(o3, 1);
 		INTPOL_3D(h2o, 1);
 		TEMP = t;
 
@@ -124,6 +107,7 @@ void kppchem_initialize(
 		//SET_VAR(ind_co, ctl->qnt_Cco);
 
 		FIX[indf_h2o] = h2o * M;
+		FIX[indf_o3] = o3 * M;
 
 		//VAR[ind_ch4] = 0;
 		//VAR[ind_co2] = 0;
@@ -205,12 +189,10 @@ void kppchem_init_cqnt_clim(
 	clim_t * clim,
 	int ip){	
 
-		atm->q[ctl->qnt_Cho2][ip] = 			
-			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->ho2);
-		atm->q[ctl->qnt_Co1d][ip] = 			
-			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->o1d);
-		atm->q[ctl->qnt_Coh][ip] = 			
-			clim_var(clim, atm->time[ip], atm->lat[ip], atm->p[ip], clim->oh);
+		INIT_CQNT(ctl->qnt_Cho2, clim->ho2);
+		INIT_CQNT(ctl->qnt_Co1d, clim->o1d);
+		INIT_CQNT(ctl->qnt_Coh, clim->oh);
+
 }
 
 void kppchem_init_cqnt_met(
@@ -241,7 +223,7 @@ void interparc_mixing(
 	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch2o2);
 	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Coh);
 	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cho2);
-	//interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch);
+	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch);
 	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3);
 	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cn2o);
 	interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl3f);
@@ -253,9 +235,23 @@ void interparc_mixing(
 void kppchem_bound_cond(
 	ctl_t * ctl,
 	atm_t * atm,
+	met_t * met0,
+	met_t * met1,
 	int ip){
+
+	/* Get Meteological variables... */
+	double t;
+	INTPOL_INIT;
+	INTPOL_3D(t, 1);
+	/* Calculate air molecular density ... */
+	double M = MOLEC_DEN_AIR(atm->p[ip], t);  
+
 	if (ctl->qnt_Cccl3f>=0)
-			atm->q[ctl->qnt_Cccl3f][ip] = 1e5;
+			atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
+	if (ctl->qnt_Cccl2f2>=0)
+			atm->q[ctl->qnt_Cccl3f][ip] = 270 * 1e-12 * M;
+	if (ctl->qnt_Cn2o>=0)
+			atm->q[ctl->qnt_Cccl3f][ip] = 300 * 1e-9 * M;
 }
 
 #ENDINLINE

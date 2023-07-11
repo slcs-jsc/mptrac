@@ -12,15 +12,13 @@ HEADERS = chem_Global.h  chem_Parameters.h  chem_Sparse.h
 
 SPSRC = chem_JacobianSP.c 
 
-
 SPOBJ = chem_JacobianSP.o 
-
 
 SRC =   chem_Main.c      chem_Integrator.c   \
 	chem_Function.c  chem_Initialize.c   \
 	chem_Jacobian.c  chem_LinearAlgebra.c\
-	chem_Rates.c         \
-	chem_Util.c         \
+	chem_Rates.c     chem_Hessian.c      \
+	chem_Stoichiom.c chem_Util.c         \
 	chem_Monitor.c
 
 OBJ =  	chem_Main.o chem_Integrator.o chem_Function.o \
@@ -63,9 +61,6 @@ chem_Monitor.o: chem_Monitor.c $(HEADERS)
 chem_JacobianSP.o: chem_JacobianSP.c $(HEADERS)
 	$(CC) $(COPT) -c $<
 
-chem_HessianSP.o: chem_HessianSP.c  $(HEADERS)
-	$(CC) $(COPT) -c $<
-
 chem_StoichiomSP.o: chem_StoichiomSP.c $(HEADERS)
 	$(CC) $(COPT) -c $<
 
@@ -73,23 +68,22 @@ chem_Main.o: chem_Main.c chem_Initialize.o $(HEADERS) $(SPOBJ)
 	$(CC) $(COPT) -c $<
 
 chem_Integrator.o: chem_Integrator.c  $(HEADERS) $(SPOBJ)
-# ifeq ($(shell grep -c '\#pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c),0)
-# 	sed -i '137i #pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c
-# 	$(CC) $(COPT) -c $<
-# else
+ifeq ($(shell grep -c '\#pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c),0)
+	sed -i '137i #pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c
+	$(CC) $(COPT) -c $<
+endif
 ifeq ($(shell grep -c '\#pragma omp threadprivate(Nfun,Njac,Nstp,Nacc,Nrej,Ndec,Nsol,Nsng)' chem_Integrator.c),0)
 	sed -i '57i #pragma omp threadprivate(Nfun,Njac,Nstp,Nacc,Nrej,Ndec,Nsol,Nsng)' chem_Integrator.c
 endif
-	sed -i 's/static//g' chem_Integrator.c
+	# sed -i 's/static//g' chem_Integrator.c
 ifeq ($(INFO),0)
 	sed -i '/printf(\"\\n Step=%d  Acc=%d  Rej=%d  Singular=%d\\n\",/d' chem_Integrator.c  #Delete this code line to reduce output on screen
 	sed -i '/Ns,Na,Nr,Ng);/d' chem_Integrator.c
 endif
 	$(CC) $(COPT) -c $<
 
-
-chem_Initialize.o: chem_Initialize.c  $(HEADERS) $(SPOBJ)
-	$(CC) $(COPT) -c $<
+# chem_Initialize.o: chem_Initialize.c  $(HEADERS) $(SPOBJ)
+# 	$(CC) $(COPT) -c $<
 
 chem_Function.o: chem_Function.c  $(HEADERS) $(SPOBJ)
 	$(CC) $(COPT) -c $<
