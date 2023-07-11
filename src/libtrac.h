@@ -678,6 +678,27 @@
 	 __FILE__, __func__, __LINE__, #var, var);
 
 /* ------------------------------------------------------------
+   Macros used in kpp...
+   ------------------------------------------------------------ */
+
+#define SET_VAR(ind_spec, qnt_index) 			\
+	if (qnt_index >= 0) 				\
+		VAR[ind_spec] = atm->q[qnt_index][ip]; 
+
+#define VAR2atm(ind_spec, qnt_index)			\
+	if (qnt_index >= 0) 				\
+		atm->q[qnt_index][ip] = VAR[ind_spec];	
+
+/*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
+#define roeth_photol(a, b, c, sza) 				\
+	(c*sza < M_PI ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
+
+#define INIT_CQNT(qnt_index, clim_var_t) 			\
+	if (qnt_index >= 0)    \
+		atm->q[qnt_index][ip] = 			\
+			clim_var(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
+
+/* ------------------------------------------------------------
    Timers...
    ------------------------------------------------------------ */
 
