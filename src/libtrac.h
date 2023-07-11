@@ -240,10 +240,6 @@
     ERRMSG("Out of memory!");
 #endif
 
-/*! Molecular density of air. */
-#define MOLEC_DEN_AIR(p,t)			\
-	AVO * 1e-6 * (p * 100) / (RI * t)
-
 /*! Get 2-D array index. */
 #define ARRAY_2D(ix, iy, ny)			\
   ((ix) * (ny) + (iy))
@@ -251,6 +247,15 @@
 /*! Get 3-D array index. */
 #define ARRAY_3D(ix, iy, ny, iz, nz)		\
   (((ix)*(ny) + (iy)) * (nz) + (iz))
+
+/*! Check whether file exists. */
+#define CHECK_FILE(filename) {			\
+    FILE *in;					\
+    if (!(in = fopen(filename, "r")))		\
+      continue;					\
+    else					\
+      fclose(in);				\
+  }
 
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
@@ -456,6 +461,10 @@
 	  "# $45 = number of data points\n"				\
 	  "# $46 = number of tropopause data points\n"			\
 	  "# $47 = number of CAPE data points\n");			\
+
+/*! Calculate molecular density of air. */
+#define MOLEC_DEN_AIR(p,t)			\
+  AVO * 1e-6 * (p * 100) / (RI * t)
 
 /*! Execute netCDF library command and check result. */
 #define NC(cmd) {				     \

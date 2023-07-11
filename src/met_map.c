@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -92,6 +92,7 @@ int main(
   for (i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
+    CHECK_FILE(argv[i]);
     if (!read_met(argv[i], &ctl, clim, met))
       continue;
 

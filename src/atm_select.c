@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2022 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -73,6 +73,7 @@ int main(
   for (f = 3; f < argc; f++) {
 
     /* Read atmopheric data... */
+    CHECK_FILE(argv[f]);
     if (!read_atm(argv[f], &ctl, atm))
       continue;
 
