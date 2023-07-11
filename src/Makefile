@@ -44,13 +44,13 @@ NVTX ?= 0
 # Enable UVW cache...
 UVW ?= 1
 
-# Enable KPP chemistry module...
-KPP ?= 0
-
 # Enable async IO for GPUs (experimental)...
 ASYNCIO ?= 0
 
-# Enable Thrust library (experimental)...
+# Enable KPP chemistry module (experimental)...
+KPP ?= 0
+
+# Enable Thrust sorting code (experimental)...
 THRUST ?= 0
 
 # Enable zfp compression (experimental)...
@@ -58,7 +58,6 @@ ZFP ?= 0
 
 # Enable zstd compression (experimental)...
 ZSTD ?= 0
-
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...
@@ -187,15 +186,16 @@ all: $(EXC)
 $(EXC): %: %.c libtrac.o
 	$(CC) $(CFLAGS) -o $@ $< libtrac.o $(LDFLAGS)
 
+libtrac.o: libtrac.c libtrac.h Makefile
+	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
+
 check: $(TESTS)
 
 $(TESTS) chem_test gpu_test: all
+	(echo "\n===== Running \"$@\" ... =====")
 	cd ../tests/$@ ; ./run.sh \
-	  && (echo "\nTest \"$@\" passed!") \
-	  || (echo "\nTest \"$@\" failed!" ; exit 1)
-
-libtrac.o: libtrac.c libtrac.h Makefile
-	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
+	  && (echo "\n===== Test \"$@\" passed! =====") \
+	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
 
 clean:
 	rm -rf $(EXC) *.o *.gcda *.gcno *.gcov coverage* *~
