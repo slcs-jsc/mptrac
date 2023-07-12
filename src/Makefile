@@ -35,7 +35,7 @@ INFO ?= 0
 # Compile for profiling...
 PROF ?= 0
 
-# Compile for coverage report...
+# Compile for coverage testing...
 COV ?= 0
 
 # Enable NVTX markers...
@@ -109,7 +109,7 @@ ifeq ($(PROF),1)
   CFLAGS += -pg
 endif
 
-# Compile for coverage...
+# Compile for coverage testing...
 ifeq ($(COV),1)
   CFLAGS += -ftest-coverage -fprofile-arcs
 endif
@@ -118,6 +118,25 @@ endif
 ifeq ($(NVTX),1)
   CFLAGS  += -DNVTX
   LDFLAGS += -lnvToolsExt
+endif
+
+# UVW cache...
+ifeq ($(UVW),1)
+  CFLAGS += -DUVW
+endif
+
+# asyncIO...
+ifeq ($(ASYNCIO),1)
+  ifneq ($(GPU),1)
+    $(error Async-I/O requires compilation for GPUs)
+  endif
+  CFLAGS += -DASYNCIO
+endif
+
+# KPP chemistry...
+ifeq ($(KPP),1)
+  CFLAGS += -DKPP
+  LDFLAGS += -lkpp
 endif
 
 # Thrust... 
@@ -141,25 +160,6 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
-endif
-
-# UVW cache...
-ifeq ($(UVW),1)
-  CFLAGS += -DUVW
-endif
-
-# KPP chemistry...
-ifeq ($(KPP),1)
-  CFLAGS += -DKPP
-  LDFLAGS += -lkpp
-endif
-
-# asyncIO...
-ifeq ($(ASYNCIO),1)
-  ifneq ($(GPU),1)
-    $(error Async-I/O requires compilation for GPUs)
-  endif
-  CFLAGS += -DASYNCIO
 endif
 
 # Static compilation...
@@ -213,7 +213,7 @@ dist:
           docs/Doxyfile docs/refman.pdf example/* \
           libs/build.sh libs/*bz2 src/* tests/*
 
-doc:
+doxygen:
 	cd ../docs && doxygen && cd latex && make && cp refman.pdf ..
 
 indent:
@@ -224,6 +224,9 @@ install:
 
 lizard:
 	lizard -s cyclomatic_complexity
+
+mkdocs:
+	cd ../docs && mkdocs build
 
 strip:
 	strip $(EXC)

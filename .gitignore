@@ -1,5 +1,6 @@
 mptrac_*.tgz
 bin/
+docs/docs/
 docs/html/
 docs/latex/
 docs/site/
