@@ -34,15 +34,15 @@ This README file describes the installation of MPTRAC on a Linux system.
 
 The following software dependencies are mandatory for the compilation of MPTRAC:
 
-* the C compiler of the [GNU Compiler Collection](https://gcc.gnu.org)
+* the C compiler of the [GNU Compiler Collection (GCC)](https://gcc.gnu.org)
 * the [GNU Make](https://www.gnu.org/software/make) build tool
-* the [GNU Scientific Library](https://www.gnu.org/software/gsl) for numerical calculations
+* the [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl) for numerical calculations
 * the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
 
 Optionally, the following software is required to enable further capabilities of MPTRAC:
 
-* the distributed version control system [Git](https://git-scm.com/) to access the git repository
-* the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to support netCDF4
+* the distributed version control system [Git](https://git-scm.com/) to access the code repository
+* the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to enable the netCDF4 file format
 * the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
 * the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
 * an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStation MPI](https://github.com/ParaStation/psmpi) for HPC support
@@ -60,23 +60,23 @@ Alternatively, you can retrieve the most recent development version of the softw
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
-Several libraries provided along with MPTRAC can be compiled and installed by running the build script:
+Several libraries provided along with MPTRAC can be compiled and installed by running a build script:
 
     cd [mptrac_directory]/libs
     ./build.sh
 
-Next, change to the source directory and edit the Makefile according to your needs.
+Next, change to the source directory and edit the `Makefile` according to your needs:
 
     cd [mptrac_directory]/src
     emacs Makefile
 
 In particular, you might want to check:
 
-* Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL and netCDF libraries are located on your system.
+* Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL, netCDF, and other libraries are located on your system.
 
-* By default, the MPTRAC binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the libraries.
+* By default, the MPTRAC binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes issues, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the paths to the shared libraries.
 
-* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled. Further steps will require an MPI library such as OpenMPI to be available. To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The NVIDIA HPC SDK is required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+* To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled. Further steps will require an MPI library such as OpenMPI to be available on your system. To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The NVIDIA HPC SDK is required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
 
 Next, try to compile the code:
 
@@ -86,20 +86,26 @@ To run the test cases to check the installation, please use:
 
     make check
 
+This will run sequentially through a set of tests. The execution of the tests will stop if any of the tests fails. Please inspect the log messages.
+
 ### Run the example
 
 A simple example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-The example can be found in the project directory. The project directory can also be used to store results of other simulation and experiments with MPTRAC. The simulation is controlled by a shell script:
+The example can be found in the `projects` subdirectory. This subdirectory can also be used to store the results of your own simulation experiments with MPTRAC.
+
+The example simulation is controlled by a shell script:
 
     cd mptrac/projects/example
     ./run.sh
 
 Please see the script `run.sh` on how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize trajectory seeds and `trac` to calculate the trajectories.
 
-The script generates a number of plots of the simulation output at different time steps after the eruption by means of the `gnuplot` graphing tool. These plots should look similar to the output already provided in the repository.
+The script generates simulation output in the `examples/data` subdirectory. The corresponding reference data can be found in `examples/data.ref`.
 
-This is an example showing the particle position and grid output on 6th and 8th of June 2011:
+A set of plots of the simulation output at different time steps after the eruption generated by means of the `gnuplot` graphing tool can be found `examples/plots`. The plots should look similar to the output provided in `examples/plots.ref`.
+
+This is an example showing the particle positions and grid output on 6th and 8th of June 2011:
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
 
@@ -115,13 +121,13 @@ These are the main scientific publications providing information on MPTRAC:
 
 Additional references are collected on the [references web site](https://slcs-jsc.github.io/mptrac/references/).
 
-Information for developers is provided in the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
+Information for developers of MPTRAC is provided in the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
 
 ## Contributing
 
-We are interested in sharing MPTRAC for operational and research applications.
+We are interested in supporting operational and research applications with MPTRAC.
 
-You can submit bug reports or feature requests on the the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
+You can submit bug reports or feature requests on the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
 
 Proposed code modifications can be submitted as [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
 
