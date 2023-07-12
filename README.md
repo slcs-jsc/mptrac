@@ -22,7 +22,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
 * Additional modules are implemented to simulate convection, sedimentation, exponential decay, gas and aqueous phase chemistry, wet and dry deposition.
 * Meteo data pre-processing code to calculate boundary layer, convective available potential energy, geopotential heights, potential vorticity, and tropopause data.
-* Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
+* Various output methods for particle, grid, ensemble, sample, and station data. Gnuplot interface for direct visualization.
 * MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
 * Distributed open source under the terms and conditions of the GNU GPL.
 
@@ -32,9 +32,8 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 This README file describes the installation of MPTRAC on a Linux system.
 
-The following software dependencies are mandatory:
+The following software dependencies are mandatory for the compilation of MPTRAC:
 
-* the distributed version control system [Git](https://git-scm.com/)
 * the C compiler of the [GNU Compiler Collection](https://gcc.gnu.org)
 * the [GNU Make](https://www.gnu.org/software/make) build tool
 * the [GNU Scientific Library](https://www.gnu.org/software/gsl) for numerical calculations
@@ -42,32 +41,33 @@ The following software dependencies are mandatory:
 
 Optionally, the following software is required to enable further capabilities of MPTRAC:
 
-* the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
+* the distributed version control system [Git](https://git-scm.com/) to access the git repository
 * the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to support netCDF4
 * the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
 * the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
 * an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStation MPI](https://github.com/ParaStation/psmpi) for HPC support
+* the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
 
 Some of the software is provided along with the MPTRAC repository, please see next section.
 
 ### Installation
 
-Start by downloading the MPTRAC source code from the git repository:
+Start by downloading the most recent or any of the earlier [MPTRAC releases on GitHub](https://github.com/slcs-jsc/mptrac/releases). Unzip the release file:
+
+    unzip mptrac-x.y.zip
+
+Alternatively, you can retrieve the most recent development version of the software from the GitHub repository:
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
-To update an existing installation, please use:
-
-    git pull https://github.com/slcs-jsc/mptrac.git
-
 Several libraries provided along with MPTRAC can be compiled and installed by running the build script:
 
-    cd mptrac/libs
+    cd [mptrac_directory]/libs
     ./build.sh
 
 Next, change to the source directory and edit the Makefile according to your needs.
 
-    cd mptrac/src
+    cd [mptrac_directory]/src
     emacs Makefile
 
 In particular, you might want to check:
@@ -80,7 +80,7 @@ In particular, you might want to check:
 
 Next, try to compile the code:
 
-    make
+    make [-j]
 
 To run the test cases to check the installation, please use:
 
@@ -105,25 +105,33 @@ This is an example showing the particle position and grid output on 6th and 8th 
 
 ## Further information
 
-More detailed information for users and developers is provided in the [user manual](https://slcs-jsc.github.io/mptrac) and the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
+More detailed information for users of MPTRAC is provided in the [user manual](https://slcs-jsc.github.io/mptrac).
 
-These are the main references for citing the MPTRAC model in scientific publications:
+These are the main scientific publications providing information on MPTRAC:
 
 * Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022.
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
-* You can cite the source code of MPTRAC by using the DOI https://doi.org/10.5281/zenodo.4400597. This DOI represents all versions, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the Zenodo web site.
+Additional references are collected on the [references web site](https://slcs-jsc.github.io/mptrac/references/).
 
-Please see the [citation file](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff) for further information.
+Information for developers is provided in the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
 
 ## Contributing
 
-We are interested in sharing MPTRAC for operational and research applications. Please do not hesitate to contact us, if you have any further questions or need support.
+We are interested in sharing MPTRAC for operational and research applications.
+
+You can submit bug reports or feature requests on the the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
+
+Proposed code modifications can be submitted as [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
+
+Please do not hesitate to contact us, if you have any questions or need support.
 
 ## License
 
 MPTRAC is distributed under the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
+
+Please see the [citation file](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff) for further information on citing the MPTRAC model in scientific publications.
 
 ## Contact
 
