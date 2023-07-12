@@ -700,7 +700,7 @@
 
 /*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
 #define roeth_photol(a, b, c, sza) 				\
-	(c*sza < M_PI ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
+	(c*sza < M_PI / 2  ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
 
 #define INIT_CQNT(qnt_index, clim_var_t) 			\
 	if (qnt_index >= 0)    \
