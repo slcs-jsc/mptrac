@@ -34,8 +34,8 @@ This README file describes the installation of MPTRAC on a Linux system.
 
 The following software dependencies are mandatory for the compilation of MPTRAC:
 
+* the [GNU make](https://www.gnu.org/software/make) build tool
 * the C compiler of the [GNU Compiler Collection (GCC)](https://gcc.gnu.org)
-* the [GNU Make](https://www.gnu.org/software/make) build tool
 * the [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl) for numerical calculations
 * the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
 
@@ -92,7 +92,7 @@ This will run sequentially through a set of tests. The execution of the tests wi
 
 A simple example is provided, illustrating how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
-The example can be found in the `projects` subdirectory. This subdirectory can also be used to store the results of your own simulation experiments with MPTRAC.
+The example can be found in the `projects/example` subdirectory. The `project` subdirectory can also be used to store the results of your own simulation experiments with MPTRAC.
 
 The example simulation is controlled by a shell script:
 
@@ -131,7 +131,7 @@ You can submit bug reports or feature requests on the [issue tracker](https://gi
 
 Proposed code modifications can be submitted as [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
 
-Please do not hesitate to contact us, if you have any questions or need support.
+Please do not hesitate to contact us if you have any questions or need support.
 
 ## License
 
