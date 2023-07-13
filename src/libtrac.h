@@ -1121,6 +1121,9 @@ typedef struct {
 
   /*! Target pressure levels [hPa]. */
   double met_p[EP];
+  
+    /*! Use predefined pressure levels or not. */
+  int press_level_def;
 
   /*! Longitudinal smoothing of geopotential heights. */
   int met_geopot_sx;
@@ -1962,6 +1965,10 @@ void compress_zstd(
   int decompress,
   FILE * inout);
 #endif
+
+/*! Get predefined pressure levels. */
+void level_definitions(
+  ctl_t* ctl);
 
 /*! Get day of year from date. */
 void day2doy(
