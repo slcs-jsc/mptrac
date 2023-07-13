@@ -313,6 +313,10 @@
 /*! Initialize cache variables for interpolation. */
 #define INTPOL_INIT						\
   double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
+  
+/*! Initialize cache variables for interpolation in diabatic scheme. */
+#define INTPOL_INIT_DIA	\
+  int ci[3] = {0, 0, 0}; double cw[4] = {0.0, 0.0, 0.0, 0.0};
 
 /*! 2-D interpolation of a meteo variable. */
 #define INTPOL_2D(var, init)						\
@@ -799,6 +803,10 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
+  /*! Coupled use of pressure based modules and diabatic advection. 
+  (0= no coupling, 1= coupling) */
+  int cpl_zeta_and_press_modules;
+
   /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
   int vert_coord_ap;
 
@@ -1172,7 +1180,7 @@ typedef struct {
 
   /*! Advection scheme (1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
-
+  
   /*! Reflection of particles at top and bottom boundary (0=no, 1=yes). */
   int reflect;
 

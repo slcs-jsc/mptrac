@@ -2613,7 +2613,7 @@ void read_ctl(
       SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
-
+  
   /* netCDF I/O parameters... */
   ctl->chunkszhint =
     (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
@@ -2628,9 +2628,24 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
   ctl->vert_vel =
     (int) scan_ctl(filename, argc, argv, "VERT_VEL", -1, "0", NULL);
+  
+  if (ctl->vert_vel == 1) {
+    int error = 1;
+    for (int iq = 0; iq < ctl->nq; iq++) {
+    	if (strcmp(ctl->qnt_name[iq], "zeta") == 0) {
+    	  error = 0;
+    	  break;
+    	}
+    }
+    if (error == 1)
+      ERRMSG("Please add zeta to your quantities for diabatic calculations.");
+  }
+  
   ctl->clams_met_data =
     (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
-
+  ctl-> cpl_zeta_and_press_modules =
+    (int) scan_ctl(filename, argc, argv, "CPL_ZETA_PRESS_MODULES", -1, "1", NULL);
+    
   /* Time steps of simulation... */
   ctl->direction =
     (int) scan_ctl(filename, argc, argv, "DIRECTION", -1, "1", NULL);
