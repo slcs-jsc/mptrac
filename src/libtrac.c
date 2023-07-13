@@ -4020,30 +4020,6 @@ void read_met_levels(
     if (!read_met_nc_3d(ncid, "cc", "CC", ctl, met, met->cc, 1.0, 1))
       WARN("Cannot read cloud cover!");
 
-    /* Transfer from model levels to pressure levels... */
-    if (ctl->met_np > 0) {
-
-      /* Read pressure on model levels... */
-      if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
-	ERRMSG("Cannot read pressure on model levels!");
-
-      /* Vertical interpolation from model to pressure levels... */
-      read_met_ml2pl(ctl, met, met->t);
-      read_met_ml2pl(ctl, met, met->u);
-      read_met_ml2pl(ctl, met, met->v);
-      read_met_ml2pl(ctl, met, met->w);
-      read_met_ml2pl(ctl, met, met->h2o);
-      read_met_ml2pl(ctl, met, met->o3);
-      read_met_ml2pl(ctl, met, met->lwc);
-      read_met_ml2pl(ctl, met, met->iwc);
-      read_met_ml2pl(ctl, met, met->cc);
-
-      /* Set new pressure levels... */
-      met->np = ctl->met_np;
-      for (int ip = 0; ip < met->np; ip++)
-	met->p[ip] = ctl->met_p[ip];
-    }
-
   }
 
   /* CLaMS meteo data... */
@@ -4103,40 +4079,143 @@ void read_met_levels(
       if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
 	ERRMSG("Cannot read pressure on model levels!");
 
-      /* Vertical interpolation from model to pressure levels... */
-      read_met_ml2pl(ctl, met, met->t);
-      read_met_ml2pl(ctl, met, met->u);
-      read_met_ml2pl(ctl, met, met->v);
-      read_met_ml2pl(ctl, met, met->w);
-      read_met_ml2pl(ctl, met, met->h2o);
-      read_met_ml2pl(ctl, met, met->o3);
-      read_met_ml2pl(ctl, met, met->lwc);
-      read_met_ml2pl(ctl, met, met->iwc);
-      read_met_ml2pl(ctl, met, met->cc);
-      if (ctl->vert_vel == 1) {
-	read_met_ml2pl(ctl, met, met->zeta);
-	read_met_ml2pl(ctl, met, met->zeta_dot);
-      }
 
-      /* Set new pressure levels... */
-      met->np = ctl->met_np;
-      for (int ip = 0; ip < met->np; ip++)
-	met->p[ip] = ctl->met_p[ip];
-
-      /* Create a pressure field... */
-      for (int i = 0; i < met->nx; i++)
-	for (int j = 0; j < met->ny; j++)
-	  for (int k = 0; k < met->np; k++) {
-	    met->patp[i][j][k] = (float) met->p[k];
-	  }
     }
   } else
     ERRMSG("Meteo data format unknown!");
+    
+  if (ctl->vert_vel == 1) {
+    /* Store the velocities on model levels for diabatic advection... */
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+        for (int ip = 0; ip < met->np; ip++) {
+          met->ul[ix][iy][ip] = met->u[ix][iy][ip];
+          met->vl[ix][iy][ip] = met->v[ix][iy][ip];
+          met->zetal[ix][iy][ip] = met->zeta[ix][iy][ip];
+          met->zeta_dotl[ix][iy][ip] = met->zeta_dot[ix][iy][ip];
+        }
+     /* Original number of vertical levels... */
+     met->npl=met->np;
+   }
+   
+   if (ctl->met_np > 0 || ctl->vert_vel == 1) {
+      /* Read pressure on model levels... */
+      if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
+      	if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
+		ERRMSG("Cannot read pressure on model levels!");
+   }
+    
+  /* Transfer from model levels to pressure levels... */
+  if (ctl->met_np > 0) {
 
+    /* Vertical interpolation from model to pressure levels... */
+    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->u);
+    read_met_ml2pl(ctl, met, met->v);
+    read_met_ml2pl(ctl, met, met->w);
+    read_met_ml2pl(ctl, met, met->h2o);
+    read_met_ml2pl(ctl, met, met->o3);
+    read_met_ml2pl(ctl, met, met->lwc);
+    read_met_ml2pl(ctl, met, met->iwc);
+    read_met_ml2pl(ctl, met, met->cc);
+
+    /* Set new pressure levels... */
+    met->np = ctl->met_np;
+    for (int ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
+    }
+    
+  /* Create a pressure field... */
+  for (int i = 0; i < met->nx; i++)
+    for (int j = 0; j < met->ny; j++)
+      for (int k = 0; k < met->np; k++) {
+        met->patp[i][j][k] = (float) met->p[k];
+        }
+    
   /* Check ordering of pressure levels... */
   for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
+}
+
+/*****************************************************************************/
+
+void read_met_monotonize(
+  met_t * met) {
+  
+  /* Create monotone zeta profiles... */
+  #pragma omp parallel for default(shared) collapse(2)
+  for (int i = 0; i < met->nx; i++)
+    for (int j = 0; j < met->ny; j++)
+    {
+       int k = 1;
+       
+       while (k<met->npl)
+       {  /* Check if there is an inversion at level k... */
+          if ((met->zetal[i][j][k - 1]>=met->zetal[i][j][k]))
+          {
+             /* Find the upper level k+l over the inversion... */
+             int l = 0;
+             do {l++;}
+             while ((met->zetal[i][j][k-1]>=met->zetal[i][j][k+l]) & (k+l<met->npl)); 
+                          
+             /* Interpolate linear between the top and bottom 
+             of the inversion... */
+             float s = (float) (met->zetal[i][j][k+l]-met->zetal[i][j][k-1])
+                      /(float)(met->hybrid[k+l]-met->hybrid[k-1]);
+             
+             for (int m=k; m<k+l; m++)
+             {
+                float d = (float) (met->hybrid[m] - met->hybrid[k - 1]);
+                met->zetal[i][j][m] = s*d + met->zetal[i][j][k - 1];
+             }
+             
+             /* Search for more inversions above the last inversion ... */
+             k=k+l; 
+          }
+          else
+          {
+             k++;
+          }
+       }  
+    }  
+    
+  /* Create monotone pressure profiles... */
+  #pragma omp parallel for default(shared) collapse(2)
+  for (int i = 0; i < met->nx; i++)
+    for (int j = 0; j < met->ny; j++)
+    {
+       int k = 1;
+       
+       while (k<met->npl)
+       {  /* Check if there is an inversion at level k... */
+          if ((met->pl[i][j][k - 1]<=met->pl[i][j][k]))
+          {
+             /* Find the upper level k+l over the inversion... */
+             int l = 0;
+             do {l++;}
+             while ((met->pl[i][j][k-1]<=met->pl[i][j][k+l]) & (k+l<met->npl)); 
+                          
+             /* Interpolate linear between the top and bottom 
+             of the inversion... */
+             float s = (float) (met->pl[i][j][k+l]-met->pl[i][j][k-1])
+                      /(float)(met->hybrid[k+l]-met->hybrid[k-1]);
+             
+             for (int m=k; m<k+l; m++)
+             {
+                float d = (float) (met->hybrid[m] - met->hybrid[k - 1]);
+                met->pl[i][j][m] = s*d + met->pl[i][j][k - 1];
+             }
+             
+             /* Search for more inversions above the last inversion ... */
+             k=k+l; 
+          }
+          else
+          {
+             k++;
+          }
+       }  
+    }
 }
 
 /*****************************************************************************/
@@ -4530,6 +4609,14 @@ void read_met_periodic(
       met->lwc[met->nx - 1][iy][ip] = met->lwc[0][iy][ip];
       met->iwc[met->nx - 1][iy][ip] = met->iwc[0][iy][ip];
       met->cc[met->nx - 1][iy][ip] = met->cc[0][iy][ip];
+      met->patp[met->nx - 1][iy][ip] = met->patp[0][iy][ip];
+    }
+    for (int ip = 0; ip < met->npl; ip++) {
+      met->ul[met->nx - 1][iy][ip] = met->ul[0][iy][ip];
+      met->vl[met->nx - 1][iy][ip] = met->vl[0][iy][ip];
+      met->pl[met->nx - 1][iy][ip] = met->pl[0][iy][ip];
+      met->zetal[met->nx - 1][iy][ip] = met->zetal[0][iy][ip];
+      met->zeta_dotl[met->nx - 1][iy][ip] = met->zeta_dotl[0][iy][ip];
     }
   }
 }

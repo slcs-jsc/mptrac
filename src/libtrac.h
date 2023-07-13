@@ -1687,6 +1687,9 @@ typedef struct {
 
   /*! Number of pressure levels. */
   int np;
+  
+  /*! Number of model levels. */
+  int npl;
 
   /*! Longitude [deg]. */
   double lon[EX];
@@ -1768,6 +1771,12 @@ typedef struct {
 
   /*! Meridional wind [m/s]. */
   float v[EX][EY][EP];
+  
+  /*! Zonal wind on model levels [m/s]. */
+  float ul[EX][EY][EP];
+
+  /*! Meridional wind on model levels [m/s]. */
+  float vl[EX][EY][EP];
 
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
@@ -1801,6 +1810,15 @@ typedef struct {
 
   /*! Vertical velocity [K/s]. */
   float zeta_dot[EX][EY][EP];
+  
+  /*! Zeta on model levels [K]. */
+  float zetal[EX][EY][EP];
+
+  /*! Vertical velocity on model levels [K/s]. */
+  float zeta_dotl[EX][EY][EP];
+  
+  /*! Hybrid model levels */
+  double hybrid[EP];
 
 #ifdef UVW
   /*! Cache for wind data. */
@@ -2294,6 +2312,10 @@ void read_met_levels(
   int ncid,
   ctl_t * ctl,
   met_t * met);
+  
+/*! Smooth vertical zeta and pressure profiles. */  
+void read_met_monotonize(
+  met_t * met);
 
 /*! Convert meteo data from model levels to pressure levels. */
 void read_met_ml2pl(
@@ -2350,10 +2372,6 @@ void read_met_surface(
 void read_met_tropo(
   ctl_t * ctl,
   clim_t * clim,
-  met_t * met);
-
-/*! Smooth vertical zeta and pressure profiles */  
-void read_met_monotonize(
   met_t * met);
 
 /*! Read observation data. */
