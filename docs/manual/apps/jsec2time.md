@@ -12,4 +12,4 @@ Converting exemplarily Julian seconds of 539314401.00 after the 1. January 2000 
 ./jsec2time 539314401.00
 2017 2 2 1 0 0 0 0.11
 ```
-Thus, Julian seconds of 539314401.00 correspond to the 2 Feburary 2017 at hour hour 1:00 (0 s and 0.11 ms).
+Thus, Julian seconds of 539314401.00 correspond to the 2 February 2017 at hour hour 1:00 (0 s and 0.11 ms).
