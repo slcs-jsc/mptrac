@@ -3923,8 +3923,11 @@ void read_met_grid(
     sprintf(levname, "lev");
     if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR)
       sprintf(levname, "plev");
-  } else
+  } else {
     sprintf(levname, "hybrid");
+    NC_GET_DOUBLE(levname, met->hybrid, 1);
+    printf("Meteorological data is in hybrid coordinates.");
+  }
   NC_INQ_DIM(levname, &met->np, 1, EP);
   if (met->np == 1) {
     int dimid;
