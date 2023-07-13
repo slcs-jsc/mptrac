@@ -3165,6 +3165,10 @@ int read_met(
 
     /* Detrending... */
     read_met_detrend(ctl, met);
+    
+    /* Check meteo data and smooth zeta profiles ... */
+    if (ctl->vert_vel == 1)
+      read_met_monotonize(met);
 
     /* Close file... */
     NC(nc_close(ncid));

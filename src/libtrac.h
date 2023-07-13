@@ -2352,6 +2352,10 @@ void read_met_tropo(
   clim_t * clim,
   met_t * met);
 
+/*! Smooth vertical zeta and pressure profiles */  
+void read_met_monotonize(
+  met_t * met);
+
 /*! Read observation data. */
 void read_obs(
   char *filename,
