@@ -720,8 +720,9 @@ void module_advect_diabatic(
 
 	/* Interpolate meteo data... */
 #ifdef UVW
-	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
-			    &u[i], &v[i], &zeta_dot[i]);
+       INTPOL_INIT_DIA
+       intpol_met_4d_coord_uvw(met0, met0->zetal, met0->uvw, met1, met1->zetal,
+	  		 met1->uvw, tm, x[2], x[0], x[1], &u[i], &v[i], &zeta_dot[i], ci, cw, 1); 
 #else
         INTPOL_INIT_DIA
 	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,

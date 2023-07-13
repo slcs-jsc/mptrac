@@ -2024,6 +2024,27 @@ void intpol_met_4d_coord(
   double *cw,
   int init
   );
+  
+#ifdef UVW
+void intpol_met_4d_coord_uvw(
+  met_t * met0,
+  float heights0[EX][EY][EP],
+  float uvw0[EX][EY][EP][3],
+  met_t * met1,
+  float heights1[EX][EY][EP],
+  float uvw1[EX][EY][EP][3],
+  double ts,
+  double height, 
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *zeta_dot,
+  int *ci,
+  double *cw,
+  int init
+  );
+#endif
 
 /*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
