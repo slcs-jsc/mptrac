@@ -1711,6 +1711,179 @@ void intpol_met_time_uvw(
 
 /*****************************************************************************/
 
+void intpol_met_4d_coord(
+  met_t * met0,
+  float heights0[EX][EY][EP],
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float heights1[EX][EY][EP],
+  float array1[EX][EY][EP],
+  double ts,
+  double height, //press -> height
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init
+  )  {
+ 
+  if (init) {
+  
+    /* Restrict positions to coordinate range... */
+    lon = FMOD(lon, 360.);
+    if (met0->lon[met0->nx - 1] > 180 && lon < 0)
+      lon += 360;  
+     
+    /* Get horizontal indizes... */
+    ci[0] = locate_irr(met0->lon, met0->nx, lon);
+    ci[1] = locate_irr(met0->lat, met0->ny, lat);
+  
+    /* Locate the vertical indizes for each edge of the column... */
+    int ind[2][4];
+    locate_vert(heights0, met0->npl, ci[0], ci[1], height, ind[0]);
+    locate_vert(heights1, met1->npl, ci[0], ci[1], height, ind[1]);
+    
+    /* Find minimum and maximum indizes... */
+    ci[2] = ind[0][0];
+    int k_max = ind[0][0];
+    for (int i=0;i<2;i++) 
+      for (int j=0;j<4;j++) {
+    	if (ci[2]>ind[i][j])
+    	  ci[2]=ind[i][j];
+    	if (k_max<ind[i][j])
+    	  k_max=ind[i][j];
+    	}
+    
+    /* Get weighting factors for time, longitude and latitude... */
+    cw[3] = (ts - met0->time) / (met1->time - met0->time);
+    cw[0] = (lon - met0->lon[ci[0]])/
+    	    (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
+    cw[1] = (lat - met0->lat[ci[1]])/
+            (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);  
+      
+    /* Start determiniation of the altitude weighting factor... */  
+    double height_top, height_bot;  
+    double height00, height01, height10, height11, height0, height1;
+      
+    /* Interpolate in time at the lowest level... */
+    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]]
+                   -heights0[ci[0]  ][ci[1]  ][ci[2]])
+                   +heights0[ci[0]  ][ci[1]  ][ci[2]];
+    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]]
+                   -heights0[ci[0]  ][ci[1]+1][ci[2]])
+                   +heights0[ci[0]  ][ci[1]+1][ci[2]];
+    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]]
+                   -heights0[ci[0]+1][ci[1]  ][ci[2]])
+                   +heights0[ci[0]+1][ci[1]  ][ci[2]];
+    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]]
+                   -heights0[ci[0]+1][ci[1]+1][ci[2]])
+                   +heights0[ci[0]+1][ci[1]+1][ci[2]];
+  
+    /* Interpolate in latitude direction... */
+    height0 =  cw[1] * (height01 - height00) + height00;
+    height1 =  cw[1] * (height11 - height10) + height10;
+   
+    /* Interpolate in longitude direction...*/
+    height_bot = cw[0] * (height1 - height0) + height0;
+    
+    /* Interpolate in time at the upper level... */
+    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
+                   -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
+                   +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
+    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
+                   -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
+                   +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
+    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
+                   -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
+                   +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
+    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
+                   -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
+                   +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
+  
+    /* Interpolate in latitude direction... */
+    height0 =  cw[1] * (height01 - height00) + height00;
+    height1 =  cw[1] * (height11 - height10) + height10;
+      
+    /* Interpolate in longitude direction... */
+    height_top =  cw[0] * (height1 - height0) + height0;    
+  
+    /* Search at higher levels if height is not in box... */
+    while(((height_bot <= height) || (height_top > height)) 
+        && (height_bot >= height) && (ci[2] < k_max)) {
+        
+      ci[2]++;
+      height_bot = height_top;
+       
+      /* Interpolate in time at the next level... */
+      height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
+                     -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
+                     +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
+      height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
+                     -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
+                     +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
+      height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
+                     -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
+                     +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
+      height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
+                     -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
+                     +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
+  
+      /* Interpolate in latitude direction... */
+      height0 =  cw[1] * (height01 - height00) + height00;
+      height1 =  cw[1] * (height11 - height10) + height10;
+      
+      /* Interpolate in longitude direction... */
+      height_top =  cw[0] * (height1 - height0) + height0;
+    }
+    
+   /* Get vertical weighting factors... */
+   cw[2] = (height - height_bot)
+      /(height_top - height_bot);
+      
+  } 
+
+  /* Calculate the needed array values... */
+  double array000=cw[3]*(array1[ci[0]  ][ci[1]  ][ci[2]  ]
+                        -array0[ci[0]  ][ci[1]  ][ci[2]  ])
+                        +array0[ci[0]  ][ci[1]  ][ci[2]  ];
+  double array100=cw[3]*(array1[ci[0]+1][ci[1]  ][ci[2]  ]
+                        -array0[ci[0]+1][ci[1]  ][ci[2]  ])
+                        +array0[ci[0]+1][ci[1]  ][ci[2]  ];
+  double array010=cw[3]*(array1[ci[0]  ][ci[1]+1][ci[2]  ]
+                        -array0[ci[0]  ][ci[1]+1][ci[2]  ]) 
+                        +array0[ci[0]  ][ci[1]+1][ci[2]  ];
+  double array110=cw[3]*(array1[ci[0]+1][ci[1]+1][ci[2]  ]
+                        -array0[ci[0]+1][ci[1]+1][ci[2]  ])
+                        +array0[ci[0]+1][ci[1]+1][ci[2]  ];
+  double array001=cw[3]*(array1[ci[0]  ][ci[1]  ][ci[2]+1]
+                        -array0[ci[0]  ][ci[1]  ][ci[2]+1])
+                        +array0[ci[0]  ][ci[1]  ][ci[2]+1];
+  double array101=cw[3]*(array1[ci[0]+1][ci[1]  ][ci[2]+1]
+                        -array0[ci[0]+1][ci[1]  ][ci[2]+1])
+                        +array0[ci[0]+1][ci[1]  ][ci[2]+1];
+  double array011=cw[3]*(array1[ci[0]  ][ci[1]+1][ci[2]+1]
+                        -array0[ci[0]  ][ci[1]+1][ci[2]+1])
+                        +array0[ci[0]  ][ci[1]+1][ci[2]+1];
+  double array111=cw[3]*(array1[ci[0]+1][ci[1]+1][ci[2]+1]
+                        -array0[ci[0]+1][ci[1]+1][ci[2]+1])
+                        +array0[ci[0]+1][ci[1]+1][ci[2]+1];
+                                     
+  double array00 = cw[0]*(array100-array000)+array000;
+  double array10 = cw[0]*(array110-array010)+array010;
+  double array01 = cw[0]*(array101-array001)+array001;
+  double array11 = cw[0]*(array111-array011)+array011;
+  
+  double aux0 = cw[1]*(array10-array00)+array00;
+  double aux1 = cw[1]*(array11-array01)+array01;
+                 
+  /* Interpolate vertically... */
+  *var =  cw[2] * (aux1 - aux0) + aux0;
+   
+} 
+
+/*****************************************************************************/
+
 void jsec2time(
   double jsec,
   int *year,
@@ -1833,6 +2006,55 @@ int locate_reg(
     return n - 2;
   else
     return i;
+}
+
+/*****************************************************************************/
+
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x) {
+    
+  int ilo = 0;
+  int ihi = np - 1;
+  int i = (ihi + ilo) >> 1;
+  
+  if (profiles[ind_lon][ind_lat][i] < profiles[ind_lon][ind_lat][i+1])
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (profiles[ind_lon][ind_lat][i] > x)
+	{ihi = i;}
+      else
+	{ilo = i;}
+  } else
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (profiles[ind_lon][ind_lat][i] <= x)
+	{ihi = i;}
+      else
+	{ilo = i;}
+    }
+   
+  return ilo;
+}
+
+/*****************************************************************************/
+
+void locate_vert(
+  float profiles[EX][EY][EP],
+  int np,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double height_ap,
+  int *ind) {
+ 
+  ind[0] = locate_irr_3d(profiles, np, lon_ap_ind  , lat_ap_ind  , height_ap);
+  ind[1] = locate_irr_3d(profiles, np, lon_ap_ind+1, lat_ap_ind  , height_ap); 
+  ind[2] = locate_irr_3d(profiles, np, lon_ap_ind  , lat_ap_ind+1, height_ap);
+  ind[3] = locate_irr_3d(profiles, np, lon_ap_ind+1, lat_ap_ind+1, height_ap);
+
 }
 
 /*****************************************************************************/

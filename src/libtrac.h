@@ -1980,6 +1980,24 @@ void get_met_replace(
   char *orig,
   char *search,
   char *repl);
+  
+/*! Spatiotemporal interpolation of meteo data !*/  
+void intpol_met_4d_coord(
+  met_t * met0,
+  float height0[EX][EY][EP],
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float height1[EX][EY][EP],
+  float array1[EX][EY][EP],
+  double ts,
+  double height,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init
+  );
 
 /*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
@@ -2126,6 +2144,23 @@ int locate_reg(
   const double *xx,
   const int n,
   const double x);
+  
+/*! Locate the four vertical indizes of a box for a given height value. */
+void locate_vert(
+  float profiles[EX][EY][EP],
+  int np,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double alt_ap,
+  int *ind);
+
+/*! locate the index in a column of a three dimensional array. */  
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x);
 
 /*! Calculate NAT existence temperature. */
 #ifdef _OPENACC
