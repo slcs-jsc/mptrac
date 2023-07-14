@@ -2438,6 +2438,13 @@ void write_atm_nc(
   ctl_t * ctl,
   atm_t * atm);
 
+/*! Write atmospheric data in vtk format. */
+void write_atm_vtk(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
 /*! Write CSI data. */
 void write_csi(
   const char *filename,

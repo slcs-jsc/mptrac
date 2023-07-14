@@ -5291,6 +5291,10 @@ void write_atm(
   else if (ctl->atm_type == 3)
     write_atm_clams(ctl, atm, t);
 
+  /* Write vtk data... */
+  else if (ctl->atm_type == 4)
+    write_atm_vtk(filename, ctl, atm, t);
+
   /* Error... */
   else
     ERRMSG("Atmospheric data type not supported!");
@@ -5642,6 +5646,61 @@ void write_atm_nc(
 
   /* Close file... */
   NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
+void write_atm_vtk(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t) {
+
+  FILE *out;
+
+  /* Set time interval for output... */
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Create file... */
+  if (!(out = fopen(filename, "w")))
+    ERRMSG("Cannot create file!");
+
+  /* Count data points... */
+  int np = 0;
+  for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
+    if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
+      continue;
+    np++;
+  }
+
+  /* Write header... */
+  fprintf(out,
+	  "# vtk DataFile Version 3.0\n"
+	  "vtk output\n" "ASCII\n" "DATASET POLYDATA\n");
+
+  /* Write point coordinates... */
+  fprintf(out, "POINTS %d float\n", np);
+  for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
+    if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
+      continue;
+    fprintf(out, "%g %g %g\n", atm->lon[ip], atm->lat[ip], Z(atm->p[ip]));
+  }
+
+  /* Write point data... */
+  fprintf(out, "POINT_DATA %d\n", np);
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    fprintf(out, "SCALARS %s float 1\n" "LOOKUP_TABLE default\n",
+	    ctl->qnt_name[iq]);
+    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
+      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
+	continue;
+      fprintf(out, "%g\n", atm->q[iq][ip]);
+    }
+  }
+
+  /* Close file... */
+  fclose(out);
 }
 
 /*****************************************************************************/
