@@ -96,7 +96,6 @@ int main(
     ctl.met_tropo = 0;
 
     /* Read meteorological data... */
-    CHECK_FILE(argv[i]);
     if (!read_met(argv[i], &ctl, clim, met))
       continue;
 

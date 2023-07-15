@@ -87,7 +87,6 @@ int main(
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    CHECK_FILE(argv[i]);
     if (!read_met(argv[i], &ctl, clim, met))
       continue;
 

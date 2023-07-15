@@ -248,15 +248,6 @@
 #define ARRAY_3D(ix, iy, ny, iz, nz)		\
   (((ix)*(ny) + (iy)) * (nz) + (iz))
 
-/*! Check whether file exists. */
-#define CHECK_FILE(filename) {			\
-    FILE *in;					\
-    if (!(in = fopen(filename, "r")))		\
-      continue;					\
-    else					\
-      fclose(in);				\
-  }
-
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))

@@ -123,8 +123,6 @@ int main(
   for (f = 4; f < argc; f += 2) {
 
     /* Read atmopheric data... */
-    CHECK_FILE(argv[f]);
-    CHECK_FILE(argv[f + 1]);
     if (!read_atm(argv[f], &ctl, atm1) || !read_atm(argv[f + 1], &ctl, atm2))
       continue;
 
