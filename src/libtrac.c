@@ -2740,6 +2740,12 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_STRIDE", -1, "1", NULL);
   ctl->atm_type =
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE", -1, "0", NULL);
+  ctl->atm_vtk_scale =
+    scan_ctl(filename, argc, argv, "ATM_VTK_SCALE", -1, "1.0", NULL);
+  ctl->atm_vtk_offset =
+    scan_ctl(filename, argc, argv, "ATM_VTK_OFFSET", -1, "0.0", NULL);
+  ctl->atm_vtk_sphere =
+    (int) scan_ctl(filename, argc, argv, "ATM_VTK_SPHERE", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -5681,11 +5687,26 @@ void write_atm_vtk(
 
   /* Write point coordinates... */
   fprintf(out, "POINTS %d float\n", np);
-  for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
-    if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
-      continue;
-    fprintf(out, "%g %g %g\n", atm->lon[ip], atm->lat[ip], Z(atm->p[ip]));
-  }
+  if (ctl->atm_vtk_sphere) {
+    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
+      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
+	continue;
+      double radius = (RE + Z(atm->p[ip]) * ctl->atm_vtk_scale
+		       + ctl->atm_vtk_offset) / RE;
+      double x = radius * cos(atm->lat[ip] / 180. * M_PI)
+	* cos(atm->lon[ip] / 180. * M_PI);
+      double y = radius * cos(atm->lat[ip] / 180. * M_PI)
+	* sin(atm->lon[ip] / 180. * M_PI);
+      double z = radius * sin(atm->lat[ip] / 180. * M_PI);
+      fprintf(out, "%g %g %g\n", x, y, z);
+    }
+  } else
+    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
+      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
+	continue;
+      fprintf(out, "%g %g %g\n", atm->lon[ip], atm->lat[ip],
+	      Z(atm->p[ip]) * ctl->atm_vtk_scale + ctl->atm_vtk_offset);
+    }
 
   /* Write point data... */
   fprintf(out, "POINT_DATA %d\n", np);

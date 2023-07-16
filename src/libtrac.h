@@ -1372,8 +1372,18 @@ typedef struct {
   /*! Particle index stride for atmospheric data files. */
   int atm_stride;
 
-  /*! Type of atmospheric data files (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
+  /*! Type of atmospheric data files
+     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS, 4=vtk). */
   int atm_type;
+
+  /*! Vertical scaling factor for vtk data. */
+  double atm_vtk_scale;
+
+  /*! Vertical offset for vtk data [km]. */
+  double atm_vtk_offset;
+
+  /*! Spherical projection for vtk data (0=no, 1=yes). */
+  int atm_vtk_sphere;
 
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
