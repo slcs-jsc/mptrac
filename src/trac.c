@@ -139,16 +139,7 @@ void module_h2o2_chem(
   double *dt,
   double *rs);
 
-/*! Interpolate to chemistry grid. */
-void module_kpp_chemgrid(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  met_t * met0,
-  met_t * met1,
-  double t);
-
-/*! Calculate the grid data for h2o2 module. */
+/*! Calculate grid data for H2O2 module. */
 void module_h2o2_chemgrid(
   ctl_t * ctl,
   met_t * met0,
@@ -164,6 +155,15 @@ void module_kpp_chem(
   met_t * met1,
   atm_t * atm,
   double *dt);
+
+/*! Interpolate to chemistry grid. */
+void module_kpp_chemgrid(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
+  double t);
 
 /*! Check position of air parcels. */
 void module_position(
@@ -491,15 +491,14 @@ int main(
 	      || ctl.kppchem_bound == 1)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
-	  /* KPP chemistry... */
 #ifdef KPP
+	  /* KPP chemistry... */
 	  if (ctl.kpp_chem == 1) {
-
 	    module_kpp_chemgrid(&ctl, clim, atm, met0, met1, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
-
+	  
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
 #ifdef ASYNCIO

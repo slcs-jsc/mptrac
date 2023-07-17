@@ -78,6 +78,11 @@
    Constants...
    ------------------------------------------------------------ */
 
+/*! Avogadro constant [1/mol]. */
+#ifndef AVO
+#define AVO 6.02214076e23
+#endif
+
 /*! Specific heat of dry air at constant pressure [J/(kg K)]. */
 #ifndef CPD
 #define CPD 1003.5
@@ -132,12 +137,6 @@
 #ifndef RA
 #define RA (1e3 * RI / MA)
 #endif
-
-/*! Avogadro constant. */
-#ifndef AVO
-#define AVO 6.02214076e23
-#endif
-
 
 /*! Mean radius of Earth [km]. */
 #ifndef RE
@@ -274,7 +273,7 @@
   (-(dz) * (p) / H0)
 
 /*! Compute Cartesian distance between two vectors. */
-#define DIST(a, b) \
+#define DIST(a, b)				\
   sqrt(DIST2(a, b))
 
 /*! Compute squared distance between two vectors. */
@@ -282,7 +281,7 @@
   ((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1])+(a[2]-b[2])*(a[2]-b[2]))
 
 /*! Compute dot product of two vectors. */
-#define DOTP(a, b) \
+#define DOTP(a, b)				\
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 
 /*! Compute floating point modulo. */
@@ -320,72 +319,72 @@
 
 /*! Spatial interpolation of all meteo data. */
 #define INTPOL_SPACE_ALL(p, lon, lat) {					\
-  intpol_met_space_3d(met, met->z, p, lon, lat, &z, ci, cw, 1);		\
-  intpol_met_space_3d(met, met->t, p, lon, lat, &t, ci, cw, 0);		\
-  intpol_met_space_3d(met, met->u, p, lon, lat, &u, ci, cw, 0);		\
-  intpol_met_space_3d(met, met->v, p, lon, lat, &v, ci, cw, 0);		\
-  intpol_met_space_3d(met, met->w, p, lon, lat, &w, ci, cw, 0);		\
-  intpol_met_space_3d(met, met->pv, p, lon, lat, &pv, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->h2o, p, lon, lat, &h2o, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->o3, p, lon, lat, &o3, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->lwc, p, lon, lat, &lwc, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
-  intpol_met_space_3d(met, met->cc, p, lon, lat, &cc, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->ts, lon, lat, &ts, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->lsm, lon, lat, &lsm, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->sst, lon, lat, &sst, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->pbl, lon, lat, &pbl, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->zt, lon, lat, &zt, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->h2ot, lon, lat, &h2ot, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->pct, lon, lat, &pct, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->pcb, lon, lat, &pcb, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);		\
-  intpol_met_space_2d(met, met->plcl, lon, lat, &plcl, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
-  intpol_met_space_2d(met, met->cin, lon, lat, &cin, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->z, p, lon, lat, &z, ci, cw, 1);	\
+    intpol_met_space_3d(met, met->t, p, lon, lat, &t, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->u, p, lon, lat, &u, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->v, p, lon, lat, &v, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->w, p, lon, lat, &w, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->pv, p, lon, lat, &pv, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->h2o, p, lon, lat, &h2o, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->o3, p, lon, lat, &o3, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->lwc, p, lon, lat, &lwc, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->cc, p, lon, lat, &cc, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->ts, lon, lat, &ts, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->lsm, lon, lat, &lsm, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->sst, lon, lat, &sst, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->pbl, lon, lat, &pbl, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->pt, lon, lat, &pt, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->tt, lon, lat, &tt, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->zt, lon, lat, &zt, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->h2ot, lon, lat, &h2ot, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->pct, lon, lat, &pct, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->pcb, lon, lat, &pcb, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->cl, lon, lat, &cl, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->plcl, lon, lat, &plcl, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->plfc, lon, lat, &plfc, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->cin, lon, lat, &cin, ci, cw, 0);	\
   }
 
 /*! Temporal interpolation of all meteo data. */
 #define INTPOL_TIME_ALL(time, p, lon, lat) {				\
-  intpol_met_time_3d(met0, met0->z, met1, met1->z, time, p, lon, lat, &z, ci, cw, 1); \
-  intpol_met_time_3d(met0, met0->t, met1, met1->t, time, p, lon, lat, &t, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->u, met1, met1->u, time, p, lon, lat, &u, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->v, met1, met1->v, time, p, lon, lat, &v, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->w, met1, met1->w, time, p, lon, lat, &w, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->pv, met1, met1->pv, time, p, lon, lat, &pv, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, p, lon, lat, &h2o, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->o3, met1, met1->o3, time, p, lon, lat, &o3, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
-  intpol_met_time_3d(met0, met0->cc, met1, met1->cc, time, p, lon, lat, &cc, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->lsm, met1, met1->lsm, time, lon, lat, &lsm, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->sst, met1, met1->sst, time, lon, lat, &sst, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->h2ot, met1, met1->h2ot, time, lon, lat, &h2ot, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->pct, met1, met1->pct, time, lon, lat, &pct, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->pcb, met1, met1->pcb, time, lon, lat, &pcb, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
-  intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->z, met1, met1->z, time, p, lon, lat, &z, ci, cw, 1); \
+    intpol_met_time_3d(met0, met0->t, met1, met1->t, time, p, lon, lat, &t, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->u, met1, met1->u, time, p, lon, lat, &u, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->v, met1, met1->v, time, p, lon, lat, &v, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->w, met1, met1->w, time, p, lon, lat, &w, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->pv, met1, met1->pv, time, p, lon, lat, &pv, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, p, lon, lat, &h2o, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->o3, met1, met1->o3, time, p, lon, lat, &o3, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->cc, met1, met1->cc, time, p, lon, lat, &cc, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->lsm, met1, met1->lsm, time, lon, lat, &lsm, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->sst, met1, met1->sst, time, lon, lat, &sst, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->pt, met1, met1->pt, time, lon, lat, &pt, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->tt, met1, met1->tt, time, lon, lat, &tt, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->zt, met1, met1->zt, time, lon, lat, &zt, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->h2ot, met1, met1->h2ot, time, lon, lat, &h2ot, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->pct, met1, met1->pct, time, lon, lat, &pct, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->pcb, met1, met1->pcb, time, lon, lat, &pcb, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->cl, met1, met1->cl, time, lon, lat, &cl, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->plcl, met1, met1->plcl, time, lon, lat, &plcl, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->plfc, met1, met1->plfc, time, lon, lat, &plfc, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
   }
 
 /*! Calculate lapse rate between pressure levels. */
@@ -396,7 +395,6 @@
 /*! Compute linear interpolation. */
 #define LIN(x0, y0, x1, y1, x)			\
   ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
-
 
 /*! Write header for meteo data files. */
 #define MET_HEADER							\
@@ -459,10 +457,10 @@
 
 /*! Execute netCDF library command and check result. */
 #define NC(cmd) {				     \
-  int nc_result=(cmd);				     \
-  if(nc_result!=NC_NOERR)			     \
-    ERRMSG("%s", nc_strerror(nc_result));	     \
-}
+    int nc_result=(cmd);			     \
+    if(nc_result!=NC_NOERR)			     \
+      ERRMSG("%s", nc_strerror(nc_result));	     \
+  }
 
 /*! Define netCDF variable. */
 #define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
@@ -539,7 +537,7 @@
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))
 
 /*! Compute norm of a vector. */
-#define NORM(a) \
+#define NORM(a)					\
   sqrt(DOTP(a, a))
 
 /*! Convert altitude to pressure. */
@@ -551,7 +549,7 @@
   (6.112 * exp(17.62 * ((t) - T0) / (243.12 + (t) - T0)))
 
 /*! Compute saturation pressure over ice (WMO, 2018). */
-#define PSICE(t)				\
+#define PSICE(t)						\
   (6.112 * exp(22.46 * ((t) - T0) / (272.62 + (t) - T0)))
 
 /*! Calculate partial water vapor pressure. */
@@ -588,12 +586,12 @@
 #define SH(h2o)					\
   (EPS * GSL_MAX((h2o), 0.1e-6))
 
-/*! Compute square. */
+/*! Compute square of x. */
 #define SQR(x)					\
   ((x)*(x))
 
 /*! Swap macro. */
-#define SWAP(x, y, type)				\
+#define SWAP(x, y, type)			\
   do {type tmp = x; x = y; y = tmp;} while(0);
 
 /*! Calculate dew point temperature (WMO, 2018). */
@@ -678,25 +676,31 @@
 	 __FILE__, __func__, __LINE__, #var, var);
 
 /* ------------------------------------------------------------
-   Macros used in kpp...
+   KPP...
    ------------------------------------------------------------ */
 
+/* TODO:
+   - doxygen comments are missing
+   - use upper case names for macros!
+   - rename VAR2atm into GET_VAR ?
+*/
+
 #define SET_VAR(ind_spec, qnt_index) 			\
-	if (qnt_index >= 0) 				\
-		VAR[ind_spec] = atm->q[qnt_index][ip];
+  if (qnt_index >= 0)					\
+    VAR[ind_spec] = atm->q[qnt_index][ip];
 
 #define VAR2atm(ind_spec, qnt_index)			\
-	if (qnt_index >= 0) 				\
-		atm->q[qnt_index][ip] = VAR[ind_spec];
+  if (qnt_index >= 0)					\
+    atm->q[qnt_index][ip] = VAR[ind_spec];
 
 /*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
 #define roeth_photol(a, b, c, sza) 				\
-	(c*sza < M_PI ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
+  (c*sza < M_PI ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
 
-#define INIT_CQNT(qnt_index, clim_var_t) 			\
-	if (qnt_index >= 0)    \
-		atm->q[qnt_index][ip] = 			\
-			clim_var(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
+#define INIT_CQNT(qnt_index, clim_var_t)	\
+  if (qnt_index >= 0)						\
+    atm->q[qnt_index][ip] =						\
+      clim_var(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
 /* ------------------------------------------------------------
    Timers...
@@ -1278,12 +1282,12 @@ typedef struct {
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
 
-  /*! Switch for kpp chemistry module. (0=off, 1=on) */
+  /*! Switch for KPP chemistry module (0=off, 1=on). */
   int kpp_chem;
-
-  /*! Switch for boundary condition for kpp chemistry module */
+  
+  /*! Switch for boundary condition for KPP chemistry module. */
   int kppchem_bound;
-
+  
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
 
@@ -2547,14 +2551,8 @@ void write_station(
   atm_t * atm,
   double t);
 
-void interparc_mixing_help(
-  ctl_t * ctl,
-  atm_t * atm,
-  clim_t * clim,
-  int *ixs,
-  int *iys,
-  int *izs,
-  int qnt_idx);
+
+/*! TODO: doxygen comments are missing. */
 
 void kppchem_bound_cond(
   ctl_t * ctl,
@@ -2614,5 +2612,14 @@ void interparc_mixing(
   int *ixs,
   int *iys,
   int *izs);
+
+void interparc_mixing_help(
+  ctl_t * ctl,
+  atm_t * atm,
+  clim_t * clim,
+  int *ixs,
+  int *iys,
+  int *izs,
+  int qnt_idx);
 
 #endif /* LIBTRAC_H */
