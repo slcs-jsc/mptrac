@@ -1493,8 +1493,8 @@ void module_h2o2_chemgrid(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
-  if (ctl->molmass < 0)
-    ERRMSG("SPECIES MOLAR MASS is not defined!");
+  if (ctl->molmass <= 0)
+    ERRMSG("Specify molar mass!");
 
   /* Allocate... */
   ALLOC(mass, double,
@@ -1641,16 +1641,18 @@ double param_mixing_calc(
   int ip) {
 
   double param_mixing;
+
   if (ctl->chemgrid_mixparam_trop < 1 || ctl->chemgrid_mixparam_strat < 1) {
+
     /* Get weighting factor... */
     double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Set interparcel exchange parameter (Collins et al. 1997)... */
-    param_mixing =
-      w * ctl->chemgrid_mixparam_trop + (1 -
-					 w) * ctl->chemgrid_mixparam_strat;
+    param_mixing = w * ctl->chemgrid_mixparam_trop
+      + (1 - w) * ctl->chemgrid_mixparam_strat;
   } else
     param_mixing = 1;
+
   return param_mixing;
 }
 
@@ -1663,6 +1665,7 @@ void interparc_mixing_help(
   int *izs,
   int qnt_idx) {
 
+  /* Allocate... */
   double *cmean;
   int *count;
   ALLOC(cmean, double,
@@ -1763,11 +1766,11 @@ void module_kpp_chemgrid(
 
   /* Calculate the trace spieces concentration according to mass data... */
   if (ctl->qnt_m >= 0) {
-    if (ctl->molmass < 0)
-      ERRMSG("SPECIES MOLAR MASS is not defined!");
-    double *mass, *area, *lat;
+    if (ctl->molmass <= 0)
+      ERRMSG("Specify molar mass!");
 
     /* Allocate... */
+    double *mass, *area, *lat;
     ALLOC(mass, double,
 	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
     ALLOC(lat, double,
@@ -1797,6 +1800,7 @@ void module_kpp_chemgrid(
 				   dz, ip, ctl->qnt_Cx);
       }
     }
+
     /* Free... */
     free(mass);
     free(area);
@@ -1807,6 +1811,7 @@ void module_kpp_chemgrid(
   //if (izs[ip] >= 0) TODO
   interparc_mixing(ctl, atm, clim, ixs, iys, izs);
 
+  /* Free... */
   free(ixs);
   free(iys);
   free(izs);

@@ -2630,42 +2630,38 @@ void read_ctl(
     ctl->oh_chem[3] = -0.2;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.3e-2;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2900.0;
-  } else {
-    ctl->molmass =
-      scan_ctl(filename, argc, argv, "MOLMASS", -1, "-999", NULL);
-    ctl->kpp_chem =
-      (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
-    ctl->kppchem_bound =
-      (int) scan_ctl(filename, argc, argv, "KPPCHEM_BOUND", -1, "0", NULL);
-    ctl->oh_chem_reaction =
-      (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, "0", NULL);
-    ctl->h2o2_chem_reaction =
-      (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0",
-		     NULL);
-    for (int ip = 0; ip < 4; ip++)
-      ctl->oh_chem[ip] =
-	scan_ctl(filename, argc, argv, "OH_CHEM", ip, "0", NULL);
-    ctl->dry_depo_vdep =
-      scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
-    ctl->dry_depo_dp =
-      scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
-    ctl->wet_depo_ic_a =
-      scan_ctl(filename, argc, argv, "WET_DEPO_IC_A", -1, "0", NULL);
-    ctl->wet_depo_ic_b =
-      scan_ctl(filename, argc, argv, "WET_DEPO_IC_B", -1, "0", NULL);
-    ctl->wet_depo_bc_a =
-      scan_ctl(filename, argc, argv, "WET_DEPO_BC_A", -1, "0", NULL);
-    ctl->wet_depo_bc_b =
-      scan_ctl(filename, argc, argv, "WET_DEPO_BC_B", -1, "0", NULL);
-    for (int ip = 0; ip < 3; ip++)
-      ctl->wet_depo_ic_h[ip] =
-	scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, "0", NULL);
-    for (int ip = 0; ip < 1; ip++)
-      ctl->wet_depo_bc_h[ip] =
-	scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, "0", NULL);
   }
 
+  /* Molar mass... */
+  char defstr[LEN];
+  sprintf(defstr, "%g", ctl->molmass);
+  ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, defstr, NULL);
+
+  /* Dry deposition... */
+  ctl->dry_depo_vdep =
+    scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
+  ctl->dry_depo_dp =
+    scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
+
   /* Wet deposition... */
+  for (int ip = 0; ip < 3; ip++) {
+    sprintf(defstr, "%g", ctl->wet_depo_ic_h[ip]);
+    ctl->wet_depo_ic_h[ip] =
+      scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, defstr, NULL);
+  }
+  for (int ip = 0; ip < 1; ip++) {
+    sprintf(defstr, "%g", ctl->wet_depo_bc_h[ip]);
+    ctl->wet_depo_bc_h[ip] =
+      scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, defstr, NULL);
+  }
+  ctl->wet_depo_ic_a =
+    scan_ctl(filename, argc, argv, "WET_DEPO_IC_A", -1, "0", NULL);
+  ctl->wet_depo_ic_b =
+    scan_ctl(filename, argc, argv, "WET_DEPO_IC_B", -1, "0", NULL);
+  ctl->wet_depo_bc_a =
+    scan_ctl(filename, argc, argv, "WET_DEPO_BC_A", -1, "0", NULL);
+  ctl->wet_depo_bc_b =
+    scan_ctl(filename, argc, argv, "WET_DEPO_BC_B", -1, "0", NULL);
   ctl->wet_depo_pre[0] =
     scan_ctl(filename, argc, argv, "WET_DEPO_PRE", 0, "0.5", NULL);
   ctl->wet_depo_pre[1] =
@@ -2675,11 +2671,28 @@ void read_ctl(
   ctl->wet_depo_bc_ret_ratio =
     scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
 
+  /* KPP chemistry... */
+  ctl->kpp_chem =
+    (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
+  ctl->kppchem_bound =
+    (int) scan_ctl(filename, argc, argv, "KPPCHEM_BOUND", -1, "0", NULL);
+
   /* OH chemistry... */
+  sprintf(defstr, "%d", ctl->oh_chem_reaction);
+  ctl->oh_chem_reaction =
+    (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, defstr,
+		   NULL);
+  for (int ip = 0; ip < 4; ip++) {
+    sprintf(defstr, "%g", ctl->oh_chem[ip]);
+    ctl->oh_chem[ip] =
+      scan_ctl(filename, argc, argv, "OH_CHEM", ip, defstr, NULL);
+  }
   ctl->oh_chem_beta =
     scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
 
   /* H2O2 chemistry... */
+  ctl->h2o2_chem_reaction =
+    (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
   ctl->h2o2_chem_cc =
     scan_ctl(filename, argc, argv, "H2O2_CHEM_CC", -1, "1", NULL);
 
