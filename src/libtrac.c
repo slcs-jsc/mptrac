@@ -2154,6 +2154,9 @@ void read_ctl(
   ctl->qnt_cin = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
+  ctl->qnt_h2o2 = -1;
+  ctl->qnt_ho2 = -1;
+  ctl->qnt_o1d = -1;
   ctl->qnt_vmrimpl = -1;
   ctl->qnt_mloss_oh = -1;
   ctl->qnt_mloss_h2o2 = -1;
@@ -2247,6 +2250,9 @@ void read_ctl(
       SET_QNT(qnt_cin, "cin", "convective inhibition", "J/kg")
       SET_QNT(qnt_hno3, "hno3", "nitric acid", "ppv")
       SET_QNT(qnt_oh, "oh", "hydroxyl radical", "molec/cm^3")
+      SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "molec/cm^3")
+      SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "molec/cm^3")
+      SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "molec/cm^3")
       SET_QNT(qnt_vmrimpl, "vmrimpl", "volume mixing ratio (implicit)", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
       SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",

@@ -955,6 +955,15 @@ typedef struct {
   /*! Quantity array index for hydroxyl number concentrations. */
   int qnt_oh;
 
+  /*! Quantity array index for hydrogen peroxide number concentrations. */
+  int qnt_h2o2;
+
+  /*! Quantity array index for hydroperoxyl radical number concentrations. */
+  int qnt_ho2;
+
+  /*! Quantity array index for atomic oxygen number concentrations. */
+  int qnt_o1d;
+
   /*! Quantity array index for implicity volumn mixing ratio. */
   int qnt_vmrimpl;
 
