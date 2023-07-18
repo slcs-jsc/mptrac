@@ -136,8 +136,7 @@ void module_h2o2_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt,
-  double *rs);
+  double *dt);
 
 /*! Calculate grid data for H2O2 module. */
 void module_h2o2_chemgrid(
@@ -474,7 +473,7 @@ int main(
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0) {
 	    module_h2o2_chemgrid(&ctl, met0, met1, atm, t);
-	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt, rs);
+	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 
 	  /* Dry deposition... */
@@ -1386,8 +1385,7 @@ void module_h2o2_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt,
-  double *rs) {
+  double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
@@ -1398,12 +1396,9 @@ void module_h2o2_chem(
   if (ctl->qnt_vmrimpl < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
-  /* Create random numbers... */
-  module_rng(rs, (size_t) atm->np, 0);
-
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(clim,ctl,met0,met1,atm,dt,rs)
+#pragma acc data present(clim,ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1417,15 +1412,11 @@ void module_h2o2_chem(
       INTPOL_3D(lwc, 1);
       if (!(lwc > 0))
 	continue;
-
-      /* Check cloud cover... */
-      if (rs[ip] > ctl->h2o2_chem_cc)
-	continue;
-
+      
       /* Check implicit volume mixing ratio... */
       if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
 	continue;
-
+      
       /* Get temperature... */
       double t;
       INTPOL_3D(t, 0);
@@ -1450,7 +1441,7 @@ void module_h2o2_chem(
       double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
       //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
       double CWC = lwc * rho_air / 1000;
-
+      
       /* Calculate exponential decay (Rolph et al., 1992)... */
       double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
       double aux = exp(-dt[ip] * rate_coef);

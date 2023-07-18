@@ -16,7 +16,7 @@ t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
-NQ = 11
+NQ = 12
 QNT_NAME[0] = t
 QNT_NAME[1] = u
 QNT_NAME[2] = v
@@ -28,9 +28,11 @@ QNT_NAME[7] = pt
 QNT_NAME[8] = m
 QNT_NAME[9] = stat
 QNT_NAME[10] = ens
+QNT_NAME[11] = vmrimpl
 METBASE = ../data/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
+# H2O2_CHEM_REACTION = 1
 BOUND_MASS = 0.0
 BOUND_DPS = 100.0
 CONV_CAPE = 0.0
@@ -74,7 +76,7 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 
 # Split air parcels...
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
-		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 1.0
+		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 5.0
 
 # Calculate trajectories...
 echo "data" > data/dirlist

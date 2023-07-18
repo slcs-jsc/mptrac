@@ -2693,9 +2693,7 @@ void read_ctl(
   /* H2O2 chemistry... */
   ctl->h2o2_chem_reaction =
     (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
-  ctl->h2o2_chem_cc =
-    scan_ctl(filename, argc, argv, "H2O2_CHEM_CC", -1, "1", NULL);
-
+  
   /* Climatological data... */
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
 	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
