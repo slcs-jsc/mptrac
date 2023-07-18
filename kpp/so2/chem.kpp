@@ -48,7 +48,7 @@ double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
 
 double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
 
-void kppchem_initialize(
+void kpp_chem_initialize(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -110,7 +110,7 @@ void kppchem_initialize(
 
 #include "libtrac.h"
 
-void kppchem_output2atm(
+void kpp_chem_output2atm(
 	atm_t * atm,
 	ctl_t * ctl, 
 	int ip){
@@ -124,7 +124,7 @@ void kppchem_output2atm(
 		}
 }
 
-void kppchem_init_cqnt_clim(
+void kpp_chem_init_cqnt_clim(
 	ctl_t * ctl,
 	atm_t * atm,
 	clim_t * clim,
@@ -135,7 +135,7 @@ void kppchem_init_cqnt_clim(
 	INIT_CQNT(ctl->qnt_Cho2, clim->ho2);
 }
 
-void kppchem_init_cqnt_met(
+void kpp_chem_init_cqnt_met(
 ctl_t * ctl,
 atm_t * atm,
 met_t * met0,
@@ -154,7 +154,7 @@ void interparc_mixing(
 	}
 
 /*! Set boundary condition for species*/
-void kppchem_bound_cond(
+void kpp_chem_bound_cond(
 	ctl_t * ctl,
 	atm_t * atm,
 	met_t * met0,

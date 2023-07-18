@@ -68,20 +68,19 @@ chem_Main.o: chem_Main.c chem_Initialize.o $(HEADERS) $(SPOBJ)
 	$(CC) $(COPT) -c $<
 
 chem_Integrator.o: chem_Integrator.c  $(HEADERS) $(SPOBJ)
-# ifeq ($(shell grep -c '\#pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c),0)
-# 	sed -i '137i #pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c
-# 	$(CC) $(COPT) -c $<
-# else
+ifeq ($(shell grep -c '\#pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c),0)
+	sed -i '137i #pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c
+	$(CC) $(COPT) -c $<
+endif
 ifeq ($(shell grep -c '\#pragma omp threadprivate(Nfun,Njac,Nstp,Nacc,Nrej,Ndec,Nsol,Nsng)' chem_Integrator.c),0)
 	sed -i '57i #pragma omp threadprivate(Nfun,Njac,Nstp,Nacc,Nrej,Ndec,Nsol,Nsng)' chem_Integrator.c
 endif
-	sed -i 's/static//g' chem_Integrator.c
+	# sed -i 's/static//g' chem_Integrator.c
 ifeq ($(INFO),0)
 	sed -i '/printf(\"\\n Step=%d  Acc=%d  Rej=%d  Singular=%d\\n\",/d' chem_Integrator.c  #Delete this code line to reduce output on screen
 	sed -i '/Ns,Na,Nr,Ng);/d' chem_Integrator.c
 endif
 	$(CC) $(COPT) -c $<
-
 
 # chem_Initialize.o: chem_Initialize.c  $(HEADERS) $(SPOBJ)
 # 	$(CC) $(COPT) -c $<

@@ -71,7 +71,7 @@ double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,
 				ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,
 				kccl3f_hv, kcl2f2_hv;
 
-void kppchem_initialize(
+void kpp_chem_initialize(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -145,15 +145,15 @@ void kppchem_initialize(
 		kho2_ho2 = ARR_ab(3e-13, -460) + ARR_ab(2.1e-33 * M, -920) ;
 		
 		/* Photolysis reaction rate ... */
-		ko2_hv = roeth_photol(1.15e-11, 6.51657, 0.75717, sza);
-		ko3_hv1 = roeth_photol(1.37e-4, 1.38520, 0.90333, sza);
-		ko3_hv2 = roeth_photol(1.12E-03, 0.49409, 0.87117, sza);
-		kho2_hv = roeth_photol(6.83E-06, 6.43722, 0.75746, sza);
-		kh2o_hv = roeth_photol(1.79E-10, 7.70686, 0.75420, sza);
-		kh2o2_hv = roeth_photol( 2.60E-05, 0.53675, 0.89531, sza);
-		kn2o_hv = roeth_photol(1.61E-08, 6.21077, 0.76015, sza);
-		kccl3f_hv = roeth_photol(6.79E-07, 6.25031, 0.75941, sza);
-		kcl2f2_hv = roeth_photol(2.81E-08, 6.47452, 0.75909, sza);
+		ko2_hv = ROETH_PHOTOL(1.15e-11, 6.51657, 0.75717, sza);
+		ko3_hv1 = ROETH_PHOTOL(1.37e-4, 1.38520, 0.90333, sza);
+		ko3_hv2 = ROETH_PHOTOL(1.12E-03, 0.49409, 0.87117, sza);
+		kho2_hv = ROETH_PHOTOL(6.83E-06, 6.43722, 0.75746, sza);
+		kh2o_hv = ROETH_PHOTOL(1.79E-10, 7.70686, 0.75420, sza);
+		kh2o2_hv = ROETH_PHOTOL( 2.60E-05, 0.53675, 0.89531, sza);
+		kn2o_hv = ROETH_PHOTOL(1.61E-08, 6.21077, 0.76015, sza);
+		kccl3f_hv = ROETH_PHOTOL(6.79E-07, 6.25031, 0.75941, sza);
+		kcl2f2_hv = ROETH_PHOTOL(2.81E-08, 6.47452, 0.75909, sza);
 }
 #ENDINLINE
 
@@ -161,29 +161,29 @@ void kppchem_initialize(
 
 #include "libtrac.h"
 
-void kppchem_output2atm(
+void kpp_chem_output2atm(
 	atm_t * atm,
 	ctl_t * ctl, 
 	int ip){
 
 		/*Output to air parcel.. */
 
-		VAR2atm(ind_o3p, ctl->qnt_Co3p)
-		VAR2atm(ind_o1d, ctl->qnt_Co1d)
-		VAR2atm(ind_h2o2, ctl->qnt_Ch2o2)
-		VAR2atm(ind_oh, ctl->qnt_Coh)
-		VAR2atm(ind_ho2, ctl->qnt_Cho2)
-		VAR2atm(ind_h, ctl->qnt_Ch)
-		VAR2atm(ind_o3, ctl->qnt_Co3)
-		VAR2atm(ind_n2o, ctl->qnt_Cn2o)
-		VAR2atm(ind_ccl3f, ctl->qnt_Cccl3f)
-		VAR2atm(ind_ccl2f2, ctl->qnt_Cccl2f2)
-		VAR2atm(ind_cclf3, ctl->qnt_Ccclf3)
-		//VAR2atm(ind_co, ctl->qnt_Cco)
+		GET_VAR(ind_o3p, ctl->qnt_Co3p)
+		GET_VAR(ind_o1d, ctl->qnt_Co1d)
+		GET_VAR(ind_h2o2, ctl->qnt_Ch2o2)
+		GET_VAR(ind_oh, ctl->qnt_Coh)
+		GET_VAR(ind_ho2, ctl->qnt_Cho2)
+		GET_VAR(ind_h, ctl->qnt_Ch)
+		GET_VAR(ind_o3, ctl->qnt_Co3)
+		GET_VAR(ind_n2o, ctl->qnt_Cn2o)
+		GET_VAR(ind_ccl3f, ctl->qnt_Cccl3f)
+		GET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2)
+		GET_VAR(ind_cclf3, ctl->qnt_Ccclf3)
+		//GET_VAR(ind_co, ctl->qnt_Cco)
 }
 
 /*! Initialize the species with climatology. */
-void kppchem_init_cqnt_clim(
+void kpp_chem_init_cqnt_clim(
 	ctl_t * ctl,
 	atm_t * atm,
 	clim_t * clim,
@@ -195,7 +195,7 @@ void kppchem_init_cqnt_clim(
 
 }
 
-void kppchem_init_cqnt_met(
+void kpp_chem_init_cqnt_met(
 ctl_t * ctl,
 atm_t * atm,
 met_t * met0,
@@ -232,7 +232,7 @@ void interparc_mixing(
 }
 
 /*! Set boundary condition for species*/
-void kppchem_bound_cond(
+void kpp_chem_bound_cond(
 	ctl_t * ctl,
 	atm_t * atm,
 	met_t * met0,

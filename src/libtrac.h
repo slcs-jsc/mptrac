@@ -685,20 +685,23 @@
    - rename VAR2atm into GET_VAR ?
 */
 
+/*! Set variable species concentration. */
 #define SET_VAR(ind_spec, qnt_index) 			\
   if (qnt_index >= 0)					\
     VAR[ind_spec] = atm->q[qnt_index][ip];
 
-#define VAR2atm(ind_spec, qnt_index)			\
+/*! Get variable species concentration. */
+#define GET_VAR(ind_spec, qnt_index)			\
   if (qnt_index >= 0)					\
     atm->q[qnt_index][ip] = VAR[ind_spec];
 
-/*Roeth-Approximation Formula for photolysis reactions. (Ref: CLaMS chem.wiki) */
-#define roeth_photol(a, b, c, sza) 				\
-  (c*sza < M_PI ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
+/*! Roeth approximation formula for photolysis reactions. */
+#define ROETH_PHOTOL(a, b, c, sza) 				\
+  (c*sza < M_PI/2. ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
 
-#define INIT_CQNT(qnt_index, clim_var_t)	\
-  if (qnt_index >= 0)						\
+/*! Initialize concentration quantity. */
+#define INIT_CQNT(qnt_index, clim_var_t)				\
+  if (qnt_index >= 0)							\
     atm->q[qnt_index][ip] =						\
       clim_var(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
@@ -1286,7 +1289,7 @@ typedef struct {
   int kpp_chem;
   
   /*! Switch for boundary condition for KPP chemistry module. */
-  int kppchem_bound;
+  int kpp_chem_bound;
   
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
@@ -2552,16 +2555,21 @@ void write_station(
   double t);
 
 
-/*! TODO: doxygen comments are missing. */
+/*! TODO:
+  - move these functions to separate header file with KPP code
+  - copy header file to libs/build/include ...
+  - doxygen comments are missing.
+  - change kppchecm* to kpp_chem*
+*/
 
-void kppchem_bound_cond(
+void kpp_chem_bound_cond(
   ctl_t * ctl,
   atm_t * atm,
   met_t * met0,
   met_t * met1,
   int ip);
 
-void kppchem_initialize(
+void kpp_chem_initialize(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -2569,7 +2577,7 @@ void kppchem_initialize(
   atm_t * atm,
   int ip);
 
-void kppchem_output2atm(
+void kpp_chem_output2atm(
   atm_t * atm,
   ctl_t * ctl,
   int ip);
@@ -2586,13 +2594,13 @@ void kpp_chemgrid_mass2concen(
   int ip,
   int qnt_index);
 
-void kppchem_init_cqnt_clim(
+void kpp_chem_init_cqnt_clim(
   ctl_t * ctl,
   atm_t * atm,
   clim_t * clim,
   int ip);
 
-void kppchem_init_cqnt_met(
+void kpp_chem_init_cqnt_met(
   ctl_t * ctl,
   atm_t * atm,
   met_t * met0,

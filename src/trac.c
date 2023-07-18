@@ -488,7 +488,7 @@ int main(
 
 	  /* Boundary conditions... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kppchem_bound == 1)
+	      || ctl.kpp_chem_bound == 1)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 #ifdef KPP
@@ -669,7 +669,7 @@ void module_bound_cond(
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->kppchem_bound == 0)
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->kpp_chem_bound == 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   const int np = atm->np;
@@ -729,10 +729,8 @@ void module_bound_cond(
 	atm->q[ctl->qnt_vmr][ip] =
 	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 #ifdef KPP
-      // if (ctl->qnt_Cccl3f>=0 && ctl->kppchem_bound == 1)
-      //      atm->q[ctl->qnt_Cccl3f][ip] = 1e5;
-      if (ctl->kppchem_bound == 1)
-	kppchem_bound_cond(ctl, atm, met0, met1, ip);
+      if (ctl->kpp_chem_bound == 1)
+	kpp_chem_bound_cond(ctl, atm, met0, met1, ip);
 #endif
     }
 }
@@ -1759,8 +1757,8 @@ void module_kpp_chemgrid(
     if (izs[ip] >= 0)
       if (!init[ip]) {
 	init[ip] += 1;
-	kppchem_init_cqnt_clim(ctl, atm, clim, ip);
-	kppchem_init_cqnt_met(ctl, atm, met0, met1, ip);
+	kpp_chem_init_cqnt_clim(ctl, atm, clim, ip);
+	kpp_chem_init_cqnt_met(ctl, atm, met0, met1, ip);
       }
 
   /* Calculate the trace spieces concentration according to mass data... */
@@ -1855,13 +1853,13 @@ void module_kpp_chem(
       }
 
       /* Initialize... */
-      kppchem_initialize(ctl, clim, met0, met1, atm, ip);
+      kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
 
       /* Integrate... */
       INTEGRATE(atm->time[ip] - dt[ip], atm->time[ip]);
 
       /* Output to air parcel.. */
-      kppchem_output2atm(atm, ctl, ip);
+      kpp_chem_output2atm(atm, ctl, ip);
 
       /* Free... */
       free(VAR);

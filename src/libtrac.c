@@ -2674,8 +2674,8 @@ void read_ctl(
   /* KPP chemistry... */
   ctl->kpp_chem =
     (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
-  ctl->kppchem_bound =
-    (int) scan_ctl(filename, argc, argv, "KPPCHEM_BOUND", -1, "0", NULL);
+  ctl->kpp_chem_bound =
+    (int) scan_ctl(filename, argc, argv, "KPP_CHEM_BOUND", -1, "0", NULL);
 
   /* OH chemistry... */
   sprintf(defstr, "%d", ctl->oh_chem_reaction);
