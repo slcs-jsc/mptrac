@@ -595,7 +595,7 @@ void module_advect(
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
+#pragma acc parallel loop independent gang vector vector_length(512)
 #else
 #pragma omp parallel for default(shared)
 #endif
