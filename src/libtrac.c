@@ -587,52 +587,10 @@ double clim_oh(
   double lat,
   double p) {
 
-  /* Get seconds since begin of year... */
-  double sec = FMOD(t, 365.25 * 86400.);
-  while (sec < 0)
-    sec += 365.25 * 86400.;
-
-  /* Check pressure range... */
-  if (p < clim->oh.p[clim->oh.np - 1])
-    p = clim->oh.p[clim->oh.np - 1];
-  else if (p > clim->oh.p[0])
-    p = clim->oh.p[0];
-
-  /* Check latitude range... */
-  if (lat < clim->oh.lat[0])
-    lat = clim->oh.lat[0];
-  else if (lat > clim->oh.lat[clim->oh.nlat - 1])
-    lat = clim->oh.lat[clim->oh.nlat - 1];
-
-  /* Get indices... */
-  int isec = locate_irr(clim->oh.time, clim->oh.ntime, sec);
-  int ilat = locate_reg(clim->oh.lat, clim->oh.nlat, lat);
-  int ip = locate_irr(clim->oh.p, clim->oh.np, p);
-
-  /* Interpolate OH data... */
-  double aux00 = LIN(clim->oh.p[ip],
-		     clim->oh.var[isec][ip][ilat],
-		     clim->oh.p[ip + 1],
-		     clim->oh.var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->oh.p[ip],
-		     clim->oh.var[isec][ip][ilat + 1],
-		     clim->oh.p[ip + 1],
-		     clim->oh.var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->oh.p[ip],
-		     clim->oh.var[isec + 1][ip][ilat],
-		     clim->oh.p[ip + 1],
-		     clim->oh.var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->oh.p[ip],
-		     clim->oh.var[isec + 1][ip][ilat + 1],
-		     clim->oh.p[ip + 1],
-		     clim->oh.var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 = LIN(clim->oh.lat[ilat], aux00, clim->oh.lat[ilat + 1], aux01, lat);
-  aux11 = LIN(clim->oh.lat[ilat], aux10, clim->oh.lat[ilat + 1], aux11, lat);
-  aux00 =
-    LIN(clim->oh.time[isec], aux00, clim->oh.time[isec + 1], aux11, sec);
+  /* Get OH data from climatology... */
+  double oh = clim_var(&clim->oh, t, lat, p);
 
   /* Apply diurnal correction... */
-  double oh = GSL_MAX(aux00, 0.0);
   if (ctl->oh_chem_beta > 0) {
     double sza = sza_calc(t, lon, lat);
     if (sza <= M_PI / 2. * 85. / 90.)
