@@ -497,7 +497,7 @@ int main(
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
-	  
+
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
 #ifdef ASYNCIO
@@ -1412,11 +1412,11 @@ void module_h2o2_chem(
       INTPOL_3D(lwc, 1);
       if (!(lwc > 0))
 	continue;
-      
+
       /* Check implicit volume mixing ratio... */
       if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
 	continue;
-      
+
       /* Get temperature... */
       double t;
       INTPOL_3D(t, 0);
@@ -1441,7 +1441,7 @@ void module_h2o2_chem(
       double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
       //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
       double CWC = lwc * rho_air / 1000;
-      
+
       /* Calculate exponential decay (Rolph et al., 1992)... */
       double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
       double aux = exp(-dt[ip] * rate_coef);
@@ -2401,7 +2401,8 @@ void write_output(
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
       || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
       || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
-      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-') {
+      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
+      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
   }
@@ -2457,5 +2458,12 @@ void write_output(
   if (ctl->stat_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
     write_station(filename, ctl, atm, t);
+  }
+
+  /* Write VTK data... */
+  if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
+    static int nvtk;
+    sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
+    write_vtk(filename, ctl, atm, t);
   }
 }

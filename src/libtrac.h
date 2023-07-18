@@ -1278,16 +1278,16 @@ typedef struct {
 
   /*! Beta parameter for diurnal variablity of OH. */
   double oh_chem_beta;
-  
+
   /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
   int h2o2_chem_reaction;
 
   /*! Switch for KPP chemistry module (0=off, 1=on). */
   int kpp_chem;
-  
+
   /*! Switch for boundary condition for KPP chemistry module. */
   int kpp_chem_bound;
-  
+
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
 
@@ -1377,17 +1377,8 @@ typedef struct {
   int atm_stride;
 
   /*! Type of atmospheric data files
-     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS, 4=vtk). */
+     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
   int atm_type;
-
-  /*! Vertical scaling factor for vtk data. */
-  double atm_vtk_scale;
-
-  /*! Vertical offset for vtk data [km]. */
-  double atm_vtk_offset;
-
-  /*! Spherical projection for vtk data (0=no, 1=yes). */
-  int atm_vtk_sphere;
 
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
@@ -1550,6 +1541,24 @@ typedef struct {
 
   /*! Stop time for station output [s]. */
   double stat_t1;
+
+  /*! Basename of VTK data files. */
+  char vtk_basename[LEN];
+
+  /*! Time step for VTK data output [s]. */
+  double vtk_dt_out;
+
+  /*! Particle index stride for VTK data. */
+  int vtk_stride;
+
+  /*! Vertical scaling factor for VTK data. */
+  double vtk_scale;
+
+  /*! Vertical offset for VTK data [km]. */
+  double vtk_offset;
+
+  /*! Spherical projection for VTK data (0=no, 1=yes). */
+  int vtk_sphere;
 
 } ctl_t;
 
@@ -2443,13 +2452,6 @@ void write_atm_nc(
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Write atmospheric data in vtk format. */
-void write_atm_vtk(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
-
 /*! Write CSI data. */
 void write_csi(
   const char *filename,
@@ -2546,6 +2548,13 @@ void write_sample(
 
 /*! Write station data. */
 void write_station(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t);
+
+/*! Write VTK data. */
+void write_vtk(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,

@@ -2693,7 +2693,7 @@ void read_ctl(
   /* H2O2 chemistry... */
   ctl->h2o2_chem_reaction =
     (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
-  
+
   /* Climatological data... */
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
 	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
@@ -2751,12 +2751,6 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_STRIDE", -1, "1", NULL);
   ctl->atm_type =
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE", -1, "0", NULL);
-  ctl->atm_vtk_scale =
-    scan_ctl(filename, argc, argv, "ATM_VTK_SCALE", -1, "1.0", NULL);
-  ctl->atm_vtk_offset =
-    scan_ctl(filename, argc, argv, "ATM_VTK_OFFSET", -1, "0.0", NULL);
-  ctl->atm_vtk_sphere =
-    (int) scan_ctl(filename, argc, argv, "ATM_VTK_SPHERE", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -2856,6 +2850,19 @@ void read_ctl(
   ctl->stat_t0 =
     scan_ctl(filename, argc, argv, "STAT_T0", -1, "-1e100", NULL);
   ctl->stat_t1 = scan_ctl(filename, argc, argv, "STAT_T1", -1, "1e100", NULL);
+
+  /* Output of VTK data... */
+  scan_ctl(filename, argc, argv, "VTK_BASENAME", -1, "-", ctl->vtk_basename);
+  ctl->vtk_dt_out =
+    scan_ctl(filename, argc, argv, "VTK_DT_OUT", -1, "86400", NULL);
+  ctl->vtk_stride =
+    (int) scan_ctl(filename, argc, argv, "VTK_STRIDE", -1, "1", NULL);
+  ctl->vtk_scale =
+    scan_ctl(filename, argc, argv, "VTK_SCALE", -1, "1.0", NULL);
+  ctl->vtk_offset =
+    scan_ctl(filename, argc, argv, "VTK_OFFSET", -1, "0.0", NULL);
+  ctl->vtk_sphere =
+    (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
 }
 
 /*****************************************************************************/
@@ -5308,10 +5315,6 @@ void write_atm(
   else if (ctl->atm_type == 3)
     write_atm_clams(ctl, atm, t);
 
-  /* Write vtk data... */
-  else if (ctl->atm_type == 4)
-    write_atm_vtk(filename, ctl, atm, t);
-
   /* Error... */
   else
     ERRMSG("Atmospheric data type not supported!");
@@ -5663,76 +5666,6 @@ void write_atm_nc(
 
   /* Close file... */
   NC(nc_close(ncid));
-}
-
-/*****************************************************************************/
-
-void write_atm_vtk(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
-
-  FILE *out;
-
-  /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Create file... */
-  if (!(out = fopen(filename, "w")))
-    ERRMSG("Cannot create file!");
-
-  /* Count data points... */
-  int np = 0;
-  for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
-    if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
-      continue;
-    np++;
-  }
-
-  /* Write header... */
-  fprintf(out,
-	  "# vtk DataFile Version 3.0\n"
-	  "vtk output\n" "ASCII\n" "DATASET POLYDATA\n");
-
-  /* Write point coordinates... */
-  fprintf(out, "POINTS %d float\n", np);
-  if (ctl->atm_vtk_sphere) {
-    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
-      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
-	continue;
-      double radius = (RE + Z(atm->p[ip]) * ctl->atm_vtk_scale
-		       + ctl->atm_vtk_offset) / RE;
-      double x = radius * cos(atm->lat[ip] / 180. * M_PI)
-	* cos(atm->lon[ip] / 180. * M_PI);
-      double y = radius * cos(atm->lat[ip] / 180. * M_PI)
-	* sin(atm->lon[ip] / 180. * M_PI);
-      double z = radius * sin(atm->lat[ip] / 180. * M_PI);
-      fprintf(out, "%g %g %g\n", x, y, z);
-    }
-  } else
-    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
-      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
-	continue;
-      fprintf(out, "%g %g %g\n", atm->lon[ip], atm->lat[ip],
-	      Z(atm->p[ip]) * ctl->atm_vtk_scale + ctl->atm_vtk_offset);
-    }
-
-  /* Write point data... */
-  fprintf(out, "POINT_DATA %d\n", np);
-  for (int iq = 0; iq < ctl->nq; iq++) {
-    fprintf(out, "SCALARS %s float 1\n" "LOOKUP_TABLE default\n",
-	    ctl->qnt_name[iq]);
-    for (int ip = 0; ip < atm->np; ip += ctl->atm_stride) {
-      if (ctl->atm_filter == 2 && (atm->time[ip] < t0 || atm->time[ip] > t1))
-	continue;
-      fprintf(out, "%g\n", atm->q[iq][ip]);
-    }
-  }
-
-  /* Close file... */
-  fclose(out);
 }
 
 /*****************************************************************************/
@@ -7123,4 +7056,80 @@ void write_station(
   /* Close file... */
   if (t == ctl->t_stop)
     fclose(out);
+}
+
+/*****************************************************************************/
+
+void write_vtk(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm,
+  double t) {
+
+  FILE *out;
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_VTK", "OUTPUT", NVTX_WRITE);
+
+  /* Write info... */
+  LOG(1, "Write VTK data: %s", filename);
+
+  /* Set time interval for output... */
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Create file... */
+  if (!(out = fopen(filename, "w")))
+    ERRMSG("Cannot create file!");
+
+  /* Count data points... */
+  int np = 0;
+  for (int ip = 0; ip < atm->np; ip += ctl->vtk_stride) {
+    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
+    np++;
+  }
+
+  /* Write header... */
+  fprintf(out,
+	  "# vtk DataFile Version 3.0\n"
+	  "vtk output\n" "ASCII\n" "DATASET POLYDATA\n");
+
+  /* Write point coordinates... */
+  fprintf(out, "POINTS %d float\n", np);
+  if (ctl->vtk_sphere) {
+    for (int ip = 0; ip < atm->np; ip += ctl->vtk_stride) {
+      if (atm->time[ip] < t0 || atm->time[ip] > t1)
+	continue;
+      double radius = (RE + Z(atm->p[ip]) * ctl->vtk_scale
+		       + ctl->vtk_offset) / RE;
+      double x = radius * cos(atm->lat[ip] / 180. * M_PI)
+	* cos(atm->lon[ip] / 180. * M_PI);
+      double y = radius * cos(atm->lat[ip] / 180. * M_PI)
+	* sin(atm->lon[ip] / 180. * M_PI);
+      double z = radius * sin(atm->lat[ip] / 180. * M_PI);
+      fprintf(out, "%g %g %g\n", x, y, z);
+    }
+  } else
+    for (int ip = 0; ip < atm->np; ip += ctl->vtk_stride) {
+      if (atm->time[ip] < t0 || atm->time[ip] > t1)
+	continue;
+      fprintf(out, "%g %g %g\n", atm->lon[ip], atm->lat[ip],
+	      Z(atm->p[ip]) * ctl->vtk_scale + ctl->vtk_offset);
+    }
+
+  /* Write point data... */
+  fprintf(out, "POINT_DATA %d\n", np);
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    fprintf(out, "SCALARS %s float 1\n" "LOOKUP_TABLE default\n",
+	    ctl->qnt_name[iq]);
+    for (int ip = 0; ip < atm->np; ip += ctl->vtk_stride) {
+      if (atm->time[ip] < t0 || atm->time[ip] > t1)
+	continue;
+      fprintf(out, "%g\n", atm->q[iq][ip]);
+    }
+  }
+
+  /* Close file... */
+  fclose(out);
 }
