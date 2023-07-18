@@ -190,7 +190,8 @@ int main(
 	    ohm[iz][iy] +=
 	      clim_oh(&ctl, clim, met->time, met->lon[ix],
 		      lats[iy], plev[iz]);
-	    h2o2m[iz][iy] += clim_h2o2(clim, met->time, lats[iy], plev[iz]);
+	    h2o2m[iz][iy]
+	      += clim_var(&clim->h2o2, met->time, lats[iy], plev[iz]);
 	    np[iz][iy]++;
 	  }
   }

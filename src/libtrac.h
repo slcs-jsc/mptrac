@@ -1892,16 +1892,6 @@ void clim_oh_diurnal_correction(
   ctl_t * ctl,
   clim_t * clim);
 
-/*! Climatology of H2O2 number concentrations. */
-#ifdef _OPENACC
-#pragma acc routine (clim_h2o2)
-#endif
-double clim_h2o2(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p);
-
 /*! Climatology of a single variable. */
 #ifdef _OPENACC
 #pragma acc routine (clim_var)
@@ -1912,7 +1902,7 @@ double clim_var(
   double lat,
   double p);
 
-/*! Initialization function for a single variable. */
+/*! Initialization function for climatology of a single variable. */
 void clim_var_init(
   clim_var_t * var,
   char *varname,

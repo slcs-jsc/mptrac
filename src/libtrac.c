@@ -675,63 +675,6 @@ void clim_oh_diurnal_correction(
 
 /*****************************************************************************/
 
-double clim_h2o2(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p) {
-
-  /* Get seconds since begin of year... */
-  double sec = FMOD(t, 365.25 * 86400.);
-  while (sec < 0)
-    sec += 365.25 * 86400.;
-
-  /* Check pressure... */
-  if (p < clim->h2o2.p[clim->h2o2.np - 1])
-    p = clim->h2o2.p[clim->h2o2.np - 1];
-  else if (p > clim->h2o2.p[0])
-    p = clim->h2o2.p[0];
-
-  /* Check latitude... */
-  if (lat < clim->h2o2.lat[0])
-    lat = clim->h2o2.lat[0];
-  else if (lat > clim->h2o2.lat[clim->h2o2.nlat - 1])
-    lat = clim->h2o2.lat[clim->h2o2.nlat - 1];
-
-  /* Get indices... */
-  int isec = locate_irr(clim->h2o2.time, clim->h2o2.ntime, sec);
-  int ilat = locate_reg(clim->h2o2.lat, clim->h2o2.nlat, lat);
-  int ip = locate_irr(clim->h2o2.p, clim->h2o2.np, p);
-
-  /* Interpolate H2O2 climatology... */
-  double aux00 = LIN(clim->h2o2.p[ip],
-		     clim->h2o2.var[isec][ip][ilat],
-		     clim->h2o2.p[ip + 1],
-		     clim->h2o2.var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(clim->h2o2.p[ip],
-		     clim->h2o2.var[isec][ip][ilat + 1],
-		     clim->h2o2.p[ip + 1],
-		     clim->h2o2.var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(clim->h2o2.p[ip],
-		     clim->h2o2.var[isec + 1][ip][ilat],
-		     clim->h2o2.p[ip + 1],
-		     clim->h2o2.var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(clim->h2o2.p[ip],
-		     clim->h2o2.var[isec + 1][ip][ilat + 1],
-		     clim->h2o2.p[ip + 1],
-		     clim->h2o2.var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 =
-    LIN(clim->h2o2.lat[ilat], aux00, clim->h2o2.lat[ilat + 1], aux01, lat);
-  aux11 =
-    LIN(clim->h2o2.lat[ilat], aux10, clim->h2o2.lat[ilat + 1], aux11, lat);
-  aux00 =
-    LIN(clim->h2o2.time[isec], aux00, clim->h2o2.time[isec + 1], aux11, sec);
-
-  return GSL_MAX(aux00, 0.0);
-}
-
-/*****************************************************************************/
-
 double clim_var(
   clim_var_t * var,
   double t,

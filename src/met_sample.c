@@ -143,7 +143,8 @@ int main(
 							      atm->p[ip]),
 	    clim_oh(&ctl, clim, atm->time[ip], atm->lon[ip],
 		    atm->lat[ip], atm->p[ip]),
-	    clim_h2o2(clim, atm->time[ip], atm->lat[ip], atm->p[ip]), pbl);
+	    clim_var(&clim->h2o2, atm->time[ip], atm->lat[ip],
+		     atm->p[ip]), pbl);
   }
 
   /* Close file... */

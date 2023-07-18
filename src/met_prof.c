@@ -176,7 +176,7 @@ int main(
 	      nat_temperature(plev[iz], h2o,
 			      clim_hno3(clim, met->time, lat, plev[iz]));
 	    ohm[iz] += clim_oh(&ctl, clim, met->time, lon, lat, plev[iz]);
-	    h2o2m[iz] += clim_h2o2(clim, met->time, lat, plev[iz]);
+	    h2o2m[iz] += clim_var(&clim->h2o2, met->time, lat, plev[iz]);
 	    np[iz]++;
 	  }
 	}
