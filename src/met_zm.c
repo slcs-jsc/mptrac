@@ -58,8 +58,9 @@ int main(
     h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY],
     ccm[NZ][NY], zm[NZ][NY], rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY],
     ticem[NZ][NY], tnatm[NZ][NY], hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY],
-    z, z0, z1, dz, zt, tt, plev[NZ], ps, ts, zs, us, vs, lsm, sst, pbl, pt,
-    pct, pcb, plcl, plfc, pel, cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3,
+    ho2m[NZ][NY], o1dm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
+    ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, plcl, plfc, pel,
+    cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3,
     lwc, iwc, cc, lat, lat0, lat1, dlat, lats[NY], lon0, lon1,
     lonm[NZ][NY], cw[3];
 
@@ -192,6 +193,10 @@ int main(
 		      lats[iy], plev[iz]);
 	    h2o2m[iz][iy]
 	      += clim_var(&clim->h2o2, met->time, lats[iy], plev[iz]);
+	    ho2m[iz][iy]
+	      += clim_var(&clim->ho2, met->time, lats[iy], plev[iz]);
+	    o1dm[iz][iy]
+	      += clim_var(&clim->o1d, met->time, lats[iy], plev[iz]);
 	    np[iz][iy]++;
 	  }
   }
@@ -211,7 +216,7 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %d %d %d\n",
+	      " %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
@@ -233,6 +238,7 @@ int main(
 	      tdewm[iz][iy] / np[iz][iy], ticem[iz][iy] / np[iz][iy],
 	      tnatm[iz][iy] / np[iz][iy], hno3m[iz][iy] / np[iz][iy],
 	      ohm[iz][iy] / np[iz][iy], h2o2m[iz][iy] / np[iz][iy],
+	      ho2m[iz][iy] / np[iz][iy], o1dm[iz][iy] / np[iz][iy],
 	      pblm[iz][iy] / np[iz][iy],
 	      np[iz][iy], npt[iz][iy], npc[iz][iy]);
   }

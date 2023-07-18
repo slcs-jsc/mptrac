@@ -55,7 +55,8 @@ int main(
     pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ], cl, clm[NZ], plcl, plclm[NZ],
     plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ], cin, cinm[NZ], tt,
     ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ],
-    tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ], ohm[NZ], h2o2m[NZ], cw[3];
+    tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ], ohm[NZ], h2o2m[NZ],
+    ho2m[NZ], o1dm[NZ], cw[3];
 
   static int i, iz, np[NZ], npc[NZ], npt[NZ], nz, ci[3];
 
@@ -177,6 +178,8 @@ int main(
 			      clim_hno3(clim, met->time, lat, plev[iz]));
 	    ohm[iz] += clim_oh(&ctl, clim, met->time, lon, lat, plev[iz]);
 	    h2o2m[iz] += clim_var(&clim->h2o2, met->time, lat, plev[iz]);
+	    ho2m[iz] += clim_var(&clim->ho2, met->time, lat, plev[iz]);
+	    o1dm[iz] += clim_var(&clim->o1d, met->time, lat, plev[iz]);
 	    np[iz]++;
 	  }
 	}
@@ -195,7 +198,7 @@ int main(
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
@@ -211,7 +214,8 @@ int main(
 	    capem[iz] / npc[iz], cinm[iz] / npc[iz], rhm[iz] / np[iz],
 	    rhicem[iz] / np[iz], tdewm[iz] / np[iz], ticem[iz] / np[iz],
 	    tnatm[iz] / np[iz], hno3m[iz] / np[iz], ohm[iz] / np[iz],
-	    h2o2m[iz] / np[iz], pblm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
+	    h2o2m[iz] / np[iz], ho2m[iz] / np[iz], o1dm[iz] / np[iz],
+	    pblm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
 
   /* Close file... */
   fclose(out);

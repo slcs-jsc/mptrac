@@ -55,7 +55,8 @@ int main(
     sst, sstm[NX][NY], pbl, pblm[NX][NY], pt, ptm[NX][NY], t,
     pm[NX][NY], tm[NX][NY], u, um[NX][NY], v, vm[NX][NY],
     w, wm[NX][NY], h2o, h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
-    hno3m[NX][NY], ohm[NX][NY], h2o2m[NX][NY], tdewm[NX][NY], ticem[NX][NY],
+    hno3m[NX][NY], ohm[NX][NY], h2o2m[NX][NY], ho2m[NX][NY], o1dm[NX][NY],
+    tdewm[NX][NY], ticem[NX][NY],
     tnatm[NX][NY], lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], cc, ccm[NX][NY],
     z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY],
     pct, pctm[NX][NY], pcb, pcbm[NX][NY], cl, clm[NX][NY], plcl,
@@ -188,6 +189,8 @@ int main(
 	  nat_temperature(p0, h2o, clim_hno3(clim, met->time, lats[iy], p0));
 	ohm[ix][iy] += clim_oh(&ctl, clim, met->time, lons[ix], lats[iy], p0);
 	h2o2m[ix][iy] += clim_var(&clim->h2o2, met->time, lats[iy], p0);
+	ho2m[ix][iy] += clim_var(&clim->ho2, met->time, lats[iy], p0);
+	o1dm[ix][iy] += clim_var(&clim->o1d, met->time, lats[iy], p0);
 	rhm[ix][iy] += RH(p0, t, h2o);
 	rhicem[ix][iy] += RHICE(p0, t, h2o);
 	tdewm[ix][iy] += TDEW(p0, h2o);
@@ -209,7 +212,7 @@ int main(
     fprintf(out, "\n");
     for (ix = 0; ix < nx; ix++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
@@ -233,6 +236,7 @@ int main(
 	      tdewm[ix][iy] / np[ix][iy], ticem[ix][iy] / np[ix][iy],
 	      tnatm[ix][iy] / np[ix][iy], hno3m[ix][iy] / np[ix][iy],
 	      ohm[ix][iy] / np[ix][iy], h2o2m[ix][iy] / np[ix][iy],
+	      ho2m[ix][iy] / np[ix][iy], o1dm[ix][iy] / np[ix][iy],
 	      pblm[ix][iy] / np[ix][iy],
 	      np[ix][iy], npt[ix][iy], npc[ix][iy]);
   }

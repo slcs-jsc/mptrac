@@ -446,10 +446,12 @@
 	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
 	  "# $42 = OH concentration [molec/cm^3]\n"			\
 	  "# $43 = H2O2 concentration [molec/cm^3]\n"			\
-	  "# $44 = boundary layer pressure [hPa]\n"			\
-	  "# $45 = number of data points\n"				\
-	  "# $46 = number of tropopause data points\n"			\
-	  "# $47 = number of CAPE data points\n");			\
+	  "# $44 = HO2 concentration [molec/cm^3]\n"			\
+	  "# $45 = O1D concentration [molec/cm^3]\n"			\
+	  "# $46 = boundary layer pressure [hPa]\n"			\
+	  "# $47 = number of data points\n"				\
+	  "# $48 = number of tropopause data points\n"			\
+	  "# $49 = number of CAPE data points\n");			\
 
 /*! Calculate molecular density of air. */
 #define MOLEC_DEN_AIR(p,t)			\

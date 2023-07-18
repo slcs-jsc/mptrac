@@ -127,8 +127,8 @@ int main(
 
     /* Write data... */
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs, lsm,
@@ -137,13 +137,15 @@ int main(
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_hno3(clim, atm->time[ip], atm->lat[ip],
-				      atm->p[ip])), clim_hno3(clim,
-							      atm->time[ip],
-							      atm->lat[ip],
-							      atm->p[ip]),
+				      atm->p[ip])),
+	    clim_hno3(clim, atm->time[ip], atm->lat[ip], atm->p[ip]),
 	    clim_oh(&ctl, clim, atm->time[ip], atm->lon[ip],
 		    atm->lat[ip], atm->p[ip]),
 	    clim_var(&clim->h2o2, atm->time[ip], atm->lat[ip],
+		     atm->p[ip]),
+	    clim_var(&clim->ho2, atm->time[ip], atm->lat[ip],
+		     atm->p[ip]),
+	    clim_var(&clim->o1d, atm->time[ip], atm->lat[ip],
 		     atm->p[ip]), pbl);
   }
 
