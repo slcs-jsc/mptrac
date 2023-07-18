@@ -681,12 +681,6 @@
    KPP...
    ------------------------------------------------------------ */
 
-/* TODO:
-   - doxygen comments are missing
-   - use upper case names for macros!
-   - rename VAR2atm into GET_VAR ?
-*/
-
 /*! Set variable species concentration. */
 #define SET_VAR(ind_spec, qnt_index) 			\
   if (qnt_index >= 0)					\
