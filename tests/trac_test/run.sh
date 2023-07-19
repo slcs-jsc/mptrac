@@ -85,12 +85,13 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 	   ENS_BASENAME ens STAT_BASENAME station \
 	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
 	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
-           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab
+           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
+	   VTK_BASENAME atm
 
 # Compare files...
 echo -e "\nCompare results..."
 error=0
-for f in $(ls data.ref/*.tab) ; do
+for f in $(ls data.ref/*.tab data.ref/*.vtk) ; do
     diff -q -s data/$(basename "$f") "$f"
     [ $? -ne 0 ] && error=1
 done
