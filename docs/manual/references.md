@@ -26,7 +26,7 @@ Smoydzin, L. and Hoor, P.: Contribution of Asian emissions to upper tropospheric
 
 Liu, M., Huang, Y., Hoffmann, L., Huang, C., Chen, P., Heng, Y.: High-Resolution Source Estimation of Volcanic Sulfur Dioxide Emissions Using Large-Scale Transport Simulations, in: Krzhizhanovskaya V.V. et al. (eds), Computational Science – ICCS 2020, ICCS 2020, Lecture Notes in Computer Science, vol 12139, Springer, <https://doi.org/10.1007/978-3-030-50420-5_5>, 2020.
 
-Zhang, J., Wu, X., Bian, J., Xia, X., Bai, Z., Liu, Y., Cai, Z., Huo, J., Lyu, D., Aerosol variations in the upper troposphere and lower stratosphere over the Tibetan Plateau. Environ. Res. Lett., 15(9), 094068, 2020, <https://iopscience.iop.org/article/10.1088/1748-9326/ab9b43>.
+Zhang, J., Wu, X., Bian, J., Xia, X., Bai, Z., Liu, Y., Cai, Z., Huo, J., Lyu, D., Aerosol variations in the upper troposphere and lower stratosphere over the Tibetan Plateau. Environ. Res. Lett., 15(9), 094068, <https://iopscience.iop.org/article/10.1088/1748-9326/ab9b43>, 2020.
 
 Hoffmann, L., Günther, G., Li, D., Stein, O., Wu, X., Griessbach, S., Heng, Y., Konopka, P., Müller, R., Vogel, B., and Wright, J. S.: From ERA-Interim to ERA5: the considerable impact of ECMWF's next-generation reanalysis on Lagrangian transport simulations, Atmos. Chem. Phys., 19, 3097-3124, <https://doi.org/10.5194/acp-19-3097-2019>, 2019.
 
