@@ -22,7 +22,7 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 * Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
 * Additional modules are implemented to simulate convection, sedimentation, exponential decay, gas and aqueous phase chemistry, wet and dry deposition.
 * Meteo data pre-processing code to calculate boundary layer, convective available potential energy, geopotential heights, potential vorticity, and tropopause data.
-* Various output methods for particle, grid, ensemble, sample, and station data. Gnuplot interface for direct visualization.
+* Various output methods for particle, grid, ensemble, profile, sample, and station data. Gnuplot and Paraview interfaces for visualization.
 * MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
 * Distributed open source under the terms and conditions of the GNU GPL.
 
