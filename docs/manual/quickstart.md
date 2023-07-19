@@ -18,7 +18,7 @@ This is an example showing the particle output on 6th to 8th of June 2011:
 
 ## Further information
 
-More detailed information for new users and developers is provided in the [MPTRAC user manual](http://mptrac.readthedocs.io) and collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
+More detailed information for new users and developers is provided in the [MPTRAC user manual](https://slcs-jsc.github.io/mptrac/) and collected in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
 A detailed description of the MPTRAC model is provided in this paper:
 
