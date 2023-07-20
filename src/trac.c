@@ -456,12 +456,17 @@ int main(
 	  /* Check final positions... */
 	  module_position(&ctl, met0, met1, atm, dt);
 
+	  /* Boundary conditions... */
+	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
+	      || ctl.kpp_chem_bound == 1)
+	    module_bound_cond(&ctl, met0, met1, atm, dt);
+	  
 	  /* Interpolate meteo data... */
 	  if (ctl.met_dt_out > 0
 	      && (ctl.met_dt_out < ctl.dt_mod
 		  || fmod(t, ctl.met_dt_out) == 0))
 	    module_meteo(&ctl, clim, met0, met1, atm);
-
+	  
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	    module_decay(&ctl, clim, atm, dt);
@@ -469,7 +474,7 @@ int main(
 	  /* OH chemistry... */
 	  if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
-
+	  
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0) {
 	    module_h2o2_chemgrid(&ctl, met0, met1, atm, t);
@@ -485,11 +490,6 @@ int main(
 	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
 	    module_wet_deposition(&ctl, met0, met1, atm, dt);
 
-	  /* Boundary conditions... */
-	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kpp_chem_bound == 1)
-	    module_bound_cond(&ctl, met0, met1, atm, dt);
-
 #ifdef KPP
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem == 1) {
@@ -497,6 +497,11 @@ int main(
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
+	  
+	  /* Boundary conditions... */
+	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
+	      || ctl.kpp_chem_bound == 1)
+	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
