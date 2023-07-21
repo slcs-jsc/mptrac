@@ -1042,6 +1042,9 @@ typedef struct {
   /*! Quantity array index for H2O2 concentration. */
   int qnt_Ch2o2;
 
+  /*! Quantity array index for H2O concentration. */
+  int qnt_Ch2o;
+
   /*! Quantity array index for O(1D) concentration. */
   int qnt_Co1d;
 
@@ -1274,6 +1277,9 @@ typedef struct {
 
   /*! Filename of O(1D) climatology. */
   char clim_o1d_filename[LEN];
+
+  /*! Filename of O3 climatology. */
+  char clim_o3_filename[LEN];
 
   /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
   int oh_chem_reaction;
@@ -1690,6 +1696,8 @@ typedef struct {
   /*! O(1D) climatology data. */
   clim_var_t o1d;
 
+  /*! O(1D) climatology data. */
+  clim_var_t o3;
 } clim_t;
 
 /*! Meteo data. */
@@ -2595,15 +2603,10 @@ void kpp_chemgrid_mass2concen(
   int ip,
   int qnt_index);
 
-void kpp_chem_init_cqnt_clim(
+void kpp_chem_init_cqnt(
   ctl_t * ctl,
   atm_t * atm,
-  clim_t * clim,
-  int ip);
-
-void kpp_chem_init_cqnt_met(
-  ctl_t * ctl,
-  atm_t * atm,
+	clim_t * clim,
   met_t * met0,
   met_t * met1,
   int ip);

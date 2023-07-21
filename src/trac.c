@@ -1759,8 +1759,7 @@ void module_kpp_chemgrid(
     if (izs[ip] >= 0)
       if (!init[ip]) {
 	init[ip] += 1;
-	kpp_chem_init_cqnt_clim(ctl, atm, clim, ip);
-	kpp_chem_init_cqnt_met(ctl, atm, met0, met1, ip);
+	kpp_chem_init_cqnt(ctl, atm, clim, met0, met1, ip);
       }
 
   /* Calculate the trace spieces concentration according to mass data... */

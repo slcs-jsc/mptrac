@@ -124,23 +124,18 @@ void kpp_chem_output2atm(
 		}
 }
 
-void kpp_chem_init_cqnt_clim(
-	ctl_t * ctl,
-	atm_t * atm,
+void kpp_chem_init_cqnt(
+  ctl_t * ctl,
+  atm_t * atm,
 	clim_t * clim,
-	int ip
-){
+  met_t * met0,
+  met_t * met1,
+  int ip){
 
-	INIT_CQNT(ctl->qnt_Ch2o2, clim->h2o2);
-	INIT_CQNT(ctl->qnt_Cho2, clim->ho2);
-}
-
-void kpp_chem_init_cqnt_met(
-ctl_t * ctl,
-atm_t * atm,
-met_t * met0,
-met_t * met1,
-int ip){
+	SET_ATM(qnt_Ch2o2, clim_var(&clim->h2o2, atm->time[ip],
+						atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Cho2, clim_var(&clim->ho2, atm->time[ip],
+						atm->lat[ip], atm->p[ip]));
 }
 
 void interparc_mixing(
