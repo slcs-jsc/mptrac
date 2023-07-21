@@ -2184,7 +2184,7 @@ void read_clim(
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    clim_var_init(&clim->h2o2, "h2o2", ctl->clim_h2o2_filename);
+    clim_var_init(&clim->h2o2, "H2O2", ctl->clim_h2o2_filename);
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
@@ -2193,6 +2193,9 @@ void read_clim(
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
     clim_var_init(&clim->o1d, "O(1D)", ctl->clim_o1d_filename);
+
+  if (ctl->clim_o3_filename[0] != '-')
+    clim_var_init(&clim->o3, "O3", ctl->clim_o3_filename);
 }
 
 /*****************************************************************************/
@@ -2283,6 +2286,7 @@ void read_ctl(
   ctl->qnt_Ch = -1;
   ctl->qnt_Co3p = -1;
   ctl->qnt_Ch2o2 = -1;
+  ctl->qnt_Ch2o = -1;
   ctl->qnt_Co3 = -1;
   ctl->qnt_Cn2o = -1;
   ctl->qnt_Cccl3f = -1;
@@ -2380,6 +2384,7 @@ void read_ctl(
       SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm^3")
       SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm^3")
       SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm^3")
+      SET_QNT(qnt_Ch2o, "Ch2o", "H2O concentration", "molec/cm^3")
       SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
       SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration",
@@ -2692,6 +2697,8 @@ void read_ctl(
 	   "../../data/clams_radical_species.nc", ctl->clim_ho2_filename);
   scan_ctl(filename, argc, argv, "CLIM_O1D_FILENAME", -1,
 	   "../../data/clams_radical_species.nc", ctl->clim_o1d_filename);
+  scan_ctl(filename, argc, argv, "CLIM_O3_FILENAME", -1,
+	   "../../data/cams_O3.nc", ctl->clim_o3_filename);
 
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
