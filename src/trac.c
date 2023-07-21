@@ -460,13 +460,13 @@ int main(
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
 	      || ctl.kpp_chem_bound == 1)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
-	  
+
 	  /* Interpolate meteo data... */
 	  if (ctl.met_dt_out > 0
 	      && (ctl.met_dt_out < ctl.dt_mod
 		  || fmod(t, ctl.met_dt_out) == 0))
 	    module_meteo(&ctl, clim, met0, met1, atm);
-	  
+
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	    module_decay(&ctl, clim, atm, dt);
@@ -474,7 +474,7 @@ int main(
 	  /* OH chemistry... */
 	  if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
-	  
+
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0) {
 	    module_h2o2_chemgrid(&ctl, met0, met1, atm, t);
@@ -497,7 +497,7 @@ int main(
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
-	  
+
 	  /* Boundary conditions... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
 	      || ctl.kpp_chem_bound == 1)
@@ -599,7 +599,7 @@ void module_advect(
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector vector_length(512)
+#pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
@@ -2121,7 +2121,7 @@ void module_sort(
 #endif
   }
 #endif
-  
+
   /* Sort data... */
   module_sort_help(atm->time, p, np);
   module_sort_help(atm->p, p, np);
