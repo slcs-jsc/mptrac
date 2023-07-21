@@ -33,6 +33,7 @@ extern double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
 
 #INLINE C_RATES
 #include "libtrac.h"
+#include "kpp_chem.h"
 
 double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
 {
@@ -109,6 +110,7 @@ void kpp_chem_initialize(
 #INLINE C_UTIL
 
 #include "libtrac.h"
+#include "kpp_chem.h"
 
 void kpp_chem_output2atm(
 	atm_t * atm,

@@ -24,6 +24,13 @@
 
 #include "libtrac.h"
 
+#ifdef KPP
+  #include "chem_Parameters.h"
+  #include "chem_Global.h"
+  #include "chem_Sparse.h"
+  #include "kpp_chem.h"
+#endif
+
 /* ------------------------------------------------------------
    Global variables...
    ------------------------------------------------------------ */
@@ -1604,10 +1611,6 @@ void module_h2o2_chemgrid(
 
 #ifdef KPP
 
-#include "chem_Parameters.h"
-#include "chem_Global.h"
-#include "chem_Sparse.h"
-
 void INTEGRATE(
   double TIN,
   double TOUT);
@@ -1806,7 +1809,6 @@ void module_kpp_chemgrid(
   }
 
   /* Calculate the inter-parcel exchange between parcel and backgroud */
-  //if (izs[ip] >= 0) TODO
   interparc_mixing(ctl, atm, clim, ixs, iys, izs);
 
   /* Free... */
