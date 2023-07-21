@@ -730,8 +730,6 @@ void module_bound_cond(
 	atm->q[ctl->qnt_vmr][ip] =
 	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 #ifdef KPP
-      // if (ctl->qnt_Cccl3f>=0 && ctl->kppchem_bound == 1)
-      //      atm->q[ctl->qnt_Cccl3f][ip] = 1e5;
       if (ctl->kppchem_bound == 1)
 	kppchem_bound_cond(ctl, atm, met0, met1, ip);
 #endif
@@ -1757,8 +1755,7 @@ void module_kpp_chemgrid(
     if (izs[ip] >= 0)
       if (!init[ip]) {
 	init[ip] += 1;
-	kppchem_init_cqnt_clim(ctl, atm, clim, ip);
-	kppchem_init_cqnt_met(ctl, atm, met0, met1, ip);
+	kppchem_init_cqnt(ctl, atm, clim, met0, met1, ip);
       }
 
   /* Calculate the trace spieces concentration according to mass data... */
