@@ -2085,7 +2085,7 @@ void read_clim(
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    clim_var_init(&clim->h2o2, "h2o2", ctl->clim_h2o2_filename);
+    clim_var_init(&clim->h2o2, "H2O2", ctl->clim_h2o2_filename);
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
