@@ -4,7 +4,7 @@ docs/docs/
 docs/html/
 docs/latex/
 docs/site/
-kpp/*/Makefile_chem
+kpp/*/Makefile*
 kpp/*/*.a
 kpp/*/*.c
 kpp/*/*.h
