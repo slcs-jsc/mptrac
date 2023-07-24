@@ -2549,11 +2549,28 @@ void read_ctl(
   sprintf(defstr, "%g", ctl->molmass);
   ctl->molmass = scan_ctl(filename, argc, argv, "MOLMASS", -1, defstr, NULL);
 
-  /* Dry deposition... */
-  ctl->dry_depo_vdep =
-    scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
-  ctl->dry_depo_dp =
-    scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
+  /* OH chemistry... */
+  sprintf(defstr, "%d", ctl->oh_chem_reaction);
+  ctl->oh_chem_reaction =
+    (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, defstr,
+		   NULL);
+  for (int ip = 0; ip < 4; ip++) {
+    sprintf(defstr, "%g", ctl->oh_chem[ip]);
+    ctl->oh_chem[ip] =
+      scan_ctl(filename, argc, argv, "OH_CHEM", ip, defstr, NULL);
+  }
+  ctl->oh_chem_beta =
+    scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
+
+  /* H2O2 chemistry... */
+  ctl->h2o2_chem_reaction =
+    (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
+
+  /* KPP chemistry... */
+  ctl->kpp_chem =
+    (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
+  ctl->kpp_chem_bound =
+    (int) scan_ctl(filename, argc, argv, "KPP_CHEM_BOUND", -1, "0", NULL);
 
   /* Wet deposition... */
   for (int ip = 0; ip < 3; ip++) {
@@ -2583,28 +2600,11 @@ void read_ctl(
   ctl->wet_depo_bc_ret_ratio =
     scan_ctl(filename, argc, argv, "WET_DEPO_BC_RET_RATIO", -1, "1", NULL);
 
-  /* KPP chemistry... */
-  ctl->kpp_chem =
-    (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
-  ctl->kpp_chem_bound =
-    (int) scan_ctl(filename, argc, argv, "KPP_CHEM_BOUND", -1, "0", NULL);
-
-  /* OH chemistry... */
-  sprintf(defstr, "%d", ctl->oh_chem_reaction);
-  ctl->oh_chem_reaction =
-    (int) scan_ctl(filename, argc, argv, "OH_CHEM_REACTION", -1, defstr,
-		   NULL);
-  for (int ip = 0; ip < 4; ip++) {
-    sprintf(defstr, "%g", ctl->oh_chem[ip]);
-    ctl->oh_chem[ip] =
-      scan_ctl(filename, argc, argv, "OH_CHEM", ip, defstr, NULL);
-  }
-  ctl->oh_chem_beta =
-    scan_ctl(filename, argc, argv, "OH_CHEM_BETA", -1, "0", NULL);
-
-  /* H2O2 chemistry... */
-  ctl->h2o2_chem_reaction =
-    (int) scan_ctl(filename, argc, argv, "H2O2_CHEM_REACTION", -1, "0", NULL);
+  /* Dry deposition... */
+  ctl->dry_depo_vdep =
+    scan_ctl(filename, argc, argv, "DRY_DEPO_VDEP", -1, "0", NULL);
+  ctl->dry_depo_dp =
+    scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
 
   /* Climatological data... */
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
@@ -2618,13 +2618,37 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "CLIM_O3_FILENAME", -1,
 	   "../../data/cams_O3.nc", ctl->clim_o3_filename);
 
+  /* Mixing... */
+  ctl->mixing_dt = scan_ctl(filename, argc, argv, "MIXING_DT", -1, "0", NULL);
+  ctl->mixing_trop
+    = scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "0", NULL);
+  ctl->mixing_strat
+    = scan_ctl(filename, argc, argv, "MIXING_STRAT", -1, "0", NULL);
+  ctl->mixing_z0 =
+    scan_ctl(filename, argc, argv, "MIXING_Z0", -1, "-5", NULL);
+  ctl->mixing_z1 =
+    scan_ctl(filename, argc, argv, "MIXING_Z1", -1, "95", NULL);
+  ctl->mixing_nz =
+    (int) scan_ctl(filename, argc, argv, "MIXING_NZ", -1, "100", NULL);
+  ctl->mixing_lon0 =
+    scan_ctl(filename, argc, argv, "MIXING_LON0", -1, "-180", NULL);
+  ctl->mixing_lon1 =
+    scan_ctl(filename, argc, argv, "MIXING_LON1", -1, "180", NULL);
+  ctl->mixing_nx =
+    (int) scan_ctl(filename, argc, argv, "MIXING_NX", -1, "360", NULL);
+  ctl->mixing_lat0 =
+    scan_ctl(filename, argc, argv, "MIXING_LAT0", -1, "-90", NULL);
+  ctl->mixing_lat1 =
+    scan_ctl(filename, argc, argv, "MIXING_LAT1", -1, "90", NULL);
+  ctl->mixing_ny =
+    (int) scan_ctl(filename, argc, argv, "MIXING_NY", -1, "180", NULL);
+
   /* Chemistry grid... */
   ctl->chemgrid_z0 =
     scan_ctl(filename, argc, argv, "CHEMGRID_Z0", -1, "0", NULL);
   ctl->chemgrid_z1 =
     scan_ctl(filename, argc, argv, "CHEMGRID_Z1", -1, "100", NULL);
-  ctl->chemgrid_nz =
-    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "1", NULL);
+  ctl->chemgrid_nz = (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "1", NULL);	// TODO: use multiple vertical layers for mixing?
   ctl->chemgrid_lon0 =
     scan_ctl(filename, argc, argv, "CHEMGRID_LON0", -1, "-180", NULL);
   ctl->chemgrid_lon1 =
@@ -2637,17 +2661,13 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
-  ctl->chemgrid_mixparam_trop =
-    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1,
-		      "1e-3", NULL);        // TODO: this looks like a very small defaut value, why not use 0?
-  ctl->chemgrid_mixparam_strat =
-    (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1,
-		      "1e-6", NULL);        // TODO: this looks like a very small defaut value, why not use 0?
+  ctl->chemgrid_mixparam_trop = scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1, "1e-3", NULL);	// TODO: this looks like a very small defaut value, why not use 0?
+  ctl->chemgrid_mixparam_strat = scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1, "1e-6", NULL);	// TODO: this looks like a very small defaut value, why not use 0?
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
-  ctl->tdec_strat =
-    scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
+  ctl->tdec_strat
+    = scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);

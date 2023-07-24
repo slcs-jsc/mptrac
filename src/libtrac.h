@@ -1236,10 +1236,10 @@ typedef struct {
   /*! Molar mass [g/mol]. */
   double molmass;
 
-  /*! Life time of particles (troposphere) [s]. */
+  /*! Life time of particles in the troposphere [s]. */
   double tdec_trop;
 
-  /*! Life time of particles (stratosphere)  [s]. */
+  /*! Life time of particles in the stratosphere  [s]. */
   double tdec_strat;
 
   /*! Filename of OH climatology. */
@@ -1257,23 +1257,41 @@ typedef struct {
   /*! Filename of O3 climatology. */
   char clim_o3_filename[LEN];
 
-  /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
-  int oh_chem_reaction;
+  /*! Time interval for mixing [s]. */
+  double mixing_dt;
 
-  /*! Coefficients for OH reaction rate (A, E/R or k0, n, kinf, m). */
-  double oh_chem[4];
+  /*! Interparcel exchange parameter for mixing in the troposphere. */
+  double mixing_trop;
 
-  /*! Beta parameter for diurnal variablity of OH. */
-  double oh_chem_beta;
+  /*! Interparcel exchange parameter for mixing in the stratosphere. */
+  double mixing_strat;
 
-  /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
-  int h2o2_chem_reaction;
+  /*! Number of altitudes of mixing grid. */
+  int mixing_nz;
 
-  /*! Switch for KPP chemistry module (0=off, 1=on). */
-  int kpp_chem;
+  /*! Lower altitude of mixing grid [km]. */
+  double mixing_z0;
 
-  /*! Switch for boundary condition for KPP chemistry module. */
-  int kpp_chem_bound;
+  /*! Upper altitude of mixing grid [km]. */
+  double mixing_z1;
+
+  /*! Number of longitudes of mixing grid. */
+  int mixing_nx;
+
+  /*! Lower longitude of mixing grid [deg]. */
+  double mixing_lon0;
+
+  /*! Upper longitude of mixing grid [deg]. */
+  double mixing_lon1;
+
+  /*! Number of latitudes of mixing grid. */
+  int mixing_ny;
+
+  /*! Lower latitude of mixing grid [deg]. */
+  double mixing_lat0;
+
+  /*! Upper latitude of mixing grid [deg]. */
+  double mixing_lat1;
 
   /*! Number of altitudes of chemistry grid. */
   int chemgrid_nz;
@@ -1308,12 +1326,23 @@ typedef struct {
   /*! Interparcel exchange parameter in stratosphere. */
   double chemgrid_mixparam_strat;
 
+  /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
+  int oh_chem_reaction;
 
-  /*! Dry deposition surface layer [hPa]. */
-  double dry_depo_dp;
+  /*! Coefficients for OH reaction rate (A, E/R or k0, n, kinf, m). */
+  double oh_chem[4];
 
-  /*! Dry deposition velocity [m/s]. */
-  double dry_depo_vdep;
+  /*! Beta parameter for diurnal variablity of OH. */
+  double oh_chem_beta;
+
+  /*! Reaction type for H2O2 chemistry (0=none, 1=SO2). */
+  int h2o2_chem_reaction;
+
+  /*! Switch for KPP chemistry module (0=off, 1=on). */
+  int kpp_chem;
+
+  /*! Switch for boundary condition for KPP chemistry module. */
+  int kpp_chem_bound;
 
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
@@ -1341,6 +1370,12 @@ typedef struct {
 
   /*! Coefficients for wet deposition below cloud: retention ratio. */
   double wet_depo_bc_ret_ratio;
+
+  /*! Dry deposition surface layer [hPa]. */
+  double dry_depo_dp;
+
+  /*! Dry deposition velocity [m/s]. */
+  double dry_depo_vdep;
 
   /*! H2O volume mixing ratio for PSC analysis. */
   double psc_h2o;

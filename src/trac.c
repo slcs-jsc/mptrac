@@ -127,6 +127,23 @@ void module_meteo(
   met_t * met1,
   atm_t * atm);
 
+/*! Apply inter-parcel mixing. */
+void module_mixing(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double t);
+
+/*! Auxiliary function for inter-parcel mixing. */
+void module_mixing_help(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  int *ixs,
+  int *iys,
+  int *izs,
+  int qnt_idx);
+
 /*! Calculate OH chemistry. */
 void module_oh_chem(
   ctl_t * ctl,
@@ -431,10 +448,10 @@ int main(
 	  /* Sort particles... */
 	  if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	    module_sort(&ctl, met0, atm);
-	  
+
 	  /* Check positions (initial)... */
 	  module_position(&ctl, met0, met1, atm, dt);
-	  
+
 	  /* Advection... */
 	  module_advect(&ctl, met0, met1, atm, dt);
 
@@ -468,7 +485,7 @@ int main(
 	      && (ctl.met_dt_out < ctl.dt_mod
 		  || fmod(t, ctl.met_dt_out) == 0))
 	    module_meteo(&ctl, clim, met0, met1, atm);
-	  
+
 	  /* Check boundary conditions (initial)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
 	      || ctl.kpp_chem_bound == 1)
@@ -477,6 +494,11 @@ int main(
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	    module_decay(&ctl, clim, atm, dt);
+
+	  /* Inter-parcel mixing... */
+	  if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
+	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
+	    module_mixing(&ctl, clim, atm, t);
 
 	  /* OH chemistry... */
 	  if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
@@ -487,7 +509,6 @@ int main(
 	    module_h2o2_chemgrid(&ctl, met0, met1, atm, t);
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
-
 #ifdef KPP
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem == 1) {
@@ -504,7 +525,7 @@ int main(
 	  /* Dry deposition... */
 	  if (ctl.dry_depo_vdep > 0)
 	    module_dry_deposition(&ctl, met0, met1, atm, dt);
-	  
+
 	  /* Check boundary conditions (final)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
 	      || ctl.kpp_chem_bound == 1)
@@ -795,7 +816,7 @@ void module_convection(
 	if (!isfinite(pel) || atm->p[ip] < pel)
 	  continue;
 
-	/* Set pressure range for mixing... */
+	/* Set pressure range for vertical mixing... */
 	double pbot = atm->p[ip];
 	double ptop = atm->p[ip];
 	if (ctl->conv_mix_bot == 1) {
@@ -1888,6 +1909,132 @@ void module_kpp_chem(
 }
 
 #endif
+
+/*****************************************************************************/
+
+void module_mixing(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double t) {
+
+  int *ixs, *iys, *izs;
+
+  /* Update host... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+#endif
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+
+  /* Set grid box size... */
+  double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
+  double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
+  double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
+
+  /* Set time interval... */
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->mixing_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->mixing_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->mixing_nz)
+      izs[ip] = -1;
+  }
+
+  /* Calculate inter-parcel mixing... */
+  if (ctl->qnt_m >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
+  if (ctl->qnt_vmr >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+
+  /* Free... */
+  free(ixs);
+  free(iys);
+  free(izs);
+
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
+}
+
+/*****************************************************************************/
+
+void module_mixing_help(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  int *ixs,
+  int *iys,
+  int *izs,
+  int qnt_idx) {
+
+  double *cmean;
+
+  int *count;
+
+  /* Allocate... */
+  ALLOC(cmean, double,
+	ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz);
+  ALLOC(count, int,
+	ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz);
+
+  /* Loop over particles... */
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+      int idx = ARRAY_3D
+	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+      cmean[idx] += atm->q[qnt_idx][ip];
+      count[idx]++;
+    }
+#pragma omp parallel for
+  for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
+    if (count[i] > 0)
+      cmean[i] /= count[i];
+
+  /* Calculate inter-parcel mixing... */
+#pragma omp parallel for
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+
+      /* Set mixing parameter... */
+      double mixparam = 1.0;
+      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
+	double w =
+	  tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
+      }
+
+      /* Adjust quantity... */
+      atm->q[qnt_idx][ip] +=
+	(cmean
+	 [ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
+	 - atm->q[qnt_idx][ip]) * mixparam;
+    }
+
+  /* Free... */
+  free(cmean);
+  free(count);
+}
 
 /*****************************************************************************/
 
