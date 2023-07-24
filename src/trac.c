@@ -463,11 +463,6 @@ int main(
 	  /* Check final positions... */
 	  module_position(&ctl, met0, met1, atm, dt);
 
-	  /* Boundary conditions... */
-	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kpp_chem_bound == 1)
-	    module_bound_cond(&ctl, met0, met1, atm, dt);
-
 	  /* Interpolate meteo data... */
 	  if (ctl.met_dt_out > 0
 	      && (ctl.met_dt_out < ctl.dt_mod
