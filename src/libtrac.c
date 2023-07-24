@@ -2639,10 +2639,10 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
   ctl->chemgrid_mixparam_trop =
     (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1,
-		      "1e-3", NULL);
+		      "1e-3", NULL);        // TODO: this looks like a very small defaut value, why not use 0?
   ctl->chemgrid_mixparam_strat =
     (double) scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1,
-		      "1e-6", NULL);
+		      "1e-6", NULL);        // TODO: this looks like a very small defaut value, why not use 0?
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);

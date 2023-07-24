@@ -25,10 +25,10 @@
 #include "libtrac.h"
 
 #ifdef KPP
-  #include "chem_Parameters.h"
-  #include "chem_Global.h"
-  #include "chem_Sparse.h"
-  #include "kpp_chem.h"
+#include "chem_Parameters.h"
+#include "chem_Global.h"
+#include "chem_Sparse.h"
+#include "kpp_chem.h"
 #endif
 
 /* ------------------------------------------------------------
@@ -145,7 +145,7 @@ void module_h2o2_chem(
   atm_t * atm,
   double *dt);
 
-/*! Calculate grid data for H2O2 module. */
+/*! Calculate grid data for H2O2 chemistry module. */
 void module_h2o2_chemgrid(
   ctl_t * ctl,
   met_t * met0,
@@ -162,7 +162,7 @@ void module_kpp_chem(
   atm_t * atm,
   double *dt);
 
-/*! Interpolate to chemistry grid. */
+/*! Calculate grid data for KPP chemistry module. */
 void module_kpp_chemgrid(
   ctl_t * ctl,
   clim_t * clim,
@@ -431,10 +431,10 @@ int main(
 	  /* Sort particles... */
 	  if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	    module_sort(&ctl, met0, atm);
-
-	  /* Check initial positions... */
+	  
+	  /* Check positions (initial)... */
 	  module_position(&ctl, met0, met1, atm, dt);
-
+	  
 	  /* Advection... */
 	  module_advect(&ctl, met0, met1, atm, dt);
 
@@ -460,7 +460,7 @@ int main(
 	  if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
 	    module_isosurf(&ctl, met0, met1, atm, cache);
 
-	  /* Check final positions... */
+	  /* Check positions (final)... */
 	  module_position(&ctl, met0, met1, atm, dt);
 
 	  /* Interpolate meteo data... */
@@ -468,6 +468,11 @@ int main(
 	      && (ctl.met_dt_out < ctl.dt_mod
 		  || fmod(t, ctl.met_dt_out) == 0))
 	    module_meteo(&ctl, clim, met0, met1, atm);
+	  
+	  /* Check boundary conditions (initial)... */
+	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
+	      || ctl.kpp_chem_bound == 1)
+	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -483,15 +488,6 @@ int main(
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 
-	  /* Dry deposition... */
-	  if (ctl.dry_depo_vdep > 0)
-	    module_dry_deposition(&ctl, met0, met1, atm, dt);
-
-	  /* Wet deposition... */
-	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
-	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
-	    module_wet_deposition(&ctl, met0, met1, atm, dt);
-
 #ifdef KPP
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem == 1) {
@@ -500,7 +496,16 @@ int main(
 	  }
 #endif
 
-	  /* Boundary conditions... */
+	  /* Wet deposition... */
+	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
+	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
+	    module_wet_deposition(&ctl, met0, met1, atm, dt);
+
+	  /* Dry deposition... */
+	  if (ctl.dry_depo_vdep > 0)
+	    module_dry_deposition(&ctl, met0, met1, atm, dt);
+	  
+	  /* Check boundary conditions (final)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
 	      || ctl.kpp_chem_bound == 1)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
@@ -1610,6 +1615,8 @@ void INTEGRATE(
   double TIN,
   double TOUT);
 
+/*****************************************************************************/
+
 void kpp_chemgrid_mass2concen(
   atm_t * atm,
   ctl_t * ctl,
@@ -1622,14 +1629,16 @@ void kpp_chemgrid_mass2concen(
   int ip,
   int qnt_index) {
 
-  if (qnt_index > 0)
-    atm->q[qnt_index][ip] = AVO * mass[ARRAY_3D
-				       (ixs[ip], iys[ip], ctl->chemgrid_ny,
-					izs[ip], ctl->chemgrid_nz)]
+  if (qnt_index > 0)		// TODO: skip check of qnt_index in this function?
+    atm->q[qnt_index][ip]
+      = AVO * mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+			    izs[ip], ctl->chemgrid_nz)]
       / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
   else
     ERRMSG("Some quantity variables are not defined!");
 }
+
+/*****************************************************************************/
 
 double param_mixing_calc(
   ctl_t * ctl,
@@ -1637,21 +1646,25 @@ double param_mixing_calc(
   atm_t * atm,
   int ip) {
 
-  double param_mixing;
-
+  /* Check control parameters... */// TODO: add check for mixparam_* < 0 ?
   if (ctl->chemgrid_mixparam_trop < 1 || ctl->chemgrid_mixparam_strat < 1) {
 
     /* Get weighting factor... */
     double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Set interparcel exchange parameter (Collins et al. 1997)... */
-    param_mixing = w * ctl->chemgrid_mixparam_trop
+    return w * ctl->chemgrid_mixparam_trop
       + (1 - w) * ctl->chemgrid_mixparam_strat;
-  } else
-    param_mixing = 1;
+  }
 
-  return param_mixing;
+  /* Complete mixing... */
+  else
+    return 1;
 }
+
+/*****************************************************************************/
+
+// TODO: it is a bit confusing that we have a function interparc_mixing_help() here, but not interparc_mixing() ?
 
 void interparc_mixing_help(
   ctl_t * ctl,
@@ -1662,6 +1675,10 @@ void interparc_mixing_help(
   int *izs,
   int qnt_idx) {
 
+  /* Check quantity flag... */
+  if (qnt_idx < 0)
+    return;
+
   /* Allocate... */
   double *cmean;
   int *count;
@@ -1670,36 +1687,38 @@ void interparc_mixing_help(
   ALLOC(count, int,
 	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
 
-  if (qnt_idx >= 0) {
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0) {
-	/* Check quantity flags... */
-	cmean[ARRAY_3D
-	      (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	  += atm->q[qnt_idx][ip];
-	count[ARRAY_3D
-	      (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
-	       ctl->chemgrid_nz)] += 1;
-      }
-    for (int i = 0;
-	 i < ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz; i++)
-      if (count[i] > 0)
-	cmean[i] /= count[i];
+  /* Loop over particles... */
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+      cmean[ARRAY_3D
+	    (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	+= atm->q[qnt_idx][ip];
+      count[ARRAY_3D
+	    (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
+	     ctl->chemgrid_nz)] += 1;
+    }
+  for (int i = 0;
+       i < ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz; i++)
+    if (count[i] > 0)
+      cmean[i] /= count[i];
 
 #pragma omp parallel for
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0) {
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
 
-	atm->q[qnt_idx][ip] +=
-	  (cmean
-	   [ARRAY_3D
-	    (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	   - atm->q[qnt_idx][ip]) * param_mixing_calc(ctl, clim, atm, ip);
-      }
-  }
+      atm->q[qnt_idx][ip] +=
+	(cmean
+	 [ARRAY_3D
+	  (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	 - atm->q[qnt_idx][ip]) * param_mixing_calc(ctl, clim, atm, ip);
+    }
+
+  /* Free... */
   free(cmean);
   free(count);
 }
+
+/*****************************************************************************/
 
 void module_kpp_chemgrid(
   ctl_t * ctl,
@@ -1751,17 +1770,17 @@ void module_kpp_chemgrid(
   }
 
   /* Initialize quantity concentration variables... */
-  static int init[NP] = { 0 };
+  static int init[NP] = { 0 };	// TODO: use short rather than int? static variables are initilaized to zero by default
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
       if (!init[ip]) {
-	init[ip] += 1;
+	init[ip] += 1;		// TODO: why += 1 ? why not init[ip] = 1 ?
 	kpp_chem_init_cqnt(ctl, atm, clim, met0, met1, ip);
       }
 
-  /* Calculate the trace spieces concentration according to mass data... */
-  if (ctl->qnt_m >= 0) {
+  /* Calculate trace species concentration according to mass data... */
+  if (ctl->qnt_m >= 0) {	// TODO: move these checks close to the begin of the function?
     if (ctl->molmass <= 0)
       ERRMSG("Specify molar mass!");
 
@@ -1774,6 +1793,7 @@ void module_kpp_chemgrid(
     ALLOC(area, double,
 	  ctl->chemgrid_ny);
 
+    /* Calculate latitude and area... */
 #pragma omp parallel for default(shared)
     for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
       lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
@@ -1781,21 +1801,20 @@ void module_kpp_chemgrid(
 	* cos(lat[iy] * M_PI / 180.);
     }
 
+    /* Calculate mass per grid box... */
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0)
-	/* Check quantity flags... */
 	mass[ARRAY_3D
 	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
 	  += atm->q[ctl->qnt_m][ip];
 
+    /* Convert mass to concentration... */
 #pragma omp parallel for default(shared)
-    for (int ip = 0; ip < atm->np; ip++) {
-      if (izs[ip] >= 0) {
+    for (int ip = 0; ip < atm->np; ip++)
+      if (izs[ip] >= 0)
 	if (ctl->qnt_m >= 0)
 	  kpp_chemgrid_mass2concen(atm, ctl, mass, area, ixs, iys, izs,
 				   dz, ip, ctl->qnt_Cx);
-      }
-    }
 
     /* Free... */
     free(mass);
@@ -1803,7 +1822,7 @@ void module_kpp_chemgrid(
     free(lat);
   }
 
-  /* Calculate the inter-parcel exchange between parcel and backgroud */
+  /* Calculate the inter-parcel exchange between parcel and backgroud... */
   interparc_mixing(ctl, atm, clim, ixs, iys, izs);
 
   /* Free... */
@@ -1817,6 +1836,8 @@ void module_kpp_chemgrid(
 #pragma acc update device(atm[:1])
 #endif
 }
+
+/*****************************************************************************/
 
 void module_kpp_chem(
   ctl_t * ctl,
@@ -1841,12 +1862,12 @@ void module_kpp_chem(
       ALLOC(FIX, double,
 	    NFIX);
 
-      STEPMIN = 0;
+      STEPMIN = 0;		// TODO: make STEPMIN and STEPMAX control parameters (ctl->kpp_stepmin, ctl->kpp_stepmax)?
       STEPMAX = 900.0;
 
       /* Set relative & absolute tolerances... */
       for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-4;
+	RTOL[i] = 1.0e-4;	// TODO: make ATOL and RTOL control parameters  (ctl->kpp_atol, ctl->kpp_rtol)?
 	ATOL[i] = 1.0e-3;
       }
 
