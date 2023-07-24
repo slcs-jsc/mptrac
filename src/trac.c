@@ -1589,19 +1589,20 @@ void module_h2o2_chemgrid(
 	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
 	+= atm->q[ctl->qnt_m][ip];
 
-  /* Assign the grid data to air parcels ... */
+  /* Assign grid data to air parcels ... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
-      if (ctl->qnt_vmrimpl > 0) {
+      if (ctl->qnt_vmrimpl > 0) {	// TODO: move this check to begin of the function? (the only purpose is to calculate vmr_impl?)
 
-	/* Inteprolate temperature... */
+	/* Interpolate temperature... */
 	double temp;
 	INTPOL_INIT;
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
+	/* Calculate volume mixing ratio... */
 	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
 	  mass[ARRAY_3D
 	       (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
@@ -1632,6 +1633,7 @@ void module_h2o2_chemgrid(
 
 #ifdef KPP
 
+// TODO: move INTEGRATE function to KPP header file?
 void INTEGRATE(
   double TIN,
   double TOUT);
@@ -1661,6 +1663,8 @@ void kpp_chemgrid_mass2concen(
 
 /*****************************************************************************/
 
+// TODO: might be removed when interparc_mixing_help() is removed?
+
 double param_mixing_calc(
   ctl_t * ctl,
   clim_t * clim,
@@ -1686,6 +1690,8 @@ double param_mixing_calc(
 /*****************************************************************************/
 
 // TODO: it is a bit confusing that we have a function interparc_mixing_help() here, but not interparc_mixing() ?
+
+// TODO: replace this by module_mixing_help() ?
 
 void interparc_mixing_help(
   ctl_t * ctl,
@@ -1844,7 +1850,7 @@ void module_kpp_chemgrid(
   }
 
   /* Calculate the inter-parcel exchange between parcel and backgroud... */
-  interparc_mixing(ctl, atm, clim, ixs, iys, izs);
+  interparc_mixing(ctl, atm, clim, ixs, iys, izs);	// TODO: can be replaced by module_mixing(), but we need to add qnt_Cx to module_mixing() ?
 
   /* Free... */
   free(ixs);
