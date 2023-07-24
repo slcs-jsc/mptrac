@@ -94,20 +94,20 @@ void kpp_chem_initialize(
     /* Calculate solar zenith angle [deg] */
     double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
-    SET_VAR(ind_o3p, ctl->qnt_Co3p);
-    SET_VAR(ind_o1d, ctl->qnt_Co1d);
-    SET_VAR(ind_h2o2, ctl->qnt_Ch2o2);
-    SET_VAR(ind_oh, ctl->qnt_Coh);
-    SET_VAR(ind_ho2, ctl->qnt_Cho2);
+    SET_VAR(ind_o3p, qnt_Co3p);
+    SET_VAR(ind_o1d, qnt_Co1d);
+    SET_VAR(ind_h2o2, qnt_Ch2o2);
+    SET_VAR(ind_oh, qnt_Coh);
+    SET_VAR(ind_ho2, qnt_Cho2);
     #ifdef ind_h
-      SET_VAR(ind_h, ctl->qnt_Ch);
+      SET_VAR(ind_h, qnt_Ch);
     #endif
     
-    SET_VAR(ind_n2o, ctl->qnt_Cn2o);
-    SET_VAR(ind_ccl3f, ctl->qnt_Cccl3f);
-    SET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2);
-    SET_VAR(ind_cclf3, ctl->qnt_Ccclf3);
-    SET_VAR(ind_o3, ctl->qnt_Co3);
+    SET_VAR(ind_n2o, qnt_Cn2o);
+    SET_VAR(ind_ccl3f, qnt_Cccl3f);
+    SET_VAR(ind_ccl2f2, qnt_Cccl2f2);
+    SET_VAR(ind_cclf3, qnt_Ccclf3);
+    SET_VAR(ind_o3, qnt_Co3);
     
     VAR[ind_h2o] = h2o * M;
     //VAR[ind_o3] = o3 * M;
