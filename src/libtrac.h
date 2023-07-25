@@ -1366,6 +1366,9 @@ typedef struct {
   /*! Switch for KPP chemistry module (0=off, 1=on). */
   int kpp_chem;
 
+  /*! Switch for first order tracer chemistry module (0=off, 1=on). */
+  int tracer_chem;
+
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
 

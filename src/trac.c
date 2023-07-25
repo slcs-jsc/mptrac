@@ -526,11 +526,10 @@ int main(
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
-
+	  
 	  /* First-order tracer chemistry... */
 #ifndef KPP
-	  if ((ctl.qnt_Cccl3f >= 0) || (ctl.qnt_Cccl2f2 >= 0) ||
-	      (ctl.qnt_Cn2o >= 0))
+	  if (ctl.tracer_chem == 1)
 	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
 #endif
 

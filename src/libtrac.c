@@ -2582,6 +2582,10 @@ void read_ctl(
   ctl->kpp_chem =
     (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
 
+  /* First order tracer chemistry... */
+  ctl->tracer_chem =
+    (int) scan_ctl(filename, argc, argv, "TRACER_CHEM", -1, "0", NULL);
+  
   /* Wet deposition... */
   for (int ip = 0; ip < 3; ip++) {
     sprintf(defstr, "%g", ctl->wet_depo_ic_h[ip]);
