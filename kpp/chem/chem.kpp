@@ -224,29 +224,6 @@ int ip){
   SET_ATM(qnt_Co3, o3 * M);
 }
 
-/*! Set boundary condition for species*/
-void kpp_chem_bound_cond(
-	ctl_t * ctl,
-	atm_t * atm,
-	met_t * met0,
-	met_t * met1,
-	int ip){
-
-	/* Get Meteological variables... */
-	double t;
-	INTPOL_INIT;
-	INTPOL_3D(t, 1);
-	/* Calculate air molecular density ... */
-	double M = MOLEC_DENS(atm->p[ip], t);  
-
-	if (ctl->qnt_Cccl3f>=0)
-			atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
-	if (ctl->qnt_Cccl2f2>=0)
-			atm->q[ctl->qnt_Cccl2f2][ip] = 270 * 1e-12 * M;
-	if (ctl->qnt_Cn2o>=0)
-			atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
-}
-
 #ENDINLINE
 
 

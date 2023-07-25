@@ -497,8 +497,8 @@ int main(
 
 	  /* Check boundary conditions (initial)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kpp_chem_bound == 1 || ctl.qnt_Cccl3f >= 0
-	      || ctl.qnt_Cccl2f2 >= 0 || ctl.qnt_Cn2o >= 0)
+	      || ctl.qnt_Cccl3f >= 0 || ctl.qnt_Cccl2f2 >= 0
+	      || ctl.qnt_Cn2o >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
@@ -544,9 +544,10 @@ int main(
 
 	  /* Check boundary conditions (final)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kpp_chem_bound == 1)
+	      || ctl.qnt_Cccl3f >= 0 || ctl.qnt_Cccl2f2 >= 0
+	      || ctl.qnt_Cn2o >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
-
+	  
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
 #ifdef ASYNCIO
@@ -717,10 +718,11 @@ void module_bound_cond(
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->kpp_chem_bound == 0
-      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0 && ctl->qnt_Cn2o < 0)
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0
+      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0
+      && ctl->qnt_Cn2o < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
-
+  
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(ctl, met0, met1, atm, dt)
@@ -777,14 +779,6 @@ void module_bound_cond(
       if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] =
 	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
-
-#ifdef KPP
-
-      /* Set boundary conditions for KPP chemistry... */
-      if (ctl->kpp_chem_bound == 1)
-	kpp_chem_bound_cond(ctl, atm, met0, met1, ip);
-      
-#else
       
       /* Set boundary conditions of tracer chemistry... */
       if (ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0 || ctl->qnt_Cn2o >= 0) {
@@ -797,7 +791,7 @@ void module_bound_cond(
 	/* Calculate molecular density... */
 	double M = MOLEC_DENS(atm->p[ip], t);
 	
-	/* Set concentration... */
+	/* Set tracer concentration... */
 	if (ctl->qnt_Cccl3f >= 0)
 	  atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
 	if (ctl->qnt_Cccl2f2 >= 0)
@@ -805,8 +799,6 @@ void module_bound_cond(
 	if (ctl->qnt_Cn2o >= 0)
 	  atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
       }
-      
-#endif
     }
 }
 

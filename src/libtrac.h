@@ -1347,10 +1347,7 @@ typedef struct {
 
   /*! Switch for KPP chemistry module (0=off, 1=on). */
   int kpp_chem;
-
-  /*! Switch for boundary condition for KPP chemistry module. */
-  int kpp_chem_bound;
-
+  
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
 

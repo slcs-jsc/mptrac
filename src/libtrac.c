@@ -2569,9 +2569,7 @@ void read_ctl(
   /* KPP chemistry... */
   ctl->kpp_chem =
     (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
-  ctl->kpp_chem_bound =
-    (int) scan_ctl(filename, argc, argv, "KPP_CHEM_BOUND", -1, "0", NULL);
-
+  
   /* Wet deposition... */
   for (int ip = 0; ip < 3; ip++) {
     sprintf(defstr, "%g", ctl->wet_depo_ic_h[ip]);
