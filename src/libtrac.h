@@ -453,7 +453,7 @@
 	  "# $48 = number of tropopause data points\n"			\
 	  "# $49 = number of CAPE data points\n");			\
 
-/*! Calculate molecular density of air. */
+/*! Calculate molecular density of an ideal gas. */   // TODO: remove "_AIR" here
 #define MOLEC_DEN_AIR(p,t)			\
   AVO * 1e-6 * (p * 100) / (RI * t)
 

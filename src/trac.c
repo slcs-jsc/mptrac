@@ -1594,7 +1594,7 @@ void module_h2o2_chemgrid(
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
-      if (ctl->qnt_vmrimpl > 0) {	// TODO: move this check to begin of the function? (the only purpose is to calculate vmr_impl?)
+      if (ctl->qnt_vmrimpl >= 0) {	// TODO: move this check to begin of the function? (the only purpose is to calculate vmr_impl?)
 
 	/* Interpolate temperature... */
 	double temp;
@@ -1713,15 +1713,15 @@ void module_kpp_chemgrid(
   }
 
   /* Initialize quantity concentration variables... */
-  static int init[NP] = { 0 };	// TODO: use short rather than int? static variables are initilaized to zero by default
+  static short init[NP];
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
       if (!init[ip]) {
-	init[ip] += 1;		// TODO: why += 1 ? why not init[ip] = 1 ?
+	init[ip] = 1;
 	kpp_chem_init_cqnt(ctl, atm, clim, met0, met1, ip);
       }
-
+  
   /* Calculate trace species concentration according to mass data... */
   if (ctl->qnt_m >= 0) {	// TODO: move these checks close to the begin of the function?
     if (ctl->molmass <= 0)
@@ -1802,12 +1802,12 @@ void module_kpp_chem(
       ALLOC(FIX, double,
 	    NFIX);
 
-      STEPMIN = 0;		// TODO: make STEPMIN and STEPMAX control parameters (ctl->kpp_stepmin, ctl->kpp_stepmax)?
+      STEPMIN = 0;
       STEPMAX = 900.0;
 
       /* Set relative & absolute tolerances... */
       for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-4;	// TODO: make ATOL and RTOL control parameters  (ctl->kpp_atol, ctl->kpp_rtol)?
+	RTOL[i] = 1.0e-4;
 	ATOL[i] = 1.0e-3;
       }
 
