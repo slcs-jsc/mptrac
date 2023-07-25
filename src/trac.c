@@ -1884,7 +1884,7 @@ void module_mixing(
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
   if (ctl->qnt_Cx >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);   // TODO: check whether this doing mixing twice as qnt_m was already mixed?
   if (ctl->qnt_Co3p >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
   if (ctl->qnt_Co1d >= 0)
