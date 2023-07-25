@@ -2648,7 +2648,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_Z0", -1, "-5", NULL);
   ctl->chemgrid_z1 =
     scan_ctl(filename, argc, argv, "CHEMGRID_Z1", -1, "95", NULL);
-  ctl->chemgrid_nz = (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "100", NULL);
+  ctl->chemgrid_nz =
+    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "100", NULL);
   ctl->chemgrid_lon0 =
     scan_ctl(filename, argc, argv, "CHEMGRID_LON0", -1, "-180", NULL);
   ctl->chemgrid_lon1 =
@@ -2661,8 +2662,12 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
-  ctl->chemgrid_mixparam_trop = scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1, "1e-3", NULL);
-  ctl->chemgrid_mixparam_strat = scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1, "1e-6", NULL);
+  ctl->chemgrid_mixparam_trop =
+    scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1, "1e-3",
+	     NULL);
+  ctl->chemgrid_mixparam_strat =
+    scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1, "1e-6",
+	     NULL);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);

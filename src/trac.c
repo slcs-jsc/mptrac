@@ -53,14 +53,6 @@ void module_advect(
   atm_t * atm,
   double *dt);
 
-/*! Set trace species boundary conditions. */
-void species_bound_cond(
-	ctl_t * ctl,
-	atm_t * atm,
-	met_t * met0,
-	met_t * met1,
-	int ip);
-
 /*! Apply boundary conditions. */
 void module_bound_cond(
   ctl_t * ctl,
@@ -154,12 +146,12 @@ void module_mixing_help(
 
 /*! Calculate 1st order chemistry. */
 void module_1st_chem(
-	ctl_t * ctl,
-	clim_t * clim,
-	atm_t * atm,
-	met_t * met0,
-	met_t * met1,
-	double *dt);
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
+  double *dt);
 
 /*! Calculate OH chemistry. */
 void module_oh_chem(
@@ -505,8 +497,8 @@ int main(
 
 	  /* Check boundary conditions (initial)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kpp_chem_bound == 1 || ctl.qnt_Cccl3f >= 0 
-				|| ctl.qnt_Cccl2f2 >= 0 ||	ctl.qnt_Cn2o >= 0)
+	      || ctl.kpp_chem_bound == 1 || ctl.qnt_Cccl3f >= 0
+	      || ctl.qnt_Cccl2f2 >= 0 || ctl.qnt_Cn2o >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
@@ -517,11 +509,11 @@ int main(
 	  if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
 	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
 	    module_mixing(&ctl, clim, atm, t);
-		/* First-order chemistry...*/
+	  /* First-order chemistry... */
 #ifndef KPP
-		if ((ctl.qnt_Cccl3f >= 0) || (ctl.qnt_Cccl2f2 >= 0) ||
-			(ctl.qnt_Cn2o >= 0))
-			module_1st_chem(&ctl, clim, atm, met0, met1, dt);
+	  if ((ctl.qnt_Cccl3f >= 0) || (ctl.qnt_Cccl2f2 >= 0) ||
+	      (ctl.qnt_Cn2o >= 0))
+	    module_1st_chem(&ctl, clim, atm, met0, met1, dt);
 #endif
 
 	  /* OH chemistry... */
@@ -713,28 +705,6 @@ void module_advect(
 }
 
 /*****************************************************************************/
-/*! Set boundary condition for species*/
-void species_bound_cond(
-	ctl_t * ctl,
-	atm_t * atm,
-	met_t * met0,
-	met_t * met1,
-	int ip){
-
-	/* Get Meteological variables... */
-	double t;
-	INTPOL_INIT;
-	INTPOL_3D(t, 1);
-	/* Calculate air molecular density ... */
-	double M = MOLEC_DENS(atm->p[ip], t);  
-
-	if (ctl->qnt_Cccl3f>=0)
-			atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
-	if (ctl->qnt_Cccl2f2>=0)
-			atm->q[ctl->qnt_Cccl2f2][ip] = 270 * 1e-12 * M;
-	if (ctl->qnt_Cn2o>=0)
-			atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
-}
 
 void module_bound_cond(
   ctl_t * ctl,
@@ -748,8 +718,7 @@ void module_bound_cond(
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->kpp_chem_bound == 0
-	&& ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0 &&
-		ctl->qnt_Cn2o < 0)
+      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0 && ctl->qnt_Cn2o < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   const int np = atm->np;
@@ -802,22 +771,43 @@ void module_bound_cond(
       }
 
       /* Set mass and volume mixing ratio... */
-	if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
-		atm->q[ctl->qnt_m][ip] =
-	  	ctl->bound_mass + ctl->bound_mass_trend * atm->time[ip];
-	if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
-		atm->q[ctl->qnt_vmr][ip] =
-	  	ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
+      if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
+	atm->q[ctl->qnt_m][ip] =
+	  ctl->bound_mass + ctl->bound_mass_trend * atm->time[ip];
+      if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
+	atm->q[ctl->qnt_vmr][ip] =
+	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 
-	#ifdef KPP
-	if (ctl->kpp_chem_bound == 1)	
-		kpp_chem_bound_cond(ctl, atm, met0, met1, ip);
-	#else
-	if (ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0 ||
-		ctl->qnt_Cn2o >= 0)
-		species_bound_cond(ctl, atm, met0, met1, ip);
-	#endif
-	}
+#ifdef KPP
+
+      /* Set boundary conditions for KPP chemistry... */
+      if (ctl->kpp_chem_bound == 1)
+	kpp_chem_bound_cond(ctl, atm, met0, met1, ip);
+      
+#else
+      
+      /* Set boundary conditions of tracer chemistry... */
+      if (ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0 || ctl->qnt_Cn2o >= 0) {
+	
+	/* Get temperature... */
+	double t;
+	INTPOL_INIT;
+	INTPOL_3D(t, 1);
+	
+	/* Calculate molecular density... */
+	double M = MOLEC_DENS(atm->p[ip], t);
+	
+	/* Set concentration... */
+	if (ctl->qnt_Cccl3f >= 0)
+	  atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
+	if (ctl->qnt_Cccl2f2 >= 0)
+	  atm->q[ctl->qnt_Cccl2f2][ip] = 270 * 1e-12 * M;
+	if (ctl->qnt_Cn2o >= 0)
+	  atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
+      }
+      
+#endif
+    }
 }
 
 /*****************************************************************************/
@@ -1396,42 +1386,65 @@ void module_meteo(
 }
 
 /*****************************************************************************/
+
 #ifndef KPP
 
 void module_1st_chem(
-	ctl_t * ctl,
-	clim_t * clim,
-	atm_t * atm,
-	met_t * met0,
-	met_t * met1,
-	double *dt){
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
+  double *dt) {
 
-	#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++)
-    if (dt[ip] != 0){
-    /* Calculate solar zenith angle [deg] */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
-		/* Get temperature... */
-		double t;
-		INTPOL_INIT;
-		INTPOL_3D(t, 1);
-		if (ctl->qnt_Cccl3f >= 0) {		
-			double Kccl3f_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-			atm->q[ctl->qnt_Cccl3f][ip] *=  exp(-dt[ip] * Kccl3f_hv);}
-		if (ctl->qnt_Cccl2f2 >= 0){
-			double Kcl2f2_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-			atm->q[ctl->qnt_Cccl2f2][ip] *=  exp(-dt[ip] * Kcl2f2_hv);
-		}
-    if (ctl->qnt_Cn2o >= 0){
-			double Ko1d_n2o = ARR_AB(1.19e-10, -20, t);
-			double Kn2o_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-			atm->q[ctl->qnt_Cn2o][ip] *=  exp(-dt[ip] * Ko1d_n2o * 
-				clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) );
-			atm->q[ctl->qnt_Cn2o][ip] *=  exp(-dt[ip] * Kn2o_hv);
-		}
-	}
-}
+  /* Set timer... */
+  SELECT_TIMER("MODULE_1STCHEM", "PHYSICS", NVTX_GPU);
+
+  const int np = atm->np;
+#ifdef _OPENACC
+#pragma acc data present(ctl, clim, atm, met0, met1, dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
 #endif
+  for (int ip = 0; ip < np; ip++)
+    if (dt[ip] != 0) {
+      
+      /* Calculate solar zenith angle... */
+      double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+      
+      /* Get temperature... */
+      double t;
+      INTPOL_INIT;
+      INTPOL_3D(t, 1);
+
+      /* Reactions for CFC-11... */
+      if (ctl->qnt_Cccl3f >= 0) {
+	double Kccl3f_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * Kccl3f_hv);
+      }
+
+      /* Reactions for CFC-12... */
+      if (ctl->qnt_Cccl2f2 >= 0) {
+	double Kcl2f2_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * Kcl2f2_hv);
+      }
+
+      /* Reactions for N2O... */
+      if (ctl->qnt_Cn2o >= 0) {
+	double Ko1d_n2o = ARR_AB(1.19e-10, -20, t);
+	double Kn2o_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+	atm->q[ctl->qnt_Cn2o][ip]
+	  *= exp(-dt[ip] * Ko1d_n2o * clim_var(&clim->o1d, atm->time[ip],
+					       atm->lat[ip], atm->p[ip]));
+	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * Kn2o_hv);
+      }
+    }
+}
+
+#endif
+
+/*****************************************************************************/
 
 void module_oh_chem(
   ctl_t * ctl,
@@ -1611,12 +1624,11 @@ void module_h2o2_chemgrid(
     ERRMSG("Module needs quantity mass!");
   if (ctl->molmass < 0)
     ERRMSG("Specify molar mass!");
-	if (ctl->qnt_vmrimpl < 0) 
-		ERRMSG("Module need quantity implicity vmr!")
-
-  /* Allocate... */
-  ALLOC(mass, double,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  if (ctl->qnt_vmrimpl < 0)
+    ERRMSG("Module need quantity implicity vmr!")
+      /* Allocate... */
+      ALLOC(mass, double,
+	    ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
   ALLOC(z, double,
 	ctl->chemgrid_nz);
   ALLOC(lon, double,
@@ -1685,19 +1697,18 @@ void module_h2o2_chemgrid(
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
-	/* Interpolate temperature... */
-	double temp;
-	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
-			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+      /* Interpolate temperature... */
+      double temp;
+      INTPOL_INIT;
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
+			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
-	/* Calculate volume mixing ratio... */
-	atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
-	  mass[ARRAY_3D
-	       (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
-		ctl->chemgrid_nz)]
-	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
-      
+      /* Calculate volume mixing ratio... */
+      atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
+	mass[ARRAY_3D
+	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	/ (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
+
     }
 
   /* Free... */
@@ -1780,9 +1791,9 @@ void module_kpp_chemgrid(
 	init[ip] = 1;
 	kpp_chem_init_cqnt(ctl, atm, clim, met0, met1, ip);
       }
-  
+
   /* Calculate trace species concentration according to mass data... */
-  if (ctl->qnt_m >= 0) {	
+  if (ctl->qnt_m >= 0) {
     if (ctl->molmass <= 0)
       ERRMSG("Specify molar mass!");
 
@@ -1814,18 +1825,18 @@ void module_kpp_chemgrid(
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0)
-				if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0)
-	      	atm->q[ctl->qnt_Cx][ip] = 
-      			AVO * mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-						izs[ip], ctl->chemgrid_nz)]
-						/ (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
+	if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0)
+	  atm->q[ctl->qnt_Cx][ip] =
+	    AVO * mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+				izs[ip], ctl->chemgrid_nz)]
+	    / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
 
     /* Free... */
     free(mass);
     free(area);
     free(lat);
   }
-  
+
   /* Free... */
   free(ixs);
   free(iys);
@@ -1966,7 +1977,7 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ccclf3);
   if (ctl->qnt_Co3 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
-  
+
   /* Free... */
   free(ixs);
   free(iys);
