@@ -528,11 +528,9 @@ int main(
 #endif
 	  
 	  /* First-order tracer chemistry... */
-#ifndef KPP
 	  if (ctl.tracer_chem == 1)
 	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
-#endif
-
+	  
 	  /* Wet deposition... */
 	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
 	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
@@ -1378,8 +1376,6 @@ void module_meteo(
 
 /*****************************************************************************/
 
-#ifndef KPP
-
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
@@ -1432,8 +1428,6 @@ void module_tracer_chem(
       }
     }
 }
-
-#endif
 
 /*****************************************************************************/
 
