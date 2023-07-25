@@ -1855,8 +1855,6 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-  if (ctl->qnt_Cx >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);   // TODO: check whether this doing mixing twice as qnt_m was already mixed? A: I suggest to remove this part.
   if (ctl->qnt_Co3p >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
   if (ctl->qnt_Co1d >= 0)
