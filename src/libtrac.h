@@ -2420,7 +2420,7 @@ float stddev(
 
 /*! Calculate solar zenith angle. */
 #ifdef _OPENACC
-#pragma acc routine (sza)
+#pragma acc routine (sza_calc)
 #endif
 double sza_calc(
   double sec,
