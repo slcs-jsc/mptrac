@@ -224,28 +224,6 @@ int ip){
   SET_ATM(qnt_Co3, o3 * M);
 }
 
-
-void interparc_mixing(
-  ctl_t * ctl,
-  atm_t * atm,
-  clim_t * clim,
-  int *ixs,
-  int *iys,	
-  int *izs){
-
-  /*interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3p);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co1d);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch2o2);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Coh);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cho2);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cn2o);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl3f);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl2f2);
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ccclf3);	
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3);	*/
-}
-
 /*! Set boundary condition for species*/
 void kpp_chem_bound_cond(
 	ctl_t * ctl,

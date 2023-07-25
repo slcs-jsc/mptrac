@@ -58,26 +58,3 @@ void kpp_chem_init_cqnt(
   met_t * met0,
   met_t * met1,
   int ip);
-
-double param_mixing_calc(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  int ip);
-
-void interparc_mixing(
-  ctl_t * ctl,
-  atm_t * atm,
-  clim_t * clim,
-  int *ixs,
-  int *iys,
-  int *izs);
-
-void interparc_mixing_help(
-  ctl_t * ctl,
-  atm_t * atm,
-  clim_t * clim,
-  int *ixs,
-  int *iys,
-  int *izs,
-  int qnt_idx);

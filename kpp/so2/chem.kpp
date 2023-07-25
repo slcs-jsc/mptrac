@@ -140,16 +140,6 @@ void kpp_chem_init_cqnt(
 						atm->lat[ip], atm->p[ip]));
 }
 
-void interparc_mixing(
-	ctl_t * ctl,
-	atm_t * atm,
-	clim_t * clim,
-	int *ixs,
-	int *iys,	
-	int *izs){
-		interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch2o2);
-	}
-
 /*! Set boundary condition for species*/
 void kpp_chem_bound_cond(
 	ctl_t * ctl,

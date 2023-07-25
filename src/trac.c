@@ -1663,90 +1663,6 @@ void kpp_chemgrid_mass2concen(
 
 /*****************************************************************************/
 
-// TODO: might be removed when interparc_mixing_help() is removed?
-
-double param_mixing_calc(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  int ip) {
-
-  /* Check control parameters... */// TODO: add check for mixparam_* < 0 ?
-  if (ctl->chemgrid_mixparam_trop < 1 || ctl->chemgrid_mixparam_strat < 1) {
-
-    /* Get weighting factor... */
-    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
-
-    /* Set interparcel exchange parameter (Collins et al. 1997)... */
-    return w * ctl->chemgrid_mixparam_trop
-      + (1 - w) * ctl->chemgrid_mixparam_strat;
-  }
-
-  /* Complete mixing... */
-  else
-    return 1;
-}
-
-/*****************************************************************************/
-
-// TODO: it is a bit confusing that we have a function interparc_mixing_help() here, but not interparc_mixing() ?
-
-// TODO: replace this by module_mixing_help() ?
-
-void interparc_mixing_help(
-  ctl_t * ctl,
-  atm_t * atm,
-  clim_t * clim,
-  int *ixs,
-  int *iys,
-  int *izs,
-  int qnt_idx) {
-
-  /* Check quantity flag... */
-  if (qnt_idx < 0)
-    return;
-
-  /* Allocate... */
-  double *cmean;
-  int *count;
-  ALLOC(cmean, double,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-  ALLOC(count, int,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-
-  /* Loop over particles... */
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0) {
-      cmean[ARRAY_3D
-	    (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	+= atm->q[qnt_idx][ip];
-      count[ARRAY_3D
-	    (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
-	     ctl->chemgrid_nz)] += 1;
-    }
-  for (int i = 0;
-       i < ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz; i++)
-    if (count[i] > 0)
-      cmean[i] /= count[i];
-
-#pragma omp parallel for
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0) {
-
-      atm->q[qnt_idx][ip] +=
-	(cmean
-	 [ARRAY_3D
-	  (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	 - atm->q[qnt_idx][ip]) * param_mixing_calc(ctl, clim, atm, ip);
-    }
-
-  /* Free... */
-  free(cmean);
-  free(count);
-}
-
-/*****************************************************************************/
-
 void module_kpp_chemgrid(
   ctl_t * ctl,
   clim_t * clim,
@@ -1848,10 +1764,7 @@ void module_kpp_chemgrid(
     free(area);
     free(lat);
   }
-
-  /* Calculate the inter-parcel exchange between parcel and backgroud... */
-  interparc_mixing(ctl, atm, clim, ixs, iys, izs);	// TODO: can be replaced by module_mixing(), but we need to add qnt_Cx to module_mixing() ?
-
+  
   /* Free... */
   free(ixs);
   free(iys);
@@ -1970,7 +1883,31 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-
+  if (ctl->qnt_Cx >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
+  if (ctl->qnt_Co3p >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
+  if (ctl->qnt_Co1d >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
+  if (ctl->qnt_Ch2o2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
+  if (ctl->qnt_Coh >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
+  if (ctl->qnt_Cho2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
+  if (ctl->qnt_Ch >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
+  if (ctl->qnt_Cn2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+  if (ctl->qnt_Cccl3f >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
+  if (ctl->qnt_Cccl2f2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
+  if (ctl->qnt_Ccclf3 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ccclf3);
+  if (ctl->qnt_Co3 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
+  
   /* Free... */
   free(ixs);
   free(iys);
