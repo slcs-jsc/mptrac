@@ -144,15 +144,6 @@ void module_mixing_help(
   int *izs,
   int qnt_idx);
 
-/*! Calculate 1st order chemistry. */
-void module_1st_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  met_t * met0,
-  met_t * met1,
-  double *dt);
-
 /*! Calculate OH chemistry. */
 void module_oh_chem(
   ctl_t * ctl,
@@ -186,6 +177,15 @@ void module_kpp_chem(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  double *dt);
+
+/*! Calculate first order tracer chemistry. */
+void module_tracer_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
   double *dt);
 
 /*! Calculate grid data for KPP chemistry module. */
@@ -509,12 +509,6 @@ int main(
 	  if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
 	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
 	    module_mixing(&ctl, clim, atm, t);
-	  /* First-order chemistry... */
-#ifndef KPP
-	  if ((ctl.qnt_Cccl3f >= 0) || (ctl.qnt_Cccl2f2 >= 0) ||
-	      (ctl.qnt_Cn2o >= 0))
-	    module_1st_chem(&ctl, clim, atm, met0, met1, dt);
-#endif
 
 	  /* OH chemistry... */
 	  if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
@@ -531,6 +525,13 @@ int main(
 	    module_kpp_chemgrid(&ctl, clim, atm, met0, met1, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
+#endif
+
+	  /* First-order tracer chemistry... */
+#ifndef KPP
+	  if ((ctl.qnt_Cccl3f >= 0) || (ctl.qnt_Cccl2f2 >= 0) ||
+	      (ctl.qnt_Cn2o >= 0))
+	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
 #endif
 
 	  /* Wet deposition... */
@@ -1380,7 +1381,7 @@ void module_meteo(
 
 #ifndef KPP
 
-void module_1st_chem(
+void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
@@ -1389,7 +1390,7 @@ void module_1st_chem(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_1STCHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   const int np = atm->np;
 #ifdef _OPENACC
