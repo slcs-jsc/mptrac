@@ -790,11 +790,14 @@ void module_bound_cond(
 
 	/* Set tracer concentration... */
 	if (ctl->qnt_Cccl3f >= 0)
-	  atm->q[ctl->qnt_Cccl3f][ip] = ctl->bound_ccl3f * M;
+	  atm->q[ctl->qnt_Cccl3f][ip] = M *
+	    (ctl->bound_ccl3f + ctl->bound_ccl3f_trend * atm->time[ip]);
 	if (ctl->qnt_Cccl2f2 >= 0)
-	  atm->q[ctl->qnt_Cccl2f2][ip] = ctl->bound_ccl2f2 * M;
+	  atm->q[ctl->qnt_Cccl2f2][ip] = M *
+	    (ctl->bound_ccl2f2 + ctl->bound_ccl2f2_trend * atm->time[ip]);
 	if (ctl->qnt_Cn2o >= 0)
-	  atm->q[ctl->qnt_Cn2o][ip] = ctl->bound_n2o * M;
+	  atm->q[ctl->qnt_Cn2o][ip] = M *
+	    (ctl->bound_n2o + ctl->bound_n2o_trend * atm->time[ip]);
       }
     }
 }
