@@ -74,7 +74,7 @@ void kpp_chem_initialize(
 			TEMP = t;
 
       /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-      double M = MOLEC_DEN_AIR(atm->p[ip], t); 
+      double M = MOLEC_DENS(atm->p[ip], t); 
 
       /* Reaction rate (Berglen et al., 2004)... */
       /* Rate of aqueous phase oxidation of SO2 with H2O2. (Maass et al. 1999)  */

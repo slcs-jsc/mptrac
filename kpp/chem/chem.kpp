@@ -89,7 +89,7 @@ void kpp_chem_initialize(
     TEMP = t;
 
     /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-    double M = MOLEC_DEN_AIR(atm->p[ip], t);  
+    double M = MOLEC_DENS(atm->p[ip], t);  
 
     /* Calculate solar zenith angle [deg] */
     double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
@@ -220,7 +220,7 @@ int ip){
   double o3, t;
   INTPOL_3D(o3,1)
   INTPOL_3D(t,1)
-  double M = MOLEC_DEN_AIR(atm->p[ip], t);  
+  double M = MOLEC_DENS(atm->p[ip], t);  
   SET_ATM(qnt_Co3, o3 * M);
 }
 
@@ -237,7 +237,7 @@ void kpp_chem_bound_cond(
 	INTPOL_INIT;
 	INTPOL_3D(t, 1);
 	/* Calculate air molecular density ... */
-	double M = MOLEC_DEN_AIR(atm->p[ip], t);  
+	double M = MOLEC_DENS(atm->p[ip], t);  
 
 	if (ctl->qnt_Cccl3f>=0)
 			atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;

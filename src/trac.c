@@ -1387,7 +1387,7 @@ void module_oh_chem(
       if (ctl->oh_chem_reaction == 3) {
 
 	/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-	double M = MOLEC_DEN_AIR(atm->p[ip], t);
+	double M = MOLEC_DENS(atm->p[ip], t);
 
 	/* Calculate rate coefficient for X + OH + M -> XOH + M
 	   (JPL Publication 19-05) ... */
