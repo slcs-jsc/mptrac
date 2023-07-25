@@ -2621,9 +2621,9 @@ void read_ctl(
   /* Mixing... */
   ctl->mixing_dt = scan_ctl(filename, argc, argv, "MIXING_DT", -1, "0", NULL);
   ctl->mixing_trop
-    = scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "0", NULL);
+    = scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "-999", NULL);
   ctl->mixing_strat
-    = scan_ctl(filename, argc, argv, "MIXING_STRAT", -1, "0", NULL);
+    = scan_ctl(filename, argc, argv, "MIXING_STRAT", -1, "-999", NULL);
   ctl->mixing_z0 =
     scan_ctl(filename, argc, argv, "MIXING_Z0", -1, "-5", NULL);
   ctl->mixing_z1 =
