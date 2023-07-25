@@ -222,6 +222,11 @@
 #define CT 12
 #endif
 
+/*! Maximum number of data points of climatological time series. */
+#ifndef CTS
+#define CTS 1000
+#endif
+
 /* ------------------------------------------------------------
    Macros...
    ------------------------------------------------------------ */
@@ -1037,8 +1042,14 @@ typedef struct {
   /*! Quantity array index for O3 concentration. */
   int qnt_Co3;
 
+  /*! Quantity array index for CO concentration. */
+  int qnt_Cco;
+
   /*! Quantity array index for N2O concentration. */
   int qnt_Cn2o;
+
+  /*! Quantity array index for CCl4 concentration. */
+  int qnt_Cccl4;
 
   /*! Quantity array index for CCl3F concentration. */
   int qnt_Cccl3f;
@@ -1049,8 +1060,8 @@ typedef struct {
   /*! Quantity array index for CClF3 concentration. */
   int qnt_Ccclf3;
 
-  /*! Quantity array index for CO concentration. */
-  int qnt_Cco;
+  /*! Quantity array index for SF6 concentration. */
+  int qnt_Csf6;
 
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
@@ -1281,6 +1292,21 @@ typedef struct {
 
   /*! Filename of O3 climatology. */
   char clim_o3_filename[LEN];
+
+  /*! Filename of CCl4 time series. */
+  char clim_ccl4_timeseries[LEN];
+
+  /*! Filename of CFC-11 time series. */
+  char clim_ccl3f_timeseries[LEN];
+
+  /*! Filename of CFC-12 time series. */
+  char clim_ccl2f2_timeseries[LEN];
+
+  /*! Filename of N2O time series. */
+  char clim_n2o_timeseries[LEN];
+
+  /*! Filename of SF6 time series. */
+  char clim_sf6_timeseries[LEN];
 
   /*! Time interval for mixing [s]. */
   double mixing_dt;
@@ -1732,8 +1758,54 @@ typedef struct {
   /*! O(1D) climatology data. */
   clim_var_t o1d;
 
-  /*! O(1D) climatology data. */
+  /*! O3 climatology data. */
   clim_var_t o3;
+
+  /*! Number of CCl4 timesteps. */
+  int ccl4_ntime;
+
+  /*! CCl4 time steps [s]. */
+  double ccl4_time[CTS];
+
+  /*! CCl4 global volume mixing ratio [ppv]. */
+  double ccl4_vmr[CTS];
+
+  /*! Number of CFC-11 timesteps. */
+  int ccl3f_ntime;
+
+  /*! CFC-11 time steps [s]. */
+  double ccl3f_time[CTS];
+
+  /*! CFC-11 global volume mixing ratio [ppv]. */
+  double ccl3f_vmr[CTS];
+
+  /*! Number of CFC-12 timesteps. */
+  int ccl2f2_ntime;
+
+  /*! CFC-12 time steps [s]. */
+  double ccl2f2_time[CTS];
+
+  /*! CFC-12 global volume mixing ratio [ppv]. */
+  double ccl2f2_vmr[CTS];
+
+  /*! Number of N2O timesteps. */
+  int n2o_ntime;
+
+  /*! N2O time steps [s]. */
+  double n2o_time[CTS];
+
+  /*! N2O global volume mixing ratio [ppv]. */
+  double n2o_vmr[CTS];
+
+  /*! Number of SF6 timesteps. */
+  int sf6_ntime;
+
+  /*! SF6 time steps [s]. */
+  double sf6_time[CTS];
+
+  /*! SF6 global volume mixing ratio [ppv]. */
+  double sf6_vmr[CTS];
+
 } clim_t;
 
 /*! Meteo data. */
@@ -2237,6 +2309,13 @@ int read_atm_nc(
 void read_clim(
   ctl_t * ctl,
   clim_t * clim);
+
+/*! Read climatological time series. */
+int read_clim_timeseries(
+  char *filename,
+  double time[CTS],
+  double vmr[CTS],
+  int *n);
 
 /*! Read control parameters. */
 void read_ctl(
