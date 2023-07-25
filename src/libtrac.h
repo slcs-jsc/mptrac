@@ -640,6 +640,13 @@
     sin(M_PI / 2. * (1. - (p) / (ps)) / (1. - 0.3)))			\
    * THETA((p), (t)))
 
+/*! Roeth approximation formula for photolysis reactions. */
+#define ROETH_PHOTOL(a, b, c, sza) 				\
+  (c*sza < M_PI/2. ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
+
+#define ARR_AB(a, b, temp)    \
+	a * exp( -b / temp)
+
 /* ------------------------------------------------------------
    Log messages...
    ------------------------------------------------------------ */

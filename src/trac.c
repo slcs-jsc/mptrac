@@ -53,6 +53,14 @@ void module_advect(
   atm_t * atm,
   double *dt);
 
+/*! Set trace species boundary conditions. */
+void species_bound_cond(
+	ctl_t * ctl,
+	atm_t * atm,
+	met_t * met0,
+	met_t * met1,
+	int ip);
+
 /*! Apply boundary conditions. */
 void module_bound_cond(
   ctl_t * ctl,
@@ -143,6 +151,15 @@ void module_mixing_help(
   int *iys,
   int *izs,
   int qnt_idx);
+
+/*! Calculate 1st order chemistry. */
+void module_1st_chem(
+	ctl_t * ctl,
+	clim_t * clim,
+	atm_t * atm,
+	met_t * met0,
+	met_t * met1,
+	double *dt);
 
 /*! Calculate OH chemistry. */
 void module_oh_chem(
@@ -488,7 +505,8 @@ int main(
 
 	  /* Check boundary conditions (initial)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.kpp_chem_bound == 1)
+	      || ctl.kpp_chem_bound == 1 || ctl.qnt_Cccl3f >= 0 
+				|| ctl.qnt_Cccl2f2 >= 0 ||	ctl.qnt_Cn2o >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
@@ -499,6 +517,12 @@ int main(
 	  if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
 	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
 	    module_mixing(&ctl, clim, atm, t);
+		/* First-order chemistry...*/
+#ifndef KPP
+		if ((ctl.qnt_Cccl3f >= 0) || (ctl.qnt_Cccl2f2 >= 0) ||
+			(ctl.qnt_Cn2o >= 0))
+			module_1st_chem(&ctl, clim, atm, met0, met1, dt);
+#endif
 
 	  /* OH chemistry... */
 	  if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
@@ -689,6 +713,28 @@ void module_advect(
 }
 
 /*****************************************************************************/
+/*! Set boundary condition for species*/
+void species_bound_cond(
+	ctl_t * ctl,
+	atm_t * atm,
+	met_t * met0,
+	met_t * met1,
+	int ip){
+
+	/* Get Meteological variables... */
+	double t;
+	INTPOL_INIT;
+	INTPOL_3D(t, 1);
+	/* Calculate air molecular density ... */
+	double M = MOLEC_DENS(atm->p[ip], t);  
+
+	if (ctl->qnt_Cccl3f>=0)
+			atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
+	if (ctl->qnt_Cccl2f2>=0)
+			atm->q[ctl->qnt_Cccl2f2][ip] = 270 * 1e-12 * M;
+	if (ctl->qnt_Cn2o>=0)
+			atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
+}
 
 void module_bound_cond(
   ctl_t * ctl,
@@ -701,7 +747,9 @@ void module_bound_cond(
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->kpp_chem_bound == 0)
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->kpp_chem_bound == 0
+	&& ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0 &&
+		ctl->qnt_Cn2o < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   const int np = atm->np;
@@ -754,17 +802,22 @@ void module_bound_cond(
       }
 
       /* Set mass and volume mixing ratio... */
-      if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
-	atm->q[ctl->qnt_m][ip] =
-	  ctl->bound_mass + ctl->bound_mass_trend * atm->time[ip];
-      if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] =
-	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
-#ifdef KPP
-      if (ctl->kpp_chem_bound == 1)
-	kpp_chem_bound_cond(ctl, atm, met0, met1, ip);
-#endif
-    }
+	if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
+		atm->q[ctl->qnt_m][ip] =
+	  	ctl->bound_mass + ctl->bound_mass_trend * atm->time[ip];
+	if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
+		atm->q[ctl->qnt_vmr][ip] =
+	  	ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
+
+	#ifdef KPP
+	if (ctl->kpp_chem_bound == 1)	
+		kpp_chem_bound_cond(ctl, atm, met0, met1, ip);
+	#else
+	if (ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0 ||
+		ctl->qnt_Cn2o >= 0)
+		species_bound_cond(ctl, atm, met0, met1, ip);
+	#endif
+	}
 }
 
 /*****************************************************************************/
@@ -1343,6 +1396,42 @@ void module_meteo(
 }
 
 /*****************************************************************************/
+#ifndef KPP
+
+void module_1st_chem(
+	ctl_t * ctl,
+	clim_t * clim,
+	atm_t * atm,
+	met_t * met0,
+	met_t * met1,
+	double *dt){
+
+	#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (dt[ip] != 0){
+    /* Calculate solar zenith angle [deg] */
+    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+		/* Get temperature... */
+		double t;
+		INTPOL_INIT;
+		INTPOL_3D(t, 1);
+		if (ctl->qnt_Cccl3f >= 0) {		
+			double Kccl3f_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+			atm->q[ctl->qnt_Cccl3f][ip] *=  exp(-dt[ip] * Kccl3f_hv);}
+		if (ctl->qnt_Cccl2f2 >= 0){
+			double Kcl2f2_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+			atm->q[ctl->qnt_Cccl2f2][ip] *=  exp(-dt[ip] * Kcl2f2_hv);
+		}
+    if (ctl->qnt_Cn2o >= 0){
+			double Ko1d_n2o = ARR_AB(1.19e-10, -20, t);
+			double Kn2o_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+			atm->q[ctl->qnt_Cn2o][ip] *=  exp(-dt[ip] * Ko1d_n2o * 
+				clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) );
+			atm->q[ctl->qnt_Cn2o][ip] *=  exp(-dt[ip] * Kn2o_hv);
+		}
+	}
+}
+#endif
 
 void module_oh_chem(
   ctl_t * ctl,
