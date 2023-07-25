@@ -2440,6 +2440,18 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "BOUND_VMR", -1, "-999", NULL);
   ctl->bound_vmr_trend =
     scan_ctl(filename, argc, argv, "BOUND_VMR_TREND", -1, "0", NULL);
+  ctl->bound_ccl3f =
+    scan_ctl(filename, argc, argv, "BOUND_CCL3F", -1, "268e-12", NULL);
+  ctl->bound_ccl3f_trend =
+    scan_ctl(filename, argc, argv, "BOUND_CCL3F_TREND", -1, "0", NULL);
+  ctl->bound_ccl2f2 =
+    scan_ctl(filename, argc, argv, "BOUND_CCL2F2", -1, "533e-12", NULL);
+  ctl->bound_ccl2f2_trend =
+    scan_ctl(filename, argc, argv, "BOUND_CCL2F2_TREND", -1, "0", NULL);
+  ctl->bound_n2o =
+    scan_ctl(filename, argc, argv, "BOUND_N2O", -1, "314e-9", NULL);
+  ctl->bound_n2o_trend =
+    scan_ctl(filename, argc, argv, "BOUND_N2O_TREND", -1, "0", NULL);
   ctl->bound_lat0 =
     scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-90", NULL);
   ctl->bound_lat1 =
@@ -2569,7 +2581,7 @@ void read_ctl(
   /* KPP chemistry... */
   ctl->kpp_chem =
     (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
-  
+
   /* Wet deposition... */
   for (int ip = 0; ip < 3; ip++) {
     sprintf(defstr, "%g", ctl->wet_depo_ic_h[ip]);

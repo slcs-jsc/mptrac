@@ -497,8 +497,8 @@ int main(
 
 	  /* Check boundary conditions (initial)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.qnt_Cccl3f >= 0 || ctl.qnt_Cccl2f2 >= 0
-	      || ctl.qnt_Cn2o >= 0)
+	      || ctl.bound_ccl3f >= 0 || ctl.bound_ccl2f2 >= 0
+	      || ctl.bound_n2o >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
@@ -544,10 +544,10 @@ int main(
 
 	  /* Check boundary conditions (final)... */
 	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
-	      || ctl.qnt_Cccl3f >= 0 || ctl.qnt_Cccl2f2 >= 0
-	      || ctl.qnt_Cn2o >= 0)
+	      || ctl.bound_ccl3f >= 0 || ctl.bound_ccl2f2 >= 0
+	      || ctl.bound_n2o >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
-	  
+
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
 #ifdef ASYNCIO
@@ -719,10 +719,9 @@ void module_bound_cond(
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0
-      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0
-      && ctl->qnt_Cn2o < 0)
+      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0 && ctl->qnt_Cn2o < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
-  
+
   const int np = atm->np;
 #ifdef _OPENACC
 #pragma acc data present(ctl, met0, met1, atm, dt)
@@ -779,25 +778,25 @@ void module_bound_cond(
       if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
 	atm->q[ctl->qnt_vmr][ip] =
 	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
-      
+
       /* Set boundary conditions of tracer chemistry... */
       if (ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0 || ctl->qnt_Cn2o >= 0) {
-	
+
 	/* Get temperature... */
 	double t;
 	INTPOL_INIT;
 	INTPOL_3D(t, 1);
-	
+
 	/* Calculate molecular density... */
 	double M = MOLEC_DENS(atm->p[ip], t);
-	
+
 	/* Set tracer concentration... */
 	if (ctl->qnt_Cccl3f >= 0)
-	  atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
+	  atm->q[ctl->qnt_Cccl3f][ip] = ctl->bound_ccl3f * M;
 	if (ctl->qnt_Cccl2f2 >= 0)
-	  atm->q[ctl->qnt_Cccl2f2][ip] = 270 * 1e-12 * M;
+	  atm->q[ctl->qnt_Cccl2f2][ip] = ctl->bound_ccl2f2 * M;
 	if (ctl->qnt_Cn2o >= 0)
-	  atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
+	  atm->q[ctl->qnt_Cn2o][ip] = ctl->bound_n2o * M;
       }
     }
 }
@@ -1401,10 +1400,10 @@ void module_1st_chem(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (dt[ip] != 0) {
-      
+
       /* Calculate solar zenith angle... */
       double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
-      
+
       /* Get temperature... */
       double t;
       INTPOL_INIT;

@@ -1213,6 +1213,24 @@ typedef struct {
   /*! Boundary conditions volume mixing ratio trend [ppv/s]. */
   double bound_vmr_trend;
 
+  /*! Boundary conditions volume mixing ratio for CFC-11 [ppv]. */
+  double bound_ccl3f;
+
+  /*! Boundary conditions volume mixing ratio trend for CFC-11 [ppv/s]. */
+  double bound_ccl3f_trend;
+
+  /*! Boundary conditions volume mixing ratio for CFC-12 [ppv]. */
+  double bound_ccl2f2;
+
+  /*! Boundary conditions volume mixing ratio trend for CFC-12 [ppv/s]. */
+  double bound_ccl2f2_trend;
+
+  /*! Boundary conditions volume mixing ratio for N2O [ppv]. */
+  double bound_n2o;
+
+  /*! Boundary conditions volume mixing ratio trend for N2O [ppv/s]. */
+  double bound_n2o_trend;
+
   /*! Boundary conditions minimum longitude [deg]. */
   double bound_lat0;
 
@@ -1347,7 +1365,7 @@ typedef struct {
 
   /*! Switch for KPP chemistry module (0=off, 1=on). */
   int kpp_chem;
-  
+
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
 
