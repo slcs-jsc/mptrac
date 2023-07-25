@@ -39,18 +39,6 @@ void kpp_chem_output2atm(
   ctl_t * ctl,
   int ip);
 
-void kpp_chemgrid_mass2concen(
-  atm_t * atm,
-  ctl_t * ctl,
-  double *mass,
-  double *area,
-  int *ixs,
-  int *iys,
-  int *izs,
-  double dz,
-  int ip,
-  int qnt_index);
-
 void kpp_chem_init_cqnt(
   ctl_t * ctl,
   atm_t * atm,
@@ -58,3 +46,7 @@ void kpp_chem_init_cqnt(
   met_t * met0,
   met_t * met1,
   int ip);
+
+void INTEGRATE(
+  double TIN,
+  double TOUT);

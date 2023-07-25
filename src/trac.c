@@ -1520,8 +1520,10 @@ void module_h2o2_chemgrid(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
-  if (ctl->molmass <= 0)
+  if (ctl->molmass < 0)
     ERRMSG("Specify molar mass!");
+	if (ctl->qnt_vmrimpl < 0) 
+		ERRMSG("Module need quantity implicity vmr!")
 
   /* Allocate... */
   ALLOC(mass, double,
@@ -1594,8 +1596,6 @@ void module_h2o2_chemgrid(
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
-      if (ctl->qnt_vmrimpl >= 0) {	// TODO: move this check to begin of the function? (the only purpose is to calculate vmr_impl?)
-
 	/* Interpolate temperature... */
 	double temp;
 	INTPOL_INIT;
@@ -1608,7 +1608,7 @@ void module_h2o2_chemgrid(
 	       (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip],
 		ctl->chemgrid_nz)]
 	  / (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
-      }
+      
     }
 
   /* Free... */
@@ -1632,36 +1632,6 @@ void module_h2o2_chemgrid(
 /*****************************************************************************/
 
 #ifdef KPP
-
-// TODO: move INTEGRATE function to KPP header file?
-void INTEGRATE(
-  double TIN,
-  double TOUT);
-
-/*****************************************************************************/
-
-void kpp_chemgrid_mass2concen(
-  atm_t * atm,
-  ctl_t * ctl,
-  double *mass,
-  double *area,
-  int *ixs,
-  int *iys,
-  int *izs,
-  double dz,
-  int ip,
-  int qnt_index) {
-
-  if (qnt_index > 0)		// TODO: skip check of qnt_index in this function?
-    atm->q[qnt_index][ip]
-      = AVO * mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-			    izs[ip], ctl->chemgrid_nz)]
-      / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
-  else
-    ERRMSG("Some quantity variables are not defined!");
-}
-
-/*****************************************************************************/
 
 void module_kpp_chemgrid(
   ctl_t * ctl,
@@ -1723,7 +1693,7 @@ void module_kpp_chemgrid(
       }
   
   /* Calculate trace species concentration according to mass data... */
-  if (ctl->qnt_m >= 0) {	// TODO: move these checks close to the begin of the function?
+  if (ctl->qnt_m >= 0) {	
     if (ctl->molmass <= 0)
       ERRMSG("Specify molar mass!");
 
@@ -1755,9 +1725,11 @@ void module_kpp_chemgrid(
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0)
-	if (ctl->qnt_m >= 0)
-	  kpp_chemgrid_mass2concen(atm, ctl, mass, area, ixs, iys, izs,
-				   dz, ip, ctl->qnt_Cx);
+				if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0)
+	      	atm->q[ctl->qnt_Cx][ip] = 
+      			AVO * mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+						izs[ip], ctl->chemgrid_nz)]
+						/ (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
 
     /* Free... */
     free(mass);
@@ -1884,7 +1856,7 @@ void module_mixing(
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
   if (ctl->qnt_Cx >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);   // TODO: check whether this doing mixing twice as qnt_m was already mixed?
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);   // TODO: check whether this doing mixing twice as qnt_m was already mixed? A: I suggest to remove this part.
   if (ctl->qnt_Co3p >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
   if (ctl->qnt_Co1d >= 0)
