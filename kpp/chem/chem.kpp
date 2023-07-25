@@ -109,15 +109,15 @@ void kpp_chem_initialize(
     SET_VAR(ind_cclf3, qnt_Ccclf3);
     SET_VAR(ind_o3, qnt_Co3);
     
-    VAR[ind_h2o] = h2o * M;
+    //VAR[ind_h2o] = h2o * M;
     //VAR[ind_o3] = o3 * M;
     
     //FIX[indf_h2o] = h2o * M;
     //FIX[indf_o3] = o3 * M;
     //FIX[indf_o3] = clim_var(&clim->o3, atm->time[ip], atm->lat[ip], atm->p[ip]);
 		FIX[indf_o2] = 0.2095 * M;
-		FIX[indf_n2] = 0.7808 * M;
-		FIX[indf_h2] = 5e-7 * M;
+		//FIX[indf_n2] = 0.7808 * M;
+		//FIX[indf_h2] = 5e-7 * M;
 
 
     /* Reaction rate ... */
@@ -233,7 +233,7 @@ void interparc_mixing(
   int *iys,	
   int *izs){
 
-  /*interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3p);
+  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3p);
   interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co1d);
   interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ch2o2);
   interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Coh);
@@ -243,7 +243,7 @@ void interparc_mixing(
   interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl3f);
   interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Cccl2f2);
   interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Ccclf3);	
-  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3);	*/
+  interparc_mixing_help(ctl, atm, clim, ixs, iys, izs, ctl->qnt_Co3);	
 }
 
 /*! Set boundary condition for species*/
@@ -264,9 +264,9 @@ void kpp_chem_bound_cond(
 	if (ctl->qnt_Cccl3f>=0)
 			atm->q[ctl->qnt_Cccl3f][ip] = 250 * 1e-12 * M;
 	if (ctl->qnt_Cccl2f2>=0)
-			atm->q[ctl->qnt_Cccl3f][ip] = 270 * 1e-12 * M;
+			atm->q[ctl->qnt_Cccl2f2][ip] = 270 * 1e-12 * M;
 	if (ctl->qnt_Cn2o>=0)
-			atm->q[ctl->qnt_Cccl3f][ip] = 300 * 1e-9 * M;
+			atm->q[ctl->qnt_Cn2o][ip] = 300 * 1e-9 * M;
 }
 
 #ENDINLINE
