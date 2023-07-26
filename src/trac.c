@@ -516,14 +516,16 @@ int main(
 	  if (ctl.tracer_chem)
 	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
 
-#ifdef KPP
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
+#ifdef KPP
 	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
-	  }
+#else
+	    ERRMSG("Code was compiled without KPP!");
 #endif
-
+	  }
+	  
 	  /* Wet deposition... */
 	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
 	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
