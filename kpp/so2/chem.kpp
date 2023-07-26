@@ -126,19 +126,4 @@ void kpp_chem_output2atm(
 		}
 }
 
-void kpp_chem_init_cqnt(
-  ctl_t * ctl,
-  atm_t * atm,
-	clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  int ip){
-
-	SET_ATM(qnt_Ch2o2, clim_var(&clim->h2o2, atm->time[ip],
-						atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Cho2, clim_var(&clim->ho2, atm->time[ip],
-						atm->lat[ip], atm->p[ip]));
-}
-
 #ENDINLINE
-

@@ -30,15 +30,6 @@ void kpp_chem_output2atm(
   ctl_t * ctl,
   int ip);
 
-/*! Initialize concentrations for KPP chemistry. */
-void kpp_chem_init_cqnt(
-  ctl_t * ctl,
-  atm_t * atm,
-	clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  int ip);
-
 /*! KPP integration function. */
 void INTEGRATE(
   double TIN,

@@ -144,6 +144,15 @@ void module_mixing_help(
   int *izs,
   int qnt_idx);
 
+/*! Calculate grid data for chemistry modules. */
+void module_chemgrid(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  met_t * met0,
+  met_t * met1,
+  double t);
+
 /*! Calculate OH chemistry. */
 void module_oh_chem(
   ctl_t * ctl,
@@ -162,23 +171,6 @@ void module_h2o2_chem(
   atm_t * atm,
   double *dt);
 
-/*! Calculate grid data for H2O2 chemistry module. */
-void module_h2o2_chemgrid(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t);
-
-/*! KPP chemistry module. */
-void module_kpp_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
 /*! Calculate first order tracer chemistry. */
 void module_tracer_chem(
   ctl_t * ctl,
@@ -188,14 +180,14 @@ void module_tracer_chem(
   met_t * met1,
   double *dt);
 
-/*! Calculate grid data for KPP chemistry module. */
-void module_kpp_chemgrid(
+/*! KPP chemistry module. */
+void module_kpp_chem(
   ctl_t * ctl,
   clim_t * clim,
-  atm_t * atm,
   met_t * met0,
   met_t * met1,
-  double t);
+  atm_t * atm,
+  double *dt);
 
 /*! Check position of air parcels. */
 void module_position(
@@ -516,7 +508,7 @@ int main(
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.h2o2_chem_reaction != 0) {
-	    module_h2o2_chemgrid(&ctl, met0, met1, atm, t);
+	    module_chemgrid(&ctl, clim, atm, met0, met1, t);
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 
@@ -527,7 +519,7 @@ int main(
 #ifdef KPP
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
-	    module_kpp_chemgrid(&ctl, clim, atm, met0, met1, t);
+	    module_chemgrid(&ctl, clim, atm, met0, met1, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
@@ -1391,75 +1383,171 @@ void module_meteo(
 
 /*****************************************************************************/
 
-void module_tracer_chem(
+void module_chemgrid(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
   met_t * met0,
   met_t * met1,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
-
-  const int np = atm->np;
+  double tt) {
+  
+  double *mass, *z, *lon, *lat, *press, *area;
+  
+  int *ixs, *iys, *izs;
+  
+  /* Update host... */
 #ifdef _OPENACC
-#pragma acc data present(ctl, clim, atm, met0, met1, dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
 #endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
+  
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+  if (ctl->molmass < 0)
+    ERRMSG("Specify molar mass!");
+  
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  ALLOC(z, double,
+	ctl->chemgrid_nz);
+  ALLOC(lon, double,
+	ctl->chemgrid_nx);
+  ALLOC(lat, double,
+	ctl->chemgrid_ny);
+  ALLOC(area, double,
+	ctl->chemgrid_ny);
+  ALLOC(press, double,
+	ctl->chemgrid_nz);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
 
-      /* Calculate solar zenith angle... */
-      double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+  /* Set grid box size... */
+  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+  
+  /* Set vertical coordinates... */
+#pragma omp parallel for default(shared)
+  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
+    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
+    press[iz] = P(z[iz]);
+  }
+  
+  /* Set horizontal coordinates... */
+  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#pragma omp parallel for default(shared)
+  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+      * cos(lat[iy] * M_PI / 180.);
+  }
+  
+  /* Set time interval for output... */
+  double t0 = tt - 0.5 * ctl->dt_mod;
+  double t1 = tt + 0.5 * ctl->dt_mod;
 
-      /* Get temperature... */
-      double t;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
+  /* Get indices... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+      izs[ip] = -1;
+  }
 
-      /* Reactions for CFC-10... */
-      if (ctl->qnt_Cccl4 >= 0) {
-	double K_o1d = ARRHENIUS(3.30e-10, 0, t);
-	atm->q[ctl->qnt_Cccl4][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
-	atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
+  /* Initialize quantity concentration variables... */
+  static short init[NP];
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0)
+      if (!init[ip]) {
+	init[ip] = 1;
+	SET_ATM(qnt_Co1d, clim_var(&clim->o1d, atm->time[ip],
+				   atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Coh, clim_var(&clim->oh, atm->time[ip],
+				  atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Ch2o2, clim_var(&clim->h2o2, atm->time[ip],
+				    atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Cho2, clim_var(&clim->ho2, atm->time[ip],
+				   atm->lat[ip], atm->p[ip]));
+
+	if (ctl->qnt_Co3 >= 0) {
+	  INTPOL_INIT;
+	  double o3, t;
+	  INTPOL_3D(o3, 1);
+	  INTPOL_3D(t, 0);
+	  double M = MOLEC_DENS(atm->p[ip], t);
+	  SET_ATM(qnt_Co3, o3 * M);
+	}
       }
 
-      /* Reactions for CFC-11... */
-      if (ctl->qnt_Cccl3f >= 0) {
-	double K_o1d = ARRHENIUS(2.30e-10, 0, t);
-	atm->q[ctl->qnt_Cccl3f][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
-      }
+  /* Check quantities... */
+  if (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0) {
+    
+    /* Get mass per grid box... */
+    for (int ip = 0; ip < atm->np; ip++)
+      if (izs[ip] >= 0)
+	mass[ARRAY_3D
+	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	  += atm->q[ctl->qnt_m][ip];
+    
+    /* Assign grid data to air parcels ... */
+#pragma omp parallel for default(shared)
+    for (int ip = 0; ip < atm->np; ip++)
+      if (izs[ip] >= 0) {
+	
+	/* Interpolate temperature... */
+	double temp;
+	INTPOL_INIT;
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
+			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
-      /* Reactions for CFC-12... */
-      if (ctl->qnt_Cccl2f2 >= 0) {
-	double K_o1d = ARRHENIUS(1.40e-10, -25, t);
-	atm->q[ctl->qnt_Cccl2f2][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
+	/* Set mass... */
+	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+				 izs[ip], ctl->chemgrid_nz)];
+	
+	/* Calculate volume mixing ratio... */
+	if (ctl->qnt_vmrimpl >= 0)
+	  atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass * m
+	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
+	
+	/* Calculate concentration... */
+	if (ctl->qnt_Cx >= 0)
+	  atm->q[ctl->qnt_Cx][ip] = AVO * m
+	    / (1e18 * area[iys[ip]] * dz * ctl->molmass);
       }
-
-      /* Reactions for N2O... */
-      if (ctl->qnt_Cn2o >= 0) {
-	double K_o1d = ARRHENIUS(1.19e-10, -20, t);
-	atm->q[ctl->qnt_Cn2o][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
-      }
-    }
+  }
+  
+  /* Free... */
+  free(mass);
+  free(z);
+  free(lon);
+  free(lat);
+  free(area);
+  free(press);
+  free(ixs);
+  free(iys);
+  free(izs);
+  
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
 }
 
 /*****************************************************************************/
@@ -1617,258 +1705,80 @@ void module_h2o2_chem(
 
 /*****************************************************************************/
 
-void module_h2o2_chemgrid(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
-
-  double *mass, *z, *lon, *lat, *press, *area;
-
-  int *ixs, *iys, *izs;
-
-  /* Update host... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-#endif
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_H2O2_CHEMGRID", "PHYSICS", NVTX_GPU);
-
-  /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
-  if (ctl->molmass < 0)
-    ERRMSG("Specify molar mass!");
-  if (ctl->qnt_vmrimpl < 0)
-    ERRMSG("Module needs quantity implicity vmr!");
-  
-  /* Allocate... */
-  ALLOC(mass, double,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-  ALLOC(z, double,
-	ctl->chemgrid_nz);
-  ALLOC(lon, double,
-	ctl->chemgrid_nx);
-  ALLOC(lat, double,
-	ctl->chemgrid_ny);
-  ALLOC(area, double,
-	ctl->chemgrid_ny);
-  ALLOC(press, double,
-	ctl->chemgrid_nz);
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
-  
-  /* Set grid box size... */
-  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
-  
-  /* Set vertical coordinates... */
-#pragma omp parallel for default(shared)
-  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
-    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
-    press[iz] = P(z[iz]);
-  }
-
-  /* Set horizontal coordinates... */
-  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
-    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
-#pragma omp parallel for default(shared)
-  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
-    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-      * cos(lat[iy] * M_PI / 180.);
-  }
-
-  /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Get indices... */
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
-    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
-    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
-    if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
-      izs[ip] = -1;
-  }
-
-  /* Average data... */
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0)
-      mass[ARRAY_3D
-	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	+= atm->q[ctl->qnt_m][ip];
-
-  /* Assign grid data to air parcels ... */
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0) {
-
-      /* Interpolate temperature... */
-      double temp;
-      INTPOL_INIT;
-      intpol_met_time_3d(met0, met0->t, met1, met1->t, t, press[izs[ip]],
-			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
-
-      /* Calculate volume mixing ratio... */
-      atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass *
-	mass[ARRAY_3D
-	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	/ (RHO(press[izs[ip]], temp) * 1e6 * area[iys[ip]] * 1e3 * dz);
-
-    }
-
-  /* Free... */
-  free(mass);
-  free(z);
-  free(lon);
-  free(lat);
-  free(area);
-  free(press);
-  free(ixs);
-  free(iys);
-  free(izs);
-
-  /* Update device... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
-}
-
-/*****************************************************************************/
-
-#ifdef KPP
-
-void module_kpp_chemgrid(
+void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
   met_t * met0,
   met_t * met1,
-  double t) {
-
-  int *ixs, *iys, *izs;
-
-  /* Update host... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-#endif
+  double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_KPP_CHEMGRID", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
-  /* Allocate... */
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
-
-  /* Set grid box size... */
-  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
-
-  /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Get indices... */
+  const int np = atm->np;
+#ifdef _OPENACC
+#pragma acc data present(ctl, clim, atm, met0, met1, dt)
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
-    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
-    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
-    if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
-      izs[ip] = -1;
-  }
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (dt[ip] != 0) {
 
-  /* Initialize quantity concentration variables... */
-  static short init[NP];
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0)
-      if (!init[ip]) {
-	init[ip] = 1;
-	kpp_chem_init_cqnt(ctl, atm, clim, met0, met1, ip);
+      /* Calculate solar zenith angle... */
+      double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+
+      /* Get temperature... */
+      double t;
+      INTPOL_INIT;
+      INTPOL_3D(t, 1);
+
+      /* Reactions for CFC-10... */
+      if (ctl->qnt_Cccl4 >= 0) {
+	double K_o1d = ARRHENIUS(3.30e-10, 0, t);
+	atm->q[ctl->qnt_Cccl4][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
+	atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
       }
 
-  /* Calculate trace species concentration according to mass data... */
-  if (ctl->qnt_m >= 0) {
-    if (ctl->molmass <= 0)
-      ERRMSG("Specify molar mass!");
+      /* Reactions for CFC-11... */
+      if (ctl->qnt_Cccl3f >= 0) {
+	double K_o1d = ARRHENIUS(2.30e-10, 0, t);
+	atm->q[ctl->qnt_Cccl3f][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
+      }
 
-    /* Allocate... */
-    double *mass, *area, *lat;
-    ALLOC(mass, double,
-	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-    ALLOC(lat, double,
-	  ctl->chemgrid_ny);
-    ALLOC(area, double,
-	  ctl->chemgrid_ny);
+      /* Reactions for CFC-12... */
+      if (ctl->qnt_Cccl2f2 >= 0) {
+	double K_o1d = ARRHENIUS(1.40e-10, -25, t);
+	atm->q[ctl->qnt_Cccl2f2][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
+      }
 
-    /* Calculate latitude and area... */
-#pragma omp parallel for default(shared)
-    for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
-      lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-	* cos(lat[iy] * M_PI / 180.);
+      /* Reactions for N2O... */
+      if (ctl->qnt_Cn2o >= 0) {
+	double K_o1d = ARRHENIUS(1.19e-10, -20, t);
+	atm->q[ctl->qnt_Cn2o][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
+      }
     }
-
-    /* Calculate mass per grid box... */
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0)
-	mass[ARRAY_3D
-	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	  += atm->q[ctl->qnt_m][ip];
-
-    /* Convert mass to concentration... */
-#pragma omp parallel for default(shared)
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0)
-	if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0)
-	  atm->q[ctl->qnt_Cx][ip] =
-	    AVO * mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-				izs[ip], ctl->chemgrid_nz)]
-	    / (1e18 * area[iys[ip]] * dz * ctl->molmass);	//Unit: molec/cm3
-
-    /* Free... */
-    free(mass);
-    free(area);
-    free(lat);
-  }
-
-  /* Free... */
-  free(ixs);
-  free(iys);
-  free(izs);
-
-  /* Update device... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
 }
 
 /*****************************************************************************/
+
+#ifdef KPP
 
 void module_kpp_chem(
   ctl_t * ctl,

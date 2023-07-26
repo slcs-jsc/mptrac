@@ -149,7 +149,7 @@ int main(
   if (ctl.qnt_aoa >= 0)
     for (ip = 0; ip < atm->np; ip++)
       atm->q[ctl.qnt_aoa][ip] = atm->time[ip];
-  
+
   /* Save data... */
   write_atm(argv[2], &ctl, atm, 0);
 

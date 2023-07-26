@@ -194,33 +194,4 @@ void kpp_chem_output2atm(
   //	atm->q[ctl->qnt_Ch2o][ip] = FIX[indf_h2o];
 }
 
-void kpp_chem_init_cqnt(
-ctl_t * ctl,
-atm_t * atm,
-clim_t * clim,
-met_t * met0,
-met_t * met1,
-int ip){	
-
-	SET_ATM(qnt_Co1d, clim_var(&clim->o1d, atm->time[ip],
-						atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Coh, clim_var(&clim->oh, atm->time[ip],
-						atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Ch2o2, clim_var(&clim->h2o2, atm->time[ip],
-						atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Cho2, clim_var(&clim->ho2, atm->time[ip],
-						atm->lat[ip], atm->p[ip]));
-	//SET_ATM(qnt_Co3, clim_var(&clim->o3, atm->time[ip],
-	//					atm->lat[ip], atm->p[ip]));
-
-  INTPOL_INIT;
-  double o3, t;
-  INTPOL_3D(o3,1)
-  INTPOL_3D(t,1)
-  double M = MOLEC_DENS(atm->p[ip], t);  
-  SET_ATM(qnt_Co3, o3 * M);
-}
-
 #ENDINLINE
-
-
