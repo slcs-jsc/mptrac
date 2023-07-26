@@ -496,9 +496,9 @@ int main(
 	    module_meteo(&ctl, clim, met0, met1, atm);
 
 	  /* Check boundary conditions (initial)... */
-	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
+	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0 || ctl.bound_ccl4 >= 0
 	      || ctl.bound_ccl3f >= 0 || ctl.bound_ccl2f2 >= 0
-	      || ctl.bound_n2o >= 0)
+	      || ctl.bound_n2o >= 0 || ctl.bound_sf6 >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
@@ -541,9 +541,9 @@ int main(
 	    module_dry_deposition(&ctl, met0, met1, atm, dt);
 
 	  /* Check boundary conditions (final)... */
-	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0
+	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0 || ctl.bound_ccl4 >= 0
 	      || ctl.bound_ccl3f >= 0 || ctl.bound_ccl2f2 >= 0
-	      || ctl.bound_n2o >= 0)
+	      || ctl.bound_n2o >= 0 || ctl.bound_sf6 >= 0)
 	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Write output... */
@@ -716,8 +716,9 @@ void module_bound_cond(
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0
-      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0 && ctl->qnt_Cn2o < 0)
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->qnt_Cccl4
+      && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0
+      && ctl->qnt_Cn2o < 0 && ctl->qnt_Csf6 < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   const int np = atm->np;
@@ -778,7 +779,8 @@ void module_bound_cond(
 	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 
       /* Set boundary conditions of tracer chemistry... */
-      if (ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0 || ctl->qnt_Cn2o >= 0) {
+      if (ctl->qnt_Cccl4 >= 0 || ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0
+	  || ctl->qnt_Cn2o >= 0 || ctl->qnt_Csf6 >= 0) {
 
 	/* Get temperature... */
 	double t;
@@ -789,15 +791,21 @@ void module_bound_cond(
 	double M = MOLEC_DENS(atm->p[ip], t);
 
 	/* Set tracer concentration... */
-	if (ctl->qnt_Cccl3f >= 0)
+	if (ctl->qnt_Cccl4 >= 0 && ctl->bound_ccl4 >= 0)
+	  atm->q[ctl->qnt_Cccl4][ip] = M *
+	    (ctl->bound_ccl4 + ctl->bound_ccl4_trend * atm->time[ip]);
+	if (ctl->qnt_Cccl3f >= 0 && ctl->bound_ccl3f >= 0)
 	  atm->q[ctl->qnt_Cccl3f][ip] = M *
 	    (ctl->bound_ccl3f + ctl->bound_ccl3f_trend * atm->time[ip]);
-	if (ctl->qnt_Cccl2f2 >= 0)
+	if (ctl->qnt_Cccl2f2 >= 0 && ctl->bound_ccl2f2 >= 0)
 	  atm->q[ctl->qnt_Cccl2f2][ip] = M *
 	    (ctl->bound_ccl2f2 + ctl->bound_ccl2f2_trend * atm->time[ip]);
-	if (ctl->qnt_Cn2o >= 0)
+	if (ctl->qnt_Cn2o >= 0 && ctl->bound_n2o >= 0)
 	  atm->q[ctl->qnt_Cn2o][ip] = M *
 	    (ctl->bound_n2o + ctl->bound_n2o_trend * atm->time[ip]);
+	if (ctl->qnt_Csf6 >= 0 && ctl->bound_sf6 >= 0)
+	  atm->q[ctl->qnt_Csf6][ip] = M *
+	    (ctl->bound_sf6 + ctl->bound_sf6_trend * atm->time[ip]);
       }
     }
 }
@@ -1408,26 +1416,53 @@ void module_tracer_chem(
       INTPOL_INIT;
       INTPOL_3D(t, 1);
 
+      /* Reactions for CFC-10... */
+      if (ctl->qnt_Cccl4 >= 0) {
+	double K_o1d = ARRHENIUS(3.30e-10, 0, t);
+	atm->q[ctl->qnt_Cccl4][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
+	atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
+      }
+
       /* Reactions for CFC-11... */
       if (ctl->qnt_Cccl3f >= 0) {
-	double Kccl3f_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * Kccl3f_hv);
+	double K_o1d = ARRHENIUS(2.30e-10, 0, t);
+	atm->q[ctl->qnt_Cccl3f][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
       }
 
       /* Reactions for CFC-12... */
       if (ctl->qnt_Cccl2f2 >= 0) {
-	double Kcl2f2_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * Kcl2f2_hv);
+	double K_o1d = ARRHENIUS(1.40e-10, -25, t);
+	atm->q[ctl->qnt_Cccl2f2][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
+      }
+
+      /* Reactions for CFC-13... */
+      if (ctl->qnt_Ccclf3 >= 0) {
+	double K_o1d = ARRHENIUS(8.70e-11, 0, t);
+	atm->q[ctl->qnt_Ccclf3][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	// TODO: Roeth photolysis data are missing?
       }
 
       /* Reactions for N2O... */
       if (ctl->qnt_Cn2o >= 0) {
-	double Ko1d_n2o = ARR_AB(1.19e-10, -20, t);
-	double Kn2o_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-	atm->q[ctl->qnt_Cn2o][ip]
-	  *= exp(-dt[ip] * Ko1d_n2o * clim_var(&clim->o1d, atm->time[ip],
-					       atm->lat[ip], atm->p[ip]));
-	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * Kn2o_hv);
+	double K_o1d = ARRHENIUS(1.19e-10, -20, t);
+	atm->q[ctl->qnt_Cn2o][ip] *=
+	  exp(-dt[ip] * K_o1d *
+	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
       }
     }
 }
@@ -1955,14 +1990,16 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
   if (ctl->qnt_Ch >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
-  if (ctl->qnt_Cn2o >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+  if (ctl->qnt_Cccl4 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
   if (ctl->qnt_Cccl3f >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
   if (ctl->qnt_Cccl2f2 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
-  if (ctl->qnt_Ccclf3 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ccclf3);
+  if (ctl->qnt_Cn2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+  if (ctl->qnt_Csf6 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
   if (ctl->qnt_Co3 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
 

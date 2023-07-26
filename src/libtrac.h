@@ -252,6 +252,10 @@
 #define ARRAY_3D(ix, iy, ny, iz, nz)		\
   (((ix)*(ny) + (iy)) * (nz) + (iz))
 
+/*! Arrhenius equation for temperature dependence of reaction rates. */
+#define ARRHENIUS(a, b, t)			\
+  ((a) * exp( -(b) / (t)))
+
 /*! Convert degrees to zonal distance. */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
@@ -576,6 +580,10 @@
 #define RHO(p, t)				\
   (100. * (p) / (RA * (t)))
 
+/*! Roeth approximation formula for photolysis reactions. */
+#define ROETH_PHOTOL(a, b, c, sza)					\
+  ((c)*(sza) < M_PI/2. ? (a) * exp((b) * (1 - 1/cos((c) * (sza)))) : 0)
+
 /*! Set atmospheric quantity value. */
 #define SET_ATM(qnt, val)			\
   if (ctl->qnt >= 0)				\
@@ -644,13 +652,6 @@
   (((p) / (ps) <= 0.3 ? 1. :						\
     sin(M_PI / 2. * (1. - (p) / (ps)) / (1. - 0.3)))			\
    * THETA((p), (t)))
-
-/*! Roeth approximation formula for photolysis reactions. */
-#define ROETH_PHOTOL(a, b, c, sza) 				\
-  (c*sza < M_PI/2. ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
-
-#define ARR_AB(a, b, temp)    \
-	a * exp( -b / temp)
 
 /* ------------------------------------------------------------
    Log messages...
@@ -1018,6 +1019,15 @@ typedef struct {
   /*! Quantity array index for trace species x concentration. */
   int qnt_Cx;
 
+  /*! Quantity array index for H2O concentration. */
+  int qnt_Ch2o;
+
+  /*! Quantity array index for O3 concentration. */
+  int qnt_Co3;
+
+  /*! Quantity array index for CO concentration. */
+  int qnt_Cco;
+
   /*! Quantity array index for OH concentration. */
   int qnt_Coh;
 
@@ -1030,35 +1040,26 @@ typedef struct {
   /*! Quantity array index for H2O2 concentration. */
   int qnt_Ch2o2;
 
-  /*! Quantity array index for H2O concentration. */
-  int qnt_Ch2o;
-
   /*! Quantity array index for O(1D) concentration. */
   int qnt_Co1d;
 
   /*! Quantity array index for O(3P) concentration. */
   int qnt_Co3p;
 
-  /*! Quantity array index for O3 concentration. */
-  int qnt_Co3;
+  /*! Quantity array index for CFC-10 concentration. */
+  int qnt_Cccl4;
 
-  /*! Quantity array index for CO concentration. */
-  int qnt_Cco;
+  /*! Quantity array index for CFC-11 concentration. */
+  int qnt_Cccl3f;
+
+  /*! Quantity array index for CFC-12 concentration. */
+  int qnt_Cccl2f2;
+
+  /*! Quantity array index for CFC-13 concentration. */
+  int qnt_Ccclf3;
 
   /*! Quantity array index for N2O concentration. */
   int qnt_Cn2o;
-
-  /*! Quantity array index for CCl4 concentration. */
-  int qnt_Cccl4;
-
-  /*! Quantity array index for CCl3F concentration. */
-  int qnt_Cccl3f;
-
-  /*! Quantity array index for CCl2F2 concentration. */
-  int qnt_Cccl2f2;
-
-  /*! Quantity array index for CClF3 concentration. */
-  int qnt_Ccclf3;
 
   /*! Quantity array index for SF6 concentration. */
   int qnt_Csf6;
@@ -1224,6 +1225,12 @@ typedef struct {
   /*! Boundary conditions volume mixing ratio trend [ppv/s]. */
   double bound_vmr_trend;
 
+  /*! Boundary conditions volume mixing ratio for CFC-10 [ppv]. */
+  double bound_ccl4;
+
+  /*! Boundary conditions volume mixing ratio trend for CFC-10 [ppv/s]. */
+  double bound_ccl4_trend;
+
   /*! Boundary conditions volume mixing ratio for CFC-11 [ppv]. */
   double bound_ccl3f;
 
@@ -1236,11 +1243,23 @@ typedef struct {
   /*! Boundary conditions volume mixing ratio trend for CFC-12 [ppv/s]. */
   double bound_ccl2f2_trend;
 
+  /*! Boundary conditions volume mixing ratio for CFC-13 [ppv]. */
+  double bound_cclf3;
+
+  /*! Boundary conditions volume mixing ratio trend for CFC-13 [ppv/s]. */
+  double bound_cclf3_trend;
+
   /*! Boundary conditions volume mixing ratio for N2O [ppv]. */
   double bound_n2o;
 
   /*! Boundary conditions volume mixing ratio trend for N2O [ppv/s]. */
   double bound_n2o_trend;
+
+  /*! Boundary conditions volume mixing ratio for SF6 [ppv]. */
+  double bound_sf6;
+
+  /*! Boundary conditions volume mixing ratio trend for SF6 [ppv/s]. */
+  double bound_sf6_trend;
 
   /*! Boundary conditions minimum longitude [deg]. */
   double bound_lat0;
@@ -1293,7 +1312,7 @@ typedef struct {
   /*! Filename of O3 climatology. */
   char clim_o3_filename[LEN];
 
-  /*! Filename of CCl4 time series. */
+  /*! Filename of CFC-10 time series. */
   char clim_ccl4_timeseries[LEN];
 
   /*! Filename of CFC-11 time series. */
@@ -1301,6 +1320,9 @@ typedef struct {
 
   /*! Filename of CFC-12 time series. */
   char clim_ccl2f2_timeseries[LEN];
+
+  /*! Filename of CFC-13 time series. */
+  char clim_cclf3_timeseries[LEN];
 
   /*! Filename of N2O time series. */
   char clim_n2o_timeseries[LEN];
@@ -1761,13 +1783,13 @@ typedef struct {
   /*! O3 climatology data. */
   clim_var_t o3;
 
-  /*! Number of CCl4 timesteps. */
+  /*! Number of CFC-10 timesteps. */
   int ccl4_ntime;
 
-  /*! CCl4 time steps [s]. */
+  /*! CFC-10 time steps [s]. */
   double ccl4_time[CTS];
 
-  /*! CCl4 global volume mixing ratio [ppv]. */
+  /*! CFC-10 global volume mixing ratio [ppv]. */
   double ccl4_vmr[CTS];
 
   /*! Number of CFC-11 timesteps. */
@@ -1787,6 +1809,15 @@ typedef struct {
 
   /*! CFC-12 global volume mixing ratio [ppv]. */
   double ccl2f2_vmr[CTS];
+
+  /*! Number of CFC-13 timesteps. */
+  int cclf3_ntime;
+
+  /*! CFC-13 time steps [s]. */
+  double cclf3_time[CTS];
+
+  /*! CFC-13 global volume mixing ratio [ppv]. */
+  double cclf3_vmr[CTS];
 
   /*! Number of N2O timesteps. */
   int n2o_ntime;

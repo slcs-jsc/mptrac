@@ -9,10 +9,6 @@
   if (qnt_index >= 0)					\
     atm->q[qnt_index][ip] = VAR[ind_spec];
 
-/*! Roeth approximation formula for photolysis reactions. */
-#define ROETH_PHOTOL(a, b, c, sza) 				\
-  (c*sza < M_PI/2. ? a * exp(b * (1 - 1/cos(c * sza))) : 0)
-
 /*! Initialize concentration quantity. */
 #define INIT_CQNT(qnt_index, clim_var_t)				\
   if (qnt_index >= 0)							\

@@ -2099,7 +2099,7 @@ void read_clim(
   if (ctl->clim_o3_filename[0] != '-')
     clim_var_init(&clim->o3, "O3", ctl->clim_o3_filename);
 
-  /* Read CCl4 time series... */
+  /* Read CFC-10 time series... */
   if (ctl->clim_ccl4_timeseries[0] != '-')
     read_clim_timeseries(ctl->clim_ccl4_timeseries, clim->ccl4_time,
 			 clim->ccl4_vmr, &clim->ccl4_ntime);
@@ -2113,6 +2113,11 @@ void read_clim(
   if (ctl->clim_ccl2f2_timeseries[0] != '-')
     read_clim_timeseries(ctl->clim_ccl2f2_timeseries, clim->ccl2f2_time,
 			 clim->ccl2f2_vmr, &clim->ccl2f2_ntime);
+
+  /* Read CFC-13 time series... */
+  if (ctl->clim_cclf3_timeseries[0] != '-')
+    read_clim_timeseries(ctl->clim_cclf3_timeseries, clim->cclf3_time,
+			 clim->cclf3_vmr, &clim->cclf3_ntime);
 
   /* Read N2O time series... */
   if (ctl->clim_n2o_timeseries[0] != '-')
@@ -2271,12 +2276,12 @@ void read_ctl(
   ctl->qnt_Ch2o2 = -1;
   ctl->qnt_Ch2o = -1;
   ctl->qnt_Co3 = -1;
-  ctl->qnt_Cn2o = -1;
-  ctl->qnt_Csf6 = -1;
   ctl->qnt_Cccl4 = -1;
   ctl->qnt_Cccl3f = -1;
   ctl->qnt_Cccl2f2 = -1;
   ctl->qnt_Ccclf3 = -1;
+  ctl->qnt_Cn2o = -1;
+  ctl->qnt_Csf6 = -1;
   ctl->qnt_Cco = -1;
 
   /* Read quantities... */
@@ -2374,16 +2379,16 @@ void read_ctl(
       SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm^3")
       SET_QNT(qnt_Ch2o, "Ch2o", "H2O concentration", "molec/cm^3")
       SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
+      SET_QNT(qnt_Cccl4, "Cccl4", "CCl4 (CFC-10) concentration", "molec/cm^3")
+      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F (CFC-11) concentration",
+	      "molec/cm^3")
+      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2 (CFC-12) concentration",
+	      "molec/cm^3")
+      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3 (CFC-13) concentration",
+	      "molec/cm^3")
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
-      SET_QNT(qnt_Cccl4, "Cccl4", "CCl4 concentration", "molec/cm^3")
-      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F(CFC-11) concentration",
-	      "molec/cm^3")
-      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2(CFC-12) concentration",
-	      "molec/cm^3")
-      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3(CFC-13) concentration",
-	      "molec/cm^3")
-      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
       SET_QNT(qnt_Csf6, "Csf6", "SF6 concentration", "molec/cm^3")
+      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
@@ -2523,6 +2528,10 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "BOUND_VMR", -1, "-999", NULL);
   ctl->bound_vmr_trend =
     scan_ctl(filename, argc, argv, "BOUND_VMR_TREND", -1, "0", NULL);
+  ctl->bound_ccl4 =
+    scan_ctl(filename, argc, argv, "BOUND_CCL4", -1, "268e-12", NULL);
+  ctl->bound_ccl4_trend =
+    scan_ctl(filename, argc, argv, "BOUND_CCL4_TREND", -1, "0", NULL);
   ctl->bound_ccl3f =
     scan_ctl(filename, argc, argv, "BOUND_CCL3F", -1, "268e-12", NULL);
   ctl->bound_ccl3f_trend =
@@ -2531,10 +2540,18 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "BOUND_CCL2F2", -1, "533e-12", NULL);
   ctl->bound_ccl2f2_trend =
     scan_ctl(filename, argc, argv, "BOUND_CCL2F2_TREND", -1, "0", NULL);
+  ctl->bound_cclf3 =
+    scan_ctl(filename, argc, argv, "BOUND_CCLF3", -1, "268e-12", NULL);
+  ctl->bound_cclf3_trend =
+    scan_ctl(filename, argc, argv, "BOUND_CCLF3_TREND", -1, "0", NULL);
   ctl->bound_n2o =
     scan_ctl(filename, argc, argv, "BOUND_N2O", -1, "314e-9", NULL);
   ctl->bound_n2o_trend =
     scan_ctl(filename, argc, argv, "BOUND_N2O_TREND", -1, "0", NULL);
+  ctl->bound_sf6 =
+    scan_ctl(filename, argc, argv, "BOUND_SF6", -1, "314e-9", NULL);
+  ctl->bound_sf6_trend =
+    scan_ctl(filename, argc, argv, "BOUND_SF6_TREND", -1, "0", NULL);
   ctl->bound_lat0 =
     scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-90", NULL);
   ctl->bound_lat1 =
@@ -2714,12 +2731,14 @@ void read_ctl(
 	   "../../data/clams_radical_species.nc", ctl->clim_o1d_filename);
   scan_ctl(filename, argc, argv, "CLIM_O3_FILENAME", -1,
 	   "../../data/cams_O3.nc", ctl->clim_o3_filename);
+  scan_ctl(filename, argc, argv, "CLIM_CCL4_TIMESERIES", -1,
+	   "../../data/noaa_gml_ccl4.tab", ctl->clim_ccl4_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_CCL3F_TIMESERIES", -1,
 	   "../../data/noaa_gml_cfc11.tab", ctl->clim_ccl3f_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_CCL2F2_TIMESERIES", -1,
 	   "../../data/noaa_gml_cfc12.tab", ctl->clim_ccl2f2_timeseries);
-  scan_ctl(filename, argc, argv, "CLIM_CCL4_TIMESERIES", -1,
-	   "../../data/noaa_gml_ccl4.tab", ctl->clim_ccl4_timeseries);
+  scan_ctl(filename, argc, argv, "CLIM_CCLF3_TIMESERIES", -1,
+	   "-", ctl->clim_cclf3_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_N2O_TIMESERIES", -1,
 	   "../../data/noaa_gml_n2o.tab", ctl->clim_n2o_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_SF6_TIMESERIES", -1,
