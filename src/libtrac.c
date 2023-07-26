@@ -2483,8 +2483,9 @@ void read_ctl(
 
   /* Advection parameters... */
   ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "2", NULL);
-  if (!(ctl->advect == 1 || ctl->advect == 2 || ctl->advect == 4))
-    ERRMSG("Set ADVECT to 1, 2, or 4!");
+  if (!(ctl->advect == 0 || ctl->advect == 1
+	|| ctl->advect == 2 || ctl->advect == 4))
+    ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
   ctl->reflect =
     (int) scan_ctl(filename, argc, argv, "REFLECT", -1, "0", NULL);
 
@@ -2545,13 +2546,13 @@ void read_ctl(
   ctl->bound_sf6_trend =
     scan_ctl(filename, argc, argv, "BOUND_SF6_TREND", -1, "0", NULL);
   ctl->bound_lat0 =
-    scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-90", NULL);
+    scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-999", NULL);
   ctl->bound_lat1 =
-    scan_ctl(filename, argc, argv, "BOUND_LAT1", -1, "90", NULL);
+    scan_ctl(filename, argc, argv, "BOUND_LAT1", -1, "-999", NULL);
   ctl->bound_p0 =
-    scan_ctl(filename, argc, argv, "BOUND_P0", -1, "1e10", NULL);
+    scan_ctl(filename, argc, argv, "BOUND_P0", -1, "-999", NULL);
   ctl->bound_p1 =
-    scan_ctl(filename, argc, argv, "BOUND_P1", -1, "-1e10", NULL);
+    scan_ctl(filename, argc, argv, "BOUND_P1", -1, "-999", NULL);
   ctl->bound_dps =
     scan_ctl(filename, argc, argv, "BOUND_DPS", -1, "-999", NULL);
   ctl->bound_dzs =

@@ -462,7 +462,8 @@ int main(
 	  module_position(&ctl, met0, met1, atm, dt);
 
 	  /* Advection... */
-	  module_advect(&ctl, met0, met1, atm, dt);
+	  if (ctl.advect > 0)
+	    module_advect(&ctl, met0, met1, atm, dt);
 
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
@@ -496,7 +497,9 @@ int main(
 	    module_meteo(&ctl, clim, met0, met1, atm);
 
 	  /* Check boundary conditions (initial)... */
-	  module_bound_cond(&ctl, met0, met1, atm, dt);
+	  if ((ctl.bound_lat0 < ctl.bound_lat1)
+	      && (ctl.bound_p0 > ctl.bound_p1))
+	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -508,25 +511,26 @@ int main(
 	    module_mixing(&ctl, clim, atm, t);
 
 	  /* OH chemistry... */
-	  if (ctl.clim_oh_filename[0] != '-' && ctl.oh_chem_reaction != 0)
+	  if (ctl.oh_chem_reaction != 0)
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-	  if (ctl.clim_h2o2_filename[0] != '-' && ctl.h2o2_chem_reaction != 0) {
+	  if (ctl.h2o2_chem_reaction != 0) {
 	    module_h2o2_chemgrid(&ctl, met0, met1, atm, t);
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
+
+	  /* First-order tracer chemistry... */
+	  if (ctl.tracer_chem)
+	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
+
 #ifdef KPP
 	  /* KPP chemistry... */
-	  if (ctl.kpp_chem == 1) {
+	  if (ctl.kpp_chem) {
 	    module_kpp_chemgrid(&ctl, clim, atm, met0, met1, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
-
-	  /* First-order tracer chemistry... */
-	  if (ctl.tracer_chem == 1)
-	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
 
 	  /* Wet deposition... */
 	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
@@ -538,7 +542,9 @@ int main(
 	    module_dry_deposition(&ctl, met0, met1, atm, dt);
 
 	  /* Check boundary conditions (final)... */
-	  module_bound_cond(&ctl, met0, met1, atm, dt);
+	  if ((ctl.bound_lat0 < ctl.bound_lat1)
+	      && (ctl.bound_p0 > ctl.bound_p1))
+	    module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
