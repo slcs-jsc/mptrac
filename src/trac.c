@@ -1643,10 +1643,11 @@ void module_h2o2_chemgrid(
   if (ctl->molmass < 0)
     ERRMSG("Specify molar mass!");
   if (ctl->qnt_vmrimpl < 0)
-    ERRMSG("Module need quantity implicity vmr!")
-      /* Allocate... */
-      ALLOC(mass, double,
-	    ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+    ERRMSG("Module needs quantity implicity vmr!");
+  
+  /* Allocate... */
+  ALLOC(mass, double,
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
   ALLOC(z, double,
 	ctl->chemgrid_nz);
   ALLOC(lon, double,
@@ -1663,12 +1664,12 @@ void module_h2o2_chemgrid(
 	atm->np);
   ALLOC(izs, int,
 	atm->np);
-
+  
   /* Set grid box size... */
   double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
   double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
   double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
-
+  
   /* Set vertical coordinates... */
 #pragma omp parallel for default(shared)
   for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
