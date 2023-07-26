@@ -2283,6 +2283,7 @@ void read_ctl(
   ctl->qnt_Cn2o = -1;
   ctl->qnt_Csf6 = -1;
   ctl->qnt_Cco = -1;
+  ctl->qnt_aoa = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -2389,6 +2390,7 @@ void read_ctl(
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
       SET_QNT(qnt_Csf6, "Csf6", "SF6 concentration", "molec/cm^3")
       SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
+      SET_QNT(qnt_aoa, "aoa", "age of air", "s")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 

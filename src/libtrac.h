@@ -1064,6 +1064,9 @@ typedef struct {
   /*! Quantity array index for SF6 concentration. */
   int qnt_Csf6;
 
+  /*! Quantity array index for age of air. */
+  int qnt_aoa;
+
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
 

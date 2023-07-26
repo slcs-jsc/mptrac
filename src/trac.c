@@ -496,10 +496,7 @@ int main(
 	    module_meteo(&ctl, clim, met0, met1, atm);
 
 	  /* Check boundary conditions (initial)... */
-	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0 || ctl.bound_ccl4 >= 0
-	      || ctl.bound_ccl3f >= 0 || ctl.bound_ccl2f2 >= 0
-	      || ctl.bound_n2o >= 0 || ctl.bound_sf6 >= 0)
-	    module_bound_cond(&ctl, met0, met1, atm, dt);
+	  module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -541,10 +538,7 @@ int main(
 	    module_dry_deposition(&ctl, met0, met1, atm, dt);
 
 	  /* Check boundary conditions (final)... */
-	  if (ctl.bound_mass >= 0 || ctl.bound_vmr >= 0 || ctl.bound_ccl4 >= 0
-	      || ctl.bound_ccl3f >= 0 || ctl.bound_ccl2f2 >= 0
-	      || ctl.bound_n2o >= 0 || ctl.bound_sf6 >= 0)
-	    module_bound_cond(&ctl, met0, met1, atm, dt);
+	  module_bound_cond(&ctl, met0, met1, atm, dt);
 
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
@@ -718,8 +712,8 @@ void module_bound_cond(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->qnt_Cccl4
       && ctl->qnt_Cccl3f < 0 && ctl->qnt_Cccl2f2 < 0
-      && ctl->qnt_Cn2o < 0 && ctl->qnt_Csf6 < 0)
-    ERRMSG("Module needs quantity mass or volume mixing ratio!");
+      && ctl->qnt_Cn2o < 0 && ctl->qnt_Csf6 < 0 && ctl->qnt_aoa < 0)
+    return;
 
   const int np = atm->np;
 #ifdef _OPENACC
@@ -807,6 +801,10 @@ void module_bound_cond(
 	  atm->q[ctl->qnt_Csf6][ip] = M *
 	    (ctl->bound_sf6 + ctl->bound_sf6_trend * atm->time[ip]);
       }
+
+      /* Set age of air... */
+      if (ctl->qnt_aoa >= 0)
+	atm->q[ctl->qnt_aoa][ip] = atm->time[ip];
     }
 }
 
@@ -1978,10 +1976,10 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-  if (ctl->qnt_Co3p >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
   if (ctl->qnt_Co1d >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
+  if (ctl->qnt_Co3p >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
   if (ctl->qnt_Ch2o2 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
   if (ctl->qnt_Coh >= 0)
@@ -1996,6 +1994,8 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
   if (ctl->qnt_Cccl2f2 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
+  if (ctl->qnt_Ccclf3 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ccclf3);
   if (ctl->qnt_Cn2o >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
   if (ctl->qnt_Csf6 >= 0)
@@ -2003,6 +2003,8 @@ void module_mixing(
   if (ctl->qnt_Co3 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
 
+  // TODO: apply mixing to age of air? maybe apply mixing to all quantities?
+  
   /* Free... */
   free(ixs);
   free(iys);
