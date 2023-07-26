@@ -1444,15 +1444,6 @@ void module_tracer_chem(
 	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
       }
 
-      /* Reactions for CFC-13... */
-      if (ctl->qnt_Ccclf3 >= 0) {
-	double K_o1d = ARRHENIUS(8.70e-11, 0, t);
-	atm->q[ctl->qnt_Ccclf3][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	// TODO: Roeth photolysis data are missing?
-      }
-
       /* Reactions for N2O... */
       if (ctl->qnt_Cn2o >= 0) {
 	double K_o1d = ARRHENIUS(1.19e-10, -20, t);
@@ -1994,8 +1985,6 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
   if (ctl->qnt_Cccl2f2 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
-  if (ctl->qnt_Ccclf3 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ccclf3);
   if (ctl->qnt_Cn2o >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
   if (ctl->qnt_Csf6 >= 0)
@@ -2004,7 +1993,7 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
 
   // TODO: apply mixing to age of air? maybe apply mixing to all quantities?
-  
+
   /* Free... */
   free(ixs);
   free(iys);

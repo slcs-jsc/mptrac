@@ -1055,9 +1055,6 @@ typedef struct {
   /*! Quantity array index for CFC-12 concentration. */
   int qnt_Cccl2f2;
 
-  /*! Quantity array index for CFC-13 concentration. */
-  int qnt_Ccclf3;
-
   /*! Quantity array index for N2O concentration. */
   int qnt_Cn2o;
 
@@ -1246,12 +1243,6 @@ typedef struct {
   /*! Boundary conditions volume mixing ratio trend for CFC-12 [ppv/s]. */
   double bound_ccl2f2_trend;
 
-  /*! Boundary conditions volume mixing ratio for CFC-13 [ppv]. */
-  double bound_cclf3;
-
-  /*! Boundary conditions volume mixing ratio trend for CFC-13 [ppv/s]. */
-  double bound_cclf3_trend;
-
   /*! Boundary conditions volume mixing ratio for N2O [ppv]. */
   double bound_n2o;
 
@@ -1323,9 +1314,6 @@ typedef struct {
 
   /*! Filename of CFC-12 time series. */
   char clim_ccl2f2_timeseries[LEN];
-
-  /*! Filename of CFC-13 time series. */
-  char clim_cclf3_timeseries[LEN];
 
   /*! Filename of N2O time series. */
   char clim_n2o_timeseries[LEN];
@@ -1812,15 +1800,6 @@ typedef struct {
 
   /*! CFC-12 global volume mixing ratio [ppv]. */
   double ccl2f2_vmr[CTS];
-
-  /*! Number of CFC-13 timesteps. */
-  int cclf3_ntime;
-
-  /*! CFC-13 time steps [s]. */
-  double cclf3_time[CTS];
-
-  /*! CFC-13 global volume mixing ratio [ppv]. */
-  double cclf3_vmr[CTS];
 
   /*! Number of N2O timesteps. */
   int n2o_ntime;

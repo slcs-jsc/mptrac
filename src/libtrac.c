@@ -2114,11 +2114,6 @@ void read_clim(
     read_clim_timeseries(ctl->clim_ccl2f2_timeseries, clim->ccl2f2_time,
 			 clim->ccl2f2_vmr, &clim->ccl2f2_ntime);
 
-  /* Read CFC-13 time series... */
-  if (ctl->clim_cclf3_timeseries[0] != '-')
-    read_clim_timeseries(ctl->clim_cclf3_timeseries, clim->cclf3_time,
-			 clim->cclf3_vmr, &clim->cclf3_ntime);
-
   /* Read N2O time series... */
   if (ctl->clim_n2o_timeseries[0] != '-')
     read_clim_timeseries(ctl->clim_n2o_timeseries, clim->n2o_time,
@@ -2279,7 +2274,6 @@ void read_ctl(
   ctl->qnt_Cccl4 = -1;
   ctl->qnt_Cccl3f = -1;
   ctl->qnt_Cccl2f2 = -1;
-  ctl->qnt_Ccclf3 = -1;
   ctl->qnt_Cn2o = -1;
   ctl->qnt_Csf6 = -1;
   ctl->qnt_Cco = -1;
@@ -2297,6 +2291,8 @@ void read_ctl(
 	     ctl->qnt_longname[iq]);
     scan_ctl(filename, argc, argv, "QNT_FORMAT", iq, "%g",
 	     ctl->qnt_format[iq]);
+    if (strcasecmp(ctl->qnt_name[iq], "aoa") == 0)
+      sprintf(ctl->qnt_format[iq], "%%.2f");
 
     /* Try to identify quantity... */
     SET_QNT(qnt_idx, "idx", "particle index", "-")
@@ -2375,8 +2371,8 @@ void read_ctl(
       SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm^3")
       SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm^3")
       SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm^3")
-      SET_QNT(qnt_Ch, "Ch", "H radiconcentrationcal", "molec/cm^3")
-      SET_QNT(qnt_Co3p, "Co3p", "O(3P) radiconcentrationcal", "molec/cm^3")
+      SET_QNT(qnt_Ch, "Ch", "H radical concentration", "molec/cm^3")
+      SET_QNT(qnt_Co3p, "Co3p", "O(3P) radical concentration", "molec/cm^3")
       SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm^3")
       SET_QNT(qnt_Ch2o, "Ch2o", "H2O concentration", "molec/cm^3")
       SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
@@ -2384,8 +2380,6 @@ void read_ctl(
       SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F (CFC-11) concentration",
 	      "molec/cm^3")
       SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2 (CFC-12) concentration",
-	      "molec/cm^3")
-      SET_QNT(qnt_Ccclf3, "Ccclf3", "CClF3 (CFC-13) concentration",
 	      "molec/cm^3")
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
       SET_QNT(qnt_Csf6, "Csf6", "SF6 concentration", "molec/cm^3")
@@ -2542,10 +2536,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "BOUND_CCL2F2", -1, "533e-12", NULL);
   ctl->bound_ccl2f2_trend =
     scan_ctl(filename, argc, argv, "BOUND_CCL2F2_TREND", -1, "0", NULL);
-  ctl->bound_cclf3 =
-    scan_ctl(filename, argc, argv, "BOUND_CCLF3", -1, "268e-12", NULL);
-  ctl->bound_cclf3_trend =
-    scan_ctl(filename, argc, argv, "BOUND_CCLF3_TREND", -1, "0", NULL);
   ctl->bound_n2o =
     scan_ctl(filename, argc, argv, "BOUND_N2O", -1, "314e-9", NULL);
   ctl->bound_n2o_trend =
@@ -2739,8 +2729,6 @@ void read_ctl(
 	   "../../data/noaa_gml_cfc11.tab", ctl->clim_ccl3f_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_CCL2F2_TIMESERIES", -1,
 	   "../../data/noaa_gml_cfc12.tab", ctl->clim_ccl2f2_timeseries);
-  scan_ctl(filename, argc, argv, "CLIM_CCLF3_TIMESERIES", -1,
-	   "-", ctl->clim_cclf3_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_N2O_TIMESERIES", -1,
 	   "../../data/noaa_gml_n2o.tab", ctl->clim_n2o_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_SF6_TIMESERIES", -1,

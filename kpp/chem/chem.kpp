@@ -11,7 +11,7 @@
 
 extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
             ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
-            ko1d_ccl2f2, ko1d_cclf3, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
+            ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
             kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
             koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2,		\
             ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
@@ -19,7 +19,7 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
 
 #pragma omp threadprivate(ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
                           ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
-                          ko1d_ccl2f2, ko1d_cclf3, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
+                          ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
                           kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
                           koh_ho2, koh_h2o2, kho2_o3, kho2_ho2,		\
                           ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
@@ -66,7 +66,7 @@ double  kcar_jpl (  float M, float A0, float B0, float A1, float B1, float A2, f
 
 double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,
       ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,
-      ko1d_ccl2f2, ko1d_cclf3, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 
+      ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 
       kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,
       koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2,
       ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,
@@ -106,7 +106,6 @@ void kpp_chem_initialize(
     SET_VAR(ind_n2o, qnt_Cn2o);
     SET_VAR(ind_ccl3f, qnt_Cccl3f);
     SET_VAR(ind_ccl2f2, qnt_Cccl2f2);
-    SET_VAR(ind_cclf3, qnt_Ccclf3);
     SET_VAR(ind_o3, qnt_Co3);
     
     //VAR[ind_h2o] = h2o * M;
@@ -134,7 +133,6 @@ void kpp_chem_initialize(
     ko1d_co2 = ARR_ab(7.5e-11, -115);
     ko1d_ccl3f = ARR_ab(2.3e-10, 0);
     ko1d_ccl2f2 = ARR_ab(1.4e-10, -25);
-    ko1d_cclf3 = ARR_ab(8.7e-11, 0);
     ko3p_oh = ARR_ab(1.8e-11, -180);
     ko3p_ho2 = ARR_ab(3e-11, -200);
     ko3p_h2o2 = ARR_ab(1.4e-12, 2000);
@@ -189,7 +187,6 @@ void kpp_chem_output2atm(
 	GET_VAR(ind_n2o, ctl->qnt_Cn2o)
 	GET_VAR(ind_ccl3f, ctl->qnt_Cccl3f)
 	GET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2)
-	GET_VAR(ind_cclf3, ctl->qnt_Ccclf3)
 	//GET_VAR(ind_co, ctl->qnt_Cco)
   //if (ctl->qnt_Co3>=0)
   //  atm->q[ctl->qnt_Co3][ip] = FIX[indf_o3];
