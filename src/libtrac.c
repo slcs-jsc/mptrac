@@ -2525,7 +2525,7 @@ void read_ctl(
   ctl->bound_vmr_trend =
     scan_ctl(filename, argc, argv, "BOUND_VMR_TREND", -1, "0", NULL);
   ctl->bound_ccl4 =
-    scan_ctl(filename, argc, argv, "BOUND_CCL4", -1, "268e-12", NULL);
+    scan_ctl(filename, argc, argv, "BOUND_CCL4", -1, "102e-12", NULL);
   ctl->bound_ccl4_trend =
     scan_ctl(filename, argc, argv, "BOUND_CCL4_TREND", -1, "0", NULL);
   ctl->bound_ccl3f =
@@ -2541,7 +2541,7 @@ void read_ctl(
   ctl->bound_n2o_trend =
     scan_ctl(filename, argc, argv, "BOUND_N2O_TREND", -1, "0", NULL);
   ctl->bound_sf6 =
-    scan_ctl(filename, argc, argv, "BOUND_SF6", -1, "314e-9", NULL);
+    scan_ctl(filename, argc, argv, "BOUND_SF6", -1, "4.2e-12", NULL);
   ctl->bound_sf6_trend =
     scan_ctl(filename, argc, argv, "BOUND_SF6_TREND", -1, "0", NULL);
   ctl->bound_lat0 =
