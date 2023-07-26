@@ -148,9 +148,9 @@ void module_mixing_help(
 void module_chemgrid(
   ctl_t * ctl,
   clim_t * clim,
-  atm_t * atm,
   met_t * met0,
   met_t * met1,
+  atm_t * atm,
   double t);
 
 /*! Calculate OH chemistry. */
@@ -508,7 +508,7 @@ int main(
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
 	  if (ctl.h2o2_chem_reaction != 0) {
-	    module_chemgrid(&ctl, clim, atm, met0, met1, t);
+	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 
@@ -519,7 +519,7 @@ int main(
 #ifdef KPP
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
-	    module_chemgrid(&ctl, clim, atm, met0, met1, t);
+	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 	  }
 #endif
@@ -1386,9 +1386,9 @@ void module_meteo(
 void module_chemgrid(
   ctl_t * ctl,
   clim_t * clim,
-  atm_t * atm,
   met_t * met0,
   met_t * met1,
+  atm_t * atm,
   double tt) {
   
   double *mass, *z, *lon, *lat, *press, *area;
