@@ -2736,7 +2736,7 @@ void read_ctl(
 	   "../../data/noaa_gml_sf6.tab", ctl->clim_sf6_timeseries);
 
   /* Mixing... */
-  ctl->mixing_dt = scan_ctl(filename, argc, argv, "MIXING_DT", -1, "0", NULL);
+  ctl->mixing_dt = scan_ctl(filename, argc, argv, "MIXING_DT", -1, "3600.", NULL);
   ctl->mixing_trop
     = scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "-999", NULL);
   ctl->mixing_strat
@@ -2744,9 +2744,9 @@ void read_ctl(
   ctl->mixing_z0 =
     scan_ctl(filename, argc, argv, "MIXING_Z0", -1, "-5", NULL);
   ctl->mixing_z1 =
-    scan_ctl(filename, argc, argv, "MIXING_Z1", -1, "95", NULL);
+    scan_ctl(filename, argc, argv, "MIXING_Z1", -1, "85", NULL);
   ctl->mixing_nz =
-    (int) scan_ctl(filename, argc, argv, "MIXING_NZ", -1, "100", NULL);
+    (int) scan_ctl(filename, argc, argv, "MIXING_NZ", -1, "90", NULL);
   ctl->mixing_lon0 =
     scan_ctl(filename, argc, argv, "MIXING_LON0", -1, "-180", NULL);
   ctl->mixing_lon1 =
@@ -2764,9 +2764,9 @@ void read_ctl(
   ctl->chemgrid_z0 =
     scan_ctl(filename, argc, argv, "CHEMGRID_Z0", -1, "-5", NULL);
   ctl->chemgrid_z1 =
-    scan_ctl(filename, argc, argv, "CHEMGRID_Z1", -1, "95", NULL);
+    scan_ctl(filename, argc, argv, "CHEMGRID_Z1", -1, "85", NULL);
   ctl->chemgrid_nz =
-    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "100", NULL);
+    (int) scan_ctl(filename, argc, argv, "CHEMGRID_NZ", -1, "90", NULL);
   ctl->chemgrid_lon0 =
     scan_ctl(filename, argc, argv, "CHEMGRID_LON0", -1, "-180", NULL);
   ctl->chemgrid_lon1 =
@@ -2818,8 +2818,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CSI_OBSMIN", -1, "0", NULL);
   ctl->csi_modmin =
     scan_ctl(filename, argc, argv, "CSI_MODMIN", -1, "0", NULL);
-  ctl->csi_z0 = scan_ctl(filename, argc, argv, "CSI_Z0", -1, "0", NULL);
-  ctl->csi_z1 = scan_ctl(filename, argc, argv, "CSI_Z1", -1, "100", NULL);
+  ctl->csi_z0 = scan_ctl(filename, argc, argv, "CSI_Z0", -1, "-5", NULL);
+  ctl->csi_z1 = scan_ctl(filename, argc, argv, "CSI_Z1", -1, "85", NULL);
   ctl->csi_nz = (int) scan_ctl(filename, argc, argv, "CSI_NZ", -1, "1", NULL);
   ctl->csi_lon0 =
     scan_ctl(filename, argc, argv, "CSI_LON0", -1, "-180", NULL);
@@ -2845,8 +2845,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
-  ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "0", NULL);
-  ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "100", NULL);
+  ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
+  ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "85", NULL);
   ctl->grid_nz =
     (int) scan_ctl(filename, argc, argv, "GRID_NZ", -1, "1", NULL);
   ctl->grid_lon0 =
