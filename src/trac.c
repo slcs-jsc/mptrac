@@ -1350,7 +1350,7 @@ void module_meteo(
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
     SET_ATM(qnt_hno3,
-	    clim_hno3(clim, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_var(&clim->hno3, atm->time[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_oh, clim_oh(ctl, clim, atm->time[ip],
 			    atm->lon[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_h2o2, clim_var(&clim->h2o2, atm->time[ip],
@@ -1376,8 +1376,8 @@ void module_meteo(
     SET_ATM(qnt_tice, TICE(atm->p[ip], h2o));
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
-			    clim_hno3(clim, atm->time[ip], atm->lat[ip],
-				      atm->p[ip])));
+			    clim_var(&clim->hno3, atm->time[ip],
+				     atm->lat[ip], atm->p[ip])));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }

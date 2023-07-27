@@ -1291,6 +1291,9 @@ typedef struct {
   /*! Life time of particles in the stratosphere  [s]. */
   double tdec_strat;
 
+  /*! Filename of HNO3 climatology. */
+  char clim_hno3_filename[LEN];
+
   /*! Filename of OH climatology. */
   char clim_oh_filename[LEN];
 
@@ -1732,40 +1735,22 @@ typedef struct {
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
 
-  /*! Number of HNO3 timesteps. */
-  int hno3_ntime;
+  /*! HNO3 climatology data [ppv]. */
+  clim_var_t hno3;
 
-  /*! Number of HNO3 latitudes. */
-  int hno3_nlat;
-
-  /*! Number of HNO3 pressure levels. */
-  int hno3_np;
-
-  /*! HNO3 time steps [s]. */
-  double hno3_time[12];
-
-  /*! HNO3 latitudes [deg]. */
-  double hno3_lat[18];
-
-  /*! HNO3 pressure levels [hPa]. */
-  double hno3_p[10];
-
-  /*! HNO3 volume mixing ratios [ppv]. */
-  double hno3[12][18][10];
-
-  /*! OH climatology data. */
+  /*! OH climatology data [molec/cm^3]. */
   clim_var_t oh;
 
-  /*! H2O climatology data. */
+  /*! H2O2 climatology data [molec/cm^3]. */
   clim_var_t h2o2;
 
-  /*! HO2 climatology data. */
+  /*! HO2 climatology data [molec/cm^3]. */
   clim_var_t ho2;
 
-  /*! O(1D) climatology data. */
+  /*! O(1D) climatology data [molec/cm^3]. */
   clim_var_t o1d;
 
-  /*! O3 climatology data. */
+  /*! O3 climatology data. */// TODO: check unit? where is this used?
   clim_var_t o3;
 
   /*! Number of CFC-10 timesteps. */
@@ -1989,20 +1974,6 @@ double clim_tropo(
 void clim_tropo_init(
   clim_t * clim);
 
-/*! Climatology of HNO3 volume mixing ratios. */
-#ifdef _OPENACC
-#pragma acc routine (clim_hno3)
-#endif
-double clim_hno3(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p);
-
-/*! Initialization function for HNO3 climatology. */
-void clim_hno3_init(
-  clim_t * clim);
-
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
@@ -2029,12 +2000,6 @@ double clim_var(
   double t,
   double lat,
   double p);
-
-/*! Initialization function for climatology of a single variable. */
-void clim_var_init(
-  clim_var_t * var,
-  char *varname,
-  char *filename);
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -2323,6 +2288,13 @@ int read_clim_timeseries(
   double time[CTS],
   double vmr[CTS],
   int *n);
+
+/*! Read climatological variable. */
+void read_clim_var(
+  char *filename,
+  char *varname,
+  char *units,
+  clim_var_t * var);
 
 /*! Read control parameters. */
 void read_ctl(

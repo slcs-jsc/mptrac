@@ -184,9 +184,10 @@ int main(
 	  h2otm[ix][iy] += h2ot;
 	  npt[ix][iy]++;
 	}
-	hno3m[ix][iy] += clim_hno3(clim, met->time, lats[iy], p0);
+	hno3m[ix][iy] += clim_var(&clim->hno3, met->time, lats[iy], p0);
 	tnatm[ix][iy] +=
-	  nat_temperature(p0, h2o, clim_hno3(clim, met->time, lats[iy], p0));
+	  nat_temperature(p0, h2o,
+			  clim_var(&clim->hno3, met->time, lats[iy], p0));
 	ohm[ix][iy] += clim_oh(&ctl, clim, met->time, lons[ix], lats[iy], p0);
 	h2o2m[ix][iy] += clim_var(&clim->h2o2, met->time, lats[iy], p0);
 	ho2m[ix][iy] += clim_var(&clim->ho2, met->time, lats[iy], p0);
