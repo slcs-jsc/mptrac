@@ -127,14 +127,14 @@ void module_meteo(
   met_t * met1,
   atm_t * atm);
 
-/*! Apply inter-parcel mixing. */
+/*! Apply interparcel mixing. */
 void module_mixing(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
   double t);
 
-/*! Auxiliary function for inter-parcel mixing. */
+/*! Auxiliary function for interparcel mixing. */
 void module_mixing_help(
   ctl_t * ctl,
   clim_t * clim,
@@ -497,7 +497,7 @@ int main(
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
 	    module_decay(&ctl, clim, atm, dt);
 
-	  /* Inter-parcel mixing... */
+	  /* Interparcel mixing... */
 	  if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
 	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
 	    module_mixing(&ctl, clim, atm, t);
@@ -525,7 +525,7 @@ int main(
 	    ERRMSG("Code was compiled without KPP!");
 #endif
 	  }
-	  
+
 	  /* Wet deposition... */
 	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
 	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
@@ -1392,26 +1392,26 @@ void module_chemgrid(
   met_t * met1,
   atm_t * atm,
   double tt) {
-  
+
   double *mass, *z, *lon, *lat, *press, *area;
-  
+
   int *ixs, *iys, *izs;
-  
+
   /* Update host... */
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
-  
+
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
-  
+
   /* Check quantity flags... */
   if (ctl->qnt_m < 0)
     ERRMSG("Module needs quantity mass!");
   if (ctl->molmass < 0)
     ERRMSG("Specify molar mass!");
-  
+
   /* Allocate... */
   ALLOC(mass, double,
 	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
@@ -1436,14 +1436,14 @@ void module_chemgrid(
   double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
   double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
   double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
-  
+
   /* Set vertical coordinates... */
 #pragma omp parallel for default(shared)
   for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
-  
+
   /* Set horizontal coordinates... */
   for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
     lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
@@ -1453,7 +1453,7 @@ void module_chemgrid(
     area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
       * cos(lat[iy] * M_PI / 180.);
   }
-  
+
   /* Set time interval for output... */
   double t0 = tt - 0.5 * ctl->dt_mod;
   double t1 = tt + 0.5 * ctl->dt_mod;
@@ -1499,19 +1499,19 @@ void module_chemgrid(
 
   /* Check quantities... */
   if (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0) {
-    
+
     /* Get mass per grid box... */
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0)
 	mass[ARRAY_3D
 	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
 	  += atm->q[ctl->qnt_m][ip];
-    
+
     /* Assign grid data to air parcels ... */
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < atm->np; ip++)
       if (izs[ip] >= 0) {
-	
+
 	/* Interpolate temperature... */
 	double temp;
 	INTPOL_INIT;
@@ -1521,19 +1521,19 @@ void module_chemgrid(
 	/* Set mass... */
 	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
 				 izs[ip], ctl->chemgrid_nz)];
-	
+
 	/* Calculate volume mixing ratio... */
 	if (ctl->qnt_vmrimpl >= 0)
 	  atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass * m
 	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
-	
+
 	/* Calculate concentration... */
 	if (ctl->qnt_Cx >= 0)
 	  atm->q[ctl->qnt_Cx][ip] = AVO * m
 	    / (1e18 * area[iys[ip]] * dz * ctl->molmass);
       }
   }
-  
+
   /* Free... */
   free(mass);
   free(z);
@@ -1544,7 +1544,7 @@ void module_chemgrid(
   free(ixs);
   free(iys);
   free(izs);
-  
+
   /* Update device... */
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -1881,7 +1881,7 @@ void module_mixing(
       izs[ip] = -1;
   }
 
-  /* Calculate inter-parcel mixing... */
+  /* Calculate interparcel mixing... */
   if (ctl->qnt_m >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
@@ -1959,7 +1959,7 @@ void module_mixing_help(
     if (count[i] > 0)
       cmean[i] /= count[i];
 
-  /* Calculate inter-parcel mixing... */
+  /* Calculate interparcel mixing... */
 #pragma omp parallel for
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {

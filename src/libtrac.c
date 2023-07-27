@@ -2736,11 +2736,12 @@ void read_ctl(
 	   "../../data/noaa_gml_sf6.tab", ctl->clim_sf6_timeseries);
 
   /* Mixing... */
-  ctl->mixing_dt = scan_ctl(filename, argc, argv, "MIXING_DT", -1, "3600.", NULL);
-  ctl->mixing_trop
-    = scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "-999", NULL);
-  ctl->mixing_strat
-    = scan_ctl(filename, argc, argv, "MIXING_STRAT", -1, "-999", NULL);
+  ctl->mixing_dt =
+    scan_ctl(filename, argc, argv, "MIXING_DT", -1, "3600.", NULL);
+  ctl->mixing_trop =
+    scan_ctl(filename, argc, argv, "MIXING_TROP", -1, "-999", NULL);
+  ctl->mixing_strat =
+    scan_ctl(filename, argc, argv, "MIXING_STRAT", -1, "-999", NULL);
   ctl->mixing_z0 =
     scan_ctl(filename, argc, argv, "MIXING_Z0", -1, "-5", NULL);
   ctl->mixing_z1 =
@@ -2779,12 +2780,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "CHEMGRID_LAT1", -1, "90", NULL);
   ctl->chemgrid_ny =
     (int) scan_ctl(filename, argc, argv, "CHEMGRID_NY", -1, "180", NULL);
-  ctl->chemgrid_mixparam_trop =
-    scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_TROP", -1, "1e-3",
-	     NULL);
-  ctl->chemgrid_mixparam_strat =
-    scan_ctl(filename, argc, argv, "CHEMGRID_MIXPARAM_STRAT", -1, "1e-6",
-	     NULL);
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);

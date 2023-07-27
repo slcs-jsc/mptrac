@@ -1384,12 +1384,6 @@ typedef struct {
   /*! Upper latitude of chemistry grid [deg]. */
   double chemgrid_lat1;
 
-  /*! Interparcel exchange parameter in troposphere. */
-  double chemgrid_mixparam_trop;
-
-  /*! Interparcel exchange parameter in stratosphere. */
-  double chemgrid_mixparam_strat;
-
   /*! Reaction type for OH chemistry (0=none, 2=bimolecular, 3=termolecular). */
   int oh_chem_reaction;
 
