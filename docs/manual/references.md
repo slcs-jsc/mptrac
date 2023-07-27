@@ -1,10 +1,10 @@
 # References
 
-This is the main references for citing the MPTRAC model in scientific publications:
+These are the main references for citing the MPTRAC model in scientific publications:
 
 - Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, <https://doi.org/10.5194/gmd-15-2731-2022>, 2022.
 
-You can cite the source code of MPTRAC by using the DOI <https://doi.org/10.5281/zenodo.4400597>. This DOI represents all versions of MPTRAC, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the Zenodo web site.
+- You can cite the source code of MPTRAC by using the DOI <https://doi.org/10.5281/zenodo.4400597>. This DOI represents all versions of MPTRAC, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the Zenodo web site.
 
 This is a list of papers in which MPTRAC was applied:
 
