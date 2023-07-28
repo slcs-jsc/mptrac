@@ -4,19 +4,19 @@ These are the main references for citing the MPTRAC model in scientific publicat
 
 - Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, <https://doi.org/10.5194/gmd-15-2731-2022>, 2022.
 
+- Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, <https://doi.org/10.1002/2015JD023749>, 2016. 
+
 - You can cite the source code of MPTRAC by using the DOI <https://doi.org/10.5281/zenodo.4400597>. This DOI represents all versions of MPTRAC, and will always resolve to the latest one. Specific DOIs for each release of MPTRAC can be found on the Zenodo web site.
 
 This is a list of papers in which MPTRAC was applied:
 
-- Clemens, J., Vogel, B., Hoffmann, L., Griessbach, S., Thomas, N., Fadnavis, S., Müller, R., Peter, T., and Ploeger, F.: Identification of source regions of the Asian Tropopause Aerosol Layer on the Indian subcontinent in August 2016, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2022-1462, 2023.
+- Clemens, J., Vogel, B., Hoffmann, L., Griessbach, S., Thomas, N., Fadnavis, S., Müller, R., Peter, T., and Ploeger, F.: Identification of source regions of the Asian Tropopause Aerosol Layer on the Indian subcontinent in August 2016, EGUsphere [preprint], <https://doi.org/10.5194/egusphere-2022-1462>, 2023.
 
-- Hoffmann, L., Konopka, P., Clemens, J., and Vogel, B.: Lagrangian transport simulations using the extreme convection parameterization: an assessment for the ECMWF reanalyses, Atmos. Chem. Phys., 23, 7589–7609, https://doi.org/10.5194/acp-23-7589-2023, 2023.
+- Hoffmann, L., Konopka, P., Clemens, J., and Vogel, B.: Lagrangian transport simulations using the extreme convection parameterization: an assessment for the ECMWF reanalyses, Atmos. Chem. Phys., 23, 7589–7609, <https://doi.org/10.5194/acp-23-7589-2023>, 2023.
 
 - Liu, M., Hoffmann, L., Griessbach, S., Cai, Z., Heng, Y., and Wu, X.: Improved representation of volcanic sulfur dioxide depletion in Lagrangian transport simulations: a case study with MPTRAC v2.4, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2022-1480, 2023. 
 
 - Cai, Z., Griessbach, S., and Hoffmann, L.: Improved estimation of volcanic SO2 injections from satellite retrievals and Lagrangian transport simulations: the 2019 Raikoke eruption, Atmos. Chem. Phys., 22, 6787–6809, <https://doi.org/10.5194/acp-22-6787-2022>, 2022.
-
-- Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, <https://doi.org/10.5194/gmd-15-2731-2022>, 2022.
 
 - Hoffmann, L. and Spang, R.: An assessment of tropopause characteristics of the ERA5 and ERA-Interim meteorological reanalyses, Atmos. Chem. Phys., 22, 4019–4046, https://doi.org/10.5194/acp-22-4019-2022, 2022.
 
@@ -39,5 +39,3 @@ This is a list of papers in which MPTRAC was applied:
 - Wu, X., Griessbach, S., and Hoffmann, L.: Equatorward dispersion of a high-latitude volcanic plume and its relation to the Asian summer monsoon: a case study of the Sarychev eruption in 2009, Atmos. Chem. Phys., 17, 13439-13455, <https://doi.org/10.5194/acp-17-13439-2017>, 2017.
 
 - Heng, Y., Hoffmann, L., Griessbach, S., Rößler, T., and Stein, O.: Inverse transport modeling of volcanic sulfur dioxide emissions using large-scale simulations, Geosci. Model Dev., 9, 1627-1645, <https://doi.org/10.5194/gmd-9-1627-2016>, 2016.
-
-- Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, <https://doi.org/10.1002/2015JD023749>, 2016. 
