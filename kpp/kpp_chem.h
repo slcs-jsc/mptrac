@@ -10,10 +10,10 @@
     atm->q[qnt_index][ip] = VAR[ind_spec];
 
 /*! Initialize concentration quantity. */
-#define INIT_CQNT(qnt_index, clim_var_t)				\
+#define INIT_CQNT(qnt_index, clim_zm_t)					\
   if (qnt_index >= 0)							\
     atm->q[qnt_index][ip] =						\
-      clim_var(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
+      clim_zm(&clim_var_t, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
 /*! Initialize KPP chemistry. */
 void kpp_chem_initialize(

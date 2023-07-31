@@ -113,7 +113,7 @@ void kpp_chem_initialize(
     
     //FIX[indf_h2o] = h2o * M;
     //FIX[indf_o3] = o3 * M;
-    //FIX[indf_o3] = clim_var(&clim->o3, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    //FIX[indf_o3] = clim_zm(&clim->o3, atm->time[ip], atm->lat[ip], atm->p[ip]);
 		FIX[indf_o2] = 0.2095 * M;
 		//FIX[indf_n2] = 0.7808 * M;
 		//FIX[indf_h2] = 5e-7 * M;
