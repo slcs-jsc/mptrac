@@ -176,9 +176,9 @@ void module_h2o2_chem(
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
-  atm_t * atm,
   met_t * met0,
   met_t * met1,
+  atm_t * atm,
   double *dt);
 
 /*! KPP chemistry module. */
@@ -231,8 +231,8 @@ void module_sort_help(
 /*! Calculate time steps. */
 void module_timesteps(
   ctl_t * ctl,
-  atm_t * atm,
   met_t * met0,
+  atm_t * atm,
   double *dt,
   double t);
 
@@ -423,7 +423,7 @@ int main(
 	  t = ctl.t_stop;
 
 	/* Set time steps of air parcels... */
-	module_timesteps(&ctl, atm, met0, dt, t);
+	module_timesteps(&ctl, met0, atm, dt, t);
 
 	/* Get meteo data... */
 #ifdef ASYNCIO
@@ -515,7 +515,7 @@ int main(
 
 	  /* First-order tracer chemistry... */
 	  if (ctl.tracer_chem)
-	    module_tracer_chem(&ctl, clim, atm, met0, met1, dt);
+	    module_tracer_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
@@ -719,7 +719,7 @@ void module_bound_cond(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, dt)
+#pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -834,7 +834,7 @@ void module_convection(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, dt, rs)
+#pragma acc data present(ctl,met0,met1,atm,dt,rs)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -970,7 +970,7 @@ void module_diffusion_meso(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, cache, dt, rs)
+#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1118,7 +1118,7 @@ void module_dry_deposition(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, dt)
+#pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1247,7 +1247,7 @@ void module_isosurf(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, cache)
+#pragma acc data present(ctl,met0,met1,atm,cache)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1310,7 +1310,7 @@ void module_meteo(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, clim, met0, met1, atm)
+#pragma acc data present(ctl,clim,met0,met1,atm)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1486,25 +1486,34 @@ void module_chemgrid(
     if (izs[ip] >= 0)
       if (!init[ip]) {
 	init[ip] = 1;
-	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
-				  atm->lat[ip], atm->p[ip]));
+
+	/* Set H2O and O3 using meteo data... */
+	if (ctl->qnt_Ch2o >= 0 || ctl->qnt_Co3 >= 0) {
+	  INTPOL_INIT;
+	  double h2o, o3, t;
+	  INTPOL_3D(t, 1);
+	  double M = MOLEC_DENS(atm->p[ip], t);
+	  if(ctl->qnt_Ch2o >= 0) {
+	    INTPOL_3D(h2o, 0);
+	    SET_ATM(qnt_Ch2o, o3 * M);
+	  }
+	  if(ctl->qnt_Co3 >= 0) {
+	    INTPOL_3D(o3, 0);
+	    SET_ATM(qnt_Co3, o3 * M);
+	  }
+	}
+	
+	/* Set radical species... */
 	SET_ATM(qnt_Coh, clim_zm(&clim->oh, atm->time[ip],
 				 atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
-				   atm->lat[ip], atm->p[ip]));
 	SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
 				  atm->lat[ip], atm->p[ip]));
-
-	if (ctl->qnt_Co3 >= 0) {
-	  INTPOL_INIT;
-	  double o3, t;
-	  INTPOL_3D(o3, 1);
-	  INTPOL_3D(t, 0);
-	  double M = MOLEC_DENS(atm->p[ip], t);
-	  SET_ATM(qnt_Co3, o3 * M);
-	}
+	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
+				   atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
+				  atm->lat[ip], atm->p[ip]));
       }
-
+  
   /* Check quantities... */
   if (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0) {
 
@@ -1579,7 +1588,7 @@ void module_oh_chem(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, clim, met0, met1, atm, dt)
+#pragma acc data present(ctl,clim,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1718,9 +1727,9 @@ void module_h2o2_chem(
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
-  atm_t * atm,
   met_t * met0,
   met_t * met1,
+  atm_t * atm,
   double *dt) {
 
   /* Set timer... */
@@ -1728,7 +1737,7 @@ void module_tracer_chem(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, clim, atm, met0, met1, dt)
+#pragma acc data present(ctl,clim,met0,atm,met1,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -1894,18 +1903,26 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+  if (ctl->qnt_Cx >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
+  if (ctl->qnt_Ch2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
+  if (ctl->qnt_Co3 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
+  if (ctl->qnt_Cco >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
+  if (ctl->qnt_Coh >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
+  if (ctl->qnt_Ch >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
+  if (ctl->qnt_Cho2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
+  if (ctl->qnt_Ch2o2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
   if (ctl->qnt_Co1d >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
   if (ctl->qnt_Co3p >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
-  if (ctl->qnt_Ch2o2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
-  if (ctl->qnt_Coh >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
-  if (ctl->qnt_Cho2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
-  if (ctl->qnt_Ch >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
   if (ctl->qnt_Cccl4 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
   if (ctl->qnt_Cccl3f >= 0)
@@ -2006,7 +2023,7 @@ void module_position(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(met0, met1, atm, dt)
+#pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -2148,7 +2165,7 @@ void module_sedi(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, dt)
+#pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -2298,8 +2315,8 @@ void module_sort_help(
 
 void module_timesteps(
   ctl_t * ctl,
-  atm_t * atm,
   met_t * met0,
+  atm_t * atm,
   double *dt,
   double t) {
 
@@ -2313,7 +2330,7 @@ void module_timesteps(
     local = (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
 
 #ifdef _OPENACC
-#pragma acc data present(ctl, atm, dt)
+#pragma acc data present(ctl,atm,met0,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -2385,7 +2402,7 @@ void module_wet_deposition(
 
   const int np = atm->np;
 #ifdef _OPENACC
-#pragma acc data present(ctl, met0, met1, atm, dt)
+#pragma acc data present(ctl,met0,met1,atm,dt)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
