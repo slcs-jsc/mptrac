@@ -184,14 +184,14 @@ int main(
 	  h2otm[ix][iy] += h2ot;
 	  npt[ix][iy]++;
 	}
-	hno3m[ix][iy] += clim_var(&clim->hno3, met->time, lats[iy], p0);
+	hno3m[ix][iy] += clim_zm(&clim->hno3, met->time, lats[iy], p0);
 	tnatm[ix][iy] +=
 	  nat_temperature(p0, h2o,
-			  clim_var(&clim->hno3, met->time, lats[iy], p0));
+			  clim_zm(&clim->hno3, met->time, lats[iy], p0));
 	ohm[ix][iy] += clim_oh(&ctl, clim, met->time, lons[ix], lats[iy], p0);
-	h2o2m[ix][iy] += clim_var(&clim->h2o2, met->time, lats[iy], p0);
-	ho2m[ix][iy] += clim_var(&clim->ho2, met->time, lats[iy], p0);
-	o1dm[ix][iy] += clim_var(&clim->o1d, met->time, lats[iy], p0);
+	h2o2m[ix][iy] += clim_zm(&clim->h2o2, met->time, lats[iy], p0);
+	ho2m[ix][iy] += clim_zm(&clim->ho2, met->time, lats[iy], p0);
+	o1dm[ix][iy] += clim_zm(&clim->o1d, met->time, lats[iy], p0);
 	rhm[ix][iy] += RH(p0, t, h2o);
 	rhicem[ix][iy] += RHICE(p0, t, h2o);
 	tdewm[ix][iy] += TDEW(p0, h2o);

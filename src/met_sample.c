@@ -136,18 +136,18 @@ int main(
 	    pel, cape, cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
-			    clim_var(&clim->hno3, atm->time[ip], atm->lat[ip],
-				     atm->p[ip])),
-	    clim_var(&clim->hno3, atm->time[ip], atm->lat[ip],
-		     atm->p[ip]),
+			    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip],
+				    atm->p[ip])),
+	    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip],
+		    atm->p[ip]),
 	    clim_oh(&ctl, clim, atm->time[ip], atm->lon[ip],
 		    atm->lat[ip], atm->p[ip]),
-	    clim_var(&clim->h2o2, atm->time[ip], atm->lat[ip],
-		     atm->p[ip]),
-	    clim_var(&clim->ho2, atm->time[ip], atm->lat[ip],
-		     atm->p[ip]),
-	    clim_var(&clim->o1d, atm->time[ip], atm->lat[ip],
-		     atm->p[ip]), pbl);
+	    clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip],
+		    atm->p[ip]),
+	    clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip],
+		    atm->p[ip]),
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip],
+		    atm->p[ip]), pbl);
   }
 
   /* Close file... */

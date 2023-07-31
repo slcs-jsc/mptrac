@@ -247,7 +247,7 @@ double clim_oh(
   double p) {
 
   /* Get OH data from climatology... */
-  double oh = clim_var(&clim->oh, t, lat, p);
+  double oh = clim_zm(&clim->oh, t, lat, p);
 
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
@@ -292,8 +292,26 @@ void clim_oh_diurnal_correction(
 
 /*****************************************************************************/
 
-double clim_var(
-  clim_var_t * var,
+double clim_ts(
+  clim_ts_t * var,
+  double t) {
+
+  /* Interpolate... */
+  if (t <= var->time[0])
+    return var->vmr[0];
+  else if (t >= var->time[var->ntime - 1])
+    return var->vmr[var->ntime - 1];
+  else {
+    int idx = locate_irr(var->time, var->ntime, t);
+    return LIN(var->time[idx], var->vmr[idx],
+	       var->time[idx + 1], var->vmr[idx + 1], t);
+  }
+}
+
+/*****************************************************************************/
+
+double clim_zm(
+  clim_zm_t * var,
   double t,
   double lat,
   double p) {
@@ -1648,64 +1666,57 @@ void read_clim(
 
   /* Read HNO3 climatology... */
   if (ctl->clim_hno3_filename[0] != '-')
-    read_clim_var(ctl->clim_hno3_filename, "HNO3", "ppv", &clim->hno3);
+    read_clim_zm(ctl->clim_hno3_filename, "HNO3", "ppv", &clim->hno3);
 
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-') {
-    read_clim_var(ctl->clim_oh_filename, "OH", "molec/cm^3", &clim->oh);
+    read_clim_zm(ctl->clim_oh_filename, "OH", "molec/cm^3", &clim->oh);
     if (ctl->oh_chem_beta > 0)
-      clim_oh_diurnal_correction(ctl, clim);
+      clim_oh_diurnal_correction(ctl, clim);	// TODO: Do we also want to implement the diurnal correction for other species?
   }
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    read_clim_var(ctl->clim_h2o2_filename, "H2O2", "molec/cm^3", &clim->h2o2);
+    read_clim_zm(ctl->clim_h2o2_filename, "H2O2", "molec/cm^3", &clim->h2o2);
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
-    read_clim_var(ctl->clim_ho2_filename, "HO2", "molec/cm^3", &clim->ho2);
+    read_clim_zm(ctl->clim_ho2_filename, "HO2", "molec/cm^3", &clim->ho2);
 
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
-    read_clim_var(ctl->clim_o1d_filename, "O(1D)", "molec/cm^3", &clim->o1d);
+    read_clim_zm(ctl->clim_o1d_filename, "O(1D)", "molec/cm^3", &clim->o1d);
 
   /* Read O3 climatology... */
   if (ctl->clim_o3_filename[0] != '-')
-    read_clim_var(ctl->clim_o3_filename, "O3", "molec/cm^3", &clim->o3);
+    read_clim_zm(ctl->clim_o3_filename, "O3", "molec/cm^3", &clim->o3);
 
   /* Read CFC-10 time series... */
   if (ctl->clim_ccl4_timeseries[0] != '-')
-    read_clim_timeseries(ctl->clim_ccl4_timeseries, clim->ccl4_time,
-			 clim->ccl4_vmr, &clim->ccl4_ntime);
+    read_clim_ts(ctl->clim_ccl4_timeseries, &clim->ccl4);
 
   /* Read CFC-11 time series... */
   if (ctl->clim_ccl3f_timeseries[0] != '-')
-    read_clim_timeseries(ctl->clim_ccl3f_timeseries, clim->ccl3f_time,
-			 clim->ccl3f_vmr, &clim->ccl3f_ntime);
+    read_clim_ts(ctl->clim_ccl3f_timeseries, &clim->ccl3f);
 
   /* Read CFC-12 time series... */
   if (ctl->clim_ccl2f2_timeseries[0] != '-')
-    read_clim_timeseries(ctl->clim_ccl2f2_timeseries, clim->ccl2f2_time,
-			 clim->ccl2f2_vmr, &clim->ccl2f2_ntime);
+    read_clim_ts(ctl->clim_ccl2f2_timeseries, &clim->ccl2f2);
 
   /* Read N2O time series... */
   if (ctl->clim_n2o_timeseries[0] != '-')
-    read_clim_timeseries(ctl->clim_n2o_timeseries, clim->n2o_time,
-			 clim->n2o_vmr, &clim->n2o_ntime);
+    read_clim_ts(ctl->clim_n2o_timeseries, &clim->n2o);
 
   /* Read SF6 time series... */
   if (ctl->clim_sf6_timeseries[0] != '-')
-    read_clim_timeseries(ctl->clim_sf6_timeseries, clim->sf6_time,
-			 clim->sf6_vmr, &clim->sf6_ntime);
+    read_clim_ts(ctl->clim_sf6_timeseries, &clim->sf6);
 }
 
 /*****************************************************************************/
 
-int read_clim_timeseries(
+int read_clim_ts(
   char *filename,
-  double time[CTS],
-  double vmr[CTS],
-  int *n) {
+  clim_ts_t * ts) {
 
   /* Write info... */
   LOG(1, "Read climatological time series: %s", filename);
@@ -1721,13 +1732,13 @@ int read_clim_timeseries(
   char line[LEN];
   int nh = 0;
   while (fgets(line, LEN, in))
-    if (sscanf(line, "%lg %lg", &time[nh], &vmr[nh]) == 2) {
+    if (sscanf(line, "%lg %lg", &ts->time[nh], &ts->vmr[nh]) == 2) {
 
       /* Convert years to seconds... */
-      time[nh] = (time[nh] - 2000.0) * 365.25 * 86400.;
+      ts->time[nh] = (ts->time[nh] - 2000.0) * 365.25 * 86400.;
 
       /* Check data... */
-      if (nh > 0 && time[nh] <= time[nh - 1])
+      if (nh > 0 && ts->time[nh] <= ts->time[nh - 1])
 	ERRMSG("Time series must be ascending!");
 
       /* Count time steps... */
@@ -1739,15 +1750,17 @@ int read_clim_timeseries(
   fclose(in);
 
   /* Check number of data points... */
-  *n = nh;
+  ts->ntime = nh;
   if (nh < 2)
     ERRMSG("Not enough data points!");
 
   /* Write info... */
-  LOG(2, "Number of time steps: %d", nh);
-  LOG(2, "Time steps: %.2f, %.2f ... %.2f s", time[0], time[1], time[nh - 1]);
+  LOG(2, "Number of time steps: %d", ts->ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s", ts->time[0], ts->time[1],
+      ts->time[nh - 1]);
   LOG(2, "Volume mixing ratio range: %g ... %g ppv",
-      gsl_stats_min(vmr, 1, (size_t) nh), gsl_stats_max(vmr, 1, (size_t) nh));
+      gsl_stats_min(ts->vmr, 1, (size_t) nh), gsl_stats_max(ts->vmr, 1,
+							    (size_t) nh));
 
   /* Exit success... */
   return 1;
@@ -1755,11 +1768,11 @@ int read_clim_timeseries(
 
 /*****************************************************************************/
 
-void read_clim_var(
+void read_clim_zm(
   char *filename,
   char *varname,
   char *units,
-  clim_var_t * var) {
+  clim_zm_t * var) {
 
   int ncid, varid, it, iy, iz, iz2, nt;
 

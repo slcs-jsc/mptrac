@@ -1661,7 +1661,21 @@ typedef struct {
 
 } cache_t;
 
-/*! Climatological data of a single variable. */
+/*! Climatological data in form of time series. */
+typedef struct {
+
+  /*! Number of climatological data timesteps. */
+  int ntime;
+
+  /*! Climatological data time steps [s]. */
+  double time[CTS];
+
+  /*! Climatological data volume mixing ratios [ppv]. */
+  double vmr[CTS];
+
+} clim_ts_t;
+
+/*! Climatological data in form of zonal means. */
 typedef struct {
 
   /*! Number of climatological data timesteps. */
@@ -1685,7 +1699,7 @@ typedef struct {
   /*! Climatological data concentrations [molec/cm^3]. */
   double var[CT][CP][CY];
 
-} clim_var_t;
+} clim_zm_t;
 
 /*! Climatological data of all variables. */
 typedef struct {
@@ -1706,67 +1720,37 @@ typedef struct {
   double tropo[12][73];
 
   /*! HNO3 climatology data [ppv]. */
-  clim_var_t hno3;
+  clim_zm_t hno3;
 
   /*! OH climatology data [molec/cm^3]. */
-  clim_var_t oh;
+  clim_zm_t oh;
 
   /*! H2O2 climatology data [molec/cm^3]. */
-  clim_var_t h2o2;
+  clim_zm_t h2o2;
 
   /*! HO2 climatology data [molec/cm^3]. */
-  clim_var_t ho2;
+  clim_zm_t ho2;
 
   /*! O(1D) climatology data [molec/cm^3]. */
-  clim_var_t o1d;
+  clim_zm_t o1d;
 
   /*! O3 climatology data. */// TODO: check unit? where is this used?
-  clim_var_t o3;
+  clim_zm_t o3;
 
-  /*! Number of CFC-10 timesteps. */
-  int ccl4_ntime;
+  /*! CFC-10 time series. */
+  clim_ts_t ccl4;
 
-  /*! CFC-10 time steps [s]. */
-  double ccl4_time[CTS];
+  /*! CFC-11 time series. */
+  clim_ts_t ccl3f;
 
-  /*! CFC-10 global volume mixing ratio [ppv]. */
-  double ccl4_vmr[CTS];
+  /*! CFC-12 time series. */
+  clim_ts_t ccl2f2;
 
-  /*! Number of CFC-11 timesteps. */
-  int ccl3f_ntime;
+  /*! N2O time series. */
+  clim_ts_t n2o;
 
-  /*! CFC-11 time steps [s]. */
-  double ccl3f_time[CTS];
-
-  /*! CFC-11 global volume mixing ratio [ppv]. */
-  double ccl3f_vmr[CTS];
-
-  /*! Number of CFC-12 timesteps. */
-  int ccl2f2_ntime;
-
-  /*! CFC-12 time steps [s]. */
-  double ccl2f2_time[CTS];
-
-  /*! CFC-12 global volume mixing ratio [ppv]. */
-  double ccl2f2_vmr[CTS];
-
-  /*! Number of N2O timesteps. */
-  int n2o_ntime;
-
-  /*! N2O time steps [s]. */
-  double n2o_time[CTS];
-
-  /*! N2O global volume mixing ratio [ppv]. */
-  double n2o_vmr[CTS];
-
-  /*! Number of SF6 timesteps. */
-  int sf6_ntime;
-
-  /*! SF6 time steps [s]. */
-  double sf6_time[CTS];
-
-  /*! SF6 global volume mixing ratio [ppv]. */
-  double sf6_vmr[CTS];
+  /*! SF6 time series. */
+  clim_ts_t sf6;
 
 } clim_t;
 
@@ -1961,12 +1945,20 @@ void clim_oh_diurnal_correction(
   ctl_t * ctl,
   clim_t * clim);
 
-/*! Climatology of a single variable. */
+/*! Interpolate time series. */
 #ifdef _OPENACC
-#pragma acc routine (clim_var)
+#pragma acc routine (clim_ts)
 #endif
-double clim_var(
-  clim_var_t * var,
+double clim_ts(
+  clim_ts_t * var,
+  double t);
+
+/*! Interpolate zonal mean climatology. */
+#ifdef _OPENACC
+#pragma acc routine (clim_zm)
+#endif
+double clim_zm(
+  clim_zm_t * var,
   double t,
   double lat,
   double p);
@@ -2253,18 +2245,16 @@ void read_clim(
   clim_t * clim);
 
 /*! Read climatological time series. */
-int read_clim_timeseries(
+int read_clim_ts(
   char *filename,
-  double time[CTS],
-  double vmr[CTS],
-  int *n);
+  clim_ts_t * ts);
 
-/*! Read climatological variable. */
-void read_clim_var(
+/*! Read climatological zonal means. */
+void read_clim_zm(
   char *filename,
   char *varname,
   char *units,
-  clim_var_t * var);
+  clim_zm_t * var);
 
 /*! Read control parameters. */
 void read_ctl(

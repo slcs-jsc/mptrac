@@ -784,42 +784,30 @@ void module_bound_cond(
 	INTPOL_3D(t, 1);
 
 	/* Calculate molecular density... */
-	double aux, M = MOLEC_DENS(atm->p[ip], t);
+	double M = MOLEC_DENS(atm->p[ip], t);
 
 	/* Set CFC-10 tracer concentration... */
-	if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-') {
-	  spline(clim->ccl4_time, clim->ccl4_vmr, clim->ccl4_ntime,
-		 &atm->time[ip], &aux, 1, 0);
-	  atm->q[ctl->qnt_Cccl4][ip] = M * aux;
-	}
+	if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-')
+	  atm->q[ctl->qnt_Cccl4][ip] = M * clim_ts(&clim->ccl4,
+						   atm->time[ip]);
 
 	/* Set CFC-11 tracer concentration... */
-	if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-') {
-	  spline(clim->ccl3f_time, clim->ccl3f_vmr, clim->ccl3f_ntime,
-		 &atm->time[ip], &aux, 1, 0);
-	  atm->q[ctl->qnt_Cccl3f][ip] = M * aux;
-	}
+	if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-')
+	  atm->q[ctl->qnt_Cccl3f][ip] = M * clim_ts(&clim->ccl3f,
+						    atm->time[ip]);
 
 	/* Set CFC-12 tracer concentration... */
-	if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-') {
-	  spline(clim->ccl2f2_time, clim->ccl2f2_vmr, clim->ccl2f2_ntime,
-		 &atm->time[ip], &aux, 1, 0);
-	  atm->q[ctl->qnt_Cccl2f2][ip] = M * aux;
-	}
+	if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-')
+	  atm->q[ctl->qnt_Cccl2f2][ip] = M * clim_ts(&clim->ccl2f2,
+						     atm->time[ip]);
 
 	/* Set N2O tracer concentration... */
-	if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-') {
-	  spline(clim->n2o_time, clim->n2o_vmr, clim->n2o_ntime,
-		 &atm->time[ip], &aux, 1, 0);
-	  atm->q[ctl->qnt_Cn2o][ip] = M * aux;
-	}
+	if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-')
+	  atm->q[ctl->qnt_Cn2o][ip] = M * clim_ts(&clim->n2o, atm->time[ip]);
 
 	/* Set SF6 tracer concentration... */
-	if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-') {
-	  spline(clim->sf6_time, clim->sf6_vmr, clim->sf6_ntime,
-		 &atm->time[ip], &aux, 1, 0);
-	  atm->q[ctl->qnt_Csf6][ip] = M * aux;
-	}
+	if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
+	  atm->q[ctl->qnt_Csf6][ip] = M * clim_ts(&clim->sf6, atm->time[ip]);
       }
 
       /* Set age of air... */
@@ -1370,15 +1358,15 @@ void module_meteo(
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
     SET_ATM(qnt_hno3,
-	    clim_var(&clim->hno3, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_oh, clim_oh(ctl, clim, atm->time[ip],
 			    atm->lon[ip], atm->lat[ip], atm->p[ip]));
-    SET_ATM(qnt_h2o2, clim_var(&clim->h2o2, atm->time[ip],
-			       atm->lat[ip], atm->p[ip]));
-    SET_ATM(qnt_ho2, clim_var(&clim->ho2, atm->time[ip],
+    SET_ATM(qnt_h2o2, clim_zm(&clim->h2o2, atm->time[ip],
 			      atm->lat[ip], atm->p[ip]));
-    SET_ATM(qnt_o1d, clim_var(&clim->o1d, atm->time[ip],
-			      atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_ho2, clim_zm(&clim->ho2, atm->time[ip],
+			     atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_o1d, clim_zm(&clim->o1d, atm->time[ip],
+			     atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_vh, sqrt(u * u + v * v));
     SET_ATM(qnt_vz, -1e3 * H0 / atm->p[ip] * w);
     SET_ATM(qnt_psat, PSAT(t));
@@ -1396,8 +1384,8 @@ void module_meteo(
     SET_ATM(qnt_tice, TICE(atm->p[ip], h2o));
     SET_ATM(qnt_tnat,
 	    nat_temperature(atm->p[ip], h2o,
-			    clim_var(&clim->hno3, atm->time[ip],
-				     atm->lat[ip], atm->p[ip])));
+			    clim_zm(&clim->hno3, atm->time[ip],
+				    atm->lat[ip], atm->p[ip])));
     SET_ATM(qnt_tsts,
 	    0.5 * (atm->q[ctl->qnt_tice][ip] + atm->q[ctl->qnt_tnat][ip]));
   }
@@ -1498,14 +1486,14 @@ void module_chemgrid(
     if (izs[ip] >= 0)
       if (!init[ip]) {
 	init[ip] = 1;
-	SET_ATM(qnt_Co1d, clim_var(&clim->o1d, atm->time[ip],
-				   atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Coh, clim_var(&clim->oh, atm->time[ip],
+	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
 				  atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Ch2o2, clim_var(&clim->h2o2, atm->time[ip],
-				    atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Cho2, clim_var(&clim->ho2, atm->time[ip],
+	SET_ATM(qnt_Coh, clim_zm(&clim->oh, atm->time[ip],
+				 atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
 				   atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
+				  atm->lat[ip], atm->p[ip]));
 
 	if (ctl->qnt_Co3 >= 0) {
 	  INTPOL_INIT;
@@ -1703,7 +1691,7 @@ void module_h2o2_chem(
       /* Concentration of H2O2 (Barth et al., 1989)... */
       double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
       double h2o2 = H_h2o2
-	* clim_var(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
+	* clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
 	* 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: M
 
       /* Volume water content in cloud [m^3 m^(-3)]... */
@@ -1761,7 +1749,7 @@ void module_tracer_chem(
 	double K_o1d = ARRHENIUS(3.30e-10, 0, t);
 	atm->q[ctl->qnt_Cccl4][ip] *=
 	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
 	double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
 	atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
       }
@@ -1771,7 +1759,7 @@ void module_tracer_chem(
 	double K_o1d = ARRHENIUS(2.30e-10, 0, t);
 	atm->q[ctl->qnt_Cccl3f][ip] *=
 	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
 	double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
 	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
       }
@@ -1781,7 +1769,7 @@ void module_tracer_chem(
 	double K_o1d = ARRHENIUS(1.40e-10, -25, t);
 	atm->q[ctl->qnt_Cccl2f2][ip] *=
 	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
 	double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
 	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
       }
@@ -1791,7 +1779,7 @@ void module_tracer_chem(
 	double K_o1d = ARRHENIUS(1.19e-10, -20, t);
 	atm->q[ctl->qnt_Cn2o][ip] *=
 	  exp(-dt[ip] * K_o1d *
-	      clim_var(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
 	double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
 	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
       }
