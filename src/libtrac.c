@@ -1723,11 +1723,12 @@ int read_clim_timeseries(
   while (fgets(line, LEN, in))
     if (sscanf(line, "%lg %lg", &time[nh], &vmr[nh]) == 2) {
 
-      /* Convert time to seconds... */
-      int year = (int) time[nh];
-      double rmon = 12. * (time[nh] - year) + 1.;
-      int mon = (int) rmon;
-      time2jsec(year, mon, 14, 0, 0, 0, 0, &time[nh]);
+      /* Convert years to seconds... */
+      time[nh] = (time[nh] - 2000.0) * 365.25 * 86400.;
+
+      /* Check data... */
+      if (nh > 0 && time[nh] <= time[nh - 1])
+	ERRMSG("Time series must be ascending!");
 
       /* Count time steps... */
       if ((++nh) >= 1000)
@@ -2203,26 +2204,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "BOUND_VMR", -1, "-999", NULL);
   ctl->bound_vmr_trend =
     scan_ctl(filename, argc, argv, "BOUND_VMR_TREND", -1, "0", NULL);
-  ctl->bound_ccl4 =
-    scan_ctl(filename, argc, argv, "BOUND_CCL4", -1, "102e-12", NULL);
-  ctl->bound_ccl4_trend =
-    scan_ctl(filename, argc, argv, "BOUND_CCL4_TREND", -1, "0", NULL);
-  ctl->bound_ccl3f =
-    scan_ctl(filename, argc, argv, "BOUND_CCL3F", -1, "268e-12", NULL);
-  ctl->bound_ccl3f_trend =
-    scan_ctl(filename, argc, argv, "BOUND_CCL3F_TREND", -1, "0", NULL);
-  ctl->bound_ccl2f2 =
-    scan_ctl(filename, argc, argv, "BOUND_CCL2F2", -1, "533e-12", NULL);
-  ctl->bound_ccl2f2_trend =
-    scan_ctl(filename, argc, argv, "BOUND_CCL2F2_TREND", -1, "0", NULL);
-  ctl->bound_n2o =
-    scan_ctl(filename, argc, argv, "BOUND_N2O", -1, "314e-9", NULL);
-  ctl->bound_n2o_trend =
-    scan_ctl(filename, argc, argv, "BOUND_N2O_TREND", -1, "0", NULL);
-  ctl->bound_sf6 =
-    scan_ctl(filename, argc, argv, "BOUND_SF6", -1, "4.2e-12", NULL);
-  ctl->bound_sf6_trend =
-    scan_ctl(filename, argc, argv, "BOUND_SF6_TREND", -1, "0", NULL);
   ctl->bound_lat0 =
     scan_ctl(filename, argc, argv, "BOUND_LAT0", -1, "-999", NULL);
   ctl->bound_lat1 =

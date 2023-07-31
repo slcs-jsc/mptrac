@@ -56,6 +56,7 @@ void module_advect(
 /*! Apply boundary conditions. */
 void module_bound_cond(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -491,7 +492,7 @@ int main(
 	  /* Check boundary conditions (initial)... */
 	  if ((ctl.bound_lat0 < ctl.bound_lat1)
 	      && (ctl.bound_p0 > ctl.bound_p1))
-	    module_bound_cond(&ctl, met0, met1, atm, dt);
+	    module_bound_cond(&ctl, clim, met0, met1, atm, dt);
 
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -538,7 +539,7 @@ int main(
 	  /* Check boundary conditions (final)... */
 	  if ((ctl.bound_lat0 < ctl.bound_lat1)
 	      && (ctl.bound_p0 > ctl.bound_p1))
-	    module_bound_cond(&ctl, met0, met1, atm, dt);
+	    module_bound_cond(&ctl, clim, met0, met1, atm, dt);
 
 	  /* Write output... */
 	  write_output(dirname, &ctl, met0, met1, atm, t);
@@ -701,6 +702,7 @@ void module_advect(
 
 void module_bound_cond(
   ctl_t * ctl,
+  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -782,24 +784,42 @@ void module_bound_cond(
 	INTPOL_3D(t, 1);
 
 	/* Calculate molecular density... */
-	double M = MOLEC_DENS(atm->p[ip], t);
+	double aux, M = MOLEC_DENS(atm->p[ip], t);
 
-	/* Set tracer concentration... */
-	if (ctl->qnt_Cccl4 >= 0 && ctl->bound_ccl4 >= 0)
-	  atm->q[ctl->qnt_Cccl4][ip] = M *
-	    (ctl->bound_ccl4 + ctl->bound_ccl4_trend * atm->time[ip]);
-	if (ctl->qnt_Cccl3f >= 0 && ctl->bound_ccl3f >= 0)
-	  atm->q[ctl->qnt_Cccl3f][ip] = M *
-	    (ctl->bound_ccl3f + ctl->bound_ccl3f_trend * atm->time[ip]);
-	if (ctl->qnt_Cccl2f2 >= 0 && ctl->bound_ccl2f2 >= 0)
-	  atm->q[ctl->qnt_Cccl2f2][ip] = M *
-	    (ctl->bound_ccl2f2 + ctl->bound_ccl2f2_trend * atm->time[ip]);
-	if (ctl->qnt_Cn2o >= 0 && ctl->bound_n2o >= 0)
-	  atm->q[ctl->qnt_Cn2o][ip] = M *
-	    (ctl->bound_n2o + ctl->bound_n2o_trend * atm->time[ip]);
-	if (ctl->qnt_Csf6 >= 0 && ctl->bound_sf6 >= 0)
-	  atm->q[ctl->qnt_Csf6][ip] = M *
-	    (ctl->bound_sf6 + ctl->bound_sf6_trend * atm->time[ip]);
+	/* Set CFC-10 tracer concentration... */
+	if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-') {
+	  spline(clim->ccl4_time, clim->ccl4_vmr, clim->ccl4_ntime,
+		 &atm->time[ip], &aux, 1, 0);
+	  atm->q[ctl->qnt_Cccl4][ip] = M * aux;
+	}
+
+	/* Set CFC-11 tracer concentration... */
+	if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-') {
+	  spline(clim->ccl3f_time, clim->ccl3f_vmr, clim->ccl3f_ntime,
+		 &atm->time[ip], &aux, 1, 0);
+	  atm->q[ctl->qnt_Cccl3f][ip] = M * aux;
+	}
+
+	/* Set CFC-12 tracer concentration... */
+	if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-') {
+	  spline(clim->ccl2f2_time, clim->ccl2f2_vmr, clim->ccl2f2_ntime,
+		 &atm->time[ip], &aux, 1, 0);
+	  atm->q[ctl->qnt_Cccl2f2][ip] = M * aux;
+	}
+
+	/* Set N2O tracer concentration... */
+	if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-') {
+	  spline(clim->n2o_time, clim->n2o_vmr, clim->n2o_ntime,
+		 &atm->time[ip], &aux, 1, 0);
+	  atm->q[ctl->qnt_Cn2o][ip] = M * aux;
+	}
+
+	/* Set SF6 tracer concentration... */
+	if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-') {
+	  spline(clim->sf6_time, clim->sf6_vmr, clim->sf6_ntime,
+		 &atm->time[ip], &aux, 1, 0);
+	  atm->q[ctl->qnt_Csf6][ip] = M * aux;
+	}
       }
 
       /* Set age of air... */

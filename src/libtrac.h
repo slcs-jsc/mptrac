@@ -1225,36 +1225,6 @@ typedef struct {
   /*! Boundary conditions volume mixing ratio trend [ppv/s]. */
   double bound_vmr_trend;
 
-  /*! Boundary conditions volume mixing ratio for CFC-10 [ppv]. */
-  double bound_ccl4;
-
-  /*! Boundary conditions volume mixing ratio trend for CFC-10 [ppv/s]. */
-  double bound_ccl4_trend;
-
-  /*! Boundary conditions volume mixing ratio for CFC-11 [ppv]. */
-  double bound_ccl3f;
-
-  /*! Boundary conditions volume mixing ratio trend for CFC-11 [ppv/s]. */
-  double bound_ccl3f_trend;
-
-  /*! Boundary conditions volume mixing ratio for CFC-12 [ppv]. */
-  double bound_ccl2f2;
-
-  /*! Boundary conditions volume mixing ratio trend for CFC-12 [ppv/s]. */
-  double bound_ccl2f2_trend;
-
-  /*! Boundary conditions volume mixing ratio for N2O [ppv]. */
-  double bound_n2o;
-
-  /*! Boundary conditions volume mixing ratio trend for N2O [ppv/s]. */
-  double bound_n2o_trend;
-
-  /*! Boundary conditions volume mixing ratio for SF6 [ppv]. */
-  double bound_sf6;
-
-  /*! Boundary conditions volume mixing ratio trend for SF6 [ppv/s]. */
-  double bound_sf6_trend;
-
   /*! Boundary conditions minimum longitude [deg]. */
   double bound_lat0;
 
