@@ -1933,8 +1933,6 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
   if (ctl->qnt_Csf6 >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
-  if (ctl->qnt_Co3 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
 
   // TODO: apply mixing to age of air? maybe apply mixing to all quantities?
 
