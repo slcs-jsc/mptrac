@@ -3,17 +3,11 @@ graph MPTRAC {
   edge [penwidth=2 color="gray"]
   node [style="filled" penwidth=0 fillcolor="gray85" fontname="Helvetica" fontcolor="black" fontsize=24]
   layout=neato;
-//  maxiter=10000;
-  K=1.9;
   start=0;
   margin=0;
   overlap=false;
-//  overlap=scale;
   splines=true;
-//  splines=polyline;
-//  splines=ortho;
-//  ordering=out;
-
+  
   MPTRAC -- {
     "infrastructure\nmodules"
     "trajectory\ncalculations"
@@ -24,10 +18,10 @@ graph MPTRAC {
   }
   MPTRAC [fontsize=48 height=2]
   "infrastructure\nmodules" [fontsize=32 fillcolor="gray95"]
-  "trajectory\ncalculations" [fontsize=32 colorscheme=greens5 fillcolor=1]
+  "trajectory\ncalculations" [fontsize=32 colorscheme=purples5 fillcolor=1]
   "chemistry\ncalculations" [fontsize=32 colorscheme=reds5 fillcolor=1]
   "read meteo\ndata" [fontsize=32 colorscheme=ylorbr5 fillcolor=1]
-  "write\noutput" [fontsize=32 colorscheme=purples5 fillcolor=1]
+  "write\noutput" [fontsize=32 colorscheme=greens5 fillcolor=1]
   "meteo data\npre-processing" [fontsize=32 colorscheme=blues5 fillcolor=1]
 
 
@@ -66,13 +60,13 @@ graph MPTRAC {
     "station\ndata"
     "VTK\ndata"
   }
-    "CSI\ndata" [colorscheme=purples5 fillcolor=1]
-    "ensemble\ndata" [colorscheme=purples5 fillcolor=1]
-    "grid\ndata" [colorscheme=purples5 fillcolor=1]
-    "particle\ndata" [colorscheme=purples5 fillcolor=1]
-    "profile\ndata" [colorscheme=purples5 fillcolor=1]
-    "station\ndata" [colorscheme=purples5 fillcolor=1]
-    "VTK\ndata" [colorscheme=purples5 fillcolor=1]
+    "CSI\ndata" [colorscheme=greens5 fillcolor=1]
+    "ensemble\ndata" [colorscheme=greens5 fillcolor=1]
+    "grid\ndata" [colorscheme=greens5 fillcolor=1]
+    "particle\ndata" [colorscheme=greens5 fillcolor=1]
+    "profile\ndata" [colorscheme=greens5 fillcolor=1]
+    "station\ndata" [colorscheme=greens5 fillcolor=1]
+    "VTK\ndata" [colorscheme=greens5 fillcolor=1]
 
 
   "meteo data\npre-processing" -- {
@@ -102,13 +96,13 @@ graph MPTRAC {
     "sedimentation"
     "isosurface"
   }
-    "check\npositions" [colorscheme=greens5 fillcolor=1]
-    "advection" [colorscheme=greens5 fillcolor=1]
-    "diffusion" [colorscheme=greens5 fillcolor=1]
-    "subgrid\nwinds" [colorscheme=greens5 fillcolor=1]
-    "convection" [colorscheme=greens5 fillcolor=1]
-    "sedimentation" [colorscheme=greens5 fillcolor=1]
-    "isosurface" [colorscheme=greens5 fillcolor=1]
+    "check\npositions" [colorscheme=purples5 fillcolor=1]
+    "advection" [colorscheme=purples5 fillcolor=1]
+    "diffusion" [colorscheme=purples5 fillcolor=1]
+    "subgrid\nwinds" [colorscheme=purples5 fillcolor=1]
+    "convection" [colorscheme=purples5 fillcolor=1]
+    "sedimentation" [colorscheme=purples5 fillcolor=1]
+    "isosurface" [colorscheme=purples5 fillcolor=1]
 
 
   "chemistry\ncalculations" -- {
