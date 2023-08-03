@@ -1,0 +1,131 @@
+graph MPTRAC {
+
+  edge [penwidth=2 color="gray"]
+  node [style="filled" penwidth=0 fillcolor="gray85" fontname="Helvetica" fontcolor="black" fontsize=24]
+  layout=neato;
+//  maxiter=10000;
+  K=1.9;
+  start=0;
+  margin=0;
+  overlap=false;
+//  overlap=scale;
+  splines=true;
+//  splines=polyline;
+//  splines=ortho;
+//  ordering=out;
+
+  MPTRAC -- {
+    "infrastructure\nmodules"
+    "trajectory\ncalculations"
+    "chemistry\ncalculations"
+    "read meteo\ndata"
+    "write\noutput"
+    "meteo data\npre-processing"
+  }
+  MPTRAC [fontsize=48 height=2]
+  "infrastructure\nmodules" [fontsize=32 fillcolor="gray95"]
+  "trajectory\ncalculations" [fontsize=32 colorscheme=greens5 fillcolor=1]
+  "chemistry\ncalculations" [fontsize=32 colorscheme=reds5 fillcolor=1]
+  "read meteo\ndata" [fontsize=32 colorscheme=ylorbr5 fillcolor=1]
+  "write\noutput" [fontsize=32 colorscheme=purples5 fillcolor=1]
+  "meteo data\npre-processing" [fontsize=32 colorscheme=blues5 fillcolor=1]
+
+
+  "infrastructure\nmodules" -- {
+    "interpolate\nmeteo data"
+    "sort\nparticles"
+    "time\nloop"
+    "utilities"
+  }
+    "interpolate\nmeteo data" [fillcolor="gray95"]
+    "sort\nparticles" [fillcolor="gray95"]
+    "time\nloop" [fillcolor="gray95"]
+    "utilities" [fillcolor="gray95"]
+
+
+  "read meteo\ndata" -- {
+    "binary\ndata"
+    "netCDF\ndata"
+    "packed\ndata"
+    "zfp\ndata"
+    "zstd\ndata"
+  }
+    "binary\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "netCDF\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "packed\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "zfp\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "zstd\ndata" [colorscheme=ylorbr5 fillcolor=1]
+ 
+
+  "write\noutput" -- {
+    "CSI\ndata"
+    "ensemble\ndata"
+    "grid\ndata"
+    "particle\ndata"
+    "profile\ndata"
+    "station\ndata"
+    "VTK\ndata"
+  }
+    "CSI\ndata" [colorscheme=purples5 fillcolor=1]
+    "ensemble\ndata" [colorscheme=purples5 fillcolor=1]
+    "grid\ndata" [colorscheme=purples5 fillcolor=1]
+    "particle\ndata" [colorscheme=purples5 fillcolor=1]
+    "profile\ndata" [colorscheme=purples5 fillcolor=1]
+    "station\ndata" [colorscheme=purples5 fillcolor=1]
+    "VTK\ndata" [colorscheme=purples5 fillcolor=1]
+
+
+  "meteo data\npre-processing" -- {
+    "geopotential\nheights"
+    "potential\nvorticity"
+    "CAPE"
+    "boundary\nlayer"
+    "cloud\nproperties"
+    "tropopause"
+    "down-\nsampling"
+  }
+    "geopotential\nheights" [colorscheme=blues5 fillcolor=1]
+    "potential\nvorticity" [colorscheme=blues5 fillcolor=1]
+    "CAPE" [colorscheme=blues5 fillcolor=1]
+    "boundary\nlayer" [colorscheme=blues5 fillcolor=1]
+    "cloud\nproperties" [colorscheme=blues5 fillcolor=1]
+    "tropopause" [colorscheme=blues5 fillcolor=1]
+    "down-\nsampling" [colorscheme=blues5 fillcolor=1]
+
+
+  "trajectory\ncalculations" -- {
+    "check\npositions"
+    "advection"
+    "diffusion"
+    "subgrid\nwinds"
+    "convection"
+    "sedimentation"
+    "isosurface"
+  }
+    "check\npositions" [colorscheme=greens5 fillcolor=1]
+    "advection" [colorscheme=greens5 fillcolor=1]
+    "diffusion" [colorscheme=greens5 fillcolor=1]
+    "subgrid\nwinds" [colorscheme=greens5 fillcolor=1]
+    "convection" [colorscheme=greens5 fillcolor=1]
+    "sedimentation" [colorscheme=greens5 fillcolor=1]
+    "isosurface" [colorscheme=greens5 fillcolor=1]
+
+
+  "chemistry\ncalculations" -- {
+    "boundary\nconditions"
+    "exponential\ndecay"
+    "sulfur\nchemistry"
+    "tracer\nchemistry"
+    "KPP\ninterface"
+    "dry\ndeposition"
+    "wet\ndeposition"
+  }
+    "boundary\nconditions" [colorscheme=reds5 fillcolor=1]
+    "exponential\ndecay" [colorscheme=reds5 fillcolor=1]
+    "sulfur\nchemistry" [colorscheme=reds5 fillcolor=1]
+    "tracer\nchemistry" [colorscheme=reds5 fillcolor=1]
+    "KPP\ninterface" [colorscheme=reds5 fillcolor=1]
+    "dry\ndeposition" [colorscheme=reds5 fillcolor=1]
+    "wet\ndeposition" [colorscheme=reds5 fillcolor=1]
+
+}
