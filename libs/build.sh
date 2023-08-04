@@ -1,91 +1,221 @@
 #! /bin/bash
+# ---------------------------------------------------------------------- # 
+#
+# Description
+#     This script is based on the original build script by Lars Hoffmann
+# in order to build the external libraries used by mptrac. The user's
+# manual of this script can be found by executing with -h
+#
+# ---------------------------------------------------------------------- # 
+#
+# DevLog:
+#   03.08.2023: Starting the modification
+#
+# ---------------------------------------------------------------------- #
 
-# Setup...
-rm -rf build
-target=$(mkdir -p build && cd build && pwd)
+###### Presets ######
 
-# Checking CPUs
-# if the nproc is larger than the default process for make (8 CPUs)
-# it will be limited to 8 CPUs
-numDefaultProcs=8
-numTotalProcs=`nproc --all`
-if [ $numTotalProcs -lt $numDefaultProcs ]; then
-    numProcs=$numProcs
-else
-    numProcs=$numDefaultProcs
+ifBuildAll=false
+ifClean=false
+ifBuildGSL=false
+ifBuildTS=false
+ifBuildZLIB=false
+ifBuildZFP=false
+ifBuildZSTD=false
+ifBuildHDF5=false
+ifBuildNETCDF=false
+ifSkip=false
+
+numProcs=4
+
+strBuildDir=${PWD}/build
+strLibsDir=${PWD}
+
+strFileGSL="gsl-2.7"
+strFileHDF5="hdf5-1.12.1"
+strFileNETCDF="netcdf-c-4.8.1"
+strFileTS="thrustsort-1.2"
+strFileZFP="zfp-0.5.5"
+strFileZLIB="zlib-1.2.12"
+strFileZSTD="zstd-1.5.2"
+
+###### Reminder           ######
+
+if [[ $# -lt 1 ]]; then
+    printf "please using -h to open the manual\n"
+    ifSkip=true
 fi
 
-printf "Using %d CPUs for make ... \n0" $numProcs
+###### Checking the flags ######
 
-# Prepare directories...
-mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 \
-    && cp *tar.bz2 $target/src \
-    && cd $target/src \
-    && for f in $(ls *tar.bz2) ; do tar xvjf $f ; done \
-	|| exit
+while getopts acgtzfshnp: flag
+do
+    case "${flag}" in
+        a) ifBuildAll=true    ; echo "All the libs will be built"    ;;	
+	c) ifClean=true       ; echo "the build directory will be clean"  ;;
+	g) ifBuildGSL=true    ; echo "GSL is selected    "     ;;
+	t) ifBuildTS=true     ; echo "TS is selected     "     ;;
+	z) ifBuildZLIB=true   ; echo "ZLIB is selected   "     ;;
+	f) ifBuildZFP=true    ; echo "ZFP is selected    "     ;;
+	s) ifBuildZSTD=true   ; echo "ZSTD is selected   "     ;;
+	d) ifBuildHDF5=true   ; echo "HDF5 is selected   "     ;;
+	n) ifBuildNETCDF=true ; echo "NETCDF is selected "     ;;
+	p) numProcs=${OPTARG}  
+           numTotalProcs=`nproc --all`
+           if [ $numProcs -lt $numTotalProcs ]; then
+                numProcs=$numProcs
+           else
+		numProcs=$(($numTotalProcs*2/3))
+           fi
+	   echo "NEW PROCESSES as ${numProcs}" ;;
+	h) printf -- "Helping Page: \n"
+	   printf -- "    Please specify which libs ( or all, -a ) you want to build\n"
+	   printf -- "    you can specify within a dash, e.g.: -gtzfs to build      \n"
+	   printf -- "    without NETCDF and HDF5                                   \n" 
+	   printf -- "--------------------------------------------------------------\n"	
+           printf -- "-a         : build all the libs, \$mptrac/libs/build will be  \n"
+	   printf -- "             cleaned      \n"
+	   printf -- "-c         : clean the \$mptrac/libs/build                    \n"
+	   printf -- "-g         : build GSL    \n" 
+	   printf -- "-t         : build TS     \n" 
+	   printf -- "-z         : build ZLIB   \n" 
+	   printf -- "-f         : build ZFP    \n" 
+	   printf -- "-s         : build ZSTD   \n" 
+	   printf -- "-d         : build HDF5   (prerequisite: ZLIB)  \n" 
+	   printf -- "-n         : build NETCDF (prerequisite: HDF5)  \n" 
+	   printf -- "-p [cores] : how many [cores] to be used by make -j [cores]   \n" 
+	   printf -- "           : default is 4                                     \n" 
+	   printf -- "--------------------------------------------------------------\n"	
+	   printf -- " Example:                                                    -\n"	
+	   printf -- "     ./build.sh -c         clean the build directory         -\n"	
+	   printf -- "     ./build.sh -a         build all the libs                -\n"	
+	   printf -- "     ./build.sh -gtzfs     build without HDF5 and NetCDF     -\n"	
+	   printf -- "     ./build.sh -g -p 8    build the GSL with 8 processors   -\n"	
+	   printf -- "--------------------------------------------------------------\n"	
+	   ifSkip=true
+	   ;;	 
+    esac
+done
 
-# GSL...
-dir=gsl-2.7
-cd $target/src/$dir \
-    && ./configure --prefix=$target \
-    && make -j $numProcs && make check && make install && make clean \
-	|| exit
+###### 
 
-# Thrust sort...
-dir=thrustsort-1.2
-cd $target/src/$dir \
-    && cp -a libthrustsort_gpu.a libthrustsort_cpu.a $target/lib/ \
-	|| exit
+#printf "processes: %d \n"  $numProcs
+#printf "building the following Libs:" 
 
-# zlib...
-dir=zlib-1.2.12
-cd $target/src/$dir \
-    && ./configure --prefix=$target \
-    && make -j $numProcs && make check && make install && make clean \
-	|| exit
+######
 
-# zfp...
-dir=zfp-0.5.5
-cd $target/src/$dir \
-    && make && make test \
-    && cp -a bin/* $target/bin/ \
-    && cp -a include/* $target/include/ \
-    && cp -a lib/* $target/lib/ \
-	|| exit
+if [ $ifBuildAll = true ] || [ $ifClean = true ]; then
+    printf "Clean the folder    \n"
+    # Setup...
+    rm -rf build
+    target=$(mkdir -p build && cd build && pwd)
+    printf "Making the folder with subfolders (src, bin, include, lib, man)   \n"
+    mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 
+else
+    if ! [ -d build ]; then
+        printf "Making the folder with subfolders    \n"
+        target=$(mkdir -p build && cd build && pwd)
+        mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 
+    fi
+fi 
+if [ $ifBuildAll = true ] || [ $ifBuildGSL = true ] ; then
+    cd $strLibsDir	
+    printf "Starting to compile GSL\n"
+    # GSL...
+    strTarget=$strFileGSL
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && ./configure --prefix=$strBuildDir \
+        && make -j $numProcs && make check && make install && make clean \
+    	|| exit
+    echo -e "\n***** gsl-config *****\n"
+    $strBuildDir/bin/gsl-config --libs --cflags --version
+fi
+if [ $ifBuildAll = true ] || [ $ifBuildTS = true ] ; then 
+    cd $strLibsDir	
+    printf "Starting to compile thrustsort\n"
+    # Thrust sort...
+    strTarget=$strFileTS 
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && cp -a libthrustsort_gpu.a libthrustsort_cpu.a $strBuildDir/lib/ \
+    	|| exit
+fi
 
-# zstd...
-dir=zstd-1.5.2
-cd $target/src/$dir \
-    && make -j $numProcs && make check \
-    && cp -a lib/libzstd* $target/lib/ \
-    && cp -a lib/*.h $target/include/ \
-    && ln -sf $target/lib/libzstd.so.1.5.2 $target/lib/libzstd.so \
-    && make clean \
-	|| exit
+if [ $ifBuildAll = true ] || [ $ifBuildZLIB = true ] ; then 
+    cd $strLibsDir	
+    printf "Starting to compile ZLIB\n"
+    # zlib...
+    strTarget=$strFileZLIB
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && ./configure --prefix=$strBuildDir \
+        && make -j $numProcs && make check && make install && make clean \
+    	|| exit
+fi
 
-# HDF5...
-dir=hdf5-1.12.1
-cd $target/src/$dir \
-    && ./configure --prefix=$target --with-zlib=$target --enable-hl \
-    && make -j $numProcs && make check && make install && make clean \
-	|| exit
+if [ $ifBuildAll = true ] || [ $ifBuildZFP = true ] ; then 
+    cd $strLibsDir	
+    printf "Starting to compile ZFP\n"
+    # zfp...
+    strTarget=$strFileZFP
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && make && make test \
+        && cp -a bin/* $strBuildDir/bin/ \
+        && cp -a include/* $strBuildDir/include/ \
+        && cp -a lib/* $strBuildDir/lib/ \
+    	|| exit
+fi
 
-# netCDF...
-dir=netcdf-c-4.8.1
-cd $target/src/$dir \
-    && CPPFLAGS=-I$target/include LDFLAGS=-L$target/lib ./configure --prefix=$target --disable-dap --disable-nczarr \
-    && make -j $numProcs && make check && make install && make clean \
-	|| exit
+if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then 
+    cd $strLibsDir	
+    printf "starting to compile ZSTD \n"
+    # zstd...
+    strTarget=$strFileZSTD
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && make -j $numProcs && make check \
+        && cp -a lib/libzstd* $strBuildDir/lib/ \
+        && cp -a lib/*.h $strBuildDir/include/ \
+        && ln -sf $strBuildDir/$strTarget/lib/libzstd.so.1.5.2 $strBuildDir/lib/libzstd.so \
+        && make clean \
+    	|| exit
+fi
 
-# # Chemistry using KPP...
-# dir=KPP
-# export KPP_HOME=$target/src/$dir
-# export KPP_FLEX_LIB_DIR=$target/src/$dir
-# cd $target/src/$dir/mptrac-chem \
-# 		&& ../bin/kpp chem.kpp && make lib && cp libkpp.a $target/lib && cp *.h $target/include
+if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then 
+    cd $strLibsDir	
+    printf "starting to compile HDF5 with zlib\n"
+    # HDF5...
+    strTarget=$strFileHDF5
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl \
+        && make -j $numProcs && make check && make install && make clean \
+    	|| exit
+fi
 
-# Summary...
-echo -e "\n***** gsl-config *****\n"
-$target/bin/gsl-config --libs --cflags --version
-echo -e "\n***** nc-config *****"
-$target/bin/nc-config --all
+if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then 
+    cd $strLibsDir	
+    printf "starting to compile netCDF \n"
+    # netCDF...
+    strTarget=$strFileNETCDF
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && CPPFLAGS=-I$strBuildDir/include LDFLAGS=-L$strBuildDir/lib ./configure --prefix=$strBuildDir --disable-dap --disable-nczarr \
+        && make -j $numProcs && make check && make install && make clean \
+    	|| exit
+    echo -e "\n***** nc-config *****"
+    $strBuildDir/bin/nc-config --all
+fi
+
+    # # Chemistry using KPP...
+    # dir=KPP
+    # export KPP_HOME=$target/src/$dir
+    # export KPP_FLEX_LIB_DIR=$target/src/$dir
+    # cd $target/src/$dir/mptrac-chem \
+    # 		&& ../bin/kpp chem.kpp && make lib && cp libkpp.a $target/lib && cp *.h $target/include
+
+if [ $ifSkip = false ] || [$ifBuildAll = true ] ; then 
+    printf "All selected compilations are done.\n"
+fi
