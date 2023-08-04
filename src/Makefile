@@ -167,6 +167,9 @@ ifeq ($(STATIC),1)
   ifeq ($(GPU),1)
     $(error Static compilation does not work for GPU)
   endif
+  ifeq ($(THRUST),1)
+    $(error Static compilation does not work for THRUST)
+  endif
   ifeq ($(MPI),1)
     $(error Static compilation does not work for MPI)
   endif
