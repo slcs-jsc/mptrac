@@ -68,7 +68,8 @@ do
 		numProcs=$(($numTotalProcs*2/3))
            fi
 	   echo "NEW PROCESSES as ${numProcs}" ;;
-	h) printf -- "Helping Page: \n"
+	h) printf -- "\n\n\nHelping Page: \n"
+	   printf -- "--------------------------------------------------------------\n"	
 	   printf -- "    Please specify which libs ( or all, -a ) you want to build\n"
 	   printf -- "    you can specify within a dash, e.g.: -gtzfs to build      \n"
 	   printf -- "    without NETCDF and HDF5                                   \n" 
@@ -86,11 +87,11 @@ do
 	   printf -- "-p [cores] : how many [cores] to be used by make -j [cores]   \n" 
 	   printf -- "           : default is 4                                     \n" 
 	   printf -- "--------------------------------------------------------------\n"	
-	   printf -- " Example:                                                    -\n"	
-	   printf -- "     ./build.sh -c         clean the build directory         -\n"	
-	   printf -- "     ./build.sh -a         build all the libs                -\n"	
-	   printf -- "     ./build.sh -gtzfs     build without HDF5 and NetCDF     -\n"	
-	   printf -- "     ./build.sh -g -p 8    build the GSL with 8 processors   -\n"	
+	   printf -- " Example:                                                     \n"	
+	   printf -- "     ./build.sh -c         clean the build directory          \n"	
+	   printf -- "     ./build.sh -a         build all the libs                 \n"	
+	   printf -- "     ./build.sh -gtzfs     build without HDF5 and NetCDF      \n"	
+	   printf -- "     ./build.sh -g -p 8    build the GSL with 8 processors    \n"	
 	   printf -- "--------------------------------------------------------------\n"	
 	   ifSkip=true
 	   ;;	 
@@ -216,6 +217,6 @@ fi
     # cd $target/src/$dir/mptrac-chem \
     # 		&& ../bin/kpp chem.kpp && make lib && cp libkpp.a $target/lib && cp *.h $target/include
 
-if [ $ifSkip = false ] || [$ifBuildAll = true ] ; then 
+if [ $ifSkip = false ] || [ $ifBuildAll = true ] ; then 
     printf "All selected compilations are done.\n"
 fi
