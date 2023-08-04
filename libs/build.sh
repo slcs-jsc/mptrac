@@ -18,7 +18,7 @@
 ifBuildAll=false
 ifClean=false
 ifBuildGSL=false
-ifBuildTS=false
+ifBuildTHRUST=false
 ifBuildZLIB=false
 ifBuildZFP=false
 ifBuildZSTD=false
@@ -26,7 +26,7 @@ ifBuildHDF5=false
 ifBuildNETCDF=false
 ifSkip=false
 
-numProcs=4
+numProcs=`nproc --all`
 
 strBuildDir=${PWD}/build
 strLibsDir=${PWD}
@@ -34,7 +34,7 @@ strLibsDir=${PWD}
 strFileGSL="gsl-2.7"
 strFileHDF5="hdf5-1.12.1"
 strFileNETCDF="netcdf-c-4.8.1"
-strFileTS="thrustsort-1.2"
+strFileTHRUST="thrustsort-1.2"
 strFileZFP="zfp-0.5.5"
 strFileZLIB="zlib-1.2.12"
 strFileZSTD="zstd-1.5.2"
@@ -42,7 +42,7 @@ strFileZSTD="zstd-1.5.2"
 ###### Reminder           ######
 
 if [[ $# -lt 1 ]]; then
-    printf "please using -h to open the manual\n"
+    printf "$0: please use -h to open the manual\n"
     ifSkip=true
 fi
 
@@ -51,15 +51,15 @@ fi
 while getopts acgtzfshnp: flag
 do
     case "${flag}" in
-        a) ifBuildAll=true    ; echo "All the libs will be built"    ;;	
-	c) ifClean=true       ; echo "the build directory will be clean"  ;;
-	g) ifBuildGSL=true    ; echo "GSL is selected    "     ;;
-	t) ifBuildTS=true     ; echo "TS is selected     "     ;;
-	z) ifBuildZLIB=true   ; echo "ZLIB is selected   "     ;;
-	f) ifBuildZFP=true    ; echo "ZFP is selected    "     ;;
-	s) ifBuildZSTD=true   ; echo "ZSTD is selected   "     ;;
-	d) ifBuildHDF5=true   ; echo "HDF5 is selected   "     ;;
-	n) ifBuildNETCDF=true ; echo "NETCDF is selected "     ;;
+        a) ifBuildAll=true    ; echo "build all libraries  " ;;	
+	c) ifClean=true       ; echo "clean build directory" ;;
+	g) ifBuildGSL=true    ; echo "GSL is selected      " ;;
+	t) ifBuildTHRUST=true ; echo "THRUST is selected   " ;;
+	z) ifBuildZLIB=true   ; echo "ZLIB is selected     " ;;
+	f) ifBuildZFP=true    ; echo "ZFP is selected      " ;;
+	s) ifBuildZSTD=true   ; echo "ZSTD is selected     " ;;
+	d) ifBuildHDF5=true   ; echo "HDF5 is selected     " ;;
+	n) ifBuildNETCDF=true ; echo "NETCDF is selected   " ;;
 	p) numProcs=${OPTARG}  
            numTotalProcs=`nproc --all`
            if [ $numProcs -lt $numTotalProcs ]; then
@@ -78,14 +78,14 @@ do
 	   printf -- "             cleaned      \n"
 	   printf -- "-c         : clean the \$mptrac/libs/build                    \n"
 	   printf -- "-g         : build GSL    \n" 
-	   printf -- "-t         : build TS     \n" 
+	   printf -- "-t         : build THRUST     \n" 
 	   printf -- "-z         : build ZLIB   \n" 
 	   printf -- "-f         : build ZFP    \n" 
 	   printf -- "-s         : build ZSTD   \n" 
 	   printf -- "-d         : build HDF5   (prerequisite: ZLIB)  \n" 
 	   printf -- "-n         : build NETCDF (prerequisite: HDF5)  \n" 
 	   printf -- "-p [cores] : how many [cores] to be used by make -j [cores]   \n" 
-	   printf -- "           : default is 4                                     \n" 
+	   printf -- "           : default is maximum number of cores               \n" 
 	   printf -- "--------------------------------------------------------------\n"	
 	   printf -- " Example:                                                     \n"	
 	   printf -- "     ./build.sh -c         clean the build directory          \n"	
@@ -97,11 +97,6 @@ do
 	   ;;	 
     esac
 done
-
-###### 
-
-#printf "processes: %d \n"  $numProcs
-#printf "building the following Libs:" 
 
 ######
 
@@ -118,11 +113,12 @@ else
         target=$(mkdir -p build && cd build && pwd)
         mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 
     fi
-fi 
+fi
+
+# GSL...
 if [ $ifBuildAll = true ] || [ $ifBuildGSL = true ] ; then
     cd $strLibsDir	
     printf "Starting to compile GSL\n"
-    # GSL...
     strTarget=$strFileGSL
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
@@ -132,21 +128,22 @@ if [ $ifBuildAll = true ] || [ $ifBuildGSL = true ] ; then
     echo -e "\n***** gsl-config *****\n"
     $strBuildDir/bin/gsl-config --libs --cflags --version
 fi
-if [ $ifBuildAll = true ] || [ $ifBuildTS = true ] ; then 
+
+# Thrust sort...
+if [ $ifBuildAll = true ] || [ $ifBuildTHRUST = true ] ; then 
     cd $strLibsDir	
     printf "Starting to compile thrustsort\n"
-    # Thrust sort...
-    strTarget=$strFileTS 
+    strTarget=$strFileTHRUST 
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
         && cp -a libthrustsort_gpu.a libthrustsort_cpu.a $strBuildDir/lib/ \
     	|| exit
 fi
 
+# zlib...
 if [ $ifBuildAll = true ] || [ $ifBuildZLIB = true ] ; then 
     cd $strLibsDir	
     printf "Starting to compile ZLIB\n"
-    # zlib...
     strTarget=$strFileZLIB
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
@@ -155,10 +152,10 @@ if [ $ifBuildAll = true ] || [ $ifBuildZLIB = true ] ; then
     	|| exit
 fi
 
+# zfp...
 if [ $ifBuildAll = true ] || [ $ifBuildZFP = true ] ; then 
     cd $strLibsDir	
     printf "Starting to compile ZFP\n"
-    # zfp...
     strTarget=$strFileZFP
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
@@ -169,10 +166,10 @@ if [ $ifBuildAll = true ] || [ $ifBuildZFP = true ] ; then
     	|| exit
 fi
 
+# zstd...
 if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then 
     cd $strLibsDir	
     printf "starting to compile ZSTD \n"
-    # zstd...
     strTarget=$strFileZSTD
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
@@ -184,10 +181,10 @@ if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then
     	|| exit
 fi
 
+# HDF5...
 if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then 
     cd $strLibsDir	
     printf "starting to compile HDF5 with zlib\n"
-    # HDF5...
     strTarget=$strFileHDF5
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
@@ -196,16 +193,16 @@ if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then
     	|| exit
 fi
 
+# netCDF...
 if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then 
     cd $strLibsDir	
     printf "starting to compile netCDF \n"
-    # netCDF...
     strTarget=$strFileNETCDF
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
         && CPPFLAGS=-I$strBuildDir/include LDFLAGS=-L$strBuildDir/lib ./configure --prefix=$strBuildDir --disable-dap --disable-nczarr \
-        && make -j $numProcs && make check && make install && make clean \
-    	|| exit
+        && make -j $numProcs && make check
+    make install && make clean || exit
     echo -e "\n***** nc-config *****"
     $strBuildDir/bin/nc-config --all
 fi
