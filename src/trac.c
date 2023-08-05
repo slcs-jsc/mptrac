@@ -1495,7 +1495,7 @@ void module_chemgrid(
 	  double M = MOLEC_DENS(atm->p[ip], t);
 	  if(ctl->qnt_Ch2o >= 0) {
 	    INTPOL_3D(h2o, 0);
-	    SET_ATM(qnt_Ch2o, o3 * M);
+	    SET_ATM(qnt_Ch2o, h2o * M);
 	  }
 	  if(ctl->qnt_Co3 >= 0) {
 	    INTPOL_3D(o3, 0);
