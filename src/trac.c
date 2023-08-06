@@ -1493,16 +1493,16 @@ void module_chemgrid(
 	  double h2o, o3, t;
 	  INTPOL_3D(t, 1);
 	  double M = MOLEC_DENS(atm->p[ip], t);
-	  if(ctl->qnt_Ch2o >= 0) {
+	  if (ctl->qnt_Ch2o >= 0) {
 	    INTPOL_3D(h2o, 0);
 	    SET_ATM(qnt_Ch2o, o3 * M);
 	  }
-	  if(ctl->qnt_Co3 >= 0) {
+	  if (ctl->qnt_Co3 >= 0) {
 	    INTPOL_3D(o3, 0);
 	    SET_ATM(qnt_Co3, o3 * M);
 	  }
 	}
-	
+
 	/* Set radical species... */
 	SET_ATM(qnt_Coh, clim_zm(&clim->oh, atm->time[ip],
 				 atm->lat[ip], atm->p[ip]));
@@ -1513,7 +1513,7 @@ void module_chemgrid(
 	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
 				  atm->lat[ip], atm->p[ip]));
       }
-  
+
   /* Check quantities... */
   if (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0) {
 
@@ -2193,7 +2193,7 @@ void module_sort(
   atm_t * atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SORT", "MEMORY", NVTX_GPU);
+  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   const int np = atm->np;

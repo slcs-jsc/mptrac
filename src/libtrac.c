@@ -2062,7 +2062,7 @@ void read_ctl(
       SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm^3")
       SET_QNT(qnt_Ch2o, "Ch2o", "H2O concentration", "molec/cm^3")
       SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
-      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")      
+      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
       SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm^3")
       SET_QNT(qnt_Ch, "Ch", "H radical concentration", "molec/cm^3")
       SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm^3")
