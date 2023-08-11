@@ -42,6 +42,28 @@ static gsl_rng *rng[NTHREADS];
 #endif
 
 /* ------------------------------------------------------------
+   Macros...
+   ------------------------------------------------------------ */
+
+/*! Loop over particles. */
+#ifdef _OPENACC
+#define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
+  const int ip0_const = ip0;                            \
+  const int ip1_const = ip1;                            \
+  _Pragma(__VA_ARGS__)					\
+  _Pragma("acc parallel loop independent gang vector")  \
+  for (int ip = ip0_const; ip < ip1_const; ip++)        \
+    if (!check_dt || dt[ip] != 0)
+#else
+#define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
+  const int ip0_const = ip0;                            \
+  const int ip1_const = ip1;                            \
+  _Pragma("omp parallel for default(shared)")           \
+  for (int ip = ip0_const; ip < ip1_const; ip++)        \
+    if (!check_dt || dt[ip] != 0)
+#endif
+
+/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -118,7 +140,8 @@ void module_isosurf(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  cache_t * cache);
+  cache_t * cache,
+  double *dt);
 
 /*! Interpolate meteo data for air parcel positions. */
 void module_meteo(
@@ -126,7 +149,8 @@ void module_meteo(
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  double *dt);
 
 /*! Apply interparcel mixing. */
 void module_mixing(
@@ -478,7 +502,7 @@ int main(
 
 	  /* Isosurface... */
 	  if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-	    module_isosurf(&ctl, met0, met1, atm, cache);
+	    module_isosurf(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Check positions (final)... */
 	  module_position(&ctl, met0, met1, atm, dt);
@@ -487,7 +511,7 @@ int main(
 	  if (ctl.met_dt_out > 0
 	      && (ctl.met_dt_out < ctl.dt_mod
 		  || fmod(t, ctl.met_dt_out) == 0))
-	    module_meteo(&ctl, clim, met0, met1, atm);
+	    module_meteo(&ctl, clim, met0, met1, atm, dt);
 
 	  /* Check boundary conditions (initial)... */
 	  if ((ctl.bound_lat0 < ctl.bound_lat1)
@@ -634,68 +658,61 @@ void module_advect(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-      /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
+    /* Init... */
+    double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
 
-      /* Loop over integration nodes... */
-      for (int i = 0; i < ctl->advect; i++) {
+    /* Loop over integration nodes... */
+    for (int i = 0; i < ctl->advect; i++) {
 
-	/* Set position... */
-	if (i == 0) {
-	  dts = 0.0;
-	  x[0] = atm->lon[ip];
-	  x[1] = atm->lat[ip];
-	  x[2] = atm->p[ip];
-	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
-	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	  x[2] = atm->p[ip] + dts * w[i - 1];
-	}
-	double tm = atm->time[ip] + dts;
-
-	/* Interpolate meteo data... */
-#ifdef UVW
-	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
-			    &u[i], &v[i], &w[i]);
-#else
-	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->u, met1, met1->u, tm,
-			   x[2], x[0], x[1], &u[i], ci, cw, 1);
-	intpol_met_time_3d(met0, met0->v, met1, met1->v, tm,
-			   x[2], x[0], x[1], &v[i], ci, cw, 0);
-	intpol_met_time_3d(met0, met0->w, met1, met1->w, tm,
-			   x[2], x[0], x[1], &w[i], ci, cw, 0);
-#endif
-
-	/* Get mean wind... */
-	double k = 1.0;
-	if (ctl->advect == 2)
-	  k = (i == 0 ? 0.0 : 1.0);
-	else if (ctl->advect == 4)
-	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
-	um += k * u[i];
-	vm += k * v[i];
-	wm += k * w[i];
+      /* Set position... */
+      if (i == 0) {
+	dts = 0.0;
+	x[0] = atm->lon[ip];
+	x[1] = atm->lat[ip];
+	x[2] = atm->p[ip];
+      } else {
+	dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	x[2] = atm->p[ip] + dts * w[i - 1];
       }
+      double tm = atm->time[ip] + dts;
 
-      /* Set new position... */
-      atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
-			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
-      atm->p[ip] += dt[ip] * wm;
+      /* Interpolate meteo data... */
+#ifdef UVW
+      intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
+			  &u[i], &v[i], &w[i]);
+#else
+      INTPOL_INIT;
+      intpol_met_time_3d(met0, met0->u, met1, met1->u, tm,
+			 x[2], x[0], x[1], &u[i], ci, cw, 1);
+      intpol_met_time_3d(met0, met0->v, met1, met1->v, tm,
+			 x[2], x[0], x[1], &v[i], ci, cw, 0);
+      intpol_met_time_3d(met0, met0->w, met1, met1->w, tm,
+			 x[2], x[0], x[1], &w[i], ci, cw, 0);
+#endif
+
+      /* Get mean wind... */
+      double k = 1.0;
+      if (ctl->advect == 2)
+	k = (i == 0 ? 0.0 : 1.0);
+      else if (ctl->advect == 4)
+	k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+      um += k * u[i];
+      vm += k * v[i];
+      wm += k * w[i];
     }
+
+    /* Set new position... */
+    atm->time[ip] += dt[ip];
+    atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+    atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+    atm->p[ip] += dt[ip] * wm;
+  }
 }
 
 /*****************************************************************************/
@@ -717,103 +734,96 @@ void module_bound_cond(
       && ctl->qnt_Cn2o < 0 && ctl->qnt_Csf6 < 0 && ctl->qnt_aoa < 0)
     return;
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,clim,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
 
-      /* Check latitude and pressure range... */
-      if (atm->lat[ip] < ctl->bound_lat0 || atm->lat[ip] > ctl->bound_lat1
-	  || atm->p[ip] > ctl->bound_p0 || atm->p[ip] < ctl->bound_p1)
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
+
+    /* Check latitude and pressure range... */
+    if (atm->lat[ip] < ctl->bound_lat0 || atm->lat[ip] > ctl->bound_lat1
+	|| atm->p[ip] > ctl->bound_p0 || atm->p[ip] < ctl->bound_p1)
+      continue;
+
+    /* Check surface layer... */
+    if (ctl->bound_dps > 0 || ctl->bound_dzs > 0
+	|| ctl->bound_zetas > 0 || ctl->bound_pbl) {
+
+      /* Get surface pressure... */
+      double ps;
+      INTPOL_INIT;
+      INTPOL_2D(ps, 1);
+
+      /* Check pressure... */
+      if (ctl->bound_dps > 0 && atm->p[ip] < ps - ctl->bound_dps)
 	continue;
 
-      /* Check surface layer... */
-      if (ctl->bound_dps > 0 || ctl->bound_dzs > 0
-	  || ctl->bound_zetas > 0 || ctl->bound_pbl) {
+      /* Check height... */
+      if (ctl->bound_dzs > 0 && Z(atm->p[ip]) > Z(ps) + ctl->bound_dzs)
+	continue;
 
-	/* Get surface pressure... */
-	double ps;
-	INTPOL_INIT;
-	INTPOL_2D(ps, 1);
-
-	/* Check pressure... */
-	if (ctl->bound_dps > 0 && atm->p[ip] < ps - ctl->bound_dps)
+      /* Check zeta range... */
+      if (ctl->bound_zetas > 0) {
+	double t;
+	INTPOL_3D(t, 1);
+	if (ZETA(ps, atm->p[ip], t) > ctl->bound_zetas)
 	  continue;
-
-	/* Check height... */
-	if (ctl->bound_dzs > 0 && Z(atm->p[ip]) > Z(ps) + ctl->bound_dzs)
-	  continue;
-
-	/* Check zeta range... */
-	if (ctl->bound_zetas > 0) {
-	  double t;
-	  INTPOL_3D(t, 1);
-	  if (ZETA(ps, atm->p[ip], t) > ctl->bound_zetas)
-	    continue;
-	}
-
-	/* Check planetary boundary layer... */
-	if (ctl->bound_pbl) {
-	  double pbl;
-	  INTPOL_2D(pbl, 0);
-	  if (atm->p[ip] < pbl)
-	    continue;
-	}
       }
 
-      /* Set mass and volume mixing ratio... */
-      if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
-	atm->q[ctl->qnt_m][ip] =
-	  ctl->bound_mass + ctl->bound_mass_trend * atm->time[ip];
-      if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] =
-	  ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
+      /* Check planetary boundary layer... */
+      if (ctl->bound_pbl) {
+	double pbl;
+	INTPOL_2D(pbl, 0);
+	if (atm->p[ip] < pbl)
+	  continue;
+      }
+    }
 
-      /* Set boundary conditions of tracer chemistry... */
-      if (ctl->qnt_Cccl4 >= 0 || ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0
-	  || ctl->qnt_Cn2o >= 0 || ctl->qnt_Csf6 >= 0) {
+    /* Set mass and volume mixing ratio... */
+    if (ctl->qnt_m >= 0 && ctl->bound_mass >= 0)
+      atm->q[ctl->qnt_m][ip] =
+	ctl->bound_mass + ctl->bound_mass_trend * atm->time[ip];
+    if (ctl->qnt_vmr >= 0 && ctl->bound_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] =
+	ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 
-	/* Get temperature... */
-	double t;
-	INTPOL_INIT;
-	INTPOL_3D(t, 1);
+    /* Set boundary conditions of tracer chemistry... */
+    if (ctl->qnt_Cccl4 >= 0 || ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0
+	|| ctl->qnt_Cn2o >= 0 || ctl->qnt_Csf6 >= 0) {
 
-	/* Calculate molecular density... */
-	double M = MOLEC_DENS(atm->p[ip], t);
+      /* Get temperature... */
+      double t;
+      INTPOL_INIT;
+      INTPOL_3D(t, 1);
 
-	/* Set CFC-10 tracer concentration... */
-	if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-')
-	  atm->q[ctl->qnt_Cccl4][ip] = M * clim_ts(&clim->ccl4,
+      /* Calculate molecular density... */
+      double M = MOLEC_DENS(atm->p[ip], t);
+
+      /* Set CFC-10 tracer concentration... */
+      if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-')
+	atm->q[ctl->qnt_Cccl4][ip] = M * clim_ts(&clim->ccl4, atm->time[ip]);
+
+      /* Set CFC-11 tracer concentration... */
+      if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-')
+	atm->q[ctl->qnt_Cccl3f][ip] = M * clim_ts(&clim->ccl3f,
+						  atm->time[ip]);
+
+      /* Set CFC-12 tracer concentration... */
+      if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-')
+	atm->q[ctl->qnt_Cccl2f2][ip] = M * clim_ts(&clim->ccl2f2,
 						   atm->time[ip]);
 
-	/* Set CFC-11 tracer concentration... */
-	if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-')
-	  atm->q[ctl->qnt_Cccl3f][ip] = M * clim_ts(&clim->ccl3f,
-						    atm->time[ip]);
+      /* Set N2O tracer concentration... */
+      if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-')
+	atm->q[ctl->qnt_Cn2o][ip] = M * clim_ts(&clim->n2o, atm->time[ip]);
 
-	/* Set CFC-12 tracer concentration... */
-	if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-')
-	  atm->q[ctl->qnt_Cccl2f2][ip] = M * clim_ts(&clim->ccl2f2,
-						     atm->time[ip]);
-
-	/* Set N2O tracer concentration... */
-	if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-')
-	  atm->q[ctl->qnt_Cn2o][ip] = M * clim_ts(&clim->n2o, atm->time[ip]);
-
-	/* Set SF6 tracer concentration... */
-	if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
-	  atm->q[ctl->qnt_Csf6][ip] = M * clim_ts(&clim->sf6, atm->time[ip]);
-      }
-
-      /* Set age of air... */
-      if (ctl->qnt_aoa >= 0)
-	atm->q[ctl->qnt_aoa][ip] = atm->time[ip];
+      /* Set SF6 tracer concentration... */
+      if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
+	atm->q[ctl->qnt_Csf6][ip] = M * clim_ts(&clim->sf6, atm->time[ip]);
     }
+
+    /* Set age of air... */
+    if (ctl->qnt_aoa >= 0)
+      atm->q[ctl->qnt_aoa][ip] = atm->time[ip];
+  }
 }
 
 /*****************************************************************************/
@@ -832,79 +842,72 @@ void module_convection(
   /* Create random numbers... */
   module_rng(rs, (size_t) atm->np, 0);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt,rs)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt,rs)") {
 
-      double cape, cin, pel, ps;
+    double cape, cin, pel, ps;
 
-      /* Interpolate CAPE... */
-      INTPOL_INIT;
-      INTPOL_2D(cape, 1);
+    /* Interpolate CAPE... */
+    INTPOL_INIT;
+    INTPOL_2D(cape, 1);
 
-      /* Check threshold... */
-      if (isfinite(cape) && cape >= ctl->conv_cape) {
+    /* Check threshold... */
+    if (isfinite(cape) && cape >= ctl->conv_cape) {
 
-	/* Check CIN... */
-	if (ctl->conv_cin > 0) {
-	  INTPOL_2D(cin, 0);
-	  if (isfinite(cin) && cin >= ctl->conv_cin)
-	    continue;
-	}
-
-	/* Interpolate equilibrium level... */
-	INTPOL_2D(pel, 0);
-
-	/* Check whether particle is above cloud top... */
-	if (!isfinite(pel) || atm->p[ip] < pel)
+      /* Check CIN... */
+      if (ctl->conv_cin > 0) {
+	INTPOL_2D(cin, 0);
+	if (isfinite(cin) && cin >= ctl->conv_cin)
 	  continue;
+      }
 
-	/* Set pressure range for vertical mixing... */
-	double pbot = atm->p[ip];
-	double ptop = atm->p[ip];
-	if (ctl->conv_mix_bot == 1) {
-	  INTPOL_2D(ps, 0);
-	  pbot = ps;
-	}
-	if (ctl->conv_mix_top == 1)
-	  ptop = pel;
+      /* Interpolate equilibrium level... */
+      INTPOL_2D(pel, 0);
 
-	/* Vertical mixing based on pressure... */
-	if (ctl->conv_mix == 0)
-	  atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
+      /* Check whether particle is above cloud top... */
+      if (!isfinite(pel) || atm->p[ip] < pel)
+	continue;
 
-	/* Vertical mixing based on density... */
-	else if (ctl->conv_mix == 1) {
+      /* Set pressure range for vertical mixing... */
+      double pbot = atm->p[ip];
+      double ptop = atm->p[ip];
+      if (ctl->conv_mix_bot == 1) {
+	INTPOL_2D(ps, 0);
+	pbot = ps;
+      }
+      if (ctl->conv_mix_top == 1)
+	ptop = pel;
 
-	  /* Get density range... */
-	  double tbot, ttop;
-	  intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			     pbot, atm->lon[ip], atm->lat[ip], &tbot,
-			     ci, cw, 1);
-	  intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			     ptop, atm->lon[ip], atm->lat[ip], &ttop,
-			     ci, cw, 1);
-	  double rhobot = pbot / tbot;
-	  double rhotop = ptop / ttop;
+      /* Vertical mixing based on pressure... */
+      if (ctl->conv_mix == 0)
+	atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
 
-	  /* Get new density... */
-	  double lrho = log(rhobot + (rhotop - rhobot) * rs[ip]);
+      /* Vertical mixing based on density... */
+      else if (ctl->conv_mix == 1) {
 
-	  /* Find pressure... */
-	  double lrhobot = log(rhobot);
-	  double lrhotop = log(rhotop);
-	  double lpbot = log(pbot);
-	  double lptop = log(ptop);
-	  atm->p[ip] = exp(LIN(lrhobot, lpbot, lrhotop, lptop, lrho));
-	}
+	/* Get density range... */
+	double tbot, ttop;
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			   pbot, atm->lon[ip], atm->lat[ip], &tbot,
+			   ci, cw, 1);
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			   ptop, atm->lon[ip], atm->lat[ip], &ttop,
+			   ci, cw, 1);
+	double rhobot = pbot / tbot;
+	double rhotop = ptop / ttop;
+
+	/* Get new density... */
+	double lrho = log(rhobot + (rhotop - rhobot) * rs[ip]);
+
+	/* Find pressure... */
+	double lrhobot = log(rhobot);
+	double lrhotop = log(rhotop);
+	double lpbot = log(pbot);
+	double lptop = log(ptop);
+	atm->p[ip] = exp(LIN(lrhobot, lpbot, lrhotop, lptop, lrho));
       }
     }
+  }
 }
 
 /*****************************************************************************/
@@ -922,33 +925,26 @@ void module_decay(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,clim,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt)") {
 
-      /* Get weighting factor... */
-      double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    /* Get weighting factor... */
+    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
-      /* Set lifetime... */
-      double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
+    /* Set lifetime... */
+    double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
-      /* Calculate exponential decay... */
-      double aux = exp(-dt[ip] / tdec);
-      if (ctl->qnt_m >= 0) {
-	if (ctl->qnt_mloss_decay >= 0)
-	  atm->q[ctl->qnt_mloss_decay][ip]
-	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
-	atm->q[ctl->qnt_m][ip] *= aux;
-      }
-      if (ctl->qnt_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] *= aux;
+    /* Calculate exponential decay... */
+    double aux = exp(-dt[ip] / tdec);
+    if (ctl->qnt_m >= 0) {
+      if (ctl->qnt_mloss_decay >= 0)
+	atm->q[ctl->qnt_mloss_decay][ip]
+	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      atm->q[ctl->qnt_m][ip] *= aux;
     }
+    if (ctl->qnt_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] *= aux;
+  }
 }
 
 /*****************************************************************************/
@@ -968,89 +964,83 @@ void module_diffusion_meso(
   /* Create random numbers... */
   module_rng(rs, 3 * (size_t) atm->np, 1);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,cache,dt,rs)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
 
-      /* Get indices... */
-      int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-      int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-      int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+    /* Get indices... */
+    int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+    int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+    int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
-      /* Get standard deviations of local wind data... */
-      float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
-      for (int i = 0; i < 2; i++)
-	for (int j = 0; j < 2; j++)
-	  for (int k = 0; k < 2; k++) {
+    /* Get standard deviations of local wind data... */
+    float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
+    for (int i = 0; i < 2; i++)
+      for (int j = 0; j < 2; j++)
+	for (int k = 0; k < 2; k++) {
 #ifdef UVW
-	    umean += met0->uvw[ix + i][iy + j][iz + k][0];
-	    usig += SQR(met0->uvw[ix + i][iy + j][iz + k][0]);
-	    vmean += met0->uvw[ix + i][iy + j][iz + k][1];
-	    vsig += SQR(met0->uvw[ix + i][iy + j][iz + k][1]);
-	    wmean += met0->uvw[ix + i][iy + j][iz + k][2];
-	    wsig += SQR(met0->uvw[ix + i][iy + j][iz + k][2]);
+	  umean += met0->uvw[ix + i][iy + j][iz + k][0];
+	  usig += SQR(met0->uvw[ix + i][iy + j][iz + k][0]);
+	  vmean += met0->uvw[ix + i][iy + j][iz + k][1];
+	  vsig += SQR(met0->uvw[ix + i][iy + j][iz + k][1]);
+	  wmean += met0->uvw[ix + i][iy + j][iz + k][2];
+	  wsig += SQR(met0->uvw[ix + i][iy + j][iz + k][2]);
 
-	    umean += met1->uvw[ix + i][iy + j][iz + k][0];
-	    usig += SQR(met1->uvw[ix + i][iy + j][iz + k][0]);
-	    vmean += met1->uvw[ix + i][iy + j][iz + k][1];
-	    vsig += SQR(met1->uvw[ix + i][iy + j][iz + k][1]);
-	    wmean += met1->uvw[ix + i][iy + j][iz + k][2];
-	    wsig += SQR(met1->uvw[ix + i][iy + j][iz + k][2]);
+	  umean += met1->uvw[ix + i][iy + j][iz + k][0];
+	  usig += SQR(met1->uvw[ix + i][iy + j][iz + k][0]);
+	  vmean += met1->uvw[ix + i][iy + j][iz + k][1];
+	  vsig += SQR(met1->uvw[ix + i][iy + j][iz + k][1]);
+	  wmean += met1->uvw[ix + i][iy + j][iz + k][2];
+	  wsig += SQR(met1->uvw[ix + i][iy + j][iz + k][2]);
 #else
-	    umean += met0->u[ix + i][iy + j][iz + k];
-	    usig += SQR(met0->u[ix + i][iy + j][iz + k]);
-	    vmean += met0->v[ix + i][iy + j][iz + k];
-	    vsig += SQR(met0->v[ix + i][iy + j][iz + k]);
-	    wmean += met0->w[ix + i][iy + j][iz + k];
-	    wsig += SQR(met0->w[ix + i][iy + j][iz + k]);
+	  umean += met0->u[ix + i][iy + j][iz + k];
+	  usig += SQR(met0->u[ix + i][iy + j][iz + k]);
+	  vmean += met0->v[ix + i][iy + j][iz + k];
+	  vsig += SQR(met0->v[ix + i][iy + j][iz + k]);
+	  wmean += met0->w[ix + i][iy + j][iz + k];
+	  wsig += SQR(met0->w[ix + i][iy + j][iz + k]);
 
-	    umean += met1->u[ix + i][iy + j][iz + k];
-	    usig += SQR(met1->u[ix + i][iy + j][iz + k]);
-	    vmean += met1->v[ix + i][iy + j][iz + k];
-	    vsig += SQR(met1->v[ix + i][iy + j][iz + k]);
-	    wmean += met1->w[ix + i][iy + j][iz + k];
-	    wsig += SQR(met1->w[ix + i][iy + j][iz + k]);
+	  umean += met1->u[ix + i][iy + j][iz + k];
+	  usig += SQR(met1->u[ix + i][iy + j][iz + k]);
+	  vmean += met1->v[ix + i][iy + j][iz + k];
+	  vsig += SQR(met1->v[ix + i][iy + j][iz + k]);
+	  wmean += met1->w[ix + i][iy + j][iz + k];
+	  wsig += SQR(met1->w[ix + i][iy + j][iz + k]);
 #endif
-	  }
-      usig = usig / 16.f - SQR(umean / 16.f);
-      usig = (usig > 0 ? sqrtf(usig) : 0);
-      vsig = vsig / 16.f - SQR(vmean / 16.f);
-      vsig = (vsig > 0 ? sqrtf(vsig) : 0);
-      wsig = wsig / 16.f - SQR(wmean / 16.f);
-      wsig = (wsig > 0 ? sqrtf(wsig) : 0);
+	}
+    usig = usig / 16.f - SQR(umean / 16.f);
+    usig = (usig > 0 ? sqrtf(usig) : 0);
+    vsig = vsig / 16.f - SQR(vmean / 16.f);
+    vsig = (vsig > 0 ? sqrtf(vsig) : 0);
+    wsig = wsig / 16.f - SQR(wmean / 16.f);
+    wsig = (wsig > 0 ? sqrtf(wsig) : 0);
 
-      /* Set temporal correlations for mesoscale fluctuations... */
-      double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
-      double r2 = sqrt(1 - r * r);
+    /* Set temporal correlations for mesoscale fluctuations... */
+    double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+    double r2 = sqrt(1 - r * r);
 
-      /* Calculate horizontal mesoscale wind fluctuations... */
-      if (ctl->turb_mesox > 0) {
-	cache->uvwp[ip][0] =
-	  (float) (r * cache->uvwp[ip][0] +
-		   r2 * rs[3 * ip] * ctl->turb_mesox * usig);
-	atm->lon[ip] +=
-	  DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
+    /* Calculate horizontal mesoscale wind fluctuations... */
+    if (ctl->turb_mesox > 0) {
+      cache->uvwp[ip][0] =
+	(float) (r * cache->uvwp[ip][0] +
+		 r2 * rs[3 * ip] * ctl->turb_mesox * usig);
+      atm->lon[ip] +=
+	DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
-	cache->uvwp[ip][1] =
-	  (float) (r * cache->uvwp[ip][1] +
-		   r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
-	atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
-      }
-
-      /* Calculate vertical mesoscale wind fluctuations... */
-      if (ctl->turb_mesoz > 0) {
-	cache->uvwp[ip][2] =
-	  (float) (r * cache->uvwp[ip][2] +
-		   r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
-	atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
-      }
+      cache->uvwp[ip][1] =
+	(float) (r * cache->uvwp[ip][1] +
+		 r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
+      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
     }
+
+    /* Calculate vertical mesoscale wind fluctuations... */
+    if (ctl->turb_mesoz > 0) {
+      cache->uvwp[ip][2] =
+	(float) (r * cache->uvwp[ip][2] +
+		 r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
+      atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
+    }
+  }
 }
 
 /*****************************************************************************/
@@ -1068,36 +1058,29 @@ void module_diffusion_turb(
   /* Create random numbers... */
   module_rng(rs, 3 * (size_t) atm->np, 1);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,clim,atm,dt,rs)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs)") {
 
-      /* Get weighting factor... */
-      double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    /* Get weighting factor... */
+    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
-      /* Set diffusivity... */
-      double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
-      double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
+    /* Set diffusivity... */
+    double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
+    double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
-      /* Horizontal turbulent diffusion... */
-      if (dx > 0) {
-	double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
-	atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
-	atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
-      }
-
-      /* Vertical turbulent diffusion... */
-      if (dz > 0) {
-	double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
-	atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
-      }
+    /* Horizontal turbulent diffusion... */
+    if (dx > 0) {
+      double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
+      atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
+      atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
     }
+
+    /* Vertical turbulent diffusion... */
+    if (dz > 0) {
+      double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
+      atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
+    }
+  }
 }
 
 /*****************************************************************************/
@@ -1116,55 +1099,48 @@ void module_dry_deposition(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-      double ps, t, v_dep;
+    double ps, t, v_dep;
 
-      /* Get surface pressure... */
-      INTPOL_INIT;
-      INTPOL_2D(ps, 1);
+    /* Get surface pressure... */
+    INTPOL_INIT;
+    INTPOL_2D(ps, 1);
 
-      /* Check whether particle is above the surface layer... */
-      if (atm->p[ip] < ps - ctl->dry_depo_dp)
-	continue;
+    /* Check whether particle is above the surface layer... */
+    if (atm->p[ip] < ps - ctl->dry_depo_dp)
+      continue;
 
-      /* Set depth of surface layer... */
-      double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
+    /* Set depth of surface layer... */
+    double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
 
-      /* Calculate sedimentation velocity for particles... */
-      if (ctl->qnt_rp > 0 && ctl->qnt_rhop > 0) {
+    /* Calculate sedimentation velocity for particles... */
+    if (ctl->qnt_rp > 0 && ctl->qnt_rhop > 0) {
 
-	/* Get temperature... */
-	INTPOL_3D(t, 1);
+      /* Get temperature... */
+      INTPOL_3D(t, 1);
 
-	/* Set deposition velocity... */
-	v_dep = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
-		     atm->q[ctl->qnt_rhop][ip]);
-      }
-
-      /* Use explicit sedimentation velocity for gases... */
-      else
-	v_dep = ctl->dry_depo_vdep;
-
-      /* Calculate loss of mass based on deposition velocity... */
-      double aux = exp(-dt[ip] * v_dep / dz);
-      if (ctl->qnt_m >= 0) {
-	if (ctl->qnt_mloss_dry >= 0)
-	  atm->q[ctl->qnt_mloss_dry][ip]
-	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
-	atm->q[ctl->qnt_m][ip] *= aux;
-      }
-      if (ctl->qnt_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] *= aux;
+      /* Set deposition velocity... */
+      v_dep = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
+		   atm->q[ctl->qnt_rhop][ip]);
     }
+
+    /* Use explicit sedimentation velocity for gases... */
+    else
+      v_dep = ctl->dry_depo_vdep;
+
+    /* Calculate loss of mass based on deposition velocity... */
+    double aux = exp(-dt[ip] * v_dep / dz);
+    if (ctl->qnt_m >= 0) {
+      if (ctl->qnt_mloss_dry >= 0)
+	atm->q[ctl->qnt_mloss_dry][ip]
+	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      atm->q[ctl->qnt_m][ip] *= aux;
+    }
+    if (ctl->qnt_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] *= aux;
+  }
 }
 
 /*****************************************************************************/
@@ -1240,19 +1216,14 @@ void module_isosurf(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  cache_t * cache) {
+  cache_t * cache,
+  double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,cache)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     double t;
 
@@ -1298,7 +1269,8 @@ void module_meteo(
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm) {
+  atm_t * atm,
+  double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -1308,14 +1280,8 @@ void module_meteo(
     if (ctl->qnt_tice < 0 || ctl->qnt_tnat < 0)
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,clim,met0,met1,atm)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     double ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc,
       pel, cape, cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, cc, z, zt;
@@ -1586,61 +1552,54 @@ void module_oh_chem(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,clim,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
-      /* Get temperature... */
-      double t;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
+    /* Get temperature... */
+    double t;
+    INTPOL_INIT;
+    INTPOL_3D(t, 1);
 
-      /* Use constant reaction rate... */
-      double k = GSL_NAN;
-      if (ctl->oh_chem_reaction == 1)
-	k = ctl->oh_chem[0];
+    /* Use constant reaction rate... */
+    double k = GSL_NAN;
+    if (ctl->oh_chem_reaction == 1)
+      k = ctl->oh_chem[0];
 
-      /* Calculate bimolecular reaction rate... */
-      else if (ctl->oh_chem_reaction == 2)
-	k = ctl->oh_chem[0] * exp(-ctl->oh_chem[1] / t);
+    /* Calculate bimolecular reaction rate... */
+    else if (ctl->oh_chem_reaction == 2)
+      k = ctl->oh_chem[0] * exp(-ctl->oh_chem[1] / t);
 
-      /* Calculate termolecular reaction rate... */
-      if (ctl->oh_chem_reaction == 3) {
+    /* Calculate termolecular reaction rate... */
+    if (ctl->oh_chem_reaction == 3) {
 
-	/* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-	double M = MOLEC_DENS(atm->p[ip], t);
+      /* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
+      double M = MOLEC_DENS(atm->p[ip], t);
 
-	/* Calculate rate coefficient for X + OH + M -> XOH + M
-	   (JPL Publication 19-05) ... */
-	double k0 =
-	  ctl->oh_chem[0] * (ctl->oh_chem[1] !=
-			     0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
-	double ki =
-	  ctl->oh_chem[2] * (ctl->oh_chem[3] !=
-			     0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
-	double c = log10(k0 * M / ki);
-	k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
-      }
-
-      /* Calculate exponential decay... */
-      double rate_coef = k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
-				     atm->lat[ip], atm->p[ip]);
-      double aux = exp(-dt[ip] * rate_coef);
-      if (ctl->qnt_m >= 0) {
-	if (ctl->qnt_mloss_oh >= 0)
-	  atm->q[ctl->qnt_mloss_oh][ip]
-	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
-	atm->q[ctl->qnt_m][ip] *= aux;
-      }
-      if (ctl->qnt_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] *= aux;
+      /* Calculate rate coefficient for X + OH + M -> XOH + M
+         (JPL Publication 19-05) ... */
+      double k0 =
+	ctl->oh_chem[0] * (ctl->oh_chem[1] !=
+			   0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
+      double ki =
+	ctl->oh_chem[2] * (ctl->oh_chem[3] !=
+			   0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
+      double c = log10(k0 * M / ki);
+      k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
+
+    /* Calculate exponential decay... */
+    double rate_coef = k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
+				   atm->lat[ip], atm->p[ip]);
+    double aux = exp(-dt[ip] * rate_coef);
+    if (ctl->qnt_m >= 0) {
+      if (ctl->qnt_mloss_oh >= 0)
+	atm->q[ctl->qnt_mloss_oh][ip]
+	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      atm->q[ctl->qnt_m][ip] *= aux;
+    }
+    if (ctl->qnt_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] *= aux;
+  }
 }
 
 /*****************************************************************************/
@@ -1662,64 +1621,56 @@ void module_h2o2_chem(
   if (ctl->qnt_vmrimpl < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(clim,ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
 
-      /* Check whether particle is inside cloud... */
-      double lwc;
-      INTPOL_INIT;
-      INTPOL_3D(lwc, 1);
-      if (!(lwc > 0))
-	continue;
+    /* Check whether particle is inside cloud... */
+    double lwc;
+    INTPOL_INIT;
+    INTPOL_3D(lwc, 1);
+    if (!(lwc > 0))
+      continue;
 
-      /* Check implicit volume mixing ratio... */
-      if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
-	continue;
+    /* Check implicit volume mixing ratio... */
+    if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
+      continue;
 
-      /* Get temperature... */
-      double t;
-      INTPOL_3D(t, 0);
+    /* Get temperature... */
+    double t;
+    INTPOL_3D(t, 0);
 
-      /* Reaction rate (Berglen et al., 2004)... */
-      double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit: M^(-2)
+    /* Reaction rate (Berglen et al., 2004)... */
+    double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit: M^(-2)
 
-      /* Henry constant of SO2... */
-      double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-      double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
+    /* Henry constant of SO2... */
+    double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
 
-      /* Henry constant of H2O2... */
-      double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+    /* Henry constant of H2O2... */
+    double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
-      /* Concentration of H2O2 (Barth et al., 1989)... */
-      double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
-      double h2o2 = H_h2o2
-	* clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
-	* 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: M
+    /* Concentration of H2O2 (Barth et al., 1989)... */
+    double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
+    double h2o2 = H_h2o2
+      * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
+      * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: M
 
-      /* Volume water content in cloud [m^3 m^(-3)]... */
-      double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-      //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
-      double CWC = lwc * rho_air / 1000;
+    /* Volume water content in cloud [m^3 m^(-3)]... */
+    double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
+    //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
+    double CWC = lwc * rho_air / 1000;
 
-      /* Calculate exponential decay (Rolph et al., 1992)... */
-      double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
-      double aux = exp(-dt[ip] * rate_coef);
-      if (ctl->qnt_m >= 0) {
-	if (ctl->qnt_mloss_h2o2 >= 0)
-	  atm->q[ctl->qnt_mloss_h2o2][ip] +=
-	    atm->q[ctl->qnt_m][ip] * (1 - aux);
-	atm->q[ctl->qnt_m][ip] *= aux;
-      }
-      if (ctl->qnt_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] *= aux;
+    /* Calculate exponential decay (Rolph et al., 1992)... */
+    double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
+    double aux = exp(-dt[ip] * rate_coef);
+    if (ctl->qnt_m >= 0) {
+      if (ctl->qnt_mloss_h2o2 >= 0)
+	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      atm->q[ctl->qnt_m][ip] *= aux;
     }
+    if (ctl->qnt_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] *= aux;
+  }
 }
 
 /*****************************************************************************/
@@ -1735,64 +1686,57 @@ void module_tracer_chem(
   /* Set timer... */
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,clim,met0,atm,met1,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
 
-      /* Calculate solar zenith angle... */
-      double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    /* Calculate solar zenith angle... */
+    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
-      /* Get temperature... */
-      double t;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
+    /* Get temperature... */
+    double t;
+    INTPOL_INIT;
+    INTPOL_3D(t, 1);
 
-      /* Reactions for CFC-10... */
-      if (ctl->qnt_Cccl4 >= 0) {
-	double K_o1d = ARRHENIUS(3.30e-10, 0, t);
-	atm->q[ctl->qnt_Cccl4][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
-	atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
-      }
-
-      /* Reactions for CFC-11... */
-      if (ctl->qnt_Cccl3f >= 0) {
-	double K_o1d = ARRHENIUS(2.30e-10, 0, t);
-	atm->q[ctl->qnt_Cccl3f][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-	atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
-      }
-
-      /* Reactions for CFC-12... */
-      if (ctl->qnt_Cccl2f2 >= 0) {
-	double K_o1d = ARRHENIUS(1.40e-10, -25, t);
-	atm->q[ctl->qnt_Cccl2f2][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-	atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
-      }
-
-      /* Reactions for N2O... */
-      if (ctl->qnt_Cn2o >= 0) {
-	double K_o1d = ARRHENIUS(1.19e-10, -20, t);
-	atm->q[ctl->qnt_Cn2o][ip] *=
-	  exp(-dt[ip] * K_o1d *
-	      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
-	double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-	atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
-      }
+    /* Reactions for CFC-10... */
+    if (ctl->qnt_Cccl4 >= 0) {
+      double K_o1d = ARRHENIUS(3.30e-10, 0, t);
+      atm->q[ctl->qnt_Cccl4][ip] *=
+	exp(-dt[ip] * K_o1d *
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+      double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
+      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
     }
+
+    /* Reactions for CFC-11... */
+    if (ctl->qnt_Cccl3f >= 0) {
+      double K_o1d = ARRHENIUS(2.30e-10, 0, t);
+      atm->q[ctl->qnt_Cccl3f][ip] *=
+	exp(-dt[ip] * K_o1d *
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+      double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
+    }
+
+    /* Reactions for CFC-12... */
+    if (ctl->qnt_Cccl2f2 >= 0) {
+      double K_o1d = ARRHENIUS(1.40e-10, -25, t);
+      atm->q[ctl->qnt_Cccl2f2][ip] *=
+	exp(-dt[ip] * K_o1d *
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+      double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
+    }
+
+    /* Reactions for N2O... */
+    if (ctl->qnt_Cn2o >= 0) {
+      double K_o1d = ARRHENIUS(1.19e-10, -20, t);
+      atm->q[ctl->qnt_Cn2o][ip] *=
+	exp(-dt[ip] * K_o1d *
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+      double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
+    }
+  }
 }
 
 /*****************************************************************************/
@@ -2019,58 +1963,51 @@ void module_position(
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-      /* Init... */
-      double ps;
-      INTPOL_INIT;
+    /* Init... */
+    double ps;
+    INTPOL_INIT;
 
-      /* Calculate modulo... */
-      atm->lon[ip] = FMOD(atm->lon[ip], 360.);
-      atm->lat[ip] = FMOD(atm->lat[ip], 360.);
+    /* Calculate modulo... */
+    atm->lon[ip] = FMOD(atm->lon[ip], 360.);
+    atm->lat[ip] = FMOD(atm->lat[ip], 360.);
 
-      /* Check latitude... */
-      while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
-	if (atm->lat[ip] > 90) {
-	  atm->lat[ip] = 180 - atm->lat[ip];
-	  atm->lon[ip] += 180;
-	}
-	if (atm->lat[ip] < -90) {
-	  atm->lat[ip] = -180 - atm->lat[ip];
-	  atm->lon[ip] += 180;
-	}
+    /* Check latitude... */
+    while (atm->lat[ip] < -90 || atm->lat[ip] > 90) {
+      if (atm->lat[ip] > 90) {
+	atm->lat[ip] = 180 - atm->lat[ip];
+	atm->lon[ip] += 180;
       }
-
-      /* Check longitude... */
-      while (atm->lon[ip] < -180)
-	atm->lon[ip] += 360;
-      while (atm->lon[ip] >= 180)
-	atm->lon[ip] -= 360;
-
-      /* Check pressure... */
-      if (atm->p[ip] < met0->p[met0->np - 1]) {
-	if (ctl->reflect)
-	  atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
-	else
-	  atm->p[ip] = met0->p[met0->np - 1];
-      } else if (atm->p[ip] > 300.) {
-	INTPOL_2D(ps, 1);
-	if (atm->p[ip] > ps) {
-	  if (ctl->reflect)
-	    atm->p[ip] = 2. * ps - atm->p[ip];
-	  else
-	    atm->p[ip] = ps;
-	}
+      if (atm->lat[ip] < -90) {
+	atm->lat[ip] = -180 - atm->lat[ip];
+	atm->lon[ip] += 180;
       }
     }
+
+    /* Check longitude... */
+    while (atm->lon[ip] < -180)
+      atm->lon[ip] += 360;
+    while (atm->lon[ip] >= 180)
+      atm->lon[ip] -= 360;
+
+    /* Check pressure... */
+    if (atm->p[ip] < met0->p[met0->np - 1]) {
+      if (ctl->reflect)
+	atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
+      else
+	atm->p[ip] = met0->p[met0->np - 1];
+    } else if (atm->p[ip] > 300.) {
+      INTPOL_2D(ps, 1);
+      if (atm->p[ip] > ps) {
+	if (ctl->reflect)
+	  atm->p[ip] = 2. * ps - atm->p[ip];
+	else
+	  atm->p[ip] = ps;
+      }
+    }
+  }
 }
 
 /*****************************************************************************/
@@ -2161,28 +2098,21 @@ void module_sedi(
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-      /* Get temperature... */
-      double t;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
+    /* Get temperature... */
+    double t;
+    INTPOL_INIT;
+    INTPOL_3D(t, 1);
 
-      /* Sedimentation velocity... */
-      double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
-			atm->q[ctl->qnt_rhop][ip]);
+    /* Sedimentation velocity... */
+    double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
+		      atm->q[ctl->qnt_rhop][ip]);
 
-      /* Calculate pressure change... */
-      atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
-    }
+    /* Calculate pressure change... */
+    atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
+  }
 }
 
 /*****************************************************************************/
@@ -2324,16 +2254,11 @@ void module_timesteps(
   const double latmin = gsl_stats_min(met0->lat, 1, (size_t) met0->ny),
     latmax = gsl_stats_max(met0->lat, 1, (size_t) met0->ny);
 
-  const int np = atm->np,
-    local = (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
+  const int local =
+    (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
 
-#ifdef _OPENACC
-#pragma acc data present(ctl,atm,met0,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,atm,met0,dt)") {
 
     /* Set time step for each air parcel... */
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
@@ -2398,122 +2323,115 @@ void module_wet_deposition(
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-      double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
+    double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
 
-      /* Check whether particle is below cloud top... */
-      INTPOL_INIT;
-      INTPOL_2D(pct, 1);
-      if (!isfinite(pct) || atm->p[ip] <= pct)
-	continue;
+    /* Check whether particle is below cloud top... */
+    INTPOL_INIT;
+    INTPOL_2D(pct, 1);
+    if (!isfinite(pct) || atm->p[ip] <= pct)
+      continue;
 
-      /* Get cloud bottom pressure... */
-      INTPOL_2D(pcb, 0);
+    /* Get cloud bottom pressure... */
+    INTPOL_2D(pcb, 0);
 
-      /* Estimate precipitation rate (Pisso et al., 2019)... */
-      INTPOL_2D(cl, 0);
-      double Is =
-	pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
-      if (Is < 0.01)
-	continue;
+    /* Estimate precipitation rate (Pisso et al., 2019)... */
+    INTPOL_2D(cl, 0);
+    double Is =
+      pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
+    if (Is < 0.01)
+      continue;
 
-      /* Check whether particle is inside or below cloud... */
-      INTPOL_3D(lwc, 1);
-      INTPOL_3D(iwc, 0);
-      int inside = (iwc > 0 || lwc > 0);
+    /* Check whether particle is inside or below cloud... */
+    INTPOL_3D(lwc, 1);
+    INTPOL_3D(iwc, 0);
+    int inside = (iwc > 0 || lwc > 0);
 
-      /* Get temperature... */
-      INTPOL_3D(t, 0);
+    /* Get temperature... */
+    INTPOL_3D(t, 0);
 
-      /* Calculate in-cloud scavenging coefficient... */
-      if (inside) {
+    /* Calculate in-cloud scavenging coefficient... */
+    if (inside) {
 
-	/* Calculate retention factor... */
-	double eta;
-	if (t > 273.15)
-	  eta = 1;
-	else if (t <= 238.15)
-	  eta = ctl->wet_depo_ic_ret_ratio;
-	else
-	  eta = LIN(273.15, 1, 238.15, ctl->wet_depo_ic_ret_ratio, t);
+      /* Calculate retention factor... */
+      double eta;
+      if (t > 273.15)
+	eta = 1;
+      else if (t <= 238.15)
+	eta = ctl->wet_depo_ic_ret_ratio;
+      else
+	eta = LIN(273.15, 1, 238.15, ctl->wet_depo_ic_ret_ratio, t);
 
-	/* Use exponential dependency for particles ... */
-	if (ctl->wet_depo_ic_a > 0)
-	  lambda = ctl->wet_depo_ic_a * pow(Is, ctl->wet_depo_ic_b) * eta;
+      /* Use exponential dependency for particles ... */
+      if (ctl->wet_depo_ic_a > 0)
+	lambda = ctl->wet_depo_ic_a * pow(Is, ctl->wet_depo_ic_b) * eta;
 
-	/* Use Henry's law for gases... */
-	else if (ctl->wet_depo_ic_h[0] > 0) {
+      /* Use Henry's law for gases... */
+      else if (ctl->wet_depo_ic_h[0] > 0) {
 
-	  /* Get Henry's constant (Sander, 2015)... */
-	  h = ctl->wet_depo_ic_h[0]
-	    * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / 298.15));
+	/* Get Henry's constant (Sander, 2015)... */
+	h = ctl->wet_depo_ic_h[0]
+	  * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / 298.15));
 
-	  /* Use effective Henry's constant for SO2
-	     (Berglen, 2004; Simpson, 2012)... */
-	  if (ctl->wet_depo_ic_h[2] > 0) {
-	    double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
-	    double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
-	    double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
-	    h *= (1 + K_1 / H_ion + K_1 * K_2 / pow(H_ion, 2));
-	  }
-
-	  /* Estimate depth of cloud layer... */
-	  dz = 1e3 * (Z(pct) - Z(pcb));
-
-	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
-	  lambda = h * RI * t * Is / 3.6e6 / dz * eta;
+	/* Use effective Henry's constant for SO2
+	   (Berglen, 2004; Simpson, 2012)... */
+	if (ctl->wet_depo_ic_h[2] > 0) {
+	  double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
+	  double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
+	  double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
+	  h *= (1 + K_1 / H_ion + K_1 * K_2 / pow(H_ion, 2));
 	}
+
+	/* Estimate depth of cloud layer... */
+	dz = 1e3 * (Z(pct) - Z(pcb));
+
+	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
       }
-
-      /* Calculate below-cloud scavenging coefficient... */
-      else {
-
-	/* Calculate retention factor... */
-	double eta;
-	if (t > 270)
-	  eta = 1;
-	else
-	  eta = ctl->wet_depo_bc_ret_ratio;
-
-	/* Use exponential dependency for particles... */
-	if (ctl->wet_depo_bc_a > 0)
-	  lambda = ctl->wet_depo_bc_a * pow(Is, ctl->wet_depo_bc_b) * eta;
-
-	/* Use Henry's law for gases... */
-	else if (ctl->wet_depo_bc_h[0] > 0) {
-
-	  /* Get Henry's constant (Sander, 2015)... */
-	  h = ctl->wet_depo_bc_h[0]
-	    * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
-
-	  /* Estimate depth of cloud layer... */
-	  dz = 1e3 * (Z(pct) - Z(pcb));
-
-	  /* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
-	  lambda = h * RI * t * Is / 3.6e6 / dz * eta;
-	}
-      }
-
-      /* Calculate exponential decay of mass... */
-      double aux = exp(-dt[ip] * lambda);
-      if (ctl->qnt_m >= 0) {
-	if (ctl->qnt_mloss_wet >= 0)
-	  atm->q[ctl->qnt_mloss_wet][ip]
-	    += atm->q[ctl->qnt_m][ip] * (1 - aux);
-	atm->q[ctl->qnt_m][ip] *= aux;
-      }
-      if (ctl->qnt_vmr >= 0)
-	atm->q[ctl->qnt_vmr][ip] *= aux;
     }
+
+    /* Calculate below-cloud scavenging coefficient... */
+    else {
+
+      /* Calculate retention factor... */
+      double eta;
+      if (t > 270)
+	eta = 1;
+      else
+	eta = ctl->wet_depo_bc_ret_ratio;
+
+      /* Use exponential dependency for particles... */
+      if (ctl->wet_depo_bc_a > 0)
+	lambda = ctl->wet_depo_bc_a * pow(Is, ctl->wet_depo_bc_b) * eta;
+
+      /* Use Henry's law for gases... */
+      else if (ctl->wet_depo_bc_h[0] > 0) {
+
+	/* Get Henry's constant (Sander, 2015)... */
+	h = ctl->wet_depo_bc_h[0]
+	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
+
+	/* Estimate depth of cloud layer... */
+	dz = 1e3 * (Z(pct) - Z(pcb));
+
+	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
+      }
+    }
+
+    /* Calculate exponential decay of mass... */
+    double aux = exp(-dt[ip] * lambda);
+    if (ctl->qnt_m >= 0) {
+      if (ctl->qnt_mloss_wet >= 0)
+	atm->q[ctl->qnt_mloss_wet][ip]
+	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      atm->q[ctl->qnt_m][ip] *= aux;
+    }
+    if (ctl->qnt_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] *= aux;
+  }
 }
 
 /*****************************************************************************/
