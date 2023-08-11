@@ -81,11 +81,9 @@ void kpp_chem_initialize(
   int ip
 ){
     /* Get Meteological variables... */
-    double t, h2o, o3;
+    double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
-    INTPOL_3D(o3, 1);
-    INTPOL_3D(h2o, 1);
     TEMP = t;
 
     /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
@@ -94,26 +92,21 @@ void kpp_chem_initialize(
     /* Calculate solar zenith angle [deg] */
     double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
-    SET_VAR(ind_o3p, qnt_Co3p);
-    SET_VAR(ind_o1d, qnt_Co1d);
-    SET_VAR(ind_h2o2, qnt_Ch2o2);
-    SET_VAR(ind_oh, qnt_Coh);
-    SET_VAR(ind_ho2, qnt_Cho2);
+    SET_VAR(ind_o3p, qnt_Co3p, M);
+    SET_VAR(ind_o1d, qnt_Co1d, M);
+    SET_VAR(ind_h2o2, qnt_Ch2o2, M);
+    SET_VAR(ind_oh, qnt_Coh, M);
+    SET_VAR(ind_ho2, qnt_Cho2, M);
     #ifdef ind_h
-      SET_VAR(ind_h, qnt_Ch);
+      SET_VAR(ind_h, qnt_Ch, M);
     #endif
     
-    SET_VAR(ind_n2o, qnt_Cn2o);
-    SET_VAR(ind_ccl3f, qnt_Cccl3f);
-    SET_VAR(ind_ccl2f2, qnt_Cccl2f2);
-    SET_VAR(ind_o3, qnt_Co3);
-    
-    //VAR[ind_h2o] = h2o * M;
-    //VAR[ind_o3] = o3 * M;
-    
-    //FIX[indf_h2o] = h2o * M;
-    //FIX[indf_o3] = o3 * M;
-    //FIX[indf_o3] = clim_zm(&clim->o3, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    SET_VAR(ind_n2o, qnt_Cn2o, M);
+    SET_VAR(ind_ccl3f, qnt_Cccl3f, M);
+    SET_VAR(ind_ccl2f2, qnt_Cccl2f2, M);
+    SET_VAR(ind_o3, qnt_Co3, M);
+		SET_VAR(ind_h2o, qnt_Ch2o, M);
+  
 		FIX[indf_o2] = 0.2095 * M;
 		//FIX[indf_n2] = 0.7808 * M;
 		//FIX[indf_h2] = 5e-7 * M;
@@ -170,28 +163,35 @@ void kpp_chem_initialize(
 
 void kpp_chem_output2atm(
 	atm_t * atm,
-	ctl_t * ctl, 
+	ctl_t * ctl,
+	met_t * met0,
+	met_t * met1, 
 	int ip){
+
+		double t;
+		INTPOL_INIT;
+		INTPOL_3D(t, 1);
+		double M = MOLEC_DENS(atm->p[ip], t); 
 
   /*Output to air parcel.. */
 
-	GET_VAR(ind_o3p, ctl->qnt_Co3p)
-	GET_VAR(ind_o1d, ctl->qnt_Co1d)
-	GET_VAR(ind_h2o2, ctl->qnt_Ch2o2)
-	GET_VAR(ind_oh, ctl->qnt_Coh)
-	GET_VAR(ind_ho2, ctl->qnt_Cho2)
+	GET_VAR(ind_o3p, ctl->qnt_Co3p, M);
+	GET_VAR(ind_o1d, ctl->qnt_Co1d, M);
+	GET_VAR(ind_h2o2, ctl->qnt_Ch2o2, M);
+	GET_VAR(ind_oh, ctl->qnt_Coh, M);
+	GET_VAR(ind_ho2, ctl->qnt_Cho2, M);
 	#ifdef ind_h
-		GET_VAR(ind_h, ctl->qnt_Ch)
+		GET_VAR(ind_h, ctl->qnt_Ch, M);
 	#endif
-	GET_VAR(ind_o3, ctl->qnt_Co3)
-	GET_VAR(ind_n2o, ctl->qnt_Cn2o)
-	GET_VAR(ind_ccl3f, ctl->qnt_Cccl3f)
-	GET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2)
-	//GET_VAR(ind_co, ctl->qnt_Cco)
+	GET_VAR(ind_o3, ctl->qnt_Co3, M);
+	GET_VAR(ind_n2o, ctl->qnt_Cn2o, M);
+	GET_VAR(ind_ccl3f, ctl->qnt_Cccl3f, M);
+	GET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2, M);
+	//GET_VAR(ind_co, ctl->qnt_Cco, M);
   //if (ctl->qnt_Co3>=0)
-  //  atm->q[ctl->qnt_Co3][ip] = FIX[indf_o3];
+  //  atm->q[ctl->qnt_Co3][ip] = FIX[indf_o3] / M;
   //if (ctl->qnt_Ch2o>=0)
-  //	atm->q[ctl->qnt_Ch2o][ip] = FIX[indf_h2o];
+  //	atm->q[ctl->qnt_Ch2o][ip] = FIX[indf_h2o] / M;
 }
 
 #ENDINLINE
