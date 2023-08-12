@@ -1,13 +1,13 @@
 
 /*! Set variable species concentration. */
-#define SET_VAR(ind_spec, qnt_Cspec) 			\
+#define SET_VAR(ind_spec, qnt_Cspec, M) 			\
   if (ctl->qnt_Cspec >= 0)					\
-    VAR[ind_spec] = atm->q[ctl->qnt_Cspec][ip];
+    VAR[ind_spec] = atm->q[ctl->qnt_Cspec][ip] * M;
 
 /*! Get variable species concentration. */
-#define GET_VAR(ind_spec, qnt_index)			\
+#define GET_VAR(ind_spec, qnt_index, M)			\
   if (qnt_index >= 0)					\
-    atm->q[qnt_index][ip] = VAR[ind_spec];
+    atm->q[qnt_index][ip] = VAR[ind_spec] / M;
 
 /*! Initialize concentration quantity. */
 #define INIT_CQNT(qnt_index, clim_zm_t)					\
@@ -28,6 +28,8 @@ void kpp_chem_initialize(
 void kpp_chem_output2atm(
   atm_t * atm,
   ctl_t * ctl,
+  met_t * met0,
+	met_t * met1,
   int ip);
 
 /*! KPP integration function. */

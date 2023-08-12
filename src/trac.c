@@ -785,40 +785,25 @@ void module_bound_cond(
       atm->q[ctl->qnt_vmr][ip] =
 	ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 
-    /* Set boundary conditions of tracer chemistry... */
-    if (ctl->qnt_Cccl4 >= 0 || ctl->qnt_Cccl3f >= 0 || ctl->qnt_Cccl2f2 >= 0
-	|| ctl->qnt_Cn2o >= 0 || ctl->qnt_Csf6 >= 0) {
+    /* Set CFC-10 tracer concentration... */
+    if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-')
+      atm->q[ctl->qnt_Cccl4][ip] = clim_ts(&clim->ccl4, atm->time[ip]);
 
-      /* Get temperature... */
-      double t;
-      INTPOL_INIT;
-      INTPOL_3D(t, 1);
+    /* Set CFC-11 tracer concentration... */
+    if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-')
+      atm->q[ctl->qnt_Cccl3f][ip] = clim_ts(&clim->ccl3f, atm->time[ip]);
 
-      /* Calculate molecular density... */
-      double M = MOLEC_DENS(atm->p[ip], t);
+    /* Set CFC-12 tracer concentration... */
+    if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-')
+      atm->q[ctl->qnt_Cccl2f2][ip] = clim_ts(&clim->ccl2f2, atm->time[ip]);
 
-      /* Set CFC-10 tracer concentration... */
-      if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-')
-	atm->q[ctl->qnt_Cccl4][ip] = M * clim_ts(&clim->ccl4, atm->time[ip]);
+    /* Set N2O tracer concentration... */
+    if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-')
+      atm->q[ctl->qnt_Cn2o][ip] = clim_ts(&clim->n2o, atm->time[ip]);
 
-      /* Set CFC-11 tracer concentration... */
-      if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-')
-	atm->q[ctl->qnt_Cccl3f][ip] = M * clim_ts(&clim->ccl3f,
-						  atm->time[ip]);
-
-      /* Set CFC-12 tracer concentration... */
-      if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-')
-	atm->q[ctl->qnt_Cccl2f2][ip] = M * clim_ts(&clim->ccl2f2,
-						   atm->time[ip]);
-
-      /* Set N2O tracer concentration... */
-      if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-')
-	atm->q[ctl->qnt_Cn2o][ip] = M * clim_ts(&clim->n2o, atm->time[ip]);
-
-      /* Set SF6 tracer concentration... */
-      if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
-	atm->q[ctl->qnt_Csf6][ip] = M * clim_ts(&clim->sf6, atm->time[ip]);
-    }
+    /* Set SF6 tracer concentration... */
+    if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
+      atm->q[ctl->qnt_Csf6][ip] = clim_ts(&clim->sf6, atm->time[ip]);
 
     /* Set age of air... */
     if (ctl->qnt_aoa >= 0)
@@ -1367,7 +1352,7 @@ void module_chemgrid(
   atm_t * atm,
   double tt) {
 
-  double *mass, *z, *lon, *lat, *press, *area;
+  double *z, *press;
 
   int *ixs, *iys, *izs;
 
@@ -1380,23 +1365,9 @@ void module_chemgrid(
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
-  /* Check quantity flags... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
-  if (ctl->molmass < 0)
-    ERRMSG("Specify molar mass!");
-
   /* Allocate... */
-  ALLOC(mass, double,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
   ALLOC(z, double,
 	ctl->chemgrid_nz);
-  ALLOC(lon, double,
-	ctl->chemgrid_nx);
-  ALLOC(lat, double,
-	ctl->chemgrid_ny);
-  ALLOC(area, double,
-	ctl->chemgrid_ny);
   ALLOC(press, double,
 	ctl->chemgrid_nz);
   ALLOC(ixs, int,
@@ -1416,16 +1387,6 @@ void module_chemgrid(
   for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
-  }
-
-  /* Set horizontal coordinates... */
-  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
-    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
-#pragma omp parallel for default(shared)
-  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
-    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-      * cos(lat[iy] * M_PI / 180.);
   }
 
   /* Set time interval for output... */
@@ -1455,17 +1416,16 @@ void module_chemgrid(
 
 	/* Set H2O and O3 using meteo data... */
 	if (ctl->qnt_Ch2o >= 0 || ctl->qnt_Co3 >= 0) {
+	  double h2o, o3;
 	  INTPOL_INIT;
-	  double h2o, o3, t;
-	  INTPOL_3D(t, 1);
-	  double M = MOLEC_DENS(atm->p[ip], t);
 	  if (ctl->qnt_Ch2o >= 0) {
-	    INTPOL_3D(h2o, 0);
-	    SET_ATM(qnt_Ch2o, h2o * M);
+
+	    INTPOL_3D(h2o, 1);
+	    SET_ATM(qnt_Ch2o, h2o);
 	  }
 	  if (ctl->qnt_Co3 >= 0) {
 	    INTPOL_3D(o3, 0);
-	    SET_ATM(qnt_Co3, o3 * M);
+	    SET_ATM(qnt_Co3, o3);
 	  }
 	}
 
@@ -1481,7 +1441,31 @@ void module_chemgrid(
       }
 
   /* Check quantities... */
-  if (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0) {
+  if (ctl->qnt_m >= 0 && (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0)) {
+    if (ctl->molmass < 0)
+      ERRMSG("SPECIES MOLAR MASS is not defined!");
+
+    double *mass, *area, *lon, *lat;
+
+    /* Allocate... */
+    ALLOC(mass, double,
+	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+    ALLOC(lon, double,
+	  ctl->chemgrid_nx);
+    ALLOC(lat, double,
+	  ctl->chemgrid_ny);
+    ALLOC(area, double,
+	  ctl->chemgrid_ny);
+
+    /* Set horizontal coordinates... */
+    for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+      lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#pragma omp parallel for default(shared)
+    for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+      lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+	* cos(lat[iy] * M_PI / 180.);
+    }
 
     /* Get mass per grid box... */
     for (int ip = 0; ip < atm->np; ip++)
@@ -1501,6 +1485,8 @@ void module_chemgrid(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
+	double M = MOLEC_DENS(atm->p[ip], temp);
+
 	/* Set mass... */
 	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
 				 izs[ip], ctl->chemgrid_nz)];
@@ -1513,16 +1499,18 @@ void module_chemgrid(
 	/* Calculate concentration... */
 	if (ctl->qnt_Cx >= 0)
 	  atm->q[ctl->qnt_Cx][ip] = AVO * m
-	    / (1e18 * area[iys[ip]] * dz * ctl->molmass);
+	    / (1e18 * area[iys[ip]] * dz * ctl->molmass) / M;
       }
+
+    free(mass);
+    free(lon);
+    free(lat);
+    free(area);
   }
 
   /* Free... */
-  free(mass);
+
   free(z);
-  free(lon);
-  free(lat);
-  free(area);
   free(press);
   free(ixs);
   free(iys);
@@ -1559,6 +1547,8 @@ void module_oh_chem(
     double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+    /* Calculate molecular density... */
+    double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Use constant reaction rate... */
     double k = GSL_NAN;
@@ -1571,9 +1561,6 @@ void module_oh_chem(
 
     /* Calculate termolecular reaction rate... */
     if (ctl->oh_chem_reaction == 3) {
-
-      /* Calculate molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
-      double M = MOLEC_DENS(atm->p[ip], t);
 
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 19-05) ... */
@@ -1589,7 +1576,7 @@ void module_oh_chem(
 
     /* Calculate exponential decay... */
     double rate_coef = k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
-				   atm->lat[ip], atm->p[ip]);
+				   atm->lat[ip], atm->p[ip]) * M;
     double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
@@ -1638,22 +1625,21 @@ void module_h2o2_chem(
     /* Get temperature... */
     double t;
     INTPOL_3D(t, 0);
+    double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reaction rate (Berglen et al., 2004)... */
     double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	// Maass  1999 unit: M^(-2)
 
     /* Henry constant of SO2... */
     double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: M
+    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	// unit: mol/L
 
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
     /* Concentration of H2O2 (Barth et al., 1989)... */
     double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
-    double h2o2 = H_h2o2
-      * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
-      * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: M
+    double h2o2 = H_h2o2 * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: mol/L
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
@@ -1696,13 +1682,14 @@ void module_tracer_chem(
     double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+    double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
       double K_o1d = ARRHENIUS(3.30e-10, 0, t);
       atm->q[ctl->qnt_Cccl4][ip] *=
 	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
       double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
     }
@@ -1712,7 +1699,7 @@ void module_tracer_chem(
       double K_o1d = ARRHENIUS(2.30e-10, 0, t);
       atm->q[ctl->qnt_Cccl3f][ip] *=
 	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
       double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
     }
@@ -1722,7 +1709,7 @@ void module_tracer_chem(
       double K_o1d = ARRHENIUS(1.40e-10, -25, t);
       atm->q[ctl->qnt_Cccl2f2][ip] *=
 	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
       double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
     }
@@ -1732,7 +1719,7 @@ void module_tracer_chem(
       double K_o1d = ARRHENIUS(1.19e-10, -20, t);
       atm->q[ctl->qnt_Cn2o][ip] *=
 	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]));
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
       double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
     }
@@ -1782,7 +1769,7 @@ void module_kpp_chem(
       INTEGRATE(atm->time[ip] - dt[ip], atm->time[ip]);
 
       /* Output to air parcel.. */
-      kpp_chem_output2atm(atm, ctl, ip);
+      kpp_chem_output2atm(atm, ctl, met0, met1, ip);
 
       /* Free... */
       free(VAR);

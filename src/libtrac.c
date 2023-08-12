@@ -1685,7 +1685,7 @@ void read_clim(
 
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
-    read_clim_zm(ctl->clim_o1d_filename, "O(1D)", "molec/cm^3", &clim->o1d);
+    read_clim_zm(ctl->clim_o1d_filename, "O1D", "molec/cm^3", &clim->o1d);
 
   /* Read O3 climatology... */
   if (ctl->clim_o3_filename[0] != '-')
@@ -2059,23 +2059,23 @@ void read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-      SET_QNT(qnt_Cx, "Cx", "Trace species x concentration", "molec/cm^3")
-      SET_QNT(qnt_Ch2o, "Ch2o", "H2O concentration", "molec/cm^3")
-      SET_QNT(qnt_Co3, "Co3", "O3 concentration", "molec/cm^3")
-      SET_QNT(qnt_Cco, "Cco", "CO concentration", "molec/cm^3")
-      SET_QNT(qnt_Coh, "Coh", "HO concentration", "molec/cm^3")
-      SET_QNT(qnt_Ch, "Ch", "H radical concentration", "molec/cm^3")
-      SET_QNT(qnt_Cho2, "Cho2", "HO2 concentration", "molec/cm^3")
-      SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 concentration", "molec/cm^3")
-      SET_QNT(qnt_Co1d, "Co1d", "O(1D) concentration", "molec/cm^3")
-      SET_QNT(qnt_Co3p, "Co3p", "O(3P) radical concentration", "molec/cm^3")
-      SET_QNT(qnt_Cccl4, "Cccl4", "CCl4 (CFC-10) concentration", "molec/cm^3")
-      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F (CFC-11) concentration",
-	      "molec/cm^3")
-      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2 (CFC-12) concentration",
-	      "molec/cm^3")
-      SET_QNT(qnt_Cn2o, "Cn2o", "N2O concentration", "molec/cm^3")
-      SET_QNT(qnt_Csf6, "Csf6", "SF6 concentration", "molec/cm^3")
+      SET_QNT(qnt_Cx, "Cx", "Trace species x volume mixing ratio", "ppv")
+      SET_QNT(qnt_Ch2o, "Ch2o", "H2O volume mixing ratio", "ppv")
+      SET_QNT(qnt_Co3, "Co3", "O3 volume mixing ratio", "ppv")
+      SET_QNT(qnt_Cco, "Cco", "CO volume mixing ratio", "ppv")
+      SET_QNT(qnt_Coh, "Coh", "HO volume mixing ratio", "ppv")
+      SET_QNT(qnt_Ch, "Ch", "H radical volume mixing ratio", "ppv")
+      SET_QNT(qnt_Cho2, "Cho2", "HO2 volume mixing ratio", "ppv")
+      SET_QNT(qnt_Ch2o2, "Ch2o2", "H2O2 volume mixing ratio", "ppv")
+      SET_QNT(qnt_Co1d, "Co1d", "O(1D) volume mixing ratio", "ppv")
+      SET_QNT(qnt_Co3p, "Co3p", "O(3P) radical volume mixing ratio", "ppv")
+      SET_QNT(qnt_Cccl4, "Cccl4", "CCl4 (CFC-10) volume mixing ratio", "ppv")
+      SET_QNT(qnt_Cccl3f, "Cccl3f", "CCl3F (CFC-11) volume mixing ratio",
+	      "ppv")
+      SET_QNT(qnt_Cccl2f2, "Cccl2f2", "CCl2F2 (CFC-12) volume mixing ratio",
+	      "ppv")
+      SET_QNT(qnt_Cn2o, "Cn2o", "N2O volume mixing ratio", "ppv")
+      SET_QNT(qnt_Csf6, "Csf6", "SF6 volume mixing ratio", "ppv")
       SET_QNT(qnt_aoa, "aoa", "age of air", "s")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
@@ -2389,15 +2389,13 @@ void read_ctl(
   scan_ctl(filename, argc, argv, "CLIM_HNO3_FILENAME", -1,
 	   "../../data/gozcards_HNO3.nc", ctl->clim_hno3_filename);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
-	   "../../data/clams_radical_species.nc", ctl->clim_oh_filename);
+	   "../../data/clams_radical_species_vmr.nc", ctl->clim_oh_filename);
   scan_ctl(filename, argc, argv, "CLIM_H2O2_FILENAME", -1,
 	   "../../data/cams_H2O2.nc", ctl->clim_h2o2_filename);
   scan_ctl(filename, argc, argv, "CLIM_HO2_FILENAME", -1,
-	   "../../data/clams_radical_species.nc", ctl->clim_ho2_filename);
+	   "../../data/clams_radical_species_vmr.nc", ctl->clim_ho2_filename);
   scan_ctl(filename, argc, argv, "CLIM_O1D_FILENAME", -1,
-	   "../../data/clams_radical_species.nc", ctl->clim_o1d_filename);
-  scan_ctl(filename, argc, argv, "CLIM_O3_FILENAME", -1,
-	   "../../data/cams_O3.nc", ctl->clim_o3_filename);
+	   "../../data/clams_radical_species_vmr.nc", ctl->clim_o1d_filename);
   scan_ctl(filename, argc, argv, "CLIM_CCL4_TIMESERIES", -1,
 	   "../../data/noaa_gml_ccl4.tab", ctl->clim_ccl4_timeseries);
   scan_ctl(filename, argc, argv, "CLIM_CCL3F_TIMESERIES", -1,

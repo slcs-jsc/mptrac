@@ -58,14 +58,6 @@ void kpp_chem_initialize(
 	int ip
 ){
 
-    VAR[ind_SO2] = atm->q[ctl->qnt_Cx][ip];
-      if (ctl->qnt_Ch2o2 >= 0)
-    VAR[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip];
-		//FIX[indf_OH]	= clim_zm(clim->oh, atm->time[ip], atm->lat[ip], atm->p[ip]);
-		FIX[indf_OH] = clim_oh(ctl, clim, atm->time[ip],
-		       atm->lon[ip], atm->lat[ip], atm->p[ip]);
-      FIX[indf_HO2] = clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]);
-
       /* Get temperature... */
       double t, lwc;
       INTPOL_INIT;
@@ -75,6 +67,14 @@ void kpp_chem_initialize(
 
       /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
       double M = MOLEC_DENS(atm->p[ip], t); 
+
+    VAR[ind_SO2] = atm->q[ctl->qnt_Cx][ip] * M;
+      if (ctl->qnt_Ch2o2 >= 0)
+    VAR[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip] * M;
+		//FIX[indf_OH]	= clim_zm(clim->oh, atm->time[ip], atm->lat[ip], atm->p[ip]);
+		FIX[indf_OH] = clim_oh(ctl, clim, atm->time[ip],
+		       atm->lon[ip], atm->lat[ip], atm->p[ip]) * M;
+      FIX[indf_HO2] = clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M;
 
       /* Reaction rate (Berglen et al., 2004)... */
       /* Rate of aqueous phase oxidation of SO2 with H2O2. (Maass et al. 1999)  */
@@ -115,14 +115,21 @@ void kpp_chem_initialize(
 void kpp_chem_output2atm(
 	atm_t * atm,
 	ctl_t * ctl, 
+	met_t * met0,
+  met_t * met1,
 	int ip){
+
+		double t;
+		INTPOL_INIT;
+		INTPOL_3D(t, 1);
+		double M = MOLEC_DENS(atm->p[ip], t); 
 		
 		/*Output to air parcel.. */
     if (ctl->qnt_Ch2o2 >= 0)
-			atm->q[ctl->qnt_Ch2o2][ip] = VAR[ind_H2O2];
+			atm->q[ctl->qnt_Ch2o2][ip] = VAR[ind_H2O2] / M;
     if (atm->q[ctl->qnt_Cx][ip] != 0) {
-			atm->q[ctl->qnt_m][ip] *= VAR[ind_SO2] / atm->q[ctl->qnt_Cx][ip];
-			atm->q[ctl->qnt_Cx][ip] = VAR[ind_SO2];
+			atm->q[ctl->qnt_m][ip] *= VAR[ind_SO2] / (atm->q[ctl->qnt_Cx][ip] * M);
+			atm->q[ctl->qnt_Cx][ip] = VAR[ind_SO2] / M;
 		}
 }
 
