@@ -1672,7 +1672,7 @@ void read_clim(
   if (ctl->clim_oh_filename[0] != '-') {
     read_clim_zm(ctl->clim_oh_filename, "OH", "molec/cm^3", &clim->oh);
     if (ctl->oh_chem_beta > 0)
-      clim_oh_diurnal_correction(ctl, clim);	// TODO: Do we also want to implement the diurnal correction for other species?
+      clim_oh_diurnal_correction(ctl, clim);	
   }
 
   /* Read H2O2 climatology... */
@@ -1686,10 +1686,6 @@ void read_clim(
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
     read_clim_zm(ctl->clim_o1d_filename, "O1D", "molec/cm^3", &clim->o1d);
-
-  /* Read O3 climatology... */
-  if (ctl->clim_o3_filename[0] != '-')
-    read_clim_zm(ctl->clim_o3_filename, "O3", "molec/cm^3", &clim->o3);
 
   /* Read CFC-10 time series... */
   if (ctl->clim_ccl4_timeseries[0] != '-')

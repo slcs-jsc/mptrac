@@ -1734,9 +1734,6 @@ typedef struct {
   /*! O(1D) climatology data [molec/cm^3]. */
   clim_zm_t o1d;
 
-  /*! O3 climatology data. */// TODO: check unit? where is this used?
-  clim_zm_t o3;
-
   /*! CFC-10 time series. */
   clim_ts_t ccl4;
 
