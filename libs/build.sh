@@ -24,6 +24,7 @@ ifBuildZFP=false
 ifBuildZSTD=false
 ifBuildHDF5=false
 ifBuildNETCDF=false
+ifBuildKPP=false
 ifSkip=false
 
 numProcs=`nproc --all`
@@ -38,6 +39,7 @@ strFileTHRUST="thrustsort-1.2"
 strFileZFP="zfp-0.5.5"
 strFileZLIB="zlib-1.2.12"
 strFileZSTD="zstd-1.5.2"
+strFileKPP="KPP"
 
 ###### Reminder           ######
 
@@ -48,7 +50,7 @@ fi
 
 ###### Checking the flags ######
 
-while getopts acgtzfshnp: flag
+while getopts acgtzfshnpk: flag
 do
     case "${flag}" in
         a) ifBuildAll=true    ; echo "build all libraries  " ;;	
@@ -60,6 +62,7 @@ do
 	s) ifBuildZSTD=true   ; echo "ZSTD is selected     " ;;
 	d) ifBuildHDF5=true   ; echo "HDF5 is selected     " ;;
 	n) ifBuildNETCDF=true ; echo "NETCDF is selected   " ;;
+	k) ifBuildKPP=true    ; echo "KPP is selected      " ;;
 	p) numProcs=${OPTARG}  
            numTotalProcs=`nproc --all`
            if [ $numProcs -lt $numTotalProcs ]; then
@@ -207,12 +210,17 @@ if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then
     $strBuildDir/bin/nc-config --all
 fi
 
-    # # Chemistry using KPP...
-    # dir=KPP
-    # export KPP_HOME=$target/src/$dir
-    # export KPP_FLEX_LIB_DIR=$target/src/$dir
-    # cd $target/src/$dir/mptrac-chem \
-    # 		&& ../bin/kpp chem.kpp && make lib && cp libkpp.a $target/lib && cp *.h $target/include
+# KPP chemistry...
+if [ $ifBuildAll = true ] || [ $ifBuildKPP = true ] ; then 
+    cd $strLibsDir	
+    printf "starting to compile KPP \n"
+    strTarget=$strFileKPP
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    export KPP_HOME=$strBuildDir/src/$strTarget
+    export KPP_FLEX_LIB_DIR=$strBuildDir/src/$strTarget
+		cd $KPP_HOME/src && make && cd ../kpp && ./build_KPP.sh so2 \
+    || exit		
+fi
 
 if [ $ifSkip = false ] || [ $ifBuildAll = true ] ; then 
     printf "All selected compilations are done.\n"
