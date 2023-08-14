@@ -107,6 +107,7 @@ graph MPTRAC {
 
   "chemistry\ncalculations" -- {
     "boundary\nconditions"
+    "interparcel\nmixing"
     "exponential\ndecay"
     "sulfur\nchemistry"
     "tracer\nchemistry"
@@ -115,6 +116,7 @@ graph MPTRAC {
     "wet\ndeposition"
   }
     "boundary\nconditions" [colorscheme=reds5 fillcolor=1]
+    "interparcel\nmixing" [colorscheme=reds5 fillcolor=1]
     "exponential\ndecay" [colorscheme=reds5 fillcolor=1]
     "sulfur\nchemistry" [colorscheme=reds5 fillcolor=1]
     "tracer\nchemistry" [colorscheme=reds5 fillcolor=1]
