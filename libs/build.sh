@@ -50,7 +50,7 @@ fi
 
 ###### Checking the flags ######
 
-while getopts acgtzfshnpk: flag
+while getopts acgtzfshnkp: flag
 do
     case "${flag}" in
         a) ifBuildAll=true    ; echo "build all libraries  " ;;	
@@ -87,6 +87,7 @@ do
 	   printf -- "-s         : build ZSTD   \n" 
 	   printf -- "-d         : build HDF5   (prerequisite: ZLIB)  \n" 
 	   printf -- "-n         : build NETCDF (prerequisite: HDF5)  \n" 
+	   printf -- "-k         : build KPP    \n" 
 	   printf -- "-p [cores] : how many [cores] to be used by make -j [cores]   \n" 
 	   printf -- "           : default is maximum number of cores               \n" 
 	   printf -- "--------------------------------------------------------------\n"	
@@ -218,7 +219,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildKPP = true ] ; then
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     export KPP_HOME=$strBuildDir/src/$strTarget
     export KPP_FLEX_LIB_DIR=$strBuildDir/src/$strTarget
-		cd $KPP_HOME/src && make && cd ../kpp && ./build_KPP.sh so2 \
+		cd $KPP_HOME/src && make && cd ${strLibsDir}/../kpp && ./build_KPP.sh so2 \
     || exit		
 fi
 
