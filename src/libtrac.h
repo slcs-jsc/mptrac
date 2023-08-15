@@ -1088,6 +1088,15 @@ typedef struct {
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
+  /*! ZFP compression precision (for all variables, except z and T). */
+  int met_zfp_prec;
+  
+  /*! ZFP compression tolerance (for temperature). */
+  double met_zfp_tol_t;
+  
+  /*! ZFP compression tolerance (for geopotential height). */
+  double met_zfp_tol_z;
+  
   /*! Stride for longitudes. */
   int met_dx;
 

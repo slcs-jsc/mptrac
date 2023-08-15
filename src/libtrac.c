@@ -2108,6 +2108,12 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
+  ctl->met_zfp_prec =
+    (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", -1, "8", NULL);
+  ctl->met_zfp_tol_t =
+    scan_ctl(filename, argc, argv, "MET_ZFP_TOL_T", -1, "5.0", NULL);
+  ctl->met_zfp_tol_z =
+    scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
@@ -6194,17 +6200,17 @@ int write_met(
     write_met_bin_2d(out, met, met->cin, "CIN");
 
     /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, 0.5);
-    write_met_bin_3d(out, ctl, met, met->t, "T", 0, 5.0);
-    write_met_bin_3d(out, ctl, met, met->u, "U", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->v, "V", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->w, "W", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->pv, "PV", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->o3, "O3", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->cc, "CC", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, ctl->met_zfp_tol_z);
+    write_met_bin_3d(out, ctl, met, met->t, "T", 0, ctl->met_zfp_tol_t);
+    write_met_bin_3d(out, ctl, met, met->u, "U", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->v, "V", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->w, "W", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->pv, "PV", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->o3, "O3", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->cc, "CC", ctl->met_zfp_prec, 0);
 
     /* Write final flag... */
     int final = 999;
