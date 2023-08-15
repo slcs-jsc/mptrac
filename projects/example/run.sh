@@ -24,7 +24,7 @@ QNT_NAME[0] = t
 QNT_NAME[1] = u
 QNT_NAME[2] = v
 QNT_NAME[3] = w
-QNT_NAME[4] = z
+QNT_NAME[4] = zg
 QNT_NAME[5] = pv
 QNT_NAME[6] = ps
 QNT_NAME[7] = pt
@@ -139,7 +139,7 @@ set ytics 10
 set mytics 5
 
 set title "MPTRAC | $t"
-splot "$f" u 3:4:(1e3*\$8) t "", \
+splot "$f" u 3:4:(1e3*\$17) t "", \
     "../data/wcl.tab" u 1:2:(0) w l lt -1 t "", \
     "-" u 1:2:3 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59 0

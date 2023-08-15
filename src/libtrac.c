@@ -1672,7 +1672,7 @@ void read_clim(
   if (ctl->clim_oh_filename[0] != '-') {
     read_clim_zm(ctl->clim_oh_filename, "OH", "molec/cm^3", &clim->oh);
     if (ctl->oh_chem_beta > 0)
-      clim_oh_diurnal_correction(ctl, clim);	
+      clim_oh_diurnal_correction(ctl, clim);
   }
 
   /* Read H2O2 climatology... */
@@ -1888,6 +1888,7 @@ void read_ctl(
   ctl->qnt_stat = -1;
   ctl->qnt_m = -1;
   ctl->qnt_vmr = -1;
+  ctl->qnt_vmrimpl = -1;
   ctl->qnt_rp = -1;
   ctl->qnt_rhop = -1;
   ctl->qnt_ps = -1;
@@ -1902,7 +1903,7 @@ void read_ctl(
   ctl->qnt_tt = -1;
   ctl->qnt_zt = -1;
   ctl->qnt_h2ot = -1;
-  ctl->qnt_z = -1;
+  ctl->qnt_zg = -1;
   ctl->qnt_p = -1;
   ctl->qnt_t = -1;
   ctl->qnt_rho = -1;
@@ -1927,7 +1928,6 @@ void read_ctl(
   ctl->qnt_h2o2 = -1;
   ctl->qnt_ho2 = -1;
   ctl->qnt_o1d = -1;
-  ctl->qnt_vmrimpl = -1;
   ctl->qnt_mloss_oh = -1;
   ctl->qnt_mloss_h2o2 = -1;
   ctl->qnt_mloss_wet = -1;
@@ -1988,6 +1988,7 @@ void read_ctl(
       SET_QNT(qnt_stat, "stat", "station flag", "-")
       SET_QNT(qnt_m, "m", "mass", "kg")
       SET_QNT(qnt_vmr, "vmr", "volume mixing ratio", "ppv")
+      SET_QNT(qnt_vmrimpl, "vmrimpl", "volume mixing ratio (implicit)", "ppv")
       SET_QNT(qnt_rp, "rp", "particle radius", "microns")
       SET_QNT(qnt_rhop, "rhop", "particle density", "kg/m^3")
       SET_QNT(qnt_ps, "ps", "surface pressure", "hPa")
@@ -2002,7 +2003,7 @@ void read_ctl(
       SET_QNT(qnt_tt, "tt", "tropopause temperature", "K")
       SET_QNT(qnt_zt, "zt", "tropopause geopotential height", "km")
       SET_QNT(qnt_h2ot, "h2ot", "tropopause water vapor", "ppv")
-      SET_QNT(qnt_z, "z", "geopotential height", "km")
+      SET_QNT(qnt_zg, "zg", "geopotential height", "km")
       SET_QNT(qnt_p, "p", "pressure", "hPa")
       SET_QNT(qnt_t, "t", "temperature", "K")
       SET_QNT(qnt_rho, "rho", "air density", "kg/m^3")
@@ -2028,7 +2029,6 @@ void read_ctl(
       SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "molec/cm^3")
       SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "molec/cm^3")
       SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "molec/cm^3")
-      SET_QNT(qnt_vmrimpl, "vmrimpl", "volume mixing ratio (implicit)", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
       SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",
 	      "kg")
@@ -5743,7 +5743,7 @@ void write_grid(
 
   static int nk;
 
-  double *cd, *mass, *vmr_expl, *vmr_impl, *z, *lon, *lat, *area, *press;
+  double *cd, *mean[NQ], *vmr_impl, *z, *lon, *lat, *area, *press;
 
   int *ixs, *iys, *izs, *np;
 
@@ -5764,10 +5764,9 @@ void write_grid(
   /* Allocate... */
   ALLOC(cd, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-  ALLOC(mass, double,
-	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-  ALLOC(vmr_expl, double,
-	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    ALLOC(mean[iq], double,
+	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(vmr_impl, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(z, double,
@@ -5833,13 +5832,10 @@ void write_grid(
     if (izs[ip] >= 0) {
       int idx =
 	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
+      double kernel = kernel_weight(kz, kw, nk, atm->p[ip]);
       np[idx]++;
-      if (ctl->qnt_m >= 0)
-	mass[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
-	  * atm->q[ctl->qnt_m][ip];
-      if (ctl->qnt_vmr >= 0)
-	vmr_expl[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
-	  * atm->q[ctl->qnt_vmr][ip];
+      for (int iq = 0; iq < ctl->nq; iq++)
+	mean[iq][idx] += kernel * atm->q[iq][ip];
     }
 
   /* Calculate column density and vmr... */
@@ -5854,13 +5850,13 @@ void write_grid(
 	/* Calculate column density... */
 	cd[idx] = GSL_NAN;
 	if (ctl->qnt_m >= 0)
-	  cd[idx] = mass[idx] / (1e6 * area[iy]);
+	  cd[idx] = mean[ctl->qnt_m][idx] / (1e6 * area[iy]);
 
 	/* Calculate volume mixing ratio (implicit)... */
 	vmr_impl[idx] = GSL_NAN;
 	if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
 	  vmr_impl[idx] = 0;
-	  if (mass[idx] > 0) {
+	  if (mean[ctl->qnt_m][idx] > 0) {
 
 	    /* Get temperature... */
 	    double temp;
@@ -5869,27 +5865,30 @@ void write_grid(
 			       lon[ix], lat[iy], &temp, ci, cw, 1);
 
 	    /* Calculate volume mixing ratio... */
-	    vmr_impl[idx] = MA / ctl->molmass * mass[idx]
+	    vmr_impl[idx] = MA / ctl->molmass * mean[ctl->qnt_m][idx]
 	      / (RHO(press[iz], temp) * 1e6 * area[iy] * 1e3 * dz);
 	  }
 	}
 
-	/* Calculate volume mixing ratio (explicit)... */
-	if (ctl->qnt_vmr >= 0 && np[idx] > 0)
-	  vmr_expl[idx] /= np[idx];
+	/* Calculate mean... */
+	if (np[idx] > 0)
+	  for (int iq = 0; iq < ctl->nq; iq++)
+	    mean[iq][idx] /= np[idx];
 	else
-	  vmr_expl[idx] = GSL_NAN;
+	  for (int iq = 0; iq < ctl->nq; iq++)
+	    mean[iq][idx] = GSL_NAN;
+
       }
 
   /* Write ASCII data... */
   if (ctl->grid_type == 0)
-    write_grid_asc(filename, ctl, cd, vmr_expl, vmr_impl,
-		   t, z, lon, lat, area, dz, np);
+    write_grid_asc(filename, ctl, cd, mean, vmr_impl, t, z, lon, lat, area,
+		   dz, np);
 
   /* Write netCDF data... */
   else if (ctl->grid_type == 1)
-    write_grid_nc(filename, ctl, cd, vmr_expl, vmr_impl,
-		  t, z, lon, lat, area, dz, np);
+    write_grid_nc(filename, ctl, cd, mean, vmr_impl, t, z, lon, lat, area, dz,
+		  np);
 
   /* Error message... */
   else
@@ -5897,8 +5896,8 @@ void write_grid(
 
   /* Free... */
   free(cd);
-  free(mass);
-  free(vmr_expl);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    free(mean[iq]);
   free(vmr_impl);
   free(z);
   free(lon);
@@ -5917,7 +5916,7 @@ void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *vmr_expl,
+  double *mean[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -5967,14 +5966,16 @@ void write_grid_asc(
   fprintf(out,
 	  "# $1 = time [s]\n"
 	  "# $2 = altitude [km]\n"
-	  "# $3 = longitude [deg]\n"
-	  "# $4 = latitude [deg]\n"
-	  "# $5 = surface area [km^2]\n"
-	  "# $6 = layer depth [km]\n"
-	  "# $7 = number of particles [1]\n"
-	  "# $8 = column density (implicit) [kg/m^2]\n"
-	  "# $9 = volume mixing ratio (implicit) [ppv]\n"
-	  "# $10 = volume mixing ratio (explicit) [ppv]\n\n");
+	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    fprintf(out, "# $%i = %s (mean) [%s]\n", 5 + iq, ctl->qnt_name[iq],
+	    ctl->qnt_unit[iq]);
+  fprintf(out, "# $%d = number of particles [1]\n", 5 + ctl->nq);
+  fprintf(out, "# $%d = surface area [km^2]\n", 6 + ctl->nq);
+  fprintf(out, "# $%d = layer depth [km]\n", 7 + ctl->nq);
+  fprintf(out, "# $%d = column density (implicit) [kg/m^2]\n", 8 + ctl->nq);
+  fprintf(out, "# $%d = volume mixing ratio (implicit) [ppv]\n", 9 + ctl->nq);
+  fprintf(out, "\n");
 
   /* Write data... */
   for (int ix = 0; ix < ctl->grid_nx; ix++) {
@@ -5985,10 +5986,15 @@ void write_grid_asc(
 	fprintf(out, "\n");
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
 	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
-	if (!ctl->grid_sparse || vmr_expl[idx] > 0 || vmr_impl[idx] > 0)
-	  fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n",
-		  t, z[iz], lon[ix], lat[iy], area[iy], dz,
-		  np[idx], cd[idx], vmr_impl[idx], vmr_expl[idx]);
+	if (!ctl->grid_sparse || vmr_impl[idx] > 0) {
+	  fprintf(out, "%.2f %g %g %g", t, z[iz], lon[ix], lat[iy]);
+	  for (int iq = 0; iq < ctl->nq; iq++) {
+	    fprintf(out, " ");
+	    fprintf(out, ctl->qnt_format[iq], mean[iq][idx]);
+	  }
+	  fprintf(out, " %d %g %g %g %g\n", np[idx], area[iy], dz, cd[idx],
+		  vmr_impl[idx]);
+	}
       }
     }
   }
@@ -6003,7 +6009,7 @@ void write_grid_nc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *vmr_expl,
+  double *mean[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -6046,9 +6052,10 @@ void write_grid_nc(
   NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2");
   NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
 	     "volume mixing ratio (implicit)", "ppv");
-  NC_DEF_VAR("vmr_expl", NC_FLOAT, 4, dimid,
-	     "volume mixing ratio (explicit)", "ppv");
   NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 4, dimid,
+	       ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
 
   /* End definitions... */
   NC(nc_enddef(ncid));
@@ -6078,16 +6085,18 @@ void write_grid_nc(
   for (int ix = 0; ix < ctl->grid_nx; ix++)
     for (int iy = 0; iy < ctl->grid_ny; iy++)
       for (int iz = 0; iz < ctl->grid_nz; iz++)
-	help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
-	  vmr_expl[ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
-  NC_PUT_DOUBLE("vmr_expl", help, 0);
-
-  for (int ix = 0; ix < ctl->grid_nx; ix++)
-    for (int iy = 0; iy < ctl->grid_ny; iy++)
-      for (int iz = 0; iz < ctl->grid_nz; iz++)
 	help2[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
 	  np[ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
   NC_PUT_INT("np", help2, 0);
+
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    for (int ix = 0; ix < ctl->grid_nx; ix++)
+      for (int iy = 0; iy < ctl->grid_ny; iy++)
+	for (int iz = 0; iz < ctl->grid_nz; iz++)
+	  help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	    mean[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+    NC_PUT_DOUBLE(ctl->qnt_name[iq], help, 0);
+  }
 
   /* Close file... */
   NC(nc_close(ncid));

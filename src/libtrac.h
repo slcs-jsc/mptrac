@@ -830,6 +830,9 @@ typedef struct {
   /*! Quantity array index for volume mixing ratio. */
   int qnt_vmr;
 
+  /*! Quantity array index for volume mixing ratio (implicit). */
+  int qnt_vmrimpl;
+
   /*! Quantity array index for particle radius. */
   int qnt_rp;
 
@@ -873,7 +876,7 @@ typedef struct {
   int qnt_h2ot;
 
   /*! Quantity array index for geopotential height. */
-  int qnt_z;
+  int qnt_zg;
 
   /*! Quantity array index for pressure. */
   int qnt_p;
@@ -946,9 +949,6 @@ typedef struct {
 
   /*! Quantity array index for atomic oxygen number concentrations. */
   int qnt_o1d;
-
-  /*! Quantity array index for implicity volumn mixing ratio. */
-  int qnt_vmrimpl;
 
   /*! Quantity array index for total mass loss due to OH chemistry. */
   int qnt_mloss_oh;
@@ -2534,7 +2534,7 @@ void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *vmr_expl,
+  double *mean[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -2549,7 +2549,7 @@ void write_grid_nc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
-  double *vmr_expl,
+  double *mean[NQ],
   double *vmr_impl,
   double t,
   double *z,
