@@ -453,10 +453,10 @@
 	  "# $40 = NAT temperature [K]\n");				\
   fprintf(out,								\
 	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
-	  "# $42 = OH concentration [molec/cm^3]\n"			\
-	  "# $43 = H2O2 concentration [molec/cm^3]\n"			\
-	  "# $44 = HO2 concentration [molec/cm^3]\n"			\
-	  "# $45 = O1D concentration [molec/cm^3]\n"			\
+	  "# $42 = OH concentration [ppv]\n"			\
+	  "# $43 = H2O2 concentration [ppv]\n"			\
+	  "# $44 = HO2 concentration [ppv]\n"			\
+	  "# $45 = O1D concentration [ppv]\n"			\
 	  "# $46 = boundary layer pressure [hPa]\n"			\
 	  "# $47 = number of data points\n"				\
 	  "# $48 = number of tropopause data points\n"			\
@@ -464,7 +464,7 @@
 
 /*! Calculate molecular density of an ideal gas. */
 #define MOLEC_DENS(p,t)			\
-  AVO * 1e-6 * (p * 100) / (RI * t)
+  (AVO * 1e-6 * ((p) * 100) / (RI * (t)))
 
 /*! Execute netCDF library command and check result. */
 #define NC(cmd) {				     \
@@ -1673,13 +1673,13 @@ typedef struct {
 /*! Climatological data in form of time series. */
 typedef struct {
 
-  /*! Number of climatological data timesteps. */
+  /*! Number of timesteps. */
   int ntime;
 
-  /*! Climatological data time steps [s]. */
+  /*! Time [s]. */
   double time[CTS];
 
-  /*! Climatological data volume mixing ratios [ppv]. */
+  /*! Volume mixing ratio [ppv]. */
   double vmr[CTS];
 
 } clim_ts_t;
@@ -1687,25 +1687,25 @@ typedef struct {
 /*! Climatological data in form of zonal means. */
 typedef struct {
 
-  /*! Number of climatological data timesteps. */
+  /*! Number of timesteps. */
   int ntime;
 
-  /*! Number of climatological data latitudes. */
+  /*! Number of latitudes. */
   int nlat;
 
-  /*! Number of climatological data pressure levels. */
+  /*! Number of pressure levels. */
   int np;
 
-  /*! Climatological data time steps [s]. */
+  /*! Time [s]. */
   double time[CT];
 
-  /*! Climatological data latitudes [deg]. */
+  /*! Latitude [deg]. */
   double lat[CY];
 
-  /*! Climatological data pressure levels [hPa]. */
+  /*! Pressure [hPa]. */
   double p[CP];
 
-  /*! Climatological data concentrations [molec/cm^3]. */
+  /*! Volume mixing ratio [ppv]. */
   double var[CT][CP][CY];
 
 } clim_zm_t;
@@ -1728,33 +1728,33 @@ typedef struct {
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
 
-  /*! HNO3 climatology data [ppv]. */
+  /*! HNO3 zonal means. */
   clim_zm_t hno3;
-
-  /*! OH climatology data [molec/cm^3]. */
+  
+  /*! OH zonal means. */
   clim_zm_t oh;
-
-  /*! H2O2 climatology data [molec/cm^3]. */
+  
+  /*! H2O2 zonal means. */
   clim_zm_t h2o2;
-
-  /*! HO2 climatology data [molec/cm^3]. */
+  
+  /*! HO2 zonal means. */
   clim_zm_t ho2;
-
-  /*! O(1D) climatology data [molec/cm^3]. */
+  
+  /*! O(1D) zonal means. */
   clim_zm_t o1d;
-
+  
   /*! CFC-10 time series. */
   clim_ts_t ccl4;
-
+  
   /*! CFC-11 time series. */
   clim_ts_t ccl3f;
-
+  
   /*! CFC-12 time series. */
   clim_ts_t ccl2f2;
-
+  
   /*! N2O time series. */
   clim_ts_t n2o;
-
+  
   /*! SF6 time series. */
   clim_ts_t sf6;
 
@@ -2259,7 +2259,6 @@ int read_clim_ts(
 void read_clim_zm(
   char *filename,
   char *varname,
-  char *units,
   clim_zm_t * var);
 
 /*! Read control parameters. */

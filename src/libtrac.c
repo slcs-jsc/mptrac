@@ -1666,26 +1666,26 @@ void read_clim(
 
   /* Read HNO3 climatology... */
   if (ctl->clim_hno3_filename[0] != '-')
-    read_clim_zm(ctl->clim_hno3_filename, "HNO3", "ppv", &clim->hno3);
+    read_clim_zm(ctl->clim_hno3_filename, "HNO3", &clim->hno3);
 
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-') {
-    read_clim_zm(ctl->clim_oh_filename, "OH", "molec/cm^3", &clim->oh);
+    read_clim_zm(ctl->clim_oh_filename, "OH", &clim->oh);
     if (ctl->oh_chem_beta > 0)
       clim_oh_diurnal_correction(ctl, clim);
   }
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    read_clim_zm(ctl->clim_h2o2_filename, "H2O2", "molec/cm^3", &clim->h2o2);
+    read_clim_zm(ctl->clim_h2o2_filename, "H2O2", &clim->h2o2);
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
-    read_clim_zm(ctl->clim_ho2_filename, "HO2", "molec/cm^3", &clim->ho2);
+    read_clim_zm(ctl->clim_ho2_filename, "HO2", &clim->ho2);
 
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
-    read_clim_zm(ctl->clim_o1d_filename, "O1D", "molec/cm^3", &clim->o1d);
+    read_clim_zm(ctl->clim_o1d_filename, "O1D", &clim->o1d);
 
   /* Read CFC-10 time series... */
   if (ctl->clim_ccl4_timeseries[0] != '-')
@@ -1767,7 +1767,6 @@ int read_clim_ts(
 void read_clim_zm(
   char *filename,
   char *varname,
-  char *units,
   clim_zm_t * var) {
 
   int ncid, varid, it, iy, iz, iz2, nt;
@@ -1862,8 +1861,8 @@ void read_clim_zm(
   LOG(2, "Number of latitudes: %d", var->nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
       var->lat[0], var->lat[1], var->lat[var->nlat - 1]);
-  LOG(2, "%s concentration range: %g ... %g %s",
-      varname, varmin, varmax, units);
+  LOG(2, "%s concentration range: %g ... %g ppv",
+      varname, varmin, varmax);
 }
 
 /*****************************************************************************/
@@ -2025,10 +2024,10 @@ void read_ctl(
 	      "J/kg")
       SET_QNT(qnt_cin, "cin", "convective inhibition", "J/kg")
       SET_QNT(qnt_hno3, "hno3", "nitric acid", "ppv")
-      SET_QNT(qnt_oh, "oh", "hydroxyl radical", "molec/cm^3")
-      SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "molec/cm^3")
-      SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "molec/cm^3")
-      SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "molec/cm^3")
+      SET_QNT(qnt_oh, "oh", "hydroxyl radical", "ppv")
+      SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "ppv")
+      SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "ppv")
+      SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
       SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",
 	      "kg")

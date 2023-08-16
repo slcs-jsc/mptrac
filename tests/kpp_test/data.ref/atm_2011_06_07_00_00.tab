@@ -7,7 +7,7 @@
 # $7 = u [m/s]
 # $8 = v [m/s]
 # $9 = w [hPa/s]
-# $10 = z [km]
+# $10 = zg [km]
 # $11 = pv [PVU]
 # $12 = ps [hPa]
 # $13 = pt [hPa]
