@@ -5770,9 +5770,10 @@ void write_grid(
   /* Allocate... */
   ALLOC(cd, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-  for (int iq = 0; iq < ctl->nq; iq++)
+  for (int iq = 0; iq < ctl->nq; iq++) {
     ALLOC(mean[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  }
   ALLOC(vmr_impl, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(z, double,

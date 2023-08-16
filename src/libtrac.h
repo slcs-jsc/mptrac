@@ -1090,13 +1090,13 @@ typedef struct {
 
   /*! ZFP compression precision (for all variables, except z and T). */
   int met_zfp_prec;
-  
+
   /*! ZFP compression tolerance (for temperature). */
   double met_zfp_tol_t;
-  
+
   /*! ZFP compression tolerance (for geopotential height). */
   double met_zfp_tol_z;
-  
+
   /*! Stride for longitudes. */
   int met_dx;
 
