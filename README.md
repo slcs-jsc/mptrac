@@ -63,7 +63,7 @@ Alternatively, you can retrieve the most recent development version of the softw
 Several libraries provided along with MPTRAC can be compiled and installed by running a build script:
 
     cd [mptrac_directory]/libs
-    ./build.sh
+    ./build.sh -a
 
 Next, change to the source directory and edit the `Makefile` according to your needs:
 
