@@ -1706,7 +1706,7 @@ typedef struct {
   double p[CP];
 
   /*! Volume mixing ratio [ppv]. */
-  double var[CT][CP][CY];
+  double vmr[CT][CP][CY];
 
 } clim_zm_t;
 
@@ -1730,31 +1730,31 @@ typedef struct {
 
   /*! HNO3 zonal means. */
   clim_zm_t hno3;
-  
+
   /*! OH zonal means. */
   clim_zm_t oh;
-  
+
   /*! H2O2 zonal means. */
   clim_zm_t h2o2;
-  
+
   /*! HO2 zonal means. */
   clim_zm_t ho2;
-  
+
   /*! O(1D) zonal means. */
   clim_zm_t o1d;
-  
+
   /*! CFC-10 time series. */
   clim_ts_t ccl4;
-  
+
   /*! CFC-11 time series. */
   clim_ts_t ccl3f;
-  
+
   /*! CFC-12 time series. */
   clim_ts_t ccl2f2;
-  
+
   /*! N2O time series. */
   clim_ts_t n2o;
-  
+
   /*! SF6 time series. */
   clim_ts_t sf6;
 
@@ -1956,7 +1956,7 @@ void clim_oh_diurnal_correction(
 #pragma acc routine (clim_ts)
 #endif
 double clim_ts(
-  clim_ts_t * var,
+  clim_ts_t * ts,
   double t);
 
 /*! Interpolate zonal mean climatology. */
@@ -1964,7 +1964,7 @@ double clim_ts(
 #pragma acc routine (clim_zm)
 #endif
 double clim_zm(
-  clim_zm_t * var,
+  clim_zm_t * zm,
   double t,
   double lat,
   double p);
@@ -2259,7 +2259,7 @@ int read_clim_ts(
 void read_clim_zm(
   char *filename,
   char *varname,
-  clim_zm_t * var);
+  clim_zm_t * zm);
 
 /*! Read control parameters. */
 void read_ctl(

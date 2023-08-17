@@ -286,32 +286,32 @@ void clim_oh_diurnal_correction(
 	}
 
 	/* Apply scaling factor to OH data... */
-	clim->oh.var[it][iz][iy] /= (sum / (double) n);
+	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
       }
 }
 
 /*****************************************************************************/
 
 double clim_ts(
-  clim_ts_t * var,
+  clim_ts_t * ts,
   double t) {
 
   /* Interpolate... */
-  if (t <= var->time[0])
-    return var->vmr[0];
-  else if (t >= var->time[var->ntime - 1])
-    return var->vmr[var->ntime - 1];
+  if (t <= ts->time[0])
+    return ts->vmr[0];
+  else if (t >= ts->time[ts->ntime - 1])
+    return ts->vmr[ts->ntime - 1];
   else {
-    int idx = locate_irr(var->time, var->ntime, t);
-    return LIN(var->time[idx], var->vmr[idx],
-	       var->time[idx + 1], var->vmr[idx + 1], t);
+    int idx = locate_irr(ts->time, ts->ntime, t);
+    return LIN(ts->time[idx], ts->vmr[idx],
+	       ts->time[idx + 1], ts->vmr[idx + 1], t);
   }
 }
 
 /*****************************************************************************/
 
 double clim_zm(
-  clim_zm_t * var,
+  clim_zm_t * zm,
   double t,
   double lat,
   double p) {
@@ -322,42 +322,34 @@ double clim_zm(
     sec += 365.25 * 86400.;
 
   /* Check pressure range... */
-  if (p < var->p[var->np - 1])
-    p = var->p[var->np - 1];
-  else if (p > var->p[0])
-    p = var->p[0];
+  if (p < zm->p[zm->np - 1])
+    p = zm->p[zm->np - 1];
+  else if (p > zm->p[0])
+    p = zm->p[0];
 
   /* Check latitude range... */
-  if (lat < var->lat[0])
-    lat = var->lat[0];
-  else if (lat > var->lat[var->nlat - 1])
-    lat = var->lat[var->nlat - 1];
+  if (lat < zm->lat[0])
+    lat = zm->lat[0];
+  else if (lat > zm->lat[zm->nlat - 1])
+    lat = zm->lat[zm->nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(var->time, var->ntime, sec);
-  int ilat = locate_reg(var->lat, var->nlat, lat);
-  int ip = locate_irr(var->p, var->np, p);
+  int isec = locate_irr(zm->time, zm->ntime, sec);
+  int ilat = locate_reg(zm->lat, zm->nlat, lat);
+  int ip = locate_irr(zm->p, zm->np, p);
 
   /* Interpolate climatology data... */
-  double aux00 = LIN(var->p[ip],
-		     var->var[isec][ip][ilat],
-		     var->p[ip + 1],
-		     var->var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(var->p[ip],
-		     var->var[isec][ip][ilat + 1],
-		     var->p[ip + 1],
-		     var->var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(var->p[ip],
-		     var->var[isec + 1][ip][ilat],
-		     var->p[ip + 1],
-		     var->var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(var->p[ip],
-		     var->var[isec + 1][ip][ilat + 1],
-		     var->p[ip + 1],
-		     var->var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 = LIN(var->lat[ilat], aux00, var->lat[ilat + 1], aux01, lat);
-  aux11 = LIN(var->lat[ilat], aux10, var->lat[ilat + 1], aux11, lat);
-  aux00 = LIN(var->time[isec], aux00, var->time[isec + 1], aux11, sec);
+  double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
+		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat], p);
+  double aux01 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat + 1],
+		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat + 1], p);
+  double aux10 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat],
+		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat], p);
+  double aux11 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat + 1],
+		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat + 1], p);
+  aux00 = LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat);
+  aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat);
+  aux00 = LIN(zm->time[isec], aux00, zm->time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
@@ -1767,7 +1759,7 @@ int read_clim_ts(
 void read_clim_zm(
   char *filename,
   char *varname,
-  clim_zm_t * var) {
+  clim_zm_t * zm) {
 
   int ncid, varid, it, iy, iz, iz2, nt;
 
@@ -1783,86 +1775,85 @@ void read_clim_zm(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &var->np, 2, CP);
-  NC_GET_DOUBLE("press", var->p, 1);
+  NC_INQ_DIM("press", &zm->np, 2, CP);
+  NC_GET_DOUBLE("press", zm->p, 1);
 
   /* Check ordering of pressure data... */
-  if (var->p[0] < var->p[1])
+  if (zm->p[0] < zm->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &var->nlat, 2, CY);
-  NC_GET_DOUBLE("lat", var->lat, 1);
+  NC_INQ_DIM("lat", &zm->nlat, 2, CY);
+  NC_GET_DOUBLE("lat", zm->lat, 1);
 
   /* Check ordering of latitude data... */
-  if (var->lat[0] > var->lat[1])
+  if (zm->lat[0] > zm->lat[1])
     ERRMSG("Latitude data are not ascending!");
 
   /* Set time data (for monthly means)... */
-  var->ntime = 12;
-  var->time[0] = 1209600.00;
-  var->time[1] = 3888000.00;
-  var->time[2] = 6393600.00;
-  var->time[3] = 9072000.00;
-  var->time[4] = 11664000.00;
-  var->time[5] = 14342400.00;
-  var->time[6] = 16934400.00;
-  var->time[7] = 19612800.00;
-  var->time[8] = 22291200.00;
-  var->time[9] = 24883200.00;
-  var->time[10] = 27561600.00;
-  var->time[11] = 30153600.00;
+  zm->ntime = 12;
+  zm->time[0] = 1209600.00;
+  zm->time[1] = 3888000.00;
+  zm->time[2] = 6393600.00;
+  zm->time[3] = 9072000.00;
+  zm->time[4] = 11664000.00;
+  zm->time[5] = 14342400.00;
+  zm->time[6] = 16934400.00;
+  zm->time[7] = 19612800.00;
+  zm->time[8] = 22291200.00;
+  zm->time[9] = 24883200.00;
+  zm->time[10] = 27561600.00;
+  zm->time[11] = 30153600.00;
 
   /* Check number of timesteps... */
   NC_INQ_DIM("time", &nt, 12, 12);
 
   /* Read data... */
   ALLOC(help, double,
-	var->nlat * var->np * var->ntime);
+	zm->nlat * zm->np * zm->ntime);
   NC_GET_DOUBLE(varname, help, 1);
-  for (it = 0; it < var->ntime; it++)
-    for (iz = 0; iz < var->np; iz++)
-      for (iy = 0; iy < var->nlat; iy++)
-	var->var[it][iz][iy] = help[ARRAY_3D(it, iz, var->np, iy, var->nlat)];
+  for (it = 0; it < zm->ntime; it++)
+    for (iz = 0; iz < zm->np; iz++)
+      for (iy = 0; iy < zm->nlat; iy++)
+	zm->vmr[it][iz][iy] = help[ARRAY_3D(it, iz, zm->np, iy, zm->nlat)];
   free(help);
 
   /* Fix data gaps... */
-  for (it = 0; it < var->ntime; it++)
-    for (iy = 0; iy < var->nlat; iy++)
-      for (iz = 0; iz < var->np; iz++) {
-	if (var->var[it][iz][iy] < 0) {
-	  for (iz2 = 0; iz2 < var->np; iz2++)
-	    if (var->var[it][iz2][iy] >= 0) {
-	      var->var[it][iz][iy] = var->var[it][iz2][iy];
+  for (it = 0; it < zm->ntime; it++)
+    for (iy = 0; iy < zm->nlat; iy++)
+      for (iz = 0; iz < zm->np; iz++) {
+	if (zm->vmr[it][iz][iy] < 0) {
+	  for (iz2 = 0; iz2 < zm->np; iz2++)
+	    if (zm->vmr[it][iz2][iy] >= 0) {
+	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
 	      break;
 	    }
-	  for (iz2 = var->np - 1; iz2 >= 0; iz2--)
-	    if (var->var[it][iz2][iy] >= 0) {
-	      var->var[it][iz][iy] = var->var[it][iz2][iy];
+	  for (iz2 = zm->np - 1; iz2 >= 0; iz2--)
+	    if (zm->vmr[it][iz2][iy] >= 0) {
+	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
 	      break;
 	    }
 	}
-	varmin = GSL_MIN(varmin, var->var[it][iz][iy]);
-	varmax = GSL_MAX(varmax, var->var[it][iz][iy]);
+	varmin = GSL_MIN(varmin, zm->vmr[it][iz][iy]);
+	varmax = GSL_MAX(varmax, zm->vmr[it][iz][iy]);
       }
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
 
   /* Write info... */
-  LOG(2, "Number of time steps: %d", var->ntime);
+  LOG(2, "Number of time steps: %d", zm->ntime);
   LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-      var->time[0], var->time[1], var->time[var->ntime - 1]);
-  LOG(2, "Number of pressure levels: %d", var->np);
+      zm->time[0], zm->time[1], zm->time[zm->ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", zm->np);
   LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(var->p[0]), Z(var->p[1]), Z(var->p[var->np - 1]));
-  LOG(2, "Pressure levels: %g, %g ... %g hPa", var->p[0],
-      var->p[1], var->p[var->np - 1]);
-  LOG(2, "Number of latitudes: %d", var->nlat);
+      Z(zm->p[0]), Z(zm->p[1]), Z(zm->p[zm->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", zm->p[0],
+      zm->p[1], zm->p[zm->np - 1]);
+  LOG(2, "Number of latitudes: %d", zm->nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      var->lat[0], var->lat[1], var->lat[var->nlat - 1]);
-  LOG(2, "%s concentration range: %g ... %g ppv",
-      varname, varmin, varmax);
+      zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
+  LOG(2, "%s concentration range: %g ... %g ppv", varname, varmin, varmax);
 }
 
 /*****************************************************************************/
