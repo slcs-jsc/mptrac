@@ -27,10 +27,10 @@
 /*****************************************************************************/
 
 double buoyancy_frequency(
-  double p0,
-  double t0,
-  double p1,
-  double t1) {
+  const double p0,
+  const double t0,
+  const double p1,
+  const double t1) {
 
   double theta0 = THETA(p0, t0);
   double theta1 = THETA(p1, t1);
@@ -42,7 +42,7 @@ double buoyancy_frequency(
 /*****************************************************************************/
 
 void cart2geo(
-  double *x,
+  const double *x,
   double *z,
   double *lon,
   double *lat) {
@@ -56,9 +56,9 @@ void cart2geo(
 /*****************************************************************************/
 
 double clim_tropo(
-  clim_t * clim,
-  double t,
-  double lat) {
+  const clim_t * clim,
+  const double t,
+  const double lat) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -239,12 +239,12 @@ void clim_tropo_init(
 /*****************************************************************************/
 
 double clim_oh(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  double lon,
-  double lat,
-  double p) {
+  const ctl_t * ctl,
+  const clim_t * clim,
+  const double t,
+  const double lon,
+  const double lat,
+  const double p) {
 
   /* Get OH data from climatology... */
   double oh = clim_zm(&clim->oh, t, lat, p);
@@ -293,8 +293,8 @@ void clim_oh_diurnal_correction(
 /*****************************************************************************/
 
 double clim_ts(
-  clim_ts_t * ts,
-  double t) {
+  const clim_ts_t * ts,
+  const double t) {
 
   /* Interpolate... */
   if (t <= ts->time[0])
@@ -311,10 +311,10 @@ double clim_ts(
 /*****************************************************************************/
 
 double clim_zm(
-  clim_zm_t * zm,
-  double t,
-  double lat,
-  double p) {
+  const clim_zm_t * zm,
+  const double t,
+  const double lat,
+  const double p) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -322,33 +322,36 @@ double clim_zm(
     sec += 365.25 * 86400.;
 
   /* Check pressure range... */
+  double p_help = p;
   if (p < zm->p[zm->np - 1])
-    p = zm->p[zm->np - 1];
+    p_help = zm->p[zm->np - 1];
   else if (p > zm->p[0])
-    p = zm->p[0];
+    p_help = zm->p[0];
 
   /* Check latitude range... */
+  double lat_help = lat;
   if (lat < zm->lat[0])
-    lat = zm->lat[0];
+    lat_help = zm->lat[0];
   else if (lat > zm->lat[zm->nlat - 1])
-    lat = zm->lat[zm->nlat - 1];
+    lat_help = zm->lat[zm->nlat - 1];
 
   /* Get indices... */
   int isec = locate_irr(zm->time, zm->ntime, sec);
-  int ilat = locate_reg(zm->lat, zm->nlat, lat);
-  int ip = locate_irr(zm->p, zm->np, p);
+  int ilat = locate_reg(zm->lat, zm->nlat, lat_help);
+  int ip = locate_irr(zm->p, zm->np, p_help);
 
   /* Interpolate climatology data... */
   double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
-		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat], p);
+		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat], p_help);
   double aux01 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat + 1],
-		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat + 1], p);
+		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat + 1], p_help);
   double aux10 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat],
-		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat], p);
+		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat], p_help);
   double aux11 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat + 1],
-		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat + 1], p);
-  aux00 = LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat);
-  aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat);
+		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat + 1],
+		     p_help);
+  aux00 = LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat_help);
+  aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat_help);
   aux00 = LIN(zm->time[isec], aux00, zm->time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
@@ -598,9 +601,9 @@ void compress_zstd(
 /*****************************************************************************/
 
 void day2doy(
-  int year,
-  int mon,
-  int day,
+  const int year,
+  const int mon,
+  const int day,
   int *doy) {
 
   const int
@@ -617,8 +620,8 @@ void day2doy(
 /*****************************************************************************/
 
 void doy2day(
-  int year,
-  int doy,
+  const int year,
+  const int doy,
   int *mon,
   int *day) {
 
@@ -647,9 +650,9 @@ void doy2day(
 /*****************************************************************************/
 
 void geo2cart(
-  double z,
-  double lon,
-  double lat,
+  const double z,
+  const double lon,
+  const double lat,
   double *x) {
 
   double radius = z + RE;
@@ -1196,7 +1199,7 @@ void intpol_met_time_uvw(
 /*****************************************************************************/
 
 void jsec2time(
-  double jsec,
+  const double jsec,
   int *year,
   int *mon,
   int *day,
@@ -1229,10 +1232,10 @@ void jsec2time(
 /*****************************************************************************/
 
 double kernel_weight(
-  double kz[EP],
-  double kw[EP],
-  int nk,
-  double p) {
+  const double kz[EP],
+  const double kw[EP],
+  const int nk,
+  const double p) {
 
   /* Check number of data points... */
   if (nk < 2)
@@ -1255,8 +1258,8 @@ double kernel_weight(
 /*****************************************************************************/
 
 double lapse_rate(
-  double t,
-  double h2o) {
+  const double t,
+  const double h2o) {
 
   /*
      Calculate moist adiabatic lapse rate [K/km] from temperature [K]
@@ -1322,16 +1325,16 @@ int locate_reg(
 /*****************************************************************************/
 
 double nat_temperature(
-  double p,
-  double h2o,
-  double hno3) {
+  const double p,
+  const double h2o,
+  const double hno3) {
 
   /* Check water vapor vmr... */
-  h2o = GSL_MAX(h2o, 0.1e-6);
+  double h2o_help = GSL_MAX(h2o, 0.1e-6);
 
   /* Calculate T_NAT... */
   double p_hno3 = hno3 * p / 1.333224;
-  double p_h2o = h2o * p / 1.333224;
+  double p_h2o = h2o_help * p / 1.333224;
   double a = 0.009179 - 0.00088 * log10(p_h2o);
   double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
   double c = -11397.0 / a;
@@ -1348,8 +1351,8 @@ double nat_temperature(
 void quicksort(
   double arr[],
   int brr[],
-  int low,
-  int high) {
+  const int low,
+  const int high) {
 
   if (low < high) {
     int pi = quicksort_partition(arr, brr, low, high);
@@ -1358,8 +1361,6 @@ void quicksort(
     {
       quicksort(arr, brr, low, pi - 1);
     }
-
-    // #pragma omp task firstprivate(arr,brr,high,pi)
     {
       quicksort(arr, brr, pi + 1, high);
     }
@@ -1371,8 +1372,8 @@ void quicksort(
 int quicksort_partition(
   double arr[],
   int brr[],
-  int low,
-  int high) {
+  const int low,
+  const int high) {
 
   double pivot = arr[high];
   int i = (low - 1);
@@ -1467,9 +1468,8 @@ int read_atm_asc(
   ctl_t * ctl,
   atm_t * atm) {
 
-  FILE *in;
-
   /* Open file... */
+  FILE *in;
   if (!(in = fopen(filename, "r"))) {
     WARN("Cannot open file!");
     return 0;
@@ -1510,9 +1510,8 @@ int read_atm_bin(
   ctl_t * ctl,
   atm_t * atm) {
 
-  FILE *in;
-
   /* Open file... */
+  FILE *in;
   if (!(in = fopen(filename, "r")))
     return 0;
 
@@ -2583,7 +2582,7 @@ void read_ctl(
 /*****************************************************************************/
 
 void read_kernel(
-  char *filename,
+  const char *filename,
   double kz[EP],
   double kw[EP],
   int *nk) {
@@ -4585,16 +4584,14 @@ void read_obs(
   double *robs,
   int *nobs) {
 
-  FILE *in;
-
-  char line[LEN];
-
   /* Open observation data file... */
+  FILE *in;
   LOG(1, "Read observation data: %s", filename);
   if (!(in = fopen(filename, "r")))
     ERRMSG("Cannot open file!");
 
   /* Read observations... */
+  char line[LEN];
   while (fgets(line, LEN, in))
     if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[*nobs], &rz[*nobs],
 	       &rlon[*nobs], &rlat[*nobs], &robs[*nobs]) == 5)
@@ -4700,13 +4697,13 @@ double scan_ctl(
 /*****************************************************************************/
 
 double sedi(
-  double p,
-  double T,
-  double rp,
-  double rhop) {
+  const double p,
+  const double T,
+  const double rp,
+  const double rhop) {
 
   /* Convert particle radius from microns to m... */
-  rp *= 1e-6;
+  double rp_help = rp * 1e-6;
 
   /* Density of dry air [kg / m^3]... */
   double rho = RHO(p, T);
@@ -4721,25 +4718,25 @@ double sedi(
   double lambda = 2. * eta / (rho * v);
 
   /* Knudsen number for air (dimensionless)... */
-  double K = lambda / rp;
+  double K = lambda / rp_help;
 
   /* Cunningham slip-flow correction (dimensionless)... */
   double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
   /* Sedimentation velocity [m / s]... */
-  return 2. * SQR(rp) * (rhop - rho) * G0 / (9. * eta) * G;
+  return 2. * SQR(rp_help) * (rhop - rho) * G0 / (9. * eta) * G;
 }
 
 /*****************************************************************************/
 
 void spline(
-  double *x,
-  double *y,
-  int n,
-  double *x2,
+  const double *x,
+  const double *y,
+  const int n,
+  const double *x2,
   double *y2,
-  int n2,
-  int method) {
+  const int n2,
+  const int method) {
 
   /* Cubic spline interpolation... */
   if (method == 1) {
@@ -4782,8 +4779,8 @@ void spline(
 /*****************************************************************************/
 
 float stddev(
-  float *data,
-  int n) {
+  const float *data,
+  const int n) {
 
   if (n <= 0)
     return 0;
@@ -4803,55 +4800,53 @@ float stddev(
 /*****************************************************************************/
 
 double sza_calc(
-  double sec,
-  double lon,
-  double lat) {
-
-  double D, dec, e, g, GMST, h, L, LST, q, ra;
+  const double sec,
+  const double lon,
+  const double lat) {
 
   /* Number of days and fraction with respect to 2000-01-01T12:00Z... */
-  D = sec / 86400 - 0.5;
+  double D = sec / 86400 - 0.5;
 
   /* Geocentric apparent ecliptic longitude [rad]... */
-  g = (357.529 + 0.98560028 * D) * M_PI / 180;
-  q = 280.459 + 0.98564736 * D;
-  L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
+  double g = (357.529 + 0.98560028 * D) * M_PI / 180;
+  double q = 280.459 + 0.98564736 * D;
+  double L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
 
   /* Mean obliquity of the ecliptic [rad]... */
-  e = (23.439 - 0.00000036 * D) * M_PI / 180;
+  double e = (23.439 - 0.00000036 * D) * M_PI / 180;
 
   /* Declination [rad]... */
-  dec = asin(sin(e) * sin(L));
+  double dec = asin(sin(e) * sin(L));
 
   /* Right ascension [rad]... */
-  ra = atan2(cos(e) * sin(L), cos(L));
+  double ra = atan2(cos(e) * sin(L), cos(L));
 
   /* Greenwich Mean Sidereal Time [h]... */
-  GMST = 18.697374558 + 24.06570982441908 * D;
+  double GMST = 18.697374558 + 24.06570982441908 * D;
 
   /* Local Sidereal Time [h]... */
-  LST = GMST + lon / 15;
+  double LST = GMST + lon / 15;
 
   /* Hour angle [rad]... */
-  h = LST / 12 * M_PI - ra;
+  double h = LST / 12 * M_PI - ra;
 
   /* Convert latitude... */
-  lat *= M_PI / 180;
+  double lat_help = lat * M_PI / 180;
 
   /* Return solar zenith angle [rad]... */
-  return acos(sin(lat) * sin(dec) + cos(lat) * cos(dec) * cos(h));
+  return acos(sin(lat_help) * sin(dec) + cos(lat_help) * cos(dec) * cos(h));
 }
 
 /*****************************************************************************/
 
 void time2jsec(
-  int year,
-  int mon,
-  int day,
-  int hour,
-  int min,
-  int sec,
-  double remain,
+  const int year,
+  const int mon,
+  const int day,
+  const int hour,
+  const int min,
+  const int sec,
+  const double remain,
   double *jsec) {
 
   struct tm t0, t1;
@@ -4979,10 +4974,10 @@ double time_from_filename(
 /*****************************************************************************/
 
 double tropo_weight(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p) {
+  const clim_t * clim,
+  const double t,
+  const double lat,
+  const double p) {
 
   /* Get tropopause pressure... */
   double pt = clim_tropo(clim, t, lat);
