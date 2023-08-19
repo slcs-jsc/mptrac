@@ -2799,18 +2799,18 @@ int read_met(
     read_met_bin_2d(in, met, met->cin, "CIN");
 
     /* Read level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z", 0, 0.5);
-    read_met_bin_3d(in, ctl, met, met->t, "T", 0, 5.0);
-    read_met_bin_3d(in, ctl, met, met->u, "U", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->v, "V", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->w, "W", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->pv, "PV", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->o3, "O3", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->z, "Z");
+    read_met_bin_3d(in, ctl, met, met->t, "T");
+    read_met_bin_3d(in, ctl, met, met->u, "U");
+    read_met_bin_3d(in, ctl, met, met->v, "V");
+    read_met_bin_3d(in, ctl, met, met->w, "W");
+    read_met_bin_3d(in, ctl, met, met->pv, "PV");
+    read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
+    read_met_bin_3d(in, ctl, met, met->o3, "O3");
+    read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
+    read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
     if (version == 101)
-      read_met_bin_3d(in, ctl, met, met->cc, "CC", 8, 0);
+      read_met_bin_3d(in, ctl, met, met->cc, "CC");
 
     /* Read final flag... */
     int final;
@@ -2880,11 +2880,13 @@ void read_met_bin_3d(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance) {
+  char *varname) {
+
+  double tolerance;
 
   float *help;
+
+  int precision;
 
   /* Allocate... */
   ALLOC(help, float,
@@ -2906,10 +2908,16 @@ void read_met_bin_3d(
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
 #ifdef ZFP
+    FREAD(&precision, int,
+	  1,
+	  in);
+    FREAD(&tolerance, double,
+	  1,
+	  in);
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 1, in);
 #else
-    ERRMSG("zfp compression not supported!");
+    ERRMSG("MPTRAC was compiled without zfp compression!");
     LOG(3, "%d %g", precision, tolerance);
 #endif
   }
@@ -2920,7 +2928,7 @@ void read_met_bin_3d(
     compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 1,
 		  in);
 #else
-    ERRMSG("zstd compression not supported!");
+    ERRMSG("MPTRAC was compiled without zstd compression!");
 #endif
   }
 
@@ -6114,11 +6122,11 @@ int write_met(
   /* Check compression flags... */
 #ifndef ZFP
   if (ctl->met_type == 3)
-    ERRMSG("zfp compression not supported!");
+    ERRMSG("MPTRAC was compiled without zfp compression!");
 #endif
 #ifndef ZSTD
   if (ctl->met_type == 4)
-    ERRMSG("zstd compression not supported!");
+    ERRMSG("MPTRAC was compiled without zstd compression!");
 #endif
 
   /* Write binary data... */
@@ -6279,9 +6287,16 @@ void write_met_bin_3d(
 
   /* Write zfp data... */
 #ifdef ZFP
-  else if (ctl->met_type == 3)
+  else if (ctl->met_type == 3) {
+    FWRITE(&precision, int,
+	   1,
+	   out);
+    FWRITE(&tolerance, double,
+	   1,
+	   out);
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 0, out);
+  }
 #endif
 
   /* Write zstd data... */

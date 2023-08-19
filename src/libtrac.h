@@ -298,8 +298,8 @@
   ((x) - (int) ((x) / (y)) * (y))
 
 /*! Read binary data. */
-#define FREAD(ptr, type, size, out) {					\
-    if(fread(ptr, sizeof(type), size, out)!=size)			\
+#define FREAD(ptr, type, size, in) {					\
+    if(fread(ptr, sizeof(type), size, in)!=size)			\
       ERRMSG("Error while reading!");					\
   }
 
@@ -2295,9 +2295,7 @@ void read_met_bin_3d(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance);
+  char *varname);
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
