@@ -25,7 +25,7 @@ The following specific configuration parameters can be used to determine the rel
 
 Followings are some optional parameters for controlling the release of air parcels:
 
-* INIT_REP: This parameter control the number of air parcels in each release position. The default value is 1.
+* INIT_REP: This parameter controls the number of air parcels in each release position. The default value is 1.
 * INIT_MASS: Total release mass [kg]. The default value is 0.
 * INIT_VMR: Volume mixing ratio of each air parcel [ppv]. The default value is 0.
 * INIT_ST/INIT_SZ/INIT_SLON/INIT_SLAT: If this parameter is set to non-zero value, the air parcels are released with a Gaussian distribution in time/altitude/longitude/latitude. The parameter value represents the full width at half maximum. 
