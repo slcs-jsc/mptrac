@@ -195,7 +195,7 @@ libtrac.o: libtrac.c libtrac.h Makefile
 check: $(TESTS)
 
 $(TESTS) gpu_test kpp_test: all
-	(echo "\n===== Running \"$@\" ... =====") ; \
+	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \
 	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
