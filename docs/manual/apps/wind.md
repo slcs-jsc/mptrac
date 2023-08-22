@@ -1,6 +1,6 @@
 # wind 
 
-Creates meteorological data files with synthetic wind fields using the method of Williamson et al. (1992, Sect. 3). The wind field describes global rotation around the Earth with a given rotation axes. The output is written in form of MPTRAC's netCDF meteo file format.
+This app creates a meteorological data file with synthetic wind fields suitable for testing advection using the method of Williamson et al. (1992, Sect. 3). The synthetic wind field describes a global rotation around the Earth with a given rotation axis. The output is written in form of MPTRAC's netCDF meteo file format.
 
 * Williamson, D. L., Drake, J. B., Hack, J. J., Jakob, R., & Swarztrauber, P. N. (1992). A standard test set for numerical approximations to the shallow water equations in spherical geometry. Journal of computational physics, 102(1), 211-224.
 
