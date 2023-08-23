@@ -2882,11 +2882,7 @@ void read_met_bin_3d(
   float var[EX][EY][EP],
   char *varname) {
 
-  double tolerance;
-
   float *help;
-
-  int precision;
 
   /* Allocate... */
   ALLOC(help, float,
@@ -2908,17 +2904,20 @@ void read_met_bin_3d(
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
 #ifdef ZFP
+    int precision;
     FREAD(&precision, int,
 	  1,
 	  in);
+
+    double tolerance;
     FREAD(&tolerance, double,
 	  1,
 	  in);
+
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 1, in);
 #else
     ERRMSG("MPTRAC was compiled without zfp compression!");
-    LOG(3, "%d %g", precision, tolerance);
 #endif
   }
 

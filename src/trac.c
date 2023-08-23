@@ -1420,7 +1420,6 @@ void module_chemgrid(
 	  double h2o, o3;
 	  INTPOL_INIT;
 	  if (ctl->qnt_Ch2o >= 0) {
-
 	    INTPOL_3D(h2o, 1);
 	    SET_ATM(qnt_Ch2o, h2o);
 	  }
