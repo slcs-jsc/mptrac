@@ -1690,44 +1690,35 @@ void module_tracer_chem(
     /* Get molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
 
+    /* Get O(1D) concentration... */
+    double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
+
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
-      double K_o1d = ARRHENIUS(3.30e-10, 0, t);
-      atm->q[ctl->qnt_Cccl4][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
-      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
-      double K_o1d = ARRHENIUS(2.30e-10, 0, t);
-      atm->q[ctl->qnt_Cccl3f][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
-      double K_o1d = ARRHENIUS(1.40e-10, -25, t);
-      atm->q[ctl->qnt_Cccl2f2][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
-      double K_o1d = ARRHENIUS(1.19e-10, -20, t);
-      atm->q[ctl->qnt_Cn2o][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
 }
