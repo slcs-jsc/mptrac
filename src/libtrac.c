@@ -4812,36 +4812,37 @@ double sza_calc(
   const double lat) {
 
   /* Number of days and fraction with respect to 2000-01-01T12:00Z... */
-  double D = sec / 86400 - 0.5;
+  const double D = sec / 86400 - 0.5;
 
   /* Geocentric apparent ecliptic longitude [rad]... */
-  double g = (357.529 + 0.98560028 * D) * M_PI / 180;
-  double q = 280.459 + 0.98564736 * D;
-  double L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
+  const double g = (357.529 + 0.98560028 * D) * M_PI / 180;
+  const double q = 280.459 + 0.98564736 * D;
+  const double L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
 
   /* Mean obliquity of the ecliptic [rad]... */
-  double e = (23.439 - 0.00000036 * D) * M_PI / 180;
+  const double e = (23.439 - 0.00000036 * D) * M_PI / 180;
 
   /* Declination [rad]... */
-  double dec = asin(sin(e) * sin(L));
+  const double sindec = sin(e) * sin(L);
 
   /* Right ascension [rad]... */
-  double ra = atan2(cos(e) * sin(L), cos(L));
+  const double ra = atan2(cos(e) * sin(L), cos(L));
 
   /* Greenwich Mean Sidereal Time [h]... */
-  double GMST = 18.697374558 + 24.06570982441908 * D;
+  const double GMST = 18.697374558 + 24.06570982441908 * D;
 
   /* Local Sidereal Time [h]... */
-  double LST = GMST + lon / 15;
+  const double LST = GMST + lon / 15;
 
   /* Hour angle [rad]... */
-  double h = LST / 12 * M_PI - ra;
+  const double h = LST / 12 * M_PI - ra;
 
   /* Convert latitude... */
-  double lat_help = lat * M_PI / 180;
+  const double lat_help = lat * M_PI / 180;
 
   /* Return solar zenith angle [rad]... */
-  return acos(sin(lat_help) * sin(dec) + cos(lat_help) * cos(dec) * cos(h));
+  return acos(sin(lat_help) * sindec +
+	      cos(lat_help) * sqrt(1 - SQR(sindec)) * cos(h));
 }
 
 /*****************************************************************************/
