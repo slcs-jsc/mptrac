@@ -15,9 +15,12 @@ The required paramters are as follows:
 * atm_out_type: The type into the air parcel data file should be converted.
 
 Types of atmospheric data:
-0 ASCII    
-1 binary  
-2 netcdf
-3 clams 
+
+|Type In/Out| Format |
+|:--------- |:-----:|
+| 0         | ASCII |    
+| 1         | binary| 
+| 2         | netcdf|
+| 3         | clams |  
 
 Correct?? Needs to be checked.
