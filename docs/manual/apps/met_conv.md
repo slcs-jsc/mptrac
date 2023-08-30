@@ -6,8 +6,16 @@ Conversion of meteorological data
 # calling met_conv
 ./met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type>
 ```
+The required paramters are as follows:
+
+* ctl: The control file.
+* met_in: The name of the meteorological file that should be converted.
+* met_in_type: The format type of the meteorological input file.
+* met_out: The name of the meteorological file in the new data format. 
+* met_out_type: The type into the meteorological data file should be converted.
+
 ```
-# An example command line for running atm_conv looks like
+# An example command line for running met_conv looks like
 ./met_conv trac.ctl era5_2017_01_08_17.nc 0 era5_2017_01_08_17.zstd 4
 ```
 Here the meteorological data file in netcdf format is converted (compressed) to the zstd format.
