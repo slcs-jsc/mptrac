@@ -734,7 +734,6 @@ void module_bound_cond(
       && ctl->qnt_Cn2o < 0 && ctl->qnt_Csf6 < 0 && ctl->qnt_aoa < 0)
     return;
 
-
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
@@ -830,9 +829,8 @@ void module_convection(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt,rs)") {
 
-    double cape, cin, pel, ps;
-
     /* Interpolate CAPE... */
+    double cape;
     INTPOL_INIT;
     INTPOL_2D(cape, 1);
 
@@ -841,12 +839,14 @@ void module_convection(
 
       /* Check CIN... */
       if (ctl->conv_cin > 0) {
+	double cin;
 	INTPOL_2D(cin, 0);
 	if (isfinite(cin) && cin >= ctl->conv_cin)
 	  continue;
       }
 
       /* Interpolate equilibrium level... */
+      double pel;
       INTPOL_2D(pel, 0);
 
       /* Check whether particle is above cloud top... */
@@ -857,6 +857,7 @@ void module_convection(
       double pbot = atm->p[ip];
       double ptop = atm->p[ip];
       if (ctl->conv_mix_bot == 1) {
+	double ps;
 	INTPOL_2D(ps, 0);
 	pbot = ps;
       }
@@ -1087,9 +1088,8 @@ void module_dry_deposition(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-    double ps, t, v_dep;
-
     /* Get surface pressure... */
+    double ps;
     INTPOL_INIT;
     INTPOL_2D(ps, 1);
 
@@ -1101,9 +1101,11 @@ void module_dry_deposition(
     double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
 
     /* Calculate sedimentation velocity for particles... */
+    double v_dep;
     if (ctl->qnt_rp > 0 && ctl->qnt_rhop > 0) {
 
       /* Get temperature... */
+      double t;
       INTPOL_3D(t, 1);
 
       /* Set deposition velocity... */
@@ -1210,9 +1212,8 @@ void module_isosurf(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
-    double t;
-
     /* Init... */
+    double t;
     INTPOL_INIT;
 
     /* Restore pressure... */
@@ -1419,7 +1420,6 @@ void module_chemgrid(
 	  double h2o, o3;
 	  INTPOL_INIT;
 	  if (ctl->qnt_Ch2o >= 0) {
-
 	    INTPOL_3D(h2o, 1);
 	    SET_ATM(qnt_Ch2o, h2o);
 	  }
@@ -1485,6 +1485,7 @@ void module_chemgrid(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
+	/* Get molecular density... */
 	double M = MOLEC_DENS(atm->p[ip], temp);
 
 	/* Set mass... */
@@ -1502,6 +1503,7 @@ void module_chemgrid(
 	    / (1e18 * area[iys[ip]] * dz * ctl->molmass) / M;
       }
 
+    /* Free... */
     free(mass);
     free(lon);
     free(lat);
@@ -1509,7 +1511,6 @@ void module_chemgrid(
   }
 
   /* Free... */
-
   free(z);
   free(press);
   free(ixs);
@@ -1547,6 +1548,7 @@ void module_oh_chem(
     double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+
     /* Calculate molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
 
@@ -1625,6 +1627,8 @@ void module_h2o2_chem(
     /* Get temperature... */
     double t;
     INTPOL_3D(t, 0);
+
+    /* Get molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reaction rate (Berglen et al., 2004)... */
@@ -1682,46 +1686,39 @@ void module_tracer_chem(
     double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+
+    /* Get molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
+
+    /* Get O(1D) concentration... */
+    double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
-      double K_o1d = ARRHENIUS(3.30e-10, 0, t);
-      atm->q[ctl->qnt_Cccl4][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
-      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
-      double K_o1d = ARRHENIUS(2.30e-10, 0, t);
-      atm->q[ctl->qnt_Cccl3f][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
-      double K_o1d = ARRHENIUS(1.40e-10, -25, t);
-      atm->q[ctl->qnt_Cccl2f2][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
-      double K_o1d = ARRHENIUS(1.19e-10, -20, t);
-      atm->q[ctl->qnt_Cn2o][ip] *=
-	exp(-dt[ip] * K_o1d *
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]) * M);
+      double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
       double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * K_hv);
+      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
 }
@@ -1753,6 +1750,7 @@ void module_kpp_chem(
       ALLOC(FIX, double,
 	    NFIX);
 
+      /* Sett range of time steps... */
       STEPMIN = 0;
       STEPMAX = 900.0;
 
@@ -2313,18 +2311,19 @@ void module_wet_deposition(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-    double cl, dz, h, lambda = 0, t, iwc, lwc, pct, pcb;
-
     /* Check whether particle is below cloud top... */
+    double pct;
     INTPOL_INIT;
     INTPOL_2D(pct, 1);
     if (!isfinite(pct) || atm->p[ip] <= pct)
       continue;
 
     /* Get cloud bottom pressure... */
+    double pcb;
     INTPOL_2D(pcb, 0);
 
     /* Estimate precipitation rate (Pisso et al., 2019)... */
+    double cl;
     INTPOL_2D(cl, 0);
     double Is =
       pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
@@ -2332,14 +2331,17 @@ void module_wet_deposition(
       continue;
 
     /* Check whether particle is inside or below cloud... */
+    double iwc, lwc;
     INTPOL_3D(lwc, 1);
     INTPOL_3D(iwc, 0);
     int inside = (iwc > 0 || lwc > 0);
 
     /* Get temperature... */
+    double t;
     INTPOL_3D(t, 0);
 
     /* Calculate in-cloud scavenging coefficient... */
+    double lambda = 0;
     if (inside) {
 
       /* Calculate retention factor... */
@@ -2359,7 +2361,7 @@ void module_wet_deposition(
       else if (ctl->wet_depo_ic_h[0] > 0) {
 
 	/* Get Henry's constant (Sander, 2015)... */
-	h = ctl->wet_depo_ic_h[0]
+	double h = ctl->wet_depo_ic_h[0]
 	  * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / 298.15));
 
 	/* Use effective Henry's constant for SO2
@@ -2372,7 +2374,7 @@ void module_wet_deposition(
 	}
 
 	/* Estimate depth of cloud layer... */
-	dz = 1e3 * (Z(pct) - Z(pcb));
+	double dz = 1e3 * (Z(pct) - Z(pcb));
 
 	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -2397,11 +2399,11 @@ void module_wet_deposition(
       else if (ctl->wet_depo_bc_h[0] > 0) {
 
 	/* Get Henry's constant (Sander, 2015)... */
-	h = ctl->wet_depo_bc_h[0]
+	double h = ctl->wet_depo_bc_h[0]
 	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
 
 	/* Estimate depth of cloud layer... */
-	dz = 1e3 * (Z(pct) - Z(pcb));
+	double dz = 1e3 * (Z(pct) - Z(pcb));
 
 	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;

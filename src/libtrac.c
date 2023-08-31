@@ -27,10 +27,10 @@
 /*****************************************************************************/
 
 double buoyancy_frequency(
-  double p0,
-  double t0,
-  double p1,
-  double t1) {
+  const double p0,
+  const double t0,
+  const double p1,
+  const double t1) {
 
   double theta0 = THETA(p0, t0);
   double theta1 = THETA(p1, t1);
@@ -42,7 +42,7 @@ double buoyancy_frequency(
 /*****************************************************************************/
 
 void cart2geo(
-  double *x,
+  const double *x,
   double *z,
   double *lon,
   double *lat) {
@@ -56,9 +56,9 @@ void cart2geo(
 /*****************************************************************************/
 
 double clim_tropo(
-  clim_t * clim,
-  double t,
-  double lat) {
+  const clim_t * clim,
+  const double t,
+  const double lat) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -239,12 +239,12 @@ void clim_tropo_init(
 /*****************************************************************************/
 
 double clim_oh(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  double lon,
-  double lat,
-  double p) {
+  const ctl_t * ctl,
+  const clim_t * clim,
+  const double t,
+  const double lon,
+  const double lat,
+  const double p) {
 
   /* Get OH data from climatology... */
   double oh = clim_zm(&clim->oh, t, lat, p);
@@ -286,35 +286,35 @@ void clim_oh_diurnal_correction(
 	}
 
 	/* Apply scaling factor to OH data... */
-	clim->oh.var[it][iz][iy] /= (sum / (double) n);
+	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
       }
 }
 
 /*****************************************************************************/
 
 double clim_ts(
-  clim_ts_t * var,
-  double t) {
+  const clim_ts_t * ts,
+  const double t) {
 
   /* Interpolate... */
-  if (t <= var->time[0])
-    return var->vmr[0];
-  else if (t >= var->time[var->ntime - 1])
-    return var->vmr[var->ntime - 1];
+  if (t <= ts->time[0])
+    return ts->vmr[0];
+  else if (t >= ts->time[ts->ntime - 1])
+    return ts->vmr[ts->ntime - 1];
   else {
-    int idx = locate_irr(var->time, var->ntime, t);
-    return LIN(var->time[idx], var->vmr[idx],
-	       var->time[idx + 1], var->vmr[idx + 1], t);
+    int idx = locate_irr(ts->time, ts->ntime, t);
+    return LIN(ts->time[idx], ts->vmr[idx],
+	       ts->time[idx + 1], ts->vmr[idx + 1], t);
   }
 }
 
 /*****************************************************************************/
 
 double clim_zm(
-  clim_zm_t * var,
-  double t,
-  double lat,
-  double p) {
+  const clim_zm_t * zm,
+  const double t,
+  const double lat,
+  const double p) {
 
   /* Get seconds since begin of year... */
   double sec = FMOD(t, 365.25 * 86400.);
@@ -322,42 +322,37 @@ double clim_zm(
     sec += 365.25 * 86400.;
 
   /* Check pressure range... */
-  if (p < var->p[var->np - 1])
-    p = var->p[var->np - 1];
-  else if (p > var->p[0])
-    p = var->p[0];
+  double p_help = p;
+  if (p < zm->p[zm->np - 1])
+    p_help = zm->p[zm->np - 1];
+  else if (p > zm->p[0])
+    p_help = zm->p[0];
 
   /* Check latitude range... */
-  if (lat < var->lat[0])
-    lat = var->lat[0];
-  else if (lat > var->lat[var->nlat - 1])
-    lat = var->lat[var->nlat - 1];
+  double lat_help = lat;
+  if (lat < zm->lat[0])
+    lat_help = zm->lat[0];
+  else if (lat > zm->lat[zm->nlat - 1])
+    lat_help = zm->lat[zm->nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(var->time, var->ntime, sec);
-  int ilat = locate_reg(var->lat, var->nlat, lat);
-  int ip = locate_irr(var->p, var->np, p);
+  int isec = locate_irr(zm->time, zm->ntime, sec);
+  int ilat = locate_reg(zm->lat, zm->nlat, lat_help);
+  int ip = locate_irr(zm->p, zm->np, p_help);
 
   /* Interpolate climatology data... */
-  double aux00 = LIN(var->p[ip],
-		     var->var[isec][ip][ilat],
-		     var->p[ip + 1],
-		     var->var[isec][ip + 1][ilat], p);
-  double aux01 = LIN(var->p[ip],
-		     var->var[isec][ip][ilat + 1],
-		     var->p[ip + 1],
-		     var->var[isec][ip + 1][ilat + 1], p);
-  double aux10 = LIN(var->p[ip],
-		     var->var[isec + 1][ip][ilat],
-		     var->p[ip + 1],
-		     var->var[isec + 1][ip + 1][ilat], p);
-  double aux11 = LIN(var->p[ip],
-		     var->var[isec + 1][ip][ilat + 1],
-		     var->p[ip + 1],
-		     var->var[isec + 1][ip + 1][ilat + 1], p);
-  aux00 = LIN(var->lat[ilat], aux00, var->lat[ilat + 1], aux01, lat);
-  aux11 = LIN(var->lat[ilat], aux10, var->lat[ilat + 1], aux11, lat);
-  aux00 = LIN(var->time[isec], aux00, var->time[isec + 1], aux11, sec);
+  double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
+		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat], p_help);
+  double aux01 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat + 1],
+		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat + 1], p_help);
+  double aux10 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat],
+		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat], p_help);
+  double aux11 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat + 1],
+		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat + 1],
+		     p_help);
+  aux00 = LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat_help);
+  aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat_help);
+  aux00 = LIN(zm->time[isec], aux00, zm->time[isec + 1], aux11, sec);
 
   return GSL_MAX(aux00, 0.0);
 }
@@ -606,9 +601,9 @@ void compress_zstd(
 /*****************************************************************************/
 
 void day2doy(
-  int year,
-  int mon,
-  int day,
+  const int year,
+  const int mon,
+  const int day,
   int *doy) {
 
   const int
@@ -625,8 +620,8 @@ void day2doy(
 /*****************************************************************************/
 
 void doy2day(
-  int year,
-  int doy,
+  const int year,
+  const int doy,
   int *mon,
   int *day) {
 
@@ -655,9 +650,9 @@ void doy2day(
 /*****************************************************************************/
 
 void geo2cart(
-  double z,
-  double lon,
-  double lat,
+  const double z,
+  const double lon,
+  const double lat,
   double *x) {
 
   double radius = z + RE;
@@ -1204,7 +1199,7 @@ void intpol_met_time_uvw(
 /*****************************************************************************/
 
 void jsec2time(
-  double jsec,
+  const double jsec,
   int *year,
   int *mon,
   int *day,
@@ -1237,10 +1232,10 @@ void jsec2time(
 /*****************************************************************************/
 
 double kernel_weight(
-  double kz[EP],
-  double kw[EP],
-  int nk,
-  double p) {
+  const double kz[EP],
+  const double kw[EP],
+  const int nk,
+  const double p) {
 
   /* Check number of data points... */
   if (nk < 2)
@@ -1263,8 +1258,8 @@ double kernel_weight(
 /*****************************************************************************/
 
 double lapse_rate(
-  double t,
-  double h2o) {
+  const double t,
+  const double h2o) {
 
   /*
      Calculate moist adiabatic lapse rate [K/km] from temperature [K]
@@ -1330,16 +1325,16 @@ int locate_reg(
 /*****************************************************************************/
 
 double nat_temperature(
-  double p,
-  double h2o,
-  double hno3) {
+  const double p,
+  const double h2o,
+  const double hno3) {
 
   /* Check water vapor vmr... */
-  h2o = GSL_MAX(h2o, 0.1e-6);
+  double h2o_help = GSL_MAX(h2o, 0.1e-6);
 
   /* Calculate T_NAT... */
   double p_hno3 = hno3 * p / 1.333224;
-  double p_h2o = h2o * p / 1.333224;
+  double p_h2o = h2o_help * p / 1.333224;
   double a = 0.009179 - 0.00088 * log10(p_h2o);
   double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
   double c = -11397.0 / a;
@@ -1356,8 +1351,8 @@ double nat_temperature(
 void quicksort(
   double arr[],
   int brr[],
-  int low,
-  int high) {
+  const int low,
+  const int high) {
 
   if (low < high) {
     int pi = quicksort_partition(arr, brr, low, high);
@@ -1366,8 +1361,6 @@ void quicksort(
     {
       quicksort(arr, brr, low, pi - 1);
     }
-
-    // #pragma omp task firstprivate(arr,brr,high,pi)
     {
       quicksort(arr, brr, pi + 1, high);
     }
@@ -1379,8 +1372,8 @@ void quicksort(
 int quicksort_partition(
   double arr[],
   int brr[],
-  int low,
-  int high) {
+  const int low,
+  const int high) {
 
   double pivot = arr[high];
   int i = (low - 1);
@@ -1475,9 +1468,8 @@ int read_atm_asc(
   ctl_t * ctl,
   atm_t * atm) {
 
-  FILE *in;
-
   /* Open file... */
+  FILE *in;
   if (!(in = fopen(filename, "r"))) {
     WARN("Cannot open file!");
     return 0;
@@ -1518,9 +1510,8 @@ int read_atm_bin(
   ctl_t * ctl,
   atm_t * atm) {
 
-  FILE *in;
-
   /* Open file... */
+  FILE *in;
   if (!(in = fopen(filename, "r")))
     return 0;
 
@@ -1666,26 +1657,26 @@ void read_clim(
 
   /* Read HNO3 climatology... */
   if (ctl->clim_hno3_filename[0] != '-')
-    read_clim_zm(ctl->clim_hno3_filename, "HNO3", "ppv", &clim->hno3);
+    read_clim_zm(ctl->clim_hno3_filename, "HNO3", &clim->hno3);
 
   /* Read OH climatology... */
   if (ctl->clim_oh_filename[0] != '-') {
-    read_clim_zm(ctl->clim_oh_filename, "OH", "molec/cm^3", &clim->oh);
+    read_clim_zm(ctl->clim_oh_filename, "OH", &clim->oh);
     if (ctl->oh_chem_beta > 0)
       clim_oh_diurnal_correction(ctl, clim);
   }
 
   /* Read H2O2 climatology... */
   if (ctl->clim_h2o2_filename[0] != '-')
-    read_clim_zm(ctl->clim_h2o2_filename, "H2O2", "molec/cm^3", &clim->h2o2);
+    read_clim_zm(ctl->clim_h2o2_filename, "H2O2", &clim->h2o2);
 
   /* Read HO2 climatology... */
   if (ctl->clim_ho2_filename[0] != '-')
-    read_clim_zm(ctl->clim_ho2_filename, "HO2", "molec/cm^3", &clim->ho2);
+    read_clim_zm(ctl->clim_ho2_filename, "HO2", &clim->ho2);
 
   /* Read O(1D) climatology... */
   if (ctl->clim_o1d_filename[0] != '-')
-    read_clim_zm(ctl->clim_o1d_filename, "O1D", "molec/cm^3", &clim->o1d);
+    read_clim_zm(ctl->clim_o1d_filename, "O1D", &clim->o1d);
 
   /* Read CFC-10 time series... */
   if (ctl->clim_ccl4_timeseries[0] != '-')
@@ -1767,8 +1758,7 @@ int read_clim_ts(
 void read_clim_zm(
   char *filename,
   char *varname,
-  char *units,
-  clim_zm_t * var) {
+  clim_zm_t * zm) {
 
   int ncid, varid, it, iy, iz, iz2, nt;
 
@@ -1784,86 +1774,85 @@ void read_clim_zm(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &var->np, 2, CP);
-  NC_GET_DOUBLE("press", var->p, 1);
+  NC_INQ_DIM("press", &zm->np, 2, CP);
+  NC_GET_DOUBLE("press", zm->p, 1);
 
   /* Check ordering of pressure data... */
-  if (var->p[0] < var->p[1])
+  if (zm->p[0] < zm->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &var->nlat, 2, CY);
-  NC_GET_DOUBLE("lat", var->lat, 1);
+  NC_INQ_DIM("lat", &zm->nlat, 2, CY);
+  NC_GET_DOUBLE("lat", zm->lat, 1);
 
   /* Check ordering of latitude data... */
-  if (var->lat[0] > var->lat[1])
+  if (zm->lat[0] > zm->lat[1])
     ERRMSG("Latitude data are not ascending!");
 
   /* Set time data (for monthly means)... */
-  var->ntime = 12;
-  var->time[0] = 1209600.00;
-  var->time[1] = 3888000.00;
-  var->time[2] = 6393600.00;
-  var->time[3] = 9072000.00;
-  var->time[4] = 11664000.00;
-  var->time[5] = 14342400.00;
-  var->time[6] = 16934400.00;
-  var->time[7] = 19612800.00;
-  var->time[8] = 22291200.00;
-  var->time[9] = 24883200.00;
-  var->time[10] = 27561600.00;
-  var->time[11] = 30153600.00;
+  zm->ntime = 12;
+  zm->time[0] = 1209600.00;
+  zm->time[1] = 3888000.00;
+  zm->time[2] = 6393600.00;
+  zm->time[3] = 9072000.00;
+  zm->time[4] = 11664000.00;
+  zm->time[5] = 14342400.00;
+  zm->time[6] = 16934400.00;
+  zm->time[7] = 19612800.00;
+  zm->time[8] = 22291200.00;
+  zm->time[9] = 24883200.00;
+  zm->time[10] = 27561600.00;
+  zm->time[11] = 30153600.00;
 
   /* Check number of timesteps... */
   NC_INQ_DIM("time", &nt, 12, 12);
 
   /* Read data... */
   ALLOC(help, double,
-	var->nlat * var->np * var->ntime);
+	zm->nlat * zm->np * zm->ntime);
   NC_GET_DOUBLE(varname, help, 1);
-  for (it = 0; it < var->ntime; it++)
-    for (iz = 0; iz < var->np; iz++)
-      for (iy = 0; iy < var->nlat; iy++)
-	var->var[it][iz][iy] = help[ARRAY_3D(it, iz, var->np, iy, var->nlat)];
+  for (it = 0; it < zm->ntime; it++)
+    for (iz = 0; iz < zm->np; iz++)
+      for (iy = 0; iy < zm->nlat; iy++)
+	zm->vmr[it][iz][iy] = help[ARRAY_3D(it, iz, zm->np, iy, zm->nlat)];
   free(help);
 
   /* Fix data gaps... */
-  for (it = 0; it < var->ntime; it++)
-    for (iy = 0; iy < var->nlat; iy++)
-      for (iz = 0; iz < var->np; iz++) {
-	if (var->var[it][iz][iy] < 0) {
-	  for (iz2 = 0; iz2 < var->np; iz2++)
-	    if (var->var[it][iz2][iy] >= 0) {
-	      var->var[it][iz][iy] = var->var[it][iz2][iy];
+  for (it = 0; it < zm->ntime; it++)
+    for (iy = 0; iy < zm->nlat; iy++)
+      for (iz = 0; iz < zm->np; iz++) {
+	if (zm->vmr[it][iz][iy] < 0) {
+	  for (iz2 = 0; iz2 < zm->np; iz2++)
+	    if (zm->vmr[it][iz2][iy] >= 0) {
+	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
 	      break;
 	    }
-	  for (iz2 = var->np - 1; iz2 >= 0; iz2--)
-	    if (var->var[it][iz2][iy] >= 0) {
-	      var->var[it][iz][iy] = var->var[it][iz2][iy];
+	  for (iz2 = zm->np - 1; iz2 >= 0; iz2--)
+	    if (zm->vmr[it][iz2][iy] >= 0) {
+	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
 	      break;
 	    }
 	}
-	varmin = GSL_MIN(varmin, var->var[it][iz][iy]);
-	varmax = GSL_MAX(varmax, var->var[it][iz][iy]);
+	varmin = GSL_MIN(varmin, zm->vmr[it][iz][iy]);
+	varmax = GSL_MAX(varmax, zm->vmr[it][iz][iy]);
       }
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
 
   /* Write info... */
-  LOG(2, "Number of time steps: %d", var->ntime);
+  LOG(2, "Number of time steps: %d", zm->ntime);
   LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-      var->time[0], var->time[1], var->time[var->ntime - 1]);
-  LOG(2, "Number of pressure levels: %d", var->np);
+      zm->time[0], zm->time[1], zm->time[zm->ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", zm->np);
   LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(var->p[0]), Z(var->p[1]), Z(var->p[var->np - 1]));
-  LOG(2, "Pressure levels: %g, %g ... %g hPa", var->p[0],
-      var->p[1], var->p[var->np - 1]);
-  LOG(2, "Number of latitudes: %d", var->nlat);
+      Z(zm->p[0]), Z(zm->p[1]), Z(zm->p[zm->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", zm->p[0],
+      zm->p[1], zm->p[zm->np - 1]);
+  LOG(2, "Number of latitudes: %d", zm->nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      var->lat[0], var->lat[1], var->lat[var->nlat - 1]);
-  LOG(2, "%s concentration range: %g ... %g %s",
-      varname, varmin, varmax, units);
+      zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
+  LOG(2, "%s concentration range: %g ... %g ppv", varname, varmin, varmax);
 }
 
 /*****************************************************************************/
@@ -2025,10 +2014,10 @@ void read_ctl(
 	      "J/kg")
       SET_QNT(qnt_cin, "cin", "convective inhibition", "J/kg")
       SET_QNT(qnt_hno3, "hno3", "nitric acid", "ppv")
-      SET_QNT(qnt_oh, "oh", "hydroxyl radical", "molec/cm^3")
-      SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "molec/cm^3")
-      SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "molec/cm^3")
-      SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "molec/cm^3")
+      SET_QNT(qnt_oh, "oh", "hydroxyl radical", "ppv")
+      SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "ppv")
+      SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "ppv")
+      SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
       SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",
 	      "kg")
@@ -2108,6 +2097,12 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
+  ctl->met_zfp_prec =
+    (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", -1, "8", NULL);
+  ctl->met_zfp_tol_t =
+    scan_ctl(filename, argc, argv, "MET_ZFP_TOL_T", -1, "5.0", NULL);
+  ctl->met_zfp_tol_z =
+    scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
@@ -2587,7 +2582,7 @@ void read_ctl(
 /*****************************************************************************/
 
 void read_kernel(
-  char *filename,
+  const char *filename,
   double kz[EP],
   double kw[EP],
   int *nk) {
@@ -2804,18 +2799,18 @@ int read_met(
     read_met_bin_2d(in, met, met->cin, "CIN");
 
     /* Read level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z", 0, 0.5);
-    read_met_bin_3d(in, ctl, met, met->t, "T", 0, 5.0);
-    read_met_bin_3d(in, ctl, met, met->u, "U", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->v, "V", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->w, "W", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->pv, "PV", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->o3, "O3", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 8, 0);
-    read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 8, 0);
+    read_met_bin_3d(in, ctl, met, met->z, "Z");
+    read_met_bin_3d(in, ctl, met, met->t, "T");
+    read_met_bin_3d(in, ctl, met, met->u, "U");
+    read_met_bin_3d(in, ctl, met, met->v, "V");
+    read_met_bin_3d(in, ctl, met, met->w, "W");
+    read_met_bin_3d(in, ctl, met, met->pv, "PV");
+    read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
+    read_met_bin_3d(in, ctl, met, met->o3, "O3");
+    read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
+    read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
     if (version == 101)
-      read_met_bin_3d(in, ctl, met, met->cc, "CC", 8, 0);
+      read_met_bin_3d(in, ctl, met, met->cc, "CC");
 
     /* Read final flag... */
     int final;
@@ -2885,9 +2880,7 @@ void read_met_bin_3d(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance) {
+  char *varname) {
 
   float *help;
 
@@ -2911,11 +2904,20 @@ void read_met_bin_3d(
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
 #ifdef ZFP
+    int precision;
+    FREAD(&precision, int,
+	  1,
+	  in);
+
+    double tolerance;
+    FREAD(&tolerance, double,
+	  1,
+	  in);
+
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 1, in);
 #else
-    ERRMSG("zfp compression not supported!");
-    LOG(3, "%d %g", precision, tolerance);
+    ERRMSG("MPTRAC was compiled without zfp compression!");
 #endif
   }
 
@@ -2925,7 +2927,7 @@ void read_met_bin_3d(
     compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 1,
 		  in);
 #else
-    ERRMSG("zstd compression not supported!");
+    ERRMSG("MPTRAC was compiled without zstd compression!");
 #endif
   }
 
@@ -4589,16 +4591,14 @@ void read_obs(
   double *robs,
   int *nobs) {
 
-  FILE *in;
-
-  char line[LEN];
-
   /* Open observation data file... */
+  FILE *in;
   LOG(1, "Read observation data: %s", filename);
   if (!(in = fopen(filename, "r")))
     ERRMSG("Cannot open file!");
 
   /* Read observations... */
+  char line[LEN];
   while (fgets(line, LEN, in))
     if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[*nobs], &rz[*nobs],
 	       &rlon[*nobs], &rlat[*nobs], &robs[*nobs]) == 5)
@@ -4704,13 +4704,13 @@ double scan_ctl(
 /*****************************************************************************/
 
 double sedi(
-  double p,
-  double T,
-  double rp,
-  double rhop) {
+  const double p,
+  const double T,
+  const double rp,
+  const double rhop) {
 
   /* Convert particle radius from microns to m... */
-  rp *= 1e-6;
+  double rp_help = rp * 1e-6;
 
   /* Density of dry air [kg / m^3]... */
   double rho = RHO(p, T);
@@ -4725,25 +4725,25 @@ double sedi(
   double lambda = 2. * eta / (rho * v);
 
   /* Knudsen number for air (dimensionless)... */
-  double K = lambda / rp;
+  double K = lambda / rp_help;
 
   /* Cunningham slip-flow correction (dimensionless)... */
   double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
   /* Sedimentation velocity [m / s]... */
-  return 2. * SQR(rp) * (rhop - rho) * G0 / (9. * eta) * G;
+  return 2. * SQR(rp_help) * (rhop - rho) * G0 / (9. * eta) * G;
 }
 
 /*****************************************************************************/
 
 void spline(
-  double *x,
-  double *y,
-  int n,
-  double *x2,
+  const double *x,
+  const double *y,
+  const int n,
+  const double *x2,
   double *y2,
-  int n2,
-  int method) {
+  const int n2,
+  const int method) {
 
   /* Cubic spline interpolation... */
   if (method == 1) {
@@ -4786,8 +4786,8 @@ void spline(
 /*****************************************************************************/
 
 float stddev(
-  float *data,
-  int n) {
+  const float *data,
+  const int n) {
 
   if (n <= 0)
     return 0;
@@ -4807,55 +4807,54 @@ float stddev(
 /*****************************************************************************/
 
 double sza_calc(
-  double sec,
-  double lon,
-  double lat) {
-
-  double D, dec, e, g, GMST, h, L, LST, q, ra;
+  const double sec,
+  const double lon,
+  const double lat) {
 
   /* Number of days and fraction with respect to 2000-01-01T12:00Z... */
-  D = sec / 86400 - 0.5;
+  const double D = sec / 86400 - 0.5;
 
   /* Geocentric apparent ecliptic longitude [rad]... */
-  g = (357.529 + 0.98560028 * D) * M_PI / 180;
-  q = 280.459 + 0.98564736 * D;
-  L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
+  const double g = (357.529 + 0.98560028 * D) * M_PI / 180;
+  const double q = 280.459 + 0.98564736 * D;
+  const double L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
 
   /* Mean obliquity of the ecliptic [rad]... */
-  e = (23.439 - 0.00000036 * D) * M_PI / 180;
+  const double e = (23.439 - 0.00000036 * D) * M_PI / 180;
 
   /* Declination [rad]... */
-  dec = asin(sin(e) * sin(L));
+  const double sindec = sin(e) * sin(L);
 
   /* Right ascension [rad]... */
-  ra = atan2(cos(e) * sin(L), cos(L));
+  const double ra = atan2(cos(e) * sin(L), cos(L));
 
   /* Greenwich Mean Sidereal Time [h]... */
-  GMST = 18.697374558 + 24.06570982441908 * D;
+  const double GMST = 18.697374558 + 24.06570982441908 * D;
 
   /* Local Sidereal Time [h]... */
-  LST = GMST + lon / 15;
+  const double LST = GMST + lon / 15;
 
   /* Hour angle [rad]... */
-  h = LST / 12 * M_PI - ra;
+  const double h = LST / 12 * M_PI - ra;
 
   /* Convert latitude... */
-  lat *= M_PI / 180;
+  const double lat_help = lat * M_PI / 180;
 
   /* Return solar zenith angle [rad]... */
-  return acos(sin(lat) * sin(dec) + cos(lat) * cos(dec) * cos(h));
+  return acos(sin(lat_help) * sindec +
+	      cos(lat_help) * sqrt(1 - SQR(sindec)) * cos(h));
 }
 
 /*****************************************************************************/
 
 void time2jsec(
-  int year,
-  int mon,
-  int day,
-  int hour,
-  int min,
-  int sec,
-  double remain,
+  const int year,
+  const int mon,
+  const int day,
+  const int hour,
+  const int min,
+  const int sec,
+  const double remain,
   double *jsec) {
 
   struct tm t0, t1;
@@ -4983,10 +4982,10 @@ double time_from_filename(
 /*****************************************************************************/
 
 double tropo_weight(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p) {
+  const clim_t * clim,
+  const double t,
+  const double lat,
+  const double p) {
 
   /* Get tropopause pressure... */
   double pt = clim_tropo(clim, t, lat);
@@ -5764,9 +5763,10 @@ void write_grid(
   /* Allocate... */
   ALLOC(cd, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-  for (int iq = 0; iq < ctl->nq; iq++)
+  for (int iq = 0; iq < ctl->nq; iq++) {
     ALLOC(mean[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+  }
   ALLOC(vmr_impl, double,
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   ALLOC(z, double,
@@ -6122,11 +6122,11 @@ int write_met(
   /* Check compression flags... */
 #ifndef ZFP
   if (ctl->met_type == 3)
-    ERRMSG("zfp compression not supported!");
+    ERRMSG("MPTRAC was compiled without zfp compression!");
 #endif
 #ifndef ZSTD
   if (ctl->met_type == 4)
-    ERRMSG("zstd compression not supported!");
+    ERRMSG("MPTRAC was compiled without zstd compression!");
 #endif
 
   /* Write binary data... */
@@ -6194,17 +6194,17 @@ int write_met(
     write_met_bin_2d(out, met, met->cin, "CIN");
 
     /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, 0.5);
-    write_met_bin_3d(out, ctl, met, met->t, "T", 0, 5.0);
-    write_met_bin_3d(out, ctl, met, met->u, "U", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->v, "V", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->w, "W", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->pv, "PV", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->o3, "O3", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 8, 0);
-    write_met_bin_3d(out, ctl, met, met->cc, "CC", 8, 0);
+    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, ctl->met_zfp_tol_z);
+    write_met_bin_3d(out, ctl, met, met->t, "T", 0, ctl->met_zfp_tol_t);
+    write_met_bin_3d(out, ctl, met, met->u, "U", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->v, "V", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->w, "W", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->pv, "PV", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->o3, "O3", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", ctl->met_zfp_prec, 0);
+    write_met_bin_3d(out, ctl, met, met->cc, "CC", ctl->met_zfp_prec, 0);
 
     /* Write final flag... */
     int final = 999;
@@ -6287,9 +6287,16 @@ void write_met_bin_3d(
 
   /* Write zfp data... */
 #ifdef ZFP
-  else if (ctl->met_type == 3)
+  else if (ctl->met_type == 3) {
+    FWRITE(&precision, int,
+	   1,
+	   out);
+    FWRITE(&tolerance, double,
+	   1,
+	   out);
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 0, out);
+  }
 #endif
 
   /* Write zstd data... */

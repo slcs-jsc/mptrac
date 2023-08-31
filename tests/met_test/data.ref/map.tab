@@ -39,10 +39,10 @@
 # $39 = frost point temperature [K]
 # $40 = NAT temperature [K]
 # $41 = HNO3 volume mixing ratio [ppv]
-# $42 = OH concentration [molec/cm^3]
-# $43 = H2O2 concentration [molec/cm^3]
-# $44 = HO2 concentration [molec/cm^3]
-# $45 = O1D concentration [molec/cm^3]
+# $42 = OH concentration [ppv]
+# $43 = H2O2 concentration [ppv]
+# $44 = HO2 concentration [ppv]
+# $45 = O1D concentration [ppv]
 # $46 = boundary layer pressure [hPa]
 # $47 = number of data points
 # $48 = number of tropopause data points

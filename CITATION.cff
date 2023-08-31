@@ -28,6 +28,11 @@ authors:
     email: k.haghighi.mood@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0000-0002-8578-4961'
+  - given-names: Yen-Sen
+    family-names: Lu
+    email: ye.lu@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
+    orcid: 'https://orcid.org/0000-0002-3255-824X'
 identifiers:
   - type: doi
     value: 10.5194/gmd-2021-382

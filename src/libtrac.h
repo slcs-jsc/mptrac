@@ -298,8 +298,8 @@
   ((x) - (int) ((x) / (y)) * (y))
 
 /*! Read binary data. */
-#define FREAD(ptr, type, size, out) {					\
-    if(fread(ptr, sizeof(type), size, out)!=size)			\
+#define FREAD(ptr, type, size, in) {					\
+    if(fread(ptr, sizeof(type), size, in)!=size)			\
       ERRMSG("Error while reading!");					\
   }
 
@@ -453,10 +453,10 @@
 	  "# $40 = NAT temperature [K]\n");				\
   fprintf(out,								\
 	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
-	  "# $42 = OH concentration [molec/cm^3]\n"			\
-	  "# $43 = H2O2 concentration [molec/cm^3]\n"			\
-	  "# $44 = HO2 concentration [molec/cm^3]\n"			\
-	  "# $45 = O1D concentration [molec/cm^3]\n"			\
+	  "# $42 = OH concentration [ppv]\n"			\
+	  "# $43 = H2O2 concentration [ppv]\n"			\
+	  "# $44 = HO2 concentration [ppv]\n"			\
+	  "# $45 = O1D concentration [ppv]\n"			\
 	  "# $46 = boundary layer pressure [hPa]\n"			\
 	  "# $47 = number of data points\n"				\
 	  "# $48 = number of tropopause data points\n"			\
@@ -464,7 +464,7 @@
 
 /*! Calculate molecular density of an ideal gas. */
 #define MOLEC_DENS(p,t)			\
-  AVO * 1e-6 * (p * 100) / (RI * t)
+  (AVO * 1e-6 * ((p) * 100) / (RI * (t)))
 
 /*! Execute netCDF library command and check result. */
 #define NC(cmd) {				     \
@@ -1088,6 +1088,15 @@ typedef struct {
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
+  /*! ZFP compression precision (for all variables, except z and T). */
+  int met_zfp_prec;
+
+  /*! ZFP compression tolerance (for temperature). */
+  double met_zfp_tol_t;
+
+  /*! ZFP compression tolerance (for geopotential height). */
+  double met_zfp_tol_z;
+
   /*! Stride for longitudes. */
   int met_dx;
 
@@ -1664,13 +1673,13 @@ typedef struct {
 /*! Climatological data in form of time series. */
 typedef struct {
 
-  /*! Number of climatological data timesteps. */
+  /*! Number of timesteps. */
   int ntime;
 
-  /*! Climatological data time steps [s]. */
+  /*! Time [s]. */
   double time[CTS];
 
-  /*! Climatological data volume mixing ratios [ppv]. */
+  /*! Volume mixing ratio [ppv]. */
   double vmr[CTS];
 
 } clim_ts_t;
@@ -1678,26 +1687,26 @@ typedef struct {
 /*! Climatological data in form of zonal means. */
 typedef struct {
 
-  /*! Number of climatological data timesteps. */
+  /*! Number of timesteps. */
   int ntime;
 
-  /*! Number of climatological data latitudes. */
+  /*! Number of latitudes. */
   int nlat;
 
-  /*! Number of climatological data pressure levels. */
+  /*! Number of pressure levels. */
   int np;
 
-  /*! Climatological data time steps [s]. */
+  /*! Time [s]. */
   double time[CT];
 
-  /*! Climatological data latitudes [deg]. */
+  /*! Latitude [deg]. */
   double lat[CY];
 
-  /*! Climatological data pressure levels [hPa]. */
+  /*! Pressure [hPa]. */
   double p[CP];
 
-  /*! Climatological data concentrations [molec/cm^3]. */
-  double var[CT][CP][CY];
+  /*! Volume mixing ratio [ppv]. */
+  double vmr[CT][CP][CY];
 
 } clim_zm_t;
 
@@ -1719,19 +1728,19 @@ typedef struct {
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
 
-  /*! HNO3 climatology data [ppv]. */
+  /*! HNO3 zonal means. */
   clim_zm_t hno3;
 
-  /*! OH climatology data [molec/cm^3]. */
+  /*! OH zonal means. */
   clim_zm_t oh;
 
-  /*! H2O2 climatology data [molec/cm^3]. */
+  /*! H2O2 zonal means. */
   clim_zm_t h2o2;
 
-  /*! HO2 climatology data [molec/cm^3]. */
+  /*! HO2 zonal means. */
   clim_zm_t ho2;
 
-  /*! O(1D) climatology data [molec/cm^3]. */
+  /*! O(1D) zonal means. */
   clim_zm_t o1d;
 
   /*! CFC-10 time series. */
@@ -1893,14 +1902,14 @@ typedef struct {
 
 /*! Calculate buoyancy frequency. */
 double buoyancy_frequency(
-  double p0,
-  double t0,
-  double p1,
-  double t1);
+  const double p0,
+  const double t0,
+  const double p1,
+  const double t1);
 
 /*! Convert Cartesian coordinates to geolocation. */
 void cart2geo(
-  double *x,
+  const double *x,
   double *z,
   double *lon,
   double *lat);
@@ -1917,9 +1926,9 @@ int check_finite(
 #pragma acc routine (clim_tropo)
 #endif
 double clim_tropo(
-  clim_t * clim,
-  double t,
-  double lat);
+  const clim_t * clim,
+  const double t,
+  const double lat);
 
 /*! Initialize tropopause climatology. */
 void clim_tropo_init(
@@ -1930,12 +1939,12 @@ void clim_tropo_init(
 #pragma acc routine (clim_oh)
 #endif
 double clim_oh(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  double lon,
-  double lat,
-  double p);
+  const ctl_t * ctl,
+  const clim_t * clim,
+  const double t,
+  const double lon,
+  const double lat,
+  const double p);
 
 /*! Initialization function for OH climatology. */
 void clim_oh_diurnal_correction(
@@ -1947,18 +1956,18 @@ void clim_oh_diurnal_correction(
 #pragma acc routine (clim_ts)
 #endif
 double clim_ts(
-  clim_ts_t * var,
-  double t);
+  const clim_ts_t * ts,
+  const double t);
 
 /*! Interpolate zonal mean climatology. */
 #ifdef _OPENACC
 #pragma acc routine (clim_zm)
 #endif
 double clim_zm(
-  clim_zm_t * var,
-  double t,
-  double lat,
-  double p);
+  const clim_zm_t * zm,
+  const double t,
+  const double lat,
+  const double p);
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -1995,23 +2004,23 @@ void compress_zstd(
 
 /*! Get day of year from date. */
 void day2doy(
-  int year,
-  int mon,
-  int day,
+  const int year,
+  const int mon,
+  const int day,
   int *doy);
 
 /*! Get date from day of year. */
 void doy2day(
-  int year,
-  int doy,
+  const int year,
+  const int doy,
   int *mon,
   int *day);
 
 /*! Convert geolocation to Cartesian coordinates. */
 void geo2cart(
-  double z,
-  double lon,
-  double lat,
+  const double z,
+  const double lon,
+  const double lat,
   double *x);
 
 /*! Get meteo data for given time step. */
@@ -2138,7 +2147,7 @@ void intpol_met_time_uvw(
 
 /*! Convert seconds to date. */
 void jsec2time(
-  double jsec,
+  const double jsec,
   int *year,
   int *mon,
   int *day,
@@ -2152,18 +2161,18 @@ void jsec2time(
 #pragma acc routine (kernel_weight)
 #endif
 double kernel_weight(
-  double kz[EP],
-  double kw[EP],
-  int nk,
-  double p);
+  const double kz[EP],
+  const double kw[EP],
+  const int nk,
+  const double p);
 
 /*! Calculate moist adiabatic lapse rate. */
 #ifdef _OPENACC
 #pragma acc routine (lapse_rate)
 #endif
 double lapse_rate(
-  double t,
-  double h2o);
+  const double t,
+  const double h2o);
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC
@@ -2188,23 +2197,23 @@ int locate_reg(
 #pragma acc routine (nat_temperature)
 #endif
 double nat_temperature(
-  double p,
-  double h2o,
-  double hno3);
+  const double p,
+  const double h2o,
+  const double hno3);
 
 /*! Parallel quicksort. */
 void quicksort(
   double arr[],
   int brr[],
-  int low,
-  int high);
+  const int low,
+  const int high);
 
 /*! Partition function for quicksort. */
 int quicksort_partition(
   double arr[],
   int brr[],
-  int low,
-  int high);
+  const int low,
+  const int high);
 
 /*! Read atmospheric data. */
 int read_atm(
@@ -2250,8 +2259,7 @@ int read_clim_ts(
 void read_clim_zm(
   char *filename,
   char *varname,
-  char *units,
-  clim_zm_t * var);
+  clim_zm_t * zm);
 
 /*! Read control parameters. */
 void read_ctl(
@@ -2262,7 +2270,7 @@ void read_ctl(
 
 /*! Read kernel data file. */
 void read_kernel(
-  char *filename,
+  const char *filename,
   double kz[EP],
   double kw[EP],
   int *nk);
@@ -2287,9 +2295,7 @@ void read_met_bin_3d(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance);
+  char *varname);
 
 /*! Calculate convective available potential energy. */
 void read_met_cape(
@@ -2410,47 +2416,47 @@ double scan_ctl(
 #pragma acc routine (sedi)
 #endif
 double sedi(
-  double p,
-  double T,
-  double rp,
-  double rhop);
+  const double p,
+  const double T,
+  const double rp,
+  const double rhop);
 
 /*! Spline interpolation. */
 void spline(
-  double *x,
-  double *y,
-  int n,
-  double *x2,
+  const double *x,
+  const double *y,
+  const int n,
+  const double *x2,
   double *y2,
-  int n2,
-  int method);
+  const int n2,
+  const int method);
 
 /*! Calculate standard deviation. */
 #ifdef _OPENACC
 #pragma acc routine (stddev)
 #endif
 float stddev(
-  float *data,
-  int n);
+  const float *data,
+  const int n);
 
 /*! Calculate solar zenith angle. */
 #ifdef _OPENACC
 #pragma acc routine (sza_calc)
 #endif
 double sza_calc(
-  double sec,
-  double lon,
-  double lat);
+  const double sec,
+  const double lon,
+  const double lat);
 
 /*! Convert date to seconds. */
 void time2jsec(
-  int year,
-  int mon,
-  int day,
-  int hour,
-  int min,
-  int sec,
-  double remain,
+  const int year,
+  const int mon,
+  const int day,
+  const int hour,
+  const int min,
+  const int sec,
+  const double remain,
   double *jsec);
 
 /*! Measure wall-clock time. */
@@ -2469,10 +2475,10 @@ double time_from_filename(
 #pragma acc routine (tropo_weight)
 #endif
 double tropo_weight(
-  clim_t * clim,
-  double t,
-  double lat,
-  double p);
+  const clim_t * clim,
+  const double t,
+  const double lat,
+  const double p);
 
 /*! Write atmospheric data. */
 void write_atm(
