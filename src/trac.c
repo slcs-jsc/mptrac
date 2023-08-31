@@ -2454,7 +2454,8 @@ void write_output(
 #endif
 
   /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
+  if (ctl->atm_basename[0] != '-' && \
+	(fmod(t, ctl->atm_dt_out) == 0 || (t == ctl->t_stop))) {
     if (ctl->atm_type == 0)
       sprintf(ext, "tab");
     else if (ctl->atm_type == 1)
