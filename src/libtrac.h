@@ -782,6 +782,9 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
+  /*! Use predefined pressure levels or not. */
+  int press_level_def;
+
   /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
   int vert_coord_ap;
 
@@ -2173,6 +2176,10 @@ double kernel_weight(
 double lapse_rate(
   const double t,
   const double h2o);
+  
+/*! Get predefined pressure levels. */
+void level_definitions(
+  ctl_t* ctl);
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC
