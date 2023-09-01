@@ -312,6 +312,10 @@
 /*! Initialize cache variables for interpolation. */
 #define INTPOL_INIT						\
   double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
+  
+/*! Initialize cache variables for interpolation in diabatic scheme. */
+#define INTPOL_INIT_DIA	\
+  int ci[3] = {0, 0, 0}; double cw[4] = {0.0, 0.0, 0.0, 0.0};
 
 /*! 2-D interpolation of a meteo variable. */
 #define INTPOL_2D(var, init)						\
@@ -781,6 +785,10 @@ void thrustSortWrapper(
 
 /*! Control parameters. */
 typedef struct {
+
+  /*! Coupled use of pressure based modules and diabatic advection. 
+  (0= no coupling, 1= coupling) */
+  int cpl_zeta_and_press_modules;
 
   /*! Use predefined pressure levels or not. */
   int press_level_def;
@@ -1698,6 +1706,9 @@ typedef struct {
 
   /*! Number of pressure levels. */
   int np;
+  
+  /*! Number of model levels. */
+  int npl;
 
   /*! Time [s]. */
   double time[CT];
@@ -1855,9 +1866,15 @@ typedef struct {
 
   /*! Zonal wind [m/s]. */
   float u[EX][EY][EP];
+  
+  /*! Zonal wind on model levels [m/s]. */
+  float ul[EX][EY][EP];
 
   /*! Meridional wind [m/s]. */
   float v[EX][EY][EP];
+  
+  /*! Meridional wind on model levels [m/s]. */
+  float vl[EX][EY][EP];
 
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
@@ -1891,6 +1908,15 @@ typedef struct {
 
   /*! Vertical velocity [K/s]. */
   float zeta_dot[EX][EY][EP];
+  
+  /*! Zeta on model levels [K]. */
+  float zetal[EX][EY][EP];
+
+  /*! Vertical velocity on model levels [K/s]. */
+  float zeta_dotl[EX][EY][EP];
+
+  /*! Hybrid model levels */
+  double hybrid[EP];
 
 #ifdef UVW
   /*! Cache for wind data. */
@@ -2048,6 +2074,48 @@ void get_met_replace(
   char *orig,
   char *search,
   char *repl);
+  
+/*! Spatiotemporal interpolation of meteo data. !*/  
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_4d_coord)
+#endif
+void intpol_met_4d_coord(
+  met_t * met0,
+  float height0[EX][EY][EP],
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float height1[EX][EY][EP],
+  float array1[EX][EY][EP],
+  double ts,
+  double height,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init
+  );
+
+#ifdef UVW
+void intpol_met_4d_coord_uvw(
+  met_t * met0,
+  float heights0[EX][EY][EP],
+  float uvw0[EX][EY][EP][3],
+  met_t * met1,
+  float heights1[EX][EY][EP],
+  float uvw1[EX][EY][EP][3],
+  double ts,
+  double height, 
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *zeta_dot,
+  int *ci,
+  double *cw,
+  int init
+  );
+#endif
 
 /*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
@@ -2198,6 +2266,26 @@ int locate_reg(
   const double *xx,
   const int n,
   const double x);
+  
+/*! Locate the four vertical indizes of a box for a given height value. */
+#ifdef _OPENACC
+#pragma acc routine (locate_vert)
+#endif
+void locate_vert(
+  float profiles[EX][EY][EP],
+  int np,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double alt_ap,
+  int *ind);
+
+/*! locate the index in a column of a three dimensional array. */  
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x);
 
 /*! Calculate NAT existence temperature. */
 #ifdef _OPENACC
@@ -2339,6 +2427,10 @@ void read_met_grid(
 void read_met_levels(
   int ncid,
   ctl_t * ctl,
+  met_t * met);
+  
+/*! Smooth vertical zeta and pressure profiles. */  
+void read_met_monotonize(
   met_t * met);
 
 /*! Convert meteo data from model levels to pressure levels. */
