@@ -13,7 +13,7 @@ The required parameters are as follows:
 * met_map: The output file in which the map should be stored.
 * met0 \[\<met1\> ...]: The meteorological data from which the climatology should be created.
 
-Calling met_map and creating out of the 0.3° x 0.3° ER5 data a data set on a 1° x 1° would look like as follows:
+Calling met_map and creating out of the 0.3° x 0.3° ERA5 data on a 1° x 1° map would look like as follows:
 
 ```
 # Calling met_map
