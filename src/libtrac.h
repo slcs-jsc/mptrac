@@ -786,6 +786,9 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  int atm_type_out;
+
   /*! Coupled use of pressure based modules and diabatic advection. 
   (0= no coupling, 1= coupling) */
   int cpl_zeta_and_press_modules;
@@ -999,6 +1002,9 @@ typedef struct {
 
   /*! Quantity array index for zeta vertical coordinate. */
   int qnt_zeta;
+  
+  /*! Quantity array index for diagnosed zeta vertical coordinate. */
+  int qnt_zeta_d;
 
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
@@ -1095,7 +1101,7 @@ typedef struct {
 
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;
-
+  
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
@@ -1707,9 +1713,6 @@ typedef struct {
   /*! Number of pressure levels. */
   int np;
   
-  /*! Number of model levels. */
-  int npl;
-
   /*! Time [s]. */
   double time[CT];
 
@@ -1788,6 +1791,9 @@ typedef struct {
 
   /*! Number of pressure levels. */
   int np;
+  
+  /*! Number of model levels. */
+  int npl;
 
   /*! Longitude [deg]. */
   double lon[EX];
@@ -2599,11 +2605,20 @@ void write_atm_bin(
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Write atmospheric data in CLaMS format. */
+/*! Write atmospheric data in CLaMS position file format. */
 void write_atm_clams(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm
+  );
+
+/*! Write atmospheric data in CLaMS position file and trajectory format */  
+void write_atm_clams_traj(
+  const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
-  double t);
+  double t
+  );
 
 /*! Write atmospheric data in netCDF format. */
 void write_atm_nc(

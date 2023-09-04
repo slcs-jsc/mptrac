@@ -888,6 +888,444 @@ void get_met_replace(
 
 /*****************************************************************************/
 
+void intpol_met_4d_coord(
+  met_t * met0,
+  float heights0[EX][EY][EP],
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float heights1[EX][EY][EP],
+  float array1[EX][EY][EP],
+  double ts,
+  double height, 
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init
+  )  {
+
+  if (init) {
+
+    /* Restrict positions to coordinate range... */
+    lon = FMOD(lon, 360.);
+    if (met0->lon[met0->nx - 1] > 180 && lon < 0)
+      lon += 360;  
+
+    /* Get horizontal indizes... */
+    ci[0] = locate_irr(met0->lon, met0->nx, lon);
+    ci[1] = locate_irr(met0->lat, met0->ny, lat);
+
+    /* Locate the vertical indizes for each edge of the column... */
+    int ind[2][4];
+    locate_vert(heights0, met0->npl, ci[0], ci[1], height, ind[0]);
+    locate_vert(heights1, met1->npl, ci[0], ci[1], height, ind[1]);
+
+    /* Find minimum and maximum indizes... */
+    ci[2] = ind[0][0];
+    int k_max = ind[0][0];
+    for (int i=0;i<2;i++) 
+      for (int j=0;j<4;j++) {
+    	if (ci[2]>ind[i][j])
+    	  ci[2]=ind[i][j];
+    	if (k_max<ind[i][j])
+    	  k_max=ind[i][j];
+    	}
+
+    /* Get weighting factors for time, longitude and latitude... */
+    cw[3] = (ts - met0->time) / (met1->time - met0->time);
+    cw[0] = (lon - met0->lon[ci[0]])/
+    	    (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
+    cw[1] = (lat - met0->lat[ci[1]])/
+            (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);  
+
+    /* Start determiniation of the altitude weighting factor... */  
+    double height_top, height_bot;  
+    double height00, height01, height10, height11, height0, height1;
+
+    /* Interpolate in time at the lowest level... */
+    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]]
+                   -heights0[ci[0]  ][ci[1]  ][ci[2]])
+                   +heights0[ci[0]  ][ci[1]  ][ci[2]];
+    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]]
+                   -heights0[ci[0]  ][ci[1]+1][ci[2]])
+                   +heights0[ci[0]  ][ci[1]+1][ci[2]];
+    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]]
+                   -heights0[ci[0]+1][ci[1]  ][ci[2]])
+                   +heights0[ci[0]+1][ci[1]  ][ci[2]];
+    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]]
+                   -heights0[ci[0]+1][ci[1]+1][ci[2]])
+                   +heights0[ci[0]+1][ci[1]+1][ci[2]];
+
+    /* Interpolate in latitude direction... */
+    height0 =  cw[1] * (height01 - height00) + height00;
+    height1 =  cw[1] * (height11 - height10) + height10;
+
+    /* Interpolate in longitude direction...*/
+    height_bot = cw[0] * (height1 - height0) + height0;
+
+    /* Interpolate in time at the upper level... */
+    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
+                   -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
+                   +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
+    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
+                   -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
+                   +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
+    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
+                   -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
+                   +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
+    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
+                   -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
+                   +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
+
+    /* Interpolate in latitude direction... */
+    height0 =  cw[1] * (height01 - height00) + height00;
+    height1 =  cw[1] * (height11 - height10) + height10;
+
+    /* Interpolate in longitude direction... */
+    height_top =  cw[0] * (height1 - height0) + height0;    
+
+    /* Search at higher levels if height is not in box... */
+    while( 
+    	((heights0[0][0][0]>heights0[0][0][1]) &&
+    	((height_bot <= height) || (height_top > height)) 
+        && (height_bot >= height) && (ci[2] < k_max))
+        ||
+        ((heights0[0][0][0]<heights0[0][0][1]) &&
+        ((height_bot >= height) || (height_top < height)) 
+        && (height_bot <= height) && (ci[2] < k_max))
+        ) {
+
+      ci[2]++;
+      height_bot = height_top;
+
+      /* Interpolate in time at the next level... */
+      height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
+                     -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
+                     +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
+      height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
+                     -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
+                     +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
+      height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
+                     -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
+                     +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
+      height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
+                     -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
+                     +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
+
+      /* Interpolate in latitude direction... */
+      height0 =  cw[1] * (height01 - height00) + height00;
+      height1 =  cw[1] * (height11 - height10) + height10;
+
+      /* Interpolate in longitude direction... */
+      height_top =  cw[0] * (height1 - height0) + height0;
+    }
+
+   /* Get vertical weighting factors... */
+   cw[2] = (height - height_bot)
+      /(height_top - height_bot);
+
+  } 
+
+  /* Calculate the needed array values... */
+  double array000=cw[3]*(array1[ci[0]  ][ci[1]  ][ci[2]  ]
+                        -array0[ci[0]  ][ci[1]  ][ci[2]  ])
+                        +array0[ci[0]  ][ci[1]  ][ci[2]  ];
+  double array100=cw[3]*(array1[ci[0]+1][ci[1]  ][ci[2]  ]
+                        -array0[ci[0]+1][ci[1]  ][ci[2]  ])
+                        +array0[ci[0]+1][ci[1]  ][ci[2]  ];
+  double array010=cw[3]*(array1[ci[0]  ][ci[1]+1][ci[2]  ]
+                        -array0[ci[0]  ][ci[1]+1][ci[2]  ]) 
+                        +array0[ci[0]  ][ci[1]+1][ci[2]  ];
+  double array110=cw[3]*(array1[ci[0]+1][ci[1]+1][ci[2]  ]
+                        -array0[ci[0]+1][ci[1]+1][ci[2]  ])
+                        +array0[ci[0]+1][ci[1]+1][ci[2]  ];
+  double array001=cw[3]*(array1[ci[0]  ][ci[1]  ][ci[2]+1]
+                        -array0[ci[0]  ][ci[1]  ][ci[2]+1])
+                        +array0[ci[0]  ][ci[1]  ][ci[2]+1];
+  double array101=cw[3]*(array1[ci[0]+1][ci[1]  ][ci[2]+1]
+                        -array0[ci[0]+1][ci[1]  ][ci[2]+1])
+                        +array0[ci[0]+1][ci[1]  ][ci[2]+1];
+  double array011=cw[3]*(array1[ci[0]  ][ci[1]+1][ci[2]+1]
+                        -array0[ci[0]  ][ci[1]+1][ci[2]+1])
+                        +array0[ci[0]  ][ci[1]+1][ci[2]+1];
+  double array111=cw[3]*(array1[ci[0]+1][ci[1]+1][ci[2]+1]
+                        -array0[ci[0]+1][ci[1]+1][ci[2]+1])
+                        +array0[ci[0]+1][ci[1]+1][ci[2]+1];
+
+  double array00 = cw[0]*(array100-array000)+array000;
+  double array10 = cw[0]*(array110-array010)+array010;
+  double array01 = cw[0]*(array101-array001)+array001;
+  double array11 = cw[0]*(array111-array011)+array011;
+
+  double aux0 = cw[1]*(array10-array00)+array00;
+  double aux1 = cw[1]*(array11-array01)+array01;
+
+  /* Interpolate vertically... */
+  *var =  cw[2] * (aux1 - aux0) + aux0;
+
+} 
+
+/*****************************************************************************/
+#ifdef UVW
+void intpol_met_4d_coord_uvw(
+  met_t * met0,
+  float heights0[EX][EY][EP],
+  float uvw0[EX][EY][EP][3],
+  met_t * met1,
+  float heights1[EX][EY][EP],
+  float uvw1[EX][EY][EP][3],
+  double ts,
+  double height, 
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *zeta_dot,
+  int *ci,
+  double *cw,
+  int init
+  )  {
+
+  if (init) {
+
+    /* Restrict positions to coordinate range... */
+    lon = FMOD(lon, 360.);
+    if (met0->lon[met0->nx - 1] > 180 && lon < 0)
+      lon += 360;  
+
+    /* Get horizontal indizes... */
+    ci[0] = locate_irr(met0->lon, met0->nx, lon);
+    ci[1] = locate_irr(met0->lat, met0->ny, lat);
+
+    /* Locate the vertical indizes for each edge of the column... */
+    int ind[2][4];
+    locate_vert(heights0, met0->npl, ci[0], ci[1], height, ind[0]);
+    locate_vert(heights1, met1->npl, ci[0], ci[1], height, ind[1]);
+
+    /* Find minimum and maximum indizes... */
+    ci[2] = ind[0][0];
+    int k_max = ind[0][0];
+    for (int i=0;i<2;i++) 
+      for (int j=0;j<4;j++) {
+    	if (ci[2]>ind[i][j])
+    	  ci[2]=ind[i][j];
+    	if (k_max<ind[i][j])
+    	  k_max=ind[i][j];
+    	}
+
+    /* Get weighting factors for time, longitude and latitude... */
+    cw[3] = (ts - met0->time) / (met1->time - met0->time);
+    cw[0] = (lon - met0->lon[ci[0]])/
+    	    (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
+    cw[1] = (lat - met0->lat[ci[1]])/
+            (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);  
+
+    /* Start determiniation of the altitude weighting factor... */  
+    double height_top, height_bot;  
+    double height00, height01, height10, height11, height0, height1;
+
+    /* Interpolate in time at the lowest level... */
+    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]]
+                   -heights0[ci[0]  ][ci[1]  ][ci[2]])
+                   +heights0[ci[0]  ][ci[1]  ][ci[2]];
+    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]]
+                   -heights0[ci[0]  ][ci[1]+1][ci[2]])
+                   +heights0[ci[0]  ][ci[1]+1][ci[2]];
+    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]]
+                   -heights0[ci[0]+1][ci[1]  ][ci[2]])
+                   +heights0[ci[0]+1][ci[1]  ][ci[2]];
+    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]]
+                   -heights0[ci[0]+1][ci[1]+1][ci[2]])
+                   +heights0[ci[0]+1][ci[1]+1][ci[2]];
+
+    /* Interpolate in latitude direction... */
+    height0 =  cw[1] * (height01 - height00) + height00;
+    height1 =  cw[1] * (height11 - height10) + height10;
+
+    /* Interpolate in longitude direction...*/
+    height_bot = cw[0] * (height1 - height0) + height0;
+
+    /* Interpolate in time at the upper level... */
+    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
+                   -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
+                   +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
+    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
+                   -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
+                   +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
+    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
+                   -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
+                   +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
+    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
+                   -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
+                   +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
+
+    /* Interpolate in latitude direction... */
+    height0 =  cw[1] * (height01 - height00) + height00;
+    height1 =  cw[1] * (height11 - height10) + height10;
+
+    /* Interpolate in longitude direction... */
+    height_top =  cw[0] * (height1 - height0) + height0;    
+
+    /* Search at higher levels if height is not in box... */
+    while( 
+    	((heights0[0][0][0]>heights0[0][0][1]) &&
+    	((height_bot <= height) || (height_top > height)) 
+        && (height_bot >= height) && (ci[2] < k_max))
+        ||
+        ((heights0[0][0][0]<heights0[0][0][1]) &&
+        ((height_bot >= height) || (height_top < height)) 
+        && (height_bot <= height) && (ci[2] < k_max))
+        )  {
+
+      ci[2]++;
+      height_bot = height_top;
+
+      /* Interpolate in time at the next level... */
+      height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
+                     -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
+                     +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
+      height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
+                     -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
+                     +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
+      height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
+                     -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
+                     +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
+      height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
+                     -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
+                     +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
+
+      /* Interpolate in latitude direction... */
+      height0 =  cw[1] * (height01 - height00) + height00;
+      height1 =  cw[1] * (height11 - height10) + height10;
+
+      /* Interpolate in longitude direction... */
+      height_top =  cw[0] * (height1 - height0) + height0;
+    }
+
+   /* Get vertical weighting factors... */
+   cw[2] = (height - height_bot)
+      /(height_top - height_bot);
+
+  } 
+
+  /* Calculate the needed array values... */
+  double u000=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]  ][0]
+                    -uvw0[ci[0]  ][ci[1]  ][ci[2]  ][0])
+                    +uvw0[ci[0]  ][ci[1]  ][ci[2]  ][0];
+  double u100=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]  ][0]
+                    -uvw0[ci[0]+1][ci[1]  ][ci[2]  ][0])
+                    +uvw0[ci[0]+1][ci[1]  ][ci[2]  ][0];
+  double u010=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]  ][0]
+                    -uvw0[ci[0]  ][ci[1]+1][ci[2]  ][0]) 
+                    +uvw0[ci[0]  ][ci[1]+1][ci[2]  ][0];
+  double u110=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]  ][0]
+                    -uvw0[ci[0]+1][ci[1]+1][ci[2]  ][0])
+                    +uvw0[ci[0]+1][ci[1]+1][ci[2]  ][0];
+  double u001=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]+1][0]
+                    -uvw0[ci[0]  ][ci[1]  ][ci[2]+1][0])
+                    +uvw0[ci[0]  ][ci[1]  ][ci[2]+1][0];
+  double u101=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]+1][0]
+                    -uvw0[ci[0]+1][ci[1]  ][ci[2]+1][0])
+                    +uvw0[ci[0]+1][ci[1]  ][ci[2]+1][0];
+  double u011=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]+1][0]
+                    -uvw0[ci[0]  ][ci[1]+1][ci[2]+1][0])
+                    +uvw0[ci[0]  ][ci[1]+1][ci[2]+1][0];
+  double u111=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]+1][0]
+                    -uvw0[ci[0]+1][ci[1]+1][ci[2]+1][0])
+                    +uvw0[ci[0]+1][ci[1]+1][ci[2]+1][0];
+
+    /* Calculate the needed array values... */
+  double v000=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]  ][1]
+                    -uvw0[ci[0]  ][ci[1]  ][ci[2]  ][1])
+                    +uvw0[ci[0]  ][ci[1]  ][ci[2]  ][1];
+  double v100=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]  ][1]
+                    -uvw0[ci[0]+1][ci[1]  ][ci[2]  ][1])
+                    +uvw0[ci[0]+1][ci[1]  ][ci[2]  ][1];
+  double v010=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]  ][1]
+                    -uvw0[ci[0]  ][ci[1]+1][ci[2]  ][1]) 
+                    +uvw0[ci[0]  ][ci[1]+1][ci[2]  ][1];
+  double v110=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]  ][1]
+                    -uvw0[ci[0]+1][ci[1]+1][ci[2]  ][1])
+                    +uvw0[ci[0]+1][ci[1]+1][ci[2]  ][1];
+  double v001=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]+1][1]
+                    -uvw0[ci[0]  ][ci[1]  ][ci[2]+1][1])
+                    +uvw0[ci[0]  ][ci[1]  ][ci[2]+1][1];
+  double v101=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]+1][1]
+                    -uvw0[ci[0]+1][ci[1]  ][ci[2]+1][1])
+                    +uvw0[ci[0]+1][ci[1]  ][ci[2]+1][1];
+  double v011=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]+1][1]
+                    -uvw0[ci[0]  ][ci[1]+1][ci[2]+1][1])
+                    +uvw0[ci[0]  ][ci[1]+1][ci[2]+1][1];
+  double v111=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]+1][1]
+                    -uvw0[ci[0]+1][ci[1]+1][ci[2]+1][1])
+                    +uvw0[ci[0]+1][ci[1]+1][ci[2]+1][1];
+
+    /* Calculate the needed array values... */
+  double zeta_dot000=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]  ][2]
+                      -uvw0[ci[0]  ][ci[1]  ][ci[2]  ][2])
+                      +uvw0[ci[0]  ][ci[1]  ][ci[2]  ][2];
+  double zeta_dot100=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]  ][2]
+                      -uvw0[ci[0]+1][ci[1]  ][ci[2]  ][2])
+                      +uvw0[ci[0]+1][ci[1]  ][ci[2]  ][2];
+  double zeta_dot010=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]  ][2]
+                      -uvw0[ci[0]  ][ci[1]+1][ci[2]  ][2]) 
+                      +uvw0[ci[0]  ][ci[1]+1][ci[2]  ][2];
+  double zeta_dot110=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]  ][2]
+                      -uvw0[ci[0]+1][ci[1]+1][ci[2]  ][2])
+                      +uvw0[ci[0]+1][ci[1]+1][ci[2]  ][2];
+  double zeta_dot001=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]+1][2]
+                      -uvw0[ci[0]  ][ci[1]  ][ci[2]+1][2])
+                      +uvw0[ci[0]  ][ci[1]  ][ci[2]+1][2];
+  double zeta_dot101=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]+1][2]
+                      -uvw0[ci[0]+1][ci[1]  ][ci[2]+1][2])
+                      +uvw0[ci[0]+1][ci[1]  ][ci[2]+1][2];
+  double zeta_dot011=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]+1][2]
+                      -uvw0[ci[0]  ][ci[1]+1][ci[2]+1][2])
+                      +uvw0[ci[0]  ][ci[1]+1][ci[2]+1][2];
+  double zeta_dot111=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]+1][2]
+                      -uvw0[ci[0]+1][ci[1]+1][ci[2]+1][2])
+                      +uvw0[ci[0]+1][ci[1]+1][ci[2]+1][2];
+
+  double u00 = cw[0]*(u100-u000)+u000;
+  double u10 = cw[0]*(u110-u010)+u010;
+  double u01 = cw[0]*(u101-u001)+u001;
+  double u11 = cw[0]*(u111-u011)+u011;
+
+  double auxu0 = cw[1]*(u10-u00)+u00;
+  double auxu1 = cw[1]*(u11-u01)+u01;
+
+  /* Interpolate vertically... */
+  *u =  cw[2] * (auxu1 - auxu0) + auxu0;
+
+  double v00 = cw[0]*(v100-v000)+v000;
+  double v10 = cw[0]*(v110-v010)+v010;
+  double v01 = cw[0]*(v101-v001)+v001;
+  double v11 = cw[0]*(v111-v011)+v011;
+
+  double auxv0 = cw[1]*(v10-v00)+v00;
+  double auxv1 = cw[1]*(v11-v01)+v01;
+
+  /* Interpolate vertically... */
+  *v =  cw[2] * (auxv1 - auxv0) + auxv0;
+
+  double zeta_dot00 = cw[0]*(zeta_dot100-zeta_dot000)+zeta_dot000;
+  double zeta_dot10 = cw[0]*(zeta_dot110-zeta_dot010)+zeta_dot010;
+  double zeta_dot01 = cw[0]*(zeta_dot101-zeta_dot001)+zeta_dot001;
+  double zeta_dot11 = cw[0]*(zeta_dot111-zeta_dot011)+zeta_dot011;
+
+  double auxzeta_dot0 = cw[1]*(zeta_dot10-zeta_dot00)+zeta_dot00;
+  double auxzeta_dot1 = cw[1]*(zeta_dot11-zeta_dot01)+zeta_dot01;
+
+  /* Interpolate vertically... */
+  *zeta_dot =  cw[2] * (auxzeta_dot1 - auxzeta_dot0) + auxzeta_dot0;
+
+
+} 
+#endif
+
+/*****************************************************************************/
+
 void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
@@ -1231,6 +1669,55 @@ void jsec2time(
 
 /*****************************************************************************/
 
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x) {
+
+  int ilo = 0;
+  int ihi = np - 1;
+  int i = (ihi + ilo) >> 1;
+
+  if (profiles[ind_lon][ind_lat][i] < profiles[ind_lon][ind_lat][i+1])
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (profiles[ind_lon][ind_lat][i] > x)
+	{ihi = i;}
+      else
+	{ilo = i;}
+  } else
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (profiles[ind_lon][ind_lat][i] <= x)
+	{ihi = i;}
+      else
+	{ilo = i;}
+    }
+
+  return ilo;
+}
+
+/*****************************************************************************/
+
+void locate_vert(
+  float profiles[EX][EY][EP],
+  int np,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double height_ap,
+  int *ind) {
+
+  ind[0] = locate_irr_3d(profiles, np, lon_ap_ind  , lat_ap_ind  , height_ap);
+  ind[1] = locate_irr_3d(profiles, np, lon_ap_ind+1, lat_ap_ind  , height_ap); 
+  ind[2] = locate_irr_3d(profiles, np, lon_ap_ind  , lat_ap_ind+1, height_ap);
+  ind[3] = locate_irr_3d(profiles, np, lon_ap_ind+1, lat_ap_ind+1, height_ap);
+
+}
+
+/*****************************************************************************/
+
 double kernel_weight(
   const double kz[EP],
   const double kw[EP],
@@ -1499,7 +1986,7 @@ int read_atm(
     result = read_atm_nc(filename, ctl, atm);
 
   /* Read CLaMS data... */
-  else if (ctl->atm_type == 3)
+  else if (ctl->atm_type == 3 || ctl->atm_type == 4)
     result = read_atm_clams(filename, ctl, atm);
 
   /* Error... */
@@ -1667,14 +2154,19 @@ int read_atm_clams(
 
   /* Read zeta coordinate, pressure is optional... */
   if (ctl->vert_coord_ap == 1) {
-    NC_GET_DOUBLE("ZETA", atm->zeta, 1);
+    NC_GET_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1); 
     NC_GET_DOUBLE("PRESS", atm->p, 0);
   }
 
   /* Read pressure, zeta coordinate is optional... */
   else {
-    NC_GET_DOUBLE("PRESS", atm->p, 1);
-    NC_GET_DOUBLE("ZETA", atm->zeta, 0);
+    if (nc_inq_varid(ncid, "PRESS_INIT", &varid) == NC_NOERR) {
+      NC(nc_get_var_double(ncid, varid, atm->p));
+    } else {
+      WARN("PRESS_INIT not found use PRESS instead!");
+      nc_inq_varid(ncid, "PRESS", &varid);
+      NC(nc_get_var_double(ncid, varid, atm->p));
+    }
   }
 
   /* Read longitude and latitude... */
@@ -2008,6 +2500,7 @@ void read_ctl(
   ctl->qnt_rhice = -1;
   ctl->qnt_theta = -1;
   ctl->qnt_zeta = -1;
+  ctl->qnt_zeta_d = -1;
   ctl->qnt_tvirt = -1;
   ctl->qnt_lapse = -1;
   ctl->qnt_vh = -1;
@@ -2113,6 +2606,7 @@ void read_ctl(
       SET_QNT(qnt_rhice, "rhice", "relative humidity over ice", "%%")
       SET_QNT(qnt_theta, "theta", "potential temperature", "K")
       SET_QNT(qnt_zeta, "zeta", "zeta coordinate", "K")
+      SET_QNT(qnt_zeta_d, "zeta_d", "diagnosed zeta coordinate", "K")
       SET_QNT(qnt_tvirt, "tvirt", "virtual temperature", "K")
       SET_QNT(qnt_lapse, "lapse", "temperature lapse rate", "K/km")
       SET_QNT(qnt_vh, "vh", "horizontal velocity", "m/s")
@@ -2157,8 +2651,21 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
   ctl->vert_vel =
     (int) scan_ctl(filename, argc, argv, "VERT_VEL", -1, "0", NULL);
+  if (ctl->vert_vel == 1) {
+    int error = 1;
+    for (int iq = 0; iq < ctl->nq; iq++) {
+    	if (strcmp(ctl->qnt_name[iq], "zeta") == 0) { 
+    	  error = 0;
+    	  break;
+    	}
+    }
+    if (error == 1)
+      ERRMSG("Please add zeta to your quantities for diabatic calculations.");
+  }
   ctl->clams_met_data =
     (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
+  ctl-> cpl_zeta_and_press_modules =
+    (int) scan_ctl(filename, argc, argv, "CPL_ZETA_PRESS_MODULES", -1, "1", NULL);
 
   /* Time steps of simulation... */
   ctl->direction =
@@ -2551,6 +3058,10 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_STRIDE", -1, "1", NULL);
   ctl->atm_type =
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE", -1, "0", NULL);
+  ctl->atm_type_out =
+    (int) scan_ctl(filename, argc, argv, "ATM_TYPE_OUT", -1, "-1", NULL);
+  if (ctl->atm_type_out==-1)
+     ctl->atm_type_out = ctl->atm_type;    
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -2767,6 +3278,10 @@ int read_met(
 
     /* Detrending... */
     read_met_detrend(ctl, met);
+    
+    /* Check meteo data and smooth zeta profiles ... */
+    if (ctl->vert_vel == 1)
+      read_met_monotonize(met);
 
     /* Close file... */
     NC(nc_close(ncid));
@@ -3528,8 +4043,12 @@ void read_met_grid(
     sprintf(levname, "lev");
     if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR)
       sprintf(levname, "plev");
-  } else
+  } else {
     sprintf(levname, "hybrid");
+    NC_GET_DOUBLE(levname, met->hybrid, 1);
+    printf("Meteorological data is in hybrid coordinates.");
+  }
+    
   NC_INQ_DIM(levname, &met->np, 1, EP);
   if (met->np == 1) {
     int dimid;
@@ -3624,34 +4143,11 @@ void read_met_levels(
     }
     if (!read_met_nc_3d(ncid, "cc", "CC", ctl, met, met->cc, 1.0, 1))
       WARN("Cannot read cloud cover!");
-
-    /* Transfer from model levels to pressure levels... */
-    if (ctl->met_np > 0) {
-
-      /* Read pressure on model levels... */
-      if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
-	ERRMSG("Cannot read pressure on model levels!");
-
-      /* Vertical interpolation from model to pressure levels... */
-      read_met_ml2pl(ctl, met, met->t);
-      read_met_ml2pl(ctl, met, met->u);
-      read_met_ml2pl(ctl, met, met->v);
-      read_met_ml2pl(ctl, met, met->w);
-      read_met_ml2pl(ctl, met, met->h2o);
-      read_met_ml2pl(ctl, met, met->o3);
-      read_met_ml2pl(ctl, met, met->lwc);
-      read_met_ml2pl(ctl, met, met->iwc);
-      read_met_ml2pl(ctl, met, met->cc);
-
-      /* Set new pressure levels... */
-      met->np = ctl->met_np;
-      for (int ip = 0; ip < met->np; ip++)
-	met->p[ip] = ctl->met_p[ip];
-    }
-
-  }
-
-  /* CLaMS meteo data... */
+     
+  
+  } 
+  
+  /* CLaMS meteo data... */ 
   else if (ctl->clams_met_data == 1) {
 
     /* Read meteorological data... */
@@ -3701,47 +4197,67 @@ void read_met_levels(
     if (!read_met_nc_3d(ncid, "cc", "CC", ctl, met, met->cc, 1.0, 1))
       WARN("Cannot read cloud cover!");
 
-    /* Transfer from model levels to pressure levels... */
-    if (ctl->met_np > 0) {
-
-      /* Read pressure on model levels... */
-      if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
-	ERRMSG("Cannot read pressure on model levels!");
-
-      /* Vertical interpolation from model to pressure levels... */
-      read_met_ml2pl(ctl, met, met->t);
-      read_met_ml2pl(ctl, met, met->u);
-      read_met_ml2pl(ctl, met, met->v);
-      read_met_ml2pl(ctl, met, met->w);
-      read_met_ml2pl(ctl, met, met->h2o);
-      read_met_ml2pl(ctl, met, met->o3);
-      read_met_ml2pl(ctl, met, met->lwc);
-      read_met_ml2pl(ctl, met, met->iwc);
-      read_met_ml2pl(ctl, met, met->cc);
-      if (ctl->vert_vel == 1) {
-	read_met_ml2pl(ctl, met, met->zeta);
-	read_met_ml2pl(ctl, met, met->zeta_dot);
-      }
-
-      /* Set new pressure levels... */
-      met->np = ctl->met_np;
-      for (int ip = 0; ip < met->np; ip++)
-	met->p[ip] = ctl->met_p[ip];
-
-      /* Create a pressure field... */
-      for (int i = 0; i < met->nx; i++)
-	for (int j = 0; j < met->ny; j++)
-	  for (int k = 0; k < met->np; k++) {
-	    met->patp[i][j][k] = (float) met->p[k];
-	  }
-    }
   } else
     ERRMSG("Meteo data format unknown!");
+    
+   if (ctl->vert_vel == 1) {
+    #ifdef UVW
+    #pragma omp parallel for default(shared) collapse(2)
+    for (int ix = 0; ix < met->nx; ix++)
+     for (int iy = 0; iy < met->ny; iy++)
+       for (int ip = 0; ip < met->np; ip++) {
+	 met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
+	 met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
+	 met->uvw[ix][iy][ip][2] = met->zeta_dot[ix][iy][ip];
+	 met->zetal[ix][iy][ip] = met->zeta[ix][iy][ip];
+       }
+    #else
+    /* Store the velocities on model levels for diabatic advection... */
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+        for (int ip = 0; ip < met->np; ip++) {
+          met->ul[ix][iy][ip] = met->u[ix][iy][ip];
+          met->vl[ix][iy][ip] = met->v[ix][iy][ip];
+          met->zetal[ix][iy][ip] = met->zeta[ix][iy][ip];
+          met->zeta_dotl[ix][iy][ip] = met->zeta_dot[ix][iy][ip];
+        }
+     /* Original number of vertical levels... */
+    #endif
+    met->npl=met->np;
+   }
 
+   if (ctl->met_np > 0 || ctl->vert_vel == 1) {
+      /* Read pressure on model levels... */
+      if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
+      	if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
+		ERRMSG("Cannot read pressure on model levels!");
+   }
+
+  /* Transfer from model levels to pressure levels... */
+  if (ctl->met_np > 0) {
+
+    /* Vertical interpolation from model to pressure levels... */
+    read_met_ml2pl(ctl, met, met->t);
+    read_met_ml2pl(ctl, met, met->u);
+    read_met_ml2pl(ctl, met, met->v);
+    read_met_ml2pl(ctl, met, met->w);
+    read_met_ml2pl(ctl, met, met->h2o);
+    read_met_ml2pl(ctl, met, met->o3);
+    read_met_ml2pl(ctl, met, met->lwc);
+    read_met_ml2pl(ctl, met, met->iwc);
+    read_met_ml2pl(ctl, met, met->cc);
+
+    /* Set new pressure levels... */
+    met->np = ctl->met_np;
+    for (int ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
+    }
+  
   /* Check ordering of pressure levels... */
   for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
+
 }
 
 /*****************************************************************************/
@@ -3782,6 +4298,86 @@ void read_met_ml2pl(
       /* Copy data... */
       for (int ip = 0; ip < ctl->met_np; ip++)
 	var[ix][iy][ip] = (float) aux[ip];
+    }
+}
+
+/*****************************************************************************/
+
+void read_met_monotonize(
+  met_t * met) {
+
+  /* Create monotone zeta profiles... */
+  #pragma omp parallel for default(shared) collapse(2)
+  for (int i = 0; i < met->nx; i++)
+    for (int j = 0; j < met->ny; j++)
+    {
+       int k = 1;
+
+       while (k<met->npl)
+       {  /* Check if there is an inversion at level k... */
+          if ((met->zetal[i][j][k - 1]>=met->zetal[i][j][k]))
+          {
+             /* Find the upper level k+l over the inversion... */
+             int l = 0;
+             do {l++;}
+             while ((met->zetal[i][j][k-1]>=met->zetal[i][j][k+l]) & (k+l<met->npl)); 
+
+             /* Interpolate linear between the top and bottom 
+             of the inversion... */
+             float s = (float) (met->zetal[i][j][k+l]-met->zetal[i][j][k-1])
+                      /(float)(met->hybrid[k+l]-met->hybrid[k-1]);
+
+             for (int m=k; m<k+l; m++)
+             {
+                float d = (float) (met->hybrid[m] - met->hybrid[k - 1]);
+                met->zetal[i][j][m] = s*d + met->zetal[i][j][k - 1];
+             }
+
+             /* Search for more inversions above the last inversion ... */
+             k=k+l; 
+          }
+          else
+          {
+             k++;
+          }
+       }  
+    }  
+
+  /* Create monotone pressure profiles... */
+  #pragma omp parallel for default(shared) collapse(2)
+  for (int i = 0; i < met->nx; i++)
+    for (int j = 0; j < met->ny; j++)
+    {
+       int k = 1;
+
+       while (k<met->npl)
+       {  /* Check if there is an inversion at level k... */
+          if ((met->pl[i][j][k - 1]<=met->pl[i][j][k]))
+          {
+             /* Find the upper level k+l over the inversion... */
+             int l = 0;
+             do {l++;}
+             while ((met->pl[i][j][k-1]<=met->pl[i][j][k+l]) & (k+l<met->npl)); 
+
+             /* Interpolate linear between the top and bottom 
+             of the inversion... */
+             float s = (float) (met->pl[i][j][k+l]-met->pl[i][j][k-1])
+                      /(float)(met->hybrid[k+l]-met->hybrid[k-1]);
+
+             for (int m=k; m<k+l; m++)
+             {
+                float d = (float) (met->hybrid[m] - met->hybrid[k - 1]);
+                met->pl[i][j][m] = s*d + met->pl[i][j][k - 1];
+             }
+
+             /* Search for more inversions above the last inversion ... */
+             k=k+l; 
+          }
+          else
+          {
+             k++;
+          }
+       }  
     }
 }
 
@@ -4135,6 +4731,14 @@ void read_met_periodic(
       met->lwc[met->nx - 1][iy][ip] = met->lwc[0][iy][ip];
       met->iwc[met->nx - 1][iy][ip] = met->iwc[0][iy][ip];
       met->cc[met->nx - 1][iy][ip] = met->cc[0][iy][ip];
+      met->patp[met->nx - 1][iy][ip] = met->patp[0][iy][ip];
+    }
+    for (int ip = 0; ip < met->npl; ip++) {
+      met->ul[met->nx - 1][iy][ip] = met->ul[0][iy][ip];
+      met->vl[met->nx - 1][iy][ip] = met->vl[0][iy][ip];
+      met->pl[met->nx - 1][iy][ip] = met->pl[0][iy][ip];
+      met->zetal[met->nx - 1][iy][ip] = met->zetal[0][iy][ip];
+      met->zeta_dotl[met->nx - 1][iy][ip] = met->zeta_dotl[0][iy][ip];
     }
   }
 }
@@ -5104,20 +5708,24 @@ void write_atm(
   LOG(1, "Write atmospheric data: %s", filename);
 
   /* Write ASCII data... */
-  if (ctl->atm_type == 0)
+  if (ctl->atm_type_out == 0)
     write_atm_asc(filename, ctl, atm, t);
 
   /* Write binary data... */
-  else if (ctl->atm_type == 1)
+  else if (ctl->atm_type_out == 1)
     write_atm_bin(filename, ctl, atm);
 
   /* Write netCDF data... */
-  else if (ctl->atm_type == 2)
+  else if (ctl->atm_type_out == 2)
     write_atm_nc(filename, ctl, atm);
 
-  /* Write CLaMS data... */
-  else if (ctl->atm_type == 3)
-    write_atm_clams(ctl, atm, t);
+  /* Write CLaMS trajectory data... */
+  else if (ctl->atm_type_out == 3)
+    write_atm_clams_traj(filename, ctl, atm, t);
+    
+  /* Write CLaMS pos data... */
+  else if (ctl->atm_type_out == 4)
+    write_atm_clams(filename, ctl, atm);
 
   /* Error... */
   else
@@ -5279,51 +5887,53 @@ void write_atm_bin(
 
 /*****************************************************************************/
 
-void write_atm_clams(
+void write_atm_clams_traj(
+  const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
-  double t) {
+  double t
+  ) {
 
   /* Global Counter... */
   static size_t out_cnt = 0;
 
-  char filename_out[2 * LEN] = "./traj_fix_3d_YYYYMMDDHH_YYYYMMDDHH.nc";
-
   double r, r_start, r_stop;
-
   int year, mon, day, hour, min, sec;
   int year_start, mon_start, day_start, hour_start, min_start, sec_start;
   int year_stop, mon_stop, day_stop, hour_stop, min_stop, sec_stop;
-  int ncid, varid, tid, pid, cid, zid, dim_ids[2];
+  char filename_out[2 * LEN] = "traj_fix_3d_YYYYMMDDHH_YYYYMMDDHH.nc";
+  
+  int ncid, varid, tid, pid, cid;
+  int dim_ids[2];
 
   /* time, nparc */
-  size_t start[2], count[2];
+  size_t start[2];
+  size_t count[2];
 
   /* Determine start and stop times of calculation... */
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
   jsec2time(ctl->t_start, &year_start, &mon_start, &day_start, &hour_start,
-	    &min_start, &sec_start, &r_start);
+	      &min_start, &sec_start, &r_start);
   jsec2time(ctl->t_stop, &year_stop, &mon_stop, &day_stop, &hour_stop,
-	    &min_stop, &sec_stop, &r_stop);
-
-  /* Set filename... */
-  sprintf(filename_out,
-	  "./traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc",
-	  year_start % 100, mon_start, day_start, hour_start,
-	  year_stop % 100, mon_stop, day_stop, hour_stop);
-  printf("Write traj file: %s\n", filename_out);
+	      &min_stop, &sec_stop, &r_stop);
+  
+  sprintf(filename_out, "%s/traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc",
+            dirname,
+	    year_start % 100, mon_start, day_start, hour_start,
+	    year_stop % 100, mon_stop, day_stop, hour_stop);
+  LOG(1, "Write traj file: %s", filename_out);      
 
   /* Define hyperslap for the traj_file... */
   start[0] = out_cnt;
   start[1] = 0;
   count[0] = 1;
   count[1] = (size_t) atm->np;
-
+  
   /* Create the file at the first timestep... */
   if (out_cnt == 0) {
 
     /* Create file... */
-    NC(nc_create(filename_out, NC_CLOBBER, &ncid));
+    nc_create(filename_out, NC_CLOBBER, &ncid);
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
@@ -5364,9 +5974,9 @@ void write_atm_clams(
   NC_PUT_DOUBLE("LON", atm->lon, 1);
   NC_PUT_DOUBLE("PRESS", atm->p, 1);
   if (ctl->vert_coord_ap == 1) {
-    NC_PUT_DOUBLE("ZETA", atm->zeta, 1);
-  } else if (ctl->qnt_zeta >= 0) {
     NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1);
+  } else if (ctl->qnt_zeta >= 0) {
+    NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta_d], 1);
   }
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 1);
@@ -5380,12 +5990,13 @@ void write_atm_clams(
 
     /* Set filename... */
     char filename_init[2 * LEN] = "./init_fix_YYYYMMDDHH.nc";
-    sprintf(filename_init, "./init_fix_%02d%02d%02d%02d.nc",
+    sprintf(filename_init, "%s/init_fix_%02d%02d%02d%02d.nc",
+    	    dirname,
 	    year_stop % 100, mon_stop, day_stop, hour_stop);
-    printf("Write init file: %s\n", filename_init);
+    LOG(1, "Write init file: %s", filename_init);
 
     /* Create file... */
-    NC(nc_create(filename_init, NC_CLOBBER, &ncid));
+    nc_create(filename_init, NC_CLOBBER, &ncid);
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -5400,8 +6011,8 @@ void write_atm_clams(
     NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
     NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
     NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
-    NC_DEF_VAR("ZETA_GRID", NC_DOUBLE, 1, &zid, "levels", "K");
-    NC_DEF_VAR("ZETA_DELTA", NC_DOUBLE, 1, &zid, "Width of zeta levels", "K");
+    //NC_DEF_VAR("ZETA_GRID", NC_DOUBLE, 1, &zid, "levels", "K");
+    //NC_DEF_VAR("ZETA_DELTA", NC_DOUBLE, 1, &zid, "Width of zeta levels", "K");
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
 		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
@@ -5418,7 +6029,7 @@ void write_atm_clams(
     NC_PUT_DOUBLE("LAT", atm->lat, 0);
     NC_PUT_DOUBLE("LON", atm->lon, 0);
     NC_PUT_DOUBLE("PRESS", atm->p, 0);
-    NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 0);
+    NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta_d], 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
 
@@ -5426,6 +6037,61 @@ void write_atm_clams(
     NC(nc_close(ncid));
   }
 }
+
+/*****************************************************************************/
+
+void write_atm_clams(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm
+  ) {
+  
+  int tid, pid, ncid, varid;
+  size_t start[2], count[2];
+
+  /* Create file... */
+  nc_create(filename, NC_CLOBBER, &ncid);
+
+  /* Define dimensions... */
+  NC(nc_def_dim(ncid, "time", 1, &tid));
+  NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
+  
+  int dim_ids[2] = {tid, pid};
+  
+  /* Define variables and their attributes... */
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
+	       "seconds since 2000-01-01 00:00:00 UTC");
+  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
+  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
+  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
+  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+  //NC_DEF_VAR("ZETA_GRID", NC_DOUBLE, 1, &zid, "levels", "K");
+  //NC_DEF_VAR("ZETA_DELTA", NC_DOUBLE, 1, &zid, "Width of zeta levels", "K");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
+     ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+
+  /* Define global attributes... */
+  NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
+  NC_PUT_ATT_GLOBAL("model", "MPTRAC");
+
+  /* End definitions... */
+  NC(nc_enddef(ncid));
+
+  /* Write data... */
+  NC_PUT_DOUBLE("time", atm->time, 0);
+  NC_PUT_DOUBLE("LAT", atm->lat, 0);
+  NC_PUT_DOUBLE("LON", atm->lon, 0);
+  NC_PUT_DOUBLE("PRESS", atm->p, 0);
+  NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta_d], 0);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
+
+  /* Close file... */
+  NC(nc_close(ncid));
+  
+}
+
 
 /*****************************************************************************/
 

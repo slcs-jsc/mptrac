@@ -74,7 +74,15 @@ void module_advect(
   met_t * met1,
   atm_t * atm,
   double *dt);
-
+  
+/*! Calculate advection of air parcels. */
+void module_advect_diabatic(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+  
 /*! Apply boundary conditions. */
 void module_bound_cond(
   ctl_t * ctl,
@@ -418,6 +426,17 @@ int main(
     /* Initialize isosurface... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
+      
+    /* Initialize pressure heights consistent with zeta ... */
+    if (ctl.vert_coord_ap == 1) {
+      INTPOL_INIT_DIA
+      for (int ip = 0; ip < atm->np; ip++) {
+        intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal, met1->pl, 
+      			   atm->time[ip], atm->q[ctl.qnt_zeta][ip], 
+      			   atm->lon[ip], atm->lat[ip], &atm->p[ip], 
+      			   ci, cw, 1);
+      }
+    }
 
     /* Update GPU... */
 #ifdef _OPENACC
@@ -474,14 +493,18 @@ int main(
 	  /* Sort particles... */
 	  if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
 	    module_sort(&ctl, met0, atm);
-
+	 
 	  /* Check positions (initial)... */
 	  module_position(&ctl, met0, met1, atm, dt);
-
+	  
 	  /* Advection... */
-	  if (ctl.advect > 0)
-	    module_advect(&ctl, met0, met1, atm, dt);
-
+	  if (ctl.advect > 0) {
+	    if (ctl.vert_vel == 0)
+	      module_advect(&ctl, met0, met1, atm, dt);
+	    else
+	      module_advect_diabatic(&ctl, met0, met1, atm, dt);
+	    }
+	 
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	      || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
@@ -506,7 +529,7 @@ int main(
 
 	  /* Check positions (final)... */
 	  module_position(&ctl, met0, met1, atm, dt);
-
+	  
 	  /* Interpolate meteo data... */
 	  if (ctl.met_dt_out > 0
 	      && (ctl.met_dt_out < ctl.dt_mod
@@ -713,6 +736,102 @@ void module_advect(
     atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
     atm->p[ip] += dt[ip] * wm;
   }
+}
+
+/*****************************************************************************/
+
+void module_advect_diabatic(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
+
+  const int np = atm->np;
+#ifdef _OPENACC
+#pragma acc data present(ctl,met0,met1,atm,dt)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (dt[ip] != 0) {
+       /* If other modules have changed p translate it into a zeta... */
+       if (ctl->cpl_zeta_and_press_modules > 0) {
+          INTPOL_INIT_DIA
+          intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1, 
+          met1->pl, met1->zetal, atm->time[ip], atm->p[ip], atm->lon[ip], 
+          atm->lat[ip], &atm->q[ctl->qnt_zeta][ip], 
+          ci, cw, 1);
+        }
+
+      /* Init... */
+      double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3];
+
+      /* Loop over integration nodes... */
+      for (int i = 0; i < ctl->advect; i++) {
+
+	/* Set position... */
+	if (i == 0) {
+	  dts = 0.0;
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->q[ctl->qnt_zeta][ip];
+	} else {
+	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
+	}
+	double tm = atm->time[ip] + dts;
+
+	/* Interpolate meteo data... */
+#ifdef UVW
+       INTPOL_INIT_DIA
+       intpol_met_4d_coord_uvw(met0, met0->zetal, met0->uvw, met1, met1->zetal,
+	  		 met1->uvw, tm, x[2], x[0], x[1], &u[i], &v[i], &zeta_dot[i], ci, cw, 1); 
+#else
+        INTPOL_INIT_DIA
+	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
+	  		 met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal, 
+	  		 met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1, met1->zetal,
+	  		 met1->zeta_dotl, tm, x[2], x[0], x[1], &zeta_dot[i], ci, cw, 0);   
+#endif
+	/* Get mean wind... */
+	double k = 1.0;
+	if (ctl->advect == 2)
+	  k = (i == 0 ? 0.0 : 1.0);
+	else if (ctl->advect == 4)
+	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	um += k * u[i];
+	vm += k * v[i];
+	zeta_dotm += k * zeta_dot[i];
+      }
+
+      /* Set new position... */
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+      atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
+
+      /* Check if zeta is below zero... */
+      if (atm->q[ctl->qnt_zeta][ip]<0) {
+        atm->q[ctl->qnt_zeta][ip] = 0;
+        }
+
+      /* Set new position also in pressure coordinates... */
+      INTPOL_INIT_DIA
+      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal, met1->pl, 
+      			   atm->time[ip], atm->q[ctl->qnt_zeta][ip], 
+      			   atm->lon[ip], atm->lat[ip], &atm->p[ip], 
+      			   ci, cw, 1);
+    }
 }
 
 /*****************************************************************************/
@@ -1328,7 +1447,8 @@ void module_meteo(
     SET_ATM(qnt_rh, RH(atm->p[ip], t, h2o));
     SET_ATM(qnt_rhice, RHICE(atm->p[ip], t, h2o));
     SET_ATM(qnt_theta, THETA(atm->p[ip], t));
-    SET_ATM(qnt_zeta, ZETA(ps, atm->p[ip], t));
+    SET_ATM(qnt_zeta, atm->q[ctl->qnt_zeta][ip]);
+    SET_ATM(qnt_zeta_d, ZETA(ps, atm->p[ip], t));
     SET_ATM(qnt_tvirt, TVIRT(t, h2o));
     SET_ATM(qnt_lapse, lapse_rate(t, h2o));
     SET_ATM(qnt_pv, pv);
@@ -2457,11 +2577,11 @@ void write_output(
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0) {
-    if (ctl->atm_type == 0)
+    if (ctl->atm_type_out == 0)
       sprintf(ext, "tab");
-    else if (ctl->atm_type == 1)
+    else if (ctl->atm_type_out == 1)
       sprintf(ext, "bin");
-    else if (ctl->atm_type == 2)
+    else if (ctl->atm_type_out == 2)
       sprintf(ext, "nc");
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);

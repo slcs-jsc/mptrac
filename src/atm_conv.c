@@ -49,8 +49,16 @@ int main(
     ERRMSG("Cannot open file!");
 
   /* Write atmospheric data... */
-  ctl.atm_type = atoi(argv[5]);
-  write_atm(argv[4], &ctl, atm, 0);
+  if (ctl.atm_type_out == 3) {
+    /* For CLaMS trajectory files... */ 
+    ctl.t_start = ctl.t_stop;
+    ctl.atm_type_out = atoi(argv[5]);
+    write_atm(argv[4], &ctl, atm, ctl.t_stop); 
+  } else {
+    /* Otherwise... */
+    ctl.atm_type_out = atoi(argv[5]);
+    write_atm(argv[4], &ctl, atm, 0);
+  }
 
   /* Free... */
   free(atm);
