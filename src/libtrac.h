@@ -1653,9 +1653,6 @@ typedef struct {
   /*! Pressure [hPa]. */
   double p[NP];
 
-  /*! Zeta [K]. */
-  double zeta[NP];
-
   /*! Longitude [deg]. */
   double lon[NP];
 
@@ -2289,6 +2286,9 @@ void locate_vert(
   int *ind);
 
 /*! locate the index in a column of a three dimensional array. */  
+#ifdef _OPENACC
+#pragma acc routine (locate_irr_3d)
+#endif
 int locate_irr_3d(
   float profiles[EX][EY][EP],
   int np,
