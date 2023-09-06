@@ -1,5 +1,8 @@
 #! /bin/bash
 
+# Create directories...
+rm -rf data && mkdir -p data
+
 # Set environment...
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 
