@@ -2103,6 +2103,9 @@ void intpol_met_4d_coord(
   );
 
 #ifdef UVW
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_4d_coord_uvw)
+#endif
 void intpol_met_4d_coord_uvw(
   met_t * met0,
   float heights0[EX][EY][EP],

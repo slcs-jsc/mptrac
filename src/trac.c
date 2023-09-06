@@ -750,15 +750,9 @@ void module_advect_diabatic(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-#ifdef _OPENACC
-#pragma acc data present(ctl,met0,met1,atm,dt)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (dt[ip] != 0) {
+ 
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
        /* If other modules have changed p translate it into a zeta... */
        if (ctl->cpl_zeta_and_press_modules > 0) {
           INTPOL_INIT_DIA
