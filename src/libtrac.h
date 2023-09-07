@@ -802,9 +802,6 @@ typedef struct {
   /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
   int vert_coord_met;
 
-  /*! Vertical velocity (0=kinematic, 1=diabatic). */
-  int vert_vel;
-
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
   int clams_met_data;
 
@@ -1098,6 +1095,9 @@ typedef struct {
 
   /*! Time step of meteo data [s]. */
   double dt_met;
+  
+  /*! Convention of the data layout */
+  int met_convention;
 
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;

@@ -436,6 +436,7 @@ int main(
       			   atm->lon[ip], atm->lat[ip], &atm->p[ip], 
       			   ci, cw, 1);
       }
+      
     }
 
     /* Update GPU... */
@@ -499,7 +500,7 @@ int main(
 	  
 	  /* Advection... */
 	  if (ctl.advect > 0) {
-	    if (ctl.vert_vel == 0)
+	    if (ctl.vert_coord_ap == 0)
 	      module_advect(&ctl, met0, met1, atm, dt);
 	    else
 	      module_advect_diabatic(&ctl, met0, met1, atm, dt);

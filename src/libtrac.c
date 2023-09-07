@@ -2649,9 +2649,7 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
   ctl->vert_coord_met =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
-  ctl->vert_vel =
-    (int) scan_ctl(filename, argc, argv, "VERT_VEL", -1, "0", NULL);
-  if (ctl->vert_vel == 1) {
+  if (ctl->vert_coord_ap == 1) {
     int error = 1;
     for (int iq = 0; iq < ctl->nq; iq++) {
     	if (strcmp(ctl->qnt_name[iq], "zeta") == 0) { 
@@ -2678,6 +2676,8 @@ void read_ctl(
   /* Meteo data... */
   scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
   ctl->dt_met = scan_ctl(filename, argc, argv, "DT_MET", -1, "3600", NULL);
+  ctl->met_convention =
+    (int) scan_ctl(filename, argc, argv, "MET_CONVENTION", -1, "0", NULL);
   ctl->met_type =
     (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
   ctl->met_nc_scale =
@@ -3280,7 +3280,7 @@ int read_met(
     read_met_detrend(ctl, met);
     
     /* Check meteo data and smooth zeta profiles ... */
-    if (ctl->vert_vel == 1)
+    if (ctl->vert_coord_ap == 1)
       read_met_monotonize(met);
 
     /* Close file... */
@@ -4161,7 +4161,7 @@ void read_met_levels(
       WARN("Cannot read vertical velocity!");
     if (!read_met_nc_3d(ncid, "ZETA", "zeta", ctl, met, met->zeta, 1.0, 1))
       WARN("Cannot read ZETA in meteo data!");
-    if (ctl->vert_vel == 1) {
+    if (ctl->vert_coord_ap == 1) {
       if (!read_met_nc_3d
 	  (ncid, "ZETA_DOT_TOT", "zeta_dot_clr", ctl, met, met->zeta_dot,
 	   0.00001157407f, 1)) {
@@ -4200,7 +4200,7 @@ void read_met_levels(
   } else
     ERRMSG("Meteo data format unknown!");
     
-   if (ctl->vert_vel == 1) {
+   if (ctl->vert_coord_ap == 1) {
     #ifdef UVW
     #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
@@ -4224,13 +4224,14 @@ void read_met_levels(
      /* Original number of vertical levels... */
     #endif
     met->npl=met->np;
+    
    }
 
-   if (ctl->met_np > 0 || ctl->vert_vel == 1) {
+   if (ctl->met_np > 0 || ctl->vert_coord_ap == 1) {
       /* Read pressure on model levels... */
       if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
       	if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
-		ERRMSG("Cannot read pressure on model levels!");
+		ERRMSG("Cannot read pressure on model levels!");	
    }
 
   /* Transfer from model levels to pressure levels... */
@@ -4594,7 +4595,8 @@ int read_met_nc_3d(
 
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
-
+        		
+    if (ctl->met_convention == 0)  {
     /* Copy and check data... */
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
@@ -4610,6 +4612,23 @@ int read_met_nc_3d(
 	  else
 	    dest[ix][iy][ip] = GSL_NAN;
 	}
+    } else {
+     /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ip = 0; ip < met->np; ip++)
+        for (int iy = 0; iy < met->ny; iy++)
+ 	 for (int ix = 0; ix < met->nx; ix++) {
+	  if (init)
+	    dest[ix][iy][ip] = 0;
+	  float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy][ip] += scl * aux;
+	  else
+	    dest[ix][iy][ip] = GSL_NAN;
+	}
+    }
 
     /* Free... */
     free(help);
