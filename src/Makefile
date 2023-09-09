@@ -42,7 +42,7 @@ COV ?= 0
 NVTX ?= 0
 
 # Enable UVW cache...
-UVW ?= 0
+UVW ?= 1
 
 # Enable async IO for GPUs (experimental)...
 ASYNCIO ?= 0

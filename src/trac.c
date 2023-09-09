@@ -784,11 +784,6 @@ void module_advect_diabatic(
 	double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data... */
-#ifdef UVW
-       INTPOL_INIT_DIA
-       intpol_met_4d_coord_uvw(met0, met0->zetal, met0->uvw, met1, met1->zetal,
-	  		 met1->uvw, tm, x[2], x[0], x[1], &u[i], &v[i], &zeta_dot[i], ci, cw, 1); 
-#else
         INTPOL_INIT_DIA
 	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
 	  		 met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
@@ -796,7 +791,7 @@ void module_advect_diabatic(
 	  		 met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
 	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1, met1->zetal,
 	  		 met1->zeta_dotl, tm, x[2], x[0], x[1], &zeta_dot[i], ci, cw, 0);   
-#endif
+
 	/* Get mean wind... */
 	double k = 1.0;
 	if (ctl->advect == 2)

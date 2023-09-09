@@ -1067,264 +1067,6 @@ void intpol_met_4d_coord(
 } 
 
 /*****************************************************************************/
-#ifdef UVW
-void intpol_met_4d_coord_uvw(
-  met_t * met0,
-  float heights0[EX][EY][EP],
-  float uvw0[EX][EY][EP][3],
-  met_t * met1,
-  float heights1[EX][EY][EP],
-  float uvw1[EX][EY][EP][3],
-  double ts,
-  double height, 
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *zeta_dot,
-  int *ci,
-  double *cw,
-  int init
-  )  {
-
-  if (init) {
-
-    /* Restrict positions to coordinate range... */
-    lon = FMOD(lon, 360.);
-    if (met0->lon[met0->nx - 1] > 180 && lon < 0)
-      lon += 360;  
-
-    /* Get horizontal indizes... */
-    ci[0] = locate_irr(met0->lon, met0->nx, lon);
-    ci[1] = locate_irr(met0->lat, met0->ny, lat);
-
-    /* Locate the vertical indizes for each edge of the column... */
-    int ind[2][4];
-    locate_vert(heights0, met0->npl, ci[0], ci[1], height, ind[0]);
-    locate_vert(heights1, met1->npl, ci[0], ci[1], height, ind[1]);
-
-    /* Find minimum and maximum indizes... */
-    ci[2] = ind[0][0];
-    int k_max = ind[0][0];
-    for (int i=0;i<2;i++) 
-      for (int j=0;j<4;j++) {
-    	if (ci[2]>ind[i][j])
-    	  ci[2]=ind[i][j];
-    	if (k_max<ind[i][j])
-    	  k_max=ind[i][j];
-    	}
-
-    /* Get weighting factors for time, longitude and latitude... */
-    cw[3] = (ts - met0->time) / (met1->time - met0->time);
-    cw[0] = (lon - met0->lon[ci[0]])/
-    	    (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
-    cw[1] = (lat - met0->lat[ci[1]])/
-            (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);  
-
-    /* Start determiniation of the altitude weighting factor... */  
-    double height_top, height_bot;  
-    double height00, height01, height10, height11, height0, height1;
-
-    /* Interpolate in time at the lowest level... */
-    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]]
-                   -heights0[ci[0]  ][ci[1]  ][ci[2]])
-                   +heights0[ci[0]  ][ci[1]  ][ci[2]];
-    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]]
-                   -heights0[ci[0]  ][ci[1]+1][ci[2]])
-                   +heights0[ci[0]  ][ci[1]+1][ci[2]];
-    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]]
-                   -heights0[ci[0]+1][ci[1]  ][ci[2]])
-                   +heights0[ci[0]+1][ci[1]  ][ci[2]];
-    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]]
-                   -heights0[ci[0]+1][ci[1]+1][ci[2]])
-                   +heights0[ci[0]+1][ci[1]+1][ci[2]];
-
-    /* Interpolate in latitude direction... */
-    height0 =  cw[1] * (height01 - height00) + height00;
-    height1 =  cw[1] * (height11 - height10) + height10;
-
-    /* Interpolate in longitude direction...*/
-    height_bot = cw[0] * (height1 - height0) + height0;
-
-    /* Interpolate in time at the upper level... */
-    height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
-                   -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
-                   +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
-    height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
-                   -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
-                   +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
-    height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
-                   -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
-                   +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
-    height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
-                   -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
-                   +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
-
-    /* Interpolate in latitude direction... */
-    height0 =  cw[1] * (height01 - height00) + height00;
-    height1 =  cw[1] * (height11 - height10) + height10;
-
-    /* Interpolate in longitude direction... */
-    height_top =  cw[0] * (height1 - height0) + height0;    
-
-    /* Search at higher levels if height is not in box... */
-    while( 
-    	((heights0[0][0][0]>heights0[0][0][1]) &&
-    	((height_bot <= height) || (height_top > height)) 
-        && (height_bot >= height) && (ci[2] < k_max))
-        ||
-        ((heights0[0][0][0]<heights0[0][0][1]) &&
-        ((height_bot >= height) || (height_top < height)) 
-        && (height_bot <= height) && (ci[2] < k_max))
-        )  {
-
-      ci[2]++;
-      height_bot = height_top;
-
-      /* Interpolate in time at the next level... */
-      height00=cw[3]*(heights1[ci[0]  ][ci[1]  ][ci[2]+1]
-                     -heights0[ci[0]  ][ci[1]  ][ci[2]+1])
-                     +heights0[ci[0]  ][ci[1]  ][ci[2]+1];
-      height01=cw[3]*(heights1[ci[0]  ][ci[1]+1][ci[2]+1]
-                     -heights0[ci[0]  ][ci[1]+1][ci[2]+1])
-                     +heights0[ci[0]  ][ci[1]+1][ci[2]+1];
-      height10=cw[3]*(heights1[ci[0]+1][ci[1]  ][ci[2]+1]
-                     -heights0[ci[0]+1][ci[1]  ][ci[2]+1])
-                     +heights0[ci[0]+1][ci[1]  ][ci[2]+1];
-      height11=cw[3]*(heights1[ci[0]+1][ci[1]+1][ci[2]+1]
-                     -heights0[ci[0]+1][ci[1]+1][ci[2]+1])
-                     +heights0[ci[0]+1][ci[1]+1][ci[2]+1];
-
-      /* Interpolate in latitude direction... */
-      height0 =  cw[1] * (height01 - height00) + height00;
-      height1 =  cw[1] * (height11 - height10) + height10;
-
-      /* Interpolate in longitude direction... */
-      height_top =  cw[0] * (height1 - height0) + height0;
-    }
-
-   /* Get vertical weighting factors... */
-   cw[2] = (height - height_bot)
-      /(height_top - height_bot);
-
-  } 
-
-  /* Calculate the needed array values... */
-  double u000=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]  ][0]
-                    -uvw0[ci[0]  ][ci[1]  ][ci[2]  ][0])
-                    +uvw0[ci[0]  ][ci[1]  ][ci[2]  ][0];
-  double u100=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]  ][0]
-                    -uvw0[ci[0]+1][ci[1]  ][ci[2]  ][0])
-                    +uvw0[ci[0]+1][ci[1]  ][ci[2]  ][0];
-  double u010=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]  ][0]
-                    -uvw0[ci[0]  ][ci[1]+1][ci[2]  ][0]) 
-                    +uvw0[ci[0]  ][ci[1]+1][ci[2]  ][0];
-  double u110=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]  ][0]
-                    -uvw0[ci[0]+1][ci[1]+1][ci[2]  ][0])
-                    +uvw0[ci[0]+1][ci[1]+1][ci[2]  ][0];
-  double u001=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]+1][0]
-                    -uvw0[ci[0]  ][ci[1]  ][ci[2]+1][0])
-                    +uvw0[ci[0]  ][ci[1]  ][ci[2]+1][0];
-  double u101=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]+1][0]
-                    -uvw0[ci[0]+1][ci[1]  ][ci[2]+1][0])
-                    +uvw0[ci[0]+1][ci[1]  ][ci[2]+1][0];
-  double u011=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]+1][0]
-                    -uvw0[ci[0]  ][ci[1]+1][ci[2]+1][0])
-                    +uvw0[ci[0]  ][ci[1]+1][ci[2]+1][0];
-  double u111=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]+1][0]
-                    -uvw0[ci[0]+1][ci[1]+1][ci[2]+1][0])
-                    +uvw0[ci[0]+1][ci[1]+1][ci[2]+1][0];
-
-    /* Calculate the needed array values... */
-  double v000=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]  ][1]
-                    -uvw0[ci[0]  ][ci[1]  ][ci[2]  ][1])
-                    +uvw0[ci[0]  ][ci[1]  ][ci[2]  ][1];
-  double v100=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]  ][1]
-                    -uvw0[ci[0]+1][ci[1]  ][ci[2]  ][1])
-                    +uvw0[ci[0]+1][ci[1]  ][ci[2]  ][1];
-  double v010=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]  ][1]
-                    -uvw0[ci[0]  ][ci[1]+1][ci[2]  ][1]) 
-                    +uvw0[ci[0]  ][ci[1]+1][ci[2]  ][1];
-  double v110=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]  ][1]
-                    -uvw0[ci[0]+1][ci[1]+1][ci[2]  ][1])
-                    +uvw0[ci[0]+1][ci[1]+1][ci[2]  ][1];
-  double v001=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]+1][1]
-                    -uvw0[ci[0]  ][ci[1]  ][ci[2]+1][1])
-                    +uvw0[ci[0]  ][ci[1]  ][ci[2]+1][1];
-  double v101=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]+1][1]
-                    -uvw0[ci[0]+1][ci[1]  ][ci[2]+1][1])
-                    +uvw0[ci[0]+1][ci[1]  ][ci[2]+1][1];
-  double v011=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]+1][1]
-                    -uvw0[ci[0]  ][ci[1]+1][ci[2]+1][1])
-                    +uvw0[ci[0]  ][ci[1]+1][ci[2]+1][1];
-  double v111=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]+1][1]
-                    -uvw0[ci[0]+1][ci[1]+1][ci[2]+1][1])
-                    +uvw0[ci[0]+1][ci[1]+1][ci[2]+1][1];
-
-    /* Calculate the needed array values... */
-  double zeta_dot000=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]  ][2]
-                      -uvw0[ci[0]  ][ci[1]  ][ci[2]  ][2])
-                      +uvw0[ci[0]  ][ci[1]  ][ci[2]  ][2];
-  double zeta_dot100=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]  ][2]
-                      -uvw0[ci[0]+1][ci[1]  ][ci[2]  ][2])
-                      +uvw0[ci[0]+1][ci[1]  ][ci[2]  ][2];
-  double zeta_dot010=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]  ][2]
-                      -uvw0[ci[0]  ][ci[1]+1][ci[2]  ][2]) 
-                      +uvw0[ci[0]  ][ci[1]+1][ci[2]  ][2];
-  double zeta_dot110=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]  ][2]
-                      -uvw0[ci[0]+1][ci[1]+1][ci[2]  ][2])
-                      +uvw0[ci[0]+1][ci[1]+1][ci[2]  ][2];
-  double zeta_dot001=cw[3]*(uvw1[ci[0]  ][ci[1]  ][ci[2]+1][2]
-                      -uvw0[ci[0]  ][ci[1]  ][ci[2]+1][2])
-                      +uvw0[ci[0]  ][ci[1]  ][ci[2]+1][2];
-  double zeta_dot101=cw[3]*(uvw1[ci[0]+1][ci[1]  ][ci[2]+1][2]
-                      -uvw0[ci[0]+1][ci[1]  ][ci[2]+1][2])
-                      +uvw0[ci[0]+1][ci[1]  ][ci[2]+1][2];
-  double zeta_dot011=cw[3]*(uvw1[ci[0]  ][ci[1]+1][ci[2]+1][2]
-                      -uvw0[ci[0]  ][ci[1]+1][ci[2]+1][2])
-                      +uvw0[ci[0]  ][ci[1]+1][ci[2]+1][2];
-  double zeta_dot111=cw[3]*(uvw1[ci[0]+1][ci[1]+1][ci[2]+1][2]
-                      -uvw0[ci[0]+1][ci[1]+1][ci[2]+1][2])
-                      +uvw0[ci[0]+1][ci[1]+1][ci[2]+1][2];
-
-  double u00 = cw[0]*(u100-u000)+u000;
-  double u10 = cw[0]*(u110-u010)+u010;
-  double u01 = cw[0]*(u101-u001)+u001;
-  double u11 = cw[0]*(u111-u011)+u011;
-
-  double auxu0 = cw[1]*(u10-u00)+u00;
-  double auxu1 = cw[1]*(u11-u01)+u01;
-
-  /* Interpolate vertically... */
-  *u =  cw[2] * (auxu1 - auxu0) + auxu0;
-
-  double v00 = cw[0]*(v100-v000)+v000;
-  double v10 = cw[0]*(v110-v010)+v010;
-  double v01 = cw[0]*(v101-v001)+v001;
-  double v11 = cw[0]*(v111-v011)+v011;
-
-  double auxv0 = cw[1]*(v10-v00)+v00;
-  double auxv1 = cw[1]*(v11-v01)+v01;
-
-  /* Interpolate vertically... */
-  *v =  cw[2] * (auxv1 - auxv0) + auxv0;
-
-  double zeta_dot00 = cw[0]*(zeta_dot100-zeta_dot000)+zeta_dot000;
-  double zeta_dot10 = cw[0]*(zeta_dot110-zeta_dot010)+zeta_dot010;
-  double zeta_dot01 = cw[0]*(zeta_dot101-zeta_dot001)+zeta_dot001;
-  double zeta_dot11 = cw[0]*(zeta_dot111-zeta_dot011)+zeta_dot011;
-
-  double auxzeta_dot0 = cw[1]*(zeta_dot10-zeta_dot00)+zeta_dot00;
-  double auxzeta_dot1 = cw[1]*(zeta_dot11-zeta_dot01)+zeta_dot01;
-
-  /* Interpolate vertically... */
-  *zeta_dot =  cw[2] * (auxzeta_dot1 - auxzeta_dot0) + auxzeta_dot0;
-
-
-} 
-#endif
-
-/*****************************************************************************/
 
 void intpol_met_space_3d(
   met_t * met,
@@ -2680,6 +2422,8 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_CONVENTION", -1, "0", NULL);
   ctl->met_type =
     (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
+  if (ctl->vert_coord_ap == 1 && ctl->met_type != 0)
+    ERRMSG("Please use meteorological files in netcdf format for diabatic calculations.");
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
   ctl->met_zfp_prec =
@@ -4201,17 +3945,6 @@ void read_met_levels(
     ERRMSG("Meteo data format unknown!");
     
    if (ctl->vert_coord_ap == 1) {
-    #ifdef UVW
-    #pragma omp parallel for default(shared) collapse(2)
-    for (int ix = 0; ix < met->nx; ix++)
-     for (int iy = 0; iy < met->ny; iy++)
-       for (int ip = 0; ip < met->np; ip++) {
-	 met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
-	 met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
-	 met->uvw[ix][iy][ip][2] = met->zeta_dot[ix][iy][ip];
-	 met->zetal[ix][iy][ip] = met->zeta[ix][iy][ip];
-       }
-    #else
     /* Store the velocities on model levels for diabatic advection... */
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
@@ -4222,9 +3955,7 @@ void read_met_levels(
           met->zeta_dotl[ix][iy][ip] = met->zeta_dot[ix][iy][ip];
         }
      /* Original number of vertical levels... */
-    #endif
     met->npl=met->np;
-    
    }
 
    if (ctl->met_np > 0 || ctl->vert_coord_ap == 1) {
