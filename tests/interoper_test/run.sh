@@ -78,7 +78,7 @@ rm ${log}/*.txt
 trac=../../src
 
 # directory of the reanalysis data...
-metbase=../data/clams/erai
+metbase=../data/clams/erai_vlr
 
 # directory for the output...
 output=./data
@@ -106,7 +106,7 @@ t1=$(${trac}/time2jsec ${end_year} ${end_month} ${end_day} ${end_hour} 0 0 0)
 # Create control parameter file...
 cat > ${output}/trac.ctl <<EOF
 MET_CONVENTION = 1
-CPL_ZETA_PRESS_MODULES = 1
+CPL_ZETA_PRESS_MODULES = 0
 PRESS_LEVEL_DEF = 2
 ATM_TYPE = 3
 ATM_TYPE_OUT = 0
