@@ -312,7 +312,7 @@
 /*! Initialize cache variables for interpolation. */
 #define INTPOL_INIT						\
   double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
-  
+
 /*! Initialize cache variables for interpolation in diabatic scheme. */
 #define INTPOL_INIT_DIA	\
   int ci[3] = {0, 0, 0}; double cw[4] = {0.0, 0.0, 0.0, 0.0};
@@ -790,7 +790,7 @@ typedef struct {
   int atm_type_out;
 
   /*! Coupled use of pressure based modules and diabatic advection. 
-  (0= no coupling, 1= coupling) */
+     (0= no coupling, 1= coupling) */
   int cpl_zeta_and_press_modules;
 
   /*! Use predefined pressure levels or not. */
@@ -999,7 +999,7 @@ typedef struct {
 
   /*! Quantity array index for zeta vertical coordinate. */
   int qnt_zeta;
-  
+
   /*! Quantity array index for diagnosed zeta vertical coordinate. */
   int qnt_zeta_d;
 
@@ -1095,13 +1095,13 @@ typedef struct {
 
   /*! Time step of meteo data [s]. */
   double dt_met;
-  
+
   /*! Convention of the data layout */
   int met_convention;
 
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;
-  
+
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
@@ -1709,7 +1709,7 @@ typedef struct {
 
   /*! Number of pressure levels. */
   int np;
-  
+
   /*! Time [s]. */
   double time[CT];
 
@@ -1788,7 +1788,7 @@ typedef struct {
 
   /*! Number of pressure levels. */
   int np;
-  
+
   /*! Number of model levels. */
   int npl;
 
@@ -1861,6 +1861,9 @@ typedef struct {
   /*! Convective inhibition [J/kg]. */
   float cin[EX][EY];
 
+  /*! Total ozone column [DU]. */
+  float o3c[EX][EY];
+
   /*! Geopotential height [km]. */
   float z[EX][EY][EP];
 
@@ -1869,13 +1872,13 @@ typedef struct {
 
   /*! Zonal wind [m/s]. */
   float u[EX][EY][EP];
-  
+
   /*! Zonal wind on model levels [m/s]. */
   float ul[EX][EY][EP];
 
   /*! Meridional wind [m/s]. */
   float v[EX][EY][EP];
-  
+
   /*! Meridional wind on model levels [m/s]. */
   float vl[EX][EY][EP];
 
@@ -1911,7 +1914,7 @@ typedef struct {
 
   /*! Vertical velocity [K/s]. */
   float zeta_dot[EX][EY][EP];
-  
+
   /*! Zeta on model levels [K]. */
   float zetal[EX][EY][EP];
 
@@ -2077,8 +2080,8 @@ void get_met_replace(
   char *orig,
   char *search,
   char *repl);
-  
-/*! Spatiotemporal interpolation of meteo data. !*/  
+
+/*! Spatiotemporal interpolation of meteo data. !*/
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_4d_coord)
 #endif
@@ -2096,8 +2099,7 @@ void intpol_met_4d_coord(
   double *var,
   int *ci,
   double *cw,
-  int init
-  );
+  int init);
 
 #ifdef UVW
 #ifdef _OPENACC
@@ -2111,7 +2113,7 @@ void intpol_met_4d_coord_uvw(
   float heights1[EX][EY][EP],
   float uvw1[EX][EY][EP][3],
   double ts,
-  double height, 
+  double height,
   double lon,
   double lat,
   double *u,
@@ -2119,8 +2121,7 @@ void intpol_met_4d_coord_uvw(
   double *zeta_dot,
   int *ci,
   double *cw,
-  int init
-  );
+  int init);
 #endif
 
 /*! Spatial interpolation of meteo data. */
@@ -2250,10 +2251,10 @@ double kernel_weight(
 double lapse_rate(
   const double t,
   const double h2o);
-  
+
 /*! Get predefined pressure levels. */
 void level_definitions(
-  ctl_t* ctl);
+  ctl_t * ctl);
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC
@@ -2272,7 +2273,7 @@ int locate_reg(
   const double *xx,
   const int n,
   const double x);
-  
+
 /*! Locate the four vertical indizes of a box for a given height value. */
 #ifdef _OPENACC
 #pragma acc routine (locate_vert)
@@ -2285,7 +2286,7 @@ void locate_vert(
   double alt_ap,
   int *ind);
 
-/*! locate the index in a column of a three dimensional array. */  
+/*! locate the index in a column of a three dimensional array. */
 #ifdef _OPENACC
 #pragma acc routine (locate_irr_3d)
 #endif
@@ -2437,8 +2438,8 @@ void read_met_levels(
   int ncid,
   ctl_t * ctl,
   met_t * met);
-  
-/*! Smooth vertical zeta and pressure profiles. */  
+
+/*! Smooth vertical zeta and pressure profiles. */
 void read_met_monotonize(
   met_t * met);
 
@@ -2480,6 +2481,10 @@ void read_met_periodic(
 
 /*! Calculate potential vorticity. */
 void read_met_pv(
+  met_t * met);
+
+/*! Calculate total column ozone. */
+void read_met_ozone(
   met_t * met);
 
 /*! Downsampling of meteo data. */
@@ -2612,16 +2617,14 @@ void write_atm_bin(
 void write_atm_clams(
   const char *filename,
   ctl_t * ctl,
-  atm_t * atm
-  );
+  atm_t * atm);
 
-/*! Write atmospheric data in CLaMS position file and trajectory format */  
+/*! Write atmospheric data in CLaMS position file and trajectory format */
 void write_atm_clams_traj(
   const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
-  double t
-  );
+  double t);
 
 /*! Write atmospheric data in netCDF format. */
 void write_atm_nc(
