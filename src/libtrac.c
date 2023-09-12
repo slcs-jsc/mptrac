@@ -4624,11 +4624,12 @@ void read_met_ozone(
 
       /* Integrate... */
       double cd = 0;
-      for (int iz = 1; iz < met->np; iz++) {
-	double vmr = 0.5 * (met->o3[ix][iy][iz - 1] + met->o3[ix][iy][iz]);
-	double dp = met->p[iz - 1] - met->p[iz];
-	cd += vmr * MO3 / MA * dp * 1e2 / G0;
-      }
+      for (int ip = 1; ip < met->np; ip++)
+	if (met->p[ip - 1] <= met->ps[ix][iy]) {
+	  double vmr = 0.5 * (met->o3[ix][iy][ip - 1] + met->o3[ix][iy][ip]);
+	  double dp = met->p[ip - 1] - met->p[ip];
+	  cd += vmr * MO3 / MA * dp * 1e2 / G0;
+	}
 
       /* Convert to Dobson units... */
       met->o3c[ix][iy] = (float) (cd / 2.1415e-5);
