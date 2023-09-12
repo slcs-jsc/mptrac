@@ -2230,6 +2230,7 @@ void read_ctl(
   ctl->qnt_pel = -1;
   ctl->qnt_cape = -1;
   ctl->qnt_cin = -1;
+  ctl->qnt_o3c = -1;
   ctl->qnt_hno3 = -1;
   ctl->qnt_oh = -1;
   ctl->qnt_h2o2 = -1;
@@ -2332,6 +2333,7 @@ void read_ctl(
       SET_QNT(qnt_cape, "cape", "convective available potential energy",
 	      "J/kg")
       SET_QNT(qnt_cin, "cin", "convective inhibition", "J/kg")
+      SET_QNT(qnt_o3c, "o3c", "total column ozone", "DU")
       SET_QNT(qnt_hno3, "hno3", "nitric acid", "ppv")
       SET_QNT(qnt_oh, "oh", "hydroxyl radical", "ppv")
       SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "ppv")

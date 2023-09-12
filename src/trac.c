@@ -1379,7 +1379,8 @@ void module_meteo(
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     double ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc,
-      pel, cape, cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, cc, z, zt;
+      pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3,
+      lwc, iwc, cc, z, zt;
 
     /* Interpolate meteo data... */
     INTPOL_INIT;
@@ -1418,6 +1419,7 @@ void module_meteo(
     SET_ATM(qnt_pel, pel);
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
+    SET_ATM(qnt_o3c, o3c);
     SET_ATM(qnt_hno3,
 	    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_oh, clim_oh(ctl, clim, atm->time[ip],

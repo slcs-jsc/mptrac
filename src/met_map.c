@@ -60,9 +60,9 @@ int main(
     tnatm[NX][NY], lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], cc, ccm[NX][NY],
     z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY],
     pct, pctm[NX][NY], pcb, pcbm[NX][NY], cl, clm[NX][NY], plcl,
-    plclm[NX][NY], plfc, plfcm[NX][NY], pel, pelm[NX][NY],
-    cape, capem[NX][NY], cin, cinm[NX][NY], rhm[NX][NY], rhicem[NX][NY],
-    theta, ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
+    plclm[NX][NY], plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape,
+    capem[NX][NY], cin, cinm[NX][NY], o3c, o3cm[NX][NY], rhm[NX][NY],
+    rhicem[NX][NY], theta, ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
     lat, lat0, lat1, lats[NY], dlat, cw[3];
 
   static int i, ix, iy, np[NX][NY], npc[NX][NY], npt[NX][NY], nx, ny, ci[3];
@@ -184,6 +184,7 @@ int main(
 	  h2otm[ix][iy] += h2ot;
 	  npt[ix][iy]++;
 	}
+	o3cm[ix][iy] += o3c;
 	hno3m[ix][iy] += clim_zm(&clim->hno3, met->time, lats[iy], p0);
 	tnatm[ix][iy] +=
 	  nat_temperature(p0, h2o,

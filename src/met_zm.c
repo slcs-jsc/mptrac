@@ -53,16 +53,15 @@ int main(
   static double timem[NZ][NY], psm[NZ][NY], tsm[NZ][NY], zsm[NZ][NY],
     usm[NZ][NY], vsm[NZ][NY], lsmm[NZ][NY], sstm[NZ][NY], pblm[NZ][NY],
     ptm[NZ][NY], pctm[NZ][NY], pcbm[NZ][NY], clm[NZ][NY], plclm[NZ][NY],
-    plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY], cinm[NZ][NY], ttm[NZ][NY],
-    ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY], h2om[NZ][NY],
-    h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY], iwcm[NZ][NY],
-    ccm[NZ][NY], zm[NZ][NY], rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY],
-    ticem[NZ][NY], tnatm[NZ][NY], hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY],
-    ho2m[NZ][NY], o1dm[NZ][NY], z, z0, z1, dz, zt, tt, plev[NZ],
-    ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, plcl, plfc, pel,
-    cape, cin, cl, t, u, v, w, pv, h2o, h2ot, o3,
-    lwc, iwc, cc, lat, lat0, lat1, dlat, lats[NY], lon0, lon1,
-    lonm[NZ][NY], cw[3];
+    plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY], cinm[NZ][NY], o3cm[NZ][NY],
+    ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY],
+    h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY],
+    iwcm[NZ][NY], ccm[NZ][NY], zm[NZ][NY], rhm[NZ][NY], rhicem[NZ][NY],
+    tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY], hno3m[NZ][NY], ohm[NZ][NY],
+    h2o2m[NZ][NY], ho2m[NZ][NY], o1dm[NZ][NY], z, z0, z1, dz, zt, tt,
+    plev[NZ], ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, plcl, plfc,
+    pel, cape, cin, o3c, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc, cc, lat,
+    lat0, lat1, dlat, lats[NY], lon0, lon1, lonm[NZ][NY], cw[3];
 
   static int i, ix, iy, iz, np[NZ][NY], npc[NZ][NY], npt[NZ][NY], ny, nz,
     ci[3];
@@ -180,6 +179,7 @@ int main(
 	      h2otm[iz][iy] += h2ot;
 	      npt[iz][iy]++;
 	    }
+	    o3cm[iz][iy] += o3c;
 	    rhm[iz][iy] += RH(plev[iz], t, h2o);
 	    rhicem[iz][iy] += RHICE(plev[iz], t, h2o);
 	    tdewm[iz][iy] += TDEW(plev[iz], h2o);

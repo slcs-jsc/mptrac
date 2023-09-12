@@ -363,6 +363,7 @@
     intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
     intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
     intpol_met_space_2d(met, met->cin, lon, lat, &cin, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->o3c, lon, lat, &o3c, ci, cw, 0);	\
   }
 
 /*! Temporal interpolation of all meteo data. */
@@ -398,6 +399,7 @@
     intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->o3c, met1, met1->o3c, time, lon, lat, &o3c, ci, cw, 0); \
   }
 
 /*! Calculate lapse rate between pressure levels. */
@@ -945,6 +947,9 @@ typedef struct {
 
   /*! Quantity array index for convective inhibition (CIN). */
   int qnt_cin;
+
+  /*! Quantity array index for total column ozone. */
+  int qnt_o3c;
 
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
@@ -1861,7 +1866,7 @@ typedef struct {
   /*! Convective inhibition [J/kg]. */
   float cin[EX][EY];
 
-  /*! Total ozone column [DU]. */
+  /*! Total column ozone [DU]. */
   float o3c[EX][EY];
 
   /*! Geopotential height [km]. */
