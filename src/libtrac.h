@@ -1779,6 +1779,42 @@ typedef struct {
 
 } clim_t;
 
+/*! Photolysis rate. */
+typedef struct{
+
+  /*! Dimension number of pressure levels. */
+  int np;
+
+  /*! Dimension number of solar zenith angles. */
+  int nsza;
+
+  /*! Dimension number of total ozone column. */
+  int no3c;
+
+  /*! Pressure [hPa]. */
+  double p[CP];	
+
+  /*! Solar zenith angle [deg]. */
+  double sza[50];
+
+  /*! Total Ozone column [DU]. */
+  double o3c[30];
+
+	/*! N2O photolysis rate. */
+	double n2o[CP][50][30];
+
+	/*! N2O photolysis rate. */
+	double ccl4[CP][50][30];
+
+	/*! N2O photolysis rate. */
+	double ccl3f[CP][50][30];
+
+	/*! N2O photolysis rate. */
+	double ccl2f2[CP][50][30];
+
+} phot_t;
+
+
 /*! Meteo data. */
 typedef struct {
 
@@ -2008,6 +2044,16 @@ double clim_zm(
   const double t,
   const double lat,
   const double p);
+
+#ifdef _OPENACC
+#pragma acc routine (clim_zm)
+#endif
+double phot_rate(
+  double rate[CP][50][30],
+	phot_t * phot,
+  double p,
+	double sza,
+	double o3c );
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -2370,6 +2416,10 @@ void read_clim_zm(
   char *filename,
   char *varname,
   clim_zm_t * zm);
+
+/*! Read Photolysis rates. */
+void read_photol(
+  phot_t * phot);
 
 /*! Read control parameters. */
 void read_ctl(

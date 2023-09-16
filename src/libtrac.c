@@ -359,6 +359,59 @@ double clim_zm(
 
 /*****************************************************************************/
 
+double phot_rate(
+  double rate[CP][50][30],
+	phot_t * phot,
+  double p,
+	double sza,
+	double o3c ){
+
+  /* Check pressure range... */
+  double p_help = p;
+  if (p < phot->p[phot->np - 1])
+    p_help = phot->p[phot->np - 1];
+  else if (p > phot->p[0])
+    p_help = phot->p[0];
+
+  /* Check sza range... */
+  double sza_help = sza;
+  if (sza < phot->sza[0])
+    sza_help = phot->sza[0];
+  else if (sza > phot->sza[phot->nsza - 1])
+    sza_help = phot->sza[phot->nsza - 1];
+
+  /* Check ozone column range... */
+  double o3c_help = o3c;
+  if (o3c < phot->o3c[0])
+    o3c_help = phot->o3c[0];
+  else if (o3c > phot->o3c[phot->no3c - 1])
+    o3c_help = phot->o3c[phot->no3c - 1];
+
+  /* Get indices... */
+  int ip = locate_irr(phot->p, phot->np, p_help);
+  int isza = locate_reg(phot->sza, phot->nsza, sza_help);
+  int io3c = locate_reg(phot->o3c, phot->no3c, o3c_help);
+
+  /* Interpolate climatology data... */
+  double aux00 = LIN(phot->p[ip], rate[ip][isza][io3c],
+		     phot->p[ip + 1], rate[ip + 1][isza][io3c], p_help);
+  double aux01 = LIN(phot->p[ip], rate[ip][isza][io3c + 1],
+		     phot->p[ip + 1], rate[ip + 1][isza][io3c + 1], p_help);
+  double aux10 = LIN(phot->p[ip], rate[ip][isza + 1][io3c],
+		     phot->p[ip + 1], rate[ip + 1][isza + 1][io3c], p_help);
+  double aux11 = LIN(phot->p[ip], rate[ip][isza + 1][io3c + 1],
+		     phot->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
+		     p_help);
+
+  aux00 = LIN(phot->o3c[io3c], aux00, phot->o3c[io3c + 1], aux01, o3c_help);
+  aux11 = LIN(phot->o3c[io3c], aux10, phot->o3c[io3c + 1], aux11, o3c_help);
+  aux00 = LIN(phot->sza[isza], aux00, phot->sza[isza + 1], aux11, sza_help);
+
+  return GSL_MAX(aux00, 0.0);
+}
+
+/*****************************************************************************/
+
 void compress_pack(
   char *varname,
   float *array,
@@ -2171,6 +2224,78 @@ void read_clim_zm(
   LOG(2, "Latitudes: %g, %g ... %g deg",
       zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
   LOG(2, "%s concentration range: %g ... %g ppv", varname, varmin, varmax);
+}
+
+/*****************************************************************************/
+
+void read_photol(
+  phot_t * phot) {
+
+  int ncid, varid, ip, is, io;
+
+  double *help1, *help2, *help3, *help4;
+
+	char *filename="../../data/photolysis_rate.nc";
+
+  /* Write info... */
+  LOG(1, "Read photolysis rate data: %s", filename);
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("Photolysis rate data are missing!");
+    return;
+  }
+
+  /* Read pressure data... */
+  NC_INQ_DIM("press", &phot->np, 2, CP);
+  NC_GET_DOUBLE("press", phot->p, 1);
+
+  /* Check ordering of pressure data... */
+  if (phot->p[0] < phot->p[1])
+    ERRMSG("Pressure data are not descending!");
+
+  /* Read latitudes... */
+  NC_INQ_DIM("total_o3col", &phot->no3c, 2, 30);
+  NC_GET_DOUBLE("total_o3col", phot->o3c, 1);
+
+  if (phot->o3c[0] > phot->o3c[1])
+    ERRMSG("Latitude data are not ascending!");
+
+	NC_INQ_DIM("sza", &phot->nsza, 2, 50);
+  NC_GET_DOUBLE("sza", phot->sza, 1);
+
+  /* Check ordering of latitude data... */
+  if (phot->sza[0] > phot->sza[1])
+    ERRMSG("Latitude data are not ascending!");
+
+  /* Read data... */
+  ALLOC(help1, double,
+	phot->np * phot->nsza * phot->no3c);
+  ALLOC(help2, double,
+	phot->np * phot->nsza * phot->no3c);
+  ALLOC(help3, double,
+	phot->np * phot->nsza * phot->no3c);
+  ALLOC(help4, double,
+	phot->np * phot->nsza * phot->no3c);
+  NC_GET_DOUBLE("n2o", help1, 1);
+	NC_GET_DOUBLE("ccl4", help2, 1);
+	NC_GET_DOUBLE("cfc11", help3, 1);
+	NC_GET_DOUBLE("cfc12", help4, 1);
+  for (ip = 0; ip < phot->np; ip++)
+    for (is = 0; is < phot->nsza; is++)
+      for (io = 0; io < phot->no3c; io++) {
+				phot->n2o[ip][is][io] = help1[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+				phot->ccl4[ip][is][io] = help2[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+				phot->ccl3f[ip][is][io] = help3[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+				phot->ccl2f2[ip][is][io] = help4[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+			}
+	free(help1);
+  free(help2);
+  free(help3);
+  free(help4);
+
+  /* Close netCDF file... */
+  NC(nc_close(ncid));
 }
 
 /*****************************************************************************/
