@@ -1816,16 +1816,16 @@ void module_tracer_chem(
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
       double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
-			double K_hv = phot_rate(phot->ccl4, phot, atm->p[ip], sza, o3c);
+      double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
+			// double K_hv = phot_rate(phot->ccl4, phot, atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
       double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-			double K_hv = phot_rate(phot->ccl3f, phot, atm->p[ip], sza, o3c);
+      double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+			// double K_hv = phot_rate(phot->ccl3f, phot, atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
@@ -1840,8 +1840,8 @@ void module_tracer_chem(
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
       double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-			double K_hv = phot_rate(phot->n2o, phot, atm->p[ip], sza, o3c);
+      double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+			// double K_hv = phot_rate(phot->n2o, phot, atm->p[ip], sza, o3c); 
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
