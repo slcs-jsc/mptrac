@@ -301,13 +301,13 @@ int main(
 
   ctl_t ctl;
 
-	phot_t phot;
-
   atm_t *atm;
 
   cache_t *cache;
 
   clim_t *clim;
+
+	phot_t *phot;
 
   met_t *met0, *met1;
 
@@ -370,6 +370,7 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
+		ALLOC(phot, phot_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
 #ifdef ASYNCIO
@@ -399,7 +400,7 @@ int main(
     read_clim(&ctl, clim);
 
 		/* Read photolysis rate data... */
-		read_photol(&phot);
+		read_photol(phot);
 
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
@@ -569,7 +570,7 @@ int main(
 
 	  /* First-order tracer chemistry... */
 	  if (ctl.tracer_chem)
-	    module_tracer_chem(&ctl, clim, &phot, met0, met1, atm, dt);
+	    module_tracer_chem(&ctl, clim, phot, met0, met1, atm, dt);
 
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
@@ -652,6 +653,7 @@ int main(
     free(atm);
     free(cache);
     free(clim);
+		free(phot);
     free(met0);
     free(met1);
 #ifdef ASYNCIO
