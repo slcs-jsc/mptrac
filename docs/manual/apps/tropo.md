@@ -15,7 +15,8 @@ The following paramerters can be defined in <.ctl> file:
 | parameter  | description                                    | default | Options                                            |
 |:---------- |:---------------------------------------------- | ------- | -------------------------------------------------- |
 | DT_MET     | time step of meteorological data [s].          | 21600   |                                                    |
-| MET_TROPO  | tropopause definition                          | 3       | 0:none, 1:clim, 2:cold point, 3:WMO_1ST, 4:WMO_2nd |
+| MET_TROPO  | tropopause definition                          | 3       | 0:none, 1:clim, 2:cold point, 3:WMO_1ST, 4:WMO_2nd, 5:dynamical |
+| MET_TROPO_PV | dynamical tropopause threshold (PV)          | 3.5     |
 | TROPO_LON0 | minimum longitude                              | -180    |                                                    |
 | TROPO_LON1 | maximum longitude                              | 180     |                                                    |
 | TROPO_DLON | distance between longitudes                    | -999    |                                                    |
