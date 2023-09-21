@@ -2045,8 +2045,9 @@ double clim_zm(
   const double lat,
   const double p);
 
+/*! Interpolate photolysis rate data. */
 #ifdef _OPENACC
-#pragma acc routine (clim_zm)
+#pragma acc routine (phot_rate)
 #endif
 double phot_rate(
   double rate[CP][50][30],
