@@ -413,7 +413,7 @@ int main(
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1], clim[:1], ctl)
+#pragma acc update device(atm[:1], clim[:1], phot[:1], ctl)
 #endif
 
     /* Initialize random number generator... */
@@ -1798,7 +1798,7 @@ void module_tracer_chem(
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,phot,met0,atm,met1,dt)") {
 
     /* Calculate solar zenith angle... */
     double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
@@ -1834,8 +1834,8 @@ void module_tracer_chem(
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
       double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-			double K_hv = phot_rate(phot->ccl2f2, phot, atm->p[ip], sza, o3c);
+      double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+			// double K_hv = phot_rate(phot->ccl2f2, phot, atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
