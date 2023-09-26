@@ -55,6 +55,111 @@ void cart2geo(
 
 /*****************************************************************************/
 
+double clim_oh(
+  const ctl_t * ctl,
+  const clim_t * clim,
+  const double t,
+  const double lon,
+  const double lat,
+  const double p) {
+
+  /* Get OH data from climatology... */
+  double oh = clim_zm(&clim->oh, t, lat, p);
+
+  /* Apply diurnal correction... */
+  if (ctl->oh_chem_beta > 0) {
+    double sza = sza_calc(t, lon, lat);
+    if (sza <= M_PI / 2. * 85. / 90.)
+      return oh * exp(-ctl->oh_chem_beta / cos(sza));
+    else
+      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+  } else
+    return oh;
+}
+
+/*****************************************************************************/
+
+void clim_oh_diurnal_correction(
+  ctl_t * ctl,
+  clim_t * clim) {
+
+  /* Loop over climatology data points... */
+  for (int it = 0; it < clim->oh.ntime; it++)
+    for (int iz = 0; iz < clim->oh.np; iz++)
+      for (int iy = 0; iy < clim->oh.nlat; iy++) {
+
+	/* Init... */
+	int n = 0;
+	double sum = 0;
+
+	/* Integrate day/night correction factor over longitude... */
+	for (double lon = -180; lon < 180; lon += 1.0) {
+	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
+	  if (sza <= M_PI / 2. * 85. / 90.)
+	    sum += exp(-ctl->oh_chem_beta / cos(sza));
+	  else
+	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+	  n++;
+	}
+
+	/* Apply scaling factor to OH data... */
+	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
+      }
+}
+
+/*****************************************************************************/
+
+double clim_photo(
+  double rate[CP][CSZA][CO3],
+  clim_photo_t * photo,
+  double p,
+  double sza,
+  double o3c) {
+
+  /* Check pressure range... */
+  double p_help = p;
+  if (p < photo->p[photo->np - 1])
+    p_help = photo->p[photo->np - 1];
+  else if (p > photo->p[0])
+    p_help = photo->p[0];
+
+  /* Check sza range... */
+  double sza_help = sza;
+  if (sza < photo->sza[0])
+    sza_help = photo->sza[0];
+  else if (sza > photo->sza[photo->nsza - 1])
+    sza_help = photo->sza[photo->nsza - 1];
+
+  /* Check ozone column range... */
+  double o3c_help = o3c;
+  if (o3c < photo->o3c[0])
+    o3c_help = photo->o3c[0];
+  else if (o3c > photo->o3c[photo->no3c - 1])
+    o3c_help = photo->o3c[photo->no3c - 1];
+
+  /* Get indices... */
+  int ip = locate_irr(photo->p, photo->np, p_help);
+  int isza = locate_reg(photo->sza, photo->nsza, sza_help);
+  int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
+
+  /* Interpolate photolysis rate... */
+  double aux00 = LIN(photo->p[ip], rate[ip][isza][io3c],
+		     photo->p[ip + 1], rate[ip + 1][isza][io3c], p_help);
+  double aux01 = LIN(photo->p[ip], rate[ip][isza][io3c + 1],
+		     photo->p[ip + 1], rate[ip + 1][isza][io3c + 1], p_help);
+  double aux10 = LIN(photo->p[ip], rate[ip][isza + 1][io3c],
+		     photo->p[ip + 1], rate[ip + 1][isza + 1][io3c], p_help);
+  double aux11 = LIN(photo->p[ip], rate[ip][isza + 1][io3c + 1],
+		     photo->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
+		     p_help);
+  aux00 = LIN(photo->o3c[io3c], aux00, photo->o3c[io3c + 1], aux01, o3c_help);
+  aux11 = LIN(photo->o3c[io3c], aux10, photo->o3c[io3c + 1], aux11, o3c_help);
+  aux00 = LIN(photo->sza[isza], aux00, photo->sza[isza + 1], aux11, sza_help);
+  return GSL_MAX(aux00, 0.0);
+}
+
+/*****************************************************************************/
+
 double clim_tropo(
   const clim_t * clim,
   const double t,
@@ -238,60 +343,6 @@ void clim_tropo_init(
 
 /*****************************************************************************/
 
-double clim_oh(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  const double t,
-  const double lon,
-  const double lat,
-  const double p) {
-
-  /* Get OH data from climatology... */
-  double oh = clim_zm(&clim->oh, t, lat, p);
-
-  /* Apply diurnal correction... */
-  if (ctl->oh_chem_beta > 0) {
-    double sza = sza_calc(t, lon, lat);
-    if (sza <= M_PI / 2. * 85. / 90.)
-      return oh * exp(-ctl->oh_chem_beta / cos(sza));
-    else
-      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
-  } else
-    return oh;
-}
-
-/*****************************************************************************/
-
-void clim_oh_diurnal_correction(
-  ctl_t * ctl,
-  clim_t * clim) {
-
-  /* Loop over climatology data points... */
-  for (int it = 0; it < clim->oh.ntime; it++)
-    for (int iz = 0; iz < clim->oh.np; iz++)
-      for (int iy = 0; iy < clim->oh.nlat; iy++) {
-
-	/* Init... */
-	int n = 0;
-	double sum = 0;
-
-	/* Integrate day/night correction factor over longitude... */
-	for (double lon = -180; lon < 180; lon += 1.0) {
-	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  if (sza <= M_PI / 2. * 85. / 90.)
-	    sum += exp(-ctl->oh_chem_beta / cos(sza));
-	  else
-	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
-	  n++;
-	}
-
-	/* Apply scaling factor to OH data... */
-	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
-      }
-}
-
-/*****************************************************************************/
-
 double clim_ts(
   const clim_ts_t * ts,
   const double t) {
@@ -353,59 +404,6 @@ double clim_zm(
   aux00 = LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat_help);
   aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat_help);
   aux00 = LIN(zm->time[isec], aux00, zm->time[isec + 1], aux11, sec);
-
-  return GSL_MAX(aux00, 0.0);
-}
-
-/*****************************************************************************/
-
-double phot_rate(
-  double rate[CP][50][30],
-	phot_t * phot,
-  double p,
-	double sza,
-	double o3c ){
-
-  /* Check pressure range... */
-  double p_help = p;
-  if (p < phot->p[phot->np - 1])
-    p_help = phot->p[phot->np - 1];
-  else if (p > phot->p[0])
-    p_help = phot->p[0];
-
-  /* Check sza range... */
-  double sza_help = sza;
-  if (sza < phot->sza[0])
-    sza_help = phot->sza[0];
-  else if (sza > phot->sza[phot->nsza - 1])
-    sza_help = phot->sza[phot->nsza - 1];
-
-  /* Check ozone column range... */
-  double o3c_help = o3c;
-  if (o3c < phot->o3c[0])
-    o3c_help = phot->o3c[0];
-  else if (o3c > phot->o3c[phot->no3c - 1])
-    o3c_help = phot->o3c[phot->no3c - 1];
-
-  /* Get indices... */
-  int ip = locate_irr(phot->p, phot->np, p_help);
-  int isza = locate_reg(phot->sza, phot->nsza, sza_help);
-  int io3c = locate_reg(phot->o3c, phot->no3c, o3c_help);
-
-  /* Interpolate climatology data... */
-  double aux00 = LIN(phot->p[ip], rate[ip][isza][io3c],
-		     phot->p[ip + 1], rate[ip + 1][isza][io3c], p_help);
-  double aux01 = LIN(phot->p[ip], rate[ip][isza][io3c + 1],
-		     phot->p[ip + 1], rate[ip + 1][isza][io3c + 1], p_help);
-  double aux10 = LIN(phot->p[ip], rate[ip][isza + 1][io3c],
-		     phot->p[ip + 1], rate[ip + 1][isza + 1][io3c], p_help);
-  double aux11 = LIN(phot->p[ip], rate[ip][isza + 1][io3c + 1],
-		     phot->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
-		     p_help);
-
-  aux00 = LIN(phot->o3c[io3c], aux00, phot->o3c[io3c + 1], aux01, o3c_help);
-  aux11 = LIN(phot->o3c[io3c], aux10, phot->o3c[io3c + 1], aux11, o3c_help);
-  aux00 = LIN(phot->sza[isza], aux00, phot->sza[isza + 1], aux11, sza_help);
 
   return GSL_MAX(aux00, 0.0);
 }
@@ -2026,6 +2024,10 @@ void read_clim(
   /* Init tropopause climatology... */
   clim_tropo_init(clim);
 
+  /* Read photolysis rates... */
+  if (ctl->clim_photo[0] != '-')
+    read_clim_photo(ctl->clim_photo, &clim->photo);
+
   /* Read HNO3 climatology... */
   if (ctl->clim_hno3_filename[0] != '-')
     read_clim_zm(ctl->clim_hno3_filename, "HNO3", &clim->hno3);
@@ -2068,6 +2070,77 @@ void read_clim(
   /* Read SF6 time series... */
   if (ctl->clim_sf6_timeseries[0] != '-')
     read_clim_ts(ctl->clim_sf6_timeseries, &clim->sf6);
+}
+
+/*****************************************************************************/
+
+void read_clim_photo(
+  char *filename,
+  clim_photo_t * photo) {
+
+  int ncid, varid, ip, is, io;
+
+  double *help1, *help2, *help3, *help4;
+
+  /* Write info... */
+  LOG(1, "Read photolysis rates: %s", filename);
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("Photolysis rate data are missing!");
+    return;
+  }
+
+  /* Read pressure data... */
+  NC_INQ_DIM("press", &photo->np, 2, CP);
+  NC_GET_DOUBLE("press", photo->p, 1);
+  if (photo->p[0] < photo->p[1])
+    ERRMSG("Pressure data are not descending!");
+
+  /* Read total column ozone data... */
+  NC_INQ_DIM("total_o3col", &photo->no3c, 2, CO3);
+  NC_GET_DOUBLE("total_o3col", photo->o3c, 1);
+  if (photo->o3c[0] > photo->o3c[1])
+    ERRMSG("Total column ozone data are not ascending!");
+
+  /* Read solar zenith angle data... */
+  NC_INQ_DIM("sza", &photo->nsza, 2, CSZA);
+  NC_GET_DOUBLE("sza", photo->sza, 1);
+  if (photo->sza[0] > photo->sza[1])
+    ERRMSG("Solar zenith angle data are not ascending!");
+
+  /* Read data... */
+  ALLOC(help1, double,
+	photo->np * photo->nsza * photo->no3c);
+  ALLOC(help2, double,
+	photo->np * photo->nsza * photo->no3c);
+  ALLOC(help3, double,
+	photo->np * photo->nsza * photo->no3c);
+  ALLOC(help4, double,
+	photo->np * photo->nsza * photo->no3c);
+  NC_GET_DOUBLE("n2o", help1, 1);
+  NC_GET_DOUBLE("ccl4", help2, 1);
+  NC_GET_DOUBLE("cfc11", help3, 1);
+  NC_GET_DOUBLE("cfc12", help4, 1);
+  for (ip = 0; ip < photo->np; ip++)
+    for (is = 0; is < photo->nsza; is++)
+      for (io = 0; io < photo->no3c; io++) {
+	photo->n2o[ip][is][io] =
+	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+	photo->ccl4[ip][is][io] =
+	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+	photo->ccl3f[ip][is][io] =
+	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+	photo->ccl2f2[ip][is][io] =
+	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+      }
+  free(help1);
+  free(help2);
+  free(help3);
+  free(help4);
+
+  /* Close netCDF file... */
+  NC(nc_close(ncid));
 }
 
 /*****************************************************************************/
@@ -2147,16 +2220,12 @@ void read_clim_zm(
   /* Read pressure data... */
   NC_INQ_DIM("press", &zm->np, 2, CP);
   NC_GET_DOUBLE("press", zm->p, 1);
-
-  /* Check ordering of pressure data... */
   if (zm->p[0] < zm->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &zm->nlat, 2, CY);
   NC_GET_DOUBLE("lat", zm->lat, 1);
-
-  /* Check ordering of latitude data... */
   if (zm->lat[0] > zm->lat[1])
     ERRMSG("Latitude data are not ascending!");
 
@@ -2224,78 +2293,6 @@ void read_clim_zm(
   LOG(2, "Latitudes: %g, %g ... %g deg",
       zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
   LOG(2, "%s concentration range: %g ... %g ppv", varname, varmin, varmax);
-}
-
-/*****************************************************************************/
-
-void read_photol(
-  phot_t * phot) {
-
-  int ncid, varid, ip, is, io;
-
-  double *help1, *help2, *help3, *help4;
-
-	char *filename="../../data/photolysis_rate.nc";
-
-  /* Write info... */
-  LOG(1, "Read photolysis rate data: %s", filename);
-
-  /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("Photolysis rate data are missing!");
-    return;
-  }
-
-  /* Read pressure data... */
-  NC_INQ_DIM("press", &phot->np, 2, CP);
-  NC_GET_DOUBLE("press", phot->p, 1);
-
-  /* Check ordering of pressure data... */
-  if (phot->p[0] < phot->p[1])
-    ERRMSG("Pressure data are not descending!");
-
-  /* Read latitudes... */
-  NC_INQ_DIM("total_o3col", &phot->no3c, 2, 30);
-  NC_GET_DOUBLE("total_o3col", phot->o3c, 1);
-
-  if (phot->o3c[0] > phot->o3c[1])
-    ERRMSG("Latitude data are not ascending!");
-
-	NC_INQ_DIM("sza", &phot->nsza, 2, 50);
-  NC_GET_DOUBLE("sza", phot->sza, 1);
-
-  /* Check ordering of latitude data... */
-  if (phot->sza[0] > phot->sza[1])
-    ERRMSG("Latitude data are not ascending!");
-
-  /* Read data... */
-  ALLOC(help1, double,
-	phot->np * phot->nsza * phot->no3c);
-  ALLOC(help2, double,
-	phot->np * phot->nsza * phot->no3c);
-  ALLOC(help3, double,
-	phot->np * phot->nsza * phot->no3c);
-  ALLOC(help4, double,
-	phot->np * phot->nsza * phot->no3c);
-  NC_GET_DOUBLE("n2o", help1, 1);
-	NC_GET_DOUBLE("ccl4", help2, 1);
-	NC_GET_DOUBLE("cfc11", help3, 1);
-	NC_GET_DOUBLE("cfc12", help4, 1);
-  for (ip = 0; ip < phot->np; ip++)
-    for (is = 0; is < phot->nsza; is++)
-      for (io = 0; io < phot->no3c; io++) {
-				phot->n2o[ip][is][io] = help1[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
-				phot->ccl4[ip][is][io] = help2[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
-				phot->ccl3f[ip][is][io] = help3[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
-				phot->ccl2f2[ip][is][io] = help4[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
-			}
-	free(help1);
-  free(help2);
-  free(help3);
-  free(help4);
-
-  /* Close netCDF file... */
-  NC(nc_close(ncid));
 }
 
 /*****************************************************************************/
@@ -2850,6 +2847,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
 
   /* Climatological data... */
+  scan_ctl(filename, argc, argv, "CLIM_PHOTO", -1,
+	   "../../data/photolysis_rate.nc", ctl->clim_photo);
   scan_ctl(filename, argc, argv, "CLIM_HNO3_FILENAME", -1,
 	   "../../data/gozcards_HNO3.nc", ctl->clim_hno3_filename);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,

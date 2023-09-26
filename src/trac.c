@@ -208,7 +208,6 @@ void module_h2o2_chem(
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
-	phot_t * phot,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -307,8 +306,6 @@ int main(
 
   clim_t *clim;
 
-	phot_t *phot;
-
   met_t *met0, *met1;
 
 #ifdef ASYNCIO
@@ -370,7 +367,6 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
-		ALLOC(phot, phot_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
 #ifdef ASYNCIO
@@ -399,9 +395,6 @@ int main(
     /* Read climatological data... */
     read_clim(&ctl, clim);
 
-		/* Read photolysis rate data... */
-		read_photol(phot);
-
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
@@ -413,7 +406,7 @@ int main(
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1], clim[:1], phot[:1], ctl)
+#pragma acc update device(atm[:1], clim[:1], ctl)
 #endif
 
     /* Initialize random number generator... */
@@ -570,7 +563,7 @@ int main(
 
 	  /* First-order tracer chemistry... */
 	  if (ctl.tracer_chem)
-	    module_tracer_chem(&ctl, clim, phot, met0, met1, atm, dt);
+	    module_tracer_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
@@ -653,7 +646,6 @@ int main(
     free(atm);
     free(cache);
     free(clim);
-		free(phot);
     free(met0);
     free(met1);
 #ifdef ASYNCIO
@@ -1788,7 +1780,6 @@ void module_h2o2_chem(
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
-	phot_t * phot,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -1798,19 +1789,22 @@ void module_tracer_chem(
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,phot,met0,atm,met1,dt)") {
-
-    /* Calculate solar zenith angle... */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
 
     /* Get temperature... */
-    double t, o3c;
+    double t;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
-		INTPOL_2D(o3c, 1)
 
     /* Get molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
+
+    /* Get total column ozone... */
+    double o3c;
+    INTPOL_2D(o3c, 1);
+
+    /* Get solar zenith angle... */
+    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Get O(1D) concentration... */
     double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
@@ -1818,32 +1812,32 @@ void module_tracer_chem(
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
       double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
-			double K_hv = phot_rate(phot->ccl4, phot, atm->p[ip], sza, o3c);
+      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
       double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-			double K_hv = phot_rate(phot->ccl3f, phot, atm->p[ip], sza, o3c);
+      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
       double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
-			double K_hv = phot_rate(phot->ccl2f2, phot, atm->p[ip], sza, o3c);
+      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
       double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      // double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-			double K_hv = phot_rate(phot->n2o, phot, atm->p[ip], sza, o3c); 
+      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
@@ -2582,8 +2576,8 @@ void write_output(
 #endif
 
   /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' && \
-	(fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop) ) {
+  if (ctl->atm_basename[0] != '-' &&
+      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
     if (ctl->atm_type_out == 0)
       sprintf(ext, "tab");
     else if (ctl->atm_type_out == 1)

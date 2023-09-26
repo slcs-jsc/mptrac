@@ -212,9 +212,19 @@
 #define CY 250
 #endif
 
+/*! Maximum number of total column ozone data for climatological data. */
+#ifndef CO3
+#define CO3 30
+#endif
+
 /*! Maximum number of pressure levels for climatological data. */
 #ifndef CP
 #define CP 60
+#endif
+
+/*! Maximum number of solar zenith angles for climatological data. */
+#ifndef CSZA
+#define CSZA 50
 #endif
 
 /*! Maximum number of time steps for climatological data. */
@@ -1292,6 +1302,9 @@ typedef struct {
   /*! Life time of particles in the stratosphere  [s]. */
   double tdec_strat;
 
+  /*! Filename of photolysis rates climatology. */
+  char clim_photo[LEN];
+
   /*! Filename of HNO3 climatology. */
   char clim_hno3_filename[LEN];
 
@@ -1689,6 +1702,41 @@ typedef struct {
 
 } cache_t;
 
+/*! Climatological data in form of photolysis rates. */
+typedef struct {
+
+  /*! Number of pressure levels. */
+  int np;
+
+  /*! Number of solar zenith angles. */
+  int nsza;
+
+  /*! Number of total ozone columns. */
+  int no3c;
+
+  /*! Pressure [hPa]. */
+  double p[CP];
+
+  /*! Solar zenith angle [rad]. */
+  double sza[CSZA];
+
+  /*! Total column ozone [DU]. */
+  double o3c[CO3];
+
+  /*! N2O photolysis rate [1/s]. */
+  double n2o[CP][CSZA][CO3];
+
+  /*! CCl4 photolysis rate [1/s]. */
+  double ccl4[CP][CSZA][CO3];
+
+  /*! CCl3F photolysis rate [1/s]. */
+  double ccl3f[CP][CSZA][CO3];
+
+  /*! CCl2F2 photolysis rate [1/s]. */
+  double ccl2f2[CP][CSZA][CO3];
+
+} clim_photo_t;
+
 /*! Climatological data in form of time series. */
 typedef struct {
 
@@ -1729,7 +1777,7 @@ typedef struct {
 
 } clim_zm_t;
 
-/*! Climatological data of all variables. */
+/*! Climatological data. */
 typedef struct {
 
   /*! Number of tropopause timesteps. */
@@ -1746,6 +1794,9 @@ typedef struct {
 
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
+
+  /*! Photolysis rates. */
+  clim_photo_t photo;
 
   /*! HNO3 zonal means. */
   clim_zm_t hno3;
@@ -1778,42 +1829,6 @@ typedef struct {
   clim_ts_t sf6;
 
 } clim_t;
-
-/*! Photolysis rate. */
-typedef struct{
-
-  /*! Dimension number of pressure levels. */
-  int np;
-
-  /*! Dimension number of solar zenith angles. */
-  int nsza;
-
-  /*! Dimension number of total ozone column. */
-  int no3c;
-
-  /*! Pressure [hPa]. */
-  double p[CP];	
-
-  /*! Solar zenith angle [deg]. */
-  double sza[50];
-
-  /*! Total Ozone column [DU]. */
-  double o3c[30];
-
-	/*! N2O photolysis rate. */
-	double n2o[CP][50][30];
-
-	/*! N2O photolysis rate. */
-	double ccl4[CP][50][30];
-
-	/*! N2O photolysis rate. */
-	double ccl3f[CP][50][30];
-
-	/*! N2O photolysis rate. */
-	double ccl2f2[CP][50][30];
-
-} phot_t;
-
 
 /*! Meteo data. */
 typedef struct {
@@ -1997,19 +2012,6 @@ void cart2geo(
 int check_finite(
   const double x);
 
-/*! Climatology of tropopause pressure. */
-#ifdef _OPENACC
-#pragma acc routine (clim_tropo)
-#endif
-double clim_tropo(
-  const clim_t * clim,
-  const double t,
-  const double lat);
-
-/*! Initialize tropopause climatology. */
-void clim_tropo_init(
-  clim_t * clim);
-
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
@@ -2025,6 +2027,30 @@ double clim_oh(
 /*! Initialization function for OH climatology. */
 void clim_oh_diurnal_correction(
   ctl_t * ctl,
+  clim_t * clim);
+
+/*! Interpolate photolysis rate data. */
+#ifdef _OPENACC
+#pragma acc routine (clim_photo)
+#endif
+double clim_photo(
+  double rate[CP][CSZA][CO3],
+  clim_photo_t * photo,
+  double p,
+  double sza,
+  double o3c);
+
+/*! Climatology of tropopause pressure. */
+#ifdef _OPENACC
+#pragma acc routine (clim_tropo)
+#endif
+double clim_tropo(
+  const clim_t * clim,
+  const double t,
+  const double lat);
+
+/*! Initialize tropopause climatology. */
+void clim_tropo_init(
   clim_t * clim);
 
 /*! Interpolate time series. */
@@ -2044,17 +2070,6 @@ double clim_zm(
   const double t,
   const double lat,
   const double p);
-
-/*! Interpolate photolysis rate data. */
-#ifdef _OPENACC
-#pragma acc routine (phot_rate)
-#endif
-double phot_rate(
-  double rate[CP][50][30],
-	phot_t * phot,
-  double p,
-	double sza,
-	double o3c );
 
 /*! Pack or unpack array. */
 void compress_pack(
@@ -2418,9 +2433,10 @@ void read_clim_zm(
   char *varname,
   clim_zm_t * zm);
 
-/*! Read Photolysis rates. */
-void read_photol(
-  phot_t * phot);
+/*! Read climatological photolysis rates. */
+void read_clim_photo(
+  char *filename,
+  clim_photo_t * photo);
 
 /*! Read control parameters. */
 void read_ctl(
