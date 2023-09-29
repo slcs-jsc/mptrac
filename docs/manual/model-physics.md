@@ -193,6 +193,38 @@ with particle density $\rho_p$ and conventional standard gravitational accelerat
 
 ## Wet deposition
 
+Wet deposition causes the removal of trace gases and aerosol particles from the atmosphere within or below clouds by mixing with suspended water and following washout through rain, snow, or fog. Wet deposition in MPTRAC is calculated based on the following four steps:
+
+(1) it is determined whether an air parcel is located below a cloud top. The cloud-top pressure $p_{ct}$ is determined from the meteorological data as the highest vertical level where cloud water or ice (i.e., CLWC, CRWC, CIWC, or CSWC) is existent. 
+ 
+(2) the wet deposition parametrization determines an estimate of the subgrid-scale precipitation rate I$_s$, which is needed to calculate the scavenging coefficient $\Lambda$. The precipitation rate I$_s$ (in units of mmh$^{-1}$) is calculated from the total column cloud water $c_l$ (in units of kgm$^{-2}$) by means of a correlation function reported by Pisso et al. (2019),
+
+$$
+\begin{equation}
+ I_s= (2c_l)^{1/0.36},
+\end{equation}
+$$
+
+(3) it is inferred whether the air parcel is located within or below the cloud because scavenging coefficients will be different under these conditions. The position of the air parcel within or below the cloud is determined by interpolating the cloud water content to the position of the air parcel and by testing whether the interpolated values are larger than zero.
+
+(4) the scavenging coefficient $\Lambda$ is calculated based on the precipitation rate $I_s$,
+
+$$
+\begin{equation}
+ \Lambda=HRT I_s \Delta z_c^{-1},
+\end{equation}
+$$
+
+where H is Henry’s law constant, R is the universal gas constant, and $\Delta z_c$ is the depth of the cloud layer, which is calculated from $p_{ct}$ and $p_{cb}$. Henry’s law constant is obtained from
+
+$$
+\begin{equation}
+ H(T)=H^\ominus \exp \left [\frac{\Lambda_{sol}H}{R} \left (\frac{1}{T}-\frac{1}{T^\ominus}  \right ) \right] 
+\end{equation}
+$$
+
+The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of dissolution $\Delta_{sol}H$ at the reference temperature $T^\ominus=298.15~K$ need to be specified as control parameters. Values for a wide range of species are tabulated by Sander (2015). The values of selected species of interest are summarized in the following table are included as default parameters in MPTRAC.
+
 ## Dry deposition
 
 ## Hydroxyl chemistry
