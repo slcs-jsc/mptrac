@@ -141,6 +141,56 @@ The convection parameterisation is set off per default, i.e. values are set to -
 
 ## Sedimentation
 
+In order to take into account the gravitational settling of particles, the sedimentation velocity $v_s$ needs to be calculated. Using $v_s$, the change of the vertical position of the particles over the model time step $\Delta$t can be calculated. In MPTRAC, $v_s$ is calculated for spherical particles following the method described by [Jacobson (1999)](https://www.cambridge.org/core/books/fundamentals-of-atmospheric-modeling/A6B866737D682B17EE46F8449F76FB2C). In the first step, we calculate the density of dry air,
+
+$$
+\begin{equation}
+  \rho=\frac{p}{RT},
+\end{equation}
+$$
+
+using the atmospheric pressure p, temperature T, and the specific gas constant R of dry air. The dynamic viscosity of air, 
+
+$$
+\begin{equation}
+  \eta=1.832515\cdot10^{-5}\frac{kg}{ms} \left (\frac{416.16~K}{T+120~K}\right)\left (\frac{T}{296.16~K}\right)^{1.5},
+  \end{equation}
+$$
+
+and the thermal velocity of an air molecule,
+
+$$
+\begin{equation}
+  v=\sqrt{\rho RT}, 
+\end{equation}
+$$
+
+are used to calculate the mean free path of an air molecule $\lambda$, as well as the Knudsen number $K_n$ for air,
+
+$$
+\begin{equation}
+  \lambda=\frac{\rho}{2\eta v} \quad \text{and} \quad K_n=\frac{\lambda}{r_p},
+\end{equation}
+$$
+
+where $r_p$ refers to the particle radius. The Cunningham slipflow correction is calculated from
+
+$$
+\begin{equation}
+  G=1+K \left [1.249+0.42 \exp \left ( \frac{-0.87}{K} \right ) \right]
+\end{equation}
+$$
+ 
+Finally, the sedimentation velocity is obtained by means of Stokes law and from the slip-flow correction, 
+
+$$
+\begin{equation}
+ v_s=\frac{2r_p^2g(\rho_p-\rho)}{9\eta}G
+\end{equation}
+$$
+
+with particle density $\rho_p$ and conventional standard gravitational acceleration g. Note that $r_p$ and $\rho_p$ can be specified individually for each air parcel. A larger set of parcels can be used to represent a size distribution of aerosol or cloud particles.
+
 ## Wet deposition
 
 ## Dry deposition
