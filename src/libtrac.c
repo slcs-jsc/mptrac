@@ -902,7 +902,7 @@ void get_met_help(
     sprintf(filename, "%s_YYMMDDHH.nc", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
-    sprintf(repl, "%d", year % 100);
+    sprintf(repl, "%02d", year % 100);
     get_met_replace(filename, "YY", repl);
     sprintf(repl, "%02d", mon);
     get_met_replace(filename, "MM", repl);
