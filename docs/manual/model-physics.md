@@ -197,7 +197,7 @@ Wet deposition causes the removal of trace gases and aerosol particles from the 
 
 (1) it is determined whether an air parcel is located below a cloud top. The cloud-top pressure $p_{ct}$ is determined from the meteorological data as the highest vertical level where cloud water or ice (i.e., CLWC, CRWC, CIWC, or CSWC) is existent. 
  
-(2) the wet deposition parametrization determines an estimate of the subgrid-scale precipitation rate I$_s$, which is needed to calculate the scavenging coefficient $\Lambda$. The precipitation rate I$_s$ (in units of mmh$^{-1}$) is calculated from the total column cloud water $c_l$ (in units of kgm$^{-2}$) by means of a correlation function reported by Pisso et al. (2019),
+(2) the wet deposition parametrization determines an estimate of the subgrid-scale precipitation rate $I_s$, which is needed to calculate the scavenging coefficient $\Lambda$. The precipitation rate I$_s$ (in units of $mmh^{-1}$) is calculated from the total column cloud water $c_l$ (in units of $kgm^{-2}$) by means of a correlation function reported by Pisso et al. (2019),
 
 $$
 \begin{equation}
@@ -224,6 +224,23 @@ $$
 $$
 
 The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of dissolution $\Delta_{sol}H$ at the reference temperature $T^\ominus=298.15~K$ need to be specified as control parameters. Values for a wide range of species are tabulated by Sander (2015). The values of selected species of interest are summarized in the following table are included as default parameters in MPTRAC.
+
+
+| Species      | $H^\ominus$ (at 298.15 K) | $-\frac{\Delta_{sol}H}{R}$ |
+| ------------ | ------------------ | ------|
+| CF2Cl2 |  3.0 $\cdot 10^{-5}$ | 3500 |   
+| CFCl3  | 1.1 $\cdot 10^{-4}$ | 3300 |
+| CH4       | 1.4 $\cdot 10^{-5}$ | 1600 |
+| CO        | 9.7 $\cdot 10^{-6}$ | 1300 |
+| CO2       | 3.3 $\cdot 10^{-4}$ | 2400 |
+| N2O       | 2.4 $\cdot 10^{-4}$ | 2600 |
+| NH3       | 5.9 $\cdot 10^{-1}$ | 4200 |
+| HNO3      | 2.1 $\cdot 10^3$    | 8700 |
+| NO        | 1.9 $\cdot 10^{-5}$ | 1600 |
+| NO2       | 1.2 $\cdot 10^{-4}$ | 2400 |
+| O3        | 1.0 $\cdot 10^{-4}$ | 2800 |
+| SF6       | 2.4 $\cdot 10^{-6}$ | 3100 |
+| SO2       | 1.3 $\cdot 10^{-2}$ | 2900 |
 
 ## Dry deposition
 
