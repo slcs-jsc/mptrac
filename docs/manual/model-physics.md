@@ -243,6 +243,17 @@ The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of dissolution $\D
 | SO2       | 1.3 $\cdot 10^{-2}$ | 2900 |
 
 ## Dry deposition
+Dry deposition leads to a loss of mass of aerosol particles or trace gases by gravitational settling or chemical and physical interactions with the surface of the dry phase. In the parametrization implemented in MPTRAC, dry deposition is calculated for air parcels located in the lowermost $\Delta_p=$ 30 hPa layer above the surface. This corresponds to a layer width of $\Delta z \approx$ 200 m at standard conditions. 
+
+For aerosol particles, the deposition velocity $v_{dep}$ will be calculated as described in Hoffmann et al. (2022) as a function of surface pressure $p$ and temperature $T$ as well as particle radius $r_p$ and particle density $\rho$. For trace gases, the deposition velocity $v_{dep}$ needs to be specified as a control parameter. Currently, this parameter is set to a constant value across the globe for each trace gas. For future applications with a stronger focus on the boundary layer, $v_{dep}$ will need to vary geographically to account for dependence on the surface characteristics and atmospheric conditions. 
+
+For both particles and gases, the loss of mass is calculated based on the deposition velocity $v_{dep}$, the model time step $\Delta t$, and the surface layer width $\Delta z$ from 
+
+$$
+\begin{equation}
+m(t+\Delta t)=M(t) exp \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
+\end{equation}
+$$
 
 ## Hydroxyl chemistry
 
