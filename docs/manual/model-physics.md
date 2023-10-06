@@ -87,10 +87,10 @@ Note that for simulations without diffusion, the diffusivity needs to be set to 
 
 |Parameter|Layer|Direction|Default|
 |---|---|---|---|
-|TURB_DX_TROP|Troposphere|horizontal|$50m^2s^{-1}$|
-|TURB_DX_STRAT|Stratosphere|horizontal|$0m^2s^{-1}$|
-|TURB_DZ_TROP|Troposphere|vertical|$0m^2s^{-1}$|
-|TURB_DZ_STRAT|Stratosphere|vertical|$0.1m^2s^{-1}$|
+|TURB_DX_TROP|Troposphere|horizontal|$50~\rm{m^2~s^{-1}}$|
+|TURB_DX_STRAT|Stratosphere|horizontal|$0~\rm{m^2~s^{-1}}$|
+|TURB_DZ_TROP|Troposphere|vertical|$0~\rm{m^2~s^{-1}}$|
+|TURB_DZ_STRAT|Stratosphere|vertical|$0.1~\rm{m^2~s^{-1}}$|
 
 
 ## Subgrid-scale wind fluctuations
@@ -121,13 +121,13 @@ The scaling factor f is *not* directly set in MPTRAC. Instead the square $f^2$ c
 
 The convection parameterization implemented in MPTRAC introduces the concept of the Extreme Convection Parametrization (ECP) to efficiently simulate convective effects within Lagrangian transport models. This method is based on the assumption that convective events create well-mixed columns of air, and it leverages convective available potential energy (CAPE), convective inhibition (CIN) and equilibrium level (EL) data from meteorological fields to capture this behavior.
 
-The fundamental idea underlying the ECP approach involves several key steps. First, the meteorological fields are used to interpolate gridded CAPE, CIN and EL values to the horizontal positions of individual air parcels within the Lagrangian model. Then, user-defined thresholds of CAPE$_0$ and CIN$_0$ are applied globally. If the interpolated CAPE value of an air parcel surpasses the CAPE$_0$ threshold or the interpolated CIN value is below the CIN$_0$ threshold and the parcel's position is below the EL, the model triggers a convective event.
+The fundamental idea underlying the ECP approach involves several key steps. First, the meteorological fields are used to interpolate gridded CAPE, CIN and EL values to the horizontal positions of individual air parcels within the Lagrangian model. Then, user-defined thresholds of $\rm{CAPE_0}$ and $\rm{CIN_0}$ are applied globally. If the interpolated CAPE value of an air parcel surpasses the $\rm{CAPE_0}$ threshold or the interpolated CIN value is below the $\rm{CIN_0}$ threshold and the parcel's position is below the EL, the model triggers a convective event.
 
 During a convective event, air parcels affected by the event are subject to random vertical redistribution within the atmospheric column, spanning from the Earth's surface to the equilibrium level. This vertical redistribution takes into account air density to ensure the creation of a well-mixed column of air. Importantly, this redistribution process adheres to mass conservation principles, maintaining both the number of air parcels and their collective mass constant.
 
 In subsequent time steps of the model, the trajectories of air parcels are continued from their new vertical positions, assigned during the convective mixing event. This dynamic approach enables the model to capture the transport implications of convective events, while also accounting for the vertical mixing effects they induce.
 
-The ECP method within MPTRAC is versatile and accommodates different simulation scenarios based on the chosen threshold CAPE$_0$. By setting CAPE$_0$ to zero, the model implements the "extreme convection" approach, where convection is simulated wherever CAPE exists below the EL. This represents an upper-limit scenario for the effects of unresolved convection in the meteorological fields. On the other hand, by turning off the ECP entirely, only explicitly resolved convective updrafts of the meteorological fields are considered, representing a lower-limit scenario. Intermediate states can be simulated by selecting specific values for threshold CAPE$_0$. The parameter CIN$_0$ can be used to prevent triggered convection in regions where a larger lower-level inversion layer is located, with high CAPE above it.
+The ECP method within MPTRAC is versatile and accommodates different simulation scenarios based on the chosen threshold $\rm{CAPE_0}$. By setting $\rm{CAPE_0}$ to zero, the model implements the "extreme convection" approach, where convection is simulated wherever CAPE exists below the EL. This represents an upper-limit scenario for the effects of unresolved convection in the meteorological fields. On the other hand, by turning off the ECP entirely, only explicitly resolved convective updrafts of the meteorological fields are considered, representing a lower-limit scenario. Intermediate states can be simulated by selecting specific values for threshold $\rm{CAPE_0}$. The parameter $\rm{CIN_0}$ can be used to prevent triggered convection in regions where a larger lower-level inversion layer is located, with high CAPE above it.
 
 The frequency of applying the ECP can be customized to the simulation's requirements. It can be implemented every model time step or at user-defined intervals that match typical convective timescales. This adaptability adds to the flexibility of the ECP method, making it suitable for a variety of simulation contexts.
 
@@ -141,7 +141,7 @@ The convection parameterisation is set off per default, i.e. values are set to -
 
 ## Sedimentation
 
-In order to take into account the gravitational settling of particles, the sedimentation velocity $v_s$ needs to be calculated. Using $v_s$, the change of the vertical position of the particles over the model time step $\Delta$t can be calculated. In MPTRAC, $v_s$ is calculated for spherical particles following the method described by [Jacobson (1999)](https://www.cambridge.org/core/books/fundamentals-of-atmospheric-modeling/A6B866737D682B17EE46F8449F76FB2C). In the first step, we calculate the density of dry air,
+In order to take into account the gravitational settling of particles, the sedimentation velocity $v_s$ needs to be calculated. Using $v_s$, the change of the vertical position of the particles over the model time step $\Delta t$ can be calculated. In MPTRAC, $v_s$ is calculated for spherical particles following the method described by [Jacobson (1999)](https://www.cambridge.org/core/books/fundamentals-of-atmospheric-modeling/A6B866737D682B17EE46F8449F76FB2C). In the first step, we calculate the density of dry air,
 
 $$
 \begin{equation}
@@ -149,11 +149,11 @@ $$
 \end{equation}
 $$
 
-using the atmospheric pressure p, temperature T, and the specific gas constant R of dry air. The dynamic viscosity of air, 
+using the atmospheric pressure $p$, temperature $T$, and the specific gas constant $R$ of dry air. The dynamic viscosity of air, 
 
 $$
 \begin{equation}
-  \eta=1.832515\cdot10^{-5}\frac{kg}{ms} \left (\frac{416.16~K}{T+120~K}\right)\left (\frac{T}{296.16~K}\right)^{1.5},
+  \eta=1.832515 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\rm{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
   \end{equation}
 $$
 
@@ -197,7 +197,7 @@ Wet deposition causes the removal of trace gases and aerosol particles from the 
 
 (1) it is determined whether an air parcel is located below a cloud top. The cloud-top pressure $p_{ct}$ is determined from the meteorological data as the highest vertical level where cloud water or ice (i.e., CLWC, CRWC, CIWC, or CSWC) is existent. 
  
-(2) the wet deposition parametrization determines an estimate of the subgrid-scale precipitation rate $I_s$, which is needed to calculate the scavenging coefficient $\Lambda$. The precipitation rate I$_s$ (in units of $mmh^{-1}$) is calculated from the total column cloud water $c_l$ (in units of $kgm^{-2}$) by means of a correlation function reported by Pisso et al. (2019),
+(2) the wet deposition parametrization determines an estimate of the subgrid-scale precipitation rate $I_s$, which is needed to calculate the scavenging coefficient $\Lambda$. The precipitation rate $I_s$ (in units of $\rm{mm h^{-1}}$) is calculated from the total column cloud water $c_l$ (in units of $\rm{kg m^{-2}}$) by means of a correlation function reported by Pisso et al. (2019),
 
 $$
 \begin{equation}
@@ -219,7 +219,7 @@ where H is Henry’s law constant, R is the universal gas constant, and $\Delta 
 
 $$
 \begin{equation}
- H(T)=H^\ominus \exp \left [\frac{\Lambda_{sol}H}{R} \left (\frac{1}{T}-\frac{1}{T^\ominus}  \right ) \right] 
+  H(T)=H^\ominus \exp \left [\frac{\Lambda_{sol}H}{R} \left (\frac{1}{T}-\frac{1}{T^\ominus}  \right ) \right] 
 \end{equation}
 $$
 
@@ -228,19 +228,19 @@ The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of dissolution $\D
 
 | Species      | $H^\ominus$ (at 298.15 K) | $-\frac{\Delta_{sol}H}{R}$ |
 | ------------ | ------------------ | ------|
-| CF2Cl2 |  3.0 $\cdot 10^{-5}$ | 3500 |   
-| CFCl3  | 1.1 $\cdot 10^{-4}$ | 3300 |
-| CH4       | 1.4 $\cdot 10^{-5}$ | 1600 |
-| CO        | 9.7 $\cdot 10^{-6}$ | 1300 |
-| CO2       | 3.3 $\cdot 10^{-4}$ | 2400 |
-| N2O       | 2.4 $\cdot 10^{-4}$ | 2600 |
-| NH3       | 5.9 $\cdot 10^{-1}$ | 4200 |
-| HNO3      | 2.1 $\cdot 10^3$    | 8700 |
-| NO        | 1.9 $\cdot 10^{-5}$ | 1600 |
-| NO2       | 1.2 $\cdot 10^{-4}$ | 2400 |
-| O3        | 1.0 $\cdot 10^{-4}$ | 2800 |
-| SF6       | 2.4 $\cdot 10^{-6}$ | 3100 |
-| SO2       | 1.3 $\cdot 10^{-2}$ | 2900 |
+| $\rm{CF_2Cl_2}$ |  3.0 $\cdot 10^{-5}$ | 3500 |   
+| $\rm{CFCl_3}$  | 1.1 $\cdot 10^{-4}$ | 3300 |
+| $\rm{CH_4}$    | 1.4 $\cdot 10^{-5}$ | 1600 |
+| $\rm{CO}$      | 9.7 $\cdot 10^{-6}$ | 1300 |
+| $\rm{CO_2}$    | 3.3 $\cdot 10^{-4}$ | 2400 |
+| $\rm{N_2O}$    | 2.4 $\cdot 10^{-4}$ | 2600 |
+| $\rm{NH_3}$    | 5.9 $\cdot 10^{-1}$ | 4200 |
+| $\rm{HNO_3}$   | 2.1 $\cdot 10^3$    | 8700 |
+| $\rm{NO}$      | 1.9 $\cdot 10^{-5}$ | 1600 |
+| $\rm{NO_2}$    | 1.2 $\cdot 10^{-4}$ | 2400 |
+| $\rm{O_3}$     | 1.0 $\cdot 10^{-4}$ | 2800 |
+| $\rm{SF_6}$    | 2.4 $\cdot 10^{-6}$ | 3100 |
+| $\rm{SO_2}$    | 1.3 $\cdot 10^{-2}$ | 2900 |
 
 ## Dry deposition
 Dry deposition leads to a loss of mass of aerosol particles or trace gases by gravitational settling or chemical and physical interactions with the surface of the dry phase. In the parametrization implemented in MPTRAC, dry deposition is calculated for air parcels located in the lowermost $\Delta_p=$ 30 hPa layer above the surface. This corresponds to a layer width of $\Delta z \approx$ 200 m at standard conditions. 
@@ -251,19 +251,19 @@ For both particles and gases, the loss of mass is calculated based on the deposi
 
 $$
 \begin{equation}
-m(t+\Delta t)=M(t) exp \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
+  m(t+\Delta t)=M(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
 \end{equation}
 $$
 
 ## Hydroxyl chemistry
 
-The hydroxyl radical (OH) is an important oxidant in the atmosphere, causing the decomposition of many gas-phase species. The oxidation of different gas-phase species with OH can be classified into two main categories, bimolecular reactions (e.g., reactions of CH4 or NH3), and termolecular reactions (e.g., CO or SO2).
+The hydroxyl radical (OH) is an important oxidant in the atmosphere, causing the decomposition of many gas-phase species. The oxidation of different gas-phase species with OH can be classified into two main categories, bimolecular reactions (e.g., reactions of $\rm{CH_4}$ or $\rm{NH_3}$), and termolecular reactions (e.g., CO or $\rm{SO_2}$).
 
 For bimolecular reactions, the rate constant is calculated from Arrhenius law,
 
 $$
 \begin{equation}
-k(T)=A \times exp \left ( -\frac{E}{RT} \right )
+  k(T)=A \times \mathrm{exp} \left ( -\frac{E}{RT} \right )
 \end{equation}
 $$
 
@@ -273,8 +273,8 @@ The for the calculation of k nedded low- and high-pressure limits of the reactio
 
 $$
 \begin{equation}
-k_0=k_0^{298} \left ( \frac{T}{298} \right )^{-n}, \quad
-k_\infty=k_\infty^{298} \left ( \frac{T}{298}\right )^{-m} .
+  k_0=k_0^{298} \left ( \frac{T}{298} \right )^{-n}, \quad
+  k_\infty=k_\infty^{298} \left ( \frac{T}{298}\right )^{-m} .
 \end{equation}
 $$
 
@@ -283,9 +283,9 @@ coefficients implemented directly into MPTRAC are listed in the table.
 
 | Reaction | A factor | E/R |
 | -------- | -------- | --- |
-CH$_4$+OH $\to$ CH$_3$+H$_2$O | 2.45 $\cdot$ 10$^{-12}$ | 1775 |
-NH$_3$+OH $\to$ H$_2$O+NH$_2$ | 1.7 $\cdot$ 10$^{-12}$ | 710 |
-O$_3$+OH $\to$ HO$_2$+O$_2$ | 1.7 $\cdot$ 10$^{-12}$ | 940 |
+$\rm{CH}_4+\rm{OH} \to \rm{CH}_3+\rm{H_2O}$ | 2.45 $\cdot 10^{-12}$ | 1775 |
+$\rm{NH}_3+\rm{OH} \to \rm{H_2O}+\rm{NH}_2$ | 1.7 $\cdot 10^{-12}$ | 710 |
+$\rm{O}_3+\rm{OH} \to \mathrm{HO}_2+\rm{O}_2$ | 1.7 $\cdot 10^{-12}$ | 940 |
 
 Where A is in $\mathrm{cm^{-3}}\mathrm{molec^{-1}} \mathrm{s^{-1}}$ and E/R in K.
 
