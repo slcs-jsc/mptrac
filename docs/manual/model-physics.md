@@ -257,7 +257,60 @@ $$
 
 ## Hydroxyl chemistry
 
+The hydroxyl radical (OH) is an important oxidant in the atmosphere, causing the decomposition of many gas-phase species. The oxidation of different gas-phase species with OH can be classified into two main categories, bimolecular reactions (e.g., reactions of CH4 or NH3), and termolecular reactions (e.g., CO or SO2).
+
+For bimolecular reactions, the rate constant is calculated from Arrhenius law,
+
+$$
+\begin{equation}
+k(T)=A \times exp \left ( -\frac{E}{RT} \right )
+\end{equation}
+$$
+
+with Avogadro constant $N_A$. For the calculation of the second-order rate constant k see Eq. 25 in Hoffmann et al. (2022).
+
+The for the calculation of k nedded low- and high-pressure limits of the reaction rate constant are given by
+
+$$
+\begin{equation}
+k_0=k_0^{298} \left ( \frac{T}{298} \right )^{-n}, \quad
+k_\infty=k_\infty^{298} \left ( \frac{T}{298}\right )^{-m} .
+\end{equation}
+$$
+
+The constants $k_0^{298}$ and k_\infty^{298}$ at the reference temperature of 298 K and the exponents n and m need to be specified as control parameters. The exponents can be set to zero in order to neglect the temperature dependence of the low- or high pressure limits of $k_0$ and $k_\infty$. The termolecular reaction rate
+coefficients implemented directly into MPTRAC are listed in the table.
+
+| Reaction | A factor | E/R |
+| -------- | -------- | --- |
+CH$_4$+OH $\to$ CH$_3$+H$_2$O | 2.45 $\cdot$ 10$^{-12}$ | 1775 |
+NH$_3$+OH $\to$ H$_2$O+NH$_2$ | 1.7 $\cdot$ 10$^{-12}$ | 710 |
+O$_3$+OH $\to$ HO$_2$+O$_2$ | 1.7 $\cdot$ 10$^{-12}$ | 940 |
+
+Where A is in $\mathrm{cm^{-3}}\mathrm{molec^{-1}} \mathrm{s^{-1}}$ and E/R in K.
+
+Based on the bimolecular reaction rate k=k(T) or the termolecular reaction rate k=k(T, [M]), the loss of mass of the gas-phase species over time is calculated from
+
+$$
+\begin{equation}
+m(t+\Delta t)=m(t) \mathrm{exp} (-k[OH] \Delta t).
+\end{equation}
+$$
+
+The hydroxyl radical concentrations [OH] are obtained by bilinear interpolation from the monthly mean zonal mean climatology of Pommrich et al. (2014). This approach is suitable for global simulations covering at least several days, as hydroxyl concentrations may vary significantly between day and nighttime as well as the local atmospheric composition.
+
 ## Exponential decay
+
+A rather generic module was implemented in MPTRAC, to simulate the loss of mass of an air parcel over a model time step $\Delta t$ due to any kind of exponential decay process, e.g.,
+chemical loss or radioactivity,
+
+$$
+\begin{equation}
+m(t+\Delta t)=m(t)\mathrm{exp} \left ( -\frac{\Delta t}{t_e} \right ).
+\end{equation}
+$$
+
+The e-folding lifetime $t_e$ of the species needs to be specified as a control parameter. As typical lifetimes may differ, we implemented an option to specify separate lifetimes for the troposphere and stratosphere. A smooth transition between the tropospheric and stratospheric lifetime is created within a 1 km log-pressure altitude range around the tropopause.
 
 ## Boundary conditions
 
