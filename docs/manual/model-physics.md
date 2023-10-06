@@ -121,13 +121,13 @@ The scaling factor f is *not* directly set in MPTRAC. Instead the square $f^2$ c
 
 The convection parameterization implemented in MPTRAC introduces the concept of the Extreme Convection Parametrization (ECP) to efficiently simulate convective effects within Lagrangian transport models. This method is based on the assumption that convective events create well-mixed columns of air, and it leverages convective available potential energy (CAPE), convective inhibition (CIN) and equilibrium level (EL) data from meteorological fields to capture this behavior.
 
-The fundamental idea underlying the ECP approach involves several key steps. First, the meteorological fields are used to interpolate gridded CAPE, CIN and EL values to the horizontal positions of individual air parcels within the Lagrangian model. Then, user-defined thresholds of $\rm{CAPE_0}$ and $\rm{CIN_0}$ are applied globally. If the interpolated CAPE value of an air parcel surpasses the $\rm{CAPE_0}$ threshold or the interpolated CIN value is below the $\rm{CIN_0}$ threshold and the parcel's position is below the EL, the model triggers a convective event.
+The fundamental idea underlying the ECP approach involves several key steps. First, the meteorological fields are used to interpolate gridded CAPE, CIN and EL values to the horizontal positions of individual air parcels within the Lagrangian model. Then, user-defined thresholds of $\sf{CAPE_0}$ and $\sf{CIN_0}$ are applied globally. If the interpolated CAPE value of an air parcel surpasses the $\sf{CAPE_0}$ threshold or the interpolated CIN value is below the $\sf{CIN_0}$ threshold and the parcel's position is below the EL, the model triggers a convective event.
 
 During a convective event, air parcels affected by the event are subject to random vertical redistribution within the atmospheric column, spanning from the Earth's surface to the equilibrium level. This vertical redistribution takes into account air density to ensure the creation of a well-mixed column of air. Importantly, this redistribution process adheres to mass conservation principles, maintaining both the number of air parcels and their collective mass constant.
 
 In subsequent time steps of the model, the trajectories of air parcels are continued from their new vertical positions, assigned during the convective mixing event. This dynamic approach enables the model to capture the transport implications of convective events, while also accounting for the vertical mixing effects they induce.
 
-The ECP method within MPTRAC is versatile and accommodates different simulation scenarios based on the chosen threshold $\rm{CAPE_0}$. By setting $\rm{CAPE_0}$ to zero, the model implements the "extreme convection" approach, where convection is simulated wherever CAPE exists below the EL. This represents an upper-limit scenario for the effects of unresolved convection in the meteorological fields. On the other hand, by turning off the ECP entirely, only explicitly resolved convective updrafts of the meteorological fields are considered, representing a lower-limit scenario. Intermediate states can be simulated by selecting specific values for threshold $\rm{CAPE_0}$. The parameter $\rm{CIN_0}$ can be used to prevent triggered convection in regions where a larger lower-level inversion layer is located, with high CAPE above it.
+The ECP method within MPTRAC is versatile and accommodates different simulation scenarios based on the chosen threshold $\sf{CAPE_0}$. By setting $\sf{CAPE_0}$ to zero, the model implements the "extreme convection" approach, where convection is simulated wherever CAPE exists below the EL. This represents an upper-limit scenario for the effects of unresolved convection in the meteorological fields. On the other hand, by turning off the ECP entirely, only explicitly resolved convective updrafts of the meteorological fields are considered, representing a lower-limit scenario. Intermediate states can be simulated by selecting specific values for threshold $\sf{CAPE_0}$. The parameter $\sf{CIN_0}$ can be used to prevent triggered convection in regions where a larger lower-level inversion layer is located, with high CAPE above it.
 
 The frequency of applying the ECP can be customized to the simulation's requirements. It can be implemented every model time step or at user-defined intervals that match typical convective timescales. This adaptability adds to the flexibility of the ECP method, making it suitable for a variety of simulation contexts.
 
@@ -153,7 +153,7 @@ using the atmospheric pressure $p$, temperature $T$, and the specific gas consta
 
 $$
 \begin{equation}
-  \eta=1.832515 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\rm{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
+  \eta=1.832515 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\sf{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
   \end{equation}
 $$
 
@@ -228,19 +228,19 @@ The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of dissolution $\D
 
 | Species      | $H^\ominus$ (at 298.15 K) | $-\frac{\Delta_{sol}H}{R}$ |
 | ------------ | ------------------ | ------|
-| $\rm{CF_2Cl_2}$ |  3.0 $\cdot 10^{-5}$ | 3500 |   
-| $\rm{CFCl_3}$  | 1.1 $\cdot 10^{-4}$ | 3300 |
-| $\rm{CH_4}$    | 1.4 $\cdot 10^{-5}$ | 1600 |
-| $\rm{CO}$      | 9.7 $\cdot 10^{-6}$ | 1300 |
-| $\rm{CO_2}$    | 3.3 $\cdot 10^{-4}$ | 2400 |
-| $\rm{N_2O}$    | 2.4 $\cdot 10^{-4}$ | 2600 |
-| $\rm{NH_3}$    | 5.9 $\cdot 10^{-1}$ | 4200 |
-| $\rm{HNO_3}$   | 2.1 $\cdot 10^3$    | 8700 |
-| $\rm{NO}$      | 1.9 $\cdot 10^{-5}$ | 1600 |
-| $\rm{NO_2}$    | 1.2 $\cdot 10^{-4}$ | 2400 |
-| $\rm{O_3}$     | 1.0 $\cdot 10^{-4}$ | 2800 |
-| $\rm{SF_6}$    | 2.4 $\cdot 10^{-6}$ | 3100 |
-| $\rm{SO_2}$    | 1.3 $\cdot 10^{-2}$ | 2900 |
+| $\sf{CF_2Cl_2}$ |  3.0 $\cdot 10^{-5}$ | 3500 |   
+| $\sf{CFCl_3}$  | 1.1 $\cdot 10^{-4}$ | 3300 |
+| $\sf{CH_4}$    | 1.4 $\cdot 10^{-5}$ | 1600 |
+| $\sf{CO}$      | 9.7 $\cdot 10^{-6}$ | 1300 |
+| $\sf{CO_2}$    | 3.3 $\cdot 10^{-4}$ | 2400 |
+| $\sf{N_2O}$    | 2.4 $\cdot 10^{-4}$ | 2600 |
+| $\sf{NH_3}$    | 5.9 $\cdot 10^{-1}$ | 4200 |
+| $\sf{HNO_3}$   | 2.1 $\cdot 10^3$    | 8700 |
+| $\sf{NO}$      | 1.9 $\cdot 10^{-5}$ | 1600 |
+| $\sf{NO_2}$    | 1.2 $\cdot 10^{-4}$ | 2400 |
+| $\sf{O_3}$     | 1.0 $\cdot 10^{-4}$ | 2800 |
+| $\sf{SF_6}$    | 2.4 $\cdot 10^{-6}$ | 3100 |
+| $\sf{SO_2}$    | 1.3 $\cdot 10^{-2}$ | 2900 |
 
 ## Dry deposition
 Dry deposition leads to a loss of mass of aerosol particles or trace gases by gravitational settling or chemical and physical interactions with the surface of the dry phase. In the parametrization implemented in MPTRAC, dry deposition is calculated for air parcels located in the lowermost $\Delta_p=$ 30 hPa layer above the surface. This corresponds to a layer width of $\Delta z \approx$ 200 m at standard conditions. 
@@ -257,7 +257,7 @@ $$
 
 ## Hydroxyl chemistry
 
-The hydroxyl radical (OH) is an important oxidant in the atmosphere, causing the decomposition of many gas-phase species. The oxidation of different gas-phase species with OH can be classified into two main categories, bimolecular reactions (e.g., reactions of $\rm{CH_4}$ or $\rm{NH_3}$), and termolecular reactions (e.g., CO or $\rm{SO_2}$).
+The hydroxyl radical (OH) is an important oxidant in the atmosphere, causing the decomposition of many gas-phase species. The oxidation of different gas-phase species with OH can be classified into two main categories, bimolecular reactions (e.g., reactions of $\sf{CH_4}$ or $\sf{NH_3}$), and termolecular reactions (e.g., CO or $\sf{SO_2}$).
 
 For bimolecular reactions, the rate constant is calculated from Arrhenius law,
 
@@ -283,11 +283,11 @@ coefficients implemented directly into MPTRAC are listed in the table.
 
 | Reaction | A factor | E/R |
 | -------- | -------- | --- |
-$\rm{CH}_4+\rm{OH} \to \rm{CH}_3+\rm{H_2O}$ | 2.45 $\cdot 10^{-12}$ | 1775 |
-$\rm{NH}_3+\rm{OH} \to \rm{H_2O}+\rm{NH}_2$ | 1.7 $\cdot 10^{-12}$ | 710 |
-$\rm{O}_3+\rm{OH} \to \mathrm{HO}_2+\rm{O}_2$ | 1.7 $\cdot 10^{-12}$ | 940 |
+$\sf{CH}_4+\sf{OH} \to \sf{CH}_3+\rm{H_2O}$ | 2.45 $\cdot 10^{-12}$ | 1775 |
+$\sf{NH}_3+\sf{OH} \to \sf{H_2O}+\rm{NH}_2$ | 1.7 $\cdot 10^{-12}$ | 710 |
+$\sf{O}_3+\sf{OH} \to \sf{HO}_2+\rm{O}_2$ | 1.7 $\cdot 10^{-12}$ | 940 |
 
-Where A is in $\mathrm{cm^{-3}}\mathrm{molec^{-1}} \mathrm{s^{-1}}$ and E/R in K.
+Where A is in $\sf{cm^{-3}}\sf{molec^{-1}} \sf{s^{-1}}$ and E/R in K.
 
 Based on the bimolecular reaction rate k=k(T) or the termolecular reaction rate k=k(T, [M]), the loss of mass of the gas-phase species over time is calculated from
 
