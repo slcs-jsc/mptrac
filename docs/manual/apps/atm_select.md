@@ -34,5 +34,3 @@ Following the selection criteria provided in the control file <ctl> atm_select e
 | SELECT_RLAT | set station latitude [deg] | 0 |
 
 The parameters should be given as an indexed list in the control file (example).
-
-**Note:** The parameters can also be appended to the function call, but they will cause error messages, as a loop runs over all input parameters >= 3 and tries to read files named as the control parameters. Despite the annoying error messages the app will create a correct output file.
