@@ -37,6 +37,10 @@
 #ifndef LIBTRAC_H
 #define LIBTRAC_H
 
+#ifndef FUN_DECL
+#define FUN_DECL 
+#endif
+
 /* ------------------------------------------------------------
    Includes...
    ------------------------------------------------------------ */
@@ -64,6 +68,11 @@
 #ifdef _OPENACC
 #include "openacc.h"
 #include "curand.h"
+#endif
+
+#ifdef _OPENMP_OFFLOAD
+//#include "hip/hip_runtime.h"
+//#include "hiprand/hiprand.h"
 #endif
 
 #ifdef ZFP
@@ -212,19 +221,9 @@
 #define CY 250
 #endif
 
-/*! Maximum number of total column ozone data for climatological data. */
-#ifndef CO3
-#define CO3 30
-#endif
-
 /*! Maximum number of pressure levels for climatological data. */
 #ifndef CP
 #define CP 60
-#endif
-
-/*! Maximum number of solar zenith angles for climatological data. */
-#ifndef CSZA
-#define CSZA 50
 #endif
 
 /*! Maximum number of time steps for climatological data. */
@@ -786,7 +785,7 @@
    ------------------------------------------------------------ */
 
 /*! Wrapper to Thrust sorting function. */
-void thrustSortWrapper(
+FUN_DECL void thrustSortWrapper(
   double *__restrict__ c,
   int n,
   int *__restrict__ index);
@@ -1302,9 +1301,6 @@ typedef struct {
   /*! Life time of particles in the stratosphere  [s]. */
   double tdec_strat;
 
-  /*! Filename of photolysis rates climatology. */
-  char clim_photo[LEN];
-
   /*! Filename of HNO3 climatology. */
   char clim_hno3_filename[LEN];
 
@@ -1702,41 +1698,6 @@ typedef struct {
 
 } cache_t;
 
-/*! Climatological data in form of photolysis rates. */
-typedef struct {
-
-  /*! Number of pressure levels. */
-  int np;
-
-  /*! Number of solar zenith angles. */
-  int nsza;
-
-  /*! Number of total ozone columns. */
-  int no3c;
-
-  /*! Pressure [hPa]. */
-  double p[CP];
-
-  /*! Solar zenith angle [rad]. */
-  double sza[CSZA];
-
-  /*! Total column ozone [DU]. */
-  double o3c[CO3];
-
-  /*! N2O photolysis rate [1/s]. */
-  double n2o[CP][CSZA][CO3];
-
-  /*! CCl4 photolysis rate [1/s]. */
-  double ccl4[CP][CSZA][CO3];
-
-  /*! CCl3F photolysis rate [1/s]. */
-  double ccl3f[CP][CSZA][CO3];
-
-  /*! CCl2F2 photolysis rate [1/s]. */
-  double ccl2f2[CP][CSZA][CO3];
-
-} clim_photo_t;
-
 /*! Climatological data in form of time series. */
 typedef struct {
 
@@ -1777,7 +1738,7 @@ typedef struct {
 
 } clim_zm_t;
 
-/*! Climatological data. */
+/*! Climatological data of all variables. */
 typedef struct {
 
   /*! Number of tropopause timesteps. */
@@ -1794,9 +1755,6 @@ typedef struct {
 
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
-
-  /*! Photolysis rates. */
-  clim_photo_t photo;
 
   /*! HNO3 zonal means. */
   clim_zm_t hno3;
@@ -1829,6 +1787,42 @@ typedef struct {
   clim_ts_t sf6;
 
 } clim_t;
+
+/*! Photolysis rate. */
+typedef struct{
+
+  /*! Dimension number of pressure levels. */
+  int np;
+
+  /*! Dimension number of solar zenith angles. */
+  int nsza;
+
+  /*! Dimension number of total ozone column. */
+  int no3c;
+
+  /*! Pressure [hPa]. */
+  double p[CP];	
+
+  /*! Solar zenith angle [deg]. */
+  double sza[50];
+
+  /*! Total Ozone column [DU]. */
+  double o3c[30];
+
+	/*! N2O photolysis rate. */
+	double n2o[CP][50][30];
+
+	/*! N2O photolysis rate. */
+	double ccl4[CP][50][30];
+
+	/*! N2O photolysis rate. */
+	double ccl3f[CP][50][30];
+
+	/*! N2O photolysis rate. */
+	double ccl2f2[CP][50][30];
+
+} phot_t;
+
 
 /*! Meteo data. */
 typedef struct {
@@ -1992,6 +1986,7 @@ typedef struct {
    ------------------------------------------------------------ */
 
 /*! Calculate buoyancy frequency. */
+FUN_DECL
 double buoyancy_frequency(
   const double p0,
   const double t0,
@@ -1999,7 +1994,7 @@ double buoyancy_frequency(
   const double t1);
 
 /*! Convert Cartesian coordinates to geolocation. */
-void cart2geo(
+FUN_DECL void cart2geo(
   const double *x,
   double *z,
   double *lon,
@@ -2011,11 +2006,32 @@ void cart2geo(
 #endif
 int check_finite(
   const double x);
+#ifdef _OPENMP_OFFLOAD
+//#pragma omp declare target(check_finite)
+#endif
+
+/*! Climatology of tropopause pressure. */
+#ifdef _OPENACC
+#pragma acc routine (clim_tropo)
+#endif
+FUN_DECL
+double clim_tropo(
+  const clim_t * clim,
+  const double t,
+  const double lat);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(clim_tropo)
+#endif
+
+/*! Initialize tropopause climatology. */
+FUN_DECL void clim_tropo_init(
+  clim_t * clim);
 
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
 #endif
+FUN_DECL
 double clim_oh(
   const ctl_t * ctl,
   const clim_t * clim,
@@ -2023,56 +2039,58 @@ double clim_oh(
   const double lon,
   const double lat,
   const double p);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(clim_oh)
+#endif
 
 /*! Initialization function for OH climatology. */
-void clim_oh_diurnal_correction(
+FUN_DECL void clim_oh_diurnal_correction(
   ctl_t * ctl,
-  clim_t * clim);
-
-/*! Interpolate photolysis rate data. */
-#ifdef _OPENACC
-#pragma acc routine (clim_photo)
-#endif
-double clim_photo(
-  double rate[CP][CSZA][CO3],
-  clim_photo_t * photo,
-  double p,
-  double sza,
-  double o3c);
-
-/*! Climatology of tropopause pressure. */
-#ifdef _OPENACC
-#pragma acc routine (clim_tropo)
-#endif
-double clim_tropo(
-  const clim_t * clim,
-  const double t,
-  const double lat);
-
-/*! Initialize tropopause climatology. */
-void clim_tropo_init(
   clim_t * clim);
 
 /*! Interpolate time series. */
 #ifdef _OPENACC
 #pragma acc routine (clim_ts)
 #endif
+FUN_DECL
 double clim_ts(
   const clim_ts_t * ts,
   const double t);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(clim_ts)
+#endif
 
 /*! Interpolate zonal mean climatology. */
 #ifdef _OPENACC
 #pragma acc routine (clim_zm)
 #endif
+FUN_DECL
 double clim_zm(
   const clim_zm_t * zm,
   const double t,
   const double lat,
   const double p);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(clim_zm)
+#endif
+
+/*! Interpolate photolysis rate data. */
+#ifdef _OPENACC
+#pragma acc routine (phot_rate)
+#endif
+FUN_DECL
+double phot_rate(
+  double rate[CP][50][30],
+	phot_t * phot,
+  double p,
+	double sza,
+	double o3c );
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(phot_rate)
+#endif
 
 /*! Pack or unpack array. */
-void compress_pack(
+FUN_DECL void compress_pack(
   char *varname,
   float *array,
   size_t nxy,
@@ -2082,7 +2100,7 @@ void compress_pack(
 
 /*! Compress or decompress array with zfp. */
 #ifdef ZFP
-void compress_zfp(
+FUN_DECL void compress_zfp(
   char *varname,
   float *array,
   int nx,
@@ -2096,7 +2114,7 @@ void compress_zfp(
 
 /*! Compress or decompress array with zstd. */
 #ifdef ZSTD
-void compress_zstd(
+FUN_DECL void compress_zstd(
   char *varname,
   float *array,
   size_t n,
@@ -2105,28 +2123,28 @@ void compress_zstd(
 #endif
 
 /*! Get day of year from date. */
-void day2doy(
+FUN_DECL void day2doy(
   const int year,
   const int mon,
   const int day,
   int *doy);
 
 /*! Get date from day of year. */
-void doy2day(
+FUN_DECL void doy2day(
   const int year,
   const int doy,
   int *mon,
   int *day);
 
 /*! Convert geolocation to Cartesian coordinates. */
-void geo2cart(
+FUN_DECL void geo2cart(
   const double z,
   const double lon,
   const double lat,
   double *x);
 
 /*! Get meteo data for given time step. */
-void get_met(
+FUN_DECL void get_met(
   ctl_t * ctl,
   clim_t * clim,
   double t,
@@ -2134,7 +2152,7 @@ void get_met(
   met_t ** met1);
 
 /*! Get meteo data for time step. */
-void get_met_help(
+FUN_DECL void get_met_help(
   ctl_t * ctl,
   double t,
   int direct,
@@ -2143,7 +2161,7 @@ void get_met_help(
   char *filename);
 
 /*! Replace template strings in filename. */
-void get_met_replace(
+FUN_DECL void get_met_replace(
   char *orig,
   char *search,
   char *repl);
@@ -2152,7 +2170,7 @@ void get_met_replace(
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_4d_coord)
 #endif
-void intpol_met_4d_coord(
+FUN_DECL void intpol_met_4d_coord(
   met_t * met0,
   float height0[EX][EY][EP],
   float array0[EX][EY][EP],
@@ -2167,12 +2185,15 @@ void intpol_met_4d_coord(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_4d_coord)
+#endif
 
 #ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_4d_coord_uvw)
 #endif
-void intpol_met_4d_coord_uvw(
+FUN_DECL void intpol_met_4d_coord_uvw(
   met_t * met0,
   float heights0[EX][EY][EP],
   float uvw0[EX][EY][EP][3],
@@ -2189,13 +2210,16 @@ void intpol_met_4d_coord_uvw(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_4d_coord_uvw)
+#endif
 #endif
 
 /*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_3d)
 #endif
-void intpol_met_space_3d(
+FUN_DECL void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
   double p,
@@ -2205,12 +2229,15 @@ void intpol_met_space_3d(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_space_3d)
+#endif
 
 /*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_2d)
 #endif
-void intpol_met_space_2d(
+FUN_DECL void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
   double lon,
@@ -2219,13 +2246,16 @@ void intpol_met_space_2d(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_space_2d)
+#endif
 
 /*! Spatial interpolation of meteo data. */
 #ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_space_uvw)
 #endif
-void intpol_met_space_uvw(
+FUN_DECL void intpol_met_space_uvw(
   met_t * met,
   double p,
   double lon,
@@ -2236,13 +2266,16 @@ void intpol_met_space_uvw(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_space_uvw)
+#endif
 #endif
 
 /*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_3d)
 #endif
-void intpol_met_time_3d(
+FUN_DECL void intpol_met_time_3d(
   met_t * met0,
   float array0[EX][EY][EP],
   met_t * met1,
@@ -2255,12 +2288,15 @@ void intpol_met_time_3d(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_time_3d)
+#endif
 
 /*! Temporal interpolation of meteo data. */
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_2d)
 #endif
-void intpol_met_time_2d(
+FUN_DECL void intpol_met_time_2d(
   met_t * met0,
   float array0[EX][EY],
   met_t * met1,
@@ -2272,13 +2308,16 @@ void intpol_met_time_2d(
   int *ci,
   double *cw,
   int init);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_time_2d)
+#endif
 
 /*! Temporal interpolation of meteo data. */
 #ifdef UVW
 #ifdef _OPENACC
 #pragma acc routine (intpol_met_time_uvw)
 #endif
-void intpol_met_time_uvw(
+FUN_DECL void intpol_met_time_uvw(
   met_t * met0,
   met_t * met1,
   double ts,
@@ -2288,10 +2327,14 @@ void intpol_met_time_uvw(
   double *u,
   double *v,
   double *w);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(intpol_met_time_uvw)
+#endif
 #endif
 
+
 /*! Convert seconds to date. */
-void jsec2time(
+FUN_DECL void jsec2time(
   const double jsec,
   int *year,
   int *mon,
@@ -2305,82 +2348,110 @@ void jsec2time(
 #ifdef _OPENACC
 #pragma acc routine (kernel_weight)
 #endif
+FUN_DECL
 double kernel_weight(
   const double kz[EP],
   const double kw[EP],
   const int nk,
   const double p);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(kernel_weight)
+#endif
 
 /*! Calculate moist adiabatic lapse rate. */
 #ifdef _OPENACC
 #pragma acc routine (lapse_rate)
 #endif
+FUN_DECL
 double lapse_rate(
   const double t,
   const double h2o);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(lapse_rate)
+#endif
 
 /*! Get predefined pressure levels. */
-void level_definitions(
+FUN_DECL void level_definitions(
   ctl_t * ctl);
 
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC
 #pragma acc routine (locate_irr)
 #endif
+FUN_DECL
 int locate_irr(
   const double *xx,
   const int n,
   const double x);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(locate_irr)
+#endif
 
 /*! Find array index for regular grid. */
 #ifdef _OPENACC
 #pragma acc routine (locate_reg)
 #endif
+FUN_DECL
 int locate_reg(
   const double *xx,
   const int n,
   const double x);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(locate_reg)
+#endif
 
 /*! Locate the four vertical indizes of a box for a given height value. */
 #ifdef _OPENACC
 #pragma acc routine (locate_vert)
 #endif
-void locate_vert(
+FUN_DECL void locate_vert(
   float profiles[EX][EY][EP],
   int np,
   int lon_ap_ind,
   int lat_ap_ind,
   double alt_ap,
   int *ind);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(locate_vert)
+#endif
 
 /*! locate the index in a column of a three dimensional array. */
 #ifdef _OPENACC
 #pragma acc routine (locate_irr_3d)
 #endif
+FUN_DECL
 int locate_irr_3d(
   float profiles[EX][EY][EP],
   int np,
   int ind_lon,
   int ind_lat,
   double x);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(locate_irr_3d)
+#endif
 
 /*! Calculate NAT existence temperature. */
 #ifdef _OPENACC
 #pragma acc routine (nat_temperature)
 #endif
+FUN_DECL
 double nat_temperature(
   const double p,
   const double h2o,
   const double hno3);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(nat_temperature)
+#endif
 
 /*! Parallel quicksort. */
-void quicksort(
+FUN_DECL void quicksort(
   double arr[],
   int brr[],
   const int low,
   const int high);
 
 /*! Partition function for quicksort. */
+FUN_DECL
 int quicksort_partition(
   double arr[],
   int brr[],
@@ -2388,71 +2459,77 @@ int quicksort_partition(
   const int high);
 
 /*! Read atmospheric data. */
+FUN_DECL
 int read_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Read atmospheric data in ASCII format. */
+FUN_DECL
 int read_atm_asc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Read atmospheric data in binary format. */
+FUN_DECL
 int read_atm_bin(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Read atmospheric data in CLaMS format. */
+FUN_DECL
 int read_atm_clams(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Read atmospheric data in netCDF format. */
+FUN_DECL
 int read_atm_nc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Read climatological data. */
-void read_clim(
+FUN_DECL void read_clim(
   ctl_t * ctl,
   clim_t * clim);
 
 /*! Read climatological time series. */
+FUN_DECL
 int read_clim_ts(
   char *filename,
   clim_ts_t * ts);
 
 /*! Read climatological zonal means. */
-void read_clim_zm(
+FUN_DECL void read_clim_zm(
   char *filename,
   char *varname,
   clim_zm_t * zm);
 
-/*! Read climatological photolysis rates. */
-void read_clim_photo(
-  char *filename,
-  clim_photo_t * photo);
+/*! Read Photolysis rates. */
+FUN_DECL void read_photol(
+  phot_t * phot);
 
 /*! Read control parameters. */
-void read_ctl(
+FUN_DECL void read_ctl(
   const char *filename,
   int argc,
   char *argv[],
   ctl_t * ctl);
 
 /*! Read kernel data file. */
-void read_kernel(
+FUN_DECL void read_kernel(
   const char *filename,
   double kz[EP],
   double kw[EP],
   int *nk);
 
 /*! Read meteo data file. */
+FUN_DECL
 int read_met(
   char *filename,
   ctl_t * ctl,
@@ -2460,14 +2537,14 @@ int read_met(
   met_t * met);
 
 /*! Read 2-D meteo variable. */
-void read_met_bin_2d(
+FUN_DECL void read_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
   char *varname);
 
 /*! Read 3-D meteo variable. */
-void read_met_bin_3d(
+FUN_DECL void read_met_bin_3d(
   FILE * in,
   ctl_t * ctl,
   met_t * met,
@@ -2475,53 +2552,54 @@ void read_met_bin_3d(
   char *varname);
 
 /*! Calculate convective available potential energy. */
-void read_met_cape(
+FUN_DECL void read_met_cape(
   clim_t * clim,
   met_t * met);
 
 /*! Calculate cloud properties. */
-void read_met_cloud(
+FUN_DECL void read_met_cloud(
   ctl_t * ctl,
   met_t * met);
 
 /*! Apply detrending method to temperature and winds. */
-void read_met_detrend(
+FUN_DECL void read_met_detrend(
   ctl_t * ctl,
   met_t * met);
 
 /*! Extrapolate meteo data at lower boundary. */
-void read_met_extrapolate(
+FUN_DECL void read_met_extrapolate(
   met_t * met);
 
 /*! Calculate geopotential heights. */
-void read_met_geopot(
+FUN_DECL void read_met_geopot(
   ctl_t * ctl,
   met_t * met);
 
 /*! Read coordinates of meteo data. */
-void read_met_grid(
+FUN_DECL void read_met_grid(
   char *filename,
   int ncid,
   ctl_t * ctl,
   met_t * met);
 
 /*! Read meteo data on vertical levels. */
-void read_met_levels(
+FUN_DECL void read_met_levels(
   int ncid,
   ctl_t * ctl,
   met_t * met);
 
 /*! Smooth vertical zeta and pressure profiles. */
-void read_met_monotonize(
+FUN_DECL void read_met_monotonize(
   met_t * met);
 
 /*! Convert meteo data from model levels to pressure levels. */
-void read_met_ml2pl(
+FUN_DECL void read_met_ml2pl(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP]);
 
 /*! Read and convert 2D variable from meteo data file. */
+FUN_DECL
 int read_met_nc_2d(
   int ncid,
   char *varname,
@@ -2533,6 +2611,7 @@ int read_met_nc_2d(
   int init);
 
 /*! Read and convert 3D variable from meteo data file. */
+FUN_DECL
 int read_met_nc_3d(
   int ncid,
   char *varname,
@@ -2544,40 +2623,40 @@ int read_met_nc_3d(
   int init);
 
 /*! Calculate pressure of the boundary layer. */
-void read_met_pbl(
+FUN_DECL void read_met_pbl(
   met_t * met);
 
 /*! Create meteo data with periodic boundary conditions. */
-void read_met_periodic(
+FUN_DECL void read_met_periodic(
   met_t * met);
 
 /*! Calculate potential vorticity. */
-void read_met_pv(
+FUN_DECL void read_met_pv(
   met_t * met);
 
 /*! Calculate total column ozone. */
-void read_met_ozone(
+FUN_DECL void read_met_ozone(
   met_t * met);
 
 /*! Downsampling of meteo data. */
-void read_met_sample(
+FUN_DECL void read_met_sample(
   ctl_t * ctl,
   met_t * met);
 
 /*! Read surface data. */
-void read_met_surface(
+FUN_DECL void read_met_surface(
   int ncid,
   met_t * met,
   ctl_t * ctl);
 
 /*! Calculate tropopause data. */
-void read_met_tropo(
+FUN_DECL void read_met_tropo(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met);
 
 /*! Read observation data. */
-void read_obs(
+FUN_DECL void read_obs(
   char *filename,
   double *rt,
   double *rz,
@@ -2587,6 +2666,7 @@ void read_obs(
   int *nobs);
 
 /*! Read a control parameter from file or command line. */
+FUN_DECL
 double scan_ctl(
   const char *filename,
   int argc,
@@ -2600,14 +2680,18 @@ double scan_ctl(
 #ifdef _OPENACC
 #pragma acc routine (sedi)
 #endif
+FUN_DECL
 double sedi(
   const double p,
   const double T,
   const double rp,
   const double rhop);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(sedi)
+#endif
 
 /*! Spline interpolation. */
-void spline(
+FUN_DECL void spline(
   const double *x,
   const double *y,
   const int n,
@@ -2615,26 +2699,37 @@ void spline(
   double *y2,
   const int n2,
   const int method);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(spline)
+#endif
 
 /*! Calculate standard deviation. */
 #ifdef _OPENACC
 #pragma acc routine (stddev)
 #endif
+FUN_DECL
 float stddev(
   const float *data,
   const int n);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(stddev)
+#endif
 
 /*! Calculate solar zenith angle. */
 #ifdef _OPENACC
 #pragma acc routine (sza_calc)
 #endif
+FUN_DECL
 double sza_calc(
   const double sec,
   const double lon,
   const double lat);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(sza_calc)
+#endif
 
 /*! Convert date to seconds. */
-void time2jsec(
+FUN_DECL void time2jsec(
   const int year,
   const int mon,
   const int day,
@@ -2645,12 +2740,13 @@ void time2jsec(
   double *jsec);
 
 /*! Measure wall-clock time. */
-void timer(
+FUN_DECL void timer(
   const char *name,
   const char *group,
   int output);
 
 /*! Extract time information from filename. */
+FUN_DECL
 double time_from_filename(
   const char *filename,
   int offset);
@@ -2659,67 +2755,71 @@ double time_from_filename(
 #ifdef _OPENACC
 #pragma acc routine (tropo_weight)
 #endif
+FUN_DECL
 double tropo_weight(
   const clim_t * clim,
   const double t,
   const double lat,
   const double p);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp declare target(tropo_weight)
+#endif
 
 /*! Write atmospheric data. */
-void write_atm(
+FUN_DECL void write_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
 /*! Write atmospheric data in ASCII format. */
-void write_atm_asc(
+FUN_DECL void write_atm_asc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
 /*! Write atmospheric data in binary format. */
-void write_atm_bin(
+FUN_DECL void write_atm_bin(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Write atmospheric data in CLaMS position file format. */
-void write_atm_clams(
+FUN_DECL void write_atm_clams(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Write atmospheric data in CLaMS position file and trajectory format */
-void write_atm_clams_traj(
+FUN_DECL void write_atm_clams_traj(
   const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
 /*! Write atmospheric data in netCDF format. */
-void write_atm_nc(
+FUN_DECL void write_atm_nc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
 /*! Write CSI data. */
-void write_csi(
+FUN_DECL void write_csi(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
 /*! Write ensemble data. */
-void write_ens(
+FUN_DECL void write_ens(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
 /*! Write gridded data. */
-void write_grid(
+FUN_DECL void write_grid(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,
@@ -2728,7 +2828,7 @@ void write_grid(
   double t);
 
 /*! Write gridded data in ASCII format. */
-void write_grid_asc(
+FUN_DECL void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
@@ -2743,7 +2843,7 @@ void write_grid_asc(
   int *np);
 
 /*! Write gridded data in netCDF format. */
-void write_grid_nc(
+FUN_DECL void write_grid_nc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
@@ -2758,20 +2858,21 @@ void write_grid_nc(
   int *np);
 
 /*! Read meteo data file. */
+FUN_DECL
 int write_met(
   char *filename,
   ctl_t * ctl,
   met_t * met);
 
 /*! Write 2-D meteo variable. */
-void write_met_bin_2d(
+FUN_DECL void write_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
   char *varname);
 
 /*! Write 3-D meteo variable. */
-void write_met_bin_3d(
+FUN_DECL void write_met_bin_3d(
   FILE * out,
   ctl_t * ctl,
   met_t * met,
@@ -2781,7 +2882,7 @@ void write_met_bin_3d(
   double tolerance);
 
 /*! Write profile data. */
-void write_prof(
+FUN_DECL void write_prof(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,
@@ -2790,7 +2891,7 @@ void write_prof(
   double t);
 
 /*! Write sample data. */
-void write_sample(
+FUN_DECL void write_sample(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,
@@ -2799,14 +2900,14 @@ void write_sample(
   double t);
 
 /*! Write station data. */
-void write_station(
+FUN_DECL void write_station(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
 /*! Write VTK data. */
-void write_vtk(
+FUN_DECL void write_vtk(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,

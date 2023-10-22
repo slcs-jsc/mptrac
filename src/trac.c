@@ -22,7 +22,9 @@
   Lagrangian particle dispersion model.
 */
 
+#define FUN_DECL __attribute__((always_inline)) inline static
 #include "libtrac.h"
+#include "libtrac.c"
 
 #ifdef KPP
 #include "chem_Parameters.h"
@@ -31,12 +33,15 @@
 #include "kpp_chem.h"
 #endif
 
+
 /* ------------------------------------------------------------
    Global variables...
    ------------------------------------------------------------ */
 
 #ifdef _OPENACC
 curandGenerator_t rng;
+#elif defined(_OPENMP_OFFLOAD)
+//hiprandGenerator_t rng;
 #else
 static gsl_rng *rng[NTHREADS];
 #endif
@@ -46,7 +51,15 @@ static gsl_rng *rng[NTHREADS];
    ------------------------------------------------------------ */
 
 /*! Loop over particles. */
-#ifdef _OPENACC
+#ifdef _OPENMP_OFFLOAD
+#define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		    \
+  const int ip0_const = ip0;                            \
+  const int ip1_const = ip1;                            \
+  _Pragma("omp target teams distribute parallel for simd default(shared)")   \
+  for (int ip = ip0_const; ip < ip1_const; ip++)        \
+    if (!check_dt || dt[ip] != 0)
+
+#elif defined(_OPENACC)
 #define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
   const int ip0_const = ip0;                            \
   const int ip1_const = ip1;                            \
@@ -208,6 +221,7 @@ void module_h2o2_chem(
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
+	phot_t * phot,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -306,6 +320,8 @@ int main(
 
   clim_t *clim;
 
+	phot_t *phot;
+
   met_t *met0, *met1;
 
 #ifdef ASYNCIO
@@ -333,6 +349,13 @@ int main(
 #endif
 
   /* Initialize GPUs... */
+#ifdef _OPENMP_OFFLOAD
+  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
+  if (omp_get_num_devices() <= 0)
+    ERRMSG("Not running on a GPU device!");
+  omp_set_default_device(rank % omp_get_num_devices());
+#endif
+
 #ifdef _OPENACC
   SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
   if (acc_get_num_devices(acc_device_nvidia) <= 0)
@@ -367,6 +390,7 @@ int main(
     ALLOC(atm, atm_t, 1);
     ALLOC(cache, cache_t, 1);
     ALLOC(clim, clim_t, 1);
+		ALLOC(phot, phot_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
 #ifdef ASYNCIO
@@ -379,6 +403,15 @@ int main(
 	  3 * NP + 1);
 
     /* Create data region on GPUs... */
+#ifdef _OPENMP_OFFLOAD
+    SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
+#ifdef ASYNCIO
+#pragma omp target enter data map(alloc: atm[:1], cache[:1], clim[:1], ctl, ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP], rs[:3 * NP])
+#else
+#pragma omp target enter data map(alloc: atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], dt[:NP], rs[:3 * NP])
+#endif
+
+#endif
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #ifdef ASYNCIO
@@ -395,6 +428,9 @@ int main(
     /* Read climatological data... */
     read_clim(&ctl, clim);
 
+		/* Read photolysis rate data... */
+		read_photol(phot);
+
     /* Read atmospheric data... */
     sprintf(filename, "%s/%s", dirname, argv[3]);
     if (!read_atm(filename, &ctl, atm))
@@ -404,9 +440,14 @@ int main(
     module_timesteps_init(&ctl, atm);
 
     /* Update GPU... */
+#ifdef _OPENMP_OFFLOAD
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma omp target update to(atm[:1], clim[:1], phot[:1], ctl)
+#endif
+
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1], clim[:1], ctl)
+#pragma acc update device(atm[:1], clim[:1], phot[:1], ctl)
 #endif
 
     /* Initialize random number generator... */
@@ -440,6 +481,11 @@ int main(
     }
 
     /* Update GPU... */
+#ifdef _OPENMP_OFFLOAD
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma omp target update to(cache[:1])
+#endif
+
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(cache[:1])
@@ -471,7 +517,11 @@ int main(
 
 	/* Get meteo data... */
 #ifdef ASYNCIO
+#ifdef _OPENMP_OFFLOAD
+#pragma omp target wait(5)
+#else
 #pragma acc wait(5)
+#endif
 #pragma omp barrier
 	if (omp_get_thread_num() == 0) {
 
@@ -563,7 +613,7 @@ int main(
 
 	  /* First-order tracer chemistry... */
 	  if (ctl.tracer_chem)
-	    module_tracer_chem(&ctl, clim, met0, met1, atm, dt);
+	    module_tracer_chem(&ctl, clim, phot, met0, met1, atm, dt);
 
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem) {
@@ -615,6 +665,9 @@ int main(
     LOG(1, "SIZE_NP = %d", atm->np);
     LOG(1, "SIZE_MPI_TASKS = %d", size);
     LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
+#ifdef _OPENMP_OFFLOAD
+    LOG(1, "SIZE_OMP_DEVICES = %d", omp_get_num_devices());
+#endif
 #ifdef _OPENACC
     LOG(1, "SIZE_ACC_DEVICES = %d", acc_get_num_devices(acc_device_nvidia));
 #endif
@@ -632,6 +685,15 @@ int main(
 	1024. / 1024.);
 
     /* Delete data region on GPUs... */
+#ifdef _OPENMP_OFFLOAD
+    SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
+#ifdef ASYNCIO
+#pragma omp target exit data map(delete: ctl, atm, cache, clim, met0, met1, dt, rs, met0TMP, met1TMP)
+#else
+#pragma omp target exit data map(delete: ctl, atm, cache, clim, met0, met1, dt, rs)
+#endif
+
+#endif
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
 #ifdef ASYNCIO
@@ -646,6 +708,7 @@ int main(
     free(atm);
     free(cache);
     free(clim);
+		free(phot);
     free(met0);
     free(met1);
 #ifdef ASYNCIO
@@ -686,7 +749,7 @@ void module_advect(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
     /* Init... */
-    double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
+    double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3]={0};
 
     /* Loop over integration nodes... */
     for (int i = 0; i < ctl->advect; i++) {
@@ -764,7 +827,7 @@ void module_advect_diabatic(
     }
 
     /* Init... */
-    double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3];
+    double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3]={0};
 
     /* Loop over integration nodes... */
     for (int i = 0; i < ctl->advect; i++) {
@@ -1470,6 +1533,11 @@ void module_chemgrid(
   int *ixs, *iys, *izs;
 
   /* Update host... */
+#ifdef _OPENMP_OFFLOAD
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma omp target update from(atm[:1])
+#endif
+
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
@@ -1630,6 +1698,11 @@ void module_chemgrid(
   free(izs);
 
   /* Update device... */
+#ifdef _OPENMP_OFFLOAD
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma omp target update to(atm[:1])
+#endif
+
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1])
@@ -1780,6 +1853,7 @@ void module_h2o2_chem(
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
+	phot_t * phot,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -1789,22 +1863,19 @@ void module_tracer_chem(
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,phot,met0,atm,met1,dt)") {
+
+    /* Calculate solar zenith angle... */
+    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Get temperature... */
-    double t;
+    double t, o3c;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+		INTPOL_2D(o3c, 1)
 
     /* Get molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
-
-    /* Get total column ozone... */
-    double o3c;
-    INTPOL_2D(o3c, 1);
-
-    /* Get solar zenith angle... */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Get O(1D) concentration... */
     double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
@@ -1812,32 +1883,32 @@ void module_tracer_chem(
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
       double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      // double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
+			double K_hv = phot_rate(phot->ccl4, phot, atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
       double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      // double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+			double K_hv = phot_rate(phot->ccl3f, phot, atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
       double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      // double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+			double K_hv = phot_rate(phot->ccl2f2, phot, atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
       double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      // double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+			double K_hv = phot_rate(phot->n2o, phot, atm->p[ip], sza, o3c); 
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
@@ -1909,6 +1980,11 @@ void module_mixing(
   int *ixs, *iys, *izs;
 
   /* Update host... */
+#ifdef _OPENMP_OFFLOAD
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma omp target update from(atm[:1])
+#endif
+
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
@@ -1991,6 +2067,11 @@ void module_mixing(
   free(izs);
 
   /* Update device... */
+#ifdef _OPENMP_OFFLOAD
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma omp target update to(atm[:1])
+#endif
+
 #ifdef _OPENACC
   SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1])
@@ -2132,6 +2213,19 @@ void module_rng_init(
       != CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set stream for random number generator!");
 
+#elif defined(_OPENMP_OFFLOAD)
+
+  /*
+  //if (hiprandCreateGenerator(&rng, HIPRAND_RNG_PSEUDO_DEFAULT) !=
+  //    HIPRAND_STATUS_SUCCESS)
+  //  ERRMSG("Cannot create random number generator!");
+  //if (hiprandSetPseudoRandomGeneratorSeed(rng, ntask) != HIPRAND_STATUS_SUCCESS)
+  //  ERRMSG("Cannot set seed for random number generator!");
+  //if (hiprandSetStream(rng, (hipdaStream_t) 0)
+  //    != HIPRAND_STATUS_SUCCESS)
+  //  ERRMSG("Cannot set stream for random number generator!");
+   // */
+
 #else
 
   gsl_rng_env_setup();
@@ -2173,6 +2267,25 @@ void module_rng(
     }
   }
 
+#elif defined(_OPENMP_OFFLOAD)
+
+//#pragma omp target data use_device_ptr(rs)
+  //{
+  //  /* Uniform distribution... */
+  //  if (method == 0) {
+  //    if (hiprandGenerateUniformDouble(rng, rs, (n < 4 ? 4 : n)) !=
+  //    HIPRAND_STATUS_SUCCESS)
+  //  ERRMSG("Cannot create random numbers!");
+  //  }
+
+  //  /* Normal distribution... */
+  //  else if (method == 1) {
+  //    if (hiprandGenerateNormalDouble(rng, rs, (n < 4 ? 4 : n), 0.0, 1.0) !=
+  //    HIPRAND_STATUS_SUCCESS)
+  //  ERRMSG("Cannot create random numbers!");
+  //  }
+  //}
+
 #else
 
   /* Uniform distribution... */
@@ -2188,6 +2301,10 @@ void module_rng(
     for (size_t i = 0; i < n; ++i)
       rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
   }
+
+#ifdef _OPENMP_OFFLOAD
+pragma omp target update to(rs)
+#endif
 #endif
 }
 
@@ -2235,13 +2352,21 @@ void module_sort(
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
 
+#ifdef _OPENMP_OFFLOAD
+#pragma omp target enter data map(alloc: a[0:np],p[0:np])
+//#pragma omp target data present(ctl,met0,atm,a,p)
+#endif
+
 #ifdef _OPENACC
 #pragma acc enter data create(a[0:np],p[0:np])
 #pragma acc data present(ctl,met0,atm,a,p)
 #endif
 
+
   /* Get box index... */
-#ifdef _OPENACC
+#ifdef _OPENMP_OFFLOAD
+#pragma omp target teams distribute parallel for simd
+#elif defined(_OPENACC)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
@@ -2563,7 +2688,7 @@ void write_output(
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Update host... */
-#ifdef _OPENACC
+#if defined(_OPENACC) || defined(_OPENMP_OFFLOAD)
   if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
       || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
@@ -2571,13 +2696,19 @@ void write_output(
       || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
       || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#ifdef _OPENMP_OFFLOAD
+#pragma omp target update from(atm[:1])
+#endif
+
+#ifdef _OPENACC
 #pragma acc update host(atm[:1])
+#endif
   }
 #endif
 
   /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' &&
-      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
+  if (ctl->atm_basename[0] != '-' && \
+	(fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop) ) {
     if (ctl->atm_type_out == 0)
       sprintf(ext, "tab");
     else if (ctl->atm_type_out == 1)

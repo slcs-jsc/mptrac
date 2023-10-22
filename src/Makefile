@@ -23,6 +23,9 @@ GPU ?= 0
 # Compile for MPI...
 MPI ?= 0
 
+# Compile for OpenMP offload
+OPENMP_OFFLOAD ?= 0
+
 # Static compilation...
 STATIC ?= 1
 
@@ -68,7 +71,11 @@ VERSION ?= $(shell git describe --abbrev=4 --dirty --always --tags)
 
 # Set CC and CFLAGS...
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
-ifeq ($(GPU),1)
+ifeq ($(OPENMP_OFFLOAD),1)
+  CC = cc
+  CFLAGS += -fopenmp -D_OPENMP_OFFLOAD=1 #-D__HIP_PLATFORM_AMD__
+  #CFLAGS += -I $(ROCM_PATH)/include/
+else ifeq ($(GPU),1)
   CC = nvc
   CFLAGS += -mp -mcmodel=medium -acc
 else ifeq ($(CC),nvc)
@@ -87,6 +94,10 @@ endif
 # Additional flags for GPUs...
 ifeq ($(GPU),1)
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
+endif
+
+ifeq ($(OPENMP_OFFLOAD),1)
+  #LDFLAGS += -L $(ROCM_PATH)/hiprand/lib/ -lhiprand
 endif
 
 # Compile with MPI...

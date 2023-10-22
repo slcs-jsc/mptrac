@@ -25,7 +25,7 @@
 #include "libtrac.h"
 
 /*****************************************************************************/
-
+FUN_DECL
 double buoyancy_frequency(
   const double p0,
   const double t0,
@@ -41,7 +41,7 @@ double buoyancy_frequency(
 
 /*****************************************************************************/
 
-void cart2geo(
+FUN_DECL void cart2geo(
   const double *x,
   double *z,
   double *lon,
@@ -55,111 +55,7 @@ void cart2geo(
 
 /*****************************************************************************/
 
-double clim_oh(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  const double t,
-  const double lon,
-  const double lat,
-  const double p) {
-
-  /* Get OH data from climatology... */
-  double oh = clim_zm(&clim->oh, t, lat, p);
-
-  /* Apply diurnal correction... */
-  if (ctl->oh_chem_beta > 0) {
-    double sza = sza_calc(t, lon, lat);
-    if (sza <= M_PI / 2. * 85. / 90.)
-      return oh * exp(-ctl->oh_chem_beta / cos(sza));
-    else
-      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
-  } else
-    return oh;
-}
-
-/*****************************************************************************/
-
-void clim_oh_diurnal_correction(
-  ctl_t * ctl,
-  clim_t * clim) {
-
-  /* Loop over climatology data points... */
-  for (int it = 0; it < clim->oh.ntime; it++)
-    for (int iz = 0; iz < clim->oh.np; iz++)
-      for (int iy = 0; iy < clim->oh.nlat; iy++) {
-
-	/* Init... */
-	int n = 0;
-	double sum = 0;
-
-	/* Integrate day/night correction factor over longitude... */
-	for (double lon = -180; lon < 180; lon += 1.0) {
-	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  if (sza <= M_PI / 2. * 85. / 90.)
-	    sum += exp(-ctl->oh_chem_beta / cos(sza));
-	  else
-	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
-	  n++;
-	}
-
-	/* Apply scaling factor to OH data... */
-	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
-      }
-}
-
-/*****************************************************************************/
-
-double clim_photo(
-  double rate[CP][CSZA][CO3],
-  clim_photo_t * photo,
-  double p,
-  double sza,
-  double o3c) {
-
-  /* Check pressure range... */
-  double p_help = p;
-  if (p < photo->p[photo->np - 1])
-    p_help = photo->p[photo->np - 1];
-  else if (p > photo->p[0])
-    p_help = photo->p[0];
-
-  /* Check sza range... */
-  double sza_help = sza;
-  if (sza < photo->sza[0])
-    sza_help = photo->sza[0];
-  else if (sza > photo->sza[photo->nsza - 1])
-    sza_help = photo->sza[photo->nsza - 1];
-
-  /* Check ozone column range... */
-  double o3c_help = o3c;
-  if (o3c < photo->o3c[0])
-    o3c_help = photo->o3c[0];
-  else if (o3c > photo->o3c[photo->no3c - 1])
-    o3c_help = photo->o3c[photo->no3c - 1];
-
-  /* Get indices... */
-  int ip = locate_irr(photo->p, photo->np, p_help);
-  int isza = locate_reg(photo->sza, photo->nsza, sza_help);
-  int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
-
-  /* Interpolate photolysis rate... */
-  double aux00 = LIN(photo->p[ip], rate[ip][isza][io3c],
-		     photo->p[ip + 1], rate[ip + 1][isza][io3c], p_help);
-  double aux01 = LIN(photo->p[ip], rate[ip][isza][io3c + 1],
-		     photo->p[ip + 1], rate[ip + 1][isza][io3c + 1], p_help);
-  double aux10 = LIN(photo->p[ip], rate[ip][isza + 1][io3c],
-		     photo->p[ip + 1], rate[ip + 1][isza + 1][io3c], p_help);
-  double aux11 = LIN(photo->p[ip], rate[ip][isza + 1][io3c + 1],
-		     photo->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
-		     p_help);
-  aux00 = LIN(photo->o3c[io3c], aux00, photo->o3c[io3c + 1], aux01, o3c_help);
-  aux11 = LIN(photo->o3c[io3c], aux10, photo->o3c[io3c + 1], aux11, o3c_help);
-  aux00 = LIN(photo->sza[isza], aux00, photo->sza[isza + 1], aux11, sza_help);
-  return GSL_MAX(aux00, 0.0);
-}
-
-/*****************************************************************************/
-
+FUN_DECL
 double clim_tropo(
   const clim_t * clim,
   const double t,
@@ -188,7 +84,7 @@ double clim_tropo(
 
 /*****************************************************************************/
 
-void clim_tropo_init(
+FUN_DECL void clim_tropo_init(
   clim_t * clim) {
 
   /* Write info... */
@@ -343,6 +239,62 @@ void clim_tropo_init(
 
 /*****************************************************************************/
 
+FUN_DECL
+double clim_oh(
+  const ctl_t * ctl,
+  const clim_t * clim,
+  const double t,
+  const double lon,
+  const double lat,
+  const double p) {
+
+  /* Get OH data from climatology... */
+  double oh = clim_zm(&clim->oh, t, lat, p);
+
+  /* Apply diurnal correction... */
+  if (ctl->oh_chem_beta > 0) {
+    double sza = sza_calc(t, lon, lat);
+    if (sza <= M_PI / 2. * 85. / 90.)
+      return oh * exp(-ctl->oh_chem_beta / cos(sza));
+    else
+      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+  } else
+    return oh;
+}
+
+/*****************************************************************************/
+
+FUN_DECL void clim_oh_diurnal_correction(
+  ctl_t * ctl,
+  clim_t * clim) {
+
+  /* Loop over climatology data points... */
+  for (int it = 0; it < clim->oh.ntime; it++)
+    for (int iz = 0; iz < clim->oh.np; iz++)
+      for (int iy = 0; iy < clim->oh.nlat; iy++) {
+
+	/* Init... */
+	int n = 0;
+	double sum = 0;
+
+	/* Integrate day/night correction factor over longitude... */
+	for (double lon = -180; lon < 180; lon += 1.0) {
+	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
+	  if (sza <= M_PI / 2. * 85. / 90.)
+	    sum += exp(-ctl->oh_chem_beta / cos(sza));
+	  else
+	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+	  n++;
+	}
+
+	/* Apply scaling factor to OH data... */
+	clim->oh.vmr[it][iz][iy] /= (sum / (double) n);
+      }
+}
+
+/*****************************************************************************/
+
+FUN_DECL
 double clim_ts(
   const clim_ts_t * ts,
   const double t) {
@@ -361,6 +313,7 @@ double clim_ts(
 
 /*****************************************************************************/
 
+FUN_DECL
 double clim_zm(
   const clim_zm_t * zm,
   const double t,
@@ -410,7 +363,61 @@ double clim_zm(
 
 /*****************************************************************************/
 
-void compress_pack(
+FUN_DECL
+double phot_rate(
+  double rate[CP][50][30],
+	phot_t * phot,
+  double p,
+	double sza,
+	double o3c ){
+
+  /* Check pressure range... */
+  double p_help = p;
+  if (p < phot->p[phot->np - 1])
+    p_help = phot->p[phot->np - 1];
+  else if (p > phot->p[0])
+    p_help = phot->p[0];
+
+  /* Check sza range... */
+  double sza_help = sza;
+  if (sza < phot->sza[0])
+    sza_help = phot->sza[0];
+  else if (sza > phot->sza[phot->nsza - 1])
+    sza_help = phot->sza[phot->nsza - 1];
+
+  /* Check ozone column range... */
+  double o3c_help = o3c;
+  if (o3c < phot->o3c[0])
+    o3c_help = phot->o3c[0];
+  else if (o3c > phot->o3c[phot->no3c - 1])
+    o3c_help = phot->o3c[phot->no3c - 1];
+
+  /* Get indices... */
+  int ip = locate_irr(phot->p, phot->np, p_help);
+  int isza = locate_reg(phot->sza, phot->nsza, sza_help);
+  int io3c = locate_reg(phot->o3c, phot->no3c, o3c_help);
+
+  /* Interpolate climatology data... */
+  double aux00 = LIN(phot->p[ip], rate[ip][isza][io3c],
+		     phot->p[ip + 1], rate[ip + 1][isza][io3c], p_help);
+  double aux01 = LIN(phot->p[ip], rate[ip][isza][io3c + 1],
+		     phot->p[ip + 1], rate[ip + 1][isza][io3c + 1], p_help);
+  double aux10 = LIN(phot->p[ip], rate[ip][isza + 1][io3c],
+		     phot->p[ip + 1], rate[ip + 1][isza + 1][io3c], p_help);
+  double aux11 = LIN(phot->p[ip], rate[ip][isza + 1][io3c + 1],
+		     phot->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
+		     p_help);
+
+  aux00 = LIN(phot->o3c[io3c], aux00, phot->o3c[io3c + 1], aux01, o3c_help);
+  aux11 = LIN(phot->o3c[io3c], aux10, phot->o3c[io3c + 1], aux11, o3c_help);
+  aux00 = LIN(phot->sza[isza], aux00, phot->sza[isza + 1], aux11, sza_help);
+
+  return GSL_MAX(aux00, 0.0);
+}
+
+/*****************************************************************************/
+
+FUN_DECL void compress_pack(
   char *varname,
   float *array,
   size_t nxy,
@@ -507,7 +514,7 @@ void compress_pack(
 /*****************************************************************************/
 
 #ifdef ZFP
-void compress_zfp(
+FUN_DECL void compress_zfp(
   char *varname,
   float *array,
   int nx,
@@ -521,7 +528,7 @@ void compress_zfp(
   zfp_type type;		/* array scalar type */
   zfp_field *field;		/* array meta data */
   zfp_stream *zfp;		/* compressed stream */
-  void *buffer;			/* storage for compressed stream */
+  FUN_DECL void *buffer;			/* storage for compressed stream */
   size_t bufsize;		/* byte size of compressed buffer */
   bitstream *stream;		/* bit stream to write to or read from */
   size_t zfpsize;		/* byte size of compressed stream */
@@ -597,7 +604,7 @@ void compress_zfp(
 /*****************************************************************************/
 
 #ifdef ZSTD
-void compress_zstd(
+FUN_DECL void compress_zstd(
   char *varname,
   float *array,
   size_t n,
@@ -651,7 +658,7 @@ void compress_zstd(
 
 /*****************************************************************************/
 
-void day2doy(
+FUN_DECL void day2doy(
   const int year,
   const int mon,
   const int day,
@@ -670,7 +677,7 @@ void day2doy(
 
 /*****************************************************************************/
 
-void doy2day(
+FUN_DECL void doy2day(
   const int year,
   const int doy,
   int *mon,
@@ -700,7 +707,7 @@ void doy2day(
 
 /*****************************************************************************/
 
-void geo2cart(
+FUN_DECL void geo2cart(
   const double z,
   const double lon,
   const double lat,
@@ -714,7 +721,7 @@ void geo2cart(
 
 /*****************************************************************************/
 
-void get_met(
+FUN_DECL void get_met(
   ctl_t * ctl,
   clim_t * clim,
   double t,
@@ -746,6 +753,16 @@ void get_met(
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
+#ifdef _OPENMP_OFFLOAD
+    met_t *met0up = *met0;
+    met_t *met1up = *met1;
+#ifdef ASYNCIO
+#pragma omp target update to(met0up[:1],met1up[:1]) async(5)
+#else
+#pragma omp target update to(met0up[:1],met1up[:1])
+#endif
+#endif
+
 #ifdef _OPENACC
     met_t *met0up = *met0;
     met_t *met1up = *met1;
@@ -781,6 +798,15 @@ void get_met(
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
+#ifdef _OPENMP_OFFLOAD
+    met_t *met1up = *met1;
+#ifdef ASYNCIO
+#pragma omp target update to(met1up[:1]) async(5)
+#else
+#pragma omp target update to(met1up[:1])
+#endif
+#endif
+
 #ifdef _OPENACC
     met_t *met1up = *met1;
 #ifdef ASYNCIO
@@ -814,6 +840,15 @@ void get_met(
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
+#ifdef _OPENMP_OFFLOAD
+    met_t *met0up = *met0;
+#ifdef ASYNCIO
+#pragma omp target update to(met0up[:1]) async(5)
+#else
+#pragma omp target update to(met0up[:1])
+#endif
+#endif
+
 #ifdef _OPENACC
     met_t *met0up = *met0;
 #ifdef ASYNCIO
@@ -852,7 +887,7 @@ void get_met(
 
 /*****************************************************************************/
 
-void get_met_help(
+FUN_DECL void get_met_help(
   ctl_t * ctl,
   double t,
   int direct,
@@ -902,7 +937,7 @@ void get_met_help(
     sprintf(filename, "%s_YYMMDDHH.nc", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
-    sprintf(repl, "%02d", year % 100);
+    sprintf(repl, "%d", year % 100);
     get_met_replace(filename, "YY", repl);
     sprintf(repl, "%02d", mon);
     get_met_replace(filename, "MM", repl);
@@ -915,7 +950,7 @@ void get_met_help(
 
 /*****************************************************************************/
 
-void get_met_replace(
+FUN_DECL void get_met_replace(
   char *orig,
   char *search,
   char *repl) {
@@ -939,7 +974,7 @@ void get_met_replace(
 
 /*****************************************************************************/
 
-void intpol_met_4d_coord(
+FUN_DECL void intpol_met_4d_coord(
   met_t * met0,
   float heights0[EX][EY][EP],
   float array0[EX][EY][EP],
@@ -1117,7 +1152,7 @@ void intpol_met_4d_coord(
 
 /*****************************************************************************/
 
-void intpol_met_space_3d(
+FUN_DECL void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
   double p,
@@ -1174,7 +1209,7 @@ void intpol_met_space_3d(
 
 /*****************************************************************************/
 
-void intpol_met_space_2d(
+FUN_DECL void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
   double lon,
@@ -1232,7 +1267,7 @@ void intpol_met_space_2d(
 /*****************************************************************************/
 
 #ifdef UVW
-void intpol_met_space_uvw(
+FUN_DECL void intpol_met_space_uvw(
   met_t * met,
   double p,
   double lon,
@@ -1334,7 +1369,7 @@ void intpol_met_space_uvw(
 
 /*****************************************************************************/
 
-void intpol_met_time_3d(
+FUN_DECL void intpol_met_time_3d(
   met_t * met0,
   float array0[EX][EY][EP],
   met_t * met1,
@@ -1363,7 +1398,7 @@ void intpol_met_time_3d(
 
 /*****************************************************************************/
 
-void intpol_met_time_2d(
+FUN_DECL void intpol_met_time_2d(
   met_t * met0,
   float array0[EX][EY],
   met_t * met1,
@@ -1397,7 +1432,7 @@ void intpol_met_time_2d(
 /*****************************************************************************/
 
 #ifdef UVW
-void intpol_met_time_uvw(
+FUN_DECL void intpol_met_time_uvw(
   met_t * met0,
   met_t * met1,
   double ts,
@@ -1427,7 +1462,7 @@ void intpol_met_time_uvw(
 
 /*****************************************************************************/
 
-void jsec2time(
+FUN_DECL void jsec2time(
   const double jsec,
   int *year,
   int *mon,
@@ -1460,6 +1495,7 @@ void jsec2time(
 
 /*****************************************************************************/
 
+FUN_DECL
 int locate_irr_3d(
   float profiles[EX][EY][EP],
   int np,
@@ -1494,7 +1530,7 @@ int locate_irr_3d(
 
 /*****************************************************************************/
 
-void locate_vert(
+FUN_DECL void locate_vert(
   float profiles[EX][EY][EP],
   int np,
   int lon_ap_ind,
@@ -1512,6 +1548,7 @@ void locate_vert(
 
 /*****************************************************************************/
 
+FUN_DECL
 double kernel_weight(
   const double kz[EP],
   const double kw[EP],
@@ -1538,6 +1575,7 @@ double kernel_weight(
 
 /*****************************************************************************/
 
+FUN_DECL
 double lapse_rate(
   const double t,
   const double h2o) {
@@ -1556,7 +1594,7 @@ double lapse_rate(
 
 /*****************************************************************************/
 
-void level_definitions(
+FUN_DECL void level_definitions(
   ctl_t * ctl) {
 
   if (0 == ctl->press_level_def) {
@@ -1639,6 +1677,7 @@ void level_definitions(
 
 /*****************************************************************************/
 
+FUN_DECL
 int locate_irr(
   const double *xx,
   const int n,
@@ -1669,6 +1708,7 @@ int locate_irr(
 
 /*****************************************************************************/
 
+FUN_DECL
 int locate_reg(
   const double *xx,
   const int n,
@@ -1688,6 +1728,7 @@ int locate_reg(
 
 /*****************************************************************************/
 
+FUN_DECL
 double nat_temperature(
   const double p,
   const double h2o,
@@ -1712,7 +1753,7 @@ double nat_temperature(
 
 /*****************************************************************************/
 
-void quicksort(
+FUN_DECL void quicksort(
   double arr[],
   int brr[],
   const int low,
@@ -1733,6 +1774,7 @@ void quicksort(
 
 /*****************************************************************************/
 
+FUN_DECL
 int quicksort_partition(
   double arr[],
   int brr[],
@@ -1756,6 +1798,7 @@ int quicksort_partition(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_atm(
   const char *filename,
   ctl_t * ctl,
@@ -1827,6 +1870,7 @@ int read_atm(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_atm_asc(
   const char *filename,
   ctl_t * ctl,
@@ -1869,6 +1913,7 @@ int read_atm_asc(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_atm_bin(
   const char *filename,
   ctl_t * ctl,
@@ -1925,6 +1970,7 @@ int read_atm_bin(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_atm_clams(
   const char *filename,
   ctl_t * ctl,
@@ -1981,6 +2027,7 @@ int read_atm_clams(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_atm_nc(
   const char *filename,
   ctl_t * ctl,
@@ -2014,7 +2061,7 @@ int read_atm_nc(
 
 /*****************************************************************************/
 
-void read_clim(
+FUN_DECL void read_clim(
   ctl_t * ctl,
   clim_t * clim) {
 
@@ -2023,10 +2070,6 @@ void read_clim(
 
   /* Init tropopause climatology... */
   clim_tropo_init(clim);
-
-  /* Read photolysis rates... */
-  if (ctl->clim_photo[0] != '-')
-    read_clim_photo(ctl->clim_photo, &clim->photo);
 
   /* Read HNO3 climatology... */
   if (ctl->clim_hno3_filename[0] != '-')
@@ -2074,77 +2117,7 @@ void read_clim(
 
 /*****************************************************************************/
 
-void read_clim_photo(
-  char *filename,
-  clim_photo_t * photo) {
-
-  int ncid, varid, ip, is, io;
-
-  double *help1, *help2, *help3, *help4;
-
-  /* Write info... */
-  LOG(1, "Read photolysis rates: %s", filename);
-
-  /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("Photolysis rate data are missing!");
-    return;
-  }
-
-  /* Read pressure data... */
-  NC_INQ_DIM("press", &photo->np, 2, CP);
-  NC_GET_DOUBLE("press", photo->p, 1);
-  if (photo->p[0] < photo->p[1])
-    ERRMSG("Pressure data are not descending!");
-
-  /* Read total column ozone data... */
-  NC_INQ_DIM("total_o3col", &photo->no3c, 2, CO3);
-  NC_GET_DOUBLE("total_o3col", photo->o3c, 1);
-  if (photo->o3c[0] > photo->o3c[1])
-    ERRMSG("Total column ozone data are not ascending!");
-
-  /* Read solar zenith angle data... */
-  NC_INQ_DIM("sza", &photo->nsza, 2, CSZA);
-  NC_GET_DOUBLE("sza", photo->sza, 1);
-  if (photo->sza[0] > photo->sza[1])
-    ERRMSG("Solar zenith angle data are not ascending!");
-
-  /* Read data... */
-  ALLOC(help1, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help2, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help3, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help4, double,
-	photo->np * photo->nsza * photo->no3c);
-  NC_GET_DOUBLE("n2o", help1, 1);
-  NC_GET_DOUBLE("ccl4", help2, 1);
-  NC_GET_DOUBLE("cfc11", help3, 1);
-  NC_GET_DOUBLE("cfc12", help4, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++) {
-	photo->n2o[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl4[ip][is][io] =
-	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl3f[ip][is][io] =
-	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl2f2[ip][is][io] =
-	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-      }
-  free(help1);
-  free(help2);
-  free(help3);
-  free(help4);
-
-  /* Close netCDF file... */
-  NC(nc_close(ncid));
-}
-
-/*****************************************************************************/
-
+FUN_DECL
 int read_clim_ts(
   char *filename,
   clim_ts_t * ts) {
@@ -2199,7 +2172,7 @@ int read_clim_ts(
 
 /*****************************************************************************/
 
-void read_clim_zm(
+FUN_DECL void read_clim_zm(
   char *filename,
   char *varname,
   clim_zm_t * zm) {
@@ -2220,12 +2193,16 @@ void read_clim_zm(
   /* Read pressure data... */
   NC_INQ_DIM("press", &zm->np, 2, CP);
   NC_GET_DOUBLE("press", zm->p, 1);
+
+  /* Check ordering of pressure data... */
   if (zm->p[0] < zm->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
   NC_INQ_DIM("lat", &zm->nlat, 2, CY);
   NC_GET_DOUBLE("lat", zm->lat, 1);
+
+  /* Check ordering of latitude data... */
   if (zm->lat[0] > zm->lat[1])
     ERRMSG("Latitude data are not ascending!");
 
@@ -2297,7 +2274,79 @@ void read_clim_zm(
 
 /*****************************************************************************/
 
-void read_ctl(
+FUN_DECL void read_photol(
+  phot_t * phot) {
+
+  int ncid, varid, ip, is, io;
+
+  double *help1, *help2, *help3, *help4;
+
+	char *filename="../../data/photolysis_rate.nc";
+
+  /* Write info... */
+  LOG(1, "Read photolysis rate data: %s", filename);
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("Photolysis rate data are missing!");
+    return;
+  }
+
+  /* Read pressure data... */
+  NC_INQ_DIM("press", &phot->np, 2, CP);
+  NC_GET_DOUBLE("press", phot->p, 1);
+
+  /* Check ordering of pressure data... */
+  if (phot->p[0] < phot->p[1])
+    ERRMSG("Pressure data are not descending!");
+
+  /* Read latitudes... */
+  NC_INQ_DIM("total_o3col", &phot->no3c, 2, 30);
+  NC_GET_DOUBLE("total_o3col", phot->o3c, 1);
+
+  if (phot->o3c[0] > phot->o3c[1])
+    ERRMSG("Latitude data are not ascending!");
+
+	NC_INQ_DIM("sza", &phot->nsza, 2, 50);
+  NC_GET_DOUBLE("sza", phot->sza, 1);
+
+  /* Check ordering of latitude data... */
+  if (phot->sza[0] > phot->sza[1])
+    ERRMSG("Latitude data are not ascending!");
+
+  /* Read data... */
+  ALLOC(help1, double,
+	phot->np * phot->nsza * phot->no3c);
+  ALLOC(help2, double,
+	phot->np * phot->nsza * phot->no3c);
+  ALLOC(help3, double,
+	phot->np * phot->nsza * phot->no3c);
+  ALLOC(help4, double,
+	phot->np * phot->nsza * phot->no3c);
+  NC_GET_DOUBLE("n2o", help1, 1);
+	NC_GET_DOUBLE("ccl4", help2, 1);
+	NC_GET_DOUBLE("cfc11", help3, 1);
+	NC_GET_DOUBLE("cfc12", help4, 1);
+  for (ip = 0; ip < phot->np; ip++)
+    for (is = 0; is < phot->nsza; is++)
+      for (io = 0; io < phot->no3c; io++) {
+				phot->n2o[ip][is][io] = help1[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+				phot->ccl4[ip][is][io] = help2[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+				phot->ccl3f[ip][is][io] = help3[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+				phot->ccl2f2[ip][is][io] = help4[ARRAY_3D(ip, is, phot->nsza, io, phot->no3c)];
+			}
+	free(help1);
+  free(help2);
+  free(help3);
+  free(help4);
+
+  /* Close netCDF file... */
+  NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
+FUN_DECL void read_ctl(
   const char *filename,
   int argc,
   char *argv[],
@@ -2847,8 +2896,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "DRY_DEPO_DP", -1, "30", NULL);
 
   /* Climatological data... */
-  scan_ctl(filename, argc, argv, "CLIM_PHOTO", -1,
-	   "../../data/photolysis_rate.nc", ctl->clim_photo);
   scan_ctl(filename, argc, argv, "CLIM_HNO3_FILENAME", -1,
 	   "../../data/gozcards_HNO3.nc", ctl->clim_hno3_filename);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
@@ -3057,7 +3104,7 @@ void read_ctl(
 
 /*****************************************************************************/
 
-void read_kernel(
+FUN_DECL void read_kernel(
   const char *filename,
   double kz[EP],
   double kw[EP],
@@ -3098,6 +3145,7 @@ void read_kernel(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_met(
   char *filename,
   ctl_t * ctl,
@@ -3329,7 +3377,7 @@ int read_met(
 
 /*****************************************************************************/
 
-void read_met_bin_2d(
+FUN_DECL void read_met_bin_2d(
   FILE * in,
   met_t * met,
   float var[EX][EY],
@@ -3358,7 +3406,7 @@ void read_met_bin_2d(
 
 /*****************************************************************************/
 
-void read_met_bin_3d(
+FUN_DECL void read_met_bin_3d(
   FILE * in,
   ctl_t * ctl,
   met_t * met,
@@ -3427,7 +3475,7 @@ void read_met_bin_3d(
 
 /*****************************************************************************/
 
-void read_met_cape(
+FUN_DECL void read_met_cape(
   clim_t * clim,
   met_t * met) {
 
@@ -3537,7 +3585,7 @@ void read_met_cape(
 
 /*****************************************************************************/
 
-void read_met_cloud(
+FUN_DECL void read_met_cloud(
   ctl_t * ctl,
   met_t * met) {
 
@@ -3587,7 +3635,7 @@ void read_met_cloud(
 
 /*****************************************************************************/
 
-void read_met_detrend(
+FUN_DECL void read_met_detrend(
   ctl_t * ctl,
   met_t * met) {
 
@@ -3691,7 +3739,7 @@ void read_met_detrend(
 
 /*****************************************************************************/
 
-void read_met_extrapolate(
+FUN_DECL void read_met_extrapolate(
   met_t * met) {
 
   /* Set timer... */
@@ -3729,7 +3777,7 @@ void read_met_extrapolate(
 
 /*****************************************************************************/
 
-void read_met_geopot(
+FUN_DECL void read_met_geopot(
   ctl_t * ctl,
   met_t * met) {
 
@@ -3849,7 +3897,7 @@ void read_met_geopot(
 
 /*****************************************************************************/
 
-void read_met_grid(
+FUN_DECL void read_met_grid(
   char *filename,
   int ncid,
   ctl_t * ctl,
@@ -3857,7 +3905,7 @@ void read_met_grid(
 
   char levname[LEN], tstr[10];
 
-  double rtime, r, r2;
+  double rtime=0, r, r2;
 
   int varid, year2, mon2, day2, hour2, min2, sec2,
     year, mon, day, hour, min, sec;
@@ -3968,7 +4016,7 @@ void read_met_grid(
 
 /*****************************************************************************/
 
-void read_met_levels(
+FUN_DECL void read_met_levels(
   int ncid,
   ctl_t * ctl,
   met_t * met) {
@@ -4132,7 +4180,7 @@ void read_met_levels(
 
 /*****************************************************************************/
 
-void read_met_ml2pl(
+FUN_DECL void read_met_ml2pl(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP]) {
@@ -4173,7 +4221,7 @@ void read_met_ml2pl(
 
 /*****************************************************************************/
 
-void read_met_monotonize(
+FUN_DECL void read_met_monotonize(
   met_t * met) {
 
   /* Create monotone zeta profiles... */
@@ -4248,6 +4296,7 @@ void read_met_monotonize(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_met_nc_2d(
   int ncid,
   char *varname,
@@ -4366,6 +4415,7 @@ int read_met_nc_2d(
 
 /*****************************************************************************/
 
+FUN_DECL
 int read_met_nc_3d(
   int ncid,
   char *varname,
@@ -4504,7 +4554,7 @@ int read_met_nc_3d(
 
 /*****************************************************************************/
 
-void read_met_pbl(
+FUN_DECL void read_met_pbl(
   met_t * met) {
 
   /* Set timer... */
@@ -4575,7 +4625,7 @@ void read_met_pbl(
 
 /*****************************************************************************/
 
-void read_met_periodic(
+FUN_DECL void read_met_periodic(
   met_t * met) {
 
   /* Set timer... */
@@ -4628,7 +4678,7 @@ void read_met_periodic(
 
 /*****************************************************************************/
 
-void read_met_pv(
+FUN_DECL void read_met_pv(
   met_t * met) {
 
   double pows[EP];
@@ -4734,7 +4784,7 @@ void read_met_pv(
 
 /*****************************************************************************/
 
-void read_met_ozone(
+FUN_DECL void read_met_ozone(
   met_t * met) {
 
   /* Set timer... */
@@ -4762,7 +4812,7 @@ void read_met_ozone(
 
 /*****************************************************************************/
 
-void read_met_sample(
+FUN_DECL void read_met_sample(
   ctl_t * ctl,
   met_t * met) {
 
@@ -4902,7 +4952,7 @@ void read_met_sample(
 
 /*****************************************************************************/
 
-void read_met_surface(
+FUN_DECL void read_met_surface(
   int ncid,
   met_t * met,
   ctl_t * ctl) {
@@ -5008,7 +5058,7 @@ void read_met_surface(
 
 /*****************************************************************************/
 
-void read_met_tropo(
+FUN_DECL void read_met_tropo(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met) {
@@ -5183,7 +5233,7 @@ void read_met_tropo(
 
 /*****************************************************************************/
 
-void read_obs(
+FUN_DECL void read_obs(
   char *filename,
   double *rt,
   double *rz,
@@ -5232,6 +5282,7 @@ void read_obs(
 
 /*****************************************************************************/
 
+FUN_DECL
 double scan_ctl(
   const char *filename,
   int argc,
@@ -5304,6 +5355,7 @@ double scan_ctl(
 
 /*****************************************************************************/
 
+FUN_DECL
 double sedi(
   const double p,
   const double T,
@@ -5337,7 +5389,7 @@ double sedi(
 
 /*****************************************************************************/
 
-void spline(
+FUN_DECL void spline(
   const double *x,
   const double *y,
   const int n,
@@ -5386,6 +5438,7 @@ void spline(
 
 /*****************************************************************************/
 
+FUN_DECL
 float stddev(
   const float *data,
   const int n) {
@@ -5407,6 +5460,7 @@ float stddev(
 
 /*****************************************************************************/
 
+FUN_DECL
 double sza_calc(
   const double sec,
   const double lon,
@@ -5448,7 +5502,7 @@ double sza_calc(
 
 /*****************************************************************************/
 
-void time2jsec(
+FUN_DECL void time2jsec(
   const int year,
   const int mon,
   const int day,
@@ -5479,7 +5533,7 @@ void time2jsec(
 
 /*****************************************************************************/
 
-void timer(
+FUN_DECL void timer(
   const char *name,
   const char *group,
   int output) {
@@ -5547,6 +5601,7 @@ void timer(
 
 /*****************************************************************************/
 
+FUN_DECL
 double time_from_filename(
   const char *filename,
   int offset) {
@@ -5582,12 +5637,12 @@ double time_from_filename(
 
 /*****************************************************************************/
 
+FUN_DECL
 double tropo_weight(
   const clim_t * clim,
   const double t,
   const double lat,
   const double p) {
-
   /* Get tropopause pressure... */
   double pt = clim_tropo(clim, t, lat);
 
@@ -5606,7 +5661,7 @@ double tropo_weight(
 
 /*****************************************************************************/
 
-void write_atm(
+FUN_DECL void write_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
@@ -5666,7 +5721,7 @@ void write_atm(
 
 /*****************************************************************************/
 
-void write_atm_asc(
+FUN_DECL void write_atm_asc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
@@ -5748,7 +5803,7 @@ void write_atm_asc(
 
 /*****************************************************************************/
 
-void write_atm_bin(
+FUN_DECL void write_atm_bin(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm) {
@@ -5798,7 +5853,7 @@ void write_atm_bin(
 
 /*****************************************************************************/
 
-void write_atm_clams_traj(
+FUN_DECL void write_atm_clams_traj(
   const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
@@ -5949,7 +6004,7 @@ void write_atm_clams_traj(
 
 /*****************************************************************************/
 
-void write_atm_clams(
+FUN_DECL void write_atm_clams(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm) {
@@ -6003,7 +6058,7 @@ void write_atm_clams(
 
 /*****************************************************************************/
 
-void write_atm_nc(
+FUN_DECL void write_atm_nc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm) {
@@ -6048,7 +6103,7 @@ void write_atm_nc(
 
 /*****************************************************************************/
 
-void write_csi(
+FUN_DECL void write_csi(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
@@ -6293,7 +6348,7 @@ void write_csi(
 
 /*****************************************************************************/
 
-void write_ens(
+FUN_DECL void write_ens(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
@@ -6390,7 +6445,7 @@ void write_ens(
 
 /*****************************************************************************/
 
-void write_grid(
+FUN_DECL void write_grid(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,
@@ -6572,7 +6627,7 @@ void write_grid(
 
 /*****************************************************************************/
 
-void write_grid_asc(
+FUN_DECL void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
@@ -6665,7 +6720,7 @@ void write_grid_asc(
 
 /*****************************************************************************/
 
-void write_grid_nc(
+FUN_DECL void write_grid_nc(
   const char *filename,
   ctl_t * ctl,
   double *cd,
@@ -6768,6 +6823,7 @@ void write_grid_nc(
 
 /*****************************************************************************/
 
+FUN_DECL
 int write_met(
   char *filename,
   ctl_t * ctl,
@@ -6881,7 +6937,7 @@ int write_met(
 
 /*****************************************************************************/
 
-void write_met_bin_2d(
+FUN_DECL void write_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
@@ -6910,7 +6966,7 @@ void write_met_bin_2d(
 
 /*****************************************************************************/
 
-void write_met_bin_3d(
+FUN_DECL void write_met_bin_3d(
   FILE * out,
   ctl_t * ctl,
   met_t * met,
@@ -6978,7 +7034,7 @@ void write_met_bin_3d(
 
 /*****************************************************************************/
 
-void write_prof(
+FUN_DECL void write_prof(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,
@@ -7206,7 +7262,7 @@ void write_prof(
 
 /*****************************************************************************/
 
-void write_sample(
+FUN_DECL void write_sample(
   const char *filename,
   ctl_t * ctl,
   met_t * met0,
@@ -7369,7 +7425,7 @@ void write_sample(
 
 /*****************************************************************************/
 
-void write_station(
+FUN_DECL void write_station(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
@@ -7424,7 +7480,7 @@ void write_station(
 
     /* Check station flag... */
     if (ctl->qnt_stat >= 0)
-      if (atm->q[ctl->qnt_stat][ip])
+      if (atm->q[ctl->qnt_stat][ip]==1)
 	continue;
 
     /* Get Cartesian coordinates... */
@@ -7455,7 +7511,7 @@ void write_station(
 
 /*****************************************************************************/
 
-void write_vtk(
+FUN_DECL void write_vtk(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
