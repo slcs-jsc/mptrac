@@ -853,9 +853,6 @@ typedef struct {
   /*! Quantity array index for volume mixing ratio. */
   int qnt_vmr;
 
-  /*! Quantity array index for volume mixing ratio (implicit). */
-  int qnt_vmrimpl;
-
   /*! Quantity array index for particle radius. */
   int qnt_rp;
 

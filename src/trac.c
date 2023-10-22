@@ -1553,7 +1553,7 @@ void module_chemgrid(
       }
 
   /* Check quantities... */
-  if (ctl->qnt_m >= 0 && (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0)) {
+  if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0) {
     if (ctl->molmass < 0)
       ERRMSG("SPECIES MOLAR MASS is not defined!");
 
@@ -1597,22 +1597,14 @@ void module_chemgrid(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
-	/* Get molecular density... */
-	double M = MOLEC_DENS(atm->p[ip], temp);
-
 	/* Set mass... */
 	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
 				 izs[ip], ctl->chemgrid_nz)];
 
 	/* Calculate volume mixing ratio... */
-	if (ctl->qnt_vmrimpl >= 0)
-	  atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass * m
-	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
-
-	/* Calculate concentration... */
 	if (ctl->qnt_Cx >= 0)
-	  atm->q[ctl->qnt_Cx][ip] = AVO * m
-	    / (1e18 * area[iys[ip]] * dz * ctl->molmass) / M;
+	  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
       }
 
     /* Free... */
@@ -1719,7 +1711,7 @@ void module_h2o2_chem(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
-  if (ctl->qnt_vmrimpl < 0)
+  if (ctl->qnt_Cx < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
   /* Loop over particles... */
@@ -1733,7 +1725,7 @@ void module_h2o2_chem(
       continue;
 
     /* Check implicit volume mixing ratio... */
-    if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
+    if (atm->q[ctl->qnt_Cx][ip] == 0)
       continue;
 
     /* Get temperature... */
@@ -1754,7 +1746,7 @@ void module_h2o2_chem(
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
     /* Concentration of H2O2 (Barth et al., 1989)... */
-    double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
+    double SO2 = atm->q[ctl->qnt_Cx][ip] * 1e9;	// vmr unit: ppbv
     double h2o2 = H_h2o2 * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: mol/L
 
     /* Volume water content in cloud [m^3 m^(-3)]... */

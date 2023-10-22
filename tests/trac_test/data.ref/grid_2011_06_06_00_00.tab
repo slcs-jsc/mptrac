@@ -13,7 +13,7 @@
 # $13 = m (mean) [kg]
 # $14 = stat (mean) [-]
 # $15 = ens (mean) [-]
-# $16 = vmrimpl (mean) [ppv]
+# $16 = Cx (mean) [ppv]
 # $17 = Cccl3f (mean) [ppv]
 # $18 = number of particles [1]
 # $19 = surface area [km^2]

@@ -2317,7 +2317,6 @@ void read_ctl(
   ctl->qnt_stat = -1;
   ctl->qnt_m = -1;
   ctl->qnt_vmr = -1;
-  ctl->qnt_vmrimpl = -1;
   ctl->qnt_rp = -1;
   ctl->qnt_rhop = -1;
   ctl->qnt_ps = -1;
@@ -2419,7 +2418,6 @@ void read_ctl(
       SET_QNT(qnt_stat, "stat", "station flag", "-")
       SET_QNT(qnt_m, "m", "mass", "kg")
       SET_QNT(qnt_vmr, "vmr", "volume mixing ratio", "ppv")
-      SET_QNT(qnt_vmrimpl, "vmrimpl", "volume mixing ratio (implicit)", "ppv")
       SET_QNT(qnt_rp, "rp", "particle radius", "microns")
       SET_QNT(qnt_rhop, "rhop", "particle density", "kg/m^3")
       SET_QNT(qnt_ps, "ps", "surface pressure", "hPa")

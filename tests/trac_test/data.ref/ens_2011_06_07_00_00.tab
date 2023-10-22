@@ -13,7 +13,7 @@
 # $13 = m (mean) [kg]
 # $14 = stat (mean) [-]
 # $15 = ens (mean) [-]
-# $16 = vmrimpl (mean) [ppv]
+# $16 = Cx (mean) [ppv]
 # $17 = Cccl3f (mean) [ppv]
 # $18 = t (sigma) [K]
 # $19 = u (sigma) [m/s]
@@ -26,7 +26,7 @@
 # $26 = m (sigma) [kg]
 # $27 = stat (sigma) [-]
 # $28 = ens (sigma) [-]
-# $29 = vmrimpl (sigma) [ppv]
+# $29 = Cx (sigma) [ppv]
 # $30 = Cccl3f (sigma) [ppv]
 # $31 = number of members
 
