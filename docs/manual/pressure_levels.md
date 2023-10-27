@@ -1,5 +1,16 @@
 ## Predefined pressure levels
 
+
+#JS - Comment - First User Perspective
+#Open Questions:
+#For what purpose/application is it usefull/necessary to define pressure levels?
+#Are the pressure levels read from met file per default, anyway?
+#Where does the pressure level information come from?
+#The bottom pressure level in the ECMWFs model level definitions link is 1013.25 and not 1044.45?
+
+
+
+
 With the parameter ``` PRESS_LEVEL_DEF ``` vertical pressure levels can be selected from a number of definitions. 
 The definitions follow the [ECMWFs model level definitions](https://confluence.ecmwf.int/display/UDOC/Model+level+definitions). 
 Per default, the value is set to -1 and hence ignored.

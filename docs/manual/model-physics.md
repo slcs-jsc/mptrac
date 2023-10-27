@@ -113,7 +113,9 @@ $$
 \end{align}
 $$
 
-Mathematically, this represents a Markov chain or a random walk, which adds temporally correlated stochastic perturbations to the winds over time. The degree of correlation depends on the correlation coefficient $r$, and therefore on the time step $\Delta t$ of the model and the time step $\Delta t_{met}$ of the meteorological data. The variance $(f\sigma_i)^2$ of the random component added at each time step depends on the grid-scale variance $\sigma_i^2$ of the wind and volcitiy data and a scaling factor $f$, which is used for downscaling to the subgrid scale. The scaling factor $f$ needs to be specified as a control parameter of the model. The default value is $f=40$%, following a choice made for the FLEXPART model (Stohl et al., 2005). For each air parcel, the grid-scale variance $\sigma_i^2$ is calculated from the neighbouring eight grid boxes and two-time step of the meteorological data. To make computations more efficient, the grid-scale variance of each parcel is kept in cache. As before, $\vec{\xi}$ is a vector of random variates to be drawn from the standard normal distribution.
+Mathematically, this represents a Markov chain or a random walk, which adds temporally correlated stochastic perturbations to the winds over time. The degree of correlation depends on the correlation coefficient $r$, and therefore on the time step $\Delta t$ of the model and the time step $\Delta t_{met}$ of the meteorological data. The variance $(f\sigma_i)^2$ of the random component added at each time step depends on the grid-scale variance $\sigma_i^2$ of the wind and velocity data and a scaling factor $f$, which is used for downscaling to the subgrid scale. The scaling factor $f$ needs to be specified as a control parameter of the model. The default value is $f=40$%, following a choice made for the FLEXPART model (Stohl et al., 2005). For each air parcel, the grid-scale variance $\sigma_i^2$ is calculated from the neighbouring eight grid boxes and two-time step of the meteorological data. To make computations more efficient, the grid-scale variance of each parcel is kept in cache. As before, $\vec{\xi}$ is a vector of random variates to be drawn from the standard normal distribution.
+#JS - Comment - First User Perspective
+#changed typo - volcitiy to velocity
 
 The scaling factor f is *not* directly set in MPTRAC. Instead the square $f^2$ can be set for the vertical and horizontal dispersion of air parcels with the parameters TURB_MESOX and TURB_MESOZ. Accordingly their default value is 16%.
 
@@ -270,6 +272,9 @@ $$
 with Avogadro constant $N_A$. For the calculation of the second-order rate constant k see Eq. 25 in Hoffmann et al. (2022).
 
 The for the calculation of k nedded low- and high-pressure limits of the reaction rate constant are given by
+#JS - Comment - First User Perspective
+#Changed sentence
+#For the calculation of k the low- and high-pressure limits of the reaction rate constant are given by (correct?)
 
 $$
 \begin{equation}
@@ -278,8 +283,11 @@ $$
 \end{equation}
 $$
 
-The constants $k_0^{298}$ and k_\infty^{298}$ at the reference temperature of 298 K and the exponents n and m need to be specified as control parameters. The exponents can be set to zero in order to neglect the temperature dependence of the low- or high pressure limits of $k_0$ and $k_\infty$. The termolecular reaction rate
+The constants $k_0^{298}$ and $k_\infty^{298}$ at the reference temperature of 298 K and the exponents n and m need to be specified as control parameters. The exponents can be set to zero in order to neglect the temperature dependence of the low- or high pressure limits of $k_0$ and $k_\infty$. The termolecular reaction rate
 coefficients implemented directly into MPTRAC are listed in the table.
+#JS - Comment - First User Perspective
+#Added $ for math format
+
 
 | Reaction | A factor | E/R |
 | -------- | -------- | --- |

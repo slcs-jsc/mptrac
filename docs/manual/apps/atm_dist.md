@@ -1,6 +1,9 @@
 # atm_dist
 
-This applocation calculates the transport deviations of trajectories.
+This application calculates the transport deviations of trajectories.
+#JS - Comment - First User Perspective
+#Typo Change
+
 
 atm_dist can be called by:
 ```
@@ -24,6 +27,11 @@ Statistical paramters that can be calculated are:
 * absdev
 * median
 * mad
+
+#JS - Comment - First User Perspective
+#Open Questions
+#How is the absdev parameter called exactly? The example below says abs_dev 
+
 
 The here used statistics are the gnu statistic library. More information on the [gnu statistics library](https://www.gnu.org/software/gsl/doc/html/statistics.html) can be found on their webpage. 
 

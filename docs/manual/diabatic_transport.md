@@ -16,7 +16,7 @@ NQ = 1
 QNT_NAME[0] = zeta
 ```
 
-Finally, if the advection is coupled with parameterisations such as the covnection parameterisation, the following control parameter must be added: 
+Finally, if the advection is coupled with parameterisations such as the convection parameterisation, the following control parameter must be added: 
 
 ```
 CPL_ZETA_PRESS_MODULES = 1
@@ -24,3 +24,5 @@ CPL_ZETA_PRESS_MODULES = 1
 ```
 
 
+#JS - Comment - First User Perspective
+#Correct typo in convection 
