@@ -429,14 +429,13 @@ int main(
 
     /* Initialize pressure heights consistent with zeta ... */
     if (ctl.vert_coord_ap == 1) {
-      INTPOL_INIT_DIA for (
-  int ip = 0; ip < atm->np; ip++) {
+      INTPOL_INIT;
+      for (int ip = 0; ip < atm->np; ip++) {
 	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
 			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
 			    1);
       }
-
     }
 
     /* Update GPU... */
@@ -750,22 +749,22 @@ void module_advect_diabatic(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
-
-
+  
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+    
     /* If other modules have changed p translate it into a zeta... */
     if (ctl->cpl_zeta_and_press_modules > 0) {
-      INTPOL_INIT_DIA
-	intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			    met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			    atm->lon[ip], atm->lat[ip],
-			    &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			  atm->lon[ip], atm->lat[ip],
+			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
     }
-
+    
     /* Init... */
     double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3];
-
+    
     /* Loop over integration nodes... */
     for (int i = 0; i < ctl->advect; i++) {
 
@@ -784,9 +783,9 @@ void module_advect_diabatic(
       double tm = atm->time[ip] + dts;
 
       /* Interpolate meteo data... */
-      INTPOL_INIT_DIA
-	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
-			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
+			  met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
       intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
 			  met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
       intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
@@ -803,24 +802,24 @@ void module_advect_diabatic(
       vm += k * v[i];
       zeta_dotm += k * zeta_dot[i];
     }
-
+    
     /* Set new position... */
     atm->time[ip] += dt[ip];
     atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
 			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
     atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
     atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
-
+    
     /* Check if zeta is below zero... */
     if (atm->q[ctl->qnt_zeta][ip] < 0) {
       atm->q[ctl->qnt_zeta][ip] = 0;
     }
-
+    
     /* Set new position also in pressure coordinates... */
-    INTPOL_INIT_DIA
-      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+    INTPOL_INIT;
+    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
   }
 }
 

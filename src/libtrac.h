@@ -321,11 +321,7 @@
 
 /*! Initialize cache variables for interpolation. */
 #define INTPOL_INIT						\
-  double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
-
-/*! Initialize cache variables for interpolation in diabatic scheme. */
-#define INTPOL_INIT_DIA	\
-  int ci[3] = {0, 0, 0}; double cw[4] = {0.0, 0.0, 0.0, 0.0};
+  double cw[4] = {0.0, 0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
 
 /*! 2-D interpolation of a meteo variable. */
 #define INTPOL_2D(var, init)						\
@@ -1958,9 +1954,6 @@ typedef struct {
 
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
-
-  /*! Pressure field in pressure levels [hPa]. */
-  float patp[EX][EY][EP];
 
   /*! Zeta [K]. */
   float zeta[EX][EY][EP];

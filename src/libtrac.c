@@ -4612,7 +4612,6 @@ void read_met_periodic(
       met->lwc[met->nx - 1][iy][ip] = met->lwc[0][iy][ip];
       met->iwc[met->nx - 1][iy][ip] = met->iwc[0][iy][ip];
       met->cc[met->nx - 1][iy][ip] = met->cc[0][iy][ip];
-      met->patp[met->nx - 1][iy][ip] = met->patp[0][iy][ip];
     }
     for (int ip = 0; ip < met->npl; ip++) {
       met->ul[met->nx - 1][iy][ip] = met->ul[0][iy][ip];
