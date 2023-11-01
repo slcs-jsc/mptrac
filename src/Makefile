@@ -141,9 +141,6 @@ endif
 
 # Thrust... 
 ifeq ($(THRUST),1)
-  ifneq ($(CC),nvc)
-    $(error Thrust library requires compilation with nvc)
-  endif
   ifeq ($(GPU),1)
     CFLAGS += -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast
     LDFLAGS += -lthrustsort_gpu
