@@ -1,10 +1,21 @@
 # Model output data
 
-At present, MPTRAC offers seven options for model, referred to as "particle output", "grid output", "CSI output", "ensemble output", "profile output", "sample output", and "station output". By default, all output functions of MPTRAC create data files in an ASCII table format. This type of output is usually simple to understand and usable with many tools for data analysis and visualization. However, in the case of large-scale simulations, it is desirable to use more efficient file formats. Therefore, an option was implemented to perform file-I/O for binary or netCDF data for some types of output. Another option of output is to pipe the data directly from the model to a visualization tool such as the graphing utility gnuplot.
+At present, MPTRAC offers seven options for model, referred to as "particle output", "grid output", "CSI output", "ensemble output", "profile output", "sample output", and "station output". By default, all output functions of MPTRAC create data files in an ASCII table format. This type of output is usually simple to understand and usable with many tools for data analysis and visualization. However, in the case of large-scale simulations, it is desirable to use more efficient file formats. Therefore, an option was implemented to perform file-I/O for binary or netCDF data for some types of output. Among these types are output files that facilitate interoperability between MPTRAC and the CLaMS model. Another option of output is to pipe the data directly from the model to a visualization tool such as the graphing utility gnuplot. 
 
 ## Particle data
 
 The most comprehensive output of MPTRAC is the atmospheric output. Atmospheric output files can be generated at user-defined time intervals, which need to be integer multiples of the model time step. The atmospheric output files are the most comprehensive type of output because they contain the time, location, and the values of all user-defined quantities of each individual air parcel.
+
+The atmospheric output file is set with the parameters ATM_TYPE and ATM_TYPE_OUT, where ATM_TYPE defines the file format for reading and ATM_TYPE_OUT defines the writing file format. However, if ATM_TYPE_OUT is not explicitly set in the control file, ATM_TYPE sets the file format for reading and writing.
+
+| ATM_TYPE | output format |
+|---|---|
+| 0  | ASCII (default) |
+| 1  | binary  |
+| 2  | netcdf  |
+| 3  | netcdf (CLaMS: trajectory and position file) |
+| 4  | netcdf (CLaMS: position file)  |
+
 
 ## Gridded data
 

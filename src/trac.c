@@ -429,14 +429,13 @@ int main(
 
     /* Initialize pressure heights consistent with zeta ... */
     if (ctl.vert_coord_ap == 1) {
-      INTPOL_INIT_DIA for (
-  int ip = 0; ip < atm->np; ip++) {
+      INTPOL_INIT;
+      for (int ip = 0; ip < atm->np; ip++) {
 	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
 			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
 			    1);
       }
-
     }
 
     /* Update GPU... */
@@ -751,16 +750,16 @@ void module_advect_diabatic(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+
     /* If other modules have changed p translate it into a zeta... */
     if (ctl->cpl_zeta_and_press_modules > 0) {
-      INTPOL_INIT_DIA
-	intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			    met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			    atm->lon[ip], atm->lat[ip],
-			    &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			  atm->lon[ip], atm->lat[ip],
+			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
     }
 
     /* Init... */
@@ -784,9 +783,9 @@ void module_advect_diabatic(
       double tm = atm->time[ip] + dts;
 
       /* Interpolate meteo data... */
-      INTPOL_INIT_DIA
-	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
-			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
+			  met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
       intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
 			  met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
       intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
@@ -817,10 +816,10 @@ void module_advect_diabatic(
     }
 
     /* Set new position also in pressure coordinates... */
-    INTPOL_INIT_DIA
-      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+    INTPOL_INIT;
+    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
   }
 }
 
@@ -2248,40 +2247,12 @@ void module_sort(
 
   /* Sorting... */
 #ifdef _OPENACC
-  {
-#ifdef THRUST
-    {
 #pragma acc host_data use_device(a, p)
-      thrustSortWrapper(a, np, p);
-    }
-#else
-    {
-#pragma acc update host(a[0:np], p[0:np])
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	quicksort(a, p, 0, np - 1);
-      }
-#pragma acc update device(a[0:np], p[0:np])
-    }
 #endif
-  }
-#else
-  {
 #ifdef THRUST
-    {
-      thrustSortWrapper(a, np, p);
-    }
+  thrustSortWrapper(a, np, p);
 #else
-    {
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	quicksort(a, p, 0, np - 1);
-      }
-    }
-#endif
-  }
+  ERRMSG("MPTRAC was compiled without Thrust library!");
 #endif
 
   /* Sort data... */
