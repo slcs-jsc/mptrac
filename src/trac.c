@@ -749,10 +749,10 @@ void module_advect_diabatic(
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
-  
+
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
-    
+
     /* If other modules have changed p translate it into a zeta... */
     if (ctl->cpl_zeta_and_press_modules > 0) {
       INTPOL_INIT;
@@ -761,10 +761,10 @@ void module_advect_diabatic(
 			  atm->lon[ip], atm->lat[ip],
 			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
     }
-    
+
     /* Init... */
     double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3];
-    
+
     /* Loop over integration nodes... */
     for (int i = 0; i < ctl->advect; i++) {
 
@@ -802,19 +802,19 @@ void module_advect_diabatic(
       vm += k * v[i];
       zeta_dotm += k * zeta_dot[i];
     }
-    
+
     /* Set new position... */
     atm->time[ip] += dt[ip];
     atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
 			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
     atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
     atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
-    
+
     /* Check if zeta is below zero... */
     if (atm->q[ctl->qnt_zeta][ip] < 0) {
       atm->q[ctl->qnt_zeta][ip] = 0;
     }
-    
+
     /* Set new position also in pressure coordinates... */
     INTPOL_INIT;
     intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
@@ -2247,40 +2247,12 @@ void module_sort(
 
   /* Sorting... */
 #ifdef _OPENACC
-  {
-#ifdef THRUST
-    {
 #pragma acc host_data use_device(a, p)
-      thrustSortWrapper(a, np, p);
-    }
-#else
-    {
-#pragma acc update host(a[0:np], p[0:np])
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	quicksort(a, p, 0, np - 1);
-      }
-#pragma acc update device(a[0:np], p[0:np])
-    }
 #endif
-  }
-#else
-  {
 #ifdef THRUST
-    {
-      thrustSortWrapper(a, np, p);
-    }
+  thrustSortWrapper(a, np, p);
 #else
-    {
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	quicksort(a, p, 0, np - 1);
-      }
-    }
-#endif
-  }
+  ERRMSG("MPTRAC was compiled without Thrust library!");
 #endif
 
   /* Sort data... */
