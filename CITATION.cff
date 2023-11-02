@@ -43,15 +43,15 @@ authors:
     email: ye.lu@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0000-0002-3255-824X'
+  - given-names: Jonas
+    family-names: Sonnabend
+    email: j.sonnabend@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
   - given-names: Ling
     family-names: Zou
     email: l.zou@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0000-0001-6563-9815'
-  - given-names: Jonas
-    family-names: Sonnabend
-    email: j.sonnabend@fz-juelich.de
-    affiliation: Forschungszentrum Jülich
 identifiers:
   - type: doi
     value: 10.5194/gmd-15-2731-2022
