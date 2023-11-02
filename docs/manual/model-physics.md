@@ -269,7 +269,8 @@ $$
 
 with Avogadro constant $N_A$. For the calculation of the second-order rate constant k see Eq. 25 in Hoffmann et al. (2022).
 
-The for the calculation of k nedded low- and high-pressure limits of the reaction rate constant are given by
+For the calculation of k the low- and high-pressure limits of the reaction rate constant are given by
+
 
 $$
 \begin{equation}
@@ -278,7 +279,7 @@ $$
 \end{equation}
 $$
 
-The constants $k_0^{298}$ and k_\infty^{298}$ at the reference temperature of 298 K and the exponents n and m need to be specified as control parameters. The exponents can be set to zero in order to neglect the temperature dependence of the low- or high pressure limits of $k_0$ and $k_\infty$. The termolecular reaction rate
+The constants $k_0^{298}$ and $k_\infty^{298}$ at the reference temperature of 298 K and the exponents n and m need to be specified as control parameters. The exponents can be set to zero in order to neglect the temperature dependence of the low- or high pressure limits of $k_0$ and $k_\infty$. The termolecular reaction rate
 coefficients implemented directly into MPTRAC are listed in the table.
 
 | Reaction | A factor | E/R |
