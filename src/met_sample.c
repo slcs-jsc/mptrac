@@ -43,8 +43,8 @@ int main(
   FILE *out;
 
   double h2o, h2ot, o3, lwc, iwc, cc, p0, p1, ps, ts, zs, us, vs, lsm, sst,
-    pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, pv, t, tt, u, v, w,
-    z, zm, zref, zt, cw[3], time_old = -999, p_old = -999, lon_old = -999,
+    pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v,
+    w, z, zm, zref, zt, cw[3], time_old = -999, p_old = -999, lon_old = -999,
     lat_old = -999;
 
   int geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];

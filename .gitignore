@@ -55,3 +55,8 @@ tests/met_test/data/
 tests/tools_test/data/
 tests/trac_test/data/
 tests/tropo_test/data/
+test/interoper_test/data/
+test/interoper_test/run_all.sh
+test/interoper_test/run_atm.sh
+test/interoper_test/run_dia.sh
+

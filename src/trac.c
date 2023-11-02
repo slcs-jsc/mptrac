@@ -75,6 +75,14 @@ void module_advect(
   atm_t * atm,
   double *dt);
 
+/*! Calculate advection of air parcels. */
+void module_advect_diabatic(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
 /*! Apply boundary conditions. */
 void module_bound_cond(
   ctl_t * ctl,
@@ -419,6 +427,17 @@ int main(
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
+    /* Initialize pressure heights consistent with zeta ... */
+    if (ctl.vert_coord_ap == 1) {
+      INTPOL_INIT;
+      for (int ip = 0; ip < atm->np; ip++) {
+	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
+			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
+			    1);
+      }
+    }
+
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -479,8 +498,12 @@ int main(
 	  module_position(&ctl, met0, met1, atm, dt);
 
 	  /* Advection... */
-	  if (ctl.advect > 0)
-	    module_advect(&ctl, met0, met1, atm, dt);
+	  if (ctl.advect > 0) {
+	    if (ctl.vert_coord_ap == 0)
+	      module_advect(&ctl, met0, met1, atm, dt);
+	    else
+	      module_advect_diabatic(&ctl, met0, met1, atm, dt);
+	  }
 
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
@@ -712,6 +735,91 @@ void module_advect(
 			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
     atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
     atm->p[ip] += dt[ip] * wm;
+  }
+}
+
+/*****************************************************************************/
+
+void module_advect_diabatic(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+
+    /* If other modules have changed p translate it into a zeta... */
+    if (ctl->cpl_zeta_and_press_modules > 0) {
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			  atm->lon[ip], atm->lat[ip],
+			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
+    }
+
+    /* Init... */
+    double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3];
+
+    /* Loop over integration nodes... */
+    for (int i = 0; i < ctl->advect; i++) {
+
+      /* Set position... */
+      if (i == 0) {
+	dts = 0.0;
+	x[0] = atm->lon[ip];
+	x[1] = atm->lat[ip];
+	x[2] = atm->q[ctl->qnt_zeta][ip];
+      } else {
+	dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
+      }
+      double tm = atm->time[ip] + dts;
+
+      /* Interpolate meteo data... */
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
+			  met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+      intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
+			  met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+      intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
+			  met1->zetal, met1->zeta_dotl, tm, x[2], x[0], x[1],
+			  &zeta_dot[i], ci, cw, 0);
+
+      /* Get mean wind... */
+      double k = 1.0;
+      if (ctl->advect == 2)
+	k = (i == 0 ? 0.0 : 1.0);
+      else if (ctl->advect == 4)
+	k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+      um += k * u[i];
+      vm += k * v[i];
+      zeta_dotm += k * zeta_dot[i];
+    }
+
+    /* Set new position... */
+    atm->time[ip] += dt[ip];
+    atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+    atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+    atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
+
+    /* Check if zeta is below zero... */
+    if (atm->q[ctl->qnt_zeta][ip] < 0) {
+      atm->q[ctl->qnt_zeta][ip] = 0;
+    }
+
+    /* Set new position also in pressure coordinates... */
+    INTPOL_INIT;
+    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
   }
 }
 
@@ -1270,7 +1378,8 @@ void module_meteo(
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     double ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc,
-      pel, cape, cin, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc, iwc, cc, z, zt;
+      pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3,
+      lwc, iwc, cc, z, zt;
 
     /* Interpolate meteo data... */
     INTPOL_INIT;
@@ -1309,6 +1418,7 @@ void module_meteo(
     SET_ATM(qnt_pel, pel);
     SET_ATM(qnt_cape, cape);
     SET_ATM(qnt_cin, cin);
+    SET_ATM(qnt_o3c, o3c);
     SET_ATM(qnt_hno3,
 	    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip], atm->p[ip]));
     SET_ATM(qnt_oh, clim_oh(ctl, clim, atm->time[ip],
@@ -1328,7 +1438,8 @@ void module_meteo(
     SET_ATM(qnt_rh, RH(atm->p[ip], t, h2o));
     SET_ATM(qnt_rhice, RHICE(atm->p[ip], t, h2o));
     SET_ATM(qnt_theta, THETA(atm->p[ip], t));
-    SET_ATM(qnt_zeta, ZETA(ps, atm->p[ip], t));
+    SET_ATM(qnt_zeta, atm->q[ctl->qnt_zeta][ip]);
+    SET_ATM(qnt_zeta_d, ZETA(ps, atm->p[ip], t));
     SET_ATM(qnt_tvirt, TVIRT(t, h2o));
     SET_ATM(qnt_lapse, lapse_rate(t, h2o));
     SET_ATM(qnt_pv, pv);
@@ -1441,7 +1552,7 @@ void module_chemgrid(
       }
 
   /* Check quantities... */
-  if (ctl->qnt_m >= 0 && (ctl->qnt_vmrimpl >= 0 || ctl->qnt_Cx >= 0)) {
+  if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0) {
     if (ctl->molmass < 0)
       ERRMSG("SPECIES MOLAR MASS is not defined!");
 
@@ -1485,22 +1596,14 @@ void module_chemgrid(
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
 			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
-	/* Get molecular density... */
-	double M = MOLEC_DENS(atm->p[ip], temp);
-
 	/* Set mass... */
 	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
 				 izs[ip], ctl->chemgrid_nz)];
 
 	/* Calculate volume mixing ratio... */
-	if (ctl->qnt_vmrimpl >= 0)
-	  atm->q[ctl->qnt_vmrimpl][ip] = MA / ctl->molmass * m
-	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
-
-	/* Calculate concentration... */
 	if (ctl->qnt_Cx >= 0)
-	  atm->q[ctl->qnt_Cx][ip] = AVO * m
-	    / (1e18 * area[iys[ip]] * dz * ctl->molmass) / M;
+	  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
       }
 
     /* Free... */
@@ -1607,7 +1710,7 @@ void module_h2o2_chem(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
-  if (ctl->qnt_vmrimpl < 0)
+  if (ctl->qnt_Cx < 0)
     ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
   /* Loop over particles... */
@@ -1621,7 +1724,7 @@ void module_h2o2_chem(
       continue;
 
     /* Check implicit volume mixing ratio... */
-    if (atm->q[ctl->qnt_vmrimpl][ip] == 0)
+    if (atm->q[ctl->qnt_Cx][ip] == 0)
       continue;
 
     /* Get temperature... */
@@ -1642,7 +1745,7 @@ void module_h2o2_chem(
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
     /* Concentration of H2O2 (Barth et al., 1989)... */
-    double SO2 = atm->q[ctl->qnt_vmrimpl][ip] * 1e9;	// vmr unit: ppbv
+    double SO2 = atm->q[ctl->qnt_Cx][ip] * 1e9;	// vmr unit: ppbv
     double h2o2 = H_h2o2 * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: mol/L
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
@@ -1679,9 +1782,6 @@ void module_tracer_chem(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
 
-    /* Calculate solar zenith angle... */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
-
     /* Get temperature... */
     double t;
     INTPOL_INIT;
@@ -1690,34 +1790,45 @@ void module_tracer_chem(
     /* Get molecular density... */
     double M = MOLEC_DENS(atm->p[ip], t);
 
+    /* Get total column ozone... */
+    double o3c;
+    INTPOL_2D(o3c, 1);
+
+    /* Get solar zenith angle... */
+    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+
     /* Get O(1D) concentration... */
     double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
       double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      double K_hv = ROETH_PHOTOL(7.79e-07, 6.32497, 0.75857, sza);
+      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
       double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      double K_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
+      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
       double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      double K_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
       double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      double K_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
+      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
+			       atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
@@ -2136,40 +2247,12 @@ void module_sort(
 
   /* Sorting... */
 #ifdef _OPENACC
-  {
-#ifdef THRUST
-    {
 #pragma acc host_data use_device(a, p)
-      thrustSortWrapper(a, np, p);
-    }
-#else
-    {
-#pragma acc update host(a[0:np], p[0:np])
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	quicksort(a, p, 0, np - 1);
-      }
-#pragma acc update device(a[0:np], p[0:np])
-    }
 #endif
-  }
-#else
-  {
 #ifdef THRUST
-    {
-      thrustSortWrapper(a, np, p);
-    }
+  thrustSortWrapper(a, np, p);
 #else
-    {
-#pragma omp parallel
-      {
-#pragma omp single nowait
-	quicksort(a, p, 0, np - 1);
-      }
-    }
-#endif
-  }
+  ERRMSG("MPTRAC was compiled without Thrust library!");
 #endif
 
   /* Sort data... */
@@ -2456,13 +2539,13 @@ void write_output(
 #endif
 
   /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' && \
-	(fmod(t, ctl->atm_dt_out) == 0 || (t == ctl->t_stop))) {
-    if (ctl->atm_type == 0)
+  if (ctl->atm_basename[0] != '-' &&
+      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
+    if (ctl->atm_type_out == 0)
       sprintf(ext, "tab");
-    else if (ctl->atm_type == 1)
+    else if (ctl->atm_type_out == 1)
       sprintf(ext, "bin");
-    else if (ctl->atm_type == 2)
+    else if (ctl->atm_type_out == 2)
       sprintf(ext, "nc");
     sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
 	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);

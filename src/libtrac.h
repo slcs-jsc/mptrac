@@ -212,9 +212,19 @@
 #define CY 250
 #endif
 
+/*! Maximum number of total column ozone data for climatological data. */
+#ifndef CO3
+#define CO3 30
+#endif
+
 /*! Maximum number of pressure levels for climatological data. */
 #ifndef CP
 #define CP 60
+#endif
+
+/*! Maximum number of solar zenith angles for climatological data. */
+#ifndef CSZA
+#define CSZA 50
 #endif
 
 /*! Maximum number of time steps for climatological data. */
@@ -311,7 +321,7 @@
 
 /*! Initialize cache variables for interpolation. */
 #define INTPOL_INIT						\
-  double cw[3] = {0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
+  double cw[4] = {0.0, 0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
 
 /*! 2-D interpolation of a meteo variable. */
 #define INTPOL_2D(var, init)						\
@@ -359,6 +369,7 @@
     intpol_met_space_2d(met, met->pel, lon, lat, &pel, ci, cw, 0);	\
     intpol_met_space_2d(met, met->cape, lon, lat, &cape, ci, cw, 0);	\
     intpol_met_space_2d(met, met->cin, lon, lat, &cin, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->o3c, lon, lat, &o3c, ci, cw, 0);	\
   }
 
 /*! Temporal interpolation of all meteo data. */
@@ -394,6 +405,7 @@
     intpol_met_time_2d(met0, met0->pel, met1, met1->pel, time, lon, lat, &pel, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->cape, met1, met1->cape, time, lon, lat, &cape, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->cin, met1, met1->cin, time, lon, lat, &cin, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->o3c, met1, met1->o3c, time, lon, lat, &o3c, ci, cw, 0); \
   }
 
 /*! Calculate lapse rate between pressure levels. */
@@ -782,14 +794,21 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  int atm_type_out;
+
+  /*! Coupled use of pressure based modules and diabatic advection. 
+     (0= no coupling, 1= coupling) */
+  int cpl_zeta_and_press_modules;
+
+  /*! Use predefined pressure levels or not. */
+  int press_level_def;
+
   /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
   int vert_coord_ap;
 
   /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
   int vert_coord_met;
-
-  /*! Vertical velocity (0=kinematic, 1=diabatic). */
-  int vert_vel;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
   int clams_met_data;
@@ -829,9 +848,6 @@ typedef struct {
 
   /*! Quantity array index for volume mixing ratio. */
   int qnt_vmr;
-
-  /*! Quantity array index for volume mixing ratio (implicit). */
-  int qnt_vmrimpl;
 
   /*! Quantity array index for particle radius. */
   int qnt_rp;
@@ -935,6 +951,9 @@ typedef struct {
   /*! Quantity array index for convective inhibition (CIN). */
   int qnt_cin;
 
+  /*! Quantity array index for total column ozone. */
+  int qnt_o3c;
+
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
 
@@ -988,6 +1007,9 @@ typedef struct {
 
   /*! Quantity array index for zeta vertical coordinate. */
   int qnt_zeta;
+
+  /*! Quantity array index for diagnosed zeta vertical coordinate. */
+  int qnt_zeta_d;
 
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
@@ -1081,6 +1103,9 @@ typedef struct {
 
   /*! Time step of meteo data [s]. */
   double dt_met;
+
+  /*! Convention of the data layout */
+  int met_convention;
 
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
   int met_type;
@@ -1269,6 +1294,9 @@ typedef struct {
 
   /*! Life time of particles in the stratosphere  [s]. */
   double tdec_strat;
+
+  /*! Filename of photolysis rates climatology. */
+  char clim_photo[LEN];
 
   /*! Filename of HNO3 climatology. */
   char clim_hno3_filename[LEN];
@@ -1636,9 +1664,6 @@ typedef struct {
   /*! Pressure [hPa]. */
   double p[NP];
 
-  /*! Zeta [K]. */
-  double zeta[NP];
-
   /*! Longitude [deg]. */
   double lon[NP];
 
@@ -1669,6 +1694,41 @@ typedef struct {
   float uvwp[NP][3];
 
 } cache_t;
+
+/*! Climatological data in form of photolysis rates. */
+typedef struct {
+
+  /*! Number of pressure levels. */
+  int np;
+
+  /*! Number of solar zenith angles. */
+  int nsza;
+
+  /*! Number of total ozone columns. */
+  int no3c;
+
+  /*! Pressure [hPa]. */
+  double p[CP];
+
+  /*! Solar zenith angle [rad]. */
+  double sza[CSZA];
+
+  /*! Total column ozone [DU]. */
+  double o3c[CO3];
+
+  /*! N2O photolysis rate [1/s]. */
+  double n2o[CP][CSZA][CO3];
+
+  /*! CCl4 photolysis rate [1/s]. */
+  double ccl4[CP][CSZA][CO3];
+
+  /*! CCl3F photolysis rate [1/s]. */
+  double ccl3f[CP][CSZA][CO3];
+
+  /*! CCl2F2 photolysis rate [1/s]. */
+  double ccl2f2[CP][CSZA][CO3];
+
+} clim_photo_t;
 
 /*! Climatological data in form of time series. */
 typedef struct {
@@ -1710,7 +1770,7 @@ typedef struct {
 
 } clim_zm_t;
 
-/*! Climatological data of all variables. */
+/*! Climatological data. */
 typedef struct {
 
   /*! Number of tropopause timesteps. */
@@ -1727,6 +1787,9 @@ typedef struct {
 
   /*! Tropopause pressure values [hPa]. */
   double tropo[12][73];
+
+  /*! Photolysis rates. */
+  clim_photo_t photo;
 
   /*! HNO3 zonal means. */
   clim_zm_t hno3;
@@ -1774,6 +1837,9 @@ typedef struct {
 
   /*! Number of pressure levels. */
   int np;
+
+  /*! Number of model levels. */
+  int npl;
 
   /*! Longitude [deg]. */
   double lon[EX];
@@ -1844,6 +1910,9 @@ typedef struct {
   /*! Convective inhibition [J/kg]. */
   float cin[EX][EY];
 
+  /*! Total column ozone [DU]. */
+  float o3c[EX][EY];
+
   /*! Geopotential height [km]. */
   float z[EX][EY][EP];
 
@@ -1853,8 +1922,14 @@ typedef struct {
   /*! Zonal wind [m/s]. */
   float u[EX][EY][EP];
 
+  /*! Zonal wind on model levels [m/s]. */
+  float ul[EX][EY][EP];
+
   /*! Meridional wind [m/s]. */
   float v[EX][EY][EP];
+
+  /*! Meridional wind on model levels [m/s]. */
+  float vl[EX][EY][EP];
 
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
@@ -1880,14 +1955,20 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
-  /*! Pressure field in pressure levels [hPa]. */
-  float patp[EX][EY][EP];
-
   /*! Zeta [K]. */
   float zeta[EX][EY][EP];
 
   /*! Vertical velocity [K/s]. */
   float zeta_dot[EX][EY][EP];
+
+  /*! Zeta on model levels [K]. */
+  float zetal[EX][EY][EP];
+
+  /*! Vertical velocity on model levels [K/s]. */
+  float zeta_dotl[EX][EY][EP];
+
+  /*! Hybrid model levels */
+  double hybrid[EP];
 
 #ifdef UVW
   /*! Cache for wind data. */
@@ -1921,19 +2002,6 @@ void cart2geo(
 int check_finite(
   const double x);
 
-/*! Climatology of tropopause pressure. */
-#ifdef _OPENACC
-#pragma acc routine (clim_tropo)
-#endif
-double clim_tropo(
-  const clim_t * clim,
-  const double t,
-  const double lat);
-
-/*! Initialize tropopause climatology. */
-void clim_tropo_init(
-  clim_t * clim);
-
 /*! Climatology of OH number concentrations. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
@@ -1949,6 +2017,30 @@ double clim_oh(
 /*! Initialization function for OH climatology. */
 void clim_oh_diurnal_correction(
   ctl_t * ctl,
+  clim_t * clim);
+
+/*! Interpolate photolysis rate data. */
+#ifdef _OPENACC
+#pragma acc routine (clim_photo)
+#endif
+double clim_photo(
+  double rate[CP][CSZA][CO3],
+  clim_photo_t * photo,
+  double p,
+  double sza,
+  double o3c);
+
+/*! Climatology of tropopause pressure. */
+#ifdef _OPENACC
+#pragma acc routine (clim_tropo)
+#endif
+double clim_tropo(
+  const clim_t * clim,
+  const double t,
+  const double lat);
+
+/*! Initialize tropopause climatology. */
+void clim_tropo_init(
   clim_t * clim);
 
 /*! Interpolate time series. */
@@ -2045,6 +2137,49 @@ void get_met_replace(
   char *orig,
   char *search,
   char *repl);
+
+/*! Spatiotemporal interpolation of meteo data. !*/
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_4d_coord)
+#endif
+void intpol_met_4d_coord(
+  met_t * met0,
+  float height0[EX][EY][EP],
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float height1[EX][EY][EP],
+  float array1[EX][EY][EP],
+  double ts,
+  double height,
+  double lon,
+  double lat,
+  double *var,
+  int *ci,
+  double *cw,
+  int init);
+
+#ifdef UVW
+#ifdef _OPENACC
+#pragma acc routine (intpol_met_4d_coord_uvw)
+#endif
+void intpol_met_4d_coord_uvw(
+  met_t * met0,
+  float heights0[EX][EY][EP],
+  float uvw0[EX][EY][EP][3],
+  met_t * met1,
+  float heights1[EX][EY][EP],
+  float uvw1[EX][EY][EP][3],
+  double ts,
+  double height,
+  double lon,
+  double lat,
+  double *u,
+  double *v,
+  double *zeta_dot,
+  int *ci,
+  double *cw,
+  int init);
+#endif
 
 /*! Spatial interpolation of meteo data. */
 #ifdef _OPENACC
@@ -2174,6 +2309,10 @@ double lapse_rate(
   const double t,
   const double h2o);
 
+/*! Get predefined pressure levels. */
+void level_definitions(
+  ctl_t * ctl);
+
 /*! Find array index for irregular grid. */
 #ifdef _OPENACC
 #pragma acc routine (locate_irr)
@@ -2191,6 +2330,29 @@ int locate_reg(
   const double *xx,
   const int n,
   const double x);
+
+/*! Locate the four vertical indizes of a box for a given height value. */
+#ifdef _OPENACC
+#pragma acc routine (locate_vert)
+#endif
+void locate_vert(
+  float profiles[EX][EY][EP],
+  int np,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double alt_ap,
+  int *ind);
+
+/*! locate the index in a column of a three dimensional array. */
+#ifdef _OPENACC
+#pragma acc routine (locate_irr_3d)
+#endif
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x);
 
 /*! Calculate NAT existence temperature. */
 #ifdef _OPENACC
@@ -2260,6 +2422,11 @@ void read_clim_zm(
   char *filename,
   char *varname,
   clim_zm_t * zm);
+
+/*! Read climatological photolysis rates. */
+void read_clim_photo(
+  char *filename,
+  clim_photo_t * photo);
 
 /*! Read control parameters. */
 void read_ctl(
@@ -2334,6 +2501,10 @@ void read_met_levels(
   ctl_t * ctl,
   met_t * met);
 
+/*! Smooth vertical zeta and pressure profiles. */
+void read_met_monotonize(
+  met_t * met);
+
 /*! Convert meteo data from model levels to pressure levels. */
 void read_met_ml2pl(
   ctl_t * ctl,
@@ -2372,6 +2543,10 @@ void read_met_periodic(
 
 /*! Calculate potential vorticity. */
 void read_met_pv(
+  met_t * met);
+
+/*! Calculate total column ozone. */
+void read_met_ozone(
   met_t * met);
 
 /*! Downsampling of meteo data. */
@@ -2500,8 +2675,15 @@ void write_atm_bin(
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Write atmospheric data in CLaMS format. */
+/*! Write atmospheric data in CLaMS position file format. */
 void write_atm_clams(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Write atmospheric data in CLaMS position file and trajectory format */
+void write_atm_clams_traj(
+  const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
   double t);

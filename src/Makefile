@@ -6,7 +6,7 @@
 EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test compress_test met_test tools_test trac_test tropo_test
+TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test
 
 # Installation directory...
 DESTDIR ?= ../bin

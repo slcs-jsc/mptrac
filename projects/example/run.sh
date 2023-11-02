@@ -34,19 +34,6 @@ QNT_NAME[8] = m
 METBASE = ../../tests/data/ei
 DT_MET = 86400.0
 
-# Sampling frequency of meteo data along the trajectories...
-MET_DT_OUT = 86400.0
-
-# Select model default parameters for sulfur dioxide...
-SPECIES = SO2
-
-# Apply exponential lifetime to air parcel mass...
-TDEC_TROP = 259200.0
-TDEC_STRAT = 259200.0
-
-# Switch on extreme convection parametrization...
-CONV_CAPE = 0.0
-
 # Activate air parcel output...
 ATM_BASENAME = atm
 

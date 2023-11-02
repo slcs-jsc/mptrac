@@ -53,10 +53,10 @@ int main(
     iwc, iwcm[NZ], cc, ccm[NZ], ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ],
     us, usm[NZ], vs, vsm[NZ], lsm, lsmm[NZ], sst, sstm[NZ], pbl, pblm[NZ],
     pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ], cl, clm[NZ], plcl, plclm[NZ],
-    plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ], cin, cinm[NZ], tt,
-    ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ],
-    tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ], ohm[NZ], h2o2m[NZ],
-    ho2m[NZ], o1dm[NZ], cw[3];
+    plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ], cin, cinm[NZ],
+    o3c, o3cm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ],
+    rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ],
+    ohm[NZ], h2o2m[NZ], ho2m[NZ], o1dm[NZ], cw[3];
 
   static int i, iz, np[NZ], npc[NZ], npt[NZ], nz, ci[3];
 
@@ -168,6 +168,7 @@ int main(
 	      h2otm[iz] += h2ot;
 	      npt[iz]++;
 	    }
+	    o3cm[iz] += o3c;
 	    rhm[iz] += RH(plev[iz], t, h2o);
 	    rhicem[iz] += RHICE(plev[iz], t, h2o);
 	    tdewm[iz] += TDEW(plev[iz], h2o);
