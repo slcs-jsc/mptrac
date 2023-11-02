@@ -6355,7 +6355,7 @@ void write_grid(
 
   static int nk;
 
-  double *cd, *mean[NQ], *vmr_impl, *z, *lon, *lat, *area, *press;
+  double *cd, *mean[NQ], *std[NQ], *vmr_impl, *z, *lon, *lat, *area, *press;
 
   int *ixs, *iys, *izs, *np;
 
@@ -6378,6 +6378,8 @@ void write_grid(
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   for (int iq = 0; iq < ctl->nq; iq++) {
     ALLOC(mean[iq], double,
+	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
+    ALLOC(std[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   }
   ALLOC(vmr_impl, double,
@@ -6447,8 +6449,10 @@ void write_grid(
 	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
       double kernel = kernel_weight(kz, kw, nk, atm->p[ip]);
       np[idx]++;
-      for (int iq = 0; iq < ctl->nq; iq++)
+      for (int iq = 0; iq < ctl->nq; iq++) {
 	mean[iq][idx] += kernel * atm->q[iq][ip];
+	std[iq][idx] += pow(kernel * atm->q[iq][ip], 2);
+      }
     }
 
   /* Calculate column density and vmr... */
@@ -6485,23 +6489,27 @@ void write_grid(
 
 	/* Calculate mean... */
 	if (np[idx] > 0)
-	  for (int iq = 0; iq < ctl->nq; iq++)
+	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] /= np[idx];
-	else
-	  for (int iq = 0; iq < ctl->nq; iq++)
+	    std[iq][idx] /= np[idx];
+	    std[iq][idx] -= pow(mean[iq][idx], 2);
+	    std[iq][idx] = pow(std[iq][idx], 0.5);
+	} else
+	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] = GSL_NAN;
-
+	    std[iq][idx] = GSL_NAN;
+	  }
       }
 
   /* Write ASCII data... */
   if (ctl->grid_type == 0)
-    write_grid_asc(filename, ctl, cd, mean, vmr_impl, t, z, lon, lat, area,
-		   dz, np);
+    write_grid_asc(filename, ctl, cd, mean, std, vmr_impl, t, z, lon, lat,
+		   area, dz, np);
 
   /* Write netCDF data... */
   else if (ctl->grid_type == 1)
-    write_grid_nc(filename, ctl, cd, mean, vmr_impl, t, z, lon, lat, area, dz,
-		  np);
+    write_grid_nc(filename, ctl, cd, mean, std, vmr_impl, t, z, lon, lat,
+		  area, dz, np);
 
   /* Error message... */
   else
@@ -6509,8 +6517,10 @@ void write_grid(
 
   /* Free... */
   free(cd);
-  for (int iq = 0; iq < ctl->nq; iq++)
+  for (int iq = 0; iq < ctl->nq; iq++) {
     free(mean[iq]);
+    free(std[iq]);
+  }
   free(vmr_impl);
   free(z);
   free(lon);
@@ -6530,6 +6540,7 @@ void write_grid_asc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
+  double *std[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -6604,6 +6615,8 @@ void write_grid_asc(
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    fprintf(out, " ");
 	    fprintf(out, ctl->qnt_format[iq], mean[iq][idx]);
+	    fprintf(out, " ");
+	    fprintf(out, "%g", std[iq][idx]);
 	  }
 	  fprintf(out, " %d %g %g %g %g\n", np[idx], area[iy], dz, cd[idx],
 		  vmr_impl[idx]);
@@ -6623,6 +6636,7 @@ void write_grid_nc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
+  double *std[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -6666,10 +6680,13 @@ void write_grid_nc(
   NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
 	     "volume mixing ratio (implicit)", "ppv");
   NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1");
-  for (int iq = 0; iq < ctl->nq; iq++)
-    NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 4, dimid,
-	       ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
-
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_mean"), NC_DOUBLE, 4, dimid,
+	       strcat(ctl->qnt_longname[iq], " (mean)"), ctl->qnt_unit[iq]);
+    NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_std"), NC_DOUBLE, 4, dimid,
+	       strcat(ctl->qnt_longname[iq], " (standard deviation)"),
+	       ctl->qnt_unit[iq]);
+  }
   /* End definitions... */
   NC(nc_enddef(ncid));
 
@@ -6708,7 +6725,16 @@ void write_grid_nc(
 	for (int iz = 0; iz < ctl->grid_nz; iz++)
 	  help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
 	    mean[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
-    NC_PUT_DOUBLE(ctl->qnt_name[iq], help, 0);
+    NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_mean"), help, 0);
+  }
+
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    for (int ix = 0; ix < ctl->grid_nx; ix++)
+      for (int iy = 0; iy < ctl->grid_ny; iy++)
+	for (int iz = 0; iz < ctl->grid_nz; iz++)
+	  help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	    std[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+    NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_std"), help, 0);
   }
 
   /* Close file... */
