@@ -24,5 +24,3 @@ CPL_ZETA_PRESS_MODULES = 1
 ```
 
 
-#JS - Comment - First User Perspective
-#Correct typo in convection 
