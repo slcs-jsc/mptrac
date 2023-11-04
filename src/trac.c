@@ -685,7 +685,7 @@ void module_advect(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
     /* Init... */
-    double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3];
+    double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3] = { 0, 0, 0 };
 
     /* Loop over integration nodes... */
     for (int i = 0; i < ctl->advect; i++) {
@@ -763,7 +763,8 @@ void module_advect_diabatic(
     }
 
     /* Init... */
-    double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0, x[3];
+    double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0,
+      x[3] = { 0, 0, 0 };
 
     /* Loop over integration nodes... */
     for (int i = 0; i < ctl->advect; i++) {
