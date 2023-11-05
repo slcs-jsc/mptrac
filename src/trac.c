@@ -973,34 +973,20 @@ void module_convection(
       if (ctl->conv_mix_top == 1)
 	ptop = pel;
 
-      /* Vertical mixing based on pressure... */
-      if (ctl->conv_mix == 0)
-	atm->p[ip] = pbot + (ptop - pbot) * rs[ip];
+      /* Get density range... */
+      double tbot, ttop;
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			 pbot, atm->lon[ip], atm->lat[ip], &tbot, ci, cw, 1);
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			 ptop, atm->lon[ip], atm->lat[ip], &ttop, ci, cw, 1);
+      double rhobot = pbot / tbot;
+      double rhotop = ptop / ttop;
 
-      /* Vertical mixing based on density... */
-      else if (ctl->conv_mix == 1) {
+      /* Get new density... */
+      double rho = rhobot + (rhotop - rhobot) * rs[ip];
 
-	/* Get density range... */
-	double tbot, ttop;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   pbot, atm->lon[ip], atm->lat[ip], &tbot,
-			   ci, cw, 1);
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   ptop, atm->lon[ip], atm->lat[ip], &ttop,
-			   ci, cw, 1);
-	double rhobot = pbot / tbot;
-	double rhotop = ptop / ttop;
-
-	/* Get new density... */
-	double lrho = log(rhobot + (rhotop - rhobot) * rs[ip]);
-
-	/* Find pressure... */
-	double lrhobot = log(rhobot);
-	double lrhotop = log(rhotop);
-	double lpbot = log(pbot);
-	double lptop = log(ptop);
-	atm->p[ip] = exp(LIN(lrhobot, lpbot, lrhotop, lptop, lrho));
-      }
+      /* Get pressure... */
+      atm->p[ip] = LIN(rhobot, pbot, rhotop, ptop, rho);
     }
   }
 }
