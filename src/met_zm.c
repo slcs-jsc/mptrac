@@ -218,7 +218,7 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %d %d %d\n",
+	      " %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
@@ -241,7 +241,7 @@ int main(
 	      tnatm[iz][iy] / np[iz][iy], hno3m[iz][iy] / np[iz][iy],
 	      ohm[iz][iy] / np[iz][iy], h2o2m[iz][iy] / np[iz][iy],
 	      ho2m[iz][iy] / np[iz][iy], o1dm[iz][iy] / np[iz][iy],
-	      pblm[iz][iy] / np[iz][iy],
+	      pblm[iz][iy] / np[iz][iy], o3cm[iz][iy] / np[iz][iy],
 	      np[iz][iy], npt[iz][iy], npc[iz][iy]);
   }
 

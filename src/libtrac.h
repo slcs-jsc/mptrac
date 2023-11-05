@@ -465,14 +465,15 @@
 	  "# $40 = NAT temperature [K]\n");				\
   fprintf(out,								\
 	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
-	  "# $42 = OH concentration [ppv]\n"			\
-	  "# $43 = H2O2 concentration [ppv]\n"			\
-	  "# $44 = HO2 concentration [ppv]\n"			\
-	  "# $45 = O1D concentration [ppv]\n"			\
+	  "# $42 = OH concentration [ppv]\n"				\
+	  "# $43 = H2O2 concentration [ppv]\n"				\
+	  "# $44 = HO2 concentration [ppv]\n"				\
+	  "# $45 = O1D concentration [ppv]\n"				\
 	  "# $46 = boundary layer pressure [hPa]\n"			\
-	  "# $47 = number of data points\n"				\
-	  "# $48 = number of tropopause data points\n"			\
-	  "# $49 = number of CAPE data points\n");			\
+	  "# $47 = total column ozone [DU]\n"				\
+	  "# $48 = number of data points\n"				\
+	  "# $49 = number of tropopause data points\n"			\
+	  "# $50 = number of CAPE data points\n");			\
 
 /*! Calculate molecular density of an ideal gas. */
 #define MOLEC_DENS(p,t)			\

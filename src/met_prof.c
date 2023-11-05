@@ -200,7 +200,7 @@ int main(
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -216,7 +216,7 @@ int main(
 	    rhicem[iz] / np[iz], tdewm[iz] / np[iz], ticem[iz] / np[iz],
 	    tnatm[iz] / np[iz], hno3m[iz] / np[iz], ohm[iz] / np[iz],
 	    h2o2m[iz] / np[iz], ho2m[iz] / np[iz], o1dm[iz] / np[iz],
-	    pblm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
+	    pblm[iz] / np[iz], o3cm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
 
   /* Close file... */
   fclose(out);

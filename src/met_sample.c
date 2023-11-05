@@ -129,7 +129,7 @@ int main(
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs, lsm,
 	    sst, pt, zt, tt, h2ot, lwc, iwc, cc, cl, pct, pcb, plcl, plfc,
@@ -147,7 +147,7 @@ int main(
 	    clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip],
 		    atm->p[ip]),
 	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip],
-		    atm->p[ip]), pbl);
+		    atm->p[ip]), pbl, o3c);
   }
 
   /* Close file... */
