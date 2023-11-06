@@ -1,6 +1,6 @@
 # atm_dist
 
-This applocation calculates the transport deviations of trajectories.
+This application calculates the transport deviations of trajectories.
 
 atm_dist can be called by:
 ```
