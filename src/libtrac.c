@@ -2933,6 +2933,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
+  ctl->grid_std =
+    (int) scan_ctl(filename, argc, argv, "GRID_STD", -1, "0", NULL); 
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
   ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "85", NULL);
   ctl->grid_nz =
@@ -6599,6 +6601,10 @@ void write_grid_asc(
   fprintf(out, "# $%d = layer depth [km]\n", 7 + ctl->nq);
   fprintf(out, "# $%d = column density (implicit) [kg/m^2]\n", 8 + ctl->nq);
   fprintf(out, "# $%d = volume mixing ratio (implicit) [ppv]\n", 9 + ctl->nq);
+  if (ctl->grid_std)
+    for (int iq = 0; iq < ctl->nq; iq++)
+      fprintf(out, "# $%i = %s (std) [%s]\n", 9 + ctl->nq + iq, ctl->qnt_name[iq],
+  	    ctl->qnt_unit[iq]); 
   fprintf(out, "\n");
 
   /* Write data... */
@@ -6615,11 +6621,15 @@ void write_grid_asc(
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    fprintf(out, " ");
 	    fprintf(out, ctl->qnt_format[iq], mean[iq][idx]);
+	  }
+	  fprintf(out, " %d %g %g %g %g", np[idx], area[iy], dz, cd[idx],
+		  vmr_impl[idx]);
+    if (ctl->grid_std)
+	    for (int iq = 0; iq < ctl->nq; iq++) {
 	    fprintf(out, " ");
 	    fprintf(out, "%g", std[iq][idx]);
 	  }
-	  fprintf(out, " %d %g %g %g %g\n", np[idx], area[iy], dz, cd[idx],
-		  vmr_impl[idx]);
+    fprintf(out, "\n");
 	}
       }
     }
