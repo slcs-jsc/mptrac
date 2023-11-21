@@ -10,11 +10,13 @@ These are the main references for citing the MPTRAC model in scientific publicat
 
 This is a list of papers in which MPTRAC was applied:
 
+- Clemens, J., Hoffmann, L., Vogel, B., Grießbach, S., and Thomas, N.: Implementation and evaluation of diabatic advection in the Lagrangian transport model MPTRAC 2.6, Geosci. Model Dev. Discuss. [preprint], <https://doi.org/10.5194/gmd-2023-214>, in review, 2023. 
+
 - Clemens, J., Vogel, B., Hoffmann, L., Griessbach, S., Thomas, N., Fadnavis, S., Müller, R., Peter, T., and Ploeger, F.: Identification of source regions of the Asian Tropopause Aerosol Layer on the Indian subcontinent in August 2016, EGUsphere [preprint], <https://doi.org/10.5194/egusphere-2022-1462>, 2023.
 
 - Hoffmann, L., Konopka, P., Clemens, J., and Vogel, B.: Lagrangian transport simulations using the extreme convection parameterization: an assessment for the ECMWF reanalyses, Atmos. Chem. Phys., 23, 7589–7609, <https://doi.org/10.5194/acp-23-7589-2023>, 2023.
 
-- Liu, M., Hoffmann, L., Griessbach, S., Cai, Z., Heng, Y., and Wu, X.: Improved representation of volcanic sulfur dioxide depletion in Lagrangian transport simulations: a case study with MPTRAC v2.4, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2022-1480, 2023. 
+- Liu, M., Hoffmann, L., Griessbach, S., Cai, Z., Heng, Y., and Wu, X.: Improved representation of volcanic sulfur dioxide depletion in Lagrangian transport simulations: a case study with MPTRAC v2.4, Geosci. Model Dev., 16, 5197–5217, https://doi.org/10.5194/gmd-16-5197-2023, 2023. 
 
 - Cai, Z., Griessbach, S., and Hoffmann, L.: Improved estimation of volcanic SO2 injections from satellite retrievals and Lagrangian transport simulations: the 2019 Raikoke eruption, Atmos. Chem. Phys., 22, 6787–6809, <https://doi.org/10.5194/acp-22-6787-2022>, 2022.
 
