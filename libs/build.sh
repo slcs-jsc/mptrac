@@ -126,8 +126,8 @@ fi
 
 if [ $ifBuildMandatory = true ]; then
      ifBuildGSL=true
-     ifBuildzlib=true
-     ifBuildHDF=true
+     ifBuildZLIB=true
+     ifBuildHDF5=true
      ifBuildNETCDF=true
 fi
 
