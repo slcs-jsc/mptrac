@@ -10,7 +10,7 @@ import pandas as pd
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
 import glob,sys,os, cv2
 
-datadir = 'data'
+datadir = '../example/data.ref'
 plotdir = 'pythonplots'
 if (os.path.isdir(plotdir)==0):
   os.mkdir(plotdir)
