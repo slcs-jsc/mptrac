@@ -16,6 +16,7 @@
 ###### Presets ######
 
 ifBuildAll=false
+ifBuildMandatory=false
 ifClean=false
 ifBuildGSL=false
 ifBuildTHRUST=false
@@ -50,11 +51,12 @@ fi
 
 ###### Checking the flags ######
 
-while getopts acgtzfshnkp: flag
+while getopts amcgtzfshnkp: flag
 do
     case "${flag}" in
-        a) ifBuildAll=true    ; echo "build all libraries  " ;;	
-	c) ifClean=true       ; echo "clean build directory" ;;
+        a) ifBuildAll=true        ; echo "build all libraries  " ;;	
+        m) ifBuildMandatory=true  ; echo "build mandatory libraries  " ;;	
+	c) ifClean=true           ; echo "clean build directory" ;;
 	g) ifBuildGSL=true    ; echo "GSL is selected      " ;;
 	t) ifBuildTHRUST=true ; echo "THRUST is selected   " ;;
 	z) ifBuildZLIB=true   ; echo "ZLIB is selected     " ;;
@@ -79,6 +81,7 @@ do
 	   printf -- "--------------------------------------------------------------\n"	
            printf -- "-a         : build all the libs, \$mptrac/libs/build will be  \n"
 	   printf -- "             cleaned      \n"
+	   printf -- "-m         : build mandatory libs: GSL, netCDF, HDF5, and zlib\n"
 	   printf -- "-c         : clean the \$mptrac/libs/build                    \n"
 	   printf -- "-g         : build GSL    \n" 
 	   printf -- "-t         : build THRUST     \n" 
@@ -117,6 +120,15 @@ else
         target=$(mkdir -p build && cd build && pwd)
         mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 
     fi
+fi
+
+# Mandatory ... 
+
+if [ $ifBuildMandatory = true ]; then
+     ifBuildGSL=true
+     ifBuildzlib=true
+     ifBuildHDF=true
+     ifBuildNETCDF=true
 fi
 
 # GSL...
