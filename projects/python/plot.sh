@@ -1,5 +1,7 @@
 #! /bin/bash
 
-python ./plot_atm.py
-python ./plot_atm_3d.py
-python ./plot_grid.py
+datadir="../example/data.ref"
+plotdir="pythonplots"
+python ./plot_atm.py $datadir $plotdir
+python ./plot_atm_3d.py $datadir $plotdir
+python ./plot_grid.py $datadir $plotdir

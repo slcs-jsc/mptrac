@@ -8,10 +8,12 @@ import cartopy.crs as ccrs
 import numpy as np
 import pandas as pd
 from cartopy.mpl.ticker import LongitudeFormatter, LatitudeFormatter
-import glob,sys,os, cv2
+import glob,sys,os
 
-datadir = '../example/data.ref'
-plotdir = 'pythonplots'
+if (len(sys.argv)-1 != 2):
+  print('Please input <datadir> <plotdir>')
+datadir = sys.argv[1]
+plotdir = sys.argv[2]
 if (os.path.isdir(plotdir)==0):
   os.mkdir(plotdir)
 
