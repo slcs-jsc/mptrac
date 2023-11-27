@@ -10,6 +10,7 @@ kpp/*/*.c
 kpp/*/*.h
 kpp/*/*.log
 libs/build/
+projects/*
 projects/example/data/
 projects/example/plots/
 !projects/data/
