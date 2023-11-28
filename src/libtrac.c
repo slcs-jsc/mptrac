@@ -2932,7 +2932,7 @@ void read_ctl(
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
   ctl->grid_std =
-    (int) scan_ctl(filename, argc, argv, "GRID_STD", -1, "0", NULL); 
+    (int) scan_ctl(filename, argc, argv, "GRID_STD", -1, "0", NULL);
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
   ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "85", NULL);
   ctl->grid_nz =
@@ -4129,6 +4129,10 @@ void read_met_ml2pl(
 
 void read_met_monotonize(
   met_t * met) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_MONOTONIZE", "METPROC", NVTX_READ);
+  LOG(2, "Make zeta profiles monotone...");
 
   /* Create monotone zeta profiles... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -6601,8 +6605,8 @@ void write_grid_asc(
   fprintf(out, "# $%d = volume mixing ratio (implicit) [ppv]\n", 9 + ctl->nq);
   if (ctl->grid_std)
     for (int iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%i = %s (std) [%s]\n", 9 + ctl->nq + iq, ctl->qnt_name[iq],
-  	    ctl->qnt_unit[iq]); 
+      fprintf(out, "# $%i = %s (std) [%s]\n", 9 + ctl->nq + iq,
+	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
   fprintf(out, "\n");
 
   /* Write data... */
@@ -6622,12 +6626,12 @@ void write_grid_asc(
 	  }
 	  fprintf(out, " %d %g %g %g %g", np[idx], area[iy], dz, cd[idx],
 		  vmr_impl[idx]);
-    if (ctl->grid_std)
+	  if (ctl->grid_std)
 	    for (int iq = 0; iq < ctl->nq; iq++) {
-	    fprintf(out, " ");
-	    fprintf(out, "%g", std[iq][idx]);
-	  }
-    fprintf(out, "\n");
+	      fprintf(out, " ");
+	      fprintf(out, "%g", std[iq][idx]);
+	    }
+	  fprintf(out, "\n");
 	}
       }
     }
