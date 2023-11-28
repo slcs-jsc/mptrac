@@ -2931,8 +2931,6 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
-  ctl->grid_std =
-    (int) scan_ctl(filename, argc, argv, "GRID_STD", -1, "0", NULL);
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
   ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "85", NULL);
   ctl->grid_nz =
@@ -6594,19 +6592,19 @@ void write_grid_asc(
   fprintf(out,
 	  "# $1 = time [s]\n"
 	  "# $2 = altitude [km]\n"
-	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
+	  "# $3 = longitude [deg]\n"
+	  "# $4 = latitude [deg]\n"
+	  "# $5 = surface area [km^2]\n"
+	  "# $6 = layer depth [km]\n"
+	  "# $7 = column density (implicit) [kg/m^2]\n"
+	  "# $8 = volume mixing ratio (implicit) [ppv]\n"
+	  "# $9 = number of particles [1]\n");
   for (int iq = 0; iq < ctl->nq; iq++)
-    fprintf(out, "# $%i = %s (mean) [%s]\n", 5 + iq, ctl->qnt_name[iq],
+    fprintf(out, "# $%i = %s (mean) [%s]\n", 10 + iq, ctl->qnt_name[iq],
 	    ctl->qnt_unit[iq]);
-  fprintf(out, "# $%d = number of particles [1]\n", 5 + ctl->nq);
-  fprintf(out, "# $%d = surface area [km^2]\n", 6 + ctl->nq);
-  fprintf(out, "# $%d = layer depth [km]\n", 7 + ctl->nq);
-  fprintf(out, "# $%d = column density (implicit) [kg/m^2]\n", 8 + ctl->nq);
-  fprintf(out, "# $%d = volume mixing ratio (implicit) [ppv]\n", 9 + ctl->nq);
-  if (ctl->grid_std)
-    for (int iq = 0; iq < ctl->nq; iq++)
-      fprintf(out, "# $%i = %s (std) [%s]\n", 9 + ctl->nq + iq,
-	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    fprintf(out, "# $%i = %s (std) [%s]\n", 10 + ctl->nq + iq,
+	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
   fprintf(out, "\n");
 
   /* Write data... */
@@ -6619,18 +6617,16 @@ void write_grid_asc(
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
 	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 	if (!ctl->grid_sparse || vmr_impl[idx] > 0) {
-	  fprintf(out, "%.2f %g %g %g", t, z[iz], lon[ix], lat[iy]);
+	  fprintf(out, "%.2f %g %g %g %g %g %g %g %d", t, z[iz], lon[ix],
+		  lat[iy], area[iy], dz, cd[idx], vmr_impl[idx], np[idx]);
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    fprintf(out, " ");
 	    fprintf(out, ctl->qnt_format[iq], mean[iq][idx]);
 	  }
-	  fprintf(out, " %d %g %g %g %g", np[idx], area[iy], dz, cd[idx],
-		  vmr_impl[idx]);
-	  if (ctl->grid_std)
-	    for (int iq = 0; iq < ctl->nq; iq++) {
-	      fprintf(out, " ");
-	      fprintf(out, "%g", std[iq][idx]);
-	    }
+	  for (int iq = 0; iq < ctl->nq; iq++) {
+	    fprintf(out, " ");
+	    fprintf(out, ctl->qnt_format[iq], std[iq][idx]);
+	  }
 	  fprintf(out, "\n");
 	}
       }

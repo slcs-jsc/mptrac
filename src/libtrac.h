@@ -1534,9 +1534,6 @@ typedef struct {
   /*! Sparse output in grid data files (0=no, 1=yes). */
   int grid_sparse;
 
-  /*! Quantity standard deviation output in grid data files (0=no, 1=yes). */
-  int grid_std;
-
   /*! Number of altitudes of gridded data. */
   int grid_nz;
 
