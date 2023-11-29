@@ -6453,7 +6453,7 @@ void write_grid(
       np[idx]++;
       for (int iq = 0; iq < ctl->nq; iq++) {
 	mean[iq][idx] += kernel * atm->q[iq][ip];
-	std[iq][idx] += pow(kernel * atm->q[iq][ip], 2);
+	std[iq][idx] += SQR(kernel * atm->q[iq][ip]);
       }
     }
 
@@ -6493,9 +6493,8 @@ void write_grid(
 	if (np[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] /= np[idx];
-	    std[iq][idx] /= np[idx];
-	    std[iq][idx] -= pow(mean[iq][idx], 2);
-	    std[iq][idx] = pow(std[iq][idx], 0.5);
+	    double var = std[iq][idx] / np[idx] - SQR(mean[iq][idx]);
+	    std[iq][idx] = (var > 0 ? sqrt(var) : 0);
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] = GSL_NAN;
