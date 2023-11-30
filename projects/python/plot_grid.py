@@ -44,7 +44,7 @@ for FILE in filelist :
   lon = np.zeros((nlon))
   for i in range(nlon):
     lon[i] = data[:,2][nlat*i]
-  col = (data[:,-2]*1000).reshape(nlat,nlon,order='F')
+  col = (data[:,6]*1000).reshape(nlat,nlon,order='F')
 
   fig = plt.figure(dpi=200)
   ax = fig.add_subplot(projection=ccrs.PlateCarree(central_longitude=0))
