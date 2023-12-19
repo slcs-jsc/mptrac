@@ -6658,6 +6658,8 @@ void write_grid_nc(
   double dz,
   int *np) {
 
+  char longname[LEN], varname[LEN];
+
   double *help;
 
   int *help2, ncid, dimid[10], varid;
@@ -6693,12 +6695,14 @@ void write_grid_nc(
 	     "volume mixing ratio (implicit)", "ppv");
   NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1");
   for (int iq = 0; iq < ctl->nq; iq++) {
-    NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_mean"), NC_DOUBLE, 4, dimid,
-	       strcat(ctl->qnt_longname[iq], " (mean)"), ctl->qnt_unit[iq]);
-    if (ctl->grid_stddev)
-      NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_std"), NC_DOUBLE, 4, dimid,
-		 strcat(ctl->qnt_longname[iq], " (stddev)"),
-		 ctl->qnt_unit[iq]);
+    sprintf(varname, "%s_mean", ctl->qnt_name[iq]);
+    sprintf(longname, "%s (mean)", ctl->qnt_longname[iq]);
+    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq]);
+    if (ctl->grid_stddev) {
+      sprintf(varname, "%s_stddev", ctl->qnt_name[iq]);
+      sprintf(longname, "%s (stddev)", ctl->qnt_longname[iq]);
+      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq]);
+    }
   }
   /* End definitions... */
   NC(nc_enddef(ncid));
@@ -6733,22 +6737,24 @@ void write_grid_nc(
   NC_PUT_INT("np", help2, 0);
 
   for (int iq = 0; iq < ctl->nq; iq++) {
+    sprintf(varname, "%s_mean", ctl->qnt_name[iq]);
     for (int ix = 0; ix < ctl->grid_nx; ix++)
       for (int iy = 0; iy < ctl->grid_ny; iy++)
 	for (int iz = 0; iz < ctl->grid_nz; iz++)
 	  help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
 	    mean[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
-    NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_mean"), help, 0);
+    NC_PUT_DOUBLE(varname, help, 0);
   }
 
   if (ctl->grid_stddev)
     for (int iq = 0; iq < ctl->nq; iq++) {
+      sprintf(varname, "%s_stddev", ctl->qnt_name[iq]);
       for (int ix = 0; ix < ctl->grid_nx; ix++)
 	for (int iy = 0; iy < ctl->grid_ny; iy++)
 	  for (int iz = 0; iz < ctl->grid_nz; iz++)
 	    help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
 	      stddev[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
-      NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_std"), help, 0);
+      NC_PUT_DOUBLE(varname, help, 0);
     }
 
   /* Close file... */
