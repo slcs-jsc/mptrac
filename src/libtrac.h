@@ -1534,6 +1534,9 @@ typedef struct {
   /*! Sparse output in grid data files (0=no, 1=yes). */
   int grid_sparse;
 
+  /*! Include standard deviations in grid output (0=no, 1=yes). */
+  int grid_stddev;
+
   /*! Number of altitudes of gridded data. */
   int grid_nz;
 
@@ -2721,7 +2724,7 @@ void write_grid_asc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *std[NQ],
+  double *stddev[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -2737,7 +2740,7 @@ void write_grid_nc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *std[NQ],
+  double *stddev[NQ],
   double *vmr_impl,
   double t,
   double *z,

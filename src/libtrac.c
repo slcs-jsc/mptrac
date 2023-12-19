@@ -2931,6 +2931,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
+  ctl->grid_stddev =
+    (int) scan_ctl(filename, argc, argv, "GRID_STDDEV", -1, "0", NULL);
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
   ctl->grid_z1 = scan_ctl(filename, argc, argv, "GRID_Z1", -1, "85", NULL);
   ctl->grid_nz =
@@ -6357,7 +6359,8 @@ void write_grid(
 
   static int nk;
 
-  double *cd, *mean[NQ], *std[NQ], *vmr_impl, *z, *lon, *lat, *area, *press;
+  double *cd, *mean[NQ], *stddev[NQ], *vmr_impl, *z, *lon, *lat, *area,
+    *press;
 
   int *ixs, *iys, *izs, *np;
 
@@ -6381,7 +6384,7 @@ void write_grid(
   for (int iq = 0; iq < ctl->nq; iq++) {
     ALLOC(mean[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-    ALLOC(std[iq], double,
+    ALLOC(stddev[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   }
   ALLOC(vmr_impl, double,
@@ -6453,7 +6456,7 @@ void write_grid(
       np[idx]++;
       for (int iq = 0; iq < ctl->nq; iq++) {
 	mean[iq][idx] += kernel * atm->q[iq][ip];
-	std[iq][idx] += SQR(kernel * atm->q[iq][ip]);
+	stddev[iq][idx] += SQR(kernel * atm->q[iq][ip]);
       }
     }
 
@@ -6493,24 +6496,24 @@ void write_grid(
 	if (np[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] /= np[idx];
-	    double var = std[iq][idx] / np[idx] - SQR(mean[iq][idx]);
-	    std[iq][idx] = (var > 0 ? sqrt(var) : 0);
+	    double var = stddev[iq][idx] / np[idx] - SQR(mean[iq][idx]);
+	    stddev[iq][idx] = (var > 0 ? sqrt(var) : 0);
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] = GSL_NAN;
-	    std[iq][idx] = GSL_NAN;
+	    stddev[iq][idx] = GSL_NAN;
 	  }
       }
 
   /* Write ASCII data... */
   if (ctl->grid_type == 0)
-    write_grid_asc(filename, ctl, cd, mean, std, vmr_impl, t, z, lon, lat,
-		   area, dz, np);
+    write_grid_asc(filename, ctl, cd, mean, stddev, vmr_impl,
+		   t, z, lon, lat, area, dz, np);
 
   /* Write netCDF data... */
   else if (ctl->grid_type == 1)
-    write_grid_nc(filename, ctl, cd, mean, std, vmr_impl, t, z, lon, lat,
-		  area, dz, np);
+    write_grid_nc(filename, ctl, cd, mean, stddev, vmr_impl,
+		  t, z, lon, lat, area, dz, np);
 
   /* Error message... */
   else
@@ -6520,7 +6523,7 @@ void write_grid(
   free(cd);
   for (int iq = 0; iq < ctl->nq; iq++) {
     free(mean[iq]);
-    free(std[iq]);
+    free(stddev[iq]);
   }
   free(vmr_impl);
   free(z);
@@ -6541,7 +6544,7 @@ void write_grid_asc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *std[NQ],
+  double *stddev[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -6601,9 +6604,10 @@ void write_grid_asc(
   for (int iq = 0; iq < ctl->nq; iq++)
     fprintf(out, "# $%i = %s (mean) [%s]\n", 10 + iq, ctl->qnt_name[iq],
 	    ctl->qnt_unit[iq]);
-  for (int iq = 0; iq < ctl->nq; iq++)
-    fprintf(out, "# $%i = %s (std) [%s]\n", 10 + ctl->nq + iq,
-	    ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+  if (ctl->grid_stddev)
+    for (int iq = 0; iq < ctl->nq; iq++)
+      fprintf(out, "# $%i = %s (stddev) [%s]\n", 10 + ctl->nq + iq,
+	      ctl->qnt_name[iq], ctl->qnt_unit[iq]);
   fprintf(out, "\n");
 
   /* Write data... */
@@ -6622,10 +6626,11 @@ void write_grid_asc(
 	    fprintf(out, " ");
 	    fprintf(out, ctl->qnt_format[iq], mean[iq][idx]);
 	  }
-	  for (int iq = 0; iq < ctl->nq; iq++) {
-	    fprintf(out, " ");
-	    fprintf(out, ctl->qnt_format[iq], std[iq][idx]);
-	  }
+	  if (ctl->grid_stddev)
+	    for (int iq = 0; iq < ctl->nq; iq++) {
+	      fprintf(out, " ");
+	      fprintf(out, ctl->qnt_format[iq], stddev[iq][idx]);
+	    }
 	  fprintf(out, "\n");
 	}
       }
@@ -6643,7 +6648,7 @@ void write_grid_nc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *std[NQ],
+  double *stddev[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -6690,9 +6695,10 @@ void write_grid_nc(
   for (int iq = 0; iq < ctl->nq; iq++) {
     NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_mean"), NC_DOUBLE, 4, dimid,
 	       strcat(ctl->qnt_longname[iq], " (mean)"), ctl->qnt_unit[iq]);
-    NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_std"), NC_DOUBLE, 4, dimid,
-	       strcat(ctl->qnt_longname[iq], " (standard deviation)"),
-	       ctl->qnt_unit[iq]);
+    if (ctl->grid_stddev)
+      NC_DEF_VAR(strcat(ctl->qnt_name[iq], "_std"), NC_DOUBLE, 4, dimid,
+		 strcat(ctl->qnt_longname[iq], " (stddev)"),
+		 ctl->qnt_unit[iq]);
   }
   /* End definitions... */
   NC(nc_enddef(ncid));
@@ -6735,14 +6741,15 @@ void write_grid_nc(
     NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_mean"), help, 0);
   }
 
-  for (int iq = 0; iq < ctl->nq; iq++) {
-    for (int ix = 0; ix < ctl->grid_nx; ix++)
-      for (int iy = 0; iy < ctl->grid_ny; iy++)
-	for (int iz = 0; iz < ctl->grid_nz; iz++)
-	  help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
-	    std[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
-    NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_std"), help, 0);
-  }
+  if (ctl->grid_stddev)
+    for (int iq = 0; iq < ctl->nq; iq++) {
+      for (int ix = 0; ix < ctl->grid_nx; ix++)
+	for (int iy = 0; iy < ctl->grid_ny; iy++)
+	  for (int iz = 0; iz < ctl->grid_nz; iz++)
+	    help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
+	      stddev[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+      NC_PUT_DOUBLE(strcat(ctl->qnt_name[iq], "_std"), help, 0);
+    }
 
   /* Close file... */
   NC(nc_close(ncid));
