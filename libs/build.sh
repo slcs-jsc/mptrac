@@ -160,6 +160,7 @@ fi
 if [ $ifBuildAll = true ] || [ $ifBuildZLIB = true ] ; then 
     cd $strLibsDir	
     printf "Starting to compile ZLIB\n"
+    export CFLAGS="-fPIC"
     strTarget=$strFileZLIB
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
