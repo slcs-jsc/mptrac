@@ -41,6 +41,8 @@ curandGenerator_t rng;
 static gsl_rng *rng[NTHREADS];
 #endif
 
+//static uint64_t rng_ctr;
+
 /* ------------------------------------------------------------
    Macros...
    ------------------------------------------------------------ */
@@ -2121,7 +2123,7 @@ void module_rng_init(
 		gsl_rng_default_seed + (long unsigned) (ntask * NTHREADS +
 							i));
   }
-
+  
 #endif
 }
 
@@ -2131,9 +2133,9 @@ void module_rng(
   double *rs,
   size_t n,
   int method) {
-
+  
 #ifdef _OPENACC
-
+  
 #pragma acc host_data use_device(rs)
   {
     /* Uniform distribution... */
@@ -2142,7 +2144,7 @@ void module_rng(
 	  CURAND_STATUS_SUCCESS)
 	ERRMSG("Cannot create random numbers!");
     }
-
+    
     /* Normal distribution... */
     else if (method == 1) {
       if (curandGenerateNormalDouble(rng, rs, (n < 4 ? 4 : n), 0.0, 1.0) !=
@@ -2150,9 +2152,9 @@ void module_rng(
 	ERRMSG("Cannot create random numbers!");
     }
   }
-
+  
 #else
-
+  
   /* Uniform distribution... */
   if (method == 0) {
 #pragma omp parallel for default(shared)
@@ -2166,8 +2168,69 @@ void module_rng(
     for (size_t i = 0; i < n; ++i)
       rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
   }
+  
 #endif
 }
+
+/*****************************************************************************/
+
+#if 0
+
+void module_rng(
+  double *rs,
+  size_t n,
+  int method) {
+
+  const uint64_t key = 0xc8e4fd154ce32f6d;
+  
+  SELECT_TIMER("MODULE_RNG_UNI", "PHYSICS", NVTX_GPU);
+  
+  /* Create uniform random numbers... */
+#ifdef _OPENACC
+#pragma acc data present(rs)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (size_t i = 0; i < n + 1; ++i) {
+    uint64_t r, t, x, y, z;
+    y = x = (rng_ctr + i) * key;
+    z = y + key;
+    x = x * x + y;
+    x = (x >> 32) | (x << 32);	/* round 1 */
+    x = x * x + z;
+    x = (x >> 32) | (x << 32);	/* round 2 */
+    x = x * x + y;
+    x = (x >> 32) | (x << 32);	/* round 3 */
+    t = x = x * x + z;
+    x = (x >> 32) | (x << 32);	/* round 4 */
+    r = t ^ ((x * x + y) >> 32);	/* round 5 */
+    rs[i] = (double) r / (double) UINT64_MAX;
+  }
+  rng_ctr += n + 1;
+
+  SELECT_TIMER("MODULE_RNG_NORMAL", "PHYSICS", NVTX_GPU);
+  
+  /* Convert to normal distribution... */
+  if (method == 1) {
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+    for (size_t i = 0; i < n; i += 2) {
+      double r = sqrt(-2.0 * log(rs[i]));
+      double phi = 2.0 * M_PI * rs[i + 1];
+      rs[i] = r * cosf((float)phi);
+      rs[i + 1] = r * sinf((float)phi);
+    }
+  }
+
+  SELECT_TIMER("MODULE_RNG_OTHER", "PHYSICS", NVTX_GPU);
+  
+}
+
+#endif
 
 /*****************************************************************************/
 
