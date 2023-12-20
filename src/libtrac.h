@@ -814,12 +814,6 @@ typedef struct {
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
   int clams_met_data;
 
-  /*! Chunk size hint for nc__open. */
-  size_t chunkszhint;
-
-  /*! Read mode for nc__open. */
-  int read_mode;
-
   /*! Number of quantities. */
   int nq;
 

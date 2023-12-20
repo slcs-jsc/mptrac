@@ -2463,13 +2463,6 @@ void read_ctl(
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
-  /* netCDF I/O parameters... */
-  ctl->chunkszhint =
-    (size_t) scan_ctl(filename, argc, argv, "CHUNKSZHINT", -1, "163840000",
-		      NULL);
-  ctl->read_mode =
-    (int) scan_ctl(filename, argc, argv, "READMODE", -1, "0", NULL);
-
   /* Vertical coordinates and velocities... */
   ctl->vert_coord_ap =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
@@ -3058,8 +3051,7 @@ int read_met(
     int ncid;
 
     /* Open netCDF file... */
-    if (nc__open(filename, ctl->read_mode, &ctl->chunkszhint, &ncid) !=
-	NC_NOERR) {
+    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
       WARN("Cannot open file!");
       return 0;
     }
