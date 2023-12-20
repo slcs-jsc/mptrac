@@ -2554,15 +2554,6 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
     ERRMSG("Set MET_TROPO = 0 ... 5!");
-  ctl->met_tropo_lapse =
-    scan_ctl(filename, argc, argv, "MET_TROPO_LAPSE", -1, "2.0", NULL);
-  ctl->met_tropo_nlev =
-    (int) scan_ctl(filename, argc, argv, "MET_TROPO_NLEV", -1, "20", NULL);
-  ctl->met_tropo_lapse_sep =
-    scan_ctl(filename, argc, argv, "MET_TROPO_LAPSE_SEP", -1, "3.0", NULL);
-  ctl->met_tropo_nlev_sep =
-    (int) scan_ctl(filename, argc, argv, "MET_TROPO_NLEV_SEP", -1, "10",
-		   NULL);
   ctl->met_tropo_pv =
     scan_ctl(filename, argc, argv, "MET_TROPO_PV", -1, "3.5", NULL);
   ctl->met_tropo_theta =
@@ -5042,9 +5033,8 @@ void read_met_tropo(
 	met->pt[ix][iy] = GSL_NAN;
 	for (iz = 0; iz <= 170; iz++) {
 	  int found = 1;
-	  for (int iz2 = iz + 1; iz2 <= iz + ctl->met_tropo_nlev; iz2++)
-	    if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) >
-		ctl->met_tropo_lapse) {
+	  for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
+	    if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
 	      found = 0;
 	      break;
 	    }
@@ -5060,9 +5050,8 @@ void read_met_tropo(
 	  met->pt[ix][iy] = GSL_NAN;
 	  for (; iz <= 170; iz++) {
 	    int found = 1;
-	    for (int iz2 = iz + 1; iz2 <= iz + ctl->met_tropo_nlev_sep; iz2++)
-	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) <
-		  ctl->met_tropo_lapse_sep) {
+	    for (int iz2 = iz + 1; iz2 <= iz + 10; iz2++)
+	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) < 3.0) {
 		found = 0;
 		break;
 	      }
@@ -5071,9 +5060,8 @@ void read_met_tropo(
 	  }
 	  for (; iz <= 170; iz++) {
 	    int found = 1;
-	    for (int iz2 = iz + 1; iz2 <= iz + ctl->met_tropo_nlev; iz2++)
-	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) >
-		  ctl->met_tropo_lapse) {
+	    for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
+	      if (LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]) > 2.0) {
 		found = 0;
 		break;
 	      }

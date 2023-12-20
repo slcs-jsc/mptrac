@@ -1163,19 +1163,7 @@ typedef struct {
      (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). */
   int met_tropo;
 
-  /*! WMO tropopause lapse rate [K/km]. */
-  double met_tropo_lapse;
-
-  /*! WMO tropopause layer depth (number of levels). */
-  int met_tropo_nlev;
-
-  /*! WMO tropopause separation layer lapse rate [K/km]. */
-  double met_tropo_lapse_sep;
-
-  /*! WMO tropopause separation layer depth (number of levels). */
-  int met_tropo_nlev_sep;
-
-  /*! Dyanmical tropopause potential vorticity threshold [PVU]. */
+  /*! Dynamical tropopause potential vorticity threshold [PVU]. */
   double met_tropo_pv;
 
   /*! Dynamical tropopause potential temperature threshold [K]. */
