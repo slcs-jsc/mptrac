@@ -44,6 +44,9 @@ NVTX ?= 0
 # Enable UVW cache...
 UVW ?= 1
 
+# Enable cuRAND random number generators...
+CURAND ?= 0
+
 # Enable async IO for GPUs (experimental)...
 ASYNCIO ?= 0
 
@@ -84,11 +87,6 @@ ifeq ($(STATIC),1)
   LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif
 
-# Additional flags for GPUs...
-ifeq ($(GPU),1)
-  LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
-endif
-
 # Compile with MPI...
 ifeq ($(MPI),1)
   CC = mpicc
@@ -123,6 +121,16 @@ endif
 # UVW cache...
 ifeq ($(UVW),1)
   CFLAGS += -DUVW
+endif
+
+# Compile with cuRAND...
+ifeq ($(CURAND),1)
+  ifeq ($(GPU),1)
+    CFLAGS += -DCURAND
+    LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
+  else
+    $(error cuRAND requires GPU compilation)
+  endif
 endif
 
 # asyncIO...

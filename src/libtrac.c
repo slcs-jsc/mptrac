@@ -2572,6 +2572,12 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ISOSURF", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "BALLOON", -1, "-", ctl->balloon);
 
+  /* Random number generator... */
+  ctl->rng_type =
+    (int) scan_ctl(filename, argc, argv, "RNG_TYPE", -1, "0", NULL);
+  if (ctl->rng_type < 0 || ctl->rng_type > 2)
+    ERRMSG("Set RNG_TYPE to 0, 1, or 2!");
+
   /* Advection parameters... */
   ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "2", NULL);
   if (!(ctl->advect == 0 || ctl->advect == 1

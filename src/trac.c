@@ -35,13 +35,16 @@
    Global variables...
    ------------------------------------------------------------ */
 
-#ifdef _OPENACC
-curandGenerator_t rng;
-#else
+/*! State variables of GSL random number generators. */
 static gsl_rng *rng[NTHREADS];
-#endif
 
-//static uint64_t rng_ctr;
+/*! Counter variable of squares random number generator. */
+static uint64_t rng_ctr;
+
+/*! State variables of cuRAND random number generator. */
+#ifdef CURAND
+static curandGenerator_t rng_curand;
+#endif
 
 /* ------------------------------------------------------------
    Macros...
@@ -238,6 +241,7 @@ void module_rng_init(
 
 /*! Generate random numbers. */
 void module_rng(
+  ctl_t * ctl,
   double *rs,
   size_t n,
   int method);
@@ -935,7 +939,7 @@ void module_convection(
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
-  module_rng(rs, (size_t) atm->np, 0);
+  module_rng(ctl, rs, (size_t) atm->np, 0);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt,rs)") {
@@ -1045,7 +1049,7 @@ void module_diffusion_meso(
   SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
-  module_rng(rs, 3 * (size_t) atm->np, 1);
+  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -1139,7 +1143,7 @@ void module_diffusion_turb(
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
-  module_rng(rs, 3 * (size_t) atm->np, 1);
+  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs)") {
@@ -2100,137 +2104,134 @@ void module_position(
 void module_rng_init(
   int ntask) {
 
-  /* Initialize random number generator... */
-#ifdef _OPENACC
-
-  if (curandCreateGenerator(&rng, CURAND_RNG_PSEUDO_DEFAULT) !=
-      CURAND_STATUS_SUCCESS)
-    ERRMSG("Cannot create random number generator!");
-  if (curandSetPseudoRandomGeneratorSeed(rng, ntask) != CURAND_STATUS_SUCCESS)
-    ERRMSG("Cannot set seed for random number generator!");
-  if (curandSetStream(rng, (cudaStream_t) acc_get_cuda_stream(acc_async_sync))
-      != CURAND_STATUS_SUCCESS)
-    ERRMSG("Cannot set stream for random number generator!");
-
-#else
-
+  /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
   if (omp_get_max_threads() > NTHREADS)
     ERRMSG("Too many threads!");
   for (int i = 0; i < NTHREADS; i++) {
     rng[i] = gsl_rng_alloc(gsl_rng_default);
-    gsl_rng_set(rng[i],
-		gsl_rng_default_seed + (long unsigned) (ntask * NTHREADS +
-							i));
+    gsl_rng_set(rng[i], gsl_rng_default_seed
+		+ (long unsigned) (ntask * NTHREADS + i));
   }
-  
+
+  /* Initialize cuRAND random number generators... */
+#ifdef CURAND
+  if (curandCreateGenerator(&rng_curand, CURAND_RNG_PSEUDO_DEFAULT) !=
+      CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot create random number generator!");
+  if (curandSetPseudoRandomGeneratorSeed(rng_curand, ntask) !=
+      CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot set seed for random number generator!");
+  if (curandSetStream
+      (rng_curand,
+       (cudaStream_t) acc_get_cuda_stream(acc_async_sync)) !=
+      CURAND_STATUS_SUCCESS)
+    ERRMSG("Cannot set stream for random number generator!");
 #endif
 }
 
 /*****************************************************************************/
 
 void module_rng(
+  ctl_t * ctl,
   double *rs,
   size_t n,
   int method) {
-  
-#ifdef _OPENACC
-  
-#pragma acc host_data use_device(rs)
-  {
+
+  /* Use GSL random number generators... */
+  if (ctl->rng_type == 0) {
+
     /* Uniform distribution... */
     if (method == 0) {
-      if (curandGenerateUniformDouble(rng, rs, (n < 4 ? 4 : n)) !=
-	  CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
+#pragma omp parallel for default(shared)
+      for (size_t i = 0; i < n; ++i)
+	rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
     }
-    
+
     /* Normal distribution... */
     else if (method == 1) {
-      if (curandGenerateNormalDouble(rng, rs, (n < 4 ? 4 : n), 0.0, 1.0) !=
-	  CURAND_STATUS_SUCCESS)
-	ERRMSG("Cannot create random numbers!");
+#pragma omp parallel for default(shared)
+      for (size_t i = 0; i < n; ++i)
+	rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
     }
-  }
-  
-#else
-  
-  /* Uniform distribution... */
-  if (method == 0) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_rng_uniform(rng[omp_get_thread_num()]);
-  }
 
-  /* Normal distribution... */
-  else if (method == 1) {
-#pragma omp parallel for default(shared)
-    for (size_t i = 0; i < n; ++i)
-      rs[i] = gsl_ran_gaussian_ziggurat(rng[omp_get_thread_num()], 1.0);
-  }
-  
+    /* Update of random numbers on device... */
+#ifdef _OPENACC
+#pragma acc update device(rs[:1])
 #endif
-}
+  }
 
-/*****************************************************************************/
+  /* Use squares random number generator... */
+  else if (ctl->rng_type == 1) {
 
-#if 0
+    const uint64_t key = 0xc8e4fd154ce32f6d;
 
-void module_rng(
-  double *rs,
-  size_t n,
-  int method) {
-
-  const uint64_t key = 0xc8e4fd154ce32f6d;
-  
-  SELECT_TIMER("MODULE_RNG_UNI", "PHYSICS", NVTX_GPU);
-  
-  /* Create uniform random numbers... */
+    /* Uniform distribution... */
 #ifdef _OPENACC
 #pragma acc data present(rs)
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (size_t i = 0; i < n + 1; ++i) {
-    uint64_t r, t, x, y, z;
-    y = x = (rng_ctr + i) * key;
-    z = y + key;
-    x = x * x + y;
-    x = (x >> 32) | (x << 32);	/* round 1 */
-    x = x * x + z;
-    x = (x >> 32) | (x << 32);	/* round 2 */
-    x = x * x + y;
-    x = (x >> 32) | (x << 32);	/* round 3 */
-    t = x = x * x + z;
-    x = (x >> 32) | (x << 32);	/* round 4 */
-    r = t ^ ((x * x + y) >> 32);	/* round 5 */
-    rs[i] = (double) r / (double) UINT64_MAX;
-  }
-  rng_ctr += n + 1;
+    for (size_t i = 0; i < n + 1; ++i) {
+      uint64_t r, t, x, y, z;
+      y = x = (rng_ctr + i) * key;
+      z = y + key;
+      x = x * x + y;
+      x = (x >> 32) | (x << 32);
+      x = x * x + z;
+      x = (x >> 32) | (x << 32);
+      x = x * x + y;
+      x = (x >> 32) | (x << 32);
+      t = x = x * x + z;
+      x = (x >> 32) | (x << 32);
+      r = t ^ ((x * x + y) >> 32);
+      rs[i] = (double) r / (double) UINT64_MAX;
+    }
+    rng_ctr += n + 1;
 
-  SELECT_TIMER("MODULE_RNG_NORMAL", "PHYSICS", NVTX_GPU);
-  
-  /* Convert to normal distribution... */
-  if (method == 1) {
+    /* Normal distribution... */
+    if (method == 1) {
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-    for (size_t i = 0; i < n; i += 2) {
-      double r = sqrt(-2.0 * log(rs[i]));
-      double phi = 2.0 * M_PI * rs[i + 1];
-      rs[i] = r * cosf((float)phi);
-      rs[i + 1] = r * sinf((float)phi);
+      for (size_t i = 0; i < n; i += 2) {
+	double r = sqrt(-2.0 * log(rs[i]));
+	double phi = 2.0 * M_PI * rs[i + 1];
+	rs[i] = r * cosf((float) phi);
+	rs[i + 1] = r * sinf((float) phi);
+      }
     }
   }
 
-  SELECT_TIMER("MODULE_RNG_OTHER", "PHYSICS", NVTX_GPU);
-  
-}
+  /* Use cuRAND random number generators... */
+  else if (ctl->rng_type == 2) {
+#ifdef CURAND
+#pragma acc host_data use_device(rs)
+    {
 
+      /* Uniform distribution... */
+      if (method == 0) {
+	if (curandGenerateUniformDouble(rng_curand, rs, (n < 4 ? 4 : n)) !=
+	    CURAND_STATUS_SUCCESS)
+	  ERRMSG("Cannot create random numbers!");
+      }
+
+      /* Normal distribution... */
+      else if (method == 1) {
+	if (curandGenerateNormalDouble
+	    (rng_curand, rs, (n < 4 ? 4 : n), 0.0,
+	     1.0) != CURAND_STATUS_SUCCESS)
+	  ERRMSG("Cannot create random numbers!");
+      }
+    }
+#else
+    ERRMSG("MPTRAC was compiled without cuRAND!");
 #endif
+  }
+}
 
 /*****************************************************************************/
 

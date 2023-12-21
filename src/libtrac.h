@@ -1195,6 +1195,9 @@ typedef struct {
   /*! Reflection of particles at top and bottom boundary (0=no, 1=yes). */
   int reflect;
 
+  /*! Random number generator (0=GSL, 1=squares, 2=cuRAND). */
+  int rng_type;
+
   /*! Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. */
   double turb_dx_trop;
 
