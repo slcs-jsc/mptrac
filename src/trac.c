@@ -2157,7 +2157,7 @@ void module_rng(
 
     /* Update of random numbers on device... */
 #ifdef _OPENACC
-#pragma acc update device(rs[:1])
+#pragma acc update device(rs[:n])
 #endif
   }
 
