@@ -38,7 +38,7 @@
 /*! State variables of GSL random number generators. */
 static gsl_rng *rng[NTHREADS];
 
-/*! Counter variable of squares random number generator. */
+/*! Counter variable of Squares random number generator. */
 static uint64_t rng_ctr;
 
 /*! State variables of cuRAND random number generator. */
@@ -2161,9 +2161,10 @@ void module_rng(
 #endif
   }
 
-  /* Use squares random number generator... */
+  /* Use Squares random number generator (Widynski, 2022)... */
   else if (ctl->rng_type == 1) {
 
+    /* Set key (don't change this!)... */
     const uint64_t key = 0xc8e4fd154ce32f6d;
 
     /* Uniform distribution... */
