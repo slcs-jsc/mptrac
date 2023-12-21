@@ -87,6 +87,11 @@ ifeq ($(STATIC),1)
   LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif
 
+# Additional flags for GPUs...
+ifeq ($(GPU),1)
+  LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart
+endif
+
 # Compile with MPI...
 ifeq ($(MPI),1)
   CC = mpicc
@@ -127,9 +132,9 @@ endif
 ifeq ($(CURAND),1)
   ifeq ($(GPU),1)
     CFLAGS += -DCURAND
-    LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart -lcurand
+    LDFLAGS += -lcurand
   else
-    $(error cuRAND requires GPU compilation)
+    $(error cuRAND requires compilation for GPUs)
   endif
 endif
 
