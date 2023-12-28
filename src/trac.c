@@ -899,23 +899,23 @@ void module_bound_cond(
       atm->q[ctl->qnt_vmr][ip] =
 	ctl->bound_vmr + ctl->bound_vmr_trend * atm->time[ip];
 
-    /* Set CFC-10 tracer concentration... */
+    /* Set CFC-10 volume mixing ratio... */
     if (ctl->qnt_Cccl4 >= 0 && ctl->clim_ccl4_timeseries[0] != '-')
       atm->q[ctl->qnt_Cccl4][ip] = clim_ts(&clim->ccl4, atm->time[ip]);
 
-    /* Set CFC-11 tracer concentration... */
+    /* Set CFC-11 volume mixing ratio... */
     if (ctl->qnt_Cccl3f >= 0 && ctl->clim_ccl3f_timeseries[0] != '-')
       atm->q[ctl->qnt_Cccl3f][ip] = clim_ts(&clim->ccl3f, atm->time[ip]);
 
-    /* Set CFC-12 tracer concentration... */
+    /* Set CFC-12 volume mixing ratio... */
     if (ctl->qnt_Cccl2f2 >= 0 && ctl->clim_ccl2f2_timeseries[0] != '-')
       atm->q[ctl->qnt_Cccl2f2][ip] = clim_ts(&clim->ccl2f2, atm->time[ip]);
 
-    /* Set N2O tracer concentration... */
+    /* Set N2O volume mixing ratio... */
     if (ctl->qnt_Cn2o >= 0 && ctl->clim_n2o_timeseries[0] != '-')
       atm->q[ctl->qnt_Cn2o][ip] = clim_ts(&clim->n2o, atm->time[ip]);
 
-    /* Set SF6 tracer concentration... */
+    /* Set SF6 volume mixing ratio... */
     if (ctl->qnt_Csf6 >= 0 && ctl->clim_sf6_timeseries[0] != '-')
       atm->q[ctl->qnt_Csf6][ip] = clim_ts(&clim->sf6, atm->time[ip]);
 
@@ -1511,7 +1511,7 @@ void module_chemgrid(
       izs[ip] = -1;
   }
 
-  /* Initialize quantity concentration variables... */
+  /* Initialize quantity volume mixing ratios... */
   static short init[NP];
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
@@ -1737,7 +1737,7 @@ void module_h2o2_chem(
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
-    /* Concentration of H2O2 (Barth et al., 1989)... */
+    /* Volume mixing ratio of H2O2 (Barth et al., 1989)... */
     double SO2 = atm->q[ctl->qnt_Cx][ip] * 1e9;	// vmr unit: ppbv
     double h2o2 = H_h2o2 * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: mol/L
 
@@ -1790,7 +1790,7 @@ void module_tracer_chem(
     /* Get solar zenith angle... */
     double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
-    /* Get O(1D) concentration... */
+    /* Get O(1D) volume mixing ratio... */
     double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Reactions for CFC-10... */

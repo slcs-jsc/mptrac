@@ -2248,7 +2248,8 @@ void read_clim_zm(
   LOG(2, "Number of latitudes: %d", zm->nlat);
   LOG(2, "Latitudes: %g, %g ... %g deg",
       zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
-  LOG(2, "%s concentration range: %g ... %g ppv", varname, varmin, varmax);
+  LOG(2, "%s volume mixing ratio range: %g ... %g ppv", varname, varmin,
+      varmax);
 }
 
 /*****************************************************************************/

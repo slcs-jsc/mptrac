@@ -466,10 +466,10 @@
 	  "# $40 = NAT temperature [K]\n");				\
   fprintf(out,								\
 	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
-	  "# $42 = OH concentration [ppv]\n"				\
-	  "# $43 = H2O2 concentration [ppv]\n"				\
-	  "# $44 = HO2 concentration [ppv]\n"				\
-	  "# $45 = O1D concentration [ppv]\n"				\
+	  "# $42 = OH volume mixing ratio [ppv]\n"			\
+	  "# $43 = H2O2 volume mixing ratio [ppv]\n"			\
+	  "# $44 = HO2 volume mixing ratio [ppv]\n"			\
+	  "# $45 = O1D volume mixing ratio [ppv]\n"			\
 	  "# $46 = boundary layer pressure [hPa]\n"			\
 	  "# $47 = total column ozone [DU]\n"				\
 	  "# $48 = number of data points\n"				\
@@ -953,16 +953,16 @@ typedef struct {
   /*! Quantity array index for nitric acid vmr. */
   int qnt_hno3;
 
-  /*! Quantity array index for hydroxyl number concentrations. */
+  /*! Quantity array index for OH volume mixing ratio. */
   int qnt_oh;
 
-  /*! Quantity array index for hydrogen peroxide number concentrations. */
+  /*! Quantity array index for H2O2 volume mixing ratio. */
   int qnt_h2o2;
 
-  /*! Quantity array index for hydroperoxyl radical number concentrations. */
+  /*! Quantity array index for HO2 volume mixing ratio. */
   int qnt_ho2;
 
-  /*! Quantity array index for atomic oxygen number concentrations. */
+  /*! Quantity array index for atomic oxygen volume mixing ratio. */
   int qnt_o1d;
 
   /*! Quantity array index for total mass loss due to OH chemistry. */
@@ -1034,49 +1034,49 @@ typedef struct {
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
 
-  /*! Quantity array index for trace species x concentration. */
+  /*! Quantity array index for trace species x volume mixing ratio. */
   int qnt_Cx;
 
-  /*! Quantity array index for H2O concentration. */
+  /*! Quantity array index for H2O volume mixing ratio. */
   int qnt_Ch2o;
 
-  /*! Quantity array index for O3 concentration. */
+  /*! Quantity array index for O3 volume mixing ratio. */
   int qnt_Co3;
 
-  /*! Quantity array index for CO concentration. */
+  /*! Quantity array index for CO volume mixing ratio. */
   int qnt_Cco;
 
-  /*! Quantity array index for OH concentration. */
+  /*! Quantity array index for OH volume mixing ratio. */
   int qnt_Coh;
 
-  /*! Quantity array index for H concentration. */
+  /*! Quantity array index for H volume mixing ratio. */
   int qnt_Ch;
 
-  /*! Quantity array index for HO2 concentration. */
+  /*! Quantity array index for HO2 volume mixing ratio. */
   int qnt_Cho2;
 
-  /*! Quantity array index for H2O2 concentration. */
+  /*! Quantity array index for H2O2 volume mixing ratio. */
   int qnt_Ch2o2;
 
-  /*! Quantity array index for O(1D) concentration. */
+  /*! Quantity array index for O(1D) volume mixing ratio. */
   int qnt_Co1d;
 
-  /*! Quantity array index for O(3P) concentration. */
+  /*! Quantity array index for O(3P) volume mixing ratio. */
   int qnt_Co3p;
 
-  /*! Quantity array index for CFC-10 concentration. */
+  /*! Quantity array index for CFC-10 volume mixing ratio. */
   int qnt_Cccl4;
 
-  /*! Quantity array index for CFC-11 concentration. */
+  /*! Quantity array index for CFC-11 volume mixing ratio. */
   int qnt_Cccl3f;
 
-  /*! Quantity array index for CFC-12 concentration. */
+  /*! Quantity array index for CFC-12 volume mixing ratio. */
   int qnt_Cccl2f2;
 
-  /*! Quantity array index for N2O concentration. */
+  /*! Quantity array index for N2O volume mixing ratio. */
   int qnt_Cn2o;
 
-  /*! Quantity array index for SF6 concentration. */
+  /*! Quantity array index for SF6 volume mixing ratio. */
   int qnt_Csf6;
 
   /*! Quantity array index for age of air. */
@@ -1989,7 +1989,7 @@ void cart2geo(
 int check_finite(
   const double x);
 
-/*! Climatology of OH number concentrations. */
+/*! Climatology of OH volume mixing ratios. */
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
 #endif
