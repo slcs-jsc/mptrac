@@ -4408,8 +4408,10 @@ int read_met_nc_3d(
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
 
+    /* Check ordering of dimensions of meteo data... */
     if (ctl->met_convention == 0) {
-      /* Copy and check data... */
+
+      /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
@@ -4425,7 +4427,8 @@ int read_met_nc_3d(
 	      dest[ix][iy][ip] = GSL_NAN;
 	  }
     } else {
-      /* Copy and check data... */
+
+      /* Copy and check data (ordering: lon, lat, lev)... */
 #pragma omp parallel for default(shared) num_threads(12)
       for (int ip = 0; ip < met->np; ip++)
 	for (int iy = 0; iy < met->ny; iy++)

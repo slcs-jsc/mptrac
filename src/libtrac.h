@@ -1100,7 +1100,7 @@ typedef struct {
   /*! Time step of meteo data [s]. */
   double dt_met;
 
-  /*! Convention of the data layout */
+  /*! Meteo data layout (0=[lev, lat, lon], 1 = [lon, lat, lev]). */
   int met_convention;
 
   /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
