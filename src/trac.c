@@ -571,7 +571,7 @@ int main(
 	    module_tracer_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* KPP chemistry... */
-	  if (ctl.kpp_chem) {
+	  if (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0) {
 #ifdef KPP
 	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
 	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);

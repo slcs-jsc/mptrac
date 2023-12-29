@@ -2750,6 +2750,8 @@ void read_ctl(
   /* KPP chemistry... */
   ctl->kpp_chem =
     (int) scan_ctl(filename, argc, argv, "KPP_CHEM", -1, "0", NULL);
+  ctl->dt_kpp =
+    scan_ctl(filename, argc, argv, "DT_KPP", -1, "1800", NULL);
 
   /* First order tracer chemistry... */
   ctl->tracer_chem =
