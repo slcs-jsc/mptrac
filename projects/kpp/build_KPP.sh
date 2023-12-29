@@ -14,7 +14,7 @@ cp ./Makefile $kppdir/
 cp ./kpp_chem.h $kppdir/
 
 # Set target directory...
-target=$(cd ../libs/build && pwd)
+target=$(cd ../../libs/build && pwd)
 export KPP_HOME=$target/src/KPP
 export KPP_FLEX_LIB_DIR=$target/src/KPP
 

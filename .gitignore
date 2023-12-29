@@ -15,6 +15,7 @@ projects/example/data/
 projects/example/plots/
 !projects/data/
 !projects/example/
+projects/kpp/
 src/*.o
 src/atm_conv
 src/atm_dist

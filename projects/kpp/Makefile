@@ -2,7 +2,7 @@ INFO ?= 0
 
 # Set here the desired C compiler and its optimization options
 CC   = gcc
-COPT = -O -Wall -fopenmp -I ../../libs/build/include -I ../../src
+COPT = -O -Wall -fopenmp -I ../../../libs/build/include -I ../../../src
 
 # To create Matlab gateway routines
 # Note: use $(CC) as the mex C compiler
