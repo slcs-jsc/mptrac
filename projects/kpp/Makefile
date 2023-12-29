@@ -70,7 +70,6 @@ chem_Main.o: chem_Main.c chem_Initialize.o $(HEADERS) $(SPOBJ)
 chem_Integrator.o: chem_Integrator.c  $(HEADERS) $(SPOBJ)
 ifeq ($(shell grep -c '\#pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c),0)
 	sed -i '137i #pragma omp threadprivate(RPAR,i,IERR,IPAR,Ns,Na,Nr,Ng)' chem_Integrator.c
-	$(CC) $(COPT) -c $<
 endif
 ifeq ($(shell grep -c '\#pragma omp threadprivate(Nfun,Njac,Nstp,Nacc,Nrej,Ndec,Nsol,Nsng)' chem_Integrator.c),0)
 	sed -i '57i #pragma omp threadprivate(Nfun,Njac,Nstp,Nacc,Nrej,Ndec,Nsol,Nsng)' chem_Integrator.c
@@ -79,14 +78,6 @@ endif
 ifeq ($(INFO),0)
 	sed -i '/printf(\"\\n Step=%d  Acc=%d  Rej=%d  Singular=%d\\n\",/d' chem_Integrator.c  #Delete this code line to reduce output on screen
 	sed -i '/Ns,Na,Nr,Ng);/d' chem_Integrator.c
-	sed -i '/printf(\"\\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");/d' chem_Integrator.c
-	sed -i '/printf(\"\\nForced exit from Rosenbrock due to the following error:\\n");/d' chem_Integrator.c
-	sed -i '/printf(\"\\n   Time = %15.7e,  H = %15.7e\",T,H);/d' chem_Integrator.c
-	sed -i '/printf(\"\\n~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~\\n"); /d' chem_Integrator.c
-	sed -i '/if (IERR < 0)/d' chem_Integrator.c
-	sed -i '/printf(\"\\n Rosenbrock: Unsucessful step at T=%g: IERR=%d\\n\",/d' chem_Integrator.c
-	sed -i '/TIN,IERR);/d' chem_Integrator.c
-	sed -i 's/printf(\"--> Step size too small (T + H\/10 = T) or H < Roundoff\");//g' chem_Integrator.c
 endif
 	$(CC) $(COPT) -c $<
 
