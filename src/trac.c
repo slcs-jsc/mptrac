@@ -1860,8 +1860,8 @@ void module_kpp_chem(
 
       /* Set relative & absolute tolerances... */
       for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-4;
-	ATOL[i] = 1.0e-3;
+	RTOL[i] = 1.0e-3;
+	ATOL[i] = 1.0;
       }
 
       /* Initialize... */
