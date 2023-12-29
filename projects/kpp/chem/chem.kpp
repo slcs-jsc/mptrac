@@ -13,7 +13,7 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
             ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
             ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
             kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
-            koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2,		\
+            koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2, kso2_h2o2, kso2_oh,		\
             ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
             kccl3f_hv, kcl2f2_hv;
 
@@ -21,7 +21,7 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
                           ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
                           ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
                           kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
-                          koh_ho2, koh_h2o2, kho2_o3, kho2_ho2,		\
+                          koh_ho2, koh_h2o2, kho2_o3, kho2_ho2,	kso2_h2o2, kso2_oh,	\
                           ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
                           kccl3f_hv, kcl2f2_hv,		\
                           RCONST,RTOL,ATOL,STEPMIN,STEPMAX,VAR,FIX,TEMP)
@@ -68,7 +68,7 @@ double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,
       ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,
       ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 
       kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,
-      koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2,
+      koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2, kso2_h2o2, kso2_oh,
       ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,
       kccl3f_hv, kcl2f2_hv;
 
@@ -81,9 +81,10 @@ void kpp_chem_initialize(
   int ip
 ){
     /* Get Meteological variables... */
-    double t;
+    double t, lwc;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
+    INTPOL_3D(lwc, 0);
     TEMP = t;
 
     /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
@@ -108,8 +109,10 @@ void kpp_chem_initialize(
 		SET_VAR(ind_h2o, qnt_Ch2o, M);
   
 		FIX[indf_o2] = 0.2095 * M;
-		//FIX[indf_n2] = 0.7808 * M;
-		//FIX[indf_h2] = 5e-7 * M;
+		FIX[indf_n2] = 0.7808 * M;
+		FIX[indf_h2] = 5e-7 * M;
+
+    SET_VAR(ind_so2, qnt_Cx, M);
 
 
     /* Reaction rate ... */
@@ -153,6 +156,27 @@ void kpp_chem_initialize(
     kn2o_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
     kccl3f_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
     kcl2f2_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+
+     /*Gas phase chemistry of so2... */
+    kso2_oh = k3rd_jpl(M, 2.9e-31, 4.1, 1.7e-12, -0.2);
+
+    /* Aqueous phase reaction of so2 + h2o2 (Berglen et al., 2004)... */
+    /* Rate of aqueous phase oxidation of SO2 with H2O2. (Maass et al. 1999)  */
+    double k =
+    	9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15)) / SQR(AVO * 1e-3); //unit: M^(-2) s-1 to {mole/cm3}^(-2) s-1. Third order coef.
+
+    /* Henry constant of SO2... */
+    double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15)) * AVO * 1e-3;	// unit: molec/cm3
+
+    /* Henry constant of H2O2... */
+    double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+
+    /* Volume water content in cloud [m^3 m^(-3)]... */
+    double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000; //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
+    double CWC = lwc * rho_air / 1000;
+
+    kso2_h2o2 = k * K_1S * H_SO2 * H_h2o2 * CWC;	//Unit: (molec/cm3)^-1  s-1
 }
 #ENDINLINE
 
@@ -192,6 +216,11 @@ void kpp_chem_output2atm(
   //  atm->q[ctl->qnt_Co3][ip] = FIX[indf_o3] / M;
   //if (ctl->qnt_Ch2o>=0)
   //	atm->q[ctl->qnt_Ch2o][ip] = FIX[indf_h2o] / M;
+
+	if (atm->q[ctl->qnt_Cx][ip] != 0) {
+		atm->q[ctl->qnt_m][ip] *= VAR[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M);
+		atm->q[ctl->qnt_Cx][ip] = VAR[ind_so2] / M;
+  }
 }
 
 #ENDINLINE
