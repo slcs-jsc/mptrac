@@ -1693,7 +1693,7 @@ double nat_temperature(
   const double h2o,
   const double hno3) {
 
-  /* Check water vapor vmr... */
+  /* Check water vapor volume mixing ratio... */
   double h2o_help = GSL_MAX(h2o, 0.1e-6);
 
   /* Calculate T_NAT... */
@@ -3387,7 +3387,7 @@ void read_met_cape(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
-      /* Get potential temperature and water vapor vmr at lowest 50 hPa... */
+      /* Get potential temperature and water vapor at lowest 50 hPa... */
       int n = 0;
       double h2o = 0, t, theta = 0;
       double pbot = GSL_MIN(met->ps[ix][iy], met->p[0]);
@@ -3701,7 +3701,7 @@ void read_met_geopot(
       double zs = met->zs[ix][iy];
       double lnps = log(met->ps[ix][iy]);
 
-      /* Get temperature and water vapor vmr at the surface... */
+      /* Get temperature and water vapor at the surface... */
       int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
       double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
 		      met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
@@ -5107,7 +5107,7 @@ void read_met_tropo(
   else
     ERRMSG("Cannot calculate tropopause!");
 
-  /* Interpolate temperature, geopotential height, and water vapor vmr... */
+  /* Interpolate temperature, geopotential height, and water vapor... */
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
@@ -6447,7 +6447,7 @@ void write_grid(
       }
     }
 
-  /* Calculate column density and vmr... */
+  /* Calculate column density and volume mixing ratio... */
 #pragma omp parallel for default(shared)
   for (int ix = 0; ix < ctl->grid_nx; ix++)
     for (int iy = 0; iy < ctl->grid_ny; iy++)

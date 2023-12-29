@@ -1520,17 +1520,16 @@ void module_chemgrid(
 	init[ip] = 1;
 
 	/* Set H2O and O3 using meteo data... */
-	if (ctl->qnt_Ch2o >= 0 || ctl->qnt_Co3 >= 0) {
-	  double h2o, o3;
-	  INTPOL_INIT;
-	  if (ctl->qnt_Ch2o >= 0) {
-	    INTPOL_3D(h2o, 1);
-	    SET_ATM(qnt_Ch2o, h2o);
-	  }
-	  if (ctl->qnt_Co3 >= 0) {
-	    INTPOL_3D(o3, 0);
-	    SET_ATM(qnt_Co3, o3);
-	  }
+	INTPOL_INIT;
+	if (ctl->qnt_Ch2o >= 0) {
+	  double h2o;
+	  INTPOL_3D(h2o, 1);
+	  SET_ATM(qnt_Ch2o, h2o);
+	}
+	if (ctl->qnt_Co3 >= 0) {
+	  double o3;
+	  INTPOL_3D(o3, 1);
+	  SET_ATM(qnt_Co3, o3);
 	}
 
 	/* Set radical species... */
@@ -1547,7 +1546,7 @@ void module_chemgrid(
   /* Check quantities... */
   if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0) {
     if (ctl->molmass < 0)
-      ERRMSG("SPECIES MOLAR MASS is not defined!");
+      ERRMSG("Molar mass is not defined!");
 
     double *mass, *area, *lon, *lat;
 
@@ -1739,11 +1738,12 @@ void module_h2o2_chem(
 
     /* Volume mixing ratio of H2O2 (Barth et al., 1989)... */
     double SO2 = atm->q[ctl->qnt_Cx][ip] * 1e9;	// vmr unit: ppbv
-    double h2o2 = H_h2o2 * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: mol/L
+    double h2o2 = H_h2o2
+      * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
+      * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	// unit: mol/L
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
     double CWC = lwc * rho_air / 1000;
 
     /* Calculate exponential decay (Rolph et al., 1992)... */

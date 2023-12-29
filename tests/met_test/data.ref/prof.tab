@@ -42,7 +42,7 @@
 # $42 = OH volume mixing ratio [ppv]
 # $43 = H2O2 volume mixing ratio [ppv]
 # $44 = HO2 volume mixing ratio [ppv]
-# $45 = O1D volume mixing ratio [ppv]
+# $45 = O(1D) volume mixing ratio [ppv]
 # $46 = boundary layer pressure [hPa]
 # $47 = total column ozone [DU]
 # $48 = number of data points

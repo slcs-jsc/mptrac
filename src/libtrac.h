@@ -469,7 +469,7 @@
 	  "# $42 = OH volume mixing ratio [ppv]\n"			\
 	  "# $43 = H2O2 volume mixing ratio [ppv]\n"			\
 	  "# $44 = HO2 volume mixing ratio [ppv]\n"			\
-	  "# $45 = O1D volume mixing ratio [ppv]\n"			\
+	  "# $45 = O(1D) volume mixing ratio [ppv]\n"			\
 	  "# $46 = boundary layer pressure [hPa]\n"			\
 	  "# $47 = total column ozone [DU]\n"				\
 	  "# $48 = number of data points\n"				\
@@ -884,7 +884,7 @@ typedef struct {
   /*! Quantity array index for tropopause geopotential height. */
   int qnt_zt;
 
-  /*! Quantity array index for tropopause water vapor vmr. */
+  /*! Quantity array index for tropopause water vapor volume mixing ratio. */
   int qnt_h2ot;
 
   /*! Quantity array index for geopotential height. */
@@ -908,10 +908,10 @@ typedef struct {
   /*! Quantity array index for vertical velocity. */
   int qnt_w;
 
-  /*! Quantity array index for water vapor vmr. */
+  /*! Quantity array index for water vapor volume mixing ratio. */
   int qnt_h2o;
 
-  /*! Quantity array index for ozone vmr. */
+  /*! Quantity array index for ozone volume mixing ratio. */
   int qnt_o3;
 
   /*! Quantity array index for cloud liquid water content. */
@@ -950,19 +950,19 @@ typedef struct {
   /*! Quantity array index for total column ozone. */
   int qnt_o3c;
 
-  /*! Quantity array index for nitric acid vmr. */
+  /*! Quantity array index for HNO3 volume mixing ratio (climatology). */
   int qnt_hno3;
 
-  /*! Quantity array index for OH volume mixing ratio. */
+  /*! Quantity array index for OH volume mixing ratio (climatology). */
   int qnt_oh;
 
-  /*! Quantity array index for H2O2 volume mixing ratio. */
+  /*! Quantity array index for H2O2 volume mixing ratio (climatology). */
   int qnt_h2o2;
 
-  /*! Quantity array index for HO2 volume mixing ratio. */
+  /*! Quantity array index for HO2 volume mixing ratio (climatology). */
   int qnt_ho2;
 
-  /*! Quantity array index for atomic oxygen volume mixing ratio. */
+  /*! Quantity array index for O(1D) volume mixing ratio (climatology). */
   int qnt_o1d;
 
   /*! Quantity array index for total mass loss due to OH chemistry. */
@@ -1034,49 +1034,49 @@ typedef struct {
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
 
-  /*! Quantity array index for trace species x volume mixing ratio. */
+  /*! Quantity array index for trace species x volume mixing ratio (chemistry code). */
   int qnt_Cx;
 
-  /*! Quantity array index for H2O volume mixing ratio. */
+  /*! Quantity array index for H2O volume mixing ratio (chemistry code). */
   int qnt_Ch2o;
 
-  /*! Quantity array index for O3 volume mixing ratio. */
+  /*! Quantity array index for O3 volume mixing ratio (chemistry code). */
   int qnt_Co3;
 
-  /*! Quantity array index for CO volume mixing ratio. */
+  /*! Quantity array index for CO volume mixing ratio (chemistry code). */
   int qnt_Cco;
 
-  /*! Quantity array index for OH volume mixing ratio. */
+  /*! Quantity array index for OH volume mixing ratio (chemistry code). */
   int qnt_Coh;
 
-  /*! Quantity array index for H volume mixing ratio. */
+  /*! Quantity array index for H volume mixing ratio (chemistry code). */
   int qnt_Ch;
 
-  /*! Quantity array index for HO2 volume mixing ratio. */
+  /*! Quantity array index for HO2 volume mixing ratio (chemistry code). */
   int qnt_Cho2;
 
-  /*! Quantity array index for H2O2 volume mixing ratio. */
+  /*! Quantity array index for H2O2 volume mixing ratio (chemistry code). */
   int qnt_Ch2o2;
 
-  /*! Quantity array index for O(1D) volume mixing ratio. */
+  /*! Quantity array index for O(1D) volume mixing ratio (chemistry code). */
   int qnt_Co1d;
 
-  /*! Quantity array index for O(3P) volume mixing ratio. */
+  /*! Quantity array index for O(3P) volume mixing ratio (chemistry code). */
   int qnt_Co3p;
 
-  /*! Quantity array index for CFC-10 volume mixing ratio. */
+  /*! Quantity array index for CFC-10 volume mixing ratio (chemistry code). */
   int qnt_Cccl4;
 
-  /*! Quantity array index for CFC-11 volume mixing ratio. */
+  /*! Quantity array index for CFC-11 volume mixing ratio (chemistry code). */
   int qnt_Cccl3f;
 
-  /*! Quantity array index for CFC-12 volume mixing ratio. */
+  /*! Quantity array index for CFC-12 volume mixing ratio (chemistry code). */
   int qnt_Cccl2f2;
 
-  /*! Quantity array index for N2O volume mixing ratio. */
+  /*! Quantity array index for N2O volume mixing ratio (chemistry code). */
   int qnt_Cn2o;
 
-  /*! Quantity array index for SF6 volume mixing ratio. */
+  /*! Quantity array index for SF6 volume mixing ratio (chemistry code). */
   int qnt_Csf6;
 
   /*! Quantity array index for age of air. */
@@ -1870,7 +1870,7 @@ typedef struct {
   /*! Tropopause geopotential height [km]. */
   float zt[EX][EY];
 
-  /*! Tropopause water vapor vmr [ppv]. */
+  /*! Tropopause water vapor volume mixing ratio [ppv]. */
   float h2ot[EX][EY];
 
   /*! Cloud top pressure [hPa]. */
