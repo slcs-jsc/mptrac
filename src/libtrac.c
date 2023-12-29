@@ -4289,20 +4289,41 @@ int read_met_nc_2d(
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
 
-    /* Copy and check data... */
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+
+      /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++) {
-	if (init)
-	  dest[ix][iy] = 0;
-	float aux = help[ARRAY_2D(iy, ix, met->nx)];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux) < 1e14f)
-	  dest[ix][iy] += scl * aux;
-	else
-	  dest[ix][iy] = GSL_NAN;
-      }
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++) {
+	  if (init)
+	    dest[ix][iy] = 0;
+	  float aux = help[ARRAY_2D(iy, ix, met->nx)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = GSL_NAN;
+	}
+
+    } else {
+
+      /* Copy and check data (ordering: lon, lat)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ix = 0; ix < met->nx; ix++) {
+	  if (init)
+	    dest[ix][iy] = 0;
+	  float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = GSL_NAN;
+	}
+    }
 
     /* Free... */
     free(help);
@@ -4408,7 +4429,7 @@ int read_met_nc_3d(
     /* Read data... */
     NC(nc_get_var_float(ncid, varid, help));
 
-    /* Check ordering of dimensions of meteo data... */
+    /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
 
       /* Copy and check data (ordering: lev, lat, lon)... */
@@ -4426,6 +4447,7 @@ int read_met_nc_3d(
 	    else
 	      dest[ix][iy][ip] = GSL_NAN;
 	  }
+
     } else {
 
       /* Copy and check data (ordering: lon, lat, lev)... */
