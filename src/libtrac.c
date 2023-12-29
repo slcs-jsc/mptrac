@@ -4248,6 +4248,10 @@ int read_met_nc_2d(
     /* Read data... */
     NC(nc_get_var_short(ncid, varid, help));
 
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
+
     /* Copy and check data... */
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
@@ -4386,6 +4390,10 @@ int read_met_nc_3d(
 
     /* Read data... */
     NC(nc_get_var_short(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
 
     /* Copy and check data... */
 #pragma omp parallel for default(shared) num_threads(12)
