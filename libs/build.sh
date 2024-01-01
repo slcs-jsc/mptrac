@@ -232,7 +232,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildKPP = true ] ; then
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     export KPP_HOME=$strBuildDir/src/$strTarget
     export KPP_FLEX_LIB_DIR=$strBuildDir/src/$strTarget
-		cd $KPP_HOME/src && make && cd ${strLibsDir}/../kpp && ./build_KPP.sh so2 \
+		cd $KPP_HOME/src && make && cd ${strLibsDir}/../projects/kpp && ./build_KPP.sh so2 \
     || exit		
 fi
 
