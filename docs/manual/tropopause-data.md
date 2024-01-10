@@ -38,11 +38,11 @@ MPTRAC provides the tool "tropo" that generates tropopause data files from given
 
 The tropopause data are provided as netCDF files. Each data file may contain one or more time steps of the reanalysis.
 
-The data files provide geopotential height, pressure, temperature, and water vapor volume mixing ratios for the cold point, WMNO 1st and 2nd tropopause, and the dynamical tropopause.
+The data files provide geopotential height, pressure, temperature, and water vapor volume mixing ratios for the cold point, WMO first and second tropopause, and the dynamical tropopause.
 
 The tool "tropo_sample" can be used to extract tropopause data from the netCDF files created by "tropo" for a set of locations specified as a particle data file (atm.tab file).
 
-Tropopause data files for various meteorological reanalyses can be found in the meteocloud data archive in Jülich:
+Tropopause data files for various meteorological reanalyses can be found in the [Reanalysis Tropopause Data Repository](https://datapub.fz-juelich.de/slcs/tropopause) or locally in the Meteocloud data archive in Jülich:
 
 ```
     /p/fastdata/slmet/slmet111/met_data/tropo
