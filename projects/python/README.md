@@ -1,4 +1,4 @@
-# Python script  Examples 
+# Python Script  Examples 
 
 Here we provide some example Python scripts that can be used to plot MPTRAC output.
 
