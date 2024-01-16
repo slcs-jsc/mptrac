@@ -1844,7 +1844,7 @@ void module_kpp_chem(
 
   /* Loop over particles... */
   const int np = atm->np;
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
   for (int ip = 0; ip < np; ip++) {
     if (dt[ip] > 0) {
 
@@ -2010,13 +2010,13 @@ void module_mixing_help(
       cmean[idx] += atm->q[qnt_idx][ip];
       count[idx]++;
     }
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
   for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
     if (count[i] > 0)
       cmean[i] /= count[i];
 
   /* Calculate interparcel mixing... */
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
