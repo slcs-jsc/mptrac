@@ -2010,7 +2010,6 @@ void module_mixing_help(
       cmean[idx] += atm->q[qnt_idx][ip];
       count[idx]++;
     }
-#pragma omp parallel for default(shared)
   for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
     if (count[i] > 0)
       cmean[i] /= count[i];
