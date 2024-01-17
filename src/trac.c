@@ -2010,7 +2010,7 @@ void module_mixing_help(
       cmean[idx] += atm->q[qnt_idx][ip];
       count[idx]++;
     }
-#ifndef __GNUC__
+#ifdef __NVCOMPILER
 #pragma novector
 #endif
   {
