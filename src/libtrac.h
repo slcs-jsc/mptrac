@@ -220,7 +220,7 @@
 
 /*! Maximum number of pressure levels for climatological data. */
 #ifndef CP
-#define CP 60
+#define CP 70
 #endif
 
 /*! Maximum number of solar zenith angles for climatological data. */
