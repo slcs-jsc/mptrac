@@ -2010,10 +2010,16 @@ void module_mixing_help(
       cmean[idx] += atm->q[qnt_idx][ip];
       count[idx]++;
     }
-  for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
-    if (count[i] > 0)
-      cmean[i] /= count[i];
-
+#ifndef __GNUC__
+#pragma novector
+#endif
+  {
+#pragma omp parallel for
+    for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
+      if (count[i] > 0)
+        cmean[i] /= count[i];
+  }
+  
   /* Calculate interparcel mixing... */
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++)
