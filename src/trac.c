@@ -1868,7 +1868,7 @@ void module_kpp_chem(
       kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
 
       /* Integrate... */
-      INTEGRATE(atm->time[ip] - dt[ip], atm->time[ip]);
+      INTEGRATE(0, ctl->dt_kpp);
 
       /* Output to air parcel.. */
       kpp_chem_output2atm(atm, ctl, met0, met1, ip);
@@ -1932,8 +1932,6 @@ void module_mixing(
   }
 
   /* Calculate interparcel mixing... */
-  if (ctl->qnt_m >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
   if (ctl->qnt_Cx >= 0)
