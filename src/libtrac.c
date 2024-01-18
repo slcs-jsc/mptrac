@@ -2148,7 +2148,7 @@ void read_clim_photo(
   ALLOC(help3, double,
 	photo->np * photo->nsza * photo->no3c);
   ALLOC(help4, double,
-	photo->np * photo->nsza * photo->no3c);
+	photo->np * photo->nsza * photo->no3c);  
   NC_GET_DOUBLE("n2o", help1, 1);
   NC_GET_DOUBLE("ccl4", help2, 1);
   NC_GET_DOUBLE("cfc11", help3, 1);
@@ -2163,6 +2163,23 @@ void read_clim_photo(
 	photo->ccl3f[ip][is][io] =
 	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
 	photo->ccl2f2[ip][is][io] =
+	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+      }
+
+  NC_GET_DOUBLE("o2", help1, 1);
+  NC_GET_DOUBLE("o3_1", help2, 1);
+  NC_GET_DOUBLE("o3_2", help3, 1);
+  NC_GET_DOUBLE("h2o2", help4, 1);
+  for (ip = 0; ip < photo->np; ip++)
+    for (is = 0; is < photo->nsza; is++)
+      for (io = 0; io < photo->no3c; io++) {
+	photo->o2[ip][is][io] =
+	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+	photo->o3_1[ip][is][io] =
+	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+	photo->o3_2[ip][is][io] =
+	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+	photo->h2o2[ip][is][io] =
 	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
       }
   free(help1);

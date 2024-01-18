@@ -14,7 +14,7 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
             ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
             kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
             koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2, kso2_h2o2, kso2_oh,		\
-            ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
+            ko2_hv, ko3_hv1, ko3_hv2, kh2o_hv, kh2o2_hv, kn2o_hv,		\
             kccl3f_hv, kcl2f2_hv;
 
 #pragma omp threadprivate(ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
@@ -22,7 +22,7 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
                           ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
                           kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
                           koh_ho2, koh_h2o2, kho2_o3, kho2_ho2,	kso2_h2o2, kso2_oh,	\
-                          ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,		\
+                          ko2_hv, ko3_hv1, ko3_hv2, kh2o_hv, kh2o2_hv, kn2o_hv,		\
                           kccl3f_hv, kcl2f2_hv,		\
                           RCONST,RTOL,ATOL,STEPMIN,STEPMAX,VAR,FIX,TEMP)
 
@@ -69,7 +69,7 @@ double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,
       ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 
       kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,
       koh_ho2, koh_h2o2, koh_co, kho2_o3, kho2_ho2, kso2_h2o2, kso2_oh,
-      ko2_hv, ko3_hv1, ko3_hv2, kho2_hv, kh2o_hv, kh2o2_hv, kn2o_hv,
+      ko2_hv, ko3_hv1, ko3_hv2, kh2o_hv, kh2o2_hv, kn2o_hv,
       kccl3f_hv, kcl2f2_hv;
 
 void kpp_chem_initialize(
@@ -81,10 +81,11 @@ void kpp_chem_initialize(
   int ip
 ){
     /* Get Meteological variables... */
-    double t, lwc;
+    double t, lwc, o3c;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
     INTPOL_3D(lwc, 0);
+    INTPOL_2D(o3c, 1);
     TEMP = t;
 
     /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
@@ -147,15 +148,21 @@ void kpp_chem_initialize(
     kho2_ho2 = ARR_ab(3e-13, -460) + ARR_ab(2.1e-33 * M, -920) ;
 
     /* Photolysis reaction rate ... */
-    ko2_hv = ROETH_PHOTOL(1.15e-11, 6.51657, 0.75717, sza);
-    ko3_hv1 = ROETH_PHOTOL(1.37e-4, 1.38520, 0.90333, sza);
-    ko3_hv2 = ROETH_PHOTOL(1.12e-03, 0.49409, 0.87117, sza);
-    kho2_hv = ROETH_PHOTOL(6.83e-06, 6.43722, 0.75746, sza);
+    ko2_hv = clim_photo(clim->photo.o2, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+    ko3_hv1 = clim_photo(clim->photo.o3_1, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+    ko3_hv2 = clim_photo(clim->photo.o3_2, &(clim->photo),
+			       atm->p[ip], sza, o3c);
     kh2o_hv = ROETH_PHOTOL(1.79e-10, 7.70686, 0.75420, sza);
-    kh2o2_hv = ROETH_PHOTOL(2.60e-05, 0.53675, 0.89531, sza);
-    kn2o_hv = ROETH_PHOTOL(1.61e-08, 6.21077, 0.76015, sza);
-    kccl3f_hv = ROETH_PHOTOL(6.79e-07, 6.25031, 0.75941, sza);
-    kcl2f2_hv = ROETH_PHOTOL(2.81e-08, 6.47452, 0.75909, sza);
+    kh2o2_hv = clim_photo(clim->photo.h2o2, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+    kn2o_hv = clim_photo(clim->photo.n2o, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+    kccl3f_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+    kcl2f2_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c);
 
      /*Gas phase chemistry of so2... */
     kso2_oh = k3rd_jpl(M, 2.9e-31, 4.1, 1.7e-12, -0.2);

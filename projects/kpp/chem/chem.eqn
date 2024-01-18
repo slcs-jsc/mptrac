@@ -56,12 +56,11 @@ ho2 + o3       = oh + o2	+ o2										: kho2_o3;
 ho2 + ho2      = h2o2 + o2											  : kho2_ho2;
 
 o2 + hv        = o3p + o3p											  : ko2_hv;
-o3 + hv        = o1d														  : ko3_hv1;
+o3 + hv        = o1d + o2												  : ko3_hv1;
 o3 + hv        = o3p + o2											    : ko3_hv2;
-ho2 + hv       = o3p + oh 											  : kho2_hv;
 h2o + hv       = h + oh												    : kh2o_hv;
-h2o2 + hv      = oh + o3p											    : kh2o2_hv;
-n2o + hv       = o1d														  : kn2o_hv;
+h2o2 + hv      = 2oh    											    : kh2o2_hv;
+n2o + hv       = o1d + n2												  : kn2o_hv;
 ccl3f + hv     = PROD													    : kccl3f_hv;
 ccl2f2 + hv    = PROD													    : kcl2f2_hv;
 
