@@ -1932,6 +1932,8 @@ void module_mixing(
   }
 
   /* Calculate interparcel mixing... */
+  if (ctl->qnt_m >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
   if (ctl->qnt_Cx >= 0)
