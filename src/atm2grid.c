@@ -23,7 +23,7 @@
   example:
   cd data
   for atmfile in $(ls atm_20*_00_00.tab); do
-  ../../../atm2grid trac.ctl $atmfile GRID_BASENAME grid
+  ../../../src/atm2grid trac.ctl $atmfile GRID_BASENAME grid
   done
 */
 
