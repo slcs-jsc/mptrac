@@ -20,6 +20,11 @@
 /*! 
   \file
   Convert atmosphric data file to grid data file.
+  example:
+  cd data
+  for atmfile in $(ls atm_20*_00_00.tab); do
+  ../../../atm2grid trac.ctl $atmfile GRID_BASENAME grid
+  done
 */
 
 #include "libtrac.h"
@@ -40,8 +45,8 @@ int main(
   ALLOC(atm, atm_t, 1);
 
   /* Check arguments... */
-  if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <atm_in> <grid_out>");
+  if (argc < 3)
+    ERRMSG("Give parameters: <ctl> <atm_in>");
 
   read_ctl(argv[1], argc, argv, &ctl);
 
@@ -55,12 +60,9 @@ int main(
   sscanf(argv[2], "atm_%d_%d_%d_%d_%d.tab", &year, &mon, &day, &hour, &min);
   time2jsec(year, mon, day, hour, min, 0, 0, &t);
   
-  if (argv[3][0] == '-')
-    sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    ctl.grid_basename, year, mon, day, hour, min,
-	    ctl.grid_type == 0 ? "tab" : "nc");
-  else
-    sprintf(filename, "%s", argv[3]);
+  sprintf(filename, "%s_%04d_%02d_%02d_%02d_%02d.%s",
+    ctl.grid_basename, year, mon, day, hour, min,
+    ctl.grid_type == 0 ? "tab" : "nc");
     
   write_grid(filename, &ctl, met0, met1, atm, t);
 
