@@ -6589,7 +6589,7 @@ void write_grid(
 
 	/* Calculate volume mixing ratio (implicit)... */
 	vmr_impl[idx] = GSL_NAN;
-	if (ctl->qnt_m >= 0 && ctl->molmass > 0) {
+	if (ctl->qnt_m >= 0 && ctl->molmass > 0 && met0 != NULL && met1 != NULL) {
 	  vmr_impl[idx] = 0;
 	  if (mean[ctl->qnt_m][idx] > 0) {
 

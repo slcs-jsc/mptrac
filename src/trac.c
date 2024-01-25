@@ -1936,8 +1936,6 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-  if (ctl->qnt_Cx >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
   if (ctl->qnt_Ch2o >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
   if (ctl->qnt_Co3 >= 0)
