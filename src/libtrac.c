@@ -2884,7 +2884,7 @@ void read_ctl(
 
   /* Climatological data... */
   scan_ctl(filename, argc, argv, "CLIM_PHOTO", -1,
-	   "../../data/photolysis_rate.nc", ctl->clim_photo);
+	   "../../data/photolysis_rates.nc", ctl->clim_photo);
   scan_ctl(filename, argc, argv, "CLIM_HNO3_FILENAME", -1,
 	   "../../data/gozcards_HNO3.nc", ctl->clim_hno3_filename);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,
