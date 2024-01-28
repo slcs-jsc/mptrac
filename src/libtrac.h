@@ -1721,10 +1721,10 @@ typedef struct {
   /*! O2 photolysis rate [1/s]. */
   double o2[CP][CSZA][CO3];
 
-  /*! O3 photolysis rate [1/s]. o3 + hv = o1d + o2	*/
+  /*! O3 photolysis rate [1/s]. o3 + hv = o1d + o2      */
   double o3_1[CP][CSZA][CO3];
 
-  /*! O3 photolysis rate [1/s]. o3 + hv = o3p + o2	*/
+  /*! O3 photolysis rate [1/s]. o3 + hv = o3p + o2      */
   double o3_2[CP][CSZA][CO3];
 
   /*! H2O2 photolysis rate [1/s]. */

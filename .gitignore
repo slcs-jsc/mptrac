@@ -17,6 +17,7 @@ projects/example/plots/
 !projects/example/
 projects/kpp/
 src/*.o
+src/atm2grid
 src/atm_conv
 src/atm_dist
 src/atm_init

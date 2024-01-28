@@ -2148,7 +2148,7 @@ void read_clim_photo(
   ALLOC(help3, double,
 	photo->np * photo->nsza * photo->no3c);
   ALLOC(help4, double,
-	photo->np * photo->nsza * photo->no3c);  
+	photo->np * photo->nsza * photo->no3c);
   NC_GET_DOUBLE("n2o", help1, 1);
   NC_GET_DOUBLE("ccl4", help2, 1);
   NC_GET_DOUBLE("cfc11", help3, 1);
@@ -5990,8 +5990,6 @@ void write_atm_clams_traj(
     NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
     NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
     NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
-    //NC_DEF_VAR("ZETA_GRID", NC_DOUBLE, 1, &zid, "levels", "K");
-    //NC_DEF_VAR("ZETA_DELTA", NC_DOUBLE, 1, &zid, "Width of zeta levels", "K");
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
 		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
@@ -6043,8 +6041,6 @@ void write_atm_clams(
   NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
   NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
   NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
-  //NC_DEF_VAR("ZETA_GRID", NC_DOUBLE, 1, &zid, "levels", "K");
-  //NC_DEF_VAR("ZETA_DELTA", NC_DOUBLE, 1, &zid, "Width of zeta levels", "K");
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
 	       ctl->qnt_name[iq], ctl->qnt_unit[iq]);
@@ -6589,7 +6585,8 @@ void write_grid(
 
 	/* Calculate volume mixing ratio (implicit)... */
 	vmr_impl[idx] = GSL_NAN;
-	if (ctl->qnt_m >= 0 && ctl->molmass > 0 && met0 != NULL && met1 != NULL) {
+	if (ctl->qnt_m >= 0 && ctl->molmass > 0 && met0 != NULL
+	    && met1 != NULL) {
 	  vmr_impl[idx] = 0;
 	  if (mean[ctl->qnt_m][idx] > 0) {
 
