@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -1983,13 +1983,6 @@ typedef struct {
    Functions...
    ------------------------------------------------------------ */
 
-/*! Calculate buoyancy frequency. */
-double buoyancy_frequency(
-  const double p0,
-  const double t0,
-  const double p1,
-  const double t1);
-
 /*! Convert Cartesian coordinates to geolocation. */
 void cart2geo(
   const double *x,
@@ -2402,18 +2395,18 @@ void read_clim(
 
 /*! Read climatological time series. */
 int read_clim_ts(
-  char *filename,
+  const char *filename,
   clim_ts_t * ts);
 
 /*! Read climatological zonal means. */
 void read_clim_zm(
-  char *filename,
+  const char *filename,
   char *varname,
   clim_zm_t * zm);
 
 /*! Read climatological photolysis rates. */
 void read_clim_photo(
-  char *filename,
+  const char *filename,
   clim_photo_t * photo);
 
 /*! Read control parameters. */
@@ -2432,7 +2425,7 @@ void read_kernel(
 
 /*! Read meteo data file. */
 int read_met(
-  char *filename,
+  const char *filename,
   ctl_t * ctl,
   clim_t * clim,
   met_t * met);
@@ -2478,7 +2471,7 @@ void read_met_geopot(
 
 /*! Read coordinates of meteo data. */
 void read_met_grid(
-  char *filename,
+  const char *filename,
   int ncid,
   ctl_t * ctl,
   met_t * met);
@@ -2556,7 +2549,7 @@ void read_met_tropo(
 
 /*! Read observation data. */
 void read_obs(
-  char *filename,
+  const char *filename,
   double *rt,
   double *rz,
   double *rlon,
@@ -2739,7 +2732,7 @@ void write_grid_nc(
 
 /*! Read meteo data file. */
 int write_met(
-  char *filename,
+  const char *filename,
   ctl_t * ctl,
   met_t * met);
 

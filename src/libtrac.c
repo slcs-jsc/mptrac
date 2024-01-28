@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,21 +23,6 @@
 */
 
 #include "libtrac.h"
-
-/*****************************************************************************/
-
-double buoyancy_frequency(
-  const double p0,
-  const double t0,
-  const double p1,
-  const double t1) {
-
-  double theta0 = THETA(p0, t0);
-  double theta1 = THETA(p1, t1);
-  double dz = RI / MA / G0 * 0.5 * (t0 + t1) * (log(p0) - log(p1));
-
-  return sqrt(2. * G0 / (theta0 + theta1) * (theta1 - theta0) / dz);
-}
 
 /*****************************************************************************/
 
@@ -1563,7 +1548,7 @@ void level_definitions(
 
     ctl->met_np = 138;
 
-    double press[138] = {
+    const double press[138] = {
       0.0200, 0.0310, 0.0467, 0.0683, 0.0975, 0.1361, 0.1861, 0.2499,
       0.3299, 0.4288, 0.5496, 0.6952, 0.8690, 1.0742, 1.3143, 1.5928, 1.9134,
       2.2797, 2.6954, 3.1642, 3.6898, 4.2759, 4.9262, 5.6441, 6.4334, 7.2974,
@@ -1592,7 +1577,7 @@ void level_definitions(
 
     ctl->met_np = 92;
 
-    double press[92] = {
+    const double press[92] = {
       0.0200, 0.0398, 0.0739, 0.1291, 0.2141, 0.3395, 0.5175, 0.7617,
       1.0872, 1.5099, 2.0464, 2.7136, 3.5282, 4.5069, 5.6652, 7.0181,
       8.5795, 10.3617, 12.3759, 14.6316, 17.1371, 19.8987, 22.9216, 26.2090,
@@ -1616,7 +1601,7 @@ void level_definitions(
 
     ctl->met_np = 60;
 
-    double press[60] = {
+    const double press[60] = {
       0.01, 0.1361, 0.2499, 0.4288, 0.6952, 1.0742,
       2.2797, 3.1642, 4.2759, 7.2974, 9.2634, 11.5685, 14.2377, 20.761,
       24.6577, 33.8174, 39.1149, 51.199, 57.9834, 73.1187, 81.6182,
@@ -1634,7 +1619,7 @@ void level_definitions(
 
     ctl->met_np = 147;
 
-    double press[147] = {
+    const double press[147] = {
       0.0200, 0.0310, 0.0467, 0.0683, 0.0975, 0.1361, 0.1861, 0.2499,
       0.3299, 0.4288, 0.5496, 0.6952, 0.8690, 1.0742, 1.3143, 1.5928, 1.9134,
       2.2797, 2.6954, 3.1642, 3.6898, 4.2759, 4.9262, 5.6441, 6.4334, 7.2974,
@@ -1665,7 +1650,7 @@ void level_definitions(
 
     ctl->met_np = 101;
 
-    double press[101] = {
+    const double press[101] = {
       0.0200, 0.0398, 0.0739, 0.1291, 0.2141, 0.3395, 0.5175, 0.7617,
       1.0872, 1.5099, 2.0464, 2.7136, 3.5282, 4.5069, 5.6652, 7.0181,
       8.5795, 10.3617, 12.3759, 14.6316, 17.1371, 19.8987, 22.9216, 26.2090,
@@ -1691,7 +1676,7 @@ void level_definitions(
 
     ctl->met_np = 62;
 
-    double press[62] = {
+    const double press[62] = {
       0.01, 0.1361, 0.2499, 0.4288, 0.6952, 1.0742,
       2.2797, 3.1642, 4.2759, 7.2974, 9.2634, 11.5685, 14.2377, 20.761,
       24.6577, 33.8174, 39.1149, 51.199, 57.9834, 73.1187, 81.6182,
@@ -2106,7 +2091,7 @@ void read_clim(
 /*****************************************************************************/
 
 void read_clim_photo(
-  char *filename,
+  const char *filename,
   clim_photo_t * photo) {
 
   int ncid, varid, ip, is, io;
@@ -2194,7 +2179,7 @@ void read_clim_photo(
 /*****************************************************************************/
 
 int read_clim_ts(
-  char *filename,
+  const char *filename,
   clim_ts_t * ts) {
 
   /* Write info... */
@@ -2248,7 +2233,7 @@ int read_clim_ts(
 /*****************************************************************************/
 
 void read_clim_zm(
-  char *filename,
+  const char *filename,
   char *varname,
   clim_zm_t * zm) {
 
@@ -3137,7 +3122,7 @@ void read_kernel(
 /*****************************************************************************/
 
 int read_met(
-  char *filename,
+  const char *filename,
   ctl_t * ctl,
   clim_t * clim,
   met_t * met) {
@@ -3887,7 +3872,7 @@ void read_met_geopot(
 /*****************************************************************************/
 
 void read_met_grid(
-  char *filename,
+  const char *filename,
   int ncid,
   ctl_t * ctl,
   met_t * met) {
@@ -5254,7 +5239,7 @@ void read_met_tropo(
 /*****************************************************************************/
 
 void read_obs(
-  char *filename,
+  const char *filename,
   double *rt,
   double *rz,
   double *rlon,
@@ -6066,7 +6051,6 @@ void write_atm_clams(
 
 }
 
-
 /*****************************************************************************/
 
 void write_atm_nc(
@@ -6664,9 +6648,7 @@ void write_grid_asc(
   double dz,
   int *np) {
 
-  FILE *in, *out;
-
-  char line[LEN];
+  FILE *out;
 
   /* Check if gnuplot output is requested... */
   if (ctl->grid_gpfile[0] != '-') {
@@ -6686,6 +6668,8 @@ void write_grid_asc(
 	    year, mon, day, hour, min);
 
     /* Dump gnuplot file to pipe... */
+    FILE *in;
+    char line[LEN];
     if (!(in = fopen(ctl->grid_gpfile, "r")))
       ERRMSG("Cannot open file!");
     while (fgets(line, LEN, in))
@@ -6878,7 +6862,7 @@ void write_grid_nc(
 /*****************************************************************************/
 
 int write_met(
-  char *filename,
+  const char *filename,
   ctl_t * ctl,
   met_t * met) {
 

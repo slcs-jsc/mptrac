@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -177,9 +177,9 @@ void module_mixing_help(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
-  int *ixs,
-  int *iys,
-  int *izs,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
   int qnt_idx);
 
 /*! Calculate grid data for chemistry modules. */
@@ -263,8 +263,8 @@ void module_sort(
 /*! Helper function for sorting module. */
 void module_sort_help(
   double *a,
-  int *p,
-  int np);
+  const int *p,
+  const int np);
 
 /*! Calculate time steps. */
 void module_timesteps(
@@ -1984,9 +1984,9 @@ void module_mixing_help(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
-  int *ixs,
-  int *iys,
-  int *izs,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
   int qnt_idx) {
 
   double *cmean;
@@ -2329,8 +2329,8 @@ void module_sort(
 
 void module_sort_help(
   double *a,
-  int *p,
-  int np) {
+  const int *p,
+  const int np) {
 
   /* Allocate... */
   double *restrict const help =

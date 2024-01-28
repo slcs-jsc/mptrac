@@ -41,18 +41,18 @@ int main(
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
-  
+
   /* Check arguments... */
   if (argc < 3)
     ERRMSG("Give parameters: <ctl> <atm_in>");
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  
+
   /* Read atmospheric data... */
   if (!read_atm(argv[2], &ctl, atm))
     ERRMSG("Cannot open file!");
-  
+
   /* Set output filename... */
   char filename[3 * LEN];
   int year, mon, day, hour, min;
@@ -68,6 +68,6 @@ int main(
 
   /* Free... */
   free(atm);
-  
+
   return EXIT_SUCCESS;
 }
