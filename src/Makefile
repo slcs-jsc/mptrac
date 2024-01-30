@@ -3,7 +3,7 @@
 # -----------------------------------------------------------------------------
 
 # List of executables...
-EXC = atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample tropo_zm wind atm2grid
+EXC = atm2grd atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_sample tropo_zm wind
 
 # List of tests...
 TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test
@@ -86,8 +86,6 @@ LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifeq ($(STATIC),1)
   LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
 endif
-
-# Additional flags for GPUs...
 ifeq ($(GPU),1)
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart
 endif
@@ -193,8 +191,7 @@ endif
 # Targets...
 # -----------------------------------------------------------------------------
 
-.PHONY : all check clean coverage cppcheck dist doc indent \
-           install lizard strip uninstall
+.PHONY : all check clean coverage cppcheck dist doxygen indent install lizard mkdocs strip uninstall
 
 all: $(EXC)
 	rm -f *~
