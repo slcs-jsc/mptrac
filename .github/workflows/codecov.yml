@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: fetch
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
     - name: install
       run: sudo apt-get update ; sudo apt-get install gnuplot lcov libgsl-dev libnetcdf-dev libhdf5-dev
     - name: make
