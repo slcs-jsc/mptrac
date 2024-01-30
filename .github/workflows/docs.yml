@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: mkdocs
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: preparing_environment
         uses: actions/setup-python@v4
         with:
@@ -23,7 +23,7 @@ jobs:
     needs: deploying_mkdoc
     steps:
       - name: doxygen
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
       - name: debugging
         run: echo `pwd`; echo `ls docs` ; echo `ls docs/*`
       - name: preparing_doxygen
