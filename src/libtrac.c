@@ -1743,7 +1743,8 @@ void level_definitions(
 	
   } else {
     ERRMSG
-      ("Definition does not exist, use 0 for l137, 1 for l91 or 2 for l60.")
+      ("Definition does not exist! Use 0 for l137, 1 for l91 or 2 for l60.\n
+	  Further options are available with values between 3 and 7.")
   }
 }
 
