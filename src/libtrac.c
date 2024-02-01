@@ -1739,7 +1739,7 @@ void level_definitions(
     };
 
     for (int ip = 0; ip < ctl->met_np; ip++)
-      ctl->met_p[ctl->met_np - ip - 1] = press[IP];
+      ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 	
   } else {
     ERRMSG
