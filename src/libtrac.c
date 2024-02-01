@@ -1742,9 +1742,7 @@ void level_definitions(
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 	
   } else {
-    ERRMSG
-      ("Definition does not exist! Use 0 for l137, 1 for l91 or 2 for l60.\n
-	  Further options are available with values between 3 and 7.")
+    ERRMSG("Use 0 for l137, 1 for l91, 2 for l60 or values between 3 and 7.")
   }
 }
 
