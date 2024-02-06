@@ -732,6 +732,7 @@ void get_met(
 
     /* Update GPU... */
 #ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
     met_t *met0up = *met0;
     met_t *met1up = *met1;
 #ifdef ASYNCIO
@@ -739,6 +740,7 @@ void get_met(
 #else
 #pragma acc update device(met0up[:1],met1up[:1])
 #endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
 #endif
 
     /* Caching... */
@@ -767,12 +769,14 @@ void get_met(
 
     /* Update GPU... */
 #ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
     met_t *met1up = *met1;
 #ifdef ASYNCIO
 #pragma acc update device(met1up[:1]) async(5)
 #else
 #pragma acc update device(met1up[:1])
 #endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
 #endif
 
     /* Caching... */
@@ -800,12 +804,14 @@ void get_met(
 
     /* Update GPU... */
 #ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
     met_t *met0up = *met0;
 #ifdef ASYNCIO
 #pragma acc update device(met0up[:1]) async(5)
 #else
 #pragma acc update device(met0up[:1])
 #endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
 #endif
 
     /* Caching... */

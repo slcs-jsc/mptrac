@@ -20,6 +20,9 @@ LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 # Compile for GPUs...
 GPU ?= 0
 
+# GPU memory pinning for GH200...
+GPU_PIN ?= 0
+
 # Compile for MPI...
 MPI ?= 0
 
@@ -74,6 +77,9 @@ CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
 ifeq ($(GPU),1)
   CC = nvc
   CFLAGS += -mp -mcmodel=medium -acc
+  ifeq ($(GPU_PIN),1)
+    CFLAGS += -gpu=pinned
+  endif
 else ifeq ($(CC),nvc)
   CFLAGS += -mp -mcmodel=medium
 else

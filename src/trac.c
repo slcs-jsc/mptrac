@@ -621,6 +621,8 @@ int main(
     LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
 #ifdef _OPENACC
     LOG(1, "SIZE_ACC_DEVICES = %d", acc_get_num_devices(acc_device_nvidia));
+#else
+    LOG(1, "SIZE_ACC_DEVICES = %d", 0);
 #endif
 
     /* Report memory usage... */
