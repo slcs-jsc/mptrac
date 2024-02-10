@@ -2522,6 +2522,10 @@ void read_met_pbl(
 void read_met_periodic(
   met_t * met);
 
+/*! Fix polar winds. */
+void read_met_polar_winds(
+  met_t * met);
+
 /*! Calculate potential vorticity. */
 void read_met_pv(
   met_t * met);

@@ -3208,6 +3208,9 @@ int read_met(
     /* Read surface data... */
     read_met_surface(ncid, met, ctl);
 
+    /* Fix polar winds... */
+    read_met_polar_winds(met);
+
     /* Create periodic boundary conditions... */
     read_met_periodic(met);
 
@@ -4735,6 +4738,61 @@ void read_met_periodic(
       met->pl[met->nx - 1][iy][ip] = met->pl[0][iy][ip];
       met->zetal[met->nx - 1][iy][ip] = met->zetal[0][iy][ip];
       met->zeta_dotl[met->nx - 1][iy][ip] = met->zeta_dotl[0][iy][ip];
+    }
+  }
+}
+
+/*****************************************************************************/
+
+void read_met_polar_winds(
+  met_t * met) {
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC", NVTX_READ);
+  LOG(2, "Apply fix for polar winds...");
+
+  /* Loop over hemispheres... */
+  for (int ihem = 0; ihem < 2; ihem++) {
+
+    /* Set latitude indices... */
+    int i89 = 1, i90 = 0, sign = 1;
+    if (ihem == 1) {
+      i89 = met->ny - 2;
+      i90 = met->ny - 1;
+    }
+    if (met->lat[i90] < 0)
+      sign = -1;
+
+    /* Look-up table of cosinus and sinus... */
+    double clon[EX], slon[EX];
+#pragma omp parallel for default(shared)
+    for (int ix = 0; ix < met->nx; ix++) {
+      clon[ix] = cos(sign * met->lon[ix] / 180. * M_PI);
+      slon[ix] = sin(sign * met->lon[ix] / 180. * M_PI);
+    }
+
+    /* Loop over levels... */
+#pragma omp parallel for default(shared)
+    for (int ip = 0; ip < met->np; ip++) {
+
+      /* Transform 89 degree u and v winds into Cartesian coordinates and take the mean... */
+      double vel89x = 0, vel89y = 0;
+      for (int ix = 0; ix < met->nx; ix++) {
+	vel89x +=
+	  (met->u[ix][i89][ip] * clon[ix] -
+	   met->v[ix][i89][ip] * slon[ix]) / met->nx;
+	vel89y +=
+	  (met->u[ix][i89][ip] * slon[ix] +
+	   met->v[ix][i89][ip] * clon[ix]) / met->nx;
+      }
+
+      /* Replace 90 degree winds by 89 degree mean... */
+      for (int ix = 0; ix < met->nx; ix++) {
+	met->u[ix][i90][ip]
+	  = (float) (vel89x * clon[ix] + vel89y * slon[ix]);
+	met->v[ix][i90][ip]
+	  = (float) (-vel89x * slon[ix] + vel89y * clon[ix]);
+      }
     }
   }
 }
