@@ -87,7 +87,7 @@ int main(
       mtot += atm->q[ctl.qnt_m][ip];
       mmax = GSL_MAX(mmax, atm->q[ctl.qnt_m][ip]);
     }
-  if (m > 0)
+  if (m >= 0)
     mtot = m;
 
   /* Loop over air parcels... */
