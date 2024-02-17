@@ -2189,10 +2189,10 @@ void read_clim_photo(
 	photo->np * photo->nsza * photo->no3c);
   ALLOC(help4, double,
 	photo->np * photo->nsza * photo->no3c);
-  NC_GET_DOUBLE("n2o", help1, 1);
-  NC_GET_DOUBLE("ccl4", help2, 1);
-  NC_GET_DOUBLE("cfc11", help3, 1);
-  NC_GET_DOUBLE("cfc12", help4, 1);
+  NC_GET_DOUBLE("J_N2O", help1, 1);
+  NC_GET_DOUBLE("J_CCl4", help2, 1);
+  NC_GET_DOUBLE("J_CFC-11", help3, 1);
+  NC_GET_DOUBLE("J_CFC-12", help4, 1);
   for (ip = 0; ip < photo->np; ip++)
     for (is = 0; is < photo->nsza; is++)
       for (io = 0; io < photo->no3c; io++) {
@@ -2206,10 +2206,10 @@ void read_clim_photo(
 	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
       }
 
-  NC_GET_DOUBLE("o2", help1, 1);
-  NC_GET_DOUBLE("o3_1", help2, 1);
-  NC_GET_DOUBLE("o3_2", help3, 1);
-  NC_GET_DOUBLE("h2o2", help4, 1);
+  NC_GET_DOUBLE("J_O2", help1, 1);
+  NC_GET_DOUBLE("J_O3b", help2, 1);
+  NC_GET_DOUBLE("J_O3a", help3, 1);
+  NC_GET_DOUBLE("J_H2O2", help4, 1);
   for (ip = 0; ip < photo->np; ip++)
     for (is = 0; is < photo->nsza; is++)
       for (io = 0; io < photo->no3c; io++) {
@@ -2222,6 +2222,12 @@ void read_clim_photo(
 	photo->h2o2[ip][is][io] =
 	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
       }
+  NC_GET_DOUBLE("J_H2O", help1, 1);
+  for (ip = 0; ip < photo->np; ip++)
+    for (is = 0; is < photo->nsza; is++)
+      for (io = 0; io < photo->no3c; io++)
+	photo->h2o[ip][is][io] =
+	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
   free(help1);
   free(help2);
   free(help3);
@@ -2924,7 +2930,7 @@ void read_ctl(
 
   /* Climatological data... */
   scan_ctl(filename, argc, argv, "CLIM_PHOTO", -1,
-	   "../../data/photolysis_rates.nc", ctl->clim_photo);
+	   "../../data/clams_photolysis_rates.nc", ctl->clim_photo);
   scan_ctl(filename, argc, argv, "CLIM_HNO3_FILENAME", -1,
 	   "../../data/gozcards_HNO3.nc", ctl->clim_hno3_filename);
   scan_ctl(filename, argc, argv, "CLIM_OH_FILENAME", -1,

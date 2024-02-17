@@ -1729,6 +1729,9 @@ typedef struct {
 
   /*! H2O2 photolysis rate [1/s]. */
   double h2o2[CP][CSZA][CO3];
+  
+  /*! H2O photolysis rate [1/s]. */
+  double h2o[CP][CSZA][CO3];
 
 } clim_photo_t;
 

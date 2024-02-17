@@ -154,7 +154,8 @@ void kpp_chem_initialize(
 			       atm->p[ip], sza, o3c);
     ko3_hv2 = clim_photo(clim->photo.o3_2, &(clim->photo),
 			       atm->p[ip], sza, o3c);
-    kh2o_hv = ROETH_PHOTOL(1.79e-10, 7.70686, 0.75420, sza);
+    kh2o_hv = clim_photo(clim->photo.h2o, &(clim->photo),
+			       atm->p[ip], sza, o3c);
     kh2o2_hv = clim_photo(clim->photo.h2o2, &(clim->photo),
 			       atm->p[ip], sza, o3c);
     kn2o_hv = clim_photo(clim->photo.n2o, &(clim->photo),
