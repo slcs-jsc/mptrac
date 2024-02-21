@@ -444,6 +444,11 @@ int main(
       }
     }
 
+    /* Initialize quantity of total loss rate ... */
+    if (ctl.qnt_loss_rate > 0)
+      for (int ip = 0; ip < atm->np; ip++)
+        atm->q[ctl.qnt_loss_rate][ip] = 0;
+
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -1029,6 +1034,8 @@ void module_decay(
 	atm->q[ctl->qnt_mloss_decay][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_loss_rate >= 0)
+        atm->q[ctl->qnt_loss_rate][ip] += 1 / tdec;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1226,6 +1233,8 @@ void module_dry_deposition(
 	atm->q[ctl->qnt_mloss_dry][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_loss_rate >= 0)
+        atm->q[ctl->qnt_loss_rate][ip] += v_dep / dz;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1681,6 +1690,8 @@ void module_oh_chem(
 	atm->q[ctl->qnt_mloss_oh][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_loss_rate >= 0)
+        atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1754,6 +1765,8 @@ void module_h2o2_chem(
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_loss_rate >= 0)
+        atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -2556,6 +2569,8 @@ void module_wet_deposition(
 	atm->q[ctl->qnt_mloss_wet][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_loss_rate >= 0)
+        atm->q[ctl->qnt_loss_rate][ip] += lambda;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;

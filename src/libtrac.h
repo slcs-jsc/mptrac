@@ -980,6 +980,9 @@ typedef struct {
   /*! Quantity array index for total mass loss due to exponential decay. */
   int qnt_mloss_decay;
 
+  /*! Quantity array index for total loss rate. */
+  int qnt_loss_rate;
+
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
 
