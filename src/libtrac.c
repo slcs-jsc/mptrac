@@ -2454,6 +2454,7 @@ void read_ctl(
   ctl->qnt_o1d = -1;
   ctl->qnt_mloss_oh = -1;
   ctl->qnt_mloss_h2o2 = -1;
+  ctl->qnt_mloss_kpp = -1;
   ctl->qnt_mloss_wet = -1;
   ctl->qnt_mloss_dry = -1;
   ctl->qnt_mloss_decay = -1;
@@ -2557,6 +2558,8 @@ void read_ctl(
       SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
       SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",
+	      "kg")
+      SET_QNT(qnt_mloss_kpp, "mloss_kpp", "mass loss due to kpp chemistry",
 	      "kg")
       SET_QNT(qnt_mloss_wet, "mloss_wet", "mass loss due to wet deposition",
 	      "kg")

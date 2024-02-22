@@ -971,6 +971,9 @@ typedef struct {
   /*! Quantity array index for total mass loss due to H2O2 chemistry. */
   int qnt_mloss_h2o2;
 
+  /*! Quantity array index for total mass loss due to kpp chemistry. */
+  int qnt_mloss_kpp;
+
   /*! Quantity array index for total mass loss due to wet deposition. */
   int qnt_mloss_wet;
 
