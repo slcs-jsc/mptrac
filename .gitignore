@@ -42,6 +42,7 @@ src/time2jsec
 src/tnat
 src/trac
 src/tropo
+src/tropo_clim
 src/tropo_sample
 src/tropo_zm
 src/wind

@@ -2567,8 +2567,7 @@ void read_ctl(
 	      "kg")
       SET_QNT(qnt_mloss_decay, "mloss_decay",
 	      "mass loss due to exponential decay", "kg")
-      SET_QNT(qnt_loss_rate, "loss_rate",
-	      "total loss rate", "s^-1")
+      SET_QNT(qnt_loss_rate, "loss_rate", "total loss rate", "s^-1")
       SET_QNT(qnt_psat, "psat", "saturation pressure over water", "hPa")
       SET_QNT(qnt_psice, "psice", "saturation pressure over ice", "hPa")
       SET_QNT(qnt_pw, "pw", "partial water vapor pressure", "hPa")
