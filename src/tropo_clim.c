@@ -45,7 +45,7 @@ int main(
 
   static char varname[LEN];
 
-  static double time0, lons[EX], lats[EY], zm[EX][EY], zs[EX][EY], pm[EX][EY],
+  static double lons[EX], lats[EY], zm[EX][EY], zs[EX][EY], pm[EX][EY],
     ps[EX][EY], tm[EX][EY], ts[EX][EY], qm[EX][EY], qs[EX][EY], o3m[EX][EY],
     o3s[EX][EY];
 
@@ -102,10 +102,8 @@ int main(
     for (int it = 0; it < ntime; it++) {
 
       /* Get time from filename... */
-      if (!init) {
+      if (!init)
 	init = 1;
-	time0 = time_from_filename(argv[iarg], 13);
-      }
 
       /* Read data... */
       start[0] = (size_t) it;
@@ -196,28 +194,27 @@ int main(
 
   /* Write header... */
   fprintf(out,
-	  "# $1 = time [s]\n"
-	  "# $2 = longitude [deg]\n"
-	  "# $3 = latitude [deg]\n"
-	  "# $4 = tropopause height (mean) [km]\n"
-	  "# $5 = tropopause pressure (mean) [hPa]\n"
-	  "# $6 = tropopause temperature (mean) [K]\n"
-	  "# $7 = tropopause water vapor (mean) [ppv]\n"
-	  "# $8 = tropopause ozone (mean) [ppv]\n"
-	  "# $9 = tropopause height (sigma) [km]\n"
-	  "# $10 = tropopause pressure (sigma) [hPa]\n"
-	  "# $11 = tropopause temperature (sigma) [K]\n"
-	  "# $12 = tropopause water vapor (sigma) [ppv]\n"
-	  "# $13 = tropopause ozone (sigma) [ppv]\n"
-	  "# $14 = number of data points\n"
-	  "# $15 = occurrence frequency [%%]\n");
+	  "# $1 = longitude [deg]\n"
+	  "# $2 = latitude [deg]\n"
+	  "# $3 = tropopause height (mean) [km]\n"
+	  "# $4 = tropopause pressure (mean) [hPa]\n"
+	  "# $5 = tropopause temperature (mean) [K]\n"
+	  "# $6 = tropopause water vapor (mean) [ppv]\n"
+	  "# $7 = tropopause ozone (mean) [ppv]\n"
+	  "# $8 = tropopause height (sigma) [km]\n"
+	  "# $9 = tropopause pressure (sigma) [hPa]\n"
+	  "# $10 = tropopause temperature (sigma) [K]\n"
+	  "# $11 = tropopause water vapor (sigma) [ppv]\n"
+	  "# $12 = tropopause ozone (sigma) [ppv]\n"
+	  "# $13 = number of data points\n"
+	  "# $14 = occurrence frequency [%%]\n");
 
   /* Write output... */
   for (ilat = 0; ilat < nlat; ilat++) {
     fprintf(out, "\n");
     for (ilon = 0; ilon < nlon; ilon++)
-      fprintf(out, "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %d %g\n",
-	      time0, lons[ilon], lats[ilat], zm[ilon][ilat], pm[ilon][ilat],
+      fprintf(out, "%g %g %g %g %g %g %g %g %g %g %g %g %d %g\n",
+	      lons[ilon], lats[ilat], zm[ilon][ilat], pm[ilon][ilat],
 	      tm[ilon][ilat], qm[ilon][ilat], o3m[ilon][ilat], zs[ilon][ilat],
 	      ps[ilon][ilat], ts[ilon][ilat], qs[ilon][ilat], o3s[ilon][ilat],
 	      n[ilon][ilat], 100. * n[ilon][ilat] / nt[ilon][ilat]);
