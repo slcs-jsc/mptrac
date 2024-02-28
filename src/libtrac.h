@@ -64,6 +64,9 @@
 
 #ifdef _OPENACC
 #include "openacc.h"
+#endif
+
+#ifdef CURAND
 #include "curand.h"
 #endif
 
