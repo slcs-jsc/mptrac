@@ -1969,12 +1969,6 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
-  /*! Zeta [K]. */
-  float zeta[EX][EY][EP];
-
-  /*! Vertical velocity [K/s]. */
-  float zeta_dot[EX][EY][EP];
-
   /*! Zeta on model levels [K]. */
   float zetal[EX][EY][EP];
 

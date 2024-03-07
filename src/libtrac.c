@@ -4132,14 +4132,14 @@ void read_met_levels(
       ERRMSG("Cannot read meridional wind!");
     if (!read_met_nc_3d(ncid, "W", "OMEGA", ctl, met, met->w, 0.01f, 1))
       WARN("Cannot read vertical velocity!");
-    if (!read_met_nc_3d(ncid, "ZETA", "zeta", ctl, met, met->zeta, 1.0, 1))
+    if (!read_met_nc_3d(ncid, "ZETA", "zeta", ctl, met, met->zetal, 1.0, 1))
       WARN("Cannot read ZETA in meteo data!");
     if (ctl->vert_coord_ap == 1) {
       if (!read_met_nc_3d
-	  (ncid, "ZETA_DOT_TOT", "zeta_dot_clr", ctl, met, met->zeta_dot,
+	  (ncid, "ZETA_DOT_TOT", "zeta_dot_clr", ctl, met, met->zeta_dotl,
 	   0.00001157407f, 1)) {
 	if (!read_met_nc_3d
-	    (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", ctl, met, met->zeta_dot,
+	    (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", ctl, met, met->zeta_dotl,
 	     0.00001157407f, 1)) {
 	  WARN("Cannot read vertical velocity!");
 	}
@@ -4180,8 +4180,6 @@ void read_met_levels(
 	for (int ip = 0; ip < met->np; ip++) {
 	  met->ul[ix][iy][ip] = met->u[ix][iy][ip];
 	  met->vl[ix][iy][ip] = met->v[ix][iy][ip];
-	  met->zetal[ix][iy][ip] = met->zeta[ix][iy][ip];
-	  met->zeta_dotl[ix][iy][ip] = met->zeta_dot[ix][iy][ip];
 	}
     /* Original number of vertical levels... */
     met->npl = met->np;
