@@ -1681,9 +1681,15 @@ void module_oh_chem(
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
+    /* Correction factor for high SO2 concentration...*/
+    double cor;
+    if (ctl->qnt_Cx >= 0)
+      cor = atm->q[ctl->qnt_Cx][ip]>1.9e-9 ? 1.67971e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.891564) : 1;
+    else
+      cor = 1;
     /* Calculate exponential decay... */
     double rate_coef = k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
-				   atm->lat[ip], atm->p[ip]) * M;
+				   atm->lat[ip], atm->p[ip]) * M * cor;
     double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
@@ -1727,10 +1733,6 @@ void module_h2o2_chem(
     if (!(lwc > 0))
       continue;
 
-    /* Check implicit volume mixing ratio... */
-    if (atm->q[ctl->qnt_Cx][ip] == 0)
-      continue;
-
     /* Get temperature... */
     double t;
     INTPOL_3D(t, 0);
@@ -1747,12 +1749,16 @@ void module_h2o2_chem(
 
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
-
-    /* Volume mixing ratio of H2O2 (Barth et al., 1989)... */
-    double SO2 = atm->q[ctl->qnt_Cx][ip] * 1e9;	/* vmr, unit: ppbv */
+    
+    /* Correction factor for high SO2 concentration...*/
+    double cor;
+    if (ctl->qnt_Cx >= 0)
+      cor = atm->q[ctl->qnt_Cx][ip]>1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
+    else
+      cor = 1;
     double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
-      * M * 0.59 * exp(-0.687 * SO2) * 1000 / AVO;	/* unit: mol/L */
+      * M * cor * 1000 / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
