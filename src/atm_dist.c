@@ -200,12 +200,16 @@ int main(
 	lv2[ip] += fabs(z2_old[ip] - z2);
 
 	/* Get relative transport deviations... */
-	if (lh1[ip] + lh2[ip] > 0)
+	if (lh1[ip] + lh2[ip] > 0) {
 	  rhtd[np] = 200. * DIST(x1, x2) / (lh1[ip] + lh2[ip]);
-	if (lv1[ip] + lv2[ip] > 0)
+	  rhtd[np] = round(rhtd[np] * 1e12) / 1e12;
+	}
+	if (lv1[ip] + lv2[ip] > 0) {
 	  rvtd[np] = 200. * (z1 - z2) / (lv1[ip] + lv2[ip]);
+	  rvtd[np] = round(rvtd[np] * 1e12) / 1e12;
+	}
       }
-
+      
       /* Get relative transport deviations... */
       for (iq = 0; iq < ctl.nq; iq++)
 	rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
