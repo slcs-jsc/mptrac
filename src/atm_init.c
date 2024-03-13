@@ -87,21 +87,25 @@ int main(
 	  for (irep = 0; irep < rep; irep++) {
 
 	    /* Set position... */
-	    atm->time[atm->np]
-	      = (t + gsl_ran_gaussian_ziggurat(rng, st / 2.3548)
-		 + ut * (gsl_rng_uniform(rng) - 0.5));
-	    atm->p[atm->np]
-	      = P(z + gsl_ran_gaussian_ziggurat(rng, sz / 2.3548)
-		  + uz * (gsl_rng_uniform(rng) - 0.5));
-	    atm->lon[atm->np]
-	      = (lon + gsl_ran_gaussian_ziggurat(rng, slon / 2.3548)
-		 + gsl_ran_gaussian_ziggurat(rng, DX2DEG(sx, lat) / 2.3548)
-		 + ulon * (gsl_rng_uniform(rng) - 0.5));
+	    double rg = gsl_ran_gaussian_ziggurat(rng, st / 2.3548);
+	    double ru = ut * (gsl_rng_uniform(rng) - 0.5);
+	    atm->time[atm->np] = (t + rg + ru);
+
+	    rg = gsl_ran_gaussian_ziggurat(rng, sz / 2.3548);
+	    ru = uz * (gsl_rng_uniform(rng) - 0.5);
+	    atm->p[atm->np] = P(z + rg + ru);
+
+	    rg = gsl_ran_gaussian_ziggurat(rng, slon / 2.3548);
+	    double rx =
+	      gsl_ran_gaussian_ziggurat(rng, DX2DEG(sx, lat) / 2.3548);
+	    ru = ulon * (gsl_rng_uniform(rng) - 0.5);
+	    atm->lon[atm->np] = (lon + rg + rx + ru);
+
 	    do {
-	      atm->lat[atm->np]
-		= (lat + gsl_ran_gaussian_ziggurat(rng, slat / 2.3548)
-		   + gsl_ran_gaussian_ziggurat(rng, DY2DEG(sx) / 2.3548)
-		   + ulat * (gsl_rng_uniform(rng) - 0.5));
+	      rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);
+	      rx = gsl_ran_gaussian_ziggurat(rng, DY2DEG(sx) / 2.3548);
+	      ru = ulat * (gsl_rng_uniform(rng) - 0.5);
+	      atm->lat[atm->np] = (lat + rg + rx + ru);
 	    } while (even && gsl_rng_uniform(rng) >
 		     fabs(cos(atm->lat[atm->np] * M_PI / 180.)));
 

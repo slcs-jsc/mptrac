@@ -1681,10 +1681,12 @@ void module_oh_chem(
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
-    /* Correction factor for high SO2 concentration...*/
+    /* Correction factor for high SO2 concentration... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>1.9e-9 ? 1.67971e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.891564) : 1;
+      cor =
+	atm->q[ctl->qnt_Cx][ip] >
+	1.9e-9 ? 1.67971e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.891564) : 1;
     else
       cor = 1;
     /* Calculate exponential decay... */
@@ -1749,11 +1751,13 @@ void module_h2o2_chem(
 
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
-    
-    /* Correction factor for high SO2 concentration...*/
+
+    /* Correction factor for high SO2 concentration... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
+      cor =
+	atm->q[ctl->qnt_Cx][ip] >
+	1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
     else
       cor = 1;
     double h2o2 = H_h2o2
