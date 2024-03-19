@@ -3028,6 +3028,8 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE_OUT", -1, "-1", NULL);
   if (ctl->atm_type_out == -1)
     ctl->atm_type_out = ctl->atm_type;
+  ctl->obs_type =
+    (int) scan_ctl(filename, argc, argv, "OBS_TYPE", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -5407,6 +5409,54 @@ void read_obs(
   LOG(2, "Observation range: %g ... %g", mini, maxi);
 }
 
+void read_obs_nc(
+  const char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs) {
+
+  int ncid, varid;
+
+  /* Open the NetCDF file... */
+  LOG(1, "Read observation data: %s", filename);
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+    ERRMSG("Cannot open file!");
+
+  /* Read the observations from the NetCDF file... */
+  NC_INQ_DIM("nobs", nobs, 1, NOBS); 
+  NC_GET_DOUBLE("time",rt,1)
+  NC_GET_DOUBLE("alt",rz,1)
+  NC_GET_DOUBLE("lon",rlon,1)
+  NC_GET_DOUBLE("lat",rlat,1)
+  NC_GET_DOUBLE("obs",robs,1)
+
+  NC(nc_close(ncid));
+
+  /* Check time... */
+  for (int i = 1; i < *nobs; i++)
+    if (rt[i] < rt[i - 1])
+      ERRMSG("Time must be ascending!");
+
+  /* Write info... */
+  int n = *nobs;
+  double mini, maxi;
+  LOG(2, "Number of observations: %d", *nobs);
+  gsl_stats_minmax(&mini, &maxi, rt, 1, (size_t) n);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rz, 1, (size_t) n);
+  LOG(2, "Altitude range: %g ... %g km", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlon, 1, (size_t) n);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlat, 1, (size_t) n);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
+  LOG(2, "Observation range: %g ... %g", mini, maxi);
+}
+
+
 /*****************************************************************************/
 
 double scan_ctl(
@@ -6258,7 +6308,10 @@ void write_csi(
 	  NOBS);
 
     /* Read observation data... */
-    read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    if (ctl->obs_type == 0)
+      read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    else if (ctl->obs_type == 1)
+      read_obs_nc(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Read kernel data... */
     if (ctl->csi_kernel[0] != '-')
@@ -7245,7 +7298,10 @@ void write_prof(
 	  NOBS);
 
     /* Read observation data... */
-    read_obs(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    if (ctl->obs_type == 0)
+      read_obs(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    else if (ctl->obs_type == 1)
+      read_obs_nc(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -7455,7 +7511,10 @@ void write_sample(
 	  NOBS);
 
     /* Read observation data... */
-    read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    if (ctl->obs_type == 0)
+      read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    else if (ctl->obs_type == 1)
+      read_obs_nc(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Read kernel data... */
     if (ctl->sample_kernel[0] != '-')

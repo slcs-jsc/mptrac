@@ -1466,6 +1466,10 @@ typedef struct {
      (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
   int atm_type;
 
+  /*! Type of observation data files
+     (0=ASCII, 1=netCDF). */
+  int obs_type;
+
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
@@ -2557,8 +2561,18 @@ void read_met_tropo(
   clim_t * clim,
   met_t * met);
 
-/*! Read observation data. */
+/*! Read observation data in ASCII format. */
 void read_obs(
+  const char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs);
+
+/*! Read observation data in netCDF format. */
+void read_obs_nc(
   const char *filename,
   double *rt,
   double *rz,
