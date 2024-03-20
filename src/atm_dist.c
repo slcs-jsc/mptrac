@@ -205,7 +205,7 @@ int main(
 	if (lv1[ip] + lv2[ip] > 0)
 	  rvtd[np] = 200. * (z1 - z2) / (lv1[ip] + lv2[ip]);
       }
-      
+
       /* Get relative transport deviations... */
       for (iq = 0; iq < ctl.nq; iq++)
 	rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])

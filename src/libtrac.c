@@ -5364,6 +5364,50 @@ void read_met_tropo(
 
 void read_obs(
   const char *filename,
+  ctl_t * ctl,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs) {
+
+  /* Write info... */
+  LOG(1, "Read observation data: %s", filename);
+
+  /* Read data... */
+  if (ctl->obs_type == 0)
+    read_obs_asc(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, nobs);
+  else if (ctl->obs_type == 1)
+    read_obs_nc(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, nobs);
+  else
+    ERRMSG("Set OBS_TYPE to 0 or 1!");
+
+  /* Check time... */
+  for (int i = 1; i < *nobs; i++)
+    if (rt[i] < rt[i - 1])
+      ERRMSG("Time must be ascending!");
+
+  /* Write info... */
+  int n = *nobs;
+  double mini, maxi;
+  LOG(2, "Number of observations: %d", *nobs);
+  gsl_stats_minmax(&mini, &maxi, rt, 1, (size_t) n);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rz, 1, (size_t) n);
+  LOG(2, "Altitude range: %g ... %g km", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlon, 1, (size_t) n);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, rlat, 1, (size_t) n);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
+  LOG(2, "Observation range: %g ... %g", mini, maxi);
+}
+
+/*****************************************************************************/
+
+void read_obs_asc(
+  const char *filename,
   double *rt,
   double *rz,
   double *rlon,
@@ -5373,7 +5417,6 @@ void read_obs(
 
   /* Open observation data file... */
   FILE *in;
-  LOG(1, "Read observation data: %s", filename);
   if (!(in = fopen(filename, "r")))
     ERRMSG("Cannot open file!");
 
@@ -5387,27 +5430,9 @@ void read_obs(
 
   /* Close observation data file... */
   fclose(in);
-
-  /* Check time... */
-  for (int i = 1; i < *nobs; i++)
-    if (rt[i] < rt[i - 1])
-      ERRMSG("Time must be ascending!");
-
-  /* Write info... */
-  int n = *nobs;
-  double mini, maxi;
-  LOG(2, "Number of observations: %d", *nobs);
-  gsl_stats_minmax(&mini, &maxi, rt, 1, (size_t) n);
-  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, rz, 1, (size_t) n);
-  LOG(2, "Altitude range: %g ... %g km", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, rlon, 1, (size_t) n);
-  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, rlat, 1, (size_t) n);
-  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
-  LOG(2, "Observation range: %g ... %g", mini, maxi);
 }
+
+/*****************************************************************************/
 
 void read_obs_nc(
   const char *filename,
@@ -5420,42 +5445,21 @@ void read_obs_nc(
 
   int ncid, varid;
 
-  /* Open the NetCDF file... */
-  LOG(1, "Read observation data: %s", filename);
+  /* Open netCDF file... */
   if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
     ERRMSG("Cannot open file!");
 
   /* Read the observations from the NetCDF file... */
-  NC_INQ_DIM("nobs", nobs, 1, NOBS); 
-  NC_GET_DOUBLE("time",rt,1)
-  NC_GET_DOUBLE("alt",rz,1)
-  NC_GET_DOUBLE("lon",rlon,1)
-  NC_GET_DOUBLE("lat",rlat,1)
-  NC_GET_DOUBLE("obs",robs,1)
+  NC_INQ_DIM("nobs", nobs, 1, NOBS);
+  NC_GET_DOUBLE("time", rt, 1);
+  NC_GET_DOUBLE("alt", rz, 1);
+  NC_GET_DOUBLE("lon", rlon, 1);
+  NC_GET_DOUBLE("lat", rlat, 1);
+  NC_GET_DOUBLE("obs", robs, 1);
 
+  /* Close file... */
   NC(nc_close(ncid));
-
-  /* Check time... */
-  for (int i = 1; i < *nobs; i++)
-    if (rt[i] < rt[i - 1])
-      ERRMSG("Time must be ascending!");
-
-  /* Write info... */
-  int n = *nobs;
-  double mini, maxi;
-  LOG(2, "Number of observations: %d", *nobs);
-  gsl_stats_minmax(&mini, &maxi, rt, 1, (size_t) n);
-  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, rz, 1, (size_t) n);
-  LOG(2, "Altitude range: %g ... %g km", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, rlon, 1, (size_t) n);
-  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, rlat, 1, (size_t) n);
-  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
-  LOG(2, "Observation range: %g ... %g", mini, maxi);
 }
-
 
 /*****************************************************************************/
 
@@ -6308,10 +6312,7 @@ void write_csi(
 	  NOBS);
 
     /* Read observation data... */
-    if (ctl->obs_type == 0)
-      read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
-    else if (ctl->obs_type == 1)
-      read_obs_nc(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    read_obs(ctl->csi_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Read kernel data... */
     if (ctl->csi_kernel[0] != '-')
@@ -7298,10 +7299,7 @@ void write_prof(
 	  NOBS);
 
     /* Read observation data... */
-    if (ctl->obs_type == 0)
-      read_obs(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
-    else if (ctl->obs_type == 1)
-      read_obs_nc(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    read_obs(ctl->prof_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -7511,10 +7509,7 @@ void write_sample(
 	  NOBS);
 
     /* Read observation data... */
-    if (ctl->obs_type == 0)
-      read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
-    else if (ctl->obs_type == 1)
-      read_obs_nc(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    read_obs(ctl->sample_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Read kernel data... */
     if (ctl->sample_kernel[0] != '-')

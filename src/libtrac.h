@@ -799,9 +799,6 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
-  int atm_type_out;
-
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
   int cpl_zeta_and_press_modules;
@@ -1465,6 +1462,10 @@ typedef struct {
   /*! Type of atmospheric data files
      (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
   int atm_type;
+
+  /*! Type of atmospheric data files for output
+     (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  int atm_type_out;
 
   /*! Type of observation data files
      (0=ASCII, 1=netCDF). */
@@ -2561,8 +2562,19 @@ void read_met_tropo(
   clim_t * clim,
   met_t * met);
 
-/*! Read observation data in ASCII format. */
+/*! Read observation data. */
 void read_obs(
+  const char *filename,
+  ctl_t * ctl,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs);
+
+/*! Read observation data in ASCII format. */
+void read_obs_asc(
   const char *filename,
   double *rt,
   double *rz,
