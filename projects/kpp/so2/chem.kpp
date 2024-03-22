@@ -35,16 +35,25 @@ extern double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
 #include "libtrac.h"
 #include "kpp_chem.h"
 
-double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
+double  k3rd_jpl (  double M, double A0, double B0, double A1, double B1)
 {
   double K0, K1, Kf;
 
-  K0 = (double)A0 * pow( (298.0/TEMP), (double)B0 ) * M;
-  K1 = (double)A1 * pow( (298.0/TEMP), (double)B1 );
-  Kf = (K0/(1.0+K0/K1)) *
-    pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0/K1)),2 ) ) ) );
+  K0 = A0 * pow( (298.0/TEMP), B0 ) ;
+  K1 = A1 * pow( (298.0/TEMP), B1 );
+  Kf = (K0*M/(1.0+K0*M/K1)) *
+    pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0*M/K1)),2 ) ) ) );
 
-  return (double)Kf;
+  return Kf;
+}
+
+double arr_ab(  double A0, double B0 )
+{
+  double ARR_RES;
+
+  ARR_RES = A0 * exp( -B0/TEMP );
+
+  return ARR_RES;
 }
 
 double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
@@ -55,6 +64,9 @@ void kpp_chem_initialize(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  double * var,
+  double * fix,
+  double * rconst,
 	int ip
 ){
 
@@ -63,18 +75,17 @@ void kpp_chem_initialize(
       INTPOL_INIT;
       INTPOL_3D(t, 1);
       INTPOL_3D(lwc, 1);
-			TEMP = t;
 
       /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
       double M = MOLEC_DENS(atm->p[ip], t); 
 
-    VAR[ind_SO2] = atm->q[ctl->qnt_Cx][ip] * M;
+    var[ind_SO2] = atm->q[ctl->qnt_Cx][ip] * M;
       if (ctl->qnt_Ch2o2 >= 0)
-    VAR[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip] * M;
-		//FIX[indf_OH]	= clim_zm(clim->oh, atm->time[ip], atm->lat[ip], atm->p[ip]);
-		FIX[indf_OH] = clim_oh(ctl, clim, atm->time[ip],
+    var[ind_H2O2] = atm->q[ctl->qnt_Ch2o2][ip] * M;
+	
+		fix[indf_OH] = clim_oh(ctl, clim, atm->time[ip],
 		       atm->lon[ip], atm->lat[ip], atm->p[ip]) * M;
-      FIX[indf_HO2] = clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M;
+      fix[indf_HO2] = clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]) * M;
 
       /* Reaction rate (Berglen et al., 2004)... */
       /* Rate of aqueous phase oxidation of SO2 with H2O2. (Maass et al. 1999)  */
@@ -93,14 +104,14 @@ void kpp_chem_initialize(
 			//MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
       double CWC = lwc * rho_air / 1000;
 
-      KaqSO2_H2O2 = k * K_1S * H_SO2 * H_h2o2 * CWC;	//Unit: (molec/cm3)^-1  s-1
+      rconst[0] = k * K_1S * H_SO2 * H_h2o2 * CWC;	//Unit: (molec/cm3)^-1  s-1
 
 
 
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 19-05) ... */
-			KSO2_OH = k3rd_jpl(M, 2.9e-31, 4.1, 1.7e-12, -0.2); //(molec/cm3)^(-1)  s-1, effective 2nd order coef
-			KHO2_HO2 = ARR_ab(3e-13, -460) + ARR_ab(2.1e-33 * M, -920) ;
+			rconst[1] = k3rd_jpl(M, 2.9e-31, 4.1, 1.7e-12, -0.2); //(molec/cm3)^(-1)  s-1, effective 2nd order coef
+			rconst[2] = arr_ab(3e-13, -460) + arr_ab(2.1e-33 * M, -920) ;
 
 }
 #ENDINLINE
@@ -117,6 +128,7 @@ void kpp_chem_output2atm(
 	ctl_t * ctl, 
 	met_t * met0,
   met_t * met1,
+  double * var,
 	int ip){
 
 		double t;
@@ -126,10 +138,15 @@ void kpp_chem_output2atm(
 		
 		/*Output to air parcel.. */
     if (ctl->qnt_Ch2o2 >= 0)
-			atm->q[ctl->qnt_Ch2o2][ip] = VAR[ind_H2O2] / M;
+			atm->q[ctl->qnt_Ch2o2][ip] = var[ind_H2O2] / M;
     if (atm->q[ctl->qnt_Cx][ip] != 0) {
-			atm->q[ctl->qnt_m][ip] *= VAR[ind_SO2] / (atm->q[ctl->qnt_Cx][ip] * M);
-			atm->q[ctl->qnt_Cx][ip] = VAR[ind_SO2] / M;
+      if (ctl->qnt_loss_rate >= 0)
+        atm->q[ctl->qnt_loss_rate][ip] += -log(var[ind_SO2] / (atm->q[ctl->qnt_Cx][ip] * M)) / ctl->dt_kpp;
+      if (ctl->qnt_mloss_kpp >= 0)
+  	    atm->q[ctl->qnt_mloss_kpp][ip]
+  	      += atm->q[ctl->qnt_m][ip] * (1 - var[ind_SO2] / (atm->q[ctl->qnt_Cx][ip] * M));
+      atm->q[ctl->qnt_m][ip] *= var[ind_SO2] / (atm->q[ctl->qnt_Cx][ip] * M);
+      atm->q[ctl->qnt_Cx][ip] = var[ind_SO2] / M;
 		}
 }
 

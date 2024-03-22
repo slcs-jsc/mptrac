@@ -1603,7 +1603,6 @@ void module_chemgrid(
 				 izs[ip], ctl->chemgrid_nz)];
 
 	/* Calculate volume mixing ratio... */
-	if (ctl->qnt_Cx >= 0)
 	  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
 	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
       }
@@ -1684,7 +1683,7 @@ void module_oh_chem(
     /* Correction factor for high SO2 concentration...*/
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>1.9e-9 ? 1.67971e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.891564) : 1;
+      cor = atm->q[ctl->qnt_Cx][ip]>1.564e-9 ? 2.64157e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.860593) : 1;
     else
       cor = 1;
     /* Calculate exponential decay... */
@@ -1753,7 +1752,7 @@ void module_h2o2_chem(
     /* Correction factor for high SO2 concentration...*/
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
+      cor = atm->q[ctl->qnt_Cx][ip]>7.8776e-10 ? 3.84264e-06 * pow(atm->q[ctl->qnt_Cx][ip], -0.59486) : 1;
     else
       cor = 1;
     double h2o2 = H_h2o2
@@ -1862,41 +1861,79 @@ void module_kpp_chem(
   /* Set timer... */
   SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
-  /* Loop over particles... */
-  const int np = atm->np;
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-    if (dt[ip] > 0) {
-
-      /* Set species... */
-      ALLOC(VAR, double,
-	    NVAR);
-      ALLOC(FIX, double,
-	    NFIX);
-
-      /* Sett range of time steps... */
-      STEPMIN = 0;
-      STEPMAX = 900.0;
-
-      /* Set relative & absolute tolerances... */
-      for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-3;
-	ATOL[i] = 1.0;
-      }
-
-      /* Initialize... */
-      kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
-
-      /* Integrate... */
-      INTEGRATE(0, ctl->dt_kpp);
-
-      /* Output to air parcel.. */
-      kpp_chem_output2atm(atm, ctl, met0, met1, ip);
-
-      /* Free... */
-      free(VAR);
-      free(FIX);
+  size_t nvar=NVAR, nfix=NFIX, nreact=NREACT;
+  // double *var, *fix, *rconst;
+  // ALLOC(var, double, NVAR*np);
+  // ALLOC(fix, double, NFIX*np);
+  // ALLOC(rconst, double, NREACT*np);
+  // double var[nvar], fix[nfix], rconst[nreact];
+  double rtol[NVAR], atol[NVAR];
+    for (size_t i = 0; i < NVAR; i++) {
+  	  rtol[i] = 1.0e-3;
+  	  atol[i] = 1.0;
     }
+
+  /* Loop over particles... */
+#ifdef _OPENACC
+#pragma acc data copy(rtol[0:nvar],atol[0:nvar],nvar,nfix,nreact)
+#endif
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {  
+//     double *var, *fix, *rconst;
+// #ifdef _OPENACC
+//   var = acc_malloc(NVAR*sizeof(double));
+//   fix = acc_malloc(NFIX*sizeof(double));
+//   rconst = acc_malloc(NREACT*sizeof(double));
+// #else 
+//   ALLOC(var, double, NVAR);
+//   ALLOC(fix, double, NFIX);
+//   ALLOC(rconst, double, NREACT);
+// #endif
+    double var[nvar], fix[nfix], rconst[nreact];      
+    // qnt_rconst
+    /* Set relative & absolute tolerances... */
+    // double rtol[NVAR], atol[NVAR];
+    // for (size_t i = 0; i < NVAR; i++) {
+  	//   rtol[i] = 1.0e-3;
+  	//   atol[i] = 1.0;
+    // }
+
+    /* Initialize... */
+    // kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
+    kpp_chem_initialize(ctl, clim, met0, met1, atm, var, fix, rconst, ip);
+
+    /* Integrate... */
+    // INTEGRATE(0, ctl->dt_kpp);
+    // INTEGRATE(0, ctl->dt_kpp, var, fix, rconst);
+    double  rpar[20];
+    int ipar[20];
+
+    for ( int i = 0; i < 20; i++ ) {
+     ipar[i] = 0;
+     rpar[i] = 0.0;
+    } /* for */
+   
+    ipar[0] = 1;    /* 0=non-autonomous, 1=time-dependent */
+    ipar[1] = 1;    /* vector tolerances */
+    rpar[2] = 900.0; /* starting step, minimum step */
+    ipar[3] = 4;    /* choice of the method */
+
+    Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
+               atol, rtol,
+               &FunTemplate, &JacTemplate,
+               rpar, ipar);
+
+    /* Output to air parcel.. */
+    // kpp_chem_output2atm(atm, ctl, met0, met1, ip);
+    kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
+// #ifdef _OPENACC
+//   acc_free(var);
+//   acc_free(fix);
+//   acc_free(rconst);
+// #else
+//   free(var);
+//   free(fix);
+//   free(rconst);
+// #endif
   }
 }
 
@@ -1956,6 +1993,8 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+  if (ctl->qnt_Cx >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
   if (ctl->qnt_Ch2o >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
   if (ctl->qnt_Co3 >= 0)

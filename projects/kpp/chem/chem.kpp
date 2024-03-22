@@ -1,4 +1,4 @@
-#INTEGRATOR rosenbrock
+#INTEGRATOR rosenbrock_noglobalvar
 #LANGUAGE   C
 #DRIVER     none
 #HESSIAN      off                   
@@ -17,14 +17,6 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
             ko2_hv, ko3_hv1, ko3_hv2, kh2o_hv, kh2o2_hv, kn2o_hv,		\
             kccl3f_hv, kcl2f2_hv;
 
-#pragma omp threadprivate(ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
-                          ko1d_n2, ko1d_n2_2, ko1d_n2o, ko1d_ch4, ko1d_co2, ko1d_ccl3f,		\
-                          ko1d_ccl2f2, ko3p_oh, ko3p_ho2, ko3p_h2o2, kh_o2_M, 		\
-                          kh_o3, kh_ho2, kh_ho2_2, kh_ho2_3, koh_o3, koh_oh, koh_oh_M,		\
-                          koh_ho2, koh_h2o2, kho2_o3, kho2_ho2,	kso2_h2o2, kso2_oh,	\
-                          ko2_hv, ko3_hv1, ko3_hv2, kh2o_hv, kh2o2_hv, kn2o_hv,		\
-                          kccl3f_hv, kcl2f2_hv,		\
-                          RCONST,RTOL,ATOL,STEPMIN,STEPMAX,VAR,FIX,TEMP)
 
 #ENDINLINE
 
@@ -34,34 +26,51 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
 
 /*Formula for the effective second-order rate constant for 
 	termolecular reactions (NASA JPL 19-5)... */
-double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
+double  k3rd_jpl (  double TEMP, double M, double A0, double B0, double A1, double B1)
 {
   double K0, K1, Kf;
 
-  K0 = (double)A0 * pow( (298.0/TEMP), (double)B0 ) ;
-  K1 = (double)A1 * pow( (298.0/TEMP), (double)B1 );
+  K0 = A0 * pow( (298.0/TEMP), B0 ) ;
+  K1 = A1 * pow( (298.0/TEMP), B1 );
   Kf = (K0*M/(1.0+K0*M/K1)) *
     pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0*M/K1)),2 ) ) ) );
 
-  return (double)Kf;
+  return Kf;
 }
 
 /*Formula for the effective second-order rate constant for
 	chemical activation reactions (NASA JPL 19-5)... */
 
-double  kcar_jpl (  float M, float A0, float B0, float A1, float B1, float A2, float B2)
+double  kcar_jpl (  double TEMP, double M, double A0, double B0, double A1, double B1, double A2, double B2)
 {
   double K0, K1, Kf, Kca;
 
-  K0 = (double)A0 * pow( (298.0/TEMP), (double)B0 );
-  K1 = (double)A1 * pow( (298.0/TEMP), (double)B1 );
+  K0 = A0 * pow( (298.0/TEMP), B0 );
+  K1 = A1 * pow( (298.0/TEMP), B1 );
   Kf = (K0*M/(1.0+K0*M/K1)) *
     pow( 0.6, ( 1.0/( 1.0+pow( (log10(K0*M/K1)),2 ) ) ) );
 	Kca = A2 * exp(-B2/TEMP) * (1 - (Kf/K1));
 
-  return (double)(Kf + Kca);
+  return (Kf + Kca);
 }
 
+double arr_ab( double TEMP, double A0, double B0 )
+{
+  double ARR_RES;
+
+  ARR_RES = A0 * exp( -B0/TEMP );
+
+  return ARR_RES;
+}
+
+double arr_ac( double TEMP, double A0, double C0 )
+{
+  double ARR_RES;
+
+  ARR_RES = A0 * pow( (TEMP/300.0), C0 );
+
+  return ARR_RES;
+}
 
 
 double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,
@@ -78,15 +87,18 @@ void kpp_chem_initialize(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  double * var,
+  double * fix,
+  double * rconst,
   int ip
 ){
     /* Get Meteological variables... */
-    double t, lwc, o3c;
+    double t, lwc, o3c,h2o;
     INTPOL_INIT;
     INTPOL_3D(t, 1);
     INTPOL_3D(lwc, 0);
+    INTPOL_3D(h2o, 0);
     INTPOL_2D(o3c, 1);
-    TEMP = t;
 
     /* Calculate air molecular density (IUPAC Data Sheet I.A4.86 SOx15)... */
     double M = MOLEC_DENS(atm->p[ip], t);  
@@ -107,66 +119,65 @@ void kpp_chem_initialize(
     SET_VAR(ind_ccl3f, qnt_Cccl3f, M);
     SET_VAR(ind_ccl2f2, qnt_Cccl2f2, M);
     SET_VAR(ind_o3, qnt_Co3, M);
+
 		SET_VAR(ind_h2o, qnt_Ch2o, M);
   
-		FIX[indf_o2] = 0.2095 * M;
-		FIX[indf_n2] = 0.7808 * M;
-		FIX[indf_h2] = 5e-7 * M;
+		fix[indf_o2] = 0.2095 * M;
+		fix[indf_n2] = 0.7808 * M;
+		fix[indf_h2] = 5e-7 * M;
 
     SET_VAR(ind_so2, qnt_Cx, M);
 
 
     /* Reaction rate ... */
-    ko3p_o2_M = ARR_ac(6.1e-34, -2.4) * M;
-    ko3p_o3 = ARR_ab(8e-12, 2060);
-    ko1d_o2 = ARR_ab(3.3e-11, -55);
-    ko1d_o3 = ARR_ab(2.4e-10, 0);
-    ko1d_h2 = ARR_ab(1.2e-10, 0);
-    ko1d_h2o = ARR_ab(1.63e-10, -60);
-    ko1d_n2 = ARR_ab(2.15e-11, -110);
-    ko1d_n2_2 = ARR_ac(2.8e-36, -0.9) * M;
-    ko1d_n2o = ARR_ab(1.19e-10, -20);
-    ko1d_ch4 = ARR_ab(1.75e-10, 0);
-    ko1d_co2 = ARR_ab(7.5e-11, -115);
-    ko1d_ccl3f = ARR_ab(2.3e-10, 0);
-    ko1d_ccl2f2 = ARR_ab(1.4e-10, -25);
-    ko3p_oh = ARR_ab(1.8e-11, -180);
-    ko3p_ho2 = ARR_ab(3e-11, -200);
-    ko3p_h2o2 = ARR_ab(1.4e-12, 2000);
-    kh_o2_M = k3rd_jpl(M, 5.3e-32, 1.8, 9.5e-11, -0.4); 
-    kh_o3 = ARR_ab(1.4e-10, 470);
-    kh_ho2 = ARR_ab(7.2e-11, 0);
-    kh_ho2_2 = ARR_ab(1.6e-12, 0);
-    kh_ho2_3 = ARR_ab(6.9e-12, 0);
-    koh_o3 = ARR_ab(1.7e-12, 940);
-    koh_oh = ARR_ab(1.8e-12, 0);
-    koh_oh_M = k3rd_jpl(M, 6.9e-31, 1.0, 2.6e-11, 0);
-    koh_ho2 = ARR_ab(4.8e-11, -250);
-    koh_h2o2 = 1.8e-12;
-    koh_co = kcar_jpl(M, 6.9e-33, 2.1, 1.1e-12, -1.3, 1.85e-13, 65);
-    kho2_o3 = ARR_ab(1e-14, 490);
-    kho2_ho2 = ARR_ab(3e-13, -460) + ARR_ab(2.1e-33 * M, -920) ;
+    SET_RCONST(0, arr_ac(t,6.1e-34, -2.4) * M)
+    SET_RCONST(1, arr_ab(t,8e-12, 2060) )
+    SET_RCONST(2, arr_ab(t,1.8e-11, -180) )
+    SET_RCONST(3,  arr_ab(t,3e-11, -200) )
+    SET_RCONST(4,  arr_ab(t,1.4e-12, 2000) )
+    SET_RCONST(5,  arr_ab(t,3.3e-11, -55) )
+    SET_RCONST(6,  arr_ab(t,2.4e-10, 0) )
+    SET_RCONST(7,  arr_ab(t,1.2e-10, 0) )
+    SET_RCONST(8,  arr_ab(t,1.63e-10, -60) )
+    SET_RCONST(9,  arr_ab(t,2.15e-11, -110) )
+    SET_RCONST(10,  arr_ac(t,2.8e-36, -0.9) * M )
+    SET_RCONST(11,  arr_ab(t,1.19e-10, -20) )
+    SET_RCONST(12,  arr_ab(t,1.75e-10, 0) )
+    SET_RCONST(13,  arr_ab(t,7.5e-11, -115) )
+    SET_RCONST(14,  arr_ab(t,2.3e-10, 0) )
+    SET_RCONST(15,  arr_ab(t,1.4e-10, -25) )
+
+    SET_RCONST(16,  k3rd_jpl(t,M, 5.3e-32, 1.8, 9.5e-11, -0.4) ) 
+    SET_RCONST(17,  arr_ab(t,1.4e-10, 470) )
+    SET_RCONST(18,  arr_ab(t,7.2e-11, 0) )
+    SET_RCONST(19,  arr_ab(t,1.6e-12, 0) )
+    SET_RCONST(20,  arr_ab(t,6.9e-12, 0) )
+    SET_RCONST(21,  arr_ab(t,1.7e-12, 940) )
+    SET_RCONST(22,  arr_ab(t,1.8e-12, 0) )
+    SET_RCONST(23,  k3rd_jpl(t,M, 6.9e-31, 1.0, 2.6e-11, 0) )
+    SET_RCONST(24,  arr_ab(t,4.8e-11, -250) )
+    SET_RCONST(25,  1.8e-12 )
+    SET_RCONST(26,  kcar_jpl(t,M, 6.9e-33, 2.1, 1.1e-12, -1.3, 1.85e-13, 65) )
+    SET_RCONST(27,  arr_ab(t,1e-14, 490) )
+    SET_RCONST(28,  arr_ab(t,3e-13, -460) + arr_ab(t,2.1e-33 * M, -920)  )
 
     /* Photolysis reaction rate ... */
-    ko2_hv = clim_photo(clim->photo.o2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    ko3_hv1 = clim_photo(clim->photo.o3_1, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    ko3_hv2 = clim_photo(clim->photo.o3_2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    kh2o_hv = clim_photo(clim->photo.h2o, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    kh2o2_hv = clim_photo(clim->photo.h2o2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    kn2o_hv = clim_photo(clim->photo.n2o, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    kccl3f_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-    kcl2f2_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-
-     /*Gas phase chemistry of so2... */
-    kso2_oh = k3rd_jpl(M, 2.9e-31, 4.1, 1.7e-12, -0.2);
+    SET_RCONST(29,  clim_photo(clim->photo.o2, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(30,  clim_photo(clim->photo.o3_1, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(31,  clim_photo(clim->photo.o3_2, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(32,  clim_photo(clim->photo.h2o, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(33,  clim_photo(clim->photo.h2o2, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(34,  clim_photo(clim->photo.n2o, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(35,  clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
+    SET_RCONST(36,  clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c) )
 
     /* Aqueous phase reaction of so2 + h2o2 (Berglen et al., 2004)... */
     /* Rate of aqueous phase oxidation of SO2 with H2O2. (Maass et al. 1999)  */
@@ -184,7 +195,9 @@ void kpp_chem_initialize(
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000; //MA: Molar mass of dry air; RI: Ideal gas constant 8.314 [J/(mol K)]
     double CWC = lwc * rho_air / 1000;
 
-    kso2_h2o2 = k * K_1S * H_SO2 * H_h2o2 * CWC;	//Unit: (molec/cm3)^-1  s-1
+    SET_RCONST(37,  k * K_1S * H_SO2 * H_h2o2 * CWC)	//Unit: (molec/cm3)^-1  s-1
+     /*Gas phase chemistry of so2... */
+    SET_RCONST(38,  k3rd_jpl(t,M, 2.9e-31, 4.1, 1.7e-12, -0.2) )
 }
 #ENDINLINE
 
@@ -198,6 +211,7 @@ void kpp_chem_output2atm(
 	ctl_t * ctl,
 	met_t * met0,
 	met_t * met1, 
+  double * var,
 	int ip){
 
 		double t;
@@ -219,6 +233,7 @@ void kpp_chem_output2atm(
 	GET_VAR(ind_n2o, ctl->qnt_Cn2o, M);
 	GET_VAR(ind_ccl3f, ctl->qnt_Cccl3f, M);
 	GET_VAR(ind_ccl2f2, ctl->qnt_Cccl2f2, M);
+  GET_VAR(ind_h2o, ctl->qnt_Ch2o, M);
 	//GET_VAR(ind_co, ctl->qnt_Cco, M);
   //if (ctl->qnt_Co3>=0)
   //  atm->q[ctl->qnt_Co3][ip] = FIX[indf_o3] / M;
@@ -226,13 +241,13 @@ void kpp_chem_output2atm(
   //	atm->q[ctl->qnt_Ch2o][ip] = FIX[indf_h2o] / M;
 
 	if (atm->q[ctl->qnt_Cx][ip] != 0) {
-		atm->q[ctl->qnt_m][ip] *= VAR[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M);
     if (ctl->qnt_loss_rate >= 0)
-      atm->q[ctl->qnt_loss_rate][ip] += -log(VAR[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M)) / ctl->dt_kpp;
+      atm->q[ctl->qnt_loss_rate][ip] += -log(var[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M)) / ctl->dt_kpp;
     if (ctl->qnt_mloss_kpp >= 0)
 	    atm->q[ctl->qnt_mloss_kpp][ip]
-	      += atm->q[ctl->qnt_m][ip] * (1 - VAR[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M));
-    atm->q[ctl->qnt_Cx][ip] = VAR[ind_so2] / M;
+	      += atm->q[ctl->qnt_m][ip] * (1 - var[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M));
+    atm->q[ctl->qnt_m][ip] *= var[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M);
+    atm->q[ctl->qnt_Cx][ip] = var[ind_so2] / M;
   }
 }
 
