@@ -5377,9 +5377,9 @@ void read_obs(
 
   /* Read data... */
   if (ctl->obs_type == 0)
-    read_obs_asc(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, nobs);
+    read_obs_asc(filename, rt, rz, rlon, rlat, robs, nobs);
   else if (ctl->obs_type == 1)
-    read_obs_nc(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, nobs);
+    read_obs_nc(filename, rt, rz, rlon, rlat, robs, nobs);
   else
     ERRMSG("Set OBS_TYPE to 0 or 1!");
 
