@@ -1,0 +1,4 @@
+<map id="time_from_filename" name="time_from_filename">
+<area shape="rect" id="node1" title="Extract time information from filename." alt="" coords="5,5,140,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Convert date to seconds." alt="" coords="188,5,267,32"/>
+</map>

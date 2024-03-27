@@ -1,0 +1,4 @@
+<map id="write_atm_asc" name="write_atm_asc">
+<area shape="rect" id="node1" title="Write atmospheric data in ASCII format." alt="" coords="5,5,112,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Temporal interpolation of meteo data." alt="" coords="160,5,239,32"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="write_grid_nc" name="write_grid_nc">
+<area shape="rect" id="node1" title="Write gridded data in netCDF format." alt="" coords="5,5,104,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculate standard deviation." alt="" coords="152,5,213,32"/>
+</map>

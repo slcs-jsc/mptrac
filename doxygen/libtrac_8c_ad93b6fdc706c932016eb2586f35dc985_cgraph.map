@@ -1,0 +1,4 @@
+<map id="locate_vert" name="locate_vert">
+<area shape="rect" id="node1" title="Locate the four vertical indizes of a box for a given height value." alt="" coords="5,5,92,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#abe2fe1fe05e15b55bc4d4031a084490b" title="locate the index in a column of a three dimensional array." alt="" coords="140,5,236,32"/>
+</map>

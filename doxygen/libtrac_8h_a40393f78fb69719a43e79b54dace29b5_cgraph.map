@@ -1,0 +1,4 @@
+<map id="clim_oh_diurnal_correction" name="clim_oh_diurnal_correction">
+<area shape="rect" id="node1" title="Initialization function for OH climatology." alt="" coords="5,5,181,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#ab0bfcf61833d71fb831d4faae03ce709" title="Calculate solar zenith angle." alt="" coords="229,5,303,32"/>
+</map>

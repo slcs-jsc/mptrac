@@ -1,0 +1,6 @@
+<map id="read_met_grid" name="read_met_grid">
+<area shape="rect" id="node1" title="Read coordinates of meteo data." alt="" coords="5,56,109,83"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Temporal interpolation of meteo data." alt="" coords="185,5,264,32"/>
+<area shape="rect" id="node3" href="$libtrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Convert date to seconds." alt="" coords="340,81,419,108"/>
+<area shape="rect" id="node4" href="$libtrac_8c.html#a98e813ec34f6121b5fdd8652d29b10dc" title="Extract time information from filename." alt="" coords="157,107,292,133"/>
+</map>

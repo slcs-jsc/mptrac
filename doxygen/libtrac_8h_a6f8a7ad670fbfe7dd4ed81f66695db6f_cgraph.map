@@ -1,0 +1,9 @@
+<map id="write_atm" name="write_atm">
+<area shape="rect" id="node1" title="Write atmospheric data." alt="" coords="5,107,84,133"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a35d13994c6a0e753baf0e0df39bc8645" title="Write atmospheric data in ASCII format." alt="" coords="152,5,259,32"/>
+<area shape="rect" id="node4" href="$libtrac_8c.html#ac8f665b550ead41a8cc17da17132a63c" title="Write atmospheric data in binary format." alt="" coords="154,56,257,83"/>
+<area shape="rect" id="node5" href="$libtrac_8c.html#aa166d9de337fa3572477f102168b2907" title="Write atmospheric data in CLaMS position file format." alt="" coords="145,107,266,133"/>
+<area shape="rect" id="node6" href="$libtrac_8c.html#a56873d15f57e990c702ec46e5016abd8" title="Write atmospheric data in CLaMS position file and trajectory format." alt="" coords="132,157,279,184"/>
+<area shape="rect" id="node7" href="$libtrac_8c.html#ad5e5574adb44a2bb04fc21c3e20a9e2a" title="Write atmospheric data in netCDF format." alt="" coords="155,208,255,235"/>
+<area shape="rect" id="node3" href="$libtrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Temporal interpolation of meteo data." alt="" coords="327,81,405,108"/>
+</map>

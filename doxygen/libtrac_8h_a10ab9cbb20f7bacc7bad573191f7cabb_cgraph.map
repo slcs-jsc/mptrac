@@ -1,0 +1,7 @@
+<map id="read_atm" name="read_atm">
+<area shape="rect" id="node1" title="Read atmospheric data." alt="" coords="5,81,81,108"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a324e0e62532d05f6711ce43bfebfa897" title="Read atmospheric data in ASCII format." alt="" coords="137,5,241,32"/>
+<area shape="rect" id="node3" href="$libtrac_8c.html#a69ed50f3a7f993df25260736697ae960" title="Read atmospheric data in binary format." alt="" coords="139,56,239,83"/>
+<area shape="rect" id="node4" href="$libtrac_8c.html#a66f35b5e3cd571f05c2430ebc9ba62a0" title="Read atmospheric data in CLaMS format." alt="" coords="129,107,248,133"/>
+<area shape="rect" id="node5" href="$libtrac_8c.html#a099fcc594e7bb8ce70bb55be9cccb69e" title="Read atmospheric data in netCDF format." alt="" coords="140,157,237,184"/>
+</map>

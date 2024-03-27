@@ -1,0 +1,6 @@
+<map id="intpol_met_time_3d" name="intpol_met_time_3d">
+<area shape="rect" id="node1" title="Spatial interpolation of meteo data." alt="" coords="5,31,140,57"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#ab697dbe3b5a6fc59b5defc1b80c558aa" title="Spatial interpolation of meteo data." alt="" coords="188,31,333,57"/>
+<area shape="rect" id="node3" href="$libtrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Find array index for irregular grid." alt="" coords="385,5,460,32"/>
+<area shape="rect" id="node4" href="$libtrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Find array index for regular grid." alt="" coords="381,56,464,83"/>
+</map>

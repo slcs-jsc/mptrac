@@ -1,0 +1,9 @@
+<map id="read_clim" name="read_clim">
+<area shape="rect" id="node1" title="Read climatological data." alt="" coords="5,107,84,133"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a40393f78fb69719a43e79b54dace29b5" title="Initialization function for OH climatology." alt="" coords="132,5,308,32"/>
+<area shape="rect" id="node4" href="$libtrac_8c.html#aa9cf40c6960c5078d1ea9e12a2fb0872" title="Initialize tropopause climatology." alt="" coords="167,56,273,83"/>
+<area shape="rect" id="node5" href="$libtrac_8c.html#a1a501ec43c01f1d742a133a7a3289d59" title="Read climatological photolysis rates." alt="" coords="161,107,279,133"/>
+<area shape="rect" id="node6" href="$libtrac_8c.html#a3510fe56a6a6e589b5c2474495af03e2" title="Read climatological time series." alt="" coords="172,157,268,184"/>
+<area shape="rect" id="node7" href="$libtrac_8c.html#a5bca26658fe5bf70952579d107a40511" title="Read climatological zonal means." alt="" coords="169,208,271,235"/>
+<area shape="rect" id="node3" href="$libtrac_8c.html#ab0bfcf61833d71fb831d4faae03ce709" title="Calculate solar zenith angle." alt="" coords="356,5,429,32"/>
+</map>

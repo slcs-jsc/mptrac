@@ -1,0 +1,9 @@
+var searchData=
+[
+  ['lapse_5frate_0',['lapse_rate',['../libtrac_8c.html#afa485eb277a5ced6dac0ed77665c976c',1,'lapse_rate(const double t, const double h2o):&#160;libtrac.c'],['../libtrac_8h.html#afa485eb277a5ced6dac0ed77665c976c',1,'lapse_rate(const double t, const double h2o):&#160;libtrac.c']]],
+  ['level_5fdefinitions_1',['level_definitions',['../libtrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e',1,'level_definitions(ctl_t *ctl):&#160;libtrac.c'],['../libtrac_8h.html#a51f61e053cfec3bdd62fa3a8110e046e',1,'level_definitions(ctl_t *ctl):&#160;libtrac.c']]],
+  ['locate_5firr_2',['locate_irr',['../libtrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc',1,'locate_irr(const double *xx, const int n, const double x):&#160;libtrac.c'],['../libtrac_8h.html#a4e1b87dc3c93a23c89f739adf10b60dc',1,'locate_irr(const double *xx, const int n, const double x):&#160;libtrac.c']]],
+  ['locate_5firr_5f3d_3',['locate_irr_3d',['../libtrac_8c.html#abe2fe1fe05e15b55bc4d4031a084490b',1,'locate_irr_3d(float profiles[EX][EY][EP], int np, int ind_lon, int ind_lat, double x):&#160;libtrac.c'],['../libtrac_8h.html#abe2fe1fe05e15b55bc4d4031a084490b',1,'locate_irr_3d(float profiles[EX][EY][EP], int np, int ind_lon, int ind_lat, double x):&#160;libtrac.c']]],
+  ['locate_5freg_4',['locate_reg',['../libtrac_8c.html#a2a3c8ab98f21179741b274439786726d',1,'locate_reg(const double *xx, const int n, const double x):&#160;libtrac.c'],['../libtrac_8h.html#a2a3c8ab98f21179741b274439786726d',1,'locate_reg(const double *xx, const int n, const double x):&#160;libtrac.c']]],
+  ['locate_5fvert_5',['locate_vert',['../libtrac_8c.html#ad93b6fdc706c932016eb2586f35dc985',1,'locate_vert(float profiles[EX][EY][EP], int np, int lon_ap_ind, int lat_ap_ind, double height_ap, int *ind):&#160;libtrac.c'],['../libtrac_8h.html#af7c3d417479747cdf69cce6cae3599e5',1,'locate_vert(float profiles[EX][EY][EP], int np, int lon_ap_ind, int lat_ap_ind, double alt_ap, int *ind):&#160;libtrac.c']]]
+];

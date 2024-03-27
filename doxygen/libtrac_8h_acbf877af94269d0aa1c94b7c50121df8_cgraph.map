@@ -1,0 +1,4 @@
+<map id="clim_ts" name="clim_ts">
+<area shape="rect" id="node1" title="Interpolate time series." alt="" coords="5,5,69,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Find array index for irregular grid." alt="" coords="117,5,192,32"/>
+</map>

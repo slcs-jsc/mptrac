@@ -1,0 +1,4 @@
+<map id="write_station" name="write_station">
+<area shape="rect" id="node1" title="Write station data." alt="" coords="5,5,101,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Convert geolocation to Cartesian coordinates." alt="" coords="149,5,221,32"/>
+</map>

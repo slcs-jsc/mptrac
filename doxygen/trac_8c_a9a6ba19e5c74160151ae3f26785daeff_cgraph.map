@@ -1,0 +1,4 @@
+<map id="module_dry_deposition" name="module_dry_deposition">
+<area shape="rect" id="node1" title="Calculate dry deposition." alt="" coords="5,5,160,32"/>
+<area shape="rect" id="node2" href="$libtrac_8c.html#a1b580107362b559d90f6766d340cc370" title="Calculate sedimentation velocity." alt="" coords="208,5,255,32"/>
+</map>
