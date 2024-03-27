@@ -1926,25 +1926,26 @@ void module_mixing(
   SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
+  const int np = atm->np;
   ALLOC(ixs, int,
-	atm->np);
+	np);
   ALLOC(iys, int,
-	atm->np);
+	np);
   ALLOC(izs, int,
-	atm->np);
+	np);
 
   /* Set grid box size... */
-  double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
-  double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
-  double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
+  const double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
+  const double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
+  const double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
 #pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
@@ -2019,13 +2020,15 @@ void module_mixing_help(
   int *count;
 
   /* Allocate... */
+  const int np = atm->np;
+  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
   ALLOC(cmean, double,
-	ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz);
+	ngrid);
   ALLOC(count, int,
-	ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz);
+	ngrid);
 
   /* Loop over particles... */
-  for (int ip = 0; ip < atm->np; ip++)
+  for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
       int idx = ARRAY_3D
 	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
@@ -2037,14 +2040,14 @@ void module_mixing_help(
 #endif
   {
 #pragma omp parallel for
-    for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
+    for (int i = 0; i < ngrid; i++)
       if (count[i] > 0)
 	cmean[i] /= count[i];
   }
 
   /* Calculate interparcel mixing... */
 #pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++)
+  for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
 
       /* Set mixing parameter... */
