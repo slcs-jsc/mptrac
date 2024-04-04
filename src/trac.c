@@ -2072,6 +2072,195 @@ void module_mixing_help(
 
 /*****************************************************************************/
 
+#if 0
+
+void module_mixing(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double t) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  const int np = atm->np;
+  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
+
+  /* Set grid box size... */
+  const double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
+  const double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
+  const double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
+
+  /* Set time interval... */
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#ifdef _OPENACC
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->mixing_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->mixing_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->mixing_nz)
+      izs[ip] = -1;
+  }
+
+  /* Calculate interparcel mixing... */
+  if (ctl->qnt_m >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
+  if (ctl->qnt_vmr >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+  if (ctl->qnt_Cx >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
+  if (ctl->qnt_Ch2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
+  if (ctl->qnt_Co3 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
+  if (ctl->qnt_Cco >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
+  if (ctl->qnt_Coh >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
+  if (ctl->qnt_Ch >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
+  if (ctl->qnt_Cho2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
+  if (ctl->qnt_Ch2o2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
+  if (ctl->qnt_Co1d >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
+  if (ctl->qnt_Co3p >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
+  if (ctl->qnt_Cccl4 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
+  if (ctl->qnt_Cccl3f >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
+  if (ctl->qnt_Cccl2f2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
+  if (ctl->qnt_Cn2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+  if (ctl->qnt_Csf6 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
+  if (ctl->qnt_aoa >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(ixs,iys,izs)
+#endif
+  free(ixs);
+  free(iys);
+  free(izs);
+}
+
+/*****************************************************************************/
+
+void module_mixing_help(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
+  int qnt_idx) {
+
+  /* Allocate... */
+  const int np = atm->np;
+  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
+  double *restrict const cmean =
+    (double *) malloc((size_t) ngrid * sizeof(double));
+  int *restrict const count = (int *) malloc((size_t) ngrid * sizeof(int));
+
+  /* Init... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
+#endif
+  {
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < ngrid; i++) {
+      count[i] = 0;
+      cmean[i] = 0;
+    }
+  }
+
+  /* Loop over particles... */
+#ifdef _OPENACC
+#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
+#pragma acc loop seq
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+      int idx = ARRAY_3D
+	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+      cmean[idx] += atm->q[qnt_idx][ip];
+      count[idx]++;
+    }
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
+#endif
+  {
+#pragma omp parallel for
+#endif
+    for (int i = 0; i < ngrid; i++)
+      if (count[i] > 0)
+	cmean[i] /= count[i];
+  }
+
+  /* Calculate interparcel mixing... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+
+      /* Set mixing parameter... */
+      double mixparam = 1.0;
+      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
+	double w =
+	  tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
+      }
+
+      /* Adjust quantity... */
+      atm->q[qnt_idx][ip] +=
+	(cmean
+	 [ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
+	 - atm->q[qnt_idx][ip]) * mixparam;
+    }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(cmean,count)
+#endif
+  free(cmean);
+  free(count);
+}
+
+#endif
+
+/*****************************************************************************/
+
 void module_position(
   ctl_t * ctl,
   met_t * met0,

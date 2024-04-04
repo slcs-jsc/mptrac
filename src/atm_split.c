@@ -36,10 +36,9 @@ int main(
 
   char kernel[LEN];
 
-  double dt, dx, dz, k, kw[EP], kz[EP], m, mmax = 0, mtot = 0, t0, t1,
-    z, z0, z1, lon0, lon1, lat0, lat1, zmin = 0, zmax = 0;
+  double k, kw[EP], kz[EP], mmax = 0, mtot = 0, z, zmin = 0, zmax = 0;
 
-  int i, ip, iq, n, nk = 0;
+  int ip, nk = 0;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -51,19 +50,20 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
-  m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
-  dt = scan_ctl(argv[1], argc, argv, "SPLIT_DT", -1, "0", NULL);
-  t0 = scan_ctl(argv[1], argc, argv, "SPLIT_T0", -1, "0", NULL);
-  t1 = scan_ctl(argv[1], argc, argv, "SPLIT_T1", -1, "0", NULL);
-  dz = scan_ctl(argv[1], argc, argv, "SPLIT_DZ", -1, "0", NULL);
-  z0 = scan_ctl(argv[1], argc, argv, "SPLIT_Z0", -1, "0", NULL);
-  z1 = scan_ctl(argv[1], argc, argv, "SPLIT_Z1", -1, "0", NULL);
-  dx = scan_ctl(argv[1], argc, argv, "SPLIT_DX", -1, "0", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "SPLIT_LON0", -1, "0", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "SPLIT_LON1", -1, "0", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT1", -1, "0", NULL);
+  int n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
+  double m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
+  double um = scan_ctl(argv[1], argc, argv, "SPLIT_UM", -1, "0", NULL);
+  double dt = scan_ctl(argv[1], argc, argv, "SPLIT_DT", -1, "0", NULL);
+  double t0 = scan_ctl(argv[1], argc, argv, "SPLIT_T0", -1, "0", NULL);
+  double t1 = scan_ctl(argv[1], argc, argv, "SPLIT_T1", -1, "0", NULL);
+  double dz = scan_ctl(argv[1], argc, argv, "SPLIT_DZ", -1, "0", NULL);
+  double z0 = scan_ctl(argv[1], argc, argv, "SPLIT_Z0", -1, "0", NULL);
+  double z1 = scan_ctl(argv[1], argc, argv, "SPLIT_Z1", -1, "0", NULL);
+  double dx = scan_ctl(argv[1], argc, argv, "SPLIT_DX", -1, "0", NULL);
+  double lon0 = scan_ctl(argv[1], argc, argv, "SPLIT_LON0", -1, "0", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "SPLIT_LON1", -1, "0", NULL);
+  double lat0 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT0", -1, "0", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT1", -1, "0", NULL);
   scan_ctl(argv[1], argc, argv, "SPLIT_KERNEL", -1, "-", kernel);
 
   /* Init random number generator... */
@@ -91,7 +91,7 @@ int main(
     mtot = m;
 
   /* Loop over air parcels... */
-  for (i = 0; i < n; i++) {
+  for (int i = 0; i < n; i++) {
 
     /* Select air parcel... */
     if (ctl.qnt_m >= 0)
@@ -135,12 +135,13 @@ int main(
     }
 
     /* Copy quantities... */
-    for (iq = 0; iq < ctl.nq; iq++)
+    for (int iq = 0; iq < ctl.nq; iq++)
       atm2->q[iq][atm2->np] = atm->q[iq][ip];
 
     /* Adjust mass... */
     if (ctl.qnt_m >= 0)
-      atm2->q[ctl.qnt_m][atm2->np] = mtot / n;
+      atm2->q[ctl.qnt_m][atm2->np]
+	= (mtot + (um > 0 ? um * (gsl_rng_uniform_pos(rng) - 0.5) : 0.0)) / n;
 
     /* Adjust air parcel index... */
     if (ctl.qnt_idx >= 0)
