@@ -409,11 +409,11 @@ int main(
     /* Initialize timesteps... */
     module_timesteps_init(&ctl, atm);
 
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1], clim[:1], ctl)
-#endif
+    //    /* Update GPU... */
+    //#ifdef _OPENACC
+    //    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    //#pragma acc update device(atm[:1], clim[:1], ctl)
+    //#endif
 
     /* Initialize random number generator... */
     module_rng_init(ntask);
@@ -433,18 +433,17 @@ int main(
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
-    /* Initialize pressure heights consistent with zeta ... */
+    /* Initialize pressure heights consistent with zeta... */
     if (ctl.vert_coord_ap == 1) {
       INTPOL_INIT;
-      for (int ip = 0; ip < atm->np; ip++) {
+      for (int ip = 0; ip < atm->np; ip++)
 	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
 			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
 			    1);
-      }
     }
 
-    /* Initialize quantity of total loss rate ... */
+    /* Initialize quantity of total loss rate... */
     if (ctl.qnt_loss_rate > 0)
       for (int ip = 0; ip < atm->np; ip++)
 	atm->q[ctl.qnt_loss_rate][ip] = 0;
@@ -452,7 +451,7 @@ int main(
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(cache[:1])
+#pragma acc update device(atm[:1], cache[:1], clim[:1], ctl)
 #endif
 
     /* ------------------------------------------------------------
