@@ -2610,19 +2610,10 @@ void read_ctl(
   /* Vertical coordinates and velocities... */
   ctl->vert_coord_ap =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
+  if (ctl->vert_coord_ap == 1 && ctl->qnt_zeta < 0)
+    ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   ctl->vert_coord_met =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
-  if (ctl->vert_coord_ap == 1) {
-    int error = 1;
-    for (int iq = 0; iq < ctl->nq; iq++) {
-      if (strcmp(ctl->qnt_name[iq], "zeta") == 0) {
-	error = 0;
-	break;
-      }
-    }
-    if (error == 1)
-      ERRMSG("Please add zeta to your quantities for diabatic calculations.");
-  }
   ctl->clams_met_data =
     (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
   ctl->cpl_zeta_and_press_modules =
