@@ -89,13 +89,13 @@ endif
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
-  ifeq ($(COMPILER),nvc)
+  ifeq ($(COMPILER),gcc)
+    CFLAGS += -fopenacc -foffload=-lm
+  else ifeq ($(COMPILER),nvc)
     CFLAGS += -acc
     ifeq ($(GPU_PIN),1)
       CFLAGS += -gpu=pinned
     endif
-  else
-    $(error GPU compilation for compiler $(COMPILER) not supported)
   endif
 endif
 
