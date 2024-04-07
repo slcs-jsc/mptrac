@@ -17,14 +17,17 @@ INCDIR += -I ../libs/build/include
 # Library directories...
 LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 
+# Compiler (gcc or nvc)...
+COMPILER ?= gcc
+
+# Compile for MPI...
+MPI ?= 0
+
 # Compile for GPUs...
 GPU ?= 0
 
 # GPU memory pinning for GH200...
 GPU_PIN ?= 0
-
-# Compile for MPI...
-MPI ?= 0
 
 # Static compilation...
 STATIC ?= 1
@@ -74,17 +77,26 @@ VERSION ?= $(shell git describe --abbrev=4 --dirty --always --tags)
 
 # Set CC and CFLAGS...
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
-ifeq ($(GPU),1)
-  CC = nvc
-  CFLAGS += -mp -mcmodel=medium -acc
-  ifeq ($(GPU_PIN),1)
-    CFLAGS += -gpu=pinned
-  endif
-else ifeq ($(CC),nvc)
+ifeq ($(COMPILER),gcc)
+  CC=gcc
+  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+else ifeq ($(COMPILER),nvc)
+  CC=nvc
   CFLAGS += -mp -mcmodel=medium
 else
-  CC = gcc
-  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  $(error Compiler $(COMPILER) not supported)
+endif
+
+# Compile for GPUs...
+ifeq ($(GPU),1)
+  ifeq ($(COMPILER),nvc)
+    CFLAGS += -acc
+    ifeq ($(GPU_PIN),1)
+      CFLAGS += -gpu=pinned
+    endif
+  else
+    $(error GPU compilation for compiler $(COMPILER) not supported)
+  endif
 endif
 
 # Set LDFLAGS...
@@ -104,10 +116,10 @@ endif
 
 # Optimization information...
 ifeq ($(INFO),1)
-  ifeq ($(CC),nvc)
-    CFLAGS += -Minfo=all
-  else
+  ifeq ($(COMPILER),gcc)
     CFLAGS += -fopt-info
+  else ifeq ($(COMPILER),nvc)
+    CFLAGS += -Minfo=all
   endif
 endif
 
