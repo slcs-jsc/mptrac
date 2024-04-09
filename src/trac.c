@@ -2031,13 +2031,19 @@ void module_mixing_help(
 
   /* Loop over particles... */
 #ifdef _OPENACC
-#pragma acc kernels
+#pragma acc parallel loop independent gang vector
 #endif
   for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
       int idx = ARRAY_3D
 	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
       cmean[idx] += atm->q[qnt_idx][ip];
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
       count[idx]++;
     }
 #ifdef _OPENACC
