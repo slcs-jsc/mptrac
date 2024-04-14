@@ -241,8 +241,8 @@ void kpp_chem_output2atm(
   //	atm->q[ctl->qnt_Ch2o][ip] = FIX[indf_h2o] / M;
 
 	if (atm->q[ctl->qnt_Cx][ip] != 0) {
-    if (ctl->qnt_loss_rate >= 0)
-      atm->q[ctl->qnt_loss_rate][ip] += -log(var[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M)) / ctl->dt_kpp;
+    if (ctl->qnt_lossrate_kpp >= 0)
+      atm->q[ctl->qnt_lossrate_kpp][ip] = (atm->q[ctl->qnt_Cx][ip] > 0 ? -log(var[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M)) / ctl->dt_kpp : 0);
     if (ctl->qnt_mloss_kpp >= 0)
 	    atm->q[ctl->qnt_mloss_kpp][ip]
 	      += atm->q[ctl->qnt_m][ip] * (1 - var[ind_so2] / (atm->q[ctl->qnt_Cx][ip] * M));

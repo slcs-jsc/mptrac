@@ -18,8 +18,8 @@ export KPP_FLEX_LIB_DIR=$target/src/KPP
 
 # Build KPP code... 
 cd $kppdir
-[ $REBUILD -eq 1 ] && cp ../Makefile2 ./Makefile \
-&& cp ../kpp_chem2.h ./kpp_chem.h \
+[ $REBUILD -eq 1 ] && cp ../Makefile ./Makefile \
+&& cp ../kpp_chem.h ./kpp_chem.h \
 && $KPP_HOME/bin/kpp chem.kpp 
 
 # [ $kppdir = 'chem2/' ] && \

@@ -2458,7 +2458,12 @@ void read_ctl(
   ctl->qnt_mloss_wet = -1;
   ctl->qnt_mloss_dry = -1;
   ctl->qnt_mloss_decay = -1;
-  ctl->qnt_loss_rate = -1;
+  ctl->qnt_lossrate_oh = -1;
+  ctl->qnt_lossrate_h2o2 = -1;
+  ctl->qnt_lossrate_kpp = -1;
+  ctl->qnt_lossrate_wet = -1;
+  ctl->qnt_lossrate_dry = -1;
+  ctl->qnt_lossrate_decay = -1;
   ctl->qnt_psat = -1;
   ctl->qnt_psice = -1;
   ctl->qnt_pw = -1;
@@ -2567,7 +2572,17 @@ void read_ctl(
 	      "kg")
       SET_QNT(qnt_mloss_decay, "mloss_decay",
 	      "mass loss due to exponential decay", "kg")
-      SET_QNT(qnt_loss_rate, "loss_rate", "total loss rate", "s^-1")
+      SET_QNT(qnt_lossrate_oh, "lossrate_oh", "E-folding loss rate due to OH chemistry", "s^-1")
+      SET_QNT(qnt_lossrate_h2o2, "lossrate_h2o2", "E-folding loss rate due to H2O2 chemistry",
+	      "s^-1")
+      SET_QNT(qnt_lossrate_kpp, "lossrate_kpp", "E-folding loss rate due to kpp chemistry",
+	      "s^-1")
+      SET_QNT(qnt_lossrate_wet, "lossrate_wet", "E-folding loss rate due to wet deposition",
+	      "s^-1")
+      SET_QNT(qnt_lossrate_dry, "lossrate_dry", "E-folding loss rate due to dry deposition",
+	      "s^-1")
+      SET_QNT(qnt_lossrate_decay, "lossrate_decay",
+	      "E-folding loss rate due to exponential decay", "s^-1")
       SET_QNT(qnt_psat, "psat", "saturation pressure over water", "hPa")
       SET_QNT(qnt_psice, "psice", "saturation pressure over ice", "hPa")
       SET_QNT(qnt_pw, "pw", "partial water vapor pressure", "hPa")
@@ -3028,6 +3043,8 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE_OUT", -1, "-1", NULL);
   if (ctl->atm_type_out == -1)
     ctl->atm_type_out = ctl->atm_type;
+  ctl->obs_type =
+    (int) scan_ctl(filename, argc, argv, "OBS_TYPE", -1, "0", NULL);
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
@@ -5362,6 +5379,7 @@ void read_met_tropo(
 
 void read_obs(
   const char *filename,
+  ctl_t * ctl,
   double *rt,
   double *rz,
   double *rlon,
@@ -5369,22 +5387,16 @@ void read_obs(
   double *robs,
   int *nobs) {
 
-  /* Open observation data file... */
-  FILE *in;
+  /* Write info... */
   LOG(1, "Read observation data: %s", filename);
-  if (!(in = fopen(filename, "r")))
-    ERRMSG("Cannot open file!");
 
-  /* Read observations... */
-  char line[LEN];
-  while (fgets(line, LEN, in))
-    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[*nobs], &rz[*nobs],
-	       &rlon[*nobs], &rlat[*nobs], &robs[*nobs]) == 5)
-      if ((++(*nobs)) >= NOBS)
-	ERRMSG("Too many observations!");
-
-  /* Close observation data file... */
-  fclose(in);
+  /* Read data... */
+  if (ctl->obs_type == 0)
+    read_obs_asc(filename, rt, rz, rlon, rlat, robs, nobs);
+  else if (ctl->obs_type == 1)
+    read_obs_nc(filename, rt, rz, rlon, rlat, robs, nobs);
+  else
+    ERRMSG("Set OBS_TYPE to 0 or 1!");
 
   /* Check time... */
   for (int i = 1; i < *nobs; i++)
@@ -5405,6 +5417,63 @@ void read_obs(
   LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
   gsl_stats_minmax(&mini, &maxi, robs, 1, (size_t) n);
   LOG(2, "Observation range: %g ... %g", mini, maxi);
+}
+
+/*****************************************************************************/
+
+void read_obs_asc(
+  const char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs) {
+
+  /* Open observation data file... */
+  FILE *in;
+  if (!(in = fopen(filename, "r")))
+    ERRMSG("Cannot open file!");
+
+  /* Read observations... */
+  char line[LEN];
+  while (fgets(line, LEN, in))
+    if (sscanf(line, "%lg %lg %lg %lg %lg", &rt[*nobs], &rz[*nobs],
+	       &rlon[*nobs], &rlat[*nobs], &robs[*nobs]) == 5)
+      if ((++(*nobs)) >= NOBS)
+	ERRMSG("Too many observations!");
+
+  /* Close observation data file... */
+  fclose(in);
+}
+
+/*****************************************************************************/
+
+void read_obs_nc(
+  const char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs) {
+
+  int ncid, varid;
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+    ERRMSG("Cannot open file!");
+
+  /* Read the observations from the NetCDF file... */
+  NC_INQ_DIM("nobs", nobs, 1, NOBS);
+  NC_GET_DOUBLE("time", rt, 1);
+  NC_GET_DOUBLE("alt", rz, 1);
+  NC_GET_DOUBLE("lon", rlon, 1);
+  NC_GET_DOUBLE("lat", rlat, 1);
+  NC_GET_DOUBLE("obs", robs, 1);
+
+  /* Close file... */
+  NC(nc_close(ncid));
 }
 
 /*****************************************************************************/
@@ -6258,7 +6327,7 @@ void write_csi(
 	  NOBS);
 
     /* Read observation data... */
-    read_obs(ctl->csi_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    read_obs(ctl->csi_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Read kernel data... */
     if (ctl->csi_kernel[0] != '-')
@@ -7245,7 +7314,7 @@ void write_prof(
 	  NOBS);
 
     /* Read observation data... */
-    read_obs(ctl->prof_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    read_obs(ctl->prof_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Create new output file... */
     LOG(1, "Write profile data: %s", filename);
@@ -7455,7 +7524,7 @@ void write_sample(
 	  NOBS);
 
     /* Read observation data... */
-    read_obs(ctl->sample_obsfile, rt, rz, rlon, rlat, robs, &nobs);
+    read_obs(ctl->sample_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
     /* Read kernel data... */
     if (ctl->sample_kernel[0] != '-')

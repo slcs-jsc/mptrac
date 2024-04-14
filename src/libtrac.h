@@ -799,9 +799,6 @@ void thrustSortWrapper(
 /*! Control parameters. */
 typedef struct {
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
-  int atm_type_out;
-
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
   int cpl_zeta_and_press_modules;
@@ -986,8 +983,23 @@ typedef struct {
   /*! Quantity array index for total mass loss due to exponential decay. */
   int qnt_mloss_decay;
 
-  /*! Quantity array index for total loss rate. */
-  int qnt_loss_rate;
+  /*! Quantity array index for total mass loss due to OH chemistry. */
+  int qnt_lossrate_oh;
+
+  /*! Quantity array index for total mass loss due to H2O2 chemistry. */
+  int qnt_lossrate_h2o2;
+
+  /*! Quantity array index for total mass loss due to kpp chemistry. */
+  int qnt_lossrate_kpp;
+
+  /*! Quantity array index for total mass loss due to wet deposition. */
+  int qnt_lossrate_wet;
+
+  /*! Quantity array index for total mass loss due to dry deposition. */
+  int qnt_lossrate_dry;
+
+  /*! Quantity array index for total mass loss due to exponential decay. */
+  int qnt_lossrate_decay;
 
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
@@ -1465,6 +1477,14 @@ typedef struct {
   /*! Type of atmospheric data files
      (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
   int atm_type;
+
+  /*! Type of atmospheric data files for output
+     (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  int atm_type_out;
+
+  /*! Type of observation data files
+     (0=ASCII, 1=netCDF). */
+  int obs_type;
 
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
@@ -2559,6 +2579,27 @@ void read_met_tropo(
 
 /*! Read observation data. */
 void read_obs(
+  const char *filename,
+  ctl_t * ctl,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs);
+
+/*! Read observation data in ASCII format. */
+void read_obs_asc(
+  const char *filename,
+  double *rt,
+  double *rz,
+  double *rlon,
+  double *rlat,
+  double *robs,
+  int *nobs);
+
+/*! Read observation data in netCDF format. */
+void read_obs_nc(
   const char *filename,
   double *rt,
   double *rz,

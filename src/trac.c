@@ -444,11 +444,6 @@ int main(
       }
     }
 
-    /* Initialize quantity of total loss rate ... */
-    if (ctl.qnt_loss_rate > 0)
-      for (int ip = 0; ip < atm->np; ip++)
-	atm->q[ctl.qnt_loss_rate][ip] = 0;
-
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -561,14 +556,15 @@ int main(
 	    module_mixing(&ctl, clim, atm, t);
 
 	  /* OH chemistry... */
+    if (((ctl.oh_chem_reaction != 0) || (ctl.h2o2_chem_reaction != 0)) && (ctl.qnt_Cx > 0))
+      module_chemgrid(&ctl, clim, met0, met1, atm, t);
+
 	  if (ctl.oh_chem_reaction != 0)
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-	  if (ctl.h2o2_chem_reaction != 0) {
-	    module_chemgrid(&ctl, clim, met0, met1, atm, t);
+	  if (ctl.h2o2_chem_reaction != 0) 	    
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
-	  }
 
 	  /* First-order tracer chemistry... */
 	  if (ctl.tracer_chem)
@@ -1034,8 +1030,8 @@ void module_decay(
 	atm->q[ctl->qnt_mloss_decay][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += 1 / tdec;
+      if (ctl->qnt_lossrate_decay >= 0)
+	atm->q[ctl->qnt_lossrate_decay][ip] = 1 / tdec;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1233,8 +1229,8 @@ void module_dry_deposition(
 	atm->q[ctl->qnt_mloss_dry][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += v_dep / dz;
+      if (ctl->qnt_lossrate_dry >= 0)
+	atm->q[ctl->qnt_lossrate_dry][ip] = v_dep / dz;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1680,10 +1676,10 @@ void module_oh_chem(
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
-    /* Correction factor for high SO2 concentration...*/
+    /* Correction factor for high SO2 concentration... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>1.564e-9 ? 2.64157e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.860593) : 1;
+      cor = atm->q[ctl->qnt_Cx][ip]>1.08426e-9 ? 1.39783632e-08 * pow(atm->q[ctl->qnt_Cx][ip], -8.76147289e-01) : 1;
     else
       cor = 1;
     /* Calculate exponential decay... */
@@ -1695,8 +1691,8 @@ void module_oh_chem(
 	atm->q[ctl->qnt_mloss_oh][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
+      if (ctl->qnt_lossrate_oh >= 0)
+	atm->q[ctl->qnt_lossrate_oh][ip] = rate_coef;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1719,8 +1715,6 @@ void module_h2o2_chem(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
-  if (ctl->qnt_Cx < 0)
-    ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
@@ -1748,11 +1742,11 @@ void module_h2o2_chem(
 
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
-    
-    /* Correction factor for high SO2 concentration...*/
+
+    /* Correction factor for high SO2 concentration... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>7.8776e-10 ? 3.84264e-06 * pow(atm->q[ctl->qnt_Cx][ip], -0.59486) : 1;
+      cor = atm->q[ctl->qnt_Cx][ip]>6.7792946e-10 ? 2.86941541e-06 * pow(atm->q[ctl->qnt_Cx][ip], -6.04462657e-01) : 1;
     else
       cor = 1;
     double h2o2 = H_h2o2
@@ -1770,8 +1764,8 @@ void module_h2o2_chem(
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
+      if (ctl->qnt_lossrate_h2o2 >= 0)
+	atm->q[ctl->qnt_lossrate_h2o2][ip] = rate_coef;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -1862,41 +1856,21 @@ void module_kpp_chem(
   SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
   size_t nvar=NVAR, nfix=NFIX, nreact=NREACT;
-  // double *var, *fix, *rconst;
-  // ALLOC(var, double, NVAR*np);
-  // ALLOC(fix, double, NFIX*np);
-  // ALLOC(rconst, double, NREACT*np);
-  // double var[nvar], fix[nfix], rconst[nreact];
-  double rtol[NVAR], atol[NVAR];
-    for (size_t i = 0; i < NVAR; i++) {
-  	  rtol[i] = 1.0e-3;
-  	  atol[i] = 1.0;
-    }
+  double rtol[1], atol[1];
+  rtol[0]=1.0e-3;
+  atol[0]=1.0;
+    // for (size_t i = 0; i < NVAR; i++) {
+  	//   rtol[i] = 1.0e-3;
+  	//   atol[i] = 1.0;
+    // }
 
   /* Loop over particles... */
 #ifdef _OPENACC
 #pragma acc data copy(rtol[0:nvar],atol[0:nvar],nvar,nfix,nreact)
 #endif
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {  
-//     double *var, *fix, *rconst;
-// #ifdef _OPENACC
-//   var = acc_malloc(NVAR*sizeof(double));
-//   fix = acc_malloc(NFIX*sizeof(double));
-//   rconst = acc_malloc(NREACT*sizeof(double));
-// #else 
-//   ALLOC(var, double, NVAR);
-//   ALLOC(fix, double, NFIX);
-//   ALLOC(rconst, double, NREACT);
-// #endif
-    double var[nvar], fix[nfix], rconst[nreact];      
-    // qnt_rconst
-    /* Set relative & absolute tolerances... */
-    // double rtol[NVAR], atol[NVAR];
-    // for (size_t i = 0; i < NVAR; i++) {
-  	//   rtol[i] = 1.0e-3;
-  	//   atol[i] = 1.0;
-    // }
 
+    double var[nvar], fix[nfix], rconst[nreact];      
     /* Initialize... */
     // kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
     kpp_chem_initialize(ctl, clim, met0, met1, atm, var, fix, rconst, ip);
@@ -1912,8 +1886,8 @@ void module_kpp_chem(
      rpar[i] = 0.0;
     } /* for */
    
-    ipar[0] = 1;    /* 0=non-autonomous, 1=time-dependent */
-    ipar[1] = 1;    /* vector tolerances */
+    ipar[0] = 0;    /* 0=time-dependent */
+    ipar[1] = 1;    /* scalar tolerances */
     rpar[2] = 900.0; /* starting step, minimum step */
     ipar[3] = 4;    /* choice of the method */
 
@@ -1925,15 +1899,7 @@ void module_kpp_chem(
     /* Output to air parcel.. */
     // kpp_chem_output2atm(atm, ctl, met0, met1, ip);
     kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
-// #ifdef _OPENACC
-//   acc_free(var);
-//   acc_free(fix);
-//   acc_free(rconst);
-// #else
-//   free(var);
-//   free(fix);
-//   free(rconst);
-// #endif
+
   }
 }
 
@@ -1989,12 +1955,12 @@ void module_mixing(
   }
 
   /* Calculate interparcel mixing... */
-  if (ctl->qnt_m >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
+  // if (ctl->qnt_m >= 0)
+  //   module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
   if (ctl->qnt_vmr >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-  if (ctl->qnt_Cx >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
+  // if (ctl->qnt_Cx >= 0)
+  //   module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cx);
   if (ctl->qnt_Ch2o >= 0)
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
   if (ctl->qnt_Co3 >= 0)
@@ -2614,8 +2580,8 @@ void module_wet_deposition(
 	atm->q[ctl->qnt_mloss_wet][ip]
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += lambda;
+      if (ctl->qnt_lossrate_wet >= 0)
+	atm->q[ctl->qnt_lossrate_wet][ip] = lambda;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
