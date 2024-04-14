@@ -18,7 +18,7 @@ t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
-NQ = 13
+NQ = 12
 QNT_NAME[0] = t
 QNT_NAME[1] = u
 QNT_NAME[2] = v
@@ -30,8 +30,7 @@ QNT_NAME[7] = pt
 QNT_NAME[8] = m
 QNT_NAME[9] = stat
 QNT_NAME[10] = ens
-QNT_NAME[11] = Cx
-QNT_NAME[12] = Cccl3f
+QNT_NAME[11] = Cccl3f
 METBASE = ../data/ei
 MET_DT_OUT = 86400.0
 SPECIES = SO2
@@ -42,6 +41,7 @@ BOUND_P1 = -1e10
 BOUND_DPS = 100.0
 BOUND_MASS = 0.0
 CONV_CAPE = 0.0
+OH_CHEM_REACTION = 3
 H2O2_CHEM_REACTION = 1
 TRACER_CHEM = 1
 TDEC_TROP = 259200.0
