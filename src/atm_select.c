@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -32,11 +32,6 @@ int main(
 
   atm_t *atm, *atm2;
 
-  double lat0, lat1, lon0, lon1, p0, p1, r, r0, r1, rlon, rlat, t0, t1, x0[3],
-    x1[3];
-
-  int f, ip, idx0, idx1, ip0, ip1, iq, stride;
-
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
   ALLOC(atm2, atm_t, 1);
@@ -47,30 +42,39 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  stride =
+  int stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
-  idx0 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX0", -1, "-999", NULL);
-  idx1 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX1", -1, "-999", NULL);
-  ip0 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP0", -1, "-999", NULL);
-  ip1 = (int) scan_ctl(argv[1], argc, argv, "SELECT_IP1", -1, "-999", NULL);
-  t0 = scan_ctl(argv[1], argc, argv, "SELECT_T0", -1, "0", NULL);
-  t1 = scan_ctl(argv[1], argc, argv, "SELECT_T1", -1, "0", NULL);
-  p0 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z0", -1, "0", NULL));
-  p1 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z1", -1, "0", NULL));
-  lon0 = scan_ctl(argv[1], argc, argv, "SELECT_LON0", -1, "0", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "SELECT_LON1", -1, "0", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "SELECT_LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "SELECT_LAT1", -1, "0", NULL);
-  r0 = scan_ctl(argv[1], argc, argv, "SELECT_R0", -1, "0", NULL);
-  r1 = scan_ctl(argv[1], argc, argv, "SELECT_R1", -1, "0", NULL);
-  rlon = scan_ctl(argv[1], argc, argv, "SELECT_RLON", -1, "0", NULL);
-  rlat = scan_ctl(argv[1], argc, argv, "SELECT_RLAT", -1, "0", NULL);
+  int idx0 =
+    (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX0", -1, "-999", NULL);
+  int idx1 =
+    (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX1", -1, "-999", NULL);
+  int ip0 =
+    (int) scan_ctl(argv[1], argc, argv, "SELECT_IP0", -1, "-999", NULL);
+  int ip1 =
+    (int) scan_ctl(argv[1], argc, argv, "SELECT_IP1", -1, "-999", NULL);
+  double t0 = scan_ctl(argv[1], argc, argv, "SELECT_T0", -1, "0", NULL);
+  double t1 = scan_ctl(argv[1], argc, argv, "SELECT_T1", -1, "0", NULL);
+  double p0 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z0", -1, "0", NULL));
+  double p1 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z1", -1, "0", NULL));
+  double theta0 =
+    scan_ctl(argv[1], argc, argv, "SELECT_THETA0", -1, "0", NULL);
+  double theta1 =
+    scan_ctl(argv[1], argc, argv, "SELECT_THETA1", -1, "0", NULL);
+  double lon0 = scan_ctl(argv[1], argc, argv, "SELECT_LON0", -1, "0", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "SELECT_LON1", -1, "0", NULL);
+  double lat0 = scan_ctl(argv[1], argc, argv, "SELECT_LAT0", -1, "0", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "SELECT_LAT1", -1, "0", NULL);
+  double r0 = scan_ctl(argv[1], argc, argv, "SELECT_R0", -1, "0", NULL);
+  double r1 = scan_ctl(argv[1], argc, argv, "SELECT_R1", -1, "0", NULL);
+  double rlon = scan_ctl(argv[1], argc, argv, "SELECT_RLON", -1, "0", NULL);
+  double rlat = scan_ctl(argv[1], argc, argv, "SELECT_RLAT", -1, "0", NULL);
 
   /* Get Cartesian coordinates... */
+  double x0[3], x1[3];
   geo2cart(0, rlon, rlat, x0);
 
   /* Loop over files... */
-  for (f = 3; f < argc; f++) {
+  for (int f = 3; f < argc; f++) {
 
     /* Read atmopheric data... */
     if (!read_atm(argv[f], &ctl, atm))
@@ -87,7 +91,7 @@ int main(
       ip1 = ip0;
 
     /* Loop over air parcels... */
-    for (ip = ip0; ip <= ip1; ip += stride) {
+    for (int ip = ip0; ip <= ip1; ip += stride) {
 
       /* Check air parcel index... */
       if (ctl.qnt_idx >= 0 && idx0 >= 0 && idx1 >= 0)
@@ -106,6 +110,21 @@ int main(
 	    || (p0 < p1 && (atm->p[ip] > p0 && atm->p[ip] < p1)))
 	  continue;
 
+      /* Check potential temperature... */
+      if (theta0 != theta1) {
+	double theta;
+	if (ctl.qnt_theta >= 0)
+	  theta = atm->q[ctl.qnt_theta][ip];
+	else if (ctl.qnt_t >= 0)
+	  theta = THETA(atm->p[ip], atm->q[ctl.qnt_t][ip]);
+	else
+	  ERRMSG
+	    ("Filtering requires temperature or potential temperature data!");
+	if ((theta1 > theta0 && (theta < theta0 || theta > theta1))
+	    || (theta1 < theta0 && (theta < theta0 && theta > theta1)))
+	  continue;
+      }
+
       /* Check longitude... */
       if (lon0 != lon1)
 	if ((lon1 > lon0 && (atm->lon[ip] < lon0 || atm->lon[ip] > lon1))
@@ -121,7 +140,7 @@ int main(
       /* Check horizontal distace... */
       if (r0 != r1) {
 	geo2cart(0, atm->lon[ip], atm->lat[ip], x1);
-	r = DIST(x0, x1);
+	double r = DIST(x0, x1);
 	if ((r1 > r0 && (r < r0 || r > r1))
 	    || (r1 < r0 && (r < r0 && r > r1)))
 	  continue;
@@ -132,7 +151,7 @@ int main(
       atm2->p[atm2->np] = atm->p[ip];
       atm2->lon[atm2->np] = atm->lon[ip];
       atm2->lat[atm2->np] = atm->lat[ip];
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	atm2->q[iq][atm2->np] = atm->q[iq][ip];
       if ((++atm2->np) > NP)
 	ERRMSG("Too many air parcels!");

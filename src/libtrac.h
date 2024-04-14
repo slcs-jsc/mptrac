@@ -1750,10 +1750,10 @@ typedef struct {
   /*! O2 photolysis rate [1/s]. */
   double o2[CP][CSZA][CO3];
 
-  /*! O3 photolysis rate [1/s]. o3 + hv = o1d + o2      */
+  /*! O3 photolysis rate (O3 + hv = O1d + O2) [1/s]. */
   double o3_1[CP][CSZA][CO3];
 
-  /*! O3 photolysis rate [1/s]. o3 + hv = o3p + o2      */
+  /*! O3 photolysis rate (O3 + hv = O3p + O2) [1/s]. */
   double o3_2[CP][CSZA][CO3];
 
   /*! H2O2 photolysis rate [1/s]. */
@@ -2017,16 +2017,10 @@ void cart2geo(
   double *lat);
 
 /*! Check if x is finite. */
-#ifdef _OPENACC
-#pragma acc routine (check_finite)
-#endif
 int check_finite(
   const double x);
 
 /*! Climatology of OH volume mixing ratios. */
-#ifdef _OPENACC
-#pragma acc routine (clim_oh)
-#endif
 double clim_oh(
   const ctl_t * ctl,
   const clim_t * clim,
@@ -2041,9 +2035,6 @@ void clim_oh_diurnal_correction(
   clim_t * clim);
 
 /*! Interpolate photolysis rate data. */
-#ifdef _OPENACC
-#pragma acc routine (clim_photo)
-#endif
 double clim_photo(
   double rate[CP][CSZA][CO3],
   clim_photo_t * photo,
@@ -2052,9 +2043,6 @@ double clim_photo(
   double o3c);
 
 /*! Climatology of tropopause pressure. */
-#ifdef _OPENACC
-#pragma acc routine (clim_tropo)
-#endif
 double clim_tropo(
   const clim_t * clim,
   const double t,
@@ -2065,17 +2053,11 @@ void clim_tropo_init(
   clim_t * clim);
 
 /*! Interpolate time series. */
-#ifdef _OPENACC
-#pragma acc routine (clim_ts)
-#endif
 double clim_ts(
   const clim_ts_t * ts,
   const double t);
 
 /*! Interpolate zonal mean climatology. */
-#ifdef _OPENACC
-#pragma acc routine (clim_zm)
-#endif
 double clim_zm(
   const clim_zm_t * zm,
   const double t,
@@ -2160,9 +2142,6 @@ void get_met_replace(
   char *repl);
 
 /*! Spatiotemporal interpolation of meteo data. !*/
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_4d_coord)
-#endif
 void intpol_met_4d_coord(
   met_t * met0,
   float height0[EX][EY][EP],
@@ -2180,9 +2159,6 @@ void intpol_met_4d_coord(
   int init);
 
 #ifdef UVW
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_4d_coord_uvw)
-#endif
 void intpol_met_4d_coord_uvw(
   met_t * met0,
   float heights0[EX][EY][EP],
@@ -2203,9 +2179,6 @@ void intpol_met_4d_coord_uvw(
 #endif
 
 /*! Spatial interpolation of meteo data. */
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_space_3d)
-#endif
 void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
@@ -2218,9 +2191,6 @@ void intpol_met_space_3d(
   int init);
 
 /*! Spatial interpolation of meteo data. */
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_space_2d)
-#endif
 void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
@@ -2233,9 +2203,6 @@ void intpol_met_space_2d(
 
 /*! Spatial interpolation of meteo data. */
 #ifdef UVW
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_space_uvw)
-#endif
 void intpol_met_space_uvw(
   met_t * met,
   double p,
@@ -2250,9 +2217,6 @@ void intpol_met_space_uvw(
 #endif
 
 /*! Temporal interpolation of meteo data. */
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_time_3d)
-#endif
 void intpol_met_time_3d(
   met_t * met0,
   float array0[EX][EY][EP],
@@ -2268,9 +2232,6 @@ void intpol_met_time_3d(
   int init);
 
 /*! Temporal interpolation of meteo data. */
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_time_2d)
-#endif
 void intpol_met_time_2d(
   met_t * met0,
   float array0[EX][EY],
@@ -2286,9 +2247,6 @@ void intpol_met_time_2d(
 
 /*! Temporal interpolation of meteo data. */
 #ifdef UVW
-#ifdef _OPENACC
-#pragma acc routine (intpol_met_time_uvw)
-#endif
 void intpol_met_time_uvw(
   met_t * met0,
   met_t * met1,
@@ -2313,9 +2271,6 @@ void jsec2time(
   double *remain);
 
 /*! Get weighting factor from kernel function. */
-#ifdef _OPENACC
-#pragma acc routine (kernel_weight)
-#endif
 double kernel_weight(
   const double kz[EP],
   const double kw[EP],
@@ -2323,9 +2278,6 @@ double kernel_weight(
   const double p);
 
 /*! Calculate moist adiabatic lapse rate. */
-#ifdef _OPENACC
-#pragma acc routine (lapse_rate)
-#endif
 double lapse_rate(
   const double t,
   const double h2o);
@@ -2335,27 +2287,18 @@ void level_definitions(
   ctl_t * ctl);
 
 /*! Find array index for irregular grid. */
-#ifdef _OPENACC
-#pragma acc routine (locate_irr)
-#endif
 int locate_irr(
   const double *xx,
   const int n,
   const double x);
 
 /*! Find array index for regular grid. */
-#ifdef _OPENACC
-#pragma acc routine (locate_reg)
-#endif
 int locate_reg(
   const double *xx,
   const int n,
   const double x);
 
 /*! Locate the four vertical indizes of a box for a given height value. */
-#ifdef _OPENACC
-#pragma acc routine (locate_vert)
-#endif
 void locate_vert(
   float profiles[EX][EY][EP],
   int np,
@@ -2365,9 +2308,6 @@ void locate_vert(
   int *ind);
 
 /*! locate the index in a column of a three dimensional array. */
-#ifdef _OPENACC
-#pragma acc routine (locate_irr_3d)
-#endif
 int locate_irr_3d(
   float profiles[EX][EY][EP],
   int np,
@@ -2376,9 +2316,6 @@ int locate_irr_3d(
   double x);
 
 /*! Calculate NAT existence temperature. */
-#ifdef _OPENACC
-#pragma acc routine (nat_temperature)
-#endif
 double nat_temperature(
   const double p,
   const double h2o,
@@ -2619,9 +2556,6 @@ double scan_ctl(
   char *value);
 
 /*! Calculate sedimentation velocity. */
-#ifdef _OPENACC
-#pragma acc routine (sedi)
-#endif
 double sedi(
   const double p,
   const double T,
@@ -2639,17 +2573,11 @@ void spline(
   const int method);
 
 /*! Calculate standard deviation. */
-#ifdef _OPENACC
-#pragma acc routine (stddev)
-#endif
 float stddev(
   const float *data,
   const int n);
 
 /*! Calculate solar zenith angle. */
-#ifdef _OPENACC
-#pragma acc routine (sza_calc)
-#endif
 double sza_calc(
   const double sec,
   const double lon,
@@ -2678,9 +2606,6 @@ double time_from_filename(
   int offset);
 
 /*! Get weighting factor based on tropopause distance. */
-#ifdef _OPENACC
-#pragma acc routine (tropo_weight)
-#endif
 double tropo_weight(
   const clim_t * clim,
   const double t,
@@ -2835,5 +2760,37 @@ void write_vtk(
   ctl_t * ctl,
   atm_t * atm,
   double t);
+
+/* ------------------------------------------------------------
+   OpenACC routines...
+   ------------------------------------------------------------ */
+
+#ifdef _OPENACC
+#pragma acc routine (check_finite)
+#pragma acc routine (clim_oh)
+#pragma acc routine (clim_photo)
+#pragma acc routine (clim_tropo)
+#pragma acc routine (clim_ts)
+#pragma acc routine (clim_zm)
+#pragma acc routine (intpol_met_4d_coord)
+#pragma acc routine (intpol_met_4d_coord_uvw)
+#pragma acc routine (intpol_met_space_3d)
+#pragma acc routine (intpol_met_space_2d)
+#pragma acc routine (intpol_met_space_uvw)
+#pragma acc routine (intpol_met_time_3d)
+#pragma acc routine (intpol_met_time_2d)
+#pragma acc routine (intpol_met_time_uvw)
+#pragma acc routine (kernel_weight)
+#pragma acc routine (lapse_rate)
+#pragma acc routine (locate_irr)
+#pragma acc routine (locate_reg)
+#pragma acc routine (locate_vert)
+#pragma acc routine (locate_irr_3d)
+#pragma acc routine (nat_temperature)
+#pragma acc routine (sedi)
+#pragma acc routine (stddev)
+#pragma acc routine (sza_calc)
+#pragma acc routine (tropo_weight)
+#endif
 
 #endif /* LIBTRAC_H */

@@ -2235,6 +2235,47 @@ void read_clim_photo(
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of pressure levels: %d", photo->np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(photo->p[0]), Z(photo->p[1]), Z(photo->p[photo->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa",
+      photo->p[0], photo->p[1], photo->p[photo->np - 1]);
+  LOG(2, "Number of solar zenith angles: %d", photo->nsza);
+  LOG(2, "Solar zenith angles: %g, %g ... %g deg",
+      photo->sza[0] * 180. / M_PI, photo->sza[1] * 180. / M_PI,
+      photo->sza[photo->nsza - 1] * 180. / M_PI);
+  LOG(2, "Number of total column ozone values: %d", photo->no3c);
+  LOG(2, "Total column ozone: %g, %g ... %g DU",
+      photo->o3c[0], photo->o3c[1], photo->o3c[photo->no3c - 1]);
+  LOG(2, "N2O photolysis rate: %g, %g ... %g s**-1",
+      photo->n2o[0][0][0], photo->n2o[1][0][0],
+      photo->n2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "CCl4 photolysis rate: %g, %g ... %g s**-1",
+      photo->ccl4[0][0][0], photo->ccl4[1][0][0],
+      photo->ccl4[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "CFC-11 photolysis rate: %g, %g ... %g s**-1",
+      photo->ccl3f[0][0][0], photo->ccl3f[1][0][0],
+      photo->ccl3f[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "CFC-12 photolysis rate: %g, %g ... %g s**-1",
+      photo->ccl2f2[0][0][0], photo->ccl2f2[1][0][0],
+      photo->ccl2f2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "O2 photolysis rate: %g, %g ... %g s**-1",
+      photo->o2[0][0][0], photo->o2[1][0][0],
+      photo->o2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "O3 -> O(1D) photolysis rate: %g, %g ... %g s**-1",
+      photo->o3_1[0][0][0], photo->o3_1[1][0][0],
+      photo->o3_1[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "O3 -> O(3P) photolysis rate: %g, %g ... %g s**-1",
+      photo->o3_2[0][0][0], photo->o3_2[1][0][0],
+      photo->o3_2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "H2O2 photolysis rate: %g, %g ... %g s**-1",
+      photo->h2o2[0][0][0], photo->h2o2[1][0][0],
+      photo->h2o2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "H2O photolysis rate: %g, %g ... %g s**-1",
+      photo->h2o[0][0][0], photo->h2o[1][0][0],
+      photo->h2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
 }
 
 /*****************************************************************************/
@@ -2625,19 +2666,10 @@ void read_ctl(
   /* Vertical coordinates and velocities... */
   ctl->vert_coord_ap =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
+  if (ctl->vert_coord_ap == 1 && ctl->qnt_zeta < 0)
+    ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   ctl->vert_coord_met =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
-  if (ctl->vert_coord_ap == 1) {
-    int error = 1;
-    for (int iq = 0; iq < ctl->nq; iq++) {
-      if (strcmp(ctl->qnt_name[iq], "zeta") == 0) {
-	error = 0;
-	break;
-      }
-    }
-    if (error == 1)
-      ERRMSG("Please add zeta to your quantities for diabatic calculations.");
-  }
   ctl->clams_met_data =
     (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
   ctl->cpl_zeta_and_press_modules =

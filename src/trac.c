@@ -409,11 +409,11 @@ int main(
     /* Initialize timesteps... */
     module_timesteps_init(&ctl, atm);
 
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1], clim[:1], ctl)
-#endif
+    //    /* Update GPU... */
+    //#ifdef _OPENACC
+    //    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    //#pragma acc update device(atm[:1], clim[:1], ctl)
+    //#endif
 
     /* Initialize random number generator... */
     module_rng_init(ntask);
@@ -433,21 +433,20 @@ int main(
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
-    /* Initialize pressure heights consistent with zeta ... */
+    /* Initialize pressure heights consistent with zeta... */
     if (ctl.vert_coord_ap == 1) {
       INTPOL_INIT;
-      for (int ip = 0; ip < atm->np; ip++) {
+      for (int ip = 0; ip < atm->np; ip++)
 	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
 			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
 			    1);
-      }
     }
 
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(cache[:1])
+#pragma acc update device(atm[:1], cache[:1], clim[:1], ctl)
 #endif
 
     /* ------------------------------------------------------------
@@ -1913,37 +1912,33 @@ void module_mixing(
   atm_t * atm,
   double t) {
 
-  int *ixs, *iys, *izs;
-
-  /* Update host... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-#endif
-
   /* Set timer... */
   SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
+  const int np = atm->np;
+  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
 
   /* Set grid box size... */
-  double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
-  double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
-  double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
+  const double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
+  const double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
+  const double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
+#ifdef _OPENACC
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs)
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
+#endif
+  for (int ip = 0; ip < np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
@@ -1993,15 +1988,12 @@ void module_mixing(
     module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
 
   /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(ixs,iys,izs)
+#endif
   free(ixs);
   free(iys);
   free(izs);
-
-  /* Update device... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
 }
 
 /*****************************************************************************/
@@ -2015,37 +2007,65 @@ void module_mixing_help(
   const int *izs,
   int qnt_idx) {
 
-  double *cmean;
-
-  int *count;
-
   /* Allocate... */
-  ALLOC(cmean, double,
-	ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz);
-  ALLOC(count, int,
-	ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz);
+  const int np = atm->np;
+  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
+  double *restrict const cmean =
+    (double *) malloc((size_t) ngrid * sizeof(double));
+  int *restrict const count = (int *) malloc((size_t) ngrid * sizeof(int));
 
-  /* Loop over particles... */
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0) {
-      int idx = ARRAY_3D
-	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
-      cmean[idx] += atm->q[qnt_idx][ip];
-      count[idx]++;
-    }
+  /* Init... */
+#ifdef _OPENACC
+#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
+#pragma acc parallel loop independent gang vector
+#else
 #ifdef __NVCOMPILER
 #pragma novector
 #endif
-  {
 #pragma omp parallel for
-    for (int i = 0; i < ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz; i++)
-      if (count[i] > 0)
-	cmean[i] /= count[i];
+#endif
+  for (int i = 0; i < ngrid; i++) {
+    count[i] = 0;
+    cmean[i] = 0;
   }
 
+  /* Loop over particles... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+      int idx = ARRAY_3D
+	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      cmean[idx] += atm->q[qnt_idx][ip];
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      count[idx]++;
+    }
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
+#endif
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < ngrid; i++)
+    if (count[i] > 0)
+      cmean[i] /= count[i];
+
   /* Calculate interparcel mixing... */
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++)
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for
+#endif
+  for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
 
       /* Set mixing parameter... */
@@ -2064,6 +2084,9 @@ void module_mixing_help(
     }
 
   /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(cmean,count)
+#endif
   free(cmean);
   free(count);
 }
