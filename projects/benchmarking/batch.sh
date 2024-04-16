@@ -1,25 +1,25 @@
 #! /bin/bash
 
 # Check arguments...
-if [ $# -ne 13 ] ; then
-    echo "usage: $0 <system> <trac> <libs> <compiler> <gpu> <npmin> <npmax> <npfac> <meteo> <rng> <sort> <phys> <cache>"
+if [ $# -ne 12 ] ; then
+    echo "usage: $0 <system> <libs> <compiler> <gpu> <npmin> <npmax> <npfac> <meteo> <rng> <sort> <phys> <cache>"
     exit
 fi
 
 # Set variables...
+trac=../../
 system=$1
-trac=$2
-libs=$3
-compiler=$4
-gpu=$5
-npmin=$6
-npmax=$7
-npfac=$8
-meteo=$9
-rng=${10}
-sort=${11}
-phys=${12}
-cache=${13}
+libs=$2
+compiler=$3
+gpu=$4
+npmin=$5
+npmax=$6
+npfac=$7
+meteo=$8
+rng=$9
+sort=${10}
+phys=${11}
+cache=${12}
 
 # Write info:
 echo "job started: $(date)"
@@ -72,6 +72,7 @@ rm -rf data && mkdir -p data || exit
 for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print np}') ; do
     
     # Set logfile,,,
+    mkdir -p logs || exit
     log=log.$system.$compiler.nodes_${SLURM_JOB_NUM_NODES}.tasks_${SLURM_NTASKS_PER_NODE}.threads_${SLURM_CPUS_PER_TASK}.gpu_$gpu.meteo_$meteo.rng_$rng.sort_$sort.np_$np.phys_${phys}.cache_${cache}
     echo -e "\nProcessing $log ..."
     {
@@ -89,14 +90,12 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	[ $cache = "2" ] && flags+=" ASYNCIO=1"
 	
 	# Compile...
-	cd $trac/src || exit
-	make clean || exit
-	make -j LIBDIR="-L $trac/libs/build/lib" INCDIR="-I $trac/libs/build/include" DEFINES="$defs" $flags || exit
+	cd $trac/src && make clean && make -j DEFINES="$defs" $flags || exit
 	cd -
 	
 	# MPTRAC setup...
 	qnt="NQ 8 QNT_NAME[0] theta QNT_NAME[1] pv QNT_NAME[2] h2o QNT_NAME[3] o3 QNT_NAME[4] Cn2o QNT_NAME[5] Cccl4 QNT_NAME[6] Cccl3f QNT_NAME[7] Cccl2f2"
-	clim="CLIM_PHOTO ./mptrac/data/clams_photolysis_rates.nc CLIM_HNO3_FILENAME ./mptrac/data/gozcards_HNO3.nc CLIM_OH_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_H2O2_FILENAME ./mptrac/data/cams_H2O2.nc CLIM_HO2_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_O1D_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_CCL4_TIMESERIES ./mptrac/data/noaa_gml_ccl4.tab CLIM_CCL3F_TIMESERIES ./mptrac/data/noaa_gml_cfc11.tab CLIM_CCL2F2_TIMESERIES ./mptrac/data/noaa_gml_cfc12.tab CLIM_N2O_TIMESERIES ./mptrac/data/noaa_gml_n2o.tab CLIM_SF6_TIMESERIES ./mptrac/data/noaa_gml_sf6.tab"
+	#clim="CLIM_PHOTO ./mptrac/data/clams_photolysis_rates.nc CLIM_HNO3_FILENAME ./mptrac/data/gozcards_HNO3.nc CLIM_OH_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_H2O2_FILENAME ./mptrac/data/cams_H2O2.nc CLIM_HO2_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_O1D_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_CCL4_TIMESERIES ./mptrac/data/noaa_gml_ccl4.tab CLIM_CCL3F_TIMESERIES ./mptrac/data/noaa_gml_cfc11.tab CLIM_CCL2F2_TIMESERIES ./mptrac/data/noaa_gml_cfc12.tab CLIM_N2O_TIMESERIES ./mptrac/data/noaa_gml_n2o.tab CLIM_SF6_TIMESERIES ./mptrac/data/noaa_gml_sf6.tab"
 	[ $meteo = "erai" ] && metbase="METBASE meteo/erai_pck/ei DT_MET 21600 DT_MOD 360 MET_TYPE 2"
 	[ $meteo = "era5" ] && metbase="METBASE meteo/era5_pck/era5 DT_MET 3600 DT_MOD 180 MET_TYPE 2"
 	[ $cache = "1" ] && metbase+=" MET_CACHE 1"
@@ -166,7 +165,7 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
             print "  column=", c, "| bias_abs=", bias_abs[c]/n[c], "| bias_rel=", 100.*bias_rel[c]/n[c], "% | rmse_abs=", sqrt(rmse_abs[c]/n[c]), "| rmse_rel=", 100.*sqrt(rmse_rel[c]/n[c]), "% | n=", n[c]
         }'
 	
-    } > $log 2>&1
+    } > logs/$log 2>&1
     
 done
 

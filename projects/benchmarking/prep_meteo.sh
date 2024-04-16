@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Setup...
-trac=./mptrac/src
+trac=../../src
 metdir=/p/largedata/slmet/slmet111/datapub/hoffmann1/mptrac/projects/benchmarking/meteo
 
 # Create directories...

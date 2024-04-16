@@ -74,7 +74,6 @@ EOF
 fi
 
 # Set variables...
-trac=$(pwd)/mptrac
 system=$1
 account=$2
 runtime=$3
@@ -107,7 +106,7 @@ fi
 # Compile libraries...
 echo -e "\nCompile libraries..."
 if [ $libs = "login" ] ; then
-    cd $trac/libs && ./build.sh -a ; cd -
+    cd ../../libs && ./build.sh -a ; cd -
 else
     echo "Compile on compute node or assume already available!"
 fi
@@ -116,6 +115,13 @@ fi
 echo -e "\nDownloading meteo data..."
 [ -s meteo ] \
     || wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/meteo/ \
+	&& echo "Already available!"
+du -h meteo || exit
+
+# Get reference data...
+echo -e "\nDownloading reference data..."
+[ -s reference ] \
+    || wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/reference/ \
 	&& echo "Already available!"
 du -h meteo || exit
 
@@ -142,4 +148,4 @@ else
     echo "error: system \"$system\" unknown!"
     exit
 fi
-sbatch $slurmset -v --wait ./batch.sh $system $trac $libs $compiler $gpu $npmin $npmax $npfac $meteo $rng $sort $phys $cache
+sbatch $slurmset -v --wait ./batch.sh $system $libs $compiler $gpu $npmin $npmax $npfac $meteo $rng $sort $phys $cache
