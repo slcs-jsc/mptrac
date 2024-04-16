@@ -14,7 +14,6 @@ projects/*
 projects/example/data/
 projects/example/plots/
 !projects/benchmarking/
-!projects/data/
 !projects/example/
 projects/kpp/
 src/*.o
@@ -63,4 +62,3 @@ test/interoper_test/data/
 test/interoper_test/run_all.sh
 test/interoper_test/run_atm.sh
 test/interoper_test/run_dia.sh
-
