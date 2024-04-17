@@ -69,9 +69,9 @@ export OMP_PLACES=sockets
 rm -rf data && mkdir -p data || exit
 
 # Loop over number of particles...
-for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print np}') ; do
+for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) print np}') ; do
     
-    # Set logfile,,,
+    # Set logfile...
     mkdir -p logs || exit
     log=log.$system.$compiler.nodes_${SLURM_JOB_NUM_NODES}.tasks_${SLURM_NTASKS_PER_NODE}.threads_${SLURM_CPUS_PER_TASK}.gpu_$gpu.meteo_$meteo.rng_$rng.sort_$sort.np_$np.phys_${phys}.cache_${cache}
     echo -e "\nProcessing $log ..."
@@ -79,7 +79,7 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	
 	# Set compile flags...
 	echo -e "\nCompile MPTRAC..."
- 	np_comp=$(echo $np | awk '{if($1<100) print 100; else print $1}')
+ 	np_comp=$(echo "$np" | awk '{if($1<100) print 100; else print $1}')
  	[ "$meteo" = "erai" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=482 -DEY=242 -DEP=62"
  	[ "$meteo" = "era5" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=1202 -DEY=602 -DEP=140"
  	flags="COMPILER=$compiler MPI=1 STATIC=0 "
