@@ -16,6 +16,9 @@ projects/example/data/
 projects/example/plots/
 !projects/example/
 projects/kpp/
+!projects/python/
+projects/python/plots/
+projects/python/pythonplots/
 src/*.o
 src/atm2grid
 src/atm_conv

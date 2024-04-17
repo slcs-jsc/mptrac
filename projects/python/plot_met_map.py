@@ -3,15 +3,14 @@
 ## Data created: 14.09.2023
 ## Last modified: 11.01.2024
 ## Purpose: Plots MPTRAC met_map output - global fields (parameter vs
-## longitude/latitude) 
+## longitude/latitude)
 ######################################################################
 
-
 import matplotlib.pyplot as plt
-import matplotlib as mlp
 import pandas as pd
 import numpy as np
 import xarray as xr
+import glob,sys,os
 
 # MPTRAC met_map ERA5 ouput - 47 species are written out. Note newer MPTRAC version write 49 species out!
 # $1 = time [s]
@@ -62,12 +61,11 @@ import xarray as xr
 # $46 = number of tropopause data points
 # $47 = number of CAPE data points
 
-
 data = 'ERA5'
 level = '10_km'    #10_km, 5_km, 2_km
 
 file = 'data/map_era5_2017010817_2_2.tab'
-  
+
 header=['time', 'altitude', 'longitude', 'latitude', 'pressure', 'temperature', 'u', 'v', 'w', 'H2O', 'O3', 'gph', 'pv', 'psurf', 'tsurf', 'gph_surf' , 'u_surf', 'v_surf', 'land_sea_mask', 'SST', 'p_trop', 'gph_trop', 'temp_trop', 'H2O_trop', 'cloud_lw', 'cloud_iwc', 'cloud_cover', 'tot_col_water', 'cloud_top press', 'cloud_bottom_press', 'pressure_lifted_CL', 'press_lev_free_conv', 'press_EL', 'CAPE', 'CIN', 'RH_w', 'RH_ice', 'T_dew', 'T_frost', 'T_NAT', 'HNO3', 'OH', 'H2O2', 'press_bl', 'np', 'np_trop', 'np_CAPE']
 
 print(header)
@@ -84,9 +82,9 @@ H2O =  xr.DataArray(data1.H2O)
 O3 = xr.DataArray(data1.O3)
 temp = xr.DataArray(data1.temperature)
 
-# ERA5 2° x 2° 
+# ERA5 2° x 2°
 nlon = 181
-nlat =  91
+nlat = 91
 
 lat_new = np.array(latitude).reshape(nlat,nlon)
 lon_new = np.array(longitude).reshape(nlat,nlon)
@@ -104,6 +102,9 @@ elif level == '5_km':
   height = '5 km'
 elif level == '2_km':
   height = '2 km'
+
+if (os.path.isdir('plots')==0):
+  os.mkdir('plots')
 
 plt.figure(1, figsize=(10,6))
 plt.contourf(lon_new[0,:], lat_new[:,0], o3_new, cmap='viridis')
@@ -130,5 +131,3 @@ plt.title('ECMWF ERA5 2° x 2° ('+height+')')
 plt.savefig('plots/'+data+'_temp.png', bbox_inches='tight')
 
 plt.show()
-
-
