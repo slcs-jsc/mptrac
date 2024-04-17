@@ -2,14 +2,12 @@
 
 # Prepare reference data...
 rm -rf reference && mkdir -p reference || exit
-./benchmark.sh jwb exaww 03:00:00 avail avail gcc 1 1 48 0 100 100000000 10 era5 0 0 traj 0
-rsync -av data/ reference/
-./benchmark.sh jwb exaww 03:00:00 avail avail gcc 1 1 48 0 100 100000000 10 era5 0 0 full 0
-rsync -av data/ reference/
-./benchmark.sh jwb exaww 03:00:00 avail avail gcc 1 1 48 0 100 100000000 10 erai 0 0 traj 0
-rsync -av data/ reference/
-./benchmark.sh jwb exaww 03:00:00 avail avail gcc 1 1 48 0 100 100000000 10 erai 0 0 full 0
-rsync -av data/ reference/
+for meteo in era5 erai ; do
+    for phys in traj full ; do
+	./benchmark.sh jwb exaww 03:00:00 avail gcc 1 1 48 0 100 100000000 10 $meteo 0 0 $phys 0
+	rsync -av data/ reference/
+    done
+done
 
 # Remove temporary files...
 rm $(find reference -name "atm_init.tab") \
