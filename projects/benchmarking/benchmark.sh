@@ -25,9 +25,8 @@ parameter choices:
 
   runtime: specify maximum runtime (e.g. 00:30:00)
 
-  mptrac: specify whether MPTRAC should be recompiled
+  mptrac: specify whether MPTRAC repo should be updated
     avail = use available copy of MPTRAC as is
-    clone = remove existing copy of MPTRAC and make new clone from git repository
     pull = update existing copy of MPTRAC via pull request to git repository
 
   libs: specify whether libraries should be recompiled
@@ -95,17 +94,15 @@ cache=${18}
 
 # Update MPTRAC repository...
 echo -e "\nUpdating MPTRAC repository..."
-if [ $mptrac = "clone" ] ; then
-    rm -rf mptrac ; git clone https://github.com/slcs-jsc/mptrac.git || exit    
-elif [ $mptrac = "pull" ] ; then
-    cd mptrac && git pull || exit ; cd -
+if [ "$mptrac" = "pull" ] ; then
+    git pull || exit
 else
     echo "Use as is!"
 fi
 
 # Compile libraries...
 echo -e "\nCompile libraries..."
-if [ $libs = "login" ] ; then
+if [ "$libs" = "login" ] ; then
     cd ../../libs && ./build.sh -a ; cd -
 else
     echo "Compile on compute node or assume already available!"
@@ -113,36 +110,40 @@ fi
 
 # Get meteo data...
 echo -e "\nDownloading meteo data..."
-[ -s meteo ] \
-    || wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/meteo/ \
-	&& echo "Already available!"
+if [ -s meteo ] ; then
+    echo "Already available!"
+else
+    wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/meteo/
+fi
 du -h meteo || exit
 
 # Get reference data...
 echo -e "\nDownloading reference data..."
-[ -s reference ] \
-    || wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/reference/ \
-	&& echo "Already available!"
-du -h meteo || exit
+if [ -s reference ] ; then
+    echo "Already available!"
+else
+    wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/reference/
+fi
+du -h reference || exit
 
 # Execute batch job...
 echo -e "\nExecute batch job..."
 ntasks=$(echo $nodes $ntasks_per_node | awk '{print $1*$2}')
 slurmset="--account=$account --time=$runtime --nodes=$nodes --ntasks=$ntasks --ntasks-per-node=$ntasks_per_node --cpus-per-task=$cpus_per_task --disable-dcgm --hint=nomultithread"
-[ $gpu != "0" ] && slurmset+=" --gres=gpu:1"
-if [ $system = "jwb" ] ; then
+[ "$gpu" != "0" ] && slurmset+=" --gres=gpu:1"
+if [ "$system" = "jwb" ] ; then
     slurmset+=" --partition=booster"
-elif [ $system = "jwc_cpu" ] ; then
+elif [ "$system" = "jwc_cpu" ] ; then
     slurmset+=" --partition=batch"
-elif [ $system = "jwc_gpu" ] ; then
+elif [ "$system" = "jwc_gpu" ] ; then
     slurmset+=" --partition=gpus"
-elif [ $system = "jrc_cpu" ] ; then
+elif [ "$system" = "jrc_cpu" ] ; then
     slurmset+=" --partition=dc-cpu"
-elif [ $system = "jrc_gpu" ] ; then
+elif [ "$system" = "jrc_gpu" ] ; then
     slurmset+=" --partition=dc-gpu"
-elif [ $system = "jrc_gh200" ] ; then
+elif [ "$system" = "jrc_gh200" ] ; then
     slurmset+=" --partition=dc-gh"
-elif [ $system = "jrc_h100" ] ; then
+elif [ "$system" = "jrc_h100" ] ; then
     slurmset+=" --partition=dc-h100"
 else
     echo "error: system \"$system\" unknown!"

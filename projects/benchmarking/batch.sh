@@ -27,7 +27,7 @@ echo -e "\nuname: $(uname -a)"
 
 # Compile libraries...
 echo -e "\nCompile libraries..."
-if [ $libs = "compute" ] ; then
+if [ "$libs" = "compute" ] ; then
     cd $trac/libs && ./build.sh -a ; cd -
 fi
 du -h $trac/libs/build/lib/ || exit
@@ -35,10 +35,10 @@ du -h $trac/libs/build/lib/ || exit
 # Load modules...
 echo -e "\nLoad modules..."
 ml purge
-if [ $compiler = "gcc" ] ; then
+if [ "$compiler" = "gcc" ] ; then
     ml GCC ParaStationMPI
     echo -e "\ngcc version:" ; gcc --version
-elif [ $compiler = "nvc" ] ; then
+elif [ "$compiler" = "nvc" ] ; then
     ml NVHPC ParaStationMPI
     echo -e "\nnvc version:" ; nvc --version
 else
@@ -80,14 +80,14 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	# Set compile flags...
 	echo -e "\nCompile MPTRAC..."
  	np_comp=$(echo $np | awk '{if($1<100) print 100; else print $1}')
- 	[ $meteo = "erai" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=482 -DEY=242 -DEP=62"
- 	[ $meteo = "era5" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=1202 -DEY=602 -DEP=140"
+ 	[ "$meteo" = "erai" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=482 -DEY=242 -DEP=62"
+ 	[ "$meteo" = "era5" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=1202 -DEY=602 -DEP=140"
  	flags="COMPILER=$compiler MPI=1 STATIC=0 "
-	[ $gpu = "1" ] && flags+=" GPU=1"
-	[ $gpu = "2" ] && flags+=" GPU=1 GPU_PIN=1"
- 	[ $rng = "2" ] && flags+=" CURAND=1"
-	[ $sort != "0" ] && flags+=" THRUST=1"
-	[ $cache = "2" ] && flags+=" ASYNCIO=1"
+	[ "$gpu" = "1" ] && flags+=" GPU=1"
+	[ "$gpu" = "2" ] && flags+=" GPU=1 GPU_PIN=1"
+ 	[ "$rng" = "2" ] && flags+=" CURAND=1"
+	[ "$sort" != "0" ] && flags+=" THRUST=1"
+	[ "$cache" = "2" ] && flags+=" ASYNCIO=1"
 	
 	# Compile...
 	cd $trac/src && make clean && make -j DEFINES="$defs" $flags || exit
@@ -95,13 +95,14 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	
 	# MPTRAC setup...
 	qnt="NQ 8 QNT_NAME[0] theta QNT_NAME[1] pv QNT_NAME[2] h2o QNT_NAME[3] o3 QNT_NAME[4] Cn2o QNT_NAME[5] Cccl4 QNT_NAME[6] Cccl3f QNT_NAME[7] Cccl2f2"
-	#clim="CLIM_PHOTO ./mptrac/data/clams_photolysis_rates.nc CLIM_HNO3_FILENAME ./mptrac/data/gozcards_HNO3.nc CLIM_OH_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_H2O2_FILENAME ./mptrac/data/cams_H2O2.nc CLIM_HO2_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_O1D_FILENAME ./mptrac/data/clams_radical_species_vmr.nc CLIM_CCL4_TIMESERIES ./mptrac/data/noaa_gml_ccl4.tab CLIM_CCL3F_TIMESERIES ./mptrac/data/noaa_gml_cfc11.tab CLIM_CCL2F2_TIMESERIES ./mptrac/data/noaa_gml_cfc12.tab CLIM_N2O_TIMESERIES ./mptrac/data/noaa_gml_n2o.tab CLIM_SF6_TIMESERIES ./mptrac/data/noaa_gml_sf6.tab"
-	[ $meteo = "erai" ] && metbase="METBASE meteo/erai_pck/ei DT_MET 21600 DT_MOD 360 MET_TYPE 2"
-	[ $meteo = "era5" ] && metbase="METBASE meteo/era5_pck/era5 DT_MET 3600 DT_MOD 180 MET_TYPE 2"
-	[ $cache = "1" ] && metbase+=" MET_CACHE 1"
-	[ $phys = "full" ] \
-	    && param="CONV_CAPE 0.0 BOUND_P0 1e100 BOUND_P1 -1e100 BOUND_LAT0 -90 BOUND_LAT1 90 BOUND_DPS 150 MIXING_TROP 0.1 MIXING_STRAT 0.1" \
-		|| param="TURB_DX_TROP 0 TURB_DX_STRAT 0 TURB_DZ_TROP 0 TURB_DZ_STRAT 0 TURB_MESOX 0 TURB_MESOZ 0" 
+	[ "$meteo" = "erai" ] && metbase="METBASE meteo/erai_pck/ei DT_MET 21600 DT_MOD 360 MET_TYPE 2"
+	[ "$meteo" = "era5" ] && metbase="METBASE meteo/era5_pck/era5 DT_MET 3600 DT_MOD 180 MET_TYPE 2"
+	[ "$cache" = "1" ] && metbase+=" MET_CACHE 1"
+	if [ "$phys" = "full" ] ; then
+	    param="CONV_CAPE 0.0 BOUND_P0 1e100 BOUND_P1 -1e100 BOUND_LAT0 -90 BOUND_LAT1 90 BOUND_DPS 150 MIXING_TROP 0.1 MIXING_STRAT 0.1"
+	else
+	    param="TURB_DX_TROP 0 TURB_DX_STRAT 0 TURB_DZ_TROP 0 TURB_DZ_STRAT 0 TURB_MESOX 0 TURB_MESOZ 0"
+	fi
 	t0=$($trac/src/time2jsec 2017 1 1 0 0 0 0)
 	t1=$($trac/src/time2jsec 2017 1 2 0 0 0 0)
 	
@@ -110,7 +111,7 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	rm -rf $dir && mkdir -p $dir || exit
 	
 	# Create init file...
-	$trac/src/atm_init - $dir/atm_init.tab $qnt $clim ATM_TYPE 1 \
+	$trac/src/atm_init - $dir/atm_init.tab $qnt ATM_TYPE 1 \
 			   INIT_T0 $t0 INIT_T1 $t0 \
 			   INIT_ULON 360 INIT_ULAT 180 \
 			   INIT_Z0 30 INIT_Z1 30 INIT_UZ 60 \
@@ -118,8 +119,7 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	
 	# Create data directories for tasks...
 	for task in $(seq ${SLURM_NTASKS}) ; do
-	    mkdir -p $dir/$task || exit
-	    cp $dir/atm_init.tab $dir/$task/ || exit
+	    mkdir -p $dir/$task && cp $dir/atm_init.tab $dir/$task/ || exit
 	    echo "$dir/$task" >> $dir/dirlist
 	done
 	
@@ -144,7 +144,7 @@ for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print n
 	done
 	
 	# Compare grid files...
-	echo -e "\nGrid differences..."	    
+	echo -e "\nGrid differences..."
 	paste $dir/1/grid_2017_01_02_00_00.tab reference/$meteo/phys_${phys}/$np/1/grid_2017_01_02_00_00.tab | awk '{
 	  if(NF>0 && $1!="#") {
             cmax=NF/2
