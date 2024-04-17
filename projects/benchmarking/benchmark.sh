@@ -1,11 +1,11 @@
 #! /bin/bash
 
 # Check arguments...
-if [ $# -ne 18 ] ; then
+if [ $# -ne 17 ] ; then
     cat <<EOF
 MPTRAC benchmarking script
 
-usage: $0 <system> <account> <runtime> <mptrac> <libs> <compiler> <nodes> <ntasks-per-node> <cpus-per-task> <gpu> <npmin> <npmax> <npfac> <meteo> <rng> <sort> <phys> <cache>
+usage: $0 <system> <account> <runtime> <libs> <compiler> <nodes> <ntasks-per-node> <cpus-per-task> <gpu> <npmin> <npmax> <npfac> <meteo> <rng> <sort> <phys> <cache>
 
 parameter choices:
 
@@ -24,10 +24,6 @@ parameter choices:
     exaww = WarmWorld compute budget
 
   runtime: specify maximum runtime (e.g. 00:30:00)
-
-  mptrac: specify whether MPTRAC repo should be updated
-    avail = use available copy of MPTRAC as is
-    pull = update existing copy of MPTRAC via pull request to git repository
 
   libs: specify whether libraries should be recompiled
     avail = assume libraries for MPTRAC are already available and compiled
@@ -76,29 +72,20 @@ fi
 system=$1
 account=$2
 runtime=$3
-mptrac=$4
-libs=$5
-compiler=$6
-nodes=$7
-ntasks_per_node=$8
-cpus_per_task=$9
-gpu=${10}
-npmin=${11}
-npmax=${12}
-npfac=${13}
-meteo=${14}
-rng=${15}
-sort=${16}
-phys=${17}
-cache=${18}
-
-# Update MPTRAC repository...
-echo -e "\nUpdating MPTRAC repository..."
-if [ "$mptrac" = "pull" ] ; then
-    git pull || exit
-else
-    echo "Use as is!"
-fi
+libs=$4
+compiler=$5
+nodes=$6
+ntasks_per_node=$7
+cpus_per_task=$8
+gpu=$9
+npmin=${10}
+npmax=${11}
+npfac=${12}
+meteo=${13}
+rng=${14}
+sort=${15}
+phys=${16}
+cache=${17}
 
 # Compile libraries...
 echo -e "\nCompile libraries..."
