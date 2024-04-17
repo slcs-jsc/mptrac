@@ -17,7 +17,7 @@ INCDIR += -I ../libs/build/include
 # Library directories...
 LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 
-# Compiler (gcc or nvc)...
+# Compiler (gcc, nvc, or clang)...
 COMPILER ?= gcc
 
 # Compile for MPI...
@@ -83,6 +83,9 @@ ifeq ($(COMPILER),gcc)
 else ifeq ($(COMPILER),nvc)
   CC=nvc
   CFLAGS += -mp -mcmodel=medium
+else ifeq ($(COMPILER),clang)
+  CC=clang
+  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 else
   $(error Compiler $(COMPILER) not supported)
 endif
@@ -96,6 +99,8 @@ ifeq ($(GPU),1)
     ifeq ($(GPU_PIN),1)
       CFLAGS += -gpu=pinned
     endif
+  else ifeq ($(COMPILER),clang)
+    $(error OpenACC is not supported by the clang compiler)
   endif
 endif
 
@@ -120,6 +125,8 @@ ifeq ($(INFO),1)
     CFLAGS += -fopt-info
   else ifeq ($(COMPILER),nvc)
     CFLAGS += -Minfo=all
+  else ifeq ($(COMPILER),clang)
+    $(error INFO flag not supported by clang compiler)
   endif
 endif
 
@@ -201,6 +208,9 @@ ifeq ($(STATIC),1)
   endif
   ifeq ($(MPI),1)
     $(error Static compilation does not work for MPI)
+  endif
+  ifeq ($(COMPILER),clang)
+    $(error Static compilation does not work for clang compiler)
   endif
   CFLAGS += -static
 endif

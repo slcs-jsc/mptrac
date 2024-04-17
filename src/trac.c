@@ -621,7 +621,7 @@ int main(
 
     /* Flush output buffer... */
     fflush(NULL);
-    
+
     /* Report problem size... */
     LOG(1, "SIZE_NP = %d", atm->np);
     LOG(1, "SIZE_MPI_TASKS = %d", size);
