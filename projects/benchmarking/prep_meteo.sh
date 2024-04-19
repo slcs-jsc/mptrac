@@ -16,8 +16,8 @@ cp /p/fastdata/slmet/slmet111/model_data/mptrac/input/era5/2017/01/era5_2017_01_
 
 # Packing...
 for f in $(ls $metdir/erai_nc/*nc) ; do
-    ../../src/met_conv - $f 0 $metdir/erai_pck/$(basename $f .nc).pck 2
+    ../../src/met_conv - "$f" 0 $metdir/erai_pck/$(basename "$f" .nc).pck 2
 done
 for f in $(ls $metdir/era5_nc/*nc) ; do
-    ../../src/met_conv - $f 0 $metdir/era5_pck/$(basename $f .nc).pck 2
+    ../../src/met_conv - "$f" 0 $metdir/era5_pck/$(basename "$f" .nc).pck 2
 done

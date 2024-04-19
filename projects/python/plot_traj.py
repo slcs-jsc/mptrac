@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 import matplotlib.pyplot as plt
-import glob,sys,os
+import sys,os
 
 traj_no = '5450'
 

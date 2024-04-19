@@ -90,7 +90,7 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	[ "$cache" = "2" ] && flags+=" ASYNCIO=1"
 	
 	# Compile...
-	cd $trac/src && make clean && make -j DEFINES="$defs" $flags || exit
+	cd $trac/src && make clean && make -j DEFINES="$defs" "$flags" || exit
 	cd -
 	
 	# MPTRAC setup...
@@ -108,14 +108,14 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	
 	# Create data directory...
 	dir=data/$meteo/phys_${phys}/$np
-	rm -rf $dir && mkdir -p $dir || exit
+	rm -rf "$dir" && mkdir -p "$dir" || exit
 	
 	# Create init file...
-	$trac/src/atm_init - $dir/atm_init.tab $qnt ATM_TYPE 1 \
-			   INIT_T0 $t0 INIT_T1 $t0 \
+	$trac/src/atm_init - $dir/atm_init.tab "$qnt" ATM_TYPE 1 \
+			   INIT_T0 "$t0" INIT_T1 "$t0" \
 			   INIT_ULON 360 INIT_ULAT 180 \
 			   INIT_Z0 30 INIT_Z1 30 INIT_UZ 60 \
-			   INIT_EVENLY 1 INIT_REP $np INIT_MASS 1e9 || exit
+			   INIT_EVENLY 1 INIT_REP "$np" INIT_MASS 1e9 || exit
 	
 	# Create data directories for tasks...
 	for task in $(seq ${SLURM_NTASKS}) ; do
@@ -124,7 +124,7 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	done
 	
 	# Calculate trajectories...
-	srun $trac/src/trac $dir/dirlist - atm_init.tab $qnt $clim T_STOP $t1 \
+	srun $trac/src/trac $dir/dirlist - atm_init.tab "$qnt" T_STOP "$t1" \
 	     $metbase MET_DT_OUT 3600 $param RNG_TYPE $rng SORT_DT $sort \
 	     ATM_BASENAME atm ATM_DT_OUT 21600 ATM_TYPE 1 \
 	     GRID_BASENAME grid GRID_DT_OUT 21600 \

@@ -41,11 +41,11 @@ mycmap = matplotlib.colors.LinearSegmentedColormap.from_list( \
 
 # Loop over files...
 filelist = sorted(glob.glob(f'{datadir}/atm_20*.tab'))
-for FILE in filelist :
+for FILE in filelist:
 
   # Write info...
   print('Plot '+FILE+' ...')
-  
+
   # Set time...
   minute = FILE.split('_')[-1][:2]
   hour = FILE.split('_')[-2]

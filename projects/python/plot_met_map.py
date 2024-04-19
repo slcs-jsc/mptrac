@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import xarray as xr
-import glob,sys,os
+import sys,os
 
 # MPTRAC met_map ERA5 ouput - 47 species are written out. Note newer MPTRAC version write 49 species out!
 # $1 = time [s]
@@ -121,7 +121,7 @@ plt.ylabel('Latitude')
 cbar = plt.colorbar(label='H$_2$O (ppmv)')
 plt.title('ECMWF ERA5 2° x 2° ('+height+')')
 plt.savefig('plots/'+data+'_H2O.png', bbox_inches='tight')
-  
+
 plt.figure(3, figsize=(10,6))
 plt.contourf(lon_new[0,:], lat_new[:,0], temp_new, cmap='viridis')
 plt.xlabel('Longitude')

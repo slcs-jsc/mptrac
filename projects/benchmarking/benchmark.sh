@@ -115,7 +115,7 @@ du -h reference || exit
 
 # Execute batch job...
 echo -e "\nExecute batch job..."
-ntasks=$(echo $nodes $ntasks_per_node | awk '{print $1*$2}')
+ntasks=$(echo "$nodes" "$ntasks_per_node" | awk '{print $1*$2}')
 slurmset="--account=$account --time=$runtime --nodes=$nodes --ntasks=$ntasks --ntasks-per-node=$ntasks_per_node --cpus-per-task=$cpus_per_task --disable-dcgm --hint=nomultithread"
 [ "$gpu" != "0" ] && slurmset+=" --gres=gpu:1"
 if [ "$system" = "jwb" ] ; then

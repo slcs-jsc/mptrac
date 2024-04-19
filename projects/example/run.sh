@@ -60,7 +60,7 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 
 # Calculate trajectories...
 echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP $t1
+$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP "$t1"
 
 # Plot air parcel data...
 echo
