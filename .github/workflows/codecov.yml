@@ -17,6 +17,6 @@ jobs:
     - name: coverage
       run: cd ./src ; STATIC=0 COV=1 make coverage
     - name: upload
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         directory: ./src/
