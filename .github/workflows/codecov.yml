@@ -18,5 +18,7 @@ jobs:
       run: cd ./src ; STATIC=0 COV=1 make coverage
     - name: upload
       uses: codecov/codecov-action@v4
+      env:
+        CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         directory: ./src/
