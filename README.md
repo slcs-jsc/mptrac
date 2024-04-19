@@ -45,7 +45,7 @@ The following optional software is required to enable additional features of MPT
 * the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to enable the netCDF4 file format
 * the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
 * the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
-* an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStation MPI](https://github.com/ParaStation/psmpi) for HPC support
+* an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStationMPI](https://github.com/ParaStation/psmpi) for HPC support
 * the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
 
 Some of the software is provided along with the MPTRAC repository, please see next section.
