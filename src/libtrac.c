@@ -3982,7 +3982,7 @@ void read_met_grid(
 
   char levname[LEN], tstr[10];
 
-  double rtime, r, r2;
+  double rtime = 0, r, r2;
 
   int varid, year2, mon2, day2, hour2, min2, sec2,
     year, mon, day, hour, min, sec;
@@ -7725,7 +7725,7 @@ void write_station(
 
     /* Check station flag... */
     if (ctl->qnt_stat >= 0)
-      if (atm->q[ctl->qnt_stat][ip])
+      if ((int) atm->q[ctl->qnt_stat][ip])
 	continue;
 
     /* Get Cartesian coordinates... */
