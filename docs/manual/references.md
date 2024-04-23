@@ -16,7 +16,7 @@ This is a list of papers in which MPTRAC was applied:
 
 - Liao, Y., Deng, X., Huang, M., Liu, M., Yi, J., and Hoffmann, L., Tracking Carbon Dioxide with Lagrangian Transport Simulations: Case Study of Canadian Forest Fires in May 2021, Atmosphere, 15, 429, <https://doi.org/10.3390/atmos15040429>, 2024.
 
-- Zou, L., Spang, R., Griessbach, S., Hoffmann, L., Khosrawi, F., Müller, R., and Tritscher, I.: A statistical analysis of the occurrence of polar stratospheric ice clouds based on MIPAS satellite observations and the ERA5 reanalysis, EGUsphere [preprint], https://doi.org/10.5194/egusphere-2024-547, 2024.
+- Zou, L., Spang, R., Griessbach, S., Hoffmann, L., Khosrawi, F., Müller, R., and Tritscher, I.: A statistical analysis of the occurrence of polar stratospheric ice clouds based on MIPAS satellite observations and the ERA5 reanalysis, EGUsphere [preprint], <https://doi.org/10.5194/egusphere-2024-547>, 2024.
 
 - Clemens, J., Hoffmann, L., Vogel, B., Grießbach, S., and Thomas, N.: Implementation and evaluation of diabatic advection in the Lagrangian transport model MPTRAC 2.6, Geosci. Model Dev. Discuss. [preprint], <https://doi.org/10.5194/gmd-2023-214>, 2023. 
 
