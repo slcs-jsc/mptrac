@@ -6960,7 +6960,7 @@ void write_grid_nc(
   double dz,
   int *np) {
 
-  char longname[LEN], varname[LEN];
+  char longname[2 * LEN], varname[2 * LEN];
 
   double *help;
 
