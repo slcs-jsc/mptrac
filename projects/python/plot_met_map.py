@@ -10,7 +10,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import numpy as np
 import xarray as xr
-import sys,os
+import os
 
 # MPTRAC met_map ERA5 ouput - 47 species are written out. Note newer MPTRAC version write 49 species out!
 # $1 = time [s]
