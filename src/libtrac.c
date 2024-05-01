@@ -4794,6 +4794,10 @@ void read_met_polar_winds(
   SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC", NVTX_READ);
   LOG(2, "Apply fix for polar winds...");
 
+  /* Check latitudes... */
+  if (fabs(met->lat[0]) < 89.999 || fabs(met->lat[met->ny - 1]) < 89.999)
+    return;
+
   /* Loop over hemispheres... */
   for (int ihem = 0; ihem < 2; ihem++) {
 
