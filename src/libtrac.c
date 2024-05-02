@@ -7159,8 +7159,12 @@ int write_met(
     write_met_bin_2d(out, met, met->cin, "CIN");
 
     /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z", 0, ctl->met_zfp_tol_z);
-    write_met_bin_3d(out, ctl, met, met->t, "T", 0, ctl->met_zfp_tol_t);
+    write_met_bin_3d(out, ctl, met, met->z, "Z",
+		     (ctl->met_zfp_tol_z <= 0 ? ctl->met_zfp_prec : 0),
+		     ctl->met_zfp_tol_z);
+    write_met_bin_3d(out, ctl, met, met->t, "T",
+		     (ctl->met_zfp_tol_t <= 0 ? ctl->met_zfp_prec : 0),
+		     ctl->met_zfp_tol_t);
     write_met_bin_3d(out, ctl, met, met->u, "U", ctl->met_zfp_prec, 0);
     write_met_bin_3d(out, ctl, met, met->v, "V", ctl->met_zfp_prec, 0);
     write_met_bin_3d(out, ctl, met, met->w, "W", ctl->met_zfp_prec, 0);
