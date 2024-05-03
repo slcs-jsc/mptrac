@@ -1884,7 +1884,7 @@ int read_atm(
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
   LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
   for (int iq = 0; iq < ctl->nq; iq++) {
-    char msg[LEN];
+    char msg[5 * LEN];
     sprintf(msg, "Quantity %s range: %s ... %s %s",
 	    ctl->qnt_name[iq], ctl->qnt_format[iq],
 	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
@@ -5922,7 +5922,7 @@ void write_atm(
   gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
   LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
   for (int iq = 0; iq < ctl->nq; iq++) {
-    char msg[LEN];
+    char msg[5 * LEN];
     sprintf(msg, "Quantity %s range: %s ... %s %s",
 	    ctl->qnt_name[iq], ctl->qnt_format[iq],
 	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);

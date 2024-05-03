@@ -33,7 +33,7 @@ GPU_PIN ?= 0
 STATIC ?= 1
 
 # Optimization flags...
-OPT ?= -O3
+OPTI ?= -O3
 
 # Optimization information...
 INFO ?= 0
@@ -76,7 +76,7 @@ ZSTD ?= 0
 VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags)
 
 # Set CC and CFLAGS...
-CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
+CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPTI) -g
 ifeq ($(COMPILER),gcc)
   CC=gcc
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
