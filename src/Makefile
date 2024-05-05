@@ -68,6 +68,9 @@ ZFP ?= 0
 # Enable zstd compression (experimental)...
 ZSTD ?= 0
 
+# Enable cmultiscale compression (experimental)...
+CMULTI ?= 0
+
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -196,6 +199,14 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
+endif
+
+# cmultiscale compression...
+ifeq ($(CMULTI),1)
+  #LIBDIR += ... ?
+  #LDFLAGS += ... ?
+  INCDIR += -I /home/lars/wrk/cmultiscale/cmultiscale/src/c_wrapper/
+  CFLAGS += -DCMULTI
 endif
 
 # Static compilation...
