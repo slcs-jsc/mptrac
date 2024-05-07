@@ -1064,7 +1064,6 @@ void intpol_met_4d_coord(
     /* Get vertical weighting factors... */
     cw[2] = (height - height_bot)
       / (height_top - height_bot);
-
   }
 
   /* Calculate the needed array values... */
@@ -1103,7 +1102,6 @@ void intpol_met_4d_coord(
 
   /* Interpolate vertically... */
   *var = cw[2] * (aux1 - aux0) + aux0;
-
 }
 
 /*****************************************************************************/

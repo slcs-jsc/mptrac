@@ -2147,26 +2147,6 @@ void intpol_met_4d_coord(
   double *cw,
   int init);
 
-#ifdef UVW
-void intpol_met_4d_coord_uvw(
-  met_t * met0,
-  float heights0[EX][EY][EP],
-  float uvw0[EX][EY][EP][3],
-  met_t * met1,
-  float heights1[EX][EY][EP],
-  float uvw1[EX][EY][EP][3],
-  double ts,
-  double height,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *zeta_dot,
-  int *ci,
-  double *cw,
-  int init);
-#endif
-
 /*! Spatial interpolation of meteo data. */
 void intpol_met_space_3d(
   met_t * met,
@@ -2762,7 +2742,6 @@ void write_vtk(
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
 #pragma acc routine (intpol_met_4d_coord)
-#pragma acc routine (intpol_met_4d_coord_uvw)
 #pragma acc routine (intpol_met_space_3d)
 #pragma acc routine (intpol_met_space_2d)
 #pragma acc routine (intpol_met_space_uvw)
