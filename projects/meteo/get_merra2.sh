@@ -1,8 +1,5 @@
 #! /bin/bash
 
-# Load modules...
-#module load GCC ParaStationMPI NCO
-
 # Check arguments...
 if [ $# -ne 4 ] ; then
     cat <<EOF
@@ -18,7 +15,7 @@ This script retrieves the MERRA-2 data for a given day (<year>,
 <month>, <day>) and place the converted data files in the <dir>
 directory.
 
-Note that the script retrieves data on model level. You will need to
+Note that the script retrieves data on model levels. You will need to
 interpolate it to pressure levels using MPTRAC's internal
 interpolation functions (via the MET_NP and MET_P control parameters).
 
