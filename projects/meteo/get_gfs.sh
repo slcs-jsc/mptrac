@@ -1,10 +1,5 @@
 #! /bin/bash
 
-## Load modules...
-#ml purge
-#ml Stages/2022
-#ml GCC ParaStationMPI CDO NCO
-
 # Check arguments...
 if [ $# -ne 4 ] ; then
     cat <<EOF
