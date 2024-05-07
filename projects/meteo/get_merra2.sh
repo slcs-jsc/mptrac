@@ -69,10 +69,10 @@ for f in $(ls $tmp/MERRA2*${year}${mon}*nc4) ; do
 	hstr=$(echo $h | awk '{printf("%02d", 3*$1)}')
 	
 	# Extract data...
-	ncks -3 -O -v PS,PHIS,PL,T,U,V,OMEGA,O3,QV,QL,QI -d time,$h $f merra2_${tstr}_${hstr}.nc
+	ncks -3 -O -v PS,PHIS,PL,T,U,V,OMEGA,O3,QV,QL,QI -d time,$h $f merra2_${tstr}_${hstr}.nc || exit
 	
 	# Rename variables...
-	ncrename -v PHIS,Z -v OMEGA,W -v QV,Q -v QL,CLWC -v QI,CIWC merra2_${tstr}_${hstr}.nc
+	ncrename -v PHIS,Z -v OMEGA,W -v QV,Q -v QL,CLWC -v QI,CIWC merra2_${tstr}_${hstr}.nc || exit
 	
 	# Move file...
 	mv merra2_${tstr}_${hstr}.nc $dir || exit
