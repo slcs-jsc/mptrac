@@ -16,6 +16,8 @@ projects/example/data/
 projects/example/plots/
 !projects/example/
 projects/kpp/
+!projects/meteo/
+projects/meteo/merra2/
 !projects/python/
 projects/python/plots/
 src/*.o
