@@ -4148,8 +4148,6 @@ void read_met_levels(
     }
     if (!read_met_nc_3d(ncid, "cc", "CC", ctl, met, met->cc, 1.0, 1))
       WARN("Cannot read cloud cover!");
-
-
   }
 
   /* CLaMS meteo data... */
@@ -4206,6 +4204,7 @@ void read_met_levels(
     ERRMSG("Meteo data format unknown!");
 
   if (ctl->vert_coord_ap == 1) {
+
     /* Store the velocities on model levels for diabatic advection... */
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
@@ -4213,15 +4212,19 @@ void read_met_levels(
 	  met->ul[ix][iy][ip] = met->u[ix][iy][ip];
 	  met->vl[ix][iy][ip] = met->v[ix][iy][ip];
 	}
+
     /* Original number of vertical levels... */
     met->npl = met->np;
   }
 
   if (ctl->met_np > 0 || ctl->vert_coord_ap == 1) {
+
     /* Read pressure on model levels... */
     if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
-      if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
-	ERRMSG("Cannot read pressure on model levels!");
+      if (!read_met_nc_3d
+	  (ncid, "pressure", "PRESSURE", ctl, met, met->pl, 0.01f, 1))
+	if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
+	  ERRMSG("Cannot read pressure on model levels!");
   }
 
   /* Transfer from model levels to pressure levels... */
