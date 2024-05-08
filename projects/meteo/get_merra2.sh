@@ -38,14 +38,12 @@ mon=$(echo $2 | awk '{printf("%02d", $1)}')
 day=$(echo $3 | awk '{printf("%02d", $1)}')
 dir=$4/$year
 
-# Create data directory...
+# Create directories...
 mkdir -p $dir || exit
-
-# Create temporary directory...
 tmp=$(mktemp -d tmp.XXXXXXXX)
-cd $tmp || exit
 
 # Download data...
+cd $tmp || exit
 vers=400
 [ $year -le 2010 ] && vers=300
 [ $year -le 2000 ] && vers=200
