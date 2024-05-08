@@ -50,7 +50,7 @@ for ts in $(seq 0 1 1463) ; do
     
     # Get 3D data...
     for var in air omega shum uwnd vwnd ; do
-	ncks -d time,$ts,$ts $tmp/$var.$year.nc $tmp/tmp.$var.nc || exit
+	ncks -d time,$ts,$ts $tmp/$var.$year.nc $tmp/tmp.$var.nc || continue
 	ncwa -O -a time -d time,0,0 $tmp/tmp.$var.nc $tmp/tmp.mean.$var.nc || exit
 	cdo intlevelx,1000,925,850,700,600,500,400,300,250,200,150,100,70,50,30,20,10 $tmp/tmp.mean.$var.nc $tmp/tmp.ip.$var.nc || exit
     done
