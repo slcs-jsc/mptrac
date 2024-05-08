@@ -19,6 +19,7 @@ projects/kpp/
 !projects/meteo/
 projects/meteo/gfs/
 projects/meteo/merra2/
+projects/meteo/ncep/
 !projects/python/
 projects/python/plots/
 src/*.o

@@ -11,17 +11,17 @@ This script retrieves instantaneous 3-dimensional, 3-hourly MERRA-2
 data (https://doi.org/10.5067/WWQSXQ8IVFW8) from NASA's GES DISC data
 archive and convert it for use with MPTRAC.
 
-This script retrieves the MERRA-2 data for a given day (<year>,
-<month>, <day>) and place the converted data files in the <dir>
-directory.
+This script retrieves the data for a given day (<year>, <month>,
+<day>) and place the converted data files in the archive directory
+(<dir>).
 
 Note that the script retrieves data on model levels. You will need to
 interpolate it to pressure levels using MPTRAC's internal
 interpolation functions (via the MET_NP and MET_P control parameters).
 
 You will need wget (https://www.gnu.org/software/wget) to retrieve the
-MERRA-2 data at GES DISC, and the netCDF Operators (NCO,
-https://nco.sourceforge.net) to convert the netCDF files for MPTRAC.
+data, and the netCDF Operators (NCO, https://nco.sourceforge.net) to
+convert the netCDF files for MPTRAC.
 
 You will need a NASA EarthData account and link GES DISC to your
 account (https://urs.earthdata.nasa.gov) to access the MERRA-2

@@ -13,11 +13,12 @@ them for use with MPTRAC. The data are retrieved from NOAA's
 Operational Model Archive and Distribution System (NOMADS,
 https://nomads.ncep.noaa.gov/).
 
-This script retrieves the GFS data for a given day (<year>, <month>,
-<day>) and places the converted data files in the <dir> directory.
+This script retrieves the data for a given day (<year>, <month>,
+<day>) and places the converted data files in the archive directory
+(<dir>).
 
 You will need wget (https://www.gnu.org/software/wget) to retrieve the
-GFS data, and the Climate Data Operators (CDO,
+data, and the Climate Data Operators (CDO,
 https://code.mpimet.mpg.de/projects/cdo) and netCDF Operators (NCO,
 https://nco.sourceforge.net) to convert the netCDF files for MPTRAC.
 EOF
