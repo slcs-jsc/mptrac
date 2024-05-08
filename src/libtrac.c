@@ -4223,7 +4223,8 @@ void read_met_levels(
     if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))
       if (!read_met_nc_3d
 	  (ncid, "pressure", "PRESSURE", ctl, met, met->pl, 0.01f, 1))
-	if (!read_met_nc_3d(ncid, "pl", "PRESS", ctl, met, met->pl, 1.0, 1))
+	if (!read_met_nc_3d
+	    (ncid, "press", "PRESS", ctl, met, met->pl, 1.0, 1))
 	  ERRMSG("Cannot read pressure on model levels!");
   }
 
@@ -5157,15 +5158,18 @@ void read_met_surface(
 
     /* Read temperature at the surface... */
     if (!read_met_nc_2d(ncid, "t2m", "T2M", ctl, met, met->ts, 1.0, 1))
-      WARN("Cannot read surface temperature!");
+      if (!read_met_nc_2d(ncid, "2t", "2T", ctl, met, met->ts, 1.0, 1))
+	WARN("Cannot read surface temperature!");
 
     /* Read zonal wind at the surface... */
     if (!read_met_nc_2d(ncid, "u10m", "U10M", ctl, met, met->us, 1.0, 1))
-      WARN("Cannot read surface zonal wind!");
+      if (!read_met_nc_2d(ncid, "10u", "10U", ctl, met, met->us, 1.0, 1))
+	WARN("Cannot read surface zonal wind!");
 
     /* Read meridional wind at the surface... */
     if (!read_met_nc_2d(ncid, "v10m", "V10M", ctl, met, met->vs, 1.0, 1))
-      WARN("Cannot read surface meridional wind!");
+      if (!read_met_nc_2d(ncid, "10v", "10V", ctl, met, met->vs, 1.0, 1))
+	WARN("Cannot read surface meridional wind!");
 
     /* Read land-sea mask... */
     if (!read_met_nc_2d(ncid, "lsm", "LSM", ctl, met, met->lsm, 1.0, 1))
@@ -5173,7 +5177,8 @@ void read_met_surface(
 
     /* Read sea surface temperature... */
     if (!read_met_nc_2d(ncid, "sstk", "SSTK", ctl, met, met->sst, 1.0, 1))
-      WARN("Cannot read sea surface temperature!");
+      if (!read_met_nc_2d(ncid, "sst", "SST", ctl, met, met->sst, 1.0, 1))
+	WARN("Cannot read sea surface temperature!");
   }
 
   /* CLaMS meteo data... */
