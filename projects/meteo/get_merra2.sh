@@ -42,8 +42,8 @@ dir=$4/$year
 mkdir -p $dir || exit
 
 # Create temporary directory...
-tmp=tmp_${year}_${mon}_${day}
-rm -rf $tmp && mkdir -p $tmp && cd $tmp || exit
+tmp=$(mktemp -d tmp.XXXXXXXX)
+cd $tmp || exit
 
 # Download data...
 vers=400

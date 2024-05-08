@@ -26,14 +26,13 @@ fi
 trac=../../src
 year=$1
 dir=$2/$year
-tmp=tmp/$year
 
 # Create directories...
 rm -rf $dir && mkdir -p $dir || exit
-rm -rf $tmp && mkdir -p $tmp || exit
+tmp=$(mktemp -d tmp.XXXXXXXX)
 
 # Download surface data...
-cd $tmp
+cd $tmp || exit
 wget https://downloads.psl.noaa.gov/Datasets/ncep.reanalysis/surface/hgt.sfc.nc
 wget https://downloads.psl.noaa.gov/Datasets/ncep.reanalysis/surface/pres.sfc.$year.nc || exit
 
