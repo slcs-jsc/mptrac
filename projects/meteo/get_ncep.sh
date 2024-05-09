@@ -3,7 +3,7 @@
 # Check arguments...
 if [ $# -ne 2 ] ; then
     cat <<EOF
-NCEP-NCAR Reanalysis 1 Data Download
+NCEP-NCAR Reanalysis 1 data download
 
 usage: $0 <year> <dir>
 

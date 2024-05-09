@@ -3,7 +3,7 @@
 # Check arguments...
 if [ $# -ne 4 ] ; then
     cat <<EOF
-MERRA-2 Data Download
+MERRA-2 data download
 
 usage: $0 <year> <month> <day> <dir>
 

@@ -3,7 +3,7 @@
 # Check arguments...
 if [ $# -ne 4 ] ; then
     cat <<EOF
-GFS Data Download
+GFS data download
 
 usage: $0 <year> <month> <day> <dir>
 
