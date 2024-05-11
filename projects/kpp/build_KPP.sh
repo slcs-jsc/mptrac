@@ -24,5 +24,5 @@ cd "$kppdir" || exit
 make clean \
 && make lib INFO=0 \
 && cp libkpp.a "$target"/lib \
-&& cp *.h "$target"/include \
-&& rm *.o
+&& cp ./*.h "$target"/include \
+&& rm ./*.o
