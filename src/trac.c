@@ -409,12 +409,6 @@ int main(
     /* Initialize timesteps... */
     module_timesteps_init(&ctl, atm);
 
-    //    /* Update GPU... */
-    //#ifdef _OPENACC
-    //    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    //#pragma acc update device(atm[:1], clim[:1], ctl)
-    //#endif
-
     /* Initialize random number generator... */
     module_rng_init(ntask);
 
