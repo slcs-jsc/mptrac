@@ -52,11 +52,11 @@ Some of the software is provided along with the MPTRAC repository, please see ne
 
 ### Installation
 
-Start by downloading the latest or one of the previous [MPTRAC releases on GitHub](https://github.com/slcs-jsc/mptrac/releases). Unzip the release file:
+Start by downloading the latest or one of the previous [MPTRAC releases](https://github.com/slcs-jsc/mptrac/releases). Unzip the release file:
 
     unzip mptrac-x.y.zip
 
-Alternatively, you can get the latest development version of the software from the GitHub repository:
+Alternatively, you can get the development version of the software from the GitHub repository:
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
@@ -74,7 +74,7 @@ In particular, you may want to check:
 
 * Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL, netCDF, and other libraries are located on your system.
 
-* By default, the MPTRAC binaries are linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilation causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the paths to the shared libraries.
+* By default, the MPTRAC binaries are linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilation causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI or OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the paths to the shared libraries.
 
 * To make use of the MPI parallelization of MPTRAC, the `MPI` flag must be enabled. Further steps will require an MPI library such as OpenMPI to be available on your system. To make use of the OpenACC parallelization, the `GPU` flag must be enabled. The NVIDIA HPC SDK is required to compile the GPU code. MPTRAC's OpenMP parallelization is always enabled.
 
