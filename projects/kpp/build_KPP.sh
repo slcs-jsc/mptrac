@@ -10,21 +10,19 @@ fi
 kppdir=$1
 REBUILD=1
 
-
-
 # Set target directory...
 target=$(cd ../../libs/build && pwd)
-export KPP_HOME=$target/src/KPP
-export KPP_FLEX_LIB_DIR=$target/src/KPP
+export KPP_HOME="$target"/src/KPP
+export KPP_FLEX_LIB_DIR="$target"/src/KPP
 
 # Build KPP code... 
-cd $kppdir
+cd "$kppdir" || exit
 [ $REBUILD -eq 1 ] && cp ../Makefile ./ \
 && cp ../kpp_chem.h ./ \
-&& $KPP_HOME/bin/kpp chem.kpp 
+&& "$KPP_HOME"/bin/kpp chem.kpp 
 
 make clean \
 && make lib INFO=0 \
-&& cp libkpp.a $target/lib \
-&& cp *.h $target/include \
+&& cp libkpp.a "$target"/lib \
+&& cp *.h "$target"/include \
 && rm *.o
