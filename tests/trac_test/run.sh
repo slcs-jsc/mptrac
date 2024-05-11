@@ -66,7 +66,7 @@ STAT_LAT = -40
 EOF
 
 # Create observation file...
-echo | awk -v tobs=$($trac/time2jsec 2011 6 7 0 0 0 0) '{
+echo | awk -v tobs="$($trac/time2jsec 2011 6 7 0 0 0 0)" '{
   for(lon=-25; lon<=-15; lon+=0.5)
     for(lat=-50; lat<=-25; lat+=1) {
       if(lon>=-24 && lon<=-21 && lat>=-36 && lat<=-28)
@@ -102,7 +102,6 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
 echo -e "\nCompare results..."
 error=0
 for f in $(ls data.ref/*.tab data.ref/*.vtk) ; do
-    diff -q -s data/$(basename "$f") "$f"
-    [ $? -ne 0 ] && error=1
+    diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
 exit $error

@@ -49,7 +49,6 @@ $trac/met_sample - data/sample.tab data/atm_init.tab \
 echo -e "\nCompare results..."
 error=0
 for f in $(ls data.ref/*.tab) ; do
-    diff -q -s data/$(basename "$f") "$f"
-    [ $? -ne 0 ] && error=1
+    diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
 exit $error

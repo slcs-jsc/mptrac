@@ -28,7 +28,7 @@ echo -e "\nuname: $(uname -a)"
 # Compile libraries...
 echo -e "\nCompile libraries..."
 if [ "$libs" = "compute" ] ; then
-    cd $trac/libs && ./build.sh -a ; cd -
+    cd $trac/libs && ./build.sh -a ; cd - || exit
 fi
 du -h $trac/libs/build/lib/ || exit
 
@@ -91,7 +91,7 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	
 	# Compile...
 	cd $trac/src && make clean && make -j DEFINES="$defs" "$flags" || exit
-	cd -
+	cd - || exit
 	
 	# MPTRAC setup...
 	qnt="NQ 8 QNT_NAME[0] theta QNT_NAME[1] pv QNT_NAME[2] h2o QNT_NAME[3] o3 QNT_NAME[4] Cn2o QNT_NAME[5] Cccl4 QNT_NAME[6] Cccl3f QNT_NAME[7] Cccl2f2"
@@ -111,41 +111,41 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	rm -rf "$dir" && mkdir -p "$dir" || exit
 	
 	# Create init file...
-	$trac/src/atm_init - $dir/atm_init.tab "$qnt" ATM_TYPE 1 \
+	$trac/src/atm_init - "$dir"/atm_init.tab "$qnt" ATM_TYPE 1 \
 			   INIT_T0 "$t0" INIT_T1 "$t0" \
 			   INIT_ULON 360 INIT_ULAT 180 \
 			   INIT_Z0 30 INIT_Z1 30 INIT_UZ 60 \
 			   INIT_EVENLY 1 INIT_REP "$np" INIT_MASS 1e9 || exit
 	
 	# Create data directories for tasks...
-	for task in $(seq ${SLURM_NTASKS}) ; do
-	    mkdir -p $dir/$task && cp $dir/atm_init.tab $dir/$task/ || exit
-	    echo "$dir/$task" >> $dir/dirlist
+	for task in $(seq "${SLURM_NTASKS}") ; do
+	    mkdir -p "$dir/$task" && cp "$dir"/atm_init.tab "$dir/$task/" || exit
+	    echo "$dir/$task" >> "$dir"/dirlist
 	done
 	
 	# Calculate trajectories...
-	srun $trac/src/trac $dir/dirlist - atm_init.tab "$qnt" T_STOP "$t1" \
-	     $metbase MET_DT_OUT 3600 $param RNG_TYPE $rng SORT_DT $sort \
+	srun $trac/src/trac "$dir"/dirlist - atm_init.tab "$qnt" T_STOP "$t1" \
+	     "$metbase" MET_DT_OUT 3600 "$param" RNG_TYPE "$rng" SORT_DT "$sort" \
 	     ATM_BASENAME atm ATM_DT_OUT 21600 ATM_TYPE 1 \
 	     GRID_BASENAME grid GRID_DT_OUT 21600 \
 	     GRID_NX 36 GRID_NY 36 GRID_Z0 -2 GRID_Z1 62 GRID_NZ 64
 	
 	# Calculate transport deviations...
 	for var in mean stddev absdev median mad ; do
-	    $trac/src/atm_dist - $dir/dist.tab $var \
-			       $dir/1/atm_2017_01_01_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_00_00.bin \
-			       $dir/1/atm_2017_01_01_06_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_06_00.bin \
-			       $dir/1/atm_2017_01_01_12_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_12_00.bin \
-			       $dir/1/atm_2017_01_01_18_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_18_00.bin \
-			       $dir/1/atm_2017_01_02_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_02_00_00.bin \
-			       $qnt ATM_TYPE 1
+	    $trac/src/atm_dist - "$dir"/dist.tab $var \
+			       "$dir/1/atm_2017_01_01_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_00_00.bin" \
+			       "$dir/1/atm_2017_01_01_06_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_06_00.bin" \
+			       "$dir/1/atm_2017_01_01_12_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_12_00.bin" \
+			       "$dir/1/atm_2017_01_01_18_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_18_00.bin" \
+			       "$dir/1/atm_2017_01_02_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_02_00_00.bin" \
+			       "$qnt" ATM_TYPE 1
 	    echo -e "\nTransport deviations: $var ..."
-	    cat $dir/dist.tab
+	    cat "$dir"/dist.tab
 	done
 	
 	# Compare grid files...
 	echo -e "\nGrid differences..."
-	paste $dir/1/grid_2017_01_02_00_00.tab reference/$meteo/phys_${phys}/$np/1/grid_2017_01_02_00_00.tab | awk '{
+	paste "$dir"/1/grid_2017_01_02_00_00.tab "reference/$meteo/phys_${phys}/$np/1/grid_2017_01_02_00_00.tab" | awk '{
 	  if(NF>0 && $1!="#") {
             cmax=NF/2
             for(c=1; c<=cmax; c++) {
@@ -165,7 +165,7 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
             print "  column=", c, "| bias_abs=", bias_abs[c]/n[c], "| bias_rel=", 100.*bias_rel[c]/n[c], "% | rmse_abs=", sqrt(rmse_abs[c]/n[c]), "| rmse_rel=", 100.*sqrt(rmse_rel[c]/n[c]), "% | n=", n[c]
         }'
 	
-    } > logs/$log 2>&1
+    } > logs/"$log" 2>&1
     
 done
 

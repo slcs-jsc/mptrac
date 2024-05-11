@@ -16,7 +16,7 @@ echo "checking time..."
 	for day in 1 15 31 ; do
 	    for hour in 0 12 24 ; do
 		t0=$($trac/time2jsec $year $mon $day $hour 0 0 0)
-		echo "$($trac/jsec2time $t0) = $t0"
+		echo "$($trac/jsec2time "$t0") = $t0"
 		d0=$($trac/day2doy $year $mon $day)
 		echo "$($trac/doy2day $d0) = $d0"
 	    done
@@ -50,7 +50,6 @@ done) > data/tnat.tab
 echo -e "\nCompare results..."
 error=0
 for f in $(ls data.ref/*.tab) ; do
-    diff -q -s data/$(basename "$f") "$f"
-    [ $? -ne 0 ] && error=1
+    diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
 exit $error

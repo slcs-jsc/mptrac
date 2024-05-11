@@ -33,50 +33,50 @@ EOF
 fi
 
 # Set variables...
-year=$1
-mon=$(echo $2 | awk '{printf("%02d", $1)}')
-day=$(echo $3 | awk '{printf("%02d", $1)}')
-dir=$4/$year
+year="$1"
+mon=$(echo "$2" | awk '{printf("%02d", $1)}')
+day=$(echo "$3" | awk '{printf("%02d", $1)}')
+dir="$4/$year"
 
 # Create directories...
-mkdir -p $dir || exit
+mkdir -p "$dir" || exit
 tmp=$(mktemp -d tmp.XXXXXXXX)
 
 # Download data...
-cd $tmp || exit
+cd "$tmp" || exit
 vers=400
-[ $year -le 2010 ] && vers=300
-[ $year -le 2000 ] && vers=200
-[ $year -le 1991 ] && vers=100
-wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies https://data.gesdisc.earthdata.nasa.gov/data/MERRA2/M2I3NVASM.5.12.4/$year/$mon/MERRA2_${vers}.inst3_3d_asm_Nv.${year}${mon}${day}.nc4 || exit
+[ "$year" -le 2010 ] && vers=300
+[ "$year" -le 2000 ] && vers=200
+[ "$year" -le 1991 ] && vers=100
+wget --load-cookies ~/.urs_cookies --save-cookies ~/.urs_cookies --keep-session-cookies "https://data.gesdisc.earthdata.nasa.gov/data/MERRA2/M2I3NVASM.5.12.4/$year/$mon/MERRA2_${vers}.inst3_3d_asm_Nv.${year}${mon}${day}.nc4" || exit
 cd - || exit
 
 # Convert data...
-for f in $(ls $tmp/MERRA2*${year}${mon}*nc4) ; do
+for f in $(ls "$tmp"/MERRA2*"${year}""${mon}"*nc4) ; do
     
     # Write info...
     echo "Convert $f ..."
     
     # Get time string...
-    tstr=$(basename $f .nc4 | awk '{print substr($1,length($1)-7,4)"_"substr($1,length($1)-3,2)"_"substr($1,length($1)-1,2)}')
+    tstr=$(basename "$f" .nc4 | awk '{print substr($1,length($1)-7,4)"_"substr($1,length($1)-3,2)"_"substr($1,length($1)-1,2)}')
     
     # Loop over hours...
     for h in $(seq 0 1 7) ; do
 	
 	# Set hour string...
-	hstr=$(echo $h | awk '{printf("%02d", 3*$1)}')
+	hstr=$(echo "$h" | awk '{printf("%02d", 3*$1)}')
 	
 	# Extract data...
-	ncks -3 -O -v PS,PHIS,PL,T,U,V,OMEGA,O3,QV,QL,QI -d time,$h $f merra2_${tstr}_${hstr}.nc || exit
+	ncks -3 -O -v PS,PHIS,PL,T,U,V,OMEGA,O3,QV,QL,QI -d time,"$h" "$f" "merra2_${tstr}_${hstr}.nc" || exit
 	
 	# Rename variables...
-	ncrename -v PHIS,Z -v OMEGA,W -v QV,Q -v QL,CLWC -v QI,CIWC merra2_${tstr}_${hstr}.nc || exit
+	ncrename -v PHIS,Z -v OMEGA,W -v QV,Q -v QL,CLWC -v QI,CIWC "merra2_${tstr}_${hstr}.nc" || exit
 	
 	# Move file...
-	mv merra2_${tstr}_${hstr}.nc $dir || exit
+	mv "merra2_${tstr}_${hstr}.nc" "$dir" || exit
 	
     done
 done
 
 # Remove temporary directory...
-rm -rf $tmp
+rm -rf "$tmp"

@@ -28,8 +28,7 @@ $trac/met_conv - data/ei_2011_06_05_00.zstd 4 data/zstd2bin_2011_06_05_00.bin 1
 echo -e "\nCompare results..."
 error=0
 for f in $(ls data.ref/*) ; do
-    [ -s data/$(basename "$f") ] || continue
-    diff -q -s data/$(basename "$f") "$f"
-    [ $? -ne 0 ] && error=1
+    [ -s data/"$(basename "$f")" ] || continue
+    diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
 exit $error
