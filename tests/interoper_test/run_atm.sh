@@ -56,13 +56,12 @@ error=0
 diff -q -s ${atm_out_tab} ${atm_ref_tab}
 
 if [ $? -ne 0 ]; then
-	error=1
-	cat ${log}/log_0to4.txt
-	cat ${log}/log_4to0.txt
-	exit $error
+    error=1
+    cat ${log}/log_0to4.txt
+    cat ${log}/log_4to0.txt
+    exit $error
 fi
 
-#rm ${atm_out_tab}
 rm ${atm_out_nc}
 
 rm ${ctl}

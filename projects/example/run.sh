@@ -68,7 +68,7 @@ for f in $(ls data/atm_2011*tab) ; do
     echo "Plot $f ..."
     t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
-set out "plots/$(basename $f).png"
+set out "plots/$(basename "$f").png"
 set term pngcairo truecolor crop linewidth 2 font "Helvetica,24" size 1440,900
 set size ratio 0.75
 set grid lw 0.75
@@ -103,7 +103,7 @@ for f in $(ls data/grid_2011*tab) ; do
     echo "Plot $f ..."
     t=$(basename "$f" .tab | awk 'BEGIN{FS="_"}{print $2"-"$3"-"$4", "$5":"$6" UTC"}')
     gnuplot <<EOF
-set out "plots/$(basename $f).png"
+set out "plots/$(basename "$f").png"
 set term pngcairo truecolor crop linewidth 2 font "Helvetica,24" size 1440,900
 set size ratio 0.75
 set grid lw 0.75

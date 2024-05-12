@@ -38,9 +38,9 @@ error=0
 diff -q -s ${atm_out_tab} ${atm_ref_tab}
 
 if [ $? -ne 0 ]; then
-	error=1
-	cat ${log}/log_4to0.txt
-	exit $error
+    error=1
+    cat ${log}/log_4to0.txt
+    exit $error
 fi
 
 rm ${atm_out_tab}
@@ -76,9 +76,9 @@ ${atm_conv} ${ctl} ${atm_in} 0 ${atm_out_nc} 4 >> ${log}/log_0to4.txt
 diff -q -s ${atm_out_nc} ${atm_ref_nc}
 
 if [ $? -ne 0 ]; then
-	error=1
-	cat ${log}/log_0to4.txt
-	exit $error
+    error=1
+    cat ${log}/log_0to4.txt
+    exit $error
 fi
 
 rm ${atm_out_nc}
@@ -128,11 +128,11 @@ fi
 diff -q -s ${atm_out}/init_fix_11060500.nc ${atm_ref_init}
 
 if [ $? -ne 0 ]; then
-	error=1
+    error=1
 fi
 
 if [ ${error} -ne 0 ]; then
-	cat ${log}/log_0to3.txt
+    cat ${log}/log_0to3.txt
 fi
 
 rm ${atm_out}/traj_fix_3d_11060500_11060500.nc
