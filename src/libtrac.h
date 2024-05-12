@@ -497,8 +497,8 @@
 /*! Define netCDF variable. */
 #define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
-    NC(nc_put_att_text(ncid, varid, "long_name", strlen(long_name), long_name)); \
-    NC(nc_put_att_text(ncid, varid, "units", strlen(units), units));	\
+    NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
+    NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
   }
 
 /*! Read netCDF double array. */
@@ -547,12 +547,12 @@
 /*! Set netCDF attribute. */
 #define NC_PUT_ATT(varname, attname, text) {				\
     NC(nc_inq_varid(ncid, varname, &varid));				\
-    NC(nc_put_att_text(ncid, varid, attname, strlen(text), text));	\
+    NC(nc_put_att_text(ncid, varid, attname, strnlen(text, LEN), text)); \
   }
 
 /*! Set netCDF global attribute. */
 #define NC_PUT_ATT_GLOBAL(attname, text)				\
-  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strlen(text), text));
+  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strnlen(text, LEN), text));
 
 /*! Write netCDF float array. */
 #define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\
