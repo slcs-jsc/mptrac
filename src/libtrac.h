@@ -2053,6 +2053,16 @@ double clim_zm(
   const double lat,
   const double p);
 
+/*! Compress or decompress array with cmultiscale. */
+void compress_cmulti(
+  char *varname,
+  float *array,
+  size_t nx,
+  size_t ny,
+  size_t np,
+  int decompress,
+  FILE * inout);
+
 /*! Pack or unpack array. */
 void compress_pack(
   char *varname,

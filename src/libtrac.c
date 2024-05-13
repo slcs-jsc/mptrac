@@ -636,6 +636,130 @@ void compress_zstd(
 
 /*****************************************************************************/
 
+#ifdef CMULTI
+void compress_cmulti(
+  char *varname,
+  float *array,
+  size_t nx,
+  size_t ny,
+  size_t np,
+  int decompress,
+  FILE * inout) {
+
+  /// Determine grid properties
+  unsigned int max_level;	/// Maximum refinement level
+  int Nd0[2];			/// Number cells on the coarsest refinement level
+  get_2d_grid_from_meteo_data((int) nx, (int) ny, &max_level, Nd0);
+
+  PRINT("%d", Nd0[0]);
+  PRINT("%d", Nd0[1]);
+  PRINT("%d", max_level);
+
+  /// Domain [a,b]x[c,d]
+  char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
+
+  /// Global threshold error -> play around with it
+  double eps_global = 0.00005;
+
+  /// Grading?
+  bool grading = false;
+
+  /// Which direction has periodic bc (not necessary here)
+  int periodic[] = { 0, 0 };
+
+  /// Initialize multiscale module
+  multiscale_t *multiscale_ptr =
+    init_multiscale(max_level, Nd0, domain, periodic, eps_global, grading);
+
+  /* Set lon-lat grid... */
+  double lon[EX], lat[EY];
+  for (size_t ix = 0; ix < nx; ix++)
+    lon[ix] = 360. * (double) ix / ((double) nx - 1.);
+  for (size_t iy = 0; iy < ny; iy++)
+    lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+
+    /* Loop over levels... */
+#pragma omp parallel for
+    for (size_t ip = 0; ip < np; ip++) {
+
+      /* Read binary data... */
+      solution_t *sol = read_sol(multiscale_ptr, inout);
+
+
+      if (ip == 10) {
+	char filename[LEN];
+	sprintf(filename, "OUTPUT/cmulti_after.%s.lev.%ld.cgns", varname, ip);
+	PRINT("%s", filename);
+	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
+      }
+
+
+      /* Evaluate... */
+      for (size_t ix = 0; ix < nx; ix++)
+	for (size_t iy = 0; iy < ny; iy++) {
+	  double val, x[] = { lon[ix], lat[iy] };
+	  eval(multiscale_ptr, sol, x, &val);
+	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
+	}
+
+      /* Free... */
+      delete_solution(sol);
+    }
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+
+    /* Loop over levels... */
+#pragma omp parallel for
+    for (size_t ip = 0; ip < np; ip++) {
+
+      /* Copy level data... */
+      float help[nx * ny];
+      for (size_t ix = 0; ix < nx; ix++)
+	for (size_t iy = 0; iy < ny; iy++)
+	  help[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+
+      /* Set grid... */
+      solution_t *sol = read_data_arr(multiscale_ptr, help, lon, lat, nx, ny);
+
+      /* Coarsening... */
+      coarsening(multiscale_ptr, sol);
+
+      /* Write binary data... */
+      save_sol(sol, inout);
+
+
+      if (ip == 10) {
+	char filename[LEN];
+	sprintf(filename, "OUTPUT/cmulti_before.%s.lev.%ld.cgns", varname,
+		ip);
+	PRINT("%s", filename);
+	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
+      }
+
+
+      /* Free... */
+      delete_solution(sol);
+    }
+
+    /* Write info... */
+    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
+  }
+
+  /* Free... */
+  delete_multiscale(multiscale_ptr);
+}
+#endif
+
+/*****************************************************************************/
+
 void day2doy(
   const int year,
   const int mon,
@@ -878,6 +1002,8 @@ void get_met_help(
       sprintf(filename, "%s_YYYY_MM_DD_HH.zfp", metbase);
     else if (ctl->met_type == 4)
       sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
+    else if (ctl->met_type == 5)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.cmul", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -3293,7 +3419,7 @@ int read_met(
   }
 
   /* Read binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 4) {
+  else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
     FILE *in;
 
@@ -3534,6 +3660,16 @@ void read_met_bin_3d(
 		  in);
 #else
     ERRMSG("MPTRAC was compiled without zstd compression!");
+#endif
+  }
+
+  /* Read cmultiscale data... */
+  else if (ctl->met_type == 5) {
+#ifdef CMULTI
+    compress_cmulti(varname, help, (size_t) met->nx, (size_t) met->ny,
+		    (size_t) met->np, 1, in);
+#else
+    ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
   }
 
@@ -7101,7 +7237,7 @@ int write_met(
 #endif
 
   /* Write binary data... */
-  if (ctl->met_type >= 1 && ctl->met_type <= 4) {
+  if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
     /* Create file... */
     FILE *out;
@@ -7279,6 +7415,14 @@ void write_met_bin_3d(
   else if (ctl->met_type == 4)
     compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 0,
 		  out);
+#endif
+
+  /* Write cmultiscale data... */
+#ifdef CMULTI
+  else if (ctl->met_type == 5) {
+    compress_cmulti(varname, help, (size_t) met->nx, (size_t) met->ny,
+		    (size_t) met->np, 0, out);
+  }
 #endif
 
   /* Unknown method... */

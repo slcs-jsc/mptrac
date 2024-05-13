@@ -203,8 +203,8 @@ endif
 
 # cmultiscale compression...
 ifeq ($(CMULTI),1)
-  #LIBDIR += ... ?
-  #LDFLAGS += ... ?
+  LIBDIR += -L /home/lars/wrk/cmultiscale/cmultiscale/builddir
+  LDFLAGS += -lmultiscale_wrapper
   INCDIR += -I /home/lars/wrk/cmultiscale/cmultiscale/src/c_wrapper/
   CFLAGS += -DCMULTI
 endif
