@@ -7235,6 +7235,10 @@ int write_met(
   if (ctl->met_type == 4)
     ERRMSG("MPTRAC was compiled without zstd compression!");
 #endif
+#ifndef CMULTI
+  if (ctl->met_type == 5)
+    ERRMSG("MPTRAC was compiled without cmultiscale compression!");
+#endif
 
   /* Write binary data... */
   if (ctl->met_type >= 1 && ctl->met_type <= 5) {
