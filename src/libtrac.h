@@ -82,6 +82,13 @@
 #include "multiscale.h"
 #endif
 
+#ifdef KPP
+#include "chem_Parameters.h"
+#include "chem_Global.h"
+#include "chem_Sparse.h"
+#include "kpp_chem.h"
+#endif
+
 /* ------------------------------------------------------------
    Constants...
    ------------------------------------------------------------ */
@@ -571,6 +578,24 @@
 /*! Compute norm of a vector. */
 #define NORM(a)					\
   sqrt(DOTP(a, a))
+  
+/*! Loop over particles. */
+#ifdef _OPENACC
+#define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
+  const int ip0_const = ip0;                            \
+  const int ip1_const = ip1;                            \
+  _Pragma(__VA_ARGS__)					\
+  _Pragma("acc parallel loop independent gang vector")  \
+  for (int ip = ip0_const; ip < ip1_const; ip++)        \
+    if (!check_dt || dt[ip] != 0)
+#else
+#define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
+  const int ip0_const = ip0;                            \
+  const int ip1_const = ip1;                            \
+  _Pragma("omp parallel for default(shared)")           \
+  for (int ip = ip0_const; ip < ip1_const; ip++)        \
+    if (!check_dt || dt[ip] != 0)
+#endif
 
 /*! Convert altitude to pressure. */
 #define P(z)					\
@@ -2293,6 +2318,226 @@ int locate_irr_3d(
   int ind_lon,
   int ind_lat,
   double x);
+  
+/*! Calculate advection of air parcels. */
+void module_advect(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate advection of air parcels. */
+void module_advect_diabatic(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Apply boundary conditions. */
+void module_bound_cond(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate convection of air parcels. */
+void module_convection(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt,
+  double *rs);
+
+/*! Calculate exponential decay of particle mass. */
+void module_decay(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate mesoscale diffusion. */
+void module_diffusion_meso(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  cache_t * cache,
+  double *dt,
+  double *rs);
+
+/*! Calculate turbulent diffusion. */
+void module_diffusion_turb(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double *dt,
+  double *rs);
+
+/*! Calculate dry deposition. */
+void module_dry_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Initialize isosurface module. */
+void module_isosurf_init(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  cache_t * cache);
+
+/*! Force air parcels to stay on isosurface. */
+void module_isosurf(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  cache_t * cache,
+  double *dt);
+
+/*! Interpolate meteo data for air parcel positions. */
+void module_meteo(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Apply interparcel mixing. */
+void module_mixing(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  double t);
+
+/*! Auxiliary function for interparcel mixing. */
+void module_mixing_help(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
+  int qnt_idx);
+
+/*! Calculate grid data for chemistry modules. */
+void module_chemgrid(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t);
+
+/*! Calculate OH chemistry. */
+void module_oh_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate H2O2 chemistry. */
+void module_h2o2_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Calculate first order tracer chemistry. */
+void module_tracer_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! KPP chemistry module. */
+void module_kpp_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Check position of air parcels. */
+void module_position(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Initialize random number generator... */
+void module_rng_init(
+  int ntask);
+
+/*! Generate random numbers. */
+void module_rng(
+  ctl_t * ctl,
+  double *rs,
+  size_t n,
+  int method);
+
+/*! Calculate sedimentation of air parcels. */
+void module_sedi(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*! Sort particles according to box index. */
+void module_sort(
+  ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm);
+
+/*! Helper function for sorting module. */
+void module_sort_help(
+  double *a,
+  const int *p,
+  const int np);
+
+/*! Calculate time steps. */
+void module_timesteps(
+  ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm,
+  double *dt,
+  double t);
+
+/*! Initialize timesteps. */
+void module_timesteps_init(
+  ctl_t * ctl,
+  atm_t * atm);
+
+/*! Calculate wet deposition. */
+void module_wet_deposition(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);  
+  
+  
+  
+  
+  
 
 /*! Calculate NAT existence temperature. */
 double nat_temperature(
@@ -2707,6 +2952,15 @@ void write_met_bin_3d(
   char *varname,
   int precision,
   double tolerance);
+  
+/*! Write simulation output. */
+void write_output(
+  const char *dirname,
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t);
 
 /*! Write profile data. */
 void write_prof(
@@ -2732,7 +2986,7 @@ void write_station(
   ctl_t * ctl,
   atm_t * atm,
   double t);
-
+ 
 /*! Write VTK data. */
 void write_vtk(
   const char *filename,
