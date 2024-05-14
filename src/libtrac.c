@@ -702,21 +702,51 @@ void compress_cmulti(
   if (decompress) {
 
     /* Loop over levels... */
-#pragma omp parallel for
+    //#pragma omp parallel for
     for (size_t ip = 0; ip < np; ip++) {
-
+      
       /* Read binary data... */
       solution_t *sol = read_sol(multiscale_ptr, inout);
-
-
+      
+      
+      /* I/O test... */
       if (ip == 10) {
 	char filename[LEN];
-	sprintf(filename, "OUTPUT/cmulti_after.%s.lev.%ld.cgns", varname, ip);
+	sprintf(filename, "OUTPUT/cmulti_decompress.%s.lev.%ld.cgns", varname, ip);
 	PRINT("%s", filename);
 	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
+
+	/* Write binary file... */
+	FILE *out2;
+	sprintf(filename, "sol_decompress.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol, out2);
+	fclose(out2);
+
+	/* Read binary data... */
+	FILE *in2;
+	LOG(2, "Read %s ...", filename);
+	if (!(in2 = fopen(filename, "r")))
+	  ERRMSG("Cannot open file!");
+	solution_t *sol2 = read_sol(multiscale_ptr, in2);
+	fclose(in2);
+
+	/* Write binary file... */
+	sprintf(filename, "sol_decompress2.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol2, out2);
+	fclose(out2);
+	
+	delete_solution(sol2);
       }
-
-
+      
+      
       /* Evaluate... */
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
@@ -737,7 +767,7 @@ void compress_cmulti(
   else {
 
     /* Loop over levels... */
-#pragma omp parallel for
+    //#pragma omp parallel for
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Copy level data... */
@@ -755,16 +785,54 @@ void compress_cmulti(
       /* Write binary data... */
       save_sol(sol, inout);
 
-
+      
+      /* I/O test... */
       if (ip == 10) {
+
+	/* Write cgns file... */
 	char filename[LEN];
-	sprintf(filename, "OUTPUT/cmulti_before.%s.lev.%ld.cgns", varname,
+	sprintf(filename, "OUTPUT/cmulti_compress.%s.lev.%ld.cgns", varname,
 		ip);
-	PRINT("%s", filename);
+	LOG(2, "Write %s ...", filename);
 	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
+
+	/* Write binary file... */
+	FILE *out2;
+	sprintf(filename, "sol_compress.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol, out2);
+	fclose(out2);
+      
+	/* Read binary data... */
+	FILE *in2;
+	LOG(2, "Read %s ...", filename);
+	if (!(in2 = fopen(filename, "r")))
+	  ERRMSG("Cannot open file!");
+	solution_t *sol2 = read_sol(multiscale_ptr, in2);
+	fclose(in2);
+
+	/* Write binary file... */
+	sprintf(filename, "sol_compress2.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol2, out2);
+	fclose(out2);
+
+	/* Write cgns file... */
+	sprintf(filename, "OUTPUT/cmulti_compress2.%s.lev.%ld.cgns", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	plot(multiscale_ptr, sol2, filename, 0.0, PLT_QUADRATIC);
+	
+	delete_solution(sol2);
       }
 
-
+      
       /* Free... */
       delete_solution(sol);
     }
