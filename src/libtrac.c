@@ -2972,6 +2972,22 @@ void module_oh_chem(
 
 /*****************************************************************************/
 
+void module_press_init(
+	ctl_t ctl,
+	met_t * met0, 
+	met_t * met1, 
+	atm_t * atm) {
+	
+      INTPOL_INIT;
+      for (int ip = 0; ip < atm->np; ip++)
+	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
+			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
+			    1);
+}
+
+/*****************************************************************************/
+
 void module_h2o2_chem(
   ctl_t * ctl,
   clim_t * clim,

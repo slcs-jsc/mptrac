@@ -2447,6 +2447,13 @@ void module_oh_chem(
   atm_t * atm,
   double *dt);
 
+/*! Calculate pressure consistent with zeta. */  
+void module_press_init(
+  ctl_t ctl,
+  met_t * met0, 
+  met_t * met1, 
+  atm_t * atm);
+
 /*! Calculate H2O2 chemistry. */
 void module_h2o2_chem(
   ctl_t * ctl,
