@@ -24,25 +24,16 @@
 
 #include "libtrac.h"
 
-/* ------------------------------------------------------------
-   Global variables...
-   ------------------------------------------------------------ */
+/*! State variables of GSL random number generators. */
+static gsl_rng *rng[NTHREADS];
 
-  /*! State variables of GSL random number generators. */
-  static gsl_rng *rng[NTHREADS];
+/*! Counter variable of Squares random number generator. */
+static uint64_t rng_ctr;
 
-  /*! Counter variable of Squares random number generator. */
-  static uint64_t rng_ctr;
-
-  /*! State variables of cuRAND random number generator. */
-  #ifdef CURAND
-  static curandGenerator_t rng_curand;
-  #endif
-  
-  
-/* ------------------------------------------------------------
-   Functions...
-   ------------------------------------------------------------ */
+/*! State variables of cuRAND random number generator. */
+#ifdef CURAND
+static curandGenerator_t rng_curand;
+#endif
 
 /*****************************************************************************/
 
