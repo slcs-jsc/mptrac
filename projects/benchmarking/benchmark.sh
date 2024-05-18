@@ -34,15 +34,15 @@ parameter choices:
     gcc = GNU C compiler
     nvc = NVIDIA C compiler
 
-  nodes | ntasks-per-node | cpus-per-task:
+  nodes, ntasks-per-node, cpus-per-task:
     provide slurm job configuration for the test job
 
   gpu: specify whether GPU offloading should be used
     0 = none
     1 = OpenACC
-    2 = OpenACC + pinning
+    2 = OpenACC + pinning (for GH200)
 
-  npmin | npmax | npfac:
+  npmin, npmax, npfac:
     provide minimum, maximum, and scaling factor for number of air parcels
 
   meteo: select meteorological data
