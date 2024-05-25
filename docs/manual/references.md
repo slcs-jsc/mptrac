@@ -12,7 +12,7 @@ This is a list of papers in which MPTRAC was applied:
 
 - Clemens, J., Vogel, B., Hoffmann, L., Griessbach, S., Thomas, N., Fadnavis, S., Müller, R., Peter, T., and Ploeger, F.: A multi-scenario Lagrangian trajectory analysis to identify source regions of the Asian tropopause aerosol layer on the Indian subcontinent in August 2016, Atmos. Chem. Phys., 24, 763–787, <https://doi.org/10.5194/acp-24-763-2024>, 2024. 
 
-- Hoffmann, L., Haghighi Mood, K., Herten, A., Hrywniak, M., Kraus, J., Clemens, J., and Liu, M.: Accelerating Lagrangian transport simulations on graphics processing units: performance optimizations of MPTRAC v2.6, EGUsphere [preprint], <https://doi.org/10.5194/egusphere-2023-2547>, 2024. 
+- Hoffmann, L., Haghighi Mood, K., Herten, A., Hrywniak, M., Kraus, J., Clemens, J., and Liu, M.: Accelerating Lagrangian transport simulations on graphics processing units: performance optimizations of Massive-Parallel Trajectory Calculations (MPTRAC) v2.6, Geosci. Model Dev., 17, 4077–4094, <https://doi.org/10.5194/gmd-17-4077-2024>, 2024. 
 
 - Liao, Y., Deng, X., Huang, M., Liu, M., Yi, J., and Hoffmann, L., Tracking Carbon Dioxide with Lagrangian Transport Simulations: Case Study of Canadian Forest Fires in May 2021, Atmosphere, 15, 429, <https://doi.org/10.3390/atmos15040429>, 2024.
 
