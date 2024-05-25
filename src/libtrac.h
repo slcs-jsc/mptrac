@@ -2023,18 +2023,47 @@ typedef struct {
    Functions...
    ------------------------------------------------------------ */
 
-/*! Convert Cartesian coordinates to geolocation. */
+/**
+ * @brief Converts Cartesian coordinates to geographic coordinates.
+ *
+ * This function converts a point from Cartesian coordinates (x, y, z)
+ * to geographic coordinates (longitude, latitude, and altitude).
+ * It uses the spherical Earth approximation for the conversion.
+ *
+ * @param[in] x Pointer to an array containing the Cartesian coordinates (x, y, z) in kilometers.
+ * @param[out] z Pointer to a double where the computed altitude (above the reference ellipsoid) will be stored, in kilometers.
+ * @param[out] lon Pointer to a double where the computed longitude (in degrees) will be stored.
+ * @param[out] lat Pointer to a double where the computed latitude (in degrees) will be stored.
+ *
+ * @author Lars Hoffmann
+ */
 void cart2geo(
   const double *x,
   double *z,
   double *lon,
   double *lat);
 
-/*! Check if x is finite. */
-int check_finite(
-  const double x);
-
-/*! Climatology of OH volume mixing ratios. */
+/**
+ * @brief Calculates the hydroxyl radical (OH) concentration from climatology data, 
+ *        with an optional diurnal correction based on solar zenith angle.
+ *
+ * This function retrieves OH data from a given climatology and applies a diurnal
+ * correction if the correction factor (oh_chem_beta) is greater than zero. The 
+ * diurnal correction accounts for the variation in OH concentration due to changes 
+ * in the solar zenith angle.
+ *
+ * @param ctl  Pointer to the control structure containing configuration parameters.
+ * @param clim Pointer to the climatology structure containing OH data.
+ * @param t    Time at which the OH concentration is to be calculated.
+ * @param lon  Longitude at which the OH concentration is to be calculated.
+ * @param lat  Latitude at which the OH concentration is to be calculated.
+ * @param p    Pressure level at which the OH concentration is to be calculated.
+ * @return     The OH concentration at the specified time, location, and pressure,
+ *             possibly adjusted by a diurnal correction.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 double clim_oh(
   const ctl_t * ctl,
   const clim_t * clim,
@@ -2043,12 +2072,55 @@ double clim_oh(
   const double lat,
   const double p);
 
-/*! Initialization function for OH climatology. */
+/**
+ * @brief Applies a diurnal correction to the hydroxyl radical (OH) concentration 
+ *        in climatology data.
+ *
+ * This function iterates over the climatology data points for OH concentration and 
+ * integrates the day/night correction factor over longitude. The correction factor 
+ * is based on the solar zenith angle, and it adjusts the OH data to account for 
+ * diurnal variations. The corrected OH data is scaled accordingly.
+ *
+ * @param ctl  Pointer to the control structure containing configuration parameters,
+ *             including the correction factor (oh_chem_beta).
+ * @param clim Pointer to the climatology structure containing OH data that will be
+ *             corrected.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 void clim_oh_diurnal_correction(
   ctl_t * ctl,
   clim_t * clim);
 
-/*! Interpolate photolysis rate data. */
+/**
+ * @brief Calculates the photolysis rate for a given set of atmospheric conditions.
+ *
+ * This function computes the photolysis rate based on provided climatology data and 
+ * input parameters such as pressure, solar zenith angle (SZA), and ozone column. It 
+ * ensures that the input parameters are within the valid range of the climatology 
+ * data and interpolates the photolysis rate accordingly.
+ *
+ * @param rate 3D array containing the photolysis rates for different combinations 
+ *             of pressure, SZA, and ozone column.
+ * @param photo Pointer to the climatology data structure containing arrays of valid 
+ *              pressure levels, SZAs, and ozone columns.
+ * @param p    Pressure at which the photolysis rate is to be calculated.
+ * @param sza  Solar zenith angle at which the photolysis rate is to be calculated.
+ * @param o3c  Ozone column at which the photolysis rate is to be calculated.
+ * @return     The interpolated photolysis rate for the specified conditions. If the 
+ *             calculated rate is negative, it returns 0.0.
+ *
+ * This function performs the following steps:
+ * 1. Checks and adjusts the input parameters (pressure, SZA, and ozone column) to 
+ *    ensure they are within the valid range.
+ * 2. Determines the appropriate indices in the climatology data for interpolation.
+ * 3. Performs trilinear interpolation to calculate the photolysis rate based on 
+ *    the input parameters.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 double clim_photo(
   double rate[CP][CSZA][CO3],
   clim_photo_t * photo,
@@ -2056,22 +2128,96 @@ double clim_photo(
   double sza,
   double o3c);
 
-/*! Climatology of tropopause pressure. */
+/**
+ * @brief Calculates the tropopause pressure based on climatological data.
+ *
+ * This function computes the tropopause pressure using climatological data 
+ * for different times and latitudes. It interpolates the tropopause pressure 
+ * based on the input time and latitude parameters.
+ *
+ * @param clim Pointer to the climatology structure containing tropopause 
+ *             pressure data.
+ * @param t    Time for which the tropopause pressure is to be calculated, 
+ *             in seconds since the beginning of the year.
+ * @param lat  Latitude at which the tropopause pressure is to be calculated.
+ * @return     The interpolated tropopause pressure for the specified time 
+ *             and latitude.
+ *
+ * This function performs the following steps:
+ * 1. Calculates the number of seconds since the beginning of the year.
+ * 2. Determines the appropriate indices in the climatology data for 
+ *    interpolation based on time and latitude.
+ * 3. Interpolates the tropopause pressure using linear interpolation 
+ *    based on latitude and time.
+ *
+ * @author Lars Hoffmann
+ */
 double clim_tropo(
   const clim_t * clim,
   const double t,
   const double lat);
 
-/*! Initialize tropopause climatology. */
+/**
+ * @brief Initializes the tropopause data in the climatology structure.
+ *
+ * This function initializes the tropopause data in the climatology structure.
+ * It sets the time steps, latitudes, and tropopause pressure values based on
+ * predefined arrays.
+ *
+ * @param clim Pointer to the climatology structure to be initialized.
+ *
+ * This function performs the following steps:
+ * 1. Sets the number of time steps and initializes the time array.
+ * 2. Sets the number of latitudes and initializes the latitude array.
+ * 3. Initializes the tropopause pressure values based on predefined arrays.
+ * 4. Computes the range of tropopause pressure values.
+ * 5. Logs information about the initialization process.
+ *
+ * @author Lars Hoffmann
+ */
 void clim_tropo_init(
   clim_t * clim);
 
-/*! Interpolate time series. */
+/**
+ * @brief Interpolates a time series of climatological variables.
+ *
+ * This function interpolates a time series of climatological variables based
+ * on the input time and the provided data points.
+ *
+ * @param ts Pointer to the time series structure containing data points.
+ * @param t Time at which to interpolate the climatological variable (in seconds).
+ * @return Interpolated value of the climatological variable at the given time.
+ *
+ * This function performs linear interpolation between the closest data points
+ * to the input time `t`. If `t` is outside the range of the provided time
+ * series, the value at the nearest boundary is returned.
+ *
+ * @author Lars Hoffmann
+ */
 double clim_ts(
   const clim_ts_t * ts,
   const double t);
 
-/*! Interpolate zonal mean climatology. */
+/**
+ * @brief Interpolates monthly mean zonal mean climatological variables.
+ *
+ * This function interpolates climatological variables based on pressure,
+ * latitude, and time. The climatological data is provided in the form of monthly mean
+ * zonal mean values.
+ *
+ * @param zm Pointer to the climatological zonal mean structure containing data points.
+ * @param t Time at which to interpolate the climatological variable (in seconds since the beginning of the year).
+ * @param lat Latitude at which to interpolate the climatological variable (in degrees).
+ * @param p Pressure at which to interpolate the climatological variable (in hPa).
+ * @return Interpolated value of the climatological variable at the given pressure, latitude, and time.
+ *
+ * This function performs trilinear interpolation between the nearest data points
+ * to the input time `t`, latitude `lat`, and pressure or altitude `p`. If the input
+ * values are outside the range of the provided data, the function extrapolates by
+ * using the nearest boundary values.
+ *
+ * @author Lars Hoffmann
+ */
 double clim_zm(
   const clim_zm_t * zm,
   const double t,
@@ -3006,7 +3152,6 @@ void write_vtk(
    ------------------------------------------------------------ */
 
 #ifdef _OPENACC
-#pragma acc routine (check_finite)
 #pragma acc routine (clim_oh)
 #pragma acc routine (clim_photo)
 #pragma acc routine (clim_tropo)
