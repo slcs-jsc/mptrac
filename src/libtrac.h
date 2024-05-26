@@ -3950,92 +3950,502 @@ void module_wet_deposition(
   atm_t * atm,
   double *dt);
 
-/*! Calculate NAT existence temperature. */
+/**
+ * @brief Calculates the nitric acid trihydrate (NAT) temperature.
+ *
+ * This function computes the temperature at which nitric acid trihydrate (NAT) can form
+ * given the partial pressures of water vapor and nitric acid in the atmosphere.
+ *
+ * @param p     The total atmospheric pressure (in hPa).
+ * @param h2o   The volume mixing ratio of water vapor (H2O).
+ * @param hno3  The volume mixing ratio of nitric acid (HNO3).
+ * @return      The NAT temperature (in Kelvin).
+ *
+ * This function follows these steps:
+ * - Ensures the water vapor volume mixing ratio is above a minimum threshold.
+ * - Converts the volume mixing ratios of H2O and HNO3 to partial pressures.
+ * - Uses these partial pressures to compute coefficients for the quadratic equation
+ *   that determines the NAT temperature.
+ * - Solves the quadratic equation to find the NAT temperature.
+ *
+ * The calculations are based on empirical relationships involving logarithms of the 
+ * partial pressures of H2O and HNO3.
+ *
+ * @note The constants and formulae used are specific to the context of atmospheric
+ * chemistry and the formation of NAT.
+ *
+ * @author Lars Hoffmann
+ */
 double nat_temperature(
   const double p,
   const double h2o,
   const double hno3);
 
-/*! Read atmospheric data. */
+/**
+ * @brief Reads air parcel data from a specified file into the given atmospheric structure.
+ *
+ * This function reads air parcel data from a file and populates the provided `atm_t` structure
+ * based on the type of data specified in the `ctl_t` control structure. It supports various
+ * data formats including ASCII, binary, netCDF, and CLaMS.
+ *
+ * @param filename The name of the file containing the atmospheric data.
+ * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the type of data.
+ * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
+ * @return         Returns 1 on success, and 0 on failure.
+ *
+ * This function performs the following steps:
+ * - Sets a timer for performance measurement.
+ * - Initializes the atmospheric structure.
+ * - Logs the file being read.
+ * - Reads data from the file based on the specified type (`ctl->atm_type`):
+ *   - `0` for ASCII data
+ *   - `1` for binary data
+ *   - `2` for netCDF data
+ *   - `3` or `4` for CLaMS data
+ * - Handles errors if the data type is not supported.
+ * - Checks the result of the data reading function and ensures data was read successfully.
+ * - Logs information about the number of air parcels and the ranges of various parameters (time, altitude, pressure, longitude, latitude, and other quantities).
+ *
+ * The function utilizes several helper functions and macros:
+ * - `SELECT_TIMER` for setting the timer.
+ * - `LOG` for logging information.
+ * - `ERRMSG` for handling error messages.
+ * - `gsl_stats_minmax` for calculating minimum and maximum values.
+ * - `Z` for converting altitude.
+ *
+ * @author Lars Hoffmann
+ */
 int read_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Read atmospheric data in ASCII format. */
+/**
+ * @brief Reads air parcel data from an ASCII file and populates the given atmospheric structure.
+ *
+ * This function reads air parcel data from an ASCII file and stores the data in the provided 
+ * `atm_t` structure. It reads each line of the file, extracts the necessary data fields, and 
+ * converts the altitude to pressure.
+ *
+ * @param filename The name of the ASCII file containing the atmospheric data.
+ * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the number of quantities.
+ * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
+ * @return         Returns 1 on success, and 0 on failure.
+ *
+ * This function performs the following steps:
+ * - Attempts to open the specified file for reading.
+ * - Logs a warning and returns 0 if the file cannot be opened.
+ * - Reads each line of the file and extracts data values for time, altitude, longitude, latitude, 
+ *   and other specified quantities.
+ * - Converts the altitude to pressure.
+ * - Increments the data point counter.
+ * - Checks if the number of data points exceeds the maximum allowed (`NP`) and logs an error message if so.
+ * - Closes the file after reading all data.
+ * - Returns 1 to indicate successful data reading.
+ *
+ * The function utilizes several macros and helper functions:
+ * - `WARN` for logging warnings.
+ * - `ERRMSG` for handling error messages.
+ * - `TOK` for tokenizing and reading values from the line.
+ * - `P` for converting altitude to pressure.
+ *
+ * @author Lars Hoffmann
+ */
 int read_atm_asc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Read atmospheric data in binary format. */
+/**
+ * @brief Reads air parcel data from a binary file and populates the given atmospheric structure.
+ *
+ * This function reads air parcel data from a binary file and stores the data in the provided
+ * `atm_t` structure. It checks the version of the binary data, reads the data values, and
+ * verifies the integrity of the data read.
+ *
+ * @param filename The name of the binary file containing the atmospheric data.
+ * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the number of quantities.
+ * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
+ * @return         Returns 1 on success, and 0 on failure.
+ *
+ * This function performs the following steps:
+ * - Attempts to open the specified file for reading.
+ * - Returns 0 if the file cannot be opened.
+ * - Checks the version of the binary data and logs an error message if the version is incorrect.
+ * - Reads the number of data points (`np`).
+ * - Reads the data arrays for time, pressure, longitude, latitude, and other specified quantities.
+ * - Checks a final flag to ensure the data was read correctly.
+ * - Logs an error message if the final flag is incorrect.
+ * - Closes the file after reading all data.
+ * - Returns 1 to indicate successful data reading.
+ *
+ * The function utilizes several macros and helper functions:
+ * - `ERRMSG` for handling error messages.
+ * - `FREAD` for reading data from the binary file.
+ *
+ * @author Lars Hoffmann
+ */
 int read_atm_bin(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Read atmospheric data in CLaMS format. */
+/**
+ * @brief Reads air parcel data from a CLaMS netCDF file and populates the given atmospheric structure.
+ *
+ * This function reads air parcel data from a CLaMS (Chemical Lagrangian Model of the Stratosphere)
+ * netCDF file and stores the data in the provided `atm_t` structure. It handles various coordinate
+ * systems and ensures the necessary data is correctly read and stored.
+ *
+ * @param filename The name of the netCDF file containing the atmospheric data.
+ * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the vertical coordinate system and quantities.
+ * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
+ * @return         Returns 1 on success, and 0 on failure.
+ *
+ * This function performs the following steps:
+ * - Attempts to open the specified netCDF file for reading.
+ * - Returns 0 if the file cannot be opened.
+ * - Retrieves the number of particles (`np`) from the "NPARTS" dimension.
+ * - Reads the initial time (`TIME_INIT`) if available, otherwise uses the "time" variable.
+ * - Reads the vertical coordinate data based on the specified system (`vert_coord_ap`):
+ *   - If `vert_coord_ap` is 1, reads "ZETA" and optionally "PRESS".
+ *   - Otherwise, reads "PRESS_INIT" if available, otherwise uses "PRESS".
+ * - Reads the longitude ("LON") and latitude ("LAT") data.
+ * - Closes the netCDF file.
+ * - Returns 1 to indicate successful data reading.
+ *
+ * The function utilizes several macros and helper functions:
+ * - `NC_INQ_DIM` for inquiring about dimensions in the netCDF file.
+ * - `NC_GET_DOUBLE` for reading double values from the netCDF file.
+ * - `NC` for checking netCDF function return values.
+ * - `WARN` for logging warnings.
+ *
+ * @author Jan Clemens
+ */
 int read_atm_clams(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Read atmospheric data in netCDF format. */
+/**
+ * @brief Reads air parcel data from a generic netCDF file and populates the given atmospheric structure.
+ *
+ * This function reads air parcel data from a netCDF file and stores the data in the provided `atm_t` structure.
+ * It retrieves the dimensions, geolocations (time, pressure, longitude, latitude), and specified variables from the file.
+ *
+ * @param filename The name of the netCDF file containing the atmospheric data.
+ * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the number of quantities and their names.
+ * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
+ * @return         Returns 1 on success, and 0 on failure.
+ *
+ * This function performs the following steps:
+ * - Attempts to open the specified netCDF file for reading.
+ * - Returns 0 if the file cannot be opened.
+ * - Retrieves the number of observations (`np`) from the "obs" dimension.
+ * - Reads the geolocation data arrays for time, pressure, longitude, and latitude.
+ * - Reads the specified variables into the corresponding arrays in the `atm_t` structure.
+ * - Closes the netCDF file after reading all data.
+ * - Returns 1 to indicate successful data reading.
+ *
+ * The function utilizes several macros and helper functions:
+ * - `NC_INQ_DIM` for inquiring about dimensions in the netCDF file.
+ * - `NC_GET_DOUBLE` for reading double values from the netCDF file.
+ * - `NC` for checking netCDF function return values.
+ *
+ * @author Lars Hoffmann
+ */
 int read_atm_nc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Read climatological data. */
+/**
+ * @brief Reads various climatological data and populates the given climatology structure.
+ *
+ * This function reads a range of climatological datasets based on the specified control settings and 
+ * stores the data in the provided `clim_t` structure. It handles initialization of tropopause climatology,
+ * photolysis rates, and multiple gas species' climatologies and time series.
+ *
+ * @param ctl   A pointer to the control structure (`ctl_t`) that specifies file names and parameters for climatology data.
+ * @param clim  A pointer to the climatology structure (`clim_t`) that will be populated with the data.
+ *
+ * This function performs the following steps:
+ * - Sets a timer for reading climatology data.
+ * - Initializes the tropopause climatology.
+ * - Reads photolysis rates if specified in `ctl`.
+ * - Reads HNO3 climatology if specified in `ctl`.
+ * - Reads OH climatology if specified in `ctl` and applies a diurnal correction if specified.
+ * - Reads H2O2, HO2, O(1D) climatologies if specified in `ctl`.
+ * - Reads time series data for various gases (CFC-10, CFC-11, CFC-12, N2O, SF6) if specified in `ctl`.
+ *
+ * The function utilizes several helper functions:
+ * - `clim_tropo_init` for initializing tropopause climatology.
+ * - `read_clim_photo` for reading photolysis rates.
+ * - `read_clim_zm` for reading zonal mean climatologies.
+ * - `clim_oh_diurnal_correction` for applying diurnal correction to OH climatology.
+ * - `read_clim_ts` for reading time series data.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 void read_clim(
   ctl_t * ctl,
   clim_t * clim);
 
-/*! Read climatological time series. */
+/**
+ * @brief Reads photolysis rates from a NetCDF file and populates the given photolysis structure.
+ *
+ * This function opens a NetCDF file specified by the filename, reads various dimensions and data
+ * related to photolysis rates, and stores this data in the provided `clim_photo_t` structure. 
+ * It includes checks for data consistency and logs detailed information about the loaded data.
+ *
+ * @param filename  A string containing the path to the NetCDF file containing photolysis rate data.
+ * @param photo     A pointer to the photolysis structure (`clim_photo_t`) that will be populated with the data.
+ *
+ * The function performs the following steps:
+ * - Logs the initiation of reading photolysis rates.
+ * - Opens the NetCDF file in read-only mode.
+ * - Reads pressure data and checks for descending order.
+ * - Reads total column ozone data and checks for ascending order.
+ * - Reads solar zenith angle data and checks for ascending order.
+ * - Allocates memory for temporary arrays to hold the data.
+ * - Reads various photolysis rates (e.g., J_N2O, J_CCl4, J_CFC-11, J_CFC-12, J_O2, J_O3b, J_O3a, J_H2O2, J_H2O) 
+ *   and stores them in the `clim_photo_t` structure.
+ * - Frees the allocated memory for temporary arrays.
+ * - Closes the NetCDF file.
+ * - Logs detailed information about the loaded data, including pressure levels, solar zenith angles, 
+ *   and photolysis rates.
+ *
+ * @author Mingzhao Liu
+ */
+void read_clim_photo(
+  const char *filename,
+  clim_photo_t * photo);
+
+/**
+ * @brief Reads a climatological time series from a file and populates the given time series structure.
+ *
+ * This function reads time and volume mixing ratio (VMR) data from a specified file, processes the
+ * data, and stores it in the provided `clim_ts_t` structure. It also includes checks for data consistency
+ * and logs detailed information about the loaded data.
+ *
+ * @param filename  A string containing the path to the file containing the climatological time series data.
+ * @param ts        A pointer to the time series structure (`clim_ts_t`) that will be populated with the data.
+ * @return          Returns 1 on success, and 0 on failure (e.g., if the file cannot be opened or data is invalid).
+ *
+ * The function performs the following steps:
+ * - Logs the initiation of reading the climatological time series.
+ * - Opens the file for reading.
+ * - Reads time and VMR data from the file, converting years to seconds.
+ * - Checks for ascending order of time data and ensures the number of data points does not exceed the limit.
+ * - Closes the file after reading.
+ * - Checks if there are enough data points.
+ * - Logs detailed information about the loaded data, including the number of time steps and the range of VMR values.
+ *
+ * @author Lars Hoffmann
+ */
 int read_clim_ts(
   const char *filename,
   clim_ts_t * ts);
 
-/*! Read climatological zonal means. */
+/**
+ * @brief Reads zonally averaged climatological data from a netCDF file and populates the given structure.
+ *
+ * This function reads data from a specified netCDF file, including pressure levels, latitudes, 
+ * and volume mixing ratios (VMR) for a specified variable. It performs necessary checks and logs 
+ * detailed information about the loaded data.
+ *
+ * @param filename  A string containing the path to the netCDF file.
+ * @param varname   A string containing the name of the variable to be read from the netCDF file.
+ * @param zm        A pointer to the structure (`clim_zm_t`) that will be populated with the data.
+ *
+ * The function performs the following steps:
+ * - Logs the initiation of reading the specified data.
+ * - Opens the netCDF file for reading.
+ * - Reads pressure level data and checks for descending order.
+ * - Reads latitude data and checks for ascending order.
+ * - Sets the time data for monthly means.
+ * - Checks the number of time steps.
+ * - Reads the specified variable data from the file.
+ * - Fixes any gaps in the data by interpolating from valid values.
+ * - Logs detailed information about the loaded data, including the number of time steps, pressure levels, 
+ *   latitude values, and the range of the variable's volume mixing ratios.
+ *
+ * @author Lars Hoffmann
+ */
 void read_clim_zm(
   const char *filename,
   char *varname,
   clim_zm_t * zm);
 
-/*! Read climatological photolysis rates. */
-void read_clim_photo(
-  const char *filename,
-  clim_photo_t * photo);
-
-/*! Read control parameters. */
+/**
+ * @brief Reads control parameters from a configuration file and populates the given structure.
+ *
+ * This function reads control parameters from a specified configuration file and command line arguments,
+ * populating the provided `ctl_t` structure with the parsed data. It handles a wide range of parameters,
+ * performing necessary checks and providing default values where applicable.
+ *
+ * @param filename  A string containing the path to the configuration file.
+ * @param argc      An integer representing the number of command line arguments.
+ * @param argv      An array of strings containing the command line arguments.
+ * @param ctl       A pointer to the structure (`ctl_t`) that will be populated with the control parameters.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for reading the control file.
+ * - Logs information about the MPTRAC executable version and compilation details.
+ * - Initializes quantity indices.
+ * - Reads and sets various control parameters such as quantities, vertical coordinates, time steps,
+ *   meteorological data, sorting options, isosurface parameters, random number generator type,
+ *   advection parameters, diffusion parameters, convection parameters, boundary conditions,
+ *   species parameters, molar mass, OH chemistry parameters, H2O2 chemistry parameters,
+ *   KPP chemistry parameters, first order tracer chemistry parameters, wet deposition parameters,
+ *   dry deposition parameters, climatological data paths, mixing parameters, chemistry grid parameters,
+ *   exponential decay parameters, PSC analysis parameters, output parameters for atmospheric data,
+ *   CSI data, ensemble data, grid data, profile data, sample data, station data, and VTK data.
+ *
+ * @author Lars Hoffmann
+ */
 void read_ctl(
   const char *filename,
   int argc,
   char *argv[],
   ctl_t * ctl);
 
-/*! Read kernel data file. */
+/**
+ * @brief Reads kernel function data from a file and populates the provided arrays.
+ *
+ * This function reads kernel function data from a specified file, populating the provided arrays
+ * `kz` and `kw` with the parsed data. It also updates the variable pointed to by `nk` with the
+ * number of data points read. The function ensures that the height levels are in ascending order
+ * and performs checks for the number of height levels read.
+ *
+ * @param filename  A string containing the path to the file containing kernel function data.
+ * @param kz        A double array to store the height levels of the kernel function.
+ * @param kw        A double array to store the weights corresponding to the height levels.
+ * @param nk        A pointer to an integer variable representing the number of data points read.
+ *
+ * The function performs the following steps:
+ * - Logs information indicating the kernel function file being read.
+ * - Attempts to open the specified file for reading.
+ * - Reads data from the file line by line, parsing height levels and weights.
+ * - Checks that the height levels are in ascending order and that the number of data points does
+ *   not exceed the defined maximum.
+ * - Closes the file after reading.
+ * - Updates the value of `nk` with the number of data points read.
+ * - Normalizes the kernel function weights by dividing each weight by the maximum weight.
+ *
+ * @author Lars Hoffmann
+ */
 void read_kernel(
   const char *filename,
   double kz[EP],
   double kw[EP],
   int *nk);
 
-/*! Read meteo data file. */
+/**
+ * @brief Reads meteorological data from a file and populates the provided structures.
+ *
+ * This function reads meteorological data from a specified file, populating the provided structures
+ * `ctl`, `clim`, and `met` with the parsed data. The function handles both netCDF and binary data
+ * formats. For netCDF data, it performs various data processing steps such as reading coordinates,
+ * surface data, atmospheric levels, and calculating derived quantities. For binary data, it reads
+ * the data directly into the appropriate arrays and structures.
+ *
+ * @param filename  A string containing the path to the file containing meteorological data.
+ * @param ctl       A pointer to a structure containing control parameters.
+ * @param clim      A pointer to a structure containing climatological data.
+ * @param met       A pointer to a structure to store the meteorological data.
+ * @return          Returns 1 on success and 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Logs information indicating the meteorological data file being read.
+ * - Determines the type of meteorological data (netCDF or binary).
+ * - For netCDF data:
+ *   - Opens the netCDF file and reads various data components including grid coordinates,
+ *     atmospheric levels, surface data, and derived quantities.
+ *   - Performs data processing steps such as extrapolation, boundary condition handling,
+ *     downsampling, and calculations of geopotential heights, potential vorticity, boundary
+ *     layer data, tropopause data, cloud properties, convective available potential energy,
+ *     total column ozone, and detrending.
+ *   - Checks and adjusts meteorological data as necessary, including monotonicity of
+ *     vertical coordinates.
+ *   - Closes the netCDF file after reading.
+ * - For binary data:
+ *   - Opens the binary file and reads metadata including the type and version of the data,
+ *     time information, dimensions, and grid coordinates.
+ *   - Reads surface data, level data, and final flag from the binary file.
+ *   - Closes the binary file after reading.
+ * - Copies wind data to a cache for subsequent use.
+ * - Returns 1 on successful reading and processing of meteorological data.
+ *
+ * @note The function handles different types of meteorological data formats and performs
+ *       appropriate processing and error checking for each format.
+ *
+ * @author Lars Hoffmann
+ */
 int read_met(
   const char *filename,
   ctl_t * ctl,
   clim_t * clim,
   met_t * met);
 
-/*! Read 2-D meteo variable. */
+/**
+ * @brief Reads a 2-dimensional meteorological variable from a binary file and stores it in the provided array.
+ *
+ * This function reads a 2-dimensional meteorological variable from a binary file, which is assumed to be
+ * uncompressed, and stores it in the provided 2-dimensional array `var`. The variable name is used for
+ * logging purposes to identify the data being read.
+ *
+ * @param in        A pointer to the FILE structure representing the binary file to read from.
+ * @param met       A pointer to a structure containing meteorological data.
+ * @param var       A 2-dimensional array to store the read variable.
+ * @param varname   A string containing the name of the variable being read.
+ *
+ * The function performs the following steps:
+ * - Allocates memory for a temporary buffer to hold the uncompressed data.
+ * - Logs information about the variable being read from the file.
+ * - Reads the uncompressed data from the file into the temporary buffer.
+ * - Copies the data from the temporary buffer to the provided 2-dimensional array.
+ * - Frees the memory allocated for the temporary buffer.
+ *
+ * @note The function assumes that the binary file contains uncompressed data and reads the data
+ *       directly into the provided array without any additional processing.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
   char *varname);
 
-/*! Read 3-D meteo variable. */
+/**
+ * @brief Reads a 3-dimensional meteorological variable from a binary file and stores it in the provided array.
+ *
+ * This function reads a 3-dimensional meteorological variable from a binary file, which can be uncompressed or
+ * compressed using different methods, and stores it in the provided 3-dimensional array `var`. The variable name
+ * is used for logging purposes to identify the data being read.
+ *
+ * @param in        A pointer to the FILE structure representing the binary file to read from.
+ * @param ctl       A pointer to a structure containing control parameters.
+ * @param met       A pointer to a structure containing meteorological data.
+ * @param var       A 3-dimensional array to store the read variable.
+ * @param varname   A string containing the name of the variable being read.
+ *
+ * The function performs the following steps based on the compression type specified in `ctl->met_type`:
+ * - If uncompressed data, it allocates memory for a temporary buffer, reads the data from the file,
+ *   and then copies it to the provided array.
+ * - If the data is compressed using packing, zfp, zstd, or cmultiscale compression, it calls corresponding
+ *   compression functions to decompress the data, then copies the decompressed data to the provided array.
+ * - The data is copied to the provided array using OpenMP parallelization for improved performance.
+ * - Finally, the memory allocated for the temporary buffer is freed.
+ *
+ * @note This function supports different compression methods based on the value of `ctl->met_type`.
+ *       If a particular compression method is not supported or the necessary libraries are not available,
+ *       an error message is generated.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_bin_3d(
   FILE * in,
   ctl_t * ctl,
@@ -4043,54 +4453,278 @@ void read_met_bin_3d(
   float var[EX][EY][EP],
   char *varname);
 
-/*! Calculate convective available potential energy. */
+/**
+ * @brief Calculates Convective Available Potential Energy (CAPE) for each grid point.
+ *
+ * This function calculates the Convective Available Potential Energy (CAPE) at each grid point based on
+ * the provided meteorological data. CAPE is a measure of the energy available for deep convection,
+ * which is essential for severe weather development.
+ *
+ * @param clim A pointer to a structure containing climatological data.
+ * @param met  A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the calculation time.
+ * - Initializes variables and constants required for the computation, such as vertical spacing and pressure levels.
+ * - Iterates over each grid point in parallel using OpenMP.
+ * - Calculates CAPE by integrating the difference in virtual temperatures between the environment and the parcel,
+ *   up to the level of free convection (LFC).
+ * - Determines the lifted condensation level (LCL), level of free convection (LFC), equilibrium level (EL),
+ *   and Convective Inhibition (CIN) for each grid point.
+ * - Checks the results and updates the corresponding fields in the meteorological data structure.
+ *
+ * @note The function utilizes OpenMP for parallelization to enhance performance by distributing
+ *       the computation across multiple threads.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_cape(
   clim_t * clim,
   met_t * met);
 
-/*! Calculate cloud properties. */
+/**
+ * @brief Calculates cloud-related variables for each grid point.
+ *
+ * This function calculates cloud-related variables, such as cloud cover, cloud top pressure, cloud bottom pressure,
+ * and total cloud water content, based on the provided meteorological data.
+ *
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the calculation time.
+ * - Initializes variables and constants required for the computation.
+ * - Iterates over each grid point in parallel using OpenMP.
+ * - Determines cloud-related variables based on thresholds for ice water content (IWC) and liquid water content (LWC).
+ * - Calculates cloud cover, cloud top pressure, cloud bottom pressure, and total cloud water content for each grid point.
+ * - Updates the corresponding fields in the meteorological data structure.
+ *
+ * @note The function utilizes OpenMP for parallelization to enhance performance by distributing
+ *       the computation across multiple threads.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_cloud(
   ctl_t * ctl,
   met_t * met);
 
-/*! Apply detrending method to temperature and winds. */
+/**
+ * @brief Detrends meteorological data.
+ *
+ * This function detrends meteorological data by removing spatially varying backgrounds from each grid point.
+ * Detrending helps in removing systematic biases and trends from the data, enabling better analysis and modeling.
+ *
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Checks if detrending is enabled based on the control parameters.
+ * - Sets up a timer to monitor the detrending time.
+ * - Allocates memory for a temporary meteorological data structure.
+ * - Calculates the standard deviation and box size for detrending.
+ * - Calculates the detrended data by subtracting spatially varying backgrounds.
+ * - Updates the original meteorological data with the detrended values.
+ * - Frees the allocated memory.
+ *
+ * @note Detrending is performed by subtracting spatially varying backgrounds calculated from neighboring grid points.
+ * @note OpenMP is utilized for parallelization to enhance performance by distributing the computation across multiple threads.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_detrend(
   ctl_t * ctl,
   met_t * met);
 
-/*! Extrapolate meteo data at lower boundary. */
+/**
+ * @brief Extrapolates meteorological data.
+ *
+ * This function extrapolates meteorological data by filling missing or invalid data points with values from the nearest valid point above.
+ * Extrapolation is performed column-wise, ensuring that missing data points are replaced with valid values.
+ *
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the extrapolation time.
+ * - Loops over each grid column in parallel.
+ * - Finds the lowest valid data point within each column.
+ * - Extrapolates missing or invalid data points by copying values from the nearest valid point above.
+ * - Updates the meteorological data structure with the extrapolated values.
+ *
+ * @note Extrapolation is performed by copying values from the nearest valid point above to fill missing or invalid data points.
+ *       OpenMP is utilized for parallelization to enhance performance by distributing the computation across multiple threads.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_extrapolate(
   met_t * met);
 
-/*! Calculate geopotential heights. */
+/**
+ * @brief Calculates geopotential heights from meteorological data.
+ *
+ * This function calculates geopotential heights from provided meteorological data using the hydrostatic equation.
+ * Geopotential heights are computed column-wise for each grid point based on the temperature, pressure, and surface height information.
+ * Optionally, the calculated geopotential heights can be smoothed horizontally using a weighted averaging scheme.
+ *
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the geopotential height calculation time.
+ * - Calculates the logarithm of pressure levels for efficient computation.
+ * - Applies the hydrostatic equation to determine geopotential heights based on temperature, pressure, and height information.
+ * - Optionally, performs horizontal smoothing on the calculated geopotential heights.
+ * - Updates the meteorological data structure with the computed geopotential heights.
+ *
+ * @note The hydrostatic equation is utilized to calculate geopotential heights, ensuring consistency with atmospheric conditions.
+ *       Optionally, horizontal smoothing can be applied to the calculated geopotential heights to reduce spatial variability.
+ *       OpenMP is utilized for parallelization to enhance performance by distributing the computation across multiple threads.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_geopot(
   ctl_t * ctl,
   met_t * met);
 
-/*! Read coordinates of meteo data. */
+/**
+ * @brief Reads meteorological grid information from a NetCDF file.
+ *
+ * This function reads meteorological grid information from a NetCDF file, including time, spatial dimensions, and pressure levels.
+ * It also extracts longitudes, latitudes, and pressure levels from the NetCDF file based on the specified control parameters.
+ * The function determines the time information either from the filename or from the data file, depending on the file type.
+ *
+ * @param filename The filename of the NetCDF file.
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from either the filename or the data file based on the file type.
+ * - Checks the validity of the time information.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
+ * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
+ * - Converts pressure levels to hPa if necessary.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
+ *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
+ *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
 void read_met_grid(
   const char *filename,
   int ncid,
   ctl_t * ctl,
   met_t * met);
 
-/*! Read meteo data on vertical levels. */
+/**
+ * @brief Reads meteorological variables at different vertical levels from a NetCDF file.
+ *
+ * This function reads meteorological variables such as temperature, wind components, specific humidity, ozone data,
+ * cloud parameters, and cloud cover at various vertical levels from a NetCDF file.
+ * The function supports reading meteorological data from both MPTRAC and CLaMS formats.
+ * Depending on the file format, it reads specific variables and performs necessary conversions or interpolations.
+ *
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological level data.
+ * - Reads meteorological variables from the NetCDF file based on the specified control parameters and file format.
+ * - Handles specific variables differently depending on the file format, such as reading temperature, wind components, humidity, ozone data, and cloud parameters.
+ * - Performs conversions or interpolations if necessary, such as converting specific humidity and ozone data from mixing ratio to volume mixing ratio.
+ * - Transfers velocity components to model levels for diabatic advection if applicable.
+ * - Reads pressure on model levels if specified in the control parameters.
+ * - Performs vertical interpolation from model levels to pressure levels if needed.
+ * - Checks the ordering of pressure levels to ensure they are in descending order.
+ *
+ * @note This function supports reading meteorological variables from NetCDF files in MPTRAC or CLaMS formats and handles specific variables differently based on the file format and control parameters.
+ *       It performs necessary conversions or interpolations and ensures the correctness of pressure levels.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
 void read_met_levels(
   int ncid,
   ctl_t * ctl,
   met_t * met);
 
-/*! Smooth vertical zeta and pressure profiles. */
-void read_met_monotonize(
-  met_t * met);
-
 /*! Convert meteo data from model levels to pressure levels. */
+/**
+ * @brief Interpolates meteorological variables from model levels to pressure levels.
+ *
+ * This function interpolates meteorological variables from model levels to pressure levels based on the given pressure levels and meteorological data.
+ * It performs interpolation for each grid point separately, considering the pressure levels at each grid point.
+ *
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param var A 3D array containing the meteorological variable data at model levels.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the interpolation time.
+ * - Iterates over each grid point (longitude and latitude) in parallel using OpenMP.
+ * - Copies the pressure profile for the current grid point.
+ * - Interpolates the meteorological variables from model levels to pressure levels using linear interpolation.
+ * - Copies the interpolated data back to the original variable array.
+ *
+ * @note This function interpolates meteorological variables from model levels to pressure levels using linear interpolation, ensuring consistency across the grid.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_ml2pl(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP]);
 
-/*! Read and convert 2D variable from meteo data file. */
+/**
+ * @brief Makes zeta and pressure profiles monotone.
+ *
+ * This function ensures that zeta and pressure profiles are monotone increasing and decreasing with altitude.
+ * It iterates over each grid point and each level to identify inversions and linearly interpolate between them to maintain monotonicity.
+ * The interpolation is performed for both zeta and pressure profiles.
+ *
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the processing time.
+ * - Iterates over each grid point in parallel using OpenMP.
+ * - Identifies inversions in both zeta and pressure profiles and interpolates linearly between them to make the profiles monotone increasing.
+ *
+ * @note This function is crucial for maintaining the physical consistency of meteorological profiles, ensuring accurate atmospheric simulations.
+ *
+ * @author Jan Clemens
+ */
+void read_met_monotonize(
+  met_t * met);
+
+/**
+ * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 2-dimensional meteorological variable from a NetCDF file and stores it in a specified destination array.
+ * It supports both packed and unpacked data formats and handles missing values and scaling factors accordingly.
+ * The function also checks the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @param init Flag indicating whether to initialize the destination array before reading.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
 int read_met_nc_2d(
   int ncid,
   char *varname,
@@ -4101,7 +4735,31 @@ int read_met_nc_2d(
   float scl,
   int init);
 
-/*! Read and convert 3D variable from meteo data file. */
+/**
+ * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 3-dimensional meteorological variable from a NetCDF file and stores it in a specified destination array.
+ * It supports both packed and unpacked data formats and handles missing values and scaling factors accordingly.
+ * The function also checks the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @param init Flag indicating whether to initialize the destination array before reading.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
 int read_met_nc_3d(
   int ncid,
   char *varname,
@@ -4112,44 +4770,279 @@ int read_met_nc_3d(
   float scl,
   int init);
 
-/*! Calculate pressure of the boundary layer. */
+/**
+ * @brief Calculates the planetary boundary layer (PBL) height for each grid point.
+ *
+ * This function estimates the height of the planetary boundary layer (PBL) based on various meteorological parameters.
+ * The method used is based on empirical relationships, such as those proposed by Vogelezang and Holtslag (1996) or Seidel et al. (2012).
+ * It computes the PBL height by analyzing the vertical profiles of temperature, wind speed, humidity, and pressure.
+ *
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets timer for performance monitoring.
+ * - Iterates over each grid point to calculate the PBL height.
+ * - Determines the bottom level of the PBL based on pressure and a specified thickness.
+ * - Finds the lowest model level near the bottom of the PBL.
+ * - Interpolates meteorological variables to the near-surface level.
+ * - Computes virtual potential temperature (theta_v) at the surface.
+ * - Initializes variables for Richardson number calculation.
+ * - Loops over vertical levels to calculate Richardson number and identify the PBL height.
+ * - Determines the PBL height based on the critical Richardson number criterion.
+ * - Stores the calculated PBL height in the meteorological data structure.
+ *
+ * @note This function plays a crucial role in atmospheric modeling applications for characterizing the height of the boundary layer, which influences atmospheric dynamics and pollutant dispersion.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_pbl(
   met_t * met);
 
-/*! Create meteo data with periodic boundary conditions. */
+/**
+ * @brief Applies periodic boundary conditions to meteorological data along longitudinal axis.
+ *
+ * This function applies periodic boundary conditions to meteorological data along the longitudinal axis.
+ * It checks if the difference between the last and first longitudes and the difference between the second and first longitudes
+ * are approximately equal to 360 degrees, indicating periodicity.
+ * If the condition is met, the function increases the longitude counter, sets the longitude value for the new grid point,
+ * and copies meteorological data from the first grid point to the last grid point to ensure periodicity.
+ *
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets timer for performance monitoring.
+ * - Checks if the difference between the last and first longitudes and the difference between the second and first longitudes
+ *   are approximately equal to 360 degrees, indicating periodicity.
+ * - If periodicity is confirmed:
+ *   - Increases the longitude counter.
+ *   - Sets the longitude value for the new grid point by adding the difference between the second and first longitudes
+ *     to the longitude of the penultimate grid point.
+ *   - Copies meteorological data from the first grid point to the last grid point to ensure periodicity:
+ *     - Surface variables (e.g., pressure, temperature, wind speed, land-sea mask, sea surface temperature) are copied.
+ *     - Meteorological variables at each pressure level are copied.
+ *     - Meteorological variables at each hybrid pressure level are copied.
+ *
+ * @note This function is useful for generating continuous meteorological fields over a periodic domain, which is common in atmospheric modeling, especially for global simulations.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_periodic(
   met_t * met);
 
-/*! Fix polar winds. */
+/**
+ * @brief Applies a fix for polar winds in meteorological data.
+ *
+ * This function applies a fix for polar winds in meteorological data, particularly focusing on the u and v wind components.
+ * It checks if the latitudes at the top and bottom of the grid are close to the poles.
+ * If so, it transforms the winds at 89-degree latitude into Cartesian coordinates, takes their mean, and replaces the winds
+ * at 90-degree latitude with this mean, effectively fixing the unrealistic behavior of winds at the poles.
+ *
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Checks if the latitudes at the top and bottom of the grid are close to the poles (within 0.001 degree latitude of the poles).
+ * - For each hemisphere (north and south):
+ *   - Sets latitude indices for 89 degrees and 90 degrees.
+ *   - Determines the sign of longitude adjustments based on the hemisphere.
+ *   - Constructs lookup tables for cosine and sine of longitudes.
+ *   - Loops over pressure levels and performs the following operations:
+ *     - Transforms u and v wind components at 89 degrees latitude into Cartesian coordinates and calculates their mean.
+ *     - Replaces u and v wind components at 90 degrees latitude with the calculated mean, effectively fixing the polar winds.
+ *
+ * @note This function is useful for correcting unrealistic behavior of winds near the poles in meteorological data, which can affect various atmospheric simulations.
+ * @note Based on a Python code provided by Jens-Uwe Grooß.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_polar_winds(
   met_t * met);
 
-/*! Calculate potential vorticity. */
+/**
+ * @brief Calculates potential vorticity (PV) from meteorological data.
+ *
+ * This function calculates the potential vorticity (PV) from the provided meteorological data.
+ * It employs finite difference methods to estimate gradients of temperature, wind components, and pressure in longitude,
+ * latitude, and pressure dimensions. These gradients are then used to compute PV at each grid point.
+ * Additionally, a fix for polar regions is applied to ensure smoothness of PV values in these regions.
+ *
+ * @param met A pointer to a structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Computes powers for pressure calculation.
+ * - Loops over grid points in longitude:
+ *   - Sets latitude indices.
+ *   - Loops over grid points in latitude:
+ *     - Sets indices and auxiliary variables.
+ *     - Loops over pressure levels:
+ *       - Computes gradients in longitude, latitude, and pressure.
+ *       - Calculates PV using computed gradients.
+ * - Applies a fix for polar regions to ensure smoothness of PV values.
+ *
+ * @note Potential vorticity is a fundamental quantity in atmospheric dynamics, representing the potential of a fluid parcel to rotate due to changes in pressure, temperature, and wind fields.
+ * @note Based on a Python code by Mathew Barlow (https://github.com/mathewbarlow/potential-vorticity).
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_pv(
   met_t * met);
 
-/*! Calculate total column ozone. */
+/**
+ * @brief Calculates the total column ozone from meteorological ozone data.
+ *
+ * This function calculates the total column ozone from the provided meteorological ozone data.
+ * It integrates ozone concentrations over altitude to obtain the column ozone density.
+ * The result is then converted to Dobson units, which represent the thickness of the ozone layer
+ * if compressed into one layer at standard temperature and pressure.
+ *
+ * @param met A pointer to a structure containing meteorological ozone data.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Loops over columns in longitude and latitude:
+ *   - Integrates ozone concentrations over altitude.
+ *   - Converts the integrated ozone density to Dobson units.
+ *
+ * @note Total column ozone is a critical metric for understanding ozone distribution in the atmosphere, with implications for climate, air quality, and UV radiation.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_ozone(
   met_t * met);
 
-/*! Downsampling of meteo data. */
+/**
+ * @brief Downsamples meteorological data based on specified parameters.
+ *
+ * This function downsamples meteorological data based on the provided control parameters.
+ * It reduces the resolution of meteorological data by averaging over specified intervals in longitude, latitude, and altitude.
+ *
+ * @param ctl A pointer to a structure containing control parameters for downsampling.
+ * @param met A pointer to a structure containing meteorological data to be downsampled.
+ *
+ * The function performs the following steps:
+ * - Checks if downsampling parameters are set to a value less than or equal to 1, if so, returns without downsampling.
+ * - Sets a timer for performance monitoring.
+ * - Allocates memory for a temporary meteorological data structure.
+ * - Copies metadata from the original structure to the temporary structure.
+ * - Performs downsampling by smoothing over specified intervals:
+ *   - Computes weighted averages over the specified intervals.
+ *   - Updates the temporary structure with the smoothed values.
+ * - Downsamples the smoothed data:
+ *   - Updates longitude and latitude arrays with downsampled values.
+ *   - Stores downsampled meteorological variables in the original structure.
+ * - Frees memory allocated for the temporary structure.
+ *
+ * @note Downsampling meteorological data can be useful for reducing computational cost while preserving essential features for modeling and analysis.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_sample(
   ctl_t * ctl,
   met_t * met);
 
-/*! Read surface data. */
+/**
+ * @brief Reads surface meteorological data from a netCDF file and stores it in the meteorological data structure.
+ *
+ * This function reads various surface meteorological variables from a netCDF file and stores them in the provided meteorological data structure.
+ * Depending on the configuration, it may read data for surface pressure, geopotential height, temperature, zonal and meridional wind components, land-sea mask, and sea surface temperature.
+ *
+ * @param ncid NetCDF file identifier.
+ * @param met A pointer to the meteorological data structure to store the read data.
+ * @param ctl A pointer to a structure containing control parameters.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Reads surface meteorological data based on the configuration:
+ *   - For MPTRAC meteorological data:
+ *     - Reads surface pressure from "lnsp", "ps", or "sp" variables.
+ *     - Converts surface pressure to Pa if necessary.
+ *     - Reads geopotential height at the surface from "z" or "zm" variables.
+ *     - Reads surface temperature from "t2m" or "2t" variables.
+ *     - Reads zonal wind at the surface from "u10m" or "10u" variables.
+ *     - Reads meridional wind at the surface from "v10m" or "10v" variables.
+ *     - Reads land-sea mask from "lsm" variable.
+ *     - Reads sea surface temperature from "sstk" or "sst" variables.
+ *   - For CLaMS meteorological data:
+ *     - Reads surface pressure from "ps" variable.
+ *     - Reads geopotential height at the surface using the lowest level of the 3-D data field.
+ *     - Reads surface temperature from "t2" variable.
+ *     - Reads zonal wind at the surface from "u10" variable.
+ *     - Reads meridional wind at the surface from "v10" variable.
+ *     - Reads land-sea mask from "lsm" variable.
+ *     - Reads sea surface temperature from "sstk" variable.
+ *
+ * @note The function handles different variable names and units according to the specified meteorological data source (MPTRAC or CLaMS).
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
 void read_met_surface(
   int ncid,
   met_t * met,
   ctl_t * ctl);
 
-/*! Calculate tropopause data. */
+/**
+ * @brief Calculates the tropopause and related meteorological variables based on various methods and stores the results in the meteorological data structure.
+ *
+ * This function calculates the tropopause and related meteorological variables using different methods specified by the control parameters.
+ * The calculated tropopause pressure is stored in the provided meteorological data structure.
+ *
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param clim A pointer to the climatological data structure.
+ * @param met A pointer to the meteorological data structure to store the calculated tropopause pressure and related variables.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Retrieves altitude and pressure profiles from the meteorological data structure.
+ * - Depending on the control parameters (ctl->met_tropo), it calculates the tropopause using one of the following methods:
+ *   - If ctl->met_tropo == 0, it does not calculate the tropopause and assigns NaN values to the tropopause pressure.
+ *   - If ctl->met_tropo == 1, it uses tropopause climatology to estimate the tropopause pressure based on latitude and time.
+ *   - If ctl->met_tropo == 2, it calculates the tropopause based on the cold point method, finding the altitude where the temperature is at a minimum.
+ *   - If ctl->met_tropo == 3 or ctl->met_tropo == 4, it calculates the tropopause using the WMO definition, which involves identifying a sharp temperature lapse rate between two pressure levels.
+ *   - If ctl->met_tropo == 5, it calculates the dynamical tropopause based on potential vorticity and potential temperature profiles.
+ * - Interpolates temperature, geopotential height, and water vapor content to the tropopause pressure level using spatial interpolation.
+ * - Stores the interpolated values in the meteorological data structure.
+ *
+ * @note The function supports parallelization using OpenMP directives to improve performance.
+ *
+ * @author Lars Hoffmann
+ */
 void read_met_tropo(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met);
 
-/*! Read observation data. */
+/**
+ * @brief Reads observation data from a file and stores it in arrays.
+ *
+ * This function reads observation data from a specified file in either ASCII or NetCDF format,
+ * depending on the value of the OBS_TYPE control parameter. It stores the time, altitude, longitude, latitude,
+ * and observation values in the provided arrays.
+ *
+ * @param filename The path to the observation data file.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param rt An array to store the time values of the observations.
+ * @param rz An array to store the altitude values of the observations.
+ * @param rlon An array to store the longitude values of the observations.
+ * @param rlat An array to store the latitude values of the observations.
+ * @param robs An array to store the observation values.
+ * @param nobs A pointer to an integer variable to store the number of observations read.
+ *
+ * The function performs the following steps:
+ * - Logs an informational message indicating the observation data file being read.
+ * - Reads the observation data from the file based on the OBS_TYPE control parameter:
+ *   - If ctl->obs_type == 0, it reads the data from an ASCII file using the read_obs_asc function.
+ *   - If ctl->obs_type == 1, it reads the data from a NetCDF file using the read_obs_nc function.
+ *   - If ctl->obs_type is neither 0 nor 1, it generates an error message indicating that the OBS_TYPE must be set to 0 or 1.
+ * - Checks if the time values are in ascending order and generates an error message if not.
+ * - Logs statistical information about the observation data, including the number of observations, time range, altitude range, longitude range, latitude range, and observation value range.
+ *
+ * @note The function assumes that the observation data file is formatted correctly and that the arrays provided have sufficient memory allocated to store the data.
+ *
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
+ */
 void read_obs(
   const char *filename,
   ctl_t * ctl,
@@ -4160,7 +5053,30 @@ void read_obs(
   double *robs,
   int *nobs);
 
-/*! Read observation data in ASCII format. */
+/**
+ * @brief Reads observation data from an ASCII file.
+ *
+ * This function reads observation data from a specified ASCII file. It extracts time, altitude, longitude, latitude, and observation values from each line of the file and stores them in the provided arrays.
+ *
+ * @param filename The path to the ASCII file containing the observation data.
+ * @param rt An array to store the time values of the observations.
+ * @param rz An array to store the altitude values of the observations.
+ * @param rlon An array to store the longitude values of the observations.
+ * @param rlat An array to store the latitude values of the observations.
+ * @param robs An array to store the observation values.
+ * @param nobs A pointer to an integer variable to store the number of observations read.
+ *
+ * The function performs the following steps:
+ * - Attempts to open the specified observation data file in read mode.
+ * - Reads each line of the file and parses it to extract the time, altitude, longitude, latitude, and observation values using the sscanf function.
+ * - Stores the extracted values in the respective arrays.
+ * - Checks if the number of observations exceeds the maximum allowed limit (NOBS) and generates an error message if so.
+ * - Closes the observation data file after reading all data.
+ *
+ * @note The function assumes that the observation data file is properly formatted and that the arrays provided have sufficient memory allocated to store the data.
+ *
+ * @author Lars Hoffmann
+ */
 void read_obs_asc(
   const char *filename,
   double *rt,
@@ -4170,7 +5086,30 @@ void read_obs_asc(
   double *robs,
   int *nobs);
 
-/*! Read observation data in netCDF format. */
+/**
+ * @brief Reads observation data from a NetCDF file.
+ *
+ * This function reads observation data from a specified NetCDF file. It extracts time, altitude, longitude, latitude,
+ * and observation values from the variables in the NetCDF file and stores them in the provided arrays.
+ *
+ * @param filename The path to the NetCDF file containing the observation data.
+ * @param rt An array to store the time values of the observations.
+ * @param rz An array to store the altitude values of the observations.
+ * @param rlon An array to store the longitude values of the observations.
+ * @param rlat An array to store the latitude values of the observations.
+ * @param robs An array to store the observation values.
+ * @param nobs A pointer to an integer variable to store the number of observations read.
+ *
+ * The function performs the following steps:
+ * - Attempts to open the specified NetCDF file in read-only mode using the nc_open function.
+ * - Queries the dimensions of the 'nobs' variable in the NetCDF file to determine the number of observations using the NC_INQ_DIM macro.
+ * - Reads the 'time', 'alt', 'lon', 'lat', and 'obs' variables from the NetCDF file using the NC_GET_DOUBLE macro and stores them in the respective arrays.
+ * - Closes the NetCDF file after reading all data using the nc_close function.
+ *
+ * @note The function assumes that the NetCDF file contains the required variables ('time', 'alt', 'lon', 'lat', 'obs') and that the arrays provided have sufficient memory allocated to store the data.
+ *
+ * @author Lars Hoffmann
+ */
 void read_obs_nc(
   const char *filename,
   double *rt,
@@ -4180,7 +5119,37 @@ void read_obs_nc(
   double *robs,
   int *nobs);
 
-/*! Read a control parameter from file or command line. */
+/**
+ * @brief Scans a control file or command-line arguments for a specified variable.
+ *
+ * This function scans either a control file or command-line arguments for a specified variable name and retrieves its value.
+ * It searches for the variable name in the control file or command-line arguments and returns its corresponding value.
+ * If the variable is not found, it returns a default value specified by the user.
+ *
+ * @param filename The name of the control file to be scanned. If NULL, only command-line arguments will be scanned.
+ * @param argc The number of command-line arguments.
+ * @param argv An array of command-line arguments.
+ * @param varname The name of the variable to be searched.
+ * @param arridx The index of the variable array, if applicable. Set to -1 if not an array.
+ * @param defvalue The default value to be returned if the variable is not found.
+ * @param value A pointer to a character array to store the retrieved value.
+ * @return The retrieved value of the variable as a double.
+ *
+ * The function performs the following steps:
+ * - Attempts to open the specified control file in read mode using the fopen function. If the filename ends with a '-', the file is not opened.
+ * - Constructs the full variable name based on the variable name and array index provided.
+ * - Reads data from the control file, searching for the full variable name. If found, it sets the contain flag to 1 and breaks the loop.
+ * - Searches through the command-line arguments for the full variable name. If found, it sets the value and contain flag and breaks the loop.
+ * - Closes the control file if opened.
+ * - If the variable is not found, it sets the value to the default value provided or throws an error if no default value is provided.
+ * - Writes the variable name and its value to the log.
+ * - Copies the retrieved value to the value parameter if it is not NULL.
+ * - Returns the retrieved value as a double after converting it from a string using the atof function.
+ *
+ * @note This function assumes that the variable names and their values in the control file or command-line arguments are separated by whitespace.
+ *
+ * @author Lars Hoffmann
+ */
 double scan_ctl(
   const char *filename,
   int argc,
@@ -4190,14 +5159,65 @@ double scan_ctl(
   const char *defvalue,
   char *value);
 
-/*! Calculate sedimentation velocity. */
+/**
+ * @brief Calculates the sedimentation velocity of a particle in air.
+ *
+ * This function calculates the sedimentation velocity of a particle in air using the given parameters.
+ *
+ * @param p The atmospheric pressure [hPa].
+ * @param T The temperature [K].
+ * @param rp The radius of the particle [microns].
+ * @param rhop The density of the particle [kg/m^3].
+ * @return The sedimentation velocity of the particle [m/s].
+ *
+ * The function performs the following steps:
+ * - Converts the radius of the particle from microns to meters.
+ * - Calculates the density of dry air using the given atmospheric pressure and temperature.
+ * - Calculates the dynamic viscosity of air using Sutherland's formula.
+ * - Calculates the thermal velocity of an air molecule using the given temperature.
+ * - Calculates the mean free path of an air molecule.
+ * - Computes the Knudsen number for air based on the ratio of mean free path to particle radius.
+ * - Applies the Cunningham slip-flow correction factor to account for particle size.
+ * - Computes the sedimentation velocity of the particle based on the difference in densities between the particle and air, incorporating the slip-flow correction.
+ *
+ * @note This function assumes that the ideal gas law and Stokes' law are applicable for calculating the sedimentation velocity of the particle.
+ *
+ * @author Lars Hoffmann
+ */
 double sedi(
   const double p,
   const double T,
   const double rp,
   const double rhop);
 
-/*! Spline interpolation. */
+/**
+ * @brief Performs spline interpolation or linear interpolation.
+ *
+ * This function interpolates a set of data points using either cubic spline interpolation or linear interpolation,
+ * depending on the specified method.
+ *
+ * @param x The array of x-coordinates of the data points.
+ * @param y The array of y-coordinates of the data points.
+ * @param n The number of data points.
+ * @param x2 The array of x-coordinates where interpolation is required.
+ * @param y2 The array to store the interpolated y-values.
+ * @param n2 The number of points to interpolate.
+ * @param method The interpolation method: 1 for cubic spline, 0 for linear interpolation.
+ *
+ * If the method is set to 1 (cubic spline interpolation):
+ * - The function initializes a cubic spline interpolator using GSL.
+ * - It interpolates the y-values at the specified x-coordinates using the spline.
+ * - The interpolated y-values are stored in the provided y2 array.
+ *
+ * If the method is set to 0 (linear interpolation):
+ * - The function performs linear interpolation between adjacent data points.
+ * - It locates the interval where each interpolation point falls and calculates the interpolated y-value using linear interpolation.
+ * - The interpolated y-values are stored in the provided y2 array.
+ *
+ * @note The x-coordinates in both arrays (x and x2) must be sorted in ascending order.
+ *
+ * @author Lars Hoffmann
+ */
 void spline(
   const double *x,
   const double *y,
@@ -4207,18 +5227,72 @@ void spline(
   const int n2,
   const int method);
 
-/*! Calculate standard deviation. */
+/**
+ * @brief Calculates the standard deviation of a set of data.
+ *
+ * This function calculates the standard deviation of a set of floating-point data values.
+ *
+ * @param data Pointer to the array of data values.
+ * @param n Number of data values in the array.
+ * @return The standard deviation of the data values. If the number of data values is less than or equal to 0, returns 0.
+ *
+ * The standard deviation is calculated using the formula:
+ * \f[
+ * \sigma = \sqrt{\frac{\sum_{i=1}^{n} (x_i - \bar{x})^2}{n}}
+ * \f]
+ * where \f$ \sigma \f$ is the standard deviation, \f$ x_i \f$ is each data value, \f$ \bar{x} \f$ is the mean of the data values, and \f$ n \f$ is the total number of data values.
+ *
+ * @author Lars Hoffmann
+ */
 float stddev(
   const float *data,
   const int n);
 
-/*! Calculate solar zenith angle. */
+/**
+ * @brief Calculates the solar zenith angle.
+ *
+ * This function calculates the solar zenith angle, which is the angle between the zenith (straight up) and the line
+ * connecting the observer to the center of the sun.
+ *
+ * @param sec Seconds elapsed since 2000-01-01T12:00Z.
+ * @param lon Observer's longitude in degrees.
+ * @param lat Observer's latitude in degrees.
+ * @return The solar zenith angle in radians.
+ *
+ * The solar zenith angle is calculated based on the observer's position (longitude and latitude) and the time specified
+ * in seconds elapsed since 2000-01-01T12:00Z.
+ *
+ * @note This function assumes that the input longitude and latitude are given in degrees.
+ *
+ * @author Lars Hoffmann
+ */
 double sza_calc(
   const double sec,
   const double lon,
   const double lat);
 
-/*! Convert date to seconds. */
+/**
+ * @brief Converts time components to seconds since January 1, 2000, 12:00:00 UTC.
+ *
+ * This function calculates the number of seconds elapsed since January 1, 2000, 12:00:00 UTC, based on the provided
+ * year, month, day, hour, minute, and second. It also includes a fractional part to represent the remaining seconds.
+ *
+ * @param year The year.
+ * @param mon The month (1-12).
+ * @param day The day of the month (1-31).
+ * @param hour The hour of the day (0-23).
+ * @param min The minute (0-59).
+ * @param sec The second (0-59).
+ * @param remain The fractional part of seconds.
+ * @param jsec Pointer to store the calculated number of seconds since January 1, 2000, 12:00:00 UTC.
+ *
+ * The function calculates the time elapsed since January 1, 2000, 12:00:00 UTC, up to the specified time and includes
+ * any fractional seconds indicated by the "remain" parameter.
+ *
+ * @note The function uses the timegm function, which is similar to mktime but operates in UTC.
+ *
+ * @author Lars Hoffmann
+ */
 void time2jsec(
   const int year,
   const int mon,
