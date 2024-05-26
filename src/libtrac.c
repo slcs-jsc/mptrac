@@ -406,6 +406,198 @@ double clim_zm(
 
 /*****************************************************************************/
 
+#ifdef CMULTI
+void compress_cmulti(
+  char *varname,
+  float *array,
+  size_t nx,
+  size_t ny,
+  size_t np,
+  int decompress,
+  FILE * inout) {
+
+  /// Determine grid properties
+  unsigned int max_level;	/// Maximum refinement level
+  int Nd0[2];			/// Number cells on the coarsest refinement level
+  get_2d_grid_from_meteo_data((int) nx, (int) ny, &max_level, Nd0);
+
+  PRINT("%d", Nd0[0]);
+  PRINT("%d", Nd0[1]);
+  PRINT("%d", max_level);
+
+  /// Domain [a,b]x[c,d]
+  char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
+
+  /// Global threshold error -> play around with it
+  double eps_global = 0.00005;
+
+  /// Grading?
+  bool grading = false;
+
+  /// Which direction has periodic bc (not necessary here)
+  int periodic[] = { 0, 0 };
+
+  /// Initialize multiscale module
+  multiscale_t *multiscale_ptr =
+    init_multiscale(max_level, Nd0, domain, periodic, eps_global, grading);
+
+  /* Set lon-lat grid... */
+  double lon[EX], lat[EY];
+  for (size_t ix = 0; ix < nx; ix++)
+    lon[ix] = 360. * (double) ix / ((double) nx - 1.);
+  for (size_t iy = 0; iy < ny; iy++)
+    lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+
+    /* Loop over levels... */
+    //#pragma omp parallel for
+    for (size_t ip = 0; ip < np; ip++) {
+      
+      /* Read binary data... */
+      solution_t *sol = read_sol(multiscale_ptr, inout);
+      
+      
+      /* I/O test... */
+      if (ip == 10) {
+	char filename[LEN];
+	sprintf(filename, "OUTPUT/cmulti_decompress.%s.lev.%ld.cgns", varname, ip);
+	PRINT("%s", filename);
+	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
+
+	/* Write binary file... */
+	FILE *out2;
+	sprintf(filename, "sol_decompress.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol, out2);
+	fclose(out2);
+
+	/* Read binary data... */
+	FILE *in2;
+	LOG(2, "Read %s ...", filename);
+	if (!(in2 = fopen(filename, "r")))
+	  ERRMSG("Cannot open file!");
+	solution_t *sol2 = read_sol(multiscale_ptr, in2);
+	fclose(in2);
+
+	/* Write binary file... */
+	sprintf(filename, "sol_decompress2.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol2, out2);
+	fclose(out2);
+	
+	delete_solution(sol2);
+      }
+      
+      
+      /* Evaluate... */
+      for (size_t ix = 0; ix < nx; ix++)
+	for (size_t iy = 0; iy < ny; iy++) {
+	  double val, x[] = { lon[ix], lat[iy] };
+	  eval(multiscale_ptr, sol, x, &val);
+	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
+	}
+
+      /* Free... */
+      delete_solution(sol);
+    }
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+
+    /* Loop over levels... */
+    //#pragma omp parallel for
+    for (size_t ip = 0; ip < np; ip++) {
+
+      /* Copy level data... */
+      float help[nx * ny];
+      for (size_t ix = 0; ix < nx; ix++)
+	for (size_t iy = 0; iy < ny; iy++)
+	  help[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+
+      /* Set grid... */
+      solution_t *sol = read_data_arr(multiscale_ptr, help, lon, lat, nx, ny);
+
+      /* Coarsening... */
+      coarsening(multiscale_ptr, sol);
+
+      /* Write binary data... */
+      save_sol(sol, inout);
+
+      
+      /* I/O test... */
+      if (ip == 10) {
+
+	/* Write cgns file... */
+	char filename[LEN];
+	sprintf(filename, "OUTPUT/cmulti_compress.%s.lev.%ld.cgns", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
+
+	/* Write binary file... */
+	FILE *out2;
+	sprintf(filename, "sol_compress.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol, out2);
+	fclose(out2);
+      
+	/* Read binary data... */
+	FILE *in2;
+	LOG(2, "Read %s ...", filename);
+	if (!(in2 = fopen(filename, "r")))
+	  ERRMSG("Cannot open file!");
+	solution_t *sol2 = read_sol(multiscale_ptr, in2);
+	fclose(in2);
+
+	/* Write binary file... */
+	sprintf(filename, "sol_compress2.%s.lev.%ld.cmul", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	if (!(out2 = fopen(filename, "w")))
+	  ERRMSG("Cannot create file!");
+	save_sol(sol2, out2);
+	fclose(out2);
+
+	/* Write cgns file... */
+	sprintf(filename, "OUTPUT/cmulti_compress2.%s.lev.%ld.cgns", varname,
+		ip);
+	LOG(2, "Write %s ...", filename);
+	plot(multiscale_ptr, sol2, filename, 0.0, PLT_QUADRATIC);
+	
+	delete_solution(sol2);
+      }
+
+      
+      /* Free... */
+      delete_solution(sol);
+    }
+
+    /* Write info... */
+    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
+  }
+
+  /* Free... */
+  delete_multiscale(multiscale_ptr);
+}
+#endif
+
+/*****************************************************************************/
+
 void compress_pack(
   char *varname,
   float *array,
@@ -642,198 +834,6 @@ void compress_zstd(
 
   /* Free... */
   free(compr);
-}
-#endif
-
-/*****************************************************************************/
-
-#ifdef CMULTI
-void compress_cmulti(
-  char *varname,
-  float *array,
-  size_t nx,
-  size_t ny,
-  size_t np,
-  int decompress,
-  FILE * inout) {
-
-  /// Determine grid properties
-  unsigned int max_level;	/// Maximum refinement level
-  int Nd0[2];			/// Number cells on the coarsest refinement level
-  get_2d_grid_from_meteo_data((int) nx, (int) ny, &max_level, Nd0);
-
-  PRINT("%d", Nd0[0]);
-  PRINT("%d", Nd0[1]);
-  PRINT("%d", max_level);
-
-  /// Domain [a,b]x[c,d]
-  char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
-
-  /// Global threshold error -> play around with it
-  double eps_global = 0.00005;
-
-  /// Grading?
-  bool grading = false;
-
-  /// Which direction has periodic bc (not necessary here)
-  int periodic[] = { 0, 0 };
-
-  /// Initialize multiscale module
-  multiscale_t *multiscale_ptr =
-    init_multiscale(max_level, Nd0, domain, periodic, eps_global, grading);
-
-  /* Set lon-lat grid... */
-  double lon[EX], lat[EY];
-  for (size_t ix = 0; ix < nx; ix++)
-    lon[ix] = 360. * (double) ix / ((double) nx - 1.);
-  for (size_t iy = 0; iy < ny; iy++)
-    lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
-
-  /* Read compressed stream and decompress array... */
-  if (decompress) {
-
-    /* Loop over levels... */
-    //#pragma omp parallel for
-    for (size_t ip = 0; ip < np; ip++) {
-      
-      /* Read binary data... */
-      solution_t *sol = read_sol(multiscale_ptr, inout);
-      
-      
-      /* I/O test... */
-      if (ip == 10) {
-	char filename[LEN];
-	sprintf(filename, "OUTPUT/cmulti_decompress.%s.lev.%ld.cgns", varname, ip);
-	PRINT("%s", filename);
-	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
-
-	/* Write binary file... */
-	FILE *out2;
-	sprintf(filename, "sol_decompress.%s.lev.%ld.cmul", varname,
-		ip);
-	LOG(2, "Write %s ...", filename);
-	if (!(out2 = fopen(filename, "w")))
-	  ERRMSG("Cannot create file!");
-	save_sol(sol, out2);
-	fclose(out2);
-
-	/* Read binary data... */
-	FILE *in2;
-	LOG(2, "Read %s ...", filename);
-	if (!(in2 = fopen(filename, "r")))
-	  ERRMSG("Cannot open file!");
-	solution_t *sol2 = read_sol(multiscale_ptr, in2);
-	fclose(in2);
-
-	/* Write binary file... */
-	sprintf(filename, "sol_decompress2.%s.lev.%ld.cmul", varname,
-		ip);
-	LOG(2, "Write %s ...", filename);
-	if (!(out2 = fopen(filename, "w")))
-	  ERRMSG("Cannot create file!");
-	save_sol(sol2, out2);
-	fclose(out2);
-	
-	delete_solution(sol2);
-      }
-      
-      
-      /* Evaluate... */
-      for (size_t ix = 0; ix < nx; ix++)
-	for (size_t iy = 0; iy < ny; iy++) {
-	  double val, x[] = { lon[ix], lat[iy] };
-	  eval(multiscale_ptr, sol, x, &val);
-	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
-	}
-
-      /* Free... */
-      delete_solution(sol);
-    }
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
-  }
-
-  /* Compress array and output compressed stream... */
-  else {
-
-    /* Loop over levels... */
-    //#pragma omp parallel for
-    for (size_t ip = 0; ip < np; ip++) {
-
-      /* Copy level data... */
-      float help[nx * ny];
-      for (size_t ix = 0; ix < nx; ix++)
-	for (size_t iy = 0; iy < ny; iy++)
-	  help[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
-
-      /* Set grid... */
-      solution_t *sol = read_data_arr(multiscale_ptr, help, lon, lat, nx, ny);
-
-      /* Coarsening... */
-      coarsening(multiscale_ptr, sol);
-
-      /* Write binary data... */
-      save_sol(sol, inout);
-
-      
-      /* I/O test... */
-      if (ip == 10) {
-
-	/* Write cgns file... */
-	char filename[LEN];
-	sprintf(filename, "OUTPUT/cmulti_compress.%s.lev.%ld.cgns", varname,
-		ip);
-	LOG(2, "Write %s ...", filename);
-	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
-
-	/* Write binary file... */
-	FILE *out2;
-	sprintf(filename, "sol_compress.%s.lev.%ld.cmul", varname,
-		ip);
-	LOG(2, "Write %s ...", filename);
-	if (!(out2 = fopen(filename, "w")))
-	  ERRMSG("Cannot create file!");
-	save_sol(sol, out2);
-	fclose(out2);
-      
-	/* Read binary data... */
-	FILE *in2;
-	LOG(2, "Read %s ...", filename);
-	if (!(in2 = fopen(filename, "r")))
-	  ERRMSG("Cannot open file!");
-	solution_t *sol2 = read_sol(multiscale_ptr, in2);
-	fclose(in2);
-
-	/* Write binary file... */
-	sprintf(filename, "sol_compress2.%s.lev.%ld.cmul", varname,
-		ip);
-	LOG(2, "Write %s ...", filename);
-	if (!(out2 = fopen(filename, "w")))
-	  ERRMSG("Cannot create file!");
-	save_sol(sol2, out2);
-	fclose(out2);
-
-	/* Write cgns file... */
-	sprintf(filename, "OUTPUT/cmulti_compress2.%s.lev.%ld.cgns", varname,
-		ip);
-	LOG(2, "Write %s ...", filename);
-	plot(multiscale_ptr, sol2, filename, 0.0, PLT_QUADRATIC);
-	
-	delete_solution(sol2);
-      }
-
-      
-      /* Free... */
-      delete_solution(sol);
-    }
-
-    /* Write info... */
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
-  }
-
-  /* Free... */
-  delete_multiscale(multiscale_ptr);
 }
 #endif
 
@@ -1654,58 +1654,6 @@ void jsec2time(
 
 /*****************************************************************************/
 
-int locate_irr_3d(
-  float profiles[EX][EY][EP],
-  int np,
-  int ind_lon,
-  int ind_lat,
-  double x) {
-
-  int ilo = 0;
-  int ihi = np - 1;
-  int i = (ihi + ilo) >> 1;
-
-  if (profiles[ind_lon][ind_lat][i] < profiles[ind_lon][ind_lat][i + 1])
-    while (ihi > ilo + 1) {
-      i = (ihi + ilo) >> 1;
-      if (profiles[ind_lon][ind_lat][i] > x) {
-	ihi = i;
-      } else {
-	ilo = i;
-      }
-  } else
-    while (ihi > ilo + 1) {
-      i = (ihi + ilo) >> 1;
-      if (profiles[ind_lon][ind_lat][i] <= x) {
-	ihi = i;
-      } else {
-	ilo = i;
-      }
-    }
-
-  return ilo;
-}
-
-/*****************************************************************************/
-
-void locate_vert(
-  float profiles[EX][EY][EP],
-  int np,
-  int lon_ap_ind,
-  int lat_ap_ind,
-  double height_ap,
-  int *ind) {
-
-  ind[0] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind, height_ap);
-  ind[1] = locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind, height_ap);
-  ind[2] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind + 1, height_ap);
-  ind[3] =
-    locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind + 1, height_ap);
-
-}
-
-/*****************************************************************************/
-
 double kernel_weight(
   const double kz[EP],
   const double kw[EP],
@@ -1987,6 +1935,40 @@ int locate_irr(
 
 /*****************************************************************************/
 
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x) {
+
+  int ilo = 0;
+  int ihi = np - 1;
+  int i = (ihi + ilo) >> 1;
+
+  if (profiles[ind_lon][ind_lat][i] < profiles[ind_lon][ind_lat][i + 1])
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (profiles[ind_lon][ind_lat][i] > x) {
+	ihi = i;
+      } else {
+	ilo = i;
+      }
+  } else
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (profiles[ind_lon][ind_lat][i] <= x) {
+	ihi = i;
+      } else {
+	ilo = i;
+      }
+    }
+
+  return ilo;
+}
+
+/*****************************************************************************/
+
 int locate_reg(
   const double *xx,
   const int n,
@@ -2002,6 +1984,22 @@ int locate_reg(
     return n - 2;
   else
     return i;
+}
+
+/*****************************************************************************/
+
+void locate_vert(
+  float profiles[EX][EY][EP],
+  int np,
+  int lon_ap_ind,
+  int lat_ap_ind,
+  double height_ap,
+  int *ind) {
+
+  ind[0] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind, height_ap);
+  ind[1] = locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind, height_ap);
+  ind[2] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind + 1, height_ap);
+  ind[3] = locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind + 1, height_ap);
 }
 
 /*****************************************************************************/

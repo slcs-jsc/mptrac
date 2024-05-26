@@ -2224,7 +2224,43 @@ double clim_zm(
   const double lat,
   const double p);
 
-/*! Compress or decompress array with cmultiscale. */
+/**
+ * @brief Compresses or decompresses a 3D array of floats using a custom multiscale compression algorithm.
+ *
+ * This function either compresses or decompresses a 3D array of floats based on the value of the `decompress` parameter.
+ * The compression and decompression are performed using a custom multiscale module.
+ *
+ * @param varname The name of the variable being processed.
+ * @param array Pointer to the 3D array of floats to be compressed or decompressed.
+ * @param nx The number of elements in the x-dimension of the array.
+ * @param ny The number of elements in the y-dimension of the array.
+ * @param np The number of elements in the p-dimension of the array.
+ * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression
+ * and writing compressed data during compression.
+ *
+ * The function performs the following steps:
+ * - Determines grid properties from the input data dimensions.
+ * - Initializes the multiscale module with the specified grid properties.
+ * - Sets up longitude and latitude grids for the data.
+ * - If decompressing:
+ *   - Reads compressed data for each level and decompresses it.
+ *   - Evaluates the decompressed data and stores it in the `array`.
+ * - If compressing:
+ *   - Copies data for each level into a temporary array.
+ *   - Compresses the data and writes the compressed data to the file.
+ *
+ * The function logs the compression or decompression details and frees allocated resources before returning.
+ *
+ * @note Ensure that the input `array` is already allocated and can hold the decompressed data.
+ * 
+ * @warning Ensure that the file pointer `inout` is correctly opened for reading or writing as required.
+ * 
+ * @see get_2d_grid_from_meteo_data, init_multiscale, read_sol, save_sol, eval, coarsening, delete_solution, delete_multiscale
+ * 
+ * @author 
+ * Lars Hoffmann
+ */
 void compress_cmulti(
   char *varname,
   float *array,
@@ -2234,7 +2270,37 @@ void compress_cmulti(
   int decompress,
   FILE * inout);
 
-/*! Pack or unpack array. */
+/**
+ * @brief Compresses or decompresses a 3D array of floats.
+ *
+ * This function either compresses or decompresses a 3D array of floats 
+ * based on the value of the `decompress` parameter. Compression reduces 
+ * the storage size by converting float values (4 bytes) to unsigned short values (2 bytes)
+ * with scaling and offset. Decompression restores the original float values 
+ * from the compressed unsigned short representation.
+ *
+ * @param varname The name of the variable being processed.
+ * @param array Pointer to the 3D array of floats to be compressed or decompressed.
+ * @param nxy The number of elements in the first two dimensions of the array.
+ * @param nz The number of elements in the third dimension of the array.
+ * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
+ * and writing compressed data during compression.
+ *
+ * The function performs the following steps:
+ * - If decompressing:
+ *   - Reads scaling factors, offsets, and compressed data from the file.
+ *   - Decompresses the data and stores it in the `array`.
+ * - If compressing:
+ *   - Computes the minimum and maximum values for each slice in the third dimension.
+ *   - Calculates scaling factors and offsets based on these values.
+ *   - Compresses the data by converting floats to unsigned shorts using the scaling factors and offsets.
+ *   - Writes the scaling factors, offsets, and compressed data to the file.
+ *
+ * The function allocates memory for the compressed data array and frees it before returning.
+ *
+ * @author Lars Hoffmann
+ */
 void compress_pack(
   char *varname,
   float *array,
@@ -2243,8 +2309,44 @@ void compress_pack(
   int decompress,
   FILE * inout);
 
-/*! Compress or decompress array with zfp. */
 #ifdef ZFP
+/**
+ * @brief Compresses or decompresses a 3D array of floats using the ZFP library.
+ *
+ * This function either compresses or decompresses a 3D array of floats based on 
+ * the value of the `decompress` parameter. Compression reduces the storage size 
+ * using the ZFP compression algorithm, which supports fixed-precision or 
+ * fixed-accuracy modes. Decompression restores the original float values from 
+ * the compressed representation.
+ *
+ * @param varname The name of the variable being processed.
+ * @param array Pointer to the 3D array of floats to be compressed or decompressed.
+ * @param nx The number of elements in the x-dimension of the array.
+ * @param ny The number of elements in the y-dimension of the array.
+ * @param nz The number of elements in the z-dimension of the array.
+ * @param precision The precision parameter for ZFP compression. If greater than 0, it sets the fixed precision mode.
+ * @param tolerance The tolerance parameter for ZFP compression. If greater than 0 and precision is 0, it sets the fixed accuracy mode.
+ * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
+ * and writing compressed data during compression.
+ *
+ * The function performs the following steps:
+ * - Allocates metadata for the 3D array and the ZFP compressed stream.
+ * - Sets the compression mode based on the precision or tolerance parameters.
+ * - Allocates a buffer for the compressed data.
+ * - Associates a bit stream with the allocated buffer and sets up the ZFP stream.
+ * - If decompressing:
+ *   - Reads the size of the compressed data and the compressed data itself from the file.
+ *   - Decompresses the data and stores it in the `array`.
+ * - If compressing:
+ *   - Compresses the data and writes the compressed data size and the compressed data itself to the file.
+ *
+ * The function logs the compression or decompression details and frees allocated resources before returning.
+ *
+ * @note Ensure that either the precision or tolerance parameter is set to a value greater than 0.
+ *
+ * @author Lars Hoffmann
+ */
 void compress_zfp(
   char *varname,
   float *array,
@@ -2257,8 +2359,40 @@ void compress_zfp(
   FILE * inout);
 #endif
 
-/*! Compress or decompress array with zstd. */
 #ifdef ZSTD
+/**
+ * @brief Compresses or decompresses an array of floats using the Zstandard (ZSTD) library.
+ *
+ * This function either compresses or decompresses an array of floats based on the value of the `decompress` parameter.
+ * Compression reduces the storage size using the ZSTD compression algorithm. Decompression restores the original float
+ * values from the compressed representation.
+ *
+ * @param varname The name of the variable being processed.
+ * @param array Pointer to the array of floats to be compressed or decompressed.
+ * @param n The number of elements in the array.
+ * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression
+ * and writing compressed data during compression.
+ *
+ * The function performs the following steps:
+ * - Calculates the buffer sizes required for compression and decompression.
+ * - Allocates memory for the compressed data buffer.
+ * - If decompressing:
+ *   - Reads the size of the compressed data and the compressed data itself from the file.
+ *   - Decompresses the data and stores it in the `array`.
+ * - If compressing:
+ *   - Compresses the data and writes the compressed data size and the compressed data itself to the file.
+ *
+ * The function logs the compression or decompression details and frees allocated resources before returning.
+ *
+ * @note This function assumes that the input `array` is already allocated and can hold the decompressed data.
+ * 
+ * @warning Ensure that the file pointer `inout` is correctly opened for reading or writing as required.
+ *
+ * @see ZSTD_compress, ZSTD_decompress, ZSTD_isError
+ * 
+ * @author Lars Hoffmann
+ */
 void compress_zstd(
   char *varname,
   float *array,
@@ -2268,27 +2402,121 @@ void compress_zstd(
 #endif
 
 /*! Get day of year from date. */
+/**
+ * @brief Converts a given date to the day of the year (DOY).
+ *
+ * This function computes the day of the year (DOY) for a given date specified
+ * by the year, month, and day. It takes into account whether the given year
+ * is a leap year or not.
+ *
+ * @param year The year of the date.
+ * @param mon The month of the date (1-12).
+ * @param day The day of the month (1-31).
+ * @param doy Pointer to an integer where the computed day of the year will be stored.
+ *
+ * The function uses two arrays, `d0` and `d0l`, which contain the cumulative
+ * number of days at the start of each month for non-leap years and leap years
+ * respectively. It checks if the year is a leap year and calculates the day of
+ * the year accordingly.
+ *
+ * @note The function assumes that the input date is valid.
+ * 
+ * @author Lars Hoffmann
+ */
 void day2doy(
   const int year,
   const int mon,
   const int day,
   int *doy);
 
-/*! Get date from day of year. */
+/**
+ * @brief Converts a given day of the year (DOY) to a date (month and day).
+ *
+ * This function computes the month and day for a given day of the year (DOY)
+ * and year. It accounts for whether the given year is a leap year or not.
+ *
+ * @param year The year corresponding to the DOY.
+ * @param doy The day of the year (1-365 or 1-366).
+ * @param mon Pointer to an integer where the computed month will be stored.
+ * @param day Pointer to an integer where the computed day of the month will be stored.
+ *
+ * The function uses two arrays, `d0` and `d0l`, which contain the cumulative
+ * number of days at the start of each month for non-leap years and leap years
+ * respectively. It checks if the year is a leap year and calculates the month
+ * and day of the month accordingly.
+ *
+ * @note The function assumes that the input DOY is valid for the given year.
+ * 
+ * @author Lars Hoffmann
+ */
 void doy2day(
   const int year,
   const int doy,
   int *mon,
   int *day);
 
-/*! Convert geolocation to Cartesian coordinates. */
+/**
+ * @brief Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates.
+ *
+ * This function converts geographic coordinates specified by longitude, latitude, and altitude
+ * into Cartesian coordinates. The Earth is approximated as a sphere with radius defined by the constant `RE`.
+ *
+ * @param z The altitude above the Earth's surface in kilometers.
+ * @param lon The longitude in degrees.
+ * @param lat The latitude in degrees.
+ * @param x Pointer to an array of three doubles where the computed Cartesian coordinates (x, y, z) will be stored.
+ *
+ * The function computes the Cartesian coordinates using the given altitude, longitude, and latitude.
+ * It assumes the Earth is a perfect sphere and uses the following formulas:
+ * - \( x = (\text{radius}) \cos(\text{lat in radians}) \cos(\text{lon in radians}) \)
+ * - \( y = (\text{radius}) \cos(\text{lat in radians}) \sin(\text{lon in radians}) \)
+ * - \( z = (\text{radius}) \sin(\text{lat in radians}) \)
+ *
+ * @note The constant `RE` is defined as the Earth's radius in kilometers.
+ * @note Longitude and latitude should be in degrees.
+ *
+ * @see https://en.wikipedia.org/wiki/Geographic_coordinate_conversion
+ *
+ * @author Lars Hoffmann
+ */
 void geo2cart(
   const double z,
   const double lon,
   const double lat,
   double *x);
 
-/*! Get meteo data for given time step. */
+/**
+ * @brief Retrieves meteorological data for the specified time.
+ *
+ * This function retrieves meteorological data for the given time `t` and updates the provided pointers
+ * to the met0 and met1 structures accordingly. It handles both the initialization and subsequent updates
+ * of the meteorological data based on the direction of time integration.
+ *
+ * @param ctl Pointer to the control structure containing configuration settings.
+ * @param clim Pointer to the climate structure.
+ * @param t The current time for which meteorological data is to be retrieved.
+ * @param met0 Pointer to the pointer of the first meteorological data structure.
+ * @param met1 Pointer to the pointer of the second meteorological data structure.
+ *
+ * The function performs the following steps:
+ * - Initializes meteorological data on the first call or when the simulation restarts.
+ * - Reads new meteorological data when advancing forward or backward in time.
+ * - Swaps pointers to manage double buffering of the meteorological data.
+ * - Performs caching to optimize subsequent data retrieval.
+ * - Ensures consistency of the meteorological grids.
+ *
+ * @note This function utilizes GPU acceleration with OpenACC directives if enabled.
+ * @note Ensure that `ctl`, `clim`, `met0`, and `met1` are properly initialized before calling this function.
+ *
+ * @see get_met_help
+ * @see read_met
+ * @see SELECT_TIMER
+ * @see LOG
+ * @see ERRMSG
+ * @see WARN
+ *
+ * @author Lars Hoffmann
+ */
 void get_met(
   ctl_t * ctl,
   clim_t * clim,
@@ -2296,7 +2524,33 @@ void get_met(
   met_t ** met0,
   met_t ** met1);
 
-/*! Get meteo data for time step. */
+/**
+ * @brief Helper function to generate the filename for meteorological data.
+ *
+ * This function generates the appropriate filename for the meteorological data file
+ * based on the provided time `t`, direction `direct`, and the base filename `metbase`.
+ * The filename is formatted according to the specified meteorological data type.
+ *
+ * @param ctl Pointer to the control structure containing configuration settings.
+ * @param t The time for which the meteorological data filename is to be generated.
+ * @param direct The direction of time integration (-1 for backward, 1 for forward).
+ * @param metbase The base string for the meteorological data filenames.
+ * @param dt_met The time interval between meteorological data files.
+ * @param filename The generated filename for the meteorological data file.
+ *
+ * The function performs the following steps:
+ * - Rounds the time to fixed intervals `dt_met` based on the direction.
+ * - Decodes the time into year, month, day, hour, minute, and second.
+ * - Constructs the filename based on the meteorological data type specified in `ctl`.
+ * - Replaces placeholders (YYYY, MM, DD, HH) in the base filename with actual date and time values.
+ *
+ * @note Ensure that `ctl` and `filename` are properly initialized before calling this function.
+ *
+ * @see jsec2time
+ * @see get_met_replace
+ *
+ * @author Lars Hoffmann
+ */
 void get_met_help(
   ctl_t * ctl,
   double t,
@@ -2305,13 +2559,71 @@ void get_met_help(
   double dt_met,
   char *filename);
 
-/*! Replace template strings in filename. */
+/**
+ * @brief Replaces occurrences of a substring in a string with another substring.
+ *
+ * This function replaces occurrences of the substring `search` in the string `orig`
+ * with the substring `repl`. The replacement is performed in-place.
+ *
+ * @param orig The original string where replacements are to be made.
+ * @param search The substring to be replaced.
+ * @param repl The substring to replace occurrences of `search`.
+ *
+ * The function iterates over the original string `orig` and replaces each occurrence
+ * of the substring `search` with the substring `repl`. It performs the replacement
+ * operation up to three times to ensure multiple occurrences are replaced.
+ *
+ * @note We use this function to repace the strings `YYYY`, `MM`, and `DD` by year,
+ *       month, and day in filenames.
+ * @note Ensure that `orig`, `search`, and `repl` are properly initialized
+ *       and have sufficient memory allocated before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
 void get_met_replace(
   char *orig,
   char *search,
   char *repl);
 
-/*! Spatiotemporal interpolation of meteo data. !*/
+/**
+ * @brief Interpolates meteorological variables to a given position and time.
+ *
+ * This function interpolates meteorological variables to a specified position
+ * and time. It calculates the interpolated value based on the values provided
+ * at two time steps and performs interpolation in time, longitude, latitude,
+ * and altitude dimensions.
+ *
+ * @param met0 Pointer to the meteorological data at the first time step.
+ * @param heights0 Array containing heights at the first time step.
+ * @param array0 Array containing meteorological variable values at the first time step.
+ * @param met1 Pointer to the meteorological data at the second time step.
+ * @param heights1 Array containing heights at the second time step.
+ * @param array1 Array containing meteorological variable values at the second time step.
+ * @param ts Interpolation time (fractional time between met0 and met1).
+ * @param height Altitude at which to interpolate.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param var Pointer to store the interpolated variable value.
+ * @param ci Array to store the calculated indices.
+ * @param cw Array to store the weighting factors.
+ * @param init Flag indicating if it's the first call (1) or not (0).
+ *
+ * The function first restricts the longitude within the range [0, 360) degrees.
+ * It then calculates the horizontal indices (`ci[0]` and `ci[1]`) based on the
+ * provided longitude and latitude. Next, it locates the vertical indices for
+ * each edge of the column based on the provided height.
+ *
+ * The function then calculates the weighting factors for time, longitude, latitude,
+ * and altitude. It iterates over the interpolation process to determine the altitude
+ * weighting factor. After initializing the interpolation parameters, it calculates
+ * the interpolated variable value and stores it in the memory location pointed to
+ * by `var`.
+ *
+ * @note Ensure that all arrays (`heights0`, `array0`, `heights1`, `array1`, `ci`, `cw`)
+ *       have sufficient memory allocated before calling this function.
+ *
+ * @author Jan Clemens
+ */
 void intpol_met_4d_coord(
   met_t * met0,
   float height0[EX][EY][EP],
@@ -2328,7 +2640,37 @@ void intpol_met_4d_coord(
   double *cw,
   int init);
 
-/*! Spatial interpolation of meteo data. */
+/**
+ * @brief Interpolates meteorological variables in 3D space.
+ *
+ * This function interpolates meteorological variables at a specified pressure level
+ * and geographic position. It calculates the interpolated value based on the values
+ * provided at neighboring grid points and performs interpolation in pressure, longitude,
+ * and latitude dimensions.
+ *
+ * @param met Pointer to the meteorological data.
+ * @param array Array containing meteorological variable values.
+ * @param p Pressure level at which to interpolate.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param var Pointer to store the interpolated variable value.
+ * @param ci Array to store the calculated indices.
+ * @param cw Array to store the weighting factors.
+ * @param init Flag indicating if it's the first call (1) or not (0).
+ *
+ * The function first checks the longitude and adjusts it if necessary to ensure it
+ * falls within the valid range. It then calculates the interpolation indices based
+ * on the provided pressure level, longitude, and latitude. Next, it computes the
+ * interpolation weights for pressure, longitude, and latitude.
+ *
+ * The function interpolates vertically first and then horizontally. The interpolated
+ * value is stored in the memory location pointed to by `var`.
+ *
+ * @note Ensure that the `array`, `ci`, and `cw` arrays have sufficient memory allocated
+ *       before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
 void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
@@ -2340,7 +2682,38 @@ void intpol_met_space_3d(
   double *cw,
   int init);
 
-/*! Spatial interpolation of meteo data. */
+/**
+ * @brief Interpolates meteorological variables in 2D space.
+ *
+ * This function interpolates meteorological variables at a specified geographic
+ * position. It calculates the interpolated value based on the values provided
+ * at neighboring grid points and performs interpolation in longitude and latitude
+ * dimensions.
+ *
+ * @param met Pointer to the meteorological data.
+ * @param array Array containing meteorological variable values.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param var Pointer to store the interpolated variable value.
+ * @param ci Array to store the calculated indices.
+ * @param cw Array to store the weighting factors.
+ * @param init Flag indicating if it's the first call (1) or not (0).
+ *
+ * The function first checks the longitude and adjusts it if necessary to ensure
+ * it falls within the valid range. It then calculates the interpolation indices
+ * based on the provided longitude and latitude. Next, it computes the interpolation
+ * weights for longitude and latitude.
+ *
+ * The function interpolates horizontally and stores the interpolated value in
+ * the memory location pointed to by `var`. If any of the data values used in
+ * interpolation are not finite, the function handles this situation by choosing
+ * a valid value or performing a simple interpolation.
+ *
+ * @note Ensure that the `array`, `ci`, and `cw` arrays have sufficient memory allocated
+ *       before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
 void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
@@ -2351,8 +2724,39 @@ void intpol_met_space_2d(
   double *cw,
   int init);
 
-/*! Spatial interpolation of meteo data. */
 #ifdef UVW
+/**
+ * @brief Interpolates wind components (u, v, and w) in 3D space.
+ *
+ * This function interpolates wind components (u, v, and w) at a specified
+ * geographical position and pressure level. It calculates the interpolated
+ * values based on the values provided at neighboring grid points and performs
+ * interpolation in longitude, latitude, and pressure dimensions.
+ *
+ * @param met Pointer to the meteorological data.
+ * @param p Pressure level at which to interpolate.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param u Pointer to store the interpolated u-component of wind.
+ * @param v Pointer to store the interpolated v-component of wind.
+ * @param w Pointer to store the interpolated w-component of wind.
+ * @param ci Array to store the calculated indices.
+ * @param cw Array to store the weighting factors.
+ * @param init Flag indicating if it's the first call (1) or not (0).
+ *
+ * The function first checks the longitude and adjusts it if necessary to ensure
+ * it falls within the valid range. It then calculates the interpolation indices
+ * based on the provided longitude, latitude, and pressure level. Next, it computes
+ * the interpolation weights for longitude, latitude, and pressure level.
+ *
+ * The function interpolates vertically for each wind component and stores the
+ * interpolated values in the memory locations pointed to by `u`, `v`, and `w`.
+ *
+ * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
+ *       before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
 void intpol_met_space_uvw(
   met_t * met,
   double p,
@@ -2366,7 +2770,38 @@ void intpol_met_space_uvw(
   int init);
 #endif
 
-/*! Temporal interpolation of meteo data. */
+/**
+ * @brief Interpolates meteorological data in 3D space and time.
+ *
+ * This function interpolates meteorological data in three dimensions (longitude,
+ * latitude, and pressure) and time. It calculates the interpolated value based
+ * on the values provided at neighboring grid points and performs interpolation
+ * both spatially and temporally.
+ *
+ * @param met0 Pointer to the meteorological data at time t0.
+ * @param array0 3D array of meteorological data at time t0.
+ * @param met1 Pointer to the meteorological data at time t1.
+ * @param array1 3D array of meteorological data at time t1.
+ * @param ts Time stamp at which to interpolate.
+ * @param p Pressure level at which to interpolate.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param var Pointer to store the interpolated value.
+ * @param ci Array to store the calculated indices.
+ * @param cw Array to store the weighting factors.
+ * @param init Flag indicating if it's the first call (1) or not (0).
+ *
+ * The function first performs spatial interpolation for both time instances
+ * (t0 and t1) using the `intpol_met_space_3d` function. It then calculates
+ * the weighting factor `wt` based on the time stamp `ts`. Finally, it performs
+ * temporal interpolation using the interpolated values at t0 and t1 along with
+ * the weighting factor to compute the final interpolated value stored in `var`.
+ *
+ * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
+ *       before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
 void intpol_met_time_3d(
   met_t * met0,
   float array0[EX][EY][EP],
@@ -2381,7 +2816,39 @@ void intpol_met_time_3d(
   double *cw,
   int init);
 
-/*! Temporal interpolation of meteo data. */
+/**
+ * @brief Interpolates meteorological data in 2D space and time.
+ *
+ * This function interpolates meteorological data in two dimensions (longitude
+ * and latitude) and time. It calculates the interpolated value based on the
+ * values provided at neighboring grid points and performs interpolation both
+ * spatially and temporally.
+ *
+ * @param met0 Pointer to the meteorological data at time t0.
+ * @param array0 2D array of meteorological data at time t0.
+ * @param met1 Pointer to the meteorological data at time t1.
+ * @param array1 2D array of meteorological data at time t1.
+ * @param ts Time stamp at which to interpolate.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param var Pointer to store the interpolated value.
+ * @param ci Array to store the calculated indices.
+ * @param cw Array to store the weighting factors.
+ * @param init Flag indicating if it's the first call (1) or not (0).
+ *
+ * The function first performs spatial interpolation for both time instances
+ * (t0 and t1) using the `intpol_met_space_2d` function. It then calculates
+ * the weighting factor `wt` based on the time stamp `ts`. Finally, it performs
+ * temporal interpolation using the interpolated values at t0 and t1 along with
+ * the weighting factor to compute the final interpolated value stored in `var`.
+ * If one of the interpolated values is not finite, it selects the valid value
+ * based on the weighting factor `wt`.
+ *
+ * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
+ *       before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
 void intpol_met_time_2d(
   met_t * met0,
   float array0[EX][EY],
@@ -2395,8 +2862,34 @@ void intpol_met_time_2d(
   double *cw,
   int init);
 
-/*! Temporal interpolation of meteo data. */
 #ifdef UVW
+/**
+ * @brief Interpolates meteorological data in 3D space and time for wind components.
+ *
+ * This function interpolates meteorological data in three dimensions (longitude,
+ * latitude, and altitude) and time for wind components (u, v, and w). It calculates
+ * the interpolated values based on the values provided at neighboring grid points
+ * and performs interpolation both spatially and temporally.
+ *
+ * @param met0 Pointer to the meteorological data at time t0.
+ * @param met1 Pointer to the meteorological data at time t1.
+ * @param ts Time stamp at which to interpolate.
+ * @param p Pressure level at which to interpolate.
+ * @param lon Longitude at which to interpolate.
+ * @param lat Latitude at which to interpolate.
+ * @param u Pointer to store the interpolated u-component of wind.
+ * @param v Pointer to store the interpolated v-component of wind.
+ * @param w Pointer to store the interpolated w-component of wind.
+ *
+ * The function first performs spatial interpolation for both time instances
+ * (t0 and t1) using the `intpol_met_space_uvw` function. It then calculates
+ * the weighting factor `wt` based on the time stamp `ts`. Finally, it performs
+ * temporal interpolation using the interpolated values at t0 and t1 along with
+ * the weighting factor to compute the final interpolated values stored in `u`,
+ * `v`, and `w`.
+ *
+ * @author Lars Hoffmann
+ */
 void intpol_met_time_uvw(
   met_t * met0,
   met_t * met1,
@@ -2409,7 +2902,31 @@ void intpol_met_time_uvw(
   double *w);
 #endif
 
-/*! Convert seconds to date. */
+/**
+ * @brief Converts Julian seconds to calendar date and time components.
+ *
+ * This function converts Julian seconds to calendar date and time components,
+ * including year, month, day, hour, minute, and second. It also calculates
+ * the fractional part of the seconds.
+ *
+ * @param jsec Julian seconds to convert.
+ * @param year Pointer to store the year.
+ * @param mon Pointer to store the month.
+ * @param day Pointer to store the day.
+ * @param hour Pointer to store the hour.
+ * @param min Pointer to store the minute.
+ * @param sec Pointer to store the second.
+ * @param remain Pointer to store the fractional part of seconds.
+ *
+ * The function initializes a time structure `t0` with a fixed starting date
+ * and time. It then converts the Julian seconds to a time_t type by adding
+ * the seconds to the epoch time. Next, it converts the time_t value to a
+ * UTC time structure `t1`. Finally, it extracts the year, month, day, hour,
+ * minute, and second components from `t1` and calculates the fractional part
+ * of seconds, which is stored in `remain`.
+ *
+ * @author Lars Hoffmann
+ */
 void jsec2time(
   const double jsec,
   int *year,
@@ -2420,35 +2937,196 @@ void jsec2time(
   int *sec,
   double *remain);
 
-/*! Get weighting factor from kernel function. */
+/**
+ * @brief Calculates the kernel weight based on altitude and given kernel data.
+ *
+ * This function calculates the kernel weight based on altitude and given kernel
+ * data. It takes arrays of altitudes (`kz`) and corresponding weights (`kw`),
+ * the number of data points (`nk`), and the current altitude (`p`) as input.
+ *
+ * @param kz Array of altitudes.
+ * @param kw Array of corresponding weights.
+ * @param nk Number of data points.
+ * @param p Current altitude.
+ * @return The calculated kernel weight.
+ *
+ * If the number of data points is less than 2 (`nk < 2`), the function returns
+ * a default weight of 1.0.
+ *
+ * The function first computes the altitude `z` based on the current altitude `p`.
+ * Then it checks whether `z` is outside the range of altitudes in the kernel data.
+ * If so, it returns the corresponding weight at the nearest altitude boundary.
+ * Otherwise, it interpolates linearly between the two closest altitudes in the
+ * kernel data to determine the weight at altitude `z`.
+ *
+ * @author Lars Hoffmann
+ */
 double kernel_weight(
   const double kz[EP],
   const double kw[EP],
   const int nk,
   const double p);
 
-/*! Calculate moist adiabatic lapse rate. */
+/**
+ * @brief Calculates the moist adiabatic lapse rate in Kelvin per kilometer.
+ *
+ * This function calculates the moist adiabatic lapse rate in Kelvin per kilometer
+ * from the given temperature (`t`) in Kelvin and water vapor volume mixing ratio (`h2o`).
+ *
+ * @param t Temperature in Kelvin.
+ * @param h2o Water vapor volume mixing ratio.
+ * @return The moist adiabatic lapse rate in Kelvin per kilometer.
+ *
+ * The moist adiabatic lapse rate is calculated using the formula:
+ * \f[
+ * \Gamma = \frac{{1000 \cdot g \cdot \left(a + L_v \cdot r \cdot T\right)}}
+ *             {{C_{pd} \cdot a + L_v^2 \cdot r \cdot \epsilon}}
+ * \f]
+ * where:
+ * - \f$ \Gamma \f$ is the lapse rate in Kelvin per kilometer.
+ * - \f$ g \f$ is the acceleration due to gravity (constant).
+ * - \f$ a = R_a \cdot T^2 \f$ is a term based on the gas constant for dry air and temperature squared.
+ * - \f$ R_a \f$ is the gas constant for dry air.
+ * - \f$ T \f$ is the temperature in Kelvin.
+ * - \f$ L_v \f$ is the latent heat of vaporization.
+ * - \f$ r = \frac{{S_h(h_2o)}}{{1 - S_h(h_2o)}} \f$ is a term based on the water vapor mixing ratio.
+ * - \f$ S_h(h_2o) \f$ is the saturation vapor pressure relative to the pressure at saturation.
+ * - \f$ C_{pd} \f$ is the specific heat of dry air at constant pressure.
+ * - \f$ \epsilon \f$ is the ratio of the gas constants for dry air and water vapor.
+ *
+ * The constants used in the calculation are defined externally:
+ * - \f$ g \f$: Acceleration due to gravity (constant).
+ * - \f$ R_a \f$: Gas constant for dry air.
+ * - \f$ L_v \f$: Latent heat of vaporization.
+ * - \f$ C_{pd} \f$: Specific heat of dry air at constant pressure.
+ * - \f$ \epsilon \f$: Ratio of the gas constants for dry air and water vapor.
+ *
+ * Reference:
+ * - [Wikipedia - Lapse rate](https://en.wikipedia.org/wiki/Lapse_rate)
+ *
+ * @author Lars Hoffmann
+ */
 double lapse_rate(
   const double t,
   const double h2o);
 
-/*! Get predefined pressure levels. */
+/**
+ * @brief Defines pressure levels for meteorological data.
+ *
+ * This function defines pressure levels for meteorological data based on the given control structure (`ctl`).
+ * Pressure levels are defined differently based on the value of `press_level_def` in `ctl`.
+ *
+ * @param ctl Control structure containing information about pressure level definitions.
+ *
+ * The function determines the number of pressure levels (`met_np`) and the corresponding pressure values (`met_p`)
+ * based on the value of `press_level_def` in the control structure `ctl`. It initializes the `met_np` and `met_p`
+ * fields accordingly.
+ *
+ * @note Valid values for `press_level_def` are:
+ * - 0: Define 138 pressure levels.
+ * - 1: Define 92 pressure levels.
+ * - 2: Define 60 pressure levels.
+ * - 3: Define 147 pressure levels.
+ * - 4: Define 101 pressure levels.
+ * - 5: Define 62 pressure levels.
+ * - 6: Define 137 pressure levels.
+ * - 7: Define 59 pressure levels.
+ * Any other value for `press_level_def` will result in an error message.
+ *
+ * @author Jan Clemens
+ */
 void level_definitions(
   ctl_t * ctl);
 
-/*! Find array index for irregular grid. */
+/**
+ * @brief Locate the index of the interval containing a given value in a sorted array.
+ *
+ * This function locates the index of the interval containing a given value in a sorted array.
+ * It uses a binary search algorithm to efficiently find the interval.
+ *
+ * @param xx Pointer to the sorted array.
+ * @param n Size of the array.
+ * @param x Value to be located.
+ * @return Index of the interval containing the value `x`.
+ *
+ * The function assumes that the array `xx` is sorted in ascending order.
+ * It returns the index of the interval where the value `x` is located.
+ * If the value `x` is outside the range of the array, the function returns the index of the closest interval.
+ *
+ * @author Lars Hoffmann
+ */
 int locate_irr(
   const double *xx,
   const int n,
   const double x);
 
-/*! Find array index for regular grid. */
+/**
+ * @brief Locate the index of the interval containing a given value in a 3D irregular grid.
+ *
+ * This function locates the index of the interval containing a given value in a 3D irregular grid.
+ * It searches for the interval in the specified longitude and latitude indices of the grid.
+ *
+ * @param profiles 3D array representing the irregular grid.
+ * @param np Size of the profile (number of data points).
+ * @param ind_lon Index of the longitude.
+ * @param ind_lat Index of the latitude.
+ * @param x Value to be located.
+ * @return Index of the interval containing the value `x`.
+ *
+ * The function assumes that the array `profiles` represents a 3D irregular grid.
+ * It calculates the index of the interval where the value `x` is located based on the data in the specified longitude and latitude indices.
+ * If the value `x` is outside the range of the profile, the function returns the index of the closest interval.
+ *
+ * @author Jan Clemens
+ */
+int locate_irr_3d(
+  float profiles[EX][EY][EP],
+  int np,
+  int ind_lon,
+  int ind_lat,
+  double x);
+
+/**
+ * @brief Locate the index of the interval containing a given value in a regular grid.
+ *
+ * This function locates the index of the interval containing a given value in a regular grid.
+ * It calculates the index based on the spacing between grid points and the value to be located.
+ *
+ * @param xx Pointer to the array representing the regular grid.
+ * @param n Size of the grid (number of grid points).
+ * @param x Value to be located.
+ * @return Index of the interval containing the value `x`.
+ *
+ * The function assumes that the array `xx` represents a regular grid with equally spaced points.
+ * It calculates the index of the interval where the value `x` is located based on the spacing between grid points.
+ * If the value `x` is outside the range of the grid, the function returns the index of the closest interval.
+ *
+ * @author Lars Hoffmann
+ */
 int locate_reg(
   const double *xx,
   const int n,
   const double x);
 
-/*! Locate the four vertical indizes of a box for a given height value. */
+/**
+ * @brief Locate the four vertical indizes of a box for a given height value.
+ *
+ * This function locates the vertical indices corresponding to a given height in a 3D irregular grid.
+ * It calculates the indices based on the specified longitude and latitude indices of the grid.
+ *
+ * @param profiles 3D array representing the irregular grid.
+ * @param np Size of the profile (number of data points).
+ * @param lon_ap_ind Index of the longitude.
+ * @param lat_ap_ind Index of the latitude.
+ * @param height_ap Height value.
+ * @param ind Pointer to an array to store the resulting indices.
+ *
+ * The function calculates the indices corresponding to the specified height in the 3D irregular grid.
+ * It stores the resulting indices in the array pointed to by `ind`.
+ * The indices are calculated based on the specified longitude and latitude indices of the grid.
+ *
+ * @author Lars Hoffmann
+ */
 void locate_vert(
   float profiles[EX][EY][EP],
   int np,
@@ -2456,14 +3134,6 @@ void locate_vert(
   int lat_ap_ind,
   double alt_ap,
   int *ind);
-
-/*! locate the index in a column of a three dimensional array. */
-int locate_irr_3d(
-  float profiles[EX][EY][EP],
-  int np,
-  int ind_lon,
-  int ind_lat,
-  double x);
   
 /*! Calculate advection of air parcels. */
 void module_advect(
