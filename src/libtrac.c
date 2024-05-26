@@ -2734,6 +2734,83 @@ void module_dry_deposition(
 
 /*****************************************************************************/
 
+void module_h2o2_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
+
+  /* Check quantity flags... */
+  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
+    ERRMSG("Module needs quantity mass or volume mixing ratio!");
+  if (ctl->qnt_Cx < 0)
+    ERRMSG("Module needs quantity implicit volume mixing ratio!");
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
+
+    /* Check whether particle is inside cloud... */
+    double lwc;
+    INTPOL_INIT;
+    INTPOL_3D(lwc, 1);
+    if (!(lwc > 0))
+      continue;
+
+    /* Get temperature... */
+    double t;
+    INTPOL_3D(t, 0);
+
+    /* Get molecular density... */
+    double M = MOLEC_DENS(atm->p[ip], t);
+
+    /* Reaction rate (Berglen et al., 2004)... */
+    double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
+
+    /* Henry constant of SO2... */
+    double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
+
+    /* Henry constant of H2O2... */
+    double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+
+    /* Correction factor for high SO2 concentration... */
+    double cor;
+    if (ctl->qnt_Cx >= 0)
+      cor =
+	atm->q[ctl->qnt_Cx][ip] >
+	1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
+    else
+      cor = 1;
+    double h2o2 = H_h2o2
+      * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
+      * M * cor * 1000 / AVO;	/* unit: mol/L */
+
+    /* Volume water content in cloud [m^3 m^(-3)]... */
+    double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
+    double CWC = lwc * rho_air / 1000;
+
+    /* Calculate exponential decay (Rolph et al., 1992)... */
+    double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
+    double aux = exp(-dt[ip] * rate_coef);
+    if (ctl->qnt_m >= 0) {
+      if (ctl->qnt_mloss_h2o2 >= 0)
+	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
+      atm->q[ctl->qnt_m][ip] *= aux;
+      if (ctl->qnt_loss_rate >= 0)
+	atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
+    }
+    if (ctl->qnt_vmr >= 0)
+      atm->q[ctl->qnt_vmr][ip] *= aux;
+  }
+}
+
+/*****************************************************************************/
+
 void module_isosurf_init(
   ctl_t * ctl,
   met_t * met0,
@@ -2849,6 +2926,59 @@ void module_isosurf(
     }
   }
 }
+
+/*****************************************************************************/
+
+#ifdef KPP
+void module_kpp_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
+
+  /* Loop over particles... */
+  const int np = atm->np;
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < np; ip++) {
+    if (dt[ip] > 0) {
+
+      /* Set species... */
+      ALLOC(VAR, double,
+	    NVAR);
+      ALLOC(FIX, double,
+	    NFIX);
+
+      /* Sett range of time steps... */
+      STEPMIN = 0;
+      STEPMAX = 900.0;
+
+      /* Set relative & absolute tolerances... */
+      for (int i = 0; i < NVAR; i++) {
+	RTOL[i] = 1.0e-3;
+	ATOL[i] = 1.0;
+      }
+
+      /* Initialize... */
+      kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
+
+      /* Integrate... */
+      INTEGRATE(0, ctl->dt_kpp);
+
+      /* Output to air parcel.. */
+      kpp_chem_output2atm(atm, ctl, met0, met1, ip);
+
+      /* Free... */
+      free(VAR);
+      free(FIX);
+    }
+  }
+}
+#endif
 
 /*****************************************************************************/
 
@@ -3209,206 +3339,6 @@ void module_oh_chem(
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
 }
-
-/*****************************************************************************/
-
-void module_h2o2_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
-
-  /* Check quantity flags... */
-  if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
-    ERRMSG("Module needs quantity mass or volume mixing ratio!");
-  if (ctl->qnt_Cx < 0)
-    ERRMSG("Module needs quantity implicit volume mixing ratio!");
-
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
-
-    /* Check whether particle is inside cloud... */
-    double lwc;
-    INTPOL_INIT;
-    INTPOL_3D(lwc, 1);
-    if (!(lwc > 0))
-      continue;
-
-    /* Get temperature... */
-    double t;
-    INTPOL_3D(t, 0);
-
-    /* Get molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
-
-    /* Reaction rate (Berglen et al., 2004)... */
-    double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
-
-    /* Henry constant of SO2... */
-    double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
-
-    /* Henry constant of H2O2... */
-    double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
-
-    /* Correction factor for high SO2 concentration... */
-    double cor;
-    if (ctl->qnt_Cx >= 0)
-      cor =
-	atm->q[ctl->qnt_Cx][ip] >
-	1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
-    else
-      cor = 1;
-    double h2o2 = H_h2o2
-      * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
-      * M * cor * 1000 / AVO;	/* unit: mol/L */
-
-    /* Volume water content in cloud [m^3 m^(-3)]... */
-    double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = lwc * rho_air / 1000;
-
-    /* Calculate exponential decay (Rolph et al., 1992)... */
-    double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
-    double aux = exp(-dt[ip] * rate_coef);
-    if (ctl->qnt_m >= 0) {
-      if (ctl->qnt_mloss_h2o2 >= 0)
-	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
-      atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
-    }
-    if (ctl->qnt_vmr >= 0)
-      atm->q[ctl->qnt_vmr][ip] *= aux;
-  }
-}
-
-/*****************************************************************************/
-
-void module_tracer_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
-
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
-
-    /* Get temperature... */
-    double t;
-    INTPOL_INIT;
-    INTPOL_3D(t, 1);
-
-    /* Get molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
-
-    /* Get total column ozone... */
-    double o3c;
-    INTPOL_2D(o3c, 1);
-
-    /* Get solar zenith angle... */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
-
-    /* Get O(1D) volume mixing ratio... */
-    double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
-
-    /* Reactions for CFC-10... */
-    if (ctl->qnt_Cccl4 >= 0) {
-      double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
-    }
-
-    /* Reactions for CFC-11... */
-    if (ctl->qnt_Cccl3f >= 0) {
-      double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
-    }
-
-    /* Reactions for CFC-12... */
-    if (ctl->qnt_Cccl2f2 >= 0) {
-      double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
-    }
-
-    /* Reactions for N2O... */
-    if (ctl->qnt_Cn2o >= 0) {
-      double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
-			       atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
-    }
-  }
-}
-
-/*****************************************************************************/
-
-#ifdef KPP
-
-void module_kpp_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
-
-  /* Loop over particles... */
-  const int np = atm->np;
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-    if (dt[ip] > 0) {
-
-      /* Set species... */
-      ALLOC(VAR, double,
-	    NVAR);
-      ALLOC(FIX, double,
-	    NFIX);
-
-      /* Sett range of time steps... */
-      STEPMIN = 0;
-      STEPMAX = 900.0;
-
-      /* Set relative & absolute tolerances... */
-      for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-3;
-	ATOL[i] = 1.0;
-      }
-
-      /* Initialize... */
-      kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
-
-      /* Integrate... */
-      INTEGRATE(0, ctl->dt_kpp);
-
-      /* Output to air parcel.. */
-      kpp_chem_output2atm(atm, ctl, met0, met1, ip);
-
-      /* Free... */
-      free(VAR);
-      free(FIX);
-    }
-  }
-}
-
-#endif
 
 /*****************************************************************************/
 
@@ -3795,6 +3725,74 @@ void module_timesteps_init(
     ctl->t_start = floor(ctl->t_start / ctl->dt_mod) * ctl->dt_mod;
   else
     ctl->t_start = ceil(ctl->t_start / ctl->dt_mod) * ctl->dt_mod;
+}
+
+/*****************************************************************************/
+
+void module_tracer_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
+
+    /* Get temperature... */
+    double t;
+    INTPOL_INIT;
+    INTPOL_3D(t, 1);
+
+    /* Get molecular density... */
+    double M = MOLEC_DENS(atm->p[ip], t);
+
+    /* Get total column ozone... */
+    double o3c;
+    INTPOL_2D(o3c, 1);
+
+    /* Get solar zenith angle... */
+    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+
+    /* Get O(1D) volume mixing ratio... */
+    double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
+
+    /* Reactions for CFC-10... */
+    if (ctl->qnt_Cccl4 >= 0) {
+      double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
+      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+    }
+
+    /* Reactions for CFC-11... */
+    if (ctl->qnt_Cccl3f >= 0) {
+      double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
+      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+    }
+
+    /* Reactions for CFC-12... */
+    if (ctl->qnt_Cccl2f2 >= 0) {
+      double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
+      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+    }
+
+    /* Reactions for N2O... */
+    if (ctl->qnt_Cn2o >= 0) {
+      double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
+      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
+			       atm->p[ip], sza, o3c);
+      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+    }
+  }
 }
 
 /*****************************************************************************/

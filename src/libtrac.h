@@ -3427,6 +3427,45 @@ void module_dry_deposition(
   double *dt);
 
 /**
+ * @brief Perform chemical reactions involving H2O2 within cloud particles.
+ *
+ * This function simulates chemical reactions involving hydrogen peroxide (H2O2)
+ * within cloud particles. It calculates the change in H2O2 concentration over
+ * time due to chemical reactions. The reaction rates are determined based on
+ * temperature and cloud properties such as liquid water content.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climatological data structure.
+ * @param met0 Pointer to the first meteorological data structure.
+ * @param met1 Pointer to the second meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to an array containing the time step for each particle.
+ *
+ * @note The function assumes that the necessary control structure (ctl), climatological
+ *       data structure (clim), meteorological data structures (met0, met1), and atmospheric
+ *       data structure (atm) have been initialized and are accessible.
+ * @note Chemical reactions involving H2O2 are simulated for particles within clouds, as
+ *       indicated by a positive liquid water content (LWC).
+ * @note The function calculates reaction rates based on temperature and cloud properties,
+ *       including the liquid water content (LWC) and the concentration of SO2.
+ * @note The exponential decay of H2O2 concentration due to chemical reactions is calculated
+ *       using the reaction rate coefficient and the time step (dt) for each particle.
+ * @note If the particle has a quantity flag for either mass (ctl->qnt_m) or volume mixing
+ *       ratio (ctl->qnt_vmr), the function updates the quantity based on the exponential decay.
+ * @note If the particle has a loss rate quantity flag (ctl->qnt_loss_rate), the function
+ *       accumulates the reaction rate coefficient to quantify the loss rate.
+ *
+ * @author Mingzhao Liu
+ */
+void module_h2o2_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/**
  * @brief Initialize the isosurface module based on atmospheric data.
  *
  * This function initializes the isosurface module based on the atmospheric data
@@ -3473,6 +3512,43 @@ void module_isosurf(
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
+  double *dt);
+
+/*! KPP chemistry module. */
+/**
+ * @brief Simulate chemical reactions using the Kinetic PreProcessor (KPP) integration scheme.
+ *
+ * This function simulates chemical reactions using the Kinetic PreProcessor (KPP) integration
+ * scheme for atmospheric particles. It loops over each particle in the atmospheric data structure
+ * and integrates chemical reactions over a specified time step using the KPP algorithm.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climatological data structure.
+ * @param met0 Pointer to the first meteorological data structure.
+ * @param met1 Pointer to the second meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to an array containing the time step for each particle.
+ *
+ * @note The function initializes a timer to measure the execution time of the chemical simulation.
+ * @note Chemical integration using KPP is performed for particles with a positive time step (dt > 0).
+ * @note For each particle, the function allocates memory for variable (VAR) and fixed (FIX) arrays,
+ *       sets the range of time steps (STEPMIN and STEPMAX), and defines relative and absolute tolerances.
+ * @note The chemical system is initialized for each particle using the kpp_chem_initialize function.
+ * @note Chemical integration is performed over a specified time step (ctl->dt_kpp) using the INTEGRATE
+ *       macro, which is part of the KPP integration scheme.
+ * @note The function outputs the integrated chemical concentrations back to the atmospheric data structure
+ *       using the kpp_chem_output2atm function.
+ * @note Memory allocated for the variable (VAR) and fixed (FIX) arrays is freed after the integration is
+ *       completed for each particle.
+ *
+ * @author Mingzhao Liu
+ */
+void module_kpp_chem(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
   double *dt);
 
 /**
@@ -3588,16 +3664,254 @@ void module_oh_chem(
   atm_t * atm,
   double *dt);
 
-/*! Calculate H2O2 chemistry. */
-void module_h2o2_chem(
+/**
+ * @brief Update the positions and pressure levels of atmospheric particles.
+ *
+ * This function updates the positions and pressure levels of atmospheric particles based on the
+ * meteorological data and the specified time step. It loops over each particle in the atmospheric
+ * data structure and performs the following operations:
+ * - Initializes variables required for interpolation.
+ * - Calculates modulo for longitude and latitude to ensure they remain within valid ranges.
+ * - Adjusts latitude if it exceeds the range [-90, 90] degrees.
+ * - Adjusts longitude if it exceeds the range [-180, 180] degrees.
+ * - Checks and adjusts pressure levels:
+ *   - Reflects pressure levels if they are below the minimum pressure in meteorological data.
+ *   - Clamps pressure levels to the maximum pressure in meteorological data if they exceed a
+ *     predefined threshold (300 hPa).
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the first meteorological data structure.
+ * @param met1 Pointer to the second meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to an array containing the time step for each particle.
+ *
+ * @note The function initializes a timer to measure the execution time of the position update process.
+ * @note Position and pressure updates are performed for each particle using linear interpolation.
+ * @note Longitude and latitude are adjusted to ensure they remain within valid ranges.
+ * @note Pressure levels are adjusted based on meteorological data and a predefined threshold.
+ *
+ * @author Lars Hoffmann
+ */
+void module_position(
   ctl_t * ctl,
-  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double *dt);
 
-/*! Calculate first order tracer chemistry. */
+/**
+ * @brief Initialize random number generators for parallel tasks.
+ *
+ * This function initializes random number generators for parallel tasks using both GSL (GNU Scientific Library) 
+ * and cuRAND (NVIDIA CUDA Random Number Generation Library) if available. It sets up GSL random number generators
+ * for each OpenMP thread and initializes them with unique seeds. For cuRAND, it creates a pseudo-random number 
+ * generator and sets its seed. The initialization ensures that each task or thread has its own independent 
+ * random number generator to prevent interference between parallel executions.
+ *
+ * @param ntask The number of tasks or parallel threads for which random number generators are initialized.
+ *
+ * @note This function must be called before using any random number generation functions to ensure proper 
+ * initialization of random number generators.
+ * @note GSL random number generators are initialized for each OpenMP thread, while cuRAND is initialized 
+ * for the entire task set.
+ * @note If cuRAND is not available (CURAND macro not defined), the cuRAND initialization section is skipped.
+ * @note Random number generators are allocated and seeded uniquely for each task or thread to ensure 
+ * independence and avoid interference between parallel executions.
+ *
+ * @author Lars Hoffmann
+ */
+void module_rng_init(
+  int ntask);
+
+/**
+ * @brief Generate random numbers using various methods and distributions.
+ *
+ * This function generates random numbers using different methods and distributions based on the specified 
+ * method and random number generator type. It supports uniform and normal distributions and can utilize 
+ * GSL, Squares (Widynski, 2022), or cuRAND random number generators.
+ *
+ * @param ctl Pointer to the control structure containing parameters and settings.
+ * @param rs Pointer to the array where the generated random numbers will be stored.
+ * @param n The number of random numbers to generate.
+ * @param method The method for generating random numbers: 
+ *               - 0: Uniform distribution
+ *               - 1: Normal distribution
+ *
+ * @note The function selects the appropriate random number generator based on the specified method and 
+ * the random number generator type defined in the control structure (ctl->rng_type).
+ * @note For uniform distribution, the generated random numbers are in the range [0, 1).
+ * @note For normal distribution, the Box-Muller transform is used to generate pairs of random numbers 
+ * and transform them into a normal distribution.
+ * @note If cuRAND is not available (CURAND macro not defined), the function returns an error message.
+ *
+ * @author Lars Hoffmann
+ */
+void module_rng(
+  ctl_t * ctl,
+  double *rs,
+  size_t n,
+  int method);
+
+/**
+ * @brief Simulate sedimentation of particles in the atmosphere.
+ *
+ * This function calculates the sedimentation velocity of particles based on atmospheric pressure, temperature, 
+ * and particle properties such as radius and density. It then updates the pressure of each particle based on 
+ * the sedimentation velocity and the specified time step.
+ *
+ * @param ctl Pointer to the control structure containing parameters and settings.
+ * @param met0 Pointer to the meteorological data at the current time step.
+ * @param met1 Pointer to the meteorological data at the next time step.
+ * @param atm Pointer to the atmospheric data containing particle information.
+ * @param dt Pointer to the array of time steps for each particle.
+ *
+ * @note The sedimentation velocity is calculated using the `sedi` function, which takes atmospheric pressure, 
+ * temperature, particle radius, and particle density as inputs.
+ * @note The pressure change for each particle is calculated based on the sedimentation velocity and the 
+ * specified time step using the `DZ2DP` function.
+ *
+ * @author Lars Hoffmann
+ */
+void module_sedi(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double *dt);
+
+/*!  */
+/**
+ * @brief Sort particles according to box index.
+ *
+ * This function sorts particles within the atmosphere data structure based on their geographical 
+ * coordinates (longitude and latitude) and pressure level. It allocates temporary arrays to store 
+ * indices and auxiliary data for sorting, then performs the sorting operation. After sorting, it 
+ * updates the order of particles in the atmosphere data structure.
+ *
+ * @param ctl Pointer to the control structure containing parameters and settings.
+ * @param met0 Pointer to the meteorological data at the current time step.
+ * @param atm Pointer to the atmospheric data containing particle information.
+ *
+ * @note The function utilizes the `locate_reg` and `locate_irr` functions to determine the 
+ * appropriate index for sorting particles based on their longitude, latitude, and pressure level.
+ * @note Particle sorting is performed using either the Thrust library (if compiled with Thrust support) 
+ * or a custom sorting algorithm. If compiled without Thrust support, an error message is displayed.
+ * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere 
+ * data structure to maintain consistency.
+ *
+ * @author Lars Hoffmann
+ */
+void module_sort(
+  ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm);
+
+/**
+ * @brief Reorder an array based on a given permutation.
+ *
+ * This function reorders the elements of a given array based on a specified permutation array. 
+ * It allocates temporary memory to store the reordered elements, performs the reordering operation, 
+ * and then updates the original array with the reordered elements.
+ *
+ * @param a Pointer to the array to be reordered.
+ * @param p Pointer to the permutation array defining the order of elements.
+ * @param np The number of elements in the array.
+ *
+ * @note The function utilizes temporary memory to store the reordered elements before updating 
+ * the original array to prevent data loss or corruption.
+ * @note Reordering is performed based on the permutation array `p`, which defines the new order 
+ * of elements in the array `a`.
+ *
+ * @author Lars Hoffmann
+ */
+void module_sort_help(
+  double *a,
+  const int *p,
+  const int np);
+
+/**
+ * @brief Calculate time steps for air parcels based on specified conditions.
+ *
+ * This function calculates the time steps for air parcels based on specified conditions, 
+ * including the direction of simulation, start and stop times, and a given target time.
+ * It adjusts the time step for each air parcel accordingly and checks for horizontal 
+ * boundary conditions of local meteorological data.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the initial meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing air parcel information.
+ * @param dt Pointer to the array storing the calculated time steps for air parcels.
+ * @param t The target time for which time steps are calculated.
+ *
+ * @note The function sets the time step for each air parcel based on its current time 
+ * relative to the start and stop times of the simulation, as well as the specified 
+ * target time `t`.
+ * @note It also checks for horizontal boundaries of local meteorological data and adjusts 
+ * the time step accordingly if necessary.
+ *
+ * @author Lars Hoffmann
+ */
+void module_timesteps(
+  ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm,
+  double *dt,
+  double t);
+
+/**
+ * @brief Initialize start time and time interval for time-stepping.
+ *
+ * This function initializes the start time and time interval for time-stepping based on 
+ * the direction of simulation and the provided atmospheric data. It sets the start time 
+ * according to the minimum or maximum time in the atmospheric data, depending on the 
+ * simulation direction. Additionally, it checks the time interval and adjusts the start 
+ * time accordingly for rounding purposes.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param atm Pointer to the atmospheric data structure containing air parcel information.
+ *
+ * @note The function sets the start time based on the direction of simulation and the 
+ * minimum or maximum time in the atmospheric data.
+ * @note It checks the time interval to ensure that there is a valid time range for 
+ * simulation and adjusts the start time for rounding purposes.
+ *
+ * @author Lars Hoffmann
+ */
+void module_timesteps_init(
+  ctl_t * ctl,
+  atm_t * atm);
+
+/**
+ * @brief Simulate chemical reactions involving long-lived atmospheric tracers.
+ *
+ * This function simulates chemical reactions involving atmospheric tracers, such as
+ * CFC-10, CFC-11, CFC-12, and N2O. It calculates the change in tracer concentrations
+ * over time based on reaction rates and environmental factors such as temperature,
+ * ozone concentration, solar zenith angle, and O(1D) volume mixing ratio.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climatological data structure.
+ * @param met0 Pointer to the first meteorological data structure.
+ * @param met1 Pointer to the second meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to an array containing the time step for each particle.
+ *
+ * @note The function assumes that the necessary control structure (ctl), climatological
+ *       data structure (clim), meteorological data structures (met0, met1), and atmospheric
+ *       data structure (atm) have been initialized and are accessible.
+ * @note Chemical reactions involving CFC-10, CFC-11, CFC-12, and N2O are simulated for each
+ *       particle in the atmospheric data structure.
+ * @note The function calculates reaction rates based on temperature, solar zenith angle,
+ *       total column ozone, and the volume mixing ratio of O(1D).
+ * @note The exponential decay of tracer concentrations due to chemical reactions is calculated
+ *       using reaction rate coefficients and the time step (dt) for each particle.
+ * @note If the particle has a quantity flag for the tracer species (e.g., ctl->qnt_Cccl4,
+ *       ctl->qnt_Cccl3f, ctl->qnt_Cccl2f2, ctl->qnt_Cn2o), the function updates the
+ *       concentration of the tracer based on the exponential decay.
+ *
+ * @authors Mingzhao Liu
+ * @authors Lars Hoffmann
+ */
 void module_tracer_chem(
   ctl_t * ctl,
   clim_t * clim,
@@ -3606,79 +3920,35 @@ void module_tracer_chem(
   atm_t * atm,
   double *dt);
 
-/*! KPP chemistry module. */
-void module_kpp_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
-/*! Check position of air parcels. */
-void module_position(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
-/*! Initialize random number generator... */
-void module_rng_init(
-  int ntask);
-
-/*! Generate random numbers. */
-void module_rng(
-  ctl_t * ctl,
-  double *rs,
-  size_t n,
-  int method);
-
-/*! Calculate sedimentation of air parcels. */
-void module_sedi(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
-/*! Sort particles according to box index. */
-void module_sort(
-  ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm);
-
-/*! Helper function for sorting module. */
-void module_sort_help(
-  double *a,
-  const int *p,
-  const int np);
-
-/*! Calculate time steps. */
-void module_timesteps(
-  ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm,
-  double *dt,
-  double t);
-
-/*! Initialize timesteps. */
-void module_timesteps_init(
-  ctl_t * ctl,
-  atm_t * atm);
-
-/*! Calculate wet deposition. */
+/**
+ * @brief Perform wet deposition calculations for air parcels.
+ *
+ * This function calculates the wet deposition process for each air parcel based on 
+ * provided atmospheric and meteorological data. It estimates the precipitation rate 
+ * and scavenging coefficients for particles and gases inside and below cloud layers. 
+ * The scavenging coefficients are used to calculate the exponential decay of mass or 
+ * volume mixing ratio over time due to wet deposition.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the initial meteorological data structure.
+ * @param met1 Pointer to the updated meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing air parcel information.
+ * @param dt Array containing the time step for each air parcel.
+ *
+ * @note The function calculates the wet deposition process for particles and gases 
+ * based on precipitation rate and scavenging coefficients inside and below cloud layers.
+ * @note It estimates the exponential decay of mass or volume mixing ratio over time 
+ * due to wet deposition.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 void module_wet_deposition(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double *dt);
-
-
-
-
-
 
 /*! Calculate NAT existence temperature. */
 double nat_temperature(
