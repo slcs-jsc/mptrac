@@ -454,22 +454,22 @@ void compress_cmulti(
     /* Loop over levels... */
     //#pragma omp parallel for
     for (size_t ip = 0; ip < np; ip++) {
-      
+
       /* Read binary data... */
       solution_t *sol = read_sol(multiscale_ptr, inout);
-      
-      
+
+
       /* I/O test... */
       if (ip == 10) {
 	char filename[LEN];
-	sprintf(filename, "OUTPUT/cmulti_decompress.%s.lev.%ld.cgns", varname, ip);
+	sprintf(filename, "OUTPUT/cmulti_decompress.%s.lev.%ld.cgns", varname,
+		ip);
 	PRINT("%s", filename);
 	plot(multiscale_ptr, sol, filename, 0.0, PLT_QUADRATIC);
 
 	/* Write binary file... */
 	FILE *out2;
-	sprintf(filename, "sol_decompress.%s.lev.%ld.cmul", varname,
-		ip);
+	sprintf(filename, "sol_decompress.%s.lev.%ld.cmul", varname, ip);
 	LOG(2, "Write %s ...", filename);
 	if (!(out2 = fopen(filename, "w")))
 	  ERRMSG("Cannot create file!");
@@ -485,18 +485,17 @@ void compress_cmulti(
 	fclose(in2);
 
 	/* Write binary file... */
-	sprintf(filename, "sol_decompress2.%s.lev.%ld.cmul", varname,
-		ip);
+	sprintf(filename, "sol_decompress2.%s.lev.%ld.cmul", varname, ip);
 	LOG(2, "Write %s ...", filename);
 	if (!(out2 = fopen(filename, "w")))
 	  ERRMSG("Cannot create file!");
 	save_sol(sol2, out2);
 	fclose(out2);
-	
+
 	delete_solution(sol2);
       }
-      
-      
+
+
       /* Evaluate... */
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
@@ -535,7 +534,7 @@ void compress_cmulti(
       /* Write binary data... */
       save_sol(sol, inout);
 
-      
+
       /* I/O test... */
       if (ip == 10) {
 
@@ -548,14 +547,13 @@ void compress_cmulti(
 
 	/* Write binary file... */
 	FILE *out2;
-	sprintf(filename, "sol_compress.%s.lev.%ld.cmul", varname,
-		ip);
+	sprintf(filename, "sol_compress.%s.lev.%ld.cmul", varname, ip);
 	LOG(2, "Write %s ...", filename);
 	if (!(out2 = fopen(filename, "w")))
 	  ERRMSG("Cannot create file!");
 	save_sol(sol, out2);
 	fclose(out2);
-      
+
 	/* Read binary data... */
 	FILE *in2;
 	LOG(2, "Read %s ...", filename);
@@ -565,8 +563,7 @@ void compress_cmulti(
 	fclose(in2);
 
 	/* Write binary file... */
-	sprintf(filename, "sol_compress2.%s.lev.%ld.cmul", varname,
-		ip);
+	sprintf(filename, "sol_compress2.%s.lev.%ld.cmul", varname, ip);
 	LOG(2, "Write %s ...", filename);
 	if (!(out2 = fopen(filename, "w")))
 	  ERRMSG("Cannot create file!");
@@ -578,11 +575,11 @@ void compress_cmulti(
 		ip);
 	LOG(2, "Write %s ...", filename);
 	plot(multiscale_ptr, sol2, filename, 0.0, PLT_QUADRATIC);
-	
+
 	delete_solution(sol2);
       }
 
-      
+
       /* Free... */
       delete_solution(sol);
     }
@@ -1999,7 +1996,8 @@ void locate_vert(
   ind[0] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind, height_ap);
   ind[1] = locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind, height_ap);
   ind[2] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind + 1, height_ap);
-  ind[3] = locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind + 1, height_ap);
+  ind[3] =
+    locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind + 1, height_ap);
 }
 
 /*****************************************************************************/
@@ -2250,6 +2248,178 @@ void module_bound_cond(
     if (ctl->qnt_aoa >= 0)
       atm->q[ctl->qnt_aoa][ip] = atm->time[ip];
   }
+}
+
+/*****************************************************************************/
+
+void module_chemgrid(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double tt) {
+
+  double *z, *press;
+
+  int *ixs, *iys, *izs;
+
+  /* Update host... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+#endif
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  ALLOC(z, double,
+	ctl->chemgrid_nz);
+  ALLOC(press, double,
+	ctl->chemgrid_nz);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+
+  /* Set grid box size... */
+  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+
+  /* Set vertical coordinates... */
+#pragma omp parallel for default(shared)
+  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
+    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
+    press[iz] = P(z[iz]);
+  }
+
+  /* Set time interval for output... */
+  double t0 = tt - 0.5 * ctl->dt_mod;
+  double t1 = tt + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+      izs[ip] = -1;
+  }
+
+  /* Initialize quantity volume mixing ratios... */
+  static short init[NP];
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0)
+      if (!init[ip]) {
+	init[ip] = 1;
+
+	/* Set H2O and O3 using meteo data... */
+	INTPOL_INIT;
+	if (ctl->qnt_Ch2o >= 0) {
+	  double h2o;
+	  INTPOL_3D(h2o, 1);
+	  SET_ATM(qnt_Ch2o, h2o);
+	}
+	if (ctl->qnt_Co3 >= 0) {
+	  double o3;
+	  INTPOL_3D(o3, 1);
+	  SET_ATM(qnt_Co3, o3);
+	}
+
+	/* Set radical species... */
+	SET_ATM(qnt_Coh, clim_zm(&clim->oh, atm->time[ip],
+				 atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
+				  atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
+				   atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
+				  atm->lat[ip], atm->p[ip]));
+      }
+
+  /* Check quantities... */
+  if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0) {
+    if (ctl->molmass < 0)
+      ERRMSG("Molar mass is not defined!");
+
+    double *mass, *area, *lon, *lat;
+
+    /* Allocate... */
+    ALLOC(mass, double,
+	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+    ALLOC(lon, double,
+	  ctl->chemgrid_nx);
+    ALLOC(lat, double,
+	  ctl->chemgrid_ny);
+    ALLOC(area, double,
+	  ctl->chemgrid_ny);
+
+    /* Set horizontal coordinates... */
+    for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+      lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#pragma omp parallel for default(shared)
+    for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+      lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+	* cos(lat[iy] * M_PI / 180.);
+    }
+
+    /* Get mass per grid box... */
+    for (int ip = 0; ip < atm->np; ip++)
+      if (izs[ip] >= 0)
+	mass[ARRAY_3D
+	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	  += atm->q[ctl->qnt_m][ip];
+
+    /* Assign grid data to air parcels ... */
+#pragma omp parallel for default(shared)
+    for (int ip = 0; ip < atm->np; ip++)
+      if (izs[ip] >= 0) {
+
+	/* Interpolate temperature... */
+	double temp;
+	INTPOL_INIT;
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
+			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+
+	/* Set mass... */
+	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+				 izs[ip], ctl->chemgrid_nz)];
+
+	/* Calculate volume mixing ratio... */
+	if (ctl->qnt_Cx >= 0)
+	  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
+      }
+
+    /* Free... */
+    free(mass);
+    free(lon);
+    free(lat);
+    free(area);
+  }
+
+  /* Free... */
+  free(z);
+  free(press);
+  free(ixs);
+  free(iys);
+  free(izs);
+
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
 }
 
 /*****************************************************************************/
@@ -2780,174 +2950,187 @@ void module_meteo(
 
 /*****************************************************************************/
 
-void module_chemgrid(
+void module_mixing(
   ctl_t * ctl,
   clim_t * clim,
-  met_t * met0,
-  met_t * met1,
   atm_t * atm,
-  double tt) {
-
-  double *z, *press;
-
-  int *ixs, *iys, *izs;
-
-  /* Update host... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-#endif
+  double t) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-  ALLOC(z, double,
-	ctl->chemgrid_nz);
-  ALLOC(press, double,
-	ctl->chemgrid_nz);
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
+  const int np = atm->np;
+  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
 
   /* Set grid box size... */
-  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+  const double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
+  const double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
+  const double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
 
-  /* Set vertical coordinates... */
-#pragma omp parallel for default(shared)
-  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
-    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
-    press[iz] = P(z[iz]);
-  }
-
-  /* Set time interval for output... */
-  double t0 = tt - 0.5 * ctl->dt_mod;
-  double t1 = tt + 0.5 * ctl->dt_mod;
+  /* Set time interval... */
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
+#ifdef _OPENACC
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs)
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
-    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
-    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+#endif
+  for (int ip = 0; ip < np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
     if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+	|| ixs[ip] < 0 || ixs[ip] >= ctl->mixing_nx
+	|| iys[ip] < 0 || iys[ip] >= ctl->mixing_ny
+	|| izs[ip] < 0 || izs[ip] >= ctl->mixing_nz)
       izs[ip] = -1;
   }
 
-  /* Initialize quantity volume mixing ratios... */
-  static short init[NP];
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0)
-      if (!init[ip]) {
-	init[ip] = 1;
-
-	/* Set H2O and O3 using meteo data... */
-	INTPOL_INIT;
-	if (ctl->qnt_Ch2o >= 0) {
-	  double h2o;
-	  INTPOL_3D(h2o, 1);
-	  SET_ATM(qnt_Ch2o, h2o);
-	}
-	if (ctl->qnt_Co3 >= 0) {
-	  double o3;
-	  INTPOL_3D(o3, 1);
-	  SET_ATM(qnt_Co3, o3);
-	}
-
-	/* Set radical species... */
-	SET_ATM(qnt_Coh, clim_zm(&clim->oh, atm->time[ip],
-				 atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
-				  atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
-				   atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
-				  atm->lat[ip], atm->p[ip]));
-      }
-
-  /* Check quantities... */
-  if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0) {
-    if (ctl->molmass < 0)
-      ERRMSG("Molar mass is not defined!");
-
-    double *mass, *area, *lon, *lat;
-
-    /* Allocate... */
-    ALLOC(mass, double,
-	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-    ALLOC(lon, double,
-	  ctl->chemgrid_nx);
-    ALLOC(lat, double,
-	  ctl->chemgrid_ny);
-    ALLOC(area, double,
-	  ctl->chemgrid_ny);
-
-    /* Set horizontal coordinates... */
-    for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
-      lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
-#pragma omp parallel for default(shared)
-    for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
-      lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-	* cos(lat[iy] * M_PI / 180.);
-    }
-
-    /* Get mass per grid box... */
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0)
-	mass[ARRAY_3D
-	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	  += atm->q[ctl->qnt_m][ip];
-
-    /* Assign grid data to air parcels ... */
-#pragma omp parallel for default(shared)
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0) {
-
-	/* Interpolate temperature... */
-	double temp;
-	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
-			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
-
-	/* Set mass... */
-	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-				 izs[ip], ctl->chemgrid_nz)];
-
-	/* Calculate volume mixing ratio... */
-	if (ctl->qnt_Cx >= 0)
-	  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
-	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
-      }
-
-    /* Free... */
-    free(mass);
-    free(lon);
-    free(lat);
-    free(area);
-  }
+  /* Calculate interparcel mixing... */
+  if (ctl->qnt_m >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
+  if (ctl->qnt_vmr >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+  if (ctl->qnt_Ch2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
+  if (ctl->qnt_Co3 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
+  if (ctl->qnt_Cco >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
+  if (ctl->qnt_Coh >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
+  if (ctl->qnt_Ch >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
+  if (ctl->qnt_Cho2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
+  if (ctl->qnt_Ch2o2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
+  if (ctl->qnt_Co1d >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
+  if (ctl->qnt_Co3p >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
+  if (ctl->qnt_Cccl4 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
+  if (ctl->qnt_Cccl3f >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
+  if (ctl->qnt_Cccl2f2 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
+  if (ctl->qnt_Cn2o >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+  if (ctl->qnt_Csf6 >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
+  if (ctl->qnt_aoa >= 0)
+    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
 
   /* Free... */
-  free(z);
-  free(press);
+#ifdef _OPENACC
+#pragma acc exit data delete(ixs,iys,izs)
+#endif
   free(ixs);
   free(iys);
   free(izs);
+}
 
-  /* Update device... */
+/*****************************************************************************/
+
+void module_mixing_help(
+  ctl_t * ctl,
+  clim_t * clim,
+  atm_t * atm,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
+  int qnt_idx) {
+
+  /* Allocate... */
+  const int np = atm->np;
+  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
+  double *restrict const cmean =
+    (double *) malloc((size_t) ngrid * sizeof(double));
+  int *restrict const count = (int *) malloc((size_t) ngrid * sizeof(int));
+
+  /* Init... */
 #ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
+#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
 #endif
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < ngrid; i++) {
+    count[i] = 0;
+    cmean[i] = 0;
+  }
+
+  /* Loop over particles... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+      int idx = ARRAY_3D
+	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      cmean[idx] += atm->q[qnt_idx][ip];
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      count[idx]++;
+    }
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
+#endif
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < ngrid; i++)
+    if (count[i] > 0)
+      cmean[i] /= count[i];
+
+  /* Calculate interparcel mixing... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+
+      /* Set mixing parameter... */
+      double mixparam = 1.0;
+      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
+	double w =
+	  tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
+      }
+
+      /* Adjust quantity... */
+      atm->q[qnt_idx][ip] +=
+	(cmean
+	 [ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
+	 - atm->q[qnt_idx][ip]) * mixparam;
+    }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(cmean,count)
+#endif
+  free(cmean);
+  free(count);
 }
 
 /*****************************************************************************/
@@ -3025,22 +3208,6 @@ void module_oh_chem(
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
-}
-
-/*****************************************************************************/
-
-void module_press_init(
-	ctl_t ctl,
-	met_t * met0, 
-	met_t * met1, 
-	atm_t * atm) {
-	
-      INTPOL_INIT;
-      for (int ip = 0; ip < atm->np; ip++)
-	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
-			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
-			    1);
 }
 
 /*****************************************************************************/
@@ -3245,191 +3412,6 @@ void module_kpp_chem(
 
 /*****************************************************************************/
 
-void module_mixing(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  double t) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  const int np = atm->np;
-  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
-  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
-  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
-
-  /* Set grid box size... */
-  const double dz = (ctl->mixing_z1 - ctl->mixing_z0) / ctl->mixing_nz;
-  const double dlon = (ctl->mixing_lon1 - ctl->mixing_lon0) / ctl->mixing_nx;
-  const double dlat = (ctl->mixing_lat1 - ctl->mixing_lat0) / ctl->mixing_ny;
-
-  /* Set time interval... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Get indices... */
-#ifdef _OPENACC
-#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np])
-#pragma acc data present(ctl,clim,atm,ixs,iys,izs)
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
-  for (int ip = 0; ip < np; ip++) {
-    ixs[ip] = (int) ((atm->lon[ip] - ctl->mixing_lon0) / dlon);
-    iys[ip] = (int) ((atm->lat[ip] - ctl->mixing_lat0) / dlat);
-    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->mixing_z0) / dz);
-    if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->mixing_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->mixing_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->mixing_nz)
-      izs[ip] = -1;
-  }
-
-  /* Calculate interparcel mixing... */
-  if (ctl->qnt_m >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
-  if (ctl->qnt_vmr >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-  if (ctl->qnt_Ch2o >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
-  if (ctl->qnt_Co3 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
-  if (ctl->qnt_Cco >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
-  if (ctl->qnt_Coh >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
-  if (ctl->qnt_Ch >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
-  if (ctl->qnt_Cho2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
-  if (ctl->qnt_Ch2o2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
-  if (ctl->qnt_Co1d >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
-  if (ctl->qnt_Co3p >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
-  if (ctl->qnt_Cccl4 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
-  if (ctl->qnt_Cccl3f >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
-  if (ctl->qnt_Cccl2f2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
-  if (ctl->qnt_Cn2o >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
-  if (ctl->qnt_Csf6 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
-  if (ctl->qnt_aoa >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete(ixs,iys,izs)
-#endif
-  free(ixs);
-  free(iys);
-  free(izs);
-}
-
-/*****************************************************************************/
-
-void module_mixing_help(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  const int *ixs,
-  const int *iys,
-  const int *izs,
-  int qnt_idx) {
-
-  /* Allocate... */
-  const int np = atm->np;
-  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
-  double *restrict const cmean =
-    (double *) malloc((size_t) ngrid * sizeof(double));
-  int *restrict const count = (int *) malloc((size_t) ngrid * sizeof(int));
-
-  /* Init... */
-#ifdef _OPENACC
-#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
-#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
-#pragma acc parallel loop independent gang vector
-#else
-#ifdef __NVCOMPILER
-#pragma novector
-#endif
-#pragma omp parallel for
-#endif
-  for (int i = 0; i < ngrid; i++) {
-    count[i] = 0;
-    cmean[i] = 0;
-  }
-
-  /* Loop over particles... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (izs[ip] >= 0) {
-      int idx = ARRAY_3D
-	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
-#ifdef _OPENACC
-#pragma acc atomic update
-#endif
-      cmean[idx] += atm->q[qnt_idx][ip];
-#ifdef _OPENACC
-#pragma acc atomic update
-#endif
-      count[idx]++;
-    }
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#ifdef __NVCOMPILER
-#pragma novector
-#endif
-#pragma omp parallel for
-#endif
-  for (int i = 0; i < ngrid; i++)
-    if (count[i] > 0)
-      cmean[i] /= count[i];
-
-  /* Calculate interparcel mixing... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (izs[ip] >= 0) {
-
-      /* Set mixing parameter... */
-      double mixparam = 1.0;
-      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
-	double w =
-	  tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
-	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
-      }
-
-      /* Adjust quantity... */
-      atm->q[qnt_idx][ip] +=
-	(cmean
-	 [ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
-	 - atm->q[qnt_idx][ip]) * mixparam;
-    }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete(cmean,count)
-#endif
-  free(cmean);
-  free(count);
-}
-
-/*****************************************************************************/
-
 void module_position(
   ctl_t * ctl,
   met_t * met0,
@@ -3491,7 +3473,7 @@ void module_position(
 
 void module_rng_init(
   int ntask) {
-  
+
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
   if (omp_get_max_threads() > NTHREADS)

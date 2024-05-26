@@ -578,7 +578,7 @@
 /*! Compute norm of a vector. */
 #define NORM(a)					\
   sqrt(DOTP(a, a))
-  
+
 /*! Loop over particles. */
 #ifdef _OPENACC
 #define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
@@ -3134,8 +3134,32 @@ void locate_vert(
   int lat_ap_ind,
   double alt_ap,
   int *ind);
-  
-/*! Calculate advection of air parcels. */
+
+/**
+ * @brief Advect particles based on interpolated meteorological data.
+ *
+ * This function advects particles based on interpolated meteorological data for a specified time step.
+ * It calculates the new positions of the particles using interpolated meteorological data obtained from
+ * the input meteorological data structures (met0 and met1) at the current and next time steps, respectively.
+ * The function loops over each particle and integrates their positions using the interpolated meteorological data.
+ * After integration, it updates the positions of the particles in the atmospheric data structure.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the initial time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ *
+ * The function initializes variables for position, wind components, and time increments.
+ * It loops over integration nodes for each particle, updating their positions based on the interpolated meteorological data.
+ * Integration nodes represent subdivisions within the time step, typically used for numerical integration accuracy.
+ * The function then calculates mean wind components based on the integration nodes' weights.
+ * Finally, it updates the particles' positions in longitude, latitude, and altitude (pressure level).
+ * The integration scheme accounts for variations in latitude-dependent distances for longitude changes
+ * and updates altitude using vertical wind velocity.
+ *
+ * @author Lars Hoffmann
+ */
 void module_advect(
   ctl_t * ctl,
   met_t * met0,
@@ -3143,7 +3167,44 @@ void module_advect(
   atm_t * atm,
   double *dt);
 
-/*! Calculate advection of air parcels. */
+/**
+ * @brief Advect particles with diabatic effects based on interpolated meteorological data.
+ *
+ * This function advects particles considering diabatic effects, such as heating or cooling, 
+ * based on interpolated meteorological data for a specified time step. It calculates the new 
+ * positions of the particles using interpolated meteorological data obtained from the input 
+ * meteorological data structures (met0 and met1) at the current and next time steps, respectively.
+ * The function loops over each particle and integrates their positions using the interpolated 
+ * meteorological data, considering diabatic heating or cooling effects. After integration, it 
+ * updates the positions of the particles in the atmospheric data structure.
+ *
+ * If other modules have changed the pressure, it translates it into a zeta coordinate. 
+ * It initializes variables for position, wind components, and diabatic effects. Then, it loops 
+ * over integration nodes for each particle, updating their positions based on the interpolated 
+ * meteorological data and considering diabatic effects. The integration scheme accounts for 
+ * variations in latitude-dependent distances for longitude changes and updates the diabatic 
+ * effect (zeta) based on the integration nodes' weights. Finally, it updates the particles' 
+ * positions in longitude, latitude, and diabatic effect (zeta) coordinates. If the diabatic 
+ * effect (zeta) becomes negative, it sets it to zero and recalculates the pressure coordinate 
+ * based on the updated diabatic effect.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the initial time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ *
+ * The function initializes variables for position, wind components, and diabatic effects.
+ * It loops over integration nodes for each particle, updating their positions based on the 
+ * interpolated meteorological data and considering diabatic effects. Integration nodes represent 
+ * subdivisions within the time step, typically used for numerical integration accuracy. The 
+ * function then calculates mean wind components based on the integration nodes' weights. Finally, 
+ * it updates the particles' positions in longitude, latitude, and diabatic effect (zeta) coordinates. 
+ * If the diabatic effect (zeta) becomes negative, it sets it to zero and recalculates the pressure 
+ * coordinate based on the updated diabatic effect.
+ *
+ * @author Jan Clemens
+ */
 void module_advect_diabatic(
   ctl_t * ctl,
   met_t * met0,
@@ -3151,7 +3212,36 @@ void module_advect_diabatic(
   atm_t * atm,
   double *dt);
 
-/*! Apply boundary conditions. */
+/**
+ * @brief Apply boundary conditions to particles based on meteorological and climatological data.
+ *
+ * This function applies boundary conditions to particles based on specified criteria, including 
+ * latitude, pressure, surface layer parameters, and climatological data. It loops over each 
+ * particle and checks whether it satisfies the specified boundary conditions. If a particle 
+ * satisfies the conditions, its properties such as mass, volume mixing ratio, and age of air 
+ * are updated accordingly.
+ *
+ * It checks for quantity flags to determine which properties need to be updated. If the latitude 
+ * or pressure of a particle falls outside the specified ranges, it skips the particle. It also 
+ * considers surface layer parameters such as surface pressure, height, zeta range, and planetary 
+ * boundary layer. If a particle is within the specified surface layer boundaries, its properties 
+ * are updated accordingly.
+ *
+ * The function updates properties such as mass and volume mixing ratio if the corresponding flags 
+ * are set. It retrieves volume mixing ratio values for various trace gases (e.g., CFC-10, CFC-11, 
+ * N2O, SF6) from climatological time series data and updates the particle properties accordingly.
+ * Additionally, it updates the age of air for each particle based on the current simulation time.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climatological data structure containing time series data.
+ * @param met0 Pointer to the meteorological data structure at the initial time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 void module_bound_cond(
   ctl_t * ctl,
   clim_t * clim,
@@ -3160,7 +3250,55 @@ void module_bound_cond(
   atm_t * atm,
   double *dt);
 
-/*! Calculate convection of air parcels. */
+/**
+ * @brief Calculate grid data for chemistry modules.
+ *
+ * This function initializes and updates chemical grid quantities based on
+ * atmospheric data and interpolation of meteorological variables.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climate data structure containing climatological data.
+ * @param met0 Pointer to the first meteorological data structure.
+ * @param met1 Pointer to the second meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param tt Time for which chemical grid is updated.
+ *
+ * @authors Mingzhao Liu
+ * @authors Lars Hoffmann
+ */
+void module_chemgrid(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t);
+
+/**
+ * @brief Simulate convective processes for atmospheric particles.
+ *
+ * This function simulates convective processes for atmospheric particles based on 
+ * convective available potential energy (CAPE) and convective inhibition (CIN). 
+ * It loops over each particle and checks whether the CAPE exceeds a specified 
+ * threshold. If CAPE is above the threshold and meets the conditions, it performs 
+ * convective mixing to update the particle's pressure based on random numbers 
+ * generated for each particle.
+ *
+ * The function interpolates CAPE and CIN from meteorological data and checks 
+ * whether the particle is above the cloud top level. If the conditions are met, 
+ * it determines the pressure range for vertical mixing and calculates the density 
+ * range based on temperature at different pressure levels. It then calculates the 
+ * new density based on random numbers and updates the particle's pressure accordingly.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the initial time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ * @param rs Pointer to an array of random numbers generated for each particle.
+ *
+ * @author Lars Hoffmann
+ */
 void module_convection(
   ctl_t * ctl,
   met_t * met0,
@@ -3169,14 +3307,61 @@ void module_convection(
   double *dt,
   double *rs);
 
-/*! Calculate exponential decay of particle mass. */
+/**
+ * @brief Simulate exponential decay processes for atmospheric particles.
+ *
+ * This function simulates decay processes for atmospheric particles based on their 
+ * mass or volume mixing ratio. It loops over each particle and calculates the decay 
+ * rate using weighting factors for tropospheric and stratospheric lifetimes. 
+ * Exponential decay is then calculated, and the mass or volume mixing ratio of 
+ * particles is updated accordingly. Loss rates can also be calculated and updated 
+ * based on the decay process.
+ *
+ * The function checks for quantity flags to ensure that mass or volume mixing ratio 
+ * data is available. It then calculates the weighting factor based on the particle's 
+ * location in the atmosphere and sets the lifetime accordingly. Exponential decay is 
+ * calculated using the time step and the lifetime, and the particle's mass or volume 
+ * mixing ratio is updated. Loss rates can also be updated based on the decay process.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climate data structure containing atmospheric data.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ *
+ * @author Lars Hoffmann
+ */
 void module_decay(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
   double *dt);
 
-/*! Calculate mesoscale diffusion. */
+/**
+ * @brief Simulate mesoscale diffusion for atmospheric particles.
+ *
+ * This function simulates mesoscale diffusion for atmospheric particles, including 
+ * horizontal and vertical wind fluctuations. It calculates standard deviations of 
+ * local wind data and temporal correlations for mesoscale fluctuations. Mesoscale 
+ * wind fluctuations are then calculated based on the provided random numbers and 
+ * turbulence parameters. The particle positions are updated accordingly.
+ *
+ * The function loops over each particle and calculates indices for interpolation 
+ * of wind data. It then computes standard deviations of local wind data and 
+ * temporal correlations for mesoscale fluctuations. Based on the turbulence 
+ * parameters and provided random numbers, it calculates horizontal and vertical 
+ * mesoscale wind fluctuations. Finally, it updates the particle positions based 
+ * on the calculated wind fluctuations.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the current time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param cache Pointer to the cache structure for temporary storage.
+ * @param dt Pointer to the time step value.
+ * @param rs Pointer to the array of random numbers.
+ *
+ * @author Lars Hoffmann
+ */
 void module_diffusion_meso(
   ctl_t * ctl,
   met_t * met0,
@@ -3186,7 +3371,29 @@ void module_diffusion_meso(
   double *dt,
   double *rs);
 
-/*! Calculate turbulent diffusion. */
+/**
+ * @brief Simulate turbulent diffusion for atmospheric particles.
+ *
+ * This function simulates turbulent diffusion for atmospheric particles, including
+ * horizontal and vertical diffusion. It calculates diffusivity based on the 
+ * provided weighting factor and turbulence parameters. The diffusion coefficients
+ * are then used to calculate horizontal and vertical displacements of particles 
+ * based on the provided random numbers and time step.
+ *
+ * The function loops over each particle and calculates the weighting factor based
+ * on the atmospheric properties. It then computes diffusivity for horizontal and 
+ * vertical diffusion. Based on the diffusivity values and provided random numbers, 
+ * it calculates horizontal and vertical displacements of particles and updates 
+ * their positions accordingly.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climatological data structure containing atmospheric properties.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ * @param rs Pointer to the array of random numbers.
+ *
+ * @author Lars Hoffmann
+ */
 void module_diffusion_turb(
   ctl_t * ctl,
   clim_t * clim,
@@ -3194,7 +3401,24 @@ void module_diffusion_turb(
   double *dt,
   double *rs);
 
-/*! Calculate dry deposition. */
+/**
+ * @brief Simulate dry deposition of atmospheric particles.
+ *
+ * This function simulates the dry deposition of atmospheric particles, including
+ * both particulate matter and gases. It calculates the sedimentation velocity 
+ * for particles based on the atmospheric properties and applies it to determine
+ * the loss of mass or volume mixing ratio due to deposition. The function loops
+ * over each particle and calculates the loss of mass or volume mixing ratio based
+ * on the deposition velocity and time step.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the current time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Pointer to the time step value.
+ *
+ * @author Lars Hoffmann
+ */
 void module_dry_deposition(
   ctl_t * ctl,
   met_t * met0,
@@ -3202,7 +3426,23 @@ void module_dry_deposition(
   atm_t * atm,
   double *dt);
 
-/*! Initialize isosurface module. */
+/**
+ * @brief Initialize the isosurface module based on atmospheric data.
+ *
+ * This function initializes the isosurface module based on the atmospheric data
+ * provided. It calculates the necessary variables required for generating the
+ * isosurface, such as pressure, density, or potential temperature. Additionally,
+ * it can read balloon pressure data from a file if specified in the control
+ * structure. The initialized data is stored in the cache for later use.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the current time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param cache Pointer to the cache structure for storing initialized data.
+ *
+ * @author Lars Hoffmann
+ */
 void module_isosurf_init(
   ctl_t * ctl,
   met_t * met0,
@@ -3210,7 +3450,23 @@ void module_isosurf_init(
   atm_t * atm,
   cache_t * cache);
 
-/*! Force air parcels to stay on isosurface. */
+/**
+ * @brief Apply the isosurface module to adjust atmospheric properties.
+ *
+ * This function applies the isosurface module to adjust atmospheric properties
+ * based on the initialized data stored in the cache. It interpolates and restores
+ * atmospheric pressure, density, or potential temperature according to the
+ * specified isosurface mode in the control structure.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param met0 Pointer to the meteorological data structure at the current time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param cache Pointer to the cache structure containing initialized data.
+ * @param dt Array of time step values for each particle.
+ *
+ * @author Lars Hoffmann
+ */
 void module_isosurf(
   ctl_t * ctl,
   met_t * met0,
@@ -3219,7 +3475,23 @@ void module_isosurf(
   cache_t * cache,
   double *dt);
 
-/*! Interpolate meteo data for air parcel positions. */
+/**
+ * @brief Update atmospheric properties using meteorological data.
+ *
+ * This function updates atmospheric properties based on meteorological data
+ * interpolated between two time steps. It calculates various atmospheric
+ * quantities such as pressure, temperature, wind speed, humidity, etc., and
+ * updates the corresponding fields in the atmospheric data structure.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climate data structure containing climatological data.
+ * @param met0 Pointer to the meteorological data structure at the current time step.
+ * @param met1 Pointer to the meteorological data structure at the next time step.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Array of time step values for each particle.
+ *
+ * @author Lars Hoffmann
+ */
 void module_meteo(
   ctl_t * ctl,
   clim_t * clim,
@@ -3228,14 +3500,46 @@ void module_meteo(
   atm_t * atm,
   double *dt);
 
-/*! Apply interparcel mixing. */
+/**
+ * @brief Update atmospheric properties through interparcel mixing.
+ *
+ * This function updates atmospheric properties by performing interparcel mixing
+ * based on the given meteorological and climatological data. It calculates the
+ * indices of grid boxes and performs mixing for various quantities such as mass,
+ * volume mixing ratio, and other chemical species concentrations.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climate data structure containing climatological data.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param t Time at which mixing is performed.
+ *
+ * @authors Mingzhao Liu
+ * @authors Lars Hoffmann
+ */
 void module_mixing(
   ctl_t * ctl,
   clim_t * clim,
   atm_t * atm,
   double t);
 
-/*! Auxiliary function for interparcel mixing. */
+/**
+ * @brief Perform interparcel mixing for a specific quantity.
+ *
+ * This function performs interparcel mixing for a specific quantity based on the
+ * given indices of grid boxes. It calculates the mean concentration within each
+ * grid box and adjusts the quantity for each particle accordingly.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climate data structure containing climatological data.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param ixs Pointer to the array of grid box indices along the longitude direction.
+ * @param iys Pointer to the array of grid box indices along the latitude direction.
+ * @param izs Pointer to the array of grid box indices along the vertical direction.
+ * @param qnt_idx Index of the quantity for which mixing is performed.
+ *
+ * @authors Mingzhao Liu
+ * @authors Lars Hoffmann
+ */
 void module_mixing_help(
   ctl_t * ctl,
   clim_t * clim,
@@ -3245,16 +3549,37 @@ void module_mixing_help(
   const int *izs,
   int qnt_idx);
 
-/*! Calculate grid data for chemistry modules. */
-void module_chemgrid(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t);
-
-/*! Calculate OH chemistry. */
+/**
+ * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
+ *
+ * This function calculates the OH chemistry for each atmospheric particle based on
+ * the specified reaction mechanism and updates the particle quantities accordingly.
+ * The OH chemistry includes bimolecular and termolecular reactions, and the reaction
+ * rates are calculated based on the provided climatological data and atmospheric
+ * conditions. The function supports both mass and volume mixing ratio quantities for
+ * the particles.
+ *
+ * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param clim Pointer to the climate data structure containing climatological data.
+ * @param met0 Pointer to the first meteorological data structure.
+ * @param met1 Pointer to the second meteorological data structure.
+ * @param atm Pointer to the atmospheric data structure containing particle information.
+ * @param dt Array of time steps for each particle.
+ *
+ * @note The function assumes that the necessary meteorological and climatological
+ *       data structures have been initialized and are accessible via the pointers
+ *       met0, met1, and clim, respectively.
+ * @note The reaction rates are calculated based on the provided reaction mechanism
+ *       and atmospheric conditions, including temperature, pressure, and the
+ *       concentrations of relevant species.
+ * @note The function updates the particle quantities based on the calculated
+ *       reaction rates and the specified time steps. The update can include both
+ *       mass and volume mixing ratio quantities, as determined by the control
+ *       structure (ctl).
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
 void module_oh_chem(
   ctl_t * ctl,
   clim_t * clim,
@@ -3262,13 +3587,6 @@ void module_oh_chem(
   met_t * met1,
   atm_t * atm,
   double *dt);
-
-/*! Calculate pressure consistent with zeta. */  
-void module_press_init(
-  ctl_t ctl,
-  met_t * met0, 
-  met_t * met1, 
-  atm_t * atm);
 
 /*! Calculate H2O2 chemistry. */
 void module_h2o2_chem(
@@ -3355,12 +3673,12 @@ void module_wet_deposition(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);  
-  
-  
-  
-  
-  
+  double *dt);
+
+
+
+
+
 
 /*! Calculate NAT existence temperature. */
 double nat_temperature(
@@ -3775,7 +4093,7 @@ void write_met_bin_3d(
   char *varname,
   int precision,
   double tolerance);
-  
+
 /*! Write simulation output. */
 void write_output(
   const char *dirname,
@@ -3809,7 +4127,7 @@ void write_station(
   ctl_t * ctl,
   atm_t * atm,
   double t);
- 
+
 /*! Write VTK data. */
 void write_vtk(
   const char *filename,
