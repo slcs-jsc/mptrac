@@ -5303,78 +5303,371 @@ void time2jsec(
   const double remain,
   double *jsec);
 
-/*! Measure wall-clock time. */
+/**
+ * @brief Measures and reports elapsed time for named and grouped timers.
+ *
+ * The `timer` function measures elapsed time for a specified named timer and
+ * an optional group of timers, accumulating time statistics such as minimum,
+ * maximum, and mean elapsed times. It also provides an option to log the
+ * timing statistics to an output.
+ *
+ * @param name A string representing the name of the timer.
+ * @param group A string representing the group to which the timer belongs.
+ * @param output An integer flag indicating whether to report the timing statistics (non-zero to report).
+ *
+ * The function keeps track of multiple timers and groups. When called, it:
+ * - Gets the current time and calculates the elapsed time since the last call.
+ * - Adds the elapsed time to the current timers' statistics.
+ * - Reports the statistics if the `output` parameter is non-zero.
+ * - Identifies the IDs of the next timer and group based on the provided `name` and `group`.
+ * - Checks if the `name` and `group` are new, and if so, initializes them.
+ * - Saves the starting time for the next measurement.
+ *
+ * @note The function uses OpenMP's `omp_get_wtime()` to get the current wall time.
+ * @note The function maintains static arrays and variables to store timer names, groups, and statistics.
+ * @note The maximum number of timers and groups is defined by the `NTIMER` macro.
+ * 
+ * @warning If the number of timers or groups exceeds `NTIMER`, the function will trigger an error message.
+ * 
+ * @author Lars Hoffmann
+ */
 void timer(
   const char *name,
   const char *group,
   int output);
 
-/*! Extract time information from filename. */
+/**
+ * @brief Extracts and converts a timestamp from a filename to Julian seconds.
+ *
+ * The `time_from_filename` function parses a given filename to extract a timestamp
+ * and converts it to Julian seconds. The timestamp is expected to follow a specific
+ * format and position within the filename, defined by the `offset` parameter.
+ *
+ * @param filename A string representing the filename containing the timestamp.
+ * @param offset An integer indicating the position from the end of the filename where the timestamp starts.
+ * 
+ * @return The time in Julian seconds as a double.
+ *
+ * The function performs the following steps:
+ * - Extracts the year, month, day, hour, and minute components of the timestamp from the filename using the given offset.
+ * - Validates the extracted components to ensure they represent a valid date and time.
+ * - Converts the validated date and time components to Julian seconds using the `time2jsec` function.
+ * - Returns the computed time in Julian seconds.
+ *
+ * @note The expected format of the timestamp in the filename is `YYYY-MM-DD_HH-MM` (e.g., "2023-05-27_14-45").
+ *
+ * @warning If the extracted components do not represent a valid date and time, the function will trigger an error message.
+ * 
+ * @author Lars Hoffmann
+ */
 double time_from_filename(
   const char *filename,
   int offset);
 
-/*! Get weighting factor based on tropopause distance. */
+/**
+ * @brief Computes the weighting factor for a given pressure with respect to the tropopause.
+ *
+ * The `tropo_weight` function calculates a weighting factor that indicates how much a given
+ * pressure `p` is influenced by the tropopause based on climatological data.
+ *
+ * @param clim A pointer to a `clim_t` structure containing climatological tropopause data.
+ * @param t The time parameter, typically representing the time of year or specific temporal context.
+ * @param lat The latitude for which the weighting factor is being calculated.
+ * @param p The pressure for which the weighting factor is to be computed.
+ * 
+ * @return A double representing the weighting factor.
+ * 
+ * The function performs the following steps:
+ * - Calculates the tropopause pressure `pt` using the `clim_tropo` function.
+ * - Determines the pressure range around the tropopause: `p1` (lower bound) and `p0` (upper bound).
+ * - Computes the weighting factor based on the given pressure `p`:
+ *   - Returns `1` if `p` is greater than `p0` (troposphere).
+ *   - Returns `0` if `p` is less than `p1` (stratosphere).
+ *   - Linearly interpolates between `1` and `0` for pressures between `p0` and `p1`.
+ *
+ * @note The `clim_tropo` function is assumed to provide the tropopause pressure based on climatological data.
+ * @note The constants used in the pressure range calculation (`0.866877899` and its reciprocal) are specific to the function's logic.
+ *
+ * @author Lars Hoffmann
+ */
 double tropo_weight(
   const clim_t * clim,
   const double t,
   const double lat,
   const double p);
 
-/*! Write atmospheric data. */
+/**
+ * @brief Writes air parcel data to a file in various formats.
+ *
+ * The `write_atm` function writes the air parcel data stored in the `atm` structure
+ * to a file specified by `filename`. The format of the output file is determined by the
+ * `atm_type_out` field in the `ctl` control structure.
+ *
+ * @param filename A string representing the name of the file to write the data to.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t The current time, used for certain output formats.
+ * 
+ * The function performs the following steps:
+ * - Sets a timer for the write operation using the `SELECT_TIMER` macro.
+ * - Logs the beginning of the write operation with the specified filename.
+ * - Depending on the `atm_type_out` value in the `ctl` structure, writes the data in one of the following formats:
+ *   - ASCII (`atm_type_out == 0`): Calls `write_atm_asc`.
+ *   - Binary (`atm_type_out == 1`): Calls `write_atm_bin`.
+ *   - netCDF (`atm_type_out == 2`): Calls `write_atm_nc`.
+ *   - CLaMS trajectory (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
+ *   - CLaMS position (`atm_type_out == 4`): Calls `write_atm_clams`.
+ * - If the `atm_type_out` value is not supported, triggers an error message.
+ * - Logs various statistics about the atmospheric data, including the number of particles,
+ *   time range, altitude range, pressure range, longitude range, and latitude range.
+ * - Logs the range for each quantity specified in the `ctl` structure.
+ *
+ * @author Lars Hoffmann
+ */
 void write_atm(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
-/*! Write atmospheric data in ASCII format. */
+/**
+ * @brief Writes air parcel data to an ASCII file or gnuplot.
+ *
+ * The `write_atm_asc` function writes the atmospheric data stored in the `atm` structure
+ * to an ASCII file specified by `filename` or to pipe to gnuplot if requested.
+ *
+ * @param filename A string representing the name of the file to write the data to.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t The current time used for filtering and timestamping.
+ * 
+ * The function performs the following steps:
+ * - Sets the time interval for the output data based on the control parameters.
+ * - Checks if gnuplot output is requested and, if so, creates a pipe to gnuplot and sets up the plot.
+ * - If gnuplot output is not requested, creates an ASCII file for writing.
+ * - Writes the header information to the output file, including the description of each column.
+ * - Iterates over the particles in the `atm` structure, filtering by time if specified, and writes the data to the output file.
+ * - Closes the output file or gnuplot pipe.
+ *
+ * @author Lars Hoffmann
+ */
 void write_atm_asc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
-/*! Write atmospheric data in binary format. */
+/**
+ * @brief Writes air parcel data to a binary file.
+ *
+ * The `write_atm_bin` function writes the air parcel data stored in the `atm` structure
+ * to a binary file specified by `filename`. The function includes versioning information
+ * and ensures that all relevant data arrays are written in a consistent binary format.
+ *
+ * @param filename A string representing the name of the file to write the data to.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * 
+ * The function performs the following steps:
+ * - Creates the binary file for writing. If the file cannot be created, it triggers an error message.
+ * - Writes a version number for the binary data format.
+ * - Writes the number of particles to the file.
+ * - Writes the time, pressure, longitude, and latitude arrays to the file.
+ * - Iterates over the quantities specified in the `ctl` structure and writes each quantity array to the file.
+ * - Writes a final flag to indicate the end of the binary data.
+ * - Closes the file.
+ *
+ * @author Lars Hoffmann
+ */
 void write_atm_bin(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Write atmospheric data in CLaMS position file format. */
+/**
+ * @brief Writes air parcel data to a NetCDF file in the CLaMS format.
+ *
+ * The `write_atm_clams` function creates a NetCDF file and writes air parcel
+ * data into it. The data includes time, latitude, longitude, pressure, and other
+ * specified quantities. The function defines the dimensions and variables, sets 
+ * global attributes, and writes the data to the file.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ *
+ * The function performs the following steps:
+ * - Creates the NetCDF file with the specified filename.
+ * - Defines the dimensions for time and the number of particles (NPARTS).
+ * - Defines variables for time, latitude, longitude, pressure, zeta, and other quantities.
+ * - Sets global attributes for the vertical coordinate name and model.
+ * - Writes the data into the NetCDF file.
+ * - Closes the NetCDF file after writing.
+ *
+ * @author Jan Clemens
+ */
 void write_atm_clams(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Write atmospheric data in CLaMS position file and trajectory format */
+/**
+ * @brief Writes CLaMS trajectory data to a NetCDF file.
+ *
+ * The `write_atm_clams_traj` function writes trajectory data for the CLaMS model
+ * to a NetCDF file. The file is created and populated with data including time,
+ * latitude, longitude, pressure, and other quantities. The function also handles
+ * the creation of a final initialization file at the last time step.
+ *
+ * @param dirname A string representing the directory name where the file will be created.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t The current time in seconds since a reference epoch.
+ *
+ * The function performs the following steps:
+ * - Determines the start and stop times of the calculation.
+ * - Constructs the output filename based on the start and stop times.
+ * - Defines the hyperslab for the trajectory file.
+ * - Creates the NetCDF file if it's the first time step and defines dimensions and variables.
+ * - Writes the trajectory data to the NetCDF file.
+ * - At the last time step, creates an initialization file with the final data.
+ *
+ * @author Jan Clemens
+ */
 void write_atm_clams_traj(
   const char *dirname,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
-/*! Write atmospheric data in netCDF format. */
+/**
+ * @brief Writes air parcel data to a NetCDF file.
+ *
+ * The `write_atm_nc` function creates a NetCDF file and writes air parcel data into it. 
+ * The data includes time, pressure, longitude, latitude, and other specified quantities.
+ * The function defines the dimensions and variables, sets global attributes, and writes 
+ * the data to the file.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ *
+ * The function performs the following steps:
+ * - Creates the NetCDF file with the specified filename.
+ * - Defines the dimension for the number of observations (obs).
+ * - Defines variables for time, pressure, longitude, latitude, and other quantities.
+ * - Sets global attributes for the feature type.
+ * - Writes the data into the NetCDF file.
+ * - Closes the NetCDF file after writing.
+ *
+ * @author Lars Hoffmann
+ */
 void write_atm_nc(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm);
 
-/*! Write CSI data. */
+/**
+ * @brief Writes Critical Success Index (CSI) data to a file.
+ *
+ * The `write_csi` function processes air parcel and observation data 
+ * to calculate and write various verification statistics, including the Critical Success Index (CSI), 
+ * to a specified output file at regular intervals. The statistics include measures such as 
+ * the number of hits, misses, and false alarms, bias, probability of detection, false alarm rate, 
+ * equitable threat score, and correlation coefficients.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t A double representing the current time.
+ *
+ * The function performs the following steps:
+ * - Initializes resources and sets up the output file if the current time is the start time.
+ * - Reads observation data and kernel data if provided.
+ * - Sets grid box sizes and horizontal coordinates.
+ * - Allocates memory for mean and count arrays.
+ * - Loops over observations and model data to accumulate mean values and counts.
+ * - Analyzes the grid cells to calculate CSI and other statistics.
+ * - Writes the calculated statistics to the output file at specified intervals.
+ * - Frees allocated resources and closes the file when the processing is complete.
+ *
+ * @author Lars Hoffmann
+ */
 void write_csi(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
-/*! Write ensemble data. */
+/**
+ * @brief Writes ensemble data to a file.
+ *
+ * The `write_ens` function processes air parcel data to calculate 
+ * ensemble means and standard deviations for various quantities and writes 
+ * them to a specified output file. It handles ensemble members and calculates 
+ * statistics such as means and standard deviations for each ensemble, along 
+ * with latitude, longitude, altitude, and time information.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t A double representing the current time.
+ *
+ * The function performs the following steps:
+ * - Initializes resources and sets up necessary variables.
+ * - Sets a time interval for processing data.
+ * - Loops over air parcels to accumulate means and standard deviations 
+ *   for each ensemble member.
+ * - Creates an output file and writes header information.
+ * - Writes ensemble data, including time, altitude, latitude, longitude, 
+ *   means, standard deviations, and the number of members.
+ * - Closes the output file.
+ *
+ * @author Lars Hoffmann
+ */
 void write_ens(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
-/*! Write gridded data. */
+/**
+ * @brief Writes grid data to a file in ASCII or netCDF format.
+ *
+ * The `write_grid` function processes air parcel data to calculate
+ * various grid-based statistics such as column density, mean, and standard
+ * deviation for specified quantities. It then writes this data to a specified
+ * output file either in ASCII or netCDF format based on the configuration
+ * parameters provided in the `ctl` structure.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met0 A pointer to a `met_t` structure containing meteorological data
+ *             for the initial time step.
+ * @param met1 A pointer to a `met_t` structure containing meteorological data
+ *             for the final time step.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t A double representing the current time.
+ *
+ * The function performs the following steps:
+ * - Initializes resources and sets up necessary variables.
+ * - Reads kernel data if it is specified in the control parameters.
+ * - Allocates memory for various arrays to store grid data.
+ * - Determines the grid box size and sets up vertical and horizontal
+ *   coordinates.
+ * - Sets a time interval for output data processing.
+ * - Calculates grid box indices for atmospheric model data.
+ * - Averages data within each grid box.
+ * - Calculates column density and volume mixing ratio.
+ * - Writes data to the output file either in ASCII or netCDF format based
+ *   on the specified `grid_type` in the control parameters.
+ * - Frees allocated memory.
+ *
+ * @note The function supports parallel processing using OpenMP for certain
+ *       computational tasks to improve performance.
+ *
+ * @author Lars Hoffmann
+ */
 void write_grid(
   const char *filename,
   ctl_t * ctl,
@@ -5383,7 +5676,51 @@ void write_grid(
   atm_t * atm,
   double t);
 
-/*! Write gridded data in ASCII format. */
+/**
+ * @brief Writes grid data to an ASCII file.
+ *
+ * The `write_grid_asc` function writes gridded air parcel data, including
+ * column density, mean and standard deviation for specified quantities, and
+ * volume mixing ratio (if available), to an ASCII file. The function also
+ * supports writing gnuplot commands to generate plots if requested in the
+ * control parameters.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param cd An array of doubles representing column density values.
+ * @param mean An array of arrays of doubles representing the mean values for
+ *             specified quantities.
+ * @param stddev An array of arrays of doubles representing the standard
+ *               deviation values for specified quantities.
+ * @param vmr_impl An array of doubles representing the volume mixing ratio
+ *                 (implicit) values.
+ * @param t A double representing the current time.
+ * @param z An array of doubles representing vertical coordinates (altitude).
+ * @param lon An array of doubles representing longitudinal coordinates.
+ * @param lat An array of doubles representing latitudinal coordinates.
+ * @param area An array of doubles representing surface area values.
+ * @param dz A double representing the layer depth.
+ * @param np An array of integers representing the number of particles.
+ *
+ * The function performs the following steps:
+ * - Checks if gnuplot output is requested in the control parameters and sets
+ *   up a gnuplot pipe if needed.
+ * - If gnuplot output is requested, sets the plot filename and time string,
+ *   and dumps gnuplot file contents to the pipe.
+ * - Otherwise, creates the output file for writing in ASCII format.
+ * - Writes the header information to the output file, including column labels.
+ * - Writes the grid data to the output file, including time, altitude,
+ *   coordinates, surface area, layer depth, column density, volume mixing
+ *   ratio, number of particles, mean values for specified quantities, and
+ *   standard deviation values if requested.
+ * - Closes the output file.
+ *
+ * @note The function supports writing gnuplot commands to generate plots if
+ *       requested in the control parameters. It also supports writing mean and
+ *       standard deviation values for specified quantities if requested.
+ *
+ * @author Lars Hoffmann
+ */
 void write_grid_asc(
   const char *filename,
   ctl_t * ctl,
@@ -5399,7 +5736,47 @@ void write_grid_asc(
   double dz,
   int *np);
 
-/*! Write gridded data in netCDF format. */
+/**
+ * @brief Writes grid data to a NetCDF file.
+ *
+ * The `write_grid_nc` function writes gridded air parcel data, including column
+ * density, mean and standard deviation for specified quantities, and volume
+ * mixing ratio (if available), to a NetCDF file. NetCDF is a self-describing,
+ * machine-independent data format for storing scientific data.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param cd An array of doubles representing column density values.
+ * @param mean An array of arrays of doubles representing the mean values for
+ *             specified quantities.
+ * @param stddev An array of arrays of doubles representing the standard
+ *               deviation values for specified quantities.
+ * @param vmr_impl An array of doubles representing the volume mixing ratio
+ *                 (implicit) values.
+ * @param t A double representing the current time.
+ * @param z An array of doubles representing vertical coordinates (altitude).
+ * @param lon An array of doubles representing longitudinal coordinates.
+ * @param lat An array of doubles representing latitudinal coordinates.
+ * @param area An array of doubles representing surface area values.
+ * @param dz A double representing the layer depth.
+ * @param np An array of integers representing the number of particles.
+ *
+ * The function performs the following steps:
+ * - Allocates memory for temporary arrays required for writing data.
+ * - Creates a NetCDF file with the specified filename.
+ * - Defines dimensions and variables in the NetCDF file, along with their
+ *   attributes.
+ * - Writes the data arrays to the NetCDF file.
+ * - Closes the NetCDF file.
+ * - Frees allocated memory.
+ *
+ * @note NetCDF files are commonly used in scientific computing and can be
+ *       accessed by various programming languages and software packages.
+ *       Additionally, the function supports writing mean and standard
+ *       deviation values for specified quantities if requested.
+ *
+ * @author Lars Hoffmann
+ */
 void write_grid_nc(
   const char *filename,
   ctl_t * ctl,
@@ -5415,20 +5792,111 @@ void write_grid_nc(
   double dz,
   int *np);
 
-/*! Read meteo data file. */
+/**
+ * @brief Writes meteorological data to a binary file.
+ *
+ * The `write_met` function writes meteorological data, including
+ * surface data and level data, to a binary file specified by the filename
+ * parameter. The data is written in binary format for efficient storage and
+ * transfer.
+ *
+ * @param filename A string representing the name of the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met A pointer to a `met_t` structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets a timer to measure the execution time.
+ * - Writes information about the meteorological data being written to the log.
+ * - Checks if compression flags are enabled and displays error messages if
+ *   required compression methods are not available.
+ * - Writes binary data to the file, including the type and version of the data,
+ *   grid data (time, dimensions, coordinates), surface data, and level data.
+ * - Closes the file after writing all data.
+ *
+ * @return Returns an integer value indicating the success or failure of the
+ *         function. A value of 0 indicates successful execution.
+ *
+ * @note This function supports writing meteorological data in different binary
+ *       formats, including uncompressed and compressed formats using various
+ *       compression algorithms such as packing, ZFP, ZSTD, and cmultiscale. The specific
+ *       compression method used depends on the configuration specified in the
+ *       `ctl_t` structure.
+ *
+ * @author Lars Hoffmann
+ */
 int write_met(
   const char *filename,
   ctl_t * ctl,
   met_t * met);
 
-/*! Write 2-D meteo variable. */
+/**
+ * @brief Writes a 2-dimensional meteorological variable to a binary file.
+ *
+ * The `write_met_bin_2d` function writes a 2-dimensional meteorological
+ * variable to a binary file specified by the `out` parameter. The variable
+ * data is provided in a 2-dimensional array `var` with maximum dimensions `EX` by `EY`.
+ * The variable name is provided as a string in the `varname` parameter.
+ *
+ * @param out A pointer to a FILE structure representing the output file.
+ * @param met A pointer to a `met_t` structure containing meteorological data.
+ * @param var An array of floats representing the 2-dimensional variable data.
+ * @param varname A string containing the name of the variable being written.
+ *
+ * The function performs the following steps:
+ * - Allocates memory for a temporary buffer to hold the variable data.
+ * - Copies the variable data from the 2-dimensional array `var` to the temporary
+ *   buffer `help`.
+ * - Writes the uncompressed variable data to the binary file specified by `out`.
+ * - Logs a message indicating the successful writing of the variable data.
+ * - Frees the allocated memory.
+ *
+ * @note This function is typically used to write surface data or other
+ *       2-dimensional meteorological variables to a binary file.
+ *
+ * @author Lars Hoffmann
+ */
 void write_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
   char *varname);
 
-/*! Write 3-D meteo variable. */
+/**
+ * @brief Writes a 3-dimensional meteorological variable to a binary file.
+ *
+ * The `write_met_bin_3d` function writes a 3-dimensional meteorological
+ * variable to a binary file specified by the `out` parameter. The variable
+ * data is provided in a 3-dimensional array `var` with maximum dimensions `EX` by `EY`
+ * by `EP`. The variable name is provided as a string in the `varname` parameter.
+ * Additionally, the function takes parameters for specifying the compression
+ * precision and tolerance.
+ *
+ * @param out A pointer to a FILE structure representing the output file.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met A pointer to a `met_t` structure containing meteorological data.
+ * @param var An array of floats representing the 3-dimensional variable data.
+ * @param varname A string containing the name of the variable being written.
+ * @param precision An integer specifying the precision of compression (for certain compression methods).
+ * @param tolerance A double specifying the tolerance for compression (for certain compression methods).
+ *
+ * The function performs the following steps:
+ * - Allocates memory for a temporary buffer to hold the variable data.
+ * - Copies the variable data from the 3-dimensional array `var` to the temporary
+ *   buffer `help`.
+ * - Writes the variable data to the binary file specified by `out` using the specified compression method
+ *   (uncompressed, packed, zfp, zstd, cmultiscale).
+ * - Logs a message indicating the successful writing of the variable data.
+ * - Frees the allocated memory.
+ *
+ * @note This function is typically used to write level data or other
+ *       3-dimensional meteorological variables to a binary file.
+ *
+ * @note Depending on the value of `ctl->met_type`, the function writes the
+ *       variable data using different compression methods. If `ctl->met_type`
+ *       is not supported, an error message is logged.
+ *
+ * @author Lars Hoffmann
+ */
 void write_met_bin_3d(
   FILE * out,
   ctl_t * ctl,
@@ -5438,7 +5906,38 @@ void write_met_bin_3d(
   int precision,
   double tolerance);
 
-/*! Write simulation output. */
+/**
+ * @brief Writes various types of output data to files in a specified directory.
+ *
+ * The `write_output` function writes various types of output data to files in the
+ * directory specified by the `dirname` parameter. The function takes control parameters
+ * (`ctl`), two meteorological data structures (`met0` and `met1`), an atmospheric
+ * data structure (`atm`), and a time value (`t`) as input.
+ *
+ * @param dirname A string representing the directory path where output files will be written.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met0 A pointer to a `met_t` structure representing the first set of meteorological data.
+ * @param met1 A pointer to a `met_t` structure representing the second set of meteorological data.
+ * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param t A double value representing the time at which the output is being written.
+ *
+ * The function performs the following steps:
+ * - Parses the input time (`t`) to extract year, month, day, hour, minute, and second.
+ * - Updates host memory if necessary based on control parameters.
+ * - Writes atmospheric data to files if specified by control parameters.
+ * - Writes gridded data to files if specified by control parameters.
+ * - Writes CSI (Critical Success Index) data to files if specified by control parameters.
+ * - Writes ensemble data to files if specified by control parameters.
+ * - Writes profile data to files if specified by control parameters.
+ * - Writes sample data to files if specified by control parameters.
+ * - Writes station data to files if specified by control parameters.
+ * - Writes VTK (Visualization Toolkit) data to files if specified by control parameters.
+ *
+ * @note This function orchestrates the writing of various types of output data to files
+ *       based on control parameters and the current simulation time.
+ *
+ * @author Lars Hoffmann
+ */
 void write_output(
   const char *dirname,
   ctl_t * ctl,
@@ -5447,7 +5946,34 @@ void write_output(
   atm_t * atm,
   double t);
 
-/*! Write profile data. */
+/**
+ * @brief Writes profile data to a specified file.
+ *
+ * The `write_prof` function writes profile data to a file specified by the `filename`
+ * parameter. It takes control parameters (`ctl`), two meteorological data structures
+ * (`met0` and `met1`), an atmospheric data structure (`atm`), and a time value (`t`) as input.
+ *
+ * @param filename A string representing the filename where the profile data will be written.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met0 A pointer to a `met_t` structure representing the first set of meteorological data.
+ * @param met1 A pointer to a `met_t` structure representing the second set of meteorological data.
+ * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param t A double value representing the time at which the profile data is being written.
+ *
+ * The function performs the following steps:
+ * - Initializes variables and allocates memory if it's the start of the simulation.
+ * - Reads observation data and creates a new output file if necessary.
+ * - Writes header information to the output file.
+ * - Sets grid box size and vertical coordinates.
+ * - Processes observations and model data within the specified time interval.
+ * - Calculates and writes output data for each grid cell.
+ * - Finalizes by closing the output file and freeing allocated memory if it's the end of the simulation.
+ *
+ * @note This function writes profile data to a file, including time, altitude, coordinates,
+ *       atmospheric properties, observed data, and the number of observations.
+ *
+ * @author Lars Hoffmann
+ */
 void write_prof(
   const char *filename,
   ctl_t * ctl,
@@ -5456,7 +5982,35 @@ void write_prof(
   atm_t * atm,
   double t);
 
-/*! Write sample data. */
+/**
+ * @brief Writes sample data to a specified file.
+ *
+ * The `write_sample` function writes sample data to a file specified by the `filename`
+ * parameter. It takes control parameters (`ctl`), two meteorological data structures
+ * (`met0` and `met1`), an atmospheric data structure (`atm`), and a time value (`t`) as input.
+ *
+ * @param filename A string representing the filename where the sample data will be written.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met0 A pointer to a `met_t` structure representing the first set of meteorological data.
+ * @param met1 A pointer to a `met_t` structure representing the second set of meteorological data.
+ * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param t A double value representing the time at which the sample data is being written.
+ *
+ * The function performs the following steps:
+ * - Initializes variables and allocates memory if it's the start of the simulation.
+ * - Reads observation data and kernel data if necessary.
+ * - Creates a new output file and writes header information to it.
+ * - Sets latitude range, squared radius, and area.
+ * - Processes observations and calculates sample data within the specified time interval.
+ * - Writes output data for each observation.
+ * - Finalizes by closing the output file and freeing allocated memory if it's the end of the simulation.
+ *
+ * @note This function writes sample data to a file, including time, altitude, coordinates,
+ *       surface area, layer depth, number of particles, column density, volume mixing ratio,
+ *       and observed data.
+ *
+ * @author Lars Hoffmann
+ */
 void write_sample(
   const char *filename,
   ctl_t * ctl,
@@ -5465,14 +6019,64 @@ void write_sample(
   atm_t * atm,
   double t);
 
-/*! Write station data. */
+/**
+ * @brief Writes station data to a specified file.
+ *
+ * The `write_station` function writes station data to a file specified by the `filename`
+ * parameter. It takes control parameters (`ctl`), an atmospheric data structure (`atm`),
+ * and a time value (`t`) as input.
+ *
+ * @param filename A string representing the filename where the station data will be written.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param t A double value representing the time at which the station data is being written.
+ *
+ * The function performs the following steps:
+ * - Initializes variables and opens a new file if it's the start of the simulation.
+ * - Writes header information to the output file.
+ * - Sets geolocation and search radius for station data.
+ * - Processes air parcels and writes station data within the specified time interval and search radius.
+ * - Writes station data for each air parcel satisfying the criteria.
+ * - Closes the output file if it's the end of the simulation.
+ *
+ * @note This function writes station data to a file, including time, altitude, longitude, latitude,
+ *       and additional quantities specified in the control parameters.
+ *
+ * @author Lars Hoffmann
+ */
 void write_station(
   const char *filename,
   ctl_t * ctl,
   atm_t * atm,
   double t);
 
-/*! Write VTK data. */
+/**
+ * @brief Writes VTK (Visualization Toolkit) data to a specified file.
+ *
+ * The `write_vtk` function writes VTK data to a file specified by the `filename`
+ * parameter. It takes control parameters (`ctl`), an atmospheric data structure (`atm`),
+ * and a time value (`t`) as input.
+ *
+ * @param filename A string representing the filename where the VTK data will be written.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param t A double value representing the time at which the VTK data is being written.
+ *
+ * The function performs the following steps:
+ * - Sets a timer and logs information about writing VTK data.
+ * - Sets a time interval for output based on the specified time and control parameters.
+ * - Creates a new file and checks if the file creation was successful.
+ * - Counts the number of data points to be written.
+ * - Writes the VTK header, including metadata.
+ * - Writes point coordinates based on the sphere or Cartesian coordinate system.
+ * - Writes point data for each quantity specified in the control parameters.
+ * - Closes the output file.
+ *
+ * @note This function writes VTK data in ASCII format, including point coordinates
+ *       and associated scalar data for visualization purposes.
+ *
+ * @author Lars Hoffmann
+ */
 void write_vtk(
   const char *filename,
   ctl_t * ctl,

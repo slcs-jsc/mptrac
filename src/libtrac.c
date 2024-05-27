@@ -8210,6 +8210,56 @@ void write_atm_bin(
 
 /*****************************************************************************/
 
+void write_atm_clams(
+  const char *filename,
+  ctl_t * ctl,
+  atm_t * atm) {
+
+  int tid, pid, ncid, varid;
+  size_t start[2], count[2];
+
+  /* Create file... */
+  nc_create(filename, NC_CLOBBER, &ncid);
+
+  /* Define dimensions... */
+  NC(nc_def_dim(ncid, "time", 1, &tid));
+  NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
+
+  int dim_ids[2] = { tid, pid };
+
+  /* Define variables and their attributes... */
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
+	     "seconds since 2000-01-01 00:00:00 UTC");
+  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
+  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
+  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
+  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
+	       ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+
+  /* Define global attributes... */
+  NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
+  NC_PUT_ATT_GLOBAL("model", "MPTRAC");
+
+  /* End definitions... */
+  NC(nc_enddef(ncid));
+
+  /* Write data... */
+  NC_PUT_DOUBLE("time", atm->time, 0);
+  NC_PUT_DOUBLE("LAT", atm->lat, 0);
+  NC_PUT_DOUBLE("LON", atm->lon, 0);
+  NC_PUT_DOUBLE("PRESS", atm->p, 0);
+  NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta_d], 0);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
+
+  /* Close file... */
+  NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
 void write_atm_clams_traj(
   const char *dirname,
   ctl_t * ctl,
@@ -8355,57 +8405,6 @@ void write_atm_clams_traj(
     /* Close file... */
     NC(nc_close(ncid));
   }
-}
-
-/*****************************************************************************/
-
-void write_atm_clams(
-  const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
-
-  int tid, pid, ncid, varid;
-  size_t start[2], count[2];
-
-  /* Create file... */
-  nc_create(filename, NC_CLOBBER, &ncid);
-
-  /* Define dimensions... */
-  NC(nc_def_dim(ncid, "time", 1, &tid));
-  NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
-
-  int dim_ids[2] = { tid, pid };
-
-  /* Define variables and their attributes... */
-  NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
-  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
-  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
-  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
-  for (int iq = 0; iq < ctl->nq; iq++)
-    NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-	       ctl->qnt_name[iq], ctl->qnt_unit[iq]);
-
-  /* Define global attributes... */
-  NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
-  NC_PUT_ATT_GLOBAL("model", "MPTRAC");
-
-  /* End definitions... */
-  NC(nc_enddef(ncid));
-
-  /* Write data... */
-  NC_PUT_DOUBLE("time", atm->time, 0);
-  NC_PUT_DOUBLE("LAT", atm->lat, 0);
-  NC_PUT_DOUBLE("LON", atm->lon, 0);
-  NC_PUT_DOUBLE("PRESS", atm->p, 0);
-  NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta_d], 0);
-  for (int iq = 0; iq < ctl->nq; iq++)
-    NC_PUT_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
-
-  /* Close file... */
-  NC(nc_close(ncid));
-
 }
 
 /*****************************************************************************/
@@ -9444,6 +9443,99 @@ void write_met_bin_3d(
 
 /*****************************************************************************/
 
+void write_output(
+  const char *dirname,
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  double t) {
+
+  char ext[10], filename[2 * LEN];
+
+  double r;
+
+  int year, mon, day, hour, min, sec;
+
+  /* Get time... */
+  jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+
+  /* Update host... */
+#ifdef _OPENACC
+  if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
+      || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
+      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
+      || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
+      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
+      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+  }
+#endif
+
+  /* Write atmospheric data... */
+  if (ctl->atm_basename[0] != '-' &&
+      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
+    if (ctl->atm_type_out == 0)
+      sprintf(ext, "tab");
+    else if (ctl->atm_type_out == 1)
+      sprintf(ext, "bin");
+    else if (ctl->atm_type_out == 2)
+      sprintf(ext, "nc");
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
+    write_atm(filename, ctl, atm, t);
+  }
+
+  /* Write gridded data... */
+  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->grid_basename, year, mon, day, hour, min,
+	    ctl->grid_type == 0 ? "tab" : "nc");
+    write_grid(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write CSI data... */
+  if (ctl->csi_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
+    write_csi(filename, ctl, atm, t);
+  }
+
+  /* Write ensemble data... */
+  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->ens_basename, year, mon, day, hour, min);
+    write_ens(filename, ctl, atm, t);
+  }
+
+  /* Write profile data... */
+  if (ctl->prof_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
+    write_prof(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write sample data... */
+  if (ctl->sample_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
+    write_sample(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write station data... */
+  if (ctl->stat_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
+    write_station(filename, ctl, atm, t);
+  }
+
+  /* Write VTK data... */
+  if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
+    static int nvtk;
+    sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
+    write_vtk(filename, ctl, atm, t);
+  }
+}
+
+/*****************************************************************************/
+
 void write_prof(
   const char *filename,
   ctl_t * ctl,
@@ -9918,100 +10010,6 @@ void write_station(
   if (t == ctl->t_stop)
     fclose(out);
 }
-
-/*****************************************************************************/
-
-void write_output(
-  const char *dirname,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
-
-  char ext[10], filename[2 * LEN];
-
-  double r;
-
-  int year, mon, day, hour, min, sec;
-
-  /* Get time... */
-  jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
-
-  /* Update host... */
-#ifdef _OPENACC
-  if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
-      || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
-      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
-      || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
-      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
-      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-  }
-#endif
-
-  /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' &&
-      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
-    if (ctl->atm_type_out == 0)
-      sprintf(ext, "tab");
-    else if (ctl->atm_type_out == 1)
-      sprintf(ext, "bin");
-    else if (ctl->atm_type_out == 2)
-      sprintf(ext, "nc");
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
-    write_atm(filename, ctl, atm, t);
-  }
-
-  /* Write gridded data... */
-  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->grid_basename, year, mon, day, hour, min,
-	    ctl->grid_type == 0 ? "tab" : "nc");
-    write_grid(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write CSI data... */
-  if (ctl->csi_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
-    write_csi(filename, ctl, atm, t);
-  }
-
-  /* Write ensemble data... */
-  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    dirname, ctl->ens_basename, year, mon, day, hour, min);
-    write_ens(filename, ctl, atm, t);
-  }
-
-  /* Write profile data... */
-  if (ctl->prof_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
-    write_prof(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write sample data... */
-  if (ctl->sample_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
-    write_sample(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write station data... */
-  if (ctl->stat_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
-    write_station(filename, ctl, atm, t);
-  }
-
-  /* Write VTK data... */
-  if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
-    static int nvtk;
-    sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
-    write_vtk(filename, ctl, atm, t);
-  }
-}
-
 
 /*****************************************************************************/
 
