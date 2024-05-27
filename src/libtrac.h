@@ -31,7 +31,19 @@
   This reference manual provides information on the algorithms
   and data structures used in the code.
 
-  Further information can be found at: https://github.com/slcs-jsc/mptrac
+  The source code of MPTRAC is accessible from the git repository located at: https://github.com/slcs-jsc/mptrac
+  
+  Please see the README file in the git repository for introductory information.
+  
+  The MPTRAC user manual is accessible at: https://slcs-jsc.github.io/mptrac
+  
+  Please refer to the following papers for referencing the model:
+
+  Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022.
+  
+  Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
+
+  Further references are collected here: https://slcs-jsc.github.io/mptrac/references
 */
 
 #ifndef LIBTRAC_H
@@ -256,7 +268,22 @@
    Macros...
    ------------------------------------------------------------ */
 
-/*! Allocate and clear memory. */
+/**
+ * @brief Allocate memory for a pointer with error handling.
+ *
+ * This macro allocates memory for a pointer of a given type and size using the `calloc` function.
+ * It includes error handling to check if memory allocation was successful.
+ * If the code is being compiled with OpenACC support (_OPENACC macro defined), it additionally checks
+ * if the code is running on a GPU device, and if not, it raises an error.
+ *
+ * @param ptr Pointer variable to be allocated.
+ * @param type Data type of the pointer.
+ * @param n Number of elements to allocate memory for.
+ *
+ * @note If the code is compiled without OpenACC support, the conditional check for GPU device is skipped.
+ *
+ * @author Lars Hoffmann
+ */
 #ifdef _OPENACC
 #define ALLOC(ptr, type, n)				\
   if(acc_get_num_devices(acc_device_nvidia) <= 0)	\
@@ -269,89 +296,340 @@
     ERRMSG("Out of memory!");
 #endif
 
-/*! Get 2-D array index. */
+/**
+ * @brief Macro for computing the linear index of a 2D array element.
+ *
+ * The `ARRAY_2D` macro computes the linear index of a 2D array element based on
+ * the specified row index (`ix`), column index (`iy`), and number of columns (`ny`).
+ *
+ * @param ix Integer representing the row index of the 2D array element.
+ * @param iy Integer representing the column index of the 2D array element.
+ * @param ny Integer representing the number of columns in the 2D array.
+ * @return The computed linear index of the 2D array element.
+ *
+ * The macro computes the linear index using the formula: `(ix) * (ny) + (iy)`.
+ * This formula assumes row-major storage, where elements of each row are stored
+ * sequentially in memory.
+ *
+ * @author Lars Hoffmann
+ */
 #define ARRAY_2D(ix, iy, ny)			\
   ((ix) * (ny) + (iy))
 
-/*! Get 3-D array index. */
+/**
+ * @brief Compute the linear index of a 3D array element.
+ *
+ * This macro computes the linear index of a 3D array element based on the specified
+ * row index (`ix`), column index (`iy`), depth index (`iz`), number of columns (`ny`),
+ * and number of depths (`nz`).
+ *
+ * @param ix Row index of the 3D array element.
+ * @param iy Column index of the 3D array element.
+ * @param ny Number of columns in the 3D array.
+ * @param iz Depth index of the 3D array element.
+ * @param nz Number of depths in the 3D array.
+ * @return Linear index of the 3D array element.
+ *
+ * @author Lars Hoffmann
+ */
 #define ARRAY_3D(ix, iy, ny, iz, nz)		\
   (((ix)*(ny) + (iy)) * (nz) + (iz))
 
-/*! Arrhenius equation for temperature dependence of reaction rates. */
+/**
+ * @brief Calculate the Arrhenius rate constant.
+ *
+ * The Arrhenius equation is commonly used in chemical kinetics to describe the temperature dependence
+ * of reaction rates. This macro calculates the rate constant (k) based on the Arrhenius equation:
+ *
+ *            k = a * exp( -b / t )
+ *
+ * where:
+ *   - k is the rate constant.
+ *   - a is the pre-exponential factor or frequency factor.
+ *   - b is the activation energy.
+ *   - t is the temperature in Kelvin.
+ *
+ * @param a Pre-exponential factor or frequency factor.
+ * @param b Activation energy.
+ * @param t Temperature in Kelvin.
+ * @return Calculated rate constant based on the Arrhenius equation.
+ *
+ * @author Mingzhao Liu
+ */
 #define ARRHENIUS(a, b, t)			\
   ((a) * exp( -(b) / (t)))
 
-/*! Convert degrees to zonal distance. */
+/**
+ * @brief Convert a longitude difference to a distance in the x-direction (east-west) at a specific latitude.
+ *
+ * This macro calculates the distance in the x-direction (east-west) corresponding to a given longitude difference
+ * at a specific latitude using the formula:
+ *
+ *            dx = dlon * π * RE / 180 * cos(lat)
+ *
+ * where:
+ *   - dx is the distance in the x-direction (east-west).
+ *   - dlon is the difference in longitudes in degrees.
+ *   - RE is the Earth's radius.
+ *   - lat is the latitude in degrees.
+ *
+ * @param dlon Difference in longitudes in degrees.
+ * @param lat Latitude in degrees.
+ * @return Distance in the x-direction (east-west) corresponding to the given longitude difference at the specified latitude.
+ *
+ * @author Lars Hoffmann
+ */
 #define DEG2DX(dlon, lat)					\
   ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
 
-/*! Convert degrees to meridional distance. */
+/**
+ * @brief Convert a latitude difference to a distance in the y-direction (north-south).
+ *
+ * This macro calculates the distance in the y-direction (north-south) corresponding to a given latitude difference
+ * using the formula:
+ *
+ *            dy = dlat * π * RE / 180
+ *
+ * where:
+ *   - dy is the distance in the y-direction (north-south).
+ *   - dlat is the difference in latitudes in degrees.
+ *   - RE is the Earth's radius.
+ *
+ * @param dlat Difference in latitudes in degrees.
+ * @return Distance in the y-direction (north-south) corresponding to the given latitude difference.
+ *
+ * @author Lars Hoffmann
+ */
 #define DEG2DY(dlat)				\
   ((dlat) * M_PI * RE / 180.)
 
-/*! Convert pressure change to vertical distance. */
+/**
+ * @brief Convert a pressure difference to a height difference in the vertical direction.
+ *
+ * This macro calculates the change in height (altitude) corresponding to a given pressure difference
+ * using the formula:
+ *
+ *            dz = - (dp) * H0 / p
+ *
+ * where:
+ *   - dz is the change in height (altitude) in meters.
+ *   - dp is the pressure difference in hPa.
+ *   - H0 is a reference scale height in km.
+ *   - p is the reference pressure in hPa.
+ *
+ * @param dp Pressure difference in hPa.
+ * @param p Reference pressure in hPa.
+ * @return Change in height (altitude) in kilometers corresponding to the given pressure difference.
+ *
+ * @author Lars Hoffmann
+ */
 #define DP2DZ(dp, p)				\
   (- (dp) * H0 / (p))
 
-/*! Convert zonal distance to degrees. */
+/**
+ * @brief Convert a distance in kilometers to degrees longitude at a given latitude.
+ *
+ * This macro calculates the change in longitude in degrees corresponding to a given distance in kilometers
+ * at a specified latitude on the Earth's surface. It uses the formula: \n
+ * \f$ \text{degrees\_longitude} = \frac{\text{distance\_in\_meters} \times 180}{\pi \times \text{radius\_of\_Earth} \times \cos(\text{latitude\_in\_radians})} \f$
+ *
+ * @param dx Distance in kilometers.
+ * @param lat Latitude in degrees.
+ * @return Change in longitude in degrees.
+ *
+ * @note The latitude must be in the range [-89.999, 89.999] degrees.
+ * Otherwise, the macro return value will be zero. This avoids issues with the singularities at the poles.
+ *
+ * @author Lars Hoffmann
+ */
 #define DX2DEG(dx, lat)						\
   (((lat) < -89.999 || (lat) > 89.999) ? 0			\
    : (dx) * 180. / (M_PI * RE * cos((lat) / 180. * M_PI)))
 
-/*! Convert meridional distance to degrees. */
+/**
+ * @brief Convert a distance in kilometers to degrees latitude.
+ *
+ * This macro calculates the change in latitude in degrees corresponding to a given distance in kilometers
+ * on the Earth's surface. It uses the formula: \n
+ * \f$ \text{degrees\_latitude} = \frac{\text{distance\_in\_kilometers} \times 180}{\pi \times \text{radius\_of\_Earth}} \f$
+ *
+ * @param dy Distance in kilometers.
+ * @return Change in latitude in degrees.
+ *
+ * @author Lars Hoffmann
+ */
 #define DY2DEG(dy)				\
   ((dy) * 180. / (M_PI * RE))
 
-/*! Convert vertical distance to pressure change. */
+/**
+ * @brief Convert a change in altitude to a change in pressure.
+ *
+ * This macro calculates the change in pressure corresponding to a given change in altitude.
+ * It uses the hydrostatic equation: \n
+ * \f$ \text{pressure\_change} = -\left(\text{change\_in\_altitude} \times \frac{p}{H_0}\right) \f$
+ *
+ * @param dz Change in altitude in kilometers.
+ * @param p Current pressure in hPa.
+ * @return Change in pressure in hPa.
+ *
+ * @author Lars Hoffmann
+ */
 #define DZ2DP(dz, p)				\
   (-(dz) * (p) / H0)
 
-/*! Compute Cartesian distance between two vectors. */
+/**
+ * @brief Calculate the distance between two points in Cartesian coordinates.
+ *
+ * This macro calculates the Euclidean distance between two points in Cartesian coordinates.
+ * It uses the square root of the square of the distance obtained from the DIST2 macro.
+ *
+ * @param a Coordinates of the first point as an array of doubles.
+ * @param b Coordinates of the second point as an array of doubles.
+ * @return The distance between the two points.
+ *
+ * @author Lars Hoffmann
+ */
 #define DIST(a, b)				\
   sqrt(DIST2(a, b))
 
-/*! Compute squared distance between two vectors. */
+/**
+ * @brief Calculate the squared Euclidean distance between two points in Cartesian coordinates.
+ *
+ * This macro calculates the squared Euclidean distance between two points in Cartesian coordinates.
+ * It computes the sum of the squares of the differences of corresponding coordinates.
+ *
+ * @param a Coordinates of the first point as an array of doubles.
+ * @param b Coordinates of the second point as an array of doubles.
+ * @return The squared distance between the two points.
+ *
+ * @author Lars Hoffmann
+ */
 #define DIST2(a, b)                                                     \
   ((a[0]-b[0])*(a[0]-b[0])+(a[1]-b[1])*(a[1]-b[1])+(a[2]-b[2])*(a[2]-b[2]))
 
-/*! Compute dot product of two vectors. */
+/**
+ * @brief Calculate the dot product of two vectors.
+ *
+ * This macro computes the dot product of two vectors represented as arrays of doubles.
+ * It multiplies corresponding components of the vectors and sums the results.
+ *
+ * @param a The first vector as an array of doubles.
+ * @param b The second vector as an array of doubles.
+ * @return The dot product of the two vectors.
+ *
+ * @author Lars Hoffmann
+ */
 #define DOTP(a, b)				\
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 
-/*! Compute floating point modulo. */
+/**
+ * @brief Calculate the floating-point remainder of dividing x by y.
+ *
+ * This macro computes the floating-point remainder of dividing x by y.
+ * It calculates this remainder as x minus the integer part of (x / y) times y.
+ *
+ * @param x The dividend.
+ * @param y The divisor.
+ * @return The floating-point remainder of x divided by y.
+ *
+ * @note Macro has been added as a substitute when a GPU version of fmod() is missing.
+ *
+ * @author Lars Hoffmann
+ */
 #define FMOD(x, y)				\
   ((x) - (int) ((x) / (y)) * (y))
 
-/*! Read binary data. */
+/**
+ * @brief Read data from a file stream and store it in memory.
+ *
+ * This macro reads data of a specified type from the given input file stream and stores it in the specified memory location.
+ * It ensures that the correct amount of data is read from the file stream, and if not, it raises an error.
+ *
+ * @param ptr Pointer to the memory location where the data will be stored.
+ * @param type Type of the data elements to be read.
+ * @param size Number of elements to read.
+ * @param in File stream from which to read the data.
+ *
+ * @author Lars Hoffmann
+ */
 #define FREAD(ptr, type, size, in) {					\
     if(fread(ptr, sizeof(type), size, in)!=size)			\
       ERRMSG("Error while reading!");					\
   }
 
-/*! Write binary data. */
+/**
+ * @brief Write data from memory to a file stream.
+ *
+ * This macro writes data of a specified type from the specified memory location to the given output file stream.
+ * It ensures that the correct amount of data is written to the file stream, and if not, it raises an error.
+ *
+ * @param ptr Pointer to the memory location containing the data to be written.
+ * @param type Type of the data elements to be written.
+ * @param size Number of elements to write.
+ * @param out File stream to which the data will be written.
+ *
+ * @author Lars Hoffmann
+ */
 #define FWRITE(ptr, type, size, out) {					\
     if(fwrite(ptr, sizeof(type), size, out)!=size)			\
       ERRMSG("Error while writing!");					\
   }
 
-/*! Initialize cache variables for interpolation. */
+/**
+ * @brief Initialize arrays for interpolation.
+ *
+ * This macro initializes arrays used for interpolation. It sets the weights `cw` and indices `ci` to zero.
+ * These arrays are used during interpolation to store the interpolation weights and indices.
+ *
+ * @author Lars Hoffmann
+ */
 #define INTPOL_INIT						\
   double cw[4] = {0.0, 0.0, 0.0, 0.0}; int ci[3] = {0, 0, 0};
 
-/*! 2-D interpolation of a meteo variable. */
+/**
+ * @brief Perform 2D interpolation for a meteorological variable.
+ *
+ * This macro performs 2D interpolation for a given meteorological variable at a specific time and location.
+ *
+ * @param var The variable to interpolate.
+ * @param init A flag indicating whether to initialize the interpolation arrays (`cw` and `ci`). Set to 1 for initialization, 0 otherwise.
+ * @return The interpolated value of the variable `var`.
+ *
+ * @author Lars Hoffmann
+ */
 #define INTPOL_2D(var, init)						\
   intpol_met_time_2d(met0, met0->var, met1, met1->var,			\
 		     atm->time[ip], atm->lon[ip], atm->lat[ip],		\
 		     &var, ci, cw, init);
 
-/*! 3-D interpolation of a meteo variable. */
+/**
+ * @brief Perform 3D interpolation for a meteorological variable.
+ *
+ * This macro performs 3D interpolation for a given meteorological variable at a specific time, pressure level, and location.
+ *
+ * @param var The variable to interpolate.
+ * @param init A flag indicating whether to initialize the interpolation arrays (`cw` and `ci`). Set to 1 for initialization, 0 otherwise.
+ * @return The interpolated value of the variable `var`.
+ *
+ * @author Lars Hoffmann
+ */
 #define INTPOL_3D(var, init)						\
   intpol_met_time_3d(met0, met0->var, met1, met1->var,			\
 		     atm->time[ip], atm->p[ip],				\
 		     atm->lon[ip], atm->lat[ip],			\
 		     &var, ci, cw, init);
 
-/*! Spatial interpolation of all meteo data. */
+/**
+ * @brief Interpolate multiple meteorological variables in space.
+ *
+ * This macro performs spatial interpolation for multiple meteorological variables at a given pressure level, longitude, and latitude.
+ *
+ * @param p The pressure level at which to interpolate the variables.
+ * @param lon The longitude at which to interpolate the variables.
+ * @param lat The latitude at which to interpolate the variables.
+ *
+ * @author Lars Hofmann
+ */
 #define INTPOL_SPACE_ALL(p, lon, lat) {					\
     intpol_met_space_3d(met, met->z, p, lon, lat, &z, ci, cw, 1);	\
     intpol_met_space_3d(met, met->t, p, lon, lat, &t, ci, cw, 0);	\
@@ -387,7 +665,18 @@
     intpol_met_space_2d(met, met->o3c, lon, lat, &o3c, ci, cw, 0);	\
   }
 
-/*! Temporal interpolation of all meteo data. */
+/**
+ * @brief Interpolate multiple meteorological variables in time.
+ *
+ * This macro performs temporal interpolation for multiple meteorological variables at a given time, pressure level, longitude, and latitude.
+ *
+ * @param time The time at which to interpolate the variables.
+ * @param p The pressure level at which to interpolate the variables.
+ * @param lon The longitude at which to interpolate the variables.
+ * @param lat The latitude at which to interpolate the variables.
+ *
+ * @author Lars Hoffmann
+ */
 #define INTPOL_TIME_ALL(time, p, lon, lat) {				\
     intpol_met_time_3d(met0, met0->z, met1, met1->z, time, p, lon, lat, &z, ci, cw, 1); \
     intpol_met_time_3d(met0, met0->t, met1, met1->t, time, p, lon, lat, &t, ci, cw, 0); \
@@ -423,16 +712,50 @@
     intpol_met_time_2d(met0, met0->o3c, met1, met1->o3c, time, lon, lat, &o3c, ci, cw, 0); \
   }
 
-/*! Calculate lapse rate between pressure levels. */
+/**
+ * @brief Calculate lapse rate.
+ *
+ * This macro calculates the lapse rate between two pressure levels given their temperatures and pressures.
+ * 
+ * @param p1 Pressure at the first level (in hPa).
+ * @param t1 Temperature at the first level (in K).
+ * @param p2 Pressure at the second level (in hPa).
+ * @param t2 Temperature at the second level (in K).
+ * @return The lapse rate (in K/km).
+ *
+ * @author Lars Hoffmann
+ */
 #define LAPSE(p1, t1, p2, t2)						\
   (1e3 * G0 / RA * ((t2) - (t1)) / ((t2) + (t1))			\
    * ((p2) + (p1)) / ((p2) - (p1)))
 
-/*! Compute linear interpolation. */
+/**
+ * @brief Linear interpolation.
+ *
+ * This macro performs linear interpolation to estimate the value of y at a given x based on two points (x0, y0) and (x1, y1).
+ * 
+ * @param x0 X-coordinate of the first point.
+ * @param y0 Y-coordinate of the first point.
+ * @param x1 X-coordinate of the second point.
+ * @param y1 Y-coordinate of the second point.
+ * @param x The x-coordinate at which to estimate the y-value.
+ * @return The estimated y-value at the given x-coordinate.
+ *
+ * @author Lars Hoffmann
+ */
 #define LIN(x0, y0, x1, y1, x)			\
   ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
 
-/*! Write header for meteo data files. */
+/**
+ * @brief Write header for meteorological data file.
+ *
+ * This macro writes a header to a meteorological data file, providing information about the variables
+ * stored in the file and their corresponding columns.
+ *
+ * @param out Pointer to the file stream where the header will be written.
+ *
+ * @author Lars Hoffmann
+ */
 #define MET_HEADER							\
   fprintf(out,								\
 	  "# $1 = time [s]\n"						\
@@ -490,25 +813,75 @@
 	  "# $49 = number of tropopause data points\n"			\
 	  "# $50 = number of CAPE data points\n");			\
 
-/*! Calculate molecular density of an ideal gas. */
+/**
+ * @brief Calculate the density of a gas molecule.
+ *
+ * This macro calculates the density of a gas molecule using the provided pressure
+ * and temperature values.
+ *
+ * @param p Pressure of the gas in Pascals.
+ * @param t Temperature of the gas in Kelvin.
+ * @return Density of the gas molecule in kg/m^3.
+ *
+ * @author Lars Hoffmann
+ */
 #define MOLEC_DENS(p,t)			\
   (AVO * 1e-6 * ((p) * 100) / (RI * (t)))
 
-/*! Execute netCDF library command and check result. */
+/**
+ * @brief Execute a NetCDF command and check for errors.
+ *
+ * This macro executes a NetCDF command and checks the result. If the result
+ * indicates an error, it prints the error message using ERRMSG.
+ *
+ * @param cmd NetCDF command to execute.
+ *
+ * @author Lars Hoffmann
+ */
 #define NC(cmd) {				     \
     int nc_result=(cmd);			     \
     if(nc_result!=NC_NOERR)			     \
       ERRMSG("%s", nc_strerror(nc_result));	     \
   }
 
-/*! Define netCDF variable. */
+/**
+ * @brief Define a NetCDF variable with attributes.
+ *
+ * This macro defines a NetCDF variable with the specified name, data type,
+ * dimensions, long name, and units. It also sets the "long_name" and "units"
+ * attributes for the variable.
+ *
+ * @param varname Name of the variable.
+ * @param type Data type of the variable.
+ * @param ndims Number of dimensions for the variable.
+ * @param dims Array of dimension IDs.
+ * @param long_name Long name of the variable.
+ * @param units Units of the variable.
+ *
+ * @author Lars Hoffmann
+ */
 #define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
     NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
     NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
   }
 
-/*! Read netCDF double array. */
+/**
+ * @brief Retrieve a double-precision variable from a NetCDF file.
+ *
+ * This macro retrieves a double-precision variable from a NetCDF file. It first
+ * checks if the variable exists in the file and then reads its data into the
+ * specified pointer. If the `force` parameter is set to true, it forces the
+ * retrieval of the variable, raising an error if the variable does not exist.
+ * If `force` is false, it retrieves the variable if it exists and issues a warning
+ * if it does not.
+ *
+ * @param varname Name of the variable to retrieve.
+ * @param ptr Pointer to the memory location where the data will be stored.
+ * @param force Boolean flag indicating whether to force retrieval (true) or not (false).
+ *
+ * @author Lars Hoffmann
+ */
 #define NC_GET_DOUBLE(varname, ptr, force) {			\
     if(force) {							\
       NC(nc_inq_varid(ncid, varname, &varid));			\
@@ -521,7 +894,21 @@
     }								\
   }
 
-/*! Read netCDF dimension. */
+/**
+ * @brief Inquire the length of a dimension in a NetCDF file.
+ *
+ * This macro retrieves the length of a specified dimension from a NetCDF file.
+ * It checks if the length of the dimension is within a specified range and 
+ * assigns the length to the provided pointer. If the length is outside the 
+ * specified range, an error message is raised.
+ *
+ * @param dimname Name of the dimension to inquire.
+ * @param ptr Pointer to an integer where the dimension length will be stored.
+ * @param min Minimum acceptable length for the dimension.
+ * @param max Maximum acceptable length for the dimension.
+ *
+ * @author Lars Hoffmann
+ */
 #define NC_INQ_DIM(dimname, ptr, min, max) {		\
     int dimid; size_t naux;				\
     NC(nc_inq_dimid(ncid, dimname, &dimid));		\
@@ -531,7 +918,20 @@
       ERRMSG("Dimension %s is out of range!", dimname);	\
   }
 
-/*! Write netCDF double array. */
+/**
+ * @brief Write double precision data to a NetCDF variable.
+ *
+ * This macro writes data to a specified NetCDF variable. It can handle both 
+ * full variable writes and hyperslab writes depending on the `hyperslab` 
+ * parameter. If `hyperslab` is true, the data is written as a hyperslab; 
+ * otherwise, the entire variable is written.
+ *
+ * @param varname Name of the NetCDF variable to write to.
+ * @param ptr Pointer to the data to be written.
+ * @param hyperslab Boolean indicating whether to write the data as a hyperslab.
+ *
+ * @author Lars Hoffmann
+ */
 #define NC_PUT_DOUBLE(varname, ptr, hyperslab) {		\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
@@ -541,27 +941,21 @@
     }								\
   }
 
-/*! Write netCDF integer array. */
-#define NC_PUT_INT(varname, ptr, hyperslab) {			\
-    NC(nc_inq_varid(ncid, varname, &varid));			\
-    if(hyperslab) {						\
-      NC(nc_put_vara_int(ncid, varid, start, count, ptr));	\
-    } else {							\
-      NC(nc_put_var_int(ncid, varid, ptr));			\
-    }								\
-  }
-
-/*! Set netCDF attribute. */
-#define NC_PUT_ATT(varname, attname, text) {				\
-    NC(nc_inq_varid(ncid, varname, &varid));				\
-    NC(nc_put_att_text(ncid, varid, attname, strnlen(text, LEN), text)); \
-  }
-
-/*! Set netCDF global attribute. */
-#define NC_PUT_ATT_GLOBAL(attname, text)				\
-  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strnlen(text, LEN), text));
-
-/*! Write netCDF float array. */
+/**
+ * @brief Write a float array to a NetCDF file.
+ *
+ * This macro writes a float array to a specified variable in a NetCDF file. 
+ * Depending on the value of the hyperslab parameter, the data can be written 
+ * as a hyperslab or as a whole variable.
+ *
+ * @param varname Name of the variable to which the float array will be written.
+ * @param ptr Pointer to the float array to be written.
+ * @param hyperslab Boolean flag indicating if the data should be written as a hyperslab. 
+ *        - If true, the data will be written as a hyperslab using the start and count arrays.
+ *        - If false, the data will be written to the entire variable.
+ *
+ * @author Lars Hoffmann
+ */
 #define NC_PUT_FLOAT(varname, ptr, hyperslab) {			\
     NC(nc_inq_varid(ncid, varname, &varid));			\
     if(hyperslab) {						\
@@ -571,15 +965,107 @@
     }								\
   }
 
-/*! Compute nearest neighbor interpolation. */
+/**
+ * @brief Write integer data to a NetCDF variable.
+ *
+ * This macro writes data to a specified NetCDF variable. It can handle both 
+ * full variable writes and hyperslab writes depending on the `hyperslab` 
+ * parameter. If `hyperslab` is true, the data is written as a hyperslab; 
+ * otherwise, the entire variable is written.
+ *
+ * @param varname Name of the NetCDF variable to write to.
+ * @param ptr Pointer to the data to be written.
+ * @param hyperslab Boolean indicating whether to write the data as a hyperslab.
+ *
+ * @author Lars Hoffmann
+ */
+#define NC_PUT_INT(varname, ptr, hyperslab) {			\
+    NC(nc_inq_varid(ncid, varname, &varid));			\
+    if(hyperslab) {						\
+      NC(nc_put_vara_int(ncid, varid, start, count, ptr));	\
+    } else {							\
+      NC(nc_put_var_int(ncid, varid, ptr));			\
+    }								\
+  }
+
+/**
+ * @brief Add a text attribute to a NetCDF variable.
+ *
+ * This macro adds a text attribute to a specified NetCDF variable. It first 
+ * retrieves the variable ID using its name, then it attaches the text attribute 
+ * to the variable.
+ *
+ * @param varname Name of the NetCDF variable to which the attribute will be added.
+ * @param attname Name of the attribute to be added.
+ * @param text Text of the attribute to be added.
+ *
+ * @author Lars Hoffmann
+ */
+#define NC_PUT_ATT(varname, attname, text) {				\
+    NC(nc_inq_varid(ncid, varname, &varid));				\
+    NC(nc_put_att_text(ncid, varid, attname, strnlen(text, LEN), text)); \
+  }
+
+/**
+ * @brief Add a global text attribute to a NetCDF file.
+ *
+ * This macro adds a text attribute to the global attributes of a NetCDF file.
+ * It directly attaches the attribute to the file, rather than to a specific variable.
+ *
+ * @param attname Name of the global attribute to be added.
+ * @param text Text of the attribute to be added.
+ *
+ * @author Lars Hoffmann
+ */
+#define NC_PUT_ATT_GLOBAL(attname, text)				\
+  NC(nc_put_att_text(ncid, NC_GLOBAL, attname, strnlen(text, LEN), text));
+
+/**
+ * @brief Perform nearest-neighbor interpolation.
+ *
+ * This macro returns the value of the nearest neighbor (y0 or y1) for a given x value. 
+ * It compares the distances between x and x0, and between x and x1, and returns the y 
+ * value corresponding to the closer x value.
+ *
+ * @param x0 The x-coordinate of the first point.
+ * @param y0 The y-coordinate of the first point.
+ * @param x1 The x-coordinate of the second point.
+ * @param y1 The y-coordinate of the second point.
+ * @param x The x-coordinate for which the nearest neighbor is to be found.
+ * @return The y-coordinate of the nearest neighbor (either y0 or y1).
+ *
+ * @author Lars Hoffmann
+ */
 #define NN(x0, y0, x1, y1, x)				\
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))
 
-/*! Compute norm of a vector. */
+/**
+ * @brief Compute the norm (magnitude) of a vector.
+ *
+ * This macro computes the Euclidean norm (magnitude) of a vector `a` using the dot product of the vector with itself.
+ * The vector is assumed to have three components: a[0], a[1], and a[2].
+ *
+ * @param a The vector for which the norm is to be computed.
+ * @return The Euclidean norm of the vector.
+ *
+ * @author Lars Hoffmann
+ */
 #define NORM(a)					\
   sqrt(DOTP(a, a))
 
-/*! Loop over particles. */
+/**
+ * @brief Loop over particle indices with OpenACC acceleration.
+ *
+ * This macro defines a loop over particle indices from `ip0` to `ip1` with optional checking of `dt`.
+ * If `_OPENACC` is defined, the loop is accelerated using OpenACC directives. Otherwise, OpenMP parallelization is used.
+ * 
+ * @param ip0 The starting index of the loop (inclusive).
+ * @param ip1 The ending index of the loop (exclusive).
+ * @param check_dt Flag indicating whether to check the array `dt` for non-zero values.
+ * @param ... Optional pragma directives to be applied.
+ *
+ * @author Lars Hoffmann
+ */
 #ifdef _OPENACC
 #define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
   const int ip0_const = ip0;                            \
@@ -597,45 +1083,234 @@
     if (!check_dt || dt[ip] != 0)
 #endif
 
-/*! Convert altitude to pressure. */
+/**
+ * @brief Compute pressure at given altitude.
+ *
+ * This macro calculates the pressure at a given altitude using the barometric formula.
+ * 
+ * @param z The altitude in kilometers.
+ * @return The pressure in hPa at the given altitude.
+ *
+ * The barometric formula used for this calculation is: \f$ P(z) = P_0 \cdot e^{-(z / H_0)} \f$,
+ * where:
+ * - \f$ P(z) \f$ is the pressure at altitude \f$ z \f$,
+ * - \f$ P_0 \f$ is the standard pressure,
+ * - \f$ H_0 \f$ is the scale height.
+ *
+ * Note: The constants \f$ P_0 \f$ and \f$ H_0 \f$ must be defined before using this macro.
+ *
+ * @author Lars Hoffmann
+ */
 #define P(z)					\
   (P0 * exp(-(z) / H0))
 
-/*! Compute saturation pressure over water (WMO, 2018). */
+/**
+ * @brief Compute saturation pressure over water.
+ *
+ * This macro calculates the saturation pressure over water based on the WMO (2018) formula.
+ * 
+ * @param t The temperature in degrees Celsius.
+ * @return The saturation pressure over water at the given temperature.
+ *
+ * The saturation pressure over water is calculated using the formula:
+ * \f$ P_{\text{sat}}(t) = 6.112 \cdot e^{17.62 \cdot \frac{(t - T_0)}{243.12 + (t - T_0)}} \f$,
+ * where:
+ * - \f$ P_{\text{sat}}(t) \f$ is the saturation pressure over water at temperature \f$ t \f$,
+ * - \f$ T_0 \f$ is the reference temperature (0°C).
+ *
+ * Note: The constants \f$ T_0 \f$ must be defined before using this macro.
+ *
+ * @author Lars Hoffmann
+ */
 #define PSAT(t)							\
   (6.112 * exp(17.62 * ((t) - T0) / (243.12 + (t) - T0)))
 
-/*! Compute saturation pressure over ice (WMO, 2018). */
+/**
+ * @brief Compute saturation pressure over ice (WMO, 2018).
+ *
+ * This macro calculates the saturation pressure over ice based on the WMO (2018) formula.
+ * 
+ * @param t The temperature in K.
+ * @return The saturation pressure over ice at the given temperature.
+ *
+ * The saturation pressure over ice is calculated using the formula:
+ * \f$ P_{\text{ice}}(t) = 6.112 \cdot e^{22.46 \cdot \frac{(t - T_0)}{272.62 + (t - T_0)}} \f$,
+ * where:
+ * - \f$ P_{\text{ice}}(t) \f$ is the saturation pressure over ice at temperature \f$ t \f$,
+ * - \f$ T_0 \f$ is the reference temperature (0°C).
+ *
+ * Note: The constant \f$ T_0 \f$ must be defined before using this macro.
+ *
+ * @author Lars Hoffmann
+ */
 #define PSICE(t)						\
   (6.112 * exp(22.46 * ((t) - T0) / (272.62 + (t) - T0)))
 
-/*! Calculate partial water vapor pressure. */
+/**
+ * @brief Calculate partial water vapor pressure.
+ *
+ * This macro calculates the partial water vapor pressure using the given total pressure and water vapor mixing ratio.
+ * 
+ * @param p The total pressure in hPa (hectopascals).
+ * @param h2o The water vapor mixing ratio in ppv (parts per volume).
+ * @return The partial water vapor pressure.
+ *
+ * The partial water vapor pressure is calculated using the formula:
+ * \f$ P_{\text{w}}(p, h_2o) = \frac{p \cdot \max(h_2o, 0.1 \times 10^{-6})}{1 + (1 - \epsilon) \cdot \max(h_2o, 0.1 \times 10^{-6})} \f$,
+ * where:
+ * - \f$ P_{\text{w}}(p, h_2o) \f$ is the partial water vapor pressure,
+ * - \f$ p \f$ is the total pressure in hPa,
+ * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv,
+ * - \f$ \epsilon \f$ is the factor to account for saturation vapor pressure over water.
+ *
+ * Note: The constant \f$ \epsilon \f$ must be defined before using this macro.
+ * 
+ * @author Lars Hoffmann
+ */
 #define PW(p, h2o)					\
   ((p) * GSL_MAX((h2o), 0.1e-6)				\
    / (1. + (1. - EPS) * GSL_MAX((h2o), 0.1e-6)))
 
-/*! Compute relative humidity over water. */
+/**
+ * @brief Compute relative humidity over water.
+ *
+ * This macro calculates the relative humidity over water using the given total pressure, temperature, and water vapor mixing ratio.
+ * 
+ * @param p The total pressure in hPa.
+ * @param t The temperature in K.
+ * @param h2o The water vapor mixing ratio in ppv (parts per volume).
+ * @return The relative humidity over water in percentage.
+ *
+ * The relative humidity over water is calculated using the formula:
+ * \f$ RH_{\text{w}}(p, t, h_2o) = \frac{P_{\text{w}}(p, h_2o)}{P_{\text{sat}}(t)} \times 100 \f$,
+ * where:
+ * - \f$ RH_{\text{w}}(p, t, h_2o) \f$ is the relative humidity over water,
+ * - \f$ P_{\text{w}}(p, h_2o) \f$ is the partial water vapor pressure,
+ * - \f$ P_{\text{sat}}(t) \f$ is the saturation pressure over water at the given temperature,
+ * - \f$ p \f$ is the total pressure in hPa,
+ * - \f$ t \f$ is the temperature in Kelvin,
+ * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
+ *
+ * Note: The macros PW() and PSAT() must be defined before using this macro.
+ * 
+ * @author Lars Hoffmann
+ */
 #define RH(p, t, h2o)				\
   (PW(p, h2o) / PSAT(t) * 100.)
 
-/*! Compute relative humidity over ice. */
+/**
+ * @brief Compute relative humidity over ice.
+ *
+ * This macro calculates the relative humidity over ice using the given total pressure, temperature, and water vapor mixing ratio.
+ * 
+ * @param p The total pressure in hPa.
+ * @param t The temperature in K.
+ * @param h2o The water vapor mixing ratio in ppv (parts per volume).
+ * @return The relative humidity over ice in percentage.
+ *
+ * The relative humidity over ice is calculated using the formula:
+ * \f$ RH_{\text{ice}}(p, t, h_2o) = \frac{P_{\text{w}}(p, h_2o)}{P_{\text{ice}}(t)} \times 100 \f$,
+ * where:
+ * - \f$ RH_{\text{ice}}(p, t, h_2o) \f$ is the relative humidity over ice,
+ * - \f$ P_{\text{w}}(p, h_2o) \f$ is the partial water vapor pressure,
+ * - \f$ P_{\text{ice}}(t) \f$ is the saturation pressure over ice at the given temperature,
+ * - \f$ p \f$ is the total pressure in hPa,
+ * - \f$ t \f$ is the temperature in Kelvin,
+ * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
+ *
+ * Note: The macros PW() and PSICE() must be defined before using this macro.
+ * 
+ * @author Lars Hoffmann
+ */
 #define RHICE(p, t, h2o)			\
   (PW(p, h2o) / PSICE(t) * 100.)
 
-/*! Compute density of air. */
+/**
+ * @brief Compute density of air.
+ *
+ * This macro calculates the density of air using the given total pressure and temperature.
+ * 
+ * @param p The total pressure in hPa.
+ * @param t The temperature in K.
+ * @return The density of air in kg/m^3.
+ *
+ * The density of air is calculated using the formula:
+ * \f$ \rho(p, t) = \frac{100 \times p}{R_a \times t} \f$,
+ * where:
+ * - \f$ \rho(p, t) \f$ is the density of air,
+ * - \f$ p \f$ is the total pressure in hPa,
+ * - \f$ t \f$ is the temperature in Kelvin,
+ * - \f$ R_a \f$ is the specific gas constant for dry air (287.05 J/(kg·K)).
+ *
+ * @author Lars Hoffmann
+ */
 #define RHO(p, t)				\
   (100. * (p) / (RA * (t)))
 
-/*! Roeth approximation formula for photolysis reactions. */
+/**
+ * @brief Roeth approximation formula for photolysis reactions.
+ *
+ * This macro calculates the rate of a photolysis reaction using the Roeth approximation formula,
+ * which takes into account the solar zenith angle (SZA).
+ * 
+ * @param a Coefficient 'a' in the Roeth formula.
+ * @param b Coefficient 'b' in the Roeth formula.
+ * @param c Coefficient 'c' in the Roeth formula.
+ * @param sza The solar zenith angle in radians.
+ * @return The rate of the photolysis reaction.
+ *
+ * The Roeth approximation formula for photolysis reactions is given by:
+ * \f$ ROETH\_PHOTOL(a, b, c, sza) = 
+ *   \begin{cases} 
+ *     a \times \exp\left(b \times \left(1 - \frac{1}{\cos(c \times sza)}\right)\right), & \text{if } c \times sza < \frac{\pi}{2} \\
+ *     0, & \text{otherwise}
+ *   \end{cases}
+ * \f$
+ * 
+ * - 'a', 'b', and 'c' are coefficients specific to the photolysis reaction.
+ * - 'sza' is the solar zenith angle in radians.
+ *
+ * @author Mingzhao Liu
+ */
 #define ROETH_PHOTOL(a, b, c, sza)					\
   ((c)*(sza) < M_PI/2. ? (a) * exp((b) * (1 - 1/cos((c) * (sza)))) : 0)
 
-/*! Set atmospheric quantity value. */
+/**
+ * @brief Set atmospheric quantity value.
+ *
+ * This macro sets the value of a specific atmospheric quantity at a given index 'ip'.
+ * The macro first checks if the control index 'ctl->qnt' is non-negative before assigning the value,
+ * ensuring that the quantity index is valid.
+ * 
+ * @param qnt The index representing the atmospheric quantity to set.
+ * @param val The value to set for the atmospheric quantity.
+ *
+ * @note The macro assumes the existence of structures 'ctl' and 'atm' containing the control indices
+ *       and atmospheric data, respectively, and an index 'ip' representing the data point.
+ *
+ * @author Lars Hoffmann
+ */
 #define SET_ATM(qnt, val)			\
   if (ctl->qnt >= 0)				\
     atm->q[ctl->qnt][ip] = val;
 
-/*! Set atmospheric quantity index. */
+/**
+ * @brief Set atmospheric quantity index.
+ *
+ * This macro sets the index, long name, and unit of a specific atmospheric quantity based on its name.
+ * It compares the name parameter with the name of the atmospheric quantity stored in 'ctl->qnt_name'.
+ * If a match is found, it assigns the index to 'ctl->qnt', updates the long name, and updates the unit.
+ * 
+ * @param qnt The index representing the atmospheric quantity.
+ * @param name The name of the atmospheric quantity.
+ * @param longname The long name of the atmospheric quantity.
+ * @param unit The unit of the atmospheric quantity.
+ *
+ * @note The macro assumes the existence of structures 'ctl' containing control information.
+ *       It also assumes the presence of 'iq', representing the index of the atmospheric quantity.
+ *
+ * @author Lars Hoffmann
+ */
 #define SET_QNT(qnt, name, longname, unit)		\
   if (strcasecmp(ctl->qnt_name[iq], name) == 0) {	\
     ctl->qnt = iq;					\
@@ -643,57 +1318,271 @@
     sprintf(ctl->qnt_unit[iq], unit);			\
   } else
 
-/*! Compute specific humidity from water vapor volume mixing ratio. */
+/**
+ * @brief Compute specific humidity from water vapor volume mixing ratio.
+ *
+ * This macro calculates the specific humidity from the water vapor volume mixing ratio.
+ * Specific humidity represents the ratio of the mass of water vapor to the total mass of air and is dimensionless.
+ * 
+ * @param h2o The water vapor volume mixing ratio.
+ * @return The specific humidity.
+ *
+ * @note The macro assumes that 'EPS' is defined and represents the ratio of the molecular weight of water vapor to the molecular weight of dry air.
+ *
+ * @author Lars Hoffmann
+ */
 #define SH(h2o)					\
   (EPS * GSL_MAX((h2o), 0.1e-6))
 
-/*! Compute square of x. */
+/**
+ * @brief Compute the square of a value.
+ *
+ * This macro computes the square of the input value.
+ * 
+ * @param x The input value.
+ * @return The square of the input value.
+ *
+ * @author Lars Hoffmann
+ */
 #define SQR(x)					\
   ((x)*(x))
 
-/*! Swap macro. */
+/**
+ * @brief Swap two values.
+ *
+ * This macro swaps the values of two variables of the specified type.
+ * 
+ * @param x The first variable to be swapped.
+ * @param y The second variable to be swapped.
+ * @param type The type of the variables.
+ *
+ * @author Lars Hoffmann
+ */
 #define SWAP(x, y, type)			\
   do {type tmp = x; x = y; y = tmp;} while(0);
 
-/*! Calculate dew point temperature (WMO, 2018). */
+/**
+ * @brief Calculate dew point temperature.
+ *
+ * This macro computes the dew point temperature using the formula provided by the World Meteorological Organization (WMO, 2018).
+ * 
+ * @param p The atmospheric pressure in hPa.
+ * @param h2o The water vapor volume mixing ratio.
+ * @return The dew point temperature in Kelvin.
+ *
+ * Formula:
+ * \f[
+ * T_{\text{dew}} = T_0 + \frac{243.12 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
+ * \f]
+ * where:
+ * - \( T_{\text{dew}} \) is the dew point temperature.
+ * - \( T_0 \) is the reference temperature in Kelvin (typically 273.15 K).
+ * - \( P_W(p, h_{2}O) \) is the partial water vapor pressure.
+ * 
+ * @author Lars Hoffmann
+ */
 #define TDEW(p, h2o)				\
   (T0 + 243.12 * log(PW((p), (h2o)) / 6.112)	\
    / (17.62 - log(PW((p), (h2o)) / 6.112)))
 
-/*! Calculate frost point temperature (WMO, 2018). */
+/**
+ * @brief Calculate frost point temperature (WMO, 2018).
+ *
+ * This macro computes the frost point temperature using the formula provided by the World Meteorological Organization (WMO, 2018).
+ * 
+ * @param p The atmospheric pressure in hPa.
+ * @param h2o The water vapor volume mixing ratio.
+ * @return The frost point temperature in Kelvin.
+ *
+ * Formula:
+ * \f[
+ * T_{\text{ice}} = T_0 + \frac{272.62 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
+ * \f]
+ * where:
+ * - \( T_{\text{ice}} \) is the frost point temperature.
+ * - \( T_0 \) is the reference temperature in Kelvin (typically 273.15 K).
+ * - \( P_W(p, h_{2}O) \) is the partial water vapor pressure.
+ * 
+ * @author Lars Hoffmann
+ */
 #define TICE(p, h2o)				\
   (T0 + 272.62 * log(PW((p), (h2o)) / 6.112)	\
    / (22.46 - log(PW((p), (h2o)) / 6.112)))
 
-/*! Compute potential temperature. */
+/**
+ * @brief Compute potential temperature.
+ *
+ * This macro calculates the potential temperature of the atmosphere.
+ * 
+ * @param p The atmospheric pressure in hPa.
+ * @param t The temperature in Kelvin.
+ * @return The potential temperature in Kelvin.
+ *
+ * Formula:
+ * \f[
+ * \theta = T \left( \frac{1000}{P} \right)^{0.286}
+ * \f]
+ * where:
+ * - \( \theta \) is the potential temperature.
+ * - \( T \) is the temperature in Kelvin.
+ * - \( P \) is the atmospheric pressure in hPa.
+ * 
+ * @author Lars Hoffmann
+ */
 #define THETA(p, t)				\
   ((t) * pow(1000. / (p), 0.286))
 
-/*! Compute virtual potential temperature. */
+/**
+ * @brief Compute virtual potential temperature.
+ *
+ * This macro calculates the virtual potential temperature of the atmosphere,
+ * which takes into account the effect of water vapor on the atmosphere's
+ * buoyancy.
+ * 
+ * @param p The atmospheric pressure in hPa.
+ * @param t The temperature in Kelvin.
+ * @param h2o The water vapor volume mixing ratio (ppv).
+ * @return The virtual potential temperature in Kelvin.
+ *
+ * Formula:
+ * The virtual potential temperature (\f$ \theta_v \f$) is computed as
+ * \f[
+ * \theta_v = \theta \left( 1 + \frac{0.61 \cdot q}{\epsilon} \right)
+ * \f]
+ * where:
+ * - \( \theta_v \) is the virtual potential temperature.
+ * - \( \theta \) is the potential temperature.
+ * - \( q \) is the specific humidity.
+ * - \( \epsilon \) is the ratio of the molecular weight of water vapor to dry air.
+ * 
+ * @author Lars Hoffmann
+ */
 #define THETAVIRT(p, t, h2o)				\
   (TVIRT(THETA((p), (t)), GSL_MAX((h2o), 0.1e-6)))
 
-/*! Get string tokens. */
+/**
+ * @brief Get string tokens.
+ *
+ * This macro extracts tokens from a given string, typically used for parsing
+ * input lines.
+ * 
+ * @param line The input string containing tokens.
+ * @param tok A pointer to the token string.
+ * @param format The format string specifying the expected format of the token.
+ * @param var The variable to store the parsed token value.
+ *
+ * The macro tokenizes the input line using space and tab characters as delimiters.
+ * It then parses each token according to the specified format string and stores
+ * the parsed value in the provided variable.
+ * 
+ * @author Lars Hoffmann
+ */
 #define TOK(line, tok, format, var) {					\
     if(((tok)=strtok((line), " \t"))) {					\
       if(sscanf(tok, format, &(var))!=1) continue;			\
     } else ERRMSG("Error while reading!");				\
   }
 
-/*! Compute virtual temperature. */
+/**
+ * @brief Compute virtual temperature.
+ *
+ * This macro calculates the virtual temperature of air given its temperature
+ * and water vapor volume mixing ratio.
+ * 
+ * @param t The temperature of the air in Kelvin.
+ * @param h2o The water vapor volume mixing ratio.
+ * @return The virtual temperature of the air.
+ *
+ * The virtual temperature (T_v) is computed as the temperature (t) multiplied
+ * by (1 + (1 - EPS) * max(h2o, 0.1e-6)), where EPS is the ratio of the molar
+ * mass of water vapor to the molar mass of dry air.
+ * 
+ * @note
+ * EPS is typically defined as 0.622.
+ * 
+ * @author Lars Hoffmann
+ */
 #define TVIRT(t, h2o)					\
   ((t) * (1. + (1. - EPS) * GSL_MAX((h2o), 0.1e-6)))
 
-/*! Convert pressure to altitude. */
+/**
+ * @brief Convert pressure to altitude.
+ *
+ * This macro calculates the altitude from the given pressure using the
+ * barometric formula.
+ * 
+ * @param p The pressure in hPa (hectopascal).
+ * @return The altitude in kilometers (km).
+ *
+ * Formula:
+ * The altitude (z) is computed as H0 times the natural logarithm of the
+ * ratio of the reference pressure (P0) to the given pressure (p), where H0
+ * is the scale height and P0 is the reference pressure at sea level.
+ * 
+ * @note
+ * H0 and P0 are typically defined as constants specific to the atmosphere.
+ * 
+ * @author Lars Hoffmann
+ */
 #define Z(p)					\
   (H0 * log(P0 / (p)))
 
-/*! Calculate geopotential height difference. */
+/**
+ * @brief Calculate geopotential height difference.
+ *
+ * This macro calculates the geopotential height difference between two
+ * pressure levels using the hypsometric equation.
+ * 
+ * @param lnp0 The natural logarithm of the pressure at the first level.
+ * @param t0 The temperature at the first level in Kelvin (K).
+ * @param h2o0 The water vapor volume mixing ratio at the first level.
+ * @param lnp1 The natural logarithm of the pressure at the second level.
+ * @param t1 The temperature at the second level in Kelvin (K).
+ * @param h2o1 The water vapor volume mixing ratio at the second level.
+ * @return The geopotential height difference in kilometers (km).
+ *
+ * Formula:
+ * The geopotential height difference (dz) is computed as a function of the
+ * difference in natural logarithm of pressure (lnp) between the two levels,
+ * the average virtual temperature (ThetaVirt) of the two levels, the specific
+ * gas constant for dry air (RI), and the acceleration due to gravity at the
+ * surface of the Earth (G0).
+ * 
+ * @note
+ * The specific gas constant for dry air (RI), the molar mass of dry air (MA),
+ * and the acceleration due to gravity at the surface of the Earth (G0) are
+ * typically defined as constants specific to the atmosphere.
+ * 
+ * @author Lars Hoffmann
+ */
 #define ZDIFF(lnp0, t0, h2o0, lnp1, t1, h2o1)				\
   (RI / MA / G0 * 0.5 * (TVIRT((t0), (h2o0)) + TVIRT((t1), (h2o1)))	\
    * ((lnp0) - (lnp1)))
 
-/*! Calculate zeta vertical coordinate. */
+/**
+ * @brief Calculate potential vorticity using the Zeta approximation.
+ *
+ * This macro calculates the potential vorticity using the Zeta approximation,
+ * which is a function of pressure, surface pressure, and temperature.
+ * 
+ * @param ps Surface pressure in hPa.
+ * @param p Pressure at the given level in hPa.
+ * @param t Temperature at the given level in Kelvin (K).
+ * @return The potential vorticity.
+ *
+ * Formula:
+ * The potential vorticity (Zeta) is computed based on the given pressure (p),
+ * surface pressure (ps), and temperature (t). It involves the potential temperature
+ * (Theta) at the given pressure level.
+ * 
+ * @note
+ * The potential vorticity is approximated using the Zeta approximation, which
+ * includes conditions based on pressure ratio and a sinusoidal function.
+ * Adjust the constants if the approximation or conditions differ from the standard
+ * Zeta approximation formula.
+ * 
+ * @author Lars Hoffmann
+ */
 #define ZETA(ps, p, t)							\
   (((p) / (ps) <= 0.3 ? 1. :						\
     sin(M_PI / 2. * (1. - (p) / (ps)) / (1. - 0.3)))			\
