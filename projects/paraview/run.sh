@@ -41,7 +41,7 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 
 # Calculate trajectories...
 echo "data" > data/dirlist
-$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP $t1 \
+$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP "$t1" \
 	   VTK_BASENAME atm_plane VTK_SCALE 5
-$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP $t1 \
+$trac/trac data/dirlist trac.ctl atm_split.tab T_STOP "$t1" \
 	   VTK_BASENAME atm_sphere VTK_SCALE 100 VTK_SPHERE 1
