@@ -21,6 +21,8 @@ projects/meteo/era5/
 projects/meteo/gfs/
 projects/meteo/merra2/
 projects/meteo/ncep/
+!projects/paraview/
+projects/paraview/data/
 !projects/python/
 projects/python/plots/
 src/*.o
