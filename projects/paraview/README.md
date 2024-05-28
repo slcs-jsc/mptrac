@@ -83,6 +83,14 @@ ParaView images can be saved in various file image formats:
 
 - note that the font size of the text labels is fixed, while the image size of the screenshot may vary
 
+- example of a ParaView image with Cartesian coordinates:
+
+<p align="center"><img src="example_plane.png" width="80%"/></p>
+
+- example of a ParaView image with spherical coordinates:
+
+<p align="center"><img src="example_sphere.png" width="80%"/></p>
+
 ## Creating animations
 
 ParaView can be used to create animations of the data:
