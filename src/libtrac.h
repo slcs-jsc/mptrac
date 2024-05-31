@@ -1,8 +1,8 @@
 /*
   This file is part of MPTRAC.
   
-  MPTRAC is free software: you can redistribute it and/or modify
-  it under the terms of the GNU General Public License as published by
+  MPTRAC is free software: you can redistribute it and/or modify it
+  under the terms of the GNU General Public License as published by
   the Free Software Foundation, either version 3 of the License, or
   (at your option) any later version.
   
@@ -25,37 +25,64 @@
 /*! 
   \mainpage
   
-  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the free troposphere and stratosphere.
+  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
+  particle dispersion model for the free troposphere and stratosphere.
   
   \section Introduction
 
-  The source code of MPTRAC is available from the [git repository] (https://github.com/slcs-jsc/mptrac). Please see the [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md) in the git repository for introductory information. More information can be found in the [user manual](https://slcs-jsc.github.io/mptrac).
+  The source code of MPTRAC is available from the [git repository]
+  (https://github.com/slcs-jsc/mptrac). Please see the
+  [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
+  in the git repository for introductory information. More information
+  can be found in the [user
+  manual](https://slcs-jsc.github.io/mptrac).
   
-  This doxygen manual contains information about the algorithms and data structures used in the code. Please refer to the `libtrac.h' documentation for a first overview.
+  This doxygen manual contains information about the algorithms and
+  data structures used in the code. Please refer to the `libtrac.h'
+  documentation for a first overview.
   
   \section References
   
-  For citing the model in scientific publications, please see [CITATION.cff](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff) and refer to the following papers:
+  For citing the model in scientific publications, please see
+  [CITATION.cff](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff)
+  and refer to the following papers:
   
-  _Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022._
+  _Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach,
+  S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O.,
+  Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel
+  Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian
+  transport simulations on graphics processing units (GPUs),
+  Geosci. Model Dev., 15, 2731–2762,
+  https://doi.org/10.5194/gmd-15-2731-2022, 2022._
   
-  _Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016._
+  _Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein,
+  Lagrangian transport simulations of volcanic sulfur dioxide
+  emissions: Impact of meteorological data products,
+  J. Geophys. Res. Atmos., 121, 4651-4673,
+  https://doi.org/10.1002/2015JD023749, 2016._
 
-  Additional references are collected here: https://slcs-jsc.github.io/mptrac/references
+  Additional references are collected here:
+  https://slcs-jsc.github.io/mptrac/references
   
   \section License
   
-  MPTRAC is being develop at the Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany.
+  MPTRAC is being develop at the Jülich Supercomputing Centre,
+  Forschungszentrum Jülich, Germany.
 
-  MPTRAC is distributed under the terms of the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
+  MPTRAC is distributed under the terms of the [GNU General Public
+  License
+  v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
   
   \section Contact
   
-  You can submit bug reports or feature requests on the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
+  You can submit bug reports or feature requests on the [issue
+  tracker](https://github.com/slcs-jsc/mptrac/issues).
   
-  Proposed code changes and fixes can be submitted as [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
+  Proposed code changes and fixes can be submitted as [pull
+  requests](https://github.com/slcs-jsc/mptrac/pulls).
   
-  Please do not hesitate to contact us if you have any questions or need assistance: Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>
+  Please do not hesitate to contact us if you have any questions or
+  need assistance: Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>
 */
 
 #ifndef LIBTRAC_H
@@ -1609,7 +1636,33 @@
 #define LOGLEV 2
 #endif
 
-/*! Print log message. */
+/*!
+ * \brief Print a log message with a specified logging level.
+ *
+ * This macro prints a formatted log message to the standard output
+ * if the specified logging level meets certain conditions. The message
+ * will be indented if the logging level is greater than or equal to 2.
+ * 
+ * \param level The logging level of the message. This should be an integer value.
+ * \param ... The formatted message string and its arguments, similar to printf.
+ *
+ * \details
+ * The `LOG` macro provides a simple way to log messages with different levels
+ * of importance. The message is only printed if the specified `level` is less than
+ * or equal to the pre-defined `LOGLEV` macro. If the `level` is greater than or
+ * equal to 2, the message is preceded by two spaces for indentation.
+ *
+ * The macro expands to a block of code that:
+ * - Checks if the `level` is greater than or equal to 2, and if so, prints two spaces.
+ * - Checks if the `level` is less than or equal to `LOGLEV`, and if so, prints the
+ *   formatted message followed by a newline.
+ *
+ * \note
+ * The `LOGLEV` macro must be defined with an appropriate logging level
+ * before using the `LOG` macro.
+ * 
+ * @author Lars Hoffmann
+ */
 #define LOG(level, ...) {						\
     if(level >= 2)							\
       printf("  ");							\
@@ -1619,20 +1672,99 @@
     }									\
   }
 
-/*! Print warning message. */
+/*!
+ * \brief Print a warning message with contextual information.
+ *
+ * This macro prints a formatted warning message to the standard output,
+ * including the file name, function name, and line number where the warning
+ * occurred. The message is then passed to the `LOG` macro with a logging level
+ * of 0.
+ * 
+ * \param ... The formatted warning message string and its arguments, similar to printf.
+ *
+ * \details
+ * The `WARN` macro is used to print warning messages with additional context
+ * about where the warning was triggered. The message includes the following
+ * contextual information:
+ * - The name of the source file where the macro is called (`__FILE__`).
+ * - The name of the function where the macro is called (`__func__`).
+ * - The line number in the source file where the macro is called (`__LINE__`).
+ *
+ * After printing this contextual information, the macro uses the `LOG` macro
+ * with a logging level of 0 to print the actual warning message. This ensures
+ * that warning messages are always logged, regardless of the value of `LOGLEV`.
+ *
+ * \note
+ * The `LOG` macro must be defined before using the `WARN` macro.
+ * 
+ * @author Lars Hoffmann
+ */
 #define WARN(...) {							\
     printf("\nWarning (%s, %s, l%d): ", __FILE__, __func__, __LINE__);	\
     LOG(0, __VA_ARGS__);						\
   }
 
-/*! Print error message and quit program. */
+/*!
+ * \brief Print an error message with contextual information and terminate the program.
+ *
+ * This macro prints a formatted error message to the standard output,
+ * including the file name, function name, and line number where the error
+ * occurred. After printing the message, the program is terminated with
+ * an exit status indicating failure.
+ * 
+ * \param ... The formatted error message string and its arguments, similar to printf.
+ *
+ * \details
+ * The `ERRMSG` macro is used to report critical errors that require the
+ * program to terminate immediately. The message includes the following
+ * contextual information:
+ * - The name of the source file where the macro is called (`__FILE__`).
+ * - The name of the function where the macro is called (`__func__`).
+ * - The line number in the source file where the macro is called (`__LINE__`).
+ *
+ * After printing this contextual information, the macro uses the `LOG` macro
+ * with a logging level of 0 to print the actual error message. Finally, the
+ * program exits with a failure status (`EXIT_FAILURE`).
+ *
+ * \note
+ * The `LOG` macro must be defined before using the `ERRMSG` macro.
+ * 
+ * @author Lars Hoffmann
+ */
 #define ERRMSG(...) {							\
     printf("\nError (%s, %s, l%d): ", __FILE__, __func__, __LINE__);	\
     LOG(0, __VA_ARGS__);						\
     exit(EXIT_FAILURE);							\
   }
 
-/*! Print macro for debugging. */
+/*!
+ * \brief Print the value of a variable with contextual information.
+ *
+ * This macro prints the value of a variable to the standard output,
+ * including the file name, function name, and line number where the macro
+ * is called. The output also includes the variable's name and value in a
+ * formatted string.
+ * 
+ * \param format The format string used to print the variable's value, similar to printf.
+ * \param var The variable to be printed.
+ *
+ * \details
+ * The `PRINT` macro is used to output the value of a variable along with
+ * additional context about where the macro is called. The message includes:
+ * - The name of the source file where the macro is called (`__FILE__`).
+ * - The name of the function where the macro is called (`__func__`).
+ * - The line number in the source file where the macro is called (`__LINE__`).
+ * - The name of the variable being printed (`#var`).
+ * - The value of the variable, formatted according to the provided format string (`format`).
+ *
+ * This macro is particularly useful for debugging purposes, providing a
+ * convenient way to trace variable values and their locations in the code.
+ *
+ * \note
+ * The format string must be compatible with the type of the variable being printed.
+ * 
+ * @author Lars Hoffmann
+ */
 #define PRINT(format, var)						\
   printf("Print (%s, %s, l%d): %s= "format"\n",				\
 	 __FILE__, __func__, __LINE__, #var, var);
@@ -1644,22 +1776,75 @@
 /*! Maximum number of timers. */
 #define NTIMER 100
 
-/*! Print timers. */
+/*!
+ * \brief Print the current state of all timers.
+ *
+ * This macro calls the `timer` function with predefined arguments to
+ * signify the end of the timer logging process. It is used to print
+ * the results of all the timers that have been tracked.
+ *
+ * \note
+ * The `timer` function must be defined elsewhere in the codebase for this
+ * macro to function correctly.
+ * 
+ * @author Lars Hoffmann
+ */
 #define PRINT_TIMERS				\
   timer("END", "END", 1);
 
-/*! Select timer. */
+/*!
+ * \brief Select and start a timer with specific attributes.
+ *
+ * This macro stops the current timer (if any) and starts a new timer with
+ * the specified ID, group, and color. It uses the `NVTX_POP` and `NVTX_PUSH`
+ * macros for managing timer events and the `timer` function to log the timer
+ * start event.
+ *
+ * \param id The identifier for the timer.
+ * \param group The group name associated with the timer.
+ * \param color The color code associated with the timer for NVTX visualization.
+ *
+ * \note
+ * The `NVTX_POP`, `NVTX_PUSH`, and `timer` functions/macros must be defined
+ * elsewhere in the codebase for this macro to function correctly.
+ * 
+ * @author Lars Hoffmann
+ */
 #define SELECT_TIMER(id, group, color) {				\
     NVTX_POP;								\
     NVTX_PUSH(id, color);						\
     timer(id, group, 0);						\
   }
 
-/*! Start timers. */
+/*!
+ * \brief Starts a timer for tracking.
+ *
+ * This macro initializes the timer tracking process by pushing a start
+ * event onto the stack using the `NVTX_PUSH` macro with a predefined ID
+ * ("START") and color (`NVTX_CPU`).
+ *
+ * \note
+ * The `NVTX_PUSH` macro must be defined elsewhere in the codebase for this
+ * macro to function correctly.
+ * 
+ * @author Lars Hoffmann
+ */
 #define START_TIMERS				\
   NVTX_PUSH("START", NVTX_CPU);
 
-/*! Stop timers. */
+/*!
+ * \def STOP_TIMERS
+ * \brief Stop the current timer.
+ *
+ * This macro stops the current timer by popping the top event from the stack
+ * using the `NVTX_POP` macro.
+ *
+ * \note
+ * The `NVTX_POP` macro must be defined elsewhere in the codebase for this
+ * macro to function correctly.
+ * 
+ * @author Lars Hoffmann
+ */
 #define STOP_TIMERS				\
   NVTX_POP;
 
@@ -1688,7 +1873,32 @@
 /*! Dark red color code (writing data). */
 #define NVTX_WRITE 0xFF8B0000
 
-/*! Macro for calling nvtxRangePushEx. */
+/*!
+ * \brief Macro for calling `nvtxRangePushEx` to start a named and colored NVTX range.
+ *
+ * This macro initializes an `nvtxEventAttributes_t` structure with the provided title
+ * and color, then calls `nvtxRangePushEx` to mark the beginning of an NVTX range.
+ *
+ * \param range_title The title of the NVTX range, displayed in the NVTX visual profiler.
+ * \param range_color The color of the NVTX range, specified as an ARGB value.
+ *
+ * \details
+ * The macro sets up the `nvtxEventAttributes_t` structure with the following fields:
+ * - `version`: Set to `NVTX_VERSION`.
+ * - `size`: Set to `NVTX_EVENT_ATTRIB_STRUCT_SIZE`.
+ * - `messageType`: Set to `NVTX_MESSAGE_TYPE_ASCII` to indicate the message is an ASCII string.
+ * - `colorType`: Set to `NVTX_COLOR_ARGB` to specify the color format.
+ * - `color`: Set to the value of `range_color`.
+ * - `message.ascii`: Set to the value of `range_title`.
+ *
+ * It then calls `nvtxRangePushEx` with the initialized attributes to start the NVTX range.
+ *
+ * \note
+ * The NVTX (NVIDIA Tools Extension) library must be included and initialized in your project for
+ * this macro to function correctly. If NVTX is not available, an empty definition is provided.
+ * 
+ * @author Lars Hoffmann
+ */
 #define NVTX_PUSH(range_title, range_color) {		\
     nvtxEventAttributes_t eventAttrib = {0};		\
     eventAttrib.version = NVTX_VERSION;			\
@@ -1700,7 +1910,17 @@
     nvtxRangePushEx(&eventAttrib);			\
   }
 
-/*! Macro for calling nvtxRangePop. */
+/*!
+ * \brief Macro for calling `nvtxRangePop` to end the current NVTX range.
+ *
+ * This macro calls `nvtxRangePop` to mark the end of the most recently started NVTX range.
+ *
+ * \note
+ * The NVTX (NVIDIA Tools Extension) library must be included and initialized in your project for
+ * this macro to function correctly. If NVTX is not available, an empty definition is provided.
+ * 
+ * @author Lars Hoffmann
+ */
 #define NVTX_POP {				\
     nvtxRangePop();				\
   }
@@ -1716,7 +1936,26 @@
    Thrust...
    ------------------------------------------------------------ */
 
-/*! Wrapper to Thrust sorting function. */
+/*!
+ * \brief Wrapper to Thrust sorting function.
+ *
+ * This function serves as a wrapper for a Thrust sorting operation, sorting the array `c`
+ * and maintaining the correspondence with the `index` array.
+ *
+ * \param c Pointer to the array of double values to be sorted.
+ * \param n The number of elements in the array `c`.
+ * \param index Pointer to the array of indices, which will be updated to reflect the sorted order.
+ *
+ * \details
+ * The `thrustSortWrapper` function uses the Thrust library to sort the array `c` in ascending order.
+ * The `index` array is updated to reflect the new order of elements in `c` after sorting.
+ *
+ * This function is particularly useful when the sorted order of elements needs to be tracked by indices.
+ *
+ * \note
+ * - The `c` and `index` arrays must be of the same length `n`.
+ * - The function assumes that the Thrust library is properly included and configured in the project.
+ */
 void thrustSortWrapper(
   double *__restrict__ c,
   int n,
@@ -1726,7 +1965,13 @@ void thrustSortWrapper(
    Structs...
    ------------------------------------------------------------ */
 
-/*! Control parameters. */
+/**
+ * @brief Control parameters.
+ * 
+ * This structure contains all control parameters used by the MPTRAC model.
+ * A struct is used to collect this information so that it can easily passed
+ * on to functions.
+ */
 typedef struct {
 
   /*! Coupled use of pressure based modules and diabatic advection. 
@@ -2586,7 +2831,13 @@ typedef struct {
 
 } ctl_t;
 
-/*! Atmospheric data. */
+/**
+ * @brief Air parcel data.
+ * 
+ * This structure contains information related to air parcel data, 
+ * including the number of air parcels, their respective times, 
+ * pressures, longitudes, latitudes, and various user-defined attributes.
+ */
 typedef struct {
 
   /*! Number of air parcels. */
@@ -2609,7 +2860,12 @@ typedef struct {
 
 } atm_t;
 
-/*! Cache data. */
+/**
+ * @brief Cache data structure.
+ * 
+ * This structure contains data related to cached isosurface variables 
+ * and wind perturbations for a given set of data points.
+ */
 typedef struct {
 
   /*! Isosurface variables. */
@@ -2629,7 +2885,12 @@ typedef struct {
 
 } cache_t;
 
-/*! Climatological data in form of photolysis rates. */
+/**
+ * @brief Climatological data in the form of photolysis rates.
+ * 
+ * This structure contains climatological data related to photolysis rates
+ * at various pressure levels, solar zenith angles, and total ozone columns.
+ */
 typedef struct {
 
   /*! Number of pressure levels. */
@@ -2679,7 +2940,12 @@ typedef struct {
 
 } clim_photo_t;
 
-/*! Climatological data in form of time series. */
+/**
+ * @brief Climatological data in the form of time series.
+ * 
+ * This structure contains climatological data in the form of time series,
+ * representing the evolution of volume mixing ratio over time.
+ */
 typedef struct {
 
   /*! Number of timesteps. */
@@ -2693,7 +2959,13 @@ typedef struct {
 
 } clim_ts_t;
 
-/*! Climatological data in form of zonal means. */
+/**
+ * @brief Climatological data in the form of zonal means.
+ * 
+ * This structure contains climatological data organized as zonal means,
+ * representing the distribution of volume mixing ratio over latitudes
+ * and pressure levels across multiple timesteps.
+ */
 typedef struct {
 
   /*! Number of timesteps. */
@@ -2719,7 +2991,13 @@ typedef struct {
 
 } clim_zm_t;
 
-/*! Climatological data. */
+/**
+ * @brief Climatological data.
+ * 
+ * This structure represents climatological data containing various atmospheric parameters
+ * organized in different formats such as zonal means, time series, photolysis rates,
+ * and tropopause data.
+ */
 typedef struct {
 
   /*! Number of tropopause timesteps. */
@@ -2772,7 +3050,13 @@ typedef struct {
 
 } clim_t;
 
-/*! Meteo data. */
+/*!
+ * @brief Meteo data structure.
+ *
+ * This structure holds meteorological data such as time, dimensions, coordinates,
+ * surface properties, atmospheric profiles, and derived variables of a given
+ * meteorological model.
+ */
 typedef struct {
 
   /*! Time [s]. */
@@ -2931,10 +3215,10 @@ typedef struct {
  * to geographic coordinates (longitude, latitude, and altitude).
  * It uses the spherical Earth approximation for the conversion.
  *
- * @param[in] x Pointer to an array containing the Cartesian coordinates (x, y, z) in kilometers.
- * @param[out] z Pointer to a double where the computed altitude (above the reference ellipsoid) will be stored, in kilometers.
- * @param[out] lon Pointer to a double where the computed longitude (in degrees) will be stored.
- * @param[out] lat Pointer to a double where the computed latitude (in degrees) will be stored.
+ * @param x Pointer to an array containing the Cartesian coordinates (x, y, z) in kilometers.
+ * @param z Pointer to a double where the computed altitude (above the reference ellipsoid) will be stored, in kilometers.
+ * @param lon Pointer to a double where the computed longitude (in degrees) will be stored.
+ * @param lat Pointer to a double where the computed latitude (in degrees) will be stored.
  *
  * @author Lars Hoffmann
  */
@@ -3495,10 +3779,10 @@ void get_met_replace(
  * and altitude dimensions.
  *
  * @param met0 Pointer to the meteorological data at the first time step.
- * @param heights0 Array containing heights at the first time step.
+ * @param height0 Array containing heights at the first time step.
  * @param array0 Array containing meteorological variable values at the first time step.
  * @param met1 Pointer to the meteorological data at the second time step.
- * @param heights1 Array containing heights at the second time step.
+ * @param height1 Array containing heights at the second time step.
  * @param array1 Array containing meteorological variable values at the second time step.
  * @param ts Interpolation time (fractional time between met0 and met1).
  * @param height Altitude at which to interpolate.
@@ -3520,7 +3804,7 @@ void get_met_replace(
  * the interpolated variable value and stores it in the memory location pointed to
  * by `var`.
  *
- * @note Ensure that all arrays (`heights0`, `array0`, `heights1`, `array1`, `ci`, `cw`)
+ * @note Ensure that all arrays (`height0`, `array0`, `height1`, `array1`, `ci`, `cw`)
  *       have sufficient memory allocated before calling this function.
  *
  * @author Jan Clemens
@@ -4019,7 +4303,7 @@ int locate_reg(
  * @param np Size of the profile (number of data points).
  * @param lon_ap_ind Index of the longitude.
  * @param lat_ap_ind Index of the latitude.
- * @param height_ap Height value.
+ * @param alt_ap Height value.
  * @param ind Pointer to an array to store the resulting indices.
  *
  * The function calculates the indices corresponding to the specified height in the 3D irregular grid.
@@ -4162,7 +4446,7 @@ void module_bound_cond(
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param tt Time for which chemical grid is updated.
+ * @param t Time for which chemical grid is updated.
  *
  * @authors Mingzhao Liu
  * @authors Lars Hoffmann
@@ -5315,7 +5599,7 @@ int read_met(
  * @author Lars Hoffmann
  */
 void read_met_bin_2d(
-  FILE * out,
+  FILE * in,
   met_t * met,
   float var[EX][EY],
   char *varname);
