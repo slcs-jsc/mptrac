@@ -26,13 +26,12 @@ jobs:
     steps:
       - name: doxygen
         uses: actions/checkout@v4
-      - name: install
-        run: sudo apt-get update ; sudo apt install texlive-base texlive-latex-extra
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
             doxyfile-path: 'Doxyfile'
             working-directory: 'docs'
+            enable-latex: true
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v4
         with:
