@@ -90,7 +90,7 @@ This will run a series of tests sequentially. It will stop if any of the tests f
 
 ### Run the example
 
-A simple example is provided to illustrate how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
+An example is provided to illustrate how to simulate the dispersion of volcanic ash from the eruption of the Puyehue-Cordón Caulle volcano, Chile, in June 2011.
 
 The example can be found in the `projects/example/` subdirectory. The `projects/` subdirectory can also be used to store the results of your own simulation experiments with MPTRAC.
 
@@ -134,6 +134,8 @@ Proposed code changes and fixes can be submitted as [pull requests](https://gith
 Please do not hesitate to contact us if you have any questions or need assistance.
 
 ## License
+
+MPTRAC is being developed at the Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany.
 
 MPTRAC is distributed under the terms of the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
 

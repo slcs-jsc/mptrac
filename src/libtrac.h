@@ -25,25 +25,37 @@
 /*! 
   \mainpage
   
-  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
-  particle dispersion model for the free troposphere and stratosphere.
+  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the free troposphere and stratosphere.
   
-  This reference manual provides information on the algorithms
-  and data structures used in the code.
+  \section Introduction
 
-  The source code of MPTRAC is accessible from the git repository located at: https://github.com/slcs-jsc/mptrac
+  The source code of MPTRAC is available from the [git repository] (https://github.com/slcs-jsc/mptrac). Please see the [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md) in the git repository for introductory information. More information can be found in the [user manual](https://slcs-jsc.github.io/mptrac).
   
-  Please see the README file in the git repository for introductory information.
+  This doxygen manual contains information about the algorithms and data structures used in the code. Please refer to the `libtrac.h' documentation for a first overview.
   
-  The MPTRAC user manual is accessible at: https://slcs-jsc.github.io/mptrac
+  \section References
   
-  Please refer to the following papers for referencing the model:
+  For citing the model in scientific publications, please see [CITATION.cff](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff) and refer to the following papers:
+  
+  _Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022._
+  
+  _Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016._
 
-  Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022.
+  Additional references are collected here: https://slcs-jsc.github.io/mptrac/references
   
-  Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
+  \section License
+  
+  MPTRAC is being develop at the Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany.
 
-  Further references are collected here: https://slcs-jsc.github.io/mptrac/references
+  MPTRAC is distributed under the terms of the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
+  
+  \section Contact
+  
+  You can submit bug reports or feature requests on the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
+  
+  Proposed code changes and fixes can be submitted as [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
+  
+  Please do not hesitate to contact us if you have any questions or need assistance: Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>
 */
 
 #ifndef LIBTRAC_H
