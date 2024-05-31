@@ -470,7 +470,7 @@
  *
  * This macro calculates the change in longitude in degrees corresponding to a given distance in kilometers
  * at a specified latitude on the Earth's surface. It uses the formula: \n
- * \f$ \text{degrees\_longitude} = \frac{\text{distance\_in\_meters} \times 180}{\pi \times \text{radius\_of\_Earth} \times \cos(\text{latitude\_in\_radians})} \f$
+ * \f$ \textrm{degrees\_longitude} = \frac{\textrm{distance\_in\_meters} \times 180}{\pi \times \textrm{radius\_of\_Earth} \times \cos(\textrm{latitude\_in\_radians})} \f$
  *
  * @param dx Distance in kilometers.
  * @param lat Latitude in degrees.
@@ -490,7 +490,7 @@
  *
  * This macro calculates the change in latitude in degrees corresponding to a given distance in kilometers
  * on the Earth's surface. It uses the formula: \n
- * \f$ \text{degrees\_latitude} = \frac{\text{distance\_in\_kilometers} \times 180}{\pi \times \text{radius\_of\_Earth}} \f$
+ * \f$ \textrm{degrees\_latitude} = \frac{\textrm{distance\_in\_kilometers} \times 180}{\pi \times \textrm{radius\_of\_Earth}} \f$
  *
  * @param dy Distance in kilometers.
  * @return Change in latitude in degrees.
@@ -505,7 +505,7 @@
  *
  * This macro calculates the change in pressure corresponding to a given change in altitude.
  * It uses the hydrostatic equation: \n
- * \f$ \text{pressure\_change} = -\left(\text{change\_in\_altitude} \times \frac{p}{H_0}\right) \f$
+ * \f$ \textrm{pressure\_change} = -\left(\textrm{change\_in\_altitude} \times \frac{p}{H_0}\right) \f$
  *
  * @param dz Change in altitude in kilometers.
  * @param p Current pressure in hPa.
@@ -1152,9 +1152,9 @@
  * @return The saturation pressure over water at the given temperature.
  *
  * The saturation pressure over water is calculated using the formula:
- * \f$ P_{\text{sat}}(t) = 6.112 \cdot e^{17.62 \cdot \frac{(t - T_0)}{243.12 + (t - T_0)}} \f$,
+ * \f$ P_{\textrm{sat}}(t) = 6.112 \cdot e^{17.62 \cdot \frac{(t - T_0)}{243.12 + (t - T_0)}} \f$,
  * where:
- * - \f$ P_{\text{sat}}(t) \f$ is the saturation pressure over water at temperature \f$ t \f$,
+ * - \f$ P_{\textrm{sat}}(t) \f$ is the saturation pressure over water at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
  *
  * Note: The constants \f$ T_0 \f$ must be defined before using this macro.
@@ -1173,9 +1173,9 @@
  * @return The saturation pressure over ice at the given temperature.
  *
  * The saturation pressure over ice is calculated using the formula:
- * \f$ P_{\text{ice}}(t) = 6.112 \cdot e^{22.46 \cdot \frac{(t - T_0)}{272.62 + (t - T_0)}} \f$,
+ * \f$ P_{\textrm{ice}}(t) = 6.112 \cdot e^{22.46 \cdot \frac{(t - T_0)}{272.62 + (t - T_0)}} \f$,
  * where:
- * - \f$ P_{\text{ice}}(t) \f$ is the saturation pressure over ice at temperature \f$ t \f$,
+ * - \f$ P_{\textrm{ice}}(t) \f$ is the saturation pressure over ice at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
  *
  * Note: The constant \f$ T_0 \f$ must be defined before using this macro.
@@ -1195,9 +1195,9 @@
  * @return The partial water vapor pressure.
  *
  * The partial water vapor pressure is calculated using the formula:
- * \f$ P_{\text{w}}(p, h_2o) = \frac{p \cdot \max(h_2o, 0.1 \times 10^{-6})}{1 + (1 - \epsilon) \cdot \max(h_2o, 0.1 \times 10^{-6})} \f$,
+ * \f$ P_{\textrm{w}}(p, h_2o) = \frac{p \cdot \max(h_2o, 0.1 \times 10^{-6})}{1 + (1 - \epsilon) \cdot \max(h_2o, 0.1 \times 10^{-6})} \f$,
  * where:
- * - \f$ P_{\text{w}}(p, h_2o) \f$ is the partial water vapor pressure,
+ * - \f$ P_{\textrm{w}}(p, h_2o) \f$ is the partial water vapor pressure,
  * - \f$ p \f$ is the total pressure in hPa,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv,
  * - \f$ \epsilon \f$ is the factor to account for saturation vapor pressure over water.
@@ -1221,11 +1221,11 @@
  * @return The relative humidity over water in percentage.
  *
  * The relative humidity over water is calculated using the formula:
- * \f$ RH_{\text{w}}(p, t, h_2o) = \frac{P_{\text{w}}(p, h_2o)}{P_{\text{sat}}(t)} \times 100 \f$,
+ * \f$ RH_{\textrm{w}}(p, t, h_2o) = \frac{P_{\textrm{w}}(p, h_2o)}{P_{\textrm{sat}}(t)} \times 100 \f$,
  * where:
- * - \f$ RH_{\text{w}}(p, t, h_2o) \f$ is the relative humidity over water,
- * - \f$ P_{\text{w}}(p, h_2o) \f$ is the partial water vapor pressure,
- * - \f$ P_{\text{sat}}(t) \f$ is the saturation pressure over water at the given temperature,
+ * - \f$ RH_{\textrm{w}}(p, t, h_2o) \f$ is the relative humidity over water,
+ * - \f$ P_{\textrm{w}}(p, h_2o) \f$ is the partial water vapor pressure,
+ * - \f$ P_{\textrm{sat}}(t) \f$ is the saturation pressure over water at the given temperature,
  * - \f$ p \f$ is the total pressure in hPa,
  * - \f$ t \f$ is the temperature in Kelvin,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
@@ -1248,11 +1248,11 @@
  * @return The relative humidity over ice in percentage.
  *
  * The relative humidity over ice is calculated using the formula:
- * \f$ RH_{\text{ice}}(p, t, h_2o) = \frac{P_{\text{w}}(p, h_2o)}{P_{\text{ice}}(t)} \times 100 \f$,
+ * \f$ RH_{\textrm{ice}}(p, t, h_2o) = \frac{P_{\textrm{w}}(p, h_2o)}{P_{\textrm{ice}}(t)} \times 100 \f$,
  * where:
- * - \f$ RH_{\text{ice}}(p, t, h_2o) \f$ is the relative humidity over ice,
- * - \f$ P_{\text{w}}(p, h_2o) \f$ is the partial water vapor pressure,
- * - \f$ P_{\text{ice}}(t) \f$ is the saturation pressure over ice at the given temperature,
+ * - \f$ RH_{\textrm{ice}}(p, t, h_2o) \f$ is the relative humidity over ice,
+ * - \f$ P_{\textrm{w}}(p, h_2o) \f$ is the partial water vapor pressure,
+ * - \f$ P_{\textrm{ice}}(t) \f$ is the saturation pressure over ice at the given temperature,
  * - \f$ p \f$ is the total pressure in hPa,
  * - \f$ t \f$ is the temperature in Kelvin,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
@@ -1301,8 +1301,8 @@
  * The Roeth approximation formula for photolysis reactions is given by:
  * \f$ ROETH\_PHOTOL(a, b, c, sza) = 
  *   \begin{cases} 
- *     a \times \exp\left(b \times \left(1 - \frac{1}{\cos(c \times sza)}\right)\right), & \text{if } c \times sza < \frac{\pi}{2} \\
- *     0, & \text{otherwise}
+ *     a \times \exp\left(b \times \left(1 - \frac{1}{\cos(c \times sza)}\right)\right), \textrm{if } c \times sza < \frac{\pi}{2} \\
+ *     0, \textrm{otherwise}
  *   \end{cases}
  * \f$
  * 
@@ -1411,10 +1411,10 @@
  *
  * Formula:
  * \f[
- * T_{\text{dew}} = T_0 + \frac{243.12 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
+ * T_{\textrm{dew}} = T_0 + \frac{243.12 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
  * \f]
  * where:
- * - \( T_{\text{dew}} \) is the dew point temperature.
+ * - \( T_{\textrm{dew}} \) is the dew point temperature.
  * - \( T_0 \) is the reference temperature in Kelvin (typically 273.15 K).
  * - \( P_W(p, h_{2}O) \) is the partial water vapor pressure.
  * 
@@ -1435,10 +1435,10 @@
  *
  * Formula:
  * \f[
- * T_{\text{ice}} = T_0 + \frac{272.62 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
+ * T_{\textrm{ice}} = T_0 + \frac{272.62 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
  * \f]
  * where:
- * - \( T_{\text{ice}} \) is the frost point temperature.
+ * - \( T_{\textrm{ice}} \) is the frost point temperature.
  * - \( T_0 \) is the reference temperature in Kelvin (typically 273.15 K).
  * - \( P_W(p, h_{2}O) \) is the partial water vapor pressure.
  * 
@@ -1485,14 +1485,12 @@
  *
  * Formula:
  * The virtual potential temperature (\f$ \theta_v \f$) is computed as
- * \f[
- * \theta_v = \theta \left( 1 + \frac{0.61 \cdot q}{\epsilon} \right)
- * \f]
+ * \f[ \theta_v = \theta \left( 1 + \frac{0.61 \cdot q}{\epsilon} \right) \f]
  * where:
- * - \( \theta_v \) is the virtual potential temperature.
- * - \( \theta \) is the potential temperature.
- * - \( q \) is the specific humidity.
- * - \( \epsilon \) is the ratio of the molecular weight of water vapor to dry air.
+ * - \f$ \theta_v \f$ is the virtual potential temperature.
+ * - \f$ \theta \f$ is the potential temperature.
+ * - \f$ q \f$ is the specific humidity.
+ * - \f$ \epsilon \f$ is the ratio of the molecular weight of water vapor to dry air.
  * 
  * @author Lars Hoffmann
  */
@@ -3653,9 +3651,9 @@ void doy2day(
  *
  * The function computes the Cartesian coordinates using the given altitude, longitude, and latitude.
  * It assumes the Earth is a perfect sphere and uses the following formulas:
- * - \( x = (\text{radius}) \cos(\text{lat in radians}) \cos(\text{lon in radians}) \)
- * - \( y = (\text{radius}) \cos(\text{lat in radians}) \sin(\text{lon in radians}) \)
- * - \( z = (\text{radius}) \sin(\text{lat in radians}) \)
+ * - \( x = (\textrm{radius}) \cos(\textrm{lat in radians}) \cos(\textrm{lon in radians}) \)
+ * - \( y = (\textrm{radius}) \cos(\textrm{lat in radians}) \sin(\textrm{lon in radians}) \)
+ * - \( z = (\textrm{radius}) \sin(\textrm{lat in radians}) \)
  *
  * @note The constant `RE` is defined as the Earth's radius in kilometers.
  * @note Longitude and latitude should be in degrees.
