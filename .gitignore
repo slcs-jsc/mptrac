@@ -1,7 +1,6 @@
 mptrac_*.tgz
 bin/
 docs/docs/
-docs/html/
 docs/site/
 libs/build/
 projects/*
