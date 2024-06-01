@@ -1410,13 +1410,11 @@
  * @return The dew point temperature in Kelvin.
  *
  * Formula:
- * \f[
- * T_{\textrm{dew}} = T_0 + \frac{243.12 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
- * \f]
+ * \f[ T_{\textrm{dew}} = T_0 + \frac{243.12 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)} \f]
  * where:
- * - \( T_{\textrm{dew}} \) is the dew point temperature.
- * - \( T_0 \) is the reference temperature in Kelvin (typically 273.15 K).
- * - \( P_W(p, h_{2}O) \) is the partial water vapor pressure.
+ * - \f$ T_{\textrm{dew}} \f$ is the dew point temperature.
+ * - \f$ T_0 \f$ is the reference temperature in Kelvin (typically 273.15 K).
+ * - \f$ P_W(p, h_{2}O) \f$ is the partial water vapor pressure.
  * 
  * @author Lars Hoffmann
  */
@@ -1434,13 +1432,11 @@
  * @return The frost point temperature in Kelvin.
  *
  * Formula:
- * \f[
- * T_{\textrm{ice}} = T_0 + \frac{272.62 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}
- * \f]
+ * \f[ T_{\textrm{ice}} = T_0 + \frac{272.62 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)} \f]
  * where:
- * - \( T_{\textrm{ice}} \) is the frost point temperature.
- * - \( T_0 \) is the reference temperature in Kelvin (typically 273.15 K).
- * - \( P_W(p, h_{2}O) \) is the partial water vapor pressure.
+ * - \f$ T_{\textrm{ice}} \f$ is the frost point temperature.
+ * - \f$ T_0 \f$ is the reference temperature in Kelvin (typically 273.15 K).
+ * - \f$ P_W(p, h_{2}O) \f$ is the partial water vapor pressure.
  * 
  * @author Lars Hoffmann
  */
@@ -1458,13 +1454,11 @@
  * @return The potential temperature in Kelvin.
  *
  * Formula:
- * \f[
- * \theta = T \left( \frac{1000}{P} \right)^{0.286}
- * \f]
+ * \f[ \theta = T \left( \frac{1000}{P} \right)^{0.286} \f]
  * where:
- * - \( \theta \) is the potential temperature.
- * - \( T \) is the temperature in Kelvin.
- * - \( P \) is the atmospheric pressure in hPa.
+ * - \f$ \theta \f$ is the potential temperature.
+ * - \f$ T \f$ is the temperature in Kelvin.
+ * - \f$ P \f$ is the atmospheric pressure in hPa.
  * 
  * @author Lars Hoffmann
  */
@@ -3651,9 +3645,9 @@ void doy2day(
  *
  * The function computes the Cartesian coordinates using the given altitude, longitude, and latitude.
  * It assumes the Earth is a perfect sphere and uses the following formulas:
- * - \( x = (\textrm{radius}) \cos(\textrm{lat in radians}) \cos(\textrm{lon in radians}) \)
- * - \( y = (\textrm{radius}) \cos(\textrm{lat in radians}) \sin(\textrm{lon in radians}) \)
- * - \( z = (\textrm{radius}) \sin(\textrm{lat in radians}) \)
+ * - \f$ x = (\textrm{radius}) \cos(\textrm{lat in radians}) \cos(\textrm{lon in radians}) \f$
+ * - \f$ y = (\textrm{radius}) \cos(\textrm{lat in radians}) \sin(\textrm{lon in radians}) \f$
+ * - \f$ z = (\textrm{radius}) \sin(\textrm{lat in radians}) \f$
  *
  * @note The constant `RE` is defined as the Earth's radius in kilometers.
  * @note Longitude and latitude should be in degrees.
@@ -4161,10 +4155,7 @@ double kernel_weight(
  * @return The moist adiabatic lapse rate in Kelvin per kilometer.
  *
  * The moist adiabatic lapse rate is calculated using the formula:
- * \f[
- * \Gamma = \frac{{1000 \cdot g \cdot \left(a + L_v \cdot r \cdot T\right)}}
- *             {{C_{pd} \cdot a + L_v^2 \cdot r \cdot \epsilon}}
- * \f]
+ * \f[ \Gamma = \frac{{1000 \cdot g \cdot \left(a + L_v \cdot r \cdot T\right)}} {{C_{pd} \cdot a + L_v^2 \cdot r \cdot \epsilon}} \f]
  * where:
  * - \f$ \Gamma \f$ is the lapse rate in Kelvin per kilometer.
  * - \f$ g \f$ is the acceleration due to gravity (constant).
@@ -6420,9 +6411,7 @@ void spline(
  * @return The standard deviation of the data values. If the number of data values is less than or equal to 0, returns 0.
  *
  * The standard deviation is calculated using the formula:
- * \f[
- * \sigma = \sqrt{\frac{\sum_{i=1}^{n} (x_i - \bar{x})^2}{n}}
- * \f]
+ * \f[ \sigma = \sqrt{\frac{\sum_{i=1}^{n} (x_i - \bar{x})^2}{n}} \f]
  * where \f$ \sigma \f$ is the standard deviation, \f$ x_i \f$ is each data value, \f$ \bar{x} \f$ is the mean of the data values, and \f$ n \f$ is the total number of data values.
  *
  * @author Lars Hoffmann
