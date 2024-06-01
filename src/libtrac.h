@@ -30,12 +30,11 @@
   
   \section Introduction
 
-  The source code of MPTRAC is available from the [git repository]
-  (https://github.com/slcs-jsc/mptrac). Please see the
+  The source code of MPTRAC is available from the
+  [git repository](https://github.com/slcs-jsc/mptrac). Please see the
   [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
   in the git repository for introductory information. More information
-  can be found in the [user
-  manual](https://slcs-jsc.github.io/mptrac).
+  can be found in the [user manual](https://slcs-jsc.github.io/mptrac).
   
   This doxygen manual contains information about the algorithms and
   data structures used in the code. Please refer to the `libtrac.h'
@@ -69,17 +68,16 @@
   MPTRAC is being develop at the Jülich Supercomputing Centre,
   Forschungszentrum Jülich, Germany.
 
-  MPTRAC is distributed under the terms of the [GNU General Public
-  License
-  v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
+  MPTRAC is distributed under the terms of the
+  [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
   
   \section Contact
   
-  You can submit bug reports or feature requests on the [issue
-  tracker](https://github.com/slcs-jsc/mptrac/issues).
+  You can submit bug reports or feature requests on the
+  [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
   
-  Proposed code changes and fixes can be submitted as [pull
-  requests](https://github.com/slcs-jsc/mptrac/pulls).
+  Proposed code changes and fixes can be submitted as
+  [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
   
   Please do not hesitate to contact us if you have any questions or
   need assistance: Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>
