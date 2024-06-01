@@ -31,7 +31,6 @@ jobs:
         with:
             doxyfile-path: 'Doxyfile'
             working-directory: 'docs'
-            enable-latex: true
       - name: deploy_doxygen
         uses: peaceiris/actions-gh-pages@v4
         with:
