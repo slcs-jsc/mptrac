@@ -8952,8 +8952,7 @@ void write_grid(
 
   static int nk;
 
-  double *cd, *mean[NQ], *stddev[NQ], *vmr_impl, *z, *lon, *lat, *area,
-    *press;
+  double *cd, *mean[NQ], *sigma[NQ], *vmr_impl, *z, *lon, *lat, *area, *press;
 
   int *ixs, *iys, *izs, *np;
 
@@ -8977,7 +8976,7 @@ void write_grid(
   for (int iq = 0; iq < ctl->nq; iq++) {
     ALLOC(mean[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
-    ALLOC(stddev[iq], double,
+    ALLOC(sigma[iq], double,
 	  ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
   }
   ALLOC(vmr_impl, double,
@@ -9049,7 +9048,7 @@ void write_grid(
       np[idx]++;
       for (int iq = 0; iq < ctl->nq; iq++) {
 	mean[iq][idx] += kernel * atm->q[iq][ip];
-	stddev[iq][idx] += SQR(kernel * atm->q[iq][ip]);
+	sigma[iq][idx] += SQR(kernel * atm->q[iq][ip]);
       }
     }
 
@@ -9090,23 +9089,23 @@ void write_grid(
 	if (np[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] /= np[idx];
-	    double var = stddev[iq][idx] / np[idx] - SQR(mean[iq][idx]);
-	    stddev[iq][idx] = (var > 0 ? sqrt(var) : 0);
+	    double var = sigma[iq][idx] / np[idx] - SQR(mean[iq][idx]);
+	    sigma[iq][idx] = (var > 0 ? sqrt(var) : 0);
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] = NAN;
-	    stddev[iq][idx] = NAN;
+	    sigma[iq][idx] = NAN;
 	  }
       }
 
   /* Write ASCII data... */
   if (ctl->grid_type == 0)
-    write_grid_asc(filename, ctl, cd, mean, stddev, vmr_impl,
+    write_grid_asc(filename, ctl, cd, mean, sigma, vmr_impl,
 		   t, z, lon, lat, area, dz, np);
 
   /* Write netCDF data... */
   else if (ctl->grid_type == 1)
-    write_grid_nc(filename, ctl, cd, mean, stddev, vmr_impl,
+    write_grid_nc(filename, ctl, cd, mean, sigma, vmr_impl,
 		  t, z, lon, lat, area, dz, np);
 
   /* Error message... */
@@ -9117,7 +9116,7 @@ void write_grid(
   free(cd);
   for (int iq = 0; iq < ctl->nq; iq++) {
     free(mean[iq]);
-    free(stddev[iq]);
+    free(sigma[iq]);
   }
   free(vmr_impl);
   free(z);
@@ -9138,7 +9137,7 @@ void write_grid_asc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *stddev[NQ],
+  double *sigma[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -9223,7 +9222,7 @@ void write_grid_asc(
 	  if (ctl->grid_stddev)
 	    for (int iq = 0; iq < ctl->nq; iq++) {
 	      fprintf(out, " ");
-	      fprintf(out, ctl->qnt_format[iq], stddev[iq][idx]);
+	      fprintf(out, ctl->qnt_format[iq], sigma[iq][idx]);
 	    }
 	  fprintf(out, "\n");
 	}
@@ -9242,7 +9241,7 @@ void write_grid_nc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *stddev[NQ],
+  double *sigma[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -9347,7 +9346,7 @@ void write_grid_nc(
 	for (int iy = 0; iy < ctl->grid_ny; iy++)
 	  for (int iz = 0; iz < ctl->grid_nz; iz++)
 	    help[ARRAY_3D(iz, iy, ctl->grid_ny, ix, ctl->grid_nx)] =
-	      stddev[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
+	      sigma[iq][ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz)];
       NC_PUT_DOUBLE(varname, help, 0);
     }
 

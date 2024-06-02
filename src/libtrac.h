@@ -7033,8 +7033,8 @@ void write_grid(
  * @param cd An array of doubles representing column density values.
  * @param mean An array of arrays of doubles representing the mean values for
  *             specified quantities.
- * @param stddev An array of arrays of doubles representing the standard
- *               deviation values for specified quantities.
+ * @param sigma An array of arrays of doubles representing the standard
+ *              deviation values for specified quantities.
  * @param vmr_impl An array of doubles representing the volume mixing ratio
  *                 (implicit) values.
  * @param t A double representing the current time.
@@ -7069,7 +7069,7 @@ void write_grid_asc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *stddev[NQ],
+  double *sigma[NQ],
   double *vmr_impl,
   double t,
   double *z,
@@ -7092,8 +7092,8 @@ void write_grid_asc(
  * @param cd An array of doubles representing column density values.
  * @param mean An array of arrays of doubles representing the mean values for
  *             specified quantities.
- * @param stddev An array of arrays of doubles representing the standard
- *               deviation values for specified quantities.
+ * @param sigma An array of arrays of doubles representing the standard
+ *              deviation values for specified quantities.
  * @param vmr_impl An array of doubles representing the volume mixing ratio
  *                 (implicit) values.
  * @param t A double representing the current time.
@@ -7125,7 +7125,7 @@ void write_grid_nc(
   ctl_t * ctl,
   double *cd,
   double *mean[NQ],
-  double *stddev[NQ],
+  double *sigma[NQ],
   double *vmr_impl,
   double t,
   double *z,
