@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -34,12 +34,12 @@ int main(
 
   FILE *out;
 
-  double *ahtd, *aqtd, *avtd, ahtdm, aqtdm[NQ], avtdm, lat0, lat1,
-    *lat1_old, *lat2_old, *lh1, *lh2, lon0, lon1, *lon1_old, *lon2_old,
-    *lv1, *lv2, p0, p1, *rhtd, *rqtd, *rvtd, rhtdm, rqtdm[NQ], rvtdm,
-    t, t0 = 0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work, zscore;
+  double *ahtd, *aqtd, *avtd, ahtdm, aqtdm[NQ], avtdm, *lat1_old, *lat2_old,
+    *lh1, *lh2, *lon1_old, *lon2_old, *lv1, *lv2, *rhtd, *rqtd, *rvtd, rhtdm,
+    rqtdm[NQ], rvtdm, t0 =
+    0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work;
 
-  int ens, f, init = 0, ip, iq, np;
+  int f, init = 0, ip, iq, np;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -86,14 +86,15 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  ens = (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
-  p0 = P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
-  p1 = P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
-  lat0 = scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "DIST_LAT1", -1, "1000", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "DIST_LON0", -1, "-1000", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
-  zscore = scan_ctl(argv[1], argc, argv, "DIST_ZSCORE", -1, "-999", NULL);
+  int ens = (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
+  double p0 = P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
+  double p1 = P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
+  double lat0 = scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "DIST_LAT1", -1, "1000", NULL);
+  double lon0 = scan_ctl(argv[1], argc, argv, "DIST_LON0", -1, "-1000", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
+  double zscore =
+    scan_ctl(argv[1], argc, argv, "DIST_ZSCORE", -1, "-999", NULL);
 
   /* Write info... */
   LOG(1, "Write transport deviations: %s", argv[2]);
@@ -131,7 +132,7 @@ int main(
       ERRMSG("Different numbers of particles!");
 
     /* Get time from filename... */
-    t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
+    double t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
 
     /* Save initial time... */
     if (!init) {

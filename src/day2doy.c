@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -28,18 +28,17 @@ int main(
   int argc,
   char *argv[]) {
 
-  int day, doy, mon, year;
-
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Give parameters: <year> <mon> <day>");
 
   /* Read arguments... */
-  year = atoi(argv[1]);
-  mon = atoi(argv[2]);
-  day = atoi(argv[3]);
+  int year = atoi(argv[1]);
+  int mon = atoi(argv[2]);
+  int day = atoi(argv[3]);
 
   /* Convert... */
+  int doy;
   day2doy(year, mon, day, &doy);
   printf("%d %d\n", year, doy);
 

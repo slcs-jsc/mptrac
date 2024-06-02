@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -44,10 +44,8 @@ int main(
 
   double h2o, h2ot, o3, lwc, iwc, cc, p0, p1, ps, ts, zs, us, vs, lsm, sst,
     pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v,
-    w, z, zm, zref, zt, cw[3], time_old = -999, p_old = -999, lon_old = -999,
+    w, z, zm, zref, zt, time_old = -999, p_old = -999, lon_old = -999,
     lat_old = -999;
-
-  int geopot, grid_time, grid_z, grid_lon, grid_lat, ip, it, ci[3];
 
   /* Check arguments... */
   if (argc < 3)
@@ -61,15 +59,15 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  geopot =
+  int geopot =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GEOPOT", -1, "0", NULL);
-  grid_time =
+  int grid_time =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_TIME", -1, "0", NULL);
-  grid_z =
+  int grid_z =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_Z", -1, "0", NULL);
-  grid_lon =
+  int grid_lon =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LON", -1, "0", NULL);
-  grid_lat =
+  int grid_lat =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LAT", -1, "0", NULL);
 
   /* Read climatological data... */
@@ -88,18 +86,19 @@ int main(
   MET_HEADER;
 
   /* Loop over air parcels... */
-  for (ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
     get_met(&ctl, clim, atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
+    INTPOL_INIT;
     double pref = atm->p[ip];
     if (geopot) {
       zref = Z(pref);
       p0 = met0->p[0];
       p1 = met0->p[met0->np - 1];
-      for (it = 0; it < 24; it++) {
+      for (int it = 0; it < 24; it++) {
 	pref = 0.5 * (p0 + p1);
 	intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip], pref,
 			   atm->lon[ip], atm->lat[ip], &zm, ci, cw, 1);

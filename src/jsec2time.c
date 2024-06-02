@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2019 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -28,7 +28,7 @@ int main(
   int argc,
   char *argv[]) {
 
-  double jsec, remain;
+  double remain;
 
   int day, hour, min, mon, sec, year;
 
@@ -37,7 +37,7 @@ int main(
     ERRMSG("Give parameters: <jsec>");
 
   /* Read arguments... */
-  jsec = atof(argv[1]);
+  double jsec = atof(argv[1]);
 
   /* Convert time... */
   jsec2time(jsec, &year, &mon, &day, &hour, &min, &sec, &remain);

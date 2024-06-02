@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -50,22 +50,20 @@ int main(
 
   FILE *out;
 
-  static double timem[NX][NY], p0, ps, psm[NX][NY], ts, tsm[NX][NY], zs,
-    zsm[NX][NY], us, usm[NX][NY], vs, vsm[NX][NY], lsm, lsmm[NX][NY],
-    sst, sstm[NX][NY], pbl, pblm[NX][NY], pt, ptm[NX][NY], t,
-    pm[NX][NY], tm[NX][NY], u, um[NX][NY], v, vm[NX][NY],
-    w, wm[NX][NY], h2o, h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY],
-    hno3m[NX][NY], ohm[NX][NY], h2o2m[NX][NY], ho2m[NX][NY], o1dm[NX][NY],
-    tdewm[NX][NY], ticem[NX][NY],
-    tnatm[NX][NY], lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], cc, ccm[NX][NY],
-    z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY], tt, ttm[NX][NY],
-    pct, pctm[NX][NY], pcb, pcbm[NX][NY], cl, clm[NX][NY], plcl,
+  static double timem[NX][NY], ps, psm[NX][NY], ts, tsm[NX][NY], zs,
+    zsm[NX][NY], us, usm[NX][NY], vs, vsm[NX][NY], lsm, lsmm[NX][NY], sst,
+    sstm[NX][NY], pbl, pblm[NX][NY], pt, ptm[NX][NY], t, pm[NX][NY],
+    tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
+    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], hno3m[NX][NY],
+    ohm[NX][NY], h2o2m[NX][NY], ho2m[NX][NY], o1dm[NX][NY], tdewm[NX][NY],
+    ticem[NX][NY], tnatm[NX][NY], lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], cc,
+    ccm[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY], tt,
+    ttm[NX][NY], pct, pctm[NX][NY], pcb, pcbm[NX][NY], cl, clm[NX][NY], plcl,
     plclm[NX][NY], plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape,
     capem[NX][NY], cin, cinm[NX][NY], o3c, o3cm[NX][NY], rhm[NX][NY],
-    rhicem[NX][NY], theta, ptop, pbot, t0, lon, lon0, lon1, lons[NX], dlon,
-    lat, lat0, lat1, lats[NY], dlat, cw[3];
+    rhicem[NX][NY], ptop, pbot, t0, lon, lons[NX], lat, lats[NY];
 
-  static int i, ix, iy, np[NX][NY], npc[NX][NY], npt[NX][NY], nx, ny, ci[3];
+  static int np[NX][NY], npc[NX][NY], npt[NX][NY], nx, ny;
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -77,20 +75,20 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  p0 = P(scan_ctl(argv[1], argc, argv, "MAP_Z0", -1, "10", NULL));
-  lon0 = scan_ctl(argv[1], argc, argv, "MAP_LON0", -1, "-180", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "MAP_LON1", -1, "180", NULL);
-  dlon = scan_ctl(argv[1], argc, argv, "MAP_DLON", -1, "-999", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "MAP_LAT0", -1, "-90", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
-  dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
-  theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
+  double p0 = P(scan_ctl(argv[1], argc, argv, "MAP_Z0", -1, "10", NULL));
+  double lon0 = scan_ctl(argv[1], argc, argv, "MAP_LON0", -1, "-180", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "MAP_LON1", -1, "180", NULL);
+  double dlon = scan_ctl(argv[1], argc, argv, "MAP_DLON", -1, "-999", NULL);
+  double lat0 = scan_ctl(argv[1], argc, argv, "MAP_LAT0", -1, "-90", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "MAP_LAT1", -1, "90", NULL);
+  double dlat = scan_ctl(argv[1], argc, argv, "MAP_DLAT", -1, "-999", NULL);
+  double theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
 
   /* Read climatological data... */
   read_clim(&ctl, clim);
 
   /* Loop over files... */
-  for (i = 3; i < argc; i++) {
+  for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
     if (!read_met(argv[i], &ctl, clim, met))
@@ -122,10 +120,11 @@ int main(
     }
 
     /* Average... */
-    for (ix = 0; ix < nx; ix++)
-      for (iy = 0; iy < ny; iy++) {
+    for (int ix = 0; ix < nx; ix++)
+      for (int iy = 0; iy < ny; iy++) {
 
 	/* Find pressure level for given theta level... */
+	INTPOL_INIT;
 	if (theta > 0) {
 	  ptop = met->p[met->np - 1];
 	  pbot = met->p[0];
@@ -210,9 +209,9 @@ int main(
   MET_HEADER;
 
   /* Write data... */
-  for (iy = 0; iy < ny; iy++) {
+  for (int iy = 0; iy < ny; iy++) {
     fprintf(out, "\n");
-    for (ix = 0; ix < nx; ix++)
+    for (int ix = 0; ix < nx; ix++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"

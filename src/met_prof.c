@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -47,18 +47,17 @@ int main(
 
   FILE *out;
 
-  static double timem[NZ], z, z0, z1, dz, lon, lon0, lon1, dlon, lonm[NZ],
-    lat, lat0, lat1, dlat, latm[NZ], t, tm[NZ], u, um[NZ], v, vm[NZ], w,
-    wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ], lwc, lwcm[NZ],
-    iwc, iwcm[NZ], cc, ccm[NZ], ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ],
-    us, usm[NZ], vs, vsm[NZ], lsm, lsmm[NZ], sst, sstm[NZ], pbl, pblm[NZ],
-    pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ], cl, clm[NZ], plcl, plclm[NZ],
-    plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ], cin, cinm[NZ],
+  static double timem[NZ], z, lon, lonm[NZ], lat, latm[NZ], t, tm[NZ], u,
+    um[NZ], v, vm[NZ], w, wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ],
+    lwc, lwcm[NZ], iwc, iwcm[NZ], cc, ccm[NZ], ps, psm[NZ], ts, tsm[NZ], zs,
+    zsm[NZ], us, usm[NZ], vs, vsm[NZ], lsm, lsmm[NZ], sst, sstm[NZ], pbl,
+    pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ], cl, clm[NZ], plcl,
+    plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ], cin, cinm[NZ],
     o3c, o3cm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ],
-    rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ],
-    ohm[NZ], h2o2m[NZ], ho2m[NZ], o1dm[NZ], cw[3];
+    rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ], ohm[NZ],
+    h2o2m[NZ], ho2m[NZ], o1dm[NZ];
 
-  static int i, iz, np[NZ], npc[NZ], npt[NZ], nz, ci[3];
+  static int iz, np[NZ], npc[NZ], npt[NZ], nz;
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -70,21 +69,21 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  z0 = scan_ctl(argv[1], argc, argv, "PROF_Z0", -1, "-999", NULL);
-  z1 = scan_ctl(argv[1], argc, argv, "PROF_Z1", -1, "-999", NULL);
-  dz = scan_ctl(argv[1], argc, argv, "PROF_DZ", -1, "-999", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "PROF_LON0", -1, "0", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "PROF_LON1", -1, "0", NULL);
-  dlon = scan_ctl(argv[1], argc, argv, "PROF_DLON", -1, "-999", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "PROF_LAT0", -1, "0", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "PROF_LAT1", -1, "0", NULL);
-  dlat = scan_ctl(argv[1], argc, argv, "PROF_DLAT", -1, "-999", NULL);
+  double z0 = scan_ctl(argv[1], argc, argv, "PROF_Z0", -1, "-999", NULL);
+  double z1 = scan_ctl(argv[1], argc, argv, "PROF_Z1", -1, "-999", NULL);
+  double dz = scan_ctl(argv[1], argc, argv, "PROF_DZ", -1, "-999", NULL);
+  double lon0 = scan_ctl(argv[1], argc, argv, "PROF_LON0", -1, "0", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "PROF_LON1", -1, "0", NULL);
+  double dlon = scan_ctl(argv[1], argc, argv, "PROF_DLON", -1, "-999", NULL);
+  double lat0 = scan_ctl(argv[1], argc, argv, "PROF_LAT0", -1, "0", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "PROF_LAT1", -1, "0", NULL);
+  double dlat = scan_ctl(argv[1], argc, argv, "PROF_DLAT", -1, "-999", NULL);
 
   /* Read climatological data... */
   read_clim(&ctl, clim);
 
   /* Loop over input files... */
-  for (i = 3; i < argc; i++) {
+  for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
     if (!read_met(argv[i], &ctl, clim, met))
@@ -122,6 +121,7 @@ int main(
 	for (lat = lat0; lat <= lat1; lat += dlat) {
 
 	  /* Interpolate meteo data... */
+	  INTPOL_INIT;
 	  INTPOL_SPACE_ALL(plev[iz], lon, lat);
 
 	  /* Averaging... */

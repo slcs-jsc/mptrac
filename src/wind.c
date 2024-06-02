@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -32,13 +32,11 @@ int main(
 
   static char filename[LEN];
 
-  static double r, t0, z0, z1, dataLon[EX], dataLat[EY], dataZ[EP],
-    u0, u1, w0, alpha;
+  static double r, dataLon[EX], dataLat[EY], dataZ[EP];
 
   static float *dataT, *dataU, *dataV, *dataW;
 
-  static int ncid, varid, dims[4], idx, ix, iy, iz, nx, ny, nz,
-    year, mon, day, hour, min, sec;
+  static int ncid, varid, dims[4], year, mon, day, hour, min, sec;
 
   static size_t start[4], count[4];
 
@@ -58,16 +56,18 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  t0 = scan_ctl(argv[1], argc, argv, "WIND_T0", -1, "0", NULL);
-  nx = (int) scan_ctl(argv[1], argc, argv, "WIND_NX", -1, "360", NULL);
-  ny = (int) scan_ctl(argv[1], argc, argv, "WIND_NY", -1, "181", NULL);
-  nz = (int) scan_ctl(argv[1], argc, argv, "WIND_NZ", -1, "61", NULL);
-  z0 = scan_ctl(argv[1], argc, argv, "WIND_Z0", -1, "0", NULL);
-  z1 = scan_ctl(argv[1], argc, argv, "WIND_Z1", -1, "60", NULL);
-  u0 = scan_ctl(argv[1], argc, argv, "WIND_U0", -1, "38.587660177302", NULL);
-  u1 = scan_ctl(argv[1], argc, argv, "WIND_U1", -1, "38.587660177302", NULL);
-  w0 = scan_ctl(argv[1], argc, argv, "WIND_W0", -1, "0", NULL);
-  alpha = scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
+  double t0 = scan_ctl(argv[1], argc, argv, "WIND_T0", -1, "0", NULL);
+  int nx = (int) scan_ctl(argv[1], argc, argv, "WIND_NX", -1, "360", NULL);
+  int ny = (int) scan_ctl(argv[1], argc, argv, "WIND_NY", -1, "181", NULL);
+  int nz = (int) scan_ctl(argv[1], argc, argv, "WIND_NZ", -1, "61", NULL);
+  double z0 = scan_ctl(argv[1], argc, argv, "WIND_Z0", -1, "0", NULL);
+  double z1 = scan_ctl(argv[1], argc, argv, "WIND_Z1", -1, "60", NULL);
+  double u0 =
+    scan_ctl(argv[1], argc, argv, "WIND_U0", -1, "38.587660177302", NULL);
+  double u1 =
+    scan_ctl(argv[1], argc, argv, "WIND_U1", -1, "38.587660177302", NULL);
+  double w0 = scan_ctl(argv[1], argc, argv, "WIND_W0", -1, "0", NULL);
+  double alpha = scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
 
   /* Check dimensions... */
   if (nx < 1 || nx > EX)
@@ -107,11 +107,11 @@ int main(
   NC(nc_enddef(ncid));
 
   /* Set coordinates... */
-  for (ix = 0; ix < nx; ix++)
+  for (int ix = 0; ix < nx; ix++)
     dataLon[ix] = 360.0 / nx * (double) ix;
-  for (iy = 0; iy < ny; iy++)
+  for (int iy = 0; iy < ny; iy++)
     dataLat[iy] = 180.0 / (ny - 1) * (double) iy - 90;
-  for (iz = 0; iz < nz; iz++)
+  for (int iz = 0; iz < nz; iz++)
     dataZ[iz] = 100. * P(LIN(0.0, z0, nz - 1.0, z1, iz));
 
   /* Write coordinates... */
@@ -121,10 +121,10 @@ int main(
   NC_PUT_DOUBLE("lon", dataLon, 0);
 
   /* Create wind fields (Williamson et al., 1992)... */
-  for (ix = 0; ix < nx; ix++)
-    for (iy = 0; iy < ny; iy++)
-      for (iz = 0; iz < nz; iz++) {
-	idx = (iz * ny + iy) * nx + ix;
+  for (int ix = 0; ix < nx; ix++)
+    for (int iy = 0; iy < ny; iy++)
+      for (int iz = 0; iz < nz; iz++) {
+	int idx = (iz * ny + iy) * nx + ix;
 	dataU[idx] = (float) (LIN(0.0, u0, nz - 1.0, u1, iz)
 			      * (cos(dataLat[iy] * M_PI / 180.0)
 				 * cos(alpha * M_PI / 180.0)

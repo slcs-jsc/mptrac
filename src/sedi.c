@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -28,29 +28,27 @@ int main(
   int argc,
   char *argv[]) {
 
-  double eta, p, T, r_p, rho, Re, rho_p, vs;
-
   /* Check arguments... */
   if (argc < 5)
     ERRMSG("Give parameters: <p> <T> <r_p> <rho_p>");
 
   /* Read arguments... */
-  p = atof(argv[1]);
-  T = atof(argv[2]);
-  r_p = atof(argv[3]);
-  rho_p = atof(argv[4]);
+  double p = atof(argv[1]);
+  double T = atof(argv[2]);
+  double r_p = atof(argv[3]);
+  double rho_p = atof(argv[4]);
 
   /* Calculate sedimentation velocity... */
-  vs = sedi(p, T, r_p, rho_p);
+  double vs = sedi(p, T, r_p, rho_p);
 
   /* Density of dry air [kg / m^3]... */
-  rho = 100. * p / (RA * T);
+  double rho = 100. * p / (RA * T);
 
   /* Dynamic viscosity of air [kg / (m s)]... */
-  eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+  double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Particle Reynolds number... */
-  Re = 2e-6 * r_p * vs * rho / eta;
+  double Re = 2e-6 * r_p * vs * rho / eta;
 
   /* Write output... */
   printf("    p= %g hPa\n", p);

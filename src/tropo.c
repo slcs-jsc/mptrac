@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -35,10 +35,9 @@ int main(
   met_t *met;
 
   static double ps[EX * EY], pt[EX * EY], qt[EX * EY], o3t[EX * EY],
-    zs[EX * EY], zt[EX * EY], tt[EX * EY], lon, lon0, lon1, lons[EX], dlon,
-    lat, lat0, lat1, lats[EY], dlat;
+    zs[EX * EY], zt[EX * EY], tt[EX * EY], lon, lons[EX], lat, lats[EY];
 
-  static int init, i, nx, ny, nt, ncid, varid, dims[3], h2o, o3;
+  static int init, nx, ny, nt, ncid, varid, dims[3];
 
   static size_t count[10], start[10];
 
@@ -52,20 +51,20 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  lon0 = scan_ctl(argv[1], argc, argv, "TROPO_LON0", -1, "-180", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "TROPO_LON1", -1, "180", NULL);
-  dlon = scan_ctl(argv[1], argc, argv, "TROPO_DLON", -1, "-999", NULL);
-  lat0 = scan_ctl(argv[1], argc, argv, "TROPO_LAT0", -1, "-90", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "TROPO_LAT1", -1, "90", NULL);
-  dlat = scan_ctl(argv[1], argc, argv, "TROPO_DLAT", -1, "-999", NULL);
-  h2o = (int) scan_ctl(argv[1], argc, argv, "TROPO_H2O", -1, "1", NULL);
-  o3 = (int) scan_ctl(argv[1], argc, argv, "TROPO_O3", -1, "1", NULL);
+  double lon0 = scan_ctl(argv[1], argc, argv, "TROPO_LON0", -1, "-180", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "TROPO_LON1", -1, "180", NULL);
+  double dlon = scan_ctl(argv[1], argc, argv, "TROPO_DLON", -1, "-999", NULL);
+  double lat0 = scan_ctl(argv[1], argc, argv, "TROPO_LAT0", -1, "-90", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "TROPO_LAT1", -1, "90", NULL);
+  double dlat = scan_ctl(argv[1], argc, argv, "TROPO_DLAT", -1, "-999", NULL);
+  int h2o = (int) scan_ctl(argv[1], argc, argv, "TROPO_H2O", -1, "1", NULL);
+  int o3 = (int) scan_ctl(argv[1], argc, argv, "TROPO_O3", -1, "1", NULL);
 
   /* Read climatological data... */
   read_clim(&ctl, clim);
 
   /* Loop over files... */
-  for (i = 3; i < argc; i++) {
+  for (int i = 3; i < argc; i++) {
 
     /* Set control parameters... */
     ctl.met_tropo = 0;

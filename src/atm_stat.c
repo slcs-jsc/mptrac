@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -36,7 +36,7 @@ int main(
 
   double latm, lonm, t, t0 = NAN, qm[NQ], *work, zm, *zs;
 
-  int f, init = 0, ip, iq;
+  int init = 0;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -74,13 +74,13 @@ int main(
 	  "# $3 = altitude (%s) [km]\n"
 	  "# $4 = longitude (%s) [deg]\n"
 	  "# $5 = latitude (%s) [deg]\n", argv[3], argv[3], argv[3]);
-  for (iq = 0; iq < ctl.nq; iq++)
+  for (int iq = 0; iq < ctl.nq; iq++)
     fprintf(out, "# $%d = %s (%s) [%s]\n", iq + 6,
 	    ctl.qnt_name[iq], argv[3], ctl.qnt_unit[iq]);
   fprintf(out, "# $%d = number of particles\n\n", ctl.nq + 6);
 
   /* Loop over files... */
-  for (f = 4; f < argc; f++) {
+  for (int f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
     if (!read_atm(argv[f], &ctl, atm))
@@ -97,7 +97,7 @@ int main(
 
     /* Filter data... */
     atm_filt->np = 0;
-    for (ip = 0; ip < atm->np; ip++) {
+    for (int ip = 0; ip < atm->np; ip++) {
 
       /* Check time... */
       if (!isfinite(atm->time[ip]))
@@ -118,13 +118,13 @@ int main(
       atm_filt->p[atm_filt->np] = atm->p[ip];
       atm_filt->lon[atm_filt->np] = atm->lon[ip];
       atm_filt->lat[atm_filt->np] = atm->lat[ip];
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	atm_filt->q[iq][atm_filt->np] = atm->q[iq][ip];
       atm_filt->np++;
     }
 
     /* Get heights... */
-    for (ip = 0; ip < atm_filt->np; ip++)
+    for (int ip = 0; ip < atm_filt->np; ip++)
       zs[ip] = Z(atm_filt->p[ip]);
 
     /* Get statistics... */
@@ -132,56 +132,56 @@ int main(
       zm = gsl_stats_mean(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_mean(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_mean(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_mean(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "stddev") == 0) {
       zm = gsl_stats_sd(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_sd(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_sd(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_sd(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "min") == 0) {
       zm = gsl_stats_min(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_min(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_min(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_min(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "max") == 0) {
       zm = gsl_stats_max(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_max(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_max(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_max(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "skew") == 0) {
       zm = gsl_stats_skew(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_skew(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_skew(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_skew(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "kurt") == 0) {
       zm = gsl_stats_kurtosis(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_kurtosis(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_kurtosis(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] =
 	  gsl_stats_kurtosis(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "median") == 0) {
       zm = gsl_stats_median(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_median(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_median(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_median(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "absdev") == 0) {
       zm = gsl_stats_absdev(zs, 1, (size_t) atm_filt->np);
       lonm = gsl_stats_absdev(atm_filt->lon, 1, (size_t) atm_filt->np);
       latm = gsl_stats_absdev(atm_filt->lat, 1, (size_t) atm_filt->np);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] = gsl_stats_absdev(atm_filt->q[iq], 1, (size_t) atm_filt->np);
     } else if (strcasecmp(argv[3], "mad") == 0) {
       zm = gsl_stats_mad0(zs, 1, (size_t) atm_filt->np, work);
       lonm = gsl_stats_mad0(atm_filt->lon, 1, (size_t) atm_filt->np, work);
       latm = gsl_stats_mad0(atm_filt->lat, 1, (size_t) atm_filt->np, work);
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	qm[iq] =
 	  gsl_stats_mad0(atm_filt->q[iq], 1, (size_t) atm_filt->np, work);
     } else
@@ -189,7 +189,7 @@ int main(
 
     /* Write data... */
     fprintf(out, "%.2f %.2f %g %g %g", t, t - t0, zm, lonm, latm);
-    for (iq = 0; iq < ctl.nq; iq++) {
+    for (int iq = 0; iq < ctl.nq; iq++) {
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], qm[iq]);
     }

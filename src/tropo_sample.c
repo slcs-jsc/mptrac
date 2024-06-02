@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -47,16 +47,16 @@ int main(
 
   static char varname[LEN];
 
-  static double times[NT], lons[EX], lats[EY], time0, time1, z0, z0sig,
-    p0, p0sig, t0, t0sig, q0, q0sig, o30, o30sig;
+  static double times[NT], lons[EX], lats[EY], time0, time1, z0, z0sig, p0,
+    p0sig, t0, t0sig, q0, q0sig, o30, o30sig;
 
   static float help[EX * EY], tropo_z0[EX][EY], tropo_z1[EX][EY],
     tropo_p0[EX][EY], tropo_p1[EX][EY], tropo_t0[EX][EY], tropo_t1[EX][EY],
     tropo_q0[EX][EY], tropo_q1[EX][EY], tropo_o30[EX][EY], tropo_o31[EX][EY];
 
-  static int ip, iq, it, it_old =
-    -999, method, ncid, varid, varid_z, varid_p, varid_t, varid_q, varid_o3,
-    h2o, o3, ntime, nlon, nlat, ilon, ilat;
+  static int it_old =
+    -999, ncid, varid, varid_z, varid_p, varid_t, varid_q, varid_o3, h2o, o3,
+    ntime, nlon, nlat, ilon, ilat;
 
   static size_t count[10], start[10];
 
@@ -69,7 +69,7 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  method =
+  int method =
     (int) scan_ctl(argv[1], argc, argv, "TROPO_SAMPLE_METHOD", -1, "1", NULL);
 
   /* Read atmospheric data... */
@@ -118,7 +118,7 @@ int main(
 	  "# $1 = time [s]\n"
 	  "# $2 = altitude [km]\n"
 	  "# $3 = longitude [deg]\n" "# $4 = latitude [deg]\n");
-  for (iq = 0; iq < ctl.nq; iq++)
+  for (int iq = 0; iq < ctl.nq; iq++)
     fprintf(out, "# $%i = %s [%s]\n", iq + 5, ctl.qnt_name[iq],
 	    ctl.qnt_unit[iq]);
   fprintf(out, "# $%d = tropopause height (mean) [km]\n", 5 + ctl.nq);
@@ -133,7 +133,7 @@ int main(
   fprintf(out, "# $%d = tropopause ozone (sigma) [ppv]\n\n", 14 + ctl.nq);
 
   /* Loop over particles... */
-  for (ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check temporal ordering... */
     if (ip > 0 && atm->time[ip] < atm->time[ip - 1])
@@ -144,7 +144,7 @@ int main(
       continue;
 
     /* Read data... */
-    it = locate_irr(times, (int) ntime, atm->time[ip]);
+    int it = locate_irr(times, (int) ntime, atm->time[ip]);
     if (it != it_old) {
 
       time0 = times[it];
@@ -235,7 +235,7 @@ int main(
     /* Write output... */
     fprintf(out, "%.2f %g %g %g", atm->time[ip], Z(atm->p[ip]),
 	    atm->lon[ip], atm->lat[ip]);
-    for (iq = 0; iq < ctl.nq; iq++) {
+    for (int iq = 0; iq < ctl.nq; iq++) {
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], atm->q[iq][ip]);
     }

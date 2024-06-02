@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -44,7 +44,7 @@ int main(
 
   static float u[16], v[16], w[16];
 
-  static int i, ix, iy, iz, n[EP][EY];
+  static int n[EP][EY];
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -63,7 +63,7 @@ int main(
   read_clim(&ctl, clim);
 
   /* Loop over data files... */
-  for (i = 3; i < argc - 1; i += 2) {
+  for (int i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
     if (!read_met(argv[i], &ctl, clim, met0))
@@ -72,9 +72,9 @@ int main(
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */
-    for (ix = 0; ix < met0->nx - 1; ix++)
-      for (iy = 0; iy < met0->ny - 1; iy++)
-	for (iz = 0; iz < met0->np - 1; iz++) {
+    for (int ix = 0; ix < met0->nx - 1; ix++)
+      for (int iy = 0; iy < met0->ny - 1; iy++)
+	for (int iz = 0; iz < met0->np - 1; iz++) {
 
 	  /* Collect local wind data... */
 	  u[0] = met0->u[ix][iy][iz];
@@ -182,9 +182,9 @@ int main(
 	  "# $8 = number of data points\n");
 
   /* Write output... */
-  for (iy = 0; iy < met0->ny - 1; iy++) {
+  for (int iy = 0; iy < met0->ny - 1; iy++) {
     fprintf(out, "\n");
-    for (iz = 0; iz < met0->np - 1; iz++)
+    for (int iz = 0; iz < met0->np - 1; iz++)
       fprintf(out, "%.2f %g %g %g %g %g %g %d\n",
 	      0.5 * (met0->time + met1->time),
 	      0.5 * (Z(met0->p[iz]) + Z(met1->p[iz + 1])),
