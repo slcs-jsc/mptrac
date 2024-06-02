@@ -139,15 +139,15 @@ int main(
 	    0, lapse_sig = 0;
 	  for (int iz2 = iz + 1; iz2 <= iz + dz; iz2++) {
 	    lapse_max =
-	      GSL_MAX(LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]), lapse_max);
+	      MAX(LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]), lapse_max);
 	    lapse_min =
-	      GSL_MIN(LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]), lapse_min);
+	      MIN(LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]), lapse_min);
 	    lapse_mean += LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]);
 	    lapse_sig += SQR(LAPSE(p2[iz], t2[iz], p2[iz2], t2[iz2]));
 	    nlapse++;
 	  }
 	  lapse_mean /= nlapse;
-	  lapse_sig = sqrt(GSL_MAX(lapse_sig / nlapse - SQR(lapse_mean), 0));
+	  lapse_sig = sqrt(MAX(lapse_sig / nlapse - SQR(lapse_mean), 0));
 
 	  /* Get histograms... */
 	  int idx = (int) ((lapse_max - LAPSEMIN) / DLAPSE);
@@ -203,10 +203,10 @@ int main(
   /* Write data... */
   double nmax_max = 0, nmax_min = 0, nmax_mean = 0, nmax_sig = 0;
   for (int idx = 0; idx < IDXMAX; idx++) {
-    nmax_max = GSL_MAX(hist_max[idx], nmax_max);
-    nmax_min = GSL_MAX(hist_min[idx], nmax_min);
-    nmax_mean = GSL_MAX(hist_mean[idx], nmax_mean);
-    nmax_sig = GSL_MAX(hist_sig[idx], nmax_sig);
+    nmax_max = MAX(hist_max[idx], nmax_max);
+    nmax_min = MAX(hist_min[idx], nmax_min);
+    nmax_mean = MAX(hist_mean[idx], nmax_mean);
+    nmax_sig = MAX(hist_sig[idx], nmax_sig);
   }
   for (int idx = 0; idx < IDXMAX; idx++)
     fprintf(out,

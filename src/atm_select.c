@@ -83,10 +83,10 @@ int main(
     /* Adjust range of air parcels... */
     if (ip0 < 0)
       ip0 = 0;
-    ip0 = GSL_MIN(ip0, atm->np - 1);
+    ip0 = MIN(ip0, atm->np - 1);
     if (ip1 < 0)
       ip1 = atm->np - 1;
-    ip1 = GSL_MIN(ip1, atm->np - 1);
+    ip1 = MIN(ip1, atm->np - 1);
     if (ip1 < ip0)
       ip1 = ip0;
 

@@ -107,7 +107,7 @@ int main(
   NC_PUT_ATT("CIN_MPT", "flag", "NONE");
   NC_PUT_ATT("PEL_MPT", "flag", "NONE");
 
-  float miss[1] = { GSL_NAN };
+  float miss[1] = { NAN };
   NC(nc_inq_varid(ncid, "CAPE_MPT", &varid));
   NC(nc_put_att_float(ncid, varid, "missing_value", NC_FLOAT, 1, miss));
   NC(nc_inq_varid(ncid, "CIN_MPT", &varid));

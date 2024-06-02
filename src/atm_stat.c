@@ -34,10 +34,9 @@ int main(
 
   FILE *out;
 
-  double lat0, lat1, latm, lon0, lon1, lonm, p0, p1,
-    t, t0 = GSL_NAN, qm[NQ], *work, zm, *zs;
+  double latm, lonm, t, t0 = NAN, qm[NQ], *work, zm, *zs;
 
-  int ens, f, init = 0, ip, iq;
+  int f, init = 0, ip, iq;
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -53,13 +52,13 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  ens = (int) scan_ctl(argv[1], argc, argv, "STAT_ENS", -1, "-999", NULL);
-  p0 = P(scan_ctl(argv[1], argc, argv, "STAT_Z0", -1, "-1000", NULL));
-  p1 = P(scan_ctl(argv[1], argc, argv, "STAT_Z1", -1, "1000", NULL));
-  lat0 = scan_ctl(argv[1], argc, argv, "STAT_LAT0", -1, "-1000", NULL);
-  lat1 = scan_ctl(argv[1], argc, argv, "STAT_LAT1", -1, "1000", NULL);
-  lon0 = scan_ctl(argv[1], argc, argv, "STAT_LON0", -1, "-1000", NULL);
-  lon1 = scan_ctl(argv[1], argc, argv, "STAT_LON1", -1, "1000", NULL);
+  int ens = (int) scan_ctl(argv[1], argc, argv, "STAT_ENS", -1, "-999", NULL);
+  double p0 = P(scan_ctl(argv[1], argc, argv, "STAT_Z0", -1, "-1000", NULL));
+  double p1 = P(scan_ctl(argv[1], argc, argv, "STAT_Z1", -1, "1000", NULL));
+  double lat0 = scan_ctl(argv[1], argc, argv, "STAT_LAT0", -1, "-1000", NULL);
+  double lat1 = scan_ctl(argv[1], argc, argv, "STAT_LAT1", -1, "1000", NULL);
+  double lon0 = scan_ctl(argv[1], argc, argv, "STAT_LON0", -1, "-1000", NULL);
+  double lon1 = scan_ctl(argv[1], argc, argv, "STAT_LON1", -1, "1000", NULL);
 
   /* Write info... */
   LOG(1, "Write air parcel statistics: %s", argv[2]);

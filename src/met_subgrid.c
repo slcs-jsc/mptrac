@@ -157,9 +157,9 @@ int main(
 	  /* Check surface pressure... */
 	  if (met0->p[iz] > met0->ps[ix][iy]
 	      || met1->p[iz] > met1->ps[ix][iy]) {
-	    usig[iz][iy] = GSL_NAN;
-	    vsig[iz][iy] = GSL_NAN;
-	    wsig[iz][iy] = GSL_NAN;
+	    usig[iz][iy] = NAN;
+	    vsig[iz][iy] = NAN;
+	    wsig[iz][iy] = NAN;
 	    n[iz][iy] = 0;
 	  }
 	}

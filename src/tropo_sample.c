@@ -190,7 +190,7 @@ int main(
       } else
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_q0[ilon][ilat] = GSL_NAN;
+	    tropo_q0[ilon][ilat] = NAN;
       if (o3) {
 	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
 	for (ilon = 0; ilon < nlon; ilon++)
@@ -199,7 +199,7 @@ int main(
       } else
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_o30[ilon][ilat] = GSL_NAN;
+	    tropo_o30[ilon][ilat] = NAN;
 
       time1 = times[it + 1];
       start[0] = (size_t) it + 1;
@@ -223,7 +223,7 @@ int main(
       } else
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_q1[ilon][ilat] = GSL_NAN;;
+	    tropo_q1[ilon][ilat] = NAN;
       if (o3) {
 	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
 	for (ilon = 0; ilon < nlon; ilon++)
@@ -232,7 +232,7 @@ int main(
       } else
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_o31[ilon][ilat] = GSL_NAN;;
+	    tropo_o31[ilon][ilat] = NAN;
     }
     it_old = it;
 
@@ -322,7 +322,7 @@ void intpol_tropo_3d(
       }
     }
   if (n > 0)
-    *sigma = sqrt(GSL_MAX(*sigma / n - SQR(mean / n), 0.0));
+    *sigma = sqrt(MAX(*sigma / n - SQR(mean / n), 0.0));
 
   /* Linear interpolation... */
   if (method == 1 && isfinite(array0[ix][iy])

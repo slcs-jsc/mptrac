@@ -784,6 +784,30 @@
   ((y0)+((y1)-(y0))/((x1)-(x0))*((x)-(x0)))
 
 /**
+ * @brief Macro to determine the maximum of two values.
+ *
+ * This macro evaluates to the larger of its two arguments, `a` and `b`.
+ * It uses a ternary conditional operator to compare the values of `a` and `b`
+ * and returns `a` if `a` is greater than `b`; otherwise, it returns `b`.
+ *
+ * @param a The first value to compare. Can be of any type that supports comparison.
+ * @param b The second value to compare. Can be of any type that supports comparison.
+ *
+ * @return The larger of the two values, `a` or `b`.
+ *
+ * @note Both `a` and `b` are evaluated twice. If `a` or `b` have side effects
+ * (e.g., increment operators, function calls), the side effects will occur
+ * more than once. This can lead to unexpected behavior.
+ *
+ * @warning The macro does not perform type checking, so `a` and `b` should be
+ * of compatible types to avoid potential issues with comparison and return value.
+ *
+ * @author Lars Hoffmann
+ */
+#define MAX(a,b)				\
+  (((a)>(b))?(a):(b))
+
+/**
  * @brief Write header for meteorological data file.
  *
  * This macro writes a header to a meteorological data file, providing information about the variables
@@ -849,6 +873,30 @@
 	  "# $48 = number of data points\n"				\
 	  "# $49 = number of tropopause data points\n"			\
 	  "# $50 = number of CAPE data points\n");			\
+
+/**
+ * @brief Macro to determine the minimum of two values.
+ *
+ * This macro evaluates to the smaller of its two arguments, `a` and `b`.
+ * It uses a ternary conditional operator to compare the values of `a` and `b`
+ * and returns `a` if `a` is less than `b`; otherwise, it returns `b`.
+ *
+ * @param a The first value to compare. Can be of any type that supports comparison.
+ * @param b The second value to compare. Can be of any type that supports comparison.
+ *
+ * @return The smaller of the two values, `a` or `b`.
+ *
+ * @note Both `a` and `b` are evaluated twice. If `a` or `b` have side effects
+ * (e.g., increment operators, function calls), the side effects will occur
+ * more than once. This can lead to unexpected behavior.
+ *
+ * @warning The macro does not perform type checking, so `a` and `b` should be
+ * of compatible types to avoid potential issues with comparison and return value.
+ *
+ * @author Lars Hoffmann
+ */
+#define MIN(a,b)				\
+  (((a)<(b))?(a):(b))
 
 /**
  * @brief Calculate the density of a gas molecule.
@@ -1204,9 +1252,8 @@
  * 
  * @author Lars Hoffmann
  */
-#define PW(p, h2o)					\
-  ((p) * GSL_MAX((h2o), 0.1e-6)				\
-   / (1. + (1. - EPS) * GSL_MAX((h2o), 0.1e-6)))
+#define PW(p, h2o)							\
+  ((p) * MAX((h2o), 0.1e-6) / (1. + (1. - EPS) * MAX((h2o), 0.1e-6)))
 
 /**
  * @brief Compute relative humidity over water.
@@ -1369,7 +1416,7 @@
  * @author Lars Hoffmann
  */
 #define SH(h2o)					\
-  (EPS * GSL_MAX((h2o), 0.1e-6))
+  (EPS * MAX((h2o), 0.1e-6))
 
 /**
  * @brief Compute the square of a value.
@@ -1486,8 +1533,8 @@
  * 
  * @author Lars Hoffmann
  */
-#define THETAVIRT(p, t, h2o)				\
-  (TVIRT(THETA((p), (t)), GSL_MAX((h2o), 0.1e-6)))
+#define THETAVIRT(p, t, h2o)			\
+  (TVIRT(THETA((p), (t)), MAX((h2o), 0.1e-6)))
 
 /**
  * @brief Get string tokens.
@@ -1532,7 +1579,7 @@
  * @author Lars Hoffmann
  */
 #define TVIRT(t, h2o)					\
-  ((t) * (1. + (1. - EPS) * GSL_MAX((h2o), 0.1e-6)))
+  ((t) * (1. + (1. - EPS) * MAX((h2o), 0.1e-6)))
 
 /**
  * @brief Convert pressure to altitude.

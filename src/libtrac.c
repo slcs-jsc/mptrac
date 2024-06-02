@@ -151,7 +151,7 @@ double clim_photo(
   aux00 = LIN(photo->o3c[io3c], aux00, photo->o3c[io3c + 1], aux01, o3c_help);
   aux11 = LIN(photo->o3c[io3c], aux10, photo->o3c[io3c + 1], aux11, o3c_help);
   aux00 = LIN(photo->sza[isza], aux00, photo->sza[isza + 1], aux11, sza_help);
-  return GSL_MAX(aux00, 0.0);
+  return MAX(aux00, 0.0);
 }
 
 /*****************************************************************************/
@@ -319,8 +319,8 @@ void clim_tropo_init(
   double tropomin = 1e99, tropomax = -1e99;
   for (int it = 0; it < clim->tropo_ntime; it++)
     for (int iy = 0; iy < clim->tropo_nlat; iy++) {
-      tropomin = GSL_MIN(tropomin, clim->tropo[it][iy]);
-      tropomax = GSL_MAX(tropomax, clim->tropo[it][iy]);
+      tropomin = MIN(tropomin, clim->tropo[it][iy]);
+      tropomax = MAX(tropomax, clim->tropo[it][iy]);
     }
 
   /* Write info... */
@@ -401,7 +401,7 @@ double clim_zm(
   aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat_help);
   aux00 = LIN(zm->time[isec], aux00, zm->time[isec + 1], aux11, sec);
 
-  return GSL_MAX(aux00, 0.0);
+  return MAX(aux00, 0.0);
 }
 
 /*****************************************************************************/
@@ -3292,7 +3292,7 @@ void module_oh_chem(
     double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Use constant reaction rate... */
-    double k = GSL_NAN;
+    double k = NAN;
     if (ctl->oh_chem_reaction == 1)
       k = ctl->oh_chem[0];
 
@@ -3936,7 +3936,7 @@ double nat_temperature(
   const double hno3) {
 
   /* Check water vapor volume mixing ratio... */
-  double h2o_help = GSL_MAX(h2o, 0.1e-6);
+  double h2o_help = MAX(h2o, 0.1e-6);
 
   /* Calculate T_NAT... */
   double p_hno3 = hno3 * p / 1.333224;
@@ -4535,8 +4535,8 @@ void read_clim_zm(
 	      break;
 	    }
 	}
-	varmin = GSL_MIN(varmin, zm->vmr[it][iz][iy]);
-	varmax = GSL_MAX(varmax, zm->vmr[it][iz][iy]);
+	varmin = MIN(varmin, zm->vmr[it][iz][iy]);
+	varmax = MAX(varmax, zm->vmr[it][iz][iy]);
       }
 
   /* Close netCDF file... */
@@ -5708,7 +5708,7 @@ void read_met_cape(
       /* Get potential temperature and water vapor at lowest 50 hPa... */
       int n = 0;
       double h2o = 0, t, theta = 0;
-      double pbot = GSL_MIN(met->ps[ix][iy], met->p[0]);
+      double pbot = MIN(met->ps[ix][iy], met->p[0]);
       double ptop = pbot - 50.;
       for (int ip = 0; ip < met->np; ip++) {
 	if (met->p[ip] <= pbot) {
@@ -5723,11 +5723,11 @@ void read_met_cape(
       h2o /= n;
 
       /* Cannot compute anything if water vapor is missing... */
-      met->plcl[ix][iy] = GSL_NAN;
-      met->plfc[ix][iy] = GSL_NAN;
-      met->pel[ix][iy] = GSL_NAN;
-      met->cape[ix][iy] = GSL_NAN;
-      met->cin[ix][iy] = GSL_NAN;
+      met->plcl[ix][iy] = NAN;
+      met->plfc[ix][iy] = NAN;
+      met->pel[ix][iy] = NAN;
+      met->cape[ix][iy] = NAN;
+      met->cin[ix][iy] = NAN;
       if (h2o <= 0)
 	continue;
 
@@ -5793,7 +5793,7 @@ void read_met_cape(
 
       /* Check results... */
       if (!isfinite(met->plfc[ix][iy]))
-	met->cin[ix][iy] = GSL_NAN;
+	met->cin[ix][iy] = NAN;
     }
 }
 
@@ -5813,8 +5813,8 @@ void read_met_cloud(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Init... */
-      met->pct[ix][iy] = GSL_NAN;
-      met->pcb[ix][iy] = GSL_NAN;
+      met->pct[ix][iy] = NAN;
+      met->pcb[ix][iy] = NAN;
       met->cl[ix][iy] = 0;
 
       /* Loop over pressure levels... */
@@ -5835,7 +5835,7 @@ void read_met_cloud(
 	  /* Get cloud bottom pressure ... */
 	  if (!isfinite(met->pcb[ix][iy]))
 	    met->pcb[ix][iy]
-	      = (float) (0.5 * (met->p[ip] + met->p[GSL_MAX(ip - 1, 0)]));
+	      = (float) (0.5 * (met->p[ip] + met->p[MAX(ip - 1, 0)]));
 	}
 
 	/* Get cloud water... */
@@ -5872,7 +5872,7 @@ void read_met_detrend(
 
   /* Calculate box size in latitude... */
   int sy = (int) (3. * DY2DEG(sigma) / fabs(met->lat[1] - met->lat[0]));
-  sy = GSL_MIN(GSL_MAX(1, sy), met->ny / 2);
+  sy = MIN(MAX(1, sy), met->ny / 2);
 
   /* Calculate background... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -5887,7 +5887,7 @@ void read_met_detrend(
       int sx =
 	(int) (3. * DX2DEG(sigma, met->lat[iy]) /
 	       fabs(met->lon[1] - met->lon[0]));
-      sx = GSL_MIN(GSL_MAX(1, sx), met->nx / 2);
+      sx = MIN(MAX(1, sx), met->nx / 2);
 
       /* Init... */
       float wsum = 0;
@@ -5905,8 +5905,8 @@ void read_met_detrend(
 	  ix3 += met->nx;
 	else if (ix3 >= met->nx)
 	  ix3 -= met->nx;
-	for (int iy2 = GSL_MAX(iy - sy, 0);
-	     iy2 <= GSL_MIN(iy + sy, met->ny - 1); iy2++) {
+	for (int iy2 = MAX(iy - sy, 0);
+	     iy2 <= MIN(iy + sy, met->ny - 1); iy2++) {
 
 	  /* Calculate Cartesian coordinates... */
 	  double x1[3];
@@ -6087,8 +6087,8 @@ void read_met_geopot(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 	float res = 0, wsum = 0;
-	int iy0 = GSL_MAX(iy - dy + 1, 0);
-	int iy1 = GSL_MIN(iy + dy - 1, met->ny - 1);
+	int iy0 = MAX(iy - dy + 1, 0);
+	int iy1 = MIN(iy + dy - 1, met->ny - 1);
 	for (int ix2 = ix - dx + 1; ix2 <= ix + dx - 1; ++ix2) {
 	  int ix3 = ix2;
 	  if (ix3 < 0)
@@ -6105,7 +6105,7 @@ void read_met_geopot(
 	if (wsum > 0)
 	  met->z[ix][iy][ip] = res / wsum;
 	else
-	  met->z[ix][iy][ip] = GSL_NAN;
+	  met->z[ix][iy][ip] = NAN;
       }
 }
 
@@ -6584,7 +6584,7 @@ int read_met_nc_2d(
 	    && fabsf(aux * scalfac + offset) < 1e14f)
 	  dest[ix][iy] += scl * (aux * scalfac + offset);
 	else
-	  dest[ix][iy] = GSL_NAN;
+	  dest[ix][iy] = NAN;
       }
 
     /* Free... */
@@ -6628,7 +6628,7 @@ int read_met_nc_2d(
 	      && fabsf(aux) < 1e14f)
 	    dest[ix][iy] += scl * aux;
 	  else
-	    dest[ix][iy] = GSL_NAN;
+	    dest[ix][iy] = NAN;
 	}
 
     } else {
@@ -6645,7 +6645,7 @@ int read_met_nc_2d(
 	      && fabsf(aux) < 1e14f)
 	    dest[ix][iy] += scl * aux;
 	  else
-	    dest[ix][iy] = GSL_NAN;
+	    dest[ix][iy] = NAN;
 	}
     }
 
@@ -6728,7 +6728,7 @@ int read_met_nc_3d(
 	      && fabsf(aux * scalfac + offset) < 1e14f)
 	    dest[ix][iy][ip] += scl * (aux * scalfac + offset);
 	  else
-	    dest[ix][iy][ip] = GSL_NAN;
+	    dest[ix][iy][ip] = NAN;
 	}
 
     /* Free... */
@@ -6773,7 +6773,7 @@ int read_met_nc_3d(
 		&& fabsf(aux) < 1e14f)
 	      dest[ix][iy][ip] += scl * aux;
 	    else
-	      dest[ix][iy][ip] = GSL_NAN;
+	      dest[ix][iy][ip] = NAN;
 	  }
 
     } else {
@@ -6791,7 +6791,7 @@ int read_met_nc_3d(
 		&& fabsf(aux) < 1e14f)
 	      dest[ix][iy][ip] += scl * aux;
 	    else
-	      dest[ix][iy][ip] = GSL_NAN;
+	      dest[ix][iy][ip] = NAN;
 	  }
     }
 
@@ -6852,7 +6852,7 @@ void read_met_pbl(
 	/* Get squared horizontal wind speed... */
 	double vh2
 	  = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
-	vh2 = GSL_MAX(vh2, SQR(umin));
+	vh2 = MAX(vh2, SQR(umin));
 
 	/* Calculate bulk Richardson number... */
 	double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
@@ -7006,15 +7006,15 @@ void read_met_pv(
   for (int ix = 0; ix < met->nx; ix++) {
 
     /* Set indices... */
-    int ix0 = GSL_MAX(ix - 1, 0);
-    int ix1 = GSL_MIN(ix + 1, met->nx - 1);
+    int ix0 = MAX(ix - 1, 0);
+    int ix1 = MIN(ix + 1, met->nx - 1);
 
     /* Loop over grid points... */
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Set indices... */
-      int iy0 = GSL_MAX(iy - 1, 0);
-      int iy1 = GSL_MIN(iy + 1, met->ny - 1);
+      int iy0 = MAX(iy - 1, 0);
+      int iy1 = MIN(iy + 1, met->ny - 1);
 
       /* Set auxiliary variables... */
       double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
@@ -7040,8 +7040,8 @@ void read_met_pv(
 	  = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Set indices... */
-	int ip0 = GSL_MAX(ip - 1, 0);
-	int ip1 = GSL_MIN(ip + 1, met->np - 1);
+	int ip0 = MAX(ip - 1, 0);
+	int ip1 = MIN(ip + 1, met->np - 1);
 
 	/* Get gradients in pressure... */
 	double dtdp, dudp, dvdp;
@@ -7176,10 +7176,10 @@ void read_met_sample(
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
 
-	  for (int iy2 = GSL_MAX(iy - ctl->met_sy + 1, 0);
-	       iy2 <= GSL_MIN(iy + ctl->met_sy - 1, met->ny - 1); iy2++)
-	    for (int ip2 = GSL_MAX(ip - ctl->met_sp + 1, 0);
-		 ip2 <= GSL_MIN(ip + ctl->met_sp - 1, met->np - 1); ip2++) {
+	  for (int iy2 = MAX(iy - ctl->met_sy + 1, 0);
+	       iy2 <= MIN(iy + ctl->met_sy - 1, met->ny - 1); iy2++)
+	    for (int ip2 = MAX(ip - ctl->met_sp + 1, 0);
+		 ip2 <= MIN(ip + ctl->met_sp - 1, met->np - 1); ip2++) {
 	      float w = (1.0f - (float) abs(ix - ix2) / (float) ctl->met_sx)
 		* (1.0f - (float) abs(iy - iy2) / (float) ctl->met_sy)
 		* (1.0f - (float) abs(ip - ip2) / (float) ctl->met_sp);
@@ -7398,7 +7398,7 @@ void read_met_tropo(
 #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
-	met->pt[ix][iy] = GSL_NAN;
+	met->pt[ix][iy] = NAN;
 
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1) {
@@ -7426,7 +7426,7 @@ void read_met_tropo(
 	if (iz > 0 && iz < 170)
 	  met->pt[ix][iy] = (float) p2[iz];
 	else
-	  met->pt[ix][iy] = GSL_NAN;
+	  met->pt[ix][iy] = NAN;
       }
   }
 
@@ -7445,7 +7445,7 @@ void read_met_tropo(
 	spline(z, t, met->np, z2, t2, 191, ctl->met_tropo_spline);
 
 	/* Find 1st tropopause... */
-	met->pt[ix][iy] = GSL_NAN;
+	met->pt[ix][iy] = NAN;
 	for (iz = 0; iz <= 170; iz++) {
 	  int found = 1;
 	  for (int iz2 = iz + 1; iz2 <= iz + 20; iz2++)
@@ -7462,7 +7462,7 @@ void read_met_tropo(
 
 	/* Find 2nd tropopause... */
 	if (ctl->met_tropo == 4) {
-	  met->pt[ix][iy] = GSL_NAN;
+	  met->pt[ix][iy] = NAN;
 	  for (; iz <= 170; iz++) {
 	    int found = 1;
 	    for (int iz2 = iz + 1; iz2 <= iz + 10; iz2++)
@@ -7509,7 +7509,7 @@ void read_met_tropo(
 	spline(z, th, met->np, z2, th2, 171, ctl->met_tropo_spline);
 
 	/* Find dynamical tropopause... */
-	met->pt[ix][iy] = GSL_NAN;
+	met->pt[ix][iy] = NAN;
 	for (int iz = 0; iz <= 170; iz++)
 	  if (fabs(pv2[iz]) >= ctl->met_tropo_pv
 	      || th2[iz] >= ctl->met_tropo_theta) {
@@ -7910,8 +7910,8 @@ void timer(
   /* Add elapsed time to current timers... */
   if (iname >= 0) {
     rt_name[iname] += dt;
-    rt_min[iname] = (ct_name[iname] <= 0 ? dt : GSL_MIN(rt_min[iname], dt));
-    rt_max[iname] = (ct_name[iname] <= 0 ? dt : GSL_MAX(rt_max[iname], dt));
+    rt_min[iname] = (ct_name[iname] <= 0 ? dt : MIN(rt_min[iname], dt));
+    rt_max[iname] = (ct_name[iname] <= 0 ? dt : MAX(rt_max[iname], dt));
     ct_name[iname]++;
   }
   if (igroup >= 0)
@@ -8147,7 +8147,7 @@ void write_atm_asc(
     for (int iq = 0; iq < ctl->nq; iq++) {
       fprintf(out, " ");
       if (ctl->atm_filter == 1 && (atm->time[ip] < t0 || atm->time[ip] > t1))
-	fprintf(out, ctl->qnt_format[iq], GSL_NAN);
+	fprintf(out, ctl->qnt_format[iq], NAN);
       else
 	fprintf(out, ctl->qnt_format[iq], atm->q[iq][ip]);
     }
@@ -8648,24 +8648,24 @@ void write_csi(
     static double work[2 * NCSI];
     int n_obs = cx + cy;
     int n_for = cx + cz;
-    double bias = (n_obs > 0) ? 100. * n_for / n_obs : GSL_NAN;
-    double pod = (n_obs > 0) ? (100. * cx) / n_obs : GSL_NAN;
-    double far = (n_for > 0) ? (100. * cz) / n_for : GSL_NAN;
-    double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : GSL_NAN;
-    double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : GSL_NAN;
+    double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+    double pod = (n_obs > 0) ? (100. * cx) / n_obs : NAN;
+    double far = (n_for > 0) ? (100. * cz) / n_for : NAN;
+    double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : NAN;
+    double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : NAN;
     double ets = (cx + cy + cz - cx_rd > 0) ?
-      (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : GSL_NAN;
+      (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : NAN;
     double rho_p =
-      (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : GSL_NAN;
+      (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : NAN;
     double rho_s =
-      (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : GSL_NAN;
+      (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : NAN;
     for (int i = 0; i < n; i++)
       work[i] = x[i] - y[i];
-    double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : GSL_NAN;
+    double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
     double rmse = (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
-							 0.0) : GSL_NAN;
+							 0.0) : NAN;
     double absdev =
-      (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : GSL_NAN;
+      (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : NAN;
 
     /* Write... */
     fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %d\n",
@@ -8919,12 +8919,12 @@ void write_grid(
 	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 
 	/* Calculate column density... */
-	cd[idx] = GSL_NAN;
+	cd[idx] = NAN;
 	if (ctl->qnt_m >= 0)
 	  cd[idx] = mean[ctl->qnt_m][idx] / (1e6 * area[iy]);
 
 	/* Calculate volume mixing ratio (implicit)... */
-	vmr_impl[idx] = GSL_NAN;
+	vmr_impl[idx] = NAN;
 	if (ctl->qnt_m >= 0 && ctl->molmass > 0 && met0 != NULL
 	    && met1 != NULL) {
 	  vmr_impl[idx] = 0;
@@ -8950,8 +8950,8 @@ void write_grid(
 	    stddev[iq][idx] = (var > 0 ? sqrt(var) : 0);
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
-	    mean[iq][idx] = GSL_NAN;
-	    stddev[iq][idx] = GSL_NAN;
+	    mean[iq][idx] = NAN;
+	    stddev[iq][idx] = NAN;
 	  }
       }
 
@@ -9903,7 +9903,7 @@ void write_sample(
 	  / (RHO(rp, temp) * 1e6 * area * 1e3 * ctl->sample_dz);
       }
     } else
-      vmr = GSL_NAN;
+      vmr = NAN;
 
     /* Write output... */
     fprintf(out, "%.2f %g %g %g %g %g %d %g %g %g\n", rt[i], rz[i],

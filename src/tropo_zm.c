@@ -128,7 +128,7 @@ int main(
       } else
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_q0[ilon][ilat] = GSL_NAN;
+	    tropo_q0[ilon][ilat] = NAN;
       if (o3) {
 	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
 	for (ilon = 0; ilon < nlon; ilon++)
@@ -137,7 +137,7 @@ int main(
       } else
 	for (ilon = 0; ilon < nlon; ilon++)
 	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_o30[ilon][ilat] = GSL_NAN;
+	    tropo_o30[ilon][ilat] = NAN;
 
       /* Averaging... */
       for (ilat = 0; ilat < nlat; ilat++)

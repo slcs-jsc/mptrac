@@ -85,7 +85,7 @@ int main(
   if (ctl.qnt_m >= 0)
     for (ip = 0; ip < atm->np; ip++) {
       mtot += atm->q[ctl.qnt_m][ip];
-      mmax = GSL_MAX(mmax, atm->q[ctl.qnt_m][ip]);
+      mmax = MAX(mmax, atm->q[ctl.qnt_m][ip]);
     }
   if (m >= 0)
     mtot = m;
