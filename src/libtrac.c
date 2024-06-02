@@ -1625,6 +1625,99 @@ void intpol_met_time_2d(
 
 /*****************************************************************************/
 
+void intpol_tropo_3d(
+  double time0,
+  float array0[EX][EY],
+  double time1,
+  float array1[EX][EY],
+  double lons[EX],
+  double lats[EY],
+  int nlon,
+  int nlat,
+  double time,
+  double lon,
+  double lat,
+  int method,
+  double *var,
+  double *sigma) {
+
+  double aux0, aux1, aux00, aux01, aux10, aux11, mean = 0;
+
+  int n = 0;
+
+  /* Adjust longitude... */
+  if (lon < lons[0])
+    lon += 360;
+  else if (lon > lons[nlon - 1])
+    lon -= 360;
+
+  /* Get indices... */
+  int ix = locate_reg(lons, (int) nlon, lon);
+  int iy = locate_reg(lats, (int) nlat, lat);
+
+  /* Calculate standard deviation... */
+  *sigma = 0;
+  for (int dx = 0; dx < 2; dx++)
+    for (int dy = 0; dy < 2; dy++) {
+      if (isfinite(array0[ix + dx][iy + dy])) {
+	mean += array0[ix + dx][iy + dy];
+	*sigma += SQR(array0[ix + dx][iy + dy]);
+	n++;
+      }
+      if (isfinite(array1[ix + dx][iy + dy])) {
+	mean += array1[ix + dx][iy + dy];
+	*sigma += SQR(array1[ix + dx][iy + dy]);
+	n++;
+      }
+    }
+  if (n > 0)
+    *sigma = sqrt(MAX(*sigma / n - SQR(mean / n), 0.0));
+
+  /* Linear interpolation... */
+  if (method == 1 && isfinite(array0[ix][iy])
+      && isfinite(array0[ix][iy + 1])
+      && isfinite(array0[ix + 1][iy])
+      && isfinite(array0[ix + 1][iy + 1])
+      && isfinite(array1[ix][iy])
+      && isfinite(array1[ix][iy + 1])
+      && isfinite(array1[ix + 1][iy])
+      && isfinite(array1[ix + 1][iy + 1])) {
+
+    aux00 = LIN(lons[ix], array0[ix][iy],
+		lons[ix + 1], array0[ix + 1][iy], lon);
+    aux01 = LIN(lons[ix], array0[ix][iy + 1],
+		lons[ix + 1], array0[ix + 1][iy + 1], lon);
+    aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat);
+
+    aux10 = LIN(lons[ix], array1[ix][iy],
+		lons[ix + 1], array1[ix + 1][iy], lon);
+    aux11 = LIN(lons[ix], array1[ix][iy + 1],
+		lons[ix + 1], array1[ix + 1][iy + 1], lon);
+    aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat);
+
+    *var = LIN(time0, aux0, time1, aux1, time);
+  }
+
+  /* Nearest neighbor interpolation... */
+  else {
+    aux00 = NN(lons[ix], array0[ix][iy],
+	       lons[ix + 1], array0[ix + 1][iy], lon);
+    aux01 = NN(lons[ix], array0[ix][iy + 1],
+	       lons[ix + 1], array0[ix + 1][iy + 1], lon);
+    aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat);
+
+    aux10 = NN(lons[ix], array1[ix][iy],
+	       lons[ix + 1], array1[ix + 1][iy], lon);
+    aux11 = NN(lons[ix], array1[ix][iy + 1],
+	       lons[ix + 1], array1[ix + 1][iy + 1], lon);
+    aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat);
+
+    *var = NN(time0, aux0, time1, aux1, time);
+  }
+}
+
+/*****************************************************************************/
+
 void intpol_met_time_uvw(
   met_t * met0,
   met_t * met1,

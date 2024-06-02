@@ -4149,6 +4149,57 @@ void intpol_met_time_uvw(
   double *w);
 
 /**
+ * @brief Interpolates tropopause data in 3D (latitude, longitude, and time).
+ *
+ * This function performs interpolation of tropopause data at a given latitude, longitude, and time.
+ * The interpolation can be performed using either linear interpolation or nearest neighbor interpolation.
+ * The standard deviation of the data points used in the interpolation is also computed.
+ *
+ * @param time0 Time corresponding to the first data array `array0`.
+ * @param array0 A 2D array of tropopause data at `time0`. The dimensions are `EX` by `EY`.
+ * @param time1 Time corresponding to the second data array `array1`.
+ * @param array1 A 2D array of tropopause data at `time1`. The dimensions are `EX` by `EY`.
+ * @param lons Array of longitudes with `EX` elements.
+ * @param lats Array of latitudes with `EY` elements.
+ * @param nlon Number of longitudes.
+ * @param nlat Number of latitudes.
+ * @param time The specific time at which to interpolate the data.
+ * @param lon The specific longitude at which to interpolate the data.
+ * @param lat The specific latitude at which to interpolate the data.
+ * @param method Interpolation method: `1` for linear interpolation, otherwise nearest neighbor interpolation is used.
+ * @param var Pointer to the variable where the interpolated value will be stored.
+ * @param sigma Pointer to the variable where the standard deviation of the data points will be stored.
+ *
+ * @pre `array0` and `array1` must be 2D arrays of size `EX` by `EY`.
+ * @pre `lons` must have at least `nlon` elements and `lats` must have at least `nlat` elements.
+ *
+ * @post `var` will contain the interpolated value.
+ * @post `sigma` will contain the standard deviation of the data points used in the interpolation.
+ *
+ * @note The function adjusts the longitude to ensure it is within the range defined by `lons`.
+ * @note This function uses the auxiliary functions `locate_reg`, `LIN`, and `NN` for locating indices and performing interpolation.
+ *
+ * @warning Ensure that `EX` and `EY` are defined appropriately to match the dimensions of `array0` and `array1`.
+ *
+ * @author Lars Hoffmann
+ */
+void intpol_tropo_3d(
+  double time0,
+  float array0[EX][EY],
+  double time1,
+  float array1[EX][EY],
+  double lons[EX],
+  double lats[EY],
+  int nlon,
+  int nlat,
+  double time,
+  double lon,
+  double lat,
+  int method,
+  double *var,
+  double *sigma);
+
+/**
  * @brief Converts Julian seconds to calendar date and time components.
  *
  * This function converts Julian seconds to calendar date and time components,
