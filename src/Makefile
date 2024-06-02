@@ -47,9 +47,6 @@ COV ?= 0
 # Enable NVTX markers...
 NVTX ?= 0
 
-# Enable UVW cache...
-UVW ?= 1
-
 # Enable cuRAND random number generators...
 CURAND ?= 0
 
@@ -147,11 +144,6 @@ endif
 ifeq ($(NVTX),1)
   CFLAGS  += -DNVTX
   LDFLAGS += -lnvToolsExt
-endif
-
-# UVW cache...
-ifeq ($(UVW),1)
-  CFLAGS += -DUVW
 endif
 
 # Compile with cuRAND...

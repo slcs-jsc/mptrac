@@ -3231,13 +3231,11 @@ typedef struct {
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
 
-  /*! Hybrid model levels */
-  double hybrid[EP];
-
-#ifdef UVW
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
-#endif
+
+  /*! Hybrid model levels */
+  double hybrid[EP];
 
 } met_t;
 
@@ -3946,7 +3944,6 @@ void intpol_met_space_2d(
   double *cw,
   int init);
 
-#ifdef UVW
 /**
  * @brief Interpolates wind components (u, v, and w) in 3D space.
  *
@@ -3990,7 +3987,6 @@ void intpol_met_space_uvw(
   int *ci,
   double *cw,
   int init);
-#endif
 
 /**
  * @brief Interpolates meteorological data in 3D space and time.
@@ -4084,7 +4080,6 @@ void intpol_met_time_2d(
   double *cw,
   int init);
 
-#ifdef UVW
 /**
  * @brief Interpolates meteorological data in 3D space and time for wind components.
  *
@@ -4122,7 +4117,6 @@ void intpol_met_time_uvw(
   double *u,
   double *v,
   double *w);
-#endif
 
 /**
  * @brief Converts Julian seconds to calendar date and time components.
