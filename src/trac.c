@@ -153,7 +153,7 @@ int main(
 
     /* Initialize pressure heights consistent with zeta... */
     if (ctl.vert_coord_ap == 1) {
-#pragma omp parallel for
+#pragma omp parallel for default(shared)
       for (int ip = 0; ip < atm->np; ip++) {
 	INTPOL_INIT;
 	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
