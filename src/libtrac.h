@@ -3836,6 +3836,57 @@ void get_met_replace(
   char *repl);
 
 /**
+ * @brief Calculate tropopause data.
+ *
+ * This function reads and interpolates various meteorological parameters such as tropopause pressure, temperature, and ozone
+ * concentration at specified latitudes and longitudes. The interpolated data is stored in the provided arrays.
+ *
+ * @param met_tropo An integer specifying the type of meteorological data to use.
+ * @param ctl Pointer to a `ctl_t` structure that controls the meteorological data processing.
+ * @param clim Pointer to a `clim_t` structure containing climatological data.
+ * @param met Pointer to a `met_t` structure containing meteorological data.
+ * @param lons Array of longitudes at which to interpolate data. The array should have `nx` elements.
+ * @param nx Number of longitude points.
+ * @param lats Array of latitudes at which to interpolate data. The array should have `ny` elements.
+ * @param ny Number of latitude points.
+ * @param pt Pointer to an array where the interpolated pressure values will be stored. The array should have `nx * ny` elements.
+ * @param zt Pointer to an array where the interpolated height values will be stored. The array should have `nx * ny` elements.
+ * @param tt Pointer to an array where the interpolated temperature values will be stored. The array should have `nx * ny` elements.
+ * @param qt Pointer to an array where the interpolated specific humidity values will be stored. The array should have `nx * ny` elements.
+ * @param o3t Pointer to an array where the interpolated ozone concentration values will be stored. The array should have `nx * ny` elements.
+ * @param ps Pointer to an array where the interpolated surface pressure values will be stored. The array should have `nx * ny` elements.
+ * @param zs Pointer to an array where the interpolated surface height values will be stored. The array should have `nx * ny` elements.
+ *
+ * @pre `lons` must have at least `nx` elements.
+ * @pre `lats` must have at least `ny` elements.
+ * @pre `pt`, `zt`, `tt`, `qt`, `o3t`, `ps`, and `zs` must have at least `nx * ny` elements.
+ *
+ * @post The arrays `pt`, `zt`, `tt`, `qt`, `o3t`, `ps`, and `zs` will contain the interpolated meteorological data.
+ *
+ * @note The function utilizes OpenMP for parallel processing of the interpolation tasks.
+ *
+ * @note The function uses the auxiliary functions `read_met_tropo`, `intpol_met_space_2d`, and `intpol_met_space_3d` for reading and interpolating the tropopause data.
+ *
+ * @author Lars Hoffmann
+ */
+void get_tropo(
+  int met_tropo,
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met,
+  double *lons,
+  int nx,
+  double *lats,
+  int ny,
+  double *pt,
+  double *zt,
+  double *tt,
+  double *qt,
+  double *o3t,
+  double *ps,
+  double *zs);
+
+/**
  * @brief Interpolates meteorological variables to a given position and time.
  *
  * This function interpolates meteorological variables to a specified position

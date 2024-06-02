@@ -1172,6 +1172,49 @@ void get_met_replace(
 
 /*****************************************************************************/
 
+void get_tropo(
+  int met_tropo,
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met,
+  double *lons,
+  int nx,
+  double *lats,
+  int ny,
+  double *pt,
+  double *zt,
+  double *tt,
+  double *qt,
+  double *o3t,
+  double *ps,
+  double *zs) {
+
+  INTPOL_INIT;
+
+  ctl->met_tropo = met_tropo;
+  read_met_tropo(ctl, clim, met);
+#pragma omp parallel for default(shared) private(ci,cw)
+  for (int ix = 0; ix < nx; ix++)
+    for (int iy = 0; iy < ny; iy++) {
+      intpol_met_space_2d(met, met->pt, lons[ix], lats[iy],
+			  &pt[iy * nx + ix], ci, cw, 1);
+      intpol_met_space_2d(met, met->ps, lons[ix], lats[iy],
+			  &ps[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_2d(met, met->zs, lons[ix], lats[iy],
+			  &zs[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_3d(met, met->z, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &zt[iy * nx + ix], ci, cw, 1);
+      intpol_met_space_3d(met, met->t, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &tt[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_3d(met, met->h2o, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &qt[iy * nx + ix], ci, cw, 0);
+      intpol_met_space_3d(met, met->o3, pt[iy * nx + ix], lons[ix],
+			  lats[iy], &o3t[iy * nx + ix], ci, cw, 0);
+    }
+}
+
+/*****************************************************************************/
+
 void intpol_met_4d_coord(
   met_t * met0,
   float heights0[EX][EY][EP],
