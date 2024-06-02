@@ -47,7 +47,7 @@ int main(
 
   char dirname[LEN], filename[2 * LEN];
 
-  double *dt, *rs, t;
+  double *dt, *rs;
 
   int ntask = -1, rank = 0, size = 1;
 
@@ -153,12 +153,14 @@ int main(
 
     /* Initialize pressure heights consistent with zeta... */
     if (ctl.vert_coord_ap == 1) {
-      INTPOL_INIT;
-      for (int ip = 0; ip < atm->np; ip++)
+#pragma omp parallel for
+      for (int ip = 0; ip < atm->np; ip++) {
+	INTPOL_INIT;
 	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
 			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
 			    1);
+      }
     }
 
     /* Initialize quantity of total loss rate... */
@@ -181,7 +183,8 @@ int main(
     omp_set_nested(1);
     int ompTrdnum = omp_get_max_threads();
 #endif
-    for (t = ctl.t_start; ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
+    for (double t = ctl.t_start;
+	 ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
 #ifdef ASYNCIO
 #pragma omp parallel num_threads(2)
