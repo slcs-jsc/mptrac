@@ -125,8 +125,7 @@ int main(
 	  INTPOL_SPACE_ALL(plev[iz], lon, lat);
 
 	  /* Averaging... */
-	  if (gsl_finite(t) && gsl_finite(u)
-	      && gsl_finite(v) && gsl_finite(w)) {
+	  if (isfinite(t) && isfinite(u) && isfinite(v) && isfinite(w)) {
 	    timem[iz] += met->time;
 	    lonm[iz] += lon;
 	    latm[iz] += lat;
@@ -152,7 +151,7 @@ int main(
 	    pctm[iz] += pct;
 	    pcbm[iz] += pcb;
 	    clm[iz] += cl;
-	    if (gsl_finite(plfc) && gsl_finite(pel) && cape >= ctl.conv_cape
+	    if (isfinite(plfc) && isfinite(pel) && cape >= ctl.conv_cape
 		&& (ctl.conv_cin <= 0 || cin < ctl.conv_cin)) {
 	      plclm[iz] += plcl;
 	      plfcm[iz] += plfc;
@@ -161,7 +160,7 @@ int main(
 	      cinm[iz] += cin;
 	      npc[iz]++;
 	    }
-	    if (gsl_finite(pt)) {
+	    if (isfinite(pt)) {
 	      ptm[iz] += pt;
 	      ztm[iz] += zt;
 	      ttm[iz] += tt;

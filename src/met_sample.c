@@ -103,7 +103,7 @@ int main(
 	pref = 0.5 * (p0 + p1);
 	intpol_met_time_3d(met0, met0->z, met1, met1->z, atm->time[ip], pref,
 			   atm->lon[ip], atm->lat[ip], &zm, ci, cw, 1);
-	if (zref > zm || !gsl_finite(zm))
+	if (zref > zm || !isfinite(zm))
 	  p0 = pref;
 	else
 	  p1 = pref;

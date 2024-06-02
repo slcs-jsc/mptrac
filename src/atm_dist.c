@@ -162,7 +162,7 @@ int main(
 	continue;
 
       /* Check time... */
-      if (!gsl_finite(atm1->time[ip]) || !gsl_finite(atm2->time[ip]))
+      if (!isfinite(atm1->time[ip]) || !isfinite(atm2->time[ip]))
 	continue;
 
       /* Check spatial range... */

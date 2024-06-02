@@ -100,7 +100,7 @@ int main(
     for (ip = 0; ip < atm->np; ip++) {
 
       /* Check time... */
-      if (!gsl_finite(atm->time[ip]))
+      if (!isfinite(atm->time[ip]))
 	continue;
 
       /* Check ensemble index... */

@@ -163,7 +163,7 @@ int main(
 	    pctm[iz][iy] += pct;
 	    pcbm[iz][iy] += pcb;
 	    clm[iz][iy] += cl;
-	    if (gsl_finite(plfc) && gsl_finite(pel) && cape >= ctl.conv_cape
+	    if (isfinite(plfc) && isfinite(pel) && cape >= ctl.conv_cape
 		&& (ctl.conv_cin <= 0 || cin < ctl.conv_cin)) {
 	      plclm[iz][iy] += plcl;
 	      plfcm[iz][iy] += plfc;
@@ -172,7 +172,7 @@ int main(
 	      cinm[iz][iy] += cin;
 	      npc[iz][iy]++;
 	    }
-	    if (gsl_finite(pt)) {
+	    if (isfinite(pt)) {
 	      ptm[iz][iy] += pt;
 	      ztm[iz][iy] += zt;
 	      ttm[iz][iy] += tt;
