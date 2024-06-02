@@ -3676,6 +3676,36 @@ void doy2day(
   int *day);
 
 /**
+ * @brief Computes the Fast Fourier Transform (FFT) of a complex sequence.
+ *
+ * This function calculates the FFT of a complex sequence represented by separate 
+ * arrays for the real and imaginary parts. The input arrays `fcReal` and `fcImag`
+ * are modified in place to contain the transformed data.
+ *
+ * @param fcReal Pointer to an array of doubles representing the real part of the input sequence. 
+ *               The array should have at least `n` elements.
+ * @param fcImag Pointer to an array of doubles representing the imaginary part of the input sequence. 
+ *               The array should have at least `n` elements.
+ * @param n The number of complex data points in the input sequence. This value should not exceed PMAX.
+ *
+ * @pre `fcReal` and `fcImag` must point to arrays of at least `n` elements.
+ * @pre `n` must be less than or equal to PMAX.
+ *
+ * @post The arrays `fcReal` and `fcImag` will contain the real and imaginary parts of the FFT result, respectively.
+ *
+ * @note This function uses the GNU Scientific Library (GSL) for computing the FFT. Ensure that GSL is properly installed 
+ *       and linked in your project.
+ *
+ * @warning If `n` exceeds PMAX, the function will trigger an error message and terminate.
+ * 
+ * @author Lars Hoffmann
+ */
+void fft_help(
+  double *fcReal,
+  double *fcImag,
+  int n);
+
+/**
  * @brief Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates.
  *
  * This function converts geographic coordinates specified by longitude, latitude, and altitude

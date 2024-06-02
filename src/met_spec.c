@@ -24,26 +24,6 @@
 
 #include "libtrac.h"
 
-/* ------------------------------------------------------------
-   Dimensions...
-   ------------------------------------------------------------ */
-
-/*! Maximum number of data points for spectral analysis. */
-#define PMAX EX
-
-/* ------------------------------------------------------------
-   Functions...
-   ------------------------------------------------------------ */
-
-void fft_help(
-  double *fcReal,
-  double *fcImag,
-  int n);
-
-/* ------------------------------------------------------------
-   Main...
-   ------------------------------------------------------------ */
-
 int main(
   int argc,
   char *argv[]) {
@@ -56,8 +36,7 @@ int main(
 
   FILE *out;
 
-  static double cutImag[PMAX], cutReal[PMAX], lx[PMAX], A[PMAX], phi[PMAX],
-    wavemax;
+  static double cutImag[EX], cutReal[EX], lx[EX], A[EX], phi[EX], wavemax;
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -143,46 +122,4 @@ int main(
   free(met);
 
   return EXIT_SUCCESS;
-}
-
-/*****************************************************************************/
-
-void fft_help(
-  double *fcReal,
-  double *fcImag,
-  int n) {
-
-  gsl_fft_complex_wavetable *wavetable;
-  gsl_fft_complex_workspace *workspace;
-
-  double data[2 * PMAX];
-
-  int i;
-
-  /* Check size... */
-  if (n > PMAX)
-    ERRMSG("Too many data points!");
-
-  /* Allocate... */
-  wavetable = gsl_fft_complex_wavetable_alloc((size_t) n);
-  workspace = gsl_fft_complex_workspace_alloc((size_t) n);
-
-  /* Set data (real, complex)... */
-  for (i = 0; i < n; i++) {
-    data[2 * i] = fcReal[i];
-    data[2 * i + 1] = fcImag[i];
-  }
-
-  /* Calculate FFT... */
-  gsl_fft_complex_forward(data, 1, (size_t) n, wavetable, workspace);
-
-  /* Copy data... */
-  for (i = 0; i < n; i++) {
-    fcReal[i] = data[2 * i];
-    fcImag[i] = data[2 * i + 1];
-  }
-
-  /* Free... */
-  gsl_fft_complex_wavetable_free(wavetable);
-  gsl_fft_complex_workspace_free(workspace);
 }

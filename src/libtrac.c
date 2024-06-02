@@ -885,6 +885,46 @@ void doy2day(
 
 /*****************************************************************************/
 
+void fft_help(
+  double *fcReal,
+  double *fcImag,
+  int n) {
+
+  gsl_fft_complex_wavetable *wavetable;
+  gsl_fft_complex_workspace *workspace;
+
+  double data[2 * EX];
+
+  /* Check size... */
+  if (n > EX)
+    ERRMSG("Too many data points!");
+
+  /* Allocate... */
+  wavetable = gsl_fft_complex_wavetable_alloc((size_t) n);
+  workspace = gsl_fft_complex_workspace_alloc((size_t) n);
+
+  /* Set data (real, complex)... */
+  for (int i = 0; i < n; i++) {
+    data[2 * i] = fcReal[i];
+    data[2 * i + 1] = fcImag[i];
+  }
+
+  /* Calculate FFT... */
+  gsl_fft_complex_forward(data, 1, (size_t) n, wavetable, workspace);
+
+  /* Copy data... */
+  for (int i = 0; i < n; i++) {
+    fcReal[i] = data[2 * i];
+    fcImag[i] = data[2 * i + 1];
+  }
+
+  /* Free... */
+  gsl_fft_complex_wavetable_free(wavetable);
+  gsl_fft_complex_workspace_free(workspace);
+}
+
+/*****************************************************************************/
+
 void geo2cart(
   const double z,
   const double lon,
@@ -5542,7 +5582,7 @@ int read_met(
 	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
 	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
       }
-  
+
   /* Return success... */
   return 1;
 }
