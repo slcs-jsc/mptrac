@@ -22,7 +22,7 @@
   Create tropopause data set from meteorological data.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

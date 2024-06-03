@@ -22,7 +22,7 @@
   Add CAPE data to netCDF file.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

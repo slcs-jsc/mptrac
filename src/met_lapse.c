@@ -22,7 +22,7 @@
   Calculate lapse rate statistics.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /* ------------------------------------------------------------
    Dimensions...

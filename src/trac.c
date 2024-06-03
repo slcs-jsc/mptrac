@@ -22,7 +22,7 @@
   Lagrangian particle dispersion model.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

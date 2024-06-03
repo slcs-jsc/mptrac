@@ -22,7 +22,7 @@
   Extract zonal mean of tropopause data set.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /* ------------------------------------------------------------
    Dimensions...

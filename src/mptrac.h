@@ -37,7 +37,7 @@
   can be found in the [user manual](https://slcs-jsc.github.io/mptrac).
   
   This doxygen manual contains information about the algorithms and
-  data structures used in the code. Please refer to the `libtrac.h'
+  data structures used in the code. Please refer to the `mptrac.h'
   documentation for a first overview.
   
   \section References

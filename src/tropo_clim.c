@@ -22,7 +22,7 @@
   Calculate tropopause climatology.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /* ------------------------------------------------------------
    Dimensions...

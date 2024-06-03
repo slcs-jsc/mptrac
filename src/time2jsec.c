@@ -22,7 +22,7 @@
   Convert date to Julian seconds.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

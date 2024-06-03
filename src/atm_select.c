@@ -22,7 +22,7 @@
   Extract subsets of air parcels from atmospheric data files.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

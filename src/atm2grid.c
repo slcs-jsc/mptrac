@@ -22,7 +22,7 @@
   Convert atmospheric data file to grid data file.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

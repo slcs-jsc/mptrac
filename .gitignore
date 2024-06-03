@@ -35,7 +35,7 @@ src/cape
 src/day2doy
 src/doy2day
 src/jsec2time
-src/libtrac.o
+src/mptrac.o
 src/met_conv
 src/met_lapse
 src/met_map

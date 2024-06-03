@@ -22,7 +22,7 @@
   Calculate standard deviations of horizontal wind and vertical velocity.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /* ------------------------------------------------------------
    Main...

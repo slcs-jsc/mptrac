@@ -22,7 +22,7 @@
   Calculate PSC temperatures.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

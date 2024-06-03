@@ -22,7 +22,7 @@
   MPTRAC library definitions.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /*! State variables of GSL random number generators. */
 static gsl_rng *rng[NTHREADS];

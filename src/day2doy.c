@@ -22,7 +22,7 @@
   Convert date to day of year.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

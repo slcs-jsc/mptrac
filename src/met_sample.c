@@ -22,7 +22,7 @@
   Sample meteorological data at given geolocations.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /* ------------------------------------------------------------
    Main...

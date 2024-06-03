@@ -22,7 +22,7 @@
   Create atmospheric data file with initial air parcel positions.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

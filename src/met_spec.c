@@ -22,7 +22,7 @@
   Spectral analysis of meteorological data.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

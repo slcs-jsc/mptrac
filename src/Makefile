@@ -227,11 +227,11 @@ endif
 all: $(EXC)
 	rm -f *~
 
-$(EXC): %: %.c libtrac.o
-	$(CC) $(CFLAGS) -o $@ $< libtrac.o $(LDFLAGS)
+$(EXC): %: %.c mptrac.o
+	$(CC) $(CFLAGS) -o $@ $< mptrac.o $(LDFLAGS)
 
-libtrac.o: libtrac.c libtrac.h Makefile
-	$(CC) $(CFLAGS) -c -o libtrac.o libtrac.c
+mptrac.o: mptrac.c mptrac.h Makefile
+	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
 
 check: $(TESTS)
 

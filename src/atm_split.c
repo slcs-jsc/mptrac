@@ -22,7 +22,7 @@
   Split air parcels into a larger set of parcels.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

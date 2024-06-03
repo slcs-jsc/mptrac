@@ -22,7 +22,7 @@
   Convert file format of air parcel data files.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

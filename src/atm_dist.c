@@ -22,7 +22,7 @@
   Calculate transport deviations of trajectories.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

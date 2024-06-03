@@ -22,7 +22,7 @@
   Create meteorological data files with synthetic wind fields.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 int main(
   int argc,

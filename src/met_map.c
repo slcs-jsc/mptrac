@@ -22,7 +22,7 @@
   Extract map from meteorological data.
 */
 
-#include "libtrac.h"
+#include "mptrac.h"
 
 /* ------------------------------------------------------------
    Dimensions...
