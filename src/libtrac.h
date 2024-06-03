@@ -71,16 +71,27 @@
   MPTRAC is distributed under the terms of the
   [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
   
-  \section Contact
+  \section Contributing
+
+  We are interested in supporting operational and research
+  applications with MPTRAC.
   
   You can submit bug reports or feature requests on the
   [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
   
   Proposed code changes and fixes can be submitted as
   [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
-  
+
   Please do not hesitate to contact us if you have any questions or
-  need assistance: Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>
+  need assistance.
+  
+  \section Contact
+  
+  Dr. Lars Hoffmann
+  
+  Jülich Supercomputing Centre, Forschungszentrum Jülich
+  
+  e-mail: <l.hoffmann@fz-juelich.de>
 */
 
 #ifndef LIBTRAC_H
@@ -308,16 +319,19 @@
 /**
  * @brief Allocate memory for a pointer with error handling.
  *
- * This macro allocates memory for a pointer of a given type and size using the `calloc` function.
- * It includes error handling to check if memory allocation was successful.
- * If the code is being compiled with OpenACC support (_OPENACC macro defined), it additionally checks
- * if the code is running on a GPU device, and if not, it raises an error.
+ * This macro allocates memory for a pointer of a given type and size
+ * using the `calloc` function.  It includes error handling to check
+ * if memory allocation was successful.  If the code is being compiled
+ * with OpenACC support (_OPENACC macro defined), it additionally
+ * checks if the code is running on a GPU device, and if not, it
+ * raises an error.
  *
  * @param ptr Pointer variable to be allocated.
  * @param type Data type of the pointer.
  * @param n Number of elements to allocate memory for.
  *
- * @note If the code is compiled without OpenACC support, the conditional check for GPU device is skipped.
+ * @note If the code is compiled without OpenACC support, the
+ * conditional check for GPU device is skipped.
  *
  * @author Lars Hoffmann
  */
@@ -336,8 +350,9 @@
 /**
  * @brief Macro for computing the linear index of a 2D array element.
  *
- * The `ARRAY_2D` macro computes the linear index of a 2D array element based on
- * the specified row index (`ix`), column index (`iy`), and number of columns (`ny`).
+ * The `ARRAY_2D` macro computes the linear index of a 2D array
+ * element based on the specified row index (`ix`), column index
+ * (`iy`), and number of columns (`ny`).
  *
  * @param ix Integer representing the row index of the 2D array element.
  * @param iy Integer representing the column index of the 2D array element.
@@ -345,8 +360,8 @@
  * @return The computed linear index of the 2D array element.
  *
  * The macro computes the linear index using the formula: `(ix) * (ny) + (iy)`.
- * This formula assumes row-major storage, where elements of each row are stored
- * sequentially in memory.
+ * This formula assumes row-major storage, where elements of
+ * each row are stored sequentially in memory.
  *
  * @author Lars Hoffmann
  */
@@ -356,9 +371,9 @@
 /**
  * @brief Compute the linear index of a 3D array element.
  *
- * This macro computes the linear index of a 3D array element based on the specified
- * row index (`ix`), column index (`iy`), depth index (`iz`), number of columns (`ny`),
- * and number of depths (`nz`).
+ * This macro computes the linear index of a 3D array element based on
+ * the specified row index (`ix`), column index (`iy`), depth index
+ * (`iz`), number of columns (`ny`), and number of depths (`nz`).
  *
  * @param ix Row index of the 3D array element.
  * @param iy Column index of the 3D array element.
@@ -375,16 +390,17 @@
 /**
  * @brief Calculate the Arrhenius rate constant.
  *
- * The Arrhenius equation is commonly used in chemical kinetics to describe the temperature dependence
- * of reaction rates. This macro calculates the rate constant (k) based on the Arrhenius equation:
+ * The Arrhenius equation is commonly used in chemical kinetics to
+ * describe the temperature dependence of reaction rates. This macro
+ * calculates the rate constant (k) based on the Arrhenius equation:
  *
- *            k = a * exp( -b / t )
+ * \f[ k = a \times \exp( -b / T ), \f]
  *
  * where:
  *   - k is the rate constant.
  *   - a is the pre-exponential factor or frequency factor.
  *   - b is the activation energy.
- *   - t is the temperature in Kelvin.
+ *   - T is the temperature in Kelvin.
  *
  * @param a Pre-exponential factor or frequency factor.
  * @param b Activation energy.
@@ -399,10 +415,11 @@
 /**
  * @brief Convert a longitude difference to a distance in the x-direction (east-west) at a specific latitude.
  *
- * This macro calculates the distance in the x-direction (east-west) corresponding to a given longitude difference
- * at a specific latitude using the formula:
+ * This macro calculates the distance in the x-direction (east-west)
+ * corresponding to a given longitude difference at a specific
+ * latitude using the formula:
  *
- *            dx = dlon * π * RE / 180 * cos(lat)
+ * \f[ dx = dlon \times \pi \times RE / 180 times \cos(lat), \f]
  *
  * where:
  *   - dx is the distance in the x-direction (east-west).
@@ -422,10 +439,10 @@
 /**
  * @brief Convert a latitude difference to a distance in the y-direction (north-south).
  *
- * This macro calculates the distance in the y-direction (north-south) corresponding to a given latitude difference
- * using the formula:
+ * This macro calculates the distance in the y-direction (north-south)
+ * corresponding to a given latitude difference using the formula:
  *
- *            dy = dlat * π * RE / 180
+ * \f[ dy = dlat \times \pi \times RE / 180, \f]
  *
  * where:
  *   - dy is the distance in the y-direction (north-south).
@@ -443,10 +460,10 @@
 /**
  * @brief Convert a pressure difference to a height difference in the vertical direction.
  *
- * This macro calculates the change in height (altitude) corresponding to a given pressure difference
- * using the formula:
+ * This macro calculates the change in height (altitude) corresponding
+ * to a given pressure difference using the formula:
  *
- *            dz = - (dp) * H0 / p
+ * \f[ dz = - (dp) \times H_0 / p \f]
  *
  * where:
  *   - dz is the change in height (altitude) in meters.
@@ -466,16 +483,19 @@
 /**
  * @brief Convert a distance in kilometers to degrees longitude at a given latitude.
  *
- * This macro calculates the change in longitude in degrees corresponding to a given distance in kilometers
- * at a specified latitude on the Earth's surface. It uses the formula: \n
- * \f$ \textrm{degrees\_longitude} = \frac{\textrm{distance\_in\_meters} \times 180}{\pi \times \textrm{radius\_of\_Earth} \times \cos(\textrm{latitude\_in\_radians})} \f$
+ * This macro calculates the change in longitude in degrees
+ * corresponding to a given distance in kilometers at a specified
+ * latitude on the Earth's surface. It uses the formula:
+ *
+ * \f[ dlon = \frac{dx \times 180}{\pi \times RE \times \cos(lat)} \f]
  *
  * @param dx Distance in kilometers.
  * @param lat Latitude in degrees.
  * @return Change in longitude in degrees.
  *
  * @note The latitude must be in the range [-89.999, 89.999] degrees.
- * Otherwise, the macro return value will be zero. This avoids issues with the singularities at the poles.
+ * Otherwise, the macro return value will be zero. This avoids issues
+ * with the singularities at the poles.
  *
  * @author Lars Hoffmann
  */
@@ -486,9 +506,11 @@
 /**
  * @brief Convert a distance in kilometers to degrees latitude.
  *
- * This macro calculates the change in latitude in degrees corresponding to a given distance in kilometers
- * on the Earth's surface. It uses the formula: \n
- * \f$ \textrm{degrees\_latitude} = \frac{\textrm{distance\_in\_kilometers} \times 180}{\pi \times \textrm{radius\_of\_Earth}} \f$
+ * This macro calculates the change in latitude in degrees
+ * corresponding to a given distance in kilometers on the Earth's
+ * surface. It uses the formula:
+ *
+ * \f[ dlat = \frac{dy \times 180}{\pi \times RE} \f]
  *
  * @param dy Distance in kilometers.
  * @return Change in latitude in degrees.
@@ -501,9 +523,10 @@
 /**
  * @brief Convert a change in altitude to a change in pressure.
  *
- * This macro calculates the change in pressure corresponding to a given change in altitude.
- * It uses the hydrostatic equation: \n
- * \f$ \textrm{pressure\_change} = -\left(\textrm{change\_in\_altitude} \times \frac{p}{H_0}\right) \f$
+ * This macro calculates the change in pressure corresponding to a
+ * given change in altitude.  It uses the hydrostatic equation:
+ *
+ * \f[ dp = -\left(dz \times \frac{p}{H_0}\right) \f]
  *
  * @param dz Change in altitude in kilometers.
  * @param p Current pressure in hPa.
@@ -517,8 +540,9 @@
 /**
  * @brief Calculate the distance between two points in Cartesian coordinates.
  *
- * This macro calculates the Euclidean distance between two points in Cartesian coordinates.
- * It uses the square root of the square of the distance obtained from the DIST2 macro.
+ * This macro calculates the Euclidean distance between two points in
+ * Cartesian coordinates.  It uses the square root of the square of
+ * the distance obtained from the DIST2 macro.
  *
  * @param a Coordinates of the first point as an array of doubles.
  * @param b Coordinates of the second point as an array of doubles.
@@ -532,8 +556,9 @@
 /**
  * @brief Calculate the squared Euclidean distance between two points in Cartesian coordinates.
  *
- * This macro calculates the squared Euclidean distance between two points in Cartesian coordinates.
- * It computes the sum of the squares of the differences of corresponding coordinates.
+ * This macro calculates the squared Euclidean distance between two
+ * points in Cartesian coordinates.  It computes the sum of the
+ * squares of the differences of corresponding coordinates.
  *
  * @param a Coordinates of the first point as an array of doubles.
  * @param b Coordinates of the second point as an array of doubles.
@@ -547,8 +572,9 @@
 /**
  * @brief Calculate the dot product of two vectors.
  *
- * This macro computes the dot product of two vectors represented as arrays of doubles.
- * It multiplies corresponding components of the vectors and sums the results.
+ * This macro computes the dot product of two vectors represented as
+ * arrays of doubles.  It multiplies corresponding components of the
+ * vectors and sums the results.
  *
  * @param a The first vector as an array of doubles.
  * @param b The second vector as an array of doubles.
@@ -562,14 +588,16 @@
 /**
  * @brief Calculate the floating-point remainder of dividing x by y.
  *
- * This macro computes the floating-point remainder of dividing x by y.
- * It calculates this remainder as x minus the integer part of (x / y) times y.
+ * This macro computes the floating-point remainder of dividing x by
+ * y.  It calculates this remainder as x minus the integer part of
+ * (x / y) times y.
  *
  * @param x The dividend.
  * @param y The divisor.
  * @return The floating-point remainder of x divided by y.
  *
- * @note Macro has been added as a substitute when a GPU version of fmod() is missing.
+ * @note Macro has been added as a substitute when a GPU version of
+ * fmod() is missing.
  *
  * @author Lars Hoffmann
  */
@@ -579,8 +607,10 @@
 /**
  * @brief Read data from a file stream and store it in memory.
  *
- * This macro reads data of a specified type from the given input file stream and stores it in the specified memory location.
- * It ensures that the correct amount of data is read from the file stream, and if not, it raises an error.
+ * This macro reads data of a specified type from the given input file
+ * stream and stores it in the specified memory location.  It ensures
+ * that the correct amount of data is read from the file stream, and
+ * if not, it raises an error.
  *
  * @param ptr Pointer to the memory location where the data will be stored.
  * @param type Type of the data elements to be read.
@@ -597,8 +627,10 @@
 /**
  * @brief Write data from memory to a file stream.
  *
- * This macro writes data of a specified type from the specified memory location to the given output file stream.
- * It ensures that the correct amount of data is written to the file stream, and if not, it raises an error.
+ * This macro writes data of a specified type from the specified
+ * memory location to the given output file stream.  It ensures that
+ * the correct amount of data is written to the file stream, and if
+ * not, it raises an error.
  *
  * @param ptr Pointer to the memory location containing the data to be written.
  * @param type Type of the data elements to be written.
@@ -615,8 +647,10 @@
 /**
  * @brief Initialize arrays for interpolation.
  *
- * This macro initializes arrays used for interpolation. It sets the weights `cw` and indices `ci` to zero.
- * These arrays are used during interpolation to store the interpolation weights and indices.
+ * This macro initializes arrays used for interpolation. It sets the
+ * weights `cw` and indices `ci` to zero.  These arrays are used
+ * during interpolation to store the interpolation weights and
+ * indices.
  *
  * @author Lars Hoffmann
  */
@@ -642,7 +676,8 @@
 /**
  * @brief Perform 3D interpolation for a meteorological variable.
  *
- * This macro performs 3D interpolation for a given meteorological variable at a specific time, pressure level, and location.
+ * This macro performs 3D interpolation for a given meteorological
+ * variable at a specific time, pressure level, and location.
  *
  * @param var The variable to interpolate.
  * @param init A flag indicating whether to initialize the interpolation arrays (`cw` and `ci`). Set to 1 for initialization, 0 otherwise.
@@ -659,7 +694,9 @@
 /**
  * @brief Interpolate multiple meteorological variables in space.
  *
- * This macro performs spatial interpolation for multiple meteorological variables at a given pressure level, longitude, and latitude.
+ * This macro performs spatial interpolation for multiple
+ * meteorological variables at a given pressure level, longitude, and
+ * latitude.
  *
  * @param p The pressure level at which to interpolate the variables.
  * @param lon The longitude at which to interpolate the variables.
@@ -705,7 +742,9 @@
 /**
  * @brief Interpolate multiple meteorological variables in time.
  *
- * This macro performs temporal interpolation for multiple meteorological variables at a given time, pressure level, longitude, and latitude.
+ * This macro performs temporal interpolation for multiple
+ * meteorological variables at a given time, pressure level,
+ * longitude, and latitude.
  *
  * @param time The time at which to interpolate the variables.
  * @param p The pressure level at which to interpolate the variables.
@@ -752,7 +791,8 @@
 /**
  * @brief Calculate lapse rate.
  *
- * This macro calculates the lapse rate between two pressure levels given their temperatures and pressures.
+ * This macro calculates the lapse rate between two pressure levels
+ * given their temperatures and pressures.
  * 
  * @param p1 Pressure at the first level (in hPa).
  * @param t1 Temperature at the first level (in K).
@@ -769,7 +809,8 @@
 /**
  * @brief Linear interpolation.
  *
- * This macro performs linear interpolation to estimate the value of y at a given x based on two points (x0, y0) and (x1, y1).
+ * This macro performs linear interpolation to estimate the value of y
+ * at a given x based on two points (x0, y0) and (x1, y1).
  * 
  * @param x0 X-coordinate of the first point.
  * @param y0 Y-coordinate of the first point.
@@ -786,21 +827,24 @@
 /**
  * @brief Macro to determine the maximum of two values.
  *
- * This macro evaluates to the larger of its two arguments, `a` and `b`.
- * It uses a ternary conditional operator to compare the values of `a` and `b`
- * and returns `a` if `a` is greater than `b`; otherwise, it returns `b`.
+ * This macro evaluates to the larger of its two arguments, `a` and
+ * `b`.  It uses a ternary conditional operator to compare the values
+ * of `a` and `b` and returns `a` if `a` is greater than `b`;
+ * otherwise, it returns `b`.
  *
  * @param a The first value to compare. Can be of any type that supports comparison.
  * @param b The second value to compare. Can be of any type that supports comparison.
  *
  * @return The larger of the two values, `a` or `b`.
  *
- * @note Both `a` and `b` are evaluated twice. If `a` or `b` have side effects
- * (e.g., increment operators, function calls), the side effects will occur
- * more than once. This can lead to unexpected behavior.
+ * @note Both `a` and `b` are evaluated twice. If `a` or `b` have side
+ * effects (e.g., increment operators, function calls), the side
+ * effects will occur more than once. This can lead to unexpected
+ * behavior.
  *
- * @warning The macro does not perform type checking, so `a` and `b` should be
- * of compatible types to avoid potential issues with comparison and return value.
+ * @warning The macro does not perform type checking, so `a` and `b`
+ * should be of compatible types to avoid potential issues with
+ * comparison and return value.
  *
  * @author Lars Hoffmann
  */
@@ -810,8 +854,9 @@
 /**
  * @brief Write header for meteorological data file.
  *
- * This macro writes a header to a meteorological data file, providing information about the variables
- * stored in the file and their corresponding columns.
+ * This macro writes a header to a meteorological data file, providing
+ * information about the variables stored in the file and their
+ * corresponding columns.
  *
  * @param out Pointer to the file stream where the header will be written.
  *
@@ -877,21 +922,24 @@
 /**
  * @brief Macro to determine the minimum of two values.
  *
- * This macro evaluates to the smaller of its two arguments, `a` and `b`.
- * It uses a ternary conditional operator to compare the values of `a` and `b`
- * and returns `a` if `a` is less than `b`; otherwise, it returns `b`.
+ * This macro evaluates to the smaller of its two arguments, `a` and
+ * `b`.  It uses a ternary conditional operator to compare the values
+ * of `a` and `b` and returns `a` if `a` is less than `b`; otherwise,
+ * it returns `b`.
  *
  * @param a The first value to compare. Can be of any type that supports comparison.
  * @param b The second value to compare. Can be of any type that supports comparison.
  *
  * @return The smaller of the two values, `a` or `b`.
  *
- * @note Both `a` and `b` are evaluated twice. If `a` or `b` have side effects
- * (e.g., increment operators, function calls), the side effects will occur
- * more than once. This can lead to unexpected behavior.
+ * @note Both `a` and `b` are evaluated twice. If `a` or `b` have side
+ * effects (e.g., increment operators, function calls), the side
+ * effects will occur more than once. This can lead to unexpected
+ * behavior.
  *
- * @warning The macro does not perform type checking, so `a` and `b` should be
- * of compatible types to avoid potential issues with comparison and return value.
+ * @warning The macro does not perform type checking, so `a` and `b`
+ * should be of compatible types to avoid potential issues with
+ * comparison and return value.
  *
  * @author Lars Hoffmann
  */
@@ -901,8 +949,8 @@
 /**
  * @brief Calculate the density of a gas molecule.
  *
- * This macro calculates the density of a gas molecule using the provided pressure
- * and temperature values.
+ * This macro calculates the density of a gas molecule using the
+ * provided pressure and temperature values.
  *
  * @param p Pressure of the gas in Pascals.
  * @param t Temperature of the gas in Kelvin.
@@ -916,8 +964,9 @@
 /**
  * @brief Execute a NetCDF command and check for errors.
  *
- * This macro executes a NetCDF command and checks the result. If the result
- * indicates an error, it prints the error message using ERRMSG.
+ * This macro executes a NetCDF command and checks the result. If the
+ * result indicates an error, it prints the error message using
+ * ERRMSG.
  *
  * @param cmd NetCDF command to execute.
  *
@@ -932,9 +981,9 @@
 /**
  * @brief Define a NetCDF variable with attributes.
  *
- * This macro defines a NetCDF variable with the specified name, data type,
- * dimensions, long name, and units. It also sets the "long_name" and "units"
- * attributes for the variable.
+ * This macro defines a NetCDF variable with the specified name, data
+ * type, dimensions, long name, and units. It also sets the
+ * "long_name" and "units" attributes for the variable.
  *
  * @param varname Name of the variable.
  * @param type Data type of the variable.
@@ -954,12 +1003,13 @@
 /**
  * @brief Retrieve a double-precision variable from a NetCDF file.
  *
- * This macro retrieves a double-precision variable from a NetCDF file. It first
- * checks if the variable exists in the file and then reads its data into the
- * specified pointer. If the `force` parameter is set to true, it forces the
- * retrieval of the variable, raising an error if the variable does not exist.
- * If `force` is false, it retrieves the variable if it exists and issues a warning
- * if it does not.
+ * This macro retrieves a double-precision variable from a NetCDF
+ * file. It first checks if the variable exists in the file and then
+ * reads its data into the specified pointer. If the `force` parameter
+ * is set to true, it forces the retrieval of the variable, raising an
+ * error if the variable does not exist.  If `force` is false, it
+ * retrieves the variable if it exists and issues a warning if it does
+ * not.
  *
  * @param varname Name of the variable to retrieve.
  * @param ptr Pointer to the memory location where the data will be stored.
@@ -982,10 +1032,11 @@
 /**
  * @brief Inquire the length of a dimension in a NetCDF file.
  *
- * This macro retrieves the length of a specified dimension from a NetCDF file.
- * It checks if the length of the dimension is within a specified range and 
- * assigns the length to the provided pointer. If the length is outside the 
- * specified range, an error message is raised.
+ * This macro retrieves the length of a specified dimension from a
+ * NetCDF file.  It checks if the length of the dimension is within a
+ * specified range and assigns the length to the provided pointer. If
+ * the length is outside the specified range, an error message is
+ * raised.
  *
  * @param dimname Name of the dimension to inquire.
  * @param ptr Pointer to an integer where the dimension length will be stored.
@@ -1006,10 +1057,10 @@
 /**
  * @brief Write double precision data to a NetCDF variable.
  *
- * This macro writes data to a specified NetCDF variable. It can handle both 
- * full variable writes and hyperslab writes depending on the `hyperslab` 
- * parameter. If `hyperslab` is true, the data is written as a hyperslab; 
- * otherwise, the entire variable is written.
+ * This macro writes data to a specified NetCDF variable. It can
+ * handle both full variable writes and hyperslab writes depending on
+ * the `hyperslab` parameter. If `hyperslab` is true, the data is
+ * written as a hyperslab; otherwise, the entire variable is written.
  *
  * @param varname Name of the NetCDF variable to write to.
  * @param ptr Pointer to the data to be written.
@@ -1029,9 +1080,9 @@
 /**
  * @brief Write a float array to a NetCDF file.
  *
- * This macro writes a float array to a specified variable in a NetCDF file. 
- * Depending on the value of the hyperslab parameter, the data can be written 
- * as a hyperslab or as a whole variable.
+ * This macro writes a float array to a specified variable in a NetCDF
+ * file.  Depending on the value of the hyperslab parameter, the data
+ * can be written as a hyperslab or as a whole variable.
  *
  * @param varname Name of the variable to which the float array will be written.
  * @param ptr Pointer to the float array to be written.
@@ -1053,10 +1104,10 @@
 /**
  * @brief Write integer data to a NetCDF variable.
  *
- * This macro writes data to a specified NetCDF variable. It can handle both 
- * full variable writes and hyperslab writes depending on the `hyperslab` 
- * parameter. If `hyperslab` is true, the data is written as a hyperslab; 
- * otherwise, the entire variable is written.
+ * This macro writes data to a specified NetCDF variable. It can
+ * handle both full variable writes and hyperslab writes depending on
+ * the `hyperslab` parameter. If `hyperslab` is true, the data is
+ * written as a hyperslab; otherwise, the entire variable is written.
  *
  * @param varname Name of the NetCDF variable to write to.
  * @param ptr Pointer to the data to be written.
@@ -1076,9 +1127,9 @@
 /**
  * @brief Add a text attribute to a NetCDF variable.
  *
- * This macro adds a text attribute to a specified NetCDF variable. It first 
- * retrieves the variable ID using its name, then it attaches the text attribute 
- * to the variable.
+ * This macro adds a text attribute to a specified NetCDF variable. It
+ * first retrieves the variable ID using its name, then it attaches
+ * the text attribute to the variable.
  *
  * @param varname Name of the NetCDF variable to which the attribute will be added.
  * @param attname Name of the attribute to be added.
@@ -1094,8 +1145,9 @@
 /**
  * @brief Add a global text attribute to a NetCDF file.
  *
- * This macro adds a text attribute to the global attributes of a NetCDF file.
- * It directly attaches the attribute to the file, rather than to a specific variable.
+ * This macro adds a text attribute to the global attributes of a
+ * NetCDF file.  It directly attaches the attribute to the file,
+ * rather than to a specific variable.
  *
  * @param attname Name of the global attribute to be added.
  * @param text Text of the attribute to be added.
@@ -1108,9 +1160,10 @@
 /**
  * @brief Perform nearest-neighbor interpolation.
  *
- * This macro returns the value of the nearest neighbor (y0 or y1) for a given x value. 
- * It compares the distances between x and x0, and between x and x1, and returns the y 
- * value corresponding to the closer x value.
+ * This macro returns the value of the nearest neighbor (y0 or y1) for
+ * a given x value.  It compares the distances between x and x0, and
+ * between x and x1, and returns the y value corresponding to the
+ * closer x value.
  *
  * @param x0 The x-coordinate of the first point.
  * @param y0 The y-coordinate of the first point.
@@ -1127,8 +1180,9 @@
 /**
  * @brief Compute the norm (magnitude) of a vector.
  *
- * This macro computes the Euclidean norm (magnitude) of a vector `a` using the dot product of the vector with itself.
- * The vector is assumed to have three components: a[0], a[1], and a[2].
+ * This macro computes the Euclidean norm (magnitude) of a vector `a`
+ * using the dot product of the vector with itself. The vector is
+ * assumed to have three components: a[0], a[1], and a[2].
  *
  * @param a The vector for which the norm is to be computed.
  * @return The Euclidean norm of the vector.
@@ -1141,8 +1195,10 @@
 /**
  * @brief Loop over particle indices with OpenACC acceleration.
  *
- * This macro defines a loop over particle indices from `ip0` to `ip1` with optional checking of `dt`.
- * If `_OPENACC` is defined, the loop is accelerated using OpenACC directives. Otherwise, OpenMP parallelization is used.
+ * This macro defines a loop over particle indices from `ip0` to `ip1`
+ * with optional checking of `dt`. If `_OPENACC` is defined, the loop
+ * is accelerated using OpenACC directives. Otherwise, OpenMP
+ * parallelization is used.
  * 
  * @param ip0 The starting index of the loop (inclusive).
  * @param ip1 The ending index of the loop (exclusive).
@@ -1171,12 +1227,16 @@
 /**
  * @brief Compute pressure at given altitude.
  *
- * This macro calculates the pressure at a given altitude using the barometric formula.
+ * This macro calculates the pressure at a given altitude using the
+ * barometric formula.
  * 
  * @param z The altitude in kilometers.
  * @return The pressure in hPa at the given altitude.
  *
- * The barometric formula used for this calculation is: \f$ P(z) = P_0 \cdot e^{-(z / H_0)} \f$,
+ * The barometric formula used for this calculation is:
+ *
+ * \f[ P(z) = P_0 \times e^{-(z / H_0)}, \f]
+ *
  * where:
  * - \f$ P(z) \f$ is the pressure at altitude \f$ z \f$,
  * - \f$ P_0 \f$ is the standard pressure,
@@ -1192,13 +1252,16 @@
 /**
  * @brief Compute saturation pressure over water.
  *
- * This macro calculates the saturation pressure over water based on the WMO (2018) formula.
+ * This macro calculates the saturation pressure over water based on
+ * the WMO (2018) formula.
  * 
  * @param t The temperature in degrees Celsius.
  * @return The saturation pressure over water at the given temperature.
  *
  * The saturation pressure over water is calculated using the formula:
- * \f$ P_{\textrm{sat}}(t) = 6.112 \cdot e^{17.62 \cdot \frac{(t - T_0)}{243.12 + (t - T_0)}} \f$,
+ *
+ * \f[ P_{\textrm{sat}}(t) = 6.112 \times e^{17.62 \times \frac{(t - T_0)}{243.12 + (t - T_0)}}, \f]
+ *
  * where:
  * - \f$ P_{\textrm{sat}}(t) \f$ is the saturation pressure over water at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
@@ -1213,13 +1276,16 @@
 /**
  * @brief Compute saturation pressure over ice (WMO, 2018).
  *
- * This macro calculates the saturation pressure over ice based on the WMO (2018) formula.
+ * This macro calculates the saturation pressure over ice based on the
+ * WMO (2018) formula.
  * 
  * @param t The temperature in K.
  * @return The saturation pressure over ice at the given temperature.
  *
  * The saturation pressure over ice is calculated using the formula:
- * \f$ P_{\textrm{ice}}(t) = 6.112 \cdot e^{22.46 \cdot \frac{(t - T_0)}{272.62 + (t - T_0)}} \f$,
+ *
+ * \f[ P_{\textrm{ice}}(t) = 6.112 \times e^{22.46 \times \frac{(t - T_0)}{272.62 + (t - T_0)}}, \f]
+ *
  * where:
  * - \f$ P_{\textrm{ice}}(t) \f$ is the saturation pressure over ice at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
@@ -1234,14 +1300,17 @@
 /**
  * @brief Calculate partial water vapor pressure.
  *
- * This macro calculates the partial water vapor pressure using the given total pressure and water vapor mixing ratio.
+ * This macro calculates the partial water vapor pressure using the
+ * given total pressure and water vapor mixing ratio.
  * 
  * @param p The total pressure in hPa (hectopascals).
  * @param h2o The water vapor mixing ratio in ppv (parts per volume).
  * @return The partial water vapor pressure.
  *
  * The partial water vapor pressure is calculated using the formula:
- * \f$ P_{\textrm{w}}(p, h_2o) = \frac{p \cdot \max(h_2o, 0.1 \times 10^{-6})}{1 + (1 - \epsilon) \cdot \max(h_2o, 0.1 \times 10^{-6})} \f$,
+ *
+ * \f[ P_{\textrm{w}}(p, h_2o) = \frac{p \times \max(h_2o, 0.1 \times 10^{-6})}{1 + (1 - \epsilon) \times \max(h_2o, 0.1 \times 10^{-6})}, \f]
+ *
  * where:
  * - \f$ P_{\textrm{w}}(p, h_2o) \f$ is the partial water vapor pressure,
  * - \f$ p \f$ is the total pressure in hPa,
@@ -1258,7 +1327,8 @@
 /**
  * @brief Compute relative humidity over water.
  *
- * This macro calculates the relative humidity over water using the given total pressure, temperature, and water vapor mixing ratio.
+ * This macro calculates the relative humidity over water using the
+ * given total pressure, temperature, and water vapor mixing ratio.
  * 
  * @param p The total pressure in hPa.
  * @param t The temperature in K.
@@ -1266,7 +1336,9 @@
  * @return The relative humidity over water in percentage.
  *
  * The relative humidity over water is calculated using the formula:
- * \f$ RH_{\textrm{w}}(p, t, h_2o) = \frac{P_{\textrm{w}}(p, h_2o)}{P_{\textrm{sat}}(t)} \times 100 \f$,
+ *
+ * \f[ RH_{\textrm{w}}(p, t, h_2o) = \frac{P_{\textrm{w}}(p, h_2o)}{P_{\textrm{sat}}(t)} \times 100, \f]
+ *
  * where:
  * - \f$ RH_{\textrm{w}}(p, t, h_2o) \f$ is the relative humidity over water,
  * - \f$ P_{\textrm{w}}(p, h_2o) \f$ is the partial water vapor pressure,
@@ -1285,7 +1357,8 @@
 /**
  * @brief Compute relative humidity over ice.
  *
- * This macro calculates the relative humidity over ice using the given total pressure, temperature, and water vapor mixing ratio.
+ * This macro calculates the relative humidity over ice using the
+ * given total pressure, temperature, and water vapor mixing ratio.
  * 
  * @param p The total pressure in hPa.
  * @param t The temperature in K.
@@ -1293,7 +1366,9 @@
  * @return The relative humidity over ice in percentage.
  *
  * The relative humidity over ice is calculated using the formula:
- * \f$ RH_{\textrm{ice}}(p, t, h_2o) = \frac{P_{\textrm{w}}(p, h_2o)}{P_{\textrm{ice}}(t)} \times 100 \f$,
+ *
+ * \f[ RH_{\textrm{ice}}(p, t, h_2o) = \frac{P_{\textrm{w}}(p, h_2o)}{P_{\textrm{ice}}(t)} \times 100, \f]
+ *
  * where:
  * - \f$ RH_{\textrm{ice}}(p, t, h_2o) \f$ is the relative humidity over ice,
  * - \f$ P_{\textrm{w}}(p, h_2o) \f$ is the partial water vapor pressure,
@@ -1312,14 +1387,17 @@
 /**
  * @brief Compute density of air.
  *
- * This macro calculates the density of air using the given total pressure and temperature.
+ * This macro calculates the density of air using the given total
+ * pressure and temperature.
  * 
  * @param p The total pressure in hPa.
  * @param t The temperature in K.
  * @return The density of air in kg/m^3.
  *
  * The density of air is calculated using the formula:
- * \f$ \rho(p, t) = \frac{100 \times p}{R_a \times t} \f$,
+ *
+ * \f[ \rho(p, t) = \frac{100 \times p}{R_a \times t}, \f]
+ *
  * where:
  * - \f$ \rho(p, t) \f$ is the density of air,
  * - \f$ p \f$ is the total pressure in hPa,
@@ -1334,8 +1412,9 @@
 /**
  * @brief Roeth approximation formula for photolysis reactions.
  *
- * This macro calculates the rate of a photolysis reaction using the Roeth approximation formula,
- * which takes into account the solar zenith angle (SZA).
+ * This macro calculates the rate of a photolysis reaction using the
+ * Roeth approximation formula, which takes into account the solar
+ * zenith angle (SZA).
  * 
  * @param a Coefficient 'a' in the Roeth formula.
  * @param b Coefficient 'b' in the Roeth formula.
@@ -1344,13 +1423,15 @@
  * @return The rate of the photolysis reaction.
  *
  * The Roeth approximation formula for photolysis reactions is given by:
- * \f$ ROETH\_PHOTOL(a, b, c, sza) = 
+ *
+ * \f[ ROETH\_PHOTOL(a, b, c, sza) = 
  *   \begin{cases} 
  *     a \times \exp\left(b \times \left(1 - \frac{1}{\cos(c \times sza)}\right)\right), \textrm{if } c \times sza < \frac{\pi}{2} \\
  *     0, \textrm{otherwise}
  *   \end{cases}
- * \f$
+ * \f]
  * 
+ * where:
  * - 'a', 'b', and 'c' are coefficients specific to the photolysis reaction.
  * - 'sza' is the solar zenith angle in radians.
  *
@@ -1362,9 +1443,10 @@
 /**
  * @brief Set atmospheric quantity value.
  *
- * This macro sets the value of a specific atmospheric quantity at a given index 'ip'.
- * The macro first checks if the control index 'ctl->qnt' is non-negative before assigning the value,
- * ensuring that the quantity index is valid.
+ * This macro sets the value of a specific atmospheric quantity at a
+ * given index 'ip'.  The macro first checks if the control index
+ * 'ctl->qnt' is non-negative before assigning the value, ensuring
+ * that the quantity index is valid.
  * 
  * @param qnt The index representing the atmospheric quantity to set.
  * @param val The value to set for the atmospheric quantity.
@@ -1381,9 +1463,11 @@
 /**
  * @brief Set atmospheric quantity index.
  *
- * This macro sets the index, long name, and unit of a specific atmospheric quantity based on its name.
- * It compares the name parameter with the name of the atmospheric quantity stored in 'ctl->qnt_name'.
- * If a match is found, it assigns the index to 'ctl->qnt', updates the long name, and updates the unit.
+ * This macro sets the index, long name, and unit of a specific
+ * atmospheric quantity based on its name.  It compares the name
+ * parameter with the name of the atmospheric quantity stored in
+ * 'ctl->qnt_name'.  If a match is found, it assigns the index to
+ * 'ctl->qnt', updates the long name, and updates the unit.
  * 
  * @param qnt The index representing the atmospheric quantity.
  * @param name The name of the atmospheric quantity.
@@ -1405,8 +1489,9 @@
 /**
  * @brief Compute specific humidity from water vapor volume mixing ratio.
  *
- * This macro calculates the specific humidity from the water vapor volume mixing ratio.
- * Specific humidity represents the ratio of the mass of water vapor to the total mass of air and is dimensionless.
+ * This macro calculates the specific humidity from the water vapor
+ * volume mixing ratio.  Specific humidity represents the ratio of the
+ * mass of water vapor to the total mass of air and is dimensionless.
  * 
  * @param h2o The water vapor volume mixing ratio.
  * @return The specific humidity.
@@ -1448,14 +1533,17 @@
 /**
  * @brief Calculate dew point temperature.
  *
- * This macro computes the dew point temperature using the formula provided by the World Meteorological Organization (WMO, 2018).
+ * This macro computes the dew point temperature using the formula
+ * provided by the World Meteorological Organization (WMO, 2018).
  * 
  * @param p The atmospheric pressure in hPa.
  * @param h2o The water vapor volume mixing ratio.
  * @return The dew point temperature in Kelvin.
  *
  * Formula:
- * \f[ T_{\textrm{dew}} = T_0 + \frac{243.12 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)} \f]
+ *
+ * \f[ T_{\textrm{dew}} = T_0 + \frac{243.12 \times \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{17.62 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)} \f]
+ *
  * where:
  * - \f$ T_{\textrm{dew}} \f$ is the dew point temperature.
  * - \f$ T_0 \f$ is the reference temperature in Kelvin (typically 273.15 K).
@@ -1470,14 +1558,17 @@
 /**
  * @brief Calculate frost point temperature (WMO, 2018).
  *
- * This macro computes the frost point temperature using the formula provided by the World Meteorological Organization (WMO, 2018).
+ * This macro computes the frost point temperature using the formula
+ * provided by the World Meteorological Organization (WMO, 2018).
  * 
  * @param p The atmospheric pressure in hPa.
  * @param h2o The water vapor volume mixing ratio.
  * @return The frost point temperature in Kelvin.
  *
  * Formula:
- * \f[ T_{\textrm{ice}} = T_0 + \frac{272.62 \cdot \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)} \f]
+ *
+ * \f[ T_{\textrm{ice}} = T_0 + \frac{272.62 \times \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)}{22.46 - \ln\left(\frac{{P_W(p, h_{2}O)}}{6.112}\right)} \f]
+ *
  * where:
  * - \f$ T_{\textrm{ice}} \f$ is the frost point temperature.
  * - \f$ T_0 \f$ is the reference temperature in Kelvin (typically 273.15 K).
@@ -1499,7 +1590,9 @@
  * @return The potential temperature in Kelvin.
  *
  * Formula:
+ *
  * \f[ \theta = T \left( \frac{1000}{P} \right)^{0.286} \f]
+ *
  * where:
  * - \f$ \theta \f$ is the potential temperature.
  * - \f$ T \f$ is the temperature in Kelvin.
@@ -1513,9 +1606,9 @@
 /**
  * @brief Compute virtual potential temperature.
  *
- * This macro calculates the virtual potential temperature of the atmosphere,
- * which takes into account the effect of water vapor on the atmosphere's
- * buoyancy.
+ * This macro calculates the virtual potential temperature of the
+ * atmosphere, which takes into account the effect of water vapor on
+ * the atmosphere's buoyancy.
  * 
  * @param p The atmospheric pressure in hPa.
  * @param t The temperature in Kelvin.
@@ -1523,8 +1616,11 @@
  * @return The virtual potential temperature in Kelvin.
  *
  * Formula:
+ *
  * The virtual potential temperature (\f$ \theta_v \f$) is computed as
- * \f[ \theta_v = \theta \left( 1 + \frac{0.61 \cdot q}{\epsilon} \right) \f]
+ *
+ * \f[ \theta_v = \theta \left( 1 + \frac{0.61 \times q}{\epsilon} \right), \f]
+ *
  * where:
  * - \f$ \theta_v \f$ is the virtual potential temperature.
  * - \f$ \theta \f$ is the potential temperature.
@@ -1539,17 +1635,18 @@
 /**
  * @brief Get string tokens.
  *
- * This macro extracts tokens from a given string, typically used for parsing
- * input lines.
+ * This macro extracts tokens from a given string, typically used for
+ * parsing input lines.
  * 
  * @param line The input string containing tokens.
  * @param tok A pointer to the token string.
  * @param format The format string specifying the expected format of the token.
  * @param var The variable to store the parsed token value.
  *
- * The macro tokenizes the input line using space and tab characters as delimiters.
- * It then parses each token according to the specified format string and stores
- * the parsed value in the provided variable.
+ * The macro tokenizes the input line using space and tab characters
+ * as delimiters.  It then parses each token according to the
+ * specified format string and stores the parsed value in the provided
+ * variable.
  * 
  * @author Lars Hoffmann
  */
@@ -1562,19 +1659,19 @@
 /**
  * @brief Compute virtual temperature.
  *
- * This macro calculates the virtual temperature of air given its temperature
- * and water vapor volume mixing ratio.
+ * This macro calculates the virtual temperature of air given its
+ * temperature and water vapor volume mixing ratio.
  * 
  * @param t The temperature of the air in Kelvin.
  * @param h2o The water vapor volume mixing ratio.
  * @return The virtual temperature of the air.
  *
- * The virtual temperature (T_v) is computed as the temperature (t) multiplied
- * by (1 + (1 - EPS) * max(h2o, 0.1e-6)), where EPS is the ratio of the molar
- * mass of water vapor to the molar mass of dry air.
+ * The virtual temperature (T_v) is computed as the temperature (t)
+ * multiplied by (1 + (1 - EPS) * max(h2o, 0.1e-6)), where EPS is the
+ * ratio of the molar mass of water vapor to the molar mass of dry
+ * air.
  * 
- * @note
- * EPS is typically defined as 0.622.
+ * @note EPS is typically defined as 0.622.
  * 
  * @author Lars Hoffmann
  */
@@ -1584,19 +1681,19 @@
 /**
  * @brief Convert pressure to altitude.
  *
- * This macro calculates the altitude from the given pressure using the
- * barometric formula.
+ * This macro calculates the altitude from the given pressure using
+ * the barometric formula.
  * 
  * @param p The pressure in hPa (hectopascal).
  * @return The altitude in kilometers (km).
  *
  * Formula:
+ *
  * The altitude (z) is computed as H0 times the natural logarithm of the
  * ratio of the reference pressure (P0) to the given pressure (p), where H0
  * is the scale height and P0 is the reference pressure at sea level.
  * 
- * @note
- * H0 and P0 are typically defined as constants specific to the atmosphere.
+ * @note H0 and P0 are typically defined as constants specific to the atmosphere.
  * 
  * @author Lars Hoffmann
  */
@@ -1638,8 +1735,9 @@
 /**
  * @brief Calculate potential vorticity using the Zeta approximation.
  *
- * This macro calculates the potential vorticity using the Zeta approximation,
- * which is a function of pressure, surface pressure, and temperature.
+ * This macro calculates the potential vorticity using the Zeta
+ * approximation, which is a function of pressure, surface pressure,
+ * and temperature.
  * 
  * @param ps Surface pressure in hPa.
  * @param p Pressure at the given level in hPa.
@@ -1647,15 +1745,17 @@
  * @return The potential vorticity.
  *
  * Formula:
- * The potential vorticity (Zeta) is computed based on the given pressure (p),
- * surface pressure (ps), and temperature (t). It involves the potential temperature
- * (Theta) at the given pressure level.
+ * The potential vorticity (Zeta) is computed based on the given
+ * pressure (p), surface pressure (ps), and temperature (t). It
+ * involves the potential temperature (Theta) at the given pressure
+ * level.
  * 
  * @note
- * The potential vorticity is approximated using the Zeta approximation, which
- * includes conditions based on pressure ratio and a sinusoidal function.
- * Adjust the constants if the approximation or conditions differ from the standard
- * Zeta approximation formula.
+ * The potential vorticity is approximated using the Zeta
+ * approximation, which includes conditions based on pressure ratio
+ * and a sinusoidal function.  Adjust the constants if the
+ * approximation or conditions differ from the standard Zeta
+ * approximation formula.
  * 
  * @author Lars Hoffmann
  */
@@ -1676,18 +1776,20 @@
 /*!
  * \brief Print a log message with a specified logging level.
  *
- * This macro prints a formatted log message to the standard output
- * if the specified logging level meets certain conditions. The message
- * will be indented if the logging level is greater than or equal to 2.
+ * This macro prints a formatted log message to the standard output if
+ * the specified logging level meets certain conditions. The message
+ * will be indented if the logging level is greater than or equal to
+ * 2.
  * 
  * \param level The logging level of the message. This should be an integer value.
  * \param ... The formatted message string and its arguments, similar to printf.
  *
  * \details
- * The `LOG` macro provides a simple way to log messages with different levels
- * of importance. The message is only printed if the specified `level` is less than
- * or equal to the pre-defined `LOGLEV` macro. If the `level` is greater than or
- * equal to 2, the message is preceded by two spaces for indentation.
+ * The `LOG` macro provides a simple way to log messages with
+ * different levels of importance. The message is only printed if the
+ * specified `level` is less than or equal to the pre-defined `LOGLEV`
+ * macro. If the `level` is greater than or equal to 2, the message is
+ * preceded by two spaces for indentation.
  *
  * The macro expands to a block of code that:
  * - Checks if the `level` is greater than or equal to 2, and if so, prints two spaces.
@@ -1712,10 +1814,10 @@
 /*!
  * \brief Print a warning message with contextual information.
  *
- * This macro prints a formatted warning message to the standard output,
- * including the file name, function name, and line number where the warning
- * occurred. The message is then passed to the `LOG` macro with a logging level
- * of 0.
+ * This macro prints a formatted warning message to the standard
+ * output, including the file name, function name, and line number
+ * where the warning occurred. The message is then passed to the `LOG`
+ * macro with a logging level of 0.
  * 
  * \param ... The formatted warning message string and its arguments, similar to printf.
  *
@@ -1727,9 +1829,10 @@
  * - The name of the function where the macro is called (`__func__`).
  * - The line number in the source file where the macro is called (`__LINE__`).
  *
- * After printing this contextual information, the macro uses the `LOG` macro
- * with a logging level of 0 to print the actual warning message. This ensures
- * that warning messages are always logged, regardless of the value of `LOGLEV`.
+ * After printing this contextual information, the macro uses the
+ * `LOG` macro with a logging level of 0 to print the actual warning
+ * message. This ensures that warning messages are always logged,
+ * regardless of the value of `LOGLEV`.
  *
  * \note
  * The `LOG` macro must be defined before using the `WARN` macro.
@@ -1745,9 +1848,9 @@
  * \brief Print an error message with contextual information and terminate the program.
  *
  * This macro prints a formatted error message to the standard output,
- * including the file name, function name, and line number where the error
- * occurred. After printing the message, the program is terminated with
- * an exit status indicating failure.
+ * including the file name, function name, and line number where the
+ * error occurred. After printing the message, the program is
+ * terminated with an exit status indicating failure.
  * 
  * \param ... The formatted error message string and its arguments, similar to printf.
  *
@@ -1759,9 +1862,10 @@
  * - The name of the function where the macro is called (`__func__`).
  * - The line number in the source file where the macro is called (`__LINE__`).
  *
- * After printing this contextual information, the macro uses the `LOG` macro
- * with a logging level of 0 to print the actual error message. Finally, the
- * program exits with a failure status (`EXIT_FAILURE`).
+ * After printing this contextual information, the macro uses the
+ * `LOG` macro with a logging level of 0 to print the actual error
+ * message. Finally, the program exits with a failure status
+ * (`EXIT_FAILURE`).
  *
  * \note
  * The `LOG` macro must be defined before using the `ERRMSG` macro.
@@ -1778,9 +1882,9 @@
  * \brief Print the value of a variable with contextual information.
  *
  * This macro prints the value of a variable to the standard output,
- * including the file name, function name, and line number where the macro
- * is called. The output also includes the variable's name and value in a
- * formatted string.
+ * including the file name, function name, and line number where the
+ * macro is called. The output also includes the variable's name and
+ * value in a formatted string.
  * 
  * \param format The format string used to print the variable's value, similar to printf.
  * \param var The variable to be printed.
@@ -1794,8 +1898,9 @@
  * - The name of the variable being printed (`#var`).
  * - The value of the variable, formatted according to the provided format string (`format`).
  *
- * This macro is particularly useful for debugging purposes, providing a
- * convenient way to trace variable values and their locations in the code.
+ * This macro is particularly useful for debugging purposes, providing
+ * a convenient way to trace variable values and their locations in
+ * the code.
  *
  * \note
  * The format string must be compatible with the type of the variable being printed.
@@ -1832,10 +1937,10 @@
 /*!
  * \brief Select and start a timer with specific attributes.
  *
- * This macro stops the current timer (if any) and starts a new timer with
- * the specified ID, group, and color. It uses the `NVTX_POP` and `NVTX_PUSH`
- * macros for managing timer events and the `timer` function to log the timer
- * start event.
+ * This macro stops the current timer (if any) and starts a new timer
+ * with the specified ID, group, and color. It uses the `NVTX_POP` and
+ * `NVTX_PUSH` macros for managing timer events and the `timer`
+ * function to log the timer start event.
  *
  * \param id The identifier for the timer.
  * \param group The group name associated with the timer.
@@ -1856,9 +1961,9 @@
 /*!
  * \brief Starts a timer for tracking.
  *
- * This macro initializes the timer tracking process by pushing a start
- * event onto the stack using the `NVTX_PUSH` macro with a predefined ID
- * ("START") and color (`NVTX_CPU`).
+ * This macro initializes the timer tracking process by pushing a
+ * start event onto the stack using the `NVTX_PUSH` macro with a
+ * predefined ID ("START") and color (`NVTX_CPU`).
  *
  * \note
  * The `NVTX_PUSH` macro must be defined elsewhere in the codebase for this
@@ -1870,11 +1975,10 @@
   NVTX_PUSH("START", NVTX_CPU);
 
 /*!
- * \def STOP_TIMERS
  * \brief Stop the current timer.
  *
- * This macro stops the current timer by popping the top event from the stack
- * using the `NVTX_POP` macro.
+ * This macro stops the current timer by popping the top event from
+ * the stack using the `NVTX_POP` macro.
  *
  * \note
  * The `NVTX_POP` macro must be defined elsewhere in the codebase for this
@@ -1913,8 +2017,9 @@
 /*!
  * \brief Macro for calling `nvtxRangePushEx` to start a named and colored NVTX range.
  *
- * This macro initializes an `nvtxEventAttributes_t` structure with the provided title
- * and color, then calls `nvtxRangePushEx` to mark the beginning of an NVTX range.
+ * This macro initializes an `nvtxEventAttributes_t` structure with
+ * the provided title and color, then calls `nvtxRangePushEx` to mark
+ * the beginning of an NVTX range.
  *
  * \param range_title The title of the NVTX range, displayed in the NVTX visual profiler.
  * \param range_color The color of the NVTX range, specified as an ARGB value.
@@ -1931,8 +2036,10 @@
  * It then calls `nvtxRangePushEx` with the initialized attributes to start the NVTX range.
  *
  * \note
- * The NVTX (NVIDIA Tools Extension) library must be included and initialized in your project for
- * this macro to function correctly. If NVTX is not available, an empty definition is provided.
+ * The NVTX (NVIDIA Tools Extension) library must be included and
+ * initialized in your project for this macro to function
+ * correctly. If NVTX is not available, an empty definition is
+ * provided.
  * 
  * @author Lars Hoffmann
  */
@@ -1950,7 +2057,8 @@
 /*!
  * \brief Macro for calling `nvtxRangePop` to end the current NVTX range.
  *
- * This macro calls `nvtxRangePop` to mark the end of the most recently started NVTX range.
+ * This macro calls `nvtxRangePop` to mark the end of the most
+ * recently started NVTX range.
  *
  * \note
  * The NVTX (NVIDIA Tools Extension) library must be included and initialized in your project for
@@ -1968,7 +2076,6 @@
 #define NVTX_POP {}
 #endif
 
-
 /* ------------------------------------------------------------
    Thrust...
    ------------------------------------------------------------ */
@@ -1976,8 +2083,9 @@
 /*!
  * \brief Wrapper to Thrust sorting function.
  *
- * This function serves as a wrapper for a Thrust sorting operation, sorting the array `c`
- * and maintaining the correspondence with the `index` array.
+ * This function serves as a wrapper for a Thrust sorting operation,
+ * sorting the array `c` and maintaining the correspondence with the
+ * `index` array.
  *
  * \param c Pointer to the array of double values to be sorted.
  * \param n The number of elements in the array `c`.
@@ -1987,11 +2095,14 @@
  * The `thrustSortWrapper` function uses the Thrust library to sort the array `c` in ascending order.
  * The `index` array is updated to reflect the new order of elements in `c` after sorting.
  *
- * This function is particularly useful when the sorted order of elements needs to be tracked by indices.
+ * This function is particularly useful when the sorted order of
+ * elements needs to be tracked by indices.
  *
  * \note
  * - The `c` and `index` arrays must be of the same length `n`.
  * - The function assumes that the Thrust library is properly included and configured in the project.
+ *
+ * @author Kaveh Haghighi Mood
  */
 void thrustSortWrapper(
   double *__restrict__ c,
@@ -2005,9 +2116,9 @@ void thrustSortWrapper(
 /**
  * @brief Control parameters.
  * 
- * This structure contains all control parameters used by the MPTRAC model.
- * A struct is used to collect this information so that it can easily passed
- * on to functions.
+ * This structure contains all control parameters used by the MPTRAC
+ * model.  The struct is used to collect to easily pass the control
+ * parameters on to the various functions.
  */
 typedef struct {
 
@@ -2871,9 +2982,10 @@ typedef struct {
 /**
  * @brief Air parcel data.
  * 
- * This structure contains information related to air parcel data, 
- * including the number of air parcels, their respective times, 
- * pressures, longitudes, latitudes, and various user-defined attributes.
+ * This structure contains information related to air parcel data,
+ * including the number of air parcels, their respective times,
+ * pressures, longitudes, latitudes, and various user-defined
+ * attributes.
  */
 typedef struct {
 
@@ -2900,7 +3012,7 @@ typedef struct {
 /**
  * @brief Cache data structure.
  * 
- * This structure contains data related to cached isosurface variables 
+ * This structure contains data related to cached isosurface variables
  * and wind perturbations for a given set of data points.
  */
 typedef struct {
@@ -2925,8 +3037,9 @@ typedef struct {
 /**
  * @brief Climatological data in the form of photolysis rates.
  * 
- * This structure contains climatological data related to photolysis rates
- * at various pressure levels, solar zenith angles, and total ozone columns.
+ * This structure contains climatological data related to photolysis
+ * rates at various pressure levels, solar zenith angles, and total
+ * ozone columns.
  */
 typedef struct {
 
@@ -2980,8 +3093,9 @@ typedef struct {
 /**
  * @brief Climatological data in the form of time series.
  * 
- * This structure contains climatological data in the form of time series,
- * representing the evolution of volume mixing ratio over time.
+ * This structure contains climatological data in the form of time
+ * series, representing the evolution of volume mixing ratio over
+ * time.
  */
 typedef struct {
 
@@ -2999,9 +3113,9 @@ typedef struct {
 /**
  * @brief Climatological data in the form of zonal means.
  * 
- * This structure contains climatological data organized as zonal means,
- * representing the distribution of volume mixing ratio over latitudes
- * and pressure levels across multiple timesteps.
+ * This structure contains climatological data organized as zonal
+ * means, representing the distribution of volume mixing ratio over
+ * latitudes and pressure levels across multiple timesteps.
  */
 typedef struct {
 
@@ -3031,9 +3145,9 @@ typedef struct {
 /**
  * @brief Climatological data.
  * 
- * This structure represents climatological data containing various atmospheric parameters
- * organized in different formats such as zonal means, time series, photolysis rates,
- * and tropopause data.
+ * This structure represents climatological data containing various
+ * atmospheric parameters organized in different formats such as zonal
+ * means, time series, photolysis rates, and tropopause data.
  */
 typedef struct {
 
@@ -3090,9 +3204,9 @@ typedef struct {
 /*!
  * @brief Meteo data structure.
  *
- * This structure holds meteorological data such as time, dimensions, coordinates,
- * surface properties, atmospheric profiles, and derived variables of a given
- * meteorological model.
+ * This structure holds meteorological data such as time, dimensions,
+ * coordinates, surface properties, atmospheric profiles, and derived
+ * variables of a given meteorological model.
  */
 typedef struct {
 
@@ -3247,8 +3361,8 @@ typedef struct {
  * @brief Converts Cartesian coordinates to geographic coordinates.
  *
  * This function converts a point from Cartesian coordinates (x, y, z)
- * to geographic coordinates (longitude, latitude, and altitude).
- * It uses the spherical Earth approximation for the conversion.
+ * to geographic coordinates (longitude, latitude, and altitude).  It
+ * uses the spherical Earth approximation for the conversion.
  *
  * @param x Pointer to an array containing the Cartesian coordinates (x, y, z) in kilometers.
  * @param z Pointer to a double where the computed altitude (above the reference ellipsoid) will be stored, in kilometers.
@@ -3267,10 +3381,11 @@ void cart2geo(
  * @brief Calculates the hydroxyl radical (OH) concentration from climatology data, 
  *        with an optional diurnal correction based on solar zenith angle.
  *
- * This function retrieves OH data from a given climatology and applies a diurnal
- * correction if the correction factor (oh_chem_beta) is greater than zero. The 
- * diurnal correction accounts for the variation in OH concentration due to changes 
- * in the solar zenith angle.
+ * This function retrieves OH data from a given climatology and
+ * applies a diurnal correction if the correction factor
+ * (oh_chem_beta) is greater than zero. The diurnal correction
+ * accounts for the variation in OH concentration due to changes in
+ * the solar zenith angle.
  *
  * @param ctl  Pointer to the control structure containing configuration parameters.
  * @param clim Pointer to the climatology structure containing OH data.
@@ -3296,10 +3411,11 @@ double clim_oh(
  * @brief Applies a diurnal correction to the hydroxyl radical (OH) concentration 
  *        in climatology data.
  *
- * This function iterates over the climatology data points for OH concentration and 
- * integrates the day/night correction factor over longitude. The correction factor 
- * is based on the solar zenith angle, and it adjusts the OH data to account for 
- * diurnal variations. The corrected OH data is scaled accordingly.
+ * This function iterates over the climatology data points for OH
+ * concentration and integrates the day/night correction factor over
+ * longitude. The correction factor is based on the solar zenith
+ * angle, and it adjusts the OH data to account for diurnal
+ * variations. The corrected OH data is scaled accordingly.
  *
  * @param ctl  Pointer to the control structure containing configuration parameters,
  *             including the correction factor (oh_chem_beta).
@@ -3316,10 +3432,11 @@ void clim_oh_diurnal_correction(
 /**
  * @brief Calculates the photolysis rate for a given set of atmospheric conditions.
  *
- * This function computes the photolysis rate based on provided climatology data and 
- * input parameters such as pressure, solar zenith angle (SZA), and ozone column. It 
- * ensures that the input parameters are within the valid range of the climatology 
- * data and interpolates the photolysis rate accordingly.
+ * This function computes the photolysis rate based on provided
+ * climatology data and input parameters such as pressure, solar
+ * zenith angle (SZA), and ozone column. It ensures that the input
+ * parameters are within the valid range of the climatology data and
+ * interpolates the photolysis rate accordingly.
  *
  * @param rate 3D array containing the photolysis rates for different combinations 
  *             of pressure, SZA, and ozone column.
@@ -3351,9 +3468,10 @@ double clim_photo(
 /**
  * @brief Calculates the tropopause pressure based on climatological data.
  *
- * This function computes the tropopause pressure using climatological data 
- * for different times and latitudes. It interpolates the tropopause pressure 
- * based on the input time and latitude parameters.
+ * This function computes the tropopause pressure using climatological
+ * data for different times and latitudes. It interpolates the
+ * tropopause pressure based on the input time and latitude
+ * parameters.
  *
  * @param clim Pointer to the climatology structure containing tropopause 
  *             pressure data.
@@ -3380,9 +3498,9 @@ double clim_tropo(
 /**
  * @brief Initializes the tropopause data in the climatology structure.
  *
- * This function initializes the tropopause data in the climatology structure.
- * It sets the time steps, latitudes, and tropopause pressure values based on
- * predefined arrays.
+ * This function initializes the tropopause data in the climatology
+ * structure.  It sets the time steps, latitudes, and tropopause
+ * pressure values based on predefined arrays.
  *
  * @param clim Pointer to the climatology structure to be initialized.
  *
@@ -3401,8 +3519,8 @@ void clim_tropo_init(
 /**
  * @brief Interpolates a time series of climatological variables.
  *
- * This function interpolates a time series of climatological variables based
- * on the input time and the provided data points.
+ * This function interpolates a time series of climatological
+ * variables based on the input time and the provided data points.
  *
  * @param ts Pointer to the time series structure containing data points.
  * @param t Time at which to interpolate the climatological variable (in seconds).
@@ -3421,9 +3539,9 @@ double clim_ts(
 /**
  * @brief Interpolates monthly mean zonal mean climatological variables.
  *
- * This function interpolates climatological variables based on pressure,
- * latitude, and time. The climatological data is provided in the form of monthly mean
- * zonal mean values.
+ * This function interpolates climatological variables based on
+ * pressure, latitude, and time. The climatological data is provided
+ * in the form of monthly mean zonal mean values.
  *
  * @param zm Pointer to the climatological zonal mean structure containing data points.
  * @param t Time at which to interpolate the climatological variable (in seconds since the beginning of the year).
@@ -3431,10 +3549,11 @@ double clim_ts(
  * @param p Pressure at which to interpolate the climatological variable (in hPa).
  * @return Interpolated value of the climatological variable at the given pressure, latitude, and time.
  *
- * This function performs trilinear interpolation between the nearest data points
- * to the input time `t`, latitude `lat`, and pressure or altitude `p`. If the input
- * values are outside the range of the provided data, the function extrapolates by
- * using the nearest boundary values.
+ * This function performs trilinear interpolation between the nearest
+ * data points to the input time `t`, latitude `lat`, and pressure or
+ * altitude `p`. If the input values are outside the range of the
+ * provided data, the function extrapolates by using the nearest
+ * boundary values.
  *
  * @author Lars Hoffmann
  */
@@ -3447,8 +3566,10 @@ double clim_zm(
 /**
  * @brief Compresses or decompresses a 3D array of floats using a custom multiscale compression algorithm.
  *
- * This function either compresses or decompresses a 3D array of floats based on the value of the `decompress` parameter.
- * The compression and decompression are performed using a custom multiscale module.
+ * This function either compresses or decompresses a 3D array of
+ * floats based on the value of the `decompress` parameter.  The
+ * compression and decompression are performed using a custom
+ * multiscale module.
  *
  * @param varname The name of the variable being processed.
  * @param array Pointer to the 3D array of floats to be compressed or decompressed.
@@ -3470,7 +3591,8 @@ double clim_zm(
  *   - Copies data for each level into a temporary array.
  *   - Compresses the data and writes the compressed data to the file.
  *
- * The function logs the compression or decompression details and frees allocated resources before returning.
+ * The function logs the compression or decompression details and
+ * frees allocated resources before returning.
  *
  * @note Ensure that the input `array` is already allocated and can hold the decompressed data.
  * 
@@ -3493,11 +3615,12 @@ void compress_cmulti(
 /**
  * @brief Compresses or decompresses a 3D array of floats.
  *
- * This function either compresses or decompresses a 3D array of floats 
- * based on the value of the `decompress` parameter. Compression reduces 
- * the storage size by converting float values (4 bytes) to unsigned short values (2 bytes)
- * with scaling and offset. Decompression restores the original float values 
- * from the compressed unsigned short representation.
+ * This function either compresses or decompresses a 3D array of
+ * floats based on the value of the `decompress`
+ * parameter. Compression reduces the storage size by converting float
+ * values (4 bytes) to unsigned short values (2 bytes) with scaling
+ * and offset. Decompression restores the original float values from
+ * the compressed unsigned short representation.
  *
  * @param varname The name of the variable being processed.
  * @param array Pointer to the 3D array of floats to be compressed or decompressed.
@@ -3529,15 +3652,15 @@ void compress_pack(
   int decompress,
   FILE * inout);
 
-#ifdef ZFP
 /**
  * @brief Compresses or decompresses a 3D array of floats using the ZFP library.
  *
- * This function either compresses or decompresses a 3D array of floats based on 
- * the value of the `decompress` parameter. Compression reduces the storage size 
- * using the ZFP compression algorithm, which supports fixed-precision or 
- * fixed-accuracy modes. Decompression restores the original float values from 
- * the compressed representation.
+ * This function either compresses or decompresses a 3D array of
+ * floats based on the value of the `decompress`
+ * parameter. Compression reduces the storage size using the ZFP
+ * compression algorithm, which supports fixed-precision or
+ * fixed-accuracy modes. Decompression restores the original float
+ * values from the compressed representation.
  *
  * @param varname The name of the variable being processed.
  * @param array Pointer to the 3D array of floats to be compressed or decompressed.
@@ -3577,15 +3700,15 @@ void compress_zfp(
   double tolerance,
   int decompress,
   FILE * inout);
-#endif
 
-#ifdef ZSTD
 /**
  * @brief Compresses or decompresses an array of floats using the Zstandard (ZSTD) library.
  *
- * This function either compresses or decompresses an array of floats based on the value of the `decompress` parameter.
- * Compression reduces the storage size using the ZSTD compression algorithm. Decompression restores the original float
- * values from the compressed representation.
+ * This function either compresses or decompresses an array of floats
+ * based on the value of the `decompress` parameter.  Compression
+ * reduces the storage size using the ZSTD compression
+ * algorithm. Decompression restores the original float values from
+ * the compressed representation.
  *
  * @param varname The name of the variable being processed.
  * @param array Pointer to the array of floats to be compressed or decompressed.
@@ -3619,25 +3742,24 @@ void compress_zstd(
   size_t n,
   int decompress,
   FILE * inout);
-#endif
 
 /*! Get day of year from date. */
 /**
  * @brief Converts a given date to the day of the year (DOY).
  *
- * This function computes the day of the year (DOY) for a given date specified
- * by the year, month, and day. It takes into account whether the given year
- * is a leap year or not.
+ * This function computes the day of the year (DOY) for a given date
+ * specified by the year, month, and day. It takes into account
+ * whether the given year is a leap year or not.
  *
  * @param year The year of the date.
  * @param mon The month of the date (1-12).
  * @param day The day of the month (1-31).
  * @param doy Pointer to an integer where the computed day of the year will be stored.
  *
- * The function uses two arrays, `d0` and `d0l`, which contain the cumulative
- * number of days at the start of each month for non-leap years and leap years
- * respectively. It checks if the year is a leap year and calculates the day of
- * the year accordingly.
+ * The function uses two arrays, `d0` and `d0l`, which contain the
+ * cumulative number of days at the start of each month for non-leap
+ * years and leap years respectively. It checks if the year is a leap
+ * year and calculates the day of the year accordingly.
  *
  * @note The function assumes that the input date is valid.
  * 
@@ -3652,18 +3774,19 @@ void day2doy(
 /**
  * @brief Converts a given day of the year (DOY) to a date (month and day).
  *
- * This function computes the month and day for a given day of the year (DOY)
- * and year. It accounts for whether the given year is a leap year or not.
+ * This function computes the month and day for a given day of the
+ * year (DOY) and year. It accounts for whether the given year is a
+ * leap year or not.
  *
  * @param year The year corresponding to the DOY.
  * @param doy The day of the year (1-365 or 1-366).
  * @param mon Pointer to an integer where the computed month will be stored.
  * @param day Pointer to an integer where the computed day of the month will be stored.
  *
- * The function uses two arrays, `d0` and `d0l`, which contain the cumulative
- * number of days at the start of each month for non-leap years and leap years
- * respectively. It checks if the year is a leap year and calculates the month
- * and day of the month accordingly.
+ * The function uses two arrays, `d0` and `d0l`, which contain the
+ * cumulative number of days at the start of each month for non-leap
+ * years and leap years respectively. It checks if the year is a leap
+ * year and calculates the month and day of the month accordingly.
  *
  * @note The function assumes that the input DOY is valid for the given year.
  * 
@@ -3678,9 +3801,10 @@ void doy2day(
 /**
  * @brief Computes the Fast Fourier Transform (FFT) of a complex sequence.
  *
- * This function calculates the FFT of a complex sequence represented by separate 
- * arrays for the real and imaginary parts. The input arrays `fcReal` and `fcImag`
- * are modified in place to contain the transformed data.
+ * This function calculates the FFT of a complex sequence represented
+ * by separate arrays for the real and imaginary parts. The input
+ * arrays `fcReal` and `fcImag` are modified in place to contain the
+ * transformed data.
  *
  * @param fcReal Pointer to an array of doubles representing the real part of the input sequence. 
  *               The array should have at least `n` elements.
@@ -3708,8 +3832,10 @@ void fft_help(
 /**
  * @brief Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates.
  *
- * This function converts geographic coordinates specified by longitude, latitude, and altitude
- * into Cartesian coordinates. The Earth is approximated as a sphere with radius defined by the constant `RE`.
+ * This function converts geographic coordinates specified by
+ * longitude, latitude, and altitude into Cartesian coordinates. The
+ * Earth is approximated as a sphere with radius defined by the
+ * constant `RE`.
  *
  * @param z The altitude above the Earth's surface in kilometers.
  * @param lon The longitude in degrees.
@@ -3738,9 +3864,11 @@ void geo2cart(
 /**
  * @brief Retrieves meteorological data for the specified time.
  *
- * This function retrieves meteorological data for the given time `t` and updates the provided pointers
- * to the met0 and met1 structures accordingly. It handles both the initialization and subsequent updates
- * of the meteorological data based on the direction of time integration.
+ * This function retrieves meteorological data for the given time `t`
+ * and updates the provided pointers to the met0 and met1 structures
+ * accordingly. It handles both the initialization and subsequent
+ * updates of the meteorological data based on the direction of time
+ * integration.
  *
  * @param ctl Pointer to the control structure containing configuration settings.
  * @param clim Pointer to the climate structure.
@@ -3777,9 +3905,10 @@ void get_met(
 /**
  * @brief Helper function to generate the filename for meteorological data.
  *
- * This function generates the appropriate filename for the meteorological data file
- * based on the provided time `t`, direction `direct`, and the base filename `metbase`.
- * The filename is formatted according to the specified meteorological data type.
+ * This function generates the appropriate filename for the
+ * meteorological data file based on the provided time `t`, direction
+ * `direct`, and the base filename `metbase`.  The filename is
+ * formatted according to the specified meteorological data type.
  *
  * @param ctl Pointer to the control structure containing configuration settings.
  * @param t The time for which the meteorological data filename is to be generated.
@@ -3812,16 +3941,18 @@ void get_met_help(
 /**
  * @brief Replaces occurrences of a substring in a string with another substring.
  *
- * This function replaces occurrences of the substring `search` in the string `orig`
- * with the substring `repl`. The replacement is performed in-place.
+ * This function replaces occurrences of the substring `search` in the
+ * string `orig` with the substring `repl`. The replacement is
+ * performed in-place.
  *
  * @param orig The original string where replacements are to be made.
  * @param search The substring to be replaced.
  * @param repl The substring to replace occurrences of `search`.
  *
- * The function iterates over the original string `orig` and replaces each occurrence
- * of the substring `search` with the substring `repl`. It performs the replacement
- * operation up to three times to ensure multiple occurrences are replaced.
+ * The function iterates over the original string `orig` and replaces
+ * each occurrence of the substring `search` with the substring
+ * `repl`. It performs the replacement operation up to three times to
+ * ensure multiple occurrences are replaced.
  *
  * @note We use this function to repace the strings `YYYY`, `MM`, and `DD` by year,
  *       month, and day in filenames.
@@ -3838,8 +3969,10 @@ void get_met_replace(
 /**
  * @brief Calculate tropopause data.
  *
- * This function reads and interpolates various meteorological parameters such as tropopause pressure, temperature, and ozone
- * concentration at specified latitudes and longitudes. The interpolated data is stored in the provided arrays.
+ * This function reads and interpolates various meteorological
+ * parameters such as tropopause pressure, temperature, and ozone
+ * concentration at specified latitudes and longitudes. The
+ * interpolated data is stored in the provided arrays.
  *
  * @param met_tropo An integer specifying the type of meteorological data to use.
  * @param ctl Pointer to a `ctl_t` structure that controls the meteorological data processing.
@@ -3889,10 +4022,10 @@ void get_tropo(
 /**
  * @brief Interpolates meteorological variables to a given position and time.
  *
- * This function interpolates meteorological variables to a specified position
- * and time. It calculates the interpolated value based on the values provided
- * at two time steps and performs interpolation in time, longitude, latitude,
- * and altitude dimensions.
+ * This function interpolates meteorological variables to a specified
+ * position and time. It calculates the interpolated value based on
+ * the values provided at two time steps and performs interpolation in
+ * time, longitude, latitude, and altitude dimensions.
  *
  * @param met0 Pointer to the meteorological data at the first time step.
  * @param height0 Array containing heights at the first time step.
@@ -3909,16 +4042,18 @@ void get_tropo(
  * @param cw Array to store the weighting factors.
  * @param init Flag indicating if it's the first call (1) or not (0).
  *
- * The function first restricts the longitude within the range [0, 360) degrees.
- * It then calculates the horizontal indices (`ci[0]` and `ci[1]`) based on the
- * provided longitude and latitude. Next, it locates the vertical indices for
- * each edge of the column based on the provided height.
+ * The function first restricts the longitude within the range [0,
+ * 360) degrees.  It then calculates the horizontal indices (`ci[0]`
+ * and `ci[1]`) based on the provided longitude and latitude. Next, it
+ * locates the vertical indices for each edge of the column based on
+ * the provided height.
  *
- * The function then calculates the weighting factors for time, longitude, latitude,
- * and altitude. It iterates over the interpolation process to determine the altitude
- * weighting factor. After initializing the interpolation parameters, it calculates
- * the interpolated variable value and stores it in the memory location pointed to
- * by `var`.
+ * The function then calculates the weighting factors for time,
+ * longitude, latitude, and altitude. It iterates over the
+ * interpolation process to determine the altitude weighting
+ * factor. After initializing the interpolation parameters, it
+ * calculates the interpolated variable value and stores it in the
+ * memory location pointed to by `var`.
  *
  * @note Ensure that all arrays (`height0`, `array0`, `height1`, `array1`, `ci`, `cw`)
  *       have sufficient memory allocated before calling this function.
@@ -3944,10 +4079,11 @@ void intpol_met_4d_coord(
 /**
  * @brief Interpolates meteorological variables in 3D space.
  *
- * This function interpolates meteorological variables at a specified pressure level
- * and geographic position. It calculates the interpolated value based on the values
- * provided at neighboring grid points and performs interpolation in pressure, longitude,
- * and latitude dimensions.
+ * This function interpolates meteorological variables at a specified
+ * pressure level and geographic position. It calculates the
+ * interpolated value based on the values provided at neighboring grid
+ * points and performs interpolation in pressure, longitude, and
+ * latitude dimensions.
  *
  * @param met Pointer to the meteorological data.
  * @param array Array containing meteorological variable values.
@@ -3959,13 +4095,15 @@ void intpol_met_4d_coord(
  * @param cw Array to store the weighting factors.
  * @param init Flag indicating if it's the first call (1) or not (0).
  *
- * The function first checks the longitude and adjusts it if necessary to ensure it
- * falls within the valid range. It then calculates the interpolation indices based
- * on the provided pressure level, longitude, and latitude. Next, it computes the
- * interpolation weights for pressure, longitude, and latitude.
+ * The function first checks the longitude and adjusts it if necessary
+ * to ensure it falls within the valid range. It then calculates the
+ * interpolation indices based on the provided pressure level,
+ * longitude, and latitude. Next, it computes the interpolation
+ * weights for pressure, longitude, and latitude.
  *
- * The function interpolates vertically first and then horizontally. The interpolated
- * value is stored in the memory location pointed to by `var`.
+ * The function interpolates vertically first and then
+ * horizontally. The interpolated value is stored in the memory
+ * location pointed to by `var`.
  *
  * @note Ensure that the `array`, `ci`, and `cw` arrays have sufficient memory allocated
  *       before calling this function.
@@ -3986,10 +4124,10 @@ void intpol_met_space_3d(
 /**
  * @brief Interpolates meteorological variables in 2D space.
  *
- * This function interpolates meteorological variables at a specified geographic
- * position. It calculates the interpolated value based on the values provided
- * at neighboring grid points and performs interpolation in longitude and latitude
- * dimensions.
+ * This function interpolates meteorological variables at a specified
+ * geographic position. It calculates the interpolated value based on
+ * the values provided at neighboring grid points and performs
+ * interpolation in longitude and latitude dimensions.
  *
  * @param met Pointer to the meteorological data.
  * @param array Array containing meteorological variable values.
@@ -4000,15 +4138,17 @@ void intpol_met_space_3d(
  * @param cw Array to store the weighting factors.
  * @param init Flag indicating if it's the first call (1) or not (0).
  *
- * The function first checks the longitude and adjusts it if necessary to ensure
- * it falls within the valid range. It then calculates the interpolation indices
- * based on the provided longitude and latitude. Next, it computes the interpolation
- * weights for longitude and latitude.
+ * The function first checks the longitude and adjusts it if necessary
+ * to ensure it falls within the valid range. It then calculates the
+ * interpolation indices based on the provided longitude and
+ * latitude. Next, it computes the interpolation weights for longitude
+ * and latitude.
  *
- * The function interpolates horizontally and stores the interpolated value in
- * the memory location pointed to by `var`. If any of the data values used in
- * interpolation are not finite, the function handles this situation by choosing
- * a valid value or performing a simple interpolation.
+ * The function interpolates horizontally and stores the interpolated
+ * value in the memory location pointed to by `var`. If any of the
+ * data values used in interpolation are not finite, the function
+ * handles this situation by choosing a valid value or performing a
+ * simple interpolation.
  *
  * @note Ensure that the `array`, `ci`, and `cw` arrays have sufficient memory allocated
  *       before calling this function.
@@ -4028,10 +4168,11 @@ void intpol_met_space_2d(
 /**
  * @brief Interpolates wind components (u, v, and w) in 3D space.
  *
- * This function interpolates wind components (u, v, and w) at a specified
- * geographical position and pressure level. It calculates the interpolated
- * values based on the values provided at neighboring grid points and performs
- * interpolation in longitude, latitude, and pressure dimensions.
+ * This function interpolates wind components (u, v, and w) at a
+ * specified geographical position and pressure level. It calculates
+ * the interpolated values based on the values provided at neighboring
+ * grid points and performs interpolation in longitude, latitude, and
+ * pressure dimensions.
  *
  * @param met Pointer to the meteorological data.
  * @param p Pressure level at which to interpolate.
@@ -4044,13 +4185,15 @@ void intpol_met_space_2d(
  * @param cw Array to store the weighting factors.
  * @param init Flag indicating if it's the first call (1) or not (0).
  *
- * The function first checks the longitude and adjusts it if necessary to ensure
- * it falls within the valid range. It then calculates the interpolation indices
- * based on the provided longitude, latitude, and pressure level. Next, it computes
- * the interpolation weights for longitude, latitude, and pressure level.
+ * The function first checks the longitude and adjusts it if necessary
+ * to ensure it falls within the valid range. It then calculates the
+ * interpolation indices based on the provided longitude, latitude,
+ * and pressure level. Next, it computes the interpolation weights for
+ * longitude, latitude, and pressure level.
  *
- * The function interpolates vertically for each wind component and stores the
- * interpolated values in the memory locations pointed to by `u`, `v`, and `w`.
+ * The function interpolates vertically for each wind component and
+ * stores the interpolated values in the memory locations pointed to
+ * by `u`, `v`, and `w`.
  *
  * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
  *       before calling this function.
@@ -4072,10 +4215,10 @@ void intpol_met_space_uvw(
 /**
  * @brief Interpolates meteorological data in 3D space and time.
  *
- * This function interpolates meteorological data in three dimensions (longitude,
- * latitude, and pressure) and time. It calculates the interpolated value based
- * on the values provided at neighboring grid points and performs interpolation
- * both spatially and temporally.
+ * This function interpolates meteorological data in three dimensions
+ * (longitude, latitude, and pressure) and time. It calculates the
+ * interpolated value based on the values provided at neighboring grid
+ * points and performs interpolation both spatially and temporally.
  *
  * @param met0 Pointer to the meteorological data at time t0.
  * @param array0 3D array of meteorological data at time t0.
@@ -4090,11 +4233,12 @@ void intpol_met_space_uvw(
  * @param cw Array to store the weighting factors.
  * @param init Flag indicating if it's the first call (1) or not (0).
  *
- * The function first performs spatial interpolation for both time instances
- * (t0 and t1) using the `intpol_met_space_3d` function. It then calculates
- * the weighting factor `wt` based on the time stamp `ts`. Finally, it performs
- * temporal interpolation using the interpolated values at t0 and t1 along with
- * the weighting factor to compute the final interpolated value stored in `var`.
+ * The function first performs spatial interpolation for both time
+ * instances (t0 and t1) using the `intpol_met_space_3d` function. It
+ * then calculates the weighting factor `wt` based on the time stamp
+ * `ts`. Finally, it performs temporal interpolation using the
+ * interpolated values at t0 and t1 along with the weighting factor to
+ * compute the final interpolated value stored in `var`.
  *
  * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
  *       before calling this function.
@@ -4118,10 +4262,10 @@ void intpol_met_time_3d(
 /**
  * @brief Interpolates meteorological data in 2D space and time.
  *
- * This function interpolates meteorological data in two dimensions (longitude
- * and latitude) and time. It calculates the interpolated value based on the
- * values provided at neighboring grid points and performs interpolation both
- * spatially and temporally.
+ * This function interpolates meteorological data in two dimensions
+ * (longitude and latitude) and time. It calculates the interpolated
+ * value based on the values provided at neighboring grid points and
+ * performs interpolation both spatially and temporally.
  *
  * @param met0 Pointer to the meteorological data at time t0.
  * @param array0 2D array of meteorological data at time t0.
@@ -4135,12 +4279,13 @@ void intpol_met_time_3d(
  * @param cw Array to store the weighting factors.
  * @param init Flag indicating if it's the first call (1) or not (0).
  *
- * The function first performs spatial interpolation for both time instances
- * (t0 and t1) using the `intpol_met_space_2d` function. It then calculates
- * the weighting factor `wt` based on the time stamp `ts`. Finally, it performs
- * temporal interpolation using the interpolated values at t0 and t1 along with
- * the weighting factor to compute the final interpolated value stored in `var`.
- * If one of the interpolated values is not finite, it selects the valid value
+ * The function first performs spatial interpolation for both time
+ * instances (t0 and t1) using the `intpol_met_space_2d` function. It
+ * then calculates the weighting factor `wt` based on the time stamp
+ * `ts`. Finally, it performs temporal interpolation using the
+ * interpolated values at t0 and t1 along with the weighting factor to
+ * compute the final interpolated value stored in `var`.  If one of
+ * the interpolated values is not finite, it selects the valid value
  * based on the weighting factor `wt`.
  *
  * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
@@ -4164,10 +4309,11 @@ void intpol_met_time_2d(
 /**
  * @brief Interpolates meteorological data in 3D space and time for wind components.
  *
- * This function interpolates meteorological data in three dimensions (longitude,
- * latitude, and altitude) and time for wind components (u, v, and w). It calculates
- * the interpolated values based on the values provided at neighboring grid points
- * and performs interpolation both spatially and temporally.
+ * This function interpolates meteorological data in three dimensions
+ * (longitude, latitude, and altitude) and time for wind components
+ * (u, v, and w). It calculates the interpolated values based on the
+ * values provided at neighboring grid points and performs
+ * interpolation both spatially and temporally.
  *
  * @param met0 Pointer to the meteorological data at time t0.
  * @param met1 Pointer to the meteorological data at time t1.
@@ -4179,12 +4325,12 @@ void intpol_met_time_2d(
  * @param v Pointer to store the interpolated v-component of wind.
  * @param w Pointer to store the interpolated w-component of wind.
  *
- * The function first performs spatial interpolation for both time instances
- * (t0 and t1) using the `intpol_met_space_uvw` function. It then calculates
- * the weighting factor `wt` based on the time stamp `ts`. Finally, it performs
- * temporal interpolation using the interpolated values at t0 and t1 along with
- * the weighting factor to compute the final interpolated values stored in `u`,
- * `v`, and `w`.
+ * The function first performs spatial interpolation for both time
+ * instances (t0 and t1) using the `intpol_met_space_uvw` function. It
+ * then calculates the weighting factor `wt` based on the time stamp
+ * `ts`. Finally, it performs temporal interpolation using the
+ * interpolated values at t0 and t1 along with the weighting factor to
+ * compute the final interpolated values stored in `u`, `v`, and `w`.
  *
  * @author Lars Hoffmann
  */
@@ -4202,9 +4348,11 @@ void intpol_met_time_uvw(
 /**
  * @brief Interpolates tropopause data in 3D (latitude, longitude, and time).
  *
- * This function performs interpolation of tropopause data at a given latitude, longitude, and time.
- * The interpolation can be performed using either linear interpolation or nearest neighbor interpolation.
- * The standard deviation of the data points used in the interpolation is also computed.
+ * This function performs interpolation of tropopause data at a given
+ * latitude, longitude, and time.  The interpolation can be performed
+ * using either linear interpolation or nearest neighbor
+ * interpolation.  The standard deviation of the data points used in
+ * the interpolation is also computed.
  *
  * @param time0 Time corresponding to the first data array `array0`.
  * @param array0 A 2D array of tropopause data at `time0`. The dimensions are `EX` by `EY`.
@@ -4253,9 +4401,9 @@ void intpol_tropo_3d(
 /**
  * @brief Converts Julian seconds to calendar date and time components.
  *
- * This function converts Julian seconds to calendar date and time components,
- * including year, month, day, hour, minute, and second. It also calculates
- * the fractional part of the seconds.
+ * This function converts Julian seconds to calendar date and time
+ * components, including year, month, day, hour, minute, and
+ * second. It also calculates the fractional part of the seconds.
  *
  * @param jsec Julian seconds to convert.
  * @param year Pointer to store the year.
@@ -4266,12 +4414,13 @@ void intpol_tropo_3d(
  * @param sec Pointer to store the second.
  * @param remain Pointer to store the fractional part of seconds.
  *
- * The function initializes a time structure `t0` with a fixed starting date
- * and time. It then converts the Julian seconds to a time_t type by adding
- * the seconds to the epoch time. Next, it converts the time_t value to a
- * UTC time structure `t1`. Finally, it extracts the year, month, day, hour,
- * minute, and second components from `t1` and calculates the fractional part
- * of seconds, which is stored in `remain`.
+ * The function initializes a time structure `t0` with a fixed
+ * starting date and time. It then converts the Julian seconds to a
+ * time_t type by adding the seconds to the epoch time. Next, it
+ * converts the time_t value to a UTC time structure `t1`. Finally, it
+ * extracts the year, month, day, hour, minute, and second components
+ * from `t1` and calculates the fractional part of seconds, which is
+ * stored in `remain`.
  *
  * @author Lars Hoffmann
  */
@@ -4288,9 +4437,10 @@ void jsec2time(
 /**
  * @brief Calculates the kernel weight based on altitude and given kernel data.
  *
- * This function calculates the kernel weight based on altitude and given kernel
- * data. It takes arrays of altitudes (`kz`) and corresponding weights (`kw`),
- * the number of data points (`nk`), and the current altitude (`p`) as input.
+ * This function calculates the kernel weight based on altitude and
+ * given kernel data. It takes arrays of altitudes (`kz`) and
+ * corresponding weights (`kw`), the number of data points (`nk`), and
+ * the current altitude (`p`) as input.
  *
  * @param kz Array of altitudes.
  * @param kw Array of corresponding weights.
@@ -4298,13 +4448,14 @@ void jsec2time(
  * @param p Current altitude.
  * @return The calculated kernel weight.
  *
- * If the number of data points is less than 2 (`nk < 2`), the function returns
- * a default weight of 1.0.
+ * If the number of data points is less than 2 (`nk < 2`), the
+ * function returns a default weight of 1.0.
  *
- * The function first computes the altitude `z` based on the current altitude `p`.
- * Then it checks whether `z` is outside the range of altitudes in the kernel data.
- * If so, it returns the corresponding weight at the nearest altitude boundary.
- * Otherwise, it interpolates linearly between the two closest altitudes in the
+ * The function first computes the altitude `z` based on the current
+ * altitude `p`.  Then it checks whether `z` is outside the range of
+ * altitudes in the kernel data.  If so, it returns the corresponding
+ * weight at the nearest altitude boundary.  Otherwise, it
+ * interpolates linearly between the two closest altitudes in the
  * kernel data to determine the weight at altitude `z`.
  *
  * @author Lars Hoffmann
@@ -4318,19 +4469,22 @@ double kernel_weight(
 /**
  * @brief Calculates the moist adiabatic lapse rate in Kelvin per kilometer.
  *
- * This function calculates the moist adiabatic lapse rate in Kelvin per kilometer
- * from the given temperature (`t`) in Kelvin and water vapor volume mixing ratio (`h2o`).
+ * This function calculates the moist adiabatic lapse rate in Kelvin
+ * per kilometer from the given temperature (`t`) in Kelvin and water
+ * vapor volume mixing ratio (`h2o`).
  *
  * @param t Temperature in Kelvin.
  * @param h2o Water vapor volume mixing ratio.
  * @return The moist adiabatic lapse rate in Kelvin per kilometer.
  *
  * The moist adiabatic lapse rate is calculated using the formula:
- * \f[ \Gamma = \frac{{1000 \cdot g \cdot \left(a + L_v \cdot r \cdot T\right)}} {{C_{pd} \cdot a + L_v^2 \cdot r \cdot \epsilon}} \f]
+ *
+ * \f[ \Gamma = \frac{{1000 \times g \times \left(a + L_v \times r \times T\right)}} {{C_{pd} \times a + L_v^2 \times r \times \epsilon}} \f]
+ *
  * where:
  * - \f$ \Gamma \f$ is the lapse rate in Kelvin per kilometer.
  * - \f$ g \f$ is the acceleration due to gravity (constant).
- * - \f$ a = R_a \cdot T^2 \f$ is a term based on the gas constant for dry air and temperature squared.
+ * - \f$ a = R_a \times T^2 \f$ is a term based on the gas constant for dry air and temperature squared.
  * - \f$ R_a \f$ is the gas constant for dry air.
  * - \f$ T \f$ is the temperature in Kelvin.
  * - \f$ L_v \f$ is the latent heat of vaporization.
@@ -4346,8 +4500,7 @@ double kernel_weight(
  * - \f$ C_{pd} \f$: Specific heat of dry air at constant pressure.
  * - \f$ \epsilon \f$: Ratio of the gas constants for dry air and water vapor.
  *
- * Reference:
- * - [Wikipedia - Lapse rate](https://en.wikipedia.org/wiki/Lapse_rate)
+ * @see [Wikipedia - Lapse rate](https://en.wikipedia.org/wiki/Lapse_rate)
  *
  * @author Lars Hoffmann
  */
@@ -4358,14 +4511,17 @@ double lapse_rate(
 /**
  * @brief Defines pressure levels for meteorological data.
  *
- * This function defines pressure levels for meteorological data based on the given control structure (`ctl`).
- * Pressure levels are defined differently based on the value of `press_level_def` in `ctl`.
+ * This function defines pressure levels for meteorological data based
+ * on the given control structure (`ctl`).  Pressure levels are
+ * defined differently based on the value of `press_level_def` in
+ * `ctl`.
  *
  * @param ctl Control structure containing information about pressure level definitions.
  *
- * The function determines the number of pressure levels (`met_np`) and the corresponding pressure values (`met_p`)
- * based on the value of `press_level_def` in the control structure `ctl`. It initializes the `met_np` and `met_p`
- * fields accordingly.
+ * The function determines the number of pressure levels (`met_np`)
+ * and the corresponding pressure values (`met_p`) based on the value
+ * of `press_level_def` in the control structure `ctl`. It initializes
+ * the `met_np` and `met_p` fields accordingly.
  *
  * @note Valid values for `press_level_def` are:
  * - 0: Define 138 pressure levels.
@@ -4386,17 +4542,19 @@ void level_definitions(
 /**
  * @brief Locate the index of the interval containing a given value in a sorted array.
  *
- * This function locates the index of the interval containing a given value in a sorted array.
- * It uses a binary search algorithm to efficiently find the interval.
+ * This function locates the index of the interval containing a given
+ * value in a sorted array.  It uses a binary search algorithm to
+ * efficiently find the interval.
  *
  * @param xx Pointer to the sorted array.
  * @param n Size of the array.
  * @param x Value to be located.
  * @return Index of the interval containing the value `x`.
  *
- * The function assumes that the array `xx` is sorted in ascending order.
- * It returns the index of the interval where the value `x` is located.
- * If the value `x` is outside the range of the array, the function returns the index of the closest interval.
+ * The function assumes that the array `xx` is sorted in ascending
+ * order.  It returns the index of the interval where the value `x` is
+ * located.  If the value `x` is outside the range of the array, the
+ * function returns the index of the closest interval.
  *
  * @author Lars Hoffmann
  */
@@ -4408,8 +4566,9 @@ int locate_irr(
 /**
  * @brief Locate the index of the interval containing a given value in a 3D irregular grid.
  *
- * This function locates the index of the interval containing a given value in a 3D irregular grid.
- * It searches for the interval in the specified longitude and latitude indices of the grid.
+ * This function locates the index of the interval containing a given
+ * value in a 3D irregular grid.  It searches for the interval in the
+ * specified longitude and latitude indices of the grid.
  *
  * @param profiles 3D array representing the irregular grid.
  * @param np Size of the profile (number of data points).
@@ -4418,9 +4577,11 @@ int locate_irr(
  * @param x Value to be located.
  * @return Index of the interval containing the value `x`.
  *
- * The function assumes that the array `profiles` represents a 3D irregular grid.
- * It calculates the index of the interval where the value `x` is located based on the data in the specified longitude and latitude indices.
- * If the value `x` is outside the range of the profile, the function returns the index of the closest interval.
+ * The function assumes that the array `profiles` represents a 3D
+ * irregular grid.  It calculates the index of the interval where the
+ * value `x` is located based on the data in the specified longitude
+ * and latitude indices.  If the value `x` is outside the range of the
+ * profile, the function returns the index of the closest interval.
  *
  * @author Jan Clemens
  */
@@ -4434,17 +4595,20 @@ int locate_irr_3d(
 /**
  * @brief Locate the index of the interval containing a given value in a regular grid.
  *
- * This function locates the index of the interval containing a given value in a regular grid.
- * It calculates the index based on the spacing between grid points and the value to be located.
+ * This function locates the index of the interval containing a given
+ * value in a regular grid.  It calculates the index based on the
+ * spacing between grid points and the value to be located.
  *
  * @param xx Pointer to the array representing the regular grid.
  * @param n Size of the grid (number of grid points).
  * @param x Value to be located.
  * @return Index of the interval containing the value `x`.
  *
- * The function assumes that the array `xx` represents a regular grid with equally spaced points.
- * It calculates the index of the interval where the value `x` is located based on the spacing between grid points.
- * If the value `x` is outside the range of the grid, the function returns the index of the closest interval.
+ * The function assumes that the array `xx` represents a regular grid
+ * with equally spaced points.  It calculates the index of the
+ * interval where the value `x` is located based on the spacing
+ * between grid points.  If the value `x` is outside the range of the
+ * grid, the function returns the index of the closest interval.
  *
  * @author Lars Hoffmann
  */
@@ -4456,8 +4620,9 @@ int locate_reg(
 /**
  * @brief Locate the four vertical indizes of a box for a given height value.
  *
- * This function locates the vertical indices corresponding to a given height in a 3D irregular grid.
- * It calculates the indices based on the specified longitude and latitude indices of the grid.
+ * This function locates the vertical indices corresponding to a given
+ * height in a 3D irregular grid.  It calculates the indices based on
+ * the specified longitude and latitude indices of the grid.
  *
  * @param profiles 3D array representing the irregular grid.
  * @param np Size of the profile (number of data points).
@@ -4466,9 +4631,10 @@ int locate_reg(
  * @param alt_ap Height value.
  * @param ind Pointer to an array to store the resulting indices.
  *
- * The function calculates the indices corresponding to the specified height in the 3D irregular grid.
- * It stores the resulting indices in the array pointed to by `ind`.
- * The indices are calculated based on the specified longitude and latitude indices of the grid.
+ * The function calculates the indices corresponding to the specified
+ * height in the 3D irregular grid. It stores the resulting indices
+ * in the array pointed to by `ind`. The indices are calculated based
+ * on the specified longitude and latitude indices of the grid.
  *
  * @author Lars Hoffmann
  */
@@ -4483,11 +4649,15 @@ void locate_vert(
 /**
  * @brief Advect particles based on interpolated meteorological data.
  *
- * This function advects particles based on interpolated meteorological data for a specified time step.
- * It calculates the new positions of the particles using interpolated meteorological data obtained from
- * the input meteorological data structures (met0 and met1) at the current and next time steps, respectively.
- * The function loops over each particle and integrates their positions using the interpolated meteorological data.
- * After integration, it updates the positions of the particles in the atmospheric data structure.
+ * This function advects particles based on interpolated
+ * meteorological data for a specified time step. It calculates the
+ * new positions of the particles using interpolated meteorological
+ * data obtained from the input meteorological data structures (met0
+ * and met1) at the current and next time steps, respectively. The
+ * function loops over each particle and integrates their positions
+ * using the interpolated meteorological data. After integration, it
+ * updates the positions of the particles in the atmospheric data
+ * structure.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the initial time step.
@@ -4495,13 +4665,17 @@ void locate_vert(
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param dt Pointer to the time step value.
  *
- * The function initializes variables for position, wind components, and time increments.
- * It loops over integration nodes for each particle, updating their positions based on the interpolated meteorological data.
- * Integration nodes represent subdivisions within the time step, typically used for numerical integration accuracy.
- * The function then calculates mean wind components based on the integration nodes' weights.
- * Finally, it updates the particles' positions in longitude, latitude, and altitude (pressure level).
- * The integration scheme accounts for variations in latitude-dependent distances for longitude changes
- * and updates altitude using vertical wind velocity.
+ * The function initializes variables for position, wind components,
+ * and time increments. It loops over integration nodes for each
+ * particle, updating their positions based on the interpolated
+ * meteorological data. Integration nodes represent subdivisions
+ * within the time step, typically used for numerical integration
+ * accuracy. The function then calculates mean wind components based
+ * on the integration nodes' weights.  Finally, it updates the
+ * particles' positions in longitude, latitude, and altitude (pressure
+ * level). The integration scheme accounts for variations in
+ * latitude-dependent distances for longitude changes and updates
+ * altitude using vertical wind velocity.
  *
  * @author Lars Hoffmann
  */
@@ -4515,23 +4689,29 @@ void module_advect(
 /**
  * @brief Advect particles with diabatic effects based on interpolated meteorological data.
  *
- * This function advects particles considering diabatic effects, such as heating or cooling, 
- * based on interpolated meteorological data for a specified time step. It calculates the new 
- * positions of the particles using interpolated meteorological data obtained from the input 
- * meteorological data structures (met0 and met1) at the current and next time steps, respectively.
- * The function loops over each particle and integrates their positions using the interpolated 
- * meteorological data, considering diabatic heating or cooling effects. After integration, it 
- * updates the positions of the particles in the atmospheric data structure.
+ * This function advects particles considering diabatic effects, such
+ * as heating or cooling, based on interpolated meteorological data
+ * for a specified time step. It calculates the new positions of the
+ * particles using interpolated meteorological data obtained from the
+ * input meteorological data structures (met0 and met1) at the current
+ * and next time steps, respectively. The function loops over each
+ * particle and integrates their positions using the interpolated
+ * meteorological data, considering diabatic heating or cooling
+ * effects. After integration, it updates the positions of the
+ * particles in the atmospheric data structure.
  *
- * If other modules have changed the pressure, it translates it into a zeta coordinate. 
- * It initializes variables for position, wind components, and diabatic effects. Then, it loops 
- * over integration nodes for each particle, updating their positions based on the interpolated 
- * meteorological data and considering diabatic effects. The integration scheme accounts for 
- * variations in latitude-dependent distances for longitude changes and updates the diabatic 
- * effect (zeta) based on the integration nodes' weights. Finally, it updates the particles' 
- * positions in longitude, latitude, and diabatic effect (zeta) coordinates. If the diabatic 
- * effect (zeta) becomes negative, it sets it to zero and recalculates the pressure coordinate 
- * based on the updated diabatic effect.
+ * If other modules have changed the pressure, it translates it into a
+ * zeta coordinate.  It initializes variables for position, wind
+ * components, and diabatic effects. Then, it loops over integration
+ * nodes for each particle, updating their positions based on the
+ * interpolated meteorological data and considering diabatic
+ * effects. The integration scheme accounts for variations in
+ * latitude-dependent distances for longitude changes and updates the
+ * diabatic effect (zeta) based on the integration nodes'
+ * weights. Finally, it updates the particles' positions in longitude,
+ * latitude, and diabatic effect (zeta) coordinates. If the diabatic
+ * effect (zeta) becomes negative, it sets it to zero and recalculates
+ * the pressure coordinate based on the updated diabatic effect.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the initial time step.
@@ -4539,14 +4719,17 @@ void module_advect(
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param dt Pointer to the time step value.
  *
- * The function initializes variables for position, wind components, and diabatic effects.
- * It loops over integration nodes for each particle, updating their positions based on the 
- * interpolated meteorological data and considering diabatic effects. Integration nodes represent 
- * subdivisions within the time step, typically used for numerical integration accuracy. The 
- * function then calculates mean wind components based on the integration nodes' weights. Finally, 
- * it updates the particles' positions in longitude, latitude, and diabatic effect (zeta) coordinates. 
- * If the diabatic effect (zeta) becomes negative, it sets it to zero and recalculates the pressure 
- * coordinate based on the updated diabatic effect.
+ * The function initializes variables for position, wind components,
+ * and diabatic effects.  It loops over integration nodes for each
+ * particle, updating their positions based on the interpolated
+ * meteorological data and considering diabatic effects. Integration
+ * nodes represent subdivisions within the time step, typically used
+ * for numerical integration accuracy. The function then calculates
+ * mean wind components based on the integration nodes'
+ * weights. Finally, it updates the particles' positions in longitude,
+ * latitude, and diabatic effect (zeta) coordinates.  If the diabatic
+ * effect (zeta) becomes negative, it sets it to zero and recalculates
+ * the pressure coordinate based on the updated diabatic effect.
  *
  * @author Jan Clemens
  */
@@ -4560,22 +4743,28 @@ void module_advect_diabatic(
 /**
  * @brief Apply boundary conditions to particles based on meteorological and climatological data.
  *
- * This function applies boundary conditions to particles based on specified criteria, including 
- * latitude, pressure, surface layer parameters, and climatological data. It loops over each 
- * particle and checks whether it satisfies the specified boundary conditions. If a particle 
- * satisfies the conditions, its properties such as mass, volume mixing ratio, and age of air 
- * are updated accordingly.
+ * This function applies boundary conditions to particles based on
+ * specified criteria, including latitude, pressure, surface layer
+ * parameters, and climatological data. It loops over each particle
+ * and checks whether it satisfies the specified boundary
+ * conditions. If a particle satisfies the conditions, its properties
+ * such as mass, volume mixing ratio, and age of air are updated
+ * accordingly.
  *
- * It checks for quantity flags to determine which properties need to be updated. If the latitude 
- * or pressure of a particle falls outside the specified ranges, it skips the particle. It also 
- * considers surface layer parameters such as surface pressure, height, zeta range, and planetary 
- * boundary layer. If a particle is within the specified surface layer boundaries, its properties 
- * are updated accordingly.
+ * It checks for quantity flags to determine which properties need to
+ * be updated. If the latitude or pressure of a particle falls outside
+ * the specified ranges, it skips the particle. It also considers
+ * surface layer parameters such as surface pressure, height, zeta
+ * range, and planetary boundary layer. If a particle is within the
+ * specified surface layer boundaries, its properties are updated
+ * accordingly.
  *
- * The function updates properties such as mass and volume mixing ratio if the corresponding flags 
- * are set. It retrieves volume mixing ratio values for various trace gases (e.g., CFC-10, CFC-11, 
- * N2O, SF6) from climatological time series data and updates the particle properties accordingly.
- * Additionally, it updates the age of air for each particle based on the current simulation time.
+ * The function updates properties such as mass and volume mixing
+ * ratio if the corresponding flags are set. It retrieves volume
+ * mixing ratio values for various trace gases (e.g., CFC-10, CFC-11,
+ * N2O, SF6) from climatological time series data and updates the
+ * particle properties accordingly.  Additionally, it updates the age
+ * of air for each particle based on the current simulation time.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climatological data structure containing time series data.
@@ -4598,8 +4787,9 @@ void module_bound_cond(
 /**
  * @brief Calculate grid data for chemistry modules.
  *
- * This function initializes and updates chemical grid quantities based on
- * atmospheric data and interpolation of meteorological variables.
+ * This function initializes and updates chemical grid quantities
+ * based on atmospheric data and interpolation of meteorological
+ * variables.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climate data structure containing climatological data.
@@ -4622,18 +4812,20 @@ void module_chemgrid(
 /**
  * @brief Simulate convective processes for atmospheric particles.
  *
- * This function simulates convective processes for atmospheric particles based on 
- * convective available potential energy (CAPE) and convective inhibition (CIN). 
- * It loops over each particle and checks whether the CAPE exceeds a specified 
- * threshold. If CAPE is above the threshold and meets the conditions, it performs 
- * convective mixing to update the particle's pressure based on random numbers 
- * generated for each particle.
+ * This function simulates convective processes for atmospheric
+ * particles based on convective available potential energy (CAPE) and
+ * convective inhibition (CIN).  It loops over each particle and
+ * checks whether the CAPE exceeds a specified threshold. If CAPE is
+ * above the threshold and meets the conditions, it performs
+ * convective mixing to update the particle's pressure based on random
+ * numbers generated for each particle.
  *
- * The function interpolates CAPE and CIN from meteorological data and checks 
- * whether the particle is above the cloud top level. If the conditions are met, 
- * it determines the pressure range for vertical mixing and calculates the density 
- * range based on temperature at different pressure levels. It then calculates the 
- * new density based on random numbers and updates the particle's pressure accordingly.
+ * The function interpolates CAPE and CIN from meteorological data and
+ * checks whether the particle is above the cloud top level. If the
+ * conditions are met, it determines the pressure range for vertical
+ * mixing and calculates the density range based on temperature at
+ * different pressure levels. It then calculates the new density based
+ * on random numbers and updates the particle's pressure accordingly.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the initial time step.
@@ -4655,18 +4847,21 @@ void module_convection(
 /**
  * @brief Simulate exponential decay processes for atmospheric particles.
  *
- * This function simulates decay processes for atmospheric particles based on their 
- * mass or volume mixing ratio. It loops over each particle and calculates the decay 
- * rate using weighting factors for tropospheric and stratospheric lifetimes. 
- * Exponential decay is then calculated, and the mass or volume mixing ratio of 
- * particles is updated accordingly. Loss rates can also be calculated and updated 
- * based on the decay process.
+ * This function simulates decay processes for atmospheric particles
+ * based on their mass or volume mixing ratio. It loops over each
+ * particle and calculates the decay rate using weighting factors for
+ * tropospheric and stratospheric lifetimes.  Exponential decay is
+ * then calculated, and the mass or volume mixing ratio of particles
+ * is updated accordingly. Loss rates can also be calculated and
+ * updated based on the decay process.
  *
- * The function checks for quantity flags to ensure that mass or volume mixing ratio 
- * data is available. It then calculates the weighting factor based on the particle's 
- * location in the atmosphere and sets the lifetime accordingly. Exponential decay is 
- * calculated using the time step and the lifetime, and the particle's mass or volume 
- * mixing ratio is updated. Loss rates can also be updated based on the decay process.
+ * The function checks for quantity flags to ensure that mass or
+ * volume mixing ratio data is available. It then calculates the
+ * weighting factor based on the particle's location in the atmosphere
+ * and sets the lifetime accordingly. Exponential decay is calculated
+ * using the time step and the lifetime, and the particle's mass or
+ * volume mixing ratio is updated. Loss rates can also be updated
+ * based on the decay process.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climate data structure containing atmospheric data.
@@ -4684,17 +4879,20 @@ void module_decay(
 /**
  * @brief Simulate mesoscale diffusion for atmospheric particles.
  *
- * This function simulates mesoscale diffusion for atmospheric particles, including 
- * horizontal and vertical wind fluctuations. It calculates standard deviations of 
- * local wind data and temporal correlations for mesoscale fluctuations. Mesoscale 
- * wind fluctuations are then calculated based on the provided random numbers and 
- * turbulence parameters. The particle positions are updated accordingly.
+ * This function simulates mesoscale diffusion for atmospheric
+ * particles, including horizontal and vertical wind fluctuations. It
+ * calculates standard deviations of local wind data and temporal
+ * correlations for mesoscale fluctuations. Mesoscale wind
+ * fluctuations are then calculated based on the provided random
+ * numbers and turbulence parameters. The particle positions are
+ * updated accordingly.
  *
- * The function loops over each particle and calculates indices for interpolation 
- * of wind data. It then computes standard deviations of local wind data and 
- * temporal correlations for mesoscale fluctuations. Based on the turbulence 
- * parameters and provided random numbers, it calculates horizontal and vertical 
- * mesoscale wind fluctuations. Finally, it updates the particle positions based 
+ * The function loops over each particle and calculates indices for
+ * interpolation of wind data. It then computes standard deviations of
+ * local wind data and temporal correlations for mesoscale
+ * fluctuations. Based on the turbulence parameters and provided
+ * random numbers, it calculates horizontal and vertical mesoscale
+ * wind fluctuations. Finally, it updates the particle positions based
  * on the calculated wind fluctuations.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
@@ -4719,16 +4917,18 @@ void module_diffusion_meso(
 /**
  * @brief Simulate turbulent diffusion for atmospheric particles.
  *
- * This function simulates turbulent diffusion for atmospheric particles, including
- * horizontal and vertical diffusion. It calculates diffusivity based on the 
- * provided weighting factor and turbulence parameters. The diffusion coefficients
- * are then used to calculate horizontal and vertical displacements of particles 
- * based on the provided random numbers and time step.
+ * This function simulates turbulent diffusion for atmospheric
+ * particles, including horizontal and vertical diffusion. It
+ * calculates diffusivity based on the provided weighting factor and
+ * turbulence parameters. The diffusion coefficients are then used to
+ * calculate horizontal and vertical displacements of particles based
+ * on the provided random numbers and time step.
  *
- * The function loops over each particle and calculates the weighting factor based
- * on the atmospheric properties. It then computes diffusivity for horizontal and 
- * vertical diffusion. Based on the diffusivity values and provided random numbers, 
- * it calculates horizontal and vertical displacements of particles and updates 
+ * The function loops over each particle and calculates the weighting
+ * factor based on the atmospheric properties. It then computes
+ * diffusivity for horizontal and vertical diffusion. Based on the
+ * diffusivity values and provided random numbers, it calculates
+ * horizontal and vertical displacements of particles and updates
  * their positions accordingly.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
@@ -4749,12 +4949,13 @@ void module_diffusion_turb(
 /**
  * @brief Simulate dry deposition of atmospheric particles.
  *
- * This function simulates the dry deposition of atmospheric particles, including
- * both particulate matter and gases. It calculates the sedimentation velocity 
- * for particles based on the atmospheric properties and applies it to determine
- * the loss of mass or volume mixing ratio due to deposition. The function loops
- * over each particle and calculates the loss of mass or volume mixing ratio based
- * on the deposition velocity and time step.
+ * This function simulates the dry deposition of atmospheric
+ * particles, including both particulate matter and gases. It
+ * calculates the sedimentation velocity for particles based on the
+ * atmospheric properties and applies it to determine the loss of mass
+ * or volume mixing ratio due to deposition. The function loops over
+ * each particle and calculates the loss of mass or volume mixing
+ * ratio based on the deposition velocity and time step.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the current time step.
@@ -4774,10 +4975,11 @@ void module_dry_deposition(
 /**
  * @brief Perform chemical reactions involving H2O2 within cloud particles.
  *
- * This function simulates chemical reactions involving hydrogen peroxide (H2O2)
- * within cloud particles. It calculates the change in H2O2 concentration over
- * time due to chemical reactions. The reaction rates are determined based on
- * temperature and cloud properties such as liquid water content.
+ * This function simulates chemical reactions involving hydrogen
+ * peroxide (H2O2) within cloud particles. It calculates the change in
+ * H2O2 concentration over time due to chemical reactions. The
+ * reaction rates are determined based on temperature and cloud
+ * properties such as liquid water content.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climatological data structure.
@@ -4813,11 +5015,13 @@ void module_h2o2_chem(
 /**
  * @brief Initialize the isosurface module based on atmospheric data.
  *
- * This function initializes the isosurface module based on the atmospheric data
- * provided. It calculates the necessary variables required for generating the
- * isosurface, such as pressure, density, or potential temperature. Additionally,
- * it can read balloon pressure data from a file if specified in the control
- * structure. The initialized data is stored in the cache for later use.
+ * This function initializes the isosurface module based on the
+ * atmospheric data provided. It calculates the necessary variables
+ * required for generating the isosurface, such as pressure, density,
+ * or potential temperature. Additionally, it can read balloon
+ * pressure data from a file if specified in the control
+ * structure. The initialized data is stored in the cache for later
+ * use.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the current time step.
@@ -4837,10 +5041,11 @@ void module_isosurf_init(
 /**
  * @brief Apply the isosurface module to adjust atmospheric properties.
  *
- * This function applies the isosurface module to adjust atmospheric properties
- * based on the initialized data stored in the cache. It interpolates and restores
- * atmospheric pressure, density, or potential temperature according to the
- * specified isosurface mode in the control structure.
+ * This function applies the isosurface module to adjust atmospheric
+ * properties based on the initialized data stored in the cache. It
+ * interpolates and restores atmospheric pressure, density, or
+ * potential temperature according to the specified isosurface mode in
+ * the control structure.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the meteorological data structure at the current time step.
@@ -4863,9 +5068,11 @@ void module_isosurf(
 /**
  * @brief Simulate chemical reactions using the Kinetic PreProcessor (KPP) integration scheme.
  *
- * This function simulates chemical reactions using the Kinetic PreProcessor (KPP) integration
- * scheme for atmospheric particles. It loops over each particle in the atmospheric data structure
- * and integrates chemical reactions over a specified time step using the KPP algorithm.
+ * This function simulates chemical reactions using the Kinetic
+ * PreProcessor (KPP) integration scheme for atmospheric particles. It
+ * loops over each particle in the atmospheric data structure and
+ * integrates chemical reactions over a specified time step using the
+ * KPP algorithm.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climatological data structure.
@@ -4899,10 +5106,11 @@ void module_kpp_chem(
 /**
  * @brief Update atmospheric properties using meteorological data.
  *
- * This function updates atmospheric properties based on meteorological data
- * interpolated between two time steps. It calculates various atmospheric
- * quantities such as pressure, temperature, wind speed, humidity, etc., and
- * updates the corresponding fields in the atmospheric data structure.
+ * This function updates atmospheric properties based on
+ * meteorological data interpolated between two time steps. It
+ * calculates various atmospheric quantities such as pressure,
+ * temperature, wind speed, humidity, etc., and updates the
+ * corresponding fields in the atmospheric data structure.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climate data structure containing climatological data.
@@ -4924,10 +5132,11 @@ void module_meteo(
 /**
  * @brief Update atmospheric properties through interparcel mixing.
  *
- * This function updates atmospheric properties by performing interparcel mixing
- * based on the given meteorological and climatological data. It calculates the
- * indices of grid boxes and performs mixing for various quantities such as mass,
- * volume mixing ratio, and other chemical species concentrations.
+ * This function updates atmospheric properties by performing
+ * interparcel mixing based on the given meteorological and
+ * climatological data. It calculates the indices of grid boxes and
+ * performs mixing for various quantities such as mass, volume mixing
+ * ratio, and other chemical species concentrations.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climate data structure containing climatological data.
@@ -4946,9 +5155,10 @@ void module_mixing(
 /**
  * @brief Perform interparcel mixing for a specific quantity.
  *
- * This function performs interparcel mixing for a specific quantity based on the
- * given indices of grid boxes. It calculates the mean concentration within each
- * grid box and adjusts the quantity for each particle accordingly.
+ * This function performs interparcel mixing for a specific quantity
+ * based on the given indices of grid boxes. It calculates the mean
+ * concentration within each grid box and adjusts the quantity for
+ * each particle accordingly.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climate data structure containing climatological data.
@@ -4973,12 +5183,13 @@ void module_mixing_help(
 /**
  * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
  *
- * This function calculates the OH chemistry for each atmospheric particle based on
- * the specified reaction mechanism and updates the particle quantities accordingly.
- * The OH chemistry includes bimolecular and termolecular reactions, and the reaction
- * rates are calculated based on the provided climatological data and atmospheric
- * conditions. The function supports both mass and volume mixing ratio quantities for
- * the particles.
+ * This function calculates the OH chemistry for each atmospheric
+ * particle based on the specified reaction mechanism and updates the
+ * particle quantities accordingly.  The OH chemistry includes
+ * bimolecular and termolecular reactions, and the reaction rates are
+ * calculated based on the provided climatological data and
+ * atmospheric conditions. The function supports both mass and volume
+ * mixing ratio quantities for the particles.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climate data structure containing climatological data.
@@ -5047,11 +5258,14 @@ void module_position(
 /**
  * @brief Initialize random number generators for parallel tasks.
  *
- * This function initializes random number generators for parallel tasks using both GSL (GNU Scientific Library) 
- * and cuRAND (NVIDIA CUDA Random Number Generation Library) if available. It sets up GSL random number generators
- * for each OpenMP thread and initializes them with unique seeds. For cuRAND, it creates a pseudo-random number 
- * generator and sets its seed. The initialization ensures that each task or thread has its own independent 
- * random number generator to prevent interference between parallel executions.
+ * This function initializes random number generators for parallel
+ * tasks using both GSL (GNU Scientific Library) and cuRAND (NVIDIA
+ * CUDA Random Number Generation Library) if available. It sets up GSL
+ * random number generators for each OpenMP thread and initializes
+ * them with unique seeds. For cuRAND, it creates a pseudo-random
+ * number generator and sets its seed. The initialization ensures that
+ * each task or thread has its own independent random number generator
+ * to prevent interference between parallel executions.
  *
  * @param ntask The number of tasks or parallel threads for which random number generators are initialized.
  *
@@ -5071,9 +5285,11 @@ void module_rng_init(
 /**
  * @brief Generate random numbers using various methods and distributions.
  *
- * This function generates random numbers using different methods and distributions based on the specified 
- * method and random number generator type. It supports uniform and normal distributions and can utilize 
- * GSL, Squares (Widynski, 2022), or cuRAND random number generators.
+ * This function generates random numbers using different methods and
+ * distributions based on the specified method and random number
+ * generator type. It supports uniform and normal distributions and
+ * can utilize GSL, Squares (Widynski, 2022), or cuRAND random number
+ * generators.
  *
  * @param ctl Pointer to the control structure containing parameters and settings.
  * @param rs Pointer to the array where the generated random numbers will be stored.
@@ -5100,9 +5316,11 @@ void module_rng(
 /**
  * @brief Simulate sedimentation of particles in the atmosphere.
  *
- * This function calculates the sedimentation velocity of particles based on atmospheric pressure, temperature, 
- * and particle properties such as radius and density. It then updates the pressure of each particle based on 
- * the sedimentation velocity and the specified time step.
+ * This function calculates the sedimentation velocity of particles
+ * based on atmospheric pressure, temperature, and particle properties
+ * such as radius and density. It then updates the pressure of each
+ * particle based on the sedimentation velocity and the specified time
+ * step.
  *
  * @param ctl Pointer to the control structure containing parameters and settings.
  * @param met0 Pointer to the meteorological data at the current time step.
@@ -5128,10 +5346,12 @@ void module_sedi(
 /**
  * @brief Sort particles according to box index.
  *
- * This function sorts particles within the atmosphere data structure based on their geographical 
- * coordinates (longitude and latitude) and pressure level. It allocates temporary arrays to store 
- * indices and auxiliary data for sorting, then performs the sorting operation. After sorting, it 
- * updates the order of particles in the atmosphere data structure.
+ * This function sorts particles within the atmosphere data structure
+ * based on their geographical coordinates (longitude and latitude)
+ * and pressure level. It allocates temporary arrays to store indices
+ * and auxiliary data for sorting, then performs the sorting
+ * operation. After sorting, it updates the order of particles in the
+ * atmosphere data structure.
  *
  * @param ctl Pointer to the control structure containing parameters and settings.
  * @param met0 Pointer to the meteorological data at the current time step.
@@ -5154,8 +5374,9 @@ void module_sort(
 /**
  * @brief Reorder an array based on a given permutation.
  *
- * This function reorders the elements of a given array based on a specified permutation array. 
- * It allocates temporary memory to store the reordered elements, performs the reordering operation, 
+ * This function reorders the elements of a given array based on a
+ * specified permutation array.  It allocates temporary memory to
+ * store the reordered elements, performs the reordering operation,
  * and then updates the original array with the reordered elements.
  *
  * @param a Pointer to the array to be reordered.
@@ -5177,10 +5398,11 @@ void module_sort_help(
 /**
  * @brief Calculate time steps for air parcels based on specified conditions.
  *
- * This function calculates the time steps for air parcels based on specified conditions, 
- * including the direction of simulation, start and stop times, and a given target time.
- * It adjusts the time step for each air parcel accordingly and checks for horizontal 
- * boundary conditions of local meteorological data.
+ * This function calculates the time steps for air parcels based on
+ * specified conditions, including the direction of simulation, start
+ * and stop times, and a given target time.  It adjusts the time step
+ * for each air parcel accordingly and checks for horizontal boundary
+ * conditions of local meteorological data.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param met0 Pointer to the initial meteorological data structure.
@@ -5206,11 +5428,12 @@ void module_timesteps(
 /**
  * @brief Initialize start time and time interval for time-stepping.
  *
- * This function initializes the start time and time interval for time-stepping based on 
- * the direction of simulation and the provided atmospheric data. It sets the start time 
- * according to the minimum or maximum time in the atmospheric data, depending on the 
- * simulation direction. Additionally, it checks the time interval and adjusts the start 
- * time accordingly for rounding purposes.
+ * This function initializes the start time and time interval for
+ * time-stepping based on the direction of simulation and the provided
+ * atmospheric data. It sets the start time according to the minimum
+ * or maximum time in the atmospheric data, depending on the
+ * simulation direction. Additionally, it checks the time interval and
+ * adjusts the start time accordingly for rounding purposes.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param atm Pointer to the atmospheric data structure containing air parcel information.
@@ -5229,10 +5452,11 @@ void module_timesteps_init(
 /**
  * @brief Simulate chemical reactions involving long-lived atmospheric tracers.
  *
- * This function simulates chemical reactions involving atmospheric tracers, such as
- * CFC-10, CFC-11, CFC-12, and N2O. It calculates the change in tracer concentrations
- * over time based on reaction rates and environmental factors such as temperature,
- * ozone concentration, solar zenith angle, and O(1D) volume mixing ratio.
+ * This function simulates chemical reactions involving atmospheric
+ * tracers, such as CFC-10, CFC-11, CFC-12, and N2O. It calculates the
+ * change in tracer concentrations over time based on reaction rates
+ * and environmental factors such as temperature, ozone concentration,
+ * solar zenith angle, and O(1D) volume mixing ratio.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
  * @param clim Pointer to the climatological data structure.
@@ -5268,10 +5492,11 @@ void module_tracer_chem(
 /**
  * @brief Perform wet deposition calculations for air parcels.
  *
- * This function calculates the wet deposition process for each air parcel based on 
- * provided atmospheric and meteorological data. It estimates the precipitation rate 
- * and scavenging coefficients for particles and gases inside and below cloud layers. 
- * The scavenging coefficients are used to calculate the exponential decay of mass or 
+ * This function calculates the wet deposition process for each air
+ * parcel based on provided atmospheric and meteorological data. It
+ * estimates the precipitation rate and scavenging coefficients for
+ * particles and gases inside and below cloud layers.  The scavenging
+ * coefficients are used to calculate the exponential decay of mass or
  * volume mixing ratio over time due to wet deposition.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
@@ -5298,8 +5523,9 @@ void module_wet_deposition(
 /**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.
  *
- * This function computes the temperature at which nitric acid trihydrate (NAT) can form
- * given the partial pressures of water vapor and nitric acid in the atmosphere.
+ * This function computes the temperature at which nitric acid
+ * trihydrate (NAT) can form given the partial pressures of water
+ * vapor and nitric acid in the atmosphere.
  *
  * @param p     The total atmospheric pressure (in hPa).
  * @param h2o   The volume mixing ratio of water vapor (H2O).
@@ -5329,9 +5555,10 @@ double nat_temperature(
 /**
  * @brief Reads air parcel data from a specified file into the given atmospheric structure.
  *
- * This function reads air parcel data from a file and populates the provided `atm_t` structure
- * based on the type of data specified in the `ctl_t` control structure. It supports various
- * data formats including ASCII, binary, netCDF, and CLaMS.
+ * This function reads air parcel data from a file and populates the
+ * provided `atm_t` structure based on the type of data specified in
+ * the `ctl_t` control structure. It supports various data formats
+ * including ASCII, binary, netCDF, and CLaMS.
  *
  * @param filename The name of the file containing the atmospheric data.
  * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the type of data.
@@ -5368,9 +5595,10 @@ int read_atm(
 /**
  * @brief Reads air parcel data from an ASCII file and populates the given atmospheric structure.
  *
- * This function reads air parcel data from an ASCII file and stores the data in the provided 
- * `atm_t` structure. It reads each line of the file, extracts the necessary data fields, and 
- * converts the altitude to pressure.
+ * This function reads air parcel data from an ASCII file and stores
+ * the data in the provided `atm_t` structure. It reads each line of
+ * the file, extracts the necessary data fields, and converts the
+ * altitude to pressure.
  *
  * @param filename The name of the ASCII file containing the atmospheric data.
  * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the number of quantities.
@@ -5404,9 +5632,10 @@ int read_atm_asc(
 /**
  * @brief Reads air parcel data from a binary file and populates the given atmospheric structure.
  *
- * This function reads air parcel data from a binary file and stores the data in the provided
- * `atm_t` structure. It checks the version of the binary data, reads the data values, and
- * verifies the integrity of the data read.
+ * This function reads air parcel data from a binary file and stores
+ * the data in the provided `atm_t` structure. It checks the version
+ * of the binary data, reads the data values, and verifies the
+ * integrity of the data read.
  *
  * @param filename The name of the binary file containing the atmospheric data.
  * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the number of quantities.
@@ -5438,9 +5667,11 @@ int read_atm_bin(
 /**
  * @brief Reads air parcel data from a CLaMS netCDF file and populates the given atmospheric structure.
  *
- * This function reads air parcel data from a CLaMS (Chemical Lagrangian Model of the Stratosphere)
- * netCDF file and stores the data in the provided `atm_t` structure. It handles various coordinate
- * systems and ensures the necessary data is correctly read and stored.
+ * This function reads air parcel data from a CLaMS (Chemical
+ * Lagrangian Model of the Stratosphere) netCDF file and stores the
+ * data in the provided `atm_t` structure. It handles various
+ * coordinate systems and ensures the necessary data is correctly read
+ * and stored.
  *
  * @param filename The name of the netCDF file containing the atmospheric data.
  * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the vertical coordinate system and quantities.
@@ -5475,8 +5706,10 @@ int read_atm_clams(
 /**
  * @brief Reads air parcel data from a generic netCDF file and populates the given atmospheric structure.
  *
- * This function reads air parcel data from a netCDF file and stores the data in the provided `atm_t` structure.
- * It retrieves the dimensions, geolocations (time, pressure, longitude, latitude), and specified variables from the file.
+ * This function reads air parcel data from a netCDF file and stores
+ * the data in the provided `atm_t` structure.  It retrieves the
+ * dimensions, geolocations (time, pressure, longitude, latitude), and
+ * specified variables from the file.
  *
  * @param filename The name of the netCDF file containing the atmospheric data.
  * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the number of quantities and their names.
@@ -5507,9 +5740,11 @@ int read_atm_nc(
 /**
  * @brief Reads various climatological data and populates the given climatology structure.
  *
- * This function reads a range of climatological datasets based on the specified control settings and 
- * stores the data in the provided `clim_t` structure. It handles initialization of tropopause climatology,
- * photolysis rates, and multiple gas species' climatologies and time series.
+ * This function reads a range of climatological datasets based on the
+ * specified control settings and stores the data in the provided
+ * `clim_t` structure. It handles initialization of tropopause
+ * climatology, photolysis rates, and multiple gas species'
+ * climatologies and time series.
  *
  * @param ctl   A pointer to the control structure (`ctl_t`) that specifies file names and parameters for climatology data.
  * @param clim  A pointer to the climatology structure (`clim_t`) that will be populated with the data.
@@ -5540,9 +5775,11 @@ void read_clim(
 /**
  * @brief Reads photolysis rates from a NetCDF file and populates the given photolysis structure.
  *
- * This function opens a NetCDF file specified by the filename, reads various dimensions and data
- * related to photolysis rates, and stores this data in the provided `clim_photo_t` structure. 
- * It includes checks for data consistency and logs detailed information about the loaded data.
+ * This function opens a NetCDF file specified by the filename, reads
+ * various dimensions and data related to photolysis rates, and stores
+ * this data in the provided `clim_photo_t` structure.  It includes
+ * checks for data consistency and logs detailed information about the
+ * loaded data.
  *
  * @param filename  A string containing the path to the NetCDF file containing photolysis rate data.
  * @param photo     A pointer to the photolysis structure (`clim_photo_t`) that will be populated with the data.
@@ -5570,8 +5807,9 @@ void read_clim_photo(
 /**
  * @brief Reads a climatological time series from a file and populates the given time series structure.
  *
- * This function reads time and volume mixing ratio (VMR) data from a specified file, processes the
- * data, and stores it in the provided `clim_ts_t` structure. It also includes checks for data consistency
+ * This function reads time and volume mixing ratio (VMR) data from a
+ * specified file, processes the data, and stores it in the provided
+ * `clim_ts_t` structure. It also includes checks for data consistency
  * and logs detailed information about the loaded data.
  *
  * @param filename  A string containing the path to the file containing the climatological time series data.
@@ -5596,9 +5834,10 @@ int read_clim_ts(
 /**
  * @brief Reads zonally averaged climatological data from a netCDF file and populates the given structure.
  *
- * This function reads data from a specified netCDF file, including pressure levels, latitudes, 
- * and volume mixing ratios (VMR) for a specified variable. It performs necessary checks and logs 
- * detailed information about the loaded data.
+ * This function reads data from a specified netCDF file, including
+ * pressure levels, latitudes, and volume mixing ratios (VMR) for a
+ * specified variable. It performs necessary checks and logs detailed
+ * information about the loaded data.
  *
  * @param filename  A string containing the path to the netCDF file.
  * @param varname   A string containing the name of the variable to be read from the netCDF file.
@@ -5626,9 +5865,11 @@ void read_clim_zm(
 /**
  * @brief Reads control parameters from a configuration file and populates the given structure.
  *
- * This function reads control parameters from a specified configuration file and command line arguments,
- * populating the provided `ctl_t` structure with the parsed data. It handles a wide range of parameters,
- * performing necessary checks and providing default values where applicable.
+ * This function reads control parameters from a specified
+ * configuration file and command line arguments, populating the
+ * provided `ctl_t` structure with the parsed data. It handles a wide
+ * range of parameters, performing necessary checks and providing
+ * default values where applicable.
  *
  * @param filename  A string containing the path to the configuration file.
  * @param argc      An integer representing the number of command line arguments.
@@ -5659,10 +5900,12 @@ void read_ctl(
 /**
  * @brief Reads kernel function data from a file and populates the provided arrays.
  *
- * This function reads kernel function data from a specified file, populating the provided arrays
- * `kz` and `kw` with the parsed data. It also updates the variable pointed to by `nk` with the
- * number of data points read. The function ensures that the height levels are in ascending order
- * and performs checks for the number of height levels read.
+ * This function reads kernel function data from a specified file,
+ * populating the provided arrays `kz` and `kw` with the parsed
+ * data. It also updates the variable pointed to by `nk` with the
+ * number of data points read. The function ensures that the height
+ * levels are in ascending order and performs checks for the number of
+ * height levels read.
  *
  * @param filename  A string containing the path to the file containing kernel function data.
  * @param kz        A double array to store the height levels of the kernel function.
@@ -5690,11 +5933,13 @@ void read_kernel(
 /**
  * @brief Reads meteorological data from a file and populates the provided structures.
  *
- * This function reads meteorological data from a specified file, populating the provided structures
- * `ctl`, `clim`, and `met` with the parsed data. The function handles both netCDF and binary data
- * formats. For netCDF data, it performs various data processing steps such as reading coordinates,
- * surface data, atmospheric levels, and calculating derived quantities. For binary data, it reads
- * the data directly into the appropriate arrays and structures.
+ * This function reads meteorological data from a specified file,
+ * populating the provided structures `ctl`, `clim`, and `met` with
+ * the parsed data. The function handles both netCDF and binary data
+ * formats. For netCDF data, it performs various data processing steps
+ * such as reading coordinates, surface data, atmospheric levels, and
+ * calculating derived quantities. For binary data, it reads the data
+ * directly into the appropriate arrays and structures.
  *
  * @param filename  A string containing the path to the file containing meteorological data.
  * @param ctl       A pointer to a structure containing control parameters.
@@ -5737,9 +5982,10 @@ int read_met(
 /**
  * @brief Reads a 2-dimensional meteorological variable from a binary file and stores it in the provided array.
  *
- * This function reads a 2-dimensional meteorological variable from a binary file, which is assumed to be
- * uncompressed, and stores it in the provided 2-dimensional array `var`. The variable name is used for
- * logging purposes to identify the data being read.
+ * This function reads a 2-dimensional meteorological variable from a
+ * binary file, which is assumed to be uncompressed, and stores it in
+ * the provided 2-dimensional array `var`. The variable name is used
+ * for logging purposes to identify the data being read.
  *
  * @param in        A pointer to the FILE structure representing the binary file to read from.
  * @param met       A pointer to a structure containing meteorological data.
@@ -5767,9 +6013,11 @@ void read_met_bin_2d(
 /**
  * @brief Reads a 3-dimensional meteorological variable from a binary file and stores it in the provided array.
  *
- * This function reads a 3-dimensional meteorological variable from a binary file, which can be uncompressed or
- * compressed using different methods, and stores it in the provided 3-dimensional array `var`. The variable name
- * is used for logging purposes to identify the data being read.
+ * This function reads a 3-dimensional meteorological variable from a
+ * binary file, which can be uncompressed or compressed using
+ * different methods, and stores it in the provided 3-dimensional
+ * array `var`. The variable name is used for logging purposes to
+ * identify the data being read.
  *
  * @param in        A pointer to the FILE structure representing the binary file to read from.
  * @param ctl       A pointer to a structure containing control parameters.
@@ -5801,9 +6049,10 @@ void read_met_bin_3d(
 /**
  * @brief Calculates Convective Available Potential Energy (CAPE) for each grid point.
  *
- * This function calculates the Convective Available Potential Energy (CAPE) at each grid point based on
- * the provided meteorological data. CAPE is a measure of the energy available for deep convection,
- * which is essential for severe weather development.
+ * This function calculates the Convective Available Potential Energy
+ * (CAPE) at each grid point based on the provided meteorological
+ * data. CAPE is a measure of the energy available for deep
+ * convection, which is essential for severe weather development.
  *
  * @param clim A pointer to a structure containing climatological data.
  * @param met  A pointer to a structure containing meteorological data.
@@ -5830,8 +6079,9 @@ void read_met_cape(
 /**
  * @brief Calculates cloud-related variables for each grid point.
  *
- * This function calculates cloud-related variables, such as cloud cover, cloud top pressure, cloud bottom pressure,
- * and total cloud water content, based on the provided meteorological data.
+ * This function calculates cloud-related variables, such as cloud
+ * cover, cloud top pressure, cloud bottom pressure, and total cloud
+ * water content, based on the provided meteorological data.
  *
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
@@ -5856,8 +6106,10 @@ void read_met_cloud(
 /**
  * @brief Detrends meteorological data.
  *
- * This function detrends meteorological data by removing spatially varying backgrounds from each grid point.
- * Detrending helps in removing systematic biases and trends from the data, enabling better analysis and modeling.
+ * This function detrends meteorological data by removing spatially
+ * varying backgrounds from each grid point.  Detrending helps in
+ * removing systematic biases and trends from the data, enabling
+ * better analysis and modeling.
  *
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
@@ -5883,8 +6135,10 @@ void read_met_detrend(
 /**
  * @brief Extrapolates meteorological data.
  *
- * This function extrapolates meteorological data by filling missing or invalid data points with values from the nearest valid point above.
- * Extrapolation is performed column-wise, ensuring that missing data points are replaced with valid values.
+ * This function extrapolates meteorological data by filling missing
+ * or invalid data points with values from the nearest valid point
+ * above.  Extrapolation is performed column-wise, ensuring that
+ * missing data points are replaced with valid values.
  *
  * @param met A pointer to a structure containing meteorological data.
  *
@@ -5906,9 +6160,12 @@ void read_met_extrapolate(
 /**
  * @brief Calculates geopotential heights from meteorological data.
  *
- * This function calculates geopotential heights from provided meteorological data using the hydrostatic equation.
- * Geopotential heights are computed column-wise for each grid point based on the temperature, pressure, and surface height information.
- * Optionally, the calculated geopotential heights can be smoothed horizontally using a weighted averaging scheme.
+ * This function calculates geopotential heights from provided
+ * meteorological data using the hydrostatic equation.  Geopotential
+ * heights are computed column-wise for each grid point based on the
+ * temperature, pressure, and surface height information.  Optionally,
+ * the calculated geopotential heights can be smoothed horizontally
+ * using a weighted averaging scheme.
  *
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
@@ -5933,9 +6190,12 @@ void read_met_geopot(
 /**
  * @brief Reads meteorological grid information from a NetCDF file.
  *
- * This function reads meteorological grid information from a NetCDF file, including time, spatial dimensions, and pressure levels.
- * It also extracts longitudes, latitudes, and pressure levels from the NetCDF file based on the specified control parameters.
- * The function determines the time information either from the filename or from the data file, depending on the file type.
+ * This function reads meteorological grid information from a NetCDF
+ * file, including time, spatial dimensions, and pressure levels.  It
+ * also extracts longitudes, latitudes, and pressure levels from the
+ * NetCDF file based on the specified control parameters.  The
+ * function determines the time information either from the filename
+ * or from the data file, depending on the file type.
  *
  * @param filename The filename of the NetCDF file.
  * @param ncid The NetCDF file identifier.
@@ -5967,10 +6227,12 @@ void read_met_grid(
 /**
  * @brief Reads meteorological variables at different vertical levels from a NetCDF file.
  *
- * This function reads meteorological variables such as temperature, wind components, specific humidity, ozone data,
- * cloud parameters, and cloud cover at various vertical levels from a NetCDF file.
- * The function supports reading meteorological data from both MPTRAC and CLaMS formats.
- * Depending on the file format, it reads specific variables and performs necessary conversions or interpolations.
+ * This function reads meteorological variables such as temperature,
+ * wind components, specific humidity, ozone data, cloud parameters,
+ * and cloud cover at various vertical levels from a NetCDF file.  The
+ * function supports reading meteorological data from both MPTRAC and
+ * CLaMS formats.  Depending on the file format, it reads specific
+ * variables and performs necessary conversions or interpolations.
  *
  * @param ncid The NetCDF file identifier.
  * @param ctl A pointer to a structure containing control parameters.
@@ -6001,8 +6263,10 @@ void read_met_levels(
 /**
  * @brief Interpolates meteorological variables from model levels to pressure levels.
  *
- * This function interpolates meteorological variables from model levels to pressure levels based on the given pressure levels and meteorological data.
- * It performs interpolation for each grid point separately, considering the pressure levels at each grid point.
+ * This function interpolates meteorological variables from model
+ * levels to pressure levels based on the given pressure levels and
+ * meteorological data.  It performs interpolation for each grid point
+ * separately, considering the pressure levels at each grid point.
  *
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
@@ -6027,9 +6291,11 @@ void read_met_ml2pl(
 /**
  * @brief Makes zeta and pressure profiles monotone.
  *
- * This function ensures that zeta and pressure profiles are monotone increasing and decreasing with altitude.
- * It iterates over each grid point and each level to identify inversions and linearly interpolate between them to maintain monotonicity.
- * The interpolation is performed for both zeta and pressure profiles.
+ * This function ensures that zeta and pressure profiles are monotone
+ * increasing and decreasing with altitude.  It iterates over each
+ * grid point and each level to identify inversions and linearly
+ * interpolate between them to maintain monotonicity.  The
+ * interpolation is performed for both zeta and pressure profiles.
  *
  * @param met A pointer to a structure containing meteorological data.
  *
@@ -6048,9 +6314,11 @@ void read_met_monotonize(
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
  *
- * This function reads a 2-dimensional meteorological variable from a NetCDF file and stores it in a specified destination array.
- * It supports both packed and unpacked data formats and handles missing values and scaling factors accordingly.
- * The function also checks the meteorological data layout to ensure correct data copying.
+ * This function reads a 2-dimensional meteorological variable from a
+ * NetCDF file and stores it in a specified destination array.  It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly.  The function also checks
+ * the meteorological data layout to ensure correct data copying.
  *
  * @param ncid The NetCDF file ID.
  * @param varname The name of the variable to read.
@@ -6083,9 +6351,11 @@ int read_met_nc_2d(
 /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
  *
- * This function reads a 3-dimensional meteorological variable from a NetCDF file and stores it in a specified destination array.
- * It supports both packed and unpacked data formats and handles missing values and scaling factors accordingly.
- * The function also checks the meteorological data layout to ensure correct data copying.
+ * This function reads a 3-dimensional meteorological variable from a
+ * NetCDF file and stores it in a specified destination array. It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly. The function also checks
+ * the meteorological data layout to ensure correct data copying.
  *
  * @param ncid The NetCDF file ID.
  * @param varname The name of the variable to read.
@@ -6118,9 +6388,12 @@ int read_met_nc_3d(
 /**
  * @brief Calculates the planetary boundary layer (PBL) height for each grid point.
  *
- * This function estimates the height of the planetary boundary layer (PBL) based on various meteorological parameters.
- * The method used is based on empirical relationships, such as those proposed by Vogelezang and Holtslag (1996) or Seidel et al. (2012).
- * It computes the PBL height by analyzing the vertical profiles of temperature, wind speed, humidity, and pressure.
+ * This function estimates the height of the planetary boundary layer
+ * (PBL) based on various meteorological parameters.  The method used
+ * is based on empirical relationships, such as those proposed by
+ * Vogelezang and Holtslag (1996) or Seidel et al. (2012).  It
+ * computes the PBL height by analyzing the vertical profiles of
+ * temperature, wind speed, humidity, and pressure.
  *
  * @param met A pointer to a structure containing meteorological data.
  *
@@ -6146,11 +6419,14 @@ void read_met_pbl(
 /**
  * @brief Applies periodic boundary conditions to meteorological data along longitudinal axis.
  *
- * This function applies periodic boundary conditions to meteorological data along the longitudinal axis.
- * It checks if the difference between the last and first longitudes and the difference between the second and first longitudes
- * are approximately equal to 360 degrees, indicating periodicity.
- * If the condition is met, the function increases the longitude counter, sets the longitude value for the new grid point,
- * and copies meteorological data from the first grid point to the last grid point to ensure periodicity.
+ * This function applies periodic boundary conditions to
+ * meteorological data along the longitudinal axis.  It checks if the
+ * difference between the last and first longitudes and the difference
+ * between the second and first longitudes are approximately equal to
+ * 360 degrees, indicating periodicity.  If the condition is met, the
+ * function increases the longitude counter, sets the longitude value
+ * for the new grid point, and copies meteorological data from the
+ * first grid point to the last grid point to ensure periodicity.
  *
  * @param met A pointer to a structure containing meteorological data.
  *
@@ -6177,10 +6453,13 @@ void read_met_periodic(
 /**
  * @brief Applies a fix for polar winds in meteorological data.
  *
- * This function applies a fix for polar winds in meteorological data, particularly focusing on the u and v wind components.
- * It checks if the latitudes at the top and bottom of the grid are close to the poles.
- * If so, it transforms the winds at 89-degree latitude into Cartesian coordinates, takes their mean, and replaces the winds
- * at 90-degree latitude with this mean, effectively fixing the unrealistic behavior of winds at the poles.
+ * This function applies a fix for polar winds in meteorological data,
+ * particularly focusing on the u and v wind components.  It checks if
+ * the latitudes at the top and bottom of the grid are close to the
+ * poles.  If so, it transforms the winds at 89-degree latitude into
+ * Cartesian coordinates, takes their mean, and replaces the winds at
+ * 90-degree latitude with this mean, effectively fixing the
+ * unrealistic behavior of winds at the poles.
  *
  * @param met A pointer to a structure containing meteorological data.
  *
@@ -6206,10 +6485,13 @@ void read_met_polar_winds(
 /**
  * @brief Calculates potential vorticity (PV) from meteorological data.
  *
- * This function calculates the potential vorticity (PV) from the provided meteorological data.
- * It employs finite difference methods to estimate gradients of temperature, wind components, and pressure in longitude,
- * latitude, and pressure dimensions. These gradients are then used to compute PV at each grid point.
- * Additionally, a fix for polar regions is applied to ensure smoothness of PV values in these regions.
+ * This function calculates the potential vorticity (PV) from the
+ * provided meteorological data.  It employs finite difference methods
+ * to estimate gradients of temperature, wind components, and pressure
+ * in longitude, latitude, and pressure dimensions. These gradients
+ * are then used to compute PV at each grid point.  Additionally, a
+ * fix for polar regions is applied to ensure smoothness of PV values
+ * in these regions.
  *
  * @param met A pointer to a structure containing meteorological data.
  *
@@ -6236,10 +6518,12 @@ void read_met_pv(
 /**
  * @brief Calculates the total column ozone from meteorological ozone data.
  *
- * This function calculates the total column ozone from the provided meteorological ozone data.
- * It integrates ozone concentrations over altitude to obtain the column ozone density.
- * The result is then converted to Dobson units, which represent the thickness of the ozone layer
- * if compressed into one layer at standard temperature and pressure.
+ * This function calculates the total column ozone from the provided
+ * meteorological ozone data.  It integrates ozone concentrations over
+ * altitude to obtain the column ozone density.  The result is then
+ * converted to Dobson units, which represent the thickness of the
+ * ozone layer if compressed into one layer at standard temperature
+ * and pressure.
  *
  * @param met A pointer to a structure containing meteorological ozone data.
  *
@@ -6259,8 +6543,10 @@ void read_met_ozone(
 /**
  * @brief Downsamples meteorological data based on specified parameters.
  *
- * This function downsamples meteorological data based on the provided control parameters.
- * It reduces the resolution of meteorological data by averaging over specified intervals in longitude, latitude, and altitude.
+ * This function downsamples meteorological data based on the provided
+ * control parameters.  It reduces the resolution of meteorological
+ * data by averaging over specified intervals in longitude, latitude,
+ * and altitude.
  *
  * @param ctl A pointer to a structure containing control parameters for downsampling.
  * @param met A pointer to a structure containing meteorological data to be downsampled.
@@ -6289,8 +6575,12 @@ void read_met_sample(
 /**
  * @brief Reads surface meteorological data from a netCDF file and stores it in the meteorological data structure.
  *
- * This function reads various surface meteorological variables from a netCDF file and stores them in the provided meteorological data structure.
- * Depending on the configuration, it may read data for surface pressure, geopotential height, temperature, zonal and meridional wind components, land-sea mask, and sea surface temperature.
+ * This function reads various surface meteorological variables from a
+ * netCDF file and stores them in the provided meteorological data
+ * structure.  Depending on the configuration, it may read data for
+ * surface pressure, geopotential height, temperature, zonal and
+ * meridional wind components, land-sea mask, and sea surface
+ * temperature.
  *
  * @param ncid NetCDF file identifier.
  * @param met A pointer to the meteorological data structure to store the read data.
@@ -6330,8 +6620,10 @@ void read_met_surface(
 /**
  * @brief Calculates the tropopause and related meteorological variables based on various methods and stores the results in the meteorological data structure.
  *
- * This function calculates the tropopause and related meteorological variables using different methods specified by the control parameters.
- * The calculated tropopause pressure is stored in the provided meteorological data structure.
+ * This function calculates the tropopause and related meteorological
+ * variables using different methods specified by the control
+ * parameters.  The calculated tropopause pressure is stored in the
+ * provided meteorological data structure.
  *
  * @param ctl A pointer to a structure containing control parameters.
  * @param clim A pointer to the climatological data structure.
@@ -6361,9 +6653,10 @@ void read_met_tropo(
 /**
  * @brief Reads observation data from a file and stores it in arrays.
  *
- * This function reads observation data from a specified file in either ASCII or NetCDF format,
- * depending on the value of the OBS_TYPE control parameter. It stores the time, altitude, longitude, latitude,
- * and observation values in the provided arrays.
+ * This function reads observation data from a specified file in
+ * either ASCII or NetCDF format, depending on the value of the
+ * OBS_TYPE control parameter. It stores the time, altitude,
+ * longitude, latitude, and observation values in the provided arrays.
  *
  * @param filename The path to the observation data file.
  * @param ctl A pointer to a structure containing control parameters.
@@ -6401,7 +6694,10 @@ void read_obs(
 /**
  * @brief Reads observation data from an ASCII file.
  *
- * This function reads observation data from a specified ASCII file. It extracts time, altitude, longitude, latitude, and observation values from each line of the file and stores them in the provided arrays.
+ * This function reads observation data from a specified ASCII
+ * file. It extracts time, altitude, longitude, latitude, and
+ * observation values from each line of the file and stores them in
+ * the provided arrays.
  *
  * @param filename The path to the ASCII file containing the observation data.
  * @param rt An array to store the time values of the observations.
@@ -6434,8 +6730,10 @@ void read_obs_asc(
 /**
  * @brief Reads observation data from a NetCDF file.
  *
- * This function reads observation data from a specified NetCDF file. It extracts time, altitude, longitude, latitude,
- * and observation values from the variables in the NetCDF file and stores them in the provided arrays.
+ * This function reads observation data from a specified NetCDF
+ * file. It extracts time, altitude, longitude, latitude, and
+ * observation values from the variables in the NetCDF file and stores
+ * them in the provided arrays.
  *
  * @param filename The path to the NetCDF file containing the observation data.
  * @param rt An array to store the time values of the observations.
@@ -6467,9 +6765,11 @@ void read_obs_nc(
 /**
  * @brief Scans a control file or command-line arguments for a specified variable.
  *
- * This function scans either a control file or command-line arguments for a specified variable name and retrieves its value.
- * It searches for the variable name in the control file or command-line arguments and returns its corresponding value.
- * If the variable is not found, it returns a default value specified by the user.
+ * This function scans either a control file or command-line arguments
+ * for a specified variable name and retrieves its value.  It searches
+ * for the variable name in the control file or command-line arguments
+ * and returns its corresponding value.  If the variable is not found,
+ * it returns a default value specified by the user.
  *
  * @param filename The name of the control file to be scanned. If NULL, only command-line arguments will be scanned.
  * @param argc The number of command-line arguments.
@@ -6507,7 +6807,8 @@ double scan_ctl(
 /**
  * @brief Calculates the sedimentation velocity of a particle in air.
  *
- * This function calculates the sedimentation velocity of a particle in air using the given parameters.
+ * This function calculates the sedimentation velocity of a particle
+ * in air using the given parameters.
  *
  * @param p The atmospheric pressure [hPa].
  * @param T The temperature [K].
@@ -6538,8 +6839,9 @@ double sedi(
 /**
  * @brief Performs spline interpolation or linear interpolation.
  *
- * This function interpolates a set of data points using either cubic spline interpolation or linear interpolation,
- * depending on the specified method.
+ * This function interpolates a set of data points using either cubic
+ * spline interpolation or linear interpolation, depending on the
+ * specified method.
  *
  * @param x The array of x-coordinates of the data points.
  * @param y The array of y-coordinates of the data points.
@@ -6575,15 +6877,22 @@ void spline(
 /**
  * @brief Calculates the standard deviation of a set of data.
  *
- * This function calculates the standard deviation of a set of floating-point data values.
+ * This function calculates the standard deviation of a set of
+ * floating-point data values.
  *
  * @param data Pointer to the array of data values.
  * @param n Number of data values in the array.
  * @return The standard deviation of the data values. If the number of data values is less than or equal to 0, returns 0.
  *
  * The standard deviation is calculated using the formula:
+ *
  * \f[ \sigma = \sqrt{\frac{\sum_{i=1}^{n} (x_i - \bar{x})^2}{n}} \f]
- * where \f$ \sigma \f$ is the standard deviation, \f$ x_i \f$ is each data value, \f$ \bar{x} \f$ is the mean of the data values, and \f$ n \f$ is the total number of data values.
+ *
+ * where:
+ * - \f$ \sigma \f$ is the standard deviation,
+ * - \f$ x_i \f$ is each data value,
+ * - \f$ \bar{x} \f$ is the mean of the data values, and 
+ * - \f$ n \f$ is the total number of data values.
  *
  * @author Lars Hoffmann
  */
@@ -6594,8 +6903,9 @@ float stddev(
 /**
  * @brief Calculates the solar zenith angle.
  *
- * This function calculates the solar zenith angle, which is the angle between the zenith (straight up) and the line
- * connecting the observer to the center of the sun.
+ * This function calculates the solar zenith angle, which is the angle
+ * between the zenith (straight up) and the line connecting the
+ * observer to the center of the sun.
  *
  * @param sec Seconds elapsed since 2000-01-01T12:00Z.
  * @param lon Observer's longitude in degrees.
@@ -6617,8 +6927,10 @@ double sza_calc(
 /**
  * @brief Converts time components to seconds since January 1, 2000, 12:00:00 UTC.
  *
- * This function calculates the number of seconds elapsed since January 1, 2000, 12:00:00 UTC, based on the provided
- * year, month, day, hour, minute, and second. It also includes a fractional part to represent the remaining seconds.
+ * This function calculates the number of seconds elapsed since
+ * January 1, 2000, 12:00:00 UTC, based on the provided year, month,
+ * day, hour, minute, and second. It also includes a fractional part
+ * to represent the remaining seconds.
  *
  * @param year The year.
  * @param mon The month (1-12).
@@ -6649,10 +6961,10 @@ void time2jsec(
 /**
  * @brief Measures and reports elapsed time for named and grouped timers.
  *
- * The `timer` function measures elapsed time for a specified named timer and
- * an optional group of timers, accumulating time statistics such as minimum,
- * maximum, and mean elapsed times. It also provides an option to log the
- * timing statistics to an output.
+ * The `timer` function measures elapsed time for a specified named
+ * timer and an optional group of timers, accumulating time statistics
+ * such as minimum, maximum, and mean elapsed times. It also provides
+ * an option to log the timing statistics to an output.
  *
  * @param name A string representing the name of the timer.
  * @param group A string representing the group to which the timer belongs.
@@ -6682,9 +6994,10 @@ void timer(
 /**
  * @brief Extracts and converts a timestamp from a filename to Julian seconds.
  *
- * The `time_from_filename` function parses a given filename to extract a timestamp
- * and converts it to Julian seconds. The timestamp is expected to follow a specific
- * format and position within the filename, defined by the `offset` parameter.
+ * The `time_from_filename` function parses a given filename to
+ * extract a timestamp and converts it to Julian seconds. The
+ * timestamp is expected to follow a specific format and position
+ * within the filename, defined by the `offset` parameter.
  *
  * @param filename A string representing the filename containing the timestamp.
  * @param offset An integer indicating the position from the end of the filename where the timestamp starts.
@@ -6710,8 +7023,9 @@ double time_from_filename(
 /**
  * @brief Computes the weighting factor for a given pressure with respect to the tropopause.
  *
- * The `tropo_weight` function calculates a weighting factor that indicates how much a given
- * pressure `p` is influenced by the tropopause based on climatological data.
+ * The `tropo_weight` function calculates a weighting factor that
+ * indicates how much a given pressure `p` is influenced by the
+ * tropopause based on climatological data.
  *
  * @param clim A pointer to a `clim_t` structure containing climatological tropopause data.
  * @param t The time parameter, typically representing the time of year or specific temporal context.
@@ -6742,9 +7056,10 @@ double tropo_weight(
 /**
  * @brief Writes air parcel data to a file in various formats.
  *
- * The `write_atm` function writes the air parcel data stored in the `atm` structure
- * to a file specified by `filename`. The format of the output file is determined by the
- * `atm_type_out` field in the `ctl` control structure.
+ * The `write_atm` function writes the air parcel data stored in the
+ * `atm` structure to a file specified by `filename`. The format of
+ * the output file is determined by the `atm_type_out` field in the
+ * `ctl` control structure.
  *
  * @param filename A string representing the name of the file to write the data to.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6776,8 +7091,9 @@ void write_atm(
 /**
  * @brief Writes air parcel data to an ASCII file or gnuplot.
  *
- * The `write_atm_asc` function writes the atmospheric data stored in the `atm` structure
- * to an ASCII file specified by `filename` or to pipe to gnuplot if requested.
+ * The `write_atm_asc` function writes the atmospheric data stored in
+ * the `atm` structure to an ASCII file specified by `filename` or to
+ * pipe to gnuplot if requested.
  *
  * @param filename A string representing the name of the file to write the data to.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6803,9 +7119,10 @@ void write_atm_asc(
 /**
  * @brief Writes air parcel data to a binary file.
  *
- * The `write_atm_bin` function writes the air parcel data stored in the `atm` structure
- * to a binary file specified by `filename`. The function includes versioning information
- * and ensures that all relevant data arrays are written in a consistent binary format.
+ * The `write_atm_bin` function writes the air parcel data stored in
+ * the `atm` structure to a binary file specified by `filename`. The
+ * function includes versioning information and ensures that all
+ * relevant data arrays are written in a consistent binary format.
  *
  * @param filename A string representing the name of the file to write the data to.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6830,10 +7147,11 @@ void write_atm_bin(
 /**
  * @brief Writes air parcel data to a NetCDF file in the CLaMS format.
  *
- * The `write_atm_clams` function creates a NetCDF file and writes air parcel
- * data into it. The data includes time, latitude, longitude, pressure, and other
- * specified quantities. The function defines the dimensions and variables, sets 
- * global attributes, and writes the data to the file.
+ * The `write_atm_clams` function creates a NetCDF file and writes air
+ * parcel data into it. The data includes time, latitude, longitude,
+ * pressure, and other specified quantities. The function defines the
+ * dimensions and variables, sets global attributes, and writes the
+ * data to the file.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6857,10 +7175,11 @@ void write_atm_clams(
 /**
  * @brief Writes CLaMS trajectory data to a NetCDF file.
  *
- * The `write_atm_clams_traj` function writes trajectory data for the CLaMS model
- * to a NetCDF file. The file is created and populated with data including time,
- * latitude, longitude, pressure, and other quantities. The function also handles
- * the creation of a final initialization file at the last time step.
+ * The `write_atm_clams_traj` function writes trajectory data for the
+ * CLaMS model to a NetCDF file. The file is created and populated
+ * with data including time, latitude, longitude, pressure, and other
+ * quantities. The function also handles the creation of a final
+ * initialization file at the last time step.
  *
  * @param dirname A string representing the directory name where the file will be created.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6886,10 +7205,11 @@ void write_atm_clams_traj(
 /**
  * @brief Writes air parcel data to a NetCDF file.
  *
- * The `write_atm_nc` function creates a NetCDF file and writes air parcel data into it. 
- * The data includes time, pressure, longitude, latitude, and other specified quantities.
- * The function defines the dimensions and variables, sets global attributes, and writes 
- * the data to the file.
+ * The `write_atm_nc` function creates a NetCDF file and writes air
+ * parcel data into it.  The data includes time, pressure, longitude,
+ * latitude, and other specified quantities.  The function defines the
+ * dimensions and variables, sets global attributes, and writes the
+ * data to the file.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6913,11 +7233,13 @@ void write_atm_nc(
 /**
  * @brief Writes Critical Success Index (CSI) data to a file.
  *
- * The `write_csi` function processes air parcel and observation data 
- * to calculate and write various verification statistics, including the Critical Success Index (CSI), 
- * to a specified output file at regular intervals. The statistics include measures such as 
- * the number of hits, misses, and false alarms, bias, probability of detection, false alarm rate, 
- * equitable threat score, and correlation coefficients.
+ * The `write_csi` function processes air parcel and observation data
+ * to calculate and write various verification statistics, including
+ * the Critical Success Index (CSI), to a specified output file at
+ * regular intervals. The statistics include measures such as the
+ * number of hits, misses, and false alarms, bias, probability of
+ * detection, false alarm rate, equitable threat score, and
+ * correlation coefficients.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6945,11 +7267,12 @@ void write_csi(
 /**
  * @brief Writes ensemble data to a file.
  *
- * The `write_ens` function processes air parcel data to calculate 
- * ensemble means and standard deviations for various quantities and writes 
- * them to a specified output file. It handles ensemble members and calculates 
- * statistics such as means and standard deviations for each ensemble, along 
- * with latitude, longitude, altitude, and time information.
+ * The `write_ens` function processes air parcel data to calculate
+ * ensemble means and standard deviations for various quantities and
+ * writes them to a specified output file. It handles ensemble members
+ * and calculates statistics such as means and standard deviations for
+ * each ensemble, along with latitude, longitude, altitude, and time
+ * information.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -6978,10 +7301,11 @@ void write_ens(
  * @brief Writes grid data to a file in ASCII or netCDF format.
  *
  * The `write_grid` function processes air parcel data to calculate
- * various grid-based statistics such as column density, mean, and standard
- * deviation for specified quantities. It then writes this data to a specified
- * output file either in ASCII or netCDF format based on the configuration
- * parameters provided in the `ctl` structure.
+ * various grid-based statistics such as column density, mean, and
+ * standard deviation for specified quantities. It then writes this
+ * data to a specified output file either in ASCII or netCDF format
+ * based on the configuration parameters provided in the `ctl`
+ * structure.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7022,11 +7346,11 @@ void write_grid(
 /**
  * @brief Writes grid data to an ASCII file.
  *
- * The `write_grid_asc` function writes gridded air parcel data, including
- * column density, mean and standard deviation for specified quantities, and
- * volume mixing ratio (if available), to an ASCII file. The function also
- * supports writing gnuplot commands to generate plots if requested in the
- * control parameters.
+ * The `write_grid_asc` function writes gridded air parcel data,
+ * including column density, mean and standard deviation for specified
+ * quantities, and volume mixing ratio (if available), to an ASCII
+ * file. The function also supports writing gnuplot commands to
+ * generate plots if requested in the control parameters.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7082,10 +7406,11 @@ void write_grid_asc(
 /**
  * @brief Writes grid data to a NetCDF file.
  *
- * The `write_grid_nc` function writes gridded air parcel data, including column
- * density, mean and standard deviation for specified quantities, and volume
- * mixing ratio (if available), to a NetCDF file. NetCDF is a self-describing,
- * machine-independent data format for storing scientific data.
+ * The `write_grid_nc` function writes gridded air parcel data,
+ * including column density, mean and standard deviation for specified
+ * quantities, and volume mixing ratio (if available), to a NetCDF
+ * file. NetCDF is a self-describing, machine-independent data format
+ * for storing scientific data.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7139,9 +7464,9 @@ void write_grid_nc(
  * @brief Writes meteorological data to a binary file.
  *
  * The `write_met` function writes meteorological data, including
- * surface data and level data, to a binary file specified by the filename
- * parameter. The data is written in binary format for efficient storage and
- * transfer.
+ * surface data and level data, to a binary file specified by the
+ * filename parameter. The data is written in binary format for
+ * efficient storage and transfer.
  *
  * @param filename A string representing the name of the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7175,10 +7500,11 @@ int write_met(
 /**
  * @brief Writes a 2-dimensional meteorological variable to a binary file.
  *
- * The `write_met_bin_2d` function writes a 2-dimensional meteorological
- * variable to a binary file specified by the `out` parameter. The variable
- * data is provided in a 2-dimensional array `var` with maximum dimensions `EX` by `EY`.
- * The variable name is provided as a string in the `varname` parameter.
+ * The `write_met_bin_2d` function writes a 2-dimensional
+ * meteorological variable to a binary file specified by the `out`
+ * parameter. The variable data is provided in a 2-dimensional array
+ * `var` with maximum dimensions `EX` by `EY`.  The variable name is
+ * provided as a string in the `varname` parameter.
  *
  * @param out A pointer to a FILE structure representing the output file.
  * @param met A pointer to a `met_t` structure containing meteorological data.
@@ -7207,12 +7533,13 @@ void write_met_bin_2d(
 /**
  * @brief Writes a 3-dimensional meteorological variable to a binary file.
  *
- * The `write_met_bin_3d` function writes a 3-dimensional meteorological
- * variable to a binary file specified by the `out` parameter. The variable
- * data is provided in a 3-dimensional array `var` with maximum dimensions `EX` by `EY`
- * by `EP`. The variable name is provided as a string in the `varname` parameter.
- * Additionally, the function takes parameters for specifying the compression
- * precision and tolerance.
+ * The `write_met_bin_3d` function writes a 3-dimensional
+ * meteorological variable to a binary file specified by the `out`
+ * parameter. The variable data is provided in a 3-dimensional array
+ * `var` with maximum dimensions `EX` by `EY` by `EP`. The variable
+ * name is provided as a string in the `varname` parameter.
+ * Additionally, the function takes parameters for specifying the
+ * compression precision and tolerance.
  *
  * @param out A pointer to a FILE structure representing the output file.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7252,10 +7579,11 @@ void write_met_bin_3d(
 /**
  * @brief Writes various types of output data to files in a specified directory.
  *
- * The `write_output` function writes various types of output data to files in the
- * directory specified by the `dirname` parameter. The function takes control parameters
- * (`ctl`), two meteorological data structures (`met0` and `met1`), an atmospheric
- * data structure (`atm`), and a time value (`t`) as input.
+ * The `write_output` function writes various types of output data to
+ * files in the directory specified by the `dirname` parameter. The
+ * function takes control parameters (`ctl`), two meteorological data
+ * structures (`met0` and `met1`), an atmospheric data structure
+ * (`atm`), and a time value (`t`) as input.
  *
  * @param dirname A string representing the directory path where output files will be written.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7292,9 +7620,11 @@ void write_output(
 /**
  * @brief Writes profile data to a specified file.
  *
- * The `write_prof` function writes profile data to a file specified by the `filename`
- * parameter. It takes control parameters (`ctl`), two meteorological data structures
- * (`met0` and `met1`), an atmospheric data structure (`atm`), and a time value (`t`) as input.
+ * The `write_prof` function writes profile data to a file specified
+ * by the `filename` parameter. It takes control parameters (`ctl`),
+ * two meteorological data structures (`met0` and `met1`), an
+ * atmospheric data structure (`atm`), and a time value (`t`) as
+ * input.
  *
  * @param filename A string representing the filename where the profile data will be written.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7328,9 +7658,11 @@ void write_prof(
 /**
  * @brief Writes sample data to a specified file.
  *
- * The `write_sample` function writes sample data to a file specified by the `filename`
- * parameter. It takes control parameters (`ctl`), two meteorological data structures
- * (`met0` and `met1`), an atmospheric data structure (`atm`), and a time value (`t`) as input.
+ * The `write_sample` function writes sample data to a file specified
+ * by the `filename` parameter. It takes control parameters (`ctl`),
+ * two meteorological data structures (`met0` and `met1`), an
+ * atmospheric data structure (`atm`), and a time value (`t`) as
+ * input.
  *
  * @param filename A string representing the filename where the sample data will be written.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7365,9 +7697,10 @@ void write_sample(
 /**
  * @brief Writes station data to a specified file.
  *
- * The `write_station` function writes station data to a file specified by the `filename`
- * parameter. It takes control parameters (`ctl`), an atmospheric data structure (`atm`),
- * and a time value (`t`) as input.
+ * The `write_station` function writes station data to a file
+ * specified by the `filename` parameter. It takes control parameters
+ * (`ctl`), an atmospheric data structure (`atm`), and a time value
+ * (`t`) as input.
  *
  * @param filename A string representing the filename where the station data will be written.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
@@ -7396,9 +7729,10 @@ void write_station(
 /**
  * @brief Writes VTK (Visualization Toolkit) data to a specified file.
  *
- * The `write_vtk` function writes VTK data to a file specified by the `filename`
- * parameter. It takes control parameters (`ctl`), an atmospheric data structure (`atm`),
- * and a time value (`t`) as input.
+ * The `write_vtk` function writes VTK data to a file specified by the
+ * `filename` parameter. It takes control parameters (`ctl`), an
+ * atmospheric data structure (`atm`), and a time value (`t`) as
+ * input.
  *
  * @param filename A string representing the filename where the VTK data will be written.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
