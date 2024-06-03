@@ -44,6 +44,7 @@ src/met_sample
 src/met_spec
 src/met_subgrid
 src/met_zm
+src/libmptrac.*
 src/sedi
 src/time2jsec
 src/tnat

@@ -222,7 +222,7 @@ endif
 # Targets...
 # -----------------------------------------------------------------------------
 
-.PHONY : all check clean coverage cppcheck dist doxygen indent install lizard mkdocs strip uninstall
+.PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall
 
 all: $(EXC)
 	rm -f *~
@@ -242,7 +242,7 @@ $(TESTS) gpu_test kpp_test: all
 	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
 
 clean:
-	rm -rf $(EXC) *.o *.gcda *.gcno *.gcov coverage* *~
+	rm -rf $(EXC) lib* *.o *.gcda *.gcno *.gcov coverage* *~
 
 coverage:
 	lcov --capture --directory . --output-file=coverage.info ; \
@@ -265,6 +265,15 @@ indent:
 
 install:
 	mkdir -p $(DESTDIR) && cp $(EXC) $(DESTDIR)
+
+lib: mptrac.c mptrac.h Makefile
+ifeq ($(STATIC),1)
+	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
+	ar rcs libmptrac.a mptrac.o
+else
+	$(CC) $(CFLAGS) -c -fPIC -o mptrac_pic.o mptrac.c
+	$(CC) mptrac_pic.o -shared -o libmptrac.so
+endif
 
 lizard:
 	lizard -s cyclomatic_complexity
