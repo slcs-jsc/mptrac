@@ -45,17 +45,53 @@ int main(
 
   static char varname[LEN];
 
-  static double lons[EX], lats[EY], zm[EX][EY], zs[EX][EY], pm[EX][EY],
-    ps[EX][EY], tm[EX][EY], ts[EX][EY], qm[EX][EY], qs[EX][EY], o3m[EX][EY],
-    o3s[EX][EY];
+  static double lons[EX], lats[EY], *zm, *zs, *pm, *ps, *tm, *ts, *qm, *qs,
+    *o3m, *o3s;
 
-  static float help[EX * EY], tropo_z0[EX][EY], tropo_p0[EX][EY],
-    tropo_t0[EX][EY], tropo_q0[EX][EY], tropo_o30[EX][EY];
+  static float *tropo_z0, *tropo_p0, *tropo_t0, *tropo_q0, *tropo_o30;
 
   static int ncid, varid, varid_z, varid_p, varid_t, varid_q, varid_o3, h2o,
-    o3, n[EX][EY], nt[EX][EY], init, ntime, nlon, nlat, ilon, ilat;
+    o3, *n, *nt, ntime, nlon, nlat;
 
   static size_t count[10], start[10];
+
+  /* Allocate... */
+  ALLOC(zm, double,
+	EX * EY);
+  ALLOC(zs, double,
+	EX * EY);
+  ALLOC(pm, double,
+	EX * EY);
+  ALLOC(ps, double,
+	EX * EY);
+  ALLOC(tm, double,
+	EX * EY);
+  ALLOC(ts, double,
+	EX * EY);
+  ALLOC(qm, double,
+	EX * EY);
+  ALLOC(qs, double,
+	EX * EY);
+  ALLOC(o3m, double,
+	EX * EY);
+  ALLOC(o3s, double,
+	EX * EY);
+
+  ALLOC(tropo_z0, float,
+	EX * EY);
+  ALLOC(tropo_p0, float,
+	EX * EY);
+  ALLOC(tropo_t0, float,
+	EX * EY);
+  ALLOC(tropo_q0, float,
+	EX * EY);
+  ALLOC(tropo_o30, float,
+	EX * EY);
+
+  ALLOC(n, int,
+	EX * EY);
+  ALLOC(nt, int,
+	EX * EY);
 
   /* Check arguments... */
   if (argc < 5)
@@ -101,65 +137,43 @@ int main(
     /* Loop over time steps... */
     for (int it = 0; it < ntime; it++) {
 
-      /* Get time from filename... */
-      if (!init)
-	init = 1;
-
       /* Read data... */
       start[0] = (size_t) it;
-      NC(nc_get_vara_float(ncid, varid_z, start, count, help));
-      for (ilon = 0; ilon < nlon; ilon++)
-	for (ilat = 0; ilat < nlat; ilat++)
-	  tropo_z0[ilon][ilat] = help[ilat * nlon + ilon];
-      NC(nc_get_vara_float(ncid, varid_p, start, count, help));
-      for (ilon = 0; ilon < nlon; ilon++)
-	for (ilat = 0; ilat < nlat; ilat++)
-	  tropo_p0[ilon][ilat] = help[ilat * nlon + ilon];
-      NC(nc_get_vara_float(ncid, varid_t, start, count, help));
-      for (ilon = 0; ilon < nlon; ilon++)
-	for (ilat = 0; ilat < nlat; ilat++)
-	  tropo_t0[ilon][ilat] = help[ilat * nlon + ilon];
+      NC(nc_get_vara_float(ncid, varid_z, start, count, tropo_z0));
+      NC(nc_get_vara_float(ncid, varid_p, start, count, tropo_p0));
+      NC(nc_get_vara_float(ncid, varid_t, start, count, tropo_t0));
       if (h2o) {
-	NC(nc_get_vara_float(ncid, varid_q, start, count, help));
-	for (ilon = 0; ilon < nlon; ilon++)
-	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_q0[ilon][ilat] = help[ilat * nlon + ilon];
+	NC(nc_get_vara_float(ncid, varid_q, start, count, tropo_q0));
       } else
-	for (ilon = 0; ilon < nlon; ilon++)
-	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_q0[ilon][ilat] = NAN;
+	for (int i = 0; i < nlon * nlat; i++)
+	  tropo_q0[i] = NAN;
       if (o3) {
-	NC(nc_get_vara_float(ncid, varid_o3, start, count, help));
-	for (ilon = 0; ilon < nlon; ilon++)
-	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_o30[ilon][ilat] = help[ilat * nlon + ilon];
+	NC(nc_get_vara_float(ncid, varid_o3, start, count, tropo_o30));
       } else
-	for (ilon = 0; ilon < nlon; ilon++)
-	  for (ilat = 0; ilat < nlat; ilat++)
-	    tropo_o30[ilon][ilat] = NAN;
+	for (int i = 0; i < nlon * nlat; i++)
+	  tropo_o30[i] = NAN;
 
       /* Averaging... */
-      for (ilon = 0; ilon < nlon; ilon++)
-	for (ilat = 0; ilat < nlat; ilat++) {
-	  nt[ilon][ilat]++;
-	  if (isfinite(tropo_z0[ilon][ilat])
-	      && isfinite(tropo_p0[ilon][ilat])
-	      && isfinite(tropo_t0[ilon][ilat])
-	      && (!h2o || isfinite(tropo_q0[ilon][ilat]))
-	      && (!o3 || isfinite(tropo_o30[ilon][ilat]))) {
-	    zm[ilon][ilat] += tropo_z0[ilon][ilat];
-	    zs[ilon][ilat] += SQR(tropo_z0[ilon][ilat]);
-	    pm[ilon][ilat] += tropo_p0[ilon][ilat];
-	    ps[ilon][ilat] += SQR(tropo_p0[ilon][ilat]);
-	    tm[ilon][ilat] += tropo_t0[ilon][ilat];
-	    ts[ilon][ilat] += SQR(tropo_t0[ilon][ilat]);
-	    qm[ilon][ilat] += tropo_q0[ilon][ilat];
-	    qs[ilon][ilat] += SQR(tropo_q0[ilon][ilat]);
-	    o3m[ilon][ilat] += tropo_o30[ilon][ilat];
-	    o3s[ilon][ilat] += SQR(tropo_o30[ilon][ilat]);
-	    n[ilon][ilat]++;
-	  }
+      for (int i = 0; i < nlon * nlat; i++) {
+	nt[i]++;
+	if (isfinite(tropo_z0[i])
+	    && isfinite(tropo_p0[i])
+	    && isfinite(tropo_t0[i])
+	    && (!h2o || isfinite(tropo_q0[i]))
+	    && (!o3 || isfinite(tropo_o30[i]))) {
+	  zm[i] += tropo_z0[i];
+	  zs[i] += SQR(tropo_z0[i]);
+	  pm[i] += tropo_p0[i];
+	  ps[i] += SQR(tropo_p0[i]);
+	  tm[i] += tropo_t0[i];
+	  ts[i] += SQR(tropo_t0[i]);
+	  qm[i] += tropo_q0[i];
+	  qs[i] += SQR(tropo_q0[i]);
+	  o3m[i] += tropo_o30[i];
+	  o3s[i] += SQR(tropo_o30[i]);
+	  n[i]++;
 	}
+      }
     }
 
     /* Close files... */
@@ -167,25 +181,24 @@ int main(
   }
 
   /* Normalize... */
-  for (ilon = 0; ilon < nlon; ilon++)
-    for (ilat = 0; ilat < nlat; ilat++)
-      if (n[ilon][ilat] > 0) {
-	zm[ilon][ilat] /= n[ilon][ilat];
-	pm[ilon][ilat] /= n[ilon][ilat];
-	tm[ilon][ilat] /= n[ilon][ilat];
-	qm[ilon][ilat] /= n[ilon][ilat];
-	o3m[ilon][ilat] /= n[ilon][ilat];
-	double aux = zs[ilon][ilat] / n[ilon][ilat] - SQR(zm[ilon][ilat]);
-	zs[ilon][ilat] = aux > 0 ? sqrt(aux) : 0.0;
-	aux = ps[ilon][ilat] / n[ilon][ilat] - SQR(pm[ilon][ilat]);
-	ps[ilon][ilat] = aux > 0 ? sqrt(aux) : 0.0;
-	aux = ts[ilon][ilat] / n[ilon][ilat] - SQR(tm[ilon][ilat]);
-	ts[ilon][ilat] = aux > 0 ? sqrt(aux) : 0.0;
-	aux = qs[ilon][ilat] / n[ilon][ilat] - SQR(qm[ilon][ilat]);
-	qs[ilon][ilat] = aux > 0 ? sqrt(aux) : 0.0;
-	aux = o3s[ilon][ilat] / n[ilon][ilat] - SQR(o3m[ilon][ilat]);
-	o3s[ilon][ilat] = aux > 0 ? sqrt(aux) : 0.0;
-      }
+  for (int i = 0; i < nlon * nlat; i++)
+    if (n[i] > 0) {
+      zm[i] /= n[i];
+      pm[i] /= n[i];
+      tm[i] /= n[i];
+      qm[i] /= n[i];
+      o3m[i] /= n[i];
+      double aux = zs[i] / n[i] - SQR(zm[i]);
+      zs[i] = aux > 0 ? sqrt(aux) : 0.0;
+      aux = ps[i] / n[i] - SQR(pm[i]);
+      ps[i] = aux > 0 ? sqrt(aux) : 0.0;
+      aux = ts[i] / n[i] - SQR(tm[i]);
+      ts[i] = aux > 0 ? sqrt(aux) : 0.0;
+      aux = qs[i] / n[i] - SQR(qm[i]);
+      qs[i] = aux > 0 ? sqrt(aux) : 0.0;
+      aux = o3s[i] / n[i] - SQR(o3m[i]);
+      o3s[i] = aux > 0 ? sqrt(aux) : 0.0;
+    }
 
   /* Create file... */
   LOG(1, "Write tropopause climatological data: %s", argv[2]);
@@ -210,18 +223,42 @@ int main(
 	  "# $14 = occurrence frequency [%%]\n");
 
   /* Write output... */
-  for (ilat = 0; ilat < nlat; ilat++) {
+  for (int ilat = 0; ilat < nlat; ilat++) {
     fprintf(out, "\n");
-    for (ilon = 0; ilon < nlon; ilon++)
+    for (int ilon = 0; ilon < nlon; ilon++)
       fprintf(out, "%g %g %g %g %g %g %g %g %g %g %g %g %d %g\n",
-	      lons[ilon], lats[ilat], zm[ilon][ilat], pm[ilon][ilat],
-	      tm[ilon][ilat], qm[ilon][ilat], o3m[ilon][ilat], zs[ilon][ilat],
-	      ps[ilon][ilat], ts[ilon][ilat], qs[ilon][ilat], o3s[ilon][ilat],
-	      n[ilon][ilat], 100. * n[ilon][ilat] / nt[ilon][ilat]);
+	      lons[ilon], lats[ilat], zm[ilat * nlon + ilon],
+	      pm[ilat * nlon + ilon], tm[ilat * nlon + ilon],
+	      qm[ilat * nlon + ilon], o3m[ilat * nlon + ilon],
+	      zs[ilat * nlon + ilon], ps[ilat * nlon + ilon],
+	      ts[ilat * nlon + ilon], qs[ilat * nlon + ilon],
+	      o3s[ilat * nlon + ilon], n[ilat * nlon + ilon],
+	      100. * n[ilat * nlon + ilon] / nt[ilat * nlon + ilon]);
   }
 
   /* Close files... */
   fclose(out);
+
+  /* Free... */
+  free(zm);
+  free(zs);
+  free(pm);
+  free(ps);
+  free(tm);
+  free(ts);
+  free(qm);
+  free(qs);
+  free(o3m);
+  free(o3s);
+
+  free(tropo_z0);
+  free(tropo_p0);
+  free(tropo_t0);
+  free(tropo_q0);
+  free(tropo_o30);
+
+  free(n);
+  free(nt);
 
   return EXIT_SUCCESS;
 }
