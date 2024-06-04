@@ -50,24 +50,118 @@ int main(
 
   FILE *out;
 
-  static double timem[NX][NY], ps, psm[NX][NY], ts, tsm[NX][NY], zs,
-    zsm[NX][NY], us, usm[NX][NY], vs, vsm[NX][NY], lsm, lsmm[NX][NY], sst,
-    sstm[NX][NY], pbl, pblm[NX][NY], pt, ptm[NX][NY], t, pm[NX][NY],
-    tm[NX][NY], u, um[NX][NY], v, vm[NX][NY], w, wm[NX][NY], h2o,
-    h2om[NX][NY], h2ot, h2otm[NX][NY], o3, o3m[NX][NY], hno3m[NX][NY],
-    ohm[NX][NY], h2o2m[NX][NY], ho2m[NX][NY], o1dm[NX][NY], tdewm[NX][NY],
-    ticem[NX][NY], tnatm[NX][NY], lwc, lwcm[NX][NY], iwc, iwcm[NX][NY], cc,
-    ccm[NX][NY], z, zm[NX][NY], pv, pvm[NX][NY], zt, ztm[NX][NY], tt,
-    ttm[NX][NY], pct, pctm[NX][NY], pcb, pcbm[NX][NY], cl, clm[NX][NY], plcl,
-    plclm[NX][NY], plfc, plfcm[NX][NY], pel, pelm[NX][NY], cape,
-    capem[NX][NY], cin, cinm[NX][NY], o3c, o3cm[NX][NY], rhm[NX][NY],
-    rhicem[NX][NY], ptop, pbot, t0, lon, lons[NX], lat, lats[NY];
+  static double *timem, ps, *psm, ts, *tsm, zs,
+    *zsm, us, *usm, vs, *vsm, lsm, *lsmm, sst,
+    *sstm, pbl, *pblm, pt, *ptm, t, *pm,
+    *tm, u, *um, v, *vm, w, *wm, h2o,
+    *h2om, h2ot, *h2otm, o3, *o3m, *hno3m,
+    *ohm, *h2o2m, *ho2m, *o1dm, *tdewm,
+    *ticem, *tnatm, lwc, *lwcm, iwc, *iwcm, cc,
+    *ccm, z, *zm, pv, *pvm, zt, *ztm, tt,
+    *ttm, pct, *pctm, pcb, *pcbm, cl, *clm, plcl,
+    *plclm, plfc, *plfcm, pel, *pelm, cape,
+    *capem, cin, *cinm, o3c, *o3cm, *rhm,
+    *rhicem, ptop, pbot, t0, lon, lons[NX], lat, lats[NY];
 
-  static int np[NX][NY], npc[NX][NY], npt[NX][NY], nx, ny;
+  static int *np, *npc, *npt, nx, ny;
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
+  ALLOC(timem, double,
+	NX * NY);
+  ALLOC(psm, double,
+	NX * NY);
+  ALLOC(tsm, double,
+	NX * NY);
+  ALLOC(zsm, double,
+	NX * NY);
+  ALLOC(usm, double,
+	NX * NY);
+  ALLOC(vsm, double,
+	NX * NY);
+  ALLOC(lsmm, double,
+	NX * NY);
+  ALLOC(sstm, double,
+	NX * NY);
+  ALLOC(pblm, double,
+	NX * NY);
+  ALLOC(ptm, double,
+	NX * NY);
+  ALLOC(pm, double,
+	NX * NY);
+  ALLOC(tm, double,
+	NX * NY);
+  ALLOC(um, double,
+	NX * NY);
+  ALLOC(vm, double,
+	NX * NY);
+  ALLOC(wm, double,
+	NX * NY);
+  ALLOC(h2om, double,
+	NX * NY);
+  ALLOC(h2otm, double,
+	NX * NY);
+  ALLOC(o3m, double,
+	NX * NY);
+  ALLOC(hno3m, double,
+	NX * NY);
+  ALLOC(ohm, double,
+	NX * NY);
+  ALLOC(h2o2m, double,
+	NX * NY);
+  ALLOC(ho2m, double,
+	NX * NY);
+  ALLOC(o1dm, double,
+	NX * NY);
+  ALLOC(tdewm, double,
+	NX * NY);
+  ALLOC(ticem, double,
+	NX * NY);
+  ALLOC(tnatm, double,
+	NX * NY);
+  ALLOC(lwcm, double,
+	NX * NY);
+  ALLOC(iwcm, double,
+	NX * NY);
+  ALLOC(ccm, double,
+	NX * NY);
+  ALLOC(zm, double,
+	NX * NY);
+  ALLOC(pvm, double,
+	NX * NY);
+  ALLOC(ztm, double,
+	NX * NY);
+  ALLOC(ttm, double,
+	NX * NY);
+  ALLOC(pctm, double,
+	NX * NY);
+  ALLOC(pcbm, double,
+	NX * NY);
+  ALLOC(clm, double,
+	NX * NY);
+  ALLOC(plclm, double,
+	NX * NY);
+  ALLOC(plfcm, double,
+	NX * NY);
+  ALLOC(pelm, double,
+	NX * NY);
+  ALLOC(capem, double,
+	NX * NY);
+  ALLOC(cinm, double,
+	NX * NY);
+  ALLOC(o3cm, double,
+	NX * NY);
+  ALLOC(rhm, double,
+	NX * NY);
+  ALLOC(rhicem, double,
+	NX * NY);
+  ALLOC(np, int,
+	NX * NY);
+  ALLOC(npc, int,
+	NX * NY);
+  ALLOC(npt, int,
+	NX * NY);
 
   /* Check arguments... */
   if (argc < 4)
@@ -143,60 +237,61 @@ int main(
 	INTPOL_SPACE_ALL(p0, lons[ix], lats[iy]);
 
 	/* Averaging... */
-	timem[ix][iy] += met->time;
-	zm[ix][iy] += z;
-	pm[ix][iy] += p0;
-	tm[ix][iy] += t;
-	um[ix][iy] += u;
-	vm[ix][iy] += v;
-	wm[ix][iy] += w;
-	pvm[ix][iy] += pv;
-	h2om[ix][iy] += h2o;
-	o3m[ix][iy] += o3;
-	lwcm[ix][iy] += lwc;
-	iwcm[ix][iy] += iwc;
-	ccm[ix][iy] += cc;
-	psm[ix][iy] += ps;
-	tsm[ix][iy] += ts;
-	zsm[ix][iy] += zs;
-	usm[ix][iy] += us;
-	vsm[ix][iy] += vs;
-	lsmm[ix][iy] += lsm;
-	sstm[ix][iy] += sst;
-	pblm[ix][iy] += pbl;
-	pctm[ix][iy] += pct;
-	pcbm[ix][iy] += pcb;
-	clm[ix][iy] += cl;
+	timem[iy * nx + ix] += met->time;
+	zm[iy * nx + ix] += z;
+	pm[iy * nx + ix] += p0;
+	tm[iy * nx + ix] += t;
+	um[iy * nx + ix] += u;
+	vm[iy * nx + ix] += v;
+	wm[iy * nx + ix] += w;
+	pvm[iy * nx + ix] += pv;
+	h2om[iy * nx + ix] += h2o;
+	o3m[iy * nx + ix] += o3;
+	lwcm[iy * nx + ix] += lwc;
+	iwcm[iy * nx + ix] += iwc;
+	ccm[iy * nx + ix] += cc;
+	psm[iy * nx + ix] += ps;
+	tsm[iy * nx + ix] += ts;
+	zsm[iy * nx + ix] += zs;
+	usm[iy * nx + ix] += us;
+	vsm[iy * nx + ix] += vs;
+	lsmm[iy * nx + ix] += lsm;
+	sstm[iy * nx + ix] += sst;
+	pblm[iy * nx + ix] += pbl;
+	pctm[iy * nx + ix] += pct;
+	pcbm[iy * nx + ix] += pcb;
+	clm[iy * nx + ix] += cl;
 	if (isfinite(plfc) && isfinite(pel) && cape >= ctl.conv_cape
 	    && (ctl.conv_cin <= 0 || cin < ctl.conv_cin)) {
-	  plclm[ix][iy] += plcl;
-	  plfcm[ix][iy] += plfc;
-	  pelm[ix][iy] += pel;
-	  capem[ix][iy] += cape;
-	  cinm[ix][iy] += cin;
-	  npc[ix][iy]++;
+	  plclm[iy * nx + ix] += plcl;
+	  plfcm[iy * nx + ix] += plfc;
+	  pelm[iy * nx + ix] += pel;
+	  capem[iy * nx + ix] += cape;
+	  cinm[iy * nx + ix] += cin;
+	  npc[iy * nx + ix]++;
 	}
 	if (isfinite(pt)) {
-	  ptm[ix][iy] += pt;
-	  ztm[ix][iy] += zt;
-	  ttm[ix][iy] += tt;
-	  h2otm[ix][iy] += h2ot;
-	  npt[ix][iy]++;
+	  ptm[iy * nx + ix] += pt;
+	  ztm[iy * nx + ix] += zt;
+	  ttm[iy * nx + ix] += tt;
+	  h2otm[iy * nx + ix] += h2ot;
+	  npt[iy * nx + ix]++;
 	}
-	o3cm[ix][iy] += o3c;
-	hno3m[ix][iy] += clim_zm(&clim->hno3, met->time, lats[iy], p0);
-	tnatm[ix][iy] +=
+	o3cm[iy * nx + ix] += o3c;
+	hno3m[iy * nx + ix] += clim_zm(&clim->hno3, met->time, lats[iy], p0);
+	tnatm[iy * nx + ix] +=
 	  nat_temperature(p0, h2o,
 			  clim_zm(&clim->hno3, met->time, lats[iy], p0));
-	ohm[ix][iy] += clim_oh(&ctl, clim, met->time, lons[ix], lats[iy], p0);
-	h2o2m[ix][iy] += clim_zm(&clim->h2o2, met->time, lats[iy], p0);
-	ho2m[ix][iy] += clim_zm(&clim->ho2, met->time, lats[iy], p0);
-	o1dm[ix][iy] += clim_zm(&clim->o1d, met->time, lats[iy], p0);
-	rhm[ix][iy] += RH(p0, t, h2o);
-	rhicem[ix][iy] += RHICE(p0, t, h2o);
-	tdewm[ix][iy] += TDEW(p0, h2o);
-	ticem[ix][iy] += TICE(p0, h2o);
-	np[ix][iy]++;
+	ohm[iy * nx + ix] +=
+	  clim_oh(&ctl, clim, met->time, lons[ix], lats[iy], p0);
+	h2o2m[iy * nx + ix] += clim_zm(&clim->h2o2, met->time, lats[iy], p0);
+	ho2m[iy * nx + ix] += clim_zm(&clim->ho2, met->time, lats[iy], p0);
+	o1dm[iy * nx + ix] += clim_zm(&clim->o1d, met->time, lats[iy], p0);
+	rhm[iy * nx + ix] += RH(p0, t, h2o);
+	rhicem[iy * nx + ix] += RHICE(p0, t, h2o);
+	tdewm[iy * nx + ix] += TDEW(p0, h2o);
+	ticem[iy * nx + ix] += TICE(p0, h2o);
+	np[iy * nx + ix]++;
       }
   }
 
@@ -216,30 +311,52 @@ int main(
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
-	      timem[ix][iy] / np[ix][iy], Z(pm[ix][iy] / np[ix][iy]),
-	      lons[ix], lats[iy], pm[ix][iy] / np[ix][iy],
-	      tm[ix][iy] / np[ix][iy], um[ix][iy] / np[ix][iy],
-	      vm[ix][iy] / np[ix][iy], wm[ix][iy] / np[ix][iy],
-	      h2om[ix][iy] / np[ix][iy], o3m[ix][iy] / np[ix][iy],
-	      zm[ix][iy] / np[ix][iy], pvm[ix][iy] / np[ix][iy],
-	      psm[ix][iy] / np[ix][iy], tsm[ix][iy] / np[ix][iy],
-	      zsm[ix][iy] / np[ix][iy], usm[ix][iy] / np[ix][iy],
-	      vsm[ix][iy] / np[ix][iy], lsmm[ix][iy] / np[ix][iy],
-	      sstm[ix][iy] / np[ix][iy], ptm[ix][iy] / npt[ix][iy],
-	      ztm[ix][iy] / npt[ix][iy], ttm[ix][iy] / npt[ix][iy],
-	      h2otm[ix][iy] / npt[ix][iy], lwcm[ix][iy] / np[ix][iy],
-	      iwcm[ix][iy] / np[ix][iy], ccm[ix][iy] / np[ix][iy],
-	      clm[ix][iy] / np[ix][iy], pctm[ix][iy] / np[ix][iy],
-	      pcbm[ix][iy] / np[ix][iy], plclm[ix][iy] / npc[ix][iy],
-	      plfcm[ix][iy] / npc[ix][iy], pelm[ix][iy] / npc[ix][iy],
-	      capem[ix][iy] / npc[ix][iy], cinm[ix][iy] / npc[ix][iy],
-	      rhm[ix][iy] / np[ix][iy], rhicem[ix][iy] / np[ix][iy],
-	      tdewm[ix][iy] / np[ix][iy], ticem[ix][iy] / np[ix][iy],
-	      tnatm[ix][iy] / np[ix][iy], hno3m[ix][iy] / np[ix][iy],
-	      ohm[ix][iy] / np[ix][iy], h2o2m[ix][iy] / np[ix][iy],
-	      ho2m[ix][iy] / np[ix][iy], o1dm[ix][iy] / np[ix][iy],
-	      pblm[ix][iy] / np[ix][iy], o3cm[ix][iy] / np[ix][iy],
-	      np[ix][iy], npt[ix][iy], npc[ix][iy]);
+	      timem[iy * nx + ix] / np[iy * nx + ix],
+	      Z(pm[iy * nx + ix] / np[iy * nx + ix]), lons[ix], lats[iy],
+	      pm[iy * nx + ix] / np[iy * nx + ix],
+	      tm[iy * nx + ix] / np[iy * nx + ix],
+	      um[iy * nx + ix] / np[iy * nx + ix],
+	      vm[iy * nx + ix] / np[iy * nx + ix],
+	      wm[iy * nx + ix] / np[iy * nx + ix],
+	      h2om[iy * nx + ix] / np[iy * nx + ix],
+	      o3m[iy * nx + ix] / np[iy * nx + ix],
+	      zm[iy * nx + ix] / np[iy * nx + ix],
+	      pvm[iy * nx + ix] / np[iy * nx + ix],
+	      psm[iy * nx + ix] / np[iy * nx + ix],
+	      tsm[iy * nx + ix] / np[iy * nx + ix],
+	      zsm[iy * nx + ix] / np[iy * nx + ix],
+	      usm[iy * nx + ix] / np[iy * nx + ix],
+	      vsm[iy * nx + ix] / np[iy * nx + ix],
+	      lsmm[iy * nx + ix] / np[iy * nx + ix],
+	      sstm[iy * nx + ix] / np[iy * nx + ix],
+	      ptm[iy * nx + ix] / npt[iy * nx + ix],
+	      ztm[iy * nx + ix] / npt[iy * nx + ix],
+	      ttm[iy * nx + ix] / npt[iy * nx + ix],
+	      h2otm[iy * nx + ix] / npt[iy * nx + ix],
+	      lwcm[iy * nx + ix] / np[iy * nx + ix],
+	      iwcm[iy * nx + ix] / np[iy * nx + ix],
+	      ccm[iy * nx + ix] / np[iy * nx + ix],
+	      clm[iy * nx + ix] / np[iy * nx + ix],
+	      pctm[iy * nx + ix] / np[iy * nx + ix],
+	      pcbm[iy * nx + ix] / np[iy * nx + ix],
+	      plclm[iy * nx + ix] / npc[iy * nx + ix],
+	      plfcm[iy * nx + ix] / npc[iy * nx + ix],
+	      pelm[iy * nx + ix] / npc[iy * nx + ix],
+	      capem[iy * nx + ix] / npc[iy * nx + ix],
+	      cinm[iy * nx + ix] / npc[iy * nx + ix],
+	      rhm[iy * nx + ix] / np[iy * nx + ix],
+	      rhicem[iy * nx + ix] / np[iy * nx + ix],
+	      tdewm[iy * nx + ix] / np[iy * nx + ix],
+	      ticem[iy * nx + ix] / np[iy * nx + ix],
+	      tnatm[iy * nx + ix] / np[iy * nx + ix],
+	      hno3m[iy * nx + ix] / np[iy * nx + ix],
+	      ohm[iy * nx + ix] / np[iy * nx + ix],
+	      h2o2m[iy * nx + ix] / np[iy * nx + ix],
+	      ho2m[iy * nx + ix] / np[iy * nx + ix],
+	      o1dm[iy * nx + ix] / np[iy * nx + ix],
+	      pblm[iy * nx + ix] / np[iy * nx + ix],
+	      o3cm[iy * nx + ix] / np[iy * nx + ix], np[iy * nx + ix],
+	      npt[iy * nx + ix], npc[iy * nx + ix]);
   }
 
   /* Close file... */
@@ -248,6 +365,53 @@ int main(
   /* Free... */
   free(clim);
   free(met);
+  free(timem);
+  free(psm);
+  free(tsm);
+  free(zsm);
+  free(usm);
+  free(vsm);
+  free(lsmm);
+  free(sstm);
+  free(pblm);
+  free(ptm);
+  free(pm);
+  free(tm);
+  free(um);
+  free(vm);
+  free(wm);
+  free(h2om);
+  free(h2otm);
+  free(o3m);
+  free(hno3m);
+  free(ohm);
+  free(h2o2m);
+  free(ho2m);
+  free(o1dm);
+  free(tdewm);
+  free(ticem);
+  free(tnatm);
+  free(lwcm);
+  free(iwcm);
+  free(ccm);
+  free(zm);
+  free(pvm);
+  free(ztm);
+  free(ttm);
+  free(pctm);
+  free(pcbm);
+  free(clm);
+  free(plclm);
+  free(plfcm);
+  free(pelm);
+  free(capem);
+  free(cinm);
+  free(o3cm);
+  free(rhm);
+  free(rhicem);
+  free(np);
+  free(npc);
+  free(npt);
 
   return EXIT_SUCCESS;
 }
