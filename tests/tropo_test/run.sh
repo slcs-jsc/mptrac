@@ -23,9 +23,10 @@ for var in clp dyn wmo_1st wmo_2nd ; do
     $trac/tropo_sample - data/sample_$var.tab data/tropo_2011_06_05.nc $var data/atm.tab
 done
 
-# Calculate zonal means...
+# Calculate zonal means and climatology...
 for var in clp dyn wmo_1st wmo_2nd ; do
     $trac/tropo_zm - data/zm_$var.tab $var data/tropo_2011_06_05.nc
+    $trac/tropo_clim - data/clim_$var.tab $var data/tropo_2011_06_05.nc
 done
 
 # Compare files...
