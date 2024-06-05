@@ -6323,6 +6323,8 @@ void read_met_monotonize(
  * @param ncid The NetCDF file ID.
  * @param varname The name of the variable to read.
  * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  * @param dest The destination array to store the read data.
@@ -6342,6 +6344,8 @@ int read_met_nc_2d(
   int ncid,
   char *varname,
   char *varname2,
+  char *varname3,
+  char *varname4,
   ctl_t * ctl,
   met_t * met,
   float dest[EX][EY],
@@ -6360,6 +6364,8 @@ int read_met_nc_2d(
  * @param ncid The NetCDF file ID.
  * @param varname The name of the variable to read.
  * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  * @param dest The destination array to store the read data.
@@ -6379,6 +6385,8 @@ int read_met_nc_3d(
   int ncid,
   char *varname,
   char *varname2,
+  char *varname3,
+  char *varname4,
   ctl_t * ctl,
   met_t * met,
   float dest[EX][EY][EP],
