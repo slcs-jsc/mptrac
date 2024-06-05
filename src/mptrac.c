@@ -6486,7 +6486,7 @@ void read_met_levels(
   } else
     ERRMSG("Meteo data format unknown!");
 
-  if (ctl->vert_coord_ap == 1) {
+  if (ctl->vert_coord_met == 1) {
 
     /* Store the velocities on model levels for diabatic advection... */
     for (int ix = 0; ix < met->nx; ix++)
@@ -6500,7 +6500,7 @@ void read_met_levels(
     met->npl = met->np;
   }
 
-  if (ctl->met_np > 0 || ctl->vert_coord_ap == 1) {
+  if (ctl->met_np > 0 || ctl->vert_coord_met == 1) {
 
     /* Read pressure on model levels... */
     if (!read_met_nc_3d(ncid, "pl", "PL", ctl, met, met->pl, 0.01f, 1))

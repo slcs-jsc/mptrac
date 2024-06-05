@@ -2132,7 +2132,7 @@ typedef struct {
   /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
   int vert_coord_ap;
 
-  /*! Vertical coordinate of input meteo data (0=automatic, 1=eta). */
+  /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
   int vert_coord_met;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
