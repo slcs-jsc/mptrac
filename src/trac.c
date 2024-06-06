@@ -23,6 +23,7 @@
 */
 
 #include "mptrac.h"
+#include "kpp_chem.h"
 
 int main(
   int argc,

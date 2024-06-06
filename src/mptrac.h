@@ -146,7 +146,6 @@
 #include "chem_Parameters.h"
 #include "chem_Global.h"
 #include "chem_Sparse.h"
-#include "kpp_chem.h"
 #endif
 
 /* ------------------------------------------------------------
