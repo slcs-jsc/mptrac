@@ -190,7 +190,7 @@ void kpp_chem_initialize(
 
 #INLINE C_UTIL
 
-#include "libtrac.h"
+#include "mptrac.h"
 #include "kpp_chem.h"
 
 void kpp_chem_output2atm(
