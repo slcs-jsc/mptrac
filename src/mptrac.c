@@ -23,7 +23,10 @@
 */
 
 #include "mptrac.h"
+
+#ifdef KPP
 #include "kpp_chem.h"
+#endif
 
 /*! State variables of GSL random number generators. */
 static gsl_rng *rng[NTHREADS];
