@@ -32,7 +32,7 @@ extern double KaqSO2_H2O2, KSO2_OH, KHO2_HO2;
 #ENDINLINE
 
 #INLINE C_RATES
-#include "libtrac.h"
+#include "mptrac.h"
 #include "kpp_chem.h"
 
 double  k3rd_jpl (  float M, float A0, float B0, float A1, float B1)
