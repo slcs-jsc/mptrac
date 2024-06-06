@@ -6469,6 +6469,7 @@ void read_met_levels(
 	for (int ip = 0; ip < met->np; ip++) {
 	  met->ul[ix][iy][ip] = met->u[ix][iy][ip];
 	  met->vl[ix][iy][ip] = met->v[ix][iy][ip];
+	  met->wl[ix][iy][ip] = met->w[ix][iy][ip];
 	}
 
     /* Original number of vertical levels... */
@@ -7046,6 +7047,7 @@ void read_met_periodic(
     for (int ip = 0; ip < met->npl; ip++) {
       met->ul[met->nx - 1][iy][ip] = met->ul[0][iy][ip];
       met->vl[met->nx - 1][iy][ip] = met->vl[0][iy][ip];
+      met->wl[met->nx - 1][iy][ip] = met->wl[0][iy][ip];
       met->pl[met->nx - 1][iy][ip] = met->pl[0][iy][ip];
       met->zetal[met->nx - 1][iy][ip] = met->zetal[0][iy][ip];
       met->zeta_dotl[met->nx - 1][iy][ip] = met->zeta_dotl[0][iy][ip];

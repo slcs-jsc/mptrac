@@ -3238,8 +3238,11 @@ typedef struct {
   /*! Latitude [deg]. */
   double lat[EY];
 
-  /*! Pressure [hPa]. */
+  /*! Pressure levels [hPa]. */
   double p[EP];
+
+  /*! Model hybrid levels. */
+  double hybrid[EP];
 
   /*! Surface pressure [hPa]. */
   float ps[EX][EY];
@@ -3313,14 +3316,8 @@ typedef struct {
   /*! Zonal wind [m/s]. */
   float u[EX][EY][EP];
 
-  /*! Zonal wind on model levels [m/s]. */
-  float ul[EX][EY][EP];
-
   /*! Meridional wind [m/s]. */
   float v[EX][EY][EP];
-
-  /*! Meridional wind on model levels [m/s]. */
-  float vl[EX][EY][EP];
 
   /*! Vertical velocity [hPa/s]. */
   float w[EX][EY][EP];
@@ -3352,6 +3349,15 @@ typedef struct {
   /*! Pressure on model levels [hPa]. */
   float pl[EX][EY][EP];
 
+  /*! Zonal wind on model levels [m/s]. */
+  float ul[EX][EY][EP];
+
+  /*! Meridional wind on model levels [m/s]. */
+  float vl[EX][EY][EP];
+
+  /*! Vertical velocity on model levels [hPa/s]. */
+  float wl[EX][EY][EP];
+
   /*! Zeta on model levels [K]. */
   float zetal[EX][EY][EP];
 
@@ -3360,9 +3366,6 @@ typedef struct {
 
   /*! Cache for wind data. */
   float uvw[EX][EY][EP][3];
-
-  /*! Hybrid model levels */
-  double hybrid[EP];
 
 } met_t;
 
