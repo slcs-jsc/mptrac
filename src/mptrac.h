@@ -714,7 +714,9 @@
     intpol_met_space_3d(met, met->h2o, p, lon, lat, &h2o, ci, cw, 0);	\
     intpol_met_space_3d(met, met->o3, p, lon, lat, &o3, ci, cw, 0);	\
     intpol_met_space_3d(met, met->lwc, p, lon, lat, &lwc, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->rwc, p, lon, lat, &rwc, ci, cw, 0);	\
     intpol_met_space_3d(met, met->iwc, p, lon, lat, &iwc, ci, cw, 0);	\
+    intpol_met_space_3d(met, met->swc, p, lon, lat, &swc, ci, cw, 0);	\
     intpol_met_space_3d(met, met->cc, p, lon, lat, &cc, ci, cw, 0);	\
     intpol_met_space_2d(met, met->ps, lon, lat, &ps, ci, cw, 0);	\
     intpol_met_space_2d(met, met->ts, lon, lat, &ts, ci, cw, 0);	\
@@ -763,7 +765,9 @@
     intpol_met_time_3d(met0, met0->h2o, met1, met1->h2o, time, p, lon, lat, &h2o, ci, cw, 0); \
     intpol_met_time_3d(met0, met0->o3, met1, met1->o3, time, p, lon, lat, &o3, ci, cw, 0); \
     intpol_met_time_3d(met0, met0->lwc, met1, met1->lwc, time, p, lon, lat, &lwc, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->rwc, met1, met1->rwc, time, p, lon, lat, &rwc, ci, cw, 0); \
     intpol_met_time_3d(met0, met0->iwc, met1, met1->iwc, time, p, lon, lat, &iwc, ci, cw, 0); \
+    intpol_met_time_3d(met0, met0->swc, met1, met1->swc, time, p, lon, lat, &swc, ci, cw, 0); \
     intpol_met_time_3d(met0, met0->cc, met1, met1->cc, time, p, lon, lat, &cc, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->ps, met1, met1->ps, time, lon, lat, &ps, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->ts, met1, met1->ts, time, lon, lat, &ts, ci, cw, 0); \
@@ -891,33 +895,36 @@
 	  "# $23 = tropopause temperature [K]\n"			\
 	  "# $24 = tropopause water vapor [ppv]\n"			\
 	  "# $25 = cloud liquid water content [kg/kg]\n"		\
-	  "# $26 = cloud ice water content [kg/kg]\n"			\
-	  "# $27 = cloud cover [1]\n"					\
-	  "# $28 = total column cloud water [kg/m^2]\n"			\
-	  "# $29 = cloud top pressure [hPa]\n"				\
-	  "# $30 = cloud bottom pressure [hPa]\n");			\
+    	  "# $26 = cloud rain water content [kg/kg]\n"			\
+	  "# $27 = cloud ice water content [kg/kg]\n"			\
+    	  "# $28 = cloud snow water content [kg/kg]\n"			\
+	  "# $29 = cloud cover [1]\n"					\
+	  "# $30 = total column cloud water [kg/m^2]\n");		\
   fprintf(out,								\
-	  "# $31 = pressure at lifted condensation level (LCL) [hPa]\n"	\
-	  "# $32 = pressure at level of free convection (LFC) [hPa]\n"	\
-	  "# $33 = pressure at equilibrium level (EL) [hPa]\n"		\
-	  "# $34 = convective available potential energy (CAPE) [J/kg]\n" \
-	  "# $35 = convective inhibition (CIN) [J/kg]\n"		\
-	  "# $36 = relative humidity over water [%%]\n"			\
-	  "# $37 = relative humidity over ice [%%]\n"			\
-	  "# $38 = dew point temperature [K]\n"				\
-	  "# $39 = frost point temperature [K]\n"			\
-	  "# $40 = NAT temperature [K]\n");				\
+	  "# $31 = cloud top pressure [hPa]\n"				\
+	  "# $32 = cloud bottom pressure [hPa]\n"			\
+	  "# $33 = pressure at lifted condensation level (LCL) [hPa]\n"	\
+	  "# $34 = pressure at level of free convection (LFC) [hPa]\n"	\
+	  "# $35 = pressure at equilibrium level (EL) [hPa]\n"		\
+	  "# $36 = convective available potential energy (CAPE) [J/kg]\n" \
+	  "# $37 = convective inhibition (CIN) [J/kg]\n"		\
+	  "# $38 = relative humidity over water [%%]\n"			\
+	  "# $39 = relative humidity over ice [%%]\n"			\
+	  "# $40 = dew point temperature [K]\n");			\
   fprintf(out,								\
-	  "# $41 = HNO3 volume mixing ratio [ppv]\n"			\
-	  "# $42 = OH volume mixing ratio [ppv]\n"			\
-	  "# $43 = H2O2 volume mixing ratio [ppv]\n"			\
-	  "# $44 = HO2 volume mixing ratio [ppv]\n"			\
-	  "# $45 = O(1D) volume mixing ratio [ppv]\n"			\
-	  "# $46 = boundary layer pressure [hPa]\n"			\
-	  "# $47 = total column ozone [DU]\n"				\
-	  "# $48 = number of data points\n"				\
-	  "# $49 = number of tropopause data points\n"			\
-	  "# $50 = number of CAPE data points\n");			\
+	  "# $41 = frost point temperature [K]\n"			\
+	  "# $42 = NAT temperature [K]\n"				\
+	  "# $43 = HNO3 volume mixing ratio [ppv]\n"			\
+	  "# $44 = OH volume mixing ratio [ppv]\n"			\
+	  "# $45 = H2O2 volume mixing ratio [ppv]\n"			\
+	  "# $46 = HO2 volume mixing ratio [ppv]\n"			\
+	  "# $47 = O(1D) volume mixing ratio [ppv]\n"			\
+	  "# $48 = boundary layer pressure [hPa]\n"			\
+	  "# $49 = total column ozone [DU]\n"				\
+	  "# $50 = number of data points\n");				\
+  fprintf(out,								\
+	  "# $51 = number of tropopause data points\n"			\
+	  "# $52 = number of CAPE data points\n");
 
 /**
  * @brief Macro to determine the minimum of two values.
@@ -2240,8 +2247,14 @@ typedef struct {
   /*! Quantity array index for cloud liquid water content. */
   int qnt_lwc;
 
+  /*! Quantity array index for cloud rain water content. */
+  int qnt_rwc;
+
   /*! Quantity array index for cloud ice water content. */
   int qnt_iwc;
+
+  /*! Quantity array index for cloud snow water content. */
+  int qnt_swc;
 
   /*! Quantity array index for cloud cover. */
   int qnt_cc;
@@ -2495,12 +2508,6 @@ typedef struct {
 
   /*! Tropopause interpolation method (0=linear, 1=spline). */
   int met_tropo_spline;
-
-  /*! Cloud data (0=none, 1=LWC+IWC, 2=RWC+SWC, 3=all). */
-  int met_cloud;
-
-  /*! Minimum cloud ice water content [kg/kg]. */
-  double met_cloud_min;
 
   /*! Time step for sampling of meteo data along trajectories [s]. */
   double met_dt_out;
@@ -3330,8 +3337,14 @@ typedef struct {
   /*! Cloud liquid water content [kg/kg]. */
   float lwc[EX][EY][EP];
 
+  /*! Cloud rain water content [kg/kg]. */
+  float rwc[EX][EY][EP];
+
   /*! Cloud ice water content [kg/kg]. */
   float iwc[EX][EY][EP];
+
+  /*! Cloud snow water content [kg/kg]. */
+  float swc[EX][EY][EP];
 
   /*! Cloud cover [1]. */
   float cc[EX][EY][EP];
@@ -6083,14 +6096,13 @@ void read_met_cape(
  * cover, cloud top pressure, cloud bottom pressure, and total cloud
  * water content, based on the provided meteorological data.
  *
- * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  *
  * The function performs the following steps:
  * - Sets up a timer to monitor the calculation time.
  * - Initializes variables and constants required for the computation.
  * - Iterates over each grid point in parallel using OpenMP.
- * - Determines cloud-related variables based on thresholds for ice water content (IWC) and liquid water content (LWC).
+ * - Determines cloud-related variables based on thresholds for liquid water content (LWC), rain water content (RWC), ice water content (IWC) and snow water content (SWC).
  * - Calculates cloud cover, cloud top pressure, cloud bottom pressure, and total cloud water content for each grid point.
  * - Updates the corresponding fields in the meteorological data structure.
  *
@@ -6100,7 +6112,6 @@ void read_met_cape(
  * @author Lars Hoffmann
  */
 void read_met_cloud(
-  ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6370,7 +6381,6 @@ int read_met_nc_2d(
  * @param met A pointer to a structure containing meteorological data.
  * @param dest The destination array to store the read data.
  * @param scl A scaling factor to apply to the read data.
- * @param init Flag indicating whether to initialize the destination array before reading.
  * @return Returns 1 on success, 0 on failure.
  *
  * The function performs the following steps:
@@ -6390,8 +6400,7 @@ int read_met_nc_3d(
   ctl_t * ctl,
   met_t * met,
   float dest[EX][EY][EP],
-  float scl,
-  int init);
+  float scl);
 
 /**
  * @brief Calculates the planetary boundary layer (PBL) height for each grid point.

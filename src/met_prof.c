@@ -49,13 +49,13 @@ int main(
 
   static double timem[NZ], z, lon, lonm[NZ], lat, latm[NZ], t, tm[NZ], u,
     um[NZ], v, vm[NZ], w, wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ],
-    lwc, lwcm[NZ], iwc, iwcm[NZ], cc, ccm[NZ], ps, psm[NZ], ts, tsm[NZ], zs,
-    zsm[NZ], us, usm[NZ], vs, vsm[NZ], lsm, lsmm[NZ], sst, sstm[NZ], pbl,
-    pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb, pcbm[NZ], cl, clm[NZ], plcl,
-    plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ], cape, capem[NZ], cin, cinm[NZ],
-    o3c, o3cm[NZ], tt, ttm[NZ], zm[NZ], zt, ztm[NZ], pv, pvm[NZ], plev[NZ],
-    rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ], tnatm[NZ], hno3m[NZ], ohm[NZ],
-    h2o2m[NZ], ho2m[NZ], o1dm[NZ];
+    lwc, lwcm[NZ], rwc, rwcm[NZ], iwc, iwcm[NZ], swc, swcm[NZ], cc, ccm[NZ],
+    ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ], vs, vsm[NZ], lsm,
+    lsmm[NZ], sst, sstm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb,
+    pcbm[NZ], cl, clm[NZ], plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ],
+    cape, capem[NZ], cin, cinm[NZ], o3c, o3cm[NZ], tt, ttm[NZ], zm[NZ], zt,
+    ztm[NZ], pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ],
+    tnatm[NZ], hno3m[NZ], ohm[NZ], h2o2m[NZ], ho2m[NZ], o1dm[NZ];
 
   static int iz, np[NZ], npc[NZ], npt[NZ], nz;
 
@@ -138,7 +138,9 @@ int main(
 	    h2om[iz] += h2o;
 	    o3m[iz] += o3;
 	    lwcm[iz] += lwc;
+	    rwcm[iz] += rwc;
 	    iwcm[iz] += iwc;
+	    swcm[iz] += swc;
 	    ccm[iz] += cc;
 	    psm[iz] += ps;
 	    tsm[iz] += ts;
@@ -199,7 +201,7 @@ int main(
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
@@ -208,14 +210,15 @@ int main(
 	    usm[iz] / np[iz], vsm[iz] / np[iz], lsmm[iz] / np[iz],
 	    sstm[iz] / np[iz], ptm[iz] / npt[iz], ztm[iz] / npt[iz],
 	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz],
-	    lwcm[iz] / np[iz], iwcm[iz] / np[iz], ccm[iz] / np[iz],
-	    clm[iz] / np[iz], pctm[iz] / np[iz], pcbm[iz] / np[iz],
-	    plclm[iz] / npc[iz], plfcm[iz] / npc[iz], pelm[iz] / npc[iz],
-	    capem[iz] / npc[iz], cinm[iz] / npc[iz], rhm[iz] / np[iz],
-	    rhicem[iz] / np[iz], tdewm[iz] / np[iz], ticem[iz] / np[iz],
-	    tnatm[iz] / np[iz], hno3m[iz] / np[iz], ohm[iz] / np[iz],
-	    h2o2m[iz] / np[iz], ho2m[iz] / np[iz], o1dm[iz] / np[iz],
-	    pblm[iz] / np[iz], o3cm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
+	    lwcm[iz] / np[iz], rwcm[iz] / np[iz], iwcm[iz] / np[iz],
+	    swcm[iz] / np[iz], ccm[iz] / np[iz], clm[iz] / np[iz],
+	    pctm[iz] / np[iz], pcbm[iz] / np[iz], plclm[iz] / npc[iz],
+	    plfcm[iz] / npc[iz], pelm[iz] / npc[iz], capem[iz] / npc[iz],
+	    cinm[iz] / npc[iz], rhm[iz] / np[iz], rhicem[iz] / np[iz],
+	    tdewm[iz] / np[iz], ticem[iz] / np[iz], tnatm[iz] / np[iz],
+	    hno3m[iz] / np[iz], ohm[iz] / np[iz], h2o2m[iz] / np[iz],
+	    ho2m[iz] / np[iz], o1dm[iz] / np[iz], pblm[iz] / np[iz],
+	    o3cm[iz] / np[iz], np[iz], npt[iz], npc[iz]);
 
   /* Close file... */
   fclose(out);

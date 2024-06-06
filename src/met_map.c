@@ -50,18 +50,14 @@ int main(
 
   FILE *out;
 
-  static double *timem, ps, *psm, ts, *tsm, zs,
-    *zsm, us, *usm, vs, *vsm, lsm, *lsmm, sst,
-    *sstm, pbl, *pblm, pt, *ptm, t, *pm,
-    *tm, u, *um, v, *vm, w, *wm, h2o,
-    *h2om, h2ot, *h2otm, o3, *o3m, *hno3m,
-    *ohm, *h2o2m, *ho2m, *o1dm, *tdewm,
-    *ticem, *tnatm, lwc, *lwcm, iwc, *iwcm, cc,
-    *ccm, z, *zm, pv, *pvm, zt, *ztm, tt,
-    *ttm, pct, *pctm, pcb, *pcbm, cl, *clm, plcl,
-    *plclm, plfc, *plfcm, pel, *pelm, cape,
-    *capem, cin, *cinm, o3c, *o3cm, *rhm,
-    *rhicem, ptop, pbot, t0, lon, lons[NX], lat, lats[NY];
+  static double *timem, ps, *psm, ts, *tsm, zs, *zsm, us, *usm, vs, *vsm, lsm,
+    *lsmm, sst, *sstm, pbl, *pblm, pt, *ptm, t, *pm, *tm, u, *um, v, *vm, w,
+    *wm, h2o, *h2om, h2ot, *h2otm, o3, *o3m, *hno3m, *ohm, *h2o2m, *ho2m,
+    *o1dm, *tdewm, *ticem, *tnatm, lwc, *lwcm, rwc, *rwcm, iwc, *iwcm, swc,
+    *swcm, cc, *ccm, z, *zm, pv, *pvm, zt, *ztm, tt, *ttm, pct, *pctm, pcb,
+    *pcbm, cl, *clm, plcl, *plclm, plfc, *plfcm, pel, *pelm, cape, *capem,
+    cin, *cinm, o3c, *o3cm, *rhm, *rhicem, ptop, pbot, t0, lon, lons[NX], lat,
+    lats[NY];
 
   static int *np, *npc, *npt, nx, ny;
 
@@ -122,7 +118,11 @@ int main(
 	NX * NY);
   ALLOC(lwcm, double,
 	NX * NY);
+  ALLOC(rwcm, double,
+	NX * NY);
   ALLOC(iwcm, double,
+	NX * NY);
+  ALLOC(swcm, double,
 	NX * NY);
   ALLOC(ccm, double,
 	NX * NY);
@@ -248,7 +248,9 @@ int main(
 	h2om[iy * nx + ix] += h2o;
 	o3m[iy * nx + ix] += o3;
 	lwcm[iy * nx + ix] += lwc;
+	rwcm[iy * nx + ix] += rwc;
 	iwcm[iy * nx + ix] += iwc;
+	swcm[iy * nx + ix] += swc;
 	ccm[iy * nx + ix] += cc;
 	psm[iy * nx + ix] += ps;
 	tsm[iy * nx + ix] += ts;
@@ -309,8 +311,8 @@ int main(
     for (int ix = 0; ix < nx; ix++)
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[iy * nx + ix] / np[iy * nx + ix],
 	      Z(pm[iy * nx + ix] / np[iy * nx + ix]), lons[ix], lats[iy],
 	      pm[iy * nx + ix] / np[iy * nx + ix],
@@ -334,7 +336,9 @@ int main(
 	      ttm[iy * nx + ix] / npt[iy * nx + ix],
 	      h2otm[iy * nx + ix] / npt[iy * nx + ix],
 	      lwcm[iy * nx + ix] / np[iy * nx + ix],
+	      rwcm[iy * nx + ix] / np[iy * nx + ix],
 	      iwcm[iy * nx + ix] / np[iy * nx + ix],
+	      swcm[iy * nx + ix] / np[iy * nx + ix],
 	      ccm[iy * nx + ix] / np[iy * nx + ix],
 	      clm[iy * nx + ix] / np[iy * nx + ix],
 	      pctm[iy * nx + ix] / np[iy * nx + ix],
@@ -392,7 +396,9 @@ int main(
   free(ticem);
   free(tnatm);
   free(lwcm);
+  free(rwcm);
   free(iwcm);
+  free(swcm);
   free(ccm);
   free(zm);
   free(pvm);

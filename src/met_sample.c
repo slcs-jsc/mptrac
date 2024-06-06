@@ -42,10 +42,10 @@ int main(
 
   FILE *out;
 
-  double h2o, h2ot, o3, lwc, iwc, cc, p0, p1, ps, ts, zs, us, vs, lsm, sst,
-    pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v,
-    w, z, zm, zref, zt, time_old = -999, p_old = -999, lon_old = -999,
-    lat_old = -999;
+  double h2o, h2ot, o3, lwc, rwc, iwc, swc, cc, p0, p1, ps, ts, zs, us, vs,
+    lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, o3c, pv, t,
+    tt, u, v, w, z, zm, zref, zt, time_old = -999, p_old = -999, lon_old =
+    -999, lat_old = -999;
 
   /* Check arguments... */
   if (argc < 3)
@@ -128,25 +128,25 @@ int main(
     fprintf(out,
 	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
 	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs, lsm,
-	    sst, pt, zt, tt, h2ot, lwc, iwc, cc, cl, pct, pcb, plcl, plfc,
-	    pel, cape, cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t, h2o),
+	    sst, pt, zt, tt, h2ot, lwc, rwc, iwc, swc, cc, cl, pct, pcb, plcl,
+	    plfc, pel, cape, cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t,
+								h2o),
 	    TDEW(atm->p[ip], h2o), TICE(atm->p[ip], h2o),
 	    nat_temperature(atm->p[ip], h2o,
 			    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip],
-				    atm->p[ip])),
-	    clim_zm(&clim->hno3, atm->time[ip], atm->lat[ip],
-		    atm->p[ip]),
-	    clim_oh(&ctl, clim, atm->time[ip], atm->lon[ip],
-		    atm->lat[ip], atm->p[ip]),
-	    clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip],
-		    atm->p[ip]),
-	    clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip],
-		    atm->p[ip]),
-	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip],
-		    atm->p[ip]), pbl, o3c);
+				    atm->p[ip])), clim_zm(&clim->hno3,
+							  atm->time[ip],
+							  atm->lat[ip],
+							  atm->p[ip]),
+	    clim_oh(&ctl, clim, atm->time[ip], atm->lon[ip], atm->lat[ip],
+		    atm->p[ip]), clim_zm(&clim->h2o2, atm->time[ip],
+					 atm->lat[ip], atm->p[ip]),
+	    clim_zm(&clim->ho2, atm->time[ip], atm->lat[ip], atm->p[ip]),
+	    clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]), pbl,
+	    o3c);
   }
 
   /* Close file... */

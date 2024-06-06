@@ -56,12 +56,12 @@ int main(
     plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY], cinm[NZ][NY], o3cm[NZ][NY],
     ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY],
     h2om[NZ][NY], h2otm[NZ][NY], pvm[NZ][NY], o3m[NZ][NY], lwcm[NZ][NY],
-    iwcm[NZ][NY], ccm[NZ][NY], zm[NZ][NY], rhm[NZ][NY], rhicem[NZ][NY],
-    tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY], hno3m[NZ][NY], ohm[NZ][NY],
-    h2o2m[NZ][NY], ho2m[NZ][NY], o1dm[NZ][NY], z, zt, tt, plev[NZ], ps, ts,
-    zs, us, vs, lsm, sst, pbl, pt, pct, pcb, plcl, plfc, pel, cape, cin, o3c,
-    cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, iwc, cc, lat, lats[NY],
-    lonm[NZ][NY], cw[3];
+    rwcm[NZ][NY], iwcm[NZ][NY], swcm[NZ][NY], ccm[NZ][NY], zm[NZ][NY],
+    rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY],
+    hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY], ho2m[NZ][NY], o1dm[NZ][NY], z,
+    zt, tt, plev[NZ], ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, plcl,
+    plfc, pel, cape, cin, o3c, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, rwc,
+    iwc, swc, cc, lat, lats[NY], lonm[NZ][NY], cw[3];
 
   static int np[NZ][NY], npc[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -149,7 +149,9 @@ int main(
 	    h2om[iz][iy] += h2o;
 	    o3m[iz][iy] += o3;
 	    lwcm[iz][iy] += lwc;
+	    rwcm[iz][iy] += rwc;
 	    iwcm[iz][iy] += iwc;
+	    swcm[iz][iy] += swc;
 	    ccm[iz][iy] += cc;
 	    psm[iz][iy] += ps;
 	    tsm[iz][iy] += ts;
@@ -217,7 +219,7 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %d %d %d\n",
+	      " %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
@@ -230,7 +232,8 @@ int main(
 	      sstm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
 	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy],
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
-	      iwcm[iz][iy] / np[iz][iy], ccm[iz][iy] / np[iz][iy],
+	      rwcm[iz][iy] / np[iz][iy], iwcm[iz][iy] / np[iz][iy],
+	      swcm[iz][iy] / np[iz][iy], ccm[iz][iy] / np[iz][iy],
 	      clm[iz][iy] / np[iz][iy], pctm[iz][iy] / np[iz][iy],
 	      pcbm[iz][iy] / np[iz][iy], plclm[iz][iy] / npc[iz][iy],
 	      plfcm[iz][iy] / npc[iz][iy], pelm[iz][iy] / npc[iz][iy],
