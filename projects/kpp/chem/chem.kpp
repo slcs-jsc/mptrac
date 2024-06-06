@@ -29,7 +29,7 @@ extern double ko3p_o2_M, ko3p_o3, ko1d_o2, ko1d_o3, ko1d_h2, ko1d_h2o,		\
 #ENDINLINE
 
 #INLINE C_RATES
-#include "libtrac.h"
+#include "mptrac.h"
 #include "kpp_chem.h"
 
 /*Formula for the effective second-order rate constant for 
