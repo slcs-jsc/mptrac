@@ -2420,13 +2420,12 @@ void module_bound_cond(
 
 void module_chemgrid(
   ctl_t * ctl,
-  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double tt) {
 
-  double *z, *press;
+  double *z, *press, *mass, *area, *lon, *lat;
 
   int *ixs, *iys, *izs;
 
@@ -2435,6 +2434,10 @@ void module_chemgrid(
   SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
 #pragma acc update host(atm[:1])
 #endif
+
+  /* Check quantities... */
+  if (ctl->molmass < 0)
+    ERRMSG("Molar mass is not defined!");
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
@@ -2450,6 +2453,14 @@ void module_chemgrid(
 	atm->np);
   ALLOC(izs, int,
 	atm->np);
+  ALLOC(mass, double,
+  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  ALLOC(lon, double,
+  ctl->chemgrid_nx);
+  ALLOC(lat, double,
+  ctl->chemgrid_ny);
+  ALLOC(area, double,
+  ctl->chemgrid_ny);
 
   /* Set grid box size... */
   double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
@@ -2480,13 +2491,72 @@ void module_chemgrid(
       izs[ip] = -1;
   }
 
-  /* Initialize quantity volume mixing ratios... */
-  static short init[NP];
+  /* Set horizontal coordinates... */
+  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
 #pragma omp parallel for default(shared)
+  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
+* cos(lat[iy] * M_PI / 180.);
+  }
+
+  /* Get mass per grid box... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
-      if (!init[ip]) {
-	init[ip] = 1;
+mass[ARRAY_3D
+     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+  += atm->q[ctl->qnt_m][ip];
+
+  /* Assign grid data to air parcels ... */
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++)
+    if (izs[ip] >= 0) {
+
+/* Interpolate temperature... */
+double temp;
+INTPOL_INIT;
+intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
+		   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+
+/* Set mass... */
+double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+			 izs[ip], ctl->chemgrid_nz)];
+
+/* Calculate volume mixing ratio... */
+  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
+    }
+
+  /* Free... */
+  free(mass);
+  free(lon);
+  free(lat);
+  free(area);
+  free(z);
+  free(press);
+  free(ixs);
+  free(iys);
+  free(izs);
+
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
+}
+
+/*****************************************************************************/
+
+void module_quan_init(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm){
+
+#pragma omp parallel for default(shared)
+for (int ip = 0; ip < atm->np; ip++) {
 
 	/* Set H2O and O3 using meteo data... */
 	INTPOL_INIT;
@@ -2502,8 +2572,8 @@ void module_chemgrid(
 	}
 
 	/* Set radical species... */
-	SET_ATM(qnt_Coh, clim_zm(&clim->oh, atm->time[ip],
-				 atm->lat[ip], atm->p[ip]));
+	SET_ATM(qnt_Coh, clim_oh(ctl, clim, atm->time[ip],
+          atm->lon[ip], atm->lat[ip], atm->p[ip]));
 	SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
 				  atm->lat[ip], atm->p[ip]));
 	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
@@ -2511,81 +2581,6 @@ void module_chemgrid(
 	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
 				  atm->lat[ip], atm->p[ip]));
       }
-
-  /* Check quantities... */
-  if (ctl->qnt_m >= 0 && ctl->qnt_Cx >= 0) {
-    if (ctl->molmass < 0)
-      ERRMSG("Molar mass is not defined!");
-
-    double *mass, *area, *lon, *lat;
-
-    /* Allocate... */
-    ALLOC(mass, double,
-	  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-    ALLOC(lon, double,
-	  ctl->chemgrid_nx);
-    ALLOC(lat, double,
-	  ctl->chemgrid_ny);
-    ALLOC(area, double,
-	  ctl->chemgrid_ny);
-
-    /* Set horizontal coordinates... */
-    for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
-      lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
-#pragma omp parallel for default(shared)
-    for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
-      lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-	* cos(lat[iy] * M_PI / 180.);
-    }
-
-    /* Get mass per grid box... */
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0)
-	mass[ARRAY_3D
-	     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-	  += atm->q[ctl->qnt_m][ip];
-
-    /* Assign grid data to air parcels ... */
-#pragma omp parallel for default(shared)
-    for (int ip = 0; ip < atm->np; ip++)
-      if (izs[ip] >= 0) {
-
-	/* Interpolate temperature... */
-	double temp;
-	INTPOL_INIT;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
-			   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
-
-	/* Set mass... */
-	double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-				 izs[ip], ctl->chemgrid_nz)];
-
-	/* Calculate volume mixing ratio... */
-	if (ctl->qnt_Cx >= 0)
-	  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
-	    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
-      }
-
-    /* Free... */
-    free(mass);
-    free(lon);
-    free(lat);
-    free(area);
-  }
-
-  /* Free... */
-  free(z);
-  free(press);
-  free(ixs);
-  free(iys);
-  free(izs);
-
-  /* Update device... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
 }
 
 /*****************************************************************************/
@@ -2898,8 +2893,6 @@ void module_h2o2_chem(
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
-  if (ctl->qnt_Cx < 0)
-    ERRMSG("Module needs quantity implicit volume mixing ratio!");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
@@ -2929,12 +2922,10 @@ void module_h2o2_chem(
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
-    /* Correction factor for high SO2 concentration... */
+    /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor =
-	atm->q[ctl->qnt_Cx][ip] >
-	1.45e-9 ? 1.20717e-7 * pow(atm->q[ctl->qnt_Cx][ip], -0.782692) : 1;
+      cor = atm->q[ctl->qnt_Cx][ip]>2.424717e-10 ?  3.12541941e-06 * pow(atm->q[ctl->qnt_Cx][ip], -5.72532259e-01) : 1;
     else
       cor = 1;
     double h2o2 = H_h2o2
@@ -3092,41 +3083,50 @@ void module_kpp_chem(
   /* Set timer... */
   SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
+  const int nvar=NVAR, nfix=NFIX, nreact=NREACT;
+  double rtol[1]={1.0e-3};
+  double atol[1]={1.0};
+
   /* Loop over particles... */
-  const int np = atm->np;
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-    if (dt[ip] > 0) {
+#ifdef _OPENACC
+#pragma acc data copy(rtol,atol,nvar,nfix,nreact)
+#endif
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {  
 
-      /* Set species... */
-      ALLOC(VAR, double,
-	    NVAR);
-      ALLOC(FIX, double,
-	    NFIX);
-
-      /* Sett range of time steps... */
-      STEPMIN = 0;
-      STEPMAX = 900.0;
-
-      /* Set relative & absolute tolerances... */
-      for (int i = 0; i < NVAR; i++) {
-	RTOL[i] = 1.0e-3;
-	ATOL[i] = 1.0;
-      }
-
-      /* Initialize... */
-      kpp_chem_initialize(ctl, clim, met0, met1, atm, ip);
-
-      /* Integrate... */
-      INTEGRATE(0, ctl->dt_kpp);
-
-      /* Output to air parcel.. */
-      kpp_chem_output2atm(atm, ctl, met0, met1, ip);
-
-      /* Free... */
-      free(VAR);
-      free(FIX);
+    double var[nvar], fix[nfix], rconst[nreact];   
+    for (int i = 0; i < nvar; i++) {
+        var[i] = 0.0;
     }
+    for (int i = 0; i < nfix; i++) {
+        fix[i] = 0.0;
+    }
+    for (int i = 0; i < nreact; i++) {
+        rconst[i] = 0.0;
+    }   
+    /* Initialize... */
+    kpp_chem_initialize(ctl, clim, met0, met1, atm, var, fix, rconst, ip);
+
+    /* Integrate... */
+    double  rpar[20];
+    int ipar[20];
+
+    for ( int i = 0; i < 20; i++ ) {
+     ipar[i] = 0;
+     rpar[i] = 0.0;
+    } /* for */
+   
+    ipar[0] = 0;    /* 0: F=F(y), i.e. independent of t (autonomous); 0:F=F(t,y), i.e. depends on t (non-autonomous) */
+    ipar[1] = 1;    /* 0: NVAR-dimentional vector of tolerances; 1:scalar tolerances */
+    ipar[3] = 4;    /* choice of the method:Rodas3 */
+
+    Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
+               atol, rtol,
+               &FunTemplate, &JacTemplate,
+               rpar, ipar);
+
+    /* Output to air parcel.. */
+    kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
+
   }
 }
 #endif
@@ -3468,12 +3468,10 @@ void module_oh_chem(
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
-    /* Correction factor for high SO2 concentration... */
+    /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor =
-	atm->q[ctl->qnt_Cx][ip] >
-	1.9e-9 ? 1.67971e-8 * pow(atm->q[ctl->qnt_Cx][ip], -0.891564) : 1;
+      cor = atm->q[ctl->qnt_Cx][ip]>1.44539e-9 ? 4.71572206e-08 * pow(atm->q[ctl->qnt_Cx][ip], -8.28782867e-01) : 1;
     else
       cor = 1;
     /* Calculate exponential decay... */

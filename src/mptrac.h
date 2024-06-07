@@ -4818,11 +4818,18 @@ void module_bound_cond(
  */
 void module_chemgrid(
   ctl_t * ctl,
-  clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   double t);
+
+/*! Initialize quantity values. */
+void module_quan_init(
+  ctl_t * ctl,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
 
 /**
  * @brief Simulate convective processes for atmospheric particles.
