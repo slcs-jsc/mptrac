@@ -273,9 +273,9 @@ int main(
 	      && (ctl.bound_p0 > ctl.bound_p1))
 	    module_bound_cond(&ctl, clim, met0, met1, atm, dt);
 
-    /* Initialize quantity of total loss rate... */
-    if (ctl.qnt_loss_rate > 0)
-      for (int ip = 0; ip < atm->np; ip++)
+	  /* Initialize quantity of total loss rate... */
+	  if (ctl.qnt_loss_rate > 0)
+	    for (int ip = 0; ip < atm->np; ip++)
 	      atm->q[ctl.qnt_loss_rate][ip] = 0;
 
 	  /* Decay of particle mass... */
@@ -288,8 +288,9 @@ int main(
 	    module_mixing(&ctl, clim, atm, t);
 
 	  /* OH chemistry... */
-    if (((ctl.oh_chem_reaction != 0) || (ctl.h2o2_chem_reaction != 0)) && (ctl.qnt_Cx > 0))
-      module_chemgrid(&ctl, met0, met1, atm, t);
+	  if (((ctl.oh_chem_reaction != 0) || (ctl.h2o2_chem_reaction != 0))
+	      && (ctl.qnt_Cx > 0))
+	    module_chemgrid(&ctl, met0, met1, atm, t);
 
 	  if (ctl.oh_chem_reaction != 0)
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
@@ -306,9 +307,9 @@ int main(
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0) {
 #ifdef KPP
-    if (ctl.qnt_Cx >= 0)
-	    module_chemgrid(&ctl, met0, met1, atm, t);
-    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
+	    if (ctl.qnt_Cx >= 0)
+	      module_chemgrid(&ctl, met0, met1, atm, t);
+	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 #else
 	    ERRMSG("Code was compiled without KPP!");
 #endif

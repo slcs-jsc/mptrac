@@ -2020,6 +2020,12 @@
 /*! Dark red color code (writing data). */
 #define NVTX_WRITE 0xFF8B0000
 
+/*! Light green color code (MPI receive). */
+#define NVTX_RECV 0xFFCCFFCB
+
+/*! Dark green color code (MPI send). */
+#define NVTX_SEND 0xFF008B00
+
 /*!
  * \brief Macro for calling `nvtxRangePushEx` to start a named and colored NVTX range.
  *
@@ -2513,6 +2519,9 @@ typedef struct {
 
   /*! Preload meteo data into disk cache (0=no, 1=yes). */
   int met_cache;
+
+  /*! Use MPI to share meteo (0=no, 1=yes). */
+  int met_mpi_share;
 
   /*! Time step for sorting of particle data [s]. */
   double sort_dt;

@@ -1033,6 +1033,7 @@ void get_met(
 	WARN("Caching command failed!");
     }
   }
+
   /* Read new data for backward trajectories... */
   if (t < (*met0)->time) {
 
@@ -1068,6 +1069,7 @@ void get_met(
 	WARN("Caching command failed!");
     }
   }
+
   /* Check that grids are consistent... */
   if ((*met0)->nx != 0 && (*met1)->nx != 0) {
     if ((*met0)->nx != (*met1)->nx
@@ -2454,13 +2456,13 @@ void module_chemgrid(
   ALLOC(izs, int,
 	atm->np);
   ALLOC(mass, double,
-  ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
   ALLOC(lon, double,
-  ctl->chemgrid_nx);
+	ctl->chemgrid_nx);
   ALLOC(lat, double,
-  ctl->chemgrid_ny);
+	ctl->chemgrid_ny);
   ALLOC(area, double,
-  ctl->chemgrid_ny);
+	ctl->chemgrid_ny);
 
   /* Set grid box size... */
   double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
@@ -2498,15 +2500,15 @@ void module_chemgrid(
   for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
     area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-* cos(lat[iy] * M_PI / 180.);
+      * cos(lat[iy] * M_PI / 180.);
   }
 
   /* Get mass per grid box... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
-mass[ARRAY_3D
-     (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-  += atm->q[ctl->qnt_m][ip];
+      mass[ARRAY_3D
+	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+	+= atm->q[ctl->qnt_m][ip];
 
   /* Assign grid data to air parcels ... */
 #pragma omp parallel for default(shared)
@@ -2514,18 +2516,18 @@ mass[ARRAY_3D
     if (izs[ip] >= 0) {
 
 /* Interpolate temperature... */
-double temp;
-INTPOL_INIT;
-intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
-		   lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+      double temp;
+      INTPOL_INIT;
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
+			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
 /* Set mass... */
-double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-			 izs[ip], ctl->chemgrid_nz)];
+      double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
+			       izs[ip], ctl->chemgrid_nz)];
 
 /* Calculate volume mixing ratio... */
-  atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
-    / (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
+      atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
     }
 
   /* Free... */
@@ -2553,34 +2555,34 @@ void module_quan_init(
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm){
+  atm_t * atm) {
 
 #pragma omp parallel for default(shared)
-for (int ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
-	/* Set H2O and O3 using meteo data... */
-	INTPOL_INIT;
-	if (ctl->qnt_Ch2o >= 0) {
-	  double h2o;
-	  INTPOL_3D(h2o, 1);
-	  SET_ATM(qnt_Ch2o, h2o);
-	}
-	if (ctl->qnt_Co3 >= 0) {
-	  double o3;
-	  INTPOL_3D(o3, 1);
-	  SET_ATM(qnt_Co3, o3);
-	}
+    /* Set H2O and O3 using meteo data... */
+    INTPOL_INIT;
+    if (ctl->qnt_Ch2o >= 0) {
+      double h2o;
+      INTPOL_3D(h2o, 1);
+      SET_ATM(qnt_Ch2o, h2o);
+    }
+    if (ctl->qnt_Co3 >= 0) {
+      double o3;
+      INTPOL_3D(o3, 1);
+      SET_ATM(qnt_Co3, o3);
+    }
 
-	/* Set radical species... */
-	SET_ATM(qnt_Coh, clim_oh(ctl, clim, atm->time[ip],
-          atm->lon[ip], atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
-				  atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
-				   atm->lat[ip], atm->p[ip]));
-	SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
-				  atm->lat[ip], atm->p[ip]));
-      }
+    /* Set radical species... */
+    SET_ATM(qnt_Coh, clim_oh(ctl, clim, atm->time[ip],
+			     atm->lon[ip], atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_Cho2, clim_zm(&clim->ho2, atm->time[ip],
+			      atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_Ch2o2, clim_zm(&clim->h2o2, atm->time[ip],
+			       atm->lat[ip], atm->p[ip]));
+    SET_ATM(qnt_Co1d, clim_zm(&clim->o1d, atm->time[ip],
+			      atm->lat[ip], atm->p[ip]));
+  }
 }
 
 /*****************************************************************************/
@@ -2925,7 +2927,10 @@ void module_h2o2_chem(
     /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>2.424717e-10 ?  3.12541941e-06 * pow(atm->q[ctl->qnt_Cx][ip], -5.72532259e-01) : 1;
+      cor =
+	atm->q[ctl->qnt_Cx][ip] >
+	2.424717e-10 ? 3.12541941e-06 * pow(atm->q[ctl->qnt_Cx][ip],
+					    -5.72532259e-01) : 1;
     else
       cor = 1;
     double h2o2 = H_h2o2
@@ -3083,46 +3088,44 @@ void module_kpp_chem(
   /* Set timer... */
   SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
-  const int nvar=NVAR, nfix=NFIX, nreact=NREACT;
-  double rtol[1]={1.0e-3};
-  double atol[1]={1.0};
+  const int nvar = NVAR, nfix = NFIX, nreact = NREACT;
+  double rtol[1] = { 1.0e-3 };
+  double atol[1] = { 1.0 };
 
   /* Loop over particles... */
 #ifdef _OPENACC
 #pragma acc data copy(rtol,atol,nvar,nfix,nreact)
 #endif
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {  
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {
 
-    double var[nvar], fix[nfix], rconst[nreact];   
+    double var[nvar], fix[nfix], rconst[nreact];
     for (int i = 0; i < nvar; i++) {
-        var[i] = 0.0;
+      var[i] = 0.0;
     }
     for (int i = 0; i < nfix; i++) {
-        fix[i] = 0.0;
+      fix[i] = 0.0;
     }
     for (int i = 0; i < nreact; i++) {
-        rconst[i] = 0.0;
-    }   
+      rconst[i] = 0.0;
+    }
     /* Initialize... */
     kpp_chem_initialize(ctl, clim, met0, met1, atm, var, fix, rconst, ip);
 
     /* Integrate... */
-    double  rpar[20];
+    double rpar[20];
     int ipar[20];
 
-    for ( int i = 0; i < 20; i++ ) {
-     ipar[i] = 0;
-     rpar[i] = 0.0;
-    } /* for */
-   
-    ipar[0] = 0;    /* 0: F=F(y), i.e. independent of t (autonomous); 0:F=F(t,y), i.e. depends on t (non-autonomous) */
-    ipar[1] = 1;    /* 0: NVAR-dimentional vector of tolerances; 1:scalar tolerances */
-    ipar[3] = 4;    /* choice of the method:Rodas3 */
+    for (int i = 0; i < 20; i++) {
+      ipar[i] = 0;
+      rpar[i] = 0.0;
+    }				/* for */
+
+    ipar[0] = 0;		/* 0: F=F(y), i.e. independent of t (autonomous); 0:F=F(t,y), i.e. depends on t (non-autonomous) */
+    ipar[1] = 1;		/* 0: NVAR-dimentional vector of tolerances; 1:scalar tolerances */
+    ipar[3] = 4;		/* choice of the method:Rodas3 */
 
     Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
-               atol, rtol,
-               &FunTemplate, &JacTemplate,
-               rpar, ipar);
+	       atol, rtol, &FunTemplate, &JacTemplate, rpar, ipar);
 
     /* Output to air parcel.. */
     kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
@@ -3471,7 +3474,10 @@ void module_oh_chem(
     /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
     double cor;
     if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip]>1.44539e-9 ? 4.71572206e-08 * pow(atm->q[ctl->qnt_Cx][ip], -8.28782867e-01) : 1;
+      cor =
+	atm->q[ctl->qnt_Cx][ip] >
+	1.44539e-9 ? 4.71572206e-08 * pow(atm->q[ctl->qnt_Cx][ip],
+					  -8.28782867e-01) : 1;
     else
       cor = 1;
     /* Calculate exponential decay... */
@@ -5017,6 +5023,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
   ctl->met_cache =
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
+  ctl->met_mpi_share =
+    (int) scan_ctl(filename, argc, argv, "MET_MPI_SHARE", -1, "0", NULL);
 
   /* Sorting... */
   ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
@@ -5508,215 +5516,345 @@ int read_met(
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
 
+  /* Initialize rank... */
+  int rank = 0;
+
+  /* Receive data via MPI... */
+#ifdef MPI
+  if (ctl->met_mpi_share) {
+    SELECT_TIMER("READ_MET_MPI_RECV", "COMM", NVTX_RECV);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    if (rank != 0) {
+      LOG(2, "Receive data on rank %d...", rank);
+      MPI_Status stat;
+      MPI_Recv(&met->time, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&met->nx, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&met->ny, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&met->np, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(&met->npl, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->lon, EX, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->lat, EY, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->p, EP, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->hybrid, EP, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->ps, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->ts, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->zs, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->us, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->vs, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->lsm, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->sst, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pbl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pt, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->tt, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->zt, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->h2ot, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pct, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pbl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->cl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->plcl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->plfc, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pel, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->cape, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->cin, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->o3c, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->z, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->t, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->u, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->v, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->w, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pv, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->h2o, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+      MPI_Recv(met->o3, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->lwc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+      MPI_Recv(met->rwc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+      MPI_Recv(met->iwc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+      MPI_Recv(met->swc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+      MPI_Recv(met->cc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->pl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->ul, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->vl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->wl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
+      MPI_Recv(met->zetal, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+      MPI_Recv(met->zeta_dotl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
+	       &stat);
+    }
+  }
+#endif
+
   /* Read netCDF data... */
-  if (ctl->met_type == 0) {
+  if (rank == 0) {
+    if (ctl->met_type == 0) {
 
-    int ncid;
+      int ncid;
 
-    /* Open netCDF file... */
-    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-      WARN("Cannot open file!");
-      return 0;
+      /* Open netCDF file... */
+      if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+	WARN("Cannot open file!");
+	return 0;
+      }
+
+      /* Read coordinates of meteo data... */
+      read_met_grid(filename, ncid, ctl, met);
+
+      /* Read meteo data on vertical levels... */
+      read_met_levels(ncid, ctl, met);
+
+      /* Extrapolate data for lower boundary... */
+      read_met_extrapolate(met);
+
+      /* Read surface data... */
+      read_met_surface(ncid, met, ctl);
+
+      /* Fix polar winds... */
+      read_met_polar_winds(met);
+
+      /* Create periodic boundary conditions... */
+      read_met_periodic(met);
+
+      /* Downsampling... */
+      read_met_sample(ctl, met);
+
+      /* Calculate geopotential heights... */
+      read_met_geopot(ctl, met);
+
+      /* Calculate potential vorticity... */
+      read_met_pv(met);
+
+      /* Calculate boundary layer data... */
+      read_met_pbl(met);
+
+      /* Calculate tropopause data... */
+      read_met_tropo(ctl, clim, met);
+
+      /* Calculate cloud properties... */
+      read_met_cloud(met);
+
+      /* Calculate convective available potential energy... */
+      read_met_cape(clim, met);
+
+      /* Calculate total column ozone... */
+      read_met_ozone(met);
+
+      /* Detrending... */
+      read_met_detrend(ctl, met);
+
+      /* Check meteo data and smooth zeta profiles ... */
+      if (ctl->vert_coord_ap == 1)
+	read_met_monotonize(met);
+
+      /* Close file... */
+      NC(nc_close(ncid));
     }
 
-    /* Read coordinates of meteo data... */
-    read_met_grid(filename, ncid, ctl, met);
+    /* Read binary data... */
+    else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
-    /* Read meteo data on vertical levels... */
-    read_met_levels(ncid, ctl, met);
+      FILE *in;
 
-    /* Extrapolate data for lower boundary... */
-    read_met_extrapolate(met);
+      double r;
 
-    /* Read surface data... */
-    read_met_surface(ncid, met, ctl);
+      int year, mon, day, hour, min, sec;
 
-    /* Fix polar winds... */
-    read_met_polar_winds(met);
+      /* Set timer... */
+      SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
 
-    /* Create periodic boundary conditions... */
-    read_met_periodic(met);
+      /* Open file... */
+      if (!(in = fopen(filename, "r"))) {
+	WARN("Cannot open file!");
+	return 0;
+      }
 
-    /* Downsampling... */
-    read_met_sample(ctl, met);
+      /* Check type of binary data... */
+      int met_type;
+      FREAD(&met_type, int,
+	    1,
+	    in);
+      if (met_type != ctl->met_type)
+	ERRMSG("Wrong MET_TYPE of binary data!");
 
-    /* Calculate geopotential heights... */
-    read_met_geopot(ctl, met);
+      /* Check version of binary data... */
+      int version;
+      FREAD(&version, int,
+	    1,
+	    in);
+      if (version != 100 && version != 101 && version != 102)
+	ERRMSG("Wrong version of binary data!");
 
-    /* Calculate potential vorticity... */
-    read_met_pv(met);
+      /* Read time... */
+      FREAD(&met->time, double,
+	    1,
+	    in);
+      jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
+      LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+	  met->time, year, mon, day, hour, min);
+      if (year < 1900 || year > 2100 || mon < 1 || mon > 12
+	  || day < 1 || day > 31 || hour < 0 || hour > 23)
+	ERRMSG("Error while reading time!");
 
-    /* Calculate boundary layer data... */
-    read_met_pbl(met);
+      /* Read dimensions... */
+      FREAD(&met->nx, int,
+	    1,
+	    in);
+      LOG(2, "Number of longitudes: %d", met->nx);
+      if (met->nx < 2 || met->nx > EX)
+	ERRMSG("Number of longitudes out of range!");
 
-    /* Calculate tropopause data... */
-    read_met_tropo(ctl, clim, met);
+      FREAD(&met->ny, int,
+	    1,
+	    in);
+      LOG(2, "Number of latitudes: %d", met->ny);
+      if (met->ny < 2 || met->ny > EY)
+	ERRMSG("Number of latitudes out of range!");
 
-    /* Calculate cloud properties... */
-    read_met_cloud(met);
+      FREAD(&met->np, int,
+	    1,
+	    in);
+      LOG(2, "Number of levels: %d", met->np);
+      if (met->np < 2 || met->np > EP)
+	ERRMSG("Number of levels out of range!");
 
-    /* Calculate convective available potential energy... */
-    read_met_cape(clim, met);
+      /* Read grid... */
+      FREAD(met->lon, double,
+	      (size_t) met->nx,
+	    in);
+      LOG(2, "Longitudes: %g, %g ... %g deg",
+	  met->lon[0], met->lon[1], met->lon[met->nx - 1]);
 
-    /* Calculate total column ozone... */
-    read_met_ozone(met);
+      FREAD(met->lat, double,
+	      (size_t) met->ny,
+	    in);
+      LOG(2, "Latitudes: %g, %g ... %g deg",
+	  met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
-    /* Detrending... */
-    read_met_detrend(ctl, met);
+      FREAD(met->p, double,
+	      (size_t) met->np,
+	    in);
+      LOG(2, "Altitude levels: %g, %g ... %g km",
+	  Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
+      LOG(2, "Pressure levels: %g, %g ... %g hPa",
+	  met->p[0], met->p[1], met->p[met->np - 1]);
 
-    /* Check meteo data and smooth zeta profiles ... */
-    if (ctl->vert_coord_ap == 1)
-      read_met_monotonize(met);
+      /* Read surface data... */
+      read_met_bin_2d(in, met, met->ps, "PS");
+      read_met_bin_2d(in, met, met->ts, "TS");
+      read_met_bin_2d(in, met, met->zs, "ZS");
+      read_met_bin_2d(in, met, met->us, "US");
+      read_met_bin_2d(in, met, met->vs, "VS");
+      if (version >= 101) {
+	read_met_bin_2d(in, met, met->lsm, "LSM");
+	read_met_bin_2d(in, met, met->sst, "SST");
+      }
+      read_met_bin_2d(in, met, met->pbl, "PBL");
+      read_met_bin_2d(in, met, met->pt, "PT");
+      read_met_bin_2d(in, met, met->tt, "TT");
+      read_met_bin_2d(in, met, met->zt, "ZT");
+      read_met_bin_2d(in, met, met->h2ot, "H2OT");
+      read_met_bin_2d(in, met, met->pct, "PCT");
+      read_met_bin_2d(in, met, met->pcb, "PCB");
+      read_met_bin_2d(in, met, met->cl, "CL");
+      read_met_bin_2d(in, met, met->plcl, "PLCL");
+      read_met_bin_2d(in, met, met->plfc, "PLFC");
+      read_met_bin_2d(in, met, met->pel, "PEL");
+      read_met_bin_2d(in, met, met->cape, "CAPE");
+      read_met_bin_2d(in, met, met->cin, "CIN");
 
-    /* Close file... */
-    NC(nc_close(ncid));
+      /* Read level data... */
+      read_met_bin_3d(in, ctl, met, met->z, "Z");
+      read_met_bin_3d(in, ctl, met, met->t, "T");
+      read_met_bin_3d(in, ctl, met, met->u, "U");
+      read_met_bin_3d(in, ctl, met, met->v, "V");
+      read_met_bin_3d(in, ctl, met, met->w, "W");
+      read_met_bin_3d(in, ctl, met, met->pv, "PV");
+      read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
+      read_met_bin_3d(in, ctl, met, met->o3, "O3");
+      read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
+      if (version >= 102)
+	read_met_bin_3d(in, ctl, met, met->rwc, "RWC");
+      read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
+      if (version >= 102)
+	read_met_bin_3d(in, ctl, met, met->swc, "SWC");
+      if (version >= 101)
+	read_met_bin_3d(in, ctl, met, met->cc, "CC");
+
+      /* Read final flag... */
+      int final;
+      FREAD(&final, int,
+	    1,
+	    in);
+      if (final != 999)
+	ERRMSG("Error while reading binary data!");
+
+      /* Close file... */
+      fclose(in);
+    }
+
+    /* Not implemented... */
+    else
+      ERRMSG("MET_TYPE not implemented!");
   }
 
-  /* Read binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
-
-    FILE *in;
-
-    double r;
-
-    int year, mon, day, hour, min, sec;
-
-    /* Set timer... */
-    SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
-
-    /* Open file... */
-    if (!(in = fopen(filename, "r"))) {
-      WARN("Cannot open file!");
-      return 0;
-    }
-
-    /* Check type of binary data... */
-    int met_type;
-    FREAD(&met_type, int,
-	  1,
-	  in);
-    if (met_type != ctl->met_type)
-      ERRMSG("Wrong MET_TYPE of binary data!");
-
-    /* Check version of binary data... */
-    int version;
-    FREAD(&version, int,
-	  1,
-	  in);
-    if (version != 100 && version != 101 && version != 102)
-      ERRMSG("Wrong version of binary data!");
-
-    /* Read time... */
-    FREAD(&met->time, double,
-	  1,
-	  in);
-    jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
-    LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-	met->time, year, mon, day, hour, min);
-    if (year < 1900 || year > 2100 || mon < 1 || mon > 12
-	|| day < 1 || day > 31 || hour < 0 || hour > 23)
-      ERRMSG("Error while reading time!");
-
-    /* Read dimensions... */
-    FREAD(&met->nx, int,
-	  1,
-	  in);
-    LOG(2, "Number of longitudes: %d", met->nx);
-    if (met->nx < 2 || met->nx > EX)
-      ERRMSG("Number of longitudes out of range!");
-
-    FREAD(&met->ny, int,
-	  1,
-	  in);
-    LOG(2, "Number of latitudes: %d", met->ny);
-    if (met->ny < 2 || met->ny > EY)
-      ERRMSG("Number of latitudes out of range!");
-
-    FREAD(&met->np, int,
-	  1,
-	  in);
-    LOG(2, "Number of levels: %d", met->np);
-    if (met->np < 2 || met->np > EP)
-      ERRMSG("Number of levels out of range!");
-
-    /* Read grid... */
-    FREAD(met->lon, double,
-	    (size_t) met->nx,
-	  in);
-    LOG(2, "Longitudes: %g, %g ... %g deg",
-	met->lon[0], met->lon[1], met->lon[met->nx - 1]);
-
-    FREAD(met->lat, double,
-	    (size_t) met->ny,
-	  in);
-    LOG(2, "Latitudes: %g, %g ... %g deg",
-	met->lat[0], met->lat[1], met->lat[met->ny - 1]);
-
-    FREAD(met->p, double,
-	    (size_t) met->np,
-	  in);
-    LOG(2, "Altitude levels: %g, %g ... %g km",
-	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
-    LOG(2, "Pressure levels: %g, %g ... %g hPa",
-	met->p[0], met->p[1], met->p[met->np - 1]);
-
-    /* Read surface data... */
-    read_met_bin_2d(in, met, met->ps, "PS");
-    read_met_bin_2d(in, met, met->ts, "TS");
-    read_met_bin_2d(in, met, met->zs, "ZS");
-    read_met_bin_2d(in, met, met->us, "US");
-    read_met_bin_2d(in, met, met->vs, "VS");
-    if (version >= 101) {
-      read_met_bin_2d(in, met, met->lsm, "LSM");
-      read_met_bin_2d(in, met, met->sst, "SST");
-    }
-    read_met_bin_2d(in, met, met->pbl, "PBL");
-    read_met_bin_2d(in, met, met->pt, "PT");
-    read_met_bin_2d(in, met, met->tt, "TT");
-    read_met_bin_2d(in, met, met->zt, "ZT");
-    read_met_bin_2d(in, met, met->h2ot, "H2OT");
-    read_met_bin_2d(in, met, met->pct, "PCT");
-    read_met_bin_2d(in, met, met->pcb, "PCB");
-    read_met_bin_2d(in, met, met->cl, "CL");
-    read_met_bin_2d(in, met, met->plcl, "PLCL");
-    read_met_bin_2d(in, met, met->plfc, "PLFC");
-    read_met_bin_2d(in, met, met->pel, "PEL");
-    read_met_bin_2d(in, met, met->cape, "CAPE");
-    read_met_bin_2d(in, met, met->cin, "CIN");
-
-    /* Read level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z");
-    read_met_bin_3d(in, ctl, met, met->t, "T");
-    read_met_bin_3d(in, ctl, met, met->u, "U");
-    read_met_bin_3d(in, ctl, met, met->v, "V");
-    read_met_bin_3d(in, ctl, met, met->w, "W");
-    read_met_bin_3d(in, ctl, met, met->pv, "PV");
-    read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
-    read_met_bin_3d(in, ctl, met, met->o3, "O3");
-    read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
-    if (version >= 102)
-      read_met_bin_3d(in, ctl, met, met->rwc, "RWC");
-    read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
-    if (version >= 102)
-      read_met_bin_3d(in, ctl, met, met->swc, "SWC");
-    if (version >= 101)
-      read_met_bin_3d(in, ctl, met, met->cc, "CC");
-
-    /* Read final flag... */
-    int final;
-    FREAD(&final, int,
-	  1,
-	  in);
-    if (final != 999)
-      ERRMSG("Error while reading binary data!");
-
-    /* Close file... */
-    fclose(in);
+  /* Send data via MPI... */
+#ifdef MPI
+  if (ctl->met_mpi_share && rank == 0) {
+    SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
+    LOG(2, "Broadcast data on rank %d...", rank);
+    MPI_Bcast(&met->time, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&met->nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&met->ny, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&met->np, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(&met->npl, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->lon, EX, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->lat, EY, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->p, EP, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->hybrid, EP, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->ps, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->ts, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->zs, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->us, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->vs, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->lsm, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->sst, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pbl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->tt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->zt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->h2ot, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pct, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pcb, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->cl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->plcl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->plfc, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pel, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->cape, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->cin, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->o3c, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->z, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->t, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->u, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->v, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->w, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pv, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->h2o, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->o3, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->lwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->rwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->iwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->swc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->cc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->pl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->ul, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->vl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->wl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->zetal, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+    MPI_Bcast(met->zeta_dotl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
   }
-
-  /* Not implemented... */
-  else
-    ERRMSG("MET_TYPE not implemented!");
+#endif
 
   /* Copy wind data to cache... */
 #pragma omp parallel for default(shared) collapse(2)
