@@ -5518,77 +5518,12 @@ int read_met(
 
   /* Initialize rank... */
   int rank = 0;
-
-  /* Receive data via MPI... */
 #ifdef MPI
-  if (ctl->met_mpi_share) {
-    SELECT_TIMER("READ_MET_MPI_RECV", "COMM", NVTX_RECV);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    if (rank != 0) {
-      LOG(2, "Receive data on rank %d...", rank);
-      MPI_Status stat;
-      MPI_Recv(&met->time, 1, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(&met->nx, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(&met->ny, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(&met->np, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(&met->npl, 1, MPI_INT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->lon, EX, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->lat, EY, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->p, EP, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->hybrid, EP, MPI_DOUBLE, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->ps, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->ts, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->zs, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->us, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->vs, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->lsm, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->sst, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pbl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pt, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->tt, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->zt, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->h2ot, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pct, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pbl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->cl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->plcl, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->plfc, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pel, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->cape, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->cin, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->o3c, EX * EY, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->z, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->t, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->u, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->v, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->w, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pv, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->h2o, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-      MPI_Recv(met->o3, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->lwc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-      MPI_Recv(met->rwc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-      MPI_Recv(met->iwc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-      MPI_Recv(met->swc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-      MPI_Recv(met->cc, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->pl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->ul, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->vl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->wl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD, &stat);
-      MPI_Recv(met->zetal, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-      MPI_Recv(met->zeta_dotl, EX * EY * EP, MPI_FLOAT, 0, 0, MPI_COMM_WORLD,
-	       &stat);
-    }
-  }
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
   /* Read netCDF data... */
-  if (rank == 0) {
+  if (!ctl->met_mpi_share || rank == 0) {
     if (ctl->met_type == 0) {
 
       int ncid;
@@ -5799,9 +5734,9 @@ int read_met(
       ERRMSG("MET_TYPE not implemented!");
   }
 
-  /* Send data via MPI... */
+  /* Broadcast data via MPI... */
 #ifdef MPI
-  if (ctl->met_mpi_share && rank == 0) {
+  if (ctl->met_mpi_share) {
     SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
     LOG(2, "Broadcast data on rank %d...", rank);
     MPI_Bcast(&met->time, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
