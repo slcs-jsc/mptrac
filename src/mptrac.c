@@ -5737,57 +5737,65 @@ int read_met(
   /* Broadcast data via MPI... */
 #ifdef MPI
   if (ctl->met_mpi_share) {
+
+    /* Set timer... */
     SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
     LOG(2, "Broadcast data on rank %d...", rank);
-    MPI_Bcast(&met->time, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->ny, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->np, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->npl, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->lon, EX, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->lat, EY, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->p, EP, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->hybrid, EP, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->ps, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->ts, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zs, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->us, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->vs, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->lsm, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->sst, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pbl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->tt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->h2ot, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pct, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pcb, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->plcl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->plfc, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pel, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cape, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cin, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->o3c, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->z, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->t, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->u, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->v, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->w, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pv, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->h2o, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->o3, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->lwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->rwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->iwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->swc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->ul, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->vl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->wl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zetal, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zeta_dotl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
+
+    /* Broadcast 1D data... */
+    MPI_BCAST_1D(&met->time, 1, MPI_DOUBLE);
+    MPI_BCAST_1D(&met->nx, 1, MPI_INT);
+    MPI_BCAST_1D(&met->ny, 1, MPI_INT);
+    MPI_BCAST_1D(&met->np, 1, MPI_INT);
+    MPI_BCAST_1D(&met->npl, 1, MPI_INT);
+    MPI_BCAST_1D(met->lon, met->nx, MPI_DOUBLE);
+    MPI_BCAST_1D(met->lat, met->ny, MPI_DOUBLE);
+    MPI_BCAST_1D(met->p, met->np, MPI_DOUBLE);
+    MPI_BCAST_1D(met->hybrid, met->npl, MPI_DOUBLE);
+
+    /* Broadcast 2D data... */
+    MPI_BCAST_2D(met->ps, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->ts, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->zs, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->us, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->vs, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->lsm, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->sst, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pbl, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pt, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->tt, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->zt, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->h2ot, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pct, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pcb, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->cl, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->plcl, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->plfc, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pel, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->cape, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->cin, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->o3c, met->nx, met->ny, MPI_FLOAT);
+
+    /* Broadcast 3D data... */
+    MPI_BCAST_3D(met->z, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->t, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->u, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->v, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->w, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->pv, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->h2o, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->o3, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->lwc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->rwc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->iwc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->swc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->cc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->pl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->ul, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->vl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->wl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->zetal, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->zeta_dotl, met->nx, met->ny, met->npl, MPI_FLOAT);
   }
 #endif
 
