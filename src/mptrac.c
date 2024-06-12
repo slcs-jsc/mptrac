@@ -9817,6 +9817,8 @@ void write_output(
   /* Write VTK data... */
   if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
     static int nvtk;
+    if (t == ctl->t_start)
+      nvtk = 0;
     sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
     write_vtk(filename, ctl, atm, t);
   }
