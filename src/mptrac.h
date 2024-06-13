@@ -4852,6 +4852,33 @@ void module_advect_diabatic(
   double *dt);
 
 /**
+ * @brief Initializes the advection module by setting up pressure fields.
+ * 
+ * This function initializes the advection module, setting up the air parcel pressure
+ * to be consistent with the given zeta vertical coordinate.
+ * It utilizes meteorological data from two time steps and interpolates
+ * the pressure values accordingly.
+ * 
+ * @param ctl   Pointer to the control structure containing configuration flags.
+ * @param met0  Pointer to the initial meteorological data structure.
+ * @param met1  Pointer to the final meteorological data structure.
+ * @param atm   Pointer to the air parcel data structure.
+ * 
+ * @details
+ * The function performs the following operations:
+ * - Sets up a timer labeled "MODULE_ADVECTION" within the "PHYSICS" category.
+ * - If the zeta vertical coordinate system is specified (ctl->vert_coord_ap == 1), it initializes
+ *   the pressure fields to be consistent with the zeta coordinate using 4D interpolation.
+ * 
+ * @author Jan Clemens
+ */
+void module_advect_init(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
+
+/**
  * @brief Apply boundary conditions to particles based on meteorological and climatological data.
  *
  * This function applies boundary conditions to particles based on
@@ -4919,8 +4946,33 @@ void module_chemgrid(
   atm_t * atm,
   double t);
 
-/*! Initialize quantity values. */
-void module_quan_init(
+/**
+ * @brief Initializes the chemistry modules by setting atmospheric composition.
+ * 
+ * This function initializes various chemical components of the
+ * atmosphere using meteorological data and climatological
+ * information. It interpolates and sets values for water vapor (H2O),
+ * ozone (O3), and several radical species such as OH, HO2, H2O2, and
+ * O1D for each air parcel.
+ * 
+ * @param ctl   Pointer to the control structure containing quantity flags.
+ * @param clim  Pointer to the climatology structure containing climatological data.
+ * @param met0  Pointer to the initial meteorological data structure.
+ * @param met1  Pointer to the final meteorological data structure.
+ * @param atm   Pointer to the air parcel data structure.
+ * 
+ * @details
+ * The function uses OpenMP for parallel processing, iterating over
+ * each point in the atmosphere (atm->np) to initialize chemical
+ * species concentrations.  It performs the following steps:
+ * - Interpolates H2O and O3 data from meteorological input if the
+ *   respective quantity flags (ctl->qnt_Ch2o and ctl->qnt_Co3) are set.
+ * - Sets the concentrations of OH, HO2, H2O2, and O1D using
+ *   climatological data if the respective quantity flags are set.
+ *
+ * @authors Mingzhao Liu
+ */
+void module_chem_init(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,

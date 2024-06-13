@@ -2325,6 +2325,26 @@ void module_advect_diabatic(
 
 /*****************************************************************************/
 
+void module_advect_init(
+  ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm) {
+
+  /* Initialize pressure consistent with zeta... */
+  if (ctl->vert_coord_ap == 1) {
+#pragma omp parallel for default(shared)
+    for (int ip = 0; ip < atm->np; ip++) {
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+    }
+  }
+}
+
+/*****************************************************************************/
+
 void module_bound_cond(
   ctl_t * ctl,
   clim_t * clim,
@@ -2550,7 +2570,7 @@ void module_chemgrid(
 
 /*****************************************************************************/
 
-void module_quan_init(
+void module_chem_init(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met0,
@@ -2968,10 +2988,6 @@ void module_isosurf_init(
   atm_t * atm,
   cache_t * cache) {
 
-  FILE *in;
-
-  char line[LEN];
-
   double t;
 
   /* Set timer... */
@@ -3006,10 +3022,12 @@ void module_isosurf_init(
     LOG(1, "Read balloon pressure data: %s", ctl->balloon);
 
     /* Open file... */
+    FILE *in;
     if (!(in = fopen(ctl->balloon, "r")))
       ERRMSG("Cannot open file!");
 
     /* Read pressure time series... */
+    char line[LEN];
     while (fgets(line, LEN, in))
       if (sscanf(line, "%lg %lg", &(cache->iso_ts[cache->iso_n]),
 		 &(cache->iso_ps[cache->iso_n])) == 2)

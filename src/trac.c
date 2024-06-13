@@ -151,24 +151,15 @@ int main(
     get_met(&ctlTMP, clim, ctlTMP.t_start, &met0TMP, &met1TMP);
 #endif
 
-    /* Initialize isosurface... */
+    /* Initialize isosurface data... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
 
-    /* Initialize pressure heights consistent with zeta... */
-    if (ctl.vert_coord_ap == 1) {
-#pragma omp parallel for default(shared)
-      for (int ip = 0; ip < atm->np; ip++) {
-	INTPOL_INIT;
-	intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			    met1->pl, atm->time[ip], atm->q[ctl.qnt_zeta][ip],
-			    atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw,
-			    1);
-      }
-    }
+    /* Initialize pressure consistent with zeta... */
+    module_advect_init(&ctl, met0, met1, atm);
 
-    /* Initialize species quantity values according to meteorological data or climatology... */
-    module_quan_init(&ctl, clim, met0, met1, atm);
+    /* Initialize chemical species using meteo data and climatology... */
+    module_chem_init(&ctl, clim, met0, met1, atm);
 
     /* Update GPU... */
 #ifdef _OPENACC
