@@ -273,10 +273,12 @@ int main(
 	      && (ctl.bound_p0 > ctl.bound_p1))
 	    module_bound_cond(&ctl, clim, met0, met1, atm, dt);
 
-    /* Initialize quantity of total loss rate... */
-    if (ctl.qnt_loss_rate > 0)
-      for (int ip = 0; ip < atm->np; ip++)
+	  /* Initialize quantity of total loss rate... */
+	  if (ctl.qnt_loss_rate >= 0) {
+	    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl, atm)") {
 	      atm->q[ctl.qnt_loss_rate][ip] = 0;
+	    }
+	  }
 
 	  /* Decay of particle mass... */
 	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
@@ -287,17 +289,19 @@ int main(
 	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
 	    module_mixing(&ctl, clim, atm, t);
 
-	  /* OH chemistry... */
-    if (((ctl.oh_chem_reaction != 0) || (ctl.h2o2_chem_reaction != 0)) && (ctl.qnt_Cx > 0))
-      module_chemgrid(&ctl, met0, met1, atm, t);
+	  /* Calculate the tracer vmr in the chemistry grid... */
+	  if (ctl.qnt_Cx > 0
+	      && (ctl.oh_chem_reaction != 0 || ctl.h2o2_chem_reaction != 0
+		  || (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0)))
+	    module_chemgrid(&ctl, met0, met1, atm, t);
 
+	  /* OH chemistry... */
 	  if (ctl.oh_chem_reaction != 0)
 	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
 
 	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-	  if (ctl.h2o2_chem_reaction != 0) {
+	  if (ctl.h2o2_chem_reaction != 0)
 	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
-	  }
 
 	  /* First-order tracer chemistry... */
 	  if (ctl.tracer_chem)
@@ -306,9 +310,7 @@ int main(
 	  /* KPP chemistry... */
 	  if (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0) {
 #ifdef KPP
-    if (ctl.qnt_Cx >= 0)
-	    module_chemgrid(&ctl, met0, met1, atm, t);
-    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
+	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
 #else
 	    ERRMSG("Code was compiled without KPP!");
 #endif
