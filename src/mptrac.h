@@ -2399,7 +2399,7 @@ typedef struct {
   /*! Quantity array index for total mass loss due to H2O2 chemistry. */
   int qnt_mloss_h2o2;
 
-  /*! Quantity array index for total mass loss due to kpp chemistry. */
+  /*! Quantity array index for total mass loss due to KPP chemistry. */
   int qnt_mloss_kpp;
 
   /*! Quantity array index for total mass loss due to wet deposition. */
@@ -4758,93 +4758,52 @@ void locate_vert(
   int *ind);
 
 /**
- * @brief Advect particles based on interpolated meteorological data.
+ * @brief Performs the advection of atmospheric particles using meteorological data.
+ * 
+ * This function advects particles in the atmosphere using
+ * meteorological data from two time steps, updating their positions
+ * and interpolating necessary data.  It supports both pressure and
+ * zeta vertical coordinate systems.
+ * 
+ * @param ctl   Pointer to the control structure containing configuration flags.
+ * @param met0  Pointer to the initial meteorological data structure.
+ * @param met1  Pointer to the final meteorological data structure.
+ * @param atm   Pointer to the air parcel data structure.
+ * @param dt    Array of time step values for each particle.
+ * 
+ * @details
+ * The function performs the following operations:
+ * - Sets up a timer labeled "MODULE_ADVECTION" within the "PHYSICS"
+     category for GPU profiling using NVTX.
+ * - Depending on the vertical coordinate system (pressure or zeta),
+ *   it loops over each particle in the atmosphere (atm->np),
+ *   initializing and updating their positions and velocities using
+ *   meteorological data interpolation.
+ * 
+ * ### Pressure Coordinate System (ctl->vert_coord_ap == 0)
+ * - Initializes particle positions and velocities.
+ * - Performs integration over a specified number of nodes (ctl->advect) to update particle positions.
+ * - Interpolates meteorological data for velocity components (u, v, w).
+ * - Computes mean velocities and updates particle positions in longitude, latitude, and pressure.
+ * 
+ * ### Zeta Coordinate System (ctl->vert_coord_ap == 1)
+ * - Translates pressure into zeta coordinate if other modules have modified the pressure.
+ * - Initializes particle positions and velocities in zeta coordinates.
+ * - Performs integration over a specified number of nodes (ctl->advect) to update particle positions.
+ * - Interpolates meteorological data for velocity components (u, v) and zeta_dot.
+ * - Computes mean velocities and updates particle positions in longitude, latitude, and zeta.
+ * - Checks and corrects if zeta is below zero.
+ * - Translates updated zeta back into pressure coordinates.
+ * 
+ * @note The function assumes that the atmospheric data structure
+ * (atm) contains arrays for time, longitude, latitude, and pressure
+ * for each point.  The specific quantification of zeta is stored in
+ * atm->q[ctl.qnt_zeta].
  *
- * This function advects particles based on interpolated
- * meteorological data for a specified time step. It calculates the
- * new positions of the particles using interpolated meteorological
- * data obtained from the input meteorological data structures (met0
- * and met1) at the current and next time steps, respectively. The
- * function loops over each particle and integrates their positions
- * using the interpolated meteorological data. After integration, it
- * updates the positions of the particles in the atmospheric data
- * structure.
- *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param met0 Pointer to the meteorological data structure at the initial time step.
- * @param met1 Pointer to the meteorological data structure at the next time step.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
- *
- * The function initializes variables for position, wind components,
- * and time increments. It loops over integration nodes for each
- * particle, updating their positions based on the interpolated
- * meteorological data. Integration nodes represent subdivisions
- * within the time step, typically used for numerical integration
- * accuracy. The function then calculates mean wind components based
- * on the integration nodes' weights.  Finally, it updates the
- * particles' positions in longitude, latitude, and altitude (pressure
- * level). The integration scheme accounts for variations in
- * latitude-dependent distances for longitude changes and updates
- * altitude using vertical wind velocity.
- *
- * @author Lars Hoffmann
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
  */
 void module_advect(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt);
-
-/**
- * @brief Advect particles with diabatic effects based on interpolated meteorological data.
- *
- * This function advects particles considering diabatic effects, such
- * as heating or cooling, based on interpolated meteorological data
- * for a specified time step. It calculates the new positions of the
- * particles using interpolated meteorological data obtained from the
- * input meteorological data structures (met0 and met1) at the current
- * and next time steps, respectively. The function loops over each
- * particle and integrates their positions using the interpolated
- * meteorological data, considering diabatic heating or cooling
- * effects. After integration, it updates the positions of the
- * particles in the atmospheric data structure.
- *
- * If other modules have changed the pressure, it translates it into a
- * zeta coordinate.  It initializes variables for position, wind
- * components, and diabatic effects. Then, it loops over integration
- * nodes for each particle, updating their positions based on the
- * interpolated meteorological data and considering diabatic
- * effects. The integration scheme accounts for variations in
- * latitude-dependent distances for longitude changes and updates the
- * diabatic effect (zeta) based on the integration nodes'
- * weights. Finally, it updates the particles' positions in longitude,
- * latitude, and diabatic effect (zeta) coordinates. If the diabatic
- * effect (zeta) becomes negative, it sets it to zero and recalculates
- * the pressure coordinate based on the updated diabatic effect.
- *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param met0 Pointer to the meteorological data structure at the initial time step.
- * @param met1 Pointer to the meteorological data structure at the next time step.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
- *
- * The function initializes variables for position, wind components,
- * and diabatic effects.  It loops over integration nodes for each
- * particle, updating their positions based on the interpolated
- * meteorological data and considering diabatic effects. Integration
- * nodes represent subdivisions within the time step, typically used
- * for numerical integration accuracy. The function then calculates
- * mean wind components based on the integration nodes'
- * weights. Finally, it updates the particles' positions in longitude,
- * latitude, and diabatic effect (zeta) coordinates.  If the diabatic
- * effect (zeta) becomes negative, it sets it to zero and recalculates
- * the pressure coordinate based on the updated diabatic effect.
- *
- * @author Jan Clemens
- */
-void module_advect_diabatic(
   ctl_t * ctl,
   met_t * met0,
   met_t * met1,

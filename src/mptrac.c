@@ -2190,136 +2190,131 @@ void module_advect(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
-
-    /* Init... */
-    double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3] = { 0, 0, 0 };
-
-    /* Loop over integration nodes... */
-    for (int i = 0; i < ctl->advect; i++) {
-
-      /* Set position... */
-      if (i == 0) {
-	dts = 0.0;
-	x[0] = atm->lon[ip];
-	x[1] = atm->lat[ip];
-	x[2] = atm->p[ip];
-      } else {
-	dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
-	x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	x[2] = atm->p[ip] + dts * w[i - 1];
+  /* Pressure coordinate... */
+  if (ctl->vert_coord_ap == 0) {
+    
+    /* Loop over particles... */
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+      
+      /* Init... */
+      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3] = { 0, 0, 0 };
+      
+      /* Loop over integration nodes... */
+      for (int i = 0; i < ctl->advect; i++) {
+	
+	/* Set position... */
+	if (i == 0) {
+	  dts = 0.0;
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->p[ip];
+	} else {
+	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->p[ip] + dts * w[i - 1];
+	}
+	double tm = atm->time[ip] + dts;
+	
+	/* Interpolate meteo data... */
+	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
+			    &u[i], &v[i], &w[i]);
+	
+	/* Get mean wind... */
+	double k = 1.0;
+	if (ctl->advect == 2)
+	  k = (i == 0 ? 0.0 : 1.0);
+	else if (ctl->advect == 4)
+	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	um += k * u[i];
+	vm += k * v[i];
+	wm += k * w[i];
       }
-      double tm = atm->time[ip] + dts;
-
-      /* Interpolate meteo data... */
-      intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
-			  &u[i], &v[i], &w[i]);
-
-      /* Get mean wind... */
-      double k = 1.0;
-      if (ctl->advect == 2)
-	k = (i == 0 ? 0.0 : 1.0);
-      else if (ctl->advect == 4)
-	k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
-      um += k * u[i];
-      vm += k * v[i];
-      wm += k * w[i];
+      
+      /* Set new position... */
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+      atm->p[ip] += dt[ip] * wm;
     }
-
-    /* Set new position... */
-    atm->time[ip] += dt[ip];
-    atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
-			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-    atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
-    atm->p[ip] += dt[ip] * wm;
   }
-}
 
-/*****************************************************************************/
-
-void module_advect_diabatic(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
-
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
-
-    /* If other modules have changed p translate it into a zeta... */
-    if (ctl->cpl_zeta_and_press_modules > 0) {
-      INTPOL_INIT;
-      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			  atm->lon[ip], atm->lat[ip],
-			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
-    }
-
-    /* Init... */
-    double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0,
-      x[3] = { 0, 0, 0 };
-
-    /* Loop over integration nodes... */
-    for (int i = 0; i < ctl->advect; i++) {
-
-      /* Set position... */
-      if (i == 0) {
-	dts = 0.0;
-	x[0] = atm->lon[ip];
-	x[1] = atm->lat[ip];
-	x[2] = atm->q[ctl->qnt_zeta][ip];
-      } else {
-	dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
-	x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
+  /* Zeta coordinate... */
+  else if (ctl->vert_coord_ap == 1) {
+    
+    /* Loop over particles... */
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+      
+      /* If other modules have changed p translate it into a zeta... */
+      if (ctl->cpl_zeta_and_press_modules > 0) {
+	INTPOL_INIT;
+	intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			    met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			    atm->lon[ip], atm->lat[ip],
+			    &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
       }
-      double tm = atm->time[ip] + dts;
-
-      /* Interpolate meteo data... */
+      
+      /* Init... */
+      double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0,
+	x[3] = { 0, 0, 0 };
+      
+      /* Loop over integration nodes... */
+      for (int i = 0; i < ctl->advect; i++) {
+	
+	/* Set position... */
+	if (i == 0) {
+	  dts = 0.0;
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->q[ctl->qnt_zeta][ip];
+	} else {
+	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
+	}
+	double tm = atm->time[ip] + dts;
+	
+	/* Interpolate meteo data... */
+	INTPOL_INIT;
+	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
+			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
+			    met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
+			    met1->zetal, met1->zeta_dotl, tm, x[2], x[0], x[1],
+			    &zeta_dot[i], ci, cw, 0);
+	
+	/* Get mean wind... */
+	double k = 1.0;
+	if (ctl->advect == 2)
+	  k = (i == 0 ? 0.0 : 1.0);
+	else if (ctl->advect == 4)
+	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	um += k * u[i];
+	vm += k * v[i];
+	zeta_dotm += k * zeta_dot[i];
+      }
+      
+      /* Set new position... */
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+      atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
+      
+      /* Check if zeta is below zero... */
+      if (atm->q[ctl->qnt_zeta][ip] < 0) {
+	atm->q[ctl->qnt_zeta][ip] = 0;
+      }
+      
+      /* Set new position also in pressure coordinates... */
       INTPOL_INIT;
-      intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
-			  met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
-      intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
-			  met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
-      intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
-			  met1->zetal, met1->zeta_dotl, tm, x[2], x[0], x[1],
-			  &zeta_dot[i], ci, cw, 0);
-
-      /* Get mean wind... */
-      double k = 1.0;
-      if (ctl->advect == 2)
-	k = (i == 0 ? 0.0 : 1.0);
-      else if (ctl->advect == 4)
-	k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
-      um += k * u[i];
-      vm += k * v[i];
-      zeta_dotm += k * zeta_dot[i];
+      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
     }
-
-    /* Set new position... */
-    atm->time[ip] += dt[ip];
-    atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
-			   (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-    atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
-    atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
-
-    /* Check if zeta is below zero... */
-    if (atm->q[ctl->qnt_zeta][ip] < 0) {
-      atm->q[ctl->qnt_zeta][ip] = 0;
-    }
-
-    /* Set new position also in pressure coordinates... */
-    INTPOL_INIT;
-    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
   }
 }
 

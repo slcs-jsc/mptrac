@@ -154,13 +154,13 @@ int main(
     /* Initialize isosurface data... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
-
-    /* Initialize pressure consistent with zeta... */
+    
+    /* Initialize advection... */
     module_advect_init(&ctl, met0, met1, atm);
-
-    /* Initialize chemical species using meteo data and climatology... */
+    
+    /* Initialize chemistry... */
     module_chem_init(&ctl, clim, met0, met1, atm);
-
+    
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -221,13 +221,9 @@ int main(
 	  module_position(&ctl, met0, met1, atm, dt);
 
 	  /* Advection... */
-	  if (ctl.advect > 0) {
-	    if (ctl.vert_coord_ap == 0)
-	      module_advect(&ctl, met0, met1, atm, dt);
-	    else
-	      module_advect_diabatic(&ctl, met0, met1, atm, dt);
-	  }
-
+	  if (ctl.advect > 0)
+	    module_advect(&ctl, met0, met1, atm, dt);
+	  
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	      || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
