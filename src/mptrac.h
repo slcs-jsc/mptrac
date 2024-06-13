@@ -968,6 +968,93 @@
   (AVO * 1e-6 * ((p) * 100) / (RI * (t)))
 
 /**
+ * @brief Broadcasts a one-dimensional array to all processes in the MPI communicator.
+ *
+ * This macro wraps the `MPI_Bcast` function to simplify broadcasting
+ * a one-dimensional array from the root process (rank 0) to all other
+ * processes in the MPI communicator (MPI_COMM_WORLD).
+ *
+ * @param pointer Pointer to the beginning of the array to be broadcasted.
+ * @param nx      Number of elements in the array.
+ * @param type    MPI data type of the elements in the array.
+ *
+ * @note The root process is assumed to have the correct data in the
+ *       array before calling this macro.  All other processes will
+ *       receive the data from the root process.
+ *
+ * @warning Ensure that the array has enough space allocated on all
+ *          processes to hold the broadcasted data.
+ *
+ * @author Lars Hoffmann
+ */
+#define MPI_BCAST_1D(pointer, nx, type)			\
+  MPI_Bcast(pointer, nx, type, 0, MPI_COMM_WORLD);
+
+/**
+ * @brief Broadcasts a two-dimensional array to all processes in the MPI communicator.
+ *
+ * This macro wraps the `MPI_Bcast` function to broadcast a
+ * two-dimensional array from the root process (rank 0) to all other
+ * processes in the MPI communicator (MPI_COMM_WORLD).  It iterates
+ * over the first dimension of the array and broadcasts each
+ * sub-array.
+ *
+ * @param pointer Pointer to the beginning of the two-dimensional array to be broadcasted.
+ *                It is assumed that the array is allocated as a contiguous block of memory.
+ * @param nx      Number of elements in the first dimension of the array.
+ * @param ny      Number of elements in the second dimension of the array.
+ * @param type    MPI data type of the elements in the array.
+ *
+ * @note The root process is assumed to have the correct data in the
+ *       array before calling this macro.  All other processes will
+ *       receive the data from the root process.
+ *
+ * @warning Ensure that the array has enough space allocated on all
+ *          processes to hold the broadcasted data.  The array should
+ *          be allocated as a contiguous block of memory, or
+ *          adjustments should be made to account for non-contiguous
+ *          memory layouts.
+ *
+ * @author Lars Hoffmann
+ */
+#define MPI_BCAST_2D(pointer, nx, ny, type)				\
+  for (int ix = 0; ix < nx; ix++)					\
+    MPI_Bcast(pointer[ix], ny, type, 0, MPI_COMM_WORLD);
+
+/**
+ * @brief Broadcasts a three-dimensional array to all processes in the MPI communicator.
+ *
+ * This macro wraps the `MPI_Bcast` function to broadcast a
+ * three-dimensional array from the root process (rank 0) to all other
+ * processes in the MPI communicator (MPI_COMM_WORLD).  It iterates
+ * over the first and second dimension of the array and broadcasts
+ * each sub-array.
+ *
+ * @param pointer Pointer to the beginning of the three-dimensional array to be broadcasted.
+ *                It is assumed that the array is allocated as a contiguous block of memory.
+ * @param nx      Number of elements in the first dimension of the array.
+ * @param ny      Number of elements in the second dimension of the array.
+ * @param ny      Number of elements in the third dimension of the array.
+ * @param type    MPI data type of the elements in the array.
+ *
+ * @note The root process is assumed to have the correct data in the
+ *       array before calling this macro.  All other processes will
+ *       receive the data from the root process.
+ *
+ * @warning Ensure that the array has enough space allocated on all
+ *          processes to hold the broadcasted data.  The array should
+ *          be allocated as a contiguous block of memory, or
+ *          adjustments should be made to account for non-contiguous
+ *          memory layouts.
+ *
+ * @author Lars Hoffmann
+ */
+#define MPI_BCAST_3D(pointer, nx, ny, nz, type)				\
+  for (int ix = 0; ix < nx; ix++)					\
+    for (int iy = 0; iy < ny; iy++)					\
+      MPI_Bcast(pointer[ix][iy], nz, type, 0, MPI_COMM_WORLD);
+
+/**
  * @brief Execute a NetCDF command and check for errors.
  *
  * This macro executes a NetCDF command and checks the result. If the
@@ -2020,6 +2107,12 @@
 /*! Dark red color code (writing data). */
 #define NVTX_WRITE 0xFF8B0000
 
+/*! Light green color code (MPI receive). */
+#define NVTX_RECV 0xFFCCFFCB
+
+/*! Dark green color code (MPI send). */
+#define NVTX_SEND 0xFF008B00
+
 /*!
  * \brief Macro for calling `nvtxRangePushEx` to start a named and colored NVTX range.
  *
@@ -2513,6 +2606,9 @@ typedef struct {
 
   /*! Preload meteo data into disk cache (0=no, 1=yes). */
   int met_cache;
+
+  /*! Use MPI to share meteo (0=no, 1=yes). */
+  int met_mpi_share;
 
   /*! Time step for sorting of particle data [s]. */
   double sort_dt;

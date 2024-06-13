@@ -1033,6 +1033,7 @@ void get_met(
 	WARN("Caching command failed!");
     }
   }
+
   /* Read new data for backward trajectories... */
   if (t < (*met0)->time) {
 
@@ -1068,6 +1069,7 @@ void get_met(
 	WARN("Caching command failed!");
     }
   }
+
   /* Check that grids are consistent... */
   if ((*met0)->nx != 0 && (*met1)->nx != 0) {
     if ((*met0)->nx != (*met1)->nx
@@ -5027,6 +5029,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "MET_DT_OUT", -1, "0.1", NULL);
   ctl->met_cache =
     (int) scan_ctl(filename, argc, argv, "MET_CACHE", -1, "0", NULL);
+  ctl->met_mpi_share =
+    (int) scan_ctl(filename, argc, argv, "MET_MPI_SHARE", -1, "0", NULL);
 
   /* Sorting... */
   ctl->sort_dt = scan_ctl(filename, argc, argv, "SORT_DT", -1, "-999", NULL);
@@ -5518,215 +5522,288 @@ int read_met(
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
 
+  /* Initialize rank... */
+  int rank = 0;
+#ifdef MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+
   /* Read netCDF data... */
-  if (ctl->met_type == 0) {
+  if (!ctl->met_mpi_share || rank == 0) {
+    if (ctl->met_type == 0) {
 
-    int ncid;
+      int ncid;
 
-    /* Open netCDF file... */
-    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-      WARN("Cannot open file!");
-      return 0;
+      /* Open netCDF file... */
+      if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+	WARN("Cannot open file!");
+	return 0;
+      }
+
+      /* Read coordinates of meteo data... */
+      read_met_grid(filename, ncid, ctl, met);
+
+      /* Read meteo data on vertical levels... */
+      read_met_levels(ncid, ctl, met);
+
+      /* Extrapolate data for lower boundary... */
+      read_met_extrapolate(met);
+
+      /* Read surface data... */
+      read_met_surface(ncid, met, ctl);
+
+      /* Fix polar winds... */
+      read_met_polar_winds(met);
+
+      /* Create periodic boundary conditions... */
+      read_met_periodic(met);
+
+      /* Downsampling... */
+      read_met_sample(ctl, met);
+
+      /* Calculate geopotential heights... */
+      read_met_geopot(ctl, met);
+
+      /* Calculate potential vorticity... */
+      read_met_pv(met);
+
+      /* Calculate boundary layer data... */
+      read_met_pbl(met);
+
+      /* Calculate tropopause data... */
+      read_met_tropo(ctl, clim, met);
+
+      /* Calculate cloud properties... */
+      read_met_cloud(met);
+
+      /* Calculate convective available potential energy... */
+      read_met_cape(clim, met);
+
+      /* Calculate total column ozone... */
+      read_met_ozone(met);
+
+      /* Detrending... */
+      read_met_detrend(ctl, met);
+
+      /* Check meteo data and smooth zeta profiles ... */
+      if (ctl->vert_coord_ap == 1)
+	read_met_monotonize(met);
+
+      /* Close file... */
+      NC(nc_close(ncid));
     }
 
-    /* Read coordinates of meteo data... */
-    read_met_grid(filename, ncid, ctl, met);
+    /* Read binary data... */
+    else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
-    /* Read meteo data on vertical levels... */
-    read_met_levels(ncid, ctl, met);
+      FILE *in;
 
-    /* Extrapolate data for lower boundary... */
-    read_met_extrapolate(met);
+      double r;
 
-    /* Read surface data... */
-    read_met_surface(ncid, met, ctl);
+      int year, mon, day, hour, min, sec;
 
-    /* Fix polar winds... */
-    read_met_polar_winds(met);
+      /* Set timer... */
+      SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
 
-    /* Create periodic boundary conditions... */
-    read_met_periodic(met);
+      /* Open file... */
+      if (!(in = fopen(filename, "r"))) {
+	WARN("Cannot open file!");
+	return 0;
+      }
 
-    /* Downsampling... */
-    read_met_sample(ctl, met);
+      /* Check type of binary data... */
+      int met_type;
+      FREAD(&met_type, int,
+	    1,
+	    in);
+      if (met_type != ctl->met_type)
+	ERRMSG("Wrong MET_TYPE of binary data!");
 
-    /* Calculate geopotential heights... */
-    read_met_geopot(ctl, met);
+      /* Check version of binary data... */
+      int version;
+      FREAD(&version, int,
+	    1,
+	    in);
+      if (version != 100 && version != 101 && version != 102)
+	ERRMSG("Wrong version of binary data!");
 
-    /* Calculate potential vorticity... */
-    read_met_pv(met);
+      /* Read time... */
+      FREAD(&met->time, double,
+	    1,
+	    in);
+      jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
+      LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+	  met->time, year, mon, day, hour, min);
+      if (year < 1900 || year > 2100 || mon < 1 || mon > 12
+	  || day < 1 || day > 31 || hour < 0 || hour > 23)
+	ERRMSG("Error while reading time!");
 
-    /* Calculate boundary layer data... */
-    read_met_pbl(met);
+      /* Read dimensions... */
+      FREAD(&met->nx, int,
+	    1,
+	    in);
+      LOG(2, "Number of longitudes: %d", met->nx);
+      if (met->nx < 2 || met->nx > EX)
+	ERRMSG("Number of longitudes out of range!");
 
-    /* Calculate tropopause data... */
-    read_met_tropo(ctl, clim, met);
+      FREAD(&met->ny, int,
+	    1,
+	    in);
+      LOG(2, "Number of latitudes: %d", met->ny);
+      if (met->ny < 2 || met->ny > EY)
+	ERRMSG("Number of latitudes out of range!");
 
-    /* Calculate cloud properties... */
-    read_met_cloud(met);
+      FREAD(&met->np, int,
+	    1,
+	    in);
+      LOG(2, "Number of levels: %d", met->np);
+      if (met->np < 2 || met->np > EP)
+	ERRMSG("Number of levels out of range!");
 
-    /* Calculate convective available potential energy... */
-    read_met_cape(clim, met);
+      /* Read grid... */
+      FREAD(met->lon, double,
+	      (size_t) met->nx,
+	    in);
+      LOG(2, "Longitudes: %g, %g ... %g deg",
+	  met->lon[0], met->lon[1], met->lon[met->nx - 1]);
 
-    /* Calculate total column ozone... */
-    read_met_ozone(met);
+      FREAD(met->lat, double,
+	      (size_t) met->ny,
+	    in);
+      LOG(2, "Latitudes: %g, %g ... %g deg",
+	  met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
-    /* Detrending... */
-    read_met_detrend(ctl, met);
+      FREAD(met->p, double,
+	      (size_t) met->np,
+	    in);
+      LOG(2, "Altitude levels: %g, %g ... %g km",
+	  Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
+      LOG(2, "Pressure levels: %g, %g ... %g hPa",
+	  met->p[0], met->p[1], met->p[met->np - 1]);
 
-    /* Check meteo data and smooth zeta profiles ... */
-    if (ctl->vert_coord_ap == 1)
-      read_met_monotonize(met);
+      /* Read surface data... */
+      read_met_bin_2d(in, met, met->ps, "PS");
+      read_met_bin_2d(in, met, met->ts, "TS");
+      read_met_bin_2d(in, met, met->zs, "ZS");
+      read_met_bin_2d(in, met, met->us, "US");
+      read_met_bin_2d(in, met, met->vs, "VS");
+      if (version >= 101) {
+	read_met_bin_2d(in, met, met->lsm, "LSM");
+	read_met_bin_2d(in, met, met->sst, "SST");
+      }
+      read_met_bin_2d(in, met, met->pbl, "PBL");
+      read_met_bin_2d(in, met, met->pt, "PT");
+      read_met_bin_2d(in, met, met->tt, "TT");
+      read_met_bin_2d(in, met, met->zt, "ZT");
+      read_met_bin_2d(in, met, met->h2ot, "H2OT");
+      read_met_bin_2d(in, met, met->pct, "PCT");
+      read_met_bin_2d(in, met, met->pcb, "PCB");
+      read_met_bin_2d(in, met, met->cl, "CL");
+      read_met_bin_2d(in, met, met->plcl, "PLCL");
+      read_met_bin_2d(in, met, met->plfc, "PLFC");
+      read_met_bin_2d(in, met, met->pel, "PEL");
+      read_met_bin_2d(in, met, met->cape, "CAPE");
+      read_met_bin_2d(in, met, met->cin, "CIN");
 
-    /* Close file... */
-    NC(nc_close(ncid));
+      /* Read level data... */
+      read_met_bin_3d(in, ctl, met, met->z, "Z");
+      read_met_bin_3d(in, ctl, met, met->t, "T");
+      read_met_bin_3d(in, ctl, met, met->u, "U");
+      read_met_bin_3d(in, ctl, met, met->v, "V");
+      read_met_bin_3d(in, ctl, met, met->w, "W");
+      read_met_bin_3d(in, ctl, met, met->pv, "PV");
+      read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
+      read_met_bin_3d(in, ctl, met, met->o3, "O3");
+      read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
+      if (version >= 102)
+	read_met_bin_3d(in, ctl, met, met->rwc, "RWC");
+      read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
+      if (version >= 102)
+	read_met_bin_3d(in, ctl, met, met->swc, "SWC");
+      if (version >= 101)
+	read_met_bin_3d(in, ctl, met, met->cc, "CC");
+
+      /* Read final flag... */
+      int final;
+      FREAD(&final, int,
+	    1,
+	    in);
+      if (final != 999)
+	ERRMSG("Error while reading binary data!");
+
+      /* Close file... */
+      fclose(in);
+    }
+
+    /* Not implemented... */
+    else
+      ERRMSG("MET_TYPE not implemented!");
   }
 
-  /* Read binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
-
-    FILE *in;
-
-    double r;
-
-    int year, mon, day, hour, min, sec;
+  /* Broadcast data via MPI... */
+#ifdef MPI
+  if (ctl->met_mpi_share) {
 
     /* Set timer... */
-    SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
+    SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
+    LOG(2, "Broadcast data on rank %d...", rank);
 
-    /* Open file... */
-    if (!(in = fopen(filename, "r"))) {
-      WARN("Cannot open file!");
-      return 0;
-    }
+    /* Broadcast 1D data... */
+    MPI_BCAST_1D(&met->time, 1, MPI_DOUBLE);
+    MPI_BCAST_1D(&met->nx, 1, MPI_INT);
+    MPI_BCAST_1D(&met->ny, 1, MPI_INT);
+    MPI_BCAST_1D(&met->np, 1, MPI_INT);
+    MPI_BCAST_1D(&met->npl, 1, MPI_INT);
+    MPI_BCAST_1D(met->lon, met->nx, MPI_DOUBLE);
+    MPI_BCAST_1D(met->lat, met->ny, MPI_DOUBLE);
+    MPI_BCAST_1D(met->p, met->np, MPI_DOUBLE);
+    MPI_BCAST_1D(met->hybrid, met->npl, MPI_DOUBLE);
 
-    /* Check type of binary data... */
-    int met_type;
-    FREAD(&met_type, int,
-	  1,
-	  in);
-    if (met_type != ctl->met_type)
-      ERRMSG("Wrong MET_TYPE of binary data!");
+    /* Broadcast 2D data... */
+    MPI_BCAST_2D(met->ps, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->ts, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->zs, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->us, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->vs, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->lsm, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->sst, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pbl, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pt, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->tt, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->zt, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->h2ot, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pct, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pcb, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->cl, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->plcl, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->plfc, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->pel, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->cape, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->cin, met->nx, met->ny, MPI_FLOAT);
+    MPI_BCAST_2D(met->o3c, met->nx, met->ny, MPI_FLOAT);
 
-    /* Check version of binary data... */
-    int version;
-    FREAD(&version, int,
-	  1,
-	  in);
-    if (version != 100 && version != 101 && version != 102)
-      ERRMSG("Wrong version of binary data!");
-
-    /* Read time... */
-    FREAD(&met->time, double,
-	  1,
-	  in);
-    jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
-    LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-	met->time, year, mon, day, hour, min);
-    if (year < 1900 || year > 2100 || mon < 1 || mon > 12
-	|| day < 1 || day > 31 || hour < 0 || hour > 23)
-      ERRMSG("Error while reading time!");
-
-    /* Read dimensions... */
-    FREAD(&met->nx, int,
-	  1,
-	  in);
-    LOG(2, "Number of longitudes: %d", met->nx);
-    if (met->nx < 2 || met->nx > EX)
-      ERRMSG("Number of longitudes out of range!");
-
-    FREAD(&met->ny, int,
-	  1,
-	  in);
-    LOG(2, "Number of latitudes: %d", met->ny);
-    if (met->ny < 2 || met->ny > EY)
-      ERRMSG("Number of latitudes out of range!");
-
-    FREAD(&met->np, int,
-	  1,
-	  in);
-    LOG(2, "Number of levels: %d", met->np);
-    if (met->np < 2 || met->np > EP)
-      ERRMSG("Number of levels out of range!");
-
-    /* Read grid... */
-    FREAD(met->lon, double,
-	    (size_t) met->nx,
-	  in);
-    LOG(2, "Longitudes: %g, %g ... %g deg",
-	met->lon[0], met->lon[1], met->lon[met->nx - 1]);
-
-    FREAD(met->lat, double,
-	    (size_t) met->ny,
-	  in);
-    LOG(2, "Latitudes: %g, %g ... %g deg",
-	met->lat[0], met->lat[1], met->lat[met->ny - 1]);
-
-    FREAD(met->p, double,
-	    (size_t) met->np,
-	  in);
-    LOG(2, "Altitude levels: %g, %g ... %g km",
-	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
-    LOG(2, "Pressure levels: %g, %g ... %g hPa",
-	met->p[0], met->p[1], met->p[met->np - 1]);
-
-    /* Read surface data... */
-    read_met_bin_2d(in, met, met->ps, "PS");
-    read_met_bin_2d(in, met, met->ts, "TS");
-    read_met_bin_2d(in, met, met->zs, "ZS");
-    read_met_bin_2d(in, met, met->us, "US");
-    read_met_bin_2d(in, met, met->vs, "VS");
-    if (version >= 101) {
-      read_met_bin_2d(in, met, met->lsm, "LSM");
-      read_met_bin_2d(in, met, met->sst, "SST");
-    }
-    read_met_bin_2d(in, met, met->pbl, "PBL");
-    read_met_bin_2d(in, met, met->pt, "PT");
-    read_met_bin_2d(in, met, met->tt, "TT");
-    read_met_bin_2d(in, met, met->zt, "ZT");
-    read_met_bin_2d(in, met, met->h2ot, "H2OT");
-    read_met_bin_2d(in, met, met->pct, "PCT");
-    read_met_bin_2d(in, met, met->pcb, "PCB");
-    read_met_bin_2d(in, met, met->cl, "CL");
-    read_met_bin_2d(in, met, met->plcl, "PLCL");
-    read_met_bin_2d(in, met, met->plfc, "PLFC");
-    read_met_bin_2d(in, met, met->pel, "PEL");
-    read_met_bin_2d(in, met, met->cape, "CAPE");
-    read_met_bin_2d(in, met, met->cin, "CIN");
-
-    /* Read level data... */
-    read_met_bin_3d(in, ctl, met, met->z, "Z");
-    read_met_bin_3d(in, ctl, met, met->t, "T");
-    read_met_bin_3d(in, ctl, met, met->u, "U");
-    read_met_bin_3d(in, ctl, met, met->v, "V");
-    read_met_bin_3d(in, ctl, met, met->w, "W");
-    read_met_bin_3d(in, ctl, met, met->pv, "PV");
-    read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
-    read_met_bin_3d(in, ctl, met, met->o3, "O3");
-    read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
-    if (version >= 102)
-      read_met_bin_3d(in, ctl, met, met->rwc, "RWC");
-    read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
-    if (version >= 102)
-      read_met_bin_3d(in, ctl, met, met->swc, "SWC");
-    if (version >= 101)
-      read_met_bin_3d(in, ctl, met, met->cc, "CC");
-
-    /* Read final flag... */
-    int final;
-    FREAD(&final, int,
-	  1,
-	  in);
-    if (final != 999)
-      ERRMSG("Error while reading binary data!");
-
-    /* Close file... */
-    fclose(in);
+    /* Broadcast 3D data... */
+    MPI_BCAST_3D(met->z, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->t, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->u, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->v, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->w, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->pv, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->h2o, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->o3, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->lwc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->rwc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->iwc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->swc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->cc, met->nx, met->ny, met->np, MPI_FLOAT);
+    MPI_BCAST_3D(met->pl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->ul, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->vl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->wl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->zetal, met->nx, met->ny, met->npl, MPI_FLOAT);
+    MPI_BCAST_3D(met->zeta_dotl, met->nx, met->ny, met->npl, MPI_FLOAT);
   }
-
-  /* Not implemented... */
-  else
-    ERRMSG("MET_TYPE not implemented!");
+#endif
 
   /* Copy wind data to cache... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -9689,6 +9766,8 @@ void write_output(
   /* Write VTK data... */
   if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
     static int nvtk;
+    if (t == ctl->t_start)
+      nvtk = 0;
     sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
     write_vtk(filename, ctl, atm, t);
   }
