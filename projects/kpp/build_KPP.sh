@@ -2,7 +2,9 @@
 
 # Check arguments...
 if [ $# -ne 2 ] ; then
-    echo "usage: $0 <kppdir> <1:GPU on; 0:GPU off>"
+    echo "Usage: $0 <kppdir> <1:GPU on; 0:GPU off>"
+    echo "Example: ./build.sh chem 0"
+    echo "Note: now the GPU code of kpp_chem module is still under testing and not finished yet."
     exit
 fi
 
