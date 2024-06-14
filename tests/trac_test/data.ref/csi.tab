@@ -15,9 +15,10 @@
 # $15 = column density mean error (F - O) [kg/m^2]
 # $16 = column density root mean square error (RMSE) [kg/m^2]
 # $17 = column density mean absolute error [kg/m^2]
-# $18 = number of data points
+# $18 = Log-likelihood function (Observation standard error weighted sum of square error)
+# $19 = number of data points
 
-360547200.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan 0
-360633600.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan 0
-360720000.00 35 1 98 36 133 369.444 97.2222 73.6842 26.1194 16.7413 15.5713 0.636444 0.503746 -0.000809817 0.00189848 0.00105095 134
-360806400.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan 0
+360547200.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan nan 0
+360633600.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan nan 0
+360720000.00 35 1 98 36 133 369.444 97.2222 73.6842 26.1194 16.7413 15.5713 0.636444 0.503746 -0.000809817 0.00189848 0.00105095 -7.31528 134
+360806400.00 0 0 0 0 0 nan nan nan nan nan nan nan nan nan nan nan nan 0

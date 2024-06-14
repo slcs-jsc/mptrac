@@ -8711,8 +8711,8 @@ void write_csi(
 
   static FILE *out;
 
-  static double *modmean, *obsmean, *rt, *rz, *rlon, *rlat, *robs, *area,
-    dlon, dlat, dz, x[NCSI], y[NCSI], kz[EP], kw[EP];
+  static double *modmean, *obsmean, *obs_std, *rt, *rz, *rlon, *rlat, *robs, *area,
+    dlon, dlat, dz, x[NCSI], y[NCSI], obs_stdn[NCSI], kz[EP], kw[EP];
 
   static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs, nk;
 
@@ -8772,7 +8772,8 @@ void write_csi(
 	    "# $15 = column density mean error (F - O) [kg/m^2]\n"
 	    "# $16 = column density root mean square error (RMSE) [kg/m^2]\n"
 	    "# $17 = column density mean absolute error [kg/m^2]\n"
-	    "# $18 = number of data points\n\n");
+      "# $18 = Log-likelihood function (Observation standard error weighted sum of square error)\n"
+	    "# $19 = number of data points\n\n");
 
     /* Set grid box size... */
     dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
@@ -8796,6 +8797,8 @@ void write_csi(
   ALLOC(obsmean, double,
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
   ALLOC(obscount, int,
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obs_std, double,
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
 
   /* Loop over observations... */
@@ -8824,6 +8827,7 @@ void write_csi(
     /* Get mean observation index... */
     int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
     obsmean[idx] += robs[i];
+    obs_std[idx] += SQR(robs[i]);
     obscount[idx]++;
   }
 
@@ -8857,8 +8861,11 @@ void write_csi(
 
 	/* Calculate mean observation index... */
 	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-	if (obscount[idx] > 0)
+	if (obscount[idx] > 0){
 	  obsmean[idx] /= obscount[idx];
+    obs_std[idx] -= SQR(obsmean[idx]);
+    obs_std[idx] = sqrt(obs_std[idx]);
+  }
 
 	/* Calculate column density... */
 	if (modmean[idx] > 0)
@@ -8884,6 +8891,7 @@ void write_csi(
 		|| modmean[idx] >= ctl->csi_modmin)) {
 	  x[n] = modmean[idx];
 	  y[n] = obsmean[idx];
+    obs_stdn[n] = obs_std[idx];
 	  if ((++n) > NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
@@ -8894,7 +8902,7 @@ void write_csi(
 
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
-    static double work[2 * NCSI];
+    static double work[2 * NCSI], work2[2 * NCSI];;
     int n_obs = cx + cy;
     int n_for = cx + cz;
     double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
@@ -8908,18 +8916,21 @@ void write_csi(
       (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : NAN;
     double rho_s =
       (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : NAN;
-    for (int i = 0; i < n; i++)
+    for (int i = 0; i < n; i++){
       work[i] = x[i] - y[i];
+      work2[i] = (obs_stdn[i] != 0) ? (x[i] - y[i])/obs_stdn[i] : 0;
+    }
     double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
     double rmse = (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
 							 0.0) : NAN;
     double absdev =
       (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : NAN;
+    double loglikelihood = (n > 0) ? gsl_stats_tss(work2, 1, (size_t) n) * (-0.5) : GSL_NAN;
 
     /* Write... */
-    fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %d\n",
+    fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
 	    t, cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets,
-	    rho_p, rho_s, mean, rmse, absdev, n);
+	    rho_p, rho_s, mean, rmse, absdev, loglikelihood, n);
 
     /* Set counters to zero... */
     n = ct = cx = cy = cz = 0;
