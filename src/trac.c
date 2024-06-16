@@ -154,13 +154,13 @@ int main(
     /* Initialize isosurface data... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
       module_isosurf_init(&ctl, met0, met1, atm, cache);
-    
+
     /* Initialize advection... */
     module_advect_init(&ctl, met0, met1, atm);
-    
+
     /* Initialize chemistry... */
     module_chem_init(&ctl, clim, met0, met1, atm);
-    
+
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -223,7 +223,7 @@ int main(
 	  /* Advection... */
 	  if (ctl.advect > 0)
 	    module_advect(&ctl, met0, met1, atm, dt);
-	  
+
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	      || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)

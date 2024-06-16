@@ -2192,16 +2192,17 @@ void module_advect(
 
   /* Pressure coordinate... */
   if (ctl->vert_coord_ap == 0) {
-    
+
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
-      
+
       /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3] = { 0, 0, 0 };
-      
+      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3] =
+	{ 0, 0, 0 };
+
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
-	
+
 	/* Set position... */
 	if (i == 0) {
 	  dts = 0.0;
@@ -2215,11 +2216,11 @@ void module_advect(
 	  x[2] = atm->p[ip] + dts * w[i - 1];
 	}
 	double tm = atm->time[ip] + dts;
-	
+
 	/* Interpolate meteo data... */
 	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
 			    &u[i], &v[i], &w[i]);
-	
+
 	/* Get mean wind... */
 	double k = 1.0;
 	if (ctl->advect == 2)
@@ -2230,7 +2231,7 @@ void module_advect(
 	vm += k * v[i];
 	wm += k * w[i];
       }
-      
+
       /* Set new position... */
       atm->time[ip] += dt[ip];
       atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
@@ -2242,10 +2243,10 @@ void module_advect(
 
   /* Zeta coordinate... */
   else if (ctl->vert_coord_ap == 1) {
-    
+
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
-      
+
       /* If other modules have changed p translate it into a zeta... */
       if (ctl->cpl_zeta_and_press_modules > 0) {
 	INTPOL_INIT;
@@ -2254,14 +2255,14 @@ void module_advect(
 			    atm->lon[ip], atm->lat[ip],
 			    &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
       }
-      
+
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0,
 	x[3] = { 0, 0, 0 };
-      
+
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
-	
+
 	/* Set position... */
 	if (i == 0) {
 	  dts = 0.0;
@@ -2275,7 +2276,7 @@ void module_advect(
 	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
 	}
 	double tm = atm->time[ip] + dts;
-	
+
 	/* Interpolate meteo data... */
 	INTPOL_INIT;
 	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
@@ -2283,9 +2284,9 @@ void module_advect(
 	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
 			    met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
 	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
-			    met1->zetal, met1->zeta_dotl, tm, x[2], x[0], x[1],
-			    &zeta_dot[i], ci, cw, 0);
-	
+			    met1->zetal, met1->zeta_dotl, tm, x[2], x[0],
+			    x[1], &zeta_dot[i], ci, cw, 0);
+
 	/* Get mean wind... */
 	double k = 1.0;
 	if (ctl->advect == 2)
@@ -2296,19 +2297,19 @@ void module_advect(
 	vm += k * v[i];
 	zeta_dotm += k * zeta_dot[i];
       }
-      
+
       /* Set new position... */
       atm->time[ip] += dt[ip];
       atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
 			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
       atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
-      
+
       /* Check if zeta is below zero... */
       if (atm->q[ctl->qnt_zeta][ip] < 0) {
 	atm->q[ctl->qnt_zeta][ip] = 0;
       }
-      
+
       /* Set new position also in pressure coordinates... */
       INTPOL_INIT;
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
@@ -8711,8 +8712,8 @@ void write_csi(
 
   static FILE *out;
 
-  static double *modmean, *obsmean, *obs_std, *rt, *rz, *rlon, *rlat, *robs, *area,
-    dlon, dlat, dz, x[NCSI], y[NCSI], obs_stdn[NCSI], kz[EP], kw[EP];
+  static double *modmean, *obsmean, *obsstd, *rt, *rz, *rlon, *rlat, *robs,
+    *area, dlon, dlat, dz, x[NCSI], y[NCSI], obsstdn[NCSI], kz[EP], kw[EP];
 
   static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs, nk;
 
@@ -8772,7 +8773,7 @@ void write_csi(
 	    "# $15 = column density mean error (F - O) [kg/m^2]\n"
 	    "# $16 = column density root mean square error (RMSE) [kg/m^2]\n"
 	    "# $17 = column density mean absolute error [kg/m^2]\n"
-      "# $18 = Log-likelihood function (Observation standard error weighted sum of square error)\n"
+	    "# $18 = log-likelihood function (observation standard error weighted sum of square error)\n"
 	    "# $19 = number of data points\n\n");
 
     /* Set grid box size... */
@@ -8798,7 +8799,7 @@ void write_csi(
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
   ALLOC(obscount, int,
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
-  ALLOC(obs_std, double,
+  ALLOC(obsstd, double,
 	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
 
   /* Loop over observations... */
@@ -8827,7 +8828,7 @@ void write_csi(
     /* Get mean observation index... */
     int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
     obsmean[idx] += robs[i];
-    obs_std[idx] += SQR(robs[i]);
+    obsstd[idx] += SQR(robs[i]);
     obscount[idx]++;
   }
 
@@ -8861,11 +8862,11 @@ void write_csi(
 
 	/* Calculate mean observation index... */
 	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-	if (obscount[idx] > 0){
+	if (obscount[idx] > 0) {
 	  obsmean[idx] /= obscount[idx];
-    obs_std[idx] -= SQR(obsmean[idx]);
-    obs_std[idx] = sqrt(obs_std[idx]);
-  }
+	  obsstd[idx] -= SQR(obsmean[idx]);
+	  obsstd[idx] = sqrt(obsstd[idx]);
+	}
 
 	/* Calculate column density... */
 	if (modmean[idx] > 0)
@@ -8891,7 +8892,7 @@ void write_csi(
 		|| modmean[idx] >= ctl->csi_modmin)) {
 	  x[n] = modmean[idx];
 	  y[n] = obsmean[idx];
-    obs_stdn[n] = obs_std[idx];
+	  obsstdn[n] = obsstd[idx];
 	  if ((++n) > NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
@@ -8916,21 +8917,23 @@ void write_csi(
       (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : NAN;
     double rho_s =
       (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : NAN;
-    for (int i = 0; i < n; i++){
+    for (int i = 0; i < n; i++) {
       work[i] = x[i] - y[i];
-      work2[i] = (obs_stdn[i] != 0) ? (x[i] - y[i])/obs_stdn[i] : 0;
+      work2[i] = (obsstdn[i] != 0) ? (x[i] - y[i]) / obsstdn[i] : 0;
     }
     double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
     double rmse = (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
 							 0.0) : NAN;
     double absdev =
       (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : NAN;
-    double loglikelihood = (n > 0) ? gsl_stats_tss(work2, 1, (size_t) n) * (-0.5) : GSL_NAN;
+    double loglikelihood =
+      (n > 0) ? gsl_stats_tss(work2, 1, (size_t) n) * (-0.5) : GSL_NAN;
 
     /* Write... */
-    fprintf(out, "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
-	    t, cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets,
-	    rho_p, rho_s, mean, rmse, absdev, loglikelihood, n);
+    fprintf(out,
+	    "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n", t,
+	    cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets, rho_p,
+	    rho_s, mean, rmse, absdev, loglikelihood, n);
 
     /* Set counters to zero... */
     n = ct = cx = cy = cz = 0;
@@ -8940,6 +8943,7 @@ void write_csi(
   free(modmean);
   free(obsmean);
   free(obscount);
+  free(obsstd);
 
   /* Finalize... */
   if (t == ctl->t_stop) {
