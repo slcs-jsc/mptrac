@@ -4233,6 +4233,32 @@ void intpol_met_space_3d(
   int init);
 
 /**
+ * @brief Interpolates a meteorological variable in 3D space (longitude, latitude, pressure).
+ *
+ * This function performs trilinear interpolation of a meteorological variable
+ * based on the provided longitude, latitude, and pressure coordinates. The
+ * meteorological data is given in a 3D array, and the function calculates the
+ * interpolated value and stores it in the variable pointed to by `var`.
+ * The function operates on model level data.
+ *
+ * @param[in]  met   Pointer to a `met_t` structure containing the meteorological data.
+ * @param[in]  array 3D array of meteorological data with dimensions [EX][EY][EP].
+ * @param[in]  p     Pressure coordinate at which to interpolate.
+ * @param[in]  lon   Longitude coordinate at which to interpolate.
+ * @param[in]  lat   Latitude coordinate at which to interpolate.
+ * @param[out] var   Pointer to a double where the interpolated value will be stored.
+ *
+ * @author Lars Hoffmann
+ */
+void intpol_met_space_3d_ml(
+  met_t * met,
+  float array[EX][EY][EP],
+  double p,
+  double lon,
+  double lat,
+  double *var);
+
+/**
  * @brief Interpolates meteorological variables in 2D space.
  *
  * This function interpolates meteorological variables at a specified
@@ -4369,6 +4395,39 @@ void intpol_met_time_3d(
   int *ci,
   double *cw,
   int init);
+
+/**
+ * @brief Interpolates a meteorological variable in time and 3D space (longitude, latitude, pressure).
+ *
+ * This function performs spatiotemporal interpolation of a meteorological
+ * variable based on the provided longitude, latitude, pressure, and timestamp. 
+ * The meteorological data is given in two 3D arrays corresponding to two 
+ * different time steps, and the function calculates the interpolated value 
+ * and stores it in the variable pointed to by `var`.
+ * The function operates on model level data.
+ *
+ * @param[in]  met0   Pointer to a `met_t` structure containing the meteorological data for the first time step.
+ * @param[in]  array0 3D array of meteorological data for the first time step with dimensions [EX][EY][EP].
+ * @param[in]  met1   Pointer to a `met_t` structure containing the meteorological data for the second time step.
+ * @param[in]  array1 3D array of meteorological data for the second time step with dimensions [EX][EY][EP].
+ * @param[in]  ts     Timestamp at which to interpolate.
+ * @param[in]  p      Pressure coordinate at which to interpolate.
+ * @param[in]  lon    Longitude coordinate at which to interpolate.
+ * @param[in]  lat    Latitude coordinate at which to interpolate.
+ * @param[out] var    Pointer to a double where the interpolated value will be stored.
+ *
+ * @author Lars Hoffmann
+ */
+void intpol_met_time_3d_ml(
+  met_t * met0,
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float array1[EX][EY][EP],
+  double ts,
+  double p,
+  double lon,
+  double lat,
+  double *var);
 
 /**
  * @brief Interpolates meteorological data in 2D space and time.
@@ -4671,6 +4730,28 @@ void level_definitions(
  */
 int locate_irr(
   const double *xx,
+  const int n,
+  const double x);
+
+/**
+ * @brief Locates the index of a given value within a sorted array of floats with irregular spacing.
+ *
+ * This function returns the index of the interval in which the given value `x`
+ * falls within a sorted array `xx`. It uses a binary search algorithm to efficiently
+ * locate the interval, handling both ascending and descending order of the array.
+ *
+ * @param[in] xx Pointer to the first element of a sorted array of floats.
+ * @param[in] n  The number of elements in the array `xx`.
+ * @param[in] x  The value to locate within the array `xx`.
+ *
+ * @return The index `i` such that `xx[i] <= x < xx[i+1]` for an ascending array,
+ *         or `xx[i] >= x > xx[i+1]` for a descending array. If `x` is out of
+ *         the array bounds, the function returns the nearest valid index.
+ *
+ * @author Lars Hoffmann
+ */
+int locate_irr_float(
+  const float *xx,
   const int n,
   const double x);
 

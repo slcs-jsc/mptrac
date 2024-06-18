@@ -1454,6 +1454,55 @@ void intpol_met_space_3d(
 
 /*****************************************************************************/
 
+void intpol_met_space_3d_ml(
+  met_t * met,
+  float array[EX][EY][EP],
+  double p,
+  double lon,
+  double lat,
+  double *var) {
+
+  /* Check longitude... */
+  if (met->lon[met->nx - 1] > 180 && lon < 0)
+    lon += 360;
+
+  /* Get horizontal indices... */
+  int ix = locate_reg(met->lon, met->nx, lon);
+  int iy = locate_reg(met->lat, met->ny, lat);
+
+  /* Interpolate vertically... */
+  int iz = locate_irr_float(met->pl[ix][iy], met->npl, p);
+  double aux00 = LIN(met->pl[ix][iy][iz],
+		     array[ix][iy][iz],
+		     met->pl[ix][iy][iz + 1],
+		     array[ix][iy][iz + 1], p);
+
+  iz = locate_irr_float(met->pl[ix][iy + 1], met->npl, p);
+  double aux01 = LIN(met->pl[ix][iy + 1][iz],
+		     array[ix][iy + 1][iz],
+		     met->pl[ix][iy + 1][iz + 1],
+		     array[ix][iy + 1][iz + 1], p);
+
+  iz = locate_irr_float(met->pl[ix + 1][iy], met->npl, p);
+  double aux10 = LIN(met->pl[ix + 1][iy][iz],
+		     array[ix + 1][iy][iz],
+		     met->pl[ix + 1][iy][iz + 1],
+		     array[ix + 1][iy][iz + 1], p);
+
+  iz = locate_irr_float(met->pl[ix + 1][iy + 1], met->npl, p);
+  double aux11 = LIN(met->pl[ix + 1][iy + 1][iz],
+		     array[ix + 1][iy + 1][iz],
+		     met->pl[ix + 1][iy + 1][iz + 1],
+		     array[ix + 1][iy + 1][iz + 1], p);
+
+  /* Interpolate horizontally... */
+  double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat);
+  double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat);
+  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon);
+}
+
+/*****************************************************************************/
+
 void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
@@ -1637,6 +1686,29 @@ void intpol_met_time_3d(
 
   /* Interpolate... */
   *var = wt * (var0 - var1) + var1;
+}
+
+/*****************************************************************************/
+
+void intpol_met_time_3d_ml(
+  met_t * met0,
+  float array0[EX][EY][EP],
+  met_t * met1,
+  float array1[EX][EY][EP],
+  double ts,
+  double p,
+  double lon,
+  double lat,
+  double *var) {
+
+  double var0, var1;
+
+  /* Spatial interpolation... */
+  intpol_met_space_3d_ml(met0, array0, p, lon, lat, &var0);
+  intpol_met_space_3d_ml(met1, array1, p, lon, lat, &var1);
+
+  /* Interpolate... */
+  *var = LIN(met0->time, var0, met1->time, var1, ts);
 }
 
 /*****************************************************************************/
@@ -2082,6 +2154,36 @@ void level_definitions(
 
 int locate_irr(
   const double *xx,
+  const int n,
+  const double x) {
+
+  int ilo = 0;
+  int ihi = n - 1;
+  int i = (ihi + ilo) >> 1;
+
+  if (xx[i] < xx[i + 1])
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (xx[i] > x)
+	ihi = i;
+      else
+	ilo = i;
+  } else
+    while (ihi > ilo + 1) {
+      i = (ihi + ilo) >> 1;
+      if (xx[i] <= x)
+	ihi = i;
+      else
+	ilo = i;
+    }
+
+  return ilo;
+}
+
+/*****************************************************************************/
+
+int locate_irr_float(
+  const float *xx,
   const int n,
   const double x) {
 
