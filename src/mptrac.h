@@ -3459,9 +3459,6 @@ typedef struct {
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
 
-  /*! Cache for wind data. */
-  float uvw[EX][EY][EP][3];
-
 } met_t;
 
 /* ------------------------------------------------------------
@@ -4303,53 +4300,6 @@ void intpol_met_space_2d(
   int init);
 
 /**
- * @brief Interpolates wind components (u, v, and w) in 3D space.
- *
- * This function interpolates wind components (u, v, and w) at a
- * specified geographical position and pressure level. It calculates
- * the interpolated values based on the values provided at neighboring
- * grid points and performs interpolation in longitude, latitude, and
- * pressure dimensions.
- *
- * @param met Pointer to the meteorological data.
- * @param p Pressure level at which to interpolate.
- * @param lon Longitude at which to interpolate.
- * @param lat Latitude at which to interpolate.
- * @param u Pointer to store the interpolated u-component of wind.
- * @param v Pointer to store the interpolated v-component of wind.
- * @param w Pointer to store the interpolated w-component of wind.
- * @param ci Array to store the calculated indices.
- * @param cw Array to store the weighting factors.
- * @param init Flag indicating if it's the first call (1) or not (0).
- *
- * The function first checks the longitude and adjusts it if necessary
- * to ensure it falls within the valid range. It then calculates the
- * interpolation indices based on the provided longitude, latitude,
- * and pressure level. Next, it computes the interpolation weights for
- * longitude, latitude, and pressure level.
- *
- * The function interpolates vertically for each wind component and
- * stores the interpolated values in the memory locations pointed to
- * by `u`, `v`, and `w`.
- *
- * @note Ensure that the `ci` and `cw` arrays have sufficient memory allocated
- *       before calling this function.
- *
- * @author Lars Hoffmann
- */
-void intpol_met_space_uvw(
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *w,
-  int *ci,
-  double *cw,
-  int init);
-
-/**
  * @brief Interpolates meteorological data in 3D space and time.
  *
  * This function interpolates meteorological data in three dimensions
@@ -4475,45 +4425,6 @@ void intpol_met_time_2d(
   int *ci,
   double *cw,
   int init);
-
-/**
- * @brief Interpolates meteorological data in 3D space and time for wind components.
- *
- * This function interpolates meteorological data in three dimensions
- * (longitude, latitude, and altitude) and time for wind components
- * (u, v, and w). It calculates the interpolated values based on the
- * values provided at neighboring grid points and performs
- * interpolation both spatially and temporally.
- *
- * @param met0 Pointer to the meteorological data at time t0.
- * @param met1 Pointer to the meteorological data at time t1.
- * @param ts Time stamp at which to interpolate.
- * @param p Pressure level at which to interpolate.
- * @param lon Longitude at which to interpolate.
- * @param lat Latitude at which to interpolate.
- * @param u Pointer to store the interpolated u-component of wind.
- * @param v Pointer to store the interpolated v-component of wind.
- * @param w Pointer to store the interpolated w-component of wind.
- *
- * The function first performs spatial interpolation for both time
- * instances (t0 and t1) using the `intpol_met_space_uvw` function. It
- * then calculates the weighting factor `wt` based on the time stamp
- * `ts`. Finally, it performs temporal interpolation using the
- * interpolated values at t0 and t1 along with the weighting factor to
- * compute the final interpolated values stored in `u`, `v`, and `w`.
- *
- * @author Lars Hoffmann
- */
-void intpol_met_time_uvw(
-  met_t * met0,
-  met_t * met1,
-  double ts,
-  double p,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *w);
 
 /**
  * @brief Interpolates tropopause data in 3D (latitude, longitude, and time).
@@ -7987,14 +7898,15 @@ void write_vtk(
 #pragma acc routine (clim_zm)
 #pragma acc routine (intpol_met_4d_coord)
 #pragma acc routine (intpol_met_space_3d)
+#pragma acc routine (intpol_met_space_3d_ml)
 #pragma acc routine (intpol_met_space_2d)
-#pragma acc routine (intpol_met_space_uvw)
 #pragma acc routine (intpol_met_time_3d)
+#pragma acc routine (intpol_met_time_3d_ml)
 #pragma acc routine (intpol_met_time_2d)
-#pragma acc routine (intpol_met_time_uvw)
 #pragma acc routine (kernel_weight)
 #pragma acc routine (lapse_rate)
 #pragma acc routine (locate_irr)
+#pragma acc routine (locate_irr_float)
 #pragma acc routine (locate_reg)
 #pragma acc routine (locate_vert)
 #pragma acc routine (locate_irr_3d)

@@ -1560,107 +1560,6 @@ void intpol_met_space_2d(
 
 /*****************************************************************************/
 
-void intpol_met_space_uvw(
-  met_t * met,
-  double p,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *w,
-  int *ci,
-  double *cw,
-  int init) {
-
-  /* Initialize interpolation... */
-  if (init) {
-
-    /* Check longitude... */
-    if (met->lon[met->nx - 1] > 180 && lon < 0)
-      lon += 360;
-
-    /* Get interpolation indices... */
-    ci[0] = locate_irr(met->p, met->np, p);
-    ci[1] = locate_reg(met->lon, met->nx, lon);
-    ci[2] = locate_reg(met->lat, met->ny, lat);
-
-    /* Get interpolation weights... */
-    cw[0] = (met->p[ci[0] + 1] - p)
-      / (met->p[ci[0] + 1] - met->p[ci[0]]);
-    cw[1] = (met->lon[ci[1] + 1] - lon)
-      / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
-    cw[2] = (met->lat[ci[2] + 1] - lat)
-      / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
-  }
-
-  /* Interpolate vertically... */
-  double u00 =
-    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][0] -
-	     met->uvw[ci[1]][ci[2]][ci[0] + 1][0])
-    + met->uvw[ci[1]][ci[2]][ci[0] + 1][0];
-  double u01 =
-    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][0] -
-	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][0])
-    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][0];
-  double u10 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][0] -
-	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][0])
-    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][0];
-  double u11 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][0] -
-	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][0])
-    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][0];
-
-  double v00 =
-    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][1] -
-	     met->uvw[ci[1]][ci[2]][ci[0] + 1][1])
-    + met->uvw[ci[1]][ci[2]][ci[0] + 1][1];
-  double v01 =
-    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][1] -
-	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][1])
-    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][1];
-  double v10 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][1] -
-	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][1])
-    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][1];
-  double v11 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][1] -
-	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][1])
-    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][1];
-
-  double w00 =
-    cw[0] * (met->uvw[ci[1]][ci[2]][ci[0]][2] -
-	     met->uvw[ci[1]][ci[2]][ci[0] + 1][2])
-    + met->uvw[ci[1]][ci[2]][ci[0] + 1][2];
-  double w01 =
-    cw[0] * (met->uvw[ci[1]][ci[2] + 1][ci[0]][2] -
-	     met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][2])
-    + met->uvw[ci[1]][ci[2] + 1][ci[0] + 1][2];
-  double w10 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2]][ci[0]][2] -
-	     met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][2])
-    + met->uvw[ci[1] + 1][ci[2]][ci[0] + 1][2];
-  double w11 =
-    cw[0] * (met->uvw[ci[1] + 1][ci[2] + 1][ci[0]][2] -
-	     met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][2])
-    + met->uvw[ci[1] + 1][ci[2] + 1][ci[0] + 1][2];
-
-  /* Interpolate horizontally... */
-  u00 = cw[2] * (u00 - u01) + u01;
-  u11 = cw[2] * (u10 - u11) + u11;
-  *u = cw[1] * (u00 - u11) + u11;
-
-  v00 = cw[2] * (v00 - v01) + v01;
-  v11 = cw[2] * (v10 - v11) + v11;
-  *v = cw[1] * (v00 - v11) + v11;
-
-  w00 = cw[2] * (w00 - w01) + w01;
-  w11 = cw[2] * (w10 - w11) + w11;
-  *w = cw[1] * (w00 - w11) + w11;
-}
-
-/*****************************************************************************/
-
 void intpol_met_time_3d(
   met_t * met0,
   float array0[EX][EY][EP],
@@ -1835,35 +1734,6 @@ void intpol_tropo_3d(
 
     *var = NN(time0, aux0, time1, aux1, time);
   }
-}
-
-/*****************************************************************************/
-
-void intpol_met_time_uvw(
-  met_t * met0,
-  met_t * met1,
-  double ts,
-  double p,
-  double lon,
-  double lat,
-  double *u,
-  double *v,
-  double *w) {
-
-  double u0, u1, v0, v1, w0, w1, wt;
-
-  /* Spatial interpolation... */
-  INTPOL_INIT;
-  intpol_met_space_uvw(met0, p, lon, lat, &u0, &v0, &w0, ci, cw, 1);
-  intpol_met_space_uvw(met1, p, lon, lat, &u1, &v1, &w1, ci, cw, 0);
-
-  /* Get weighting factor... */
-  wt = (met1->time - ts) / (met1->time - met0->time);
-
-  /* Interpolate... */
-  *u = wt * (u0 - u1) + u1;
-  *v = wt * (v0 - v1) + v1;
-  *w = wt * (w0 - w1) + w1;
 }
 
 /*****************************************************************************/
@@ -2303,8 +2173,9 @@ void module_advect(
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
       /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0, x[3] =
-	{ 0, 0, 0 };
+      INTPOL_INIT;
+      double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0,
+	x[3] = { 0, 0, 0 };
 
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
@@ -2324,9 +2195,14 @@ void module_advect(
 	double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data on pressure levels... */
-	if (ctl->vert_coord_ap == 0)
-	  intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
-			      &u[i], &v[i], &w[i]);
+	if (ctl->vert_coord_ap == 0) {
+	  intpol_met_time_3d(met0, met0->u, met1, met1->u,
+			     tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+	  intpol_met_time_3d(met0, met0->v, met1, met1->v,
+			     tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+	  intpol_met_time_3d(met0, met0->w, met1, met1->w,
+			     tm, x[2], x[0], x[1], &w[i], ci, cw, 0);
+	}
 
 	/* Interpolate meteo data on model levels... */
 	else {
@@ -2860,19 +2736,19 @@ void module_diffusion_meso(
     for (int i = 0; i < 2; i++)
       for (int j = 0; j < 2; j++)
 	for (int k = 0; k < 2; k++) {
-	  umean += met0->uvw[ix + i][iy + j][iz + k][0];
-	  usig += SQR(met0->uvw[ix + i][iy + j][iz + k][0]);
-	  vmean += met0->uvw[ix + i][iy + j][iz + k][1];
-	  vsig += SQR(met0->uvw[ix + i][iy + j][iz + k][1]);
-	  wmean += met0->uvw[ix + i][iy + j][iz + k][2];
-	  wsig += SQR(met0->uvw[ix + i][iy + j][iz + k][2]);
+	  umean += met0->u[ix + i][iy + j][iz + k];
+	  usig += SQR(met0->u[ix + i][iy + j][iz + k]);
+	  vmean += met0->v[ix + i][iy + j][iz + k];
+	  vsig += SQR(met0->v[ix + i][iy + j][iz + k]);
+	  wmean += met0->w[ix + i][iy + j][iz + k];
+	  wsig += SQR(met0->w[ix + i][iy + j][iz + k]);
 
-	  umean += met1->uvw[ix + i][iy + j][iz + k][0];
-	  usig += SQR(met1->uvw[ix + i][iy + j][iz + k][0]);
-	  vmean += met1->uvw[ix + i][iy + j][iz + k][1];
-	  vsig += SQR(met1->uvw[ix + i][iy + j][iz + k][1]);
-	  wmean += met1->uvw[ix + i][iy + j][iz + k][2];
-	  wsig += SQR(met1->uvw[ix + i][iy + j][iz + k][2]);
+	  umean += met1->u[ix + i][iy + j][iz + k];
+	  usig += SQR(met1->u[ix + i][iy + j][iz + k]);
+	  vmean += met1->v[ix + i][iy + j][iz + k];
+	  vsig += SQR(met1->v[ix + i][iy + j][iz + k]);
+	  wmean += met1->w[ix + i][iy + j][iz + k];
+	  wsig += SQR(met1->w[ix + i][iy + j][iz + k]);
 	}
     usig = usig / 16.f - SQR(umean / 16.f);
     usig = (usig > 0 ? sqrtf(usig) : 0);
@@ -5939,16 +5815,6 @@ int read_met(
     MPI_BCAST_3D(met->zeta_dotl, met->nx, met->ny, met->npl, MPI_FLOAT);
   }
 #endif
-
-  /* Copy wind data to cache... */
-#pragma omp parallel for default(shared) collapse(2)
-  for (int ix = 0; ix < met->nx; ix++)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++) {
-	met->uvw[ix][iy][ip][0] = met->u[ix][iy][ip];
-	met->uvw[ix][iy][ip][1] = met->v[ix][iy][ip];
-	met->uvw[ix][iy][ip][2] = met->w[ix][iy][ip];
-      }
 
   /* Return success... */
   return 1;
