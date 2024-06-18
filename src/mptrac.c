@@ -1471,25 +1471,25 @@ void intpol_met_space_3d_ml(
   int iy = locate_reg(met->lat, met->ny, lat);
 
   /* Interpolate vertically... */
-  int iz = locate_irr_float(met->pl[ix][iy], met->npl, p);
+  int iz = locate_irr_float(met->pl[ix][iy], met->npl, p, 0);
   double aux00 = LIN(met->pl[ix][iy][iz],
 		     array[ix][iy][iz],
 		     met->pl[ix][iy][iz + 1],
 		     array[ix][iy][iz + 1], p);
 
-  iz = locate_irr_float(met->pl[ix][iy + 1], met->npl, p);
+  iz = locate_irr_float(met->pl[ix][iy + 1], met->npl, p, iz);
   double aux01 = LIN(met->pl[ix][iy + 1][iz],
 		     array[ix][iy + 1][iz],
 		     met->pl[ix][iy + 1][iz + 1],
 		     array[ix][iy + 1][iz + 1], p);
 
-  iz = locate_irr_float(met->pl[ix + 1][iy], met->npl, p);
+  iz = locate_irr_float(met->pl[ix + 1][iy], met->npl, p, iz);
   double aux10 = LIN(met->pl[ix + 1][iy][iz],
 		     array[ix + 1][iy][iz],
 		     met->pl[ix + 1][iy][iz + 1],
 		     array[ix + 1][iy][iz + 1], p);
 
-  iz = locate_irr_float(met->pl[ix + 1][iy + 1], met->npl, p);
+  iz = locate_irr_float(met->pl[ix + 1][iy + 1], met->npl, p, iz);
   double aux11 = LIN(met->pl[ix + 1][iy + 1][iz],
 		     array[ix + 1][iy + 1][iz],
 		     met->pl[ix + 1][iy + 1][iz + 1],
@@ -2185,11 +2185,15 @@ int locate_irr(
 int locate_irr_float(
   const float *xx,
   const int n,
-  const double x) {
+  const double x,
+  const int ig) {
 
   int ilo = 0;
   int ihi = n - 1;
   int i = (ihi + ilo) >> 1;
+
+  if (x >= xx[ig] && x < xx[ig + 1])
+    return ig;
 
   if (xx[i] < xx[i + 1])
     while (ihi > ilo + 1) {

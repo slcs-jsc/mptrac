@@ -4753,7 +4753,8 @@ int locate_irr(
 int locate_irr_float(
   const float *xx,
   const int n,
-  const double x);
+  const double x,
+  const int ig);
 
 /**
  * @brief Locate the index of the interval containing a given value in a 3D irregular grid.
