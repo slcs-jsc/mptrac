@@ -2293,7 +2293,7 @@ void module_advect(
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
   /* Pressure coordinate... */
-  if (ctl->vert_coord_ap == 0) {
+  if (ctl->vert_coord_ap == 0 || ctl->vert_coord_ap == 2) {
 
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
@@ -2319,9 +2319,20 @@ void module_advect(
 	}
 	double tm = atm->time[ip] + dts;
 
-	/* Interpolate meteo data... */
-	intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
-			    &u[i], &v[i], &w[i]);
+	/* Interpolate meteo data on pressure levels... */
+	if (ctl->vert_coord_ap == 0)
+	  intpol_met_time_uvw(met0, met1, tm, x[2], x[0], x[1],
+			      &u[i], &v[i], &w[i]);
+
+	/* Interpolate meteo data on model levels... */
+	else {
+	  intpol_met_time_3d_ml(met0, met0->ul, met1, met1->ul, tm, x[2],
+				x[0], x[1], &u[i]);
+	  intpol_met_time_3d_ml(met0, met0->vl, met1, met1->vl, tm, x[2],
+				x[0], x[1], &v[i]);
+	  intpol_met_time_3d_ml(met0, met0->wl, met1, met1->wl, tm, x[2],
+				x[0], x[1], &w[i]);
+	}
 
 	/* Get mean wind... */
 	double k = 1.0;
@@ -5063,10 +5074,14 @@ void read_ctl(
   /* Vertical coordinates and velocities... */
   ctl->vert_coord_ap =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
+  if (ctl->vert_coord_ap < 0 || ctl->vert_coord_ap > 2)
+    ERRMSG("Set VERT_COORD_AP to 0, 1, or 2!");
   if (ctl->vert_coord_ap == 1 && ctl->qnt_zeta < 0)
     ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   ctl->vert_coord_met =
     (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
+  if (ctl->vert_coord_ap == 2 && ctl->vert_coord_met != 1)
+    ERRMSG("Using VERT_COORD_AP = 2 requires meteo data on model levels!");
   ctl->clams_met_data =
     (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
   ctl->cpl_zeta_and_press_modules =
@@ -6541,26 +6556,21 @@ void read_met_grid(
   NC_INQ_DIM("lat", &met->ny, 2, EY);
   LOG(2, "Number of latitudes: %d", met->ny);
 
-  if (ctl->vert_coord_met == 0) {
-    int dimid;
-    sprintf(levname, "lev");
-    if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR)
-      sprintf(levname, "plev");
-  } else {
+  int dimid2;
+  sprintf(levname, "lev");
+  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
+    sprintf(levname, "plev");
+  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
     sprintf(levname, "hybrid");
-    NC_GET_DOUBLE(levname, met->hybrid, 1);
-    printf("Meteorological data is in hybrid coordinates.");
-  }
 
   NC_INQ_DIM(levname, &met->np, 1, EP);
   if (met->np == 1) {
-    int dimid;
     sprintf(levname, "lev_2");
-    if (nc_inq_dimid(ncid, levname, &dimid) != NC_NOERR) {
+    if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR) {
       sprintf(levname, "plev");
-      NC(nc_inq_dimid(ncid, levname, &dimid));
+      NC(nc_inq_dimid(ncid, levname, &dimid2));
     }
-    NC(nc_inq_dimlen(ncid, dimid, &np));
+    NC(nc_inq_dimlen(ncid, dimid2, &np));
     met->np = (int) np;
   }
   LOG(2, "Number of levels: %d", met->np);
@@ -6585,6 +6595,10 @@ void read_met_grid(
     LOG(2, "Pressure levels: %g, %g ... %g hPa",
 	met->p[0], met->p[1], met->p[met->np - 1]);
   }
+
+  /* Read hybrid levels... */
+  if (strcasecmp(levname, "hybrid") == 0)
+    NC_GET_DOUBLE("hybrid", met->hybrid, 1);
 }
 
 /*****************************************************************************/

@@ -2228,7 +2228,7 @@ typedef struct {
   /*! Use predefined pressure levels or not. */
   int press_level_def;
 
-  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta). */
+  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta, 2=eta). */
   int vert_coord_ap;
 
   /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
