@@ -1472,28 +1472,49 @@ void intpol_met_space_3d_ml(
 
   /* Interpolate vertically... */
   int iz = locate_irr_float(met->pl[ix][iy], met->npl, p, 0);
-  double aux00 = LIN(met->pl[ix][iy][iz],
-		     array[ix][iy][iz],
-		     met->pl[ix][iy][iz + 1],
-		     array[ix][iy][iz + 1], p);
+  double aux00;
+  if (p >= met->pl[ix][iy][iz + 1])
+    aux00 = array[ix][iy][iz + 1];
+  else if (p <= met->pl[ix][iy][iz])
+    aux00 = array[ix][iy][iz];
+  else
+    aux00 = LIN(met->pl[ix][iy][iz],
+		array[ix][iy][iz],
+		met->pl[ix][iy][iz + 1], array[ix][iy][iz + 1], p);
 
   iz = locate_irr_float(met->pl[ix][iy + 1], met->npl, p, iz);
-  double aux01 = LIN(met->pl[ix][iy + 1][iz],
-		     array[ix][iy + 1][iz],
-		     met->pl[ix][iy + 1][iz + 1],
-		     array[ix][iy + 1][iz + 1], p);
+  double aux01;
+  if (p >= met->pl[ix][iy + 1][iz + 1])
+    aux01 = array[ix][iy + 1][iz + 1];
+  else if (p <= met->pl[ix][iy + 1][iz])
+    aux01 = array[ix][iy + 1][iz];
+  else
+    aux01 = LIN(met->pl[ix][iy + 1][iz],
+		array[ix][iy + 1][iz],
+		met->pl[ix][iy + 1][iz + 1], array[ix][iy + 1][iz + 1], p);
 
   iz = locate_irr_float(met->pl[ix + 1][iy], met->npl, p, iz);
-  double aux10 = LIN(met->pl[ix + 1][iy][iz],
-		     array[ix + 1][iy][iz],
-		     met->pl[ix + 1][iy][iz + 1],
-		     array[ix + 1][iy][iz + 1], p);
+  double aux10;
+  if (p >= met->pl[ix + 1][iy][iz + 1])
+    aux10 = array[ix + 1][iy][iz + 1];
+  else if (p <= met->pl[ix + 1][iy][iz])
+    aux10 = array[ix + 1][iy][iz];
+  else
+    aux10 = LIN(met->pl[ix + 1][iy][iz],
+		array[ix + 1][iy][iz],
+		met->pl[ix + 1][iy][iz + 1], array[ix + 1][iy][iz + 1], p);
 
   iz = locate_irr_float(met->pl[ix + 1][iy + 1], met->npl, p, iz);
-  double aux11 = LIN(met->pl[ix + 1][iy + 1][iz],
-		     array[ix + 1][iy + 1][iz],
-		     met->pl[ix + 1][iy + 1][iz + 1],
-		     array[ix + 1][iy + 1][iz + 1], p);
+  double aux11;
+  if (p >= met->pl[ix + 1][iy + 1][iz + 1])
+    aux11 = array[ix + 1][iy + 1][iz + 1];
+  else if (p <= met->pl[ix + 1][iy + 1][iz])
+    aux11 = array[ix + 1][iy + 1][iz];
+  else
+    aux11 = LIN(met->pl[ix + 1][iy + 1][iz],
+		array[ix + 1][iy + 1][iz],
+		met->pl[ix + 1][iy + 1][iz + 1],
+		array[ix + 1][iy + 1][iz + 1], p);
 
   /* Interpolate horizontally... */
   double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat);
