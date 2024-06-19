@@ -6567,28 +6567,40 @@ void read_met_levels(
 
   /* Read pressure on model levels... */
   if (ctl->met_np > 0 || ctl->vert_coord_met == 1) {
+
+    /* Read data... */
     if (!read_met_nc_3d
 	(ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl, 0.01f))
       if (!read_met_nc_3d
 	  (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	ERRMSG("Cannot read pressure on model levels!");
+
+    /* Check ordering of pressure levels... */
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 1; ip < met->np; ip++)
+	  if ((met->pl[ix][iy][0] > met->pl[ix][iy][1]
+	       && met->pl[ix][iy][ip - 1] <= met->pl[ix][iy][ip])
+	      || (met->pl[ix][iy][0] < met->pl[ix][iy][1]
+		  && met->pl[ix][iy][ip - 1] >= met->pl[ix][iy][ip]))
+	    ERRMSG("Pressure profiles are not monotonic!");
   }
 
-  /* Transfer from model levels to pressure levels... */
+  /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
 
-    /* Vertical interpolation from model to pressure levels... */
-    read_met_ml2pl(ctl, met, met->t);
-    read_met_ml2pl(ctl, met, met->u);
-    read_met_ml2pl(ctl, met, met->v);
-    read_met_ml2pl(ctl, met, met->w);
-    read_met_ml2pl(ctl, met, met->h2o);
-    read_met_ml2pl(ctl, met, met->o3);
-    read_met_ml2pl(ctl, met, met->lwc);
-    read_met_ml2pl(ctl, met, met->rwc);
-    read_met_ml2pl(ctl, met, met->iwc);
-    read_met_ml2pl(ctl, met, met->swc);
-    read_met_ml2pl(ctl, met, met->cc);
+    /* Interpolate variables... */
+    read_met_ml2pl(ctl, met, met->t, "T");
+    read_met_ml2pl(ctl, met, met->u, "U");
+    read_met_ml2pl(ctl, met, met->v, "V");
+    read_met_ml2pl(ctl, met, met->w, "W");
+    read_met_ml2pl(ctl, met, met->h2o, "H2O");
+    read_met_ml2pl(ctl, met, met->o3, "O3");
+    read_met_ml2pl(ctl, met, met->lwc, "LWC");
+    read_met_ml2pl(ctl, met, met->rwc, "RWC");
+    read_met_ml2pl(ctl, met, met->iwc, "IWC");
+    read_met_ml2pl(ctl, met, met->swc, "SWC");
+    read_met_ml2pl(ctl, met, met->cc, "CC");
 
     /* Set new pressure levels... */
     met->np = ctl->met_np;
@@ -6607,13 +6619,14 @@ void read_met_levels(
 void read_met_ml2pl(
   ctl_t * ctl,
   met_t * met,
-  float var[EX][EY][EP]) {
+  float var[EX][EY][EP],
+  char *varname) {
 
   double aux[EP], p[EP];
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_ML2PL", "METPROC", NVTX_READ);
-  LOG(2, "Interpolate meteo data to pressure levels...");
+  LOG(2, "Interpolate meteo data to pressure levels: %s", varname);
 
   /* Loop over columns... */
 #pragma omp parallel for default(shared) private(aux,p) collapse(2)

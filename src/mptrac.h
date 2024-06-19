@@ -6387,34 +6387,39 @@ void read_met_levels(
   ctl_t * ctl,
   met_t * met);
 
-/*! Convert meteo data from model levels to pressure levels. */
 /**
- * @brief Interpolates meteorological variables from model levels to pressure levels.
+ * @brief Interpolates meteorological data to specified pressure levels.
  *
- * This function interpolates meteorological variables from model
- * levels to pressure levels based on the given pressure levels and
- * meteorological data.  It performs interpolation for each grid point
- * separately, considering the pressure levels at each grid point.
+ * This function interpolates meteorological data from model levels to pressure levels.
+ * The interpolation is performed in parallel over the spatial grid defined in the 
+ * meteorological data structure.
  *
- * @param ctl A pointer to a structure containing control parameters.
- * @param met A pointer to a structure containing meteorological data.
- * @param var A 3D array containing the meteorological variable data at model levels.
+ * @param[in] ctl A pointer to a control structure containing the number of pressure levels (`met_np`)
+ *                and the pressure levels themselves (`met_p`).
+ * @param[in] met A pointer to a meteorological data structure containing the grid dimensions 
+ *                (`nx`, `ny`) and the pressure profile (`pl`).
+ * @param[in, out] var A 3D array containing the meteorological variable to be interpolated.
+ *                      On output, this array will contain the interpolated values at the specified
+ *                      pressure levels.
+ * @param[in] varname A string representing the name of the meteorological variable being interpolated.
  *
- * The function performs the following steps:
- * - Sets up a timer to monitor the interpolation time.
- * - Iterates over each grid point (longitude and latitude) in parallel using OpenMP.
- * - Copies the pressure profile for the current grid point.
- * - Interpolates the meteorological variables from model levels to pressure levels using linear interpolation.
- * - Copies the interpolated data back to the original variable array.
+ * This function performs the following steps:
+ * - Sets a timer for the operation.
+ * - Logs the start of the interpolation process with the variable name.
+ * - Loops over the spatial columns (grid points).
+ * - For each column, copies the pressure profile.
+ * - Interpolates the meteorological variable to the specified pressure levels.
+ * - Copies the interpolated data back into the `var` array.
  *
- * @note This function interpolates meteorological variables from model levels to pressure levels using linear interpolation, ensuring consistency across the grid.
+ * @note The interpolation is performed in parallel using OpenMP.
  *
  * @author Lars Hoffmann
  */
 void read_met_ml2pl(
   ctl_t * ctl,
   met_t * met,
-  float var[EX][EY][EP]);
+  float var[EX][EY][EP],
+  char *varname);
 
 /**
  * @brief Makes zeta and pressure profiles monotone.
