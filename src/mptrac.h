@@ -4645,19 +4645,27 @@ int locate_irr(
   const double x);
 
 /**
- * @brief Locates the index of a given value within a sorted array of floats with irregular spacing.
+ * @brief Locate the index of the interval containing a given value in an irregularly spaced array.
  *
- * This function returns the index of the interval in which the given value `x`
- * falls within a sorted array `xx`. It uses a binary search algorithm to efficiently
- * locate the interval, handling both ascending and descending order of the array.
+ * This function performs a binary search to locate the interval in the array `xx` such that 
+ * `xx[ig] <= x < xx[ig + 1]`. If the value `x` lies within the interval specified by the initial 
+ * guess index `ig`, the function returns `ig`. Otherwise, it searches the array to find the correct interval.
  *
- * @param[in] xx Pointer to the first element of a sorted array of floats.
- * @param[in] n  The number of elements in the array `xx`.
- * @param[in] x  The value to locate within the array `xx`.
+ * @param xx Pointer to the array of floats representing the irregularly spaced intervals. 
+ *           The array must be of size `n`.
+ * @param n The number of elements in the array `xx`.
+ * @param x The value to locate within the intervals of the array `xx`.
+ * @param ig The initial guess index. If the interval `[xx[ig], xx[ig+1])` contains `x`, 
+ *           the function returns `ig` directly.
+ * 
+ * @return The index `i` such that `xx[i] <= x < xx[i + 1]`. If `x` is out of bounds, 
+ *         it returns the index of the closest interval.
  *
- * @return The index `i` such that `xx[i] <= x < xx[i+1]` for an ascending array,
- *         or `xx[i] >= x > xx[i+1]` for a descending array. If `x` is out of
- *         the array bounds, the function returns the nearest valid index.
+ * @note The function assumes that the array `xx` contains at least two elements.
+ * @note The function can handle both increasing and decreasing sequences in the array `xx`.
+ *
+ * @warning The behavior is undefined if the array `xx` is not sorted in either increasing or 
+ *          decreasing order, or if it contains less than two elements.
  *
  * @author Lars Hoffmann
  */
