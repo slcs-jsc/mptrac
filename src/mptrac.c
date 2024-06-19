@@ -513,7 +513,7 @@ void compress_cmulti(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
+    LOG(2, "Read 3-D variable: %s (cmulti, RATIO= %g %%)", varname, NAN);
   }
 
   /* Compress array and output compressed stream... */
@@ -589,7 +589,7 @@ void compress_cmulti(
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)", varname, 100.);
+    LOG(2, "Write 3-D variable: %s (cmulti, RATIO= %g %%)", varname, NAN);
   }
 
   /* Free... */
@@ -8882,9 +8882,8 @@ void write_csi(
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
 
-  if (obscount[idx] > 0 && 
-      modmean[idx] >= ctl->csi_modmin) 
-    obsstdn[n] = obsstdn[idx];
+	if (obscount[idx] > 0 && modmean[idx] >= ctl->csi_modmin)
+	  obsstdn[n] = obsstdn[idx];
       }
 
   /* Write output... */
