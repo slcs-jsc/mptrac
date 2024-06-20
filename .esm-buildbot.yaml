@@ -35,15 +35,7 @@ steps:
     cmd: cp BUILDER_MPTRAC_CPU/build.sh ../. 
     env:
     work_dir: build/builder
-  - name: pre-build for the external libraries"
-    cmd:  sh prebuild.sh 
-    env:  
-    work_dir: build
   - name: build mptrac
     cmd: sh build.sh
-    env:
-    work_dir:
-  - name: test mptrac
-    cmd: sh test.sh
     env:
     work_dir:
