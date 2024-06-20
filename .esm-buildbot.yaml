@@ -2,6 +2,7 @@ title : esm-bb for buildbot
 git-repository: https://github.com/slcs-jsc/mptrac.git
 builder: MPTRAC_ESMBB
 worker: ESM_JUWELS
+project: MPTRAC
 scheduler: 
   - FORCE
   - CHANGE
