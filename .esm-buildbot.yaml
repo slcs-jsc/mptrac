@@ -32,7 +32,7 @@ steps:
     env:
     work_dir: build/builder
   - name: move files
-    cmd: mv BUILDER_MPTRAC_GPU/{prebuild,build.sh,test.sh} ../. 
+    cmd: mv BUILDER_MPTRAC_CPU/{prebuild,build.sh,test.sh} ../. 
     env:
     work_dir: build/builder
   - name: pre-build for the external libraries"
