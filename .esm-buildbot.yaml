@@ -4,7 +4,8 @@ worker: ESM_JUWELS
 scheduler: 
   - FORCE
   - CHANGE
-branch: master
+branch: 
+  - master
 poll-interval: 3600
 time-out: 3600
 steps:
