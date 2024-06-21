@@ -69,7 +69,7 @@ export OMP_PLACES=sockets
 rm -rf data && mkdir -p data || exit
 
 # Loop over number of particles...
-for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) print np}') ; do
+for np in $(echo $npmin $npmax $npfac | awk '{for(np=$1; np<=$2; np*=$3) print np}') ; do
     
     # Set logfile...
     mkdir -p logs || exit
@@ -79,7 +79,7 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	
 	# Set compile flags...
 	echo -e "\nCompile MPTRAC..."
- 	np_comp=$(echo "$np" | awk '{if($1<100) print 100; else print $1}')
+ 	np_comp=$(echo $np | awk '{if($1<100) print 100; else print $1}')
  	[ "$meteo" = "erai" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=482 -DEY=242 -DEP=62"
  	[ "$meteo" = "era5" ] && defs="-DNP=$np_comp -DNQ=8 -DEX=1202 -DEY=602 -DEP=140"
  	flags="COMPILER=$compiler MPI=1 STATIC=0 "
@@ -90,7 +90,7 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	[ "$cache" = "2" ] && flags+=" ASYNCIO=1"
 	
 	# Compile...
-	cd $trac/src && make clean && make -j DEFINES="$defs" "$flags" || exit
+	cd $trac/src && make clean && make -j DEFINES="$defs" $flags || exit
 	cd - || exit
 	
 	# MPTRAC setup...
@@ -108,44 +108,44 @@ for np in $(echo "$npmin" "$npmax" "$npfac" | awk '{for(np=$1; np<=$2; np*=$3) p
 	
 	# Create data directory...
 	dir=data/$meteo/phys_${phys}/$np
-	rm -rf "$dir" && mkdir -p "$dir" || exit
+	rm -rf $dir && mkdir -p $dir || exit
 	
 	# Create init file...
-	$trac/src/atm_init - "$dir"/atm_init.tab "$qnt" ATM_TYPE 1 \
-			   INIT_T0 "$t0" INIT_T1 "$t0" \
+	$trac/src/atm_init - $dir/atm_init.tab $qnt ATM_TYPE 1 \
+			   INIT_T0 $t0 INIT_T1 $t0 \
 			   INIT_ULON 360 INIT_ULAT 180 \
 			   INIT_Z0 30 INIT_Z1 30 INIT_UZ 60 \
-			   INIT_EVENLY 1 INIT_REP "$np" INIT_MASS 1e9 || exit
+			   INIT_EVENLY 1 INIT_REP $np INIT_MASS 1e9 || exit
 	
 	# Create data directories for tasks...
-	for task in $(seq "${SLURM_NTASKS}") ; do
-	    mkdir -p "$dir/$task" && cp "$dir"/atm_init.tab "$dir/$task/" || exit
-	    echo "$dir/$task" >> "$dir"/dirlist
+	for task in $(seq ${SLURM_NTASKS}) ; do
+	    mkdir -p $dir/$task && cp $dir/atm_init.tab $dir/$task/ || exit
+	    echo $dir/$task >> $dir/dirlist
 	done
 	
 	# Calculate trajectories...
-	srun $trac/src/trac "$dir"/dirlist - atm_init.tab "$qnt" T_STOP "$t1" \
-	     "$metbase" MET_DT_OUT 3600 "$param" RNG_TYPE "$rng" SORT_DT "$sort" \
+	srun $trac/src/trac $dir/dirlist - atm_init.tab $qnt T_STOP $t1 \
+	     $metbase MET_DT_OUT 3600 $param RNG_TYPE $rng SORT_DT $sort \
 	     ATM_BASENAME atm ATM_DT_OUT 21600 ATM_TYPE 1 \
 	     GRID_BASENAME grid GRID_DT_OUT 21600 \
 	     GRID_NX 36 GRID_NY 36 GRID_Z0 -2 GRID_Z1 62 GRID_NZ 64
 	
 	# Calculate transport deviations...
 	for var in mean stddev absdev median mad ; do
-	    $trac/src/atm_dist - "$dir"/dist.tab $var \
-			       "$dir/1/atm_2017_01_01_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_00_00.bin" \
-			       "$dir/1/atm_2017_01_01_06_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_06_00.bin" \
-			       "$dir/1/atm_2017_01_01_12_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_12_00.bin" \
-			       "$dir/1/atm_2017_01_01_18_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_18_00.bin" \
-			       "$dir/1/atm_2017_01_02_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_02_00_00.bin" \
-			       "$qnt" ATM_TYPE 1
+	    $trac/src/atm_dist - $dir/dist.tab $var \
+			       $dir/1/atm_2017_01_01_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_00_00.bin \
+			       $dir/1/atm_2017_01_01_06_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_06_00.bin \
+			       $dir/1/atm_2017_01_01_12_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_12_00.bin \
+			       $dir/1/atm_2017_01_01_18_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_01_18_00.bin \
+			       $dir/1/atm_2017_01_02_00_00.bin reference/$meteo/phys_${phys}/$np/1/atm_2017_01_02_00_00.bin \
+			       $qnt ATM_TYPE 1
 	    echo -e "\nTransport deviations: $var ..."
-	    cat "$dir"/dist.tab
+	    cat $dir/dist.tab
 	done
 	
 	# Compare grid files...
 	echo -e "\nGrid differences..."
-	paste "$dir"/1/grid_2017_01_02_00_00.tab "reference/$meteo/phys_${phys}/$np/1/grid_2017_01_02_00_00.tab" | awk '{
+	paste $dir/1/grid_2017_01_02_00_00.tab "reference/$meteo/phys_${phys}/$np/1/grid_2017_01_02_00_00.tab" | awk '{
 	  if(NF>0 && $1!="#") {
             cmax=NF/2
             for(c=1; c<=cmax; c++) {

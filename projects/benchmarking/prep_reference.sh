@@ -15,5 +15,5 @@ rm $(find reference -name "atm_init.tab") \
    $(find reference -name "dirlist")
 
 # Copy data...
-refdir=/p/largedata/slmet/slmet111/datapub/hoffmann1/mptrac/projects/benchmarking/reference
+refdir=/p/data1/slmet/datapub/hoffmann1/mptrac/projects/benchmarking/reference
 rm -rf $refdir && mkdir -p $refdir && rsync -av reference/ $refdir/
