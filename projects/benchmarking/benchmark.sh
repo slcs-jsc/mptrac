@@ -1,11 +1,11 @@
 #! /bin/bash
 
 # Check arguments...
-if [ $# -ne 17 ] ; then
+if [ $# -ne 20 ] ; then
     cat <<EOF
 MPTRAC benchmarking script
 
-usage: $0 <system> <account> <runtime> <libs> <compiler> <nodes> <ntasks-per-node> <cpus-per-task> <gpu> <npmin> <npmax> <npfac> <meteo> <rng> <sort> <phys> <cache>
+usage: $0 <system> <account> <runtime> <trac> <libs> <compiler> <nodes> <ntasks-per-node> <cpus-per-task> <gpu> <npmin> <npmax> <npfac> <meteo> <metdir> <rng> <sort> <phys> <cache> <refdir>
 
 parameter choices:
 
@@ -24,6 +24,8 @@ parameter choices:
     exaww = WarmWorld compute budget
 
   runtime: specify maximum runtime (e.g. 00:30:00)
+
+  trac: MPTRAC directory
 
   libs: specify whether libraries should be recompiled
     avail = assume libraries for MPTRAC are already available and compiled
@@ -49,6 +51,8 @@ parameter choices:
     era5 = ERA5 reanalysis
     erai = ERA-Interim reanalysis
 
+  metdir: directory holding the meteo data files
+
   rng: select random number generator
     0 = GSL
     1 = Squares
@@ -64,6 +68,8 @@ parameter choices:
     0 = none
     1 = disk cache
     2 = async-I/O
+
+  refdir: directory holding the reference data files
 EOF
     exit
 fi
@@ -72,20 +78,23 @@ fi
 system=$1
 account=$2
 runtime=$3
-libs=$4
-compiler=$5
-nodes=$6
-ntasks_per_node=$7
-cpus_per_task=$8
-gpu=$9
-npmin=${10}
-npmax=${11}
-npfac=${12}
-meteo=${13}
-rng=${14}
-sort=${15}
-phys=${16}
-cache=${17}
+trac=$4
+libs=$5
+compiler=$6
+nodes=$7
+ntasks_per_node=$8
+cpus_per_task=$9
+gpu=$10
+npmin=${11}
+npmax=${12}
+npfac=${13}
+meteo=${14}
+metdir=${15}
+rng=${16}
+sort=${17}
+phys=${18}
+cache=${19}
+refdir=${20}
 
 # Compile libraries...
 echo -e "\nCompile libraries..."
@@ -102,7 +111,7 @@ if [ -s meteo ] ; then
 else
     wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/meteo/
 fi
-du -h meteo || exit
+du -h $metdir || exit
 
 # Get reference data...
 echo -e "\nDownloading reference data..."
@@ -136,4 +145,4 @@ else
     echo "error: system \"$system\" unknown!"
     exit
 fi
-sbatch $slurmset -v --wait ./batch.sh $system $libs $compiler $gpu $npmin $npmax $npfac $meteo $rng $sort $phys $cache
+sbatch $slurmset -v --wait ./batch.sh $system $trac $libs $compiler $gpu $npmin $npmax $npfac $meteo $metdir $rng $sort $phys $cache $refdir
