@@ -4,7 +4,7 @@
 rm -rf reference && mkdir -p reference || exit
 for meteo in era5 erai ; do
     for phys in traj full ; do
-	./benchmark.sh jwb exaww 03:00:00 avail gcc 1 1 48 0 100 100000000 10 $meteo 0 0 $phys 0
+	./benchmark.sh jwb exaww 03:00:00 ../.. avail gcc 1 1 48 0 100 100000000 10 $meteo meteo 0 0 $phys 0 reference
 	rsync -av data/ reference/
     done
 done
