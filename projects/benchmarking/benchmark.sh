@@ -106,21 +106,25 @@ fi
 
 # Get meteo data...
 echo -e "\nDownloading meteo data..."
-if [ -s meteo ] ; then
+if [ -s $metdir ] ; then
     echo "Already available!"
 else
-    wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/meteo/
+    mkdir -p $metdir && cd $metdir || exit
+    wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=6 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/meteo/ || exit
+    cd - || exit
 fi
 du -h $metdir || exit
 
 # Get reference data...
 echo -e "\nDownloading reference data..."
-if [ -s reference ] ; then
+if [ -s $refdir ] ; then
     echo "Already available!"
 else
-    wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=5 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/reference/
+    mkdir -p $refdir && cd $refdir || exit
+    wget --mirror --no-parent --no-host-directories --execute robots=off --reject="index.html*" --cut-dirs=6 https://datapub.fz-juelich.de/slcs/mptrac/data/projects/benchmarking/reference/ || exit
+    cd - || exit
 fi
-du -h reference || exit
+du -h $refdir || exit
 
 # Execute batch job...
 echo -e "\nExecute batch job..."
