@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Setup...
+trac=../../src
 metdir=/p/data1/slmet/datapub/hoffmann1/mptrac/projects/benchmarking/meteo
 
 # Create directories...
@@ -16,8 +17,8 @@ cp /p/data1/slmet/model_data/mptrac/input/era5/2017/01/era5_2017_01_01_*.nc \
 
 # Packing...
 for f in $(ls $metdir/erai_nc/*nc) ; do
-    ../../src/met_conv - "$f" 0 $metdir/erai_pck/$(basename "$f" .nc).pck 2
+    $trac/met_conv - "$f" 0 $metdir/erai_pck/$(basename "$f" .nc).pck 2
 done
 for f in $(ls $metdir/era5_nc/*nc) ; do
-    ../../src/met_conv - "$f" 0 $metdir/era5_pck/$(basename "$f" .nc).pck 2
+    $trac/met_conv - "$f" 0 $metdir/era5_pck/$(basename "$f" .nc).pck 2
 done
