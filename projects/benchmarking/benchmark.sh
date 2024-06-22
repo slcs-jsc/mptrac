@@ -99,7 +99,7 @@ refdir=${20}
 # Compile libraries...
 echo -e "\nCompile libraries..."
 if [ "$libs" = "login" ] ; then
-    cd ../../libs && ./build.sh -a ; cd -
+    cd $trac/libs && ./build.sh -a ; cd -
 else
     echo "Compile on compute node or assume already available!"
 fi
