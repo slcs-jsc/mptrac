@@ -18,7 +18,7 @@ jobs:
           python-version: 3.x
       - name: installing_mkdocs
         run: pip install mkdocs ; pip install mkdocs-material; 
-             cd docs ; mkdocs gh-deploy --force --clean --verbose
+             cd docs && mkdocs gh-deploy --force --clean --verbose
         
   deploying_doxygen:
     runs-on: ubuntu-latest
