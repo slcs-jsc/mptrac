@@ -28,7 +28,7 @@ parameter choices:
   trac: MPTRAC directory
 
   libs: specify whether libraries should be recompiled
-    avail = assume libraries for MPTRAC are already available and compiled
+    avail = assume libraries for MPTRAC are already compiled
     compute = recompile required libraries on compute node
     login = recompile required libraries on login node
 
@@ -51,7 +51,7 @@ parameter choices:
     era5 = ERA5 reanalysis
     erai = ERA-Interim reanalysis
 
-  metdir: directory holding the meteo data files
+  metdir: directory holding the meteo data
 
   rng: select random number generator
     0 = GSL
@@ -69,7 +69,7 @@ parameter choices:
     1 = disk cache
     2 = async-I/O
 
-  refdir: directory holding the reference data files
+  refdir: directory holding the reference data
 EOF
     exit
 fi
