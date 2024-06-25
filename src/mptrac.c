@@ -427,16 +427,10 @@ void compress_cms(
   for (size_t iy = 0; iy < ny; iy++)
     lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
 
-  /* Set domain [a,b]x[c,d]... */
-  char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
-
   /* Set multiscale parameters (only grid properties),
      C_thresh has still to be set... */
-  cms_param_t *cms_param = cms_set_parameters(nx, ny, domain);
-
-  /* Global threshold error -> play around with it
-     You can also set this afterwards with set_global_eps... */
-  cms_param->c_thresh = 0.1;
+  cms_param_t *cms_param =
+    cms_set_parameters(nx, ny, "[0.0, 360.0]x[-90.0, 90.0]");
 
   /* Initialize multiscale module... */
   cms_module_t *cms_ptr = cms_init(cms_param);
@@ -446,6 +440,7 @@ void compress_cms(
 
     /* Loop over levels... */
     //#pragma omp parallel for
+    double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Read binary data... */
@@ -459,12 +454,15 @@ void compress_cms(
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
+      /* Calculate mean compression rate... */
+      cr += 100. * cms_compression_rate(cms_ptr, sol) / (double) np;
+
       /* Free... */
       cms_delete_sol(sol);
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, NAN);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -472,6 +470,7 @@ void compress_cms(
 
     /* Loop over levels... */
     //#pragma omp parallel for
+    double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
       float tmp_arr[nx * ny];
@@ -482,24 +481,26 @@ void compress_cms(
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 
       /* Create solution pointer... */
-      cms_sol_t *sol_ptr = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
+      cms_sol_t *sol = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
 
-      /* Set_global_eps set threshold values after initializing cmultiscale...
-         cms_set_eps(cms_ptr, 3.0);
-       */
+      /* Set_global_eps set threshold values after initializing cmultiscale... */
+      cms_set_eps(cms_ptr, 3.0);
 
       /* Coarsening... */
-      cms_coarsening(cms_ptr, sol_ptr, CMS_MEAN_DIFF);
+      cms_coarsening(cms_ptr, sol, CMS_MEAN_DIFF);
+
+      /* Calculate mean compression rate... */
+      cr += 100. * cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Save binary data... */
-      cms_save_sol(sol_ptr, inout);
+      cms_save_sol(sol, inout);
 
       /* Free... */
-      cms_delete_sol(sol_ptr);
+      cms_delete_sol(sol);
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, NAN);
+    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
   /* Cleaning... */
