@@ -410,8 +410,8 @@ double clim_zm(
 
 /*****************************************************************************/
 
-#ifdef CMULTI
-void compress_cmulti(
+#ifdef CMS
+void compress_cms(
   char *varname,
   float *array,
   size_t nx,
@@ -432,14 +432,14 @@ void compress_cmulti(
 
   /* Set multiscale parameters (only grid properties),
      C_thresh has still to be set... */
-  ms_param_t *ms_param = ms_set_parameters(nx, ny, domain);
+  cms_param_t *cms_param = cms_set_parameters(nx, ny, domain);
 
   /* Global threshold error -> play around with it
      You can also set this afterwards with set_global_eps... */
-  ms_param->c_thresh = 0.1;
+  cms_param->c_thresh = 0.1;
 
   /* Initialize multiscale module... */
-  ms_module_t *multiscale_ptr = ms_init(ms_param);
+  cms_module_t *cms_ptr = cms_init(cms_param);
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
@@ -449,22 +449,22 @@ void compress_cmulti(
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Read binary data... */
-      ms_sol_t *sol = ms_read_sol(multiscale_ptr, inout);
+      cms_sol_t *sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
 	  double val, x[] = { lon[ix], lat[iy] };
-	  ms_eval(multiscale_ptr, sol, x, &val);
+	  cms_eval(cms_ptr, sol, x, &val);
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
       /* Free... */
-      ms_delete_sol(sol);
+      cms_delete_sol(sol);
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cmulti, RATIO= %g %%)", varname, NAN);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, NAN);
   }
 
   /* Compress array and output compressed stream... */
@@ -482,30 +482,29 @@ void compress_cmulti(
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 
       /* Create solution pointer... */
-      ms_sol_t *sol_ptr =
-	ms_read_arr(multiscale_ptr, tmp_arr, lon, lat, nx, ny);
+      cms_sol_t *sol_ptr = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
 
       /* Set_global_eps set threshold values after initializing cmultiscale...
-         ms_set_eps(multiscale_ptr, 3.0);
+         cms_set_eps(cms_ptr, 3.0);
        */
 
       /* Coarsening... */
-      ms_coarsening(multiscale_ptr, sol_ptr, MS_MEAN_DIFF);
+      cms_coarsening(cms_ptr, sol_ptr, CMS_MEAN_DIFF);
 
       /* Save binary data... */
-      ms_save_sol(sol_ptr, inout);
+      cms_save_sol(sol_ptr, inout);
 
       /* Free... */
-      ms_delete_sol(sol_ptr);
+      cms_delete_sol(sol_ptr);
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (cmulti, RATIO= %g %%)", varname, NAN);
+    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, NAN);
   }
 
-  /// Cleaning...
-  ms_delete_module(multiscale_ptr);
-  ms_delete_param(ms_param);
+  /* Cleaning... */
+  cms_delete_module(cms_ptr);
+  cms_delete_param(cms_param);
 }
 #endif
 
@@ -1037,7 +1036,7 @@ void get_met_help(
     else if (ctl->met_type == 4)
       sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
     else if (ctl->met_type == 5)
-      sprintf(filename, "%s_YYYY_MM_DD_HH.cmul", metbase);
+      sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -5842,9 +5841,9 @@ void read_met_bin_3d(
 
   /* Read cmultiscale data... */
   else if (ctl->met_type == 5) {
-#ifdef CMULTI
-    compress_cmulti(varname, help, (size_t) met->nx, (size_t) met->ny,
-		    (size_t) met->np, 1, in);
+#ifdef CMS
+    compress_cms(varname, help, (size_t) met->nx, (size_t) met->ny,
+		 (size_t) met->np, 1, in);
 #else
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
@@ -9433,7 +9432,7 @@ int write_met(
   if (ctl->met_type == 4)
     ERRMSG("MPTRAC was compiled without zstd compression!");
 #endif
-#ifndef CMULTI
+#ifndef CMS
   if (ctl->met_type == 5)
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
@@ -9622,10 +9621,10 @@ void write_met_bin_3d(
 #endif
 
   /* Write cmultiscale data... */
-#ifdef CMULTI
+#ifdef CMS
   else if (ctl->met_type == 5) {
-    compress_cmulti(varname, help, (size_t) met->nx, (size_t) met->ny,
-		    (size_t) met->np, 0, out);
+    compress_cms(varname, help, (size_t) met->nx, (size_t) met->ny,
+		 (size_t) met->np, 0, out);
   }
 #endif
 

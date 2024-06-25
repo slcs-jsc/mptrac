@@ -138,8 +138,8 @@
 #include "zstd.h"
 #endif
 
-#ifdef CMULTI
-#include "multiscale.h"
+#ifdef CMS
+#include "cmultiscale.h"
 #endif
 
 #ifdef KPP
@@ -3711,7 +3711,7 @@ double clim_zm(
  * @author 
  * Lars Hoffmann
  */
-void compress_cmulti(
+void compress_cms(
   char *varname,
   float *array,
   size_t nx,
