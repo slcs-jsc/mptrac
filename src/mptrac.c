@@ -412,6 +412,7 @@ double clim_zm(
 
 #ifdef CMS
 void compress_cms(
+  ctl_t * ctl,
   char *varname,
   float *array,
   size_t nx,
@@ -484,10 +485,37 @@ void compress_cms(
       cms_sol_t *sol = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
 
       /* Set_global_eps set threshold values after initializing cmultiscale... */
-      cms_set_eps(cms_ptr, 3.0);
+      if (strcasecmp(varname, "Z") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_z);
+      else if (strcasecmp(varname, "T") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_t);
+      else if (strcasecmp(varname, "U") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_u);
+      else if (strcasecmp(varname, "V") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_v);
+      else if (strcasecmp(varname, "W") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_w);
+      else if (strcasecmp(varname, "PV") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_pv);
+      else if (strcasecmp(varname, "H2O") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_h2o);
+      else if (strcasecmp(varname, "O3") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_o3);
+      else if (strcasecmp(varname, "LWC") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_lwc);
+      else if (strcasecmp(varname, "RWC") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_rwc);
+      else if (strcasecmp(varname, "IWC") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_iwc);
+      else if (strcasecmp(varname, "SWC") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_swc);
+      else if (strcasecmp(varname, "CC") == 0)
+	cms_set_eps(cms_ptr, ctl->met_cms_eps_cc);
+      else
+	ERRMSG("Variable name unknown!");
 
       /* Coarsening... */
-      cms_coarsening(cms_ptr, sol, CMS_MEAN_DIFF);
+      cms_coarsening(cms_ptr, sol, (unsigned int) ctl->met_cms_heur);
 
       /* Calculate mean compression rate... */
       cr += 100. * cms_compression_rate(cms_ptr, sol) / (double) np;
@@ -2457,17 +2485,17 @@ void module_chemgrid(
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
-/* Interpolate temperature... */
+      /* Interpolate temperature... */
       double temp;
       INTPOL_INIT;
       intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
 			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
-/* Set mass... */
+      /* Set mass... */
       double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
 			       izs[ip], ctl->chemgrid_nz)];
 
-/* Calculate volume mixing ratio... */
+      /* Calculate volume mixing ratio... */
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
 	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
     }
@@ -4927,6 +4955,34 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_T", -1, "5.0", NULL);
   ctl->met_zfp_tol_z =
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
+  ctl->met_cms_heur =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
+  ctl->met_cms_eps_z =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "3.0", NULL);
+  ctl->met_cms_eps_t =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "3.0", NULL);
+  ctl->met_cms_eps_u =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "3.0", NULL);
+  ctl->met_cms_eps_v =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_V", -1, "3.0", NULL);
+  ctl->met_cms_eps_w =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_W", -1, "3.0", NULL);
+  ctl->met_cms_eps_pv =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_PV", -1, "3.0", NULL);
+  ctl->met_cms_eps_h2o =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_H2O", -1, "3.0", NULL);
+  ctl->met_cms_eps_o3 =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_O3", -1, "3.0", NULL);
+  ctl->met_cms_eps_lwc =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_LWC", -1, "3.0", NULL);
+  ctl->met_cms_eps_rwc =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_RWC", -1, "3.0", NULL);
+  ctl->met_cms_eps_iwc =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_IWC", -1, "3.0", NULL);
+  ctl->met_cms_eps_swc =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_SWC", -1, "3.0", NULL);
+  ctl->met_cms_eps_cc =
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_CC", -1, "3.0", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
@@ -5843,7 +5899,7 @@ void read_met_bin_3d(
   /* Read cmultiscale data... */
   else if (ctl->met_type == 5) {
 #ifdef CMS
-    compress_cms(varname, help, (size_t) met->nx, (size_t) met->ny,
+    compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
 		 (size_t) met->np, 1, in);
 #else
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
@@ -9624,7 +9680,7 @@ void write_met_bin_3d(
   /* Write cmultiscale data... */
 #ifdef CMS
   else if (ctl->met_type == 5) {
-    compress_cms(varname, help, (size_t) met->nx, (size_t) met->ny,
+    compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
 		 (size_t) met->np, 0, out);
   }
 #endif

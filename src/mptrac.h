@@ -2543,14 +2543,57 @@ typedef struct {
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
-  /*! ZFP compression precision (for all variables, except z and T). */
+  /*! ZFP compression precision for all variables, except z and T. */
   int met_zfp_prec;
 
-  /*! ZFP compression tolerance (for temperature). */
+  /*! ZFP compression tolerance for temperature. */
   double met_zfp_tol_t;
 
-  /*! ZFP compression tolerance (for geopotential height). */
+  /*! ZFP compression tolerance for geopotential height. */
   double met_zfp_tol_z;
+
+  /*! cmultiscale coarsening heuristics
+     (0=default, 1=mean diff, 2=median diff, 3=max diff). */
+  int met_cms_heur;
+
+  /*! cmultiscale compression epsilon for geopotential height. */
+  double met_cms_eps_z;
+
+  /*! cmultiscale compression epsilon for temperature. */
+  double met_cms_eps_t;
+
+  /*! cmultiscale compression epsilon for zonal wind. */
+  double met_cms_eps_u;
+
+  /*! cmultiscale compression epsilon for meridional wind. */
+  double met_cms_eps_v;
+
+  /*! cmultiscale compression epsilon for vertical velocity. */
+  double met_cms_eps_w;
+
+  /*! cmultiscale compression epsilon for potential vorticity. */
+  double met_cms_eps_pv;
+
+  /*! cmultiscale compression epsilon for water vapor. */
+  double met_cms_eps_h2o;
+
+  /*! cmultiscale compression epsilon for ozone. */
+  double met_cms_eps_o3;
+
+  /*! cmultiscale compression epsilon for cloud liquid water content. */
+  double met_cms_eps_lwc;
+
+  /*! cmultiscale compression epsilon for cloud rain water content. */
+  double met_cms_eps_rwc;
+
+  /*! cmultiscale compression epsilon for cloud ice water content. */
+  double met_cms_eps_iwc;
+
+  /*! cmultiscale compression epsilon for cloud snow water content. */
+  double met_cms_eps_swc;
+
+  /*! cmultiscale compression epsilon for cloud cover. */
+  double met_cms_eps_cc;
 
   /*! Stride for longitudes. */
   int met_dx;
@@ -3712,6 +3755,7 @@ double clim_zm(
  * Lars Hoffmann
  */
 void compress_cms(
+  ctl_t * ctl,
   char *varname,
   float *array,
   size_t nx,
