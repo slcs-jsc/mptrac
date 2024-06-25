@@ -6185,31 +6185,39 @@ void read_met_bin_2d(
   char *varname);
 
 /**
- * @brief Reads a 3-dimensional meteorological variable from a binary file and stores it in the provided array.
+ * @brief Reads 3D meteorological data from a binary file, potentially using different compression methods.
  *
- * This function reads a 3-dimensional meteorological variable from a
- * binary file, which can be uncompressed or compressed using
- * different methods, and stores it in the provided 3-dimensional
- * array `var`. The variable name is used for logging purposes to
- * identify the data being read.
+ * This function reads 3-dimensional meteorological data from a binary
+ * file into a specified variable array.  The data can be read in
+ * uncompressed form or using one of several supported compression
+ * methods.  The data is then clamped to specified minimum and maximum
+ * bounds.
  *
- * @param in        A pointer to the FILE structure representing the binary file to read from.
- * @param ctl       A pointer to a structure containing control parameters.
- * @param met       A pointer to a structure containing meteorological data.
- * @param var       A 3-dimensional array to store the read variable.
- * @param varname   A string containing the name of the variable being read.
+ * @param[in] in       Pointer to the input file from which to read the data.
+ * @param[in] ctl      Pointer to the control structure that contains metadata about the type of data and how it is stored.
+ * @param[in] met      Pointer to the meteorological structure that contains the dimensions of the data.
+ * @param[out] var     3D array to store the read data, with dimensions [EX][EY][EP].
+ * @param[in] varname  Name of the variable being read, used for logging and debugging.
+ * @param[in] bound_min Minimum bound to which data values should be clamped.
+ * @param[in] bound_max Maximum bound to which data values should be clamped.
  *
- * The function performs the following steps based on the compression type specified in `ctl->met_type`:
- * - If uncompressed data, it allocates memory for a temporary buffer, reads the data from the file,
- *   and then copies it to the provided array.
- * - If the data is compressed using packing, zfp, zstd, or cmultiscale compression, it calls corresponding
- *   compression functions to decompress the data, then copies the decompressed data to the provided array.
- * - The data is copied to the provided array using OpenMP parallelization for improved performance.
- * - Finally, the memory allocated for the temporary buffer is freed.
+ * The function supports the following types of data:
+ * - Uncompressed data
+ * - Packed data
+ * - ZFP compressed data (if compiled with ZFP support)
+ * - ZSTD compressed data (if compiled with ZSTD support)
+ * - CMULTISCALE compressed data (if compiled with CMS support)
  *
- * @note This function supports different compression methods based on the value of `ctl->met_type`.
- *       If a particular compression method is not supported or the necessary libraries are not available,
- *       an error message is generated.
+ * Depending on the compression type specified in the control
+ * structure, the appropriate reading and decompression function is
+ * used. The data is read into a temporary buffer, then copied into
+ * the output array, applying the specified bounds to each value.
+ *
+ * @note The function assumes that the dimensions EX, EY, and EP are
+ *       correctly defined and match the dimensions specified in the
+ *       `met` structure.
+ * @note If the appropriate compression support is not compiled, an
+ *       error message is generated.
  *
  * @author Lars Hoffmann
  */
@@ -6218,7 +6226,9 @@ void read_met_bin_3d(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname);
+  char *varname,
+  float bound_min,
+  float bound_max);
 
 /**
  * @brief Calculates Convective Available Potential Energy (CAPE) for each grid point.

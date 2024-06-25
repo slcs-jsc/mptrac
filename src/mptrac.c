@@ -440,7 +440,6 @@ void compress_cms(
   if (decompress) {
 
     /* Loop over levels... */
-    //#pragma omp parallel for
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
@@ -448,6 +447,7 @@ void compress_cms(
       cms_sol_t *sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
+#pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
 	  double val, x[] = { lon[ix], lat[iy] };
@@ -470,7 +470,6 @@ void compress_cms(
   else {
 
     /* Loop over levels... */
-    //#pragma omp parallel for
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
@@ -5706,22 +5705,22 @@ int read_met(
       read_met_bin_2d(in, met, met->cin, "CIN");
 
       /* Read level data... */
-      read_met_bin_3d(in, ctl, met, met->z, "Z");
-      read_met_bin_3d(in, ctl, met, met->t, "T");
-      read_met_bin_3d(in, ctl, met, met->u, "U");
-      read_met_bin_3d(in, ctl, met, met->v, "V");
-      read_met_bin_3d(in, ctl, met, met->w, "W");
-      read_met_bin_3d(in, ctl, met, met->pv, "PV");
-      read_met_bin_3d(in, ctl, met, met->h2o, "H2O");
-      read_met_bin_3d(in, ctl, met, met->o3, "O3");
-      read_met_bin_3d(in, ctl, met, met->lwc, "LWC");
+      read_met_bin_3d(in, ctl, met, met->z, "Z", -1e34f, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->t, "T", 0, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->u, "U", -1e34f, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->v, "V", -1e34f, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->w, "W", -1e34f, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->pv, "PV", -1e34f, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 0, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->o3, "O3", 0, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 0, 1e34f);
       if (version >= 102)
-	read_met_bin_3d(in, ctl, met, met->rwc, "RWC");
-      read_met_bin_3d(in, ctl, met, met->iwc, "IWC");
+	read_met_bin_3d(in, ctl, met, met->rwc, "RWC", 0, 1e34f);
+      read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 0, 1e34f);
       if (version >= 102)
-	read_met_bin_3d(in, ctl, met, met->swc, "SWC");
+	read_met_bin_3d(in, ctl, met, met->swc, "SWC", 0, 1e34f);
       if (version >= 101)
-	read_met_bin_3d(in, ctl, met, met->cc, "CC");
+	read_met_bin_3d(in, ctl, met, met->cc, "CC", 0, 1);
 
       /* Read final flag... */
       int final;
@@ -5845,7 +5844,9 @@ void read_met_bin_3d(
   ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname) {
+  char *varname,
+  float bound_min,
+  float bound_max) {
 
   float *help;
 
@@ -5910,8 +5911,13 @@ void read_met_bin_3d(
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
-      for (int ip = 0; ip < met->np; ip++)
+      for (int ip = 0; ip < met->np; ip++) {
 	var[ix][iy][ip] = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	if (var[ix][iy][ip] < bound_min)
+	  var[ix][iy][ip] = bound_min;
+	else if (var[ix][iy][ip] > bound_max)
+	  var[ix][iy][ip] = bound_max;
+      }
 
   /* Free... */
   free(help);
