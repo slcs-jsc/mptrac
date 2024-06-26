@@ -12,10 +12,10 @@ poll-interval: 3600
 time-out: 3600
 steps:
   - name: build mptrac
-    cmd: sh build_cpu.sh
+    cmd: sh config/build_cpu.sh
     env:
     work_dir:
   - name: test mptrac
-    cmd: sh test_cpu.sh
+    cmd: sh config/test_cpu.sh
     env:
     work_dir:
