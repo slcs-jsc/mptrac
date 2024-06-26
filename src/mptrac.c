@@ -455,7 +455,7 @@ void compress_cms(
 	}
 
       /* Calculate mean compression rate... */
-      cr += 100. * cms_compression_rate(cms_ptr, sol) / (double) np;
+      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Free... */
       cms_delete_sol(sol);
@@ -516,7 +516,7 @@ void compress_cms(
       cms_coarsening(cms_ptr, sol, (unsigned int) ctl->met_cms_heur);
 
       /* Calculate mean compression rate... */
-      cr += 100. * cms_compression_rate(cms_ptr, sol) / (double) np;
+      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Save binary data... */
       cms_save_sol(sol, inout);
