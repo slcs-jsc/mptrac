@@ -428,8 +428,7 @@ void compress_cms(
   for (size_t iy = 0; iy < ny; iy++)
     lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
 
-  /* Set multiscale parameters (only grid properties),
-     C_thresh has still to be set... */
+  /* Set multiscale parameters... */
   cms_param_t *cms_param =
     cms_set_parameters(nx, ny, "[0.0, 360.0]x[-90.0, 90.0]");
 
@@ -483,7 +482,7 @@ void compress_cms(
       /* Create solution pointer... */
       cms_sol_t *sol = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
 
-      /* Set_global_eps set threshold values after initializing cmultiscale... */
+      /* Set eps threshold value... */
       if (strcasecmp(varname, "Z") == 0)
 	cms_set_eps(cms_ptr, ctl->met_cms_eps_z);
       else if (strcasecmp(varname, "T") == 0)
@@ -530,7 +529,7 @@ void compress_cms(
     LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
-  /* Cleaning... */
+  /* Free... */
   cms_delete_module(cms_ptr);
   cms_delete_param(cms_param);
 }
