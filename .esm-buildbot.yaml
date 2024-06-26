@@ -11,30 +11,10 @@ branch:
 poll-interval: 3600
 time-out: 3600
 steps:
-  - name: remove the external setup files 
-    cmd: rm -fr builder
-    env:
-    work_dir: build 
-  - name: clone the setup files
-    cmd: git clone --no-checkout https://jugit.fz-juelich.de/esm-buildbot/ESMBuildbot.git builder
-    env:
-    work_dir: build
-  - name: clone the setup files
-    cmd: git sparse-checkout init --cone
-    env:
-    work_dir: build/builder
-  - name: git sparse-checkout folder
-    cmd: git sparse-checkout set BUILDER_MPTRAC_CPU
-    env:
-    work_dir: build/builder
-  - name: git sparse-checkout the files
-    cmd: git checkout @
-    env:
-    work_dir: build/builder
   - name: move files
-    cmd: cp BUILDER_MPTRAC_CPU/build.sh ../. 
+    cmd: cp config/build.sh ../. 
     env:
-    work_dir: build/builder
+    work_dir: 
   - name: build mptrac
     cmd: sh build.sh
     env:
