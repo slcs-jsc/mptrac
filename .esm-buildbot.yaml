@@ -11,11 +11,11 @@ branch:
 poll-interval: 3600
 time-out: 3600
 steps:
-  - name: move files
-    cmd: cp config/build.sh ../. 
-    env:
-    work_dir: 
   - name: build mptrac
-    cmd: sh build.sh
+    cmd: sh build_cpu.sh
+    env:
+    work_dir:
+  - name: test mptrac
+    cmd: sh test_cpu.sh
     env:
     work_dir:
