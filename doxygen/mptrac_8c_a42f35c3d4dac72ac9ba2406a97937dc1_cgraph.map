@@ -1,0 +1,8 @@
+<map id="module_tracer_chem" name="module_tracer_chem">
+<area shape="rect" id="node1" title="Simulate chemical reactions involving long&#45;lived atmospheric tracers." alt="" coords="5,56,148,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#afb5aaa2ee2de7b0625084e6a18503996" title="Calculates the photolysis rate for a given set of atmospheric conditions." alt="" coords="196,56,281,83"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a41f5ab8ff7acad400fe7332b6b53288a" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="203,5,274,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#ab0bfcf61833d71fb831d4faae03ce709" title="Calculates the solar zenith angle." alt="" coords="202,107,275,133"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="333,5,408,32"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="329,56,412,83"/>
+</map>
