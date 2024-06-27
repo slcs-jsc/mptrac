@@ -7,8 +7,8 @@ scheduler:
   - FORCE
   - CHANGE
 branch: 
-  - master
   - esm-buildbot
+  - master
 poll-interval: 3600
 time-out: 3600
 steps:
