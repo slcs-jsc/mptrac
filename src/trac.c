@@ -91,6 +91,13 @@ int main(
     /* MPI parallelization... */
     if ((++ntask) % size != rank)
       continue;
+#ifdef _OPENACC
+    LOG(1, "Parallelization: ntask= %d | rank= %d | size= %d | acc_dev= %d",
+	ntask, rank, size, acc_get_device_num(acc_device_t devicetype));
+#else
+    LOG(1, "Parallelization: ntask= %d | rank= %d | size= %d | acc_dev= nan",
+	ntask, rank, size);
+#endif
 
     /* ------------------------------------------------------------
        Initialize model run...
