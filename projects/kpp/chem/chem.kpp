@@ -104,13 +104,13 @@ void kpp_chem_initialize(
     SET_VAR(ind_n2o, qnt_Cn2o, M);
     SET_VAR(ind_ccl3f, qnt_Cccl3f, M);
     SET_VAR(ind_ccl2f2, qnt_Cccl2f2, M);
-    SET_VAR(ind_o3, qnt_Co3, M);
-		SET_VAR(ind_h2o, qnt_Ch2o, M);
+    //SET_VAR(ind_o3, qnt_Co3, M);
+		//SET_VAR(ind_h2o, qnt_Ch2o, M);
     SET_VAR(ind_co, qnt_Cco, M);
     //if (ctl->qnt_Cco >= 0)
       //var[ind_co] = clim_zm(&clim->co, atm->time[ip],atm->lat[ip], atm->p[ip]) * M;
-    //var[ind_h2o] = h2o * M;
-    //var[ind_o3] = o3 * M;
+    var[ind_h2o] = h2o * M;
+    var[ind_o3] = o3 * M;
   
 		fix[indf_o2] = 0.2095 * M;
 		fix[indf_n2] = 0.7808 * M;

@@ -2395,16 +2395,6 @@ void module_chemgrid(
   atm_t * atm,
   double tt) {
 
-  double *z, *press, *mass, *area, *lon, *lat;
-
-  int *ixs, *iys, *izs;
-
-  /* Update host... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-#endif
-
   /* Check quantities... */
   if (ctl->molmass < 0)
     ERRMSG("Molar mass is not defined!");
@@ -2412,44 +2402,55 @@ void module_chemgrid(
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
-  /* Allocate... */
-  ALLOC(z, double,
-	ctl->chemgrid_nz);
-  ALLOC(press, double,
-	ctl->chemgrid_nz);
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
-  ALLOC(mass, double,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-  ALLOC(lon, double,
-	ctl->chemgrid_nx);
-  ALLOC(lat, double,
-	ctl->chemgrid_ny);
-  ALLOC(area, double,
-	ctl->chemgrid_ny);
+  const int np = atm->np;
+  const int nz = ctl->chemgrid_nz;
+  const int nx = ctl->chemgrid_nx;
+  const int ny = ctl->chemgrid_ny;
+  const int ngrid = ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz;
+
+  double *restrict const z = (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const press = (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const mass = (double *) malloc((size_t) ngrid * sizeof(double));
+  double *restrict const area = (double *) malloc((size_t) ny * sizeof(double));
+  double *restrict const lon = (double *) malloc((size_t) nx * sizeof(double));
+  double *restrict const lat = (double *) malloc((size_t) ny * sizeof(double));
+
+  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
 
   /* Set grid box size... */
-  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+  const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+
+  for (int i = 0; i < ngrid; i++) 
+    mass[i] = 0;
+
 
   /* Set vertical coordinates... */
+#ifdef _OPENACC
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],z[0:nz],press[0:nz],mass[0:ngrid],area[0:ny],lon[0:nx],lat[0:ny])
+#pragma acc data present(ctl,met0,met1,atm,ixs,iys,izs,z,press,mass,area,lon,lat)
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
+#endif
   for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
 
   /* Set time interval for output... */
-  double t0 = tt - 0.5 * ctl->dt_mod;
-  double t1 = tt + 0.5 * ctl->dt_mod;
+  const double t0 = tt - 0.5 * ctl->dt_mod;
+  const double t1 = tt + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
+#endif
   for (int ip = 0; ip < atm->np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
@@ -2462,9 +2463,18 @@ void module_chemgrid(
   }
 
   /* Set horizontal coordinates... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
   for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
     lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
+#endif
   for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
     area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
@@ -2472,14 +2482,24 @@ void module_chemgrid(
   }
 
   /* Get mass per grid box... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
       mass[ARRAY_3D
 	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
 	+= atm->q[ctl->qnt_m][ip];
 
   /* Assign grid data to air parcels ... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
+#endif
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
@@ -2498,6 +2518,10 @@ void module_chemgrid(
 	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
     }
 
+#ifdef _OPENACC
+#pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
+#endif
+
   /* Free... */
   free(mass);
   free(lon);
@@ -2508,12 +2532,6 @@ void module_chemgrid(
   free(ixs);
   free(iys);
   free(izs);
-
-  /* Update device... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
 }
 
 /*****************************************************************************/
