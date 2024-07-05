@@ -5523,7 +5523,8 @@ int read_met(
   /* Initialize rank... */
   int rank = 0;
 #ifdef MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (ctl->met_mpi_share)
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
   /* Read netCDF data... */
