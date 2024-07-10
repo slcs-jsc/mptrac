@@ -2537,7 +2537,7 @@ typedef struct {
   /*! Meteo data layout (0=[lev, lat, lon], 1 = [lon, lat, lev]). */
   int met_convention;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd). */
   int met_type;
 
   /*! Check netCDF scaling factors (0=no, 1=yes). */
@@ -2932,7 +2932,7 @@ typedef struct {
   int atm_type;
 
   /*! Type of atmospheric data files for output
-     (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+     (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd). */
   int atm_type_out;
 
   /*! Type of observation data files
@@ -3796,7 +3796,7 @@ void compress_cms(
  *
  * @author Lars Hoffmann
  */
-void compress_pack(
+void compress_pck(
   char *varname,
   float *array,
   size_t nxy,

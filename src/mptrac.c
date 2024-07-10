@@ -454,15 +454,15 @@ void compress_cms(
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
-      /* Calculate mean compression rate... */
-      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
+      /* Calculate mean compression ratio... */
+      cr += cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Free... */
       cms_delete_sol(sol);
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -515,8 +515,8 @@ void compress_cms(
       /* Coarsening... */
       cms_coarsening(cms_ptr, sol, (unsigned int) ctl->met_cms_heur);
 
-      /* Calculate mean compression rate... */
-      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
+      /* Calculate mean compression ratio... */
+      cr += cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Save binary data... */
       cms_save_sol(sol, inout);
@@ -526,7 +526,7 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
+    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g)", varname, cr);
   }
 
   /* Free... */
@@ -537,7 +537,7 @@ void compress_cms(
 
 /*****************************************************************************/
 
-void compress_pack(
+void compress_pck(
   char *varname,
   float *array,
   size_t nxy,
@@ -557,8 +557,8 @@ void compress_pack(
   if (decompress) {
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(unsigned short) / sizeof(float));
+    LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
+	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
 
     /* Read data... */
     FREAD(&scl, double,
@@ -583,8 +583,8 @@ void compress_pack(
   else {
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(unsigned short) / sizeof(float));
+    LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
+	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
 
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
@@ -690,9 +690,9 @@ void compress_zfp(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
 	varname, actual_prec, actual_tol,
-	(100. * (double) zfpsize) / (double) (nx * ny * nz));
+	((double) (nx * ny * nz)) / (double) zfpsize);
   }
 
   /* Compress array and output compressed stream... */
@@ -708,9 +708,9 @@ void compress_zfp(
 	ERRMSG("Error while writing zfp data!");
     }
     LOG(2, "Write 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
 	varname, actual_prec, actual_tol,
-	(100. * (double) zfpsize) / (double) (nx * ny * nz));
+	((double) (nx * ny * nz)) / (double) zfpsize);
   }
 
   /* Free... */
@@ -751,8 +751,8 @@ void compress_zstd(
     if (ZSTD_isError(compsize)) {
       ERRMSG("Decompression failed!");
     }
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) comprLen) / (double) uncomprLen);
+    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g)",
+	varname, ((double) uncomprLen) / (double) comprLen);
   }
 
   /* Compress array and output compressed stream... */
@@ -767,8 +767,8 @@ void compress_zstd(
       if (fwrite(compr, 1, compsize, inout) != compsize)
 	ERRMSG("Error while writing zstd data!");
     }
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) compsize) / (double) uncomprLen);
+    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g)",
+	varname, ((double) uncomprLen) / (double) compsize);
   }
 
   /* Free... */
@@ -2409,11 +2409,16 @@ void module_chemgrid(
   const int ngrid = ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz;
 
   double *restrict const z = (double *) malloc((size_t) nz * sizeof(double));
-  double *restrict const press = (double *) malloc((size_t) nz * sizeof(double));
-  double *restrict const mass = (double *) malloc((size_t) ngrid * sizeof(double));
-  double *restrict const area = (double *) malloc((size_t) ny * sizeof(double));
-  double *restrict const lon = (double *) malloc((size_t) nx * sizeof(double));
-  double *restrict const lat = (double *) malloc((size_t) ny * sizeof(double));
+  double *restrict const press =
+    (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const mass =
+    (double *) malloc((size_t) ngrid * sizeof(double));
+  double *restrict const area =
+    (double *) malloc((size_t) ny * sizeof(double));
+  double *restrict const lon =
+    (double *) malloc((size_t) nx * sizeof(double));
+  double *restrict const lat =
+    (double *) malloc((size_t) ny * sizeof(double));
 
   int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
   int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
@@ -2421,10 +2426,12 @@ void module_chemgrid(
 
   /* Set grid box size... */
   const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+  const double dlon =
+    (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  const double dlat =
+    (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
 
-  for (int i = 0; i < ngrid; i++) 
+  for (int i = 0; i < ngrid; i++)
     mass[i] = 0;
 
 
@@ -2517,7 +2524,6 @@ void module_chemgrid(
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
 	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
     }
-
 #ifdef _OPENACC
 #pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
 #endif
@@ -5882,8 +5888,8 @@ void read_met_bin_3d(
 
   /* Read packed data... */
   else if (ctl->met_type == 2)
-    compress_pack(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, 1, in);
+    compress_pck(varname, help, (size_t) (met->ny * met->nx),
+		 (size_t) met->np, 1, in);
 
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
@@ -9677,8 +9683,8 @@ void write_met_bin_3d(
 
   /* Write packed data... */
   else if (ctl->met_type == 2)
-    compress_pack(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, 0, out);
+    compress_pck(varname, help, (size_t) (met->ny * met->nx),
+		 (size_t) met->np, 0, out);
 
   /* Write zfp data... */
 #ifdef ZFP
