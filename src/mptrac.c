@@ -454,15 +454,15 @@ void compress_cms(
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
-      /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr, sol) / (double) np;
+      /* Calculate mean compression rate... */
+      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Free... */
       cms_delete_sol(sol);
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -515,8 +515,8 @@ void compress_cms(
       /* Coarsening... */
       cms_coarsening(cms_ptr, sol, (unsigned int) ctl->met_cms_heur);
 
-      /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr, sol) / (double) np;
+      /* Calculate mean compression rate... */
+      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Save binary data... */
       cms_save_sol(sol, inout);
@@ -526,7 +526,7 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g)", varname, cr);
+    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
   /* Free... */
@@ -537,7 +537,7 @@ void compress_cms(
 
 /*****************************************************************************/
 
-void compress_pck(
+void compress_pack(
   char *varname,
   float *array,
   size_t nxy,
@@ -557,8 +557,8 @@ void compress_pck(
   if (decompress) {
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
-	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
+    LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
+	varname, 100. * sizeof(unsigned short) / sizeof(float));
 
     /* Read data... */
     FREAD(&scl, double,
@@ -583,8 +583,8 @@ void compress_pck(
   else {
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
-	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
+    LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
+	varname, 100. * sizeof(unsigned short) / sizeof(float));
 
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
@@ -690,9 +690,9 @@ void compress_zfp(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
 	varname, actual_prec, actual_tol,
-	((double) (nx * ny * nz)) / (double) zfpsize);
+	(100. * (double) zfpsize) / (double) (nx * ny * nz));
   }
 
   /* Compress array and output compressed stream... */
@@ -708,9 +708,9 @@ void compress_zfp(
 	ERRMSG("Error while writing zfp data!");
     }
     LOG(2, "Write 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
 	varname, actual_prec, actual_tol,
-	((double) (nx * ny * nz)) / (double) zfpsize);
+	(100. * (double) zfpsize) / (double) (nx * ny * nz));
   }
 
   /* Free... */
@@ -751,8 +751,8 @@ void compress_zstd(
     if (ZSTD_isError(compsize)) {
       ERRMSG("Decompression failed!");
     }
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) comprLen);
+    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)",
+	varname, (100. * (double) comprLen) / (double) uncomprLen);
   }
 
   /* Compress array and output compressed stream... */
@@ -767,8 +767,8 @@ void compress_zstd(
       if (fwrite(compr, 1, compsize, inout) != compsize)
 	ERRMSG("Error while writing zstd data!");
     }
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) compsize);
+    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)",
+	varname, (100. * (double) compsize) / (double) uncomprLen);
   }
 
   /* Free... */
@@ -943,7 +943,7 @@ void get_met(
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
-
+    
     /* Read new meteo data... */
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, clim, *met1))
@@ -1021,6 +1021,157 @@ void get_met(
 	ERRMSG("Meteo grid latitudes do not match!");
     for (int ip = 0; ip < (*met0)->np; ip++)
       if (fabs((*met0)->p[ip] - (*met1)->p[ip]) > 0.001)
+	ERRMSG("Meteo grid pressure levels do not match!");
+  }
+}
+
+/*****************************************************************************/
+
+void get_met_fortran(
+  ctl_t * ctl,
+  clim_t * clim,
+  double t,
+  met_t * met0,
+  met_t * met1) {
+
+  static int init;
+
+  //met_t *mets;
+
+  char cachefile[LEN], cmd[2 * LEN], filename[LEN];
+
+  /* Set timer... */
+  SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+
+  /* Init... */
+  if (t == ctl->t_start || !init) {
+    init = 1;
+
+    /* Read meteo data... */
+    get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
+		 ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, met0))
+      ERRMSG("Cannot open file!");
+
+    get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
+		 ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, met1))
+      ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met0up = met0;
+    met_t *met1up = met1;
+#ifdef ASYNCIO
+#pragma acc update device(met0up[:1],met1up[:1]) async(5)
+#else
+#pragma acc update device(met0up[:1],met1up[:1])
+#endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+#endif
+
+    /* Caching... */
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
+		   ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
+  }
+
+  /* Read new data for forward trajectories... */
+  if (t > (met1)->time) {
+
+    //#ifdef WRAPPER
+    memcpy(met0,met1,sizeof(met_t));
+    //#else
+    /* Pointer swap... */
+    /*    mets = *met1;
+    *met1 = *met0;
+    *met0 = mets;
+#endif*/
+    
+    /* Read new meteo data... */
+    get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, met1))
+      ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met1up = met1;
+#ifdef ASYNCIO
+#pragma acc update device(met1up[:1]) async(5)
+#else
+#pragma acc update device(met1up[:1])
+#endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+#endif
+
+    /* Caching... */
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
+		   cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
+  }
+
+  /* Read new data for backward trajectories... */
+  if (t < (met0)->time) {
+
+    memcpy(met1,met0,sizeof(met_t));
+    /* Pointer swap... */
+    /*mets = *met1;
+    *met1 = *met0;
+    *met0 = mets;*/
+
+    /* Read new meteo data... */
+    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, met0))
+      ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met0up = met0;
+#ifdef ASYNCIO
+#pragma acc update device(met0up[:1]) async(5)
+#else
+#pragma acc update device(met0up[:1])
+#endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+#endif
+
+    /* Caching... */
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
+		   cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
+  }
+
+  /* Check that grids are consistent... */
+  if ((met0)->nx != 0 && (met1)->nx != 0) {
+    if ((met0)->nx != (met1)->nx
+	|| (met0)->ny != (met1)->ny || (met0)->np != (met1)->np)
+      ERRMSG("Meteo grid dimensions do not match!");
+    for (int ix = 0; ix < (met0)->nx; ix++)
+      if (fabs((met0)->lon[ix] - (met1)->lon[ix]) > 0.001)
+	ERRMSG("Meteo grid longitudes do not match!");
+    for (int iy = 0; iy < (met0)->ny; iy++)
+      if (fabs((met0)->lat[iy] - (met1)->lat[iy]) > 0.001)
+	ERRMSG("Meteo grid latitudes do not match!");
+    for (int ip = 0; ip < (met0)->np; ip++)
+      if (fabs((met0)->p[ip] - (met1)->p[ip]) > 0.001)
 	ERRMSG("Meteo grid pressure levels do not match!");
   }
 }
@@ -2395,6 +2546,16 @@ void module_chemgrid(
   atm_t * atm,
   double tt) {
 
+  double *z, *press, *mass, *area, *lon, *lat;
+
+  int *ixs, *iys, *izs;
+
+  /* Update host... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+#endif
+
   /* Check quantities... */
   if (ctl->molmass < 0)
     ERRMSG("Molar mass is not defined!");
@@ -2402,62 +2563,44 @@ void module_chemgrid(
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
-  const int np = atm->np;
-  const int nz = ctl->chemgrid_nz;
-  const int nx = ctl->chemgrid_nx;
-  const int ny = ctl->chemgrid_ny;
-  const int ngrid = ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz;
-
-  double *restrict const z = (double *) malloc((size_t) nz * sizeof(double));
-  double *restrict const press =
-    (double *) malloc((size_t) nz * sizeof(double));
-  double *restrict const mass =
-    (double *) malloc((size_t) ngrid * sizeof(double));
-  double *restrict const area =
-    (double *) malloc((size_t) ny * sizeof(double));
-  double *restrict const lon =
-    (double *) malloc((size_t) nx * sizeof(double));
-  double *restrict const lat =
-    (double *) malloc((size_t) ny * sizeof(double));
-
-  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
-  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
-  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
+  /* Allocate... */
+  ALLOC(z, double,
+	ctl->chemgrid_nz);
+  ALLOC(press, double,
+	ctl->chemgrid_nz);
+  ALLOC(ixs, int,
+	atm->np);
+  ALLOC(iys, int,
+	atm->np);
+  ALLOC(izs, int,
+	atm->np);
+  ALLOC(mass, double,
+	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
+  ALLOC(lon, double,
+	ctl->chemgrid_nx);
+  ALLOC(lat, double,
+	ctl->chemgrid_ny);
+  ALLOC(area, double,
+	ctl->chemgrid_ny);
 
   /* Set grid box size... */
-  const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  const double dlon =
-    (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  const double dlat =
-    (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
-
-  for (int i = 0; i < ngrid; i++)
-    mass[i] = 0;
-
+  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
+  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
+  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
 
   /* Set vertical coordinates... */
-#ifdef _OPENACC
-#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],z[0:nz],press[0:nz],mass[0:ngrid],area[0:ny],lon[0:nx],lat[0:ny])
-#pragma acc data present(ctl,met0,met1,atm,ixs,iys,izs,z,press,mass,area,lon,lat)
-#pragma acc parallel loop independent gang vector
-#else
 #pragma omp parallel for default(shared)
-#endif
   for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
 
   /* Set time interval for output... */
-  const double t0 = tt - 0.5 * ctl->dt_mod;
-  const double t1 = tt + 0.5 * ctl->dt_mod;
+  double t0 = tt - 0.5 * ctl->dt_mod;
+  double t1 = tt + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
 #pragma omp parallel for default(shared)
-#endif
   for (int ip = 0; ip < atm->np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
@@ -2470,18 +2613,9 @@ void module_chemgrid(
   }
 
   /* Set horizontal coordinates... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for default(shared)
-#endif
   for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
     lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
 #pragma omp parallel for default(shared)
-#endif
   for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
     area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
@@ -2489,24 +2623,14 @@ void module_chemgrid(
   }
 
   /* Get mass per grid box... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
-#ifdef _OPENACC
-#pragma acc atomic update
-#endif
       mass[ARRAY_3D
 	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
 	+= atm->q[ctl->qnt_m][ip];
 
   /* Assign grid data to air parcels ... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
 #pragma omp parallel for default(shared)
-#endif
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
 
@@ -2524,9 +2648,6 @@ void module_chemgrid(
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
 	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
     }
-#ifdef _OPENACC
-#pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
-#endif
 
   /* Free... */
   free(mass);
@@ -2538,6 +2659,12 @@ void module_chemgrid(
   free(ixs);
   free(iys);
   free(izs);
+
+  /* Update device... */
+#ifdef _OPENACC
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
 }
 
 /*****************************************************************************/
@@ -5547,8 +5674,7 @@ int read_met(
   /* Initialize rank... */
   int rank = 0;
 #ifdef MPI
-  if (ctl->met_mpi_share)
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
   /* Read netCDF data... */
@@ -5888,8 +6014,8 @@ void read_met_bin_3d(
 
   /* Read packed data... */
   else if (ctl->met_type == 2)
-    compress_pck(varname, help, (size_t) (met->ny * met->nx),
-		 (size_t) met->np, 1, in);
+    compress_pack(varname, help, (size_t) (met->ny * met->nx),
+		  (size_t) met->np, 1, in);
 
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
@@ -6398,7 +6524,7 @@ void read_met_grid(
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
-
+    
     /* Check time information from data file... */
     jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
@@ -8235,6 +8361,7 @@ double time_from_filename(
 
   double t;
 
+  PRINT("%s", filename);
   /* Get time from filename... */
   int len = (int) strlen(filename);
   sprintf(tstr, "%.4s", &filename[len - offset]);
@@ -9683,8 +9810,8 @@ void write_met_bin_3d(
 
   /* Write packed data... */
   else if (ctl->met_type == 2)
-    compress_pck(varname, help, (size_t) (met->ny * met->nx),
-		 (size_t) met->np, 0, out);
+    compress_pack(varname, help, (size_t) (met->ny * met->nx),
+		  (size_t) met->np, 0, out);
 
   /* Write zfp data... */
 #ifdef ZFP

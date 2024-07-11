@@ -6,7 +6,7 @@
 EXC = atm2grid atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_clim tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test
+TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test wrapper_test
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -71,6 +71,9 @@ CMS ?= 0
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= /home/lars/wrk/cmultiscale/cmultiscale
 
+# Enable Fortran Wrapper
+WRAPPER ?= 1
+
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -92,6 +95,10 @@ else ifeq ($(COMPILER),clang)
 else
   $(error Compiler $(COMPILER) not supported)
 endif
+
+# Set FC and FCFLAGS...
+FC=gfortran
+FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation -O0
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
@@ -238,6 +245,11 @@ $(EXC): %: %.c mptrac.o
 
 mptrac.o: mptrac.c mptrac.h Makefile
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
+
+wrapper:
+	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
 
 check: $(TESTS)
 
