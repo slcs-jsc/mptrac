@@ -134,6 +134,8 @@ Using the log messages, [draft a new release](https://github.com/slcs-jsc/mptrac
 
 Check the [Zenodo the website](https://doi.org/10.5281/zenodo.4400597) to publish the new release and to get a DOI.
 
+Use the DOI to submit entry at [JuSER publication database](https://juser.fz-juelich.de/).
+
 ## Cleaning the git repository
 
 Always test the following procedures on a fresh copy of the repository!
