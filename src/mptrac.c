@@ -41,6 +41,37 @@ static curandGenerator_t rng_curand;
 
 /*****************************************************************************/
 
+#ifdef MPI
+void broadcast_large_data(void* data, size_t N, int root, MPI_Comm comm) {
+  
+#define CHUNK_SIZE 2147483647
+  
+  /* Get rank... */
+  int rank;
+  MPI_Comm_rank(comm, &rank);
+  
+  /* Broadcast the size of the data first... */
+  MPI_Bcast(&N, 1, MPI_UINT64_T, root, comm);
+  
+  /* Calculate the number of chunks... */
+  size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
+  
+  /* Loop over chunks... */
+  for (size_t i = 0; i < num_chunks; i++) {
+    
+    /* Determine the start and end indices for the current chunk... */
+    size_t start = i * CHUNK_SIZE;
+    size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
+    size_t chunk_size = end - start;
+    
+    /* Broadcast the current chunk... */
+    MPI_Bcast((char*)data + start, (int)chunk_size, MPI_BYTE, root, comm);
+  }
+}
+#endif
+
+/*****************************************************************************/
+
 void cart2geo(
   const double *x,
   double *z,
@@ -5771,64 +5802,11 @@ int read_met(
     SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
     LOG(2, "Broadcast data on rank %d...", rank);
 
-    /* Broadcast 1D data... */
-    MPI_Bcast(&met->time, 1, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->nx, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->ny, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->np, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->npl, 1, MPI_INT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->lon, met->nx, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->lat, met->ny, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->p, met->np, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-    MPI_Bcast(&met->hybrid, met->npl, MPI_DOUBLE, 0, MPI_COMM_WORLD);
-
-    /* Broadcast 2D data... */
-    MPI_Bcast(met->ps, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->ts, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zs, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->us, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->vs, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->lsm, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->sst, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pbl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->tt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zt, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->h2ot, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pct, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pcb, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->plcl, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->plfc, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pel, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cape, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cin, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->o3c, EX * EY, MPI_FLOAT, 0, MPI_COMM_WORLD);
-
-    /* Broadcast 3D data... */
-    MPI_Bcast(met->z, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->t, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->u, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->v, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->w, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pv, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->h2o, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->o3, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->lwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->rwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->iwc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->swc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->cc, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->pl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->ul, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->vl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->wl, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zetal, EX * EY * EP, MPI_FLOAT, 0, MPI_COMM_WORLD);
-    MPI_Bcast(met->zeta_dotl, EX * EY * EP, MPI_FLOAT, 0,
-	      MPI_COMM_WORLD);
+    /* Broadcast... */
+    broadcast_large_data(met, sizeof(met_t), 0, MPI_COMM_WORLD);
   }
 #endif
-
+  
   /* Return success... */
   return 1;
 }
