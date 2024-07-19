@@ -3421,22 +3421,30 @@ typedef struct {
    Functions...
    ------------------------------------------------------------ */
 
-#ifdef MPI
 /**
- * @brief Broadcasts large data in chunks from the root process to all other processes in the given communicator.
+ * @brief Broadcasts large data across all processes in an MPI communicator.
  *
- * This function splits the data into manageable chunks (up to 2 GB - 1 byte each) and broadcasts each chunk sequentially.
- * This approach avoids issues with broadcasting very large data sizes that exceed the limits of a single MPI_Bcast call.
+ * This function divides the data into manageable chunks and broadcasts each
+ * chunk sequentially. This approach is necessary because the data size may
+ * exceed the maximum allowable message size for a single MPI_Bcast operation.
  *
- * @param data Pointer to the data to be broadcast. This pointer should point to a contiguous block of memory.
- * @param N The size of the data in bytes.
- * @param root The rank of the root process that holds the initial data.
- * @param comm The MPI communicator.
+ * @param data Pointer to the data to be broadcasted.
+ * @param N    Size of the data in bytes.
+ *
+ * The function first broadcasts the total size of the data to all processes.
+ * Then, it calculates the number of chunks needed to broadcast the entire data.
+ * Each chunk is broadcasted in sequence until the entire data has been sent.
+ * 
+ * The maximum chunk size is defined as CHUNK_SIZE (2147483647 bytes).
+ *
+ * @note The function assumes that the MPI environment has been initialized 
+ * before calling this function and will be finalized afterward.
  *
  * @author Lars Hoffmann
  */
-void broadcast_large_data(void* data, size_t N, int root, MPI_Comm comm);
-#endif
+void broadcast_large_data(
+  void *data,
+  size_t N);
 
 /**
  * @brief Converts Cartesian coordinates to geographic coordinates.

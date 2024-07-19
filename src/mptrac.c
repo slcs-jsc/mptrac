@@ -42,30 +42,29 @@ static curandGenerator_t rng_curand;
 /*****************************************************************************/
 
 #ifdef MPI
-void broadcast_large_data(void* data, size_t N, int root, MPI_Comm comm) {
-  
+void broadcast_large_data(
+  void *data,
+  size_t N) {
+
 #define CHUNK_SIZE 2147483647
-  
-  /* Get rank... */
-  int rank;
-  MPI_Comm_rank(comm, &rank);
-  
+
   /* Broadcast the size of the data first... */
-  MPI_Bcast(&N, 1, MPI_UINT64_T, root, comm);
-  
+  MPI_Bcast(&N, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+
   /* Calculate the number of chunks... */
   size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
-  
+
   /* Loop over chunks... */
   for (size_t i = 0; i < num_chunks; i++) {
-    
+
     /* Determine the start and end indices for the current chunk... */
     size_t start = i * CHUNK_SIZE;
     size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
     size_t chunk_size = end - start;
-    
+
     /* Broadcast the current chunk... */
-    MPI_Bcast((char*)data + start, (int)chunk_size, MPI_BYTE, root, comm);
+    MPI_Bcast((char *) data + start, (int) chunk_size, MPI_BYTE, 0,
+	      MPI_COMM_WORLD);
   }
 }
 #endif
@@ -5803,10 +5802,10 @@ int read_met(
     LOG(2, "Broadcast data on rank %d...", rank);
 
     /* Broadcast... */
-    broadcast_large_data(met, sizeof(met_t), 0, MPI_COMM_WORLD);
+    broadcast_large_data(met, sizeof(met_t));
   }
 #endif
-  
+
   /* Return success... */
   return 1;
 }
