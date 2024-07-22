@@ -2,14 +2,16 @@ MODULE mptrac_struct
   
   USE, intrinsic :: iso_c_binding
   IMPLICIT NONE
-  
+
+  !! Values must be identical to equivalent variables in mptrac.h!
   INTEGER, PARAMETER :: ex=1201
   INTEGER, PARAMETER :: ey=601
   INTEGER, PARAMETER :: ep=140
-  INTEGER, PARAMETER :: npp=10000000 
+  INTEGER, PARAMETER :: npp=10000000
   INTEGER, PARAMETER :: nqq=15
   INTEGER, PARAMETER :: length=5000
-  
+
+  !! The order of the variables in each struct matters!
   TYPE, bind(c) :: met_t
      REAL(c_double) :: time
      INTEGER(c_int) :: nx
@@ -205,6 +207,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_tropo_spline
      REAL(c_double) :: met_dt_out
      INTEGER(c_int) :: met_cache
+     INTEGER(c_int) :: met_mpi_share
      REAL(c_double) :: sort_dt
      INTEGER(c_int) :: isosurf
      CHARACTER(c_char), DIMENSION(length) :: balloon
@@ -451,8 +454,8 @@ MODULE mptrac_func
        USE mptrac_struct, ONLY : ctl_t
        IMPLICIT NONE
        CHARACTER(c_char), INTENT(in) :: filename
-       INTEGER(c_int), INTENT(in) :: argc
-       CHARACTER(c_char), DIMENSION(5), INTENT(in) :: argv
+       INTEGER(c_int), VALUE :: argc
+       TYPE(c_ptr), DIMENSION(5) :: argv
        TYPE(ctl_t), INTENT(out), TARGET :: ctl
      END SUBROUTINE mptrac_read_ctl
 
