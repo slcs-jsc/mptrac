@@ -394,10 +394,10 @@ int main(
 #endif
     free(dt);
     free(rs);
-
-    /* Report timers... */
-    PRINT_TIMERS;
   }
+
+  /* Report timers... */
+  PRINT_TIMERS;
 
   /* Finalize MPI... */
 #ifdef MPI
