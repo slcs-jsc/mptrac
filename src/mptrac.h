@@ -248,7 +248,8 @@
 
 /*! Maximum number of data points for CSI calculation. */
 #ifndef NCSI
-#define NCSI 1000000
+#define NCSI 100
+/* #define NCSI 1000000 */
 #endif
 
 /*! Maximum number of pressure levels for meteo data. */
@@ -273,7 +274,8 @@
 
 /*! Maximum number of observation data points. */
 #ifndef NOBS
-#define NOBS 10000000
+/* #define NOBS 10000000 */
+#define NOBS 100
 #endif
 
 /*! Maximum number of OpenMP threads. */
