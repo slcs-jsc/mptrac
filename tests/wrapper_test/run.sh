@@ -1,5 +1,7 @@
 #! /bin/bash
 
+# ToDo: clean up
+
 # Set environment...
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export LANG=C
@@ -79,8 +81,11 @@ EOF
 #		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 5.0
 
 # Calculate trajectories...
-#echo "data" > data/dirlist
+echo "data" > data/dirlist
 $trac_fortran/trac_fortran
+#valgrind --tool=memcheck --leak-check=full --track-origins=yes -s $trac_fortran/trac_fortran
+#valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --max-stackframe=17081687808 --main-stacksize=90388608 -s $trac_fortran/trac_fortran
+#valgrind --tool=memcheck --leak-check=full --track-origins=yes --max-stackframe=17081687808 --main-stacksize=190388608 -s $trac_fortran/trac_fortran
 
 # Compare files...
 echo -e "\nCompare results..."
