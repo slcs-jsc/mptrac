@@ -17,7 +17,7 @@ INCDIR += -I ../libs/build/include
 # Library directories...
 LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 
-# Compiler (gcc, nvc, or clang)...
+# Compiler (gcc, icx, nvc, or clang)...
 COMPILER ?= gcc
 
 # Compile for MPI...
@@ -32,8 +32,8 @@ GPU_PIN ?= 0
 # Static compilation...
 STATIC ?= 0
 
-# Optimization flags...
-OPTI ?= -O3
+# Optimization flags...; default production -O3
+OPTI ?= -O0
 
 # Optimization information...
 INFO ?= 0
@@ -85,7 +85,11 @@ VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags)
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPTI) -g
 ifeq ($(COMPILER),gcc)
   CC=gcc
-  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  #CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+else ifeq ($(COMPILER),icx)
+  CC=icx
+  CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 else ifeq ($(COMPILER),nvc)
   CC=nvc
   CFLAGS += -mp -mcmodel=medium
@@ -96,9 +100,21 @@ else
   $(error Compiler $(COMPILER) not supported)
 endif
 
+
 # Set FC and FCFLAGS...
-FC=gfortran
-FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation -O0
+ifeq ($(COMPILER),gcc)
+  FC=gfortran
+  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation $(OPTI)
+else ifeq ($(COMPILER),icx)
+  FC=ifort
+  FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium $(OPTI)
+else ifeq ($(COMPILER),nvc)
+  FC=nvfortran
+  FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays $(OPTI) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
+else
+  $(error Compiler $(COMPILER) not supported)
+endif
+
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
@@ -132,6 +148,8 @@ endif
 # Optimization information...
 ifeq ($(INFO),1)
   ifeq ($(COMPILER),gcc)
+    CFLAGS += -fopt-info
+  else ifeq ($(COMPILER),icx)
     CFLAGS += -fopt-info
   else ifeq ($(COMPILER),nvc)
     CFLAGS += -Minfo=all
