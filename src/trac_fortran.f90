@@ -3,34 +3,35 @@ PROGRAM trac_fortran
   USE mptrac_struct
   USE mptrac_func
   USE, intrinsic :: iso_fortran_env
+  USE, intrinsic :: iso_c_binding
+  !! ToDo clean up and check for consitency
+  !!What is the difference between  "USE iso_c_binding" and "USE, intrinsic :: iso_c_binding"?
   IMPLICIT NONE
 
   CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
   INTEGER(c_int) :: argc
-  !  CHARACTER(len=5), DIMENSION(5) :: argv
-  CHARACTER(len=:), allocatable, target :: arg1, arg2, arg3, arg4, arg5
-  CHARACTER(len=:), allocatable, target :: temp1, temp2, temp3, temp4, temp5
-  TYPE(c_ptr), DIMENSION(5), target :: argv_ptrs
+  CHARACTER(len=15) :: arg1, arg2, arg3, arg4, arg5
+  CHARACTER(c_char), TARGET :: temp1, temp2, temp3, temp4, temp5
+  TYPE(c_ptr), DIMENSION(5), TARGET :: argv_ptrs
   TYPE(ctl_t) :: ctl
   TYPE(atm_t) :: atm
   TYPE(clim_t) :: clim
-  TYPE(met_t), TARGET :: met0, met1
+  TYPE(met_t) :: met0, met1
   REAL(real64) :: t
   REAL(real64), DIMENSION(npp) :: dt
   
   filename_ctl = "data/trac.ctl"
   filename_atm = "atm_split.tab"
 
+  !! ToDo: Create command line arguments
   argc = 5
-  arg1 = "FortranWrapper"
-  arg2 = trim("abc2") // c_null_char
+  arg1 = "FortranWrapper" 
+  arg2 = "abc2"
   arg3 = "abc3"
   arg4 = "abc4"
   arg5 = "abc5"
 
-  print *, "Hello World!"
-
-  ! Get 5 different pointers and store them in array
+  ! Create 5 different pointers and store them in array
   temp1 = trim(arg1)//c_null_char
   argv_ptrs(1) = c_loc(temp1)
   temp2 = trim(arg2)//c_null_char
@@ -41,31 +42,36 @@ PROGRAM trac_fortran
   argv_ptrs(4) = c_loc(temp4)
   temp5 = trim(arg5)//c_null_char
   argv_ptrs(5) = c_loc(temp5)
-  write(*,*) argv_ptrs
-  
-  ! Read control parameters... 
-  !CALL mptrac_read_ctl(TRIM(filename_ctl)//char(0), argc, TRIM(argv(1))//char(0), ctl)
-  CALL mptrac_read_ctl(TRIM(filename_ctl)//char(0), argc, argv_ptrs, ctl)
-  
-  print *, "Hello Control"
-  
-  ! Read climatological data... 
-  CALL mptrac_read_clim(ctl, clim)
 
-  print *, "Hello Clim"
+  print *,'Hello World!'
+  
+  ! ! Read control parameters... 
+  CALL mptrac_read_ctl(TRIM(filename_ctl)//char(0), argc, argv_ptrs, ctl)
+  print *,'Hello Control'
+  
+  ! ! Read climatological data... 
+  CALL mptrac_read_clim(ctl, clim)
+  print *,'Hello Clim'
   
   ! Read atmospheric data...
   CALL mptrac_read_atm(TRIM(filename_atm)//char(0), ctl, atm)
-
   print *, "Hello Atm"
   
   ! Initialize timesteps...
   CALL mptrac_module_timesteps_init(ctl, atm)
+  print *, "Hello Timesteps"
 
+  print *,c_sizeof(met1)
+  print *,c_sizeof(atm)
+  print *,c_sizeof(ctl)
+  print *,c_sizeof(clim)
+  
+  
   WRITE(*,*) ctl%t_start
   ! Get meteo data...
   CALL mptrac_get_met(ctl, clim, ctl%t_start, met0, met1)
-
+  print *, "Hello Met"
+  
   dirname = "data"
 
   t = ctl%t_start
