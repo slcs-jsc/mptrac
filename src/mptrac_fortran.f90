@@ -4,15 +4,21 @@ MODULE mptrac_struct
   IMPLICIT NONE
 
   !! Values must be identical to equivalent variables in mptrac.h!
+  !! ToDo: write test script
+  !! The values for ex, ey, ep are suited for ERA5 data. However, they
+  !! exceed some size limit of NVHPC (2GB???), where the compiler fails
+  !! to build the fortran wrapper. GCC and ICX work fine.
   INTEGER, PARAMETER :: ex=1201
   INTEGER, PARAMETER :: ey=601
   INTEGER, PARAMETER :: ep=140
-  ! INTEGER, PARAMETER :: npp=10000000
-  INTEGER, PARAMETER :: npp=100000
-  INTEGER, PARAMETER :: nqq=15
-  INTEGER, PARAMETER :: length=5000
-  !! more for testing
-  INTEGER, PARAMETER :: cyy=250
+  !! Alternative smaller values, good enough for ERA-interim.
+  ! INTEGER, PARAMETER :: ex=481
+  ! INTEGER, PARAMETER :: ey=241
+  ! INTEGER, PARAMETER :: ep=60
+  INTEGER, PARAMETER :: npp=10000000 !NP
+  INTEGER, PARAMETER :: nqq=15       !NQ
+  INTEGER, PARAMETER :: length=5000  !LEN
+  INTEGER, PARAMETER :: cyy=250      !CY
   INTEGER, PARAMETER :: co3=30
   INTEGER, PARAMETER :: cp=70
   INTEGER, PARAMETER :: csza=50
@@ -27,50 +33,50 @@ MODULE mptrac_struct
      INTEGER(c_int) :: ny
      INTEGER(c_int) :: np
      INTEGER(c_int) :: npl
-     ! REAL(c_double), DIMENSION(ex) :: lon
-     ! REAL(c_double), DIMENSION(ey) :: lat
-     ! REAL(c_double), DIMENSION(ep) :: p
-     ! REAL(c_double), DIMENSION(ep) :: hybrid
-     ! REAL(c_float), DIMENSION(ey,ex) :: ps
-     ! REAL(c_float), DIMENSION(ey,ex) :: ts
-     ! REAL(c_float), DIMENSION(ey,ex) :: zs
-     ! REAL(c_float), DIMENSION(ey,ex) :: us
-     ! REAL(c_float), DIMENSION(ey,ex) :: vs
-     ! REAL(c_float), DIMENSION(ey,ex) :: lsm
-     ! REAL(c_float), DIMENSION(ey,ex) :: sst
-     ! REAL(c_float), DIMENSION(ey,ex) :: pbl
-     ! REAL(c_float), DIMENSION(ey,ex) :: pt
-     ! REAL(c_float), DIMENSION(ey,ex) :: tt
-     ! REAL(c_float), DIMENSION(ey,ex) :: zt
-     ! REAL(c_float), DIMENSION(ey,ex) :: h2ot
-     ! REAL(c_float), DIMENSION(ey,ex) :: pct
-     ! REAL(c_float), DIMENSION(ey,ex) :: pcb
-     ! REAL(c_float), DIMENSION(ey,ex) :: cl
-     ! REAL(c_float), DIMENSION(ey,ex) :: plcl
-     ! REAL(c_float), DIMENSION(ey,ex) :: plfc
-     ! REAL(c_float), DIMENSION(ey,ex) :: pel
-     ! REAL(c_float), DIMENSION(ey,ex) :: cape
-     ! REAL(c_float), DIMENSION(ey,ex) :: cin
-     ! REAL(c_float), DIMENSION(ey,ex) :: o3c
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: z
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: t
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: u
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: v
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: w
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: pv
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: h2o
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: o3
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: lwc
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: rwc
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: iwc
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: swc
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: cc
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: pl
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: ul
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: vl
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: wl
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: zetal
-     ! REAL(c_float), DIMENSION(ep,ey,ex) :: zeta_dotl
+     REAL(c_double), DIMENSION(ex) :: lon
+     REAL(c_double), DIMENSION(ey) :: lat
+     REAL(c_double), DIMENSION(ep) :: p
+     REAL(c_double), DIMENSION(ep) :: hybrid
+     REAL(c_float), DIMENSION(ey,ex) :: ps
+     REAL(c_float), DIMENSION(ey,ex) :: ts
+     REAL(c_float), DIMENSION(ey,ex) :: zs
+     REAL(c_float), DIMENSION(ey,ex) :: us
+     REAL(c_float), DIMENSION(ey,ex) :: vs
+     REAL(c_float), DIMENSION(ey,ex) :: lsm
+     REAL(c_float), DIMENSION(ey,ex) :: sst
+     REAL(c_float), DIMENSION(ey,ex) :: pbl
+     REAL(c_float), DIMENSION(ey,ex) :: pt
+     REAL(c_float), DIMENSION(ey,ex) :: tt
+     REAL(c_float), DIMENSION(ey,ex) :: zt
+     REAL(c_float), DIMENSION(ey,ex) :: h2ot
+     REAL(c_float), DIMENSION(ey,ex) :: pct
+     REAL(c_float), DIMENSION(ey,ex) :: pcb
+     REAL(c_float), DIMENSION(ey,ex) :: cl
+     REAL(c_float), DIMENSION(ey,ex) :: plcl
+     REAL(c_float), DIMENSION(ey,ex) :: plfc
+     REAL(c_float), DIMENSION(ey,ex) :: pel
+     REAL(c_float), DIMENSION(ey,ex) :: cape
+     REAL(c_float), DIMENSION(ey,ex) :: cin
+     REAL(c_float), DIMENSION(ey,ex) :: o3c
+     REAL(c_float), DIMENSION(ep,ey,ex) :: z
+     REAL(c_float), DIMENSION(ep,ey,ex) :: t
+     REAL(c_float), DIMENSION(ep,ey,ex) :: u
+     REAL(c_float), DIMENSION(ep,ey,ex) :: v
+     REAL(c_float), DIMENSION(ep,ey,ex) :: w
+     REAL(c_float), DIMENSION(ep,ey,ex) :: pv
+     REAL(c_float), DIMENSION(ep,ey,ex) :: h2o
+     REAL(c_float), DIMENSION(ep,ey,ex) :: o3
+     REAL(c_float), DIMENSION(ep,ey,ex) :: lwc
+     REAL(c_float), DIMENSION(ep,ey,ex) :: rwc
+     REAL(c_float), DIMENSION(ep,ey,ex) :: iwc
+     REAL(c_float), DIMENSION(ep,ey,ex) :: swc
+     REAL(c_float), DIMENSION(ep,ey,ex) :: cc
+     REAL(c_float), DIMENSION(ep,ey,ex) :: pl
+     REAL(c_float), DIMENSION(ep,ey,ex) :: ul
+     REAL(c_float), DIMENSION(ep,ey,ex) :: vl
+     REAL(c_float), DIMENSION(ep,ey,ex) :: wl
+     REAL(c_float), DIMENSION(ep,ey,ex) :: zetal
+     REAL(c_float), DIMENSION(ep,ey,ex) :: zeta_dotl
   END TYPE met_t
 
   TYPE, bind(c) :: ctl_t
@@ -410,7 +416,6 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(cyy) :: lat
      REAL(c_double), DIMENSION(cp) :: p
      REAL(c_double), DIMENSION(cyy,cp,ct) :: vmr
-     !REAL(c_double), DIMENSION(ct,cp,cyy) :: vmr
   END TYPE clim_zm_t
   
   TYPE, bind(c) :: clim_ts_t
@@ -509,8 +514,7 @@ MODULE mptrac_func
      SUBROUTINE mptrac_read_clim(ctl,clim) &
           bind(c,name='read_clim')
        USE, intrinsic :: iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, clim_t
-       !USE mptrac_struct
+       USE mptrac_struct, ONLY : ctl_t, clim_t, clim_ts_t, clim_zm_t, clim_photo_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(clim_t), INTENT(out), TARGET :: clim
