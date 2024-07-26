@@ -41,6 +41,36 @@ static curandGenerator_t rng_curand;
 
 /*****************************************************************************/
 
+#ifdef MPI
+void broadcast_large_data(
+  void *data,
+  size_t N) {
+
+#define CHUNK_SIZE 2147483647
+
+  /* Broadcast the size of the data first... */
+  MPI_Bcast(&N, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
+
+  /* Calculate the number of chunks... */
+  size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
+
+  /* Loop over chunks... */
+  for (size_t i = 0; i < num_chunks; i++) {
+
+    /* Determine the start and end indices for the current chunk... */
+    size_t start = i * CHUNK_SIZE;
+    size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
+    size_t chunk_size = end - start;
+
+    /* Broadcast the current chunk... */
+    MPI_Bcast((char *) data + start, (int) chunk_size, MPI_BYTE, 0,
+	      MPI_COMM_WORLD);
+  }
+}
+#endif
+
+/*****************************************************************************/
+
 void cart2geo(
   const double *x,
   double *z,
@@ -5910,60 +5940,8 @@ int read_met(
     SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
     LOG(2, "Broadcast data on rank %d...", rank);
 
-    /* Broadcast 1D data... */
-    MPI_BCAST_1D(&met->time, 1, MPI_DOUBLE);
-    MPI_BCAST_1D(&met->nx, 1, MPI_INT);
-    MPI_BCAST_1D(&met->ny, 1, MPI_INT);
-    MPI_BCAST_1D(&met->np, 1, MPI_INT);
-    MPI_BCAST_1D(&met->npl, 1, MPI_INT);
-    MPI_BCAST_1D(met->lon, met->nx, MPI_DOUBLE);
-    MPI_BCAST_1D(met->lat, met->ny, MPI_DOUBLE);
-    MPI_BCAST_1D(met->p, met->np, MPI_DOUBLE);
-    MPI_BCAST_1D(met->hybrid, met->npl, MPI_DOUBLE);
-
-    /* Broadcast 2D data... */
-    MPI_BCAST_2D(met->ps, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->ts, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->zs, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->us, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->vs, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->lsm, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->sst, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->pbl, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->pt, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->tt, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->zt, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->h2ot, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->pct, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->pcb, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->cl, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->plcl, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->plfc, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->pel, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->cape, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->cin, met->nx, met->ny, MPI_FLOAT);
-    MPI_BCAST_2D(met->o3c, met->nx, met->ny, MPI_FLOAT);
-
-    /* Broadcast 3D data... */
-    MPI_BCAST_3D(met->z, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->t, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->u, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->v, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->w, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->pv, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->h2o, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->o3, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->lwc, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->rwc, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->iwc, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->swc, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->cc, met->nx, met->ny, met->np, MPI_FLOAT);
-    MPI_BCAST_3D(met->pl, met->nx, met->ny, met->npl, MPI_FLOAT);
-    MPI_BCAST_3D(met->ul, met->nx, met->ny, met->npl, MPI_FLOAT);
-    MPI_BCAST_3D(met->vl, met->nx, met->ny, met->npl, MPI_FLOAT);
-    MPI_BCAST_3D(met->wl, met->nx, met->ny, met->npl, MPI_FLOAT);
-    MPI_BCAST_3D(met->zetal, met->nx, met->ny, met->npl, MPI_FLOAT);
-    MPI_BCAST_3D(met->zeta_dotl, met->nx, met->ny, met->npl, MPI_FLOAT);
+    /* Broadcast... */
+    broadcast_large_data(met, sizeof(met_t));
   }
 #endif
 
@@ -8931,7 +8909,7 @@ void write_csi(
 	    "# $15 = column density mean error (F - O) [kg/m^2]\n"
 	    "# $16 = column density root mean square error (RMSE) [kg/m^2]\n"
 	    "# $17 = column density mean absolute error [kg/m^2]\n"
-	    "# $18 = log-likelihood function (observation standard error weighted sum of square error)\n"
+	    "# $18 = log-likelihood function\n"
 	    "# $19 = number of data points\n\n");
 
     /* Set grid box size... */
