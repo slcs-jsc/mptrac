@@ -32,7 +32,7 @@
 #define NZ 1000
 
 /*! Maximum number of latitudes. */
-#define NY 721
+#define NY EY
 
 /* ------------------------------------------------------------
    Main...

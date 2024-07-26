@@ -29,10 +29,10 @@
    ------------------------------------------------------------ */
 
 /*! Maximum number of longitudes. */
-#define NX 1441
+#define NX EX
 
 /*! Maximum number of latitudes. */
-#define NY 721
+#define NY EY
 
 /* ------------------------------------------------------------
    Main...
