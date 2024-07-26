@@ -258,12 +258,12 @@
 
 /*! Maximum number of longitudes for meteo data. */
 #ifndef EX
-#define EX 1201
+#define EX 1202
 #endif
 
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
-#define EY 601
+#define EY 602
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
