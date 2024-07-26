@@ -200,7 +200,7 @@ int main(
     nx = ny = 0;
     for (lon = lon0; lon <= lon1; lon += dlon) {
       lons[nx] = lon;
-      if ((++nx) > NX)
+      if ((++nx) >= NX)
 	ERRMSG("Too many longitudes!");
     }
     if (lat0 < -90 && lat1 > 90) {
@@ -209,7 +209,7 @@ int main(
     }
     for (lat = lat0; lat <= lat1; lat += dlat) {
       lats[ny] = lat;
-      if ((++ny) > NY)
+      if ((++ny) >= NY)
 	ERRMSG("Too many latitudes!");
     }
 
