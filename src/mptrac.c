@@ -6236,7 +6236,7 @@ void read_met_geopot(
   ctl_t * ctl,
   met_t * met) {
 
-  static float help[EP][EX][EY];
+  float *help;
 
   double logp[EP];
 
@@ -6245,6 +6245,10 @@ void read_met_geopot(
   /* Set timer... */
   SELECT_TIMER("READ_MET_GEOPOT", "METPROC", NVTX_READ);
   LOG(2, "Calculate geopotential heights...");
+
+  /* Allocate... */
+  ALLOC(help, float,
+	EX * EY * EP);
 
   /* Calculate log pressure... */
 #pragma omp parallel for default(shared)
@@ -6320,7 +6324,7 @@ void read_met_geopot(
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++)
       for (int ip = 0; ip < met->np; ip++)
-	help[ip][ix][iy] = met->z[ix][iy][ip];
+	help[ARRAY_3D(ip, ix, met->nx, iy, met->ny)] = met->z[ix][iy][ip];
 
   /* Horizontal smoothing... */
 #pragma omp parallel for default(shared) collapse(3)
@@ -6337,9 +6341,9 @@ void read_met_geopot(
 	  else if (ix3 >= met->nx)
 	    ix3 -= met->nx;
 	  for (int iy2 = iy0; iy2 <= iy1; ++iy2)
-	    if (isfinite(help[ip][ix3][iy2])) {
+	    if (isfinite(help[ARRAY_3D(ip, ix3, met->nx, iy2, met->ny)])) {
 	      float w = ws[abs(ix - ix2)][abs(iy - iy2)];
-	      res += w * help[ip][ix3][iy2];
+	      res += w * help[ARRAY_3D(ip, ix3, met->nx, iy2, met->ny)];
 	      wsum += w;
 	    }
 	}
@@ -6348,6 +6352,9 @@ void read_met_geopot(
 	else
 	  met->z[ix][iy][ip] = NAN;
       }
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/
