@@ -248,22 +248,24 @@
 
 /*! Maximum number of data points for CSI calculation. */
 #ifndef NCSI
-#define NCSI 100
-/* #define NCSI 1000000 */
+#define NCSI 1000000
 #endif
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
+/* #define EP 60 */
 #define EP 140
 #endif
 
 /*! Maximum number of longitudes for meteo data. */
 #ifndef EX
 #define EX 1201
+/* #define EX 481 */
 #endif
 
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
+/* #define EY 241 */
 #define EY 601
 #endif
 
@@ -274,8 +276,7 @@
 
 /*! Maximum number of observation data points. */
 #ifndef NOBS
-/* #define NOBS 10000000 */
-#define NOBS 100
+#define NOBS 10000000
 #endif
 
 /*! Maximum number of OpenMP threads. */
