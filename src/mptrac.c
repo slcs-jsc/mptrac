@@ -3033,7 +3033,7 @@ void module_isosurf_init(
     while (fgets(line, LEN, in))
       if (sscanf(line, "%lg %lg", &(cache->iso_ts[cache->iso_n]),
 		 &(cache->iso_ps[cache->iso_n])) == 2)
-	if ((++cache->iso_n) >= NP)
+	if ((++cache->iso_n) > NP)
 	  ERRMSG("Too many data points!");
 
     /* Check number of points... */
@@ -4239,7 +4239,7 @@ int read_atm_asc(
     atm->p[atm->np] = P(atm->p[atm->np]);
 
     /* Increment data point counter... */
-    if ((++atm->np) >= NP)
+    if ((++atm->np) > NP)
       ERRMSG("Too many data points!");
   }
 

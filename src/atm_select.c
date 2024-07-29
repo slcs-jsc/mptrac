@@ -153,7 +153,7 @@ int main(
       atm2->lat[atm2->np] = atm->lat[ip];
       for (int iq = 0; iq < ctl.nq; iq++)
 	atm2->q[iq][atm2->np] = atm->q[iq][ip];
-      if ((++atm2->np) >= NP)
+      if ((++atm2->np) > NP)
 	ERRMSG("Too many air parcels!");
     }
   }
