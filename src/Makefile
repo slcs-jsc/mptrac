@@ -85,7 +85,7 @@ ifeq ($(COMPILER),gcc)
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 else ifeq ($(COMPILER),nvc)
   CC=nvc
-  CFLAGS += -mp -mcmodel=medium
+  CFLAGS += -mp
 else ifeq ($(COMPILER),clang)
   CC=clang
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
