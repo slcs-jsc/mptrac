@@ -2136,19 +2136,19 @@ typedef struct {
 
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
-  int cpl_zeta_and_press_modules;
+  int advect_cpl_zeta_and_press_modules;
 
   /*! Use predefined pressure levels or not. */
-  int press_level_def;
+  int met_press_level_def;
 
   /*! Vertical coordinate of air parcels (0=pressure, 1=zeta, 2=eta). */
-  int vert_coord_ap;
+  int advect_vert_coord;
 
   /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
-  int vert_coord_met;
+  int met_vert_coord;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
-  int clams_met_data;
+  int met_clams;
 
   /*! Number of quantities. */
   int nq;

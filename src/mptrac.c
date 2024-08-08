@@ -1081,7 +1081,7 @@ void get_met_help(
   jsec2time(t6, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Set filename of MPTRAC meteo files... */
-  if (ctl->clams_met_data == 0) {
+  if (ctl->met_clams == 0) {
     if (ctl->met_type == 0)
       sprintf(filename, "%s_YYYY_MM_DD_HH.nc", metbase);
     else if (ctl->met_type == 1)
@@ -1808,7 +1808,7 @@ void level_definitions(
   ctl_t * ctl) {
 
 
-  if (0 == ctl->press_level_def) {
+  if (0 == ctl->met_press_level_def) {
 
     ctl->met_np = 138;
 
@@ -1837,7 +1837,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (1 == ctl->press_level_def) {
+  } else if (1 == ctl->met_press_level_def) {
 
     ctl->met_np = 92;
 
@@ -1861,7 +1861,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (2 == ctl->press_level_def) {
+  } else if (2 == ctl->met_press_level_def) {
 
     ctl->met_np = 60;
 
@@ -1879,7 +1879,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (3 == ctl->press_level_def) {
+  } else if (3 == ctl->met_press_level_def) {
 
     ctl->met_np = 147;
 
@@ -1910,7 +1910,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (4 == ctl->press_level_def) {
+  } else if (4 == ctl->met_press_level_def) {
 
     ctl->met_np = 101;
 
@@ -1936,7 +1936,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (5 == ctl->press_level_def) {
+  } else if (5 == ctl->met_press_level_def) {
 
     ctl->met_np = 62;
 
@@ -1955,7 +1955,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (6 == ctl->press_level_def) {
+  } else if (6 == ctl->met_press_level_def) {
 
     ctl->met_np = 137;
 
@@ -1985,7 +1985,7 @@ void level_definitions(
     for (int ip = 0; ip < ctl->met_np; ip++)
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
-  } else if (7 == ctl->press_level_def) {
+  } else if (7 == ctl->met_press_level_def) {
 
     ctl->met_np = 59;
 
@@ -2156,7 +2156,7 @@ void module_advect(
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
 
   /* Pressure coordinate... */
-  if (ctl->vert_coord_ap == 0 || ctl->vert_coord_ap == 2) {
+  if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
 
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
@@ -2184,7 +2184,7 @@ void module_advect(
 	double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data on pressure levels... */
-	if (ctl->vert_coord_ap == 0) {
+	if (ctl->advect_vert_coord == 0) {
 	  intpol_met_time_3d(met0, met0->u, met1, met1->u,
 			     tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
 	  intpol_met_time_3d(met0, met0->v, met1, met1->v,
@@ -2224,13 +2224,13 @@ void module_advect(
   }
 
   /* Zeta coordinate... */
-  else if (ctl->vert_coord_ap == 1) {
+  else if (ctl->advect_vert_coord == 1) {
 
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
       /* If other modules have changed p translate it into a zeta... */
-      if (ctl->cpl_zeta_and_press_modules > 0) {
+      if (ctl->advect_cpl_zeta_and_press_modules > 0) {
 	INTPOL_INIT;
 	intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
 			    met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
@@ -2310,7 +2310,7 @@ void module_advect_init(
   atm_t * atm) {
 
   /* Initialize pressure consistent with zeta... */
-  if (ctl->vert_coord_ap == 1) {
+  if (ctl->advect_vert_coord == 1) {
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < atm->np; ip++) {
       INTPOL_INIT;
@@ -4335,7 +4335,7 @@ int read_atm_clams(
   }
 
   /* Read zeta coordinate, pressure is optional... */
-  if (ctl->vert_coord_ap == 1) {
+  if (ctl->advect_vert_coord == 1) {
     NC_GET_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1);
     NC_GET_DOUBLE("PRESS", atm->p, 0);
   }
@@ -4965,20 +4965,20 @@ void read_ctl(
   }
 
   /* Vertical coordinates and velocities... */
-  ctl->vert_coord_ap =
-    (int) scan_ctl(filename, argc, argv, "VERT_COORD_AP", -1, "0", NULL);
-  if (ctl->vert_coord_ap < 0 || ctl->vert_coord_ap > 2)
-    ERRMSG("Set VERT_COORD_AP to 0, 1, or 2!");
-  if (ctl->vert_coord_ap == 1 && ctl->qnt_zeta < 0)
+  ctl->advect_vert_coord =
+    (int) scan_ctl(filename, argc, argv, "ADVECT_VERT_COORD", -1, "0", NULL);
+  if (ctl->advect_vert_coord < 0 || ctl->advect_vert_coord > 2)
+    ERRMSG("Set advect_vert_coord to 0, 1, or 2!");
+  if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
     ERRMSG("Please add zeta to your quantities for diabatic calculations!");
-  ctl->vert_coord_met =
-    (int) scan_ctl(filename, argc, argv, "VERT_COORD_MET", -1, "0", NULL);
-  if (ctl->vert_coord_ap == 2 && ctl->vert_coord_met != 1)
-    ERRMSG("Using VERT_COORD_AP = 2 requires meteo data on model levels!");
-  ctl->clams_met_data =
-    (int) scan_ctl(filename, argc, argv, "CLAMS_MET_DATA", -1, "0", NULL);
-  ctl->cpl_zeta_and_press_modules =
-    (int) scan_ctl(filename, argc, argv, "CPL_ZETA_PRESS_MODULES", -1, "1",
+  ctl->met_vert_coord =
+    (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
+  if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord != 1)
+    ERRMSG("Using advect_vert_coord = 2 requires meteo data on model levels!");
+  ctl->met_clams =
+    (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
+  ctl->advect_cpl_zeta_and_press_modules =
+    (int) scan_ctl(filename, argc, argv, "ADVECT_ZETA_PRESS_MODULES", -1, "1",
 		   NULL);
 
   /* Time steps of simulation... */
@@ -4996,7 +4996,7 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_CONVENTION", -1, "0", NULL);
   ctl->met_type =
     (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
-  if (ctl->vert_coord_ap == 1 && ctl->met_type != 0)
+  if (ctl->advect_vert_coord == 1 && ctl->met_type != 0)
     ERRMSG
       ("Please use meteorological files in netcdf format for diabatic calculations.");
   ctl->met_nc_scale =
@@ -5050,9 +5050,9 @@ void read_ctl(
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
     ERRMSG("Too many levels!");
-  ctl->press_level_def =
-    (int) scan_ctl(filename, argc, argv, "PRESS_LEVEL_DEF", -1, "-1", NULL);
-  if (ctl->press_level_def >= 0) {
+  ctl->met_press_level_def =
+    (int) scan_ctl(filename, argc, argv, "MET_PRESS_LEVEL_DEF", -1, "-1", NULL);
+  if (ctl->met_press_level_def >= 0) {
     level_definitions(ctl);
   } else {
     if (ctl->met_np > 0) {
@@ -5639,7 +5639,7 @@ int read_met(
       read_met_detrend(ctl, met);
 
       /* Check meteo data and smooth zeta profiles ... */
-      if (ctl->vert_coord_ap == 1)
+      if (ctl->advect_vert_coord == 1)
 	read_met_monotonize(met);
 
       /* Close file... */
@@ -6379,7 +6379,7 @@ void read_met_grid(
   LOG(2, "Read meteo grid information...");
 
   /* MPTRAC meteo files... */
-  if (ctl->clams_met_data == 0) {
+  if (ctl->met_clams == 0) {
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
@@ -6543,7 +6543,7 @@ void read_met_levels(
   if (!read_met_nc_3d
       (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
     WARN("Cannot read ZETA in meteo data!");
-  if (ctl->vert_coord_ap == 1) {
+  if (ctl->advect_vert_coord == 1) {
     if (!read_met_nc_3d
 	(ncid, "ZETA_DOT_TOT", "zeta_dot_clr", NULL, NULL, ctl, met,
 	 met->zeta_dotl, 0.00001157407f)) {
@@ -6556,7 +6556,7 @@ void read_met_levels(
   }
 
   /* Store velocities on model levels for diabatic advection... */
-  if (ctl->vert_coord_met == 1) {
+  if (ctl->met_vert_coord == 1) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
@@ -6570,7 +6570,7 @@ void read_met_levels(
   }
 
   /* Read pressure on model levels... */
-  if (ctl->met_np > 0 || ctl->vert_coord_met == 1) {
+  if (ctl->met_np > 0 || ctl->met_vert_coord == 1) {
 
     /* Read data... */
     if (!read_met_nc_3d
@@ -7514,7 +7514,7 @@ void read_met_surface(
   LOG(2, "Read surface data...");
 
   /* MPTRAC meteo data... */
-  if (ctl->clams_met_data == 0) {
+  if (ctl->met_clams == 0) {
 
     /* Read surface pressure... */
     if (read_met_nc_2d
@@ -8598,7 +8598,7 @@ void write_atm_clams_traj(
   NC_PUT_DOUBLE("LAT", atm->lat, 1);
   NC_PUT_DOUBLE("LON", atm->lon, 1);
   NC_PUT_DOUBLE("PRESS", atm->p, 1);
-  if (ctl->vert_coord_ap == 1) {
+  if (ctl->advect_vert_coord == 1) {
     NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1);
   } else if (ctl->qnt_zeta >= 0) {
     NC_PUT_DOUBLE("ZETA", atm->q[ctl->qnt_zeta_d], 1);

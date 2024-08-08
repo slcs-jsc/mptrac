@@ -30,7 +30,7 @@ GPU ?= 0
 GPU_PIN ?= 0
 
 # Static compilation...
-STATIC ?= 1
+STATIC ?= 0
 
 # Optimization flags...
 OPTI ?= -O3
