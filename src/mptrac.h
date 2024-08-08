@@ -2129,11 +2129,13 @@ void thrustSortWrapper(
  * @brief Control parameters.
  * 
  * This structure contains all control parameters used by the MPTRAC
- * model.  The struct is used to collect to easily pass the control
+ * model. The struct is used to collect and to easily pass the control
  * parameters on to the various functions.
  */
 typedef struct {
 
+  /* TODO: finally sort ctl parameters once Fortran wrapper is working! */
+  
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
   int advect_cpl_zeta_and_press_modules;
@@ -2150,6 +2152,10 @@ typedef struct {
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
   int met_clams;
 
+  /* ------------------------------------------------------------
+     Quantity parameters...
+     ------------------------------------------------------------ */
+  
   /*! Number of quantities. */
   int nq;
 
@@ -2441,6 +2447,10 @@ typedef struct {
   /*! Time step of simulation [s]. */
   double dt_mod;
 
+  /* ------------------------------------------------------------
+     Meteo data parameters...
+     ------------------------------------------------------------ */
+
   /*! Basename for meteo data. */
   char metbase[LEN];
 
@@ -2565,6 +2575,10 @@ typedef struct {
 
   /*! Use MPI to share meteo (0=no, 1=yes). */
   int met_mpi_share;
+
+  /* ------------------------------------------------------------
+     Geophysical module parameters...
+     ------------------------------------------------------------ */
 
   /*! Time step for sorting of particle data [s]. */
   double sort_dt;
@@ -2824,6 +2838,10 @@ typedef struct {
 
   /*! HNO3 volume mixing ratio for PSC analysis. */
   double psc_hno3;
+
+  /* ------------------------------------------------------------
+     Output parameters...
+     ------------------------------------------------------------ */
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];

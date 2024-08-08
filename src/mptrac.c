@@ -2136,10 +2136,14 @@ void locate_vert(
   double height_ap,
   int *ind) {
 
-  ind[0] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind], np, height_ap, 0);
-  ind[1] = locate_irr_float(profiles[lon_ap_ind + 1][lat_ap_ind], np, height_ap, ind[0]);
-  ind[2] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind + 1], np, height_ap, ind[1]);
-  ind[3] = locate_irr_float(profiles[lon_ap_ind + 1][lat_ap_ind + 1], np, height_ap, ind[2]);
+  ind[0] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind],
+			    np, height_ap, 0);
+  ind[1] = locate_irr_float(profiles[lon_ap_ind + 1][lat_ap_ind],
+			    np, height_ap, ind[0]);
+  ind[2] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind + 1],
+			    np, height_ap, ind[1]);
+  ind[3] = locate_irr_float(profiles[lon_ap_ind + 1][lat_ap_ind + 1],
+			    np, height_ap, ind[2]);
 }
 
 /*****************************************************************************/
@@ -2950,20 +2954,20 @@ void module_h2o2_chem(
     /* Henry constant of H2O2... */
     double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
-    /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
+    /* Correction factor for high SO2 concentration
+       (if qnt_Cx is defined, the correction is switched on)... */
     double cor = 1;
     if (ctl->qnt_Cx >= 0)
-      cor =
-	atm->q[ctl->qnt_Cx][ip] >
+      cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
-
+    
     double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
       * M * cor * 1000 / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = (lwc + rwc) * rho_air / 1000;	// TODO: check this? wrong units?
+    double CWC = (lwc + rwc) * rho_air / 1000;   // TODO: check this? wrong units?
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
@@ -4973,7 +4977,8 @@ void read_ctl(
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord != 1)
-    ERRMSG("Using advect_vert_coord = 2 requires meteo data on model levels!");
+    ERRMSG
+      ("Using ADVECT_VERT_COORD = 2 requires meteo data on model levels!");
   ctl->met_clams =
     (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
   ctl->advect_cpl_zeta_and_press_modules =
@@ -5050,7 +5055,8 @@ void read_ctl(
   if (ctl->met_np > EP)
     ERRMSG("Too many levels!");
   ctl->met_press_level_def =
-    (int) scan_ctl(filename, argc, argv, "MET_PRESS_LEVEL_DEF", -1, "-1", NULL);
+    (int) scan_ctl(filename, argc, argv, "MET_PRESS_LEVEL_DEF", -1, "-1",
+		   NULL);
   if (ctl->met_press_level_def >= 0) {
     level_definitions(ctl);
   } else {
