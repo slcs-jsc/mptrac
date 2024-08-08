@@ -2136,11 +2136,10 @@ void locate_vert(
   double height_ap,
   int *ind) {
 
-  ind[0] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind, height_ap);
-  ind[1] = locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind, height_ap);
-  ind[2] = locate_irr_3d(profiles, np, lon_ap_ind, lat_ap_ind + 1, height_ap);
-  ind[3] =
-    locate_irr_3d(profiles, np, lon_ap_ind + 1, lat_ap_ind + 1, height_ap);
+  ind[0] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind], np, height_ap, 0);
+  ind[1] = locate_irr_float(profiles[lon_ap_ind + 1][lat_ap_ind], np, height_ap, ind[0]);
+  ind[2] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind + 1], np, height_ap, ind[1]);
+  ind[3] = locate_irr_float(profiles[lon_ap_ind + 1][lat_ap_ind + 1], np, height_ap, ind[2]);
 }
 
 /*****************************************************************************/
