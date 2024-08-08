@@ -1,0 +1,4 @@
+<map id="intpol_tropo_3d" name="intpol_tropo_3d">
+<area shape="rect" id="node1" title="Interpolates tropopause data in 3D (latitude, longitude, and time)." alt="" coords="5,5,116,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="164,5,247,32"/>
+</map>

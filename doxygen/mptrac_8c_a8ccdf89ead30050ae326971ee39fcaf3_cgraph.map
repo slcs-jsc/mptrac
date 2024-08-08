@@ -1,0 +1,7 @@
+<map id="read_met_bin_3d" name="read_met_bin_3d">
+<area shape="rect" id="node1" title="Reads 3D meteorological data from a binary file, potentially using different compression methods." alt="" coords="5,81,127,108"/>
+<area shape="rect" id="node2" href="$mptrac_8h.html#a0bfb63c34a3c496b1511b16591a5d1bf" title="Compresses or decompresses a 3D array of floats using a custom multiscale compression algorithm." alt="" coords="175,5,285,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#af485af740dd22a788ad96bdba644163e" title="Compresses or decompresses a 3D array of floats." alt="" coords="177,56,283,83"/>
+<area shape="rect" id="node4" href="$mptrac_8h.html#ae048dc2902c16ca66b6b4bd192c6c469" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="179,107,281,133"/>
+<area shape="rect" id="node5" href="$mptrac_8h.html#a1d81ee47c2554547a8e5d4bcc325cecc" title="Compresses or decompresses an array of floats using the Zstandard (ZSTD) library." alt="" coords="175,157,285,184"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="write_met" name="write_met">
+<area shape="rect" id="node1" title="Writes meteorological data to a binary file." alt="" coords="5,56,84,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a463d151fd69782a7f31f4d535f377cb0" title="Writes a 2&#45;dimensional meteorological variable to a binary file." alt="" coords="132,31,256,57"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a277456b731e2a0a531884a8390250b03" title="Writes a 3&#45;dimensional meteorological variable to a binary file." alt="" coords="132,81,256,108"/>
+<area shape="rect" id="node4" href="$mptrac_8h.html#a0bfb63c34a3c496b1511b16591a5d1bf" title="Compresses or decompresses a 3D array of floats using a custom multiscale compression algorithm." alt="" coords="304,5,415,32"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#af485af740dd22a788ad96bdba644163e" title="Compresses or decompresses a 3D array of floats." alt="" coords="306,56,413,83"/>
+<area shape="rect" id="node6" href="$mptrac_8h.html#ae048dc2902c16ca66b6b4bd192c6c469" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="308,107,411,133"/>
+<area shape="rect" id="node7" href="$mptrac_8h.html#a1d81ee47c2554547a8e5d4bcc325cecc" title="Compresses or decompresses an array of floats using the Zstandard (ZSTD) library." alt="" coords="304,157,415,184"/>
+</map>
