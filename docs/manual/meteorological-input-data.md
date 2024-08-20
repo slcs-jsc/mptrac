@@ -69,4 +69,4 @@ For registered users and collaboration partners at the Jülich Supercomputing Ce
 
 ## Interoperability with CLaMS data 
 
-MPTRAC can read meteorological data that follows the data format guidelines for the CLaMS. This option can be set true with the parameter: CLAMS_MET_DATA = 1. Furthermore, the CLaMS data is provided in hybrid coordinates ($\eta$ coordinates). Therefore VERT_COORD_MET = 1 must be set and vertical pressure levels must be provided or chosen with the parameter PRESS_LEVEL_DEF.
+MPTRAC can read meteorological data that follows the data format guidelines for the CLaMS. This option can be set true with the parameter: MET_CLAMS = 1. Furthermore, the CLaMS data is provided in hybrid coordinates ($\eta$ coordinates). Therefore MET_VERT_COORD = 1 must be set and vertical pressure levels must be provided or chosen with the parameter MET_PRESS_LEVEL_DEF.

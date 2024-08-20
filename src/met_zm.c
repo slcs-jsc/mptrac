@@ -32,7 +32,7 @@
 #define NZ 1000
 
 /*! Maximum number of latitudes. */
-#define NY 721
+#define NY EY
 
 /* ------------------------------------------------------------
    Main...
@@ -104,13 +104,13 @@ int main(
       for (int iz = 0; iz < met->np; iz++)
 	if (Z(met->p[iz]) >= z0 && Z(met->p[iz]) <= z1) {
 	  plev[nz] = met->p[iz];
-	  if ((++nz) > NZ)
+	  if ((++nz) >= NZ)
 	    ERRMSG("Too many pressure levels!");
 	}
     } else
       for (z = z0; z <= z1; z += dz) {
 	plev[nz] = P(z);
-	if ((++nz) > NZ)
+	if ((++nz) >= NZ)
 	  ERRMSG("Too many pressure levels!");
       }
 
@@ -124,7 +124,7 @@ int main(
     }
     for (lat = lat0; lat <= lat1; lat += dlat) {
       lats[ny] = lat;
-      if ((++ny) > NY)
+      if ((++ny) >= NY)
 	ERRMSG("Too many latitudes!");
     }
 

@@ -259,14 +259,14 @@
 
 /*! Maximum number of longitudes for meteo data. */
 #ifndef EX
-#define EX 1201
+#define EX 1202
 /* #define EX 481 */
 #endif
 
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
 /* #define EY 241 */
-#define EY 601
+#define EY 602
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -2132,27 +2132,33 @@ void thrustSortWrapper(
  * @brief Control parameters.
  * 
  * This structure contains all control parameters used by the MPTRAC
- * model.  The struct is used to collect to easily pass the control
+ * model. The struct is used to collect and to easily pass the control
  * parameters on to the various functions.
  */
 typedef struct {
 
+  /* TODO: finally sort ctl parameters once Fortran wrapper is working! */
+  
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
-  int cpl_zeta_and_press_modules;
+  int advect_cpl_zeta_and_press_modules;
 
   /*! Use predefined pressure levels or not. */
-  int press_level_def;
+  int met_press_level_def;
 
   /*! Vertical coordinate of air parcels (0=pressure, 1=zeta, 2=eta). */
-  int vert_coord_ap;
+  int advect_vert_coord;
 
   /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
-  int vert_coord_met;
+  int met_vert_coord;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
-  int clams_met_data;
+  int met_clams;
 
+  /* ------------------------------------------------------------
+     Quantity parameters...
+     ------------------------------------------------------------ */
+  
   /*! Number of quantities. */
   int nq;
 
@@ -2444,6 +2450,10 @@ typedef struct {
   /*! Time step of simulation [s]. */
   double dt_mod;
 
+  /* ------------------------------------------------------------
+     Meteo data parameters...
+     ------------------------------------------------------------ */
+
   /*! Basename for meteo data. */
   char metbase[LEN];
 
@@ -2568,6 +2578,10 @@ typedef struct {
 
   /*! Use MPI to share meteo (0=no, 1=yes). */
   int met_mpi_share;
+
+  /* ------------------------------------------------------------
+     Geophysical module parameters...
+     ------------------------------------------------------------ */
 
   /*! Time step for sorting of particle data [s]. */
   double sort_dt;
@@ -2827,6 +2841,10 @@ typedef struct {
 
   /*! HNO3 volume mixing ratio for PSC analysis. */
   double psc_hno3;
+
+  /* ------------------------------------------------------------
+     Output parameters...
+     ------------------------------------------------------------ */
 
   /*! Basename of atmospheric data files. */
   char atm_basename[LEN];

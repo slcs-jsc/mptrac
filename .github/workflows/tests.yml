@@ -17,3 +17,6 @@ jobs:
       run: cd src ; make STATIC=0
     - name: check
       run: cd src ; make check
+
+
+    
