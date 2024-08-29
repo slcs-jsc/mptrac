@@ -1,6 +1,6 @@
 MODULE mptrac_struct
   
-  USE, intrinsic :: iso_c_binding
+  USE iso_c_binding
   IMPLICIT NONE
 
   !! Values must be identical to equivalent variables in mptrac.h!
@@ -8,8 +8,8 @@ MODULE mptrac_struct
   !! The values for ex, ey, ep are suited for ERA5 data. However, they
   !! exceed some size limit of NVHPC (2GB???), where the compiler fails
   !! to build the fortran wrapper. GCC and ICX work fine.
-  INTEGER, PARAMETER :: ex=1201
-  INTEGER, PARAMETER :: ey=601
+  INTEGER, PARAMETER :: ex=1202
+  INTEGER, PARAMETER :: ey=602
   INTEGER, PARAMETER :: ep=140
   !! Alternative smaller values, good enough for ERA-interim.
   ! INTEGER, PARAMETER :: ex=481
@@ -80,11 +80,11 @@ MODULE mptrac_struct
   END TYPE met_t
 
   TYPE, bind(c) :: ctl_t
-     INTEGER(c_int) :: cpl_zeta_and_press_modules
-     INTEGER(c_int) :: press_level_def
-     INTEGER(c_int) :: vert_coord_ap
-     INTEGER(c_int) :: vert_coord_met
-     INTEGER(c_int) :: clams_met_data
+     INTEGER(c_int) :: advect_cpl_zeta_and_press_modules
+     INTEGER(c_int) :: met_press_level_def
+     INTEGER(c_int) :: advect_vert_coord
+     INTEGER(c_int) :: met_vert_coord
+     INTEGER(c_int) :: met_clams
      INTEGER(c_int) :: nq
      CHARACTER(c_char), DIMENSION(length,nqq) :: qnt_name
      CHARACTER(c_char), DIMENSION(length,nqq) :: qnt_longname
@@ -451,7 +451,7 @@ MODULE mptrac_func
      
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
           bind(c,name='get_met_fortran')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
@@ -462,7 +462,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_module_advect(ctl, met0, met1, atm, dt) &
           bind(c,name='module_advect')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, met_t, atm_t, npp
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
@@ -473,7 +473,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_module_timesteps(ctl, met0, atm, dt, t) &
           bind(c,name='module_timesteps')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, met_t, atm_t, npp
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(met_t), INTENT(in), TARGET :: met0
@@ -484,7 +484,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_module_timesteps_init(ctl, atm) &
           bind(c,name='module_timesteps_init')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, atm_t
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(atm_t), INTENT(out), TARGET :: atm
@@ -492,7 +492,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_read_atm(filename,ctl,atm) &
           bind(c,name='read_atm')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, atm_t
        IMPLICIT NONE
        CHARACTER(c_char), INTENT(in) :: filename
@@ -502,7 +502,7 @@ MODULE mptrac_func
      
      SUBROUTINE mptrac_read_ctl(filename,argc,argv,ctl) &
           bind(c,name='read_ctl')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t
        IMPLICIT NONE
        CHARACTER(c_char), INTENT(in) :: filename
@@ -513,7 +513,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_read_clim(ctl,clim) &
           bind(c,name='read_clim')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, clim_ts_t, clim_zm_t, clim_photo_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
@@ -522,7 +522,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_read_met(filename,ctl,clim,met,atm) &
           bind(c,name='read_met')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t
        IMPLICIT NONE
        CHARACTER(c_char), DIMENSION(*), INTENT(in) :: filename
@@ -534,7 +534,7 @@ MODULE mptrac_func
 
      SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, t) &
           bind(c,name='write_output')
-       USE, intrinsic :: iso_c_binding
+       USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, met_t, atm_t
        CHARACTER(c_char), INTENT(in) :: dirname
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
