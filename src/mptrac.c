@@ -2455,7 +2455,7 @@ void module_chemgrid(
   double *restrict const press =
     (double *) malloc((size_t) nz * sizeof(double));
   double *restrict const mass =
-    (double *) malloc((size_t) ngrid * sizeof(double));
+    (double *) calloc((size_t) ngrid, sizeof(double));
   double *restrict const area =
     (double *) malloc((size_t) ny * sizeof(double));
   double *restrict const lon =
@@ -2471,10 +2471,6 @@ void module_chemgrid(
   const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / nz;
   const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / nx;
   const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ny;
-
-  /* Initialize mass... */// TODO: does not work on GPU?
-  for (int i = 0; i < ngrid; i++)
-    mass[i] = 0;
 
   /* Set vertical coordinates... */
 #ifdef _OPENACC
@@ -2505,8 +2501,7 @@ void module_chemgrid(
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
     if (atm->time[ip] < t0 || atm->time[ip] > t1
 	|| ixs[ip] < 0 || ixs[ip] >= nx
-	|| iys[ip] < 0 || iys[ip] >= ny
-	|| izs[ip] < 0 || izs[ip] >= nz)
+	|| iys[ip] < 0 || iys[ip] >= ny || izs[ip] < 0 || izs[ip] >= nz)
       izs[ip] = -1;
   }
 
