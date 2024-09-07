@@ -2434,17 +2434,22 @@ void module_chemgrid(
   double tt) {
 
   /* Check quantities... */
-  if (ctl->molmass < 0)
+  if (ctl->molmass <= 0)
     ERRMSG("Molar mass is not defined!");
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_Cx < 0)
+    ERRMSG("Module needs quantity Cx!");
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
+  /* Allocate... */
   const int np = atm->np;
   const int nz = ctl->chemgrid_nz;
   const int nx = ctl->chemgrid_nx;
   const int ny = ctl->chemgrid_ny;
-  const int ngrid = ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz;
+  const int ngrid = nx * ny * nz;
 
   double *restrict const z = (double *) malloc((size_t) nz * sizeof(double));
   double *restrict const press =
@@ -2463,15 +2468,13 @@ void module_chemgrid(
   int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
 
   /* Set grid box size... */
-  const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  const double dlon =
-    (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  const double dlat =
-    (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+  const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / nz;
+  const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / nx;
+  const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ny;
 
+  /* Initialize mass... */// TODO: does not work on GPU?
   for (int i = 0; i < ngrid; i++)
     mass[i] = 0;
-
 
   /* Set vertical coordinates... */
 #ifdef _OPENACC
@@ -2481,7 +2484,7 @@ void module_chemgrid(
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
+  for (int iz = 0; iz < nz; iz++) {
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
@@ -2496,14 +2499,14 @@ void module_chemgrid(
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < np; ip++) {
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
     if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+	|| ixs[ip] < 0 || ixs[ip] >= nx
+	|| iys[ip] < 0 || iys[ip] >= ny
+	|| izs[ip] < 0 || izs[ip] >= nz)
       izs[ip] = -1;
   }
 
@@ -2513,30 +2516,29 @@ void module_chemgrid(
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+  for (int ix = 0; ix < nx; ix++)
     lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+  for (int iy = 0; iy < ny; iy++) {
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-      * cos(lat[iy] * M_PI / 180.);
+    area[iy] =
+      dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat[iy] * M_PI / 180.);
   }
 
   /* Get mass per grid box... */
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #endif
-  for (int ip = 0; ip < atm->np; ip++)
+  for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0)
 #ifdef _OPENACC
 #pragma acc atomic update
 #endif
-      mass[ARRAY_3D
-	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+      mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)]
 	+= atm->q[ctl->qnt_m][ip];
 
   /* Assign grid data to air parcels ... */
@@ -2545,7 +2547,7 @@ void module_chemgrid(
 #else
 #pragma omp parallel for default(shared)
 #endif
-  for (int ip = 0; ip < atm->np; ip++)
+  for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
 
       /* Interpolate temperature... */
@@ -2555,8 +2557,7 @@ void module_chemgrid(
 			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
       /* Set mass... */
-      double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-			       izs[ip], ctl->chemgrid_nz)];
+      double m = mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
 
       /* Calculate volume mixing ratio... */
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
@@ -2972,7 +2973,7 @@ void module_h2o2_chem(
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = (lwc + rwc) * rho_air / 1000;	// TODO: check this? wrong units?
+    double CWC = (lwc + rwc) * rho_air / 1000;
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
@@ -3507,7 +3508,8 @@ void module_oh_chem(
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
-    /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
+    /* Correction factor for high SO2 concentration
+       (if qnt_Cx is defined, the correction is switched on)... */
     double cor = 1;
     if (ctl->qnt_Cx >= 0)
       cor =
