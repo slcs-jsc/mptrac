@@ -2135,7 +2135,7 @@ void thrustSortWrapper(
 typedef struct {
 
   /* TODO: finally sort ctl parameters once Fortran wrapper is working! */
-  
+
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
   int advect_cpl_zeta_and_press_modules;
@@ -2155,7 +2155,7 @@ typedef struct {
   /* ------------------------------------------------------------
      Quantity parameters...
      ------------------------------------------------------------ */
-  
+
   /*! Number of quantities. */
   int nq;
 

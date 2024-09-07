@@ -459,8 +459,12 @@ void compress_cms(
     lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
 
   /* Set multiscale parameters... */
-  cms_param_t *cms_param =
-    cms_set_parameters(nx, ny, "[0.0, 360.0]x[-90.0, 90.0]");
+  const char domain[] = "[-0.15, 360.15]x[-90.15, 90.15]";
+  const int Nd0_x = 6;
+  const int Nd0_y = 3;
+  const int max_level_grid = 8;
+  cms_param_t *cms_param
+    = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
   /* Initialize multiscale module... */
   cms_module_t *cms_ptr = cms_init(cms_param);
@@ -502,9 +506,10 @@ void compress_cms(
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
-      float tmp_arr[nx * ny];
+      LOG(2, "Compress level %lu / %lu ...", ip, np);
 
       /* Copy level data... */
+      float tmp_arr[nx * ny];
       for (size_t ix = 0; ix < nx; ++ix)
 	for (size_t iy = 0; iy < ny; ++iy)
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
@@ -549,7 +554,7 @@ void compress_cms(
       cr += cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Save binary data... */
-      cms_save_sol(sol, inout);
+      cms_save_sol(sol, cms_ptr, inout);
 
       /* Free... */
       cms_delete_sol(sol);
@@ -2960,14 +2965,14 @@ void module_h2o2_chem(
     if (ctl->qnt_Cx >= 0)
       cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
-    
+
     double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
       * M * cor * 1000 / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = (lwc + rwc) * rho_air / 1000;   // TODO: check this? wrong units?
+    double CWC = (lwc + rwc) * rho_air / 1000;	// TODO: check this? wrong units?
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
