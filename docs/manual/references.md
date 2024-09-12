@@ -22,11 +22,13 @@ This is a list of papers in which MPTRAC was applied:
 
 - Hoffmann, L., Konopka, P., Clemens, J., and Vogel, B.: Lagrangian transport simulations using the extreme convection parameterization: an assessment for the ECMWF reanalyses, Atmos. Chem. Phys., 23, 7589–7609, <https://doi.org/10.5194/acp-23-7589-2023>, 2023.
 
-- Liu, M., Hoffmann, L., Griessbach, S., Cai, Z., Heng, Y., and Wu, X.: Improved representation of volcanic sulfur dioxide depletion in Lagrangian transport simulations: a case study with MPTRAC v2.4, Geosci. Model Dev., 16, 5197–5217, https://doi.org/10.5194/gmd-16-5197-2023, 2023. 
+- Liu, M., Hoffmann, L., Griessbach, S., Cai, Z., Heng, Y., and Wu, X.: Improved representation of volcanic sulfur dioxide depletion in Lagrangian transport simulations: a case study with MPTRAC v2.4, Geosci. Model Dev., 16, 5197–5217, <https://doi.org/10.5194/gmd-16-5197-2023>, 2023. 
+
+- Wu, X., Qiao, Q., Chen, B., Wang, X., Hoffmann, L., Griessbach, S., Tian, Y., and Wang, Y., The influence of the Asian summer monsoon on volcanic aerosol transport in the UTLS region, npj Clim. Atmos. Sci., 6, 11, <https://doi.org/10.1038/s41612-023-00339-w>, 2023.
 
 - Cai, Z., Griessbach, S., and Hoffmann, L.: Improved estimation of volcanic SO2 injections from satellite retrievals and Lagrangian transport simulations: the 2019 Raikoke eruption, Atmos. Chem. Phys., 22, 6787–6809, <https://doi.org/10.5194/acp-22-6787-2022>, 2022.
 
-- Hoffmann, L. and Spang, R.: An assessment of tropopause characteristics of the ERA5 and ERA-Interim meteorological reanalyses, Atmos. Chem. Phys., 22, 4019–4046, https://doi.org/10.5194/acp-22-4019-2022, 2022.
+- Hoffmann, L. and Spang, R.: An assessment of tropopause characteristics of the ERA5 and ERA-Interim meteorological reanalyses, Atmos. Chem. Phys., 22, 4019–4046, <https://doi.org/10.5194/acp-22-4019-2022>, 2022.
 
 - Mishra, M.K., Hoffmann, L., Thapliyal, P.K.: Investigations on the Global Spread of the Hunga Tonga-Hunga Ha’apai Volcanic Eruption Using Space-Based Observations and Lagrangian Transport Simulations. Atmosphere, 13, 2055, <https://doi.org/10.3390/atmos13122055>, 2022.
 
