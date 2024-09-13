@@ -459,10 +459,10 @@ void compress_cms(
     lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
 
   /* Set multiscale parameters... */
-  const char domain[] = "[-0.15, 360.15]x[-90.15, 90.15]";
+  const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
   const int Nd0_x = 6;
   const int Nd0_y = 3;
-  const int max_level_grid = 8;
+  const int max_level_grid = 7;
   cms_param_t *cms_param
     = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
