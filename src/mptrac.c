@@ -8501,9 +8501,8 @@ void write_atm_clams(
   NC(nc_def_dim(ncid, "time", 1, &tid));
   NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
 
-  int dim_ids[2] = { tid, pid };
-
   /* Define variables and their attributes... */
+  int dim_ids[2] = { tid, pid };
   NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
 	     "seconds since 2000-01-01 00:00:00 UTC");
   NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");

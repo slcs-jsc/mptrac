@@ -2460,7 +2460,8 @@ typedef struct {
   /*! Meteo data layout (0=[lev, lat, lon], 1 = [lon, lat, lev]). */
   int met_convention;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd). */
+  /*! Type of meteo data files
+     (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd, 5=cms). */
   int met_type;
 
   /*! Check netCDF scaling factors (0=no, 1=yes). */
@@ -2859,11 +2860,12 @@ typedef struct {
   int atm_stride;
 
   /*! Type of atmospheric data files
-     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
+     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS_traj, 4=CLaMS_pos). */
   int atm_type;
 
   /*! Type of atmospheric data files for output
-     (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd). */
+     (-1=same as ATM_TYPE, 0=ASCII, 1=binary, 2=netCDF,
+     3=CLaMS_traj, 4=CLaMS_pos). */
   int atm_type_out;
 
   /*! Type of observation data files
@@ -7222,8 +7224,8 @@ double tropo_weight(
  *   - ASCII (`atm_type_out == 0`): Calls `write_atm_asc`.
  *   - Binary (`atm_type_out == 1`): Calls `write_atm_bin`.
  *   - netCDF (`atm_type_out == 2`): Calls `write_atm_nc`.
- *   - CLaMS trajectory (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
- *   - CLaMS position (`atm_type_out == 4`): Calls `write_atm_clams`.
+ *   - CLaMS trajectory data (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
+ *   - CLaMS position data (`atm_type_out == 4`): Calls `write_atm_clams`.
  * - If the `atm_type_out` value is not supported, triggers an error message.
  * - Logs various statistics about the atmospheric data, including the number of particles,
  *   time range, altitude range, pressure range, longitude range, and latitude range.
