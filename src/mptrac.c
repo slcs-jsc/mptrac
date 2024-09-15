@@ -466,15 +466,15 @@ void compress_cms(
   cms_param_t *cms_param
     = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
-  /* Initialize multiscale module... */
-  cms_module_t *cms_ptr = cms_init(cms_param);
-
   /* Read compressed stream and decompress array... */
   if (decompress) {
 
     /* Loop over levels... */
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
+
+      /* Initialize multiscale module... */
+      cms_module_t *cms_ptr = cms_init(cms_param);
 
       /* Read binary data... */
       cms_sol_t *sol = cms_read_sol(cms_ptr, inout);
@@ -492,6 +492,7 @@ void compress_cms(
       cr += cms_compression_rate(cms_ptr, sol) / (double) np;
 
       /* Free... */
+      cms_delete_module(cms_ptr);
       cms_delete_sol(sol);
     }
 
@@ -502,8 +503,12 @@ void compress_cms(
   /* Compress array and output compressed stream... */
   else {
 
+    /* Init... */
+    cms_module_t *cms_ptr[EP];
+    cms_sol_t *cms_sol[EP];
+
     /* Loop over levels... */
-    double cr = 0;
+#pragma omp parallel for default(shared)
     for (size_t ip = 0; ip < np; ip++) {
 
       LOG(2, "Compress level %lu / %lu ...", ip, np);
@@ -514,50 +519,62 @@ void compress_cms(
 	for (size_t iy = 0; iy < ny; ++iy)
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 
+      /* Initialize multiscale module... */
+      cms_ptr[ip] = cms_init(cms_param);
+
       /* Create solution pointer... */
-      cms_sol_t *sol = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
+      cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
 
       /* Set eps threshold value... */
       if (strcasecmp(varname, "Z") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_z);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
       else if (strcasecmp(varname, "T") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_t);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
       else if (strcasecmp(varname, "U") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_u);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
       else if (strcasecmp(varname, "V") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_v);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
       else if (strcasecmp(varname, "W") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_w);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
       else if (strcasecmp(varname, "PV") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_pv);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
       else if (strcasecmp(varname, "H2O") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_h2o);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
       else if (strcasecmp(varname, "O3") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_o3);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
       else if (strcasecmp(varname, "LWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_lwc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
       else if (strcasecmp(varname, "RWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_rwc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
       else if (strcasecmp(varname, "IWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_iwc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
       else if (strcasecmp(varname, "SWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_swc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
       else if (strcasecmp(varname, "CC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_cc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
       else
 	ERRMSG("Variable name unknown!");
 
       /* Coarsening... */
-      cms_coarsening(cms_ptr, sol, (unsigned int) ctl->met_cms_heur);
+      cms_coarsening(cms_ptr[ip], cms_sol[ip],
+		     (unsigned int) ctl->met_cms_heur);
+    }
+
+    /* Loop over levels... */
+    double cr = 0;
+    for (size_t ip = 0; ip < np; ip++) {
+
+      LOG(2, "Save level %lu / %lu ...", ip, np);
 
       /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr, sol) / (double) np;
+      cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
       /* Save binary data... */
-      cms_save_sol(sol, cms_ptr, inout);
+      cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
 
       /* Free... */
-      cms_delete_sol(sol);
+      cms_delete_module(cms_ptr[ip]);
+      cms_delete_sol(cms_sol[ip]);
     }
 
     /* Write info... */
@@ -565,7 +582,6 @@ void compress_cms(
   }
 
   /* Free... */
-  cms_delete_module(cms_ptr);
   cms_delete_param(cms_param);
 }
 #endif
