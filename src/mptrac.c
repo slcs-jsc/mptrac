@@ -452,11 +452,12 @@ void compress_cms(
   FILE * inout) {
 
   /* Set lon-lat grid... */
+  size_t nxy = nx * ny;
   double lon[EX], lat[EY];
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
   for (size_t iy = 0; iy < ny; iy++)
-    lat[iy] = -(180. * (double) iy / ((double) ny - 1.) - 90);
+    lat[iy] = -(180. * (double) iy / ((double) ny - 1.) - 90.);
 
   /* Set multiscale parameters... */
   const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
@@ -492,8 +493,8 @@ void compress_cms(
       cr += cms_compression_rate(cms_ptr, cms_sol) / (double) np;
 
       /* Free... */
-      cms_delete_module(cms_ptr);
       cms_delete_sol(cms_sol);
+      cms_delete_module(cms_ptr);
     }
 
     /* Write info... */
@@ -512,7 +513,7 @@ void compress_cms(
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Copy level data... */
-      float tmp_arr[nx * ny];
+      float tmp_arr[nxy];
       for (size_t ix = 0; ix < nx; ++ix)
 	for (size_t iy = 0; iy < ny; ++iy)
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
@@ -563,28 +564,25 @@ void compress_cms(
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Evaluate... */
-      double tmp_cms[nx * ny], tmp_org[nx * ny], tmp_diff[nx * ny];
+      double tmp_cms[nxy], tmp_org[nxy], tmp_diff[nxy];
 #pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
-	  double val, x[] = { lon[ix], lat[iy] };
-	  cms_eval(cms_ptr[ip], cms_sol[ip], x, &val);
-	  tmp_cms[ARRAY_2D(ix, iy, ny)] = val;
-	  tmp_org[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
-	  tmp_diff[ARRAY_2D(ix, iy, ny)] =
-	    tmp_cms[ARRAY_2D(ix, iy, ny)] - tmp_org[ARRAY_2D(ix, iy, ny)];
+	  size_t idx = ARRAY_2D(ix, iy, ny);
+	  double x[] = { lon[ix], lat[iy] };
+	  cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
+	  tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	  tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
 	}
 
       /* Write info... */
       LOG(2,
-	  "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g / mean= %g / sd= %g / min= %g / max= %g",
-	  varname, ip, cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
-	  gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nx * ny),
-	  gsl_stats_mean(tmp_diff, 1, nx * ny), gsl_stats_sd(tmp_diff, 1,
-							     nx * ny),
-	  gsl_stats_min(tmp_diff, 1, nx * ny), gsl_stats_max(tmp_diff, 1,
-							     nx * ny)
-	);
+	  "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
+	  " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
+	  cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+	  gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
+	  gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
+	  gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
 
       /* Calculate mean compression ratio... */
       cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
@@ -593,8 +591,8 @@ void compress_cms(
       cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
 
       /* Free... */
-      cms_delete_module(cms_ptr[ip]);
       cms_delete_sol(cms_sol[ip]);
+      cms_delete_module(cms_ptr[ip]);
     }
 
     /* Write info... */
@@ -2109,40 +2107,6 @@ int locate_irr_float(
 	ihi = i;
       else
 	ilo = i;
-    }
-
-  return ilo;
-}
-
-/*****************************************************************************/
-
-int locate_irr_3d(
-  float profiles[EX][EY][EP],
-  int np,
-  int ind_lon,
-  int ind_lat,
-  double x) {
-
-  int ilo = 0;
-  int ihi = np - 1;
-  int i = (ihi + ilo) >> 1;
-
-  if (profiles[ind_lon][ind_lat][i] < profiles[ind_lon][ind_lat][i + 1])
-    while (ihi > ilo + 1) {
-      i = (ihi + ilo) >> 1;
-      if (profiles[ind_lon][ind_lat][i] > x) {
-	ihi = i;
-      } else {
-	ilo = i;
-      }
-  } else
-    while (ihi > ilo + 1) {
-      i = (ihi + ilo) >> 1;
-      if (profiles[ind_lon][ind_lat][i] <= x) {
-	ihi = i;
-      } else {
-	ilo = i;
-      }
     }
 
   return ilo;

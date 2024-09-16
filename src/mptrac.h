@@ -4678,35 +4678,6 @@ int locate_irr_float(
   const int ig);
 
 /**
- * @brief Locate the index of the interval containing a given value in a 3D irregular grid.
- *
- * This function locates the index of the interval containing a given
- * value in a 3D irregular grid.  It searches for the interval in the
- * specified longitude and latitude indices of the grid.
- *
- * @param profiles 3D array representing the irregular grid.
- * @param np Size of the profile (number of data points).
- * @param ind_lon Index of the longitude.
- * @param ind_lat Index of the latitude.
- * @param x Value to be located.
- * @return Index of the interval containing the value `x`.
- *
- * The function assumes that the array `profiles` represents a 3D
- * irregular grid.  It calculates the index of the interval where the
- * value `x` is located based on the data in the specified longitude
- * and latitude indices.  If the value `x` is outside the range of the
- * profile, the function returns the index of the closest interval.
- *
- * @author Jan Clemens
- */
-int locate_irr_3d(
-  float profiles[EX][EY][EP],
-  int np,
-  int ind_lon,
-  int ind_lat,
-  double x);
-
-/**
  * @brief Locate the index of the interval containing a given value in a regular grid.
  *
  * This function locates the index of the interval containing a given
@@ -7934,7 +7905,6 @@ void write_vtk(
 #pragma acc routine (locate_irr_float)
 #pragma acc routine (locate_reg)
 #pragma acc routine (locate_vert)
-#pragma acc routine (locate_irr_3d)
 #pragma acc routine (nat_temperature)
 #pragma acc routine (sedi)
 #pragma acc routine (stddev)
