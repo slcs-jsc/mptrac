@@ -456,7 +456,7 @@ void compress_cms(
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
   for (size_t iy = 0; iy < ny; iy++)
-    lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
+    lat[iy] = -(180. * (double) iy / ((double) ny - 1.) - 90);
 
   /* Set multiscale parameters... */
   const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
