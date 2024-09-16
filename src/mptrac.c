@@ -511,8 +511,6 @@ void compress_cms(
 #pragma omp parallel for default(shared)
     for (size_t ip = 0; ip < np; ip++) {
 
-      LOG(2, "Compress level %lu / %lu ...", ip, np);
-
       /* Copy level data... */
       float tmp_arr[nx * ny];
       for (size_t ix = 0; ix < nx; ++ix)
@@ -564,7 +562,9 @@ void compress_cms(
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
-      LOG(2, "Save level %lu / %lu ...", ip, np);
+      /* Write info... */
+      LOG(2, "cmultiscale: varname= %s / level= %lu / ratio= %g ...", varname,
+	  ip, cms_compression_rate(cms_ptr[ip], cms_sol[ip]));
 
       /* Calculate mean compression ratio... */
       cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
@@ -5032,31 +5032,31 @@ void read_ctl(
   ctl->met_cms_heur =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
   ctl->met_cms_eps_z =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "1.0", NULL);
   ctl->met_cms_eps_t =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "0.01", NULL);
   ctl->met_cms_eps_u =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "0.05", NULL);
   ctl->met_cms_eps_v =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_V", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_V", -1, "0.05", NULL);
   ctl->met_cms_eps_w =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_W", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_W", -1, "1.0", NULL);
   ctl->met_cms_eps_pv =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_PV", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_PV", -1, "1.0", NULL);
   ctl->met_cms_eps_h2o =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_H2O", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_H2O", -1, "1.0", NULL);
   ctl->met_cms_eps_o3 =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_O3", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_O3", -1, "1.0", NULL);
   ctl->met_cms_eps_lwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_LWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_LWC", -1, "1.0", NULL);
   ctl->met_cms_eps_rwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_RWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_RWC", -1, "1.0", NULL);
   ctl->met_cms_eps_iwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_IWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_IWC", -1, "1.0", NULL);
   ctl->met_cms_eps_swc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_SWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_SWC", -1, "1.0", NULL);
   ctl->met_cms_eps_cc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_CC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_CC", -1, "1.0", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
