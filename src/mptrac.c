@@ -477,23 +477,23 @@ void compress_cms(
       cms_module_t *cms_ptr = cms_init(cms_param);
 
       /* Read binary data... */
-      cms_sol_t *sol = cms_read_sol(cms_ptr, inout);
+      cms_sol_t *cms_sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
 #pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
 	  double val, x[] = { lon[ix], lat[iy] };
-	  cms_eval(cms_ptr, sol, x, &val);
+	  cms_eval(cms_ptr, cms_sol, x, &val);
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
       /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr, sol) / (double) np;
+      cr += cms_compression_rate(cms_ptr, cms_sol) / (double) np;
 
       /* Free... */
       cms_delete_module(cms_ptr);
-      cms_delete_sol(sol);
+      cms_delete_sol(cms_sol);
     }
 
     /* Write info... */
@@ -562,9 +562,29 @@ void compress_cms(
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
+      /* Evaluate... */
+      double tmp_cms[nx * ny], tmp_org[nx * ny], tmp_diff[nx * ny];
+#pragma omp parallel for default(shared)
+      for (size_t ix = 0; ix < nx; ix++)
+	for (size_t iy = 0; iy < ny; iy++) {
+	  double val, x[] = { lon[ix], lat[iy] };
+	  cms_eval(cms_ptr[ip], cms_sol[ip], x, &val);
+	  tmp_cms[ARRAY_2D(ix, iy, ny)] = val;
+	  tmp_org[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	  tmp_diff[ARRAY_2D(ix, iy, ny)] =
+	    tmp_cms[ARRAY_2D(ix, iy, ny)] - tmp_org[ARRAY_2D(ix, iy, ny)];
+	}
+
       /* Write info... */
-      LOG(2, "cmultiscale: varname= %s / level= %lu / ratio= %g ...", varname,
-	  ip, cms_compression_rate(cms_ptr[ip], cms_sol[ip]));
+      LOG(2,
+	  "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g / mean= %g / sd= %g / min= %g / max= %g",
+	  varname, ip, cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+	  gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nx * ny),
+	  gsl_stats_mean(tmp_diff, 1, nx * ny), gsl_stats_sd(tmp_diff, 1,
+							     nx * ny),
+	  gsl_stats_min(tmp_diff, 1, nx * ny), gsl_stats_max(tmp_diff, 1,
+							     nx * ny)
+	);
 
       /* Calculate mean compression ratio... */
       cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
@@ -5034,7 +5054,7 @@ void read_ctl(
   ctl->met_cms_eps_z =
     scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "1.0", NULL);
   ctl->met_cms_eps_t =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "0.01", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "0.05", NULL);
   ctl->met_cms_eps_u =
     scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "0.05", NULL);
   ctl->met_cms_eps_v =
