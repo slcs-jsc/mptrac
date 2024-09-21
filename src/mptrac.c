@@ -8901,8 +8901,7 @@ void write_csi(
 		|| modmean[idx] >= ctl->csi_modmin)) {
 	  x[n] = modmean[idx];
 	  y[n] = obsmean[idx];
-	  if (modmean[idx] >= ctl->csi_modmin)
-	    obsstdn[n] = obsstd[idx];
+	  obsstdn[n] = obsstd[idx];
 	  if ((++n) >= NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
 	}
