@@ -99,13 +99,13 @@ int main(
       for (iz = 0; iz < met->np; iz++)
 	if (Z(met->p[iz]) >= z0 && Z(met->p[iz]) <= z1) {
 	  plev[nz] = met->p[iz];
-	  if ((++nz) > NZ)
+	  if ((++nz) >= NZ)
 	    ERRMSG("Too many pressure levels!");
 	}
     } else
       for (z = z0; z <= z1; z += dz) {
 	plev[nz] = P(z);
-	if ((++nz) > NZ)
+	if ((++nz) >= NZ)
 	  ERRMSG("Too many pressure levels!");
       }
 

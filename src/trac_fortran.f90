@@ -1,11 +1,9 @@
 PROGRAM trac_fortran
-  USE iso_c_binding
   USE mptrac_struct
   USE mptrac_func
-  USE, intrinsic :: iso_fortran_env
-  USE, intrinsic :: iso_c_binding
-  !! ToDo clean up and check for consitency
-  !!What is the difference between  "USE iso_c_binding" and "USE, intrinsic :: iso_c_binding"?
+  USE iso_fortran_env
+  USE iso_c_binding
+
   IMPLICIT NONE
 
   CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
@@ -47,7 +45,7 @@ PROGRAM trac_fortran
   print *,'Hello World!'
   
   ! ! Read control parameters... 
-  CALL mptrac_read_ctl(TRIM(filename_ctl)//char(0), argc, argv_ptrs, ctl)
+  CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc, argv_ptrs, ctl)
   print *,'Hello Control'
   
   ! ! Read climatological data... 
@@ -55,7 +53,7 @@ PROGRAM trac_fortran
   print *,'Hello Clim'
   
   ! Read atmospheric data...
-  CALL mptrac_read_atm(TRIM(filename_atm)//char(0), ctl, atm)
+  CALL mptrac_read_atm(TRIM(filename_atm)//c_null_char, ctl, atm)
   print *, "Hello Atm"
   
   ! Initialize timesteps...
@@ -66,7 +64,7 @@ PROGRAM trac_fortran
   print *,c_sizeof(atm)
   print *,c_sizeof(ctl)
   print *,c_sizeof(clim)
-  
+    
   
   WRITE(*,*) ctl%t_start
   ! Get meteo data...
@@ -98,7 +96,7 @@ PROGRAM trac_fortran
      CALL mptrac_module_advect(ctl, met0, met1, atm, dt)
 
      ! Write output...
-     CALL mptrac_write_output(TRIM(dirname)//char(0), ctl, met0, met1, atm, t)
+     CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0, met1, atm, t)
 
      t = t + ctl%direction * ctl%dt_mod
 

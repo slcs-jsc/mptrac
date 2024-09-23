@@ -106,14 +106,14 @@ t1=$(${trac}/time2jsec "${end_year}" "${end_month}" "${end_day}" "${end_hour}" 0
 # Create control parameter file...
 cat > ${output}/trac.ctl <<EOF
 MET_CONVENTION = 1
-CPL_ZETA_PRESS_MODULES = 0
-PRESS_LEVEL_DEF = 2
+ADVECT_ZETA_PRESS_MODULES = 1
+MET_PRESS_LEVEL_DEF = 2
 ATM_TYPE = 3
 ATM_TYPE_OUT = 0
 ADVECT = 2
-CLAMS_MET_DATA = 1
-VERT_COORD_AP = 1
-VERT_COORD_MET = 1
+MET_CLAMS = 1
+ADVECT_VERT_COORD = 1
+MET_VERT_COORD = 1
 NQ = 7
 QNT_NAME[0] = theta
 QNT_NAME[1] = pv
