@@ -461,7 +461,7 @@ MODULE mptrac_func
      ! END SUBROUTINE mptrac_get_met
 
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
-       bind(c,name='get_met')
+          bind(c,name='get_met')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
        IMPLICIT NONE
