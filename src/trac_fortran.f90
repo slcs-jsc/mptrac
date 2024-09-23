@@ -16,7 +16,8 @@ PROGRAM trac_fortran
   TYPE(ctl_t) :: ctl
   TYPE(atm_t) :: atm
   TYPE(clim_t) :: clim
-  TYPE(met_t) :: met0, met1
+  TYPE(met_t), TARGET :: met0, met1
+  TYPE(met_t), POINTER :: met0p, met1p
   REAL(real64) :: t
   REAL(real64), DIMENSION(npp) :: dt
   
@@ -69,7 +70,9 @@ PROGRAM trac_fortran
   
   WRITE(*,*) ctl%t_start
   ! Get meteo data...
-  CALL mptrac_get_met(ctl, clim, ctl%t_start, met0, met1)
+  met0p => met0
+  met1p => met1
+  CALL mptrac_get_met(ctl, clim, ctl%t_start, met0p, met1p)
   print *, "Hello Met"
   
   dirname = "data"
@@ -88,7 +91,7 @@ PROGRAM trac_fortran
 
      IF (t .NE. ctl%t_start) THEN
         ! Get meteo data...
-        CALL mptrac_get_met(ctl, clim, t, met0, met1)
+        CALL mptrac_get_met(ctl, clim, t, met0p, met1p)
      ENDIF
 
      ! Advection...

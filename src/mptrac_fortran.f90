@@ -449,15 +449,26 @@ END MODULE mptrac_struct
 MODULE mptrac_func
   INTERFACE
      
+     ! SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
+     !      bind(c,name='get_met_fortran')
+     !   USE, intrinsic :: iso_c_binding
+     !   USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
+     !   IMPLICIT NONE
+     !   TYPE(ctl_t), INTENT(in), TARGET :: ctl
+     !   TYPE(clim_t), INTENT(in), TARGET :: clim
+     !   REAL(c_double), INTENT(in), VALUE :: t
+     !   TYPE(met_t), INTENT(inout) :: met0, met1
+     ! END SUBROUTINE mptrac_get_met
+
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
-          bind(c,name='get_met_fortran')
+          bind(c,name='get_met')
        USE, intrinsic :: iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(clim_t), INTENT(in), TARGET :: clim
        REAL(c_double), INTENT(in), VALUE :: t
-       TYPE(met_t), INTENT(inout) :: met0, met1
+       TYPE(met_t), INTENT(inout), POINTER :: met0, met1
      END SUBROUTINE mptrac_get_met
 
      SUBROUTINE mptrac_module_advect(ctl, met0, met1, atm, dt) &
