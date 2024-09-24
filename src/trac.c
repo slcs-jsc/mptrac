@@ -284,9 +284,8 @@ int main(
 	    module_mixing(&ctl, clim, atm, t);
 
 	  /* Calculate the tracer vmr in the chemistry grid... */
-	  if (ctl.qnt_Cx > 0
-	      && (ctl.oh_chem_reaction != 0 || ctl.h2o2_chem_reaction != 0
-		  || (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0)))
+	  if (ctl.oh_chem_reaction != 0 || ctl.h2o2_chem_reaction != 0
+	      || (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0))
 	    module_chemgrid(&ctl, met0, met1, atm, t);
 
 	  /* OH chemistry... */

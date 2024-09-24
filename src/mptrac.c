@@ -452,18 +452,20 @@ void compress_cms(
   FILE * inout) {
 
   /* Set lon-lat grid... */
+  size_t nxy = nx * ny;
   double lon[EX], lat[EY];
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
   for (size_t iy = 0; iy < ny; iy++)
-    lat[iy] = 180. * (double) iy / ((double) ny - 1.) - 90;
+    lat[iy] = -(180. * (double) iy / ((double) ny - 1.) - 90.);
 
   /* Set multiscale parameters... */
-  cms_param_t *cms_param =
-    cms_set_parameters(nx, ny, "[0.0, 360.0]x[-90.0, 90.0]");
-
-  /* Initialize multiscale module... */
-  cms_module_t *cms_ptr = cms_init(cms_param);
+  const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
+  const int Nd0_x = 6;
+  const int Nd0_y = 3;
+  const int max_level_grid = 7;
+  cms_param_t *cms_param
+    = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
@@ -472,23 +474,27 @@ void compress_cms(
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
+      /* Initialize multiscale module... */
+      cms_module_t *cms_ptr = cms_init(cms_param);
+
       /* Read binary data... */
-      cms_sol_t *sol = cms_read_sol(cms_ptr, inout);
+      cms_sol_t *cms_sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
 #pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
 	  double val, x[] = { lon[ix], lat[iy] };
-	  cms_eval(cms_ptr, sol, x, &val);
+	  cms_eval(cms_ptr, cms_sol, x, &val);
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
-      /* Calculate mean compression rate... */
-      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
+      /* Calculate mean compression ratio... */
+      cr += cms_compression_rate(cms_ptr, cms_sol) / (double) np;
 
       /* Free... */
-      cms_delete_sol(sol);
+      cms_delete_sol(cms_sol);
+      cms_delete_module(cms_ptr);
     }
 
     /* Write info... */
@@ -498,61 +504,100 @@ void compress_cms(
   /* Compress array and output compressed stream... */
   else {
 
+    /* Init... */
+    cms_module_t *cms_ptr[EP];
+    cms_sol_t *cms_sol[EP];
+
     /* Loop over levels... */
-    double cr = 0;
+#pragma omp parallel for default(shared)
     for (size_t ip = 0; ip < np; ip++) {
 
-      float tmp_arr[nx * ny];
-
       /* Copy level data... */
+      float tmp_arr[nxy];
       for (size_t ix = 0; ix < nx; ++ix)
 	for (size_t iy = 0; iy < ny; ++iy)
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 
+      /* Initialize multiscale module... */
+      cms_ptr[ip] = cms_init(cms_param);
+
       /* Create solution pointer... */
-      cms_sol_t *sol = cms_read_arr(cms_ptr, tmp_arr, lon, lat, nx, ny);
+      cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
 
       /* Set eps threshold value... */
       if (strcasecmp(varname, "Z") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_z);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
       else if (strcasecmp(varname, "T") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_t);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
       else if (strcasecmp(varname, "U") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_u);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
       else if (strcasecmp(varname, "V") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_v);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
       else if (strcasecmp(varname, "W") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_w);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
       else if (strcasecmp(varname, "PV") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_pv);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
       else if (strcasecmp(varname, "H2O") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_h2o);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
       else if (strcasecmp(varname, "O3") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_o3);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
       else if (strcasecmp(varname, "LWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_lwc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
       else if (strcasecmp(varname, "RWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_rwc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
       else if (strcasecmp(varname, "IWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_iwc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
       else if (strcasecmp(varname, "SWC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_swc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
       else if (strcasecmp(varname, "CC") == 0)
-	cms_set_eps(cms_ptr, ctl->met_cms_eps_cc);
+	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
       else
 	ERRMSG("Variable name unknown!");
 
       /* Coarsening... */
-      cms_coarsening(cms_ptr, sol, (unsigned int) ctl->met_cms_heur);
+      cms_coarsening(cms_ptr[ip], cms_sol[ip],
+		     (unsigned int) ctl->met_cms_heur);
+    }
 
+    /* Loop over levels... */
+    double cr = 0;
+    for (size_t ip = 0; ip < np; ip++) {
+
+      /* Evaluate... */
+      double tmp_cms[nxy], tmp_org[nxy], tmp_diff[nxy];
+#pragma omp parallel for default(shared)
+      for (size_t ix = 0; ix < nx; ix++)
+	for (size_t iy = 0; iy < ny; iy++) {
+	  size_t idx = ARRAY_2D(ix, iy, ny);
+	  double x[] = { lon[ix], lat[iy] };
+	  cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
+	  tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	  tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
+	}
+
+      /* Write info... */
+      LOG(2,
+	  "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
+	  " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
+	  cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+	  gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
+	  gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
+	  gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
+
+<<<<<<< HEAD
       /* Calculate mean compression rate... */
       cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
+=======
+      /* Calculate mean compression ratio... */
+      cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
 
       /* Save binary data... */
-      cms_save_sol(sol, inout);
+      cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
 
       /* Free... */
-      cms_delete_sol(sol);
+      cms_delete_sol(cms_sol[ip]);
+      cms_delete_module(cms_ptr[ip]);
     }
 
     /* Write info... */
@@ -560,7 +605,6 @@ void compress_cms(
   }
 
   /* Free... */
-  cms_delete_module(cms_ptr);
   cms_delete_param(cms_param);
 }
 #endif
@@ -2226,40 +2270,6 @@ int locate_irr_float(
 
 /*****************************************************************************/
 
-int locate_irr_3d(
-  float profiles[EX][EY][EP],
-  int np,
-  int ind_lon,
-  int ind_lat,
-  double x) {
-
-  int ilo = 0;
-  int ihi = np - 1;
-  int i = (ihi + ilo) >> 1;
-
-  if (profiles[ind_lon][ind_lat][i] < profiles[ind_lon][ind_lat][i + 1])
-    while (ihi > ilo + 1) {
-      i = (ihi + ilo) >> 1;
-      if (profiles[ind_lon][ind_lat][i] > x) {
-	ihi = i;
-      } else {
-	ilo = i;
-      }
-  } else
-    while (ihi > ilo + 1) {
-      i = (ihi + ilo) >> 1;
-      if (profiles[ind_lon][ind_lat][i] <= x) {
-	ihi = i;
-      } else {
-	ilo = i;
-      }
-    }
-
-  return ilo;
-}
-
-/*****************************************************************************/
-
 int locate_reg(
   const double *xx,
   const int n,
@@ -2590,13 +2600,18 @@ void module_chemgrid(
 #endif
 
   /* Check quantities... */
-  if (ctl->molmass < 0)
+  if (ctl->molmass <= 0)
     ERRMSG("Molar mass is not defined!");
+  if (ctl->qnt_m < 0)
+    ERRMSG("Module needs quantity mass!");
+  if (ctl->qnt_Cx < 0)
+    ERRMSG("Module needs quantity Cx!");
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
+<<<<<<< HEAD
   ALLOC(z, double,
 	ctl->chemgrid_nz);
   ALLOC(press, double,
@@ -2620,10 +2635,43 @@ void module_chemgrid(
   double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
   double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
   double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
+=======
+  const int np = atm->np;
+  const int nz = ctl->chemgrid_nz;
+  const int nx = ctl->chemgrid_nx;
+  const int ny = ctl->chemgrid_ny;
+  const int ngrid = nx * ny * nz;
+
+  double *restrict const z = (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const press =
+    (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const mass =
+    (double *) calloc((size_t) ngrid, sizeof(double));
+  double *restrict const area =
+    (double *) malloc((size_t) ny * sizeof(double));
+  double *restrict const lon =
+    (double *) malloc((size_t) nx * sizeof(double));
+  double *restrict const lat =
+    (double *) malloc((size_t) ny * sizeof(double));
+
+  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
+
+  /* Set grid box size... */
+  const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / nz;
+  const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / nx;
+  const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ny;
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
 
   /* Set vertical coordinates... */
 #pragma omp parallel for default(shared)
+<<<<<<< HEAD
   for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
+=======
+#endif
+  for (int iz = 0; iz < nz; iz++) {
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
@@ -2634,37 +2682,72 @@ void module_chemgrid(
 
   /* Get indices... */
 #pragma omp parallel for default(shared)
+<<<<<<< HEAD
   for (int ip = 0; ip < atm->np; ip++) {
+=======
+#endif
+  for (int ip = 0; ip < np; ip++) {
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
     if (atm->time[ip] < t0 || atm->time[ip] > t1
-	|| ixs[ip] < 0 || ixs[ip] >= ctl->chemgrid_nx
-	|| iys[ip] < 0 || iys[ip] >= ctl->chemgrid_ny
-	|| izs[ip] < 0 || izs[ip] >= ctl->chemgrid_nz)
+	|| ixs[ip] < 0 || ixs[ip] >= nx
+	|| iys[ip] < 0 || iys[ip] >= ny || izs[ip] < 0 || izs[ip] >= nz)
       izs[ip] = -1;
   }
 
   /* Set horizontal coordinates... */
+<<<<<<< HEAD
   for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
+=======
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ix = 0; ix < nx; ix++)
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
 #pragma omp parallel for default(shared)
+<<<<<<< HEAD
   for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
+=======
+#endif
+  for (int iy = 0; iy < ny; iy++) {
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-      * cos(lat[iy] * M_PI / 180.);
+    area[iy] =
+      dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat[iy] * M_PI / 180.);
   }
 
   /* Get mass per grid box... */
+<<<<<<< HEAD
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0)
       mass[ARRAY_3D
 	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
+=======
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0)
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)]
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
 	+= atm->q[ctl->qnt_m][ip];
 
   /* Assign grid data to air parcels ... */
 #pragma omp parallel for default(shared)
+<<<<<<< HEAD
   for (int ip = 0; ip < atm->np; ip++)
+=======
+#endif
+  for (int ip = 0; ip < np; ip++)
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     if (izs[ip] >= 0) {
 
       /* Interpolate temperature... */
@@ -2674,8 +2757,7 @@ void module_chemgrid(
 			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
       /* Set mass... */
-      double m = mass[ARRAY_3D(ixs[ip], iys[ip], ctl->chemgrid_ny,
-			       izs[ip], ctl->chemgrid_nz)];
+      double m = mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
 
       /* Calculate volume mixing ratio... */
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
@@ -3087,14 +3169,14 @@ void module_h2o2_chem(
     if (ctl->qnt_Cx >= 0)
       cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
-    
+
     double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
       * M * cor * 1000 / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
     double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = (lwc + rwc) * rho_air / 1000;   // TODO: check this? wrong units?
+    double CWC = (lwc + rwc) * rho_air / 1000;
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
@@ -3629,7 +3711,8 @@ void module_oh_chem(
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
-    /* Correction factor for high SO2 concentration (When qnt_Cx is difined, the correction switch on)... */
+    /* Correction factor for high SO2 concentration
+       (if qnt_Cx is defined, the correction is switched on)... */
     double cor = 1;
     if (ctl->qnt_Cx >= 0)
       cor =
@@ -5141,31 +5224,31 @@ void read_ctl(
   ctl->met_cms_heur =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
   ctl->met_cms_eps_z =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "1.0", NULL);
   ctl->met_cms_eps_t =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "0.05", NULL);
   ctl->met_cms_eps_u =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "0.05", NULL);
   ctl->met_cms_eps_v =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_V", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_V", -1, "0.05", NULL);
   ctl->met_cms_eps_w =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_W", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_W", -1, "1.0", NULL);
   ctl->met_cms_eps_pv =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_PV", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_PV", -1, "1.0", NULL);
   ctl->met_cms_eps_h2o =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_H2O", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_H2O", -1, "1.0", NULL);
   ctl->met_cms_eps_o3 =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_O3", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_O3", -1, "1.0", NULL);
   ctl->met_cms_eps_lwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_LWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_LWC", -1, "1.0", NULL);
   ctl->met_cms_eps_rwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_RWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_RWC", -1, "1.0", NULL);
   ctl->met_cms_eps_iwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_IWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_IWC", -1, "1.0", NULL);
   ctl->met_cms_eps_swc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_SWC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_SWC", -1, "1.0", NULL);
   ctl->met_cms_eps_cc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_CC", -1, "3.0", NULL);
+    scan_ctl(filename, argc, argv, "MET_CMS_EPS_CC", -1, "1.0", NULL);
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);
@@ -8623,9 +8706,8 @@ void write_atm_clams(
   NC(nc_def_dim(ncid, "time", 1, &tid));
   NC(nc_def_dim(ncid, "NPARTS", (size_t) atm->np, &pid));
 
-  int dim_ids[2] = { tid, pid };
-
   /* Define variables and their attributes... */
+  int dim_ids[2] = { tid, pid };
   NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
 	     "seconds since 2000-01-01 00:00:00 UTC");
   NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
@@ -9040,7 +9122,7 @@ void write_csi(
 		|| modmean[idx] >= ctl->csi_modmin)) {
 	  x[n] = modmean[idx];
 	  y[n] = obsmean[idx];
-	  if (modmean[idx] >= ctl->csi_modmin)
+  	  if (modmean[idx] >= ctl->csi_modmin)
 	    obsstdn[n] = obsstd[idx];
 	  if ((++n) >= NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");

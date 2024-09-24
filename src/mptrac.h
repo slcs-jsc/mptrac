@@ -2138,7 +2138,7 @@ void thrustSortWrapper(
 typedef struct {
 
   /* TODO: finally sort ctl parameters once Fortran wrapper is working! */
-  
+
   /*! Coupled use of pressure based modules and diabatic advection. 
      (0= no coupling, 1= coupling) */
   int advect_cpl_zeta_and_press_modules;
@@ -2158,7 +2158,7 @@ typedef struct {
   /* ------------------------------------------------------------
      Quantity parameters...
      ------------------------------------------------------------ */
-  
+
   /*! Number of quantities. */
   int nq;
 
@@ -2463,7 +2463,8 @@ typedef struct {
   /*! Meteo data layout (0=[lev, lat, lon], 1 = [lon, lat, lev]). */
   int met_convention;
 
-  /*! Type of meteo data files (0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+  /*! Type of meteo data files
+     (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd, 5=cms). */
   int met_type;
 
   /*! Check netCDF scaling factors (0=no, 1=yes). */
@@ -2862,11 +2863,16 @@ typedef struct {
   int atm_stride;
 
   /*! Type of atmospheric data files
-     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS). */
+     (0=ASCII, 1=binary, 2=netCDF, 3=CLaMS_traj, 4=CLaMS_pos). */
   int atm_type;
 
   /*! Type of atmospheric data files for output
+<<<<<<< HEAD
      (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
+=======
+     (-1=same as ATM_TYPE, 0=ASCII, 1=binary, 2=netCDF,
+     3=CLaMS_traj, 4=CLaMS_pos). */
+>>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
   int atm_type_out;
 
   /*! Type of observation data files
@@ -4684,35 +4690,6 @@ int locate_irr_float(
   const int n,
   const double x,
   const int ig);
-
-/**
- * @brief Locate the index of the interval containing a given value in a 3D irregular grid.
- *
- * This function locates the index of the interval containing a given
- * value in a 3D irregular grid.  It searches for the interval in the
- * specified longitude and latitude indices of the grid.
- *
- * @param profiles 3D array representing the irregular grid.
- * @param np Size of the profile (number of data points).
- * @param ind_lon Index of the longitude.
- * @param ind_lat Index of the latitude.
- * @param x Value to be located.
- * @return Index of the interval containing the value `x`.
- *
- * The function assumes that the array `profiles` represents a 3D
- * irregular grid.  It calculates the index of the interval where the
- * value `x` is located based on the data in the specified longitude
- * and latitude indices.  If the value `x` is outside the range of the
- * profile, the function returns the index of the closest interval.
- *
- * @author Jan Clemens
- */
-int locate_irr_3d(
-  float profiles[EX][EY][EP],
-  int np,
-  int ind_lon,
-  int ind_lat,
-  double x);
 
 /**
  * @brief Locate the index of the interval containing a given value in a regular grid.
@@ -7232,8 +7209,8 @@ double tropo_weight(
  *   - ASCII (`atm_type_out == 0`): Calls `write_atm_asc`.
  *   - Binary (`atm_type_out == 1`): Calls `write_atm_bin`.
  *   - netCDF (`atm_type_out == 2`): Calls `write_atm_nc`.
- *   - CLaMS trajectory (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
- *   - CLaMS position (`atm_type_out == 4`): Calls `write_atm_clams`.
+ *   - CLaMS trajectory data (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
+ *   - CLaMS position data (`atm_type_out == 4`): Calls `write_atm_clams`.
  * - If the `atm_type_out` value is not supported, triggers an error message.
  * - Logs various statistics about the atmospheric data, including the number of particles,
  *   time range, altitude range, pressure range, longitude range, and latitude range.
@@ -7942,7 +7919,6 @@ void write_vtk(
 #pragma acc routine (locate_irr_float)
 #pragma acc routine (locate_reg)
 #pragma acc routine (locate_vert)
-#pragma acc routine (locate_irr_3d)
 #pragma acc routine (nat_temperature)
 #pragma acc routine (sedi)
 #pragma acc routine (stddev)
