@@ -505,112 +505,120 @@ void compress_cms(
   else {
 
     /* Init... */
+    double cr = 0;
     cms_module_t *cms_ptr[EP];
     cms_sol_t *cms_sol[EP];
 
-    /* Loop over levels... */
+    /* Loop over batches... */
+    const size_t dip = (ctl->met_cms_batch <= 0
+			? (size_t) omp_get_max_threads()
+			: (size_t) ctl->met_cms_batch);
+    for (size_t ip0 = 0; ip0 < np; ip0 += dip) {
+
+      /* Loop over levels... */
 #pragma omp parallel for default(shared)
-    for (size_t ip = 0; ip < np; ip++) {
+      for (size_t ip = ip0; ip < MIN(ip0 + dip, np); ip++) {
 
-      /* Allocate... */
-      float *tmp_arr;
-      ALLOC(tmp_arr, float,
-	    nxy);
+	/* Allocate... */
+	float *tmp_arr;
+	ALLOC(tmp_arr, float,
+	      nxy);
 
-      /* Copy level data... */
-      for (size_t ix = 0; ix < nx; ++ix)
-	for (size_t iy = 0; iy < ny; ++iy)
-	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	/* Copy level data... */
+	for (size_t ix = 0; ix < nx; ++ix)
+	  for (size_t iy = 0; iy < ny; ++iy)
+	    tmp_arr[ARRAY_2D(ix, iy, ny)] =
+	      array[ARRAY_3D(ix, iy, ny, ip, np)];
 
-      /* Initialize multiscale module... */
-      cms_ptr[ip] = cms_init(cms_param);
+	/* Initialize multiscale module... */
+	cms_ptr[ip] = cms_init(cms_param);
 
-      /* Create solution pointer... */
-      cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
+	/* Create solution pointer... */
+	cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
 
-      /* Set eps threshold value... */
-      if (strcasecmp(varname, "Z") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
-      else if (strcasecmp(varname, "T") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
-      else if (strcasecmp(varname, "U") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
-      else if (strcasecmp(varname, "V") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
-      else if (strcasecmp(varname, "W") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
-      else if (strcasecmp(varname, "PV") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
-      else if (strcasecmp(varname, "H2O") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
-      else if (strcasecmp(varname, "O3") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
-      else if (strcasecmp(varname, "LWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
-      else if (strcasecmp(varname, "RWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
-      else if (strcasecmp(varname, "IWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
-      else if (strcasecmp(varname, "SWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
-      else if (strcasecmp(varname, "CC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
-      else
-	ERRMSG("Variable name unknown!");
+	/* Set eps threshold value... */
+	if (strcasecmp(varname, "Z") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
+	else if (strcasecmp(varname, "T") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
+	else if (strcasecmp(varname, "U") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
+	else if (strcasecmp(varname, "V") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
+	else if (strcasecmp(varname, "W") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
+	else if (strcasecmp(varname, "PV") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
+	else if (strcasecmp(varname, "H2O") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
+	else if (strcasecmp(varname, "O3") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
+	else if (strcasecmp(varname, "LWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
+	else if (strcasecmp(varname, "RWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
+	else if (strcasecmp(varname, "IWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
+	else if (strcasecmp(varname, "SWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
+	else if (strcasecmp(varname, "CC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
+	else
+	  ERRMSG("Variable name unknown!");
 
-      /* Coarsening... */
-      cms_coarsening(cms_ptr[ip], cms_sol[ip],
-		     (unsigned int) ctl->met_cms_heur);
+	/* Coarsening... */
+	cms_coarsening(cms_ptr[ip], cms_sol[ip],
+		       (unsigned int) ctl->met_cms_heur);
 
-      /* Free... */
-      free(tmp_arr);
-    }
+	/* Free... */
+	free(tmp_arr);
+      }
 
-    /* Loop over levels... */
-    double cr = 0;
-    for (size_t ip = 0; ip < np; ip++) {
+      /* Loop over levels... */
+      for (size_t ip = ip0; ip < MIN(ip0 + dip, np); ip++) {
 
-      /* Allocate... */
-      double *tmp_cms, *tmp_org, *tmp_diff;
-      ALLOC(tmp_cms, double,
-	    nxy);
-      ALLOC(tmp_org, double,
-	    nxy);
-      ALLOC(tmp_diff, double,
-	    nxy);
+	/* Allocate... */
+	double *tmp_cms, *tmp_org, *tmp_diff;
+	ALLOC(tmp_cms, double,
+	      nxy);
+	ALLOC(tmp_org, double,
+	      nxy);
+	ALLOC(tmp_diff, double,
+	      nxy);
 
-      /* Evaluate... */
+	/* Evaluate... */
 #pragma omp parallel for default(shared)
-      for (size_t ix = 0; ix < nx; ix++)
-	for (size_t iy = 0; iy < ny; iy++) {
-	  size_t idx = ARRAY_2D(ix, iy, ny);
-	  double x[] = { lon[ix], lat[iy] };
-	  cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
-	  tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
-	  tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
-	}
+	for (size_t ix = 0; ix < nx; ix++)
+	  for (size_t iy = 0; iy < ny; iy++) {
+	    size_t idx = ARRAY_2D(ix, iy, ny);
+	    double x[] = { lon[ix], lat[iy] };
+	    cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
+	    tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	    tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
+	  }
 
-      /* Write info... */
-      LOG(2,
-	  "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
-	  " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
-	  cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
-	  gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
-	  gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
-	  gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
+	/* Write info... */
+	LOG(2,
+	    "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
+	    " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
+	    cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+	    gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
+	    gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
+	    gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
 
-      /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
+	/* Calculate mean compression ratio... */
+	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
-      /* Save binary data... */
-      cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
+	/* Save binary data... */
+	cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
 
-      /* Free... */
-      cms_delete_sol(cms_sol[ip]);
-      cms_delete_module(cms_ptr[ip]);
-      free(tmp_cms);
-      free(tmp_org);
-      free(tmp_diff);
+	/* Free... */
+	cms_delete_sol(cms_sol[ip]);
+	cms_delete_module(cms_ptr[ip]);
+	free(tmp_cms);
+	free(tmp_org);
+	free(tmp_diff);
+      }
     }
 
     /* Write info... */
@@ -5031,6 +5039,8 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_T", -1, "5.0", NULL);
   ctl->met_zfp_tol_z =
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
+  ctl->met_cms_batch =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
   ctl->met_cms_heur =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
   ctl->met_cms_eps_z =

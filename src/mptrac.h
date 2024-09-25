@@ -2476,6 +2476,9 @@ typedef struct {
   /*! ZFP compression tolerance for geopotential height. */
   double met_zfp_tol_z;
 
+  /*! cmultiscale batch size. */
+  int met_cms_batch;
+
   /*! cmultiscale coarsening heuristics
      (0=default, 1=mean diff, 2=median diff, 3=max diff). */
   int met_cms_heur;
