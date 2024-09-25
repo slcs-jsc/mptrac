@@ -52,7 +52,7 @@ void broadcast_large_data(
   MPI_Bcast(&N, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
   /* Calculate the number of chunks... */
-  size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
+  const size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
   /* Loop over chunks... */
   for (size_t i = 0; i < num_chunks; i++) {
@@ -95,7 +95,7 @@ double clim_oh(
   const double p) {
 
   /* Get OH data from climatology... */
-  double oh = clim_zm(&clim->oh, t, lat, p);
+  const double oh = clim_zm(&clim->oh, t, lat, p);
 
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
@@ -169,9 +169,9 @@ double clim_photo(
     o3c_help = photo->o3c[photo->no3c - 1];
 
   /* Get indices... */
-  int ip = locate_irr(photo->p, photo->np, p_help);
-  int isza = locate_reg(photo->sza, photo->nsza, sza_help);
-  int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
+  const int ip = locate_irr(photo->p, photo->np, p_help);
+  const int isza = locate_reg(photo->sza, photo->nsza, sza_help);
+  const int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
 
   /* Interpolate photolysis rate... */
   double aux00 = LIN(photo->p[ip], rate[ip][isza][io3c],
@@ -202,18 +202,18 @@ double clim_tropo(
     sec += 365.25 * 86400.;
 
   /* Get indices... */
-  int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
-  int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
+  const int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
+  const int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
 
   /* Interpolate tropopause pressure... */
-  double p0 = LIN(clim->tropo_lat[ilat],
-		  clim->tropo[isec][ilat],
-		  clim->tropo_lat[ilat + 1],
-		  clim->tropo[isec][ilat + 1], lat);
-  double p1 = LIN(clim->tropo_lat[ilat],
-		  clim->tropo[isec + 1][ilat],
-		  clim->tropo_lat[ilat + 1],
-		  clim->tropo[isec + 1][ilat + 1], lat);
+  const double p0 = LIN(clim->tropo_lat[ilat],
+			clim->tropo[isec][ilat],
+			clim->tropo_lat[ilat + 1],
+			clim->tropo[isec][ilat + 1], lat);
+  const double p1 = LIN(clim->tropo_lat[ilat],
+			clim->tropo[isec + 1][ilat],
+			clim->tropo_lat[ilat + 1],
+			clim->tropo[isec + 1][ilat + 1], lat);
   return LIN(clim->tropo_time[isec], p0, clim->tropo_time[isec + 1], p1, sec);
 }
 
@@ -453,7 +453,7 @@ void compress_cms(
   FILE * inout) {
 
   /* Set lon-lat grid... */
-  size_t nxy = nx * ny;
+  const size_t nxy = nx * ny;
   double lon[EX], lat[EY];
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
@@ -750,7 +750,7 @@ void compress_zfp(
   size_t zfpsize;		/* byte size of compressed stream */
 
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
-  type = zfp_type_float;
+  const type = zfp_type_float;
   field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
 
   /* Allocate meta data for a compressed stream... */
@@ -1635,14 +1635,14 @@ void intpol_met_time_3d(
   double *cw,
   int init) {
 
-  double var0, var1, wt;
+  double var0, var1;
 
   /* Spatial interpolation... */
   intpol_met_space_3d(met0, array0, p, lon, lat, &var0, ci, cw, init);
   intpol_met_space_3d(met1, array1, p, lon, lat, &var1, ci, cw, 0);
 
   /* Get weighting factor... */
-  wt = (met1->time - ts) / (met1->time - met0->time);
+  const double wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
   *var = wt * (var0 - var1) + var1;
@@ -1686,14 +1686,14 @@ void intpol_met_time_2d(
   double *cw,
   int init) {
 
-  double var0, var1, wt;
+  double var0, var1;
 
   /* Spatial interpolation... */
   intpol_met_space_2d(met0, array0, lon, lat, &var0, ci, cw, init);
   intpol_met_space_2d(met1, array1, lon, lat, &var1, ci, cw, 0);
 
   /* Get weighting factor... */
-  wt = (met1->time - ts) / (met1->time - met0->time);
+  const double wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
   if (isfinite(var0) && isfinite(var1))
@@ -1733,8 +1733,8 @@ void intpol_tropo_3d(
     lon -= 360;
 
   /* Get indices... */
-  int ix = locate_reg(lons, (int) nlon, lon);
-  int iy = locate_reg(lats, (int) nlat, lat);
+  const int ix = locate_reg(lons, (int) nlon, lon);
+  const int iy = locate_reg(lats, (int) nlat, lat);
 
   /* Calculate standard deviation... */
   *sigma = 0;
@@ -1818,7 +1818,7 @@ void jsec2time(
   t0.tm_min = 0;
   t0.tm_sec = 0;
 
-  time_t jsec0 = (time_t) jsec + timegm(&t0);
+  const time_t jsec0 = (time_t) jsec + timegm(&t0);
   t1 = gmtime(&jsec0);
 
   *year = t1->tm_year + 1900;
@@ -1843,7 +1843,7 @@ double kernel_weight(
     return 1.0;
 
   /* Get altitude... */
-  double z = Z(p);
+  const double z = Z(p);
 
   /* Get weighting factor... */
   if (z < kz[0])
@@ -2735,13 +2735,14 @@ void module_decay(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt)") {
 
     /* Get weighting factor... */
-    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double w =
+      tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Set lifetime... */
-    double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
+    const double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
     /* Calculate exponential decay... */
-    double aux = exp(-dt[ip] / tdec);
+    const double aux = exp(-dt[ip] / tdec);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_decay >= 0)
 	atm->q[ctl->qnt_mloss_decay][ip]
@@ -2777,9 +2778,9 @@ void module_diffusion_meso(
 		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
 
     /* Get indices... */
-    int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-    int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-    int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+    const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+    const int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+    const int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
     /* Get standard deviations of local wind data... */
     float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
@@ -2808,8 +2809,8 @@ void module_diffusion_meso(
     wsig = (wsig > 0 ? sqrtf(wsig) : 0);
 
     /* Set temporal correlations for mesoscale fluctuations... */
-    double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
-    double r2 = sqrt(1 - r * r);
+    const double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+    const double r2 = sqrt(1 - r * r);
 
     /* Calculate horizontal mesoscale wind fluctuations... */
     if (ctl->turb_mesox > 0) {
@@ -2854,22 +2855,23 @@ void module_diffusion_turb(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs)") {
 
     /* Get weighting factor... */
-    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double w =
+      tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Set diffusivity... */
-    double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
-    double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
+    const double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
+    const double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
-      double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
+      const double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
       atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
       atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
     }
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
+      const double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
       atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
     }
   }
@@ -2904,7 +2906,7 @@ void module_dry_deposition(
       continue;
 
     /* Set depth of surface layer... */
-    double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
+    const double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
 
     /* Calculate sedimentation velocity for particles... */
     double v_dep;
@@ -2924,7 +2926,7 @@ void module_dry_deposition(
       v_dep = ctl->dry_depo_vdep;
 
     /* Calculate loss of mass based on deposition velocity... */
-    double aux = exp(-dt[ip] * v_dep / dz);
+    const double aux = exp(-dt[ip] * v_dep / dz);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_dry >= 0)
 	atm->q[ctl->qnt_mloss_dry][ip]
@@ -2976,17 +2978,17 @@ void module_h2o2_chem(
     INTPOL_3D(t, 0);
 
     /* Get molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
+    const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reaction rate (Berglen et al., 2004)... */
-    double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
+    const double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
 
     /* Henry constant of SO2... */
-    double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
+    const double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+    const double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
 
     /* Henry constant of H2O2... */
-    double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+    const double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
@@ -2995,17 +2997,17 @@ void module_h2o2_chem(
       cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
 
-    double h2o2 = H_h2o2
+    const double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
       * M * cor * 1000 / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
-    double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = (lwc + rwc) * rho_air / 1000;
+    const double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
+    const double CWC = (lwc + rwc) * rho_air / 1000;
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
-    double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
-    double aux = exp(-dt[ip] * rate_coef);
+    const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
+    const double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
@@ -3510,7 +3512,7 @@ void module_oh_chem(
     INTPOL_3D(t, 1);
 
     /* Calculate molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
+    const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Use constant reaction rate... */
     double k = NAN;
@@ -3526,10 +3528,10 @@ void module_oh_chem(
 
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 19-05) ... */
-      double k0 =
+      const double k0 =
 	ctl->oh_chem[0] * (ctl->oh_chem[1] !=
 			   0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
-      double ki =
+      const double ki =
 	ctl->oh_chem[2] * (ctl->oh_chem[3] !=
 			   0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
       double c = log10(k0 * M / ki);
@@ -3545,9 +3547,10 @@ void module_oh_chem(
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
 
     /* Calculate exponential decay... */
-    double rate_coef = k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
-				   atm->lat[ip], atm->p[ip]) * M * cor;
-    double aux = exp(-dt[ip] * rate_coef);
+    const double rate_coef =
+      k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
+		  atm->lat[ip], atm->p[ip]) * M * cor;
+    const double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
 	atm->q[ctl->qnt_mloss_oh][ip]
@@ -3720,8 +3723,8 @@ void module_rng(
 #pragma omp parallel for default(shared)
 #endif
       for (size_t i = 0; i < n; i += 2) {
-	double r = sqrt(-2.0 * log(rs[i]));
-	double phi = 2.0 * M_PI * rs[i + 1];
+	const double r = sqrt(-2.0 * log(rs[i]));
+	const double phi = 2.0 * M_PI * rs[i + 1];
 	rs[i] = r * cosf((float) phi);
 	rs[i + 1] = r * sinf((float) phi);
       }
@@ -3776,8 +3779,8 @@ void module_sedi(
     INTPOL_3D(t, 1);
 
     /* Sedimentation velocity... */
-    double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
-		      atm->q[ctl->qnt_rhop][ip]);
+    const double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
+			    atm->q[ctl->qnt_rhop][ip]);
 
     /* Calculate pressure change... */
     atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
@@ -3970,47 +3973,48 @@ void module_tracer_chem(
     INTPOL_3D(t, 1);
 
     /* Get molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
+    const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Get total column ozone... */
     double o3c;
     INTPOL_2D(o3c, 1);
 
     /* Get solar zenith angle... */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    const double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Get O(1D) volume mixing ratio... */
-    double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double o1d =
+      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
-      double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
-      double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
-      double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
-      double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
@@ -4049,7 +4053,7 @@ void module_wet_deposition(
     /* Estimate precipitation rate (Pisso et al., 2019)... */
     double cl;
     INTPOL_2D(cl, 0);
-    double Is =
+    const double Is =
       pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
     if (Is < 0.01)
       continue;
@@ -4093,14 +4097,14 @@ void module_wet_deposition(
 	/* Use effective Henry's constant for SO2
 	   (Berglen, 2004; Simpson, 2012)... */
 	if (ctl->wet_depo_ic_h[2] > 0) {
-	  double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
-	  double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
-	  double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
+	  const double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
+	  const double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
+	  const double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
 	  h *= (1 + K_1 / H_ion + K_1 * K_2 / pow(H_ion, 2));
 	}
 
 	/* Estimate depth of cloud layer... */
-	double dz = 1e3 * (Z(pct) - Z(pcb));
+	const double dz = 1e3 * (Z(pct) - Z(pcb));
 
 	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -4125,11 +4129,11 @@ void module_wet_deposition(
       else if (ctl->wet_depo_bc_h[0] > 0) {
 
 	/* Get Henry's constant (Sander, 2015)... */
-	double h = ctl->wet_depo_bc_h[0]
+	const double h = ctl->wet_depo_bc_h[0]
 	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
 
 	/* Estimate depth of cloud layer... */
-	double dz = 1e3 * (Z(pct) - Z(pcb));
+	const double dz = 1e3 * (Z(pct) - Z(pcb));
 
 	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -4137,7 +4141,7 @@ void module_wet_deposition(
     }
 
     /* Calculate exponential decay of mass... */
-    double aux = exp(-dt[ip] * lambda);
+    const double aux = exp(-dt[ip] * lambda);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_wet >= 0)
 	atm->q[ctl->qnt_mloss_wet][ip]
@@ -4159,14 +4163,14 @@ double nat_temperature(
   const double hno3) {
 
   /* Check water vapor volume mixing ratio... */
-  double h2o_help = MAX(h2o, 0.1e-6);
+  const double h2o_help = MAX(h2o, 0.1e-6);
 
   /* Calculate T_NAT... */
-  double p_hno3 = hno3 * p / 1.333224;
-  double p_h2o = h2o_help * p / 1.333224;
-  double a = 0.009179 - 0.00088 * log10(p_h2o);
-  double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
-  double c = -11397.0 / a;
+  const double p_hno3 = hno3 * p / 1.333224;
+  const double p_h2o = h2o_help * p / 1.333224;
+  const double a = 0.009179 - 0.00088 * log10(p_h2o);
+  const double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
+  const double c = -11397.0 / a;
   double tnat = (-b + sqrt(b * b - 4. * c)) / 2.;
   double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
   if (x2 > 0)
@@ -5600,7 +5604,7 @@ void read_kernel(
     ERRMSG("Not enough height levels!");
 
   /* Normalize kernel function... */
-  double kmax = gsl_stats_max(kw, 1, (size_t) n);
+  const double kmax = gsl_stats_max(kw, 1, (size_t) n);
   for (int iz = 0; iz < n; iz++)
     kw[iz] /= kmax;
 }
@@ -6148,8 +6152,8 @@ void read_met_detrend(
   ALLOC(help, met_t, 1);
 
   /* Calculate standard deviation... */
-  double sigma = ctl->met_detrend / 2.355;
-  double tssq = 2. * SQR(sigma);
+  const double sigma = ctl->met_detrend / 2.355;
+  const double tssq = 2. * SQR(sigma);
 
   /* Calculate box size in latitude... */
   int sy = (int) (3. * DY2DEG(sigma) / fabs(met->lat[1] - met->lat[0]));
@@ -6194,7 +6198,7 @@ void read_met_detrend(
 	  geo2cart(0.0, met->lon[ix3], met->lat[iy2], x1);
 
 	  /* Calculate weighting factor... */
-	  float w = (float) exp(-DIST2(x0, x1) / tssq);
+	  const float w = (float) exp(-DIST2(x0, x1) / tssq);
 
 	  /* Add data... */
 	  wsum += w;
@@ -6303,15 +6307,16 @@ void read_met_geopot(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Get surface height and pressure... */
-      double zs = met->zs[ix][iy];
-      double lnps = log(met->ps[ix][iy]);
+      const double zs = met->zs[ix][iy];
+      const double lnps = log(met->ps[ix][iy]);
 
       /* Get temperature and water vapor at the surface... */
-      int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
-      double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
-		      met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
-      double h2os = LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
-			met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      const int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
+      const double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
+			    met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      const double h2os =
+	LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
+	    met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
@@ -6773,7 +6778,7 @@ void read_met_monotonize(
 	  }
 
 	  /* Search for more inversions above the last inversion ... */
-	  k = k + l;
+	  k += l;
 	} else {
 	  k++;
 	}
@@ -6852,7 +6857,7 @@ int read_met_nc_2d(
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	short aux = help[ARRAY_2D(iy, ix, met->nx)];
+	const short aux = help[ARRAY_2D(iy, ix, met->nx)];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux * scalfac + offset) < 1e14f)
@@ -6896,7 +6901,7 @@ int read_met_nc_2d(
 	for (int iy = 0; iy < met->ny; iy++) {
 	  if (init)
 	    dest[ix][iy] = 0;
-	  float aux = help[ARRAY_2D(iy, ix, met->nx)];
+	  const float aux = help[ARRAY_2D(iy, ix, met->nx)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -6913,7 +6918,7 @@ int read_met_nc_2d(
 	for (int ix = 0; ix < met->nx; ix++) {
 	  if (init)
 	    dest[ix][iy] = 0;
-	  float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	  const float aux = help[ARRAY_2D(ix, iy, met->ny)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -7000,7 +7005,7 @@ int read_met_nc_3d(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
-	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	  const short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux * scalfac + offset) < 1e14f)
@@ -7043,7 +7048,7 @@ int read_met_nc_3d(
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
-	    float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	    const float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
 	    if ((fillval == 0 || aux != fillval)
 		&& (missval == 0 || aux != missval)
 		&& fabsf(aux) < 1e14f)
@@ -7059,7 +7064,7 @@ int read_met_nc_3d(
       for (int ip = 0; ip < met->np; ip++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ix = 0; ix < met->nx; ix++) {
-	    float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	    const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 	    if ((fillval == 0 || aux != fillval)
 		&& (missval == 0 || aux != missval)
 		&& fabsf(aux) < 1e14f)
@@ -7096,7 +7101,7 @@ void read_met_pbl(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Set bottom level of PBL... */
-      double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
+      const double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
 
       /* Find lowest level near the bottom... */
       int ip;
@@ -7105,17 +7110,17 @@ void read_met_pbl(
 	  break;
 
       /* Get near surface data... */
-      double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
-		      met->p[ip], met->z[ix][iy][ip], pbl_bot);
-      double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
-		      met->p[ip], met->t[ix][iy][ip], pbl_bot);
-      double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
-		      met->p[ip], met->u[ix][iy][ip], pbl_bot);
-      double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
-		      met->p[ip], met->v[ix][iy][ip], pbl_bot);
-      double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
-			met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
-      double tvs = THETAVIRT(pbl_bot, ts, h2os);
+      const double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
+			    met->p[ip], met->z[ix][iy][ip], pbl_bot);
+      const double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
+			    met->p[ip], met->t[ix][iy][ip], pbl_bot);
+      const double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
+			    met->p[ip], met->u[ix][iy][ip], pbl_bot);
+      const double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
+			    met->p[ip], met->v[ix][iy][ip], pbl_bot);
+      const double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
+			      met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
+      const double tvs = THETAVIRT(pbl_bot, ts, h2os);
 
       /* Init... */
       double rib_old = 0;
@@ -7129,7 +7134,7 @@ void read_met_pbl(
 	vh2 = MAX(vh2, SQR(umin));
 
 	/* Calculate bulk Richardson number... */
-	double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	const double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
 	  * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
 		       met->h2o[ix][iy][ip]) - tvs) / vh2;
 
@@ -7283,47 +7288,47 @@ void read_met_pv(
   for (int ix = 0; ix < met->nx; ix++) {
 
     /* Set indices... */
-    int ix0 = MAX(ix - 1, 0);
-    int ix1 = MIN(ix + 1, met->nx - 1);
+    const int ix0 = MAX(ix - 1, 0);
+    const int ix1 = MIN(ix + 1, met->nx - 1);
 
     /* Loop over grid points... */
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Set indices... */
-      int iy0 = MAX(iy - 1, 0);
-      int iy1 = MIN(iy + 1, met->ny - 1);
+      const int iy0 = MAX(iy - 1, 0);
+      const int iy1 = MIN(iy + 1, met->ny - 1);
 
       /* Set auxiliary variables... */
-      double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
-      double dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
-      double dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
-      double c0 = cos(met->lat[iy0] / 180. * M_PI);
-      double c1 = cos(met->lat[iy1] / 180. * M_PI);
-      double cr = cos(latr / 180. * M_PI);
-      double vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
+      const double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
+      const double dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
+      const double dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
+      const double c0 = cos(met->lat[iy0] / 180. * M_PI);
+      const double c1 = cos(met->lat[iy1] / 180. * M_PI);
+      const double cr = cos(latr / 180. * M_PI);
+      const double vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
 
       /* Loop over grid points... */
       for (int ip = 0; ip < met->np; ip++) {
 
 	/* Get gradients in longitude... */
-	double dtdx
+	const double dtdx
 	  = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
-	double dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
+	const double dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
 
 	/* Get gradients in latitude... */
-	double dtdy
+	const double dtdy
 	  = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
-	double dudy
+	const double dudy
 	  = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Set indices... */
-	int ip0 = MAX(ip - 1, 0);
-	int ip1 = MIN(ip + 1, met->np - 1);
+	const int ip0 = MAX(ip - 1, 0);
+	const int ip1 = MIN(ip + 1, met->np - 1);
 
 	/* Get gradients in pressure... */
 	double dtdp, dudp, dvdp;
-	double dp0 = 100. * (met->p[ip] - met->p[ip0]);
-	double dp1 = 100. * (met->p[ip1] - met->p[ip]);
+	const double dp0 = 100. * (met->p[ip] - met->p[ip0]);
+	const double dp1 = 100. * (met->p[ip1] - met->p[ip]);
 	if (ip != ip0 && ip != ip1) {
 	  double denom = dp0 * dp1 * (dp0 + dp1);
 	  dtdp = (dp0 * dp0 * met->t[ix][iy][ip1] * pows[ip1]
@@ -7339,7 +7344,7 @@ void read_met_pv(
 		  + (dp1 * dp1 - dp0 * dp0) * met->v[ix][iy][ip])
 	    / denom;
 	} else {
-	  double denom = dp0 + dp1;
+	  const double denom = dp0 + dp1;
 	  dtdp =
 	    (met->t[ix][iy][ip1] * pows[ip1] -
 	     met->t[ix][iy][ip0] * pows[ip0]) / denom;
@@ -7386,8 +7391,9 @@ void read_met_ozone(
       double cd = 0;
       for (int ip = 1; ip < met->np; ip++)
 	if (met->p[ip - 1] <= met->ps[ix][iy]) {
-	  double vmr = 0.5 * (met->o3[ix][iy][ip - 1] + met->o3[ix][iy][ip]);
-	  double dp = met->p[ip - 1] - met->p[ip];
+	  const double vmr =
+	    0.5 * (met->o3[ix][iy][ip - 1] + met->o3[ix][iy][ip]);
+	  const double dp = met->p[ip - 1] - met->p[ip];
 	  cd += vmr * MO3 / MA * dp * 1e2 / G0;
 	}
 
@@ -8018,25 +8024,25 @@ double sedi(
   const double rhop) {
 
   /* Convert particle radius from microns to m... */
-  double rp_help = rp * 1e-6;
+  const double rp_help = rp * 1e-6;
 
   /* Density of dry air [kg / m^3]... */
-  double rho = RHO(p, T);
+  const double rho = RHO(p, T);
 
   /* Dynamic viscosity of air [kg / (m s)]... */
-  double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+  const double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Thermal velocity of an air molecule [m / s]... */
-  double v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
+  const double v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
 
   /* Mean free path of an air molecule [m]... */
-  double lambda = 2. * eta / (rho * v);
+  const double lambda = 2. * eta / (rho * v);
 
   /* Knudsen number for air (dimensionless)... */
-  double K = lambda / rp_help;
+  const double K = lambda / rp_help;
 
   /* Cunningham slip-flow correction (dimensionless)... */
-  double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
+  const double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
   /* Sedimentation velocity [m / s]... */
   return 2. * SQR(rp_help) * (rhop - rho) * G0 / (9. * eta) * G;
@@ -8296,11 +8302,11 @@ double tropo_weight(
   const double p) {
 
   /* Get tropopause pressure... */
-  double pt = clim_tropo(clim, t, lat);
+  const double pt = clim_tropo(clim, t, lat);
 
   /* Get pressure range... */
-  double p1 = pt * 0.866877899;
-  double p0 = pt / 0.866877899;
+  const double p1 = pt * 0.866877899;
+  const double p0 = pt / 0.866877899;
 
   /* Get weighting factor... */
   if (p > p0)
@@ -8827,14 +8833,14 @@ void write_csi(
 
     /* Set horizontal coordinates... */
     for (iy = 0; iy < ctl->csi_ny; iy++) {
-      double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat * M_PI / 180.);
     }
   }
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate... */
   ALLOC(modmean, double,
@@ -8949,29 +8955,31 @@ void write_csi(
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
     static double work[2 * NCSI], work2[2 * NCSI];;
-    int n_obs = cx + cy;
-    int n_for = cx + cz;
-    double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
-    double pod = (n_obs > 0) ? (100. * cx) / n_obs : NAN;
-    double far = (n_for > 0) ? (100. * cz) / n_for : NAN;
-    double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : NAN;
-    double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : NAN;
-    double ets = (cx + cy + cz - cx_rd > 0) ?
+    const int n_obs = cx + cy;
+    const int n_for = cx + cz;
+    const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+    const double pod = (n_obs > 0) ? (100. * cx) / n_obs : NAN;
+    const double far = (n_for > 0) ? (100. * cz) / n_for : NAN;
+    const double csi =
+      (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : NAN;
+    const double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : NAN;
+    const double ets = (cx + cy + cz - cx_rd > 0) ?
       (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : NAN;
-    double rho_p =
+    const double rho_p =
       (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : NAN;
-    double rho_s =
+    const double rho_s =
       (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : NAN;
     for (int i = 0; i < n; i++) {
       work[i] = x[i] - y[i];
       work2[i] = (obsstdn[i] != 0) ? (x[i] - y[i]) / obsstdn[i] : 0;
     }
-    double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
-    double rmse = (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
-							 0.0) : NAN;
-    double absdev =
+    const double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
+    const double rmse =
+      (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
+					     0.0) : NAN;
+    const double absdev =
       (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : NAN;
-    double loglikelihood =
+    const double loglikelihood =
       (n > 0) ? gsl_stats_tss(work2, 1, (size_t) n) * (-0.5) : GSL_NAN;
 
     /* Write... */
@@ -9029,8 +9037,8 @@ void write_ens(
     ERRMSG("Missing ensemble IDs!");
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Init... */
   for (int i = 0; i < NENS; i++) {
@@ -9166,9 +9174,9 @@ void write_grid(
 	atm->np);
 
   /* Set grid box size... */
-  double dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
-  double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
-  double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+  const double dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
+  const double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
+  const double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
 
   /* Set vertical coordinates... */
 #pragma omp parallel for default(shared)
@@ -9188,8 +9196,8 @@ void write_grid(
   }
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Get grid box indices... */
 #pragma omp parallel for default(shared)
@@ -9943,8 +9951,8 @@ void write_prof(
   }
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate... */
   ALLOC(mass, double,
@@ -10037,7 +10045,7 @@ void write_prof(
 			     lon[ix], lat[iy], &o3, ci, cw, 0);
 
 	  /* Calculate volume mixing ratio... */
-	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+	  const int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
 	  vmr = MA / ctl->molmass * mass[idx3]
 	    / (RHO(press[iz], temp) * area[iy] * dz * 1e9);
 
@@ -10141,8 +10149,8 @@ void write_sample(
   }
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over observations... */
   for (int i = 0; i < nobs; i++) {
@@ -10158,7 +10166,7 @@ void write_sample(
     geo2cart(0, rlon[i], rlat[i], x0);
 
     /* Set pressure range... */
-    double rp = P(rz[i]);
+    const double rp = P(rz[i]);
     double ptop = P(rz[i] + ctl->sample_dz);
     double pbot = P(rz[i] - ctl->sample_dz);
 
@@ -10197,7 +10205,7 @@ void write_sample(
     }
 
     /* Calculate column density... */
-    double cd = mass / (1e6 * area);
+    const double cd = mass / (1e6 * area);
 
     /* Calculate volume mixing ratio... */
     double vmr = 0;
@@ -10278,8 +10286,8 @@ void write_station(
   }
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over air parcels... */
   for (int ip = 0; ip < atm->np; ip++) {
@@ -10340,8 +10348,8 @@ void write_vtk(
   LOG(1, "Write VTK data: %s", filename);
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Create file... */
   if (!(out = fopen(filename, "w")))
