@@ -457,6 +457,23 @@
   ((dlat) * M_PI * RE / 180.)
 
 /**
+ * @brief Converts degrees to radians.
+ *
+ * This macro converts an angle from degrees to radians using the formula:
+ * radians = degrees * (π / 180)
+ *
+ * @param deg The angle in degrees to be converted.
+ *
+ * @return The angle in radians.
+ *
+ * @note This macro uses the M_PI constant from <math.h> for the value of π.
+ *
+ * @author Lars Hoffmann
+ */
+#define DEG2RAD(deg)				\
+  ((deg) * (M_PI / 180.0))
+
+/**
  * @brief Convert a pressure difference to a height difference in the vertical direction.
  *
  * This macro calculates the change in height (altitude) corresponding
@@ -1248,7 +1265,7 @@
  * - \f$ P_0 \f$ is the standard pressure,
  * - \f$ H_0 \f$ is the scale height.
  *
- * Note: The constants \f$ P_0 \f$ and \f$ H_0 \f$ must be defined before using this macro.
+ * @note The constants \f$ P_0 \f$ and \f$ H_0 \f$ must be defined before using this macro.
  *
  * @author Lars Hoffmann
  */
@@ -1272,7 +1289,7 @@
  * - \f$ P_{\textrm{sat}}(t) \f$ is the saturation pressure over water at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
  *
- * Note: The constants \f$ T_0 \f$ must be defined before using this macro.
+ * @note The constants \f$ T_0 \f$ must be defined before using this macro.
  *
  * @author Lars Hoffmann
  */
@@ -1296,7 +1313,7 @@
  * - \f$ P_{\textrm{ice}}(t) \f$ is the saturation pressure over ice at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
  *
- * Note: The constant \f$ T_0 \f$ must be defined before using this macro.
+ * @note The constant \f$ T_0 \f$ must be defined before using this macro.
  *
  * @author Lars Hoffmann
  */
@@ -1323,12 +1340,29 @@
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv,
  * - \f$ \epsilon \f$ is the factor to account for saturation vapor pressure over water.
  *
- * Note: The constant \f$ \epsilon \f$ must be defined before using this macro.
+ * @note The constant \f$ \epsilon \f$ must be defined before using this macro.
  * 
  * @author Lars Hoffmann
  */
 #define PW(p, h2o)							\
   ((p) * MAX((h2o), 0.1e-6) / (1. + (1. - EPS) * MAX((h2o), 0.1e-6)))
+
+/**
+ * @brief Converts radians to degrees.
+ *
+ * This macro converts an angle from radians to degrees using the formula:
+ * degrees = radians * (180 / π)
+ *
+ * @param rad The angle in radians to be converted.
+ *
+ * @return The angle in degrees.
+ *
+ * @note This macro uses the M_PI constant from <math.h> for the value of π.
+ * 
+ * @author Lars Hoffmann
+ */
+#define RAD2DEG(rad)				\
+  ((rad) * (180.0 / M_PI))
 
 /**
  * @brief Compute relative humidity over water.
@@ -1353,7 +1387,7 @@
  * - \f$ t \f$ is the temperature in Kelvin,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
  *
- * Note: The macros PW() and PSAT() must be defined before using this macro.
+ * @note The macros PW() and PSAT() must be defined before using this macro.
  * 
  * @author Lars Hoffmann
  */
@@ -1383,7 +1417,7 @@
  * - \f$ t \f$ is the temperature in Kelvin,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
  *
- * Note: The macros PW() and PSICE() must be defined before using this macro.
+ * @note The macros PW() and PSICE() must be defined before using this macro.
  * 
  * @author Lars Hoffmann
  */
