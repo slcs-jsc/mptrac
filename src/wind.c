@@ -126,14 +126,14 @@ int main(
       for (int iz = 0; iz < nz; iz++) {
 	int idx = (iz * ny + iy) * nx + ix;
 	dataU[idx] = (float) (LIN(0.0, u0, nz - 1.0, u1, iz)
-			      * (cos(dataLat[iy] * M_PI / 180.0)
-				 * cos(alpha * M_PI / 180.0)
-				 + sin(dataLat[iy] * M_PI / 180.0)
-				 * cos(dataLon[ix] * M_PI / 180.0)
-				 * sin(alpha * M_PI / 180.0)));
+			      * (cos(DEG2RAD(dataLat[iy]))
+				 * cos(DEG2RAD(alpha))
+				 + sin(DEG2RAD(dataLat[iy]))
+				 * cos(DEG2RAD(dataLon[ix]))
+				 * sin(DEG2RAD(alpha))));
 	dataV[idx] = (float) (-LIN(0.0, u0, nz - 1.0, u1, iz)
-			      * sin(dataLon[ix] * M_PI / 180.0)
-			      * sin(alpha * M_PI / 180.0));
+			      * sin(DEG2RAD(dataLon[ix]))
+			      * sin(DEG2RAD(alpha)));
 	dataW[idx] = (float) DZ2DP(1e-3 * w0, dataZ[iz]);
       }
 

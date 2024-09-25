@@ -104,7 +104,7 @@ int main(
 	      ru = ulat * (gsl_rng_uniform(rng) - 0.5);
 	      atm->lat[atm->np] = (lat + rg + rx + ru);
 	    } while (even && gsl_rng_uniform(rng) >
-		     fabs(cos(atm->lat[atm->np] * M_PI / 180.)));
+		     fabs(cos(DEG2RAD(atm->lat[atm->np]))));
 
 	    /* Apply cosine bell (Williamson et al., 1992)... */
 	    if (bellrad > 0) {
