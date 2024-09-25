@@ -512,8 +512,12 @@ void compress_cms(
 #pragma omp parallel for default(shared)
     for (size_t ip = 0; ip < np; ip++) {
 
+      /* Allocate... */
+      float *tmp_arr;
+      ALLOC(tmp_arr, float,
+	    nxy);
+
       /* Copy level data... */
-      float tmp_arr[nxy];
       for (size_t ix = 0; ix < nx; ++ix)
 	for (size_t iy = 0; iy < ny; ++iy)
 	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
@@ -557,14 +561,25 @@ void compress_cms(
       /* Coarsening... */
       cms_coarsening(cms_ptr[ip], cms_sol[ip],
 		     (unsigned int) ctl->met_cms_heur);
+
+      /* Free... */
+      free(tmp_arr);
     }
 
     /* Loop over levels... */
     double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
+      /* Allocate... */
+      double *tmp_cms, *tmp_org, *tmp_diff;
+      ALLOC(tmp_cms, double,
+	    nxy);
+      ALLOC(tmp_org, double,
+	    nxy);
+      ALLOC(tmp_diff, double,
+	    nxy);
+
       /* Evaluate... */
-      double tmp_cms[nxy], tmp_org[nxy], tmp_diff[nxy];
 #pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
@@ -593,6 +608,9 @@ void compress_cms(
       /* Free... */
       cms_delete_sol(cms_sol[ip]);
       cms_delete_module(cms_ptr[ip]);
+      free(tmp_cms);
+      free(tmp_org);
+      free(tmp_diff);
     }
 
     /* Write info... */
@@ -8901,7 +8919,7 @@ void write_csi(
 		|| modmean[idx] >= ctl->csi_modmin)) {
 	  x[n] = modmean[idx];
 	  y[n] = obsmean[idx];
-  	  if (modmean[idx] >= ctl->csi_modmin)
+	  if (modmean[idx] >= ctl->csi_modmin)
 	    obsstdn[n] = obsstd[idx];
 	  if ((++n) >= NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
