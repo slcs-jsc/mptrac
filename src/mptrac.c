@@ -77,9 +77,10 @@ void cart2geo(
   double *lon,
   double *lat) {
 
-  double radius = NORM(x);
-  *lat = asin(x[2] / radius) * 180. / M_PI;
-  *lon = atan2(x[1], x[0]) * 180. / M_PI;
+  const double radius = NORM(x);
+
+  *lat = RAD2DEG(asin(x[2] / radius));
+  *lon = RAD2DEG(atan2(x[1], x[0]));
   *z = radius - RE;
 }
 
@@ -968,10 +969,16 @@ void geo2cart(
   const double lat,
   double *x) {
 
-  double radius = z + RE;
-  x[0] = radius * cos(lat / 180. * M_PI) * cos(lon / 180. * M_PI);
-  x[1] = radius * cos(lat / 180. * M_PI) * sin(lon / 180. * M_PI);
-  x[2] = radius * sin(lat / 180. * M_PI);
+  const double radius = z + RE;
+
+  const double latrad = lat / 180. * M_PI;
+  const double lonrad = lon / 180. * M_PI;
+
+  const double coslat = cos(latrad);
+
+  x[0] = radius * coslat * cos(lonrad);
+  x[1] = radius * coslat * sin(lonrad);
+  x[2] = radius * sin(latrad);
 }
 
 /*****************************************************************************/
