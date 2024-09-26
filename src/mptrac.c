@@ -2554,7 +2554,7 @@ void module_chemgrid(
   for (int iy = 0; iy < ny; iy++) {
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
     area[iy] =
-      dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat[iy] * M_PI / 180.);
+      dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
   }
 
   /* Get mass per grid box... */
@@ -4598,8 +4598,8 @@ void read_clim_photo(
       photo->p[0], photo->p[1], photo->p[photo->np - 1]);
   LOG(2, "Number of solar zenith angles: %d", photo->nsza);
   LOG(2, "Solar zenith angles: %g, %g ... %g deg",
-      photo->sza[0] * 180. / M_PI, photo->sza[1] * 180. / M_PI,
-      photo->sza[photo->nsza - 1] * 180. / M_PI);
+      RAD2DEG(photo->sza[0]), RAD2DEG(photo->sza[1]),
+      RAD2DEG(photo->sza[photo->nsza - 1]));
   LOG(2, "Number of total column ozone values: %d", photo->no3c);
   LOG(2, "Total column ozone: %g, %g ... %g DU",
       photo->o3c[0], photo->o3c[1], photo->o3c[photo->no3c - 1]);
@@ -7237,8 +7237,8 @@ void read_met_polar_winds(
     double clon[EX], slon[EX];
 #pragma omp parallel for default(shared)
     for (int ix = 0; ix < met->nx; ix++) {
-      clon[ix] = cos(sign * met->lon[ix] / 180. * M_PI);
-      slon[ix] = sin(sign * met->lon[ix] / 180. * M_PI);
+      clon[ix] = cos(sign * DEG2RAD(met->lon[ix]));
+      slon[ix] = sin(sign * DEG2RAD(met->lon[ix]));
     }
 
     /* Loop over levels... */
