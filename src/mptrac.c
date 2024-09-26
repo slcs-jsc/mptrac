@@ -58,9 +58,9 @@ void broadcast_large_data(
   for (size_t i = 0; i < num_chunks; i++) {
 
     /* Determine the start and end indices for the current chunk... */
-    size_t start = i * CHUNK_SIZE;
-    size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
-    size_t chunk_size = end - start;
+    const size_t start = i * CHUNK_SIZE;
+    const size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
+    const size_t chunk_size = end - start;
 
     /* Broadcast the current chunk... */
     MPI_Bcast((char *) data + start, (int) chunk_size, MPI_BYTE, 0,
@@ -94,16 +94,19 @@ double clim_oh(
   const double lat,
   const double p) {
 
+  /* Set SZA threshold... */
+  const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
+
   /* Get OH data from climatology... */
   const double oh = clim_zm(&clim->oh, t, lat, p);
 
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
     double sza = sza_calc(t, lon, lat);
-    if (sza <= M_PI / 2. * 85. / 90.)
+    if (sza <= sza_thresh)
       return oh * exp(-ctl->oh_chem_beta / cos(sza));
     else
-      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+      return oh * exp(-ctl->oh_chem_beta / cos_sza_thresh);
   } else
     return oh;
 }
@@ -113,6 +116,9 @@ double clim_oh(
 void clim_oh_diurnal_correction(
   ctl_t * ctl,
   clim_t * clim) {
+
+  /* Set SZA threshold... */
+  const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
 
   /* Loop over climatology data points... */
   for (int it = 0; it < clim->oh.ntime; it++)
@@ -126,10 +132,10 @@ void clim_oh_diurnal_correction(
 	/* Integrate day/night correction factor over longitude... */
 	for (double lon = -180; lon < 180; lon += 1.0) {
 	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  if (sza <= M_PI / 2. * 85. / 90.)
+	  if (sza <= sza_thresh)
 	    sum += exp(-ctl->oh_chem_beta / cos(sza));
 	  else
-	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+	    sum += exp(-ctl->oh_chem_beta / cos_sza_thresh);
 	  n++;
 	}
 
@@ -741,7 +747,6 @@ void compress_zfp(
   int decompress,
   FILE * inout) {
 
-  zfp_type type;		/* array scalar type */
   zfp_field *field;		/* array meta data */
   zfp_stream *zfp;		/* compressed stream */
   void *buffer;			/* storage for compressed stream */
@@ -750,7 +755,7 @@ void compress_zfp(
   size_t zfpsize;		/* byte size of compressed stream */
 
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
-  const type = zfp_type_float;
+  const zfp_type type = zfp_type_float;
   field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
 
   /* Allocate meta data for a compressed stream... */
@@ -2553,8 +2558,7 @@ void module_chemgrid(
 #endif
   for (int iy = 0; iy < ny; iy++) {
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-    area[iy] =
-      dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
   }
 
   /* Get mass per grid box... */
