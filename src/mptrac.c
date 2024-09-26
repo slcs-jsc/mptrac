@@ -8392,8 +8392,8 @@ void write_atm_asc(
   FILE *out;
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Check if gnuplot output is requested... */
   if (ctl->atm_gpfile[0] != '-') {
@@ -10378,13 +10378,12 @@ void write_vtk(
     for (int ip = 0; ip < atm->np; ip += ctl->vtk_stride) {
       if (atm->time[ip] < t0 || atm->time[ip] > t1)
 	continue;
-      double radius = (RE + Z(atm->p[ip]) * ctl->vtk_scale
-		       + ctl->vtk_offset) / RE;
-      double x = radius * cos(atm->lat[ip] / 180. * M_PI)
-	* cos(atm->lon[ip] / 180. * M_PI);
-      double y = radius * cos(atm->lat[ip] / 180. * M_PI)
-	* sin(atm->lon[ip] / 180. * M_PI);
-      double z = radius * sin(atm->lat[ip] / 180. * M_PI);
+      const double radius = (RE + Z(atm->p[ip]) * ctl->vtk_scale
+			     + ctl->vtk_offset) / RE;
+      const double coslat = cos(DEG2RAD(atm->lat[ip]));
+      const double x = radius * coslat * cos(DEG2RAD(atm->lon[ip]));
+      const double y = radius * coslat * sin(DEG2RAD(atm->lon[ip]));
+      const double z = radius * sin(DEG2RAD(atm->lat[ip]));
       fprintf(out, "%g %g %g\n", x, y, z);
     }
   } else
