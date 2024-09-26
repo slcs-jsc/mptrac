@@ -8133,12 +8133,12 @@ double sza_calc(
   const double D = sec / 86400 - 0.5;
 
   /* Geocentric apparent ecliptic longitude [rad]... */
-  const double g = (357.529 + 0.98560028 * D) * M_PI / 180;
+  const double g = DEG2RAD(357.529 + 0.98560028 * D);
   const double q = 280.459 + 0.98564736 * D;
-  const double L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
+  const double L = DEG2RAD(q + 1.915 * sin(g) + 0.020 * sin(2 * g));
 
   /* Mean obliquity of the ecliptic [rad]... */
-  const double e = (23.439 - 0.00000036 * D) * M_PI / 180;
+  const double e = DEG2RAD(23.439 - 0.00000036 * D);
 
   /* Declination [rad]... */
   const double sindec = sin(e) * sin(L);
@@ -8156,7 +8156,7 @@ double sza_calc(
   const double h = LST / 12 * M_PI - ra;
 
   /* Convert latitude... */
-  const double lat_help = lat * M_PI / 180;
+  const double lat_help = DEG2RAD(lat);
 
   /* Return solar zenith angle [rad]... */
   return acos(sin(lat_help) * sindec +
