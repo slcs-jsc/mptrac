@@ -7306,10 +7306,10 @@ void read_met_pv(
       const double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
       const double dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
       const double dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
-      const double c0 = cos(met->lat[iy0] / 180. * M_PI);
-      const double c1 = cos(met->lat[iy1] / 180. * M_PI);
-      const double cr = cos(latr / 180. * M_PI);
-      const double vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
+      const double c0 = cos(DEG2RAD(met->lat[iy0]));
+      const double c1 = cos(DEG2RAD(met->lat[iy1]));
+      const double cr = cos(DEG2RAD(latr));
+      const double vort = 2 * 7.2921e-5 * sin(DEG2RAD(latr));
 
       /* Loop over grid points... */
       for (int ip = 0; ip < met->np; ip++) {
