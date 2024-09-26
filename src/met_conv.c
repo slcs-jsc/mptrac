@@ -34,9 +34,6 @@ int main(
 
   met_t *met;
 
-  /* Start timers... */
-  START_TIMERS;
-
   /* Check arguments... */
   if (argc < 6)
     ERRMSG("Give parameters: <ctl> <met_in> <met_in_type>"
@@ -45,6 +42,9 @@ int main(
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
+
+  /* Start timers... */
+  START_TIMERS;
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
@@ -61,13 +61,13 @@ int main(
   ctl.met_type = atoi(argv[5]);
   write_met(argv[4], &ctl, met);
 
-  /* Free... */
-  free(clim);
-  free(met);
-
   /* Report timers... */
   PRINT_TIMERS;
   STOP_TIMERS;
+  
+  /* Free... */
+  free(clim);
+  free(met);
 
   return EXIT_SUCCESS;
 }
