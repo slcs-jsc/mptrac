@@ -34,6 +34,9 @@ int main(
 
   met_t *met;
 
+  /* Start timers... */
+  START_TIMERS;
+
   /* Check arguments... */
   if (argc < 6)
     ERRMSG("Give parameters: <ctl> <met_in> <met_in_type>"
@@ -61,6 +64,10 @@ int main(
   /* Free... */
   free(clim);
   free(met);
+
+  /* Report timers... */
+  PRINT_TIMERS;
+  STOP_TIMERS;
 
   return EXIT_SUCCESS;
 }
