@@ -64,7 +64,7 @@ int main(
   /* Report timers... */
   PRINT_TIMERS;
   STOP_TIMERS;
-  
+
   /* Free... */
   free(clim);
   free(met);

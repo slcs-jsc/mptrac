@@ -474,11 +474,13 @@ void compress_cms(
   cms_param_t *cms_param
     = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
+  /* Init... */
+  double cr = 0, t_coars = 0, t_eval = 0;
+
   /* Read compressed stream and decompress array... */
   if (decompress) {
 
     /* Loop over levels... */
-    double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Initialize multiscale module... */
@@ -512,7 +514,6 @@ void compress_cms(
   else {
 
     /* Init... */
-    double cr = 0;
     cms_module_t *cms_ptr[EP];
     cms_sol_t *cms_sol[EP];
 
@@ -521,6 +522,9 @@ void compress_cms(
 			? (size_t) omp_get_max_threads()
 			: (size_t) ctl->met_cms_batch);
     for (size_t ip0 = 0; ip0 < np; ip0 += dip) {
+
+      /* Measure time... */
+      double t0 = omp_get_wtime();
 
       /* Loop over levels... */
 #pragma omp parallel for default(shared)
@@ -581,6 +585,9 @@ void compress_cms(
 	free(tmp_arr);
       }
 
+      /* Measure time... */
+      t_coars += (omp_get_wtime() - t0);
+
       /* Loop over levels... */
       for (size_t ip = ip0; ip < MIN(ip0 + dip, np); ip++) {
 
@@ -593,6 +600,9 @@ void compress_cms(
 	ALLOC(tmp_diff, double,
 	      nxy);
 
+	/* Measure time... */
+	t0 = omp_get_wtime();
+
 	/* Evaluate... */
 #pragma omp parallel for default(shared)
 	for (size_t ix = 0; ix < nx; ix++)
@@ -603,6 +613,9 @@ void compress_cms(
 	    tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 	    tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
 	  }
+
+	/* Measure time... */
+	t_eval += (omp_get_wtime() - t0);
 
 	/* Write info... */
 	LOG(2,
@@ -629,7 +642,9 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g)", varname, cr);
+    LOG(2, "Write 3-D variable: %s"
+	" (cms, RATIO= %g, T_COARS= %g s, T_EVAL= %g s)",
+	varname, cr, t_coars, t_eval);
   }
 
   /* Free... */
