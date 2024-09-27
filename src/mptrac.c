@@ -4522,9 +4522,7 @@ void read_clim_photo(
   const char *filename,
   clim_photo_t * photo) {
 
-  int ncid, varid, ip, is, io;
-
-  double *help1, *help2, *help3, *help4;
+  int ncid, varid;
 
   /* Write info... */
   LOG(1, "Read photolysis rates: %s", filename);
@@ -4554,57 +4552,15 @@ void read_clim_photo(
     ERRMSG("Solar zenith angle data are not ascending!");
 
   /* Read data... */
-  ALLOC(help1, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help2, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help3, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help4, double,
-	photo->np * photo->nsza * photo->no3c);
-  NC_GET_DOUBLE("J_N2O", help1, 1);
-  NC_GET_DOUBLE("J_CCl4", help2, 1);
-  NC_GET_DOUBLE("J_CFC-11", help3, 1);
-  NC_GET_DOUBLE("J_CFC-12", help4, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++) {
-	photo->n2o[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl4[ip][is][io] =
-	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl3f[ip][is][io] =
-	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl2f2[ip][is][io] =
-	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-      }
-
-  NC_GET_DOUBLE("J_O2", help1, 1);
-  NC_GET_DOUBLE("J_O3b", help2, 1);
-  NC_GET_DOUBLE("J_O3a", help3, 1);
-  NC_GET_DOUBLE("J_H2O2", help4, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++) {
-	photo->o2[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->o3_1[ip][is][io] =
-	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->o3_2[ip][is][io] =
-	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->h2o2[ip][is][io] =
-	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-      }
-  NC_GET_DOUBLE("J_H2O", help1, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++)
-	photo->h2o[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-  free(help1);
-  free(help2);
-  free(help3);
-  free(help4);
+  read_clim_photo_help(ncid, "J_N2O", photo, photo->n2o);
+  read_clim_photo_help(ncid, "J_CCl4", photo, photo->ccl4);
+  read_clim_photo_help(ncid, "J_CFC-11", photo, photo->ccl3f);
+  read_clim_photo_help(ncid, "J_CFC-12", photo, photo->ccl2f2);
+  read_clim_photo_help(ncid, "J_O2", photo, photo->o2);
+  read_clim_photo_help(ncid, "J_O3b", photo, photo->o3_1);
+  read_clim_photo_help(ncid, "J_O3a", photo, photo->o3_2);
+  read_clim_photo_help(ncid, "J_H2O2", photo, photo->h2o2);
+  read_clim_photo_help(ncid, "J_H2O", photo, photo->h2o);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
@@ -4649,6 +4605,34 @@ void read_clim_photo(
   LOG(2, "H2O photolysis rate: %g, %g ... %g s**-1",
       photo->h2o[0][0][0], photo->h2o[1][0][0],
       photo->h2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+}
+
+/*****************************************************************************/
+
+void read_clim_photo_help(
+  int ncid,
+  const char *varname,
+  clim_photo_t * photo,
+  double var[CP][CSZA][CO3]) {
+
+  /* Allocate... */
+  double *help;
+  ALLOC(help, double,
+	photo->np * photo->nsza * photo->no3c);
+
+  /* Read varible... */
+  int varid;
+  NC_GET_DOUBLE(varname, help, 1);
+
+  /* Copy data... */
+  for (int ip = 0; ip < photo->np; ip++)
+    for (int is = 0; is < photo->nsza; is++)
+      for (int io = 0; io < photo->no3c; io++)
+	var[ip][is][io] =
+	  help[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+
+  /* Free... */
+  free(help);
 }
 
 /*****************************************************************************/
@@ -4709,7 +4693,7 @@ int read_clim_ts(
 
 void read_clim_zm(
   const char *filename,
-  char *varname,
+  const char *varname,
   clim_zm_t * zm) {
 
   int ncid, varid, it, iy, iz, iz2, nt;

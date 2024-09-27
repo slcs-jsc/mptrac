@@ -5945,6 +5945,28 @@ void read_clim_photo(
   clim_photo_t * photo);
 
 /**
+ * @brief Reads a 3D climatological photochemistry variable from a NetCDF file.
+ *
+ * This function reads a variable from a NetCDF file into a 3D array
+ * based on the dimensions provided by the `clim_photo_t` structure.
+ *
+ * @param[in] ncid      NetCDF file ID.
+ * @param[in] varname   Name of the variable to read from the NetCDF file.
+ * @param[in] photo     Pointer to a structure defining the data dimensions (np, nsza, no3c).
+ * @param[out] var      3D array to store the read data, with dimensions [CP][CSZA][CO3].
+ *
+ * @note Allocates temporary memory for reading and copies data into the provided array.
+ *       The memory is freed after the data is copied.
+ *
+ * @author Lars Hoffmann
+ */
+void read_clim_photo_help(
+  int ncid,
+  const char *varname,
+  clim_photo_t * photo,
+  double var[CP][CSZA][CO3]);
+
+/**
  * @brief Reads a climatological time series from a file and populates the given time series structure.
  *
  * This function reads time and volume mixing ratio (VMR) data from a
@@ -5999,7 +6021,7 @@ int read_clim_ts(
  */
 void read_clim_zm(
   const char *filename,
-  char *varname,
+  const char *varname,
   clim_zm_t * zm);
 
 /**
