@@ -1286,24 +1286,24 @@ void intpol_met_4d_coord(
   met_t * met1,
   float heights1[EX][EY][EP],
   float array1[EX][EY][EP],
-  double ts,
-  double height,
-  double lon,
-  double lat,
+  const double ts,
+  const double height,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   if (init) {
 
     /* Restrict positions to coordinate range... */
-    lon = FMOD(lon, 360.);
-    if (met0->lon[met0->nx - 1] > 180 && lon < 0)
-      lon += 360;
+    double lon2 = FMOD(lon, 360.);
+    if (met0->lon[met0->nx - 1] > 180 && lon2 < 0)
+      lon2 += 360;
 
     /* Get horizontal indizes... */
-    ci[0] = locate_irr(met0->lon, met0->nx, lon);
+    ci[0] = locate_irr(met0->lon, met0->nx, lon2);
     ci[1] = locate_irr(met0->lat, met0->ny, lat);
 
     /* Locate the vertical indizes for each edge of the column... */
@@ -1324,7 +1324,7 @@ void intpol_met_4d_coord(
 
     /* Get weighting factors for time, longitude and latitude... */
     cw[3] = (ts - met0->time) / (met1->time - met0->time);
-    cw[0] = (lon - met0->lon[ci[0]]) /
+    cw[0] = (lon2 - met0->lon[ci[0]]) /
       (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
     cw[1] = (lat - met0->lat[ci[1]]) /
       (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);
@@ -1458,30 +1458,31 @@ void intpol_met_4d_coord(
 void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   /* Initialize interpolation... */
   if (init) {
 
     /* Check longitude... */
-    if (met->lon[met->nx - 1] > 180 && lon < 0)
-      lon += 360;
+    double lon2 = lon;
+    if (met->lon[met->nx - 1] > 180 && lon2 < 0)
+      lon2 += 360;
 
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
-    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[1] = locate_reg(met->lon, met->nx, lon2);
     ci[2] = locate_reg(met->lat, met->ny, lat);
 
     /* Get interpolation weights... */
     cw[0] = (met->p[ci[0] + 1] - p)
       / (met->p[ci[0] + 1] - met->p[ci[0]]);
-    cw[1] = (met->lon[ci[1] + 1] - lon)
+    cw[1] = (met->lon[ci[1] + 1] - lon2)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
     cw[2] = (met->lat[ci[2] + 1] - lat)
       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
@@ -1515,17 +1516,18 @@ void intpol_met_space_3d(
 void intpol_met_space_3d_ml(
   met_t * met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var) {
 
   /* Check longitude... */
-  if (met->lon[met->nx - 1] > 180 && lon < 0)
-    lon += 360;
+  double lon2 = lon;
+  if (met->lon[met->nx - 1] > 180 && lon2 < 0)
+    lon2 += 360;
 
   /* Get horizontal indices... */
-  int ix = locate_reg(met->lon, met->nx, lon);
+  int ix = locate_reg(met->lon, met->nx, lon2);
   int iy = locate_reg(met->lat, met->ny, lat);
 
   /* Interpolate vertically... */
@@ -1577,7 +1579,7 @@ void intpol_met_space_3d_ml(
   /* Interpolate horizontally... */
   double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat);
   double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat);
-  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon);
+  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
 }
 
 /*****************************************************************************/
@@ -1585,26 +1587,27 @@ void intpol_met_space_3d_ml(
 void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
-  double lon,
-  double lat,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   /* Initialize interpolation... */
   if (init) {
 
     /* Check longitude... */
-    if (met->lon[met->nx - 1] > 180 && lon < 0)
-      lon += 360;
+    double lon2 = lon;
+    if (met->lon[met->nx - 1] > 180 && lon2 < 0)
+      lon2 += 360;
 
     /* Get interpolation indices... */
-    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[1] = locate_reg(met->lon, met->nx, lon2);
     ci[2] = locate_reg(met->lat, met->ny, lat);
 
     /* Get interpolation weights... */
-    cw[1] = (met->lon[ci[1] + 1] - lon)
+    cw[1] = (met->lon[ci[1] + 1] - lon2)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
     cw[2] = (met->lat[ci[2] + 1] - lat)
       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
@@ -1644,14 +1647,14 @@ void intpol_met_time_3d(
   float array0[EX][EY][EP],
   met_t * met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   double var0, var1;
 
@@ -1673,10 +1676,10 @@ void intpol_met_time_3d_ml(
   float array0[EX][EY][EP],
   met_t * met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var) {
 
   double var0, var1;
@@ -1696,13 +1699,13 @@ void intpol_met_time_2d(
   float array0[EX][EY],
   met_t * met1,
   float array1[EX][EY],
-  double ts,
-  double lon,
-  double lat,
+  const double ts,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   double var0, var1;
 
@@ -1725,18 +1728,18 @@ void intpol_met_time_2d(
 /*****************************************************************************/
 
 void intpol_tropo_3d(
-  double time0,
+  const double time0,
   float array0[EX][EY],
-  double time1,
+  const double time1,
   float array1[EX][EY],
-  double lons[EX],
-  double lats[EY],
-  int nlon,
-  int nlat,
-  double time,
-  double lon,
-  double lat,
-  int method,
+  const double lons[EX],
+  const double lats[EY],
+  const int nlon,
+  const int nlat,
+  const double time,
+  const double lon,
+  const double lat,
+  const int method,
   double *var,
   double *sigma) {
 
@@ -1745,13 +1748,14 @@ void intpol_tropo_3d(
   int n = 0;
 
   /* Adjust longitude... */
-  if (lon < lons[0])
-    lon += 360;
-  else if (lon > lons[nlon - 1])
-    lon -= 360;
+  double lon2 = lon;
+  if (lon2 < lons[0])
+    lon2 += 360;
+  else if (lon2 > lons[nlon - 1])
+    lon2 -= 360;
 
   /* Get indices... */
-  const int ix = locate_reg(lons, (int) nlon, lon);
+  const int ix = locate_reg(lons, (int) nlon, lon2);
   const int iy = locate_reg(lats, (int) nlat, lat);
 
   /* Calculate standard deviation... */
@@ -1783,15 +1787,15 @@ void intpol_tropo_3d(
       && isfinite(array1[ix + 1][iy + 1])) {
 
     aux00 = LIN(lons[ix], array0[ix][iy],
-		lons[ix + 1], array0[ix + 1][iy], lon);
+		lons[ix + 1], array0[ix + 1][iy], lon2);
     aux01 = LIN(lons[ix], array0[ix][iy + 1],
-		lons[ix + 1], array0[ix + 1][iy + 1], lon);
+		lons[ix + 1], array0[ix + 1][iy + 1], lon2);
     aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat);
 
     aux10 = LIN(lons[ix], array1[ix][iy],
-		lons[ix + 1], array1[ix + 1][iy], lon);
+		lons[ix + 1], array1[ix + 1][iy], lon2);
     aux11 = LIN(lons[ix], array1[ix][iy + 1],
-		lons[ix + 1], array1[ix + 1][iy + 1], lon);
+		lons[ix + 1], array1[ix + 1][iy + 1], lon2);
     aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat);
 
     *var = LIN(time0, aux0, time1, aux1, time);
@@ -1800,15 +1804,15 @@ void intpol_tropo_3d(
   /* Nearest neighbor interpolation... */
   else {
     aux00 = NN(lons[ix], array0[ix][iy],
-	       lons[ix + 1], array0[ix + 1][iy], lon);
+	       lons[ix + 1], array0[ix + 1][iy], lon2);
     aux01 = NN(lons[ix], array0[ix][iy + 1],
-	       lons[ix + 1], array0[ix + 1][iy + 1], lon);
+	       lons[ix + 1], array0[ix + 1][iy + 1], lon2);
     aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat);
 
     aux10 = NN(lons[ix], array1[ix][iy],
-	       lons[ix + 1], array1[ix + 1][iy], lon);
+	       lons[ix + 1], array1[ix + 1][iy], lon2);
     aux11 = NN(lons[ix], array1[ix][iy + 1],
-	       lons[ix + 1], array1[ix + 1][iy + 1], lon);
+	       lons[ix + 1], array1[ix + 1][iy + 1], lon2);
     aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat);
 
     *var = NN(time0, aux0, time1, aux1, time);

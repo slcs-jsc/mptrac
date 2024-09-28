@@ -4214,14 +4214,14 @@ void intpol_met_4d_coord(
   met_t * met1,
   float height1[EX][EY][EP],
   float array1[EX][EY][EP],
-  double ts,
-  double height,
-  double lon,
-  double lat,
+  const double ts,
+  const double height,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates meteorological variables in 3D space.
@@ -4260,13 +4260,13 @@ void intpol_met_4d_coord(
 void intpol_met_space_3d(
   met_t * met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates a meteorological variable in 3D space (longitude, latitude, pressure).
@@ -4289,9 +4289,9 @@ void intpol_met_space_3d(
 void intpol_met_space_3d_ml(
   met_t * met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var);
 
 /**
@@ -4331,12 +4331,12 @@ void intpol_met_space_3d_ml(
 void intpol_met_space_2d(
   met_t * met,
   float array[EX][EY],
-  double lon,
-  double lat,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates meteorological data in 3D space and time.
@@ -4376,14 +4376,14 @@ void intpol_met_time_3d(
   float array0[EX][EY][EP],
   met_t * met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates a meteorological variable in time and 3D space (longitude, latitude, pressure).
@@ -4412,10 +4412,10 @@ void intpol_met_time_3d_ml(
   float array0[EX][EY][EP],
   met_t * met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var);
 
 /**
@@ -4457,13 +4457,13 @@ void intpol_met_time_2d(
   float array0[EX][EY],
   met_t * met1,
   float array1[EX][EY],
-  double ts,
-  double lon,
-  double lat,
+  const double ts,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates tropopause data in 3D (latitude, longitude, and time).
@@ -4503,18 +4503,18 @@ void intpol_met_time_2d(
  * @author Lars Hoffmann
  */
 void intpol_tropo_3d(
-  double time0,
+  const double time0,
   float array0[EX][EY],
-  double time1,
+  const double time1,
   float array1[EX][EY],
-  double lons[EX],
-  double lats[EY],
-  int nlon,
-  int nlat,
-  double time,
-  double lon,
-  double lat,
-  int method,
+  const double lons[EX],
+  const double lats[EY],
+  const int nlon,
+  const int nlat,
+  const double time,
+  const double lon,
+  const double lat,
+  const int method,
   double *var,
   double *sigma);
 
