@@ -990,10 +990,8 @@ void geo2cart(
   double *x) {
 
   const double radius = z + RE;
-
   const double latrad = lat / 180. * M_PI;
   const double lonrad = lon / 180. * M_PI;
-
   const double coslat = cos(latrad);
 
   x[0] = radius * coslat * cos(lonrad);
@@ -1006,7 +1004,7 @@ void geo2cart(
 void get_met(
   ctl_t * ctl,
   clim_t * clim,
-  double t,
+  const double t,
   met_t ** met0,
   met_t ** met1) {
 
@@ -1150,11 +1148,11 @@ void get_met(
 /*****************************************************************************/
 
 void get_met_help(
-  ctl_t * ctl,
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
+  const ctl_t * ctl,
+  const double t,
+  const int direct,
+  const char *metbase,
+  const double dt_met,
   char *filename) {
 
   char repl[LEN];
@@ -1239,14 +1237,14 @@ void get_met_replace(
 /*****************************************************************************/
 
 void get_tropo(
-  int met_tropo,
+  const int met_tropo,
   ctl_t * ctl,
   clim_t * clim,
   met_t * met,
-  double *lons,
-  int nx,
-  double *lats,
-  int ny,
+  const double *lons,
+  const int nx,
+  const double *lats,
+  const int ny,
   double *pt,
   double *zt,
   double *tt,
@@ -2188,10 +2186,10 @@ int locate_reg(
 
 void locate_vert(
   float profiles[EX][EY][EP],
-  int np,
-  int lon_ap_ind,
-  int lat_ap_ind,
-  double height_ap,
+  const int np,
+  const int lon_ap_ind,
+  const int lat_ap_ind,
+  const double height_ap,
   int *ind) {
 
   ind[0] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind],
@@ -4612,7 +4610,7 @@ void read_clim_photo(
 void read_clim_photo_help(
   const int ncid,
   const char *varname,
-  clim_photo_t * photo,
+  const clim_photo_t * photo,
   double var[CP][CSZA][CO3]) {
 
   /* Allocate... */
@@ -5652,7 +5650,7 @@ int read_met(
       read_met_extrapolate(met);
 
       /* Read surface data... */
-      read_met_surface(ncid, met, ctl);
+      read_met_surface(ncid, ctl, met);
 
       /* Fix polar winds... */
       read_met_polar_winds(met);
@@ -5863,9 +5861,9 @@ int read_met(
 
 void read_met_bin_2d(
   FILE * in,
-  met_t * met,
+  const met_t * met,
   float var[EX][EY],
-  char *varname) {
+  const char *varname) {
 
   float *help;
 
@@ -5892,12 +5890,12 @@ void read_met_bin_2d(
 
 void read_met_bin_3d(
   FILE * in,
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t * ctl,
+  const met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  float bound_min,
-  float bound_max) {
+  const char *varname,
+  const float bound_min,
+  const float bound_max) {
 
   float *help;
 
@@ -5977,7 +5975,7 @@ void read_met_bin_3d(
 /*****************************************************************************/
 
 void read_met_cape(
-  clim_t * clim,
+  const clim_t * clim,
   met_t * met) {
 
   /* Set timer... */
@@ -6138,7 +6136,7 @@ void read_met_cloud(
 /*****************************************************************************/
 
 void read_met_detrend(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met) {
 
   met_t *help;
@@ -6282,7 +6280,7 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met) {
 
   float *help;
@@ -6411,8 +6409,8 @@ void read_met_geopot(
 
 void read_met_grid(
   const char *filename,
-  int ncid,
-  ctl_t * ctl,
+  const int ncid,
+  const ctl_t * ctl,
   met_t * met) {
 
   char levname[LEN], tstr[10];
@@ -6528,8 +6526,8 @@ void read_met_grid(
 /*****************************************************************************/
 
 void read_met_levels(
-  int ncid,
-  ctl_t * ctl,
+  const int ncid,
+  const ctl_t * ctl,
   met_t * met) {
 
   /* Set timer... */
@@ -6671,10 +6669,10 @@ void read_met_levels(
 /*****************************************************************************/
 
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t * ctl,
+  const met_t * met,
   float var[EX][EY][EP],
-  char *varname) {
+  const char *varname) {
 
   double aux[EP], p[EP];
 
@@ -6792,16 +6790,16 @@ void read_met_monotonize(
 /*****************************************************************************/
 
 int read_met_nc_2d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY],
-  float scl,
-  int init) {
+  const float scl,
+  const int init) {
 
   char varsel[LEN];
 
@@ -6942,15 +6940,15 @@ int read_met_nc_2d(
 /*****************************************************************************/
 
 int read_met_nc_3d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY][EP],
-  float scl) {
+  const float scl) {
 
   char varsel[LEN];
 
@@ -7408,7 +7406,7 @@ void read_met_ozone(
 /*****************************************************************************/
 
 void read_met_sample(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met) {
 
   met_t *help;
@@ -7556,9 +7554,9 @@ void read_met_sample(
 /*****************************************************************************/
 
 void read_met_surface(
-  int ncid,
-  met_t * met,
-  ctl_t * ctl) {
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
@@ -7676,8 +7674,8 @@ void read_met_surface(
 /*****************************************************************************/
 
 void read_met_tropo(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met) {
 
   double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
@@ -7953,7 +7951,7 @@ double scan_ctl(
   int argc,
   char *argv[],
   const char *varname,
-  int arridx,
+  const int arridx,
   const char *defvalue,
   char *value) {
 
@@ -8198,7 +8196,7 @@ void time2jsec(
 void timer(
   const char *name,
   const char *group,
-  int output) {
+  const int output) {
 
   static char names[NTIMER][100], groups[NTIMER][100];
 
@@ -8265,7 +8263,7 @@ void timer(
 
 double time_from_filename(
   const char *filename,
-  int offset) {
+  const int offset) {
 
   char tstr[10];
 
@@ -9118,11 +9116,11 @@ void write_ens(
 
 void write_grid(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t) {
+  const atm_t * atm,
+  const double t) {
 
   static double kz[EP], kw[EP];
 
@@ -9310,18 +9308,18 @@ void write_grid(
 
 void write_grid_asc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t * ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np) {
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np) {
 
   FILE *out;
 
@@ -9414,18 +9412,18 @@ void write_grid_asc(
 
 void write_grid_nc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t * ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np) {
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np) {
 
   char longname[2 * LEN], varname[2 * LEN];
 
@@ -9538,7 +9536,7 @@ void write_grid_nc(
 
 int write_met(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met) {
 
   /* Set timer... */
@@ -9663,7 +9661,7 @@ void write_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
-  char *varname) {
+  const char *varname) {
 
   float *help;
 
@@ -9690,12 +9688,12 @@ void write_met_bin_2d(
 
 void write_met_bin_3d(
   FILE * out,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance) {
+  const char *varname,
+  const int precision,
+  const double tolerance) {
 
   float *help;
 
@@ -9766,11 +9764,11 @@ void write_met_bin_3d(
 
 void write_output(
   const char *dirname,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double t) {
+  const double t) {
 
   char ext[10], filename[2 * LEN];
 
@@ -9861,11 +9859,11 @@ void write_output(
 
 void write_prof(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t) {
+  const atm_t * atm,
+  const double t) {
 
   static FILE *out;
 
@@ -10089,11 +10087,11 @@ void write_prof(
 
 void write_sample(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t) {
+  const atm_t * atm,
+  const double t) {
 
   static FILE *out;
 

@@ -4045,7 +4045,7 @@ void geo2cart(
 void get_met(
   ctl_t * ctl,
   clim_t * clim,
-  double t,
+  const double t,
   met_t ** met0,
   met_t ** met1);
 
@@ -4078,11 +4078,11 @@ void get_met(
  * @author Lars Hoffmann
  */
 void get_met_help(
-  ctl_t * ctl,
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
+  const ctl_t * ctl,
+  const double t,
+  const int direct,
+  const char *metbase,
+  const double dt_met,
   char *filename);
 
 /**
@@ -4150,14 +4150,14 @@ void get_met_replace(
  * @author Lars Hoffmann
  */
 void get_tropo(
-  int met_tropo,
+  const int met_tropo,
   ctl_t * ctl,
   clim_t * clim,
   met_t * met,
-  double *lons,
-  int nx,
-  double *lats,
-  int ny,
+  const double *lons,
+  const int nx,
+  const double *lats,
+  const int ny,
   double *pt,
   double *zt,
   double *tt,
@@ -4762,10 +4762,10 @@ int locate_reg(
  */
 void locate_vert(
   float profiles[EX][EY][EP],
-  int np,
-  int lon_ap_ind,
-  int lat_ap_ind,
-  double alt_ap,
+  const int np,
+  const int lon_ap_ind,
+  const int lat_ap_ind,
+  const double alt_ap,
   int *ind);
 
 /**
@@ -5963,7 +5963,7 @@ void read_clim_photo(
 void read_clim_photo_help(
   const int ncid,
   const char *varname,
-  clim_photo_t * photo,
+  const clim_photo_t * photo,
   double var[CP][CSZA][CO3]);
 
 /**
@@ -6168,9 +6168,9 @@ int read_met(
  */
 void read_met_bin_2d(
   FILE * in,
-  met_t * met,
+  const met_t * met,
   float var[EX][EY],
-  char *varname);
+  const char *varname);
 
 /**
  * @brief Reads 3D meteorological data from a binary file, potentially using different compression methods.
@@ -6211,12 +6211,12 @@ void read_met_bin_2d(
  */
 void read_met_bin_3d(
   FILE * in,
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t * ctl,
+  const met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  float bound_min,
-  float bound_max);
+  const char *varname,
+  const float bound_min,
+  const float bound_max);
 
 /**
  * @brief Calculates Convective Available Potential Energy (CAPE) for each grid point.
@@ -6245,7 +6245,7 @@ void read_met_bin_3d(
  * @author Lars Hoffmann
  */
 void read_met_cape(
-  clim_t * clim,
+  const clim_t * clim,
   met_t * met);
 
 /**
@@ -6299,7 +6299,7 @@ void read_met_cloud(
  * @author Lars Hoffmann
  */
 void read_met_detrend(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6354,7 +6354,7 @@ void read_met_extrapolate(
  * @author Lars Hoffmann
  */
 void read_met_geopot(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6390,8 +6390,8 @@ void read_met_geopot(
  */
 void read_met_grid(
   const char *filename,
-  int ncid,
-  ctl_t * ctl,
+  const int ncid,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6425,8 +6425,8 @@ void read_met_grid(
  * @authors Jan Clemens
  */
 void read_met_levels(
-  int ncid,
-  ctl_t * ctl,
+  const int ncid,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6458,10 +6458,10 @@ void read_met_levels(
  * @author Lars Hoffmann
  */
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t * ctl,
+  const met_t * met,
   float var[EX][EY][EP],
-  char *varname);
+  const char *varname);
 
 /**
  * @brief Makes zeta and pressure profiles monotone.
@@ -6516,16 +6516,16 @@ void read_met_monotonize(
  * @author Lars Hoffmann
  */
 int read_met_nc_2d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY],
-  float scl,
-  int init);
+  const float scl,
+  const int init);
 
 /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
@@ -6556,15 +6556,15 @@ int read_met_nc_2d(
  * @author Lars Hoffmann
  */
 int read_met_nc_3d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY][EP],
-  float scl);
+  const float scl);
 
 /**
  * @brief Calculates the planetary boundary layer (PBL) height for each grid point.
@@ -6750,7 +6750,7 @@ void read_met_ozone(
  * @author Lars Hoffmann
  */
 void read_met_sample(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6794,9 +6794,9 @@ void read_met_sample(
  * @authors Jan Clemens
  */
 void read_met_surface(
-  int ncid,
-  met_t * met,
-  ctl_t * ctl);
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
 
 /**
  * @brief Calculates the tropopause and related meteorological variables based on various methods and stores the results in the meteorological data structure.
@@ -6827,8 +6827,8 @@ void read_met_surface(
  * @author Lars Hoffmann
  */
 void read_met_tropo(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met);
 
 /**
@@ -6981,7 +6981,7 @@ double scan_ctl(
   int argc,
   char *argv[],
   const char *varname,
-  int arridx,
+  const int arridx,
   const char *defvalue,
   char *value);
 
@@ -7170,7 +7170,7 @@ void time2jsec(
 void timer(
   const char *name,
   const char *group,
-  int output);
+  const int output);
 
 /**
  * @brief Extracts and converts a timestamp from a filename to Julian seconds.
@@ -7199,7 +7199,7 @@ void timer(
  */
 double time_from_filename(
   const char *filename,
-  int offset);
+  const int offset);
 
 /**
  * @brief Computes the weighting factor for a given pressure with respect to the tropopause.
@@ -7518,11 +7518,11 @@ void write_ens(
  */
 void write_grid(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes grid data to an ASCII file.
@@ -7571,18 +7571,18 @@ void write_grid(
  */
 void write_grid_asc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t * ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np);
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np);
 
 /**
  * @brief Writes grid data to a NetCDF file.
@@ -7628,18 +7628,18 @@ void write_grid_asc(
  */
 void write_grid_nc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t * ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np);
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np);
 
 /**
  * @brief Writes meteorological data to a binary file.
@@ -7675,7 +7675,7 @@ void write_grid_nc(
  */
 int write_met(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -7709,7 +7709,7 @@ void write_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
-  char *varname);
+  const char *varname);
 
 /**
  * @brief Writes a 3-dimensional meteorological variable to a binary file.
@@ -7750,12 +7750,12 @@ void write_met_bin_2d(
  */
 void write_met_bin_3d(
   FILE * out,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance);
+  const char *varname,
+  const int precision,
+  const double tolerance);
 
 /**
  * @brief Writes various types of output data to files in a specified directory.
@@ -7792,11 +7792,11 @@ void write_met_bin_3d(
  */
 void write_output(
   const char *dirname,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Writes profile data to a specified file.
@@ -7830,11 +7830,11 @@ void write_output(
  */
 void write_prof(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes sample data to a specified file.
@@ -7869,11 +7869,11 @@ void write_prof(
  */
 void write_sample(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes station data to a specified file.
