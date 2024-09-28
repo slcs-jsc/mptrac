@@ -147,11 +147,11 @@ void clim_oh_diurnal_correction(
 /*****************************************************************************/
 
 double clim_photo(
-  double rate[CP][CSZA][CO3],
-  clim_photo_t * photo,
-  double p,
-  double sza,
-  double o3c) {
+  const double rate[CP][CSZA][CO3],
+  const clim_photo_t * photo,
+  const double p,
+  const double sza,
+  const double o3c) {
 
   /* Check pressure range... */
   double p_help = p;
@@ -2207,11 +2207,11 @@ void locate_vert(
 /*****************************************************************************/
 
 void module_advect(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
@@ -2365,7 +2365,7 @@ void module_advect(
 /*****************************************************************************/
 
 void module_advect_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm) {
@@ -2385,12 +2385,12 @@ void module_advect_init(
 /*****************************************************************************/
 
 void module_bound_cond(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
@@ -2480,11 +2480,11 @@ void module_bound_cond(
 /*****************************************************************************/
 
 void module_chemgrid(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double tt) {
+  const double tt) {
 
   /* Check quantities... */
   if (ctl->molmass <= 0)
@@ -2629,8 +2629,8 @@ void module_chemgrid(
 /*****************************************************************************/
 
 void module_chem_init(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm) {
@@ -2666,11 +2666,11 @@ void module_chem_init(
 /*****************************************************************************/
 
 void module_convection(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt,
+  const double *dt,
   double *rs) {
 
   /* Set timer... */
@@ -2738,10 +2738,10 @@ void module_convection(
 /*****************************************************************************/
 
 void module_decay(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -2778,12 +2778,12 @@ void module_decay(
 /*****************************************************************************/
 
 void module_diffusion_meso(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  double *dt,
+  const double *dt,
   double *rs) {
 
   /* Set timer... */
@@ -2858,10 +2858,10 @@ void module_diffusion_meso(
 /*****************************************************************************/
 
 void module_diffusion_turb(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double *dt,
+  const double *dt,
   double *rs) {
 
   /* Set timer... */
@@ -2899,11 +2899,11 @@ void module_diffusion_turb(
 /*****************************************************************************/
 
 void module_dry_deposition(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
@@ -2962,12 +2962,12 @@ void module_dry_deposition(
 /*****************************************************************************/
 
 void module_h2o2_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
@@ -3042,7 +3042,7 @@ void module_h2o2_chem(
 /*****************************************************************************/
 
 void module_isosurf_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -3106,12 +3106,12 @@ void module_isosurf_init(
 /*****************************************************************************/
 
 void module_isosurf(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
@@ -3218,12 +3218,12 @@ void module_kpp_chem(
 /*****************************************************************************/
 
 void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -3318,10 +3318,10 @@ void module_meteo(
 /*****************************************************************************/
 
 void module_mixing(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double t) {
+  const double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
@@ -3408,13 +3408,13 @@ void module_mixing(
 /*****************************************************************************/
 
 void module_mixing_help(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
   const int *ixs,
   const int *iys,
   const int *izs,
-  int qnt_idx) {
+  const int qnt_idx) {
 
   /* Allocate... */
   const int np = atm->np;
@@ -3503,12 +3503,12 @@ void module_mixing_help(
 /*****************************************************************************/
 
 void module_oh_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
@@ -3586,11 +3586,11 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
@@ -3645,7 +3645,7 @@ void module_position(
 /*****************************************************************************/
 
 void module_rng_init(
-  int ntask) {
+  const int ntask) {
 
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
@@ -3676,10 +3676,10 @@ void module_rng_init(
 /*****************************************************************************/
 
 void module_rng(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   double *rs,
-  size_t n,
-  int method) {
+  const size_t n,
+  const int method) {
 
   /* Use GSL random number generators... */
   if (ctl->rng_type == 0) {
@@ -3780,11 +3780,11 @@ void module_rng(
 /*****************************************************************************/
 
 void module_sedi(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
@@ -3809,7 +3809,7 @@ void module_sedi(
 /*****************************************************************************/
 
 void module_sort(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   atm_t * atm) {
 
@@ -3905,11 +3905,11 @@ void module_sort_help(
 /*****************************************************************************/
 
 void module_timesteps(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
   double *dt,
-  double t) {
+  const double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
@@ -3943,7 +3943,7 @@ void module_timesteps(
 
 void module_timesteps_init(
   ctl_t * ctl,
-  atm_t * atm) {
+  const atm_t * atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
@@ -3973,12 +3973,12 @@ void module_timesteps_init(
 /*****************************************************************************/
 
 void module_tracer_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
@@ -4042,11 +4042,11 @@ void module_tracer_chem(
 /*****************************************************************************/
 
 void module_wet_deposition(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);

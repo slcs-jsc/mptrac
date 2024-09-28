@@ -3605,11 +3605,11 @@ void clim_oh_diurnal_correction(
  * @authors Mingzhao Liu
  */
 double clim_photo(
-  double rate[CP][CSZA][CO3],
-  clim_photo_t * photo,
-  double p,
-  double sza,
-  double o3c);
+  const double rate[CP][CSZA][CO3],
+  const clim_photo_t * photo,
+  const double p,
+  const double sza,
+  const double o3c);
 
 /**
  * @brief Calculates the tropopause pressure based on climatological data.
@@ -4815,11 +4815,11 @@ void locate_vert(
  * @authors Jan Clemens
  */
 void module_advect(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Initializes the advection module by setting up pressure fields.
@@ -4843,7 +4843,7 @@ void module_advect(
  * @author Jan Clemens
  */
 void module_advect_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm);
@@ -4885,12 +4885,12 @@ void module_advect_init(
  * @authors Mingzhao Liu
  */
 void module_bound_cond(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Calculate grid data for chemistry modules.
@@ -4910,11 +4910,11 @@ void module_bound_cond(
  * @authors Lars Hoffmann
  */
 void module_chemgrid(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Initializes the chemistry modules by setting atmospheric composition.
@@ -4943,8 +4943,8 @@ void module_chemgrid(
  * @authors Mingzhao Liu
  */
 void module_chem_init(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm);
@@ -4977,11 +4977,11 @@ void module_chem_init(
  * @author Lars Hoffmann
  */
 void module_convection(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt,
+  const double *dt,
   double *rs);
 
 /**
@@ -5011,10 +5011,10 @@ void module_convection(
  * @author Lars Hoffmann
  */
 void module_decay(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Simulate mesoscale diffusion for atmospheric particles.
@@ -5046,12 +5046,12 @@ void module_decay(
  * @author Lars Hoffmann
  */
 void module_diffusion_meso(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  double *dt,
+  const double *dt,
   double *rs);
 
 /**
@@ -5080,10 +5080,10 @@ void module_diffusion_meso(
  * @author Lars Hoffmann
  */
 void module_diffusion_turb(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double *dt,
+  const double *dt,
   double *rs);
 
 /**
@@ -5106,11 +5106,11 @@ void module_diffusion_turb(
  * @author Lars Hoffmann
  */
 void module_dry_deposition(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Perform chemical reactions involving H2O2 within cloud particles.
@@ -5145,12 +5145,12 @@ void module_dry_deposition(
  * @author Mingzhao Liu
  */
 void module_h2o2_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Initialize the isosurface module based on atmospheric data.
@@ -5172,7 +5172,7 @@ void module_h2o2_chem(
  * @author Lars Hoffmann
  */
 void module_isosurf_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -5197,12 +5197,12 @@ void module_isosurf_init(
  * @author Lars Hoffmann
  */
 void module_isosurf(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  double *dt);
+  const double *dt);
 
 /*! KPP chemistry module. */
 /**
@@ -5262,12 +5262,12 @@ void module_kpp_chem(
  * @author Lars Hoffmann
  */
 void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Update atmospheric properties through interparcel mixing.
@@ -5287,10 +5287,10 @@ void module_meteo(
  * @authors Lars Hoffmann
  */
 void module_mixing(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Perform interparcel mixing for a specific quantity.
@@ -5312,13 +5312,13 @@ void module_mixing(
  * @authors Lars Hoffmann
  */
 void module_mixing_help(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
   const int *ixs,
   const int *iys,
   const int *izs,
-  int qnt_idx);
+  const int qnt_idx);
 
 /**
  * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
@@ -5353,12 +5353,12 @@ void module_mixing_help(
  * @authors Mingzhao Liu
  */
 void module_oh_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Update the positions and pressure levels of atmospheric particles.
@@ -5389,11 +5389,11 @@ void module_oh_chem(
  * @author Lars Hoffmann
  */
 void module_position(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Initialize random number generators for parallel tasks.
@@ -5420,7 +5420,7 @@ void module_position(
  * @author Lars Hoffmann
  */
 void module_rng_init(
-  int ntask);
+  const int ntask);
 
 /**
  * @brief Generate random numbers using various methods and distributions.
@@ -5448,10 +5448,10 @@ void module_rng_init(
  * @author Lars Hoffmann
  */
 void module_rng(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   double *rs,
-  size_t n,
-  int method);
+  const size_t n,
+  const int method);
 
 /**
  * @brief Simulate sedimentation of particles in the atmosphere.
@@ -5476,11 +5476,11 @@ void module_rng(
  * @author Lars Hoffmann
  */
 void module_sedi(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /*!  */
 /**
@@ -5507,7 +5507,7 @@ void module_sedi(
  * @author Lars Hoffmann
  */
 void module_sort(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   atm_t * atm);
 
@@ -5559,11 +5559,11 @@ void module_sort_help(
  * @author Lars Hoffmann
  */
 void module_timesteps(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
   double *dt,
-  double t);
+  const double t);
 
 /**
  * @brief Initialize start time and time interval for time-stepping.
@@ -5587,7 +5587,7 @@ void module_timesteps(
  */
 void module_timesteps_init(
   ctl_t * ctl,
-  atm_t * atm);
+  const atm_t * atm);
 
 /**
  * @brief Simulate chemical reactions involving long-lived atmospheric tracers.
@@ -5622,12 +5622,12 @@ void module_timesteps_init(
  * @authors Lars Hoffmann
  */
 void module_tracer_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Perform wet deposition calculations for air parcels.
@@ -5654,11 +5654,11 @@ void module_tracer_chem(
  * @authors Mingzhao Liu
  */
 void module_wet_deposition(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.
