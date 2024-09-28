@@ -1297,11 +1297,13 @@ void intpol_met_4d_coord(
 
   if (init) {
 
-    /* Restrict positions to coordinate range... */
+    /* Check longitude... */
     double lon2 = FMOD(lon, 360.);
-    if (met0->lon[met0->nx - 1] > 180 && lon2 < 0)
+    if(lon2 < met0->lon[0])
       lon2 += 360;
-
+    else if(lon2 > met0->lon[met0->nx - 1])
+      lon2 -= 360;
+    
     /* Get horizontal indizes... */
     ci[0] = locate_irr(met0->lon, met0->nx, lon2);
     ci[1] = locate_irr(met0->lat, met0->ny, lat);
@@ -1470,10 +1472,12 @@ void intpol_met_space_3d(
   if (init) {
 
     /* Check longitude... */
-    double lon2 = lon;
-    if (met->lon[met->nx - 1] > 180 && lon2 < 0)
+    double lon2 = FMOD(lon, 360.);
+    if(lon2 < met->lon[0])
       lon2 += 360;
-
+    else if(lon2 > met->lon[met->nx - 1])
+      lon2 -= 360;
+    
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
     ci[1] = locate_reg(met->lon, met->nx, lon2);
@@ -1522,10 +1526,12 @@ void intpol_met_space_3d_ml(
   double *var) {
 
   /* Check longitude... */
-  double lon2 = lon;
-  if (met->lon[met->nx - 1] > 180 && lon2 < 0)
+  double lon2 = FMOD(lon, 360.);
+  if(lon2 < met->lon[0])
     lon2 += 360;
-
+  else if(lon2 > met->lon[met->nx - 1])
+    lon2 -= 360;
+  
   /* Get horizontal indices... */
   int ix = locate_reg(met->lon, met->nx, lon2);
   int iy = locate_reg(met->lat, met->ny, lat);
@@ -1598,10 +1604,12 @@ void intpol_met_space_2d(
   if (init) {
 
     /* Check longitude... */
-    double lon2 = lon;
-    if (met->lon[met->nx - 1] > 180 && lon2 < 0)
+    double lon2 = FMOD(lon, 360.);
+    if(lon2 < met->lon[0])
       lon2 += 360;
-
+    else if(lon2 > met->lon[met->nx - 1])
+      lon2 -= 360;
+    
     /* Get interpolation indices... */
     ci[1] = locate_reg(met->lon, met->nx, lon2);
     ci[2] = locate_reg(met->lat, met->ny, lat);
@@ -1747,13 +1755,13 @@ void intpol_tropo_3d(
 
   int n = 0;
 
-  /* Adjust longitude... */
-  double lon2 = lon;
-  if (lon2 < lons[0])
+  /* Check longitude... */
+  double lon2 = FMOD(lon, 360.);
+  if(lon2 < lons[0])
     lon2 += 360;
-  else if (lon2 > lons[nlon - 1])
+  else if(lon2 > lons[nlon - 1])
     lon2 -= 360;
-
+  
   /* Get indices... */
   const int ix = locate_reg(lons, (int) nlon, lon2);
   const int iy = locate_reg(lats, (int) nlat, lat);
