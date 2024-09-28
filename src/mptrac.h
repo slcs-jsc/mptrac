@@ -3572,7 +3572,7 @@ double clim_oh(
  * @authors Mingzhao Liu
  */
 void clim_oh_diurnal_correction(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   clim_t * clim);
 
 /**
@@ -5729,7 +5729,7 @@ double nat_temperature(
  */
 int read_atm(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5766,7 +5766,7 @@ int read_atm(
  */
 int read_atm_asc(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5801,7 +5801,7 @@ int read_atm_asc(
  */
 int read_atm_bin(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5840,7 +5840,7 @@ int read_atm_bin(
  */
 int read_atm_clams(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5874,7 +5874,7 @@ int read_atm_clams(
  */
 int read_atm_nc(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5909,7 +5909,7 @@ int read_atm_nc(
  * @authors Mingzhao Liu
  */
 void read_clim(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   clim_t * clim);
 
 /**
@@ -5961,7 +5961,7 @@ void read_clim_photo(
  * @author Lars Hoffmann
  */
 void read_clim_photo_help(
-  int ncid,
+  const int ncid,
   const char *varname,
   clim_photo_t * photo,
   double var[CP][CSZA][CO3]);
@@ -7474,9 +7474,9 @@ void write_csi(
  */
 void write_ens(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes grid data to a file in ASCII or netCDF format.
@@ -7903,9 +7903,9 @@ void write_sample(
  */
 void write_station(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Writes VTK (Visualization Toolkit) data to a specified file.
@@ -7937,9 +7937,9 @@ void write_station(
  */
 void write_vtk(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /* ------------------------------------------------------------
    OpenACC routines...

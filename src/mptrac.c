@@ -114,7 +114,7 @@ double clim_oh(
 /*****************************************************************************/
 
 void clim_oh_diurnal_correction(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   clim_t * clim) {
 
   /* Set SZA threshold... */
@@ -4202,7 +4202,7 @@ double nat_temperature(
 
 int read_atm(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm) {
 
   int result;
@@ -4273,7 +4273,7 @@ int read_atm(
 
 int read_atm_asc(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm) {
 
   /* Open file... */
@@ -4315,7 +4315,7 @@ int read_atm_asc(
 
 int read_atm_bin(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm) {
 
   /* Open file... */
@@ -4371,7 +4371,7 @@ int read_atm_bin(
 
 int read_atm_clams(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm) {
 
   int ncid, varid;
@@ -4427,7 +4427,7 @@ int read_atm_clams(
 
 int read_atm_nc(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm) {
 
   int ncid, varid;
@@ -4459,7 +4459,7 @@ int read_atm_nc(
 /*****************************************************************************/
 
 void read_clim(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   clim_t * clim) {
 
   /* Set timer... */
@@ -4610,7 +4610,7 @@ void read_clim_photo(
 /*****************************************************************************/
 
 void read_clim_photo_help(
-  int ncid,
+  const int ncid,
   const char *varname,
   clim_photo_t * photo,
   double var[CP][CSZA][CO3]) {
@@ -9021,9 +9021,9 @@ void write_csi(
 
 void write_ens(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t) {
 
   static FILE *out;
 
@@ -10252,9 +10252,9 @@ void write_sample(
 
 void write_station(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm,
-  double t) {
+  const double t) {
 
   static FILE *out;
 
@@ -10338,9 +10338,9 @@ void write_station(
 
 void write_vtk(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t) {
 
   FILE *out;
 
