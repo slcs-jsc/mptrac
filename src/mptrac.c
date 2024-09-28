@@ -7849,7 +7849,7 @@ void read_met_tropo(
 
 void read_obs(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   double *rt,
   double *rz,
   double *rlon,
@@ -8324,9 +8324,9 @@ double tropo_weight(
 
 void write_atm(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t) {
 
   /* Set timer... */
   SELECT_TIMER("WRITE_ATM", "OUTPUT", NVTX_WRITE);
@@ -8384,9 +8384,9 @@ void write_atm(
 
 void write_atm_asc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t) {
 
   FILE *out;
 
@@ -8466,8 +8466,8 @@ void write_atm_asc(
 
 void write_atm_bin(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t * ctl,
+  const atm_t * atm) {
 
   FILE *out;
 
@@ -8516,8 +8516,8 @@ void write_atm_bin(
 
 void write_atm_clams(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t * ctl,
+  const atm_t * atm) {
 
   int tid, pid, ncid, varid;
   size_t start[2], count[2];
@@ -8565,9 +8565,9 @@ void write_atm_clams(
 
 void write_atm_clams_traj(
   const char *dirname,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t) {
 
   /* Global Counter... */
   static size_t out_cnt = 0;
@@ -8714,8 +8714,8 @@ void write_atm_clams_traj(
 
 void write_atm_nc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t * ctl,
+  const atm_t * atm) {
 
   int ncid, obsid, varid;
 
@@ -8759,9 +8759,9 @@ void write_atm_nc(
 
 void write_csi(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t) {
 
   static FILE *out;
 

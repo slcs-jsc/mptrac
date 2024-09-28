@@ -6864,7 +6864,7 @@ void read_met_tropo(
  */
 void read_obs(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   double *rt,
   double *rz,
   double *rlon,
@@ -7265,9 +7265,9 @@ double tropo_weight(
  */
 void write_atm(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes air parcel data to an ASCII file or gnuplot.
@@ -7293,9 +7293,9 @@ void write_atm(
  */
 void write_atm_asc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes air parcel data to a binary file.
@@ -7322,8 +7322,8 @@ void write_atm_asc(
  */
 void write_atm_bin(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm);
+  const ctl_t * ctl,
+  const atm_t * atm);
 
 /**
  * @brief Writes air parcel data to a NetCDF file in the CLaMS format.
@@ -7350,8 +7350,8 @@ void write_atm_bin(
  */
 void write_atm_clams(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm);
+  const ctl_t * ctl,
+  const atm_t * atm);
 
 /**
  * @brief Writes CLaMS trajectory data to a NetCDF file.
@@ -7379,9 +7379,9 @@ void write_atm_clams(
  */
 void write_atm_clams_traj(
   const char *dirname,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes air parcel data to a NetCDF file.
@@ -7408,8 +7408,8 @@ void write_atm_clams_traj(
  */
 void write_atm_nc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm);
+  const ctl_t * ctl,
+  const atm_t * atm);
 
 /**
  * @brief Writes Critical Success Index (CSI) data to a file.
@@ -7441,9 +7441,9 @@ void write_atm_nc(
  */
 void write_csi(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes ensemble data to a file.
