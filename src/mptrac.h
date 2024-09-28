@@ -3750,13 +3750,13 @@ double clim_zm(
  * Lars Hoffmann
  */
 void compress_cms(
-  ctl_t * ctl,
-  char *varname,
+  const ctl_t * ctl,
+  const char *varname,
   float *array,
-  size_t nx,
-  size_t ny,
-  size_t np,
-  int decompress,
+  const size_t nx,
+  const size_t ny,
+  const size_t np,
+  const int decompress,
   FILE * inout);
 
 /**
@@ -3792,11 +3792,11 @@ void compress_cms(
  * @author Lars Hoffmann
  */
 void compress_pck(
-  char *varname,
+  const char *varname,
   float *array,
-  size_t nxy,
-  size_t nz,
-  int decompress,
+  const size_t nxy,
+  const size_t nz,
+  const int decompress,
   FILE * inout);
 
 /**
@@ -3838,14 +3838,14 @@ void compress_pck(
  * @author Lars Hoffmann
  */
 void compress_zfp(
-  char *varname,
+  const char *varname,
   float *array,
-  int nx,
-  int ny,
-  int nz,
-  int precision,
-  double tolerance,
-  int decompress,
+  const int nx,
+  const int ny,
+  const int nz,
+  const int precision,
+  const double tolerance,
+  const int decompress,
   FILE * inout);
 
 /**
@@ -3884,10 +3884,10 @@ void compress_zfp(
  * @author Lars Hoffmann
  */
 void compress_zstd(
-  char *varname,
+  const char *varname,
   float *array,
-  size_t n,
-  int decompress,
+  const size_t n,
+  const int decompress,
   FILE * inout);
 
 /*! Get day of year from date. */

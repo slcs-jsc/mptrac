@@ -449,13 +449,13 @@ double clim_zm(
 
 #ifdef CMS
 void compress_cms(
-  ctl_t * ctl,
-  char *varname,
+  const ctl_t * ctl,
+  const char *varname,
   float *array,
-  size_t nx,
-  size_t ny,
-  size_t np,
-  int decompress,
+  const size_t nx,
+  const size_t ny,
+  const size_t np,
+  const int decompress,
   FILE * inout) {
 
   /* Set lon-lat grid... */
@@ -655,11 +655,11 @@ void compress_cms(
 /*****************************************************************************/
 
 void compress_pck(
-  char *varname,
+  const char *varname,
   float *array,
-  size_t nxy,
-  size_t nz,
-  int decompress,
+  const size_t nxy,
+  const size_t nz,
+  const int decompress,
   FILE * inout) {
 
   double min[EP], max[EP], off[EP], scl[EP];
@@ -752,14 +752,14 @@ void compress_pck(
 
 #ifdef ZFP
 void compress_zfp(
-  char *varname,
+  const char *varname,
   float *array,
-  int nx,
-  int ny,
-  int nz,
-  int precision,
-  double tolerance,
-  int decompress,
+  const int nx,
+  const int ny,
+  const int nz,
+  const int precision,
+  const double tolerance,
+  const int decompress,
   FILE * inout) {
 
   zfp_field *field;		/* array meta data */
@@ -841,10 +841,10 @@ void compress_zfp(
 
 #ifdef ZSTD
 void compress_zstd(
-  char *varname,
+  const char *varname,
   float *array,
-  size_t n,
-  int decompress,
+  const size_t n,
+  const int decompress,
   FILE * inout) {
 
   /* Get buffer sizes... */
