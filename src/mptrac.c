@@ -6602,11 +6602,11 @@ void read_met_levels(
   /* Read zeta and zeta_dot... */
   if (!read_met_nc_3d
       (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
-    WARN("Cannot read ZETA in meteo data!");
+    WARN("Cannot read ZETA!");
   if (!read_met_nc_3d
       (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
        NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
-    WARN("Cannot read vertical velocity!");
+    WARN("Cannot read ZETA_DOT!");
 
   /* Store velocities on model levels for diabatic advection... */
   if (ctl->met_vert_coord == 1) {
@@ -7640,12 +7640,11 @@ void read_met_surface(
     memcpy(help, met->pl, sizeof(met->pl));
     if (!read_met_nc_3d
 	(ncid, "gph", "GPH", NULL, NULL, ctl, met, met->pl,
-	 (float) (1e-3 / G0))) {
+	 (float) (1e-3 / G0)))
       ERRMSG("Cannot read geopotential height!");
-    } else
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->zs[ix][iy] = met->pl[ix][iy][0];
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->zs[ix][iy] = met->pl[ix][iy][0];
     memcpy(met->pl, help, sizeof(met->pl));
     free(help);
 
