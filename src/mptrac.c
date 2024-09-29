@@ -1280,10 +1280,10 @@ void get_tropo(
 /*****************************************************************************/
 
 void intpol_met_4d_coord(
-  met_t * met0,
+  const met_t * met0,
   float heights0[EX][EY][EP],
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t * met1,
   float heights1[EX][EY][EP],
   float array1[EX][EY][EP],
   const double ts,
@@ -1458,7 +1458,7 @@ void intpol_met_4d_coord(
 /*****************************************************************************/
 
 void intpol_met_space_3d(
-  met_t * met,
+  const met_t * met,
   float array[EX][EY][EP],
   const double p,
   const double lon,
@@ -1518,7 +1518,7 @@ void intpol_met_space_3d(
 /*****************************************************************************/
 
 void intpol_met_space_3d_ml(
-  met_t * met,
+  const met_t * met,
   float array[EX][EY][EP],
   const double p,
   const double lon,
@@ -1591,7 +1591,7 @@ void intpol_met_space_3d_ml(
 /*****************************************************************************/
 
 void intpol_met_space_2d(
-  met_t * met,
+  const met_t * met,
   float array[EX][EY],
   const double lon,
   const double lat,
@@ -1651,9 +1651,9 @@ void intpol_met_space_2d(
 /*****************************************************************************/
 
 void intpol_met_time_3d(
-  met_t * met0,
+  const met_t * met0,
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t * met1,
   float array1[EX][EY][EP],
   const double ts,
   const double p,
@@ -1680,9 +1680,9 @@ void intpol_met_time_3d(
 /*****************************************************************************/
 
 void intpol_met_time_3d_ml(
-  met_t * met0,
+  const met_t * met0,
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t * met1,
   float array1[EX][EY][EP],
   const double ts,
   const double p,
@@ -1703,9 +1703,9 @@ void intpol_met_time_3d_ml(
 /*****************************************************************************/
 
 void intpol_met_time_2d(
-  met_t * met0,
+  const met_t * met0,
   float array0[EX][EY],
-  met_t * met1,
+  const met_t * met1,
   float array1[EX][EY],
   const double ts,
   const double lon,
