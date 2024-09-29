@@ -1299,11 +1299,11 @@ void intpol_met_4d_coord(
 
     /* Check longitude... */
     double lon2 = FMOD(lon, 360.);
-    if(lon2 < met0->lon[0])
+    if (lon2 < met0->lon[0])
       lon2 += 360;
-    else if(lon2 > met0->lon[met0->nx - 1])
+    else if (lon2 > met0->lon[met0->nx - 1])
       lon2 -= 360;
-    
+
     /* Get horizontal indizes... */
     ci[0] = locate_irr(met0->lon, met0->nx, lon2);
     ci[1] = locate_irr(met0->lat, met0->ny, lat);
@@ -1473,11 +1473,11 @@ void intpol_met_space_3d(
 
     /* Check longitude... */
     double lon2 = FMOD(lon, 360.);
-    if(lon2 < met->lon[0])
+    if (lon2 < met->lon[0])
       lon2 += 360;
-    else if(lon2 > met->lon[met->nx - 1])
+    else if (lon2 > met->lon[met->nx - 1])
       lon2 -= 360;
-    
+
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
     ci[1] = locate_reg(met->lon, met->nx, lon2);
@@ -1527,11 +1527,11 @@ void intpol_met_space_3d_ml(
 
   /* Check longitude... */
   double lon2 = FMOD(lon, 360.);
-  if(lon2 < met->lon[0])
+  if (lon2 < met->lon[0])
     lon2 += 360;
-  else if(lon2 > met->lon[met->nx - 1])
+  else if (lon2 > met->lon[met->nx - 1])
     lon2 -= 360;
-  
+
   /* Get horizontal indices... */
   int ix = locate_reg(met->lon, met->nx, lon2);
   int iy = locate_reg(met->lat, met->ny, lat);
@@ -1605,11 +1605,11 @@ void intpol_met_space_2d(
 
     /* Check longitude... */
     double lon2 = FMOD(lon, 360.);
-    if(lon2 < met->lon[0])
+    if (lon2 < met->lon[0])
       lon2 += 360;
-    else if(lon2 > met->lon[met->nx - 1])
+    else if (lon2 > met->lon[met->nx - 1])
       lon2 -= 360;
-    
+
     /* Get interpolation indices... */
     ci[1] = locate_reg(met->lon, met->nx, lon2);
     ci[2] = locate_reg(met->lat, met->ny, lat);
@@ -1757,11 +1757,11 @@ void intpol_tropo_3d(
 
   /* Check longitude... */
   double lon2 = FMOD(lon, 360.);
-  if(lon2 < lons[0])
+  if (lon2 < lons[0])
     lon2 += 360;
-  else if(lon2 > lons[nlon - 1])
+  else if (lon2 > lons[nlon - 1])
     lon2 -= 360;
-  
+
   /* Get indices... */
   const int ix = locate_reg(lons, (int) nlon, lon2);
   const int iy = locate_reg(lats, (int) nlat, lat);
@@ -6603,17 +6603,10 @@ void read_met_levels(
   if (!read_met_nc_3d
       (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
     WARN("Cannot read ZETA in meteo data!");
-  if (ctl->advect_vert_coord == 1) {
-    if (!read_met_nc_3d
-	(ncid, "ZETA_DOT_TOT", "zeta_dot_clr", NULL, NULL, ctl, met,
-	 met->zeta_dotl, 0.00001157407f)) {
-      if (!read_met_nc_3d
-	  (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", NULL, NULL, ctl, met,
-	   met->zeta_dotl, 0.00001157407f)) {
-	WARN("Cannot read vertical velocity!");
-      }
-    }
-  }
+  if (!read_met_nc_3d
+      (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
+       NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
+    WARN("Cannot read vertical velocity!");
 
   /* Store velocities on model levels for diabatic advection... */
   if (ctl->met_vert_coord == 1) {
