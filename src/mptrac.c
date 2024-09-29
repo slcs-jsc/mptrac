@@ -424,9 +424,9 @@ double clim_zm(
     lat_help = zm->lat[zm->nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(zm->time, zm->ntime, sec);
-  int ilat = locate_reg(zm->lat, zm->nlat, lat_help);
-  int ip = locate_irr(zm->p, zm->np, p_help);
+  const int isec = locate_irr(zm->time, zm->ntime, sec);
+  const int ilat = locate_reg(zm->lat, zm->nlat, lat_help);
+  const int ip = locate_irr(zm->p, zm->np, p_help);
 
   /* Interpolate climatology data... */
   double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
@@ -946,7 +946,7 @@ void doy2day(
 void fft_help(
   double *fcReal,
   double *fcImag,
-  int n) {
+  const int n) {
 
   gsl_fft_complex_wavetable *wavetable;
   gsl_fft_complex_workspace *workspace;
@@ -2384,6 +2384,12 @@ void module_advect_init(
   if (ctl->advect_vert_coord == 1) {
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < atm->np; ip++) {
+
+      /* Check time... */
+      if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+	ERRMSG("Time of air parcel is out of range!");
+
+      /* Interpolate pressure... */
       INTPOL_INIT;
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
@@ -2647,6 +2653,10 @@ void module_chem_init(
 
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
+
+    /* Check time... */
+    if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+      ERRMSG("Time of air parcel is out of range!");
 
     /* Set H2O and O3 using meteo data... */
     INTPOL_INIT;

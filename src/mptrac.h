@@ -3974,7 +3974,7 @@ void doy2day(
 void fft_help(
   double *fcReal,
   double *fcImag,
-  int n);
+  const int n);
 
 /**
  * @brief Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates.
