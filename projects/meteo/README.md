@@ -1,13 +1,13 @@
 
 # Meteorological Data Retrieval Scripts
 
-This directory contains a set of scripts for retrieving meteorological data (ERA5, GFS, MERRA-2, and NCEP) from different data centers and converting them for use with the MPTRAC Lagrangian transport model. Each script is designed to retrieve data from a specific center and perform necessary conversions.
+This directory contains a set of scripts for retrieving meteorological data (ERA5, GFS, MERRA-2, and NCEP) from different data centers and converting them for use with MPTRAC. Each script is designed to retrieve data from a specific center and perform necessary conversions.
 
 ## Scripts Overview
 
-### 1. `get_era5.sh`
+### `get_era5.sh`
 
-- **Description**: This script retrieves ERA5 reanalysis data from the ECMWF's Climate Data Store (CDS). ERA5 provides a detailed record of the atmosphere's state on a global scale.
+- **Description**: This script retrieves [ERA5 reanalysis data](https://www.ecmwf.int/en/forecasts/dataset/ecmwf-reanalysis-v5)  from the [ECMWF's Climate Data Store (CDS)](https://cds.climate.copernicus.eu/). ERA5 provides a detailed record of the atmosphere's state on a global scale.
 
 - **Usage**: 
   ```bash
@@ -18,11 +18,11 @@ This directory contains a set of scripts for retrieving meteorological data (ERA
   - `res`: Grid resolution in degrees.
   - `dt`: Timestep in hours.
   
-- **Requirements**: Requires the CDS API and Climate Data Operators (CDO) for data access and conversion.
+- **Requirements**: Requires the [CDS API](https://cds.climate.copernicus.eu/how-to-api) and Climate Data Operators (CDO) for data access and conversion.
 
-### 2. `get_gfs.sh`
+### `get_gfs.sh`
 
-- **Description**: This script retrieves GFS (Global Forecast System) data, a global weather prediction model, and converts it for MPTRAC use.
+- **Description**: This script retrieves [GFS (Global Forecast System) data](https://www.emc.ncep.noaa.gov/emc/pages/numerical_forecast_systems/gfs.php), a global weather prediction model, and converts it for MPTRAC use.
 
 - **Usage**: 
   ```bash
@@ -33,9 +33,9 @@ This directory contains a set of scripts for retrieving meteorological data (ERA
   
 - **Functionality**: Downloads multiple weather parameters and integrates them over different pressure levels for analysis.
 
-### 3. `get_merra2.sh`
+### `get_merra2.sh`
 
-- **Description**: Retrieves MERRA-2 data from NASA's GES DISC (Goddard Earth Sciences Data and Information Services Center), which provides historical atmospheric reanalysis data.
+- **Description**: Retrieves [MERRA-2 data](https://gmao.gsfc.nasa.gov/reanalysis/MERRA-2/) from NASA's GES DISC (Goddard Earth Sciences Data and Information Services Center), which provides historical atmospheric reanalysis data.
 
 - **Usage**: 
   ```bash
@@ -46,9 +46,9 @@ This directory contains a set of scripts for retrieving meteorological data (ERA
   
 - **Functionality**: This script handles 3D and surface data, processes time steps, and formats it for use in MPTRAC simulations.
 
-### 4. `get_ncep.sh`
+### `get_ncep.sh`
 
-- **Description**: Retrieves NCEP (National Centers for Environmental Prediction) data and converts it for MPTRAC, using reanalysis data on different atmospheric levels.
+- **Description**: Retrieves [NCEP-NCAR (National Centers for Environmental Prediction) Reanalysis 1 data](https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.html) and converts it for MPTRAC, using reanalysis data on different atmospheric levels.
 
 - **Usage**: 
   ```bash
@@ -65,7 +65,6 @@ This directory contains a set of scripts for retrieving meteorological data (ERA
 - **NCO (NetCDF Operators)**: For handling NetCDF file operations.
 - **Python**: Required for interacting with data APIs, such as the CDS API for ERA5.
 - **CDS API**: For retrieving data from ECMWF's Climate Data Store.
-- **ncatted**: For modifying NetCDF attributes.
 
 ## Notes
 
