@@ -3199,38 +3199,31 @@ void module_kpp_chem(
 #endif
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {
 
-    double var[nvar], fix[nfix], rconst[nreact];
-    for (int i = 0; i < nvar; i++) {
-      var[i] = 0.0;
-    }
-    for (int i = 0; i < nfix; i++) {
-      fix[i] = 0.0;
-    }
-    for (int i = 0; i < nreact; i++) {
-      rconst[i] = 0.0;
-    }
     /* Initialize... */
+    double var[nvar], fix[nfix], rconst[nreact];
+    for (int i = 0; i < nvar; i++)
+      var[i] = 0.0;
+    for (int i = 0; i < nfix; i++)
+      fix[i] = 0.0;
+    for (int i = 0; i < nreact; i++)
+      rconst[i] = 0.0;
     kpp_chem_initialize(ctl, clim, met0, met1, atm, var, fix, rconst, ip);
 
     /* Integrate... */
     double rpar[20];
     int ipar[20];
-
     for (int i = 0; i < 20; i++) {
       ipar[i] = 0;
       rpar[i] = 0.0;
-    }				/* for */
-
+    }
     ipar[0] = 0;		/* 0: F=F(y), i.e. independent of t (autonomous); 0:F=F(t,y), i.e. depends on t (non-autonomous) */
     ipar[1] = 1;		/* 0: NVAR-dimentional vector of tolerances; 1:scalar tolerances */
     ipar[3] = 4;		/* choice of the method:Rodas3 */
-
     Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
 	       atol, rtol, &FunTemplate, &JacTemplate, rpar, ipar);
 
-    /* Output to air parcel.. */
+    /* Save results.. */
     kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
-
   }
 }
 #endif
