@@ -68,7 +68,7 @@ To use this project, the following software must be installed:
 Here is an example of a chemical reaction that may be present in the chem.eqn file:
 
   ```O3 + NO -> NO2 + O2  ;  k1
-  NO2 + hv -> NO + O    ;  J1```
+  NO2 + hv -> NO + O    ;  J1
 
 This represents two reactions:
 
