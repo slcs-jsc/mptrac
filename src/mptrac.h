@@ -432,8 +432,8 @@
  *
  * @author Lars Hoffmann
  */
-#define DEG2DX(dlon, lat)					\
-  ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
+#define DEG2DX(dlon, lat)			\
+  (RE * DEG2RAD(dlon) * cos(DEG2RAD(lat)))
 
 /**
  * @brief Convert a latitude difference to a distance in the y-direction (north-south).
@@ -454,7 +454,7 @@
  * @author Lars Hoffmann
  */
 #define DEG2DY(dlat)				\
-  ((dlat) * M_PI * RE / 180.)
+  (RE * DEG2RAD(dlat))
 
 /**
  * @brief Converts degrees to radians.
@@ -517,7 +517,7 @@
  */
 #define DX2DEG(dx, lat)						\
   (((lat) < -89.999 || (lat) > 89.999) ? 0			\
-   : (dx) * 180. / (M_PI * RE * cos((lat) / 180. * M_PI)))
+   : (dx) * 180. / (M_PI * RE * cos(DEG2RAD(lat))))
 
 /**
  * @brief Convert a distance in kilometers to degrees latitude.
@@ -1448,37 +1448,6 @@
  */
 #define RHO(p, t)				\
   (100. * (p) / (RA * (t)))
-
-/**
- * @brief Roeth approximation formula for photolysis reactions.
- *
- * This macro calculates the rate of a photolysis reaction using the
- * Roeth approximation formula, which takes into account the solar
- * zenith angle (SZA).
- * 
- * @param a Coefficient 'a' in the Roeth formula.
- * @param b Coefficient 'b' in the Roeth formula.
- * @param c Coefficient 'c' in the Roeth formula.
- * @param sza The solar zenith angle in radians.
- * @return The rate of the photolysis reaction.
- *
- * The Roeth approximation formula for photolysis reactions is given by:
- *
- * \f[ ROETH\_PHOTOL(a, b, c, sza) = 
- *   \begin{cases} 
- *     a \times \exp\left(b \times \left(1 - \frac{1}{\cos(c \times sza)}\right)\right), \textrm{if } c \times sza < \frac{\pi}{2} \\
- *     0, \textrm{otherwise}
- *   \end{cases}
- * \f]
- * 
- * where:
- * - 'a', 'b', and 'c' are coefficients specific to the photolysis reaction.
- * - 'sza' is the solar zenith angle in radians.
- *
- * @author Mingzhao Liu
- */
-#define ROETH_PHOTOL(a, b, c, sza)					\
-  ((c)*(sza) < M_PI/2. ? (a) * exp((b) * (1 - 1/cos((c) * (sza)))) : 0)
 
 /**
  * @brief Set atmospheric quantity value.

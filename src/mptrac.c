@@ -87,8 +87,8 @@ void cart2geo(
 /*****************************************************************************/
 
 double clim_oh(
-  const ctl_t * ctl,
-  const clim_t * clim,
+  const ctl_t *ctl,
+  const clim_t *clim,
   const double t,
   const double lon,
   const double lat,
@@ -114,8 +114,8 @@ double clim_oh(
 /*****************************************************************************/
 
 void clim_oh_diurnal_correction(
-  const ctl_t * ctl,
-  clim_t * clim) {
+  const ctl_t *ctl,
+  clim_t *clim) {
 
   /* Set SZA threshold... */
   const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
@@ -148,7 +148,7 @@ void clim_oh_diurnal_correction(
 
 double clim_photo(
   const double rate[CP][CSZA][CO3],
-  const clim_photo_t * photo,
+  const clim_photo_t *photo,
   const double p,
   const double sza,
   const double o3c) {
@@ -198,7 +198,7 @@ double clim_photo(
 /*****************************************************************************/
 
 double clim_tropo(
-  const clim_t * clim,
+  const clim_t *clim,
   const double t,
   const double lat) {
 
@@ -226,7 +226,7 @@ double clim_tropo(
 /*****************************************************************************/
 
 void clim_tropo_init(
-  clim_t * clim) {
+  clim_t *clim) {
 
   /* Write info... */
   LOG(1, "Initialize tropopause data...");
@@ -381,7 +381,7 @@ void clim_tropo_init(
 /*****************************************************************************/
 
 double clim_ts(
-  const clim_ts_t * ts,
+  const clim_ts_t *ts,
   const double t) {
 
   /* Interpolate... */
@@ -399,7 +399,7 @@ double clim_ts(
 /*****************************************************************************/
 
 double clim_zm(
-  const clim_zm_t * zm,
+  const clim_zm_t *zm,
   const double t,
   const double lat,
   const double p) {
@@ -449,14 +449,14 @@ double clim_zm(
 
 #ifdef CMS
 void compress_cms(
-  const ctl_t * ctl,
+  const ctl_t *ctl,
   const char *varname,
   float *array,
   const size_t nx,
   const size_t ny,
   const size_t np,
   const int decompress,
-  FILE * inout) {
+  FILE *inout) {
 
   /* Set lon-lat grid... */
   const size_t nxy = nx * ny;
@@ -660,7 +660,7 @@ void compress_pck(
   const size_t nxy,
   const size_t nz,
   const int decompress,
-  FILE * inout) {
+  FILE *inout) {
 
   double min[EP], max[EP], off[EP], scl[EP];
 
@@ -760,7 +760,7 @@ void compress_zfp(
   const int precision,
   const double tolerance,
   const int decompress,
-  FILE * inout) {
+  FILE *inout) {
 
   zfp_field *field;		/* array meta data */
   zfp_stream *zfp;		/* compressed stream */
@@ -845,7 +845,7 @@ void compress_zstd(
   float *array,
   const size_t n,
   const int decompress,
-  FILE * inout) {
+  FILE *inout) {
 
   /* Get buffer sizes... */
   size_t uncomprLen = n * sizeof(float);
@@ -990,8 +990,8 @@ void geo2cart(
   double *x) {
 
   const double radius = z + RE;
-  const double latrad = lat / 180. * M_PI;
-  const double lonrad = lon / 180. * M_PI;
+  const double latrad = DEG2RAD(lat);
+  const double lonrad = DEG2RAD(lon);
   const double coslat = cos(latrad);
 
   x[0] = radius * coslat * cos(lonrad);
@@ -1002,11 +1002,11 @@ void geo2cart(
 /*****************************************************************************/
 
 void get_met(
-  ctl_t * ctl,
-  clim_t * clim,
+  ctl_t *ctl,
+  clim_t *clim,
   const double t,
-  met_t ** met0,
-  met_t ** met1) {
+  met_t **met0,
+  met_t **met1) {
 
   static int init;
 
@@ -1148,7 +1148,7 @@ void get_met(
 /*****************************************************************************/
 
 void get_met_help(
-  const ctl_t * ctl,
+  const ctl_t *ctl,
   const double t,
   const int direct,
   const char *metbase,
@@ -1238,9 +1238,9 @@ void get_met_replace(
 
 void get_tropo(
   const int met_tropo,
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met,
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met,
   const double *lons,
   const int nx,
   const double *lats,
@@ -1280,10 +1280,10 @@ void get_tropo(
 /*****************************************************************************/
 
 void intpol_met_4d_coord(
-  const met_t * met0,
+  const met_t *met0,
   float heights0[EX][EY][EP],
   float array0[EX][EY][EP],
-  const met_t * met1,
+  const met_t *met1,
   float heights1[EX][EY][EP],
   float array1[EX][EY][EP],
   const double ts,
@@ -1458,7 +1458,7 @@ void intpol_met_4d_coord(
 /*****************************************************************************/
 
 void intpol_met_space_3d(
-  const met_t * met,
+  const met_t *met,
   float array[EX][EY][EP],
   const double p,
   const double lon,
@@ -1518,7 +1518,7 @@ void intpol_met_space_3d(
 /*****************************************************************************/
 
 void intpol_met_space_3d_ml(
-  const met_t * met,
+  const met_t *met,
   float array[EX][EY][EP],
   const double p,
   const double lon,
@@ -1591,7 +1591,7 @@ void intpol_met_space_3d_ml(
 /*****************************************************************************/
 
 void intpol_met_space_2d(
-  const met_t * met,
+  const met_t *met,
   float array[EX][EY],
   const double lon,
   const double lat,
@@ -1651,9 +1651,9 @@ void intpol_met_space_2d(
 /*****************************************************************************/
 
 void intpol_met_time_3d(
-  const met_t * met0,
+  const met_t *met0,
   float array0[EX][EY][EP],
-  const met_t * met1,
+  const met_t *met1,
   float array1[EX][EY][EP],
   const double ts,
   const double p,
@@ -1680,9 +1680,9 @@ void intpol_met_time_3d(
 /*****************************************************************************/
 
 void intpol_met_time_3d_ml(
-  const met_t * met0,
+  const met_t *met0,
   float array0[EX][EY][EP],
-  const met_t * met1,
+  const met_t *met1,
   float array1[EX][EY][EP],
   const double ts,
   const double p,
@@ -1703,9 +1703,9 @@ void intpol_met_time_3d_ml(
 /*****************************************************************************/
 
 void intpol_met_time_2d(
-  const met_t * met0,
+  const met_t *met0,
   float array0[EX][EY],
-  const met_t * met1,
+  const met_t *met1,
   float array1[EX][EY],
   const double ts,
   const double lon,
@@ -1907,7 +1907,7 @@ double lapse_rate(
 /*****************************************************************************/
 
 void level_definitions(
-  ctl_t * ctl) {
+  ctl_t *ctl) {
 
 
   if (0 == ctl->met_press_level_def) {
@@ -2217,10 +2217,10 @@ void locate_vert(
 /*****************************************************************************/
 
 void module_advect(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -2375,10 +2375,10 @@ void module_advect(
 /*****************************************************************************/
 
 void module_advect_init(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm) {
 
   /* Initialize pressure consistent with zeta... */
   if (ctl->advect_vert_coord == 1) {
@@ -2401,11 +2401,11 @@ void module_advect_init(
 /*****************************************************************************/
 
 void module_bound_cond(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -2496,10 +2496,10 @@ void module_bound_cond(
 /*****************************************************************************/
 
 void module_chemgrid(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double tt) {
 
   /* Check quantities... */
@@ -2645,11 +2645,11 @@ void module_chemgrid(
 /*****************************************************************************/
 
 void module_chem_init(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm) {
 
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
@@ -2686,10 +2686,10 @@ void module_chem_init(
 /*****************************************************************************/
 
 void module_convection(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt,
   double *rs) {
 
@@ -2758,9 +2758,9 @@ void module_convection(
 /*****************************************************************************/
 
 void module_decay(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -2798,11 +2798,11 @@ void module_decay(
 /*****************************************************************************/
 
 void module_diffusion_meso(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache,
   const double *dt,
   double *rs) {
 
@@ -2878,9 +2878,9 @@ void module_diffusion_meso(
 /*****************************************************************************/
 
 void module_diffusion_turb(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
   const double *dt,
   double *rs) {
 
@@ -2919,10 +2919,10 @@ void module_diffusion_turb(
 /*****************************************************************************/
 
 void module_dry_deposition(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -2982,11 +2982,11 @@ void module_dry_deposition(
 /*****************************************************************************/
 
 void module_h2o2_chem(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -3062,11 +3062,11 @@ void module_h2o2_chem(
 /*****************************************************************************/
 
 void module_isosurf_init(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache) {
 
   double t;
 
@@ -3126,11 +3126,11 @@ void module_isosurf_init(
 /*****************************************************************************/
 
 void module_isosurf(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache,
   const double *dt) {
 
   /* Set timer... */
@@ -3179,11 +3179,11 @@ void module_isosurf(
 
 #ifdef KPP
 void module_kpp_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   double *dt) {
 
   /* Set timer... */
@@ -3231,11 +3231,11 @@ void module_kpp_chem(
 /*****************************************************************************/
 
 void module_meteo(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -3331,9 +3331,9 @@ void module_meteo(
 /*****************************************************************************/
 
 void module_mixing(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
   const double t) {
 
   /* Set timer... */
@@ -3421,9 +3421,9 @@ void module_mixing(
 /*****************************************************************************/
 
 void module_mixing_help(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
   const int *ixs,
   const int *iys,
   const int *izs,
@@ -3516,11 +3516,11 @@ void module_mixing_help(
 /*****************************************************************************/
 
 void module_oh_chem(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -3599,10 +3599,10 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -3689,7 +3689,7 @@ void module_rng_init(
 /*****************************************************************************/
 
 void module_rng(
-  const ctl_t * ctl,
+  const ctl_t *ctl,
   double *rs,
   const size_t n,
   const int method) {
@@ -3793,10 +3793,10 @@ void module_rng(
 /*****************************************************************************/
 
 void module_sedi(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -3822,9 +3822,9 @@ void module_sedi(
 /*****************************************************************************/
 
 void module_sort(
-  const ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  met_t *met0,
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
@@ -3918,9 +3918,9 @@ void module_sort_help(
 /*****************************************************************************/
 
 void module_timesteps(
-  const ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  atm_t *atm,
   double *dt,
   const double t) {
 
@@ -3955,8 +3955,8 @@ void module_timesteps(
 /*****************************************************************************/
 
 void module_timesteps_init(
-  ctl_t * ctl,
-  const atm_t * atm) {
+  ctl_t *ctl,
+  const atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
@@ -3986,11 +3986,11 @@ void module_timesteps_init(
 /*****************************************************************************/
 
 void module_tracer_chem(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -4055,10 +4055,10 @@ void module_tracer_chem(
 /*****************************************************************************/
 
 void module_wet_deposition(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double *dt) {
 
   /* Set timer... */
@@ -4215,8 +4215,8 @@ double nat_temperature(
 
 int read_atm(
   const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   int result;
 
@@ -4286,8 +4286,8 @@ int read_atm(
 
 int read_atm_asc(
   const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   /* Open file... */
   FILE *in;
@@ -4328,8 +4328,8 @@ int read_atm_asc(
 
 int read_atm_bin(
   const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   /* Open file... */
   FILE *in;
@@ -4384,8 +4384,8 @@ int read_atm_bin(
 
 int read_atm_clams(
   const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   int ncid, varid;
 
@@ -4440,8 +4440,8 @@ int read_atm_clams(
 
 int read_atm_nc(
   const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   int ncid, varid;
 
@@ -4472,8 +4472,8 @@ int read_atm_nc(
 /*****************************************************************************/
 
 void read_clim(
-  const ctl_t * ctl,
-  clim_t * clim) {
+  const ctl_t *ctl,
+  clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("READ_CLIM", "INPUT", NVTX_READ);
@@ -4533,7 +4533,7 @@ void read_clim(
 
 void read_clim_photo(
   const char *filename,
-  clim_photo_t * photo) {
+  clim_photo_t *photo) {
 
   int ncid, varid;
 
@@ -4625,7 +4625,7 @@ void read_clim_photo(
 void read_clim_photo_help(
   const int ncid,
   const char *varname,
-  const clim_photo_t * photo,
+  const clim_photo_t *photo,
   double var[CP][CSZA][CO3]) {
 
   /* Allocate... */
@@ -4652,7 +4652,7 @@ void read_clim_photo_help(
 
 int read_clim_ts(
   const char *filename,
-  clim_ts_t * ts) {
+  clim_ts_t *ts) {
 
   /* Write info... */
   LOG(1, "Read climatological time series: %s", filename);
@@ -4707,7 +4707,7 @@ int read_clim_ts(
 void read_clim_zm(
   const char *filename,
   const char *varname,
-  clim_zm_t * zm) {
+  clim_zm_t *zm) {
 
   int ncid, varid, it, iy, iz, iz2, nt;
 
@@ -4807,7 +4807,7 @@ void read_ctl(
   const char *filename,
   int argc,
   char *argv[],
-  ctl_t * ctl) {
+  ctl_t *ctl) {
 
   /* Set timer... */
   SELECT_TIMER("READ_CTL", "INPUT", NVTX_READ);
@@ -5629,9 +5629,9 @@ void read_kernel(
 
 int read_met(
   const char *filename,
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met) {
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met) {
 
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
@@ -5875,8 +5875,8 @@ int read_met(
 /*****************************************************************************/
 
 void read_met_bin_2d(
-  FILE * in,
-  const met_t * met,
+  FILE *in,
+  const met_t *met,
   float var[EX][EY],
   const char *varname) {
 
@@ -5904,9 +5904,9 @@ void read_met_bin_2d(
 /*****************************************************************************/
 
 void read_met_bin_3d(
-  FILE * in,
-  const ctl_t * ctl,
-  const met_t * met,
+  FILE *in,
+  const ctl_t *ctl,
+  const met_t *met,
   float var[EX][EY][EP],
   const char *varname,
   const float bound_min,
@@ -5990,8 +5990,8 @@ void read_met_bin_3d(
 /*****************************************************************************/
 
 void read_met_cape(
-  const clim_t * clim,
-  met_t * met) {
+  const clim_t *clim,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
@@ -6100,7 +6100,7 @@ void read_met_cape(
 /*****************************************************************************/
 
 void read_met_cloud(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CLOUD", "METPROC", NVTX_READ);
@@ -6151,8 +6151,8 @@ void read_met_cloud(
 /*****************************************************************************/
 
 void read_met_detrend(
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   met_t *help;
 
@@ -6255,7 +6255,7 @@ void read_met_detrend(
 /*****************************************************************************/
 
 void read_met_extrapolate(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_EXTRAPOLATE", "METPROC", NVTX_READ);
@@ -6295,8 +6295,8 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   float *help;
 
@@ -6425,8 +6425,8 @@ void read_met_geopot(
 void read_met_grid(
   const char *filename,
   const int ncid,
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   char levname[LEN], tstr[10];
 
@@ -6542,8 +6542,8 @@ void read_met_grid(
 
 void read_met_levels(
   const int ncid,
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
@@ -6677,8 +6677,8 @@ void read_met_levels(
 /*****************************************************************************/
 
 void read_met_ml2pl(
-  const ctl_t * ctl,
-  const met_t * met,
+  const ctl_t *ctl,
+  const met_t *met,
   float var[EX][EY][EP],
   const char *varname) {
 
@@ -6719,7 +6719,7 @@ void read_met_ml2pl(
 /*****************************************************************************/
 
 void read_met_monotonize(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_MONOTONIZE", "METPROC", NVTX_READ);
@@ -6803,8 +6803,8 @@ int read_met_nc_2d(
   const char *varname2,
   const char *varname3,
   const char *varname4,
-  const ctl_t * ctl,
-  const met_t * met,
+  const ctl_t *ctl,
+  const met_t *met,
   float dest[EX][EY],
   const float scl,
   const int init) {
@@ -6953,8 +6953,8 @@ int read_met_nc_3d(
   const char *varname2,
   const char *varname3,
   const char *varname4,
-  const ctl_t * ctl,
-  const met_t * met,
+  const ctl_t *ctl,
+  const met_t *met,
   float dest[EX][EY][EP],
   const float scl) {
 
@@ -7094,7 +7094,7 @@ int read_met_nc_3d(
 /*****************************************************************************/
 
 void read_met_pbl(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PBL", "METPROC", NVTX_READ);
@@ -7165,7 +7165,7 @@ void read_met_pbl(
 /*****************************************************************************/
 
 void read_met_periodic(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PERIODIC", "METPROC", NVTX_READ);
@@ -7220,7 +7220,7 @@ void read_met_periodic(
 /*****************************************************************************/
 
 void read_met_polar_winds(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC", NVTX_READ);
@@ -7279,7 +7279,7 @@ void read_met_polar_winds(
 /*****************************************************************************/
 
 void read_met_pv(
-  met_t * met) {
+  met_t *met) {
 
   double pows[EP];
 
@@ -7385,7 +7385,7 @@ void read_met_pv(
 /*****************************************************************************/
 
 void read_met_ozone(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_OZONE", "METPROC", NVTX_READ);
@@ -7414,8 +7414,8 @@ void read_met_ozone(
 /*****************************************************************************/
 
 void read_met_sample(
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   met_t *help;
 
@@ -7563,8 +7563,8 @@ void read_met_sample(
 
 void read_met_surface(
   const int ncid,
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
@@ -7681,9 +7681,9 @@ void read_met_surface(
 /*****************************************************************************/
 
 void read_met_tropo(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met) {
 
   double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
     th2[200], z[EP], z2[200];
@@ -7854,7 +7854,7 @@ void read_met_tropo(
 
 void read_obs(
   const char *filename,
-  const ctl_t * ctl,
+  const ctl_t *ctl,
   double *rt,
   double *rz,
   double *rlon,
@@ -8304,7 +8304,7 @@ double time_from_filename(
 /*****************************************************************************/
 
 double tropo_weight(
-  const clim_t * clim,
+  const clim_t *clim,
   const double t,
   const double lat,
   const double p) {
@@ -8329,8 +8329,8 @@ double tropo_weight(
 
 void write_atm(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t) {
 
   /* Set timer... */
@@ -8389,8 +8389,8 @@ void write_atm(
 
 void write_atm_asc(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t) {
 
   FILE *out;
@@ -8471,8 +8471,8 @@ void write_atm_asc(
 
 void write_atm_bin(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm) {
+  const ctl_t *ctl,
+  const atm_t *atm) {
 
   FILE *out;
 
@@ -8521,8 +8521,8 @@ void write_atm_bin(
 
 void write_atm_clams(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm) {
+  const ctl_t *ctl,
+  const atm_t *atm) {
 
   int tid, pid, ncid, varid;
   size_t start[2], count[2];
@@ -8570,8 +8570,8 @@ void write_atm_clams(
 
 void write_atm_clams_traj(
   const char *dirname,
-  const ctl_t * ctl,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t) {
 
   /* Global Counter... */
@@ -8719,8 +8719,8 @@ void write_atm_clams_traj(
 
 void write_atm_nc(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm) {
+  const ctl_t *ctl,
+  const atm_t *atm) {
 
   int ncid, obsid, varid;
 
@@ -8764,8 +8764,8 @@ void write_atm_nc(
 
 void write_csi(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t) {
 
   static FILE *out;
@@ -8842,7 +8842,7 @@ void write_csi(
     /* Set horizontal coordinates... */
     for (iy = 0; iy < ctl->csi_ny; iy++) {
       const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat * M_PI / 180.);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
     }
   }
 
@@ -9026,8 +9026,8 @@ void write_csi(
 
 void write_ens(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t) {
 
   static FILE *out;
@@ -9123,10 +9123,10 @@ void write_ens(
 
 void write_grid(
   const char *filename,
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
   const double t) {
 
   static double kz[EP], kw[EP];
@@ -9199,8 +9199,7 @@ void write_grid(
 #pragma omp parallel for default(shared)
   for (int iy = 0; iy < ctl->grid_ny; iy++) {
     lat[iy] = ctl->grid_lat0 + dlat * (iy + 0.5);
-    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-      * cos(lat[iy] * M_PI / 180.);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
   }
 
   /* Set time interval for output... */
@@ -9315,7 +9314,7 @@ void write_grid(
 
 void write_grid_asc(
   const char *filename,
-  const ctl_t * ctl,
+  const ctl_t *ctl,
   const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
@@ -9419,7 +9418,7 @@ void write_grid_asc(
 
 void write_grid_nc(
   const char *filename,
-  const ctl_t * ctl,
+  const ctl_t *ctl,
   const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
@@ -9543,8 +9542,8 @@ void write_grid_nc(
 
 int write_met(
   const char *filename,
-  const ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
@@ -9665,8 +9664,8 @@ int write_met(
 /*****************************************************************************/
 
 void write_met_bin_2d(
-  FILE * out,
-  met_t * met,
+  FILE *out,
+  met_t *met,
   float var[EX][EY],
   const char *varname) {
 
@@ -9694,9 +9693,9 @@ void write_met_bin_2d(
 /*****************************************************************************/
 
 void write_met_bin_3d(
-  FILE * out,
-  const ctl_t * ctl,
-  met_t * met,
+  FILE *out,
+  const ctl_t *ctl,
+  met_t *met,
   float var[EX][EY][EP],
   const char *varname,
   const int precision,
@@ -9771,10 +9770,10 @@ void write_met_bin_3d(
 
 void write_output(
   const char *dirname,
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   const double t) {
 
   char ext[10], filename[2 * LEN];
@@ -9866,10 +9865,10 @@ void write_output(
 
 void write_prof(
   const char *filename,
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
   const double t) {
 
   static FILE *out;
@@ -9953,8 +9952,7 @@ void write_prof(
       lon[ix] = ctl->prof_lon0 + dlon * (ix + 0.5);
     for (int iy = 0; iy < ctl->prof_ny; iy++) {
       lat[iy] = ctl->prof_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-	* cos(lat[iy] * M_PI / 180.);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
     }
   }
 
@@ -10094,10 +10092,10 @@ void write_prof(
 
 void write_sample(
   const char *filename,
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
   const double t) {
 
   static FILE *out;
@@ -10257,8 +10255,8 @@ void write_sample(
 
 void write_station(
   const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm,
+  const ctl_t *ctl,
+  atm_t *atm,
   const double t) {
 
   static FILE *out;
@@ -10343,8 +10341,8 @@ void write_station(
 
 void write_vtk(
   const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t) {
 
   FILE *out;
