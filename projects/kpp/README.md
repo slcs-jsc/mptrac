@@ -49,15 +49,15 @@ To use this project, the following software must be installed:
 
 3. **Set up environment:**
   Ensure that KPP is installed and its path is set in your environment. For example:
-  ```export PATH=/path/to/kpp:$PATH
+  ```export PATH=/path/to/kpp:$PATH```
 
 ## Usage
 
 1. **Build the chemical integrator:**
   To build the solver using the KPP preprocessor, run the provided build_KPP.sh script. This will generate the necessary C or Fortran code and compile it:
-  ```./build_KPP.sh
+  ```./build_KPP.sh```
 
-    The script will generate the chemical integration code from the chem.kpp and chem.eqn files, then compile it into an executable.
+  The script will generate the chemical integration code from the chem.kpp and chem.eqn files, then compile it into an executable.
 
 2. **Run the solver:** After compiling, you can run the executable to integrate the chemical reactions over time. The specific usage of the solver will depend on how the code is set up to take inputs for initial concentrations, integration time, etc.
 
@@ -68,18 +68,9 @@ To use this project, the following software must be installed:
 Here is an example of a chemical reaction that may be present in the chem.eqn file:
 
   ```O3 + NO -> NO2 + O2  ;  k1
-  NO2 + hv -> NO + O    ;  J1
+  NO2 + hv -> NO + O    ;  J1```
 
 This represents two reactions:
 
 1. Ozone (O3) reacts with nitrogen oxide (NO) to form nitrogen dioxide (NO2) and oxygen (O2), with a reaction rate k1.
 2. Nitrogen dioxide (NO2) breaks down into nitrogen oxide (NO) and an oxygen atom (O) upon absorbing sunlight (denoted by hv), with a photolysis rate J1.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-   - The Kinetic PreProcessor (KPP) team for providing an excellent tool for chemical mechanism integration.
-   - [Your organization/university] for supporting this project.
