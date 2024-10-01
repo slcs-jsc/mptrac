@@ -20,6 +20,7 @@ ifBuildMandatory=false
 ifClean=false
 ifBuildGSL=false
 ifBuildTHRUST=false
+ifBuildCURL=false
 ifBuildZLIB=false
 ifBuildZFP=false
 ifBuildZSTD=false
@@ -33,13 +34,14 @@ numProcs=`nproc --all`
 strBuildDir=${PWD}/build
 strLibsDir=${PWD}
 
-strFileGSL="gsl-2.7"
-strFileHDF5="hdf5-1.12.1"
-strFileNETCDF="netcdf-c-4.8.1"
+strFileGSL="gsl-2.7.1"
+strFileHDF5="hdf5-1.14.4-3"
+strFileNETCDF="netcdf-c-4.9.2"
 strFileTHRUST="thrustsort-1.2"
 strFileZFP="zfp-0.5.5"
-strFileZLIB="zlib-1.2.12"
-strFileZSTD="zstd-1.5.2"
+strFileCURL="curl-8.10.1"
+strFileZLIB="zlib-1.3.1"
+strFileZSTD="zstd-1.5.5"
 strFileKPP="KPP"
 
 ###### Reminder           ######
@@ -51,7 +53,7 @@ fi
 
 ###### Checking the flags ######
 
-while getopts amcgtzfshnkp: flag
+while getopts amcgtuzfshnkp: flag
 do
     case "${flag}" in
         a) ifBuildAll=true        ; echo "build all libraries  " ;;	
@@ -59,6 +61,7 @@ do
 	c) ifClean=true           ; echo "clean build directory" ;;
 	g) ifBuildGSL=true    ; echo "GSL is selected      " ;;
 	t) ifBuildTHRUST=true ; echo "THRUST is selected   " ;;
+	u) ifBuildCURL=true   ; echo "CURL is selected     " ;;
 	z) ifBuildZLIB=true   ; echo "ZLIB is selected     " ;;
 	f) ifBuildZFP=true    ; echo "ZFP is selected      " ;;
 	s) ifBuildZSTD=true   ; echo "ZSTD is selected     " ;;
@@ -81,14 +84,15 @@ do
 	   printf -- "--------------------------------------------------------------\n"	
            printf -- "-a         : build all the libs, \$mptrac/libs/build will be  \n"
 	   printf -- "             cleaned      \n"
-	   printf -- "-m         : build mandatory libs: GSL, netCDF, HDF5, and zlib\n"
+	   printf -- "-m         : build mandatory libs: GSL, netCDF, HDF5, curl and zlib\n"
 	   printf -- "-c         : clean the \$mptrac/libs/build                    \n"
 	   printf -- "-g         : build GSL    \n" 
-	   printf -- "-t         : build THRUST     \n" 
+	   printf -- "-t         : build THRUST     \n"
+	   printf -- "-u         : build CURL   \n" 
 	   printf -- "-z         : build ZLIB   \n" 
 	   printf -- "-f         : build ZFP    \n" 
 	   printf -- "-s         : build ZSTD   \n" 
-	   printf -- "-d         : build HDF5   (prerequisite: ZLIB)  \n" 
+	   printf -- "-d         : build HDF5   (prerequisites: curl, ZLIB)  \n" 
 	   printf -- "-n         : build NETCDF (prerequisite: HDF5)  \n" 
 	   printf -- "-k         : build KPP    \n" 
 	   printf -- "-p [cores] : how many [cores] to be used by make -j [cores]   \n" 
@@ -125,10 +129,11 @@ fi
 # Mandatory ... 
 
 if [ $ifBuildMandatory = true ]; then
-     ifBuildGSL=true
-     ifBuildZLIB=true
-     ifBuildHDF5=true
-     ifBuildNETCDF=true
+    ifBuildGSL=true
+    ifBuildCURL=true
+    ifBuildZLIB=true
+    ifBuildHDF5=true
+    ifBuildNETCDF=true
 fi
 
 # GSL...
@@ -153,6 +158,19 @@ if [ $ifBuildAll = true ] || [ $ifBuildTHRUST = true ] ; then
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
         && cp -a libthrustsort_gpu.a libthrustsort_cpu.a $strBuildDir/lib/ \
+    	|| exit
+fi
+
+# curl...
+if [ $ifBuildAll = true ] || [ $ifBuildCURL = true ] ; then 
+    cd $strLibsDir	
+    printf "Starting to compile CURL\n"
+    export CFLAGS="-fPIC"
+    strTarget=$strFileCURL
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
+    cd $strBuildDir/src/$strTarget \
+        && ./configure --prefix=$strBuildDir --without-ssl --without-libpsl \
+        && make -j $numProcs && make check && make install && make clean \
     	|| exit
 fi
 
@@ -205,7 +223,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then
     strTarget=$strFileHDF5
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
-        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl \
+        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl --disable-build-for-curl --enable-static --disable-fortran \
         && make -j $numProcs && make check && make install && make clean \
     	|| exit
 fi
