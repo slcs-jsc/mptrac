@@ -1,6 +1,6 @@
 # KPP Chemical Integrator
 
-This project uses the **Kinetic PreProcessor (KPP)** to solve chemical reaction systems. KPP is a widely used tool for generating code that integrates chemical reactions in atmospheric models. It converts chemical equations and mechanisms into optimized C or Fortran code that can be linked to large-scale models.
+This project uses the **Kinetic PreProcessor (KPP)** to solve chemical reaction systems. KPP is a widely used tool for generating code that integrates chemical reactions in atmospheric models. It converts chemical equations and mechanisms into C code that can be linked to large-scale models.
 
 ## Overview
 
@@ -16,9 +16,29 @@ The purpose of this repository is to provide a complete setup for solving chemic
 
 ### 1. `chem.eqn`
 This file contains the list of chemical reactions that define the chemical mechanism to be integrated. Each line in this file represents a chemical reaction, including the reactants, products, and reaction rates.
+- #DEFVAR and #DEFFIX
+There are two ways to declare new species together with their atom composition: #DEFVAR and #DEFFIX. These sections define all the species that will be used in the chemical mechanism. Species can be variable or fixed. The type is implicitly specified by defining the species in the appropriate sections. A fixed species does not vary through chemical reactions.
+```
+#DEFVAR
+o3p   =   IGNORE;
+o3    =   IGNORE;
+#DEFFIX
+o2    =   IGNORE;
+```
+- #EQUATIONS
+The chemical mechanism is specified in the #EQUATIONS section.
+```
+#EQUATIONS
+o3p + o2    = o3   : k0;
+```
+The reaction coefficient k0 should be defined in the function 
+`void kpp_chem_initialize()`
+
+The detail description of the user manual of KPP package can be found in https://kpp.readthedocs.io/en/stable/index.html
 
 ### 2. `chem.kpp`
 This is the KPP mechanism file, which specifies the chemical species, parameters, and reactions. It is the primary input file used by KPP to generate the solver code.
+This file comtain the declaration of the rate coefficient variables and the functions to initialize the species concentrations and rate coefficient (`kpp_chem_initialize()`) and output the species' volume mixing ratio back to MPTRAC (`kpp_chem_output2atm()`).
 
 ### 3. `kpp_chem.h`
 This header file defines key parameters, constants, and functions used in the KPP-generated code. It includes the species involved in the chemical reactions and additional configurations necessary for the solver.
@@ -31,46 +51,24 @@ This script automates the process of generating and compiling the KPP code. It r
 
 ## Prerequisites
 
-To use this project, the following software must be installed:
-
-- **KPP (Kinetic PreProcessor)**: Make sure that KPP is installed and available in your system’s `PATH`. You can download it from the [official KPP website](https://people.cs.vt.edu/~asandu/Software/Kpp/).
-- A C/C++ compiler (e.g., `gcc`, `clang`) or a Fortran compiler if using Fortran-generated code.
-- Standard build tools such as `make` and `bash`.
-
-## Installation
-
-1. **Install KPP**: 
-   Download and install the KPP preprocessor by following the instructions on the official KPP website.
-   
-2. **Clone this repository**:
-   ```bash
-   git clone https://github.com/your-username/kpp-chemical-integrator.git
-   cd kpp-chemical-integrator
-
-3. **Set up environment:**
-  Ensure that KPP is installed and its path is set in your environment. For example:
-  ```export PATH=/path/to/kpp:$PATH```
+The KPP package has been implemented in the libs folder. Execute  `/libs/build.sh -k` for the environment set up.
 
 ## Usage
 
-1. **Build the chemical integrator:**
-  To build the solver using the KPP preprocessor, run the provided build_KPP.sh script. This will generate the necessary C or Fortran code and compile it:
-  ```./build_KPP.sh```
+1. **Modifying the chemical mechanism:** To modify the chemical reactions, edit the chem.eqn file. You can add, remove, or change the reactions and their rates. After modifying the file, run the build_KPP.sh script again to regenerate and recompile the solver code.
+
+2. **Build the chemical integrator:**
+  To build the solver using the KPP, run the provided build_KPP.sh script. This will generate the necessary C code and compile it with two parameter: 1) the directory of the folder where the kpp definition file is in, 2) the switch of GPU compilation:
+  ```./build_KPP.sh <directory> <1:GPU on; 0:GPU off>```
+  Example:
+  ```./build.sh chem 0```
 
   The script will generate the chemical integration code from the chem.kpp and chem.eqn files, then compile it into an executable.
 
-2. **Run the solver:** After compiling, you can run the executable to integrate the chemical reactions over time. The specific usage of the solver will depend on how the code is set up to take inputs for initial concentrations, integration time, etc.
+3. **Compile the source code of MPTRAC with `KPP=1`:** Go to the `src` directory and compile the code with the KPP mode switched on:
+```
+cd ../../src
+make clean
+make KPP=1
+```
 
-3. **Modifying the chemical mechanism:** To modify the chemical reactions, edit the chem.eqn file. You can add, remove, or change the reactions and their rates. After modifying the file, run the build_KPP.sh script again to regenerate and recompile the solver code.
-
-## Example
-
-Here is an example of a chemical reaction that may be present in the chem.eqn file:
-
-  ```O3 + NO -> NO2 + O2  ;  k1
-  NO2 + hv -> NO + O    ;  J1
-
-This represents two reactions:
-
-1. Ozone (O3) reacts with nitrogen oxide (NO) to form nitrogen dioxide (NO2) and oxygen (O2), with a reaction rate k1.
-2. Nitrogen dioxide (NO2) breaks down into nitrogen oxide (NO) and an oxygen atom (O) upon absorbing sunlight (denoted by hv), with a photolysis rate J1.
