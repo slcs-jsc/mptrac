@@ -17,6 +17,7 @@ The purpose of this repository is to provide a complete setup for solving chemic
 ### 1. `chem.eqn`
 This file contains the list of chemical reactions that define the chemical mechanism to be integrated. Each line in this file represents a chemical reaction, including the reactants, products, and reaction rates.
 - #DEFVAR and #DEFFIX
+  
 There are two ways to declare new species together with their atom composition: #DEFVAR and #DEFFIX. These sections define all the species that will be used in the chemical mechanism. Species can be variable or fixed. The type is implicitly specified by defining the species in the appropriate sections. A fixed species does not vary through chemical reactions.
 ```
 #DEFVAR
@@ -26,6 +27,7 @@ o3    =   IGNORE;
 o2    =   IGNORE;
 ```
 - #EQUATIONS
+  
 The chemical mechanism is specified in the #EQUATIONS section.
 ```
 #EQUATIONS
@@ -60,7 +62,9 @@ The KPP package has been implemented in the libs folder. Execute  `/libs/build.s
 2. **Build the chemical integrator:**
   To build the solver using the KPP, run the provided build_KPP.sh script. This will generate the necessary C code and compile it with two parameter: 1) the directory of the folder where the kpp definition file is in, 2) the switch of GPU compilation:
   ```./build_KPP.sh <directory> <1:GPU on; 0:GPU off>```
+
   Example:
+  
   ```./build.sh chem 0```
 
   The script will generate the chemical integration code from the chem.kpp and chem.eqn files, then compile it into an executable.
