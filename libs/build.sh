@@ -38,7 +38,7 @@ strFileGSL="gsl-2.7.1"
 strFileHDF5="hdf5-1.14.4-3"
 strFileNETCDF="netcdf-c-4.9.2"
 strFileTHRUST="thrustsort-1.2"
-strFileZFP="zfp-0.5.5"
+strFileZFP="zfp-1.0.1"
 strFileCURL="curl-8.10.1"
 strFileZLIB="zlib-1.3.1"
 strFileZSTD="zstd-1.5.5"
@@ -223,7 +223,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then
     strTarget=$strFileHDF5
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
-        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl --disable-build-for-curl --enable-static --disable-fortran \
+        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl --enable-static --disable-fortran --disable-libxml2 \
         && make -j $numProcs && make check && make install && make clean \
     	|| exit
 fi
