@@ -8,7 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v4
     - name: install
@@ -17,6 +17,4 @@ jobs:
       run: cd src ; make STATIC=0
     - name: check
       run: cd src ; make check
-
-
-    
+      
