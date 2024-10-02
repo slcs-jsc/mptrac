@@ -140,7 +140,7 @@ endif
 
 # Compile for coverage testing...
 ifeq ($(COV),1)
-  CFLAGS += -ftest-coverage -fprofile-arcs
+  CFLAGS += --coverage
 endif
 
 # NVTX...
