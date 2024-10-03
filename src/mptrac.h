@@ -2961,6 +2961,12 @@ typedef struct {
   /*! Sparse output in grid data files (0=no, 1=yes). */
   int grid_sparse;
 
+  /*! zlib compression level of netCDF grid data files (0=off). */
+  int grid_nc_level;
+
+  /*! Number of digits for quantization of netCDF grid data files (0=off). */
+  int grid_nc_quant[NQ];
+
   /*! Include standard deviations in grid output (0=no, 1=yes). */
   int grid_stddev;
 

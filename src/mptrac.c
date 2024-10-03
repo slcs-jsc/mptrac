@@ -5515,6 +5515,11 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
+  ctl->grid_nc_level =
+    (int) scan_ctl(filename, argc, argv, "GRID_NC_LEVEL", -1, "0", NULL);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    ctl->grid_nc_quant[iq] =
+      (int) scan_ctl(filename, argc, argv, "GRID_NC_QUANT", iq, "0", NULL);
   ctl->grid_stddev =
     (int) scan_ctl(filename, argc, argv, "GRID_STDDEV", -1, "0", NULL);
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
@@ -9491,20 +9496,22 @@ void write_grid_nc(
 	     0);
   NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km", 0, 0);
   NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2", 0, 0);
-  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2", 0, 0);
-  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
-	     "volume mixing ratio (implicit)", "ppv", 0, 0);
+
+  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2",
+	     ctl->grid_nc_level, 0);
+  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid, "volume mixing ratio (implicit)",
+	     "ppv", ctl->grid_nc_level, 0);
   NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1", 0, 0);
   for (int iq = 0; iq < ctl->nq; iq++) {
     sprintf(varname, "%s_mean", ctl->qnt_name[iq]);
     sprintf(longname, "%s (mean)", ctl->qnt_longname[iq]);
-    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq], 0,
-	       0);
+    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq],
+	       ctl->grid_nc_level, ctl->grid_nc_quant[iq]);
     if (ctl->grid_stddev) {
       sprintf(varname, "%s_stddev", ctl->qnt_name[iq]);
       sprintf(longname, "%s (stddev)", ctl->qnt_longname[iq]);
-      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq], 0,
-		 0);
+      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq],
+		 ctl->grid_nc_level, ctl->grid_nc_quant[iq]);
     }
   }
   /* End definitions... */
