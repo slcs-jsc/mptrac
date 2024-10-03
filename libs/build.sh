@@ -223,7 +223,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then
     strTarget=$strFileHDF5
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
-        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl --enable-static --disable-fortran --disable-libxml2 \
+        && ./configure --prefix=$strBuildDir --with-zlib=$strBuildDir --enable-hl --enable-static --disable-fortran \
         && make -j $numProcs && make check && make install && make clean \
     	|| exit
 fi
@@ -235,7 +235,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then
     strTarget=$strFileNETCDF
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
-        && CPPFLAGS=-I$strBuildDir/include LDFLAGS=-L$strBuildDir/lib ./configure --prefix=$strBuildDir --disable-dap --disable-nczarr \
+        && CPPFLAGS=-I$strBuildDir/include LDFLAGS=-L$strBuildDir/lib ./configure --prefix=$strBuildDir --disable-dap --disable-nczarr --disable-libxml2 \
         && make -j $numProcs && make check
     make install && make clean || exit
     echo -e "\n***** nc-config *****"
