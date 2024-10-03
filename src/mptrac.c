@@ -9600,19 +9600,19 @@ int write_met(
     /* Define surface variables... */
     int dimid2[2] = { latid, lonid };
     NC_DEF_VAR("sp", NC_FLOAT, 2, dimid2, "Surface pressure", "Pa",
-	       ctl->met_nc_level, ctl->met_nc_quant);
+	       ctl->met_nc_level, 0);
     NC_DEF_VAR("z", NC_FLOAT, 2, dimid2, "Geopotential", "m**2 s**-2",
-	       ctl->met_nc_level, ctl->met_nc_quant);
+	       ctl->met_nc_level, 0);
     NC_DEF_VAR("t2m", NC_FLOAT, 2, dimid2, "2 metre temperature", "K",
-	       ctl->met_nc_level, ctl->met_nc_quant);
+	       ctl->met_nc_level, 0);
     NC_DEF_VAR("u10m", NC_FLOAT, 2, dimid2, "10 metre U wind component",
-	       "m s**-1", ctl->met_nc_level, ctl->met_nc_quant);
+	       "m s**-1", ctl->met_nc_level, 0);
     NC_DEF_VAR("v10m", NC_FLOAT, 2, dimid2, "10 metre V wind component",
-	       "m s**-1", ctl->met_nc_level, ctl->met_nc_quant);
+	       "m s**-1", ctl->met_nc_level, 0);
     NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-",
-	       ctl->met_nc_level, ctl->met_nc_quant);
+	       ctl->met_nc_level, 0);
     NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K",
-	       ctl->met_nc_level, ctl->met_nc_quant);
+	       ctl->met_nc_level, 0);
 
     /* Define level data... */
     int dimid3[3] = { levid, latid, lonid };
