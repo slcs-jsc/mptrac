@@ -251,9 +251,9 @@ clean:
 	rm -rf $(EXC) lib* *.o *.gcda *.gcno *.gcov coverage* *~
 
 coverage:
-	echo "LCOV:" ; lcov --capture --directory . --output-file=coverage.info ; \
-	echo "GENHTML:" ; genhtml coverage.info --legend --frames --output-directory=coverage ; \
-	echo "GCOV:" ; gcov -abcfu *.c ; echo "FINISHED"
+	lcov --capture --directory . --output-file=coverage.info ; \
+	genhtml coverage.info --legend --frames --output-directory=coverage ; \
+	gcov -abcfu *.c ; echo "FINISHED" || true
 
 cppcheck:
 	cppcheck --enable=all ./
