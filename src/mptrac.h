@@ -2886,8 +2886,13 @@ typedef struct {
      3=CLaMS_traj, 4=CLaMS_pos). */
   int atm_type_out;
 
-  /*! Type of observation data files
-     (0=ASCII, 1=netCDF). */
+  /*! zlib compression level of netCDF atmospheric data files (0=off). */
+  int atm_nc_level;
+
+  /*! Number of digits for quantization of netCDF atmospheric data files (0=off). */
+  int atm_nc_quant[NQ];
+
+  /*! Type of observation data files (0=ASCII, 1=netCDF). */
   int obs_type;
 
   /*! Basename of CSI data files. */

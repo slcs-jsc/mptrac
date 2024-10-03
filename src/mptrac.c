@@ -5470,6 +5470,11 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE_OUT", -1, "-1", NULL);
   if (ctl->atm_type_out == -1)
     ctl->atm_type_out = ctl->atm_type;
+  ctl->atm_nc_level =
+    (int) scan_ctl(filename, argc, argv, "ATM_NC_LEVEL", -1, "0", NULL);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    ctl->atm_nc_quant[iq] =
+      (int) scan_ctl(filename, argc, argv, "ATM_NC_QUANT", iq, "0", NULL);
   ctl->obs_type =
     (int) scan_ctl(filename, argc, argv, "OBS_TYPE", -1, "0", NULL);
 
@@ -8541,14 +8546,18 @@ void write_atm_clams(
   /* Define variables and their attributes... */
   int dim_ids[2] = { tid, pid };
   NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
-  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg", 0, 0);
-  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg", 0, 0);
-  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa", 0, 0);
-  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", 0, 0);
+	     "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", ctl->atm_nc_level, 0);
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-	       ctl->qnt_name[iq], ctl->qnt_unit[iq], 0, 0);
+	       ctl->qnt_name[iq], ctl->qnt_unit[iq],
+	       ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
   /* Define global attributes... */
   NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8628,14 +8637,19 @@ void write_atm_clams_traj(
 
     /* Define variables and their attributes... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	       "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
-    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg", 0, 0);
-    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg", 0, 0);
-    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa", 0, 0);
-    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K", 0, 0);
+	       "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K",
+	       ctl->atm_nc_level, 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-		 ctl->qnt_name[iq], ctl->qnt_unit[iq], 0, 0);
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq],
+		 ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
     /* Define global attributes... */
     NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8689,14 +8703,18 @@ void write_atm_clams_traj(
 
     /* Define variables and their attributes... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	       "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
-    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg", 0, 0);
-    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg", 0, 0);
-    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa", 0, 0);
-    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", 0, 0);
+	       "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", ctl->atm_nc_level, 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-		 ctl->qnt_name[iq], ctl->qnt_unit[iq], 0, 0);
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq],
+		 ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
     /* Define global attributes... */
     NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8738,13 +8756,17 @@ void write_atm_nc(
 
   /* Define variables and their attributes... */
   NC_DEF_VAR("time", NC_DOUBLE, 1, &obsid, "time",
-	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
-  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa", 0, 0);
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east", 0, 0);
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north", 0, 0);
+	     "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north",
+	     ctl->atm_nc_level, 0);
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 1, &obsid,
-	       ctl->qnt_longname[iq], ctl->qnt_unit[iq], 0, 0);
+	       ctl->qnt_longname[iq], ctl->qnt_unit[iq],
+	       ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
   /* Define global attributes... */
   NC_PUT_ATT_GLOBAL("featureType", "point");
