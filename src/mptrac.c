@@ -5060,6 +5060,10 @@ void read_ctl(
       ("Please use meteorological files in netcdf format for diabatic calculations.");
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
+  ctl->met_nc_level =
+    (int) scan_ctl(filename, argc, argv, "MET_NC_LEVEL", -1, "0", NULL);
+  ctl->met_nc_quant =
+    (int) scan_ctl(filename, argc, argv, "MET_NC_QUANT", -1, "0", NULL);
   ctl->met_zfp_prec =
     (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", -1, "8", NULL);
   ctl->met_zfp_tol_t =
@@ -8528,7 +8532,7 @@ void write_atm_clams(
   size_t start[2], count[2];
 
   /* Create file... */
-  nc_create(filename, NC_CLOBBER, &ncid);
+  nc_create(filename, NC_NETCDF4, &ncid);
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -8537,14 +8541,14 @@ void write_atm_clams(
   /* Define variables and their attributes... */
   int dim_ids[2] = { tid, pid };
   NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
-  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
-  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
-  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg", 0, 0);
+  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg", 0, 0);
+  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa", 0, 0);
+  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", 0, 0);
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-	       ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+	       ctl->qnt_name[iq], ctl->qnt_unit[iq], 0, 0);
 
   /* Define global attributes... */
   NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8613,7 +8617,7 @@ void write_atm_clams_traj(
   if (out_cnt == 0) {
 
     /* Create file... */
-    nc_create(filename_out, NC_CLOBBER, &ncid);
+    nc_create(filename_out, NC_NETCDF4, &ncid);
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
@@ -8624,14 +8628,14 @@ void write_atm_clams_traj(
 
     /* Define variables and their attributes... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	       "seconds since 2000-01-01 00:00:00 UTC");
-    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg");
-    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg");
-    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa");
-    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K");
+	       "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg", 0, 0);
+    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg", 0, 0);
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa", 0, 0);
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K", 0, 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq], 0, 0);
 
     /* Define global attributes... */
     NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8675,7 +8679,7 @@ void write_atm_clams_traj(
     LOG(1, "Write init file: %s", filename_init);
 
     /* Create file... */
-    nc_create(filename_init, NC_CLOBBER, &ncid);
+    nc_create(filename_init, NC_NETCDF4, &ncid);
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -8685,14 +8689,14 @@ void write_atm_clams_traj(
 
     /* Define variables and their attributes... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	       "seconds since 2000-01-01 00:00:00 UTC");
-    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
-    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
-    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
-    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+	       "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg", 0, 0);
+    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg", 0, 0);
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa", 0, 0);
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", 0, 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq], 0, 0);
 
     /* Define global attributes... */
     NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8727,20 +8731,20 @@ void write_atm_nc(
   size_t start[2], count[2];
 
   /* Create file... */
-  NC(nc_create(filename, NC_CLOBBER, &ncid));
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "obs", (size_t) atm->np, &obsid));
 
   /* Define variables and their attributes... */
   NC_DEF_VAR("time", NC_DOUBLE, 1, &obsid, "time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa");
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east");
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north");
+	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa", 0, 0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east", 0, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north", 0, 0);
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 1, &obsid,
-	       ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
+	       ctl->qnt_longname[iq], ctl->qnt_unit[iq], 0, 0);
 
   /* Define global attributes... */
   NC_PUT_ATT_GLOBAL("featureType", "point");
@@ -9446,7 +9450,7 @@ void write_grid_nc(
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
 
   /* Create file... */
-  NC(nc_create(filename, NC_CLOBBER, &ncid));
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &dimid[0]));
@@ -9457,24 +9461,28 @@ void write_grid_nc(
 
   /* Define variables and their attributes... */
   NC_DEF_VAR("time", NC_DOUBLE, 1, &dimid[0], "time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[1], "altitude", "km");
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[2], "latitude", "degrees_north");
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[3], "longitude", "degrees_east");
-  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km");
-  NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2");
-  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2");
+	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[1], "altitude", "km", 0, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[2], "latitude", "degrees_north", 0,
+	     0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[3], "longitude", "degrees_east", 0,
+	     0);
+  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km", 0, 0);
+  NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2", 0, 0);
+  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2", 0, 0);
   NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
-	     "volume mixing ratio (implicit)", "ppv");
-  NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1");
+	     "volume mixing ratio (implicit)", "ppv", 0, 0);
+  NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1", 0, 0);
   for (int iq = 0; iq < ctl->nq; iq++) {
     sprintf(varname, "%s_mean", ctl->qnt_name[iq]);
     sprintf(longname, "%s (mean)", ctl->qnt_longname[iq]);
-    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq]);
+    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq], 0,
+	       0);
     if (ctl->grid_stddev) {
       sprintf(varname, "%s_stddev", ctl->qnt_name[iq]);
       sprintf(longname, "%s (stddev)", ctl->qnt_longname[iq]);
-      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq]);
+      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq], 0,
+		 0);
     }
   }
   /* End definitions... */
@@ -9571,7 +9579,7 @@ int write_met(
     /* Create file... */
     int ncid, varid;
     size_t start[4], count[4];
-    nc_create(filename, NC_CLOBBER, &ncid);
+    nc_create(filename, NC_NETCDF4, &ncid);
 
     /* Define dimensions... */
     int tid, lonid, latid, levid;
@@ -9582,41 +9590,54 @@ int write_met(
 
     /* Define grid... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "time",
-	       "seconds since 2000-01-01 00:00:00 UTC");
-    NC_DEF_VAR("lon", NC_DOUBLE, 1, &lonid, "longitude", "degrees_east");
-    NC_DEF_VAR("lat", NC_DOUBLE, 1, &latid, "latitude", "degrees_north");
-    NC_DEF_VAR("lev", NC_DOUBLE, 1, &levid, "pressure", "Pa");
+	       "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+    NC_DEF_VAR("lon", NC_DOUBLE, 1, &lonid, "longitude", "degrees_east", 0,
+	       0);
+    NC_DEF_VAR("lat", NC_DOUBLE, 1, &latid, "latitude", "degrees_north", 0,
+	       0);
+    NC_DEF_VAR("lev", NC_DOUBLE, 1, &levid, "pressure", "Pa", 0, 0);
 
     /* Define surface variables... */
     int dimid2[2] = { latid, lonid };
-    NC_DEF_VAR("sp", NC_FLOAT, 2, dimid2, "Surface pressure", "Pa");
-    NC_DEF_VAR("z", NC_FLOAT, 2, dimid2, "Geopotential", "m**2 s**-2");
-    NC_DEF_VAR("t2m", NC_FLOAT, 2, dimid2, "2 metre temperature", "K");
+    NC_DEF_VAR("sp", NC_FLOAT, 2, dimid2, "Surface pressure", "Pa",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("z", NC_FLOAT, 2, dimid2, "Geopotential", "m**2 s**-2",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("t2m", NC_FLOAT, 2, dimid2, "2 metre temperature", "K",
+	       ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("u10m", NC_FLOAT, 2, dimid2, "10 metre U wind component",
-	       "m s**-1");
+	       "m s**-1", ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("v10m", NC_FLOAT, 2, dimid2, "10 metre V wind component",
-	       "m s**-1");
-    NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-");
-    NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K");
+	       "m s**-1", ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K",
+	       ctl->met_nc_level, ctl->met_nc_quant);
 
     /* Define level data... */
     int dimid3[3] = { levid, latid, lonid };
-    NC_DEF_VAR("t", NC_FLOAT, 3, dimid3, "Temperature", "K");
-    NC_DEF_VAR("u", NC_FLOAT, 3, dimid3, "U velocity", "m s**-1");
-    NC_DEF_VAR("v", NC_FLOAT, 3, dimid3, "V velocity", "m s**-1");
-    NC_DEF_VAR("w", NC_FLOAT, 3, dimid3, "Vertical velocity", "Pa s**-1");
-    NC_DEF_VAR("q", NC_FLOAT, 3, dimid3, "Specific humidity", "kg kg**-1");
+    NC_DEF_VAR("t", NC_FLOAT, 3, dimid3, "Temperature", "K",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("u", NC_FLOAT, 3, dimid3, "U velocity", "m s**-1",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("v", NC_FLOAT, 3, dimid3, "V velocity", "m s**-1",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("w", NC_FLOAT, 3, dimid3, "Vertical velocity", "Pa s**-1",
+	       ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("q", NC_FLOAT, 3, dimid3, "Specific humidity", "kg kg**-1",
+	       ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("o3", NC_FLOAT, 3, dimid3, "Ozone mass mixing ratio",
-	       "kg kg**-1");
+	       "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("clwc", NC_FLOAT, 3, dimid3, "Cloud liquid water content",
-	       "kg kg**-1");
+	       "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("crwc", NC_FLOAT, 3, dimid3, "Cloud rain water content",
-	       "kg kg**-1");
+	       "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("ciwc", NC_FLOAT, 3, dimid3, "Cloud ice water content",
-	       "kg kg**-1");
+	       "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
     NC_DEF_VAR("cswc", NC_FLOAT, 3, dimid3, "Cloud snow water content",
-	       "kg kg**-1");
-    NC_DEF_VAR("cc", NC_FLOAT, 3, dimid3, "Cloud cover", "-");
+	       "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
+    NC_DEF_VAR("cc", NC_FLOAT, 3, dimid3, "Cloud cover", "-",
+	       ctl->met_nc_level, ctl->met_nc_quant);
 
     /* End definitions... */
     NC(nc_enddef(ncid));

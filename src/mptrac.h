@@ -1014,13 +1014,19 @@
  * @param dims Array of dimension IDs.
  * @param long_name Long name of the variable.
  * @param units Units of the variable.
+ * @param level zlib compression level (0 = off).
+ * @param quant Number of digits for quantization (0 = off).
  *
  * @author Lars Hoffmann
  */
-#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
+#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units, level, quant) { \
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
     NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
     NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
+    if((level) != 0)							\
+      NC(nc_def_var_deflate(ncid, varid, 1, 1, level));			\
+    if((quant) > 0)							\
+      NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_BITGROOM, quant)); \
   }
 
 /**
@@ -2469,6 +2475,12 @@ typedef struct {
 
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
+
+  /*! zlib compression level of netCDF meteo files (0=off). */
+  int met_nc_level;
+
+  /*! Number of digits for quantization of netCDF meteo files (0=off). */
+  int met_nc_quant;
 
   /*! ZFP compression precision for all variables, except z and T. */
   int met_zfp_prec;
