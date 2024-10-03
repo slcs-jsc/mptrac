@@ -9565,8 +9565,99 @@ int write_met(
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
 
+  /* Write netCDF data... */
+  if (ctl->met_type == 0) {
+
+    /* Create file... */
+    int ncid, varid;
+    size_t start[4], count[4];
+    nc_create(filename, NC_CLOBBER, &ncid);
+
+    /* Define dimensions... */
+    int tid, lonid, latid, levid;
+    NC(nc_def_dim(ncid, "time", 1, &tid));
+    NC(nc_def_dim(ncid, "lon", (size_t) met->nx, &lonid));
+    NC(nc_def_dim(ncid, "lat", (size_t) met->ny, &latid));
+    NC(nc_def_dim(ncid, "lev", (size_t) met->np, &levid));
+
+    /* Define grid... */
+    NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "time",
+	       "seconds since 2000-01-01 00:00:00 UTC");
+    NC_DEF_VAR("lon", NC_DOUBLE, 1, &lonid, "longitude", "degrees_east");
+    NC_DEF_VAR("lat", NC_DOUBLE, 1, &latid, "latitude", "degrees_north");
+    NC_DEF_VAR("lev", NC_DOUBLE, 1, &levid, "pressure", "Pa");
+
+    /* Define surface variables... */
+    int dimid2[2] = { latid, lonid };
+    NC_DEF_VAR("sp", NC_FLOAT, 2, dimid2, "Surface pressure", "Pa");
+    NC_DEF_VAR("z", NC_FLOAT, 2, dimid2, "Geopotential", "m**2 s**-2");
+    NC_DEF_VAR("t2m", NC_FLOAT, 2, dimid2, "2 metre temperature", "K");
+    NC_DEF_VAR("u10m", NC_FLOAT, 2, dimid2, "10 metre U wind component",
+	       "m s**-1");
+    NC_DEF_VAR("v10m", NC_FLOAT, 2, dimid2, "10 metre V wind component",
+	       "m s**-1");
+    NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-");
+    NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K");
+
+    /* Define level data... */
+    int dimid3[3] = { levid, latid, lonid };
+    NC_DEF_VAR("t", NC_FLOAT, 3, dimid3, "Temperature", "K");
+    NC_DEF_VAR("u", NC_FLOAT, 3, dimid3, "U velocity", "m s**-1");
+    NC_DEF_VAR("v", NC_FLOAT, 3, dimid3, "V velocity", "m s**-1");
+    NC_DEF_VAR("w", NC_FLOAT, 3, dimid3, "Vertical velocity", "Pa s**-1");
+    NC_DEF_VAR("q", NC_FLOAT, 3, dimid3, "Specific humidity", "kg kg**-1");
+    NC_DEF_VAR("o3", NC_FLOAT, 3, dimid3, "Ozone mass mixing ratio",
+	       "kg kg**-1");
+    NC_DEF_VAR("clwc", NC_FLOAT, 3, dimid3, "Cloud liquid water content",
+	       "kg kg**-1");
+    NC_DEF_VAR("crwc", NC_FLOAT, 3, dimid3, "Cloud rain water content",
+	       "kg kg**-1");
+    NC_DEF_VAR("ciwc", NC_FLOAT, 3, dimid3, "Cloud ice water content",
+	       "kg kg**-1");
+    NC_DEF_VAR("cswc", NC_FLOAT, 3, dimid3, "Cloud snow water content",
+	       "kg kg**-1");
+    NC_DEF_VAR("cc", NC_FLOAT, 3, dimid3, "Cloud cover", "-");
+
+    /* End definitions... */
+    NC(nc_enddef(ncid));
+
+    /* Write grid data... */
+    NC_PUT_DOUBLE("time", &met->time, 0);
+    NC_PUT_DOUBLE("lon", met->lon, 0);
+    NC_PUT_DOUBLE("lat", met->lat, 0);
+    double phelp[EP];
+    for (int ip = 0; ip < met->np; ip++)
+      phelp[ip] = 100. * met->p[ip];
+    NC_PUT_DOUBLE("lev", phelp, 0);
+
+    /* Write surface data... */
+    write_met_nc_2d(ncid, "sp", met, met->ps, 100.0f);
+    write_met_nc_2d(ncid, "z", met, met->zs, (float) (1000. * G0));
+    write_met_nc_2d(ncid, "t2m", met, met->ts, 1.0f);
+    write_met_nc_2d(ncid, "u10m", met, met->us, 1.0f);
+    write_met_nc_2d(ncid, "v10m", met, met->vs, 1.0f);
+    write_met_nc_2d(ncid, "lsm", met, met->lsm, 1.0f);
+    write_met_nc_2d(ncid, "sstk", met, met->sst, 1.0f);
+
+    /* Write level data... */
+    write_met_nc_3d(ncid, "t", met, met->t, 1.0f);
+    write_met_nc_3d(ncid, "u", met, met->u, 1.0f);
+    write_met_nc_3d(ncid, "v", met, met->v, 1.0f);
+    write_met_nc_3d(ncid, "w", met, met->w, 100.0f);
+    write_met_nc_3d(ncid, "q", met, met->h2o, (float) (MH2O / MA));
+    write_met_nc_3d(ncid, "o3", met, met->o3, (float) (MO3 / MA));
+    write_met_nc_3d(ncid, "clwc", met, met->lwc, 1.0f);
+    write_met_nc_3d(ncid, "crwc", met, met->rwc, 1.0f);
+    write_met_nc_3d(ncid, "ciwc", met, met->iwc, 1.0f);
+    write_met_nc_3d(ncid, "cswc", met, met->swc, 1.0f);
+    write_met_nc_3d(ncid, "cc", met, met->cc, 1.0f);
+
+    /* Close file... */
+    NC(nc_close(ncid));
+  }
+
   /* Write binary data... */
-  if (ctl->met_type >= 1 && ctl->met_type <= 5) {
+  else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
 
     /* Create file... */
     FILE *out;
@@ -9657,6 +9748,10 @@ int write_met(
     /* Close file... */
     fclose(out);
   }
+
+  /* Not implemented... */
+  else
+    ERRMSG("MET_TYPE not implemented!");
 
   return 0;
 }
@@ -9761,6 +9856,65 @@ void write_met_bin_3d(
     ERRMSG("MET_TYPE not supported!");
     LOG(3, "%d %g", precision, tolerance);
   }
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
+void write_met_nc_2d(
+  int ncid,
+  const char *varname,
+  met_t *met,
+  float var[EX][EY],
+  float scl) {
+
+  int varid;
+  size_t start[4], count[4];
+
+  /* Allocate... */
+  float *help;
+  ALLOC(help, float,
+	EX * EY);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      help[ARRAY_2D(iy, ix, met->nx)] = scl * var[ix][iy];
+
+  /* Write data... */
+  NC_PUT_FLOAT(varname, help, 0);
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
+void write_met_nc_3d(
+  int ncid,
+  const char *varname,
+  met_t *met,
+  float var[EX][EY][EP],
+  float scl) {
+
+  int varid;
+  size_t start[4], count[4];
+
+  /* Allocate... */
+  float *help;
+  ALLOC(help, float,
+	EX * EY * EP);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
+	help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)] = scl * var[ix][iy][ip];
+
+  /* Write data... */
+  NC_PUT_FLOAT(varname, help, 0);
 
   /* Free... */
   free(help);

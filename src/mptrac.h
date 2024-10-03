@@ -7727,6 +7727,69 @@ void write_met_bin_3d(
   const double tolerance);
 
 /**
+ * @brief Writes a 2D meteorological variable to a NetCDF file.
+ *
+ * This function writes a 2D meteorological variable, stored in the
+ * array `var`, to a NetCDF file with the specified variable name.
+ * The data is scaled by a factor `scl` before being written. The
+ * function handles memory allocation for the data copy, scaling, and
+ * freeing the allocated memory after writing the data to the NetCDF
+ * file.
+ *
+ * @param ncid     The NetCDF file ID. This is an integer that identifies the NetCDF file where the data will be written. 
+ *                 It is assumed that this file has already been opened for writing.
+ * @param varname  A pointer to a string containing the name of the variable in the NetCDF file where the data will be stored.
+ * @param met      A pointer to a structure of type `met_t` that contains metadata about the meteorological field, 
+ *                 including the dimensions `nx` (number of points in x-direction) and `ny` (number of points in y-direction).
+ * @param var      A 2D array of dimensions `EX x EY` containing the meteorological data to be written. 
+ *                 The data is provided in the format `var[ix][iy]`, where `ix` is the index in the x-direction and 
+ *                 `iy` is the index in the y-direction.
+ * @param scl      A scaling factor applied to each element in the `var` array before writing to the NetCDF file.
+ *
+ * @return void    This function does not return any value.
+ *
+ * @author Lars Hoffmann
+ */
+void write_met_nc_2d(
+  int ncid,
+  const char *varname,
+  met_t * met,
+  float var[EX][EY],
+  float scl);
+
+/**
+ * @brief Writes a 3D meteorological variable to a NetCDF file.
+ *
+ * This function writes a 3D meteorological variable, stored in the
+ * array `var`, to a NetCDF file with the specified variable name.
+ * The data is scaled by a factor `scl` before being written. The
+ * function handles memory allocation for the data copy, scaling, and
+ * freeing the allocated memory after writing the data to the NetCDF
+ * file.
+ *
+ * @param ncid     The NetCDF file ID. This is an integer that identifies the NetCDF file where the data will be written.
+ *                 It is assumed that this file has already been opened for writing.
+ * @param varname  A pointer to a string containing the name of the variable in the NetCDF file where the data will be stored.
+ * @param met      A pointer to a structure of type `met_t` that contains metadata about the meteorological field, 
+ *                 including the dimensions `nx` (number of points in the x-direction), `ny` (number of points in the y-direction), 
+ *                 and `np` (number of points in the third dimension, e.g., pressure levels).
+ * @param var      A 3D array of dimensions `EX x EY x EP` containing the meteorological data to be written.
+ *                 The data is provided in the format `var[ix][iy][ip]`, where `ix` is the index in the x-direction, 
+ *                 `iy` is the index in the y-direction, and `ip` is the index in the third dimension (e.g., vertical levels).
+ * @param scl      A scaling factor applied to each element in the `var` array before writing to the NetCDF file.
+ *
+ * @return void    This function does not return any value.
+ *
+ * @author Lars Hoffmann
+ */
+void write_met_nc_3d(
+  int ncid,
+  const char *varname,
+  met_t * met,
+  float var[EX][EY][EP],
+  float scl);
+
+/**
  * @brief Writes various types of output data to files in a specified directory.
  *
  * The `write_output` function writes various types of output data to
