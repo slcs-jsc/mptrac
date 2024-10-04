@@ -1006,7 +1006,8 @@
  *
  * This macro defines a NetCDF variable with the specified name, data
  * type, dimensions, long name, and units. It also sets the
- * "long_name" and "units" attributes for the variable.
+ * `long_name` and `units` attributes for the variable.
+ * It enables compression and quantizatio of the data.
  *
  * @param varname Name of the variable.
  * @param type Data type of the variable.
@@ -1017,16 +1018,23 @@
  * @param level zlib compression level (0 = off).
  * @param quant Number of digits for quantization (0 = off).
  *
+ * @note To enable zstd compression, replace `nc_def_var_deflate()` by
+ * `nc_def_var_filter()` below. Use dynamic linking, static linking does not work.
+ * Set environment variable `HDF5_PLUGIN_PATH` to `./libs/build/share/netcdf-plugins/`.
+ *
  * @author Lars Hoffmann
  */
 #define NC_DEF_VAR(varname, type, ndims, dims, long_name, units, level, quant) { \
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
     NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
     NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
-    if((level) != 0)							\
-      NC(nc_def_var_deflate(ncid, varid, 1, 1, level));			\
     if((quant) > 0)							\
       NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_GRANULARBR, quant)); \
+    if((level) != 0) {							\
+      NC(nc_def_var_deflate(ncid, varid, 1, 1, level));			\
+      /* unsigned int ulevel = (unsigned int)level; */			\
+      /* NC(nc_def_var_filter(ncid, varid, 32015, 1, (unsigned int[]){ulevel})); */ \
+    }									\
   }
 
 /**
