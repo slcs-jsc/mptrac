@@ -235,7 +235,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then
     strTarget=$strFileNETCDF
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
-        && CPPFLAGS=-I$strBuildDir/include LDFLAGS=-L$strBuildDir/lib ./configure --prefix=$strBuildDir --disable-dap --disable-nczarr --disable-libxml2 \
+        && CPPFLAGS=-I$strBuildDir/include LDFLAGS=-L$strBuildDir/lib ./configure --prefix=$strBuildDir --with-plugin-dir=$strBuildDir/netcdf-plugin --disable-dap --disable-byterange --disable-nczarr --disable-libxml2 \
         && make -j $numProcs && make check
     make install && make clean || exit
     echo -e "\n***** nc-config *****"
