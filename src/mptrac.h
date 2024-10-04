@@ -1026,7 +1026,7 @@
     if((level) != 0)							\
       NC(nc_def_var_deflate(ncid, varid, 1, 1, level));			\
     if((quant) > 0)							\
-      NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_BITGROOM, quant)); \
+      NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_GRANULARBR, quant)); \
   }
 
 /**
