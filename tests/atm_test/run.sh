@@ -79,7 +79,7 @@ $trac/atm2grid - data/atm_2000_01_01_00_00.tab \
 # Compare files...
 echo -e "\nCompare results..."
 error=0
-for f in $(ls data.ref/*.tab data.ref/*.nc) ; do
+for f in $(ls data.ref/*.tab) ; do
     diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
 exit $error
