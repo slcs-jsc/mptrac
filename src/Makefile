@@ -110,7 +110,7 @@ endif
 # Set LDFLAGS...
 LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifeq ($(STATIC),1)
-  LDFLAGS += -lhdf5_hl -lhdf5 -lcurl -lsz -laec -lz -ldl -lm -lzstd
+  LDFLAGS += -lhdf5_hl -lhdf5 -lm -lz -lsz -lzstd -lcurl
 endif
 ifeq ($(GPU),1)
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart
