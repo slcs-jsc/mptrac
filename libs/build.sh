@@ -33,6 +33,8 @@ strFileSZIP="szip-2.1.1"
 strFileZSTD="zstd-1.5.5"
 strFileKPP="KPP"
 
+export LD_LIBRARY_PATH=$strBuildDir/lib:$LD_LIBRARY_PATH
+
 ###### Reminder           ######
 
 if [[ $# -lt 1 ]]; then
