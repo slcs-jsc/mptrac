@@ -1,0 +1,4 @@
+<map id="clim_oh_diurnal_correction" name="clim_oh_diurnal_correction">
+<area shape="rect" id="node1" title="Applies a diurnal correction to the hydroxyl radical (OH) concentration in climatology data." alt="" coords="5,5,181,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ab0bfcf61833d71fb831d4faae03ce709" title="Calculates the solar zenith angle." alt="" coords="229,5,303,32"/>
+</map>
