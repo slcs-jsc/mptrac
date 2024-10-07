@@ -199,7 +199,7 @@ endif
 # cmultiscale compression...
 ifeq ($(CMS),1)
   LIBDIR += -L $(CMSDIR)/builddir/
-  LDFLAGS += -lcmultiscale /usr/lib/x86_64-linux-gnu/libcurl.so.4
+  LDFLAGS += -lcmultiscale
   ifeq ($(STATIC),1)
     LDFLAGS += -lstdc++
   endif
