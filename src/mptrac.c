@@ -2503,13 +2503,11 @@ void module_chemgrid(
   const double tt) {
 
   /* Check quantities... */
+  if (ctl->qnt_m < 0 || ctl->qnt_Cx < 0)
+    return;
   if (ctl->molmass <= 0)
     ERRMSG("Molar mass is not defined!");
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
-  if (ctl->qnt_Cx < 0)
-    ERRMSG("Module needs quantity Cx!");
-
+  
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
