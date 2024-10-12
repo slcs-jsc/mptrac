@@ -6093,45 +6093,30 @@ void read_kernel(
   int *nk);
 
 /**
- * @brief Reads meteorological data from a file and populates the provided structures.
+ * @brief Reads meteorological data from a file, supporting multiple formats and MPI broadcasting.
  *
- * This function reads meteorological data from a specified file,
- * populating the provided structures `ctl`, `clim`, and `met` with
- * the parsed data. The function handles both netCDF and binary data
- * formats. For netCDF data, it performs various data processing steps
- * such as reading coordinates, surface data, atmospheric levels, and
- * calculating derived quantities. For binary data, it reads the data
- * directly into the appropriate arrays and structures.
+ * This function reads meteorological data from a file specified by the `filename` parameter. It supports 
+ * both NetCDF and binary formats based on the `met_type` field in the `ctl_t` structure. The function can 
+ * also handle parallel processing with MPI, broadcasting the data across ranks if required by the 
+ * configuration.
  *
- * @param filename  A string containing the path to the file containing meteorological data.
- * @param ctl       A pointer to a structure containing control parameters.
- * @param clim      A pointer to a structure containing climatological data.
- * @param met       A pointer to a structure to store the meteorological data.
- * @return          Returns 1 on success and 0 on failure.
+ * @param filename A constant character pointer representing the name of the file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which holds control parameters including the type of 
+ * meteorological data, MPI sharing flags, and configuration details.
+ * @param clim A pointer to a `clim_t` structure, which contains climatological data to be used in the 
+ * process, if applicable.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read from the file.
  *
- * The function performs the following steps:
- * - Logs information indicating the meteorological data file being read.
- * - Determines the type of meteorological data (netCDF or binary).
- * - For netCDF data:
- *   - Opens the netCDF file and reads various data components including grid coordinates,
- *     atmospheric levels, surface data, and derived quantities.
- *   - Performs data processing steps such as extrapolation, boundary condition handling,
- *     downsampling, and calculations of geopotential heights, potential vorticity, boundary
- *     layer data, tropopause data, cloud properties, convective available potential energy,
- *     total column ozone, and detrending.
- *   - Checks and adjusts meteorological data as necessary, including monotonicity of
- *     vertical coordinates.
- *   - Closes the netCDF file after reading.
- * - For binary data:
- *   - Opens the binary file and reads metadata including the type and version of the data,
- *     time information, dimensions, and grid coordinates.
- *   - Reads surface data, level data, and final flag from the binary file.
- *   - Closes the binary file after reading.
- * - Copies wind data to a cache for subsequent use.
- * - Returns 1 on successful reading and processing of meteorological data.
+ * @return Returns an integer, where 1 indicates success.
  *
- * @note The function handles different types of meteorological data formats and performs
- *       appropriate processing and error checking for each format.
+ * @note
+ * - The function logs the action of reading meteorological data, including the file name.
+ * - It supports MPI parallelization and will share the data across multiple processes if the 
+ * `met_mpi_share` flag is set in the control structure.
+ * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
+ * - If `ctl->met_type` is between 1 and 5, the data is read from a binary file using the `read_met_bin` function.
+ * - If the `met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann
  */
@@ -6139,6 +6124,42 @@ int read_met(
   const char *filename,
   ctl_t * ctl,
   clim_t * clim,
+  met_t * met);
+
+/**
+ * @brief Reads meteorological data from a binary file.
+ *
+ * This function reads meteorological data from a binary file and populates the provided `met_t` structure 
+ * with the data. It checks the binary file's format version and `met_type`, ensuring compatibility with the 
+ * control structure (`ctl_t`). The function reads time, grid, surface data, and multi-level data, and supports 
+ * different binary file versions.
+ *
+ * @param filename A constant character pointer representing the name of the binary file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure that holds control parameters such as the expected 
+ * `met_type` and other configuration options.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read from the binary file.
+ *
+ * @note
+ * - The function logs the progress and details of the read operation, such as time, number of longitudes, 
+ * latitudes, levels, and various meteorological variables.
+ * - It uses the `FREAD` macro for safe binary reading operations, which checks the integrity of the read 
+ * operation.
+ * - The function reads and verifies the `met_type` and binary file version to ensure compatibility.
+ * - Supported binary file versions include 100, 101, and 102, each of which may include additional 
+ * variables (e.g., `LSM`, `SST`, `RWC`, `SWC`, and `CC`).
+ * 
+ * @warning
+ * - The function will raise an error if the `met_type` in the file does not match the `ctl->met_type`.
+ * - It will raise an error if the binary file version is not supported.
+ * - If the dimensions of the data (e.g., number of longitudes, latitudes, or levels) are outside the 
+ * expected range, an error will be raised.
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_bin(
+  const char *filename,
+  ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6484,6 +6505,43 @@ void read_met_ml2pl(
  * @author Jan Clemens
  */
 void read_met_monotonize(
+  met_t * met);
+
+/**
+ * @brief Reads meteorological data from a NetCDF file and processes it.
+ *
+ * This function reads meteorological data from a NetCDF file specified by the `filename` parameter, 
+ * using the NetCDF library. It reads grid, surface, and vertical level data, processes the data 
+ * (including extrapolation, boundary conditions, and downsampling), and calculates various derived 
+ * meteorological fields such as geopotential heights, potential vorticity, cloud properties, and 
+ * convective available potential energy (CAPE).
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param clim A pointer to a `clim_t` structure that holds climatological data, used in the 
+ * calculation of derived properties such as CAPE and tropopause data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
+ *
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
+ *
+ * @note
+ * - The function opens the NetCDF file in read-only mode using `nc_open` and handles any errors 
+ * during the file opening process.
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
+ * - It is important to ensure that the NetCDF file contains the expected structure for meteorological 
+ * data (grid, levels, surface data).
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc(
+  const char *filename,
+  ctl_t * ctl,
+  clim_t * clim,
   met_t * met);
 
 /**
