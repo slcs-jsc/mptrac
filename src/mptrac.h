@@ -7642,38 +7642,75 @@ void write_grid_nc(
   const int *np);
 
 /**
- * @brief Writes meteorological data to a binary file.
+ * @brief Writes meteorological data to a file, supporting multiple formats and compression options.
  *
- * The `write_met` function writes meteorological data, including
- * surface data and level data, to a binary file specified by the
- * filename parameter. The data is written in binary format for
- * efficient storage and transfer.
+ * This function handles writing meteorological data based on the specified control (`ctl_t`) and 
+ * meteorological data (`met_t`) structures. The file format and compression type are determined 
+ * by the `met_type` in the control structure. The function supports netCDF, binary output, and 
+ * various compression methods (ZFP, ZSTD, CMS), while providing error handling for unsupported 
+ * configurations.
  *
- * @param filename A string representing the name of the output file.
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param met A pointer to a `met_t` structure containing meteorological data.
+ * @param filename A constant character pointer representing the name of the file to write the 
+ * meteorological data to.
+ * @param ctl A pointer to a `ctl_t` structure, which holds the configuration and control parameters 
+ * for the output, including the type of meteorological data and compression method.
+ * @param met A pointer to a `met_t` structure that holds the meteorological data to be written 
+ * to the file.
  *
- * The function performs the following steps:
- * - Sets a timer to measure the execution time.
- * - Writes information about the meteorological data being written to the log.
- * - Checks if compression flags are enabled and displays error messages if
- *   required compression methods are not available.
- * - Writes binary data to the file, including the type and version of the data,
- *   grid data (time, dimensions, coordinates), surface data, and level data.
- * - Closes the file after writing all data.
+ * @note 
+ * - The function selects a timer for performance profiling or debugging.
+ * - It logs the action of writing meteorological data, including the file name.
  *
- * @return Returns an integer value indicating the success or failure of the
- *         function. A value of 0 indicates successful execution.
+ * @warning 
+ * - If `ctl->met_type` is 3, ZFP compression is required, and the function will generate an error 
+ * if compiled without ZFP support.
+ * - If `ctl->met_type` is 4, ZSTD compression is required, and the function will generate an error 
+ * if compiled without ZSTD support.
+ * - If `ctl->met_type` is 5, CMS compression is required, and the function will generate an error 
+ * if compiled without CMS support.
  *
- * @note This function supports writing meteorological data in different binary
- *       formats, including uncompressed and compressed formats using various
- *       compression algorithms such as packing, ZFP, ZSTD, and cmultiscale. The specific
- *       compression method used depends on the configuration specified in the
- *       `ctl_t` structure.
+ * @note 
+ * - If `ctl->met_type` is 0, the function writes data in netCDF format via `write_met_nc`.
+ * - If `ctl->met_type` is between 1 and 5, the function writes data in binary format via `write_met_bin`.
+ * - If `ctl->met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann
  */
-int write_met(
+void write_met(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Writes meteorological data in binary format to a specified file.
+ *
+ * This function writes meteorological data from the `met_t` structure to a binary file. The 
+ * data includes grid and surface data, as well as multi-level data such as temperature, 
+ * velocity components, and atmospheric properties. The compression options for multi-level 
+ * data (ZFP) are controlled via the `ctl_t` structure. The function supports multiple variables, 
+ * such as surface pressure, temperature, wind components, and cloud properties.
+ *
+ * @param filename A constant character pointer representing the name of the file to write the 
+ * binary data to.
+ * @param ctl A pointer to a `ctl_t` structure, which holds control parameters including the type 
+ * of meteorological data, compression settings, and grid dimensions.
+ * @param met A pointer to a `met_t` structure that contains the meteorological data to be written 
+ * to the binary file.
+ *
+ * @note 
+ * - The function creates a new file to write the data. If the file cannot be created, an error 
+ * is generated.
+ * - The type of meteorological data (`ctl->met_type`) and the version of the binary format 
+ * are written at the beginning of the file.
+ * - Grid data such as longitude, latitude, pressure levels, and time are written to the file.
+ * - Surface data (e.g., pressure, temperature, wind components) are written using the `write_met_bin_2d` 
+ * helper function.
+ * - Multi-level (3D) data such as geopotential height, temperature, and wind velocity are written 
+ * using the `write_met_bin_3d` function with optional ZFP compression settings.
+ * 
+ * @author Lars Hoffmann
+ */
+void write_met_bin(
   const char *filename,
   const ctl_t * ctl,
   met_t * met);
@@ -7756,6 +7793,38 @@ void write_met_bin_3d(
   const char *varname,
   const int precision,
   const double tolerance);
+
+/**
+ * @brief Writes meteorological data to a NetCDF file.
+ *
+ * This function creates and writes meteorological data to a NetCDF file in the NetCDF-4 format. It defines 
+ * the required dimensions, grid, surface variables, and level data within the NetCDF structure and 
+ * writes the corresponding values from the `met_t` structure. The function uses helper functions 
+ * to write 2D surface and 3D level data.
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to create and 
+ * write the data to.
+ * @param ctl A pointer to a `ctl_t` structure that contains control parameters, such as the 
+ * NetCDF level and quantization settings.
+ * @param met A pointer to a `met_t` structure that contains the meteorological data to be written 
+ * to the NetCDF file.
+ *
+ * @note
+ * - The function uses the NetCDF-4 format for efficient data storage.
+ * - It defines the grid dimensions (time, longitude, latitude, pressure levels) and adds global 
+ * attributes like units and descriptions for each variable.
+ * - The surface variables include surface pressure, geopotential, 2-meter temperature, and wind 
+ * components, which are defined on a 2D grid (latitude × longitude).
+ * - The level variables, such as temperature, wind velocities, and cloud properties, are defined 
+ * on a 3D grid (pressure level × latitude × longitude).
+ *
+ * @author
+ * Lars Hoffmann
+ */
+void write_met_nc(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
 
 /**
  * @brief Writes a 2D meteorological variable to a NetCDF file.
