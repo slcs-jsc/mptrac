@@ -158,7 +158,8 @@ if [ $ifBuildAll = true ] || [ $ifBuildCURL = true ] ; then
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
         && ./configure --prefix=$strBuildDir --without-ssl --without-libpsl \
-        && make -j $numProcs && make check && make install && make clean \
+        && make -j $numProcs && make check
+    make install && make clean \
     	    || exit
 fi
 
