@@ -69,7 +69,7 @@ ZSTD ?= 0
 CMS ?= 0
 
 # Path to cmultiscale library (experimental)...
-CMSDIR ?= /home/lars/wrk/cmultiscale/cmultiscale
+CMSDIR ?= ../../cmultiscale/cmultiscale
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...
@@ -209,6 +209,9 @@ endif
 
 # Static compilation...
 ifeq ($(STATIC),1)
+  ifeq ($(CMS),1)
+    $(error Static compilation does not work for CMS)
+  endif
   ifeq ($(GPU),1)
     $(error Static compilation does not work for GPU)
   endif
@@ -241,7 +244,7 @@ mptrac.o: mptrac.c mptrac.h Makefile
 
 check: $(TESTS)
 
-$(TESTS) gpu_test kpp_test: all
+$(TESTS) cms_test gpu_test kpp_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \
