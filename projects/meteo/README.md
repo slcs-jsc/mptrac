@@ -1,4 +1,3 @@
-
 # Meteorological Data Retrieval Scripts
 
 This directory contains a set of scripts for retrieving meteorological data (ERA5, GFS, MERRA-2, and NCEP) from different data centers and converting them for use with MPTRAC. Each script is designed to retrieve data from a specific center and perform necessary conversions.
@@ -26,9 +25,9 @@ This directory contains a set of scripts for retrieving meteorological data (ERA
 
 - **Usage**: 
   ```bash
-  ./get_gfs.sh <year> <dir>
+  ./get_gfs.sh <year> <month> <day> <dir>
   ```
-  - `year`: Specify the year for data retrieval.
+  - `year`, `month`, `day`: Specify the date for data retrieval.
   - `dir`: Directory to store the processed data.
   
 - **Functionality**: Downloads multiple weather parameters and integrates them over different pressure levels for analysis.
@@ -39,9 +38,9 @@ This directory contains a set of scripts for retrieving meteorological data (ERA
 
 - **Usage**: 
   ```bash
-  ./get_merra2.sh <year> <dir>
+  ./get_merra2.sh <year> <month> <day> <dir>
   ```
-  - `year`: Year for which the data is being retrieved.
+  - `year`, `month`, `day`: Specify the date for data retrieval.
   - `dir`: Directory to store the retrieved files.
   
 - **Functionality**: This script handles 3D and surface data, processes time steps, and formats it for use in MPTRAC simulations.
