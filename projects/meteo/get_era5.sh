@@ -43,7 +43,7 @@ tmp=$(mktemp -d tmp.XXXXXXXX)
 
 # Download data...
 cd "$tmp" || exit
-python <<EOF
+python3 <<EOF
 import cdsapi
 c = cdsapi.Client()
 
