@@ -2,49 +2,60 @@
 
 Here we provide some example Python scripts that can be used to plot MPTRAC output.
 
-## Plotting of atm and grid output of MPTRAC
+## Preparations
 
-Three programs are provided, plot_atm.py, plot_atm_3d.py and plot_grid.py.
+Create a virtual environment for python in your home directory:
 
-Call the python plot scripts with parameter _datadir_ (the directory of the data files) and _plotdir_ (the directory where the plots will be written to), e.g for plot_atm.py it would be:
+```
+    python3 -m venv ~/venv
+```
 
-      python ./plot_atm.py ../example/data pythonplots
+Activate the environment:
 
-The libraries required for running these python scripts are:
+```
+    source ~/venv/bin/activate
+```
 
-* scipy-stack
-* Cartopy
+Install the python modules required for ingesting and plotting the data:
 
-Under Linux OS missing libraries can be downloaded and installed by using sudo apt-get install, e.g. for cartopy and scipy-stack it would be: 
+```
+    pip install basemap basemap-data cartopy matplotlib numpy pandas scipy xarray
+```
 
-      sudo apt-get install python3-scipy python3-cartopy
+## Plotting of air parcel and grid output of MPTRAC
 
-Additionally, the shell script plot.sh is provided where all three programs can be run at once. The input and output files are then provided in the shell script and the script itself can be run with
+Three programs are provided, `plot_atm.py`, `plot_atm_3d.py` and `plot_grid.py`.
 
-       ./plot.sh
+Call the python plot scripts with parameter `datadir` (the directory of the data files) and `plotdir` (the directory where the plots will be written to), e.g. for `plot_atm.py` it would be:
 
-## Plotting of atm_select and met_map output of MPTRAC
+```
+    python ./plot_atm.py ../example/data pythonplots
+```
 
-To plot the data created with atm_select call the python script atm_traj.py using Python3
+## Plotting of trajectories and meteo map output of MPTRAC
 
-      python3 plot_traj.py
+To plot the data created with `atm_select` call the python script `atm_traj.py` using Python3:
 
-Here, a single trajectory on a map is plotted from the datafile traj_5450.tab provided in the directory data. 
+```
+    python3 plot_traj.py
+```
 
-To plot data created with met_map call the python script plot_met_map.py using Python3  
+Here, a single trajectory on a map is plotted from the datafile traj_5450.tab provided in the directory `data`. 
 
-      python3 plot_met_map.py
+To plot data created with `met_map` call the python script `plot_met_map.py` using Python3:
 
-Here, three parameters (O3, H2O and temperature) are plotted vs longitude and latitude from the datafile map_era5_2017010817_2_2.tab provided in the directory data. The met_map file contains data at 10 km altitude. In the program other altitudes can be chosen by changing the parameter "level". However, in order to plot other altitudes new files would be needed to be created.       
+```
+    python3 plot_met_map.py
+```
 
-The python libraries required to run these scripts are:
+Here, three parameters (O3, H2O and temperature) are plotted vs longitude and latitude from the datafile `map_era5_2017010817_2_2.tab` provided in the directory `data`. The met_map file contains data at 10 km altitude. In the program other altitudes can be chosen by changing the parameter "level". However, in order to plot other altitudes new map files would be needed to be created first.       
 
-* numpy
-* pandas
-* xarray
-* matplotlib
-* Basemap
+## Plot script
 
-On Ubuntu Linux, install matplotlib via:
+Additionally, the shell script `plot.sh` is provided, where all plots are created at once. The input and output filenames are set in the shell script and the script itself can be run with:
 
-    sudo apt install python3-mpltoolkits.basemap
+```
+    ./plot.sh
+```
+
+The plots will be written to the directory `plots`. A set of reference plots for comparison is provided in `plots.ref`.
