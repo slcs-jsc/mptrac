@@ -6845,6 +6845,8 @@ int read_met_nc_2d(
   const char *varname2,
   const char *varname3,
   const char *varname4,
+  const char *varname5,
+  const char *varname6,
   const ctl_t *ctl,
   const met_t *met,
   float dest[EX][EY],
@@ -6869,6 +6871,12 @@ int read_met_nc_2d(
   else if (varname4 != NULL
 	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
     sprintf(varsel, "%s", varname4);
+  else if (varname5 != NULL
+	   && nc_inq_varid(ncid, varname5, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname5);
+  else if (varname6 != NULL
+	   && nc_inq_varid(ncid, varname6, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname6);
   else
     return 0;
 
@@ -7612,70 +7620,38 @@ void read_met_surface(
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
   LOG(2, "Read surface data...");
 
+  /* Read surface pressure... */
+  if (read_met_nc_2d
+      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps, 1.0f,
+       1)) {
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+  } else
+    if (!read_met_nc_2d
+	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, met->ps, 0.01f,
+	 1)) {
+    WARN("Cannot not read surface pressure data (use lowest level)!");
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->ps[ix][iy] = (float) met->p[0];
+  }
+
   /* MPTRAC meteo data... */
   if (ctl->met_clams == 0) {
 
-    /* Read surface pressure... */
-    if (read_met_nc_2d
-	(ncid, "lnsp", "LNSP", NULL, NULL, ctl, met, met->ps, 1.0f, 1)) {
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
-    } else
-      if (!read_met_nc_2d
-	  (ncid, "ps", "PS", "sp", "SP", ctl, met, met->ps, 0.01f, 1)) {
-      WARN("Cannot not read surface pressure data (use lowest level)!");
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
-    }
-
     /* Read geopotential height at the surface... */
     if (!read_met_nc_2d
-	(ncid, "z", "Z", NULL, NULL, ctl, met, met->zs,
+	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, met->zs,
 	 (float) (1. / (1000. * G0)), 1))
       if (!read_met_nc_2d
-	  (ncid, "zm", "ZM", NULL, NULL, ctl, met, met->zs,
+	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, met->zs,
 	   (float) (1. / 1000.), 1))
 	WARN("Cannot read surface geopotential height!");
-
-    /* Read temperature at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "t2m", "T2M", "2t", "2T", ctl, met, met->ts, 1.0, 1))
-      WARN("Cannot read surface temperature!");
-
-    /* Read zonal wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "u10m", "U10M", "10u", "10U", ctl, met, met->us, 1.0, 1))
-      WARN("Cannot read surface zonal wind!");
-
-    /* Read meridional wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "v10m", "V10M", "10v", "10V", ctl, met, met->vs, 1.0, 1))
-      WARN("Cannot read surface meridional wind!");
-
-    /* Read land-sea mask... */
-    if (!read_met_nc_2d
-	(ncid, "lsm", "LSM", NULL, NULL, ctl, met, met->lsm, 1.0, 1))
-      WARN("Cannot read land-sea mask!");
-
-    /* Read sea surface temperature... */
-    if (!read_met_nc_2d
-	(ncid, "sstk", "SSTK", "sst", "SST", ctl, met, met->sst, 1.0, 1))
-      WARN("Cannot read sea surface temperature!");
   }
 
   /* CLaMS meteo data... */
   else {
-
-    /* Read surface pressure... */
-    if (!read_met_nc_2d
-	(ncid, "ps", "PS", NULL, NULL, ctl, met, met->ps, 0.01f, 1)) {
-      WARN("Cannot not read surface pressure data (use lowest level)!");
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
-    }
 
     /* Read geopotential height at the surface
        (use lowermost level of 3-D data field)... */
@@ -7692,32 +7668,36 @@ void read_met_surface(
 	met->zs[ix][iy] = met->pl[ix][iy][0];
     memcpy(met->pl, help, sizeof(met->pl));
     free(help);
-
-    /* Read temperature at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "t2", "T2", NULL, NULL, ctl, met, met->ts, 1.0, 1))
-      WARN("Cannot read surface temperature!");
-
-    /* Read zonal wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "u10", "U10", NULL, NULL, ctl, met, met->us, 1.0, 1))
-      WARN("Cannot read surface zonal wind!");
-
-    /* Read meridional wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "v10", "V10", NULL, NULL, ctl, met, met->vs, 1.0, 1))
-      WARN("Cannot read surface meridional wind!");
-
-    /* Read land-sea mask... */
-    if (!read_met_nc_2d
-	(ncid, "lsm", "LSM", NULL, NULL, ctl, met, met->lsm, 1.0, 1))
-      WARN("Cannot read land-sea mask!");
-
-    /* Read sea surface temperature... */
-    if (!read_met_nc_2d
-	(ncid, "sstk", "SSTK", NULL, NULL, ctl, met, met->sst, 1.0, 1))
-      WARN("Cannot read sea surface temperature!");
   }
+
+  /* Read temperature at the surface... */
+  if (!read_met_nc_2d
+      (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, met->ts, 1.0, 1))
+    WARN("Cannot read surface temperature!");
+
+  /* Read zonal wind at the surface... */
+  if (!read_met_nc_2d
+      (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, met->us,
+       1.0, 1))
+    WARN("Cannot read surface zonal wind!");
+
+  /* Read meridional wind at the surface... */
+  if (!read_met_nc_2d
+      (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, met->vs,
+       1.0, 1))
+    WARN("Cannot read surface meridional wind!");
+
+  /* Read land-sea mask... */
+  if (!read_met_nc_2d
+      (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, met->lsm, 1.0,
+       1))
+    WARN("Cannot read land-sea mask!");
+
+  /* Read sea surface temperature... */
+  if (!read_met_nc_2d
+      (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
+       1.0, 1))
+    WARN("Cannot read sea surface temperature!");
 }
 
 /*****************************************************************************/

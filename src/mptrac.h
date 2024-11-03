@@ -6579,6 +6579,8 @@ int read_met_nc_2d(
   const char *varname2,
   const char *varname3,
   const char *varname4,
+  const char *varname5,
+  const char *varname6,
   const ctl_t * ctl,
   const met_t * met,
   float dest[EX][EY],
@@ -6599,6 +6601,8 @@ int read_met_nc_2d(
  * @param varname2 An alternative name of the variable to read (in case varname is not found).
  * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
  * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param varname5 An alternative name of the variable to read (in case varname4 is not found).
+ * @param varname6 An alternative name of the variable to read (in case varname5 is not found).
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  * @param dest The destination array to store the read data.
