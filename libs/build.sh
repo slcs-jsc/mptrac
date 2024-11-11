@@ -16,6 +16,7 @@ ifBuildHDF5=false
 ifBuildNETCDF=false
 ifBuildKPP=false
 ifSkip=false
+ifBuildEcCodes=false
 
 numProcs=`nproc --all`
 
@@ -32,6 +33,7 @@ strFileZLIB="zlib-1.3.1"
 strFileSZIP="szip-2.1.1"
 strFileZSTD="zstd-1.5.5"
 strFileKPP="KPP"
+strFileEcCodes="eccodes-2.38.3"
 
 export LD_LIBRARY_PATH=$strBuildDir/lib:$LD_LIBRARY_PATH
 
@@ -44,7 +46,7 @@ fi
 
 ###### Checking the flags ######
 
-while getopts amcgtuzifshnkp: flag
+while getopts amcgtuzifshnkep: flag
 do
     case "${flag}" in
         a) ifBuildAll=true        ; echo "build all libraries  " ;;	
@@ -60,6 +62,7 @@ do
 	d) ifBuildHDF5=true   ; echo "HDF5 is selected     " ;;
 	n) ifBuildNETCDF=true ; echo "NETCDF is selected   " ;;
 	k) ifBuildKPP=true    ; echo "KPP is selected      " ;;
+    e) ifBuildEcCodes=true; echo "ecCodes is selected  " ;;
 	p) numProcs=${OPTARG}  
            numTotalProcs=`nproc --all`
            if [ $numProcs -lt $numTotalProcs ]; then
@@ -87,6 +90,7 @@ do
 	   printf -- "-d         : build HDF5   (prerequisites: CURL, ZLIB, SZIP)  \n" 
 	   printf -- "-n         : build NETCDF (prerequisite: HDF5)  \n" 
 	   printf -- "-k         : build KPP    \n" 
+       printf -- "-e         : build ecCodes\n"
 	   printf -- "-p [cores] : how many [cores] to be used by make -j [cores]   \n" 
 	   printf -- "           : default is maximum number of cores               \n" 
 	   printf -- "--------------------------------------------------------------\n"	
@@ -137,6 +141,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildGSL = true ] ; then
         && make -j $numProcs && make check && make install && make clean \
     	    || exit
 fi
+
 
 # Thrust sort...
 if [ $ifBuildAll = true ] || [ $ifBuildTHRUST = true ] ; then 
@@ -253,6 +258,18 @@ if [ $ifBuildAll = true ] || [ $ifBuildKPP = true ] ; then
     export KPP_FLEX_LIB_DIR=$strBuildDir/src/$strTarget
     cd $KPP_HOME/src && make clean && make && cd ${strLibsDir}/../projects/kpp && ./build_KPP.sh chem 0 \
 	    || exit		
+fi
+
+# ecCodes...
+if [ $ifBuildAll = true] || [ $ifBuildEcCodes = true ] ; then
+    cd $strLibsDir
+    printf "starting to compile ecCodes...\n"
+    strTarget=$strFileEcCodes
+    cp $strTarget.tar.gz $strBuildDir/src && cd $strBuildDir/src && tar xvf $strTarget.tar.gz
+    cd $strBuildDir/src && cmake -DCMAKE_INSTALL_PREFIX=$strBuildDir/src -DBUILD_SHARED_LIBS=OFF -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF $strTarget && make -j && ctest -j && make install \
+        && cp -a include/* $strBuildDir/include/ \
+        || exit
+
 fi
 
 # Finish...

@@ -68,6 +68,9 @@ ZSTD ?= 0
 # Enable cmultiscale compression (experimental)...
 CMS ?= 0
 
+# Enable ecCodes for reading Grib data (experimental)...
+ecCodes ?= 1
+
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
 
@@ -169,6 +172,7 @@ endif
 
 # KPP chemistry...
 ifeq ($(KPP),1)
+  $(error help)
   CFLAGS += -DKPP
   LDFLAGS += -lkpp
 endif
@@ -205,6 +209,11 @@ ifeq ($(CMS),1)
   endif
   INCDIR += -I $(CMSDIR)/src/cms_module/
   CFLAGS += -DCMS
+endif
+
+ifeq ($(ecCodes),1)
+  LDFLAGS += -leccodes
+  CFLAGS += -DECCODES
 endif
 
 # Static compilation...
