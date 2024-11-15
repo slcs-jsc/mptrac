@@ -69,7 +69,7 @@ ZSTD ?= 0
 CMS ?= 0
 
 # Path to cmultiscale library (experimental)...
-CMSDIR ?= /home/lars/wrk/cmultiscale/cmultiscale
+CMSDIR ?= ../../cmultiscale/cmultiscale
 
 # Enable Fortran Wrapper
 WRAPPER ?= 1
@@ -133,7 +133,7 @@ endif
 # Set LDFLAGS...
 LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifeq ($(STATIC),1)
-  LDFLAGS += -lhdf5_hl -lhdf5 -lm -ldl -lz
+  LDFLAGS += -lhdf5_hl -lhdf5 -lm -lz -lsz -lzstd -lcurl
 endif
 ifeq ($(GPU),1)
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart
@@ -165,7 +165,7 @@ endif
 
 # Compile for coverage testing...
 ifeq ($(COV),1)
-  CFLAGS += -ftest-coverage -fprofile-arcs
+  CFLAGS += --coverage
 endif
 
 # NVTX...
@@ -234,6 +234,9 @@ endif
 
 # Static compilation...
 ifeq ($(STATIC),1)
+  ifeq ($(CMS),1)
+    $(error Static compilation does not work for CMS)
+  endif
   ifeq ($(GPU),1)
     $(error Static compilation does not work for GPU)
   endif
@@ -249,6 +252,10 @@ ifeq ($(STATIC),1)
   CFLAGS += -static
 endif
 
+ifeq ($(WRAPPER),1)
+  exc_wrapper = 0	
+endif	
+
 # -----------------------------------------------------------------------------
 # Targets...
 # -----------------------------------------------------------------------------
@@ -256,7 +263,13 @@ endif
 .PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall
 
 all: $(EXC)
-	rm -f *~
+	rm -f *~	
+ifeq ($(WRAPPER),1)
+	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
+#	WRAPPER=0
+endif
 
 $(EXC): %: %.c mptrac.o
 	$(CC) $(CFLAGS) -o $@ $< mptrac.o $(LDFLAGS)
@@ -271,19 +284,19 @@ wrapper:
 
 check: $(TESTS)
 
-$(TESTS) gpu_test kpp_test: all
+$(TESTS) cms_test gpu_test kpp_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \
 	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
 
 clean:
-	rm -rf $(EXC) lib* *.o *.gcda *.gcno *.gcov coverage* *~
+	rm -rf $(EXC) trac_fortran lib* *.o *.gcda *.gcno *.gcov coverage* *~
 
 coverage:
 	lcov --capture --directory . --output-file=coverage.info ; \
-	genhtml coverage.info --legend --frames --output-directory=coverage
-	gcov -abcfu *.c
+	genhtml coverage.info --legend --frames --output-directory=coverage ; \
+	gcov -abcfu *.c ; echo "FINISHED" || true
 
 cppcheck:
 	cppcheck --enable=all ./

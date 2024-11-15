@@ -435,8 +435,8 @@
  *
  * @author Lars Hoffmann
  */
-#define DEG2DX(dlon, lat)					\
-  ((dlon) * M_PI * RE / 180. * cos((lat) / 180. * M_PI))
+#define DEG2DX(dlon, lat)			\
+  (RE * DEG2RAD(dlon) * cos(DEG2RAD(lat)))
 
 /**
  * @brief Convert a latitude difference to a distance in the y-direction (north-south).
@@ -457,7 +457,24 @@
  * @author Lars Hoffmann
  */
 #define DEG2DY(dlat)				\
-  ((dlat) * M_PI * RE / 180.)
+  (RE * DEG2RAD(dlat))
+
+/**
+ * @brief Converts degrees to radians.
+ *
+ * This macro converts an angle from degrees to radians using the formula:
+ * radians = degrees * (π / 180)
+ *
+ * @param deg The angle in degrees to be converted.
+ *
+ * @return The angle in radians.
+ *
+ * @note This macro uses the M_PI constant from <math.h> for the value of π.
+ *
+ * @author Lars Hoffmann
+ */
+#define DEG2RAD(deg)				\
+  ((deg) * (M_PI / 180.0))
 
 /**
  * @brief Convert a pressure difference to a height difference in the vertical direction.
@@ -503,7 +520,7 @@
  */
 #define DX2DEG(dx, lat)						\
   (((lat) < -89.999 || (lat) > 89.999) ? 0			\
-   : (dx) * 180. / (M_PI * RE * cos((lat) / 180. * M_PI)))
+   : (dx) * 180. / (M_PI * RE * cos(DEG2RAD(lat))))
 
 /**
  * @brief Convert a distance in kilometers to degrees latitude.
@@ -992,7 +1009,8 @@
  *
  * This macro defines a NetCDF variable with the specified name, data
  * type, dimensions, long name, and units. It also sets the
- * "long_name" and "units" attributes for the variable.
+ * `long_name` and `units` attributes for the variable.
+ * It enables compression and quantizatio of the data.
  *
  * @param varname Name of the variable.
  * @param type Data type of the variable.
@@ -1000,13 +1018,26 @@
  * @param dims Array of dimension IDs.
  * @param long_name Long name of the variable.
  * @param units Units of the variable.
+ * @param level zlib compression level (0 = off).
+ * @param quant Number of digits for quantization (0 = off).
+ *
+ * @note To enable zstd compression, replace `nc_def_var_deflate()` by
+ * `nc_def_var_filter()` below. Use dynamic linking, static linking does not work.
+ * Set environment variable `HDF5_PLUGIN_PATH` to `./libs/build/share/netcdf-plugins/`.
  *
  * @author Lars Hoffmann
  */
-#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units) {	\
+#define NC_DEF_VAR(varname, type, ndims, dims, long_name, units, level, quant) { \
     NC(nc_def_var(ncid, varname, type, ndims, dims, &varid));		\
     NC(nc_put_att_text(ncid, varid, "long_name", strnlen(long_name, LEN), long_name)); \
     NC(nc_put_att_text(ncid, varid, "units", strnlen(units, LEN), units)); \
+    if((quant) > 0)							\
+      NC(nc_def_var_quantize(ncid, varid, NC_QUANTIZE_GRANULARBR, quant)); \
+    if((level) != 0) {							\
+      NC(nc_def_var_deflate(ncid, varid, 1, 1, level));			\
+      /* unsigned int ulevel = (unsigned int)level; */			\
+      /* NC(nc_def_var_filter(ncid, varid, 32015, 1, (unsigned int[]){ulevel})); */ \
+    }									\
   }
 
 /**
@@ -1251,7 +1282,7 @@
  * - \f$ P_0 \f$ is the standard pressure,
  * - \f$ H_0 \f$ is the scale height.
  *
- * Note: The constants \f$ P_0 \f$ and \f$ H_0 \f$ must be defined before using this macro.
+ * @note The constants \f$ P_0 \f$ and \f$ H_0 \f$ must be defined before using this macro.
  *
  * @author Lars Hoffmann
  */
@@ -1275,7 +1306,7 @@
  * - \f$ P_{\textrm{sat}}(t) \f$ is the saturation pressure over water at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
  *
- * Note: The constants \f$ T_0 \f$ must be defined before using this macro.
+ * @note The constants \f$ T_0 \f$ must be defined before using this macro.
  *
  * @author Lars Hoffmann
  */
@@ -1299,7 +1330,7 @@
  * - \f$ P_{\textrm{ice}}(t) \f$ is the saturation pressure over ice at temperature \f$ t \f$,
  * - \f$ T_0 \f$ is the reference temperature (0°C).
  *
- * Note: The constant \f$ T_0 \f$ must be defined before using this macro.
+ * @note The constant \f$ T_0 \f$ must be defined before using this macro.
  *
  * @author Lars Hoffmann
  */
@@ -1326,12 +1357,29 @@
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv,
  * - \f$ \epsilon \f$ is the factor to account for saturation vapor pressure over water.
  *
- * Note: The constant \f$ \epsilon \f$ must be defined before using this macro.
+ * @note The constant \f$ \epsilon \f$ must be defined before using this macro.
  * 
  * @author Lars Hoffmann
  */
 #define PW(p, h2o)							\
   ((p) * MAX((h2o), 0.1e-6) / (1. + (1. - EPS) * MAX((h2o), 0.1e-6)))
+
+/**
+ * @brief Converts radians to degrees.
+ *
+ * This macro converts an angle from radians to degrees using the formula:
+ * degrees = radians * (180 / π)
+ *
+ * @param rad The angle in radians to be converted.
+ *
+ * @return The angle in degrees.
+ *
+ * @note This macro uses the M_PI constant from <math.h> for the value of π.
+ * 
+ * @author Lars Hoffmann
+ */
+#define RAD2DEG(rad)				\
+  ((rad) * (180.0 / M_PI))
 
 /**
  * @brief Compute relative humidity over water.
@@ -1356,7 +1404,7 @@
  * - \f$ t \f$ is the temperature in Kelvin,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
  *
- * Note: The macros PW() and PSAT() must be defined before using this macro.
+ * @note The macros PW() and PSAT() must be defined before using this macro.
  * 
  * @author Lars Hoffmann
  */
@@ -1386,7 +1434,7 @@
  * - \f$ t \f$ is the temperature in Kelvin,
  * - \f$ h_2o \f$ is the water vapor mixing ratio in ppv.
  *
- * Note: The macros PW() and PSICE() must be defined before using this macro.
+ * @note The macros PW() and PSICE() must be defined before using this macro.
  * 
  * @author Lars Hoffmann
  */
@@ -1417,37 +1465,6 @@
  */
 #define RHO(p, t)				\
   (100. * (p) / (RA * (t)))
-
-/**
- * @brief Roeth approximation formula for photolysis reactions.
- *
- * This macro calculates the rate of a photolysis reaction using the
- * Roeth approximation formula, which takes into account the solar
- * zenith angle (SZA).
- * 
- * @param a Coefficient 'a' in the Roeth formula.
- * @param b Coefficient 'b' in the Roeth formula.
- * @param c Coefficient 'c' in the Roeth formula.
- * @param sza The solar zenith angle in radians.
- * @return The rate of the photolysis reaction.
- *
- * The Roeth approximation formula for photolysis reactions is given by:
- *
- * \f[ ROETH\_PHOTOL(a, b, c, sza) = 
- *   \begin{cases} 
- *     a \times \exp\left(b \times \left(1 - \frac{1}{\cos(c \times sza)}\right)\right), \textrm{if } c \times sza < \frac{\pi}{2} \\
- *     0, \textrm{otherwise}
- *   \end{cases}
- * \f]
- * 
- * where:
- * - 'a', 'b', and 'c' are coefficients specific to the photolysis reaction.
- * - 'sza' is the solar zenith angle in radians.
- *
- * @author Mingzhao Liu
- */
-#define ROETH_PHOTOL(a, b, c, sza)					\
-  ((c)*(sza) < M_PI/2. ? (a) * exp((b) * (1 - 1/cos((c) * (sza)))) : 0)
 
 /**
  * @brief Set atmospheric quantity value.
@@ -2470,6 +2487,12 @@ typedef struct {
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
 
+  /*! zlib compression level of netCDF meteo files (0=off). */
+  int met_nc_level;
+
+  /*! Number of digits for quantization of netCDF meteo files (0=off). */
+  int met_nc_quant;
+
   /*! ZFP compression precision for all variables, except z and T. */
   int met_zfp_prec;
 
@@ -2478,6 +2501,9 @@ typedef struct {
 
   /*! ZFP compression tolerance for geopotential height. */
   double met_zfp_tol_z;
+
+  /*! cmultiscale batch size. */
+  int met_cms_batch;
 
   /*! cmultiscale coarsening heuristics
      (0=default, 1=mean diff, 2=median diff, 3=max diff). */
@@ -2867,16 +2893,17 @@ typedef struct {
   int atm_type;
 
   /*! Type of atmospheric data files for output
-<<<<<<< HEAD
-     (-1=same as ATM_TYPE, 0=netCDF, 1=binary, 2=pack, 3=zfp, 4=zstd). */
-=======
      (-1=same as ATM_TYPE, 0=ASCII, 1=binary, 2=netCDF,
      3=CLaMS_traj, 4=CLaMS_pos). */
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
   int atm_type_out;
 
-  /*! Type of observation data files
-     (0=ASCII, 1=netCDF). */
+  /*! zlib compression level of netCDF atmospheric data files (0=off). */
+  int atm_nc_level;
+
+  /*! Number of digits for quantization of netCDF atmospheric data files (0=off). */
+  int atm_nc_quant[NQ];
+
+  /*! Type of observation data files (0=ASCII, 1=netCDF). */
   int obs_type;
 
   /*! Basename of CSI data files. */
@@ -2944,6 +2971,12 @@ typedef struct {
 
   /*! Sparse output in grid data files (0=no, 1=yes). */
   int grid_sparse;
+
+  /*! zlib compression level of netCDF grid data files (0=off). */
+  int grid_nc_level;
+
+  /*! Number of digits for quantization of netCDF grid data files (0=off). */
+  int grid_nc_quant[NQ];
 
   /*! Include standard deviations in grid output (0=no, 1=yes). */
   int grid_stddev;
@@ -3542,7 +3575,7 @@ double clim_oh(
  * @authors Mingzhao Liu
  */
 void clim_oh_diurnal_correction(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   clim_t * clim);
 
 /**
@@ -3575,11 +3608,11 @@ void clim_oh_diurnal_correction(
  * @authors Mingzhao Liu
  */
 double clim_photo(
-  double rate[CP][CSZA][CO3],
-  clim_photo_t * photo,
-  double p,
-  double sza,
-  double o3c);
+  const double rate[CP][CSZA][CO3],
+  const clim_photo_t * photo,
+  const double p,
+  const double sza,
+  const double o3c);
 
 /**
  * @brief Calculates the tropopause pressure based on climatological data.
@@ -3720,13 +3753,13 @@ double clim_zm(
  * Lars Hoffmann
  */
 void compress_cms(
-  ctl_t * ctl,
-  char *varname,
+  const ctl_t * ctl,
+  const char *varname,
   float *array,
-  size_t nx,
-  size_t ny,
-  size_t np,
-  int decompress,
+  const size_t nx,
+  const size_t ny,
+  const size_t np,
+  const int decompress,
   FILE * inout);
 
 /**
@@ -3761,12 +3794,12 @@ void compress_cms(
  *
  * @author Lars Hoffmann
  */
-void compress_pack(
-  char *varname,
+void compress_pck(
+  const char *varname,
   float *array,
-  size_t nxy,
-  size_t nz,
-  int decompress,
+  const size_t nxy,
+  const size_t nz,
+  const int decompress,
   FILE * inout);
 
 /**
@@ -3808,14 +3841,14 @@ void compress_pack(
  * @author Lars Hoffmann
  */
 void compress_zfp(
-  char *varname,
+  const char *varname,
   float *array,
-  int nx,
-  int ny,
-  int nz,
-  int precision,
-  double tolerance,
-  int decompress,
+  const int nx,
+  const int ny,
+  const int nz,
+  const int precision,
+  const double tolerance,
+  const int decompress,
   FILE * inout);
 
 /**
@@ -3854,10 +3887,10 @@ void compress_zfp(
  * @author Lars Hoffmann
  */
 void compress_zstd(
-  char *varname,
+  const char *varname,
   float *array,
-  size_t n,
-  int decompress,
+  const size_t n,
+  const int decompress,
   FILE * inout);
 
 /*! Get day of year from date. */
@@ -3944,7 +3977,7 @@ void doy2day(
 void fft_help(
   double *fcReal,
   double *fcImag,
-  int n);
+  const int n);
 
 /**
  * @brief Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates.
@@ -4015,51 +4048,16 @@ void geo2cart(
 void get_met(
   ctl_t * ctl,
   clim_t * clim,
-  double t,
+  const double t,
   met_t ** met0,
   met_t ** met1);
 
-/**
- * @brief Helper function to generate the filename for meteorological data.
- *
- * This function generates the appropriate filename for the
- * meteorological data file based on the provided time `t`, direction
- * `direct`, and the base filename `metbase`.  The filename is
- * formatted according to the specified meteorological data type.
- *
- * @param ctl Pointer to the control structure containing configuration settings.
- * @param t The time for which the meteorological data filename is to be generated.
- * @param direct The direction of time integration (-1 for backward, 1 for forward).
- * @param metbase The base string for the meteorological data filenames.
- * @param dt_met The time interval between meteorological data files.
- * @param filename The generated filename for the meteorological data file.
- *
- * The function performs the following steps:
- * - Rounds the time to fixed intervals `dt_met` based on the direction.
- * - Decodes the time into year, month, day, hour, minute, and second.
- * - Constructs the filename based on the meteorological data type specified in `ctl`.
- * - Replaces placeholders (YYYY, MM, DD, HH) in the base filename with actual date and time values.
- *
- * @note Ensure that `ctl` and `filename` are properly initialized before calling this function.
- *
- * @see jsec2time
- * @see get_met_replace
- *
- * @author Lars Hoffmann
- */
-void get_met_fortran(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  met_t * met0,
-  met_t * met1);
-
 void get_met_help(
-  ctl_t * ctl,
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
+  const ctl_t * ctl,
+  const double t,
+  const int direct,
+  const char *metbase,
+  const double dt_met,
   char *filename);
 
 /**
@@ -4127,14 +4125,14 @@ void get_met_replace(
  * @author Lars Hoffmann
  */
 void get_tropo(
-  int met_tropo,
+  const int met_tropo,
   ctl_t * ctl,
   clim_t * clim,
   met_t * met,
-  double *lons,
-  int nx,
-  double *lats,
-  int ny,
+  const double *lons,
+  const int nx,
+  const double *lats,
+  const int ny,
   double *pt,
   double *zt,
   double *tt,
@@ -4185,20 +4183,20 @@ void get_tropo(
  * @author Jan Clemens
  */
 void intpol_met_4d_coord(
-  met_t * met0,
+  const met_t * met0,
   float height0[EX][EY][EP],
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t * met1,
   float height1[EX][EY][EP],
   float array1[EX][EY][EP],
-  double ts,
-  double height,
-  double lon,
-  double lat,
+  const double ts,
+  const double height,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates meteorological variables in 3D space.
@@ -4235,15 +4233,15 @@ void intpol_met_4d_coord(
  * @author Lars Hoffmann
  */
 void intpol_met_space_3d(
-  met_t * met,
+  const met_t * met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates a meteorological variable in 3D space (longitude, latitude, pressure).
@@ -4264,11 +4262,11 @@ void intpol_met_space_3d(
  * @author Lars Hoffmann
  */
 void intpol_met_space_3d_ml(
-  met_t * met,
+  const met_t * met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var);
 
 /**
@@ -4306,14 +4304,14 @@ void intpol_met_space_3d_ml(
  * @author Lars Hoffmann
  */
 void intpol_met_space_2d(
-  met_t * met,
+  const met_t * met,
   float array[EX][EY],
-  double lon,
-  double lat,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates meteorological data in 3D space and time.
@@ -4349,18 +4347,18 @@ void intpol_met_space_2d(
  * @author Lars Hoffmann
  */
 void intpol_met_time_3d(
-  met_t * met0,
+  const met_t * met0,
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t * met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates a meteorological variable in time and 3D space (longitude, latitude, pressure).
@@ -4385,14 +4383,14 @@ void intpol_met_time_3d(
  * @author Lars Hoffmann
  */
 void intpol_met_time_3d_ml(
-  met_t * met0,
+  const met_t * met0,
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t * met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var);
 
 /**
@@ -4430,17 +4428,17 @@ void intpol_met_time_3d_ml(
  * @author Lars Hoffmann
  */
 void intpol_met_time_2d(
-  met_t * met0,
+  const met_t * met0,
   float array0[EX][EY],
-  met_t * met1,
+  const met_t * met1,
   float array1[EX][EY],
-  double ts,
-  double lon,
-  double lat,
+  const double ts,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init);
+  const int init);
 
 /**
  * @brief Interpolates tropopause data in 3D (latitude, longitude, and time).
@@ -4480,18 +4478,18 @@ void intpol_met_time_2d(
  * @author Lars Hoffmann
  */
 void intpol_tropo_3d(
-  double time0,
+  const double time0,
   float array0[EX][EY],
-  double time1,
+  const double time1,
   float array1[EX][EY],
-  double lons[EX],
-  double lats[EY],
-  int nlon,
-  int nlat,
-  double time,
-  double lon,
-  double lat,
-  int method,
+  const double lons[EX],
+  const double lats[EY],
+  const int nlon,
+  const int nlat,
+  const double time,
+  const double lon,
+  const double lat,
+  const int method,
   double *var,
   double *sigma);
 
@@ -4739,10 +4737,10 @@ int locate_reg(
  */
 void locate_vert(
   float profiles[EX][EY][EP],
-  int np,
-  int lon_ap_ind,
-  int lat_ap_ind,
-  double alt_ap,
+  const int np,
+  const int lon_ap_ind,
+  const int lat_ap_ind,
+  const double alt_ap,
   int *ind);
 
 /**
@@ -4792,11 +4790,11 @@ void locate_vert(
  * @authors Jan Clemens
  */
 void module_advect(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Initializes the advection module by setting up pressure fields.
@@ -4820,7 +4818,7 @@ void module_advect(
  * @author Jan Clemens
  */
 void module_advect_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm);
@@ -4862,12 +4860,12 @@ void module_advect_init(
  * @authors Mingzhao Liu
  */
 void module_bound_cond(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Calculate grid data for chemistry modules.
@@ -4887,11 +4885,11 @@ void module_bound_cond(
  * @authors Lars Hoffmann
  */
 void module_chemgrid(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Initializes the chemistry modules by setting atmospheric composition.
@@ -4920,8 +4918,8 @@ void module_chemgrid(
  * @authors Mingzhao Liu
  */
 void module_chem_init(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm);
@@ -4954,11 +4952,11 @@ void module_chem_init(
  * @author Lars Hoffmann
  */
 void module_convection(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt,
+  const double *dt,
   double *rs);
 
 /**
@@ -4988,10 +4986,10 @@ void module_convection(
  * @author Lars Hoffmann
  */
 void module_decay(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Simulate mesoscale diffusion for atmospheric particles.
@@ -5023,12 +5021,12 @@ void module_decay(
  * @author Lars Hoffmann
  */
 void module_diffusion_meso(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  double *dt,
+  const double *dt,
   double *rs);
 
 /**
@@ -5057,10 +5055,10 @@ void module_diffusion_meso(
  * @author Lars Hoffmann
  */
 void module_diffusion_turb(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double *dt,
+  const double *dt,
   double *rs);
 
 /**
@@ -5083,11 +5081,11 @@ void module_diffusion_turb(
  * @author Lars Hoffmann
  */
 void module_dry_deposition(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Perform chemical reactions involving H2O2 within cloud particles.
@@ -5122,12 +5120,12 @@ void module_dry_deposition(
  * @author Mingzhao Liu
  */
 void module_h2o2_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Initialize the isosurface module based on atmospheric data.
@@ -5149,7 +5147,7 @@ void module_h2o2_chem(
  * @author Lars Hoffmann
  */
 void module_isosurf_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
@@ -5174,12 +5172,12 @@ void module_isosurf_init(
  * @author Lars Hoffmann
  */
 void module_isosurf(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  double *dt);
+  const double *dt);
 
 /*! KPP chemistry module. */
 /**
@@ -5239,12 +5237,12 @@ void module_kpp_chem(
  * @author Lars Hoffmann
  */
 void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Update atmospheric properties through interparcel mixing.
@@ -5264,10 +5262,10 @@ void module_meteo(
  * @authors Lars Hoffmann
  */
 void module_mixing(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Perform interparcel mixing for a specific quantity.
@@ -5289,13 +5287,13 @@ void module_mixing(
  * @authors Lars Hoffmann
  */
 void module_mixing_help(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   atm_t * atm,
   const int *ixs,
   const int *iys,
   const int *izs,
-  int qnt_idx);
+  const int qnt_idx);
 
 /**
  * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
@@ -5330,12 +5328,12 @@ void module_mixing_help(
  * @authors Mingzhao Liu
  */
 void module_oh_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Update the positions and pressure levels of atmospheric particles.
@@ -5366,11 +5364,11 @@ void module_oh_chem(
  * @author Lars Hoffmann
  */
 void module_position(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Initialize random number generators for parallel tasks.
@@ -5397,7 +5395,7 @@ void module_position(
  * @author Lars Hoffmann
  */
 void module_rng_init(
-  int ntask);
+  const int ntask);
 
 /**
  * @brief Generate random numbers using various methods and distributions.
@@ -5425,10 +5423,10 @@ void module_rng_init(
  * @author Lars Hoffmann
  */
 void module_rng(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   double *rs,
-  size_t n,
-  int method);
+  const size_t n,
+  const int method);
 
 /**
  * @brief Simulate sedimentation of particles in the atmosphere.
@@ -5453,11 +5451,11 @@ void module_rng(
  * @author Lars Hoffmann
  */
 void module_sedi(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /*!  */
 /**
@@ -5484,7 +5482,7 @@ void module_sedi(
  * @author Lars Hoffmann
  */
 void module_sort(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   atm_t * atm);
 
@@ -5536,11 +5534,11 @@ void module_sort_help(
  * @author Lars Hoffmann
  */
 void module_timesteps(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
   double *dt,
-  double t);
+  const double t);
 
 /**
  * @brief Initialize start time and time interval for time-stepping.
@@ -5564,7 +5562,7 @@ void module_timesteps(
  */
 void module_timesteps_init(
   ctl_t * ctl,
-  atm_t * atm);
+  const atm_t * atm);
 
 /**
  * @brief Simulate chemical reactions involving long-lived atmospheric tracers.
@@ -5599,12 +5597,12 @@ void module_timesteps_init(
  * @authors Lars Hoffmann
  */
 void module_tracer_chem(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Perform wet deposition calculations for air parcels.
@@ -5631,11 +5629,11 @@ void module_tracer_chem(
  * @authors Mingzhao Liu
  */
 void module_wet_deposition(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double *dt);
+  const double *dt);
 
 /**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.
@@ -5706,7 +5704,7 @@ double nat_temperature(
  */
 int read_atm(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5743,7 +5741,7 @@ int read_atm(
  */
 int read_atm_asc(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5778,7 +5776,7 @@ int read_atm_asc(
  */
 int read_atm_bin(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5817,7 +5815,7 @@ int read_atm_bin(
  */
 int read_atm_clams(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5851,7 +5849,7 @@ int read_atm_clams(
  */
 int read_atm_nc(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm);
 
 /**
@@ -5886,7 +5884,7 @@ int read_atm_nc(
  * @authors Mingzhao Liu
  */
 void read_clim(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   clim_t * clim);
 
 /**
@@ -5920,6 +5918,28 @@ void read_clim(
 void read_clim_photo(
   const char *filename,
   clim_photo_t * photo);
+
+/**
+ * @brief Reads a 3D climatological photochemistry variable from a NetCDF file.
+ *
+ * This function reads a variable from a NetCDF file into a 3D array
+ * based on the dimensions provided by the `clim_photo_t` structure.
+ *
+ * @param[in] ncid      NetCDF file ID.
+ * @param[in] varname   Name of the variable to read from the NetCDF file.
+ * @param[in] photo     Pointer to a structure defining the data dimensions (np, nsza, no3c).
+ * @param[out] var      3D array to store the read data, with dimensions [CP][CSZA][CO3].
+ *
+ * @note Allocates temporary memory for reading and copies data into the provided array.
+ *       The memory is freed after the data is copied.
+ *
+ * @author Lars Hoffmann
+ */
+void read_clim_photo_help(
+  const int ncid,
+  const char *varname,
+  const clim_photo_t * photo,
+  double var[CP][CSZA][CO3]);
 
 /**
  * @brief Reads a climatological time series from a file and populates the given time series structure.
@@ -5976,7 +5996,7 @@ int read_clim_ts(
  */
 void read_clim_zm(
   const char *filename,
-  char *varname,
+  const char *varname,
   clim_zm_t * zm);
 
 /**
@@ -6048,45 +6068,30 @@ void read_kernel(
   int *nk);
 
 /**
- * @brief Reads meteorological data from a file and populates the provided structures.
+ * @brief Reads meteorological data from a file, supporting multiple formats and MPI broadcasting.
  *
- * This function reads meteorological data from a specified file,
- * populating the provided structures `ctl`, `clim`, and `met` with
- * the parsed data. The function handles both netCDF and binary data
- * formats. For netCDF data, it performs various data processing steps
- * such as reading coordinates, surface data, atmospheric levels, and
- * calculating derived quantities. For binary data, it reads the data
- * directly into the appropriate arrays and structures.
+ * This function reads meteorological data from a file specified by the `filename` parameter. It supports 
+ * both NetCDF and binary formats based on the `met_type` field in the `ctl_t` structure. The function can 
+ * also handle parallel processing with MPI, broadcasting the data across ranks if required by the 
+ * configuration.
  *
- * @param filename  A string containing the path to the file containing meteorological data.
- * @param ctl       A pointer to a structure containing control parameters.
- * @param clim      A pointer to a structure containing climatological data.
- * @param met       A pointer to a structure to store the meteorological data.
- * @return          Returns 1 on success and 0 on failure.
+ * @param filename A constant character pointer representing the name of the file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which holds control parameters including the type of 
+ * meteorological data, MPI sharing flags, and configuration details.
+ * @param clim A pointer to a `clim_t` structure, which contains climatological data to be used in the 
+ * process, if applicable.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read from the file.
  *
- * The function performs the following steps:
- * - Logs information indicating the meteorological data file being read.
- * - Determines the type of meteorological data (netCDF or binary).
- * - For netCDF data:
- *   - Opens the netCDF file and reads various data components including grid coordinates,
- *     atmospheric levels, surface data, and derived quantities.
- *   - Performs data processing steps such as extrapolation, boundary condition handling,
- *     downsampling, and calculations of geopotential heights, potential vorticity, boundary
- *     layer data, tropopause data, cloud properties, convective available potential energy,
- *     total column ozone, and detrending.
- *   - Checks and adjusts meteorological data as necessary, including monotonicity of
- *     vertical coordinates.
- *   - Closes the netCDF file after reading.
- * - For binary data:
- *   - Opens the binary file and reads metadata including the type and version of the data,
- *     time information, dimensions, and grid coordinates.
- *   - Reads surface data, level data, and final flag from the binary file.
- *   - Closes the binary file after reading.
- * - Copies wind data to a cache for subsequent use.
- * - Returns 1 on successful reading and processing of meteorological data.
+ * @return Returns an integer, where 1 indicates success.
  *
- * @note The function handles different types of meteorological data formats and performs
- *       appropriate processing and error checking for each format.
+ * @note
+ * - The function logs the action of reading meteorological data, including the file name.
+ * - It supports MPI parallelization and will share the data across multiple processes if the 
+ * `met_mpi_share` flag is set in the control structure.
+ * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
+ * - If `ctl->met_type` is between 1 and 5, the data is read from a binary file using the `read_met_bin` function.
+ * - If the `met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann
  */
@@ -6094,6 +6099,42 @@ int read_met(
   const char *filename,
   ctl_t * ctl,
   clim_t * clim,
+  met_t * met);
+
+/**
+ * @brief Reads meteorological data from a binary file.
+ *
+ * This function reads meteorological data from a binary file and populates the provided `met_t` structure 
+ * with the data. It checks the binary file's format version and `met_type`, ensuring compatibility with the 
+ * control structure (`ctl_t`). The function reads time, grid, surface data, and multi-level data, and supports 
+ * different binary file versions.
+ *
+ * @param filename A constant character pointer representing the name of the binary file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure that holds control parameters such as the expected 
+ * `met_type` and other configuration options.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read from the binary file.
+ *
+ * @note
+ * - The function logs the progress and details of the read operation, such as time, number of longitudes, 
+ * latitudes, levels, and various meteorological variables.
+ * - It uses the `FREAD` macro for safe binary reading operations, which checks the integrity of the read 
+ * operation.
+ * - The function reads and verifies the `met_type` and binary file version to ensure compatibility.
+ * - Supported binary file versions include 100, 101, and 102, each of which may include additional 
+ * variables (e.g., `LSM`, `SST`, `RWC`, `SWC`, and `CC`).
+ * 
+ * @warning
+ * - The function will raise an error if the `met_type` in the file does not match the `ctl->met_type`.
+ * - It will raise an error if the binary file version is not supported.
+ * - If the dimensions of the data (e.g., number of longitudes, latitudes, or levels) are outside the 
+ * expected range, an error will be raised.
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_bin(
+  const char *filename,
+  ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6123,9 +6164,9 @@ int read_met(
  */
 void read_met_bin_2d(
   FILE * in,
-  met_t * met,
+  const met_t * met,
   float var[EX][EY],
-  char *varname);
+  const char *varname);
 
 /**
  * @brief Reads 3D meteorological data from a binary file, potentially using different compression methods.
@@ -6166,12 +6207,12 @@ void read_met_bin_2d(
  */
 void read_met_bin_3d(
   FILE * in,
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t * ctl,
+  const met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  float bound_min,
-  float bound_max);
+  const char *varname,
+  const float bound_min,
+  const float bound_max);
 
 /**
  * @brief Calculates Convective Available Potential Energy (CAPE) for each grid point.
@@ -6200,7 +6241,7 @@ void read_met_bin_3d(
  * @author Lars Hoffmann
  */
 void read_met_cape(
-  clim_t * clim,
+  const clim_t * clim,
   met_t * met);
 
 /**
@@ -6254,7 +6295,7 @@ void read_met_cloud(
  * @author Lars Hoffmann
  */
 void read_met_detrend(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6309,7 +6350,7 @@ void read_met_extrapolate(
  * @author Lars Hoffmann
  */
 void read_met_geopot(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6345,8 +6386,8 @@ void read_met_geopot(
  */
 void read_met_grid(
   const char *filename,
-  int ncid,
-  ctl_t * ctl,
+  const int ncid,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6380,8 +6421,8 @@ void read_met_grid(
  * @authors Jan Clemens
  */
 void read_met_levels(
-  int ncid,
-  ctl_t * ctl,
+  const int ncid,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6413,10 +6454,10 @@ void read_met_levels(
  * @author Lars Hoffmann
  */
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t * ctl,
+  const met_t * met,
   float var[EX][EY][EP],
-  char *varname);
+  const char *varname);
 
 /**
  * @brief Makes zeta and pressure profiles monotone.
@@ -6439,6 +6480,43 @@ void read_met_ml2pl(
  * @author Jan Clemens
  */
 void read_met_monotonize(
+  met_t * met);
+
+/**
+ * @brief Reads meteorological data from a NetCDF file and processes it.
+ *
+ * This function reads meteorological data from a NetCDF file specified by the `filename` parameter, 
+ * using the NetCDF library. It reads grid, surface, and vertical level data, processes the data 
+ * (including extrapolation, boundary conditions, and downsampling), and calculates various derived 
+ * meteorological fields such as geopotential heights, potential vorticity, cloud properties, and 
+ * convective available potential energy (CAPE).
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param clim A pointer to a `clim_t` structure that holds climatological data, used in the 
+ * calculation of derived properties such as CAPE and tropopause data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
+ *
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
+ *
+ * @note
+ * - The function opens the NetCDF file in read-only mode using `nc_open` and handles any errors 
+ * during the file opening process.
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
+ * - It is important to ensure that the NetCDF file contains the expected structure for meteorological 
+ * data (grid, levels, surface data).
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc(
+  const char *filename,
+  ctl_t * ctl,
+  clim_t * clim,
   met_t * met);
 
 /**
@@ -6471,16 +6549,18 @@ void read_met_monotonize(
  * @author Lars Hoffmann
  */
 int read_met_nc_2d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const char *varname5,
+  const char *varname6,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY],
-  float scl,
-  int init);
+  const float scl,
+  const int init);
 
 /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
@@ -6496,6 +6576,8 @@ int read_met_nc_2d(
  * @param varname2 An alternative name of the variable to read (in case varname is not found).
  * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
  * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param varname5 An alternative name of the variable to read (in case varname4 is not found).
+ * @param varname6 An alternative name of the variable to read (in case varname5 is not found).
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure containing meteorological data.
  * @param dest The destination array to store the read data.
@@ -6511,15 +6593,15 @@ int read_met_nc_2d(
  * @author Lars Hoffmann
  */
 int read_met_nc_3d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY][EP],
-  float scl);
+  const float scl);
 
 /**
  * @brief Calculates the planetary boundary layer (PBL) height for each grid point.
@@ -6705,7 +6787,7 @@ void read_met_ozone(
  * @author Lars Hoffmann
  */
 void read_met_sample(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -6749,9 +6831,9 @@ void read_met_sample(
  * @authors Jan Clemens
  */
 void read_met_surface(
-  int ncid,
-  met_t * met,
-  ctl_t * ctl);
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
 
 /**
  * @brief Calculates the tropopause and related meteorological variables based on various methods and stores the results in the meteorological data structure.
@@ -6782,8 +6864,8 @@ void read_met_surface(
  * @author Lars Hoffmann
  */
 void read_met_tropo(
-  ctl_t * ctl,
-  clim_t * clim,
+  const ctl_t * ctl,
+  const clim_t * clim,
   met_t * met);
 
 /**
@@ -6819,7 +6901,7 @@ void read_met_tropo(
  */
 void read_obs(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   double *rt,
   double *rz,
   double *rlon,
@@ -6936,7 +7018,7 @@ double scan_ctl(
   int argc,
   char *argv[],
   const char *varname,
-  int arridx,
+  const int arridx,
   const char *defvalue,
   char *value);
 
@@ -7125,7 +7207,7 @@ void time2jsec(
 void timer(
   const char *name,
   const char *group,
-  int output);
+  const int output);
 
 /**
  * @brief Extracts and converts a timestamp from a filename to Julian seconds.
@@ -7154,7 +7236,7 @@ void timer(
  */
 double time_from_filename(
   const char *filename,
-  int offset);
+  const int offset);
 
 /**
  * @brief Computes the weighting factor for a given pressure with respect to the tropopause.
@@ -7220,9 +7302,9 @@ double tropo_weight(
  */
 void write_atm(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes air parcel data to an ASCII file or gnuplot.
@@ -7248,9 +7330,9 @@ void write_atm(
  */
 void write_atm_asc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes air parcel data to a binary file.
@@ -7277,8 +7359,8 @@ void write_atm_asc(
  */
 void write_atm_bin(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm);
+  const ctl_t * ctl,
+  const atm_t * atm);
 
 /**
  * @brief Writes air parcel data to a NetCDF file in the CLaMS format.
@@ -7305,8 +7387,8 @@ void write_atm_bin(
  */
 void write_atm_clams(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm);
+  const ctl_t * ctl,
+  const atm_t * atm);
 
 /**
  * @brief Writes CLaMS trajectory data to a NetCDF file.
@@ -7334,9 +7416,9 @@ void write_atm_clams(
  */
 void write_atm_clams_traj(
   const char *dirname,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes air parcel data to a NetCDF file.
@@ -7363,8 +7445,8 @@ void write_atm_clams_traj(
  */
 void write_atm_nc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm);
+  const ctl_t * ctl,
+  const atm_t * atm);
 
 /**
  * @brief Writes Critical Success Index (CSI) data to a file.
@@ -7396,9 +7478,9 @@ void write_atm_nc(
  */
 void write_csi(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes ensemble data to a file.
@@ -7429,9 +7511,9 @@ void write_csi(
  */
 void write_ens(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes grid data to a file in ASCII or netCDF format.
@@ -7473,11 +7555,11 @@ void write_ens(
  */
 void write_grid(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes grid data to an ASCII file.
@@ -7526,18 +7608,18 @@ void write_grid(
  */
 void write_grid_asc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t * ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np);
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np);
 
 /**
  * @brief Writes grid data to a NetCDF file.
@@ -7583,54 +7665,91 @@ void write_grid_asc(
  */
 void write_grid_nc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t * ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np);
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np);
 
 /**
- * @brief Writes meteorological data to a binary file.
+ * @brief Writes meteorological data to a file, supporting multiple formats and compression options.
  *
- * The `write_met` function writes meteorological data, including
- * surface data and level data, to a binary file specified by the
- * filename parameter. The data is written in binary format for
- * efficient storage and transfer.
+ * This function handles writing meteorological data based on the specified control (`ctl_t`) and 
+ * meteorological data (`met_t`) structures. The file format and compression type are determined 
+ * by the `met_type` in the control structure. The function supports netCDF, binary output, and 
+ * various compression methods (ZFP, ZSTD, CMS), while providing error handling for unsupported 
+ * configurations.
  *
- * @param filename A string representing the name of the output file.
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param met A pointer to a `met_t` structure containing meteorological data.
+ * @param filename A constant character pointer representing the name of the file to write the 
+ * meteorological data to.
+ * @param ctl A pointer to a `ctl_t` structure, which holds the configuration and control parameters 
+ * for the output, including the type of meteorological data and compression method.
+ * @param met A pointer to a `met_t` structure that holds the meteorological data to be written 
+ * to the file.
  *
- * The function performs the following steps:
- * - Sets a timer to measure the execution time.
- * - Writes information about the meteorological data being written to the log.
- * - Checks if compression flags are enabled and displays error messages if
- *   required compression methods are not available.
- * - Writes binary data to the file, including the type and version of the data,
- *   grid data (time, dimensions, coordinates), surface data, and level data.
- * - Closes the file after writing all data.
+ * @note 
+ * - The function selects a timer for performance profiling or debugging.
+ * - It logs the action of writing meteorological data, including the file name.
  *
- * @return Returns an integer value indicating the success or failure of the
- *         function. A value of 0 indicates successful execution.
+ * @warning 
+ * - If `ctl->met_type` is 3, ZFP compression is required, and the function will generate an error 
+ * if compiled without ZFP support.
+ * - If `ctl->met_type` is 4, ZSTD compression is required, and the function will generate an error 
+ * if compiled without ZSTD support.
+ * - If `ctl->met_type` is 5, CMS compression is required, and the function will generate an error 
+ * if compiled without CMS support.
  *
- * @note This function supports writing meteorological data in different binary
- *       formats, including uncompressed and compressed formats using various
- *       compression algorithms such as packing, ZFP, ZSTD, and cmultiscale. The specific
- *       compression method used depends on the configuration specified in the
- *       `ctl_t` structure.
+ * @note 
+ * - If `ctl->met_type` is 0, the function writes data in netCDF format via `write_met_nc`.
+ * - If `ctl->met_type` is between 1 and 5, the function writes data in binary format via `write_met_bin`.
+ * - If `ctl->met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann
  */
-int write_met(
+void write_met(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Writes meteorological data in binary format to a specified file.
+ *
+ * This function writes meteorological data from the `met_t` structure to a binary file. The 
+ * data includes grid and surface data, as well as multi-level data such as temperature, 
+ * velocity components, and atmospheric properties. The compression options for multi-level 
+ * data (ZFP) are controlled via the `ctl_t` structure. The function supports multiple variables, 
+ * such as surface pressure, temperature, wind components, and cloud properties.
+ *
+ * @param filename A constant character pointer representing the name of the file to write the 
+ * binary data to.
+ * @param ctl A pointer to a `ctl_t` structure, which holds control parameters including the type 
+ * of meteorological data, compression settings, and grid dimensions.
+ * @param met A pointer to a `met_t` structure that contains the meteorological data to be written 
+ * to the binary file.
+ *
+ * @note 
+ * - The function creates a new file to write the data. If the file cannot be created, an error 
+ * is generated.
+ * - The type of meteorological data (`ctl->met_type`) and the version of the binary format 
+ * are written at the beginning of the file.
+ * - Grid data such as longitude, latitude, pressure levels, and time are written to the file.
+ * - Surface data (e.g., pressure, temperature, wind components) are written using the `write_met_bin_2d` 
+ * helper function.
+ * - Multi-level (3D) data such as geopotential height, temperature, and wind velocity are written 
+ * using the `write_met_bin_3d` function with optional ZFP compression settings.
+ * 
+ * @author Lars Hoffmann
+ */
+void write_met_bin(
+  const char *filename,
+  const ctl_t * ctl,
   met_t * met);
 
 /**
@@ -7664,7 +7783,7 @@ void write_met_bin_2d(
   FILE * out,
   met_t * met,
   float var[EX][EY],
-  char *varname);
+  const char *varname);
 
 /**
  * @brief Writes a 3-dimensional meteorological variable to a binary file.
@@ -7705,12 +7824,107 @@ void write_met_bin_2d(
  */
 void write_met_bin_3d(
   FILE * out,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance);
+  const char *varname,
+  const int precision,
+  const double tolerance);
+
+/**
+ * @brief Writes meteorological data to a NetCDF file.
+ *
+ * This function creates and writes meteorological data to a NetCDF file in the NetCDF-4 format. It defines 
+ * the required dimensions, grid, surface variables, and level data within the NetCDF structure and 
+ * writes the corresponding values from the `met_t` structure. The function uses helper functions 
+ * to write 2D surface and 3D level data.
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to create and 
+ * write the data to.
+ * @param ctl A pointer to a `ctl_t` structure that contains control parameters, such as the 
+ * NetCDF level and quantization settings.
+ * @param met A pointer to a `met_t` structure that contains the meteorological data to be written 
+ * to the NetCDF file.
+ *
+ * @note
+ * - The function uses the NetCDF-4 format for efficient data storage.
+ * - It defines the grid dimensions (time, longitude, latitude, pressure levels) and adds global 
+ * attributes like units and descriptions for each variable.
+ * - The surface variables include surface pressure, geopotential, 2-meter temperature, and wind 
+ * components, which are defined on a 2D grid (latitude × longitude).
+ * - The level variables, such as temperature, wind velocities, and cloud properties, are defined 
+ * on a 3D grid (pressure level × latitude × longitude).
+ *
+ * @author
+ * Lars Hoffmann
+ */
+void write_met_nc(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Writes a 2D meteorological variable to a NetCDF file.
+ *
+ * This function writes a 2D meteorological variable, stored in the
+ * array `var`, to a NetCDF file with the specified variable name.
+ * The data is scaled by a factor `scl` before being written. The
+ * function handles memory allocation for the data copy, scaling, and
+ * freeing the allocated memory after writing the data to the NetCDF
+ * file.
+ *
+ * @param ncid     The NetCDF file ID. This is an integer that identifies the NetCDF file where the data will be written. 
+ *                 It is assumed that this file has already been opened for writing.
+ * @param varname  A pointer to a string containing the name of the variable in the NetCDF file where the data will be stored.
+ * @param met      A pointer to a structure of type `met_t` that contains metadata about the meteorological field, 
+ *                 including the dimensions `nx` (number of points in x-direction) and `ny` (number of points in y-direction).
+ * @param var      A 2D array of dimensions `EX x EY` containing the meteorological data to be written. 
+ *                 The data is provided in the format `var[ix][iy]`, where `ix` is the index in the x-direction and 
+ *                 `iy` is the index in the y-direction.
+ * @param scl      A scaling factor applied to each element in the `var` array before writing to the NetCDF file.
+ *
+ * @return void    This function does not return any value.
+ *
+ * @author Lars Hoffmann
+ */
+void write_met_nc_2d(
+  int ncid,
+  const char *varname,
+  met_t * met,
+  float var[EX][EY],
+  float scl);
+
+/**
+ * @brief Writes a 3D meteorological variable to a NetCDF file.
+ *
+ * This function writes a 3D meteorological variable, stored in the
+ * array `var`, to a NetCDF file with the specified variable name.
+ * The data is scaled by a factor `scl` before being written. The
+ * function handles memory allocation for the data copy, scaling, and
+ * freeing the allocated memory after writing the data to the NetCDF
+ * file.
+ *
+ * @param ncid     The NetCDF file ID. This is an integer that identifies the NetCDF file where the data will be written.
+ *                 It is assumed that this file has already been opened for writing.
+ * @param varname  A pointer to a string containing the name of the variable in the NetCDF file where the data will be stored.
+ * @param met      A pointer to a structure of type `met_t` that contains metadata about the meteorological field, 
+ *                 including the dimensions `nx` (number of points in the x-direction), `ny` (number of points in the y-direction), 
+ *                 and `np` (number of points in the third dimension, e.g., pressure levels).
+ * @param var      A 3D array of dimensions `EX x EY x EP` containing the meteorological data to be written.
+ *                 The data is provided in the format `var[ix][iy][ip]`, where `ix` is the index in the x-direction, 
+ *                 `iy` is the index in the y-direction, and `ip` is the index in the third dimension (e.g., vertical levels).
+ * @param scl      A scaling factor applied to each element in the `var` array before writing to the NetCDF file.
+ *
+ * @return void    This function does not return any value.
+ *
+ * @author Lars Hoffmann
+ */
+void write_met_nc_3d(
+  int ncid,
+  const char *varname,
+  met_t * met,
+  float var[EX][EY][EP],
+  float scl);
 
 /**
  * @brief Writes various types of output data to files in a specified directory.
@@ -7747,11 +7961,11 @@ void write_met_bin_3d(
  */
 void write_output(
   const char *dirname,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Writes profile data to a specified file.
@@ -7785,11 +7999,11 @@ void write_output(
  */
 void write_prof(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes sample data to a specified file.
@@ -7824,11 +8038,11 @@ void write_prof(
  */
 void write_sample(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double t);
+  const atm_t * atm,
+  const double t);
 
 /**
  * @brief Writes station data to a specified file.
@@ -7858,9 +8072,9 @@ void write_sample(
  */
 void write_station(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm,
-  double t);
+  const double t);
 
 /**
  * @brief Writes VTK (Visualization Toolkit) data to a specified file.
@@ -7892,9 +8106,9 @@ void write_station(
  */
 void write_vtk(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t);
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
 
 /* ------------------------------------------------------------
    OpenACC routines...

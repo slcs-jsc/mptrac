@@ -4,26 +4,25 @@ MODULE mptrac_struct
   IMPLICIT NONE
 
   !! Values must be identical to equivalent variables in mptrac.h!
-  !! ToDo: write test script
   !! The values for ex, ey, ep are suited for ERA5 data. However, they
   !! exceed some size limit of NVHPC (2GB???), where the compiler fails
   !! to build the fortran wrapper. GCC and ICX work fine.
-  INTEGER, PARAMETER :: ex=1202
-  INTEGER, PARAMETER :: ey=602
-  INTEGER, PARAMETER :: ep=140
+  INTEGER, PARAMETER :: ex = 1202
+  INTEGER, PARAMETER :: ey = 602
+  INTEGER, PARAMETER :: ep = 140
   !! Alternative smaller values, good enough for ERA-interim.
-  ! INTEGER, PARAMETER :: ex=481
-  ! INTEGER, PARAMETER :: ey=241
-  ! INTEGER, PARAMETER :: ep=60
-  INTEGER, PARAMETER :: npp=10000000 !NP
-  INTEGER, PARAMETER :: nqq=15       !NQ
-  INTEGER, PARAMETER :: length=5000  !LEN
-  INTEGER, PARAMETER :: cyy=250      !CY
-  INTEGER, PARAMETER :: co3=30
-  INTEGER, PARAMETER :: cp=70
-  INTEGER, PARAMETER :: csza=50
-  INTEGER, PARAMETER :: ct=12
-  INTEGER, PARAMETER :: cts=1000
+  ! INTEGER, PARAMETER :: ex = 481
+  ! INTEGER, PARAMETER :: ey = 241
+  ! INTEGER, PARAMETER :: ep = 60
+  INTEGER, PARAMETER :: npp = 10000000 !NP
+  INTEGER, PARAMETER :: nqq = 15       !NQ
+  INTEGER, PARAMETER :: length = 5000  !LEN
+  INTEGER, PARAMETER :: cyy = 250      !CY
+  INTEGER, PARAMETER :: co3 = 30
+  INTEGER, PARAMETER :: cp = 70
+  INTEGER, PARAMETER :: csza = 50
+  INTEGER, PARAMETER :: ct = 12
+  INTEGER, PARAMETER :: cts = 1000
 
   
   !! The order of the variables in each struct matters!
@@ -187,9 +186,12 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_convention
      INTEGER(c_int) :: met_type
      INTEGER(c_int) :: met_nc_scale
+     INTEGER(c_int) :: met_nc_level
+     INTEGER(c_int) :: met_nc_quant
      INTEGER(c_int) :: met_zfp_prec
      REAL(c_double) :: met_zfp_tol_t
      REAL(c_double) :: met_zfp_tol_z
+     INTEGER(c_int) :: met_cms_batch
      INTEGER(c_int) :: met_cms_heur
      REAL(c_double) :: met_cms_eps_z
      REAL(c_double) :: met_cms_eps_t
@@ -316,6 +318,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: atm_stride
      INTEGER(c_int) :: atm_type
      INTEGER(c_int) :: atm_type_out
+     INTEGER(c_int) :: atm_nc_level
+     INTEGER(c_int), DIMENSION(nqq) :: atm_nc_quant
      INTEGER(c_int) :: obs_type
      CHARACTER(c_char), DIMENSION(length) :: csi_basename
      CHARACTER(c_char), DIMENSION(length) :: csi_kernel
@@ -339,6 +343,8 @@ MODULE mptrac_struct
      CHARACTER(c_char), DIMENSION(length) :: grid_gpfile
      REAL(c_double) :: grid_dt_out
      INTEGER(c_int) :: grid_sparse
+     INTEGER(c_int) :: grid_nc_level
+     INTEGER(c_int), DIMENSION(nqq) :: grid_nc_quant
      INTEGER(c_int) :: grid_stddev
      INTEGER(c_int) :: grid_nz
      REAL(c_double) :: grid_z0
@@ -448,17 +454,6 @@ END MODULE mptrac_struct
 
 MODULE mptrac_func
   INTERFACE
-     
-     ! SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
-     !      bind(c,name='get_met_fortran')
-     !   USE, intrinsic :: iso_c_binding
-     !   USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
-     !   IMPLICIT NONE
-     !   TYPE(ctl_t), INTENT(in), TARGET :: ctl
-     !   TYPE(clim_t), INTENT(in), TARGET :: clim
-     !   REAL(c_double), INTENT(in), VALUE :: t
-     !   TYPE(met_t), INTENT(inout) :: met0, met1
-     ! END SUBROUTINE mptrac_get_met
 
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
           bind(c,name='get_met')
@@ -510,7 +505,16 @@ MODULE mptrac_func
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(atm_t), INTENT(out), TARGET :: atm
      END SUBROUTINE mptrac_read_atm
-     
+
+     SUBROUTINE mptrac_read_clim(ctl,clim) &
+          bind(c,name='read_clim')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, clim_t, clim_ts_t, clim_zm_t, clim_photo_t
+       IMPLICIT NONE
+       TYPE(ctl_t), INTENT(in), TARGET :: ctl
+       TYPE(clim_t), INTENT(out), TARGET :: clim
+     END SUBROUTINE mptrac_read_clim
+
      SUBROUTINE mptrac_read_ctl(filename,argc,argv,ctl) &
           bind(c,name='read_ctl')
        USE iso_c_binding
@@ -521,15 +525,6 @@ MODULE mptrac_func
        TYPE(c_ptr), DIMENSION(5) :: argv
        TYPE(ctl_t), INTENT(out), TARGET :: ctl
      END SUBROUTINE mptrac_read_ctl
-
-     SUBROUTINE mptrac_read_clim(ctl,clim) &
-          bind(c,name='read_clim')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, clim_t, clim_ts_t, clim_zm_t, clim_photo_t
-       IMPLICIT NONE
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(clim_t), INTENT(out), TARGET :: clim
-     END SUBROUTINE mptrac_read_clim
 
      SUBROUTINE mptrac_read_met(filename,ctl,clim,met,atm) &
           bind(c,name='read_met')

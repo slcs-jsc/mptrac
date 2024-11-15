@@ -52,15 +52,15 @@ void broadcast_large_data(
   MPI_Bcast(&N, 1, MPI_UINT64_T, 0, MPI_COMM_WORLD);
 
   /* Calculate the number of chunks... */
-  size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
+  const size_t num_chunks = (N + CHUNK_SIZE - 1) / CHUNK_SIZE;
 
   /* Loop over chunks... */
   for (size_t i = 0; i < num_chunks; i++) {
 
     /* Determine the start and end indices for the current chunk... */
-    size_t start = i * CHUNK_SIZE;
-    size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
-    size_t chunk_size = end - start;
+    const size_t start = i * CHUNK_SIZE;
+    const size_t end = (start + CHUNK_SIZE > N) ? N : start + CHUNK_SIZE;
+    const size_t chunk_size = end - start;
 
     /* Broadcast the current chunk... */
     MPI_Bcast((char *) data + start, (int) chunk_size, MPI_BYTE, 0,
@@ -77,32 +77,36 @@ void cart2geo(
   double *lon,
   double *lat) {
 
-  double radius = NORM(x);
-  *lat = asin(x[2] / radius) * 180. / M_PI;
-  *lon = atan2(x[1], x[0]) * 180. / M_PI;
+  const double radius = NORM(x);
+
+  *lat = RAD2DEG(asin(x[2] / radius));
+  *lon = RAD2DEG(atan2(x[1], x[0]));
   *z = radius - RE;
 }
 
 /*****************************************************************************/
 
 double clim_oh(
-  const ctl_t * ctl,
-  const clim_t * clim,
+  const ctl_t *ctl,
+  const clim_t *clim,
   const double t,
   const double lon,
   const double lat,
   const double p) {
 
+  /* Set SZA threshold... */
+  const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
+
   /* Get OH data from climatology... */
-  double oh = clim_zm(&clim->oh, t, lat, p);
+  const double oh = clim_zm(&clim->oh, t, lat, p);
 
   /* Apply diurnal correction... */
   if (ctl->oh_chem_beta > 0) {
     double sza = sza_calc(t, lon, lat);
-    if (sza <= M_PI / 2. * 85. / 90.)
+    if (sza <= sza_thresh)
       return oh * exp(-ctl->oh_chem_beta / cos(sza));
     else
-      return oh * exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+      return oh * exp(-ctl->oh_chem_beta / cos_sza_thresh);
   } else
     return oh;
 }
@@ -110,8 +114,11 @@ double clim_oh(
 /*****************************************************************************/
 
 void clim_oh_diurnal_correction(
-  ctl_t * ctl,
-  clim_t * clim) {
+  const ctl_t *ctl,
+  clim_t *clim) {
+
+  /* Set SZA threshold... */
+  const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
 
   /* Loop over climatology data points... */
   for (int it = 0; it < clim->oh.ntime; it++)
@@ -125,10 +132,10 @@ void clim_oh_diurnal_correction(
 	/* Integrate day/night correction factor over longitude... */
 	for (double lon = -180; lon < 180; lon += 1.0) {
 	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  if (sza <= M_PI / 2. * 85. / 90.)
+	  if (sza <= sza_thresh)
 	    sum += exp(-ctl->oh_chem_beta / cos(sza));
 	  else
-	    sum += exp(-ctl->oh_chem_beta / cos(M_PI / 2. * 85. / 90.));
+	    sum += exp(-ctl->oh_chem_beta / cos_sza_thresh);
 	  n++;
 	}
 
@@ -140,11 +147,11 @@ void clim_oh_diurnal_correction(
 /*****************************************************************************/
 
 double clim_photo(
-  double rate[CP][CSZA][CO3],
-  clim_photo_t * photo,
-  double p,
-  double sza,
-  double o3c) {
+  const double rate[CP][CSZA][CO3],
+  const clim_photo_t *photo,
+  const double p,
+  const double sza,
+  const double o3c) {
 
   /* Check pressure range... */
   double p_help = p;
@@ -168,9 +175,9 @@ double clim_photo(
     o3c_help = photo->o3c[photo->no3c - 1];
 
   /* Get indices... */
-  int ip = locate_irr(photo->p, photo->np, p_help);
-  int isza = locate_reg(photo->sza, photo->nsza, sza_help);
-  int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
+  const int ip = locate_irr(photo->p, photo->np, p_help);
+  const int isza = locate_reg(photo->sza, photo->nsza, sza_help);
+  const int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
 
   /* Interpolate photolysis rate... */
   double aux00 = LIN(photo->p[ip], rate[ip][isza][io3c],
@@ -191,7 +198,7 @@ double clim_photo(
 /*****************************************************************************/
 
 double clim_tropo(
-  const clim_t * clim,
+  const clim_t *clim,
   const double t,
   const double lat) {
 
@@ -201,25 +208,25 @@ double clim_tropo(
     sec += 365.25 * 86400.;
 
   /* Get indices... */
-  int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
-  int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
+  const int isec = locate_irr(clim->tropo_time, clim->tropo_ntime, sec);
+  const int ilat = locate_reg(clim->tropo_lat, clim->tropo_nlat, lat);
 
   /* Interpolate tropopause pressure... */
-  double p0 = LIN(clim->tropo_lat[ilat],
-		  clim->tropo[isec][ilat],
-		  clim->tropo_lat[ilat + 1],
-		  clim->tropo[isec][ilat + 1], lat);
-  double p1 = LIN(clim->tropo_lat[ilat],
-		  clim->tropo[isec + 1][ilat],
-		  clim->tropo_lat[ilat + 1],
-		  clim->tropo[isec + 1][ilat + 1], lat);
+  const double p0 = LIN(clim->tropo_lat[ilat],
+			clim->tropo[isec][ilat],
+			clim->tropo_lat[ilat + 1],
+			clim->tropo[isec][ilat + 1], lat);
+  const double p1 = LIN(clim->tropo_lat[ilat],
+			clim->tropo[isec + 1][ilat],
+			clim->tropo_lat[ilat + 1],
+			clim->tropo[isec + 1][ilat + 1], lat);
   return LIN(clim->tropo_time[isec], p0, clim->tropo_time[isec + 1], p1, sec);
 }
 
 /*****************************************************************************/
 
 void clim_tropo_init(
-  clim_t * clim) {
+  clim_t *clim) {
 
   /* Write info... */
   LOG(1, "Initialize tropopause data...");
@@ -374,7 +381,7 @@ void clim_tropo_init(
 /*****************************************************************************/
 
 double clim_ts(
-  const clim_ts_t * ts,
+  const clim_ts_t *ts,
   const double t) {
 
   /* Interpolate... */
@@ -392,7 +399,7 @@ double clim_ts(
 /*****************************************************************************/
 
 double clim_zm(
-  const clim_zm_t * zm,
+  const clim_zm_t *zm,
   const double t,
   const double lat,
   const double p) {
@@ -417,9 +424,9 @@ double clim_zm(
     lat_help = zm->lat[zm->nlat - 1];
 
   /* Get indices... */
-  int isec = locate_irr(zm->time, zm->ntime, sec);
-  int ilat = locate_reg(zm->lat, zm->nlat, lat_help);
-  int ip = locate_irr(zm->p, zm->np, p_help);
+  const int isec = locate_irr(zm->time, zm->ntime, sec);
+  const int ilat = locate_reg(zm->lat, zm->nlat, lat_help);
+  const int ip = locate_irr(zm->p, zm->np, p_help);
 
   /* Interpolate climatology data... */
   double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
@@ -442,17 +449,17 @@ double clim_zm(
 
 #ifdef CMS
 void compress_cms(
-  ctl_t * ctl,
-  char *varname,
+  const ctl_t *ctl,
+  const char *varname,
   float *array,
-  size_t nx,
-  size_t ny,
-  size_t np,
-  int decompress,
-  FILE * inout) {
+  const size_t nx,
+  const size_t ny,
+  const size_t np,
+  const int decompress,
+  FILE *inout) {
 
   /* Set lon-lat grid... */
-  size_t nxy = nx * ny;
+  const size_t nxy = nx * ny;
   double lon[EX], lat[EY];
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
@@ -467,11 +474,13 @@ void compress_cms(
   cms_param_t *cms_param
     = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
+  /* Init... */
+  double cr = 0, t_coars = 0, t_eval = 0;
+
   /* Read compressed stream and decompress array... */
   if (decompress) {
 
     /* Loop over levels... */
-    double cr = 0;
     for (size_t ip = 0; ip < np; ip++) {
 
       /* Initialize multiscale module... */
@@ -508,100 +517,134 @@ void compress_cms(
     cms_module_t *cms_ptr[EP];
     cms_sol_t *cms_sol[EP];
 
-    /* Loop over levels... */
+    /* Loop over batches... */
+    const size_t dip = (ctl->met_cms_batch <= 0
+			? (size_t) omp_get_max_threads()
+			: (size_t) ctl->met_cms_batch);
+    for (size_t ip0 = 0; ip0 < np; ip0 += dip) {
+
+      /* Measure time... */
+      double t0 = omp_get_wtime();
+
+      /* Loop over levels... */
 #pragma omp parallel for default(shared)
-    for (size_t ip = 0; ip < np; ip++) {
+      for (size_t ip = ip0; ip < MIN(ip0 + dip, np); ip++) {
 
-      /* Copy level data... */
-      float tmp_arr[nxy];
-      for (size_t ix = 0; ix < nx; ++ix)
-	for (size_t iy = 0; iy < ny; ++iy)
-	  tmp_arr[ARRAY_2D(ix, iy, ny)] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	/* Allocate... */
+	float *tmp_arr;
+	ALLOC(tmp_arr, float,
+	      nxy);
 
-      /* Initialize multiscale module... */
-      cms_ptr[ip] = cms_init(cms_param);
+	/* Copy level data... */
+	for (size_t ix = 0; ix < nx; ++ix)
+	  for (size_t iy = 0; iy < ny; ++iy)
+	    tmp_arr[ARRAY_2D(ix, iy, ny)] =
+	      array[ARRAY_3D(ix, iy, ny, ip, np)];
 
-      /* Create solution pointer... */
-      cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
+	/* Initialize multiscale module... */
+	cms_ptr[ip] = cms_init(cms_param);
 
-      /* Set eps threshold value... */
-      if (strcasecmp(varname, "Z") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
-      else if (strcasecmp(varname, "T") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
-      else if (strcasecmp(varname, "U") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
-      else if (strcasecmp(varname, "V") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
-      else if (strcasecmp(varname, "W") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
-      else if (strcasecmp(varname, "PV") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
-      else if (strcasecmp(varname, "H2O") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
-      else if (strcasecmp(varname, "O3") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
-      else if (strcasecmp(varname, "LWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
-      else if (strcasecmp(varname, "RWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
-      else if (strcasecmp(varname, "IWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
-      else if (strcasecmp(varname, "SWC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
-      else if (strcasecmp(varname, "CC") == 0)
-	cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
-      else
-	ERRMSG("Variable name unknown!");
+	/* Create solution pointer... */
+	cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
 
-      /* Coarsening... */
-      cms_coarsening(cms_ptr[ip], cms_sol[ip],
-		     (unsigned int) ctl->met_cms_heur);
-    }
+	/* Set eps threshold value... */
+	if (strcasecmp(varname, "Z") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
+	else if (strcasecmp(varname, "T") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
+	else if (strcasecmp(varname, "U") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
+	else if (strcasecmp(varname, "V") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
+	else if (strcasecmp(varname, "W") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
+	else if (strcasecmp(varname, "PV") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
+	else if (strcasecmp(varname, "H2O") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
+	else if (strcasecmp(varname, "O3") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
+	else if (strcasecmp(varname, "LWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
+	else if (strcasecmp(varname, "RWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
+	else if (strcasecmp(varname, "IWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
+	else if (strcasecmp(varname, "SWC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
+	else if (strcasecmp(varname, "CC") == 0)
+	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
+	else
+	  ERRMSG("Variable name unknown!");
 
-    /* Loop over levels... */
-    double cr = 0;
-    for (size_t ip = 0; ip < np; ip++) {
+	/* Coarsening... */
+	cms_coarsening(cms_ptr[ip], cms_sol[ip],
+		       (unsigned int) ctl->met_cms_heur);
 
-      /* Evaluate... */
-      double tmp_cms[nxy], tmp_org[nxy], tmp_diff[nxy];
+	/* Free... */
+	free(tmp_arr);
+      }
+
+      /* Measure time... */
+      t_coars += (omp_get_wtime() - t0);
+
+      /* Loop over levels... */
+      for (size_t ip = ip0; ip < MIN(ip0 + dip, np); ip++) {
+
+	/* Allocate... */
+	double *tmp_cms, *tmp_org, *tmp_diff;
+	ALLOC(tmp_cms, double,
+	      nxy);
+	ALLOC(tmp_org, double,
+	      nxy);
+	ALLOC(tmp_diff, double,
+	      nxy);
+
+	/* Measure time... */
+	t0 = omp_get_wtime();
+
+	/* Evaluate... */
 #pragma omp parallel for default(shared)
-      for (size_t ix = 0; ix < nx; ix++)
-	for (size_t iy = 0; iy < ny; iy++) {
-	  size_t idx = ARRAY_2D(ix, iy, ny);
-	  double x[] = { lon[ix], lat[iy] };
-	  cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
-	  tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
-	  tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
-	}
+	for (size_t ix = 0; ix < nx; ix++)
+	  for (size_t iy = 0; iy < ny; iy++) {
+	    size_t idx = ARRAY_2D(ix, iy, ny);
+	    double x[] = { lon[ix], lat[iy] };
+	    cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
+	    tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
+	    tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
+	  }
 
-      /* Write info... */
-      LOG(2,
-	  "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
-	  " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
-	  cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
-	  gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
-	  gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
-	  gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
+	/* Measure time... */
+	t_eval += (omp_get_wtime() - t0);
 
-<<<<<<< HEAD
-      /* Calculate mean compression rate... */
-      cr += 100. / cms_compression_rate(cms_ptr, sol) / (double) np;
-=======
-      /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
+	/* Write info... */
+	LOG(2,
+	    "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
+	    " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
+	    cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+	    gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
+	    gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
+	    gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
 
-      /* Save binary data... */
-      cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
+	/* Calculate mean compression ratio... */
+	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
-      /* Free... */
-      cms_delete_sol(cms_sol[ip]);
-      cms_delete_module(cms_ptr[ip]);
+	/* Save binary data... */
+	cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
+
+	/* Free... */
+	cms_delete_sol(cms_sol[ip]);
+	cms_delete_module(cms_ptr[ip]);
+	free(tmp_cms);
+	free(tmp_org);
+	free(tmp_diff);
+      }
     }
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
+    LOG(2, "Write 3-D variable: %s"
+	" (cms, RATIO= %g, T_COARS= %g s, T_EVAL= %g s)",
+	varname, cr, t_coars, t_eval);
   }
 
   /* Free... */
@@ -611,13 +654,13 @@ void compress_cms(
 
 /*****************************************************************************/
 
-void compress_pack(
-  char *varname,
+void compress_pck(
+  const char *varname,
   float *array,
-  size_t nxy,
-  size_t nz,
-  int decompress,
-  FILE * inout) {
+  const size_t nxy,
+  const size_t nz,
+  const int decompress,
+  FILE *inout) {
 
   double min[EP], max[EP], off[EP], scl[EP];
 
@@ -631,9 +674,9 @@ void compress_pack(
   if (decompress) {
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(unsigned short) / sizeof(float));
-
+    LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
+	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
+    
     /* Read data... */
     FREAD(&scl, double,
 	  nz,
@@ -657,9 +700,9 @@ void compress_pack(
   else {
 
     /* Write info... */
-    LOG(2, "Write 3-D variable: %s (pack, RATIO= %g %%)",
-	varname, 100. * sizeof(unsigned short) / sizeof(float));
-
+    LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
+	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
+    
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
       min[iz] = array[iz];
@@ -709,17 +752,16 @@ void compress_pack(
 
 #ifdef ZFP
 void compress_zfp(
-  char *varname,
+  const char *varname,
   float *array,
-  int nx,
-  int ny,
-  int nz,
-  int precision,
-  double tolerance,
-  int decompress,
-  FILE * inout) {
+  const int nx,
+  const int ny,
+  const int nz,
+  const int precision,
+  const double tolerance,
+  const int decompress,
+  FILE *inout) {
 
-  zfp_type type;		/* array scalar type */
   zfp_field *field;		/* array meta data */
   zfp_stream *zfp;		/* compressed stream */
   void *buffer;			/* storage for compressed stream */
@@ -728,7 +770,7 @@ void compress_zfp(
   size_t zfpsize;		/* byte size of compressed stream */
 
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
-  type = zfp_type_float;
+  const zfp_type type = zfp_type_float;
   field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
 
   /* Allocate meta data for a compressed stream... */
@@ -764,9 +806,9 @@ void compress_zfp(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
 	varname, actual_prec, actual_tol,
-	(100. * (double) zfpsize) / (double) (nx * ny * nz));
+	((double) (nx * ny * nz)) / (double) zfpsize);
   }
 
   /* Compress array and output compressed stream... */
@@ -782,9 +824,9 @@ void compress_zfp(
 	ERRMSG("Error while writing zfp data!");
     }
     LOG(2, "Write 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g %%)",
+	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
 	varname, actual_prec, actual_tol,
-	(100. * (double) zfpsize) / (double) (nx * ny * nz));
+	((double) (nx * ny * nz)) / (double) zfpsize);
   }
 
   /* Free... */
@@ -799,11 +841,11 @@ void compress_zfp(
 
 #ifdef ZSTD
 void compress_zstd(
-  char *varname,
+  const char *varname,
   float *array,
-  size_t n,
-  int decompress,
-  FILE * inout) {
+  const size_t n,
+  const int decompress,
+  FILE *inout) {
 
   /* Get buffer sizes... */
   size_t uncomprLen = n * sizeof(float);
@@ -825,8 +867,8 @@ void compress_zstd(
     if (ZSTD_isError(compsize)) {
       ERRMSG("Decompression failed!");
     }
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) comprLen) / (double) uncomprLen);
+    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g)",
+	varname, ((double) uncomprLen) / (double) comprLen)
   }
 
   /* Compress array and output compressed stream... */
@@ -841,8 +883,8 @@ void compress_zstd(
       if (fwrite(compr, 1, compsize, inout) != compsize)
 	ERRMSG("Error while writing zstd data!");
     }
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g %%)",
-	varname, (100. * (double) compsize) / (double) uncomprLen);
+    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g)",
+	varname, ((double) uncomprLen) / (double) compsize);
   }
 
   /* Free... */
@@ -904,7 +946,7 @@ void doy2day(
 void fft_help(
   double *fcReal,
   double *fcImag,
-  int n) {
+  const int n) {
 
   gsl_fft_complex_wavetable *wavetable;
   gsl_fft_complex_workspace *workspace;
@@ -947,20 +989,24 @@ void geo2cart(
   const double lat,
   double *x) {
 
-  double radius = z + RE;
-  x[0] = radius * cos(lat / 180. * M_PI) * cos(lon / 180. * M_PI);
-  x[1] = radius * cos(lat / 180. * M_PI) * sin(lon / 180. * M_PI);
-  x[2] = radius * sin(lat / 180. * M_PI);
+  const double radius = z + RE;
+  const double latrad = DEG2RAD(lat);
+  const double lonrad = DEG2RAD(lon);
+  const double coslat = cos(latrad);
+
+  x[0] = radius * coslat * cos(lonrad);
+  x[1] = radius * coslat * sin(lonrad);
+  x[2] = radius * sin(latrad);
 }
 
 /*****************************************************************************/
 
 void get_met(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  met_t ** met0,
-  met_t ** met1) {
+  ctl_t *ctl,
+  clim_t *clim,
+  const double t,
+  met_t **met0,
+  met_t **met1) {
 
   static int init;
 
@@ -1101,163 +1147,12 @@ void get_met(
 
 /*****************************************************************************/
 
-void get_met_fortran(
-  ctl_t * ctl,
-  clim_t * clim,
-  double t,
-  met_t * met0,
-  met_t * met1) {
-
-  static int init;
-
-  //met_t *mets;
-
-  char cachefile[LEN], cmd[2 * LEN], filename[LEN];
-
-  /* Set timer... */
-  SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-
-  /* Init... */
-  if (t == ctl->t_start || !init) {
-    init = 1;
-
-    /* Read meteo data... */
-    get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
-		 ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, clim, met0))
-      ERRMSG("Cannot open file!");
-
-    get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
-		 ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, clim, met1))
-      ERRMSG("Cannot open file!");
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met0up = met0;
-    met_t *met1up = met1;
-#ifdef ASYNCIO
-#pragma acc update device(met0up[:1],met1up[:1]) async(5)
-#else
-#pragma acc update device(met0up[:1],met1up[:1])
-#endif
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
-
-    /* Caching... */
-    if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
-		   ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
-      sprintf(cmd, "cat %s > /dev/null &", cachefile);
-      LOG(1, "Caching: %s", cachefile);
-      if (system(cmd) != 0)
-	WARN("Caching command failed!");
-    }
-  }
-
-  /* Read new data for forward trajectories... */
-  if (t > (met1)->time) {
-
-    //#ifdef WRAPPER
-    memcpy(met0,met1,sizeof(met_t));
-    //#else
-    /* Pointer swap... */
-    /*    mets = *met1;
-    *met1 = *met0;
-    *met0 = mets;
-#endif*/
-    
-    /* Read new meteo data... */
-    get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, clim, met1))
-      ERRMSG("Cannot open file!");
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met1up = met1;
-#ifdef ASYNCIO
-#pragma acc update device(met1up[:1]) async(5)
-#else
-#pragma acc update device(met1up[:1])
-#endif
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
-
-    /* Caching... */
-    if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
-		   cachefile);
-      sprintf(cmd, "cat %s > /dev/null &", cachefile);
-      LOG(1, "Caching: %s", cachefile);
-      if (system(cmd) != 0)
-	WARN("Caching command failed!");
-    }
-  }
-
-  /* Read new data for backward trajectories... */
-  if (t < (met0)->time) {
-
-    memcpy(met1,met0,sizeof(met_t));
-    /* Pointer swap... */
-    /*mets = *met1;
-    *met1 = *met0;
-    *met0 = mets;*/
-
-    /* Read new meteo data... */
-    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!read_met(filename, ctl, clim, met0))
-      ERRMSG("Cannot open file!");
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met0up = met0;
-#ifdef ASYNCIO
-#pragma acc update device(met0up[:1]) async(5)
-#else
-#pragma acc update device(met0up[:1])
-#endif
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
-
-    /* Caching... */
-    if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
-		   cachefile);
-      sprintf(cmd, "cat %s > /dev/null &", cachefile);
-      LOG(1, "Caching: %s", cachefile);
-      if (system(cmd) != 0)
-	WARN("Caching command failed!");
-    }
-  }
-
-  /* Check that grids are consistent... */
-  if ((met0)->nx != 0 && (met1)->nx != 0) {
-    if ((met0)->nx != (met1)->nx
-	|| (met0)->ny != (met1)->ny || (met0)->np != (met1)->np)
-      ERRMSG("Meteo grid dimensions do not match!");
-    for (int ix = 0; ix < (met0)->nx; ix++)
-      if (fabs((met0)->lon[ix] - (met1)->lon[ix]) > 0.001)
-	ERRMSG("Meteo grid longitudes do not match!");
-    for (int iy = 0; iy < (met0)->ny; iy++)
-      if (fabs((met0)->lat[iy] - (met1)->lat[iy]) > 0.001)
-	ERRMSG("Meteo grid latitudes do not match!");
-    for (int ip = 0; ip < (met0)->np; ip++)
-      if (fabs((met0)->p[ip] - (met1)->p[ip]) > 0.001)
-	ERRMSG("Meteo grid pressure levels do not match!");
-  }
-}
-
-/*****************************************************************************/
-
 void get_met_help(
-  ctl_t * ctl,
-  double t,
-  int direct,
-  char *metbase,
-  double dt_met,
+  const ctl_t *ctl,
+  const double t,
+  const int direct,
+  const char *metbase,
+  const double dt_met,
   char *filename) {
 
   char repl[LEN];
@@ -1342,14 +1237,14 @@ void get_met_replace(
 /*****************************************************************************/
 
 void get_tropo(
-  int met_tropo,
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met,
-  double *lons,
-  int nx,
-  double *lats,
-  int ny,
+  const int met_tropo,
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met,
+  const double *lons,
+  const int nx,
+  const double *lats,
+  const int ny,
   double *pt,
   double *zt,
   double *tt,
@@ -1385,30 +1280,32 @@ void get_tropo(
 /*****************************************************************************/
 
 void intpol_met_4d_coord(
-  met_t * met0,
+  const met_t *met0,
   float heights0[EX][EY][EP],
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t *met1,
   float heights1[EX][EY][EP],
   float array1[EX][EY][EP],
-  double ts,
-  double height,
-  double lon,
-  double lat,
+  const double ts,
+  const double height,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   if (init) {
 
-    /* Restrict positions to coordinate range... */
-    lon = FMOD(lon, 360.);
-    if (met0->lon[met0->nx - 1] > 180 && lon < 0)
-      lon += 360;
+    /* Check longitude... */
+    double lon2 = FMOD(lon, 360.);
+    if (lon2 < met0->lon[0])
+      lon2 += 360;
+    else if (lon2 > met0->lon[met0->nx - 1])
+      lon2 -= 360;
 
     /* Get horizontal indizes... */
-    ci[0] = locate_irr(met0->lon, met0->nx, lon);
+    ci[0] = locate_irr(met0->lon, met0->nx, lon2);
     ci[1] = locate_irr(met0->lat, met0->ny, lat);
 
     /* Locate the vertical indizes for each edge of the column... */
@@ -1429,7 +1326,7 @@ void intpol_met_4d_coord(
 
     /* Get weighting factors for time, longitude and latitude... */
     cw[3] = (ts - met0->time) / (met1->time - met0->time);
-    cw[0] = (lon - met0->lon[ci[0]]) /
+    cw[0] = (lon2 - met0->lon[ci[0]]) /
       (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
     cw[1] = (lat - met0->lat[ci[1]]) /
       (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);
@@ -1561,32 +1458,35 @@ void intpol_met_4d_coord(
 /*****************************************************************************/
 
 void intpol_met_space_3d(
-  met_t * met,
+  const met_t *met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   /* Initialize interpolation... */
   if (init) {
 
     /* Check longitude... */
-    if (met->lon[met->nx - 1] > 180 && lon < 0)
-      lon += 360;
+    double lon2 = FMOD(lon, 360.);
+    if (lon2 < met->lon[0])
+      lon2 += 360;
+    else if (lon2 > met->lon[met->nx - 1])
+      lon2 -= 360;
 
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
-    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[1] = locate_reg(met->lon, met->nx, lon2);
     ci[2] = locate_reg(met->lat, met->ny, lat);
 
     /* Get interpolation weights... */
     cw[0] = (met->p[ci[0] + 1] - p)
       / (met->p[ci[0] + 1] - met->p[ci[0]]);
-    cw[1] = (met->lon[ci[1] + 1] - lon)
+    cw[1] = (met->lon[ci[1] + 1] - lon2)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
     cw[2] = (met->lat[ci[2] + 1] - lat)
       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
@@ -1618,19 +1518,22 @@ void intpol_met_space_3d(
 /*****************************************************************************/
 
 void intpol_met_space_3d_ml(
-  met_t * met,
+  const met_t *met,
   float array[EX][EY][EP],
-  double p,
-  double lon,
-  double lat,
+  const double p,
+  const double lon,
+  const double lat,
   double *var) {
 
   /* Check longitude... */
-  if (met->lon[met->nx - 1] > 180 && lon < 0)
-    lon += 360;
+  double lon2 = FMOD(lon, 360.);
+  if (lon2 < met->lon[0])
+    lon2 += 360;
+  else if (lon2 > met->lon[met->nx - 1])
+    lon2 -= 360;
 
   /* Get horizontal indices... */
-  int ix = locate_reg(met->lon, met->nx, lon);
+  int ix = locate_reg(met->lon, met->nx, lon2);
   int iy = locate_reg(met->lat, met->ny, lat);
 
   /* Interpolate vertically... */
@@ -1682,34 +1585,37 @@ void intpol_met_space_3d_ml(
   /* Interpolate horizontally... */
   double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat);
   double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat);
-  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon);
+  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
 }
 
 /*****************************************************************************/
 
 void intpol_met_space_2d(
-  met_t * met,
+  const met_t *met,
   float array[EX][EY],
-  double lon,
-  double lat,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
   /* Initialize interpolation... */
   if (init) {
 
     /* Check longitude... */
-    if (met->lon[met->nx - 1] > 180 && lon < 0)
-      lon += 360;
+    double lon2 = FMOD(lon, 360.);
+    if (lon2 < met->lon[0])
+      lon2 += 360;
+    else if (lon2 > met->lon[met->nx - 1])
+      lon2 -= 360;
 
     /* Get interpolation indices... */
-    ci[1] = locate_reg(met->lon, met->nx, lon);
+    ci[1] = locate_reg(met->lon, met->nx, lon2);
     ci[2] = locate_reg(met->lat, met->ny, lat);
 
     /* Get interpolation weights... */
-    cw[1] = (met->lon[ci[1] + 1] - lon)
+    cw[1] = (met->lon[ci[1] + 1] - lon2)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
     cw[2] = (met->lat[ci[2] + 1] - lat)
       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
@@ -1745,27 +1651,27 @@ void intpol_met_space_2d(
 /*****************************************************************************/
 
 void intpol_met_time_3d(
-  met_t * met0,
+  const met_t *met0,
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t *met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
-  double var0, var1, wt;
+  double var0, var1;
 
   /* Spatial interpolation... */
   intpol_met_space_3d(met0, array0, p, lon, lat, &var0, ci, cw, init);
   intpol_met_space_3d(met1, array1, p, lon, lat, &var1, ci, cw, 0);
 
   /* Get weighting factor... */
-  wt = (met1->time - ts) / (met1->time - met0->time);
+  const double wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
   *var = wt * (var0 - var1) + var1;
@@ -1774,14 +1680,14 @@ void intpol_met_time_3d(
 /*****************************************************************************/
 
 void intpol_met_time_3d_ml(
-  met_t * met0,
+  const met_t *met0,
   float array0[EX][EY][EP],
-  met_t * met1,
+  const met_t *met1,
   float array1[EX][EY][EP],
-  double ts,
-  double p,
-  double lon,
-  double lat,
+  const double ts,
+  const double p,
+  const double lon,
+  const double lat,
   double *var) {
 
   double var0, var1;
@@ -1797,26 +1703,26 @@ void intpol_met_time_3d_ml(
 /*****************************************************************************/
 
 void intpol_met_time_2d(
-  met_t * met0,
+  const met_t *met0,
   float array0[EX][EY],
-  met_t * met1,
+  const met_t *met1,
   float array1[EX][EY],
-  double ts,
-  double lon,
-  double lat,
+  const double ts,
+  const double lon,
+  const double lat,
   double *var,
   int *ci,
   double *cw,
-  int init) {
+  const int init) {
 
-  double var0, var1, wt;
+  double var0, var1;
 
   /* Spatial interpolation... */
   intpol_met_space_2d(met0, array0, lon, lat, &var0, ci, cw, init);
   intpol_met_space_2d(met1, array1, lon, lat, &var1, ci, cw, 0);
 
   /* Get weighting factor... */
-  wt = (met1->time - ts) / (met1->time - met0->time);
+  const double wt = (met1->time - ts) / (met1->time - met0->time);
 
   /* Interpolate... */
   if (isfinite(var0) && isfinite(var1))
@@ -1830,18 +1736,18 @@ void intpol_met_time_2d(
 /*****************************************************************************/
 
 void intpol_tropo_3d(
-  double time0,
+  const double time0,
   float array0[EX][EY],
-  double time1,
+  const double time1,
   float array1[EX][EY],
-  double lons[EX],
-  double lats[EY],
-  int nlon,
-  int nlat,
-  double time,
-  double lon,
-  double lat,
-  int method,
+  const double lons[EX],
+  const double lats[EY],
+  const int nlon,
+  const int nlat,
+  const double time,
+  const double lon,
+  const double lat,
+  const int method,
   double *var,
   double *sigma) {
 
@@ -1849,15 +1755,16 @@ void intpol_tropo_3d(
 
   int n = 0;
 
-  /* Adjust longitude... */
-  if (lon < lons[0])
-    lon += 360;
-  else if (lon > lons[nlon - 1])
-    lon -= 360;
+  /* Check longitude... */
+  double lon2 = FMOD(lon, 360.);
+  if (lon2 < lons[0])
+    lon2 += 360;
+  else if (lon2 > lons[nlon - 1])
+    lon2 -= 360;
 
   /* Get indices... */
-  int ix = locate_reg(lons, (int) nlon, lon);
-  int iy = locate_reg(lats, (int) nlat, lat);
+  const int ix = locate_reg(lons, (int) nlon, lon2);
+  const int iy = locate_reg(lats, (int) nlat, lat);
 
   /* Calculate standard deviation... */
   *sigma = 0;
@@ -1888,15 +1795,15 @@ void intpol_tropo_3d(
       && isfinite(array1[ix + 1][iy + 1])) {
 
     aux00 = LIN(lons[ix], array0[ix][iy],
-		lons[ix + 1], array0[ix + 1][iy], lon);
+		lons[ix + 1], array0[ix + 1][iy], lon2);
     aux01 = LIN(lons[ix], array0[ix][iy + 1],
-		lons[ix + 1], array0[ix + 1][iy + 1], lon);
+		lons[ix + 1], array0[ix + 1][iy + 1], lon2);
     aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat);
 
     aux10 = LIN(lons[ix], array1[ix][iy],
-		lons[ix + 1], array1[ix + 1][iy], lon);
+		lons[ix + 1], array1[ix + 1][iy], lon2);
     aux11 = LIN(lons[ix], array1[ix][iy + 1],
-		lons[ix + 1], array1[ix + 1][iy + 1], lon);
+		lons[ix + 1], array1[ix + 1][iy + 1], lon2);
     aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat);
 
     *var = LIN(time0, aux0, time1, aux1, time);
@@ -1905,15 +1812,15 @@ void intpol_tropo_3d(
   /* Nearest neighbor interpolation... */
   else {
     aux00 = NN(lons[ix], array0[ix][iy],
-	       lons[ix + 1], array0[ix + 1][iy], lon);
+	       lons[ix + 1], array0[ix + 1][iy], lon2);
     aux01 = NN(lons[ix], array0[ix][iy + 1],
-	       lons[ix + 1], array0[ix + 1][iy + 1], lon);
+	       lons[ix + 1], array0[ix + 1][iy + 1], lon2);
     aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat);
 
     aux10 = NN(lons[ix], array1[ix][iy],
-	       lons[ix + 1], array1[ix + 1][iy], lon);
+	       lons[ix + 1], array1[ix + 1][iy], lon2);
     aux11 = NN(lons[ix], array1[ix][iy + 1],
-	       lons[ix + 1], array1[ix + 1][iy + 1], lon);
+	       lons[ix + 1], array1[ix + 1][iy + 1], lon2);
     aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat);
 
     *var = NN(time0, aux0, time1, aux1, time);
@@ -1941,7 +1848,7 @@ void jsec2time(
   t0.tm_min = 0;
   t0.tm_sec = 0;
 
-  time_t jsec0 = (time_t) jsec + timegm(&t0);
+  const time_t jsec0 = (time_t) jsec + timegm(&t0);
   t1 = gmtime(&jsec0);
 
   *year = t1->tm_year + 1900;
@@ -1966,7 +1873,7 @@ double kernel_weight(
     return 1.0;
 
   /* Get altitude... */
-  double z = Z(p);
+  const double z = Z(p);
 
   /* Get weighting factor... */
   if (z < kz[0])
@@ -2000,7 +1907,7 @@ double lapse_rate(
 /*****************************************************************************/
 
 void level_definitions(
-  ctl_t * ctl) {
+  ctl_t *ctl) {
 
 
   if (0 == ctl->met_press_level_def) {
@@ -2291,10 +2198,10 @@ int locate_reg(
 
 void locate_vert(
   float profiles[EX][EY][EP],
-  int np,
-  int lon_ap_ind,
-  int lat_ap_ind,
-  double height_ap,
+  const int np,
+  const int lon_ap_ind,
+  const int lat_ap_ind,
+  const double height_ap,
   int *ind) {
 
   ind[0] = locate_irr_float(profiles[lon_ap_ind][lat_ap_ind],
@@ -2310,11 +2217,11 @@ void locate_vert(
 /*****************************************************************************/
 
 void module_advect(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
@@ -2468,15 +2375,21 @@ void module_advect(
 /*****************************************************************************/
 
 void module_advect_init(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm) {
 
   /* Initialize pressure consistent with zeta... */
   if (ctl->advect_vert_coord == 1) {
 #pragma omp parallel for default(shared)
     for (int ip = 0; ip < atm->np; ip++) {
+
+      /* Check time... */
+      if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+	ERRMSG("Time of air parcel is out of range!");
+
+      /* Interpolate pressure... */
       INTPOL_INIT;
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
@@ -2488,12 +2401,12 @@ void module_advect_init(
 /*****************************************************************************/
 
 void module_bound_cond(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
@@ -2583,59 +2496,22 @@ void module_bound_cond(
 /*****************************************************************************/
 
 void module_chemgrid(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double tt) {
-
-  double *z, *press, *mass, *area, *lon, *lat;
-
-  int *ixs, *iys, *izs;
-
-  /* Update host... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-#endif
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double tt) {
 
   /* Check quantities... */
+  if (ctl->qnt_m < 0 || ctl->qnt_Cx < 0)
+    return;
   if (ctl->molmass <= 0)
     ERRMSG("Molar mass is not defined!");
-  if (ctl->qnt_m < 0)
-    ERRMSG("Module needs quantity mass!");
-  if (ctl->qnt_Cx < 0)
-    ERRMSG("Module needs quantity Cx!");
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-<<<<<<< HEAD
-  ALLOC(z, double,
-	ctl->chemgrid_nz);
-  ALLOC(press, double,
-	ctl->chemgrid_nz);
-  ALLOC(ixs, int,
-	atm->np);
-  ALLOC(iys, int,
-	atm->np);
-  ALLOC(izs, int,
-	atm->np);
-  ALLOC(mass, double,
-	ctl->chemgrid_nx * ctl->chemgrid_ny * ctl->chemgrid_nz);
-  ALLOC(lon, double,
-	ctl->chemgrid_nx);
-  ALLOC(lat, double,
-	ctl->chemgrid_ny);
-  ALLOC(area, double,
-	ctl->chemgrid_ny);
-
-  /* Set grid box size... */
-  double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / ctl->chemgrid_nz;
-  double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / ctl->chemgrid_nx;
-  double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ctl->chemgrid_ny;
-=======
   const int np = atm->np;
   const int nz = ctl->chemgrid_nz;
   const int nx = ctl->chemgrid_nx;
@@ -2662,32 +2538,31 @@ void module_chemgrid(
   const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / nz;
   const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / nx;
   const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ny;
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
 
   /* Set vertical coordinates... */
+#ifdef _OPENACC
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],z[0:nz],press[0:nz],mass[0:ngrid],area[0:ny],lon[0:nx],lat[0:ny])
+#pragma acc data present(ctl,met0,met1,atm,ixs,iys,izs,z,press,mass,area,lon,lat)
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-<<<<<<< HEAD
-  for (int iz = 0; iz < ctl->chemgrid_nz; iz++) {
-=======
 #endif
   for (int iz = 0; iz < nz; iz++) {
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
     press[iz] = P(z[iz]);
   }
 
   /* Set time interval for output... */
-  double t0 = tt - 0.5 * ctl->dt_mod;
-  double t1 = tt + 0.5 * ctl->dt_mod;
+  const double t0 = tt - 0.5 * ctl->dt_mod;
+  const double t1 = tt + 0.5 * ctl->dt_mod;
 
   /* Get indices... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-<<<<<<< HEAD
-  for (int ip = 0; ip < atm->np; ip++) {
-=======
 #endif
   for (int ip = 0; ip < np; ip++) {
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
     iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
     izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
@@ -2698,36 +2573,24 @@ void module_chemgrid(
   }
 
   /* Set horizontal coordinates... */
-<<<<<<< HEAD
-  for (int ix = 0; ix < ctl->chemgrid_nx; ix++)
-=======
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
   for (int ix = 0; ix < nx; ix++)
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-<<<<<<< HEAD
-  for (int iy = 0; iy < ctl->chemgrid_ny; iy++) {
-=======
 #endif
   for (int iy = 0; iy < ny; iy++) {
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
-    area[iy] =
-      dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat[iy] * M_PI / 180.);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
   }
 
   /* Get mass per grid box... */
-<<<<<<< HEAD
-  for (int ip = 0; ip < atm->np; ip++)
-    if (izs[ip] >= 0)
-      mass[ARRAY_3D
-	   (ixs[ip], iys[ip], ctl->chemgrid_ny, izs[ip], ctl->chemgrid_nz)]
-=======
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #endif
@@ -2737,17 +2600,15 @@ void module_chemgrid(
 #pragma acc atomic update
 #endif
       mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)]
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
 	+= atm->q[ctl->qnt_m][ip];
 
   /* Assign grid data to air parcels ... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
 #pragma omp parallel for default(shared)
-<<<<<<< HEAD
-  for (int ip = 0; ip < atm->np; ip++)
-=======
 #endif
   for (int ip = 0; ip < np; ip++)
->>>>>>> dde113bb7f0b22d6dfe33d4ca316736789aa7682
     if (izs[ip] >= 0) {
 
       /* Interpolate temperature... */
@@ -2763,7 +2624,10 @@ void module_chemgrid(
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
 	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
     }
-
+#ifdef _OPENACC
+#pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
+#endif
+  
   /* Free... */
   free(mass);
   free(lon);
@@ -2775,24 +2639,23 @@ void module_chemgrid(
   free(iys);
   free(izs);
 
-  /* Update device... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
 }
 
 /*****************************************************************************/
 
 void module_chem_init(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm) {
 
 #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
+
+    /* Check time... */
+    if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+      ERRMSG("Time of air parcel is out of range!");
 
     /* Set H2O and O3 using meteo data... */
     INTPOL_INIT;
@@ -2822,11 +2685,11 @@ void module_chem_init(
 /*****************************************************************************/
 
 void module_convection(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt,
   double *rs) {
 
   /* Set timer... */
@@ -2894,10 +2757,10 @@ void module_convection(
 /*****************************************************************************/
 
 void module_decay(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -2910,13 +2773,14 @@ void module_decay(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt)") {
 
     /* Get weighting factor... */
-    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double w =
+      tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Set lifetime... */
-    double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
+    const double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
     /* Calculate exponential decay... */
-    double aux = exp(-dt[ip] / tdec);
+    const double aux = exp(-dt[ip] / tdec);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_decay >= 0)
 	atm->q[ctl->qnt_mloss_decay][ip]
@@ -2933,12 +2797,12 @@ void module_decay(
 /*****************************************************************************/
 
 void module_diffusion_meso(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  double *dt,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt,
   double *rs) {
 
   /* Set timer... */
@@ -2952,9 +2816,9 @@ void module_diffusion_meso(
 		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
 
     /* Get indices... */
-    int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-    int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-    int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+    const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+    const int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+    const int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
     /* Get standard deviations of local wind data... */
     float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
@@ -2983,8 +2847,8 @@ void module_diffusion_meso(
     wsig = (wsig > 0 ? sqrtf(wsig) : 0);
 
     /* Set temporal correlations for mesoscale fluctuations... */
-    double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
-    double r2 = sqrt(1 - r * r);
+    const double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+    const double r2 = sqrt(1 - r * r);
 
     /* Calculate horizontal mesoscale wind fluctuations... */
     if (ctl->turb_mesox > 0) {
@@ -3013,10 +2877,10 @@ void module_diffusion_meso(
 /*****************************************************************************/
 
 void module_diffusion_turb(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  double *dt,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
+  const double *dt,
   double *rs) {
 
   /* Set timer... */
@@ -3029,22 +2893,23 @@ void module_diffusion_turb(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs)") {
 
     /* Get weighting factor... */
-    double w = tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double w =
+      tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Set diffusivity... */
-    double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
-    double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
+    const double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
+    const double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
-      double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
+      const double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
       atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
       atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
     }
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
+      const double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
       atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
     }
   }
@@ -3053,11 +2918,11 @@ void module_diffusion_turb(
 /*****************************************************************************/
 
 void module_dry_deposition(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
@@ -3079,7 +2944,7 @@ void module_dry_deposition(
       continue;
 
     /* Set depth of surface layer... */
-    double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
+    const double dz = 1000. * (Z(ps - ctl->dry_depo_dp) - Z(ps));
 
     /* Calculate sedimentation velocity for particles... */
     double v_dep;
@@ -3099,7 +2964,7 @@ void module_dry_deposition(
       v_dep = ctl->dry_depo_vdep;
 
     /* Calculate loss of mass based on deposition velocity... */
-    double aux = exp(-dt[ip] * v_dep / dz);
+    const double aux = exp(-dt[ip] * v_dep / dz);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_dry >= 0)
 	atm->q[ctl->qnt_mloss_dry][ip]
@@ -3116,12 +2981,12 @@ void module_dry_deposition(
 /*****************************************************************************/
 
 void module_h2o2_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
@@ -3151,17 +3016,17 @@ void module_h2o2_chem(
     INTPOL_3D(t, 0);
 
     /* Get molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
+    const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reaction rate (Berglen et al., 2004)... */
-    double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
+    const double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
 
     /* Henry constant of SO2... */
-    double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
-    double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
+    const double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+    const double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
 
     /* Henry constant of H2O2... */
-    double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+    const double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
 
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
@@ -3170,17 +3035,17 @@ void module_h2o2_chem(
       cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
 
-    double h2o2 = H_h2o2
+    const double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
       * M * cor * 1000 / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
-    double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    double CWC = (lwc + rwc) * rho_air / 1000;
+    const double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
+    const double CWC = (lwc + rwc) * rho_air / 1000;
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
-    double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
-    double aux = exp(-dt[ip] * rate_coef);
+    const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
+    const double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
@@ -3196,11 +3061,11 @@ void module_h2o2_chem(
 /*****************************************************************************/
 
 void module_isosurf_init(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache) {
 
   double t;
 
@@ -3260,12 +3125,12 @@ void module_isosurf_init(
 /*****************************************************************************/
 
 void module_isosurf(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  double *dt) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
@@ -3313,11 +3178,11 @@ void module_isosurf(
 
 #ifdef KPP
 void module_kpp_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   double *dt) {
 
   /* Set timer... */
@@ -3333,38 +3198,31 @@ void module_kpp_chem(
 #endif
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {
 
-    double var[nvar], fix[nfix], rconst[nreact];
-    for (int i = 0; i < nvar; i++) {
-      var[i] = 0.0;
-    }
-    for (int i = 0; i < nfix; i++) {
-      fix[i] = 0.0;
-    }
-    for (int i = 0; i < nreact; i++) {
-      rconst[i] = 0.0;
-    }
     /* Initialize... */
+    double var[nvar], fix[nfix], rconst[nreact];
+    for (int i = 0; i < nvar; i++)
+      var[i] = 0.0;
+    for (int i = 0; i < nfix; i++)
+      fix[i] = 0.0;
+    for (int i = 0; i < nreact; i++)
+      rconst[i] = 0.0;
     kpp_chem_initialize(ctl, clim, met0, met1, atm, var, fix, rconst, ip);
 
     /* Integrate... */
     double rpar[20];
     int ipar[20];
-
     for (int i = 0; i < 20; i++) {
       ipar[i] = 0;
       rpar[i] = 0.0;
-    }				/* for */
-
+    }
     ipar[0] = 0;		/* 0: F=F(y), i.e. independent of t (autonomous); 0:F=F(t,y), i.e. depends on t (non-autonomous) */
     ipar[1] = 1;		/* 0: NVAR-dimentional vector of tolerances; 1:scalar tolerances */
     ipar[3] = 4;		/* choice of the method:Rodas3 */
-
     Rosenbrock(var, fix, rconst, 0, ctl->dt_kpp,
 	       atol, rtol, &FunTemplate, &JacTemplate, rpar, ipar);
 
-    /* Output to air parcel.. */
+    /* Save results.. */
     kpp_chem_output2atm(atm, ctl, met0, met1, var, ip);
-
   }
 }
 #endif
@@ -3372,12 +3230,12 @@ void module_kpp_chem(
 /*****************************************************************************/
 
 void module_meteo(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -3472,10 +3330,10 @@ void module_meteo(
 /*****************************************************************************/
 
 void module_mixing(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
+  const double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
@@ -3562,13 +3420,13 @@ void module_mixing(
 /*****************************************************************************/
 
 void module_mixing_help(
-  ctl_t * ctl,
-  clim_t * clim,
-  atm_t * atm,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
   const int *ixs,
   const int *iys,
   const int *izs,
-  int qnt_idx) {
+  const int qnt_idx) {
 
   /* Allocate... */
   const int np = atm->np;
@@ -3657,12 +3515,12 @@ void module_mixing_help(
 /*****************************************************************************/
 
 void module_oh_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
@@ -3685,7 +3543,7 @@ void module_oh_chem(
     INTPOL_3D(t, 1);
 
     /* Calculate molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
+    const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Use constant reaction rate... */
     double k = NAN;
@@ -3701,10 +3559,10 @@ void module_oh_chem(
 
       /* Calculate rate coefficient for X + OH + M -> XOH + M
          (JPL Publication 19-05) ... */
-      double k0 =
+      const double k0 =
 	ctl->oh_chem[0] * (ctl->oh_chem[1] !=
 			   0 ? pow(298. / t, ctl->oh_chem[1]) : 1.);
-      double ki =
+      const double ki =
 	ctl->oh_chem[2] * (ctl->oh_chem[3] !=
 			   0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
       double c = log10(k0 * M / ki);
@@ -3720,9 +3578,10 @@ void module_oh_chem(
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
 
     /* Calculate exponential decay... */
-    double rate_coef = k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
-				   atm->lat[ip], atm->p[ip]) * M * cor;
-    double aux = exp(-dt[ip] * rate_coef);
+    const double rate_coef =
+      k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
+		  atm->lat[ip], atm->p[ip]) * M * cor;
+    const double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
 	atm->q[ctl->qnt_mloss_oh][ip]
@@ -3739,11 +3598,11 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
@@ -3798,7 +3657,7 @@ void module_position(
 /*****************************************************************************/
 
 void module_rng_init(
-  int ntask) {
+  const int ntask) {
 
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
@@ -3829,10 +3688,10 @@ void module_rng_init(
 /*****************************************************************************/
 
 void module_rng(
-  ctl_t * ctl,
+  const ctl_t *ctl,
   double *rs,
-  size_t n,
-  int method) {
+  const size_t n,
+  const int method) {
 
   /* Use GSL random number generators... */
   if (ctl->rng_type == 0) {
@@ -3895,8 +3754,8 @@ void module_rng(
 #pragma omp parallel for default(shared)
 #endif
       for (size_t i = 0; i < n; i += 2) {
-	double r = sqrt(-2.0 * log(rs[i]));
-	double phi = 2.0 * M_PI * rs[i + 1];
+	const double r = sqrt(-2.0 * log(rs[i]));
+	const double phi = 2.0 * M_PI * rs[i + 1];
 	rs[i] = r * cosf((float) phi);
 	rs[i + 1] = r * sinf((float) phi);
       }
@@ -3933,11 +3792,11 @@ void module_rng(
 /*****************************************************************************/
 
 void module_sedi(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
@@ -3951,8 +3810,8 @@ void module_sedi(
     INTPOL_3D(t, 1);
 
     /* Sedimentation velocity... */
-    double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
-		      atm->q[ctl->qnt_rhop][ip]);
+    const double v_s = sedi(atm->p[ip], t, atm->q[ctl->qnt_rp][ip],
+			    atm->q[ctl->qnt_rhop][ip]);
 
     /* Calculate pressure change... */
     atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
@@ -3962,9 +3821,9 @@ void module_sedi(
 /*****************************************************************************/
 
 void module_sort(
-  ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  met_t *met0,
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
@@ -4058,11 +3917,11 @@ void module_sort_help(
 /*****************************************************************************/
 
 void module_timesteps(
-  ctl_t * ctl,
-  met_t * met0,
-  atm_t * atm,
+  const ctl_t *ctl,
+  met_t *met0,
+  atm_t *atm,
   double *dt,
-  double t) {
+  const double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
@@ -4095,8 +3954,8 @@ void module_timesteps(
 /*****************************************************************************/
 
 void module_timesteps_init(
-  ctl_t * ctl,
-  atm_t * atm) {
+  ctl_t *ctl,
+  const atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
@@ -4126,12 +3985,12 @@ void module_timesteps_init(
 /*****************************************************************************/
 
 void module_tracer_chem(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
@@ -4145,47 +4004,48 @@ void module_tracer_chem(
     INTPOL_3D(t, 1);
 
     /* Get molecular density... */
-    double M = MOLEC_DENS(atm->p[ip], t);
+    const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Get total column ozone... */
     double o3c;
     INTPOL_2D(o3c, 1);
 
     /* Get solar zenith angle... */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    const double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
 
     /* Get O(1D) volume mixing ratio... */
-    double o1d = clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double o1d =
+      clim_zm(&clim->o1d, atm->time[ip], atm->lat[ip], atm->p[ip]);
 
     /* Reactions for CFC-10... */
     if (ctl->qnt_Cccl4 >= 0) {
-      double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
     if (ctl->qnt_Cccl3f >= 0) {
-      double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
     if (ctl->qnt_Cccl2f2 >= 0) {
-      double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
     if (ctl->qnt_Cn2o >= 0) {
-      double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
-      double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
-			       atm->p[ip], sza, o3c);
+      const double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
+      const double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
+				     atm->p[ip], sza, o3c);
       atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
@@ -4194,11 +4054,11 @@ void module_tracer_chem(
 /*****************************************************************************/
 
 void module_wet_deposition(
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double *dt) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);
@@ -4224,7 +4084,7 @@ void module_wet_deposition(
     /* Estimate precipitation rate (Pisso et al., 2019)... */
     double cl;
     INTPOL_2D(cl, 0);
-    double Is =
+    const double Is =
       pow(1. / ctl->wet_depo_pre[0] * cl, 1. / ctl->wet_depo_pre[1]);
     if (Is < 0.01)
       continue;
@@ -4268,14 +4128,14 @@ void module_wet_deposition(
 	/* Use effective Henry's constant for SO2
 	   (Berglen, 2004; Simpson, 2012)... */
 	if (ctl->wet_depo_ic_h[2] > 0) {
-	  double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
-	  double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
-	  double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
+	  const double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
+	  const double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
+	  const double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
 	  h *= (1 + K_1 / H_ion + K_1 * K_2 / pow(H_ion, 2));
 	}
 
 	/* Estimate depth of cloud layer... */
-	double dz = 1e3 * (Z(pct) - Z(pcb));
+	const double dz = 1e3 * (Z(pct) - Z(pcb));
 
 	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -4300,11 +4160,11 @@ void module_wet_deposition(
       else if (ctl->wet_depo_bc_h[0] > 0) {
 
 	/* Get Henry's constant (Sander, 2015)... */
-	double h = ctl->wet_depo_bc_h[0]
+	const double h = ctl->wet_depo_bc_h[0]
 	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
 
 	/* Estimate depth of cloud layer... */
-	double dz = 1e3 * (Z(pct) - Z(pcb));
+	const double dz = 1e3 * (Z(pct) - Z(pcb));
 
 	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
@@ -4312,7 +4172,7 @@ void module_wet_deposition(
     }
 
     /* Calculate exponential decay of mass... */
-    double aux = exp(-dt[ip] * lambda);
+    const double aux = exp(-dt[ip] * lambda);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_wet >= 0)
 	atm->q[ctl->qnt_mloss_wet][ip]
@@ -4334,14 +4194,14 @@ double nat_temperature(
   const double hno3) {
 
   /* Check water vapor volume mixing ratio... */
-  double h2o_help = MAX(h2o, 0.1e-6);
+  const double h2o_help = MAX(h2o, 0.1e-6);
 
   /* Calculate T_NAT... */
-  double p_hno3 = hno3 * p / 1.333224;
-  double p_h2o = h2o_help * p / 1.333224;
-  double a = 0.009179 - 0.00088 * log10(p_h2o);
-  double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
-  double c = -11397.0 / a;
+  const double p_hno3 = hno3 * p / 1.333224;
+  const double p_h2o = h2o_help * p / 1.333224;
+  const double a = 0.009179 - 0.00088 * log10(p_h2o);
+  const double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
+  const double c = -11397.0 / a;
   double tnat = (-b + sqrt(b * b - 4. * c)) / 2.;
   double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
   if (x2 > 0)
@@ -4354,8 +4214,8 @@ double nat_temperature(
 
 int read_atm(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   int result;
 
@@ -4425,8 +4285,8 @@ int read_atm(
 
 int read_atm_asc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   /* Open file... */
   FILE *in;
@@ -4467,8 +4327,8 @@ int read_atm_asc(
 
 int read_atm_bin(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   /* Open file... */
   FILE *in;
@@ -4523,8 +4383,8 @@ int read_atm_bin(
 
 int read_atm_clams(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   int ncid, varid;
 
@@ -4579,8 +4439,8 @@ int read_atm_clams(
 
 int read_atm_nc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  atm_t *atm) {
 
   int ncid, varid;
 
@@ -4611,8 +4471,8 @@ int read_atm_nc(
 /*****************************************************************************/
 
 void read_clim(
-  ctl_t * ctl,
-  clim_t * clim) {
+  const ctl_t *ctl,
+  clim_t *clim) {
 
   /* Set timer... */
   SELECT_TIMER("READ_CLIM", "INPUT", NVTX_READ);
@@ -4672,11 +4532,9 @@ void read_clim(
 
 void read_clim_photo(
   const char *filename,
-  clim_photo_t * photo) {
+  clim_photo_t *photo) {
 
-  int ncid, varid, ip, is, io;
-
-  double *help1, *help2, *help3, *help4;
+  int ncid, varid;
 
   /* Write info... */
   LOG(1, "Read photolysis rates: %s", filename);
@@ -4706,57 +4564,15 @@ void read_clim_photo(
     ERRMSG("Solar zenith angle data are not ascending!");
 
   /* Read data... */
-  ALLOC(help1, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help2, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help3, double,
-	photo->np * photo->nsza * photo->no3c);
-  ALLOC(help4, double,
-	photo->np * photo->nsza * photo->no3c);
-  NC_GET_DOUBLE("J_N2O", help1, 1);
-  NC_GET_DOUBLE("J_CCl4", help2, 1);
-  NC_GET_DOUBLE("J_CFC-11", help3, 1);
-  NC_GET_DOUBLE("J_CFC-12", help4, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++) {
-	photo->n2o[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl4[ip][is][io] =
-	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl3f[ip][is][io] =
-	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->ccl2f2[ip][is][io] =
-	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-      }
-
-  NC_GET_DOUBLE("J_O2", help1, 1);
-  NC_GET_DOUBLE("J_O3b", help2, 1);
-  NC_GET_DOUBLE("J_O3a", help3, 1);
-  NC_GET_DOUBLE("J_H2O2", help4, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++) {
-	photo->o2[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->o3_1[ip][is][io] =
-	  help2[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->o3_2[ip][is][io] =
-	  help3[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-	photo->h2o2[ip][is][io] =
-	  help4[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-      }
-  NC_GET_DOUBLE("J_H2O", help1, 1);
-  for (ip = 0; ip < photo->np; ip++)
-    for (is = 0; is < photo->nsza; is++)
-      for (io = 0; io < photo->no3c; io++)
-	photo->h2o[ip][is][io] =
-	  help1[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-  free(help1);
-  free(help2);
-  free(help3);
-  free(help4);
+  read_clim_photo_help(ncid, "J_N2O", photo, photo->n2o);
+  read_clim_photo_help(ncid, "J_CCl4", photo, photo->ccl4);
+  read_clim_photo_help(ncid, "J_CFC-11", photo, photo->ccl3f);
+  read_clim_photo_help(ncid, "J_CFC-12", photo, photo->ccl2f2);
+  read_clim_photo_help(ncid, "J_O2", photo, photo->o2);
+  read_clim_photo_help(ncid, "J_O3b", photo, photo->o3_1);
+  read_clim_photo_help(ncid, "J_O3a", photo, photo->o3_2);
+  read_clim_photo_help(ncid, "J_H2O2", photo, photo->h2o2);
+  read_clim_photo_help(ncid, "J_H2O", photo, photo->h2o);
 
   /* Close netCDF file... */
   NC(nc_close(ncid));
@@ -4769,8 +4585,8 @@ void read_clim_photo(
       photo->p[0], photo->p[1], photo->p[photo->np - 1]);
   LOG(2, "Number of solar zenith angles: %d", photo->nsza);
   LOG(2, "Solar zenith angles: %g, %g ... %g deg",
-      photo->sza[0] * 180. / M_PI, photo->sza[1] * 180. / M_PI,
-      photo->sza[photo->nsza - 1] * 180. / M_PI);
+      RAD2DEG(photo->sza[0]), RAD2DEG(photo->sza[1]),
+      RAD2DEG(photo->sza[photo->nsza - 1]));
   LOG(2, "Number of total column ozone values: %d", photo->no3c);
   LOG(2, "Total column ozone: %g, %g ... %g DU",
       photo->o3c[0], photo->o3c[1], photo->o3c[photo->no3c - 1]);
@@ -4805,9 +4621,37 @@ void read_clim_photo(
 
 /*****************************************************************************/
 
+void read_clim_photo_help(
+  const int ncid,
+  const char *varname,
+  const clim_photo_t *photo,
+  double var[CP][CSZA][CO3]) {
+
+  /* Allocate... */
+  double *help;
+  ALLOC(help, double,
+	photo->np * photo->nsza * photo->no3c);
+
+  /* Read varible... */
+  int varid;
+  NC_GET_DOUBLE(varname, help, 1);
+
+  /* Copy data... */
+  for (int ip = 0; ip < photo->np; ip++)
+    for (int is = 0; is < photo->nsza; is++)
+      for (int io = 0; io < photo->no3c; io++)
+	var[ip][is][io] =
+	  help[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
 int read_clim_ts(
   const char *filename,
-  clim_ts_t * ts) {
+  clim_ts_t *ts) {
 
   /* Write info... */
   LOG(1, "Read climatological time series: %s", filename);
@@ -4861,8 +4705,8 @@ int read_clim_ts(
 
 void read_clim_zm(
   const char *filename,
-  char *varname,
-  clim_zm_t * zm) {
+  const char *varname,
+  clim_zm_t *zm) {
 
   int ncid, varid, it, iy, iz, iz2, nt;
 
@@ -4962,7 +4806,7 @@ void read_ctl(
   const char *filename,
   int argc,
   char *argv[],
-  ctl_t * ctl) {
+  ctl_t *ctl) {
 
   /* Set timer... */
   SELECT_TIMER("READ_CTL", "INPUT", NVTX_READ);
@@ -5215,12 +5059,18 @@ void read_ctl(
       ("Please use meteorological files in netcdf format for diabatic calculations.");
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
+  ctl->met_nc_level =
+    (int) scan_ctl(filename, argc, argv, "MET_NC_LEVEL", -1, "0", NULL);
+  ctl->met_nc_quant =
+    (int) scan_ctl(filename, argc, argv, "MET_NC_QUANT", -1, "0", NULL);
   ctl->met_zfp_prec =
     (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", -1, "8", NULL);
   ctl->met_zfp_tol_t =
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_T", -1, "5.0", NULL);
   ctl->met_zfp_tol_z =
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
+  ctl->met_cms_batch =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
   ctl->met_cms_heur =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
   ctl->met_cms_eps_z =
@@ -5378,12 +5228,10 @@ void read_ctl(
     ctl->molmass = 120.907;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 3e-5;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 3500.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "CFCl3") == 0) {
     ctl->molmass = 137.359;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.1e-4;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 3300.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "CH4") == 0) {
     ctl->molmass = 16.043;
     ctl->oh_chem_reaction = 2;
@@ -5391,7 +5239,6 @@ void read_ctl(
     ctl->oh_chem[1] = 1775;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.4e-5;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 1600.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "CO") == 0) {
     ctl->molmass = 28.01;
     ctl->oh_chem_reaction = 3;
@@ -5401,19 +5248,16 @@ void read_ctl(
     ctl->oh_chem[3] = -1.3;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 9.7e-6;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 1300.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "CO2") == 0) {
     ctl->molmass = 44.009;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 3.3e-4;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2400.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "H2O") == 0) {
     ctl->molmass = 18.01528;
   } else if (strcasecmp(ctl->species, "N2O") == 0) {
     ctl->molmass = 44.013;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 2.4e-4;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2600.;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "NH3") == 0) {
     ctl->molmass = 17.031;
     ctl->oh_chem_reaction = 2;
@@ -5421,12 +5265,10 @@ void read_ctl(
     ctl->oh_chem[1] = 710;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 5.9e-1;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 4200.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "HNO3") == 0) {
     ctl->molmass = 63.012;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 2.1e3;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 8700.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "NO") == 0) {
     ctl->molmass = 30.006;
     ctl->oh_chem_reaction = 3;
@@ -5436,7 +5278,6 @@ void read_ctl(
     ctl->oh_chem[3] = 0.1;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.9e-5;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 1600.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "NO2") == 0) {
     ctl->molmass = 46.005;
     ctl->oh_chem_reaction = 3;
@@ -5446,7 +5287,6 @@ void read_ctl(
     ctl->oh_chem[3] = 0.0;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.2e-4;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2400.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "O3") == 0) {
     ctl->molmass = 47.997;
     ctl->oh_chem_reaction = 2;
@@ -5454,12 +5294,10 @@ void read_ctl(
     ctl->oh_chem[1] = 940;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1e-4;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2800.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "SF6") == 0) {
     ctl->molmass = 146.048;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 2.4e-6;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 3100.0;
-    ctl->wet_depo_ic_h[2] = 0;
   } else if (strcasecmp(ctl->species, "SO2") == 0) {
     ctl->molmass = 64.066;
     ctl->oh_chem_reaction = 3;
@@ -5469,7 +5307,6 @@ void read_ctl(
     ctl->oh_chem[3] = -0.2;
     ctl->wet_depo_ic_h[0] = ctl->wet_depo_bc_h[0] = 1.3e-2;
     ctl->wet_depo_ic_h[1] = ctl->wet_depo_bc_h[1] = 2900.0;
-    ctl->wet_depo_ic_h[2] = 0;
   }
 
   /* Molar mass... */
@@ -5509,7 +5346,7 @@ void read_ctl(
     ctl->wet_depo_ic_h[ip] =
       scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, defstr, NULL);
   }
-  for (int ip = 0; ip < 2; ip++) {
+  for (int ip = 0; ip < 1; ip++) {
     sprintf(defstr, "%g", ctl->wet_depo_bc_h[ip]);
     ctl->wet_depo_bc_h[ip] =
       scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, defstr, NULL);
@@ -5632,6 +5469,11 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "ATM_TYPE_OUT", -1, "-1", NULL);
   if (ctl->atm_type_out == -1)
     ctl->atm_type_out = ctl->atm_type;
+  ctl->atm_nc_level =
+    (int) scan_ctl(filename, argc, argv, "ATM_NC_LEVEL", -1, "0", NULL);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    ctl->atm_nc_quant[iq] =
+      (int) scan_ctl(filename, argc, argv, "ATM_NC_QUANT", iq, "0", NULL);
   ctl->obs_type =
     (int) scan_ctl(filename, argc, argv, "OBS_TYPE", -1, "0", NULL);
 
@@ -5672,6 +5514,11 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "GRID_DT_OUT", -1, "86400", NULL);
   ctl->grid_sparse =
     (int) scan_ctl(filename, argc, argv, "GRID_SPARSE", -1, "0", NULL);
+  ctl->grid_nc_level =
+    (int) scan_ctl(filename, argc, argv, "GRID_NC_LEVEL", -1, "0", NULL);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    ctl->grid_nc_quant[iq] =
+      (int) scan_ctl(filename, argc, argv, "GRID_NC_QUANT", iq, "0", NULL);
   ctl->grid_stddev =
     (int) scan_ctl(filename, argc, argv, "GRID_STDDEV", -1, "0", NULL);
   ctl->grid_z0 = scan_ctl(filename, argc, argv, "GRID_Z0", -1, "-5", NULL);
@@ -5786,7 +5633,7 @@ void read_kernel(
     ERRMSG("Not enough height levels!");
 
   /* Normalize kernel function... */
-  double kmax = gsl_stats_max(kw, 1, (size_t) n);
+  const double kmax = gsl_stats_max(kw, 1, (size_t) n);
   for (int iz = 0; iz < n; iz++)
     kw[iz] /= kmax;
 }
@@ -5795,224 +5642,33 @@ void read_kernel(
 
 int read_met(
   const char *filename,
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met) {
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met) {
 
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
 
-  /* Initialize rank... */
+  /* Set rank... */
   int rank = 0;
 #ifdef MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  if (ctl->met_mpi_share)
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
 
-  /* Read netCDF data... */
+  /* Check rank... */
   if (!ctl->met_mpi_share || rank == 0) {
+
+    /* Read netCDF data... */
     if (ctl->met_type == 0) {
-
-      int ncid;
-
-      /* Open netCDF file... */
-      if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-	WARN("Cannot open file!");
+      if (read_met_nc(filename, ctl, clim, met) != 1)
 	return 0;
-      }
-
-      /* Read coordinates of meteo data... */
-      read_met_grid(filename, ncid, ctl, met);
-
-      /* Read meteo data on vertical levels... */
-      read_met_levels(ncid, ctl, met);
-
-      /* Extrapolate data for lower boundary... */
-      read_met_extrapolate(met);
-
-      /* Read surface data... */
-      read_met_surface(ncid, met, ctl);
-
-      /* Fix polar winds... */
-      read_met_polar_winds(met);
-
-      /* Create periodic boundary conditions... */
-      read_met_periodic(met);
-
-      /* Downsampling... */
-      read_met_sample(ctl, met);
-
-      /* Calculate geopotential heights... */
-      read_met_geopot(ctl, met);
-
-      /* Calculate potential vorticity... */
-      read_met_pv(met);
-
-      /* Calculate boundary layer data... */
-      read_met_pbl(met);
-
-      /* Calculate tropopause data... */
-      read_met_tropo(ctl, clim, met);
-
-      /* Calculate cloud properties... */
-      read_met_cloud(met);
-
-      /* Calculate convective available potential energy... */
-      read_met_cape(clim, met);
-
-      /* Calculate total column ozone... */
-      read_met_ozone(met);
-
-      /* Detrending... */
-      read_met_detrend(ctl, met);
-
-      /* Check meteo data and smooth zeta profiles ... */
-      if (ctl->advect_vert_coord == 1)
-	read_met_monotonize(met);
-
-      /* Close file... */
-      NC(nc_close(ncid));
     }
 
     /* Read binary data... */
     else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
-
-      FILE *in;
-
-      double r;
-
-      int year, mon, day, hour, min, sec;
-
-      /* Set timer... */
-      SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
-
-      /* Open file... */
-      if (!(in = fopen(filename, "r"))) {
-	WARN("Cannot open file!");
+      if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
-      }
-
-      /* Check type of binary data... */
-      int met_type;
-      FREAD(&met_type, int,
-	    1,
-	    in);
-      if (met_type != ctl->met_type)
-	ERRMSG("Wrong MET_TYPE of binary data!");
-
-      /* Check version of binary data... */
-      int version;
-      FREAD(&version, int,
-	    1,
-	    in);
-      if (version != 100 && version != 101 && version != 102)
-	ERRMSG("Wrong version of binary data!");
-
-      /* Read time... */
-      FREAD(&met->time, double,
-	    1,
-	    in);
-      jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
-      LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-	  met->time, year, mon, day, hour, min);
-      if (year < 1900 || year > 2100 || mon < 1 || mon > 12
-	  || day < 1 || day > 31 || hour < 0 || hour > 23)
-	ERRMSG("Error while reading time!");
-
-      /* Read dimensions... */
-      FREAD(&met->nx, int,
-	    1,
-	    in);
-      LOG(2, "Number of longitudes: %d", met->nx);
-      if (met->nx < 2 || met->nx > EX)
-	ERRMSG("Number of longitudes out of range!");
-
-      FREAD(&met->ny, int,
-	    1,
-	    in);
-      LOG(2, "Number of latitudes: %d", met->ny);
-      if (met->ny < 2 || met->ny > EY)
-	ERRMSG("Number of latitudes out of range!");
-
-      FREAD(&met->np, int,
-	    1,
-	    in);
-      LOG(2, "Number of levels: %d", met->np);
-      if (met->np < 2 || met->np > EP)
-	ERRMSG("Number of levels out of range!");
-
-      /* Read grid... */
-      FREAD(met->lon, double,
-	      (size_t) met->nx,
-	    in);
-      LOG(2, "Longitudes: %g, %g ... %g deg",
-	  met->lon[0], met->lon[1], met->lon[met->nx - 1]);
-
-      FREAD(met->lat, double,
-	      (size_t) met->ny,
-	    in);
-      LOG(2, "Latitudes: %g, %g ... %g deg",
-	  met->lat[0], met->lat[1], met->lat[met->ny - 1]);
-
-      FREAD(met->p, double,
-	      (size_t) met->np,
-	    in);
-      LOG(2, "Altitude levels: %g, %g ... %g km",
-	  Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
-      LOG(2, "Pressure levels: %g, %g ... %g hPa",
-	  met->p[0], met->p[1], met->p[met->np - 1]);
-
-      /* Read surface data... */
-      read_met_bin_2d(in, met, met->ps, "PS");
-      read_met_bin_2d(in, met, met->ts, "TS");
-      read_met_bin_2d(in, met, met->zs, "ZS");
-      read_met_bin_2d(in, met, met->us, "US");
-      read_met_bin_2d(in, met, met->vs, "VS");
-      if (version >= 101) {
-	read_met_bin_2d(in, met, met->lsm, "LSM");
-	read_met_bin_2d(in, met, met->sst, "SST");
-      }
-      read_met_bin_2d(in, met, met->pbl, "PBL");
-      read_met_bin_2d(in, met, met->pt, "PT");
-      read_met_bin_2d(in, met, met->tt, "TT");
-      read_met_bin_2d(in, met, met->zt, "ZT");
-      read_met_bin_2d(in, met, met->h2ot, "H2OT");
-      read_met_bin_2d(in, met, met->pct, "PCT");
-      read_met_bin_2d(in, met, met->pcb, "PCB");
-      read_met_bin_2d(in, met, met->cl, "CL");
-      read_met_bin_2d(in, met, met->plcl, "PLCL");
-      read_met_bin_2d(in, met, met->plfc, "PLFC");
-      read_met_bin_2d(in, met, met->pel, "PEL");
-      read_met_bin_2d(in, met, met->cape, "CAPE");
-      read_met_bin_2d(in, met, met->cin, "CIN");
-
-      /* Read level data... */
-      read_met_bin_3d(in, ctl, met, met->z, "Z", -1e34f, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->t, "T", 0, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->u, "U", -1e34f, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->v, "V", -1e34f, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->w, "W", -1e34f, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->pv, "PV", -1e34f, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 0, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->o3, "O3", 0, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 0, 1e34f);
-      if (version >= 102)
-	read_met_bin_3d(in, ctl, met, met->rwc, "RWC", 0, 1e34f);
-      read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 0, 1e34f);
-      if (version >= 102)
-	read_met_bin_3d(in, ctl, met, met->swc, "SWC", 0, 1e34f);
-      if (version >= 101)
-	read_met_bin_3d(in, ctl, met, met->cc, "CC", 0, 1);
-
-      /* Read final flag... */
-      int final;
-      FREAD(&final, int,
-	    1,
-	    in);
-      if (final != 999)
-	ERRMSG("Error while reading binary data!");
-
-      /* Close file... */
-      fclose(in);
     }
 
     /* Not implemented... */
@@ -6039,11 +5695,160 @@ int read_met(
 
 /*****************************************************************************/
 
+int read_met_bin(
+  const char *filename,
+  ctl_t *ctl,
+  met_t *met) {
+
+  FILE *in;
+
+  double r;
+
+  int year, mon, day, hour, min, sec;
+
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
+
+  /* Open file... */
+  if (!(in = fopen(filename, "r"))) {
+    WARN("Cannot open file!");
+    return 0;
+  }
+
+  /* Check type of binary data... */
+  int met_type;
+  FREAD(&met_type, int,
+	1,
+	in);
+  if (met_type != ctl->met_type)
+    ERRMSG("Wrong MET_TYPE of binary data!");
+
+  /* Check version of binary data... */
+  int version;
+  FREAD(&version, int,
+	1,
+	in);
+  if (version != 100 && version != 101 && version != 102)
+    ERRMSG("Wrong version of binary data!");
+
+  /* Read time... */
+  FREAD(&met->time, double,
+	1,
+	in);
+  jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
+  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+      met->time, year, mon, day, hour, min);
+  if (year < 1900 || year > 2100 || mon < 1 || mon > 12
+      || day < 1 || day > 31 || hour < 0 || hour > 23)
+    ERRMSG("Error while reading time!");
+
+  /* Read dimensions... */
+  FREAD(&met->nx, int,
+	1,
+	in);
+  LOG(2, "Number of longitudes: %d", met->nx);
+  if (met->nx < 2 || met->nx > EX)
+    ERRMSG("Number of longitudes out of range!");
+
+  FREAD(&met->ny, int,
+	1,
+	in);
+  LOG(2, "Number of latitudes: %d", met->ny);
+  if (met->ny < 2 || met->ny > EY)
+    ERRMSG("Number of latitudes out of range!");
+
+  FREAD(&met->np, int,
+	1,
+	in);
+  LOG(2, "Number of levels: %d", met->np);
+  if (met->np < 2 || met->np > EP)
+    ERRMSG("Number of levels out of range!");
+
+  /* Read grid... */
+  FREAD(met->lon, double,
+	  (size_t) met->nx,
+	in);
+  LOG(2, "Longitudes: %g, %g ... %g deg",
+      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+
+  FREAD(met->lat, double,
+	  (size_t) met->ny,
+	in);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+
+  FREAD(met->p, double,
+	  (size_t) met->np,
+	in);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa",
+      met->p[0], met->p[1], met->p[met->np - 1]);
+
+  /* Read surface data... */
+  read_met_bin_2d(in, met, met->ps, "PS");
+  read_met_bin_2d(in, met, met->ts, "TS");
+  read_met_bin_2d(in, met, met->zs, "ZS");
+  read_met_bin_2d(in, met, met->us, "US");
+  read_met_bin_2d(in, met, met->vs, "VS");
+  if (version >= 101) {
+    read_met_bin_2d(in, met, met->lsm, "LSM");
+    read_met_bin_2d(in, met, met->sst, "SST");
+  }
+  read_met_bin_2d(in, met, met->pbl, "PBL");
+  read_met_bin_2d(in, met, met->pt, "PT");
+  read_met_bin_2d(in, met, met->tt, "TT");
+  read_met_bin_2d(in, met, met->zt, "ZT");
+  read_met_bin_2d(in, met, met->h2ot, "H2OT");
+  read_met_bin_2d(in, met, met->pct, "PCT");
+  read_met_bin_2d(in, met, met->pcb, "PCB");
+  read_met_bin_2d(in, met, met->cl, "CL");
+  read_met_bin_2d(in, met, met->plcl, "PLCL");
+  read_met_bin_2d(in, met, met->plfc, "PLFC");
+  read_met_bin_2d(in, met, met->pel, "PEL");
+  read_met_bin_2d(in, met, met->cape, "CAPE");
+  read_met_bin_2d(in, met, met->cin, "CIN");
+
+  /* Read level data... */
+  read_met_bin_3d(in, ctl, met, met->z, "Z", -1e34f, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->t, "T", 0, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->u, "U", -1e34f, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->v, "V", -1e34f, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->w, "W", -1e34f, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->pv, "PV", -1e34f, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 0, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->o3, "O3", 0, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 0, 1e34f);
+  if (version >= 102)
+    read_met_bin_3d(in, ctl, met, met->rwc, "RWC", 0, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 0, 1e34f);
+  if (version >= 102)
+    read_met_bin_3d(in, ctl, met, met->swc, "SWC", 0, 1e34f);
+  if (version >= 101)
+    read_met_bin_3d(in, ctl, met, met->cc, "CC", 0, 1);
+
+  /* Read final flag... */
+  int final;
+  FREAD(&final, int,
+	1,
+	in);
+  if (final != 999)
+    ERRMSG("Error while reading binary data!");
+
+  /* Close file... */
+  fclose(in);
+
+  /* Return success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
 void read_met_bin_2d(
-  FILE * in,
-  met_t * met,
+  FILE *in,
+  const met_t *met,
   float var[EX][EY],
-  char *varname) {
+  const char *varname) {
 
   float *help;
 
@@ -6069,13 +5874,13 @@ void read_met_bin_2d(
 /*****************************************************************************/
 
 void read_met_bin_3d(
-  FILE * in,
-  ctl_t * ctl,
-  met_t * met,
+  FILE *in,
+  const ctl_t *ctl,
+  const met_t *met,
   float var[EX][EY][EP],
-  char *varname,
-  float bound_min,
-  float bound_max) {
+  const char *varname,
+  const float bound_min,
+  const float bound_max) {
 
   float *help;
 
@@ -6093,8 +5898,8 @@ void read_met_bin_3d(
 
   /* Read packed data... */
   else if (ctl->met_type == 2)
-    compress_pack(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, 1, in);
+    compress_pck(varname, help, (size_t) (met->ny * met->nx),
+		 (size_t) met->np, 1, in);
 
   /* Read zfp data... */
   else if (ctl->met_type == 3) {
@@ -6155,8 +5960,8 @@ void read_met_bin_3d(
 /*****************************************************************************/
 
 void read_met_cape(
-  clim_t * clim,
-  met_t * met) {
+  const clim_t *clim,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
@@ -6265,7 +6070,7 @@ void read_met_cape(
 /*****************************************************************************/
 
 void read_met_cloud(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CLOUD", "METPROC", NVTX_READ);
@@ -6316,8 +6121,8 @@ void read_met_cloud(
 /*****************************************************************************/
 
 void read_met_detrend(
-  ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   met_t *help;
 
@@ -6333,8 +6138,8 @@ void read_met_detrend(
   ALLOC(help, met_t, 1);
 
   /* Calculate standard deviation... */
-  double sigma = ctl->met_detrend / 2.355;
-  double tssq = 2. * SQR(sigma);
+  const double sigma = ctl->met_detrend / 2.355;
+  const double tssq = 2. * SQR(sigma);
 
   /* Calculate box size in latitude... */
   int sy = (int) (3. * DY2DEG(sigma) / fabs(met->lat[1] - met->lat[0]));
@@ -6379,7 +6184,7 @@ void read_met_detrend(
 	  geo2cart(0.0, met->lon[ix3], met->lat[iy2], x1);
 
 	  /* Calculate weighting factor... */
-	  float w = (float) exp(-DIST2(x0, x1) / tssq);
+	  const float w = (float) exp(-DIST2(x0, x1) / tssq);
 
 	  /* Add data... */
 	  wsum += w;
@@ -6420,7 +6225,7 @@ void read_met_detrend(
 /*****************************************************************************/
 
 void read_met_extrapolate(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_EXTRAPOLATE", "METPROC", NVTX_READ);
@@ -6460,8 +6265,8 @@ void read_met_extrapolate(
 /*****************************************************************************/
 
 void read_met_geopot(
-  ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   float *help;
 
@@ -6488,15 +6293,16 @@ void read_met_geopot(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Get surface height and pressure... */
-      double zs = met->zs[ix][iy];
-      double lnps = log(met->ps[ix][iy]);
+      const double zs = met->zs[ix][iy];
+      const double lnps = log(met->ps[ix][iy]);
 
       /* Get temperature and water vapor at the surface... */
-      int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
-      double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
-		      met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
-      double h2os = LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
-			met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      const int ip0 = locate_irr(met->p, met->np, met->ps[ix][iy]);
+      const double ts = LIN(met->p[ip0], met->t[ix][iy][ip0], met->p[ip0 + 1],
+			    met->t[ix][iy][ip0 + 1], met->ps[ix][iy]);
+      const double h2os =
+	LIN(met->p[ip0], met->h2o[ix][iy][ip0], met->p[ip0 + 1],
+	    met->h2o[ix][iy][ip0 + 1], met->ps[ix][iy]);
 
       /* Upper part of profile... */
       met->z[ix][iy][ip0 + 1]
@@ -6588,9 +6394,9 @@ void read_met_geopot(
 
 void read_met_grid(
   const char *filename,
-  int ncid,
-  ctl_t * ctl,
-  met_t * met) {
+  const int ncid,
+  const ctl_t *ctl,
+  met_t *met) {
 
   char levname[LEN], tstr[10];
 
@@ -6705,9 +6511,9 @@ void read_met_grid(
 /*****************************************************************************/
 
 void read_met_levels(
-  int ncid,
-  ctl_t * ctl,
-  met_t * met) {
+  const int ncid,
+  const ctl_t *ctl,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_LEVELS", "INPUT", NVTX_READ);
@@ -6769,18 +6575,11 @@ void read_met_levels(
   /* Read zeta and zeta_dot... */
   if (!read_met_nc_3d
       (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
-    WARN("Cannot read ZETA in meteo data!");
-  if (ctl->advect_vert_coord == 1) {
-    if (!read_met_nc_3d
-	(ncid, "ZETA_DOT_TOT", "zeta_dot_clr", NULL, NULL, ctl, met,
-	 met->zeta_dotl, 0.00001157407f)) {
-      if (!read_met_nc_3d
-	  (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", NULL, NULL, ctl, met,
-	   met->zeta_dotl, 0.00001157407f)) {
-	WARN("Cannot read vertical velocity!");
-      }
-    }
-  }
+    WARN("Cannot read ZETA!");
+  if (!read_met_nc_3d
+      (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
+       NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
+    WARN("Cannot read ZETA_DOT!");
 
   /* Store velocities on model levels for diabatic advection... */
   if (ctl->met_vert_coord == 1) {
@@ -6848,10 +6647,10 @@ void read_met_levels(
 /*****************************************************************************/
 
 void read_met_ml2pl(
-  ctl_t * ctl,
-  met_t * met,
+  const ctl_t *ctl,
+  const met_t *met,
   float var[EX][EY][EP],
-  char *varname) {
+  const char *varname) {
 
   double aux[EP], p[EP];
 
@@ -6890,7 +6689,7 @@ void read_met_ml2pl(
 /*****************************************************************************/
 
 void read_met_monotonize(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_MONOTONIZE", "METPROC", NVTX_READ);
@@ -6939,6 +6738,7 @@ void read_met_monotonize(
 
       while (k < met->npl) {	/* Check if there is an inversion at level k... */
 	if ((met->pl[i][j][k - 1] <= met->pl[i][j][k])) {
+
 	  /* Find the upper level k+l over the inversion... */
 	  int l = 0;
 	  do {
@@ -6958,7 +6758,7 @@ void read_met_monotonize(
 	  }
 
 	  /* Search for more inversions above the last inversion ... */
-	  k = k + l;
+	  k += l;
 	} else {
 	  k++;
 	}
@@ -6968,17 +6768,91 @@ void read_met_monotonize(
 
 /*****************************************************************************/
 
+int read_met_nc(
+  const char *filename,
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met) {
+
+  int ncid;
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("Cannot open file!");
+    return 0;
+  }
+
+  /* Read coordinates of meteo data... */
+  read_met_grid(filename, ncid, ctl, met);
+
+  /* Read meteo data on vertical levels... */
+  read_met_levels(ncid, ctl, met);
+
+  /* Extrapolate data for lower boundary... */
+  read_met_extrapolate(met);
+
+  /* Read surface data... */
+  read_met_surface(ncid, ctl, met);
+
+  /* Fix polar winds... */
+  read_met_polar_winds(met);
+
+  /* Create periodic boundary conditions... */
+  read_met_periodic(met);
+
+  /* Downsampling... */
+  read_met_sample(ctl, met);
+
+  /* Calculate geopotential heights... */
+  read_met_geopot(ctl, met);
+
+  /* Calculate potential vorticity... */
+  read_met_pv(met);
+
+  /* Calculate boundary layer data... */
+  read_met_pbl(met);
+
+  /* Calculate tropopause data... */
+  read_met_tropo(ctl, clim, met);
+
+  /* Calculate cloud properties... */
+  read_met_cloud(met);
+
+  /* Calculate convective available potential energy... */
+  read_met_cape(clim, met);
+
+  /* Calculate total column ozone... */
+  read_met_ozone(met);
+
+  /* Detrending... */
+  read_met_detrend(ctl, met);
+
+  /* Check meteo data and smooth zeta profiles ... */
+  if (ctl->advect_vert_coord == 1)
+    read_met_monotonize(met);
+
+  /* Close file... */
+  NC(nc_close(ncid));
+
+  /* Return success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
 int read_met_nc_2d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const char *varname5,
+  const char *varname6,
+  const ctl_t *ctl,
+  const met_t *met,
   float dest[EX][EY],
-  float scl,
-  int init) {
+  const float scl,
+  const int init) {
 
   char varsel[LEN];
 
@@ -6998,6 +6872,12 @@ int read_met_nc_2d(
   else if (varname4 != NULL
 	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
     sprintf(varsel, "%s", varname4);
+  else if (varname5 != NULL
+	   && nc_inq_varid(ncid, varname5, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname5);
+  else if (varname6 != NULL
+	   && nc_inq_varid(ncid, varname6, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname6);
   else
     return 0;
 
@@ -7037,7 +6917,7 @@ int read_met_nc_2d(
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	short aux = help[ARRAY_2D(iy, ix, met->nx)];
+	const short aux = help[ARRAY_2D(iy, ix, met->nx)];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux * scalfac + offset) < 1e14f)
@@ -7081,7 +6961,7 @@ int read_met_nc_2d(
 	for (int iy = 0; iy < met->ny; iy++) {
 	  if (init)
 	    dest[ix][iy] = 0;
-	  float aux = help[ARRAY_2D(iy, ix, met->nx)];
+	  const float aux = help[ARRAY_2D(iy, ix, met->nx)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -7098,7 +6978,7 @@ int read_met_nc_2d(
 	for (int ix = 0; ix < met->nx; ix++) {
 	  if (init)
 	    dest[ix][iy] = 0;
-	  float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	  const float aux = help[ARRAY_2D(ix, iy, met->ny)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -7119,15 +6999,15 @@ int read_met_nc_2d(
 /*****************************************************************************/
 
 int read_met_nc_3d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t *ctl,
+  const met_t *met,
   float dest[EX][EY][EP],
-  float scl) {
+  const float scl) {
 
   char varsel[LEN];
 
@@ -7185,7 +7065,7 @@ int read_met_nc_3d(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
-	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	  const short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux * scalfac + offset) < 1e14f)
@@ -7228,7 +7108,7 @@ int read_met_nc_3d(
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
-	    float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	    const float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
 	    if ((fillval == 0 || aux != fillval)
 		&& (missval == 0 || aux != missval)
 		&& fabsf(aux) < 1e14f)
@@ -7244,7 +7124,7 @@ int read_met_nc_3d(
       for (int ip = 0; ip < met->np; ip++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ix = 0; ix < met->nx; ix++) {
-	    float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	    const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 	    if ((fillval == 0 || aux != fillval)
 		&& (missval == 0 || aux != missval)
 		&& fabsf(aux) < 1e14f)
@@ -7265,7 +7145,7 @@ int read_met_nc_3d(
 /*****************************************************************************/
 
 void read_met_pbl(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PBL", "METPROC", NVTX_READ);
@@ -7281,7 +7161,7 @@ void read_met_pbl(
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Set bottom level of PBL... */
-      double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
+      const double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
 
       /* Find lowest level near the bottom... */
       int ip;
@@ -7290,17 +7170,17 @@ void read_met_pbl(
 	  break;
 
       /* Get near surface data... */
-      double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
-		      met->p[ip], met->z[ix][iy][ip], pbl_bot);
-      double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
-		      met->p[ip], met->t[ix][iy][ip], pbl_bot);
-      double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
-		      met->p[ip], met->u[ix][iy][ip], pbl_bot);
-      double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
-		      met->p[ip], met->v[ix][iy][ip], pbl_bot);
-      double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
-			met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
-      double tvs = THETAVIRT(pbl_bot, ts, h2os);
+      const double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
+			    met->p[ip], met->z[ix][iy][ip], pbl_bot);
+      const double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
+			    met->p[ip], met->t[ix][iy][ip], pbl_bot);
+      const double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
+			    met->p[ip], met->u[ix][iy][ip], pbl_bot);
+      const double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
+			    met->p[ip], met->v[ix][iy][ip], pbl_bot);
+      const double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
+			      met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
+      const double tvs = THETAVIRT(pbl_bot, ts, h2os);
 
       /* Init... */
       double rib_old = 0;
@@ -7314,7 +7194,7 @@ void read_met_pbl(
 	vh2 = MAX(vh2, SQR(umin));
 
 	/* Calculate bulk Richardson number... */
-	double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	const double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
 	  * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
 		       met->h2o[ix][iy][ip]) - tvs) / vh2;
 
@@ -7336,7 +7216,7 @@ void read_met_pbl(
 /*****************************************************************************/
 
 void read_met_periodic(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PERIODIC", "METPROC", NVTX_READ);
@@ -7391,7 +7271,7 @@ void read_met_periodic(
 /*****************************************************************************/
 
 void read_met_polar_winds(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC", NVTX_READ);
@@ -7417,8 +7297,8 @@ void read_met_polar_winds(
     double clon[EX], slon[EX];
 #pragma omp parallel for default(shared)
     for (int ix = 0; ix < met->nx; ix++) {
-      clon[ix] = cos(sign * met->lon[ix] / 180. * M_PI);
-      slon[ix] = sin(sign * met->lon[ix] / 180. * M_PI);
+      clon[ix] = cos(sign * DEG2RAD(met->lon[ix]));
+      slon[ix] = sin(sign * DEG2RAD(met->lon[ix]));
     }
 
     /* Loop over levels... */
@@ -7450,7 +7330,7 @@ void read_met_polar_winds(
 /*****************************************************************************/
 
 void read_met_pv(
-  met_t * met) {
+  met_t *met) {
 
   double pows[EP];
 
@@ -7468,47 +7348,47 @@ void read_met_pv(
   for (int ix = 0; ix < met->nx; ix++) {
 
     /* Set indices... */
-    int ix0 = MAX(ix - 1, 0);
-    int ix1 = MIN(ix + 1, met->nx - 1);
+    const int ix0 = MAX(ix - 1, 0);
+    const int ix1 = MIN(ix + 1, met->nx - 1);
 
     /* Loop over grid points... */
     for (int iy = 0; iy < met->ny; iy++) {
 
       /* Set indices... */
-      int iy0 = MAX(iy - 1, 0);
-      int iy1 = MIN(iy + 1, met->ny - 1);
+      const int iy0 = MAX(iy - 1, 0);
+      const int iy1 = MIN(iy + 1, met->ny - 1);
 
       /* Set auxiliary variables... */
-      double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
-      double dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
-      double dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
-      double c0 = cos(met->lat[iy0] / 180. * M_PI);
-      double c1 = cos(met->lat[iy1] / 180. * M_PI);
-      double cr = cos(latr / 180. * M_PI);
-      double vort = 2 * 7.2921e-5 * sin(latr * M_PI / 180.);
+      const double latr = 0.5 * (met->lat[iy1] + met->lat[iy0]);
+      const double dx = 1000. * DEG2DX(met->lon[ix1] - met->lon[ix0], latr);
+      const double dy = 1000. * DEG2DY(met->lat[iy1] - met->lat[iy0]);
+      const double c0 = cos(DEG2RAD(met->lat[iy0]));
+      const double c1 = cos(DEG2RAD(met->lat[iy1]));
+      const double cr = cos(DEG2RAD(latr));
+      const double vort = 2 * 7.2921e-5 * sin(DEG2RAD(latr));
 
       /* Loop over grid points... */
       for (int ip = 0; ip < met->np; ip++) {
 
 	/* Get gradients in longitude... */
-	double dtdx
+	const double dtdx
 	  = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
-	double dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
+	const double dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
 
 	/* Get gradients in latitude... */
-	double dtdy
+	const double dtdy
 	  = (met->t[ix][iy1][ip] - met->t[ix][iy0][ip]) * pows[ip] / dy;
-	double dudy
+	const double dudy
 	  = (met->u[ix][iy1][ip] * c1 - met->u[ix][iy0][ip] * c0) / dy;
 
 	/* Set indices... */
-	int ip0 = MAX(ip - 1, 0);
-	int ip1 = MIN(ip + 1, met->np - 1);
+	const int ip0 = MAX(ip - 1, 0);
+	const int ip1 = MIN(ip + 1, met->np - 1);
 
 	/* Get gradients in pressure... */
 	double dtdp, dudp, dvdp;
-	double dp0 = 100. * (met->p[ip] - met->p[ip0]);
-	double dp1 = 100. * (met->p[ip1] - met->p[ip]);
+	const double dp0 = 100. * (met->p[ip] - met->p[ip0]);
+	const double dp1 = 100. * (met->p[ip1] - met->p[ip]);
 	if (ip != ip0 && ip != ip1) {
 	  double denom = dp0 * dp1 * (dp0 + dp1);
 	  dtdp = (dp0 * dp0 * met->t[ix][iy][ip1] * pows[ip1]
@@ -7524,7 +7404,7 @@ void read_met_pv(
 		  + (dp1 * dp1 - dp0 * dp0) * met->v[ix][iy][ip])
 	    / denom;
 	} else {
-	  double denom = dp0 + dp1;
+	  const double denom = dp0 + dp1;
 	  dtdp =
 	    (met->t[ix][iy][ip1] * pows[ip1] -
 	     met->t[ix][iy][ip0] * pows[ip0]) / denom;
@@ -7556,7 +7436,7 @@ void read_met_pv(
 /*****************************************************************************/
 
 void read_met_ozone(
-  met_t * met) {
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_OZONE", "METPROC", NVTX_READ);
@@ -7571,8 +7451,9 @@ void read_met_ozone(
       double cd = 0;
       for (int ip = 1; ip < met->np; ip++)
 	if (met->p[ip - 1] <= met->ps[ix][iy]) {
-	  double vmr = 0.5 * (met->o3[ix][iy][ip - 1] + met->o3[ix][iy][ip]);
-	  double dp = met->p[ip - 1] - met->p[ip];
+	  const double vmr =
+	    0.5 * (met->o3[ix][iy][ip - 1] + met->o3[ix][iy][ip]);
+	  const double dp = met->p[ip - 1] - met->p[ip];
 	  cd += vmr * MO3 / MA * dp * 1e2 / G0;
 	}
 
@@ -7584,8 +7465,8 @@ void read_met_ozone(
 /*****************************************************************************/
 
 void read_met_sample(
-  ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   met_t *help;
 
@@ -7732,78 +7613,46 @@ void read_met_sample(
 /*****************************************************************************/
 
 void read_met_surface(
-  int ncid,
-  met_t * met,
-  ctl_t * ctl) {
+  const int ncid,
+  const ctl_t *ctl,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
   LOG(2, "Read surface data...");
 
+  /* Read surface pressure... */
+  if (read_met_nc_2d
+      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps, 1.0f,
+       1)) {
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
+  } else
+    if (!read_met_nc_2d
+	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, met->ps, 0.01f,
+	 1)) {
+    WARN("Cannot not read surface pressure data (use lowest level)!");
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->ps[ix][iy] = (float) met->p[0];
+  }
+
   /* MPTRAC meteo data... */
   if (ctl->met_clams == 0) {
 
-    /* Read surface pressure... */
-    if (read_met_nc_2d
-	(ncid, "lnsp", "LNSP", NULL, NULL, ctl, met, met->ps, 1.0f, 1)) {
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
-    } else
-      if (!read_met_nc_2d
-	  (ncid, "ps", "PS", "sp", "SP", ctl, met, met->ps, 0.01f, 1)) {
-      WARN("Cannot not read surface pressure data (use lowest level)!");
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
-    }
-
     /* Read geopotential height at the surface... */
     if (!read_met_nc_2d
-	(ncid, "z", "Z", NULL, NULL, ctl, met, met->zs,
+	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, met->zs,
 	 (float) (1. / (1000. * G0)), 1))
       if (!read_met_nc_2d
-	  (ncid, "zm", "ZM", NULL, NULL, ctl, met, met->zs,
+	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, met->zs,
 	   (float) (1. / 1000.), 1))
 	WARN("Cannot read surface geopotential height!");
-
-    /* Read temperature at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "t2m", "T2M", "2t", "2T", ctl, met, met->ts, 1.0, 1))
-      WARN("Cannot read surface temperature!");
-
-    /* Read zonal wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "u10m", "U10M", "10u", "10U", ctl, met, met->us, 1.0, 1))
-      WARN("Cannot read surface zonal wind!");
-
-    /* Read meridional wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "v10m", "V10M", "10v", "10V", ctl, met, met->vs, 1.0, 1))
-      WARN("Cannot read surface meridional wind!");
-
-    /* Read land-sea mask... */
-    if (!read_met_nc_2d
-	(ncid, "lsm", "LSM", NULL, NULL, ctl, met, met->lsm, 1.0, 1))
-      WARN("Cannot read land-sea mask!");
-
-    /* Read sea surface temperature... */
-    if (!read_met_nc_2d
-	(ncid, "sstk", "SSTK", "sst", "SST", ctl, met, met->sst, 1.0, 1))
-      WARN("Cannot read sea surface temperature!");
   }
 
   /* CLaMS meteo data... */
   else {
-
-    /* Read surface pressure... */
-    if (!read_met_nc_2d
-	(ncid, "ps", "PS", NULL, NULL, ctl, met, met->ps, 0.01f, 1)) {
-      WARN("Cannot not read surface pressure data (use lowest level)!");
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->ps[ix][iy] = (float) met->p[0];
-    }
 
     /* Read geopotential height at the surface
        (use lowermost level of 3-D data field)... */
@@ -7813,48 +7662,51 @@ void read_met_surface(
     memcpy(help, met->pl, sizeof(met->pl));
     if (!read_met_nc_3d
 	(ncid, "gph", "GPH", NULL, NULL, ctl, met, met->pl,
-	 (float) (1e-3 / G0))) {
+	 (float) (1e-3 / G0)))
       ERRMSG("Cannot read geopotential height!");
-    } else
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  met->zs[ix][iy] = met->pl[ix][iy][0];
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	met->zs[ix][iy] = met->pl[ix][iy][0];
     memcpy(met->pl, help, sizeof(met->pl));
     free(help);
-
-    /* Read temperature at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "t2", "T2", NULL, NULL, ctl, met, met->ts, 1.0, 1))
-      WARN("Cannot read surface temperature!");
-
-    /* Read zonal wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "u10", "U10", NULL, NULL, ctl, met, met->us, 1.0, 1))
-      WARN("Cannot read surface zonal wind!");
-
-    /* Read meridional wind at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "v10", "V10", NULL, NULL, ctl, met, met->vs, 1.0, 1))
-      WARN("Cannot read surface meridional wind!");
-
-    /* Read land-sea mask... */
-    if (!read_met_nc_2d
-	(ncid, "lsm", "LSM", NULL, NULL, ctl, met, met->lsm, 1.0, 1))
-      WARN("Cannot read land-sea mask!");
-
-    /* Read sea surface temperature... */
-    if (!read_met_nc_2d
-	(ncid, "sstk", "SSTK", NULL, NULL, ctl, met, met->sst, 1.0, 1))
-      WARN("Cannot read sea surface temperature!");
   }
+
+  /* Read temperature at the surface... */
+  if (!read_met_nc_2d
+      (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, met->ts, 1.0, 1))
+    WARN("Cannot read surface temperature!");
+
+  /* Read zonal wind at the surface... */
+  if (!read_met_nc_2d
+      (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, met->us,
+       1.0, 1))
+    WARN("Cannot read surface zonal wind!");
+
+  /* Read meridional wind at the surface... */
+  if (!read_met_nc_2d
+      (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, met->vs,
+       1.0, 1))
+    WARN("Cannot read surface meridional wind!");
+
+  /* Read land-sea mask... */
+  if (!read_met_nc_2d
+      (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, met->lsm, 1.0,
+       1))
+    WARN("Cannot read land-sea mask!");
+
+  /* Read sea surface temperature... */
+  if (!read_met_nc_2d
+      (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
+       1.0, 1))
+    WARN("Cannot read sea surface temperature!");
 }
 
 /*****************************************************************************/
 
 void read_met_tropo(
-  ctl_t * ctl,
-  clim_t * clim,
-  met_t * met) {
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met) {
 
   double p2[200], pv[EP], pv2[200], t[EP], t2[200], th[EP],
     th2[200], z[EP], z2[200];
@@ -8025,7 +7877,7 @@ void read_met_tropo(
 
 void read_obs(
   const char *filename,
-  ctl_t * ctl,
+  const ctl_t *ctl,
   double *rt,
   double *rz,
   double *rlon,
@@ -8129,7 +7981,7 @@ double scan_ctl(
   int argc,
   char *argv[],
   const char *varname,
-  int arridx,
+  const int arridx,
   const char *defvalue,
   char *value) {
 
@@ -8203,25 +8055,25 @@ double sedi(
   const double rhop) {
 
   /* Convert particle radius from microns to m... */
-  double rp_help = rp * 1e-6;
+  const double rp_help = rp * 1e-6;
 
   /* Density of dry air [kg / m^3]... */
-  double rho = RHO(p, T);
+  const double rho = RHO(p, T);
 
   /* Dynamic viscosity of air [kg / (m s)]... */
-  double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+  const double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Thermal velocity of an air molecule [m / s]... */
-  double v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
+  const double v = sqrt(8. * KB * T / (M_PI * 4.8096e-26));
 
   /* Mean free path of an air molecule [m]... */
-  double lambda = 2. * eta / (rho * v);
+  const double lambda = 2. * eta / (rho * v);
 
   /* Knudsen number for air (dimensionless)... */
-  double K = lambda / rp_help;
+  const double K = lambda / rp_help;
 
   /* Cunningham slip-flow correction (dimensionless)... */
-  double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
+  const double G = 1. + K * (1.249 + 0.42 * exp(-0.87 / K));
 
   /* Sedimentation velocity [m / s]... */
   return 2. * SQR(rp_help) * (rhop - rho) * G0 / (9. * eta) * G;
@@ -8308,12 +8160,12 @@ double sza_calc(
   const double D = sec / 86400 - 0.5;
 
   /* Geocentric apparent ecliptic longitude [rad]... */
-  const double g = (357.529 + 0.98560028 * D) * M_PI / 180;
+  const double g = DEG2RAD(357.529 + 0.98560028 * D);
   const double q = 280.459 + 0.98564736 * D;
-  const double L = (q + 1.915 * sin(g) + 0.020 * sin(2 * g)) * M_PI / 180;
+  const double L = DEG2RAD(q + 1.915 * sin(g) + 0.020 * sin(2 * g));
 
   /* Mean obliquity of the ecliptic [rad]... */
-  const double e = (23.439 - 0.00000036 * D) * M_PI / 180;
+  const double e = DEG2RAD(23.439 - 0.00000036 * D);
 
   /* Declination [rad]... */
   const double sindec = sin(e) * sin(L);
@@ -8331,7 +8183,7 @@ double sza_calc(
   const double h = LST / 12 * M_PI - ra;
 
   /* Convert latitude... */
-  const double lat_help = lat * M_PI / 180;
+  const double lat_help = DEG2RAD(lat);
 
   /* Return solar zenith angle [rad]... */
   return acos(sin(lat_help) * sindec +
@@ -8374,7 +8226,7 @@ void time2jsec(
 void timer(
   const char *name,
   const char *group,
-  int output) {
+  const int output) {
 
   static char names[NTIMER][100], groups[NTIMER][100];
 
@@ -8441,13 +8293,12 @@ void timer(
 
 double time_from_filename(
   const char *filename,
-  int offset) {
+  const int offset) {
 
   char tstr[10];
 
   double t;
 
-  PRINT("%s", filename);
   /* Get time from filename... */
   int len = (int) strlen(filename);
   sprintf(tstr, "%.4s", &filename[len - offset]);
@@ -8476,17 +8327,17 @@ double time_from_filename(
 /*****************************************************************************/
 
 double tropo_weight(
-  const clim_t * clim,
+  const clim_t *clim,
   const double t,
   const double lat,
   const double p) {
 
   /* Get tropopause pressure... */
-  double pt = clim_tropo(clim, t, lat);
+  const double pt = clim_tropo(clim, t, lat);
 
   /* Get pressure range... */
-  double p1 = pt * 0.866877899;
-  double p0 = pt / 0.866877899;
+  const double p1 = pt * 0.866877899;
+  const double p0 = pt / 0.866877899;
 
   /* Get weighting factor... */
   if (p > p0)
@@ -8501,9 +8352,9 @@ double tropo_weight(
 
 void write_atm(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
 
   /* Set timer... */
   SELECT_TIMER("WRITE_ATM", "OUTPUT", NVTX_WRITE);
@@ -8561,15 +8412,15 @@ void write_atm(
 
 void write_atm_asc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
 
   FILE *out;
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Check if gnuplot output is requested... */
   if (ctl->atm_gpfile[0] != '-') {
@@ -8643,8 +8494,8 @@ void write_atm_asc(
 
 void write_atm_bin(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  const atm_t *atm) {
 
   FILE *out;
 
@@ -8693,14 +8544,14 @@ void write_atm_bin(
 
 void write_atm_clams(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  const atm_t *atm) {
 
   int tid, pid, ncid, varid;
   size_t start[2], count[2];
 
   /* Create file... */
-  nc_create(filename, NC_CLOBBER, &ncid);
+  nc_create(filename, NC_NETCDF4, &ncid);
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -8709,14 +8560,18 @@ void write_atm_clams(
   /* Define variables and their attributes... */
   int dim_ids[2] = { tid, pid };
   NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
-  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
-  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
-  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+	     "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+  NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", ctl->atm_nc_level, 0);
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-	       ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+	       ctl->qnt_name[iq], ctl->qnt_unit[iq],
+	       ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
   /* Define global attributes... */
   NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8742,9 +8597,9 @@ void write_atm_clams(
 
 void write_atm_clams_traj(
   const char *dirname,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
 
   /* Global Counter... */
   static size_t out_cnt = 0;
@@ -8785,7 +8640,7 @@ void write_atm_clams_traj(
   if (out_cnt == 0) {
 
     /* Create file... */
-    nc_create(filename_out, NC_CLOBBER, &ncid);
+    nc_create(filename_out, NC_NETCDF4, &ncid);
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
@@ -8796,14 +8651,19 @@ void write_atm_clams_traj(
 
     /* Define variables and their attributes... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	       "seconds since 2000-01-01 00:00:00 UTC");
-    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg");
-    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg");
-    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa");
-    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K");
+	       "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LAT", NC_DOUBLE, 2, dim_ids, "Latitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LON", NC_DOUBLE, 2, dim_ids, "Longitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 2, dim_ids, "Pressure", "hPa",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 2, dim_ids, "Zeta", "K",
+	       ctl->atm_nc_level, 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq],
+		 ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
     /* Define global attributes... */
     NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8847,7 +8707,7 @@ void write_atm_clams_traj(
     LOG(1, "Write init file: %s", filename_init);
 
     /* Create file... */
-    nc_create(filename_init, NC_CLOBBER, &ncid);
+    nc_create(filename_init, NC_NETCDF4, &ncid);
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -8857,14 +8717,18 @@ void write_atm_clams_traj(
 
     /* Define variables and their attributes... */
     NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "Time",
-	       "seconds since 2000-01-01 00:00:00 UTC");
-    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg");
-    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg");
-    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa");
-    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K");
+	       "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LAT", NC_DOUBLE, 1, &pid, "Latitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("LON", NC_DOUBLE, 1, &pid, "Longitude", "deg",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("PRESS", NC_DOUBLE, 1, &pid, "Pressure", "hPa",
+	       ctl->atm_nc_level, 0);
+    NC_DEF_VAR("ZETA", NC_DOUBLE, 1, &pid, "Zeta", "K", ctl->atm_nc_level, 0);
     for (int iq = 0; iq < ctl->nq; iq++)
       NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 2, dim_ids,
-		 ctl->qnt_name[iq], ctl->qnt_unit[iq]);
+		 ctl->qnt_name[iq], ctl->qnt_unit[iq],
+		 ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
     /* Define global attributes... */
     NC_PUT_ATT_GLOBAL("exp_VERTCOOR_name", "zeta");
@@ -8891,28 +8755,32 @@ void write_atm_clams_traj(
 
 void write_atm_nc(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm) {
+  const ctl_t *ctl,
+  const atm_t *atm) {
 
   int ncid, obsid, varid;
 
   size_t start[2], count[2];
 
   /* Create file... */
-  NC(nc_create(filename, NC_CLOBBER, &ncid));
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "obs", (size_t) atm->np, &obsid));
 
   /* Define variables and their attributes... */
   NC_DEF_VAR("time", NC_DOUBLE, 1, &obsid, "time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa");
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east");
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north");
+	     "seconds since 2000-01-01 00:00:00 UTC", ctl->atm_nc_level, 0);
+  NC_DEF_VAR("press", NC_DOUBLE, 1, &obsid, "pressure", "hPa",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &obsid, "longitude", "degrees_east",
+	     ctl->atm_nc_level, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &obsid, "latitude", "degrees_north",
+	     ctl->atm_nc_level, 0);
   for (int iq = 0; iq < ctl->nq; iq++)
     NC_DEF_VAR(ctl->qnt_name[iq], NC_DOUBLE, 1, &obsid,
-	       ctl->qnt_longname[iq], ctl->qnt_unit[iq]);
+	       ctl->qnt_longname[iq], ctl->qnt_unit[iq],
+	       ctl->atm_nc_level, ctl->atm_nc_quant[iq]);
 
   /* Define global attributes... */
   NC_PUT_ATT_GLOBAL("featureType", "point");
@@ -8936,9 +8804,9 @@ void write_atm_nc(
 
 void write_csi(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
 
   static FILE *out;
 
@@ -9013,14 +8881,14 @@ void write_csi(
 
     /* Set horizontal coordinates... */
     for (iy = 0; iy < ctl->csi_ny; iy++) {
-      double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(lat * M_PI / 180.);
+      const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
     }
   }
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate... */
   ALLOC(modmean, double,
@@ -9122,7 +8990,7 @@ void write_csi(
 		|| modmean[idx] >= ctl->csi_modmin)) {
 	  x[n] = modmean[idx];
 	  y[n] = obsmean[idx];
-  	  if (modmean[idx] >= ctl->csi_modmin)
+	  if (modmean[idx] >= ctl->csi_modmin)
 	    obsstdn[n] = obsstd[idx];
 	  if ((++n) >= NCSI)
 	    ERRMSG("Too many data points to calculate statistics!");
@@ -9135,29 +9003,31 @@ void write_csi(
     /* Calculate verification statistics
        (https://www.cawcr.gov.au/projects/verification/) ... */
     static double work[2 * NCSI], work2[2 * NCSI];;
-    int n_obs = cx + cy;
-    int n_for = cx + cz;
-    double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
-    double pod = (n_obs > 0) ? (100. * cx) / n_obs : NAN;
-    double far = (n_for > 0) ? (100. * cz) / n_for : NAN;
-    double csi = (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : NAN;
-    double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : NAN;
-    double ets = (cx + cy + cz - cx_rd > 0) ?
+    const int n_obs = cx + cy;
+    const int n_for = cx + cz;
+    const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+    const double pod = (n_obs > 0) ? (100. * cx) / n_obs : NAN;
+    const double far = (n_for > 0) ? (100. * cz) / n_for : NAN;
+    const double csi =
+      (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : NAN;
+    const double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : NAN;
+    const double ets = (cx + cy + cz - cx_rd > 0) ?
       (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : NAN;
-    double rho_p =
+    const double rho_p =
       (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : NAN;
-    double rho_s =
+    const double rho_s =
       (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : NAN;
     for (int i = 0; i < n; i++) {
       work[i] = x[i] - y[i];
       work2[i] = (obsstdn[i] != 0) ? (x[i] - y[i]) / obsstdn[i] : 0;
     }
-    double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
-    double rmse = (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
-							 0.0) : NAN;
-    double absdev =
+    const double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
+    const double rmse =
+      (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
+					     0.0) : NAN;
+    const double absdev =
       (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : NAN;
-    double loglikelihood =
+    const double loglikelihood =
       (n > 0) ? gsl_stats_tss(work2, 1, (size_t) n) * (-0.5) : GSL_NAN;
 
     /* Write... */
@@ -9196,9 +9066,9 @@ void write_csi(
 
 void write_ens(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
 
   static FILE *out;
 
@@ -9215,8 +9085,8 @@ void write_ens(
     ERRMSG("Missing ensemble IDs!");
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Init... */
   for (int i = 0; i < NENS; i++) {
@@ -9293,11 +9163,11 @@ void write_ens(
 
 void write_grid(
   const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
+  const double t) {
 
   static double kz[EP], kw[EP];
 
@@ -9352,9 +9222,9 @@ void write_grid(
 	atm->np);
 
   /* Set grid box size... */
-  double dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
-  double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
-  double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
+  const double dz = (ctl->grid_z1 - ctl->grid_z0) / ctl->grid_nz;
+  const double dlon = (ctl->grid_lon1 - ctl->grid_lon0) / ctl->grid_nx;
+  const double dlat = (ctl->grid_lat1 - ctl->grid_lat0) / ctl->grid_ny;
 
   /* Set vertical coordinates... */
 #pragma omp parallel for default(shared)
@@ -9369,13 +9239,12 @@ void write_grid(
 #pragma omp parallel for default(shared)
   for (int iy = 0; iy < ctl->grid_ny; iy++) {
     lat[iy] = ctl->grid_lat0 + dlat * (iy + 0.5);
-    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-      * cos(lat[iy] * M_PI / 180.);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
   }
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Get grid box indices... */
 #pragma omp parallel for default(shared)
@@ -9485,18 +9354,18 @@ void write_grid(
 
 void write_grid_asc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t *ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np) {
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np) {
 
   FILE *out;
 
@@ -9589,18 +9458,18 @@ void write_grid_asc(
 
 void write_grid_nc(
   const char *filename,
-  ctl_t * ctl,
-  double *cd,
+  const ctl_t *ctl,
+  const double *cd,
   double *mean[NQ],
   double *sigma[NQ],
-  double *vmr_impl,
-  double t,
-  double *z,
-  double *lon,
-  double *lat,
-  double *area,
-  double dz,
-  int *np) {
+  const double *vmr_impl,
+  const double t,
+  const double *z,
+  const double *lon,
+  const double *lat,
+  const double *area,
+  const double dz,
+  const int *np) {
 
   char longname[2 * LEN], varname[2 * LEN];
 
@@ -9617,7 +9486,7 @@ void write_grid_nc(
 	ctl->grid_nx * ctl->grid_ny * ctl->grid_nz);
 
   /* Create file... */
-  NC(nc_create(filename, NC_CLOBBER, &ncid));
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &dimid[0]));
@@ -9628,24 +9497,30 @@ void write_grid_nc(
 
   /* Define variables and their attributes... */
   NC_DEF_VAR("time", NC_DOUBLE, 1, &dimid[0], "time",
-	     "seconds since 2000-01-01 00:00:00 UTC");
-  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[1], "altitude", "km");
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[2], "latitude", "degrees_north");
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[3], "longitude", "degrees_east");
-  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km");
-  NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2");
-  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2");
-  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
-	     "volume mixing ratio (implicit)", "ppv");
-  NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1");
+	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+  NC_DEF_VAR("z", NC_DOUBLE, 1, &dimid[1], "altitude", "km", 0, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dimid[2], "latitude", "degrees_north", 0,
+	     0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dimid[3], "longitude", "degrees_east", 0,
+	     0);
+  NC_DEF_VAR("dz", NC_DOUBLE, 1, &dimid[1], "layer depth", "km", 0, 0);
+  NC_DEF_VAR("area", NC_DOUBLE, 1, &dimid[2], "surface area", "km**2", 0, 0);
+
+  NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2",
+	     ctl->grid_nc_level, 0);
+  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid, "volume mixing ratio (implicit)",
+	     "ppv", ctl->grid_nc_level, 0);
+  NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1", 0, 0);
   for (int iq = 0; iq < ctl->nq; iq++) {
     sprintf(varname, "%s_mean", ctl->qnt_name[iq]);
     sprintf(longname, "%s (mean)", ctl->qnt_longname[iq]);
-    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq]);
+    NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq],
+	       ctl->grid_nc_level, ctl->grid_nc_quant[iq]);
     if (ctl->grid_stddev) {
       sprintf(varname, "%s_stddev", ctl->qnt_name[iq]);
       sprintf(longname, "%s (stddev)", ctl->qnt_longname[iq]);
-      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq]);
+      NC_DEF_VAR(varname, NC_DOUBLE, 4, dimid, longname, ctl->qnt_unit[iq],
+		 ctl->grid_nc_level, ctl->grid_nc_quant[iq]);
     }
   }
   /* End definitions... */
@@ -9711,10 +9586,10 @@ void write_grid_nc(
 
 /*****************************************************************************/
 
-int write_met(
+void write_met(
   const char *filename,
-  ctl_t * ctl,
-  met_t * met) {
+  const ctl_t *ctl,
+  met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
@@ -9736,109 +9611,123 @@ int write_met(
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
 
+  /* Write netCDF data... */
+  if (ctl->met_type == 0)
+    write_met_nc(filename, ctl, met);
+
   /* Write binary data... */
-  if (ctl->met_type >= 1 && ctl->met_type <= 5) {
+  else if (ctl->met_type >= 1 && ctl->met_type <= 5)
+    write_met_bin(filename, ctl, met);
 
-    /* Create file... */
-    FILE *out;
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create file!");
+  /* Not implemented... */
+  else
+    ERRMSG("MET_TYPE not implemented!");
+}
 
-    /* Write type of binary data... */
-    FWRITE(&ctl->met_type, int,
-	   1,
-	   out);
+/*****************************************************************************/
 
-    /* Write version of binary data... */
-    int version = 102;
-    FWRITE(&version, int,
-	   1,
-	   out);
+void write_met_bin(
+  const char *filename,
+  const ctl_t *ctl,
+  met_t *met) {
 
-    /* Write grid data... */
-    FWRITE(&met->time, double,
-	   1,
-	   out);
-    FWRITE(&met->nx, int,
-	   1,
-	   out);
-    FWRITE(&met->ny, int,
-	   1,
-	   out);
-    FWRITE(&met->np, int,
-	   1,
-	   out);
-    FWRITE(met->lon, double,
-	     (size_t) met->nx,
-	   out);
-    FWRITE(met->lat, double,
-	     (size_t) met->ny,
-	   out);
-    FWRITE(met->p, double,
-	     (size_t) met->np,
-	   out);
+  /* Create file... */
+  FILE *out;
+  if (!(out = fopen(filename, "w")))
+    ERRMSG("Cannot create file!");
 
-    /* Write surface data... */
-    write_met_bin_2d(out, met, met->ps, "PS");
-    write_met_bin_2d(out, met, met->ts, "TS");
-    write_met_bin_2d(out, met, met->zs, "ZS");
-    write_met_bin_2d(out, met, met->us, "US");
-    write_met_bin_2d(out, met, met->vs, "VS");
-    write_met_bin_2d(out, met, met->lsm, "LSM");
-    write_met_bin_2d(out, met, met->sst, "SST");
-    write_met_bin_2d(out, met, met->pbl, "PBL");
-    write_met_bin_2d(out, met, met->pt, "PT");
-    write_met_bin_2d(out, met, met->tt, "TT");
-    write_met_bin_2d(out, met, met->zt, "ZT");
-    write_met_bin_2d(out, met, met->h2ot, "H2OT");
-    write_met_bin_2d(out, met, met->pct, "PCT");
-    write_met_bin_2d(out, met, met->pcb, "PCB");
-    write_met_bin_2d(out, met, met->cl, "CL");
-    write_met_bin_2d(out, met, met->plcl, "PLCL");
-    write_met_bin_2d(out, met, met->plfc, "PLFC");
-    write_met_bin_2d(out, met, met->pel, "PEL");
-    write_met_bin_2d(out, met, met->cape, "CAPE");
-    write_met_bin_2d(out, met, met->cin, "CIN");
+  /* Write type of binary data... */
+  FWRITE(&ctl->met_type, int,
+	 1,
+	 out);
 
-    /* Write level data... */
-    write_met_bin_3d(out, ctl, met, met->z, "Z",
-		     (ctl->met_zfp_tol_z <= 0 ? ctl->met_zfp_prec : 0),
-		     ctl->met_zfp_tol_z);
-    write_met_bin_3d(out, ctl, met, met->t, "T",
-		     (ctl->met_zfp_tol_t <= 0 ? ctl->met_zfp_prec : 0),
-		     ctl->met_zfp_tol_t);
-    write_met_bin_3d(out, ctl, met, met->u, "U", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->v, "V", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->w, "W", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->pv, "PV", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->h2o, "H2O", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->o3, "O3", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->lwc, "LWC", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->rwc, "RWC", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->iwc, "IWC", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->swc, "SWC", ctl->met_zfp_prec, 0);
-    write_met_bin_3d(out, ctl, met, met->cc, "CC", ctl->met_zfp_prec, 0);
+  /* Write version of binary data... */
+  int version = 102;
+  FWRITE(&version, int,
+	 1,
+	 out);
 
-    /* Write final flag... */
-    int final = 999;
-    FWRITE(&final, int,
-	   1,
-	   out);
+  /* Write grid data... */
+  FWRITE(&met->time, double,
+	 1,
+	 out);
+  FWRITE(&met->nx, int,
+	 1,
+	 out);
+  FWRITE(&met->ny, int,
+	 1,
+	 out);
+  FWRITE(&met->np, int,
+	 1,
+	 out);
+  FWRITE(met->lon, double,
+	   (size_t) met->nx,
+	 out);
+  FWRITE(met->lat, double,
+	   (size_t) met->ny,
+	 out);
+  FWRITE(met->p, double,
+	   (size_t) met->np,
+	 out);
 
-    /* Close file... */
-    fclose(out);
-  }
+  /* Write surface data... */
+  write_met_bin_2d(out, met, met->ps, "PS");
+  write_met_bin_2d(out, met, met->ts, "TS");
+  write_met_bin_2d(out, met, met->zs, "ZS");
+  write_met_bin_2d(out, met, met->us, "US");
+  write_met_bin_2d(out, met, met->vs, "VS");
+  write_met_bin_2d(out, met, met->lsm, "LSM");
+  write_met_bin_2d(out, met, met->sst, "SST");
+  write_met_bin_2d(out, met, met->pbl, "PBL");
+  write_met_bin_2d(out, met, met->pt, "PT");
+  write_met_bin_2d(out, met, met->tt, "TT");
+  write_met_bin_2d(out, met, met->zt, "ZT");
+  write_met_bin_2d(out, met, met->h2ot, "H2OT");
+  write_met_bin_2d(out, met, met->pct, "PCT");
+  write_met_bin_2d(out, met, met->pcb, "PCB");
+  write_met_bin_2d(out, met, met->cl, "CL");
+  write_met_bin_2d(out, met, met->plcl, "PLCL");
+  write_met_bin_2d(out, met, met->plfc, "PLFC");
+  write_met_bin_2d(out, met, met->pel, "PEL");
+  write_met_bin_2d(out, met, met->cape, "CAPE");
+  write_met_bin_2d(out, met, met->cin, "CIN");
 
-  return 0;
+  /* Write level data... */
+  write_met_bin_3d(out, ctl, met, met->z, "Z",
+		   (ctl->met_zfp_tol_z <= 0 ? ctl->met_zfp_prec : 0),
+		   ctl->met_zfp_tol_z);
+  write_met_bin_3d(out, ctl, met, met->t, "T",
+		   (ctl->met_zfp_tol_t <= 0 ? ctl->met_zfp_prec : 0),
+		   ctl->met_zfp_tol_t);
+  write_met_bin_3d(out, ctl, met, met->u, "U", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->v, "V", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->w, "W", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->pv, "PV", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->h2o, "H2O", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->o3, "O3", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->lwc, "LWC", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->rwc, "RWC", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->iwc, "IWC", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->swc, "SWC", ctl->met_zfp_prec, 0);
+  write_met_bin_3d(out, ctl, met, met->cc, "CC", ctl->met_zfp_prec, 0);
+
+  /* Write final flag... */
+  int final = 999;
+  FWRITE(&final, int,
+	 1,
+	 out);
+
+  /* Close file... */
+  fclose(out);
 }
 
 /*****************************************************************************/
 
 void write_met_bin_2d(
-  FILE * out,
-  met_t * met,
+  FILE *out,
+  met_t *met,
   float var[EX][EY],
-  char *varname) {
+  const char *varname) {
 
   float *help;
 
@@ -9864,13 +9753,13 @@ void write_met_bin_2d(
 /*****************************************************************************/
 
 void write_met_bin_3d(
-  FILE * out,
-  ctl_t * ctl,
-  met_t * met,
+  FILE *out,
+  const ctl_t *ctl,
+  met_t *met,
   float var[EX][EY][EP],
-  char *varname,
-  int precision,
-  double tolerance) {
+  const char *varname,
+  const int precision,
+  const double tolerance) {
 
   float *help;
 
@@ -9895,8 +9784,8 @@ void write_met_bin_3d(
 
   /* Write packed data... */
   else if (ctl->met_type == 2)
-    compress_pack(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, 0, out);
+    compress_pck(varname, help, (size_t) (met->ny * met->nx),
+		 (size_t) met->np, 0, out);
 
   /* Write zfp data... */
 #ifdef ZFP
@@ -9939,13 +9828,178 @@ void write_met_bin_3d(
 
 /*****************************************************************************/
 
+void write_met_nc(
+  const char *filename,
+  const ctl_t *ctl,
+  met_t *met) {
+
+  /* Create file... */
+  int ncid, varid;
+  size_t start[4], count[4];
+  nc_create(filename, NC_NETCDF4, &ncid);
+
+  /* Define dimensions... */
+  int tid, lonid, latid, levid;
+  NC(nc_def_dim(ncid, "time", 1, &tid));
+  NC(nc_def_dim(ncid, "lon", (size_t) met->nx, &lonid));
+  NC(nc_def_dim(ncid, "lat", (size_t) met->ny, &latid));
+  NC(nc_def_dim(ncid, "lev", (size_t) met->np, &levid));
+
+  /* Define grid... */
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &tid, "time",
+	     "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &lonid, "longitude", "degrees_east", 0, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &latid, "latitude", "degrees_north", 0, 0);
+  NC_DEF_VAR("lev", NC_DOUBLE, 1, &levid, "pressure", "Pa", 0, 0);
+
+  /* Define surface variables... */
+  int dimid2[2] = { latid, lonid };
+  NC_DEF_VAR("sp", NC_FLOAT, 2, dimid2, "Surface pressure", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("z", NC_FLOAT, 2, dimid2, "Geopotential", "m**2 s**-2",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("t2m", NC_FLOAT, 2, dimid2, "2 metre temperature", "K",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("u10m", NC_FLOAT, 2, dimid2, "10 metre U wind component",
+	     "m s**-1", ctl->met_nc_level, 0);
+  NC_DEF_VAR("v10m", NC_FLOAT, 2, dimid2, "10 metre V wind component",
+	     "m s**-1", ctl->met_nc_level, 0);
+  NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K",
+	     ctl->met_nc_level, 0);
+
+  /* Define level data... */
+  int dimid3[3] = { levid, latid, lonid };
+  NC_DEF_VAR("t", NC_FLOAT, 3, dimid3, "Temperature", "K",
+	     ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("u", NC_FLOAT, 3, dimid3, "U velocity", "m s**-1",
+	     ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("v", NC_FLOAT, 3, dimid3, "V velocity", "m s**-1",
+	     ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("w", NC_FLOAT, 3, dimid3, "Vertical velocity", "Pa s**-1",
+	     ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("q", NC_FLOAT, 3, dimid3, "Specific humidity", "kg kg**-1",
+	     ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("o3", NC_FLOAT, 3, dimid3, "Ozone mass mixing ratio",
+	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("clwc", NC_FLOAT, 3, dimid3, "Cloud liquid water content",
+	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("crwc", NC_FLOAT, 3, dimid3, "Cloud rain water content",
+	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("ciwc", NC_FLOAT, 3, dimid3, "Cloud ice water content",
+	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("cswc", NC_FLOAT, 3, dimid3, "Cloud snow water content",
+	     "kg kg**-1", ctl->met_nc_level, ctl->met_nc_quant);
+  NC_DEF_VAR("cc", NC_FLOAT, 3, dimid3, "Cloud cover", "-",
+	     ctl->met_nc_level, ctl->met_nc_quant);
+
+  /* End definitions... */
+  NC(nc_enddef(ncid));
+
+  /* Write grid data... */
+  NC_PUT_DOUBLE("time", &met->time, 0);
+  NC_PUT_DOUBLE("lon", met->lon, 0);
+  NC_PUT_DOUBLE("lat", met->lat, 0);
+  double phelp[EP];
+  for (int ip = 0; ip < met->np; ip++)
+    phelp[ip] = 100. * met->p[ip];
+  NC_PUT_DOUBLE("lev", phelp, 0);
+
+  /* Write surface data... */
+  write_met_nc_2d(ncid, "sp", met, met->ps, 100.0f);
+  write_met_nc_2d(ncid, "z", met, met->zs, (float) (1000. * G0));
+  write_met_nc_2d(ncid, "t2m", met, met->ts, 1.0f);
+  write_met_nc_2d(ncid, "u10m", met, met->us, 1.0f);
+  write_met_nc_2d(ncid, "v10m", met, met->vs, 1.0f);
+  write_met_nc_2d(ncid, "lsm", met, met->lsm, 1.0f);
+  write_met_nc_2d(ncid, "sstk", met, met->sst, 1.0f);
+
+  /* Write level data... */
+  write_met_nc_3d(ncid, "t", met, met->t, 1.0f);
+  write_met_nc_3d(ncid, "u", met, met->u, 1.0f);
+  write_met_nc_3d(ncid, "v", met, met->v, 1.0f);
+  write_met_nc_3d(ncid, "w", met, met->w, 100.0f);
+  write_met_nc_3d(ncid, "q", met, met->h2o, (float) (MH2O / MA));
+  write_met_nc_3d(ncid, "o3", met, met->o3, (float) (MO3 / MA));
+  write_met_nc_3d(ncid, "clwc", met, met->lwc, 1.0f);
+  write_met_nc_3d(ncid, "crwc", met, met->rwc, 1.0f);
+  write_met_nc_3d(ncid, "ciwc", met, met->iwc, 1.0f);
+  write_met_nc_3d(ncid, "cswc", met, met->swc, 1.0f);
+  write_met_nc_3d(ncid, "cc", met, met->cc, 1.0f);
+
+  /* Close file... */
+  NC(nc_close(ncid));
+}
+
+/*****************************************************************************/
+
+void write_met_nc_2d(
+  int ncid,
+  const char *varname,
+  met_t *met,
+  float var[EX][EY],
+  float scl) {
+
+  int varid;
+  size_t start[4], count[4];
+
+  /* Allocate... */
+  float *help;
+  ALLOC(help, float,
+	EX * EY);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      help[ARRAY_2D(iy, ix, met->nx)] = scl * var[ix][iy];
+
+  /* Write data... */
+  NC_PUT_FLOAT(varname, help, 0);
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
+void write_met_nc_3d(
+  int ncid,
+  const char *varname,
+  met_t *met,
+  float var[EX][EY][EP],
+  float scl) {
+
+  int varid;
+  size_t start[4], count[4];
+
+  /* Allocate... */
+  float *help;
+  ALLOC(help, float,
+	EX * EY * EP);
+
+  /* Copy data... */
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 0; ip < met->np; ip++)
+	help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)] = scl * var[ix][iy][ip];
+
+  /* Write data... */
+  NC_PUT_FLOAT(varname, help, 0);
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
 void write_output(
   const char *dirname,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double t) {
 
   char ext[10], filename[2 * LEN];
 
@@ -10036,11 +10090,11 @@ void write_output(
 
 void write_prof(
   const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
+  const double t) {
 
   static FILE *out;
 
@@ -10123,14 +10177,13 @@ void write_prof(
       lon[ix] = ctl->prof_lon0 + dlon * (ix + 0.5);
     for (int iy = 0; iy < ctl->prof_ny; iy++) {
       lat[iy] = ctl->prof_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.)
-	* cos(lat[iy] * M_PI / 180.);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
     }
   }
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate... */
   ALLOC(mass, double,
@@ -10223,7 +10276,7 @@ void write_prof(
 			     lon[ix], lat[iy], &o3, ci, cw, 0);
 
 	  /* Calculate volume mixing ratio... */
-	  int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+	  const int idx3 = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
 	  vmr = MA / ctl->molmass * mass[idx3]
 	    / (RHO(press[iz], temp) * area[iy] * dz * 1e9);
 
@@ -10264,11 +10317,11 @@ void write_prof(
 
 void write_sample(
   const char *filename,
-  ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
+  const double t) {
 
   static FILE *out;
 
@@ -10327,8 +10380,8 @@ void write_sample(
   }
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over observations... */
   for (int i = 0; i < nobs; i++) {
@@ -10344,7 +10397,7 @@ void write_sample(
     geo2cart(0, rlon[i], rlat[i], x0);
 
     /* Set pressure range... */
-    double rp = P(rz[i]);
+    const double rp = P(rz[i]);
     double ptop = P(rz[i] + ctl->sample_dz);
     double pbot = P(rz[i] - ctl->sample_dz);
 
@@ -10383,7 +10436,7 @@ void write_sample(
     }
 
     /* Calculate column density... */
-    double cd = mass / (1e6 * area);
+    const double cd = mass / (1e6 * area);
 
     /* Calculate volume mixing ratio... */
     double vmr = 0;
@@ -10427,9 +10480,9 @@ void write_sample(
 
 void write_station(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  atm_t *atm,
+  const double t) {
 
   static FILE *out;
 
@@ -10464,8 +10517,8 @@ void write_station(
   }
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Loop over air parcels... */
   for (int ip = 0; ip < atm->np; ip++) {
@@ -10513,9 +10566,9 @@ void write_station(
 
 void write_vtk(
   const char *filename,
-  ctl_t * ctl,
-  atm_t * atm,
-  double t) {
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
 
   FILE *out;
 
@@ -10526,8 +10579,8 @@ void write_vtk(
   LOG(1, "Write VTK data: %s", filename);
 
   /* Set time interval for output... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Create file... */
   if (!(out = fopen(filename, "w")))
@@ -10552,13 +10605,12 @@ void write_vtk(
     for (int ip = 0; ip < atm->np; ip += ctl->vtk_stride) {
       if (atm->time[ip] < t0 || atm->time[ip] > t1)
 	continue;
-      double radius = (RE + Z(atm->p[ip]) * ctl->vtk_scale
-		       + ctl->vtk_offset) / RE;
-      double x = radius * cos(atm->lat[ip] / 180. * M_PI)
-	* cos(atm->lon[ip] / 180. * M_PI);
-      double y = radius * cos(atm->lat[ip] / 180. * M_PI)
-	* sin(atm->lon[ip] / 180. * M_PI);
-      double z = radius * sin(atm->lat[ip] / 180. * M_PI);
+      const double radius = (RE + Z(atm->p[ip]) * ctl->vtk_scale
+			     + ctl->vtk_offset) / RE;
+      const double coslat = cos(DEG2RAD(atm->lat[ip]));
+      const double x = radius * coslat * cos(DEG2RAD(atm->lon[ip]));
+      const double y = radius * coslat * sin(DEG2RAD(atm->lon[ip]));
+      const double z = radius * sin(DEG2RAD(atm->lat[ip]));
       fprintf(out, "%g %g %g\n", x, y, z);
     }
   } else

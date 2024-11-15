@@ -8,9 +8,6 @@ PROGRAM trac_fortran
 
   CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
   INTEGER(c_int) :: argc
-  CHARACTER(len=15) :: arg1, arg2, arg3, arg4, arg5
-  CHARACTER(c_char), TARGET :: temp1, temp2, temp3, temp4, temp5
-  TYPE(c_ptr), DIMENSION(5), TARGET :: argv_ptrs
   TYPE(ctl_t) :: ctl
   TYPE(atm_t) :: atm
   TYPE(clim_t) :: clim
@@ -18,89 +15,87 @@ PROGRAM trac_fortran
   TYPE(met_t), POINTER :: met0p, met1p
   REAL(real64) :: t
   REAL(real64), DIMENSION(npp) :: dt
+  CHARACTER(len=32) :: arg
+  TYPE(c_ptr), ALLOCATABLE, DIMENSION(:) :: argv_ptrs
+  CHARACTER(len=32), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
+  INTEGER :: i, stat
   
-  filename_ctl = "data/trac.ctl"
-  filename_atm = "atm_split.tab"
+  ! Read command line arguments...
+  argc = command_argument_count()
 
-  !! ToDo: Create command line arguments
-  argc = 5
-  arg1 = "FortranWrapper" 
-  arg2 = "abc2"
-  arg3 = "abc3"
-  arg4 = "abc4"
-  arg5 = "abc5"
-
-  ! Create 5 different pointers and store them in array
-  temp1 = trim(arg1)//c_null_char
-  argv_ptrs(1) = c_loc(temp1)
-  temp2 = trim(arg2)//c_null_char
-  argv_ptrs(2) = c_loc(temp2)
-  temp3 = trim(arg3)//c_null_char
-  argv_ptrs(3) = c_loc(temp3)
-  temp4 = trim(arg4)//c_null_char
-  argv_ptrs(4) = c_loc(temp4)
-  temp5 = trim(arg5)//c_null_char
-  argv_ptrs(5) = c_loc(temp5)
-
-  print *,'Hello World!'
+  IF (argc < 4) THEN
+     WRITE(*,*) "Give parameters: <dirlist> <ctl> <atm_in>"
+     CALL ABORT
+  ENDIF
   
-  ! ! Read control parameters... 
-  CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc, argv_ptrs, ctl)
-  print *,'Hello Control'
+  ALLOCATE(tmp(argc), argv_ptrs(argc))
   
-  ! ! Read climatological data... 
-  CALL mptrac_read_clim(ctl, clim)
-  print *,'Hello Clim'
+  DO i = 1, argc
+     CALL get_command_argument(i, arg)
+     IF (LEN_TRIM(arg) == 0) EXIT
+     tmp(i) = TRIM(arg)//c_null_char
+     argv_ptrs(i) = c_loc(tmp(i))
+  ENDDO
   
-  ! Read atmospheric data...
-  CALL mptrac_read_atm(TRIM(filename_atm)//c_null_char, ctl, atm)
-  print *, "Hello Atm"
+  ! Open directory list...
+  OPEN(10,file=tmp(1),iostat=stat)
+  IF (stat .ne. 0) THEN
+     WRITE(*,*) "Cannot open directory list!"
+     CALL ABORT
+  ENDIF
   
-  ! Initialize timesteps...
-  CALL mptrac_module_timesteps_init(ctl, atm)
-  print *, "Hello Timesteps"
+  DO WHILE (1 .eq. 1)
+     READ(10,'(a)', END=200) dirname
+ 
+     filename_ctl = TRIM(dirname)//"/"//tmp(2)
+     filename_atm = TRIM(dirname)//"/"//tmp(3)
 
-  print *,c_sizeof(met1)
-  print *,c_sizeof(atm)
-  print *,c_sizeof(ctl)
-  print *,c_sizeof(clim)
-    
+     ! Read control parameters...
+     CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc, argv_ptrs, ctl)
   
-  WRITE(*,*) ctl%t_start
-  ! Get meteo data...
-  met0p => met0
-  met1p => met1
-  CALL mptrac_get_met(ctl, clim, ctl%t_start, met0p, met1p)
-  print *, "Hello Met"
+     ! Read climatological data... 
+     CALL mptrac_read_clim(ctl, clim)
   
-  dirname = "data"
+     ! Read atmospheric data...
+     CALL mptrac_read_atm(TRIM(filename_atm)//c_null_char, ctl, atm)
+  
+     ! Initialize timesteps...
+     CALL mptrac_module_timesteps_init(ctl, atm)
 
-  t = ctl%t_start
+     ! Get meteo data...
+     met0p => met0
+     met1p => met1
+     CALL mptrac_get_met(ctl, clim, ctl%t_start, met0p, met1p)
 
-  DO WHILE (ctl%direction * (t - ctl%t_stop) < ctl%dt_mod)
+     t = ctl%t_start
 
-     ! Adjust length of final time step... 
-     IF (ctl%direction * (t - ctl%t_stop) > 0) THEN
-        t = ctl%t_stop
-     ENDIF
+     DO WHILE (ctl%direction * (t - ctl%t_stop) < ctl%dt_mod)
 
-     ! Set time steps of air parcels...
-     CALL mptrac_module_timesteps(ctl, met0, atm, dt, t)
+        ! Adjust length of final time step... 
+        IF (ctl%direction * (t - ctl%t_stop) > 0) THEN
+           t = ctl%t_stop
+        ENDIF
 
-     IF (t .NE. ctl%t_start) THEN
-        ! Get meteo data...
-        CALL mptrac_get_met(ctl, clim, t, met0p, met1p)
-     ENDIF
+        ! Set time steps of air parcels...
+        CALL mptrac_module_timesteps(ctl, met0, atm, dt, t)
+        
+        IF (t .NE. ctl%t_start) THEN
+           ! Get meteo data...
+           CALL mptrac_get_met(ctl, clim, t, met0p, met1p)
+        ENDIF
 
-     ! Advection...
-     CALL mptrac_module_advect(ctl, met0, met1, atm, dt)
+        ! Advection...
+        CALL mptrac_module_advect(ctl, met0, met1, atm, dt)
+        
+        ! Write output...
+        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0, met1, atm, t)
 
-     ! Write output...
-     CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0, met1, atm, t)
+        t = t + ctl%direction * ctl%dt_mod
 
-     t = t + ctl%direction * ctl%dt_mod
+     END DO
 
   END DO
+200  CONTINUE
 
 END PROGRAM trac_fortran
 
