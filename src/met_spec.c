@@ -101,8 +101,7 @@ int main(
 	  / ((ix < met->nx / 2) ? (double) ix : -(double) (met->nx - ix));
 	A[ix] = (ix == 0 ? 1.0 : 2.0) / (met->nx)
 	  * sqrt(gsl_pow_2(cutReal[ix]) + gsl_pow_2(cutImag[ix]));
-	phi[ix]
-	  = 180. / M_PI * atan2(cutImag[ix], cutReal[ix]);
+	phi[ix] = RAD2DEG(atan2(cutImag[ix], cutReal[ix]));
       }
 
       /* Write data... */

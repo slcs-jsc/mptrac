@@ -42,8 +42,9 @@ mkdir -p "$dir" || exit
 tmp=$(mktemp -d tmp.XXXXXXXX)
 
 # Download data...
+source ~/venv/bin/activate
 cd "$tmp" || exit
-python <<EOF
+python3 <<EOF
 import cdsapi
 c = cdsapi.Client()
 
@@ -81,7 +82,7 @@ cdo -f nc copy "$tmp/ml.grib" "$tmp/ml.nc" && cdo -f nc copy "$tmp/sf.grib" "$tm
 cdo merge "$tmp/sf.nc" "$tmp/ml.nc" "$tmp/all.nc" || exit
 
 # Calculate pressure...
-cdo -pressure_fl "$tmp/all.nc" "$tmp/p.nc" && cdo merge "$tmp/all.nc" "$tmp/p.nc" "$tmp/allp.nc" || exit
+cdo -pressure_full "$tmp/all.nc" "$tmp/p.nc" && cdo merge "$tmp/all.nc" "$tmp/p.nc" "$tmp/allp.nc" || exit
 
 # Split timesteps...
 n=0

@@ -72,7 +72,7 @@ CMS ?= 0
 CMSDIR ?= ../../cmultiscale/cmultiscale
 
 # Enable Fortran Wrapper
-WRAPPER ?= 1
+WRAPPER ?= 0
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...

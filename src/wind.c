@@ -85,7 +85,7 @@ int main(
   sprintf(filename, "%s_%d_%02d_%02d_%02d.nc", argv[2], year, mon, day, hour);
 
   /* Create netCDF file... */
-  NC(nc_create(filename, NC_CLOBBER, &ncid));
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Create dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &dims[0]));
@@ -94,14 +94,18 @@ int main(
   NC(nc_def_dim(ncid, "lon", (size_t) nx, &dims[3]));
 
   /* Create variables... */
-  NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time", "day as %Y%m%d.%f");
-  NC_DEF_VAR("lev", NC_DOUBLE, 1, &dims[1], "air_pressure", "Pa");
-  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[2], "latitude", "degrees_north");
-  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[3], "longitude", "degrees_east");
-  NC_DEF_VAR("T", NC_FLOAT, 4, &dims[0], "Temperature", "K");
-  NC_DEF_VAR("U", NC_FLOAT, 4, &dims[0], "zonal wind", "m s**-1");
-  NC_DEF_VAR("V", NC_FLOAT, 4, &dims[0], "meridional wind", "m s**-1");
-  NC_DEF_VAR("W", NC_FLOAT, 4, &dims[0], "vertical velocity", "Pa s**-1");
+  NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time", "day as %Y%m%d.%f", 0,
+	     0);
+  NC_DEF_VAR("lev", NC_DOUBLE, 1, &dims[1], "air_pressure", "Pa", 0, 0);
+  NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[2], "latitude", "degrees_north", 0,
+	     0);
+  NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[3], "longitude", "degrees_east", 0,
+	     0);
+  NC_DEF_VAR("T", NC_FLOAT, 4, &dims[0], "Temperature", "K", 0, 0);
+  NC_DEF_VAR("U", NC_FLOAT, 4, &dims[0], "zonal wind", "m s**-1", 0, 0);
+  NC_DEF_VAR("V", NC_FLOAT, 4, &dims[0], "meridional wind", "m s**-1", 0, 0);
+  NC_DEF_VAR("W", NC_FLOAT, 4, &dims[0], "vertical velocity", "Pa s**-1", 0,
+	     0);
 
   /* End definition... */
   NC(nc_enddef(ncid));
@@ -126,14 +130,14 @@ int main(
       for (int iz = 0; iz < nz; iz++) {
 	int idx = (iz * ny + iy) * nx + ix;
 	dataU[idx] = (float) (LIN(0.0, u0, nz - 1.0, u1, iz)
-			      * (cos(dataLat[iy] * M_PI / 180.0)
-				 * cos(alpha * M_PI / 180.0)
-				 + sin(dataLat[iy] * M_PI / 180.0)
-				 * cos(dataLon[ix] * M_PI / 180.0)
-				 * sin(alpha * M_PI / 180.0)));
+			      * (cos(DEG2RAD(dataLat[iy]))
+				 * cos(DEG2RAD(alpha))
+				 + sin(DEG2RAD(dataLat[iy]))
+				 * cos(DEG2RAD(dataLon[ix]))
+				 * sin(DEG2RAD(alpha))));
 	dataV[idx] = (float) (-LIN(0.0, u0, nz - 1.0, u1, iz)
-			      * sin(dataLon[ix] * M_PI / 180.0)
-			      * sin(alpha * M_PI / 180.0));
+			      * sin(DEG2RAD(dataLon[ix]))
+			      * sin(DEG2RAD(alpha)));
 	dataW[idx] = (float) DZ2DP(1e-3 * w0, dataZ[iz]);
       }
 

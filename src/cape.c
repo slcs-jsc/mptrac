@@ -77,11 +77,11 @@ int main(
 
   /* Create variables... */
   NC_DEF_VAR("CAPE_MPT", NC_FLOAT, 3, dims,
-	     "convective available potential energy", "J kg**-1");
+	     "convective available potential energy", "J kg**-1", 0, 0);
   NC_DEF_VAR("CIN_MPT", NC_FLOAT, 3, dims,
-	     "convective inhibition", "J kg**-1");
+	     "convective inhibition", "J kg**-1", 0, 0);
   NC_DEF_VAR("PEL_MPT", NC_FLOAT, 3, dims,
-	     "pressure at equilibrium level", "hPa");
+	     "pressure at equilibrium level", "hPa", 0, 0);
 
   /* Get current time... */
   time_t t = time(NULL);

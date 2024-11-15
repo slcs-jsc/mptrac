@@ -43,6 +43,9 @@ int main(
   ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
 
+  /* Start timers... */
+  START_TIMERS;
+
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
 
@@ -57,6 +60,10 @@ int main(
   /* Write meteo data... */
   ctl.met_type = atoi(argv[5]);
   write_met(argv[4], &ctl, met);
+
+  /* Report timers... */
+  PRINT_TIMERS;
+  STOP_TIMERS;
 
   /* Free... */
   free(clim);

@@ -104,7 +104,7 @@ int main(
 
       /* Create netCDF file... */
       LOG(1, "Write tropopause data file: %s", argv[2]);
-      NC(nc_create(argv[2], NC_CLOBBER, &ncid));
+      NC(nc_create(argv[2], NC_NETCDF4, &ncid));
 
       /* Create dimensions... */
       NC(nc_def_dim(ncid, "time", (size_t) NC_UNLIMITED, &dims[0]));
@@ -113,63 +113,67 @@ int main(
 
       /* Create variables... */
       NC_DEF_VAR("time", NC_DOUBLE, 1, &dims[0], "time",
-		 "seconds since 2000-01-01 00:00:00 UTC");
-      NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[1], "latitude", "degrees_north");
-      NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[2], "longitude", "degrees_east");
+		 "seconds since 2000-01-01 00:00:00 UTC", 0, 0);
+      NC_DEF_VAR("lat", NC_DOUBLE, 1, &dims[1], "latitude", "degrees_north",
+		 0, 0);
+      NC_DEF_VAR("lon", NC_DOUBLE, 1, &dims[2], "longitude", "degrees_east",
+		 0, 0);
 
-      NC_DEF_VAR("clp_z", NC_FLOAT, 3, &dims[0], "cold point height", "km");
-      NC_DEF_VAR("clp_p", NC_FLOAT, 3, &dims[0], "cold point pressure",
-		 "hPa");
+      NC_DEF_VAR("clp_z", NC_FLOAT, 3, &dims[0], "cold point height", "km", 0,
+		 0);
+      NC_DEF_VAR("clp_p", NC_FLOAT, 3, &dims[0], "cold point pressure", "hPa",
+		 0, 0);
       NC_DEF_VAR("clp_t", NC_FLOAT, 3, &dims[0], "cold point temperature",
-		 "K");
+		 "K", 0, 0);
       if (h2o)
 	NC_DEF_VAR("clp_q", NC_FLOAT, 3, &dims[0], "cold point water vapor",
-		   "ppv");
+		   "ppv", 0, 0);
       if (o3)
 	NC_DEF_VAR("clp_o3", NC_FLOAT, 3, &dims[0], "cold point ozone",
-		   "ppv");
+		   "ppv", 0, 0);
 
       NC_DEF_VAR("dyn_z", NC_FLOAT, 3, &dims[0],
-		 "dynamical tropopause height", "km");
+		 "dynamical tropopause height", "km", 0, 0);
       NC_DEF_VAR("dyn_p", NC_FLOAT, 3, &dims[0],
-		 "dynamical tropopause pressure", "hPa");
+		 "dynamical tropopause pressure", "hPa", 0, 0);
       NC_DEF_VAR("dyn_t", NC_FLOAT, 3, &dims[0],
-		 "dynamical tropopause temperature", "K");
+		 "dynamical tropopause temperature", "K", 0, 0);
       if (h2o)
 	NC_DEF_VAR("dyn_q", NC_FLOAT, 3, &dims[0],
-		   "dynamical tropopause water vapor", "ppv");
+		   "dynamical tropopause water vapor", "ppv", 0, 0);
       if (o3)
 	NC_DEF_VAR("dyn_o3", NC_FLOAT, 3, &dims[0],
-		   "dynamical tropopause ozone", "ppv");
+		   "dynamical tropopause ozone", "ppv", 0, 0);
 
       NC_DEF_VAR("wmo_1st_z", NC_FLOAT, 3, &dims[0],
-		 "WMO 1st tropopause height", "km");
+		 "WMO 1st tropopause height", "km", 0, 0);
       NC_DEF_VAR("wmo_1st_p", NC_FLOAT, 3, &dims[0],
-		 "WMO 1st tropopause pressure", "hPa");
+		 "WMO 1st tropopause pressure", "hPa", 0, 0);
       NC_DEF_VAR("wmo_1st_t", NC_FLOAT, 3, &dims[0],
-		 "WMO 1st tropopause temperature", "K");
+		 "WMO 1st tropopause temperature", "K", 0, 0);
       if (h2o)
 	NC_DEF_VAR("wmo_1st_q", NC_FLOAT, 3, &dims[0],
-		   "WMO 1st tropopause water vapor", "ppv");
+		   "WMO 1st tropopause water vapor", "ppv", 0, 0);
       if (o3)
 	NC_DEF_VAR("wmo_1st_o3", NC_FLOAT, 3, &dims[0],
-		   "WMO 1st tropopause ozone", "ppv");
+		   "WMO 1st tropopause ozone", "ppv", 0, 0);
 
       NC_DEF_VAR("wmo_2nd_z", NC_FLOAT, 3, &dims[0],
-		 "WMO 2nd tropopause height", "km");
+		 "WMO 2nd tropopause height", "km", 0, 0);
       NC_DEF_VAR("wmo_2nd_p", NC_FLOAT, 3, &dims[0],
-		 "WMO 2nd tropopause pressure", "hPa");
+		 "WMO 2nd tropopause pressure", "hPa", 0, 0);
       NC_DEF_VAR("wmo_2nd_t", NC_FLOAT, 3, &dims[0],
-		 "WMO 2nd tropopause temperature", "K");
+		 "WMO 2nd tropopause temperature", "K", 0, 0);
       if (h2o)
 	NC_DEF_VAR("wmo_2nd_q", NC_FLOAT, 3, &dims[0],
-		   "WMO 2nd tropopause water vapor", "ppv");
+		   "WMO 2nd tropopause water vapor", "ppv", 0, 0);
       if (o3)
 	NC_DEF_VAR("wmo_2nd_o3", NC_FLOAT, 3, &dims[0],
-		   "WMO 2nd tropopause ozone", "ppv");
+		   "WMO 2nd tropopause ozone", "ppv", 0, 0);
 
-      NC_DEF_VAR("ps", NC_FLOAT, 3, &dims[0], "surface pressure", "hPa");
-      NC_DEF_VAR("zs", NC_FLOAT, 3, &dims[0], "surface height", "km");
+      NC_DEF_VAR("ps", NC_FLOAT, 3, &dims[0], "surface pressure", "hPa", 0,
+		 0);
+      NC_DEF_VAR("zs", NC_FLOAT, 3, &dims[0], "surface height", "km", 0, 0);
 
       /* End definition... */
       NC(nc_enddef(ncid));
