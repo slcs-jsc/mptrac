@@ -2584,7 +2584,7 @@ typedef struct {
   /*! Convective available potential energy data (0=file, 1=calculate). */
   int met_cape;
 
-  /*! Planetary boundary layer data (0=file, 1=Richardson, 2=Theta). */
+  /*! Planetary boundary layer data (0=file, 1=Richardson, 2=theta). */
   int met_pbl;
 
   /*! Minimum depth of planetary boundary layer [km]. */

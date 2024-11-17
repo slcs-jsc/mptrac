@@ -6092,6 +6092,9 @@ void read_met_cloud(
   SELECT_TIMER("READ_MET_CLOUD", "METPROC", NVTX_READ);
   LOG(2, "Calculate cloud data...");
 
+  /* Thresholds for cloud detection... */
+  const double ccmin = 0.01, cwmin = 1e-6;
+
   /* Loop over columns... */
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
@@ -6110,8 +6113,11 @@ void read_met_cloud(
 	  continue;
 
 	/* Check ice water and liquid water content... */
-	if (met->iwc[ix][iy][ip] > 0 || met->rwc[ix][iy][ip] > 0
-	    || met->lwc[ix][iy][ip] > 0 || met->swc[ix][iy][ip] > 0) {
+	if (met->cc[ix][iy][ip] > ccmin
+	    && (met->iwc[ix][iy][ip] > cwmin
+		|| met->rwc[ix][iy][ip] > cwmin
+		|| met->lwc[ix][iy][ip] > cwmin
+		|| met->swc[ix][iy][ip] > cwmin)) {
 
 	  /* Get cloud top pressure ... */
 	  met->pct[ix][iy]
