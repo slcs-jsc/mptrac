@@ -5132,13 +5132,13 @@ void read_ctl(
   ctl->met_relhum
     = (int) scan_ctl(filename, argc, argv, "MET_RELHUM", -1, "0", NULL);
   ctl->met_pbl =
-    (int) scan_ctl(filename, argc, argv, "MET_PBL", -1, "1", NULL);
+    (int) scan_ctl(filename, argc, argv, "MET_PBL", -1, "2", NULL);
   if (ctl->met_pbl < 0 || ctl->met_pbl > 2)
     ERRMSG("Set MET_PBL = 0 ... 2!");
   ctl->met_pbl_min =
-    scan_ctl(filename, argc, argv, "MET_PBL_MIN", -1, "-999", NULL);
+    scan_ctl(filename, argc, argv, "MET_PBL_MIN", -1, "0.1", NULL);
   ctl->met_pbl_max =
-    scan_ctl(filename, argc, argv, "MET_PBL_MAX", -1, "999", NULL);
+    scan_ctl(filename, argc, argv, "MET_PBL_MAX", -1, "5.0", NULL);
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
