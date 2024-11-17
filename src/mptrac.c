@@ -5125,12 +5125,16 @@ void read_ctl(
 	  scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
     }
   }
-  ctl->met_geopot_sx
-    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
-  ctl->met_geopot_sy
-    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "-1", NULL);
-  ctl->met_relhum
-    = (int) scan_ctl(filename, argc, argv, "MET_RELHUM", -1, "0", NULL);
+  ctl->met_geopot_sx =
+    (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
+  ctl->met_geopot_sy =
+    (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "-1", NULL);
+  ctl->met_relhum =
+    (int) scan_ctl(filename, argc, argv, "MET_RELHUM", -1, "0", NULL);
+  ctl->met_cape =
+    (int) scan_ctl(filename, argc, argv, "MET_CAPE", -1, "1", NULL);
+  if (ctl->met_cape < 0 || ctl->met_cape > 1)
+    ERRMSG("Set MET_CAPE to 0 or 1!");
   ctl->met_pbl =
     (int) scan_ctl(filename, argc, argv, "MET_PBL", -1, "2", NULL);
   if (ctl->met_pbl < 0 || ctl->met_pbl > 2)
@@ -5967,8 +5971,13 @@ void read_met_bin_3d(
 /*****************************************************************************/
 
 void read_met_cape(
+  const ctl_t *ctl,
   const clim_t *clim,
   met_t *met) {
+
+  /* Check parameters... */
+  if (ctl->met_cape != 1)
+    return;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
@@ -6826,7 +6835,7 @@ int read_met_nc(
   read_met_cloud(met);
 
   /* Calculate convective available potential energy... */
-  read_met_cape(clim, met);
+  read_met_cape(ctl, clim, met);
 
   /* Calculate total column ozone... */
   read_met_ozone(met);
@@ -7152,7 +7161,7 @@ int read_met_nc_3d(
 /*****************************************************************************/
 
 void read_met_pbl(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   met_t *met) {
 
   /* Set timer... */
@@ -7783,22 +7792,25 @@ void read_met_surface(
     WARN("Cannot read sea surface temperature!");
 
   /* Read CAPE... */
-  if (!read_met_nc_2d
-      (ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, met->cape,
-       1.0, 1))
-    WARN("Cannot read CAPE!");
+  if (ctl->met_cape == 0)
+    if (!read_met_nc_2d
+	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, met->cape,
+	 1.0, 1))
+      WARN("Cannot read CAPE!");
 
   /* Read CIN... */
-  if (!read_met_nc_2d
-      (ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
-       1.0, 1))
-    WARN("Cannot read convective inhibition!");
+  if (ctl->met_cape == 0)
+    if (!read_met_nc_2d
+	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
+	 1.0, 1))
+      WARN("Cannot read convective inhibition!");
 
   /* Read PBL... */
-  if (!read_met_nc_2d
-      (ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
-       0.001f, 1))
-    WARN("Cannot read planetary boundary layer!");
+  if (ctl->met_pbl == 0)
+    if (!read_met_nc_2d
+	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
+	 0.001f, 1))
+      ERRMSG("Cannot read planetary boundary layer!");
 }
 
 /*****************************************************************************/
