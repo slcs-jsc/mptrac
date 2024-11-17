@@ -2581,6 +2581,15 @@ typedef struct {
   /*! Try to read relative humidity (0=no, 1=yes). */
   int met_relhum;
 
+  /*! Planetary boundary layer (0=file, 1=Richardson, 2=Theta). */
+  int met_pbl;
+
+  /*! Minimum depth of planetary boundary layer [km]. */
+  double met_pbl_min;
+
+  /*! Maximum depth of planetary boundary layer [km]. */
+  double met_pbl_max;
+
   /*! Tropopause definition
      (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). */
   int met_tropo;
@@ -6657,6 +6666,7 @@ int read_met_nc_3d(
  * @author Lars Hoffmann
  */
 void read_met_pbl(
+  ctl_t * ctl,
   met_t * met);
 
 /**
