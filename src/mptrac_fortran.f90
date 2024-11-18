@@ -36,25 +36,6 @@ MODULE mptrac_struct
   END TYPE atm_t
 
   !! in 3D arrays first and third index swapped
-  TYPE, bind(c) :: clim_t
-     INTEGER(c_int) :: tropo_ntime
-     INTEGER(c_int) :: tropo_nlat
-     REAL(c_double), DIMENSION(12) :: tropo_time
-     REAL(c_double), DIMENSION(73) :: tropo_lat
-     REAL(c_double), DIMENSION(73,12) :: tropo
-     TYPE(clim_photo_t) :: photo
-     TYPE(clim_zm_t) :: hno3
-     TYPE(clim_zm_t) :: oh
-     TYPE(clim_zm_t) :: h2o2
-     TYPE(clim_zm_t) :: ho2
-     TYPE(clim_zm_t) :: o1d
-     TYPE(clim_ts_t) :: ccl4
-     TYPE(clim_ts_t) :: ccl3f
-     TYPE(clim_ts_t) :: ccl2f2
-     TYPE(clim_ts_t) :: n2o
-     TYPE(clim_ts_t) :: sf6
-  END TYPE clim_t
-  
   TYPE, bind(c) :: clim_photo_t
      INTEGER(c_int) :: np
      INTEGER(c_int) :: nsza
@@ -89,6 +70,26 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(cyy,cp,ct) :: vmr
   END TYPE clim_zm_t
 
+  TYPE, bind(c) :: clim_t
+     INTEGER(c_int) :: tropo_ntime
+     INTEGER(c_int) :: tropo_nlat
+     REAL(c_double), DIMENSION(12) :: tropo_time
+     REAL(c_double), DIMENSION(73) :: tropo_lat
+     REAL(c_double), DIMENSION(73,12) :: tropo
+     TYPE(clim_photo_t) :: photo
+     TYPE(clim_zm_t) :: hno3
+     TYPE(clim_zm_t) :: oh
+     TYPE(clim_zm_t) :: h2o2
+     TYPE(clim_zm_t) :: ho2
+     TYPE(clim_zm_t) :: o1d
+     TYPE(clim_ts_t) :: ccl4
+     TYPE(clim_ts_t) :: ccl3f
+     TYPE(clim_ts_t) :: ccl2f2
+     TYPE(clim_ts_t) :: n2o
+     TYPE(clim_ts_t) :: sf6
+  END TYPE clim_t
+
+  
   TYPE, bind(c) :: ctl_t
      INTEGER(c_int) :: advect_cpl_zeta_and_press_modules
      INTEGER(c_int) :: met_press_level_def
