@@ -42,7 +42,7 @@ INFO ?= 0
 PROF ?= 0
 
 # Compile for coverage testing...
-COV ?= 0
+COV ?= 1
 
 # Enable NVTX markers...
 NVTX ?= 0
@@ -166,6 +166,7 @@ endif
 # Compile for coverage testing...
 ifeq ($(COV),1)
   CFLAGS += --coverage
+  FCFLAGS += --coverage
 endif
 
 # NVTX...
