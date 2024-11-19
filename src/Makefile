@@ -33,7 +33,7 @@ GPU_PIN ?= 0
 STATIC ?= 0
 
 # Optimization flags...; default production -O3
-OPTI ?= -O0
+OPTI ?= -O3
 
 # Optimization information...
 INFO ?= 0
@@ -42,7 +42,7 @@ INFO ?= 0
 PROF ?= 0
 
 # Compile for coverage testing...
-COV ?= 1
+COV ?= 0
 
 # Enable NVTX markers...
 NVTX ?= 0
