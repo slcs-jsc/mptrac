@@ -21,7 +21,7 @@ rm -rf data.ref && mkdir -p data.ref
 exit_code=$?
 if [ $exit_code == 99 ]
 then
-    exit
+    exit 1
 fi
 
 
