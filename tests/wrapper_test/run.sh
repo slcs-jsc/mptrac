@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Set environment...
+ulimit -s unlimited
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export LANG=C
 export LC_ALL=C
@@ -18,7 +19,7 @@ rm -rf data.ref && mkdir -p data.ref
 
 # find-vars gives 99 back, if C and Fortran structures are not equal
 exit_code=$?
-if [ $exit_code == 99]
+if [ $exit_code == 99 ]
 then
     exit
 fi

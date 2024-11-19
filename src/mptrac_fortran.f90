@@ -230,6 +230,10 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_geopot_sx
      INTEGER(c_int) :: met_geopot_sy
      INTEGER(c_int) :: met_relhum
+     INTEGER(c_int) :: met_cape
+     INTEGER(c_int) :: met_pbl
+     INTEGER(c_int) :: met_pbl_min
+     INTEGER(c_int) :: met_pbl_max
      INTEGER(c_int) :: met_tropo
      REAL(c_double) :: met_tropo_pv
      REAL(c_double) :: met_tropo_theta
