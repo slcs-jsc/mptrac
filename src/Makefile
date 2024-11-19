@@ -6,7 +6,7 @@
 EXC = atm2grid atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_clim tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test
+TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test wrapper_test
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -17,7 +17,7 @@ INCDIR += -I ../libs/build/include
 # Library directories...
 LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 
-# Compiler (gcc, nvc, or clang)...
+# Compiler (gcc, icx, nvc, or clang)...
 COMPILER ?= gcc
 
 # Compile for MPI...
@@ -30,9 +30,9 @@ GPU ?= 0
 GPU_PIN ?= 0
 
 # Static compilation...
-STATIC ?= 1
+STATIC ?= 0
 
-# Optimization flags...
+# Optimization flags...; default production -O3
 OPTI ?= -O3
 
 # Optimization information...
@@ -71,6 +71,9 @@ CMS ?= 0
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
 
+# Enable Fortran Wrapper
+WRAPPER ?= 1
+
 # -----------------------------------------------------------------------------
 # Set compiler flags...
 # -----------------------------------------------------------------------------
@@ -82,7 +85,11 @@ VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags)
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPTI) -g
 ifeq ($(COMPILER),gcc)
   CC=gcc
-  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  #CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+else ifeq ($(COMPILER),icx)
+  CC=icx
+  CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 else ifeq ($(COMPILER),nvc)
   CC=nvc
   CFLAGS += -mp
@@ -92,6 +99,22 @@ else ifeq ($(COMPILER),clang)
 else
   $(error Compiler $(COMPILER) not supported)
 endif
+
+
+# Set FC and FCFLAGS...
+ifeq ($(COMPILER),gcc)
+  FC=gfortran
+  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation $(OPTI)
+else ifeq ($(COMPILER),icx)
+  FC=ifort
+  FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium $(OPTI)
+else ifeq ($(COMPILER),nvc)
+  FC=nvfortran
+  FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays $(OPTI) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
+else
+  $(error Compiler $(COMPILER) not supported)
+endif
+
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
@@ -126,6 +149,8 @@ endif
 ifeq ($(INFO),1)
   ifeq ($(COMPILER),gcc)
     CFLAGS += -fopt-info
+  else ifeq ($(COMPILER),icx)
+    CFLAGS += -fopt-info
   else ifeq ($(COMPILER),nvc)
     CFLAGS += -Minfo=all
   else ifeq ($(COMPILER),clang)
@@ -141,6 +166,7 @@ endif
 # Compile for coverage testing...
 ifeq ($(COV),1)
   CFLAGS += --coverage
+  FCFLAGS += --coverage
 endif
 
 # NVTX...
@@ -227,6 +253,10 @@ ifeq ($(STATIC),1)
   CFLAGS += -static
 endif
 
+ifeq ($(WRAPPER),1)
+  exc_wrapper = 0	
+endif	
+
 # -----------------------------------------------------------------------------
 # Targets...
 # -----------------------------------------------------------------------------
@@ -234,13 +264,24 @@ endif
 .PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall
 
 all: $(EXC)
-	rm -f *~
+	rm -f *~	
+ifeq ($(WRAPPER),1)
+	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
+#	WRAPPER=0
+endif
 
 $(EXC): %: %.c mptrac.o
 	$(CC) $(CFLAGS) -o $@ $< mptrac.o $(LDFLAGS)
 
 mptrac.o: mptrac.c mptrac.h Makefile
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
+
+wrapper:
+	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
+	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
 
 check: $(TESTS)
 
@@ -251,7 +292,7 @@ $(TESTS) cms_test gpu_test kpp_test: all
 	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
 
 clean:
-	rm -rf $(EXC) lib* *.o *.gcda *.gcno *.gcov coverage* *~
+	rm -rf $(EXC) trac_fortran lib* *.o *.gcda *.gcno *.gcov coverage* *~
 
 coverage:
 	lcov --capture --directory . --output-file=coverage.info ; \

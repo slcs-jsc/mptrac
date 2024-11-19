@@ -507,7 +507,7 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -676,7 +676,7 @@ void compress_pck(
     /* Write info... */
     LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
 	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
-
+    
     /* Read data... */
     FREAD(&scl, double,
 	  nz,
@@ -702,7 +702,7 @@ void compress_pck(
     /* Write info... */
     LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
 	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
-
+    
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
       min[iz] = array[iz];
@@ -868,7 +868,7 @@ void compress_zstd(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) comprLen);
+	varname, ((double) uncomprLen) / (double) comprLen)
   }
 
   /* Compress array and output compressed stream... */
@@ -1063,7 +1063,7 @@ void get_met(
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
-
+    
     /* Read new meteo data... */
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, clim, *met1))
@@ -2627,7 +2627,7 @@ void module_chemgrid(
 #ifdef _OPENACC
 #pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
 #endif
-
+  
   /* Free... */
   free(mass);
   free(lon);
@@ -2638,6 +2638,7 @@ void module_chemgrid(
   free(ixs);
   free(iys);
   free(izs);
+
 }
 
 /*****************************************************************************/
@@ -6438,7 +6439,7 @@ void read_met_grid(
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
-
+    
     /* Check time information from data file... */
     jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {

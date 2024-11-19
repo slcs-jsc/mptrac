@@ -253,16 +253,19 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
+/* #define EP 60 */
 #define EP 140
 #endif
 
 /*! Maximum number of longitudes for meteo data. */
 #ifndef EX
 #define EX 1202
+/* #define EX 481 */
 #endif
 
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
+/* #define EY 241 */
 #define EY 602
 #endif
 
@@ -4061,34 +4064,6 @@ void get_met(
   met_t ** met0,
   met_t ** met1);
 
-/**
- * @brief Helper function to generate the filename for meteorological data.
- *
- * This function generates the appropriate filename for the
- * meteorological data file based on the provided time `t`, direction
- * `direct`, and the base filename `metbase`.  The filename is
- * formatted according to the specified meteorological data type.
- *
- * @param ctl Pointer to the control structure containing configuration settings.
- * @param t The time for which the meteorological data filename is to be generated.
- * @param direct The direction of time integration (-1 for backward, 1 for forward).
- * @param metbase The base string for the meteorological data filenames.
- * @param dt_met The time interval between meteorological data files.
- * @param filename The generated filename for the meteorological data file.
- *
- * The function performs the following steps:
- * - Rounds the time to fixed intervals `dt_met` based on the direction.
- * - Decodes the time into year, month, day, hour, minute, and second.
- * - Constructs the filename based on the meteorological data type specified in `ctl`.
- * - Replaces placeholders (YYYY, MM, DD, HH) in the base filename with actual date and time values.
- *
- * @note Ensure that `ctl` and `filename` are properly initialized before calling this function.
- *
- * @see jsec2time
- * @see get_met_replace
- *
- * @author Lars Hoffmann
- */
 void get_met_help(
   const ctl_t * ctl,
   const double t,
