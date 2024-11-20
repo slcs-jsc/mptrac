@@ -1,3 +1,21 @@
+! This file is part of MPTRAC.
+! 
+! MPTRAC is free software: you can redistribute it and/or modify it
+! under the terms of the GNU General Public License as published by
+! the Free Software Foundation, either version 3 of the License, or
+! (at your option) any later version.
+! 
+! MPTRAC is distributed in the hope that it will be useful,
+! but WITHOUT ANY WARRANTY; without even the implied warranty of
+! MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+! GNU General Public License for more details.
+! 
+! You should have received a copy of the GNU General Public License
+! along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
+! 
+! Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+
+! MPTRAC data sturctures
 MODULE mptrac_struct
   
   USE iso_c_binding
@@ -23,7 +41,6 @@ MODULE mptrac_struct
   INTEGER, PARAMETER :: csza = 50
   INTEGER, PARAMETER :: ct = 12
   INTEGER, PARAMETER :: cts = 1000
-
   
   !! The order of the variables in each struct matters!
   TYPE, bind(c) :: atm_t
@@ -88,7 +105,6 @@ MODULE mptrac_struct
      TYPE(clim_ts_t) :: n2o
      TYPE(clim_ts_t) :: sf6
   END TYPE clim_t
-
   
   TYPE, bind(c) :: ctl_t
      INTEGER(c_int) :: advect_cpl_zeta_and_press_modules
@@ -456,7 +472,7 @@ MODULE mptrac_struct
 
 END MODULE mptrac_struct
 
-
+! MPTRAC functions
 MODULE mptrac_func
   INTERFACE
 
@@ -556,4 +572,3 @@ MODULE mptrac_func
 
   END INTERFACE
 END MODULE mptrac_func
-
