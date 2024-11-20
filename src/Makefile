@@ -271,7 +271,7 @@ $(EXC): %: %.c mptrac.o
 mptrac.o: mptrac.c mptrac.h Makefile
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
 
-wrapper: mptrac_fortran.f90 trac_fortran.f90
+wrapper: mptrac_fortran.f90 trac_fortran.f90 mptrac.o
 	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
