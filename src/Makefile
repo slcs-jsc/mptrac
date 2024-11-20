@@ -85,8 +85,8 @@ VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags)
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPTI) -g
 ifeq ($(COMPILER),gcc)
   CC=gcc
-  #CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
-  CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
+  #CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 else ifeq ($(COMPILER),icx)
   CC=icx
   CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
@@ -99,7 +99,6 @@ else ifeq ($(COMPILER),clang)
 else
   $(error Compiler $(COMPILER) not supported)
 endif
-
 
 # Set FC and FCFLAGS...
 ifeq ($(COMPILER),gcc)
@@ -114,7 +113,6 @@ else ifeq ($(COMPILER),nvc)
 else
   $(error Compiler $(COMPILER) not supported)
 endif
-
 
 # Compile for GPUs...
 ifeq ($(GPU),1)
@@ -253,15 +251,11 @@ ifeq ($(STATIC),1)
   CFLAGS += -static
 endif
 
-ifeq ($(WRAPPER),1)
-  exc_wrapper = 0	
-endif	
-
 # -----------------------------------------------------------------------------
 # Targets...
 # -----------------------------------------------------------------------------
 
-.PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall
+.PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall wrapper
 
 all: $(EXC)
 	rm -f *~	
@@ -269,7 +263,6 @@ ifeq ($(WRAPPER),1)
 	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
-#	WRAPPER=0
 endif
 
 $(EXC): %: %.c mptrac.o
@@ -278,7 +271,7 @@ $(EXC): %: %.c mptrac.o
 mptrac.o: mptrac.c mptrac.h Makefile
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
 
-wrapper:
+wrapper: mptrac_fortran.f90 trac_fortran.f90
 	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
