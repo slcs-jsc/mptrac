@@ -24,6 +24,7 @@ projects/paraview/data/
 !projects/python/
 projects/python/plots/
 src/*.o
+src/*.mod
 src/atm2grid
 src/atm_conv
 src/atm_dist
