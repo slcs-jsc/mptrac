@@ -285,7 +285,7 @@ $(TESTS) cms_test gpu_test kpp_test: all
 	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
 
 clean:
-	rm -rf $(EXC) trac_fortran lib* *.o *.gcda *.gcno *.gcov coverage* *~
+	rm -rf $(EXC) trac_fortran lib* *.o *.mod *.gcda *.gcno *.gcov coverage* *~
 
 coverage:
 	lcov --capture --directory . --output-file=coverage.info ; \
