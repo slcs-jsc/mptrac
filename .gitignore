@@ -50,6 +50,7 @@ src/sedi
 src/time2jsec
 src/tnat
 src/trac
+src/trac_fortran
 src/tropo
 src/tropo_clim
 src/tropo_sample
