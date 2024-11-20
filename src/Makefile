@@ -32,7 +32,7 @@ GPU_PIN ?= 0
 # Static compilation...
 STATIC ?= 0
 
-# Optimization flags...; default production -O3
+# Optimization flags...
 OPTI ?= -O3
 
 # Optimization information...
@@ -86,7 +86,6 @@ CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPTI) -g
 ifeq ($(COMPILER),gcc)
   CC=gcc
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
-  #CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
 else ifeq ($(COMPILER),icx)
   CC=icx
   CFLAGS += -DHAVE_INLINE -pedantic -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
@@ -257,12 +256,12 @@ endif
 
 .PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall wrapper
 
-all: $(EXC)
-	rm -f *~	
 ifeq ($(WRAPPER),1)
-	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
-	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
-	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
+all: $(EXC) wrapper
+	rm -f *~
+else
+all: $(EXC)
+	rm -f *~
 endif
 
 $(EXC): %: %.c mptrac.o
@@ -271,10 +270,14 @@ $(EXC): %: %.c mptrac.o
 mptrac.o: mptrac.c mptrac.h Makefile
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
 
-wrapper: mptrac_fortran.f90 trac_fortran.f90 mptrac.o
+mptrac_fortran.o: mptrac_fortran.f90 Makefile
 	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
+
+trac_fortran: trac_fortran.f90 mptrac.o mptrac_fortran.o
 	$(FC) $(FCFLAGS) -o trac_fortran.o -c trac_fortran.f90 $(LDFLAGS)
 	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.o mptrac_fortran.o mptrac.o $(LDFLAGS)
+
+wrapper: trac_fortran
 
 check: $(TESTS)
 

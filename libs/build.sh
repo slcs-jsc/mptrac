@@ -196,10 +196,12 @@ if [ $ifBuildAll = true ] || [ $ifBuildZFP = true ] ; then
     strTarget=$strFileZFP
     cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src/$strTarget \
-        && make && make test \
+        && make BUILD_SHARED_LIBS=0 && make test \
         && cp -a bin/* $strBuildDir/bin/ \
         && cp -a include/* $strBuildDir/include/ \
         && cp -a lib/* $strBuildDir/lib/ \
+	&& make BUILD_SHARED_LIBS=1 \
+	&& cp -a lib/* $strBuildDir/lib/ \
     	    || exit
 fi
 
@@ -213,7 +215,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then
         && make -j $numProcs && make check \
         && cp -a lib/libzstd* $strBuildDir/lib/ \
         && cp -a lib/*.h $strBuildDir/include/ \
-        && ln -sf $strBuildDir/$strTarget/lib/libzstd.so.1.5.2 $strBuildDir/lib/libzstd.so \
+        && ln -sf $strBuildDir/$strTarget/lib/libzstd.so.1.5.5 $strBuildDir/lib/libzstd.so \
         && make clean \
     	    || exit
 fi
