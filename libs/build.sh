@@ -215,7 +215,6 @@ if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then
         && make -j $numProcs && make check \
         && cp -a lib/libzstd* $strBuildDir/lib/ \
         && cp -a lib/*.h $strBuildDir/include/ \
-        && ln -sf $strBuildDir/$strTarget/lib/libzstd.so.1.5.5 $strBuildDir/lib/libzstd.so \
         && make clean \
     	    || exit
 fi
