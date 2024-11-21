@@ -42,8 +42,8 @@ PROGRAM trac_fortran
   argc = command_argument_count()
 
   IF (argc < 4) THEN
-     WRITE(*,*) "Give parameters: <dirlist> <ctl> <atm_in>"
-     CALL ABORT
+     WRITE(*,*) "Error: Give parameters: <dirlist> <ctl> <atm_in>"
+     CALL EXIT
   ENDIF
   
   ALLOCATE(tmp(argc), argv_ptrs(argc))
@@ -58,8 +58,8 @@ PROGRAM trac_fortran
   ! Open directory list...
   OPEN(10,file=tmp(1),iostat=stat)
   IF (stat .ne. 0) THEN
-     WRITE(*,*) "Cannot open directory list!"
-     CALL ABORT
+     WRITE(*,*) "Error: Cannot open directory list!"
+     CALL EXIT
   ENDIF
   
   DO WHILE (1 .eq. 1)
