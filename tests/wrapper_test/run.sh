@@ -1,6 +1,7 @@
 #! /bin/bash
 
 # Set environment...
+ulimit -s unlimited
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export LANG=C
 export LC_ALL=C

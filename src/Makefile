@@ -102,7 +102,7 @@ endif
 # Set FC and FCFLAGS...
 ifeq ($(COMPILER),gcc)
   FC=gfortran
-  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation -fno-automatic $(OPTI)
+  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation $(OPTI)
 else ifeq ($(COMPILER),icx)
   FC=ifort
   FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium $(OPTI)
