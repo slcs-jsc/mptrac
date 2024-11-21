@@ -1,7 +1,6 @@
 #! /bin/bash
 
 # Set environment...
-ulimit -s unlimited
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export LANG=C
 export LC_ALL=C
@@ -12,7 +11,8 @@ trac_fortran=../../src
 
 # Create directories...
 rm -rf data && mkdir -p data
-rm -rf data.ref && mkdir -p data.ref
+mkdir -p data/c
+mkdir -p data/fortran
 
 # Test order and missing variables between C and Fortran structure
 ./find-vars.sh
@@ -85,7 +85,6 @@ STAT_LON = -22
 STAT_LAT = -40
 EOF
 
-
 # Create observation file...
 echo | awk -v tobs="$($trac/time2jsec 2011 6 7 0 0 0 0)" '{
   for(lon=-25; lon<=-15; lon+=0.5)
@@ -121,9 +120,7 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
            VTK_BASENAME atm
 
 # trac.c produces the reference data set for the Fortran wrapper
-cp -a data/* data.ref/
-rm data/*
-cp -a data.ref/atm_split.tab data.ref/trac.ctl data.ref/obs.tab data/
+mv data/*00.tab data/*.vtk data/c/
 
 # Calculate trajectories with Fortran Wrapper...
 echo "Fortran Wrapper..."
@@ -136,6 +133,8 @@ $trac_fortran/trac_fortran data/dirlist trac.ctl atm_split.tab \
            SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
            VTK_BASENAME atm
 
+mv data/*00.tab data/*.vtk data/fortran/
+
 #valgrind --tool=memcheck --leak-check=full --track-origins=yes -s $trac_fortran/trac_fortran
 #valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --max-stackframe=17081687808 --main-stacksize=90388608 -s $trac_fortran/trac_fortran
 #valgrind --tool=memcheck --leak-check=full --track-origins=yes --max-stackframe=17081687808 --main-stacksize=190388608 -s $trac_fortran/trac_fortran
@@ -144,9 +143,8 @@ $trac_fortran/trac_fortran data/dirlist trac.ctl atm_split.tab \
 # Files are limited to time, altitude, longitude and latitude, because Fortran wrapper includes only advection 
 echo -e "\nCompare results..."
 error=0
-for f in $(ls data.ref/atm*00.tab ) ; do
-#for f in $(ls data.ref/*.tab ) ; do   
-    f2=data/"$(basename "$f")"
+for f in $(ls data/c/atm*00.tab ) ; do
+    f2=data/fortran/"$(basename "$f")"
     a=$(awk '{printf $1}' "$f")
     aa=$(awk '{printf $1}' "$f2")
     rm -f x y
