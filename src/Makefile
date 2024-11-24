@@ -317,8 +317,7 @@ ifeq ($(STATIC),1)
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
 	ar rcs libmptrac.a mptrac.o
 else
-	$(CC) $(CFLAGS) -c -fPIC -o mptrac_pic.o mptrac.c
-	$(CC) mptrac_pic.o -shared -o libmptrac.so
+	$(CC) $(CFLAGS) -shared -fPIC -o libmptrac.so mptrac.c
 endif
 
 lizard:
