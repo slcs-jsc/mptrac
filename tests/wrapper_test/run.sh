@@ -2,33 +2,26 @@
 
 # Set environment...
 ulimit -s unlimited
+export OMP_NUM_THREADS=4
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
 export LANG=C
 export LC_ALL=C
 
 # Setup...
 trac=../../src
-trac_fortran=../../src
 
 # Create directories...
 rm -rf data && mkdir -p data
 mkdir -p data/c
 mkdir -p data/fortran
 
-# Test order and missing variables between C and Fortran structure
+# Test order and missing variables between C and Fortran structure...
 ./find-vars.sh
-
-# find-vars gives 99 back, if C and Fortran structures are not equal
-exit_code=$?
-if [ $exit_code == 99 ]
-then
-    exit 1
-fi
-
+[ $? == 99 ] && exit 1
 
 # Set timestep and timerange of simulation...
-t0=$($trac_fortran/time2jsec 2011 6 5 0 0 0 0)
-t1=$($trac_fortran/time2jsec 2011 6 8 0 0 0 0)
+t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
+t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
 cat > data/trac.ctl <<EOF
@@ -126,19 +119,19 @@ mv data/*00.tab data/*.vtk data/c/
 # Calculate trajectories with Fortran Wrapper...
 echo "Fortran Wrapper..."
 echo "data" > data/dirlist
-$trac_fortran/trac_fortran data/dirlist trac.ctl atm_split.tab \
-           ATM_BASENAME atm GRID_BASENAME grid \
-           ENS_BASENAME ens STAT_BASENAME station \
-           CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
-           PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
-           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
-           VTK_BASENAME atm
-
+$trac/trac_fortran data/dirlist trac.ctl atm_split.tab \
+		   ATM_BASENAME atm GRID_BASENAME grid \
+		   ENS_BASENAME ens STAT_BASENAME station \
+		   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
+		   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
+		   SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
+		   VTK_BASENAME atm
 mv data/*00.tab data/*.vtk data/fortran/
 
-#valgrind --tool=memcheck --leak-check=full --track-origins=yes -s $trac_fortran/trac_fortran
-#valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --max-stackframe=17081687808 --main-stacksize=90388608 -s $trac_fortran/trac_fortran
-#valgrind --tool=memcheck --leak-check=full --track-origins=yes --max-stackframe=17081687808 --main-stacksize=190388608 -s $trac_fortran/trac_fortran
+# Check for memory leaks...
+#valgrind --tool=memcheck --leak-check=full --track-origins=yes -s $trac/trac_fortran
+#valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --max-stackframe=17081687808 --main-stacksize=90388608 -s $trac/trac_fortran
+#valgrind --tool=memcheck --leak-check=full --track-origins=yes --max-stackframe=17081687808 --main-stacksize=190388608 -s $trac/trac_fortran
 
 # Compare files...
 # Files are limited to time, altitude, longitude and latitude, because Fortran wrapper includes only advection 
