@@ -69,7 +69,7 @@ ZSTD ?= 0
 CMS ?= 0
 
 # Enable ecCodes for reading Grib data (experimental)...
-ECCODES ?= 1
+ecCodes ?= 0
 
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
