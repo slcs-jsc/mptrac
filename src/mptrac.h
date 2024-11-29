@@ -255,16 +255,19 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
+/* #define EP 60 */
 #define EP 140
 #endif
 
 /*! Maximum number of longitudes for meteo data. */
 #ifndef EX
 #define EX 1202
+/* #define EX 481 */
 #endif
 
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
+/* #define EY 241 */
 #define EY 602
 #endif
 
@@ -2583,6 +2586,18 @@ typedef struct {
   /*! Try to read relative humidity (0=no, 1=yes). */
   int met_relhum;
 
+  /*! Convective available potential energy data (0=file, 1=calculate). */
+  int met_cape;
+
+  /*! Planetary boundary layer data (0=file, 1=Richardson, 2=theta). */
+  int met_pbl;
+
+  /*! Minimum depth of planetary boundary layer [km]. */
+  double met_pbl_min;
+
+  /*! Maximum depth of planetary boundary layer [km]. */
+  double met_pbl_max;
+
   /*! Tropopause definition
      (0=none, 1=clim, 2=cold point, 3=WMO_1st, 4=WMO_2nd, 5=dynamical). */
   int met_tropo;
@@ -4051,34 +4066,6 @@ void get_met(
   met_t ** met0,
   met_t ** met1);
 
-/**
- * @brief Helper function to generate the filename for meteorological data.
- *
- * This function generates the appropriate filename for the
- * meteorological data file based on the provided time `t`, direction
- * `direct`, and the base filename `metbase`.  The filename is
- * formatted according to the specified meteorological data type.
- *
- * @param ctl Pointer to the control structure containing configuration settings.
- * @param t The time for which the meteorological data filename is to be generated.
- * @param direct The direction of time integration (-1 for backward, 1 for forward).
- * @param metbase The base string for the meteorological data filenames.
- * @param dt_met The time interval between meteorological data files.
- * @param filename The generated filename for the meteorological data file.
- *
- * The function performs the following steps:
- * - Rounds the time to fixed intervals `dt_met` based on the direction.
- * - Decodes the time into year, month, day, hour, minute, and second.
- * - Constructs the filename based on the meteorological data type specified in `ctl`.
- * - Replaces placeholders (YYYY, MM, DD, HH) in the base filename with actual date and time values.
- *
- * @note Ensure that `ctl` and `filename` are properly initialized before calling this function.
- *
- * @see jsec2time
- * @see get_met_replace
- *
- * @author Lars Hoffmann
- */
 void get_met_help(
   const ctl_t * ctl,
   const double t,
@@ -6268,6 +6255,7 @@ void read_met_bin_3d(
  * @author Lars Hoffmann
  */
 void read_met_cape(
+  const ctl_t * ctl,
   const clim_t * clim,
   met_t * met);
 
@@ -6643,34 +6631,47 @@ int read_met_nc_3d(
   const float scl);
 
 /**
- * @brief Calculates the planetary boundary layer (PBL) height for each grid point.
+ * @brief Computes the planetary boundary layer (PBL) height based on meteorological data.
  *
- * This function estimates the height of the planetary boundary layer
- * (PBL) based on various meteorological parameters.  The method used
- * is based on empirical relationships, such as those proposed by
- * Vogelezang and Holtslag (1996) or Seidel et al. (2012).  It
- * computes the PBL height by analyzing the vertical profiles of
- * temperature, wind speed, humidity, and pressure.
+ * This function calculates the PBL height for each grid point using one of three methods:
+ * 1. From precomputed values in the meteorological data file.
+ * 2. Based on the bulk Richardson number criterion.
+ * 3. Based on potential temperature difference.
+ * The calculated PBL height is constrained by user-defined minimum and maximum limits.
  *
- * @param met A pointer to a structure containing meteorological data.
+ * @param[in] ctl Pointer to the control structure (`ctl_t`), which contains
+ *                parameters controlling the PBL calculation.
+ * @param[in,out] met Pointer to the meteorological data structure (`met_t`), 
+ *                    which contains grid and atmospheric data.
+ *                    The `met->pbl` array is updated with the calculated PBL heights.
  *
- * The function performs the following steps:
- * - Sets timer for performance monitoring.
- * - Iterates over each grid point to calculate the PBL height.
- * - Determines the bottom level of the PBL based on pressure and a specified thickness.
- * - Finds the lowest model level near the bottom of the PBL.
- * - Interpolates meteorological variables to the near-surface level.
- * - Computes virtual potential temperature (theta_v) at the surface.
- * - Initializes variables for Richardson number calculation.
- * - Loops over vertical levels to calculate Richardson number and identify the PBL height.
- * - Determines the PBL height based on the critical Richardson number criterion.
- * - Stores the calculated PBL height in the meteorological data structure.
+ * Method 0 (Precomputed PBL height from file):
+ * - Interpolates the PBL height using the pressure at the top of the PBL and
+ *   the meteorological vertical profile.
  *
- * @note This function plays a crucial role in atmospheric modeling applications for characterizing the height of the boundary layer, which influences atmospheric dynamics and pollutant dispersion.
+ * Method 1 (Richardson number criterion):
+ * - Implements a method based on the bulk Richardson number (critical value: 0.25).
+ * - Iteratively evaluates vertical levels, calculating wind shear, and thermal gradients,
+ *   until the Richardson number exceeds the critical threshold.
+ * - Interpolates the PBL height at the critical Richardson number.
+ *
+ * Method 2 (Potential temperature difference):
+ * - Computes the PBL height as the altitude where the potential temperature exceeds
+ *   the surface value by 2 K.
+ * - Interpolates between levels to find the precise height.
+ *
+ * Final Adjustments:
+ * - Ensures the PBL height respects user-defined minimum and maximum thresholds.
+ *
+ * @note Method 1 is a standard method for estimating PBL depths, but the current implementation
+ * seems to significantly underestimate PBL depths compared to ECMWF data or Method 2. Therefore,
+ * Method 2, is selected by default. If PBL data are available from the meteo data files,
+ * it is recommended to select Method 0.
  *
  * @author Lars Hoffmann
  */
 void read_met_pbl(
+  const ctl_t * ctl,
   met_t * met);
 
 /**

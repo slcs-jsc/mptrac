@@ -24,6 +24,7 @@ projects/paraview/data/
 !projects/python/
 projects/python/plots/
 src/*.o
+src/*.mod
 src/atm2grid
 src/atm_conv
 src/atm_dist
@@ -49,6 +50,7 @@ src/sedi
 src/time2jsec
 src/tnat
 src/trac
+src/trac_fortran
 src/tropo
 src/tropo_clim
 src/tropo_sample
@@ -62,12 +64,13 @@ tests/atm_test/data/
 tests/cms_test/data/
 tests/compress_test/data/
 tests/gpu_test/data/
+tests/interoper_test/data/
+tests/interoper_test/run_all.sh
+tests/interoper_test/run_atm.sh
+tests/interoper_test/run_dia.sh
 tests/kpp_test/data/
 tests/met_test/data/
 tests/tools_test/data/
 tests/trac_test/data/
 tests/tropo_test/data/
-test/interoper_test/data/
-test/interoper_test/run_all.sh
-test/interoper_test/run_atm.sh
-test/interoper_test/run_dia.sh
+tests/wrapper_test/data/

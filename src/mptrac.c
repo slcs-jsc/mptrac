@@ -509,7 +509,7 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -678,7 +678,7 @@ void compress_pck(
     /* Write info... */
     LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
 	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
-
+    
     /* Read data... */
     FREAD(&scl, double,
 	  nz,
@@ -704,7 +704,7 @@ void compress_pck(
     /* Write info... */
     LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
 	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
-
+    
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
       min[iz] = array[iz];
@@ -870,7 +870,7 @@ void compress_zstd(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) comprLen);
+	varname, ((double) uncomprLen) / (double) comprLen)
   }
 
   /* Compress array and output compressed stream... */
@@ -1065,7 +1065,7 @@ void get_met(
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
-
+    
     /* Read new meteo data... */
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, clim, *met1))
@@ -2631,7 +2631,7 @@ void module_chemgrid(
 #ifdef _OPENACC
 #pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
 #endif
-
+  
   /* Free... */
   free(mass);
   free(lon);
@@ -2642,6 +2642,7 @@ void module_chemgrid(
   free(ixs);
   free(iys);
   free(izs);
+
 }
 
 /*****************************************************************************/
@@ -5129,12 +5130,24 @@ void read_ctl(
 	  scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
     }
   }
-  ctl->met_geopot_sx
-    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
-  ctl->met_geopot_sy
-    = (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "-1", NULL);
-  ctl->met_relhum
-    = (int) scan_ctl(filename, argc, argv, "MET_RELHUM", -1, "0", NULL);
+  ctl->met_geopot_sx =
+    (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
+  ctl->met_geopot_sy =
+    (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SY", -1, "-1", NULL);
+  ctl->met_relhum =
+    (int) scan_ctl(filename, argc, argv, "MET_RELHUM", -1, "0", NULL);
+  ctl->met_cape =
+    (int) scan_ctl(filename, argc, argv, "MET_CAPE", -1, "1", NULL);
+  if (ctl->met_cape < 0 || ctl->met_cape > 1)
+    ERRMSG("Set MET_CAPE to 0 or 1!");
+  ctl->met_pbl =
+    (int) scan_ctl(filename, argc, argv, "MET_PBL", -1, "2", NULL);
+  if (ctl->met_pbl < 0 || ctl->met_pbl > 2)
+    ERRMSG("Set MET_PBL = 0 ... 2!");
+  ctl->met_pbl_min =
+    scan_ctl(filename, argc, argv, "MET_PBL_MIN", -1, "0.1", NULL);
+  ctl->met_pbl_max =
+    scan_ctl(filename, argc, argv, "MET_PBL_MAX", -1, "5.0", NULL);
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
@@ -5969,8 +5982,13 @@ void read_met_bin_3d(
 /*****************************************************************************/
 
 void read_met_cape(
+  const ctl_t *ctl,
   const clim_t *clim,
   met_t *met) {
+
+  /* Check parameters... */
+  if (ctl->met_cape != 1)
+    return;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
@@ -6085,6 +6103,9 @@ void read_met_cloud(
   SELECT_TIMER("READ_MET_CLOUD", "METPROC", NVTX_READ);
   LOG(2, "Calculate cloud data...");
 
+  /* Thresholds for cloud detection... */
+  const double ccmin = 0.01, cwmin = 1e-6;
+
   /* Loop over columns... */
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
@@ -6103,8 +6124,11 @@ void read_met_cloud(
 	  continue;
 
 	/* Check ice water and liquid water content... */
-	if (met->iwc[ix][iy][ip] > 0 || met->rwc[ix][iy][ip] > 0
-	    || met->lwc[ix][iy][ip] > 0 || met->swc[ix][iy][ip] > 0) {
+	if (met->cc[ix][iy][ip] > ccmin
+	    && (met->iwc[ix][iy][ip] > cwmin
+		|| met->rwc[ix][iy][ip] > cwmin
+		|| met->lwc[ix][iy][ip] > cwmin
+		|| met->swc[ix][iy][ip] > cwmin)) {
 
 	  /* Get cloud top pressure ... */
 	  met->pct[ix][iy]
@@ -6425,7 +6449,7 @@ void read_met_grid(
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
-
+    
     /* Check time information from data file... */
     jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
@@ -6938,7 +6962,7 @@ int read_met_nc(
   read_met_pv(met);
 
   /* Calculate boundary layer data... */
-  read_met_pbl(met);
+  read_met_pbl(ctl, met);
 
   /* Calculate tropopause data... */
   read_met_tropo(ctl, clim, met);
@@ -6947,7 +6971,7 @@ int read_met_nc(
   read_met_cloud(met);
 
   /* Calculate convective available potential energy... */
-  read_met_cape(clim, met);
+  read_met_cape(ctl, clim, met);
 
   /* Calculate total column ozone... */
   read_met_ozone(met);
@@ -7273,71 +7297,146 @@ int read_met_nc_3d(
 /*****************************************************************************/
 
 void read_met_pbl(
+  const ctl_t *ctl,
   met_t *met) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PBL", "METPROC", NVTX_READ);
   LOG(2, "Calculate planetary boundary layer...");
 
-  /* Parameters used to estimate the height of the PBL
-     (e.g., Vogelezang and Holtslag, 1996; Seidel et al., 2012)... */
-  const double rib_crit = 0.25, dz = 0.05, umin = 5.0;
+  /* Get PBL from meteo file... */
+  if (ctl->met_pbl == 0) {
+
+    /* Loop over grid points... */
+#pragma omp parallel for default(shared) collapse(2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+
+	/* Get pressure at top of PBL... */
+	const float z = met->zs[ix][iy] + met->pbl[ix][iy];
+	const int ip = locate_irr_float(met->z[ix][iy], met->np, z, 0);
+	met->pbl[ix][iy] =
+	  (float) (LIN(met->z[ix][iy][ip], met->p[ip],
+		       met->z[ix][iy][ip + 1], met->p[ip + 1], z));
+      }
+  }
+
+  /* Determine PBL based on Richardson number... */
+  else if (ctl->met_pbl == 1) {
+
+    /* Parameters used to estimate the height of the PBL
+       (e.g., Vogelezang and Holtslag, 1996; Seidel et al., 2012)... */
+    const double rib_crit = 0.25, dz = 0.05, umin = 5.0;
+
+    /* Loop over grid points... */
+#pragma omp parallel for default(shared) collapse(2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+
+	/* Set bottom level of PBL... */
+	const double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
+
+	/* Find lowest level near the bottom... */
+	int ip;
+	for (ip = 1; ip < met->np; ip++)
+	  if (met->p[ip] < pbl_bot)
+	    break;
+
+	/* Get near surface data... */
+	const double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
+			      met->p[ip], met->z[ix][iy][ip], pbl_bot);
+	const double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
+			      met->p[ip], met->t[ix][iy][ip], pbl_bot);
+	const double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
+			      met->p[ip], met->u[ix][iy][ip], pbl_bot);
+	const double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
+			      met->p[ip], met->v[ix][iy][ip], pbl_bot);
+	const double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
+				met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
+	const double tvs = THETAVIRT(pbl_bot, ts, h2os);
+
+	/* Init... */
+	double rib_old = 0;
+
+	/* Loop over levels... */
+	for (; ip < met->np; ip++) {
+
+	  /* Get squared horizontal wind speed... */
+	  double vh2
+	    = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
+	  vh2 = MAX(vh2, SQR(umin));
+
+	  /* Calculate bulk Richardson number... */
+	  const double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	    * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
+			 met->h2o[ix][iy][ip]) - tvs) / vh2;
+
+	  /* Check for critical value... */
+	  if (rib >= rib_crit) {
+	    met->pbl[ix][iy] = (float) (LIN(rib_old, met->p[ip - 1],
+					    rib, met->p[ip], rib_crit));
+	    if (met->pbl[ix][iy] > pbl_bot)
+	      met->pbl[ix][iy] = (float) pbl_bot;
+	    break;
+	  }
+
+	  /* Save Richardson number... */
+	  rib_old = rib;
+	}
+      }
+  }
+
+  /* Determine PBL based on potential temperature... */
+  if (ctl->met_pbl == 2) {
+
+    /* Parameters used to estimate the height of the PBL
+       (following HYSPLIT model)... */
+    const double dtheta = 2.0, zmin = 0.1;
+
+    /* Loop over grid points... */
+#pragma omp parallel for default(shared) collapse(2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+
+	/* Potential temperature at the surface... */
+	const double theta0 = THETA(met->ps[ix][iy], met->ts[ix][iy]);
+
+	/* Find topmost level where theta exceeds surface value by 2 K... */
+	int ip;
+	for (ip = met->np - 2; ip > 0; ip--)
+	  if (met->p[ip] >= 300.)
+	    if (met->p[ip] > met->ps[ix][iy]
+		|| THETA(met->p[ip], met->t[ix][iy][ip]) <= theta0 + dtheta)
+	      break;
+
+	/* Interpolate... */
+	met->pbl[ix][iy]
+	  = (float) (LIN(THETA(met->p[ip + 1], met->t[ix][iy][ip + 1]),
+			 met->p[ip + 1],
+			 THETA(met->p[ip], met->t[ix][iy][ip]),
+			 met->p[ip], theta0 + dtheta));
+
+	/* Check minimum value... */
+	double pbl_min = met->ps[ix][iy] + DZ2DP(zmin, met->ps[ix][iy]);
+	if (met->pbl[ix][iy] > pbl_min || met->p[ip] > met->ps[ix][iy])
+	  met->pbl[ix][iy] = (float) pbl_min;
+      }
+  }
 
   /* Loop over grid points... */
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
 
-      /* Set bottom level of PBL... */
-      const double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
+      /* Check minimum value... */
+      double pbl_min =
+	met->ps[ix][iy] + DZ2DP(ctl->met_pbl_min, met->ps[ix][iy]);
+      met->pbl[ix][iy] = MIN(met->pbl[ix][iy], (float) pbl_min);
 
-      /* Find lowest level near the bottom... */
-      int ip;
-      for (ip = 1; ip < met->np; ip++)
-	if (met->p[ip] < pbl_bot)
-	  break;
-
-      /* Get near surface data... */
-      const double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
-			    met->p[ip], met->z[ix][iy][ip], pbl_bot);
-      const double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
-			    met->p[ip], met->t[ix][iy][ip], pbl_bot);
-      const double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
-			    met->p[ip], met->u[ix][iy][ip], pbl_bot);
-      const double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
-			    met->p[ip], met->v[ix][iy][ip], pbl_bot);
-      const double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
-			      met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
-      const double tvs = THETAVIRT(pbl_bot, ts, h2os);
-
-      /* Init... */
-      double rib_old = 0;
-
-      /* Loop over levels... */
-      for (; ip < met->np; ip++) {
-
-	/* Get squared horizontal wind speed... */
-	double vh2
-	  = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
-	vh2 = MAX(vh2, SQR(umin));
-
-	/* Calculate bulk Richardson number... */
-	const double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
-	  * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
-		       met->h2o[ix][iy][ip]) - tvs) / vh2;
-
-	/* Check for critical value... */
-	if (rib >= rib_crit) {
-	  met->pbl[ix][iy] = (float) (LIN(rib_old, met->p[ip - 1],
-					  rib, met->p[ip], rib_crit));
-	  if (met->pbl[ix][iy] > pbl_bot)
-	    met->pbl[ix][iy] = (float) pbl_bot;
-	  break;
-	}
-
-	/* Save Richardson number... */
-	rib_old = rib;
-      }
+      /* Check maximum value... */
+      double pbl_max =
+	met->ps[ix][iy] + DZ2DP(ctl->met_pbl_max, met->ps[ix][iy]);
+      met->pbl[ix][iy] = MAX(met->pbl[ix][iy], (float) pbl_max);
     }
 }
 
@@ -7827,6 +7926,27 @@ void read_met_surface(
       (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
        1.0, 1))
     WARN("Cannot read sea surface temperature!");
+
+  /* Read CAPE... */
+  if (ctl->met_cape == 0)
+    if (!read_met_nc_2d
+	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, met->cape,
+	 1.0, 1))
+      WARN("Cannot read CAPE!");
+
+  /* Read CIN... */
+  if (ctl->met_cape == 0)
+    if (!read_met_nc_2d
+	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
+	 1.0, 1))
+      WARN("Cannot read convective inhibition!");
+
+  /* Read PBL... */
+  if (ctl->met_pbl == 0)
+    if (!read_met_nc_2d
+	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
+	 0.001f, 1))
+      ERRMSG("Cannot read planetary boundary layer!");
 }
 
 /*****************************************************************************/
