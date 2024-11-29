@@ -24,6 +24,8 @@
 
 #include "mptrac.h"
 
+#include "eccodes.h"
+
 #ifdef KPP
 #include "kpp_chem.h"
 #endif
@@ -1184,6 +1186,8 @@ void get_met_help(
       sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
     else if (ctl->met_type == 5)
       sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
+    else if (ctl->met_type == 6)
+      sprintf(filename,"%s_YYYY_MM_DD_HH.grb",metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -5669,6 +5673,12 @@ int read_met(
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
+  #ifdef ECCODES
+    else if (ctl->met_type == 6){
+      if (read_met_grib(filename, ctl, clim, met) != 1)
+  return 0;
+    }
+  #endif
 
     /* Not implemented... */
     else
@@ -6420,6 +6430,7 @@ void read_met_grid(
     jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
       NC(nc_get_var_double(ncid, varid, &rtime));
+      LOG(1,"%f",rtime)
       if (fabs(year * 10000. + mon * 100. + day + hour / 24. - rtime) > 1.0)
 	WARN("Time information in meteo file does not match filename!");
     } else
@@ -6506,6 +6517,45 @@ void read_met_grid(
   if (strcasecmp(levname, "hybrid") == 0)
     NC_GET_DOUBLE("hybrid", met->hybrid, 1);
 }
+
+/*****************************************************************************/
+
+#ifdef ECCODES
+void read_met_grid_grib(
+  const char *filename,
+  const ctl_t *ctl,
+  met_t *met) {
+  
+
+  codes_handle* handle = NULL;
+  double r;
+
+  int err =1;
+
+  int year, mon, day, hour, min, sec;
+
+  FILE *f =fopen(filename,"rb");
+
+  /* Set timer... */
+
+  SELECT_TIMER("READ_MET_GRID", "INPUT", NVTX_READ);
+  LOG(2, "Read meteo grid information...");
+
+  /* Get time from filename... */
+  /* Offset = 17 without _ml or _sf else offset = 20*/
+  met->time = time_from_filename(filename, 17);
+
+  jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
+
+  handle = codes_handle_new_from_file(0,f,PRODUCT_GRIB, &err);
+  if(handle){
+    printf("HI");
+  }
+  ERRMSG("INSIDE grid grib")
+  read_met_grid(filename, 1, ctl, met);
+  
+  }
+#endif
 
 /*****************************************************************************/
 
@@ -6766,6 +6816,85 @@ void read_met_monotonize(
 }
 
 /*****************************************************************************/
+
+#ifdef ECCODES
+int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
+  LOG(1,"INSIDE READ_MET_GRIB");
+  LOG(1,"%s",filename);
+  codes_handle* h = NULL;
+  filename = "/root/2020012306_ml.grb";
+
+  long ni,nj;
+
+  int first_dim = 1;
+  
+
+  
+  /*Open grib file...*/
+  // FILE* grib_file = fopen(filename,"rb");
+  FILE* grib_file = fopen(filename,"rb");
+  
+  if (!grib_file){
+    WARN("Cannot open file!");
+    return 0;
+  }
+  int err = 0;
+
+  while((h = codes_handle_new_from_file(0, grib_file, PRODUCT_GRIB, &err))!= NULL){
+    if (first_dim == 1){
+      /* Get grid dimensions... */
+      codes_get_long(h,"Ni",&ni);
+      codes_get_long(h,"Nj",&nj);
+      if (ni < 2 || ni > EX || nj < 2 || nj > EY) {
+        ERRMSG("Invalid grid dimension")
+      }
+      met->nx = (int)ni;
+      met->ny = (int)nj;
+      LOG(2,"Number of longitudes: %d",met->nx)
+      LOG(2,"Number of latitudes: %d",met->ny)
+      
+      codes_handle_delete(h);
+      first_dim = 0;
+    }
+  
+  }
+    
+  
+  // while ((h = codes_handle_new_from_file(0, grib_file, PRODUCT_GRIB, &err))!= NULL){
+  //   char shortName[256];
+  //   size_t len = sizeof(shortName);
+  //   // long grid;
+  //   if (codes_get_string(h, "typeOfLevel", shortName,&len) == 0) {
+  //           // Wenn der Shortname vorhanden ist, gib ihn aus
+  //           printf("Shortname der aktuellen Nachricht: %s\n", shortName);
+  //           // printf("LEVEL: %ld\n",grid);
+  //       } else {
+  //           printf("Kein Shortname in der aktuellen Nachricht gefunden\n");
+  //       }
+    
+  // }
+  
+
+  
+  
+  fclose(grib_file);
+
+  // /* Read coordinates of meteo data... */
+  read_met_grid_grib(filename, ctl, met);
+
+  // /* Read meteo data on vertical levels... */
+  // read_met_levels_grib(ncid, ctl, met);
+
+  // /* Extrapolate data for lower boundary... */
+  // read_met_extrapolate(met);
+
+  // /* Read surface data... */
+  // read_met_surface_grib(ncid, ctl, met);
+  read_met_nc(filename,ctl,clim,met);
+
+  return 0;
+}
+#endif
 
 int read_met_nc(
   const char *filename,
@@ -8380,6 +8509,10 @@ void write_atm(
   /* Write CLaMS pos data... */
   else if (ctl->atm_type_out == 4)
     write_atm_clams(filename, ctl, atm);
+  #ifdef ECCODES
+  else if (ctl->atm_type_out==6)
+    write_atm_grib(filename,ctl,atm);
+  #endif
 
   /* Error... */
   else
@@ -8798,7 +8931,16 @@ void write_atm_nc(
   /* Close file... */
   NC(nc_close(ncid));
 }
-
+#ifdef ECCODES
+void write_atm_grib(
+  const char *filename,
+  const ctl_t *ctl,
+  const atm_t *atm){
+  
+  LOG(1,"Inside write_atm_grib");
+  write_atm_nc(filename, ctl, atm);
+    }
+#endif
 /*****************************************************************************/
 
 void write_csi(

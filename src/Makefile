@@ -69,7 +69,7 @@ ZSTD ?= 0
 CMS ?= 0
 
 # Enable ecCodes for reading Grib data (experimental)...
-ecCodes ?= 1
+ECCODES ?= 1
 
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
@@ -172,7 +172,6 @@ endif
 
 # KPP chemistry...
 ifeq ($(KPP),1)
-  $(error help)
   CFLAGS += -DKPP
   LDFLAGS += -lkpp
 endif
@@ -211,8 +210,8 @@ ifeq ($(CMS),1)
   CFLAGS += -DCMS
 endif
 
-ifeq ($(ecCodes),1)
-  LDFLAGS += -leccodes
+ifeq ($(ECCODES),1)
+  LDFLAGS += -leccodes -lstdc++
   CFLAGS += -DECCODES
 endif
 

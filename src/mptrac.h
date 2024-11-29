@@ -148,9 +148,7 @@
 #include "chem_Sparse.h"
 #endif
 
-#ifdef ECCODES
-#include "eccodes.h"
-#endif
+
 
 /* ------------------------------------------------------------
    Constants...
@@ -6419,6 +6417,12 @@ void read_met_grid(
   const ctl_t * ctl,
   met_t * met);
 
+void read_met_grid_grib(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
+
+
 /**
  * @brief Reads meteorological variables at different vertical levels from a NetCDF file.
  *
@@ -6547,6 +6551,12 @@ int read_met_nc(
   ctl_t * ctl,
   clim_t * clim,
   met_t * met);
+
+int read_met_grib(
+  const char *filename,
+  ctl_t *ctl,
+  clim_t *clim,
+  met_t *met);
 
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
@@ -7476,6 +7486,11 @@ void write_atm_nc(
   const char *filename,
   const ctl_t * ctl,
   const atm_t * atm);
+
+void write_atm_grib(
+  const char *filename,
+  const ctl_t *ctl,
+  const atm_t *atm);
 
 /**
  * @brief Writes Critical Success Index (CSI) data to a file.
