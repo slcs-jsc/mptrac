@@ -4,15 +4,15 @@ docs/docs/
 docs/site/
 libs/build/
 projects/*
+!projects/benchmarking/
 projects/benchmarking/data/
 projects/benchmarking/logs/
 projects/benchmarking/meteo/
 projects/benchmarking/reference/
 projects/benchmarking/slurm-*
-!projects/benchmarking/
+!projects/example/
 projects/example/data/
 projects/example/plots/
-!projects/example/
 !projects/fortran_wrapper/
 projects/kpp/
 !projects/meteo/
