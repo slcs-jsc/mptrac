@@ -6,7 +6,7 @@
 EXC = atm2grid atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_clim tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test wrapper_test
+TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -73,9 +73,6 @@ ECCODES ?= 0
 
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
-
-# Enable Fortran Wrapper
-WRAPPER ?= 1
 
 # -----------------------------------------------------------------------------
 # Set compiler flags...
@@ -267,13 +264,8 @@ endif
 
 .PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall wrapper
 
-ifeq ($(WRAPPER),1)
-all: $(EXC) wrapper
-	rm -f *~
-else
 all: $(EXC)
 	rm -f *~
-endif
 
 $(EXC): %: %.c mptrac.o
 	$(CC) $(CFLAGS) -o $@ $< mptrac.o $(LDFLAGS)
@@ -292,7 +284,7 @@ wrapper: trac_fortran
 
 check: $(TESTS)
 
-$(TESTS) cms_test gpu_test kpp_test: all
+$(TESTS) cms_test gpu_test kpp_test wrapper_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \

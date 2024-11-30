@@ -13,6 +13,7 @@ projects/benchmarking/slurm-*
 projects/example/data/
 projects/example/plots/
 !projects/example/
+!projects/fortran_wrapper/
 projects/kpp/
 !projects/meteo/
 projects/meteo/era5/
