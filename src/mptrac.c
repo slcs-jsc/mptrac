@@ -24,7 +24,9 @@
 
 #include "mptrac.h"
 
+#ifdef ECCODES
 #include "eccodes.h"
+#endif
 
 #ifdef KPP
 #include "kpp_chem.h"
@@ -6575,7 +6577,7 @@ void read_met_grid_grib(
   if(handle){
     printf("HI");
   }
-  ERRMSG("INSIDE grid grib")
+  ERRMSG("INSIDE grid grib");
   read_met_grid(filename, 1, ctl, met);
   
   }
@@ -6848,9 +6850,9 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   codes_handle* h = NULL;
   filename = "/root/2020012306_ml.grb";
 
-  long ni,nj;
+  
 
-  int first_dim = 1;
+  int first_mes = 1;
   
 
   
@@ -6864,47 +6866,59 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   }
   int err = 0;
 
+  long final_nv = 0;
+  
+
   while((h = codes_handle_new_from_file(0, grib_file, PRODUCT_GRIB, &err))!= NULL){
-    if (first_dim == 1){
+    if (first_mes == 1){
       /* Get grid dimensions... */
+      long ni,nj;
       codes_get_long(h,"Ni",&ni);
       codes_get_long(h,"Nj",&nj);
       if (ni < 2 || ni > EX || nj < 2 || nj > EY) {
         ERRMSG("Invalid grid dimension")
       }
       met->nx = (int)ni;
-      met->ny = (int)nj;
       LOG(2,"Number of longitudes: %d",met->nx)
+      met->ny = (int)nj;
       LOG(2,"Number of latitudes: %d",met->ny)
+
       
-      codes_handle_delete(h);
-      first_dim = 0;
+    
+
+      codes_grib_get_data(h,met->lat,met->lon,met->hybrid);
+      size_t size = (size_t)ni;
+      printf("vals %ld",size);
+
+      for (size_t i = 0; i < size;i++) {
+            printf("Punkt %zu: Lat = %f\n", i + 1, met->lat[i]);
+        }
+      first_mes = 0;
+    }
+
+  
+    long current_nv;
+    codes_get_long(h,"level",&current_nv);
+    
+    if(current_nv > final_nv){
+      final_nv = current_nv;
     }
   
-  }
-    
-  
-  // while ((h = codes_handle_new_from_file(0, grib_file, PRODUCT_GRIB, &err))!= NULL){
-  //   char shortName[256];
-  //   size_t len = sizeof(shortName);
-  //   // long grid;
-  //   if (codes_get_string(h, "typeOfLevel", shortName,&len) == 0) {
-  //           // Wenn der Shortname vorhanden ist, gib ihn aus
-  //           printf("Shortname der aktuellen Nachricht: %s\n", shortName);
-  //           // printf("LEVEL: %ld\n",grid);
-  //       } else {
-  //           printf("Kein Shortname in der aktuellen Nachricht gefunden\n");
-  //       }
-    
-  // }
-  
 
   
   
+    codes_handle_delete(h);
+  }
   fclose(grib_file);
+  if(final_nv < 2 || final_nv > EP){
+    ERRMSG("Number of levels out of range!");
+  }
+  met->npl = (int) final_nv;
+  LOG(2,"Vertical Levels: %ld\n",final_nv);
+
 
   // /* Read coordinates of meteo data... */
-  read_met_grid_grib(filename, ctl, met);
+  // read_met_grid_grib(filename, ctl, met);
 
   // /* Read meteo data on vertical levels... */
   // read_met_levels_grib(ncid, ctl, met);

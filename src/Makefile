@@ -69,7 +69,7 @@ ZSTD ?= 0
 CMS ?= 0
 
 # Enable ecCodes for reading Grib data (experimental)...
-ecCodes ?= 0
+ECCODES ?= 0
 
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
@@ -234,7 +234,7 @@ ifeq ($(CMS),1)
 endif
 
 ifeq ($(ECCODES),1)
-  LDFLAGS += -leccodes -lstdc++
+  LDFLAGS += -leccodes
   CFLAGS += -DECCODES
 endif
 
