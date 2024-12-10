@@ -678,7 +678,7 @@ void compress_pck(
     /* Write info... */
     LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
 	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
-    
+
     /* Read data... */
     FREAD(&scl, double,
 	  nz,
@@ -704,7 +704,7 @@ void compress_pck(
     /* Write info... */
     LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
 	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
-    
+
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
       min[iz] = array[iz];
@@ -1065,7 +1065,7 @@ void get_met(
     mets = *met1;
     *met1 = *met0;
     *met0 = mets;
-    
+
     /* Read new meteo data... */
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!read_met(filename, ctl, clim, *met1))
@@ -1913,7 +1913,6 @@ double lapse_rate(
 void level_definitions(
   ctl_t *ctl) {
 
-
   if (0 == ctl->met_press_level_def) {
 
     ctl->met_np = 138;
@@ -2622,16 +2621,16 @@ void module_chemgrid(
 			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
 
       /* Set mass... */
-      double m = mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
+      const double m = mass[ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
 
       /* Calculate volume mixing ratio... */
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
-	/ (1e9 * RHO(press[izs[ip]], temp) * area[iys[ip]] * dz);
+	/ (RHO(press[izs[ip]], temp) * area[iys[ip]] * dz * 1e9);
     }
 #ifdef _OPENACC
 #pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
 #endif
-  
+
   /* Free... */
   free(mass);
   free(lon);
@@ -3023,14 +3022,15 @@ void module_h2o2_chem(
     const double M = MOLEC_DENS(atm->p[ip], t);
 
     /* Reaction rate (Berglen et al., 2004)... */
-    const double k = 9.1e7 * exp(-29700 / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
+    const double k = 9.1e7 * exp(-29700. / RI * (1. / t - 1. / 298.15));	/* (Maass, 1999), unit: M^(-2) */
 
     /* Henry constant of SO2... */
-    const double H_SO2 = 1.3e-2 * exp(2900 * (1. / t - 1. / 298.15)) * RI * t;
+    const double H_SO2 =
+      1.3e-2 * exp(2900. * (1. / t - 1. / 298.15)) * RI * t;
     const double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
 
     /* Henry constant of H2O2... */
-    const double H_h2o2 = 8.3e2 * exp(7600 * (1 / t - 1 / 298.15)) * RI * t;
+    const double H_h2o2 = 8.3e2 * exp(7600. * (1 / t - 1 / 298.15)) * RI * t;
 
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
@@ -3041,11 +3041,11 @@ void module_h2o2_chem(
 
     const double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
-      * M * cor * 1000 / AVO;	/* unit: mol/L */
+      * M * cor * 1000. / AVO;	/* unit: mol/L */
 
     /* Volume water content in cloud [m^3 m^(-3)]... */
-    const double rho_air = 100 * atm->p[ip] / (RI * t) * MA / 1000;
-    const double CWC = (lwc + rwc) * rho_air / 1000;
+    const double rho_air = atm->p[ip] / (RI * t) * MA / 10.;
+    const double CWC = (lwc + rwc) * rho_air / 1e3;
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
@@ -6450,7 +6450,7 @@ void read_met_grid(
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
-    
+
     /* Check time information from data file... */
     jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
     if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
@@ -9916,8 +9916,8 @@ void write_grid(
 			       lon[ix], lat[iy], &temp, ci, cw, 1);
 
 	    /* Calculate volume mixing ratio... */
-	    vmr_impl[idx] = MA / ctl->molmass * mean[ctl->qnt_m][idx]
-	      / (RHO(press[iz], temp) * 1e6 * area[iy] * 1e3 * dz);
+	    vmr_impl[idx] =
+	      MA / ctl->molmass * cd[idx] / (RHO(press[iz], temp) * dz * 1e3);
 	  }
 	}
 
@@ -11014,8 +11014,8 @@ void write_sample(
 
     /* Set pressure range... */
     const double rp = P(rz[i]);
-    double ptop = P(rz[i] + ctl->sample_dz);
-    double pbot = P(rz[i] - ctl->sample_dz);
+    const double ptop = P(rz[i] + ctl->sample_dz);
+    const double pbot = P(rz[i] - ctl->sample_dz);
 
     /* Init... */
     double mass = 0;
@@ -11066,8 +11066,7 @@ void write_sample(
 			   rlon[i], rlat[i], &temp, ci, cw, 1);
 
 	/* Calculate volume mixing ratio... */
-	vmr = MA / ctl->molmass * mass
-	  / (RHO(rp, temp) * 1e6 * area * 1e3 * ctl->sample_dz);
+	vmr = MA / ctl->molmass * cd / (RHO(rp, temp) * ctl->sample_dz * 1e3);
       }
     } else
       vmr = NAN;

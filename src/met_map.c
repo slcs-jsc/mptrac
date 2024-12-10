@@ -163,13 +163,6 @@ int main(
   ALLOC(npt, int,
 	NX * NY);
 
-  /* ToDo: 1) investigate size of all structs in c and fortran
-           2) clean up */
-  printf("met size %lu \n", sizeof(met_t));
-  printf("atm size %lu \n", sizeof(atm_t));
-  printf("ctl size %lu \n", sizeof(ctl_t));
-  printf("clim size %lu \n", sizeof(clim_t));
-  
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
