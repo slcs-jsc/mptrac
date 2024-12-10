@@ -10525,7 +10525,7 @@ void write_sample(
     int np = 0;
 
     /* Loop over air parcels... */
-#pragma omp parallel for default(shared) reduction(+:mass,np)
+    //#pragma omp parallel for default(shared) reduction(+:mass,np)
     for (int ip = 0; ip < atm->np; ip++) {
 
       /* Check time... */
