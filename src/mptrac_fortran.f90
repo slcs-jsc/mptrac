@@ -335,8 +335,9 @@ MODULE mptrac_struct
      REAL(c_double) :: wet_depo_bc_b
      REAL(c_double) :: wet_depo_ic_a
      REAL(c_double) :: wet_depo_ic_b
-     REAL(c_double), DIMENSION(3) :: wet_depo_ic_h
+     REAL(c_double), DIMENSION(2) :: wet_depo_ic_h
      REAL(c_double), DIMENSION(2) :: wet_depo_bc_h
+     REAL(c_double) :: wet_depo_so2_ph
      REAL(c_double) :: wet_depo_ic_ret_ratio
      REAL(c_double) :: wet_depo_bc_ret_ratio
      REAL(c_double) :: dry_depo_dp
