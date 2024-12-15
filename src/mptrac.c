@@ -4099,7 +4099,7 @@ void module_wet_deposition(
     INTPOL_3D(rwc, 0);
     INTPOL_3D(iwc, 0);
     INTPOL_3D(swc, 0);
-    int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
+    const int inside = (lwc > 0 || rwc > 0 || iwc > 0 || swc > 0);
 
     /* Get temperature... */
     double t;
