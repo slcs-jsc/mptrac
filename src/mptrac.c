@@ -2688,11 +2688,18 @@ void module_convection(
   met_t *met0,
   met_t *met1,
   atm_t *atm,
-  const double *dt,
-  double *rs) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  double *rs;
+  ALLOC(rs, double,
+	3 * NP + 1);
+#ifdef _OPENACC
+#pragma acc enter data create(rs[:3 * NP])
+#endif
 
   /* Create random numbers... */
   module_rng(ctl, rs, (size_t) atm->np, 0);
@@ -2751,6 +2758,12 @@ void module_convection(
       atm->p[ip] = LIN(rhobot, pbot, rhotop, ptop, rho);
     }
   }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete (rs)
+#endif
+  free(rs);
 }
 
 /*****************************************************************************/
@@ -2801,11 +2814,18 @@ void module_diffusion_meso(
   met_t *met1,
   atm_t *atm,
   cache_t *cache,
-  const double *dt,
-  double *rs) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  double *rs;
+  ALLOC(rs, double,
+	3 * NP + 1);
+#ifdef _OPENACC
+#pragma acc enter data create(rs[:3 * NP])
+#endif
 
   /* Create random numbers... */
   module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
@@ -2871,6 +2891,12 @@ void module_diffusion_meso(
       atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
     }
   }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete (rs)
+#endif
+  free(rs);
 }
 
 /*****************************************************************************/
@@ -2879,11 +2905,18 @@ void module_diffusion_turb(
   const ctl_t *ctl,
   const clim_t *clim,
   atm_t *atm,
-  const double *dt,
-  double *rs) {
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  double *rs;
+  ALLOC(rs, double,
+	3 * NP + 1);
+#ifdef _OPENACC
+#pragma acc enter data create(rs[:3 * NP])
+#endif
 
   /* Create random numbers... */
   module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
@@ -2912,6 +2945,12 @@ void module_diffusion_turb(
       atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
     }
   }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete (rs)
+#endif
+  free(rs);
 }
 
 /*****************************************************************************/
