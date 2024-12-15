@@ -4118,30 +4118,30 @@ void module_wet_deposition(
       else
 	eta = LIN(273.15, 1, 238.15, ctl->wet_depo_ic_ret_ratio, t);
 
-      /* Use exponential dependency for particles ... */
+      /* Use exponential dependency for particles (Bakels et al., 2024)... */
       if (ctl->wet_depo_ic_a > 0)
 	lambda = ctl->wet_depo_ic_a * pow(Is, ctl->wet_depo_ic_b) * eta;
 
       /* Use Henry's law for gases... */
       else if (ctl->wet_depo_ic_h[0] > 0) {
 
-	/* Get Henry's constant (Sander, 2015)... */
+	/* Get Henry's constant (Burkholder et al., 2019; Sander, 2023)... */
 	double h = ctl->wet_depo_ic_h[0]
 	  * exp(ctl->wet_depo_ic_h[1] * (1. / t - 1. / 298.15));
 
 	/* Use effective Henry's constant for SO2
 	   (Berglen, 2004; Simpson, 2012)... */
-	if (ctl->wet_depo_ic_h[2] > 0) {
-	  const double H_ion = pow(10, ctl->wet_depo_ic_h[2] * (-1));
+	if (ctl->wet_depo_so2_ph > 0) {
+	  const double H_ion = pow(10., -ctl->wet_depo_so2_ph);
 	  const double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
 	  const double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
-	  h *= (1 + K_1 / H_ion + K_1 * K_2 / pow(H_ion, 2));
+	  h *= (1 + K_1 / H_ion + K_1 * K_2 / SQR(H_ion));
 	}
 
 	/* Estimate depth of cloud layer... */
 	const double dz = 1e3 * (Z(pct) - Z(pcb));
 
-	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	/* Calculate scavenging coefficient... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
       }
     }
@@ -4156,21 +4156,21 @@ void module_wet_deposition(
       else
 	eta = ctl->wet_depo_bc_ret_ratio;
 
-      /* Use exponential dependency for particles... */
+      /* Use exponential dependency for particles (Bakels et al., 2024)... */
       if (ctl->wet_depo_bc_a > 0)
 	lambda = ctl->wet_depo_bc_a * pow(Is, ctl->wet_depo_bc_b) * eta;
 
       /* Use Henry's law for gases... */
       else if (ctl->wet_depo_bc_h[0] > 0) {
 
-	/* Get Henry's constant (Sander, 2015)... */
+	/* Get Henry's constant (Burkholder et al., 2019; Sander, 2023)... */
 	const double h = ctl->wet_depo_bc_h[0]
 	  * exp(ctl->wet_depo_bc_h[1] * (1. / t - 1. / 298.15));
 
 	/* Estimate depth of cloud layer... */
 	const double dz = 1e3 * (Z(pct) - Z(pcb));
 
-	/* Calculate scavenging coefficient (Draxler and Hess, 1997)... */
+	/* Calculate scavenging coefficient... */
 	lambda = h * RI * t * Is / 3.6e6 / dz * eta;
       }
     }
@@ -5357,7 +5357,7 @@ void read_ctl(
     (int) scan_ctl(filename, argc, argv, "TRACER_CHEM", -1, "0", NULL);
 
   /* Wet deposition... */
-  for (int ip = 0; ip < 3; ip++) {
+  for (int ip = 0; ip < 2; ip++) {
     sprintf(defstr, "%g", ctl->wet_depo_ic_h[ip]);
     ctl->wet_depo_ic_h[ip] =
       scan_ctl(filename, argc, argv, "WET_DEPO_IC_H", ip, defstr, NULL);
@@ -5367,6 +5367,8 @@ void read_ctl(
     ctl->wet_depo_bc_h[ip] =
       scan_ctl(filename, argc, argv, "WET_DEPO_BC_H", ip, defstr, NULL);
   }
+  ctl->wet_depo_so2_ph =
+    scan_ctl(filename, argc, argv, "WET_DEPO_SO2_PH", -1, "0", NULL);
   ctl->wet_depo_ic_a =
     scan_ctl(filename, argc, argv, "WET_DEPO_IC_A", -1, "0", NULL);
   ctl->wet_depo_ic_b =
