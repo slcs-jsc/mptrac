@@ -51,7 +51,7 @@ int main(
 
   char dirname[LEN], filename[2 * LEN];
 
-  double *dt, *rs;
+  double *dt;
 
   int ntask = -1, rank = 0, size = 1;
 
@@ -116,16 +116,14 @@ int main(
 #endif
     ALLOC(dt, double,
 	  NP);
-    ALLOC(rs, double,
-	  3 * NP + 1);
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
 #ifdef ASYNCIO
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP], rs[:3 * NP])
+#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP])
 #else
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], dt[:NP], rs[:3 * NP])
+#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], dt[:NP])
 #endif
 #endif
 
@@ -234,16 +232,16 @@ int main(
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 	      || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
-	    module_diffusion_turb(&ctl, clim, atm, dt, rs);
+	    module_diffusion_turb(&ctl, clim, atm, dt);
 
 	  /* Mesoscale diffusion... */
 	  if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
-	    module_diffusion_meso(&ctl, met0, met1, atm, cache, dt, rs);
+	    module_diffusion_meso(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Convection... */
 	  if (ctl.conv_cape >= 0
 	      && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
-	    module_convection(&ctl, met0, met1, atm, dt, rs);
+	    module_convection(&ctl, met0, met1, atm, dt);
 
 	  /* Sedimentation... */
 	  if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)
@@ -374,9 +372,9 @@ int main(
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
 #ifdef ASYNCIO
-#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1, dt, rs, met0TMP, met1TMP)
+#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1, dt, met0TMP, met1TMP)
 #else
-#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1, dt, rs)
+#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1, dt)
 #endif
 #endif
 
@@ -392,7 +390,6 @@ int main(
     free(met1TMP);
 #endif
     free(dt);
-    free(rs);
   }
 
   /* Report timers... */

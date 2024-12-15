@@ -4996,7 +4996,6 @@ void module_chem_init(
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param dt Pointer to the time step value.
- * @param rs Pointer to an array of random numbers generated for each particle.
  *
  * @author Lars Hoffmann
  */
@@ -5005,8 +5004,7 @@ void module_convection(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  const double *dt,
-  double *rs);
+  const double *dt);
 
 /**
  * @brief Simulate exponential decay processes for atmospheric particles.
@@ -5065,7 +5063,6 @@ void module_decay(
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param cache Pointer to the cache structure for temporary storage.
  * @param dt Pointer to the time step value.
- * @param rs Pointer to the array of random numbers.
  *
  * @author Lars Hoffmann
  */
@@ -5075,8 +5072,7 @@ void module_diffusion_meso(
   met_t * met1,
   atm_t * atm,
   cache_t * cache,
-  const double *dt,
-  double *rs);
+  const double *dt);
 
 /**
  * @brief Simulate turbulent diffusion for atmospheric particles.
@@ -5099,7 +5095,6 @@ void module_diffusion_meso(
  * @param clim Pointer to the climatological data structure containing atmospheric properties.
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param dt Pointer to the time step value.
- * @param rs Pointer to the array of random numbers.
  *
  * @author Lars Hoffmann
  */
@@ -5107,8 +5102,7 @@ void module_diffusion_turb(
   const ctl_t * ctl,
   const clim_t * clim,
   atm_t * atm,
-  const double *dt,
-  double *rs);
+  const double *dt);
 
 /**
  * @brief Simulate dry deposition of atmospheric particles.
