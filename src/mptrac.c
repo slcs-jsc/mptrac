@@ -2255,7 +2255,7 @@ void module_advect(
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->p[ip] + dts * w[i - 1];
 	}
-	double tm = atm->time[ip] + dts;
+	const double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data on pressure levels... */
 	if (ctl->advect_vert_coord == 0) {
@@ -2303,19 +2303,17 @@ void module_advect(
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
-      /* If other modules have changed p translate it into a zeta... */
-      if (ctl->advect_cpl_zeta_and_press_modules > 0) {
-	INTPOL_INIT;
-	intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			    met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			    atm->lon[ip], atm->lat[ip],
-			    &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
-      }
+      /* Convert pressure to zeta... */
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			  atm->lon[ip], atm->lat[ip],
+			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
 
       /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4], zeta_dotm = 0,
-	x[3] = { 0, 0, 0 };
-
+      double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4],
+	zeta_dotm = 0, x[3] = { 0, 0, 0 };
+      
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
 
@@ -2331,10 +2329,9 @@ void module_advect(
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
 	}
-	double tm = atm->time[ip] + dts;
+	const double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data... */
-	INTPOL_INIT;
 	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
 			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
 	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
@@ -2362,12 +2359,10 @@ void module_advect(
       atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
 
       /* Check if zeta is below zero... */
-      if (atm->q[ctl->qnt_zeta][ip] < 0) {
+      if (atm->q[ctl->qnt_zeta][ip] < 0)
 	atm->q[ctl->qnt_zeta][ip] = 0;
-      }
 
-      /* Set new position also in pressure coordinates... */
-      INTPOL_INIT;
+      /* Convert zeta to pressure... */
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
 			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
@@ -5078,9 +5073,6 @@ void read_ctl(
       ("Using ADVECT_VERT_COORD = 2 requires meteo data on model levels!");
   ctl->met_clams =
     (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
-  ctl->advect_cpl_zeta_and_press_modules =
-    (int) scan_ctl(filename, argc, argv, "ADVECT_ZETA_PRESS_MODULES", -1, "1",
-		   NULL);
 
   /* Time steps of simulation... */
   ctl->direction =

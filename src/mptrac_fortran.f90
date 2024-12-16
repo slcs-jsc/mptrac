@@ -107,7 +107,6 @@ MODULE mptrac_struct
   END TYPE clim_t
   
   TYPE, bind(c) :: ctl_t
-     INTEGER(c_int) :: advect_cpl_zeta_and_press_modules
      INTEGER(c_int) :: met_press_level_def
      INTEGER(c_int) :: advect_vert_coord
      INTEGER(c_int) :: met_vert_coord
