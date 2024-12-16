@@ -90,7 +90,7 @@ set ytics 10
 set mytics 5
 
 set title "MPTRAC | $t"
-plot "$f" u 3:4:(1.*\$2) w d lc pal z t "", \
+plot "$f" u 3:4:(1.*\$2) w p pt 7 ps .25 lc pal z t "", \
     "../../data/wcl.tab" u 1:2 w l lt -1 t "", \
     "-" u 1:2 w p pt 9 ps 3 lc rgbcolor "red" t ""
 -72.117 -40.59
