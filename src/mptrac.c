@@ -2309,7 +2309,7 @@ void module_advect(
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4],
 	zeta_dotm = 0, x[3] = { 0, 0, 0 };
-      
+
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
 
@@ -2356,7 +2356,7 @@ void module_advect(
 
       /* Check if zeta is below zero... */
       if (atm->q[ctl->qnt_zeta][ip] < 0)
-	atm->q[ctl->qnt_zeta][ip] = 0;
+	atm->q[ctl->qnt_zeta][ip] = 0;	/* TODO: reflect particle, or skip this test (use module_position) */
 
       /* Convert zeta to pressure... */
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
@@ -2632,7 +2632,6 @@ void module_chemgrid(
   free(ixs);
   free(iys);
   free(izs);
-
 }
 
 /*****************************************************************************/
@@ -2743,8 +2742,8 @@ void module_convection(
 			 pbot, atm->lon[ip], atm->lat[ip], &tbot, ci, cw, 1);
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
 			 ptop, atm->lon[ip], atm->lat[ip], &ttop, ci, cw, 1);
-      double rhobot = pbot / tbot;
-      double rhotop = ptop / ttop;
+      const double rhobot = pbot / tbot;
+      const double rhotop = ptop / ttop;
 
       /* Get new density... */
       double rho = rhobot + (rhotop - rhobot) * rs[ip];
@@ -2794,7 +2793,7 @@ void module_decay(
 	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
       atm->q[ctl->qnt_m][ip] *= aux;
       if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += 1 / tdec;
+	atm->q[ctl->qnt_loss_rate][ip] += 1. / tdec;
     }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
@@ -3031,7 +3030,7 @@ void module_h2o2_chem(
   /* Parameter of SO2 correction... */
   const double a = 3.12541941e-06;
   const double b = -5.72532259e-01;
-  const double low = pow(1 / a, 1 / b);
+  const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
@@ -3060,11 +3059,12 @@ void module_h2o2_chem(
     const double K_1S = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));	/* unit: mol/L */
 
     /* Henry constant of H2O2... */
-    const double H_h2o2 = 8.3e2 * exp(7600. * (1 / t - 1 / 298.15)) * RI * t;
+    const double H_h2o2 =
+      8.3e2 * exp(7600. * (1. / t - 1. / 298.15)) * RI * t;
 
     /* Correction factor for high SO2 concentration
        (if qnt_Cx is defined, the correction is switched on)... */
-    double cor = 1;
+    double cor = 1.0;
     if (ctl->qnt_Cx >= 0)
       cor = atm->q[ctl->qnt_Cx][ip] >
 	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
@@ -3566,7 +3566,7 @@ void module_oh_chem(
   /* Parameter of SO2 correction... */
   const double a = 4.71572206e-08;
   const double b = -8.28782867e-01;
-  const double low = pow(1 / a, 1 / b);
+  const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
@@ -4157,7 +4157,7 @@ void module_wet_deposition(
 	  const double H_ion = pow(10., -ctl->wet_depo_so2_ph);
 	  const double K_1 = 1.23e-2 * exp(2.01e3 * (1. / t - 1. / 298.15));
 	  const double K_2 = 6e-8 * exp(1.12e3 * (1. / t - 1. / 298.15));
-	  h *= (1 + K_1 / H_ion + K_1 * K_2 / SQR(H_ion));
+	  h *= (1. + K_1 / H_ion + K_1 * K_2 / SQR(H_ion));
 	}
 
 	/* Estimate depth of cloud layer... */
@@ -5203,7 +5203,7 @@ void read_ctl(
   if (!(ctl->advect == 0 || ctl->advect == 1
 	|| ctl->advect == 2 || ctl->advect == 4))
     ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
-  
+
   /* Diffusion parameters... */
   ctl->turb_dx_trop =
     scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);
