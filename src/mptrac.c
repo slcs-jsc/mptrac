@@ -3636,7 +3636,6 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
-  const ctl_t *ctl,
   met_t *met0,
   met_t *met1,
   atm_t *atm,
@@ -3676,18 +3675,11 @@ void module_position(
 
     /* Check pressure... */
     if (atm->p[ip] < met0->p[met0->np - 1]) {
-      if (ctl->reflect)
-	atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
-      else
-	atm->p[ip] = met0->p[met0->np - 1];
+      atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
     } else if (atm->p[ip] > 300.) {
       INTPOL_2D(ps, 1);
-      if (atm->p[ip] > ps) {
-	if (ctl->reflect)
-	  atm->p[ip] = 2. * ps - atm->p[ip];
-	else
-	  atm->p[ip] = ps;
-      }
+      if (atm->p[ip] > ps)
+	atm->p[ip] = 2. * ps - atm->p[ip];
     }
   }
 }
@@ -5215,9 +5207,7 @@ void read_ctl(
   if (!(ctl->advect == 0 || ctl->advect == 1
 	|| ctl->advect == 2 || ctl->advect == 4))
     ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
-  ctl->reflect =
-    (int) scan_ctl(filename, argc, argv, "REFLECT", -1, "0", NULL);
-
+  
   /* Diffusion parameters... */
   ctl->turb_dx_trop =
     scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);

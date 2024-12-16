@@ -260,7 +260,6 @@ MODULE mptrac_struct
      INTEGER(c_int) :: isosurf
      CHARACTER(c_char), DIMENSION(length) :: balloon
      INTEGER(c_int) :: advect
-     INTEGER(c_int) :: reflect
      INTEGER(c_int) :: rng_type
      REAL(c_double) :: turb_dx_trop
      REAL(c_double) :: turb_dx_strat
