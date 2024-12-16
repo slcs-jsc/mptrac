@@ -2664,7 +2664,7 @@ typedef struct {
 
   /*! Advection scheme (0=off, 1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
-  
+
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
 
