@@ -223,7 +223,7 @@ int main(
 	    module_sort(&ctl, met0, atm);
 
 	  /* Check positions (initial)... */
-	  module_position(&ctl, met0, met1, atm, dt);
+	  module_position(met0, met1, atm, dt);
 
 	  /* Advection... */
 	  if (ctl.advect > 0)
@@ -252,7 +252,7 @@ int main(
 	    module_isosurf(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Check positions (final)... */
-	  module_position(&ctl, met0, met1, atm, dt);
+	  module_position(met0, met1, atm, dt);
 
 	  /* Interpolate meteo data... */
 	  if (ctl.met_dt_out > 0

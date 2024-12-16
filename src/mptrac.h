@@ -2630,10 +2630,7 @@ typedef struct {
 
   /*! Advection scheme (0=off, 1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
-
-  /*! Reflection of particles at top and bottom boundary (0=no, 1=yes). */
-  int reflect;
-
+  
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
 
@@ -5369,7 +5366,6 @@ void module_oh_chem(
  * @author Lars Hoffmann
  */
 void module_position(
-  const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
   atm_t * atm,
