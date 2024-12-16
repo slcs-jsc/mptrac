@@ -5198,7 +5198,7 @@ void read_ctl(
 
   /* Random number generator... */
   ctl->rng_type =
-    (int) scan_ctl(filename, argc, argv, "RNG_TYPE", -1, "0", NULL);
+    (int) scan_ctl(filename, argc, argv, "RNG_TYPE", -1, "1", NULL);
   if (ctl->rng_type < 0 || ctl->rng_type > 2)
     ERRMSG("Set RNG_TYPE to 0, 1, or 2!");
 
