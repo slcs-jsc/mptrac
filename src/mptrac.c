@@ -5210,17 +5210,17 @@ void read_ctl(
 
   /* Diffusion parameters... */
   ctl->turb_dx_trop =
-    scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);
+    scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "0", NULL);
   ctl->turb_dx_strat =
     scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0", NULL);
   ctl->turb_dz_trop =
     scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0", NULL);
   ctl->turb_dz_strat =
-    scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
+    scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0", NULL);
   ctl->turb_mesox =
-    scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0.16", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0", NULL);
   ctl->turb_mesoz =
-    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0", NULL);
 
   /* Convection... */
   ctl->conv_cape
