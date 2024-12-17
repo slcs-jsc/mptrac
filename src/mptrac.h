@@ -5023,6 +5023,12 @@ void module_decay(
  * @param cache Pointer to the cache structure for temporary storage.
  * @param dt Pointer to the time step value.
  *
+ * @note Control parameters `TURB_MESO_X` and `TURB_MESO_Z` define
+ * subgrid-scale variability as a fraction of grid-scale variance. The
+ * default values from Stohl et al. (2005) are 0.16 for both
+ * horizontal and vertical directions.  However, Bakels et al. (2024)
+ * highlight limitations of this approach and recommend disabling it.
+ *
  * @author Lars Hoffmann
  */
 void module_diffusion_meso(
@@ -5054,6 +5060,12 @@ void module_diffusion_meso(
  * @param clim Pointer to the climatological data structure containing atmospheric properties.
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param dt Pointer to the time step value.
+ *
+ * @note Control parameters `TURB_DX_TROP`, `TURB_DZ_TROP`,
+ * `TURB_DX_STRAT`, and `TURB_DZ_STRAT` define horizontal and vertical
+ * diffusivities in the troposphere and stratosphere. Default values
+ * from Stohl et al. (2005) are 50 m**2 s**-1 for `TURB_DX_TROP` and
+ * 0.1 m**2 s**-1 for `TURB_DZ_STRAT`.
  *
  * @author Lars Hoffmann
  */
