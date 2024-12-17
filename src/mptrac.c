@@ -3645,7 +3645,7 @@ void module_position(
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(met0,met1,atm,dt)") {
 
     /* Init... */
     double ps;
