@@ -48,12 +48,58 @@ python3 <<EOF
 import cdsapi
 c = cdsapi.Client()
 
+"""
+ECMWF Parameter Database:
+https://codes.ecmwf.int/grib/param-db/
+
+Surface variables (analysis):
+   34.128 = Sea surface temperature [K]
+   59.128 = Convective available potential energy [J kg**-1]
+  129.128 = Geopotential [m**2 s**-2]
+  134.128 = Surface pressure [Pa]
+  159.128 = Boundary layer height [m]
+  160.128 = Standard deviation of sub-gridscale orography [m]
+  164.128 = Total cloud cover (0 - 1)
+  165.128 = 10 metre U wind component [m s**-1]
+  166.128 = 10 metre V wind component [m s**-1]
+  167.128 = 2 metre temperature [K]
+  168.128 = 2 metre dewpoint temperature [K]
+  172.128 = Land-sea mask (0 - 1)
+  186.128 = Low cloud cover (0 - 1)
+  187.128 = Medium cloud cover (0 - 1)
+  188.128 = High cloud cover (0 - 1)
+  229.128 = Instantaneous eastward turbulent surface stress [N m**-2]
+  230.128 = Instantaneous northward turbulent surface stress [N m**-2]
+
+#Surface variables (forecast):
+#   50.128 = Large-scale precipitation fraction [s]
+#  142.128 = Large-scale precipitation [m]
+#  143.128 = Convective precipitation [m]
+#  146.128 = Time-integrated surface sensible heat net flux [J m**-2]
+#  147.128 = Time-integrated surface latent heat net flux [J m**-2]
+#  228.128 = Total precipitation [m]
+
+Model levels:
+   75 = Specific rain water content [kg kg**-1]
+   76 = Specific snow water content [kg kg**-1]
+   77 = Eta-coordinate vertical velocity [s**-1]
+  130 = Temperature [K]
+  131 = U component of wind [m s**-1]
+  132 = V component of wind [m s**-1]
+  133 = Specific humidity [kg kg**-1]
+  135 = Vertical velocity [Pa s**-1]
+  203 = Ozone mass mixing ratio [kg kg**-1]
+  246 = Specific cloud liquid water content [kg kg**-1]
+  247 = Specific cloud ice water content [kg kg**-1]
+  248 = Fraction of cloud cover (0 - 1)
+"""
+
 c.retrieve("reanalysis-era5-complete", {
     "class": "ea",
     "date": "${year}-${mon}-${day}",
     "expver": "1",
     "levtype": "sfc",
-    "param": "34.128/59.128/129.128/134.128/159.128/165.128/166.128/167.128/172.128",
+    "param": "34.128/59.128/129.128/134.128/159.128/160.128/164.128/165.128/166.128/167.128/168.128/172.128/186.128/187.128/188.128/229.128/230.128",
     "stream": "oper",
     "time": "$tstr",
     "type": "an",
@@ -66,7 +112,7 @@ c.retrieve("reanalysis-era5-complete", {
     "expver": "1",
     "levelist": "1/to/137",
     "levtype": "ml",
-    "param": "75/76/130/131/132/133/135/203/246/247/248",
+    "param": "75/76/77/130/131/132/133/135/203/246/247/248",
     "stream": "oper",
     "time": "$tstr",
     "type": "an",
