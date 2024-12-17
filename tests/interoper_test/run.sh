@@ -3,6 +3,7 @@
 # Testing components for better interoperable use between CLaMS and MPTRAC...
 
 # (1) Test reading and writing CLaMS position files...
+
 # Create directories...
 rm -rf data && mkdir -p data
 
@@ -21,17 +22,10 @@ atm_in=./data.ref/atm_input.tab
 # Path to the output atmosphere data...
 atm_out_nc=./data/atm_output.nc
 
-# Path to control file...
-ctl=./data/trac.ctl
-
-# Create control parameter file...
-cat > ./data/trac.ctl <<EOF
-EOF
-
 # Run the application...
 echo "Test reading atm_type 0 data and write it to atm_type 4 data."
-echo ${atm_conv} ${ctl} ${atm_in} 0 ${atm_out_nc} 4
-${atm_conv} ${ctl} ${atm_in} 0 ${atm_out_nc} 4 >> ${log}/log_0to4.txt
+echo ${atm_conv} - ${atm_in} 0 ${atm_out_nc} 4
+${atm_conv} - ${atm_in} 0 ${atm_out_nc} 4 >> ${log}/log_0to4.txt
 
 # Path to the atmosphere data that containts air parcel positions...
 atm_in=${atm_out_nc}
@@ -42,17 +36,10 @@ atm_out_tab=./data/atm_output.tab
 # Path to the reference...
 atm_ref_tab=./data.ref/atm_output.tab
 
-# Path to control file...
-ctl=./data/trac.ctl
-
-# Create control parameter file...
-cat > ./data/trac.ctl <<EOF
-EOF
-
 # Run the application...
 echo "Reading atmospheric data of atm_type 4 and write it as atm_type 0."
-echo ${atm_conv} ${ctl} ${atm_in} 4 ${atm_out_tab} 0
-${atm_conv} ${ctl} ${atm_in} 4 ${atm_out_tab} 0 > ${log}/log_4to0.txt
+echo ${atm_conv} - ${atm_in} 4 ${atm_out_tab} 0
+${atm_conv} - ${atm_in} 4 ${atm_out_tab} 0 > ${log}/log_4to0.txt
 
 # Compare files...
 error=0
@@ -65,12 +52,7 @@ if [ $? -ne 0 ]; then
     exit $error
 fi
 
-rm ${atm_out_tab}
-rm ${atm_out_nc}
-
-rm ${ctl}
-rm ${log}/*.txt
-
+rm ${atm_out_tab} ${atm_out_nc} ${log}/*.txt
 
 # (2) Test if the diabatic transport calculations have been changed...
 
@@ -87,26 +69,12 @@ output=./data
 input=./data.ref/
 
 # start and end date
-start_date=16070100
-end_date=16070106
-
-year=20${start_date:0:2}
-month=${start_date:2:2}
-day=${start_date:4:2}
-hour=${start_date:6:6}
-
-end_year=20${end_date:0:2}
-end_month=${end_date:2:2}
-end_day=${end_date:4:2}
-end_hour=${end_date:6:6}
-
-t0=$(${trac}/time2jsec "${year}" "${month}" "${day}" "${hour}" 0 0 0)
-t1=$(${trac}/time2jsec "${end_year}" "${end_month}" "${end_day}" "${end_hour}" 0 0 0)
+t0=$(${trac}/time2jsec 2016 7 1 0 0 0 0)
+t1=$(${trac}/time2jsec 2016 7 1 6 0 0 0)
 
 # Create control parameter file...
 cat > ${output}/trac.ctl <<EOF
 MET_CONVENTION = 1
-ADVECT_ZETA_PRESS_MODULES = 1
 MET_PRESS_LEVEL_DEF = 2
 ATM_TYPE = 3
 ATM_TYPE_OUT = 0
