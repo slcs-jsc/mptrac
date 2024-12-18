@@ -261,8 +261,10 @@ MODULE mptrac_struct
      CHARACTER(c_char), DIMENSION(length) :: balloon
      INTEGER(c_int) :: advect
      INTEGER(c_int) :: rng_type
+     REAL(c_double) :: turb_dx_pbl
      REAL(c_double) :: turb_dx_trop
      REAL(c_double) :: turb_dx_strat
+     REAL(c_double) :: turb_dz_pbl
      REAL(c_double) :: turb_dz_trop
      REAL(c_double) :: turb_dz_strat
      REAL(c_double) :: turb_mesox
