@@ -7661,7 +7661,7 @@ void read_met_pbl(
       for (int iy = 0; iy < met->ny; iy++) {
 
 	/* Set bottom level of PBL... */
-	const double pbl_bot = met->ps[ix][iy] + DZ2DP(dz, met->ps[ix][iy]);
+	const double pbl_bot = met->ps[ix][iy] * exp(-dz / H0);
 
 	/* Find lowest level near the bottom... */
 	int ip;
@@ -7744,7 +7744,7 @@ void read_met_pbl(
 			 met->p[ip], theta0 + dtheta));
 
 	/* Check minimum value... */
-	double pbl_min = met->ps[ix][iy] + DZ2DP(zmin, met->ps[ix][iy]);
+	double pbl_min = met->ps[ix][iy] * exp(-zmin / H0);
 	if (met->pbl[ix][iy] > pbl_min || met->p[ip] > met->ps[ix][iy])
 	  met->pbl[ix][iy] = (float) pbl_min;
       }
@@ -7754,15 +7754,13 @@ void read_met_pbl(
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
-      
+
       /* Check minimum value... */
-      double pbl_min =
-	met->ps[ix][iy] + DZ2DP(ctl->met_pbl_min, met->ps[ix][iy]);
+      double pbl_min = met->ps[ix][iy] * exp(-ctl->met_pbl_min / H0);
       met->pbl[ix][iy] = MIN(met->pbl[ix][iy], (float) pbl_min);
-      
+
       /* Check maximum value... */
-      double pbl_max =
-       met->ps[ix][iy] + DZ2DP(ctl->met_pbl_max, met->ps[ix][iy]);
+      double pbl_max = met->ps[ix][iy] * exp(-ctl->met_pbl_max / H0);
       met->pbl[ix][iy] = MAX(met->pbl[ix][iy], (float) pbl_max);
     }
 }
