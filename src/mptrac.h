@@ -494,6 +494,8 @@
  * @param p Reference pressure in hPa.
  * @return Change in height (altitude) in kilometers corresponding to the given pressure difference.
  *
+ * @warning Don't use this for large values of dp!
+ *
  * @author Lars Hoffmann
  */
 #define DP2DZ(dp, p)				\
@@ -550,6 +552,8 @@
  * @param dz Change in altitude in kilometers.
  * @param p Current pressure in hPa.
  * @return Change in pressure in hPa.
+ *
+ * @warning Don't use this for large values of dz!
  *
  * @author Lars Hoffmann
  */
