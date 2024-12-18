@@ -2779,8 +2779,7 @@ void module_decay(
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt)") {
 
     /* Get weighting factor... */
-    const double w =
-      tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    const double w = tropo_weight(clim, atm, ip);
 
     /* Set lifetime... */
     const double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
@@ -2898,6 +2897,8 @@ void module_diffusion_meso(
 void module_diffusion_turb(
   const ctl_t *ctl,
   const clim_t *clim,
+  met_t *met0,
+  met_t *met1,
   atm_t *atm,
   const double *dt) {
 
@@ -2918,13 +2919,19 @@ void module_diffusion_turb(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs)") {
 
-    /* Get weighting factor... */
-    const double w =
-      tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+    /* Get weighting factors... */
+    const double wpbl = pbl_weight(met0, met1, atm, ip);
+    const double wt = tropo_weight(clim, atm, ip) * (1 - wpbl);
 
     /* Set diffusivity... */
-    const double dx = w * ctl->turb_dx_trop + (1 - w) * ctl->turb_dx_strat;
-    const double dz = w * ctl->turb_dz_trop + (1 - w) * ctl->turb_dz_strat;
+    const double dx = wpbl * ctl->turb_dx_pbl + wt * ctl->turb_dx_trop
+      + (1 - wpbl - wt) * ctl->turb_dx_strat;
+    const double dz = wpbl * ctl->turb_dz_pbl + wt * ctl->turb_dz_trop
+      + (1 - wpbl - wt) * ctl->turb_dz_strat;
+
+
+    //printf("diffws: %g %g %g %g %g\n", Z(atm->p[ip]), wt, wpbl, dx, dz);
+
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
@@ -3526,8 +3533,7 @@ void module_mixing_help(
       /* Set mixing parameter... */
       double mixparam = 1.0;
       if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
-	double w =
-	  tropo_weight(clim, atm->time[ip], atm->lat[ip], atm->p[ip]);
+	double w = tropo_weight(clim, atm, ip);
 	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
       }
 
@@ -4234,6 +4240,32 @@ double nat_temperature(
     tnat = x2;
 
   return tnat;
+}
+
+/*****************************************************************************/
+
+double pbl_weight(
+  met_t *met0,
+  met_t *met1,
+  const atm_t *atm,
+  const int ip) {
+
+  /* Get PBL pressure... */
+  double pbl;
+  INTPOL_INIT;
+  INTPOL_2D(pbl, 1);
+
+  /* Get pressure range... */
+  const double p1 = pbl * 0.971832875032981;
+  const double p0 = pbl / 0.971832875032981;
+
+  /* Get weighting factor... */
+  if (atm->p[ip] > p0)
+    return 1;
+  else if (atm->p[ip] < p1)
+    return 0;
+  else
+    return LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 }
 
 /*****************************************************************************/
@@ -5205,10 +5237,14 @@ void read_ctl(
     ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
 
   /* Diffusion parameters... */
+  ctl->turb_dx_pbl =
+    scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "0", NULL);
   ctl->turb_dx_trop =
     scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "0", NULL);
   ctl->turb_dx_strat =
     scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0", NULL);
+  ctl->turb_dz_pbl =
+    scan_ctl(filename, argc, argv, "TURB_DZ_PBL", -1, "0", NULL);
   ctl->turb_dz_trop =
     scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0", NULL);
   ctl->turb_dz_strat =
@@ -7321,15 +7357,15 @@ void read_met_pbl(
 #pragma omp parallel for default(shared) collapse(2)
   for (int ix = 0; ix < met->nx; ix++)
     for (int iy = 0; iy < met->ny; iy++) {
-
+      
       /* Check minimum value... */
       double pbl_min =
 	met->ps[ix][iy] + DZ2DP(ctl->met_pbl_min, met->ps[ix][iy]);
       met->pbl[ix][iy] = MIN(met->pbl[ix][iy], (float) pbl_min);
-
+      
       /* Check maximum value... */
       double pbl_max =
-	met->ps[ix][iy] + DZ2DP(ctl->met_pbl_max, met->ps[ix][iy]);
+       met->ps[ix][iy] + DZ2DP(ctl->met_pbl_max, met->ps[ix][iy]);
       met->pbl[ix][iy] = MAX(met->pbl[ix][iy], (float) pbl_max);
     }
 }
@@ -8470,24 +8506,23 @@ double time_from_filename(
 
 double tropo_weight(
   const clim_t *clim,
-  const double t,
-  const double lat,
-  const double p) {
+  const atm_t *atm,
+  const int ip) {
 
   /* Get tropopause pressure... */
-  const double pt = clim_tropo(clim, t, lat);
+  const double pt = clim_tropo(clim, atm->time[ip], atm->lat[ip]);
 
   /* Get pressure range... */
   const double p1 = pt * 0.866877899;
   const double p0 = pt / 0.866877899;
 
   /* Get weighting factor... */
-  if (p > p0)
+  if (atm->p[ip] > p0)
     return 1;
-  else if (p < p1)
+  else if (atm->p[ip] < p1)
     return 0;
   else
-    return LIN(p0, 1.0, p1, 0.0, p);
+    return LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 }
 
 /*****************************************************************************/

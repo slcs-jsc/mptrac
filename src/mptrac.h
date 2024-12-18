@@ -2634,11 +2634,17 @@ typedef struct {
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
 
+  /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
+  double turb_dx_pbl;
+
   /*! Horizontal turbulent diffusion coefficient (troposphere) [m^2/s]. */
   double turb_dx_trop;
 
   /*! Horizontal turbulent diffusion coefficient (stratosphere) [m^2/s]. */
   double turb_dx_strat;
+
+  /*! Vertical turbulent diffusion coefficient (PBL) [m^2/s]. */
+  double turb_dz_pbl;
 
   /*! Vertical turbulent diffusion coefficient (troposphere) [m^2/s]. */
   double turb_dz_trop;
@@ -5072,6 +5078,8 @@ void module_diffusion_meso(
 void module_diffusion_turb(
   const ctl_t * ctl,
   const clim_t * clim,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   const double *dt);
 
@@ -5684,6 +5692,30 @@ double nat_temperature(
   const double p,
   const double h2o,
   const double hno3);
+
+/**
+ * @brief Computes the weighting factor based on the planetary boundary layer (PBL) pressure.
+ *
+ * This function determines a weighting factor for a specific pressure value in relation to 
+ * the planetary boundary layer (PBL) pressure. The weighting factor is calculated as follows:
+ * - Returns 1 if the pressure is greater than a calculated upper limit.
+ * - Returns 0 if the pressure is less than a calculated lower limit.
+ * - Linearly interpolates between 1 and 0 within the range defined by the upper and lower limits.
+ *
+ * @param[in] met0 First meteorological input data structure.
+ * @param[in] met1 Second meteorological input data structure.
+ * @param[in] atm Pointer to the atmospheric data structure.
+ * @param[in] ip Index of the pressure value to evaluate within the atmospheric data.
+ * 
+ * @return Weighting factor (double) in the range [0, 1].
+ *
+ * @author Lars Hoffmann
+ */
+double pbl_weight(
+  met_t * met0,
+  met_t * met1,
+  const atm_t * atm,
+  const int ip);
 
 /**
  * @brief Reads air parcel data from a specified file into the given atmospheric structure.
@@ -7271,37 +7303,26 @@ double time_from_filename(
   const int offset);
 
 /**
- * @brief Computes the weighting factor for a given pressure with respect to the tropopause.
+ * @brief Computes the weighting factor based on the tropopause pressure.
  *
- * The `tropo_weight` function calculates a weighting factor that
- * indicates how much a given pressure `p` is influenced by the
- * tropopause based on climatological data.
+ * This function calculates a weighting factor for a given pressure value in relation to 
+ * the tropopause pressure. The weighting factor is determined as follows:
+ * - Returns 1 if the pressure is greater than a calculated upper limit.
+ * - Returns 0 if the pressure is less than a calculated lower limit.
+ * - Linearly interpolates between 1 and 0 within the range defined by the upper and lower limits.
  *
- * @param clim A pointer to a `clim_t` structure containing climatological tropopause data.
- * @param t The time parameter, typically representing the time of year or specific temporal context.
- * @param lat The latitude for which the weighting factor is being calculated.
- * @param p The pressure for which the weighting factor is to be computed.
+ * @param[in] clim Pointer to the climatology data structure.
+ * @param[in] atm Pointer to the atmospheric data structure.
+ * @param[in] ip Index of the pressure value to evaluate within the atmospheric data.
  * 
- * @return A double representing the weighting factor.
- * 
- * The function performs the following steps:
- * - Calculates the tropopause pressure `pt` using the `clim_tropo` function.
- * - Determines the pressure range around the tropopause: `p1` (lower bound) and `p0` (upper bound).
- * - Computes the weighting factor based on the given pressure `p`:
- *   - Returns `1` if `p` is greater than `p0` (troposphere).
- *   - Returns `0` if `p` is less than `p1` (stratosphere).
- *   - Linearly interpolates between `1` and `0` for pressures between `p0` and `p1`.
- *
- * @note The `clim_tropo` function is assumed to provide the tropopause pressure based on climatological data.
- * @note The constants used in the pressure range calculation (`0.866877899` and its reciprocal) are specific to the function's logic.
+ * @return Weighting factor (double) in the range [0, 1].
  *
  * @author Lars Hoffmann
  */
 double tropo_weight(
   const clim_t * clim,
-  const double t,
-  const double lat,
-  const double p);
+  const atm_t * atm,
+  const int ip);
 
 /**
  * @brief Writes air parcel data to a file in various formats.
