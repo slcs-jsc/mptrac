@@ -7273,17 +7273,9 @@ void read_met_pbl(
 	    break;
 
 	/* Get near surface data... */
-	const double zs = LIN(met->p[ip - 1], met->z[ix][iy][ip - 1],
-			      met->p[ip], met->z[ix][iy][ip], pbl_bot);
-	const double ts = LIN(met->p[ip - 1], met->t[ix][iy][ip - 1],
-			      met->p[ip], met->t[ix][iy][ip], pbl_bot);
-	const double us = LIN(met->p[ip - 1], met->u[ix][iy][ip - 1],
-			      met->p[ip], met->u[ix][iy][ip], pbl_bot);
-	const double vs = LIN(met->p[ip - 1], met->v[ix][iy][ip - 1],
-			      met->p[ip], met->v[ix][iy][ip], pbl_bot);
 	const double h2os = LIN(met->p[ip - 1], met->h2o[ix][iy][ip - 1],
 				met->p[ip], met->h2o[ix][iy][ip], pbl_bot);
-	const double tvs = THETAVIRT(pbl_bot, ts, h2os);
+	const double tvs = THETAVIRT(pbl_bot, met->ts[ix][iy], h2os);
 
 	/* Init... */
 	double rib_old = 0;
@@ -7292,12 +7284,13 @@ void read_met_pbl(
 	for (; ip < met->np; ip++) {
 
 	  /* Get squared horizontal wind speed... */
-	  double vh2
-	    = SQR(met->u[ix][iy][ip] - us) + SQR(met->v[ix][iy][ip] - vs);
+	  double vh2 = SQR(met->u[ix][iy][ip] - met->us[ix][iy])
+	    + SQR(met->v[ix][iy][ip] - met->vs[ix][iy]);
 	  vh2 = MAX(vh2, SQR(umin));
 
 	  /* Calculate bulk Richardson number... */
-	  const double rib = G0 * 1e3 * (met->z[ix][iy][ip] - zs) / tvs
+	  const double rib =
+	    G0 * 1e3 * (met->z[ix][iy][ip] - met->zs[ix][iy]) / tvs
 	    * (THETAVIRT(met->p[ip], met->t[ix][iy][ip],
 			 met->h2o[ix][iy][ip]) - tvs) / vh2;
 
