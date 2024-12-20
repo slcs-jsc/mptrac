@@ -70,6 +70,7 @@ Surface variables (analysis):
   188.128 = High cloud cover (0 - 1)
   229.128 = Instantaneous eastward turbulent surface stress [N m**-2]
   230.128 = Instantaneous northward turbulent surface stress [N m**-2]
+  231.128 = Instantaneous surface sensible heat net flux [W m**-2]
 
 #Surface variables (forecast):
 #   50.128 = Large-scale precipitation fraction [s]
@@ -99,7 +100,7 @@ c.retrieve("reanalysis-era5-complete", {
     "date": "${year}-${mon}-${day}",
     "expver": "1",
     "levtype": "sfc",
-    "param": "34.128/59.128/129.128/134.128/159.128/160.128/164.128/165.128/166.128/167.128/168.128/172.128/186.128/187.128/188.128/229.128/230.128",
+    "param": "34.128/59.128/129.128/134.128/159.128/160.128/164.128/165.128/166.128/167.128/168.128/172.128/186.128/187.128/188.128/229.128/230.128/231.128",
     "stream": "oper",
     "time": "$tstr",
     "type": "an",
