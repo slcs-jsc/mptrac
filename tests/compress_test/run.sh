@@ -18,11 +18,13 @@ $trac/met_conv - ../data/ei_2011_06_05_00.nc 0 data/ei_2011_06_05_00.bin 1 \
 $trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.pck 2
 $trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.zfp 3
 $trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.zstd 4
+$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.nc 0
 
 # Convert from compressed to binary data...
 $trac/met_conv - data/ei_2011_06_05_00.pck 2 data/pck2bin_2011_06_05_00.bin 1
 $trac/met_conv - data/ei_2011_06_05_00.zfp 3 data/zfp2bin_2011_06_05_00.bin 1
 $trac/met_conv - data/ei_2011_06_05_00.zstd 4 data/zstd2bin_2011_06_05_00.bin 1
+$trac/met_conv - data/ei_2011_06_05_00.nc 0 data/nc2bin_2011_06_05_00.bin 1
 
 # Compare files...
 echo -e "\nCompare results..."

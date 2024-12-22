@@ -5957,6 +5957,7 @@ int read_met_bin(
   read_met_bin_2d(in, met, met->pel, "PEL");
   read_met_bin_2d(in, met, met->cape, "CAPE");
   read_met_bin_2d(in, met, met->cin, "CIN");
+  read_met_bin_2d(in, met, met->o3c, "O3C");
 
   /* Read level data... */
   read_met_bin_3d(in, ctl, met, met->z, "Z", -1e34f, 1e34f);
@@ -10471,6 +10472,7 @@ void write_met_bin(
   write_met_bin_2d(out, met, met->pel, "PEL");
   write_met_bin_2d(out, met, met->cape, "CAPE");
   write_met_bin_2d(out, met, met->cin, "CIN");
+  write_met_bin_2d(out, met, met->o3c, "O3C");
 
   /* Write level data... */
   write_met_bin_3d(out, ctl, met, met->z, "Z",
@@ -10644,9 +10646,23 @@ void write_met_nc(
 	     "m s**-1", ctl->met_nc_level, 0);
   NC_DEF_VAR("v10m", NC_FLOAT, 2, dimid2, "10 metre V wind component",
 	     "m s**-1", ctl->met_nc_level, 0);
+  NC_DEF_VAR("iews", NC_FLOAT, 2, dimid2,
+	     "Instantaneous eastward turbulent surface stress", "N m**-2",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("inss", NC_FLOAT, 2, dimid2,
+	     "Instantaneous northward turbulent surface stress", "N m**-2",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("ishf", NC_FLOAT, 2, dimid2,
+	     "Instantaneous surface sensible heat flux", "W m**-1",
+	     ctl->met_nc_level, 0);
   NC_DEF_VAR("lsm", NC_FLOAT, 2, dimid2, "Land/sea mask", "-",
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("cape", NC_FLOAT, 2, dimid2,
+	     "Convective available potential energy", "J kg**-1",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("cin", NC_FLOAT, 2, dimid2, "Convective inhibition", "J kg**-1",
 	     ctl->met_nc_level, 0);
 
   /* Define level data... */
@@ -10692,8 +10708,13 @@ void write_met_nc(
   write_met_nc_2d(ncid, "t2m", met, met->ts, 1.0f);
   write_met_nc_2d(ncid, "u10m", met, met->us, 1.0f);
   write_met_nc_2d(ncid, "v10m", met, met->vs, 1.0f);
+  write_met_nc_2d(ncid, "iews", met, met->ess, 1.0f);
+  write_met_nc_2d(ncid, "inss", met, met->nss, 1.0f);
+  write_met_nc_2d(ncid, "ishf", met, met->shf, 1.0f);
   write_met_nc_2d(ncid, "lsm", met, met->lsm, 1.0f);
   write_met_nc_2d(ncid, "sstk", met, met->sst, 1.0f);
+  write_met_nc_2d(ncid, "cape", met, met->cape, 1.0f);
+  write_met_nc_2d(ncid, "cin", met, met->cin, 1.0f);
 
   /* Write level data... */
   write_met_nc_3d(ncid, "t", met, met->t, 1.0f);
