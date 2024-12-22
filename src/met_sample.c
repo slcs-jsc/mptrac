@@ -43,9 +43,9 @@ int main(
   FILE *out;
 
   double h2o, h2ot, o3, lwc, rwc, iwc, swc, cc, p0, p1, ps, ts, zs, us, vs,
-    lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc, pel, cape, cin, o3c, pv, t,
-    tt, u, v, w, z, zm, zref, zt, time_old = -999, p_old = -999, lon_old =
-    -999, lat_old = -999;
+    ess, nss, shf, lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc, pel,
+    cape, cin, o3c, pv, t, tt, u, v, w, z, zm, zref, zt, time_old = -999,
+    p_old = -999, lon_old = -999, lat_old = -999;
 
   /* Check arguments... */
   if (argc < 3)
@@ -126,11 +126,12 @@ int main(
 
     /* Write data... */
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g 1 1 1\n",
 	    atm->time[ip], Z(atm->p[ip]), atm->lon[ip], atm->lat[ip],
-	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs, lsm,
+	    atm->p[ip], t, u, v, w, h2o, o3, z, pv, ps, ts, zs, us, vs,
+	    ess, nss, shf, lsm,
 	    sst, pt, zt, tt, h2ot, lwc, rwc, iwc, swc, cc, cl, pct, pcb, plcl,
 	    plfc, pel, cape, cin, RH(atm->p[ip], t, h2o), RHICE(atm->p[ip], t,
 								h2o),

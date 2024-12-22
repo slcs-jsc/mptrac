@@ -2801,6 +2801,62 @@ void module_decay(
 
 /*****************************************************************************/
 
+void module_diffusion(
+  const ctl_t *ctl,
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_DIFFUSION", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  double *rs;
+  ALLOC(rs, double,
+	3 * NP + 1);
+#ifdef _OPENACC
+#pragma acc enter data create(rs[:3 * NP])
+#endif
+
+  /* Create random numbers... */
+  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
+
+    const double sig_u = 0.25;	// m/s
+    const double sig_w = 0.1;	// m/s
+    const double tau_u = 300.;	// s
+    const double tau_w = 100.;	// s
+
+    /* Update perturbations (Ryall and Maryon, 1998)... */
+    cache->uvwp[ip][0]
+      = (float) (cache->uvwp[ip][0] * (1. - fabs(dt[ip]) / tau_u)
+		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u)) * rs[3 * ip]);
+    cache->uvwp[ip][1]
+      = (float) (cache->uvwp[ip][1] * (1. - fabs(dt[ip]) / tau_u)
+		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u)) * rs[3 * ip +
+								     1]);
+    cache->uvwp[ip][2]
+      = (float) (cache->uvwp[ip][2] * (1. - fabs(dt[ip]) / tau_w)
+		 + sqrt(2. * SQR(sig_w) * fabs(dt[ip] / tau_w)) * rs[3 * ip + 2]);	// TODO: add drift correction
+
+    /* Calculate horizontal mesoscale wind fluctuations... */
+    atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
+    atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
+    atm->p[ip] += DZ2DP(cache->uvwp[ip][2] * dt[ip] / 1000., atm->p[ip]);
+  }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete (rs)
+#endif
+  free(rs);
+}
+
+/*****************************************************************************/
+
 void module_diffusion_meso(
   const ctl_t *ctl,
   met_t *met0,
@@ -2928,10 +2984,6 @@ void module_diffusion_turb(
       + (1 - wpbl - wt) * ctl->turb_dx_strat;
     const double dz = wpbl * ctl->turb_dz_pbl + wt * ctl->turb_dz_trop
       + (1 - wpbl - wt) * ctl->turb_dz_strat;
-
-
-    //printf("diffws: %g %g %g %g %g\n", Z(atm->p[ip]), wt, wpbl, dx, dz);
-
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
@@ -3289,9 +3341,9 @@ void module_meteo(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
-    double ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, cl, plcl, plfc,
-      pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3,
-      lwc, rwc, iwc, swc, cc, z, zt;
+    double ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl, pt, pct, pcb, cl,
+      plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc,
+      rwc, iwc, swc, cc, z, zt;
 
     /* Interpolate meteo data... */
     INTPOL_INIT;
@@ -3303,6 +3355,9 @@ void module_meteo(
     SET_ATM(qnt_zs, zs);
     SET_ATM(qnt_us, us);
     SET_ATM(qnt_vs, vs);
+    SET_ATM(qnt_ess, ess);
+    SET_ATM(qnt_nss, nss);
+    SET_ATM(qnt_shf, shf);
     SET_ATM(qnt_lsm, lsm);
     SET_ATM(qnt_sst, sst);
     SET_ATM(qnt_pbl, pbl);
@@ -3677,11 +3732,14 @@ void module_position(
 
     /* Check pressure... */
     if (atm->p[ip] < met0->p[met0->np - 1]) {
-      atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
+      // TODO: add reflection: atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
+      atm->p[ip] = met0->p[met0->np - 1];
     } else if (atm->p[ip] > 300.) {
       INTPOL_2D(ps, 1);
+      // TODO: add reflection: if (atm->p[ip] > ps)
+      // atm->p[ip] = 2. * ps - atm->p[ip];
       if (atm->p[ip] > ps)
-	atm->p[ip] = 2. * ps - atm->p[ip];
+	atm->p[ip] = ps;
     }
   }
 }
@@ -4887,6 +4945,9 @@ void read_ctl(
   ctl->qnt_zs = -1;
   ctl->qnt_us = -1;
   ctl->qnt_vs = -1;
+  ctl->qnt_ess = -1;
+  ctl->qnt_nss = -1;
+  ctl->qnt_shf = -1;
   ctl->qnt_lsm = -1;
   ctl->qnt_sst = -1;
   ctl->qnt_pbl = -1;
@@ -4992,6 +5053,9 @@ void read_ctl(
       SET_QNT(qnt_zs, "zs", "surface height", "km")
       SET_QNT(qnt_us, "us", "surface zonal wind", "m/s")
       SET_QNT(qnt_vs, "vs", "surface meridional wind", "m/s")
+      SET_QNT(qnt_ess, "ess", "eastward turbulent surface stress", "N/m^2")
+      SET_QNT(qnt_nss, "nss", "northward turbulent surface stress", "N/m^2")
+      SET_QNT(qnt_shf, "shf", "surface sensible heat flux", "W/m^2")
       SET_QNT(qnt_lsm, "lsm", "land-sea mask", "1")
       SET_QNT(qnt_sst, "sst", "sea surface temperature", "K")
       SET_QNT(qnt_pbl, "pbl", "planetary boundary layer", "hPa")
@@ -5237,6 +5301,8 @@ void read_ctl(
     ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
 
   /* Diffusion parameters... */
+  ctl->diffusion
+    = (int) scan_ctl(filename, argc, argv, "DIFFUSION", -1, "0", NULL);
   ctl->turb_dx_pbl =
     scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "0", NULL);
   ctl->turb_dx_trop =
@@ -5799,7 +5865,7 @@ int read_met_bin(
   FREAD(&version, int,
 	1,
 	in);
-  if (version != 100 && version != 101 && version != 102)
+  if (version != 103)
     ERRMSG("Wrong version of binary data!");
 
   /* Read time... */
@@ -5862,10 +5928,11 @@ int read_met_bin(
   read_met_bin_2d(in, met, met->zs, "ZS");
   read_met_bin_2d(in, met, met->us, "US");
   read_met_bin_2d(in, met, met->vs, "VS");
-  if (version >= 101) {
-    read_met_bin_2d(in, met, met->lsm, "LSM");
-    read_met_bin_2d(in, met, met->sst, "SST");
-  }
+  read_met_bin_2d(in, met, met->ess, "ESS");
+  read_met_bin_2d(in, met, met->nss, "NSS");
+  read_met_bin_2d(in, met, met->shf, "SHF");
+  read_met_bin_2d(in, met, met->lsm, "LSM");
+  read_met_bin_2d(in, met, met->sst, "SST");
   read_met_bin_2d(in, met, met->pbl, "PBL");
   read_met_bin_2d(in, met, met->pt, "PT");
   read_met_bin_2d(in, met, met->tt, "TT");
@@ -5890,13 +5957,10 @@ int read_met_bin(
   read_met_bin_3d(in, ctl, met, met->h2o, "H2O", 0, 1e34f);
   read_met_bin_3d(in, ctl, met, met->o3, "O3", 0, 1e34f);
   read_met_bin_3d(in, ctl, met, met->lwc, "LWC", 0, 1e34f);
-  if (version >= 102)
-    read_met_bin_3d(in, ctl, met, met->rwc, "RWC", 0, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->rwc, "RWC", 0, 1e34f);
   read_met_bin_3d(in, ctl, met, met->iwc, "IWC", 0, 1e34f);
-  if (version >= 102)
-    read_met_bin_3d(in, ctl, met, met->swc, "SWC", 0, 1e34f);
-  if (version >= 101)
-    read_met_bin_3d(in, ctl, met, met->cc, "CC", 0, 1);
+  read_met_bin_3d(in, ctl, met, met->swc, "SWC", 0, 1e34f);
+  read_met_bin_3d(in, ctl, met, met->cc, "CC", 0, 1);
 
   /* Read final flag... */
   int final;
@@ -7390,8 +7454,14 @@ void read_met_periodic(
     met->ts[met->nx - 1][iy] = met->ts[0][iy];
     met->us[met->nx - 1][iy] = met->us[0][iy];
     met->vs[met->nx - 1][iy] = met->vs[0][iy];
+    met->ess[met->nx - 1][iy] = met->ess[0][iy];
+    met->nss[met->nx - 1][iy] = met->nss[0][iy];
+    met->shf[met->nx - 1][iy] = met->shf[0][iy];
     met->lsm[met->nx - 1][iy] = met->lsm[0][iy];
     met->sst[met->nx - 1][iy] = met->sst[0][iy];
+    met->pbl[met->nx - 1][iy] = met->pbl[0][iy];
+    met->cape[met->nx - 1][iy] = met->cape[0][iy];
+    met->cin[met->nx - 1][iy] = met->cin[0][iy];
     for (int ip = 0; ip < met->np; ip++) {
       met->t[met->nx - 1][iy][ip] = met->t[0][iy][ip];
       met->u[met->nx - 1][iy][ip] = met->u[0][iy][ip];
@@ -7647,8 +7717,14 @@ void read_met_sample(
 	help->ts[ix][iy] = 0;
 	help->us[ix][iy] = 0;
 	help->vs[ix][iy] = 0;
+	help->ess[ix][iy] = 0;
+	help->nss[ix][iy] = 0;
+	help->shf[ix][iy] = 0;
 	help->lsm[ix][iy] = 0;
 	help->sst[ix][iy] = 0;
+	help->pbl[ix][iy] = 0;
+	help->cape[ix][iy] = 0;
+	help->cin[ix][iy] = 0;
 	help->t[ix][iy][ip] = 0;
 	help->u[ix][iy][ip] = 0;
 	help->v[ix][iy][ip] = 0;
@@ -7681,8 +7757,14 @@ void read_met_sample(
 	      help->ts[ix][iy] += w * met->ts[ix3][iy2];
 	      help->us[ix][iy] += w * met->us[ix3][iy2];
 	      help->vs[ix][iy] += w * met->vs[ix3][iy2];
+	      help->ess[ix][iy] += w * met->ess[ix3][iy2];
+	      help->nss[ix][iy] += w * met->nss[ix3][iy2];
+	      help->shf[ix][iy] += w * met->shf[ix3][iy2];
 	      help->lsm[ix][iy] += w * met->lsm[ix3][iy2];
 	      help->sst[ix][iy] += w * met->sst[ix3][iy2];
+	      help->pbl[ix][iy] += w * met->pbl[ix3][iy2];
+	      help->cape[ix][iy] += w * met->cape[ix3][iy2];
+	      help->cin[ix][iy] += w * met->cin[ix3][iy2];
 	      help->t[ix][iy][ip] += w * met->t[ix3][iy2][ip2];
 	      help->u[ix][iy][ip] += w * met->u[ix3][iy2][ip2];
 	      help->v[ix][iy][ip] += w * met->v[ix3][iy2][ip2];
@@ -7702,8 +7784,14 @@ void read_met_sample(
 	help->ts[ix][iy] /= wsum;
 	help->us[ix][iy] /= wsum;
 	help->vs[ix][iy] /= wsum;
+	help->ess[ix][iy] /= wsum;
+	help->nss[ix][iy] /= wsum;
+	help->shf[ix][iy] /= wsum;
 	help->lsm[ix][iy] /= wsum;
 	help->sst[ix][iy] /= wsum;
+	help->pbl[ix][iy] /= wsum;
+	help->cape[ix][iy] /= wsum;
+	help->cin[ix][iy] /= wsum;
 	help->t[ix][iy][ip] /= wsum;
 	help->u[ix][iy][ip] /= wsum;
 	help->v[ix][iy][ip] /= wsum;
@@ -7731,8 +7819,14 @@ void read_met_sample(
       met->ts[met->nx][met->ny] = help->ts[ix][iy];
       met->us[met->nx][met->ny] = help->us[ix][iy];
       met->vs[met->nx][met->ny] = help->vs[ix][iy];
+      met->ess[met->nx][met->ny] = help->ess[ix][iy];
+      met->nss[met->nx][met->ny] = help->nss[ix][iy];
+      met->shf[met->nx][met->ny] = help->shf[ix][iy];
       met->lsm[met->nx][met->ny] = help->lsm[ix][iy];
       met->sst[met->nx][met->ny] = help->sst[ix][iy];
+      met->pbl[met->nx][met->ny] = help->pbl[ix][iy];
+      met->cape[met->nx][met->ny] = help->cape[ix][iy];
+      met->cin[met->nx][met->ny] = help->cin[ix][iy];
       met->np = 0;
       for (int ip = 0; ip < help->np; ip += ctl->met_dp) {
 	met->p[met->np] = help->p[ip];
@@ -7836,6 +7930,24 @@ void read_met_surface(
        1.0, 1))
     WARN("Cannot read surface meridional wind!");
 
+  /* Read eastward turbulent surface stress... */
+  if (!read_met_nc_2d
+      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, met->ess, 1.0,
+       1))
+    WARN("Cannot read eastward turbulent surface stress!");
+
+  /* Read northward turbulent surface stress... */
+  if (!read_met_nc_2d
+      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, met->nss, 1.0,
+       1))
+    WARN("Cannot read nothward turbulent surface stress!");
+
+  /* Read surface sensible heat flux... */
+  if (!read_met_nc_2d
+      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, met->shf, 1.0,
+       1))
+    WARN("Cannot read surface sensible heat flux!");
+
   /* Read land-sea mask... */
   if (!read_met_nc_2d
       (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, met->lsm, 1.0,
@@ -7847,6 +7959,13 @@ void read_met_surface(
       (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
        1.0, 1))
     WARN("Cannot read sea surface temperature!");
+
+  /* Read PBL... */
+  if (ctl->met_pbl == 0)
+    if (!read_met_nc_2d
+	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
+	 0.001f, 1))
+      ERRMSG("Cannot read planetary boundary layer!");
 
   /* Read CAPE... */
   if (ctl->met_cape == 0)
@@ -7861,13 +7980,6 @@ void read_met_surface(
 	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
 	 1.0, 1))
       WARN("Cannot read convective inhibition!");
-
-  /* Read PBL... */
-  if (ctl->met_pbl == 0)
-    if (!read_met_nc_2d
-	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
-	 0.001f, 1))
-      ERRMSG("Cannot read planetary boundary layer!");
 }
 
 /*****************************************************************************/
@@ -9810,7 +9922,7 @@ void write_met_bin(
 	 out);
 
   /* Write version of binary data... */
-  int version = 102;
+  int version = 103;
   FWRITE(&version, int,
 	 1,
 	 out);
@@ -9844,6 +9956,9 @@ void write_met_bin(
   write_met_bin_2d(out, met, met->zs, "ZS");
   write_met_bin_2d(out, met, met->us, "US");
   write_met_bin_2d(out, met, met->vs, "VS");
+  write_met_bin_2d(out, met, met->ess, "ESS");
+  write_met_bin_2d(out, met, met->nss, "NSS");
+  write_met_bin_2d(out, met, met->shf, "SHF");
   write_met_bin_2d(out, met, met->lsm, "LSM");
   write_met_bin_2d(out, met, met->sst, "SST");
   write_met_bin_2d(out, met, met->pbl, "PBL");

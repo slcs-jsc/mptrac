@@ -746,6 +746,9 @@
     intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);	\
     intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);	\
     intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->ess, ess, lat, &vs, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->nss, nss, lat, &vs, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->shf, shf, lat, &vs, ci, cw, 0);	\
     intpol_met_space_2d(met, met->lsm, lon, lat, &lsm, ci, cw, 0);	\
     intpol_met_space_2d(met, met->sst, lon, lat, &sst, ci, cw, 0);	\
     intpol_met_space_2d(met, met->pbl, lon, lat, &pbl, ci, cw, 0);	\
@@ -797,6 +800,9 @@
     intpol_met_time_2d(met0, met0->zs, met1, met1->zs, time, lon, lat, &zs, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->us, met1, met1->us, time, lon, lat, &us, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->vs, met1, met1->vs, time, lon, lat, &vs, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->ess, met1, met1->ess, time, lon, lat, &ess, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->nss, met1, met1->nss, time, lon, lat, &nss, ci, cw, 0); \
+    intpol_met_time_2d(met0, met0->shf, met1, met1->shf, time, lon, lat, &shf, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->lsm, met1, met1->lsm, time, lon, lat, &lsm, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->sst, met1, met1->sst, time, lon, lat, &sst, ci, cw, 0); \
     intpol_met_time_2d(met0, met0->pbl, met1, met1->pbl, time, lon, lat, &pbl, ci, cw, 0); \
@@ -908,46 +914,49 @@
 	  "# $14 = surface pressure [hPa]\n"				\
 	  "# $15 = surface temperature [K]\n"				\
 	  "# $16 = surface geopotential height [km]\n"			\
-	  "# $17 = surface zonal wind [m/s]\n"				\
-	  "# $18 = surface meridional wind [m/s]\n"			\
-    	  "# $19 = land-sea mask [1]\n"					\
-    	  "# $20 = sea surface temperature [K]\n");			\
+          "# $17 = surface zonal wind [m/s]\n"				\
+          "# $18 = surface meridional wind [m/s]\n"			\
+	  "# $19 = eastward turbulent surface stress [N/m^2]\n"		\
+          "# $20 = northward turbulent surface stress [N/m^2]\n");	\
   fprintf(out,								\
-	  "# $21 = tropopause pressure [hPa]\n"				\
-	  "# $22 = tropopause geopotential height [km]\n"		\
-	  "# $23 = tropopause temperature [K]\n"			\
-	  "# $24 = tropopause water vapor [ppv]\n"			\
-	  "# $25 = cloud liquid water content [kg/kg]\n"		\
-    	  "# $26 = cloud rain water content [kg/kg]\n"			\
-	  "# $27 = cloud ice water content [kg/kg]\n"			\
-    	  "# $28 = cloud snow water content [kg/kg]\n"			\
-	  "# $29 = cloud cover [1]\n"					\
-	  "# $30 = total column cloud water [kg/m^2]\n");		\
+          "# $21 = surface sensible heat flux [W/m^2]\n"	      	\
+    	  "# $22 = land-sea mask [1]\n"					\
+    	  "# $23 = sea surface temperature [K]\n"			\
+	  "# $24 = tropopause pressure [hPa]\n"				\
+	  "# $25 = tropopause geopotential height [km]\n"		\
+	  "# $26 = tropopause temperature [K]\n"			\
+	  "# $27 = tropopause water vapor [ppv]\n"			\
+	  "# $28 = cloud liquid water content [kg/kg]\n"		\
+    	  "# $29 = cloud rain water content [kg/kg]\n"			\
+	  "# $30 = cloud ice water content [kg/kg]\n");			\
   fprintf(out,								\
-	  "# $31 = cloud top pressure [hPa]\n"				\
-	  "# $32 = cloud bottom pressure [hPa]\n"			\
-	  "# $33 = pressure at lifted condensation level (LCL) [hPa]\n"	\
-	  "# $34 = pressure at level of free convection (LFC) [hPa]\n"	\
-	  "# $35 = pressure at equilibrium level (EL) [hPa]\n"		\
-	  "# $36 = convective available potential energy (CAPE) [J/kg]\n" \
-	  "# $37 = convective inhibition (CIN) [J/kg]\n"		\
-	  "# $38 = relative humidity over water [%%]\n"			\
-	  "# $39 = relative humidity over ice [%%]\n"			\
-	  "# $40 = dew point temperature [K]\n");			\
+    	  "# $31 = cloud snow water content [kg/kg]\n"			\
+	  "# $32 = cloud cover [1]\n"					\
+	  "# $33 = total column cloud water [kg/m^2]\n"			\
+	  "# $34 = cloud top pressure [hPa]\n"				\
+	  "# $35 = cloud bottom pressure [hPa]\n"			\
+	  "# $36 = pressure at lifted condensation level (LCL) [hPa]\n"	\
+	  "# $37 = pressure at level of free convection (LFC) [hPa]\n"	\
+	  "# $38 = pressure at equilibrium level (EL) [hPa]\n"		\
+	  "# $39 = convective available potential energy (CAPE) [J/kg]\n" \
+	  "# $40 = convective inhibition (CIN) [J/kg]\n");		\
   fprintf(out,								\
-	  "# $41 = frost point temperature [K]\n"			\
-	  "# $42 = NAT temperature [K]\n"				\
-	  "# $43 = HNO3 volume mixing ratio [ppv]\n"			\
-	  "# $44 = OH volume mixing ratio [ppv]\n"			\
-	  "# $45 = H2O2 volume mixing ratio [ppv]\n"			\
-	  "# $46 = HO2 volume mixing ratio [ppv]\n"			\
-	  "# $47 = O(1D) volume mixing ratio [ppv]\n"			\
-	  "# $48 = boundary layer pressure [hPa]\n"			\
-	  "# $49 = total column ozone [DU]\n"				\
-	  "# $50 = number of data points\n");				\
+	  "# $41 = relative humidity over water [%%]\n"			\
+	  "# $42 = relative humidity over ice [%%]\n"			\
+	  "# $43 = dew point temperature [K]\n"				\
+	  "# $44 = frost point temperature [K]\n"			\
+	  "# $45 = NAT temperature [K]\n"				\
+	  "# $46 = HNO3 volume mixing ratio [ppv]\n"			\
+	  "# $47 = OH volume mixing ratio [ppv]\n"			\
+	  "# $48 = H2O2 volume mixing ratio [ppv]\n"			\
+	  "# $49 = HO2 volume mixing ratio [ppv]\n"			\
+	  "# $50 = O(1D) volume mixing ratio [ppv]\n");			\
   fprintf(out,								\
-	  "# $51 = number of tropopause data points\n"			\
-	  "# $52 = number of CAPE data points\n");
+	  "# $51 = boundary layer pressure [hPa]\n"			\
+	  "# $52 = total column ozone [DU]\n"				\
+	  "# $53 = number of data points\n"				\
+	  "# $54 = number of tropopause data points\n"			\
+	  "# $55 = number of CAPE data points\n");
 
 /**
  * @brief Macro to determine the minimum of two values.
@@ -2227,6 +2236,15 @@ typedef struct {
   /*! Quantity array index for surface meridional wind. */
   int qnt_vs;
 
+  /*! Quantity array index for eastward turbulent surface stress. */
+  int qnt_ess;
+
+  /*! Quantity array index for northward turbulent surface stress. */
+  int qnt_nss;
+
+  /*! Quantity array index for surface sensible heat flux. */
+  int qnt_shf;
+
   /*! Quantity array index for land-sea mask. */
   int qnt_lsm;
 
@@ -2637,6 +2655,9 @@ typedef struct {
 
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
+
+  /*! Diffusion scheme (0=off, 1=Hanna). */
+  int diffusion;
 
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
   double turb_dx_pbl;
@@ -3387,6 +3408,15 @@ typedef struct {
 
   /*! Surface meridional wind [m/s]. */
   float vs[EX][EY];
+
+  /*! Eastward turbulent surface stress [N/m^2]. */
+  float ess[EX][EY];
+
+  /*! Northward turbulent surface stress [N/m^2]. */
+  float nss[EX][EY];
+
+  /*! Surface sensible heat flux [W/m^2]. */
+  float shf[EX][EY];
 
   /*! Land-sea mask [1]. */
   float lsm[EX][EY];
@@ -5006,6 +5036,14 @@ void module_decay(
   const clim_t * clim,
   atm_t * atm,
   const double *dt);
+
+
+void module_diffusion(
+  const ctl_t * ctl,
+  atm_t * atm,
+  cache_t * cache,
+  const double *dt);
+
 
 /**
  * @brief Simulate mesoscale diffusion for atmospheric particles.
