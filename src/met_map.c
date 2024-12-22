@@ -50,14 +50,14 @@ int main(
 
   FILE *out;
 
-  static double *timem, ps, *psm, ts, *tsm, zs, *zsm, us, *usm, vs, *vsm, lsm,
-    *lsmm, sst, *sstm, pbl, *pblm, pt, *ptm, t, *pm, *tm, u, *um, v, *vm, w,
-    *wm, h2o, *h2om, h2ot, *h2otm, o3, *o3m, *hno3m, *ohm, *h2o2m, *ho2m,
-    *o1dm, *tdewm, *ticem, *tnatm, lwc, *lwcm, rwc, *rwcm, iwc, *iwcm, swc,
-    *swcm, cc, *ccm, z, *zm, pv, *pvm, zt, *ztm, tt, *ttm, pct, *pctm, pcb,
-    *pcbm, cl, *clm, plcl, *plclm, plfc, *plfcm, pel, *pelm, cape, *capem,
-    cin, *cinm, o3c, *o3cm, *rhm, *rhicem, ptop, pbot, t0, lon, lons[NX], lat,
-    lats[NY];
+  static double *timem, ps, *psm, ts, *tsm, zs, *zsm, us, *usm, vs, *vsm,
+    ess, *essm, nss, *nssm, shf, *shfm, lsm, *lsmm, sst, *sstm, pbl, *pblm,
+    pt, *ptm, t, *pm, *tm, u, *um, v, *vm, w, *wm, h2o, *h2om, h2ot, *h2otm,
+    o3, *o3m, *hno3m, *ohm, *h2o2m, *ho2m, *o1dm, *tdewm, *ticem, *tnatm,
+    lwc, *lwcm, rwc, *rwcm, iwc, *iwcm, swc, *swcm, cc, *ccm, z, *zm,
+    pv, *pvm, zt, *ztm, tt, *ttm, pct, *pctm, pcb, *pcbm, cl, *clm,
+    plcl, *plclm, plfc, *plfcm, pel, *pelm, cape, *capem, cin, *cinm,
+    o3c, *o3cm, *rhm, *rhicem, ptop, pbot, t0, lon, lons[NX], lat, lats[NY];
 
   static int *np, *npc, *npt, nx, ny;
 
@@ -75,6 +75,12 @@ int main(
   ALLOC(usm, double,
 	NX * NY);
   ALLOC(vsm, double,
+	NX * NY);
+  ALLOC(essm, double,
+	NX * NY);
+  ALLOC(nssm, double,
+	NX * NY);
+  ALLOC(shfm, double,
 	NX * NY);
   ALLOC(lsmm, double,
 	NX * NY);
@@ -257,6 +263,9 @@ int main(
 	zsm[iy * nx + ix] += zs;
 	usm[iy * nx + ix] += us;
 	vsm[iy * nx + ix] += vs;
+	essm[iy * nx + ix] += ess;
+	nssm[iy * nx + ix] += nss;
+	shfm[iy * nx + ix] += shf;
 	lsmm[iy * nx + ix] += lsm;
 	sstm[iy * nx + ix] += sst;
 	pblm[iy * nx + ix] += pbl;
@@ -310,8 +319,8 @@ int main(
     fprintf(out, "\n");
     for (int ix = 0; ix < nx; ix++)
       fprintf(out,
-	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[iy * nx + ix] / np[iy * nx + ix],
 	      Z(pm[iy * nx + ix] / np[iy * nx + ix]), lons[ix], lats[iy],
@@ -329,6 +338,9 @@ int main(
 	      zsm[iy * nx + ix] / np[iy * nx + ix],
 	      usm[iy * nx + ix] / np[iy * nx + ix],
 	      vsm[iy * nx + ix] / np[iy * nx + ix],
+	      essm[iy * nx + ix] / np[iy * nx + ix],
+	      nssm[iy * nx + ix] / np[iy * nx + ix],
+	      shfm[iy * nx + ix] / np[iy * nx + ix],
 	      lsmm[iy * nx + ix] / np[iy * nx + ix],
 	      sstm[iy * nx + ix] / np[iy * nx + ix],
 	      ptm[iy * nx + ix] / npt[iy * nx + ix],
@@ -375,6 +387,9 @@ int main(
   free(zsm);
   free(usm);
   free(vsm);
+  free(essm);
+  free(nssm);
+  free(shfm);
   free(lsmm);
   free(sstm);
   free(pblm);

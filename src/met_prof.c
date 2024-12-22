@@ -50,8 +50,9 @@ int main(
   static double timem[NZ], z, lon, lonm[NZ], lat, latm[NZ], t, tm[NZ], u,
     um[NZ], v, vm[NZ], w, wm[NZ], h2o, h2om[NZ], h2ot, h2otm[NZ], o3, o3m[NZ],
     lwc, lwcm[NZ], rwc, rwcm[NZ], iwc, iwcm[NZ], swc, swcm[NZ], cc, ccm[NZ],
-    ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ], vs, vsm[NZ], lsm,
-    lsmm[NZ], sst, sstm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb,
+    ps, psm[NZ], ts, tsm[NZ], zs, zsm[NZ], us, usm[NZ], vs, vsm[NZ],
+    ess, essm[NZ], nss, nssm[NZ], shf, shfm[NZ], lsm, lsmm[NZ],
+    sst, sstm[NZ], pbl, pblm[NZ], pt, ptm[NZ], pct, pctm[NZ], pcb,
     pcbm[NZ], cl, clm[NZ], plcl, plclm[NZ], plfc, plfcm[NZ], pel, pelm[NZ],
     cape, capem[NZ], cin, cinm[NZ], o3c, o3cm[NZ], tt, ttm[NZ], zm[NZ], zt,
     ztm[NZ], pv, pvm[NZ], plev[NZ], rhm[NZ], rhicem[NZ], tdewm[NZ], ticem[NZ],
@@ -147,6 +148,9 @@ int main(
 	    zsm[iz] += zs;
 	    usm[iz] += us;
 	    vsm[iz] += vs;
+	    essm[iz] += ess;
+	    nssm[iz] += nss;
+	    shfm[iz] += shf;
 	    lsmm[iz] += lsm;
 	    sstm[iz] += sst;
 	    pblm[iz] += pbl;
@@ -199,15 +203,16 @@ int main(
   fprintf(out, "\n");
   for (iz = 0; iz < nz; iz++)
     fprintf(out,
-	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
+	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	    " %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	    timem[iz] / np[iz], Z(plev[iz]), lonm[iz] / np[iz],
 	    latm[iz] / np[iz], plev[iz], tm[iz] / np[iz], um[iz] / np[iz],
 	    vm[iz] / np[iz], wm[iz] / np[iz], h2om[iz] / np[iz],
 	    o3m[iz] / np[iz], zm[iz] / np[iz], pvm[iz] / np[iz],
 	    psm[iz] / np[iz], tsm[iz] / np[iz], zsm[iz] / np[iz],
-	    usm[iz] / np[iz], vsm[iz] / np[iz], lsmm[iz] / np[iz],
+	    usm[iz] / np[iz], vsm[iz] / np[iz], essm[iz] / np[iz],
+	    nssm[iz] / np[iz], shfm[iz] / np[iz], lsmm[iz] / np[iz],
 	    sstm[iz] / np[iz], ptm[iz] / npt[iz], ztm[iz] / npt[iz],
 	    ttm[iz] / npt[iz], h2otm[iz] / npt[iz],
 	    lwcm[iz] / np[iz], rwcm[iz] / np[iz], iwcm[iz] / np[iz],

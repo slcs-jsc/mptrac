@@ -51,7 +51,8 @@ int main(
   FILE *out;
 
   static double timem[NZ][NY], psm[NZ][NY], tsm[NZ][NY], zsm[NZ][NY],
-    usm[NZ][NY], vsm[NZ][NY], lsmm[NZ][NY], sstm[NZ][NY], pblm[NZ][NY],
+    usm[NZ][NY], vsm[NZ][NY], essm[NZ][NY], nssm[NZ][NY], shfm[NZ][NY],
+    lsmm[NZ][NY], sstm[NZ][NY], pblm[NZ][NY],
     ptm[NZ][NY], pctm[NZ][NY], pcbm[NZ][NY], clm[NZ][NY], plclm[NZ][NY],
     plfcm[NZ][NY], pelm[NZ][NY], capem[NZ][NY], cinm[NZ][NY], o3cm[NZ][NY],
     ttm[NZ][NY], ztm[NZ][NY], tm[NZ][NY], um[NZ][NY], vm[NZ][NY], wm[NZ][NY],
@@ -59,9 +60,9 @@ int main(
     rwcm[NZ][NY], iwcm[NZ][NY], swcm[NZ][NY], ccm[NZ][NY], zm[NZ][NY],
     rhm[NZ][NY], rhicem[NZ][NY], tdewm[NZ][NY], ticem[NZ][NY], tnatm[NZ][NY],
     hno3m[NZ][NY], ohm[NZ][NY], h2o2m[NZ][NY], ho2m[NZ][NY], o1dm[NZ][NY], z,
-    zt, tt, plev[NZ], ps, ts, zs, us, vs, lsm, sst, pbl, pt, pct, pcb, plcl,
-    plfc, pel, cape, cin, o3c, cl, t, u, v, w, pv, h2o, h2ot, o3, lwc, rwc,
-    iwc, swc, cc, lat, lats[NY], lonm[NZ][NY], cw[3];
+    zt, tt, plev[NZ], ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl,
+    pt, pct, pcb, plcl, plfc, pel, cape, cin, o3c, cl, t, u, v, w, pv,
+    h2o, h2ot, o3, lwc, rwc, iwc, swc, cc, lat, lats[NY], lonm[NZ][NY], cw[3];
 
   static int np[NZ][NY], npc[NZ][NY], npt[NZ][NY], ny, nz, ci[3];
 
@@ -158,6 +159,9 @@ int main(
 	    zsm[iz][iy] += zs;
 	    usm[iz][iy] += us;
 	    vsm[iz][iy] += vs;
+	    essm[iz][iy] += ess;
+	    nssm[iz][iy] += nss;
+	    shfm[iz][iy] += shf;
 	    lsmm[iz][iy] += lsm;
 	    sstm[iz][iy] += sst;
 	    pblm[iz][iy] += pbl;
@@ -219,7 +223,7 @@ int main(
       fprintf(out,
 	      "%.2f %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
 	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g"
-	      " %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
+	      " %g %g %g %g %g %g %g %g %g %g %g %g %g %d %d %d\n",
 	      timem[iz][iy] / np[iz][iy], Z(plev[iz]),
 	      lonm[iz][iy] / np[iz][iy], lats[iy],
 	      plev[iz], tm[iz][iy] / np[iz][iy], um[iz][iy] / np[iz][iy],
@@ -228,7 +232,9 @@ int main(
 	      zm[iz][iy] / np[iz][iy], pvm[iz][iy] / np[iz][iy],
 	      psm[iz][iy] / np[iz][iy], tsm[iz][iy] / np[iz][iy],
 	      zsm[iz][iy] / np[iz][iy], usm[iz][iy] / np[iz][iy],
-	      vsm[iz][iy] / np[iz][iy], lsmm[iz][iy] / np[iz][iy],
+	      vsm[iz][iy] / np[iz][iy], essm[iz][iy] / np[iz][iy],
+	      nssm[iz][iy] / np[iz][iy], shfm[iz][iy] / np[iz][iy],
+	      lsmm[iz][iy] / np[iz][iy],
 	      sstm[iz][iy] / np[iz][iy], ptm[iz][iy] / npt[iz][iy],
 	      ztm[iz][iy] / npt[iz][iy], ttm[iz][iy] / npt[iz][iy],
 	      h2otm[iz][iy] / npt[iz][iy], lwcm[iz][iy] / np[iz][iy],
