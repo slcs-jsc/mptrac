@@ -229,18 +229,20 @@ int main(
 	  if (ctl.advect > 0)
 	    module_advect(&ctl, met0, met1, atm, dt);
 
-	  /* Diffusion... */
-	  if (ctl.diffusion > 0)
-	    module_diffusion(&ctl, met0, met1, atm, cache, dt);
-
 	  /* Turbulent diffusion... */
-	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
-	      || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0)
+	  if (ctl.diffusion == 1
+	      && (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
+		  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0))
 	    module_diffusion_turb(&ctl, clim, met0, met1, atm, dt);
 
 	  /* Mesoscale diffusion... */
-	  if (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0)
+	  if (ctl.diffusion == 1
+	      && (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0))
 	    module_diffusion_meso(&ctl, met0, met1, atm, cache, dt);
+
+	  /* Diffusion... */
+	  if (ctl.diffusion == 2)
+	    module_diffusion_pbl(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Convection... */
 	  if (ctl.conv_cape >= 0
