@@ -34,6 +34,11 @@ dir=$4/${year}/${mon}
 res=$5
 dt=$6
 
+# Create Python environment...
+python3 -m venv venv
+source ./venv/bin/activate
+pip install "cdsapi>=0.7.2"
+
 # Set time string...
 tstr=$(seq 0 "$dt" 23 | awk '{printf("%02d:00:00/", $1)}' | awk '{print substr($1,1,length($1)-1)}')
 

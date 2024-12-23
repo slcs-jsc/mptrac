@@ -4,19 +4,9 @@ Here we provide some example Python scripts that can be used to plot MPTRAC outp
 
 ## Preparations
 
-Create a virtual environment for python in your home directory:
+The script `plot.sh` creates and activates a Python virtual environment (`venv`) in your working directory.
 
-```
-    python3 -m venv ~/venv
-```
-
-Activate the environment:
-
-```
-    source ~/venv/bin/activate
-```
-
-Install the python modules required for ingesting and plotting the data:
+Additionally, it installs the necessary Python modules for data ingestion and plotting:
 
 ```
     pip install basemap basemap-data cartopy matplotlib numpy pandas scipy xarray
@@ -26,7 +16,7 @@ Install the python modules required for ingesting and plotting the data:
 
 Three programs are provided for plotting air parcel and grid output, `plot_atm.py`, `plot_atm_3d.py` and `plot_grid.py`.
 
-Call the python plot scripts with parameter `datadir` (the directory of the data files) and `plotdir` (the directory where the plots will be written to), e.g., for `plot_atm.py` it would be:
+Call the Python plot scripts with parameter `datadir` (the directory of the data files) and `plotdir` (the directory where the plots will be written to), e.g., for `plot_atm.py` it would be:
 
 ```
     python ./plot_atm.py ../example/data pythonplots
@@ -34,7 +24,7 @@ Call the python plot scripts with parameter `datadir` (the directory of the data
 
 ## Plotting of trajectories and meteo map output of MPTRAC
 
-To plot the trajectory data files created with `atm_select`, call the python script `atm_traj.py`:
+To plot the trajectory data files created with `atm_select`, call the Python script `atm_traj.py`:
 
 ```
     python3 plot_traj.py
@@ -42,7 +32,7 @@ To plot the trajectory data files created with `atm_select`, call the python scr
 
 Here, a single trajectory on a map is plotted from the data file `traj_5450.tab` provided in the directory `data`. 
 
-To plot meteo data files created with `met_map` call the python script `plot_met_map.py`:
+To plot meteo data files created with `met_map` call the Python script `plot_met_map.py`:
 
 ```
     python3 plot_met_map.py
