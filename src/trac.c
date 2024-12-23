@@ -231,7 +231,7 @@ int main(
 
 	  /* Diffusion... */
 	  if (ctl.diffusion > 0)
-	    module_diffusion(&ctl, atm, cache, dt);
+	    module_diffusion(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Turbulent diffusion... */
 	  if (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
