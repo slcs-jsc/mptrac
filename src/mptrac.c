@@ -2807,6 +2807,8 @@ void module_decay(
 
 void module_diffusion(
   const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
   atm_t *atm,
   cache_t *cache,
   const double *dt) {
@@ -2829,22 +2831,106 @@ void module_diffusion(
   PARTICLE_LOOP(0, atm->np, 1,
 		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
 
-    const double sig_u = 0.25;	// m/s
-    const double sig_w = 0.1;	// m/s
-    const double tau_u = 300.;	// s
-    const double tau_w = 100.;	// s
+    double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1, tau_u = 300., tau_w =
+      100.;
+
+    /* Get surface and PBL pressure... */
+    double pbl, ps;
+    INTPOL_INIT;
+    INTPOL_2D(ps, 1);
+    INTPOL_2D(pbl, 0);
+
+    /* Boundary layer... */
+    if (atm->p[ip] >= pbl) {
+
+      /* Calculate heights... */
+      const double p = MIN(atm->p[ip], ps);
+      const double zs = Z(ps);
+      const double z = 1e3 * (Z(p) - zs);
+      const double zi = 1e3 * (Z(pbl) - zs);
+      const double zratio = z / zi;
+
+      /* Calculate friction velocity... */
+      double ess, nss, h2o, t;
+      INTPOL_2D(ess, 0);
+      INTPOL_2D(nss, 0);
+      INTPOL_3D(t, 1);
+      INTPOL_3D(h2o, 0);
+      const double rho = RHO(p, TVIRT(t, h2o));
+      const double tau = sqrt(SQR(ess) + SQR(nss));
+      const double ustar = sqrt(tau / rho);
+
+      /* Get surface sensible heat flux... */
+      double shf;
+      INTPOL_2D(shf, 1);
+
+      /* Stable or neutral conditions... */
+      if (shf <= 0) {
+
+	/* Calcalute turbulent velocity variances... */
+	sig_u = 2.0 * ustar * (1.0 - zratio);
+	sig_w = 1.3 * ustar * (1.0 - zratio);
+
+	/* Calculate derivative dsig_w/dz... */
+	dsigw_dz = -1.3 * ustar / zi;
+
+	/* Calcalute Lagrangian timescales... */
+	tau_u = 0.07 * zi / sig_u * sqrt(zratio);
+	tau_w = 0.1 * zi / sig_w * pow(zratio, 0.8);
+      }
+
+      /* Unstable conditions... */
+      else {
+
+	/* Convective velocity... */
+	const double wstar =
+	  pow(G0 / THETAVIRT(p, t, h2o) * shf / (rho * CPD) * zi, 1. / 3.);
+
+	/* Calcalute turbulent velocity variances... */
+	sig_u = sqrt(0.4 * SQR(wstar) + (5.0 - 4.0 * zratio) * SQR(ustar));
+	sig_w = sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zratio)
+		     * pow(zratio,
+			   2. / 3.) + (1.8 - 1.4 * zratio) * SQR(ustar));
+
+	/* Calculate derivative dsig_w/dz... */
+	dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ustar) + SQR(wstar)
+				       * (0.8 *
+					  pow(MAX(zratio, 1e-3),
+					      -1. / 3.) - 1.8 * pow(zratio,
+								    2. /
+								    3.)));
+
+	/* Calcalute Lagrangian timescales... */
+	const double C0 = 3.0;	// TODO: universal constant, typically 3...6, NAME model uses 3?
+	const double eps =
+	  (1.5 - 1.2 * pow(zratio, 1. / 3.)) * SQR(wstar) * wstar / zi +
+	  SQR(ustar) * ustar * (1. - 0.8 * zratio) / (KARMAN * z);
+	tau_u = 2 * SQR(sig_u) / (C0 * eps);	// TODO: use a more simple form as in FLEXPART?
+	tau_w = 2 * SQR(sig_w) / (C0 * eps);	// 0.15*zi/sig_w*(1.-exp(-5.0*zratio)) or 0.59 * z/sig_w
+      }
+    }
+
+    /* Set minimum values... */
+    sig_u = MAX(sig_u, 0.25);
+    sig_w = MAX(sig_w, 0.1);
+    tau_u = MAX(tau_u, 300.);
+    tau_w = MAX(tau_w, 100.);
 
     /* Update perturbations (Ryall and Maryon, 1998)... */
     cache->uvwp[ip][0]
       = (float) (cache->uvwp[ip][0] * (1. - fabs(dt[ip]) / tau_u)
-		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u)) * rs[3 * ip]);
+		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u))
+		 * rs[3 * ip]);
     cache->uvwp[ip][1]
       = (float) (cache->uvwp[ip][1] * (1. - fabs(dt[ip]) / tau_u)
-		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u)) * rs[3 * ip +
-								     1]);
+		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u))
+		 * rs[3 * ip + 1]);
     cache->uvwp[ip][2]
       = (float) (cache->uvwp[ip][2] * (1. - fabs(dt[ip]) / tau_w)
-		 + sqrt(2. * SQR(sig_w) * fabs(dt[ip] / tau_w)) * rs[3 * ip + 2]);	// TODO: add drift correction
+		 + sqrt(2. * SQR(sig_w) * fabs(dt[ip] / tau_w)) * rs[3 * ip +
+								     2]
+		 + dt[ip] / sig_w * dsigw_dz * (SQR(sig_w) +
+						SQR(cache->uvwp[ip][2])));
 
     /* Calculate horizontal mesoscale wind fluctuations... */
     atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);

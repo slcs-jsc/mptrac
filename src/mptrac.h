@@ -188,6 +188,11 @@
 #define LV 2501000.
 #endif
 
+/*! Karman's constant. */
+#ifndef KARMAN
+#define KARMAN 0.40
+#endif
+
 /*! Boltzmann constant [kg m^2/(K s^2)]. */
 #ifndef KB
 #define KB 1.3806504e-23
@@ -5074,6 +5079,8 @@ void module_decay(
 
 void module_diffusion(
   const ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
   atm_t * atm,
   cache_t * cache,
   const double *dt);
