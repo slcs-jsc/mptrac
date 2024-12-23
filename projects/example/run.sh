@@ -34,11 +34,8 @@ QNT_NAME[8] = m
 METBASE = ../../tests/data/ei
 DT_MET = 86400.0
 
-# Set diffusivities...
-TURB_DX_TROP = 50.0
-TURB_DZ_STRAT = 0.1
-TURB_MESOX = 0.16
-TURB_MESOZ = 0.16
+# Select diffusion scheme...
+DIFFUSION = 1
 
 # Activate air parcel output...
 ATM_BASENAME = atm

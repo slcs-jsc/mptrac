@@ -2661,7 +2661,7 @@ typedef struct {
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
 
-  /*! Diffusion scheme (0=off, 1=Hanna). */
+  /*! Diffusion scheme (0=off, 1=fixed-K, 2=PBL). */
   int diffusion;
 
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
@@ -5042,16 +5042,6 @@ void module_decay(
   atm_t * atm,
   const double *dt);
 
-
-void module_diffusion(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  const double *dt);
-
-
 /**
  * @brief Simulate mesoscale diffusion for atmospheric particles.
  *
@@ -5087,6 +5077,47 @@ void module_diffusion(
  * @author Lars Hoffmann
  */
 void module_diffusion_meso(
+  const ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  cache_t * cache,
+  const double *dt);
+
+/**
+ * @brief Computes particle diffusion within the planetary boundary layer (PBL).
+ *
+ * This function handles the effects of turbulence on particles within
+ * the PBL.  It calculates turbulent velocity variances, Lagrangian
+ * timescales, and updates particle positions and perturbations based
+ * on random fluctuations and boundary layer physics.
+ *
+ * @param ctl    Pointer to the control structure containing model settings.
+ * @param met0   Pointer to the meteorological data structure for the current timestep.
+ * @param met1   Pointer to the meteorological data structure for the next timestep.
+ * @param atm    Pointer to the atmospheric data structure containing particle states.
+ * @param cache  Pointer to the cache structure for storing intermediate values.
+ * @param dt     Pointer to the time step array for particles.
+ *
+ * The function:
+ * - Allocates memory for random numbers and generates them using `module_rng`.
+ * - Loops over all particles to compute their behavior within the boundary layer.
+ * - Handles both stable/neutral and unstable conditions based on the surface sensible heat flux.
+ * - Calculates turbulent velocity variances (`sig_u`, `sig_w`), their vertical derivatives, 
+ *   and Lagrangian timescales (`tau_u`, `tau_w`).
+ * - Updates particle velocity perturbations and positions using turbulent diffusion equations.
+ *
+ * The function uses OpenACC directives for GPU acceleration.
+ * 
+ * @note The function handles edge cases like zero diffusivity and imposes minimum
+ *       limits on calculated values to ensure stability.
+ *
+ * @warning Ensure that all input pointers are properly initialized and accessible 
+ *          before calling this function.
+ *
+ * @author Lars Hoffmann
+ */
+void module_diffusion_pbl(
   const ctl_t * ctl,
   met_t * met0,
   met_t * met1,

@@ -2801,7 +2801,100 @@ void module_decay(
 
 /*****************************************************************************/
 
-void module_diffusion(
+void module_diffusion_meso(
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  double *rs;
+  ALLOC(rs, double,
+	3 * NP + 1);
+#ifdef _OPENACC
+#pragma acc enter data create(rs[:3 * NP])
+#endif
+
+  /* Create random numbers... */
+  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
+
+    /* Get indices... */
+    const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
+    const int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+    const int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
+
+    /* Get standard deviations of local wind data... */
+    float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
+    for (int i = 0; i < 2; i++)
+      for (int j = 0; j < 2; j++)
+	for (int k = 0; k < 2; k++) {
+	  umean += met0->u[ix + i][iy + j][iz + k];
+	  usig += SQR(met0->u[ix + i][iy + j][iz + k]);
+	  vmean += met0->v[ix + i][iy + j][iz + k];
+	  vsig += SQR(met0->v[ix + i][iy + j][iz + k]);
+	  wmean += met0->w[ix + i][iy + j][iz + k];
+	  wsig += SQR(met0->w[ix + i][iy + j][iz + k]);
+
+	  umean += met1->u[ix + i][iy + j][iz + k];
+	  usig += SQR(met1->u[ix + i][iy + j][iz + k]);
+	  vmean += met1->v[ix + i][iy + j][iz + k];
+	  vsig += SQR(met1->v[ix + i][iy + j][iz + k]);
+	  wmean += met1->w[ix + i][iy + j][iz + k];
+	  wsig += SQR(met1->w[ix + i][iy + j][iz + k]);
+	}
+    usig = usig / 16.f - SQR(umean / 16.f);
+    usig = (usig > 0 ? sqrtf(usig) : 0);
+    vsig = vsig / 16.f - SQR(vmean / 16.f);
+    vsig = (vsig > 0 ? sqrtf(vsig) : 0);
+    wsig = wsig / 16.f - SQR(wmean / 16.f);
+    wsig = (wsig > 0 ? sqrtf(wsig) : 0);
+
+    /* Set temporal correlations for mesoscale fluctuations... */
+    const double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+    const double r2 = sqrt(1 - r * r);
+
+    /* Calculate horizontal mesoscale wind fluctuations... */
+    if (ctl->turb_mesox > 0) {
+      cache->uvwp[ip][0] =
+	(float) (r * cache->uvwp[ip][0] +
+		 r2 * rs[3 * ip] * ctl->turb_mesox * usig);
+      atm->lon[ip] +=
+	DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
+
+      cache->uvwp[ip][1] =
+	(float) (r * cache->uvwp[ip][1] +
+		 r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
+      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
+    }
+
+    /* Calculate vertical mesoscale wind fluctuations... */
+    if (ctl->turb_mesoz > 0) {
+      cache->uvwp[ip][2] =
+	(float) (r * cache->uvwp[ip][2] +
+		 r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
+      atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
+    }
+  }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete (rs)
+#endif
+  free(rs);
+}
+
+/*****************************************************************************/
+
+void module_diffusion_pbl(
   const ctl_t *ctl,
   met_t *met0,
   met_t *met1,
@@ -2827,8 +2920,8 @@ void module_diffusion(
   PARTICLE_LOOP(0, atm->np, 1,
 		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
 
-    double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1, tau_u = 300., tau_w =
-      100.;
+    double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1,
+      tau_u = 300., tau_w = 100.;
 
     /* Get surface and PBL pressure... */
     double pbl, ps;
@@ -2932,99 +3025,6 @@ void module_diffusion(
     atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
     atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
     atm->p[ip] += DZ2DP(cache->uvwp[ip][2] * dt[ip] / 1000., atm->p[ip]);
-  }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete (rs)
-#endif
-  free(rs);
-}
-
-/*****************************************************************************/
-
-void module_diffusion_meso(
-  const ctl_t *ctl,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm,
-  cache_t *cache,
-  const double *dt) {
-
-  /* Set timer... */
-  SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  double *rs;
-  ALLOC(rs, double,
-	3 * NP + 1);
-#ifdef _OPENACC
-#pragma acc enter data create(rs[:3 * NP])
-#endif
-
-  /* Create random numbers... */
-  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
-
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
-
-    /* Get indices... */
-    const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-    const int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
-    const int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
-
-    /* Get standard deviations of local wind data... */
-    float umean = 0, usig = 0, vmean = 0, vsig = 0, wmean = 0, wsig = 0;
-    for (int i = 0; i < 2; i++)
-      for (int j = 0; j < 2; j++)
-	for (int k = 0; k < 2; k++) {
-	  umean += met0->u[ix + i][iy + j][iz + k];
-	  usig += SQR(met0->u[ix + i][iy + j][iz + k]);
-	  vmean += met0->v[ix + i][iy + j][iz + k];
-	  vsig += SQR(met0->v[ix + i][iy + j][iz + k]);
-	  wmean += met0->w[ix + i][iy + j][iz + k];
-	  wsig += SQR(met0->w[ix + i][iy + j][iz + k]);
-
-	  umean += met1->u[ix + i][iy + j][iz + k];
-	  usig += SQR(met1->u[ix + i][iy + j][iz + k]);
-	  vmean += met1->v[ix + i][iy + j][iz + k];
-	  vsig += SQR(met1->v[ix + i][iy + j][iz + k]);
-	  wmean += met1->w[ix + i][iy + j][iz + k];
-	  wsig += SQR(met1->w[ix + i][iy + j][iz + k]);
-	}
-    usig = usig / 16.f - SQR(umean / 16.f);
-    usig = (usig > 0 ? sqrtf(usig) : 0);
-    vsig = vsig / 16.f - SQR(vmean / 16.f);
-    vsig = (vsig > 0 ? sqrtf(vsig) : 0);
-    wsig = wsig / 16.f - SQR(wmean / 16.f);
-    wsig = (wsig > 0 ? sqrtf(wsig) : 0);
-
-    /* Set temporal correlations for mesoscale fluctuations... */
-    const double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
-    const double r2 = sqrt(1 - r * r);
-
-    /* Calculate horizontal mesoscale wind fluctuations... */
-    if (ctl->turb_mesox > 0) {
-      cache->uvwp[ip][0] =
-	(float) (r * cache->uvwp[ip][0] +
-		 r2 * rs[3 * ip] * ctl->turb_mesox * usig);
-      atm->lon[ip] +=
-	DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
-
-      cache->uvwp[ip][1] =
-	(float) (r * cache->uvwp[ip][1] +
-		 r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
-      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
-    }
-
-    /* Calculate vertical mesoscale wind fluctuations... */
-    if (ctl->turb_mesoz > 0) {
-      cache->uvwp[ip][2] =
-	(float) (r * cache->uvwp[ip][2] +
-		 r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
-      atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
-    }
   }
 
   /* Free... */
@@ -5389,10 +5389,12 @@ void read_ctl(
   /* Diffusion parameters... */
   ctl->diffusion
     = (int) scan_ctl(filename, argc, argv, "DIFFUSION", -1, "0", NULL);
+  if (ctl->diffusion < 0 || ctl->diffusion > 2)
+    ERRMSG("Set DIFFUSION to 0, 1 or 2!");
   ctl->turb_dx_pbl =
-    scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "0", NULL);
+    scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "50", NULL);
   ctl->turb_dx_trop =
-    scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "0", NULL);
+    scan_ctl(filename, argc, argv, "TURB_DX_TROP", -1, "50", NULL);
   ctl->turb_dx_strat =
     scan_ctl(filename, argc, argv, "TURB_DX_STRAT", -1, "0", NULL);
   ctl->turb_dz_pbl =
@@ -5400,11 +5402,11 @@ void read_ctl(
   ctl->turb_dz_trop =
     scan_ctl(filename, argc, argv, "TURB_DZ_TROP", -1, "0", NULL);
   ctl->turb_dz_strat =
-    scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0", NULL);
+    scan_ctl(filename, argc, argv, "TURB_DZ_STRAT", -1, "0.1", NULL);
   ctl->turb_mesox =
-    scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESOX", -1, "0.16", NULL);
   ctl->turb_mesoz =
-    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0", NULL);
+    scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
   /* Convection... */
   ctl->conv_cape
