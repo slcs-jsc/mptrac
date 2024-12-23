@@ -20,10 +20,12 @@ projects/meteo/era5/
 projects/meteo/gfs/
 projects/meteo/merra2/
 projects/meteo/ncep/
+projects/meteo/venv/
 !projects/paraview/
 projects/paraview/data/
 !projects/python/
 projects/python/plots/
+projects/python/venv/
 src/*.o
 src/*.mod
 src/atm2grid

@@ -1,7 +1,9 @@
 #! /bin/bash
 
-# Activate venv...
-source ~/venv/bin/activate
+# Create Python environment...
+python3 -m venv venv
+source ./venv/bin/activate
+pip install basemap basemap-data cartopy matplotlib numpy pandas scipy xarray
 
 # Setup...
 datadir="../example/data.ref"
