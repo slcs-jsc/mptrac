@@ -2694,9 +2694,9 @@ void module_convection(
   /* Allocate... */
   double *rs;
   ALLOC(rs, double,
-	3 * NP + 1);
+	NP + 1);
 #ifdef _OPENACC
-#pragma acc enter data create(rs[:3 * NP])
+#pragma acc enter data create(rs[:NP])
 #endif
 
   /* Create random numbers... */
@@ -3052,18 +3052,21 @@ void module_diffusion_turb(
   SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
-  double *rs;
+  double *rs, *rs2;
   ALLOC(rs, double,
 	3 * NP + 1);
+  ALLOC(rs2, double,
+	NP + 1);
 #ifdef _OPENACC
-#pragma acc enter data create(rs[:3 * NP])
+#pragma acc enter data create(rs[:3 * NP], rs2[:NP])
 #endif
 
   /* Create random numbers... */
   module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+  module_rng(ctl, rs2, (size_t) atm->np, 0);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs,rs2)") {
 
     /* Get weighting factors... */
     const double wpbl = pbl_weight(met0, met1, atm, ip);
@@ -3087,13 +3090,48 @@ void module_diffusion_turb(
       const double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
       atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
     }
+
+    /* Vertical mixing in the PBL... */
+    if (ctl->diff_mix_pbl) {
+
+      /* Get PBL pressure... */
+      double pbl;
+      INTPOL_INIT;
+      INTPOL_2D(pbl, 1);
+
+      /* Check pressure... */
+      if (atm->p[ip] >= pbl) {	// TODO: add delta p to mix over inversion
+
+	/* Get surface pressure... */
+	double ps;
+	INTPOL_2D(ps, 0);
+
+	/* Get temperature... */
+	double ts, tpbl;
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			   ps, atm->lon[ip], atm->lat[ip], &ts, ci, cw, 1);
+	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
+			   pbl, atm->lon[ip], atm->lat[ip], &tpbl, ci, cw, 1);
+
+	/* Get density... */
+	const double rhos = ps / ts;
+	const double rhopbl = pbl / tpbl;
+
+	/* Get new air parcel density... */
+	double rho = rhos + (rhopbl - rhos) * rs2[ip];
+
+	/* Get new air parcel pressure... */
+	atm->p[ip] = LIN(rhos, ps, rhopbl, pbl, rho);
+      }
+    }
   }
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete (rs)
+#pragma acc exit data delete (rs,rs2)
 #endif
   free(rs);
+  free(rs2);
 }
 
 /*****************************************************************************/
@@ -5395,6 +5433,8 @@ void read_ctl(
     = (int) scan_ctl(filename, argc, argv, "DIFFUSION", -1, "0", NULL);
   if (ctl->diffusion < 0 || ctl->diffusion > 2)
     ERRMSG("Set DIFFUSION to 0, 1 or 2!");
+  ctl->diff_mix_pbl
+    = (int) scan_ctl(filename, argc, argv, "DIFF_MIX_PBL", -1, "0", NULL);
   ctl->turb_dx_pbl =
     scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "50", NULL);
   ctl->turb_dx_trop =
