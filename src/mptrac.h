@@ -2664,6 +2664,9 @@ typedef struct {
   /*! Diffusion scheme (0=off, 1=fixed-K, 2=PBL). */
   int diffusion;
 
+  /*! Vertical mixing in the PBL (0=off, 1=on). */
+  int diff_mix_pbl;
+
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
   double turb_dx_pbl;
 
@@ -5068,11 +5071,14 @@ void module_decay(
  * @param cache Pointer to the cache structure for temporary storage.
  * @param dt Pointer to the time step value.
  *
- * @note Control parameters `TURB_MESO_X` and `TURB_MESO_Z` define
- * subgrid-scale variability as a fraction of grid-scale variance. The
- * default values from Stohl et al. (2005) are 0.16 for both
- * horizontal and vertical directions.  However, Bakels et al. (2024)
- * highlight limitations of this approach and recommend disabling it.
+ * @note Control parameters `TURB_MESOX` and `TURB_MESOZ` define the 
+ * subgrid-scale variability as a fraction of the grid-scale variance. 
+ * Stohl et al. (2005) recommend a default value of 0.16 for both 
+ * parameters, providing a standard approach for turbulence representation. 
+ * However, recent findings by Bakels et al. (2024) suggest disabling this 
+ * approach to improve model accuracy under certain conditions. It is advised 
+ * to evaluate the applicability of these recommendations based on the specific 
+ * simulation context and objectives.
  *
  * @author Lars Hoffmann
  */
@@ -5126,32 +5132,60 @@ void module_diffusion_pbl(
   const double *dt);
 
 /**
- * @brief Simulate turbulent diffusion for atmospheric particles.
+ * @brief Applies turbulent diffusion processes to atmospheric particles.
  *
- * This function simulates turbulent diffusion for atmospheric
- * particles, including horizontal and vertical diffusion. It
- * calculates diffusivity based on the provided weighting factor and
- * turbulence parameters. The diffusion coefficients are then used to
- * calculate horizontal and vertical displacements of particles based
- * on the provided random numbers and time step.
+ * This function calculates and applies turbulent diffusion effects, including 
+ * horizontal and vertical diffusion, as well as vertical mixing in the planetary 
+ * boundary layer (PBL), to a set of atmospheric particles based on input parameters 
+ * and environmental conditions.
  *
- * The function loops over each particle and calculates the weighting
- * factor based on the atmospheric properties. It then computes
- * diffusivity for horizontal and vertical diffusion. Based on the
- * diffusivity values and provided random numbers, it calculates
- * horizontal and vertical displacements of particles and updates
- * their positions accordingly.
+ * @param[in] ctl  Pointer to the control structure containing simulation parameters.
+ * @param[in] clim Pointer to the climate structure containing climatological data.
+ * @param[in,out] met0 Pointer to the meteorological data structure for the initial timestep.
+ * @param[in,out] met1 Pointer to the meteorological data structure for the next timestep.
+ * @param[in,out] atm  Pointer to the atmospheric structure containing particle data.
+ * @param[in] dt   Pointer to an array of timestep durations for each particle.
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param clim Pointer to the climatological data structure containing atmospheric properties.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
+ * @details
+ * The function performs the following operations:
+ * - Allocates temporary arrays for random number generation.
+ * - Generates random numbers for simulating diffusion effects.
+ * - Loops over atmospheric particles to compute and apply:
+ *   - Horizontal turbulent diffusion, based on prescribed diffusivity values.
+ *   - Vertical turbulent diffusion, using vertical diffusivity values.
+ *   - Vertical mixing within the PBL, incorporating density and pressure adjustments.
+ * - Cleans up allocated resources after processing.
  *
- * @note Control parameters `TURB_DX_TROP`, `TURB_DZ_TROP`,
- * `TURB_DX_STRAT`, and `TURB_DZ_STRAT` define horizontal and vertical
- * diffusivities in the troposphere and stratosphere. Default values
- * from Stohl et al. (2005) are 50 m**2 s**-1 for `TURB_DX_TROP` and
- * 0.1 m**2 s**-1 for `TURB_DZ_STRAT`.
+ * Turbulent diffusivity parameters are derived from control inputs and weighted 
+ * based on atmospheric layer influences (PBL, troposphere, stratosphere).
+ * 
+ * Vertical mixing within the PBL adjusts particle pressures based on air parcel 
+ * density calculations and interpolated atmospheric conditions.
+ *
+ * @note
+ * - Control parameters `TURB_DX_PBL`, `TURB_DX_TROP`, `TURB_DX_STRAT`, `TURB_DZ_TROP` and `TURB_DZ_PBL`, `TURB_DZ_TROP`, `TURB_DZ_STRAT` define horizontal and vertical
+ *   diffusivities (in units of m**2 s**-1) in the PBL, troposphere, and stratosphere, respectively. The control parameter `DIFF_PBL_MIX` is used to switch vertical mixing
+ *   in the PBL on or off.
+ * - Apply the following settings to reproduce Stohl et al. (2005):
+ *     TURB_DX_PBL = 50
+ *     TURB_DX_TROP = 50
+ *     TURB_DX_STRAT = 0
+ *     TURB_DX_PBL = 0
+ *     TURB_DX_TROP = 0
+ *     TURB_DX_STRAT = 0.1
+ *     TURB_MESOX = 0.16
+ *     TURB_MESOZ = 0.16
+ *     DIFF_PBL_MIX = 0
+ * - Apply the following setting to reproduce Maryon et al. (1991) and Ryall et al. (1998):
+ *     TURB_DX_PBL = 5300
+ *     TURB_DX_TROP = 1325
+ *     TURB_DX_STRAT = 1325
+ *     TURB_DX_PBL = 0
+ *     TURB_DX_TROP = 1.5
+ *     TURB_DX_STRAT = 1.5
+ *     TURB_MESOX = 0
+ *     TURB_MESOZ = 0
+ *     DIFF_PBL_MIX = 1
  *
  * @author Lars Hoffmann
  */
