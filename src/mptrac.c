@@ -2810,7 +2810,7 @@ void module_diffusion_meso(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TURBMESO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs;
@@ -2903,7 +2903,7 @@ void module_diffusion_pbl(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFUSION", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs;
@@ -3045,7 +3045,7 @@ void module_diffusion_turb(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TURBDIFF", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs, *rs2;
@@ -3066,32 +3066,33 @@ void module_diffusion_turb(
 
     /* Get weighting factors... */
     const double wpbl = pbl_weight(met0, met1, atm, ip);
-    const double wt = tropo_weight(clim, atm, ip) * (1 - wpbl);
+    const double wtrop = tropo_weight(clim, atm, ip) * (1.0 - wpbl);
+    const double wstrat = 1.0 - wpbl - wtrop;
 
     /* Set diffusivity... */
-    const double dx = wpbl * ctl->turb_dx_pbl + wt * ctl->turb_dx_trop
-      + (1 - wpbl - wt) * ctl->turb_dx_strat;
-    const double dz = wpbl * ctl->turb_dz_pbl + wt * ctl->turb_dz_trop
-      + (1 - wpbl - wt) * ctl->turb_dz_strat;
+    const double dx = wpbl * ctl->turb_dx_pbl + wtrop * ctl->turb_dx_trop
+      + wstrat * ctl->turb_dx_strat;
+    const double dz = wpbl * ctl->turb_dz_pbl + wtrop * ctl->turb_dz_trop
+      + wstrat * ctl->turb_dz_strat;
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
-      const double sigma = sqrt(2.0 * dx * fabs(dt[ip]));
-      atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma / 1000., atm->lat[ip]);
-      atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma / 1000.);
+      const double sigma = sqrt(2.0 * dx * fabs(dt[ip])) / 1000.;
+      atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma, atm->lat[ip]);
+      atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma);
     }
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      const double sigma = sqrt(2.0 * dz * fabs(dt[ip]));
-      atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma / 1000., atm->p[ip]);
+      const double sigma = sqrt(2.0 * dz * fabs(dt[ip])) / 1000.;
+      atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma, atm->p[ip]);
     }
 
     /* Vertical mixing in the PBL... */
     if (ctl->diff_mix_pbl) {
 
       /* Get PBL pressure... */
-      double pbl;
+      double pbl, ps, tpbl, ts;
       INTPOL_INIT;
       INTPOL_2D(pbl, 1);
 
@@ -3099,11 +3100,9 @@ void module_diffusion_turb(
       if (atm->p[ip] >= pbl) {	// TODO: add delta p to mix over inversion
 
 	/* Get surface pressure... */
-	double ps;
 	INTPOL_2D(ps, 0);
 
 	/* Get temperature... */
-	double ts, tpbl;
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
 			   ps, atm->lon[ip], atm->lat[ip], &ts, ci, cw, 1);
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
@@ -3114,7 +3113,7 @@ void module_diffusion_turb(
 	const double rhopbl = pbl / tpbl;
 
 	/* Get new air parcel density... */
-	double rho = rhos + (rhopbl - rhos) * rs2[ip];
+	const double rho = rhos + (rhopbl - rhos) * rs2[ip];
 
 	/* Get new air parcel pressure... */
 	atm->p[ip] = LIN(rhos, ps, rhopbl, pbl, rho);
@@ -3124,7 +3123,7 @@ void module_diffusion_turb(
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete (rs,rs2)
+#pragma acc exit data delete (rs, rs2)
 #endif
   free(rs);
   free(rs2);
@@ -3403,7 +3402,7 @@ void module_kpp_chem(
   double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_KPPCHEM", "PHYSICS", NVTX_GPU);
 
   const int nvar = NVAR, nfix = NFIX, nreact = NREACT;
   double rtol[1] = { 1.0e-3 };
