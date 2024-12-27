@@ -2746,7 +2746,7 @@ void module_convection(
       const double rhotop = ptop / ttop;
 
       /* Get new density... */
-      double rho = rhobot + (rhotop - rhobot) * rs[ip];
+      const double rho = rhobot + (rhotop - rhobot) * rs[ip];
 
       /* Get pressure... */
       atm->p[ip] = LIN(rhobot, pbot, rhotop, ptop, rho);
@@ -3783,7 +3783,7 @@ void module_oh_chem(
       const double ki =
 	ctl->oh_chem[2] * (ctl->oh_chem[3] !=
 			   0 ? pow(298. / t, ctl->oh_chem[3]) : 1.);
-      double c = log10(k0 * M / ki);
+      const double c = log10(k0 * M / ki);
       k = k0 * M / (1. + k0 * M / ki) * pow(0.6, 1. / (1. + c * c));
     }
 
