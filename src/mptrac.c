@@ -4432,13 +4432,14 @@ double pbl_weight(
   const int ip) {
 
   /* Get PBL pressure... */
-  double pbl;
+  double pbl, ps;
   INTPOL_INIT;
   INTPOL_2D(pbl, 1);
+  INTPOL_2D(ps, 1);
 
   /* Get pressure range... */
-  const double p1 = pbl * 0.971832875032981;
-  const double p0 = pbl / 0.971832875032981;
+  const double p1 = pbl - 0.2 * (ps - pbl);
+  const double p0 = pbl;
 
   /* Get weighting factor... */
   if (atm->p[ip] > p0)
