@@ -2957,8 +2957,8 @@ void module_diffusion_pbl(
       if (shf <= 0) {
 
 	/* Calcalute turbulent velocity variances... */
-	sig_u = 2.0 * ustar * (1.0 - zratio);
-	sig_w = 1.3 * ustar * (1.0 - zratio);
+	sig_u = 1e-2 + 2.0 * ustar * (1.0 - zratio);
+	sig_w = 1e-2 + 1.3 * ustar * (1.0 - zratio);
 
 	/* Calculate derivative dsig_w/dz... */
 	dsigw_dz = -1.3 * ustar / zi;
@@ -2976,26 +2976,25 @@ void module_diffusion_pbl(
 	  pow(G0 / THETAVIRT(p, t, h2o) * shf / (rho * CPD) * zi, 1. / 3.);
 
 	/* Calcalute turbulent velocity variances... */
-	sig_u = sqrt(0.4 * SQR(wstar) + (5.0 - 4.0 * zratio) * SQR(ustar));
-	sig_w = sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zratio)
-		     * pow(zratio,
-			   2. / 3.) + (1.8 - 1.4 * zratio) * SQR(ustar));
+	sig_u = 1e-2
+	  + sqrt(0.4 * SQR(wstar) + (5.0 - 4.0 * zratio) * SQR(ustar));
+	sig_w = 1e-2 + sqrt(1.2 * SQR(wstar) * (1.0 - 0.9 * zratio)
+			    * pow(zratio, 2.0 / 3.0)
+			    + (1.8 - 1.4 * zratio) * SQR(ustar));
 
 	/* Calculate derivative dsig_w/dz... */
 	dsigw_dz = 0.5 / sig_w / zi * (-1.4 * SQR(ustar) + SQR(wstar)
 				       * (0.8 *
-					  pow(MAX(zratio, 1e-3),
-					      -1. / 3.) - 1.8 * pow(zratio,
-								    2. /
-								    3.)));
+					  pow(MAX(zratio, 1e-3), -1.0 / 3.0)
+					  - 1.8 * pow(zratio, 2.0 / 3.0)));
 
 	/* Calcalute Lagrangian timescales... */
-	const double C0 = 3.0;	// TODO: universal constant, typically 3...6, NAME model uses 3?
+	const double C0 = 3.0;	// TODO: typically 3...6, NAME model uses 3?
 	const double eps =
-	  (1.5 - 1.2 * pow(zratio, 1. / 3.)) * SQR(wstar) * wstar / zi +
-	  SQR(ustar) * ustar * (1. - 0.8 * zratio) / (KARMAN * z);
-	tau_u = 2 * SQR(sig_u) / (C0 * eps);	// TODO: use a more simple form as in FLEXPART?
-	tau_w = 2 * SQR(sig_w) / (C0 * eps);	// 0.15*zi/sig_w*(1.-exp(-5.0*zratio)) or 0.59 * z/sig_w
+	  (1.5 - 1.2 * pow(zratio, 1.0 / 3.0)) * SQR(wstar) * wstar / zi
+	  + SQR(ustar) * ustar * (1.0 - 0.8 * zratio) / (KARMAN * z);
+	tau_u = 2 * SQR(sig_u) / (C0 * eps);
+	tau_w = 2 * SQR(sig_w) / (C0 * eps);
       }
     }
 
@@ -3006,20 +3005,18 @@ void module_diffusion_pbl(
     tau_w = MAX(tau_w, 100.);
 
     /* Update perturbations (Ryall and Maryon, 1998)... */
+    const double ru = exp(-fabs(dt[ip]) / tau_u);
+    const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
-      = (float) (cache->uvwp[ip][0] * (1. - fabs(dt[ip]) / tau_u)
-		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u))
-		 * rs[3 * ip]);
+      = (float) (cache->uvwp[ip][0] * ru + ru2 * rs[3 * ip]);
     cache->uvwp[ip][1]
-      = (float) (cache->uvwp[ip][1] * (1. - fabs(dt[ip]) / tau_u)
-		 + sqrt(2. * SQR(sig_u) * fabs(dt[ip] / tau_u))
-		 * rs[3 * ip + 1]);
+      = (float) (cache->uvwp[ip][1] * ru + ru2 * rs[3 * ip + 1]);
+
+    const double rw = exp(-fabs(dt[ip]) / tau_w);
+    const double rw2 = sqrt(1.0 - SQR(rw));
     cache->uvwp[ip][2]
-      = (float) (cache->uvwp[ip][2] * (1. - fabs(dt[ip]) / tau_w)
-		 + sqrt(2. * SQR(sig_w) * fabs(dt[ip] / tau_w)) * rs[3 * ip +
-								     2]
-		 + dt[ip] / sig_w * dsigw_dz * (SQR(sig_w) +
-						SQR(cache->uvwp[ip][2])));
+      = (float) (cache->uvwp[ip][2] * rw + rw2 * rs[3 * ip + 2]
+		 + sig_w * dsigw_dz * dt[ip]);	// TODO: check approx for density correction?
 
     /* Calculate horizontal mesoscale wind fluctuations... */
     atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
