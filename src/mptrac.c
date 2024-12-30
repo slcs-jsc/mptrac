@@ -3064,8 +3064,14 @@ void module_diffusion_turb(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs,rs2)") {
 
+    /* Get PBL and surface pressure... */
+    double pbl, ps;
+    INTPOL_INIT;
+    INTPOL_2D(pbl, 1);
+    INTPOL_2D(ps, 0);
+
     /* Get weighting factors... */
-    const double wpbl = pbl_weight(met0, met1, atm, ip);
+    const double wpbl = pbl_weight(ctl, atm, ip, pbl, ps);
     const double wtrop = tropo_weight(clim, atm, ip) * (1.0 - wpbl);
     const double wstrat = 1.0 - wpbl - wtrop;
 
@@ -3091,32 +3097,27 @@ void module_diffusion_turb(
     /* Vertical mixing in the PBL... */
     if (ctl->diff_mix_pbl) {
 
-      /* Get PBL pressure... */
-      double pbl, ps, tpbl, ts;
-      INTPOL_INIT;
-      INTPOL_2D(pbl, 1);
+      /* Get top of transition layer... */
+      const double pbl_ext = pbl - ctl->diff_pbl_trans * (ps - pbl);
 
       /* Check pressure... */
-      if (atm->p[ip] >= pbl) {	// TODO: add delta p to mix over inversion
-
-	/* Get surface pressure... */
-	INTPOL_2D(ps, 0);
+      if (atm->p[ip] >= pbl_ext) {
 
 	/* Get temperature... */
+	double tpbl_ext, ts;
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
 			   ps, atm->lon[ip], atm->lat[ip], &ts, ci, cw, 1);
 	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   pbl, atm->lon[ip], atm->lat[ip], &tpbl, ci, cw, 1);
-
-	/* Get density... */
-	const double rhos = ps / ts;
-	const double rhopbl = pbl / tpbl;
+			   pbl_ext, atm->lon[ip], atm->lat[ip], &tpbl_ext, ci,
+			   cw, 1);
 
 	/* Get new air parcel density... */
-	const double rho = rhos + (rhopbl - rhos) * rs2[ip];
+	const double rhos = ps / ts;
+	const double rhopbl_ext = pbl_ext / tpbl_ext;
+	const double rho = rhos + (rhopbl_ext - rhos) * rs2[ip];
 
 	/* Get new air parcel pressure... */
-	atm->p[ip] = LIN(rhos, ps, rhopbl, pbl, rho);
+	atm->p[ip] = LIN(rhos, ps, rhopbl_ext, pbl_ext, rho);
       }
     }
   }
@@ -4426,19 +4427,14 @@ double nat_temperature(
 /*****************************************************************************/
 
 double pbl_weight(
-  met_t *met0,
-  met_t *met1,
+  const ctl_t *ctl,
   const atm_t *atm,
-  const int ip) {
-
-  /* Get PBL pressure... */
-  double pbl, ps;
-  INTPOL_INIT;
-  INTPOL_2D(pbl, 1);
-  INTPOL_2D(ps, 1);
+  const int ip,
+  const double pbl,
+  const double ps) {
 
   /* Get pressure range... */
-  const double p1 = pbl - 0.2 * (ps - pbl);
+  const double p1 = pbl - ctl->diff_pbl_trans * (ps - pbl);
   const double p0 = pbl;
 
   /* Get weighting factor... */
@@ -5431,6 +5427,8 @@ void read_ctl(
     ERRMSG("Set DIFFUSION to 0, 1 or 2!");
   ctl->diff_mix_pbl
     = (int) scan_ctl(filename, argc, argv, "DIFF_MIX_PBL", -1, "0", NULL);
+  ctl->diff_pbl_trans
+    = scan_ctl(filename, argc, argv, "DIFF_PBL_TRANS", -1, "0", NULL);
   ctl->turb_dx_pbl =
     scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "50", NULL);
   ctl->turb_dx_trop =
