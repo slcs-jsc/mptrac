@@ -2701,6 +2701,9 @@ typedef struct {
   /*! Vertical mixing in the PBL (0=off, 1=on). */
   int diff_mix_pbl;
 
+  /*! Depth of PBL transition layer (fraction of PBL depth). */
+  double diff_pbl_trans;
+
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
   double turb_dx_pbl;
 
@@ -5842,28 +5845,31 @@ double nat_temperature(
   const double hno3);
 
 /**
- * @brief Computes the weighting factor based on the planetary boundary layer (PBL) pressure.
+ * @brief Computes a weighting factor based on planetary boundary layer pressure.
  *
- * This function determines a weighting factor for a specific pressure value in relation to 
- * the planetary boundary layer (PBL) pressure. The weighting factor is calculated as follows:
- * - Returns 1 if the pressure is greater than a calculated upper limit.
- * - Returns 0 if the pressure is less than a calculated lower limit.
- * - Linearly interpolates between 1 and 0 within the range defined by the upper and lower limits.
+ * This function calculates a weighting factor that determines the
+ * contribution of a pressure level to processes within the planetary
+ * boundary layer. The factor is based on the relative position of the
+ * pressure within a linear transition range defined by `pbl` and `ps`.
  *
- * @param[in] met0 First meteorological input data structure.
- * @param[in] met1 Second meteorological input data structure.
- * @param[in] atm Pointer to the atmospheric data structure.
- * @param[in] ip Index of the pressure value to evaluate within the atmospheric data.
- * 
- * @return Weighting factor (double) in the range [0, 1].
+ * @param ctl Pointer to the control structure containing configuration parameters.
+ * @param atm Pointer to the atmospheric data structure containing pressure levels.
+ * @param ip Index of the pressure level in the atmospheric data array.
+ * @param pbl Pressure at the planetary boundary layer.
+ * @param ps Surface pressure.
+ * @return Weighting factor for the specified pressure level:
+ *         - Returns 1.0 if the pressure is above the upper boundary (`p0`).
+ *         - Returns 0.0 if the pressure is below the lower boundary (`p1`).
+ *         - Returns a linearly interpolated value between 1.0 and 0.0 for pressures within the transition range.
  *
  * @author Lars Hoffmann
  */
 double pbl_weight(
-  met_t * met0,
-  met_t * met1,
+  const ctl_t * ctl,
   const atm_t * atm,
-  const int ip);
+  const int ip,
+  const double pbl,
+  const double ps);
 
 /**
  * @brief Reads air parcel data from a specified file into the given atmospheric structure.
@@ -7483,7 +7489,7 @@ double time_from_filename(
   const int offset);
 
 /**
- * @brief Computes the weighting factor based on the tropopause pressure.
+ * @brief Computes a weighting factor based on tropopause pressure.
  *
  * This function calculates a weighting factor for a given pressure value in relation to 
  * the tropopause pressure. The weighting factor is determined as follows:
