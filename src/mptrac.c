@@ -3004,7 +3004,7 @@ void module_diffusion_pbl(
     tau_u = MAX(tau_u, 300.);
     tau_w = MAX(tau_w, 100.);
 
-    /* Update perturbations (Ryall and Maryon, 1998)... */
+    /* Update perturbations... */
     const double ru = exp(-fabs(dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
@@ -3018,7 +3018,7 @@ void module_diffusion_pbl(
       = (float) (cache->uvwp[ip][2] * rw + rw2 * rs[3 * ip + 2]
 		 + sig_w * dsigw_dz * dt[ip]);	// TODO: check approx for density correction?
 
-    /* Calculate horizontal mesoscale wind fluctuations... */
+    /* Calculate new air parcel position... */
     atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
     atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
     atm->p[ip] += DZ2DP(cache->uvwp[ip][2] * dt[ip] / 1000., atm->p[ip]);
