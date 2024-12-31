@@ -5133,7 +5133,8 @@ void module_diffusion_meso(
  * This function handles the effects of turbulence on particles within
  * the PBL.  It calculates turbulent velocity variances, Lagrangian
  * timescales, and updates particle positions and perturbations based
- * on random fluctuations and boundary layer physics.
+ * on random fluctuations and boundary layer physics. This module adapts
+ * the approach of Ryall and Maryon (1998) and Stohl et al. (2005).
  *
  * @param ctl    Pointer to the control structure containing model settings.
  * @param met0   Pointer to the meteorological data structure for the current timestep.
