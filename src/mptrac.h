@@ -3499,7 +3499,7 @@ typedef struct {
   /*! Pressure at level of free convection (LFC) [hPa]. */
   float plfc[EX][EY];
 
-  /*! Pressure at equilibrium level [hPa]. */
+  /*! Pressure at equilibrium level (EL) [hPa]. */
   float pel[EX][EY];
 
   /*! Convective available potential energy [J/kg]. */
