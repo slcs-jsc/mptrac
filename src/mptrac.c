@@ -10285,10 +10285,36 @@ void write_met_nc(
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("sstk", NC_FLOAT, 2, dimid2, "Sea surface temperature", "K",
 	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("blp", NC_FLOAT, 2, dimid2, "Boundary layer pressure", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("pt", NC_FLOAT, 2, dimid2, "Tropopause pressure", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("tt", NC_FLOAT, 2, dimid2, "Tropopause temperature", "K",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("zt", NC_FLOAT, 2, dimid2, "Tropopause height", "m",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("h2ot", NC_FLOAT, 2, dimid2, "Tropopause water vapor", "ppv",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("pct", NC_FLOAT, 2, dimid2, "Cloud top pressure", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("pcb", NC_FLOAT, 2, dimid2, "Cloud bottom pressure", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("cl", NC_FLOAT, 2, dimid2, "Total column cloud water", "kg m**2",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("plcl", NC_FLOAT, 2, dimid2,
+	     "Pressure at lifted condensation level (LCL)", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("plfc", NC_FLOAT, 2, dimid2,
+	     "Pressure at level of free convection (LFC)", "Pa",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("pel", NC_FLOAT, 2, dimid2, "Pressure at equilibrium level (EL)",
+	     "Pa", ctl->met_nc_level, 0);
   NC_DEF_VAR("cape", NC_FLOAT, 2, dimid2,
 	     "Convective available potential energy", "J kg**-1",
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("cin", NC_FLOAT, 2, dimid2, "Convective inhibition", "J kg**-1",
+	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("o3c", NC_FLOAT, 2, dimid2, "Total column ozone", "DU",
 	     ctl->met_nc_level, 0);
 
   /* Define level data... */
@@ -10339,8 +10365,20 @@ void write_met_nc(
   write_met_nc_2d(ncid, "ishf", met, met->shf, 1.0f);
   write_met_nc_2d(ncid, "lsm", met, met->lsm, 1.0f);
   write_met_nc_2d(ncid, "sstk", met, met->sst, 1.0f);
+  write_met_nc_2d(ncid, "blp", met, met->pbl, 100.0f);
+  write_met_nc_2d(ncid, "pt", met, met->pt, 100.0f);
+  write_met_nc_2d(ncid, "tt", met, met->tt, 1.0f);
+  write_met_nc_2d(ncid, "zt", met, met->zt, 1000.0f);
+  write_met_nc_2d(ncid, "h2ot", met, met->h2ot, 1.0f);
+  write_met_nc_2d(ncid, "pct", met, met->pct, 100.0f);
+  write_met_nc_2d(ncid, "pcb", met, met->pcb, 100.0f);
+  write_met_nc_2d(ncid, "cl", met, met->cl, 1.0f);
+  write_met_nc_2d(ncid, "plcl", met, met->plcl, 100.0f);
+  write_met_nc_2d(ncid, "plfc", met, met->plfc, 100.0f);
+  write_met_nc_2d(ncid, "pel", met, met->pel, 100.0f);
   write_met_nc_2d(ncid, "cape", met, met->cape, 1.0f);
   write_met_nc_2d(ncid, "cin", met, met->cin, 1.0f);
+  write_met_nc_2d(ncid, "o3c", met, met->o3c, 1.0f);
 
   /* Write level data... */
   write_met_nc_3d(ncid, "t", met, met->t, 1.0f);
