@@ -6410,13 +6410,14 @@ void read_met_geopot(
  * @authors Lars Hoffmann
  * @authors Jan Clemens
  */
- #ifdef ECCODES
+
 void read_met_grid(
   const char *filename,
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
-
+  
+#ifdef ECCODES
 void read_met_global_grib(
   codes_handle** handles,
   int count_handles,
