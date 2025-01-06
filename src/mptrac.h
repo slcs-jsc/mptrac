@@ -148,6 +148,10 @@
 #include "chem_Sparse.h"
 #endif
 
+#ifdef ECCODES
+#include "eccodes.h"
+#endif
+
 
 
 /* ------------------------------------------------------------
@@ -1005,6 +1009,13 @@
     if(nc_result!=NC_NOERR)			     \
       ERRMSG("%s", nc_strerror(nc_result));	     \
   }
+
+#define ECC(cmd) {				     \
+    int ecc_result=(cmd);			     \
+    if(ecc_result!=0)			     \
+      ERRMSG("ECCODES error");	     \
+  }
+
 
 /**
  * @brief Define a NetCDF variable with attributes.
@@ -6399,16 +6410,18 @@ void read_met_geopot(
  * @authors Lars Hoffmann
  * @authors Jan Clemens
  */
+ #ifdef ECCODES
 void read_met_grid(
   const char *filename,
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
 
-void read_met_grid_grib(
-  const char *filename,
-  const ctl_t * ctl,
+void read_met_global_grib(
+  codes_handle** handles,
+  int count_handles,
   met_t * met);
+#endif
 
 
 /**

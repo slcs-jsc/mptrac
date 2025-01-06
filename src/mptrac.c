@@ -24,9 +24,7 @@
 
 #include "mptrac.h"
 
-#ifdef ECCODES
-#include "eccodes.h"
-#endif
+
 
 #ifdef KPP
 #include "kpp_chem.h"
@@ -6547,38 +6545,92 @@ void read_met_grid(
 /*****************************************************************************/
 
 #ifdef ECCODES
-void read_met_grid_grib(
-  const char *filename,
-  const ctl_t *ctl,
+void read_met_global_grib(
+  codes_handle** handles,
+  int count_handles,
   met_t *met) {
-  
 
-  codes_handle* handle = NULL;
-  double r;
+  /*Read type of level...*/
+  long leveltype = 0;
+  ECC(codes_get_long(handles[0],"typeOfFirstFixedSurface",&leveltype));
+  printf("level type: %ld\n",leveltype);
+  /*Read date...*/
 
-  int err =1;
+  char datestr[50];
+  char timestr[50];
+  char year[20],month[20],day[20],hour[20];
+  size_t s = sizeof(datestr);
 
-  int year, mon, day, hour, min, sec;
+  ECC(codes_get_string(handles[0],"dataDate",datestr,&s));
+  ECC(codes_get_string(handles[0],"dataTime",timestr,&s));
+  strncpy(year,datestr,4);
+  year[4] = '\0';
+  strncpy(month,datestr+4,2);
+  month[2] = '\0';
+  strncpy(day,datestr+6,2);
+  day[2] = '\0';
+  strncpy(hour,timestr,2);
+  hour[2] = '\0';
+  printf("date: %d,%d,%d\n",atoi(year),atoi(month),atoi(day));
+  printf("hour: %d\n",atoi(hour));
+  time2jsec(atoi(year),atoi(month),atoi(day),atoi(hour),0,0,0,&(met->time));
+  /*Does not seem quite right*/
+  printf("juliantime: %f\n",met->time);
 
-  FILE *f =fopen(filename,"rb");
+  /*Read grid information*/
+  long count_lat = 0,count_lon= 0;
+  ECC(codes_get_long(handles[0],"Nj",&count_lat));
+  ECC(codes_get_long(handles[0],"Ni",&count_lon));
+  met->ny = (int) count_lat;
+  printf("count_lat: %ld\n",count_lat);
+  met->nx = (int) count_lon;
+  printf("count_lon: %ld\n",count_lon);
+  double min_lon,max_lon,min_lat,max_lat,inc_lon,inc_lat;
+  ECC(codes_get_double(handles[0],"longitudeOfFirstGridPointInDegrees",&min_lon));
+  printf("min_lon: %.2f\n",min_lon);
+  ECC(codes_get_double(handles[0],"latitudeOfFirstGridPointInDegrees",&min_lat));
+  printf("min_lat: %.2f\n",min_lat);
+  ECC(codes_get_double(handles[0],"longitudeOfLastGridPointInDegrees",&max_lon));
+  printf("max_lon: %.2f\n",max_lon);
+  ECC(codes_get_double(handles[0],"latitudeOfLastGridPointInDegrees",&max_lat));
+  printf("max_lat: %.2f\n",max_lat);
+  ECC(codes_get_double(handles[0],"iDirectionIncrementInDegrees",&inc_lon));
+  printf("inc_lon: %.2f\n",inc_lon);
+  ECC(codes_get_double(handles[0],"jDirectionIncrementInDegrees",&inc_lat));
+  printf("inc_lat: %.2f\n",inc_lat);
 
-  /* Set timer... */
-
-  SELECT_TIMER("READ_MET_GRID", "INPUT", NVTX_READ);
-  LOG(2, "Read meteo grid information...");
-
-  /* Get time from filename... */
-  /* Offset = 17 without _ml or _sf else offset = 20*/
-  met->time = time_from_filename(filename, 17);
-
-  jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
-
-  handle = codes_handle_new_from_file(0,f,PRODUCT_GRIB, &err);
-  if(handle){
-    printf("HI");
+  /*Compute grid*/
+  int counter = 0;
+  for (double i = min_lon ; i <= max_lon+1e-6 ; i += inc_lon){
+    met->lon[counter] = i;
+    counter += 1;
   }
-  ERRMSG("INSIDE grid grib");
-  read_met_grid(filename, 1, ctl, met);
+  counter = 0;
+  for (double i = max_lat ; i <= min_lat + 1e-6 ; i += inc_lat){
+    met->lat[counter] = i;
+    counter += 1;
+  }
+
+  // counter = 0;
+  // for(int i = 0;i<count_lon;i++){
+  //   printf("%.2f ",met->lon[i]);
+  // }
+  // printf("\n")
+  // for(int i = 0;i<count_lat;i++){
+  //   printf("%.2f ",met->lat[i]);
+  // }
+
+  /*Read vertical levels*/
+  int max_level = 0;
+  for(int i=0;i<count_handles;i++){
+    long level;
+    ECC(codes_get_long(handles[i],"level",&level));
+    if(level > max_level){
+      max_level = (int)level;
+    }
+  }
+  printf("Max level: %d\n",max_level);
+  met->npl = max_level;
   
   }
 #endif
@@ -6842,92 +6894,40 @@ void read_met_monotonize(
 }
 
 /*****************************************************************************/
-
+/* potential workflow?
+   - get global information (grid/time/leveltype/num_param ... )
+   - save data from each message on temporary "dict" (or directly into struct -> switch case??)
+   - read data from dict into struct*/
 #ifdef ECCODES
 int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   LOG(1,"INSIDE READ_MET_GRIB");
   LOG(1,"%s",filename);
-  codes_handle* h = NULL;
   filename = "/root/2020012306_ml.grb";
 
-  
-
-  int first_mes = 1;
-  
-
-  
-  /*Open grib file...*/
-  // FILE* grib_file = fopen(filename,"rb");
-  FILE* grib_file = fopen(filename,"rb");
-  
-  if (!grib_file){
-    WARN("Cannot open file!");
-    return 0;
-  }
   int err = 0;
-
-  long final_nv = 0;
-  
-
-  while((h = codes_handle_new_from_file(0, grib_file, PRODUCT_GRIB, &err))!= NULL){
-    if (first_mes == 1){
-      /* Get grid dimensions... */
-      long ni,nj;
-      codes_get_long(h,"Ni",&ni);
-      codes_get_long(h,"Nj",&nj);
-      if (ni < 2 || ni > EX || nj < 2 || nj > EY) {
-        ERRMSG("Invalid grid dimension")
-      }
-      met->nx = (int)ni;
-      LOG(2,"Number of longitudes: %d",met->nx)
-      met->ny = (int)nj;
-      LOG(2,"Number of latitudes: %d",met->ny)
-
-      
-    
-
-      codes_grib_get_data(h,met->lat,met->lon,met->hybrid);
-      size_t size = (size_t)ni;
-      printf("vals %ld",size);
-
-      for (size_t i = 0; i < size;i++) {
-            printf("Punkt %zu: Lat = %f\n", i + 1, met->lat[i]);
-        }
-      first_mes = 0;
+  FILE* file = fopen(filename,"rb");
+  codes_handle** handles;
+  int num_messages = 0;
+  ECC(codes_count_in_file(0,file,&num_messages));
+  printf("Number of messages: %d\n",num_messages);
+  handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)num_messages);
+  for (int i = 0 ; i < num_messages ; i++){
+    codes_handle* h = NULL;
+    if((h = codes_grib_handle_new_from_file(0,file,&err))!=NULL ){
+        handles[i] = h;
     }
-
-  
-    long current_nv;
-    codes_get_long(h,"level",&current_nv);
-    
-    if(current_nv > final_nv){
-      final_nv = current_nv;
-    }
-  
-
-  
-  
-    codes_handle_delete(h);
   }
-  fclose(grib_file);
-  if(final_nv < 2 || final_nv > EP){
-    ERRMSG("Number of levels out of range!");
-  }
-  met->npl = (int) final_nv;
-  LOG(2,"Vertical Levels: %ld\n",final_nv);
+  read_met_global_grib(handles,num_messages,met);
+  
+  codes_handle* h = handles[67];
+  char shortName[50];
+  size_t size2 = sizeof(shortName);
+  codes_get_string(h, "shortName", shortName, &size2);
+  printf("shortName: %s\n", shortName);
 
+  fclose(file);
+  
 
-  // /* Read coordinates of meteo data... */
-  // read_met_grid_grib(filename, ctl, met);
-
-  // /* Read meteo data on vertical levels... */
-  // read_met_levels_grib(ncid, ctl, met);
-
-  // /* Extrapolate data for lower boundary... */
-  // read_met_extrapolate(met);
-
-  // /* Read surface data... */
-  // read_met_surface_grib(ncid, ctl, met);
   read_met_nc(filename,ctl,clim,met);
 
   return 0;
