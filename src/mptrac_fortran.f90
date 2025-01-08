@@ -128,6 +128,9 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_zs
      INTEGER(c_int) :: qnt_us
      INTEGER(c_int) :: qnt_vs
+     INTEGER(c_int) :: qnt_ess
+     INTEGER(c_int) :: qnt_nss
+     INTEGER(c_int) :: qnt_shf
      INTEGER(c_int) :: qnt_lsm
      INTEGER(c_int) :: qnt_sst
      INTEGER(c_int) :: qnt_pbl
@@ -261,6 +264,9 @@ MODULE mptrac_struct
      CHARACTER(c_char), DIMENSION(length) :: balloon
      INTEGER(c_int) :: advect
      INTEGER(c_int) :: rng_type
+     INTEGER(c_int) :: diffusion
+     INTEGER(c_int) :: diff_mix_pbl
+     INTEGER(c_int) :: diff_pbl_trans
      REAL(c_double) :: turb_dx_pbl
      REAL(c_double) :: turb_dx_trop
      REAL(c_double) :: turb_dx_strat
@@ -434,6 +440,9 @@ MODULE mptrac_struct
      REAL(c_float), DIMENSION(ey,ex) :: zs
      REAL(c_float), DIMENSION(ey,ex) :: us
      REAL(c_float), DIMENSION(ey,ex) :: vs
+     REAL(c_float), DIMENSION(ey,ex) :: ess
+     REAL(c_float), DIMENSION(ey,ex) :: nss
+     REAL(c_float), DIMENSION(ey,ex) :: shf
      REAL(c_float), DIMENSION(ey,ex) :: lsm
      REAL(c_float), DIMENSION(ey,ex) :: sst
      REAL(c_float), DIMENSION(ey,ex) :: pbl
