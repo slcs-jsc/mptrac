@@ -14,7 +14,7 @@ awk '/TYPE, bind\(c\) :: clim_ts_t/{f=1;next} /END TYPE clim_ts_t/{f=0} f' < ../
 awk '/TYPE, bind\(c\) :: clim_photo_t/{f=1;next} /END TYPE clim_photo_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_photo_f.asc
 awk '/TYPE, bind\(c\) :: atm_t/{f=1;next} /END TYPE atm_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_atm_f.asc
 
-awk '/Control parameters/{f=1;next} /\} ctl_t;/{f=0} f' < ../../src/mptrac.h > data/test_ctl_c.asc
+awk '/brief Control parameters/{f=1;next} /\} ctl_t;/{f=0} f' < ../../src/mptrac.h > data/test_ctl_c.asc
 awk '/Meteo data structure/{f=1;next} /\} met_t;/{f=0} f' < ../../src/mptrac.h > data/test_met_c.asc
 awk '/climatological data containing/{f=1;next} /\} clim_t;/{f=0} f' < ../../src/mptrac.h > data/test_clim_c.asc
 awk '/Climatological data in the form of zonal means./{f=1;next} /\} clim_zm_t;/{f=0} f' < ../../src/mptrac.h > data/test_clim_zm_c.asc
