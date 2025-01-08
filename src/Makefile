@@ -109,8 +109,8 @@ else ifeq ($(COMPILER),icx)
 else ifeq ($(COMPILER),nvc)
   FC=nvfortran
   FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays $(OPTI) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
-else
-  $(error Compiler $(COMPILER) not supported)
+else ifeq ($(COMPILER),clang)
+  $(warning Compiler $(COMPILER) does not support Fortran wrapper)
 endif
 
 # Compile for GPUs...

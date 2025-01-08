@@ -5377,9 +5377,9 @@ void read_ctl(
   if (ctl->met_cape < 0 || ctl->met_cape > 1)
     ERRMSG("Set MET_CAPE to 0 or 1!");
   ctl->met_pbl =
-    (int) scan_ctl(filename, argc, argv, "MET_PBL", -1, "2", NULL);
-  if (ctl->met_pbl < 0 || ctl->met_pbl > 2)
-    ERRMSG("Set MET_PBL = 0 ... 2!");
+    (int) scan_ctl(filename, argc, argv, "MET_PBL", -1, "3", NULL);
+  if (ctl->met_pbl < 0 || ctl->met_pbl > 3)
+    ERRMSG("Set MET_PBL to 0 ... 3!");
   ctl->met_pbl_min =
     scan_ctl(filename, argc, argv, "MET_PBL_MIN", -1, "0.1", NULL);
   ctl->met_pbl_max =
@@ -5387,7 +5387,7 @@ void read_ctl(
   ctl->met_tropo =
     (int) scan_ctl(filename, argc, argv, "MET_TROPO", -1, "3", NULL);
   if (ctl->met_tropo < 0 || ctl->met_tropo > 5)
-    ERRMSG("Set MET_TROPO = 0 ... 5!");
+    ERRMSG("Set MET_TROPO to 0 ... 5!");
   ctl->met_tropo_pv =
     scan_ctl(filename, argc, argv, "MET_TROPO_PV", -1, "3.5", NULL);
   ctl->met_tropo_theta =
@@ -7819,8 +7819,8 @@ void read_met_pbl(
   SELECT_TIMER("READ_MET_PBL", "METPROC", NVTX_READ);
   LOG(2, "Calculate planetary boundary layer...");
 
-  /* Get PBL from meteo file... */
-  if (ctl->met_pbl == 0) {
+  /* Convert PBL height from meteo file to pressure... */
+  if (ctl->met_pbl == 1) {
 
     /* Loop over grid points... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -7837,7 +7837,7 @@ void read_met_pbl(
   }
 
   /* Determine PBL based on Richardson number... */
-  else if (ctl->met_pbl == 1) {
+  else if (ctl->met_pbl == 2) {
 
     /* Parameters used to estimate the height of the PBL
        (e.g., Vogelezang and Holtslag, 1996; Seidel et al., 2012)... */
@@ -7895,7 +7895,7 @@ void read_met_pbl(
   }
 
   /* Determine PBL based on potential temperature... */
-  if (ctl->met_pbl == 2) {
+  if (ctl->met_pbl == 3) {
 
     /* Parameters used to estimate the height of the PBL
        (following HYSPLIT model)... */
@@ -8484,9 +8484,14 @@ void read_met_surface(
   /* Read PBL... */
   if (ctl->met_pbl == 0)
     if (!read_met_nc_2d
+	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
+	 0.01f, 1))
+      WARN("Cannot read planetary boundary layer pressure!");
+  if (ctl->met_pbl == 1)
+    if (!read_met_nc_2d
 	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
 	 0.001f, 1))
-      ERRMSG("Cannot read planetary boundary layer!");
+      WARN("Cannot read planetary boundary layer height!");
 
   /* Read CAPE... */
   if (ctl->met_cape == 0)
