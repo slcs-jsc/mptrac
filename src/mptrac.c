@@ -509,7 +509,7 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g %%)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
