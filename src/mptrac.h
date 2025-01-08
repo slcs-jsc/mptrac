@@ -2610,7 +2610,7 @@ typedef struct {
   /*! Convective available potential energy data (0=file, 1=calculate). */
   int met_cape;
 
-  /*! Planetary boundary layer data (0=file, 1=Richardson, 2=theta). */
+  /*! Planetary boundary layer data (0=file, 1=z2p, 2=Richardson, 3=theta). */
   int met_pbl;
 
   /*! Minimum depth of planetary boundary layer [km]. */
@@ -6776,31 +6776,35 @@ int read_met_nc_3d(
   const float scl);
 
 /**
- * @brief Computes the planetary boundary layer (PBL) height based on meteorological data.
+ * @brief Computes the planetary boundary layer (PBL) pressure based on meteorological data.
  *
- * This function calculates the PBL height for each grid point using one of three methods:
- * 1. From precomputed values in the meteorological data file.
- * 2. Based on the bulk Richardson number criterion.
- * 3. Based on potential temperature difference.
+ * This function determines the PBL pressure for each grid point using one of four methods:
+ * 0. Read PBL pressure from meteo data file.
+ * 1. Read PBL heights from meteo data file and convert to pressure.
+ * 2. Determine PBL pressure based on bulk Richardson number criterion.
+ * 3. Determine PBL pressure Based on potential temperature difference.
  * The calculated PBL height is constrained by user-defined minimum and maximum limits.
  *
  * @param[in] ctl Pointer to the control structure (`ctl_t`), which contains
  *                parameters controlling the PBL calculation.
  * @param[in,out] met Pointer to the meteorological data structure (`met_t`), 
  *                    which contains grid and atmospheric data.
- *                    The `met->pbl` array is updated with the calculated PBL heights.
+ *                    The `met->pbl` array is updated with the calculated PBL pressure.
  *
- * Method 0 (Precomputed PBL height from file):
- * - Interpolates the PBL height using the pressure at the top of the PBL and
- *   the meteorological vertical profile.
+ * Method 0 (Precomputed PBL pressure from file):
+ * - Read PBL pressure from meteo data file.
  *
- * Method 1 (Richardson number criterion):
- * - Implements a method based on the bulk Richardson number (critical value: 0.25).
+ * Method 1 (Precomputed PBL height from file):
+ * - Read PBL height from meteo data file.
+ * - Interpolates the PBL pressure using the geopotential heights from the meteo file.
+ *
+ * Method 2 (Richardson number criterion):
+ * - Implements a method based on the bulk Richardson number (critical value: Ri = 0.25).
  * - Iteratively evaluates vertical levels, calculating wind shear, and thermal gradients,
  *   until the Richardson number exceeds the critical threshold.
- * - Interpolates the PBL height at the critical Richardson number.
+ * - Interpolates between levels to find the precise height.
  *
- * Method 2 (Potential temperature difference):
+ * Method 3 (Potential temperature difference):
  * - Computes the PBL height as the altitude where the potential temperature exceeds
  *   the surface value by 2 K.
  * - Interpolates between levels to find the precise height.
@@ -6808,10 +6812,11 @@ int read_met_nc_3d(
  * Final Adjustments:
  * - Ensures the PBL height respects user-defined minimum and maximum thresholds.
  *
- * @note Method 1 is a standard method for estimating PBL depths, but the current implementation
- * seems to significantly underestimate PBL depths compared to ECMWF data or Method 2. Therefore,
- * Method 2, is selected by default. If PBL data are available from the meteo data files,
- * it is recommended to select Method 0.
+ * @note Method 2 is a standard method for estimating PBL depths, but
+ * the current implementation seems to underestimate PBL depths
+ * compared to ECMWF PBL data or Method 3. Therefore, Method 3, is
+ * selected by default. If PBL heights are available from the meteo
+ * data files, it is recommended to select Method 1.
  *
  * @author Lars Hoffmann
  */
