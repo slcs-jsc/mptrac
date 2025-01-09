@@ -630,7 +630,7 @@ void compress_cms(
 	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
 	/* Save binary data... */
-	cms_save_sol(cms_sol[ip], cms_ptr[ip], inout);
+	cms_save_sol(cms_sol[ip], inout);
 
 	/* Free... */
 	cms_delete_sol(cms_sol[ip]);
