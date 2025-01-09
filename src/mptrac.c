@@ -2685,7 +2685,7 @@ void module_convection(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs;
@@ -2697,6 +2697,9 @@ void module_convection(
 
   /* Create random numbers... */
   module_rng(ctl, rs, (size_t) atm->np, 0);
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt,rs)") {
@@ -2810,7 +2813,7 @@ void module_diffusion_meso(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs;
@@ -2822,6 +2825,9 @@ void module_diffusion_meso(
 
   /* Create random numbers... */
   module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -2903,7 +2909,7 @@ void module_diffusion_pbl(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs;
@@ -2915,6 +2921,9 @@ void module_diffusion_pbl(
 
   /* Create random numbers... */
   module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -3042,7 +3051,7 @@ void module_diffusion_turb(
   const double *dt) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   double *rs, *rs2;
@@ -3057,6 +3066,9 @@ void module_diffusion_turb(
   /* Create random numbers... */
   module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
   module_rng(ctl, rs2, (size_t) atm->np, 0);
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs,rs2)") {
