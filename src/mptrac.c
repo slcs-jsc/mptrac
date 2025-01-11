@@ -2689,11 +2689,11 @@ void module_convection(
   cache_t *cache,
   const double *dt) {
 
-  /* Create random numbers... */
-  module_rng(ctl, cache->rs, (size_t) atm->np, 0);
-
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+
+  /* Create random numbers... */
+  module_rng(ctl, cache->rs, (size_t) atm->np, 0);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
@@ -2802,11 +2802,11 @@ void module_diffusion_meso(
   cache_t *cache,
   const double *dt) {
 
-  /* Create random numbers... */
-  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
-
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
+
+  /* Create random numbers... */
+  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
@@ -2880,11 +2880,11 @@ void module_diffusion_pbl(
   cache_t *cache,
   const double *dt) {
 
-  /* Create random numbers... */
-  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
-
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
+
+  /* Create random numbers... */
+  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
@@ -3005,11 +3005,11 @@ void module_diffusion_turb(
   cache_t *cache,
   const double *dt) {
 
-  /* Create random numbers... */
-  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
-
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
+
+  /* Create random numbers... */
+  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
