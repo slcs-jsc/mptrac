@@ -2686,62 +2686,54 @@ void module_convection(
   met_t *met0,
   met_t *met1,
   atm_t *atm,
+  cache_t *cache,
   const double *dt) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  double *rs;
-  ALLOC(rs, double,
-	NP + 1);
-#ifdef _OPENACC
-#pragma acc enter data create(rs[:NP])
-#endif
-
   /* Create random numbers... */
-  module_rng(ctl, rs, (size_t) atm->np, 0);
+  module_rng(ctl, cache->rs, (size_t) atm->np, 0);
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt,rs)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     /* Interpolate CAPE... */
-    double cape;
+    double ps;
     INTPOL_INIT;
-    INTPOL_2D(cape, 1);
+    INTPOL_2D(ps, 1);
 
-    /* Check threshold... */
-    if (isfinite(cape) && cape >= ctl->conv_cape) {
+    /* Initialize pressure range for vertical mixing... */
+    double pbot = ps, ptop = ps;
 
-      /* Check CIN... */
-      if (ctl->conv_cin > 0) {
-	double cin;
-	INTPOL_2D(cin, 0);
-	if (isfinite(cin) && cin >= ctl->conv_cin)
-	  continue;
-      }
+    /* Mixing in the PBL... */
+    if (ctl->conv_mix_pbl) {
 
-      /* Interpolate equilibrium level... */
-      double pel;
+      /* Interpolate PBL... */
+      double pbl;
+      INTPOL_2D(pbl, 0);
+
+      /* Set pressure range... */
+      ptop = pbl - ctl->conv_pbl_trans * (ps - pbl);
+    }
+
+    /* Convective mixing... */
+    if (ctl->conv_cape >= 0) {
+
+      /* Interpolate CAPE, CIN, and equilibrium level... */
+      double cape, cin, pel;
+      INTPOL_2D(cape, 0);
+      INTPOL_2D(cin, 0);
       INTPOL_2D(pel, 0);
 
-      /* Check whether particle is above cloud top... */
-      if (!isfinite(pel) || atm->p[ip] < pel)
-	continue;
+      /* Set pressure range... */
+      if (isfinite(cape) && cape >= ctl->conv_cape
+	  && (ctl->conv_cin <= 0 || (isfinite(cin) && cin >= ctl->conv_cin)))
+	ptop = GSL_MIN(ptop, pel);
+    }
 
-      /* Set pressure range for vertical mixing... */
-      double pbot = atm->p[ip];
-      double ptop = atm->p[ip];
-      if (ctl->conv_mix_bot == 1) {
-	double ps;
-	INTPOL_2D(ps, 0);
-	pbot = ps;
-      }
-      if (ctl->conv_mix_top == 1)
-	ptop = pel;
+    /* Apply vertical mixing... */
+    if (ptop != pbot && atm->p[ip] >= ptop) {
 
       /* Get density range... */
       double tbot, ttop;
@@ -2753,18 +2745,12 @@ void module_convection(
       const double rhotop = ptop / ttop;
 
       /* Get new density... */
-      const double rho = rhobot + (rhotop - rhobot) * rs[ip];
+      const double rho = rhobot + (rhotop - rhobot) * cache->rs[ip];
 
       /* Get pressure... */
       atm->p[ip] = LIN(rhobot, pbot, rhotop, ptop, rho);
     }
   }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete (rs)
-#endif
-  free(rs);
 }
 
 /*****************************************************************************/
@@ -2816,26 +2802,14 @@ void module_diffusion_meso(
   cache_t *cache,
   const double *dt) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  double *rs;
-  ALLOC(rs, double,
-	3 * NP + 1);
-#ifdef _OPENACC
-#pragma acc enter data create(rs[:3 * NP])
-#endif
-
   /* Create random numbers... */
-  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     /* Get indices... */
     const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
@@ -2876,13 +2850,13 @@ void module_diffusion_meso(
     if (ctl->turb_mesox > 0) {
       cache->uvwp[ip][0] =
 	(float) (r * cache->uvwp[ip][0] +
-		 r2 * rs[3 * ip] * ctl->turb_mesox * usig);
+		 r2 * cache->rs[3 * ip] * ctl->turb_mesox * usig);
       atm->lon[ip] +=
 	DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
       cache->uvwp[ip][1] =
 	(float) (r * cache->uvwp[ip][1] +
-		 r2 * rs[3 * ip + 1] * ctl->turb_mesox * vsig);
+		 r2 * cache->rs[3 * ip + 1] * ctl->turb_mesox * vsig);
       atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
     }
 
@@ -2890,16 +2864,10 @@ void module_diffusion_meso(
     if (ctl->turb_mesoz > 0) {
       cache->uvwp[ip][2] =
 	(float) (r * cache->uvwp[ip][2] +
-		 r2 * rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
+		 r2 * cache->rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
       atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
     }
   }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete (rs)
-#endif
-  free(rs);
 }
 
 /*****************************************************************************/
@@ -2912,26 +2880,14 @@ void module_diffusion_pbl(
   cache_t *cache,
   const double *dt) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  double *rs;
-  ALLOC(rs, double,
-	3 * NP + 1);
-#ifdef _OPENACC
-#pragma acc enter data create(rs[:3 * NP])
-#endif
-
   /* Create random numbers... */
-  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
+  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,met0,met1,atm,cache,dt,rs)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1,
       tau_u = 300., tau_w = 100.;
@@ -3021,14 +2977,14 @@ void module_diffusion_pbl(
     const double ru = exp(-fabs(dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
-      = (float) (cache->uvwp[ip][0] * ru + ru2 * rs[3 * ip]);
+      = (float) (cache->uvwp[ip][0] * ru + ru2 * cache->rs[3 * ip]);
     cache->uvwp[ip][1]
-      = (float) (cache->uvwp[ip][1] * ru + ru2 * rs[3 * ip + 1]);
+      = (float) (cache->uvwp[ip][1] * ru + ru2 * cache->rs[3 * ip + 1]);
 
     const double rw = exp(-fabs(dt[ip]) / tau_w);
     const double rw2 = sqrt(1.0 - SQR(rw));
     cache->uvwp[ip][2]
-      = (float) (cache->uvwp[ip][2] * rw + rw2 * rs[3 * ip + 2]
+      = (float) (cache->uvwp[ip][2] * rw + rw2 * cache->rs[3 * ip + 2]
 		 + sig_w * dsigw_dz * dt[ip]);	// TODO: check approx for density correction?
 
     /* Calculate new air parcel position... */
@@ -3036,12 +2992,6 @@ void module_diffusion_pbl(
     atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
     atm->p[ip] += DZ2DP(cache->uvwp[ip][2] * dt[ip] / 1000., atm->p[ip]);
   }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete (rs)
-#endif
-  free(rs);
 }
 
 /*****************************************************************************/
@@ -3052,30 +3002,18 @@ void module_diffusion_turb(
   met_t *met0,
   met_t *met1,
   atm_t *atm,
+  cache_t *cache,
   const double *dt) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_RNG", "PHYSICS", NVTX_GPU);
-
-  /* Allocate... */
-  double *rs, *rs2;
-  ALLOC(rs, double,
-	3 * NP + 1);
-  ALLOC(rs2, double,
-	NP + 1);
-#ifdef _OPENACC
-#pragma acc enter data create(rs[:3 * NP], rs2[:NP])
-#endif
-
   /* Create random numbers... */
-  module_rng(ctl, rs, 3 * (size_t) atm->np, 1);
-  module_rng(ctl, rs2, (size_t) atm->np, 0);
+  module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt,rs,rs2)") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,clim,met0,met1,atm,cache,dt)") {
 
     /* Get PBL and surface pressure... */
     double pbl, ps;
@@ -3097,50 +3035,16 @@ void module_diffusion_turb(
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
       const double sigma = sqrt(2.0 * dx * fabs(dt[ip])) / 1000.;
-      atm->lon[ip] += DX2DEG(rs[3 * ip] * sigma, atm->lat[ip]);
-      atm->lat[ip] += DY2DEG(rs[3 * ip + 1] * sigma);
+      atm->lon[ip] += DX2DEG(cache->rs[3 * ip] * sigma, atm->lat[ip]);
+      atm->lat[ip] += DY2DEG(cache->rs[3 * ip + 1] * sigma);
     }
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
       const double sigma = sqrt(2.0 * dz * fabs(dt[ip])) / 1000.;
-      atm->p[ip] += DZ2DP(rs[3 * ip + 2] * sigma, atm->p[ip]);
-    }
-
-    /* Vertical mixing in the PBL... */
-    if (ctl->diff_mix_pbl) {
-
-      /* Get top of transition layer... */
-      const double pbl_ext = pbl - ctl->diff_pbl_trans * (ps - pbl);
-
-      /* Check pressure... */
-      if (atm->p[ip] >= pbl_ext) {
-
-	/* Get temperature... */
-	double tpbl_ext, ts;
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   ps, atm->lon[ip], atm->lat[ip], &ts, ci, cw, 1);
-	intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			   pbl_ext, atm->lon[ip], atm->lat[ip], &tpbl_ext, ci,
-			   cw, 1);
-
-	/* Get new air parcel density... */
-	const double rhos = ps / ts;
-	const double rhopbl_ext = pbl_ext / tpbl_ext;
-	const double rho = rhos + (rhopbl_ext - rhos) * rs2[ip];
-
-	/* Get new air parcel pressure... */
-	atm->p[ip] = LIN(rhos, ps, rhopbl_ext, pbl_ext, rho);
-      }
+      atm->p[ip] += DZ2DP(cache->rs[3 * ip + 2] * sigma, atm->p[ip]);
     }
   }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete (rs, rs2)
-#endif
-  free(rs);
-  free(rs2);
 }
 
 /*****************************************************************************/
@@ -4160,7 +4064,7 @@ void module_timesteps(
     (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,atm,met0,dt)") {
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,atm,dt)") {
 
     /* Set time step for each air parcel... */
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
@@ -4223,7 +4127,7 @@ void module_tracer_chem(
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,atm,met1,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     /* Get temperature... */
     double t;
@@ -4447,7 +4351,7 @@ double pbl_weight(
   const double ps) {
 
   /* Get pressure range... */
-  const double p1 = pbl - ctl->diff_pbl_trans * (ps - pbl);
+  const double p1 = pbl - ctl->conv_pbl_trans * (ps - pbl);
   const double p0 = pbl;
 
   /* Get weighting factor... */
@@ -5438,10 +5342,6 @@ void read_ctl(
     = (int) scan_ctl(filename, argc, argv, "DIFFUSION", -1, "0", NULL);
   if (ctl->diffusion < 0 || ctl->diffusion > 2)
     ERRMSG("Set DIFFUSION to 0, 1 or 2!");
-  ctl->diff_mix_pbl
-    = (int) scan_ctl(filename, argc, argv, "DIFF_MIX_PBL", -1, "0", NULL);
-  ctl->diff_pbl_trans
-    = scan_ctl(filename, argc, argv, "DIFF_PBL_TRANS", -1, "0", NULL);
   ctl->turb_dx_pbl =
     scan_ctl(filename, argc, argv, "TURB_DX_PBL", -1, "50", NULL);
   ctl->turb_dx_trop =
@@ -5460,15 +5360,15 @@ void read_ctl(
     scan_ctl(filename, argc, argv, "TURB_MESOZ", -1, "0.16", NULL);
 
   /* Convection... */
+  ctl->conv_mix_pbl
+    = (int) scan_ctl(filename, argc, argv, "CONV_MIX_PBL", -1, "0", NULL);
+  ctl->conv_pbl_trans
+    = scan_ctl(filename, argc, argv, "CONV_PBL_TRANS", -1, "0", NULL);
   ctl->conv_cape
     = scan_ctl(filename, argc, argv, "CONV_CAPE", -1, "-999", NULL);
   ctl->conv_cin
     = scan_ctl(filename, argc, argv, "CONV_CIN", -1, "-999", NULL);
   ctl->conv_dt = scan_ctl(filename, argc, argv, "CONV_DT", -1, "-999", NULL);
-  ctl->conv_mix_bot
-    = (int) scan_ctl(filename, argc, argv, "CONV_MIX_BOT", -1, "1", NULL);
-  ctl->conv_mix_top
-    = (int) scan_ctl(filename, argc, argv, "CONV_MIX_TOP", -1, "1", NULL);
 
   /* Boundary conditions... */
   ctl->bound_mass =
