@@ -265,8 +265,6 @@ MODULE mptrac_struct
      INTEGER(c_int) :: advect
      INTEGER(c_int) :: rng_type
      INTEGER(c_int) :: diffusion
-     INTEGER(c_int) :: diff_mix_pbl
-     INTEGER(c_int) :: diff_pbl_trans
      REAL(c_double) :: turb_dx_pbl
      REAL(c_double) :: turb_dx_trop
      REAL(c_double) :: turb_dx_strat
@@ -275,11 +273,11 @@ MODULE mptrac_struct
      REAL(c_double) :: turb_dz_strat
      REAL(c_double) :: turb_mesox
      REAL(c_double) :: turb_mesoz
+     INTEGER(c_int) :: conv_mix_pbl
+     REAL(c_double) :: conv_pbl_trans
      REAL(c_double) :: conv_cape
      REAL(c_double) :: conv_cin
      REAL(c_double) :: conv_dt
-     INTEGER(c_int) :: conv_mix_bot
-     INTEGER(c_int) :: conv_mix_top
      REAL(c_double) :: bound_mass
      REAL(c_double) :: bound_mass_trend
      REAL(c_double) :: bound_vmr

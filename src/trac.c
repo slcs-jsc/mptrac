@@ -233,7 +233,7 @@ int main(
 	  if (ctl.diffusion == 1
 	      && (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
 		  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0))
-	    module_diffusion_turb(&ctl, clim, met0, met1, atm, dt);
+	    module_diffusion_turb(&ctl, clim, met0, met1, atm, cache, dt);
 
 	  /* Mesoscale diffusion... */
 	  if (ctl.diffusion == 1
@@ -245,9 +245,9 @@ int main(
 	    module_diffusion_pbl(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Convection... */
-	  if (ctl.conv_cape >= 0
+	  if ((ctl.conv_mix_pbl || ctl.conv_cape >= 0)
 	      && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
-	    module_convection(&ctl, met0, met1, atm, dt);
+	    module_convection(&ctl, met0, met1, atm, cache, dt);
 
 	  /* Sedimentation... */
 	  if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)

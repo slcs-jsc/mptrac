@@ -2664,12 +2664,6 @@ typedef struct {
   /*! Diffusion scheme (0=off, 1=fixed-K, 2=PBL). */
   int diffusion;
 
-  /*! Vertical mixing in the PBL (0=off, 1=on). */
-  int diff_mix_pbl;
-
-  /*! Depth of PBL transition layer (fraction of PBL depth). */
-  double diff_pbl_trans;
-
   /*! Horizontal turbulent diffusion coefficient (PBL) [m^2/s]. */
   double turb_dx_pbl;
 
@@ -2694,6 +2688,12 @@ typedef struct {
   /*! Vertical scaling factor for mesoscale wind fluctuations. */
   double turb_mesoz;
 
+  /*! Vertical mixing in the PBL (0=off, 1=on). */
+  int conv_mix_pbl;
+
+  /*! Depth of PBL transition layer (fraction of PBL depth). */
+  double conv_pbl_trans;
+
   /*! CAPE threshold for convection module [J/kg]. */
   double conv_cape;
 
@@ -2702,12 +2702,6 @@ typedef struct {
 
   /*! Time interval for convection module [s]. */
   double conv_dt;
-
-  /*! Lower level for mixing (0=particle pressure, 1=surface). */
-  int conv_mix_bot;
-
-  /*! Upper level for mixing (0=particle pressure, 1=EL). */
-  int conv_mix_top;
 
   /*! Boundary conditions mass per particle [kg]. */
   double bound_mass;
@@ -3199,6 +3193,9 @@ typedef struct {
 
   /*! Wind perturbations [m/s]. */
   float uvwp[NP][3];
+
+  /*! Random numbers. */
+  double rs[3 * NP + 1];
 
 } cache_t;
 
@@ -4984,28 +4981,26 @@ void module_chem_init(
   atm_t * atm);
 
 /**
- * @brief Simulate convective processes for atmospheric particles.
+ * @brief Performs convective mixing of atmospheric particles.
  *
- * This function simulates convective processes for atmospheric
- * particles based on convective available potential energy (CAPE) and
- * convective inhibition (CIN).  It loops over each particle and
- * checks whether the CAPE exceeds a specified threshold. If CAPE is
- * above the threshold and meets the conditions, it performs
- * convective mixing to update the particle's pressure based on random
- * numbers generated for each particle.
+ * This function adjusts the pressure of atmospheric particles based on 
+ * boundary layer (PBL) mixing and convective conditions driven by CAPE 
+ * (Convective Available Potential Energy) and CIN (Convective Inhibition).
+ * It uses meteorological data and random numbers for vertical mixing 
+ * calculations.
  *
- * The function interpolates CAPE and CIN from meteorological data and
- * checks whether the particle is above the cloud top level. If the
- * conditions are met, it determines the pressure range for vertical
- * mixing and calculates the density range based on temperature at
- * different pressure levels. It then calculates the new density based
- * on random numbers and updates the particle's pressure accordingly.
+ * @param[in] ctl     Pointer to the control structure with simulation settings.
+ * @param[in,out] met0 Pointer to the meteorological data at the initial timestep.
+ * @param[in,out] met1 Pointer to the meteorological data at the subsequent timestep.
+ * @param[in,out] atm  Pointer to the atmospheric data structure with particle properties.
+ * @param[in,out] cache Pointer to the cache structure for temporary data and random numbers.
+ * @param[in] dt      Pointer to the simulation timestep duration.
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param met0 Pointer to the meteorological data structure at the initial time step.
- * @param met1 Pointer to the meteorological data structure at the next time step.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
+ * @note
+ * - This function modifies the `atm` structure in place.
+ * - Interpolates CAPE, CIN, and other meteorological parameters.
+ * - Determines the pressure range for PBL and convective mixing.
+ * - Updates the pressure of particles based on calculated mixing.
  *
  * @author Lars Hoffmann
  */
@@ -5014,6 +5009,7 @@ void module_convection(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  cache_t * cache,
   const double *dt);
 
 /**
@@ -5148,6 +5144,7 @@ void module_diffusion_pbl(
  * @param[in,out] met0 Pointer to the meteorological data structure for the initial timestep.
  * @param[in,out] met1 Pointer to the meteorological data structure for the next timestep.
  * @param[in,out] atm  Pointer to the atmospheric structure containing particle data.
+ * @param[in,out] cache Pointer to the cache structure for temporary storage.
  * @param[in] dt   Pointer to an array of timestep durations for each particle.
  *
  * @details
@@ -5157,14 +5154,10 @@ void module_diffusion_pbl(
  * - Loops over atmospheric particles to compute and apply:
  *   - Horizontal turbulent diffusion, based on prescribed diffusivity values.
  *   - Vertical turbulent diffusion, using vertical diffusivity values.
- *   - Vertical mixing within the PBL, incorporating density and pressure adjustments.
  * - Cleans up allocated resources after processing.
  *
  * Turbulent diffusivity parameters are derived from control inputs and weighted 
  * based on atmospheric layer influences (PBL, troposphere, stratosphere).
- * 
- * Vertical mixing within the PBL adjusts particle pressures based on air parcel 
- * density calculations and interpolated atmospheric conditions.
  *
  * @note
  * - Control parameters `TURB_DX_PBL`, `TURB_DX_TROP`, `TURB_DX_STRAT`, `TURB_DZ_TROP` and `TURB_DZ_PBL`, `TURB_DZ_TROP`, `TURB_DZ_STRAT` define horizontal and vertical
@@ -5199,6 +5192,7 @@ void module_diffusion_turb(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
+  cache_t * cache,
   const double *dt);
 
 /**
