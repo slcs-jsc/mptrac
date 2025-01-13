@@ -6416,7 +6416,7 @@ void read_met_grid(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
-  
+
 #ifdef ECCODES
 void read_met_global_grib(
   codes_handle** handles,
@@ -6888,6 +6888,14 @@ void read_met_surface(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
+
+#ifdef ECCODES
+void read_met_surface_grib(
+  codes_handle** handles,
+  int num_messages,
+  met_t* met,
+  ctl_t* ctl);
+#endif
 
 /**
  * @brief Calculates the tropopause and related meteorological variables based on various methods and stores the results in the meteorological data structure.

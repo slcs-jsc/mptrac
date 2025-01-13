@@ -1187,7 +1187,7 @@ void get_met_help(
     else if (ctl->met_type == 5)
       sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
     else if (ctl->met_type == 6)
-      sprintf(filename,"%s_YYYY_MM_DD_HH.grb",metbase);
+      sprintf(filename,"YYYYMMDDHH_.grb");
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -6561,6 +6561,10 @@ void read_met_global_grib(
   char year[20],month[20],day[20],hour[20];
   size_t s = sizeof(datestr);
 
+  long nvert;
+  ECC(codes_get_long(handles[0],"numberOfVerticalCoordinateValues",&nvert));
+  printf("Nvert: %ld", nvert);
+
   ECC(codes_get_string(handles[0],"dataDate",datestr,&s));
   ECC(codes_get_string(handles[0],"dataTime",timestr,&s));
   strncpy(year,datestr,4);
@@ -6631,6 +6635,8 @@ void read_met_global_grib(
   }
   printf("Max level: %d\n",max_level);
   met->npl = max_level;
+
+  
   
   }
 #endif
@@ -6900,34 +6906,80 @@ void read_met_monotonize(
    - read data from dict into struct*/
 #ifdef ECCODES
 int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
-  LOG(1,"INSIDE READ_MET_GRIB");
-  LOG(1,"%s",filename);
-  filename = "/root/2020012306_ml.grb";
+  printf("original filename: %s\n",filename);
+  filename = "/root/2020012306_.grb";
 
+  size_t filename_len = strlen(filename);
+  char general_filename [filename_len-3];
+  memcpy(general_filename,filename,filename_len-4);
+  general_filename[filename_len-4] = '\0';
+  printf("general: %s\n",general_filename);
+  char sf_filename [filename_len+3];
+  char ml_filename [filename_len+3];
+
+  snprintf(ml_filename,filename_len+strlen("ml")+1,"%s%s%s",general_filename,"ml",".grb");
+  snprintf(sf_filename,filename_len+strlen("sf")+1,"%s%s%s",general_filename,"sf",".grb");
+  
+
+  printf("ml_filename: %s\n",ml_filename);
+  printf("sf_filename: %s\n",sf_filename);
+
+
+  
   int err = 0;
-  FILE* file = fopen(filename,"rb");
-  codes_handle** handles;
+  /*Open files*/
+  FILE* ml_file = fopen(ml_filename,"rb");
+  FILE* sf_file = fopen(sf_filename,"rb");
+
+  /*Store messages from files*/
+  codes_handle** ml_handles;
+  codes_handle** sf_handles;
+
   int num_messages = 0;
-  ECC(codes_count_in_file(0,file,&num_messages));
-  printf("Number of messages: %d\n",num_messages);
-  handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)num_messages);
+  ECC(codes_count_in_file(0,ml_file,&num_messages));
+  ml_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)num_messages);
   for (int i = 0 ; i < num_messages ; i++){
     codes_handle* h = NULL;
-    if((h = codes_grib_handle_new_from_file(0,file,&err))!=NULL ){
-        handles[i] = h;
+    if((h = codes_grib_handle_new_from_file(0,ml_file,&err))!=NULL ){
+        ml_handles[i] = h;
     }
   }
-  read_met_global_grib(handles,num_messages,met);
+  int sf_num_messages = 0;
+  ECC(codes_count_in_file(0,sf_file,&sf_num_messages));
+  printf("Messages in sf file: %d \n", sf_num_messages);
+  sf_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)sf_num_messages);
+  for (int i = 0 ; i < num_messages ; i++){
+    codes_handle* h = NULL;
+    if((h = codes_grib_handle_new_from_file(0,sf_file,&err))!=NULL ){
+        sf_handles[i] = h;
+    }
+  }
+
+  /*Read time/lat/lon and number of levels*/
+  read_met_global_grib(ml_handles,num_messages,met);
+  /*Read data from surface file*/
+  read_met_surface_grib(sf_handles,sf_num_messages,met,ctl);
+  // /*Read data from ml file*/
+  // read_met_levels_grib(ml_handles,num_messages,met,ctl);
   
-  codes_handle* h = handles[67];
+
+  
+  codes_handle* h = sf_handles[20];
   char shortName[50];
   size_t size2 = sizeof(shortName);
   codes_get_string(h, "shortName", shortName, &size2);
   printf("shortName: %s\n", shortName);
 
-  fclose(file);
-  
+  fclose(ml_file);
+  fclose(sf_file);
 
+  for(int i=0;i<num_messages;i++){
+    codes_handle_delete(ml_handles[i]);
+  }
+  for(int i=0;i<sf_num_messages;i++){
+    codes_handle_delete(sf_handles[i]);
+  }
+  
   read_met_nc(filename,ctl,clim,met);
 
   return 0;
@@ -7962,6 +8014,130 @@ void read_met_surface(
 	 0.001f, 1))
       ERRMSG("Cannot read planetary boundary layer!");
 }
+
+
+#ifdef ECCODES
+void read_met_surface_grib(codes_handle** handles, int num_messages, met_t* met, ctl_t* ctl){
+
+  char** shortNames = (char**)malloc((size_t)num_messages * sizeof(char*));
+  double** values = (double**)malloc((size_t)num_messages * sizeof(double*));
+  size_t* valueCounts = (size_t*)malloc((size_t)num_messages * sizeof(size_t));
+
+
+  /*Iterate over all messages*/
+  for( int i = 0; i< num_messages; i++){
+    size_t max_size = 50;
+    shortNames[i] = (char*)malloc(max_size * sizeof(char));;
+
+  
+    /*Store values with shortname*/
+    ECC(codes_get_string(handles[i], "shortName", shortNames[i], &max_size));
+    ECC(codes_get_size(handles[i],"values",&valueCounts[i]));
+    values[i]= (double*)malloc(valueCounts[i] * sizeof(double));
+    ECC(codes_get_double_array(handles[i],"values",values[i],&valueCounts[i]))
+
+    /*Read surface pressure... */
+
+    if ( strcmp(shortNames[i],"sp")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->ps[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        }
+      
+    }
+
+    /*Read geopotential height at the surface... */
+    if ( strcmp(shortNames[i],"z")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->zs[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        } 
+    }
+
+    /* Read temperature at the surface... */
+    if ( strcmp(shortNames[i],"2t")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->ts[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        }
+      }
+    /* Read zonal wind at the surface...*/
+    if ( strcmp(shortNames[i],"10u")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->us[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        }
+      }
+    /* Read meridional wind at the surface...*/
+    if ( strcmp(shortNames[i],"10v")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->vs[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        }
+      }
+    /* Read land-sea mask...*/
+    if ( strcmp(shortNames[i],"lsm")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->lsm[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        }
+      }
+     /* Read sea surface temperature...*/
+    if ( strcmp(shortNames[i],"sst")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+                met->sst[ix][iy] = (float)values[i][ix * met->nx + iy];
+            }
+        }
+      }
+    if(ctl->met_cape == 0){
+
+        /* Read CAPE...*/
+        if ( strcmp(shortNames[i],"cape")==0){
+          for (int ix = 0; ix < met->nx; ix++) {
+                for (int iy = 0; iy < met->ny; iy++) {
+                    met->cape[ix][iy] = (float)values[i][ix * met->nx + iy];
+                }
+            }
+          }
+        /* Read CIN...*/
+        if ( strcmp(shortNames[i],"cin")==0){
+          for (int ix = 0; ix < met->nx; ix++) {
+                for (int iy = 0; iy < met->ny; iy++) {
+                    met->cin[ix][iy] = (float)values[i][ix * met->nx + iy];
+                }
+            }
+          }
+    }
+  
+    if(ctl->met_pbl == 0){
+        if ( strcmp(shortNames[i],"blh")==0){
+            for (int ix = 0; ix < met->nx; ix++) {
+                  for (int iy = 0; iy < met->ny; iy++) {
+                      met->pbl[ix][iy] = (float)values[i][ix * met->nx + iy];
+                  }
+              }
+            }
+    }
+    
+  }
+  
+  for (int i = 0; i<num_messages;i++){
+    free(shortNames[i]);
+    free(values[i]);
+  }
+  free(shortNames);
+  free(values);
+
+  free(valueCounts);
+}
+#endif
 
 /*****************************************************************************/
 
