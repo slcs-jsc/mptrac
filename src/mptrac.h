@@ -258,19 +258,16 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
-/* #define EP 60 */
 #define EP 140
 #endif
 
 /*! Maximum number of longitudes for meteo data. */
 #ifndef EX
 #define EX 1202
-/* #define EX 481 */
 #endif
 
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
-/* #define EY 241 */
 #define EY 602
 #endif
 
@@ -3534,6 +3531,37 @@ typedef struct {
 } met_t;
 
 /* ------------------------------------------------------------
+   OpenACC routines...
+   ------------------------------------------------------------ */
+
+#ifdef _OPENACC
+#pragma acc routine (clim_oh)
+#pragma acc routine (clim_photo)
+#pragma acc routine (clim_tropo)
+#pragma acc routine (clim_ts)
+#pragma acc routine (clim_zm)
+#pragma acc routine (intpol_met_4d_coord)
+#pragma acc routine (intpol_met_space_3d)
+#pragma acc routine (intpol_met_space_3d_ml)
+#pragma acc routine (intpol_met_space_2d)
+#pragma acc routine (intpol_met_time_3d)
+#pragma acc routine (intpol_met_time_3d_ml)
+#pragma acc routine (intpol_met_time_2d)
+#pragma acc routine (kernel_weight)
+#pragma acc routine (lapse_rate)
+#pragma acc routine (locate_irr)
+#pragma acc routine (locate_irr_float)
+#pragma acc routine (locate_reg)
+#pragma acc routine (locate_vert)
+#pragma acc routine (nat_temperature)
+#pragma acc routine (pbl_weight)
+#pragma acc routine (sedi)
+#pragma acc routine (stddev)
+#pragma acc routine (sza_calc)
+#pragma acc routine (tropo_weight)
+#endif
+
+/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -4108,6 +4136,30 @@ void get_met(
   met_t ** met0,
   met_t ** met1);
 
+/**
+ * @brief Generates a formatted filename for meteorological data files based on the input parameters.
+ *
+ * This function determines a rounded time interval, decodes the time
+ * components (year, month, day, hour, minute, second), and constructs
+ * a filename string for meteorological data files in various
+ * formats. The filename is adjusted based on the input control
+ * settings.
+ *
+ * @param[in] ctl       Pointer to the control structure containing configuration settings.
+ * @param[in] t         The time value in seconds since a reference epoch.
+ * @param[in] direct    Direction to round the time value. Use -1 for rounding down and 1 for rounding up.
+ * @param[in] metbase   Base string for the filename, representing the dataset.
+ * @param[in] dt_met    Time interval for rounding in seconds.
+ * @param[out] filename Output buffer to store the generated filename.
+ *
+ * @note The function modifies the provided filename buffer to include placeholders (e.g., YYYY, MM, DD, HH)
+ *       replaced with the corresponding time values. The format of the filename depends on the values in
+ *       the control structure (e.g., ctl->met_type).
+ *
+ * @warning Ensure that the filename buffer has sufficient size to accommodate the resulting string.
+ *
+ * @author Lars Hoffmann
+ */
 void get_met_help(
   const ctl_t * ctl,
   const double t,
@@ -8282,35 +8334,5 @@ void write_vtk(
   const ctl_t * ctl,
   const atm_t * atm,
   const double t);
-
-/* ------------------------------------------------------------
-   OpenACC routines...
-   ------------------------------------------------------------ */
-
-#ifdef _OPENACC
-#pragma acc routine (clim_oh)
-#pragma acc routine (clim_photo)
-#pragma acc routine (clim_tropo)
-#pragma acc routine (clim_ts)
-#pragma acc routine (clim_zm)
-#pragma acc routine (intpol_met_4d_coord)
-#pragma acc routine (intpol_met_space_3d)
-#pragma acc routine (intpol_met_space_3d_ml)
-#pragma acc routine (intpol_met_space_2d)
-#pragma acc routine (intpol_met_time_3d)
-#pragma acc routine (intpol_met_time_3d_ml)
-#pragma acc routine (intpol_met_time_2d)
-#pragma acc routine (kernel_weight)
-#pragma acc routine (lapse_rate)
-#pragma acc routine (locate_irr)
-#pragma acc routine (locate_irr_float)
-#pragma acc routine (locate_reg)
-#pragma acc routine (locate_vert)
-#pragma acc routine (nat_temperature)
-#pragma acc routine (sedi)
-#pragma acc routine (stddev)
-#pragma acc routine (sza_calc)
-#pragma acc routine (tropo_weight)
-#endif
 
 #endif /* LIBTRAC_H */
