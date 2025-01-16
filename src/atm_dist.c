@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -39,7 +39,7 @@ int main(
     rqtdm[NQ], rvtdm, t0 =
     0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work;
 
-  int f, init = 0, ip, iq, np;
+  int init = 0, np;
 
   /* Allocate... */
   ALLOC(atm1, atm_t, 1);
@@ -86,14 +86,21 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  int ens = (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
-  double p0 = P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
-  double p1 = P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
-  double lat0 = scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
-  double lat1 = scan_ctl(argv[1], argc, argv, "DIST_LAT1", -1, "1000", NULL);
-  double lon0 = scan_ctl(argv[1], argc, argv, "DIST_LON0", -1, "-1000", NULL);
-  double lon1 = scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
-  double zscore =
+  const int ens =
+    (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
+  const double p0 =
+    P(scan_ctl(argv[1], argc, argv, "DIST_Z0", -1, "-1000", NULL));
+  const double p1 =
+    P(scan_ctl(argv[1], argc, argv, "DIST_Z1", -1, "1000", NULL));
+  const double lat0 =
+    scan_ctl(argv[1], argc, argv, "DIST_LAT0", -1, "-1000", NULL);
+  const double lat1 =
+    scan_ctl(argv[1], argc, argv, "DIST_LAT1", -1, "1000", NULL);
+  const double lon0 =
+    scan_ctl(argv[1], argc, argv, "DIST_LON0", -1, "-1000", NULL);
+  const double lon1 =
+    scan_ctl(argv[1], argc, argv, "DIST_LON1", -1, "1000", NULL);
+  const double zscore =
     scan_ctl(argv[1], argc, argv, "DIST_ZSCORE", -1, "-999", NULL);
 
   /* Write info... */
@@ -112,7 +119,7 @@ int main(
 	  "# $5 = absolute vertical distance (%s) [km]\n"
 	  "# $6 = relative vertical distance (%s) [%%]\n",
 	  argv[3], argv[3], argv[3], argv[3]);
-  for (iq = 0; iq < ctl.nq; iq++)
+  for (int iq = 0; iq < ctl.nq; iq++)
     fprintf(out,
 	    "# $%d = %s absolute difference (%s) [%s]\n"
 	    "# $%d = %s relative difference (%s) [%%]\n",
@@ -121,7 +128,7 @@ int main(
   fprintf(out, "# $%d = number of particles\n\n", 7 + 2 * ctl.nq);
 
   /* Loop over file pairs... */
-  for (f = 4; f < argc; f += 2) {
+  for (int f = 4; f < argc; f += 2) {
 
     /* Read atmopheric data... */
     if (!read_atm(argv[f], &ctl, atm1) || !read_atm(argv[f + 1], &ctl, atm2))
@@ -132,7 +139,7 @@ int main(
       ERRMSG("Different numbers of particles!");
 
     /* Get time from filename... */
-    double t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
+    const double t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
 
     /* Save initial time... */
     if (!init) {
@@ -142,14 +149,14 @@ int main(
 
     /* Init... */
     np = 0;
-    for (ip = 0; ip < atm1->np; ip++) {
+    for (int ip = 0; ip < atm1->np; ip++) {
       ahtd[ip] = avtd[ip] = rhtd[ip] = rvtd[ip] = 0;
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	aqtd[iq * NP + ip] = rqtd[iq * NP + ip] = 0;
     }
 
     /* Loop over air parcels... */
-    for (ip = 0; ip < atm1->np; ip++) {
+    for (int ip = 0; ip < atm1->np; ip++) {
 
       /* Check air parcel index... */
       if (ctl.qnt_idx > 0
@@ -185,7 +192,7 @@ int main(
       /* Calculate absolute transport deviations... */
       ahtd[np] = DIST(x1, x2);
       avtd[np] = z1 - z2;
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	aqtd[iq * NP + np] = atm1->q[iq][ip] - atm2->q[iq][ip];
 
       /* Calculate relative transport deviations... */
@@ -208,7 +215,7 @@ int main(
       }
 
       /* Get relative transport deviations... */
-      for (iq = 0; iq < ctl.nq; iq++)
+      for (int iq = 0; iq < ctl.nq; iq++)
 	rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
 	  / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
 
@@ -229,11 +236,11 @@ int main(
     if (zscore > 0 && np > 1) {
 
       /* Get means and standard deviations of transport deviations... */
-      size_t n = (size_t) np;
-      double muh = gsl_stats_mean(ahtd, 1, n);
-      double muv = gsl_stats_mean(avtd, 1, n);
-      double sigh = gsl_stats_sd(ahtd, 1, n);
-      double sigv = gsl_stats_sd(avtd, 1, n);
+      const size_t n = (size_t) np;
+      const double muh = gsl_stats_mean(ahtd, 1, n);
+      const double muv = gsl_stats_mean(avtd, 1, n);
+      const double sigh = gsl_stats_sd(ahtd, 1, n);
+      const double sigv = gsl_stats_sd(avtd, 1, n);
 
       /* Filter data... */
       np = 0;
@@ -244,7 +251,7 @@ int main(
 	  rhtd[np] = rhtd[i];
 	  avtd[np] = avtd[i];
 	  rvtd[np] = rvtd[i];
-	  for (iq = 0; iq < ctl.nq; iq++) {
+	  for (int iq = 0; iq < ctl.nq; iq++) {
 	    aqtd[iq * NP + np] = aqtd[iq * NP + (int) i];
 	    rqtd[iq * NP + np] = rqtd[iq * NP + (int) i];
 	  }
@@ -258,7 +265,7 @@ int main(
       rhtdm = gsl_stats_mean(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_mean(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_mean(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_mean(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_mean(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -267,7 +274,7 @@ int main(
       rhtdm = gsl_stats_sd(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_sd(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_sd(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_sd(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_sd(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -276,7 +283,7 @@ int main(
       rhtdm = gsl_stats_min(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_min(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_min(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_min(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_min(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -285,7 +292,7 @@ int main(
       rhtdm = gsl_stats_max(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_max(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_max(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_max(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_max(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -294,7 +301,7 @@ int main(
       rhtdm = gsl_stats_skew(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_skew(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_skew(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_skew(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_skew(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -303,7 +310,7 @@ int main(
       rhtdm = gsl_stats_kurtosis(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_kurtosis(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_kurtosis(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_kurtosis(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_kurtosis(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -312,7 +319,7 @@ int main(
       rhtdm = gsl_stats_absdev_m(rhtd, 1, (size_t) np, 0.0);
       avtdm = gsl_stats_absdev_m(avtd, 1, (size_t) np, 0.0);
       rvtdm = gsl_stats_absdev_m(rvtd, 1, (size_t) np, 0.0);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_absdev_m(&aqtd[iq * NP], 1, (size_t) np, 0.0);
 	rqtdm[iq] = gsl_stats_absdev_m(&rqtd[iq * NP], 1, (size_t) np, 0.0);
       }
@@ -321,7 +328,7 @@ int main(
       rhtdm = gsl_stats_median(rhtd, 1, (size_t) np);
       avtdm = gsl_stats_median(avtd, 1, (size_t) np);
       rvtdm = gsl_stats_median(rvtd, 1, (size_t) np);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_median(&aqtd[iq * NP], 1, (size_t) np);
 	rqtdm[iq] = gsl_stats_median(&rqtd[iq * NP], 1, (size_t) np);
       }
@@ -330,7 +337,7 @@ int main(
       rhtdm = gsl_stats_mad0(rhtd, 1, (size_t) np, work);
       avtdm = gsl_stats_mad0(avtd, 1, (size_t) np, work);
       rvtdm = gsl_stats_mad0(rvtd, 1, (size_t) np, work);
-      for (iq = 0; iq < ctl.nq; iq++) {
+      for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_mad0(&aqtd[iq * NP], 1, (size_t) np, work);
 	rqtdm[iq] = gsl_stats_mad0(&rqtd[iq * NP], 1, (size_t) np, work);
       }
@@ -340,7 +347,7 @@ int main(
     /* Write output... */
     fprintf(out, "%.2f %.2f %g %g %g %g", t, t - t0,
 	    ahtdm, rhtdm, avtdm, rvtdm);
-    for (iq = 0; iq < ctl.nq; iq++) {
+    for (int iq = 0; iq < ctl.nq; iq++) {
       fprintf(out, " ");
       fprintf(out, ctl.qnt_format[iq], aqtdm[iq]);
       fprintf(out, " ");

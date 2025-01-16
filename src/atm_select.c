@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -42,32 +42,40 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  int stride =
+  const int stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
-  int idx0 =
+  const int idx0 =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX0", -1, "-999", NULL);
-  int idx1 =
+  const int idx1 =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_IDX1", -1, "-999", NULL);
   int ip0 =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_IP0", -1, "-999", NULL);
   int ip1 =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_IP1", -1, "-999", NULL);
-  double t0 = scan_ctl(argv[1], argc, argv, "SELECT_T0", -1, "0", NULL);
-  double t1 = scan_ctl(argv[1], argc, argv, "SELECT_T1", -1, "0", NULL);
-  double p0 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z0", -1, "0", NULL));
-  double p1 = P(scan_ctl(argv[1], argc, argv, "SELECT_Z1", -1, "0", NULL));
-  double theta0 =
+  const double t0 = scan_ctl(argv[1], argc, argv, "SELECT_T0", -1, "0", NULL);
+  const double t1 = scan_ctl(argv[1], argc, argv, "SELECT_T1", -1, "0", NULL);
+  const double p0 =
+    P(scan_ctl(argv[1], argc, argv, "SELECT_Z0", -1, "0", NULL));
+  const double p1 =
+    P(scan_ctl(argv[1], argc, argv, "SELECT_Z1", -1, "0", NULL));
+  const double theta0 =
     scan_ctl(argv[1], argc, argv, "SELECT_THETA0", -1, "0", NULL);
-  double theta1 =
+  const double theta1 =
     scan_ctl(argv[1], argc, argv, "SELECT_THETA1", -1, "0", NULL);
-  double lon0 = scan_ctl(argv[1], argc, argv, "SELECT_LON0", -1, "0", NULL);
-  double lon1 = scan_ctl(argv[1], argc, argv, "SELECT_LON1", -1, "0", NULL);
-  double lat0 = scan_ctl(argv[1], argc, argv, "SELECT_LAT0", -1, "0", NULL);
-  double lat1 = scan_ctl(argv[1], argc, argv, "SELECT_LAT1", -1, "0", NULL);
-  double r0 = scan_ctl(argv[1], argc, argv, "SELECT_R0", -1, "0", NULL);
-  double r1 = scan_ctl(argv[1], argc, argv, "SELECT_R1", -1, "0", NULL);
-  double rlon = scan_ctl(argv[1], argc, argv, "SELECT_RLON", -1, "0", NULL);
-  double rlat = scan_ctl(argv[1], argc, argv, "SELECT_RLAT", -1, "0", NULL);
+  const double lon0 =
+    scan_ctl(argv[1], argc, argv, "SELECT_LON0", -1, "0", NULL);
+  const double lon1 =
+    scan_ctl(argv[1], argc, argv, "SELECT_LON1", -1, "0", NULL);
+  const double lat0 =
+    scan_ctl(argv[1], argc, argv, "SELECT_LAT0", -1, "0", NULL);
+  const double lat1 =
+    scan_ctl(argv[1], argc, argv, "SELECT_LAT1", -1, "0", NULL);
+  const double r0 = scan_ctl(argv[1], argc, argv, "SELECT_R0", -1, "0", NULL);
+  const double r1 = scan_ctl(argv[1], argc, argv, "SELECT_R1", -1, "0", NULL);
+  const double rlon =
+    scan_ctl(argv[1], argc, argv, "SELECT_RLON", -1, "0", NULL);
+  const double rlat =
+    scan_ctl(argv[1], argc, argv, "SELECT_RLAT", -1, "0", NULL);
 
   /* Get Cartesian coordinates... */
   double x0[3], x1[3];

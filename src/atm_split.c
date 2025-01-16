@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -32,8 +32,6 @@ int main(
 
   ctl_t ctl;
 
-  gsl_rng *rng;
-
   char kernel[LEN];
 
   double k, kw[EP], kz[EP], mmax = 0, mtot = 0, z, zmin = 0, zmax = 0;
@@ -50,25 +48,29 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  int n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
-  double m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
-  double um = scan_ctl(argv[1], argc, argv, "SPLIT_UM", -1, "0", NULL);
-  double dt = scan_ctl(argv[1], argc, argv, "SPLIT_DT", -1, "0", NULL);
-  double t0 = scan_ctl(argv[1], argc, argv, "SPLIT_T0", -1, "0", NULL);
-  double t1 = scan_ctl(argv[1], argc, argv, "SPLIT_T1", -1, "0", NULL);
-  double dz = scan_ctl(argv[1], argc, argv, "SPLIT_DZ", -1, "0", NULL);
-  double z0 = scan_ctl(argv[1], argc, argv, "SPLIT_Z0", -1, "0", NULL);
-  double z1 = scan_ctl(argv[1], argc, argv, "SPLIT_Z1", -1, "0", NULL);
-  double dx = scan_ctl(argv[1], argc, argv, "SPLIT_DX", -1, "0", NULL);
-  double lon0 = scan_ctl(argv[1], argc, argv, "SPLIT_LON0", -1, "0", NULL);
-  double lon1 = scan_ctl(argv[1], argc, argv, "SPLIT_LON1", -1, "0", NULL);
-  double lat0 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT0", -1, "0", NULL);
-  double lat1 = scan_ctl(argv[1], argc, argv, "SPLIT_LAT1", -1, "0", NULL);
+  const int n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
+  const double m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
+  const double um = scan_ctl(argv[1], argc, argv, "SPLIT_UM", -1, "0", NULL);
+  const double dt = scan_ctl(argv[1], argc, argv, "SPLIT_DT", -1, "0", NULL);
+  const double t0 = scan_ctl(argv[1], argc, argv, "SPLIT_T0", -1, "0", NULL);
+  const double t1 = scan_ctl(argv[1], argc, argv, "SPLIT_T1", -1, "0", NULL);
+  const double dz = scan_ctl(argv[1], argc, argv, "SPLIT_DZ", -1, "0", NULL);
+  const double z0 = scan_ctl(argv[1], argc, argv, "SPLIT_Z0", -1, "0", NULL);
+  const double z1 = scan_ctl(argv[1], argc, argv, "SPLIT_Z1", -1, "0", NULL);
+  const double dx = scan_ctl(argv[1], argc, argv, "SPLIT_DX", -1, "0", NULL);
+  const double lon0 =
+    scan_ctl(argv[1], argc, argv, "SPLIT_LON0", -1, "0", NULL);
+  const double lon1 =
+    scan_ctl(argv[1], argc, argv, "SPLIT_LON1", -1, "0", NULL);
+  const double lat0 =
+    scan_ctl(argv[1], argc, argv, "SPLIT_LAT0", -1, "0", NULL);
+  const double lat1 =
+    scan_ctl(argv[1], argc, argv, "SPLIT_LAT1", -1, "0", NULL);
   scan_ctl(argv[1], argc, argv, "SPLIT_KERNEL", -1, "-", kernel);
 
   /* Init random number generator... */
   gsl_rng_env_setup();
-  rng = gsl_rng_alloc(gsl_rng_default);
+  gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Read atmospheric data... */
   if (!read_atm(argv[2], &ctl, atm))

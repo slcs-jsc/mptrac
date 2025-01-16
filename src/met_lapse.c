@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2021 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -69,15 +69,17 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  int dz = (int) scan_ctl(argv[1], argc, argv, "LAPSE_DZ", -1, "20", NULL);
-  double lat0 =
+  const int dz =
+    (int) scan_ctl(argv[1], argc, argv, "LAPSE_DZ", -1, "20", NULL);
+  const double lat0 =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_LAT0", -1, "-90", NULL);
-  double lat1 =
+  const double lat1 =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_LAT1", -1, "90", NULL);
-  double z0 = (int) scan_ctl(argv[1], argc, argv, "LAPSE_Z0", -1, "0", NULL);
-  double z1 =
+  const double z0 =
+    (int) scan_ctl(argv[1], argc, argv, "LAPSE_Z0", -1, "0", NULL);
+  const double z1 =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_Z1", -1, "100", NULL);
-  int intpol =
+  const int intpol =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_INTPOL", -1, "1", NULL);
 
   /* Read climatological data... */

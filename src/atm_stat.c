@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -52,13 +52,20 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  int ens = (int) scan_ctl(argv[1], argc, argv, "STAT_ENS", -1, "-999", NULL);
-  double p0 = P(scan_ctl(argv[1], argc, argv, "STAT_Z0", -1, "-1000", NULL));
-  double p1 = P(scan_ctl(argv[1], argc, argv, "STAT_Z1", -1, "1000", NULL));
-  double lat0 = scan_ctl(argv[1], argc, argv, "STAT_LAT0", -1, "-1000", NULL);
-  double lat1 = scan_ctl(argv[1], argc, argv, "STAT_LAT1", -1, "1000", NULL);
-  double lon0 = scan_ctl(argv[1], argc, argv, "STAT_LON0", -1, "-1000", NULL);
-  double lon1 = scan_ctl(argv[1], argc, argv, "STAT_LON1", -1, "1000", NULL);
+  const int ens =
+    (int) scan_ctl(argv[1], argc, argv, "STAT_ENS", -1, "-999", NULL);
+  const double p0 =
+    P(scan_ctl(argv[1], argc, argv, "STAT_Z0", -1, "-1000", NULL));
+  const double p1 =
+    P(scan_ctl(argv[1], argc, argv, "STAT_Z1", -1, "1000", NULL));
+  const double lat0 =
+    scan_ctl(argv[1], argc, argv, "STAT_LAT0", -1, "-1000", NULL);
+  const double lat1 =
+    scan_ctl(argv[1], argc, argv, "STAT_LAT1", -1, "1000", NULL);
+  const double lon0 =
+    scan_ctl(argv[1], argc, argv, "STAT_LON0", -1, "-1000", NULL);
+  const double lon1 =
+    scan_ctl(argv[1], argc, argv, "STAT_LON1", -1, "1000", NULL);
 
   /* Write info... */
   LOG(1, "Write air parcel statistics: %s", argv[2]);
