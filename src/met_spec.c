@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -48,7 +48,7 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  double wavemax =
+  const double wavemax =
     (int) scan_ctl(argv[1], argc, argv, "SPEC_WAVEMAX", -1, "7", NULL);
 
   /* Read climatological data... */

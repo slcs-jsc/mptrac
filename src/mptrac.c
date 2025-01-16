@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -948,9 +948,6 @@ void fft_help(
   double *fcImag,
   const int n) {
 
-  gsl_fft_complex_wavetable *wavetable;
-  gsl_fft_complex_workspace *workspace;
-
   double data[2 * EX];
 
   /* Check size... */
@@ -958,8 +955,10 @@ void fft_help(
     ERRMSG("Too many data points!");
 
   /* Allocate... */
-  wavetable = gsl_fft_complex_wavetable_alloc((size_t) n);
-  workspace = gsl_fft_complex_workspace_alloc((size_t) n);
+  gsl_fft_complex_wavetable *wavetable =
+    gsl_fft_complex_wavetable_alloc((size_t) n);
+  gsl_fft_complex_workspace *workspace =
+    gsl_fft_complex_workspace_alloc((size_t) n);
 
   /* Set data (real, complex)... */
   for (int i = 0; i < n; i++) {
@@ -8416,10 +8415,8 @@ void spline(
   if (method == 1) {
 
     /* Allocate... */
-    gsl_interp_accel *acc;
-    gsl_spline *s;
-    acc = gsl_interp_accel_alloc();
-    s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
+    gsl_interp_accel *acc = gsl_interp_accel_alloc();
+    gsl_spline *s = gsl_spline_alloc(gsl_interp_cspline, (size_t) n);
 
     /* Interpolate profile... */
     gsl_spline_init(s, x, y, (size_t) n);

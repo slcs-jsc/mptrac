@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2023 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -33,9 +33,9 @@ int main(
     ERRMSG("Give parameters: <p> <h2o> <hno3>");
 
   /* Get varibles... */
-  double p = atof(argv[1]);
-  double h2o = atof(argv[2]);
-  double hno3 = atof(argv[3]);
+  const double p = atof(argv[1]);
+  const double h2o = atof(argv[2]);
+  const double hno3 = atof(argv[3]);
 
   /* Write output... */
   printf("     p= %g hPa\n", p);

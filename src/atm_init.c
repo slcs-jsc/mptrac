@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -32,8 +32,6 @@ int main(
 
   ctl_t ctl;
 
-  gsl_rng *rng;
-
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
 
@@ -43,38 +41,49 @@ int main(
 
   /* Read control parameters... */
   read_ctl(argv[1], argc, argv, &ctl);
-  double t0 = scan_ctl(argv[1], argc, argv, "INIT_T0", -1, "0", NULL);
-  double t1 = scan_ctl(argv[1], argc, argv, "INIT_T1", -1, "0", NULL);
-  double dt = scan_ctl(argv[1], argc, argv, "INIT_DT", -1, "1", NULL);
-  double z0 = scan_ctl(argv[1], argc, argv, "INIT_Z0", -1, "0", NULL);
-  double z1 = scan_ctl(argv[1], argc, argv, "INIT_Z1", -1, "0", NULL);
-  double dz = scan_ctl(argv[1], argc, argv, "INIT_DZ", -1, "1", NULL);
-  double lon0 = scan_ctl(argv[1], argc, argv, "INIT_LON0", -1, "0", NULL);
-  double lon1 = scan_ctl(argv[1], argc, argv, "INIT_LON1", -1, "0", NULL);
-  double dlon = scan_ctl(argv[1], argc, argv, "INIT_DLON", -1, "1", NULL);
-  double lat0 = scan_ctl(argv[1], argc, argv, "INIT_LAT0", -1, "0", NULL);
-  double lat1 = scan_ctl(argv[1], argc, argv, "INIT_LAT1", -1, "0", NULL);
-  double dlat = scan_ctl(argv[1], argc, argv, "INIT_DLAT", -1, "1", NULL);
-  double st = scan_ctl(argv[1], argc, argv, "INIT_ST", -1, "0", NULL);
-  double sz = scan_ctl(argv[1], argc, argv, "INIT_SZ", -1, "0", NULL);
-  double slon = scan_ctl(argv[1], argc, argv, "INIT_SLON", -1, "0", NULL);
-  double slat = scan_ctl(argv[1], argc, argv, "INIT_SLAT", -1, "0", NULL);
-  double sx = scan_ctl(argv[1], argc, argv, "INIT_SX", -1, "0", NULL);
-  double ut = scan_ctl(argv[1], argc, argv, "INIT_UT", -1, "0", NULL);
-  double uz = scan_ctl(argv[1], argc, argv, "INIT_UZ", -1, "0", NULL);
-  double ulon = scan_ctl(argv[1], argc, argv, "INIT_ULON", -1, "0", NULL);
-  double ulat = scan_ctl(argv[1], argc, argv, "INIT_ULAT", -1, "0", NULL);
-  int even =
+  const double t0 = scan_ctl(argv[1], argc, argv, "INIT_T0", -1, "0", NULL);
+  const double t1 = scan_ctl(argv[1], argc, argv, "INIT_T1", -1, "0", NULL);
+  const double dt = scan_ctl(argv[1], argc, argv, "INIT_DT", -1, "1", NULL);
+  const double z0 = scan_ctl(argv[1], argc, argv, "INIT_Z0", -1, "0", NULL);
+  const double z1 = scan_ctl(argv[1], argc, argv, "INIT_Z1", -1, "0", NULL);
+  const double dz = scan_ctl(argv[1], argc, argv, "INIT_DZ", -1, "1", NULL);
+  const double lon0 =
+    scan_ctl(argv[1], argc, argv, "INIT_LON0", -1, "0", NULL);
+  const double lon1 =
+    scan_ctl(argv[1], argc, argv, "INIT_LON1", -1, "0", NULL);
+  const double dlon =
+    scan_ctl(argv[1], argc, argv, "INIT_DLON", -1, "1", NULL);
+  const double lat0 =
+    scan_ctl(argv[1], argc, argv, "INIT_LAT0", -1, "0", NULL);
+  const double lat1 =
+    scan_ctl(argv[1], argc, argv, "INIT_LAT1", -1, "0", NULL);
+  const double dlat =
+    scan_ctl(argv[1], argc, argv, "INIT_DLAT", -1, "1", NULL);
+  const double st = scan_ctl(argv[1], argc, argv, "INIT_ST", -1, "0", NULL);
+  const double sz = scan_ctl(argv[1], argc, argv, "INIT_SZ", -1, "0", NULL);
+  const double slon =
+    scan_ctl(argv[1], argc, argv, "INIT_SLON", -1, "0", NULL);
+  const double slat =
+    scan_ctl(argv[1], argc, argv, "INIT_SLAT", -1, "0", NULL);
+  const double sx = scan_ctl(argv[1], argc, argv, "INIT_SX", -1, "0", NULL);
+  const double ut = scan_ctl(argv[1], argc, argv, "INIT_UT", -1, "0", NULL);
+  const double uz = scan_ctl(argv[1], argc, argv, "INIT_UZ", -1, "0", NULL);
+  const double ulon =
+    scan_ctl(argv[1], argc, argv, "INIT_ULON", -1, "0", NULL);
+  const double ulat =
+    scan_ctl(argv[1], argc, argv, "INIT_ULAT", -1, "0", NULL);
+  const int even =
     (int) scan_ctl(argv[1], argc, argv, "INIT_EVENLY", -1, "0", NULL);
-  int rep = (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
-  double m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
-  double vmr = scan_ctl(argv[1], argc, argv, "INIT_VMR", -1, "0", NULL);
-  double bellrad =
+  const int rep =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_REP", -1, "1", NULL);
+  const double m = scan_ctl(argv[1], argc, argv, "INIT_MASS", -1, "0", NULL);
+  const double vmr = scan_ctl(argv[1], argc, argv, "INIT_VMR", -1, "0", NULL);
+  const double bellrad =
     scan_ctl(argv[1], argc, argv, "INIT_BELLRAD", -1, "0", NULL);
 
   /* Initialize random number generator... */
   gsl_rng_env_setup();
-  rng = gsl_rng_alloc(gsl_rng_default);
+  gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Create grid... */
   for (double t = t0; t <= t1; t += dt)
@@ -111,7 +120,8 @@ int main(
 	      double x0[3], x1[3];
 	      geo2cart(0.0, 0.5 * (lon0 + lon1), 0.5 * (lat0 + lat1), x0);
 	      geo2cart(0.0, atm->lon[atm->np], atm->lat[atm->np], x1);
-	      double rad = RE * acos(DOTP(x0, x1) / NORM(x0) / NORM(x1));
+	      const double rad =
+		RE * acos(DOTP(x0, x1) / NORM(x0) / NORM(x1));
 	      if (rad > bellrad)
 		continue;
 	      if (ctl.qnt_m >= 0)

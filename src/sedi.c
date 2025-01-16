@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -33,22 +33,22 @@ int main(
     ERRMSG("Give parameters: <p> <T> <r_p> <rho_p>");
 
   /* Read arguments... */
-  double p = atof(argv[1]);
-  double T = atof(argv[2]);
-  double r_p = atof(argv[3]);
-  double rho_p = atof(argv[4]);
+  const double p = atof(argv[1]);
+  const double T = atof(argv[2]);
+  const double r_p = atof(argv[3]);
+  const double rho_p = atof(argv[4]);
 
   /* Calculate sedimentation velocity... */
-  double vs = sedi(p, T, r_p, rho_p);
+  const double vs = sedi(p, T, r_p, rho_p);
 
   /* Density of dry air [kg / m^3]... */
-  double rho = 100. * p / (RA * T);
+  const double rho = 100. * p / (RA * T);
 
   /* Dynamic viscosity of air [kg / (m s)]... */
-  double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
+  const double eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);
 
   /* Particle Reynolds number... */
-  double Re = 2e-6 * r_p * vs * rho / eta;
+  const double Re = 2e-6 * r_p * vs * rho / eta;
 
   /* Write output... */
   printf("    p= %g hPa\n", p);
