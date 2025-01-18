@@ -107,10 +107,6 @@ MODULE mptrac_struct
   END TYPE clim_t
   
   TYPE, bind(c) :: ctl_t
-     INTEGER(c_int) :: met_press_level_def
-     INTEGER(c_int) :: advect_vert_coord
-     INTEGER(c_int) :: met_vert_coord
-     INTEGER(c_int) :: met_clams
      INTEGER(c_int) :: nq
      CHARACTER(c_char), DIMENSION(length,nqq) :: qnt_name
      CHARACTER(c_char), DIMENSION(length,nqq) :: qnt_longname
@@ -214,7 +210,9 @@ MODULE mptrac_struct
      CHARACTER(c_char), DIMENSION(length) :: metbase
      REAL(c_double) :: dt_met
      INTEGER(c_int) :: met_convention
+     INTEGER(c_int) :: met_vert_coord
      INTEGER(c_int) :: met_type
+     INTEGER(c_int) :: met_clams
      INTEGER(c_int) :: met_nc_scale
      INTEGER(c_int) :: met_nc_level
      INTEGER(c_int) :: met_nc_quant
@@ -245,6 +243,7 @@ MODULE mptrac_struct
      REAL(c_double) :: met_detrend
      INTEGER(c_int) :: met_np
      REAL(c_double), DIMENSION(ep) :: met_p
+     INTEGER(c_int) :: met_press_level_def
      INTEGER(c_int) :: met_geopot_sx
      INTEGER(c_int) :: met_geopot_sy
      INTEGER(c_int) :: met_relhum
@@ -263,6 +262,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: isosurf
      CHARACTER(c_char), DIMENSION(length) :: balloon
      INTEGER(c_int) :: advect
+     INTEGER(c_int) :: advect_vert_coord
      INTEGER(c_int) :: rng_type
      INTEGER(c_int) :: diffusion
      REAL(c_double) :: turb_dx_pbl

@@ -2169,20 +2169,6 @@ void thrustSortWrapper(
  */
 typedef struct {
 
-  /* TODO: finally sort ctl parameters once Fortran wrapper is working! */
-
-  /*! Use predefined pressure levels or not. */
-  int met_press_level_def;
-
-  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta, 2=eta). */
-  int advect_vert_coord;
-
-  /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
-  int met_vert_coord;
-
-  /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
-  int met_clams;
-
   /* ------------------------------------------------------------
      Quantity parameters...
      ------------------------------------------------------------ */
@@ -2497,12 +2483,18 @@ typedef struct {
   /*! Time step of meteo data [s]. */
   double dt_met;
 
-  /*! Meteo data layout (0=[lev, lat, lon], 1 = [lon, lat, lev]). */
+  /*! Meteo data layout (0=[lev, lat, lon], 1=[lon, lat, lev]). */
   int met_convention;
+
+  /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
+  int met_vert_coord;
 
   /*! Type of meteo data files
      (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd, 5=cms). */
   int met_type;
+
+  /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
+  int met_clams;
 
   /*! Check netCDF scaling factors (0=no, 1=yes). */
   int met_nc_scale;
@@ -2595,6 +2587,9 @@ typedef struct {
   /*! Target pressure levels [hPa]. */
   double met_p[EP];
 
+  /*! Use predefined pressure levels or not. */
+  int met_press_level_def;
+
   /*! Longitudinal smoothing of geopotential heights. */
   int met_geopot_sx;
 
@@ -2654,6 +2649,9 @@ typedef struct {
 
   /*! Advection scheme (0=off, 1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
+
+  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta, 2=eta). */
+  int advect_vert_coord;
 
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
   int rng_type;
