@@ -5191,8 +5191,6 @@ void read_ctl(
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord != 1)
     ERRMSG
       ("Using ADVECT_VERT_COORD = 2 requires meteo data on model levels!");
-  ctl->met_clams =
-    (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
 
   /* Time steps of simulation... */
   ctl->direction =
@@ -5212,6 +5210,8 @@ void read_ctl(
   if (ctl->advect_vert_coord == 1 && ctl->met_type != 0)
     ERRMSG
       ("Please use meteorological files in netcdf format for diabatic calculations.");
+  ctl->met_clams =
+    (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
   ctl->met_nc_scale =
     (int) scan_ctl(filename, argc, argv, "MET_NC_SCALE", -1, "1", NULL);
   ctl->met_nc_level =
