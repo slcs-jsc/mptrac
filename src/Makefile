@@ -291,7 +291,7 @@ cppcheck:
 
 dist:
 	cd ..  && tar cvfz mptrac_$(VERSION).tgz bin/* \
-          docs/Doxyfile docs/refman.pdf example/* \
+          docs/Doxyfile projects/example/* \
           libs/build.sh libs/*bz2 src/* tests/*
 
 doxygen:
