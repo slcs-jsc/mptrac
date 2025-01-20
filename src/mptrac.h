@@ -6460,6 +6460,14 @@ void read_met_levels(
   const ctl_t * ctl,
   met_t * met);
 
+#ifdef ECCODES
+void read_met_levels_grib(
+  codes_handle** handles,
+  const int num_messages,
+  const ctl_t * ctl,
+  met_t* met);
+#endif
+
 /**
  * @brief Interpolates meteorological data to specified pressure levels.
  *
@@ -6892,9 +6900,10 @@ void read_met_surface(
 #ifdef ECCODES
 void read_met_surface_grib(
   codes_handle** handles,
-  int num_messages,
-  met_t* met,
-  ctl_t* ctl);
+  const int num_messages,
+  const ctl_t* ctl,
+  met_t* met
+  );
 #endif
 
 /**

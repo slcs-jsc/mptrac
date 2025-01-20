@@ -5687,6 +5687,7 @@ int read_met(
 	return 0;
     }
   #ifdef ECCODES
+    /* Read grib data... */
     else if (ctl->met_type == 6){
       if (read_met_grib(filename, ctl, clim, met) != 1)
   return 0;
@@ -6635,9 +6636,6 @@ void read_met_global_grib(
   }
   printf("Max level: %d\n",max_level);
   met->npl = max_level;
-
-  
-  
   }
 #endif
 
@@ -6777,6 +6775,151 @@ void read_met_levels(
       ERRMSG("Pressure levels must be descending!");
 }
 
+/*****************************************************************************/
+#ifdef ECCODES
+void read_met_levels_grib(codes_handle** handles, const int num_messages,const ctl_t* ctl,met_t* met){
+
+
+  /*Iterate over all messages*/
+  for( int i = 0; i< num_messages; i++){
+    /* Allocate arrays*/
+    size_t max_size = 50;
+    char short_name[max_size];
+    size_t value_count;
+    
+    /* Get the current level*/
+    long current_level; 
+    ECC(codes_get_long(handles[i],"level",&current_level));
+    
+
+    /* Retrieve data from current message*/
+    ECC(codes_get_string(handles[i],"shortName",short_name,&max_size));
+    ECC(codes_get_size(handles[i],"values",&value_count));
+    double * values = (double*)malloc(value_count * sizeof(double));
+    ECC(codes_get_double_array(handles[i],"values",values,&value_count))
+
+    /*Read temperature*/
+    if ( strcmp(short_name,"t")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->t[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    /*read horizontal wind and vertical velocity*/
+    else if( strcmp(short_name,"u")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->u[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    else if( strcmp(short_name,"v")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->v[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    else if( strcmp(short_name,"w")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->w[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+
+    /*Read ozone*/
+    else if( strcmp(short_name,"o3")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->o3[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+
+    /*Read cloud data*/
+    else if( strcmp(short_name,"clwc")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->lwc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    else if( strcmp(short_name,"crwc")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->rwc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    else if( strcmp(short_name,"ciwc")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->iwc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    else if( strcmp(short_name,"cswc")==0){
+      printf("Hä1");
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->swc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    else if( strcmp(short_name,"cswc")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->cc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+
+    /*Read zeta and zeta_dot*/
+  
+    
+
+    /*Read water vapor*/
+    if (!ctl->met_relhum){
+      if( strcmp(short_name,"q")==0){
+            for (int ix = 0; ix < met->nx; ix++) {
+                  for (int iy = 0; iy < met->ny; iy++) {
+                    met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+                  }
+              }
+              
+          }    
+    }
+    else if( strcmp(short_name,"r")==0){
+      for (int ix = 0; ix < met->nx; ix++) {
+            for (int iy = 0; iy < met->ny; iy++) {
+              met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+            }
+        }
+    }
+    
+    
+    free(values);
+  }
+
+
+  if (ctl->met_pbl == 0 && handles[1]){
+    met->time = 10;
+  }
+  if( ctl->met_relhum){
+    #pragma omp parallel for default(shared) collapse(2)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	      for (int ip = 0; ip < met->np; ip++) {
+	        double pw = met->h2o[ix][iy][ip] * PSAT(met->t[ix][iy][ip]);
+	        met->h2o[ix][iy][ip] = (float) (pw / (met->p[ip] - (1.0 - EPS) * pw));
+	}
+  }
+
+  printf("Finished reading level data\n");
+}
+#endif
 /*****************************************************************************/
 
 void read_met_ml2pl(
@@ -6955,20 +7098,14 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
     }
   }
 
+  
   /*Read time/lat/lon and number of levels*/
   read_met_global_grib(ml_handles,num_messages,met);
   /*Read data from surface file*/
-  read_met_surface_grib(sf_handles,sf_num_messages,met,ctl);
-  // /*Read data from ml file*/
-  // read_met_levels_grib(ml_handles,num_messages,met,ctl);
+  read_met_surface_grib(sf_handles,sf_num_messages,ctl,met);
   
-
-  
-  codes_handle* h = sf_handles[20];
-  char shortName[50];
-  size_t size2 = sizeof(shortName);
-  codes_get_string(h, "shortName", shortName, &size2);
-  printf("shortName: %s\n", shortName);
+  /*Read data from ml file*/
+  read_met_levels_grib(ml_handles,num_messages,ctl,met);
 
   fclose(ml_file);
   fclose(sf_file);
@@ -8017,125 +8154,114 @@ void read_met_surface(
 
 
 #ifdef ECCODES
-void read_met_surface_grib(codes_handle** handles, int num_messages, met_t* met, ctl_t* ctl){
-
-  char** shortNames = (char**)malloc((size_t)num_messages * sizeof(char*));
-  double** values = (double**)malloc((size_t)num_messages * sizeof(double*));
-  size_t* valueCounts = (size_t*)malloc((size_t)num_messages * sizeof(size_t));
-
+void read_met_surface_grib(codes_handle** handles, const int num_messages, const ctl_t* ctl, met_t* met){
 
   /*Iterate over all messages*/
   for( int i = 0; i< num_messages; i++){
     size_t max_size = 50;
-    shortNames[i] = (char*)malloc(max_size * sizeof(char));;
+    char short_name[max_size];
+    size_t value_count;
 
-  
+
     /*Store values with shortname*/
-    ECC(codes_get_string(handles[i], "shortName", shortNames[i], &max_size));
-    ECC(codes_get_size(handles[i],"values",&valueCounts[i]));
-    values[i]= (double*)malloc(valueCounts[i] * sizeof(double));
-    ECC(codes_get_double_array(handles[i],"values",values[i],&valueCounts[i]))
+    ECC(codes_get_string(handles[i], "shortName", short_name, &max_size));
+    ECC(codes_get_size(handles[i],"values",&value_count));
+    double * values = (double*)malloc(value_count * sizeof(double));
+    ECC(codes_get_double_array(handles[i],"values",values,&value_count))
 
     /*Read surface pressure... */
 
-    if ( strcmp(shortNames[i],"sp")==0){
+    if ( strcmp(short_name,"sp")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->ps[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->ps[ix][iy] = (float)values[ix * met->ny + ix];
             }
         }
-      
     }
 
     /*Read geopotential height at the surface... */
-    if ( strcmp(shortNames[i],"z")==0){
+    else if ( strcmp(short_name,"z")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->zs[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->zs[ix][iy] = (float)values[ix * met->ny +ix];
             }
         } 
     }
 
     /* Read temperature at the surface... */
-    if ( strcmp(shortNames[i],"2t")==0){
+    else if ( strcmp(short_name,"2t")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->ts[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->ts[ix][iy] = (float)values[ix * met->ny +ix];
             }
         }
       }
+
     /* Read zonal wind at the surface...*/
-    if ( strcmp(shortNames[i],"10u")==0){
+    else if ( strcmp(short_name,"10u")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->us[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->us[ix][iy] = (float)values[ix * met->ny +ix];
             }
         }
       }
+
     /* Read meridional wind at the surface...*/
-    if ( strcmp(shortNames[i],"10v")==0){
+    else if ( strcmp(short_name,"10v")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->vs[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->vs[ix][iy] = (float)values[ix * met->ny +ix];
             }
         }
       }
     /* Read land-sea mask...*/
-    if ( strcmp(shortNames[i],"lsm")==0){
+    else if ( strcmp(short_name,"lsm")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->lsm[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->lsm[ix][iy] = (float)values[ix * met->ny +ix];
             }
         }
       }
      /* Read sea surface temperature...*/
-    if ( strcmp(shortNames[i],"sst")==0){
+    else if ( strcmp(short_name,"sst")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->sst[ix][iy] = (float)values[i][ix * met->nx + iy];
+                met->sst[ix][iy] = (float)values[ix * met->ny +ix];
             }
         }
       }
     if(ctl->met_cape == 0){
 
         /* Read CAPE...*/
-        if ( strcmp(shortNames[i],"cape")==0){
+        if ( strcmp(short_name,"cape")==0){
           for (int ix = 0; ix < met->nx; ix++) {
                 for (int iy = 0; iy < met->ny; iy++) {
-                    met->cape[ix][iy] = (float)values[i][ix * met->nx + iy];
+                    met->cape[ix][iy] = (float)values[ix * met->ny +ix];
                 }
             }
           }
         /* Read CIN...*/
-        if ( strcmp(shortNames[i],"cin")==0){
+        else if ( strcmp(short_name,"cin")==0){
           for (int ix = 0; ix < met->nx; ix++) {
                 for (int iy = 0; iy < met->ny; iy++) {
-                    met->cin[ix][iy] = (float)values[i][ix * met->nx + iy];
+                    met->cin[ix][iy] = (float)values[ix * met->ny +ix];
                 }
             }
           }
     }
-  
+
     if(ctl->met_pbl == 0){
-        if ( strcmp(shortNames[i],"blh")==0){
+        if ( strcmp(short_name,"blh")==0){
             for (int ix = 0; ix < met->nx; ix++) {
                   for (int iy = 0; iy < met->ny; iy++) {
-                      met->pbl[ix][iy] = (float)values[i][ix * met->nx + iy];
+                      met->pbl[ix][iy] = (float)values[ix * met->ny +ix];
                   }
               }
             }
     }
-    
-  }
-  
-  for (int i = 0; i<num_messages;i++){
-    free(shortNames[i]);
-    free(values[i]);
-  }
-  free(shortNames);
   free(values);
-
-  free(valueCounts);
+  }
+  LOG(1,"Finished reading surface data")
 }
 #endif
 
