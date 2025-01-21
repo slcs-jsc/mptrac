@@ -13,7 +13,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
 ! 
-! Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
+! Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
 
 PROGRAM trac_fortran
   
@@ -27,12 +27,12 @@ PROGRAM trac_fortran
   CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
   INTEGER(c_int) :: argc
   TYPE(ctl_t) :: ctl
+  TYPE(cache_t) :: cache
   TYPE(atm_t) :: atm
   TYPE(clim_t) :: clim
   TYPE(met_t), TARGET :: met0, met1
   TYPE(met_t), POINTER :: met0p, met1p
   REAL(real64) :: t
-  REAL(real64), DIMENSION(npp) :: dt
   CHARACTER(len=32) :: arg
   TYPE(c_ptr), ALLOCATABLE, DIMENSION(:) :: argv_ptrs
   CHARACTER(len=32), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
@@ -95,7 +95,7 @@ PROGRAM trac_fortran
         ENDIF
 
         ! Set time steps of air parcels...
-        CALL mptrac_module_timesteps(ctl, met0, atm, dt, t)
+        CALL mptrac_module_timesteps(ctl, cache, met0, atm, t)
         
         IF (t .NE. ctl%t_start) THEN
            ! Get meteo data...
@@ -103,7 +103,7 @@ PROGRAM trac_fortran
         ENDIF
 
         ! Advection...
-        CALL mptrac_module_advect(ctl, met0, met1, atm, dt)
+        CALL mptrac_module_advect(ctl, cache, met0, met1, atm)
         
         ! Write output...
         CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0, met1, atm, t)
