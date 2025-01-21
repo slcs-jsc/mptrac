@@ -3667,10 +3667,9 @@ void module_rng_init(
   /* Set rank... */
   int rank = 0;
 #ifdef MPI
-  if (ctl->met_mpi_share)
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-
+  
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
   if (omp_get_max_threads() > NTHREADS)
