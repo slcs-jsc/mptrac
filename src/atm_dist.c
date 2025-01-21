@@ -85,7 +85,7 @@ int main(
 	   " [<atm2a> <atm2b> ...]");
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
   const int ens =
     (int) scan_ctl(argv[1], argc, argv, "DIST_ENS", -1, "-999", NULL);
   const double p0 =
@@ -131,7 +131,8 @@ int main(
   for (int f = 4; f < argc; f += 2) {
 
     /* Read atmopheric data... */
-    if (!read_atm(argv[f], &ctl, atm1) || !read_atm(argv[f + 1], &ctl, atm2))
+    if (!mptrac_read_atm(argv[f], &ctl, atm1)
+	|| !mptrac_read_atm(argv[f + 1], &ctl, atm2))
       continue;
 
     /* Check if structs match... */
