@@ -3665,7 +3665,7 @@ void module_rng_init(
 #ifdef MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 #endif
-  
+
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
   if (omp_get_max_threads() > NTHREADS)
@@ -4495,8 +4495,10 @@ int mptrac_read_atm(
 
   /* Update GPU... */
 #ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+  if (acc_is_present(atm, sizeof(atm))) {
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(atm[:1])
+  }
 #endif
 
   /* Return success... */
@@ -4564,8 +4566,10 @@ void mptrac_read_clim(
 
   /* Update GPU... */
 #ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+  if (acc_is_present(clim, sizeof(clim))) {
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(clim[:1])
+  }
 #endif
 }
 
@@ -5529,7 +5533,7 @@ void mptrac_run_timestep(
 
   /* Initialize quantity of total loss rate... */
   if (ctl->qnt_loss_rate >= 0) {
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl, atm)") {
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,atm)") {
       atm->q[ctl->qnt_loss_rate][ip] = 0;
     }
   }
