@@ -1000,6 +1000,152 @@ void geo2cart(
 
 /*****************************************************************************/
 
+void get_met(
+  ctl_t *ctl,
+  clim_t *clim,
+  const double t,
+  met_t **met0,
+  met_t **met1) {
+
+  static int init;
+
+  met_t *mets;
+
+  char cachefile[LEN], cmd[2 * LEN], filename[LEN];
+
+  /* Set timer... */
+  SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+
+  /* Init... */
+  if (t == ctl->t_start || !init) {
+    init = 1;
+
+    /* Read meteo data... */
+    get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
+		 ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, *met0))
+      ERRMSG("Cannot open file!");
+
+    get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
+		 ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, *met1))
+      ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met0up = *met0;
+    met_t *met1up = *met1;
+#ifdef ASYNCIO
+#pragma acc update device(met0up[:1],met1up[:1]) async(5)
+#else
+#pragma acc update device(met0up[:1],met1up[:1])
+#endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+#endif
+
+    /* Caching... */
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
+		   ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
+  }
+
+  /* Read new data for forward trajectories... */
+  if (t > (*met1)->time) {
+
+    /* Pointer swap... */
+    mets = *met1;
+    *met1 = *met0;
+    *met0 = mets;
+
+    /* Read new meteo data... */
+    get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, *met1))
+      ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met1up = *met1;
+#ifdef ASYNCIO
+#pragma acc update device(met1up[:1]) async(5)
+#else
+#pragma acc update device(met1up[:1])
+#endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+#endif
+
+    /* Caching... */
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
+		   cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
+  }
+
+  /* Read new data for backward trajectories... */
+  if (t < (*met0)->time) {
+
+    /* Pointer swap... */
+    mets = *met1;
+    *met1 = *met0;
+    *met0 = mets;
+
+    /* Read new meteo data... */
+    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
+    if (!read_met(filename, ctl, clim, *met0))
+      ERRMSG("Cannot open file!");
+
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met0up = *met0;
+#ifdef ASYNCIO
+#pragma acc update device(met0up[:1]) async(5)
+#else
+#pragma acc update device(met0up[:1])
+#endif
+    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+#endif
+
+    /* Caching... */
+    if (ctl->met_cache && t != ctl->t_stop) {
+      get_met_help(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
+		   cachefile);
+      sprintf(cmd, "cat %s > /dev/null &", cachefile);
+      LOG(1, "Caching: %s", cachefile);
+      if (system(cmd) != 0)
+	WARN("Caching command failed!");
+    }
+  }
+
+  /* Check that grids are consistent... */
+  if ((*met0)->nx != 0 && (*met1)->nx != 0) {
+    if ((*met0)->nx != (*met1)->nx
+	|| (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
+      ERRMSG("Meteo grid dimensions do not match!");
+    for (int ix = 0; ix < (*met0)->nx; ix++)
+      if (fabs((*met0)->lon[ix] - (*met1)->lon[ix]) > 0.001)
+	ERRMSG("Meteo grid longitudes do not match!");
+    for (int iy = 0; iy < (*met0)->ny; iy++)
+      if (fabs((*met0)->lat[iy] - (*met1)->lat[iy]) > 0.001)
+	ERRMSG("Meteo grid latitudes do not match!");
+    for (int ip = 0; ip < (*met0)->np; ip++)
+      if (fabs((*met0)->p[ip] - (*met1)->p[ip]) > 0.001)
+	ERRMSG("Meteo grid pressure levels do not match!");
+  }
+}
+
+/*****************************************************************************/
+
 void get_met_help(
   const ctl_t *ctl,
   const double t,
@@ -2070,10 +2216,10 @@ void locate_vert(
 
 void module_advect(
   const ctl_t *ctl,
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
@@ -2082,7 +2228,7 @@ void module_advect(
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
 
     /* Loop over particles... */
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
       /* Init... */
       INTPOL_INIT;
@@ -2099,7 +2245,7 @@ void module_advect(
 	  x[1] = atm->lat[ip];
 	  x[2] = atm->p[ip];
 	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
 	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->p[ip] + dts * w[i - 1];
@@ -2138,11 +2284,11 @@ void module_advect(
       }
 
       /* Set new position... */
-      atm->time[ip] += cache->dt[ip];
-      atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
 			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-      atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
-      atm->p[ip] += cache->dt[ip] * wm;
+      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+      atm->p[ip] += dt[ip] * wm;
     }
   }
 
@@ -2150,7 +2296,7 @@ void module_advect(
   else if (ctl->advect_vert_coord == 1) {
 
     /* Loop over particles... */
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
       /* Convert pressure to zeta... */
       INTPOL_INIT;
@@ -2173,7 +2319,7 @@ void module_advect(
 	  x[1] = atm->lat[ip];
 	  x[2] = atm->q[ctl->qnt_zeta][ip];
 	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
 	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
@@ -2201,11 +2347,11 @@ void module_advect(
       }
 
       /* Set new position... */
-      atm->time[ip] += cache->dt[ip];
-      atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
+      atm->time[ip] += dt[ip];
+      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
 			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-      atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
-      atm->q[ctl->qnt_zeta][ip] += cache->dt[ip] * zeta_dotm;
+      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
+      atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
 
       /* Check if zeta is below zero... */
       if (atm->q[ctl->qnt_zeta][ip] < 0)
@@ -2223,29 +2369,25 @@ void module_advect(
 
 void module_advect_init(
   const ctl_t *ctl,
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECT_INIT", "PHYSICS", NVTX_GPU);
-
   /* Initialize pressure consistent with zeta... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,met1,atm)") {
+  if (ctl->advect_vert_coord == 1) {
+#pragma omp parallel for default(shared)
+    for (int ip = 0; ip < atm->np; ip++) {
 
-    /*
-       TODO: Check time...
+      /* Check time... */
+      if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+	ERRMSG("Time of air parcel is out of range!");
 
-       if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
-       ERRMSG("Time of air parcel is out of range!");
-     */
-
-    /* Interpolate pressure... */
-    INTPOL_INIT;
-    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+      /* Interpolate pressure... */
+      INTPOL_INIT;
+      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+    }
   }
 }
 
@@ -2253,11 +2395,11 @@ void module_advect_init(
 
 void module_bound_cond(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
@@ -2269,8 +2411,7 @@ void module_bound_cond(
     return;
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     /* Check latitude and pressure range... */
     if (atm->lat[ip] < ctl->bound_lat0 || atm->lat[ip] > ctl->bound_lat1
@@ -2496,25 +2637,17 @@ void module_chemgrid(
 
 void module_chem_init(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_CHEM_INIT", "PHYSICS", NVTX_GPU);
+#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < atm->np; ip++) {
 
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
-
-    /*
-       Check time...
-
-       if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
-       ERRMSG("Time of air parcel is out of range!");
-     */
+    /* Check time... */
+    if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
+      ERRMSG("Time of air parcel is out of range!");
 
     /* Set H2O and O3 using meteo data... */
     INTPOL_INIT;
@@ -2545,10 +2678,11 @@ void module_chem_init(
 
 void module_convection(
   const ctl_t *ctl,
-  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
@@ -2557,7 +2691,7 @@ void module_convection(
   module_rng(ctl, cache->rs, (size_t) atm->np, 0);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     /* Interpolate CAPE... */
     double ps;
@@ -2618,9 +2752,9 @@ void module_convection(
 
 void module_decay(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -2630,7 +2764,7 @@ void module_decay(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,clim,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt)") {
 
     /* Get weighting factor... */
     const double w = tropo_weight(clim, atm, ip);
@@ -2639,7 +2773,7 @@ void module_decay(
     const double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
     /* Calculate exponential decay... */
-    const double aux = exp(-cache->dt[ip] / tdec);
+    const double aux = exp(-dt[ip] / tdec);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_decay >= 0)
 	atm->q[ctl->qnt_mloss_decay][ip]
@@ -2657,10 +2791,11 @@ void module_decay(
 
 void module_diffusion_meso(
   const ctl_t *ctl,
-  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
@@ -2669,7 +2804,7 @@ void module_diffusion_meso(
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     /* Get indices... */
     const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
@@ -2703,7 +2838,7 @@ void module_diffusion_meso(
     wsig = (wsig > 0 ? sqrtf(wsig) : 0);
 
     /* Set temporal correlations for mesoscale fluctuations... */
-    const double r = 1 - 2 * fabs(cache->dt[ip]) / ctl->dt_met;
+    const double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
     const double r2 = sqrt(1 - r * r);
 
     /* Calculate horizontal mesoscale wind fluctuations... */
@@ -2712,12 +2847,12 @@ void module_diffusion_meso(
 	(float) (r * cache->uvwp[ip][0] +
 		 r2 * cache->rs[3 * ip] * ctl->turb_mesox * usig);
       atm->lon[ip] +=
-	DX2DEG(cache->uvwp[ip][0] * cache->dt[ip] / 1000., atm->lat[ip]);
+	DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
 
       cache->uvwp[ip][1] =
 	(float) (r * cache->uvwp[ip][1] +
 		 r2 * cache->rs[3 * ip + 1] * ctl->turb_mesox * vsig);
-      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * cache->dt[ip] / 1000.);
+      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
     }
 
     /* Calculate vertical mesoscale wind fluctuations... */
@@ -2725,7 +2860,7 @@ void module_diffusion_meso(
       cache->uvwp[ip][2] =
 	(float) (r * cache->uvwp[ip][2] +
 		 r2 * cache->rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
-      atm->p[ip] += cache->uvwp[ip][2] * cache->dt[ip];
+      atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
     }
   }
 }
@@ -2734,10 +2869,11 @@ void module_diffusion_meso(
 
 void module_diffusion_pbl(
   const ctl_t *ctl,
-  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
@@ -2746,7 +2882,7 @@ void module_diffusion_pbl(
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1,
       tau_u = 300., tau_w = 100.;
@@ -2833,25 +2969,23 @@ void module_diffusion_pbl(
     tau_w = MAX(tau_w, 100.);
 
     /* Update perturbations... */
-    const double ru = exp(-fabs(cache->dt[ip]) / tau_u);
+    const double ru = exp(-fabs(dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
       = (float) (cache->uvwp[ip][0] * ru + ru2 * cache->rs[3 * ip]);
     cache->uvwp[ip][1]
       = (float) (cache->uvwp[ip][1] * ru + ru2 * cache->rs[3 * ip + 1]);
 
-    const double rw = exp(-fabs(cache->dt[ip]) / tau_w);
+    const double rw = exp(-fabs(dt[ip]) / tau_w);
     const double rw2 = sqrt(1.0 - SQR(rw));
     cache->uvwp[ip][2]
       = (float) (cache->uvwp[ip][2] * rw + rw2 * cache->rs[3 * ip + 2]
-		 + sig_w * dsigw_dz * cache->dt[ip]);	// TODO: check approx for density correction?
+		 + sig_w * dsigw_dz * dt[ip]);	// TODO: check approx for density correction?
 
     /* Calculate new air parcel position... */
-    atm->lon[ip] +=
-      DX2DEG(cache->uvwp[ip][0] * cache->dt[ip] / 1000., atm->lat[ip]);
-    atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * cache->dt[ip] / 1000.);
-    atm->p[ip] +=
-      DZ2DP(cache->uvwp[ip][2] * cache->dt[ip] / 1000., atm->p[ip]);
+    atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
+    atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
+    atm->p[ip] += DZ2DP(cache->uvwp[ip][2] * dt[ip] / 1000., atm->p[ip]);
   }
 }
 
@@ -2859,11 +2993,12 @@ void module_diffusion_pbl(
 
 void module_diffusion_turb(
   const ctl_t *ctl,
-  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
@@ -2873,7 +3008,7 @@ void module_diffusion_turb(
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
+		"acc data present(ctl,clim,met0,met1,atm,cache,dt)") {
 
     /* Get PBL and surface pressure... */
     double pbl, ps;
@@ -2894,14 +3029,14 @@ void module_diffusion_turb(
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
-      const double sigma = sqrt(2.0 * dx * fabs(cache->dt[ip])) / 1000.;
+      const double sigma = sqrt(2.0 * dx * fabs(dt[ip])) / 1000.;
       atm->lon[ip] += DX2DEG(cache->rs[3 * ip] * sigma, atm->lat[ip]);
       atm->lat[ip] += DY2DEG(cache->rs[3 * ip + 1] * sigma);
     }
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      const double sigma = sqrt(2.0 * dz * fabs(cache->dt[ip])) / 1000.;
+      const double sigma = sqrt(2.0 * dz * fabs(dt[ip])) / 1000.;
       atm->p[ip] += DZ2DP(cache->rs[3 * ip + 2] * sigma, atm->p[ip]);
     }
   }
@@ -2911,10 +3046,10 @@ void module_diffusion_turb(
 
 void module_dry_deposition(
   const ctl_t *ctl,
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
@@ -2924,7 +3059,7 @@ void module_dry_deposition(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
     /* Get surface pressure... */
     double ps;
@@ -2956,7 +3091,7 @@ void module_dry_deposition(
       v_dep = ctl->dry_depo_vdep;
 
     /* Calculate loss of mass based on deposition velocity... */
-    const double aux = exp(-cache->dt[ip] * v_dep / dz);
+    const double aux = exp(-dt[ip] * v_dep / dz);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_dry >= 0)
 	atm->q[ctl->qnt_mloss_dry][ip]
@@ -2974,11 +3109,11 @@ void module_dry_deposition(
 
 void module_h2o2_chem(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
@@ -2993,8 +3128,7 @@ void module_h2o2_chem(
   const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
 
     /* Check whether particle is inside cloud... */
     double lwc, rwc;
@@ -3040,7 +3174,7 @@ void module_h2o2_chem(
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
-    const double aux = exp(-cache->dt[ip] * rate_coef);
+    const double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
@@ -3057,41 +3191,40 @@ void module_h2o2_chem(
 
 void module_isosurf_init(
   const ctl_t *ctl,
-  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  cache_t *cache) {
 
   double t;
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF_INIT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
-  /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,met1,atm)") {
+  /* Init... */
+  INTPOL_INIT;
 
-    /* Init... */
-    INTPOL_INIT;
-
-    /* Save pressure... */
-    if (ctl->isosurf == 1)
+  /* Save pressure... */
+  if (ctl->isosurf == 1)
+    for (int ip = 0; ip < atm->np; ip++)
       cache->iso_var[ip] = atm->p[ip];
 
-    /* Save density... */
-    else if (ctl->isosurf == 2) {
+  /* Save density... */
+  else if (ctl->isosurf == 2)
+    for (int ip = 0; ip < atm->np; ip++) {
       INTPOL_3D(t, 1);
       cache->iso_var[ip] = atm->p[ip] / t;
     }
 
-    /* Save potential temperature... */
-    else if (ctl->isosurf == 3) {
+  /* Save potential temperature... */
+  else if (ctl->isosurf == 3)
+    for (int ip = 0; ip < atm->np; ip++) {
       INTPOL_3D(t, 1);
       cache->iso_var[ip] = THETA(atm->p[ip], t);
     }
-  }
 
   /* Read balloon pressure data... */
-  if (ctl->isosurf == 4) {
+  else if (ctl->isosurf == 4) {
 
     /* Write info... */
     LOG(1, "Read balloon pressure data: %s", ctl->balloon);
@@ -3115,12 +3248,6 @@ void module_isosurf_init(
 
     /* Close file... */
     fclose(in);
-
-    /* Update of cache data on device... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(cache[:1])
-#endif
   }
 }
 
@@ -3128,16 +3255,17 @@ void module_isosurf_init(
 
 void module_isosurf(
   const ctl_t *ctl,
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  cache_t *cache,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm,cache,dt)") {
 
     /* Init... */
     double t;
@@ -3180,11 +3308,11 @@ void module_isosurf(
 #ifdef KPP
 void module_kpp_chem(
   ctl_t *ctl,
-  cache_t *cache,
   clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_KPPCHEM", "PHYSICS", NVTX_GPU);
@@ -3197,8 +3325,7 @@ void module_kpp_chem(
 #ifdef _OPENACC
 #pragma acc data copy(rtol,atol,nvar,nfix,nreact)
 #endif
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,clim,met0,met1,atm) ") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {
 
     /* Initialize... */
     double var[nvar], fix[nfix], rconst[nreact];
@@ -3233,11 +3360,11 @@ void module_kpp_chem(
 
 void module_meteo(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -3248,8 +3375,7 @@ void module_meteo(
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     double ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl, pt, pct, pcb, cl,
       plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc,
@@ -3521,11 +3647,11 @@ void module_mixing_help(
 
 void module_oh_chem(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
@@ -3540,8 +3666,7 @@ void module_oh_chem(
   const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     /* Get temperature... */
     double t;
@@ -3587,7 +3712,7 @@ void module_oh_chem(
     const double rate_coef =
       k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
 		  atm->lat[ip], atm->p[ip]) * M * cor;
-    const double aux = exp(-cache->dt[ip] * rate_coef);
+    const double aux = exp(-dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
 	atm->q[ctl->qnt_mloss_oh][ip]
@@ -3604,16 +3729,16 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(met0,met1,atm,dt)") {
 
     /* Init... */
     double ps;
@@ -3658,14 +3783,7 @@ void module_position(
 /*****************************************************************************/
 
 void module_rng_init(
-  void) {
-
-  /* Set rank... */
-  int rank = 0;
-#ifdef MPI
-  if (ctl->met_mpi_share)
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
+  const int ntask) {
 
   /* Initialize GSL random number generators... */
   gsl_rng_env_setup();
@@ -3674,7 +3792,7 @@ void module_rng_init(
   for (int i = 0; i < NTHREADS; i++) {
     rng[i] = gsl_rng_alloc(gsl_rng_default);
     gsl_rng_set(rng[i], gsl_rng_default_seed
-		+ (long unsigned) (rank * NTHREADS + i));
+		+ (long unsigned) (ntask * NTHREADS + i));
   }
 
   /* Initialize cuRAND random number generators... */
@@ -3682,7 +3800,7 @@ void module_rng_init(
   if (curandCreateGenerator(&rng_curand, CURAND_RNG_PSEUDO_DEFAULT) !=
       CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot create random number generator!");
-  if (curandSetPseudoRandomGeneratorSeed(rng_curand, rank) !=
+  if (curandSetPseudoRandomGeneratorSeed(rng_curand, ntask) !=
       CURAND_STATUS_SUCCESS)
     ERRMSG("Cannot set seed for random number generator!");
   if (curandSetStream
@@ -3801,16 +3919,16 @@ void module_rng(
 
 void module_sedi(
   const ctl_t *ctl,
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
     /* Get temperature... */
     double t;
@@ -3822,7 +3940,7 @@ void module_sedi(
 			    atm->q[ctl->qnt_rhop][ip]);
 
     /* Calculate pressure change... */
-    atm->p[ip] += DZ2DP(v_s * cache->dt[ip] / 1000., atm->p[ip]);
+    atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
   }
 }
 
@@ -3926,9 +4044,9 @@ void module_sort_help(
 
 void module_timesteps(
   const ctl_t *ctl,
-  cache_t *cache,
   met_t *met0,
   atm_t *atm,
+  double *dt,
   const double t) {
 
   /* Set timer... */
@@ -3941,21 +4059,21 @@ void module_timesteps(
     (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,atm)") {
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,atm,dt)") {
 
     /* Set time step for each air parcel... */
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
 	 && ctl->direction * (atm->time[ip] - ctl->t_stop) <= 0
 	 && ctl->direction * (atm->time[ip] - t) < 0))
-      cache->dt[ip] = t - atm->time[ip];
+      dt[ip] = t - atm->time[ip];
     else
-      cache->dt[ip] = 0.0;
+      dt[ip] = 0.0;
 
     /* Check horizontal boundaries of local meteo data... */
     if (local && (atm->lon[ip] <= met0->lon[0]
 		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
 		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
-      cache->dt[ip] = 0.0;
+      dt[ip] = 0.0;
   }
 }
 
@@ -3966,7 +4084,7 @@ void module_timesteps_init(
   const atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TIMESTEPS_INIT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
 
   /* Set start time... */
   if (ctl->direction == 1) {
@@ -3988,30 +4106,23 @@ void module_timesteps_init(
     ctl->t_start = floor(ctl->t_start / ctl->dt_mod) * ctl->dt_mod;
   else
     ctl->t_start = ceil(ctl->t_start / ctl->dt_mod) * ctl->dt_mod;
-
-  /* Update GPU... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(ctl[:1])
-#endif
 }
 
 /*****************************************************************************/
 
 void module_tracer_chem(
   const ctl_t *ctl,
-  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,clim,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
 
     /* Get temperature... */
     double t;
@@ -4037,7 +4148,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl4][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
@@ -4045,7 +4156,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
@@ -4053,7 +4164,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
@@ -4061,7 +4172,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cn2o][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
     }
   }
 }
@@ -4070,10 +4181,10 @@ void module_tracer_chem(
 
 void module_wet_deposition(
   const ctl_t *ctl,
-  const cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  const double *dt) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);
@@ -4083,7 +4194,7 @@ void module_wet_deposition(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
 
     /* Check whether particle is below cloud top... */
     double pct;
@@ -4187,7 +4298,7 @@ void module_wet_deposition(
     }
 
     /* Calculate exponential decay of mass... */
-    const double aux = exp(-cache->dt[ip] * lambda);
+    const double aux = exp(-dt[ip] * lambda);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_wet >= 0)
 	atm->q[ctl->qnt_mloss_wet][ip]
@@ -4203,233 +4314,53 @@ void module_wet_deposition(
 
 /*****************************************************************************/
 
-void mptrac_alloc(
-  ctl_t **ctl,
-  cache_t **cache,
-  clim_t **clim,
-  met_t **met0,
-  met_t **met1,
-  atm_t **atm) {
+double nat_temperature(
+  const double p,
+  const double h2o,
+  const double hno3) {
 
-  /* Initialize GPUs... */
-#ifdef _OPENACC
-  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
-  int rank = 0;
-#ifdef MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-#endif
-  if (acc_get_num_devices(acc_device_nvidia) <= 0)
-    ERRMSG("Not running on a GPU device!");
-  acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
-		     acc_device_nvidia);
-  acc_device_t device_type = acc_get_device_type();
-  acc_init(device_type);
-#endif
+  /* Check water vapor volume mixing ratio... */
+  const double h2o_help = MAX(h2o, 0.1e-6);
 
-  /* Allocate... */
-  SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
-  ALLOC(*atm, atm_t, 1);
-  ALLOC(*cache, cache_t, 1);
-  ALLOC(*ctl, ctl_t, 1);
-  ALLOC(*clim, clim_t, 1);
-  ALLOC(*met0, met_t, 1);
-  ALLOC(*met1, met_t, 1);
+  /* Calculate T_NAT... */
+  const double p_hno3 = hno3 * p / 1.333224;
+  const double p_h2o = h2o_help * p / 1.333224;
+  const double a = 0.009179 - 0.00088 * log10(p_h2o);
+  const double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
+  const double c = -11397.0 / a;
+  double tnat = (-b + sqrt(b * b - 4. * c)) / 2.;
+  double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
+  if (x2 > 0)
+    tnat = x2;
 
-  /* Create data region on GPUs... */
-#ifdef _OPENACC
-  SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl[:1], met0[:1], met1[:1])
-#endif
+  return tnat;
 }
 
 /*****************************************************************************/
 
-void mptrac_free(
-  ctl_t *ctl,
-  cache_t *cache,
-  clim_t *clim,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm) {
+double pbl_weight(
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const int ip,
+  const double pbl,
+  const double ps) {
 
-  /* Get number of MPI tasks... */
-  int size = 1;
-#ifdef MPI
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-#endif
+  /* Get pressure range... */
+  const double p1 = pbl - ctl->conv_pbl_trans * (ps - pbl);
+  const double p0 = pbl;
 
-  /* Flush output buffer... */
-  fflush(NULL);
-
-  /* Report problem size... */
-  LOG(1, "SIZE_NP = %d", atm->np);
-  LOG(1, "SIZE_MPI_TASKS = %d", size);
-  LOG(1, "SIZE_OMP_THREADS = %d", omp_get_max_threads());
-#ifdef _OPENACC
-  LOG(1, "SIZE_ACC_DEVICES = %d", acc_get_num_devices(acc_device_nvidia));
-#else
-  LOG(1, "SIZE_ACC_DEVICES = %d", 0);
-#endif
-
-  /* Report memory usage... */
-  LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
-  LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
-  LOG(1, "MEMORY_CLIM = %g MByte", sizeof(clim_t) / 1024. / 1024.);
-  LOG(1, "MEMORY_METEO = %g MByte", sizeof(met_t) / 1024. / 1024.);
-
-  /* Delete data region on GPUs... */
-#ifdef _OPENACC
-  SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1)
-#endif
-
-  /* Free... */
-  SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
-  free(atm);
-  free(cache);
-  free(clim);
-  free(ctl);
-  free(met0);
-  free(met1);
+  /* Get weighting factor... */
+  if (atm->p[ip] > p0)
+    return 1;
+  else if (atm->p[ip] < p1)
+    return 0;
+  else
+    return LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
 }
 
 /*****************************************************************************/
 
-void mptrac_get_met(
-  ctl_t *ctl,
-  clim_t *clim,
-  const double t,
-  met_t **met0,
-  met_t **met1) {
-
-  static int init;
-
-  met_t *mets;
-
-  char cachefile[LEN], cmd[2 * LEN], filename[LEN];
-
-  /* Set timer... */
-  SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-
-  /* Init... */
-  if (t == ctl->t_start || !init) {
-    init = 1;
-
-    /* Read meteo data... */
-    get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
-		 ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met0))
-      ERRMSG("Cannot open file!");
-
-    get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
-		 ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met1))
-      ERRMSG("Cannot open file!");
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met0up = *met0;
-    met_t *met1up = *met1;
-#pragma acc update device(met0up[:1],met1up[:1])
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
-
-    /* Caching... */
-    if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
-		   ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
-      sprintf(cmd, "cat %s > /dev/null &", cachefile);
-      LOG(1, "Caching: %s", cachefile);
-      if (system(cmd) != 0)
-	WARN("Caching command failed!");
-    }
-  }
-
-  /* Read new data for forward trajectories... */
-  if (t > (*met1)->time) {
-
-    /* Pointer swap... */
-    mets = *met1;
-    *met1 = *met0;
-    *met0 = mets;
-
-    /* Read new meteo data... */
-    get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met1))
-      ERRMSG("Cannot open file!");
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met1up = *met1;
-#pragma acc update device(met1up[:1])
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
-
-    /* Caching... */
-    if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
-		   cachefile);
-      sprintf(cmd, "cat %s > /dev/null &", cachefile);
-      LOG(1, "Caching: %s", cachefile);
-      if (system(cmd) != 0)
-	WARN("Caching command failed!");
-    }
-  }
-
-  /* Read new data for backward trajectories... */
-  if (t < (*met0)->time) {
-
-    /* Pointer swap... */
-    mets = *met1;
-    *met1 = *met0;
-    *met0 = mets;
-
-    /* Read new meteo data... */
-    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met0))
-      ERRMSG("Cannot open file!");
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met0up = *met0;
-#pragma acc update device(met0up[:1])
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
-
-    /* Caching... */
-    if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
-		   cachefile);
-      sprintf(cmd, "cat %s > /dev/null &", cachefile);
-      LOG(1, "Caching: %s", cachefile);
-      if (system(cmd) != 0)
-	WARN("Caching command failed!");
-    }
-  }
-
-  /* Check that grids are consistent... */
-  if ((*met0)->nx != 0 && (*met1)->nx != 0) {
-    if ((*met0)->nx != (*met1)->nx
-	|| (*met0)->ny != (*met1)->ny || (*met0)->np != (*met1)->np)
-      ERRMSG("Meteo grid dimensions do not match!");
-    for (int ix = 0; ix < (*met0)->nx; ix++)
-      if (fabs((*met0)->lon[ix] - (*met1)->lon[ix]) > 0.001)
-	ERRMSG("Meteo grid longitudes do not match!");
-    for (int iy = 0; iy < (*met0)->ny; iy++)
-      if (fabs((*met0)->lat[iy] - (*met1)->lat[iy]) > 0.001)
-	ERRMSG("Meteo grid latitudes do not match!");
-    for (int ip = 0; ip < (*met0)->np; ip++)
-      if (fabs((*met0)->p[ip] - (*met1)->p[ip]) > 0.001)
-	ERRMSG("Meteo grid pressure levels do not match!");
-  }
-}
-
-/*****************************************************************************/
-
-int mptrac_read_atm(
+int read_atm(
   const char *filename,
   const ctl_t *ctl,
   atm_t *atm) {
@@ -4494,11 +4425,47 @@ int mptrac_read_atm(
     LOG(2, msg, mini, maxi);
   }
 
-  /* Update GPU... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1])
-#endif
+  /* Return success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+int read_atm_asc(
+  const char *filename,
+  const ctl_t *ctl,
+  atm_t *atm) {
+
+  /* Open file... */
+  FILE *in;
+  if (!(in = fopen(filename, "r"))) {
+    WARN("Cannot open file!");
+    return 0;
+  }
+
+  /* Read line... */
+  char line[LEN];
+  while (fgets(line, LEN, in)) {
+
+    /* Read data... */
+    char *tok;
+    TOK(line, tok, "%lg", atm->time[atm->np]);
+    TOK(NULL, tok, "%lg", atm->p[atm->np]);
+    TOK(NULL, tok, "%lg", atm->lon[atm->np]);
+    TOK(NULL, tok, "%lg", atm->lat[atm->np]);
+    for (int iq = 0; iq < ctl->nq; iq++)
+      TOK(NULL, tok, "%lg", atm->q[iq][atm->np]);
+
+    /* Convert altitude to pressure... */
+    atm->p[atm->np] = P(atm->p[atm->np]);
+
+    /* Increment data point counter... */
+    if ((++atm->np) > NP)
+      ERRMSG("Too many data points!");
+  }
+
+  /* Close file... */
+  fclose(in);
 
   /* Return success... */
   return 1;
@@ -4506,7 +4473,152 @@ int mptrac_read_atm(
 
 /*****************************************************************************/
 
-void mptrac_read_clim(
+int read_atm_bin(
+  const char *filename,
+  const ctl_t *ctl,
+  atm_t *atm) {
+
+  /* Open file... */
+  FILE *in;
+  if (!(in = fopen(filename, "r")))
+    return 0;
+
+  /* Check version of binary data... */
+  int version;
+  FREAD(&version, int,
+	1,
+	in);
+  if (version != 100)
+    ERRMSG("Wrong version of binary data!");
+
+  /* Read data... */
+  FREAD(&atm->np, int,
+	1,
+	in);
+  FREAD(atm->time, double,
+	  (size_t) atm->np,
+	in);
+  FREAD(atm->p, double,
+	  (size_t) atm->np,
+	in);
+  FREAD(atm->lon, double,
+	  (size_t) atm->np,
+	in);
+  FREAD(atm->lat, double,
+	  (size_t) atm->np,
+	in);
+  for (int iq = 0; iq < ctl->nq; iq++)
+    FREAD(atm->q[iq], double,
+	    (size_t) atm->np,
+	  in);
+
+  /* Read final flag... */
+  int final;
+  FREAD(&final, int,
+	1,
+	in);
+  if (final != 999)
+    ERRMSG("Error while reading binary data!");
+
+  /* Close file... */
+  fclose(in);
+
+  /* Return success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+int read_atm_clams(
+  const char *filename,
+  const ctl_t *ctl,
+  atm_t *atm) {
+
+  int ncid, varid;
+
+  /* Open file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+    return 0;
+
+  /* Get dimensions... */
+  NC_INQ_DIM("NPARTS", &atm->np, 1, NP);
+
+  /* Get time... */
+  if (nc_inq_varid(ncid, "TIME_INIT", &varid) == NC_NOERR) {
+    NC(nc_get_var_double(ncid, varid, atm->time));
+  } else {
+    WARN("TIME_INIT not found use time instead!");
+    double time_init;
+    NC_GET_DOUBLE("time", &time_init, 1);
+    for (int ip = 0; ip < atm->np; ip++) {
+      atm->time[ip] = time_init;
+    }
+  }
+
+  /* Read zeta coordinate, pressure is optional... */
+  if (ctl->advect_vert_coord == 1) {
+    NC_GET_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1);
+    NC_GET_DOUBLE("PRESS", atm->p, 0);
+  }
+
+  /* Read pressure, zeta coordinate is optional... */
+  else {
+    if (nc_inq_varid(ncid, "PRESS_INIT", &varid) == NC_NOERR) {
+      NC(nc_get_var_double(ncid, varid, atm->p));
+    } else {
+      WARN("PRESS_INIT not found use PRESS instead!");
+      nc_inq_varid(ncid, "PRESS", &varid);
+      NC(nc_get_var_double(ncid, varid, atm->p));
+    }
+  }
+
+  /* Read longitude and latitude... */
+  NC_GET_DOUBLE("LON", atm->lon, 1);
+  NC_GET_DOUBLE("LAT", atm->lat, 1);
+
+  /* Close file... */
+  NC(nc_close(ncid));
+
+  /* Return success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+int read_atm_nc(
+  const char *filename,
+  const ctl_t *ctl,
+  atm_t *atm) {
+
+  int ncid, varid;
+
+  /* Open file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
+    return 0;
+
+  /* Get dimensions... */
+  NC_INQ_DIM("obs", &atm->np, 1, NP);
+
+  /* Read geolocations... */
+  NC_GET_DOUBLE("time", atm->time, 1);
+  NC_GET_DOUBLE("press", atm->p, 1);
+  NC_GET_DOUBLE("lon", atm->lon, 1);
+  NC_GET_DOUBLE("lat", atm->lat, 1);
+
+  /* Read variables... */
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_GET_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
+
+  /* Close file... */
+  NC(nc_close(ncid));
+
+  /* Return success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+void read_clim(
   const ctl_t *ctl,
   clim_t *clim) {
 
@@ -4562,17 +4674,283 @@ void mptrac_read_clim(
   /* Read SF6 time series... */
   if (ctl->clim_sf6_timeseries[0] != '-')
     read_clim_ts(ctl->clim_sf6_timeseries, &clim->sf6);
-
-  /* Update GPU... */
-#ifdef _OPENACC
-  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(clim[:1])
-#endif
 }
 
 /*****************************************************************************/
 
-void mptrac_read_ctl(
+void read_clim_photo(
+  const char *filename,
+  clim_photo_t *photo) {
+
+  int ncid, varid;
+
+  /* Write info... */
+  LOG(1, "Read photolysis rates: %s", filename);
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("Photolysis rate data are missing!");
+    return;
+  }
+
+  /* Read pressure data... */
+  NC_INQ_DIM("press", &photo->np, 2, CP);
+  NC_GET_DOUBLE("press", photo->p, 1);
+  if (photo->p[0] < photo->p[1])
+    ERRMSG("Pressure data are not descending!");
+
+  /* Read total column ozone data... */
+  NC_INQ_DIM("total_o3col", &photo->no3c, 2, CO3);
+  NC_GET_DOUBLE("total_o3col", photo->o3c, 1);
+  if (photo->o3c[0] > photo->o3c[1])
+    ERRMSG("Total column ozone data are not ascending!");
+
+  /* Read solar zenith angle data... */
+  NC_INQ_DIM("sza", &photo->nsza, 2, CSZA);
+  NC_GET_DOUBLE("sza", photo->sza, 1);
+  if (photo->sza[0] > photo->sza[1])
+    ERRMSG("Solar zenith angle data are not ascending!");
+
+  /* Read data... */
+  read_clim_photo_help(ncid, "J_N2O", photo, photo->n2o);
+  read_clim_photo_help(ncid, "J_CCl4", photo, photo->ccl4);
+  read_clim_photo_help(ncid, "J_CFC-11", photo, photo->ccl3f);
+  read_clim_photo_help(ncid, "J_CFC-12", photo, photo->ccl2f2);
+  read_clim_photo_help(ncid, "J_O2", photo, photo->o2);
+  read_clim_photo_help(ncid, "J_O3b", photo, photo->o3_1);
+  read_clim_photo_help(ncid, "J_O3a", photo, photo->o3_2);
+  read_clim_photo_help(ncid, "J_H2O2", photo, photo->h2o2);
+  read_clim_photo_help(ncid, "J_H2O", photo, photo->h2o);
+
+  /* Close netCDF file... */
+  NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of pressure levels: %d", photo->np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(photo->p[0]), Z(photo->p[1]), Z(photo->p[photo->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa",
+      photo->p[0], photo->p[1], photo->p[photo->np - 1]);
+  LOG(2, "Number of solar zenith angles: %d", photo->nsza);
+  LOG(2, "Solar zenith angles: %g, %g ... %g deg",
+      RAD2DEG(photo->sza[0]), RAD2DEG(photo->sza[1]),
+      RAD2DEG(photo->sza[photo->nsza - 1]));
+  LOG(2, "Number of total column ozone values: %d", photo->no3c);
+  LOG(2, "Total column ozone: %g, %g ... %g DU",
+      photo->o3c[0], photo->o3c[1], photo->o3c[photo->no3c - 1]);
+  LOG(2, "N2O photolysis rate: %g, %g ... %g s**-1",
+      photo->n2o[0][0][0], photo->n2o[1][0][0],
+      photo->n2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "CCl4 photolysis rate: %g, %g ... %g s**-1",
+      photo->ccl4[0][0][0], photo->ccl4[1][0][0],
+      photo->ccl4[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "CFC-11 photolysis rate: %g, %g ... %g s**-1",
+      photo->ccl3f[0][0][0], photo->ccl3f[1][0][0],
+      photo->ccl3f[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "CFC-12 photolysis rate: %g, %g ... %g s**-1",
+      photo->ccl2f2[0][0][0], photo->ccl2f2[1][0][0],
+      photo->ccl2f2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "O2 photolysis rate: %g, %g ... %g s**-1",
+      photo->o2[0][0][0], photo->o2[1][0][0],
+      photo->o2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "O3 -> O(1D) photolysis rate: %g, %g ... %g s**-1",
+      photo->o3_1[0][0][0], photo->o3_1[1][0][0],
+      photo->o3_1[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "O3 -> O(3P) photolysis rate: %g, %g ... %g s**-1",
+      photo->o3_2[0][0][0], photo->o3_2[1][0][0],
+      photo->o3_2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "H2O2 photolysis rate: %g, %g ... %g s**-1",
+      photo->h2o2[0][0][0], photo->h2o2[1][0][0],
+      photo->h2o2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+  LOG(2, "H2O photolysis rate: %g, %g ... %g s**-1",
+      photo->h2o[0][0][0], photo->h2o[1][0][0],
+      photo->h2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
+}
+
+/*****************************************************************************/
+
+void read_clim_photo_help(
+  const int ncid,
+  const char *varname,
+  const clim_photo_t *photo,
+  double var[CP][CSZA][CO3]) {
+
+  /* Allocate... */
+  double *help;
+  ALLOC(help, double,
+	photo->np * photo->nsza * photo->no3c);
+
+  /* Read varible... */
+  int varid;
+  NC_GET_DOUBLE(varname, help, 1);
+
+  /* Copy data... */
+  for (int ip = 0; ip < photo->np; ip++)
+    for (int is = 0; is < photo->nsza; is++)
+      for (int io = 0; io < photo->no3c; io++)
+	var[ip][is][io] =
+	  help[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
+
+  /* Free... */
+  free(help);
+}
+
+/*****************************************************************************/
+
+int read_clim_ts(
+  const char *filename,
+  clim_ts_t *ts) {
+
+  /* Write info... */
+  LOG(1, "Read climatological time series: %s", filename);
+
+  /* Open file... */
+  FILE *in;
+  if (!(in = fopen(filename, "r"))) {
+    WARN("Cannot open file!");
+    return 0;
+  }
+
+  /* Read data... */
+  char line[LEN];
+  int nh = 0;
+  while (fgets(line, LEN, in))
+    if (sscanf(line, "%lg %lg", &ts->time[nh], &ts->vmr[nh]) == 2) {
+
+      /* Convert years to seconds... */
+      ts->time[nh] = (ts->time[nh] - 2000.0) * 365.25 * 86400.;
+
+      /* Check data... */
+      if (nh > 0 && ts->time[nh] <= ts->time[nh - 1])
+	ERRMSG("Time series must be ascending!");
+
+      /* Count time steps... */
+      if ((++nh) >= CTS)
+	ERRMSG("Too many data points!");
+    }
+
+  /* Close file... */
+  fclose(in);
+
+  /* Check number of data points... */
+  ts->ntime = nh;
+  if (nh < 2)
+    ERRMSG("Not enough data points!");
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", ts->ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s", ts->time[0], ts->time[1],
+      ts->time[nh - 1]);
+  LOG(2, "Volume mixing ratio range: %g ... %g ppv",
+      gsl_stats_min(ts->vmr, 1, (size_t) nh), gsl_stats_max(ts->vmr, 1,
+							    (size_t) nh));
+
+  /* Exit success... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+void read_clim_zm(
+  const char *filename,
+  const char *varname,
+  clim_zm_t *zm) {
+
+  int ncid, varid, it, iy, iz, iz2, nt;
+
+  double *help, varmin = 1e99, varmax = -1e99;
+
+  /* Write info... */
+  LOG(1, "Read %s data: %s", varname, filename);
+
+  /* Open netCDF file... */
+  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+    WARN("%s climatology data are missing!", varname);
+    return;
+  }
+
+  /* Read pressure data... */
+  NC_INQ_DIM("press", &zm->np, 2, CP);
+  NC_GET_DOUBLE("press", zm->p, 1);
+  if (zm->p[0] < zm->p[1])
+    ERRMSG("Pressure data are not descending!");
+
+  /* Read latitudes... */
+  NC_INQ_DIM("lat", &zm->nlat, 2, CY);
+  NC_GET_DOUBLE("lat", zm->lat, 1);
+  if (zm->lat[0] > zm->lat[1])
+    ERRMSG("Latitude data are not ascending!");
+
+  /* Set time data (for monthly means)... */
+  zm->ntime = 12;
+  zm->time[0] = 1209600.00;
+  zm->time[1] = 3888000.00;
+  zm->time[2] = 6393600.00;
+  zm->time[3] = 9072000.00;
+  zm->time[4] = 11664000.00;
+  zm->time[5] = 14342400.00;
+  zm->time[6] = 16934400.00;
+  zm->time[7] = 19612800.00;
+  zm->time[8] = 22291200.00;
+  zm->time[9] = 24883200.00;
+  zm->time[10] = 27561600.00;
+  zm->time[11] = 30153600.00;
+
+  /* Check number of timesteps... */
+  NC_INQ_DIM("time", &nt, 12, 12);
+
+  /* Read data... */
+  ALLOC(help, double,
+	zm->nlat * zm->np * zm->ntime);
+  NC_GET_DOUBLE(varname, help, 1);
+  for (it = 0; it < zm->ntime; it++)
+    for (iz = 0; iz < zm->np; iz++)
+      for (iy = 0; iy < zm->nlat; iy++)
+	zm->vmr[it][iz][iy] = help[ARRAY_3D(it, iz, zm->np, iy, zm->nlat)];
+  free(help);
+
+  /* Fix data gaps... */
+  for (it = 0; it < zm->ntime; it++)
+    for (iy = 0; iy < zm->nlat; iy++)
+      for (iz = 0; iz < zm->np; iz++) {
+	if (zm->vmr[it][iz][iy] < 0) {
+	  for (iz2 = 0; iz2 < zm->np; iz2++)
+	    if (zm->vmr[it][iz2][iy] >= 0) {
+	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
+	      break;
+	    }
+	  for (iz2 = zm->np - 1; iz2 >= 0; iz2--)
+	    if (zm->vmr[it][iz2][iy] >= 0) {
+	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
+	      break;
+	    }
+	}
+	varmin = MIN(varmin, zm->vmr[it][iz][iy]);
+	varmax = MAX(varmax, zm->vmr[it][iz][iy]);
+      }
+
+  /* Close netCDF file... */
+  NC(nc_close(ncid));
+
+  /* Write info... */
+  LOG(2, "Number of time steps: %d", zm->ntime);
+  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
+      zm->time[0], zm->time[1], zm->time[zm->ntime - 1]);
+  LOG(2, "Number of pressure levels: %d", zm->np);
+  LOG(2, "Altitude levels: %g, %g ... %g km",
+      Z(zm->p[0]), Z(zm->p[1]), Z(zm->p[zm->np - 1]));
+  LOG(2, "Pressure levels: %g, %g ... %g hPa", zm->p[0],
+      zm->p[1], zm->p[zm->np - 1]);
+  LOG(2, "Number of latitudes: %d", zm->nlat);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
+  LOG(2, "%s volume mixing ratio range: %g ... %g ppv", varname, varmin,
+      varmax);
+}
+
+/*****************************************************************************/
+
+void read_ctl(
   const char *filename,
   int argc,
   char *argv[],
@@ -5392,10 +5770,51 @@ void mptrac_read_ctl(
 
 /*****************************************************************************/
 
-int mptrac_read_met(
+void read_kernel(
   const char *filename,
-  const ctl_t *ctl,
-  const clim_t *clim,
+  double kz[EP],
+  double kw[EP],
+  int *nk) {
+
+  /* Write info... */
+  LOG(1, "Read kernel function: %s", filename);
+
+  /* Open file... */
+  FILE *in;
+  if (!(in = fopen(filename, "r")))
+    ERRMSG("Cannot open file!");
+
+  /* Read data... */
+  char line[LEN];
+  int n = 0;
+  while (fgets(line, LEN, in))
+    if (sscanf(line, "%lg %lg", &kz[n], &kw[n]) == 2) {
+      if (n > 0 && kz[n] < kz[n - 1])
+	ERRMSG("Height levels must be ascending!");
+      if ((++n) >= EP)
+	ERRMSG("Too many height levels!");
+    }
+
+  /* Close file... */
+  fclose(in);
+
+  /* Check number of data points... */
+  *nk = n;
+  if (n < 2)
+    ERRMSG("Not enough height levels!");
+
+  /* Normalize kernel function... */
+  const double kmax = gsl_stats_max(kw, 1, (size_t) n);
+  for (int iz = 0; iz < n; iz++)
+    kw[iz] /= kmax;
+}
+
+/*****************************************************************************/
+
+int read_met(
+  const char *filename,
+  ctl_t *ctl,
+  clim_t *clim,
   met_t *met) {
 
   /* Write info... */
@@ -5447,889 +5866,9 @@ int mptrac_read_met(
 
 /*****************************************************************************/
 
-void mptrac_run_timestep(
-  const ctl_t *ctl,
-  cache_t *cache,
-  const clim_t *clim,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm,
-  const double t) {
-
-  /* Initialize... */
-  if (t == ctl->t_start) {
-
-    /* Initialize random number generator... */
-    module_rng_init();
-
-    /* Initialize isosurface data... */
-    if (ctl->isosurf >= 1 && ctl->isosurf <= 4)
-      module_isosurf_init(ctl, cache, met0, met1, atm);
-
-    /* Initialize advection... */
-    if (ctl->advect_vert_coord == 1)
-      module_advect_init(ctl, cache, met0, met1, atm);
-
-    /* Initialize chemistry... */
-    module_chem_init(ctl, cache, clim, met0, met1, atm);
-  }
-
-  /* Set time steps of air parcels... */
-  module_timesteps(ctl, cache, met0, atm, t);
-
-  /* Sort particles... */
-  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
-    module_sort(ctl, met0, atm);
-
-  /* Check positions (initial)... */
-  module_position(cache, met0, met1, atm);
-
-  /* Advection... */
-  if (ctl->advect > 0)
-    module_advect(ctl, cache, met0, met1, atm);
-
-  /* Turbulent diffusion... */
-  if (ctl->diffusion == 1
-      && (ctl->turb_dx_pbl > 0 || ctl->turb_dz_pbl > 0
-	  || ctl->turb_dx_trop > 0 || ctl->turb_dz_trop > 0
-	  || ctl->turb_dx_strat > 0 || ctl->turb_dz_strat > 0))
-    module_diffusion_turb(ctl, cache, clim, met0, met1, atm);
-
-  /* Mesoscale diffusion... */
-  if (ctl->diffusion == 1 && (ctl->turb_mesox > 0 || ctl->turb_mesoz > 0))
-    module_diffusion_meso(ctl, cache, met0, met1, atm);
-
-  /* Diffusion... */
-  if (ctl->diffusion == 2)
-    module_diffusion_pbl(ctl, cache, met0, met1, atm);
-
-  /* Convection... */
-  if ((ctl->conv_mix_pbl || ctl->conv_cape >= 0)
-      && (ctl->conv_dt <= 0 || fmod(t, ctl->conv_dt) == 0))
-    module_convection(ctl, cache, met0, met1, atm);
-
-  /* Sedimentation... */
-  if (ctl->qnt_rp >= 0 && ctl->qnt_rhop >= 0)
-    module_sedi(ctl, cache, met0, met1, atm);
-
-  /* Isosurface... */
-  if (ctl->isosurf >= 1 && ctl->isosurf <= 4)
-    module_isosurf(ctl, cache, met0, met1, atm);
-
-  /* Check positions (final)... */
-  module_position(cache, met0, met1, atm);
-
-  /* Interpolate meteo data... */
-  if (ctl->met_dt_out > 0
-      && (ctl->met_dt_out < ctl->dt_mod || fmod(t, ctl->met_dt_out) == 0))
-    module_meteo(ctl, cache, clim, met0, met1, atm);
-
-  /* Check boundary conditions (initial)... */
-  if ((ctl->bound_lat0 < ctl->bound_lat1) && (ctl->bound_p0 > ctl->bound_p1))
-    module_bound_cond(ctl, cache, clim, met0, met1, atm);
-
-  /* Initialize quantity of total loss rate... */
-  if (ctl->qnt_loss_rate >= 0) {
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl, atm)") {
-      atm->q[ctl->qnt_loss_rate][ip] = 0;
-    }
-  }
-
-  /* Decay of particle mass... */
-  if (ctl->tdec_trop > 0 && ctl->tdec_strat > 0)
-    module_decay(ctl, cache, clim, atm);
-
-  /* Interparcel mixing... */
-  if (ctl->mixing_trop >= 0 && ctl->mixing_strat >= 0
-      && (ctl->mixing_dt <= 0 || fmod(t, ctl->mixing_dt) == 0))
-    module_mixing(ctl, clim, atm, t);
-
-  /* Calculate the tracer vmr in the chemistry grid... */
-  if (ctl->oh_chem_reaction != 0 || ctl->h2o2_chem_reaction != 0
-      || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0))
-    module_chemgrid(ctl, met0, met1, atm, t);
-
-  /* OH chemistry... */
-  if (ctl->oh_chem_reaction != 0)
-    module_oh_chem(ctl, cache, clim, met0, met1, atm);
-
-  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-  if (ctl->h2o2_chem_reaction != 0)
-    module_h2o2_chem(ctl, cache, clim, met0, met1, atm);
-
-  /* First-order tracer chemistry... */
-  if (ctl->tracer_chem)
-    module_tracer_chem(ctl, cache, clim, met0, met1, atm);
-
-  /* KPP chemistry... */
-  if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
-#ifdef KPP
-    module_kpp_chem(ctl, cache, clim, met0, met1, atm);
-#else
-    ERRMSG("Code was compiled without KPP!");
-#endif
-  }
-
-  /* Wet deposition... */
-  if ((ctl->wet_depo_ic_a > 0 || ctl->wet_depo_ic_h[0] > 0)
-      && (ctl->wet_depo_bc_a > 0 || ctl->wet_depo_bc_h[0] > 0))
-    module_wet_deposition(ctl, cache, met0, met1, atm);
-
-  /* Dry deposition... */
-  if (ctl->dry_depo_vdep > 0)
-    module_dry_deposition(ctl, cache, met0, met1, atm);
-
-  /* Check boundary conditions (final)... */
-  if ((ctl->bound_lat0 < ctl->bound_lat1) && (ctl->bound_p0 > ctl->bound_p1))
-    module_bound_cond(ctl, cache, clim, met0, met1, atm);
-}
-
-/*****************************************************************************/
-
-void mptrac_write_atm(
-  const char *filename,
-  const ctl_t *ctl,
-  const atm_t *atm,
-  const double t) {
-
-  /* Set timer... */
-  SELECT_TIMER("WRITE_ATM", "OUTPUT", NVTX_WRITE);
-
-  /* Write info... */
-  LOG(1, "Write atmospheric data: %s", filename);
-
-  /* Write ASCII data... */
-  if (ctl->atm_type_out == 0)
-    write_atm_asc(filename, ctl, atm, t);
-
-  /* Write binary data... */
-  else if (ctl->atm_type_out == 1)
-    write_atm_bin(filename, ctl, atm);
-
-  /* Write netCDF data... */
-  else if (ctl->atm_type_out == 2)
-    write_atm_nc(filename, ctl, atm);
-
-  /* Write CLaMS trajectory data... */
-  else if (ctl->atm_type_out == 3)
-    write_atm_clams_traj(filename, ctl, atm, t);
-
-  /* Write CLaMS pos data... */
-  else if (ctl->atm_type_out == 4)
-    write_atm_clams(filename, ctl, atm);
-
-  /* Error... */
-  else
-    ERRMSG("Atmospheric data type not supported!");
-
-  /* Write info... */
-  double mini, maxi;
-  LOG(2, "Number of particles: %d", atm->np);
-  gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
-  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
-  LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
-  LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
-  gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
-  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
-  gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
-  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
-  for (int iq = 0; iq < ctl->nq; iq++) {
-    char msg[5 * LEN];
-    sprintf(msg, "Quantity %s range: %s ... %s %s",
-	    ctl->qnt_name[iq], ctl->qnt_format[iq],
-	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
-    gsl_stats_minmax(&mini, &maxi, atm->q[iq], 1, (size_t) atm->np);
-    LOG(2, msg, mini, maxi);
-  }
-}
-
-/*****************************************************************************/
-
-void mptrac_write_met(
-  const char *filename,
-  const ctl_t *ctl,
-  met_t *met) {
-
-  /* Set timer... */
-  SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
-
-  /* Write info... */
-  LOG(1, "Write meteo data: %s", filename);
-
-  /* Check compression flags... */
-#ifndef ZFP
-  if (ctl->met_type == 3)
-    ERRMSG("MPTRAC was compiled without zfp compression!");
-#endif
-#ifndef ZSTD
-  if (ctl->met_type == 4)
-    ERRMSG("MPTRAC was compiled without zstd compression!");
-#endif
-#ifndef CMS
-  if (ctl->met_type == 5)
-    ERRMSG("MPTRAC was compiled without cmultiscale compression!");
-#endif
-
-  /* Write netCDF data... */
-  if (ctl->met_type == 0)
-    write_met_nc(filename, ctl, met);
-
-  /* Write binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 5)
-    write_met_bin(filename, ctl, met);
-
-  /* Not implemented... */
-  else
-    ERRMSG("MET_TYPE not implemented!");
-}
-
-/*****************************************************************************/
-
-void mptrac_write_output(
-  const char *dirname,
-  const ctl_t *ctl,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm,
-  const double t) {
-
-  char ext[10], filename[2 * LEN];
-
-  double r;
-
-  int year, mon, day, hour, min, sec;
-
-  /* Get time... */
-  jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
-
-  /* Update host... */
-#ifdef _OPENACC
-  if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
-      || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
-      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
-      || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
-      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
-      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-  }
-#endif
-
-  /* Write atmospheric data... */
-  if (ctl->atm_basename[0] != '-' &&
-      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
-    if (ctl->atm_type_out == 0)
-      sprintf(ext, "tab");
-    else if (ctl->atm_type_out == 1)
-      sprintf(ext, "bin");
-    else if (ctl->atm_type_out == 2)
-      sprintf(ext, "nc");
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
-    mptrac_write_atm(filename, ctl, atm, t);
-  }
-
-  /* Write gridded data... */
-  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->grid_basename, year, mon, day, hour, min,
-	    ctl->grid_type == 0 ? "tab" : "nc");
-    write_grid(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write CSI data... */
-  if (ctl->csi_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
-    write_csi(filename, ctl, atm, t);
-  }
-
-  /* Write ensemble data... */
-  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
-	    dirname, ctl->ens_basename, year, mon, day, hour, min);
-    write_ens(filename, ctl, atm, t);
-  }
-
-  /* Write profile data... */
-  if (ctl->prof_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
-    write_prof(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write sample data... */
-  if (ctl->sample_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
-    write_sample(filename, ctl, met0, met1, atm, t);
-  }
-
-  /* Write station data... */
-  if (ctl->stat_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
-    write_station(filename, ctl, atm, t);
-  }
-
-  /* Write VTK data... */
-  if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
-    static int nvtk;
-    if (t == ctl->t_start)
-      nvtk = 0;
-    sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
-    write_vtk(filename, ctl, atm, t);
-  }
-}
-
-/*****************************************************************************/
-
-double nat_temperature(
-  const double p,
-  const double h2o,
-  const double hno3) {
-
-  /* Check water vapor volume mixing ratio... */
-  const double h2o_help = MAX(h2o, 0.1e-6);
-
-  /* Calculate T_NAT... */
-  const double p_hno3 = hno3 * p / 1.333224;
-  const double p_h2o = h2o_help * p / 1.333224;
-  const double a = 0.009179 - 0.00088 * log10(p_h2o);
-  const double b = (38.9855 - log10(p_hno3) - 2.7836 * log10(p_h2o)) / a;
-  const double c = -11397.0 / a;
-  double tnat = (-b + sqrt(b * b - 4. * c)) / 2.;
-  double x2 = (-b - sqrt(b * b - 4. * c)) / 2.;
-  if (x2 > 0)
-    tnat = x2;
-
-  return tnat;
-}
-
-/*****************************************************************************/
-
-double pbl_weight(
-  const ctl_t *ctl,
-  const atm_t *atm,
-  const int ip,
-  const double pbl,
-  const double ps) {
-
-  /* Get pressure range... */
-  const double p1 = pbl - ctl->conv_pbl_trans * (ps - pbl);
-  const double p0 = pbl;
-
-  /* Get weighting factor... */
-  if (atm->p[ip] > p0)
-    return 1;
-  else if (atm->p[ip] < p1)
-    return 0;
-  else
-    return LIN(p0, 1.0, p1, 0.0, atm->p[ip]);
-}
-
-/*****************************************************************************/
-
-int read_atm_asc(
-  const char *filename,
-  const ctl_t *ctl,
-  atm_t *atm) {
-
-  /* Open file... */
-  FILE *in;
-  if (!(in = fopen(filename, "r"))) {
-    WARN("Cannot open file!");
-    return 0;
-  }
-
-  /* Read line... */
-  char line[LEN];
-  while (fgets(line, LEN, in)) {
-
-    /* Read data... */
-    char *tok;
-    TOK(line, tok, "%lg", atm->time[atm->np]);
-    TOK(NULL, tok, "%lg", atm->p[atm->np]);
-    TOK(NULL, tok, "%lg", atm->lon[atm->np]);
-    TOK(NULL, tok, "%lg", atm->lat[atm->np]);
-    for (int iq = 0; iq < ctl->nq; iq++)
-      TOK(NULL, tok, "%lg", atm->q[iq][atm->np]);
-
-    /* Convert altitude to pressure... */
-    atm->p[atm->np] = P(atm->p[atm->np]);
-
-    /* Increment data point counter... */
-    if ((++atm->np) > NP)
-      ERRMSG("Too many data points!");
-  }
-
-  /* Close file... */
-  fclose(in);
-
-  /* Return success... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-int read_atm_bin(
-  const char *filename,
-  const ctl_t *ctl,
-  atm_t *atm) {
-
-  /* Open file... */
-  FILE *in;
-  if (!(in = fopen(filename, "r")))
-    return 0;
-
-  /* Check version of binary data... */
-  int version;
-  FREAD(&version, int,
-	1,
-	in);
-  if (version != 100)
-    ERRMSG("Wrong version of binary data!");
-
-  /* Read data... */
-  FREAD(&atm->np, int,
-	1,
-	in);
-  FREAD(atm->time, double,
-	  (size_t) atm->np,
-	in);
-  FREAD(atm->p, double,
-	  (size_t) atm->np,
-	in);
-  FREAD(atm->lon, double,
-	  (size_t) atm->np,
-	in);
-  FREAD(atm->lat, double,
-	  (size_t) atm->np,
-	in);
-  for (int iq = 0; iq < ctl->nq; iq++)
-    FREAD(atm->q[iq], double,
-	    (size_t) atm->np,
-	  in);
-
-  /* Read final flag... */
-  int final;
-  FREAD(&final, int,
-	1,
-	in);
-  if (final != 999)
-    ERRMSG("Error while reading binary data!");
-
-  /* Close file... */
-  fclose(in);
-
-  /* Return success... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-int read_atm_clams(
-  const char *filename,
-  const ctl_t *ctl,
-  atm_t *atm) {
-
-  int ncid, varid;
-
-  /* Open file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
-    return 0;
-
-  /* Get dimensions... */
-  NC_INQ_DIM("NPARTS", &atm->np, 1, NP);
-
-  /* Get time... */
-  if (nc_inq_varid(ncid, "TIME_INIT", &varid) == NC_NOERR) {
-    NC(nc_get_var_double(ncid, varid, atm->time));
-  } else {
-    WARN("TIME_INIT not found use time instead!");
-    double time_init;
-    NC_GET_DOUBLE("time", &time_init, 1);
-    for (int ip = 0; ip < atm->np; ip++) {
-      atm->time[ip] = time_init;
-    }
-  }
-
-  /* Read zeta coordinate, pressure is optional... */
-  if (ctl->advect_vert_coord == 1) {
-    NC_GET_DOUBLE("ZETA", atm->q[ctl->qnt_zeta], 1);
-    NC_GET_DOUBLE("PRESS", atm->p, 0);
-  }
-
-  /* Read pressure, zeta coordinate is optional... */
-  else {
-    if (nc_inq_varid(ncid, "PRESS_INIT", &varid) == NC_NOERR) {
-      NC(nc_get_var_double(ncid, varid, atm->p));
-    } else {
-      WARN("PRESS_INIT not found use PRESS instead!");
-      nc_inq_varid(ncid, "PRESS", &varid);
-      NC(nc_get_var_double(ncid, varid, atm->p));
-    }
-  }
-
-  /* Read longitude and latitude... */
-  NC_GET_DOUBLE("LON", atm->lon, 1);
-  NC_GET_DOUBLE("LAT", atm->lat, 1);
-
-  /* Close file... */
-  NC(nc_close(ncid));
-
-  /* Return success... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-int read_atm_nc(
-  const char *filename,
-  const ctl_t *ctl,
-  atm_t *atm) {
-
-  int ncid, varid;
-
-  /* Open file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR)
-    return 0;
-
-  /* Get dimensions... */
-  NC_INQ_DIM("obs", &atm->np, 1, NP);
-
-  /* Read geolocations... */
-  NC_GET_DOUBLE("time", atm->time, 1);
-  NC_GET_DOUBLE("press", atm->p, 1);
-  NC_GET_DOUBLE("lon", atm->lon, 1);
-  NC_GET_DOUBLE("lat", atm->lat, 1);
-
-  /* Read variables... */
-  for (int iq = 0; iq < ctl->nq; iq++)
-    NC_GET_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
-
-  /* Close file... */
-  NC(nc_close(ncid));
-
-  /* Return success... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-void read_clim_photo(
-  const char *filename,
-  clim_photo_t *photo) {
-
-  int ncid, varid;
-
-  /* Write info... */
-  LOG(1, "Read photolysis rates: %s", filename);
-
-  /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("Photolysis rate data are missing!");
-    return;
-  }
-
-  /* Read pressure data... */
-  NC_INQ_DIM("press", &photo->np, 2, CP);
-  NC_GET_DOUBLE("press", photo->p, 1);
-  if (photo->p[0] < photo->p[1])
-    ERRMSG("Pressure data are not descending!");
-
-  /* Read total column ozone data... */
-  NC_INQ_DIM("total_o3col", &photo->no3c, 2, CO3);
-  NC_GET_DOUBLE("total_o3col", photo->o3c, 1);
-  if (photo->o3c[0] > photo->o3c[1])
-    ERRMSG("Total column ozone data are not ascending!");
-
-  /* Read solar zenith angle data... */
-  NC_INQ_DIM("sza", &photo->nsza, 2, CSZA);
-  NC_GET_DOUBLE("sza", photo->sza, 1);
-  if (photo->sza[0] > photo->sza[1])
-    ERRMSG("Solar zenith angle data are not ascending!");
-
-  /* Read data... */
-  read_clim_photo_help(ncid, "J_N2O", photo, photo->n2o);
-  read_clim_photo_help(ncid, "J_CCl4", photo, photo->ccl4);
-  read_clim_photo_help(ncid, "J_CFC-11", photo, photo->ccl3f);
-  read_clim_photo_help(ncid, "J_CFC-12", photo, photo->ccl2f2);
-  read_clim_photo_help(ncid, "J_O2", photo, photo->o2);
-  read_clim_photo_help(ncid, "J_O3b", photo, photo->o3_1);
-  read_clim_photo_help(ncid, "J_O3a", photo, photo->o3_2);
-  read_clim_photo_help(ncid, "J_H2O2", photo, photo->h2o2);
-  read_clim_photo_help(ncid, "J_H2O", photo, photo->h2o);
-
-  /* Close netCDF file... */
-  NC(nc_close(ncid));
-
-  /* Write info... */
-  LOG(2, "Number of pressure levels: %d", photo->np);
-  LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(photo->p[0]), Z(photo->p[1]), Z(photo->p[photo->np - 1]));
-  LOG(2, "Pressure levels: %g, %g ... %g hPa",
-      photo->p[0], photo->p[1], photo->p[photo->np - 1]);
-  LOG(2, "Number of solar zenith angles: %d", photo->nsza);
-  LOG(2, "Solar zenith angles: %g, %g ... %g deg",
-      RAD2DEG(photo->sza[0]), RAD2DEG(photo->sza[1]),
-      RAD2DEG(photo->sza[photo->nsza - 1]));
-  LOG(2, "Number of total column ozone values: %d", photo->no3c);
-  LOG(2, "Total column ozone: %g, %g ... %g DU",
-      photo->o3c[0], photo->o3c[1], photo->o3c[photo->no3c - 1]);
-  LOG(2, "N2O photolysis rate: %g, %g ... %g s**-1",
-      photo->n2o[0][0][0], photo->n2o[1][0][0],
-      photo->n2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "CCl4 photolysis rate: %g, %g ... %g s**-1",
-      photo->ccl4[0][0][0], photo->ccl4[1][0][0],
-      photo->ccl4[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "CFC-11 photolysis rate: %g, %g ... %g s**-1",
-      photo->ccl3f[0][0][0], photo->ccl3f[1][0][0],
-      photo->ccl3f[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "CFC-12 photolysis rate: %g, %g ... %g s**-1",
-      photo->ccl2f2[0][0][0], photo->ccl2f2[1][0][0],
-      photo->ccl2f2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "O2 photolysis rate: %g, %g ... %g s**-1",
-      photo->o2[0][0][0], photo->o2[1][0][0],
-      photo->o2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "O3 -> O(1D) photolysis rate: %g, %g ... %g s**-1",
-      photo->o3_1[0][0][0], photo->o3_1[1][0][0],
-      photo->o3_1[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "O3 -> O(3P) photolysis rate: %g, %g ... %g s**-1",
-      photo->o3_2[0][0][0], photo->o3_2[1][0][0],
-      photo->o3_2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "H2O2 photolysis rate: %g, %g ... %g s**-1",
-      photo->h2o2[0][0][0], photo->h2o2[1][0][0],
-      photo->h2o2[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-  LOG(2, "H2O photolysis rate: %g, %g ... %g s**-1",
-      photo->h2o[0][0][0], photo->h2o[1][0][0],
-      photo->h2o[photo->np - 1][photo->nsza - 1][photo->no3c - 1]);
-}
-
-/*****************************************************************************/
-
-void read_clim_photo_help(
-  const int ncid,
-  const char *varname,
-  const clim_photo_t *photo,
-  double var[CP][CSZA][CO3]) {
-
-  /* Allocate... */
-  double *help;
-  ALLOC(help, double,
-	photo->np * photo->nsza * photo->no3c);
-
-  /* Read varible... */
-  int varid;
-  NC_GET_DOUBLE(varname, help, 1);
-
-  /* Copy data... */
-  for (int ip = 0; ip < photo->np; ip++)
-    for (int is = 0; is < photo->nsza; is++)
-      for (int io = 0; io < photo->no3c; io++)
-	var[ip][is][io] =
-	  help[ARRAY_3D(ip, is, photo->nsza, io, photo->no3c)];
-
-  /* Free... */
-  free(help);
-}
-
-/*****************************************************************************/
-
-int read_clim_ts(
-  const char *filename,
-  clim_ts_t *ts) {
-
-  /* Write info... */
-  LOG(1, "Read climatological time series: %s", filename);
-
-  /* Open file... */
-  FILE *in;
-  if (!(in = fopen(filename, "r"))) {
-    WARN("Cannot open file!");
-    return 0;
-  }
-
-  /* Read data... */
-  char line[LEN];
-  int nh = 0;
-  while (fgets(line, LEN, in))
-    if (sscanf(line, "%lg %lg", &ts->time[nh], &ts->vmr[nh]) == 2) {
-
-      /* Convert years to seconds... */
-      ts->time[nh] = (ts->time[nh] - 2000.0) * 365.25 * 86400.;
-
-      /* Check data... */
-      if (nh > 0 && ts->time[nh] <= ts->time[nh - 1])
-	ERRMSG("Time series must be ascending!");
-
-      /* Count time steps... */
-      if ((++nh) >= CTS)
-	ERRMSG("Too many data points!");
-    }
-
-  /* Close file... */
-  fclose(in);
-
-  /* Check number of data points... */
-  ts->ntime = nh;
-  if (nh < 2)
-    ERRMSG("Not enough data points!");
-
-  /* Write info... */
-  LOG(2, "Number of time steps: %d", ts->ntime);
-  LOG(2, "Time steps: %.2f, %.2f ... %.2f s", ts->time[0], ts->time[1],
-      ts->time[nh - 1]);
-  LOG(2, "Volume mixing ratio range: %g ... %g ppv",
-      gsl_stats_min(ts->vmr, 1, (size_t) nh), gsl_stats_max(ts->vmr, 1,
-							    (size_t) nh));
-
-  /* Exit success... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-void read_clim_zm(
-  const char *filename,
-  const char *varname,
-  clim_zm_t *zm) {
-
-  int ncid, varid, it, iy, iz, iz2, nt;
-
-  double *help, varmin = 1e99, varmax = -1e99;
-
-  /* Write info... */
-  LOG(1, "Read %s data: %s", varname, filename);
-
-  /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("%s climatology data are missing!", varname);
-    return;
-  }
-
-  /* Read pressure data... */
-  NC_INQ_DIM("press", &zm->np, 2, CP);
-  NC_GET_DOUBLE("press", zm->p, 1);
-  if (zm->p[0] < zm->p[1])
-    ERRMSG("Pressure data are not descending!");
-
-  /* Read latitudes... */
-  NC_INQ_DIM("lat", &zm->nlat, 2, CY);
-  NC_GET_DOUBLE("lat", zm->lat, 1);
-  if (zm->lat[0] > zm->lat[1])
-    ERRMSG("Latitude data are not ascending!");
-
-  /* Set time data (for monthly means)... */
-  zm->ntime = 12;
-  zm->time[0] = 1209600.00;
-  zm->time[1] = 3888000.00;
-  zm->time[2] = 6393600.00;
-  zm->time[3] = 9072000.00;
-  zm->time[4] = 11664000.00;
-  zm->time[5] = 14342400.00;
-  zm->time[6] = 16934400.00;
-  zm->time[7] = 19612800.00;
-  zm->time[8] = 22291200.00;
-  zm->time[9] = 24883200.00;
-  zm->time[10] = 27561600.00;
-  zm->time[11] = 30153600.00;
-
-  /* Check number of timesteps... */
-  NC_INQ_DIM("time", &nt, 12, 12);
-
-  /* Read data... */
-  ALLOC(help, double,
-	zm->nlat * zm->np * zm->ntime);
-  NC_GET_DOUBLE(varname, help, 1);
-  for (it = 0; it < zm->ntime; it++)
-    for (iz = 0; iz < zm->np; iz++)
-      for (iy = 0; iy < zm->nlat; iy++)
-	zm->vmr[it][iz][iy] = help[ARRAY_3D(it, iz, zm->np, iy, zm->nlat)];
-  free(help);
-
-  /* Fix data gaps... */
-  for (it = 0; it < zm->ntime; it++)
-    for (iy = 0; iy < zm->nlat; iy++)
-      for (iz = 0; iz < zm->np; iz++) {
-	if (zm->vmr[it][iz][iy] < 0) {
-	  for (iz2 = 0; iz2 < zm->np; iz2++)
-	    if (zm->vmr[it][iz2][iy] >= 0) {
-	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
-	      break;
-	    }
-	  for (iz2 = zm->np - 1; iz2 >= 0; iz2--)
-	    if (zm->vmr[it][iz2][iy] >= 0) {
-	      zm->vmr[it][iz][iy] = zm->vmr[it][iz2][iy];
-	      break;
-	    }
-	}
-	varmin = MIN(varmin, zm->vmr[it][iz][iy]);
-	varmax = MAX(varmax, zm->vmr[it][iz][iy]);
-      }
-
-  /* Close netCDF file... */
-  NC(nc_close(ncid));
-
-  /* Write info... */
-  LOG(2, "Number of time steps: %d", zm->ntime);
-  LOG(2, "Time steps: %.2f, %.2f ... %.2f s",
-      zm->time[0], zm->time[1], zm->time[zm->ntime - 1]);
-  LOG(2, "Number of pressure levels: %d", zm->np);
-  LOG(2, "Altitude levels: %g, %g ... %g km",
-      Z(zm->p[0]), Z(zm->p[1]), Z(zm->p[zm->np - 1]));
-  LOG(2, "Pressure levels: %g, %g ... %g hPa", zm->p[0],
-      zm->p[1], zm->p[zm->np - 1]);
-  LOG(2, "Number of latitudes: %d", zm->nlat);
-  LOG(2, "Latitudes: %g, %g ... %g deg",
-      zm->lat[0], zm->lat[1], zm->lat[zm->nlat - 1]);
-  LOG(2, "%s volume mixing ratio range: %g ... %g ppv", varname, varmin,
-      varmax);
-}
-
-/*****************************************************************************/
-
-void read_kernel(
-  const char *filename,
-  double kz[EP],
-  double kw[EP],
-  int *nk) {
-
-  /* Write info... */
-  LOG(1, "Read kernel function: %s", filename);
-
-  /* Open file... */
-  FILE *in;
-  if (!(in = fopen(filename, "r")))
-    ERRMSG("Cannot open file!");
-
-  /* Read data... */
-  char line[LEN];
-  int n = 0;
-  while (fgets(line, LEN, in))
-    if (sscanf(line, "%lg %lg", &kz[n], &kw[n]) == 2) {
-      if (n > 0 && kz[n] < kz[n - 1])
-	ERRMSG("Height levels must be ascending!");
-      if ((++n) >= EP)
-	ERRMSG("Too many height levels!");
-    }
-
-  /* Close file... */
-  fclose(in);
-
-  /* Check number of data points... */
-  *nk = n;
-  if (n < 2)
-    ERRMSG("Not enough height levels!");
-
-  /* Normalize kernel function... */
-  const double kmax = gsl_stats_max(kw, 1, (size_t) n);
-  for (int iz = 0; iz < n; iz++)
-    kw[iz] /= kmax;
-}
-
-/*****************************************************************************/
-
 int read_met_bin(
   const char *filename,
-  const ctl_t *ctl,
+  ctl_t *ctl,
   met_t *met) {
 
   FILE *in;
@@ -7412,8 +6951,8 @@ void read_met_monotonize(
 
 int read_met_nc(
   const char *filename,
-  const ctl_t *ctl,
-  const clim_t *clim,
+  ctl_t *ctl,
+  clim_t *clim,
   met_t *met) {
 
   int ncid;
@@ -9129,6 +8668,66 @@ double tropo_weight(
 
 /*****************************************************************************/
 
+void write_atm(
+  const char *filename,
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_ATM", "OUTPUT", NVTX_WRITE);
+
+  /* Write info... */
+  LOG(1, "Write atmospheric data: %s", filename);
+
+  /* Write ASCII data... */
+  if (ctl->atm_type_out == 0)
+    write_atm_asc(filename, ctl, atm, t);
+
+  /* Write binary data... */
+  else if (ctl->atm_type_out == 1)
+    write_atm_bin(filename, ctl, atm);
+
+  /* Write netCDF data... */
+  else if (ctl->atm_type_out == 2)
+    write_atm_nc(filename, ctl, atm);
+
+  /* Write CLaMS trajectory data... */
+  else if (ctl->atm_type_out == 3)
+    write_atm_clams_traj(filename, ctl, atm, t);
+
+  /* Write CLaMS pos data... */
+  else if (ctl->atm_type_out == 4)
+    write_atm_clams(filename, ctl, atm);
+
+  /* Error... */
+  else
+    ERRMSG("Atmospheric data type not supported!");
+
+  /* Write info... */
+  double mini, maxi;
+  LOG(2, "Number of particles: %d", atm->np);
+  gsl_stats_minmax(&mini, &maxi, atm->time, 1, (size_t) atm->np);
+  LOG(2, "Time range: %.2f ... %.2f s", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->p, 1, (size_t) atm->np);
+  LOG(2, "Altitude range: %g ... %g km", Z(maxi), Z(mini));
+  LOG(2, "Pressure range: %g ... %g hPa", maxi, mini);
+  gsl_stats_minmax(&mini, &maxi, atm->lon, 1, (size_t) atm->np);
+  LOG(2, "Longitude range: %g ... %g deg", mini, maxi);
+  gsl_stats_minmax(&mini, &maxi, atm->lat, 1, (size_t) atm->np);
+  LOG(2, "Latitude range: %g ... %g deg", mini, maxi);
+  for (int iq = 0; iq < ctl->nq; iq++) {
+    char msg[5 * LEN];
+    sprintf(msg, "Quantity %s range: %s ... %s %s",
+	    ctl->qnt_name[iq], ctl->qnt_format[iq],
+	    ctl->qnt_format[iq], ctl->qnt_unit[iq]);
+    gsl_stats_minmax(&mini, &maxi, atm->q[iq], 1, (size_t) atm->np);
+    LOG(2, msg, mini, maxi);
+  }
+}
+
+/*****************************************************************************/
+
 void write_atm_asc(
   const char *filename,
   const ctl_t *ctl,
@@ -10305,6 +9904,46 @@ void write_grid_nc(
 
 /*****************************************************************************/
 
+void write_met(
+  const char *filename,
+  const ctl_t *ctl,
+  met_t *met) {
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
+
+  /* Write info... */
+  LOG(1, "Write meteo data: %s", filename);
+
+  /* Check compression flags... */
+#ifndef ZFP
+  if (ctl->met_type == 3)
+    ERRMSG("MPTRAC was compiled without zfp compression!");
+#endif
+#ifndef ZSTD
+  if (ctl->met_type == 4)
+    ERRMSG("MPTRAC was compiled without zstd compression!");
+#endif
+#ifndef CMS
+  if (ctl->met_type == 5)
+    ERRMSG("MPTRAC was compiled without cmultiscale compression!");
+#endif
+
+  /* Write netCDF data... */
+  if (ctl->met_type == 0)
+    write_met_nc(filename, ctl, met);
+
+  /* Write binary data... */
+  else if (ctl->met_type >= 1 && ctl->met_type <= 5)
+    write_met_bin(filename, ctl, met);
+
+  /* Not implemented... */
+  else
+    ERRMSG("MET_TYPE not implemented!");
+}
+
+/*****************************************************************************/
+
 void write_met_bin(
   const char *filename,
   const ctl_t *ctl,
@@ -10675,11 +10314,11 @@ void write_met_nc(
 /*****************************************************************************/
 
 void write_met_nc_2d(
-  const int ncid,
+  int ncid,
   const char *varname,
   met_t *met,
   float var[EX][EY],
-  const float scl) {
+  float scl) {
 
   int varid;
   size_t start[4], count[4];
@@ -10704,11 +10343,11 @@ void write_met_nc_2d(
 /*****************************************************************************/
 
 void write_met_nc_3d(
-  const int ncid,
+  int ncid,
   const char *varname,
   met_t *met,
   float var[EX][EY][EP],
-  const float scl) {
+  float scl) {
 
   int varid;
   size_t start[4], count[4];
@@ -10729,6 +10368,101 @@ void write_met_nc_3d(
 
   /* Free... */
   free(help);
+}
+
+/*****************************************************************************/
+
+void write_output(
+  const char *dirname,
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double t) {
+
+  char ext[10], filename[2 * LEN];
+
+  double r;
+
+  int year, mon, day, hour, min, sec;
+
+  /* Get time... */
+  jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+
+  /* Update host... */
+#ifdef _OPENACC
+  if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
+      || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
+      || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
+      || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
+      || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
+      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
+#pragma acc update host(atm[:1])
+  }
+#endif
+
+  /* Write atmospheric data... */
+  if (ctl->atm_basename[0] != '-' &&
+      (fmod(t, ctl->atm_dt_out) == 0 || t == ctl->t_stop)) {
+    if (ctl->atm_type_out == 0)
+      sprintf(ext, "tab");
+    else if (ctl->atm_type_out == 1)
+      sprintf(ext, "bin");
+    else if (ctl->atm_type_out == 2)
+      sprintf(ext, "nc");
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
+    write_atm(filename, ctl, atm, t);
+  }
+
+  /* Write gridded data... */
+  if (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	    dirname, ctl->grid_basename, year, mon, day, hour, min,
+	    ctl->grid_type == 0 ? "tab" : "nc");
+    write_grid(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write CSI data... */
+  if (ctl->csi_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
+    write_csi(filename, ctl, atm, t);
+  }
+
+  /* Write ensemble data... */
+  if (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0) {
+    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.tab",
+	    dirname, ctl->ens_basename, year, mon, day, hour, min);
+    write_ens(filename, ctl, atm, t);
+  }
+
+  /* Write profile data... */
+  if (ctl->prof_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->prof_basename);
+    write_prof(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write sample data... */
+  if (ctl->sample_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->sample_basename);
+    write_sample(filename, ctl, met0, met1, atm, t);
+  }
+
+  /* Write station data... */
+  if (ctl->stat_basename[0] != '-') {
+    sprintf(filename, "%s/%s.tab", dirname, ctl->stat_basename);
+    write_station(filename, ctl, atm, t);
+  }
+
+  /* Write VTK data... */
+  if (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0) {
+    static int nvtk;
+    if (t == ctl->t_start)
+      nvtk = 0;
+    sprintf(filename, "%s/%s_%05d.vtk", dirname, ctl->vtk_basename, ++nvtk);
+    write_vtk(filename, ctl, atm, t);
+  }
 }
 
 /*****************************************************************************/

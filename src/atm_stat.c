@@ -51,7 +51,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <stat.tab> <param> <atm1> [<atm2> ...]");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   const int ens =
     (int) scan_ctl(argv[1], argc, argv, "STAT_ENS", -1, "-999", NULL);
   const double p0 =
@@ -90,7 +90,7 @@ int main(
   for (int f = 4; f < argc; f++) {
 
     /* Read atmopheric data... */
-    if (!mptrac_read_atm(argv[f], &ctl, atm))
+    if (!read_atm(argv[f], &ctl, atm))
       continue;
 
     /* Get time from filename... */

@@ -75,7 +75,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <zm.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   double z0 = scan_ctl(argv[1], argc, argv, "ZM_Z0", -1, "-999", NULL);
   double z1 = scan_ctl(argv[1], argc, argv, "ZM_Z1", -1, "-999", NULL);
   double dz = scan_ctl(argv[1], argc, argv, "ZM_DZ", -1, "-999", NULL);
@@ -86,13 +86,13 @@ int main(
   double dlat = scan_ctl(argv[1], argc, argv, "ZM_DLAT", -1, "-999", NULL);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met))
+    if (!read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Set vertical grid... */

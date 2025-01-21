@@ -68,7 +68,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <lapse.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   const int dz =
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_DZ", -1, "20", NULL);
   const double lat0 =
@@ -83,13 +83,13 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "LAPSE_INTPOL", -1, "1", NULL);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met))
+    if (!read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Get altitude and pressure profiles... */

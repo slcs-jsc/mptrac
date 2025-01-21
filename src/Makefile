@@ -50,6 +50,9 @@ NVTX ?= 0
 # Enable cuRAND random number generators...
 CURAND ?= 0
 
+# Enable async IO for GPUs (experimental)...
+ASYNCIO ?= 0
+
 # Enable KPP chemistry module (experimental)...
 KPP ?= 0
 

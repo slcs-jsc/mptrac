@@ -50,7 +50,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <tropo.nc> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   double lon0 = scan_ctl(argv[1], argc, argv, "TROPO_LON0", -1, "-180", NULL);
   double lon1 = scan_ctl(argv[1], argc, argv, "TROPO_LON1", -1, "180", NULL);
   double dlon = scan_ctl(argv[1], argc, argv, "TROPO_DLON", -1, "-999", NULL);
@@ -61,7 +61,7 @@ int main(
   int o3 = (int) scan_ctl(argv[1], argc, argv, "TROPO_O3", -1, "1", NULL);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
@@ -70,7 +70,7 @@ int main(
     ctl.met_tropo = 0;
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met))
+    if (!read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Set horizontal grid... */

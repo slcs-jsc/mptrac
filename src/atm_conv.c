@@ -41,25 +41,23 @@ int main(
   ALLOC(atm, atm_t, 1);
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
 
   /* Read atmospheric data... */
   ctl.atm_type = atoi(argv[3]);
-  if (!mptrac_read_atm(argv[2], &ctl, atm))
+  if (!read_atm(argv[2], &ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Write atmospheric data... */
   if (ctl.atm_type_out == 3) {
-
     /* For CLaMS trajectory files... */
     ctl.t_start = ctl.t_stop;
     ctl.atm_type_out = atoi(argv[5]);
-    mptrac_write_atm(argv[4], &ctl, atm, ctl.t_stop);
+    write_atm(argv[4], &ctl, atm, ctl.t_stop);
   } else {
-
     /* Otherwise... */
     ctl.atm_type_out = atoi(argv[5]);
-    mptrac_write_atm(argv[4], &ctl, atm, 0);
+    write_atm(argv[4], &ctl, atm, 0);
   }
 
   /* Free... */

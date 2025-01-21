@@ -41,7 +41,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <atm_select> <atm1> [<atm2> ...]");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   const int stride =
     (int) scan_ctl(argv[1], argc, argv, "SELECT_STRIDE", -1, "1", NULL);
   const int idx0 =
@@ -85,7 +85,7 @@ int main(
   for (int f = 3; f < argc; f++) {
 
     /* Read atmopheric data... */
-    if (!mptrac_read_atm(argv[f], &ctl, atm))
+    if (!read_atm(argv[f], &ctl, atm))
       continue;
 
     /* Adjust range of air parcels... */
@@ -167,7 +167,7 @@ int main(
   }
 
   /* Close file... */
-  mptrac_write_atm(argv[2], &ctl, atm2, 0);
+  write_atm(argv[2], &ctl, atm2, 0);
 
   /* Free... */
   free(atm);

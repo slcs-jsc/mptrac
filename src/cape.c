@@ -51,13 +51,13 @@ int main(
     ERRMSG("Give parameters: <ctl> <met.nc>");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Read meteorological data... */
-  if (!mptrac_read_met(argv[2], &ctl, clim, met))
+  if (!read_met(argv[2], &ctl, clim, met))
     ERRMSG("Cannot open file!");
 
   /* Open netCDF file... */

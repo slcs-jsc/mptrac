@@ -27,12 +27,12 @@ PROGRAM trac_fortran
   CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
   INTEGER(c_int) :: argc
   TYPE(ctl_t) :: ctl
-  TYPE(cache_t) :: cache
   TYPE(atm_t) :: atm
   TYPE(clim_t) :: clim
   TYPE(met_t), TARGET :: met0, met1
   TYPE(met_t), POINTER :: met0p, met1p
   REAL(real64) :: t
+  REAL(real64), DIMENSION(npp) :: dt
   CHARACTER(len=32) :: arg
   TYPE(c_ptr), ALLOCATABLE, DIMENSION(:) :: argv_ptrs
   CHARACTER(len=32), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
@@ -61,8 +61,7 @@ PROGRAM trac_fortran
      WRITE(*,*) "Error: Cannot open directory list!"
      CALL EXIT
   ENDIF
-
-  ! Loop over directories...
+  
   DO WHILE (1 .eq. 1)
      READ(10,'(a)', END=200) dirname
  
@@ -86,35 +85,34 @@ PROGRAM trac_fortran
      met1p => met1
      CALL mptrac_get_met(ctl, clim, ctl%t_start, met0p, met1p)
 
-     ! Time loop...
      t = ctl%t_start
+
      DO WHILE (ctl%direction * (t - ctl%t_stop) < ctl%dt_mod)
-        
+
         ! Adjust length of final time step... 
         IF (ctl%direction * (t - ctl%t_stop) > 0) THEN
            t = ctl%t_stop
         ENDIF
-        
-        ! Set time steps of air parcels...
-        CALL mptrac_module_timesteps(ctl, cache, met0, atm, t)
 
-        ! Get meteo data...
+        ! Set time steps of air parcels...
+        CALL mptrac_module_timesteps(ctl, met0, atm, dt, t)
+        
         IF (t .NE. ctl%t_start) THEN
+           ! Get meteo data...
            CALL mptrac_get_met(ctl, clim, t, met0p, met1p)
         ENDIF
 
         ! Advection...
-        CALL mptrac_module_advect(ctl, cache, met0, met1, atm)
+        CALL mptrac_module_advect(ctl, met0, met1, atm, dt)
         
         ! Write output...
         CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0, met1, atm, t)
 
-        ! Time step...
         t = t + ctl%direction * ctl%dt_mod
 
      END DO
+
   END DO
-  
 200  CONTINUE
-  
+
 END PROGRAM trac_fortran
