@@ -42,16 +42,9 @@ int main(
 
   met_t *met0, *met1;
 
-#ifdef ASYNCIO
-  met_t *met0TMP, *met1TMP, *mets;
-  ctl_t ctlTMP;
-#endif
-
   FILE *dirlist;
 
   char dirname[LEN], filename[2 * LEN];
-
-  double *dt;
 
   int ntask = -1, rank = 0, size = 1;
 
@@ -110,21 +103,11 @@ int main(
     ALLOC(clim, clim_t, 1);
     ALLOC(met0, met_t, 1);
     ALLOC(met1, met_t, 1);
-#ifdef ASYNCIO
-    ALLOC(met0TMP, met_t, 1);
-    ALLOC(met1TMP, met_t, 1);
-#endif
-    ALLOC(dt, double,
-	  NP);
 
     /* Create data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#ifdef ASYNCIO
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, ctlTMP, met0[:1], met1[:1], met0TMP[:1], met1TMP[:1], dt[:NP])
-#else
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1], dt[:NP])
-#endif
+#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl, met0[:1], met1[:1])
 #endif
 
     /* Read control parameters... */
@@ -146,19 +129,13 @@ int main(
     module_rng_init(ntask);
 
     /* Initialize meteo data... */
-#ifdef ASYNCIO
-    ctlTMP = ctl;
-#endif
     get_met(&ctl, clim, ctl.t_start, &met0, &met1);
     if (ctl.dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
       WARN("Violation of CFL criterion! Check DT_MOD!");
-#ifdef ASYNCIO
-    get_met(&ctlTMP, clim, ctlTMP.t_start, &met0TMP, &met1TMP);
-#endif
 
     /* Initialize isosurface data... */
     if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-      module_isosurf_init(&ctl, met0, met1, atm, cache);
+      module_isosurf_init(&ctl, cache, met0, met1, atm);
 
     /* Initialize advection... */
     module_advect_init(&ctl, met0, met1, atm);
@@ -177,173 +154,131 @@ int main(
        ------------------------------------------------------------ */
 
     /* Loop over timesteps... */
-#ifdef ASYNCIO
-    omp_set_nested(1);
-    int ompTrdnum = omp_get_max_threads();
-#endif
     for (double t = ctl.t_start;
 	 ctl.direction * (t - ctl.t_stop) < ctl.dt_mod;
 	 t += ctl.direction * ctl.dt_mod) {
-#ifdef ASYNCIO
-#pragma omp parallel num_threads(2)
-      {
-#endif
 
-	/* Adjust length of final time step... */
-	if (ctl.direction * (t - ctl.t_stop) > 0)
-	  t = ctl.t_stop;
+      /* Adjust length of final time step... */
+      if (ctl.direction * (t - ctl.t_stop) > 0)
+	t = ctl.t_stop;
 
-	/* Set time steps of air parcels... */
-	module_timesteps(&ctl, met0, atm, dt, t);
+      /* Set time steps of air parcels... */
+      module_timesteps(&ctl, cache, met0, atm, t);
 
-	/* Get meteo data... */
-#ifdef ASYNCIO
-#pragma acc wait(5)
-#pragma omp barrier
-	if (omp_get_thread_num() == 0) {
+      /* Get meteo data... */
+      if (t != ctl.t_start)
+	get_met(&ctl, clim, t, &met0, &met1);
 
-	  /* Pointer swap... */
-	  if (t != ctl.t_start) {
-	    mets = met0;
-	    met0 = met0TMP;
-	    met0TMP = mets;
+      /* Sort particles... */
+      if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
+	module_sort(&ctl, met0, atm);
 
-	    mets = met1;
-	    met1 = met1TMP;
-	    met1TMP = mets;
-	  }
-#endif
-#ifndef ASYNCIO
-	  if (t != ctl.t_start)
-	    get_met(&ctl, clim, t, &met0, &met1);
-#endif
+      /* Check positions (initial)... */
+      module_position(cache, met0, met1, atm);
 
-	  /* Sort particles... */
-	  if (ctl.sort_dt > 0 && fmod(t, ctl.sort_dt) == 0)
-	    module_sort(&ctl, met0, atm);
+      /* Advection... */
+      if (ctl.advect > 0)
+	module_advect(&ctl, cache, met0, met1, atm);
 
-	  /* Check positions (initial)... */
-	  module_position(met0, met1, atm, dt);
+      /* Turbulent diffusion... */
+      if (ctl.diffusion == 1
+	  && (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
+	      || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0))
+	module_diffusion_turb(&ctl, cache, clim, met0, met1, atm);
 
-	  /* Advection... */
-	  if (ctl.advect > 0)
-	    module_advect(&ctl, met0, met1, atm, dt);
+      /* Mesoscale diffusion... */
+      if (ctl.diffusion == 1 && (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0))
+	module_diffusion_meso(&ctl, cache, met0, met1, atm);
 
-	  /* Turbulent diffusion... */
-	  if (ctl.diffusion == 1
-	      && (ctl.turb_dx_trop > 0 || ctl.turb_dz_trop > 0
-		  || ctl.turb_dx_strat > 0 || ctl.turb_dz_strat > 0))
-	    module_diffusion_turb(&ctl, clim, met0, met1, atm, cache, dt);
+      /* Diffusion... */
+      if (ctl.diffusion == 2)
+	module_diffusion_pbl(&ctl, cache, met0, met1, atm);
 
-	  /* Mesoscale diffusion... */
-	  if (ctl.diffusion == 1
-	      && (ctl.turb_mesox > 0 || ctl.turb_mesoz > 0))
-	    module_diffusion_meso(&ctl, met0, met1, atm, cache, dt);
+      /* Convection... */
+      if ((ctl.conv_mix_pbl || ctl.conv_cape >= 0)
+	  && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
+	module_convection(&ctl, cache, met0, met1, atm);
 
-	  /* Diffusion... */
-	  if (ctl.diffusion == 2)
-	    module_diffusion_pbl(&ctl, met0, met1, atm, cache, dt);
+      /* Sedimentation... */
+      if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)
+	module_sedi(&ctl, cache, met0, met1, atm);
 
-	  /* Convection... */
-	  if ((ctl.conv_mix_pbl || ctl.conv_cape >= 0)
-	      && (ctl.conv_dt <= 0 || fmod(t, ctl.conv_dt) == 0))
-	    module_convection(&ctl, met0, met1, atm, cache, dt);
+      /* Isosurface... */
+      if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
+	module_isosurf(&ctl, cache, met0, met1, atm);
 
-	  /* Sedimentation... */
-	  if (ctl.qnt_rp >= 0 && ctl.qnt_rhop >= 0)
-	    module_sedi(&ctl, met0, met1, atm, dt);
+      /* Check positions (final)... */
+      module_position(cache, met0, met1, atm);
 
-	  /* Isosurface... */
-	  if (ctl.isosurf >= 1 && ctl.isosurf <= 4)
-	    module_isosurf(&ctl, met0, met1, atm, cache, dt);
+      /* Interpolate meteo data... */
+      if (ctl.met_dt_out > 0
+	  && (ctl.met_dt_out < ctl.dt_mod || fmod(t, ctl.met_dt_out) == 0))
+	module_meteo(&ctl, cache, clim, met0, met1, atm);
 
-	  /* Check positions (final)... */
-	  module_position(met0, met1, atm, dt);
+      /* Check boundary conditions (initial)... */
+      if ((ctl.bound_lat0 < ctl.bound_lat1)
+	  && (ctl.bound_p0 > ctl.bound_p1))
+	module_bound_cond(&ctl, cache, clim, met0, met1, atm);
 
-	  /* Interpolate meteo data... */
-	  if (ctl.met_dt_out > 0
-	      && (ctl.met_dt_out < ctl.dt_mod
-		  || fmod(t, ctl.met_dt_out) == 0))
-	    module_meteo(&ctl, clim, met0, met1, atm, dt);
-
-	  /* Check boundary conditions (initial)... */
-	  if ((ctl.bound_lat0 < ctl.bound_lat1)
-	      && (ctl.bound_p0 > ctl.bound_p1))
-	    module_bound_cond(&ctl, clim, met0, met1, atm, dt);
-
-	  /* Initialize quantity of total loss rate... */
-	  if (ctl.qnt_loss_rate >= 0) {
-	    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl, atm)") {
-	      atm->q[ctl.qnt_loss_rate][ip] = 0;
-	    }
-	  }
-
-	  /* Decay of particle mass... */
-	  if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
-	    module_decay(&ctl, clim, atm, dt);
-
-	  /* Interparcel mixing... */
-	  if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
-	      && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
-	    module_mixing(&ctl, clim, atm, t);
-
-	  /* Calculate the tracer vmr in the chemistry grid... */
-	  if (ctl.oh_chem_reaction != 0 || ctl.h2o2_chem_reaction != 0
-	      || (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0))
-	    module_chemgrid(&ctl, met0, met1, atm, t);
-
-	  /* OH chemistry... */
-	  if (ctl.oh_chem_reaction != 0)
-	    module_oh_chem(&ctl, clim, met0, met1, atm, dt);
-
-	  /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
-	  if (ctl.h2o2_chem_reaction != 0)
-	    module_h2o2_chem(&ctl, clim, met0, met1, atm, dt);
-
-	  /* First-order tracer chemistry... */
-	  if (ctl.tracer_chem)
-	    module_tracer_chem(&ctl, clim, met0, met1, atm, dt);
-
-	  /* KPP chemistry... */
-	  if (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0) {
-#ifdef KPP
-	    module_kpp_chem(&ctl, clim, met0, met1, atm, dt);
-#else
-	    ERRMSG("Code was compiled without KPP!");
-#endif
-	  }
-
-	  /* Wet deposition... */
-	  if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
-	      && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
-	    module_wet_deposition(&ctl, met0, met1, atm, dt);
-
-	  /* Dry deposition... */
-	  if (ctl.dry_depo_vdep > 0)
-	    module_dry_deposition(&ctl, met0, met1, atm, dt);
-
-	  /* Check boundary conditions (final)... */
-	  if ((ctl.bound_lat0 < ctl.bound_lat1)
-	      && (ctl.bound_p0 > ctl.bound_p1))
-	    module_bound_cond(&ctl, clim, met0, met1, atm, dt);
-
-	  /* Write output... */
-	  write_output(dirname, &ctl, met0, met1, atm, t);
-#ifdef ASYNCIO
-	} else {
-	  omp_set_num_threads(ompTrdnum);
-	  if (ctl.direction * (t - ctl.t_stop + ctl.direction * ctl.dt_mod) <
-	      ctl.dt_mod)
-	    get_met(&ctl, clim, t + (ctl.direction * ctl.dt_mod), &met0TMP,
-		    &met1TMP);
+      /* Initialize quantity of total loss rate... */
+      if (ctl.qnt_loss_rate >= 0) {
+	PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl, atm)") {
+	  atm->q[ctl.qnt_loss_rate][ip] = 0;
 	}
       }
-#endif
-    }
 
-#ifdef ASYNCIO
-    omp_set_num_threads(ompTrdnum);
+      /* Decay of particle mass... */
+      if (ctl.tdec_trop > 0 && ctl.tdec_strat > 0)
+	module_decay(&ctl, cache, clim, atm);
+
+      /* Interparcel mixing... */
+      if (ctl.mixing_trop >= 0 && ctl.mixing_strat >= 0
+	  && (ctl.mixing_dt <= 0 || fmod(t, ctl.mixing_dt) == 0))
+	module_mixing(&ctl, clim, atm, t);
+
+      /* Calculate the tracer vmr in the chemistry grid... */
+      if (ctl.oh_chem_reaction != 0 || ctl.h2o2_chem_reaction != 0
+	  || (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0))
+	module_chemgrid(&ctl, met0, met1, atm, t);
+
+      /* OH chemistry... */
+      if (ctl.oh_chem_reaction != 0)
+	module_oh_chem(&ctl, cache, clim, met0, met1, atm);
+
+      /* H2O2 chemistry (for SO2 aqueous phase oxidation)... */
+      if (ctl.h2o2_chem_reaction != 0)
+	module_h2o2_chem(&ctl, cache, clim, met0, met1, atm);
+
+      /* First-order tracer chemistry... */
+      if (ctl.tracer_chem)
+	module_tracer_chem(&ctl, cache, clim, met0, met1, atm);
+
+      /* KPP chemistry... */
+      if (ctl.kpp_chem && fmod(t, ctl.dt_kpp) == 0) {
+#ifdef KPP
+	module_kpp_chem(&ctl, cache, clim, met0, met1, atm);
+#else
+	ERRMSG("Code was compiled without KPP!");
 #endif
+      }
+
+      /* Wet deposition... */
+      if ((ctl.wet_depo_ic_a > 0 || ctl.wet_depo_ic_h[0] > 0)
+	  && (ctl.wet_depo_bc_a > 0 || ctl.wet_depo_bc_h[0] > 0))
+	module_wet_deposition(&ctl, cache, met0, met1, atm);
+
+      /* Dry deposition... */
+      if (ctl.dry_depo_vdep > 0)
+	module_dry_deposition(&ctl, cache, met0, met1, atm);
+
+      /* Check boundary conditions (final)... */
+      if ((ctl.bound_lat0 < ctl.bound_lat1)
+	  && (ctl.bound_p0 > ctl.bound_p1))
+	module_bound_cond(&ctl, cache, clim, met0, met1, atm);
+
+      /* Write output... */
+      write_output(dirname, &ctl, met0, met1, atm, t);
+    }
 
     /* ------------------------------------------------------------
        Finalize model run...
@@ -377,11 +312,7 @@ int main(
     /* Delete data region on GPUs... */
 #ifdef _OPENACC
     SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#ifdef ASYNCIO
-#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1, dt, met0TMP, met1TMP)
-#else
-#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1, dt)
-#endif
+#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1)
 #endif
 
     /* Free... */
@@ -391,11 +322,6 @@ int main(
     free(clim);
     free(met0);
     free(met1);
-#ifdef ASYNCIO
-    free(met0TMP);
-    free(met1TMP);
-#endif
-    free(dt);
   }
 
   /* Report timers... */
