@@ -3990,10 +3990,8 @@ void module_timesteps_init(
 
   /* Update GPU... */
 #ifdef _OPENACC
-  if (acc_is_present(ctl, sizeof(ctl))) {
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+  SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(ctl[:1])
-  }
 #endif
 }
 
