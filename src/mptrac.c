@@ -2216,7 +2216,7 @@ void locate_vert(
 
 void module_advect(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
@@ -2395,7 +2395,7 @@ void module_advect_init(
 
 void module_bound_cond(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
@@ -2752,7 +2752,7 @@ void module_convection(
 
 void module_decay(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   const clim_t *clim,
   atm_t *atm) {
 
@@ -3045,7 +3045,7 @@ void module_diffusion_turb(
 
 void module_dry_deposition(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
@@ -3108,7 +3108,7 @@ void module_dry_deposition(
 
 void module_h2o2_chem(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
@@ -3255,7 +3255,7 @@ void module_isosurf_init(
 
 void module_isosurf(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
@@ -3360,7 +3360,7 @@ void module_kpp_chem(
 
 void module_meteo(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
@@ -3648,7 +3648,7 @@ void module_mixing_help(
 
 void module_oh_chem(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
@@ -3731,7 +3731,7 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
-  cache_t *cache,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
@@ -3921,7 +3921,7 @@ void module_rng(
 
 void module_sedi(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
@@ -4114,7 +4114,7 @@ void module_timesteps_init(
 
 void module_tracer_chem(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
@@ -4184,7 +4184,7 @@ void module_tracer_chem(
 
 void module_wet_deposition(
   const ctl_t *ctl,
-  cache_t *cache,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
@@ -5816,8 +5816,8 @@ void read_kernel(
 
 int read_met(
   const char *filename,
-  ctl_t *ctl,
-  clim_t *clim,
+  const ctl_t *ctl,
+  const clim_t *clim,
   met_t *met) {
 
   /* Write info... */
@@ -5871,7 +5871,7 @@ int read_met(
 
 int read_met_bin(
   const char *filename,
-  ctl_t *ctl,
+  const ctl_t *ctl,
   met_t *met) {
 
   FILE *in;
@@ -6954,8 +6954,8 @@ void read_met_monotonize(
 
 int read_met_nc(
   const char *filename,
-  ctl_t *ctl,
-  clim_t *clim,
+  const ctl_t *ctl,
+  const clim_t *clim,
   met_t *met) {
 
   int ncid;
@@ -10317,11 +10317,11 @@ void write_met_nc(
 /*****************************************************************************/
 
 void write_met_nc_2d(
-  int ncid,
+  const int ncid,
   const char *varname,
   met_t *met,
   float var[EX][EY],
-  float scl) {
+  const float scl) {
 
   int varid;
   size_t start[4], count[4];
@@ -10346,11 +10346,11 @@ void write_met_nc_2d(
 /*****************************************************************************/
 
 void write_met_nc_3d(
-  int ncid,
+  const int ncid,
   const char *varname,
   met_t *met,
   float var[EX][EY][EP],
-  float scl) {
+  const float scl) {
 
   int varid;
   size_t start[4], count[4];
