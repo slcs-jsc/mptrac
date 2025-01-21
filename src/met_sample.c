@@ -58,7 +58,7 @@ int main(
   ALLOC(met1, met_t, 1);
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   const int geopot =
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GEOPOT", -1, "0", NULL);
   const int grid_time =
@@ -71,10 +71,10 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "SAMPLE_GRID_LAT", -1, "0", NULL);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Read atmospheric data... */
-  if (!mptrac_read_atm(argv[3], &ctl, atm))
+  if (!read_atm(argv[3], &ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Create output file... */
@@ -89,7 +89,7 @@ int main(
   for (int ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    mptrac_get_met(&ctl, clim, atm->time[ip], &met0, &met1);
+    get_met(&ctl, clim, atm->time[ip], &met0, &met1);
 
     /* Set reference pressure for interpolation... */
     INTPOL_INIT;

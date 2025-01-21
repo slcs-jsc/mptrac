@@ -13,12 +13,9 @@
 ! You should have received a copy of the GNU General Public License
 ! along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
 ! 
-! Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+! Copyright (C) 2013-2024 Forschungszentrum Juelich GmbH
 
-! ------------------------------------------------------------
-! MPTRAC data structures
-! ------------------------------------------------------------
-
+! MPTRAC data sturctures
 MODULE mptrac_struct
   
   USE iso_c_binding
@@ -31,7 +28,7 @@ MODULE mptrac_struct
   INTEGER, PARAMETER :: ex = 1202
   INTEGER, PARAMETER :: ey = 602
   INTEGER, PARAMETER :: ep = 140
-  !! Alternative smaller values, good enough for ERA-Interim.
+  !! Alternative smaller values, good enough for ERA-interim.
   ! INTEGER, PARAMETER :: ex = 481
   ! INTEGER, PARAMETER :: ey = 241
   ! INTEGER, PARAMETER :: ep = 60
@@ -54,18 +51,7 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(npp) :: lat
      REAL(c_double), DIMENSION(npp,nqq) :: q
   END TYPE atm_t
-  
-  !! The order of the variables in each struct matters!
-  TYPE, bind(c) :: cache_t
-     REAL(c_double), DIMENSION(npp) :: iso_var
-     REAL(c_double), DIMENSION(npp) :: iso_ps
-     REAL(c_double), DIMENSION(npp) :: iso_ts
-     INTEGER(c_int) :: iso_n
-     REAL(c_double), DIMENSION(npp) :: dt
-     REAL(c_float), DIMENSION(3,npp) :: uvwp
-     REAL(c_double), DIMENSION(3 * npp + 1) :: rs
-  END TYPE cache_t
-  
+
   !! in 3D arrays first and third index swapped
   TYPE, bind(c) :: clim_photo_t
      INTEGER(c_int) :: np
@@ -491,42 +477,15 @@ MODULE mptrac_struct
      REAL(c_float), DIMENSION(ep,ey,ex) :: zetal
      REAL(c_float), DIMENSION(ep,ey,ex) :: zeta_dotl
   END TYPE met_t
-  
+
 END MODULE mptrac_struct
 
-! ------------------------------------------------------------
 ! MPTRAC functions
-! ------------------------------------------------------------
-
 MODULE mptrac_func
   INTERFACE
-     
-     SUBROUTINE mptrac_alloc(ctl, cache, clim, met0, met1, atm) &
-          bind(c,name='mptrac_alloc')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
-       IMPLICIT NONE
-       TYPE(ctl_t), INTENT(inout), POINTER :: ctl
-       TYPE(cache_t), INTENT(inout), POINTER :: cache
-       TYPE(clim_t), INTENT(inout), POINTER :: clim
-       TYPE(met_t), INTENT(inout), POINTER :: met0, met1
-       TYPE(atm_t), INTENT(inout), POINTER :: atm
-     END SUBROUTINE mptrac_alloc
-     
-     SUBROUTINE mptrac_free(ctl, cache, clim, met0, met1, atm) &
-          bind(c,name='mptrac_free')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
-       IMPLICIT NONE
-       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
-       TYPE(cache_t), INTENT(inout), TARGET :: cache
-       TYPE(clim_t), INTENT(inout), TARGET :: clim
-       TYPE(met_t), INTENT(inout), TARGET :: met0, met1
-       TYPE(atm_t), INTENT(inout), TARGET :: atm
-     END SUBROUTINE mptrac_free
 
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
-          bind(c,name='mptrac_get_met')
+          bind(c,name='get_met')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
        IMPLICIT NONE
@@ -536,25 +495,25 @@ MODULE mptrac_func
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
      END SUBROUTINE mptrac_get_met
 
-     SUBROUTINE mptrac_module_advect(ctl, cache, met0, met1, atm) &
+     SUBROUTINE mptrac_module_advect(ctl, met0, met1, atm, dt) &
           bind(c,name='module_advect')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, met_t, atm_t, npp
+       USE mptrac_struct, ONLY : ctl_t, met_t, atm_t, npp
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(cache_t), INTENT(in), TARGET :: cache
        TYPE(met_t), INTENT(in), TARGET :: met0, met1
        TYPE(atm_t), INTENT(inout), TARGET :: atm
+       REAL(c_double), DIMENSION(npp) :: dt
      END SUBROUTINE mptrac_module_advect
 
-     SUBROUTINE mptrac_module_timesteps(ctl, cache, met0, atm, t) &
+     SUBROUTINE mptrac_module_timesteps(ctl, met0, atm, dt, t) &
           bind(c,name='module_timesteps')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, met_t, atm_t, npp
+       USE mptrac_struct, ONLY : ctl_t, met_t, atm_t, npp
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(cache_t), INTENT(inout), TARGET :: cache
        TYPE(met_t), INTENT(in), TARGET :: met0
        TYPE(atm_t), INTENT(in), TARGET :: atm
+       REAL(c_double), DIMENSION(npp) :: dt
        REAL(c_double), INTENT(in), VALUE :: t
      END SUBROUTINE mptrac_module_timesteps
 
@@ -567,7 +526,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_module_timesteps_init
 
      SUBROUTINE mptrac_read_atm(filename,ctl,atm) &
-          bind(c,name='mptrac_read_atm')
+          bind(c,name='read_atm')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, atm_t
        IMPLICIT NONE
@@ -577,7 +536,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_atm
 
      SUBROUTINE mptrac_read_clim(ctl,clim) &
-          bind(c,name='mptrac_read_clim')
+          bind(c,name='read_clim')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, clim_ts_t, clim_zm_t, clim_photo_t
        IMPLICIT NONE
@@ -586,7 +545,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_clim
 
      SUBROUTINE mptrac_read_ctl(filename,argc,argv,ctl) &
-          bind(c,name='mptrac_read_ctl')
+          bind(c,name='read_ctl')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t
        IMPLICIT NONE
@@ -597,7 +556,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_ctl
 
      SUBROUTINE mptrac_read_met(filename,ctl,clim,met,atm) &
-          bind(c,name='mptrac_read_met')
+          bind(c,name='read_met')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t
        IMPLICIT NONE
@@ -608,40 +567,8 @@ MODULE mptrac_func
        TYPE(met_t), INTENT(out), TARGET :: met
      END SUBROUTINE mptrac_read_met
 
-     SUBROUTINE mptrac_run_timestep(ctl,cache,clim,met0,met1,atm) &
-          bind(c,name='mptrac_run_timestep')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
-       IMPLICIT NONE
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(cache_t), INTENT(inout), TARGET :: cache
-       TYPE(clim_t), INTENT(in), TARGET :: clim
-       TYPE(met_t), INTENT(inout), TARGET :: met0
-       TYPE(met_t), INTENT(inout), TARGET :: met1
-       TYPE(atm_t), INTENT(inout), TARGET :: atm
-     END SUBROUTINE mptrac_run_timestep
-
-     SUBROUTINE mptrac_write_atm(filename, ctl, atm, t) &
-          bind(c,name='mptrac_write_atm')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, atm_t
-       CHARACTER(c_char), INTENT(in) :: filename
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(atm_t), INTENT(in), TARGET :: atm
-       REAL(c_double), INTENT(in), VALUE :: t
-     END SUBROUTINE mptrac_write_atm
-
-     SUBROUTINE mptrac_write_met(filename, ctl, met) &
-          bind(c,name='mptrac_write_met')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, met_t
-       CHARACTER(c_char), INTENT(in) :: filename
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(met_t), INTENT(in), TARGET :: met
-     END SUBROUTINE mptrac_write_met
-
      SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, t) &
-          bind(c,name='mptrac_write_output')
+          bind(c,name='write_output')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, met_t, atm_t
        CHARACTER(c_char), INTENT(in) :: dirname

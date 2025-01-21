@@ -55,7 +55,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <metbase>");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   double t0 = scan_ctl(argv[1], argc, argv, "WIND_T0", -1, "0", NULL);
   const int nx =
     (int) scan_ctl(argv[1], argc, argv, "WIND_NX", -1, "360", NULL);

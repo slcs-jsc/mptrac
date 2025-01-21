@@ -57,18 +57,18 @@ int main(
       ("Give parameters: <ctl> <subgrid.tab> <met0> <met1> [ <met0> <met1> ... ]");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Loop over data files... */
   for (int i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met0))
+    if (!read_met(argv[i], &ctl, clim, met0))
       ERRMSG("Cannot open file!");
-    if (!mptrac_read_met(argv[i + 1], &ctl, clim, met1))
+    if (!read_met(argv[i + 1], &ctl, clim, met1))
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */

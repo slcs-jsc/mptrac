@@ -47,15 +47,15 @@ int main(
     ERRMSG("Give parameters: <ctl> <spec.tab> <met0>");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
   const double wavemax =
     (int) scan_ctl(argv[1], argc, argv, "SPEC_WAVEMAX", -1, "7", NULL);
 
   /* Read climatological data... */
-  mptrac_read_clim(&ctl, clim);
+  read_clim(&ctl, clim);
 
   /* Read meteorological data... */
-  if (!mptrac_read_met(argv[3], &ctl, clim, met))
+  if (!read_met(argv[3], &ctl, clim, met))
     ERRMSG("Cannot read meteo data!");
 
   /* Create output file... */

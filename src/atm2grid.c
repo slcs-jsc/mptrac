@@ -42,14 +42,14 @@ int main(
     ERRMSG("Give parameters: <ctl> <atm_in>");
 
   /* Read control parameters... */
-  mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  read_ctl(argv[1], argc, argv, &ctl);
 
   /* Check grid basename... */
   if (ctl.grid_basename[0] == '-')
     ERRMSG("You need to specify GRID_BASENAME!");
 
   /* Read atmospheric data... */
-  if (!mptrac_read_atm(argv[2], &ctl, atm))
+  if (!read_atm(argv[2], &ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Get time from filename... */
