@@ -50,9 +50,6 @@ NVTX ?= 0
 # Enable cuRAND random number generators...
 CURAND ?= 0
 
-# Enable async IO for GPUs (experimental)...
-ASYNCIO ?= 0
-
 # Enable KPP chemistry module (experimental)...
 KPP ?= 0
 
@@ -180,14 +177,6 @@ ifeq ($(CURAND),1)
   else
     $(error cuRAND requires compilation for GPUs)
   endif
-endif
-
-# asyncIO...
-ifeq ($(ASYNCIO),1)
-  ifneq ($(GPU),1)
-    $(error Async-I/O requires compilation for GPUs)
-  endif
-  CFLAGS += -DASYNCIO
 endif
 
 # KPP chemistry...

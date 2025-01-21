@@ -1303,14 +1303,14 @@
   _Pragma(__VA_ARGS__)					\
   _Pragma("acc parallel loop independent gang vector")  \
   for (int ip = ip0_const; ip < ip1_const; ip++)        \
-    if (!check_dt || dt[ip] != 0)
+    if (!check_dt || cache->dt[ip] != 0)
 #else
 #define PARTICLE_LOOP(ip0, ip1, check_dt, ...)		\
   const int ip0_const = ip0;                            \
   const int ip1_const = ip1;                            \
   _Pragma("omp parallel for default(shared)")           \
   for (int ip = ip0_const; ip < ip1_const; ip++)        \
-    if (!check_dt || dt[ip] != 0)
+    if (!check_dt || cache->dt[ip] != 0)
 #endif
 
 /**
@@ -3226,6 +3226,9 @@ typedef struct {
   /*! Random numbers. */
   double rs[3 * NP + 1];
 
+  /*! Timesteps [s]. */
+  double dt[NP];
+
 } cache_t;
 
 /**
@@ -4892,10 +4895,10 @@ void locate_vert(
  * zeta vertical coordinate systems.
  * 
  * @param ctl   Pointer to the control structure containing configuration flags.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0  Pointer to the initial meteorological data structure.
  * @param met1  Pointer to the final meteorological data structure.
  * @param atm   Pointer to the air parcel data structure.
- * @param dt    Array of time step values for each particle.
  * 
  * @details
  * The function performs the following operations:
@@ -4931,10 +4934,10 @@ void locate_vert(
  */
 void module_advect(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Initializes the advection module by setting up pressure fields.
@@ -4945,6 +4948,7 @@ void module_advect(
  * the pressure values accordingly.
  * 
  * @param ctl   Pointer to the control structure containing configuration flags.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0  Pointer to the initial meteorological data structure.
  * @param met1  Pointer to the final meteorological data structure.
  * @param atm   Pointer to the air parcel data structure.
@@ -4990,22 +4994,22 @@ void module_advect_init(
  * of air for each particle based on the current simulation time.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climatological data structure containing time series data.
  * @param met0 Pointer to the meteorological data structure at the initial time step.
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
  *
  * @authors Lars Hoffmann
  * @authors Mingzhao Liu
  */
 void module_bound_cond(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Calculate grid data for chemistry modules.
@@ -5074,11 +5078,10 @@ void module_chem_init(
  * calculations.
  *
  * @param[in] ctl     Pointer to the control structure with simulation settings.
+ * @param[in,out] cache Pointer to the cache structure for temporary data and random numbers.
  * @param[in,out] met0 Pointer to the meteorological data at the initial timestep.
  * @param[in,out] met1 Pointer to the meteorological data at the subsequent timestep.
  * @param[in,out] atm  Pointer to the atmospheric data structure with particle properties.
- * @param[in,out] cache Pointer to the cache structure for temporary data and random numbers.
- * @param[in] dt      Pointer to the simulation timestep duration.
  *
  * @note
  * - This function modifies the `atm` structure in place.
@@ -5090,11 +5093,10 @@ void module_chem_init(
  */
 void module_convection(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Simulate exponential decay processes for atmospheric particles.
@@ -5116,17 +5118,17 @@ void module_convection(
  * based on the decay process.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climate data structure containing atmospheric data.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
  *
  * @author Lars Hoffmann
  */
 void module_decay(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Simulate mesoscale diffusion for atmospheric particles.
@@ -5148,11 +5150,10 @@ void module_decay(
  * on the calculated wind fluctuations.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the meteorological data structure at the current time step.
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param cache Pointer to the cache structure for temporary storage.
- * @param dt Pointer to the time step value.
  *
  * @note Control parameters `TURB_MESOX` and `TURB_MESOZ` define the 
  * subgrid-scale variability as a fraction of the grid-scale variance. 
@@ -5167,11 +5168,10 @@ void module_decay(
  */
 void module_diffusion_meso(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Computes particle diffusion within the planetary boundary layer (PBL).
@@ -5183,11 +5183,10 @@ void module_diffusion_meso(
  * the approach of Ryall and Maryon (1998) and Stohl et al. (2005).
  *
  * @param ctl    Pointer to the control structure containing model settings.
+ * @param cache  Pointer to the cache structure for temporary data and random numbers.
  * @param met0   Pointer to the meteorological data structure for the current timestep.
  * @param met1   Pointer to the meteorological data structure for the next timestep.
  * @param atm    Pointer to the atmospheric data structure containing particle states.
- * @param cache  Pointer to the cache structure for storing intermediate values.
- * @param dt     Pointer to the time step array for particles.
  *
  * The function:
  * - Allocates memory for random numbers and generates them using `module_rng`.
@@ -5209,11 +5208,10 @@ void module_diffusion_meso(
  */
 void module_diffusion_pbl(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Applies turbulent diffusion processes to atmospheric particles.
@@ -5224,12 +5222,11 @@ void module_diffusion_pbl(
  * and environmental conditions.
  *
  * @param[in] ctl  Pointer to the control structure containing simulation parameters.
+ * @param[in,out] cache Pointer to the cache structure for temporary data and random numbers.
  * @param[in] clim Pointer to the climate structure containing climatological data.
  * @param[in,out] met0 Pointer to the meteorological data structure for the initial timestep.
  * @param[in,out] met1 Pointer to the meteorological data structure for the next timestep.
  * @param[in,out] atm  Pointer to the atmospheric structure containing particle data.
- * @param[in,out] cache Pointer to the cache structure for temporary storage.
- * @param[in] dt   Pointer to an array of timestep durations for each particle.
  *
  * @details
  * The function performs the following operations:
@@ -5272,12 +5269,11 @@ void module_diffusion_pbl(
  */
 void module_diffusion_turb(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Simulate dry deposition of atmospheric particles.
@@ -5291,19 +5287,19 @@ void module_diffusion_turb(
  * ratio based on the deposition velocity and time step.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the meteorological data structure at the current time step.
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to the time step value.
  *
  * @author Lars Hoffmann
  */
 void module_dry_deposition(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Perform chemical reactions involving H2O2 within cloud particles.
@@ -5315,11 +5311,11 @@ void module_dry_deposition(
  * properties such as liquid water content.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climatological data structure.
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to an array containing the time step for each particle.
  *
  * @note The function assumes that the necessary control structure (ctl), climatological
  *       data structure (clim), meteorological data structures (met0, met1), and atmospheric
@@ -5339,11 +5335,11 @@ void module_dry_deposition(
  */
 void module_h2o2_chem(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Initialize the isosurface module based on atmospheric data.
@@ -5366,10 +5362,10 @@ void module_h2o2_chem(
  */
 void module_isosurf_init(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  cache_t * cache);
+  atm_t * atm);
 
 /**
  * @brief Apply the isosurface module to adjust atmospheric properties.
@@ -5381,21 +5377,19 @@ void module_isosurf_init(
  * the control structure.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the meteorological data structure at the current time step.
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param cache Pointer to the cache structure containing initialized data.
- * @param dt Array of time step values for each particle.
  *
  * @author Lars Hoffmann
  */
 void module_isosurf(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  cache_t * cache,
-  const double *dt);
+  atm_t * atm);
 
 /*! KPP chemistry module. */
 /**
@@ -5408,11 +5402,11 @@ void module_isosurf(
  * KPP algorithm.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climatological data structure.
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to an array containing the time step for each particle.
  *
  * @note The function initializes a timer to measure the execution time of the chemical simulation.
  * @note Chemical integration using KPP is performed for particles with a positive time step (dt > 0).
@@ -5430,11 +5424,11 @@ void module_isosurf(
  */
 void module_kpp_chem(
   ctl_t * ctl,
+  cache_t * cache,
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  double *dt);
+  atm_t * atm);
 
 /**
  * @brief Update atmospheric properties using meteorological data.
@@ -5446,21 +5440,21 @@ void module_kpp_chem(
  * corresponding fields in the atmospheric data structure.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climate data structure containing climatological data.
  * @param met0 Pointer to the meteorological data structure at the current time step.
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Array of time step values for each particle.
  *
  * @author Lars Hoffmann
  */
 void module_meteo(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Update atmospheric properties through interparcel mixing.
@@ -5525,11 +5519,11 @@ void module_mixing_help(
  * mixing ratio quantities for the particles.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climate data structure containing climatological data.
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Array of time steps for each particle.
  *
  * @note The function assumes that the necessary meteorological and climatological
  *       data structures have been initialized and are accessible via the pointers
@@ -5547,11 +5541,11 @@ void module_mixing_help(
  */
 void module_oh_chem(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Update the positions and pressure levels of atmospheric particles.
@@ -5568,11 +5562,10 @@ void module_oh_chem(
  *   - Clamps pressure levels to the maximum pressure in meteorological data if they exceed a
  *     predefined threshold (300 hPa).
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to an array containing the time step for each particle.
  *
  * @note The function initializes a timer to measure the execution time of the position update process.
  * @note Position and pressure updates are performed for each particle using linear interpolation.
@@ -5582,10 +5575,10 @@ void module_oh_chem(
  * @author Lars Hoffmann
  */
 void module_position(
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Initialize random number generators for parallel tasks.
@@ -5655,10 +5648,10 @@ void module_rng(
  * step.
  *
  * @param ctl Pointer to the control structure containing parameters and settings.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the meteorological data at the current time step.
  * @param met1 Pointer to the meteorological data at the next time step.
  * @param atm Pointer to the atmospheric data containing particle information.
- * @param dt Pointer to the array of time steps for each particle.
  *
  * @note The sedimentation velocity is calculated using the `sedi` function, which takes atmospheric pressure, 
  * temperature, particle radius, and particle density as inputs.
@@ -5669,12 +5662,11 @@ void module_rng(
  */
 void module_sedi(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
-/*!  */
 /**
  * @brief Sort particles according to box index.
  *
@@ -5737,9 +5729,9 @@ void module_sort_help(
  * conditions of local meteorological data.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the initial meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing air parcel information.
- * @param dt Pointer to the array storing the calculated time steps for air parcels.
  * @param t The target time for which time steps are calculated.
  *
  * @note The function sets the time step for each air parcel based on its current time 
@@ -5752,9 +5744,9 @@ void module_sort_help(
  */
 void module_timesteps(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   atm_t * atm,
-  double *dt,
   const double t);
 
 /**
@@ -5791,11 +5783,11 @@ void module_timesteps_init(
  * solar zenith angle, and O(1D) volume mixing ratio.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param clim Pointer to the climatological data structure.
  * @param met0 Pointer to the first meteorological data structure.
  * @param met1 Pointer to the second meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param dt Pointer to an array containing the time step for each particle.
  *
  * @note The function assumes that the necessary control structure (ctl), climatological
  *       data structure (clim), meteorological data structures (met0, met1), and atmospheric
@@ -5815,11 +5807,11 @@ void module_timesteps_init(
  */
 void module_tracer_chem(
   const ctl_t * ctl,
+  cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Perform wet deposition calculations for air parcels.
@@ -5832,10 +5824,10 @@ void module_tracer_chem(
  * volume mixing ratio over time due to wet deposition.
  *
  * @param ctl Pointer to the control structure containing simulation parameters.
+ * @param cache Pointer to the cache structure for temporary data and random numbers.
  * @param met0 Pointer to the initial meteorological data structure.
  * @param met1 Pointer to the updated meteorological data structure.
  * @param atm Pointer to the atmospheric data structure containing air parcel information.
- * @param dt Array containing the time step for each air parcel.
  *
  * @note The function calculates the wet deposition process for particles and gases 
  * based on precipitation rate and scavenging coefficients inside and below cloud layers.
@@ -5852,10 +5844,10 @@ void module_tracer_chem(
  */
 void module_wet_deposition(
   const ctl_t * ctl,
+  cache_t * cache,
   met_t * met0,
   met_t * met1,
-  atm_t * atm,
-  const double *dt);
+  atm_t * atm);
 
 /**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.

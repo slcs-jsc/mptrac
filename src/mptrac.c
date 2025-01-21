@@ -2220,10 +2220,10 @@ void locate_vert(
 
 void module_advect(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
@@ -2232,7 +2232,7 @@ void module_advect(
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
 
     /* Loop over particles... */
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
       /* Init... */
       INTPOL_INIT;
@@ -2249,7 +2249,7 @@ void module_advect(
 	  x[1] = atm->lat[ip];
 	  x[2] = atm->p[ip];
 	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
 	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->p[ip] + dts * w[i - 1];
@@ -2288,11 +2288,11 @@ void module_advect(
       }
 
       /* Set new position... */
-      atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+      atm->time[ip] += cache->dt[ip];
+      atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
 			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
-      atm->p[ip] += dt[ip] * wm;
+      atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
+      atm->p[ip] += cache->dt[ip] * wm;
     }
   }
 
@@ -2300,7 +2300,7 @@ void module_advect(
   else if (ctl->advect_vert_coord == 1) {
 
     /* Loop over particles... */
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
       /* Convert pressure to zeta... */
       INTPOL_INIT;
@@ -2323,7 +2323,7 @@ void module_advect(
 	  x[1] = atm->lat[ip];
 	  x[2] = atm->q[ctl->qnt_zeta][ip];
 	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * dt[ip];
+	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
 	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
 	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
 	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
@@ -2351,11 +2351,11 @@ void module_advect(
       }
 
       /* Set new position... */
-      atm->time[ip] += dt[ip];
-      atm->lon[ip] += DX2DEG(dt[ip] * um / 1000.,
+      atm->time[ip] += cache->dt[ip];
+      atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
 			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-      atm->lat[ip] += DY2DEG(dt[ip] * vm / 1000.);
-      atm->q[ctl->qnt_zeta][ip] += dt[ip] * zeta_dotm;
+      atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
+      atm->q[ctl->qnt_zeta][ip] += cache->dt[ip] * zeta_dotm;
 
       /* Check if zeta is below zero... */
       if (atm->q[ctl->qnt_zeta][ip] < 0)
@@ -2399,11 +2399,11 @@ void module_advect_init(
 
 void module_bound_cond(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
@@ -2415,7 +2415,8 @@ void module_bound_cond(
     return;
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     /* Check latitude and pressure range... */
     if (atm->lat[ip] < ctl->bound_lat0 || atm->lat[ip] > ctl->bound_lat1
@@ -2682,11 +2683,10 @@ void module_chem_init(
 
 void module_convection(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  cache_t *cache,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
@@ -2695,7 +2695,7 @@ void module_convection(
   module_rng(ctl, cache->rs, (size_t) atm->np, 0);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Interpolate CAPE... */
     double ps;
@@ -2756,9 +2756,9 @@ void module_convection(
 
 void module_decay(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
@@ -2768,7 +2768,7 @@ void module_decay(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,clim,atm)") {
 
     /* Get weighting factor... */
     const double w = tropo_weight(clim, atm, ip);
@@ -2777,7 +2777,7 @@ void module_decay(
     const double tdec = w * ctl->tdec_trop + (1 - w) * ctl->tdec_strat;
 
     /* Calculate exponential decay... */
-    const double aux = exp(-dt[ip] / tdec);
+    const double aux = exp(-cache->dt[ip] / tdec);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_decay >= 0)
 	atm->q[ctl->qnt_mloss_decay][ip]
@@ -2795,11 +2795,10 @@ void module_decay(
 
 void module_diffusion_meso(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  cache_t *cache,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
@@ -2808,7 +2807,7 @@ void module_diffusion_meso(
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Get indices... */
     const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
@@ -2842,7 +2841,7 @@ void module_diffusion_meso(
     wsig = (wsig > 0 ? sqrtf(wsig) : 0);
 
     /* Set temporal correlations for mesoscale fluctuations... */
-    const double r = 1 - 2 * fabs(dt[ip]) / ctl->dt_met;
+    const double r = 1 - 2 * fabs(cache->dt[ip]) / ctl->dt_met;
     const double r2 = sqrt(1 - r * r);
 
     /* Calculate horizontal mesoscale wind fluctuations... */
@@ -2851,12 +2850,12 @@ void module_diffusion_meso(
 	(float) (r * cache->uvwp[ip][0] +
 		 r2 * cache->rs[3 * ip] * ctl->turb_mesox * usig);
       atm->lon[ip] +=
-	DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
+	DX2DEG(cache->uvwp[ip][0] * cache->dt[ip] / 1000., atm->lat[ip]);
 
       cache->uvwp[ip][1] =
 	(float) (r * cache->uvwp[ip][1] +
 		 r2 * cache->rs[3 * ip + 1] * ctl->turb_mesox * vsig);
-      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
+      atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * cache->dt[ip] / 1000.);
     }
 
     /* Calculate vertical mesoscale wind fluctuations... */
@@ -2864,7 +2863,7 @@ void module_diffusion_meso(
       cache->uvwp[ip][2] =
 	(float) (r * cache->uvwp[ip][2] +
 		 r2 * cache->rs[3 * ip + 2] * ctl->turb_mesoz * wsig);
-      atm->p[ip] += cache->uvwp[ip][2] * dt[ip];
+      atm->p[ip] += cache->uvwp[ip][2] * cache->dt[ip];
     }
   }
 }
@@ -2873,11 +2872,10 @@ void module_diffusion_meso(
 
 void module_diffusion_pbl(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  cache_t *cache,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
@@ -2886,7 +2884,7 @@ void module_diffusion_pbl(
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,cache,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     double dsigw_dz = 0.0, sig_u = 0.25, sig_w = 0.1,
       tau_u = 300., tau_w = 100.;
@@ -2973,23 +2971,25 @@ void module_diffusion_pbl(
     tau_w = MAX(tau_w, 100.);
 
     /* Update perturbations... */
-    const double ru = exp(-fabs(dt[ip]) / tau_u);
+    const double ru = exp(-fabs(cache->dt[ip]) / tau_u);
     const double ru2 = sqrt(1.0 - SQR(ru));
     cache->uvwp[ip][0]
       = (float) (cache->uvwp[ip][0] * ru + ru2 * cache->rs[3 * ip]);
     cache->uvwp[ip][1]
       = (float) (cache->uvwp[ip][1] * ru + ru2 * cache->rs[3 * ip + 1]);
 
-    const double rw = exp(-fabs(dt[ip]) / tau_w);
+    const double rw = exp(-fabs(cache->dt[ip]) / tau_w);
     const double rw2 = sqrt(1.0 - SQR(rw));
     cache->uvwp[ip][2]
       = (float) (cache->uvwp[ip][2] * rw + rw2 * cache->rs[3 * ip + 2]
-		 + sig_w * dsigw_dz * dt[ip]);	// TODO: check approx for density correction?
+		 + sig_w * dsigw_dz * cache->dt[ip]);	// TODO: check approx for density correction?
 
     /* Calculate new air parcel position... */
-    atm->lon[ip] += DX2DEG(cache->uvwp[ip][0] * dt[ip] / 1000., atm->lat[ip]);
-    atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * dt[ip] / 1000.);
-    atm->p[ip] += DZ2DP(cache->uvwp[ip][2] * dt[ip] / 1000., atm->p[ip]);
+    atm->lon[ip] +=
+      DX2DEG(cache->uvwp[ip][0] * cache->dt[ip] / 1000., atm->lat[ip]);
+    atm->lat[ip] += DY2DEG(cache->uvwp[ip][1] * cache->dt[ip] / 1000.);
+    atm->p[ip] +=
+      DZ2DP(cache->uvwp[ip][2] * cache->dt[ip] / 1000., atm->p[ip]);
   }
 }
 
@@ -2997,12 +2997,11 @@ void module_diffusion_pbl(
 
 void module_diffusion_turb(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  cache_t *cache,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
@@ -3012,7 +3011,7 @@ void module_diffusion_turb(
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,clim,met0,met1,atm,cache,dt)") {
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     /* Get PBL and surface pressure... */
     double pbl, ps;
@@ -3033,14 +3032,14 @@ void module_diffusion_turb(
 
     /* Horizontal turbulent diffusion... */
     if (dx > 0) {
-      const double sigma = sqrt(2.0 * dx * fabs(dt[ip])) / 1000.;
+      const double sigma = sqrt(2.0 * dx * fabs(cache->dt[ip])) / 1000.;
       atm->lon[ip] += DX2DEG(cache->rs[3 * ip] * sigma, atm->lat[ip]);
       atm->lat[ip] += DY2DEG(cache->rs[3 * ip + 1] * sigma);
     }
 
     /* Vertical turbulent diffusion... */
     if (dz > 0) {
-      const double sigma = sqrt(2.0 * dz * fabs(dt[ip])) / 1000.;
+      const double sigma = sqrt(2.0 * dz * fabs(cache->dt[ip])) / 1000.;
       atm->p[ip] += DZ2DP(cache->rs[3 * ip + 2] * sigma, atm->p[ip]);
     }
   }
@@ -3050,10 +3049,10 @@ void module_diffusion_turb(
 
 void module_dry_deposition(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
@@ -3063,7 +3062,7 @@ void module_dry_deposition(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Get surface pressure... */
     double ps;
@@ -3095,7 +3094,7 @@ void module_dry_deposition(
       v_dep = ctl->dry_depo_vdep;
 
     /* Calculate loss of mass based on deposition velocity... */
-    const double aux = exp(-dt[ip] * v_dep / dz);
+    const double aux = exp(-cache->dt[ip] * v_dep / dz);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_dry >= 0)
 	atm->q[ctl->qnt_mloss_dry][ip]
@@ -3113,11 +3112,11 @@ void module_dry_deposition(
 
 void module_h2o2_chem(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
@@ -3132,7 +3131,8 @@ void module_h2o2_chem(
   const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(clim,ctl,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,cache,ctl,met0,met1,atm)") {
 
     /* Check whether particle is inside cloud... */
     double lwc, rwc;
@@ -3178,7 +3178,7 @@ void module_h2o2_chem(
 
     /* Calculate exponential decay (Rolph et al., 1992)... */
     const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
-    const double aux = exp(-dt[ip] * rate_coef);
+    const double aux = exp(-cache->dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_h2o2 >= 0)
 	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
@@ -3195,10 +3195,10 @@ void module_h2o2_chem(
 
 void module_isosurf_init(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  cache_t *cache) {
+  atm_t *atm) {
 
   double t;
 
@@ -3259,17 +3259,16 @@ void module_isosurf_init(
 
 void module_isosurf(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  cache_t *cache,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm,cache,dt)") {
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Init... */
     double t;
@@ -3312,11 +3311,11 @@ void module_isosurf(
 #ifdef KPP
 void module_kpp_chem(
   ctl_t *ctl,
+  cache_t *cache,
   clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_KPPCHEM", "PHYSICS", NVTX_GPU);
@@ -3329,7 +3328,8 @@ void module_kpp_chem(
 #ifdef _OPENACC
 #pragma acc data copy(rtol,atol,nvar,nfix,nreact)
 #endif
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt) ") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,cache,clim,met0,met1,atm) ") {
 
     /* Initialize... */
     double var[nvar], fix[nfix], rconst[nreact];
@@ -3364,11 +3364,11 @@ void module_kpp_chem(
 
 void module_meteo(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
@@ -3379,7 +3379,8 @@ void module_meteo(
       ERRMSG("Need T_ice and T_NAT to calculate T_STS!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,clim,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 0,
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     double ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl, pt, pct, pcb, cl,
       plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc,
@@ -3651,11 +3652,11 @@ void module_mixing_help(
 
 void module_oh_chem(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
@@ -3670,7 +3671,8 @@ void module_oh_chem(
   const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     /* Get temperature... */
     double t;
@@ -3716,7 +3718,7 @@ void module_oh_chem(
     const double rate_coef =
       k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
 		  atm->lat[ip], atm->p[ip]) * M * cor;
-    const double aux = exp(-dt[ip] * rate_coef);
+    const double aux = exp(-cache->dt[ip] * rate_coef);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_oh >= 0)
 	atm->q[ctl->qnt_mloss_oh][ip]
@@ -3733,16 +3735,16 @@ void module_oh_chem(
 /*****************************************************************************/
 
 void module_position(
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(cache,met0,met1,atm)") {
 
     /* Init... */
     double ps;
@@ -3923,16 +3925,16 @@ void module_rng(
 
 void module_sedi(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Get temperature... */
     double t;
@@ -3944,7 +3946,7 @@ void module_sedi(
 			    atm->q[ctl->qnt_rhop][ip]);
 
     /* Calculate pressure change... */
-    atm->p[ip] += DZ2DP(v_s * dt[ip] / 1000., atm->p[ip]);
+    atm->p[ip] += DZ2DP(v_s * cache->dt[ip] / 1000., atm->p[ip]);
   }
 }
 
@@ -4048,9 +4050,9 @@ void module_sort_help(
 
 void module_timesteps(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   atm_t *atm,
-  double *dt,
   const double t) {
 
   /* Set timer... */
@@ -4063,21 +4065,21 @@ void module_timesteps(
     (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,atm)") {
 
     /* Set time step for each air parcel... */
     if ((ctl->direction * (atm->time[ip] - ctl->t_start) >= 0
 	 && ctl->direction * (atm->time[ip] - ctl->t_stop) <= 0
 	 && ctl->direction * (atm->time[ip] - t) < 0))
-      dt[ip] = t - atm->time[ip];
+      cache->dt[ip] = t - atm->time[ip];
     else
-      dt[ip] = 0.0;
+      cache->dt[ip] = 0.0;
 
     /* Check horizontal boundaries of local meteo data... */
     if (local && (atm->lon[ip] <= met0->lon[0]
 		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
 		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
-      dt[ip] = 0.0;
+      cache->dt[ip] = 0.0;
   }
 }
 
@@ -4116,17 +4118,18 @@ void module_timesteps_init(
 
 void module_tracer_chem(
   const ctl_t *ctl,
+  cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,clim,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1,
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     /* Get temperature... */
     double t;
@@ -4152,7 +4155,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(3.30e-10, 0, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl4, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl4][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cccl4][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-11... */
@@ -4160,7 +4163,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(2.30e-10, 0, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl3f, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cccl3f][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for CFC-12... */
@@ -4168,7 +4171,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(1.40e-10, -25, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.ccl2f2, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cccl2f2][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
 
     /* Reactions for N2O... */
@@ -4176,7 +4179,7 @@ void module_tracer_chem(
       const double K_o1d = ARRHENIUS(1.19e-10, -20, t) * o1d * M;
       const double K_hv = clim_photo(clim->photo.n2o, &(clim->photo),
 				     atm->p[ip], sza, o3c);
-      atm->q[ctl->qnt_Cn2o][ip] *= exp(-dt[ip] * (K_hv + K_o1d));
+      atm->q[ctl->qnt_Cn2o][ip] *= exp(-cache->dt[ip] * (K_hv + K_o1d));
     }
   }
 }
@@ -4185,10 +4188,10 @@ void module_tracer_chem(
 
 void module_wet_deposition(
   const ctl_t *ctl,
+  cache_t *cache,
   met_t *met0,
   met_t *met1,
-  atm_t *atm,
-  const double *dt) {
+  atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);
@@ -4198,7 +4201,7 @@ void module_wet_deposition(
     ERRMSG("Module needs quantity mass or volume mixing ratio!");
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,met0,met1,atm,dt)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Check whether particle is below cloud top... */
     double pct;
@@ -4302,7 +4305,7 @@ void module_wet_deposition(
     }
 
     /* Calculate exponential decay of mass... */
-    const double aux = exp(-dt[ip] * lambda);
+    const double aux = exp(-cache->dt[ip] * lambda);
     if (ctl->qnt_m >= 0) {
       if (ctl->qnt_mloss_wet >= 0)
 	atm->q[ctl->qnt_mloss_wet][ip]
