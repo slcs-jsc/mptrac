@@ -5816,6 +5816,34 @@ void module_wet_deposition(
   atm_t * atm);
 
 /**
+ * @brief Executes a single timestep of the MPTRAC model simulation.
+ *
+ * This function performs all operations required to advance the model 
+ * simulation by one timestep. It includes updating air parcel positions, 
+ * applying advection, diffusion, convection, and other processes such as 
+ * sedimentation, chemistry, and deposition. Each process is conditionally 
+ * executed based on the control settings provided in the `ctl` structure.
+ *
+ * @param ctl   Pointer to the control structure containing model parameters and settings.
+ * @param cache Pointer to the cache structure used for intermediate calculations.
+ * @param clim  Pointer to the climatology structure containing climatological data.
+ * @param met0  Pointer to the current meteorological data structure.
+ * @param met1  Pointer to the next meteorological data structure.
+ * @param atm   Pointer to the atmosphere structure containing air parcel data.
+ * @param t     Current simulation time in seconds.
+ *
+ * @authors Lars Hoffmann
+ */
+void mptrac_run_timestep(
+  ctl_t * ctl,
+  cache_t * cache,
+  clim_t * clim,
+  met_t ** met0,
+  met_t ** met1,
+  atm_t * atm,
+  double t);
+
+/**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.
  *
  * This function computes the temperature at which nitric acid
