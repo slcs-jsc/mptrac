@@ -5850,6 +5850,81 @@ void module_wet_deposition(
   atm_t * atm);
 
 /**
+ * @brief Allocates and initializes memory resources for MPTRAC.
+ *
+ * This function handles memory allocation for various data structures
+ * and sets up GPU resources if available. It also creates the
+ * necessary data regions on GPUs for OpenACC-enabled execution.
+ *
+ * @param[out] ctl Pointer to the control structure (ctl_t).
+ * @param[out] cache Pointer to the cache structure (cache_t).
+ * @param[out] clim Pointer to the climatology structure (clim_t).
+ * @param[out] met0 Pointer to the first meteorology structure (met_t).
+ * @param[out] met1 Pointer to the second meteorology structure (met_t).
+ * @param[out] atm Pointer to the atmospheric structure (atm_t).
+ *
+ * @note This function uses OpenACC for GPU initialization and memory
+ *       management. If OpenACC is not enabled, the GPU-specific code
+ *       is ignored.
+ *
+ * @pre The function requires an environment supporting OpenACC for
+ *      GPU operations. MPI support is optional but assumed if
+ *      compiled with MPI.
+ *
+ * @post Allocated structures are ready for use, and data regions on
+ *       GPUs are initialized if OpenACC is enabled.
+ *
+ * @throws Runtime error if no GPU devices are available when OpenACC
+ *         is enabled.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_alloc(
+  ctl_t ** ctl,
+  cache_t ** cache,
+  clim_t ** clim,
+  met_t ** met0,
+  met_t ** met1,
+  atm_t ** atm);
+
+/**
+ * @brief Frees memory resources allocated for MPTRAC.
+ *
+ * This function releases the memory allocated for various data
+ * structures and deletes any associated data regions on GPUs if
+ * OpenACC is enabled.
+ *
+ * @param[in] ctl Pointer to the control structure (ctl_t) to be freed.
+ * @param[in] cache Pointer to the cache structure (cache_t) to be freed.
+ * @param[in] clim Pointer to the climatology structure (clim_t) to be freed.
+ * @param[in] met0 Pointer to the first meteorology structure (met_t) to be freed.
+ * @param[in] met1 Pointer to the second meteorology structure (met_t) to be freed.
+ * @param[in] atm Pointer to the atmospheric structure (atm_t) to be freed.
+ *
+ * @note This function uses OpenACC for GPU memory management. If
+ *       OpenACC is not enabled, the GPU-specific code is ignored.
+ *
+ * @pre All input pointers must point to valid allocated memory. The
+ *      function assumes that the memory was allocated using
+ *      compatible allocation methods.
+ *
+ * @post All input pointers are freed, and the associated data regions
+ *       on GPUs are deleted if OpenACC is enabled.
+ *
+ * @warning Ensure that the input pointers are not used after calling
+ *          this function as they will be invalidated.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_free(
+  ctl_t * ctl,
+  cache_t * cache,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
+
+/**
  * @brief Executes a single timestep of the MPTRAC model simulation.
  *
  * This function performs all operations required to advance the model 

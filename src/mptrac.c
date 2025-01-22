@@ -4321,6 +4321,79 @@ void module_wet_deposition(
 
 /*****************************************************************************/
 
+void mptrac_alloc(
+  ctl_t **ctl,
+  cache_t **cache,
+  clim_t **clim,
+  met_t **met0,
+  met_t **met1,
+  atm_t **atm) {
+
+  /* Initialize GPUs... */
+#ifdef _OPENACC
+  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
+  int rank = 0;
+#ifdef MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+#endif
+  if (acc_get_num_devices(acc_device_nvidia) <= 0)
+    ERRMSG("Not running on a GPU device!");
+  acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
+		     acc_device_nvidia);
+  acc_device_t device_type = acc_get_device_type();
+  acc_init(device_type);
+#endif
+
+  /* Allocate... */
+  SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
+  ALLOC(*ctl, ctl_t, 1);
+  ALLOC(*cache, cache_t, 1);
+  ALLOC(*clim, clim_t, 1);
+  ALLOC(*met0, met_t, 1);
+  ALLOC(*met1, met_t, 1);
+  ALLOC(*atm, atm_t, 1);
+
+  /* Create data region on GPUs... */
+#ifdef _OPENACC
+  SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
+  ctl_t *ctlup = *ctl;
+  cache_t *cacheup = *cache;
+  clim_t *climup = *clim;
+  met_t *met0up = *met0;
+  met_t *met1up = *met1;
+  atm_t *atmup = *atm;
+#pragma acc enter data create(ctlup[:1], cacheup[:1], climup[:1], met0up[:1], met1up[:1], atmup[:1])
+#endif
+}
+
+/*****************************************************************************/
+
+void mptrac_free(
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm) {
+
+  /* Delete data region on GPUs... */
+#ifdef _OPENACC
+  SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
+#pragma acc exit data delete (ctl, cache, clim, met0, met1, atm)
+#endif
+
+  /* Free... */
+  SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
+  free(atm);
+  free(ctl);
+  free(cache);
+  free(clim);
+  free(met0);
+  free(met1);
+}
+
+/*****************************************************************************/
+
 void mptrac_run_timestep(
   ctl_t *ctl,
   cache_t *cache,
