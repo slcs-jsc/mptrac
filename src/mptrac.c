@@ -1038,11 +1038,7 @@ void get_met(
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
     met_t *met0up = *met0;
     met_t *met1up = *met1;
-#ifdef ASYNCIO
-#pragma acc update device(met0up[:1],met1up[:1]) async(5)
-#else
 #pragma acc update device(met0up[:1],met1up[:1])
-#endif
     SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
 #endif
 
@@ -1074,11 +1070,7 @@ void get_met(
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
     met_t *met1up = *met1;
-#ifdef ASYNCIO
-#pragma acc update device(met1up[:1]) async(5)
-#else
 #pragma acc update device(met1up[:1])
-#endif
     SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
 #endif
 
@@ -1110,11 +1102,7 @@ void get_met(
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
     met_t *met0up = *met0;
-#ifdef ASYNCIO
-#pragma acc update device(met0up[:1]) async(5)
-#else
 #pragma acc update device(met0up[:1])
-#endif
     SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
 #endif
 
@@ -3986,7 +3974,7 @@ void module_sort(
 
   /* Sorting... */
 #ifdef _OPENACC
-#pragma acc host_data use_device(a, p)
+#pragma acc host_data use_device(a,p)
 #endif
 #ifdef THRUST
   thrustSortWrapper(a, np, p);
@@ -4362,7 +4350,7 @@ void mptrac_alloc(
   met_t *met0up = *met0;
   met_t *met1up = *met1;
   atm_t *atmup = *atm;
-#pragma acc enter data create(ctlup[:1], cacheup[:1], climup[:1], met0up[:1], met1up[:1], atmup[:1])
+#pragma acc enter data create(ctlup[:1],cacheup[:1],climup[:1],met0up[:1],met1up[:1],atmup[:1])
 #endif
 }
 
@@ -4379,7 +4367,7 @@ void mptrac_free(
   /* Delete data region on GPUs... */
 #ifdef _OPENACC
   SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete (ctl, cache, clim, met0, met1, atm)
+#pragma acc exit data delete (ctl,cache,clim,met0,met1,atm)
 #endif
 
   /* Free... */

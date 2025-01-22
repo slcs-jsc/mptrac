@@ -129,7 +129,7 @@ int main(
     /* Update GPU... */
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1], cache[:1], clim[:1], ctl[:1])
+#pragma acc update device(atm[:1],cache[:1],clim[:1],ctl[:1])
 #endif
 
     /* ------------------------------------------------------------
