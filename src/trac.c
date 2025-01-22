@@ -78,38 +78,17 @@ int main(
        Initialize model run...
        ------------------------------------------------------------ */
 
-    /* Initialize GPUs... */
-#ifdef _OPENACC
-    SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
-    if (acc_get_num_devices(acc_device_nvidia) <= 0)
-      ERRMSG("Not running on a GPU device!");
-    acc_set_device_num(rank % acc_get_num_devices(acc_device_nvidia),
-		       acc_device_nvidia);
-    acc_device_t device_type = acc_get_device_type();
-    acc_init(device_type);
-#endif
+    /* Allocate memory... */
+    mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm);
 
+    /* Write info... */
 #ifdef _OPENACC
+    acc_device_t device_type = acc_get_device_type();
     LOG(1, "Parallelization: ntask= %d | rank= %d | size= %d | acc_dev= %d",
 	ntask, rank, size, acc_get_device_num(device_type));
 #else
     LOG(1, "Parallelization: ntask= %d | rank= %d | size= %d | acc_dev= nan",
 	ntask, rank, size);
-#endif
-
-    /* Allocate... */
-    SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
-    ALLOC(ctl, ctl_t, 1);
-    ALLOC(atm, atm_t, 1);
-    ALLOC(cache, cache_t, 1);
-    ALLOC(clim, clim_t, 1);
-    ALLOC(met0, met_t, 1);
-    ALLOC(met1, met_t, 1);
-
-    /* Create data region on GPUs... */
-#ifdef _OPENACC
-    SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc enter data create(atm[:1], cache[:1], clim[:1], ctl[:1], met0[:1], met1[:1])
 #endif
 
     /* Read control parameters... */
@@ -194,28 +173,10 @@ int main(
     LOG(1, "MEMORY_ATM = %g MByte", sizeof(atm_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CACHE = %g MByte", sizeof(cache_t) / 1024. / 1024.);
     LOG(1, "MEMORY_CLIM = %g MByte", sizeof(clim_t) / 1024. / 1024.);
-    LOG(1, "MEMORY_METEO = %g MByte", 2 * sizeof(met_t) / 1024. / 1024.);
-    LOG(1, "MEMORY_DYNAMIC = %g MByte", (3 * NP * sizeof(int)
-					 + 4 * NP * sizeof(double)
-					 + EX * EY * EP * sizeof(float)) /
-	1024. / 1024.);
-    LOG(1, "MEMORY_STATIC = %g MByte", (EX * EY * EP * sizeof(float)) /
-	1024. / 1024.);
+    LOG(1, "MEMORY_METEO = %g MByte", sizeof(met_t) / 1024. / 1024.);
 
-    /* Delete data region on GPUs... */
-#ifdef _OPENACC
-    SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
-#pragma acc exit data delete (ctl, atm, cache, clim, met0, met1)
-#endif
-
-    /* Free... */
-    SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
-    free(atm);
-    free(ctl);
-    free(cache);
-    free(clim);
-    free(met0);
-    free(met1);
+    /* Free memory... */
+    mptrac_free(ctl, cache, clim, met0, met1, atm);
   }
 
   /* Report timers... */
