@@ -108,30 +108,7 @@ int main(
 
     /* Initialize random number generator... */
     module_rng_init(ntask);
-
-    /* Initialize meteo data... */
-    get_met(ctl, clim, ctl->t_start, &met0, &met1);
-
-    /* Check time step... */
-    if (ctl->dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
-      WARN("Violation of CFL criterion! Check DT_MOD!");
-
-    /* Initialize isosurface data... */
-    if (ctl->isosurf >= 1 && ctl->isosurf <= 4)
-      module_isosurf_init(ctl, cache, met0, met1, atm);
-
-    /* Initialize advection... */
-    module_advect_init(ctl, met0, met1, atm);
-
-    /* Initialize chemistry... */
-    module_chem_init(ctl, clim, met0, met1, atm);
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1],cache[:1],clim[:1],ctl[:1])
-#endif
-
+    
     /* ------------------------------------------------------------
        Loop over timesteps...
        ------------------------------------------------------------ */
@@ -144,7 +121,14 @@ int main(
       /* Adjust length of final time step... */
       if (ctl->direction * (t - ctl->t_stop) > 0)
 	t = ctl->t_stop;
-
+      
+      /* Get meteo data... */
+      get_met(ctl, clim, t, &met0, &met1);
+      
+      /* Check time step... */
+      if (ctl->dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
+	WARN("Violation of CFL criterion! Check DT_MOD!");
+      
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
 
