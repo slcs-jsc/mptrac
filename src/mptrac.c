@@ -4313,7 +4313,7 @@ void mptrac_alloc(
   met_t **met1,
   atm_t **atm) {
 
-  /* Initialize GPUs... */
+  /* Initialize GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
   int rank = 0;
@@ -4337,7 +4337,7 @@ void mptrac_alloc(
   ALLOC(*met1, met_t, 1);
   ALLOC(*atm, atm_t, 1);
 
-  /* Create data region on GPUs... */
+  /* Create data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
   ctl_t *ctlup = *ctl;
@@ -4360,7 +4360,7 @@ void mptrac_free(
   met_t *met1,
   atm_t *atm) {
 
-  /* Delete data region on GPUs... */
+  /* Delete data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
 #pragma acc exit data delete (ctl,cache,clim,met0,met1,atm)
@@ -4387,13 +4387,29 @@ void mptrac_run_timestep(
   atm_t *atm,
   double t) {
 
+  /* Initialize modules... */
+  if (t == ctl->t_start) {
+    
+    /* Initialize isosurface data... */
+    if (ctl->isosurf >= 1 && ctl->isosurf <= 4)
+      module_isosurf_init(ctl, cache, *met0, *met1, atm);
+
+    /* Initialize advection... */
+    module_advect_init(ctl, *met0, *met1, atm);
+    
+    /* Initialize chemistry... */
+    module_chem_init(ctl, clim, *met0, *met1, atm);
+    
+    /* Update GPU... */
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1],cache[:1],clim[:1],ctl[:1])
+#endif
+  }
+  
   /* Set time steps of air parcels... */
   module_timesteps(ctl, cache, *met0, atm, t);
-
-  /* Get meteo data... */
-  if (t != ctl->t_start)
-    get_met(ctl, clim, t, met0, met1);
-
+  
   /* Sort particles... */
   if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
     module_sort(ctl, *met0, atm);
