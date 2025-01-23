@@ -40,7 +40,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <atm_out>");
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
   const double t0 = scan_ctl(argv[1], argc, argv, "INIT_T0", -1, "0", NULL);
   const double t1 = scan_ctl(argv[1], argc, argv, "INIT_T1", -1, "0", NULL);
   const double dt = scan_ctl(argv[1], argc, argv, "INIT_DT", -1, "1", NULL);
@@ -162,7 +162,7 @@ int main(
       atm->q[ctl.qnt_aoa][ip] = atm->time[ip];
 
   /* Save data... */
-  write_atm(argv[2], &ctl, atm, 0);
+  mptrac_write_atm(argv[2], &ctl, atm, 0);
 
   /* Free... */
   gsl_rng_free(rng);

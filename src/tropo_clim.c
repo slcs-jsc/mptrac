@@ -98,7 +98,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <clim.tab> <var> <tropo.nc>");
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
 
   /* Loop over tropopause files... */
   for (int iarg = 4; iarg < argc; iarg++) {
