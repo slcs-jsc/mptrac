@@ -4131,47 +4131,6 @@ void geo2cart(
   double *x);
 
 /**
- * @brief Retrieves meteorological data for the specified time.
- *
- * This function retrieves meteorological data for the given time `t`
- * and updates the provided pointers to the met0 and met1 structures
- * accordingly. It handles both the initialization and subsequent
- * updates of the meteorological data based on the direction of time
- * integration.
- *
- * @param ctl Pointer to the control structure containing configuration settings.
- * @param clim Pointer to the climate structure.
- * @param t The current time for which meteorological data is to be retrieved.
- * @param met0 Pointer to the pointer of the first meteorological data structure.
- * @param met1 Pointer to the pointer of the second meteorological data structure.
- *
- * The function performs the following steps:
- * - Initializes meteorological data on the first call or when the simulation restarts.
- * - Reads new meteorological data when advancing forward or backward in time.
- * - Swaps pointers to manage double buffering of the meteorological data.
- * - Performs caching to optimize subsequent data retrieval.
- * - Ensures consistency of the meteorological grids.
- *
- * @note This function utilizes GPU acceleration with OpenACC directives if enabled.
- * @note Ensure that `ctl`, `clim`, `met0`, and `met1` are properly initialized before calling this function.
- *
- * @see get_met_help
- * @see read_met
- * @see SELECT_TIMER
- * @see LOG
- * @see ERRMSG
- * @see WARN
- *
- * @author Lars Hoffmann
- */
-void get_met(
-  ctl_t * ctl,
-  clim_t * clim,
-  const double t,
-  met_t ** met0,
-  met_t ** met1);
-
-/**
  * @brief Generates a formatted filename for meteorological data files based on the input parameters.
  *
  * This function determines a rounded time interval, decodes the time
@@ -5925,6 +5884,201 @@ void mptrac_free(
   atm_t * atm);
 
 /**
+ * @brief Retrieves meteorological data for the specified time.
+ *
+ * This function retrieves meteorological data for the given time `t`
+ * and updates the provided pointers to the met0 and met1 structures
+ * accordingly. It handles both the initialization and subsequent
+ * updates of the meteorological data based on the direction of time
+ * integration.
+ *
+ * @param ctl Pointer to the control structure containing configuration settings.
+ * @param clim Pointer to the climate structure.
+ * @param t The current time for which meteorological data is to be retrieved.
+ * @param met0 Pointer to the pointer of the first meteorological data structure.
+ * @param met1 Pointer to the pointer of the second meteorological data structure.
+ *
+ * The function performs the following steps:
+ * - Initializes meteorological data on the first call or when the simulation restarts.
+ * - Reads new meteorological data when advancing forward or backward in time.
+ * - Swaps pointers to manage double buffering of the meteorological data.
+ * - Performs caching to optimize subsequent data retrieval.
+ * - Ensures consistency of the meteorological grids.
+ *
+ * @note This function utilizes GPU acceleration with OpenACC directives if enabled.
+ * @note Ensure that `ctl`, `clim`, `met0`, and `met1` are properly initialized before calling this function.
+ *
+ * @see get_met_help
+ * @see read_met
+ * @see SELECT_TIMER
+ * @see LOG
+ * @see ERRMSG
+ * @see WARN
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_get_met(
+  ctl_t * ctl,
+  clim_t * clim,
+  const double t,
+  met_t ** met0,
+  met_t ** met1);
+
+
+
+void mptrac_init(
+  ctl_t * ctl,
+  atm_t * atm,
+  const int ntask);
+
+
+
+
+/**
+ * @brief Reads air parcel data from a specified file into the given atmospheric structure.
+ *
+ * This function reads air parcel data from a file and populates the
+ * provided `atm_t` structure based on the type of data specified in
+ * the `ctl_t` control structure. It supports various data formats
+ * including ASCII, binary, netCDF, and CLaMS.
+ *
+ * @param filename The name of the file containing the atmospheric data.
+ * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the type of data.
+ * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
+ * @return         Returns 1 on success, and 0 on failure.
+ *
+ * This function performs the following steps:
+ * - Sets a timer for performance measurement.
+ * - Initializes the atmospheric structure.
+ * - Logs the file being read.
+ * - Reads data from the file based on the specified type (`ctl->atm_type`):
+ *   - `0` for ASCII data
+ *   - `1` for binary data
+ *   - `2` for netCDF data
+ *   - `3` or `4` for CLaMS data
+ * - Handles errors if the data type is not supported.
+ * - Checks the result of the data reading function and ensures data was read successfully.
+ * - Logs information about the number of air parcels and the ranges of various parameters (time, altitude, pressure, longitude, latitude, and other quantities).
+ *
+ * The function utilizes several helper functions and macros:
+ * - `SELECT_TIMER` for setting the timer.
+ * - `LOG` for logging information.
+ * - `ERRMSG` for handling error messages.
+ * - `gsl_stats_minmax` for calculating minimum and maximum values.
+ * - `Z` for converting altitude.
+ *
+ * @author Lars Hoffmann
+ */
+int mptrac_read_atm(
+  const char *filename,
+  const ctl_t * ctl,
+  atm_t * atm);
+
+/**
+ * @brief Reads various climatological data and populates the given climatology structure.
+ *
+ * This function reads a range of climatological datasets based on the
+ * specified control settings and stores the data in the provided
+ * `clim_t` structure. It handles initialization of tropopause
+ * climatology, photolysis rates, and multiple gas species'
+ * climatologies and time series.
+ *
+ * @param ctl   A pointer to the control structure (`ctl_t`) that specifies file names and parameters for climatology data.
+ * @param clim  A pointer to the climatology structure (`clim_t`) that will be populated with the data.
+ *
+ * This function performs the following steps:
+ * - Sets a timer for reading climatology data.
+ * - Initializes the tropopause climatology.
+ * - Reads photolysis rates if specified in `ctl`.
+ * - Reads HNO3 climatology if specified in `ctl`.
+ * - Reads OH climatology if specified in `ctl` and applies a diurnal correction if specified.
+ * - Reads H2O2, HO2, O(1D) climatologies if specified in `ctl`.
+ * - Reads time series data for various gases (CFC-10, CFC-11, CFC-12, N2O, SF6) if specified in `ctl`.
+ *
+ * The function utilizes several helper functions:
+ * - `clim_tropo_init` for initializing tropopause climatology.
+ * - `read_clim_photo` for reading photolysis rates.
+ * - `read_clim_zm` for reading zonal mean climatologies.
+ * - `clim_oh_diurnal_correction` for applying diurnal correction to OH climatology.
+ * - `read_clim_ts` for reading time series data.
+ *
+ * @authors Lars Hoffmann
+ * @authors Mingzhao Liu
+ */
+void mptrac_read_clim(
+  const ctl_t * ctl,
+  clim_t * clim);
+
+/**
+ * @brief Reads control parameters from a configuration file and populates the given structure.
+ *
+ * This function reads control parameters from a specified
+ * configuration file and command line arguments, populating the
+ * provided `ctl_t` structure with the parsed data. It handles a wide
+ * range of parameters, performing necessary checks and providing
+ * default values where applicable.
+ *
+ * @param filename  A string containing the path to the configuration file.
+ * @param argc      An integer representing the number of command line arguments.
+ * @param argv      An array of strings containing the command line arguments.
+ * @param ctl       A pointer to the structure (`ctl_t`) that will be populated with the control parameters.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for reading the control file.
+ * - Logs information about the MPTRAC executable version and compilation details.
+ * - Initializes quantity indices.
+ * - Reads and sets various control parameters such as quantities, vertical coordinates, time steps,
+ *   meteorological data, sorting options, isosurface parameters, random number generator type,
+ *   advection parameters, diffusion parameters, convection parameters, boundary conditions,
+ *   species parameters, molar mass, OH chemistry parameters, H2O2 chemistry parameters,
+ *   KPP chemistry parameters, first order tracer chemistry parameters, wet deposition parameters,
+ *   dry deposition parameters, climatological data paths, mixing parameters, chemistry grid parameters,
+ *   exponential decay parameters, PSC analysis parameters, output parameters for atmospheric data,
+ *   CSI data, ensemble data, grid data, profile data, sample data, station data, and VTK data.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_read_ctl(
+  const char *filename,
+  int argc,
+  char *argv[],
+  ctl_t * ctl);
+
+/**
+ * @brief Reads meteorological data from a file, supporting multiple formats and MPI broadcasting.
+ *
+ * This function reads meteorological data from a file specified by the `filename` parameter. It supports 
+ * both NetCDF and binary formats based on the `met_type` field in the `ctl_t` structure. The function can 
+ * also handle parallel processing with MPI, broadcasting the data across ranks if required by the 
+ * configuration.
+ *
+ * @param filename A constant character pointer representing the name of the file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which holds control parameters including the type of 
+ * meteorological data, MPI sharing flags, and configuration details.
+ * @param clim A pointer to a `clim_t` structure, which contains climatological data to be used in the 
+ * process, if applicable.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read from the file.
+ *
+ * @return Returns an integer, where 1 indicates success.
+ *
+ * @note
+ * - The function logs the action of reading meteorological data, including the file name.
+ * - It supports MPI parallelization and will share the data across multiple processes if the 
+ * `met_mpi_share` flag is set in the control structure.
+ * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
+ * - If `ctl->met_type` is between 1 and 5, the data is read from a binary file using the `read_met_bin` function.
+ * - If the `met_type` is not recognized, an error message is generated.
+ *
+ * @author Lars Hoffmann
+ */
+int mptrac_read_met(
+  const char *filename,
+  const ctl_t * ctl,
+  const clim_t * clim,
+  met_t * met);
+
+/**
  * @brief Executes a single timestep of the MPTRAC model simulation.
  *
  * This function performs all operations required to advance the model 
@@ -5951,6 +6105,122 @@ void mptrac_run_timestep(
   met_t ** met1,
   atm_t * atm,
   double t);
+
+/**
+ * @brief Writes air parcel data to a file in various formats.
+ *
+ * The `mptrac_write_atm` function writes the air parcel data stored in the
+ * `atm` structure to a file specified by `filename`. The format of
+ * the output file is determined by the `atm_type_out` field in the
+ * `ctl` control structure.
+ *
+ * @param filename A string representing the name of the file to write the data to.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param t The current time, used for certain output formats.
+ * 
+ * The function performs the following steps:
+ * - Sets a timer for the write operation using the `SELECT_TIMER` macro.
+ * - Logs the beginning of the write operation with the specified filename.
+ * - Depending on the `atm_type_out` value in the `ctl` structure, writes the data in one of the following formats:
+ *   - ASCII (`atm_type_out == 0`): Calls `write_atm_asc`.
+ *   - Binary (`atm_type_out == 1`): Calls `write_atm_bin`.
+ *   - netCDF (`atm_type_out == 2`): Calls `write_atm_nc`.
+ *   - CLaMS trajectory data (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
+ *   - CLaMS position data (`atm_type_out == 4`): Calls `write_atm_clams`.
+ * - If the `atm_type_out` value is not supported, triggers an error message.
+ * - Logs various statistics about the atmospheric data, including the number of particles,
+ *   time range, altitude range, pressure range, longitude range, and latitude range.
+ * - Logs the range for each quantity specified in the `ctl` structure.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_write_atm(
+  const char *filename,
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
+
+/**
+ * @brief Writes meteorological data to a file, supporting multiple formats and compression options.
+ *
+ * This function handles writing meteorological data based on the specified control (`ctl_t`) and 
+ * meteorological data (`met_t`) structures. The file format and compression type are determined 
+ * by the `met_type` in the control structure. The function supports netCDF, binary output, and 
+ * various compression methods (ZFP, ZSTD, CMS), while providing error handling for unsupported 
+ * configurations.
+ *
+ * @param filename A constant character pointer representing the name of the file to write the 
+ * meteorological data to.
+ * @param ctl A pointer to a `ctl_t` structure, which holds the configuration and control parameters 
+ * for the output, including the type of meteorological data and compression method.
+ * @param met A pointer to a `met_t` structure that holds the meteorological data to be written 
+ * to the file.
+ *
+ * @note 
+ * - The function selects a timer for performance profiling or debugging.
+ * - It logs the action of writing meteorological data, including the file name.
+ *
+ * @warning 
+ * - If `ctl->met_type` is 3, ZFP compression is required, and the function will generate an error 
+ * if compiled without ZFP support.
+ * - If `ctl->met_type` is 4, ZSTD compression is required, and the function will generate an error 
+ * if compiled without ZSTD support.
+ * - If `ctl->met_type` is 5, CMS compression is required, and the function will generate an error 
+ * if compiled without CMS support.
+ *
+ * @note 
+ * - If `ctl->met_type` is 0, the function writes data in netCDF format via `write_met_nc`.
+ * - If `ctl->met_type` is between 1 and 5, the function writes data in binary format via `write_met_bin`.
+ * - If `ctl->met_type` is not recognized, an error message is generated.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_write_met(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Writes various types of output data to files in a specified directory.
+ *
+ * The `mptrac_write_output` function writes various types of output data to
+ * files in the directory specified by the `dirname` parameter. The
+ * function takes control parameters (`ctl`), two meteorological data
+ * structures (`met0` and `met1`), an atmospheric data structure
+ * (`atm`), and a time value (`t`) as input.
+ *
+ * @param dirname A string representing the directory path where output files will be written.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met0 A pointer to a `met_t` structure representing the first set of meteorological data.
+ * @param met1 A pointer to a `met_t` structure representing the second set of meteorological data.
+ * @param atm A pointer to an `atm_t` structure representing atmospheric data.
+ * @param t A double value representing the time at which the output is being written.
+ *
+ * The function performs the following steps:
+ * - Parses the input time (`t`) to extract year, month, day, hour, minute, and second.
+ * - Updates host memory if necessary based on control parameters.
+ * - Writes atmospheric data to files if specified by control parameters.
+ * - Writes gridded data to files if specified by control parameters.
+ * - Writes CSI (Critical Success Index) data to files if specified by control parameters.
+ * - Writes ensemble data to files if specified by control parameters.
+ * - Writes profile data to files if specified by control parameters.
+ * - Writes sample data to files if specified by control parameters.
+ * - Writes station data to files if specified by control parameters.
+ * - Writes VTK (Visualization Toolkit) data to files if specified by control parameters.
+ *
+ * @note This function orchestrates the writing of various types of output data to files
+ *       based on control parameters and the current simulation time.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_write_output(
+  const char *dirname,
+  const ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  const double t);
 
 /**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.
@@ -6010,46 +6280,6 @@ double pbl_weight(
   const int ip,
   const double pbl,
   const double ps);
-
-/**
- * @brief Reads air parcel data from a specified file into the given atmospheric structure.
- *
- * This function reads air parcel data from a file and populates the
- * provided `atm_t` structure based on the type of data specified in
- * the `ctl_t` control structure. It supports various data formats
- * including ASCII, binary, netCDF, and CLaMS.
- *
- * @param filename The name of the file containing the atmospheric data.
- * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the type of data.
- * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
- * @return         Returns 1 on success, and 0 on failure.
- *
- * This function performs the following steps:
- * - Sets a timer for performance measurement.
- * - Initializes the atmospheric structure.
- * - Logs the file being read.
- * - Reads data from the file based on the specified type (`ctl->atm_type`):
- *   - `0` for ASCII data
- *   - `1` for binary data
- *   - `2` for netCDF data
- *   - `3` or `4` for CLaMS data
- * - Handles errors if the data type is not supported.
- * - Checks the result of the data reading function and ensures data was read successfully.
- * - Logs information about the number of air parcels and the ranges of various parameters (time, altitude, pressure, longitude, latitude, and other quantities).
- *
- * The function utilizes several helper functions and macros:
- * - `SELECT_TIMER` for setting the timer.
- * - `LOG` for logging information.
- * - `ERRMSG` for handling error messages.
- * - `gsl_stats_minmax` for calculating minimum and maximum values.
- * - `Z` for converting altitude.
- *
- * @author Lars Hoffmann
- */
-int read_atm(
-  const char *filename,
-  const ctl_t * ctl,
-  atm_t * atm);
 
 /**
  * @brief Reads air parcel data from an ASCII file and populates the given atmospheric structure.
@@ -6197,41 +6427,6 @@ int read_atm_nc(
   atm_t * atm);
 
 /**
- * @brief Reads various climatological data and populates the given climatology structure.
- *
- * This function reads a range of climatological datasets based on the
- * specified control settings and stores the data in the provided
- * `clim_t` structure. It handles initialization of tropopause
- * climatology, photolysis rates, and multiple gas species'
- * climatologies and time series.
- *
- * @param ctl   A pointer to the control structure (`ctl_t`) that specifies file names and parameters for climatology data.
- * @param clim  A pointer to the climatology structure (`clim_t`) that will be populated with the data.
- *
- * This function performs the following steps:
- * - Sets a timer for reading climatology data.
- * - Initializes the tropopause climatology.
- * - Reads photolysis rates if specified in `ctl`.
- * - Reads HNO3 climatology if specified in `ctl`.
- * - Reads OH climatology if specified in `ctl` and applies a diurnal correction if specified.
- * - Reads H2O2, HO2, O(1D) climatologies if specified in `ctl`.
- * - Reads time series data for various gases (CFC-10, CFC-11, CFC-12, N2O, SF6) if specified in `ctl`.
- *
- * The function utilizes several helper functions:
- * - `clim_tropo_init` for initializing tropopause climatology.
- * - `read_clim_photo` for reading photolysis rates.
- * - `read_clim_zm` for reading zonal mean climatologies.
- * - `clim_oh_diurnal_correction` for applying diurnal correction to OH climatology.
- * - `read_clim_ts` for reading time series data.
- *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
- */
-void read_clim(
-  const ctl_t * ctl,
-  clim_t * clim);
-
-/**
  * @brief Reads photolysis rates from a NetCDF file and populates the given photolysis structure.
  *
  * This function opens a NetCDF file specified by the filename, reads
@@ -6344,41 +6539,6 @@ void read_clim_zm(
   clim_zm_t * zm);
 
 /**
- * @brief Reads control parameters from a configuration file and populates the given structure.
- *
- * This function reads control parameters from a specified
- * configuration file and command line arguments, populating the
- * provided `ctl_t` structure with the parsed data. It handles a wide
- * range of parameters, performing necessary checks and providing
- * default values where applicable.
- *
- * @param filename  A string containing the path to the configuration file.
- * @param argc      An integer representing the number of command line arguments.
- * @param argv      An array of strings containing the command line arguments.
- * @param ctl       A pointer to the structure (`ctl_t`) that will be populated with the control parameters.
- *
- * The function performs the following steps:
- * - Sets a timer for reading the control file.
- * - Logs information about the MPTRAC executable version and compilation details.
- * - Initializes quantity indices.
- * - Reads and sets various control parameters such as quantities, vertical coordinates, time steps,
- *   meteorological data, sorting options, isosurface parameters, random number generator type,
- *   advection parameters, diffusion parameters, convection parameters, boundary conditions,
- *   species parameters, molar mass, OH chemistry parameters, H2O2 chemistry parameters,
- *   KPP chemistry parameters, first order tracer chemistry parameters, wet deposition parameters,
- *   dry deposition parameters, climatological data paths, mixing parameters, chemistry grid parameters,
- *   exponential decay parameters, PSC analysis parameters, output parameters for atmospheric data,
- *   CSI data, ensemble data, grid data, profile data, sample data, station data, and VTK data.
- *
- * @author Lars Hoffmann
- */
-void read_ctl(
-  const char *filename,
-  int argc,
-  char *argv[],
-  ctl_t * ctl);
-
-/**
  * @brief Reads kernel function data from a file and populates the provided arrays.
  *
  * This function reads kernel function data from a specified file,
@@ -6410,40 +6570,6 @@ void read_kernel(
   double kz[EP],
   double kw[EP],
   int *nk);
-
-/**
- * @brief Reads meteorological data from a file, supporting multiple formats and MPI broadcasting.
- *
- * This function reads meteorological data from a file specified by the `filename` parameter. It supports 
- * both NetCDF and binary formats based on the `met_type` field in the `ctl_t` structure. The function can 
- * also handle parallel processing with MPI, broadcasting the data across ranks if required by the 
- * configuration.
- *
- * @param filename A constant character pointer representing the name of the file to read the 
- * meteorological data from.
- * @param ctl A pointer to a `ctl_t` structure, which holds control parameters including the type of 
- * meteorological data, MPI sharing flags, and configuration details.
- * @param clim A pointer to a `clim_t` structure, which contains climatological data to be used in the 
- * process, if applicable.
- * @param met A pointer to a `met_t` structure that will store the meteorological data read from the file.
- *
- * @return Returns an integer, where 1 indicates success.
- *
- * @note
- * - The function logs the action of reading meteorological data, including the file name.
- * - It supports MPI parallelization and will share the data across multiple processes if the 
- * `met_mpi_share` flag is set in the control structure.
- * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
- * - If `ctl->met_type` is between 1 and 5, the data is read from a binary file using the `read_met_bin` function.
- * - If the `met_type` is not recognized, an error message is generated.
- *
- * @author Lars Hoffmann
- */
-int read_met(
-  const char *filename,
-  const ctl_t * ctl,
-  const clim_t * clim,
-  met_t * met);
 
 /**
  * @brief Reads meteorological data from a binary file.
@@ -7656,41 +7782,6 @@ double tropo_weight(
   const int ip);
 
 /**
- * @brief Writes air parcel data to a file in various formats.
- *
- * The `write_atm` function writes the air parcel data stored in the
- * `atm` structure to a file specified by `filename`. The format of
- * the output file is determined by the `atm_type_out` field in the
- * `ctl` control structure.
- *
- * @param filename A string representing the name of the file to write the data to.
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param atm A pointer to an `atm_t` structure containing atmospheric data.
- * @param t The current time, used for certain output formats.
- * 
- * The function performs the following steps:
- * - Sets a timer for the write operation using the `SELECT_TIMER` macro.
- * - Logs the beginning of the write operation with the specified filename.
- * - Depending on the `atm_type_out` value in the `ctl` structure, writes the data in one of the following formats:
- *   - ASCII (`atm_type_out == 0`): Calls `write_atm_asc`.
- *   - Binary (`atm_type_out == 1`): Calls `write_atm_bin`.
- *   - netCDF (`atm_type_out == 2`): Calls `write_atm_nc`.
- *   - CLaMS trajectory data (`atm_type_out == 3`): Calls `write_atm_clams_traj`.
- *   - CLaMS position data (`atm_type_out == 4`): Calls `write_atm_clams`.
- * - If the `atm_type_out` value is not supported, triggers an error message.
- * - Logs various statistics about the atmospheric data, including the number of particles,
- *   time range, altitude range, pressure range, longitude range, and latitude range.
- * - Logs the range for each quantity specified in the `ctl` structure.
- *
- * @author Lars Hoffmann
- */
-void write_atm(
-  const char *filename,
-  const ctl_t * ctl,
-  const atm_t * atm,
-  const double t);
-
-/**
  * @brief Writes air parcel data to an ASCII file or gnuplot.
  *
  * The `write_atm_asc` function writes the atmospheric data stored in
@@ -8068,46 +8159,6 @@ void write_grid_nc(
   const int *np);
 
 /**
- * @brief Writes meteorological data to a file, supporting multiple formats and compression options.
- *
- * This function handles writing meteorological data based on the specified control (`ctl_t`) and 
- * meteorological data (`met_t`) structures. The file format and compression type are determined 
- * by the `met_type` in the control structure. The function supports netCDF, binary output, and 
- * various compression methods (ZFP, ZSTD, CMS), while providing error handling for unsupported 
- * configurations.
- *
- * @param filename A constant character pointer representing the name of the file to write the 
- * meteorological data to.
- * @param ctl A pointer to a `ctl_t` structure, which holds the configuration and control parameters 
- * for the output, including the type of meteorological data and compression method.
- * @param met A pointer to a `met_t` structure that holds the meteorological data to be written 
- * to the file.
- *
- * @note 
- * - The function selects a timer for performance profiling or debugging.
- * - It logs the action of writing meteorological data, including the file name.
- *
- * @warning 
- * - If `ctl->met_type` is 3, ZFP compression is required, and the function will generate an error 
- * if compiled without ZFP support.
- * - If `ctl->met_type` is 4, ZSTD compression is required, and the function will generate an error 
- * if compiled without ZSTD support.
- * - If `ctl->met_type` is 5, CMS compression is required, and the function will generate an error 
- * if compiled without CMS support.
- *
- * @note 
- * - If `ctl->met_type` is 0, the function writes data in netCDF format via `write_met_nc`.
- * - If `ctl->met_type` is between 1 and 5, the function writes data in binary format via `write_met_bin`.
- * - If `ctl->met_type` is not recognized, an error message is generated.
- *
- * @author Lars Hoffmann
- */
-void write_met(
-  const char *filename,
-  const ctl_t * ctl,
-  met_t * met);
-
-/**
  * @brief Writes meteorological data in binary format to a specified file.
  *
  * This function writes meteorological data from the `met_t` structure to a binary file. The 
@@ -8314,47 +8365,6 @@ void write_met_nc_3d(
   met_t * met,
   float var[EX][EY][EP],
   const float scl);
-
-/**
- * @brief Writes various types of output data to files in a specified directory.
- *
- * The `write_output` function writes various types of output data to
- * files in the directory specified by the `dirname` parameter. The
- * function takes control parameters (`ctl`), two meteorological data
- * structures (`met0` and `met1`), an atmospheric data structure
- * (`atm`), and a time value (`t`) as input.
- *
- * @param dirname A string representing the directory path where output files will be written.
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param met0 A pointer to a `met_t` structure representing the first set of meteorological data.
- * @param met1 A pointer to a `met_t` structure representing the second set of meteorological data.
- * @param atm A pointer to an `atm_t` structure representing atmospheric data.
- * @param t A double value representing the time at which the output is being written.
- *
- * The function performs the following steps:
- * - Parses the input time (`t`) to extract year, month, day, hour, minute, and second.
- * - Updates host memory if necessary based on control parameters.
- * - Writes atmospheric data to files if specified by control parameters.
- * - Writes gridded data to files if specified by control parameters.
- * - Writes CSI (Critical Success Index) data to files if specified by control parameters.
- * - Writes ensemble data to files if specified by control parameters.
- * - Writes profile data to files if specified by control parameters.
- * - Writes sample data to files if specified by control parameters.
- * - Writes station data to files if specified by control parameters.
- * - Writes VTK (Visualization Toolkit) data to files if specified by control parameters.
- *
- * @note This function orchestrates the writing of various types of output data to files
- *       based on control parameters and the current simulation time.
- *
- * @author Lars Hoffmann
- */
-void write_output(
-  const char *dirname,
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  const double t);
 
 /**
  * @brief Writes profile data to a specified file.

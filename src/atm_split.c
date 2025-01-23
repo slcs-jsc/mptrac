@@ -47,7 +47,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <atm_in> <atm_out>");
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
   const int n = (int) scan_ctl(argv[1], argc, argv, "SPLIT_N", -1, "", NULL);
   const double m = scan_ctl(argv[1], argc, argv, "SPLIT_M", -1, "-999", NULL);
   const double um = scan_ctl(argv[1], argc, argv, "SPLIT_UM", -1, "0", NULL);
@@ -73,7 +73,7 @@ int main(
   gsl_rng *rng = gsl_rng_alloc(gsl_rng_default);
 
   /* Read atmospheric data... */
-  if (!read_atm(argv[2], &ctl, atm))
+  if (!mptrac_read_atm(argv[2], &ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Read kernel function... */
@@ -155,7 +155,7 @@ int main(
   }
 
   /* Save data and close file... */
-  write_atm(argv[3], &ctl, atm2, 0);
+  mptrac_write_atm(argv[3], &ctl, atm2, 0);
 
   /* Free... */
   free(atm);

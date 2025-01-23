@@ -502,7 +502,7 @@ MODULE mptrac_func
   INTERFACE
 
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
-          bind(c,name='get_met')
+          bind(c,name='mptrac_get_met')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
        IMPLICIT NONE
@@ -543,7 +543,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_module_timesteps_init
 
      SUBROUTINE mptrac_read_atm(filename, ctl, atm) &
-          bind(c,name='read_atm')
+          bind(c,name='mptrac_read_atm')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, atm_t
        IMPLICIT NONE
@@ -553,7 +553,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_atm
 
      SUBROUTINE mptrac_read_clim(ctl, clim) &
-          bind(c,name='read_clim')
+          bind(c,name='mptrac_read_clim')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, clim_ts_t, clim_zm_t, clim_photo_t
        IMPLICIT NONE
@@ -562,7 +562,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_clim
 
      SUBROUTINE mptrac_read_ctl(filename, argc, argv, ctl) &
-          bind(c,name='read_ctl')
+          bind(c,name='mptrac_read_ctl')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t
        IMPLICIT NONE
@@ -573,7 +573,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_ctl
 
      SUBROUTINE mptrac_read_met(filename, ctl, clim, met, atm) &
-          bind(c,name='read_met')
+          bind(c,name='mptrac_read_met')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t
        IMPLICIT NONE
@@ -585,7 +585,7 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_read_met
 
      SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, t) &
-          bind(c,name='write_output')
+          bind(c,name='mptrac_write_output')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, met_t, atm_t
        CHARACTER(c_char), INTENT(in) :: dirname

@@ -174,7 +174,7 @@ int main(
     ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
   double p0 = P(scan_ctl(argv[1], argc, argv, "MAP_Z0", -1, "10", NULL));
   double lon0 = scan_ctl(argv[1], argc, argv, "MAP_LON0", -1, "-180", NULL);
   double lon1 = scan_ctl(argv[1], argc, argv, "MAP_LON1", -1, "180", NULL);
@@ -185,13 +185,13 @@ int main(
   double theta = scan_ctl(argv[1], argc, argv, "MAP_THETA", -1, "-999", NULL);
 
   /* Read climatological data... */
-  read_clim(&ctl, clim);
+  mptrac_read_clim(&ctl, clim);
 
   /* Loop over files... */
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!read_met(argv[i], &ctl, clim, met))
+    if (!mptrac_read_met(argv[i], &ctl, clim, met))
       continue;
 
     /* Set horizontal grid... */

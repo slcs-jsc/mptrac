@@ -68,12 +68,12 @@ int main(
     ERRMSG("Give parameters: <ctl> <sample.tab> <tropo.nc> <var> <atm_in>");
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
   int method =
     (int) scan_ctl(argv[1], argc, argv, "TROPO_SAMPLE_METHOD", -1, "1", NULL);
 
   /* Read atmospheric data... */
-  if (!read_atm(argv[5], &ctl, atm))
+  if (!mptrac_read_atm(argv[5], &ctl, atm))
     ERRMSG("Cannot open file!");
 
   /* Open tropopause file... */

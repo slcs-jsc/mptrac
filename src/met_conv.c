@@ -47,19 +47,19 @@ int main(
   START_TIMERS;
 
   /* Read control parameters... */
-  read_ctl(argv[1], argc, argv, &ctl);
+  mptrac_read_ctl(argv[1], argc, argv, &ctl);
 
   /* Read climatological data... */
-  read_clim(&ctl, clim);
+  mptrac_read_clim(&ctl, clim);
 
   /* Read meteo data... */
   ctl.met_type = atoi(argv[3]);
-  if (!read_met(argv[2], &ctl, clim, met))
+  if (!mptrac_read_met(argv[2], &ctl, clim, met))
     ERRMSG("Cannot open file!");
 
   /* Write meteo data... */
   ctl.met_type = atoi(argv[5]);
-  write_met(argv[4], &ctl, met);
+  mptrac_write_met(argv[4], &ctl, met);
 
   /* Report timers... */
   PRINT_TIMERS;
