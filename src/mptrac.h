@@ -5924,15 +5924,22 @@ void mptrac_get_met(
   met_t ** met0,
   met_t ** met1);
 
-
-
+/**
+ * @brief Initialize MPTRAC simulation.
+ *
+ * This function performs the initialization of the timesteps and
+ * random number generator for MPTRAC.
+ *
+ * @param ctl   Pointer to the control structure (ctl_t) containing model configuration and state.
+ * @param atm   Pointer to the atmospheric data structure (atm_t) holding atmospheric conditions.
+ * @param ntask Number of MPI task for which the random number generator needs initialization.
+ *
+ * @author Lars Hoffmann
+ */
 void mptrac_init(
   ctl_t * ctl,
   atm_t * atm,
   const int ntask);
-
-
-
 
 /**
  * @brief Reads air parcel data from a specified file into the given atmospheric structure.
