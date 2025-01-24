@@ -205,7 +205,7 @@ int main(
     }
     nx = ny = 0;
     for (lon = lon0; lon <= lon1 + 0.001; lon += dlon) {
-      lons[nx] = lon;
+      lons[nx] = round(lon * 1e3) / 1e3;
       if ((++nx) >= NX)
 	ERRMSG("Too many longitudes!");
     }
@@ -214,7 +214,7 @@ int main(
       lat1 = gsl_stats_max(met->lat, 1, (size_t) met->ny);
     }
     for (lat = lat0; lat <= lat1 + 0.001; lat += dlat) {
-      lats[ny] = lat;
+      lats[ny] = round(lat * 1e3) / 1e3;
       if ((++ny) >= NY)
 	ERRMSG("Too many latitudes!");
     }
