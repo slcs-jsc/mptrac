@@ -123,7 +123,7 @@ int main(
       lat0 = gsl_stats_min(met->lat, 1, (size_t) met->ny);
       lat1 = gsl_stats_max(met->lat, 1, (size_t) met->ny);
     }
-    for (lat = lat0; lat <= lat1; lat += dlat) {
+    for (lat = lat0; lat <= lat1 + 0.001; lat += dlat) {
       lats[ny] = lat;
       if ((++ny) >= NY)
 	ERRMSG("Too many latitudes!");
