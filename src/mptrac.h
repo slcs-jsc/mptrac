@@ -4827,7 +4827,7 @@ void locate_vert(
  * 
  * @details
  * The function performs the following operations:
- * - Sets up a timer labeled "MODULE_ADVECTION" within the "PHYSICS"
+ * - Sets up a timer labeled "MODULE_ADVECT" within the "PHYSICS"
      category for GPU profiling using NVTX.
  * - Depending on the vertical coordinate system (pressure or zeta),
  *   it loops over each particle in the atmosphere (atm->np),
@@ -4880,7 +4880,7 @@ void module_advect(
  * 
  * @details
  * The function performs the following operations:
- * - Sets up a timer labeled "MODULE_ADVECTION" within the "PHYSICS" category.
+ * - Sets up a timer labeled "MODULE_ADVECT_INIT" within the "PHYSICS" category.
  * - If the zeta vertical coordinate system is specified (ctl->vert_coord_ap == 1), it initializes
  *   the pressure fields to be consistent with the zeta coordinate using 4D interpolation.
  * 
@@ -4888,6 +4888,7 @@ void module_advect(
  */
 void module_advect_init(
   const ctl_t * ctl,
+  const cache_t * cache,
   met_t * met0,
   met_t * met1,
   atm_t * atm);
@@ -4953,7 +4954,7 @@ void module_bound_cond(
  * @authors Mingzhao Liu
  * @authors Lars Hoffmann
  */
-void module_chemgrid(
+void module_chem_grid(
   const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
@@ -4988,6 +4989,7 @@ void module_chemgrid(
  */
 void module_chem_init(
   const ctl_t * ctl,
+  const cache_t * cache,
   const clim_t * clim,
   met_t * met0,
   met_t * met1,
@@ -5091,7 +5093,7 @@ void module_decay(
  *
  * @author Lars Hoffmann
  */
-void module_diffusion_meso(
+void module_diff_meso(
   const ctl_t * ctl,
   cache_t * cache,
   met_t * met0,
@@ -5131,7 +5133,7 @@ void module_diffusion_meso(
  *
  * @author Lars Hoffmann
  */
-void module_diffusion_pbl(
+void module_diff_pbl(
   const ctl_t * ctl,
   cache_t * cache,
   met_t * met0,
@@ -5192,7 +5194,7 @@ void module_diffusion_pbl(
  *
  * @author Lars Hoffmann
  */
-void module_diffusion_turb(
+void module_diff_turb(
   const ctl_t * ctl,
   cache_t * cache,
   const clim_t * clim,
@@ -5219,7 +5221,7 @@ void module_diffusion_turb(
  *
  * @author Lars Hoffmann
  */
-void module_dry_deposition(
+void module_dry_depo(
   const ctl_t * ctl,
   const cache_t * cache,
   met_t * met0,
@@ -5767,7 +5769,7 @@ void module_tracer_chem(
  * @authors Lars Hoffmann
  * @authors Mingzhao Liu
  */
-void module_wet_deposition(
+void module_wet_depo(
   const ctl_t * ctl,
   const cache_t * cache,
   met_t * met0,
@@ -6194,6 +6196,69 @@ void mptrac_write_output(
   met_t * met1,
   atm_t * atm,
   const double t);
+
+/**
+ * @brief Updates device memory for specified data structures.
+ *
+ * This function updates the GPU memory with the data from the provided
+ * host data structures (`ctl`, `cache`, `clim`, `atm`) using OpenACC directives.
+ * It ensures that the host data is transferred to the device for further computation.
+ *
+ * @param[in] ctl Pointer to the `ctl_t` structure. If not `NULL`, the corresponding
+ *                device memory for `ctl` is updated.
+ * @param[in] cache Pointer to the `cache_t` structure. If not `NULL`, the corresponding
+ *                  device memory for `cache` is updated.
+ * @param[in] clim Pointer to the `clim_t` structure. If not `NULL`, the corresponding
+ *                 device memory for `clim` is updated.
+ * @param[in] atm Pointer to the `atm_t` structure. If not `NULL`, the corresponding
+ *                device memory for `atm` is updated.
+ *
+ * @note The function assumes that OpenACC is enabled and uses the `#pragma acc update` 
+ *       directive for device memory synchronization. Each update operation is wrapped
+ *       with a timer labeled as "UPDATE_DEVICE" for performance tracking.
+ *
+ * @warning Ensure that the pointers passed to this function are valid and properly 
+ *          initialized before calling this function. Passing invalid or uninitialized
+ *          pointers may lead to undefined behavior.
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_update_device(
+  const ctl_t * ctl,
+  const cache_t * cache,
+  const clim_t * clim,
+  const atm_t * atm);
+
+/**
+ * @brief Updates host memory for specified data structures.
+ *
+ * This function transfers data from the device (GPU) memory back to the host memory 
+ * for the provided data structures (`ctl`, `cache`, `clim`, `atm`) using OpenACC directives.
+ * It ensures that the latest data from the device is synchronized with the host.
+ *
+ * @param[in] ctl Pointer to the `ctl_t` structure. If not `NULL`, the corresponding
+ *                host memory for `ctl` is updated from the device.
+ * @param[in] cache Pointer to the `cache_t` structure. If not `NULL`, the corresponding
+ *                  host memory for `cache` is updated from the device.
+ * @param[in] clim Pointer to the `clim_t` structure. If not `NULL`, the corresponding
+ *                 host memory for `clim` is updated from the device.
+ * @param[in] atm Pointer to the `atm_t` structure. If not `NULL`, the corresponding
+ *                host memory for `atm` is updated from the device.
+ *
+ * @note The function assumes that OpenACC is enabled and uses the `#pragma acc update` 
+ *       directive for host memory synchronization. Each update operation is wrapped
+ *       with a timer labeled as "UPDATE_HOST" for performance tracking.
+ *
+ * @warning Ensure that the pointers passed to this function are valid and properly 
+ *          initialized before calling this function
+ *
+ * @author Lars Hoffmann
+ */
+void mptrac_update_host(
+  const ctl_t * ctl,
+  const cache_t * cache,
+  const clim_t * clim,
+  const atm_t * atm);
 
 /**
  * @brief Calculates the nitric acid trihydrate (NAT) temperature.
