@@ -99,6 +99,9 @@ int main(
     /* Initialize MPTRAC... */
     mptrac_init(ctl, atm, ntask);
 
+    /* Update GPU memory... */
+    mptrac_update_device(ctl, cache, clim, atm);
+
     /* ------------------------------------------------------------
        Loop over timesteps...
        ------------------------------------------------------------ */

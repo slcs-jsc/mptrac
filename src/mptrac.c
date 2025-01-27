@@ -2080,7 +2080,7 @@ void module_advect(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECTION", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_ADVECT", "PHYSICS", NVTX_GPU);
 
   /* Pressure coordinate... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
@@ -2227,25 +2227,26 @@ void module_advect(
 
 void module_advect_init(
   const ctl_t *ctl,
+  const cache_t *cache,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
 
-  /* Initialize pressure consistent with zeta... */
-  if (ctl->advect_vert_coord == 1) {
-#pragma omp parallel for default(shared)
-    for (int ip = 0; ip < atm->np; ip++) {
+  /* Check parameters... */
+  if (ctl->advect_vert_coord != 1)
+    return;
 
-      /* Check time... */
-      if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
-	ERRMSG("Time of air parcel is out of range!");
+  /* Set timer... */
+  SELECT_TIMER("MODULE_ADVECT_INIT", "PHYSICS", NVTX_GPU);
 
-      /* Interpolate pressure... */
-      INTPOL_INIT;
-      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
-    }
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm)") {
+
+    /* Initialize pressure consistent with zeta... */
+    INTPOL_INIT;
+    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
   }
 }
 
@@ -2260,7 +2261,7 @@ void module_bound_cond(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_BOUNDCOND", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_BOUND_COND", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->qnt_Cccl4
@@ -2347,7 +2348,7 @@ void module_bound_cond(
 
 /*****************************************************************************/
 
-void module_chemgrid(
+void module_chem_grid(
   const ctl_t *ctl,
   met_t *met0,
   met_t *met1,
@@ -2361,7 +2362,7 @@ void module_chemgrid(
     ERRMSG("Molar mass is not defined!");
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEMGRID", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_CHEM_GRID", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   const int np = atm->np;
@@ -2496,17 +2497,18 @@ void module_chemgrid(
 
 void module_chem_init(
   const ctl_t *ctl,
+  const cache_t *cache,
   const clim_t *clim,
   met_t *met0,
   met_t *met1,
   atm_t *atm) {
 
-#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CHEM_INIT", "PHYSICS", NVTX_GPU);
 
-    /* Check time... */
-    if (atm->time[ip] < met0->time || atm->time[ip] > met1->time)
-      ERRMSG("Time of air parcel is out of range!");
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 0,
+		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
     /* Set H2O and O3 using meteo data... */
     INTPOL_INIT;
@@ -2647,7 +2649,7 @@ void module_decay(
 
 /*****************************************************************************/
 
-void module_diffusion_meso(
+void module_diff_meso(
   const ctl_t *ctl,
   cache_t *cache,
   met_t *met0,
@@ -2655,7 +2657,7 @@ void module_diffusion_meso(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFMESO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFF_MESO", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
@@ -2724,7 +2726,7 @@ void module_diffusion_meso(
 
 /*****************************************************************************/
 
-void module_diffusion_pbl(
+void module_diff_pbl(
   const ctl_t *ctl,
   cache_t *cache,
   met_t *met0,
@@ -2732,7 +2734,7 @@ void module_diffusion_pbl(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFPBL", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFF_PBL", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
@@ -2849,7 +2851,7 @@ void module_diffusion_pbl(
 
 /*****************************************************************************/
 
-void module_diffusion_turb(
+void module_diff_turb(
   const ctl_t *ctl,
   cache_t *cache,
   const clim_t *clim,
@@ -2858,7 +2860,7 @@ void module_diffusion_turb(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFFTURB", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFF_TURB", "PHYSICS", NVTX_GPU);
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
@@ -2901,7 +2903,7 @@ void module_diffusion_turb(
 
 /*****************************************************************************/
 
-void module_dry_deposition(
+void module_dry_depo(
   const ctl_t *ctl,
   const cache_t *cache,
   met_t *met0,
@@ -2909,7 +2911,7 @@ void module_dry_deposition(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DRYDEPO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DRY_DEPO", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -2973,7 +2975,7 @@ void module_h2o2_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_H2O2CHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_H2O2_CHEM", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -3057,29 +3059,32 @@ void module_isosurf_init(
   double t;
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
-
-  /* Init... */
-  INTPOL_INIT;
+  SELECT_TIMER("MODULE_ISOSURF_INIT", "PHYSICS", NVTX_GPU);
 
   /* Save pressure... */
-  if (ctl->isosurf == 1)
-    for (int ip = 0; ip < atm->np; ip++)
+  if (ctl->isosurf == 1) {
+    PARTICLE_LOOP(0, atm->np, 0, "acc data present(cache,atm)") {
       cache->iso_var[ip] = atm->p[ip];
+    }
+  }
 
   /* Save density... */
-  else if (ctl->isosurf == 2)
-    for (int ip = 0; ip < atm->np; ip++) {
+  else if (ctl->isosurf == 2) {
+    PARTICLE_LOOP(0, atm->np, 0, "acc data present(cache,met0,met1,atm)") {
+      INTPOL_INIT;
       INTPOL_3D(t, 1);
       cache->iso_var[ip] = atm->p[ip] / t;
     }
+  }
 
   /* Save potential temperature... */
-  else if (ctl->isosurf == 3)
-    for (int ip = 0; ip < atm->np; ip++) {
+  else if (ctl->isosurf == 3) {
+    PARTICLE_LOOP(0, atm->np, 0, "acc data present(cache,met0,met1,atm)") {
+      INTPOL_INIT;
       INTPOL_3D(t, 1);
       cache->iso_var[ip] = THETA(atm->p[ip], t);
     }
+  }
 
   /* Read balloon pressure data... */
   else if (ctl->isosurf == 4) {
@@ -3106,6 +3111,9 @@ void module_isosurf_init(
 
     /* Close file... */
     fclose(in);
+
+    /* Update of cache data on device... */
+    mptrac_update_device(NULL, cache, NULL, NULL);
   }
 }
 
@@ -3172,7 +3180,7 @@ void module_kpp_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_KPPCHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
 
   const int nvar = NVAR, nfix = NFIX, nreact = NREACT;
   double rtol[1] = { 1.0e-3 };
@@ -3513,7 +3521,7 @@ void module_oh_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_OHCHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_OH_CHEM", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -3698,6 +3706,7 @@ void module_rng(
 
     /* Update of random numbers on device... */
 #ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
 #pragma acc update device(rs[:n])
 #endif
   }
@@ -3944,7 +3953,7 @@ void module_timesteps_init(
   const atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TIMESTEPS_INIT", "PHYSICS", NVTX_GPU);
 
   /* Set start time... */
   if (ctl->direction == 1) {
@@ -3979,7 +3988,7 @@ void module_tracer_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TRACERCHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TRACER_CHEM", "PHYSICS", NVTX_GPU);
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -4040,7 +4049,7 @@ void module_tracer_chem(
 
 /*****************************************************************************/
 
-void module_wet_deposition(
+void module_wet_depo(
   const ctl_t *ctl,
   const cache_t *cache,
   met_t *met0,
@@ -4048,7 +4057,7 @@ void module_wet_deposition(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_WETDEPO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_WET_DEPO", "PHYSICS", NVTX_GPU);
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -5426,16 +5435,10 @@ void mptrac_run_timestep(
       module_isosurf_init(ctl, cache, *met0, *met1, atm);
 
     /* Initialize advection... */
-    module_advect_init(ctl, *met0, *met1, atm);
+    module_advect_init(ctl, cache, *met0, *met1, atm);
 
     /* Initialize chemistry... */
-    module_chem_init(ctl, clim, *met0, *met1, atm);
-
-    /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-#pragma acc update device(atm[:1],cache[:1],clim[:1],ctl[:1])
-#endif
+    module_chem_init(ctl, cache, clim, *met0, *met1, atm);
   }
 
   /* Set time steps of air parcels... */
@@ -5457,15 +5460,15 @@ void mptrac_run_timestep(
       && (ctl->turb_dx_pbl > 0 || ctl->turb_dz_pbl > 0
 	  || ctl->turb_dx_trop > 0 || ctl->turb_dz_trop > 0
 	  || ctl->turb_dx_strat > 0 || ctl->turb_dz_strat > 0))
-    module_diffusion_turb(ctl, cache, clim, *met0, *met1, atm);
+    module_diff_turb(ctl, cache, clim, *met0, *met1, atm);
 
   /* Mesoscale diffusion... */
   if (ctl->diffusion == 1 && (ctl->turb_mesox > 0 || ctl->turb_mesoz > 0))
-    module_diffusion_meso(ctl, cache, *met0, *met1, atm);
+    module_diff_meso(ctl, cache, *met0, *met1, atm);
 
   /* Diffusion... */
   if (ctl->diffusion == 2)
-    module_diffusion_pbl(ctl, cache, *met0, *met1, atm);
+    module_diff_pbl(ctl, cache, *met0, *met1, atm);
 
   /* Convection... */
   if ((ctl->conv_mix_pbl || ctl->conv_cape >= 0)
@@ -5512,7 +5515,7 @@ void mptrac_run_timestep(
   /* Calculate the tracer vmr in the chemistry grid... */
   if (ctl->oh_chem_reaction != 0 || ctl->h2o2_chem_reaction != 0
       || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0))
-    module_chemgrid(ctl, *met0, *met1, atm, t);
+    module_chem_grid(ctl, *met0, *met1, atm, t);
 
   /* OH chemistry... */
   if (ctl->oh_chem_reaction != 0)
@@ -5538,16 +5541,92 @@ void mptrac_run_timestep(
   /* Wet deposition... */
   if ((ctl->wet_depo_ic_a > 0 || ctl->wet_depo_ic_h[0] > 0)
       && (ctl->wet_depo_bc_a > 0 || ctl->wet_depo_bc_h[0] > 0))
-    module_wet_deposition(ctl, cache, *met0, *met1, atm);
+    module_wet_depo(ctl, cache, *met0, *met1, atm);
 
   /* Dry deposition... */
   if (ctl->dry_depo_vdep > 0)
-    module_dry_deposition(ctl, cache, *met0, *met1, atm);
+    module_dry_depo(ctl, cache, *met0, *met1, atm);
 
   /* Check boundary conditions (final)... */
   if ((ctl->bound_lat0 < ctl->bound_lat1)
       && (ctl->bound_p0 > ctl->bound_p1))
     module_bound_cond(ctl, cache, clim, *met0, *met1, atm);
+}
+
+/*****************************************************************************/
+
+void mptrac_update_device(
+  const ctl_t *ctl,
+  const cache_t *cache,
+  const clim_t *clim,
+  const atm_t *atm) {
+
+  /* Update GPU... */
+  if (ctl != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(ctl[:1])
+#endif
+  }
+
+  if (cache != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(cache[:1])
+#endif
+  }
+
+  if (clim != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(clim[:1])
+#endif
+  }
+
+  if (atm != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+#pragma acc update device(atm[:1])
+#endif
+  }
+}
+
+/*****************************************************************************/
+
+void mptrac_update_host(
+  const ctl_t *ctl,
+  const cache_t *cache,
+  const clim_t *clim,
+  const atm_t *atm) {
+
+  /* Update GPU... */
+  if (ctl != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+#pragma acc update host(ctl[:1])
+#endif
+  }
+
+  if (cache != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+#pragma acc update host(cache[:1])
+#endif
+  }
+
+  if (clim != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+#pragma acc update host(clim[:1])
+#endif
+  }
+
+  if (atm != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+#pragma acc update host(atm[:1])
+#endif
+  }
 }
 
 /*****************************************************************************/
@@ -5670,17 +5749,13 @@ void mptrac_write_output(
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
 
   /* Update host... */
-#ifdef _OPENACC
   if ((ctl->atm_basename[0] != '-' && fmod(t, ctl->atm_dt_out) == 0)
       || (ctl->grid_basename[0] != '-' && fmod(t, ctl->grid_dt_out) == 0)
       || (ctl->ens_basename[0] != '-' && fmod(t, ctl->ens_dt_out) == 0)
       || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
       || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
-      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0)) {
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_D2H);
-#pragma acc update host(atm[:1])
-  }
-#endif
+      || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0))
+    mptrac_update_host(NULL, NULL, NULL, atm);
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' &&
