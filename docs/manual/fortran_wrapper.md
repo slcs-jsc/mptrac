@@ -1,15 +1,19 @@
 # Fortran Wrapper
 
-This project shows the integration of C functions in Fortran. The project started as natESM sprint LAGOOn (url will be added, when published).
+This project shows the integration of C functions in Fortran. The project started as [natESM sprint LAGOOn](https://www.nat-esm.de/services/support-through-sprints/documentation).
 
-To integrate multi language programming with Fortran and C in a single program the ISO_C_BINDINGS <!-- https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fC_005fBINDING.html --> module is since Fortran 2003 the standard tool that faciliates interoperability between the two languages. In Fortran the Compiler is informed with the BIND(C) attribute that a symbol shall be interoperable with C.
+To integrate multi language programming with Fortran and C in a single program the ISO_C_BINDINGS <!-- https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fC_005fBINDING.html --> module is since Fortran 2003 the standard tool that facilitates interoperability between the two languages. In Fortran the Compiler is informed with the BIND(C) attribute that a symbol shall be interoperable with C.
+
+## Compilation and testing
 
 To compile the Fortran wrapper, navigate to the `src` directory and run the following command:
+
 ```
 $ make wrapper
 ```
 
 To test the compiled wrapper, use the following command in the same directory:
+
 ```
 $ make wrapper_test
 ```
@@ -53,7 +57,7 @@ $ ./trac_fortran data/dirlist trac.ctl atm_split.tab meteo/ei ATM_BASENAME atm_d
 
 ### mptrac_fortran.f90
 
-To ensure the interoperabilty between Fortran and C an interface is needed. This interface includes some general dimension variables, the structures atm_t, clim_photo_t, clim_t, clim_ts_t, clim_zm_t, clt_t, met_t and the functions mptrac_get_met, mptrac_module_advect, mptrac_module_timesteps, mptrac_read_atm, mptrac_read_clim, mptrac_read_ctl, mptrac_read_met, mptrac_write_output. The functions have always the prefix mptrac to indicate that they are only an interface calling the original MPTRAC function.
+To ensure the interoperability between Fortran and C an interface is needed. This interface includes some general dimension variables, the structures atm_t, clim_photo_t, clim_t, clim_ts_t, clim_zm_t, clt_t, met_t and the functions mptrac_get_met, mptrac_module_advect, mptrac_module_timesteps, mptrac_read_atm, mptrac_read_clim, mptrac_read_ctl, mptrac_read_met, mptrac_write_output. The functions have always the prefix mptrac to indicate that they are only an interface calling the original MPTRAC function.
 
 ### Checking order and array sizes
 
