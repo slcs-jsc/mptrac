@@ -25,10 +25,11 @@ nav:
         - Model physics: model-physics.md
         - Tropopause data: tropopause-data.md
     - Developer manual:
-        - High-level interface: high_level_interface.md
         - Code development: code-development.md
         - Parallelization: parallelization.md
         - Profiling: profiling.md
+	- Fortran wrapper: fortran_wrapper.md
+        - High-level interface: high_level_interface.md
     - Further information:
         - References: references.md
         - Links: links.md
