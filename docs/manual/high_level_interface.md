@@ -1,4 +1,4 @@
-# High-Level interface
+# High-level interface
 
 ## Overview
 
