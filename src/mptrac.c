@@ -1187,7 +1187,7 @@ void get_met_help(
     else if (ctl->met_type == 5)
       sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
     else if (ctl->met_type == 6)
-      sprintf(filename,"YYYYMMDDHH_.grb");
+      sprintf(filename,"%s_YYYYMMDDHH_.grb",metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -3259,7 +3259,7 @@ void module_meteo(
     /* Interpolate meteo data... */
     INTPOL_INIT;
     INTPOL_TIME_ALL(atm->time[ip], atm->p[ip], atm->lon[ip], atm->lat[ip]);
-
+    
     /* Set quantities... */
     SET_ATM(qnt_ps, ps);
     SET_ATM(qnt_ts, ts);
@@ -6554,7 +6554,6 @@ void read_met_global_grib(
   /*Read type of level...*/
   long leveltype = 0;
   ECC(codes_get_long(handles[0],"typeOfFirstFixedSurface",&leveltype));
-  printf("level type: %ld\n",leveltype);
   /*Read date...*/
 
   char datestr[50];
@@ -6564,7 +6563,6 @@ void read_met_global_grib(
 
   long nvert;
   ECC(codes_get_long(handles[0],"numberOfVerticalCoordinateValues",&nvert));
-  printf("Nvert: %ld", nvert);
 
   ECC(codes_get_string(handles[0],"dataDate",datestr,&s));
   ECC(codes_get_string(handles[0],"dataTime",timestr,&s));
@@ -6576,33 +6574,22 @@ void read_met_global_grib(
   day[2] = '\0';
   strncpy(hour,timestr,2);
   hour[2] = '\0';
-  printf("date: %d,%d,%d\n",atoi(year),atoi(month),atoi(day));
-  printf("hour: %d\n",atoi(hour));
   time2jsec(atoi(year),atoi(month),atoi(day),atoi(hour),0,0,0,&(met->time));
   /*Does not seem quite right*/
-  printf("juliantime: %f\n",met->time);
 
   /*Read grid information*/
   long count_lat = 0,count_lon= 0;
   ECC(codes_get_long(handles[0],"Nj",&count_lat));
   ECC(codes_get_long(handles[0],"Ni",&count_lon));
   met->ny = (int) count_lat;
-  printf("count_lat: %ld\n",count_lat);
   met->nx = (int) count_lon;
-  printf("count_lon: %ld\n",count_lon);
   double min_lon,max_lon,min_lat,max_lat,inc_lon,inc_lat;
   ECC(codes_get_double(handles[0],"longitudeOfFirstGridPointInDegrees",&min_lon));
-  printf("min_lon: %.2f\n",min_lon);
   ECC(codes_get_double(handles[0],"latitudeOfFirstGridPointInDegrees",&min_lat));
-  printf("min_lat: %.2f\n",min_lat);
   ECC(codes_get_double(handles[0],"longitudeOfLastGridPointInDegrees",&max_lon));
-  printf("max_lon: %.2f\n",max_lon);
   ECC(codes_get_double(handles[0],"latitudeOfLastGridPointInDegrees",&max_lat));
-  printf("max_lat: %.2f\n",max_lat);
   ECC(codes_get_double(handles[0],"iDirectionIncrementInDegrees",&inc_lon));
-  printf("inc_lon: %.2f\n",inc_lon);
   ECC(codes_get_double(handles[0],"jDirectionIncrementInDegrees",&inc_lat));
-  printf("inc_lat: %.2f\n",inc_lat);
 
   /*Compute grid*/
   int counter = 0;
@@ -6616,15 +6603,6 @@ void read_met_global_grib(
     counter += 1;
   }
 
-  // counter = 0;
-  // for(int i = 0;i<count_lon;i++){
-  //   printf("%.2f ",met->lon[i]);
-  // }
-  // printf("\n")
-  // for(int i = 0;i<count_lat;i++){
-  //   printf("%.2f ",met->lat[i]);
-  // }
-
   /*Read vertical levels*/
   int max_level = 0;
   for(int i=0;i<count_handles;i++){
@@ -6634,7 +6612,6 @@ void read_met_global_grib(
       max_level = (int)level;
     }
   }
-  printf("Max level: %d\n",max_level);
   met->npl = max_level;
   }
 #endif
@@ -6782,10 +6759,10 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
 
   /*Iterate over all messages*/
   for( int i = 0; i< num_messages; i++){
-    /* Allocate arrays*/
     size_t max_size = 50;
     char short_name[max_size];
     size_t value_count;
+    double* values;
     
     /* Get the current level*/
     long current_level; 
@@ -6795,7 +6772,7 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     /* Retrieve data from current message*/
     ECC(codes_get_string(handles[i],"shortName",short_name,&max_size));
     ECC(codes_get_size(handles[i],"values",&value_count));
-    double * values = (double*)malloc(value_count * sizeof(double));
+    ALLOC(values,double,value_count)
     ECC(codes_get_double_array(handles[i],"values",values,&value_count))
 
     /*Read temperature*/
@@ -6824,7 +6801,7 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     else if( strcmp(short_name,"w")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-              met->w[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+              met->w[ix][iy][current_level-1] = (float)values[ix * met->ny + iy]*0.01f;
             }
         }
     }
@@ -6833,7 +6810,7 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     else if( strcmp(short_name,"o3")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-              met->o3[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+              met->o3[ix][iy][current_level-1] = (float)values[ix * met->ny + iy]*(float) (MA / MO3);
             }
         }
     }
@@ -6861,14 +6838,13 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
         }
     }
     else if( strcmp(short_name,"cswc")==0){
-      printf("Hä1");
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
               met->swc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
             }
         }
     }
-    else if( strcmp(short_name,"cswc")==0){
+    else if( strcmp(short_name,"cc")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
               met->cc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
@@ -6876,16 +6852,12 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
         }
     }
 
-    /*Read zeta and zeta_dot*/
-  
-    
-
     /*Read water vapor*/
     if (!ctl->met_relhum){
       if( strcmp(short_name,"q")==0){
             for (int ix = 0; ix < met->nx; ix++) {
                   for (int iy = 0; iy < met->ny; iy++) {
-                    met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+                    met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy] *(float) (MA / MH2O);
                   }
               }
               
@@ -6894,30 +6866,51 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     else if( strcmp(short_name,"r")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-              met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
+              met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy]*0.01f;
             }
         }
     }
-    
-    
     free(values);
   }
 
-
-  if (ctl->met_pbl == 0 && handles[1]){
-    met->time = 10;
-  }
-  if( ctl->met_relhum){
-    #pragma omp parallel for default(shared) collapse(2)
+  /* Check ordering of pressure levels... */
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
-	      for (int ip = 0; ip < met->np; ip++) {
-	        double pw = met->h2o[ix][iy][ip] * PSAT(met->t[ix][iy][ip]);
-	        met->h2o[ix][iy][ip] = (float) (pw / (met->p[ip] - (1.0 - EPS) * pw));
-	}
+	for (int ip = 1; ip < met->np; ip++)
+	  if ((met->pl[ix][iy][0] > met->pl[ix][iy][1]
+	       && met->pl[ix][iy][ip - 1] <= met->pl[ix][iy][ip])
+	      || (met->pl[ix][iy][0] < met->pl[ix][iy][1]
+		  && met->pl[ix][iy][ip - 1] >= met->pl[ix][iy][ip])){
+        LOG(1,"ERR: %f %f %f %f",met->pl[ix][iy][0], met->pl[ix][iy][1],met->pl[ix][iy][ip - 1], met->pl[ix][iy][ip])
+	    ERRMSG("Pressure profiles are not monotonic!");
+      }
+
+  /* Interpolate from model levels to pressure levels... */
+  if (ctl->met_np > 0) {
+    /* Interpolate variables... */
+    read_met_ml2pl(ctl, met, met->t, "T");
+    read_met_ml2pl(ctl, met, met->u, "U");
+    read_met_ml2pl(ctl, met, met->v, "V");
+    read_met_ml2pl(ctl, met, met->w, "W");
+    read_met_ml2pl(ctl, met, met->h2o, "H2O");
+    read_met_ml2pl(ctl, met, met->o3, "O3");
+    read_met_ml2pl(ctl, met, met->lwc, "LWC");
+    read_met_ml2pl(ctl, met, met->rwc, "RWC");
+    read_met_ml2pl(ctl, met, met->iwc, "IWC");
+    read_met_ml2pl(ctl, met, met->swc, "SWC");
+    read_met_ml2pl(ctl, met, met->cc, "CC");
+
+    /* Set new pressure levels... */
+    met->np = ctl->met_np;
+    for (int ip = 0; ip < met->np; ip++)
+      met->p[ip] = ctl->met_p[ip];
   }
 
-  printf("Finished reading level data\n");
+  /* Check ordering of pressure levels... */
+  for (int ip = 1; ip < met->np; ip++)
+    if (met->p[ip - 1] < met->p[ip])
+      ERRMSG("Pressure levels must be descending!");
+
 }
 #endif
 /*****************************************************************************/
@@ -7049,24 +7042,16 @@ void read_met_monotonize(
    - read data from dict into struct*/
 #ifdef ECCODES
 int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
-  printf("original filename: %s\n",filename);
-  filename = "/root/2020012306_.grb";
 
   size_t filename_len = strlen(filename);
   char general_filename [filename_len-3];
   memcpy(general_filename,filename,filename_len-4);
   general_filename[filename_len-4] = '\0';
-  printf("general: %s\n",general_filename);
   char sf_filename [filename_len+3];
   char ml_filename [filename_len+3];
 
   snprintf(ml_filename,filename_len+strlen("ml")+1,"%s%s%s",general_filename,"ml",".grb");
   snprintf(sf_filename,filename_len+strlen("sf")+1,"%s%s%s",general_filename,"sf",".grb");
-  
-
-  printf("ml_filename: %s\n",ml_filename);
-  printf("sf_filename: %s\n",sf_filename);
-
 
   
   int err = 0;
@@ -7074,14 +7059,21 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   FILE* ml_file = fopen(ml_filename,"rb");
   FILE* sf_file = fopen(sf_filename,"rb");
 
+  if (ml_file == NULL || sf_file == NULL) {
+    if (ml_file != NULL) fclose(ml_file);
+    if (sf_file != NULL) fclose(sf_file);
+    return -1;
+  }
+
+  
   /*Store messages from files*/
   codes_handle** ml_handles;
   codes_handle** sf_handles;
 
-  int num_messages = 0;
-  ECC(codes_count_in_file(0,ml_file,&num_messages));
-  ml_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)num_messages);
-  for (int i = 0 ; i < num_messages ; i++){
+  int ml_num_messages = 0;
+  ECC(codes_count_in_file(0,ml_file,&ml_num_messages));
+  ml_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)ml_num_messages);
+  for (int i = 0 ; i < ml_num_messages ; i++){
     codes_handle* h = NULL;
     if((h = codes_grib_handle_new_from_file(0,ml_file,&err))!=NULL ){
         ml_handles[i] = h;
@@ -7089,37 +7081,90 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   }
   int sf_num_messages = 0;
   ECC(codes_count_in_file(0,sf_file,&sf_num_messages));
-  printf("Messages in sf file: %d \n", sf_num_messages);
   sf_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)sf_num_messages);
-  for (int i = 0 ; i < num_messages ; i++){
+  for (int i = 0 ; i < sf_num_messages ; i++){
     codes_handle* h = NULL;
     if((h = codes_grib_handle_new_from_file(0,sf_file,&err))!=NULL ){
         sf_handles[i] = h;
     }
   }
-
-  
-  /*Read time/lat/lon and number of levels*/
-  read_met_global_grib(ml_handles,num_messages,met);
-  /*Read data from surface file*/
-  read_met_surface_grib(sf_handles,sf_num_messages,ctl,met);
-  
-  /*Read data from ml file*/
-  read_met_levels_grib(ml_handles,num_messages,ctl,met);
-
   fclose(ml_file);
   fclose(sf_file);
 
-  for(int i=0;i<num_messages;i++){
-    codes_handle_delete(ml_handles[i]);
-  }
+  
+  /*Read time/lat/lon and number of levels*/
+  read_met_global_grib(ml_handles,ml_num_messages,met);
+  /*Read data from surface file*/
+  read_met_surface_grib(sf_handles,sf_num_messages,ctl,met);
   for(int i=0;i<sf_num_messages;i++){
     codes_handle_delete(sf_handles[i]);
   }
-  
-  read_met_nc(filename,ctl,clim,met);
+  free(sf_handles);
 
-  return 0;
+  /*Compute 3D pressure field*/
+  size_t value_count;
+  ECC(codes_get_size(ml_handles[0],"pv",&value_count))
+  double* values = (double*) malloc(value_count * sizeof(double));
+  ECC(codes_get_double_array(ml_handles[0],"pv",values,&value_count)) 
+  for(int nx = 0;nx<met->nx;nx++){
+    for(int ny = 0;ny<met->ny;ny++){
+      for(int level = 0;level<met->npl;level++){
+        met->pl[nx][ny][level] = (float) (values[level+1] + met->ps[nx][ny] * values[level+2+met->npl]);
+      }
+    }
+  }
+
+  /*Read data from ml file*/
+  read_met_levels_grib(ml_handles,ml_num_messages,ctl,met);
+  met->np = met->npl;
+  for(int i=0;i<ml_num_messages;i++){
+    codes_handle_delete(ml_handles[i]);
+  }
+  free(ml_handles);
+
+
+  read_met_extrapolate(met);
+
+  /* Fix polar winds... */
+  read_met_polar_winds(met);
+
+  /* Create periodic boundary conditions... */
+  read_met_periodic(met);
+
+  /* Downsampling... */
+  read_met_sample(ctl, met);
+
+  /* Calculate geopotential heights... */
+  read_met_geopot(ctl, met);
+
+  /* Calculate potential vorticity... */
+  read_met_pv(met);
+
+  /* Calculate boundary layer data... */
+  read_met_pbl(ctl, met);
+
+  /* Calculate tropopause data... */
+  read_met_tropo(ctl, clim, met);
+
+  /* Calculate cloud properties... */
+  read_met_cloud(met);
+
+  /* Calculate convective available potential energy... */
+  read_met_cape(ctl, clim, met);
+
+  /* Calculate total column ozone... */
+  read_met_ozone(met);
+
+  /* Detrending... */
+  read_met_detrend(ctl, met);
+
+  /* Check meteo data and smooth zeta profiles ... */
+  if (ctl->advect_vert_coord == 1)
+    read_met_monotonize(met);
+  
+
+  /* Return success... */
+  return 1;
 }
 #endif
 
@@ -7780,7 +7825,7 @@ void read_met_pv(
     /* Set indices... */
     const int ix0 = MAX(ix - 1, 0);
     const int ix1 = MIN(ix + 1, met->nx - 1);
-
+    
     /* Loop over grid points... */
     for (int iy = 0; iy < met->ny; iy++) {
 
@@ -7796,11 +7841,11 @@ void read_met_pv(
       const double c1 = cos(DEG2RAD(met->lat[iy1]));
       const double cr = cos(DEG2RAD(latr));
       const double vort = 2 * 7.2921e-5 * sin(DEG2RAD(latr));
-
-      /* Loop over grid points... */
+      
+            /* Loop over grid points... */
       for (int ip = 0; ip < met->np; ip++) {
-
-	/* Get gradients in longitude... */
+	
+  /* Get gradients in longitude... */
 	const double dtdx
 	  = (met->t[ix1][iy][ip] - met->t[ix0][iy][ip]) * pows[ip] / dx;
 	const double dvdx = (met->v[ix1][iy][ip] - met->v[ix0][iy][ip]) / dx;
@@ -8183,7 +8228,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"z")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->zs[ix][iy] = (float)values[ix * met->ny +ix];
+                met->zs[ix][iy] = (float)values[ix * met->ny +ix]*(float) (1. / (1000. * G0));
             }
         } 
     }
@@ -8254,7 +8299,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
         if ( strcmp(short_name,"blh")==0){
             for (int ix = 0; ix < met->nx; ix++) {
                   for (int iy = 0; iy < met->ny; iy++) {
-                      met->pbl[ix][iy] = (float)values[ix * met->ny +ix];
+                      met->pbl[ix][iy] = (float)values[ix * met->ny +ix]*0.0001f;
                   }
               }
             }
@@ -8295,7 +8340,7 @@ void read_met_tropo(
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = NAN;
-
+  
   /* Use tropopause climatology... */
   else if (ctl->met_tropo == 1) {
 #pragma omp parallel for default(shared) collapse(2)
@@ -8303,7 +8348,7 @@ void read_met_tropo(
       for (int iy = 0; iy < met->ny; iy++)
 	met->pt[ix][iy] = (float) clim_tropo(clim, met->time, met->lat[iy]);
   }
-
+  
   /* Use cold point... */
   else if (ctl->met_tropo == 2) {
 
@@ -8385,7 +8430,7 @@ void read_met_tropo(
 	}
       }
   }
-
+ 
   /* Use dynamical tropopause... */
   else if (ctl->met_tropo == 5) {
 
@@ -8925,7 +8970,7 @@ void write_atm(
 
   /* Write info... */
   LOG(1, "Write atmospheric data: %s", filename);
-
+  
   /* Write ASCII data... */
   if (ctl->atm_type_out == 0)
     write_atm_asc(filename, ctl, atm, t);
@@ -8945,11 +8990,6 @@ void write_atm(
   /* Write CLaMS pos data... */
   else if (ctl->atm_type_out == 4)
     write_atm_clams(filename, ctl, atm);
-  #ifdef ECCODES
-  else if (ctl->atm_type_out==6)
-    write_atm_grib(filename,ctl,atm);
-  #endif
-
   /* Error... */
   else
     ERRMSG("Atmospheric data type not supported!");
