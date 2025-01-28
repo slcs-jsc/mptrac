@@ -1,6 +1,6 @@
-# Fortran Wrapper
+# Fortran wrapper
 
-This project shows the integration of C functions in Fortran. The project started as [natESM sprint LAGOOn](https://www.nat-esm.de/services/support-through-sprints/documentation).
+MPTRAC has been equiped with a wrapper to access the C functions from Fortran. The project started as coding sprint in [natESM project LAGOOn](https://www.nat-esm.de/services/support-through-sprints/documentation).
 
 To integrate multi language programming with Fortran and C in a single program the ISO_C_BINDINGS <!-- https://gcc.gnu.org/onlinedocs/gfortran/ISO_005fC_005fBINDING.html --> module is since Fortran 2003 the standard tool that facilitates interoperability between the two languages. In Fortran the Compiler is informed with the BIND(C) attribute that a symbol shall be interoperable with C.
 
