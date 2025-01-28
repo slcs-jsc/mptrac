@@ -100,7 +100,7 @@ int main(
     mptrac_init(ctl, atm, ntask);
 
     /* Update GPU memory... */
-    mptrac_update_device(ctl, cache, clim, atm);
+    mptrac_update_device(ctl, cache, clim, NULL, NULL, atm);
 
     /* ------------------------------------------------------------
        Loop over timesteps...

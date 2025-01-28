@@ -6210,6 +6210,10 @@ void mptrac_write_output(
  *                  device memory for `cache` is updated.
  * @param[in] clim Pointer to the `clim_t` structure. If not `NULL`, the corresponding
  *                 device memory for `clim` is updated.
+ * @param[in] met0 Pointer to the first `met_t` structure. If not `NULL`, the corresponding
+ *                 device memory for `met0` is updated.
+ * @param[in] met1 Pointer to the second `met_t` structure. If not `NULL`, the corresponding
+ *                 device memory for `met1` is updated.
  * @param[in] atm Pointer to the `atm_t` structure. If not `NULL`, the corresponding
  *                device memory for `atm` is updated.
  *
@@ -6227,6 +6231,8 @@ void mptrac_update_device(
   const ctl_t * ctl,
   const cache_t * cache,
   const clim_t * clim,
+  met_t ** met0,
+  met_t ** met1,
   const atm_t * atm);
 
 /**
@@ -6242,6 +6248,10 @@ void mptrac_update_device(
  *                  host memory for `cache` is updated from the device.
  * @param[in] clim Pointer to the `clim_t` structure. If not `NULL`, the corresponding
  *                 host memory for `clim` is updated from the device.
+ * @param[in] met0 Pointer to the first `met_t` structure. If not `NULL`, the corresponding
+ *                 host memory for `met0` is updated.
+ * @param[in] met1 Pointer to the second `met_t` structure. If not `NULL`, the corresponding
+ *                 host memory for `met1` is updated.
  * @param[in] atm Pointer to the `atm_t` structure. If not `NULL`, the corresponding
  *                host memory for `atm` is updated from the device.
  *
@@ -6258,6 +6268,8 @@ void mptrac_update_host(
   const ctl_t * ctl,
   const cache_t * cache,
   const clim_t * clim,
+  met_t ** met0,
+  met_t ** met1,
   const atm_t * atm);
 
 /**

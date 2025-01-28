@@ -3109,7 +3109,7 @@ void module_isosurf_init(
     fclose(in);
 
     /* Update of cache data on device... */
-    mptrac_update_device(NULL, cache, NULL, NULL);
+    mptrac_update_device(NULL, cache, NULL, NULL, NULL, NULL);
   }
 }
 
@@ -4285,13 +4285,8 @@ void mptrac_get_met(
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met0up = *met0;
-    met_t *met1up = *met1;
-#pragma acc update device(met0up[:1],met1up[:1])
+    mptrac_update_device(NULL, NULL, NULL, met0, met1, NULL);
     SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
@@ -4318,12 +4313,8 @@ void mptrac_get_met(
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met1up = *met1;
-#pragma acc update device(met1up[:1])
+    mptrac_update_device(NULL, NULL, NULL, NULL, met1, NULL);
     SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
@@ -4350,12 +4341,8 @@ void mptrac_get_met(
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
-#ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
-    met_t *met0up = *met0;
-#pragma acc update device(met0up[:1])
+    mptrac_update_device(NULL, NULL, NULL, met0, NULL, NULL);
     SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
-#endif
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
@@ -5548,6 +5535,8 @@ void mptrac_update_device(
   const ctl_t *ctl,
   const cache_t *cache,
   const clim_t *clim,
+  met_t **met0,
+  met_t **met1,
   const atm_t *atm) {
 
   /* Update GPU... */
@@ -5572,6 +5561,22 @@ void mptrac_update_device(
 #endif
   }
 
+  if (met0 != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met0up = *met0;
+#pragma acc update device(met0up[:1])
+#endif
+  }
+
+  if (met1 != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met1up = *met1;
+#pragma acc update device(met1up[:1])
+#endif
+  }
+
   if (atm != NULL) {
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
@@ -5586,6 +5591,8 @@ void mptrac_update_host(
   const ctl_t *ctl,
   const cache_t *cache,
   const clim_t *clim,
+  met_t **met0,
+  met_t **met1,
   const atm_t *atm) {
 
   /* Update GPU... */
@@ -5607,6 +5614,22 @@ void mptrac_update_host(
 #ifdef _OPENACC
     SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
 #pragma acc update host(clim[:1])
+#endif
+  }
+
+  if (met0 != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met0up = *met0;
+#pragma acc update host(met0up[:1])
+#endif
+  }
+
+  if (met1 != NULL) {
+#ifdef _OPENACC
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    met_t *met1up = *met1;
+#pragma acc update host(met1up[:1])
 #endif
   }
 
@@ -5744,7 +5767,7 @@ void mptrac_write_output(
       || ctl->csi_basename[0] != '-' || ctl->prof_basename[0] != '-'
       || ctl->sample_basename[0] != '-' || ctl->stat_basename[0] != '-'
       || (ctl->vtk_basename[0] != '-' && fmod(t, ctl->vtk_dt_out) == 0))
-    mptrac_update_host(NULL, NULL, NULL, atm);
+    mptrac_update_host(NULL, NULL, NULL, NULL, NULL, atm);
 
   /* Write atmospheric data... */
   if (ctl->atm_basename[0] != '-' &&
