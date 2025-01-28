@@ -28,7 +28,7 @@ nav:
         - Code development: code-development.md
         - Parallelization: parallelization.md
         - Profiling: profiling.md
-	- Fortran wrapper: fortran_wrapper.md
+        - Fortran wrapper: fortran_wrapper.md
         - High-level interface: high_level_interface.md
     - Further information:
         - References: references.md
