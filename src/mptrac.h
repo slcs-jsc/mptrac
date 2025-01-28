@@ -5893,19 +5893,28 @@ void mptrac_get_met(
   met_t ** met1);
 
 /**
- * @brief Initialize MPTRAC simulation.
+ * @brief Initializes the MPTRAC model and its associated components.
  *
- * This function performs the initialization of the timesteps and
- * random number generator for MPTRAC.
+ * This function sets up the necessary components and subsystems for the MPTRAC 
+ * module, including timesteps, random number generation, and GPU memory updates.
  *
- * @param ctl   Pointer to the control structure (ctl_t) containing model configuration and state.
- * @param atm   Pointer to the atmospheric data structure (atm_t) holding atmospheric conditions.
- * @param ntask Number of MPI task for which the random number generator needs initialization.
+ * @param ctl   Pointer to the control structure containing configuration and state information.
+ * @param cache Pointer to the cache structure used for data storage and retrieval.
+ * @param clim  Pointer to the climatology structure containing climate-related data.
+ * @param atm   Pointer to the atmospheric structure containing atmospheric state data.
+ * @param ntask Number of tasks or threads to initialize for the random number generator.
+ *
+ * The function performs the following operations:
+ * - Initializes the timesteps using the `module_timesteps_init` function.
+ * - Initializes the random number generator using the `module_rng_init` function.
+ * - Updates GPU memory using the `mptrac_update_device` function.
  *
  * @author Lars Hoffmann
  */
 void mptrac_init(
   ctl_t * ctl,
+  cache_t * cache,
+  clim_t * clim,
   atm_t * atm,
   const int ntask);
 

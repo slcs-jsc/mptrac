@@ -97,10 +97,7 @@ int main(
       ERRMSG("Cannot open file!");
 
     /* Initialize MPTRAC... */
-    mptrac_init(ctl, atm, ntask);
-
-    /* Update GPU memory... */
-    mptrac_update_device(ctl, cache, clim, NULL, NULL, atm);
+    mptrac_init(ctl, cache, clim, atm, ntask);
 
     /* ------------------------------------------------------------
        Loop over timesteps...

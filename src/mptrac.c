@@ -4376,6 +4376,8 @@ void mptrac_get_met(
 
 void mptrac_init(
   ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
   atm_t *atm,
   const int ntask) {
 
@@ -4384,6 +4386,9 @@ void mptrac_init(
 
   /* Initialize random number generator... */
   module_rng_init(ntask);
+
+  /* Update GPU memory... */
+  mptrac_update_device(ctl, cache, clim, NULL, NULL, atm);
 }
 
 /*****************************************************************************/
