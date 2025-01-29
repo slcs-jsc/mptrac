@@ -13,6 +13,7 @@ awk '/TYPE, bind\(c\) :: clim_zm_t/{f=1;next} /END TYPE clim_zm_t/{f=0} f' < ../
 awk '/TYPE, bind\(c\) :: clim_ts_t/{f=1;next} /END TYPE clim_ts_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_ts_f.asc
 awk '/TYPE, bind\(c\) :: clim_photo_t/{f=1;next} /END TYPE clim_photo_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_photo_f.asc
 awk '/TYPE, bind\(c\) :: atm_t/{f=1;next} /END TYPE atm_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_atm_f.asc
+awk '/TYPE, bind\(c\) :: cache_t/{f=1;next} /END TYPE cache_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_cache_f.asc
 
 awk '/brief Control parameters/{f=1;next} /\} ctl_t;/{f=0} f' < ../../src/mptrac.h > data/test_ctl_c.asc
 awk '/Meteo data structure/{f=1;next} /\} met_t;/{f=0} f' < ../../src/mptrac.h > data/test_met_c.asc
@@ -21,6 +22,7 @@ awk '/Climatological data in the form of zonal means./{f=1;next} /\} clim_zm_t;/
 awk '/Climatological data in the form of time series./{f=1;next} /\} clim_ts_t;/{f=0} f' < ../../src/mptrac.h > data/test_clim_ts_c.asc
 awk '/Climatological data in the form of photolysis rates./{f=1;next} /\} clim_photo_t;/{f=0} f' < ../../src/mptrac.h > data/test_clim_photo_c.asc
 awk '/Air parcel data./{f=1;next} /\} atm_t;/{f=0} f' < ../../src/mptrac.h > data/test_atm_c.asc
+awk '/Cache data structure./{f=1;next} /\} cache_t;/{f=0} f' < ../../src/mptrac.h > data/test_cache_c.asc
 
 # compare number of structure entries and variables inside 
 grep ";" data/test_ctl_c.asc | wc -l > x
@@ -188,8 +190,8 @@ else
     exit $exit_code
 fi
 
-grep ";" data/test_clim_photo_c.asc | wc -l > x
-wc -l < data/test_clim_photo_f.asc > y
+grep ";" data/test_atm_c.asc | wc -l > x
+wc -l < data/test_atm_f.asc > y
 for varc in $(grep ";" data/test_atm_c.asc| awk '{print $2}')
 do
     echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_atm_c.asc
@@ -214,6 +216,34 @@ else
     exit_code=99
     exit $exit_code
 fi
+
+grep ";" data/test_cache_c.asc | wc -l > x
+wc -l < data/test_cache_f.asc > y
+for varc in $(grep ";" data/test_cache_c.asc| awk '{print $2}')
+do
+    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_cache_c.asc
+done
+
+for varf in $(grep "::" data/test_cache_f.asc|awk '{print $NF}')
+do
+    echo $varf >> data/var_cache_f.asc
+done
+if cmp -s x y && cmp -s data/var_cache_c.asc data/var_cache_f.asc ; then
+    echo "Number of cache data are equal:"
+    cat x
+    rm x y
+else
+    echo "Number of cache data are not equal. C has: "
+    cat x
+    echo "and Fortran has: "
+    cat y
+    echo "Difference between var_cache_c.asc and var_cache_f.asc"
+    diff data/var_cache_c.asc data/var_cache_f.asc
+    rm x y
+    exit_code=99
+    exit $exit_code
+fi
+
 
 ########## Compare Dimensions 
 
