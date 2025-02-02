@@ -1774,29 +1774,17 @@
    * ((lnp0) - (lnp1)))
 
 /**
- * @brief Calculate potential vorticity using the Zeta approximation.
+ * @brief Computes the value of the zeta vertical coordinate.
  *
- * This macro calculates the potential vorticity using the Zeta
- * approximation, which is a function of pressure, surface pressure,
- * and temperature.
- * 
- * @param ps Surface pressure in hPa.
- * @param p Pressure at the given level in hPa.
- * @param t Temperature at the given level in Kelvin (K).
- * @return The potential vorticity.
+ * This macro calculates the zeta vertical coordinate based on the given surface pressure (`ps`), 
+ * pressure (`p`), and temperature (`t`). The calculation depends on the ratio `p/ps`:
+ * - If `p/ps <= 0.3`, the function returns 1.0 multiplied by `THETA(p, t)`.
+ * - Otherwise, it computes a sine function transformation scaled by `THETA(p, t)`.
  *
- * Formula:
- * The potential vorticity (Zeta) is computed based on the given
- * pressure (p), surface pressure (ps), and temperature (t). It
- * involves the potential temperature (Theta) at the given pressure
- * level.
- * 
- * @note
- * The potential vorticity is approximated using the Zeta
- * approximation, which includes conditions based on pressure ratio
- * and a sinusoidal function.  Adjust the constants if the
- * approximation or conditions differ from the standard Zeta
- * approximation formula.
+ * @param ps Surface pressure.
+ * @param p  Pressure at the given level.
+ * @param t  Temperature at the given level.
+ * @return Computed zeta vertical coordinate value.
  * 
  * @author Lars Hoffmann
  */
@@ -4312,20 +4300,20 @@ void intpol_met_space_3d(
   const int init);
 
 /**
- * @brief Interpolates a meteorological variable in 3D space (longitude, latitude, pressure).
+ * @brief Interpolates meteorological data in 3D space.
  *
- * This function performs trilinear interpolation of a meteorological variable
- * based on the provided longitude, latitude, and pressure coordinates. The
- * meteorological data is given in a 3D array, and the function calculates the
- * interpolated value and stores it in the variable pointed to by `var`.
- * The function operates on model level data.
+ * This function performs trilinear interpolation to estimate a
+ * meteorological variable at a given altitude (`z`), longitude
+ * (`lon`), and latitude (`lat`). It uses a structured 3D grid with
+ * irregular vertical spacing and regular horizontal spacing.
  *
- * @param[in]  met   Pointer to a `met_t` structure containing the meteorological data.
- * @param[in]  array 3D array of meteorological data with dimensions [EX][EY][EP].
- * @param[in]  p     Pressure coordinate at which to interpolate.
- * @param[in]  lon   Longitude coordinate at which to interpolate.
- * @param[in]  lat   Latitude coordinate at which to interpolate.
- * @param[out] var   Pointer to a double where the interpolated value will be stored.
+ * @param met   Pointer to the meteorological data structure containing grid information.
+ * @param zs    3D array of altitude levels at each horizontal grid point.
+ * @param array 3D array of meteorological data values corresponding to the grid points.
+ * @param z     Target altitude for interpolation.
+ * @param lon   Target longitude for interpolation.
+ * @param lat   Target latitude for interpolation.
+ * @param var   Pointer to a variable where the interpolated value will be stored.
  *
  * @author Lars Hoffmann
  */
@@ -4430,24 +4418,24 @@ void intpol_met_time_3d(
   const int init);
 
 /**
- * @brief Interpolates a meteorological variable in time and 3D space (longitude, latitude, pressure).
+ * @brief Interpolates meteorological data in both space and time.
  *
- * This function performs spatiotemporal interpolation of a meteorological
- * variable based on the provided longitude, latitude, pressure, and timestamp. 
- * The meteorological data is given in two 3D arrays corresponding to two 
- * different time steps, and the function calculates the interpolated value 
- * and stores it in the variable pointed to by `var`.
- * The function operates on model level data.
+ * This function performs 3D spatial interpolation at two time steps
+ * (`met0` and `met1`), then interpolates the results in time to
+ * estimate the meteorological variable at a given time (`ts`),
+ * pressure level (`p`), longitude (`lon`), and latitude (`lat`).
  *
- * @param[in]  met0   Pointer to a `met_t` structure containing the meteorological data for the first time step.
- * @param[in]  array0 3D array of meteorological data for the first time step with dimensions [EX][EY][EP].
- * @param[in]  met1   Pointer to a `met_t` structure containing the meteorological data for the second time step.
- * @param[in]  array1 3D array of meteorological data for the second time step with dimensions [EX][EY][EP].
- * @param[in]  ts     Timestamp at which to interpolate.
- * @param[in]  p      Pressure coordinate at which to interpolate.
- * @param[in]  lon    Longitude coordinate at which to interpolate.
- * @param[in]  lat    Latitude coordinate at which to interpolate.
- * @param[out] var    Pointer to a double where the interpolated value will be stored.
+ * @param met0   Pointer to the meteorological data structure at the earlier time step.
+ * @param zs0    3D array of altitude levels for `met0`.
+ * @param array0 3D array of meteorological data values corresponding to `met0`.
+ * @param met1   Pointer to the meteorological data structure at the later time step.
+ * @param zs1    3D array of altitude levels for `met1`.
+ * @param array1 3D array of meteorological data values corresponding to `met1`.
+ * @param ts     Target time for interpolation.
+ * @param p      Target pressure level for interpolation.
+ * @param lon    Target longitude for interpolation.
+ * @param lat    Target latitude for interpolation.
+ * @param var    Pointer to a variable where the interpolated value will be stored.
  *
  * @author Lars Hoffmann
  */
