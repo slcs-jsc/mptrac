@@ -1376,8 +1376,9 @@ void intpol_met_space_3d(
 
 void intpol_met_space_3d_ml(
   const met_t *met,
+  float zs[EX][EY][EP],
   float array[EX][EY][EP],
-  const double p,
+  const double z,
   const double lon,
   const double lat,
   double *var) {
@@ -1394,50 +1395,45 @@ void intpol_met_space_3d_ml(
   int iy = locate_reg(met->lat, met->ny, lat);
 
   /* Interpolate vertically... */
-  int iz = locate_irr_float(met->pl[ix][iy], met->npl, p, 0);
+  int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
   double aux00;
-  if (p >= met->pl[ix][iy][iz + 1])
+  if (z >= zs[ix][iy][iz + 1])
     aux00 = array[ix][iy][iz + 1];
-  else if (p <= met->pl[ix][iy][iz])
+  else if (z <= zs[ix][iy][iz])
     aux00 = array[ix][iy][iz];
   else
-    aux00 = LIN(met->pl[ix][iy][iz],
-		array[ix][iy][iz],
-		met->pl[ix][iy][iz + 1], array[ix][iy][iz + 1], p);
+    aux00 = LIN(zs[ix][iy][iz], array[ix][iy][iz],
+		zs[ix][iy][iz + 1], array[ix][iy][iz + 1], z);
 
-  iz = locate_irr_float(met->pl[ix][iy + 1], met->npl, p, iz);
+  iz = locate_irr_float(zs[ix][iy + 1], met->npl, z, iz);
   double aux01;
-  if (p >= met->pl[ix][iy + 1][iz + 1])
+  if (z >= zs[ix][iy + 1][iz + 1])
     aux01 = array[ix][iy + 1][iz + 1];
-  else if (p <= met->pl[ix][iy + 1][iz])
+  else if (z <= zs[ix][iy + 1][iz])
     aux01 = array[ix][iy + 1][iz];
   else
-    aux01 = LIN(met->pl[ix][iy + 1][iz],
-		array[ix][iy + 1][iz],
-		met->pl[ix][iy + 1][iz + 1], array[ix][iy + 1][iz + 1], p);
+    aux01 = LIN(zs[ix][iy + 1][iz], array[ix][iy + 1][iz],
+		zs[ix][iy + 1][iz + 1], array[ix][iy + 1][iz + 1], z);
 
-  iz = locate_irr_float(met->pl[ix + 1][iy], met->npl, p, iz);
+  iz = locate_irr_float(zs[ix + 1][iy], met->npl, z, iz);
   double aux10;
-  if (p >= met->pl[ix + 1][iy][iz + 1])
+  if (z >= zs[ix + 1][iy][iz + 1])
     aux10 = array[ix + 1][iy][iz + 1];
-  else if (p <= met->pl[ix + 1][iy][iz])
+  else if (z <= zs[ix + 1][iy][iz])
     aux10 = array[ix + 1][iy][iz];
   else
-    aux10 = LIN(met->pl[ix + 1][iy][iz],
-		array[ix + 1][iy][iz],
-		met->pl[ix + 1][iy][iz + 1], array[ix + 1][iy][iz + 1], p);
+    aux10 = LIN(zs[ix + 1][iy][iz], array[ix + 1][iy][iz],
+		zs[ix + 1][iy][iz + 1], array[ix + 1][iy][iz + 1], z);
 
-  iz = locate_irr_float(met->pl[ix + 1][iy + 1], met->npl, p, iz);
+  iz = locate_irr_float(zs[ix + 1][iy + 1], met->npl, z, iz);
   double aux11;
-  if (p >= met->pl[ix + 1][iy + 1][iz + 1])
+  if (z >= zs[ix + 1][iy + 1][iz + 1])
     aux11 = array[ix + 1][iy + 1][iz + 1];
-  else if (p <= met->pl[ix + 1][iy + 1][iz])
+  else if (z <= zs[ix + 1][iy + 1][iz])
     aux11 = array[ix + 1][iy + 1][iz];
   else
-    aux11 = LIN(met->pl[ix + 1][iy + 1][iz],
-		array[ix + 1][iy + 1][iz],
-		met->pl[ix + 1][iy + 1][iz + 1],
-		array[ix + 1][iy + 1][iz + 1], p);
+    aux11 = LIN(zs[ix + 1][iy + 1][iz], array[ix + 1][iy + 1][iz],
+		zs[ix + 1][iy + 1][iz + 1], array[ix + 1][iy + 1][iz + 1], z);
 
   /* Interpolate horizontally... */
   double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat);
@@ -1538,8 +1534,10 @@ void intpol_met_time_3d(
 
 void intpol_met_time_3d_ml(
   const met_t *met0,
+  float zs0[EX][EY][EP],
   float array0[EX][EY][EP],
   const met_t *met1,
+  float zs1[EX][EY][EP],
   float array1[EX][EY][EP],
   const double ts,
   const double p,
@@ -1550,8 +1548,8 @@ void intpol_met_time_3d_ml(
   double var0, var1;
 
   /* Spatial interpolation... */
-  intpol_met_space_3d_ml(met0, array0, p, lon, lat, &var0);
-  intpol_met_space_3d_ml(met1, array1, p, lon, lat, &var1);
+  intpol_met_space_3d_ml(met0, zs0, array0, p, lon, lat, &var0);
+  intpol_met_space_3d_ml(met1, zs1, array1, p, lon, lat, &var1);
 
   /* Interpolate... */
   *var = LIN(met0->time, var0, met1->time, var1, ts);
@@ -2122,12 +2120,15 @@ void module_advect(
   
 	/* Interpolate meteo data on model levels... */
 	else {
-	  intpol_met_time_3d_ml(met0, met0->ul, met1, met1->ul, tm, x[2],
-				x[0], x[1], &u[i]);
-	  intpol_met_time_3d_ml(met0, met0->vl, met1, met1->vl, tm, x[2],
-				x[0], x[1], &v[i]);
-	  intpol_met_time_3d_ml(met0, met0->wl, met1, met1->wl, tm, x[2],
-				x[0], x[1], &w[i]);
+	  intpol_met_time_3d_ml(met0, met0->pl, met0->ul,
+				met1, met1->pl, met1->ul,
+				tm, x[2], x[0], x[1], &u[i]);
+	  intpol_met_time_3d_ml(met0, met0->pl, met0->vl,
+				met1, met1->pl, met1->vl,
+				tm, x[2], x[0], x[1], &v[i]);
+	  intpol_met_time_3d_ml(met0, met0->pl, met0->wl,
+				met1, met1->pl, met1->wl,
+				tm, x[2], x[0], x[1], &w[i]);
 	}
 
 	/* Get mean wind... */
