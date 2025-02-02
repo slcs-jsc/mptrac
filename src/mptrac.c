@@ -2159,6 +2159,9 @@ void module_advect(
 
       /* Convert pressure to zeta... */
       INTPOL_INIT;
+
+      // TODO: can we use intpol_met_time_3d_ml instead of intpol_met_4d_coord?
+
       intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
 			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
 			  atm->lon[ip], atm->lat[ip],
