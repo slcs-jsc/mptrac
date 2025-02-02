@@ -4331,11 +4331,12 @@ void intpol_met_space_3d(
  */
 void intpol_met_space_3d_ml(
   const met_t * met,
-  float array[EX][EY][EP],
-  const double p,
+  float zs[EX][EY][EP],
+  float vals[EX][EY][EP],
+  const double z,
   const double lon,
   const double lat,
-  double *var);
+  double *val);
 
 /**
  * @brief Interpolates meteorological variables in 2D space.
@@ -4452,8 +4453,10 @@ void intpol_met_time_3d(
  */
 void intpol_met_time_3d_ml(
   const met_t * met0,
+  float zs0[EX][EY][EP],
   float array0[EX][EY][EP],
   const met_t * met1,
+  float zs1[EX][EY][EP],
   float array1[EX][EY][EP],
   const double ts,
   const double p,
