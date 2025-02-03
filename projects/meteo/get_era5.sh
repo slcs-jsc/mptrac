@@ -47,7 +47,7 @@ mkdir -p "$dir" || exit
 tmp=$(mktemp -d tmp.XXXXXXXX)
 
 # Download data...
-source ~/venv/bin/activate
+source ./venv/bin/activate
 cd "$tmp" || exit
 python3 <<EOF
 import cdsapi
