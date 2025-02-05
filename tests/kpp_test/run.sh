@@ -55,6 +55,8 @@ DT_MET = 86400.0
 T_STOP = $t1
 MIXING_TROP = 1e-3
 MIXING_STRAT = 1e-6
+DIFFUSION = 1
+RNG_TYPE = 0
 EOF
 
 # Create observation file...
