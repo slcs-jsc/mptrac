@@ -12,9 +12,9 @@ jobs:
       run: sudo apt-get update ; sudo apt-get install gnuplot lcov libgsl-dev libnetcdf-dev libhdf5-dev
     - name: make
       run: cd ./src ; STATIC=0 COV=1 make
-    - name: check
+    - name: make check
       run: cd ./src ; STATIC=0 COV=1 make check
-    - name: coverage
+    - name: make coverage
       run: cd ./src ; STATIC=0 COV=1 make coverage
     - name: upload
       uses: codecov/codecov-action@v5
