@@ -65,6 +65,6 @@ $trac/trac ./data/dirlist trac.ctl ../data.ref/init/pos_glo_16070100.nc \
 
 # Compare files...
 diff -q -s ./data.ref/atm_output.tab ./data/atm_output.tab || error=1
-diff -q -s ./data.ref/diabatic/atm_2016_07_01_00_00.tab ./data/atm_2016_07_01_00_00.tab || error=1
-diff -q -s ./data.ref/diabatic/atm_2016_07_01_06_00.tab ./data/atm_2016_07_01_06_00.tab || error=1
+diff -q -s ./data.ref/atm_2016_07_01_00_00.tab ./data/atm_2016_07_01_00_00.tab || error=1
+diff -q -s ./data.ref/atm_2016_07_01_06_00.tab ./data/atm_2016_07_01_06_00.tab || error=1
 exit ${error}
