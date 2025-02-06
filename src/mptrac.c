@@ -4762,7 +4762,9 @@ void mptrac_read_ctl(
     ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
-  if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord != 1)
+  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 2)
+    ERRMSG("Set MET_VERT_COORD to 0, 1, or 2!");
+  if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
     ERRMSG
       ("Using ADVECT_VERT_COORD = 2 requires meteo data on model levels!");
 
@@ -7285,8 +7287,8 @@ void read_met_levels(
        NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
     WARN("Cannot read ZETA_DOT!");
 
-  /* Store velocities on model levels for diabatic advection... */
-  if (ctl->met_vert_coord == 1) {
+  /* Store velocities on model levels... */
+  if (ctl->met_vert_coord != 0) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
@@ -7295,19 +7297,39 @@ void read_met_levels(
 	  met->wl[ix][iy][ip] = met->w[ix][iy][ip];
 	}
 
-    /* Original number of vertical levels... */
+    /* Save number of model levels... */
     met->npl = met->np;
   }
 
   /* Read pressure on model levels... */
-  if (ctl->met_np > 0 || ctl->met_vert_coord == 1) {
+  if (ctl->met_np > 0 || ctl->met_vert_coord != 0) {
 
-    /* Read data... */
-    if (!read_met_nc_3d
-	(ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl, 0.01f))
+    /* Read 3-D pressure field... */
+    if (ctl->met_vert_coord == 1) {
       if (!read_met_nc_3d
-	  (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
-	ERRMSG("Cannot read pressure on model levels!");
+	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl,
+	   0.01f))
+	if (!read_met_nc_3d
+	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
+	  ERRMSG("Cannot read pressure on model levels!");
+    }
+
+    /* Calculate pressure from a and b coefficients... */
+    else {
+
+      /* Read a and b coefficients... */
+      int varid;
+      double hyam[EP], hybm[EP];
+      NC_GET_DOUBLE("hyam", hyam, 1);
+      NC_GET_DOUBLE("hybm", hybm, 1);
+
+      /* Calculate pressure... */
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++)
+	    met->pl[ix][iy][ip] =
+	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
+    }
 
     /* Check ordering of pressure levels... */
     for (int ix = 0; ix < met->nx; ix++)
@@ -7489,14 +7511,14 @@ int read_met_nc(
   /* Read coordinates of meteo data... */
   read_met_grid(filename, ncid, ctl, met);
 
+  /* Read surface data... */
+  read_met_surface(ncid, ctl, met);
+
   /* Read meteo data on vertical levels... */
   read_met_levels(ncid, ctl, met);
 
   /* Extrapolate data for lower boundary... */
   read_met_extrapolate(met);
-
-  /* Read surface data... */
-  read_met_surface(ncid, ctl, met);
 
   /* Fix polar winds... */
   read_met_polar_winds(met);
@@ -8435,7 +8457,8 @@ void read_met_surface(
     WARN("Cannot not read surface pressure data (use lowest level)!");
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy] = (float) met->p[0];
+	met->ps[ix][iy]
+	  = (ctl->met_np > 0 ? (float) ctl->met_p[0] : (float) met->p[0]);
   }
 
   /* MPTRAC meteo data... */

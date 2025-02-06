@@ -2474,7 +2474,8 @@ typedef struct {
   /*! Meteo data layout (0=[lev, lat, lon], 1=[lon, lat, lev]). */
   int met_convention;
 
-  /*! Vertical coordinate of input meteo data (0=pressure-level, 1=model-level). */
+  /*! Vertical coordinate of input meteo data
+     (0=pressure-level, 1=model-level_pfield, 2=model-level_abcoeff). */
   int met_vert_coord;
 
   /*! Type of meteo data files
