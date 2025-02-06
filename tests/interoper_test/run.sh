@@ -45,7 +45,7 @@ QNT_NAME[3] = zeta
 QNT_NAME[4] = zeta_d
 QNT_NAME[5] = ps
 QNT_NAME[6] = p
-METBASE = ../data/clams/erai_vlr
+METBASE = ./clams/erai_vlr
 DIRECTION = 1
 MET_TROPO = 3
 TDEC_TROP = 259200
@@ -61,9 +61,7 @@ EOF
 # Calculate trajectories...
 echo "./data" > ./data/dirlist
 $trac/trac ./data/dirlist trac.ctl ../data.ref/init/pos_glo_16070100.nc \
-	   ATM_BASENAME atm GRID_BASENAME grid \
-	   TURB_MESOX 0 TURB_MESOZ 0 \
-	   TURB_DX_TROP 0 TURB_DZ_STRAT 0
+	   ATM_BASENAME atm GRID_BASENAME grid
 
 # Compare files...
 diff -q -s ./data.ref/atm_output.tab ./data/atm_output.tab || error=1
