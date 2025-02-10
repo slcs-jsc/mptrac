@@ -2178,7 +2178,7 @@ void module_advect(
 	  intpol_met_time_3d(met0, met0->w, met1, met1->w,
 			     tm, x[2], x[0], x[1], &w[i], ci, cw, 0);
 	}
-  
+    
 	/* Interpolate meteo data on model levels... */
 	else {
 	  intpol_met_time_3d_ml(met0, met0->pl, met0->ul,
@@ -8040,6 +8040,7 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
 
   /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
+    met->np = ctl->met_np;
     /* Interpolate variables... */
     read_met_ml2pl(ctl, met, met->t, "T");
     read_met_ml2pl(ctl, met, met->u, "U");
@@ -8282,8 +8283,9 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
       }
     }
   }
-
+  
   /*Read data from ml file*/
+  met->npl = met->np;
   read_met_levels_grib(ml_handles,ml_num_messages,ctl,met);
   for(int i=0;i<ml_num_messages;i++){
     codes_handle_delete(ml_handles[i]);
