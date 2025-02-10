@@ -2267,7 +2267,7 @@ void module_advect(
 	  intpol_met_time_3d(met0, met0->w, met1, met1->w,
 			     tm, x[2], x[0], x[1], &w[i], ci, cw, 0);
 	}
-
+  
 	/* Interpolate meteo data on model levels... */
 	else {
 	  intpol_met_time_3d_ml(met0, met0->ul, met1, met1->ul, tm, x[2],
@@ -6612,7 +6612,7 @@ void read_met_global_grib(
       max_level = (int)level;
     }
   }
-  met->npl = max_level;
+  met->npl = max_level+1;
   }
 #endif
 
@@ -6853,23 +6853,15 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     }
 
     /*Read water vapor*/
-    if (!ctl->met_relhum){
-      if( strcmp(short_name,"q")==0){
-            for (int ix = 0; ix < met->nx; ix++) {
-                  for (int iy = 0; iy < met->ny; iy++) {
-                    met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy] *(float) (MA / MH2O);
-                  }
-              }
-              
-          }    
-    }
-    else if( strcmp(short_name,"r")==0){
+    
+    if( strcmp(short_name,"q")==0){
       for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy]*0.01f;
-            }
+        for (int iy = 0; iy < met->ny; iy++) {
+          met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy] *(float) (MA / MH2O);
         }
-    }
+      }
+            
+    }    
     free(values);
   }
 
@@ -6881,12 +6873,13 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
 	       && met->pl[ix][iy][ip - 1] <= met->pl[ix][iy][ip])
 	      || (met->pl[ix][iy][0] < met->pl[ix][iy][1]
 		  && met->pl[ix][iy][ip - 1] >= met->pl[ix][iy][ip])){
-        LOG(1,"ERR: %f %f %f %f",met->pl[ix][iy][0], met->pl[ix][iy][1],met->pl[ix][iy][ip - 1], met->pl[ix][iy][ip])
+      LOG(1,"%f %f %f %f",met->pl[ix][iy][0],met->pl[ix][iy][1],met->pl[ix][iy][ip - 1],met->pl[ix][iy][ip]);
 	    ERRMSG("Pressure profiles are not monotonic!");
       }
 
   /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
+    met->np = ctl->met_np;
     /* Interpolate variables... */
     read_met_ml2pl(ctl, met, met->t, "T");
     read_met_ml2pl(ctl, met, met->u, "U");
@@ -7109,14 +7102,14 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   for(int nx = 0;nx<met->nx;nx++){
     for(int ny = 0;ny<met->ny;ny++){
       for(int level = 0;level<met->npl;level++){
-        met->pl[nx][ny][level] = (float) (values[level+1] + met->ps[nx][ny] * values[level+2+met->npl]);
+        met->pl[nx][ny][level] = (float) ((values[level] + met->ps[nx][ny] * values[level+met->npl])*0.01f);
       }
     }
   }
-
+  
   /*Read data from ml file*/
+  met->npl = met->np;
   read_met_levels_grib(ml_handles,ml_num_messages,ctl,met);
-  met->np = met->npl;
   for(int i=0;i<ml_num_messages;i++){
     codes_handle_delete(ml_handles[i]);
   }
@@ -8219,7 +8212,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     if ( strcmp(short_name,"sp")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->ps[ix][iy] = (float)values[ix * met->ny + ix];
+                met->ps[ix][iy] = (float)values[ix * met->ny + iy];
             }
         }
     }
@@ -8228,7 +8221,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"z")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->zs[ix][iy] = (float)values[ix * met->ny +ix]*(float) (1. / (1000. * G0));
+                met->zs[ix][iy] = (float)values[ix * met->ny +iy]*(float) (1. / (1000. * G0));
             }
         } 
     }
@@ -8237,7 +8230,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"2t")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->ts[ix][iy] = (float)values[ix * met->ny +ix];
+                met->ts[ix][iy] = (float)values[ix * met->ny +iy];
             }
         }
       }
@@ -8246,7 +8239,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"10u")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->us[ix][iy] = (float)values[ix * met->ny +ix];
+                met->us[ix][iy] = (float)values[ix * met->ny +iy];
             }
         }
       }
@@ -8255,7 +8248,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"10v")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->vs[ix][iy] = (float)values[ix * met->ny +ix];
+                met->vs[ix][iy] = (float)values[ix * met->ny +iy];
             }
         }
       }
@@ -8263,7 +8256,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"lsm")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->lsm[ix][iy] = (float)values[ix * met->ny +ix];
+                met->lsm[ix][iy] = (float)values[ix * met->ny +iy];
             }
         }
       }
@@ -8271,7 +8264,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     else if ( strcmp(short_name,"sst")==0){
       for (int ix = 0; ix < met->nx; ix++) {
             for (int iy = 0; iy < met->ny; iy++) {
-                met->sst[ix][iy] = (float)values[ix * met->ny +ix];
+                met->sst[ix][iy] = (float)values[ix * met->ny +iy];
             }
         }
       }
@@ -8281,7 +8274,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
         if ( strcmp(short_name,"cape")==0){
           for (int ix = 0; ix < met->nx; ix++) {
                 for (int iy = 0; iy < met->ny; iy++) {
-                    met->cape[ix][iy] = (float)values[ix * met->ny +ix];
+                    met->cape[ix][iy] = (float)values[ix * met->ny +iy];
                 }
             }
           }
@@ -8289,7 +8282,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
         else if ( strcmp(short_name,"cin")==0){
           for (int ix = 0; ix < met->nx; ix++) {
                 for (int iy = 0; iy < met->ny; iy++) {
-                    met->cin[ix][iy] = (float)values[ix * met->ny +ix];
+                    met->cin[ix][iy] = (float)values[ix * met->ny +iy];
                 }
             }
           }
@@ -8299,7 +8292,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
         if ( strcmp(short_name,"blh")==0){
             for (int ix = 0; ix < met->nx; ix++) {
                   for (int iy = 0; iy < met->ny; iy++) {
-                      met->pbl[ix][iy] = (float)values[ix * met->ny +ix]*0.0001f;
+                      met->pbl[ix][iy] = (float)values[ix * met->ny +iy]*0.0001f;
                   }
               }
             }
