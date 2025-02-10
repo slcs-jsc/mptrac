@@ -2,8 +2,8 @@
 
 # Set environment...
 ulimit -s unlimited
-export OMP_NUM_THREADS=4
 export LD_LIBRARY_PATH=../../libs/build/lib:$LD_LIBRARY_PATH
+export OMP_NUM_THREADS=4
 export LANG=C
 export LC_ALL=C
 
@@ -21,6 +21,7 @@ mkdir -p data/fortran
 
 # Set timestep and timerange of simulation...
 t0=$($trac/time2jsec 2011 6 5 0 0 0 0)
+#t1=$($trac/time2jsec 2011 6 6 0 0 0 0)
 t1=$($trac/time2jsec 2011 6 8 0 0 0 0)
 
 # Create control parameter file...
@@ -48,24 +49,22 @@ BOUND_P0 = 1e10
 BOUND_P1 = -1e10
 BOUND_DPS = 100.0
 BOUND_MASS = 0.0
-TURB_DX_TROP = 0
-TURB_DX_STRAT = 0
-TURB_DZ_TROP = 0
-TURB_DZ_STRAT = 0
-TURB_MESOX = 0
-TURB_MESOZ = 0
+CONV_CAPE = 0.0
 H2O2_CHEM_REACTION = 1
 TRACER_CHEM = 1
+DIFFUSION = 1
 TDEC_TROP = 259200.0
 TDEC_STRAT = 259200.0
 DRY_DEPO_VDEP = 0.15
 DRY_DEPO_DP = 300
 MIXING_TROP = 1e-3
 MIXING_STRAT = 1e-6
+DRY_DEPO_VDEP = 0.15
+DRY_DEPO_DP = 300
+MIXING_TROP = 1e-3
+MIXING_STRAT = 1e-6
 DT_MET = 86400.0
 T_STOP = $t1
-ATM_BASENAME = atm
-ATM_TYPE_OUT = 0
 CSI_OBSMIN = 1e-5
 CSI_MODMIN = 1e-5
 GRID_LON0 = -90
@@ -106,12 +105,12 @@ $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 echo "C Code..."
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-           ATM_BASENAME atm GRID_BASENAME grid \
-           ENS_BASENAME ens STAT_BASENAME station \
-           CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
-           PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
+	   ATM_BASENAME atm GRID_BASENAME grid \
+	   ENS_BASENAME ens STAT_BASENAME station \
+	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
            SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
-           VTK_BASENAME atm
+	   VTK_BASENAME atm
 
 # trac.c produces the reference data set for the Fortran wrapper
 mv data/*00.tab data/*.vtk data/c/
@@ -120,40 +119,53 @@ mv data/*00.tab data/*.vtk data/c/
 echo "Fortran Wrapper..."
 echo "data" > data/dirlist
 $trac/trac_fortran data/dirlist trac.ctl atm_split.tab \
-		   ATM_BASENAME atm GRID_BASENAME grid \
-		   ENS_BASENAME ens STAT_BASENAME station \
-		   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
-		   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
-		   SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
-		   VTK_BASENAME atm
+	   ATM_BASENAME atm GRID_BASENAME grid \
+	   ENS_BASENAME ens STAT_BASENAME station \
+	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
+           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
+	   VTK_BASENAME atm
+
 mv data/*00.tab data/*.vtk data/fortran/
 
-# Check for memory leaks...
-#valgrind --tool=memcheck --leak-check=full --track-origins=yes -s $trac/trac_fortran
-#valgrind --tool=memcheck --leak-check=full --show-leak-kinds=all --track-origins=yes --max-stackframe=17081687808 --main-stacksize=90388608 -s $trac/trac_fortran
-#valgrind --tool=memcheck --leak-check=full --track-origins=yes --max-stackframe=17081687808 --main-stacksize=190388608 -s $trac/trac_fortran
+# Compare files...
+## Files are limited to time, altitude, longitude and latitude, because Fortran wrapper includes only advection 
+#echo -e "\nCompare results..."
+#error=0
+#for f in $(ls data/c/atm*00.tab ) ; do
+#    f2=data/fortran/"$(basename "$f")"
+#    a=$(awk '{printf $1}' "$f")
+#    aa=$(awk '{printf $1}' "$f2")
+#    rm -f x y
+#    if [ $a == "#" ]; then
+#	cut -d' ' -f1-5 $f >> x
+#    else
+#	cut -d' ' -f1-4 $f >> x
+#    fi
+#    if [ $aa == "#" ]; then
+#	cut -d' ' -f1-5 $f2 >> y
+#    else
+#	cut -d' ' -f1-4 $f2 >> y
+#    fi
+#    mv x $f
+#    mv y $f2
+#    diff -q -s $f $f2 || error=1
+#done
+#exit $error
 
 # Compare files...
-# Files are limited to time, altitude, longitude and latitude, because Fortran wrapper includes only advection 
 echo -e "\nCompare results..."
 error=0
-for f in $(ls data/c/atm*00.tab ) ; do
-    f2=data/fortran/"$(basename "$f")"
-    a=$(awk '{printf $1}' "$f")
-    aa=$(awk '{printf $1}' "$f2")
-    rm -f x y
-    if [ $a == "#" ]; then
-	cut -d' ' -f1-5 $f >> x
-    else
-	cut -d' ' -f1-4 $f >> x
-    fi
-    if [ $aa == "#" ]; then
-	cut -d' ' -f1-5 $f2 >> y
-    else
-	cut -d' ' -f1-4 $f2 >> y
-    fi
-    mv x $f
-    mv y $f2
-    diff -q -s $f $f2 || error=1
+for f in $(ls data/c/*.tab data/c/*.vtk) ; do
+    diff -q -s data/fortran/"$(basename "$f")" "$f" || error=1
+    #    xxdiff data/fortran/"$(basename "$f")" "$f" || error=1
 done
 exit $error
+
+## Compare files...
+#echo -e "\nCompare results..."
+#error=0
+#for f in $(ls data.ref/*.tab data.ref/*.vtk) ; do
+#    diff -q -s data/"$(basename "$f")" "$f" || error=1
+#done
+#exit $error

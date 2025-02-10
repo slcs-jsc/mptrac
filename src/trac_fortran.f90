@@ -25,18 +25,24 @@ PROGRAM trac_fortran
   IMPLICIT NONE
   
   CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
-  INTEGER(c_int) :: argc
-  TYPE(ctl_t) :: ctl
-  TYPE(cache_t) :: cache
-  TYPE(atm_t) :: atm
-  TYPE(clim_t) :: clim
+  INTEGER(c_int) :: argc, ntask
+  TYPE(ctl_t), TARGET :: ctl
+  TYPE(ctl_t), POINTER :: ctlp
+  TYPE(cache_t), TARGET :: cache
+  TYPE(cache_t), POINTER :: cachep
+  TYPE(atm_t), TARGET :: atm
+  TYPE(atm_t), POINTER :: atmp
+  TYPE(clim_t), TARGET :: clim
+  TYPE(clim_t), POINTER :: climp
   TYPE(met_t), TARGET :: met0, met1
   TYPE(met_t), POINTER :: met0p, met1p
   REAL(real64) :: t
-  CHARACTER(len=32) :: arg
+  CHARACTER(len=5000) :: arg
   TYPE(c_ptr), ALLOCATABLE, DIMENSION(:) :: argv_ptrs
-  CHARACTER(len=32), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
+  CHARACTER(len=5000), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
   INTEGER :: i, stat
+
+  ntask = -1
   
   ! Read command line arguments...
   argc = command_argument_count()
@@ -61,6 +67,13 @@ PROGRAM trac_fortran
      WRITE(*,*) "Error: Cannot open directory list!"
      CALL EXIT
   ENDIF
+
+  ctlp => ctl
+  cachep => cache
+  climp => clim
+  met0p => met0
+  met1p => met1
+  atmp => atm
   
   DO WHILE (1 .eq. 1)
      READ(10,'(a)', END=200) dirname
@@ -68,22 +81,20 @@ PROGRAM trac_fortran
      filename_ctl = TRIM(dirname)//"/"//tmp(2)
      filename_atm = TRIM(dirname)//"/"//tmp(3)
 
+     ! Allocate memory...
+     CALL mptrac_alloc(ctlp, cachep, climp, met0p, met1p, atmp)
+     
      ! Read control parameters...
      CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc, argv_ptrs, ctl)
-  
+
      ! Read climatological data... 
      CALL mptrac_read_clim(ctl, clim)
   
      ! Read atmospheric data...
      CALL mptrac_read_atm(TRIM(filename_atm)//c_null_char, ctl, atm)
-  
-     ! Initialize timesteps...
-     CALL mptrac_module_timesteps_init(ctl, atm)
 
-     ! Get meteo data...
-     met0p => met0
-     met1p => met1
-     CALL mptrac_get_met(ctl, clim, ctl%t_start, met0p, met1p)
+     ! Initialize MPTRAC...
+     CALL mptrac_init(ctl, cache, clim, atm, ntask)
 
      t = ctl%t_start
 
@@ -94,24 +105,26 @@ PROGRAM trac_fortran
            t = ctl%t_stop
         ENDIF
 
-        ! Set time steps of air parcels...
-        CALL mptrac_module_timesteps(ctl, cache, met0, atm, t)
-        
-        IF (t .NE. ctl%t_start) THEN
-           ! Get meteo data...
-           CALL mptrac_get_met(ctl, clim, t, met0p, met1p)
+        ! Get meteo data...
+        CALL mptrac_get_met(ctl, clim, t, met0p, met1p)
+
+        ! Check time step...
+        IF (ctl%dt_mod > ABS(met0p%lon(2) - met0p%lon(1)) * 111132. / 150.) THEN
+           WRITE(*,*) "Violation of CFL criterion! Check DT_MOD!"
         ENDIF
 
-        ! Advection...
-        CALL mptrac_module_advect(ctl, cache, met0, met1, atm)
+        ! Run a single time step..."
+        CALL mptrac_run_timestep(ctl, cache, clim, met0p, met1p, atm, t)
         
         ! Write output...
-        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0, met1, atm, t)
+        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0p, met1p, atm, t)
 
         t = t + ctl%direction * ctl%dt_mod
 
      END DO
 
+     CALL mptrac_free(ctlp, cachep, climp, met0p, met1p, atmp)
+     
   END DO
 200  CONTINUE
 
