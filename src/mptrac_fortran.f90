@@ -501,6 +501,30 @@ END MODULE mptrac_struct
 MODULE mptrac_func
   INTERFACE
 
+     SUBROUTINE mptrac_alloc(ctl, cache, clim, met0, met1, atm) &
+          bind(c,name='mptrac_alloc')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       IMPLICIT NONE
+       TYPE(ctl_t), INTENT(inout), POINTER :: ctl
+       TYPE(cache_t), INTENT(inout), POINTER :: cache
+       TYPE(clim_t), INTENT(inout), POINTER :: clim
+       TYPE(met_t), INTENT(inout), POINTER :: met0, met1
+       TYPE(atm_t), INTENT(inout), POINTER :: atm
+     END SUBROUTINE mptrac_alloc
+
+     SUBROUTINE mptrac_free(ctl, cache, clim, met0, met1, atm) &
+          bind(c,name='mptrac_free')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       IMPLICIT NONE
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
+       TYPE(cache_t), INTENT(inout), TARGET :: cache
+       TYPE(clim_t), INTENT(inout), TARGET :: clim
+       TYPE(met_t), INTENT(inout), TARGET :: met0, met1
+       TYPE(atm_t), INTENT(inout), TARGET :: atm
+     END SUBROUTINE mptrac_free
+     
      SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
           bind(c,name='mptrac_get_met')
        USE iso_c_binding
@@ -512,36 +536,18 @@ MODULE mptrac_func
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
      END SUBROUTINE mptrac_get_met
 
-     SUBROUTINE mptrac_module_advect(ctl, cache, met0, met1, atm) &
-          bind(c,name='module_advect')
+     SUBROUTINE mptrac_init(ctl, cache, clim, atm, ntask) &
+          bind(c,name='mptrac_init')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, met_t, atm_t, npp
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, atm_t
        IMPLICIT NONE
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
        TYPE(cache_t), INTENT(inout), TARGET :: cache
-       TYPE(met_t), INTENT(in), TARGET :: met0, met1
+       TYPE(clim_t), INTENT(inout), TARGET :: clim
        TYPE(atm_t), INTENT(inout), TARGET :: atm
-     END SUBROUTINE mptrac_module_advect
-
-     SUBROUTINE mptrac_module_timesteps(ctl, cache, met0, atm, t) &
-          bind(c,name='module_timesteps')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, met_t, atm_t, npp
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(cache_t), INTENT(inout), TARGET :: cache
-       TYPE(met_t), INTENT(in), TARGET :: met0
-       TYPE(atm_t), INTENT(in), TARGET :: atm
-       REAL(c_double), INTENT(in), VALUE :: t
-     END SUBROUTINE mptrac_module_timesteps
-
-     SUBROUTINE mptrac_module_timesteps_init(ctl, atm) &
-          bind(c,name='module_timesteps_init')
-       USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, atm_t
-       TYPE(ctl_t), INTENT(in), TARGET :: ctl
-       TYPE(atm_t), INTENT(out), TARGET :: atm
-     END SUBROUTINE mptrac_module_timesteps_init
-
+       INTEGER(c_int), INTENT(in), VALUE :: ntask
+     END SUBROUTINE mptrac_init
+     
      SUBROUTINE mptrac_read_atm(filename, ctl, atm) &
           bind(c,name='mptrac_read_atm')
        USE iso_c_binding
@@ -572,17 +578,50 @@ MODULE mptrac_func
        TYPE(ctl_t), INTENT(out), TARGET :: ctl
      END SUBROUTINE mptrac_read_ctl
 
-     SUBROUTINE mptrac_read_met(filename, ctl, clim, met, atm) &
+     SUBROUTINE mptrac_read_met(filename, ctl, clim, met) &
           bind(c,name='mptrac_read_met')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t
        IMPLICIT NONE
-       CHARACTER(c_char), DIMENSION(*), INTENT(in) :: filename
+       CHARACTER(c_char), DIMENSION(:), INTENT(in) :: filename
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(clim_t), INTENT(in), TARGET :: clim
-       TYPE(atm_t), INTENT(in), TARGET :: atm
        TYPE(met_t), INTENT(out), TARGET :: met
      END SUBROUTINE mptrac_read_met
+
+     SUBROUTINE mptrac_run_timestep(ctl, cache, clim, met0, met1, atm, t) &
+          bind(c,name='mptrac_run_timestep')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       IMPLICIT NONE
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
+       TYPE(cache_t), INTENT(inout), TARGET :: cache
+       TYPE(clim_t), INTENT(inout), TARGET :: clim
+       TYPE(met_t), INTENT(inout), POINTER :: met0, met1
+       TYPE(atm_t), INTENT(inout), TARGET :: atm
+       REAL(c_double), INTENT(in), VALUE :: t
+     END SUBROUTINE mptrac_run_timestep
+
+     SUBROUTINE mptrac_write_atm(filename, ctl, atm, t) &
+          bind(c,name='mptrac_write_atm')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, atm_t
+       IMPLICIT NONE
+       CHARACTER(c_char), DIMENSION(*), INTENT(in) :: filename
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
+       TYPE(atm_t), INTENT(inout), TARGET :: atm
+       REAL(c_double), INTENT(in), VALUE :: t
+     END SUBROUTINE mptrac_write_atm
+
+     SUBROUTINE mptrac_write_met(filename, ctl, met) &
+          bind(c,name='mptrac_write_met')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, met_t
+       IMPLICIT NONE
+       CHARACTER(c_char), DIMENSION(*), INTENT(in) :: filename
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
+       TYPE(met_t), INTENT(inout), TARGET :: met
+     END SUBROUTINE mptrac_write_met
 
      SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, t) &
           bind(c,name='mptrac_write_output')
@@ -595,5 +634,27 @@ MODULE mptrac_func
        REAL(c_double), INTENT(in), VALUE :: t
      END SUBROUTINE mptrac_write_output
 
+     SUBROUTINE mptrac_update_device(ctl, cache, clim, met0, met1, atm) &
+          bind(c,name='mptrac_update_device')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
+       TYPE(cache_t), INTENT(inout), TARGET :: cache
+       TYPE(clim_t), INTENT(inout), TARGET :: clim
+       TYPE(met_t), INTENT(inout), POINTER :: met0, met1
+       TYPE(atm_t), INTENT(inout), TARGET :: atm
+     END SUBROUTINE mptrac_update_device
+
+     SUBROUTINE mptrac_update_host(ctl, cache, clim, met0, met1, atm) &
+          bind(c,name='mptrac_update_host')
+       USE iso_c_binding
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       TYPE(ctl_t), INTENT(inout), TARGET :: ctl
+       TYPE(cache_t), INTENT(inout), TARGET :: cache
+       TYPE(clim_t), INTENT(inout), TARGET :: clim
+       TYPE(met_t), INTENT(inout), POINTER :: met0, met1
+       TYPE(atm_t), INTENT(inout) , TARGET :: atm
+     END SUBROUTINE mptrac_update_host
+     
   END INTERFACE
 END MODULE mptrac_func
