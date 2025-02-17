@@ -1015,6 +1015,26 @@
     if(ecc_result!=0)			     \
       ERRMSG("ECCODES error");	     \
   }
+#define ECC_READ_2D(variable,target,scaling_factor,found_flag){\
+  if( strcmp(short_name,variable)==0){\
+    for (int ix = 0; ix < met->nx; ix++) {\
+          for (int iy = 0; iy < met->ny; iy++) {\
+              target[ix][iy] = (float)(values[ix * met->ny + iy]*scaling_factor);\
+          }\
+      }\
+    found_flag =1;\
+  }\
+}
+#define ECC_READ_3D(variable,level,target,scaling_factor,found_flag){\
+  if( strcmp(short_name,variable)==0){\
+    for (int ix = 0; ix < met->nx; ix++) {\
+          for (int iy = 0; iy < met->ny; iy++) {\
+              target[ix][iy][level] = (float) (values[ix * met->ny + iy]*scaling_factor);\
+          }\
+      }\
+    found_flag +=1;\
+  }\
+}
 
 
 /**

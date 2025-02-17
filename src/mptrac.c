@@ -6756,7 +6756,7 @@ void read_met_levels(
 #ifdef ECCODES
 void read_met_levels_grib(codes_handle** handles, const int num_messages,const ctl_t* ctl,met_t* met){
 
-
+  int t_flag=0,u_flag=0,v_flag=0,w_flag=0,o3_flag=0,h2o_flag=0,lwc_flag=0,rwc_flag=0,iwc_flag=0,swc_flag=0,cc_flag=0;
   /*Iterate over all messages*/
   for( int i = 0; i< num_messages; i++){
     size_t max_size = 50;
@@ -6776,93 +6776,65 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     ECC(codes_get_double_array(handles[i],"values",values,&value_count))
 
     /*Read temperature*/
-    if ( strcmp(short_name,"t")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->t[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
+    ECC_READ_3D("t",current_level-1,met->t,1.0,t_flag)
+    
     /*read horizontal wind and vertical velocity*/
-    else if( strcmp(short_name,"u")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->u[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-    else if( strcmp(short_name,"v")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->v[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-    else if( strcmp(short_name,"w")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->w[ix][iy][current_level-1] = (float)values[ix * met->ny + iy]*0.01f;
-            }
-        }
-    }
+    ECC_READ_3D("u",current_level-1,met->u,1.0,u_flag)
+
+    ECC_READ_3D("v",current_level-1,met->v,1.0,v_flag)
+    
+    ECC_READ_3D("w",current_level-1,met->w,0.01f,w_flag)
+
 
     /*Read ozone*/
-    else if( strcmp(short_name,"o3")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->o3[ix][iy][current_level-1] = (float)values[ix * met->ny + iy]*(float) (MA / MO3);
-            }
-        }
-    }
+    ECC_READ_3D("o3",current_level-1,met->o3,(float) (MA / MO3),o3_flag)
 
     /*Read cloud data*/
-    else if( strcmp(short_name,"clwc")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->lwc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-    else if( strcmp(short_name,"crwc")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->rwc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-    else if( strcmp(short_name,"ciwc")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->iwc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-    else if( strcmp(short_name,"cswc")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->swc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-    else if( strcmp(short_name,"cc")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-              met->cc[ix][iy][current_level-1] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
+    ECC_READ_3D("clwc",current_level-1,met->lwc,1.0,lwc_flag)
+    ECC_READ_3D("crwc",current_level-1,met->rwc,1.0,rwc_flag)
+    ECC_READ_3D("ciwc",current_level-1,met->iwc,1.0,iwc_flag)
+    ECC_READ_3D("cswc",current_level-1,met->swc,1.0,swc_flag)
+    ECC_READ_3D("cc",current_level-1,met->cc,1.0,cc_flag)
 
     /*Read water vapor*/
+    ECC_READ_3D("q",current_level-1,met->h2o,(float) (MA / MH2O),h2o_flag)
     
-    if( strcmp(short_name,"q")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-        for (int iy = 0; iy < met->ny; iy++) {
-          met->h2o[ix][iy][current_level-1] = (float)values[ix * met->ny + iy] *(float) (MA / MH2O);
-        }
-      }
-            
-    }    
+    /*Free allocated array*/
     free(values);
+  }
+
+  if(t_flag!=ctl->met_np-1){
+    WARN("Cannot read temperature!");
+  }
+  if(u_flag!=ctl->met_np-1){
+    WARN("Cannot read zonal wind!");
+  }
+  if(v_flag!=ctl->met_np-1){
+    WARN("Cannot read meridional wind!");
+  }
+  if(w_flag!=ctl->met_np-1){
+    WARN("Cannot read vertical velocity!");
+  }
+  if(o3_flag!=ctl->met_np-1){
+    WARN("Cannot read ozone data!");
+  }
+  if(h2o_flag!=ctl->met_np-1){
+    WARN("Cannot read specific humidity!");
+  }
+  if(lwc_flag!=ctl->met_np-1){
+    WARN("Cannot read cloud liquid water content!");
+  }
+  if(rwc_flag!=ctl->met_np-1){
+    WARN("Cannot read cloud rain water content!");
+  }
+  if(iwc_flag!=ctl->met_np-1){
+    WARN("Cannot read cloud ice water content!");
+  }
+  if(swc_flag!=ctl->met_np-1){
+    WARN("Cannot read cloud snow water content!");
+  }
+  if(cc_flag!=ctl->met_np-1){
+    WARN("Cannot read cloud cover!");
   }
 
   /* Check ordering of pressure levels... */
@@ -6905,6 +6877,7 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
       ERRMSG("Pressure levels must be descending!");
 
 }
+
 #endif
 /*****************************************************************************/
 
@@ -8194,6 +8167,7 @@ void read_met_surface(
 #ifdef ECCODES
 void read_met_surface_grib(codes_handle** handles, const int num_messages, const ctl_t* ctl, met_t* met){
 
+  int sp_flag=0,z_flag=0,t_flag=0,u_flag=0,v_flag=0,lsm_flag=0,sst_flag=0,cape_flag=0,cin_flag=0,pbl_flag=0;
   /*Iterate over all messages*/
   for( int i = 0; i< num_messages; i++){
     size_t max_size = 50;
@@ -8208,97 +8182,71 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     ECC(codes_get_double_array(handles[i],"values",values,&value_count))
 
     /*Read surface pressure... */
-
-    if ( strcmp(short_name,"sp")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->ps[ix][iy] = (float)values[ix * met->ny + iy];
-            }
-        }
-    }
-
+    ECC_READ_2D("sp",met->ps,1.0f,sp_flag)
+    
     /*Read geopotential height at the surface... */
-    else if ( strcmp(short_name,"z")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->zs[ix][iy] = (float)values[ix * met->ny +iy]*(float) (1. / (1000. * G0));
-            }
-        } 
-    }
+    ECC_READ_2D("z",met->zs,(float) (1. / (1000. * G0)),z_flag)
 
     /* Read temperature at the surface... */
-    else if ( strcmp(short_name,"2t")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->ts[ix][iy] = (float)values[ix * met->ny +iy];
-            }
-        }
-      }
+    ECC_READ_2D("2t",met->ts,1.0f,t_flag)
 
     /* Read zonal wind at the surface...*/
-    else if ( strcmp(short_name,"10u")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->us[ix][iy] = (float)values[ix * met->ny +iy];
-            }
-        }
-      }
+    ECC_READ_2D("10u",met->us,1.0f,u_flag)
 
     /* Read meridional wind at the surface...*/
-    else if ( strcmp(short_name,"10v")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->vs[ix][iy] = (float)values[ix * met->ny +iy];
-            }
-        }
-      }
+    ECC_READ_2D("10v",met->vs,1.0f,v_flag)
+
     /* Read land-sea mask...*/
-    else if ( strcmp(short_name,"lsm")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->lsm[ix][iy] = (float)values[ix * met->ny +iy];
-            }
-        }
-      }
+    ECC_READ_2D("lsm",met->lsm,1.0f,lsm_flag)
+    
      /* Read sea surface temperature...*/
-    else if ( strcmp(short_name,"sst")==0){
-      for (int ix = 0; ix < met->nx; ix++) {
-            for (int iy = 0; iy < met->ny; iy++) {
-                met->sst[ix][iy] = (float)values[ix * met->ny +iy];
-            }
-        }
-      }
+    ECC_READ_2D("sst",met->sst,1.0f,sst_flag)
+  
     if(ctl->met_cape == 0){
 
         /* Read CAPE...*/
-        if ( strcmp(short_name,"cape")==0){
-          for (int ix = 0; ix < met->nx; ix++) {
-                for (int iy = 0; iy < met->ny; iy++) {
-                    met->cape[ix][iy] = (float)values[ix * met->ny +iy];
-                }
-            }
-          }
+        ECC_READ_2D("cape",met->cape,1.0f,cape_flag)
+        
         /* Read CIN...*/
-        else if ( strcmp(short_name,"cin")==0){
-          for (int ix = 0; ix < met->nx; ix++) {
-                for (int iy = 0; iy < met->ny; iy++) {
-                    met->cin[ix][iy] = (float)values[ix * met->ny +iy];
-                }
-            }
-          }
+        ECC_READ_2D("cin",met->cin,1.0f,cin_flag)
     }
 
     if(ctl->met_pbl == 0){
-        if ( strcmp(short_name,"blh")==0){
-            for (int ix = 0; ix < met->nx; ix++) {
-                  for (int iy = 0; iy < met->ny; iy++) {
-                      met->pbl[ix][iy] = (float)values[ix * met->ny +iy]*0.0001f;
-                  }
-              }
-            }
+      ECC_READ_2D("blh",met->pbl,0.0001f,pbl_flag)
     }
   free(values);
   }
+  if(sp_flag==0){
+    WARN("Cannot read surface pressure data!");
+  }
+  if(z_flag==0){
+    WARN("Cannot read surface geopotential height!");
+  }
+  if(t_flag==0){
+    WARN("Cannot read surface temperature!");
+  }
+  if(u_flag==0){
+    WARN("Cannot read surface zonal wind!");
+  }
+  if(v_flag==0){
+    WARN("Cannot read surface meridional wind!");
+  }
+  if(lsm_flag==0){
+    WARN("Cannot read land-sea mask!");
+  }
+  if(sst_flag==0){
+    WARN("Cannot read sea surface temperature!");
+  }
+  if(cape_flag==0){
+    WARN("Cannot read CAPE!");
+  }
+  if(cin_flag==0){
+    WARN("Cannot read convective inhibition!");
+  }
+  if(pbl_flag==0){
+    WARN("Cannot read planetary boundary layer!");
+  }
+
   LOG(1,"Finished reading surface data")
 }
 #endif
