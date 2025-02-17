@@ -267,8 +267,9 @@ if [ $ifBuildAll = true ] || [ $ifBuildEcCodes = true ] ; then
     printf "starting to compile ecCodes...\n"
     strTarget=$strFileEcCodes
     cp $strTarget.tar.gz $strBuildDir/src && cd $strBuildDir/src && tar xvf $strTarget.tar.gz
-    cd $strBuildDir/src && cmake -DCMAKE_INSTALL_PREFIX=$strBuildDir/src -DBUILD_SHARED_LIBS=OFF -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF $strTarget && make && ctest && make install \
+    cd $strBuildDir/src && cmake -DCMAKE_INSTALL_PREFIX=$strBuildDir/src -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF $strTarget && make -j $numProcs && ctest -j $numProcs && make install \
         && cp -a include/* $strBuildDir/include/ \
+        && cp -a lib/libeccodes* $strBuildDir/lib/ \
         || exit
 
 fi
