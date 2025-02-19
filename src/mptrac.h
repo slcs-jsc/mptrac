@@ -3123,6 +3123,12 @@ typedef struct {
 
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
+  
+  /*! Zonal domain number */
+  int dd_number_zonal;
+  
+  /*! Meridional domain number */
+  int dd_number_meridional;
 
 } ctl_t;
 
