@@ -2509,7 +2509,7 @@ typedef struct {
   int met_convention;
 
   /*! Vertical coordinate of input meteo data
-     (0=plev, 1=mlev_with_pfield, 2=mlev_with_abcoeff). */
+     (0=plev, 1=mlev_with_pfield, 2=mlev_with_ab_file, 3=mlev_with_ab_ctl). */
   int met_vert_coord;
 
   /*! Type of meteo data files
@@ -2612,6 +2612,15 @@ typedef struct {
 
   /*! Use predefined pressure levels or not. */
   int met_press_level_def;
+
+  /*! Number of meteo data model levels. */
+  int met_nlev;
+
+  /*! Meteo data model level a coefficients. */
+  double met_lev_hyam[EP];
+
+  /*! Meteo data model level b coefficients. */
+  double met_lev_hybm[EP];
 
   /*! Longitudinal smoothing of geopotential heights. */
   int met_geopot_sx;

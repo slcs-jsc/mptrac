@@ -1338,7 +1338,7 @@ void intpol_met_space_3d(
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
     ci[1] = locate_reg(met->lon, met->nx, lon2);
-    ci[2] = locate_reg(met->lat, met->ny, lat);
+    ci[2] = locate_irr(met->lat, met->ny, lat);
 
     /* Get interpolation weights... */
     cw[0] = (met->p[ci[0] + 1] - p)
@@ -1392,7 +1392,7 @@ void intpol_met_space_3d_ml(
 
   /* Get horizontal indices... */
   int ix = locate_reg(met->lon, met->nx, lon2);
-  int iy = locate_reg(met->lat, met->ny, lat);
+  int iy = locate_irr(met->lat, met->ny, lat);
 
   /* Interpolate vertically... */
   int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
@@ -1465,7 +1465,7 @@ void intpol_met_space_2d(
 
     /* Get interpolation indices... */
     ci[1] = locate_reg(met->lon, met->nx, lon2);
-    ci[2] = locate_reg(met->lat, met->ny, lat);
+    ci[2] = locate_irr(met->lat, met->ny, lat);
 
     /* Get interpolation weights... */
     cw[1] = (met->lon[ci[1] + 1] - lon2)
@@ -1619,7 +1619,7 @@ void intpol_tropo_3d(
 
   /* Get indices... */
   const int ix = locate_reg(lons, (int) nlon, lon2);
-  const int iy = locate_reg(lats, (int) nlat, lat);
+  const int iy = locate_irr(lats, (int) nlat, lat);
 
   /* Calculate standard deviation... */
   *sigma = 0;
@@ -2671,7 +2671,7 @@ void module_diff_meso(
 
     /* Get indices... */
     const int ix = locate_reg(met0->lon, met0->nx, atm->lon[ip]);
-    const int iy = locate_reg(met0->lat, met0->ny, atm->lat[ip]);
+    const int iy = locate_irr(met0->lat, met0->ny, atm->lat[ip]);
     const int iz = locate_irr(met0->p, met0->np, atm->p[ip]);
 
     /* Get standard deviations of local wind data... */
@@ -3846,7 +3846,7 @@ void module_sort(
   for (int ip = 0; ip < np; ip++) {
     a[ip] =
       (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
-		 locate_reg(met0->lat, met0->ny, atm->lat[ip]))
+		 locate_irr(met0->lat, met0->ny, atm->lat[ip]))
 		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
     p[ip] = ip;
   }
@@ -4764,8 +4764,8 @@ void mptrac_read_ctl(
     ERRMSG("Set ADVECT_VERT_COORD to 0, 1, or 2!");
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
-  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 2)
-    ERRMSG("Set MET_VERT_COORD to 0, 1, or 2!");
+  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 3)
+    ERRMSG("Set MET_VERT_COORD to 0, 1, 2, or 3!");
   if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
     ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
@@ -4848,7 +4848,7 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "MET_DETREND", -1, "-999", NULL);
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
-    ERRMSG("Too many levels!");
+    ERRMSG("Too many pressure levels!");
   ctl->met_press_level_def =
     (int) scan_ctl(filename, argc, argv, "MET_PRESS_LEVEL_DEF", -1, "-1",
 		   NULL);
@@ -4860,6 +4860,16 @@ void mptrac_read_ctl(
 	ctl->met_p[ip] =
 	  scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
     }
+  }
+  ctl->met_nlev =
+    (int) scan_ctl(filename, argc, argv, "MET_NLEV", -1, "0", NULL);
+  if (ctl->met_nlev > EP)
+    ERRMSG("Too many model levels!");
+  for (int ip = 0; ip < ctl->met_nlev; ip++) {
+    ctl->met_lev_hyam[ip] =
+      scan_ctl(filename, argc, argv, "MET_LEV_HYAM", ip, "", NULL);
+    ctl->met_lev_hybm[ip] =
+      scan_ctl(filename, argc, argv, "MET_LEV_HYBM", ip, "", NULL);
   }
   ctl->met_geopot_sx =
     (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
@@ -7210,6 +7220,18 @@ void read_met_grid(
   LOG(2, "Latitudes: %g, %g ... %g deg",
       met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
+  /* Check grid spacing... */
+  for (int ix = 2; ix < met->nx; ix++)
+    if (fabs
+	(fabs(met->lon[ix] - met->lon[ix - 1]) -
+	 fabs(met->lon[1] - met->lon[0])) > 0.001)
+      ERRMSG("No regular grid spacing in longitudes!");
+  for (int iy = 2; iy < met->ny; iy++)
+    if (fabs
+	(fabs(met->lat[iy] - met->lat[iy - 1]) -
+	 fabs(met->lat[1] - met->lat[0])) > 0.001)
+      WARN("No regular grid spacing in latitudes!");
+
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
     NC_GET_DOUBLE(levname, met->p, 1);
@@ -7447,11 +7469,29 @@ void read_met_levels(
     /* Calculate pressure from a and b coefficients... */
     else {
 
-      /* Read a and b coefficients... */
-      int varid;
+      /* Grid level coefficients... */
       double hyam[EP], hybm[EP];
-      NC_GET_DOUBLE("hyam", hyam, 1);
-      NC_GET_DOUBLE("hybm", hybm, 1);
+
+      /* Read a and b coefficients from file... */
+      if (ctl->met_vert_coord == 2) {
+	int varid;
+	NC_GET_DOUBLE("hyam", hyam, 1);
+	NC_GET_DOUBLE("hybm", hybm, 1);
+      }
+
+      /* Use ctl parameters... */
+      else {
+
+	/* Check number of levels... */
+	if (met->np != ctl->met_nlev)
+	  ERRMSG("Mismatch in number of model levels!");
+
+	/* Copy parameters... */
+	for (int ip = 0; ip < met->np; ip++) {
+	  hyam[ip] = ctl->met_lev_hyam[ip];
+	  hybm[ip] = ctl->met_lev_hybm[ip];
+	}
+      }
 
       /* Calculate pressure... */
       for (int ix = 0; ix < met->nx; ix++)
