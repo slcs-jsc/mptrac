@@ -2475,7 +2475,7 @@ typedef struct {
   int met_convention;
 
   /*! Vertical coordinate of input meteo data
-     (0=pressure-level, 1=model-level_pfield, 2=model-level_abcoeff). */
+     (0=plev, 1=mlev_with_pfield, 2=mlev_with_abcoeff). */
   int met_vert_coord;
 
   /*! Type of meteo data files
@@ -2639,7 +2639,8 @@ typedef struct {
   /*! Advection scheme (0=off, 1=Euler, 2=midpoint, 4=Runge-Kutta). */
   int advect;
 
-  /*! Vertical coordinate of air parcels (0=pressure, 1=zeta, 2=eta). */
+  /*! Vertical velocity of air parcels
+     (0=omega_on_plev, 1=zetadot_on_mlev, 2=omega_on_mlev). */
   int advect_vert_coord;
 
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
@@ -4804,47 +4805,26 @@ void locate_vert(
   int *ind);
 
 /**
- * @brief Performs the advection of atmospheric particles using meteorological data.
- * 
- * This function advects particles in the atmosphere using
- * meteorological data from two time steps, updating their positions
- * and interpolating necessary data.  It supports both pressure and
- * zeta vertical coordinate systems.
- * 
- * @param ctl   Pointer to the control structure containing configuration flags.
- * @param cache Pointer to the cache structure for temporary data and random numbers.
- * @param met0  Pointer to the initial meteorological data structure.
- * @param met1  Pointer to the final meteorological data structure.
- * @param atm   Pointer to the air parcel data structure.
- * 
+ * @brief Advances particle positions using different advection schemes.
+ *
+ * This function updates the positions of atmospheric particles using different 
+ * advection schemes based on vertical velocity formulations (omega or zetadot). 
+ * The advection is performed over a number of integration nodes, using meteorological
+ * data interpolated in time and space.
+ *
+ * @param[in] ctl Pointer to the control structure containing configuration settings.
+ * @param[in] cache Pointer to the cache structure storing precomputed time step values.
+ * @param[in] met0 Pointer to the meteorological data structure at the initial time.
+ * @param[in] met1 Pointer to the meteorological data structure at the next time step.
+ * @param[in,out] atm Pointer to the atmospheric data structure containing particle states.
+ *
  * @details
- * The function performs the following operations:
- * - Sets up a timer labeled "MODULE_ADVECT" within the "PHYSICS"
-     category for GPU profiling using NVTX.
- * - Depending on the vertical coordinate system (pressure or zeta),
- *   it loops over each particle in the atmosphere (atm->np),
- *   initializing and updating their positions and velocities using
- *   meteorological data interpolation.
- * 
- * ### Pressure Coordinate System (ctl->vert_coord_ap == 0)
- * - Initializes particle positions and velocities.
- * - Performs integration over a specified number of nodes (ctl->advect) to update particle positions.
- * - Interpolates meteorological data for velocity components (u, v, w).
- * - Computes mean velocities and updates particle positions in longitude, latitude, and pressure.
- * 
- * ### Zeta Coordinate System (ctl->vert_coord_ap == 1)
- * - Translates pressure into zeta coordinate if other modules have modified the pressure.
- * - Initializes particle positions and velocities in zeta coordinates.
- * - Performs integration over a specified number of nodes (ctl->advect) to update particle positions.
- * - Interpolates meteorological data for velocity components (u, v) and zeta_dot.
- * - Computes mean velocities and updates particle positions in longitude, latitude, and zeta.
- * - Checks and corrects if zeta is below zero.
- * - Translates updated zeta back into pressure coordinates.
- * 
- * @note The function assumes that the atmospheric data structure
- * (atm) contains arrays for time, longitude, latitude, and pressure
- * for each point.  The specific quantification of zeta is stored in
- * atm->q[ctl.qnt_zeta].
+ * - If `ctl->advect_vert_coord` is 0 or 2, the function uses omega vertical velocity.
+ * - If `ctl->advect_vert_coord` is 1, the function uses zetadot vertical velocity.
+ * - The function interpolates meteorological data either on pressure levels or model levels.
+ * - The advection scheme supports different integration methods (e.g., two-stage, four-stage).
+ * - The function updates longitude, latitude, and pressure (or zeta) for each particle.
+ * - Special handling is applied to ensure `zeta` values remain non-negative.
  *
  * @authors Lars Hoffmann
  * @authors Jan Clemens
@@ -6405,36 +6385,26 @@ int read_atm_bin(
   atm_t * atm);
 
 /**
- * @brief Reads air parcel data from a CLaMS netCDF file and populates the given atmospheric structure.
+ * @brief Reads atmospheric data from a CLAMS NetCDF file.
  *
- * This function reads air parcel data from a CLaMS (Chemical
- * Lagrangian Model of the Stratosphere) netCDF file and stores the
- * data in the provided `atm_t` structure. It handles various
- * coordinate systems and ensures the necessary data is correctly read
- * and stored.
+ * This function opens a NetCDF file, reads various atmospheric parameters, 
+ * and stores them in the provided `atm_t` structure. It handles both zeta
+ * and pressure coordinate systems depending on the control settings.
  *
- * @param filename The name of the netCDF file containing the atmospheric data.
- * @param ctl      A pointer to the control structure (`ctl_t`) that specifies the vertical coordinate system and quantities.
- * @param atm      A pointer to the atmospheric structure (`atm_t`) that will be populated with the data.
- * @return         Returns 1 on success, and 0 on failure.
+ * @param[in] filename Path to the NetCDF file containing atmospheric data.
+ * @param[in] ctl Pointer to the control structure containing configuration settings.
+ * @param[out] atm Pointer to the atmospheric data structure where the data will be stored.
  *
- * This function performs the following steps:
- * - Attempts to open the specified netCDF file for reading.
- * - Returns 0 if the file cannot be opened.
- * - Retrieves the number of particles (`np`) from the "NPARTS" dimension.
- * - Reads the initial time (`TIME_INIT`) if available, otherwise uses the "time" variable.
- * - Reads the vertical coordinate data based on the specified system (`vert_coord_ap`):
- *   - If `vert_coord_ap` is 1, reads "ZETA" and optionally "PRESS".
- *   - Otherwise, reads "PRESS_INIT" if available, otherwise uses "PRESS".
- * - Reads the longitude ("LON") and latitude ("LAT") data.
- * - Closes the netCDF file.
- * - Returns 1 to indicate successful data reading.
+ * @return Returns 1 on success, 0 on failure.
  *
- * The function utilizes several macros and helper functions:
- * - `NC_INQ_DIM` for inquiring about dimensions in the netCDF file.
- * - `NC_GET_DOUBLE` for reading double values from the netCDF file.
- * - `NC` for checking netCDF function return values.
- * - `WARN` for logging warnings.
+ * @details
+ * - Opens the NetCDF file in read-only mode.
+ * - Retrieves the number of particles (`NPARTS`).
+ * - Reads initial time (`TIME_INIT`) or falls back to `time` if unavailable.
+ * - Depending on `ctl->advect_vert_coord`, reads `ZETA` and optionally `PRESS`,
+ *   or reads `PRESS_INIT` with fallback to `PRESS`.
+ * - Reads longitude (`LON`) and latitude (`LAT`).
+ * - Closes the NetCDF file before returning.
  *
  * @author Jan Clemens
  */
@@ -6990,6 +6960,7 @@ void read_met_ml2pl(
  * interpolate between them to maintain monotonicity.  The
  * interpolation is performed for both zeta and pressure profiles.
  *
+ * @param ctl A pointer to a control parameter structure.
  * @param met A pointer to a structure containing meteorological data.
  *
  * The function performs the following steps:
@@ -7002,6 +6973,7 @@ void read_met_ml2pl(
  * @author Jan Clemens
  */
 void read_met_monotonize(
+  const ctl_t * ctl,
   met_t * met);
 
 /**

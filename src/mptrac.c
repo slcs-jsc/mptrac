@@ -2076,7 +2076,7 @@ void module_advect(
   /* Set timer... */
   SELECT_TIMER("MODULE_ADVECT", "PHYSICS", NVTX_GPU);
 
-  /* Pressure coordinate... */
+  /* Use omega vertical velocity... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
 
     /* Loop over particles... */
@@ -2147,7 +2147,7 @@ void module_advect(
     }
   }
 
-  /* Zeta coordinate... */
+  /* Use zetadot vertical velocity... */
   else if (ctl->advect_vert_coord == 1) {
 
     /* Loop over particles... */
@@ -4757,13 +4757,13 @@ void mptrac_read_ctl(
   ctl->advect_vert_coord =
     (int) scan_ctl(filename, argc, argv, "ADVECT_VERT_COORD", -1, "0", NULL);
   if (ctl->advect_vert_coord < 0 || ctl->advect_vert_coord > 2)
-    ERRMSG("Set advect_vert_coord to 0, 1, or 2!");
-  if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
-    ERRMSG("Please add zeta to your quantities for diabatic calculations!");
+    ERRMSG("Set ADVECT_VERT_COORD to 0, 1, or 2!");
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
   if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 2)
     ERRMSG("Set MET_VERT_COORD to 0, 1, or 2!");
+  if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
+    ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
     ERRMSG
       ("Using ADVECT_VERT_COORD = 2 requires meteo data on model levels!");
@@ -4785,7 +4785,7 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_TYPE", -1, "0", NULL);
   if (ctl->advect_vert_coord == 1 && ctl->met_type != 0)
     ERRMSG
-      ("Please use meteorological files in netcdf format for diabatic calculations.");
+      ("Please use meteo files in netcdf format for diabatic calculations.");
   ctl->met_clams =
     (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
   ctl->met_nc_scale =
@@ -7415,7 +7415,12 @@ void read_met_ml2pl(
 /*****************************************************************************/
 
 void read_met_monotonize(
+  const ctl_t *ctl,
   met_t *met) {
+
+  /* Check parameters... */
+  if (ctl->advect_vert_coord != 1)
+    return;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_MONOTONIZE", "METPROC", NVTX_READ);
@@ -7554,8 +7559,7 @@ int read_met_nc(
   read_met_detrend(ctl, met);
 
   /* Check meteo data and smooth zeta profiles ... */
-  if (ctl->advect_vert_coord == 1)
-    read_met_monotonize(met);
+  read_met_monotonize(ctl, met);
 
   /* Close file... */
   NC(nc_close(ncid));
