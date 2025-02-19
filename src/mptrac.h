@@ -3125,10 +3125,19 @@ typedef struct {
   int vtk_sphere;
   
   /*! Zonal domain number */
-  int dd_number_zonal;
+  int dd_domains_zonal;
   
   /*! Meridional domain number */
-  int dd_number_meridional;
+  int dd_domains_meridional;
+  
+  /*! Number of neighbours to communicate with... */
+  int dd_nbr_neighbours;
+
+  /*! Quantity array index for the current domain. */
+  int qnt_domain;
+
+  /*! Quantity array index for the destination domain */
+  int qnt_destination;
 
 } ctl_t;
 
@@ -3161,6 +3170,32 @@ typedef struct {
   double q[NQ][NP];
 
 } atm_t;
+
+/**
+ * @brief Particle data.
+ * 
+ * This structure contains information related to one air parcel,
+ * including the air parcels time, pressure, longitudes, latitudes, 
+ * and various user-defined attributes.
+ */
+typedef struct {
+
+  /*! Time [s]. */
+  double time;
+
+  /*! Pressure [hPa]. */
+  double p;
+
+  /*! Longitude [deg]. */
+  double lon;
+
+  /*! Latitude [deg]. */
+  double lat;
+
+  /*! Quantity data (for various, user-defined attributes). */
+  double q[NQ];
+  
+} particle_t;
 
 /**
  * @brief Cache data structure.
