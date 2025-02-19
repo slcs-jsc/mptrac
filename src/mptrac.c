@@ -7229,8 +7229,10 @@ void read_met_grid(
   for (int iy = 2; iy < met->ny; iy++)
     if (fabs
 	(fabs(met->lat[iy] - met->lat[iy - 1]) -
-	 fabs(met->lat[1] - met->lat[0])) > 0.001)
+	 fabs(met->lat[1] - met->lat[0])) > 0.001) {
       WARN("No regular grid spacing in latitudes!");
+      break;
+    }
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
