@@ -272,6 +272,11 @@
 #define EY 602
 #endif
 
+/*! Maximum number of pressure levels for meteo data. */
+#ifndef EP_GLOB
+#define EP_GLOB 140
+#endif
+
 /*! Maximum number of global longitudes for meteo data. */
 #ifndef EX_GLOB
 #define EX_GLOB 1202
@@ -3448,12 +3453,12 @@ typedef struct {
 
   /*! Latitude [deg]. */
   // TODO:
-  // They need global sizes now, maybe in the future just keep EX, EY and
+  // They need global sizes now, maybe in the future just keep EX, EY, EP and
   // Introduce help data structure in read_met_grid etc.==
   double lat[EY_GLOB];
 
   /*! Pressure levels [hPa]. */
-  double p[EP];
+  double p[EP_GLOB];
 
   /*! Model hybrid levels. */
   double hybrid[EP];

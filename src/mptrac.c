@@ -7184,13 +7184,16 @@ void read_met_grid(
   LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);
 
-  /* Get grid dimensions... */
-  NC_INQ_DIM("lon", &met->nx, 2, EX);
-  LOG(2, "Number of longitudes: %d", met->nx);
+  /* Get global and local grid dimensions... */
+  NC_INQ_DIM("lon", &met->nx_glob, 2, EX_GLOB);
+  LOG(2, "Number of longitudes: %d", met->nx_glob);
+  met->nx = (int) floor(met->nx_glob / ctl->dd_domains_zonal);
 
-  NC_INQ_DIM("lat", &met->ny, 2, EY);
-  LOG(2, "Number of latitudes: %d", met->ny);
-
+  NC_INQ_DIM("lat", &met->ny_glob, 2, EY_GLOB);
+  LOG(2, "Number of latitudes: %d", met->ny_glob);
+  met->ny = (int) floor(met->ny_glob / ctl->dd_domains_meridional);;
+  
+  /* Get global coordinates... */
   int dimid2;
   sprintf(levname, "lev");
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
@@ -7198,27 +7201,29 @@ void read_met_grid(
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
     sprintf(levname, "hybrid");
 
-  NC_INQ_DIM(levname, &met->np, 1, EP);
-  if (met->np == 1) {
+  NC_INQ_DIM(levname, &met->np_glob, 1, EP_GLOB);
+  if (met->np_glob == 1) {
     sprintf(levname, "lev_2");
     if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR) {
       sprintf(levname, "plev");
       NC(nc_inq_dimid(ncid, levname, &dimid2));
     }
     NC(nc_inq_dimlen(ncid, dimid2, &np));
-    met->np = (int) np;
+    met->np_glob = (int) np;
   }
+  met->np = met->np_glob;
+  
   LOG(2, "Number of levels: %d", met->np);
-  if (met->np < 2 || met->np > EP)
+  if (met->np_glob < 2 || met->np_glob > EP_GLOB)
     ERRMSG("Number of levels out of range!");
 
   /* Read longitudes and latitudes... */
   NC_GET_DOUBLE("lon", met->lon, 1);
   LOG(2, "Longitudes: %g, %g ... %g deg",
-      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+      met->lon[0], met->lon[1], met->lon[met->nx_glob - 1]);
   NC_GET_DOUBLE("lat", met->lat, 1);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+      met->lat[0], met->lat[1], met->lat[met->ny_glob - 1]);
 
   /* Check grid spacing... */
   for (int ix = 2; ix < met->nx; ix++)
@@ -7233,6 +7238,54 @@ void read_met_grid(
       WARN("No regular grid spacing in latitudes!");
       break;
     }
+
+  /* Adapt lon und lat data to domain decomposition... */
+  
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  /* Start... */
+  met->domain_start[0] = 0;
+  met->domain_start[1] = 0;
+  met->domain_start[2] = (size_t)((rank % ctl->dd_domains_meridional)*met->ny);
+  met->domain_start[3] = (size_t)(floor (rank / ctl->dd_domains_meridional)*met->nx);
+  
+  /* Block-size, i.e. count */
+  met->domain_count[0] = 1; 
+  met->domain_count[1] = (size_t) met->np; 
+  met->domain_count[2] = (size_t) met->ny;
+  met->domain_count[3] = (size_t) met->nx;
+  
+  /* Halos here... */
+  
+  /* Get the range of the entire meteodata... */
+  double lon_range = met->lon[ met->nx_glob - 1 ] - met->lon[0];
+  double lat_range = met->lat[ met->ny_glob - 1 ] - met->lat[0];
+  
+  /* Focus on domain longitutes and latitudes... */
+  for ( int iy = 0; iy < (int) met->domain_count[2]; iy++) {
+  	int iy_ = (int) met->domain_start[2] + iy;
+  	met->lat[iy] = met->lat[iy_];}
+  
+  for ( int ix = 0; ix < (int) met->domain_count[3]; ix++) {
+  	int ix_ = (int) met->domain_start[3] + ix;
+  	met->lon[ix] = met->lon[ix_];}
+  	
+  // Determine domain edges...
+  met->domain_lon_min = floor (rank / ctl->ndomain_meridional)
+                        * (lon_range) / (double) ctl->ndomain_zonal;
+  met->domain_lon_max = met->domain_lon_min
+                        + (lon_range) / (double) ctl->ndomain_zonal;
+  met->domain_lat_min = 90 + (rank % ctl->ndomain_meridional)
+                        * (lat_range) / (double) ctl->ndomain_meridional;
+  met->domain_lat_max = met->domain_lat_min
+                        + (lat_range) / (double) ctl->ndomain_meridional;
+  
+ 
+  LOG(2, " %d Domain longitudes: %g, %g ... %g deg", rank,
+      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+  LOG(2, " %d Domain latitudes: %g, %g ... %g deg", rank,
+      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
