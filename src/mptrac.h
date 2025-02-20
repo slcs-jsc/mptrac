@@ -261,14 +261,24 @@
 #define EP 140
 #endif
 
-/*! Maximum number of longitudes for meteo data. */
+/*! Maximum number of domain longitudes for meteo data. */
 #ifndef EX
 #define EX 1202
 #endif
 
-/*! Maximum number of latitudes for meteo data. */
+/*! Maximum number of domain latitudes for meteo data. */
 #ifndef EY
 #define EY 602
+#endif
+
+/*! Maximum number of global longitudes for meteo data. */
+#ifndef EX_GLOB
+#define EX_GLOB 1202
+#endif
+
+/*! Maximum number of global latitudes for meteo data. */
+#ifndef EY_GLOB
+#define EY_GLOB 602
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -3429,10 +3439,13 @@ typedef struct {
   int npl;
 
   /*! Longitude [deg]. */
-  double lon[EX];
+  double lon[EX_GLOB];
 
   /*! Latitude [deg]. */
-  double lat[EY];
+  // TODO:
+  // They need global sizes now, maybe in the future just keep EX, EY and
+  // Introduce help data structure in read_met_grid etc.==
+  double lat[EY_GLOB];
 
   /*! Pressure levels [hPa]. */
   double p[EP];
@@ -3568,7 +3581,22 @@ typedef struct {
 
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
-
+  
+  /*! More grid information... */
+  // TODO: Or this will be integrated to a grid_t ...
+  double domain_lon_max;
+  double domain_lon_min;
+  double domain_lat_max;
+  double domain_lat_min;
+  
+  size_t domain_start[4];
+  size_t domain_count[4];
+  
+  /*! Global sizes of meteo data... */
+  int nx_glob;
+  int ny_glob;
+  int np_glob;
+  
 } met_t;
 
 /* ------------------------------------------------------------
