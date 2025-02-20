@@ -7677,7 +7677,7 @@ int read_met_nc(
 
 /*****************************************************************************/
 
-int read_met_nc_2d_par(
+int read_met_nc_2d(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -7835,7 +7835,7 @@ int read_met_nc_2d_par(
 
 /*****************************************************************************/
 
-int read_met_nc_3d_par(
+int read_met_nc_3d(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -7978,6 +7978,515 @@ int read_met_nc_3d_par(
   /* Return... */
   return 1;
 }
+
+/*****************************************************************************/
+
+int read_met_nc_2d_par(
+  int ncid,
+  char *varname,
+  char *varname2,
+  char *varname3,
+  char *varname4,
+  ctl_t * ctl,
+  met_t * met,
+  float dest[EX][EY],
+  float scl,
+  int init) {
+
+  char varsel[LEN];
+
+  float offset, scalfac;
+
+  int varid;
+
+  /* Check if variable exists... */
+  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname);
+  else if (varname2 != NULL
+	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname2);
+  else if (varname3 != NULL
+	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname3);
+  else if (varname4 != NULL
+	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname4);
+  else
+    return 0;
+
+  /* Read packed data... */
+  if (ctl->met_nc_scale
+      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
+
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s"
+	" (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
+
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+	if (init)
+	  dest[ix][iy] = 0;
+	short aux = help[ARRAY_2D(iy, ix, met->nx)];
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
+	    && fabsf(aux * scalfac + offset) < 1e14f)
+	  dest[ix][iy] += scl * (aux * scalfac + offset);
+	else
+	  dest[ix][iy] = NAN;
+      }
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Unpacked data... */
+  else {
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+	
+    /* Define hyperslab... */
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    
+    /* Allocate... */
+    float* help;
+    size_t help_domain_start[4];
+    size_t help_domain_count[4];
+
+    help_domain_start[0] = 0;
+    help_domain_start[1] = 0; 
+    help_domain_start[2] = met->domain_start[2];
+    help_domain_start[3] = met->domain_start[3];
+   
+    help_domain_count[0] = 1;
+    help_domain_count[1] = 1;
+    help_domain_count[2] = met->domain_count[2];
+    help_domain_count[3] = met->domain_count[3];
+    
+    //ALLOC(help, float, (int) met->domain_count[2] * (int) met->domain_count[3]);
+    ALLOC(help, float, 
+    (int) met->domain_count[0] * (int) met->domain_count[1] *
+    (int) met->domain_count[2] * (int) met->domain_count[3]
+    );
+
+    /* Read data... */
+    //printf("[Debugging] start %ld:%ld:%ld:%ld, count %ld:%ld:%ld:%ld \n",
+    //met->domain_start[0], met->domain_start[1], met->domain_start[2], met->domain_start[3],
+    //met->domain_count[0], met->domain_count[1], met->domain_count[2], met->domain_count[3]);
+    NC(nc_get_vara_float(ncid, varid, help_domain_start, help_domain_count, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+
+      /* Copy and check data (ordering: lat, lon)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++) {
+	  if (init)
+	    dest[ix][iy] = 0;
+	  float aux = help[ARRAY_2D(iy, ix, met->nx)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = NAN;
+	}
+
+    } else {
+
+      /* Copy and check data (ordering: lon, lat)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ix = 0; ix < met->nx; ix++) {
+	  if (init)
+	    dest[ix][iy] = 0;
+	  float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = NAN;
+	}
+    }
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Return... */
+  return 1;
+}
+
+
+/*****************************************************************************/
+
+int read_met_nc_3d(
+  int ncid,
+  char *varname,
+  char *varname2,
+  char *varname3,
+  char *varname4,
+  ctl_t * ctl,
+  met_t * met,
+  float dest[EX][EY][EP],
+  float scl) {
+
+  char varsel[LEN];
+
+  float offset, scalfac;
+
+  int varid;
+
+  /* Check if variable exists... */
+  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname);
+  else if (varname2 != NULL
+	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname2);
+  else if (varname3 != NULL
+	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname3);
+  else if (varname4 != NULL
+	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname4);
+  else
+    return 0;
+
+  /* Read packed data... */
+  if (ctl->met_nc_scale
+      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
+
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s "
+	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
+
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 0; ip < met->np; ip++) {
+	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux * scalfac + offset) < 1e14f)
+	    dest[ix][iy][ip] = scl * (aux * scalfac + offset);
+	  else
+	    dest[ix][iy][ip] = NAN;
+	}
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Unpacked data... */
+  else {
+
+    /* Allocate... */
+    float *help;
+    ALLOC(help, float,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
+    /* Read data... */
+    NC(nc_get_var_float(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+
+      /* Copy and check data (ordering: lev, lat, lon)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++) {
+	    float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval)
+		&& fabsf(aux) < 1e14f)
+	      dest[ix][iy][ip] = scl * aux;
+	    else
+	      dest[ix][iy][ip] = NAN;
+	  }
+
+    } else {
+
+      /* Copy and check data (ordering: lon, lat, lev)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ip = 0; ip < met->np; ip++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ix = 0; ix < met->nx; ix++) {
+	    float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval)
+		&& fabsf(aux) < 1e14f)
+	      dest[ix][iy][ip] = scl * aux;
+	    else
+	      dest[ix][iy][ip] = NAN;
+	  }
+    }
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Return... */
+  return 1;
+}
+
+/*****************************************************************************/
+
+int read_met_nc_3d_par(
+  int ncid,
+  char *varname,
+  char *varname2,
+  char *varname3,
+  char *varname4,
+  ctl_t * ctl,
+  met_t * met,
+  float dest[EX][EY][EP],
+  float scl) {
+
+  char varsel[LEN];
+
+  float offset, scalfac;
+
+  int varid;
+
+  /* Check if variable exists... */
+  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname);
+  else if (varname2 != NULL
+	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname2);
+  else if (varname3 != NULL
+	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname3);
+  else if (varname4 != NULL
+	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname4);
+  else
+    return 0;
+
+  /* Read packed data... */
+  if (ctl->met_nc_scale
+      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
+
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s "
+	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
+
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
+
+    /* Copy and check data... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 0; ip < met->np; ip++) {
+	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux * scalfac + offset) < 1e14f)
+	    dest[ix][iy][ip] = scl * (aux * scalfac + offset);
+	  else
+	    dest[ix][iy][ip] = NAN;
+	}
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Unpacked data... */
+  else {
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
+    /* Define hyperslab... */
+    int rank, size;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    
+    /* Create halos... */
+    /*
+    if ((rank > ctl->ndomain_meridional - 1) && (rank < size - ctl->ndomain_meridional)) {
+      // If we are not at the left or right edge extend in zonal direction...
+      // Move the start one point to the left...
+      met->domain_count[3] = met->domain_count[3] + 10;//2;
+      met->domain_start[3] = met->domain_start[3] - 5;
+     } else {
+      // If we are at the left or right edge, extend only in one zonal direction...
+      met->domain_count[3] = met->domain_count[3] + 5;
+      if (rank > ctl->ndomain_meridional - 1 )
+        // If we are not at the left edge, move the start to the left... 
+        met->domain_start[3] = met->domain_start[3] - 5;
+    }
+  
+    if ((rank%ctl->ndomain_meridional > 0) && (rank%ctl->ndomain_meridional <  ctl->ndomain_meridional -1 )) {
+      // If we are not at the upper or lower edge extend in meridional direction...
+      // Move the start point one point down...
+      met->domain_count[2] = met->domain_count[2] + 10;//2;
+      met->domain_start[2] = met->domain_start[2] - 5;
+    } else {
+      // If we are at the top or the lower edge only extend in one mer. direction...
+      met->domain_count[2] = met->domain_count[2] + 5;
+      if (rank%ctl->ndomain_meridional > 0)
+        // If we are not at the top, move the start one upward... 
+        met->domain_start[2] = met->domain_start[2] - 5;
+    }*/
+
+    /* Debugging... */
+    printf("Size:%d\n",(int) met->domain_count[0] * (int) met->domain_count[1]
+	             * (int) met->domain_count[2] * (int) met->domain_count[3]);
+    printf("RANK: %d; Start: %ld,%ld,%ld,%ld, Block: %ld,%ld,%ld,%ld\n",rank,
+    met->domain_start[0], met->domain_start[1], met->domain_start[2], met->domain_start[3],
+    met->domain_count[0], met->domain_count[1], met->domain_count[2], met->domain_count[3]);
+    /* TODO: SOME OF THE COUNTS MUST BE A BIT LARGER TO COVER THE REST OF THE GLOBE!! */
+
+    /* Allocate... */
+    float *help;
+    ALLOC(help, float, (int) met->domain_count[0] * (int) met->domain_count[1]
+	             * (int) met->domain_count[2] * (int) met->domain_count[3]);
+
+    /* Read data... */
+    printf("nc_get_vara_float\n");
+    NC(nc_get_vara_float(ncid, varid, met->domain_start, met->domain_count, help));
+            
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+	printf("store data in dest...\n");
+      /* Copy and check data (ordering: lev, lat, lon)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ix = 0; ix < met->nx; ix++)
+	      for (int iy = 0; iy < met->ny; iy++)
+	        for (int ip = 0; ip < met->np; ip++) {
+	  	float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	  	if ((fillval == 0 || aux != fillval)
+	      		&& (missval == 0 || aux != missval)
+	      		&& fabsf(aux) < 1e14f)
+	    		dest[ix][iy][ip] = scl * aux;
+	  	else
+	    		dest[ix][iy][ip] = NAN;
+	      }
+    } else {
+
+      /* Copy and check data (ordering: lon, lat, lev)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ip = 0; ip < met->np; ip++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ix = 0; ix < met->nx; ix++) {
+	    float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval)
+		&& fabsf(aux) < 1e14f)
+	      dest[ix][iy][ip] = scl * aux;
+	    else
+	      dest[ix][iy][ip] = NAN;
+	  }
+    }
+    
+    /* Free... */
+  free(help);
+  }
+
+  /* Return... */
+  return 1;
+}
+
 
 /*****************************************************************************/
 
