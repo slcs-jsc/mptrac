@@ -8768,7 +8768,7 @@ void particles2atm(
  *
  * @author Jan Clemens
  */
-void  dd_reg_MPI_type_particle(
+void  dd_register_MPI_type_particle(
   MPI_Datatype* MPI_Particle);
   
 /**
@@ -8875,12 +8875,28 @@ void dd_communicate_particles(
  *
  * @author Jan Clemens
  */
- void assign_rect_domains_atm(
+ void dd_assign_rect_domains_atm(
   atm_t* atm,
   met_t* met, 
   ctl_t ctl, 
   int rank, 
   int* destinations, 
   int init);
+  
+  /**
+ * @brief A module to perform the entire rectangular domain decomposition.
+ */
+  void module_dd(  
+  atm_t* atm,
+  particle_t* particles,
+  int nparticles,
+  met_t* met, 
+  ctl_t ctl, 
+  int* destinations,
+  int ndestinations,
+  int rank, 
+  MPI_Datatype MPI_Particle, 
+  ctl_t ctl, 
+  double* dt);
 
 #endif /* LIBTRAC_H */

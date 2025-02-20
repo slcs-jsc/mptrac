@@ -5537,6 +5537,28 @@ void mptrac_run_timestep(
   /* First-order tracer chemistry... */
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
+    
+  if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1) {
+  
+    MPI_Barrier(MPI_COMM_WORLD);
+   
+    /* Assign particles to new domains... */
+    dd_assign_rect_domains_atm( atm, met0, ctl, rank, destinations, 0);
+    
+    /* Transform from struct of array to array of struct... */
+    atm2particles(atm, particles, ctl);
+    
+    /* Perform the communication... */
+    dd_communicate_particles( particles, atm->np, MPI_Particle, 
+      destinations,ctl.dd_nbr_neighbours , ctl, dt);
+      
+    /* Transform from array of struct to struct of array... */
+    particles2atm(atm, particles, ctl); 
+    
+    
+  
+  }  
+    
 
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
@@ -12024,7 +12046,7 @@ void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
 
 /*****************************************************************************/
 
-void dd_reg_MPI_type_particle(MPI_Datatype * MPI_Particle) {
+void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
   MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, 
     MPI_DOUBLE, MPI_DOUBLE };
   int blocklengths[5] = { 1, 1, 1, 1, NQ };
@@ -12307,7 +12329,7 @@ void dd_communicate_particles(
 }  
 
 /*****************************************************************************/
-void assign_rect_domains_atm(
+void dd_assign_rect_domains_atm(
   atm_t* atm,
   met_t* met, 
   ctl_t ctl, 
@@ -12395,5 +12417,35 @@ void assign_rect_domains_atm(
    }
     
   }
+  
+void module_dd(  
+  atm_t* atm,
+  particle_t* particles,
+  int nparticles,
+  met_t* met, 
+  ctl_t ctl, 
+  int* destinations,
+  int ndestinations,
+  int rank, 
+  MPI_Datatype MPI_Particle, 
+  ctl_t ctl, 
+  double* dt) {
+
+    MPI_Barrier(MPI_COMM_WORLD);
+   
+    /* Assign particles to new domains... */
+    dd_assign_rect_domains_atm( atm, met, ctl, rank, destinations, 0);
+    
+    /* Transform from struct of array to array of struct... */
+    atm2particles(atm, particles, ctl);
+    
+    /* Perform the communication... */
+    dd_communicate_particles( particles, atm->np, MPI_Particle, 
+      destinations,ctl.dd_nbr_neighbours , ctl, dt);
+      
+    /* Transform from array of struct to struct of array... */
+    particles2atm(atm, particles, ctl); 
+    
+}
 
 
