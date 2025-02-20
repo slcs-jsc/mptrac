@@ -8687,9 +8687,12 @@ void write_vtk(
  * @note This function assumes that the `particles` array is pre-allocated with sufficient
  *       memory to hold `np` particles. The `ctl` structure must be properly initialized.
  *
- * @author Jan CLEMENS
+ * @author Jan Clemens
  */
-void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl);
+void atm2particles(
+  atm_t* atm, 
+  particle_t particles[], 
+  ctl_t ctl);
 
 /**
  * @brief Converts particle data to atmospheric data.
@@ -8711,8 +8714,92 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl);
  * @note This function assumes that the `atm` structure is pre-allocated with sufficient
  *       memory to hold data for `np` particles. The `ctl` structure must be properly initialized.
  *
- * @author Your Name
+ * @author Jan Clemens
  */
-void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl);
+void particles2atm(
+  atm_t* atm, 
+  particle_t particles[], 
+  ctl_t ctl);
+
+/**
+ * @brief Creates an MPI datatype for particle structures.
+ *
+ * The `dd_destination_get_rect` function defines an MPI datatype for
+ * particle structures (`particle_t`). This datatype is used to describe
+ * the layout of particle data in memory, enabling efficient communication
+ * of particle data in MPI programs.
+ *
+ * @param MPI_Particle A pointer to an `MPI_Datatype` where the new datatype will be stored.
+ *
+ * The function performs the following steps:
+ * - Defines an array of MPI datatypes (`types`) representing the types of each field in the particle structure.
+ * - Defines an array of block lengths (`blocklengths`) specifying the number of elements for each field.
+ * - Defines an array of displacements (`displacements`) specifying the byte offset of each field within the particle structure.
+ * - Creates a new MPI struct datatype using `MPI_Type_create_struct` with the defined types, block lengths, and displacements.
+ * - Commits the new datatype using `MPI_Type_commit` to make it available for use in MPI communication.
+ *
+ * @note This function assumes that the `particle_t` structure is defined and includes
+ *       fields `time`, `p`, `lon`, `lat`, and `q`. The `NQ` macro or constant must be defined
+ *       to specify the number of elements in the `q` array.
+ *
+ * @author Jan Clemens
+ */
+
+/**
+ * @brief Creates an MPI datatype for particle structures.
+ *
+ * The `dd_destination_get_rect` function defines an MPI datatype for
+ * particle structures (`particle_t`). This datatype is used to describe
+ * the layout of particle data in memory, enabling efficient communication
+ * of particle data in MPI programs.
+ *
+ * @param MPI_Particle A pointer to an `MPI_Datatype` where the new datatype will be stored.
+ *
+ * The function performs the following steps:
+ * - Defines an array of MPI datatypes (`types`) representing the types of each field in the particle structure.
+ * - Defines an array of block lengths (`blocklengths`) specifying the number of elements for each field.
+ * - Defines an array of displacements (`displacements`) specifying the byte offset of each field within the particle structure.
+ * - Creates a new MPI struct datatype using `MPI_Type_create_struct` with the defined types, block lengths, and displacements.
+ * - Commits the new datatype using `MPI_Type_commit` to make it available for use in MPI communication.
+ *
+ * @note This function assumes that the `particle_t` structure is defined and includes
+ *       fields `time`, `p`, `lon`, `lat`, and `q`. The `NQ` macro or constant must be defined
+ *       to specify the number of elements in the `q` array.
+ *
+ * @author Jan Clemens
+ */
+void  dd_reg_MPI_type_particle(
+  MPI_Datatype* MPI_Particle);
+  
+/**
+ * @brief Determines destination ranks for data distribution in a domain decomposition setup.
+ *
+ * The `dd_get_destinations` function calculates and assigns destination ranks for data
+ * distribution based on the current rank and control parameters (`ctl_t`). It handles
+ * various edge cases, including poles and boundaries, to ensure correct data communication
+ * in a parallel computing environment.
+ *
+ * @param ctl A `ctl_t` structure containing control parameters, including domain decomposition details.
+ * @param destinations An array to store the calculated destination ranks.
+ * @param rank The current rank of the process.
+ * @param size The total number of processes in the communicator.
+ *
+ * The function performs the following steps:
+ * - Determines the destination ranks based on the current rank and control parameters.
+ * - Handles special cases for poles (`SPOLE` and `NPOLE`) and domain boundaries.
+ * - Uses modulo arithmetic to wrap around ranks when necessary.
+ * - Populates the `destinations` array with the calculated ranks.
+ *
+ * @note This function assumes that the `ctl` structure is properly initialized and that
+ *       the `destinations` array has sufficient space to store the results. The function
+ *       uses zero-based indexing for ranks.
+ *
+ * @author Jan Clemens
+ */
+dd_destination_get_rect(
+  ctl_t ctl, 
+  int* destinations, 
+  int rank, 
+  int size)
 
 #endif /* LIBTRAC_H */

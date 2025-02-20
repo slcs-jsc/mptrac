@@ -12021,3 +12021,146 @@ void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
   }
 
 }
+
+/*****************************************************************************/
+
+void dd_reg_MPI_type_particle(MPI_Datatype * MPI_Particle) {
+  MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, 
+    MPI_DOUBLE, MPI_DOUBLE };
+  int blocklengths[5] = { 1, 1, 1, 1, NQ };
+  MPI_Aint displacements[5] = { offsetof (particle_t, time), 
+                                offsetof (particle_t, p),
+                                offsetof (particle_t, lon),
+                                offsetof (particle_t, lat),
+                                offsetof (particle_t, q)
+                              };
+  MPI_Type_create_struct (5, blocklengths, displacements, types,
+			  MPI_Particle);
+  MPI_Type_commit (MPI_Particle);
+}
+
+/*****************************************************************************/
+void dd_destination_get_rect(ctl_t ctl, int* destinations, int rank, int size) {
+    
+      if ( rank + 1 == size) {
+
+        destinations[0] = rank - ctl.ndomain_meridional;   
+        destinations[1] = SPOLE;
+        destinations[2] = rank - ctl.ndomain_meridional - 1; 
+
+        destinations[3] = (rank + 1 + ctl.ndomain_meridional)%size  - 1; 
+        destinations[4] = SPOLE;
+        destinations[5] = (rank + ctl.ndomain_meridional)%size  - 1;
+
+        destinations[6] = rank - 1;
+        destinations[7] = SPOLE;
+      
+      } else if (rank == ctl.ndomain_meridional*( ctl.ndomain_zonal - 1 )){
+
+        destinations[0] = rank - ctl.ndomain_meridional ;
+        destinations[1] = rank - ctl.ndomain_meridional + 1;
+        destinations[2] = NPOLE; 
+
+        destinations[3] = (rank + 1 + ctl.ndomain_meridional)%size  - 1;
+        destinations[4] = (rank + 2 + ctl.ndomain_meridional)%size  - 1;
+        destinations[5] = NPOLE;
+
+        destinations[6] = NPOLE;
+        destinations[7] = rank + 1;
+
+     } else if (rank == 0) {
+
+        destinations[0] = size - ctl.ndomain_meridional + rank;
+        destinations[1] = size - ctl.ndomain_meridional + rank + 1;
+        destinations[2] = NPOLE;
+
+        destinations[3] = rank + ctl.ndomain_meridional;
+        destinations[4] = rank + 1 + ctl.ndomain_meridional;
+        destinations[5] = NPOLE;
+
+      destinations[6] = NPOLE;
+      destinations[7] = rank + 1;
+
+    } else if (rank + 1 == ctl.ndomain_meridional) {
+
+      destinations[0] = size - ctl.ndomain_meridional + rank;
+      destinations[1] = SPOLE;
+      destinations[2] = size - ctl.ndomain_meridional + rank - 1;
+
+      destinations[3] = rank + ctl.ndomain_meridional;
+      destinations[4] = SPOLE;
+      destinations[5] = rank + ctl.ndomain_meridional - 1;
+
+      destinations[6] = rank - 1;
+      destinations[7] = SPOLE;
+
+    } else if ((rank + 1)%ctl.ndomain_meridional == 1) {
+
+      destinations[0] = rank - ctl.ndomain_meridional;
+      destinations[1] = rank + 1 - ctl.ndomain_meridional;
+      destinations[2] = NPOLE;
+
+      destinations[3] = rank + ctl.ndomain_meridional;
+      destinations[4] = rank + 1 + ctl.ndomain_meridional;
+      destinations[5] = NPOLE;
+
+      destinations[6] = NPOLE;
+      destinations[7] = rank + 1;
+
+    } else if ((rank+1)%ctl.ndomain_meridional == 0) {
+      
+      destinations[0] = rank - ctl.ndomain_meridional;
+      destinations[1] = SPOLE;
+      destinations[2] = rank - ctl.ndomain_meridional - 1;
+
+      destinations[3] = rank + ctl.ndomain_meridional;
+      destinations[4] = SPOLE;
+      destinations[5] = rank + ctl.ndomain_meridional - 1;
+
+      destinations[6] = rank - 1;
+      destinations[7] = SPOLE;
+    
+    } else if (rank + 1 <= ctl.ndomain_meridional) {
+
+      destinations[0] = size - ctl.ndomain_meridional + rank;
+      destinations[1] = size - ctl.ndomain_meridional + rank + 1;
+      destinations[2] = size - ctl.ndomain_meridional + rank - 1;
+
+      destinations[3] = rank + ctl.ndomain_meridional;
+      destinations[4] = rank + ctl.ndomain_meridional + 1;
+      destinations[5] = rank + ctl.ndomain_meridional - 1;
+
+      destinations[6] = rank - 1;
+      destinations[7] = rank + 1;
+
+    } else if (rank + 1 > size - ctl.ndomain_meridional) {
+
+      destinations[0] = rank - ctl.ndomain_meridional;
+      destinations[1] = rank - ctl.ndomain_meridional + 1;
+      destinations[2] = rank - ctl.ndomain_meridional - 1;
+
+      destinations[3] = (rank + 1 + ctl.ndomain_meridional)%size  - 1;
+      destinations[4] = (rank + 2 + ctl.ndomain_meridional)%size  - 1;
+      destinations[5] = (rank  + ctl.ndomain_meridional)%size  - 1;
+
+      destinations[6] = rank - 1;
+      destinations[7] = rank + 1;
+      
+    } else {
+
+      destinations[0] = rank - ctl.ndomain_meridional;  // left...
+      destinations[1] = rank - ctl.ndomain_meridional + 1; // lower left..
+      destinations[2] = rank - ctl.ndomain_meridional - 1; // upper left..
+
+      destinations[3] = rank + ctl.ndomain_meridional; // right...
+      destinations[4] = rank + ctl.ndomain_meridional + 1 ; // lower right...
+      destinations[5] = rank + ctl.ndomain_meridional - 1; // upper right...
+
+      destinations[6] = rank - 1; // upper
+      destinations[7] = rank + 1; // lower
+    
+    }
+    
+  }
+
+
