@@ -327,6 +327,10 @@
 #define CTS 1000
 #endif
 
+/*! Define abbreviations for poles in domain decomposition. */
+#define NPOLE -1
+#define SPOLE -2
+
 /* ------------------------------------------------------------
    Macros...
    ------------------------------------------------------------ */
