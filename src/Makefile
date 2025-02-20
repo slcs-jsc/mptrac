@@ -235,6 +235,9 @@ endif
 
 ifeq ($(ECCODES),1)
   LDFLAGS += -leccodes
+  ifeq ($(STATIC),1)
+    LDFLAGS += -lstdc++ -lm
+  endif
   CFLAGS += -DECCODES
 endif
 

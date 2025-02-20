@@ -1010,12 +1010,13 @@
       ERRMSG("%s", nc_strerror(nc_result));	     \
   }
 
-#define ECC(cmd) {				     \
-    int ecc_result=(cmd);			     \
-    if(ecc_result!=0)			     \
-      ERRMSG("ECCODES error");	     \
+#define ECC(cmd) {							\
+    int ecc_result=(cmd);						\
+    if(ecc_result!=0)							\
+      ERRMSG("ECCODES error: %s", codes_get_error_message(ecc_result));	\
   }
-#define ECC_READ_2D(variable,target,scaling_factor,found_flag){\
+
+#define ECC_READ_2D(variable,target,scaling_factor,found_flag){	\
   if( strcmp(short_name,variable)==0){\
     for (int ix = 0; ix < met->nx; ix++) {\
           for (int iy = 0; iy < met->ny; iy++) {\
