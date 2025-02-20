@@ -4634,6 +4634,8 @@ void mptrac_read_ctl(
   ctl->qnt_Cn2o = -1;
   ctl->qnt_Csf6 = -1;
   ctl->qnt_aoa = -1;
+  ctl->qnt_destination = -1;
+  ctl->qnt_domain = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -4750,6 +4752,8 @@ void mptrac_read_ctl(
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O volume mixing ratio", "ppv")
       SET_QNT(qnt_Csf6, "Csf6", "SF6 volume mixing ratio", "ppv")
       SET_QNT(qnt_aoa, "aoa", "age of air", "s")
+      SET_QNT(qnt_destination, "destination", "domain index of destination", "-")
+      SET_QNT(qnt_domain, "domain", "current domain index", "-")
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
@@ -5356,6 +5360,14 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "VTK_OFFSET", -1, "0.0", NULL);
   ctl->vtk_sphere =
     (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
+    
+  /* Controle of domain decomposition... */
+  ctl->dd_domains_meridional =
+    (int) scan_ctl(filename, argc, argv, "DD_DOMAINS_MERIDIONAL", -1, "1", NULL);
+  ctl->dd_domains_zonal =
+    (int) scan_ctl(filename, argc, argv, "DD_DOMAINS_ZONAL", -1, "1", NULL);
+  ctl->dd_nbr_neighbours =
+    (int) scan_ctl(filename, argc, argv, "DD_NBR_NEIGHBOURS", -1, "8", NULL);
 }
 
 /*****************************************************************************/
