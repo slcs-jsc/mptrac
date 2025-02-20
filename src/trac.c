@@ -83,22 +83,7 @@ int main(
 
     /* Allocate memory... */
     mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm);
-    
-    /* Register the MPI_Particle data type... */
-    MPI_Datatype MPI_Particle;
-    dd_reg_MPI_type_particle(&MPI_Particle);
-  
-    /* Define communication destinations ... */
-    int destinations[8];
-    dd_get_destinations(ctl, destinations, rank, size); 
-  
-    /* Check if particles are in domain. */
-    dd_assign_rect_domains_atm( atm, met0, ctl, rank, destinations, 1);
    
-    /* Initialize particles locally... */
-    particle_t* particles;
-    ALLOC(particles, particle_t, atm->np);
-
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     mptrac_read_ctl(filename, argc, argv, ctl);
@@ -113,6 +98,13 @@ int main(
 
     /* Initialize MPTRAC... */
     mptrac_init(ctl, cache, clim, atm, ntask);
+    
+    /* Define communication destinations ... */
+    int destinations[8];
+    dd_get_rect_destination(*ctl, destinations, rank, size);
+  
+    /* Check if particles are in domain. */
+    dd_assign_rect_domains_atm( atm, met0, *ctl, rank, destinations, 1);
 
     /* ------------------------------------------------------------
        Loop over timesteps...
@@ -161,11 +153,6 @@ int main(
 
     /* Free memory... */
     mptrac_free(ctl, cache, clim, met0, met1, atm);
-    /* Free MPI datatype... */
-    MPI_Type_free(&MPI_Particle);
-    
-    /* Free local particle array... */
-    free(particles);
 
     /* Report timers... */
     PRINT_TIMERS;

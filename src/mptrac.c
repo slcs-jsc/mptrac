@@ -5539,24 +5539,45 @@ void mptrac_run_timestep(
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
     
   if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1) {
+    //module_dd()
   
+    /* Initialize particles locally... */
+    particle_t* particles;
+    ALLOC(particles, particle_t, atm->np);
+  
+    /* Get the MPI information... */
+    int rank;
     MPI_Barrier(MPI_COMM_WORLD);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    int size = ctl->dd_domains_meridional*ctl->dd_domains_zonal;
+        
+    /* Register the MPI_Particle data type... */
+    MPI_Datatype MPI_Particle;
+    dd_register_MPI_type_particle(&MPI_Particle);
+    
+    /* Define communication destinations ... */
+    int destinations[8];
+    dd_get_rect_destination(*ctl, destinations, rank, size);
    
     /* Assign particles to new domains... */
-    dd_assign_rect_domains_atm( atm, met0, ctl, rank, destinations, 0);
+    dd_assign_rect_domains_atm( atm, *met0, *ctl, rank, destinations, 0);
     
     /* Transform from struct of array to array of struct... */
-    atm2particles(atm, particles, ctl);
+    atm2particles(atm, particles, *ctl);
     
     /* Perform the communication... */
     dd_communicate_particles( particles, atm->np, MPI_Particle, 
-      destinations,ctl.dd_nbr_neighbours , ctl, dt);
+      destinations,ctl->dd_nbr_neighbours , *ctl, cache->dt);
       
     /* Transform from array of struct to struct of array... */
-    particles2atm(atm, particles, ctl); 
+    particles2atm(atm, particles, *ctl); 
     
+    /* Free MPI datatype... */
+    MPI_Type_free(&MPI_Particle);
     
-  
+    /* Free local particle array... */
+    free(particles);
+
   }  
     
 
@@ -8005,16 +8026,18 @@ int read_met_nc_3d(
 /*****************************************************************************/
 
 int read_met_nc_2d_par(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const char *varname5,
+  const char *varname6,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY],
-  float scl,
-  int init) {
+  const float scl,
+  const int init) {
 
   char varsel[LEN];
 
@@ -8034,6 +8057,12 @@ int read_met_nc_2d_par(
   else if (varname4 != NULL
 	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
     sprintf(varsel, "%s", varname4);
+  else if (varname5 != NULL
+	   && nc_inq_varid(ncid, varname5, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname5);
+  else if (varname6 != NULL
+	   && nc_inq_varid(ncid, varname6, &varid) == NC_NOERR)
+    sprintf(varsel, "%s", varname6);
   else
     return 0;
 
@@ -8176,165 +8205,18 @@ int read_met_nc_2d_par(
   return 1;
 }
 
-
-/*****************************************************************************/
-
-int read_met_nc_3d(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
-  float dest[EX][EY][EP],
-  float scl) {
-
-  char varsel[LEN];
-
-  float offset, scalfac;
-
-  int varid;
-
-  /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname);
-  else if (varname2 != NULL
-	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname2);
-  else if (varname3 != NULL
-	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname3);
-  else if (varname4 != NULL
-	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname4);
-  else
-    return 0;
-
-  /* Read packed data... */
-  if (ctl->met_nc_scale
-      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
-
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s "
-	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention != 0)
-      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
-
-    /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux * scalfac + offset) < 1e14f)
-	    dest[ix][iy][ip] = scl * (aux * scalfac + offset);
-	  else
-	    dest[ix][iy][ip] = NAN;
-	}
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Unpacked data... */
-  else {
-
-    /* Allocate... */
-    float *help;
-    ALLOC(help, float,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-
-    /* Read data... */
-    NC(nc_get_var_float(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention == 0) {
-
-      /* Copy and check data (ordering: lev, lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ip = 0; ip < met->np; ip++) {
-	    float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
-	    if ((fillval == 0 || aux != fillval)
-		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
-	      dest[ix][iy][ip] = scl * aux;
-	    else
-	      dest[ix][iy][ip] = NAN;
-	  }
-
-    } else {
-
-      /* Copy and check data (ordering: lon, lat, lev)... */
-#pragma omp parallel for default(shared) num_threads(12)
-      for (int ip = 0; ip < met->np; ip++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ix = 0; ix < met->nx; ix++) {
-	    float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-	    if ((fillval == 0 || aux != fillval)
-		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
-	      dest[ix][iy][ip] = scl * aux;
-	    else
-	      dest[ix][iy][ip] = NAN;
-	  }
-    }
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Return... */
-  return 1;
-}
-
 /*****************************************************************************/
 
 int read_met_nc_3d_par(
-  int ncid,
-  char *varname,
-  char *varname2,
-  char *varname3,
-  char *varname4,
-  ctl_t * ctl,
-  met_t * met,
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
   float dest[EX][EY][EP],
-  float scl) {
+  const float scl) {
 
   char varsel[LEN];
 
@@ -12062,7 +11944,7 @@ void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 }
 
 /*****************************************************************************/
-void dd_get_rect_destination(ctl_t ctl, int* destinations, int rank, int size) {
+void dd_get_rect_destination(const ctl_t ctl, int* destinations, int rank, int size) {
     
       if ( rank + 1 == size) {
 
@@ -12421,14 +12303,11 @@ void dd_assign_rect_domains_atm(
 void module_dd(  
   atm_t* atm,
   particle_t* particles,
-  int nparticles,
   met_t* met, 
   ctl_t ctl, 
   int* destinations,
-  int ndestinations,
   int rank, 
   MPI_Datatype MPI_Particle, 
-  ctl_t ctl, 
   double* dt) {
 
     MPI_Barrier(MPI_COMM_WORLD);
@@ -12441,7 +12320,7 @@ void module_dd(
     
     /* Perform the communication... */
     dd_communicate_particles( particles, atm->np, MPI_Particle, 
-      destinations,ctl.dd_nbr_neighbours , ctl, dt);
+      destinations, ctl.dd_nbr_neighbours , ctl, dt);
       
     /* Transform from array of struct to struct of array... */
     particles2atm(atm, particles, ctl); 

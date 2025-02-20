@@ -333,8 +333,17 @@
 #endif
 
 /*! Define abbreviations for poles in domain decomposition. */
+#ifndef NPOLE
 #define NPOLE -1
+#endif
+#ifndef SPOLE
 #define SPOLE -2
+#endif
+
+/*! Define size of send and recieve buffer. */
+#ifndef NBUFFER
+#define NBUFFER 1000
+#endif
 
 /* ------------------------------------------------------------
    Macros...
@@ -8796,8 +8805,8 @@ void  dd_register_MPI_type_particle(
  *
  * @author Jan Clemens
  */
-dd_get_rect_destination(
-  ctl_t ctl, 
+void dd_get_rect_destination(
+  const ctl_t ctl, 
   int* destinations, 
   int rank, 
   int size);
@@ -8886,17 +8895,14 @@ void dd_communicate_particles(
   /**
  * @brief A module to perform the entire rectangular domain decomposition.
  */
-  void module_dd(  
+void module_dd(  
   atm_t* atm,
   particle_t* particles,
-  int nparticles,
   met_t* met, 
   ctl_t ctl, 
   int* destinations,
-  int ndestinations,
   int rank, 
   MPI_Datatype MPI_Particle, 
-  ctl_t ctl, 
   double* dt);
 
 #endif /* LIBTRAC_H */
