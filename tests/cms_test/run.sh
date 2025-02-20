@@ -14,7 +14,7 @@ rm -rf data && mkdir -p data
 $trac/met_conv - ../data/ei_2011_06_05_00.nc 0 data/ei_2011_06_05_00.cms 5 MET_DP 15
 
 # Extract map data...
-$trac/met_map - data/map.tab data/ei_2011_06_05_00.cms MET_TYPE 5
+$trac/met_map - data/map.tab data/ei_2011_06_05_00.cms MET_TYPE 5 MAP_DLON 3 MAP_DLAT 2
 
 # Compare files...
 echo -e "\nCompare results..."
