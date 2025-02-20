@@ -11986,3 +11986,38 @@ void write_vtk(
   /* Close file... */
   fclose(out);
 }
+
+/*****************************************************************************/
+
+void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
+
+  for (int ip = 0; ip < atm->np; ip++) {
+
+    particles[ip].time = atm->time[ip];
+    particles[ip].lon = atm->lon[ip]; 
+    particles[ip].lat = atm->lat[ip];
+    particles[ip].p = atm->p[ip];
+
+    for (int iq = 0; iq < ctl.nq; iq++) 
+      particles[ip].q[iq] = atm->q[iq][ip];
+
+  }
+
+}
+
+/*****************************************************************************/
+
+void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
+
+  for (int ip = 0; ip < atm->np; ip++) {
+    atm->time[ip] = particles[ip].time;
+    atm->lon[ip] = particles[ip].lon; 
+    atm->lat[ip] = particles[ip].lat;
+    atm->p[ip] = particles[ip].p;
+
+    for (int iq = 0; iq < ctl.nq; iq++) 
+      atm->q[iq][ip] = particles[ip].q[iq];
+
+  }
+
+}

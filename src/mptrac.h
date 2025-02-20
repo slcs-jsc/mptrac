@@ -8666,5 +8666,53 @@ void write_vtk(
   const ctl_t * ctl,
   const atm_t * atm,
   const double t);
+  
+/**
+ * @brief Converts atmospheric data to particle data.
+ *
+ * The `atm2particles` function converts data from an atmospheric data
+ * structure (`atm_t`) to an array of particle structures (`particle_t`).
+ * It iterates over each particle and assigns corresponding values from
+ * the atmospheric data based on control parameters (`ctl_t`).
+ *
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param particles An array of `particle_t` structures to be populated with data.
+ * @param ctl A `ctl_t` structure containing control parameters.
+ *
+ * The function performs the following steps:
+ * - Iterates through each particle index up to the number of particles (`np`) in `atm`.
+ * - Assigns time, longitude, latitude, and pressure values from `atm` to each particle.
+ * - Copies additional quantities (`q`) from `atm` to each particle based on the number of quantities (`nq`) in `ctl`.
+ *
+ * @note This function assumes that the `particles` array is pre-allocated with sufficient
+ *       memory to hold `np` particles. The `ctl` structure must be properly initialized.
+ *
+ * @author Jan CLEMENS
+ */
+void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl);
+
+/**
+ * @brief Converts particle data to atmospheric data.
+ *
+ * The `particles2atm` function converts data from an array of particle
+ * structures (`particle_t`) to an atmospheric data structure (`atm_t`).
+ * It iterates over each particle and assigns corresponding values to
+ * the atmospheric data based on control parameters (`ctl_t`).
+ *
+ * @param atm A pointer to an `atm_t` structure to be populated with data.
+ * @param particles An array of `particle_t` structures containing particle data.
+ * @param ctl A `ctl_t` structure containing control parameters.
+ *
+ * The function performs the following steps:
+ * - Iterates through each particle index up to the number of particles (`np`) in `atm`.
+ * - Assigns time, longitude, latitude, and pressure values from each particle to `atm`.
+ * - Copies additional quantities (`q`) from each particle to `atm` based on the number of quantities (`nq`) in `ctl`.
+ *
+ * @note This function assumes that the `atm` structure is pre-allocated with sufficient
+ *       memory to hold data for `np` particles. The `ctl` structure must be properly initialized.
+ *
+ * @author Your Name
+ */
+void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl);
 
 #endif /* LIBTRAC_H */
