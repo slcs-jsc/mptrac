@@ -7636,7 +7636,8 @@ int read_met_nc(
   read_met_polar_winds(met);
 
   /* Create periodic boundary conditions... */
-  read_met_periodic(met);
+  // TODO: Periodic conditions are different with dd... 
+  //read_met_periodic(met);
 
   /* Downsampling... */
   read_met_sample(ctl, met);

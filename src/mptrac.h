@@ -7184,6 +7184,90 @@ int read_met_nc_3d(
   const met_t * met,
   float dest[EX][EY][EP],
   const float scl);
+  
+/**
+ * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 2-dimensional meteorological variable from a
+ * NetCDF file in parallel and stores it in a specified destination array.  It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly.  The function also checks
+ * the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @param init Flag indicating whether to initialize the destination array before reading.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc_2d_par(
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const char *varname5,
+  const char *varname6,
+  const ctl_t * ctl,
+  const met_t * met,
+  float dest[EX][EY],
+  const float scl,
+  const int init);
+
+/**
+ * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 3-dimensional meteorological variable from a
+ * NetCDF file in parallel and stores it in a specified destination array. It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly. The function also checks
+ * the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param varname5 An alternative name of the variable to read (in case varname4 is not found).
+ * @param varname6 An alternative name of the variable to read (in case varname5 is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc_3d_par(
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
+  float dest[EX][EY][EP],
+  const float scl);
 
 /**
  * @brief Computes the planetary boundary layer (PBL) pressure based on meteorological data.
