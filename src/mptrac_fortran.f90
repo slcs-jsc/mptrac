@@ -258,6 +258,9 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_np
      REAL(c_double), DIMENSION(ep) :: met_p
      INTEGER(c_int) :: met_press_level_def
+     INTEGER(c_int) :: met_nlev
+     REAL(c_double), DIMENSION(ep) :: met_lev_hyam
+     REAL(c_double), DIMENSION(ep) :: met_lev_hybm
      INTEGER(c_int) :: met_geopot_sx
      INTEGER(c_int) :: met_geopot_sy
      INTEGER(c_int) :: met_relhum
