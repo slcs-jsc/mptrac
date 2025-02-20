@@ -8796,13 +8796,48 @@ void  dd_reg_MPI_type_particle(
  *
  * @author Jan Clemens
  */
-dd_destination_get_rect(
+dd_get_rect_destination(
   ctl_t ctl, 
   int* destinations, 
   int rank, 
   int size);
   
-
+/**
+ * @brief Communicates particle data between processes in a parallel computing environment.
+ *
+ * The `dd_communicate_particles` function handles the communication of particle data
+ * between processes using MPI. It sends and receives particle data based on precomputed
+ * destination ranks, managing buffers for efficient data transfer.
+ *
+ * @param particles An array of `particle_t` structures representing the particles to be communicated.
+ * @param nparticles The total number of particles in the `particles` array.
+ * @param MPI_Particle An MPI datatype describing the structure of a particle for communication.
+ * @param destinations An array of destination ranks for sending and receiving particles.
+ * @param ndestinations The number of destination ranks in the `destinations` array.
+ * @param ctl A `ctl_t` structure containing control parameters, including domain decomposition details.
+ * @param dt An array of doubles representing the time step for each particle.
+ *
+ * The function performs the following steps:
+ * - Initializes buffers for sending and receiving particle data.
+ * - Determines the current MPI rank.
+ * - Sends particle data to destination ranks, ignoring poles.
+ * - Counts the number of particles to be sent to each destination.
+ * - Allocates and fills send buffers with particle data.
+ * - Sends the particle data using non-blocking MPI sends.
+ * - Waits for all sends to complete using an MPI barrier.
+ * - Receives particle data from source ranks, ignoring poles.
+ * - Allocates receive buffers and receives particle data.
+ * - Integrates received particle data into the local `particles` array.
+ * - Waits for all receives to complete using an MPI barrier.
+ * - Frees allocated buffers and memory.
+ *
+ * @note This function assumes that the `particles` array and `destinations` array are
+ *       properly initialized. It uses non-blocking MPI sends and receives to improve
+ *       communication efficiency. The function handles special cases for poles and
+ *       ensures proper memory management.
+ *
+ * @author Jan Clemens
+ */
 void dd_communicate_particles(
   particle_t* particles, 
   int nparticles, 
@@ -8810,6 +8845,42 @@ void dd_communicate_particles(
   int* destinations, 
   int ndestinations, 
   ctl_t ctl, 
-  double* dt)
+  double* dt);
+  
+/**
+ * @brief Assigns rectangular domains to atmospheric data based on geographical coordinates.
+ *
+ * The `assign_rect_domains_atm` function assigns domain and destination ranks to atmospheric
+ * data points based on their longitude and latitude. It handles both initialization and
+ * subsequent classification of air parcels into domains.
+ *
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param met A pointer to a `met_t` structure containing meteorological domain boundaries.
+ * @param ctl A `ctl_t` structure containing control parameters, including domain indices.
+ * @param rank The current rank of the process.
+ * @param destinations An array of destination ranks for domain classification.
+ * @param init A flag indicating whether the function is called for initialization.
+ *
+ * The function performs the following steps:
+ * - If `init` is true, it initializes the domain and destination ranks for each particle
+ *   based on whether its coordinates fall within the specified domain boundaries.
+ * - If `init` is false, it classifies air parcels into domains based on their current
+ *   coordinates and updates their destination ranks accordingly.
+ * - Adjusts longitude values to ensure they fall within the range [0, 360).
+ * - Assigns destination ranks based on the particle's position relative to the domain boundaries.
+ *
+ * @note This function assumes that the `atm`, `met`, and `ctl` structures are properly
+ *       initialized. The `destinations` array should contain valid destination ranks for
+ *       the eight possible directions (upper right, lower right, etc.).
+ *
+ * @author Jan Clemens
+ */
+ void assign_rect_domains_atm(
+  atm_t* atm,
+  met_t* met, 
+  ctl_t ctl, 
+  int rank, 
+  int* destinations, 
+  int init);
 
 #endif /* LIBTRAC_H */

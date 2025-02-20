@@ -7276,9 +7276,9 @@ void read_met_grid(
                         * (lon_range) / (double) ctl->dd_domains_zonal;
   met->domain_lon_max = met->domain_lon_min
                         + (lon_range) / (double) ctl->dd_domains_zonal;
-  met->domain_lat_min = 90 + (rank % ctl->dd_domains_meridional)
+  met->domain_lat_max = 90 + (rank % ctl->dd_domains_meridional)
                         * (lat_range) / (double) ctl->dd_domains_meridional;
-  met->domain_lat_max = met->domain_lat_min
+  met->domain_lat_min = met->domain_lat_max
                         + (lat_range) / (double) ctl->dd_domains_meridional;
   
  
@@ -12040,7 +12040,7 @@ void dd_reg_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 }
 
 /*****************************************************************************/
-void dd_destination_get_rect(ctl_t ctl, int* destinations, int rank, int size) {
+void dd_get_rect_destination(ctl_t ctl, int* destinations, int rank, int size) {
     
       if ( rank + 1 == size) {
 
@@ -12305,5 +12305,95 @@ void dd_communicate_particles(
   free(nbr);
 
 }  
+
+/*****************************************************************************/
+void assign_rect_domains_atm(
+  atm_t* atm,
+  met_t* met, 
+  ctl_t ctl, 
+  int rank, 
+  int* destinations, 
+  int init) {
+    
+    if (init) {
+      for (int ip = 0; ip < atm->np; ip++) {
+
+        double lont = atm->lon[ip];
+      
+        if (lont < 0)
+          lont += 360;
+
+        if (lont >= met->domain_lon_min && lont < met->domain_lon_max
+         && atm->lat[ip] >= met->domain_lat_min && atm->lat[ip] < met->domain_lat_max) {
+          atm->q[ctl.qnt_domain][ip] = rank;
+          atm->q[ctl.qnt_destination][ip] = rank;
+        }
+        else {
+          atm->q[ctl.qnt_domain][ip] = -1;
+          atm->q[ctl.qnt_destination][ip] = -1;
+        }   
+      } 
+    }
+    
+    else {
+    
+     /* Classify air parcels into domain... */
+    for (int ip = 0; ip < atm->np; ip++) {
+    
+      /* Skip empty places in the particle array... */
+      if (atm->q[ctl.qnt_domain][ip] == -1)
+        continue;
+
+      double lont = atm->lon[ip];
+      double latt = atm->lat[ip];
+
+      double lon_max = met->domain_lon_max;
+      double lon_min = met->domain_lon_min;
+      double lat_max = met->domain_lat_max;
+      double lat_min = met->domain_lat_min;
+ 
+      if (lont < 0)
+        lont += 360;
+
+      if ((lont >= lon_max) && (latt >= lat_max)) {
+        // Upper right...
+        atm->q[ctl.qnt_destination][ip] = destinations[5];
+      }
+      else if ((lont >= lon_max) && (latt <= lat_min)) {
+        // Lower right...
+        atm->q[ctl.qnt_destination][ip] = destinations[4];
+      }
+      else if ((lont <= lon_min) && (latt >= lat_max)) {
+        // Upper left...
+        atm->q[ctl.qnt_destination][ip] = destinations[2];
+      }
+      else if ((lont <= lon_min) && (latt <= lat_min)) {
+        // Lower left...
+        atm->q[ctl.qnt_destination][ip] = destinations[1];
+          }
+      else if (lont >= lon_max) {
+        // Right...
+        atm->q[ctl.qnt_destination][ip] = destinations[3];
+      }
+      else if (lont <= lon_min) {
+        // Left...
+        atm->q[ctl.qnt_destination][ip] = destinations[0];
+      }
+      else if (latt <= lat_min) {
+        // Down...
+        atm->q[ctl.qnt_destination][ip] = destinations[7];
+      }
+      else if (latt >= lat_max) {
+        // Up...
+        atm->q[ctl.qnt_destination][ip] = destinations[6];
+      }
+      else {
+        // Within...
+        atm->q[ctl.qnt_destination][ip] = rank;
+      }
+    }  
+   }
+    
+  }
 
 
