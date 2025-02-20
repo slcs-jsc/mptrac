@@ -7272,14 +7272,14 @@ void read_met_grid(
   	met->lon[ix] = met->lon[ix_];}
   	
   // Determine domain edges...
-  met->domain_lon_min = floor (rank / ctl->ndomain_meridional)
-                        * (lon_range) / (double) ctl->ndomain_zonal;
+  met->domain_lon_min = floor (rank / ctl->dd_domains_meridional)
+                        * (lon_range) / (double) ctl->dd_domains_zonal;
   met->domain_lon_max = met->domain_lon_min
-                        + (lon_range) / (double) ctl->ndomain_zonal;
-  met->domain_lat_min = 90 + (rank % ctl->ndomain_meridional)
-                        * (lat_range) / (double) ctl->ndomain_meridional;
+                        + (lon_range) / (double) ctl->dd_domains_zonal;
+  met->domain_lat_min = 90 + (rank % ctl->dd_domains_meridional)
+                        * (lat_range) / (double) ctl->dd_domains_meridional;
   met->domain_lat_max = met->domain_lat_min
-                        + (lat_range) / (double) ctl->ndomain_meridional;
+                        + (lat_range) / (double) ctl->dd_domains_meridional;
   
  
   LOG(2, " %d Domain longitudes: %g, %g ... %g deg", rank,
@@ -8404,7 +8404,7 @@ int read_met_nc_3d_par(
     
     /* Create halos... */
     /*
-    if ((rank > ctl->ndomain_meridional - 1) && (rank < size - ctl->ndomain_meridional)) {
+    if ((rank > ctl->dd_domains_meridional - 1) && (rank < size - ctl->dd_domains_meridional)) {
       // If we are not at the left or right edge extend in zonal direction...
       // Move the start one point to the left...
       met->domain_count[3] = met->domain_count[3] + 10;//2;
@@ -8412,12 +8412,12 @@ int read_met_nc_3d_par(
      } else {
       // If we are at the left or right edge, extend only in one zonal direction...
       met->domain_count[3] = met->domain_count[3] + 5;
-      if (rank > ctl->ndomain_meridional - 1 )
+      if (rank > ctl->dd_domains_meridional - 1 )
         // If we are not at the left edge, move the start to the left... 
         met->domain_start[3] = met->domain_start[3] - 5;
     }
   
-    if ((rank%ctl->ndomain_meridional > 0) && (rank%ctl->ndomain_meridional <  ctl->ndomain_meridional -1 )) {
+    if ((rank%ctl->dd_domains_meridional > 0) && (rank%ctl->dd_domains_meridional <  ctl->dd_domains_meridional -1 )) {
       // If we are not at the upper or lower edge extend in meridional direction...
       // Move the start point one point down...
       met->domain_count[2] = met->domain_count[2] + 10;//2;
@@ -8425,7 +8425,7 @@ int read_met_nc_3d_par(
     } else {
       // If we are at the top or the lower edge only extend in one mer. direction...
       met->domain_count[2] = met->domain_count[2] + 5;
-      if (rank%ctl->ndomain_meridional > 0)
+      if (rank%ctl->dd_domains_meridional > 0)
         // If we are not at the top, move the start one upward... 
         met->domain_start[2] = met->domain_start[2] - 5;
     }*/
@@ -12044,25 +12044,25 @@ void dd_destination_get_rect(ctl_t ctl, int* destinations, int rank, int size) {
     
       if ( rank + 1 == size) {
 
-        destinations[0] = rank - ctl.ndomain_meridional;   
+        destinations[0] = rank - ctl.dd_domains_meridional;   
         destinations[1] = SPOLE;
-        destinations[2] = rank - ctl.ndomain_meridional - 1; 
+        destinations[2] = rank - ctl.dd_domains_meridional - 1; 
 
-        destinations[3] = (rank + 1 + ctl.ndomain_meridional)%size  - 1; 
+        destinations[3] = (rank + 1 + ctl.dd_domains_meridional)%size  - 1; 
         destinations[4] = SPOLE;
-        destinations[5] = (rank + ctl.ndomain_meridional)%size  - 1;
+        destinations[5] = (rank + ctl.dd_domains_meridional)%size  - 1;
 
         destinations[6] = rank - 1;
         destinations[7] = SPOLE;
       
-      } else if (rank == ctl.ndomain_meridional*( ctl.ndomain_zonal - 1 )){
+      } else if (rank == ctl.dd_domains_meridional*( ctl.dd_domains_zonal - 1 )){
 
-        destinations[0] = rank - ctl.ndomain_meridional ;
-        destinations[1] = rank - ctl.ndomain_meridional + 1;
+        destinations[0] = rank - ctl.dd_domains_meridional ;
+        destinations[1] = rank - ctl.dd_domains_meridional + 1;
         destinations[2] = NPOLE; 
 
-        destinations[3] = (rank + 1 + ctl.ndomain_meridional)%size  - 1;
-        destinations[4] = (rank + 2 + ctl.ndomain_meridional)%size  - 1;
+        destinations[3] = (rank + 1 + ctl.dd_domains_meridional)%size  - 1;
+        destinations[4] = (rank + 2 + ctl.dd_domains_meridional)%size  - 1;
         destinations[5] = NPOLE;
 
         destinations[6] = NPOLE;
@@ -12070,91 +12070,91 @@ void dd_destination_get_rect(ctl_t ctl, int* destinations, int rank, int size) {
 
      } else if (rank == 0) {
 
-        destinations[0] = size - ctl.ndomain_meridional + rank;
-        destinations[1] = size - ctl.ndomain_meridional + rank + 1;
+        destinations[0] = size - ctl.dd_domains_meridional + rank;
+        destinations[1] = size - ctl.dd_domains_meridional + rank + 1;
         destinations[2] = NPOLE;
 
-        destinations[3] = rank + ctl.ndomain_meridional;
-        destinations[4] = rank + 1 + ctl.ndomain_meridional;
+        destinations[3] = rank + ctl.dd_domains_meridional;
+        destinations[4] = rank + 1 + ctl.dd_domains_meridional;
         destinations[5] = NPOLE;
 
       destinations[6] = NPOLE;
       destinations[7] = rank + 1;
 
-    } else if (rank + 1 == ctl.ndomain_meridional) {
+    } else if (rank + 1 == ctl.dd_domains_meridional) {
 
-      destinations[0] = size - ctl.ndomain_meridional + rank;
+      destinations[0] = size - ctl.dd_domains_meridional + rank;
       destinations[1] = SPOLE;
-      destinations[2] = size - ctl.ndomain_meridional + rank - 1;
+      destinations[2] = size - ctl.dd_domains_meridional + rank - 1;
 
-      destinations[3] = rank + ctl.ndomain_meridional;
+      destinations[3] = rank + ctl.dd_domains_meridional;
       destinations[4] = SPOLE;
-      destinations[5] = rank + ctl.ndomain_meridional - 1;
+      destinations[5] = rank + ctl.dd_domains_meridional - 1;
 
       destinations[6] = rank - 1;
       destinations[7] = SPOLE;
 
-    } else if ((rank + 1)%ctl.ndomain_meridional == 1) {
+    } else if ((rank + 1)%ctl.dd_domains_meridional == 1) {
 
-      destinations[0] = rank - ctl.ndomain_meridional;
-      destinations[1] = rank + 1 - ctl.ndomain_meridional;
+      destinations[0] = rank - ctl.dd_domains_meridional;
+      destinations[1] = rank + 1 - ctl.dd_domains_meridional;
       destinations[2] = NPOLE;
 
-      destinations[3] = rank + ctl.ndomain_meridional;
-      destinations[4] = rank + 1 + ctl.ndomain_meridional;
+      destinations[3] = rank + ctl.dd_domains_meridional;
+      destinations[4] = rank + 1 + ctl.dd_domains_meridional;
       destinations[5] = NPOLE;
 
       destinations[6] = NPOLE;
       destinations[7] = rank + 1;
 
-    } else if ((rank+1)%ctl.ndomain_meridional == 0) {
+    } else if ((rank+1)%ctl.dd_domains_meridional == 0) {
       
-      destinations[0] = rank - ctl.ndomain_meridional;
+      destinations[0] = rank - ctl.dd_domains_meridional;
       destinations[1] = SPOLE;
-      destinations[2] = rank - ctl.ndomain_meridional - 1;
+      destinations[2] = rank - ctl.dd_domains_meridional - 1;
 
-      destinations[3] = rank + ctl.ndomain_meridional;
+      destinations[3] = rank + ctl.dd_domains_meridional;
       destinations[4] = SPOLE;
-      destinations[5] = rank + ctl.ndomain_meridional - 1;
+      destinations[5] = rank + ctl.dd_domains_meridional - 1;
 
       destinations[6] = rank - 1;
       destinations[7] = SPOLE;
     
-    } else if (rank + 1 <= ctl.ndomain_meridional) {
+    } else if (rank + 1 <= ctl.dd_domains_meridional) {
 
-      destinations[0] = size - ctl.ndomain_meridional + rank;
-      destinations[1] = size - ctl.ndomain_meridional + rank + 1;
-      destinations[2] = size - ctl.ndomain_meridional + rank - 1;
+      destinations[0] = size - ctl.dd_domains_meridional + rank;
+      destinations[1] = size - ctl.dd_domains_meridional + rank + 1;
+      destinations[2] = size - ctl.dd_domains_meridional + rank - 1;
 
-      destinations[3] = rank + ctl.ndomain_meridional;
-      destinations[4] = rank + ctl.ndomain_meridional + 1;
-      destinations[5] = rank + ctl.ndomain_meridional - 1;
+      destinations[3] = rank + ctl.dd_domains_meridional;
+      destinations[4] = rank + ctl.dd_domains_meridional + 1;
+      destinations[5] = rank + ctl.dd_domains_meridional - 1;
 
       destinations[6] = rank - 1;
       destinations[7] = rank + 1;
 
-    } else if (rank + 1 > size - ctl.ndomain_meridional) {
+    } else if (rank + 1 > size - ctl.dd_domains_meridional) {
 
-      destinations[0] = rank - ctl.ndomain_meridional;
-      destinations[1] = rank - ctl.ndomain_meridional + 1;
-      destinations[2] = rank - ctl.ndomain_meridional - 1;
+      destinations[0] = rank - ctl.dd_domains_meridional;
+      destinations[1] = rank - ctl.dd_domains_meridional + 1;
+      destinations[2] = rank - ctl.dd_domains_meridional - 1;
 
-      destinations[3] = (rank + 1 + ctl.ndomain_meridional)%size  - 1;
-      destinations[4] = (rank + 2 + ctl.ndomain_meridional)%size  - 1;
-      destinations[5] = (rank  + ctl.ndomain_meridional)%size  - 1;
+      destinations[3] = (rank + 1 + ctl.dd_domains_meridional)%size  - 1;
+      destinations[4] = (rank + 2 + ctl.dd_domains_meridional)%size  - 1;
+      destinations[5] = (rank  + ctl.dd_domains_meridional)%size  - 1;
 
       destinations[6] = rank - 1;
       destinations[7] = rank + 1;
       
     } else {
 
-      destinations[0] = rank - ctl.ndomain_meridional;  // left...
-      destinations[1] = rank - ctl.ndomain_meridional + 1; // lower left..
-      destinations[2] = rank - ctl.ndomain_meridional - 1; // upper left..
+      destinations[0] = rank - ctl.dd_domains_meridional;  // left...
+      destinations[1] = rank - ctl.dd_domains_meridional + 1; // lower left..
+      destinations[2] = rank - ctl.dd_domains_meridional - 1; // upper left..
 
-      destinations[3] = rank + ctl.ndomain_meridional; // right...
-      destinations[4] = rank + ctl.ndomain_meridional + 1 ; // lower right...
-      destinations[5] = rank + ctl.ndomain_meridional - 1; // upper right...
+      destinations[3] = rank + ctl.dd_domains_meridional; // right...
+      destinations[4] = rank + ctl.dd_domains_meridional + 1 ; // lower right...
+      destinations[5] = rank + ctl.dd_domains_meridional - 1; // upper right...
 
       destinations[6] = rank - 1; // upper
       destinations[7] = rank + 1; // lower
@@ -12162,5 +12162,148 @@ void dd_destination_get_rect(ctl_t ctl, int* destinations, int rank, int size) {
     }
     
   }
+  
+/*****************************************************************************/
+void dd_communicate_particles(
+  particle_t* particles, 
+  int nparticles, 
+  MPI_Datatype MPI_Particle, 
+  int* destinations, 
+  int ndestinations, 
+  ctl_t ctl, 
+  double* dt) {
+
+  /* Initialize the buffers... */
+  int* nbs;
+  int* nbr;
+  ALLOC(nbs, int, ndestinations);
+  ALLOC(nbr, int, ndestinations);
+  particle_t* send_buffers[NBUFFER];
+  particle_t* recieve_buffers[NBUFFER];
+  
+  /* Get MPI rank... */
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+  /* Sending... */
+  for (int idest = 0; idest < ndestinations; idest++) {
+    
+    /* Ignore poles... */
+    if (destinations[idest] < 0)
+      continue;
+      
+    /* Count number of particles in particle array that will be send... */
+    nbs[idest] = 0;
+    for (int ip = 0; ip < nparticles; ip++) {
+      if ( (int) particles[ip].q[ctl.qnt_domain] != -1 
+      && (int) particles[ip].q[ctl.qnt_destination] == destinations[idest] ) {
+      nbs[idest]++;
+      }
+    }
+    
+    /* Send buffer sizes... */
+    MPI_Request request;
+    MPI_Isend( &nbs[idest], 1, MPI_INT, destinations[idest], 0, MPI_COMM_WORLD, &request);
+
+    /* Don't send empty signals... */
+    if ( nbs[idest] == 0 )
+      continue;
+
+    /* Allocate buffer for sending... */
+    ALLOC(send_buffers[idest], particle_t, nbs[idest]);
+   
+    /* Fill the send buffer... */
+    int ibs = 0;
+    for (int ip = 0; ip < nparticles; ip++) {
+      // Only add those elements whithout 'graveyard' 
+      // and with the right destinations...
+      if ((int) particles[ip].q[ctl.qnt_domain] != -1
+       && (int) particles[ip].q[ctl.qnt_destination] == destinations[idest]) {
+        memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
+   
+      // Mark old place as 'graveyard'...
+      particles[ip].q[ctl.qnt_domain] = -1;
+      dt[ip] = 0;
+      ibs++;
+      }
+    }
+
+    /* Send the buffer... */
+    MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
+    	      destinations[idest], 1, MPI_COMM_WORLD, &request);
+  }
+
+  /* Wait for all signals to be send... */
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  /* Recieving... */
+  for (int isourc = 0; isourc < ndestinations; isourc++) {
+  
+  /* Ignore poles... */
+  if (destinations[isourc]<0)
+    continue;
+
+  /* Recieve buffer sizes... */
+  MPI_Status status;
+  MPI_Recv( &nbr[isourc], 1, MPI_INT, destinations[isourc], 0, MPI_COMM_WORLD,  &status);
+
+  /* Continue with other neighbours if there is no signal... */
+  if (nbr[isourc]==0)
+    continue;
+
+  /* Allocate buffer for recieving... */
+  ALLOC( recieve_buffers[isourc], particle_t, nbr[isourc]);
+  MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, destinations[isourc], 1, MPI_COMM_WORLD, &status);
+    
+  }
+
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+
+  /* Putting buffer into particle array... */
+  for (int isourc = 0; isourc < ndestinations; isourc++) {
+    
+    /* Ignore poles... */
+    if (destinations[isourc]<0)
+      continue;
+      
+    /* Getting particles from buffer... */ 
+    if (nbr[isourc] > 0) {
+      int ipbr = 0;
+      for (int ip = 0; ip < nparticles; ip++) {
+        if ((int) particles[ip].q[ctl.qnt_domain] == -1) {
+          memcpy(&particles[ip], &recieve_buffers[isourc][ipbr], sizeof(particle_t));
+          dt[ip] = ctl.dt_mod;
+          particles[ip].q[ctl.qnt_destination] = rank;
+          particles[ip].q[ctl.qnt_domain] = rank;
+          ipbr++; 
+        }  
+        if (ipbr == nbr[isourc])
+          break; 
+      } 
+    } 
+  }
+
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  /* Free buffers and buffersizes... */
+  for (int i = 0; i < ndestinations; i++) {
+        
+    if ((send_buffers[i] != NULL) && (nbs[i] != 0)) {
+      free(send_buffers[i]);
+      send_buffers[i] = NULL;
+    }
+    
+    if ((recieve_buffers[i] != NULL) && (nbr[i] != 0)) {
+      free(recieve_buffers[i]);
+      recieve_buffers[i] = NULL;
+    }
+  }
+    
+  free(nbs);
+  free(nbr);
+
+}  
 
 

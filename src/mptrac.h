@@ -8800,6 +8800,16 @@ dd_destination_get_rect(
   ctl_t ctl, 
   int* destinations, 
   int rank, 
-  int size)
+  int size);
+  
+
+void dd_communicate_particles(
+  particle_t* particles, 
+  int nparticles, 
+  MPI_Datatype MPI_Particle, 
+  int* destinations, 
+  int ndestinations, 
+  ctl_t ctl, 
+  double* dt)
 
 #endif /* LIBTRAC_H */
