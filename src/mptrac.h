@@ -120,6 +120,7 @@
 
 #ifdef MPI
 #include "mpi.h"
+#include <netcdf_par.h>
 #endif
 
 #ifdef _OPENACC
