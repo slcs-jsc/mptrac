@@ -6551,11 +6551,15 @@ void read_met_global_grib(
   int count_handles,
   met_t *met) {
 
+  /* Set timer... */
+  SELECT_TIMER("READ_MET_GLOBAL_GRIB", "INPUT", NVTX_READ);
+  LOG(2, "Read meteo grid information...");
+
   /*Read type of level...*/
   long leveltype = 0;
   ECC(codes_get_long(handles[0],"typeOfFirstFixedSurface",&leveltype));
+  
   /*Read date...*/
-
   char datestr[50];
   char timestr[50];
   char year[20],month[20],day[20],hour[20];
@@ -6577,12 +6581,25 @@ void read_met_global_grib(
   time2jsec(atoi(year),atoi(month),atoi(day),atoi(hour),0,0,0,&(met->time));
   /*Does not seem quite right*/
 
-  /*Read grid information*/
+  /* Write info... */
+  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
+      met->time, atoi(year),atoi(month),atoi(day),atoi(hour), 0);
+  
+  /* Read grid information... */
   long count_lat = 0,count_lon= 0;
   ECC(codes_get_long(handles[0],"Nj",&count_lat));
   ECC(codes_get_long(handles[0],"Ni",&count_lon));
   met->ny = (int) count_lat;
   met->nx = (int) count_lon;
+
+  /* Check grid dimensions... */
+  LOG(2, "Number of longitudes: %d", met->nx);
+  if(met->nx<2 || met->nx>EX)
+    ERRMSG("Number of longitudes out of range!");
+  LOG(2, "Number of latitudes: %d", met->ny);
+  if(met->ny<2 || met->ny>EY)
+    ERRMSG("Number of latitudes out of range!");    
+  
   double min_lon,max_lon,min_lat,max_lat,inc_lon,inc_lat;
   ECC(codes_get_double(handles[0],"longitudeOfFirstGridPointInDegrees",&min_lon));
   ECC(codes_get_double(handles[0],"latitudeOfFirstGridPointInDegrees",&min_lat));
@@ -6591,7 +6608,7 @@ void read_met_global_grib(
   ECC(codes_get_double(handles[0],"iDirectionIncrementInDegrees",&inc_lon));
   ECC(codes_get_double(handles[0],"jDirectionIncrementInDegrees",&inc_lat));
 
-  /*Compute grid*/
+  /* Compute longitude-latitude grid... */
   int counter = 0;
   for (double i = min_lon ; i <= max_lon+1e-6 ; i += inc_lon){
     met->lon[counter] = i;
@@ -6602,8 +6619,14 @@ void read_met_global_grib(
     met->lat[counter] = i;
     counter += 1;
   }
-
-  /*Read vertical levels*/
+  
+  /* Write info... */
+  LOG(2, "Longitudes: %g, %g ... %g deg",
+      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+  LOG(2, "Latitudes: %g, %g ... %g deg",
+      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+  
+  /* Read vertical levels... */
   int max_level = 0;
   for(int i=0;i<count_handles;i++){
     long level;
@@ -6612,7 +6635,12 @@ void read_met_global_grib(
       max_level = (int)level;
     }
   }
-  met->npl = max_level+1;
+  met->npl = max_level+1;   // TODO: don't add +1 here, number levels is 137, not 138?
+
+  /* Check number of levels... */
+  LOG(2, "Number of levels: %d", met->npl);
+  if (met->npl < 2 || met->npl > EP)
+    ERRMSG("Number of levels out of range!");
   }
 #endif
 
@@ -7010,13 +7038,18 @@ void read_met_monotonize(
 int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
 
   size_t filename_len = strlen(filename);
-  char general_filename [filename_len-3];
+
+  /* Check length of filename... */
+  if(filename_len<4)
+    return 0;
+  
+  char general_filename [filename_len-3];   // TODO: will lead to seg fault if filename_len < 3
   memcpy(general_filename,filename,filename_len-4);
   general_filename[filename_len-4] = '\0';
   char sf_filename [filename_len+3];
   char ml_filename [filename_len+3];
 
-  snprintf(ml_filename,filename_len+strlen("ml")+1,"%s%s%s",general_filename,"ml",".grb");
+  snprintf(ml_filename,filename_len+strlen("ml")+1,"%s%s%s",general_filename,"ml",".grb");   // TODO: use get_met_replace() to replace pattern (eg "XX" by "ml" or "sf")?
   snprintf(sf_filename,filename_len+strlen("sf")+1,"%s%s%s",general_filename,"sf",".grb");
 
   
