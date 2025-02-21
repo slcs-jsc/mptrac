@@ -7075,7 +7075,7 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   for(int nx = 0;nx<met->nx;nx++){
     for(int ny = 0;ny<met->ny;ny++){
       for(int level = 0;level<met->npl;level++){
-        met->pl[nx][ny][level] = (float) ((values[level] + met->ps[nx][ny] * values[level+met->npl])*0.01f);
+        met->pl[nx][ny][level] = (float) ((values[level]*0.01f + met->ps[nx][ny] * values[level+met->npl]));
       }
     }
   }
@@ -8182,7 +8182,7 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
     ECC(codes_get_double_array(handles[i],"values",values,&value_count))
 
     /*Read surface pressure... */
-    ECC_READ_2D("sp",met->ps,1.0f,sp_flag)
+    ECC_READ_2D("sp",met->ps,0.01f,sp_flag)
     
     /*Read geopotential height at the surface... */
     ECC_READ_2D("z",met->zs,(float) (1. / (1000. * G0)),z_flag)
