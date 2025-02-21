@@ -8237,14 +8237,18 @@ void read_met_surface_grib(codes_handle** handles, const int num_messages, const
   if(sst_flag==0){
     WARN("Cannot read sea surface temperature!");
   }
-  if(cape_flag==0){
-    WARN("Cannot read CAPE!");
+  if(ctl->met_cape == 0){
+    if(cape_flag==0){
+      WARN("Cannot read CAPE!");
+    }
+    if(cin_flag==0){
+      WARN("Cannot read convective inhibition!");
+    }
   }
-  if(cin_flag==0){
-    WARN("Cannot read convective inhibition!");
-  }
-  if(pbl_flag==0){
-    WARN("Cannot read planetary boundary layer!");
+  if(ctl->met_pbl == 0){
+    if(pbl_flag==0){
+      WARN("Cannot read planetary boundary layer!");
+    }
   }
 
   LOG(1,"Finished reading surface data")
