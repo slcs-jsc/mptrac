@@ -5567,7 +5567,7 @@ void mptrac_run_timestep(
     
     /* Perform the communication... */
     dd_communicate_particles( particles, atm->np, MPI_Particle, 
-      destinations,ctl->dd_nbr_neighbours , *ctl, cache->dt);
+      destinations, ctl->dd_nbr_neighbours , *ctl, cache->dt);
       
     /* Transform from array of struct to struct of array... */
     particles2atm(atm, particles, *ctl); 
