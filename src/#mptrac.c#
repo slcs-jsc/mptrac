@@ -12349,13 +12349,15 @@ void dd_communicate_particles_cleo(
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+  printf("Sending\n");
   /* Sending... */
   for (int idest = 0; idest < ndestinations; idest++) {
     
     /* Ignore poles... */
     if (destinations[idest] < 0)
       continue;
-     
+      
+    printf("Counting\n");
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12372,10 +12374,11 @@ void dd_communicate_particles_cleo(
     /* Don't send empty signals... */
     if ( nbs[idest] == 0 )
       continue;
-    
+
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
    
+    printf("Filling\n");
     /* Fill the send buffer... */
     int ibs = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12384,11 +12387,11 @@ void dd_communicate_particles_cleo(
       if ((int) *particles[ip].q[qnt_domain] != -1
        && (int) *particles[ip].q[qnt_destination] == destinations[idest]) {
        
-        memcpy( &send_buffers[idest][ibs].lon, particles[ip].lon, sizeof(double));
-        memcpy( &send_buffers[idest][ibs].lat, particles[ip].lat, sizeof(double));
-        memcpy( &send_buffers[idest][ibs].p, particles[ip].p, sizeof(double));
+        memcpy( &send_buffers[idest][ibs].lon, *particles[ip].lon, sizeof(particle_t));
+        memcpy( &send_buffers[idest][ibs].lat, *particles[ip].lat, sizeof(particle_t));
+        memcpy( &send_buffers[idest][ibs].p, *particles[ip].p, sizeof(particle_t));
         for (int iq=0; iq < NQ ; iq++) {
-         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], sizeof(double));
+         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], sizeof(particle_t));
         } 
   
    
@@ -12428,6 +12431,7 @@ void dd_communicate_particles_cleo(
 
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
+  printf("Recieving\n");
   
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
@@ -12442,12 +12446,12 @@ void dd_communicate_particles_cleo(
       for (int ip = 0; ip < nparticles; ip++) {
         if ((int) *particles[ip].q[qnt_domain] == -1) {
           
-          memcpy(particles[ip].lon, &recieve_buffers[isourc][ipbr].lon, sizeof(double));
-          memcpy(particles[ip].lat, &recieve_buffers[isourc][ipbr].lat, sizeof(double));
-          memcpy(particles[ip].p, &recieve_buffers[isourc][ipbr].p, sizeof(double));
+          memcpy(particles[ip].lon, &recieve_buffers[isourc][ipbr].lon, sizeof(particle_t));
+          memcpy(particles[ip].lat, &recieve_buffers[isourc][ipbr].lat, sizeof(particle_t));
+          memcpy(particles[ip].p, &recieve_buffers[isourc][ipbr].p, sizeof(particle_t));
           
           for (int iq=0; iq < NQ ; iq++) {
-            memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], sizeof(double));
+            memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], sizeof(particle_t));
           }
           
           *particles[ip].q[qnt_destination] = rank;

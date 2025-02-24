@@ -8925,5 +8925,15 @@ void module_dd(
   int rank, 
   MPI_Datatype MPI_Particle, 
   double* dt);
+  
+void dd_communicate_particles_cleo(
+  particle_ptr_t* particles, 
+  int nparticles, 
+  MPI_Datatype MPI_Particle, 
+  int* destinations, 
+  int ndestinations, 
+  int qnt_domain,
+  int qnt_destination
+  );
 
 #endif /* LIBTRAC_H */
