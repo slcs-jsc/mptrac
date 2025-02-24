@@ -3235,6 +3235,27 @@ typedef struct {
   
 } particle_t;
 
+typedef struct {
+
+  /*! Time [s]. */
+  double* time;
+
+  /*! Pressure [hPa]. */
+  double* p;
+
+  /*! Longitude [deg]. */
+  double* lon;
+
+  /*! Latitude [deg]. */
+  double* lat;
+
+  /*! Quantity data (for various, user-defined attributes). */
+  double* q[NQ];
+
+} particle_ptr_t;
+
+
+
 /**
  * @brief Cache data structure.
  * 

@@ -12139,7 +12139,6 @@ void dd_communicate_particles(
 
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
-
   /* Recieving... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
   
