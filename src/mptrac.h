@@ -2509,7 +2509,7 @@ typedef struct {
   int met_convention;
 
   /*! Vertical coordinate of input meteo data
-     (0=plev, 1=mlev_with_pfield, 2=mlev_with_ab_file, 3=mlev_with_ab_ctl). */
+    (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). */
   int met_vert_coord;
 
   /*! Type of meteo data files
