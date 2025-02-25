@@ -4760,8 +4760,8 @@ void mptrac_read_ctl(
     ERRMSG("Set ADVECT_VERT_COORD to 0, 1, or 2!");
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
-  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 3)
-    ERRMSG("Set MET_VERT_COORD to 0, 1, 2, or 3!");
+  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 4)
+    ERRMSG("Set MET_VERT_COORD to 0, 1, 2, 3, or 4!");
   if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
     ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
@@ -7325,7 +7325,7 @@ void read_met_levels(
     met->npl = met->np;
   }
 
-  /* Read pressure on model levels... */
+  /* Get pressure on model levels... */
   if (ctl->met_np > 0 || ctl->met_vert_coord != 0) {
 
     /* Read 3-D pressure field... */
@@ -7338,32 +7338,29 @@ void read_met_levels(
 	  ERRMSG("Cannot read pressure on model levels!");
     }
 
-    /* Calculate pressure from a and b coefficients... */
-    else {
+    /* Use a and b coefficients for full levels... */
+    else if (ctl->met_vert_coord == 2 || ctl->met_vert_coord == 3) {
 
       /* Grid level coefficients... */
       double hyam[EP], hybm[EP];
 
-      /* Read a and b coefficients from file... */
+      /* Read coefficients... */
       if (ctl->met_vert_coord == 2) {
 	int varid;
 	NC_GET_DOUBLE("hyam", hyam, 1);
 	NC_GET_DOUBLE("hybm", hybm, 1);
       }
 
-      /* Use ctl parameters... */
-      else {
-
-	/* Check number of levels... */
-	if (met->np != ctl->met_nlev)
-	  ERRMSG("Mismatch in number of model levels!");
-
-	/* Copy parameters... */
+      /* Use control parameters... */
+      else if (ctl->met_vert_coord == 3)
 	for (int ip = 0; ip < met->np; ip++) {
 	  hyam[ip] = ctl->met_lev_hyam[ip];
 	  hybm[ip] = ctl->met_lev_hybm[ip];
 	}
-      }
+
+      /* Check number of levels... */
+      if (met->np != ctl->met_nlev)
+	ERRMSG("Mismatch in number of model levels!");
 
       /* Calculate pressure... */
       for (int ix = 0; ix < met->nx; ix++)
@@ -7371,6 +7368,33 @@ void read_met_levels(
 	  for (int ip = 0; ip < met->np; ip++)
 	    met->pl[ix][iy][ip] =
 	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
+    }
+
+    /* Use a and b coefficients for half levels... */
+    else if (ctl->met_vert_coord == 4) {
+
+      /* Grid level coefficients... */
+      double hyam[EP], hybm[EP];
+
+      /* Use control parameters... */
+      for (int ip = 0; ip < met->np + 1; ip++) {
+	hyam[ip] = ctl->met_lev_hyam[ip];
+	hybm[ip] = ctl->met_lev_hybm[ip];
+      }
+
+      /* Check number of levels... */
+      if (met->np + 1 != ctl->met_nlev)
+	ERRMSG("Mismatch in number of model levels!");
+
+      /* Calculate pressure... */
+#pragma omp parallel for default(shared) collapse(2)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++) {
+	    double p0 = hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy];
+	    double p1 = hyam[ip + 1] / 100. + hybm[ip + 1] * met->ps[ix][iy];
+	    met->pl[ix][iy][ip] = (float) ((p1 - p0) / log(p1 / p0));
+	  }
     }
 
     /* Check ordering of pressure levels... */
