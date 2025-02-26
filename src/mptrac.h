@@ -2509,7 +2509,7 @@ typedef struct {
   int met_convention;
 
   /*! Vertical coordinate of input meteo data
-    (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). */
+     (0=plev, 1=mlev_p_file, 2=mlev_ab_file, 3=mlev_ab_full, 4=mlev_ab_half). */
   int met_vert_coord;
 
   /*! Type of meteo data files
@@ -3574,6 +3574,7 @@ typedef struct {
 #pragma acc routine (clim_tropo)
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
+#pragma acc routine (intpol_check_lon_lat)
 #pragma acc routine (intpol_met_4d_coord)
 #pragma acc routine (intpol_met_space_3d)
 #pragma acc routine (intpol_met_space_3d_ml)
@@ -4241,6 +4242,36 @@ void get_tropo(
   double *o3t,
   double *ps,
   double *zs);
+
+/**
+ * @brief Adjusts longitude and latitude to ensure they fall within valid bounds.
+ *
+ * This function checks and modifies the given longitude and latitude
+ * values to fit within the specified longitude and latitude
+ * arrays. The longitude is wrapped within a 360-degree range, and the
+ * latitude is clamped within the valid range defined by the latitude
+ * array.
+ *
+ * @param[in] lons Pointer to an array of valid longitude values.
+ * @param[in] nlon Number of elements in the longitude array.
+ * @param[in] lats Pointer to an array of valid latitude values.
+ * @param[in] nlat Number of elements in the latitude array.
+ * @param[in] lon Input longitude to be checked and adjusted.
+ * @param[in] lat Input latitude to be checked and adjusted.
+ * @param[out] lon2 Pointer to the adjusted longitude.
+ * @param[out] lat2 Pointer to the adjusted latitude.
+ *
+ * @author Lars Hoffmann
+ */
+void intpol_check_lon_lat(
+  const double *lons,
+  const int nlon,
+  const double *lats,
+  const int nlat,
+  const double lon,
+  const double lat,
+  double *lon2,
+  double *lat2);
 
 /**
  * @brief Interpolates meteorological variables to a given position and time.
