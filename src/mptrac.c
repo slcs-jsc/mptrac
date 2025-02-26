@@ -12388,15 +12388,15 @@ void dd_communicate_particles_cleo(
       // and with the right destinations...
       if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
        
+        //unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
+        //unsigned int sdgbx_index = *sdgbx_index_ptr;     
+        //send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
         
-        unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
-        unsigned int sdgbx_index = *sdgbx_index_ptr;     
-        send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
-        
-      
-        for (int iq=1; iq < NQ ; iq++) {         
-         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
-        } 
+        memcpy( &send_buffers[idest][ibs].q[1], particles[ip].q[1], q_sizes[1]);
+   
+        //for (int iq=1; iq < NQ ; iq++) {  
+        // memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
+        //} 
   
       // Mark old place as 'graveyard'...
       target_ranks[ip] = -1;
@@ -12404,7 +12404,7 @@ void dd_communicate_particles_cleo(
       }
     }
 
-    printf("Send buffer\n");
+    printf("Send buffer finally\n");
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      destinations[idest], 1, MPI_COMM_WORLD, &request);
