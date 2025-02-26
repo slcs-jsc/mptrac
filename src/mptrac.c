@@ -12333,7 +12333,7 @@ void dd_communicate_particles_cleo(
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 
-  int* target_ranks
+  int* target_ranks,
   ) {
 
   /* Initialize the buffers... */
@@ -12358,7 +12358,8 @@ void dd_communicate_particles_cleo(
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
-      if ( target_ranks[ip] == destinations[idest] ) {
+      if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) 
+      {
       nbs[idest]++;
       }
     }
@@ -12379,7 +12380,7 @@ void dd_communicate_particles_cleo(
     for (int ip = 0; ip < nparticles; ip++) {
       // Only add those elements whithout 'graveyard' 
       // and with the right destinations...
-      if ( target_ranks[ip] == destinations[idest]) {
+      if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
        
         for (int iq=0; iq < NQ ; iq++) {
          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], sizeof(double));
@@ -12433,7 +12434,7 @@ void dd_communicate_particles_cleo(
     if (nbr[isourc] > 0) {
       int ipbr = 0;
       for (int ip = 0; ip < nparticles; ip++) {
-        if ((int) target_ranks[ip] == -1) {
+        if (target_ranks[ip] == -1) {
           
           for (int iq=0; iq < NQ ; iq++) {
             memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], sizeof(double));
