@@ -209,8 +209,8 @@
 #endif
 
 /*! Standard pressure [hPa]. */
-#ifndef P0
-#define P0 1013.25
+#ifndef MPTRAC_P0
+#define MPTRAC_P0 1013.25
 #endif
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
@@ -1367,7 +1367,7 @@ TYPE q_TYPE[NQ]
  * @author Lars Hoffmann
  */
 #define P(z)					\
-  (P0 * exp(-(z) / H0))
+  (MPTRAC_P0 * exp(-(z) / H0))
 
 /**
  * @brief Compute saturation pressure over water.
@@ -1796,15 +1796,15 @@ TYPE q_TYPE[NQ]
  * Formula:
  *
  * The altitude (z) is computed as H0 times the natural logarithm of the
- * ratio of the reference pressure (P0) to the given pressure (p), where H0
- * is the scale height and P0 is the reference pressure at sea level.
+ * ratio of the reference pressure (MPTRAC_P0) to the given pressure (p), where H0
+ * is the scale height and MPTRAC_P0 is the reference pressure at sea level.
  * 
- * @note H0 and P0 are typically defined as constants specific to the atmosphere.
+ * @note H0 and MPTRAC_P0 are typically defined as constants specific to the atmosphere.
  * 
  * @author Lars Hoffmann
  */
 #define Z(p)					\
-  (H0 * log(P0 / (p)))
+  (H0 * log(MPTRAC_P0 / (p)))
 
 /**
  * @brief Calculate geopotential height difference.
