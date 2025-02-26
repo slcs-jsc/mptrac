@@ -12333,7 +12333,7 @@ void dd_communicate_particles_cleo(
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 
-  int* target_ranks,
+  int* target_ranks
   ) {
 
   /* Initialize the buffers... */
@@ -12341,8 +12341,8 @@ void dd_communicate_particles_cleo(
   int* nbr;
   ALLOC(nbs, int, ndestinations);
   ALLOC(nbr, int, ndestinations);
-  particle_t* send_buffers[NBUFFER];
-  particle_t* recieve_buffers[NBUFFER];
+  particle_quant_t* send_buffers[NBUFFER];
+  particle_quant_t* recieve_buffers[NBUFFER];
   
   /* Get MPI rank... */
   int rank;

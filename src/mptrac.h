@@ -3273,22 +3273,18 @@ typedef struct {
 
 typedef struct {
 
-  /*! Time [s]. */
-  double* time;
+  /*! Quantity data (for various, user-defined attributes). */
+  double q[NQ];
+  
+} particle_quant_t;
 
-  /*! Pressure [hPa]. */
-  double* p;
 
-  /*! Longitude [deg]. */
-  double* lon;
-
-  /*! Latitude [deg]. */
-  double* lat;
+typedef struct {
   
   /*! Quantity data (for various, user-defined attributes). */
   double* q[NQ];
   
-  void* attr;
+  //void* attr;
      
 } particle_ptr_t;
 
