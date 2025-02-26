@@ -345,6 +345,43 @@
 #define NBUFFER 1000
 #endif
 
+/*! Define MPTRAC Data types. */
+#ifndef MPTRAC_DOUBLE
+#define MPTRAC_DOUBLE sizeof(double)
+#endif
+
+#ifndef MPTRAC_INT
+#define MPTRAC_INT sizeof(int)
+#endif
+
+/*
+types = {MPTRAC_DOUBLE, MPTRAC_INT}
+blocklength = {1,2}
+
+
+void mptrac_alloc_particle(types, blocklengths, blocknumber) {
+  size_t size = 0
+  for (int ib=0; ib<blocknumber;ib++) {
+    size+=blocklength[ib]*types[ip];
+  }
+  
+  patricle->q;
+
+  particles_ptr.attr = malloc(1, size);
+}
+
+
+type
+
+
+int* q[nq];
+
+
+TYPE q_TYPE[NQ]
+*/
+
+
+
 /* ------------------------------------------------------------
    Macros...
    ------------------------------------------------------------ */
@@ -413,7 +450,6 @@
  * @param ny Number of columns in the 3D array.
  * @param iz Depth index of the 3D array element.
  * @param nz Number of depths in the 3D array.
- * @return Linear index of the 3D array element.
  *
  * @author Lars Hoffmann
  */
@@ -3248,13 +3284,13 @@ typedef struct {
 
   /*! Latitude [deg]. */
   double* lat;
-
+  
   /*! Quantity data (for various, user-defined attributes). */
   double* q[NQ];
-
+  
+  void* attr;
+     
 } particle_ptr_t;
-
-
 
 /**
  * @brief Cache data structure.
@@ -8934,6 +8970,7 @@ void dd_communicate_particles_cleo(
   int ndestinations, 
   int qnt_domain,
   int qnt_destination
+  int* destinations,
   );
 
 #endif /* LIBTRAC_H */
