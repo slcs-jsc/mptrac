@@ -8968,9 +8968,7 @@ void dd_communicate_particles_cleo(
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 
-  int qnt_domain,
-  int qnt_destination
-  int* destinations,
+  int* target_ranks
   );
 
 #endif /* LIBTRAC_H */

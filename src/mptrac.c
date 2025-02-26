@@ -12333,8 +12333,7 @@ void dd_communicate_particles_cleo(
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 
-  int qnt_domain,
-  int qnt_destination
+  int* target_ranks
   ) {
 
   /* Initialize the buffers... */
@@ -12359,8 +12358,7 @@ void dd_communicate_particles_cleo(
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
-      if ( (int) *particles[ip].q[qnt_domain] != -1 
-      && (int) *particles[ip].q[qnt_destination] == destinations[idest] ) {
+      if ( target_ranks[ip] == destinations[idest] ) {
       nbs[idest]++;
       }
     }
@@ -12381,19 +12379,14 @@ void dd_communicate_particles_cleo(
     for (int ip = 0; ip < nparticles; ip++) {
       // Only add those elements whithout 'graveyard' 
       // and with the right destinations...
-      if ((int) *particles[ip].q[qnt_domain] != -1
-       && (int) *particles[ip].q[qnt_destination] == destinations[idest]) {
+      if ( target_ranks[ip] == destinations[idest]) {
        
-        memcpy( &send_buffers[idest][ibs].lon, particles[ip].lon, sizeof(double));
-        memcpy( &send_buffers[idest][ibs].lat, particles[ip].lat, sizeof(double));
-        memcpy( &send_buffers[idest][ibs].p, particles[ip].p, sizeof(double));
         for (int iq=0; iq < NQ ; iq++) {
          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], sizeof(double));
         } 
   
-   
       // Mark old place as 'graveyard'...
-      *particles[ip].q[qnt_domain] = -1;
+      target_ranks[ip] = -1;
       ibs++;
       }
     }
@@ -12440,18 +12433,12 @@ void dd_communicate_particles_cleo(
     if (nbr[isourc] > 0) {
       int ipbr = 0;
       for (int ip = 0; ip < nparticles; ip++) {
-        if ((int) *particles[ip].q[qnt_domain] == -1) {
-          
-          memcpy(particles[ip].lon, &recieve_buffers[isourc][ipbr].lon, sizeof(double));
-          memcpy(particles[ip].lat, &recieve_buffers[isourc][ipbr].lat, sizeof(double));
-          memcpy(particles[ip].p, &recieve_buffers[isourc][ipbr].p, sizeof(double));
+        if ((int) target_ranks[ip] == -1) {
           
           for (int iq=0; iq < NQ ; iq++) {
             memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], sizeof(double));
           }
           
-          *particles[ip].q[qnt_destination] = rank;
-          *particles[ip].q[qnt_domain] = rank;
           ipbr++; 
         } 
         if (ipbr == nbr[isourc])
