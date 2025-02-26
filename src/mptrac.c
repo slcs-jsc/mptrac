@@ -12367,7 +12367,6 @@ void dd_communicate_particles_cleo(
       }
     }
     
-    
     printf("Send buffer sizes\n");
     /* Send buffer sizes... */
     MPI_Request request;
@@ -12389,8 +12388,13 @@ void dd_communicate_particles_cleo(
       // and with the right destinations...
       if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
        
+        
+        unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
+        unsigned int sdgbx_index = *sdgbx_index_ptr;     
+        send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
+        
       
-        for (int iq=0; iq < NQ ; iq++) {
+        for (int iq=1; iq < NQ ; iq++) {         
          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
         } 
   
@@ -12448,7 +12452,7 @@ void dd_communicate_particles_cleo(
         if (target_ranks[ip] == -1) {
           
           for (int iq=0; iq < NQ ; iq++) {
-            memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], sizeof(double));
+            memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], q_sizes[iq]);
           }
           
           ipbr++; 
