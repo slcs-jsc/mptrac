@@ -12333,7 +12333,8 @@ void dd_communicate_particles_cleo(
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 
-  int* target_ranks
+  int* target_ranks,
+  size_t* q_sizes
   ) {
 
   /* Initialize the buffers... */
@@ -12349,12 +12350,14 @@ void dd_communicate_particles_cleo(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   /* Sending... */
+  printf("Sending\n");
   for (int idest = 0; idest < ndestinations; idest++) {
     
     /* Ignore poles... */
     if (destinations[idest] < 0)
       continue;
      
+    printf("Count particles\n");
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12364,6 +12367,8 @@ void dd_communicate_particles_cleo(
       }
     }
     
+    
+    printf("Send buffer sizes\n");
     /* Send buffer sizes... */
     MPI_Request request;
     MPI_Isend( &nbs[idest], 1, MPI_INT, destinations[idest], 0, MPI_COMM_WORLD, &request);
@@ -12372,9 +12377,11 @@ void dd_communicate_particles_cleo(
     if ( nbs[idest] == 0 )
       continue;
     
+    printf("ALLOC buffer sizes\n");
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
    
+    printf("Fill Send buffer\n");
     /* Fill the send buffer... */
     int ibs = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12382,8 +12389,9 @@ void dd_communicate_particles_cleo(
       // and with the right destinations...
       if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
        
+      
         for (int iq=0; iq < NQ ; iq++) {
-         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], sizeof(double));
+         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
         } 
   
       // Mark old place as 'graveyard'...
@@ -12392,6 +12400,7 @@ void dd_communicate_particles_cleo(
       }
     }
 
+    printf("Send buffer\n");
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      destinations[idest], 1, MPI_COMM_WORLD, &request);
@@ -12400,6 +12409,7 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
   /* Recieving... */
+  printf("Recieving\n");
   for (int isourc = 0; isourc < ndestinations; isourc++) {
   
   /* Ignore poles... */
@@ -12423,6 +12433,7 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
   
+  printf("Putting buffer into particles...\n");
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
     
@@ -12448,9 +12459,11 @@ void dd_communicate_particles_cleo(
     } 
   }
 
+
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
-  
+
+  printf("Free buffer...\n");  
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
         

@@ -21,7 +21,7 @@ LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
 COMPILER ?= gcc
 
 # Compile for MPI...
-MPI ?= 0
+MPI ?= 1
 
 # Compile for GPUs...
 GPU ?= 0
@@ -30,7 +30,7 @@ GPU ?= 0
 GPU_PIN ?= 0
 
 # Static compilation...
-STATIC ?= 1
+STATIC ?= 0
 
 # Optimization flags...
 OPTI ?= -O3
