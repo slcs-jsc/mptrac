@@ -12397,11 +12397,13 @@ void dd_communicate_particles_cleo(
     printf("== Particle in MPTRAC==\n");
   
     unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap].q[0];
-    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;  
+    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
   
+    printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap]);
   
     for (int iq=1; iq < 8 ; iq++) {
-      printf("q[%d]: %d, target_rank: %d\n",iq, sdgbx_index_tmp,  target_ranks[ip_ap]);
+      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
+      , target_ranks[ip_ap]);
     }
   }
 
