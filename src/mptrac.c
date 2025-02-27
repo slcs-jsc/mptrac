@@ -7368,15 +7368,18 @@ void read_met_levels(
       }
 
       /* Use control parameters... */
-      else if (ctl->met_vert_coord == 3)
+      else if (ctl->met_vert_coord == 3) {
+
+	/* Check number of levels... */
+	if (met->np != ctl->met_nlev)
+	  ERRMSG("Mismatch in number of model levels!");
+
+	/* Copy parameters... */
 	for (int ip = 0; ip < met->np; ip++) {
 	  hyam[ip] = ctl->met_lev_hyam[ip];
 	  hybm[ip] = ctl->met_lev_hybm[ip];
 	}
-
-      /* Check number of levels... */
-      if (met->np != ctl->met_nlev)
-	ERRMSG("Mismatch in number of model levels!");
+      }
 
       /* Calculate pressure... */
       for (int ix = 0; ix < met->nx; ix++)
