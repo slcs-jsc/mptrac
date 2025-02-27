@@ -12350,6 +12350,7 @@ void dd_communicate_particles_cleo(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
   /* Debugging... */
+  if (rank==0 && 1==2) {
   printf("==START DEBUGGING==\n");
   printf("Test destinations: \n");
   printf("%d\n", destinations[ndestinations-1]);
@@ -12378,19 +12379,28 @@ void dd_communicate_particles_cleo(
   memcpy(particles[0].q[1], &recieve_buffers[ndestinations-1][0].q[1], q_sizes[1]);
   printf("Test casting\n");
   unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[nparticles-1].q[0];
-  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;     
+  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;  
   send_buffers[ndestinations-1][nparticles-1].q[0] = (double) sdgbx_index_tmp;
   printf("%d to %f\n", *sdgbx_index_ptr_tmp, send_buffers[ndestinations-1][nparticles-1].q[0]);
+  }
+  
+  if (rank==0) {
+  
+  printf("== Particle in MPTRAC==\n");
+  for (int iq=1; iq < NQ ; iq++) { 
+    printf("q[%d],%f\n",iq, *particles[nparticles-1].q[iq]);
+  }
+  }
 
   /* Sending... */
-  printf("Sending\n");
+  if (rank==0) {printf("Sending\n");}
   for (int idest = 0; idest < ndestinations; idest++) {
     
     /* Ignore poles... */
     if (destinations[idest] < 0)
       continue;
      
-    printf("Count particles\n");
+    if (rank==0) {printf("Count particles\n");}
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12400,7 +12410,7 @@ void dd_communicate_particles_cleo(
       }
     }
     
-    printf("Send buffer sizes\n");
+    if (rank==0) {printf("Send buffer sizes\n");}
     /* Send buffer sizes... */
     MPI_Request request;
     MPI_Isend( &nbs[idest], 1, MPI_INT, destinations[idest], 0, MPI_COMM_WORLD, &request);
@@ -12409,11 +12419,11 @@ void dd_communicate_particles_cleo(
     if ( nbs[idest] == 0 )
       continue;
     
-    printf("ALLOC buffer sizes\n");
+    if (rank==0) {printf("ALLOC buffer sizes\n");}
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_quant_t, nbs[idest]);
    
-    printf("Fill Send buffer\n");
+    if (rank==0) {printf("Fill Send buffer\n");}
     /* Fill the send buffer... */
     int ibs = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12437,7 +12447,7 @@ void dd_communicate_particles_cleo(
       }
     }
 
-    printf("Send buffer finally\n");
+    if (rank==0) {printf("Send buffer finally\n");}
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      destinations[idest], 1, MPI_COMM_WORLD, &request);
@@ -12446,7 +12456,7 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
   /* Recieving... */
-  printf("Recieving\n");
+  if (rank==0) {printf("Recieving\n");}
   for (int isourc = 0; isourc < ndestinations; isourc++) {
   
   /* Ignore poles... */
@@ -12470,7 +12480,7 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  printf("Putting buffer into particles...\n");
+  if (rank==0) {printf("Putting buffer into particles...\n");}
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
     
@@ -12483,8 +12493,11 @@ void dd_communicate_particles_cleo(
       int ipbr = 0;
       for (int ip = 0; ip < nparticles; ip++) {
         if (target_ranks[ip] == -1) {
+           
+        unsigned int sdgbx_index = (unsigned int) recieve_buffers[isourc][ipbr].q[0];
+        memcpy(particles[ip].q[0], &sdgbx_index, q_sizes[0]);
           
-          for (int iq=0; iq < NQ ; iq++) {
+          for (int iq=1; iq < NQ ; iq++) {
             memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], q_sizes[iq]);
           }
           
@@ -12500,7 +12513,7 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
 
-  printf("Free buffer...\n");  
+  if (rank==0) {printf("Free buffer...\n");}  
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
         
