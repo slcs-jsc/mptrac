@@ -12542,7 +12542,7 @@ void dd_communicate_particles_cleo(
        long unsigned int* tmp_ptr = (long unsigned int*) particles[ip].q[7];
        long unsigned int tmp = *tmp_ptr;
     
-      if (tmp != 26) {
+      if (tmp == 26) {
         ip_ap_rec = ip;
         break;
       } 
