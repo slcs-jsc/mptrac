@@ -12458,6 +12458,7 @@ void dd_communicate_particles_cleo(
         unsigned int sdgbx_index = *sdgbx_index_ptr;     
         send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
         
+        
         memcpy(&send_buffers[idest][ibs].q[0], particles[ip].q[0], q_sizes[0]);
    
         for (int iq=1; iq < NQ ; iq++) {  
@@ -12535,9 +12536,13 @@ void dd_communicate_particles_cleo(
   
   if (rank==3) {
   
+  
     int ip_ap_rec = 0;
     for (int ip = 0; ip < nparticles; ip++) {
-      if ((long unsigned int) (*particles[ip].q[7]) != 26) {
+       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip].q[7];
+       long unsigned int tmp = *tmp_ptr;
+    
+      if (tmp != 26) {
         ip_ap_rec = ip;
         break;
       } 
