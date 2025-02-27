@@ -12377,7 +12377,7 @@ void dd_communicate_particles_cleo(
   printf("Test memcopy buffer (recieving)\n:");
   memcpy(particles[0].q[1], &recieve_buffers[ndestinations-1][0].q[1], q_sizes[1]);
   printf("Test casting\n");
-  unsigned int* sdgbx_index_ptr = (unsigned int*) particles[0].q[0];
+  unsigned int* sdgbx_index_ptr = (unsigned int*) particles[0].q[1];
   unsigned int sdgbx_index = *sdgbx_index_ptr;     
   send_buffers[ndestinations-1][0].q[1] = (double) sdgbx_index;
   printf("%d to %f\n", *sdgbx_index_ptr, send_buffers[ndestinations-1][0].q[1]);
