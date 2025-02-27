@@ -754,9 +754,9 @@
     intpol_met_space_2d(met, met->zs, lon, lat, &zs, ci, cw, 0);	\
     intpol_met_space_2d(met, met->us, lon, lat, &us, ci, cw, 0);	\
     intpol_met_space_2d(met, met->vs, lon, lat, &vs, ci, cw, 0);	\
-    intpol_met_space_2d(met, met->ess, ess, lat, &vs, ci, cw, 0);	\
-    intpol_met_space_2d(met, met->nss, nss, lat, &vs, ci, cw, 0);	\
-    intpol_met_space_2d(met, met->shf, shf, lat, &vs, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->ess, ess, lat, &ess, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->nss, nss, lat, &nss, ci, cw, 0);	\
+    intpol_met_space_2d(met, met->shf, shf, lat, &shf, ci, cw, 0);	\
     intpol_met_space_2d(met, met->lsm, lon, lat, &lsm, ci, cw, 0);	\
     intpol_met_space_2d(met, met->sst, lon, lat, &sst, ci, cw, 0);	\
     intpol_met_space_2d(met, met->pbl, lon, lat, &pbl, ci, cw, 0);	\
