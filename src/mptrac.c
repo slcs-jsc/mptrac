@@ -12394,7 +12394,7 @@ void dd_communicate_particles_cleo(
       } 
     }
   
-    printf("== Particle in MPTRAC==\n");
+    printf("== Particle in MPTRAC Send==\n");
   
     unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap].q[0];
     unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
@@ -12535,7 +12535,7 @@ void dd_communicate_particles_cleo(
       } 
     }
   
-    printf("== Particle in MPTRAC==\n");
+    printf("== Particle in MPTRAC Rec.==\n");
   
     unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
     unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
