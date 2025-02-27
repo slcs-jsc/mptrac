@@ -12411,8 +12411,7 @@ void dd_communicate_particles_cleo(
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
       , target_ranks[ip_ap]);
      }
-    }
-    
+    } 
   }
 
   /* Sending... */
@@ -12428,9 +12427,9 @@ void dd_communicate_particles_cleo(
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
       if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) 
-      {
-      nbs[idest]++;
-      }
+        {
+          nbs[idest]++;
+        }
     }
     
     //if (rank==0) {printf("Send buffer sizes\n");}
@@ -12454,15 +12453,14 @@ void dd_communicate_particles_cleo(
       // and with the right destinations...
       if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
        
+        /* Cast and copy data... */
         unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
         unsigned int sdgbx_index = *sdgbx_index_ptr;     
         send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
-        
-        
-        // Copy data...
+
         memcpy(&send_buffers[idest][ibs].q[0], particles[ip].q[0], q_sizes[0]);
         for (int iq=1; iq < NQ ; iq++) {  
-         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
+          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
         }
   
       // Mark old place as 'graveyard'...
@@ -12589,7 +12587,7 @@ void dd_communicate_particles_cleo(
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
       , target_ranks[ip_ap_rec]);
      }
-  }
+    }
   }
  
   if (rank==0) {printf("Free buffer...\n");}  
@@ -12610,8 +12608,7 @@ void dd_communicate_particles_cleo(
   free(nbs);
   free(nbr);
   
-  //ERRMSG("MPTRAC_STOP");
-
+  ERRMSG("MPTRAC_STOP");
 }  
 
 
