@@ -12403,7 +12403,9 @@ void dd_communicate_particles_cleo(
     
     for (int iq=1; iq < 8 ; iq++) {
      if (iq==4 || iq==7) {
-             printf("q[%d]: %lu, target_rank: %d\n",iq, (long unsigned int)(*particles[ip_ap].q[iq])
+       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap].q[iq];
+       long unsigned int tmp = *tmp_ptr;
+             printf("q[%d]: %lu, target_rank: %d\n",iq, tmp
       , target_ranks[ip_ap]);
      } else {
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
@@ -12550,8 +12552,9 @@ void dd_communicate_particles_cleo(
   
     for (int iq=1; iq < 8 ; iq++) {
      if (iq==4 || iq==7) {
-             printf("q[%d]: %lu, target_rank: %d\n",iq, (long unsigned int)(*particles[ip_ap_rec].q[iq])
-      , target_ranks[ip_ap_rec]);
+             long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap_rec].q[iq];
+             long unsigned int tmp = *tmp_ptr;
+             printf("q[%d]: %lu, target_rank: %d\n", iq, tmp, target_ranks[ip_ap_rec]);
      } else {
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
       , target_ranks[ip_ap_rec]);
