@@ -12416,14 +12416,14 @@ void dd_communicate_particles_cleo(
   }
 
   /* Sending... */
-  if (rank==0) {printf("Sending\n");}
+  //if (rank==0) {printf("Sending\n");}
   for (int idest = 0; idest < ndestinations; idest++) {
     
     /* Ignore poles... */
     if (destinations[idest] < 0)
       continue;
      
-    if (rank==0) {printf("Count particles\n");}
+    //if (rank==0) {printf("Count particles\n");}
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12433,7 +12433,7 @@ void dd_communicate_particles_cleo(
       }
     }
     
-    if (rank==0) {printf("Send buffer sizes\n");}
+    //if (rank==0) {printf("Send buffer sizes\n");}
     /* Send buffer sizes... */
     MPI_Request request;
     MPI_Isend( &nbs[idest], 1, MPI_INT, destinations[idest], 0, MPI_COMM_WORLD, &request);
@@ -12442,11 +12442,11 @@ void dd_communicate_particles_cleo(
     if ( nbs[idest] == 0 )
       continue;
     
-    if (rank==0) {printf("ALLOC buffer sizes\n");}
+    //if (rank==0) {printf("ALLOC buffer sizes\n");}
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_quant_t, nbs[idest]);
    
-    if (rank==0) {printf("Fill Send buffer\n");}
+    //if (rank==0) {printf("Fill Send buffer\n");}
     /* Fill the send buffer... */
     int ibs = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12459,8 +12459,8 @@ void dd_communicate_particles_cleo(
         send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
         
         
+        // Copy data...
         memcpy(&send_buffers[idest][ibs].q[0], particles[ip].q[0], q_sizes[0]);
-   
         for (int iq=1; iq < NQ ; iq++) {  
          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
         }
@@ -12471,7 +12471,7 @@ void dd_communicate_particles_cleo(
       }
     }
 
-    if (rank==0) {printf("Send buffer finally\n");}
+    //if (rank==0) {printf("Send buffer finally\n");}
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      destinations[idest], 1, MPI_COMM_WORLD, &request);
@@ -12489,6 +12489,7 @@ void dd_communicate_particles_cleo(
 
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
+  
   /* Recieving... */
   if (rank==0) {printf("Recieving\n");}
   for (int isourc = 0; isourc < ndestinations; isourc++) {
@@ -12531,7 +12532,7 @@ void dd_communicate_particles_cleo(
         unsigned int sdgbx_index = (unsigned int) recieve_buffers[isourc][ipbr].q[0];
         memcpy(particles[ip].q[0], &sdgbx_index, q_sizes[0]);
           
-          for (int iq=1; iq < NQ ; iq++) {
+          for (int iq=0; iq < NQ ; iq++) {
             memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], q_sizes[iq]);
           }
           
@@ -12542,7 +12543,13 @@ void dd_communicate_particles_cleo(
       } 
     } 
     
-    if ((rank==3) && (destinations[isourc]==0)) {
+  }
+  
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  for (int isourc = 0; isourc < ndestinations; isourc++) {
+      if ((rank==3) && (destinations[isourc]==0)) {
      for (int i = 0; i < nbr[isourc]; i++ ) {
       printf("%d\n",i);
       for (int iq = 0; iq < 8; iq++ ){
@@ -12551,9 +12558,6 @@ void dd_communicate_particles_cleo(
      }
     }
   }
-  
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
   
   if (rank==3) {
   
@@ -12569,7 +12573,6 @@ void dd_communicate_particles_cleo(
       }       
     }
 
-    
   printf("== Particle in MPTRAC Rec.==\n");
   
   unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
@@ -12607,7 +12610,7 @@ void dd_communicate_particles_cleo(
   free(nbs);
   free(nbr);
   
-  ERRMSG("MPTRAC_STOP");
+  //ERRMSG("MPTRAC_STOP");
 
 }  
 
