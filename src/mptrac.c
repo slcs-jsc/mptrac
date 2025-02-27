@@ -12377,10 +12377,10 @@ void dd_communicate_particles_cleo(
   printf("Test memcopy buffer (recieving)\n:");
   memcpy(particles[0].q[1], &recieve_buffers[ndestinations-1][0].q[1], q_sizes[1]);
   printf("Test casting\n");
-  unsigned int* sdgbx_index_ptr = (unsigned int*) particles[nparticles-1].q[1];
-  unsigned int sdgbx_index = *sdgbx_index_ptr;     
-  send_buffers[ndestinations-1][nparticles-1].q[1] = (double) sdgbx_index;
-  printf("%d to %f\n", *sdgbx_index_ptr, send_buffers[ndestinations-1][nparticles-1].q[1]);
+  unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[nparticles-1].q[0];
+  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;     
+  send_buffers[ndestinations-1][nparticles-1].q[0] = (double) sdgbx_index_tmp;
+  printf("%d to %f\n", *sdgbx_index_ptr_tmp, send_buffers[ndestinations-1][nparticles-1].q[0]);
 
   /* Sending... */
   printf("Sending\n");
@@ -12421,15 +12421,15 @@ void dd_communicate_particles_cleo(
       // and with the right destinations...
       if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
        
-        //unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
-        //unsigned int sdgbx_index = *sdgbx_index_ptr;     
-        //send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
+        unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
+        unsigned int sdgbx_index = *sdgbx_index_ptr;     
+        send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
         
-        //memcpy( &send_buffers[idest][ibs].q[1], particles[ip].q[1], q_sizes[1]);
+        memcpy(&send_buffers[idest][ibs].q[0], particles[ip].q[0], q_sizes[0]);
    
         for (int iq=1; iq < NQ ; iq++) {  
          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
-        } 
+        }
   
       // Mark old place as 'graveyard'...
       target_ranks[ip] = -1;
