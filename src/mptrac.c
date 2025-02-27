@@ -12580,6 +12580,8 @@ void dd_communicate_particles_cleo(
     
   free(nbs);
   free(nbr);
+  
+  ERRMSG("MPTRAC_STOP");
 
 }  
 
