@@ -12475,6 +12475,16 @@ void dd_communicate_particles_cleo(
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      destinations[idest], 1, MPI_COMM_WORLD, &request);
+    	      
+    	      
+    if ((rank==0) && (destinations[idest]==3)) {
+     for (int i = 0; i < nbs[idest]; i++ ) {
+      printf("%d\n",i);
+      for (int iq = 0; iq < 8; iq++ ){
+          printf("Send Buffer q[%i]: %f\n", iq, send_buffers[idest][i].q[iq]);
+         }
+     }
+    }
   }
 
   /* Wait for all signals to be send... */
@@ -12531,8 +12541,16 @@ void dd_communicate_particles_cleo(
           break; 
       } 
     } 
+    
+    if ((rank==3) && (destinations[isourc]==0)) {
+     for (int i = 0; i < nbr[isourc]; i++ ) {
+      printf("%d\n",i);
+      for (int iq = 0; iq < 8; iq++ ){
+          printf("Recieve Buffer q[%i]: %f \n", iq, recieve_buffers[isourc][i].q[iq]);
+         }
+     }
+    }
   }
-
   
   if (rank==3) {
   
@@ -12547,15 +12565,18 @@ void dd_communicate_particles_cleo(
         break;
       } 
     }
+    
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
   
-    printf("== Particle in MPTRAC Rec.==\n");
+  printf("== Particle in MPTRAC Rec.==\n");
   
-    unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
-    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
+  unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
+  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
   
-    printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap_rec]);
+  printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap_rec]);
   
-    for (int iq=1; iq < 8 ; iq++) {
+  for (int iq=1; iq < 8 ; iq++) {
      if (iq==4 || iq==7) {
              long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap_rec].q[iq];
              long unsigned int tmp = *tmp_ptr;
@@ -12566,11 +12587,8 @@ void dd_communicate_particles_cleo(
      }
     }
   }
-
-
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
-
+  
+ 
   if (rank==0) {printf("Free buffer...\n");}  
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
