@@ -12386,9 +12386,17 @@ void dd_communicate_particles_cleo(
   
   if (rank==0) {
   
+  
+  int ip_ap = 0;
+  for (int ip = 0; ip < nparticles; ip++) {
+    if (target_ranks[ip] != rank) {
+      ip_ap = ip;
+    }
+  }
+  
   printf("== Particle in MPTRAC==\n");
-  for (int iq=1; iq < NQ ; iq++) { 
-    printf("q[%d],%f\n",iq, *particles[nparticles-1].q[iq]);
+  for (int iq=1; iq < NQ ; iq++) {
+    printf("q[%d],%f\n",iq, *particles[ip_ap].q[iq]);
   }
   }
 
