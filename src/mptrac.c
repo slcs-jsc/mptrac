@@ -12400,11 +12400,17 @@ void dd_communicate_particles_cleo(
     unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
   
     printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap]);
-  
+    
     for (int iq=1; iq < 8 ; iq++) {
+     if (iq==4 || iq==7) {
+             printf("q[%d]: %u, target_rank: %d\n",iq, (unsigned int)(*particles[ip_ap].q[iq])
+      , target_ranks[ip_ap]);
+     } else {
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
       , target_ranks[ip_ap]);
+     }
     }
+    
   }
 
   /* Sending... */
@@ -12543,8 +12549,13 @@ void dd_communicate_particles_cleo(
     printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap_rec]);
   
     for (int iq=1; iq < 8 ; iq++) {
+     if (iq==4 || iq==7) {
+             printf("q[%d]: %u, target_rank: %d\n",iq, (unsigned int)(*particles[ip_ap_rec].q[iq])
+      , target_ranks[ip_ap_rec]);
+     } else {
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
       , target_ranks[ip_ap_rec]);
+     }
     }
   }
 
