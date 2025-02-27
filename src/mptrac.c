@@ -12391,6 +12391,7 @@ void dd_communicate_particles_cleo(
   for (int ip = 0; ip < nparticles; ip++) {
     if (target_ranks[ip] != rank) {
       ip_ap = ip;
+      break;
     }
   }
   
