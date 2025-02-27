@@ -12348,6 +12348,39 @@ void dd_communicate_particles_cleo(
   /* Get MPI rank... */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  
+  
+  /* Debugging... */
+  printf("==START DEBUGGING==\n");
+  printf("Test destinations: \n");
+  printf("%d\n", destinations[ndestinations-1]);
+  printf("Test target_ranks: \n");
+  printf("%d\n", target_ranks[nparticles-1]);
+  printf("Test nbs: \n");
+  nbs[ndestinations-1] = 1;
+  printf("%d\n", nbs[ndestinations-1]);
+  printf("Test nbr: \n");
+  nbr[ndestinations-1] = 1;
+  printf("%d\n", nbr[ndestinations-1]);
+  printf("Test send buffers (q[1]): \n");
+  ALLOC(send_buffers[ndestinations-1], particle_quant_t, nbs[ndestinations-1]);
+  printf("%f\n", send_buffers[ndestinations-1][0].q[1]);
+  printf("Test recieve buffers (q[1]): \n");
+  ALLOC(recieve_buffers[ndestinations-1], particle_quant_t, nbs[ndestinations-1]);
+  printf("%f\n", recieve_buffers[ndestinations-1][0].q[1]);
+  printf("Test particles_ptr (q[1]): \n");
+  printf("%f\n", *particles[nparticles-1].q[1]);
+  printf("Test q_sizes:");
+  printf("%ld\n", q_sizes[1]);
+  printf("Test memcopy buffer (sending)\n:");
+  memcpy( &send_buffers[ndestinations-1][0].q[1], particles[0].q[1], q_sizes[1]);
+  printf("Test memcopy buffer (recieving)\n:");
+  memcpy(particles[0].q[1], &recieve_buffers[ndestinations-1][0].q[1], q_sizes[1]);
+  printf("Test casting\n");
+  unsigned int* sdgbx_index_ptr = (unsigned int*) particles[0].q[0];
+  unsigned int sdgbx_index = *sdgbx_index_ptr;     
+  send_buffers[ndestinations-1][0].q[1] = (double) sdgbx_index;
+  printf("%d to %f\n", *sdgbx_index_ptr, send_buffers[ndestinations-1][0].q[1]);
 
   /* Sending... */
   printf("Sending\n");
@@ -12378,7 +12411,7 @@ void dd_communicate_particles_cleo(
     
     printf("ALLOC buffer sizes\n");
     /* Allocate buffer for sending... */
-    ALLOC(send_buffers[idest], particle_t, nbs[idest]);
+    ALLOC(send_buffers[idest], particle_quant_t, nbs[idest]);
    
     printf("Fill Send buffer\n");
     /* Fill the send buffer... */
@@ -12392,11 +12425,11 @@ void dd_communicate_particles_cleo(
         //unsigned int sdgbx_index = *sdgbx_index_ptr;     
         //send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
         
-        memcpy( &send_buffers[idest][ibs].q[1], particles[ip].q[1], q_sizes[1]);
+        //memcpy( &send_buffers[idest][ibs].q[1], particles[ip].q[1], q_sizes[1]);
    
-        //for (int iq=1; iq < NQ ; iq++) {  
-        // memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
-        //} 
+        for (int iq=1; iq < NQ ; iq++) {  
+         memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
+        } 
   
       // Mark old place as 'graveyard'...
       target_ranks[ip] = -1;
@@ -12429,7 +12462,7 @@ void dd_communicate_particles_cleo(
     continue;
 
   /* Allocate buffer for recieving... */
-  ALLOC( recieve_buffers[isourc], particle_t, nbr[isourc]);
+  ALLOC( recieve_buffers[isourc], particle_quant_t, nbr[isourc]);
   MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, destinations[isourc], 1, MPI_COMM_WORLD, &status);
     
   }
