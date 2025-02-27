@@ -12386,19 +12386,23 @@ void dd_communicate_particles_cleo(
   
   if (rank==0) {
   
-  
-  int ip_ap = 0;
-  for (int ip = 0; ip < nparticles; ip++) {
-    if (target_ranks[ip] != rank) {
-      ip_ap = ip;
-      break;
+    int ip_ap = 0;
+    for (int ip = 0; ip < nparticles; ip++) {
+      if (target_ranks[ip] != rank) {
+        ip_ap = ip;
+        break;
+      } 
     }
-  }
   
-  printf("== Particle in MPTRAC==\n");
-  for (int iq=0; iq < 8 ; iq++) {
-    printf("q[%d]: %f, target_rank: %d\n",iq, *((double *)((unsigned int*) particles[ip_ap].q[iq])), target_ranks[ip_ap]);
-  }
+    printf("== Particle in MPTRAC==\n");
+  
+    unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap].q[0];
+    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;  
+  
+  
+    for (int iq=1; iq < 8 ; iq++) {
+      printf("q[%d]: %d, target_rank: %d\n",iq, sdgbx_index_tmp,  target_ranks[ip_ap]);
+    }
   }
 
   /* Sending... */
