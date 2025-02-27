@@ -12369,7 +12369,7 @@ void dd_communicate_particles_cleo(
   ALLOC(recieve_buffers[ndestinations-1], particle_quant_t, nbs[ndestinations-1]);
   printf("%f\n", recieve_buffers[ndestinations-1][0].q[1]);
   printf("Test particles_ptr (q[1]): \n");
-  printf("%f\n", *particles[nparticles-1].q[1]);
+  printf("%f\n", *(particles[nparticles-1].q[1]));
   printf("Test q_sizes:");
   printf("%ld\n", q_sizes[1]);
   printf("Test memcopy buffer (sending)\n:");
