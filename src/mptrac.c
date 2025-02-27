@@ -12552,6 +12552,9 @@ void dd_communicate_particles_cleo(
     }
   }
   
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
   if (rank==3) {
   
   
@@ -12563,12 +12566,10 @@ void dd_communicate_particles_cleo(
       if (tmp == 26) {
         ip_ap_rec = ip;
         break;
-      } 
+      }       
     }
+
     
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
-  
   printf("== Particle in MPTRAC Rec.==\n");
   
   unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
@@ -12585,9 +12586,8 @@ void dd_communicate_particles_cleo(
       printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
       , target_ranks[ip_ap_rec]);
      }
-    }
   }
-  
+  }
  
   if (rank==0) {printf("Free buffer...\n");}  
   /* Free buffers and buffersizes... */
