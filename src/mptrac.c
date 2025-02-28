@@ -12349,80 +12349,13 @@ void dd_communicate_particles_cleo(
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
-  /* Debugging... */
-  if (rank==0 && 1==2) {
-  printf("==START DEBUGGING==\n");
-  printf("Test destinations: \n");
-  printf("%d\n", destinations[ndestinations-1]);
-  printf("Test target_ranks: \n");
-  printf("%d\n", target_ranks[nparticles-1]);
-  printf("Test nbs: \n");
-  nbs[ndestinations-1] = 1;
-  printf("%d\n", nbs[ndestinations-1]);
-  printf("Test nbr: \n");
-  nbr[ndestinations-1] = 1;
-  printf("%d\n", nbr[ndestinations-1]);
-  printf("Test send buffers (q[1]): \n");
-  ALLOC(send_buffers[ndestinations-1], particle_quant_t, nbs[ndestinations-1]);
-  printf("%f\n", send_buffers[ndestinations-1][0].q[1]);
-  printf("Test recieve buffers (q[1]): \n");
-  ALLOC(recieve_buffers[ndestinations-1], particle_quant_t, nbs[ndestinations-1]);
-  printf("%f\n", recieve_buffers[ndestinations-1][0].q[1]);
-  printf("Test particles_ptr (q[1]): \n");
-  printf("%p\n", (void*) (&particles[nparticles-1]));
-  printf("%p\n", (void*) particles[nparticles-1].q[1]);
-  printf("Test q_sizes:");
-  printf("%ld\n", q_sizes[1]);
-  printf("Test memcopy buffer (sending)\n:");
-  memcpy( &send_buffers[ndestinations-1][0].q[1], particles[0].q[1], q_sizes[1]);
-  printf("Test memcopy buffer (recieving)\n:");
-  memcpy(particles[0].q[1], &recieve_buffers[ndestinations-1][0].q[1], q_sizes[1]);
-  printf("Test casting\n");
-  unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[nparticles-1].q[0];
-  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;  
-  send_buffers[ndestinations-1][nparticles-1].q[0] = (double) sdgbx_index_tmp;
-  printf("%d to %f\n", *sdgbx_index_ptr_tmp, send_buffers[ndestinations-1][nparticles-1].q[0]);
-  }
-  
-  if (rank==0) {
-  
-    int ip_ap = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
-      if (target_ranks[ip] != rank) {
-        ip_ap = ip;
-        break;
-      } 
-    }
-  
-    printf("== Particle in MPTRAC Send==\n");
-  
-    unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap].q[0];
-    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
-  
-    printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap]);
-    
-    for (int iq=1; iq < 8 ; iq++) {
-     if (iq==4 || iq==7) {
-       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap].q[iq];
-       long unsigned int tmp = *tmp_ptr;
-             printf("q[%d]: %lu, target_rank: %d\n",iq, tmp
-      , target_ranks[ip_ap]);
-     } else {
-      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
-      , target_ranks[ip_ap]);
-     }
-    } 
-  }
-
   /* Sending... */
-  //if (rank==0) {printf("Sending\n");}
   for (int idest = 0; idest < ndestinations; idest++) {
     
     /* Ignore poles... */
     if (destinations[idest] < 0)
       continue;
      
-    //if (rank==0) {printf("Count particles\n");}
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12432,7 +12365,6 @@ void dd_communicate_particles_cleo(
         }
     }
     
-    //if (rank==0) {printf("Send buffer sizes\n");}
     /* Send buffer sizes... */
     MPI_Request request;
     MPI_Isend( &nbs[idest], 1, MPI_INT, destinations[idest], 0, MPI_COMM_WORLD, &request);
@@ -12441,11 +12373,9 @@ void dd_communicate_particles_cleo(
     if ( nbs[idest] == 0 )
       continue;
     
-    //if (rank==0) {printf("ALLOC buffer sizes\n");}
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_quant_t, nbs[idest]);
    
-    //if (rank==0) {printf("Fill Send buffer\n");}
     /* Fill the send buffer... */
     int ibs = 0;
     for (int ip = 0; ip < nparticles; ip++) {
@@ -12469,27 +12399,16 @@ void dd_communicate_particles_cleo(
       }
     }
 
-    //if (rank==0) {printf("Send buffer finally\n");}
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      destinations[idest], 1, MPI_COMM_WORLD, &request);
     	      
-    	      
-    if ((rank==0) && (destinations[idest]==3)) {
-     for (int i = 0; i < nbs[idest]; i++ ) {
-      printf("%d\n",i);
-      for (int iq = 0; iq < 8; iq++ ){
-          printf("Send Buffer q[%i]: %f\n", iq, send_buffers[idest][i].q[iq]);
-         }
-     }
-    }
   }
 
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
   
   /* Recieving... */
-  if (rank==0) {printf("Recieving\n");}
   for (int isourc = 0; isourc < ndestinations; isourc++) {
   
   /* Ignore poles... */
@@ -12513,7 +12432,6 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  if (rank==0) {printf("Putting buffer into particles...\n");}
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
     
@@ -12539,58 +12457,12 @@ void dd_communicate_particles_cleo(
         if (ipbr == nbr[isourc])
           break; 
       } 
-    } 
-    
+    }  
   }
   
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
     
-  if (rank==3) {
-    for (int isourc = 0; isourc < ndestinations; isourc++) {
-      if ((rank==3) && (destinations[isourc]==0)) {
-        for (int i = 0; i < nbr[isourc]; i++ ) {
-          printf("%d\n",i);
-        for (int iq = 0; iq < NQ; iq++ ) {
-          printf("Recieve Buffer q[%i]: %f \n", iq, recieve_buffers[isourc][i].q[iq]);
-        }
-      }
-    }
-  }
-  
-
-  int ip_ap_rec = 0;
-  for (int ip = 0; ip < nparticles; ip++) {
-  
-    long unsigned int* tmp_ptr = (long unsigned int*) particles[ip].q[7];
-    long unsigned int tmp = *tmp_ptr;
-    
-    if (tmp == 26) {
-      ip_ap_rec = ip;
-      break;
-    }       
-  }
-
-  printf("== Particle in MPTRAC Rec.==\n");
-  
-  unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
-  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
-  
-  printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap_rec]);
-  
-  for (int iq=1; iq < 8 ; iq++) {
-    if (iq==4 || iq==7) {
-      long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap_rec].q[iq];
-      long unsigned int tmp = *tmp_ptr;
-      printf("q[%d]: %lu, target_rank: %d\n", iq, tmp, target_ranks[ip_ap_rec]);
-    } else {
-      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
-      , target_ranks[ip_ap_rec]);
-    }
-   }
-  }
- 
-  if (rank==0) {printf("Free buffer...\n");}  
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
         
