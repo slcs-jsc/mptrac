@@ -12530,7 +12530,7 @@ void dd_communicate_particles_cleo(
         unsigned int sdgbx_index = (unsigned int) recieve_buffers[isourc][ipbr].q[0];
         memcpy(particles[ip].q[0], &sdgbx_index, q_sizes[0]);
           
-          for (int iq=1; iq < 8 ; iq++) {
+          for (int iq=1; iq < NQ ; iq++) {
             memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], q_sizes[iq]);
           }
           
@@ -12551,7 +12551,7 @@ void dd_communicate_particles_cleo(
       if ((rank==3) && (destinations[isourc]==0)) {
         for (int i = 0; i < nbr[isourc]; i++ ) {
           printf("%d\n",i);
-        for (int iq = 0; iq < 8; iq++ ) {
+        for (int iq = 0; iq < NQ; iq++ ) {
           printf("Recieve Buffer q[%i]: %f \n", iq, recieve_buffers[isourc][i].q[iq]);
         }
       }

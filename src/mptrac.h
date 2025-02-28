@@ -249,7 +249,7 @@
 
 /*! Maximum number of quantities per data point. */
 #ifndef NQ
-#define NQ 15
+#define NQ 8
 #endif
 
 /*! Maximum number of data points for CSI calculation. */
