@@ -487,7 +487,7 @@ void compress_cms(
       cms_module_t *cms_ptr = cms_init(cms_param);
 
       /* Read binary data... */
-      cms_sol_t *cms_sol = cms_read_sol(cms_ptr, inout);
+      cms_sol_t *cms_sol = cms_read_zstd_sol(cms_ptr, inout);
 
       /* Evaluate... */
 #pragma omp parallel for default(shared)
@@ -630,7 +630,7 @@ void compress_cms(
 	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
 	/* Save binary data... */
-	cms_save_sol(cms_sol[ip], inout);
+	cms_save_zstd_sol(cms_sol[ip], inout, 3);
 
 	/* Free... */
 	cms_delete_sol(cms_sol[ip]);
