@@ -6579,7 +6579,6 @@ void read_met_global_grib(
   strncpy(hour,timestr,2);
   hour[2] = '\0';
   time2jsec(atoi(year),atoi(month),atoi(day),atoi(hour),0,0,0,&(met->time));
-  /*Does not seem quite right*/
 
   /* Write info... */
   LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
@@ -6614,9 +6613,9 @@ void read_met_global_grib(
     met->lon[counter] = i;
     counter += 1;
   }
-  counter = 0;
+  counter = 1;
   for (double i = max_lat ; i <= min_lat + 1e-6 ; i += inc_lat){
-    met->lat[counter] = i;
+    met->lat[met->ny-counter] = i;
     counter += 1;
   }
   
@@ -6635,7 +6634,7 @@ void read_met_global_grib(
       max_level = (int)level;
     }
   }
-  met->npl = max_level+1;   // TODO: don't add +1 here, number levels is 137, not 138?
+  met->npl = max_level;
 
   /* Check number of levels... */
   LOG(2, "Number of levels: %d", met->npl);
@@ -7030,10 +7029,6 @@ void read_met_monotonize(
 }
 
 /*****************************************************************************/
-/* potential workflow?
-   - get global information (grid/time/leveltype/num_param ... )
-   - save data from each message on temporary "dict" (or directly into struct -> switch case??)
-   - read data from dict into struct*/
 #ifdef ECCODES
 int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
 
@@ -7107,7 +7102,7 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   ECC(codes_get_double_array(ml_handles[0],"pv",values,&value_count)) 
   for(int nx = 0;nx<met->nx;nx++){
     for(int ny = 0;ny<met->ny;ny++){
-      for(int level = 0;level<met->npl;level++){
+      for(int level = 0;level<=met->npl;level++){
         met->pl[nx][ny][level] = (float) ((values[level]*0.01f + met->ps[nx][ny] * values[level+met->npl]));
       }
     }

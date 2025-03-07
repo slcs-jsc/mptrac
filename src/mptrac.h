@@ -1020,7 +1020,7 @@
   if( strcmp(short_name,variable)==0){\
     for (int ix = 0; ix < met->nx; ix++) {\
           for (int iy = 0; iy < met->ny; iy++) {\
-              target[ix][iy] = (float)(values[ix * met->ny + iy]*scaling_factor);\
+              target[ix][iy] = (float)(values[iy * met->nx + ix]*scaling_factor);\
           }\
       }\
     found_flag =1;\
@@ -1030,7 +1030,7 @@
   if( strcmp(short_name,variable)==0){\
     for (int ix = 0; ix < met->nx; ix++) {\
           for (int iy = 0; iy < met->ny; iy++) {\
-              target[ix][iy][level] = (float) (values[ix * met->ny + iy]*scaling_factor);\
+              target[ix][iy][level] = (float) (values[iy * met->nx + ix]*scaling_factor);\
           }\
       }\
     found_flag +=1;\
