@@ -1187,7 +1187,7 @@ void get_met_help(
     else if (ctl->met_type == 5)
       sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
     else if (ctl->met_type == 6)
-      sprintf(filename,"%s_YYYYMMDDHH_.grb",metbase);
+      sprintf(filename,"%s_YYYYMMDDHH_XX.grb",metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -7032,34 +7032,34 @@ void read_met_monotonize(
 #ifdef ECCODES
 int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
 
-  size_t filename_len = strlen(filename);
+  size_t filename_len = strlen(filename)+1;
 
-  /* Check length of filename... */
-  if(filename_len<4)
-    return 0;
+  char sf_filename [filename_len];
+  char ml_filename [filename_len];
+  strcpy(sf_filename,filename);
+  strcpy(ml_filename,filename);
   
-  char general_filename [filename_len-3];   // TODO: will lead to seg fault if filename_len < 3
-  memcpy(general_filename,filename,filename_len-4);
-  general_filename[filename_len-4] = '\0';
-  char sf_filename [filename_len+3];
-  char ml_filename [filename_len+3];
+  get_met_replace(ml_filename,"XX","ml");
+  get_met_replace(sf_filename,"XX","sf");
 
-  snprintf(ml_filename,filename_len+strlen("ml")+1,"%s%s%s",general_filename,"ml",".grb");   // TODO: use get_met_replace() to replace pattern (eg "XX" by "ml" or "sf")?
-  snprintf(sf_filename,filename_len+strlen("sf")+1,"%s%s%s",general_filename,"sf",".grb");
 
-  
   int err = 0;
   /*Open files*/
   FILE* ml_file = fopen(ml_filename,"rb");
   FILE* sf_file = fopen(sf_filename,"rb");
 
   if (ml_file == NULL || sf_file == NULL) {
-    if (ml_file != NULL) fclose(ml_file);
-    if (sf_file != NULL) fclose(sf_file);
-    return -1;
+    if (ml_file != NULL){
+      fclose(ml_file);
+      LOG(1,"Cannot open file: %s",ml_filename);
+    }
+    if (sf_file != NULL){
+      fclose(sf_file);
+      LOG(1,"Cannot open file: %s",sf_filename);
+    }
   }
 
-  
+
   /*Store messages from files*/
   codes_handle** ml_handles;
   codes_handle** sf_handles;
