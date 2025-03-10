@@ -6599,24 +6599,43 @@ void read_met_global_grib(
   if(met->ny<2 || met->ny>EY)
     ERRMSG("Number of latitudes out of range!");    
   
-  double min_lon,max_lon,min_lat,max_lat,inc_lon,inc_lat;
-  ECC(codes_get_double(handles[0],"longitudeOfFirstGridPointInDegrees",&min_lon));
-  ECC(codes_get_double(handles[0],"latitudeOfFirstGridPointInDegrees",&min_lat));
-  ECC(codes_get_double(handles[0],"longitudeOfLastGridPointInDegrees",&max_lon));
-  ECC(codes_get_double(handles[0],"latitudeOfLastGridPointInDegrees",&max_lat));
+  double first_lon,last_lon,first_lat,last_lat,inc_lon,inc_lat;
+  ECC(codes_get_double(handles[0],"longitudeOfFirstGridPointInDegrees",&first_lon));
+  ECC(codes_get_double(handles[0],"latitudeOfFirstGridPointInDegrees",&first_lat));
+  ECC(codes_get_double(handles[0],"longitudeOfLastGridPointInDegrees",&last_lon));
+  ECC(codes_get_double(handles[0],"latitudeOfLastGridPointInDegrees",&last_lat));
   ECC(codes_get_double(handles[0],"iDirectionIncrementInDegrees",&inc_lon));
   ECC(codes_get_double(handles[0],"jDirectionIncrementInDegrees",&inc_lat));
 
+  long jscanpos,iscanneg;
+  ECC(codes_get_long(handles[0],"iScansNegatively",&iscanneg));
+  ECC(codes_get_long(handles[0],"jScansPositively",&jscanpos));
+  
   /* Compute longitude-latitude grid... */
   int counter = 0;
-  for (double i = min_lon ; i <= max_lon+1e-6 ; i += inc_lon){
+  if(iscanneg == 0){
+    for (double i = first_lon ; i <= last_lon+1e-6 ; i += inc_lon){
     met->lon[counter] = i;
     counter += 1;
-  }
-  counter = 1;
-  for (double i = max_lat ; i <= min_lat + 1e-6 ; i += inc_lat){
-    met->lat[met->ny-counter] = i;
+    }
+  }else{
+    for (double i = first_lon ; i > last_lon-1e-6 ; i -= inc_lon){
+    met->lon[counter] = i;
     counter += 1;
+    }
+  }
+  
+  counter = 0;
+  if(jscanpos == 0){
+    for (double i = first_lat ; i>last_lat-1e-6; i -= inc_lat){
+      met->lat[counter] = i;
+      counter += 1;
+    }
+  }else{
+    for (double i = first_lat ; i <= last_lat+1e-6; i += inc_lat){
+      met->lat[counter] = i;
+      counter += 1;
+    }
   }
   
   /* Write info... */
@@ -6830,37 +6849,37 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     free(values);
   }
 
-  if(t_flag!=ctl->met_np-1){
-    WARN("Cannot read temperature!");
+  if(t_flag!=met->npl){
+    WARN("Cannot read{ temperature!");
   }
-  if(u_flag!=ctl->met_np-1){
+  if(u_flag!=met->npl){
     WARN("Cannot read zonal wind!");
   }
-  if(v_flag!=ctl->met_np-1){
+  if(v_flag!=met->npl){
     WARN("Cannot read meridional wind!");
   }
-  if(w_flag!=ctl->met_np-1){
+  if(w_flag!=met->npl){
     WARN("Cannot read vertical velocity!");
   }
-  if(o3_flag!=ctl->met_np-1){
+  if(o3_flag!=met->npl){
     WARN("Cannot read ozone data!");
   }
-  if(h2o_flag!=ctl->met_np-1){
+  if(h2o_flag!=met->npl){
     WARN("Cannot read specific humidity!");
   }
-  if(lwc_flag!=ctl->met_np-1){
+  if(lwc_flag!=met->npl){
     WARN("Cannot read cloud liquid water content!");
   }
-  if(rwc_flag!=ctl->met_np-1){
+  if(rwc_flag!=met->npl){
     WARN("Cannot read cloud rain water content!");
   }
-  if(iwc_flag!=ctl->met_np-1){
+  if(iwc_flag!=met->npl){
     WARN("Cannot read cloud ice water content!");
   }
-  if(swc_flag!=ctl->met_np-1){
+  if(swc_flag!=met->npl){
     WARN("Cannot read cloud snow water content!");
   }
-  if(cc_flag!=ctl->met_np-1){
+  if(cc_flag!=met->npl){
     WARN("Cannot read cloud cover!");
   }
 
@@ -7110,7 +7129,6 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   }
   
   /*Read data from ml file*/
-  met->npl = met->np;
   read_met_levels_grib(ml_handles,ml_num_messages,ctl,met);
   for(int i=0;i<ml_num_messages;i++){
     codes_handle_delete(ml_handles[i]);
