@@ -7057,6 +7057,7 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
       fclose(sf_file);
       LOG(1,"Cannot open file: %s",sf_filename);
     }
+    return 0;
   }
 
 
