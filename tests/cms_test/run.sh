@@ -20,7 +20,6 @@ $trac/met_map - data/map.tab data/ei_2011_06_05_00.cms MET_TYPE 5 MAP_DLON 3 MAP
 echo -e "\nCompare results..."
 error=0
 for f in $(ls data.ref/*) ; do
-    [ -s data/"$(basename "$f")" ] || continue
     diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
 exit $error
