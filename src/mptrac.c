@@ -487,7 +487,11 @@ void compress_cms(
       cms_module_t *cms_ptr = cms_init(cms_param);
 
       /* Read binary data... */
-      cms_sol_t *cms_sol = cms_read_zstd_sol(cms_ptr, inout);
+      cms_sol_t *cms_sol;
+      if (ctl->met_cms_zstd == 1)
+	cms_sol = cms_read_zstd_sol(cms_ptr, inout);
+      else
+	cms_sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
 #pragma omp parallel for default(shared)
@@ -630,7 +634,10 @@ void compress_cms(
 	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
 	/* Save binary data... */
-	cms_save_zstd_sol(cms_sol[ip], inout, 3);
+	if (ctl->met_cms_zstd == 1)
+	  cms_save_zstd_sol(cms_sol[ip], inout, 3);
+	else
+	  cms_save_sol(cms_sol[ip], inout);
 
 	/* Free... */
 	cms_delete_sol(cms_sol[ip]);
@@ -4818,6 +4825,8 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
   ctl->met_cms_batch =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
+  ctl->met_cms_zstd =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_ZSTD", -1, "1", NULL);
   ctl->met_cms_heur =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
   ctl->met_cms_eps_z =
