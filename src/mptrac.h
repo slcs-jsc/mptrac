@@ -2540,6 +2540,9 @@ typedef struct {
   /*! cmultiscale batch size. */
   int met_cms_batch;
 
+  /*! cmultiscale zstd compression (0=off, 1=on). */
+  int met_cms_zstd;
+
   /*! cmultiscale coarsening heuristics
      (0=default, 1=mean diff, 2=median diff, 3=max diff). */
   int met_cms_heur;
