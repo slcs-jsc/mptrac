@@ -1,7 +1,7 @@
 #! /bin/bash
 
 # Set environment...
-export LD_LIBRARY_PATH=../../libs/build/lib:../../../cmultiscale/cmultiscale/builddir/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:../../libs/build/lib:../../../cmultiscale/cmultiscale/builddir/
 export OMP_NUM_THREADS=4
 
 # Setup...
