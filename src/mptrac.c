@@ -12481,10 +12481,10 @@ void dd_communicate_particles_cleo(
       for (int ip = 0; ip < nparticles; ip++) {
         if (target_ranks[ip] == -1) {
            
-        unsigned int sdgbx_index = (unsigned int) recieve_buffers[isourc][ipbr].q[0];
-        memcpy(particles[ip].q[0], &sdgbx_index, q_sizes[0]);
+          //unsigned int sdgbx_index = (unsigned int) recieve_buffers[isourc][ipbr].q[0];
+          memcpy(particles[ip].q[0], &recieve_buffers[isourc][ipbr].q[0], q_sizes[0]);
           
-          for (int iq=1; iq < NQ ; iq++) {
+          for (int iq=1; iq < 8 ; iq++) {
             memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], q_sizes[iq]);
           }
           
