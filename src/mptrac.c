@@ -12350,7 +12350,7 @@ void dd_communicate_particles_cleo(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
   printf("At the start MPTRAC says:\n");
-  if (rank == 0 || rank == 3)
+  if (rank == 0)
     for (int iq = 0; iq < 8; iq++)
       printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
 
@@ -12413,10 +12413,10 @@ void dd_communicate_particles_cleo(
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
 
-  printf("After sending MPTRAC says:\n");
-  if (rank == 0 || rank == 3)
-    for (int iq = 0; iq < 8; iq++)
-      printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
+  //printf("After sending MPTRAC says:\n");
+  //if (rank == 0 || rank == 3)
+  //  for (int iq = 0; iq < 8; iq++)
+  //    printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
   
   /* Recieving... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
@@ -12474,7 +12474,7 @@ void dd_communicate_particles_cleo(
   MPI_Barrier(MPI_COMM_WORLD);
 
   printf("After recieving MPTRAC says:\n");
-  if (rank == 0 || rank == 3)  
+  if (rank == 3)  
     for (int iq = 0; iq < 8; iq++)
       printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
     
