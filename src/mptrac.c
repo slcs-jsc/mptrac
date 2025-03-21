@@ -12349,10 +12349,36 @@ void dd_communicate_particles_cleo(
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
-  printf("At the start MPTRAC says:\n");
-  if (rank == 0)
-    for (int iq = 0; iq < 8; iq++)
-      printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
+  if (rank==0) {
+  
+    int ip_ap = 0;
+    for (int ip = 0; ip < nparticles; ip++) {
+      if (target_ranks[ip] != rank) {
+        ip_ap = ip;
+        break;
+      } 
+    }
+  
+    printf("== Particle in MPTRAC Send==\n");
+  
+    unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap].q[0];
+    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
+  
+    printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap]);
+    
+    for (int iq=1; iq < 8 ; iq++) {
+     if (iq==4 || iq==7) {
+       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap].q[iq];
+       long unsigned int tmp = *tmp_ptr;
+             printf("q[%d]: %lu, target_rank: %d\n",iq, tmp
+      , target_ranks[ip_ap]);
+     } else {
+      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
+      , target_ranks[ip_ap]);
+     }
+    } 
+  }
+
 
   /* Sending... */
   for (int idest = 0; idest < ndestinations; idest++) {
