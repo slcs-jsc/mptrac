@@ -12474,9 +12474,37 @@ void dd_communicate_particles_cleo(
   MPI_Barrier(MPI_COMM_WORLD);
 
   printf("After recieving MPTRAC says:\n");
-  if (rank == 3)  
-    for (int iq = 0; iq < 8; iq++)
-      printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
+  if (rank==3) {
+    
+    int ip_ap_rec = 0;
+    for (int ip = 0; ip < nparticles; ip++) {
+    
+       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip].q[7];
+       long unsigned int tmp = *tmp_ptr;
+    
+       if (tmp == 26) {
+         ip_ap_rec = ip;
+         break;
+       }   
+            
+    }
+    
+  unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
+  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
+  
+  printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap_rec]);
+  
+  for (int iq=1; iq < 8 ; iq++) {
+     if (iq==4 || iq==7) {
+             long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap_rec].q[iq];
+             long unsigned int tmp = *tmp_ptr;
+             printf("q[%d]: %lu, target_rank: %d\n", iq, tmp, target_ranks[ip_ap_rec]);
+     } else {
+      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
+      , target_ranks[ip_ap_rec]);
+     }
+    }
+  }
     
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
