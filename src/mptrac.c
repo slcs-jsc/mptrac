@@ -2234,10 +2234,6 @@ void module_advect(
       atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
       atm->q[ctl->qnt_zeta][ip] += cache->dt[ip] * zeta_dotm;
 
-      /* Check if zeta is below zero... */
-      if (atm->q[ctl->qnt_zeta][ip] < 0)
-	atm->q[ctl->qnt_zeta][ip] = 0;	/* TODO: reflect particle, or skip this test (use module_position) */
-
       /* Convert zeta to pressure... */
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
