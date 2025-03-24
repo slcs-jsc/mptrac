@@ -2202,7 +2202,7 @@ void module_advect(
 	/* Interpolate meteo data... */
 	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
 			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
-	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
+	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met1->zetal,
 			    met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
 	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
 			    met1->zetal, met1->zeta_dotl, tm, x[2], x[0],
