@@ -499,7 +499,8 @@ void compress_cms(
 #pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
-	  double val, x[] = { lon[ix], lat[iy] };
+	  double val;
+	  const double x[] = { lon[ix], lat[iy] };
 	  cms_eval(cms_ptr, cms_sol, x, &val);
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
@@ -613,8 +614,8 @@ void compress_cms(
 #pragma omp parallel for default(shared)
 	for (size_t ix = 0; ix < nx; ix++)
 	  for (size_t iy = 0; iy < ny; iy++) {
-	    size_t idx = ARRAY_2D(ix, iy, ny);
-	    double x[] = { lon[ix], lat[iy] };
+	    const size_t idx = ARRAY_2D(ix, iy, ny);
+	    const double x[] = { lon[ix], lat[iy] };
 	    cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
 	    tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 	    tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
@@ -771,19 +772,13 @@ void compress_zfp(
   const int decompress,
   FILE *inout) {
 
-  zfp_field *field;		/* array meta data */
-  zfp_stream *zfp;		/* compressed stream */
-  void *buffer;			/* storage for compressed stream */
-  size_t bufsize;		/* byte size of compressed buffer */
-  bitstream *stream;		/* bit stream to write to or read from */
-  size_t zfpsize;		/* byte size of compressed stream */
-
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
   const zfp_type type = zfp_type_float;
-  field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
+  zfp_field *field =
+    zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
 
   /* Allocate meta data for a compressed stream... */
-  zfp = zfp_stream_open(NULL);
+  zfp_stream *zfp = zfp_stream_open(NULL);
 
   /* Set compression mode... */
   int actual_prec = 0;
@@ -796,15 +791,16 @@ void compress_zfp(
     ERRMSG("Set precision or tolerance!");
 
   /* Allocate buffer for compressed data... */
-  bufsize = zfp_stream_maximum_size(zfp, field);
-  buffer = malloc(bufsize);
+  const size_t bufsize = zfp_stream_maximum_size(zfp, field);
+  void *buffer = malloc(bufsize);
 
   /* Associate bit stream with allocated buffer... */
-  stream = stream_open(buffer, bufsize);
+  bitstream *stream = stream_open(buffer, bufsize);
   zfp_stream_set_bit_stream(zfp, stream);
   zfp_stream_rewind(zfp);
 
   /* Read compressed stream and decompress array... */
+  size_t zfpsize;
   if (decompress) {
     FREAD(&zfpsize, size_t,
 	  1,
@@ -857,7 +853,7 @@ void compress_zstd(
   FILE *inout) {
 
   /* Get buffer sizes... */
-  size_t uncomprLen = n * sizeof(float);
+  const size_t uncomprLen = n * sizeof(float);
   size_t comprLen = ZSTD_compressBound(uncomprLen);
   size_t compsize;
 
@@ -1220,30 +1216,26 @@ void intpol_met_4d_coord(
     cw[1] = (lat2 - met0->lat[ci[1]]) /
       (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);
 
-    /* Start determiniation of the altitude weighting factor... */
-    double height_top, height_bot;
-    double height00, height01, height10, height11, height0, height1;
-
     /* Interpolate in time at the lowest level... */
-    height00 = cw[3] * (heights1[ci[0]][ci[1]][ci[2]]
-			- heights0[ci[0]][ci[1]][ci[2]])
+    double height00 = cw[3] * (heights1[ci[0]][ci[1]][ci[2]]
+			       - heights0[ci[0]][ci[1]][ci[2]])
       + heights0[ci[0]][ci[1]][ci[2]];
-    height01 = cw[3] * (heights1[ci[0]][ci[1] + 1][ci[2]]
-			- heights0[ci[0]][ci[1] + 1][ci[2]])
+    double height01 = cw[3] * (heights1[ci[0]][ci[1] + 1][ci[2]]
+			       - heights0[ci[0]][ci[1] + 1][ci[2]])
       + heights0[ci[0]][ci[1] + 1][ci[2]];
-    height10 = cw[3] * (heights1[ci[0] + 1][ci[1]][ci[2]]
-			- heights0[ci[0] + 1][ci[1]][ci[2]])
+    double height10 = cw[3] * (heights1[ci[0] + 1][ci[1]][ci[2]]
+			       - heights0[ci[0] + 1][ci[1]][ci[2]])
       + heights0[ci[0] + 1][ci[1]][ci[2]];
-    height11 = cw[3] * (heights1[ci[0] + 1][ci[1] + 1][ci[2]]
-			- heights0[ci[0] + 1][ci[1] + 1][ci[2]])
+    double height11 = cw[3] * (heights1[ci[0] + 1][ci[1] + 1][ci[2]]
+			       - heights0[ci[0] + 1][ci[1] + 1][ci[2]])
       + heights0[ci[0] + 1][ci[1] + 1][ci[2]];
 
     /* Interpolate in latitude direction... */
-    height0 = cw[1] * (height01 - height00) + height00;
-    height1 = cw[1] * (height11 - height10) + height10;
+    double height0 = cw[1] * (height01 - height00) + height00;
+    double height1 = cw[1] * (height11 - height10) + height10;
 
     /* Interpolate in longitude direction... */
-    height_bot = cw[0] * (height1 - height0) + height0;
+    double height_bot = cw[0] * (height1 - height0) + height0;
 
     /* Interpolate in time at the upper level... */
     height00 = cw[3] * (heights1[ci[0]][ci[1]][ci[2] + 1]
@@ -1264,7 +1256,7 @@ void intpol_met_4d_coord(
     height1 = cw[1] * (height11 - height10) + height10;
 
     /* Interpolate in longitude direction... */
-    height_top = cw[0] * (height1 - height0) + height0;
+    double height_top = cw[0] * (height1 - height0) + height0;
 
     /* Search at higher levels if height is not in box... */
     while (((heights0[0][0][0] > heights0[0][0][1]) &&
@@ -1419,8 +1411,8 @@ void intpol_met_space_3d_ml(
 		       &lat2);
 
   /* Get horizontal indices... */
-  int ix = locate_reg(met->lon, met->nx, lon2);
-  int iy = locate_irr(met->lat, met->ny, lat2);
+  const int ix = locate_reg(met->lon, met->nx, lon2);
+  const int iy = locate_irr(met->lat, met->ny, lat2);
 
   /* Interpolate vertically... */
   int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
@@ -2060,7 +2052,7 @@ int locate_reg(
   const double x) {
 
   /* Calculate index... */
-  int i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
+  const int i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
 
   /* Check range... */
   if (i < 0)
