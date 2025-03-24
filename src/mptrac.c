@@ -3651,12 +3651,9 @@ void module_position(
 
     /* Check pressure... */
     if (atm->p[ip] < met0->p[met0->np - 1]) {
-      // TODO: add reflection: atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
       atm->p[ip] = met0->p[met0->np - 1];
     } else if (atm->p[ip] > 300.) {
       INTPOL_2D(ps, 1);
-      // TODO: add reflection: if (atm->p[ip] > ps)
-      // atm->p[ip] = 2. * ps - atm->p[ip];
       if (atm->p[ip] > ps)
 	atm->p[ip] = ps;
     }
