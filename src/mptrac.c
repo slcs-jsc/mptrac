@@ -12412,7 +12412,7 @@ void dd_communicate_particles_cleo(
     for (int ip = 0; ip < nparticles; ip++) {
       // Only add those elements whithout 'graveyard' 
       // and with the right destinations...
-      if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank) {
+      if ( target_ranks[ip] == destinations[idest] && target_ranks[ip] != rank ) {
        
         /* Cast and copy data... */
         unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
