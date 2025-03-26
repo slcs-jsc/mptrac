@@ -65,7 +65,7 @@ Alternatively, to get the latest development version, clone the GitHub repositor
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
-**2. Install Required Libraries**
+**2. Install required libraries**
 
 MPTRAC includes several libraries that can be compiled and installed using a build script:
 
@@ -87,11 +87,13 @@ Pay special attention to the following settings:
 
 * Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL, netCDF, and other required libraries are located on your system.
 
-* By default, the MPTRAC binaries are linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilation causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI or OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the paths to the shared libraries.
+* By default, the MPTRAC binaries are linked dynamically. Ensure that the `LD_LIBRARY_PATH` is properly configured to include the paths to the shared libraries. If you prefer static linking, you can enable it by setting the `STATIC` flag, which allows you to copy and use the binaries on other machines. However, in some cases, either static or dynamic linking may not be feasible or could cause specific issues.
 
-* To make use of the MPI parallelization of MPTRAC, the `MPI` flag must be enabled. Further steps will require an MPI library such as OpenMPI to be available on your system. To make use of the OpenACC parallelization, the `GPU` flag must be enabled. The NVIDIA HPC SDK is required to compile the GPU code. MPTRAC's OpenMP parallelization is always enabled.
+* To enable MPI parallelization in MPTRAC, you must set the `MPI` flag. Additionally, an MPI library, such as OpenMPI, must be installed on your system. To utilize OpenACC parallelization, enable the `GPU` flag, and ensure the NVIDIA HPC SDK is installed to compile the GPU code. OpenMP parallelization is always enabled.
 
-**4. Compile and Test the Installation**
+* Some options in the Makefile are labeled as experimental. These features are still under development and may not be fully functional or tested. Use them at your own risk.
+
+**4. Compile and test the installation**
 
 Once the Makefile is configured, compile the code using:
 
@@ -101,7 +103,7 @@ To verify the installation, run the test suite:
 
     make check
 
-This will execute a series of tests sequentially. If any test fails, check the log messages for details.
+This will execute a series of tests sequentially. If any test fails, check the log messages for further details.
 
 ### Run the example
 
