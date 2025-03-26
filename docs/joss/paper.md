@@ -72,11 +72,11 @@ bibliography: paper.bib
 
 # Summary
 
-The Massive-Parallel Trajectory Calculations (MPTRAC) Lagrangian transport model simulates the movement, dispersion, and chemical transformation of air parcels carrying pollutants, aerosols, and trace gases. Unlike Eulerian models, which operate on a fixed spatial grid, MPTRAC tracks individual air parcels along their trajectories, providing a high-resolution view of atmospheric transport and chemical reactions. It enables detailed studies of dispersion, long-range transport, deposition, and trace gas chemistry. Optimized for high-performance computing, MPTRAC combines advanced numerical techniques with computational efficiency, making it a versatile tool for simulating atmospheric transport and chemistry under diverse meteorological conditions.
+The Massive-Parallel Trajectory Calculations (MPTRAC) Lagrangian transport model simulates the movement, dispersion, and chemical transformation of air parcels carrying pollutants, aerosols, and trace gases. Unlike Eulerian models, which use a fixed grid, MPTRAC tracks trajectories of individual air parcels, offering a high-resolution view of atmospheric transport and chemistry. Optimized for high-performance computing, MPTRAC combines advanced numerical techniques with computational efficiency, making it a powerful tool for studying dispersion, long-range transport, deposition, and trace gas reactions under diverse meteorological conditions.
 
 # Statement of need
 
-Accurate pollutant transport modeling is essential for assessing air quality, climate impacts, and public health. While traditional Eulerian models often lack fine-scale detail, Lagrangian models track individual air parcels, offering a more precise representation of dispersion, deposition, and atmospheric interactions. MPTRAC has been successfully used to study pollutant transport from volcanic eruptions and wildfires, proving its value in environmental monitoring, climate research, and emergency response. Unlike many existing Lagrangian models, MPTRAC is specifically optimized for high-performance computing (HPC), enabling efficient large-scale, high-resolution simulations.
+Accurate pollutant transport modeling is crucial for assessing air quality, climate impacts, and public health. While traditional Eulerian models often lack fine-scale detail, Lagrangian models track individual air parcels for a more precise representation of dispersion, deposition, and atmospheric interactions. MPTRAC has been successfully applied to studying pollutant transport in the free troposphere and stratosphere, proving its value for atmospheric research, environmental monitoring, and emergency response. Unlike many Lagrangian models, MPTRAC is optimized for high-performance computing (HPC), enabling efficient large-scale, high-resolution simulations.
 
 # Scientific background
 
@@ -84,13 +84,7 @@ Lagrangian transport models track individual air parcels to simulate the long-ra
 
 # Features
 
-MPTRAC [@hoffmann16; @hoffmann22] is a Lagrangian particle dispersion model designed to analyze atmospheric transport in the free troposphere and stratosphere. It computes air parcel trajectories using wind and vertical velocity fields from global reanalysis or forecast data, such as ECMWF's ERA5 [@hersbach20] or NASA's MERRA-2 [@gelaro17] reanalysis. The model accounts for mesoscale diffusion and wind fluctuations with the Langevin equation and includes an inter-parcel exchange module for air mixing.
-
-MPTRAC also simulates convection, sedimentation, decay, gas and aqueous phase chemistry, and wet/dry deposition. It provides meteorological data processing for boundary layers, convective potential energy, geopotential heights, and tropopause data. The model supports multiple output methods, including particle, grid, ensemble, profile, sample, and station data, with visualization via Gnuplot and ParaView.
-
-Optimized for efficiency, MPTRAC provides an MPI-OpenMP-OpenACC hybrid parallelization, making it suitable for deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It is available as open-source software under the GNU GPL license.
-
-\autoref{fig:clusters} illustrates MPTRAC's geophysical modules and main software components.
+MPTRAC [@hoffmann16; @hoffmann22] is a Lagrangian particle dispersion model for analyzing atmospheric transport in the free troposphere and stratosphere. It computes air parcel trajectories using wind and vertical velocity fields from global reanalysis or forecast data, such as ECMWF's ERA5 [@hersbach20] or NASA's MERRA-2 [@gelaro17], while accounting for mesoscale diffusion and wind fluctuations with the Langevin equation. An inter-parcel exchange module represents air mixing. The model also simulates convection, sedimentation, decay, gas and aqueous phase chemistry, and wet/dry deposition, with meteorological pre-processing for boundary layer height, convective available potential energy, geopotential heights, and tropopause data. Optimized for computational efficiency, MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for scalable deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It supports multiple output formats, including particle, grid, ensemble, profile, sample, and station data, with visualization via Gnuplot and ParaView. MPTRAC is open-source software distributed under the GNU GPL v3 license. \autoref{fig:clusters} illustrates MPTRAC's geophysical modules and core software components.
 
 ![Geophysical modules and main software components of the MPTRAC model. Image adapted from @hoffmann24.\label{fig:clusters}](clusters.png){ width=70% }
 
@@ -100,7 +94,7 @@ MPTRAC simulates the transport and dispersion of aerosols and trace gases from b
 
 An example, shown in \autoref{fig:convection}, illustrates MPTRAC’s use in studying the transport of air from the planetary boundary layer (PBL) into the free troposphere. MPTRAC tracks how air parcels lifted by updrafts or convective currents move into the more stable free troposphere, where pollutants or aerosols can spread over large areas. This helps provide insights into atmospheric circulation and pollutant distribution on regional to global scales.
 
-![Lagrangian transport simulation showing convective transport from the planetary boundary layer (PBL) into the free troposphere. Trajectories are initialized in the PBL at 00:00 UTC on 1 July 2017 and are tracked over a 10-day period. The simulation is driven by ERA5 meteorological reanalysis data.\label{fig:convection}](convection.png)
+![Lagrangian transport simulation of convective transport from the planetary boundary layer (PBL) into the free troposphere. One million trajectories are initialized in the PBL at 00:00 UTC on 1 July 2017 and tracked over 10 days using ERA5 reanalysis data.\label{fig:convection}](convection.png)
 
 # Evolution and Future Directions of MPTRAC
 
