@@ -84,19 +84,19 @@ Lagrangian transport models track individual air parcels to simulate the long-ra
 
 # Features
 
-MPTRAC [@hoffmann16; @hoffmann22] is a Lagrangian particle dispersion model designed to analyze atmospheric transport in the free troposphere and stratosphere. It computes air parcel trajectories using wind and vertical velocity fields from global reanalysis or forecast data, such as ECMWF ERA5 [@hersbach20]. The model accounts for mesoscale diffusion and wind fluctuations with the Langevin equation and includes an inter-parcel exchange module for air mixing.
+MPTRAC [@hoffmann16; @hoffmann22] is a Lagrangian particle dispersion model designed to analyze atmospheric transport in the free troposphere and stratosphere. It computes air parcel trajectories using wind and vertical velocity fields from global reanalysis or forecast data, such as ECMWF's ERA5 [@hersbach20] or NASA's MERRA-2 [@gelaro17] reanalysis. The model accounts for mesoscale diffusion and wind fluctuations with the Langevin equation and includes an inter-parcel exchange module for air mixing.
 
 MPTRAC also simulates convection, sedimentation, decay, gas and aqueous phase chemistry, and wet/dry deposition. It provides meteorological data processing for boundary layers, convective potential energy, geopotential heights, and tropopause data. The model supports multiple output methods, including particle, grid, ensemble, profile, sample, and station data, with visualization via Gnuplot and ParaView.
 
-Optimized for efficiency, MPTRAC uses MPI-OpenMP-OpenACC hybrid parallelization, making it suitable for deployment on workstations, HPC, and GPU platforms. It is available as open-source software under the GNU GPL license.
+Optimized for efficiency, MPTRAC provides an MPI-OpenMP-OpenACC hybrid parallelization, making it suitable for deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It is available as open-source software under the GNU GPL license.
 
-\autoref{fig:clusters} illustrates MPTRAC's main software components.
+\autoref{fig:clusters} illustrates MPTRAC's geophysical modules and main software components.
 
-![Main software components of the MPTRAC model. Image adapted from @hoffmann24.\label{fig:clusters}](clusters.png){ width=60% }
+![Geophysical modules and main software components of the MPTRAC model. Image adapted from @hoffmann24.\label{fig:clusters}](clusters.png){ width=70% }
 
 # Applications
 
-MPTRAC simulates the transport and dispersion of aerosols and trace gases from both natural and anthropogenic sources. For volcanic eruptions, it tracks plumes carried by wind, helping predict the spread of volcanic ash and sulfate aerosols, which impact air travel, climate, and ecosystems. Similarly, MPTRAC models the dispersion of carbon dioxide and smoke from wildfires, including their ascent into the upper atmosphere and eventual removal via deposition or precipitation. These applications are vital for air quality monitoring, hazard assessment, and environmental impact studies.
+MPTRAC simulates the transport and dispersion of aerosols and trace gases from both natural and anthropogenic sources. For volcanic eruptions, it tracks plumes carried by wind, helping estimate the emissions and predict the spread of volcanic ash and sulfate aerosols, which impact air travel, climate, and ecosystems [@heng16; @wu17; @wu18; @cai22]. Similarly, MPTRAC models the dispersion of carbon dioxide and smoke from wildfires, including their ascent into the upper atmosphere and eventual removal via deposition or precipitation [@liao24]. Other studies with MPTRAC addressed the transport of aerosols and trace gases in the upper troposphere and lower stratosphere region [@smoydzin22; @wu23; @clemens24]. These applications are vital for air quality monitoring, hazard assessment, and environmental impact studies.
 
 An example, shown in \autoref{fig:convection}, illustrates MPTRAC’s use in studying the transport of air from the planetary boundary layer (PBL) into the free troposphere. MPTRAC tracks how air parcels lifted by updrafts or convective currents move into the more stable free troposphere, where pollutants or aerosols can spread over large areas. This helps provide insights into atmospheric circulation and pollutant distribution on regional to global scales.
 
@@ -104,7 +104,7 @@ An example, shown in \autoref{fig:convection}, illustrates MPTRAC’s use in stu
 
 # Evolution and Future Directions of MPTRAC
 
-MPTRAC development began in 2013, designed from the ground up for high-performance computing (HPC). Initially using OpenMP for multi-core CPUs, it later incorporated MPI for large-scale ensemble simulations. In 2019, OpenACC offloading enabled execution on NVIDIA GPUs, significantly boosting performance. Over time, all geophysical modules were ported to GPUs, optimizing efficiency and minimizing data transfers. Recent efforts have improved documentation, enhanced usability, and integrated continuous testing across GitHub Actions and multiple HPC systems, including the JUPITER Exascale platform.
+MPTRAC development began in 2013, designed from the ground up for HPC applications. Initially using OpenMP for multi-core CPUs, it later incorporated MPI for large-scale ensemble simulations. In 2019, OpenACC offloading enabled execution on NVIDIA GPUs, significantly boosting performance. Over time, all geophysical modules were ported to GPUs, optimizing efficiency and minimizing data transfers. Recent efforts have improved documentation, enhanced usability, and integrated continuous testing across GitHub Actions and multiple HPC systems, including the JUPITER Exascale platform.
 
 Future development will expand MPTRAC’s applications, particularly in the planetary boundary layer (PBL), where turbulence and surface interactions affect transport. Planned enhancements include terrain-following coordinates for better airflow representation over complex topography and advanced turbulence parametrizations for more accurate small-scale transport modeling. These improvements will strengthen MPTRAC’s role in studying air quality, pollutant dispersion, and other environmental challenges.
 
