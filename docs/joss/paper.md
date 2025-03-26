@@ -1,18 +1,21 @@
 ---
 title: 'MPTRAC: A high-performance Lagrangian transport model for atmospheric air parcel dispersion'
+
 tags:
   - Atmospheric modeling
   - Lagrangian transport
   - Particle dispersion
   - Troposphere
   - Stratosphere
-  - Aerosol transport
   - High-performance computing (HPC)
-  - GPU acceleration
+  - Graphical processing unit (GPU)
   - Numerical simulation
   - Advection and diffusion
+  - Meteorology
   - Environmental monitoring
+  - Aerosol transport
   - Pollutant tracking
+
 authors:
   - name: Lars Hoffmann
     affiliation: "1, 2"
@@ -50,6 +53,7 @@ authors:
   - name: Ling Zou
     affiliation: "1, 2"
     orcid: 0000-0001-6563-9815
+
 affiliations:
  - name: Jülich Supercomputing Centre, Forschungszentrum Jülich, Jülich, Germany
    index: 1
@@ -75,40 +79,38 @@ bibliography: paper.bib
 
 # Summary
 
-The Massive-Parallel Trajectory Calculations (MPTRAC) Lagrangian transport model simulates the movement, dispersion, and chemical transformation of air parcels carrying pollutants, aerosols, and trace gases. Unlike Eulerian models, which use a fixed grid, MPTRAC tracks trajectories of individual air parcels, offering a high-resolution view of atmospheric transport and chemistry. Optimized for high-performance computing, MPTRAC combines advanced numerical techniques with computational efficiency, making it a powerful tool for studying dispersion, long-range transport, deposition, and trace gas reactions under diverse meteorological conditions.
+The Massive-Parallel Trajectory Calculations (MPTRAC) Lagrangian transport model simulates the movement, dispersion, and chemical transformation of pollutants, aerosols, and trace gases in the atmosphere. Unlike traditional grid-based (Eulerian) models, MPTRAC tracks individual air parcel trajectories, providing a high-resolution view of atmospheric transport processes. The Lagrangian approach enables precise modeling of dispersion, mixing, deposition, and chemical interactions. MPTRAC is driven by meteorological data from weather forecasting systems and has been applied to various real-world scenarios, particularly for tracking volcanic emissions in the free troposphere and stratosphere. Optimized for high-performance computing (HPC) and graphics processing unit (GPU) systems, MPTRAC efficiently handles large-scale, high-resolution simulations, making it a powerful tool for atmospheric research, environmental monitoring, and emergency response.
 
 # Statement of need
 
-Accurate pollutant transport modeling is crucial for assessing air quality, climate impacts, and public health. While traditional Eulerian models often lack fine-scale detail, Lagrangian models track individual air parcels for a more precise representation of dispersion, deposition, and atmospheric interactions. MPTRAC has been successfully applied to studying pollutant transport in the free troposphere and stratosphere, proving its value for atmospheric research, environmental monitoring, and emergency response. Unlike many Lagrangian models, MPTRAC is optimized for high-performance computing (HPC), enabling efficient large-scale, high-resolution simulations.
+Accurate atmospheric transport modeling is essential for air quality assessment, climate studies, and public health protection. Many traditional Eulerian models struggle with fine-scale resolution, limiting their ability to capture complex transport and mixing processes. Lagrangian models, such as MPTRAC and others [@mckenna02; @lin03; @stohl05; @jones07; @stein15; @pisso19], address this limitation by tracking individual air parcels, offering a more detailed and flexible representation of dispersion, chemical reactions, and deposition.
 
-# Scientific background
-
-Lagrangian transport models track individual air parcels to simulate the long-range transport, dispersion, and chemical transformation of aerosols and trace gases [@mckenna02; @lin03; @stohl05; @jones07; @stein15; @pisso19]. Unlike Eulerian models, which use a fixed grid, Lagrangian models provide greater flexibility, making them ideal for studying dispersion, mixing, and chemical reactions. They solve the equations of motion for air parcels, accounting for advection, diffusion, settling, and deposition, and can simulate atmospheric chemistry. Driven by meteorological data from weather prediction systems, they are used for applications such as volcanic ash tracking, wildfire smoke dispersion, and monitoring nuclear or industrial accidents. Advances in turbulence modeling, chemistry, and computational efficiency continue to improve their accuracy and expand their use in environmental monitoring and emergency response.
+MPTRAC is primarily designed for researchers to study atmospheric transport processes, but can also provide added value for policymakers and emergency response teams who require high-precision atmospheric transport simulations. Its ability to model long-range transport and chemical transformations makes it particularly valuable for studying pollution dispersion, tracking hazardous emissions, and forecasting environmental impacts. Unlike many other Lagrangian models, MPTRAC is optimized for HPC and GPU systems, enabling fast, large-scale simulations that support real-time decision-making and scientific analysis.
 
 # Features
 
-MPTRAC [@hoffmann16; @hoffmann22] is a Lagrangian particle dispersion model for analyzing atmospheric transport in the free troposphere and stratosphere. It computes air parcel trajectories using wind and vertical velocity fields from global reanalysis or forecast data, such as ECMWF's ERA5 [@hersbach20] or NASA's MERRA-2 [@gelaro17], while accounting for mesoscale diffusion and wind fluctuations with the Langevin equation. An inter-parcel exchange module represents air mixing. The model also simulates convection, sedimentation, decay, gas and aqueous phase chemistry, and wet/dry deposition, with meteorological pre-processing for boundary layer height, convective available potential energy, geopotential heights, and tropopause data.
+MPTRAC [@hoffmann16; @hoffmann22] is a Lagrangian particle dispersion model primarily designed for analyzing atmospheric transport in the free troposphere and stratosphere. It computes air parcel trajectories using wind and vertical velocity fields from global reanalysis or forecast data, such as ECMWF's ERA5 [@hersbach20] or NASA's MERRA-2 [@gelaro17]. The model accounts for eddy diffusion and wind fluctuations using the Langevin equation and incorporates an inter-parcel exchange module to represent air mixing. Additionally, MPTRAC simulates convection, sedimentation, radioactive decay, gas and aqueous phase chemistry, and wet/dry deposition. Meteorological pre-processing routines enable calculations of boundary layer heights, convective available potential energy, geopotential heights, and tropopause data.
 
-Optimized for computational efficiency, MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for scalable deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It supports multiple output formats, including particle, grid, ensemble, profile, sample, and station data, with visualization via Gnuplot and ParaView. MPTRAC is open-source software distributed under the GNU GPL v3 license. \autoref{fig:clusters} illustrates MPTRAC's geophysical modules and core software components.
+Optimized for computational efficiency, MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for scalable deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It supports multiple output formats, including particle, grid, ensemble, profile, sample, and station data, with visualization tools such as Gnuplot and ParaView. MPTRAC is open-source software distributed under the GNU GPL v3 license. \autoref{fig:clusters} provides an overview of MPTRAC's geophysical modules and core software components.
 
 ![Geophysical modules and main software components of the MPTRAC model. Image adapted from @hoffmann24.\label{fig:clusters}](clusters.png){ width=80% }
 
 # Applications
 
-MPTRAC simulates the transport and dispersion of aerosols and trace gases from both natural and anthropogenic sources. For volcanic eruptions, it tracks plumes carried by wind, helping estimate the emissions and predict the spread of volcanic ash and sulfate aerosols, which impact air travel, climate, and ecosystems [@heng16; @wu17; @wu18; @cai22]. Similarly, MPTRAC models the dispersion of carbon dioxide and smoke from wildfires, including their ascent into the upper atmosphere and eventual removal via deposition or precipitation [@liao24]. Other studies with MPTRAC addressed the transport of aerosols and trace gases in the upper troposphere and lower stratosphere region [@smoydzin22; @wu23; @clemens24]. These applications are vital for air quality monitoring, hazard assessment, and environmental impact studies.
+MPTRAC simulates the transport and dispersion of aerosols and trace gases from both natural and anthropogenic sources. For volcanic eruptions, it helps estimate emissions and track the spread of volcanic ash and sulfate aerosols, which impact air travel, climate, and ecosystems [@heng16; @wu17; @wu18; @cai22; @mishra22]. Similarly, MPTRAC models the dispersion of carbon dioxide and smoke from wildfires, including their ascent into the upper atmosphere and eventual removal via deposition or precipitation [@liao24]. Additional studies have examined aerosol and trace gas transport in the upper troposphere and lower stratosphere [@smoydzin22; @wu23; @clemens24]. These applications are vital for atmospheric research and environmental impact studies.
 
-An example, shown in \autoref{fig:convection}, illustrates MPTRAC’s use in studying the transport of air from the planetary boundary layer into the free troposphere. MPTRAC tracks how air parcels lifted by updrafts or convective currents move into the more stable free troposphere, where pollutants or aerosols can spread over large areas. This helps provide insights into atmospheric circulation and pollutant distribution on regional to global scales.
+An example, shown in \autoref{fig:convection}, illustrates MPTRAC's use in studying convective transport of air from the planetary boundary layer into the free troposphere [@hoffmann23]. The simulation tracks air parcels lifted by updrafts associated with tropical storms and mid-latitude weather systems, revealing how pollutants and aerosols spread over large areas in the more stable free troposphere. This enhances understanding of atmospheric circulation and pollutant distribution on regional to global scales.
 
 ![Lagrangian transport simulation of convective transport from the planetary boundary layer (PBL) into the free troposphere. One million trajectories are initialized in the PBL at 00:00 UTC on 1 July 2017 and tracked over 10 days using ERA5 reanalysis data.\label{fig:convection}](convection.png)
 
 # Evolution and Future Directions
 
-MPTRAC development began in 2013, designed from the ground up for HPC applications. Initially using OpenMP for multi-core CPUs, it later incorporated MPI for large-scale ensemble simulations. In 2019, OpenACC offloading enabled execution on NVIDIA GPUs, significantly boosting performance. Over time, all geophysical modules were ported to GPUs, optimizing efficiency and minimizing data transfers. Recent efforts have improved documentation, enhanced usability, and integrated continuous testing across GitHub Actions and multiple HPC systems, including the JUPITER Exascale Development Instrument (JEDI) for the upcoming Exascale machine in Jülich.
+MPTRAC development began in 2013, designed from the ground up for HPC applications. Initially using OpenMP for multi-core CPUs, it later incorporated MPI for large-scale ensemble simulations. In 2019, OpenACC offloading enabled execution on NVIDIA GPUs, significantly boosting performance. Over time, all geophysical modules were ported to GPUs, optimizing efficiency and minimizing data transfers. Recent efforts have improved documentation, enhanced usability, and integrated continuous testing across GitHub Actions and multiple HPC systems, including the JUPITER Exascale Development Instrument (JEDI) for the upcoming Exascale supercomputer in Jülich.
 
-Future development will expand MPTRAC's applications, particularly in the planetary boundary layer, where turbulence and surface interactions affect transport. Ongoing enhancements include terrain-following coordinates for better airflow representation over complex topography and advanced turbulence parametrizations for more accurate small-scale transport modeling. These improvements will strengthen MPTRAC's role in studying air quality, pollutant dispersion, and other environmental challenges.
+Future development will expand MPTRAC's applications, particularly in the planetary boundary layer, where turbulence and surface interactions affect transport. Ongoing enhancements include terrain-following coordinates for better airflow representation over complex topography and advanced turbulence parameterizations for more accurate small-scale transport modeling. These improvements will strengthen MPTRAC's role in studying air quality, pollutant dispersion, and other environmental challenges.
 
 # Acknowledgements
 
-The development of MPTRAC has been continuously supported by the Simulation and Data Laboratory Climate Science at the Jülich Supercomputing Centre (JSC) and the Joint Lab Exascale Earth System Modeling of the Helmholtz Association (HGF). We acknowledge JSC for providing essential compute time and storage resources. Financial support for scientific applications and software development has been provided by the DFG project AeroTrac (HO 5102/1-1) and the BMBF project ADAPTEX (FKZ 16ME0670). AI-assisted tools, including ChatGPT and DeepL, were used for manuscript preparation and language editing.
+The development of MPTRAC is supported by the Simulation and Data Laboratory Climate Science at the Jülich Supercomputing Centre (JSC) and the Joint Lab Exascale Earth System Modeling of the Helmholtz Association (HGF). We acknowledge JSC for providing essential compute time and storage resources. Financial support for scientific applications and software development has been provided by the DFG project AeroTrac (HO 5102/1-1) and the BMBF project ADAPTEX (FKZ 16ME0670). AI-assisted tools, including ChatGPT and DeepL, were used for manuscript preparation and language editing.
 
 # References
