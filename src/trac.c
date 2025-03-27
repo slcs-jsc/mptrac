@@ -99,13 +99,6 @@ int main(
     /* Initialize MPTRAC... */
     mptrac_init(ctl, cache, clim, atm, ntask);
     
-    /* Define communication destinations ... */
-    int destinations[8];
-    dd_get_rect_destination(*ctl, destinations, rank, size);
-  
-    /* Check if particles are in domain. */
-    dd_assign_rect_domains_atm( atm, met0, *ctl, rank, destinations, 1);
-
     /* ------------------------------------------------------------
        Loop over timesteps...
        ------------------------------------------------------------ */

@@ -4301,6 +4301,15 @@ void mptrac_get_met(
       if (system(cmd) != 0)
 	WARN("Caching command failed!");
     }
+
+    /* Set-up domain decomposition... */
+    /* Define communication destinations ... */
+    int destinations[8];
+    dd_get_rect_destination(*ctl, destinations, rank, size);
+      
+    /* Check if particles are in domain. */
+    dd_assign_rect_domains_atm( atm, met0, *ctl, rank, destinations, 1);
+
   }
 
   /* Read new data for forward trajectories... */
