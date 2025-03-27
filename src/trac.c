@@ -119,6 +119,14 @@ int main(
       if (ctl->dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
+      /* Set-up domain decomposition... */
+      /* Define communication destinations ... */
+      int destinations[8];
+      dd_get_rect_destination(*ctl, destinations, rank, size);
+      
+      /* Check if particles are in domain. */
+      dd_assign_rect_domains_atm( atm, met0, *ctl, rank, destinations, 1);
+
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
 
