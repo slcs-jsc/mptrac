@@ -151,6 +151,8 @@ If you encounter any issues or have feature requests, please submit them on the 
 
 For code changes or fixes, feel free to submit a [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
 
+For detailed contribution instructions, check out our [contributing guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md).
+
 If you have any questions or need assistance, don't hesitate to reach out to us. We are happy to help!
 
 ## License
