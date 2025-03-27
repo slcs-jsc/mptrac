@@ -31,25 +31,11 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This README file describes how to install MPTRAC on a Linux system.
+To build and run MPTRAC, you will need some basic tools and libraries, including Git, GNU Make, GCC, GSL, HDF5, netCDF, Szip, and zlib. For additional features such as high-performance computing (HPC) and GPU support, optional dependencies like OpenMPI and NVIDIA HPC SDK are required.
 
-The following software dependencies are required to compile MPTRAC:
+Some of the required dependencies are included with the MPTRAC repository. See the next section for more details.
 
-* the [GNU make](https://www.gnu.org/software/make) build tool
-* the C compiler of the [GNU Compiler Collection (GCC)](https://gcc.gnu.org)
-* the [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl) for numerical calculations
-* the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
-
-The following optional software is required to enable additional features of MPTRAC:
-
-* the distributed version control system [Git](https://git-scm.com/) to access the code repository
-* the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to enable the netCDF4 file format
-* the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
-* the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
-* an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStationMPI](https://github.com/ParaStation/psmpi) for HPC support
-* the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
-
-Some of the software is provided along with the MPTRAC repository, please see next section.
+For a complete list of dependencies, including specific versions and installation instructions, refer to the [dependencies file](https://github.com/slcs-jsc/mptrac/blob/master/dependencies.md).
 
 ### Installation
 
