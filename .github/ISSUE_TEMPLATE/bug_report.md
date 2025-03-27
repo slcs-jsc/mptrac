@@ -20,7 +20,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Environment**
-Describe the hardware (e.g., HPC system, workstation, laptop) and software environment (e.g., Ubuntu Linux 20.04).
+Describe the hardware and software environment.
 
 **Additional context**
 Add any other context about the problem here.
