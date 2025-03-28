@@ -10,9 +10,9 @@ These dependencies are required to compile MPTRAC:
 |------------|---------|-------------|
 | [Git](https://git-scm.com/) | v2.43.0 | Version control and code repository access |
 | [GNU Make](https://www.gnu.org/software/make) | v4.3 | Build tool |
-| [GCC (GNU Compiler Collection)](https://gcc.gnu.org) | v13.3.0 | C, C++ and Fortran compilers |
+| [GNU Compiler Collection (GCC)](https://gcc.gnu.org) | v13.3.0 | C, C++ and Fortran compilers |
 | [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl) | v2.7.1 | Numerical calculations |
-| [netCDF library](http://www.unidata.ucar.edu/software/netcdf) | v4.9.2 | File I/O |
+| [netCDF library](http://www.unidata.ucar.edu/software/netcdf) | v4.9.2 | Portable file I/O |
 | [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) | v1.14.4-3 | Enable netCDF4 file format |
 
 ## Optional Dependencies
@@ -21,12 +21,12 @@ These dependencies enable additional features of MPTRAC. They are not required f
 
 | Dependency | Version | Description |
 |------------|---------|-------------|
-| [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) | v25.1 | GPU support |
+| [NVIDIA HPC SDK](https://developer.nvidia.com/hpc-sdk) | v25.1 | GPU support |
 | [Clang (LLVM)](https://clang.llvm.org) | v18.1.8 | Alternative C/C++ compiler |
 | [Intel Compilers (ICC and IFORT)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/compilers.html) | v2024.2.0  | High-performance C, C++, and Fortran compilers from Intel |
-| [OpenMPI](https://www.open-mpi.org) | v5.1.0 | MPI library for HPC support |
-| [ParaStationMPI](https://github.com/ParaStation/psmpi | v5.11.0 | MPI library for HPC support |
-| [KPP (Kinetic PreProcessor)](https://github.com/KineticPreProcessor/KPP) | v3.2.0 | Preprocessor for generating chemical mechanism code |
+| [Open MPI](https://www.open-mpi.org) | v5.1.0 | MPI library for HPC support |
+| [ParaStation MPI](https://github.com/ParaStation/psmpi) | v5.11.0 | MPI library for HPC support |
+| [Kinetic PreProcessor (KPP)](https://github.com/KineticPreProcessor/KPP) | v3.2.0 | Preprocessor for generating chemical mechanism code |
 | [Thrust](https://developer.nvidia.com/thrust) | v1.14.0 | C++ template library for parallel algorithms and data structures |
 | [zfp](https://computing.llnl.gov/projects/zfp) | v1.0.1 | Compression library |
 | [Zstandard](https://facebook.github.io/zstd) | v1.5.5 | Compression library |
