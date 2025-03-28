@@ -49,7 +49,7 @@ authors:
     orcid: TODO
   - name: Xue Wu
     affiliation: "5, 6"
-    orcid: TODO
+    orcid: 0000-0002-0427-782X
   - name: Ling Zou
     affiliation: "1, 2"
     orcid: 0000-0001-6563-9815
