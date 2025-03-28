@@ -31,7 +31,9 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-To build and run MPTRAC, you will need some basic tools and libraries, including Git, GNU Make, GCC, GSL, HDF5, netCDF, Szip, and zlib. For additional features such as high-performance computing (HPC) and GPU support, optional dependencies like OpenMPI and NVIDIA HPC SDK are required.
+To build and run MPTRAC, you will need some basic tools and libraries, including Git, GNU Make, GCC, GSL, HDF5, netCDF, Szip, and zlib.
+
+For additional features such as high-performance computing (HPC) and GPU support, optional dependencies like OpenMPI and NVIDIA HPC SDK are required.
 
 Some of the required dependencies are included with the MPTRAC repository. See the next section for more details.
 
@@ -58,9 +60,7 @@ MPTRAC includes several libraries that can be compiled and installed using a bui
     cd [mptrac_directory]/libs
     ./build.sh -a
 
-Alternatively, if you prefer to use existing system libraries, install the dependencies manually. On Ubuntu, run:
-
-    sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+Alternatively, if you prefer to use existing system libraries, install the dependencies manually.
 
 **3. Configure the Makefile**
 

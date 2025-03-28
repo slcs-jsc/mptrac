@@ -10,12 +10,10 @@ These dependencies are required to compile MPTRAC:
 |------------|---------|-------------|
 | [Git](https://git-scm.com/) | v2.43.0 | Version control and code repository access |
 | [GNU Make](https://www.gnu.org/software/make) | v4.3 | Build tool |
-| [GCC (GNU Compiler Collection)](https://gcc.gnu.org) | v13.3.0 | C compiler |
+| [GCC (GNU Compiler Collection)](https://gcc.gnu.org) | v13.3.0 | C, C++ and Fortran compilers |
 | [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl) | v2.7.1 | Numerical calculations |
-| [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) | v1.14.4-3 | Enable netCDF4 file format |
 | [netCDF library](http://www.unidata.ucar.edu/software/netcdf) | v4.9.2 | File I/O |
-| [Szip](https://support.hdfgroup.org/doc_resource/SZIP/) | v2.1.1 | Compression library |
-| [zlib](https://zlib.net) | v1.3.1 | Compression library |
+| [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) | v1.14.4-3 | Enable netCDF4 file format |
 
 ## Optional Dependencies
 
@@ -23,14 +21,17 @@ These dependencies enable additional features of MPTRAC. They are not required f
 
 | Dependency | Version | Description |
 |------------|---------|-------------|
-| [KPP (Kinetic PreProcessor)](https://www.airquality-models.org/index.php/kpp) | v2.2 | Preprocessor for generating chemical mechanism code |
-| [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) | v24.9 | GPU support |
+| [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) | v25.1 | GPU support |
+| [Clang (LLVM)](https://clang.llvm.org) | v18.1.8 | Alternative C/C++ compiler |
+| [Intel Compilers (ICC and IFORT)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/compilers.html) | v2024.2.0  | High-performance C, C++, and Fortran compilers from Intel |
 | [OpenMPI](https://www.open-mpi.org) | v5.1.0 | MPI library for HPC support |
-| [ParaView](https://www.paraview.org) | v5.11.0 | Visualization tool for scientific data |
-| [Thrust](https://github.com/thrust/thrust) | v1.14.0 | C++ template library for parallel algorithms and data structures |
-| [Zstandard](https://facebook.github.io/zstd) | v1.5.5 | Compression library |
+| [ParaStationMPI](https://github.com/ParaStation/psmpi | v5.11.0 | MPI library for HPC support |
+| [KPP (Kinetic PreProcessor)](https://github.com/KineticPreProcessor/KPP) | v3.2.0 | Preprocessor for generating chemical mechanism code |
+| [Thrust](https://developer.nvidia.com/thrust) | v1.14.0 | C++ template library for parallel algorithms and data structures |
 | [zfp](https://computing.llnl.gov/projects/zfp) | v1.0.1 | Compression library |
+| [Zstandard](https://facebook.github.io/zstd) | v1.5.5 | Compression library |
 | [gnuplot](http://www.gnuplot.info) | v5.4.5 | Graphing utility for visualization |
+| [ParaView](https://www.paraview.org) | v5.11.0 | Visualization tool for scientific data |
 
 ## Installing Dependencies
 
