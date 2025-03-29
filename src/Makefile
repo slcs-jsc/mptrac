@@ -15,7 +15,7 @@ DESTDIR ?= ../bin
 INCDIR += -I ../libs/build/include
 
 # Library directories...
-LIBDIR += -L ../libs/build/lib -L ../lib/build/lib64
+LIBDIR += -L ../libs/build/lib -L ../libs/build/lib64
 
 # Compiler (gcc, icx, nvc, or clang)...
 COMPILER ?= gcc
