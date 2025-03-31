@@ -259,7 +259,7 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
-#define EP 140
+#define EP 150
 #endif
 
 /*! Maximum number of domain longitudes for meteo data. */
@@ -274,7 +274,7 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP_GLOB
-#define EP_GLOB 140
+#define EP_GLOB 150
 #endif
 
 /*! Maximum number of global longitudes for meteo data. */

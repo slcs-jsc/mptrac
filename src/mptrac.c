@@ -2158,10 +2158,11 @@ void module_advect(
 
       // TODO: can we use intpol_met_time_3d_ml instead of intpol_met_4d_coord?
 
-      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			  atm->lon[ip], atm->lat[ip],
-			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
+      // Debugging:
+      //intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			//  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			//  atm->lon[ip], atm->lat[ip],
+			//  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
 
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4],
@@ -2215,10 +2216,18 @@ void module_advect(
       if (atm->q[ctl->qnt_zeta][ip] < 0)
 	atm->q[ctl->qnt_zeta][ip] = 0;	/* TODO: reflect particle, or skip this test (use module_position) */
 
+      int rank;
+      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+      if ( ip==0  && rank==0) {
+        printf("%f,%f,%f,%f - %d,%d,%d - %f,%f,%f \n",atm->lon[ip], atm->lat[ip], atm->p[ip],atm->q[ctl->qnt_zeta][ip],ci[0],ci[1],ci[2],cw[0],cw[1],cw[2]);
+      }
       /* Convert zeta to pressure... */
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
 			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+      if ( ip==0  && rank==0) {
+        printf("%f,%f,%f,%f - %d,%d,%d - %f,%f,%f \n",atm->lon[ip], atm->lat[ip], atm->p[ip],atm->q[ctl->qnt_zeta][ip],ci[0],ci[1],ci[2],cw[0],cw[1],cw[2]);
+      }
     }
   }
 }
@@ -3942,7 +3951,7 @@ void module_timesteps(
     if (local && (atm->lon[ip] <= met0->lon[0]
 		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
 		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
-      cache->dt[ip] = 0.0;
+      cache->dt[ip] = cache->dt[ip]; // Debugging: this needs to be 0
   }
 }
 
@@ -5537,8 +5546,16 @@ void mptrac_run_timestep(
   /* First-order tracer chemistry... */
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
+
+  int rankd = 0;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rankd);
+
+  if ( rankd==0 ) {
+    printf("Before communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
+  }
     
-  if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1) {
+  //Debugging only...
+  if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1 && 1==0) {
     //module_dd()
   
     /* Initialize particles locally... */
@@ -5579,6 +5596,10 @@ void mptrac_run_timestep(
     free(particles);
 
   }  
+
+  if ( rankd==0 ) {
+    printf("After communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
+  }
     
 
   /* KPP chemistry... */
@@ -7444,10 +7465,8 @@ void read_met_levels(
 	if (!read_met_nc_3d_par
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
-    }
-
-    /* Calculate pressure from a and b coefficients... */
-    else {
+  /* Calculate pressure from a and b coefficients... */
+  }  else {
 
       /* Grid level coefficients... */
       double hyam[EP], hybm[EP];
@@ -7645,7 +7664,7 @@ void read_met_monotonize(
 	}
       }
     }
-}
+  }
 
 /*****************************************************************************/
 
@@ -7679,7 +7698,7 @@ int read_met_nc(
   read_met_polar_winds(met);
 
   /* Create periodic boundary conditions... */
-  // TODO: Periodic conditions are different with dd... 
+  // Debugging: Periodic conditions are different with dd... 
   //read_met_periodic(met);
 
   /* Downsampling... */
@@ -8136,23 +8155,23 @@ int read_met_nc_2d_par(
     
     /* Allocate... */
     float* help;
-    size_t help_domain_start[4];
-    size_t help_domain_count[4];
+    size_t help_domain_start[3];
+    size_t help_domain_count[3];
 
-    help_domain_start[0] = 0;
-    help_domain_start[1] = 0; 
-    help_domain_start[2] = met->domain_start[2];
-    help_domain_start[3] = met->domain_start[3];
+    //help_domain_start[0] = 0;
+    help_domain_start[0] = 0; 
+    help_domain_start[1] = met->domain_start[2];
+    help_domain_start[2] = met->domain_start[3];
    
+    //help_domain_count[0] = 1;
     help_domain_count[0] = 1;
-    help_domain_count[1] = 1;
-    help_domain_count[2] = met->domain_count[2];
-    help_domain_count[3] = met->domain_count[3];
+    help_domain_count[1] = met->domain_count[2];
+    help_domain_count[2] = met->domain_count[3];
     
     //ALLOC(help, float, (int) met->domain_count[2] * (int) met->domain_count[3]);
     ALLOC(help, float, 
-    (int) met->domain_count[0] * (int) met->domain_count[1] *
-    (int) met->domain_count[2] * (int) met->domain_count[3]
+    (int) met->domain_count[1] * (int) met->domain_count[2] *
+    (int) met->domain_count[3]
     );
 
     /* Read data... */
