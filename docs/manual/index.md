@@ -1,8 +1,8 @@
 # Welcome to MPTRAC!
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a state-of-the-art Lagrangian particle dispersion model designed to analyze atmospheric transport processes in the free troposphere and stratosphere.
+Massive-Parallel Trajectory Calculations (MPTRAC) is a state-of-the-art Lagrangian particle dispersion model designed to analyze atmospheric transport processes in the free troposphere and stratosphere. Leveraging high-performance computing techniques, MPTRAC efficiently handles large-scale trajectory simulations, making it a powerful tool for both research and operational applications.
 
-Leveraging high-performance computing techniques, MPTRAC efficiently handles large-scale trajectory simulations, making it a powerful tool for both research and operational applications.
+![Lagrangian transport simulation of convective transport](img/convection.png)
 
 ## Features
 
@@ -21,6 +21,8 @@ MPTRAC offers a wide range of features to support comprehensive atmospheric mode
 - **High-Performance Parallelization**: Leverages MPI-OpenMP-OpenACC hybrid parallelization for efficient execution on workstations, high-performance computing clusters, and GPU systems.
 
 - **Open Source and Collaborative Development**: Released under the GNU General Public License (GPL), promoting community involvement and open development.
+
+![Geophysical modules and main software components of MPTRAC](img/clusters.png)
 
 ## Get Involved
 
