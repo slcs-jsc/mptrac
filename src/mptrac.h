@@ -25,72 +25,83 @@
 /*! 
   \mainpage
   
-  Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian
-  particle dispersion model for the free troposphere and stratosphere.
-  
+  Massive-Parallel Trajectory Calculations (MPTRAC) is a
+  high-performance Lagrangian particle dispersion model designed for
+  simulating atmospheric transport processes in the free troposphere
+  and stratosphere. It leverages parallel computing to efficiently
+  handle large-scale trajectory calculations, making it a valuable
+  tool for atmospheric research.
+
   \section Introduction
 
-  The source code of MPTRAC is available from the
-  [git repository](https://github.com/slcs-jsc/mptrac). Please see the
-  [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
-  in the git repository for introductory information. More information
-  can be found in the [user manual](https://slcs-jsc.github.io/mptrac).
-  
-  This doxygen manual contains information about the algorithms and
-  data structures used in the code. Please refer to the `mptrac.h'
-  documentation for a first overview.
-  
-  \section References
-  
-  For citing the model in scientific publications, please see
-  [CITATION.cff](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff)
-  and refer to the following papers:
-  
-  _Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach,
-  S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O.,
-  Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel
-  Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian
-  transport simulations on graphics processing units (GPUs),
-  Geosci. Model Dev., 15, 2731–2762,
-  https://doi.org/10.5194/gmd-15-2731-2022, 2022._
-  
-  _Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein,
-  Lagrangian transport simulations of volcanic sulfur dioxide
-  emissions: Impact of meteorological data products,
-  J. Geophys. Res. Atmos., 121, 4651-4673,
-  https://doi.org/10.1002/2015JD023749, 2016._
+  MPTRAC is developed at the Jülich Supercomputing Centre,
+  Forschungszentrum Jülich, Germany.  The source code is available on
+  the official [GitHub repository](https://github.com/slcs-jsc/mptrac).
 
-  Additional references are collected here:
-  https://slcs-jsc.github.io/mptrac/references
-  
+  For introductory information and installation instructions, please
+  refer to the
+  [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
+  file in the repository.  Additional guidance and usage details can
+  be found in the [User Manual](https://slcs-jsc.github.io/mptrac).
+
+  This Doxygen manual provides comprehensive documentation of the
+  algorithms, data structures, and functions used in the MPTRAC
+  codebase. For an overview of the core components, please refer to
+  the documentation of `mptrac.h`.
+
+  \section Publications and References
+
+  If you use MPTRAC in your scientific work, please cite the relevant
+  publications:
+
+  - Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach,
+    S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O.,
+    Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel
+    Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian
+    transport simulations on graphics processing units (GPUs),
+    Geosci. Model Dev., 15, 2731–2762,
+    https://doi.org/10.5194/gmd-15-2731-2022, 2022.
+
+  - Hoffmann, L., Rößler, T., Griessbach, S., Heng, Y., and Stein, O.:
+    Lagrangian transport simulations of volcanic sulfur dioxide
+    emissions: Impact of meteorological data products,
+    J. Geophys. Res. Atmos., 121, 4651–4673,
+    https://doi.org/10.1002/2015JD023749, 2016.
+
+  For a complete list of related publications and references, please
+  visit the [References Page](https://slcs-jsc.github.io/mptrac/references).
+
   \section License
-  
-  MPTRAC is being develop at the Jülich Supercomputing Centre,
-  Forschungszentrum Jülich, Germany.
 
   MPTRAC is distributed under the terms of the
   [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
-  
+  This open-source license ensures that MPTRAC remains free to use,
+  modify, and distribute, while encouraging community-driven
+  development.
+
   \section Contributing
 
-  We are interested in supporting operational and research
-  applications with MPTRAC.
-  
-  You can submit bug reports or feature requests on the
-  [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
-  
-  Proposed code changes and fixes can be submitted as
-  [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
+  We welcome contributions to MPTRAC from both researchers and
+  developers.  If you encounter bugs, have suggestions, or want to
+  propose new features, please use the
+  [issue tracker](https://github.com/slcs-jsc/mptrac/issues)
+  to report problems or ideas.
 
-  Please do not hesitate to contact us if you have any questions or
-  need assistance.
-  
+  Contributions to the codebase, including bug fixes and enhancements,
+  can be submitted via
+  [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
+  For detailed instructions on contributing, please see the
+  contributing guidelines in the repository.
+
   \section Contact
-  
-  Dr. Lars Hoffmann
-  
-  Jülich Supercomputing Centre, Forschungszentrum Jülich
-  
+
+  For inquiries, support, or collaboration opportunities, please
+  contact:
+
+  Dr. Lars Hoffmann  
+
+  Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany
+
   e-mail: <l.hoffmann@fz-juelich.de>
 */
 
