@@ -6122,6 +6122,10 @@ int read_atm_clams(
     }
   }
 
+  /* Read further quantities if requested... */
+  for (int iq = 0; iq < ctl->nq; iq++)
+    NC_GET_DOUBLE(ctl->qnt_name[iq], atm->q[iq],0);
+
   /* Read longitude and latitude... */
   NC_GET_DOUBLE("LON", atm->lon, 1);
   NC_GET_DOUBLE("LAT", atm->lat, 1);
