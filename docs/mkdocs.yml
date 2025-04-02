@@ -2,7 +2,9 @@ site_name: MPTRAC
 site_url: https://slcs-jsc.github.io/mptrac/
 repo_url: https://github.com/slcs-jsc/mptrac
 docs_dir: manual
-theme: material
+theme:
+  name: material
+  logo: img/MPTRAC_320px.png
 
 markdown_extensions:
   - pymdownx.arithmatex:
