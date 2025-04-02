@@ -36,7 +36,7 @@ Always run all the tests to verify the revised code:
     make check
 ```
 
-Please do not execute tests in parallel (`-j` option of `make`), you might miss seeing failed tests.
+Please do not execute tests in parallel (do not use `-j` option of `make`), you might miss seeing failed tests.
 
 You can run only selected tests, e.g.:
 
@@ -46,13 +46,7 @@ You can run only selected tests, e.g.:
 
 If a test fails, please carefully compare the test results with the reference data. The Linux tool `xxdiff` can be used to compare test data and reference data number by number. The graphing utility `gnuplot` can be used to visualize any differences. The reference data of a test should only be updated if the new test results are considered correct.
 
-On Linux, use the `indent` tool to apply a selected formatting style to the source code:
-
-```
-    make indent
-```
-
-Only use `indent` if the code has been compiled correctly. You may need to re-run the `indent` command 2-3 times to get proper results.
+## Static code analysis
 
 You can use static code analysis to automatically detect potential problems in the code:
 
@@ -60,6 +54,8 @@ You can use static code analysis to automatically detect potential problems in t
     make cppcheck
     make lizard
 ```
+
+## Coverage testing
 
 You can perform a coverage analysis to determine which parts of the code are covered by tests:
 
@@ -70,23 +66,39 @@ You can perform a coverage analysis to determine which parts of the code are cov
 
 If you find that parts of the code are not covered by the coverage analysis, please consider adding a new test.
 
+## Automated testing and code analysis
+
 After committing revised code to the GitHub repository, please check the [GitHub Actions page](https://github.com/slcs-jsc/mptrac/actions) to see if the automated tests were successfully passed.
 
 Please also check the [Codacy](https://app.codacy.com/gh/slcs-jsc/mptrac?utm_source=github.com&utm_medium=referral&utm_content=slcs-jsc/mptrac&utm_campaign=Badge_Grade_Settings) and [Codecov](https://codecov.io/gh/slcs-jsc/mptrac) websites for test results.
 
 Please check the [nightly build website](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds) to see if the tests passed on the Juelich supercomputers, especially for the GPU code. User at the Juelich Supercomputing Centre can also check the test results at the [ESM Buildbot](https://esm-buildbot.fz-juelich.de).
 
+## Code formatting
+
+On Linux, use the `indent` tool to apply a selected formatting style to the source code:
+
+```
+    make indent
+```
+
+Only use `indent` if the code has been compiled correctly. You may need to re-run the `indent` command 2-3 times to get proper results.
+
 ## Documentation
 
-To update the [Doxygen documentation](https://slcs-jsc.github.io/mptrac/) (HTML and pdf files) from the source code, use:
-
-```
-    make doc
-```
-
-Please update the [GitHub wiki pages](https://github.com/slcs-jsc/mptrac/wiki/) to describe all changes and new code.
-
 Please update the [README file](https://github.com/slcs-jsc/mptrac/blob/master/README.md) as needed.
+
+To update the [User Manual](https://slcs-jsc.github.io/mptrac), use:
+
+```
+    make mkdocs
+```
+
+To update the [Doxygen Manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
+
+```
+    make doxygen
+```
 
 ## Installation
 

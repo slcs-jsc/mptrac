@@ -13,6 +13,7 @@ $$
 Here, the position $\vec{x}$ is provided in a meteorological coordinate system, $\vec{x}=(\lambda,\phi,p)$, with longitude $\lambda$, latitude $\phi$, and a vertical coordinate (pressure $p$ or zeta $\zeta$). The velocity vector $\vec{v}=(u,v,\omega)$ is composed of the zonal wind component $u$, the meridional wind component $v$, and the vertical velocity ($\omega$ or $\dot{\zeta}$), respectively. 
 
 #### Integration Method
+
 Based on its accuracy and computational efficiency for trajectory calculations (Rößler et al., 2018), per default we apply the explicit midpoint method to solve the trajectory equation,
 
 $$
@@ -243,6 +244,7 @@ The constants $H^\ominus$ and $\Delta_{sol}H/R$ with enthalpy of dissolution $\D
 | $\sf{SO_2}$    | 1.3 $\cdot 10^{-2}$ | 2900 |
 
 ## Dry deposition
+
 Dry deposition leads to a loss of mass of aerosol particles or trace gases by gravitational settling or chemical and physical interactions with the surface of the dry phase. In the parametrization implemented in MPTRAC, dry deposition is calculated for air parcels located in the lowermost $\Delta_p=$ 30 hPa layer above the surface. This corresponds to a layer width of $\Delta z \approx$ 200 m at standard conditions. 
 
 For aerosol particles, the deposition velocity $v_{dep}$ will be calculated as described in Hoffmann et al. (2022) as a function of surface pressure $p$ and temperature $T$ as well as particle radius $r_p$ and particle density $\rho$. For trace gases, the deposition velocity $v_{dep}$ needs to be specified as a control parameter. Currently, this parameter is set to a constant value across the globe for each trace gas. For future applications with a stronger focus on the boundary layer, $v_{dep}$ will need to vary geographically to account for dependence on the surface characteristics and atmospheric conditions. 
@@ -315,6 +317,3 @@ The e-folding lifetime $t_e$ of the species needs to be specified as a control p
 ## Boundary conditions
 
 When an air parcels reach the upper and lower boundary layer two options are available. First, they can be reflected back or second, their position is set to the lowest or highest height available in the meteorological data and hence will slide along the boundaries until updrafts or downdrafts transport them back into the wider model domain. Those two options can be selected with the parameter REFLECT, which is 1 if air parcels are supposed to be reflected and 0 if they are supposed to be set to the boundary heights. The default value is 0, hence no reflection.
-
-
-
