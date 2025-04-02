@@ -50,4 +50,4 @@ $trac/trac data/dirlist trac.ctl atm_split.tab \
            ATM_BASENAME atm GRID_BASENAME grid
 ```
 
-Please see the wiki page on [Control parameters](control-parameters.md) for more information on the control file trac.ctl and the control parameters.
+Please see the wiki page on [control parameters](control-parameters.md) for more information on the control file trac.ctl and the control parameters.

@@ -1,65 +1,65 @@
 # Installation
 
-Here we describe the installation of MPTRAC on a Linux system. The installation comprises several steps, i.e. to meet the prerequisites, downloading the source code from the GitHub repository, the compilation of the source code, and conducting checks to confirm the integrity of the installation.
+This guide covers the installation of MPTRAC on a Linux system. The process involves several steps: meeting prerequisites, downloading the source code, building the required libraries, compiling the source code, and verifying the installation.
 
 ## Prerequisites
 
-The following software dependencies need to be met to compile and install MPTRAC:
+To build and run MPTRAC, you will need some basic tools and libraries, including Git, GNU Make, GCC, GSL, HDF5, and netCDF.
 
-* the distributed version control system [Git](https://git-scm.com/)
-* the C compiler of the [GNU Compiler Collection](https://gcc.gnu.org)
-* the [GNU Make](https://www.gnu.org/software/make) build tool
-* the [GNU Scientific Library](https://www.gnu.org/software/gsl) for numerical calculations
-* the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
+For additional features such as high-performance computing (HPC) and GPU support, optional dependencies like OpenMPI and NVIDIA HPC SDK are required.
 
-Optionally, the following software is needed to enable further capabilities of the model:
+Some of the required dependencies are included with the MPTRAC repository. See the next section for more details.
 
-* the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
-* the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to support netCDF4
-* the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
-* the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
-* an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStation MPI](https://github.com/ParaStation/psmpi) for HPC support
-
-Some of the software is provided along with the MPTRAC repository, please see next section.
+For a complete list of dependencies, including specific versions and installation instructions, refer to the [dependencies file](https://github.com/slcs-jsc/mptrac/blob/master/dependencies.md).
 
 ## Downloading the source code
 
-Start by downloading the MPTRAC source code from the GitHub repository:
+Get the latest or a previous version from the [MPTRAC releases](https://github.com/slcs-jsc/mptrac/releases) page. After downloading, extract the release file:
+
+    unzip mptrac-x.y.zip
+
+Alternatively, to get the latest development version, clone the GitHub repository:
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
-To update an existing installation, please use:
+To update an existing installation, navigate to the directory and pull the latest changes:
 
     git pull https://github.com/slcs-jsc/mptrac.git
 
 ## Building the libraries
 
-Several libraries provided along with MPTRAC can be compiled and installed by running a build script:
+MPTRAC includes several libraries that can be compiled and installed using a build script:
 
-    cd mptrac/libs
-    ./build.sh
+    cd [mptrac_directory]/libs
+    ./build.sh -a
 
-As the build process is rather time-consuming, it might be more efficient to apply versions of the libraries readily available on your system.
+The build process can take considerable time. If your system already has compatible versions of the libraries, consider using those instead.
 
-## Compilation of the source code
+## Configure the Makefile
 
-Change to the source directory and edit the Makefile according to your needs.
+Navigate to the source directory and adjust the `Makefile` as needed:
 
-    cd mptrac/src
+    cd [mptrac_directory]/src
     emacs Makefile
 
-In particular, you might want to edit the `LIBDIR` and `INCDIR` paths to point to the directories where GSL, netCDF, and other libraries are located on your system.
+Pay special attention to the following settings:
 
-By default, the MPTRAC binaries will be linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilations causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI and OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the libraries.
+* Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL, netCDF, and other required libraries are located on your system.
 
-To make use of the MPI parallelization of MPTRAC, the `MPI` flag needs to be enabled. Further steps will require an MPI library such as OpenMPI to be available. To make use of the OpenACC parallelization, the `GPU` flag needs to be enabled. The NVIDIA HPC SDK is required to compile the GPU code. The OpenMP parallelization of MPTRAC is always enabled.
+* By default, the MPTRAC binaries are linked dynamically. Ensure that the `LD_LIBRARY_PATH` is properly configured to include the paths to the shared libraries. If you prefer static linking, you can enable it by setting the `STATIC` flag, which allows you to copy and use the binaries on other machines. However, in some cases, either static or dynamic linking may not be feasible or could cause specific issues.
 
-Finally, use `make` in the source directory to compile the code. Please carefully check the logs of the compilation process for any warnings or errors.
+* To enable MPI parallelization in MPTRAC, you must set the `MPI` flag. Additionally, an MPI library, such as OpenMPI, must be installed on your system. To utilize OpenACC parallelization, enable the `GPU` flag, and ensure the NVIDIA HPC SDK is installed to compile the GPU code. OpenMP parallelization is always enabled.
 
-## Running the test cases
+* Some options in the Makefile are labeled as experimental. These features are still under development and may not be fully functional or tested. Use them at your own risk.
 
-Please run the test cases in order to check the installation:
+## Compile and test the installation
+
+Once the Makefile is configured, compile the code using:
+
+    make [-j]
+
+To verify the installation, run the test suite:
 
     make check
 
-The test cases have been designed to cover a wide range of the functionality of the MPTRAC model. Please carefully inspect whether the test cases are conducted successfully before applying the model in any other application.
+These tests cover a wide range of MPTRAC functionalities. Make sure all tests pass successfully before using the model in other applications. If any test fails, check the log messages for further details.
