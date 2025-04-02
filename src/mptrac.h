@@ -3204,14 +3204,17 @@ typedef struct {
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
   
-  /*! Zonal domain number */
+  /*! Zonal domain number. */
   int dd_domains_zonal;
   
-  /*! Meridional domain number */
+  /*! Meridional domain number. */
   int dd_domains_meridional;
   
-  /*! Number of neighbours to communicate with... */
+  /*! Number of neighbours to communicate with. */
   int dd_nbr_neighbours;
+
+  /*! Size of halos given in grid-points. */
+  int dd_halos_size;
 
   /*! Quantity array index for the current domain. */
   int qnt_domain;
@@ -8909,7 +8912,7 @@ void dd_get_rect_destination(
  * destination ranks, managing buffers for efficient data transfer.
  *
  * @param particles An array of `particle_t` structures representing the particles to be communicated.
- * @param nparticles The total number of particles in the `particles` array.
+ * @param nparticles A pointer to the total number of particles in the `particles` array.
  * @param MPI_Particle An MPI datatype describing the structure of a particle for communication.
  * @param destinations An array of destination ranks for sending and receiving particles.
  * @param ndestinations The number of destination ranks in the `destinations` array.
@@ -8939,7 +8942,7 @@ void dd_get_rect_destination(
  */
 void dd_communicate_particles(
   particle_t* particles, 
-  int nparticles, 
+  int* nparticles, 
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 

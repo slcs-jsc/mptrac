@@ -5382,6 +5382,8 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "DD_DOMAINS_ZONAL", -1, "1", NULL);
   ctl->dd_nbr_neighbours =
     (int) scan_ctl(filename, argc, argv, "DD_NBR_NEIGHBOURS", -1, "8", NULL);
+  ctl->dd_halos_size =
+    (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
 }
 
 /*****************************************************************************/
@@ -5589,7 +5591,7 @@ void mptrac_run_timestep(
     atm2particles(atm, particles, *ctl);
     
     /* Perform the communication... */
-    dd_communicate_particles( particles, atm->np, MPI_Particle, 
+    dd_communicate_particles( particles, &atm->np, MPI_Particle, 
       destinations, ctl->dd_nbr_neighbours , *ctl, cache->dt);
       
     /* Transform from array of struct to struct of array... */
@@ -7314,7 +7316,6 @@ void read_met_grid(
     }
 
   /* Adapt lon und lat data to domain decomposition... */
-  
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
@@ -7330,8 +7331,35 @@ void read_met_grid(
   met->domain_count[2] = (size_t) met->ny;
   met->domain_count[3] = (size_t) met->nx;
   
-  /* Halos here... */
+  /* Create halos... */
+  if ((rank > ctl->dd_domains_meridional - 1)
+   && (rank < size - ctl->dd_domains_meridional)) {
+      // If we are not at the left or right edge extend in zonal direction...
+      // Move the start one point to the left...
+      met->domain_count[3] = met->domain_count[3] + ctl->dd_halos_size*2;
+      met->domain_start[3] = met->domain_start[3] - ctl->dd_halos_size;
+     } else {
+      // If we are at the left or right edge, extend only in one zonal direction...
+      met->domain_count[3] = met->domain_count[3] + ctl->dd_halos_size;
+      if (rank > ctl->dd_domains_meridional - 1 )
+        // If we are not at the left edge, move the start to the left... 
+        met->domain_start[3] = met->domain_start[3] - ctl->dd_halos_size;
+  }
   
+  if ((rank%ctl->dd_domains_meridional > 0)
+   && (rank%ctl->dd_domains_meridional <  ctl->dd_domains_meridional -1 )) {
+      // If we are not at the upper or lower edge extend in meridional direction...
+      // Move the start point one point down...
+      met->domain_count[2] = met->domain_count[2] + ctl->dd_halos_size*2;
+      met->domain_start[2] = met->domain_start[2] - ctl->dd_halos_size;
+    } else {
+      // If we are at the top or the lower edge only extend in one mer. direction...
+      met->domain_count[2] = met->domain_count[2] + ctl->dd_halos_size;
+      if (rank%ctl->dd_domains_meridional > 0)
+        // If we are not at the top, move the start one upward... 
+        met->domain_start[2] = met->domain_start[2] - ctl->dd_halos_size;
+  }
+
   /* Get the range of the entire meteodata... */
   double lon_range = met->lon[ met->nx_glob - 1 ] - met->lon[0];
   double lat_range = met->lat[ met->ny_glob - 1 ] - met->lat[0];
@@ -7472,7 +7500,7 @@ void read_met_levels(
       if (!read_met_nc_3d_par
 	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl,
 	   0.01f))
-	if (!read_met_nc_3d_par
+	    if (!read_met_nc_3d_par
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
     }
@@ -7485,31 +7513,32 @@ void read_met_levels(
 
       /* Read coefficients... */
       if (ctl->met_vert_coord == 2) {
-	int varid;
-	NC_GET_DOUBLE("hyam", hyam, 1);
-	NC_GET_DOUBLE("hybm", hybm, 1);
+	      int varid;
+	      NC_GET_DOUBLE("hyam", hyam, 1);
+	      NC_GET_DOUBLE("hybm", hybm, 1);
       }
 
       /* Use control parameters... */
       else if (ctl->met_vert_coord == 3) {
 
-	/* Check number of levels... */
-	if (met->np != ctl->met_nlev)
-	  ERRMSG("Mismatch in number of model levels!");
+	      /* Check number of levels... */
+	      if (met->np != ctl->met_nlev)
+	        ERRMSG("Mismatch in number of model levels!");
 
-	/* Copy parameters... */
-	for (int ip = 0; ip < met->np; ip++) {
-	  hyam[ip] = ctl->met_lev_hyam[ip];
-	  hybm[ip] = ctl->met_lev_hybm[ip];
-	}
+	      /* Copy parameters... */
+	      for (int ip = 0; ip < met->np; ip++) {
+	        hyam[ip] = ctl->met_lev_hyam[ip];
+	        hybm[ip] = ctl->met_lev_hybm[ip];
+ 	      }
       }
 
       /* Calculate pressure... */
       for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ip = 0; ip < met->np; ip++)
-	    met->pl[ix][iy][ip] =
+	      for (int iy = 0; iy < met->ny; iy++)
+	        for (int ip = 0; ip < met->np; ip++)
+	          met->pl[ix][iy][ip] =
 	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
+
     }
 
     /* Use a and b coefficients for half levels... */
@@ -7520,13 +7549,13 @@ void read_met_levels(
 
       /* Use control parameters... */
       for (int ip = 0; ip < met->np + 1; ip++) {
-	hyam[ip] = ctl->met_lev_hyam[ip];
-	hybm[ip] = ctl->met_lev_hybm[ip];
+	      hyam[ip] = ctl->met_lev_hyam[ip];
+	      hybm[ip] = ctl->met_lev_hybm[ip];
       }
 
       /* Check number of levels... */
       if (met->np + 1 != ctl->met_nlev)
-	ERRMSG("Mismatch in number of model levels!");
+	      ERRMSG("Mismatch in number of model levels!");
 
       /* Calculate pressure... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -7573,9 +7602,13 @@ void read_met_levels(
   }
 
   /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++)
-    if (met->p[ip - 1] < met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
+  for (int ip = 1; ip < met->np; ip++) {
+    printf("%f\n", met->p[ip - 1]);
+    
+    //if (met->p[ip - 1] < met->p[ip])
+      //ERRMSG("Pressure levels must be descending!");
+  }
+
 }
 
 /*****************************************************************************/
@@ -8364,34 +8397,6 @@ int read_met_nc_3d_par(
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
-    /* Create halos... */
-    /*
-    if ((rank > ctl->dd_domains_meridional - 1) && (rank < size - ctl->dd_domains_meridional)) {
-      // If we are not at the left or right edge extend in zonal direction...
-      // Move the start one point to the left...
-      met->domain_count[3] = met->domain_count[3] + 10;//2;
-      met->domain_start[3] = met->domain_start[3] - 5;
-     } else {
-      // If we are at the left or right edge, extend only in one zonal direction...
-      met->domain_count[3] = met->domain_count[3] + 5;
-      if (rank > ctl->dd_domains_meridional - 1 )
-        // If we are not at the left edge, move the start to the left... 
-        met->domain_start[3] = met->domain_start[3] - 5;
-    }
-  
-    if ((rank%ctl->dd_domains_meridional > 0) && (rank%ctl->dd_domains_meridional <  ctl->dd_domains_meridional -1 )) {
-      // If we are not at the upper or lower edge extend in meridional direction...
-      // Move the start point one point down...
-      met->domain_count[2] = met->domain_count[2] + 10;//2;
-      met->domain_start[2] = met->domain_start[2] - 5;
-    } else {
-      // If we are at the top or the lower edge only extend in one mer. direction...
-      met->domain_count[2] = met->domain_count[2] + 5;
-      if (rank%ctl->dd_domains_meridional > 0)
-        // If we are not at the top, move the start one upward... 
-        met->domain_start[2] = met->domain_start[2] - 5;
-    }*/
-
     /* Debugging... */
     printf("Size:%d\n",(int) met->domain_count[0] * (int) met->domain_count[1]
 	             * (int) met->domain_count[2] * (int) met->domain_count[3]);
@@ -12128,7 +12133,7 @@ void dd_get_rect_destination(const ctl_t ctl, int* destinations, int rank, int s
 /*****************************************************************************/
 void dd_communicate_particles(
   particle_t* particles, 
-  int nparticles, 
+  int* nparticles, 
   MPI_Datatype MPI_Particle, 
   int* destinations, 
   int ndestinations, 
@@ -12156,7 +12161,7 @@ void dd_communicate_particles(
       
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
+    for (int ip = 0; ip < *nparticles; ip++) {
       if ( (int) particles[ip].q[ctl.qnt_domain] != -1 
       && (int) particles[ip].q[ctl.qnt_destination] == destinations[idest] ) {
       nbs[idest]++;
@@ -12176,19 +12181,29 @@ void dd_communicate_particles(
    
     /* Fill the send buffer... */
     int ibs = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
+    int offset = 1;
+    for (int ip = *nparticles-1; ip > 0; ip--) {
       // Only add those elements whithout 'graveyard' 
       // and with the right destinations...
       if ((int) particles[ip].q[ctl.qnt_domain] != -1
        && (int) particles[ip].q[ctl.qnt_destination] == destinations[idest]) {
+        
         memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
    
-      // Mark old place as 'graveyard'...
-      particles[ip].q[ctl.qnt_domain] = -1;
-      dt[ip] = 0;
-      ibs++;
+        // Mark old place as 'graveyard'...
+        particles[ip].q[ctl.qnt_domain] = -1;
+        dt[ip] = 0;
+        ibs++;
+
+        // Check if particle array limit can be reduced...
+        if (offset == *nparticles-ip)
+          offset++;
+
       }
     }
+
+    /* Decrease the particle array limit... */
+    *nparticles = *nparticles - offset + 1;
 
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
@@ -12221,6 +12236,9 @@ void dd_communicate_particles(
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
 
+  /* Smallest particle index for first possible graveyard... */
+  int api = 0;
+
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
     
@@ -12231,7 +12249,7 @@ void dd_communicate_particles(
     /* Getting particles from buffer... */ 
     if (nbr[isourc] > 0) {
       int ipbr = 0;
-      for (int ip = 0; ip < nparticles; ip++) {
+      for (int ip = api; ip < NP; ip++) {
         if ((int) particles[ip].q[ctl.qnt_domain] == -1) {
           memcpy(&particles[ip], &recieve_buffers[isourc][ipbr], sizeof(particle_t));
           dt[ip] = ctl.dt_mod;
@@ -12239,15 +12257,21 @@ void dd_communicate_particles(
           particles[ip].q[ctl.qnt_domain] = rank;
           ipbr++; 
         }  
-        if (ipbr == nbr[isourc])
-          break; 
+        if (ipbr == nbr[isourc]) {
+          api = ip;
+          break;
+        }
       } 
     } 
+    
+    /* Increase the particle array limit... */
+    if (*nparticles < api)
+      *nparticles = api;
   }
 
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
-  
+
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
         
@@ -12376,7 +12400,7 @@ void module_dd(
     atm2particles(atm, particles, ctl);
     
     /* Perform the communication... */
-    dd_communicate_particles( particles, atm->np, MPI_Particle, 
+    dd_communicate_particles( particles, &atm->np, MPI_Particle, 
       destinations, ctl.dd_nbr_neighbours , ctl, dt);
       
     /* Transform from array of struct to struct of array... */
