@@ -3325,6 +3325,7 @@ void module_meteo(
     SET_ATM(qnt_theta, THETA(atm->p[ip], t));
     SET_ATM(qnt_zeta, atm->q[ctl->qnt_zeta][ip]);
     SET_ATM(qnt_zeta_d, ZETA(ps, atm->p[ip], t));
+    SET_ATM(qnt_zeta_dot, atm->q[ctl->qnt_zeta_dot][ip])
     SET_ATM(qnt_tvirt, TVIRT(t, h2o));
     SET_ATM(qnt_lapse, lapse_rate(t, h2o));
     SET_ATM(qnt_pv, pv);
@@ -4734,6 +4735,7 @@ void mptrac_read_ctl(
       SET_QNT(qnt_rhice, "rhice", "relative humidity over ice", "%%")
       SET_QNT(qnt_theta, "theta", "potential temperature", "K")
       SET_QNT(qnt_zeta, "zeta", "zeta coordinate", "K")
+      SET_QNT(qnt_zeta_dot, "zeta_dot", "zeta coordinate vertical velocity", "K/s")
       SET_QNT(qnt_zeta_d, "zeta_d", "diagnosed zeta coordinate", "K")
       SET_QNT(qnt_tvirt, "tvirt", "virtual temperature", "K")
       SET_QNT(qnt_lapse, "lapse", "temperature lapse rate", "K/km")
