@@ -5554,8 +5554,9 @@ void mptrac_run_timestep(
     printf("Before communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
   }
     
-  //Debugging only...
-  if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1 && 1==0) {
+  // Debugging only...
+  /* Domain decomposition... */
+  if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1) {
     //module_dd()
   
     /* Initialize particles locally... */
