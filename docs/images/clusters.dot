@@ -7,6 +7,7 @@ graph MPTRAC {
   margin=0;
   overlap=false;
   splines=true;
+  ratio=0.75;
   
   MPTRAC -- {
     "infrastructure\nmodules"
@@ -26,25 +27,33 @@ graph MPTRAC {
 
 
   "infrastructure\nmodules" -- {
-    "interpolate\nmeteo data"
-    "sort\nparticles"
+    "Fortran\nwrapper"
+    "high-level\nAPI"
+    "meteo data\ninterpolation"
+    "particle\nsorting"
     "time\nloop"
     "utilities"
   }
-    "interpolate\nmeteo data" [fillcolor="gray95"]
-    "sort\nparticles" [fillcolor="gray95"]
+    "Fortran\nwrapper" [fillcolor="gray95"]
+    "high-level\nAPI" [fillcolor="gray95"]
+    "meteo data\ninterpolation" [fillcolor="gray95"]
+    "particle\nsorting" [fillcolor="gray95"]
     "time\nloop" [fillcolor="gray95"]
     "utilities" [fillcolor="gray95"]
 
 
   "read meteo\ndata" -- {
+    "AMR\ndata"
     "binary\ndata"
+    "grib\ndata"
     "netCDF\ndata"
     "packed\ndata"
     "zfp\ndata"
     "zstd\ndata"
   }
+    "AMR\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "binary\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "grib\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "netCDF\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "packed\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "zfp\ndata" [colorscheme=ylorbr5 fillcolor=1]
@@ -88,7 +97,7 @@ graph MPTRAC {
 
 
   "trajectory\ncalculations" -- {
-    "check\npositions"
+    "position\ncheck"
     "advection"
     "diffusion"
     "subgrid\nwinds"
@@ -96,7 +105,7 @@ graph MPTRAC {
     "sedimentation"
     "isosurface"
   }
-    "check\npositions" [colorscheme=purples5 fillcolor=1]
+    "position\ncheck" [colorscheme=purples5 fillcolor=1]
     "advection" [colorscheme=purples5 fillcolor=1]
     "diffusion" [colorscheme=purples5 fillcolor=1]
     "subgrid\nwinds" [colorscheme=purples5 fillcolor=1]

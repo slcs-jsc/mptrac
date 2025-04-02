@@ -234,6 +234,7 @@ MODULE mptrac_struct
      REAL(c_double) :: met_zfp_tol_t
      REAL(c_double) :: met_zfp_tol_z
      INTEGER(c_int) :: met_cms_batch
+     INTEGER(c_int) :: met_cms_zstd
      INTEGER(c_int) :: met_cms_heur
      REAL(c_double) :: met_cms_eps_z
      REAL(c_double) :: met_cms_eps_t

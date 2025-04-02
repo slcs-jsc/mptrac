@@ -487,13 +487,18 @@ void compress_cms(
       cms_module_t *cms_ptr = cms_init(cms_param);
 
       /* Read binary data... */
-      cms_sol_t *cms_sol = cms_read_sol(cms_ptr, inout);
+      cms_sol_t *cms_sol;
+      if (ctl->met_cms_zstd == 1)
+	cms_sol = cms_read_zstd_sol(cms_ptr, inout);
+      else
+	cms_sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
 #pragma omp parallel for default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
-	  double val, x[] = { lon[ix], lat[iy] };
+	  double val;
+	  const double x[] = { lon[ix], lat[iy] };
 	  cms_eval(cms_ptr, cms_sol, x, &val);
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
@@ -607,8 +612,8 @@ void compress_cms(
 #pragma omp parallel for default(shared)
 	for (size_t ix = 0; ix < nx; ix++)
 	  for (size_t iy = 0; iy < ny; iy++) {
-	    size_t idx = ARRAY_2D(ix, iy, ny);
-	    double x[] = { lon[ix], lat[iy] };
+	    const size_t idx = ARRAY_2D(ix, iy, ny);
+	    const double x[] = { lon[ix], lat[iy] };
 	    cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
 	    tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
 	    tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
@@ -630,7 +635,10 @@ void compress_cms(
 	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
 
 	/* Save binary data... */
-	cms_save_sol(cms_sol[ip], inout);
+	if (ctl->met_cms_zstd == 1)
+	  cms_save_zstd_sol(cms_sol[ip], inout, 3);
+	else
+	  cms_save_sol(cms_sol[ip], inout);
 
 	/* Free... */
 	cms_delete_sol(cms_sol[ip]);
@@ -762,19 +770,13 @@ void compress_zfp(
   const int decompress,
   FILE *inout) {
 
-  zfp_field *field;		/* array meta data */
-  zfp_stream *zfp;		/* compressed stream */
-  void *buffer;			/* storage for compressed stream */
-  size_t bufsize;		/* byte size of compressed buffer */
-  bitstream *stream;		/* bit stream to write to or read from */
-  size_t zfpsize;		/* byte size of compressed stream */
-
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
   const zfp_type type = zfp_type_float;
-  field = zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
+  zfp_field *field =
+    zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
 
   /* Allocate meta data for a compressed stream... */
-  zfp = zfp_stream_open(NULL);
+  zfp_stream *zfp = zfp_stream_open(NULL);
 
   /* Set compression mode... */
   int actual_prec = 0;
@@ -787,15 +789,16 @@ void compress_zfp(
     ERRMSG("Set precision or tolerance!");
 
   /* Allocate buffer for compressed data... */
-  bufsize = zfp_stream_maximum_size(zfp, field);
-  buffer = malloc(bufsize);
+  const size_t bufsize = zfp_stream_maximum_size(zfp, field);
+  void *buffer = malloc(bufsize);
 
   /* Associate bit stream with allocated buffer... */
-  stream = stream_open(buffer, bufsize);
+  bitstream *stream = stream_open(buffer, bufsize);
   zfp_stream_set_bit_stream(zfp, stream);
   zfp_stream_rewind(zfp);
 
   /* Read compressed stream and decompress array... */
+  size_t zfpsize;
   if (decompress) {
     FREAD(&zfpsize, size_t,
 	  1,
@@ -848,7 +851,7 @@ void compress_zstd(
   FILE *inout) {
 
   /* Get buffer sizes... */
-  size_t uncomprLen = n * sizeof(float);
+  const size_t uncomprLen = n * sizeof(float);
   size_t comprLen = ZSTD_compressBound(uncomprLen);
   size_t compsize;
 
@@ -1132,6 +1135,33 @@ void get_tropo(
 
 /*****************************************************************************/
 
+void intpol_check_lon_lat(
+  const double *lons,
+  const int nlon,
+  const double *lats,
+  const int nlat,
+  const double lon,
+  const double lat,
+  double *lon2,
+  double *lat2) {
+
+  /* Check longitude... */
+  *lon2 = FMOD(lon, 360.);
+  if (*lon2 < lons[0])
+    *lon2 += 360;
+  else if (*lon2 > lons[nlon - 1])
+    *lon2 -= 360;
+
+  /* Check latitude... */
+  *lat2 = lat;
+  if (lats[0] < lats[nlat - 1])
+    *lat2 = MIN(MAX(*lat2, lats[0]), lats[nlat - 1]);
+  else
+    *lat2 = MIN(MAX(*lat2, lats[nlat - 1]), lats[0]);
+}
+
+/*****************************************************************************/
+
 void intpol_met_4d_coord(
   const met_t *met0,
   float heights0[EX][EY][EP],
@@ -1150,16 +1180,14 @@ void intpol_met_4d_coord(
 
   if (init) {
 
-    /* Check longitude... */
-    double lon2 = FMOD(lon, 360.);
-    if (lon2 < met0->lon[0])
-      lon2 += 360;
-    else if (lon2 > met0->lon[met0->nx - 1])
-      lon2 -= 360;
+    /* Check longitude and latitude... */
+    double lon2, lat2;
+    intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
+			 &lon2, &lat2);
 
     /* Get horizontal indizes... */
     ci[0] = locate_irr(met0->lon, met0->nx, lon2);
-    ci[1] = locate_irr(met0->lat, met0->ny, lat);
+    ci[1] = locate_irr(met0->lat, met0->ny, lat2);
 
     /* Locate the vertical indizes for each edge of the column... */
     int ind[2][4];
@@ -1181,33 +1209,29 @@ void intpol_met_4d_coord(
     cw[3] = (ts - met0->time) / (met1->time - met0->time);
     cw[0] = (lon2 - met0->lon[ci[0]]) /
       (met0->lon[ci[0] + 1] - met0->lon[ci[0]]);
-    cw[1] = (lat - met0->lat[ci[1]]) /
+    cw[1] = (lat2 - met0->lat[ci[1]]) /
       (met0->lat[ci[1] + 1] - met0->lat[ci[1]]);
 
-    /* Start determiniation of the altitude weighting factor... */
-    double height_top, height_bot;
-    double height00, height01, height10, height11, height0, height1;
-
     /* Interpolate in time at the lowest level... */
-    height00 = cw[3] * (heights1[ci[0]][ci[1]][ci[2]]
-			- heights0[ci[0]][ci[1]][ci[2]])
+    double height00 = cw[3] * (heights1[ci[0]][ci[1]][ci[2]]
+			       - heights0[ci[0]][ci[1]][ci[2]])
       + heights0[ci[0]][ci[1]][ci[2]];
-    height01 = cw[3] * (heights1[ci[0]][ci[1] + 1][ci[2]]
-			- heights0[ci[0]][ci[1] + 1][ci[2]])
+    double height01 = cw[3] * (heights1[ci[0]][ci[1] + 1][ci[2]]
+			       - heights0[ci[0]][ci[1] + 1][ci[2]])
       + heights0[ci[0]][ci[1] + 1][ci[2]];
-    height10 = cw[3] * (heights1[ci[0] + 1][ci[1]][ci[2]]
-			- heights0[ci[0] + 1][ci[1]][ci[2]])
+    double height10 = cw[3] * (heights1[ci[0] + 1][ci[1]][ci[2]]
+			       - heights0[ci[0] + 1][ci[1]][ci[2]])
       + heights0[ci[0] + 1][ci[1]][ci[2]];
-    height11 = cw[3] * (heights1[ci[0] + 1][ci[1] + 1][ci[2]]
-			- heights0[ci[0] + 1][ci[1] + 1][ci[2]])
+    double height11 = cw[3] * (heights1[ci[0] + 1][ci[1] + 1][ci[2]]
+			       - heights0[ci[0] + 1][ci[1] + 1][ci[2]])
       + heights0[ci[0] + 1][ci[1] + 1][ci[2]];
 
     /* Interpolate in latitude direction... */
-    height0 = cw[1] * (height01 - height00) + height00;
-    height1 = cw[1] * (height11 - height10) + height10;
+    double height0 = cw[1] * (height01 - height00) + height00;
+    double height1 = cw[1] * (height11 - height10) + height10;
 
     /* Interpolate in longitude direction... */
-    height_bot = cw[0] * (height1 - height0) + height0;
+    double height_bot = cw[0] * (height1 - height0) + height0;
 
     /* Interpolate in time at the upper level... */
     height00 = cw[3] * (heights1[ci[0]][ci[1]][ci[2] + 1]
@@ -1228,7 +1252,7 @@ void intpol_met_4d_coord(
     height1 = cw[1] * (height11 - height10) + height10;
 
     /* Interpolate in longitude direction... */
-    height_top = cw[0] * (height1 - height0) + height0;
+    double height_top = cw[0] * (height1 - height0) + height0;
 
     /* Search at higher levels if height is not in box... */
     while (((heights0[0][0][0] > heights0[0][0][1]) &&
@@ -1324,24 +1348,22 @@ void intpol_met_space_3d(
   /* Initialize interpolation... */
   if (init) {
 
-    /* Check longitude... */
-    double lon2 = FMOD(lon, 360.);
-    if (lon2 < met->lon[0])
-      lon2 += 360;
-    else if (lon2 > met->lon[met->nx - 1])
-      lon2 -= 360;
+    /* Check longitude and latitude... */
+    double lon2, lat2;
+    intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat,
+			 &lon2, &lat2);
 
     /* Get interpolation indices... */
     ci[0] = locate_irr(met->p, met->np, p);
     ci[1] = locate_reg(met->lon, met->nx, lon2);
-    ci[2] = locate_irr(met->lat, met->ny, lat);
+    ci[2] = locate_irr(met->lat, met->ny, lat2);
 
     /* Get interpolation weights... */
     cw[0] = (met->p[ci[0] + 1] - p)
       / (met->p[ci[0] + 1] - met->p[ci[0]]);
     cw[1] = (met->lon[ci[1] + 1] - lon2)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
-    cw[2] = (met->lat[ci[2] + 1] - lat)
+    cw[2] = (met->lat[ci[2] + 1] - lat2)
       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
   }
 
@@ -1379,16 +1401,14 @@ void intpol_met_space_3d_ml(
   const double lat,
   double *var) {
 
-  /* Check longitude... */
-  double lon2 = FMOD(lon, 360.);
-  if (lon2 < met->lon[0])
-    lon2 += 360;
-  else if (lon2 > met->lon[met->nx - 1])
-    lon2 -= 360;
+  /* Check longitude and latitude... */
+  double lon2, lat2;
+  intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat, &lon2,
+		       &lat2);
 
   /* Get horizontal indices... */
-  int ix = locate_reg(met->lon, met->nx, lon2);
-  int iy = locate_irr(met->lat, met->ny, lat);
+  const int ix = locate_reg(met->lon, met->nx, lon2);
+  const int iy = locate_irr(met->lat, met->ny, lat2);
 
   /* Interpolate vertically... */
   int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
@@ -1432,8 +1452,8 @@ void intpol_met_space_3d_ml(
 		zs[ix + 1][iy + 1][iz + 1], array[ix + 1][iy + 1][iz + 1], z);
 
   /* Interpolate horizontally... */
-  double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat);
-  double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat);
+  double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
+  double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat2);
   *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
 }
 
@@ -1452,21 +1472,19 @@ void intpol_met_space_2d(
   /* Initialize interpolation... */
   if (init) {
 
-    /* Check longitude... */
-    double lon2 = FMOD(lon, 360.);
-    if (lon2 < met->lon[0])
-      lon2 += 360;
-    else if (lon2 > met->lon[met->nx - 1])
-      lon2 -= 360;
+    /* Check longitude and latitude... */
+    double lon2, lat2;
+    intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat,
+			 &lon2, &lat2);
 
     /* Get interpolation indices... */
     ci[1] = locate_reg(met->lon, met->nx, lon2);
-    ci[2] = locate_irr(met->lat, met->ny, lat);
+    ci[2] = locate_irr(met->lat, met->ny, lat2);
 
     /* Get interpolation weights... */
     cw[1] = (met->lon[ci[1] + 1] - lon2)
       / (met->lon[ci[1] + 1] - met->lon[ci[1]]);
-    cw[2] = (met->lat[ci[2] + 1] - lat)
+    cw[2] = (met->lat[ci[2] + 1] - lat2)
       / (met->lat[ci[2] + 1] - met->lat[ci[2]]);
   }
 
@@ -1606,16 +1624,13 @@ void intpol_tropo_3d(
 
   int n = 0;
 
-  /* Check longitude... */
-  double lon2 = FMOD(lon, 360.);
-  if (lon2 < lons[0])
-    lon2 += 360;
-  else if (lon2 > lons[nlon - 1])
-    lon2 -= 360;
+  /* Check longitude and latitude... */
+  double lon2, lat2;
+  intpol_check_lon_lat(lons, nlon, lats, nlat, lon, lat, &lon2, &lat2);
 
   /* Get indices... */
   const int ix = locate_reg(lons, (int) nlon, lon2);
-  const int iy = locate_irr(lats, (int) nlat, lat);
+  const int iy = locate_irr(lats, (int) nlat, lat2);
 
   /* Calculate standard deviation... */
   *sigma = 0;
@@ -1649,13 +1664,13 @@ void intpol_tropo_3d(
 		lons[ix + 1], array0[ix + 1][iy], lon2);
     aux01 = LIN(lons[ix], array0[ix][iy + 1],
 		lons[ix + 1], array0[ix + 1][iy + 1], lon2);
-    aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat);
+    aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat2);
 
     aux10 = LIN(lons[ix], array1[ix][iy],
 		lons[ix + 1], array1[ix + 1][iy], lon2);
     aux11 = LIN(lons[ix], array1[ix][iy + 1],
 		lons[ix + 1], array1[ix + 1][iy + 1], lon2);
-    aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat);
+    aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat2);
 
     *var = LIN(time0, aux0, time1, aux1, time);
   }
@@ -1666,13 +1681,13 @@ void intpol_tropo_3d(
 	       lons[ix + 1], array0[ix + 1][iy], lon2);
     aux01 = NN(lons[ix], array0[ix][iy + 1],
 	       lons[ix + 1], array0[ix + 1][iy + 1], lon2);
-    aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat);
+    aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat2);
 
     aux10 = NN(lons[ix], array1[ix][iy],
 	       lons[ix + 1], array1[ix + 1][iy], lon2);
     aux11 = NN(lons[ix], array1[ix][iy + 1],
 	       lons[ix + 1], array1[ix + 1][iy + 1], lon2);
-    aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat);
+    aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat2);
 
     *var = NN(time0, aux0, time1, aux1, time);
   }
@@ -2033,7 +2048,7 @@ int locate_reg(
   const double x) {
 
   /* Calculate index... */
-  int i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
+  const int i = (int) ((x - xx[0]) / (xx[1] - xx[0]));
 
   /* Check range... */
   if (i < 0)
@@ -2188,7 +2203,7 @@ void module_advect(
 	/* Interpolate meteo data... */
 	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
 			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
-	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met0->zetal,
+	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met1->zetal,
 			    met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
 	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
 			    met1->zetal, met1->zeta_dotl, tm, x[2], x[0],
@@ -2212,22 +2227,11 @@ void module_advect(
       atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
       atm->q[ctl->qnt_zeta][ip] += cache->dt[ip] * zeta_dotm;
 
-      /* Check if zeta is below zero... */
-      if (atm->q[ctl->qnt_zeta][ip] < 0)
-	atm->q[ctl->qnt_zeta][ip] = 0;	/* TODO: reflect particle, or skip this test (use module_position) */
-
-      int rank;
-      MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-      if ( ip==0  && rank==0) {
-        printf("%f,%f,%f,%f - %d,%d,%d - %f,%f,%f \n",atm->lon[ip], atm->lat[ip], atm->p[ip],atm->q[ctl->qnt_zeta][ip],ci[0],ci[1],ci[2],cw[0],cw[1],cw[2]);
-      }
       /* Convert zeta to pressure... */
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
 			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
 			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
-      if ( ip==0  && rank==0) {
-        printf("%f,%f,%f,%f - %d,%d,%d - %f,%f,%f \n",atm->lon[ip], atm->lat[ip], atm->p[ip],atm->q[ctl->qnt_zeta][ip],ci[0],ci[1],ci[2],cw[0],cw[1],cw[2]);
-      }
+
     }
   }
 }
@@ -3645,12 +3649,9 @@ void module_position(
 
     /* Check pressure... */
     if (atm->p[ip] < met0->p[met0->np - 1]) {
-      // TODO: add reflection: atm->p[ip] = 2. * met0->p[met0->np - 1] - atm->p[ip];
       atm->p[ip] = met0->p[met0->np - 1];
     } else if (atm->p[ip] > 300.) {
       INTPOL_2D(ps, 1);
-      // TODO: add reflection: if (atm->p[ip] > ps)
-      // atm->p[ip] = 2. * ps - atm->p[ip];
       if (atm->p[ip] > ps)
 	atm->p[ip] = ps;
     }
@@ -4773,8 +4774,8 @@ void mptrac_read_ctl(
     ERRMSG("Set ADVECT_VERT_COORD to 0, 1, or 2!");
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
-  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 3)
-    ERRMSG("Set MET_VERT_COORD to 0, 1, 2, or 3!");
+  if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 4)
+    ERRMSG("Set MET_VERT_COORD to 0, 1, 2, 3, or 4!");
   if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
     ERRMSG("Please add zeta to your quantities for diabatic calculations!");
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
@@ -4815,6 +4816,8 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
   ctl->met_cms_batch =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
+  ctl->met_cms_zstd =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_ZSTD", -1, "1", NULL);
   ctl->met_cms_heur =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
   ctl->met_cms_eps_z =
@@ -7455,7 +7458,7 @@ void read_met_levels(
     met->npl = met->np;
   }
 
-  /* Read pressure on model levels... */
+  /* Get pressure on model levels... */
   if (ctl->met_np > 0 || ctl->met_vert_coord != 0) {
 
     /* Read 3-D pressure field... */
@@ -7466,21 +7469,23 @@ void read_met_levels(
 	if (!read_met_nc_3d_par
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
-  /* Calculate pressure from a and b coefficients... */
-  }  else {
+    }
+
+    /* Use a and b coefficients for full levels... */
+    else if (ctl->met_vert_coord == 2 || ctl->met_vert_coord == 3) {
 
       /* Grid level coefficients... */
       double hyam[EP], hybm[EP];
 
-      /* Read a and b coefficients from file... */
+      /* Read coefficients... */
       if (ctl->met_vert_coord == 2) {
 	int varid;
 	NC_GET_DOUBLE("hyam", hyam, 1);
 	NC_GET_DOUBLE("hybm", hybm, 1);
       }
 
-      /* Use ctl parameters... */
-      else {
+      /* Use control parameters... */
+      else if (ctl->met_vert_coord == 3) {
 
 	/* Check number of levels... */
 	if (met->np != ctl->met_nlev)
@@ -7499,6 +7504,33 @@ void read_met_levels(
 	  for (int ip = 0; ip < met->np; ip++)
 	    met->pl[ix][iy][ip] =
 	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
+    }
+
+    /* Use a and b coefficients for half levels... */
+    else if (ctl->met_vert_coord == 4) {
+
+      /* Grid level coefficients... */
+      double hyam[EP], hybm[EP];
+
+      /* Use control parameters... */
+      for (int ip = 0; ip < met->np + 1; ip++) {
+	hyam[ip] = ctl->met_lev_hyam[ip];
+	hybm[ip] = ctl->met_lev_hybm[ip];
+      }
+
+      /* Check number of levels... */
+      if (met->np + 1 != ctl->met_nlev)
+	ERRMSG("Mismatch in number of model levels!");
+
+      /* Calculate pressure... */
+#pragma omp parallel for default(shared) collapse(2)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++) {
+	    double p0 = hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy];
+	    double p1 = hyam[ip + 1] / 100. + hybm[ip + 1] * met->ps[ix][iy];
+	    met->pl[ix][iy][ip] = (float) ((p1 - p0) / log(p1 / p0));
+	  }
     }
 
     /* Check ordering of pressure levels... */

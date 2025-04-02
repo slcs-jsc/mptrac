@@ -31,63 +31,65 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ### Prerequisites
 
-This README file describes how to install MPTRAC on a Linux system.
+To build and run MPTRAC, you will need some basic tools and libraries, including Git, GNU Make, GCC, GSL, HDF5, and netCDF.
 
-The following software dependencies are required to compile MPTRAC:
+For additional features such as high-performance computing (HPC) and GPU support, optional dependencies like OpenMPI and NVIDIA HPC SDK are required.
 
-* the [GNU make](https://www.gnu.org/software/make) build tool
-* the C compiler of the [GNU Compiler Collection (GCC)](https://gcc.gnu.org)
-* the [GNU Scientific Library (GSL)](https://www.gnu.org/software/gsl) for numerical calculations
-* the [netCDF library](http://www.unidata.ucar.edu/software/netcdf) for file-I/O
+Some of the required dependencies are included with the MPTRAC repository. See the next section for more details.
 
-The following optional software is required to enable additional features of MPTRAC:
-
-* the distributed version control system [Git](https://git-scm.com/) to access the code repository
-* the [HDF5 library](https://www.hdfgroup.org/solutions/hdf5) to enable the netCDF4 file format
-* the [Zstandard library](https://facebook.github.io/zstd) and the [zfp library](https://computing.llnl.gov/projects/zfp) for compressed meteo data
-* the [NVIDIA HPC Software Development Kit](https://developer.nvidia.com/hpc-sdk) for GPU support
-* an MPI library such as [OpenMPI](https://www.open-mpi.org) or [ParaStationMPI](https://github.com/ParaStation/psmpi) for HPC support
-* the graphing utility [gnuplot](http://www.gnuplot.info) for visualization
-
-Some of the software is provided along with the MPTRAC repository, please see next section.
+For a complete list of dependencies, including specific versions and installation instructions, refer to the [dependencies file](https://github.com/slcs-jsc/mptrac/blob/master/dependencies.md).
 
 ### Installation
 
-Start by downloading the latest or one of the previous [MPTRAC releases](https://github.com/slcs-jsc/mptrac/releases). Unzip the release file:
+To install MPTRAC, follow these steps:
+
+**1. Download MPTRAC**
+
+Get the latest or a previous version from the [MPTRAC releases](https://github.com/slcs-jsc/mptrac/releases) page. After downloading, extract the release file:
 
     unzip mptrac-x.y.zip
 
-Alternatively, you can get the development version of the software from the GitHub repository:
+Alternatively, to get the latest development version, clone the GitHub repository:
 
     git clone https://github.com/slcs-jsc/mptrac.git
 
-Several libraries shipped along with MPTRAC can be compiled and installed by running a build script:
+**2. Install required libraries**
+
+MPTRAC includes several libraries that can be compiled and installed using a build script:
 
     cd [mptrac_directory]/libs
     ./build.sh -a
 
-Then change to the source directory and edit the `Makefile` according to your needs:
+Alternatively, if you prefer to use existing system libraries, install the dependencies manually.
+
+**3. Configure the Makefile**
+
+Navigate to the source directory and adjust the `Makefile` as needed:
 
     cd [mptrac_directory]/src
     emacs Makefile
 
-In particular, you may want to check:
+Pay special attention to the following settings:
 
-* Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL, netCDF, and other libraries are located on your system.
+* Edit the `LIBDIR` and `INCDIR` paths to point to the directories where the GSL, netCDF, and other required libraries are located on your system.
 
-* By default, the MPTRAC binaries are linked statically, i.e., they can be copied and used on other machines. However, sometimes static compilation causes problems, e.g., in combination with dynamically compiled GSL and netCDF libraries or when using MPI or OpenACC. In this case, disable the `STATIC` flag and remember to set the `LD_LIBRARY_PATH` to include the paths to the shared libraries.
+* By default, the MPTRAC binaries are linked dynamically. Ensure that the `LD_LIBRARY_PATH` is properly configured to include the paths to the shared libraries. If you prefer static linking, you can enable it by setting the `STATIC` flag, which allows you to copy and use the binaries on other machines. However, in some cases, either static or dynamic linking may not be feasible or could cause specific issues.
 
-* To make use of the MPI parallelization of MPTRAC, the `MPI` flag must be enabled. Further steps will require an MPI library such as OpenMPI to be available on your system. To make use of the OpenACC parallelization, the `GPU` flag must be enabled. The NVIDIA HPC SDK is required to compile the GPU code. MPTRAC's OpenMP parallelization is always enabled.
+* To enable MPI parallelization in MPTRAC, you must set the `MPI` flag. Additionally, an MPI library, such as OpenMPI, must be installed on your system. To utilize OpenACC parallelization, enable the `GPU` flag, and ensure the NVIDIA HPC SDK is installed to compile the GPU code. OpenMP parallelization is always enabled.
 
-Next, try compiling the code:
+* Some options in the Makefile are labeled as experimental. These features are still under development and may not be fully functional or tested. Use them at your own risk.
+
+**4. Compile and test the installation**
+
+Once the Makefile is configured, compile the code using:
 
     make [-j]
 
-To run the test cases to check the installation, use
+To verify the installation, run the test suite:
 
     make check
 
-This will run a series of tests sequentially. It will stop if any of the tests fail. Please check the log messages.
+This will execute a series of tests sequentially. If any test fails, check the log messages for further details.
 
 ### Run the example
 
@@ -97,16 +99,17 @@ The example can be found in the `projects/example/` subdirectory. The `projects/
 
 The example simulation is controlled by a shell script:
 
-    cd mptrac/projects/example
+    cd [mptrac_directory]/projects/example
     ./run.sh
 
-See the `run.sh` script for how to invoke MPTRAC programs such as `atm_init` and `atm_split` to initialize the trajectory seeds and `trac` to compute the trajectories.
+The `run.sh` script outlines the steps for invoking MPTRAC programs, such as `atm_init` and `atm_split`, to initialize the trajectory seeds, and `trac` to compute the trajectories.
 
 The script generates simulation output in the `examples/data` subdirectory. The corresponding reference data can be found in `examples/data.ref`.
 
 A set of plots of the simulation output at different time steps after the eruption, generated by means of the `gnuplot` plotting tool, can be found in `examples/plots`. The plots should look similar to the output provided in `examples/plots.ref`.
 
 This is an example showing the particle positions and grid output on 6th and 8th of June 2011:
+
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
 
@@ -124,15 +127,19 @@ More detailed information for users of MPTRAC is provided in the [user manual](h
 
 Information for developers of MPTRAC can be found in the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
 
+For additional information, please also refer to the [wiki](https://github.com/slcs-jsc/mptrac/wiki).
+
 ## Contributing
 
-We are interested in supporting operational and research applications with MPTRAC.
+We are committed to supporting both operational and research applications with MPTRAC.
 
-You can submit bug reports or feature requests on the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
+If you encounter any issues or have feature requests, please submit them on the [issue tracker](https://github.com/slcs-jsc/mptrac/issues).
 
-Proposed code changes and fixes can be submitted as [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
+For code changes or fixes, feel free to submit a [pull requests](https://github.com/slcs-jsc/mptrac/pulls).
 
-Please do not hesitate to contact us if you have any questions or need assistance.
+For detailed contribution instructions, check out our [contributing guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md).
+
+If you have any questions or need assistance, don't hesitate to reach out to us. We are happy to help!
 
 ## License
 
@@ -140,7 +147,7 @@ MPTRAC is being developed at the Jülich Supercomputing Centre, Forschungszentru
 
 MPTRAC is distributed under the terms of the [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
 
-Please see the [citation file](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff) for more information about citing the MPTRAC model in scientific publications.
+For information on how to cite the MPTRAC model in scientific publications, please refer to the [citation file](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff).
 
 ## Contact
 
