@@ -46,7 +46,7 @@ authors:
     orcid: 0000-0002-9271-6174
   - name: Nils Nobre Wittwer
     affiliation: "1, 2"
-    orcid: TODO
+    orcid: 0009-0001-3175-0889
   - name: Xue Wu
     affiliation: "5, 6"
     orcid: 0000-0002-0427-782X
@@ -93,7 +93,7 @@ MPTRAC computes air parcel trajectories using horizontal wind and vertical veloc
 
 ![Geophysical modules and main software components of the MPTRAC model. Image adapted from @hoffmann24.\label{fig:clusters}](clusters.png){ width=95% }
 
-Optimized for computational efficiency, MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for scalable deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It supports a wide range of output formats (ASCII, netCDF, VTK) for particle, grid, ensemble, profile, sample, and station data, facilitating seamless integration with various data analysis workflows. The results can be directly visualized using tools like Gnuplot and ParaView. MPTRAC is an open-source software distributed under the GNU GPL v3 license. Code and documentation are available in a [GitHub repository](https://github.com/slcs-jsc/mptrac). Software releases are archived on [Zenodo](https://doi.org/10.5281/zenodo.4400597).
+Optimized for computational efficiency, MPTRAC features an MPI-OpenMP-OpenACC hybrid parallelization for scalable deployment on workstations, HPC systems, and GPU platforms [@liu20; @hoffmann22; @hoffmann24]. It supports a wide range of output formats (ASCII table, netCDF, VTK) for particle, grid, ensemble, profile, sample, and station data, facilitating seamless integration with various data analysis workflows. The results can be directly visualized using tools like Gnuplot and ParaView. MPTRAC is an open-source software distributed under the GNU GPL v3 license. Code and documentation are available in a [GitHub repository](https://github.com/slcs-jsc/mptrac). Software releases are archived on [Zenodo](https://doi.org/10.5281/zenodo.4400597).
 
 # Applications
 
