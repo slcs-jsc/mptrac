@@ -4,7 +4,7 @@ With the parameter `MET_PRESS_LEVEL_DEF` vertical pressure levels can
 be selected from a number of definitions.  The definitions follow the
 [ECMWF's model level definitions](https://confluence.ecmwf.int/display/UDOC/Model+level+definitions).
 Additional levels up to ~1045 hPa have been added to avoid
-extrapolation levels near the surface.  Per default, the value is set
+extrapolation errors near the surface.  Per default, the value is set
 to -1 and hence pre-defined pressure level sets ignored.  The
 recommended pressure level set for ERA5 is number 6.
 
