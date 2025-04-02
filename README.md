@@ -129,11 +129,15 @@ Follow these steps to run the example simulation:
 
 1. Navigate to the example directory:
 
+```
     cd [mptrac_directory]/projects/example
+```
 
 2. Execute the `run.sh` script to start the simulation:
 
+```
     ./run.sh
+```
 
 The `run.sh` script outlines the necessary steps to invoke MPTRAC programs such as `atm_init` (for initializing trajectory seeds), `atm_split` (for splitting particle groups), and `trac` (for computing the trajectories). This script automates the simulation process, ensuring a smooth workflow.
 
