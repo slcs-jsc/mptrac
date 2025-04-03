@@ -4693,7 +4693,7 @@ void mptrac_read_ctl(
       SET_QNT(qnt_lwc, "lwc", "cloud liquid water content", "kg/kg")
       SET_QNT(qnt_rwc, "rwc", "cloud rain water content", "kg/kg")
       SET_QNT(qnt_iwc, "iwc", "cloud ice water content", "kg/kg")
-      SET_QNT(qnt_swc, "iwc", "cloud snow water content", "kg/kg")
+      SET_QNT(qnt_swc, "swc", "cloud snow water content", "kg/kg")
       SET_QNT(qnt_cc, "cc", "cloud cover", "1")
       SET_QNT(qnt_pct, "pct", "cloud top pressure", "hPa")
       SET_QNT(qnt_pcb, "pcb", "cloud bottom pressure", "hPa")
@@ -6818,9 +6818,9 @@ void read_met_cloud(
 
 	/* Check ice water and liquid water content... */
 	if (met->cc[ix][iy][ip] > ccmin
-	    && (met->iwc[ix][iy][ip] > cwmin
+	    && (met->lwc[ix][iy][ip] > cwmin
 		|| met->rwc[ix][iy][ip] > cwmin
-		|| met->lwc[ix][iy][ip] > cwmin
+		|| met->iwc[ix][iy][ip] > cwmin
 		|| met->swc[ix][iy][ip] > cwmin)) {
 
 	  /* Get cloud top pressure ... */
