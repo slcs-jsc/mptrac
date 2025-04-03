@@ -12,6 +12,14 @@ These links provide further information for users of MPTRAC:
 
 * [Other references](https://slcs-jsc.github.io/mptrac/references)
 
+* [Citation file](https://github.com/slcs-jsc/mptrac/blob/master/CITATION.cff)
+
+* [Code of conduct](https://github.com/slcs-jsc/mptrac/blob/master/CODE_OF_CONDUCT.md)
+
+* [Contributing guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md)
+
+* [Software dependencies](https://github.com/slcs-jsc/mptrac/blob/master/DEPENDENCIES.md)
+
 * [License](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 
 These links provide further informaton for developers of MPTRAC:
@@ -29,3 +37,5 @@ These links provide further informaton for developers of MPTRAC:
 * [Nightly builds](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds)
 
 * [ESM Buildbot](https://esm-buildbot.fz-juelich.de) (internal)
+
+* [exacb integration](https://gitlab.jsc.fz-juelich.de/jureap/projects/mptrac) (internal)

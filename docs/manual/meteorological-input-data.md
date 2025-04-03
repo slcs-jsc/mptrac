@@ -63,10 +63,10 @@ The [NCEP/NCAR Reanalysis 1](https://psl.noaa.gov/data/gridded/data.ncep.reanaly
 
 The [Global Forecast System (GFS)](https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/global-forcast-system-gfs) is a weather forecast model produced by the National Centers for Environmental Prediction (NCEP). Dozens of atmospheric and land-soil variables are available through this dataset, from temperatures, winds, and precipitation to soil moisture and atmospheric ozone concentration. The entire globe is covered by the GFS at a base horizontal resolution of 18 miles (28 kilometers) between grid points, which is used by the operational forecasters who predict weather out to 16 days in the future. Horizontal resolution drops to 44 miles (70 kilometers) between grid points for forecasts between one week and two weeks.
 
+## Interoperability with CLaMS data 
+
+MPTRAC can read meteorological data that follows the data format guidelines for the CLaMS model. This option can be set true with the parameter: MET_CLAMS = 1. Furthermore, the CLaMS data is provided in hybrid coordinates ($\eta$ coordinates). Therefore MET_VERT_COORD = 1 must be set and vertical pressure levels must be provided or chosen with the parameter MET_PRESS_LEVEL_DEF.
+
 ## MeteoCloud data archive in Jülich
 
 For registered users and collaboration partners at the Jülich Supercomputing Centre, Germany, a number of meteorological data sets are readily available for MPTRAC in netCDF file format. The data sets are stored in the [MeteoCloud data archive](https://datapub.fz-juelich.de/slcs/meteocloud) in Jülich. Please contact us in order to inquire about getting access to the data.
-
-## Interoperability with CLaMS data 
-
-MPTRAC can read meteorological data that follows the data format guidelines for the CLaMS. This option can be set true with the parameter: MET_CLAMS = 1. Furthermore, the CLaMS data is provided in hybrid coordinates ($\eta$ coordinates). Therefore MET_VERT_COORD = 1 must be set and vertical pressure levels must be provided or chosen with the parameter MET_PRESS_LEVEL_DEF.

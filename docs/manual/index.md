@@ -1,29 +1,37 @@
 # Welcome to MPTRAC!
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispersion model for the analysis of atmospheric transport processes in the free troposphere and stratosphere.
+Massive-Parallel Trajectory Calculations (MPTRAC) is a state-of-the-art Lagrangian particle dispersion model designed to analyze atmospheric transport processes in the free troposphere and stratosphere. Leveraging high-performance computing techniques, MPTRAC efficiently handles large-scale trajectory simulations, making it a powerful tool for both research and operational applications.
+
+![Lagrangian transport simulation of convective transport](img/convection_lowres.jpg)
 
 ## Features
 
-These are some of the most important features of the MPTRAC model:
+MPTRAC offers a wide range of features to support comprehensive atmospheric modeling and analysis:
 
-* MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using given horizontal wind and vertical velocity fields.
+- **Trajectory Calculations**: Computes air parcel trajectories by solving the kinematic equation of motion using specified horizontal wind and vertical velocity fields.
 
-* Mesoscale diffusion and sub-grid scale wind fluctuations are simulated using the Langevin equation to add stochastic perturbations to the trajectories.
+- **Mesoscale Diffusion and Stochastic Perturbations**: Models mesoscale diffusion and sub-grid scale wind fluctuations with the Langevin equation, incorporating stochastic perturbations to enhance simulation realism.
 
-* Additional modules are implemented to simulate convection, sedimentation, exponential decay, gas and aqueous phase chemistry, wet and dry deposition.
+- **Advanced Process Modules**: Simulates a range of atmospheric processes, including convection, sedimentation, exponential decay, gas and aqueous phase chemistry, as well as wet and dry deposition.
 
-* Meteo data pre-processing code to calculate boundary layer, convective available potential energy, geopotential heights, potential vorticity, and tropopause data.
+- **Meteorological Data Pre-processing**: Provides tools to calculate boundary layer characteristics, convective available potential energy (CAPE), geopotential heights, potential vorticity, and tropopause data.
 
-* Various output methods for particle, ensemble, gridded, sample, and station data. Gnuplot interface for direct visualization.
+- **Comprehensive Output and Visualization**: Supports multiple output formats such as particle, ensemble, gridded, sample, and station data. Includes direct visualization through the Gnuplot interface.
 
-* MPI-OpenMP-OpenACC hybrid parallelization for efficient use from single workstations to HPC and GPU systems.
+- **High-Performance Parallelization**: Leverages MPI-OpenMP-OpenACC hybrid parallelization for efficient execution on workstations, high-performance computing clusters, and GPU systems.
 
-* Distributed open source under the terms and conditions of the GNU GPL.
+- **Open Source and Collaborative Development**: Released under the GNU General Public License (GPL), promoting community involvement and open development.
+
+![Geophysical modules and main software components of MPTRAC](img/clusters.png)
+
+## Get Involved
+
+We encourage collaboration and welcome contributions from the research community. Feel free to reach out if you have questions, suggestions, or need support with MPTRAC.
 
 ## Contact
 
-We are interested in sharing MPTRAC for research applications. Please do not hesitate to contact us, if you have any questions or need support.
+Dr. Lars Hoffmann
 
-Dr. Lars Hoffmann, <l.hoffmann@fz-juelich.de>
+Jülich Supercomputing Centre, Forschungszentrum Jülich, Germany
 
-Jülich Supercomputing Centre, Forschungszentrum Jülich
+e-mail: <l.hoffmann@fz-juelich.de>

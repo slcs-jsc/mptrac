@@ -18,39 +18,74 @@ Example of output reported by the trac tool:
 SIZE_NP = 10000
 SIZE_MPI_TASKS = 1
 SIZE_OMP_THREADS = 4
-SIZE_ACC_DEVICES = 0
-MEMORY_ATM = 1220.7 MByte
-MEMORY_CACHE = 1885.26 MByte
-MEMORY_METEO = 6812.07 MByte
-MEMORY_DYNAMIC = 4019.6 MByte
-MEMORY_STATIC = 1307.61 MByte
-TIMER_INIT = 1.134 s
-TIMER_INPUT = 0.001 s
-TIMER_OUTPUT = 0.852 s
-TIMER_ADVECT = 0.705 s
-TIMER_DECAY = 0.141 s
-TIMER_DIFFMESO = 0.275 s
-TIMER_DIFFTURB = 0.322 s
-TIMER_ISOSURF = 0.000 s
-TIMER_METEO = 1.140 s
-TIMER_POSITION = 0.050 s
-TIMER_SEDI = 0.000 s
-TIMER_OHCHEM = 0.000 s
-TIMER_WETDEPO = 0.000 s
-TIMER_TOTAL = 4.639 s
+MEMORY_ATM = 1449.58 MByte
+MEMORY_CACHE = 648.499 MByte
+MEMORY_CLIM = 15.3182 MByte
+MEMORY_METEO = 7408.74 MByte
+TIMER_ALLOC = 0.000 s    (min= 6.9767e-05 s, mean= 6.9767e-05 s, max= 6.9767e-05 s, n= 1)
+TIMER_READ_CTL = 0.007 s    (min= 0.00717609 s, mean= 0.00717609 s, max= 0.00717609 s, n= 1)
+TIMER_READ_CLIM = 0.025 s    (min= 0.0254529 s, mean= 0.0254529 s, max= 0.0254529 s, n= 1)
+TIMER_READ_ATM = 0.028 s    (min= 0.0275215 s, mean= 0.0275215 s, max= 0.0275215 s, n= 1)
+TIMER_MODULE_TIMESTEPS_INIT = 0.002 s    (min= 0.002085 s, mean= 0.002085 s, max= 0.002085 s, n= 1)
+TIMER_GET_MET = 0.026 s    (min= 1.546e-06 s, mean= 1.76945e-05 s, max= 0.00997372 s, n= 1444)
+TIMER_READ_MET_GRID = 0.003 s    (min= 0.000771007 s, mean= 0.000873196 s, max= 0.000986955 s, n= 4)
+TIMER_READ_MET_SURFACE = 0.219 s    (min= 0.0519605 s, mean= 0.0547709 s, max= 0.0580699 s, n= 4)
+TIMER_READ_MET_LEVELS = 5.490 s    (min= 1.30604 s, mean= 1.37255 s, max= 1.39654 s, n= 4)
+TIMER_READ_MET_EXTRAPOLATE = 0.253 s    (min= 0.0239204 s, mean= 0.06324 s, max= 0.103068 s, n= 4)
+TIMER_READ_MET_POLAR_WINDS = 0.006 s    (min= 0.00125896 s, mean= 0.00153137 s, max= 0.00172609 s, n= 4)
+TIMER_READ_MET_PERIODIC = 0.002 s    (min= 0.000341735 s, mean= 0.000458583 s, max= 0.000582423 s, n= 4)
+TIMER_READ_MET_GEOPOT = 1.594 s    (min= 0.394668 s, mean= 0.398482 s, max= 0.402873 s, n= 4)
+TIMER_READ_MET_PV = 0.238 s    (min= 0.0565131 s, mean= 0.0594941 s, max= 0.0644101 s, n= 4)
+TIMER_READ_MET_PBL = 0.122 s    (min= 0.0269698 s, mean= 0.0306072 s, max= 0.0331155 s, n= 4)
+TIMER_READ_MET_TROPO = 0.737 s    (min= 0.183587 s, mean= 0.184353 s, max= 0.18602 s, n= 4)
+TIMER_READ_MET_CLOUD = 0.085 s    (min= 0.0204375 s, mean= 0.0213186 s, max= 0.0221769 s, n= 4)
+TIMER_READ_MET_CAPE = 2.116 s    (min= 0.517294 s, mean= 0.528923 s, max= 0.549389 s, n= 4)
+TIMER_READ_MET_OZONE = 0.122 s    (min= 0.020632 s, mean= 0.0305517 s, max= 0.041007 s, n= 4)
+TIMER_MODULE_CHEM_INIT = 0.000 s    (min= 0.000247314 s, mean= 0.000247314 s, max= 0.000247314 s, n= 1)
+TIMER_MODULE_TIMESTEPS = 0.302 s    (min= 2.6811e-05 s, mean= 0.000209307 s, max= 0.000455049 s, n= 1441)
+TIMER_MODULE_POSITION = 0.629 s    (min= 5.9016e-05 s, mean= 0.000218254 s, max= 0.000583772 s, n= 2882)
+TIMER_MODULE_ADVECT = 1.685 s    (min= 0.000162452 s, mean= 0.00116961 s, max= 0.00311676 s, n= 1441)
+TIMER_MODULE_DIFF_TURB = 1.742 s    (min= 0.000707676 s, mean= 0.00120864 s, max= 0.00243357 s, n= 1441)
+TIMER_MODULE_DIFF_MESO = 1.544 s    (min= 0.000488041 s, mean= 0.00107166 s, max= 0.00232684 s, n= 1441)
+TIMER_MODULE_CONVECTION = 0.962 s    (min= 0.000295857 s, mean= 0.000667748 s, max= 0.00142307 s, n= 1441)
+TIMER_MODULE_METEO = 0.014 s    (min= 0.00228027 s, mean= 0.0035394 s, max= 0.00568389 s, n= 4)
+TIMER_MODULE_BOUND_COND = 0.916 s    (min= 4.1641e-05 s, mean= 0.000317876 s, max= 0.000974128 s, n= 2882)
+TIMER_MODULE_DECAY = 0.427 s    (min= 0.000157237 s, mean= 0.000296458 s, max= 0.000618609 s, n= 1441)
+TIMER_MODULE_MIXING = 2.408 s    (min= 0.0298906 s, mean= 0.0329851 s, max= 0.0553491 s, n= 73)
+TIMER_MODULE_CHEM_GRID = 1.744 s    (min= 0.000420581 s, mean= 0.00121059 s, max= 0.00318095 s, n= 1441)
+TIMER_MODULE_OH_CHEM = 1.873 s    (min= 0.000114869 s, mean= 0.00129959 s, max= 0.00288309 s, n= 1441)
+TIMER_MODULE_H2O2_CHEM = 0.776 s    (min= 5.8315e-05 s, mean= 0.00053884 s, max= 0.00215969 s, n= 1441)
+TIMER_MODULE_TRACER_CHEM = 2.582 s    (min= 1.9956e-05 s, mean= 0.00179167 s, max= 0.0040358 s, n= 1441)
+TIMER_MODULE_WET_DEPO = 0.532 s    (min= 1.9342e-05 s, mean= 0.000369044 s, max= 0.000838083 s, n= 1441)
+TIMER_MODULE_DRY_DEPO = 0.453 s    (min= 2.7147e-05 s, mean= 0.000314659 s, max= 0.000882621 s, n= 1441)
+TIMER_WRITE_ATM = 0.192 s    (min= 0.0456917 s, mean= 0.0480724 s, max= 0.049666 s, n= 4)
+TIMER_WRITE_GRID = 0.328 s    (min= 0.0776646 s, mean= 0.0819251 s, max= 0.0879495 s, n= 4)
+TIMER_WRITE_CSI = 1.025 s    (min= 0.000456732 s, mean= 0.000711579 s, max= 0.00215784 s, n= 1441)
+TIMER_WRITE_ENS = 0.003 s    (min= 0.000652666 s, mean= 0.000704509 s, max= 0.000817902 s, n= 4)
+TIMER_WRITE_PROF = 5.827 s    (min= 0.000380689 s, mean= 0.0040439 s, max= 0.0294752 s, n= 1441)
+TIMER_WRITE_SAMPLE = 0.024 s    (min= 9.81003e-07 s, mean= 1.65024e-05 s, max= 0.0191332 s, n= 1441)
+TIMER_WRITE_STATION = 0.620 s    (min= 0.000347288 s, mean= 0.000430191 s, max= 0.00285026 s, n= 1441)
+TIMER_WRITE_VTK = 0.152 s    (min= 0.0374231 s, mean= 0.0378852 s, max= 0.0385151 s, n= 4)
+TIMER_FREE = 0.098 s    (min= 0.0981576 s, mean= 0.0981576 s, max= 0.0981576 s, n= 1)
+TIMER_GROUP_MEMORY = 0.098 s
+TIMER_GROUP_INPUT = 5.798 s
+TIMER_GROUP_PHYSICS = 18.593 s
+TIMER_GROUP_METPROC = 5.276 s
+TIMER_GROUP_OUTPUT = 8.171 s
+TIMER_TOTAL = 37.936 s
 ```
 
 SIZE_NP refers to the number of particles used in the simulation. SIZE_MPI_TASKS refers to the number of MPI tasks. SIZE_OMP_THREADS refers to the number of OpenMP threads per MPI task. SIZE_ACC_DEVICES refers to the number of GPU devices per MPI task.
 
 The memory needs have been derived by analyzing the data structures used in the code and are not based on measurements.
 
-Some timers are zero because the corresponding modules have not been used in this run.
+Some timers are zero or not shown because the corresponding modules have not been used in this run.
 
-A simple optimization of memory needs (and runtime!) is to adjust the constants EX, EY, and EZ defined in libtrac.h to match the grid dimensions of the meteorological data set and the constant NP to match the number of particles used in the simulation.
+A simple optimization of memory needs (and runtime!) is to adjust the constants EX, EY, and EZ defined in mptrac.h to match the grid dimensions of the meteorological data set and the constant NP to match the number of particles used in the simulation.
 
 ## Profiling of CPU runs
 
-CPU profiling of MPTRAC is enabled by means of gprof. Uncomment "PROF = 1" in the Makefile, recompile the code, and run a test case.
+CPU profiling of MPTRAC is enabled by means of gprof. Set "PROF = 1" in the Makefile, recompile the code, and run a test case.
 
 Runtime information will be collected in the file "gmon.out" in the working directory. Use "gprof [binary]" to see the runtime profile.
 
@@ -82,7 +117,7 @@ Each sample counts as 0.01 seconds.
 
 ## Profiling of GPU runs
 
-GPU profiling is enabled by means of NVIDIA Nsight Systems. To see NVTX markers in the timeline, uncomment "USE_NVTX = 1" in the Makefile before the compilation.
+GPU profiling is enabled by means of NVIDIA Nsight Systems. To see NVTX markers in the timeline, set "NVTX = 1" in the Makefile before the compilation.
 
 Please find an example here on how to enable Nsight systems profilings in a job script:
 
@@ -104,6 +139,6 @@ After the execution, you can visualize .qdrep files in nsys-ui. Take a look at "
 
 ## Further reading
 
-- [Nsight Systems documentation](https://developer.nvidia.com/nsight-systems)
-
 - [gprof manual](http://sourceware.org/binutils/docs/gprof)
+
+- [Nsight Systems documentation](https://developer.nvidia.com/nsight-systems)

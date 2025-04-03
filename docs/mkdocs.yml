@@ -2,7 +2,9 @@ site_name: MPTRAC
 site_url: https://slcs-jsc.github.io/mptrac/
 repo_url: https://github.com/slcs-jsc/mptrac
 docs_dir: manual
-theme: material
+theme:
+  name: material
+  logo: img/MPTRAC_320px.png
 
 markdown_extensions:
   - pymdownx.arithmatex:
@@ -23,13 +25,15 @@ nav:
         - Meteorological input data: meteorological-input-data.md
         - Model output data: model-output-data.md
         - Model physics: model-physics.md
+        - Diabatic transport: diabatic_transport.md
+        - Pressure levels: pressure_levels.md
         - Tropopause data: tropopause-data.md
     - Developer manual:
         - Code development: code-development.md
-        - Parallelization: parallelization.md
-        - Profiling: profiling.md
         - Fortran wrapper: fortran_wrapper.md
         - High-level interface: high_level_interface.md
+        - Parallelization: parallelization.md
+        - Profiling: profiling.md
     - Further information:
         - References: references.md
         - Links: links.md
