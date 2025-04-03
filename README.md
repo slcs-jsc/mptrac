@@ -65,7 +65,7 @@ For additional features such as high-performance computing (HPC) and GPU support
 
 Some of the required dependencies are included with the MPTRAC repository. See the next section for more details.
 
-For a complete list of dependencies, including specific versions and installation instructions, refer to the [dependencies file](https://github.com/slcs-jsc/mptrac/blob/master/dependencies.md).
+For a complete list of dependencies, including specific versions and installation instructions, refer to the [dependencies file](https://github.com/slcs-jsc/mptrac/blob/master/DEPENDENCIES.md).
 
 ### Installation
 

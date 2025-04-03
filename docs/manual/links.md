@@ -18,7 +18,7 @@ These links provide further information for users of MPTRAC:
 
 * [Contributing guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md)
 
-* [Software dependencies](https://github.com/slcs-jsc/mptrac/blob/master/dependencies.md)
+* [Software dependencies](https://github.com/slcs-jsc/mptrac/blob/master/DEPENDENCIES.md)
 
 * [License](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 
