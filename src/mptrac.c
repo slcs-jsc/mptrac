@@ -7332,6 +7332,7 @@ void read_met_grid(
   met->domain_count[3] = (size_t) met->nx;
   
   /* Create halos... */
+  /*
   if ((rank > ctl->dd_domains_meridional - 1)
    && (rank < size - ctl->dd_domains_meridional)) {
       // If we are not at the left or right edge extend in zonal direction...
@@ -7346,8 +7347,8 @@ void read_met_grid(
         met->domain_start[3] = met->domain_start[3] - ctl->dd_halos_size;
   }
   
-  if ((rank%ctl->dd_domains_meridional > 0)
-   && (rank%ctl->dd_domains_meridional <  ctl->dd_domains_meridional -1 )) {
+  if ((rank - ctl->dd_domains_meridional > 0)
+   && (rank - ctl->dd_domains_meridional <  ctl->dd_domains_meridional -1 )) {
       // If we are not at the upper or lower edge extend in meridional direction...
       // Move the start point one point down...
       met->domain_count[2] = met->domain_count[2] + ctl->dd_halos_size*2;
@@ -7359,6 +7360,16 @@ void read_met_grid(
         // If we are not at the top, move the start one upward... 
         met->domain_start[2] = met->domain_start[2] - ctl->dd_halos_size;
   }
+  */
+  /* Get information to create halos at zonal boundaries... */
+  /*
+  if rank < 
+  met->bound_domain_count[0] = ; 
+  met->bound_domain_count[1] = (size_t) met->np; 
+  met->bound_domain_count[2] = (size_t) (met->ny + ; // This actually need to be extended... and depending on corner cases so annoying...//
+  met->bound_domain_count[3] = (size_t) ctl->dd_halos_size;
+  */
+  /* Change meteo data limits according to halo sizes... */
 
   /* Get the range of the entire meteodata... */
   double lon_range = met->lon[ met->nx_glob - 1 ] - met->lon[0];
@@ -7605,8 +7616,8 @@ void read_met_levels(
   for (int ip = 1; ip < met->np; ip++) {
     printf("%f\n", met->p[ip - 1]);
     
-    //if (met->p[ip - 1] < met->p[ip])
-      //ERRMSG("Pressure levels must be descending!");
+    if (met->p[ip - 1] < met->p[ip])
+      ERRMSG("Pressure levels must be descending!");
   }
 
 }
