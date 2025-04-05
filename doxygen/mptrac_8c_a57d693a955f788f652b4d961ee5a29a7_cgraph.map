@@ -1,0 +1,6 @@
+<map id="mptrac_init" name="mptrac_init">
+<area shape="rect" id="node1" title="Initializes the MPTRAC model and its associated components." alt="" coords="5,56,92,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a9430c769e61661f2da526feb29d2d032" title="Initialize random number generators for parallel tasks." alt="" coords="160,5,273,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a3f42ca12ace33e1168edaaf4b96e5a60" title="Initialize start time and time interval for time&#45;stepping." alt="" coords="141,56,293,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a55562b13a38a124b0abc09ce8511dde9" title="Updates device memory for specified data structures." alt="" coords="140,107,293,133"/>
+</map>
