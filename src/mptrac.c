@@ -5568,43 +5568,51 @@ void mptrac_run_timestep(
   //if ( rankd==0 ) {
   //  printf("Before communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
   //}
-    
-  // Debugging only...
+
   /* Domain decomposition... */
   if (ctl->dd_domains_meridional*ctl->dd_domains_zonal > 1) {
     //module_dd()
-  
+    
     /* Initialize particles locally... */
     particle_t* particles;
-    ALLOC(particles, particle_t, atm->np);
+    ALLOC(particles, particle_t, NP);
   
     /* Get the MPI information... */
     int rank;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     int size = ctl->dd_domains_meridional*ctl->dd_domains_zonal;
+
+    LOG(1, "Starting module_dd with %d particles on rank %d", atm->np, rank);
         
     /* Register the MPI_Particle data type... */
+    LOG(1, "Register the MPI_Particle data type.")
     MPI_Datatype MPI_Particle;
     dd_register_MPI_type_particle(&MPI_Particle);
     
     /* Define communication destinations ... */
+    LOG(1, "Define communication destinations.")
     int destinations[8];
     dd_get_rect_destination(*ctl, destinations, rank, size);
    
     /* Assign particles to new domains... */
+    LOG(1, "Assign particles to new domains.")
     dd_assign_rect_domains_atm( atm, *met0, *ctl, rank, destinations, 0);
     
     /* Transform from struct of array to array of struct... */
+    LOG(1, "Transform from SoA to AoS.")
     atm2particles(atm, particles, *ctl);
     
     /* Perform the communication... */
+    LOG(1, "Peform the communication.")
     dd_communicate_particles( particles, &atm->np, MPI_Particle, 
       destinations, ctl->dd_nbr_neighbours , *ctl, cache->dt);
       
     /* Transform from array of struct to struct of array... */
+    LOG(1, "Transform from AoS to SoA.")
     particles2atm(atm, particles, *ctl); 
     
+    LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
     MPI_Type_free(&MPI_Particle);
     
@@ -12170,6 +12178,7 @@ void dd_communicate_particles(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   /* Sending... */
+  LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
   for (int idest = 0; idest < ndestinations; idest++) {
     
     /* Ignore poles... */
@@ -12199,7 +12208,8 @@ void dd_communicate_particles(
     /* Fill the send buffer... */
     int ibs = 0;
     int offset = 1;
-    for (int ip = *nparticles-1; ip > 0; ip--) {
+    for (int ip = *nparticles-1; ip >= 0; ip--) {
+
       // Only add those elements whithout 'graveyard' 
       // and with the right destinations...
       if ((int) particles[ip].q[ctl.qnt_domain] != -1
@@ -12216,6 +12226,10 @@ void dd_communicate_particles(
         if (offset == *nparticles-ip)
           offset++;
 
+        // Check if all particles are already inserted...
+        if (ibs == nbs[idest])
+          break;
+
       }
     }
 
@@ -12229,24 +12243,26 @@ void dd_communicate_particles(
 
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
+
   /* Recieving... */
+  LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
   for (int isourc = 0; isourc < ndestinations; isourc++) {
   
-  /* Ignore poles... */
-  if (destinations[isourc]<0)
-    continue;
+    /* Ignore poles... */
+    if (destinations[isourc]<0)
+      continue;
 
-  /* Recieve buffer sizes... */
-  MPI_Status status;
-  MPI_Recv( &nbr[isourc], 1, MPI_INT, destinations[isourc], 0, MPI_COMM_WORLD,  &status);
+    /* Recieve buffer sizes... */
+    MPI_Status status;
+    MPI_Recv( &nbr[isourc], 1, MPI_INT, destinations[isourc], 0, MPI_COMM_WORLD,  &status);
 
-  /* Continue with other neighbours if there is no signal... */
-  if (nbr[isourc]==0)
-    continue;
+    /* Continue with other neighbours if there is no signal... */
+    if (nbr[isourc]==0)
+      continue;
 
-  /* Allocate buffer for recieving... */
-  ALLOC( recieve_buffers[isourc], particle_t, nbr[isourc]);
-  MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, destinations[isourc], 1, MPI_COMM_WORLD, &status);
+    /* Allocate buffer for recieving... */
+    ALLOC( recieve_buffers[isourc], particle_t, nbr[isourc]);
+    MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, destinations[isourc], 1, MPI_COMM_WORLD, &status);
     
   }
 
@@ -12256,6 +12272,7 @@ void dd_communicate_particles(
   /* Smallest particle index for first possible graveyard... */
   int api = 0;
 
+  LOG(1, "Putting buffer into particle array: %d with %d particles in list.", rank, *nparticles);
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < ndestinations; isourc++) {
     
@@ -12267,13 +12284,17 @@ void dd_communicate_particles(
     if (nbr[isourc] > 0) {
       int ipbr = 0;
       for (int ip = api; ip < NP; ip++) {
-        if ((int) particles[ip].q[ctl.qnt_domain] == -1) {
+        // Add if there is an empty space within the existing list or if list needs expansions...
+        if ( ((ip < *nparticles) && ((int) particles[ip].q[ctl.qnt_domain] == -1)) ||
+             (ip > *nparticles)) {
           memcpy(&particles[ip], &recieve_buffers[isourc][ipbr], sizeof(particle_t));
           dt[ip] = ctl.dt_mod;
           particles[ip].q[ctl.qnt_destination] = rank;
           particles[ip].q[ctl.qnt_domain] = rank;
           ipbr++; 
         }  
+
+        // Check if buffer was filled and save new size after expansion...
         if (ipbr == nbr[isourc]) {
           api = ip;
           break;
@@ -12284,11 +12305,18 @@ void dd_communicate_particles(
     /* Increase the particle array limit... */
     if (*nparticles < api)
       *nparticles = api;
+
   }
+
+
+  /* Logging of communication ... */
+  for (int isourc = 0; isourc < ndestinations; isourc++)
+    LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank, destinations[isourc], nbs[isourc], nbr[isourc]);
 
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
 
+  LOG(1, "Free all the buffer.")
   /* Free buffers and buffersizes... */
   for (int i = 0; i < ndestinations; i++) {
         
