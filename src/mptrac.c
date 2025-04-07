@@ -4698,7 +4698,7 @@ void mptrac_read_ctl(
       SET_QNT(qnt_lwc, "lwc", "cloud liquid water content", "kg/kg")
       SET_QNT(qnt_rwc, "rwc", "cloud rain water content", "kg/kg")
       SET_QNT(qnt_iwc, "iwc", "cloud ice water content", "kg/kg")
-      SET_QNT(qnt_swc, "iwc", "cloud snow water content", "kg/kg")
+      SET_QNT(qnt_swc, "swc", "cloud snow water content", "kg/kg")
       SET_QNT(qnt_cc, "cc", "cloud cover", "1")
       SET_QNT(qnt_pct, "pct", "cloud top pressure", "hPa")
       SET_QNT(qnt_pcb, "pcb", "cloud bottom pressure", "hPa")
@@ -4863,28 +4863,34 @@ void mptrac_read_ctl(
   ctl->met_np = (int) scan_ctl(filename, argc, argv, "MET_NP", -1, "0", NULL);
   if (ctl->met_np > EP)
     ERRMSG("Too many pressure levels!");
+
+    ctl->met_nlev =
+    (int) scan_ctl(filename, argc, argv, "MET_NLEV", -1, "0", NULL);
+  
   ctl->met_press_level_def =
     (int) scan_ctl(filename, argc, argv, "MET_PRESS_LEVEL_DEF", -1, "-1",
 		   NULL);
+
   if (ctl->met_press_level_def >= 0) {
-    level_definitions(ctl);
-  } else {
-    if (ctl->met_np > 0) {
-      for (int ip = 0; ip < ctl->met_np; ip++)
-	ctl->met_p[ip] =
-	  scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
-    }
+      level_definitions(ctl);
+    } else {
+      if (ctl->met_np > 0) {
+        for (int ip = 0; ip < ctl->met_np; ip++)
+          ctl->met_p[ip] =
+          scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
+      }
   }
-  ctl->met_nlev =
-    (int) scan_ctl(filename, argc, argv, "MET_NLEV", -1, "0", NULL);
+   
   if (ctl->met_nlev > EP)
     ERRMSG("Too many model levels!");
+
   for (int ip = 0; ip < ctl->met_nlev; ip++) {
     ctl->met_lev_hyam[ip] =
       scan_ctl(filename, argc, argv, "MET_LEV_HYAM", ip, "", NULL);
     ctl->met_lev_hybm[ip] =
       scan_ctl(filename, argc, argv, "MET_LEV_HYBM", ip, "", NULL);
   }
+
   ctl->met_geopot_sx =
     (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
   ctl->met_geopot_sy =
@@ -5384,6 +5390,8 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "DD_NBR_NEIGHBOURS", -1, "8", NULL);
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
+
+
 }
 
 /*****************************************************************************/
@@ -5557,9 +5565,9 @@ void mptrac_run_timestep(
   int rankd = 0;
   MPI_Comm_rank(MPI_COMM_WORLD,&rankd);
 
-  if ( rankd==0 ) {
-    printf("Before communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
-  }
+  //if ( rankd==0 ) {
+  //  printf("Before communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
+  //}
     
   // Debugging only...
   /* Domain decomposition... */
@@ -5605,11 +5613,10 @@ void mptrac_run_timestep(
 
   }  
 
-  if ( rankd==0 ) {
-    printf("After communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
-  }
+  //if ( rankd==0 ) {
+  //  printf("After communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
+  //}
     
-
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
 #ifdef KPP
@@ -7514,6 +7521,7 @@ void read_met_levels(
 	    if (!read_met_nc_3d_par
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
+
     }
 
     /* Use a and b coefficients for full levels... */
@@ -7608,17 +7616,15 @@ void read_met_levels(
 
     /* Set new pressure levels... */
     met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
+    for (int ip = 0; ip < met->np; ip++) {
       met->p[ip] = ctl->met_p[ip];
+    }
   }
 
   /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++) {
-    printf("%f\n", met->p[ip - 1]);
-    
+  for (int ip = 1; ip < met->np; ip++)    
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
-  }
 
 }
 

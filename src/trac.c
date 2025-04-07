@@ -98,7 +98,7 @@ int main(
 
     /* Initialize MPTRAC... */
     mptrac_init(ctl, cache, clim, atm, ntask);
-    
+
     /* ------------------------------------------------------------
        Loop over timesteps...
        ------------------------------------------------------------ */
