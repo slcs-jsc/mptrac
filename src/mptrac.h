@@ -112,6 +112,7 @@
    Includes...
    ------------------------------------------------------------ */
 
+#include <stdbool.h>
 #include <ctype.h>
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_math.h>
@@ -3683,6 +3684,12 @@ typedef struct {
   
   size_t domain_start[4];
   size_t domain_count[4];
+
+  size_t halo_bnd_start[4];
+  size_t halo_bnd_count[4];
+
+  int halo_offset_start;
+  int halo_offset_end;
   
   /*! Global sizes of meteo data... */
   int nx_glob;

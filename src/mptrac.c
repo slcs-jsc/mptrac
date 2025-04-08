@@ -5618,7 +5618,6 @@ void mptrac_run_timestep(
     
     /* Free local particle array... */
     free(particles);
-
   }  
 
   //if ( rankd==0 ) {
@@ -7330,11 +7329,36 @@ void read_met_grid(
       break;
     }
 
-  /* Adapt lon und lat data to domain decomposition... */
-  int rank;
+  /* Get the MPI information... */
+  int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_rank(MPI_COMM_WORLD, &size);
 
-  /* Start... */
+  /* Check for edge cases... */
+  bool left = (rank <= ctl->dd_domains_meridional-1);
+  bool right = (rank >= size-ctl->dd_domains_meridional);
+  bool top = (rank % ctl->dd_domains_meridional == 0);
+  bool bottom = (rank % ctl->dd_domains_meridional == ctl->dd_domains_meridional - 1);
+
+  /* Extend subdomains at the right and bottom to fit the full domain. */
+  if (right) {
+    int gap = met->nx_glob - ctl->dd_domains_zonal*met->nx;
+    if (gap > 0) {
+      met->nx = met->nx + gap;
+      WARN("Extended subdomains at the right to fit to full domain.");
+    }
+  }
+
+  if (bottom) {
+    int gap = met->ny_glob - ctl->dd_domains_meridional*met->ny;
+    if (gap > 0) {
+      met->nx = met->ny + gap;
+      WARN("Extended subdomains at the bottom to fit to full domain.");
+    }
+
+  }
+
+  /* Set the hyperslab for the subdomain... */
   met->domain_start[0] = 0;
   met->domain_start[1] = 0;
   met->domain_start[2] = (size_t)((rank % ctl->dd_domains_meridional)*met->ny);
@@ -7345,46 +7369,50 @@ void read_met_grid(
   met->domain_count[1] = (size_t) met->np; 
   met->domain_count[2] = (size_t) met->ny;
   met->domain_count[3] = (size_t) met->nx;
-  
-  /* Create halos... */
-  /*
-  if ((rank > ctl->dd_domains_meridional - 1)
-   && (rank < size - ctl->dd_domains_meridional)) {
+ 
+  /* Create halos and include them into the subdomain... */
+  if (!left && !right) {
       // If we are not at the left or right edge extend in zonal direction...
       // Move the start one point to the left...
-      met->domain_count[3] = met->domain_count[3] + ctl->dd_halos_size*2;
-      met->domain_start[3] = met->domain_start[3] - ctl->dd_halos_size;
+      met->domain_count[3] = met->domain_count[3] + (size_t) (ctl->dd_halos_size*2);
+      met->domain_start[3] = met->domain_start[3] - (size_t) ctl->dd_halos_size;
      } else {
       // If we are at the left or right edge, extend only in one zonal direction...
-      met->domain_count[3] = met->domain_count[3] + ctl->dd_halos_size;
-      if (rank > ctl->dd_domains_meridional - 1 )
+      met->domain_count[3] = met->domain_count[3] + (size_t) ctl->dd_halos_size;
+      if (!left)
         // If we are not at the left edge, move the start to the left... 
-        met->domain_start[3] = met->domain_start[3] - ctl->dd_halos_size;
+        met->domain_start[3] = met->domain_start[3] - (size_t) ctl->dd_halos_size;
   }
   
-  if ((rank - ctl->dd_domains_meridional > 0)
-   && (rank - ctl->dd_domains_meridional <  ctl->dd_domains_meridional -1 )) {
+  if ( !top && !bottom ) {
       // If we are not at the upper or lower edge extend in meridional direction...
       // Move the start point one point down...
-      met->domain_count[2] = met->domain_count[2] + ctl->dd_halos_size*2;
-      met->domain_start[2] = met->domain_start[2] - ctl->dd_halos_size;
+      met->domain_count[2] = met->domain_count[2] + (size_t) (ctl->dd_halos_size*2);
+      met->domain_start[2] = met->domain_start[2] - (size_t) ctl->dd_halos_size;
     } else {
       // If we are at the top or the lower edge only extend in one mer. direction...
-      met->domain_count[2] = met->domain_count[2] + ctl->dd_halos_size;
-      if (rank%ctl->dd_domains_meridional > 0)
+      met->domain_count[2] = met->domain_count[2] + (size_t) ctl->dd_halos_size;
+      if (!top)
         // If we are not at the top, move the start one upward... 
-        met->domain_start[2] = met->domain_start[2] - ctl->dd_halos_size;
+        met->domain_start[2] = met->domain_start[2] - (size_t) ctl->dd_halos_size;
   }
-  */
-  /* Get information to create halos at zonal boundaries... */
-  /*
-  if rank < 
-  met->bound_domain_count[0] = ; 
-  met->bound_domain_count[1] = (size_t) met->np; 
-  met->bound_domain_count[2] = (size_t) (met->ny + ; // This actually need to be extended... and depending on corner cases so annoying...//
-  met->bound_domain_count[3] = (size_t) ctl->dd_halos_size;
-  */
-  /* Change meteo data limits according to halo sizes... */
+
+  /* Set boundary halo hyperslabs ... */
+  if ( left || right ) {
+
+      met->nx = met->nx + ctl->dd_halos_size;
+    
+      met->halo_bnd_start[0] = 0;
+      met->halo_bnd_start[1] = 0;
+      met->halo_bnd_start[3] = (size_t)(left ? (met->nx_glob - ctl->dd_halos_size) : (0)); //x
+      met->halo_bnd_start[2] = (size_t)(met->domain_start[2] - (size_t) ctl->dd_halos_size); //y
+      
+      met->halo_bnd_count[0] = 1;
+      met->halo_bnd_count[1] = (size_t) met->np;
+      met->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
+      met->halo_bnd_count[2] = (size_t) met->ny; 
+  
+  }  
 
   /* Get the range of the entire meteodata... */
   double lon_range = met->lon[ met->nx_glob - 1 ] - met->lon[0];
@@ -7392,14 +7420,28 @@ void read_met_grid(
   
   /* Focus on domain longitutes and latitudes... */
   for ( int iy = 0; iy < (int) met->domain_count[2]; iy++) {
-  	int iy_ = (int) met->domain_start[2] + iy;
-  	met->lat[iy] = met->lat[iy_];}
-  
+    int iy_ = (int) met->domain_start[2] + iy;
+    met->lat[iy] = met->lat[iy_];
+  }
+
+  met->halo_offset_start =  (left ? (int) met->halo_bnd_count[3] : 0);
   for ( int ix = 0; ix < (int) met->domain_count[3]; ix++) {
-  	int ix_ = (int) met->domain_start[3] + ix;
-  	met->lon[ix] = met->lon[ix_];}
+    int ix_ = (int) met->domain_start[3] + ix;
+    met->lon[ix + met->halo_offset_start] = met->lon[ix_];
+  }
+
+  met->halo_offset_end = (left ? 0 : (int) met->domain_count[3] + ctl->dd_halos_size);
+  double lon_shift = (left ? -360 : 360);
+  for ( int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
+     int ix_ = (int) met->halo_bnd_start[3] + ix;
+     met->lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
+  }
+  
+  /* Reset the grid dimensions... */
+  met->nx = (int) met->domain_count[3] + (int) met->halo_bnd_count[3];
+  met->ny = (int) met->domain_count[2];
   	
-  // Determine domain edges...
+  /* Determine domain edges... */
   met->domain_lon_min = floor (rank / ctl->dd_domains_meridional)
                         * (lon_range) / (double) ctl->dd_domains_zonal;
   met->domain_lon_max = met->domain_lon_min
@@ -7409,11 +7451,14 @@ void read_met_grid(
   met->domain_lat_min = met->domain_lat_max
                         + (lat_range) / (double) ctl->dd_domains_meridional;
   
- 
   LOG(2, " %d Domain longitudes: %g, %g ... %g deg", rank,
       met->lon[0], met->lon[1], met->lon[met->nx - 1]);
   LOG(2, " %d Domain latitudes: %g, %g ... %g deg", rank,
       met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+
+  LOG(2, "Max dim sizes: %d-%d-%d : Met: %d-%d-%d : Halo Bnd: %d-%d-%d : Domain :  %d-%d-%d", EX, EY, EP, met->nx, met->ny, met->np, 
+    (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1],
+    (int) met->domain_count[3], (int) met->domain_count[2], (int) met->domain_count[1]);
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
@@ -8438,38 +8483,70 @@ int read_met_nc_3d_par(
     /* Read data... */
     printf("nc_get_vara_float\n");
     NC(nc_get_vara_float(ncid, varid, met->domain_start, met->domain_count, help));
-            
+
+    /* Read halos separately at boundaries... */
+    float* help_halo;
+    ALLOC(help_halo, float, met->halo_bnd_count[0]*met->halo_bnd_count[1]*met->halo_bnd_count[2]*met->halo_bnd_count[3])
+    NC(nc_get_vara_float(ncid, varid,  met->halo_bnd_start, met->halo_bnd_count, help_halo));
+
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
-	printf("store data in dest...\n");
       /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-      for (int ix = 0; ix < met->nx; ix++)
-	      for (int iy = 0; iy < met->ny; iy++)
+      for (int ix = 0; ix < (int) met->domain_count[3]; ix++)
+	      for (int iy = 0; iy < (int) met->domain_count[2]; iy++)
 	        for (int ip = 0; ip < met->np; ip++) {
-	  	float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
-	  	if ((fillval == 0 || aux != fillval)
-	      		&& (missval == 0 || aux != missval)
-	      		&& fabsf(aux) < 1e14f)
-	    		dest[ix][iy][ip] = scl * aux;
-	  	else
-	    		dest[ix][iy][ip] = NAN;
+            float aux = help[ARRAY_3D(ip, iy, (int) met->domain_count[2], ix, (int) met->domain_count[3])];
+	  	      if ((fillval == 0 || aux != fillval)
+	      		  && (missval == 0 || aux != missval)
+	      		  && fabsf(aux) < 1e14f)
+	    		    dest[ix +  met->halo_offset_end][iy][ip] = scl * aux;
+	  	      else
+	    		    dest[ix +  met->halo_offset_end][iy][ip] = NAN;
 	      }
+#pragma omp parallel for default(shared) num_threads(12)
+        for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
+          for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
+            for (int ip = 0; ip < met->np; ip++) {
+              float aux = help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix, (int) met->halo_bnd_count[3])];
+              if ((fillval == 0 || aux != fillval)
+                && (missval == 0 || aux != missval)
+                && fabsf(aux) < 1e14f)
+                dest[ix + met->halo_offset_start][iy][ip] = scl * aux;
+              else
+                dest[ix + met->halo_offset_start][iy][ip] = NAN;
+          }
+
     } else {
 
       /* Copy and check data (ordering: lon, lat, lev)... */
 #pragma omp parallel for default(shared) num_threads(12)
       for (int ip = 0; ip < met->np; ip++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ix = 0; ix < met->nx; ix++) {
-	    float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-	    if ((fillval == 0 || aux != fillval)
-		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
-	      dest[ix][iy][ip] = scl * aux;
-	    else
-	      dest[ix][iy][ip] = NAN;
-	  }
+	      for (int iy = 0; iy < (int) met->domain_count[2]; iy++)
+	        for (int ix = 0; ix < (int) met->domain_count[3]; ix++) {
+	          float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	          if ((fillval == 0 || aux != fillval)
+		          && (missval == 0 || aux != missval)
+		          && fabsf(aux) < 1e14f)
+	            dest[ix +  met->halo_offset_end][iy][ip] = scl * aux;
+	          else
+	            dest[ix +  met->halo_offset_end][iy][ip] = NAN;
+	    }
+
+/* Copy and check data (ordering: lon, lat, lev)... */
+#pragma omp parallel for default(shared) num_threads(12)
+for (int ip = 0; ip < met->np; ip++)
+  for (int iy = 0; iy < (int)met->halo_bnd_count[2]; iy++)
+    for (int ix = 0; ix < (int)met->halo_bnd_count[3]; ix++) {
+      float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+      if ((fillval == 0 || aux != fillval)
+        && (missval == 0 || aux != missval)
+        && fabsf(aux) < 1e14f)
+        dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
+      else
+        dest[ix +  met->halo_offset_start][iy][ip] = NAN;
+}
+
     }
     
     /* Free... */
@@ -12218,6 +12295,12 @@ void dd_communicate_particles(
         memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
    
         // Mark old place as 'graveyard'...
+        // Only for debugging
+        particles[ip].lon = -1;
+        particles[ip].lat = -1;
+        particles[ip].time = -1;
+
+        // This is required...
         particles[ip].q[ctl.qnt_domain] = -1;
         dt[ip] = 0;
         ibs++;
