@@ -6910,9 +6910,9 @@ void read_met_cloud(
 
 	/* Check ice water and liquid water content... */
 	if (met->cc[ix][iy][ip] > ccmin
-	    && (met->iwc[ix][iy][ip] > cwmin
+	    && (met->lwc[ix][iy][ip] > cwmin
 		|| met->rwc[ix][iy][ip] > cwmin
-		|| met->lwc[ix][iy][ip] > cwmin
+		|| met->iwc[ix][iy][ip] > cwmin
 		|| met->swc[ix][iy][ip] > cwmin)) {
 
 	  /* Get cloud top pressure ... */
