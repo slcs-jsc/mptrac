@@ -7333,12 +7333,20 @@ void read_met_grid(
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_rank(MPI_COMM_WORLD, &size);
+  rank = 5;
+  size = 9;
 
   /* Check for edge cases... */
   bool left = (rank <= ctl->dd_domains_meridional-1);
   bool right = (rank >= size-ctl->dd_domains_meridional);
   bool top = (rank % ctl->dd_domains_meridional == 0);
   bool bottom = (rank % ctl->dd_domains_meridional == ctl->dd_domains_meridional - 1);
+
+  /* Set the hyperslab for the subdomain... */
+  met->domain_start[0] = 0;
+  met->domain_start[1] = 0;
+  met->domain_start[2] = (size_t)((rank % ctl->dd_domains_meridional)*met->ny);
+  met->domain_start[3] = (size_t)(floor (rank / ctl->dd_domains_meridional)*met->nx);
 
   /* Extend subdomains at the right and bottom to fit the full domain. */
   if (right) {
@@ -7352,17 +7360,11 @@ void read_met_grid(
   if (bottom) {
     int gap = met->ny_glob - ctl->dd_domains_meridional*met->ny;
     if (gap > 0) {
-      met->nx = met->ny + gap;
+      met->ny = met->ny + gap;
       WARN("Extended subdomains at the bottom to fit to full domain.");
     }
 
   }
-
-  /* Set the hyperslab for the subdomain... */
-  met->domain_start[0] = 0;
-  met->domain_start[1] = 0;
-  met->domain_start[2] = (size_t)((rank % ctl->dd_domains_meridional)*met->ny);
-  met->domain_start[3] = (size_t)(floor (rank / ctl->dd_domains_meridional)*met->nx);
   
   /* Block-size, i.e. count */
   met->domain_count[0] = 1; 
@@ -7398,6 +7400,7 @@ void read_met_grid(
   }
 
   /* Set boundary halo hyperslabs ... */
+  double lon_shift = 0;
   if ( left || right ) {
 
       met->nx = met->nx + ctl->dd_halos_size;
@@ -7405,13 +7408,16 @@ void read_met_grid(
       met->halo_bnd_start[0] = 0;
       met->halo_bnd_start[1] = 0;
       met->halo_bnd_start[3] = (size_t)(left ? (met->nx_glob - ctl->dd_halos_size) : (0)); //x
-      met->halo_bnd_start[2] = (size_t)(met->domain_start[2] - (size_t) ctl->dd_halos_size); //y
+      met->halo_bnd_start[2] = met->domain_start[2]; //y
       
       met->halo_bnd_count[0] = 1;
       met->halo_bnd_count[1] = (size_t) met->np;
       met->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
-      met->halo_bnd_count[2] = (size_t) met->ny; 
+      met->halo_bnd_count[2] = (size_t) met->ny + (size_t) ctl->dd_halos_size * ((top || bottom) ?  1 : 2 ); 
   
+      met->halo_offset_start =  (left ? (int) met->halo_bnd_count[3] : 0);
+      met->halo_offset_end = (left ? 0 : (int) met->domain_count[3]);
+      lon_shift = (left ? -360 : 360);
   }  
 
   /* Get the range of the entire meteodata... */
@@ -7424,22 +7430,28 @@ void read_met_grid(
     met->lat[iy] = met->lat[iy_];
   }
 
-  met->halo_offset_start =  (left ? (int) met->halo_bnd_count[3] : 0);
+  /* Keep space at the beginning or end of the array for halo...*/
+  double help_lon[EX];
+
   for ( int ix = 0; ix < (int) met->domain_count[3]; ix++) {
     int ix_ = (int) met->domain_start[3] + ix;
-    met->lon[ix + met->halo_offset_start] = met->lon[ix_];
+    //met->lon[ix + met->halo_offset_start] = met->lon[ix_];
+    help_lon[ix + met->halo_offset_start] = met->lon[ix_];
   }
 
-  met->halo_offset_end = (left ? 0 : (int) met->domain_count[3] + ctl->dd_halos_size);
-  double lon_shift = (left ? -360 : 360);
   for ( int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
      int ix_ = (int) met->halo_bnd_start[3] + ix;
-     met->lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
+    help_lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
+    //met->lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
   }
   
   /* Reset the grid dimensions... */
   met->nx = (int) met->domain_count[3] + (int) met->halo_bnd_count[3];
   met->ny = (int) met->domain_count[2];
+
+  for ( int ix = 0; ix < (int) met->nx; ix++) {
+    met->lon[ix] = help_lon[ix];
+  }
   	
   /* Determine domain edges... */
   met->domain_lon_min = floor (rank / ctl->dd_domains_meridional)
@@ -7459,6 +7471,8 @@ void read_met_grid(
   LOG(2, "Max dim sizes: %d-%d-%d : Met: %d-%d-%d : Halo Bnd: %d-%d-%d : Domain :  %d-%d-%d", EX, EY, EP, met->nx, met->ny, met->np, 
     (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1],
     (int) met->domain_count[3], (int) met->domain_count[2], (int) met->domain_count[1]);
+  LOG(2, "Domain starts %ld-%ld-%ld : Halo start : %ld-%ld-%ld : Offsets: %d-%d",met->domain_start[3], met->domain_start[2], met->domain_start[1],
+  met->halo_bnd_start[3], met->halo_bnd_start[2], met->halo_bnd_start[1], met->halo_offset_start, met->halo_offset_end);
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
