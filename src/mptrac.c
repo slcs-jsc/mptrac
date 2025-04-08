@@ -7333,8 +7333,6 @@ void read_met_grid(
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_rank(MPI_COMM_WORLD, &size);
-  rank = 5;
-  size = 9;
 
   /* Check for edge cases... */
   bool left = (rank <= ctl->dd_domains_meridional-1);
@@ -8499,12 +8497,14 @@ int read_met_nc_3d_par(
     NC(nc_get_vara_float(ncid, varid, met->domain_start, met->domain_count, help));
 
     /* Read halos separately at boundaries... */
+    printf("Read halos\n");
     float* help_halo;
     ALLOC(help_halo, float, met->halo_bnd_count[0]*met->halo_bnd_count[1]*met->halo_bnd_count[2]*met->halo_bnd_count[3])
     NC(nc_get_vara_float(ncid, varid,  met->halo_bnd_start, met->halo_bnd_count, help_halo));
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
+      printf("COPY and check data...\n");
       /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
       for (int ix = 0; ix < (int) met->domain_count[3]; ix++)
@@ -8514,10 +8514,11 @@ int read_met_nc_3d_par(
 	  	      if ((fillval == 0 || aux != fillval)
 	      		  && (missval == 0 || aux != missval)
 	      		  && fabsf(aux) < 1e14f)
-	    		    dest[ix +  met->halo_offset_end][iy][ip] = scl * aux;
+	    		    dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
 	  	      else
-	    		    dest[ix +  met->halo_offset_end][iy][ip] = NAN;
+	    		    dest[ix +  met->halo_offset_start][iy][ip] = NAN;
 	      }
+        printf("COPY and check data 2...\n");
 #pragma omp parallel for default(shared) num_threads(12)
         for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
           for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
@@ -8526,9 +8527,9 @@ int read_met_nc_3d_par(
               if ((fillval == 0 || aux != fillval)
                 && (missval == 0 || aux != missval)
                 && fabsf(aux) < 1e14f)
-                dest[ix + met->halo_offset_start][iy][ip] = scl * aux;
+                dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
               else
-                dest[ix + met->halo_offset_start][iy][ip] = NAN;
+                dest[ix + met->halo_offset_end][iy][ip] = NAN;
           }
 
     } else {
