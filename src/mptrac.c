@@ -8270,7 +8270,22 @@ int read_met_nc_2d_par(
       ERRMSG("Meteo data layout not implemented for packed netCDF files!");
 
     /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
+    #pragma omp parallel for default(shared) num_threads(12)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
+	      if (init)
+	        dest[ix][iy] = 0;
+	short aux = help[ARRAY_2D(iy, ix, met->nx)];
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
+	    && fabsf(aux * scalfac + offset) < 1e14f)
+	  dest[ix][iy] += scl * (aux * scalfac + offset);
+	else
+	  dest[ix][iy] = NAN;
+      }
+
+    /* Copy and check data... */
+    #pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
@@ -8322,35 +8337,67 @@ int read_met_nc_2d_par(
     help_domain_count[1] = met->domain_count[2];
     help_domain_count[2] = met->domain_count[3];
     
-    //ALLOC(help, float, (int) met->domain_count[2] * (int) met->domain_count[3]);
+    // (int) met->domain_count[1] * 
     ALLOC(help, float, 
-    (int) met->domain_count[1] * (int) met->domain_count[2] *
+    (int) met->domain_count[2] *
     (int) met->domain_count[3]
     );
 
     /* Read data... */
-    //printf("[Debugging] start %ld:%ld:%ld:%ld, count %ld:%ld:%ld:%ld \n",
-    //met->domain_start[0], met->domain_start[1], met->domain_start[2], met->domain_start[3],
-    //met->domain_count[0], met->domain_count[1], met->domain_count[2], met->domain_count[3]);
     NC(nc_get_vara_float(ncid, varid, help_domain_start, help_domain_count, help));
+
+    /* Read halos at boundaries...*/
+    size_t help_halo_bnd_start[3];
+    size_t help_halo_bnd_count[3];
+
+    //help_domain_start[0] = 0;
+    help_halo_bnd_start[0] = 0; 
+    help_halo_bnd_start[1] = met->halo_bnd_start[2];
+    help_halo_bnd_start[2] = met->halo_bnd_start[3];
+   
+    //help_domain_count[0] = 1;
+    help_halo_bnd_count[0] = 1;
+    help_halo_bnd_count[1] = met->halo_bnd_count[2];
+    help_halo_bnd_count[2] = met->halo_bnd_count[3];
+
+    float* help_halo;
+    ALLOC(help_halo, float, met->halo_bnd_count[2]*met->halo_bnd_count[3])     
+    NC(nc_get_vara_float(ncid, varid,  help_halo_bnd_start, help_halo_bnd_count, help_halo));
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
 
+      printf("Copy 2d data 1\n");
       /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++) {
-	  if (init)
-	    dest[ix][iy] = 0;
-	  float aux = help[ARRAY_2D(iy, ix, met->nx)];
-	  if ((fillval == 0 || aux != fillval)
+  for (int ix = 0; ix < (int) help_domain_count[2]; ix++)
+	  for (int iy = 0; iy < (int) help_domain_count[1]; iy++) {
+	    if (init)
+	      dest[ix][iy] = 0;
+	    float aux = help[ARRAY_2D(iy, ix, (int) help_domain_count[2])];
+	    if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
-	    dest[ix][iy] += scl * aux;
-	  else
-	    dest[ix][iy] = NAN;
-	}
+	      dest[ix + met->halo_offset_start][iy] += scl * aux;
+	    else
+	      dest[ix + met->halo_offset_start][iy] = NAN;
+}
+
+  printf("Copy 2d data 2\n");
+/* Copy and check data (ordering: lat, lon)... */
+#pragma omp parallel for default(shared) num_threads(12)
+  for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
+	  for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
+	    if (init)
+	      dest[ix][iy] = 0;
+	    float aux = help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
+	    if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	      dest[ix + met->halo_offset_end][iy] += scl * aux;
+	    else
+	      dest[ix + met->halo_offset_end][iy] = NAN;
+}
 
     } else {
 
@@ -8485,7 +8532,6 @@ int read_met_nc_3d_par(
     printf("RANK: %d; Start: %ld,%ld,%ld,%ld, Block: %ld,%ld,%ld,%ld\n",rank,
     met->domain_start[0], met->domain_start[1], met->domain_start[2], met->domain_start[3],
     met->domain_count[0], met->domain_count[1], met->domain_count[2], met->domain_count[3]);
-    /* TODO: SOME OF THE COUNTS MUST BE A BIT LARGER TO COVER THE REST OF THE GLOBE!! */
 
     /* Allocate... */
     float *help;
@@ -12075,6 +12121,8 @@ void write_vtk(
 
 void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
 
+  SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
+
   for (int ip = 0; ip < atm->np; ip++) {
 
     particles[ip].time = atm->time[ip];
@@ -12092,6 +12140,8 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
 /*****************************************************************************/
 
 void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
+
+  SELECT_TIMER("PARTICLES2ATM", "DD", NVTX_READ);
 
   for (int ip = 0; ip < atm->np; ip++) {
     atm->time[ip] = particles[ip].time;
@@ -12125,6 +12175,8 @@ void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 
 /*****************************************************************************/
 void dd_get_rect_destination(const ctl_t ctl, int* destinations, int rank, int size) {
+
+      SELECT_TIMER("DD_GET_RECT_DESTINATION", "DD", NVTX_READ);
     
       if ( rank + 1 == size) {
 
@@ -12244,6 +12296,10 @@ void dd_get_rect_destination(const ctl_t ctl, int* destinations, int rank, int s
       destinations[7] = rank + 1; // lower
     
     }
+
+    LOG(2, "Rank %d destinations: %d, %d, %d, %d, %d, %d, %d, %d", rank, destinations[0],
+      destinations[1], destinations[2], destinations[3], destinations[4],
+      destinations[5], destinations[6], destinations[7]);
     
   }
   
@@ -12256,6 +12312,8 @@ void dd_communicate_particles(
   int ndestinations, 
   ctl_t ctl, 
   double* dt) {
+
+  SELECT_TIMER("DD_COMMUNICATE_PARTICLES", "DD", NVTX_READ);
 
   /* Initialize the buffers... */
   int* nbs;
@@ -12299,7 +12357,7 @@ void dd_communicate_particles(
    
     /* Fill the send buffer... */
     int ibs = 0;
-    int offset = 1;
+    int offset = 0;
     for (int ip = *nparticles-1; ip >= 0; ip--) {
 
       // Only add those elements whithout 'graveyard' 
@@ -12307,10 +12365,10 @@ void dd_communicate_particles(
       if ((int) particles[ip].q[ctl.qnt_domain] != -1
        && (int) particles[ip].q[ctl.qnt_destination] == destinations[idest]) {
         
-        memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
+        memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t) );
    
         // Mark old place as 'graveyard'...
-        // Only for debugging
+        // Only for debugging...
         particles[ip].lon = -1;
         particles[ip].lat = -1;
         particles[ip].time = -1;
@@ -12321,18 +12379,19 @@ void dd_communicate_particles(
         ibs++;
 
         // Check if particle array limit can be reduced...
-        if (offset == *nparticles-ip)
+        if (offset + 1 == *nparticles-ip)
           offset++;
 
-        // Check if all particles are already inserted...
-        if (ibs == nbs[idest])
-          break;
-
       }
+
+      // Check if all particles are already inserted...
+      if (ibs == nbs[idest])
+      break;
+
     }
 
     /* Decrease the particle array limit... */
-    *nparticles = *nparticles - offset + 1;
+    *nparticles = *nparticles - offset;
 
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
@@ -12384,7 +12443,7 @@ void dd_communicate_particles(
       for (int ip = api; ip < NP; ip++) {
         // Add if there is an empty space within the existing list or if list needs expansions...
         if ( ((ip < *nparticles) && ((int) particles[ip].q[ctl.qnt_domain] == -1)) ||
-             (ip > *nparticles)) {
+             (ip >= *nparticles)) {
           memcpy(&particles[ip], &recieve_buffers[isourc][ipbr], sizeof(particle_t));
           dt[ip] = ctl.dt_mod;
           particles[ip].q[ctl.qnt_destination] = rank;
@@ -12394,7 +12453,7 @@ void dd_communicate_particles(
 
         // Check if buffer was filled and save new size after expansion...
         if (ipbr == nbr[isourc]) {
-          api = ip;
+          api = ip + 1;
           break;
         }
       } 
@@ -12442,6 +12501,8 @@ void dd_assign_rect_domains_atm(
   int rank, 
   int* destinations, 
   int init) {
+
+    SELECT_TIMER("DD_ASSIGN_RECT_DOMAINS", "DD", NVTX_READ);
     
     if (init) {
       for (int ip = 0; ip < atm->np; ip++) {
