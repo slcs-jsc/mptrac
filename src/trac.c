@@ -122,12 +122,12 @@ int main(
       /* Set-up domain decomposition... */
       static int dd_init = 0;
       if (t == ctl->t_start || !dd_init) {
-        /* Define communication destinations ... */
-        int destinations[8];
-        dd_get_rect_destination(*ctl, destinations, rank, size);
+        /* Define grid neighbours ... */
+        int neighbours[NNMAX];
+        dd_get_rect_neighbour(*ctl, neighbours, rank, size);
       
-        /* Check if particles are in domain. */
-        dd_assign_rect_domains_atm( atm, met0, *ctl, rank, destinations, 1);
+        /* Check if particles are in subdomain. */
+        dd_assign_rect_subdomains_atm( atm, met0, *ctl, rank, neighbours, 1);
 
         dd_init = 1;
       }

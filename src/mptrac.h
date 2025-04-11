@@ -274,12 +274,12 @@
 #define EP 150
 #endif
 
-/*! Maximum number of domain longitudes for meteo data. */
+/*! Maximum number of subdomain longitudes for meteo data. */
 #ifndef EX
 #define EX 1202
 #endif
 
-/*! Maximum number of domain latitudes for meteo data. */
+/*! Maximum number of subdomain latitudes for meteo data. */
 #ifndef EY
 #define EY 602
 #endif
@@ -297,6 +297,11 @@
 /*! Maximum number of global latitudes for meteo data. */
 #ifndef EY_GLOB
 #define EY_GLOB 602
+#endif
+
+/*! Maximum number of neighbours to communicate with. */
+#ifndef NNMAX
+#define NNMAX  26
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -3216,11 +3221,11 @@ typedef struct {
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
   
-  /*! Zonal domain number. */
-  int dd_domains_zonal;
+  /*! Zonal subdomain number. */
+  int dd_subdomains_zonal;
   
-  /*! Meridional domain number. */
-  int dd_domains_meridional;
+  /*! Meridional subdomain number. */
+  int dd_subdomains_meridional;
   
   /*! Number of neighbours to communicate with. */
   int dd_nbr_neighbours;
@@ -3228,8 +3233,8 @@ typedef struct {
   /*! Size of halos given in grid-points. */
   int dd_halos_size;
 
-  /*! Quantity array index for the current domain. */
-  int qnt_domain;
+  /*! Quantity array index for the current subdomain. */
+  int qnt_subdomain;
 
   /*! Quantity array index for the destination domain */
   int qnt_destination;
@@ -3677,13 +3682,13 @@ typedef struct {
   
   /*! More grid information... */
   // TODO: Or this will be integrated to a grid_t ...
-  double domain_lon_max;
-  double domain_lon_min;
-  double domain_lat_max;
-  double domain_lat_min;
+  double subdomain_lon_max;
+  double subdomain_lon_min;
+  double subdomain_lat_max;
+  double subdomain_lat_min;
   
-  size_t domain_start[4];
-  size_t domain_count[4];
+  size_t subdomain_start[4];
+  size_t subdomain_count[4];
 
   size_t halo_bnd_start[4];
   size_t halo_bnd_count[4];
@@ -3695,7 +3700,13 @@ typedef struct {
   int nx_glob;
   int ny_glob;
   int np_glob;
+
+  /* TODO: Number of neighbours shif tto here?*/
   
+  /* Neighbour ranks of the subdomain. */
+  /* TODO: use this instead of inline neighbours array...*/
+  int neighbours[NNMAX];
+
 } met_t;
 
 /* ------------------------------------------------------------
@@ -8868,7 +8879,7 @@ void particles2atm(
 /**
  * @brief Creates an MPI datatype for particle structures.
  *
- * The `dd_destination_get_rect` function defines an MPI datatype for
+ * The `dd_neighbour_get_rect` function defines an MPI datatype for
  * particle structures (`particle_t`). This datatype is used to describe
  * the layout of particle data in memory, enabling efficient communication
  * of particle data in MPI programs.
@@ -8892,33 +8903,33 @@ void  dd_register_MPI_type_particle(
   MPI_Datatype* MPI_Particle);
   
 /**
- * @brief Determines destination ranks for data distribution in a domain decomposition setup.
+ * @brief Determines neighbour ranks for data distribution in a domain decomposition setup.
  *
- * The `dd_get_destinations` function calculates and assigns destination ranks for data
+ * The `dd_get_neighbours` function calculates and assigns neighbour ranks for data
  * distribution based on the current rank and control parameters (`ctl_t`). It handles
  * various edge cases, including poles and boundaries, to ensure correct data communication
  * in a parallel computing environment.
  *
  * @param ctl A `ctl_t` structure containing control parameters, including domain decomposition details.
- * @param destinations An array to store the calculated destination ranks.
+ * @param neighbours An array to store the calculated neighbour ranks.
  * @param rank The current rank of the process.
  * @param size The total number of processes in the communicator.
  *
  * The function performs the following steps:
- * - Determines the destination ranks based on the current rank and control parameters.
+ * - Determines the neighbour ranks based on the current rank and control parameters.
  * - Handles special cases for poles (`SPOLE` and `NPOLE`) and domain boundaries.
  * - Uses modulo arithmetic to wrap around ranks when necessary.
- * - Populates the `destinations` array with the calculated ranks.
+ * - Populates the `neighbours` array with the calculated ranks.
  *
  * @note This function assumes that the `ctl` structure is properly initialized and that
- *       the `destinations` array has sufficient space to store the results. The function
+ *       the `neighbours` array has sufficient space to store the results. The function
  *       uses zero-based indexing for ranks.
  *
  * @author Jan Clemens
  */
-void dd_get_rect_destination(
+void dd_get_rect_neighbour(
   const ctl_t ctl, 
-  int* destinations, 
+  int* neighbours, 
   int rank, 
   int size);
   
@@ -8927,21 +8938,21 @@ void dd_get_rect_destination(
  *
  * The `dd_communicate_particles` function handles the communication of particle data
  * between processes using MPI. It sends and receives particle data based on precomputed
- * destination ranks, managing buffers for efficient data transfer.
+ * neighbour ranks, managing buffers for efficient data transfer.
  *
  * @param particles An array of `particle_t` structures representing the particles to be communicated.
  * @param nparticles A pointer to the total number of particles in the `particles` array.
  * @param MPI_Particle An MPI datatype describing the structure of a particle for communication.
- * @param destinations An array of destination ranks for sending and receiving particles.
- * @param ndestinations The number of destination ranks in the `destinations` array.
+ * @param neighbours An array of neighbour ranks for sending and receiving particles.
+ * @param nneighbours The number of neighbour ranks in the `neighbours` array.
  * @param ctl A `ctl_t` structure containing control parameters, including domain decomposition details.
  * @param dt An array of doubles representing the time step for each particle.
  *
  * The function performs the following steps:
  * - Initializes buffers for sending and receiving particle data.
  * - Determines the current MPI rank.
- * - Sends particle data to destination ranks, ignoring poles.
- * - Counts the number of particles to be sent to each destination.
+ * - Sends particle data to neighbour ranks, ignoring poles.
+ * - Counts the number of particles to be sent to each neighbour.
  * - Allocates and fills send buffers with particle data.
  * - Sends the particle data using non-blocking MPI sends.
  * - Waits for all sends to complete using an MPI barrier.
@@ -8951,7 +8962,7 @@ void dd_get_rect_destination(
  * - Waits for all receives to complete using an MPI barrier.
  * - Frees allocated buffers and memory.
  *
- * @note This function assumes that the `particles` array and `destinations` array are
+ * @note This function assumes that the `particles` array and `neighbours` array are
  *       properly initialized. It uses non-blocking MPI sends and receives to improve
  *       communication efficiency. The function handles special cases for poles and
  *       ensures proper memory management.
@@ -8962,56 +8973,56 @@ void dd_communicate_particles(
   particle_t* particles, 
   int* nparticles, 
   MPI_Datatype MPI_Particle, 
-  int* destinations, 
-  int ndestinations, 
+  int* neighbours, 
+  int nneighbours, 
   ctl_t ctl, 
   double* dt);
   
 /**
- * @brief Assigns rectangular domains to atmospheric data based on geographical coordinates.
+ * @brief Assigns rectangular subdomains to atmospheric data based on geographical coordinates.
  *
- * The `assign_rect_domains_atm` function assigns domain and destination ranks to atmospheric
+ * The `assign_rect_domains_atm` function assigns subdomain and neighbour ranks to atmospheric
  * data points based on their longitude and latitude. It handles both initialization and
- * subsequent classification of air parcels into domains.
+ * subsequent classification of air parcels into subdomains.
  *
  * @param atm A pointer to an `atm_t` structure containing atmospheric data.
- * @param met A pointer to a `met_t` structure containing meteorological domain boundaries.
- * @param ctl A `ctl_t` structure containing control parameters, including domain indices.
+ * @param met A pointer to a `met_t` structure containing meteorological subdomain boundaries.
+ * @param ctl A `ctl_t` structure containing control parameters, including subdomain indices.
  * @param rank The current rank of the process.
- * @param destinations An array of destination ranks for domain classification.
+ * @param neighbours An array of neighbour ranks for subdomain classification.
  * @param init A flag indicating whether the function is called for initialization.
  *
  * The function performs the following steps:
- * - If `init` is true, it initializes the domain and destination ranks for each particle
- *   based on whether its coordinates fall within the specified domain boundaries.
- * - If `init` is false, it classifies air parcels into domains based on their current
- *   coordinates and updates their destination ranks accordingly.
+ * - If `init` is true, it initializes the subdomain and neighbour ranks for each particle
+ *   based on whether its coordinates fall within the specified subdomain boundaries.
+ * - If `init` is false, it classifies air parcels into subdomains based on their current
+ *   coordinates and updates their neighbour ranks accordingly.
  * - Adjusts longitude values to ensure they fall within the range [0, 360).
- * - Assigns destination ranks based on the particle's position relative to the domain boundaries.
+ * - Assigns neighbour ranks based on the particle's position relative to the subdomain boundaries.
  *
  * @note This function assumes that the `atm`, `met`, and `ctl` structures are properly
- *       initialized. The `destinations` array should contain valid destination ranks for
+ *       initialized. The `neighbours` array should contain valid neighbour ranks for
  *       the eight possible directions (upper right, lower right, etc.).
  *
  * @author Jan Clemens
  */
- void dd_assign_rect_domains_atm(
+ void dd_assign_rect_subdomains_atm(
   atm_t* atm,
   met_t* met, 
   ctl_t ctl, 
   int rank, 
-  int* destinations, 
+  int* neighbours, 
   int init);
   
   /**
- * @brief A module to perform the entire rectangular domain decomposition.
+ * @brief A module to perform the entire rectangular subdomain decomposition.
  */
 void module_dd(  
   atm_t* atm,
   particle_t* particles,
   met_t* met, 
   ctl_t ctl, 
-  int* destinations,
+  int* neighbours,
   int rank, 
   MPI_Datatype MPI_Particle, 
   double* dt);
@@ -9020,8 +9031,8 @@ void dd_communicate_particles_cleo(
   particle_ptr_t* particles, 
   int nparticles, 
   MPI_Datatype MPI_Particle, 
-  int* destinations, 
-  int ndestinations, 
+  int* neighbours, 
+  int nneighbours, 
   int* target_ranks,
   size_t* q_sizes
   );
