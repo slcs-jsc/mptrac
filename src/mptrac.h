@@ -256,7 +256,7 @@
 
 /*! Maximum number of atmospheric data points. */
 #ifndef NP
-#define NP 10000000
+#define NP 9000000
 #endif
 
 /*! Maximum number of quantities per data point. */
@@ -351,11 +351,13 @@
 
 /*! Define abbreviations for poles in domain decomposition. */
 #ifndef NPOLE
-#define NPOLE -1
+#define NPOLE -2
 #endif
 #ifndef SPOLE
-#define SPOLE -2
+#define SPOLE -3
 #endif
+
+/*! Define abbreviations for hole in particles array. */
 
 /*! Define size of send and recieve buffer. */
 #ifndef NBUFFER

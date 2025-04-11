@@ -3950,10 +3950,12 @@ void module_timesteps(
       cache->dt[ip] = 0.0;
 
     /* Check horizontal boundaries of local meteo data... */
-    if (local && (atm->lon[ip] <= met0->lon[0]
-		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
-		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
-      cache->dt[ip] = cache->dt[ip]; // Debugging: this needs to be 0
+    if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal == 1)
+      if (local && (atm->lon[ip] <= met0->lon[0]
+		    || atm->lon[ip] >= met0->lon[met0->nx - 1]
+		    || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
+        cache->dt[ip] = 0; 
+
   }
 }
 
@@ -7858,8 +7860,7 @@ int read_met_nc(
   read_met_polar_winds(met);
 
   /* Create periodic boundary conditions... */
-  // Debugging: Periodic conditions are different with dd... 
-  //read_met_periodic(met);
+  read_met_periodic(met);
 
   /* Downsampling... */
   read_met_sample(ctl, met);
@@ -8754,11 +8755,15 @@ void read_met_pbl(
 /*****************************************************************************/
 
 void read_met_periodic(
-  met_t *met) {
+  met_t *met, ctl_t *ctl) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PERIODIC", "METPROC", NVTX_READ);
   LOG(2, "Apply periodic boundary conditions...");
+
+  /* Check if domain decomposition is used... */
+  if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1)
+    return;
 
   /* Check longitudes... */
   if (!(fabs(met->lon[met->nx - 1] - met->lon[0]
