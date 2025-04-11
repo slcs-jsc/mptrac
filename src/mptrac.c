@@ -7332,7 +7332,7 @@ void read_met_grid(
   /* Get the MPI information... */
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_rank(MPI_COMM_WORLD, &size);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   /* Check for edge cases... */
   bool left = (rank <= ctl->dd_domains_meridional-1);
@@ -7401,22 +7401,23 @@ void read_met_grid(
   double lon_shift = 0;
   if ( left || right ) {
 
-      met->nx = met->nx + ctl->dd_halos_size;
+    met->nx = met->nx + ctl->dd_halos_size;
     
-      met->halo_bnd_start[0] = 0;
-      met->halo_bnd_start[1] = 0;
-      met->halo_bnd_start[3] = (size_t)(left ? (met->nx_glob - ctl->dd_halos_size) : (0)); //x
-      met->halo_bnd_start[2] = met->domain_start[2]; //y
+    met->halo_bnd_start[0] = 0;
+    met->halo_bnd_start[1] = 0;
+    met->halo_bnd_start[3] = (size_t)(left ? (met->nx_glob - ctl->dd_halos_size) : (0)); //x
+    met->halo_bnd_start[2] = met->domain_start[2]; //y
       
-      met->halo_bnd_count[0] = 1;
-      met->halo_bnd_count[1] = (size_t) met->np;
-      met->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
-      met->halo_bnd_count[2] = (size_t) met->ny + (size_t) ctl->dd_halos_size * ((top || bottom) ?  1 : 2 ); 
+    met->halo_bnd_count[0] = 1;
+    met->halo_bnd_count[1] = (size_t) met->np;
+    met->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
+    met->halo_bnd_count[2] = (size_t) met->ny + (size_t) ctl->dd_halos_size * ((top || bottom) ?  1 : 2 ); 
   
-      met->halo_offset_start =  (left ? (int) met->halo_bnd_count[3] : 0);
-      met->halo_offset_end = (left ? 0 : (int) met->domain_count[3]);
-      lon_shift = (left ? -360 : 360);
-  }  
+    met->halo_offset_start =  (left ? (int) met->halo_bnd_count[3] : 0);
+    met->halo_offset_end = (left ? 0 : (int) met->domain_count[3]);
+    lon_shift = (left ? -360 : 360);
+
+  }
 
   /* Get the range of the entire meteodata... */
   double lon_range = met->lon[ met->nx_glob - 1 ] - met->lon[0];
@@ -7466,12 +7467,17 @@ void read_met_grid(
   LOG(2, " %d Domain latitudes: %g, %g ... %g deg", rank,
       met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
-  LOG(2, "Max dim sizes: %d-%d-%d : Met: %d-%d-%d : Halo Bnd: %d-%d-%d : Domain :  %d-%d-%d", EX, EY, EP, met->nx, met->ny, met->np, 
-    (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1],
-    (int) met->domain_count[3], (int) met->domain_count[2], (int) met->domain_count[1]);
-  LOG(2, "Domain starts %ld-%ld-%ld : Halo start : %ld-%ld-%ld : Offsets: %d-%d",met->domain_start[3], met->domain_start[2], met->domain_start[1],
-  met->halo_bnd_start[3], met->halo_bnd_start[2], met->halo_bnd_start[1], met->halo_offset_start, met->halo_offset_end);
-
+  LOG(2, "Define subdomain properties.");
+  LOG(3, "MPI information: Rank %d, Size %d", rank, size);
+  LOG(3, "Edge position: l=%d,r=%d,t=%d, b=%d", (int)left, (int)right, (int)top, (int)bottom );
+  LOG(3, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
+  LOG(3, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx, met->ny, met->np);
+  LOG(3, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",  (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1]);
+  LOG(3, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d", (int) met->domain_count[3], (int) met->domain_count[2], (int) met->domain_count[1]);
+  LOG(3, "Subdomain start: nx %ld ny %ld np %ld" , met->domain_start[3], met->domain_start[2], met->domain_start[1]);
+  LOG(3, "Boundary halo start: nx %ld ny %ld np %ld", met->halo_bnd_start[3], met->halo_bnd_start[2], met->halo_bnd_start[1]);
+  LOG(3, "Offsets: nx %d ny %d", met->halo_offset_start, met->halo_offset_end);
+  
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
     NC_GET_DOUBLE(levname, met->p, 1);
@@ -8334,8 +8340,8 @@ int read_met_nc_2d_par(
    
     //help_domain_count[0] = 1;
     help_domain_count[0] = 1;
-    help_domain_count[1] = met->domain_count[2];
-    help_domain_count[2] = met->domain_count[3];
+    help_domain_count[1] = met->domain_count[2]; //y
+    help_domain_count[2] = met->domain_count[3]; //x
     
     // (int) met->domain_count[1] * 
     ALLOC(help, float, 
@@ -8350,54 +8356,53 @@ int read_met_nc_2d_par(
     size_t help_halo_bnd_start[3];
     size_t help_halo_bnd_count[3];
 
-    //help_domain_start[0] = 0;
     help_halo_bnd_start[0] = 0; 
     help_halo_bnd_start[1] = met->halo_bnd_start[2];
     help_halo_bnd_start[2] = met->halo_bnd_start[3];
    
-    //help_domain_count[0] = 1;
     help_halo_bnd_count[0] = 1;
-    help_halo_bnd_count[1] = met->halo_bnd_count[2];
-    help_halo_bnd_count[2] = met->halo_bnd_count[3];
+    help_halo_bnd_count[1] = met->halo_bnd_count[2]; //y
+    help_halo_bnd_count[2] = met->halo_bnd_count[3]; //x
 
     float* help_halo;
-    ALLOC(help_halo, float, met->halo_bnd_count[2]*met->halo_bnd_count[3])     
+    ALLOC( help_halo, float, help_halo_bnd_count[1]*help_halo_bnd_count[2]);     
     NC(nc_get_vara_float(ncid, varid,  help_halo_bnd_start, help_halo_bnd_count, help_halo));
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
 
-      printf("Copy 2d data 1\n");
       /* Copy and check data (ordering: lat, lon)... */
+
 #pragma omp parallel for default(shared) num_threads(12)
   for (int ix = 0; ix < (int) help_domain_count[2]; ix++)
 	  for (int iy = 0; iy < (int) help_domain_count[1]; iy++) {
-	    if (init)
-	      dest[ix][iy] = 0;
+	    if (init == 1)
+	      dest[ix + met->halo_offset_start][iy] = 0;
 	    float aux = help[ARRAY_2D(iy, ix, (int) help_domain_count[2])];
 	    if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f)
+	      && fabsf(aux) < 1e14f) {
 	      dest[ix + met->halo_offset_start][iy] += scl * aux;
+      }
 	    else
-	      dest[ix + met->halo_offset_start][iy] = NAN;
-}
+        dest[ix + met->halo_offset_start][iy] = NAN;
+    }
 
-  printf("Copy 2d data 2\n");
 /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
   for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
 	  for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
-	    if (init)
-	      dest[ix][iy] = 0;
+	    if (init == 1)
+	      dest[ix  + met->halo_offset_end][iy] = 0; 
 	    float aux = help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
 	    if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
 	      dest[ix + met->halo_offset_end][iy] += scl * aux;
-	    else
+	    else {
 	      dest[ix + met->halo_offset_end][iy] = NAN;
-}
+      }
+  }
 
     } else {
 
@@ -8415,10 +8420,13 @@ int read_met_nc_2d_par(
 	  else
 	    dest[ix][iy] = NAN;
 	}
-    }
+
+  }
 
     /* Free... */
     free(help);
+    free(help_halo);
+    
   }
 
   /* Return... */
@@ -8526,31 +8534,21 @@ int read_met_nc_3d_par(
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
-    /* Debugging... */
-    printf("Size:%d\n",(int) met->domain_count[0] * (int) met->domain_count[1]
-	             * (int) met->domain_count[2] * (int) met->domain_count[3]);
-    printf("RANK: %d; Start: %ld,%ld,%ld,%ld, Block: %ld,%ld,%ld,%ld\n",rank,
-    met->domain_start[0], met->domain_start[1], met->domain_start[2], met->domain_start[3],
-    met->domain_count[0], met->domain_count[1], met->domain_count[2], met->domain_count[3]);
-
     /* Allocate... */
     float *help;
     ALLOC(help, float, (int) met->domain_count[0] * (int) met->domain_count[1]
 	             * (int) met->domain_count[2] * (int) met->domain_count[3]);
 
     /* Read data... */
-    printf("nc_get_vara_float\n");
     NC(nc_get_vara_float(ncid, varid, met->domain_start, met->domain_count, help));
 
     /* Read halos separately at boundaries... */
-    printf("Read halos\n");
     float* help_halo;
     ALLOC(help_halo, float, met->halo_bnd_count[0]*met->halo_bnd_count[1]*met->halo_bnd_count[2]*met->halo_bnd_count[3])
     NC(nc_get_vara_float(ncid, varid,  met->halo_bnd_start, met->halo_bnd_count, help_halo));
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
-      printf("COPY and check data...\n");
       /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
       for (int ix = 0; ix < (int) met->domain_count[3]; ix++)
@@ -8564,7 +8562,6 @@ int read_met_nc_3d_par(
 	  	      else
 	    		    dest[ix +  met->halo_offset_start][iy][ip] = NAN;
 	      }
-        printf("COPY and check data 2...\n");
 #pragma omp parallel for default(shared) num_threads(12)
         for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
           for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
@@ -8612,6 +8609,7 @@ for (int ip = 0; ip < met->np; ip++)
     
     /* Free... */
   free(help);
+  free(help_halo);
   }
 
   /* Return... */
@@ -9211,6 +9209,14 @@ void read_met_surface(
 	met->ps[ix][iy]
 	  = (ctl->met_np > 0 ? (float) ctl->met_p[0] : (float) met->p[0]);
   }
+
+  // DEbugging
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+  for (int ix = 0; ix < met->nx; ix++)
+	  for (int iy = 0; iy < met->ny; iy++) 
+      if (met->ps[ix][iy]==0)
+        printf("rank: %d, gaps: %d,%d\n",rank, ix, iy);
 
   /* MPTRAC meteo data... */
   if (ctl->met_clams == 0) {
@@ -12142,15 +12148,15 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
 void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
 
   SELECT_TIMER("PARTICLES2ATM", "DD", NVTX_READ);
-
+  
   for (int ip = 0; ip < atm->np; ip++) {
-    atm->time[ip] = particles[ip].time;
-    atm->lon[ip] = particles[ip].lon; 
-    atm->lat[ip] = particles[ip].lat;
-    atm->p[ip] = particles[ip].p;
+      atm->time[ip] = particles[ip].time;
+      atm->lon[ip] = particles[ip].lon; 
+      atm->lat[ip] = particles[ip].lat;
+      atm->p[ip] = particles[ip].p;
 
-    for (int iq = 0; iq < ctl.nq; iq++) 
-      atm->q[iq][ip] = particles[ip].q[iq];
+      for (int iq = 0; iq < ctl.nq; iq++) 
+        atm->q[iq][ip] = particles[ip].q[iq];
 
   }
 
