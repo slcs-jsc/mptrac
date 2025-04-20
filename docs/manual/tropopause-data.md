@@ -31,7 +31,7 @@ determine the tropopause level have been implemented:
 
 ## Tropopause data along trajectories
 
-The trac tool of MPTRAC can extract the tropopause data along the
+The `trac` tool of MPTRAC can extract the tropopause data along the
 trajectories. For example, set the following quantities to
 obtain tropopause pressure, height, and temperature:
 
