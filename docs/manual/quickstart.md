@@ -28,6 +28,12 @@ This is an example showing the particle output on 6th to 8th of June
 
 ![MPTRAC particle output for Puyehue simulation](img/puyehue.png)
 
+Additionally, the `projects/python/` directory of the MPTRAC
+repository contains examples on how to read data files and visualize
+the results using Python and matplotlib. These scripts can be helpful
+for users who prefer to analyze and visualize simulation output in
+Python rather than with tools like gnuplot.
+
 ## Further information
 
 More detailed information for new users and developers is provided in

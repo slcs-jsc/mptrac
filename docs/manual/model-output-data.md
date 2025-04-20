@@ -165,4 +165,5 @@ each air parcel, allowing for advanced visualization and
 post-processing. The frequency of output is controlled by user-defined
 time intervals, which must be integer multiples of the model's time
 step. The VTK output is configured using the `VTK_*` control
-parameters.
+parameters. Please see `projects/paraview/README.md` for further
+instructions and examples on how to create VTK output.
