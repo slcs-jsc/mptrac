@@ -22,13 +22,13 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 Massive-Parallel Trajectory Calculations (MPTRAC) is a high-performance Lagrangian particle dispersion model designed to simulate and analyze atmospheric transport processes in the free troposphere and stratosphere.
 
-MPTRAC leverages massive parallelization to efficiently handle large-scale trajectory calculations, making it an invaluable tool for researchers and scientists studying atmospheric dynamics, pollutant dispersion, and stratospheric transport events.
+MPTRAC leverages massive parallelization to efficiently handle large-scale trajectory calculations, making it a helpful tool for researchers and scientists studying atmospheric dynamics, pollutant dispersion, and stratospheric transport events.
 
-The model's primary focus is on accurately tracking the movement of air parcels and particles over extended periods and vast spatial domains. It accounts for complex atmospheric processes, including advection, turbulent diffusion, and various meteorological influences, by integrating high-resolution meteorological data.
+The model's primary focus is on accurately tracking the movement of air parcels and particles over extended periods of time and large spatial domains. It accounts for complex atmospheric processes, including advection, turbulent diffusion, and various meteorological influences, by integrating high-resolution meteorological data.
 
 MPTRAC is used in applications such as:
 
-- Tracking long-range transport of pollutants, including aerosols and greenhouse gases.
+- Tracking long-range transport of pollutants, including aerosol particles and trace gases.
 
 - Volcanic ash dispersion modeling to predict ash cloud movement and impact.
 
@@ -36,7 +36,7 @@ MPTRAC is used in applications such as:
 
 - Atmospheric chemistry studies, focusing on the distribution and transformation of trace gases.
 
-By offering unparalleled scalability and accuracy, MPTRAC empowers atmospheric scientists and environmental researchers to gain deeper insights into complex transport phenomena, enhancing our understanding of atmospheric dynamics and improving prediction capabilities.
+By offering scalability and accuracy, MPTRAC empowers atmospheric scientists and environmental researchers to gain deeper insights into complex transport phenomena, enhancing our understanding of atmospheric dynamics and improving prediction capabilities.
 
 ## Features
 
@@ -62,7 +62,7 @@ MPTRAC is a powerful tool for atmospheric trajectory calculations, offering a wi
 
 To build and run MPTRAC, you will need some basic tools and libraries, including Git, GNU Make, GCC, GSL, HDF5, and netCDF.
 
-For additional features such as high-performance computing (HPC) and GPU support, optional dependencies like OpenMPI and NVIDIA HPC SDK are required.
+For additional features such as HPC and GPU support, optional dependencies like OpenMPI and the NVIDIA HPC SDK are required.
 
 Some of the required dependencies are included with the MPTRAC repository. See the next section for more details.
 
@@ -84,7 +84,7 @@ Alternatively, to get the latest development version, clone the GitHub repositor
 
 **2. Install required libraries**
 
-MPTRAC includes several libraries that can be compiled and installed using a build script:
+The MPTRAC git repository includes several libraries that can be compiled and installed using a build script:
 
     cd [mptrac_directory]/libs
     ./build.sh -a
@@ -144,7 +144,7 @@ The `run.sh` script outlines the necessary steps to invoke MPTRAC programs such 
 
 The output of the simulation will be stored in the `projects/example/data` subdirectory. For comparison, reference data is available in the `projects/example/data.ref` folder.
 
-Additionally, the simulation generates several plots at different time steps, which are stored in `projects/example/plots`. These plots show the results of the volcanic ash dispersion over time and can be visualized using the gnuplot plotting tool.
+Additionally, the simulation generates several plots at different time steps, which are stored in `projects/example/plots`. These plots show the results of the volcanic plume dispersion over time and can be visualized using the gnuplot plotting tool.
 
 For example, particle positions and grid outputs at different time steps (June 6th and June 8th, 2011) are shown below:
 
@@ -175,7 +175,7 @@ If you encounter any issues, bugs, or have suggestions for new features, please 
 
 If you would like to contribute code, fix bugs, or enhance existing features, feel free to submit a [pull request](https://github.com/slcs-jsc/mptrac/pulls). We appreciate well-documented and tested contributions.
 
-Before getting started, please take a moment to read our [contributing guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md). They include helpful information on setting up your development environment and best practices for submitting contributions.
+Before getting started, please take a moment to read the [contributing guidelines](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md). They include helpful information on setting up your development environment and best practices for submitting contributions.
 
 If you have any questions or need assistance during the process, don't hesitate to reach out. We are happy to help and collaborate!
 
