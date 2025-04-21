@@ -6,7 +6,7 @@ Caulle volcano, Chile, in June 2011.
 
 ## Example of an MPTRAC simulation
 
-The example can be found in the `project` directory. The `project`
+The example can be found in the `projects` directory. The `projects`
 directory can also be used to store results of other simulation and
 experiments with MPTRAC. The simulation is controlled by a shell
 script:
@@ -36,10 +36,10 @@ Python rather than with tools like gnuplot.
 
 ## Further information
 
-More detailed information for new users and developers is provided in
-the [MPTRAC user manual](https://slcs-jsc.github.io/mptrac/),
-the [Doxygen Manual](https://slcs-jsc.github.io/mptrac/doxygen), and
-in the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
+More detailed information for new users and developers of MPTRAC is
+provided in the [user manual](https://slcs-jsc.github.io/mptrac/), the
+[Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen), and in
+the [GitHub wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
 A detailed description of the MPTRAC model is provided in this paper:
 

@@ -151,6 +151,18 @@ For example, particle positions and grid outputs at different time steps (June 6
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
 <p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
 
+### Additional project subdirectories
+
+In addition to the example simulation, MPTRAC provides several utility scripts and resources in the `projects/` directory to support your work:
+
+- `projects/meteo/`: Contains scripts for downloading meteorological input data from various data centers (e.g., ECMWF, NOAA), which are required for trajectory simulations.
+
+- `projects/python/`: Includes Python scripts to read, analyze, and visualize MPTRAC output data, such as air parcel trajectories and gridded fields. These can be helpful for creating custom plots and diagnostics.
+
+- `projects/paraview/`: Provides examples and guidelines for using ParaView to visualize MPTRAC air parcel data in an interactive 3D environment.
+
+These directories offer helpful tools and examples for extending your use of MPTRAC beyond the basic workflow and adapting it to your specific research needs.
+
 ## Further information
 
 To learn more about MPTRAC and its scientific background, please refer to the following key publications:
@@ -159,11 +171,11 @@ To learn more about MPTRAC and its scientific background, please refer to the fo
 
 * Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
 
-For a complete list of related publications and references, please visit the [MPTRAC references page](https://slcs-jsc.github.io/mptrac/references/).
+For a complete list of related publications and references, please visit the [references page](https://slcs-jsc.github.io/mptrac/references/).
 
-The [User Manual](https://slcs-jsc.github.io/mptrac) provides detailed instructions on how to install, configure, and run MPTRAC, along with example workflows and practical tips.
+The [user manual](https://slcs-jsc.github.io/mptrac) provides detailed instructions on how to install, configure, and run MPTRAC, along with example workflows and practical tips.
 
-Developer-oriented documentation, including code structure and API references, can be found in the [Doxygen Manual](https://slcs-jsc.github.io/mptrac/doxygen).
+Developer-oriented documentation, including code structure and API references, can be found in the [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen).
 
 For additional information, please also refer to the [MPTRAC Wiki](https://github.com/slcs-jsc/mptrac/wiki).
 
