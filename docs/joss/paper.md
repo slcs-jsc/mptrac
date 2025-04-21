@@ -101,7 +101,7 @@ MPTRAC simulates the transport and dispersion of atmospheric constituents from b
 
 \autoref{fig:convection} illustrates MPTRAC's use in studying convective transport of air from the boundary layer into the free troposphere [@hoffmann23]. The simulation tracks air parcels lifted by updrafts from tropical storms and mid-latitude systems, revealing how boundary layer air and pollutants spread aloft, improving understanding of atmospheric circulation and pollutant distribution at regional and global scales.
 
-![Lagrangian transport simulation of convective transport from the boundary layer into the free troposphere. One million trajectories are initialized near the surface on 1 July 2017, 00:00 UTC, and tracked over 10 days using ERA5 reanalysis data. Color coding indicates the geopotential height of the air parcels.\label{fig:convection}](convection.png){ width=95% }
+![Lagrangian transport simulation of convective transport from the boundary layer into the free troposphere. One million trajectories are initialized near the surface on 1 July 2017, 00:00 UTC, and tracked over 10 days using ERA5 reanalysis data. Color coding indicates the geopotential height of the air parcels. Video available via Zenodo [@hoffmann25].\label{fig:convection}](convection.png){ width=95% }
 
 # Evolution and Future Directions
 
