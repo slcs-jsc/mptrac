@@ -38,7 +38,7 @@ The tools [tropo](apps/tropo.md) and
 rate statistics and to prepare and sample tropopause data files.
 
 Please see the
-[list of files in the doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/files.html)
+[list of files in the Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/files.html)
 for more information.
 
 ## Workflows

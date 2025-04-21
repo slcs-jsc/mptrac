@@ -88,13 +88,13 @@ Only use `indent` if the code has been compiled correctly. You may need to re-ru
 
 Please update the [README file](https://github.com/slcs-jsc/mptrac/blob/master/README.md) as needed.
 
-To update the [User Manual](https://slcs-jsc.github.io/mptrac), use:
+To update the [user manual](https://slcs-jsc.github.io/mptrac), use:
 
 ```
     make mkdocs
 ```
 
-To update the [Doxygen Manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
+To update the [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
 
 ```
     make doxygen
