@@ -28,11 +28,17 @@ This is an example showing the particle output on 6th to 8th of June
 
 ![MPTRAC particle output for Puyehue simulation](img/puyehue.png)
 
-Additionally, the `projects/python/` directory of the MPTRAC
-repository contains examples on how to read data files and visualize
-the results using Python and matplotlib. These scripts can be helpful
-for users who prefer to analyze and visualize simulation output in
-Python rather than with tools like gnuplot.
+## Additional project subdirectories
+
+In addition to the example simulation, MPTRAC provides several utility scripts and resources in the `projects/` directory to support your work:
+
+- `projects/meteo/`: Contains scripts for downloading meteorological input data from various data centers (e.g., ECMWF, NOAA), which are required for trajectory simulations.
+
+- `projects/python/`: Includes Python scripts to read, analyze, and visualize MPTRAC output data, such as air parcel trajectories and gridded fields. These can be helpful for creating custom plots and diagnostics.
+
+- `projects/paraview/`: Provides examples and guidelines for using ParaView to visualize MPTRAC air parcel data in an interactive 3D environment.
+
+These directories offer helpful tools and examples for extending your use of MPTRAC beyond the basic workflow and adapting it to your specific research needs.
 
 ## Further information
 
