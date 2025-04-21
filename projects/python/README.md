@@ -53,12 +53,13 @@ script `plot_met_map.py`:
     python3 plot_met_map.py
 ```
 
-Here, three parameters (O3, H2O, and temperature) are plotted versus
-longitude and latitude from the datafile `map_era5_2017010817_2_2.tab`
-provided in the directory `data`. The met_map file contains data at 10
-km altitude. In the program other altitudes can be chosen by changing
-the parameter `level`. However, in order to plot other altitudes, new
-map files must be created.
+Here, three parameters (O<sub>3</sub>, H<sub>2</sub>O, and
+temperature) are plotted versus longitude and latitude from the
+datafile `map_era5_2017010817_2_2.tab` provided in the directory
+`data`. The met_map file contains data at 10 km altitude. In the
+program other altitudes can be chosen by changing the parameter
+`level`. However, in order to plot other altitudes, new map files must
+be created.
 
 <p align="center"><img src="plots.ref/ERA5_temp.png" width="28%"/> &emsp; <img src="plots.ref/ERA5_H2O.png" width="28%"/> ; &emsp <img src="plots.ref/ERA5_O3.png" width="28%"/></p>
 
