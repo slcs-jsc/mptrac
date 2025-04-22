@@ -2,11 +2,18 @@
 
 ## Overview
 
-The MPTRAC Lagrangian transport model provides a high-level interface for simulating atmospheric transport processes.
+The MPTRAC Lagrangian transport model provides a high-level interface
+for simulating atmospheric transport processes, which can be applied
+easily from other models.
 
-This high-level interface, implemented through the `mptrac_*` functions in [`mptrac.c`](https://github.com/slcs-jsc/mptrac/blob/master/src/mptrac.c) and [`mptrac.h`](https://github.com/slcs-jsc/mptrac/blob/master/src/mptrac.h), facilitates memory management, initialization, data input/output, and simulation execution.
+This high-level interface, implemented through the `mptrac_*`
+functions in [`mptrac.c`](https://github.com/slcs-jsc/mptrac/blob/master/src/mptrac.c)
+and [`mptrac.h`](https://github.com/slcs-jsc/mptrac/blob/master/src/mptrac.h),
+facilitates memory management, initialization, data input/output, and
+simulation execution.
 
-This document describes the core functions of the interface and demonstrates their usage with an example workflow.
+This document describes the core functions of the interface and
+demonstrates their usage with an example workflow.
 
 ## Function categories
 
@@ -52,7 +59,9 @@ This document describes the core functions of the interface and demonstrates the
 
 ## Example workflow
 
-Below is an example of how to use the high-level MPTRAC interface in a typical simulation. Please see [`trac.c`](https://github.com/slcs-jsc/mptrac/blob/master/src/trac.c) for the full code.
+Below is an example of how to use the high-level MPTRAC interface in a
+typical simulation. Please see [`trac.c`](https://github.com/slcs-jsc/mptrac/blob/master/src/trac.c)
+for the full code.
 
 ### 1. Allocate memory
 
@@ -87,9 +96,13 @@ mptrac_free(ctl, cache, clim, met0, met1, atm);
 
 ## Notes
 
-- Error handling is essential when reading input data or allocating memory.
+- Proper error handling is essential when reading input data or
+  allocating memory.
 
-- The example workflow shown here properly handles GPU offloading and data transfers between CPU and GPU memory. In other application, ensure proper synchronization between host and device memory when using GPUs.
+- The example workflow shown here handles GPU offloading and data
+  transfers between CPU and GPU memory. In other application, ensure
+  proper synchronization between host and device memory when using
+  GPUs.
 
 ## References
 
