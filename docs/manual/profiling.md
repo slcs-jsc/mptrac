@@ -2,17 +2,30 @@
 
 ## Introduction
 
-In software engineering, profiling ("program profiling", "software profiling") is a form of dynamic program analysis that measures, for example, the space (memory) or time complexity of a program, the usage of particular instructions, or the frequency and duration of function calls. Most commonly, profiling information serves to aid program optimization.
+In software engineering, *profiling* is a form of dynamic program
+analysis that measures, for example, the space (memory) or time
+complexity of a program, the usage of particular instructions, or the
+frequency and duration of function calls. Most commonly, profiling
+information serves to aid program optimization.
 
-Profiling is achieved by instrumenting either the program source code or its binary executable form using a tool called a profiler (or code profiler). Profilers may use a number of different techniques, such as event-based, statistical, instrumented, and simulation methods.
+Profiling is achieved by instrumenting either the program's source
+code or its binary executable with a tool called a profiler (or code
+profiler). Profilers may use a number of different techniques, such as
+event-based, statistical, instrumentation-based, and simulation
+methods.
 
-Profilers use a wide variety of techniques to collect data, including hardware interrupts, code instrumentation, instruction set simulation, operating system hooks, and performance counters. Profilers are used in the performance engineering process.
+Profilers use a wide variety of techniques to collect data, including
+hardware interrupts, code instrumentation, instruction set simulation,
+operating system hooks, and performance counters. Profilers are
+commonly used in the performance engineering process.
 
-## Timers of the trac tool
+## Timers in MPTRAC
 
-A set of timers has been implemented directly in the trac tool. Next to the runtime for different parts of the code, also estimates of the memory needs and the problem size are reported.
+A set of timers has been directly implemented in the `trac` tool. In
+addition to the runtime for different parts of the code, estimates of
+memory usage and problem size are also reported.
 
-Example of output reported by the trac tool:
+An example of output reported by the `trac` tool:
 
 ```
 SIZE_NP = 10000
@@ -75,21 +88,32 @@ TIMER_GROUP_OUTPUT = 8.171 s
 TIMER_TOTAL = 37.936 s
 ```
 
-SIZE_NP refers to the number of particles used in the simulation. SIZE_MPI_TASKS refers to the number of MPI tasks. SIZE_OMP_THREADS refers to the number of OpenMP threads per MPI task. SIZE_ACC_DEVICES refers to the number of GPU devices per MPI task.
+`SIZE_NP` refers to the number of particles used in the
+simulation. `SIZE_MPI_TASKS` refers to the number of MPI
+tasks. `SIZE_OMP_THREADS` refers to the number of OpenMP threads per
+MPI task. `SIZE_ACC_DEVICES` refers to the number of GPU devices per
+MPI task.
 
-The memory needs have been derived by analyzing the data structures used in the code and are not based on measurements.
+The memory requirements have been derived by analyzing the data
+structures used in the code and are not based on measurements.
 
-Some timers are zero or not shown because the corresponding modules have not been used in this run.
+Some timers are zero or not shown because the corresponding modules
+have not been used in this run.
 
-A simple optimization of memory needs (and runtime!) is to adjust the constants EX, EY, and EZ defined in mptrac.h to match the grid dimensions of the meteorological data set and the constant NP to match the number of particles used in the simulation.
+A simple optimization of memory requirements (and runtime!) is to
+adjust the constants `EX`, `EY`, and `EP`, defined in `mptrac.h`, to
+match the grid dimensions of the meteorological data set and the
+constant `NP` to match the number of particles used in the simulation.
 
 ## Profiling of CPU runs
 
-CPU profiling of MPTRAC is enabled by means of gprof. Set "PROF = 1" in the Makefile, recompile the code, and run a test case.
+CPU profiling of MPTRAC is enabled using `gprof`. Set `PROF = 1` in
+the Makefile, recompile the code, and run a test case.
 
-Runtime information will be collected in the file "gmon.out" in the working directory. Use "gprof [binary]" to see the runtime profile.
+Runtime information will be collected in the file `gmon.out` in the
+working directory. Use `gprof [binary]` to see the runtime profile.
 
-Example output for the trac tool:
+Example output for the `trac` tool:
 
 ```
 Flat profile:
@@ -117,12 +141,15 @@ Each sample counts as 0.01 seconds.
 
 ## Profiling of GPU runs
 
-GPU profiling is enabled by means of NVIDIA Nsight Systems. To see NVTX markers in the timeline, set "NVTX = 1" in the Makefile before the compilation.
+GPU profiling is enabled by means of NVIDIA Nsight Systems. To see
+NVTX markers in the timeline, set `NVTX = 1` in the Makefile before
+compilation.
 
-Please find an example here on how to enable Nsight systems profilings in a job script:
+Here is an example of how to enable Nsight Systems profiling in a job
+script:
 
 ```
-    #### Nsight Sytems notes                                                                                                                                                                                            
+    #### Nsight Systems notes                                                                                                                                                                                            
     # For MPI profiling add "mpi" to the trace list:                                                                                                                                                                    
     #     --trace=nvtx,osrt,openacc,mpi                                                                                                                                                                                     
     # to start profiling after x sec add "--delay x":                                                                                                                                                                   
@@ -135,7 +162,9 @@ Please find an example here on how to enable Nsight systems profilings in a job 
         $trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei ATM_BASENAME atm | tee data/log_trac.txt
 ```
 
-After the execution, you can visualize .qdrep files in nsys-ui. Take a look at "Nsight Sytems notes" for other useful options.
+After the execution, you can visualize `.qdrep`-files in
+`nsys-ui`. Refer to the Nsight Systems manual for other useful
+options.
 
 ## Further reading
 
