@@ -25,6 +25,12 @@ scientific publications:
 
 This is a list of papers in which MPTRAC was applied:
 
+- Liu, M., Hoffmann, L., Grooß, J.-U., Cai, Z., Grießbach, S., and
+  Heng, Y.: Technical note: A comparative study of chemistry schemes
+  for volcanic sulfur dioxide in Lagrangian transport simulations – a
+  case study of the 2019 Raikoke eruption, Atmos. Chem. Phys., 25,
+  4403–4418, <https://doi.org/10.5194/acp-25-4403-2025>, 2025.
+
 - Clemens, J., Hoffmann, L., Vogel, B., Grießbach, S., and Thomas, N.:
   Implementation and evaluation of diabatic advection in the
   Lagrangian transport model MPTRAC 2.6, Geosci. Model Dev., 17,
