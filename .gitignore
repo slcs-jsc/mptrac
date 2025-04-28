@@ -26,6 +26,9 @@ projects/paraview/data/
 !projects/python/
 projects/python/plots/
 projects/python/venv/
+!projects/web_runner/
+projects/web_runner/runs/
+projects/web_runner/venv/
 src/*.o
 src/*.mod
 src/atm2grid
