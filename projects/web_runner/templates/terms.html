@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  
+  <head>
+    <title>MPTRAC Web Runner</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  </head>
+  
+  <body style="font-family:monospace; background:#111; color:#ccc; padding:20px;">
+
+    <!-- Header -->
+    <div class="w3-container w3-padding-24" style="background: linear-gradient(90deg, #001530, #003366); color: white;">
+      <div class="w3-row w3-center w3-padding-16 w3-content" style="max-width:1200px; margin:auto; display: flex; align-items: center; justify-content: center;">  
+	<div style="display: flex; align-items: center;">
+	  <img src="{{ url_for('static', filename='images/MPTRAC.svg') }}" alt="Logo" style="height:100px; margin-right:20px;">
+	  <div style="text-align: left;">
+            <h1 style="font-family: monospace; margin:0; font-size:32px;">Massive-Parallel Trajectory Calculations</h1>
+            <h4 style="margin-top:6px; font-size:18px; color: #ddd;">Web Runner for Air Parcel Trajectory Calculations</h4>
+	  </div>
+	</div>
+      </div>
+    </div>
+    
+    <div class="w3-container w3-padding-32 w3-center">
+      <div class="w3-card-4 w3-white w3-padding-large" style="max-width: 80%; margin: auto; text-align: left;">
+	
+	<h2 class="w3-center w3-xxlarge">Terms & Conditions</h2>
+	<hr style="border-top: 1px solid #ccc; width: 60%; margin: auto; margin-bottom: 32px;">
+	
+	<h3>1. Use at Your Own Risk</h3>
+	<p>
+          The MPTRAC Web Runner is provided "as is" without any warranty, express or implied. 
+          We accept no liability for any losses or damages resulting from the use of this service.
+	</p>
+	
+	<h3>2. Fair Use</h3>
+	<p>
+          Please use this web service responsibly. Excessive use, abuse, or attempts to disrupt the service may lead to restricted access.
+	</p>
+	
+	<h3>3. Active Development Notice</h3>
+	<p>
+          The MPTRAC Web Runner is under active development. 
+          Features, functionality, and availability may change without notice.
+	</p>
+	
+	<h3>4. Open Access and License</h3>
+	<p>
+          Simulation results are made available under the 
+          <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank" class="w3-text-blue">Creative Commons Attribution 4.0 International (CC BY 4.0)</a> license.
+          You are free to share and adapt the results, provided appropriate credit is given.
+	</p>
+	
+	<h3>5. Citation Requirement</h3>
+	<p>
+          If you use the MPTRAC Web Runner or its output for publications or presentations, 
+          please cite the relevant MPTRAC reference papers. 
+          <br><br>
+	  Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, <a href="https://doi.org/10.5194/gmd-15-2731-2022" target="_blank" class="w3-text-blue">https://doi.org/10.5194/gmd-15-2731-2022></a>, 2022.
+	</p>
+	
+	<h3>6. Contact Information</h3>
+	<p>
+          For questions or feedback, please contact:
+	  <br><br>
+          <strong>Dr. Lars Hoffmann</strong> <br>
+          Jülich Supercomputing Centre (JSC), Forschungszentrum Jülich, Germany
+          <br>
+          Email: <a href="mailto:l.hoffmann@fz-juelich.de" class="w3-text-blue">l.hoffmann@fz-juelich.de</a>
+	</p>
+      </div>
+    </div>
+
+    <div class="w3-bar w3-center">
+      <button onclick="window.location.href='/'"
+	      class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue"
+	      style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
+	🏠 Return to Homepage
+      </button>
+    </div>
+
+    <!-- Footer -->
+    <footer class="w3-container w3-center w3-padding-32" style="background-color:#001f4d; color:white; margin-top:40px;">
+      <p style="margin: 0;">
+	<a href="/terms" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Terms & Conditions</a>
+	| <a href="https://www.fz-juelich.de/en/legal-notice" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Legal Notice</a>
+	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Privacy Policy</a>
+      </p>
+    </footer>
+    
+  </body>
+</html>

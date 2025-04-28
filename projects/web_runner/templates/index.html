@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>MPTRAC Web Runner</title>
+    <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  </head>
+  
+  <body style="font-family:monospace; background:#111; color:#ccc; padding:20px;">
+
+    <!-- Header -->
+    <div class="w3-container w3-padding-24" style="background: linear-gradient(90deg, #001530, #003366); color: white;">
+      <div class="w3-row w3-center w3-padding-16 w3-content" style="max-width:1200px; margin:auto; display: flex; align-items: center; justify-content: center;">  
+	<div style="display: flex; align-items: center;">
+	  <img src="{{ url_for('static', filename='images/MPTRAC.svg') }}" alt="Logo" style="height:100px; margin-right:20px;">
+	  <div style="text-align: left;">
+            <h1 style="font-family: monospace; margin:0; font-size:32px;">Massive-Parallel Trajectory Calculations</h1>
+            <h4 style="margin-top:6px; font-size:18px; color: #ddd;">Web Runner for Air Parcel Trajectory Calculations</h4>
+	  </div>
+	</div>
+      </div>
+    </div>
+
+    <!-- Intro -->
+    <div class="w3-container w3-padding-16 w3-center" style="background-color: #1a1a1a; color: white; transition: all 0.3s ease; margin-top: 10px;">
+      <div class="w3-row w3-content" style="max-width:1200px; margin:auto;">
+	<p style="font-size: 18px; color: #ddd; line-height: 1.6;">
+	  <strong>Explore the MPTRAC Web Runner:</strong> Simulate and visualize air parcel trajectories to study atmospheric transport. 
+	  Configure simulations with key parameters and download results for analysis and further studies. 
+	</p>
+	<div style="margin-top: 20px;">
+	  <a href="https://slcs-jsc.github.io/mptrac/" class="w3-button w3-hover-shadow w3-padding-medium w3-round-large w3-hover-light-blue" style="background: #003366; color: white; font-size: 16px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">📘 MPTRAC Documentation</a>
+	  <a href="https://github.com/slcs-jsc/mptrac" class="w3-button w3-hover-shadow w3-padding-medium w3-round-large w3-hover-light-blue" style="background: #003366; color: white; font-size: 16px; border: none; transition: background-color 0.3s ease;">💻 GitHub Repository</a>
+	</div>
+      </div>
+    </div>
+
+    <br>
+    
+    <h2 class="w3-center">Simulation Parameters</h2>
+    
+    <!-- Form -->
+    <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16" style="width: 80%; margin: 0 auto;">
+      
+      <!-- Time Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('time-settings')">
+	<i class="fa fa-caret-down"></i> Time Settings
+      </button>
+      <div id="time-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Please specify the start and stop times for the simulation period. Make sure that the total duration between the start and stop times does not exceed <strong>30 days</strong>. The times should be entered in the format <code>YYYY-MM-DD HH:MM:SS</code>.</p>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Start Time</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" placeholder="YYYY-MM-DD HH:MM:SS" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Stop Time</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" placeholder="YYYY-MM-DD HH:MM:SS" required>
+	  </div>
+	</div>
+      </div>
+      
+      <!-- Grid Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('grid-settings')">
+	<i class="fa fa-caret-down"></i> Initial Grid Settings
+      </button>
+      <div id="grid-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Longitude Start [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="lon0" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Longitude End [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="lon1" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Longitude Step [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="dlon" value="1.0">
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Latitude Start [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="lat0" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Latitude End [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="lat1" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Latitude Step [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="dlat" value="1.0">
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Height Start [km]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="z0" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Height End [km]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="z1" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Height Step [km]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="dz" value="1.0">
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Number of Air Parcels per Grid Point</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="rep" value="1" required>
+	  </div>
+	</div>
+      </div>
+      
+      <!-- Random Perturbations -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('random-perturbations')">
+	<i class="fa fa-caret-down"></i> Initial Random Perturbations
+      </button>
+      <div id="random-perturbations" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Uniform Spread Longitude [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="ulon" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Uniform Spread Latitude [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="ulat" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Uniform Spread Height [km]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="0.0">
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Gaussian Spread Longitude [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="slon" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Gaussian Spread Latitude [°]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="slat" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Gaussian Spread Height [km]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="sz" value="0.0">
+	  </div>
+	</div>
+      </div>
+      
+      <!-- Diffusivity Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('diffusivity-settings')">
+	<i class="fa fa-caret-down"></i> Diffusivity Settings
+      </button>
+      <div id="diffusivity-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Horizontal Diffusivity in PBL [m²/s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dx_pbl" value="50.0" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Horizontal Diffusivity in Tropopause [m²/s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dx_trop" value="50.0" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Horizontal Diffusivity in Stratosphere [m²/s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dx_strat" value="0.0" required>
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Vertical Diffusivity in PBL [m²/s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dz_pbl" value="0.0" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Vertical Diffusivity in Tropopause [m²/s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dz_trop" value="0.0" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Vertical Diffusivity in Stratosphere [m²/s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_dz_strat" value="0.1" required>
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Horizontal Subgrid-Scale Winds</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_mesox" value="0.16" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Vertical Subgrid-Scale Winds</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_mesoz" value="0.16" required>
+	  </div>
+	</div>
+      </div>
+      
+      <!-- Output Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('output-settings')">
+	<i class="fa fa-caret-down"></i> Output Settings
+      </button>
+      <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+            <label>Output Interval [s]</label>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="atm_dt_out" value="86400.0">
+	  </div>
+	</div>
+      </div>
+
+      <br>
+      
+      <!-- Buttons -->
+      <div class="w3-bar w3-center" style="margin-top: 20px;">
+	<button class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;" type="submit">
+	  ▶️ Run Simulation
+	</button>
+	
+	<button type="reset" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
+	  ♻️ Reset Form
+	</button>
+      </div>
+    </form>
+    
+    <!-- JavaScript for Collapsible Sections -->
+    <script>
+      function toggleCollapsible(sectionId) {
+	  var section = document.getElementById(sectionId);
+	  if (section.classList.contains("w3-hide")) {
+	      section.classList.remove("w3-hide");
+	  } else {
+	      section.classList.add("w3-hide");
+	  }
+      }
+    </script>
+    
+    <!-- Modal for showing progress -->
+    <div id="progressModal" class="w3-modal" style="display:none;">
+      <div class="w3-modal-content w3-center w3-round-large w3-padding-32" style="background:#222;">
+        <h2 class="w3-text-white">Running Simulation...</h2>
+        <div class="w3-center w3-padding-16">
+          <i class="w3-spin w3-jumbo w3-text-light-blue fa fa-cog"></i>
+        </div>
+        <p class="w3-text-light-grey">Please wait while we process your request.</p>
+      </div>
+    </div>
+    <script>
+      function showProgressModal() {
+        document.getElementById('progressModal').style.display = 'block';
+      }
+    </script>
+
+    <!-- Footer -->
+    <footer class="w3-container w3-center w3-padding-32" style="background-color:#001f4d; color:white; margin-top:40px;">
+      <p style="margin: 0;">
+	<a href="/terms" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Terms & Conditions</a>
+	| <a href="https://www.fz-juelich.de/en/legal-notice" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Legal Notice</a>
+	| <a href="https://www.fz-juelich.de/en/privacy-policy" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white;">Privacy Policy</a>
+      </p>
+    </footer>
+    
+  </body>
+</html>
