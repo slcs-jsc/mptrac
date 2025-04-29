@@ -270,12 +270,14 @@ def run():
         plot_url = create_plot(np.array(lons), np.array(lats), np.array(heights))
 
         delayed_cleanup(work_dir)
-
-        return render_template('result.html', run_id=run_id, stdout=trac_output, plot_url=plot_url)
-
+        
+        combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
+        return render_template('result.html', run_id=run_id, stdout=combined_output, plot_url=plot_url)
+    
     else:
         delayed_cleanup(work_dir)
-        return render_template('error.html', stdout=trac_output), 500
+        combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
+        return render_template('error.html', stdout=combined_output), 500
 
 
 @app.route('/download/<run_id>')
