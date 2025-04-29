@@ -125,7 +125,12 @@ def run():
     try:
         start_time = seconds_since_2000(request.form['start_time'])
         stop_time  = seconds_since_2000(request.form['stop_time'])
-
+        
+        if stop_time < start_time:
+            direction = -1  # Backward trajectory
+        else:
+            direction = 1   # Forward trajectory
+        
         z0 = float(request.form['z0'])
         z1 = float(request.form['z1'])
         dz = float(request.form['dz'])
@@ -138,6 +143,8 @@ def run():
         lon1 = float(request.form['lon1'])
         dlon = float(request.form['dlon'])
 
+        rep = int(request.form['rep'])
+
         ulon = float(request.form['ulon'])
         ulat = float(request.form['ulat'])
         uz   = float(request.form['uz'])
@@ -145,8 +152,6 @@ def run():
         slon = float(request.form['slon'])
         slat = float(request.form['slat'])
         sz   = float(request.form['sz'])
-
-        rep = int(request.form['rep'])
 
         turb_dx_pbl   = float(request.form['turb_dx_pbl'])
         turb_dx_trop  = float(request.form['turb_dx_trop'])
@@ -159,14 +164,26 @@ def run():
 
         atm_dt_out = float(request.form.get('atm_dt_out', 3600))
 
+        if abs(start_time - stop_time) > 30. * 86400.:
+            return validation_error("Duration between start_time and stop_time must not exceed 30 days.")
         if not (-100 <= z0 <= 100 and -100 <= z1 <= 100):
             return validation_error("Invalid height range. Must be between -100 and 100 km.")
+        if not (0 < dz <= 100):
+            return validation_error("Invalid vertical sampling. Must be > 0 and ≤ 100 km.")
         if not (-90 <= lat0 <= 90 and -90 <= lat1 <= 90):
             return validation_error("Invalid latitude range. Must be between -90 and 90°.")
+        if not (0 < dlat <= 180):
+            return validation_error("Invalid latitude sampling. Must be > 0 and ≤ 180°.")
         if not (-180 <= lon0 <= 180 and -180 <= lon1 <= 180):
             return validation_error("Invalid longitude range. Must be between -180 and 180°.")
+        if not (0 < dlon <= 360):
+            return validation_error("Invalid longitude sampling. Must be > 0 and ≤ 360°.")
         if not (1 <= rep <= 10000):
             return validation_error("Invalid repetition value. Must be between 1 and 10000.")
+        if any(param < 0 for param in [ulon, ulat, uz, slon, slat, sz]):
+            return validation_error("Random perturbations must be >= 0.")
+        if any(param < 0 for param in [turb_dx_pbl, turb_dx_trop, turb_dx_strat, turb_dz_pbl, turb_dz_trop, turb_dz_strat, turb_mesox, turb_mesoz]):
+            return validation_error("Turbulence parameters must be >= 0.")
         if atm_dt_out <= 0:
             return validation_error("Output frequency must be > 0.")
 
@@ -207,6 +224,7 @@ def run():
     INIT_REP = {rep}
 
     # trac...
+    DIRECTION = {direction}
     T_STOP = {stop_time}
     METBASE = {METBASE}
     DT_MET = 86400.0
