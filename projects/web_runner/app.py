@@ -260,13 +260,18 @@ def run():
 
         files = sorted(glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
         lons, lats, heights = [], [], []
-
+        
         for file in files:
             data = np.loadtxt(file)
+            if data.ndim == 1:
+                if data.shape[0] == 4:
+                    data = data[np.newaxis, :]
+                else:
+                    continue
             lons.extend(data[:, 2])
             lats.extend(data[:, 3])
             heights.extend(data[:, 1])
-
+            
         plot_url = create_plot(np.array(lons), np.array(lats), np.array(heights))
 
         delayed_cleanup(work_dir)
