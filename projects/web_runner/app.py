@@ -72,7 +72,7 @@ def seconds_since_2000(time_str):
 
 
 def create_plot(lons, lats, heights):
-    """Create a scatter plot."""
+    """Create map plot."""
     fig = plt.figure(figsize=(15, 12))
     ax = plt.axes(projection=ccrs.PlateCarree())
     ax.set_global()
@@ -123,36 +123,25 @@ def terms():
 @app.route('/run', methods=['POST'])
 def run():
     try:
+        # Get parameters...
         start_time = seconds_since_2000(request.form['start_time'])
         stop_time  = seconds_since_2000(request.form['stop_time'])
-        
-        if stop_time < start_time:
-            direction = -1  # Backward trajectory
-        else:
-            direction = 1   # Forward trajectory
-        
         z0 = float(request.form['z0'])
         z1 = float(request.form['z1'])
         dz = float(request.form['dz'])
-
         lat0 = float(request.form['lat0'])
         lat1 = float(request.form['lat1'])
         dlat = float(request.form['dlat'])
-
         lon0 = float(request.form['lon0'])
         lon1 = float(request.form['lon1'])
         dlon = float(request.form['dlon'])
-
         rep = int(request.form['rep'])
-
         ulon = float(request.form['ulon'])
         ulat = float(request.form['ulat'])
         uz   = float(request.form['uz'])
-
         slon = float(request.form['slon'])
         slat = float(request.form['slat'])
         sz   = float(request.form['sz'])
-
         turb_dx_pbl   = float(request.form['turb_dx_pbl'])
         turb_dx_trop  = float(request.form['turb_dx_trop'])
         turb_dx_strat = float(request.form['turb_dx_strat'])
@@ -161,9 +150,9 @@ def run():
         turb_dz_strat = float(request.form['turb_dz_strat'])
         turb_mesox    = float(request.form['turb_mesox'])
         turb_mesoz    = float(request.form['turb_mesoz'])
-
         atm_dt_out = float(request.form.get('atm_dt_out', 3600))
 
+        # Check parameters...
         if abs(start_time - stop_time) > 30. * 86400.:
             return validation_error("Duration between start_time and stop_time must not exceed 30 days.")
         if not (-100 <= z0 <= 100 and -100 <= z1 <= 100):
@@ -187,6 +176,20 @@ def run():
         if atm_dt_out <= 0:
             return validation_error("Output frequency must be > 0.")
 
+        # Check number of trajectories...
+        nz = int(round((z1 - z0) / dz)) + 1
+        nlat = int(round((lat1 - lat0) / dlat)) + 1
+        nlon = int(round((lon1 - lon0) / dlon)) + 1
+        num_trajectories = nz * nlat * nlon * rep
+        if num_trajectories > 10000:
+            return validation_error("Too many trajectories. Must be below 10000.")
+        
+        # Set forward/backward flag...
+        if stop_time < start_time:
+            direction = -1  # Backward trajectory
+        else:
+            direction = 1   # Forward trajectory
+        
     except Exception as e:
         return validation_error(str(e))
 
