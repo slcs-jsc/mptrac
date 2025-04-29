@@ -8,6 +8,8 @@ These links provide further information for users of MPTRAC:
 
 * [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen)
 
+* [AI documentation](https://www.deepwiki.com/slcs-jsc/mptrac)
+
 * [Reference paper](https://doi.org/10.5194/gmd-15-2731-2022)
 
 * [Other references](https://slcs-jsc.github.io/mptrac/references)
