@@ -47,7 +47,7 @@
 	<i class="fa fa-caret-down"></i> Time Settings
       </button>
       <div id="time-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Please specify the start and stop times for the simulation period. Make sure that the total duration between the start and stop times does not exceed <strong>30 days</strong>. The times should be entered in the format <code>YYYY-MM-DD HH:MM:SS</code>.</p>
+	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM:SS</code>. Trajectories can be calculated forward or backward in time, swap the start and stop times accordingly. The total duration must not exceed 30 days.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
             <label>Start Time</label>
@@ -65,6 +65,7 @@
 	<i class="fa fa-caret-down"></i> Initial Grid Settings
       </button>
       <div id="grid-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Define the initial positions of the air parcels using a 3D grid by specifying the start, end, and step values for longitude, latitude, and height. Heights are internally converted to pressure using a surface pressure of 1013.25 hPa and a scale height of 7.0 km. The total number of air parcels must not exceed 10,000.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
             <label>Longitude Start [°]</label>
@@ -120,6 +121,7 @@
 	<i class="fa fa-caret-down"></i> Initial Random Perturbations
       </button>
       <div id="random-perturbations" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Specify the initial random perturbations for air parcel locations with uniform or Gaussian spreads for longitude, latitude, and height. The values define the extent of the perturbations in each direction.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
             <label>Uniform Spread Longitude [°]</label>
@@ -155,6 +157,7 @@
 	<i class="fa fa-caret-down"></i> Diffusivity Settings
       </button>
       <div id="diffusivity-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Define the stochastic perturbations of air parcel locations along trajectories by setting the horizontal and vertical diffusivity values for the PBL, troposphere, and stratosphere. Additionally, specify the subgrid-scale winds for both horizontal and vertical directions.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
             <label>Horizontal Diffusivity in PBL [m²/s]</label>
@@ -200,6 +203,7 @@
 	<i class="fa fa-caret-down"></i> Output Settings
       </button>
       <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Set the output interval for data collection in seconds. This determines how frequently simulation results are recorded.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
             <label>Output Interval [s]</label>
