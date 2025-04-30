@@ -7860,7 +7860,7 @@ int read_met_nc(
   read_met_polar_winds(met);
 
   /* Create periodic boundary conditions... */
-  read_met_periodic(met);
+  read_met_periodic(met, ctl);
 
   /* Downsampling... */
   read_met_sample(ctl, met);
@@ -8755,7 +8755,7 @@ void read_met_pbl(
 /*****************************************************************************/
 
 void read_met_periodic(
-  met_t *met, ctl_t *ctl) {
+  met_t *met, const ctl_t *ctl) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_PERIODIC", "METPROC", NVTX_READ);

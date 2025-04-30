@@ -7483,7 +7483,7 @@ void read_met_pbl(
  * @author Lars Hoffmann
  */
 void read_met_periodic(
-  met_t * met);
+  met_t * met, const ctl_t * ctl);
 
 /**
  * @brief Applies a fix for polar winds in meteorological data.
