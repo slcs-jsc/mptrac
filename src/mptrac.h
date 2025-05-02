@@ -2539,6 +2539,9 @@ typedef struct {
   /*! Number of digits for quantization of netCDF meteo files (0=off). */
   int met_nc_quant;
 
+  /*! ZSTD compression level (from -5 to 22). */
+  int met_zstd_level;
+
   /*! ZFP compression precision for all variables, except z and T. */
   int met_zfp_prec;
 
@@ -3985,37 +3988,29 @@ void compress_zfp(
   FILE * inout);
 
 /**
- * @brief Compresses or decompresses an array of floats using the Zstandard (ZSTD) library.
+ * @brief Compress or decompress a float array using Zstandard (zstd).
  *
- * This function either compresses or decompresses an array of floats
- * based on the value of the `decompress` parameter.  Compression
- * reduces the storage size using the ZSTD compression
- * algorithm. Decompression restores the original float values from
- * the compressed representation.
+ * This function either compresses or decompresses a given array of
+ * floats using the Zstandard (zstd) compression algorithm. It
+ * supports multi-threaded compression and allows specifying the
+ * compression level. When decompressing, it reads the compressed data
+ * from the provided file stream and decompresses it into the original
+ * array. When compressing, it compresses the given array and writes
+ * the compressed data to the file stream.
  *
- * @param varname The name of the variable being processed.
- * @param array Pointer to the array of floats to be compressed or decompressed.
- * @param n The number of elements in the array.
- * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
- * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression
- * and writing compressed data during compression.
+ * @param varname The name of the variable being compressed or decompressed (for logging).
+ * @param array The float array to compress or decompress.
+ * @param n The number of elements in the array (used to calculate the uncompressed size).
+ * @param decompress A flag indicating whether to decompress (non-zero value) or compress (zero value).
+ * @param level The compression level to use (-5 to 22). A higher value gives better compression at the cost of speed.
+ * @param inout A file pointer to read/write the compressed or decompressed data.
  *
- * The function performs the following steps:
- * - Calculates the buffer sizes required for compression and decompression.
- * - Allocates memory for the compressed data buffer.
- * - If decompressing:
- *   - Reads the size of the compressed data and the compressed data itself from the file.
- *   - Decompresses the data and stores it in the `array`.
- * - If compressing:
- *   - Compresses the data and writes the compressed data size and the compressed data itself to the file.
+ * @note This function uses OpenMP to set the number of threads based on the maximum threads 
+ *       available in the environment. The zstd library handles multi-threaded compression 
+ *       with a number of threads determined by the OpenMP thread count.
  *
- * The function logs the compression or decompression details and frees allocated resources before returning.
- *
- * @note This function assumes that the input `array` is already allocated and can hold the decompressed data.
- * 
- * @warning Ensure that the file pointer `inout` is correctly opened for reading or writing as required.
- *
- * @see ZSTD_compress, ZSTD_decompress, ZSTD_isError
+ * @throws ERRMSG If there is an error during compression or decompression.
+ * @throws ZSTD_isError If there is an error in Zstandard compression or decompression.
  * 
  * @author Lars Hoffmann
  */
@@ -4024,6 +4019,7 @@ void compress_zstd(
   float *array,
   const size_t n,
   const int decompress,
+  const int level,
   FILE * inout);
 
 /*! Get day of year from date. */
