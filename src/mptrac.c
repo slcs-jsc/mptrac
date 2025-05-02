@@ -862,7 +862,7 @@ void compress_zstd(
   ZSTD_CCtx *cctx = ZSTD_createCCtx();
 
   /* Enable threading and set compression level... */
-  int threads = MAX(1, omp_get_max_threads());
+  int threads = MIN(1, omp_get_max_threads());
   ZSTD_CCtx_setParameter(cctx, ZSTD_c_nbWorkers, threads);
   ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, level);
 
