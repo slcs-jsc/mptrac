@@ -861,12 +861,6 @@ void compress_zstd(
   /* Allocate... */
   char *compr = (char *) calloc((uint) comprLen, 1);
   char *uncompr = (char *) array;
-  ZSTD_CCtx *cctx = ZSTD_createCCtx();
-
-  /* Enable threading and set compression level... */
-  int threads = MIN(1, omp_get_max_threads());
-  ZSTD_CCtx_setParameter(cctx, ZSTD_c_nbWorkers, threads);
-  ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel, level);
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
@@ -885,7 +879,7 @@ void compress_zstd(
 
   /* Compress array and output compressed stream... */
   else {
-    compsize = ZSTD_compress2(cctx, compr, comprLen, uncompr, uncomprLen);
+    compsize = ZSTD_compress(compr, comprLen, uncompr, uncomprLen, level);
     if (ZSTD_isError(compsize)) {
       ERRMSG("Compression failed!");
     } else {
@@ -901,7 +895,6 @@ void compress_zstd(
 
   /* Free... */
   free(compr);
-  free(cctx);
 }
 #endif
 

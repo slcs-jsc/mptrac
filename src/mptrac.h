@@ -3988,29 +3988,23 @@ void compress_zfp(
   FILE * inout);
 
 /**
- * @brief Compress or decompress a float array using Zstandard (zstd).
+ * @brief Compresses or decompresses a float array using Zstandard (ZSTD).
  *
- * This function either compresses or decompresses a given array of
- * floats using the Zstandard (zstd) compression algorithm. It
- * supports multi-threaded compression and allows specifying the
- * compression level. When decompressing, it reads the compressed data
- * from the provided file stream and decompresses it into the original
- * array. When compressing, it compresses the given array and writes
- * the compressed data to the file stream.
+ * This function either compresses a given float array and writes the result to a file,
+ * or reads compressed data from a file and decompresses it into the array.
  *
- * @param varname The name of the variable being compressed or decompressed (for logging).
- * @param array The float array to compress or decompress.
- * @param n The number of elements in the array (used to calculate the uncompressed size).
- * @param decompress A flag indicating whether to decompress (non-zero value) or compress (zero value).
- * @param level The compression level to use (-5 to 22). A higher value gives better compression at the cost of speed.
- * @param inout A file pointer to read/write the compressed or decompressed data.
+ * @param[in]  varname     Name of the variable, used for logging.
+ * @param[in,out] array    Pointer to the float array to compress or to fill with decompressed data.
+ * @param[in]  n           Number of float elements in the array.
+ * @param[in]  decompress  If non-zero, perform decompression; otherwise, perform compression.
+ * @param[in]  level       Compression level (-5 to 22). Use 0 for the Zstd default.
+ * @param[in,out] inout    File pointer for input/output. Used for reading or writing compressed data.
  *
- * @note This function uses OpenMP to set the number of threads based on the maximum threads 
- *       available in the environment. The zstd library handles multi-threaded compression 
- *       with a number of threads determined by the OpenMP thread count.
+ * @note This function uses ZSTD's simple one-shot compression API (ZSTD_compress),
+ *       which does not support multithreaded compression.
  *
- * @throws ERRMSG If there is an error during compression or decompression.
- * @throws ZSTD_isError If there is an error in Zstandard compression or decompression.
+ * @warning The function allocates temporary memory for the compressed buffer
+ *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
  * 
  * @author Lars Hoffmann
  */
