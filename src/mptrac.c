@@ -7435,6 +7435,10 @@ void read_met_levels(
   /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
 
+    /* Check pressure on model levels... */
+    if (met->pl[0][0][0] <= 0)
+      ERRMSG("Pressure on model levels is missing, check MET_VERT_COORD!");
+
     /* Interpolate variables... */
     read_met_ml2pl(ctl, met, met->t, "T");
     read_met_ml2pl(ctl, met, met->u, "U");
