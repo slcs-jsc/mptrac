@@ -7207,6 +7207,8 @@ void read_met_grid(
     sprintf(levname, "plev");
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
     sprintf(levname, "hybrid");
+  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
+    sprintf(levname, "hybrid_level");
 
   NC_INQ_DIM(levname, &met->np, 1, EP);
   if (met->np == 1) {
@@ -7484,11 +7486,20 @@ void read_met_levels(
       /* Grid level coefficients... */
       double hyam[EP], hybm[EP];
 
-      /* Read coefficients... */
+      /* Read coefficients from file... */
       if (ctl->met_vert_coord == 2) {
 	int varid;
-	NC_GET_DOUBLE("hyam", hyam, 1);
-	NC_GET_DOUBLE("hybm", hybm, 1);
+	if (nc_inq_varid(ncid, "hyam", &varid) == NC_NOERR
+	    && nc_inq_varid(ncid, "hybm", &varid) == NC_NOERR) {
+	  NC_GET_DOUBLE("hyam", hyam, 1);
+	  NC_GET_DOUBLE("hybm", hybm, 1);
+	} else if (nc_inq_varid(ncid, "a_hybrid_level", &varid) == NC_NOERR
+		   && nc_inq_varid(ncid, "b_hybrid_level",
+				   &varid) == NC_NOERR) {
+	  NC_GET_DOUBLE("a_hybrid_level", hyam, 1);
+	  NC_GET_DOUBLE("b_hybrid_level", hybm, 1);
+	} else
+	  ERRMSG("Cannot read a and b level coefficients from netCDF file!");
       }
 
       /* Use control parameters... */
