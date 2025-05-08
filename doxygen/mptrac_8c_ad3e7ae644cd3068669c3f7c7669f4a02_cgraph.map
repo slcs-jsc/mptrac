@@ -1,0 +1,9 @@
+<map id="module_diff_turb" name="module_diff_turb">
+<area shape="rect" id="node1" title="Applies turbulent diffusion processes to atmospheric particles." alt="" coords="5,56,123,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#aab313e4929e7379aca2aee1ee36873d9" title="Generate random numbers using various methods and distributions." alt="" coords="174,5,263,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#ae0ce53cb5230060c17ee4766ca910e79" title="Computes a weighting factor based on planetary boundary layer pressure." alt="" coords="177,56,261,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a90bdbbffe8b8633d84a48d2ddd311180" title="Computes a weighting factor based on tropopause pressure." alt="" coords="171,107,267,133"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="315,107,397,133"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="449,81,524,108"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="445,132,528,159"/>
+</map>

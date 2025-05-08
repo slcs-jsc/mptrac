@@ -1,0 +1,7 @@
+<map id="mptrac_read_atm" name="mptrac_read_atm">
+<area shape="rect" id="node1" title="Reads air parcel data from a specified file into the given atmospheric structure." alt="" coords="5,81,128,108"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#af0092541e8eb2c51fc9a3fcd98043f3f" title="Reads air parcel data from an ASCII file and populates the given atmospheric structure." alt="" coords="183,5,287,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#ac51355e97453a01a70446623d0c382e5" title="Reads air parcel data from a binary file and populates the given atmospheric structure." alt="" coords="185,56,285,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#ad55d18eefcfa90b7c40d4a37dbb8fbf0" title="Reads atmospheric data from a CLAMS NetCDF file." alt="" coords="176,107,295,133"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a2569c3ce3d8d46ce8aa186d42685494c" title="Reads air parcel data from a generic netCDF file and populates the given atmospheric structure." alt="" coords="187,157,284,184"/>
+</map>
