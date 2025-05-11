@@ -77,7 +77,7 @@ Surface variables (analysis):
   230.128 = Instantaneous northward turbulent surface stress [N m**-2]
   231.128 = Instantaneous surface sensible heat net flux [W m**-2]
 
-#Surface variables (forecast):
+# Surface variables (only in forecasts):
 #   50.128 = Large-scale precipitation fraction [s]
 #  142.128 = Large-scale precipitation [m]
 #  143.128 = Convective precipitation [m]
@@ -88,7 +88,6 @@ Surface variables (analysis):
 Model levels:
    75 = Specific rain water content [kg kg**-1]
    76 = Specific snow water content [kg kg**-1]
-   77 = Eta-coordinate vertical velocity [s**-1]
   130 = Temperature [K]
   131 = U component of wind [m s**-1]
   132 = V component of wind [m s**-1]
@@ -98,6 +97,9 @@ Model levels:
   246 = Specific cloud liquid water content [kg kg**-1]
   247 = Specific cloud ice water content [kg kg**-1]
   248 = Fraction of cloud cover (0 - 1)
+
+# Model levels (optional):
+#   77 = Eta-coordinate vertical velocity [s**-1]
 """
 
 c.retrieve("reanalysis-era5-complete", {
@@ -118,7 +120,7 @@ c.retrieve("reanalysis-era5-complete", {
     "expver": "1",
     "levelist": "1/to/137",
     "levtype": "ml",
-    "param": "75/76/77/130/131/132/133/135/203/246/247/248",
+    "param": "75/76/130/131/132/133/135/203/246/247/248",
     "stream": "oper",
     "time": "$tstr",
     "type": "an",
