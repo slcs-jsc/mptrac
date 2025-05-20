@@ -2016,6 +2016,10 @@ void level_definitions(
   } else {
     ERRMSG("Use 0 for l137, 1 for l91, 2 for l60 or values between 3 and 7.")
   }
+
+  if (ctl->met_np > NP)
+    ERRMSG("Recompile with larger NP to use this pressure level definition.")
+	    
 }
 
 /*****************************************************************************/
