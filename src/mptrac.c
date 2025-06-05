@@ -468,9 +468,9 @@ void compress_cms(
 
   /* Set multiscale parameters... */
   const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
-  const int Nd0_x = 6;
-  const int Nd0_y = 3;
-  const int max_level_grid = 7;
+  const int Nd0_x = 48;
+  const int Nd0_y = 24;
+  const int max_level_grid = 6;
   cms_param_t *cms_param
     = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
@@ -546,6 +546,46 @@ void compress_cms(
 	    tmp_arr[ARRAY_2D(ix, iy, ny)] =
 	      array[ARRAY_3D(ix, iy, ny, ip, np)];
 
+	/* Set eps threshold value... */
+	double c_thresh_test;
+	if (strcasecmp(varname, "Z") == 0)
+	  c_thresh_test = ctl->met_cms_eps_z;
+	else if (strcasecmp(varname, "T") == 0)
+	  c_thresh_test = ctl->met_cms_eps_t;
+	else if (strcasecmp(varname, "U") == 0)
+	  c_thresh_test = ctl->met_cms_eps_u;
+	else if (strcasecmp(varname, "V") == 0)
+	  c_thresh_test = ctl->met_cms_eps_v;
+	else if (strcasecmp(varname, "W") == 0)
+	  c_thresh_test = ctl->met_cms_eps_w;
+	else if (strcasecmp(varname, "PV") == 0)
+	  c_thresh_test = ctl->met_cms_eps_pv;
+	else if (strcasecmp(varname, "H2O") == 0)
+	  c_thresh_test = ctl->met_cms_eps_h2o;
+	else if (strcasecmp(varname, "O3") == 0)
+	  c_thresh_test = ctl->met_cms_eps_o3;
+	else if (strcasecmp(varname, "LWC") == 0)
+	  c_thresh_test = ctl->met_cms_eps_lwc;
+	else if (strcasecmp(varname, "RWC") == 0)
+	  c_thresh_test = ctl->met_cms_eps_rwc;
+	else if (strcasecmp(varname, "IWC") == 0)
+	  c_thresh_test = ctl->met_cms_eps_iwc;
+	else if (strcasecmp(varname, "SWC") == 0)
+	  c_thresh_test = ctl->met_cms_eps_swc;
+	else if (strcasecmp(varname, "CC") == 0)
+	  c_thresh_test = ctl->met_cms_eps_cc;
+	else
+	  ERRMSG("Variable name unknown!");
+
+	/* Initialize multiscale module... */
+	cms_ptr[ip] = cms_init(cms_param);
+
+	/* Coarsening... */
+	cms_sol[ip] =
+	  cms_read_arr_new(cms_ptr[ip], tmp_arr, lon, lat,
+			   nx, ny, c_thresh_test);
+
+#if 0
 	/* Initialize multiscale module... */
 	cms_ptr[ip] = cms_init(cms_param);
 
@@ -585,6 +625,7 @@ void compress_cms(
 	/* Coarsening... */
 	cms_coarsening(cms_ptr[ip], cms_sol[ip],
 		       (unsigned int) ctl->met_cms_heur);
+#endif
 
 	/* Free... */
 	free(tmp_arr);
@@ -1975,6 +2016,10 @@ void level_definitions(
   } else {
     ERRMSG("Use 0 for l137, 1 for l91, 2 for l60 or values between 3 and 7.")
   }
+
+  if (ctl->met_np > NP)
+    ERRMSG("Recompile with larger NP to use this pressure level definition.")
+	    
 }
 
 /*****************************************************************************/
