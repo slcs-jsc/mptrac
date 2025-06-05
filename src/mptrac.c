@@ -3385,40 +3385,82 @@ void module_mixing(
   }
 
   /* Calculate interparcel mixing... */
-  if (ctl->qnt_m >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
-  if (ctl->qnt_vmr >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-  if (ctl->qnt_Ch2o >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
-  if (ctl->qnt_Co3 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
-  if (ctl->qnt_Cco >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
-  if (ctl->qnt_Coh >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
-  if (ctl->qnt_Ch >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
-  if (ctl->qnt_Cho2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
-  if (ctl->qnt_Ch2o2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
-  if (ctl->qnt_Co1d >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
-  if (ctl->qnt_Co3p >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
-  if (ctl->qnt_Cccl4 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
-  if (ctl->qnt_Cccl3f >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
-  if (ctl->qnt_Cccl2f2 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
-  if (ctl->qnt_Cn2o >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
-  if (ctl->qnt_Csf6 >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
-  if (ctl->qnt_aoa >= 0)
-    module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
+  if (ctl->nens > 0)
+  {
+    if (ctl->qnt_m >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
+    if (ctl->qnt_vmr >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+    if (ctl->qnt_Ch2o >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
+    if (ctl->qnt_Co3 >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
+    if (ctl->qnt_Cco >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
+    if (ctl->qnt_Coh >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
+    if (ctl->qnt_Ch >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
+    if (ctl->qnt_Cho2 >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
+    if (ctl->qnt_Ch2o2 >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
+    if (ctl->qnt_Co1d >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
+    if (ctl->qnt_Co3p >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
+    if (ctl->qnt_Cccl4 >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
+    if (ctl->qnt_Cccl3f >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
+    if (ctl->qnt_Cccl2f2 >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
+    if (ctl->qnt_Cn2o >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+    if (ctl->qnt_Csf6 >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
+    if (ctl->qnt_aoa >= 0)
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);    
+  }
+  else
+  {
+    if (ctl->qnt_m >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
+    if (ctl->qnt_vmr >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
+    if (ctl->qnt_Ch2o >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
+    if (ctl->qnt_Co3 >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
+    if (ctl->qnt_Cco >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
+    if (ctl->qnt_Coh >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
+    if (ctl->qnt_Ch >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
+    if (ctl->qnt_Cho2 >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
+    if (ctl->qnt_Ch2o2 >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
+    if (ctl->qnt_Co1d >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
+    if (ctl->qnt_Co3p >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
+    if (ctl->qnt_Cccl4 >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
+    if (ctl->qnt_Cccl3f >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
+    if (ctl->qnt_Cccl2f2 >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
+    if (ctl->qnt_Cn2o >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
+    if (ctl->qnt_Csf6 >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
+    if (ctl->qnt_aoa >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
+  }
+
+
 
   /* Free... */
 #ifdef _OPENACC
@@ -3606,7 +3648,103 @@ void module_oh_chem(
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
 }
+      
+/*****************************************************************************/
 
+void module_ens_mixing_help(
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
+  const int qnt_idx) {
+
+  /* Allocate... */
+  const int np = atm->np;
+  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
+  double *restrict const cmean =
+    (double *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(double));
+  int *restrict const count = (int *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(int));
+
+  /* Init... */
+#ifdef _OPENACC
+#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
+#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
+#endif
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < ngrid * ctl->nens; i++) {
+    count[i] = 0;
+    cmean[i] = 0;
+  }
+
+  /* Loop over particles... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+      int ens = (int) atm->q[ctl->qnt_ens][ip];
+      int idx = ens * ngrid + ARRAY_3D
+	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      cmean[idx] += atm->q[qnt_idx][ip];
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+      count[idx]++;
+    }
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#ifdef __NVCOMPILER
+#pragma novector
+#endif
+#pragma omp parallel for
+#endif
+  for (int i = 0; i < ngrid * ctl->nens; i++)
+    if (count[i] > 0)
+      cmean[i] /= count[i];
+
+  /* Calculate interparcel mixing... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+      
+      int ens = (int) atm->q[ctl->qnt_ens][ip];
+      /* Set mixing parameter... */
+      double mixparam = 1.0;
+      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
+	double w = tropo_weight(clim, atm, ip);
+	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
+      }
+
+      /* Adjust quantity... */
+      atm->q[qnt_idx][ip] +=
+	(cmean
+	 [ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
+	 - atm->q[qnt_idx][ip]) * mixparam;
+    }
+
+  /* Free... */
+#ifdef _OPENACC
+#pragma acc exit data delete(cmean,count)
+#endif
+  free(cmean);
+  free(count);
+}
+      
 /*****************************************************************************/
 
 void module_position(
@@ -5254,6 +5392,8 @@ void mptrac_read_ctl(
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
+  scan_ctl(filename, argc, argv, "CSI_ENS_BASENAME", -1, "-", ctl->csi_ens_basename);
+  ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
     scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
@@ -5532,8 +5672,11 @@ void mptrac_run_timestep(
 
   /* Calculate the tracer vmr in the chemistry grid... */
   if (ctl->oh_chem_reaction != 0 || ctl->h2o2_chem_reaction != 0
-      || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0))
-    module_chem_grid(ctl, *met0, *met1, atm, t);
+      || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0)){
+      if (ctl->nens > 0)
+    module_ens_chem_grid(ctl, *met0, *met1, atm, t);
+      else
+    module_chem_grid(ctl, *met0, *met1, atm, t);}
 
   /* OH chemistry... */
   if (ctl->oh_chem_reaction != 0)
@@ -5837,6 +5980,12 @@ void mptrac_write_output(
   if (ctl->csi_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
+  }
+      
+  /* Write CSI ensemble data... */
+  if (ctl->csi_ens_basename[0] != '-') {
+    sprintf(filename,  "%s/%s.tab", dirname, ctl->csi_ens_basename);
+    write_csi_ens(filename, ctl, atm, t);
   }
 
   /* Write ensemble data... */
@@ -10460,6 +10609,445 @@ void write_csi(
     free(rlat);
     free(robs);
   }
+}
+
+/*****************************************************************************/
+
+void write_csi_ens(
+  const char *filename,
+  const ctl_t *ctl,
+  const atm_t *atm,
+  const double t) {
+
+  static FILE *out;
+
+  static double *modmean, *obsmean, *obsstd, *rt, *rz, *rlon, *rlat, *robs,
+    *area, dlon, dlat, dz, x[NCSI], y[NCSI], obsstdn[NCSI], kz[EP], kw[EP];
+
+  static int *obscount, ct[NENS], cx[NENS], cy[NENS], cz[NENS], ip, ix, iy, iz, 
+    n[NENS], nobs, nk;
+
+  /* Set timer... */
+  SELECT_TIMER("WRITE_CSI_ENS", "OUTPUT", NVTX_WRITE);
+
+  /* Check quantity index for mass... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Need quantity mass!");
+
+  /* Check ensemble IDs... */
+  if (ctl->qnt_ens < 0)
+    ERRMSG("Missing ensemble IDs!");
+
+  if (ctl->nens > NENS)
+    ERRMSG("Too much ensembles!")
+
+  /* Init... */
+  if (t == ctl->t_start) {
+    /* Allocate... */
+    ALLOC(area, double,
+          ctl->csi_ny);
+    ALLOC(rt, double,
+          NOBS);
+    ALLOC(rz, double,
+          NOBS);
+    ALLOC(rlon, double,
+          NOBS);
+    ALLOC(rlat, double,
+          NOBS);
+    ALLOC(robs, double,
+          NOBS);
+
+    /* Read observation data... */
+    read_obs(ctl->csi_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
+
+    /* Read kernel data... */
+    if (ctl->csi_kernel[0] != '-')
+      read_kernel(ctl->csi_kernel, kz, kw, &nk);
+
+    /* Create new file... */
+    LOG(1, "Write CSI ensemble data: %s", filename);
+    if (!(out = fopen(filename, "w")))
+      ERRMSG("Cannot create file!");
+
+    /* Write header... */
+    fprintf(out,
+            "# $1 = time [s]\n"
+            "# $2 = ensemble ID\n"
+            "# $3 = number of hits (cx)\n"
+            "# $4 = number of misses (cy)\n"
+            "# $5 = number of false alarms (cz)\n"
+            "# $6 = number of observations (cx + cy)\n"
+            "# $7 = number of forecasts (cx + cz)\n"
+            "# $8 = bias (ratio of forecasts and observations) [%%]\n"
+            "# $9 = probability of detection (POD) [%%]\n"
+            "# $10 = false alarm rate (FAR) [%%]\n"
+            "# $11 = critical success index (CSI) [%%]\n"
+            "# $12 = hits associated with random chance\n"
+            "# $13 = equitable threat score (ETS) [%%]\n"
+            "# $14 = Pearson linear correlation coefficient\n"
+            "# $15 = Spearman rank-order correlation coefficient\n"
+            "# $16 = column density mean error (F - O) [kg/m^2]\n"
+            "# $17 = column density root mean square error (RMSE) [kg/m^2]\n"
+            "# $18 = column density mean absolute error [kg/m^2]\n"
+            "# $19 = log-likelihood function\n"
+            "# $20 = number of data points\n\n");
+
+    /* Set grid box size... */
+    dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
+    dlon = (ctl->csi_lon1 - ctl->csi_lon0) / ctl->csi_nx;
+    dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
+
+    /* Set horizontal coordinates... */
+    for (iy = 0; iy < ctl->csi_ny; iy++) {
+      const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
+    }
+  }
+
+  /* Set time interval... */
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
+
+  /* Allocate per-ensemble arrays... */
+  ALLOC(modmean, double, ctl->nens * 
+    ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+
+  ALLOC(obsmean, double,
+        ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obscount, int,
+        ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(obsstd, double,
+        ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+
+  /* Initialize ensemble counters... */
+  for (int i = 0; i < ctl->nens; i++) {
+    ct[i] = cx[i] = cy[i] = cz[i] = n[i] = 0;
+  }
+
+  /* Loop over observations... */
+  int grid_size = ctl->csi_nx * ctl->csi_ny * ctl->csi_nz;
+  for (int i = 0; i < nobs; i++) {
+    /* Check time... */
+    if (rt[i] < t0)
+      continue;
+    else if (rt[i] >= t1)
+      break;
+
+    /* Check observation data... */
+    if (!isfinite(robs[i]))
+      continue;
+
+    /* Calculate indices... */
+    ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
+    iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
+    iz = (int) ((rz[i] - ctl->csi_z0) / dz);
+
+    /* Check indices... */
+    if (ix < 0 || ix >= ctl->csi_nx ||
+        iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
+      continue;
+
+    /* Get mean observation index... */
+    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    obsmean[idx] += robs[i];
+    obsstd[idx] += SQR(robs[i]);
+    obscount[idx]++;
+  }
+
+  /* Analyze model data per ensemble... */
+  for (ip = 0; ip < atm->np; ip++) {
+    /* Check time... */
+    if (atm->time[ip] < t0 || atm->time[ip] > t1)
+      continue;
+
+    /* Check ensemble ID... */
+    int ens = (int) atm->q[ctl->qnt_ens][ip];
+    if (ens < 0 || ens > ctl->nens)
+      ERRMSG("Ensemble ID is out of range!");
+
+    /* Get indices... */
+    ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
+    iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
+    iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
+
+    /* Check indices... */
+    if (ix < 0 || ix >= ctl->csi_nx ||
+        iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
+      continue;
+
+    /* Get total mass in grid cell per ensemble... */
+    int idx = ens * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    modmean[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
+      * atm->q[ctl->qnt_m][ip];
+  }
+
+  /* Analyze all grid cells... */
+  for (ix = 0; ix < ctl->csi_nx; ix++) 
+    for (iy = 0; iy < ctl->csi_ny; iy++) 
+      for (iz = 0; iz < ctl->csi_nz; iz++) {
+        /* Calculate mean observation index... */
+        int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+        if (obscount[idx] > 0) {
+          obsmean[idx] /= obscount[idx];
+          obsstd[idx] -= SQR(obsmean[idx]);
+          obsstd[idx] = sqrt(obsstd[idx]);
+        }
+
+        /* Calculate column density per ensemble... */
+        for (int i = 0; i < ctl->nens; i++) {
+          int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+          if (modmean[mod_idx] > 0)
+            modmean[mod_idx] /= (1e6 * area[iy]);
+        }
+
+        /* Calculate CSI per ensemble... */
+        if (obscount[idx] > 0) {
+          for (int i = 0; i < ctl->nens; i++) {
+            ct[i]++;
+            int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+            if (obsmean[idx] >= ctl->csi_obsmin &&
+                modmean[mod_idx] >= ctl->csi_modmin)
+              cx[i]++;
+            else if (obsmean[idx] >= ctl->csi_obsmin &&
+                     modmean[mod_idx] < ctl->csi_modmin)
+              cy[i]++;
+            else if (obsmean[idx] < ctl->csi_obsmin &&
+                     modmean[mod_idx] >= ctl->csi_modmin)
+              cz[i]++;
+          }
+        }
+
+        /* Save data for other verification statistics... */
+        for (int i = 0; i < ctl->nens; i++) {
+          if (obscount[idx] > 0
+            && (obsmean[idx] >= ctl->csi_obsmin
+                || modmean[i * grid_size + idx] >= ctl->csi_modmin)) {
+            int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+            x[n[i]] = modmean[mod_idx];
+            y[n[i]] = obsmean[idx];
+            if (modmean[mod_idx] >= ctl->csi_modmin)
+              obsstdn[n[i]] = obsstd[idx];
+            if ((++n[i]) >= NCSI)
+              ERRMSG("Too many data points to calculate statistics!");
+          }
+        }
+      }
+    
+  
+
+  /* Write output... */
+  if (fmod(t, ctl->csi_dt_out) == 0) {
+    for (int i = 0; i < ctl->nens; i++) {
+      if (n[i] > 0) {
+        /* Calculate verification statistics... */
+        static double work[2 * NCSI], work2[2 * NCSI];
+        const int n_obs = cx[i] + cy[i];
+        const int n_for = cx[i] + cz[i];
+        const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+        const double pod = (n_obs > 0) ? (100. * cx[i]) / n_obs : NAN;
+        const double far = (n_for > 0) ? (100. * cz[i]) / n_for : NAN;
+        const double csi =
+          (cx[i] + cy[i] + cz[i] > 0) ? (100. * cx[i]) / (cx[i] + cy[i] + cz[i]) : NAN;
+        const double cx_rd = (ct[i] > 0) ? (1. * n_obs * n_for) / ct[i] : NAN;
+        const double ets = (cx[i] + cy[i] + cz[i] - cx_rd > 0) ?
+          (100. * (cx[i] - cx_rd)) / (cx[i] + cy[i] + cz[i] - cx_rd) : NAN;
+        const double rho_p =
+          (n[i] > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n[i]) : NAN;
+        const double rho_s =
+          (n[i] > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n[i], work) : NAN;
+        for (int j = 0; j < n[i]; j++) {
+          work[j] = x[j] - y[j];
+          work2[j] = (obsstdn[j] != 0) ? (x[j] - y[j]) / obsstdn[j] : 0;
+        }
+        const double mean = (n[i] > 0) ? gsl_stats_mean(work, 1, (size_t) n[i]) : NAN;
+        const double rmse =
+          (n[i] > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[i],
+                         0.0) : NAN;
+        const double absdev =
+          (n[i] > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n[i], 0.0) : NAN;
+        const double loglikelihood =
+          (n[i] > 0) ? gsl_stats_tss(work2, 1, (size_t) n[i]) * (-0.5) : GSL_NAN;
+
+        /* Write... */
+        fprintf(out,
+                "%.2f %d %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n", t,
+                i, cx[i], cy[i], cz[i], n_obs, n_for, bias, pod, far, csi, cx_rd, ets, 
+                rho_p, rho_s, mean, rmse, absdev, loglikelihood, n[i]);
+      }
+    }
+  }
+
+  /* Free per-ensemble arrays... */
+
+  free(modmean);
+  free(obsmean);
+  free(obscount);
+  free(obsstd);
+
+  /* Finalize... */
+  if (t == ctl->t_stop) {
+    /* Close output file... */
+    fclose(out);
+
+    /* Free... */
+    free(area);
+    free(rt);
+    free(rz);
+    free(rlon);
+    free(rlat);
+    free(robs);
+  }
+}
+
+/*****************************************************************************/
+
+void module_ens_chem_grid(
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double tt) {
+
+  /* Check quantities... */
+  if (ctl->qnt_m < 0 || ctl->qnt_Cx < 0)
+    return;
+  if (ctl->molmass <= 0)
+    ERRMSG("Molar mass is not defined!");
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_CHEM_GRID", "PHYSICS", NVTX_GPU);
+
+  /* Allocate... */
+  const int np = atm->np;
+  const int nz = ctl->chemgrid_nz;
+  const int nx = ctl->chemgrid_nx;
+  const int ny = ctl->chemgrid_ny;
+  const int ngrid = nx * ny * nz;
+
+  double *restrict const z = (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const press =
+    (double *) malloc((size_t) nz * sizeof(double));
+  double *restrict const mass =
+    (double *) calloc((size_t) ngrid * (size_t) ctl->nens, sizeof(double));
+  double *restrict const area =
+    (double *) malloc((size_t) ny * sizeof(double));
+  double *restrict const lon =
+    (double *) malloc((size_t) nx * sizeof(double));
+  double *restrict const lat =
+    (double *) malloc((size_t) ny * sizeof(double));
+
+  int *restrict const ixs = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const iys = (int *) malloc((size_t) np * sizeof(int));
+  int *restrict const izs = (int *) malloc((size_t) np * sizeof(int));
+
+  /* Set grid box size... */
+  const double dz = (ctl->chemgrid_z1 - ctl->chemgrid_z0) / nz;
+  const double dlon = (ctl->chemgrid_lon1 - ctl->chemgrid_lon0) / nx;
+  const double dlat = (ctl->chemgrid_lat1 - ctl->chemgrid_lat0) / ny;
+
+  /* Set vertical coordinates... */
+#ifdef _OPENACC
+#pragma acc enter data create(ixs[0:np],iys[0:np],izs[0:np],z[0:nz],press[0:nz],mass[0:ngrid],area[0:ny],lon[0:nx],lat[0:ny])
+#pragma acc data present(ctl,met0,met1,atm,ixs,iys,izs,z,press,mass,area,lon,lat)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int iz = 0; iz < nz; iz++) {
+    z[iz] = ctl->chemgrid_z0 + dz * (iz + 0.5);
+    press[iz] = P(z[iz]);
+  }
+
+  /* Set time interval for output... */
+  const double t0 = tt - 0.5 * ctl->dt_mod;
+  const double t1 = tt + 0.5 * ctl->dt_mod;
+
+  /* Get indices... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++) {
+    ixs[ip] = (int) ((atm->lon[ip] - ctl->chemgrid_lon0) / dlon);
+    iys[ip] = (int) ((atm->lat[ip] - ctl->chemgrid_lat0) / dlat);
+    izs[ip] = (int) ((Z(atm->p[ip]) - ctl->chemgrid_z0) / dz);
+    if (atm->time[ip] < t0 || atm->time[ip] > t1
+	|| ixs[ip] < 0 || ixs[ip] >= nx
+	|| iys[ip] < 0 || iys[ip] >= ny || izs[ip] < 0 || izs[ip] >= nz)
+      izs[ip] = -1;
+  }
+
+  /* Set horizontal coordinates... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ix = 0; ix < nx; ix++)
+    lon[ix] = ctl->chemgrid_lon0 + dlon * (ix + 0.5);
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int iy = 0; iy < ny; iy++) {
+    lat[iy] = ctl->chemgrid_lat0 + dlat * (iy + 0.5);
+    area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat[iy]));
+  }
+
+  /* Get mass per grid box per ensemble... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0)
+#ifdef _OPENACC
+#pragma acc atomic update
+#endif
+    {
+      int ens = (int) atm->q[ctl->qnt_ens][ip];
+      mass[ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)]
+	+= atm->q[ctl->qnt_m][ip];
+    }
+
+  /* Assign grid data to air parcels ... */
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    if (izs[ip] >= 0) {
+
+      /* Interpolate temperature... */
+      double temp;
+      INTPOL_INIT;
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, tt, press[izs[ip]],
+			 lon[ixs[ip]], lat[iys[ip]], &temp, ci, cw, 1);
+
+      /* Set mass per ensemble... */
+      int ens = (int) atm->q[ctl->qnt_ens][ip];
+      const double m = mass[ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
+
+      /* Calculate volume mixing ratio... */
+      atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+	/ (RHO(press[izs[ip]], temp) * area[iys[ip]] * dz * 1e9);
+    }
+#ifdef _OPENACC
+#pragma acc exit data delete(ixs,iys,izs,z,press,mass,area,lon,lat)
+#endif
+
+  /* Free... */
+  free(mass);
+  free(lon);
+  free(lat);
+  free(area);
+  free(z);
+  free(press);
+  free(ixs);
+  free(iys);
+  free(izs);
 }
 
 /*****************************************************************************/
