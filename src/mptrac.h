@@ -2964,6 +2964,12 @@ typedef struct {
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
+  /*! Basename of CSI ensemble data files. */
+  char csi_ens_basename[LEN];
+
+  /*! Number of ensembles. */
+  int nens;
+
   /*! Kernel data file for CSI output. */
   char csi_kernel[LEN];
 
@@ -4977,6 +4983,13 @@ void module_chem_grid(
   atm_t * atm,
   const double t);
 
+ void module_ens_chem_grid(
+  const ctl_t *ctl,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  const double tt);
+
 /**
  * @brief Initializes the chemistry modules by setting atmospheric composition.
  * 
@@ -5445,6 +5458,15 @@ void module_mixing_help(
   const ctl_t * ctl,
   const clim_t * clim,
   atm_t * atm,
+  const int *ixs,
+  const int *iys,
+  const int *izs,
+  const int qnt_idx);
+
+void module_ens_mixing_help(
+  const ctl_t *ctl,
+  const clim_t *clim,
+  atm_t *atm,
   const int *ixs,
   const int *iys,
   const int *izs,
@@ -7990,6 +8012,12 @@ void write_csi(
   const char *filename,
   const ctl_t * ctl,
   const atm_t * atm,
+  const double t);
+
+void write_csi_ens(
+  const char *filename,
+  const ctl_t *ctl,
+  const atm_t *atm,
   const double t);
 
 /**
