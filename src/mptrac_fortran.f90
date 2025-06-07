@@ -230,6 +230,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_nc_scale
      INTEGER(c_int) :: met_nc_level
      INTEGER(c_int) :: met_nc_quant
+     INTEGER(c_int) :: met_zstd_level
      INTEGER(c_int) :: met_zfp_prec
      REAL(c_double) :: met_zfp_tol_t
      REAL(c_double) :: met_zfp_tol_z
@@ -377,6 +378,8 @@ MODULE mptrac_struct
      INTEGER(c_int), DIMENSION(nqq) :: atm_nc_quant
      INTEGER(c_int) :: obs_type
      CHARACTER(c_char), DIMENSION(length) :: csi_basename
+     CHARACTER(c_char), DIMENSION(length) :: csi_ens_basename
+     INTEGER(c_int) :: nens
      CHARACTER(c_char), DIMENSION(length) :: csi_kernel
      REAL(c_double) :: csi_dt_out
      CHARACTER(c_char), DIMENSION(length) :: csi_obsfile
