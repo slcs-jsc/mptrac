@@ -2018,12 +2018,12 @@ void level_definitions(
       ctl->met_p[ctl->met_np - ip - 1] = press[ip];
 
   } else {
-    ERRMSG("Use 0 for l137, 1 for l91, 2 for l60 or values between 3 and 7.")
+    ERRMSG("Use 0 for l137, 1 for l91, 2 for l60 or values between 3 and 7.");
   }
 
-  if (ctl->met_np > NP)
-    ERRMSG("Recompile with larger NP to use this pressure level definition.")
-	    
+  if (ctl->met_np > NP) {
+    ERRMSG("Recompile with larger NP to use this pressure level definition.");
+  }
 }
 
 /*****************************************************************************/
@@ -2275,8 +2275,9 @@ void module_advect(
 
       /* Convert zeta to pressure... */
       intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			  met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			  atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+			  met1->pl, atm->time[ip],
+			  atm->q[ctl->qnt_zeta][ip], atm->lon[ip],
+			  atm->lat[ip], &atm->p[ip], ci, cw, 1);
     }
   }
 }
@@ -2652,8 +2653,8 @@ void module_convection(
       double tbot, ttop;
       intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
 			 pbot, atm->lon[ip], atm->lat[ip], &tbot, ci, cw, 1);
-      intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip],
-			 ptop, atm->lon[ip], atm->lat[ip], &ttop, ci, cw, 1);
+      intpol_met_time_3d(met0, met0->t, met1, met1->t, atm->time[ip], ptop,
+			 atm->lon[ip], atm->lat[ip], &ttop, ci, cw, 1);
       const double rhobot = pbot / tbot;
       const double rhotop = ptop / ttop;
 
@@ -3302,9 +3303,9 @@ void module_meteo(
   PARTICLE_LOOP(0, atm->np, 0,
 		"acc data present(ctl,cache,clim,met0,met1,atm)") {
 
-    double ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl, pt, pct, pcb, cl,
-      plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot, o3, lwc,
-      rwc, iwc, swc, cc, z, zt;
+    double ps, ts, zs, us, vs, ess, nss, shf, lsm, sst, pbl, pt, pct, pcb,
+      cl, plcl, plfc, pel, cape, cin, o3c, pv, t, tt, u, v, w, h2o, h2ot,
+      o3, lwc, rwc, iwc, swc, cc, z, zt;
 
     /* Interpolate meteo data... */
     INTPOL_INIT;
@@ -3430,8 +3431,7 @@ void module_mixing(
   }
 
   /* Calculate interparcel mixing... */
-  if (ctl->nens > 0)
-  {
+  if (ctl->nens > 0) {
     if (ctl->qnt_m >= 0)
       module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
     if (ctl->qnt_vmr >= 0)
@@ -3465,10 +3465,8 @@ void module_mixing(
     if (ctl->qnt_Csf6 >= 0)
       module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
     if (ctl->qnt_aoa >= 0)
-      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);    
-  }
-  else
-  {
+      module_ens_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
+  } else {
     if (ctl->qnt_m >= 0)
       module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
     if (ctl->qnt_vmr >= 0)
@@ -3556,7 +3554,7 @@ void module_mixing_help(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
-      int idx = ARRAY_3D
+      const int idx = ARRAY_3D
 	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
 #ifdef _OPENACC
 #pragma acc atomic update
@@ -3693,7 +3691,7 @@ void module_oh_chem(
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
 }
-      
+
 /*****************************************************************************/
 
 void module_ens_mixing_help(
@@ -3710,7 +3708,8 @@ void module_ens_mixing_help(
   const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
   double *restrict const cmean =
     (double *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(double));
-  int *restrict const count = (int *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(int));
+  int *restrict const count =
+    (int *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(int));
 
   /* Init... */
 #ifdef _OPENACC
@@ -3734,8 +3733,8 @@ void module_ens_mixing_help(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
-      int ens = (int) atm->q[ctl->qnt_ens][ip];
-      int idx = ens * ngrid + ARRAY_3D
+      const int ens = (int) atm->q[ctl->qnt_ens][ip];
+      const int idx = ens * ngrid + ARRAY_3D
 	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
 #ifdef _OPENACC
 #pragma acc atomic update
@@ -3766,7 +3765,7 @@ void module_ens_mixing_help(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
-      
+
       int ens = (int) atm->q[ctl->qnt_ens][ip];
       /* Set mixing parameter... */
       double mixparam = 1.0;
@@ -3778,7 +3777,8 @@ void module_ens_mixing_help(
       /* Adjust quantity... */
       atm->q[qnt_idx][ip] +=
 	(cmean
-	 [ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
+	 [ens * ngrid +
+	  ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
 	 - atm->q[qnt_idx][ip]) * mixparam;
     }
 
@@ -3789,7 +3789,7 @@ void module_ens_mixing_help(
   free(cmean);
   free(count);
 }
-      
+
 /*****************************************************************************/
 
 void module_position(
@@ -4896,8 +4896,8 @@ void mptrac_read_ctl(
       SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "ppv")
       SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "ppv")
       SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
-      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2", "mass loss due to H2O2 chemistry",
-	      "kg")
+      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2",
+	      "mass loss due to H2O2 chemistry", "kg")
       SET_QNT(qnt_mloss_kpp, "mloss_kpp", "mass loss due to kpp chemistry",
 	      "kg")
       SET_QNT(qnt_mloss_wet, "mloss_wet", "mass loss due to wet deposition",
@@ -5115,8 +5115,9 @@ void mptrac_read_ctl(
 
   /* Advection parameters... */
   ctl->advect = (int) scan_ctl(filename, argc, argv, "ADVECT", -1, "2", NULL);
-  if (!(ctl->advect == 0 || ctl->advect == 1
-	|| ctl->advect == 2 || ctl->advect == 4))
+  if (!
+      (ctl->advect == 0 || ctl->advect == 1 || ctl->advect == 2
+       || ctl->advect == 4))
     ERRMSG("Set ADVECT to 0, 1, 2, or 4!");
 
   /* Diffusion parameters... */
@@ -5404,8 +5405,8 @@ void mptrac_read_ctl(
 
   /* Exponential decay... */
   ctl->tdec_trop = scan_ctl(filename, argc, argv, "TDEC_TROP", -1, "0", NULL);
-  ctl->tdec_strat
-    = scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
+  ctl->tdec_strat =
+    scan_ctl(filename, argc, argv, "TDEC_STRAT", -1, "0", NULL);
 
   /* PSC analysis... */
   ctl->psc_h2o = scan_ctl(filename, argc, argv, "PSC_H2O", -1, "4e-6", NULL);
@@ -5437,7 +5438,8 @@ void mptrac_read_ctl(
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
-  scan_ctl(filename, argc, argv, "CSI_ENS_BASENAME", -1, "-", ctl->csi_ens_basename);
+  scan_ctl(filename, argc, argv, "CSI_ENS_BASENAME", -1, "-",
+	   ctl->csi_ens_basename);
   ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
@@ -5717,11 +5719,12 @@ void mptrac_run_timestep(
 
   /* Calculate the tracer vmr in the chemistry grid... */
   if (ctl->oh_chem_reaction != 0 || ctl->h2o2_chem_reaction != 0
-      || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0)){
-      if (ctl->nens > 0)
-    module_ens_chem_grid(ctl, *met0, *met1, atm, t);
-      else
-    module_chem_grid(ctl, *met0, *met1, atm, t);}
+      || (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0)) {
+    if (ctl->nens > 0)
+      module_ens_chem_grid(ctl, *met0, *met1, atm, t);
+    else
+      module_chem_grid(ctl, *met0, *met1, atm, t);
+  }
 
   /* OH chemistry... */
   if (ctl->oh_chem_reaction != 0)
@@ -6026,10 +6029,10 @@ void mptrac_write_output(
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
   }
-      
+
   /* Write CSI ensemble data... */
   if (ctl->csi_ens_basename[0] != '-') {
-    sprintf(filename,  "%s/%s.tab", dirname, ctl->csi_ens_basename);
+    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_ens_basename);
     write_csi_ens(filename, ctl, atm, t);
   }
 
@@ -9134,8 +9137,8 @@ void read_met_surface(
 
   /* Read surface pressure... */
   if (read_met_nc_2d
-      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps, 1.0f,
-       1)) {
+      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps,
+       1.0f, 1)) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
@@ -9202,20 +9205,20 @@ void read_met_surface(
 
   /* Read eastward turbulent surface stress... */
   if (!read_met_nc_2d
-      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, met->ess, 1.0,
-       1))
+      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, met->ess,
+       1.0, 1))
     WARN("Cannot read eastward turbulent surface stress!");
 
   /* Read northward turbulent surface stress... */
   if (!read_met_nc_2d
-      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, met->nss, 1.0,
-       1))
+      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, met->nss,
+       1.0, 1))
     WARN("Cannot read nothward turbulent surface stress!");
 
   /* Read surface sensible heat flux... */
   if (!read_met_nc_2d
-      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, met->shf, 1.0,
-       1))
+      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, met->shf,
+       1.0, 1))
     WARN("Cannot read surface sensible heat flux!");
 
   /* Read land-sea mask... */
@@ -10209,8 +10212,8 @@ void write_atm_clams_traj(
   jsec2time(ctl->t_stop, &year_stop, &mon_stop, &day_stop, &hour_stop,
 	    &min_stop, &sec_stop, &r_stop);
 
-  sprintf(filename_out, "%s/traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc",
-	  dirname,
+  sprintf(filename_out,
+	  "%s/traj_fix_3d_%02d%02d%02d%02d_%02d%02d%02d%02d.nc", dirname,
 	  year_start % 100, mon_start, day_start, hour_start,
 	  year_stop % 100, mon_stop, day_stop, hour_stop);
   LOG(1, "Write traj file: %s", filename_out);
@@ -10626,9 +10629,9 @@ void write_csi(
 
     /* Write... */
     fprintf(out,
-	    "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n", t,
-	    cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets, rho_p,
-	    rho_s, mean, rmse, absdev, loglikelihood, n);
+	    "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
+	    t, cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets,
+	    rho_p, rho_s, mean, rmse, absdev, loglikelihood, n);
 
     /* Set counters to zero... */
     n = ct = cx = cy = cz = 0;
@@ -10669,8 +10672,8 @@ void write_csi_ens(
   static double *modmean, *obsmean, *obsstd, *rt, *rz, *rlon, *rlat, *robs,
     *area, dlon, dlat, dz, x[NCSI], y[NCSI], obsstdn[NCSI], kz[EP], kw[EP];
 
-  static int *obscount, ct[NENS], cx[NENS], cy[NENS], cz[NENS], ip, ix, iy, iz, 
-    n[NENS], nobs, nk;
+  static int *obscount, ct[NENS], cx[NENS], cy[NENS], cz[NENS], ip, ix, iy,
+    iz, n[NENS], nobs, nk;
 
   /* Set timer... */
   SELECT_TIMER("WRITE_CSI_ENS", "OUTPUT", NVTX_WRITE);
@@ -10685,84 +10688,83 @@ void write_csi_ens(
 
   if (ctl->nens > NENS)
     ERRMSG("Too much ensembles!")
+      /* Init... */
+      if (t == ctl->t_start) {
+      /* Allocate... */
+      ALLOC(area, double,
+	    ctl->csi_ny);
+      ALLOC(rt, double,
+	    NOBS);
+      ALLOC(rz, double,
+	    NOBS);
+      ALLOC(rlon, double,
+	    NOBS);
+      ALLOC(rlat, double,
+	    NOBS);
+      ALLOC(robs, double,
+	    NOBS);
 
-  /* Init... */
-  if (t == ctl->t_start) {
-    /* Allocate... */
-    ALLOC(area, double,
-          ctl->csi_ny);
-    ALLOC(rt, double,
-          NOBS);
-    ALLOC(rz, double,
-          NOBS);
-    ALLOC(rlon, double,
-          NOBS);
-    ALLOC(rlat, double,
-          NOBS);
-    ALLOC(robs, double,
-          NOBS);
+      /* Read observation data... */
+      read_obs(ctl->csi_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
 
-    /* Read observation data... */
-    read_obs(ctl->csi_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
+      /* Read kernel data... */
+      if (ctl->csi_kernel[0] != '-')
+	read_kernel(ctl->csi_kernel, kz, kw, &nk);
 
-    /* Read kernel data... */
-    if (ctl->csi_kernel[0] != '-')
-      read_kernel(ctl->csi_kernel, kz, kw, &nk);
+      /* Create new file... */
+      LOG(1, "Write CSI ensemble data: %s", filename);
+      if (!(out = fopen(filename, "w")))
+	ERRMSG("Cannot create file!");
 
-    /* Create new file... */
-    LOG(1, "Write CSI ensemble data: %s", filename);
-    if (!(out = fopen(filename, "w")))
-      ERRMSG("Cannot create file!");
+      /* Write header... */
+      fprintf(out,
+	      "# $1 = time [s]\n"
+	      "# $2 = ensemble ID\n"
+	      "# $3 = number of hits (cx)\n"
+	      "# $4 = number of misses (cy)\n"
+	      "# $5 = number of false alarms (cz)\n"
+	      "# $6 = number of observations (cx + cy)\n"
+	      "# $7 = number of forecasts (cx + cz)\n"
+	      "# $8 = bias (ratio of forecasts and observations) [%%]\n"
+	      "# $9 = probability of detection (POD) [%%]\n"
+	      "# $10 = false alarm rate (FAR) [%%]\n"
+	      "# $11 = critical success index (CSI) [%%]\n"
+	      "# $12 = hits associated with random chance\n"
+	      "# $13 = equitable threat score (ETS) [%%]\n"
+	      "# $14 = Pearson linear correlation coefficient\n"
+	      "# $15 = Spearman rank-order correlation coefficient\n"
+	      "# $16 = column density mean error (F - O) [kg/m^2]\n"
+	      "# $17 = column density root mean square error (RMSE) [kg/m^2]\n"
+	      "# $18 = column density mean absolute error [kg/m^2]\n"
+	      "# $19 = log-likelihood function\n"
+	      "# $20 = number of data points\n\n");
 
-    /* Write header... */
-    fprintf(out,
-            "# $1 = time [s]\n"
-            "# $2 = ensemble ID\n"
-            "# $3 = number of hits (cx)\n"
-            "# $4 = number of misses (cy)\n"
-            "# $5 = number of false alarms (cz)\n"
-            "# $6 = number of observations (cx + cy)\n"
-            "# $7 = number of forecasts (cx + cz)\n"
-            "# $8 = bias (ratio of forecasts and observations) [%%]\n"
-            "# $9 = probability of detection (POD) [%%]\n"
-            "# $10 = false alarm rate (FAR) [%%]\n"
-            "# $11 = critical success index (CSI) [%%]\n"
-            "# $12 = hits associated with random chance\n"
-            "# $13 = equitable threat score (ETS) [%%]\n"
-            "# $14 = Pearson linear correlation coefficient\n"
-            "# $15 = Spearman rank-order correlation coefficient\n"
-            "# $16 = column density mean error (F - O) [kg/m^2]\n"
-            "# $17 = column density root mean square error (RMSE) [kg/m^2]\n"
-            "# $18 = column density mean absolute error [kg/m^2]\n"
-            "# $19 = log-likelihood function\n"
-            "# $20 = number of data points\n\n");
+      /* Set grid box size... */
+      dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
+      dlon = (ctl->csi_lon1 - ctl->csi_lon0) / ctl->csi_nx;
+      dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
 
-    /* Set grid box size... */
-    dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
-    dlon = (ctl->csi_lon1 - ctl->csi_lon0) / ctl->csi_nx;
-    dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
-
-    /* Set horizontal coordinates... */
-    for (iy = 0; iy < ctl->csi_ny; iy++) {
-      const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
+      /* Set horizontal coordinates... */
+      for (iy = 0; iy < ctl->csi_ny; iy++) {
+	const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+	area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
+      }
     }
-  }
 
   /* Set time interval... */
   const double t0 = t - 0.5 * ctl->dt_mod;
   const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate per-ensemble arrays... */
-  ALLOC(modmean, double, ctl->nens * 
-    ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+  ALLOC(modmean, double,
+	ctl->nens * ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
 
   ALLOC(obsmean, double,
-        ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
   ALLOC(obscount, int,
-        ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
   ALLOC(obsstd, double,
-        ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
 
   /* Initialize ensemble counters... */
   for (int i = 0; i < ctl->nens; i++) {
@@ -10789,7 +10791,7 @@ void write_csi_ens(
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->csi_nx ||
-        iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
+	iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
       continue;
 
     /* Get mean observation index... */
@@ -10817,107 +10819,120 @@ void write_csi_ens(
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->csi_nx ||
-        iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
+	iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
       continue;
 
     /* Get total mass in grid cell per ensemble... */
-    int idx = ens * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    int idx =
+      ens * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
     modmean[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
       * atm->q[ctl->qnt_m][ip];
   }
 
   /* Analyze all grid cells... */
-  for (ix = 0; ix < ctl->csi_nx; ix++) 
-    for (iy = 0; iy < ctl->csi_ny; iy++) 
+  for (ix = 0; ix < ctl->csi_nx; ix++)
+    for (iy = 0; iy < ctl->csi_ny; iy++)
       for (iz = 0; iz < ctl->csi_nz; iz++) {
-        /* Calculate mean observation index... */
-        int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-        if (obscount[idx] > 0) {
-          obsmean[idx] /= obscount[idx];
-          obsstd[idx] -= SQR(obsmean[idx]);
-          obsstd[idx] = sqrt(obsstd[idx]);
-        }
+	/* Calculate mean observation index... */
+	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+	if (obscount[idx] > 0) {
+	  obsmean[idx] /= obscount[idx];
+	  obsstd[idx] -= SQR(obsmean[idx]);
+	  obsstd[idx] = sqrt(obsstd[idx]);
+	}
 
-        /* Calculate column density per ensemble... */
-        for (int i = 0; i < ctl->nens; i++) {
-          int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-          if (modmean[mod_idx] > 0)
-            modmean[mod_idx] /= (1e6 * area[iy]);
-        }
+	/* Calculate column density per ensemble... */
+	for (int i = 0; i < ctl->nens; i++) {
+	  int mod_idx =
+	    i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+	  if (modmean[mod_idx] > 0)
+	    modmean[mod_idx] /= (1e6 * area[iy]);
+	}
 
-        /* Calculate CSI per ensemble... */
-        if (obscount[idx] > 0) {
-          for (int i = 0; i < ctl->nens; i++) {
-            ct[i]++;
-            int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-            if (obsmean[idx] >= ctl->csi_obsmin &&
-                modmean[mod_idx] >= ctl->csi_modmin)
-              cx[i]++;
-            else if (obsmean[idx] >= ctl->csi_obsmin &&
-                     modmean[mod_idx] < ctl->csi_modmin)
-              cy[i]++;
-            else if (obsmean[idx] < ctl->csi_obsmin &&
-                     modmean[mod_idx] >= ctl->csi_modmin)
-              cz[i]++;
-          }
-        }
+	/* Calculate CSI per ensemble... */
+	if (obscount[idx] > 0) {
+	  for (int i = 0; i < ctl->nens; i++) {
+	    ct[i]++;
+	    int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz,
+						   ctl->csi_nz);
+	    if (obsmean[idx] >= ctl->csi_obsmin
+		&& modmean[mod_idx] >= ctl->csi_modmin)
+	      cx[i]++;
+	    else if (obsmean[idx] >= ctl->csi_obsmin &&
+		     modmean[mod_idx] < ctl->csi_modmin)
+	      cy[i]++;
+	    else if (obsmean[idx] < ctl->csi_obsmin &&
+		     modmean[mod_idx] >= ctl->csi_modmin)
+	      cz[i]++;
+	  }
+	}
 
-        /* Save data for other verification statistics... */
-        for (int i = 0; i < ctl->nens; i++) {
-          if (obscount[idx] > 0
-            && (obsmean[idx] >= ctl->csi_obsmin
-                || modmean[i * grid_size + idx] >= ctl->csi_modmin)) {
-            int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-            x[n[i]] = modmean[mod_idx];
-            y[n[i]] = obsmean[idx];
-            if (modmean[mod_idx] >= ctl->csi_modmin)
-              obsstdn[n[i]] = obsstd[idx];
-            if ((++n[i]) >= NCSI)
-              ERRMSG("Too many data points to calculate statistics!");
-          }
-        }
+	/* Save data for other verification statistics... */
+	for (int i = 0; i < ctl->nens; i++) {
+	  if (obscount[idx] > 0
+	      && (obsmean[idx] >= ctl->csi_obsmin
+		  || modmean[i * grid_size + idx] >= ctl->csi_modmin)) {
+	    int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz,
+						   ctl->csi_nz);
+	    x[n[i]] = modmean[mod_idx];
+	    y[n[i]] = obsmean[idx];
+	    if (modmean[mod_idx] >= ctl->csi_modmin)
+	      obsstdn[n[i]] = obsstd[idx];
+	    if ((++n[i]) >= NCSI)
+	      ERRMSG("Too many data points to calculate statistics!");
+	  }
+	}
       }
-    
-  
+
+
 
   /* Write output... */
   if (fmod(t, ctl->csi_dt_out) == 0) {
     for (int i = 0; i < ctl->nens; i++) {
       if (n[i] > 0) {
-        /* Calculate verification statistics... */
-        static double work[2 * NCSI], work2[2 * NCSI];
-        const int n_obs = cx[i] + cy[i];
-        const int n_for = cx[i] + cz[i];
-        const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
-        const double pod = (n_obs > 0) ? (100. * cx[i]) / n_obs : NAN;
-        const double far = (n_for > 0) ? (100. * cz[i]) / n_for : NAN;
-        const double csi =
-          (cx[i] + cy[i] + cz[i] > 0) ? (100. * cx[i]) / (cx[i] + cy[i] + cz[i]) : NAN;
-        const double cx_rd = (ct[i] > 0) ? (1. * n_obs * n_for) / ct[i] : NAN;
-        const double ets = (cx[i] + cy[i] + cz[i] - cx_rd > 0) ?
-          (100. * (cx[i] - cx_rd)) / (cx[i] + cy[i] + cz[i] - cx_rd) : NAN;
-        const double rho_p =
-          (n[i] > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n[i]) : NAN;
-        const double rho_s =
-          (n[i] > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n[i], work) : NAN;
-        for (int j = 0; j < n[i]; j++) {
-          work[j] = x[j] - y[j];
-          work2[j] = (obsstdn[j] != 0) ? (x[j] - y[j]) / obsstdn[j] : 0;
-        }
-        const double mean = (n[i] > 0) ? gsl_stats_mean(work, 1, (size_t) n[i]) : NAN;
-        const double rmse =
-          (n[i] > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[i],
-                         0.0) : NAN;
-        const double absdev =
-          (n[i] > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n[i], 0.0) : NAN;
-        const double loglikelihood =
-          (n[i] > 0) ? gsl_stats_tss(work2, 1, (size_t) n[i]) * (-0.5) : GSL_NAN;
+	/* Calculate verification statistics... */
+	static double work[2 * NCSI], work2[2 * NCSI];
+	const int n_obs = cx[i] + cy[i];
+	const int n_for = cx[i] + cz[i];
+	const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+	const double pod = (n_obs > 0) ? (100. * cx[i]) / n_obs : NAN;
+	const double far = (n_for > 0) ? (100. * cz[i]) / n_for : NAN;
+	const double csi =
+	  (cx[i] + cy[i] + cz[i] >
+	   0) ? (100. * cx[i]) / (cx[i] + cy[i] + cz[i]) : NAN;
+	const double cx_rd = (ct[i] > 0) ? (1. * n_obs * n_for) / ct[i] : NAN;
+	const double ets =
+	  (cx[i] + cy[i] + cz[i] - cx_rd >
+	   0) ? (100. * (cx[i] - cx_rd)) / (cx[i] + cy[i] + cz[i] -
+					    cx_rd) : NAN;
+	const double rho_p = (n[i] > 0) ? gsl_stats_correlation(x, 1, y, 1,
+								(size_t) n[i])
+	  : NAN;
+	const double rho_s =
+	  (n[i] > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n[i],
+					  work) : NAN;
+	for (int j = 0; j < n[i]; j++) {
+	  work[j] = x[j] - y[j];
+	  work2[j] = (obsstdn[j] != 0) ? (x[j] - y[j]) / obsstdn[j] : 0;
+	}
+	const double mean =
+	  (n[i] > 0) ? gsl_stats_mean(work, 1, (size_t) n[i]) : NAN;
+	const double rmse =
+	  (n[i] > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[i],
+						    0.0) : NAN;
+	const double absdev =
+	  (n[i] > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n[i],
+					  0.0) : NAN;
+	const double loglikelihood = (n[i] > 0) ? gsl_stats_tss(work2, 1,
+								(size_t) n[i])
+	  * (-0.5) : GSL_NAN;
 
-        /* Write... */
-        fprintf(out,
-                "%.2f %d %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n", t,
-                i, cx[i], cy[i], cz[i], n_obs, n_for, bias, pod, far, csi, cx_rd, ets, 
-                rho_p, rho_s, mean, rmse, absdev, loglikelihood, n[i]);
+	/* Write... */
+	fprintf(out,
+		"%.2f %d %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
+		t, i, cx[i], cy[i], cz[i], n_obs, n_for, bias, pod, far,
+		csi, cx_rd, ets, rho_p, rho_s, mean, rmse, absdev,
+		loglikelihood, n[i]);
       }
     }
   }
@@ -11046,12 +11061,11 @@ void module_ens_chem_grid(
 #pragma acc parallel loop independent gang vector
 #endif
   for (int ip = 0; ip < np; ip++)
-    if (izs[ip] >= 0)
+    if (izs[ip] >= 0) {
+      const int ens = (int) atm->q[ctl->qnt_ens][ip];
 #ifdef _OPENACC
 #pragma acc atomic update
 #endif
-    {
-      int ens = (int) atm->q[ctl->qnt_ens][ip];
       mass[ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)]
 	+= atm->q[ctl->qnt_m][ip];
     }
@@ -11073,7 +11087,8 @@ void module_ens_chem_grid(
 
       /* Set mass per ensemble... */
       int ens = (int) atm->q[ctl->qnt_ens][ip];
-      const double m = mass[ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
+      const double m =
+	mass[ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz)];
 
       /* Calculate volume mixing ratio... */
       atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
@@ -11541,8 +11556,8 @@ void write_grid_nc(
 
   NC_DEF_VAR("cd", NC_FLOAT, 4, dimid, "column density", "kg m**-2",
 	     ctl->grid_nc_level, 0);
-  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid, "volume mixing ratio (implicit)",
-	     "ppv", ctl->grid_nc_level, 0);
+  NC_DEF_VAR("vmr_impl", NC_FLOAT, 4, dimid,
+	     "volume mixing ratio (implicit)", "ppv", ctl->grid_nc_level, 0);
   NC_DEF_VAR("np", NC_INT, 4, dimid, "number of particles", "1", 0, 0);
   for (int iq = 0; iq < ctl->nq; iq++) {
     sprintf(varname, "%s_mean", ctl->qnt_name[iq]);
@@ -11888,21 +11903,22 @@ void write_met_nc(
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("pcb", NC_FLOAT, 2, dimid2, "Cloud bottom pressure", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("cl", NC_FLOAT, 2, dimid2, "Total column cloud water", "kg m**2",
-	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("cl", NC_FLOAT, 2, dimid2, "Total column cloud water",
+	     "kg m**2", ctl->met_nc_level, 0);
   NC_DEF_VAR("plcl", NC_FLOAT, 2, dimid2,
 	     "Pressure at lifted condensation level (LCL)", "Pa",
 	     ctl->met_nc_level, 0);
   NC_DEF_VAR("plfc", NC_FLOAT, 2, dimid2,
 	     "Pressure at level of free convection (LFC)", "Pa",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("pel", NC_FLOAT, 2, dimid2, "Pressure at equilibrium level (EL)",
-	     "Pa", ctl->met_nc_level, 0);
+  NC_DEF_VAR("pel", NC_FLOAT, 2, dimid2,
+	     "Pressure at equilibrium level (EL)", "Pa", ctl->met_nc_level,
+	     0);
   NC_DEF_VAR("cape", NC_FLOAT, 2, dimid2,
 	     "Convective available potential energy", "J kg**-1",
 	     ctl->met_nc_level, 0);
-  NC_DEF_VAR("cin", NC_FLOAT, 2, dimid2, "Convective inhibition", "J kg**-1",
-	     ctl->met_nc_level, 0);
+  NC_DEF_VAR("cin", NC_FLOAT, 2, dimid2, "Convective inhibition",
+	     "J kg**-1", ctl->met_nc_level, 0);
   NC_DEF_VAR("o3c", NC_FLOAT, 2, dimid2, "Total column ozone", "DU",
 	     ctl->met_nc_level, 0);
 
