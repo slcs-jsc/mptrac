@@ -5017,7 +5017,43 @@ void module_chem_grid(
   atm_t * atm,
   const double t);
 
-void module_ens_chem_grid(
+/**
+ * @brief Processes atmospheric ensemble chemical data on a defined 3D grid.
+ *
+ * This function aggregates and interpolates mass and mixing ratio data for 
+ * atmospheric parcels over a 3D spatial grid, for multiple ensemble members.
+ * It computes grid-based statistics and updates each air parcel with the 
+ * appropriate chemical quantities (e.g., mass and concentration).
+ *
+ * @param ctl  Pointer to the model control structure containing grid and configuration parameters.
+ * @param met0 Pointer to the meteorological dataset at the beginning of the interpolation time window.
+ * @param met1 Pointer to the meteorological dataset at the end of the interpolation time window.
+ * @param atm  Pointer to the structure containing atmospheric parcel data, including positions and properties.
+ * @param tt   Simulation time (in seconds) for which the chemical grid is evaluated.
+ *
+ * @details
+ * The function performs the following main tasks:
+ * - Checks configuration and model parameters for validity.
+ * - Allocates and initializes memory for spatial grid properties (altitude, pressure, area, etc.).
+ * - Maps air parcel positions to 3D grid indices (longitude, latitude, height).
+ * - Aggregates mass into grid cells for each ensemble.
+ * - Interpolates meteorological data (e.g., temperature) at each parcel's position.
+ * - Computes volume mixing ratios using the interpolated data and grid cell properties.
+ * - Updates each air parcel with the computed chemical quantity.
+ *
+ * Parallelization is supported via OpenMP or OpenACC (depending on compilation).
+ *
+ * @note
+ * - Memory allocation is done dynamically within the function and freed before exit.
+ * - The function uses macros and helper functions like `P()`, `Z()`, `RHO()`, `ARRAY_3D()`,
+ *   and `intpol_met_time_3d()` for calculations and interpolation.
+ * - Requires ensemble quantity indices (`qnt_ens`, `qnt_m`, and `qnt_Cx`) to be set in `ctl`.
+ *
+ * @warning If molar mass is not set (`molmass <= 0`), the function will issue an error and exit.
+ *
+ * @authors Mingzhao Liu
+ */
+void module_chem_grid_ens(
   const ctl_t * ctl,
   met_t * met0,
   met_t * met1,
@@ -5497,7 +5533,41 @@ void module_mixing_help(
   const int *izs,
   const int qnt_idx);
 
-void module_ens_mixing_help(
+/**
+ * @brief Applies ensemble-based interparcel mixing for a given tracer quantity.
+ *
+ * This function calculates local grid-cell averages of a specified tracer quantity
+ * (`qnt_idx`) across ensemble members, and then applies a mixing adjustment to each 
+ * atmospheric parcel based on the difference between its value and the mean within its grid cell.
+ *
+ * @param ctl      Pointer to the model control structure, containing mixing configuration and grid dimensions.
+ * @param clim     Pointer to climatological data used to determine tropospheric weighting, if applicable.
+ * @param atm      Pointer to the structure containing atmospheric parcel data, including tracer fields.
+ * @param ixs      Array of X-indices mapping parcels to grid cells in the horizontal (longitude) direction.
+ * @param iys      Array of Y-indices mapping parcels to grid cells in the horizontal (latitude) direction.
+ * @param izs      Array of Z-indices mapping parcels to vertical levels; negative values indicate invalid/masked parcels.
+ * @param qnt_idx  Index of the tracer quantity in the `atm->q` array to be mixed.
+ *
+ * @details
+ * The function performs the following steps:
+ * - Initializes temporary arrays for computing ensemble-mean tracer concentrations and parcel counts.
+ * - Loops over all parcels to accumulate tracer values and counts into their corresponding grid cells.
+ * - Computes the ensemble mean of the tracer for each populated grid cell.
+ * - Applies a linear relaxation of parcel tracer values toward the ensemble mean using a mixing parameter.
+ *   The mixing strength can vary between troposphere and stratosphere, depending on `ctl->mixing_trop` and `ctl->mixing_strat`.
+ *   If those values are < 1, a weighted average based on the parcel's vertical position (via `tropo_weight()`) is used.
+ *
+ * @note
+ * - Memory is dynamically allocated and freed within the function.
+ * - The grid is assumed to be 3D (nx × ny × nz), and calculations are performed per ensemble member.
+ * - Parallelization is supported through OpenMP or OpenACC for improved performance.
+ *
+ * @warning
+ * Parcels with `izs[ip] < 0` are excluded from processing.
+ *
+ * @authors Mingzhao Liu
+ */
+void module_mixing_help_ens(
   const ctl_t * ctl,
   const clim_t * clim,
   atm_t * atm,
@@ -8085,6 +8155,46 @@ void write_csi(
   const atm_t * atm,
   const double t);
 
+/**
+ * @brief Writes ensemble-based Critical Success Index (CSI) and other
+ *        verification statistics to an output file.
+ *
+ * This function computes and writes various statistical verification metrics
+ * that assess the performance of ensemble forecasts compared to observations.
+ * The output includes, for each ensemble member:
+ * - Critical Success Index (CSI)
+ * - Equitable Threat Score (ETS)
+ * - Bias (forecast/observation ratio)
+ * - Probability of Detection (POD)
+ * - False Alarm Rate (FAR)
+ * - Correlation coefficients (Pearson, Spearman)
+ * - Error metrics (mean error, RMSE, mean absolute error)
+ * - Log-likelihood of the normalized errors
+ *
+ * On the first invocation (when `t == ctl->t_start`), the function loads
+ * observation data and kernel weights, allocates necessary arrays, and
+ * creates a new output file with a descriptive header.
+ * On the final call (when `t == ctl->t_stop`), the function closes the file
+ * and frees all persistent memory.
+ *
+ * Output is written at time steps divisible by `ctl->csi_dt_out`.
+ *
+ * @param[in] filename  Path to the output file where statistics will be written.
+ * @param[in] ctl       Pointer to control structure containing configuration,
+ *                      ensemble settings, and spatial/time grid info.
+ * @param[in] atm       Pointer to atmospheric data structure holding model output.
+ * @param[in] t         Current simulation/model time.
+ *
+ * @note This function maintains internal static buffers and handles memory
+ *       management across time steps. It validates input configuration and
+ *       will terminate with an error message if required quantities are missing
+ *       or if limits (e.g., number of ensembles or data points) are exceeded.
+ *
+ * @throws If required quantities (mass or ensemble IDs) are undefined,
+ *         if ensemble IDs are out of bounds, or if the output file cannot be created.
+ *
+ * @author Mingzhao Liu
+ */
 void write_csi_ens(
   const char *filename,
   const ctl_t * ctl,
