@@ -4983,11 +4983,11 @@ void module_chem_grid(
   atm_t * atm,
   const double t);
 
- void module_ens_chem_grid(
-  const ctl_t *ctl,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm,
+void module_ens_chem_grid(
+  const ctl_t * ctl,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
   const double tt);
 
 /**
@@ -5464,9 +5464,9 @@ void module_mixing_help(
   const int qnt_idx);
 
 void module_ens_mixing_help(
-  const ctl_t *ctl,
-  const clim_t *clim,
-  atm_t *atm,
+  const ctl_t * ctl,
+  const clim_t * clim,
+  atm_t * atm,
   const int *ixs,
   const int *iys,
   const int *izs,
@@ -8016,8 +8016,8 @@ void write_csi(
 
 void write_csi_ens(
   const char *filename,
-  const ctl_t *ctl,
-  const atm_t *atm,
+  const ctl_t * ctl,
+  const atm_t * atm,
   const double t);
 
 /**
