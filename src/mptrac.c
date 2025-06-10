@@ -2564,7 +2564,7 @@ void module_chem_grid_ens(
     ERRMSG("Molar mass is not defined!");
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEM_GRID", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_CHEM_GRID_ENS", "PHYSICS", NVTX_GPU);
 
   /* Allocate... */
   const int np = atm->np;
