@@ -12190,7 +12190,7 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
 
   SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
 
-  #pragma omp parallel for default(shared)
+  //#pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
 
     particles[ip].time = atm->time[ip];
@@ -12400,16 +12400,16 @@ void dd_communicate_particles_sorted(
   /* Count number of particles in particle array that will be send... */
   // TODO: This can be done much faster, if we focus on the particles that 
   // need to be send only... maybe do it earlier?
-  #pragma omp parallel for
+  //#pragma omp parallel for
   for (int ip = 0; ip < *nparticles; ip++) {
     for (int idest = 0; idest < nneighbours; idest++) {
       if ((int)particles[ip].q[ctl.qnt_destination] == neighbours[idest]) {
         {
-	  #pragma omp critical 
+	  //#pragma omp critical 
 	   {nbs[idest]++;}
 	}
         } else {
-        #pragma omp critical 
+        //#pragma omp critical 
         { np++; }
         }
     }
@@ -12524,7 +12524,7 @@ void dd_communicate_particles(
   ctl_t ctl, 
   double* dt) {
 
-  SELECT_TIMER("DD_COMMUNICATE_PARTICLES", "DD", NVTX_READ);
+  
 
   /* Initialize the buffers... */
   int* nbs;
@@ -12541,6 +12541,8 @@ void dd_communicate_particles(
   /* Sending... */
   LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
   for (int idest = 0; idest < nneighbours; idest++) {
+  
+    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_READ);
     
     /* Ignore poles... */
     if (neighbours[idest] < 0)
@@ -12556,6 +12558,7 @@ void dd_communicate_particles(
       }
     }
     
+    SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_READ);
     /* Send buffer sizes... */
     MPI_Request request;
     MPI_Isend( &nbs[idest], 1, MPI_INT, neighbours[idest], 0, MPI_COMM_WORLD, &request);
@@ -12564,6 +12567,7 @@ void dd_communicate_particles(
     if ( nbs[idest] == 0 )
       continue;
 
+    SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_READ);
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
    
@@ -12606,14 +12610,15 @@ void dd_communicate_particles(
 
     /* Decrease the particle array limit... */
     *nparticles = *nparticles - offset;
-
+    SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_READ);
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      neighbours[idest], 1, MPI_COMM_WORLD, &request);
   }
-
+  
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
+  SELECT_TIMER("DD_RECIEVE", "DD", NVTX_READ);
 
   /* Recieving... */
   LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
@@ -12639,6 +12644,7 @@ void dd_communicate_particles(
 
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
+  SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_READ);
 
   /* Smallest particle index for first possible graveyard... */
   int api = 0;
@@ -12686,6 +12692,7 @@ void dd_communicate_particles(
 
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
+  SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_READ);
 
   LOG(1, "Free all the buffer.")
   /* Free buffers and buffersizes... */
