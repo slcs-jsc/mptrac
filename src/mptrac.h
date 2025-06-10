@@ -8826,6 +8826,12 @@ void atm2particles(
   atm_t* atm, 
   particle_t particles[], 
   ctl_t ctl);
+  
+void atm2particles_sort(
+  atm_t* atm, 
+  particle_t particles[], 
+  ctl_t ctl,
+  met_t* met);
 
 /**
  * @brief Converts particle data to atmospheric data.
@@ -8979,6 +8985,14 @@ void dd_communicate_particles(
   int nneighbours, 
   ctl_t ctl, 
   double* dt);
+  
+void dd_communicate_particles_sorted(
+  particle_t* particles, 
+  int* nparticles, 
+  MPI_Datatype MPI_Particle, 
+  int* neighbours, 
+  int nneighbours, 
+  ctl_t ctl);
   
 /**
  * @brief Assigns rectangular subdomains to atmospheric data based on geographical coordinates.

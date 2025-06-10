@@ -5604,11 +5604,14 @@ void mptrac_run_timestep(
     /* Transform from struct of array to array of struct... */
     LOG(1, "Transform from SoA to AoS.")
     atm2particles(atm, particles, *ctl);
+    //atm2particles_sort(atm, particles, *ctl, *met0); 
     
     /* Perform the communication... */
     LOG(1, "Peform the communication.")
     dd_communicate_particles( particles, &atm->np, MPI_Particle, 
       neighbours, ctl->dd_nbr_neighbours , *ctl, cache->dt);
+    //dd_communicate_particles_sorted( particles, &atm->np, MPI_Particle, 
+    //  neighbours, ctl->dd_nbr_neighbours , *ctl);      
       
     /* Transform from array of struct to struct of array... */
     LOG(1, "Transform from AoS to SoA.")
@@ -12127,10 +12130,67 @@ void write_vtk(
 
 /*****************************************************************************/
 
+void atm2particles_sort(atm_t* atm, particle_t particles[], ctl_t ctl, met_t* met) {
+
+  SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
+  
+  /* Allocate... */
+  const int np = atm->np;
+  double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
+  int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
+  double amax = (met->nx*met->ny + met->ny)*met->np + met->np;
+  
+  /* Get the MPI rank... */
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  
+  /* Get flags from box index or destinations... */
+  #pragma omp parallel for default(shared)
+  for (int ip = 0; ip < np; ip++) {
+    if ((int) atm->q[ctl.qnt_destination][ip] == rank) {
+      a[ip] = (double) ((locate_reg(met->lon, met->nx, atm->lon[ip]) * met->ny +
+		 locate_irr(met->lat, met->ny, atm->lat[ip]))
+		* met->np + locate_irr(met->p, met->np, atm->p[ip]));
+    } else {
+      a[ip] = atm->q[ctl.qnt_destination][ip] + amax + 1;
+    }
+    p[ip] = ip;
+  }
+
+  /* Sorting... */
+  #ifdef THRUST
+    thrustSortWrapper(a, np, p);
+  #else
+    ERRMSG("MPTRAC was compiled without Thrust library!");
+  #endif
+  
+  /* Fill the particles buffer... */
+  //#pragma omp parallel for default(shared)
+  for (int ip = 0; ip < np; ip++) {
+
+    particles[ip].time = atm->time[p[ip]];
+    particles[ip].lon = atm->lon[p[ip]]; 
+    particles[ip].lat = atm->lat[p[ip]];
+    particles[ip].p = atm->p[p[ip]];
+
+    for (int iq = 0; iq < ctl.nq; iq++) 
+      particles[ip].q[iq] = atm->q[iq][p[ip]];
+
+  }
+  
+  /* Free... */
+  free(a);
+  free(p);
+  
+}
+
+/*****************************************************************************/
+
 void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
 
   SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
 
+  #pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
 
     particles[ip].time = atm->time[ip];
@@ -12151,6 +12211,7 @@ void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
 
   SELECT_TIMER("PARTICLES2ATM", "DD", NVTX_READ);
   
+  //#pragma omp parallel for default(shared)
   for (int ip = 0; ip < atm->np; ip++) {
       atm->time[ip] = particles[ip].time;
       atm->lon[ip] = particles[ip].lon; 
@@ -12312,6 +12373,148 @@ void dd_get_rect_neighbour(const ctl_t ctl, int* neighbours, int rank, int size)
   }
   
 /*****************************************************************************/
+void dd_communicate_particles_sorted(
+  particle_t* particles, 
+  int* nparticles, 
+  MPI_Datatype MPI_Particle, 
+  int* neighbours, 
+  int nneighbours, 
+  ctl_t ctl) {
+
+  SELECT_TIMER("DD_COMMUNICATE_PARTICLES_COUNT", "DD", NVTX_READ);
+
+  /* Initialize the buffers... */
+  int np = 0;
+  int* nbs;
+  int* nbr;
+  int loc;
+  ALLOC(nbs, int, nneighbours);
+  ALLOC(nbr, int, nneighbours);
+  
+  particle_t* recieve_buffer;
+  
+  /* Get MPI rank... */
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  
+  /* Count number of particles in particle array that will be send... */
+  // TODO: This can be done much faster, if we focus on the particles that 
+  // need to be send only... maybe do it earlier?
+  #pragma omp parallel for
+  for (int ip = 0; ip < *nparticles; ip++) {
+    for (int idest = 0; idest < nneighbours; idest++) {
+      if ((int)particles[ip].q[ctl.qnt_destination] == neighbours[idest]) {
+        {
+	  #pragma omp critical 
+	   {nbs[idest]++;}
+	}
+        } else {
+        #pragma omp critical 
+        { np++; }
+        }
+    }
+  }
+  
+  
+   SELECT_TIMER("DD_COMMUNICATE_PARTICLES_SEND", "DD", NVTX_READ);
+
+
+  /* Sending... */
+  LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
+  loc = np;
+  for (int idest = 0; idest < nneighbours; idest++) {
+    
+    /* Ignore poles... */
+    if (neighbours[idest] < 0)
+      continue;
+    
+    /* Send buffer sizes... */
+    MPI_Request request;
+    MPI_Isend( &nbs[idest], 1, MPI_INT, neighbours[idest], 0, MPI_COMM_WORLD, &request);
+
+    /* Don't send empty signals... */
+    if ( nbs[idest] == 0 )
+      continue;
+        
+    /* Send the buffer... */
+    MPI_Isend(&particles[loc], nbs[idest], MPI_Particle, 
+    	      neighbours[idest], 1, MPI_COMM_WORLD, &request);
+    	 
+    /* Increment start position for next buffer...      */
+    loc = loc + nbs[idest];
+  }
+
+  /* Wait for all signals to be send... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  
+  SELECT_TIMER("DD_COMMUNICATE_PARTICLES_RECV", "DD", NVTX_READ);
+
+  /* Recieving sizes of send particle arrays... */
+  LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
+  
+  int recv_buffer_size = 0; 
+  for (int isourc = 0; isourc < nneighbours; isourc++) {
+  
+    /* Ignore poles... */
+    if (neighbours[isourc]<0)
+      continue;
+
+    /* Recieve buffer sizes... */
+    MPI_Status status;
+    MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
+    
+    recv_buffer_size = recv_buffer_size + nbr[isourc];
+
+  }
+  
+  /* Wait for all sizes to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  /* Allocate buffer for recieving... */
+  ALLOC( recieve_buffer, particle_t, recv_buffer_size);
+
+  /* Recieving particle arrays... */
+  loc = 0;
+  for (int isourc = 0; isourc < nneighbours; isourc++) {
+
+    /* Continue with other neighbours if there is no signal... */
+    if (nbr[isourc]==0)
+      continue;
+     
+    MPI_Status status;
+    MPI_Recv(&recieve_buffer[loc], nbr[isourc], MPI_Particle, 
+                neighbours[isourc], 1, MPI_COMM_WORLD, &status);
+    
+    loc = loc + nbr[isourc];
+                
+  }
+
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  /* Copy new particles into local particle array... */
+  loc = 0;
+  for (int isourc = 0; isourc < nneighbours; isourc++) {
+    memcpy( &particles[np + loc],&recieve_buffer[loc], sizeof(particle_t));
+    loc = loc + nbr[isourc];
+  }
+  
+  /* Rest particle array size... */
+  *nparticles = loc + *nparticles;
+ 
+  /* Logging of communication ... */
+  for (int isourc = 0; isourc < nneighbours; isourc++)
+    LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank, neighbours[isourc], nbs[isourc], nbr[isourc]);
+
+  LOG(1, "Free sending buffer.")    
+  free(nbs);
+  free(nbr);
+  free(recieve_buffer);
+
+}  
+  
+/*****************************************************************************/
 void dd_communicate_particles(
   particle_t* particles, 
   int* nparticles, 
@@ -12345,10 +12548,11 @@ void dd_communicate_particles(
       
     /* Count number of particles in particle array that will be send... */
     nbs[idest] = 0;
+    #pragma omp parallel for reduction(+:nbs[idest])
     for (int ip = 0; ip < *nparticles; ip++) {
       if ( (int) particles[ip].q[ctl.qnt_subdomain] != -1 
       && (int) particles[ip].q[ctl.qnt_destination] == neighbours[idest] ) {
-      nbs[idest]++;
+      nbs[idest]++; // 
       }
     }
     
@@ -12366,6 +12570,7 @@ void dd_communicate_particles(
     /* Fill the send buffer... */
     int ibs = 0;
     int offset = 0;
+    
     for (int ip = *nparticles-1; ip >= 0; ip--) {
 
       // Only add those elements whithout 'graveyard' 
@@ -12384,6 +12589,7 @@ void dd_communicate_particles(
         // This is required...
         particles[ip].q[ctl.qnt_subdomain] = -1;
         dt[ip] = 0;
+        
         ibs++;
 
         // Check if particle array limit can be reduced...
@@ -12456,8 +12662,8 @@ void dd_communicate_particles(
           dt[ip] = ctl.dt_mod;
           particles[ip].q[ctl.qnt_destination] = rank;
           particles[ip].q[ctl.qnt_subdomain] = rank;
-          ipbr++; 
-        }  
+          {ipbr++;} 
+        }
 
         // Check if buffer was filled and save new size after expansion...
         if (ipbr == nbr[isourc]) {
