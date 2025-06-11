@@ -6610,7 +6610,6 @@ void read_met_global_grib(
   long jscanpos,iscanneg;
   ECC(codes_get_long(handles[0],"iScansNegatively",&iscanneg));
   ECC(codes_get_long(handles[0],"jScansPositively",&jscanpos));
-  
   /* Compute longitude-latitude grid... */
   int counter = 0;
   if(iscanneg == 0){
@@ -6814,6 +6813,7 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     long current_level; 
     ECC(codes_get_long(handles[i],"level",&current_level));
     
+    current_level-=1;
 
     /* Retrieve data from current message*/
     ECC(codes_get_string(handles[i],"shortName",short_name,&max_size));
@@ -6822,28 +6822,28 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
     ECC(codes_get_double_array(handles[i],"values",values,&value_count))
 
     /*Read temperature*/
-    ECC_READ_3D("t",current_level-1,met->t,1.0,t_flag)
+    ECC_READ_3D("t",current_level,met->t,1.0,t_flag)
     
     /*read horizontal wind and vertical velocity*/
-    ECC_READ_3D("u",current_level-1,met->u,1.0,u_flag)
+    ECC_READ_3D("u",current_level,met->u,1.0,u_flag)
 
-    ECC_READ_3D("v",current_level-1,met->v,1.0,v_flag)
+    ECC_READ_3D("v",current_level,met->v,1.0,v_flag)
     
-    ECC_READ_3D("w",current_level-1,met->w,0.01f,w_flag)
+    ECC_READ_3D("w",current_level,met->w,0.01f,w_flag)
 
 
     /*Read ozone*/
-    ECC_READ_3D("o3",current_level-1,met->o3,(float) (MA / MO3),o3_flag)
+    ECC_READ_3D("o3",current_level,met->o3,(float) (MA / MO3),o3_flag)
 
     /*Read cloud data*/
-    ECC_READ_3D("clwc",current_level-1,met->lwc,1.0,lwc_flag)
-    ECC_READ_3D("crwc",current_level-1,met->rwc,1.0,rwc_flag)
-    ECC_READ_3D("ciwc",current_level-1,met->iwc,1.0,iwc_flag)
-    ECC_READ_3D("cswc",current_level-1,met->swc,1.0,swc_flag)
-    ECC_READ_3D("cc",current_level-1,met->cc,1.0,cc_flag)
+    ECC_READ_3D("clwc",current_level,met->lwc,1.0,lwc_flag)
+    ECC_READ_3D("crwc",current_level,met->rwc,1.0,rwc_flag)
+    ECC_READ_3D("ciwc",current_level,met->iwc,1.0,iwc_flag)
+    ECC_READ_3D("cswc",current_level,met->swc,1.0,swc_flag)
+    ECC_READ_3D("cc",current_level,met->cc,1.0,cc_flag)
 
     /*Read water vapor*/
-    ECC_READ_3D("q",current_level-1,met->h2o,(float) (MA / MH2O),h2o_flag)
+    ECC_READ_3D("q",current_level,met->h2o,(float) (MA / MH2O),h2o_flag)
     
     /*Free allocated array*/
     free(values);
@@ -6897,7 +6897,6 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
 
   /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
-    met->np = ctl->met_np;
     /* Interpolate variables... */
     read_met_ml2pl(ctl, met, met->t, "T");
     read_met_ml2pl(ctl, met, met->u, "U");
@@ -7120,14 +7119,22 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
   ECC(codes_get_size(ml_handles[0],"pv",&value_count))
   double* values = (double*) malloc(value_count * sizeof(double));
   ECC(codes_get_double_array(ml_handles[0],"pv",values,&value_count)) 
+  double a_vals [138],b_vals[138];
+  for(int i = 0;i<=137;i++){
+    a_vals[i] = values[i];
+    b_vals[i] = values[i+137];
+  }
   for(int nx = 0;nx<met->nx;nx++){
     for(int ny = 0;ny<met->ny;ny++){
       for(int level = 0;level<=met->npl;level++){
-        met->pl[nx][ny][level] = (float) ((values[level]*0.01f + met->ps[nx][ny] * values[level+met->npl]));
+        float p1,p2;
+        p1 = (float) ((a_vals[level]*0.01f + met->ps[nx][ny] * b_vals[level]));
+        p2 = (float) ((a_vals[level+1]*0.01f + met->ps[nx][ny] * b_vals[level+1]));
+        met->pl[nx][ny][level] = (p1+p2)*0.5f;
       }
     }
   }
-  
+
   /*Read data from ml file*/
   read_met_levels_grib(ml_handles,ml_num_messages,ctl,met);
   for(int i=0;i<ml_num_messages;i++){
