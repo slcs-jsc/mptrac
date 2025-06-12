@@ -8197,7 +8197,7 @@ void read_met_monotonize(
 
 /*****************************************************************************/
 #ifdef ECCODES
-int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
+int read_met_grib(const char *filename, const ctl_t *ctl, const clim_t *clim, met_t *met){
 
   size_t filename_len = strlen(filename)+1;
 
@@ -8330,7 +8330,7 @@ int read_met_grib(const char *filename, ctl_t *ctl, clim_t *clim, met_t *met){
 
   /* Check meteo data and smooth zeta profiles ... */
   if (ctl->advect_vert_coord == 1)
-    read_met_monotonize(met);
+    read_met_monotonize(ctl,met);
   
 
   /* Return success... */

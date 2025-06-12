@@ -7202,8 +7202,8 @@ int read_met_nc(
 
 int read_met_grib(
   const char *filename,
-  ctl_t *ctl,
-  clim_t *clim,
+  const ctl_t *ctl,
+  const clim_t *clim,
   met_t *met);
 
 /**
