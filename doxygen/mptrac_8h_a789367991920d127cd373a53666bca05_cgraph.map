@@ -1,0 +1,5 @@
+<map id="read_met_surface" name="read_met_surface">
+<area shape="rect" id="node1" title="Reads surface meteorological data from a netCDF file and stores it in the meteorological data structu..." alt="" coords="5,31,132,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a28987fd57181ba2ea555654b199a7a65" title="Reads a 2&#45;dimensional meteorological variable from a NetCDF file." alt="" coords="180,5,299,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a89fb3563e927b8dedaedba864ffe8086" title="Reads a 3&#45;dimensional meteorological variable from a NetCDF file." alt="" coords="180,56,299,83"/>
+</map>
