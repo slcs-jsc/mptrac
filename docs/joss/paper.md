@@ -85,7 +85,7 @@ The Massive-Parallel Trajectory Calculations (MPTRAC) Lagrangian transport model
 
 Accurate atmospheric transport modeling is essential for applications such as air quality assessments, climate studies, and public health protection. Traditional Eulerian models often struggle with fine-scale resolution, limiting their ability to capture complex transport and mixing processes. Lagrangian models, such as MPTRAC and others [@mckenna02; @lin03; @stohl05; @jones07; @stein15; @pisso19], address this limitation by tracking individual air parcels, offering fine-grained representations of atmospheric processes.
 
-MPTRAC supports both research and operational applications requiring high-precision transport simulations. It models long-range transport and chemical transformations, enabling pollution studies, emission tracking, and environmental impact forecasting. MPTRAC runs efficiently on HPC and GPU systems, supporting fast, large-scale simulations that facilitate real-time decision-making and scientific analysis.
+MPTRAC supports both research and operational applications requiring precise transport simulations. It models long-range transport and chemical transformations, enabling pollution studies, emission tracking, and environmental impact forecasting. MPTRAC runs efficiently on HPC and GPU systems, supporting fast, large-scale simulations that facilitate real-time decision-making and scientific analysis.
 
 # Features
 
