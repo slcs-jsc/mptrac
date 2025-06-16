@@ -2171,13 +2171,11 @@ void module_advect(
       /* Convert pressure to zeta... */
       INTPOL_INIT;
 
-      // TODO: can we use intpol_met_time_3d_ml instead of intpol_met_4d_coord?
-
       // Debugging:
-      //intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			//  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			//  atm->lon[ip], atm->lat[ip],
-			//  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
+      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
+			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			  atm->lon[ip], atm->lat[ip],
+			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
 
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4],
@@ -3950,11 +3948,14 @@ void module_timesteps(
       cache->dt[ip] = 0.0;
 
     /* Check horizontal boundaries of local meteo data... */
-    if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal == 1)
+    if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal == 1) {
       if (local && (atm->lon[ip] <= met0->lon[0]
 		    || atm->lon[ip] >= met0->lon[met0->nx - 1]
 		    || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
         cache->dt[ip] = 0; 
+    } else if ( (int) atm->q[ctl->qnt_subdomain][ip] == -1) {
+      cache->dt[ip] = 0;}
+      
 
   }
 }
@@ -5603,19 +5604,21 @@ void mptrac_run_timestep(
     
     /* Transform from struct of array to array of struct... */
     LOG(1, "Transform from SoA to AoS.")
-    atm2particles(atm, particles, *ctl);
-    //atm2particles_sort(atm, particles, *ctl, *met0); 
+    //atm2particles(atm, particles, *ctl)
+    int nparticles = 0;
+    atm2particles(atm, particles, *ctl, &nparticles, cache);
     
     /* Perform the communication... */
     LOG(1, "Peform the communication.")
-    dd_communicate_particles( particles, &atm->np, MPI_Particle, 
-      neighbours, ctl->dd_nbr_neighbours , *ctl, cache->dt);
-    //dd_communicate_particles_sorted( particles, &atm->np, MPI_Particle, 
-    //  neighbours, ctl->dd_nbr_neighbours , *ctl);      
+    //dd_communicate_particles( particles, &atm->np, MPI_Particle, 
+      //neighbours, ctl->dd_nbr_neighbours , *ctl, cache->dt);
+    
+    dd_communicate_particles( particles, &nparticles, MPI_Particle, 
+      neighbours, ctl->dd_nbr_neighbours , *ctl);
       
     /* Transform from array of struct to struct of array... */
     LOG(1, "Transform from AoS to SoA.")
-    particles2atm(atm, particles, *ctl); 
+    particles2atm(atm, particles, *ctl, &nparticles, cache); 
     
     LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
@@ -7473,15 +7476,15 @@ void read_met_grid(
       met->lat[0], met->lat[1], met->lat[met->ny - 1]);
 
   LOG(2, "Define subdomain properties.");
-  LOG(3, "MPI information: Rank %d, Size %d", rank, size);
-  LOG(3, "Edge position: l=%d,r=%d,t=%d, b=%d", (int)left, (int)right, (int)top, (int)bottom );
-  LOG(3, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
-  LOG(3, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx, met->ny, met->np);
-  LOG(3, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",  (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1]);
-  LOG(3, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d", (int) met->subdomain_count[3], (int) met->subdomain_count[2], (int) met->subdomain_count[1]);
-  LOG(3, "Subdomain start: nx %ld ny %ld np %ld" , met->subdomain_start[3], met->subdomain_start[2], met->subdomain_start[1]);
-  LOG(3, "Boundary halo start: nx %ld ny %ld np %ld", met->halo_bnd_start[3], met->halo_bnd_start[2], met->halo_bnd_start[1]);
-  LOG(3, "Offsets: nx %d ny %d", met->halo_offset_start, met->halo_offset_end);
+  LOG(2, "MPI information: Rank %d, Size %d", rank, size);
+  LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int)left, (int)right, (int)top, (int)bottom );
+  LOG(2, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
+  LOG(2, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx, met->ny, met->np);
+  LOG(2, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",  (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1]);
+  LOG(2, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d", (int) met->subdomain_count[3], (int) met->subdomain_count[2], (int) met->subdomain_count[1]);
+  LOG(2, "Subdomain start: nx %ld ny %ld np %ld" , met->subdomain_start[3], met->subdomain_start[2], met->subdomain_start[1]);
+  LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", met->halo_bnd_start[3], met->halo_bnd_start[2], met->halo_bnd_start[1]);
+  LOG(2, "Offsets: nx %d ny %d", met->halo_offset_start, met->halo_offset_end);
   
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
@@ -12130,99 +12133,65 @@ void write_vtk(
 
 /*****************************************************************************/
 
-void atm2particles_sort(atm_t* atm, particle_t particles[], ctl_t ctl, met_t* met) {
-
+void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles, 
+    cache_t *cache) {
+  
   SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
   
-  /* Allocate... */
-  const int np = atm->np;
-  double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
-  int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
-  double amax = (met->nx*met->ny + met->ny)*met->np + met->np;
+  // Select the particles that will be send...
   
-  /* Get the MPI rank... */
+  /* Get MPI rank... */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
-  /* Get flags from box index or destinations... */
-  #pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-    if ((int) atm->q[ctl.qnt_destination][ip] == rank) {
-      a[ip] = (double) ((locate_reg(met->lon, met->nx, atm->lon[ip]) * met->ny +
-		 locate_irr(met->lat, met->ny, atm->lat[ip]))
-		* met->np + locate_irr(met->p, met->np, atm->p[ip]));
-    } else {
-      a[ip] = atm->q[ctl.qnt_destination][ip] + amax + 1;
+
+  int ibfr = 0;
+  for (int ip = 0; ip < atm->np; ip++) 
+    if (((int) (atm->q[ctl.qnt_destination][ip]) != rank)
+    && ((int) (atm->q[ctl.qnt_destination][ip]) >= 0) 
+    && ((int) atm->q[ctl.qnt_subdomain][ip] >= 0)) {
+
+    particles[ibfr].time = atm->time[ip];
+    particles[ibfr].lon = atm->lon[ip];
+    particles[ibfr].lat = atm->lat[ip];
+    particles[ibfr].p = atm->p[ip];
+
+    for (int iq = 0; iq < ctl.nq; iq++) 
+      particles[ibfr].q[iq] = atm->q[iq][ip];
+      
+    atm->q[ctl.qnt_subdomain][ip] = -1;
+    cache->dt[ip] = 0;
+
+    ibfr++;
     }
-    p[ip] = ip;
-  }
-
-  /* Sorting... */
-  #ifdef THRUST
-    thrustSortWrapper(a, np, p);
-  #else
-    ERRMSG("MPTRAC was compiled without Thrust library!");
-  #endif
-  
-  /* Fill the particles buffer... */
-  //#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < np; ip++) {
-
-    particles[ip].time = atm->time[p[ip]];
-    particles[ip].lon = atm->lon[p[ip]]; 
-    particles[ip].lat = atm->lat[p[ip]];
-    particles[ip].p = atm->p[p[ip]];
-
-    for (int iq = 0; iq < ctl.nq; iq++) 
-      particles[ip].q[iq] = atm->q[iq][p[ip]];
-
-  }
-  
-  /* Free... */
-  free(a);
-  free(p);
-  
+ 
+  *nparticles = ibfr;
 }
 
 /*****************************************************************************/
 
-void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl) {
+void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles,
+  cache_t* cache) {
 
-  SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
-
-  //#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
-
-    particles[ip].time = atm->time[ip];
-    particles[ip].lon = atm->lon[ip]; 
-    particles[ip].lat = atm->lat[ip];
-    particles[ip].p = atm->p[ip];
-
-    for (int iq = 0; iq < ctl.nq; iq++) 
-      particles[ip].q[iq] = atm->q[iq][ip];
-
-  }
-
-}
-
-/*****************************************************************************/
-
-void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl) {
-
-  SELECT_TIMER("PARTICLES2ATM", "DD", NVTX_READ);
+  SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_READ);
   
-  //#pragma omp parallel for default(shared)
-  for (int ip = 0; ip < atm->np; ip++) {
-      atm->time[ip] = particles[ip].time;
-      atm->lon[ip] = particles[ip].lon; 
-      atm->lat[ip] = particles[ip].lat;
-      atm->p[ip] = particles[ip].p;
+  int ipp = 0;
+  for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
+  
+      ipp = ip - atm->np;
+  
+      atm->time[ip] = particles[ipp].time;
+      atm->lon[ip] = particles[ipp].lon; 
+      atm->lat[ip] = particles[ipp].lat;
+      atm->p[ip] = particles[ipp].p;
 
       for (int iq = 0; iq < ctl.nq; iq++) 
-        atm->q[iq][ip] = particles[ip].q[iq];
-
+        atm->q[iq][ip] = particles[ipp].q[iq];
+        
+       cache->dt[ip] = ctl.dt_mod;
   }
-
+  
+  atm->np += *nparticles;
+  
 }
 
 /*****************************************************************************/
@@ -12372,148 +12341,7 @@ void dd_get_rect_neighbour(const ctl_t ctl, int* neighbours, int rank, int size)
     
   }
   
-/*****************************************************************************/
-void dd_communicate_particles_sorted(
-  particle_t* particles, 
-  int* nparticles, 
-  MPI_Datatype MPI_Particle, 
-  int* neighbours, 
-  int nneighbours, 
-  ctl_t ctl) {
 
-  SELECT_TIMER("DD_COMMUNICATE_PARTICLES_COUNT", "DD", NVTX_READ);
-
-  /* Initialize the buffers... */
-  int np = 0;
-  int* nbs;
-  int* nbr;
-  int loc;
-  ALLOC(nbs, int, nneighbours);
-  ALLOC(nbr, int, nneighbours);
-  
-  particle_t* recieve_buffer;
-  
-  /* Get MPI rank... */
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
-  /* Count number of particles in particle array that will be send... */
-  // TODO: This can be done much faster, if we focus on the particles that 
-  // need to be send only... maybe do it earlier?
-  //#pragma omp parallel for
-  for (int ip = 0; ip < *nparticles; ip++) {
-    for (int idest = 0; idest < nneighbours; idest++) {
-      if ((int)particles[ip].q[ctl.qnt_destination] == neighbours[idest]) {
-        {
-	  //#pragma omp critical 
-	   {nbs[idest]++;}
-	}
-        } else {
-        //#pragma omp critical 
-        { np++; }
-        }
-    }
-  }
-  
-  
-   SELECT_TIMER("DD_COMMUNICATE_PARTICLES_SEND", "DD", NVTX_READ);
-
-
-  /* Sending... */
-  LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
-  loc = np;
-  for (int idest = 0; idest < nneighbours; idest++) {
-    
-    /* Ignore poles... */
-    if (neighbours[idest] < 0)
-      continue;
-    
-    /* Send buffer sizes... */
-    MPI_Request request;
-    MPI_Isend( &nbs[idest], 1, MPI_INT, neighbours[idest], 0, MPI_COMM_WORLD, &request);
-
-    /* Don't send empty signals... */
-    if ( nbs[idest] == 0 )
-      continue;
-        
-    /* Send the buffer... */
-    MPI_Isend(&particles[loc], nbs[idest], MPI_Particle, 
-    	      neighbours[idest], 1, MPI_COMM_WORLD, &request);
-    	 
-    /* Increment start position for next buffer...      */
-    loc = loc + nbs[idest];
-  }
-
-  /* Wait for all signals to be send... */
-  MPI_Barrier(MPI_COMM_WORLD);
-  
-  
-  SELECT_TIMER("DD_COMMUNICATE_PARTICLES_RECV", "DD", NVTX_READ);
-
-  /* Recieving sizes of send particle arrays... */
-  LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
-  
-  int recv_buffer_size = 0; 
-  for (int isourc = 0; isourc < nneighbours; isourc++) {
-  
-    /* Ignore poles... */
-    if (neighbours[isourc]<0)
-      continue;
-
-    /* Recieve buffer sizes... */
-    MPI_Status status;
-    MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
-    
-    recv_buffer_size = recv_buffer_size + nbr[isourc];
-
-  }
-  
-  /* Wait for all sizes to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
-  
-  /* Allocate buffer for recieving... */
-  ALLOC( recieve_buffer, particle_t, recv_buffer_size);
-
-  /* Recieving particle arrays... */
-  loc = 0;
-  for (int isourc = 0; isourc < nneighbours; isourc++) {
-
-    /* Continue with other neighbours if there is no signal... */
-    if (nbr[isourc]==0)
-      continue;
-     
-    MPI_Status status;
-    MPI_Recv(&recieve_buffer[loc], nbr[isourc], MPI_Particle, 
-                neighbours[isourc], 1, MPI_COMM_WORLD, &status);
-    
-    loc = loc + nbr[isourc];
-                
-  }
-
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
-  
-  /* Copy new particles into local particle array... */
-  loc = 0;
-  for (int isourc = 0; isourc < nneighbours; isourc++) {
-    memcpy( &particles[np + loc],&recieve_buffer[loc], sizeof(particle_t));
-    loc = loc + nbr[isourc];
-  }
-  
-  /* Rest particle array size... */
-  *nparticles = loc + *nparticles;
- 
-  /* Logging of communication ... */
-  for (int isourc = 0; isourc < nneighbours; isourc++)
-    LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank, neighbours[isourc], nbs[isourc], nbr[isourc]);
-
-  LOG(1, "Free sending buffer.")    
-  free(nbs);
-  free(nbr);
-  free(recieve_buffer);
-
-}  
-  
 /*****************************************************************************/
 void dd_communicate_particles(
   particle_t* particles, 
@@ -12521,43 +12349,37 @@ void dd_communicate_particles(
   MPI_Datatype MPI_Particle, 
   int* neighbours, 
   int nneighbours, 
-  ctl_t ctl, 
-  double* dt) {
-
-  
+  ctl_t ctl) {
 
   /* Initialize the buffers... */
   int* nbs;
   int* nbr;
   ALLOC(nbs, int, nneighbours);
   ALLOC(nbr, int, nneighbours);
-  particle_t* send_buffers[NBUFFER];
-  particle_t* recieve_buffers[NBUFFER];
+  particle_t* send_buffers[NBUFFER] = { NULL };
+  particle_t* recieve_buffers[NBUFFER] = { NULL };
   
   /* Get MPI rank... */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+  
   /* Sending... */
   LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
   for (int idest = 0; idest < nneighbours; idest++) {
   
-    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_READ);
-    
     /* Ignore poles... */
     if (neighbours[idest] < 0)
       continue;
-      
+            
+    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_READ);
     /* Count number of particles in particle array that will be send... */
-    nbs[idest] = 0;
-    #pragma omp parallel for reduction(+:nbs[idest])
-    for (int ip = 0; ip < *nparticles; ip++) {
-      if ( (int) particles[ip].q[ctl.qnt_subdomain] != -1 
-      && (int) particles[ip].q[ctl.qnt_destination] == neighbours[idest] ) {
-      nbs[idest]++; // 
-      }
-    }
-    
+    int help_sum = 0;
+    if (*nparticles > 0)
+      for (int ip = 0; ip < *nparticles; ip++)
+        if ( (int) particles[ip].q[ctl.qnt_destination] == neighbours[idest] ) 
+          help_sum++;
+    nbs[idest] = help_sum;
+        
     SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_READ);
     /* Send buffer sizes... */
     MPI_Request request;
@@ -12571,45 +12393,20 @@ void dd_communicate_particles(
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
    
-    /* Fill the send buffer... */
-    int ibs = 0;
-    int offset = 0;
-    
-    for (int ip = *nparticles-1; ip >= 0; ip--) {
-
-      // Only add those elements whithout 'graveyard' 
-      // and with the right neighbours...
-      if ((int) particles[ip].q[ctl.qnt_subdomain] != -1
-       && (int) particles[ip].q[ctl.qnt_destination] == neighbours[idest]) {
-        
-        memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t) );
-   
-        // Mark old place as 'graveyard'...
-        // Only for debugging...
-        particles[ip].lon = -1;
-        particles[ip].lat = -1;
-        particles[ip].time = -1;
-
-        // This is required...
-        particles[ip].q[ctl.qnt_subdomain] = -1;
-        dt[ip] = 0;
-        
+    /* Fill the send buffer in a sorted way... */
+    int ibs = 0;    
+    for (int ip = 0; ip < *nparticles; ip++) {
+      if ((int) particles[ip].q[ctl.qnt_destination] == neighbours[idest]) {
+        memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
         ibs++;
-
-        // Check if particle array limit can be reduced...
-        if (offset + 1 == *nparticles-ip)
-          offset++;
-
       }
-
-      // Check if all particles are already inserted...
+      
+      // This might be removed and instead just use omp?
       if (ibs == nbs[idest])
       break;
 
     }
 
-    /* Decrease the particle array limit... */
-    *nparticles = *nparticles - offset;
     SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_READ);
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
@@ -12618,7 +12415,7 @@ void dd_communicate_particles(
   
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
-  SELECT_TIMER("DD_RECIEVE", "DD", NVTX_READ);
+  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_READ);
 
   /* Recieving... */
   LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
@@ -12631,12 +12428,25 @@ void dd_communicate_particles(
     /* Recieve buffer sizes... */
     MPI_Status status;
     MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
-
+    
+  }
+  
+  /* Wait for all signals to be recieved... */
+  MPI_Barrier(MPI_COMM_WORLD);
+  
+  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_READ);
+  for (int isourc = 0; isourc < nneighbours; isourc++) {
+  
+    /* Ignore poles... */
+    if (neighbours[isourc]<0)
+      continue;
+  
     /* Continue with other neighbours if there is no signal... */
     if (nbr[isourc]==0)
       continue;
 
     /* Allocate buffer for recieving... */
+    MPI_Status status;
     ALLOC( recieve_buffers[isourc], particle_t, nbr[isourc]);
     MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &status);
     
@@ -12646,7 +12456,7 @@ void dd_communicate_particles(
   MPI_Barrier(MPI_COMM_WORLD);
   SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_READ);
 
-  /* Smallest particle index for first possible graveyard... */
+  /* Start position for different buffer ranges... */
   int api = 0;
 
   LOG(1, "Putting buffer into particle array: %d with %d particles in list.", rank, *nparticles);
@@ -12658,42 +12468,23 @@ void dd_communicate_particles(
       continue;
       
     /* Getting particles from buffer... */ 
-    if (nbr[isourc] > 0) {
-      int ipbr = 0;
-      for (int ip = api; ip < NP; ip++) {
-        // Add if there is an empty space within the existing list or if list needs expansions...
-        if ( ((ip < *nparticles) && ((int) particles[ip].q[ctl.qnt_subdomain] == -1)) ||
-             (ip >= *nparticles)) {
-          memcpy(&particles[ip], &recieve_buffers[isourc][ipbr], sizeof(particle_t));
-          dt[ip] = ctl.dt_mod;
-          particles[ip].q[ctl.qnt_destination] = rank;
-          particles[ip].q[ctl.qnt_subdomain] = rank;
-          {ipbr++;} 
-        }
+    for (int ip = 0; ip < nbr[isourc]; ip++) {
+      memcpy(&particles[ip + api], &recieve_buffers[isourc][ip], sizeof(particle_t));
+          particles[ip + api].q[ctl.qnt_destination] = rank;
+          particles[ip + api].q[ctl.qnt_subdomain] = rank;
 
-        // Check if buffer was filled and save new size after expansion...
-        if (ipbr == nbr[isourc]) {
-          api = ip + 1;
-          break;
-        }
-      } 
-    } 
-    
-    /* Increase the particle array limit... */
-    if (*nparticles < api)
-      *nparticles = api;
-
-  }
-
+    }
+  api += nbr[isourc];   
+  } 
+  
+  /* Set number of recieved particles... */
+  *nparticles = api;
 
   /* Logging of communication ... */
   for (int isourc = 0; isourc < nneighbours; isourc++)
     LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank, neighbours[isourc], nbs[isourc], nbr[isourc]);
-
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
+  
   SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_READ);
-
   LOG(1, "Free all the buffer.")
   /* Free buffers and buffersizes... */
   for (int i = 0; i < nneighbours; i++) {
@@ -12707,12 +12498,13 @@ void dd_communicate_particles(
       free(recieve_buffers[i]);
       recieve_buffers[i] = NULL;
     }
+    
   }
     
   free(nbs);
   free(nbr);
 
-}  
+} 
 
 /*****************************************************************************/
 void dd_assign_rect_subdomains_atm(
@@ -12751,7 +12543,7 @@ void dd_assign_rect_subdomains_atm(
     for (int ip = 0; ip < atm->np; ip++) {
     
       /* Skip empty places in the particle array... */
-      if (atm->q[ctl.qnt_subdomain][ip] == -1)
+      if ((int) atm->q[ctl.qnt_subdomain][ip] == -1)
         continue;
 
       double lont = atm->lon[ip];
@@ -12761,301 +12553,99 @@ void dd_assign_rect_subdomains_atm(
       double lon_min = met->subdomain_lon_min;
       double lat_max = met->subdomain_lat_max;
       double lat_min = met->subdomain_lat_min;
- 
-      if (lont < 0)
-        lont += 360;
-
-      if ((lont >= lon_max) && (latt >= lat_max)) {
-        // Upper right...
-        atm->q[ctl.qnt_destination][ip] = neighbours[5];
-      }
-      else if ((lont >= lon_max) && (latt <= lat_min)) {
-        // Lower right...
-        atm->q[ctl.qnt_destination][ip] = neighbours[4];
-      }
-      else if ((lont <= lon_min) && (latt >= lat_max)) {
-        // Upper left...
-        atm->q[ctl.qnt_destination][ip] = neighbours[2];
-      }
-      else if ((lont <= lon_min) && (latt <= lat_min)) {
-        // Lower left...
-        atm->q[ctl.qnt_destination][ip] = neighbours[1];
-          }
-      else if (lont >= lon_max) {
-        // Right...
-        atm->q[ctl.qnt_destination][ip] = neighbours[3];
-      }
-      else if (lont <= lon_min) {
-        // Left...
-        atm->q[ctl.qnt_destination][ip] = neighbours[0];
-      }
-      else if (latt <= lat_min) {
-        // Down...
-        atm->q[ctl.qnt_destination][ip] = neighbours[7];
-      }
-      else if (latt >= lat_max) {
-        // Up...
-        atm->q[ctl.qnt_destination][ip] = neighbours[6];
-      }
-      else {
-        // Within...
-        atm->q[ctl.qnt_destination][ip] = rank;
-      }
-    }  
-   }
-    
-  }
-  
-void module_dd(  
-  atm_t* atm,
-  particle_t* particles,
-  met_t* met, 
-  ctl_t ctl, 
-  int* neighbours,
-  int rank, 
-  MPI_Datatype MPI_Particle, 
-  double* dt) {
-
-    MPI_Barrier(MPI_COMM_WORLD);
-   
-    /* Assign particles to new subdomains... */
-    dd_assign_rect_subdomains_atm( atm, met, ctl, rank, neighbours, 0);
-    
-    /* Transform from struct of array to array of struct... */
-    atm2particles(atm, particles, ctl);
-    
-    /* Perform the communication... */
-    dd_communicate_particles( particles, &atm->np, MPI_Particle, 
-      neighbours, ctl.dd_nbr_neighbours , ctl, dt);
-      
-    /* Transform from array of struct to struct of array... */
-    particles2atm(atm, particles, ctl); 
-    
-}
-
-/*****************************************************************************/
-void dd_communicate_particles_cleo(
-  particle_ptr_t* particles, 
-  int nparticles, 
-  MPI_Datatype MPI_Particle, 
-  int* neighbours, 
-  int nneighbours, 
-  int* target_ranks,
-  size_t* q_sizes
-  ) {
-
-  /* Initialize the buffers... */
-  int* nbs;
-  int* nbr;
-  ALLOC(nbs, int, nneighbours);
-  ALLOC(nbr, int, nneighbours);
-  particle_quant_t* send_buffers[NBUFFER];
-  particle_quant_t* recieve_buffers[NBUFFER];
-  
-  /* Get MPI rank... */
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
-  if (rank==0) {
-  
-    int ip_ap = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
-      if (target_ranks[ip] != rank) {
-        ip_ap = ip;
-        break;
-      } 
-    }
-  
-    printf("== Particle in MPTRAC Send==\n");
-  
-    unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap].q[0];
-    unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
-  
-    printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap]);
-    
-    for (int iq=1; iq < 8 ; iq++) {
-     if (iq==4 || iq==7) {
-       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap].q[iq];
-       long unsigned int tmp = *tmp_ptr;
-             printf("q[%d]: %lu, target_rank: %d\n",iq, tmp
-      , target_ranks[ip_ap]);
-     } else {
-      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap].q[iq]
-      , target_ranks[ip_ap]);
-     }
-    } 
-  }
-
-
-  /* Sending... */
-  for (int idest = 0; idest < nneighbours; idest++) {
-    
-    /* Ignore poles... */
-    if (neighbours[idest] < 0)
-      continue;
-     
-    /* Count number of particles in particle array that will be send... */
-    nbs[idest] = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
-      if ( target_ranks[ip] == neighbours[idest] && target_ranks[ip] != rank) 
-        {
-          nbs[idest]++;
-        }
-    }
-    
-    /* Send buffer sizes... */
-    MPI_Request request;
-    MPI_Isend( &nbs[idest], 1, MPI_INT, neighbours[idest], 0, MPI_COMM_WORLD, &request);
-
-    /* Don't send empty signals... */
-    if ( nbs[idest] == 0 )
-      continue;
-    
-    /* Allocate buffer for sending... */
-    ALLOC(send_buffers[idest], particle_quant_t, nbs[idest]);
-   
-    /* Fill the send buffer... */
-    int ibs = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
-      // Only add those elements whithout 'graveyard' 
-      // and with the right neighbours...
-      if ( target_ranks[ip] == neighbours[idest] && target_ranks[ip] != rank ) {
        
-        /* Cast and copy data... */
-        unsigned int* sdgbx_index_ptr = (unsigned int*) particles[ip].q[0];
-        unsigned int sdgbx_index = *sdgbx_index_ptr;     
-        send_buffers[idest][ibs].q[0] = (double) sdgbx_index;
-
-        memcpy(&send_buffers[idest][ibs].q[0], particles[ip].q[0], q_sizes[0]);
-        for (int iq=1; iq < 8 ; iq++) {  
-          memcpy( &send_buffers[idest][ibs].q[iq], particles[ip].q[iq], q_sizes[iq]);
-        }
-  
-      // Mark old place as 'graveyard'...
-      target_ranks[ip] = -1;
-      ibs++;
-      }
-    }
-
-    /* Send the buffer... */
-    MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
-    	      neighbours[idest], 1, MPI_COMM_WORLD, &request);
-    	      
-  }
-
-  /* Wait for all signals to be send... */
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  //printf("After sending MPTRAC says:\n");
-  //if (rank == 0 || rank == 3)
-  //  for (int iq = 0; iq < 8; iq++)
-  //    printf("q[%d] = %f @ rank %d \n", iq, *particles[26].q[iq], rank);
-  
-  /* Recieving... */
-  for (int isourc = 0; isourc < nneighbours; isourc++) {
-  
-  /* Ignore poles... */
-  if (neighbours[isourc]<0)
-    continue;
-
-  /* Recieve buffer sizes... */
-  MPI_Status status;
-  MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
-
-  /* Continue with other neighbours if there is no signal... */
-  if (nbr[isourc]==0)
-    continue;
-
-  /* Allocate buffer for recieving... */
-  ALLOC( recieve_buffers[isourc], particle_quant_t, nbr[isourc]);
-  MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &status);
-    
-  }
-
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
-  
-  /* Putting buffer into particle array... */
-  for (int isourc = 0; isourc < nneighbours; isourc++) {
-    
-    /* Ignore poles... */
-    if (neighbours[isourc]<0)
-      continue;
+      if (lont < 0) 
+        lont += 360;
+ 
+      int size = ctl.dd_subdomains_meridional*ctl.dd_subdomains_zonal;
+      bool left = (rank <= ctl.dd_subdomains_meridional-1);
+      bool right = (rank >= size-ctl.dd_subdomains_meridional);    
       
-    /* Getting particles from buffer... */ 
-    if (nbr[isourc] > 0) {
-      int ipbr = 0;
-      for (int ip = 0; ip < nparticles; ip++) {
-        if (target_ranks[ip] == -1) {
-           
-          //unsigned int sdgbx_index = (unsigned int) recieve_buffers[isourc][ipbr].q[0];
-          memcpy(particles[ip].q[0], &recieve_buffers[isourc][ipbr].q[0], q_sizes[0]);
-          
-          for (int iq=1; iq < 8 ; iq++) {
-            memcpy(particles[ip].q[iq], &recieve_buffers[isourc][ipbr].q[iq], q_sizes[iq]);
-          }
-          
-          ipbr++; 
-        } 
-        if (ipbr == nbr[isourc])
-          break; 
-      } 
-    }  
-  }
-  
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
-
-  printf("After recieving MPTRAC says:\n");
-  if (rank==3) {
-    
-    int ip_ap_rec = 0;
-    for (int ip = 0; ip < nparticles; ip++) {
-    
-       long unsigned int* tmp_ptr = (long unsigned int*) particles[ip].q[7];
-       long unsigned int tmp = *tmp_ptr;
-    
-       if (tmp == 26) {
-         ip_ap_rec = ip;
-         break;
-       }   
-            
-    }
-    
-  unsigned int* sdgbx_index_ptr_tmp = (unsigned int*) particles[ip_ap_rec].q[0];
-  unsigned int sdgbx_index_tmp = *sdgbx_index_ptr_tmp;
-  
-  printf("q[%d]: %u, target_rank: %d\n",0, sdgbx_index_tmp,  target_ranks[ip_ap_rec]);
-  
-  for (int iq=1; iq < 8 ; iq++) {
-     if (iq==4 || iq==7) {
-             long unsigned int* tmp_ptr = (long unsigned int*) particles[ip_ap_rec].q[iq];
-             long unsigned int tmp = *tmp_ptr;
-             printf("q[%d]: %lu, target_rank: %d\n", iq, tmp, target_ranks[ip_ap_rec]);
-     } else {
-      printf("q[%d]: %f, target_rank: %d\n",iq, *particles[ip_ap_rec].q[iq]
-      , target_ranks[ip_ap_rec]);
+      bool bound = 0;
+      if (left)
+        bound = (lont-lon_max > 90) ? 1 : 0;
+      if (right)
+        bound = (lon_min-lont > 90) ? 1 : 0;
+      	
+      if (!bound) {
+        if ((lont >= lon_max) && (latt >= lat_max)) {
+          // Upper right...
+          atm->q[ctl.qnt_destination][ip] = neighbours[5];
+        }
+        else if ((lont >= lon_max) && (latt <= lat_min)) {
+          // Lower right...
+          atm->q[ctl.qnt_destination][ip] = neighbours[4];
+        }
+        else if ((lont <= lon_min) && (latt >= lat_max)) {
+          // Upper left...
+          atm->q[ctl.qnt_destination][ip] = neighbours[2];
+        }
+        else if ((lont <= lon_min) && (latt <= lat_min)) {
+          // Lower left...
+          atm->q[ctl.qnt_destination][ip] = neighbours[1];
+        }
+        else if (lont >= lon_max) {
+          // Right...
+          atm->q[ctl.qnt_destination][ip] = neighbours[3];
+        }
+        else if (lont <= lon_min) {
+          // Left...
+          atm->q[ctl.qnt_destination][ip] = neighbours[0];
+        }
+        else if (latt <= lat_min) {
+          // Down...
+          atm->q[ctl.qnt_destination][ip] = neighbours[7];
+        }
+        else if (latt >= lat_max) {
+          // Up...
+          atm->q[ctl.qnt_destination][ip] = neighbours[6];
+        }
+        else {
+          // Within...
+          atm->q[ctl.qnt_destination][ip] = rank;
+        }
+      } else {
+        if ((lont >= lon_max) && (latt >= lat_max)) {
+          // Upper right...
+          atm->q[ctl.qnt_destination][ip] = neighbours[2];
+        }
+        else if ((lont >= lon_max) && (latt <= lat_min)) {
+          // Lower right...
+          atm->q[ctl.qnt_destination][ip] = neighbours[1];
+        }
+        else if ((lont <= lon_min) && (latt >= lat_max)) {
+          // Upper left...
+          atm->q[ctl.qnt_destination][ip] = neighbours[5];
+        }
+        else if ((lont <= lon_min) && (latt <= lat_min)) {
+          // Lower left...
+          atm->q[ctl.qnt_destination][ip] = neighbours[4];
+        }
+        else if (lont >= lon_max) {
+          // Right...
+          atm->q[ctl.qnt_destination][ip] = neighbours[0];
+        }
+        else if (lont <= lon_min) {
+          // Left...
+          atm->q[ctl.qnt_destination][ip] = neighbours[3];
+        }
+        else if (latt <= lat_min) {
+          // Down...
+          atm->q[ctl.qnt_destination][ip] = neighbours[7];
+        }
+        else if (latt >= lat_max) {
+          // Up...
+          atm->q[ctl.qnt_destination][ip] = neighbours[6];
+        }
+        else {
+          // Within...
+          atm->q[ctl.qnt_destination][ip] = rank;
+        }
      }
+    
+   
     }
+   }
   }
-    
-  /* Free buffers and buffersizes... */
-  for (int i = 0; i < nneighbours; i++) {
-        
-    if ((send_buffers[i] != NULL) && (nbs[i] != 0)) {
-      free(send_buffers[i]);
-      send_buffers[i] = NULL;
-    }
-    
-    if ((recieve_buffers[i] != NULL) && (nbr[i] != 0)) {
-      free(recieve_buffers[i]);
-      recieve_buffers[i] = NULL;
-    }
-  }
-    
-  free(nbs);
-  free(nbr);
   
-}  
-
 

@@ -8825,13 +8825,9 @@ void write_vtk(
 void atm2particles(
   atm_t* atm, 
   particle_t particles[], 
-  ctl_t ctl);
-  
-void atm2particles_sort(
-  atm_t* atm, 
-  particle_t particles[], 
   ctl_t ctl,
-  met_t* met);
+  int* nparticles,
+  cache_t *cache);
 
 /**
  * @brief Converts particle data to atmospheric data.
@@ -8855,10 +8851,13 @@ void atm2particles_sort(
  *
  * @author Jan Clemens
  */
-void particles2atm(
+/*void particles2atm(
   atm_t* atm, 
   particle_t particles[], 
-  ctl_t ctl);
+  ctl_t ctl);*/
+  
+void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles,
+   cache_t* cache);
 
 /**
  * @brief Creates an MPI datatype for particle structures.
@@ -8983,15 +8982,6 @@ void dd_communicate_particles(
   MPI_Datatype MPI_Particle, 
   int* neighbours, 
   int nneighbours, 
-  ctl_t ctl, 
-  double* dt);
-  
-void dd_communicate_particles_sorted(
-  particle_t* particles, 
-  int* nparticles, 
-  MPI_Datatype MPI_Particle, 
-  int* neighbours, 
-  int nneighbours, 
   ctl_t ctl);
   
 /**
@@ -9030,27 +9020,5 @@ void dd_communicate_particles_sorted(
   int* neighbours, 
   int init);
   
-  /**
- * @brief A module to perform the entire rectangular subdomain decomposition.
- */
-void module_dd(  
-  atm_t* atm,
-  particle_t* particles,
-  met_t* met, 
-  ctl_t ctl, 
-  int* neighbours,
-  int rank, 
-  MPI_Datatype MPI_Particle, 
-  double* dt);
-  
-void dd_communicate_particles_cleo(
-  particle_ptr_t* particles, 
-  int nparticles, 
-  MPI_Datatype MPI_Particle, 
-  int* neighbours, 
-  int nneighbours, 
-  int* target_ranks,
-  size_t* q_sizes
-  );
 
 #endif /* LIBTRAC_H */
