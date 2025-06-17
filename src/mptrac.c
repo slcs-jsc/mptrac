@@ -3836,10 +3836,11 @@ void module_sort(
   const int np = atm->np;
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
+  double amax = (met0->nx*met0->ny + met0->ny)*met0->np + met0->np;
 
 #ifdef _OPENACC
-#pragma acc enter data create(a[0:np],p[0:np])
-#pragma acc data present(ctl,met0,atm,a,p)
+#pragma acc enter data create(a[0:np],p[0:np],amax)
+#pragma acc data present(ctl,met0,atm,a,p,amax)
 #endif
 
   /* Get box index... */
@@ -3849,12 +3850,17 @@ void module_sort(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
-    a[ip] =
-      (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
+    if ((int) atm->q[ctl->qnt_subdomain][ip] != -1)
+      a[ip] = 0;
+      /*(double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
 		 locate_irr(met0->lat, met0->ny, atm->lat[ip]))
-		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
+		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));*/
+    else
+      a[ip] = amax+1;
     p[ip] = ip;
   }
+  
+
 
   /* Sorting... */
 #ifdef _OPENACC
@@ -3873,10 +3879,19 @@ void module_sort(
   module_sort_help(atm->lat, p, np);
   for (int iq = 0; iq < ctl->nq; iq++)
     module_sort_help(atm->q[iq], p, np);
+    
+ /* Reset the size... */
+ int npt = 0;
+ #pragma omp parallel for reduction(+:npt)
+ for (int ip = 0; ip < np; ip++)
+   if ((int) atm->q[ctl->qnt_subdomain][ip] != -1)
+     npt++;
+     
+ atm->np = npt;
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete(a,p)
+#pragma acc exit data delete(a,p,amax)
 #endif
   free(a);
   free(p);
@@ -5480,10 +5495,6 @@ void mptrac_run_timestep(
   /* Set time steps of air parcels... */
   module_timesteps(ctl, cache, *met0, atm, t);
 
-  /* Sort particles... */
-  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
-    module_sort(ctl, *met0, atm);
-
   /* Check positions (initial)... */
   module_position(cache, *met0, *met1, atm);
 
@@ -5568,70 +5579,87 @@ void mptrac_run_timestep(
   int rankd = 0;
   MPI_Comm_rank(MPI_COMM_WORLD,&rankd);
 
-  //if ( rankd==0 ) {
-  //  printf("Before communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
-  //}
-
   /* Domain decomposition... */
+  //module_dd()
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1) {
-    //module_dd()
+    
     
     /* Initialize particles locally... */
+    int nparticles = 0;
+    int neighbours[NNMAX];
     particle_t* particles;
     ALLOC(particles, particle_t, NP);
-  
+
     /* Get the MPI information... */
-    int rank;
+    int rank, size;
+    
+#pragma acc enter data create(particles[:NP], nparticles[:1], size[:1], rank[:1], neighbours[:NNMAX])  
+#pragma acc data present(particles, nparticles, size, rank, neighbours)
+    
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    int size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;
-
-    LOG(1, "Starting module_dd with %d particles on rank %d", atm->np, rank);
-        
-    /* Register the MPI_Particle data type... */
-    LOG(1, "Register the MPI_Particle data type.");
-    MPI_Datatype MPI_Particle;
-    dd_register_MPI_type_particle(&MPI_Particle);
-    
-    /* Define grid neighbours ... */
-    LOG(1, "Define grid neighbours.");
-    int neighbours[NNMAX];
-    dd_get_rect_neighbour(*ctl, neighbours, rank, size);
+    size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;
    
+    //LOG(1, "Starting module_dd with %d particles on rank %d", atm->np, rank);
+            
+    /* Define grid neighbours ... */
+    //LOG(1, "Define grid neighbours.");
+    dd_get_rect_neighbour(*ctl, neighbours, rank, size);
+    
+#pragma acc update device(neighbours, rank, size)
+
+    
     /* Assign particles to new subdomains... */
-    LOG(1, "Assign particles to new subdomains.")
+    //LOG(1, "Assign particles to new subdomains.")
     dd_assign_rect_subdomains_atm( atm, *met0, *ctl, rank, neighbours, 0);
     
     /* Transform from struct of array to array of struct... */
-    LOG(1, "Transform from SoA to AoS.")
+    //LOG(1, "Transform from SoA to AoS.")
     //atm2particles(atm, particles, *ctl)
-    int nparticles = 0;
-    atm2particles(atm, particles, *ctl, &nparticles, cache);
+    atm2particles( atm, particles, *ctl, &nparticles, cache);
+    
+#pragma acc update host(nparticles, particles, cache)
     
     /* Perform the communication... */
-    LOG(1, "Peform the communication.")
+    //LOG(1, "Peform the communication.")
     //dd_communicate_particles( particles, &atm->np, MPI_Particle, 
       //neighbours, ctl->dd_nbr_neighbours , *ctl, cache->dt);
+      
+    // Copy particles, nparticles, neighbours from GPUs to CPUs?
     
+    /* Register the MPI_Particle data type... */
+    //LOG(1, "Register the MPI_Particle data type.");
+    MPI_Datatype MPI_Particle;
+    dd_register_MPI_type_particle(&MPI_Particle);
+        
     dd_communicate_particles( particles, &nparticles, MPI_Particle, 
       neighbours, ctl->dd_nbr_neighbours , *ctl);
       
+#pragma acc update device(nparticles, particles, cache)
+      
+    // Copy particles, nparticles from CPUs to GPUs?
+      
     /* Transform from array of struct to struct of array... */
-    LOG(1, "Transform from AoS to SoA.")
+    //LOG(1, "Transform from AoS to SoA.")
     particles2atm(atm, particles, *ctl, &nparticles, cache); 
     
-    LOG(1, "Free MPI datatype and particles.")
+    //LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
     MPI_Type_free(&MPI_Particle);
+
+#ifdef _OPENACC
+  #pragma acc exit data delete(particles, nparticles, size, rank, neighbours)
+#endif
     
     /* Free local particle array... */
     free(particles);
+    
   }  
 
-  //if ( rankd==0 ) {
-  //  printf("After communicator: %f,%f,%f,%f \n",atm->lon[0], atm->lat[0], atm->p[0],atm->q[ctl->qnt_zeta][0]);
-  //}
-    
+  /* Sort particles... */
+  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
+    module_sort(ctl, *met0, atm);
+   
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
 #ifdef KPP
@@ -12143,28 +12171,32 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
   /* Get MPI rank... */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-
+ 
+#pragma acc kernels present(atm, rank, particles, nparticles, cache)
+{
   int ibfr = 0;
-  for (int ip = 0; ip < atm->np; ip++) 
-    if (((int) (atm->q[ctl.qnt_destination][ip]) != rank)
-    && ((int) (atm->q[ctl.qnt_destination][ip]) >= 0) 
-    && ((int) atm->q[ctl.qnt_subdomain][ip] >= 0)) {
+  for (int ip = 0; ip < atm->np; ip++)
+    if (((int)(atm->q[ctl.qnt_destination][ip]) != rank)
+        && ((int)(atm->q[ctl.qnt_destination][ip]) >= 0)
+        && ((int)atm->q[ctl.qnt_subdomain][ip] >= 0)) {
 
-    particles[ibfr].time = atm->time[ip];
-    particles[ibfr].lon = atm->lon[ip];
-    particles[ibfr].lat = atm->lat[ip];
-    particles[ibfr].p = atm->p[ip];
+        particles[ibfr].time = atm->time[ip];
+        particles[ibfr].lon = atm->lon[ip];
+        particles[ibfr].lat = atm->lat[ip];
+        particles[ibfr].p = atm->p[ip];
 
-    for (int iq = 0; iq < ctl.nq; iq++) 
-      particles[ibfr].q[iq] = atm->q[iq][ip];
-      
-    atm->q[ctl.qnt_subdomain][ip] = -1;
-    cache->dt[ip] = 0;
+        for (int iq = 0; iq < ctl.nq; iq++)
+            particles[ibfr].q[iq] = atm->q[iq][ip];
 
-    ibfr++;
-    }
+        atm->q[ctl.qnt_subdomain][ip] = -1;
+        cache->dt[ip] = 0;
+        
+        ibfr++;
+  }
  
   *nparticles = ibfr;
+}
+
 }
 
 /*****************************************************************************/
@@ -12172,8 +12204,10 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
 void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles,
   cache_t* cache) {
 
-  SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_READ);
-  
+  SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_GPU);
+
+  #pragma acc kernels present(atm, particles, ctl, nparticles, cache)
+  {
   int ipp = 0;
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
   
@@ -12191,6 +12225,7 @@ void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
   }
   
   atm->np += *nparticles;
+  }
   
 }
 
@@ -12214,7 +12249,7 @@ void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 /*****************************************************************************/
 void dd_get_rect_neighbour(const ctl_t ctl, int* neighbours, int rank, int size) {
 
-      SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_READ);
+      SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
     
       if ( rank + 1 == size) {
 
@@ -12335,9 +12370,9 @@ void dd_get_rect_neighbour(const ctl_t ctl, int* neighbours, int rank, int size)
     
     }
 
-    LOG(2, "Rank %d neighbours: %d, %d, %d, %d, %d, %d, %d, %d", rank, neighbours[0],
+    /*LOG(2, "Rank %d neighbours: %d, %d, %d, %d, %d, %d, %d, %d", rank, neighbours[0],
       neighbours[1], neighbours[2], neighbours[3], neighbours[4],
-      neighbours[5], neighbours[6], neighbours[7]);
+      neighbours[5], neighbours[6], neighbours[7]);*/
     
   }
   
@@ -12371,7 +12406,7 @@ void dd_communicate_particles(
     if (neighbours[idest] < 0)
       continue;
             
-    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_READ);
+    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_GPU);
     /* Count number of particles in particle array that will be send... */
     int help_sum = 0;
     if (*nparticles > 0)
@@ -12380,7 +12415,7 @@ void dd_communicate_particles(
           help_sum++;
     nbs[idest] = help_sum;
         
-    SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_READ);
+    SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_GPU);
     /* Send buffer sizes... */
     MPI_Request request;
     MPI_Isend( &nbs[idest], 1, MPI_INT, neighbours[idest], 0, MPI_COMM_WORLD, &request);
@@ -12389,7 +12424,7 @@ void dd_communicate_particles(
     if ( nbs[idest] == 0 )
       continue;
 
-    SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_READ);
+    SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_GPU);
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
    
@@ -12407,7 +12442,7 @@ void dd_communicate_particles(
 
     }
 
-    SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_READ);
+    SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_GPU);
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
     	      neighbours[idest], 1, MPI_COMM_WORLD, &request);
@@ -12415,7 +12450,7 @@ void dd_communicate_particles(
   
   /* Wait for all signals to be send... */
   MPI_Barrier(MPI_COMM_WORLD);
-  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_READ);
+  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_GPU);
 
   /* Recieving... */
   LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
@@ -12434,7 +12469,7 @@ void dd_communicate_particles(
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
   
-  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_READ);
+  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_GPU);
   for (int isourc = 0; isourc < nneighbours; isourc++) {
   
     /* Ignore poles... */
@@ -12454,7 +12489,7 @@ void dd_communicate_particles(
 
   /* Wait for all signals to be recieved... */
   MPI_Barrier(MPI_COMM_WORLD);
-  SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_READ);
+  SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_GPU);
 
   /* Start position for different buffer ranges... */
   int api = 0;
@@ -12484,7 +12519,7 @@ void dd_communicate_particles(
   for (int isourc = 0; isourc < nneighbours; isourc++)
     LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank, neighbours[isourc], nbs[isourc], nbr[isourc]);
   
-  SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_READ);
+  SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_GPU);
   LOG(1, "Free all the buffer.")
   /* Free buffers and buffersizes... */
   for (int i = 0; i < nneighbours; i++) {
@@ -12510,15 +12545,18 @@ void dd_communicate_particles(
 void dd_assign_rect_subdomains_atm(
   atm_t* atm,
   met_t* met, 
-  ctl_t ctl, 
+  ctl_t ctl,
   int rank, 
   int* neighbours, 
   int init) {
 
-    SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_READ);
+    SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
     
     if (init) {
-      for (int ip = 0; ip < atm->np; ip++) {
+    
+      #pragma acc data present(ctl, atm, rank)
+      #pragma acc parallel loop independent gang vector 
+      for (int ip=0; ip<atm->np; ip++) {
 
         double lont = atm->lon[ip];
       
@@ -12540,7 +12578,9 @@ void dd_assign_rect_subdomains_atm(
     else {
     
      /* Classify air parcels into subdomain... */
-    for (int ip = 0; ip < atm->np; ip++) {
+    #pragma acc data present(ctl,atm,met,rank)
+    #pragma acc parallel loop independent gang vector 
+    for (int ip=0; ip<atm->np; ip++) {
     
       /* Skip empty places in the particle array... */
       if ((int) atm->q[ctl.qnt_subdomain][ip] == -1)
