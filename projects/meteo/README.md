@@ -1,8 +1,28 @@
 # Meteorological Data Retrieval Scripts
 
-This directory contains a set of scripts for retrieving meteorological data (ERA5, GFS, MERRA-2, and NCEP) from different data centers and converting them for use with MPTRAC. Each script is designed to retrieve data from a specific center and perform necessary conversions.
+This directory contains a set of scripts for retrieving meteorological data (ECMWF, ERA5, GFS, MERRA-2, and NCEP) from different data centers and converting them for use with MPTRAC. Each script is designed to retrieve data from a specific center and perform necessary conversions.
 
 ## Scripts Overview
+
+### `get_ecmwf.sh`
+
+- **Description**: Downloads [ECMWF high-resolution forecast data (IFS or AIFS)](https://www.ecmwf.int/en/forecasts/datasets/) from the [ECMWF Open Data](https://www.ecmwf.int/en/forecasts/datasets/open-data) archive hosted on Amazon AWS, and converts them for MPTRAC.
+
+- **Usage**:
+  ```bash
+  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs>
+  ```
+  - `year`, `month`, `day: Date of the forecast. Set to `today` to retrieve the most recent forecast.
+  - `dir`: Directory where output NetCDF files are stored.
+  - `ifs`|`aifs`: Choose between the deterministic forecast (IFS) or the AI forecast (AIFS).
+
+- **Features**:
+  - Downloads 00 UTC forecasts at 0.25° resolution.
+  - Supports 3-hourly steps up to 144 h, then 6-hourly to 360 h.
+  - Converts GRIB2 files to NetCDF using the Climate Data Operators (CDO).
+
+- **Requirements**:
+  - CDO (Climate Data Operators)
 
 ### `get_era5.sh`
 

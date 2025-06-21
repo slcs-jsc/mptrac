@@ -3,25 +3,32 @@
 # Check arguments...
 if [ $# -ne 6 ] ; then
     cat <<EOF
-ERA5 data download
+ERA5 Reanalysis Data Download
 
-usage: $0 <year> <month> <day> <dir> <res> <dt>
+Usage:
+  $0 <year> <month> <day> <dir> <res> <dt>
 
-This script retrieves ECMWF's ERA5 reanalysis data
-(https://www.ecmwf.int/en/forecasts/dataset/ecmwf-reanalysis-v5/) and
-converts them for use with MPTRAC. The data are retrieved from the
-Climate Data Store (https://cds.climate.copernicus.eu/).
+Description:
+  This script retrieves ECMWF's ERA5 reanalysis data
+  (https://www.ecmwf.int/en/forecasts/dataset/ecmwf-reanalysis-v5/)
+  and converts it for use with MPTRAC. The data are accessed through
+  the Climate Data Store (CDS): https://cds.climate.copernicus.eu/
 
-This script retrieves the data for a given day (<year>, <month>,
-<day>) and places the converted data files in the archive directory
-(<dir>). The data are retrieved on 137 model levels and a regular
-longitude-latitude grid with grid box size <res> (in degrees). Also
-specify the timestep <dt> (in hours) of the retrieved data.
+  The script retrieves data for the specified date (<year>, <month>, <day>)
+  and stores the converted NetCDF files in the output directory (<dir>).
 
-You will need Python and the CDS API to access and retrieve data from
-the CDS (https://cds.climate.copernicus.eu/api-how-to). The Climate
-Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo) are used
-to convert the netCDF files for MPTRAC.
+  Data are provided on 137 model levels and a regular
+  latitude-longitude grid with horizontal resolution <res> (in degrees).
+  The temporal resolution is specified via <dt> (in hours).
+
+Requirements:
+  - Python and the CDS API (https://cds.climate.copernicus.eu/api-how-to)
+    must be installed and configured to retrieve data from the CDS.
+  - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
+    are required to convert GRIB files to NetCDF format for MPTRAC.
+
+License:
+  ERA5 data are distributed under the Copernicus open data license.
 EOF
     exit
 fi

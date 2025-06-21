@@ -4,26 +4,31 @@ set -euo pipefail
 # Check arguments...
 if [ $# -ne 5 ] ; then
     cat <<EOF
-ECMWF forecast data download
+ECMWF Forecast Data Download
 
-usage: $0 <year> <month> <day> <dir> <ifs|aifs>
+Usage:
+  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs>
 
-This script retrieves ECMWF's IFS or AIFS forecast data
-(https://www.ecmwf.int/en/forecasts/dataset/) and converts them for
-use with MPTRAC. The data are retrieved from Amazon AWS.
+Description:
+  This script retrieves ECMWF IFS or AIFS forecast data
+  (https://www.ecmwf.int/en/forecasts/dataset/) and converts it for
+  use with MPTRAC. The data are downloaded from Amazon AWS.
 
-This script retrieves the forecast for 00z for a given day (<year>,
-<month>, <day>) and places the converted data files in the archive
-directory (<dir>). You can set <year>, <mon>, <day> to "today"
-to retrieve the most recent dara.
+  The script retrieves the forecast for 00Z on the specified date
+  (<year>, <month>, <day>) and stores the converted data files in the
+  output directory (<dir>). You can set <year>, <month>, and <day> to
+  "today" to retrieve the most recent available data.
 
-The data are retrieved on 13 pressure levels and a
-regular longitude-latitude grid with grid box size of 0.25 degrees.
-The time step is 3 hourly until 144 h and 6 hourly until 360 h.
+  The forecast data include 13 pressure levels on a regular
+  longitude-latitude grid with a spatial resolution of 0.25 degrees.
+  Time steps are 3-hourly up to 144 hours and 6-hourly up to 360 hours.
 
-The ECMWF open data are provided under the CC BY-4 license. The
-Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
-are used to convert the netCDF files for MPTRAC.
+License:
+  The ECMWF open data are provided under the Creative Commons BY 4.0 license.
+
+Requirements:
+  The Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
+  are used to convert GRIB2 files to NetCDF format for use with MPTRAC.
 EOF
     exit
 fi

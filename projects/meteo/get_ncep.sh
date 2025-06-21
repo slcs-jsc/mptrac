@@ -3,21 +3,29 @@
 # Check arguments...
 if [ $# -ne 2 ] ; then
     cat <<EOF
-NCEP-NCAR Reanalysis 1 data download
+NCEP–NCAR Reanalysis 1 Data Download
 
-usage: $0 <year> <dir>
+Usage:
+  $0 <year> <dir>
 
-This script retrieves 6-hourly NCEP-NCAR Reanalysis 1 data
-(https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.html) and
-converts them for use with MPTRAC.
+Description:
+  This script downloads 6-hourly reanalysis data from the NCEP–NCAR
+  Reanalysis 1 project and converts them for use with MPTRAC.
 
-This script retrieves the data for a given year (<year>) and
-places the converted data files in the archive directory (<dir>).
+  The data are retrieved for the specified year (<year>) and saved in
+  the specified output directory (<dir>).
 
-You will need wget (https://www.gnu.org/software/wget) to retrieve the
-data, and the Climate Data Operators (CDO,
-https://code.mpimet.mpg.de/projects/cdo) and netCDF Operators (NCO,
-https://nco.sourceforge.net) to convert the netCDF files for MPTRAC.
+  Data source: NOAA PSL
+  https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.html
+
+Requirements:
+  - `wget` (https://www.gnu.org/software/wget) for data retrieval
+  - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
+    for data processing
+  - NetCDF Operators (NCO, https://nco.sourceforge.net) for format conversion
+
+License:
+  The NCEP–NCAR Reanalysis 1 data are provided by NOAA and are in the public domain.
 EOF
     exit
 fi

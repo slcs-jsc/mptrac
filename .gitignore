@@ -16,6 +16,7 @@ projects/example/plots/
 !projects/fortran_wrapper/
 projects/kpp/
 !projects/meteo/
+projects/meteo/ecmwf/
 projects/meteo/era5/
 projects/meteo/gfs/
 projects/meteo/merra2/
