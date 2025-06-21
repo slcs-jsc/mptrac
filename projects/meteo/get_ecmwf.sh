@@ -7,7 +7,7 @@ if [ $# -ne 5 ] ; then
 ECMWF Forecast Data Download
 
 Usage:
-  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs>
+  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs-single>
 
 Description:
   This script retrieves ECMWF IFS or AIFS forecast data
@@ -41,6 +41,16 @@ day=$(echo "$3" | awk '{printf("%02d", $1)}')
 dir=$4
 model=$5
 
+# Set step sequence...
+if [ "$model" = "ifs" ]; then
+    step_seq="$(seq 0 3 144) $(seq 150 6 360)"
+elif [ "$model" = "aifs-single" ]; then
+    step_seq=$(seq 0 6 360)
+else
+    echo "Cannot select model $model!"
+    exit
+fi
+
 # Determine date...
 date=${year}${mon}${day}
 hour="00"
@@ -56,7 +66,7 @@ outdir="${dir}/${model}/${date}/${hour}z"
 rm -rf tmp && mkdir -p tmp "$outdir" || exit
 
 # Loop over forecast steps...
-for step in $(seq 0 3 144) $(seq 150 6 360) ; do
+for step in $step_seq ; do
     
     # Write info...
     echo "Downloading HRES forecast: ${date}${hour}Z + ${step}h"

@@ -10,15 +10,15 @@ This directory contains a set of scripts for retrieving meteorological data (ECM
 
 - **Usage**:
   ```bash
-  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs>
+  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs-single>
   ```
   - `year`, `month`, `day: Date of the forecast. Set to `today` to retrieve the most recent forecast.
   - `dir`: Directory where output NetCDF files are stored.
-  - `ifs`|`aifs`: Choose between the deterministic forecast (IFS) or the AI forecast (AIFS).
+  - `ifs`|`aifs-single`: Choose between the deterministic forecast (IFS) or the AI forecast (AIFS).
 
 - **Features**:
   - Downloads 00 UTC forecasts at 0.25° resolution.
-  - Supports 3-hourly steps up to 144 h, then 6-hourly to 360 h.
+  - IFS Supports 3-hourly steps up to 144 h, then 6-hourly to 360 h. AIFS supports 6-hourly steps.
   - Converts GRIB2 files to NetCDF using the Climate Data Operators (CDO).
 
 - **Requirements**:
