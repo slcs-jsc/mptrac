@@ -9,14 +9,38 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
 # === Config ===
-ATM_INIT_CMD = os.getenv('ATM_INIT_CMD', '../../src/atm_init')
-TRAC_CMD = os.getenv('TRAC_CMD', '../../src/trac')
-METBASE = os.getenv('METBASE', '../../tests/data/ei')
+ATM_INIT_CMD = '../../src/atm_init'
+TRAC_CMD = '../../src/trac'
 RUNS_DIR, ZIPS_DIR = 'runs/working', 'runs/zips'
 os.makedirs(RUNS_DIR, exist_ok=True)
 os.makedirs(ZIPS_DIR, exist_ok=True)
 process_semaphore = threading.Semaphore(3)
 app = Flask(__name__)
+
+# === Meteo options ===
+METBASE = os.getenv('METBASE', '../../tests/data/ei')
+MET_OPTIONS = {
+    'erai_6h': {
+        'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
+        'DT_MET': 21600.0,
+        'MET_PRESS_LEVEL_DEF': -1
+    },
+    'merra2_3h': {
+        'METBASE': '/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
+        'DT_MET': 10800.0,
+        'MET_PRESS_LEVEL_DEF': 6
+    },
+    'merra2_6h': {
+        'METBASE': '/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra',
+        'DT_MET': 21600.0,
+        'MET_PRESS_LEVEL_DEF': 6
+    },
+    'ncep_6h': {
+        'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
+        'DT_MET': 21600.0,
+        'MET_PRESS_LEVEL_DEF': -1
+    }
+}
 
 def delayed_cleanup(path, delay=600):
     threading.Thread(target=lambda: (time.sleep(delay), shutil.rmtree(path, ignore_errors=True)), daemon=True).start()
@@ -72,6 +96,10 @@ def run():
     try:
         f = request.form
         to_f = lambda x: float(f[x])
+        met_source = f.get('met_source', 'erai_6h')
+        METBASE = MET_OPTIONS[met_source]['METBASE']
+        DT_MET = MET_OPTIONS[met_source]['DT_MET']
+        MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         z0, z1, dz = to_f('z0'), to_f('z1'), to_f('dz')
         lat0, lat1, dlat = to_f('lat0'), to_f('lat1'), to_f('dlat')
@@ -134,7 +162,8 @@ def run():
     DIRECTION = {direction}
     T_STOP = {stop_time}
     METBASE = {METBASE}
-    DT_MET = 86400.0
+    DT_MET = {DT_MET}
+    MET_PRESS_LEVEL_DEF = {MET_PRESS_LEVEL_DEF}
     DIFFUSION = 1
     """ + '\n'.join(f"{k.upper()} = {v}" for k, v in turb.items()) + f"""
     ATM_BASENAME = {atm_file}

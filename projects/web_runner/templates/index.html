@@ -42,18 +42,37 @@
     <!-- Form -->
     <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16" style="width: 80%; margin: 0 auto;">
       
-      <!-- Time Settings -->
+      <!-- Meteo Data Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('meteo-settings')">
+	<i class="fa fa-caret-down"></i> Meteorological Data Settings
+      </button>
+      <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Select the meteorological dataset (time step included).</p>
+	<div class="w3-row-padding">
+	  <div class="w3-full" style="padding: 16px;">
+	    <label for="met_source">Meteo Dataset</label>
+	    <select class="w3-select w3-dark-gray w3-round" name="met_source" required>
+              <option value="erai_6h" selected>ERA-Interim (6-hourly)</option>
+              <option value="merra2_3h">MERRA-2 (3-hourly)</option>
+              <option value="merra2_6h">MERRA-2 (6-hourly)</option>
+	      <option value="ncep_6h">NCEP-NCAR Reanalysis 1 (6-hourly)</option>
+	    </select>
+	  </div>
+	</div>
+      </div>
+      
+      <!-- Simulation Time Settings -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('time-settings')">
-	<i class="fa fa-caret-down"></i> Time Settings
+	<i class="fa fa-caret-down"></i> Simulation Time Settings
       </button>
       <div id="time-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM:SS</code>. Trajectories can be calculated forward or backward in time, swap the start and stop times accordingly. The total duration must not exceed 30 days.</p>
 	<div class="w3-row-padding">
-	  <div class="w3-third" style="padding: 16px;">
+	  <div class="w3-half" style="padding: 16px;">
             <label>Start Time</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" placeholder="YYYY-MM-DD HH:MM:SS" required>
 	  </div>
-	  <div class="w3-third" style="padding: 16px;">
+	  <div class="w3-half" style="padding: 16px;">
             <label>Stop Time</label>
             <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" placeholder="YYYY-MM-DD HH:MM:SS" required>
 	  </div>
