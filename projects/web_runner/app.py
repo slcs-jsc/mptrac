@@ -36,7 +36,7 @@ MET_OPTIONS = {
         'MET_PRESS_LEVEL_DEF': 6
     },
     'merra2_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra',
+        'METBASE': '/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
         'DT_MET': 21600.0,
         'MET_PRESS_LEVEL_DEF': 6
     },
@@ -46,7 +46,7 @@ MET_OPTIONS = {
         'MET_PRESS_LEVEL_DEF': -1
     },
     'ncep2_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/2000/ncep2',
+        'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
         'DT_MET': 21600.0,
         'MET_PRESS_LEVEL_DEF': -1
     }
@@ -184,7 +184,7 @@ def run():
     if met_source in ['era5low_6h']:
         ctl_template += "MET_CLAMS = 1\nMET_VERT_COORD = 1\n"
     if met_source in ['merra2_3h', 'merra2_6h']:
-        ctl_template += "MET_NC_SCALE = 0\n"
+        ctl_template += "MET_NC_SCALE = 0\nMET_VERT_COORD = 1\n"
     if met_source in ['ncep2_6h']:
         ctl_template += "MET_RELHUM = 1\n"
     
