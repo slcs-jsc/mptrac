@@ -20,6 +20,11 @@ app = Flask(__name__)
 # === Meteo options ===
 METBASE = os.getenv('METBASE', '../../tests/data/ei')
 MET_OPTIONS = {
+    'era5low_6h': {
+        'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
+        'DT_MET': 21600.0,
+        'MET_PRESS_LEVEL_DEF': 6
+    },
     'erai_6h': {
         'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
         'DT_MET': 21600.0,
@@ -37,6 +42,11 @@ MET_OPTIONS = {
     },
     'ncep_6h': {
         'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
+        'DT_MET': 21600.0,
+        'MET_PRESS_LEVEL_DEF': -1
+    },
+    'ncep2_6h': {
+        'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/2000/ncep2',
         'DT_MET': 21600.0,
         'MET_PRESS_LEVEL_DEF': -1
     }
@@ -169,7 +179,15 @@ def run():
     ATM_BASENAME = {atm_file}
     ATM_DT_OUT = {atm_dt_out}
     """)
-
+    
+    # Meteo specific parameters...
+    if met_source in ['era5low_6h']:
+        ctl_template += "MET_CLAMS = 1\nMET_VERT_COORD = 1\n"
+    if met_source in ['merra2_3h', 'merra2_6h']:
+        ctl_template += "MET_NC_SCALE = 0\n"
+    if met_source in ['ncep2_6h']:
+        ctl_template += "MET_RELHUM = 1\n"
+    
     with open(ctl_file, 'w') as f: f.write(ctl_template)
 
     atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120)

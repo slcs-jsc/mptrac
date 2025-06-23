@@ -7,7 +7,7 @@
   </head>
   
   <body style="font-family:monospace; background:#111; color:#ccc; padding:20px;">
-
+    
     <!-- Header -->
     <div class="w3-container w3-padding-24" style="background: linear-gradient(90deg, #001530, #003366); color: white;">
       <div class="w3-row w3-center w3-padding-16 w3-content" style="max-width:1200px; margin:auto; display: flex; align-items: center; justify-content: center;">  
@@ -20,7 +20,7 @@
 	</div>
       </div>
     </div>
-
+    
     <!-- Intro -->
     <div class="w3-container w3-padding-16 w3-center" style="background-color: #1a1a1a; color: white; transition: all 0.3s ease; margin-top: 10px;">
       <div class="w3-row w3-content" style="max-width:1200px; margin:auto;">
@@ -34,7 +34,7 @@
 	</div>
       </div>
     </div>
-
+    
     <br>
     
     <h2 class="w3-center">Simulation Parameters</h2>
@@ -52,10 +52,12 @@
 	  <div class="w3-full" style="padding: 16px;">
 	    <label for="met_source">Meteo Dataset</label>
 	    <select class="w3-select w3-dark-gray w3-round" name="met_source" required>
-              <option value="erai_6h" selected>ERA-Interim (6-hourly)</option>
-              <option value="merra2_3h">MERRA-2 (3-hourly)</option>
-              <option value="merra2_6h">MERRA-2 (6-hourly)</option>
+	      <option value="era5low_6h">ERA5 low resolution (6-hourly)</option>
+	      <option value="erai_6h" selected>ERA-Interim (6-hourly)</option>
+	      <option value="merra2_3h">MERRA-2 (3-hourly)</option>
+	      <option value="merra2_6h">MERRA-2 (6-hourly)</option>
 	      <option value="ncep_6h">NCEP-NCAR Reanalysis 1 (6-hourly)</option>
+	      <option value="ncep2_6h">NCEP-DOE Reanalysis 2 (6-hourly)</option>
 	    </select>
 	  </div>
 	</div>
@@ -230,7 +232,7 @@
 	  </div>
 	</div>
       </div>
-
+      
       <br>
       
       <!-- Buttons -->
@@ -269,10 +271,10 @@
     </div>
     <script>
       function showProgressModal() {
-        document.getElementById('progressModal').style.display = 'block';
+          document.getElementById('progressModal').style.display = 'block';
       }
     </script>
-
+    
     <!-- Footer -->
     <footer class="w3-container w3-center w3-padding-32" style="background-color:#001f4d; color:white; margin-top:40px;">
       <p style="margin: 0;">
