@@ -9,9 +9,9 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
 # === Config ===
-ATM_INIT_CMD = os.getenv('ATM_INIT_CMD', '/home/lars/wrk/mptrac/src/atm_init')
-TRAC_CMD = os.getenv('TRAC_CMD', '/home/lars/wrk/mptrac/src/trac')
-METBASE = os.getenv('METBASE', '/home/lars/wrk/mptrac/tests/data/ei')
+ATM_INIT_CMD = os.getenv('ATM_INIT_CMD', '../../src/atm_init')
+TRAC_CMD = os.getenv('TRAC_CMD', '../../src/trac')
+METBASE = os.getenv('METBASE', '../../tests/data/ei')
 RUNS_DIR, ZIPS_DIR = 'runs/working', 'runs/zips'
 os.makedirs(RUNS_DIR, exist_ok=True)
 os.makedirs(ZIPS_DIR, exist_ok=True)
@@ -175,4 +175,4 @@ def terms():
     return render_template('terms.html')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host="0.0.0.0", port=7000, debug=True)
