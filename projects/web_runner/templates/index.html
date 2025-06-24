@@ -47,7 +47,7 @@
 	<i class="fa fa-caret-down"></i> Meteorological Data Settings
       </button>
       <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Select the meteorological dataset (time step included).</p>
+	<p>Select the meteorological dataset and synoptic time step.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
 	    <label for="met_source">Meteo Dataset</label>
@@ -224,11 +224,42 @@
 	<i class="fa fa-caret-down"></i> Output Settings
       </button>
       <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Set the output interval for data collection in seconds. This determines how frequently simulation results are recorded.</p>
+	<p>Select the output interval to determine how frequently simulation results are recorded.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Output Interval [s]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="atm_dt_out" value="86400.0">
+	    <label>Output Interval</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="900"> 15 min</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="1800"> 30 min</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="3600"> 1 h</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="10800"> 3 h</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="21600" checked> 6 h</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="43200"> 12 h</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="86400"> 24 h</label>
+	  </div>
+	</div>
+	<hr style="border-color: #444;">
+	<p>Select parameters for quick look plot.</p>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Region</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="plot_region" value="global" checked> Global</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="plot_region" value="regional"> Regional</label>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Projection</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="map_projection" value="cartesian" checked> Cartesian</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="map_projection" value="orthographic"> Orthographic</label><br>
+	    <label class="w3-small"><input class="w3-radio" type="radio" name="map_projection" value="robinson"> Robinson</label>
+	  </div>
+	</div>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Central Longitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lon" value="0.0" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Central Latitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lat" value="0.0" required>
 	  </div>
 	</div>
       </div>

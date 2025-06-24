@@ -69,12 +69,23 @@ def seconds_since_2000(time_str):
     dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
-def create_plot(lons, lats, heights):
+def create_plot(lons, lats, heights, projection='cartesian', region='global', central_lon=0.0, central_lat=0.0):
+    import matplotlib.pyplot as plt
+    import cartopy.crs as ccrs
+    import cartopy.feature as cfeature
+    import io, base64
+    if projection == 'cartesian':
+        proj = ccrs.PlateCarree()
+    elif projection == 'orthographic':
+        proj = ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat)
+    elif projection == 'robinson':
+        proj = ccrs.Robinson(central_longitude=central_lon)
     fig = plt.figure(figsize=(15, 12))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    #ax = plt.axes(projection=ccrs.Robinson())
-    ax.set_global()
+    ax = plt.axes(projection=proj)
+    if region == 'global':
+        ax.set_global()
     ax.coastlines(color='gray', resolution='10m')
+    ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='gray')
     sc = ax.scatter(
         lons, lats, c=heights,
         cmap='tab20c', s=10, edgecolors='none',
@@ -125,6 +136,10 @@ def run():
         slon, slat, sz = to_f('slon'), to_f('slat'), to_f('sz')
         turb = {k: to_f(k) for k in ['turb_dx_pbl','turb_dx_trop','turb_dx_strat','turb_dz_pbl','turb_dz_trop','turb_dz_strat','turb_mesox','turb_mesoz']}
         atm_dt_out = to_f('atm_dt_out') if 'atm_dt_out' in f else 3600
+        plot_region = f.get('plot_region', 'global')
+        map_projection = f.get('map_projection', 'cartesian')
+        central_lon = to_f('central_lon') if 'central_lon' in f else 0.0
+        central_lat = to_f('central_lat') if 'central_lat' in f else 0.0
 
         if abs(start_time - stop_time) > 30*86400: return validation_error("Duration exceeds 30 days.")
         if not (-100 <= z0 <= 100 and -100 <= z1 <= 100): return validation_error("Height range invalid.")
@@ -231,9 +246,15 @@ def run():
             data = data[np.newaxis, :] if data.ndim == 1 else data
             lons.extend(data[:, 2])
             lats.extend(data[:, 3])
-            heights.extend(data[:, 1])
-
-        plot_url = create_plot(np.array(lons), np.array(lats), np.array(heights))
+            heights.extend(data[:, 1])        
+        plot_url = create_plot(
+            np.array(lons), np.array(lats), np.array(heights),
+            projection=map_projection,
+            region=plot_region,
+            central_lon=central_lon,
+            central_lat=central_lat
+        )
+        
         delayed_cleanup(work_dir)
         return render_template('result.html', run_id=run_id, stdout=combined_output, plot_url=plot_url)
     
