@@ -18,7 +18,6 @@ process_semaphore = threading.Semaphore(3)
 app = Flask(__name__)
 
 # === Meteo options ===
-METBASE = os.getenv('METBASE', '../../tests/data/ei')
 MET_OPTIONS = {
     'era5low_6h': {
         'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
@@ -72,22 +71,27 @@ def seconds_since_2000(time_str):
 
 def create_plot(lons, lats, heights):
     fig = plt.figure(figsize=(15, 12))
-    ax = plt.axes(projection=ccrs.PlateCarree())
-    ax.set_global()
-    sc = ax.scatter(lons, lats, c=heights, cmap='viridis', s=10, edgecolors='none', transform=ccrs.PlateCarree())
-    ax.coastlines(color='white')
+    #ax = plt.axes(projection=ccrs.PlateCarree())
+    ax = plt.axes(projection=ccrs.Robinson())
+    #ax.set_global()
+    ax.coastlines(color='gray', resolution='10m')
+    sc = ax.scatter(
+        lons, lats, c=heights,
+        cmap='tab20c', s=10, edgecolors='none',
+        transform=ccrs.PlateCarree()
+    )
     gl = ax.gridlines(draw_labels=True, color='gray', linestyle='--', alpha=0.5)
-    gl.xlabel_style = gl.ylabel_style = {'color': 'white'}
-    ax.set_facecolor('#222')
-    fig.patch.set_facecolor('#111')
+    gl.xlabel_style = gl.ylabel_style = {'color': 'black'}
+    ax.set_facecolor('white')
+    fig.patch.set_facecolor('white')
     cbar = plt.colorbar(sc, orientation='horizontal', pad=0.05, aspect=50)
-    cbar.set_label('Height (km)', color='white')
-    cbar.ax.xaxis.set_tick_params(color='white')
-    plt.setp(cbar.ax.get_xticklabels(), color='white')
-    ax.tick_params(axis='both', colors='white')
-    ax.set_title('MPTRAC | Air Parcel Trajectories', fontsize=16, color='white')
+    cbar.set_label('Log-pressure height [km]', color='black')
+    cbar.ax.xaxis.set_tick_params(color='black')
+    plt.setp(cbar.ax.get_xticklabels(), color='black')
+    ax.tick_params(axis='both', colors='black')
+    ax.set_title('MPTRAC | Air Parcel Trajectories', fontsize=16, color='black')
     buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight')
+    plt.savefig(buf, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close()
     return base64.b64encode(buf.getvalue()).decode()
 
@@ -109,6 +113,8 @@ def run():
         met_source = f.get('met_source', 'erai_6h')
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
+        #METBASE = '../../tests/data/ei'
+        #DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         z0, z1, dz = to_f('z0'), to_f('z1'), to_f('dz')
@@ -148,6 +154,23 @@ def run():
     with open(dirlist_file, 'w') as f: f.write("./\n")
 
     ctl_template = textwrap.dedent(f"""\
+    # Variables...
+    NQ = 14
+    QNT_NAME[0] = zg
+    QNT_NAME[1] = p
+    QNT_NAME[2] = t
+    QNT_NAME[3] = theta
+    QNT_NAME[4] = u
+    QNT_NAME[5] = v
+    QNT_NAME[6] = w
+    QNT_NAME[7] = pv
+    QNT_NAME[8] = h2o
+    QNT_NAME[9] = o3
+    QNT_NAME[10] = cc
+    QNT_NAME[11] = ps
+    QNT_NAME[12] = pbl
+    QNT_NAME[13] = pt
+    
     # atm_init...
     INIT_T0 = {start_time}
     INIT_T1 = {start_time}
