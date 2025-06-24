@@ -71,9 +71,9 @@ def seconds_since_2000(time_str):
 
 def create_plot(lons, lats, heights):
     fig = plt.figure(figsize=(15, 12))
-    #ax = plt.axes(projection=ccrs.PlateCarree())
-    ax = plt.axes(projection=ccrs.Robinson())
-    #ax.set_global()
+    ax = plt.axes(projection=ccrs.PlateCarree())
+    #ax = plt.axes(projection=ccrs.Robinson())
+    ax.set_global()
     ax.coastlines(color='gray', resolution='10m')
     sc = ax.scatter(
         lons, lats, c=heights,
