@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 
-# === Config ===
+# Config...
 ATM_INIT_CMD = '../../src/atm_init'
 TRAC_CMD = '../../src/trac'
 RUNS_DIR, ZIPS_DIR = 'runs/working', 'runs/zips'
@@ -17,7 +17,7 @@ os.makedirs(ZIPS_DIR, exist_ok=True)
 process_semaphore = threading.Semaphore(3)
 app = Flask(__name__)
 
-# === Meteo options ===
+# Meteo options...
 MET_OPTIONS = {
     'era5low_6h': {
         'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
@@ -51,9 +51,11 @@ MET_OPTIONS = {
     }
 }
 
+# Clean up working directory...
 def delayed_cleanup(path, delay=600):
     threading.Thread(target=lambda: (time.sleep(delay), shutil.rmtree(path, ignore_errors=True)), daemon=True).start()
 
+# Execute shell command and check result...
 def run_command(cmd, timeout=300):
     if not process_semaphore.acquire(timeout=5):
         return -999, "❌ Server is too busy."
@@ -65,10 +67,12 @@ def run_command(cmd, timeout=300):
     finally:
         process_semaphore.release()
 
+# Calculate second since 2000-01-01, 00:00 UTC...
 def seconds_since_2000(time_str):
     dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
+# Create map plot of air parcel data...
 def create_plot(lons, lats, heights, projection='cartesian', region='global', central_lon=0.0, central_lat=0.0):
     import matplotlib.pyplot as plt
     import cartopy.crs as ccrs
@@ -106,6 +110,7 @@ def create_plot(lons, lats, heights, projection='cartesian', region='global', ce
     plt.close()
     return base64.b64encode(buf.getvalue()).decode()
 
+# Exit with error message...
 def validation_error(message):
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
@@ -119,6 +124,7 @@ def download(run_id):
 @app.route('/run', methods=['POST'])
 def run():
     try:
+        # Get control parameters from input form...
         f = request.form
         to_f = lambda x: float(f[x])
         met_source = f.get('met_source', 'erai_6h')
@@ -141,6 +147,7 @@ def run():
         central_lon = to_f('central_lon') if 'central_lon' in f else 0.0
         central_lat = to_f('central_lat') if 'central_lat' in f else 0.0
 
+        # Check values...
         if abs(start_time - stop_time) > 30*86400: return validation_error("Duration exceeds 30 days.")
         if not (-100 <= z0 <= 100 and -100 <= z1 <= 100): return validation_error("Height range invalid.")
         if not (0 < dz <= 100): return validation_error("dz must be > 0 and ≤ 100 km.")
@@ -152,18 +159,24 @@ def run():
         if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())): return validation_error("Negative values not allowed.")
         if atm_dt_out <= 0: return validation_error("Output frequency must be > 0.")
 
+        # Check number of air parcels...
         nz, nlat, nlon = map(lambda x: int(round(x[0]/x[1])) + 1, [(z1-z0, dz), (lat1-lat0, dlat), (lon1-lon0, dlon)])
         if nz * nlat * nlon * rep > 10000: return validation_error("Too many trajectories.")
 
+        # Set forward/backward trajectory flag...
         direction = -1 if stop_time < start_time else 1
 
     except Exception as e:
         return validation_error(str(e))
 
+    # Set run ID...
     run_id = str(uuid.uuid4())
+
+    # Create working directory...
     work_dir = os.path.join(RUNS_DIR, run_id)
     os.makedirs(work_dir, exist_ok=True)
 
+    # Create control parameter file...
     ctl_file, dirlist_file, init_file = map(lambda x: os.path.join(work_dir, x), ['trac.ctl', 'dirlist.txt', 'atm_init.tab'])
     atm_file = os.path.join(work_dir, 'atm')
     with open(dirlist_file, 'w') as f: f.write("./\n")
@@ -228,36 +241,59 @@ def run():
     
     with open(ctl_file, 'w') as f: f.write(ctl_template)
 
+    # Run atm_init...
     atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120)
+
+    # Run trac...
     trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600)
 
+    # Check result...
     if trac_code == -999:
         return render_template('server_busy.html'), 503
 
+    # Combine log message...
     combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
+    
     if trac_code == 0:
+
+        # Create zip file...
         zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
         shutil.make_archive(zip_path.replace('.zip', ''), 'zip', work_dir)
 
+        # Gather data...
         lons, lats, heights = [], [], []
-        for file in sorted(glob.glob(os.path.join(work_dir, 'atm_20*.tab'))):
+        files = sorted(glob.glob(os.path.join(work_dir, 'atm_19*.tab')) +
+                       glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
+        for file in files:
             data = np.loadtxt(file)
-            if data.ndim == 1 and data.shape[0] != 4: continue
+            if data.ndim == 1 and data.shape[0] != 4:
+                continue
             data = data[np.newaxis, :] if data.ndim == 1 else data
             lons.extend(data[:, 2])
             lats.extend(data[:, 3])
-            heights.extend(data[:, 1])        
+            heights.extend(data[:, 1])
+            
+        # Sort by height...
+        combined = np.array([lons, lats, heights]).T
+        sorted_combined = combined[np.argsort(combined[:, 2])]
+        lons_sorted = sorted_combined[:, 0]
+        lats_sorted = sorted_combined[:, 1]
+        heights_sorted = sorted_combined[:, 2]
+
+        # Plot...
         plot_url = create_plot(
-            np.array(lons), np.array(lats), np.array(heights),
+            lons_sorted, lats_sorted, heights_sorted,
             projection=map_projection,
             region=plot_region,
             central_lon=central_lon,
             central_lat=central_lat
         )
-        
+
+        # Clean up...
         delayed_cleanup(work_dir)
         return render_template('result.html', run_id=run_id, stdout=combined_output, plot_url=plot_url)
-    
+
+    # Clean up...
     delayed_cleanup(work_dir)
     return render_template('error.html', stdout=combined_output), 500
 
