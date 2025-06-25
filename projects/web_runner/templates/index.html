@@ -54,27 +54,27 @@
 	    <div class="w3-text-white">
               <label class="w3-block w3-padding-small">
 		<input type="radio" name="met_source" value="era5low_6h" required>
-		ERA5 low resolution (6-hourly | 1.0° x 1.0° | 137 levels | 1980-present)
+		ERA5 low resolution (6-hourly | 1.0° × 1.0° | 137 levels | 1980–present)
               </label>
               <label class="w3-block w3-padding-small">
 		<input type="radio" name="met_source" value="erai_6h" checked>
-		ERA-Interim (6-hourly | 0.75° x 0.75° | 60 levels | 1979-2019)
+		ERA-Interim (6-hourly | 0.75° × 0.75° | 60 levels | 1979–2019)
               </label>
               <label class="w3-block w3-padding-small">
 		<input type="radio" name="met_source" value="merra2_3h">
-		MERRA-2 (3-hourly | 0.5° x 0.625° | 72 levels | 1979-present)
+		MERRA-2 (3-hourly | 0.5° × 0.625° | 72 levels | 1979–present)
               </label>
               <label class="w3-block w3-padding-small">
 		<input type="radio" name="met_source" value="merra2_6h">
-		MERRA-2 (6-hourly | 0.5° x 0.625° | 72 levels | 1979-present)
+		MERRA-2 (6-hourly | 0.5° × 0.625° | 72 levels | 1979–present)
               </label>
               <label class="w3-block w3-padding-small">
 		<input type="radio" name="met_source" value="ncep_6h">
-		NCEP-NCAR Reanalysis 1 (6-hourly) | 2.5° x 2.5° | 17 levels | 1948-present)
+		NCEP-NCAR Reanalysis 1 (6-hourly | 2.5° × 2.5° | 17 levels | 1948–present)
               </label>
               <label class="w3-block w3-padding-small">
 		<input type="radio" name="met_source" value="ncep2_6h">
-		NCEP-DOE Reanalysis 2 (6-hourly | 2.5° x 2.5° | 17 levels | 1979–present)
+		NCEP-DOE Reanalysis 2 (6-hourly | 2.5° × 2.5° | 17 levels | 1979–present)
               </label>
 	    </div>
 	  </div>
@@ -86,7 +86,8 @@
 	<i class="fa fa-caret-down"></i> Simulation Time Settings
       </button>
       <div id="time-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM</code>. Trajectories can be calculated forward or backward in time, swap the start and stop times accordingly. The total duration must not exceed 30 days.</p>
+	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM</code> (UTC). You may simulate forward or backward in time by adjusting the order of the start and stop times. The total duration must not exceed 30 days.
+	</p>
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
             <label>Start Time</label>
