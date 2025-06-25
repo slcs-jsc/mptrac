@@ -47,18 +47,36 @@
 	<i class="fa fa-caret-down"></i> Meteorological Data Settings
       </button>
       <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Select the meteorological dataset and synoptic time step.</p>
+	<p>Select the meteorological dataset for the trajectory calculations.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full" style="padding: 16px;">
-	    <label for="met_source">Meteo Dataset</label>
-	    <select class="w3-select w3-dark-gray w3-round" name="met_source" required>
-	      <option value="era5low_6h">ERA5 low resolution (6-hourly)</option>
-	      <option value="erai_6h" selected>ERA-Interim (6-hourly)</option>
-	      <option value="merra2_3h">MERRA-2 (3-hourly)</option>
-	      <option value="merra2_6h">MERRA-2 (6-hourly)</option>
-	      <option value="ncep_6h">NCEP-NCAR Reanalysis 1 (6-hourly)</option>
-	      <option value="ncep2_6h">NCEP-DOE Reanalysis 2 (6-hourly)</option>
-	    </select>
+	    <label>Meteo Dataset</label>
+	    <div class="w3-text-white">
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="met_source" value="era5low_6h" required>
+		ERA5 low resolution (6-hourly | 1.0° x 1.0° | 137 levels | 1980-present)
+              </label>
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="met_source" value="erai_6h" checked>
+		ERA-Interim (6-hourly | 0.75° x 0.75° | 60 levels | 1979-2019)
+              </label>
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="met_source" value="merra2_3h">
+		MERRA-2 (3-hourly | 0.5° x 0.625° | 72 levels | 1979-present)
+              </label>
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="met_source" value="merra2_6h">
+		MERRA-2 (6-hourly | 0.5° x 0.625° | 72 levels | 1979-present)
+              </label>
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="met_source" value="ncep_6h">
+		NCEP-NCAR Reanalysis 1 (6-hourly) | 2.5° x 2.5° | 17 levels | 1948-present)
+              </label>
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="met_source" value="ncep2_6h">
+		NCEP-DOE Reanalysis 2 (6-hourly | 2.5° x 2.5° | 17 levels | 1979–present)
+              </label>
+	    </div>
 	  </div>
 	</div>
       </div>
@@ -68,15 +86,15 @@
 	<i class="fa fa-caret-down"></i> Simulation Time Settings
       </button>
       <div id="time-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM:SS</code>. Trajectories can be calculated forward or backward in time, swap the start and stop times accordingly. The total duration must not exceed 30 days.</p>
+	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM</code>. Trajectories can be calculated forward or backward in time, swap the start and stop times accordingly. The total duration must not exceed 30 days.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
             <label>Start Time</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" placeholder="YYYY-MM-DD HH:MM:SS" required>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" placeholder="YYYY-MM-DD HH:MM" required>
 	  </div>
 	  <div class="w3-half" style="padding: 16px;">
             <label>Stop Time</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" placeholder="YYYY-MM-DD HH:MM:SS" required>
+            <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" placeholder="YYYY-MM-DD HH:MM" required>
 	  </div>
 	</div>
       </div>
