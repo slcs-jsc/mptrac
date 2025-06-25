@@ -67,38 +67,29 @@ def run_command(cmd, timeout=300):
     finally:
         process_semaphore.release()
 
-# Calculate second since 2000-01-01, 00:00 UTC...
+# Calculate seconds since 2000-01-01, 00:00 UTC...
 def seconds_since_2000(time_str):
-    dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S").replace(tzinfo=timezone.utc)
+    dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
 # Create map plot of air parcel data...
 def create_plot(lons, lats, heights, projection='cartesian', region='global', central_lon=0.0, central_lat=0.0):
-    import matplotlib.pyplot as plt
-    import cartopy.crs as ccrs
-    import cartopy.feature as cfeature
-    import io, base64
-    if projection == 'cartesian':
-        proj = ccrs.PlateCarree()
-    elif projection == 'orthographic':
-        proj = ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat)
-    elif projection == 'robinson':
-        proj = ccrs.Robinson(central_longitude=central_lon)
-    fig = plt.figure(figsize=(15, 12))
-    ax = plt.axes(projection=proj)
+    proj_map = {
+        'cartesian': ccrs.PlateCarree(),
+        'orthographic': ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat),
+        'robinson': ccrs.Robinson(central_longitude=central_lon)
+    }
+    proj = proj_map.get(projection, ccrs.PlateCarree())
+    fig, ax = plt.subplots(figsize=(15, 12), subplot_kw={'projection': proj})
     if region == 'global':
         ax.set_global()
     ax.coastlines(color='gray', resolution='10m')
     ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='gray')
-    sc = ax.scatter(
-        lons, lats, c=heights,
-        cmap='tab20c', s=10, edgecolors='none',
-        transform=ccrs.PlateCarree()
-    )
+    sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10, edgecolors='none', transform=ccrs.PlateCarree())
     gl = ax.gridlines(draw_labels=True, color='gray', linestyle='--', alpha=0.5)
     gl.xlabel_style = gl.ylabel_style = {'color': 'black'}
-    ax.set_facecolor('white')
-    fig.patch.set_facecolor('white')
+    for obj in [ax, fig]:
+        obj.set_facecolor('white')
     cbar = plt.colorbar(sc, orientation='horizontal', pad=0.05, aspect=50)
     cbar.set_label('Log-pressure height [km]', color='black')
     cbar.ax.xaxis.set_tick_params(color='black')
@@ -141,11 +132,11 @@ def run():
         ulon, ulat, uz = to_f('ulon'), to_f('ulat'), to_f('uz')
         slon, slat, sz = to_f('slon'), to_f('slat'), to_f('sz')
         turb = {k: to_f(k) for k in ['turb_dx_pbl','turb_dx_trop','turb_dx_strat','turb_dz_pbl','turb_dz_trop','turb_dz_strat','turb_mesox','turb_mesoz']}
-        atm_dt_out = to_f('atm_dt_out') if 'atm_dt_out' in f else 3600
+        atm_dt_out = to_f('atm_dt_out')
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
-        central_lon = to_f('central_lon') if 'central_lon' in f else 0.0
-        central_lat = to_f('central_lat') if 'central_lat' in f else 0.0
+        central_lon = to_f('central_lon')
+        central_lat = to_f('central_lat')
 
         # Check values...
         if abs(start_time - stop_time) > 30*86400: return validation_error("Duration exceeds 30 days.")
@@ -158,6 +149,8 @@ def run():
         if not (1 <= rep <= 10000): return validation_error("Repetitions must be 1–10000.")
         if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())): return validation_error("Negative values not allowed.")
         if atm_dt_out <= 0: return validation_error("Output frequency must be > 0.")
+        if not (-180 <= central_lon <= 180): return validation_error("Central longitude is out of range.")
+        if not (-90 <= central_lat <= 90): return validation_error("Central latitude is out of range.")
 
         # Check number of air parcels...
         nz, nlat, nlon = map(lambda x: int(round(x[0]/x[1])) + 1, [(z1-z0, dz), (lat1-lat0, dlat), (lon1-lon0, dlon)])
@@ -230,8 +223,6 @@ def run():
     ATM_BASENAME = {atm_file}
     ATM_DT_OUT = {atm_dt_out}
     """)
-    
-    # Meteo specific parameters...
     if met_source in ['era5low_6h']:
         ctl_template += "MET_CLAMS = 1\nMET_VERT_COORD = 1\n"
     if met_source in ['merra2_3h', 'merra2_6h']:
@@ -247,13 +238,14 @@ def run():
     # Run trac...
     trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600)
 
-    # Check result...
+    # Catch errors...
     if trac_code == -999:
         return render_template('server_busy.html'), 503
 
     # Combine log message...
     combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
-    
+
+    # Run successfull...
     if trac_code == 0:
 
         # Create zip file...
