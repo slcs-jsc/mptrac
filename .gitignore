@@ -71,6 +71,7 @@ tests/atm_test/data/
 tests/cms_test/data/
 tests/compress_test/data/
 tests/gpu_test/data/
+tests/grib_test/data/
 tests/interoper_test/data/
 tests/interoper_test/run_all.sh
 tests/interoper_test/run_atm.sh

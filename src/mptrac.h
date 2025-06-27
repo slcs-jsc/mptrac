@@ -159,6 +159,10 @@
 #include "chem_Sparse.h"
 #endif
 
+#ifdef ECCODES
+#include "eccodes.h"
+#endif
+
 /* ------------------------------------------------------------
    Constants...
    ------------------------------------------------------------ */
@@ -620,6 +624,71 @@
  */
 #define DOTP(a, b)				\
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+
+/**
+ * @brief Execute a ECCODES command and check for errors.
+ *
+ * This macro executes a ECCODES command and checks the result. If the
+ * result indicates an error, it prints the error message using
+ * ERRMSG.
+ *
+ * @param cmd ECCODES command to execute.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC(cmd) {							\
+    int ecc_result=(cmd);						\
+    if(ecc_result!=0)							\
+      ERRMSG("ECCODES error: %s", codes_get_error_message(ecc_result));	\
+  }
+
+/**
+ * @brief Writes 2-D data from a grib message into the met struct.
+ *
+ * This Macro writes 2-D data from an one dimensional grib message into the
+ * corresponding 2-D variable in the met struct. 
+ * 
+ * @param variable Name of the current meterological variable 
+ * @param target Pointer to the 2-D array in the met struct where the data will be stored.
+ * @param scaling_factor Scaling factor to apply to the data.
+ * @param found_flag Flag to store, that the variable was found in the grib message.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC_READ_2D(variable,target,scaling_factor,found_flag){	\
+  if( strcmp(short_name,variable)==0){\
+    for (int ix = 0; ix < met->nx; ix++) {\
+          for (int iy = 0; iy < met->ny; iy++) {\
+              target[ix][iy] = (float)(values[iy * met->nx + ix]*scaling_factor);\
+          }\
+      }\
+    found_flag =1;\
+  }\
+}
+
+/**
+ * @brief Writes 3D data from a grib message into the met struct.
+ *
+ * This Macro writes 3D data from an one dimensional grib message into the
+ * corresponding 3D variable in the met struct. 
+ * 
+ * @param variable Name of the current meterological variable.
+ * @param target Pointer to the 3D array in the met struct where the data will be stored.
+ * @param scaling_factor Scaling factor to apply to the data.
+ * @param found_flag Counter to store, how many messages countaining data for this variable have been read.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC_READ_3D(variable,level,target,scaling_factor,found_flag){\
+  if( strcmp(short_name,variable)==0){\
+    for (int ix = 0; ix < met->nx; ix++) {\
+          for (int iy = 0; iy < met->ny; iy++) {\
+              target[ix][iy][level] = (float) (values[iy * met->nx + ix]*scaling_factor);\
+          }\
+      }\
+    found_flag +=1;\
+  }\
+}
 
 /**
  * @brief Calculate the floating-point remainder of dividing x by y.
@@ -6982,6 +7051,66 @@ void read_met_geopot(
   met_t * met);
 
 /**
+ * @brief Reads global meteorological information from a grib file.
+ *
+ * This function reads meteorological grid information from a Grib
+ * file, including time and spatial dimensions. The function computes the 
+ * latitude and longitude grid based on the provided boundaries and icnrement values.
+ *
+ * @param handles A pointer to an array of codes_handle pointers representing the Grib messages.
+ * @param count_handles The total number of Grib messages in the handles array.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from the data file.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the Grib file.
+ * - Reads longitudes and latitudes boundaries and increments from the Grib file and computes the grid.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ *
+ * @authors Nils Nobre Wittwer
+ */
+#ifdef ECCODES
+void read_met_global_grib(
+  codes_handle** handles,
+  int count_handles,
+  met_t * met);
+#endif
+
+/**
+ * @brief Reads meteorological data from a Grib file and processes it.
+ *
+ * This function reads meteorological data from a Grib file specified by the `filename` parameter, 
+ * using the ECCODES library. It reads grid, surface, and vertical level data, processes the data 
+ * and calculates various derived meteorological fields such as geopotential heights, potential vorticity, cloud properties, and 
+ * convective available potential energy (CAPE).
+ *
+ * @param filename A constant character pointer representing the name of the Grib files to read the 
+ * meteorological data from. The sf or ml suffixes indicating surface or multi-level data should be replaced with XX.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param clim A pointer to a `clim_t` structure that holds climatological data, used in the 
+ * calculation of derived properties such as CAPE and tropopause data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
+ *
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
+ *
+ * @note
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
+ *
+ * @author Nils Nobre Wittwer
+ */
+int read_met_grib(
+  const char *filename,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met);
+
+/**
  * @brief Reads meteorological grid information from a NetCDF file.
  *
  * This function reads meteorological grid information from a NetCDF
@@ -7052,6 +7181,33 @@ void read_met_levels(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
+
+/**
+ * @brief Reads meteorological variables at different vertical levels from a Grib file.
+ *
+ * This function reads meteorological variables such as temperature,
+ * wind components, specific humidity, ozone data, cloud parameters,
+ * and cloud cover at various vertical levels from a Grib file.
+ *
+ * @param handles A pointer to an array of codes_handle pointers representing the Grib messages.
+ * @param num_messages The total number of Grib messages in the handles array.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological level data.
+ * - Reads meteorological variables from the Grib file.
+ * - Checks the ordering of pressure levels to ensure they are in descending order.
+ *
+ * @authors Nils Nobre Wittwer
+ */
+#ifdef ECCODES
+void read_met_levels_grib(
+  codes_handle** handles,
+  const int num_messages,
+  const ctl_t * ctl,
+  met_t* met);
+#endif
 
 /**
  * @brief Interpolates meteorological data to specified pressure levels.
@@ -7482,6 +7638,44 @@ void read_met_surface(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
+
+/**
+ * @brief Reads surface meteorological data from a Grib file and stores it in the meteorological data structure.
+ *
+ * This function reads various surface meteorological variables from a
+ * Grib file and stores them in the provided meteorological data
+ * structure.  Depending on the configuration, it may read data for
+ * surface pressure, geopotential height, temperature, zonal and
+ * meridional wind components, land-sea mask, and sea surface
+ * temperature.
+ *
+ * @param handles A pointer to an array of codes_handle pointers representing the Grib messages.
+ * @param num_messages The total number of Grib messages in the handles array.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Reads surface meteorological data based on the configuration:
+ * - Reads surface pressure from "lnsp", "ps", or "sp" variables.
+ * - Converts surface pressure to Pa.
+ * - Reads geopotential height at the surface from "z" or "zm" variables.
+ * - Reads surface temperature from "t2m" or "2t" variables.
+ * - Reads zonal wind at the surface from "u10m" or "10u" variables.
+ * - Reads meridional wind at the surface from "v10m" or "10v" variables.
+ * - Reads land-sea mask from "lsm" variable.
+ * - Reads sea surface temperature from "sstk" or "sst" variables.
+ *
+ * @authors Nils Nobre Wittwer
+ */
+#ifdef ECCODES
+void read_met_surface_grib(
+  codes_handle** handles,
+  const int num_messages,
+  const ctl_t* ctl,
+  met_t* met
+  );
+#endif
 
 /**
  * @brief Calculates the tropopause and related meteorological variables based on various methods and stores the results in the meteorological data structure.
