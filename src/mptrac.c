@@ -5736,14 +5736,13 @@ int mptrac_read_met(
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
-
-    #ifdef ECCODES
+#ifdef ECCODES
     /* Read grib data... */
-    else if (ctl->met_type == 6){
+    else if (ctl->met_type == 6) {
       if (read_met_grib(filename, ctl, clim, met) != 1)
-  return 0;
+	return 0;
     }
-    #endif
+#endif
 
     /* Not implemented... */
     else
@@ -7608,7 +7607,7 @@ void read_met_grid(
 
 #ifdef ECCODES
 void read_met_global_grib(
-  codes_handle** handles,
+  codes_handle **handles,
   int count_handles,
   met_t *met) {
 
@@ -7616,97 +7615,100 @@ void read_met_global_grib(
   SELECT_TIMER("READ_MET_GLOBAL_GRIB", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
-  
-  /*Read date...*/
+  /*Read date... */
   char datestr[50];
   char timestr[50];
-  char year[20],month[20],day[20],hour[20];
+  char year[20], month[20], day[20], hour[20];
   size_t s = sizeof(datestr);
 
-
-  ECC(codes_get_string(handles[0],"dataDate",datestr,&s));
-  ECC(codes_get_string(handles[0],"dataTime",timestr,&s));
-  strncpy(year,datestr,4);
+  ECC(codes_get_string(handles[0], "dataDate", datestr, &s));
+  ECC(codes_get_string(handles[0], "dataTime", timestr, &s));
+  strncpy(year, datestr, 4);
   year[4] = '\0';
-  strncpy(month,datestr+4,2);
+  strncpy(month, datestr + 4, 2);
   month[2] = '\0';
-  strncpy(day,datestr+6,2);
+  strncpy(day, datestr + 6, 2);
   day[2] = '\0';
-  strncpy(hour,timestr,2);
+  strncpy(hour, timestr, 2);
   hour[2] = '\0';
-  time2jsec(atoi(year),atoi(month),atoi(day),atoi(hour),0,0,0,&(met->time));
+  time2jsec(atoi(year), atoi(month), atoi(day), atoi(hour), 0, 0, 0,
+	    &(met->time));
 
   /* Write info... */
   LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-      met->time, atoi(year),atoi(month),atoi(day),atoi(hour), 0);
-  
+      met->time, atoi(year), atoi(month), atoi(day), atoi(hour), 0);
+
   /* Read grid information... */
-  long count_lat = 0,count_lon= 0;
-  ECC(codes_get_long(handles[0],"Nj",&count_lat));
-  ECC(codes_get_long(handles[0],"Ni",&count_lon));
+  long count_lat = 0, count_lon = 0;
+  ECC(codes_get_long(handles[0], "Nj", &count_lat));
+  ECC(codes_get_long(handles[0], "Ni", &count_lon));
   met->ny = (int) count_lat;
   met->nx = (int) count_lon;
 
   /* Check grid dimensions... */
   LOG(2, "Number of longitudes: %d", met->nx);
-  if(met->nx<2 || met->nx>EX)
+  if (met->nx < 2 || met->nx > EX)
     ERRMSG("Number of longitudes out of range!");
   LOG(2, "Number of latitudes: %d", met->ny);
-  if(met->ny<2 || met->ny>EY)
-    ERRMSG("Number of latitudes out of range!");    
-  
-  double first_lon,last_lon,first_lat,last_lat,inc_lon,inc_lat;
-  ECC(codes_get_double(handles[0],"longitudeOfFirstGridPointInDegrees",&first_lon));
-  ECC(codes_get_double(handles[0],"latitudeOfFirstGridPointInDegrees",&first_lat));
-  ECC(codes_get_double(handles[0],"longitudeOfLastGridPointInDegrees",&last_lon));
-  ECC(codes_get_double(handles[0],"latitudeOfLastGridPointInDegrees",&last_lat));
-  ECC(codes_get_double(handles[0],"iDirectionIncrementInDegrees",&inc_lon));
-  ECC(codes_get_double(handles[0],"jDirectionIncrementInDegrees",&inc_lat));
+  if (met->ny < 2 || met->ny > EY)
+    ERRMSG("Number of latitudes out of range!");
 
-  long jscanpos,iscanneg;
-  ECC(codes_get_long(handles[0],"iScansNegatively",&iscanneg));
-  ECC(codes_get_long(handles[0],"jScansPositively",&jscanpos));
-  
+  double first_lon, last_lon, first_lat, last_lat, inc_lon, inc_lat;
+  ECC(codes_get_double
+      (handles[0], "longitudeOfFirstGridPointInDegrees", &first_lon));
+  ECC(codes_get_double
+      (handles[0], "latitudeOfFirstGridPointInDegrees", &first_lat));
+  ECC(codes_get_double
+      (handles[0], "longitudeOfLastGridPointInDegrees", &last_lon));
+  ECC(codes_get_double
+      (handles[0], "latitudeOfLastGridPointInDegrees", &last_lat));
+  ECC(codes_get_double(handles[0], "iDirectionIncrementInDegrees", &inc_lon));
+  ECC(codes_get_double(handles[0], "jDirectionIncrementInDegrees", &inc_lat));
+
+  long jscanpos, iscanneg;
+  ECC(codes_get_long(handles[0], "iScansNegatively", &iscanneg));
+  ECC(codes_get_long(handles[0], "jScansPositively", &jscanpos));
+
   /* Compute longitude-latitude grid... */
   int counter = 0;
-  if(iscanneg == 0){
-    for (double i = first_lon ; i <= last_lon+1e-6 ; i += inc_lon){
-    met->lon[counter] = i;
-    counter += 1;
+  if (iscanneg == 0) {
+    for (double i = first_lon; i <= last_lon + 1e-6; i += inc_lon) {
+      met->lon[counter] = i;
+      counter += 1;
     }
-  }else{
-    for (double i = first_lon ; i > last_lon-1e-6 ; i -= inc_lon){
-    met->lon[counter] = i;
-    counter += 1;
+  } else {
+    for (double i = first_lon; i > last_lon - 1e-6; i -= inc_lon) {
+      met->lon[counter] = i;
+      counter += 1;
     }
   }
-  
+
   counter = 0;
-  if(jscanpos == 0){
-    for (double i = first_lat ; i>last_lat-1e-6; i -= inc_lat){
+  if (jscanpos == 0) {
+    for (double i = first_lat; i > last_lat - 1e-6; i -= inc_lat) {
       met->lat[counter] = i;
       counter += 1;
     }
-  }else{
-    for (double i = first_lat ; i <= last_lat+1e-6; i += inc_lat){
+  } else {
+    for (double i = first_lat; i <= last_lat + 1e-6; i += inc_lat) {
       met->lat[counter] = i;
       counter += 1;
     }
   }
-  
+
   /* Write info... */
   LOG(2, "Longitudes: %g, %g ... %g deg",
       met->lon[0], met->lon[1], met->lon[met->nx - 1]);
   LOG(2, "Latitudes: %g, %g ... %g deg",
       met->lat[0], met->lat[1], met->lat[met->ny - 1]);
-  
+
   /* Read vertical levels... */
   int max_level = 0;
-  for(int i=0;i<count_handles;i++){
+  for (int i = 0; i < count_handles; i++) {
     long level;
-    ECC(codes_get_long(handles[i],"level",&level));
-    if(level > max_level){
-      max_level = (int)level;
+    ECC(codes_get_long(handles[i], "level", &level));
+    if (level > max_level) {
+      max_level = (int) level;
     }
   }
   met->npl = max_level;
@@ -7715,7 +7717,7 @@ void read_met_global_grib(
   LOG(2, "Number of levels: %d", met->npl);
   if (met->npl < 2 || met->npl > EP)
     ERRMSG("Number of levels out of range!");
-  }
+}
 #endif
 
 /*****************************************************************************/
@@ -7935,105 +7937,157 @@ void read_met_levels(
 /*****************************************************************************/
 
 #ifdef ECCODES
-void read_met_levels_grib(codes_handle** handles, const int num_messages,const ctl_t* ctl,met_t* met){
+void read_met_levels_grib(
+  codes_handle **handles,
+  const int num_messages,
+  const ctl_t *ctl,
+  met_t *met) {
 
-  int t_flag=0,u_flag=0,v_flag=0,w_flag=0,o3_flag=0,h2o_flag=0,lwc_flag=0,rwc_flag=0,iwc_flag=0,swc_flag=0,cc_flag=0;
-  /*Iterate over all messages*/
-  for( int i = 0; i< num_messages; i++){
+  int t_flag = 0, u_flag = 0, v_flag = 0, w_flag = 0, o3_flag = 0, h2o_flag =
+    0, lwc_flag = 0, rwc_flag = 0, iwc_flag = 0, swc_flag = 0, cc_flag = 0;
+
+  /*Iterate over all messages */
+  for (int i = 0; i < num_messages; i++) {
     size_t max_size = 50;
     char short_name[max_size];
     size_t value_count;
-    double* values;
-    
-    /* Get the current level*/
-    long current_level; 
-    ECC(codes_get_long(handles[i],"level",&current_level));
-    
-    current_level-=1;
+    double *values;
 
-    /* Retrieve data from current message*/
-    ECC(codes_get_string(handles[i],"shortName",short_name,&max_size));
-    ECC(codes_get_size(handles[i],"values",&value_count));
-    ALLOC(values,double,value_count)
-    ECC(codes_get_double_array(handles[i],"values",values,&value_count))
+    /* Get the current level */
+    long current_level;
+    ECC(codes_get_long(handles[i], "level", &current_level));
+    current_level -= 1;
 
-    /*Read temperature*/
-    ECC_READ_3D("t",current_level,met->t,1.0,t_flag)
-    
-    /*read horizontal wind and vertical velocity*/
-    ECC_READ_3D("u",current_level,met->u,1.0,u_flag)
-
-    ECC_READ_3D("v",current_level,met->v,1.0,v_flag)
-    
-    ECC_READ_3D("w",current_level,met->w,0.01f,w_flag)
-
-
-    /*Read ozone*/
-    ECC_READ_3D("o3",current_level,met->o3,(float) (MA / MO3),o3_flag)
-
-    /*Read cloud data*/
-    ECC_READ_3D("clwc",current_level,met->lwc,1.0,lwc_flag)
-    ECC_READ_3D("crwc",current_level,met->rwc,1.0,rwc_flag)
-    ECC_READ_3D("ciwc",current_level,met->iwc,1.0,iwc_flag)
-    ECC_READ_3D("cswc",current_level,met->swc,1.0,swc_flag)
-    ECC_READ_3D("cc",current_level,met->cc,1.0,cc_flag)
-
-    /*Read water vapor*/
-    ECC_READ_3D("q",current_level,met->h2o,(float) (MA / MH2O),h2o_flag)
-    
-    /*Free allocated array*/
-    free(values);
+    /* Retrieve data from current message */
+    ECC(codes_get_string(handles[i], "shortName", short_name, &max_size));
+    ECC(codes_get_size(handles[i], "values", &value_count));
+    ALLOC(values, double,
+	  value_count) ECC(
+  codes_get_double_array(handles[i],
+			 "values",
+			 values,
+			 &value_count))
+      /*Read temperature */
+      ECC_READ_3D(
+  "t",
+  current_level,
+  met->t,
+  1.0,
+  t_flag)
+      /*read horizontal wind and vertical velocity */
+      ECC_READ_3D(
+  "u",
+  current_level,
+  met->u,
+  1.0,
+  u_flag) ECC_READ_3D(
+  "v",
+  current_level,
+  met->v,
+  1.0,
+  v_flag) ECC_READ_3D(
+  "w",
+  current_level,
+  met->w,
+  0.01f,
+  w_flag)
+      /*Read ozone */
+      ECC_READ_3D(
+  "o3",
+  current_level,
+  met->o3,
+    (float) (MA / MO3),
+  o3_flag)
+      /*Read cloud data */
+      ECC_READ_3D(
+  "clwc",
+  current_level,
+  met->lwc,
+  1.0,
+  lwc_flag) ECC_READ_3D(
+  "crwc",
+  current_level,
+  met->rwc,
+  1.0,
+  rwc_flag) ECC_READ_3D(
+  "ciwc",
+  current_level,
+  met->iwc,
+  1.0,
+  iwc_flag) ECC_READ_3D(
+  "cswc",
+  current_level,
+  met->swc,
+  1.0,
+  swc_flag) ECC_READ_3D(
+  "cc",
+  current_level,
+  met->cc,
+  1.0,
+  cc_flag)
+      /*Read water vapor */
+      ECC_READ_3D(
+  "q",
+  current_level,
+  met->h2o,
+    (float) (MA / MH2O),
+  h2o_flag)
+      /*Free allocated array */
+      free(
+  values);
   }
 
-  if(t_flag!=met->npl){
+  if (t_flag != met->npl) {
     WARN("Cannot read{ temperature!");
   }
-  if(u_flag!=met->npl){
+  if (u_flag != met->npl) {
     WARN("Cannot read zonal wind!");
   }
-  if(v_flag!=met->npl){
+  if (v_flag != met->npl) {
     WARN("Cannot read meridional wind!");
   }
-  if(w_flag!=met->npl){
+  if (w_flag != met->npl) {
     WARN("Cannot read vertical velocity!");
   }
-  if(o3_flag!=met->npl){
+  if (o3_flag != met->npl) {
     WARN("Cannot read ozone data!");
   }
-  if(h2o_flag!=met->npl){
+  if (h2o_flag != met->npl) {
     WARN("Cannot read specific humidity!");
   }
-  if(lwc_flag!=met->npl){
+  if (lwc_flag != met->npl) {
     WARN("Cannot read cloud liquid water content!");
   }
-  if(rwc_flag!=met->npl){
+  if (rwc_flag != met->npl) {
     WARN("Cannot read cloud rain water content!");
   }
-  if(iwc_flag!=met->npl){
+  if (iwc_flag != met->npl) {
     WARN("Cannot read cloud ice water content!");
   }
-  if(swc_flag!=met->npl){
+  if (swc_flag != met->npl) {
     WARN("Cannot read cloud snow water content!");
   }
-  if(cc_flag!=met->npl){
+  if (cc_flag != met->npl) {
     WARN("Cannot read cloud cover!");
   }
 
   /* Check ordering of pressure levels... */
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 1; ip < met->np; ip++)
-	  if ((met->pl[ix][iy][0] > met->pl[ix][iy][1]
-	       && met->pl[ix][iy][ip - 1] <= met->pl[ix][iy][ip])
-	      || (met->pl[ix][iy][0] < met->pl[ix][iy][1]
-		  && met->pl[ix][iy][ip - 1] >= met->pl[ix][iy][ip])){
-      LOG(1,"%f %f %f %f",met->pl[ix][iy][0],met->pl[ix][iy][1],met->pl[ix][iy][ip - 1],met->pl[ix][iy][ip]);
-	    ERRMSG("Pressure profiles are not monotonic!");
-      }
+  for (int ix = 0; ix < met->nx; ix++)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ip = 1; ip < met->np; ip++)
+	if ((met->pl[ix][iy][0] > met->pl[ix][iy][1]
+	     && met->pl[ix][iy][ip - 1] <= met->pl[ix][iy][ip])
+	    || (met->pl[ix][iy][0] < met->pl[ix][iy][1]
+		&& met->pl[ix][iy][ip - 1] >= met->pl[ix][iy][ip])) {
+	  LOG(1, "%f %f %f %f", met->pl[ix][iy][0], met->pl[ix][iy][1],
+	      met->pl[ix][iy][ip - 1], met->pl[ix][iy][ip]);
+	  ERRMSG("Pressure profiles are not monotonic!");
+	}
 
   /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
     met->np = ctl->met_np;
+
     /* Interpolate variables... */
     read_met_ml2pl(ctl, met, met->t, "T");
     read_met_ml2pl(ctl, met, met->u, "U");
@@ -8056,10 +8110,9 @@ void read_met_levels_grib(codes_handle** handles, const int num_messages,const c
   for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
-
 }
-
 #endif
+
 /*****************************************************************************/
 
 void read_met_ml2pl(
@@ -8190,96 +8243,107 @@ void read_met_monotonize(
 /*****************************************************************************/
 
 #ifdef ECCODES
-int read_met_grib(const char *filename, const ctl_t *ctl, const clim_t *clim, met_t *met){
+int read_met_grib(
+  const char *filename,
+  const ctl_t *ctl,
+  const clim_t *clim,
+  met_t *met) {
 
-  size_t filename_len = strlen(filename)+1;
+  size_t filename_len = strlen(filename) + 1;
 
-  char sf_filename [filename_len];
-  char ml_filename [filename_len];
-  strcpy(sf_filename,filename);
-  strcpy(ml_filename,filename);
-  
-  get_met_replace(ml_filename,"XX","ml");
-  get_met_replace(sf_filename,"XX","sf");
+  char sf_filename[filename_len];
+  char ml_filename[filename_len];
+  strcpy(sf_filename, filename);
+  strcpy(ml_filename, filename);
+
+  get_met_replace(ml_filename, "XX", "ml");
+  get_met_replace(sf_filename, "XX", "sf");
 
 
   int err = 0;
-  /*Open files*/
-  FILE* ml_file = fopen(ml_filename,"rb");
-  FILE* sf_file = fopen(sf_filename,"rb");
+  /*Open files */
+  FILE *ml_file = fopen(ml_filename, "rb");
+  FILE *sf_file = fopen(sf_filename, "rb");
 
   if (ml_file == NULL || sf_file == NULL) {
-    if (ml_file != NULL){
+    if (ml_file != NULL) {
       fclose(ml_file);
-      LOG(1,"Cannot open file: %s",sf_filename);
+      LOG(1, "Cannot open file: %s", sf_filename);
     }
-    if (sf_file != NULL){
+    if (sf_file != NULL) {
       fclose(sf_file);
-      LOG(1,"Cannot open file: %s",ml_filename);
+      LOG(1, "Cannot open file: %s", ml_filename);
     }
     return 0;
   }
 
 
-  /*Store messages from files*/
-  codes_handle** ml_handles;
-  codes_handle** sf_handles;
+  /*Store messages from files */
+  codes_handle **ml_handles;
+  codes_handle **sf_handles;
 
   int ml_num_messages = 0;
-  ECC(codes_count_in_file(0,ml_file,&ml_num_messages));
-  ml_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)ml_num_messages);
-  for (int i = 0 ; i < ml_num_messages ; i++){
-    codes_handle* h = NULL;
-    if((h = codes_grib_handle_new_from_file(0,ml_file,&err))!=NULL ){
-        ml_handles[i] = h;
+  ECC(codes_count_in_file(0, ml_file, &ml_num_messages));
+  ml_handles =
+    (codes_handle **) malloc(sizeof(codes_handle *) *
+			     (size_t) ml_num_messages);
+  for (int i = 0; i < ml_num_messages; i++) {
+    codes_handle *h = NULL;
+    if ((h = codes_grib_handle_new_from_file(0, ml_file, &err)) != NULL) {
+      ml_handles[i] = h;
     }
   }
   int sf_num_messages = 0;
-  ECC(codes_count_in_file(0,sf_file,&sf_num_messages));
-  sf_handles = (codes_handle**)malloc(sizeof(codes_handle*)*(size_t)sf_num_messages);
-  for (int i = 0 ; i < sf_num_messages ; i++){
-    codes_handle* h = NULL;
-    if((h = codes_grib_handle_new_from_file(0,sf_file,&err))!=NULL ){
-        sf_handles[i] = h;
+  ECC(codes_count_in_file(0, sf_file, &sf_num_messages));
+  sf_handles =
+    (codes_handle **) malloc(sizeof(codes_handle *) *
+			     (size_t) sf_num_messages);
+  for (int i = 0; i < sf_num_messages; i++) {
+    codes_handle *h = NULL;
+    if ((h = codes_grib_handle_new_from_file(0, sf_file, &err)) != NULL) {
+      sf_handles[i] = h;
     }
   }
   fclose(ml_file);
   fclose(sf_file);
 
-  
-  /*Read time/lat/lon and number of levels*/
-  read_met_global_grib(ml_handles,ml_num_messages,met);
-  /*Read data from surface file*/
-  read_met_surface_grib(sf_handles,sf_num_messages,ctl,met);
-  for(int i=0;i<sf_num_messages;i++){
+
+  /*Read time/lat/lon and number of levels */
+  read_met_global_grib(ml_handles, ml_num_messages, met);
+  /*Read data from surface file */
+  read_met_surface_grib(sf_handles, sf_num_messages, ctl, met);
+  for (int i = 0; i < sf_num_messages; i++) {
     codes_handle_delete(sf_handles[i]);
   }
   free(sf_handles);
 
-  /*Compute 3D pressure field*/
+  /*Compute 3D pressure field */
   size_t value_count;
-  ECC(codes_get_size(ml_handles[0],"pv",&value_count))
-  double* values = (double*) malloc(value_count * sizeof(double));
-  ECC(codes_get_double_array(ml_handles[0],"pv",values,&value_count)) 
-  double a_vals [138],b_vals[138];
-  for(int i = 0;i<=137;i++){
+  ECC(codes_get_size(ml_handles[0], "pv", &value_count))
+  double *values = (double *) malloc(value_count * sizeof(double));
+  ECC(codes_get_double_array(ml_handles[0], "pv", values, &value_count))
+  double a_vals[138], b_vals[138];
+  for (int i = 0; i <= 137; i++) {
     a_vals[i] = values[i];
-    b_vals[i] = values[i+137];
+    b_vals[i] = values[i + 137];
   }
-  for(int nx = 0;nx<met->nx;nx++){
-    for(int ny = 0;ny<met->ny;ny++){
-      for(int level = 0;level<=met->npl;level++){
-        float p1,p2;
-        p1 = (float) ((a_vals[level]*0.01f + met->ps[nx][ny] * b_vals[level]));
-        p2 = (float) ((a_vals[level+1]*0.01f + met->ps[nx][ny] * b_vals[level+1]));
-        met->pl[nx][ny][level] = (p1+p2)*0.5f;
+  for (int nx = 0; nx < met->nx; nx++) {
+    for (int ny = 0; ny < met->ny; ny++) {
+      for (int level = 0; level <= met->npl; level++) {
+	float p1, p2;
+	p1 =
+	  (float) ((a_vals[level] * 0.01f + met->ps[nx][ny] * b_vals[level]));
+	p2 =
+	  (float) ((a_vals[level + 1] * 0.01f +
+		    met->ps[nx][ny] * b_vals[level + 1]));
+	met->pl[nx][ny][level] = (p1 + p2) * 0.5f;
       }
     }
   }
 
-  /*Read data from ml file*/
-  read_met_levels_grib(ml_handles,ml_num_messages,ctl,met);
-  for(int i=0;i<ml_num_messages;i++){
+  /*Read data from ml file */
+  read_met_levels_grib(ml_handles, ml_num_messages, ctl, met);
+  for (int i = 0; i < ml_num_messages; i++) {
     codes_handle_delete(ml_handles[i]);
   }
   free(ml_handles);
@@ -8322,8 +8386,8 @@ int read_met_grib(const char *filename, const ctl_t *ctl, const clim_t *clim, me
 
   /* Check meteo data and smooth zeta profiles ... */
   if (ctl->advect_vert_coord == 1)
-    read_met_monotonize(ctl,met);
-  
+    read_met_monotonize(ctl, met);
+
 
   /* Return success... */
   return 1;
@@ -9406,93 +9470,89 @@ void read_met_surface(
 /*****************************************************************************/
 
 #ifdef ECCODES
-void read_met_surface_grib(codes_handle** handles, const int num_messages, const ctl_t* ctl, met_t* met){
+void read_met_surface_grib(
+  codes_handle **handles,
+  const int num_messages,
+  const ctl_t *ctl,
+  met_t *met) {
 
-  int sp_flag=0,z_flag=0,t_flag=0,u_flag=0,v_flag=0,lsm_flag=0,sst_flag=0,cape_flag=0,cin_flag=0,pbl_flag=0;
-  /*Iterate over all messages*/
-  for( int i = 0; i< num_messages; i++){
+  int sp_flag = 0, z_flag = 0, t_flag = 0, u_flag = 0, v_flag = 0, lsm_flag =
+    0, sst_flag = 0, cape_flag = 0, cin_flag = 0, pbl_flag = 0;
+  /*Iterate over all messages */
+  for (int i = 0; i < num_messages; i++) {
     size_t max_size = 50;
     char short_name[max_size];
     size_t value_count;
 
 
-    /*Store values with shortname*/
+    /*Store values with shortname */
     ECC(codes_get_string(handles[i], "shortName", short_name, &max_size));
-    ECC(codes_get_size(handles[i],"values",&value_count));
-    double * values = (double*)malloc(value_count * sizeof(double));
-    ECC(codes_get_double_array(handles[i],"values",values,&value_count))
+    ECC(codes_get_size(handles[i], "values", &value_count));
+    double *values = (double *) malloc(value_count * sizeof(double));
+    ECC(codes_get_double_array(handles[i], "values", values, &value_count))
+      /*Read surface pressure... */
+      ECC_READ_2D("sp", met->ps, 0.01f, sp_flag)
+      /*Read geopotential height at the surface... */
+      ECC_READ_2D("z", met->zs, (float) (1. / (1000. * G0)), z_flag)
+      /* Read temperature at the surface... */
+      ECC_READ_2D("2t", met->ts, 1.0f, t_flag)
+      /* Read zonal wind at the surface... */
+      ECC_READ_2D("10u", met->us, 1.0f, u_flag)
+      /* Read meridional wind at the surface... */
+      ECC_READ_2D("10v", met->vs, 1.0f, v_flag)
+      /* Read land-sea mask... */
+      ECC_READ_2D("lsm", met->lsm, 1.0f, lsm_flag)
+      /* Read sea surface temperature... */
+      ECC_READ_2D("sst", met->sst, 1.0f, sst_flag)
+      if (ctl->met_cape == 0) {
 
-    /*Read surface pressure... */
-    ECC_READ_2D("sp",met->ps,0.01f,sp_flag)
-    
-    /*Read geopotential height at the surface... */
-    ECC_READ_2D("z",met->zs,(float) (1. / (1000. * G0)),z_flag)
-
-    /* Read temperature at the surface... */
-    ECC_READ_2D("2t",met->ts,1.0f,t_flag)
-
-    /* Read zonal wind at the surface...*/
-    ECC_READ_2D("10u",met->us,1.0f,u_flag)
-
-    /* Read meridional wind at the surface...*/
-    ECC_READ_2D("10v",met->vs,1.0f,v_flag)
-
-    /* Read land-sea mask...*/
-    ECC_READ_2D("lsm",met->lsm,1.0f,lsm_flag)
-    
-     /* Read sea surface temperature...*/
-    ECC_READ_2D("sst",met->sst,1.0f,sst_flag)
-  
-    if(ctl->met_cape == 0){
-
-        /* Read CAPE...*/
-        ECC_READ_2D("cape",met->cape,1.0f,cape_flag)
-        
-        /* Read CIN...*/
-        ECC_READ_2D("cin",met->cin,1.0f,cin_flag)
+      /* Read CAPE... */
+      ECC_READ_2D("cape", met->cape, 1.0f, cape_flag)
+	/* Read CIN... */
+	ECC_READ_2D("cin", met->cin, 1.0f, cin_flag)
     }
 
-    if(ctl->met_pbl == 0){
-      ECC_READ_2D("blh",met->pbl,0.0001f,pbl_flag)
+    if (ctl->met_pbl == 0) {
+      ECC_READ_2D("blh", met->pbl, 0.0001f, pbl_flag)
     }
-  free(values);
+    free(values);
   }
-  if(sp_flag==0){
+  if (sp_flag == 0) {
     WARN("Cannot read surface pressure data!");
   }
-  if(z_flag==0){
+  if (z_flag == 0) {
     WARN("Cannot read surface geopotential height!");
   }
-  if(t_flag==0){
+  if (t_flag == 0) {
     WARN("Cannot read surface temperature!");
   }
-  if(u_flag==0){
+  if (u_flag == 0) {
     WARN("Cannot read surface zonal wind!");
   }
-  if(v_flag==0){
+  if (v_flag == 0) {
     WARN("Cannot read surface meridional wind!");
   }
-  if(lsm_flag==0){
+  if (lsm_flag == 0) {
     WARN("Cannot read land-sea mask!");
   }
-  if(sst_flag==0){
+  if (sst_flag == 0) {
     WARN("Cannot read sea surface temperature!");
   }
-  if(ctl->met_cape == 0){
-    if(cape_flag==0){
+  if (ctl->met_cape == 0) {
+    if (cape_flag == 0) {
       WARN("Cannot read CAPE!");
     }
-    if(cin_flag==0){
+    if (cin_flag == 0) {
       WARN("Cannot read convective inhibition!");
     }
   }
-  if(ctl->met_pbl == 0){
-    if(pbl_flag==0){
+  if (ctl->met_pbl == 0) {
+    if (pbl_flag == 0) {
       WARN("Cannot read planetary boundary layer!");
     }
   }
 
-  LOG(1,"Finished reading surface data")
+  LOG(1, "Finished reading surface data")
 }
 #endif
 
