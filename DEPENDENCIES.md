@@ -22,10 +22,12 @@ These dependencies enable additional features of MPTRAC. They are not required f
 | Dependency | Version | Description |
 |------------|---------|-------------|
 | [NVIDIA HPC SDK](https://developer.nvidia.com/hpc-sdk) | v25.1 | GPU support |
+| [CMake](https://cmake.org/) | v3.28.3 | Build tool (required for ecCodes support) |
 | [Clang (LLVM)](https://clang.llvm.org) | v18.1.8 | Alternative C/C++ compiler |
 | [Intel Compilers (ICC and IFORT)](https://www.intel.com/content/www/us/en/developer/tools/oneapi/compilers.html) | v2024.2.0  | High-performance C, C++, and Fortran compilers from Intel |
 | [Open MPI](https://www.open-mpi.org) | v5.1.0 | MPI library for HPC support |
 | [ParaStation MPI](https://github.com/ParaStation/psmpi) | v5.11.0 | MPI library for HPC support |
+| [ecCodes](https://confluence.ecmwf.int/display/ECC/ecCodes+Home) | v2.38.3 | Encoding and decoding GRIB messages |
 | [Kinetic PreProcessor (KPP)](https://github.com/KineticPreProcessor/KPP) | v3.2.0 | Preprocessor for generating chemical mechanism code |
 | [Thrust](https://developer.nvidia.com/thrust) | v1.14.0 | C++ template library for parallel algorithms and data structures |
 | [zfp](https://computing.llnl.gov/projects/zfp) | v1.0.1 | Compression library |
