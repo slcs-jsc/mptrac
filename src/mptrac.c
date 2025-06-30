@@ -5580,7 +5580,7 @@ void mptrac_run_timestep(
   MPI_Comm_rank(MPI_COMM_WORLD,&rankd);
 
   /* Domain decomposition... */
-  //module_dd()
+#pragma acc update host(atm, cache)
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1) {
     
     
@@ -5592,10 +5592,7 @@ void mptrac_run_timestep(
 
     /* Get the MPI information... */
     int rank, size;
-    
-#pragma acc enter data create(particles[:NP], nparticles[:1], size[:1], rank[:1], neighbours[:NNMAX])  
-#pragma acc data present(particles, nparticles, size, rank, neighbours)
-    
+        
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;
@@ -5605,10 +5602,7 @@ void mptrac_run_timestep(
     /* Define grid neighbours ... */
     //LOG(1, "Define grid neighbours.");
     dd_get_rect_neighbour(*ctl, neighbours, rank, size);
-    
-#pragma acc update device(neighbours, rank, size)
-
-    
+        
     /* Assign particles to new subdomains... */
     //LOG(1, "Assign particles to new subdomains.")
     dd_assign_rect_subdomains_atm( atm, *met0, *ctl, rank, neighbours, 0);
@@ -5617,9 +5611,7 @@ void mptrac_run_timestep(
     //LOG(1, "Transform from SoA to AoS.")
     //atm2particles(atm, particles, *ctl)
     atm2particles( atm, particles, *ctl, &nparticles, cache);
-    
-#pragma acc update host(nparticles, particles, cache)
-    
+        
     /* Perform the communication... */
     //LOG(1, "Peform the communication.")
     //dd_communicate_particles( particles, &atm->np, MPI_Particle, 
@@ -5635,7 +5627,7 @@ void mptrac_run_timestep(
     dd_communicate_particles( particles, &nparticles, MPI_Particle, 
       neighbours, ctl->dd_nbr_neighbours , *ctl);
       
-#pragma acc update device(nparticles, particles, cache)
+
       
     // Copy particles, nparticles from CPUs to GPUs?
       
@@ -5646,15 +5638,12 @@ void mptrac_run_timestep(
     //LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
     MPI_Type_free(&MPI_Particle);
-
-#ifdef _OPENACC
-  #pragma acc exit data delete(particles, nparticles, size, rank, neighbours)
-#endif
     
     /* Free local particle array... */
     free(particles);
     
-  }  
+  } 
+#pragma acc update device(atm, cache) 
 
   /* Sort particles... */
   if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
@@ -12172,8 +12161,6 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
  
-#pragma acc kernels present(atm, rank, particles, nparticles, cache)
-{
   int ibfr = 0;
   for (int ip = 0; ip < atm->np; ip++)
     if (((int)(atm->q[ctl.qnt_destination][ip]) != rank)
@@ -12195,7 +12182,6 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
   }
  
   *nparticles = ibfr;
-}
 
 }
 
@@ -12204,10 +12190,8 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
 void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles,
   cache_t* cache) {
 
-  SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
-  #pragma acc kernels present(atm, particles, ctl, nparticles, cache)
-  {
   int ipp = 0;
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
   
@@ -12225,7 +12209,6 @@ void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
   }
   
   atm->np += *nparticles;
-  }
   
 }
 
@@ -12554,8 +12537,6 @@ void dd_assign_rect_subdomains_atm(
     
     if (init) {
     
-      #pragma acc data present(ctl, atm, rank)
-      #pragma acc parallel loop independent gang vector 
       for (int ip=0; ip<atm->np; ip++) {
 
         double lont = atm->lon[ip];
@@ -12578,8 +12559,6 @@ void dd_assign_rect_subdomains_atm(
     else {
     
      /* Classify air parcels into subdomain... */
-    #pragma acc data present(ctl,atm,met,rank)
-    #pragma acc parallel loop independent gang vector 
     for (int ip=0; ip<atm->np; ip++) {
     
       /* Skip empty places in the particle array... */
