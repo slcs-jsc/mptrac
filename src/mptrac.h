@@ -3715,6 +3715,15 @@ typedef struct {
    OpenACC routines...
    ------------------------------------------------------------ */
 
+//#ifdef _OPENACC
+//#pragma acc routine (dd_get_rect_neighbour)
+//#pragma acc routine (dd_assign_rect_subdomains_atm)
+//#pragma acc routine (atm2particles)
+//#pragma acc routine (dd_register_MPI_type_particle)
+//#pragma acc routine (dd_communicate_particles)
+//#pragma acc routine (particles2atm)
+//#endif
+
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
 #pragma acc routine (clim_photo)
@@ -8824,10 +8833,11 @@ void write_vtk(
  */
 void atm2particles(
   atm_t* atm, 
-  particle_t particles[], 
-  ctl_t ctl,
+  particle_t* particles, 
+  ctl_t* ctl,
   int* nparticles,
-  cache_t *cache);
+  cache_t *cache,
+  int rank);
 
 /**
  * @brief Converts particle data to atmospheric data.
@@ -8856,7 +8866,7 @@ void atm2particles(
   particle_t particles[], 
   ctl_t ctl);*/
   
-void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles,
+void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
    cache_t* cache);
 
 /**
@@ -9015,7 +9025,7 @@ void dd_communicate_particles(
  void dd_assign_rect_subdomains_atm(
   atm_t* atm,
   met_t* met, 
-  ctl_t ctl, 
+  ctl_t* ctl, 
   int rank, 
   int* neighbours, 
   int init);

@@ -3837,6 +3837,9 @@ void module_sort(
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
   double amax = (met0->nx*met0->ny + met0->ny)*met0->np + met0->np;
+  
+  /* MPI information... */
+  //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 #ifdef _OPENACC
 #pragma acc enter data create(a[0:np],p[0:np],amax)
@@ -3850,13 +3853,14 @@ void module_sort(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++) {
-    if ((int) atm->q[ctl->qnt_subdomain][ip] != -1)
-      a[ip] = 0;
-      /*(double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
+    if ((int) atm->q[ctl->qnt_subdomain][ip] != -1) {
+      a[ip] = (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
 		 locate_irr(met0->lat, met0->ny, atm->lat[ip]))
-		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));*/
-    else
+		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
+      // Alos if destination != rank amax+1, then below amax+2
+     } else {
       a[ip] = amax+1;
+     }
     p[ip] = ip;
   }
   
@@ -5580,60 +5584,65 @@ void mptrac_run_timestep(
   MPI_Comm_rank(MPI_COMM_WORLD,&rankd);
 
   /* Domain decomposition... */
-#pragma acc update host(atm, cache)
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1) {
     
-    
     /* Initialize particles locally... */
-    int nparticles = 0;
+    int nparticles = 0; 
     int neighbours[NNMAX];
     particle_t* particles;
     ALLOC(particles, particle_t, NP);
 
-    /* Get the MPI information... */
+    /* Get the MPI information on CPU... */
     int rank, size;
-        
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;
-   
-    //LOG(1, "Starting module_dd with %d particles on rank %d", atm->np, rank);
-            
+    size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;  
+    
     /* Define grid neighbours ... */
-    //LOG(1, "Define grid neighbours.");
+    // TODO: This actually only needs to be done ones!
     dd_get_rect_neighbour(*ctl, neighbours, rank, size);
-        
+            
+    /* Create data region... */    
+#pragma acc enter data create( nparticles, neighbours[:NNMAX], particles[:NP], rank, size)
+   
+    /* Update GPU... */
+#pragma acc update device( rank, size, nparticles, neighbours[:NNMAX])
+
     /* Assign particles to new subdomains... */
-    //LOG(1, "Assign particles to new subdomains.")
-    dd_assign_rect_subdomains_atm( atm, *met0, *ctl, rank, neighbours, 0);
-    
+    dd_assign_rect_subdomains_atm( atm, *met0, ctl, rank, neighbours, 0);
+            
     /* Transform from struct of array to array of struct... */
-    //LOG(1, "Transform from SoA to AoS.")
-    //atm2particles(atm, particles, *ctl)
-    atm2particles( atm, particles, *ctl, &nparticles, cache);
-        
-    /* Perform the communication... */
-    //LOG(1, "Peform the communication.")
-    //dd_communicate_particles( particles, &atm->np, MPI_Particle, 
-      //neighbours, ctl->dd_nbr_neighbours , *ctl, cache->dt);
-      
-    // Copy particles, nparticles, neighbours from GPUs to CPUs?
+    atm2particles( atm, particles, ctl, &nparticles, cache, rank);
     
+    
+    /*int debug0 = 0;
+    for (int ip = 0; ip < nparticles; ip++)
+      if ( ((int) particles[ip].q[ctl->qnt_destination] > 0) && ((int) particles[ip].q[ctl->qnt_destination] != rank))
+        debug0++;*/
+        
+    /* Update data on CPUs... */  
+#pragma acc update host( nparticles )
+#pragma acc update host( particles[:nparticles])
+
+    /*int debug1 = 0;
+    for (int ip = 0; ip < nparticles; ip++)
+      if ( ((int) particles[ip].q[ctl->qnt_destination] > 0) && ((int) particles[ip].q[ctl->qnt_destination] != rank))
+        debug1++;
+        
+    printf("Rank %d Debugging %d -> %d : nparticles %d \n", rank, debug0, debug1, nparticles);*/
+
     /* Register the MPI_Particle data type... */
-    //LOG(1, "Register the MPI_Particle data type.");
     MPI_Datatype MPI_Particle;
     dd_register_MPI_type_particle(&MPI_Particle);
-        
+      
+    /* Perform the communication... */  
     dd_communicate_particles( particles, &nparticles, MPI_Particle, 
       neighbours, ctl->dd_nbr_neighbours , *ctl);
-      
+#pragma acc update device( particles[:nparticles], nparticles, neighbours[:NNMAX])      
 
-      
-    // Copy particles, nparticles from CPUs to GPUs?
-      
     /* Transform from array of struct to struct of array... */
     //LOG(1, "Transform from AoS to SoA.")
-    particles2atm(atm, particles, *ctl, &nparticles, cache); 
+    particles2atm(atm, particles, ctl, &nparticles, cache);
     
     //LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
@@ -5642,8 +5651,10 @@ void mptrac_run_timestep(
     /* Free local particle array... */
     free(particles);
     
-  } 
-#pragma acc update device(atm, cache) 
+#pragma acc exit data delete(nparticles, neighbours, particles, rank, size)
+  
+  }
+  
 
   /* Sort particles... */
   if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
@@ -12150,32 +12161,29 @@ void write_vtk(
 
 /*****************************************************************************/
 
-void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles, 
-    cache_t *cache) {
+void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles, 
+    cache_t *cache, int rank) {
   
-  SELECT_TIMER("ATM2PARTICLES", "DD", NVTX_READ);
+  SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
   
-  // Select the particles that will be send...
-  
-  /* Get MPI rank... */
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
- 
+/* Select the particles that will be send... */
+#pragma acc parallel present(atm, ctl, particles, nparticles, cache)
+{
   int ibfr = 0;
   for (int ip = 0; ip < atm->np; ip++)
-    if (((int)(atm->q[ctl.qnt_destination][ip]) != rank)
-        && ((int)(atm->q[ctl.qnt_destination][ip]) >= 0)
-        && ((int)atm->q[ctl.qnt_subdomain][ip] >= 0)) {
+    if (((int)(atm->q[ctl->qnt_destination][ip]) != rank)
+        && ((int)(atm->q[ctl->qnt_destination][ip]) >= 0)
+        && ((int)atm->q[ctl->qnt_subdomain][ip] >= 0)) {
 
         particles[ibfr].time = atm->time[ip];
         particles[ibfr].lon = atm->lon[ip];
         particles[ibfr].lat = atm->lat[ip];
         particles[ibfr].p = atm->p[ip];
 
-        for (int iq = 0; iq < ctl.nq; iq++)
+        for (int iq = 0; iq < ctl->nq; iq++)
             particles[ibfr].q[iq] = atm->q[iq][ip];
 
-        atm->q[ctl.qnt_subdomain][ip] = -1;
+        atm->q[ctl->qnt_subdomain][ip] = -1;
         cache->dt[ip] = 0;
         
         ibfr++;
@@ -12185,31 +12193,32 @@ void atm2particles(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticle
 
 }
 
+}
+
 /*****************************************************************************/
 
-void particles2atm(atm_t* atm, particle_t particles[], ctl_t ctl, int* nparticles,
+void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
   cache_t* cache) {
 
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
-  int ipp = 0;
+#pragma acc kernels present(atm, particles, ctl, nparticles, cache)
+{
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
-  
-      ipp = ip - atm->np;
-  
-      atm->time[ip] = particles[ipp].time;
-      atm->lon[ip] = particles[ipp].lon; 
-      atm->lat[ip] = particles[ipp].lat;
-      atm->p[ip] = particles[ipp].p;
+    
+      atm->time[ip] = particles[ip - atm->np].time;
+      atm->lon[ip] = particles[ip - atm->np].lon; 
+      atm->lat[ip] = particles[ip - atm->np].lat;
+      atm->p[ip] = particles[ip - atm->np].p;
 
-      for (int iq = 0; iq < ctl.nq; iq++) 
-        atm->q[iq][ip] = particles[ipp].q[iq];
+      for (int iq = 0; iq < ctl->nq; iq++) 
+        atm->q[iq][ip] = particles[ip - atm->np].q[iq];
         
-       cache->dt[ip] = ctl.dt_mod;
+       cache->dt[ip] = ctl->dt_mod;
   }
   
   atm->np += *nparticles;
-  
+}
 }
 
 /*****************************************************************************/
@@ -12233,7 +12242,7 @@ void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 void dd_get_rect_neighbour(const ctl_t ctl, int* neighbours, int rank, int size) {
 
       SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
-    
+
       if ( rank + 1 == size) {
 
         neighbours[0] = rank - ctl.dd_subdomains_meridional;   
@@ -12356,8 +12365,7 @@ void dd_get_rect_neighbour(const ctl_t ctl, int* neighbours, int rank, int size)
     /*LOG(2, "Rank %d neighbours: %d, %d, %d, %d, %d, %d, %d, %d", rank, neighbours[0],
       neighbours[1], neighbours[2], neighbours[3], neighbours[4],
       neighbours[5], neighbours[6], neighbours[7]);*/
-    
-  }
+}
   
 
 /*****************************************************************************/
@@ -12528,7 +12536,7 @@ void dd_communicate_particles(
 void dd_assign_rect_subdomains_atm(
   atm_t* atm,
   met_t* met, 
-  ctl_t ctl,
+  ctl_t* ctl,
   int rank, 
   int* neighbours, 
   int init) {
@@ -12536,7 +12544,8 @@ void dd_assign_rect_subdomains_atm(
     SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
     
     if (init) {
-    
+#pragma acc data present(atm, ctl)
+#pragma acc parallel loop independent gang vector
       for (int ip=0; ip<atm->np; ip++) {
 
         double lont = atm->lon[ip];
@@ -12546,23 +12555,23 @@ void dd_assign_rect_subdomains_atm(
 
         if (lont >= met->subdomain_lon_min && lont < met->subdomain_lon_max
          && atm->lat[ip] >= met->subdomain_lat_min && atm->lat[ip] < met->subdomain_lat_max) {
-          atm->q[ctl.qnt_subdomain][ip] = rank;
-          atm->q[ctl.qnt_destination][ip] = rank;
+          atm->q[ctl->qnt_subdomain][ip] = rank;
+          atm->q[ctl->qnt_destination][ip] = rank;
         }
         else {
-          atm->q[ctl.qnt_subdomain][ip] = -1;
-          atm->q[ctl.qnt_destination][ip] = -1;
+          atm->q[ctl->qnt_subdomain][ip] = -1;
+          atm->q[ctl->qnt_destination][ip] = -1;
         }   
       } 
-    }
-    
-    else {
+    } else {
     
      /* Classify air parcels into subdomain... */
+#pragma data present(atm, ctl, neighbours)
+#pragma acc parallel loop independent gang vector
     for (int ip=0; ip<atm->np; ip++) {
     
       /* Skip empty places in the particle array... */
-      if ((int) atm->q[ctl.qnt_subdomain][ip] == -1)
+      if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
         continue;
 
       double lont = atm->lon[ip];
@@ -12576,9 +12585,9 @@ void dd_assign_rect_subdomains_atm(
       if (lont < 0) 
         lont += 360;
  
-      int size = ctl.dd_subdomains_meridional*ctl.dd_subdomains_zonal;
-      bool left = (rank <= ctl.dd_subdomains_meridional-1);
-      bool right = (rank >= size-ctl.dd_subdomains_meridional);    
+      int size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;
+      bool left = (rank <= ctl->dd_subdomains_meridional-1);
+      bool right = (rank >= size-ctl->dd_subdomains_meridional);    
       
       bool bound = 0;
       if (left)
@@ -12589,80 +12598,78 @@ void dd_assign_rect_subdomains_atm(
       if (!bound) {
         if ((lont >= lon_max) && (latt >= lat_max)) {
           // Upper right...
-          atm->q[ctl.qnt_destination][ip] = neighbours[5];
+          atm->q[ctl->qnt_destination][ip] = neighbours[5];
         }
         else if ((lont >= lon_max) && (latt <= lat_min)) {
           // Lower right...
-          atm->q[ctl.qnt_destination][ip] = neighbours[4];
+          atm->q[ctl->qnt_destination][ip] = neighbours[4];
         }
         else if ((lont <= lon_min) && (latt >= lat_max)) {
           // Upper left...
-          atm->q[ctl.qnt_destination][ip] = neighbours[2];
+          atm->q[ctl->qnt_destination][ip] = neighbours[2];
         }
         else if ((lont <= lon_min) && (latt <= lat_min)) {
           // Lower left...
-          atm->q[ctl.qnt_destination][ip] = neighbours[1];
+          atm->q[ctl->qnt_destination][ip] = neighbours[1];
         }
         else if (lont >= lon_max) {
           // Right...
-          atm->q[ctl.qnt_destination][ip] = neighbours[3];
+          atm->q[ctl->qnt_destination][ip] = neighbours[3];
         }
         else if (lont <= lon_min) {
           // Left...
-          atm->q[ctl.qnt_destination][ip] = neighbours[0];
+          atm->q[ctl->qnt_destination][ip] = neighbours[0];
         }
         else if (latt <= lat_min) {
           // Down...
-          atm->q[ctl.qnt_destination][ip] = neighbours[7];
+          atm->q[ctl->qnt_destination][ip] = neighbours[7];
         }
         else if (latt >= lat_max) {
           // Up...
-          atm->q[ctl.qnt_destination][ip] = neighbours[6];
+          atm->q[ctl->qnt_destination][ip] = neighbours[6];
         }
         else {
           // Within...
-          atm->q[ctl.qnt_destination][ip] = rank;
+          atm->q[ctl->qnt_destination][ip] = rank;
         }
       } else {
         if ((lont >= lon_max) && (latt >= lat_max)) {
           // Upper right...
-          atm->q[ctl.qnt_destination][ip] = neighbours[2];
+          atm->q[ctl->qnt_destination][ip] = neighbours[2];
         }
         else if ((lont >= lon_max) && (latt <= lat_min)) {
           // Lower right...
-          atm->q[ctl.qnt_destination][ip] = neighbours[1];
+          atm->q[ctl->qnt_destination][ip] = neighbours[1];
         }
         else if ((lont <= lon_min) && (latt >= lat_max)) {
           // Upper left...
-          atm->q[ctl.qnt_destination][ip] = neighbours[5];
+          atm->q[ctl->qnt_destination][ip] = neighbours[5];
         }
         else if ((lont <= lon_min) && (latt <= lat_min)) {
           // Lower left...
-          atm->q[ctl.qnt_destination][ip] = neighbours[4];
+          atm->q[ctl->qnt_destination][ip] = neighbours[4];
         }
         else if (lont >= lon_max) {
           // Right...
-          atm->q[ctl.qnt_destination][ip] = neighbours[0];
+          atm->q[ctl->qnt_destination][ip] = neighbours[0];
         }
         else if (lont <= lon_min) {
           // Left...
-          atm->q[ctl.qnt_destination][ip] = neighbours[3];
+          atm->q[ctl->qnt_destination][ip] = neighbours[3];
         }
         else if (latt <= lat_min) {
           // Down...
-          atm->q[ctl.qnt_destination][ip] = neighbours[7];
+          atm->q[ctl->qnt_destination][ip] = neighbours[7];
         }
         else if (latt >= lat_max) {
           // Up...
-          atm->q[ctl.qnt_destination][ip] = neighbours[6];
+          atm->q[ctl->qnt_destination][ip] = neighbours[6];
         }
         else {
           // Within...
-          atm->q[ctl.qnt_destination][ip] = rank;
+          atm->q[ctl->qnt_destination][ip] = rank;
         }
      }
-    
-   
     }
    }
   }

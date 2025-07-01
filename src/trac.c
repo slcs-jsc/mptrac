@@ -125,10 +125,15 @@ int main(
         /* Define grid neighbours ... */
         int neighbours[NNMAX];
         dd_get_rect_neighbour(*ctl, neighbours, rank, size);
-      
+        
+        /* Create data region... */
+#pragma acc enter data create(neighbours[:NNMAX], rank, size)
+        /* Update GPU... */
+#pragma acc update device( rank, size, neighbours[:NNMAX])      
         /* Check if particles are in subdomain. */
-        dd_assign_rect_subdomains_atm( atm, met0, *ctl, rank, neighbours, 1);
-
+        dd_assign_rect_subdomains_atm( atm, met0, ctl, rank, neighbours, 1);
+        /* Delete data region... */
+#pragma acc exit data delete(neighbours[:NNMAX], rank, size)
         dd_init = 1;
       }
 
