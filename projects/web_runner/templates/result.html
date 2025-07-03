@@ -38,21 +38,26 @@
     
     <br><br>
     
-    {% if plot_url %}
-    <h3 class="w3-center">Trajectory Plot</h3>
-    <div class="w3-container w3-center">
-      <img src="data:image/png;base64,{{ plot_url }}" alt="Trajectory Plot" class="w3-image w3-round-large" style="max-width: 80%; background: #222; padding: 10px;">
+    <!-- Common wrapper to unify width -->
+    <div style="width: 80%; margin: 0 auto; box-sizing: border-box;">
+      
+      {% if plot_url %}
+      <h3 class="w3-center">Trajectory Plot</h3>
+      <div class="w3-container w3-center" style="padding: 0;">
+	<img src="data:image/png;base64,{{ plot_url }}" alt="Trajectory Plot" 
+             class="w3-round-large"
+	     style="width: 100%; background: #222; padding: 15px; box-sizing: border-box;">
+      </div>
+      
+      <br><br>
+      {% endif %}
+      
+      <h3 class="w3-center">Log Output</h3>
+      <pre class="w3-round-large"
+	   style="width: 100%; background: #222; padding: 15px; max-height: 500px; overflow: auto; box-sizing: border-box;">
+	{{ stdout }}
+      </pre>
     </div>
-    
-    <br><br>
-    {% endif %}
-        
-    <h3 class="w3-center">Log Output</h3>
-    
-    <pre class="w3-container w3-round-large" 
-	 style="max-width: 80%; background: #222; padding: 15px; max-height: 500px; overflow: auto; margin: 0 auto;">
-{{ stdout }}
-    </pre>
     
     <br><br>
     
