@@ -23,13 +23,29 @@ scientific publications:
   one. Specific DOIs for each release of MPTRAC can be found on the
   Zenodo web site.
 
-This is a list of papers in which MPTRAC was applied:
+This is a list of papers and theses in which MPTRAC was applied:
+
+- Huang, M. and Heng, Y.: Supercomputing-based inverse identification
+  of high-resolution atmospheric pollutant source intensity
+  distributions in High-Performance Computing and Artificial
+  Intelligence in Process Engineering, IOP Publishing, Bristol, UK,
+  <https://dx.doi.org/10.1088/978-0-7503-6174-3ch10>, 2025.
+
+- Liu, M., Chemistry modeling and inverse reconstruction of emissions
+  with a Lagrangian transport model, Dissertation, Bergische
+  Universität Wuppertal, Wuppertal,
+  <https://doi.org/10.25926/BUW/0-799>, 2025
 
 - Liu, M., Hoffmann, L., Grooß, J.-U., Cai, Z., Grießbach, S., and
   Heng, Y.: Technical note: A comparative study of chemistry schemes
   for volcanic sulfur dioxide in Lagrangian transport simulations – a
   case study of the 2019 Raikoke eruption, Atmos. Chem. Phys., 25,
   4403–4418, <https://doi.org/10.5194/acp-25-4403-2025>, 2025.
+
+- Clemens, J. H., Multi-scenario, high-resolution Lagrangian transport
+  modeling for the analysis of the Asian tropopause aerosol layer,
+  Dissertation, Bergische Universität Wuppertal, Wuppertal,
+  <https://doi.org/10.25926/BUW/0-796>, 2024.
 
 - Clemens, J., Hoffmann, L., Vogel, B., Grießbach, S., and Thomas, N.:
   Implementation and evaluation of diabatic advection in the
