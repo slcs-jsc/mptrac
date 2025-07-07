@@ -54,8 +54,8 @@ After running the simulation, you will find:
 
 Example outputs include global maps such as:
 
-<p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
-<p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
 
 ## What's Next?
 
