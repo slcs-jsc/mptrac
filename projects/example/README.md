@@ -54,10 +54,8 @@ After running the simulation, you will find:
 
 Example outputs include global maps such as:
 
-<p align="center">
-  <img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp;
-  <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/>
-</p>
+<p align="center"><img src="projects/example/plots.ref/atm_2011_06_06_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_06_00_00.tab.png" width="45%"/></p>
+<p align="center"><img src="projects/example/plots.ref/atm_2011_06_08_00_00.tab.png" width="45%"/> &emsp; <img src="projects/example/plots.ref/grid_2011_06_08_00_00.tab.png" width="45%"/></p>
 
 ## What's Next?
 
@@ -72,8 +70,6 @@ This example is just a starting point — the `example/` directory provides a mi
 - View trajectories in 3D using ParaView via `projects/paraview/`.
 
 - Explore the full documentation in the [MPTRAC Manual](https://slcs-jsc.github.io/mptrac).
-
----
 
 For more advanced simulations, you can build your own setup from scratch or modify the example project for new scenarios. Adapt the input files and parameters to suit your specific scientific needs.
 
