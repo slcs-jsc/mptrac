@@ -130,6 +130,9 @@ def run():
         #DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
+        start_time_string = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
+        if met_source == 'gfs_3h':
+            METBASE = f"/mnt/slmet-mnt/met_data/ncep/gfs/data_{start_time_string.strftime('%Y_%m_%d')}/gfs"
         z0, z1, dz = to_f('z0'), to_f('z1'), to_f('dz')
         lat0, lat1, dlat = to_f('lat0'), to_f('lat1'), to_f('dlat')
         lon0, lon1, dlon = to_f('lon0'), to_f('lon1'), to_f('dlon')
