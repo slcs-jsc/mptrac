@@ -251,15 +251,15 @@
       <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Select the output interval to determine how frequently simulation results are recorded.</p>
 	<div class="w3-row-padding">
-	  <div class="w3-third" style="padding: 16px;">
+	  <div class="w3-full" style="padding: 16px;">
 	    <label>Output Interval</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="900"> 15 min</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="1800"> 30 min</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="3600"> 1 h</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="10800"> 3 h</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="21600" checked> 6 h</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="43200"> 12 h</label><br>
-	    <label class="w3-small"><input class="w3-radio" type="radio" name="atm_dt_out" value="86400"> 24 h</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="900"> 15 min</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="1800"> 30 min</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="3600"> 1 h</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="10800"> 3 h</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="21600" checked> 6 h</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="43200"> 12 h</label>
+	    <label class="w3-small" style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="86400"> 24 h</label>
 	  </div>
 	</div>
 	<hr style="border-color: #444;">
@@ -271,20 +271,21 @@
 	    <label class="w3-small"><input class="w3-radio" type="radio" name="plot_region" value="regional"> Regional</label>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-	    <label>Projection</label><br>
+	    <label>Map Projection</label><br>
 	    <label class="w3-small"><input class="w3-radio" type="radio" name="map_projection" value="cartesian" checked> Cartesian</label><br>
 	    <label class="w3-small"><input class="w3-radio" type="radio" name="map_projection" value="orthographic"> Orthographic</label><br>
 	    <label class="w3-small"><input class="w3-radio" type="radio" name="map_projection" value="robinson"> Robinson</label>
 	  </div>
-	</div>
-	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-	    <label>Central Longitude [°]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lon" value="0.0" required>
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-	    <label>Central Latitude [°]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lat" value="0.0" required>
+	    <div>
+	      <label>Central Longitude [°]</label>
+	      <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lon" value="0.0" required>
+	    </div>
+	    <br>
+	    <div>
+	      <label>Central Latitude [°]</label>
+	      <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lat" value="0.0" required>
+	    </div>
 	  </div>
 	</div>
       </div>
