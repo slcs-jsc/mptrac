@@ -19,41 +19,20 @@ app = Flask(__name__)
 
 # Meteo options...
 MET_OPTIONS = {
-    'era5low_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
-        'DT_MET': 21600.0,
-        'MET_PRESS_LEVEL_DEF': 6
-    },
-    'erai_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
-        'DT_MET': 21600.0,
-        'MET_PRESS_LEVEL_DEF': -1
-    },
-    'merra2_3h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
-        'DT_MET': 10800.0,
-        'MET_PRESS_LEVEL_DEF': 6
-    },
-    'merra2_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
-        'DT_MET': 21600.0,
-        'MET_PRESS_LEVEL_DEF': 6
-    },
-    'ncep_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
-        'DT_MET': 21600.0,
-        'MET_PRESS_LEVEL_DEF': -1
-    },
-    'ncep2_6h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
-        'DT_MET': 21600.0,
-        'MET_PRESS_LEVEL_DEF': -1
-    },
-    'gfs_3h': {
-        'METBASE': '/mnt/slmet-mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
-        'DT_MET': 10800.0,
-        'MET_PRESS_LEVEL_DEF': -1
-    }
+    'era5low_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
+                       DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='ERA5'),
+    'erai_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
+                    DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ERA-Interim'),
+    'merra2_3h': dict(METBASE='/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
+                      DT_MET=10800, MET_PRESS_LEVEL_DEF=6, MET_NAME='MERRA-2'),
+    'merra2_6h': dict(METBASE='/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
+                      DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='MERRA-2'),
+    'ncep_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
+                    DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-NCAR Reanalysis 1'),
+    'ncep2_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
+                     DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2'),
+    'gfs_3h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
+                   DT_MET=10800, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP GFS')
 }
 
 # Clean up working directory...
@@ -78,7 +57,10 @@ def seconds_since_2000(time_str):
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
 # Create map plot of air parcel data...
-def create_plot(lons, lats, heights, projection='cartesian', region='global', central_lon=0.0, central_lat=0.0):
+def create_plot(lons, lats, heights,
+                projection='cartesian', region='global',
+                central_lon=0.0, central_lat=0.0,
+                met_name='', start_time_str='', stop_time_str=''):
     proj_map = {
         'cartesian': ccrs.PlateCarree(),
         'orthographic': ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat),
@@ -100,7 +82,8 @@ def create_plot(lons, lats, heights, projection='cartesian', region='global', ce
     cbar.ax.xaxis.set_tick_params(color='black')
     plt.setp(cbar.ax.get_xticklabels(), color='black')
     ax.tick_params(axis='both', colors='black')
-    ax.set_title('MPTRAC | Air Parcel Trajectories', fontsize=16, color='black')
+    title = f"MPTRAC | {met_name} | {start_time_str} to {stop_time_str}"
+    ax.set_title(title, fontsize=16, color='black', pad=12)
     buf = io.BytesIO()
     plt.savefig(buf, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close()
@@ -124,22 +107,28 @@ def run():
         f = request.form
         to_f = lambda x: float(f[x])
         met_source = f.get('met_source', 'erai_6h')
+        met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
         #METBASE = '../../tests/data/ei'
         #DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
+        start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
+        stop_dt = datetime.strptime(f['stop_time'], "%Y-%m-%d %H:%M")
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
-        start_time_string = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
+        start_time_str = start_dt.strftime("%Y-%m-%dT%H:%MZ")
+        stop_time_str = stop_dt.strftime("%Y-%m-%dT%H:%MZ")
         if met_source == 'gfs_3h':
-            METBASE = f"/mnt/slmet-mnt/met_data/ncep/gfs/data_{start_time_string.strftime('%Y_%m_%d')}/gfs"
+            METBASE = f"/mnt/slmet-mnt/met_data/ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"        
         z0, z1, dz = to_f('z0'), to_f('z1'), to_f('dz')
         lat0, lat1, dlat = to_f('lat0'), to_f('lat1'), to_f('dlat')
         lon0, lon1, dlon = to_f('lon0'), to_f('lon1'), to_f('dlon')
         rep = int(f['rep'])
         ulon, ulat, uz = to_f('ulon'), to_f('ulat'), to_f('uz')
         slon, slat, sz = to_f('slon'), to_f('slat'), to_f('sz')
-        turb = {k: to_f(k) for k in ['turb_dx_pbl','turb_dx_trop','turb_dx_strat','turb_dz_pbl','turb_dz_trop','turb_dz_strat','turb_mesox','turb_mesoz']}
+        turb = {k: to_f(k) for k in ['turb_dx_pbl','turb_dx_trop','turb_dx_strat',
+                                     'turb_dz_pbl','turb_dz_trop','turb_dz_strat',
+                                     'turb_mesox','turb_mesoz']}
         atm_dt_out = to_f('atm_dt_out')
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
@@ -283,12 +272,13 @@ def run():
         # Plot...
         plot_url = create_plot(
             lons_sorted, lats_sorted, heights_sorted,
-            projection=map_projection,
-            region=plot_region,
-            central_lon=central_lon,
-            central_lat=central_lat
+            projection=map_projection, region=plot_region,
+            central_lon=central_lon, central_lat=central_lat,
+            met_name=met_name,
+            start_time_str=start_time_str,
+            stop_time_str=stop_time_str
         )
-
+        
         # Clean up...
         delayed_cleanup(work_dir)
         return render_template('result.html', run_id=run_id, stdout=combined_output, plot_url=plot_url)
