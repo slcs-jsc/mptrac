@@ -50,7 +50,7 @@ MET_OPTIONS = {
         'MET_PRESS_LEVEL_DEF': -1
     },
     'gfs_3h': {
-        'METBASE': '/p/data1/slmet/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
+        'METBASE': '/mnt/slmet-mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
         'DT_MET': 10800.0,
         'MET_PRESS_LEVEL_DEF': -1
     }
