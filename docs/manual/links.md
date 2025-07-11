@@ -1,6 +1,6 @@
 # Links
 
-These links provide further information for users of MPTRAC:
+These links provide further information for users and developers of MPTRAC:
 
 * [README file](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
 
@@ -24,7 +24,7 @@ These links provide further information for users of MPTRAC:
 
 * [License](https://github.com/slcs-jsc/mptrac/blob/master/COPYING)
 
-These links provide further informaton for developers of MPTRAC:
+Links to external resources:
 
 * [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de)
 
@@ -34,11 +34,11 @@ These links provide further informaton for developers of MPTRAC:
 
 * [User and developer meeting](https://iffmd.fz-juelich.de/s/7EQXSZTDy#) (internal)
 
-* [MPTRAC data repository](https://datapub.fz-juelich.de/slcs/mptrac)
+* [MPTRAC Data Repository](https://datapub.fz-juelich.de/slcs/mptrac)
 
-* [Tropopause data repository](https://datapub.fz-juelich.de/slcs/tropopause)
+* [Reanalysis Tropopause Data Repository](https://datapub.fz-juelich.de/slcs/tropopause)
 
-* [Nightly builds](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds)
+* [Nightly Builds](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds)
 
 * [ESM Buildbot](https://esm-buildbot.fz-juelich.de) (internal)
 
