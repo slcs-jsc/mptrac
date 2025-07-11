@@ -27,15 +27,7 @@ MPTRAC leverages massive parallelization to efficiently handle large-scale traje
 
 The model's primary focus is on accurately tracking the movement of air parcels and particles over extended periods of time and large spatial domains. It accounts for complex atmospheric processes, including advection, turbulent diffusion, and various meteorological influences, by integrating high-resolution meteorological data.
 
-MPTRAC is used in applications such as:
-
-- Tracking long-range transport of pollutants, including aerosol particles and trace gases.
-
-- Volcanic ash dispersion modeling to predict ash cloud movement and impact.
-
-- Stratospheric tracer experiments to investigate stratosphere-troposphere exchange processes.
-
-- Atmospheric chemistry studies, focusing on the distribution and transformation of trace gases.
+MPTRAC is used in a range of applications, including tracking the long-range transport of pollutants such as aerosol particles and trace gases, modeling volcanic ash dispersion to predict the movement and impact of ash clouds, conducting stratospheric tracer experiments to study stratosphere-troposphere exchange processes, and supporting atmospheric chemistry research by examining the distribution and transformation of trace gases.
 
 By offering scalability and accuracy, MPTRAC empowers atmospheric scientists and environmental researchers to gain deeper insights into complex transport phenomena, enhancing our understanding of atmospheric dynamics and improving prediction capabilities.
 
@@ -53,7 +45,9 @@ MPTRAC is a powerful tool for atmospheric trajectory calculations, offering a wi
 
 - **Flexible Output and Visualization**: MPTRAC supports various output formats for particle trajectories, gridded fields, ensemble statistics, vertical profiles, point samples, and station data. Visualization interfaces with Gnuplot and ParaView make it easy to analyze complex data.
 
-- **High-Performance Computing**: The model employs hybrid parallelization using MPI, OpenMP, and OpenACC, allowing efficient utilization of resources from single workstations to HPC clusters and GPU systems.
+- **High-Performance Computing**: The model employs hybrid parallelization using MPI, OpenMP, and OpenACC, allowing efficient utilization of resources from single workstations to HPC clusters and GPU-based systems.
+
+- Web-Based Accessibility: The new [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de) provides an intuitive, browser-based interface for running trajectory simulations without local installation, making the tool more accessible for educational, research, and operational users.
 
 - **Open Source and Community Driven**: MPTRAC is distributed as open-source software under the GNU General Public License (GPL), promoting collaborative development and ensuring transparency.
 
