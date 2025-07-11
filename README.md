@@ -45,7 +45,7 @@ MPTRAC is a powerful tool for atmospheric Lagrangian transport simulations, offe
 
 - **High-Performance Computing**: The model employs hybrid parallelization using MPI, OpenMP, and OpenACC, allowing efficient utilization of resources from single workstations to HPC clusters and GPU-based systems.
 
-- **Web-Based Accessibility**: The new [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de) provides an intuitive, browser-based interface for running trajectory simulations without local installation, making the tool more accessible for educational, research, and operational users.
+- **Web-Based Accessibility**: The new MPTRAC Web Runner provides an intuitive, browser-based interface for running trajectory simulations without local installation, making the tool more accessible for educational, research, and operational users.
 
 - **Open Source and Community Driven**: MPTRAC is distributed as open-source software under the GNU General Public License (GPL), promoting collaborative development and ensuring transparency.
 
@@ -160,9 +160,11 @@ These directories offer helpful tools and examples for extending your use of MPT
 
 To learn more about MPTRAC and its scientific background, please refer to the following key publications:
 
-* Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, https://doi.org/10.5194/gmd-15-2731-2022, 2022.
+* Hoffmann, L., Clemens, J., Griessbach, S., Haghighi Mood, K., Heng, Y., Khosrawi, F., Liu, M., Lu, Y.-S., Meyer, C., Nobre Wittwer, N., Wu, X., Zou, L., MPTRAC: A high-performance Lagrangian transport model for atmospheric air parcel dispersion, Journal of Open Source Software, 10(111), 8177, <https://doi.org/10.21105/joss.08177>, 2025.
 
-* Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, https://doi.org/10.1002/2015JD023749, 2016. 
+* Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach, S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O., Thomas, N., Vogel, B., Wu, X., and Zou, L.: Massive-Parallel Trajectory Calculations version 2.2 (MPTRAC-2.2): Lagrangian transport simulations on graphics processing units (GPUs), Geosci. Model Dev., 15, 2731–2762, <https://doi.org/10.5194/gmd-15-2731-2022>, 2022.
+
+* Hoffmann, L., T. Rößler, S. Griessbach, Y. Heng, and O. Stein, Lagrangian transport simulations of volcanic sulfur dioxide emissions: Impact of meteorological data products, J. Geophys. Res. Atmos., 121, 4651-4673, <https://doi.org/10.1002/2015JD023749>, 2016. 
 
 For a complete list of related publications and references, please visit the [references page](https://slcs-jsc.github.io/mptrac/references/).
 

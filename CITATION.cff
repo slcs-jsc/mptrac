@@ -59,14 +59,17 @@ authors:
     orcid: 'https://orcid.org/0000-0001-6563-9815'
 identifiers:
   - type: doi
+    value: 10.21105/joss.08177
+    description: Introductory paper.
+  - type: doi
     value: 10.5194/gmd-15-2731-2022
     description: Reference paper.
   - type: doi
     value: 10.1002/2015JD023749
-    description: Reference paper.
+    description: First publication.
   - type: doi
     value: 10.5281/zenodo.4400597
-    description: Latest release on Zenodo.
+    description: Latest software release on Zenodo.
   - type: url
     value: 'https://github.com/slcs-jsc/mptrac'
     description: Software repository on GitHub.
