@@ -242,6 +242,25 @@
             <input class="w3-input w3-dark-gray w3-round" type="text" name="turb_mesoz" value="0.16" required>
 	  </div>
 	</div>
+	<hr style="border-color: #444;">
+	<p>Select thresholds for extreme convection parametrization, and choose whether to enable vertical mixing throughout the planetary boundary layer (PBL).</p>
+	<div class="w3-row-padding">
+	  <div class="w3-third" style="padding: 16px;">
+	    <label for="conv_cape">CAPE Threshold [J/kg]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="conv_cape" id="conv_cape" value="-999" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label for="conv_cin">CIN Threshold [J/kg]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="conv_cin" id="conv_cin" value="-999" required>
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>PBL Mixing</label><br>
+	    <input class="w3-radio" type="radio" name="conv_mix_pbl" id="pbl_mix_yes" value="1">
+	    <label for="pbl_mix_yes">Yes</label>
+	    <input class="w3-radio" type="radio" name="conv_mix_pbl" id="pbl_mix_no" value="0" checked>
+	    <label for="pbl_mix_no">No</label>
+	  </div>
+	</div>
       </div>
       
       <!-- Output Settings -->

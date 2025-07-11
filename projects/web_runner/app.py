@@ -110,8 +110,8 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-        #METBASE = '../../tests/data/ei'
-        #DT_MET = 86400
+        # METBASE = '../../tests/data/ei'
+        # DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
         stop_dt = datetime.strptime(f['stop_time'], "%Y-%m-%d %H:%M")
@@ -129,6 +129,8 @@ def run():
         turb = {k: to_f(k) for k in ['turb_dx_pbl','turb_dx_trop','turb_dx_strat',
                                      'turb_dz_pbl','turb_dz_trop','turb_dz_strat',
                                      'turb_mesox','turb_mesoz']}
+        conv_cape, conv_cin = to_f('conv_cape'), to_f('conv_cin')
+        conv_mix_pbl = int(f.get('conv_mix_pbl', 0))
         atm_dt_out = to_f('atm_dt_out')
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
@@ -217,6 +219,9 @@ def run():
     MET_PRESS_LEVEL_DEF = {MET_PRESS_LEVEL_DEF}
     DIFFUSION = 1
     """ + '\n'.join(f"{k.upper()} = {v}" for k, v in turb.items()) + f"""
+    CONV_CAPE = {conv_cape}
+    CONV_CIN = {conv_cin}
+    CONV_MIX_PBL = {conv_mix_pbl}
     ATM_BASENAME = {atm_file}
     ATM_DT_OUT = {atm_dt_out}
     """)

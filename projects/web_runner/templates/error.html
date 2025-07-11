@@ -22,15 +22,18 @@
     </div>
     
     <br>
+
+    <!-- Common wrapper to unify width -->
+    <div style="width: 80%; margin: 0 auto; box-sizing: border-box;">
+      
+      <h2 class="w3-text-red w3-center">❌ Simulation Failed</h2>
+      <h3 class="w3-center">Log Output</h3>
+      <pre class="w3-round-large"
+	   style="width: 100%; background: #222; padding: 15px; max-height: 500px; overflow: auto; box-sizing: border-box;">
+	{{ stdout }}
+      </pre>
+    </div>
     
-    <h2 class="w3-text-red w3-center">❌ Simulation Failed</h2>
-
-    <h3 class="w3-center">Log Output</h3>
-
-    <pre class="w3-container w3-round-large" style="background: #220000; padding: 15px; max-height: 500px; overflow: auto;">
-{{ stdout }}
-    </pre>
-
     <br>
     
     <div class="w3-bar w3-center">
