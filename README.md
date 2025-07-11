@@ -21,19 +21,17 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ## Introduction
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a high-performance Lagrangian particle dispersion model designed to simulate and analyze atmospheric transport processes in the free troposphere and stratosphere.
+Massive-Parallel Trajectory Calculations (MPTRAC) is a high-performance Lagrangian particle dispersion model for simulating atmospheric transport in the free troposphere and stratosphere.
 
-MPTRAC leverages massive parallelization to efficiently handle large-scale trajectory calculations, making it a helpful tool for researchers and scientists studying atmospheric dynamics, pollutant dispersion, and stratospheric transport events.
+Designed for scalability, MPTRAC efficiently handles large-scale trajectory calculations using massive parallelization, making it a valuable tool for studying atmospheric dynamics, pollutant dispersion, and stratospheric transport.
 
-The model's primary focus is on accurately tracking the movement of air parcels and particles over extended periods of time and large spatial domains. It accounts for complex atmospheric processes, including advection, turbulent diffusion, and various meteorological influences, by integrating high-resolution meteorological data.
+The model accurately tracks air parcels across large spatial and temporal scales by integrating high-resolution meteorological data and accounting for processes such as advection, turbulent diffusion, and meteorological variability.
 
-MPTRAC is used in a range of applications, including tracking the long-range transport of pollutants such as aerosol particles and trace gases, modeling volcanic ash dispersion to predict the movement and impact of ash clouds, conducting stratospheric tracer experiments to study stratosphere-troposphere exchange processes, and supporting atmospheric chemistry research by examining the distribution and transformation of trace gases.
-
-By offering scalability and accuracy, MPTRAC empowers atmospheric scientists and environmental researchers to gain deeper insights into complex transport phenomena, enhancing our understanding of atmospheric dynamics and improving prediction capabilities.
+Applications include long-range pollutant transport, volcanic ash dispersion modeling, stratospheric tracer experiments, and atmospheric chemistry studies. With its focus on performance and precision, MPTRAC enables researchers to better understand and predict complex atmospheric transport phenomena.
 
 ## Features
 
-MPTRAC is a powerful tool for atmospheric trajectory calculations, offering a wide range of features to enhance accuracy, performance, and usability:
+MPTRAC is a powerful tool for atmospheric Lagrangian transport simulations, offering a wide range of features to enhance accuracy, performance, and usability:
 
 - **Advanced Trajectory Calculations**: MPTRAC calculates air parcel trajectories by solving the kinematic equation of motion using horizontal wind and vertical velocity fields from global reanalyses or forecast datasets, enabling precise tracking of atmospheric transport processes in the free troposphere and stratosphere.
 
@@ -47,7 +45,7 @@ MPTRAC is a powerful tool for atmospheric trajectory calculations, offering a wi
 
 - **High-Performance Computing**: The model employs hybrid parallelization using MPI, OpenMP, and OpenACC, allowing efficient utilization of resources from single workstations to HPC clusters and GPU-based systems.
 
-- Web-Based Accessibility: The new [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de) provides an intuitive, browser-based interface for running trajectory simulations without local installation, making the tool more accessible for educational, research, and operational users.
+- **Web-Based Accessibility**: The new [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de) provides an intuitive, browser-based interface for running trajectory simulations without local installation, making the tool more accessible for educational, research, and operational users.
 
 - **Open Source and Community Driven**: MPTRAC is distributed as open-source software under the GNU General Public License (GPL), promoting collaborative development and ensuring transparency.
 
