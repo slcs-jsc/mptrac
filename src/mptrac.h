@@ -49,10 +49,17 @@
   codebase. For an overview of the core components, please refer to
   the documentation of `mptrac.h`.
 
-  \section Publications and References
+  \section References
 
   If you use MPTRAC in your scientific work, please cite the relevant
   publications:
+
+  - Hoffmann, L., Clemens, J., Griessbach, S., Haghighi Mood, K.,
+    Heng, Y., Khosrawi, F., Liu, M., Lu, Y.-S., Meyer, C., Nobre
+    Wittwer, N., Wu, X., Zou, L., MPTRAC: A high-performance
+    Lagrangian transport model for atmospheric air parcel dispersion,
+    Journal of Open Source Software, 10(111), 8177,
+    https://doi.org/10.21105/joss.08177, 2025.
 
   - Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach,
     S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O.,
