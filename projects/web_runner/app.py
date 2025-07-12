@@ -23,6 +23,10 @@ MET_OPTIONS = {
                        DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='ERA5'),
     'erai_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
                     DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ERA-Interim'),
+    'jra3q_6h': dict(METBASE='/mnt/slmet-mnt/met_data/jma/jra3q/nc/YYYY/jra3q',
+                     DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-3Q'),
+    'jra55_6h': dict(METBASE='/mnt/slmet-mnt/met_data/jma/jra55/nc/YYYY/jra55',
+                     DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-55'),
     'merra2_3h': dict(METBASE='/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
                       DT_MET=10800, MET_PRESS_LEVEL_DEF=6, MET_NAME='MERRA-2'),
     'merra2_6h': dict(METBASE='/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
@@ -227,6 +231,8 @@ def run():
     """)
     if met_source in ['era5low_6h']:
         ctl_template += "MET_CLAMS = 1\nMET_VERT_COORD = 1\n"
+    if met_source in ['jra3q_6h', 'jra55_6h']:
+        ctl_template += "MET_VERT_COORD = 4\n"
     if met_source in ['merra2_3h', 'merra2_6h']:
         ctl_template += "MET_NC_SCALE = 0\nMET_VERT_COORD = 1\n"
     if met_source in ['ncep2_6h']:
