@@ -22,13 +22,13 @@ Massive-Parallel Trajectory Calculations (MPTRAC) is a Lagrangian particle dispe
 
 ## Introduction
 
-Massive-Parallel Trajectory Calculations (MPTRAC) is a high-performance Lagrangian particle dispersion model for simulating atmospheric transport in the free troposphere and stratosphere.
+Massive-Parallel Trajectory Calculations (MPTRAC) is a high-performance Lagrangian particle dispersion model for simulating atmospheric transport in the free troposphere and stratosphere. It is designed for scalability and can efficiently perform large-scale trajectory calculations using massive parallelization.
 
-Designed for scalability, MPTRAC efficiently handles large-scale trajectory calculations using massive parallelization, making it a valuable tool for studying atmospheric dynamics, pollutant dispersion, and stratospheric transport.
+MPTRAC integrates high-resolution meteorological data and models key processes such as advection, diffusion, and more to accurately track air parcels over large spatial and temporal scales.
 
-The model accurately tracks air parcels across large spatial and temporal scales by integrating high-resolution meteorological data and accounting for processes such as advection, turbulent diffusion, and meteorological variability.
+Typical applications include long-range pollutant transport, volcanic ash dispersion, tracer experiments, and atmospheric chemistry studies. With its focus on precision and performance, MPTRAC supports improved understanding and prediction of complex transport phenomena.
 
-Applications include long-range pollutant transport, volcanic ash dispersion modeling, stratospheric tracer experiments, and atmospheric chemistry studies. With its focus on performance and precision, MPTRAC enables researchers to better understand and predict complex atmospheric transport phenomena.
+To make MPTRAC more accessible, especially for educational and exploratory use, we now offer the [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de) — a browser-based interface that enables running simulations without local installation.
 
 ## Features
 
