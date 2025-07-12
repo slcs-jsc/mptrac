@@ -61,11 +61,13 @@ performance, and usability:
 
 ![Geophysical modules and main software components of MPTRAC](img/clusters.png)
 
-## Get Involved
+## Getting Started
 
-We encourage collaboration and welcome contributions from the research
-community. Feel free to reach out if you have questions, suggestions,
-or need support with MPTRAC.
+To begin using MPTRAC, users can refer to the [installation guide](installation.md), which provides detailed steps for setting up the model on a local machine or HPC system. Once installed, the [quick start guide](quickstart.md) offers a streamlined introduction to running basic simulations, helping new users become familiar with the model's core functionality and input structure.
+
+For those who prefer not to install any software locally, the [MPTRAC Web Runner](https://mptrac.jsc.fz-juelich.de) provides a convenient, browser-based interface for running trajectory simulations. This web tool is particularly useful for educational purposes, quick tests, and exploratory studies.
+
+We welcome contributions and collaboration from the research community. If you have questions, feedback, or require support, please feel free to reach out.
 
 ## Contact
 
