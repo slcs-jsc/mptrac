@@ -1,0 +1,9 @@
+<map id="module_mixing" name="module_mixing">
+<area shape="rect" id="node1" title="Update atmospheric properties through interparcel mixing." alt="" coords="5,31,113,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ab1c48e6c43a8e09624010d9d9dca8df8" title="Perform interparcel mixing for a specific quantity." alt="" coords="175,5,314,32"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a53c7aad05c13fb182f3b857dfaf2e9e2" title="Applies ensemble&#45;based interparcel mixing for a given tracer quantity." alt="" coords="161,56,328,83"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a90bdbbffe8b8633d84a48d2ddd311180" title="Computes a weighting factor based on tropopause pressure." alt="" coords="376,31,472,57"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="520,31,603,57"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="655,5,729,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="651,56,733,83"/>
+</map>
