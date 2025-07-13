@@ -20,21 +20,21 @@ app = Flask(__name__)
 # Meteo options...
 MET_OPTIONS = {
     'era5low_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
-                       DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='ERA5'),
+                       DT_MET=21600, MET_VERT_COORD=1, MET_PRESS_LEVEL_DEF=6, MET_NAME='ERA5'),
     'erai_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
-                    DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ERA-Interim'),
+                    DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ERA-Interim'),
     'jra3q_6h': dict(METBASE='/mnt/slmet-mnt/met_data/jma/jra3q/nc/YYYY/jra3q',
-                     DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-3Q'),
+                     DT_MET=21600, MET_VERT_COORD=2, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-3Q'),
     'jra55_6h': dict(METBASE='/mnt/slmet-mnt/met_data/jma/jra55/nc/YYYY/jra55',
-                     DT_MET=21600, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-55'),
+                     DT_MET=21600, MET_VERT_COORD=4, MET_PRESS_LEVEL_DEF=6, MET_NAME='JRA-55'),
     'merra2_3h': dict(METBASE='/mnt/slmet-mnt/met_data/nasa/merra-2/hybrid/YYYY/merra2',
-                      DT_MET=10800, MET_PRESS_LEVEL_DEF=6, MET_NAME='MERRA-2'),
+                      DT_MET=10800, MET_VERT_COORD=1, MET_PRESS_LEVEL_DEF=6, MET_NAME='MERRA-2'),
     'ncep_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
-                    DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-NCAR Reanalysis 1'),
+                    DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-NCAR Reanalysis 1'),
     'ncep2_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
-                     DT_MET=21600, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2'),
+                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2'),
     'gfs_3h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
-                   DT_MET=10800, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP GFS')
+                   DT_MET=10800, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP GFS')
 }
 
 # Clean up working directory...
@@ -115,6 +115,7 @@ def run():
         # METBASE = '../../tests/data/ei'
         # DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
+        MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
         stop_dt = datetime.strptime(f['stop_time'], "%Y-%m-%d %H:%M")
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
@@ -228,10 +229,9 @@ def run():
     ATM_DT_OUT = {atm_dt_out}
     """)
     if met_source in ['era5low_6h']:
-        ctl_template += "MET_CLAMS = 1\nMET_VERT_COORD = 1\n"
+        ctl_template += "MET_CLAMS = 1\n"
     elif met_source in ['jra55_6h']:
         ctl_template += """
-MET_VERT_COORD = 4
 MET_NLEV = 61
 MET_LEV_HYAM[0] = 0.00000000000000E+00
 MET_LEV_HYAM[1] = 0.00000000000000E+00
@@ -357,7 +357,7 @@ MET_LEV_HYBM[59] = 0.00000000000000E+00
 MET_LEV_HYBM[60] = 0.00000000000000E+00
 """
     elif met_source in ['merra2_3h']:
-        ctl_template += "MET_NC_SCALE = 0\nMET_VERT_COORD = 1\n"
+        ctl_template += "MET_NC_SCALE = 0\n"
     elif met_source in ['ncep2_6h']:
         ctl_template += "MET_RELHUM = 1\n"
     
