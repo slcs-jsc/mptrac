@@ -87,34 +87,35 @@ for step in $step_seq ; do
     hour2=$($trac/jsec2time $t2 | awk '{printf("%02d", $4)}')
     
     # Convert to netCDF...
-    outfile=$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc
-    cdo -f nc4 copy $tmp/${step}.grib2 $outfile || exit
+    outfile="$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
+    cdo -f nc4 copy "$tmp/${step}.grib2" "$outfile" || exit
     
-    # Fix for AIFS data...
-    if [ "$model" = "aifs-single" ]; then
+    # Copy geopotential...
+    if [ "$step" -eq 0 ]; then
 	
-	tmpfile="$tmp/tmp_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
-	zfile="$tmp/z_${model}_${year2}_${mon2}_${day2}_00.nc"
-	
-	if [ "$step" -eq 0 ]; then
+	# Fix for AIFS data...
+	if [ "$model" = "aifs-single" ] ; then
 	    
-            # Rename z_2 to z and delete original z...
+	    # Rename z_2 to z and delete original z...
+	    tmpfile="$tmp/tmp_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
             cdo -f nc4 chname,z_2,z -delvar,z "$outfile" "$tmpfile" || exit
             mv "$tmpfile" "$outfile" || exit
-	    
-            # Save clean z to zfile for future merging...
-            cdo -selvar,z "$outfile" "$zfile" || exit
-	    
-	elif [ "$step" -gt 0 ]; then
-	    
-            # Remove existing z from current file...
-	    cleanedfile="$tmp/cleaned_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
-            cdo -delvar,z "$outfile" "$cleanedfile" || exit
-	    
-            # Merge cleaned file with step-0 z...
-            cdo merge "$zfile" "$cleanedfile" "$tmpfile" || exit
-            mv "$tmpfile" "$outfile" || exit
 	fi
+	
+        # Save clean z to zfile for future merging...
+	zfile="$tmp/z_${model}_${year2}_${mon2}_${day2}_00.nc"
+        cdo -f nc4 -selvar,z "$outfile" "$zfile" || exit
+	
+    elif [ "$step" -gt 0 ] ; then
+	
+        # Remove existing z from current file...
+	cleanedfile="$tmp/cleaned_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
+        cdo -f nc4 -delvar,z "$outfile" "$cleanedfile" || exit
+	
+        # Merge cleaned file with step-0 z...
+	tmpfile="$tmp/tmp_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
+        cdo -f nc4 merge "$zfile" "$cleanedfile" "$tmpfile" || exit
+        mv "$tmpfile" "$outfile" || exit
     fi
     
 done
