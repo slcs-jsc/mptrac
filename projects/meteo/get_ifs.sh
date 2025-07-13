@@ -78,6 +78,7 @@ for step in $step_seq ; do
     root="https://ecmwf-forecasts.s3.eu-central-1.amazonaws.com"
     url="${root}/${date}/${hour}z/${model}/0p25/oper/${date}${hour}0000-${step}h-oper-fc.grib2"
     wget -c --show-progress -O "$tmp/${step}.grib2" "$url" || exit
+    sleep 2
     
     # Get time...
     t2=$($trac/time2jsec $year $mon $day $hour 0 0 0 | awk -v step=$step '{printf("%.2f", $1 + step * 3600.)}')
