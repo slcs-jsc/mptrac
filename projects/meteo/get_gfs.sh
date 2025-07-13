@@ -18,7 +18,7 @@ Description:
   Distribution System (NOMADS): https://nomads.ncep.noaa.gov/
 
 Requirements:
-  - `wget` (https://www.gnu.org/software/wget) for downloading the data
+  - wget (https://www.gnu.org/software/wget) for downloading the data
   - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
     for format conversion
   - NetCDF Operators (NCO, https://nco.sourceforge.net) for file processing

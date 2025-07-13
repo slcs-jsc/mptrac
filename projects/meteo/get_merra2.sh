@@ -23,7 +23,7 @@ Description:
   (via the `MET_NP` and `MET_P` control parameters).
 
 Requirements:
-  - `wget` (https://www.gnu.org/software/wget) to retrieve data.
+  - wget (https://www.gnu.org/software/wget) to retrieve data.
   - NetCDF Operators (NCO, https://nco.sourceforge.net) for file conversion.
   - A NASA EarthData account (https://urs.earthdata.nasa.gov) linked to GES DISC.
   - Configuration of `~/.netrc` and `~/.urs_cookies` for authenticated wget access:

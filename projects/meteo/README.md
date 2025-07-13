@@ -12,7 +12,7 @@ This directory contains a set of scripts for retrieving meteorological data (ECM
   ```bash
   ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs-single>
   ```
-  - `year`, `month`, `day: Date of the forecast. Set to `today` to retrieve the most recent forecast.
+  - `year`, `month`, `day`: Date of the forecast. Set to `today` to retrieve the most recent forecast.
   - `dir`: Directory where output NetCDF files are stored.
   - `ifs`|`aifs-single`: Choose between the deterministic forecast (IFS) or the AI forecast (AIFS).
 

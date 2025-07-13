@@ -21,14 +21,15 @@ Description:
 
   The forecast data include 13 pressure levels on a regular
   longitude-latitude grid with a spatial resolution of 0.25 degrees.
-  Time steps are 3-hourly up to 144 hours and 6-hourly up to 360 hours.
-
-License:
-  The ECMWF open data are provided under the Creative Commons BY 4.0 license.
+  Time steps are 3-hourly up to 144 hours and 6-hourly up to 360 hours
+  for IFS. AIFS has 6-hourly steps up to 360 hours.
 
 Requirements:
   The Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
   are used to convert GRIB2 files to NetCDF format for use with MPTRAC.
+
+License:
+  - The ECMWF open data are provided under the Creative Commons BY 4.0 license.
 EOF
     exit
 fi

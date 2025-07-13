@@ -19,7 +19,7 @@ Description:
   https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.html
 
 Requirements:
-  - `wget` (https://www.gnu.org/software/wget) for data retrieval
+  - wget (https://www.gnu.org/software/wget) for data retrieval
   - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
     for data processing
   - NetCDF Operators (NCO, https://nco.sourceforge.net) for format conversion
