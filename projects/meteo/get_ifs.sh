@@ -88,6 +88,11 @@ for step in $step_seq ; do
     
     # Convert to netCDF...
     cdo -f nc4 copy $tmp/${step}.grib2 $outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc || exit
+    if [ "$model" = "aifs-single" ] ; then
+	tmpfile="${tmp}/tmp_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
+	cdo -f nc4 chname,z_2,z -delvar,z "$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc" "$tmpfile" || exit
+	mv "$tmpfile" "$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc" || exit
+    fi
     
 done
 

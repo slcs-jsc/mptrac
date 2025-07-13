@@ -7543,9 +7543,9 @@ void read_met_grid(
   LOG(2, "Number of latitudes: %d", met->ny);
 
   int dimid2;
-  sprintf(levname, "lev");
+  sprintf(levname, "plev");
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
-    sprintf(levname, "plev");
+    sprintf(levname, "lev");
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
     sprintf(levname, "hybrid");
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
