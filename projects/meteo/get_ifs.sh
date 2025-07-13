@@ -16,7 +16,7 @@ Description:
 
   The script retrieves the forecast for 00Z on the specified date
   (<year>, <month>, <day>) and stores the converted data files in the
-  output directory (<dir>). You can set <year>, <month>, and <day> to
+  output directory <dir>. You can set <year>, <month>, and <day> to
   "today" to retrieve the most recent available data.
 
   The forecast data include 13 pressure levels on a regular
@@ -64,8 +64,9 @@ if [ "$year" = "today" ] ; then
 fi
 
 # Create directories...
-outdir="${dir}/${model}_${date}"
-rm -rf tmp && mkdir -p tmp "$outdir" || exit
+outdir=${dir}/"${model}_${year}_${mon}_${day}"
+tmp=$(mktemp -d tmp.XXXXXXXX)
+rm -rf $tmp && mkdir -p $tmp "$outdir" || exit
 
 # Loop over forecast steps...
 for step in $step_seq ; do
@@ -76,7 +77,7 @@ for step in $step_seq ; do
     # Download...
     root="https://ecmwf-forecasts.s3.eu-central-1.amazonaws.com"
     url="${root}/${date}/${hour}z/${model}/0p25/oper/${date}${hour}0000-${step}h-oper-fc.grib2"
-    wget -c --show-progress -O "tmp/${step}.grib2" "$url" || exit
+    wget -c --show-progress -O "$tmp/${step}.grib2" "$url" || exit
     
     # Get time...
     t2=$($trac/time2jsec $year $mon $day $hour 0 0 0 | awk -v step=$step '{printf("%.2f", $1 + step * 3600.)}')
@@ -86,12 +87,12 @@ for step in $step_seq ; do
     hour2=$($trac/jsec2time $t2 | awk '{printf("%02d", $4)}')
     
     # Convert to netCDF...
-    cdo -f nc4 copy tmp/${step}.grib2 $outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc || exit
+    cdo -f nc4 copy $tmp/${step}.grib2 $outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc || exit
     
 done
 
 # Remove temporary data...
-rm -rf tmp || exit
+rm -rf $tmp || exit
 
 # Write info...
 echo "Download complete."

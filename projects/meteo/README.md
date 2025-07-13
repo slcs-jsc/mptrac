@@ -26,14 +26,14 @@ Example: Retrieve ERA5 data for July 1, 2023, at 1.0° resolution and 3-hourly i
   
 - **Usage**:
   ```bash
-  ./get_era5.sh <year> <month> <day> <output_dir> <resolution_deg> <timestep_hours>
+  ./get_era5.sh <year> <month> <day> <dir> <res> <dt>
   ```
   
 - **Parameters**:
   - `year`, `month`, `day`: Date to retrieve.
-  - `output_dir`: Directory to store the retrieved data.
-  - `resolution_deg`: Grid resolution in degrees (e.g., `1.0`).
-  - `timestep_hours`: Timestep in hours (e.g., `3`).
+  - `dir`: Directory to store the retrieved data.
+  - `res`: Grid resolution in degrees (e.g., `1.0`).
+  - `dt`: Timestep in hours (e.g., `3`).
 
 - **Functionality**: Retrieves and converts data to NetCDF format for MPTRAC.
 
@@ -43,12 +43,12 @@ Example: Retrieve ERA5 data for July 1, 2023, at 1.0° resolution and 3-hourly i
 
 - **Usage**:
   ```bash
-  ./get_gfs.sh <year> <month> <day> <output_dir>
+  ./get_gfs.sh <year> <month> <day> <dir>
   ```
   
 - **Parameters**:
   - `year`, `month`, `day`: Date to retrieve.
-  - `output_dir`: Directory to store the processed data.
+  - `dir`: Directory to store the processed data.
 - **Functionality**: Downloads weather parameters, integrates data over pressure levels, and outputs NetCDF files.
 
 ### `get_ifs.sh`
@@ -57,12 +57,12 @@ Example: Retrieve ERA5 data for July 1, 2023, at 1.0° resolution and 3-hourly i
 
 - **Usage**:
   ```bash
-  ./get_ifs.sh <year> <month> <day> <output_dir> <ifs|aifs-single>
+  ./get_ifs.sh <year> <month> <day> <dir> <ifs|aifs-single>
   ```
   
 - **Parameters**:
   - `year`, `month`, `day`: Forecast date (use `today` for the latest).
-  - `output_dir`: Directory to store NetCDF files.
+  - `dir`: Directory to store the processed data.
   - `ifs|aifs-single`: Choose between deterministic forecast (IFS) or AI forecast (AIFS).
   
 - **Functionality**:
@@ -76,12 +76,12 @@ Example: Retrieve ERA5 data for July 1, 2023, at 1.0° resolution and 3-hourly i
 
 - **Usage**:
   ```bash
-  ./get_merra2.sh <year> <month> <day> <output_dir>
+  ./get_merra2.sh <year> <month> <day> <dir>
   ```
   
 - **Parameters**:
   - `year`, `month`, `day`: Date to retrieve.
-  - `output_dir`: Directory to store the data.
+  - `dir`: Directory to store the data.
   
 - **Functionality**: Retrieves 3D and surface data, processes time steps, and outputs MPTRAC-compatible NetCDF files.
 
@@ -91,12 +91,12 @@ Example: Retrieve ERA5 data for July 1, 2023, at 1.0° resolution and 3-hourly i
 
 - **Usage**:
   ```bash
-  ./get_ncep.sh <year> <output_dir>
+  ./get_ncep.sh <year> <dir>
   ```
   
 - **Parameters**:
   - `year`: Year to retrieve.
-  - `output_dir`: Directory to store the data.
+  - `dir`: Directory to store the data.
   
 - **Functionality**: Processes air temperature, wind, pressure, and geopotential height. Performs vertical interpolation and conversion for MPTRAC.
 
