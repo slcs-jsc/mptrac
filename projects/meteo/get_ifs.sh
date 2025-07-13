@@ -7,7 +7,7 @@ if [ $# -ne 5 ] ; then
 ECMWF Forecast Data Download
 
 Usage:
-  ./get_ecmwf.sh <year> <month> <day> <dir> <ifs|aifs-single>
+  $0 <year> <month> <day> <dir> <ifs|aifs-single>
 
 Description:
   This script retrieves ECMWF IFS or AIFS forecast data
@@ -25,8 +25,9 @@ Description:
   for IFS. AIFS has 6-hourly steps up to 360 hours.
 
 Requirements:
-  The Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
-  are used to convert GRIB2 files to NetCDF format for use with MPTRAC.
+  - wget (https://www.gnu.org/software/wget) for data retrieval
+  - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
+    for data processing
 
 License:
   - The ECMWF open data are provided under the Creative Commons BY 4.0 license.
@@ -63,7 +64,7 @@ if [ "$year" = "today" ] ; then
 fi
 
 # Create directories...
-outdir="${dir}/${model}/${date}/${hour}z"
+outdir="${dir}/${model}_${date}"
 rm -rf tmp && mkdir -p tmp "$outdir" || exit
 
 # Loop over forecast steps...
