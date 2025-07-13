@@ -87,11 +87,34 @@ for step in $step_seq ; do
     hour2=$($trac/jsec2time $t2 | awk '{printf("%02d", $4)}')
     
     # Convert to netCDF...
-    cdo -f nc4 copy $tmp/${step}.grib2 $outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc || exit
-    if [ "$model" = "aifs-single" ] ; then
-	tmpfile="${tmp}/tmp_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
-	cdo -f nc4 chname,z_2,z -delvar,z "$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc" "$tmpfile" || exit
-	mv "$tmpfile" "$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc" || exit
+    outfile=$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc
+    cdo -f nc4 copy $tmp/${step}.grib2 $outfile || exit
+    
+    # Fix for AIFS data...
+    if [ "$model" = "aifs-single" ]; then
+	
+	tmpfile="$tmp/tmp_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
+	zfile="$tmp/z_${model}_${year2}_${mon2}_${day2}_00.nc"
+	
+	if [ "$step" -eq 0 ]; then
+	    
+            # Rename z_2 to z and delete original z...
+            cdo -f nc4 chname,z_2,z -delvar,z "$outfile" "$tmpfile" || exit
+            mv "$tmpfile" "$outfile" || exit
+	    
+            # Save clean z to zfile for future merging...
+            cdo -selvar,z "$outfile" "$zfile" || exit
+	    
+	elif [ "$step" -gt 0 ]; then
+	    
+            # Remove existing z from current file...
+	    cleanedfile="$tmp/cleaned_${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
+            cdo -delvar,z "$outfile" "$cleanedfile" || exit
+	    
+            # Merge cleaned file with step-0 z...
+            cdo merge "$zfile" "$cleanedfile" "$tmpfile" || exit
+            mv "$tmpfile" "$outfile" || exit
+	fi
     fi
     
 done
