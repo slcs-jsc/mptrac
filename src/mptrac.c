@@ -3827,7 +3827,8 @@ void module_sedi(
 void module_sort(
   const ctl_t *ctl,
   met_t *met0,
-  atm_t *atm) {
+  atm_t *atm,
+  int* nparticles) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
@@ -3837,13 +3838,15 @@ void module_sort(
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
   double amax = (met0->nx*met0->ny + met0->ny)*met0->np + met0->np;
-  
+    
   /* MPI information... */
-  //MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 #ifdef _OPENACC
-#pragma acc enter data create(a[0:np],p[0:np],amax)
-#pragma acc data present(ctl,met0,atm,a,p,amax)
+#pragma acc enter data create(a[0:np],p[0:np],amax, rank)
+#pragma update device(rank, amax)
+#pragma acc data present(ctl,met0,atm,a,p,amax,rank)
 #endif
 
   /* Get box index... */
@@ -3854,18 +3857,18 @@ void module_sort(
 #endif
   for (int ip = 0; ip < np; ip++) {
     if ((int) atm->q[ctl->qnt_subdomain][ip] != -1) {
-      a[ip] = (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
+      if ((int) atm->q[ctl->qnt_destination][ip] == rank)
+        a[ip] = (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
 		 locate_irr(met0->lat, met0->ny, atm->lat[ip]))
 		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
-      // Alos if destination != rank amax+1, then below amax+2
+      else
+        a[ip] = amax + 1;
      } else {
-      a[ip] = amax+1;
+        a[ip] = amax + 2;
      }
     p[ip] = ip;
   }
   
-
-
   /* Sorting... */
 #ifdef _OPENACC
 #pragma acc host_data use_device(a,p)
@@ -3884,18 +3887,27 @@ void module_sort(
   for (int iq = 0; iq < ctl->nq; iq++)
     module_sort_help(atm->q[iq], p, np);
     
- /* Reset the size... */
- int npt = 0;
- #pragma omp parallel for reduction(+:npt)
+  /* Reset the size... */
+  int npt = 0;
+#pragma acc parallel loop reduction(+:npt) present(atm, rank, ctl)
  for (int ip = 0; ip < np; ip++)
-   if ((int) atm->q[ctl->qnt_subdomain][ip] != -1)
+   if (((int) atm->q[ctl->qnt_subdomain][ip] != -1) && ((int) atm->q[ctl->qnt_destination][ip] == rank))
      npt++;
      
- atm->np = npt;
-
+  /* Count number of particles to send... */
+  int nparticlest = 0;
+#pragma acc parallel loop reduction(+:nparticlest) present(atm, rank, ctl)
+  for (int ip = npt; ip < np; ip++)
+    if (((int) atm->q[ctl->qnt_subdomain][ip] != -1) && ((int) atm->q[ctl->qnt_destination][ip] != rank))
+      nparticlest++;
+     
+  *nparticles = nparticlest;
+  atm->np = npt;
+  #pragma acc update device(nparticles, atm->np)
+ 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete(a,p,amax)
+#pragma acc exit data delete(a,p,amax, rank)
 #endif
   free(a);
   free(p);
@@ -5610,18 +5622,20 @@ void mptrac_run_timestep(
 
     /* Assign particles to new subdomains... */
     dd_assign_rect_subdomains_atm( atm, *met0, ctl, rank, neighbours, 0);
+    
+    printf("I: %d,%d\n", nparticles, atm->np);
+    
+    /* Sort particles... */
+    //if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
+    module_sort( ctl, *met0, atm, &nparticles);
+
+    printf("II: %d,%d\n", nparticles, atm->np);
             
     /* Transform from struct of array to array of struct... */
     atm2particles( atm, particles, ctl, &nparticles, cache, rank);
     
-    
-    /*int debug0 = 0;
-    for (int ip = 0; ip < nparticles; ip++)
-      if ( ((int) particles[ip].q[ctl->qnt_destination] > 0) && ((int) particles[ip].q[ctl->qnt_destination] != rank))
-        debug0++;*/
-        
     /* Update data on CPUs... */  
-#pragma acc update host( nparticles )
+//#pragma acc update host( nparticles )
 #pragma acc update host( particles[:nparticles])
 
     /*int debug1 = 0;
@@ -5638,12 +5652,12 @@ void mptrac_run_timestep(
     /* Perform the communication... */  
     dd_communicate_particles( particles, &nparticles, MPI_Particle, 
       neighbours, ctl->dd_nbr_neighbours , *ctl);
-#pragma acc update device( particles[:nparticles], nparticles, neighbours[:NNMAX])      
+#pragma acc update device( particles[:nparticles], nparticles)  
 
     /* Transform from array of struct to struct of array... */
     //LOG(1, "Transform from AoS to SoA.")
     particles2atm(atm, particles, ctl, &nparticles, cache);
-    
+        
     //LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
     MPI_Type_free(&MPI_Particle);
@@ -5652,14 +5666,9 @@ void mptrac_run_timestep(
     free(particles);
     
 #pragma acc exit data delete(nparticles, neighbours, particles, rank, size)
-  
+ 
   }
-  
-
-  /* Sort particles... */
-  if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
-    module_sort(ctl, *met0, atm);
-   
+     
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
 #ifdef KPP
@@ -12167,32 +12176,23 @@ void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
   SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
   
 /* Select the particles that will be send... */
-#pragma acc parallel present(atm, ctl, particles, nparticles, cache)
-{
-  int ibfr = 0;
-  for (int ip = 0; ip < atm->np; ip++)
+#pragma acc parallel loop present(atm, ctl, particles, cache, nparticles)
+  for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
     if (((int)(atm->q[ctl->qnt_destination][ip]) != rank)
         && ((int)(atm->q[ctl->qnt_destination][ip]) >= 0)
         && ((int)atm->q[ctl->qnt_subdomain][ip] >= 0)) {
 
-        particles[ibfr].time = atm->time[ip];
-        particles[ibfr].lon = atm->lon[ip];
-        particles[ibfr].lat = atm->lat[ip];
-        particles[ibfr].p = atm->p[ip];
+        particles[ip-atm->np].time = atm->time[ip];
+        particles[ip-atm->np].lon = atm->lon[ip];
+        particles[ip-atm->np].lat = atm->lat[ip];
+        particles[ip-atm->np].p = atm->p[ip];
 
         for (int iq = 0; iq < ctl->nq; iq++)
-            particles[ibfr].q[iq] = atm->q[iq][ip];
+            particles[ip-atm->np].q[iq] = atm->q[iq][ip];
 
         atm->q[ctl->qnt_subdomain][ip] = -1;
-        cache->dt[ip] = 0;
-        
-        ibfr++;
+        cache->dt[ip] = 0;    
   }
- 
-  *nparticles = ibfr;
-
-}
-
 }
 
 /*****************************************************************************/
@@ -12202,7 +12202,7 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
 
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
-#pragma acc kernels present(atm, particles, ctl, nparticles, cache)
+#pragma acc kernels present(atm, particles, ctl, cache, nparticles)
 {
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
     
@@ -12216,9 +12216,11 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
         
        cache->dt[ip] = ctl->dt_mod;
   }
-  
-  atm->np += *nparticles;
-}
+}  
+
+atm->np += *nparticles;
+#pragma update device(atm->np)
+
 }
 
 /*****************************************************************************/
@@ -12400,9 +12402,8 @@ void dd_communicate_particles(
     SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_GPU);
     /* Count number of particles in particle array that will be send... */
     int help_sum = 0;
-    if (*nparticles > 0)
-      for (int ip = 0; ip < *nparticles; ip++)
-        if ( (int) particles[ip].q[ctl.qnt_destination] == neighbours[idest] ) 
+    for (int ip = 0; ip < *nparticles; ip++)
+      if ((int) particles[ip].q[ctl.qnt_destination] == neighbours[idest] ) 
           help_sum++;
     nbs[idest] = help_sum;
         
@@ -12544,7 +12545,7 @@ void dd_assign_rect_subdomains_atm(
     SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
     
     if (init) {
-#pragma acc data present(atm, ctl)
+#pragma acc data present(atm, ctl, rank, met)
 #pragma acc parallel loop independent gang vector
       for (int ip=0; ip<atm->np; ip++) {
 
@@ -12566,7 +12567,7 @@ void dd_assign_rect_subdomains_atm(
     } else {
     
      /* Classify air parcels into subdomain... */
-#pragma data present(atm, ctl, neighbours)
+#pragma data present(atm, met, ctl, neighbours, rank)
 #pragma acc parallel loop independent gang vector
     for (int ip=0; ip<atm->np; ip++) {
     

@@ -5822,7 +5822,8 @@ void module_sedi(
 void module_sort(
   const ctl_t * ctl,
   met_t * met0,
-  atm_t * atm);
+  atm_t * atm,
+  int* nparticles);
 
 /**
  * @brief Reorder an array based on a given permutation.
