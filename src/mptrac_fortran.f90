@@ -28,8 +28,8 @@ MODULE mptrac_struct
   !! The values for ex, ey, ep are suited for ERA5 data. However, they
   !! exceed some size limit of NVHPC (2GB???), where the compiler fails
   !! to build the fortran wrapper. GCC and ICX work fine.
-  INTEGER, PARAMETER :: ex = 1202
-  INTEGER, PARAMETER :: ey = 602
+  INTEGER, PARAMETER :: ex = 1444
+  INTEGER, PARAMETER :: ey = 724
   INTEGER, PARAMETER :: ep = 140
   !! Alternative smaller values, good enough for ERA-interim.
   ! INTEGER, PARAMETER :: ex = 481
