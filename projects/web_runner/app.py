@@ -7,14 +7,30 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
+import logging
+from logging.handlers import RotatingFileHandler
 
 # Config...
 ATM_INIT_CMD = '../../src/atm_init'
 TRAC_CMD = '../../src/trac'
-RUNS_DIR, ZIPS_DIR = 'runs/working', 'runs/zips'
+
+# Create directories...
+RUNS_DIR, ZIPS_DIR, LOG_DIR = 'runs/working', 'runs/zips', 'runs/logs'
 os.makedirs(RUNS_DIR, exist_ok=True)
 os.makedirs(ZIPS_DIR, exist_ok=True)
+os.makedirs(LOG_DIR, exist_ok=True)
+
+# Semaphore...
 process_semaphore = threading.Semaphore(3)
+
+# Set up logging...
+log_file = os.path.join(LOG_DIR, 'web_runner.log')
+handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
+formatter = logging.Formatter('[%(asctime)s] %(levelname)s in %(threadName)s: %(message)s')
+handler.setFormatter(formatter)
+logger = logging.getLogger('web_runner')
+logger.setLevel(logging.INFO)
+logger.addHandler(handler)
 
 # Clean up working directory...
 def clean_old_runs(max_age_sec=3600):
@@ -116,6 +132,7 @@ def create_plot(lons, lats, heights,
 
 # Exit with error message...
 def validation_error(message):
+    logger.warning(f"Validation failed for {request.remote_addr}: {message}")
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
 @app.route('/')
@@ -123,6 +140,7 @@ def index(): return render_template('index.html')
 
 @app.route('/download/<run_id>')
 def download(run_id):
+    logger.info(f"Download requested for run {run_id} by {request.remote_addr}")
     return send_from_directory(ZIPS_DIR, f"{run_id}.zip", as_attachment=True)
 
 @app.route('/run', methods=['POST'])
@@ -186,10 +204,14 @@ def run():
 
     except Exception as e:
         return validation_error(str(e))
-
+    
     # Set run ID...
     run_id = str(uuid.uuid4())
-
+    
+    # Logging...
+    client_ip = request.remote_addr
+    logger.info(f"Run requested by {client_ip} | MET: {met_source} | Start: {f['start_time']} | Stop: {f['stop_time']}")
+    
     # Create working directory...
     work_dir = os.path.join(RUNS_DIR, run_id)
     os.makedirs(work_dir, exist_ok=True)
@@ -386,22 +408,26 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
     
     with open(ctl_file, 'w') as f: f.write(ctl_template)
 
-    # Run atm_init...
+    # Run atm_init and trac...
     atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120)
-
-    # Run trac...
     trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600)
-
+    
     # Catch errors...
     if trac_code == -999:
         return render_template('server_busy.html'), 503
+    
+    # Logging...
+    if atm_init_code != 0 or trac_code != 0:
+        logger.error(f"Run {run_id} failed for {client_ip} | atm_init_code={atm_init_code} | trac_code={trac_code}")
+    else:
+        logger.info(f"Run {run_id} succeeded for {client_ip}")
 
     # Combine log message...
     combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
-
+    
     # Run successfull...
     if trac_code == 0:
-
+        
         # Create zip file...
         zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
         shutil.make_archive(zip_path.replace('.zip', ''), 'zip', work_dir)
