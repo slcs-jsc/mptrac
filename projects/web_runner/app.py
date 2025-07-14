@@ -19,6 +19,12 @@ app = Flask(__name__)
 
 # Meteo options...
 MET_OPTIONS = {
+    'aifs_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/open_data/data/aifs-single_YYYY_MM_DD/aifs-single',
+                    DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ECMWF AIFS'),
+    'ifs_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/open_data/data/ifs_YYYY_MM_DD/ifs',
+                   DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='ECMWF IFS'),
+    'gfs_3h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
+                   DT_MET=10800, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP GFS'),
     'era5low_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era5.1/resolution_1x1/nc/YYYY/MM/era5',
                        DT_MET=21600, MET_VERT_COORD=1, MET_PRESS_LEVEL_DEF=6, MET_NAME='ERA5'),
     'erai_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ecmwf/era_interim/pressure_0.75deg_v2/nc/YYYY/ei',
@@ -32,9 +38,7 @@ MET_OPTIONS = {
     'ncep_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis/nc/YYYY/ncep',
                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-NCAR Reanalysis 1'),
     'ncep2_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
-                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2'),
-    'gfs_3h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/gfs/data_YYYY_MM_DD/gfs',
-                   DT_MET=10800, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP GFS')
+                     DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2')
 }
 
 # Clean up working directory...

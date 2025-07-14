@@ -51,41 +51,58 @@
       <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Select the meteorological dataset for the trajectory calculations.</p>
 	<div class="w3-row-padding">
-	  <div class="w3-full" style="padding: 16px;">
-	    <label>Meteo Dataset</label>
+	  <div class="w3-full">
 	    <div class="w3-text-white">
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="era5low_6h" required>
-		ERA5 low resolution (6-hourly | 1.0° × 1.0° | 137 levels | 1978–present)
-              </label>
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="erai_6h" checked>
-		ERA-Interim (6-hourly | 0.75° × 0.75° | 60 levels | 1979–2019)
-              </label>
-	      <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="jra3q_6h">
-		JRA-3Q (3-hourly | 0.375° × 0.375° | 100 levels | 1948–present)
-	      </label>
-	      <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="jra55_6h">
-		JRA-55 (6-hourly | 0.5625° × 0.5625° | 60 levels | 1958–2023)
-	      </label>
-	      <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="merra2_3h">
-		MERRA-2 (3-hourly | 0.5° × 0.625° | 72 levels | 1980–present)
-              </label>
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="ncep_6h">
-		NCEP-NCAR Reanalysis 1 (6-hourly | 2.5° × 2.5° | 17 levels | 1948–present)
-              </label>
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="ncep2_6h">
-		NCEP-DOE Reanalysis 2 (6-hourly | 2.5° × 2.5° | 17 levels | 1979–present)
-              </label>
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="met_source" value="gfs_3h">
-		NCEP GFS (3-hourly | 0.5° × 0.5° | 41 levels | recent 10-day forecasts)
-              </label>
+	      
+              <!-- Forecasts -->
+              <div style="margin-bottom: 12px;">
+		<h5 style="margin: 8px 0; color: #ccc;">Forecasts</h5>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="aifs_6h" required>
+		  ECMWF AIFS (6-hourly | 0.25° × 0.25° | 13 levels | recent 15-day forecasts)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="ifs_6h" required>
+		  ECMWF IFS (6-hourly | 0.25° × 0.25° | 13 levels | recent 15-day forecasts)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="gfs_3h" required>
+		  NCEP GFS (3-hourly | 0.5° × 0.5° | 41 levels | recent 10-day forecasts)
+		</label>
+              </div>
+	      
+              <!-- Reanalyses -->
+              <div>
+		<h5 style="margin: 8px 0; color: #ccc;">Reanalyses</h5>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="era5low_6h" checked>
+		  ERA5 low resolution (6-hourly | 1.0° × 1.0° | 137 levels | 1978–present)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="erai_6h" required>
+		  ERA-Interim (6-hourly | 0.75° × 0.75° | 60 levels | 1979–2019)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="jra3q_6h" required>
+		  JRA-3Q (6-hourly | 0.375° × 0.375° | 100 levels | 1948–present)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="jra55_6h" required>
+		  JRA-55 (6-hourly | 0.5625° × 0.5625° | 60 levels | 1958–2023)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="merra2_3h" required>
+		  MERRA-2 (3-hourly | 0.5° × 0.625° | 72 levels | 1980–present)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="ncep_6h" required>
+		  NCEP-NCAR Reanalysis 1 (6-hourly | 2.5° × 2.5° | 17 levels | 1948–present)
+		</label>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="met_source" value="ncep2_6h" required>
+		  NCEP-DOE Reanalysis 2 (6-hourly | 2.5° × 2.5° | 17 levels | 1979–present)
+		</label>
+              </div>
 	    </div>
 	  </div>
 	</div>
