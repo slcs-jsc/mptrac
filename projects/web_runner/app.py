@@ -15,6 +15,29 @@ RUNS_DIR, ZIPS_DIR = 'runs/working', 'runs/zips'
 os.makedirs(RUNS_DIR, exist_ok=True)
 os.makedirs(ZIPS_DIR, exist_ok=True)
 process_semaphore = threading.Semaphore(3)
+
+# Clean up working directory...
+def clean_old_runs(max_age_sec=3600):
+    now = time.time()
+    for directory in [RUNS_DIR, ZIPS_DIR]:
+        for path in glob.glob(os.path.join(directory, "*")):
+            if os.path.isdir(path):
+                if now - os.path.getmtime(path) > max_age_sec:
+                    shutil.rmtree(path, ignore_errors=True)
+            elif os.path.isfile(path) and now - os.path.getmtime(path) > max_age_sec:
+                os.remove(path)
+
+# Periodic cleaning...
+def schedule_periodic_cleanup(interval=3600):
+    def loop():
+        while True:
+            clean_old_runs()
+            time.sleep(interval)
+    threading.Thread(target=loop, daemon=True).start()
+clean_old_runs()
+schedule_periodic_cleanup()
+
+# Flask app...
 app = Flask(__name__)
 
 # Meteo options...
@@ -40,10 +63,6 @@ MET_OPTIONS = {
     'ncep2_6h': dict(METBASE='/mnt/slmet-mnt/met_data/ncep/reanalysis2/nc/YYYY/ncep2',
                      DT_MET=21600, MET_VERT_COORD=0, MET_PRESS_LEVEL_DEF=-1, MET_NAME='NCEP-DOE Reanalysis 2')
 }
-
-# Clean up working directory...
-def delayed_cleanup(path, delay=600):
-    threading.Thread(target=lambda: (time.sleep(delay), shutil.rmtree(path, ignore_errors=True)), daemon=True).start()
 
 # Execute shell command and check result...
 def run_command(cmd, timeout=300):
@@ -417,12 +436,10 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             stop_time_str=stop_time_str
         )
         
-        # Clean up...
-        delayed_cleanup(work_dir)
+        # Show results...
         return render_template('result.html', run_id=run_id, stdout=combined_output, plot_url=plot_url)
 
-    # Clean up...
-    delayed_cleanup(work_dir)
+    # Show error...
     return render_template('error.html', stdout=combined_output), 500
 
 @app.route('/terms')
