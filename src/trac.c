@@ -121,21 +121,22 @@ int main(
 
       /* Set-up domain decomposition... */
       static int dd_init = 0;
+     
+     /* Update host memory... */
+      //mptrac_update_host(NULL, NULL, NULL, NULL, NULL, atm);
       if (t == ctl->t_start || !dd_init) {
+      
         /* Define grid neighbours ... */
         int neighbours[NNMAX];
         dd_get_rect_neighbour(*ctl, neighbours, rank, size);
-        
-        /* Create data region... */
-#pragma acc enter data create(neighbours[:NNMAX], rank, size)
-        /* Update GPU... */
-#pragma acc update device( rank, size, neighbours[:NNMAX])      
+       
         /* Check if particles are in subdomain. */
-        dd_assign_rect_subdomains_atm( atm, met0, ctl, rank, neighbours, 1);
-        /* Delete data region... */
-#pragma acc exit data delete(neighbours[:NNMAX], rank, size)
+        dd_assign_rect_subdomains_atm( atm, met0, ctl, &rank, neighbours, 1);
+
         dd_init = 1;
       }
+      /* Update device memory... */
+      //mptrac_update_device(NULL, NULL, NULL, NULL, NULL, atm);
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);

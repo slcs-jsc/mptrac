@@ -5823,7 +5823,8 @@ void module_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
-  int* nparticles);
+  int* nparticles,
+  int* rank);
 
 /**
  * @brief Reorder an array based on a given permutation.
@@ -9027,7 +9028,7 @@ void dd_communicate_particles(
   atm_t* atm,
   met_t* met, 
   ctl_t* ctl, 
-  int rank, 
+  int* rank, 
   int* neighbours, 
   int init);
   
