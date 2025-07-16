@@ -5617,11 +5617,11 @@ void mptrac_run_timestep(
     dd_assign_rect_subdomains_atm( atm, *met0, ctl, &rank, neighbours, 0);
    
     module_sort( ctl, *met0, atm, &nparticles, &rank);
-    mptrac_update_host(NULL, cache, NULL, NULL, NULL, atm);
-    
+ 
     printf("II: %d,%d\n", nparticles, atm->np);
     /* Transform from struct of array to array of struct... */
-    // 2. TODO: Make this run on the GPU ... remove mptrac update host above, add update host particles... (intermediate also add update cache and atm on host below, for incremental progress only)
+    // 2. TODO: Make this run on the GPU y ... remove mptrac update host above y, add update host particles... y (intermediate also add update cache and atm on host below, for incremental progress only y)
+    
     atm2particles( atm, particles, ctl, &nparticles, cache, rank);
    
     // CPU region start...
@@ -5641,6 +5641,7 @@ void mptrac_run_timestep(
     /* Transform from array of struct to struct of array... */
     //LOG(1, "Transform from AoS to SoA.")
     // 3. TODO: Make this function run on the GPU and add update on GPU for particles here... then the deviec update below can be removed since the function sticsk atm and particles together on the GPU... the cache remains on the GPU all the time...
+    mptrac_update_host(NULL, cache, NULL, NULL, NULL, NULL);
     particles2atm(atm, particles, ctl, &nparticles, cache);
         
     /* Free local particle array... */
@@ -12156,7 +12157,10 @@ void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
   SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
   
 /* Select the particles that will be send... */
-//#pragma acc parallel loop present(atm, ctl, particles, cache, nparticles)
+int npart = *nparticles;
+#pragma acc enter data create( nparticles, particles[:NP])
+#pragma acc update device( nparticles)
+#pragma acc parallel loop present( atm, ctl, particles, cache, nparticles)
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
     if (((int)(atm->q[ctl->qnt_destination][ip]) != rank)
         && ((int)(atm->q[ctl->qnt_destination][ip]) >= 0)
@@ -12173,6 +12177,9 @@ void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
         atm->q[ctl->qnt_subdomain][ip] = -1;
         cache->dt[ip] = 0;    
   }
+#pragma acc update host( particles[:npart])
+#pragma acc exit data delete( nparticles, particles)
+  
 }
 
 /*****************************************************************************/
