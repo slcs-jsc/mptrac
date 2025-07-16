@@ -5611,25 +5611,20 @@ void mptrac_run_timestep(
     
     /* Define grid neighbours ... */
     // TODO: This actually only needs to be done ones!
-    dd_get_rect_neighbour(*ctl, neighbours, rank, size);  // CPUs...
-    //for (int isourc = 0; isourc < 8; isourc++)
-    //  LOG(1, "Ranks: %d <-> %d , Size: %d", rank, neighbours[isourc], size);
-       
-    /* Assign particles to new subdomains... */
-    mptrac_update_host(NULL, NULL, NULL, NULL, NULL, atm);
+    dd_get_rect_neighbour(*ctl, neighbours, rank, size); 
+
+    /* Assign particles to new subdomains... */    
     dd_assign_rect_subdomains_atm( atm, *met0, ctl, &rank, neighbours, 0);
    
-    printf("I: %d,%d\n", nparticles, atm->np);
-    /* Sort particles... */
-    //if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
-    mptrac_update_device( NULL, NULL, NULL, NULL, NULL, atm);
     module_sort( ctl, *met0, atm, &nparticles, &rank);
     mptrac_update_host(NULL, cache, NULL, NULL, NULL, atm);
     
     printf("II: %d,%d\n", nparticles, atm->np);
     /* Transform from struct of array to array of struct... */
+    // 2. TODO: Make this run on the GPU ... remove mptrac update host above, add update host particles... (intermediate also add update cache and atm on host below, for incremental progress only)
     atm2particles( atm, particles, ctl, &nparticles, cache, rank);
    
+    // CPU region start...
     /* Register the MPI_Particle data type... */
     MPI_Datatype MPI_Particle;
     dd_register_MPI_type_particle(&MPI_Particle);
@@ -5637,15 +5632,17 @@ void mptrac_run_timestep(
     /* Perform the communication... */  
     dd_communicate_particles( particles, &nparticles, MPI_Particle, 
       neighbours, ctl->dd_nbr_neighbours , *ctl);
-
-    /* Transform from array of struct to struct of array... */
-    //LOG(1, "Transform from AoS to SoA.")
-    particles2atm(atm, particles, ctl, &nparticles, cache);
-        
+      
     //LOG(1, "Free MPI datatype and particles.")
     /* Free MPI datatype... */
     MPI_Type_free(&MPI_Particle);
-    
+    // CPU region end...
+
+    /* Transform from array of struct to struct of array... */
+    //LOG(1, "Transform from AoS to SoA.")
+    // 3. TODO: Make this function run on the GPU and add update on GPU for particles here... then the deviec update below can be removed since the function sticsk atm and particles together on the GPU... the cache remains on the GPU all the time...
+    particles2atm(atm, particles, ctl, &nparticles, cache);
+        
     /* Free local particle array... */
     free(particles);
     
@@ -12528,8 +12525,10 @@ void dd_assign_rect_subdomains_atm(
     SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
     
     if (init) {
-//#pragma acc data present(atm, ctl, rank, met)
-//#pragma acc parallel loop independent gang vector
+#pragma acc enter data create(rank)
+#pragma acc update device(rank)
+#pragma acc data present(atm, ctl, rank, met)
+#pragma acc parallel loop independent gang vector
       for (int ip=0; ip<atm->np; ip++) {
 
         double lont = atm->lon[ip];
@@ -12547,11 +12546,14 @@ void dd_assign_rect_subdomains_atm(
           atm->q[ctl->qnt_destination][ip] = -1;
         }   
       } 
+#pragma acc exit data delete(neighbours, rank)
     } else {
     
      /* Classify air parcels into subdomain... */
-//#pragma data present(atm, met, ctl, neighbours, rank)
-//#pragma acc parallel loop independent gang vector
+#pragma acc enter data create(neighbours[:NNMAX], rank)
+#pragma acc update device(neighbours[:NNMAX], rank)
+#pragma acc data present(atm, met, ctl, neighbours, rank)
+#pragma acc parallel loop independent gang vector
     for (int ip=0; ip<atm->np; ip++) {
     
       /* Skip empty places in the particle array... */
@@ -12655,6 +12657,7 @@ void dd_assign_rect_subdomains_atm(
         }
      }
     }
+#pragma acc exit data delete(neighbours, rank)
    }
   }
   

@@ -123,7 +123,6 @@ int main(
       static int dd_init = 0;
      
      /* Update host memory... */
-      //mptrac_update_host(NULL, NULL, NULL, NULL, NULL, atm);
       if (t == ctl->t_start || !dd_init) {
       
         /* Define grid neighbours ... */
@@ -134,9 +133,11 @@ int main(
         dd_assign_rect_subdomains_atm( atm, met0, ctl, &rank, neighbours, 1);
 
         dd_init = 1;
+        
+        /* Update device memory... */
+        //mptrac_update_device(NULL, NULL, NULL, NULL, NULL, atm);
       }
-      /* Update device memory... */
-      //mptrac_update_device(NULL, NULL, NULL, NULL, NULL, atm);
+
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
