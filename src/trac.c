@@ -134,10 +134,7 @@ int main(
 
         dd_init = 1;
         
-        /* Update device memory... */
-        //mptrac_update_device(NULL, NULL, NULL, NULL, NULL, atm);
       }
-
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);

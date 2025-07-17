@@ -3901,6 +3901,7 @@ void module_sort(
     if (((int) atm->q[ctl->qnt_subdomain][ip] != -1) && ((int) atm->q[ctl->qnt_destination][ip] != *rank))
       nparticlest++;
      
+  /* Reset sizes... */
   *nparticles = nparticlest;
   atm->np = npt;
   #pragma acc update device(atm->np)
@@ -5604,6 +5605,7 @@ void mptrac_run_timestep(
     ALLOC(particles, particle_t, NP);
 
     /* Get the MPI information on CPU... */
+    // TODO: This actually only needs to be done ones: mpi_info_t ...
     int rank, size;
     MPI_Barrier(MPI_COMM_WORLD);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -5620,12 +5622,11 @@ void mptrac_run_timestep(
  
     printf("II: %d,%d\n", nparticles, atm->np);
     /* Transform from struct of array to array of struct... */
-    // 2. TODO: Make this run on the GPU y ... remove mptrac update host above y, add update host particles... y (intermediate also add update cache and atm on host below, for incremental progress only y)
-    
     atm2particles( atm, particles, ctl, &nparticles, cache, rank);
    
     // CPU region start...
     /* Register the MPI_Particle data type... */
+    // TODO: This actually only needs to be done ones...
     MPI_Datatype MPI_Particle;
     dd_register_MPI_type_particle(&MPI_Particle);
       
@@ -5639,16 +5640,12 @@ void mptrac_run_timestep(
     // CPU region end...
 
     /* Transform from array of struct to struct of array... */
-    //LOG(1, "Transform from AoS to SoA.")
-    // 3. TODO: Make this function run on the GPU and add update on GPU for particles here... then the deviec update below can be removed since the function sticsk atm and particles together on the GPU... the cache remains on the GPU all the time...
-    mptrac_update_host(NULL, cache, NULL, NULL, NULL, NULL);
     particles2atm(atm, particles, ctl, &nparticles, cache);
         
     /* Free local particle array... */
     free(particles);
     
   }
-  mptrac_update_device(NULL, cache, NULL, NULL, NULL, atm);
      
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
@@ -12189,8 +12186,11 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
 
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
-//#pragma acc kernels present(atm, particles, ctl, cache, nparticles)
-{
+  int npart = *nparticles;
+#pragma acc enter data create(nparticles, particles[:NP])
+#pragma acc update device(particles[:npart], nparticles)
+#pragma acc data present(atm, ctl, cache, particles, nparticles)
+#pragma acc parallel loop
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
     
       atm->time[ip] = particles[ip - atm->np].time;
@@ -12201,12 +12201,14 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
       for (int iq = 0; iq < ctl->nq; iq++) 
         atm->q[iq][ip] = particles[ip - atm->np].q[iq];
         
-       cache->dt[ip] = ctl->dt_mod;
+      cache->dt[ip] = ctl->dt_mod;
+      
   }
-}  
+#pragma acc exit data delete(nparticles, particles)
 
-atm->np += *nparticles;
-//#pragma update device(atm->np)
+  /* Reset size... */
+  atm->np += *nparticles;
+#pragma acc update device(atm->np)
 
 }
 
