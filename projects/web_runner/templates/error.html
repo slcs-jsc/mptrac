@@ -20,14 +20,22 @@
 	</div>
       </div>
     </div>
+
+    <div class="w3-container w3-padding-16 w3-center" style="background-color: #1a1a1a; color: white; transition: all 0.3s ease; margin-top: 10px;">
+      <div class="w3-row w3-content" style="max-width:1200px; margin:auto;">
+	<h2 class="w3-text-red w3-center">❌ Simulation Failed</h2>
+      </div>
+    </div>
     
     <br>
-
+    
     <!-- Common wrapper to unify width -->
     <div style="width: 80%; margin: 0 auto; box-sizing: border-box;">
       
-      <h2 class="w3-text-red w3-center">❌ Simulation Failed</h2>
       <h3 class="w3-center">Log Output</h3>
+      <p style="color: #ccc; font-size: 16px; margin-bottom: 10px; text-align: center; font-family: monospace;">
+	Please carefully check the log output below for warnings or errors.
+      </p>
       <pre class="w3-round-large"
 	   style="width: 100%; background: #222; padding: 15px; max-height: 500px; overflow: auto; box-sizing: border-box;">
 	{{ stdout }}
