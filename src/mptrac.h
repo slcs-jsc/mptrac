@@ -5036,18 +5036,42 @@ void module_bound_cond(
   atm_t * atm);
 
 /**
- * @brief Calculate grid data for chemistry modules.
+ * @brief Computes gridded chemical tracer concentrations (volume mixing ratio)
+ *        from individual air parcel mass data and assigns them back to the parcels.
  *
- * This function initializes and updates chemical grid quantities
- * based on atmospheric data and interpolation of meteorological
- * variables.
+ * This function aggregates the mass of tracer particles onto a 3D chemical grid
+ * (longitude × latitude × altitude), accounting for either single or ensemble
+ * simulations depending on `ctl->nens`. It then interpolates meteorological
+ * temperature fields and computes volume mixing ratios, storing them in the
+ * specified tracer quantity (e.g., `ctl->qnt_Cx`).
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param clim Pointer to the climate data structure containing climatological data.
- * @param met0 Pointer to the first meteorological data structure.
- * @param met1 Pointer to the second meteorological data structure.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param t Time for which chemical grid is updated.
+ * If the molar mass is undefined or required quantity indices are missing,
+ * the function exits early.
+ *
+ * Parallelization is supported via OpenMP or OpenACC.
+ *
+ * @param[in]  ctl   Pointer to the control structure containing configuration
+ *                   parameters, including grid dimensions, tracer indices, and
+ *                   simulation mode.
+ * @param[in]  met0  Pointer to the meteorological data at the beginning of the
+ *                   interpolation interval.
+ * @param[in]  met1  Pointer to the meteorological data at the end of the
+ *                   interpolation interval.
+ * @param[in,out] atm Pointer to the atmospheric state, including parcel
+ *                    coordinates, time, mass, and output tracer fields.
+ * @param[in]  t     Central time step used for output and interpolation.
+ *
+ * @note
+ * - Requires `ctl->molmass > 0`, and `ctl->qnt_m` and `ctl->qnt_Cx` to be set.
+ * - Uses ensemble mode if `ctl->nens > 0` and assigns each parcel to its
+ *   ensemble member via `ctl->qnt_ens`.
+ * - Grid box volume mixing ratios are computed assuming ideal gas law and a
+ *   layered spherical grid.
+ * - The output quantity (e.g., `qnt_Cx`) is given in ppbv.
+ *
+ * @see intpol_met_time_3d()
+ * @see P(), Z(), RHO()
+ * @see ARRAY_3D macro
  *
  * @authors Mingzhao Liu
  * @authors Lars Hoffmann
@@ -5058,49 +5082,6 @@ void module_chem_grid(
   met_t * met1,
   atm_t * atm,
   const double t);
-
-/**
- * @brief Processes atmospheric ensemble chemical data on a defined 3D grid.
- *
- * This function aggregates and interpolates mass and mixing ratio data for 
- * atmospheric parcels over a 3D spatial grid, for multiple ensemble members.
- * It computes grid-based statistics and updates each air parcel with the 
- * appropriate chemical quantities (e.g., mass and concentration).
- *
- * @param ctl  Pointer to the model control structure containing grid and configuration parameters.
- * @param met0 Pointer to the meteorological dataset at the beginning of the interpolation time window.
- * @param met1 Pointer to the meteorological dataset at the end of the interpolation time window.
- * @param atm  Pointer to the structure containing atmospheric parcel data, including positions and properties.
- * @param tt   Simulation time (in seconds) for which the chemical grid is evaluated.
- *
- * @details
- * The function performs the following main tasks:
- * - Checks configuration and model parameters for validity.
- * - Allocates and initializes memory for spatial grid properties (altitude, pressure, area, etc.).
- * - Maps air parcel positions to 3D grid indices (longitude, latitude, height).
- * - Aggregates mass into grid cells for each ensemble.
- * - Interpolates meteorological data (e.g., temperature) at each parcel's position.
- * - Computes volume mixing ratios using the interpolated data and grid cell properties.
- * - Updates each air parcel with the computed chemical quantity.
- *
- * Parallelization is supported via OpenMP or OpenACC (depending on compilation).
- *
- * @note
- * - Memory allocation is done dynamically within the function and freed before exit.
- * - The function uses macros and helper functions like `P()`, `Z()`, `RHO()`, `ARRAY_3D()`,
- *   and `intpol_met_time_3d()` for calculations and interpolation.
- * - Requires ensemble quantity indices (`qnt_ens`, `qnt_m`, and `qnt_Cx`) to be set in `ctl`.
- *
- * @warning If molar mass is not set (`molmass <= 0`), the function will issue an error and exit.
- *
- * @authors Mingzhao Liu
- */
-void module_chem_grid_ens(
-  const ctl_t * ctl,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
-  const double tt);
 
 /**
  * @brief Initializes the chemistry modules by setting atmospheric composition.
