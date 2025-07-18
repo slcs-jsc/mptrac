@@ -3578,77 +3578,21 @@ void module_mixing(
   }
 
   /* Calculate interparcel mixing... */
-  if (ctl->nens > 0) {
-    if (ctl->qnt_m >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
-    if (ctl->qnt_vmr >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-    if (ctl->qnt_Ch2o >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
-    if (ctl->qnt_Co3 >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
-    if (ctl->qnt_Cco >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
-    if (ctl->qnt_Coh >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
-    if (ctl->qnt_Ch >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
-    if (ctl->qnt_Cho2 >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
-    if (ctl->qnt_Ch2o2 >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
-    if (ctl->qnt_Co1d >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
-    if (ctl->qnt_Co3p >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
-    if (ctl->qnt_Cccl4 >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
-    if (ctl->qnt_Cccl3f >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
-    if (ctl->qnt_Cccl2f2 >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
-    if (ctl->qnt_Cn2o >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
-    if (ctl->qnt_Csf6 >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
-    if (ctl->qnt_aoa >= 0)
-      module_mixing_help_ens(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
-  } else {
-    if (ctl->qnt_m >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_m);
-    if (ctl->qnt_vmr >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_vmr);
-    if (ctl->qnt_Ch2o >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o);
-    if (ctl->qnt_Co3 >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3);
-    if (ctl->qnt_Cco >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cco);
-    if (ctl->qnt_Coh >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Coh);
-    if (ctl->qnt_Ch >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch);
-    if (ctl->qnt_Cho2 >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cho2);
-    if (ctl->qnt_Ch2o2 >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Ch2o2);
-    if (ctl->qnt_Co1d >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co1d);
-    if (ctl->qnt_Co3p >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Co3p);
-    if (ctl->qnt_Cccl4 >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl4);
-    if (ctl->qnt_Cccl3f >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl3f);
-    if (ctl->qnt_Cccl2f2 >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cccl2f2);
-    if (ctl->qnt_Cn2o >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Cn2o);
-    if (ctl->qnt_Csf6 >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_Csf6);
-    if (ctl->qnt_aoa >= 0)
-      module_mixing_help(ctl, clim, atm, ixs, iys, izs, ctl->qnt_aoa);
-  }
+  const int use_ensemble = (ctl->nens > 0);
+
+  const int quantities[] = {
+    ctl->qnt_m, ctl->qnt_vmr, ctl->qnt_Ch2o, ctl->qnt_Co3,
+    ctl->qnt_Cco, ctl->qnt_Coh, ctl->qnt_Ch, ctl->qnt_Cho2,
+    ctl->qnt_Ch2o2, ctl->qnt_Co1d, ctl->qnt_Co3p, ctl->qnt_Cccl4,
+    ctl->qnt_Cccl3f, ctl->qnt_Cccl2f2, ctl->qnt_Cn2o,
+    ctl->qnt_Csf6, ctl->qnt_aoa
+  };
+  const int n_qnt = sizeof(quantities) / sizeof(quantities[0]);
+
+  for (int i = 0; i < n_qnt; i++)
+    if (quantities[i] >= 0)
+      module_mixing_help(ctl, clim, atm, ixs, iys, izs, quantities[i],
+			 use_ensemble);
 
   /* Free... */
 #ifdef _OPENACC
@@ -3668,113 +3612,22 @@ void module_mixing_help(
   const int *ixs,
   const int *iys,
   const int *izs,
-  const int qnt_idx) {
+  const int qnt_idx,
+  const int use_ensemble) {
 
-  /* Allocate... */
   const int np = atm->np;
   const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
+  const int nens = use_ensemble ? ctl->nens : 1;
+  const int total_grid = ngrid * nens;
+
   double *restrict const cmean =
-    (double *) malloc((size_t) ngrid * sizeof(double));
-  int *restrict const count = (int *) malloc((size_t) ngrid * sizeof(int));
-
-  /* Init... */
-#ifdef _OPENACC
-#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
-#pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
-#pragma acc parallel loop independent gang vector
-#else
-#ifdef __NVCOMPILER
-#pragma novector
-#endif
-#pragma omp parallel for
-#endif
-  for (int i = 0; i < ngrid; i++) {
-    count[i] = 0;
-    cmean[i] = 0;
-  }
-
-  /* Loop over particles... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (izs[ip] >= 0) {
-      const int idx = ARRAY_3D
-	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
-#ifdef _OPENACC
-#pragma acc atomic update
-#endif
-      cmean[idx] += atm->q[qnt_idx][ip];
-#ifdef _OPENACC
-#pragma acc atomic update
-#endif
-      count[idx]++;
-    }
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#ifdef __NVCOMPILER
-#pragma novector
-#endif
-#pragma omp parallel for
-#endif
-  for (int i = 0; i < ngrid; i++)
-    if (count[i] > 0)
-      cmean[i] /= count[i];
-
-  /* Calculate interparcel mixing... */
-#ifdef _OPENACC
-#pragma acc parallel loop independent gang vector
-#else
-#pragma omp parallel for
-#endif
-  for (int ip = 0; ip < np; ip++)
-    if (izs[ip] >= 0) {
-
-      /* Set mixing parameter... */
-      double mixparam = 1.0;
-      if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
-	double w = tropo_weight(clim, atm, ip);
-	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
-      }
-
-      /* Adjust quantity... */
-      atm->q[qnt_idx][ip] +=
-	(cmean
-	 [ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
-	 - atm->q[qnt_idx][ip]) * mixparam;
-    }
-
-  /* Free... */
-#ifdef _OPENACC
-#pragma acc exit data delete(cmean,count)
-#endif
-  free(cmean);
-  free(count);
-}
-
-/*****************************************************************************/
-
-void module_mixing_help_ens(
-  const ctl_t *ctl,
-  const clim_t *clim,
-  atm_t *atm,
-  const int *ixs,
-  const int *iys,
-  const int *izs,
-  const int qnt_idx) {
-
-  /* Allocate... */
-  const int np = atm->np;
-  const int ngrid = ctl->mixing_nx * ctl->mixing_ny * ctl->mixing_nz;
-  double *restrict const cmean =
-    (double *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(double));
+    (double *) malloc((size_t) total_grid * sizeof(double));
   int *restrict const count =
-    (int *) malloc((size_t) ngrid * (size_t) ctl->nens * sizeof(int));
+    (int *) malloc((size_t) total_grid * sizeof(int));
 
   /* Init... */
 #ifdef _OPENACC
-#pragma acc enter data create(cmean[0:ngrid],count[0:ngrid])
+#pragma acc enter data create(cmean[0:total_grid],count[0:total_grid])
 #pragma acc data present(ctl,clim,atm,ixs,iys,izs,cmean,count)
 #pragma acc parallel loop independent gang vector
 #else
@@ -3783,9 +3636,9 @@ void module_mixing_help_ens(
 #endif
 #pragma omp parallel for
 #endif
-  for (int i = 0; i < ngrid * ctl->nens; i++) {
+  for (int i = 0; i < total_grid; i++) {
     count[i] = 0;
-    cmean[i] = 0;
+    cmean[i] = 0.0;
   }
 
   /* Loop over particles... */
@@ -3794,9 +3647,10 @@ void module_mixing_help_ens(
 #endif
   for (int ip = 0; ip < np; ip++)
     if (izs[ip] >= 0) {
-      const int ens = (int) atm->q[ctl->qnt_ens][ip];
-      const int idx = ens * ngrid + ARRAY_3D
-	(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz);
+      const int ens = use_ensemble ? (int) atm->q[ctl->qnt_ens][ip] : 0;
+      const int idx =
+	ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip],
+			       ctl->mixing_nz);
 #ifdef _OPENACC
 #pragma acc atomic update
 #endif
@@ -3806,6 +3660,8 @@ void module_mixing_help_ens(
 #endif
       count[idx]++;
     }
+
+  /* Compute means... */
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
@@ -3814,34 +3670,32 @@ void module_mixing_help_ens(
 #endif
 #pragma omp parallel for
 #endif
-  for (int i = 0; i < ngrid * ctl->nens; i++)
+  for (int i = 0; i < total_grid; i++)
     if (count[i] > 0)
       cmean[i] /= count[i];
 
-  /* Calculate interparcel mixing... */
+  /* Interparcel mixing... */
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for
 #endif
-  for (int ip = 0; ip < np; ip++)
+  for (int ip = 0; ip < np; ip++) {
     if (izs[ip] >= 0) {
+      const int ens = use_ensemble ? (int) atm->q[ctl->qnt_ens][ip] : 0;
 
-      int ens = (int) atm->q[ctl->qnt_ens][ip];
-      /* Set mixing parameter... */
       double mixparam = 1.0;
       if (ctl->mixing_trop < 1 || ctl->mixing_strat < 1) {
-	double w = tropo_weight(clim, atm, ip);
-	mixparam = w * ctl->mixing_trop + (1 - w) * ctl->mixing_strat;
+	const double w = tropo_weight(clim, atm, ip);
+	mixparam = w * ctl->mixing_trop + (1.0 - w) * ctl->mixing_strat;
       }
 
-      /* Adjust quantity... */
-      atm->q[qnt_idx][ip] +=
-	(cmean
-	 [ens * ngrid +
-	  ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip], ctl->mixing_nz)]
-	 - atm->q[qnt_idx][ip]) * mixparam;
+      const int idx =
+	ens * ngrid + ARRAY_3D(ixs[ip], iys[ip], ctl->mixing_ny, izs[ip],
+			       ctl->mixing_nz);
+      atm->q[qnt_idx][ip] += (cmean[idx] - atm->q[qnt_idx][ip]) * mixparam;
     }
+  }
 
   /* Free... */
 #ifdef _OPENACC

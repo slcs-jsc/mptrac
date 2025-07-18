@@ -5548,20 +5548,28 @@ void module_mixing(
   const double t);
 
 /**
- * @brief Perform interparcel mixing for a specific quantity.
+ * @brief Perform subgrid-scale interparcel mixing of a given quantity.
  *
- * This function performs interparcel mixing for a specific quantity
- * based on the given indices of grid boxes. It calculates the mean
- * concentration within each grid box and adjusts the quantity for
- * each particle accordingly.
+ * This function computes the average of a specified quantity within each
+ * subgrid box (and optionally for each ensemble member) and applies a 
+ * mixing adjustment to particle values based on the computed local mean.
+ * 
+ * The mixing accounts for differences in tropopause and stratosphere mixing
+ * via a weighted parameterization. It supports both ensemble and non-ensemble
+ * modes using the `use_ensemble` flag.
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param clim Pointer to the climate data structure containing climatological data.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param ixs Pointer to the array of grid box indices along the longitude direction.
- * @param iys Pointer to the array of grid box indices along the latitude direction.
- * @param izs Pointer to the array of grid box indices along the vertical direction.
- * @param qnt_idx Index of the quantity for which mixing is performed.
+ * @param[in] ctl            Pointer to control/configuration structure.
+ * @param[in] clim           Pointer to climatological data structure.
+ * @param[in,out] atm        Pointer to atmospheric state (includes particles).
+ * @param[in] ixs            Array of x-grid indices for each particle.
+ * @param[in] iys            Array of y-grid indices for each particle.
+ * @param[in] izs            Array of z-grid indices for each particle (-1 for invalid).
+ * @param[in] qnt_idx        Index of the quantity in atm->q to be mixed.
+ * @param[in] use_ensemble   Flag indicating whether to use ensemble-aware logic (0 = no, 1 = yes).
+ *
+ * @note Particles with `izs[ip] < 0` are excluded from mixing.
+ * @note Uses OpenACC or OpenMP for parallelism depending on compilation options.
+ * @note Requires `ctl->qnt_ens` to be valid if `use_ensemble` is true.
  *
  * @authors Mingzhao Liu
  * @authors Lars Hoffmann
@@ -5573,50 +5581,8 @@ void module_mixing_help(
   const int *ixs,
   const int *iys,
   const int *izs,
-  const int qnt_idx);
-
-/**
- * @brief Applies ensemble-based interparcel mixing for a given tracer quantity.
- *
- * This function calculates local grid-cell averages of a specified tracer quantity
- * (`qnt_idx`) across ensemble members, and then applies a mixing adjustment to each 
- * atmospheric parcel based on the difference between its value and the mean within its grid cell.
- *
- * @param ctl      Pointer to the model control structure, containing mixing configuration and grid dimensions.
- * @param clim     Pointer to climatological data used to determine tropospheric weighting, if applicable.
- * @param atm      Pointer to the structure containing atmospheric parcel data, including tracer fields.
- * @param ixs      Array of X-indices mapping parcels to grid cells in the horizontal (longitude) direction.
- * @param iys      Array of Y-indices mapping parcels to grid cells in the horizontal (latitude) direction.
- * @param izs      Array of Z-indices mapping parcels to vertical levels; negative values indicate invalid/masked parcels.
- * @param qnt_idx  Index of the tracer quantity in the `atm->q` array to be mixed.
- *
- * @details
- * The function performs the following steps:
- * - Initializes temporary arrays for computing ensemble-mean tracer concentrations and parcel counts.
- * - Loops over all parcels to accumulate tracer values and counts into their corresponding grid cells.
- * - Computes the ensemble mean of the tracer for each populated grid cell.
- * - Applies a linear relaxation of parcel tracer values toward the ensemble mean using a mixing parameter.
- *   The mixing strength can vary between troposphere and stratosphere, depending on `ctl->mixing_trop` and `ctl->mixing_strat`.
- *   If those values are < 1, a weighted average based on the parcel's vertical position (via `tropo_weight()`) is used.
- *
- * @note
- * - Memory is dynamically allocated and freed within the function.
- * - The grid is assumed to be 3D (nx × ny × nz), and calculations are performed per ensemble member.
- * - Parallelization is supported through OpenMP or OpenACC for improved performance.
- *
- * @warning
- * Parcels with `izs[ip] < 0` are excluded from processing.
- *
- * @authors Mingzhao Liu
- */
-void module_mixing_help_ens(
-  const ctl_t * ctl,
-  const clim_t * clim,
-  atm_t * atm,
-  const int *ixs,
-  const int *iys,
-  const int *izs,
-  const int qnt_idx);
+  const int qnt_idx,
+  const int use_ensemble);
 
 /**
  * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
