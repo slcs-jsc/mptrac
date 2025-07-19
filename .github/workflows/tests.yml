@@ -14,7 +14,7 @@ jobs:
     - name: install
       run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev libzstd-dev libzfp-dev libeccodes-dev
     - name: make
-      run: cd src ; make STATIC=0 ZSTD=1 ZFP=1 ECCODES=1
+      run: cd src ; make ZSTD=1 ZFP=1 ECCODES=1
     - name: make check
       run: cd src ; make check
     - name: make grib_test
