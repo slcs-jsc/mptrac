@@ -20,13 +20,13 @@ Description:
 
   Note: The data are provided on model levels. You will need to
   interpolate to pressure levels using MPTRAC's internal interpolation
-  (via the `MET_NP` and `MET_P` control parameters).
+  (via the 'MET_NP' and 'MET_P' control parameters).
 
 Requirements:
   - wget (https://www.gnu.org/software/wget) to retrieve data.
   - NetCDF Operators (NCO, https://nco.sourceforge.net) for file conversion.
   - A NASA EarthData account (https://urs.earthdata.nasa.gov) linked to GES DISC.
-  - Configuration of `~/.netrc` and `~/.urs_cookies` for authenticated wget access:
+  - Configuration of '~/.netrc' and '~/.urs_cookies' for authenticated wget access:
     See https://disc.gsfc.nasa.gov/data-access#windows_wget for setup instructions.
 
 License:

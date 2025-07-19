@@ -58,15 +58,15 @@ date=${year}${mon}${day}
 hour="00"
 if [ "$year" = "today" ] ; then
     date=$(date -u -d "${hour} hour ago" +%Y%m%d)
-    year=$(echo $date | awk '{print substr($1,1,4)}')
-    mon=$(echo $date | awk '{print substr($1,5,2)}')
-    day=$(echo $date | awk '{print substr($1,7,2)}')
+    year=$(echo "$date" | awk '{print substr($1,1,4)}')
+    mon=$(echo "$date" | awk '{print substr($1,5,2)}')
+    day=$(echo "$date" | awk '{print substr($1,7,2)}')
 fi
 
 # Create directories...
 outdir=${dir}/"${model}_${year}_${mon}_${day}"
 tmp=$(mktemp -d tmp.XXXXXXXX)
-rm -rf $tmp && mkdir -p $tmp "$outdir" || exit
+rm -rf "$tmp" && mkdir -p "$tmp" "$outdir" || exit
 
 # Loop over forecast steps...
 for step in $step_seq ; do
@@ -82,10 +82,10 @@ for step in $step_seq ; do
     
     # Get time...
     t2=$($trac/time2jsec $year $mon $day $hour 0 0 0 | awk -v step=$step '{printf("%.2f", $1 + step * 3600.)}')
-    year2=$($trac/jsec2time $t2 | awk '{print $1}')
-    mon2=$($trac/jsec2time $t2 | awk '{printf("%02d", $2)}')
-    day2=$($trac/jsec2time $t2 | awk '{printf("%02d", $3)}')
-    hour2=$($trac/jsec2time $t2 | awk '{printf("%02d", $4)}')
+    year2=$($trac/jsec2time "$t2" | awk '{print $1}')
+    mon2=$($trac/jsec2time "$t2" | awk '{printf("%02d", $2)}')
+    day2=$($trac/jsec2time "$t2" | awk '{printf("%02d", $3)}')
+    hour2=$($trac/jsec2time "$t2" | awk '{printf("%02d", $4)}')
     
     # Convert to netCDF...
     outfile="$outdir/${model}_${year2}_${mon2}_${day2}_${hour2}.nc"
