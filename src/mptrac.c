@@ -585,48 +585,6 @@ void compress_cms(
 	  cms_read_arr_new(cms_ptr[ip], tmp_arr, lon, lat,
 			   nx, ny, c_thresh_test);
 
-#if 0
-	/* Initialize multiscale module... */
-	cms_ptr[ip] = cms_init(cms_param);
-
-	/* Create solution pointer... */
-	cms_sol[ip] = cms_read_arr(cms_ptr[ip], tmp_arr, lon, lat, nx, ny);
-
-	/* Set eps threshold value... */
-	if (strcasecmp(varname, "Z") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_z);
-	else if (strcasecmp(varname, "T") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_t);
-	else if (strcasecmp(varname, "U") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_u);
-	else if (strcasecmp(varname, "V") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_v);
-	else if (strcasecmp(varname, "W") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_w);
-	else if (strcasecmp(varname, "PV") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_pv);
-	else if (strcasecmp(varname, "H2O") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_h2o);
-	else if (strcasecmp(varname, "O3") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_o3);
-	else if (strcasecmp(varname, "LWC") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_lwc);
-	else if (strcasecmp(varname, "RWC") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_rwc);
-	else if (strcasecmp(varname, "IWC") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_iwc);
-	else if (strcasecmp(varname, "SWC") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_swc);
-	else if (strcasecmp(varname, "CC") == 0)
-	  cms_set_eps(cms_ptr[ip], ctl->met_cms_eps_cc);
-	else
-	  ERRMSG("Variable name unknown!");
-
-	/* Coarsening... */
-	cms_coarsening(cms_ptr[ip], cms_sol[ip],
-		       (unsigned int) ctl->met_cms_heur);
-#endif
-
 	/* Free... */
 	free(tmp_arr);
       }
@@ -3057,8 +3015,7 @@ void module_h2o2_chem(
   const double low = pow(1. / a, 1. / b);
 
   /* Loop over particles... */
-  PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,met0,met1,atm)") {
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Check whether particle is inside cloud... */
     double lwc, rwc;
@@ -5301,8 +5258,6 @@ void mptrac_read_ctl(
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
-  scan_ctl(filename, argc, argv, "CSI_ENS_BASENAME", -1, "-",
-	   ctl->csi_ens_basename);
   ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
@@ -5930,12 +5885,6 @@ void mptrac_write_output(
   if (ctl->csi_basename[0] != '-') {
     sprintf(filename, "%s/%s.tab", dirname, ctl->csi_basename);
     write_csi(filename, ctl, atm, t);
-  }
-
-  /* Write CSI ensemble data... */
-  if (ctl->csi_ens_basename[0] != '-') {
-    sprintf(filename, "%s/%s.tab", dirname, ctl->csi_ens_basename);
-    write_csi_ens(filename, ctl, atm, t);
   }
 
   /* Write ensemble data... */
@@ -10217,19 +10166,29 @@ void write_csi(
   static double *modmean, *obsmean, *obsstd, *rt, *rz, *rlon, *rlat, *robs,
     *area, dlon, dlat, dz, x[NCSI], y[NCSI], obsstdn[NCSI], kz[EP], kw[EP];
 
-  static int *obscount, ct, cx, cy, cz, ip, ix, iy, iz, n, nobs, nk;
+  static int *obscount, nobs, nk;
 
-  /* Set timer... */
+  static int ct[NENS], cx[NENS], cy[NENS], cz[NENS], n[NENS];
+
+  const int ensemble = (ctl->nens > 0);
+
+  /* Set timer */
   SELECT_TIMER("WRITE_CSI", "OUTPUT", NVTX_WRITE);
+
+  /* Check quantities... */
+  if (ctl->qnt_m < 0)
+    ERRMSG("Need quantity mass!");
+  if (ensemble) {
+    if (ctl->qnt_ens < 0)
+      ERRMSG("Missing ensemble IDs!");
+    if (ctl->nens > NENS)
+      ERRMSG("Too many ensembles!");
+  }
 
   /* Init... */
   if (t == ctl->t_start) {
 
-    /* Check quantity index for mass... */
-    if (ctl->qnt_m < 0)
-      ERRMSG("Need quantity mass!");
-
-    /* Allocate... */
+    /* Allocate.. */
     ALLOC(area, double,
 	  ctl->csi_ny);
     ALLOC(rt, double,
@@ -10251,32 +10210,31 @@ void write_csi(
       read_kernel(ctl->csi_kernel, kz, kw, &nk);
 
     /* Create new file... */
-    LOG(1, "Write CSI data: %s", filename);
+    LOG(1, "Write CSI%s data: %s", ensemble ? " ensemble" : "", filename);
     if (!(out = fopen(filename, "w")))
       ERRMSG("Cannot create file!");
 
     /* Write header... */
     fprintf(out,
 	    "# $1 = time [s]\n"
-	    "# $2 = number of hits (cx)\n"
-	    "# $3 = number of misses (cy)\n"
-	    "# $4 = number of false alarms (cz)\n"
-	    "# $5 = number of observations (cx + cy)\n"
-	    "# $6 = number of forecasts (cx + cz)\n"
-	    "# $7 = bias (ratio of forecasts and observations) [%%]\n"
-	    "# $8 = probability of detection (POD) [%%]\n"
-	    "# $9 = false alarm rate (FAR) [%%]\n"
-	    "# $10 = critical success index (CSI) [%%]\n");
-    fprintf(out,
-	    "# $11 = hits associated with random chance\n"
-	    "# $12 = equitable threat score (ETS) [%%]\n"
-	    "# $13 = Pearson linear correlation coefficient\n"
-	    "# $14 = Spearman rank-order correlation coefficient\n"
-	    "# $15 = column density mean error (F - O) [kg/m^2]\n"
-	    "# $16 = column density root mean square error (RMSE) [kg/m^2]\n"
-	    "# $17 = column density mean absolute error [kg/m^2]\n"
-	    "# $18 = log-likelihood function\n"
-	    "# $19 = number of data points\n\n");
+	    "# $2 = ensemble ID\n"
+	    "# $3 = number of hits (cx)\n"
+	    "# $4 = number of misses (cy)\n"
+	    "# $5 = number of false alarms (cz)\n"
+	    "# $6 = number of observations (cx + cy)\n"
+	    "# $7 = number of forecasts (cx + cz)\n"
+	    "# $8 = bias (%%)\n"
+	    "# $9 = POD (%%)\n"
+	    "# $10 = FAR (%%)\n"
+	    "# $11 = CSI (%%)\n"
+	    "# $12 = hits by random chance\n"
+	    "# $13 = ETS (%%)\n"
+	    "# $14 = Pearson R\n"
+	    "# $15 = Spearman R\n"
+	    "# $16 = mean error [kg/m²]\n"
+	    "# $17 = RMSE [kg/m²]\n"
+	    "# $18 = MAE [kg/m²]\n"
+	    "# $19 = log-likelihood\n" "# $20 = number of points\n\n");
 
     /* Set grid box size... */
     dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
@@ -10284,461 +10242,168 @@ void write_csi(
     dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
 
     /* Set horizontal coordinates... */
-    for (iy = 0; iy < ctl->csi_ny; iy++) {
-      const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
-      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
+    for (int iy = 0; iy < ctl->csi_ny; iy++) {
+      double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      area[iy] = dlat * dlon * SQR(RE * M_PI / 180.0) * cos(DEG2RAD(lat));
     }
   }
 
   /* Set time interval... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
+  double t0 = t - 0.5 * ctl->dt_mod;
+  double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate... */
+  int grid_size = ctl->csi_nx * ctl->csi_ny * ctl->csi_nz;
   ALLOC(modmean, double,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	  (ensemble ? ctl->nens : 1) * grid_size);
   ALLOC(obsmean, double,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	grid_size);
   ALLOC(obscount, int,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	grid_size);
   ALLOC(obsstd, double,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
+	grid_size);
+
+  /* Init... */
+  for (int i = 0; i < (ensemble ? ctl->nens : 1); i++)
+    ct[i] = cx[i] = cy[i] = cz[i] = n[i] = 0;
 
   /* Loop over observations... */
   for (int i = 0; i < nobs; i++) {
-
-    /* Check time... */
-    if (rt[i] < t0)
-      continue;
-    else if (rt[i] >= t1)
-      break;
-
-    /* Check observation data... */
-    if (!isfinite(robs[i]))
+    if (rt[i] < t0 || rt[i] >= t1 || !isfinite(robs[i]))
       continue;
 
     /* Calculate indices... */
-    ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
-    iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
-    iz = (int) ((rz[i] - ctl->csi_z0) / dz);
-
-    /* Check indices... */
-    if (ix < 0 || ix >= ctl->csi_nx ||
-	iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
+    int ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
+    int iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
+    int iz = (int) ((rz[i] - ctl->csi_z0) / dz);
+    if (ix < 0 || ix >= ctl->csi_nx || iy < 0 || iy >= ctl->csi_ny || iz < 0
+	|| iz >= ctl->csi_nz)
       continue;
 
     /* Get mean observation index... */
-    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    const int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
     obsmean[idx] += robs[i];
     obsstd[idx] += SQR(robs[i]);
     obscount[idx]++;
   }
 
   /* Analyze model data... */
-  for (ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
     /* Check time... */
     if (atm->time[ip] < t0 || atm->time[ip] > t1)
       continue;
 
-    /* Get indices... */
-    ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
-    iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
-    iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
+    /* Get ensemble ID... */
+    int ens_id = ensemble ? (int) atm->q[ctl->qnt_ens][ip] : 0;
+    if (ens_id < 0 || ens_id >= (ensemble ? ctl->nens : 1))
+      ERRMSG("Ensemble ID out of range!");
 
-    /* Check indices... */
-    if (ix < 0 || ix >= ctl->csi_nx ||
-	iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
+    /* Get indices... */
+    int ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
+    int iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
+    int iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
+    if (ix < 0 || ix >= ctl->csi_nx || iy < 0 || iy >= ctl->csi_ny || iz < 0
+	|| iz >= ctl->csi_nz)
       continue;
 
     /* Get total mass in grid cell... */
-    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-    modmean[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
-      * atm->q[ctl->qnt_m][ip];
-  }
-
-  /* Analyze all grid cells... */
-  for (ix = 0; ix < ctl->csi_nx; ix++)
-    for (iy = 0; iy < ctl->csi_ny; iy++)
-      for (iz = 0; iz < ctl->csi_nz; iz++) {
-
-	/* Calculate mean observation index... */
-	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-	if (obscount[idx] > 0) {
-	  obsmean[idx] /= obscount[idx];
-	  obsstd[idx] -= SQR(obsmean[idx]);
-	  obsstd[idx] = sqrt(obsstd[idx]);
-	}
-
-	/* Calculate column density... */
-	if (modmean[idx] > 0)
-	  modmean[idx] /= (1e6 * area[iy]);
-
-	/* Calculate CSI... */
-	if (obscount[idx] > 0) {
-	  ct++;
-	  if (obsmean[idx] >= ctl->csi_obsmin &&
-	      modmean[idx] >= ctl->csi_modmin)
-	    cx++;
-	  else if (obsmean[idx] >= ctl->csi_obsmin &&
-		   modmean[idx] < ctl->csi_modmin)
-	    cy++;
-	  else if (obsmean[idx] < ctl->csi_obsmin &&
-		   modmean[idx] >= ctl->csi_modmin)
-	    cz++;
-	}
-
-	/* Save data for other verification statistics... */
-	if (obscount[idx] > 0
-	    && (obsmean[idx] >= ctl->csi_obsmin
-		|| modmean[idx] >= ctl->csi_modmin)) {
-	  x[n] = modmean[idx];
-	  y[n] = obsmean[idx];
-	  if (modmean[idx] >= ctl->csi_modmin)
-	    obsstdn[n] = obsstd[idx];
-	  if ((++n) >= NCSI)
-	    ERRMSG("Too many data points to calculate statistics!");
-	}
-      }
-
-  /* Write output... */
-  if (fmod(t, ctl->csi_dt_out) == 0) {
-
-    /* Calculate verification statistics
-       (https://www.cawcr.gov.au/projects/verification/) ... */
-    static double work[2 * NCSI], work2[2 * NCSI];;
-    const int n_obs = cx + cy;
-    const int n_for = cx + cz;
-    const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
-    const double pod = (n_obs > 0) ? (100. * cx) / n_obs : NAN;
-    const double far = (n_for > 0) ? (100. * cz) / n_for : NAN;
-    const double csi =
-      (cx + cy + cz > 0) ? (100. * cx) / (cx + cy + cz) : NAN;
-    const double cx_rd = (ct > 0) ? (1. * n_obs * n_for) / ct : NAN;
-    const double ets = (cx + cy + cz - cx_rd > 0) ?
-      (100. * (cx - cx_rd)) / (cx + cy + cz - cx_rd) : NAN;
-    const double rho_p =
-      (n > 0) ? gsl_stats_correlation(x, 1, y, 1, (size_t) n) : NAN;
-    const double rho_s =
-      (n > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n, work) : NAN;
-    for (int i = 0; i < n; i++) {
-      work[i] = x[i] - y[i];
-      work2[i] = (obsstdn[i] != 0) ? (x[i] - y[i]) / obsstdn[i] : 0;
-    }
-    const double mean = (n > 0) ? gsl_stats_mean(work, 1, (size_t) n) : NAN;
-    const double rmse =
-      (n > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n,
-					     0.0) : NAN;
-    const double absdev =
-      (n > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n, 0.0) : NAN;
-    const double loglikelihood =
-      (n > 0) ? gsl_stats_tss(work2, 1, (size_t) n) * (-0.5) : GSL_NAN;
-
-    /* Write... */
-    fprintf(out,
-	    "%.2f %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
-	    t, cx, cy, cz, n_obs, n_for, bias, pod, far, csi, cx_rd, ets,
-	    rho_p, rho_s, mean, rmse, absdev, loglikelihood, n);
-
-    /* Set counters to zero... */
-    n = ct = cx = cy = cz = 0;
-  }
-
-  /* Free... */
-  free(modmean);
-  free(obsmean);
-  free(obscount);
-  free(obsstd);
-
-  /* Finalize... */
-  if (t == ctl->t_stop) {
-
-    /* Close output file... */
-    fclose(out);
-
-    /* Free... */
-    free(area);
-    free(rt);
-    free(rz);
-    free(rlon);
-    free(rlat);
-    free(robs);
-  }
-}
-
-/*****************************************************************************/
-
-void write_csi_ens(
-  const char *filename,
-  const ctl_t *ctl,
-  const atm_t *atm,
-  const double t) {
-
-  static FILE *out;
-
-  static double *modmean, *obsmean, *obsstd, *rt, *rz, *rlon, *rlat, *robs,
-    *area, dlon, dlat, dz, x[NCSI], y[NCSI], obsstdn[NCSI], kz[EP], kw[EP];
-
-  static int *obscount, ct[NENS], cx[NENS], cy[NENS], cz[NENS], ip, ix, iy,
-    iz, n[NENS], nobs, nk;
-
-  /* Set timer... */
-  SELECT_TIMER("WRITE_CSI_ENS", "OUTPUT", NVTX_WRITE);
-
-  /* Check quantity index for mass... */
-  if (ctl->qnt_m < 0)
-    ERRMSG("Need quantity mass!");
-
-  /* Check ensemble IDs... */
-  if (ctl->qnt_ens < 0)
-    ERRMSG("Missing ensemble IDs!");
-
-  if (ctl->nens > NENS)
-    ERRMSG("Too much ensembles!")
-      /* Init... */
-      if (t == ctl->t_start) {
-      /* Allocate... */
-      ALLOC(area, double,
-	    ctl->csi_ny);
-      ALLOC(rt, double,
-	    NOBS);
-      ALLOC(rz, double,
-	    NOBS);
-      ALLOC(rlon, double,
-	    NOBS);
-      ALLOC(rlat, double,
-	    NOBS);
-      ALLOC(robs, double,
-	    NOBS);
-
-      /* Read observation data... */
-      read_obs(ctl->csi_obsfile, ctl, rt, rz, rlon, rlat, robs, &nobs);
-
-      /* Read kernel data... */
-      if (ctl->csi_kernel[0] != '-')
-	read_kernel(ctl->csi_kernel, kz, kw, &nk);
-
-      /* Create new file... */
-      LOG(1, "Write CSI ensemble data: %s", filename);
-      if (!(out = fopen(filename, "w")))
-	ERRMSG("Cannot create file!");
-
-      /* Write header... */
-      fprintf(out,
-	      "# $1 = time [s]\n"
-	      "# $2 = ensemble ID\n"
-	      "# $3 = number of hits (cx)\n"
-	      "# $4 = number of misses (cy)\n"
-	      "# $5 = number of false alarms (cz)\n"
-	      "# $6 = number of observations (cx + cy)\n"
-	      "# $7 = number of forecasts (cx + cz)\n"
-	      "# $8 = bias (ratio of forecasts and observations) [%%]\n"
-	      "# $9 = probability of detection (POD) [%%]\n"
-	      "# $10 = false alarm rate (FAR) [%%]\n"
-	      "# $11 = critical success index (CSI) [%%]\n"
-	      "# $12 = hits associated with random chance\n"
-	      "# $13 = equitable threat score (ETS) [%%]\n"
-	      "# $14 = Pearson linear correlation coefficient\n"
-	      "# $15 = Spearman rank-order correlation coefficient\n"
-	      "# $16 = column density mean error (F - O) [kg/m^2]\n"
-	      "# $17 = column density root mean square error (RMSE) [kg/m^2]\n"
-	      "# $18 = column density mean absolute error [kg/m^2]\n"
-	      "# $19 = log-likelihood function\n"
-	      "# $20 = number of data points\n\n");
-
-      /* Set grid box size... */
-      dz = (ctl->csi_z1 - ctl->csi_z0) / ctl->csi_nz;
-      dlon = (ctl->csi_lon1 - ctl->csi_lon0) / ctl->csi_nx;
-      dlat = (ctl->csi_lat1 - ctl->csi_lat0) / ctl->csi_ny;
-
-      /* Set horizontal coordinates... */
-      for (iy = 0; iy < ctl->csi_ny; iy++) {
-	const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
-	area[iy] = dlat * dlon * SQR(RE * M_PI / 180.) * cos(DEG2RAD(lat));
-      }
-    }
-
-  /* Set time interval... */
-  const double t0 = t - 0.5 * ctl->dt_mod;
-  const double t1 = t + 0.5 * ctl->dt_mod;
-
-  /* Allocate per-ensemble arrays... */
-  ALLOC(modmean, double,
-	ctl->nens * ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
-
-  ALLOC(obsmean, double,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
-  ALLOC(obscount, int,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
-  ALLOC(obsstd, double,
-	ctl->csi_nx * ctl->csi_ny * ctl->csi_nz);
-
-  /* Initialize ensemble counters... */
-  for (int i = 0; i < ctl->nens; i++) {
-    ct[i] = cx[i] = cy[i] = cz[i] = n[i] = 0;
-  }
-
-  /* Loop over observations... */
-  int grid_size = ctl->csi_nx * ctl->csi_ny * ctl->csi_nz;
-  for (int i = 0; i < nobs; i++) {
-    /* Check time... */
-    if (rt[i] < t0)
-      continue;
-    else if (rt[i] >= t1)
-      break;
-
-    /* Check observation data... */
-    if (!isfinite(robs[i]))
-      continue;
-
-    /* Calculate indices... */
-    ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
-    iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
-    iz = (int) ((rz[i] - ctl->csi_z0) / dz);
-
-    /* Check indices... */
-    if (ix < 0 || ix >= ctl->csi_nx ||
-	iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
-      continue;
-
-    /* Get mean observation index... */
-    int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-    obsmean[idx] += robs[i];
-    obsstd[idx] += SQR(robs[i]);
-    obscount[idx]++;
-  }
-
-  /* Analyze model data per ensemble... */
-  for (ip = 0; ip < atm->np; ip++) {
-    /* Check time... */
-    if (atm->time[ip] < t0 || atm->time[ip] > t1)
-      continue;
-
-    /* Check ensemble ID... */
-    int ens = (int) atm->q[ctl->qnt_ens][ip];
-    if (ens < 0 || ens > ctl->nens)
-      ERRMSG("Ensemble ID is out of range!");
-
-    /* Get indices... */
-    ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
-    iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
-    iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
-
-    /* Check indices... */
-    if (ix < 0 || ix >= ctl->csi_nx ||
-	iy < 0 || iy >= ctl->csi_ny || iz < 0 || iz >= ctl->csi_nz)
-      continue;
-
-    /* Get total mass in grid cell per ensemble... */
     int idx =
-      ens * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-    modmean[idx] += kernel_weight(kz, kw, nk, atm->p[ip])
-      * atm->q[ctl->qnt_m][ip];
+      ens_id * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+    modmean[idx] +=
+      kernel_weight(kz, kw, nk, atm->p[ip]) * atm->q[ctl->qnt_m][ip];
   }
 
   /* Analyze all grid cells... */
-  for (ix = 0; ix < ctl->csi_nx; ix++)
-    for (iy = 0; iy < ctl->csi_ny; iy++)
-      for (iz = 0; iz < ctl->csi_nz; iz++) {
+  for (int ix = 0; ix < ctl->csi_nx; ix++)
+    for (int iy = 0; iy < ctl->csi_ny; iy++)
+      for (int iz = 0; iz < ctl->csi_nz; iz++) {
+
 	/* Calculate mean observation index... */
 	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-	if (obscount[idx] > 0) {
+	if (obscount[idx]) {
 	  obsmean[idx] /= obscount[idx];
-	  obsstd[idx] -= SQR(obsmean[idx]);
-	  obsstd[idx] = sqrt(obsstd[idx]);
+	  obsstd[idx] = sqrt(obsstd[idx] - SQR(obsmean[idx]));
 	}
 
-	/* Calculate column density per ensemble... */
-	for (int i = 0; i < ctl->nens; i++) {
-	  int mod_idx =
-	    i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-	  if (modmean[mod_idx] > 0)
-	    modmean[mod_idx] /= (1e6 * area[iy]);
+	/* Calculate model mean per ensemble... */
+	for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
+	  int midx = e * grid_size + idx;
+	  if (modmean[midx] > 0)
+	    modmean[midx] /= (1e6 * area[iy]);
 	}
 
-	/* Calculate CSI per ensemble... */
-	if (obscount[idx] > 0) {
-	  for (int i = 0; i < ctl->nens; i++) {
-	    ct[i]++;
-	    int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz,
-						   ctl->csi_nz);
+	/* Check number of observations... */
+	if (obscount[idx]) {
+
+	  /* Calculate CSI... */
+	  for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
+	    int midx = e * grid_size + idx;
+	    ct[e]++;
 	    if (obsmean[idx] >= ctl->csi_obsmin
-		&& modmean[mod_idx] >= ctl->csi_modmin)
-	      cx[i]++;
-	    else if (obsmean[idx] >= ctl->csi_obsmin &&
-		     modmean[mod_idx] < ctl->csi_modmin)
-	      cy[i]++;
-	    else if (obsmean[idx] < ctl->csi_obsmin &&
-		     modmean[mod_idx] >= ctl->csi_modmin)
-	      cz[i]++;
-	  }
-	}
+		&& modmean[midx] >= ctl->csi_modmin)
+	      cx[e]++;
+	    else if (obsmean[idx] >= ctl->csi_obsmin)
+	      cy[e]++;
+	    else if (modmean[midx] >= ctl->csi_modmin)
+	      cz[e]++;
 
-	/* Save data for other verification statistics... */
-	for (int i = 0; i < ctl->nens; i++) {
-	  if (obscount[idx] > 0
-	      && (obsmean[idx] >= ctl->csi_obsmin
-		  || modmean[i * grid_size + idx] >= ctl->csi_modmin)) {
-	    int mod_idx = i * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz,
-						   ctl->csi_nz);
-	    x[n[i]] = modmean[mod_idx];
-	    y[n[i]] = obsmean[idx];
-	    if (modmean[mod_idx] >= ctl->csi_modmin)
-	      obsstdn[n[i]] = obsstd[idx];
-	    if ((++n[i]) >= NCSI)
-	      ERRMSG("Too many data points to calculate statistics!");
+	    /* Save data for other verification statistics... */
+	    if (obsmean[idx] >= ctl->csi_obsmin
+		|| modmean[midx] >= ctl->csi_modmin) {
+	      x[n[e]] = modmean[midx];
+	      y[n[e]] = obsmean[idx];
+	      if (modmean[midx] >= ctl->csi_modmin)
+		obsstdn[n[e]] = obsstd[idx];
+	      if ((++n[e]) >= NCSI)
+		ERRMSG("Too many points for statistics!");
+	    }
 	  }
 	}
       }
 
   /* Write output... */
   if (fmod(t, ctl->csi_dt_out) == 0) {
-    for (int i = 0; i < ctl->nens; i++) {
-      if (n[i] > 0) {
-	/* Calculate verification statistics... */
-	static double work[2 * NCSI], work2[2 * NCSI];
-	const int n_obs = cx[i] + cy[i];
-	const int n_for = cx[i] + cz[i];
-	const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
-	const double pod = (n_obs > 0) ? (100. * cx[i]) / n_obs : NAN;
-	const double far = (n_for > 0) ? (100. * cz[i]) / n_for : NAN;
-	const double csi =
-	  (cx[i] + cy[i] + cz[i] >
-	   0) ? (100. * cx[i]) / (cx[i] + cy[i] + cz[i]) : NAN;
-	const double cx_rd = (ct[i] > 0) ? (1. * n_obs * n_for) / ct[i] : NAN;
-	const double ets =
-	  (cx[i] + cy[i] + cz[i] - cx_rd >
-	   0) ? (100. * (cx[i] - cx_rd)) / (cx[i] + cy[i] + cz[i] -
-					    cx_rd) : NAN;
-	const double rho_p = (n[i] > 0) ? gsl_stats_correlation(x, 1, y, 1,
-								(size_t) n[i])
-	  : NAN;
-	const double rho_s =
-	  (n[i] > 0) ? gsl_stats_spearman(x, 1, y, 1, (size_t) n[i],
-					  work) : NAN;
-	for (int j = 0; j < n[i]; j++) {
-	  work[j] = x[j] - y[j];
-	  work2[j] = (obsstdn[j] != 0) ? (x[j] - y[j]) / obsstdn[j] : 0;
-	}
-	const double mean =
-	  (n[i] > 0) ? gsl_stats_mean(work, 1, (size_t) n[i]) : NAN;
-	const double rmse =
-	  (n[i] > 0) ? gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[i],
-						    0.0) : NAN;
-	const double absdev =
-	  (n[i] > 0) ? gsl_stats_absdev_m(work, 1, (size_t) n[i],
-					  0.0) : NAN;
-	const double loglikelihood = (n[i] > 0) ? gsl_stats_tss(work2, 1,
-								(size_t) n[i])
-	  * (-0.5) : GSL_NAN;
+    for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
 
-	/* Write... */
-	fprintf(out,
-		"%.2f %d %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
-		t, i, cx[i], cy[i], cz[i], n_obs, n_for, bias, pod, far,
-		csi, cx_rd, ets, rho_p, rho_s, mean, rmse, absdev,
-		loglikelihood, n[i]);
+      if (n[e] == 0)
+	continue;
+
+      /* Calculate verification statistics
+         (https://www.cawcr.gov.au/projects/verification/) ... */
+      static double work[2 * NCSI], work2[2 * NCSI];
+      int n_obs = cx[e] + cy[e];
+      int n_for = cx[e] + cz[e];
+      double cx_rd = (ct[e] > 0) ? (1. * n_obs * n_for) / ct[e] : NAN;
+      double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+      double pod = (n_obs > 0) ? 100. * cx[e] / n_obs : NAN;
+      double far = (n_for > 0) ? 100. * cz[e] / n_for : NAN;
+      double csi =
+	(cx[e] + cy[e] + cz[e] >
+	 0) ? 100. * cx[e] / (cx[e] + cy[e] + cz[e]) : NAN;
+      double ets =
+	(cx[e] + cy[e] + cz[e] - cx_rd >
+	 0) ? 100. * (cx[e] - cx_rd) / (cx[e] + cy[e] + cz[e] - cx_rd) : NAN;
+      double rho_p = gsl_stats_correlation(x, 1, y, 1, (size_t) n[e]);
+      double rho_s = gsl_stats_spearman(x, 1, y, 1, (size_t) n[e], work);
+      for (int i = 0; i < n[e]; i++) {
+	work[i] = x[i] - y[i];
+	work2[i] = (obsstdn[i] != 0) ? work[i] / obsstdn[i] : 0;
       }
+      double mean = gsl_stats_mean(work, 1, (size_t) n[e]);
+      double rmse = gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[e], 0.0);
+      double absdev = gsl_stats_absdev_m(work, 1, (size_t) n[e], 0.0);
+      double loglikelihood = gsl_stats_tss(work2, 1, (size_t) n[e]) * -0.5;
+
+      /* Write... */
+      fprintf(out,
+	      "%.2f %d %d %d %d %d %d %g %g %g %g %g %g %g %g %g %g %g %g %d\n",
+	      t, ensemble ? e : -999, cx[e], cy[e], cz[e], n_obs, n_for, bias,
+	      pod, far, csi, cx_rd, ets, rho_p, rho_s, mean, rmse, absdev,
+	      loglikelihood, n[e]);
+
+      /* Set counters to zero... */
+      ct[e] = cx[e] = cy[e] = cz[e] = n[e] = 0;
     }
   }
 
@@ -10750,6 +10415,7 @@ void write_csi_ens(
 
   /* Finalize... */
   if (t == ctl->t_stop) {
+
     /* Close output file... */
     fclose(out);
 

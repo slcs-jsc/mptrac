@@ -3040,9 +3040,6 @@ typedef struct {
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
-  /*! Basename of CSI ensemble data files. */
-  char csi_ens_basename[LEN];
-
   /*! Number of ensembles. */
   int nens;
 
