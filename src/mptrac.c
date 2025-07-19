@@ -3058,7 +3058,7 @@ void module_h2o2_chem(
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
-		"acc data present(ctl,cache,ctl,met0,met1,atm)") {
+		"acc data present(ctl,cache,met0,met1,atm)") {
 
     /* Check whether particle is inside cloud... */
     double lwc, rwc;
