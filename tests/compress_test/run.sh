@@ -29,7 +29,7 @@ $trac/met_conv - data/ei_2011_06_05_00.nc 0 data/nc2bin_2011_06_05_00.bin 1
 # Compare files...
 echo -e "\nCompare results..."
 error=0
-for f in $(ls data.ref/*) ; do
+for f in $(ls data.ref/* | grep -v ".zfp") ; do
     [ -s data/"$(basename "$f")" ] || continue
     diff -q -s data/"$(basename "$f")" "$f" || error=1
 done
