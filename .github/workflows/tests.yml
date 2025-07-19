@@ -19,3 +19,7 @@ jobs:
       run: cd src ; make check
     - name: make grib_test
       run: cd src ; make grib_test
+    - name: make wrapper
+      run: cd src ; make wrapper ZSTD=1 ZFP=1 ECCODES=1
+    - name: make wrapper_test
+      run: cd src ; make wrapper_test
