@@ -378,7 +378,6 @@ MODULE mptrac_struct
      INTEGER(c_int), DIMENSION(nqq) :: atm_nc_quant
      INTEGER(c_int) :: obs_type
      CHARACTER(c_char), DIMENSION(length) :: csi_basename
-     CHARACTER(c_char), DIMENSION(length) :: csi_ens_basename
      INTEGER(c_int) :: nens
      CHARACTER(c_char), DIMENSION(length) :: csi_kernel
      REAL(c_double) :: csi_dt_out
