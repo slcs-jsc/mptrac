@@ -3,6 +3,9 @@
 # $3 = altitude (min) [km]
 # $4 = longitude (min) [deg]
 # $5 = latitude (min) [deg]
-# $6 = number of particles
+# $6 = aoa (min) [s]
+# $7 = m (min) [kg]
+# $8 = vmr (min) [ppv]
+# $9 = number of particles
 
-0.00 0.00 5.00217 -149.97 -74.9833 6715
+0.00 0.00 5.00217 -149.97 -74.9833 0.00 100000 1e-09 6715
