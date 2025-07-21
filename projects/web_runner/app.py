@@ -16,20 +16,18 @@ TRAC_CMD = '../../src/trac'
 
 # Create directories...
 RUNS_DIR, ZIPS_DIR, LOG_DIR = 'runs/working', 'runs/zips', 'runs/logs'
-os.makedirs(RUNS_DIR, exist_ok=True)
-os.makedirs(ZIPS_DIR, exist_ok=True)
-os.makedirs(LOG_DIR, exist_ok=True)
+for path in [RUNS_DIR, ZIPS_DIR, LOG_DIR]:
+    os.makedirs(path, exist_ok=True)
 
 # Semaphore...
 process_semaphore = threading.Semaphore(3)
 
-# Set up logging...
+# Logging setup...
 log_file = os.path.join(LOG_DIR, 'web_runner.log')
-handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
-formatter = logging.Formatter('[%(asctime)s] %(levelname)s in %(threadName)s: %(message)s')
-handler.setFormatter(formatter)
 logger = logging.getLogger('web_runner')
 logger.setLevel(logging.INFO)
+handler = RotatingFileHandler(log_file, maxBytes=10*1024*1024, backupCount=5)
+handler.setFormatter(logging.Formatter('[%(asctime)s] %(levelname)s in %(threadName)s: %(message)s'))
 logger.addHandler(handler)
 
 # Clean up working directory...
@@ -37,21 +35,16 @@ def clean_old_runs(max_age_sec=3600):
     now = time.time()
     for directory in [RUNS_DIR, ZIPS_DIR]:
         for path in glob.glob(os.path.join(directory, "*")):
-            if os.path.isdir(path):
-                if now - os.path.getmtime(path) > max_age_sec:
-                    shutil.rmtree(path, ignore_errors=True)
-            elif os.path.isfile(path) and now - os.path.getmtime(path) > max_age_sec:
-                os.remove(path)
+            if now - os.path.getmtime(path) > max_age_sec:
+                try:
+                    shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
+                except Exception as e:
+                    logger.warning(f"Failed to remove {path}: {e}")
 
 # Periodic cleaning...
 def schedule_periodic_cleanup(interval=3600):
-    def loop():
-        while True:
-            clean_old_runs()
-            time.sleep(interval)
-    threading.Thread(target=loop, daemon=True).start()
-clean_old_runs()
-schedule_periodic_cleanup()
+    threading.Thread(target=lambda: [clean_old_runs() or time.sleep(interval) for _ in iter(int, 1)],
+                     daemon=True).start()
 
 # Flask app...
 app = Flask(__name__)
@@ -162,8 +155,12 @@ def run():
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         start_time_str = start_dt.strftime("%Y-%m-%dT%H:%MZ")
         stop_time_str = stop_dt.strftime("%Y-%m-%dT%H:%MZ")
+        if met_source == 'aifs_6h':
+            METBASE = f"/mnt/slmet-mnt/met_data/ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"
+        if met_source == 'ifs_6h':
+            METBASE = f"/mnt/slmet-mnt/met_data/ecmwf/open_data/data/ifs_{start_dt.strftime('%Y_%m_%d')}/ifs"
         if met_source == 'gfs_3h':
-            METBASE = f"/mnt/slmet-mnt/met_data/ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"        
+            METBASE = f"/mnt/slmet-mnt/met_data/ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"
         z0, z1, dz = to_f('z0'), to_f('z1'), to_f('dz')
         lat0, lat1, dlat = to_f('lat0'), to_f('lat1'), to_f('dlat')
         lon0, lon1, dlon = to_f('lon0'), to_f('lon1'), to_f('dlon')
