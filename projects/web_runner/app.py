@@ -265,6 +265,7 @@ def run():
     METBASE = {METBASE}
     DT_MET = {DT_MET}
     MET_PRESS_LEVEL_DEF = {MET_PRESS_LEVEL_DEF}
+    MET_VERT_COORD = {MET_VERT_COORD}
     DIFFUSION = 1
     """ + '\n'.join(f"{k.upper()} = {v}" for k, v in turb.items()) + f"""
     CONV_CAPE = {conv_cape}
