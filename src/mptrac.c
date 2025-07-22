@@ -8169,14 +8169,18 @@ void read_met_nc_grid(
     if (nc_inq_varid(ncid, "U", &varid) != NC_NOERR)
       ERRMSG
 	("Variable 'u' or 'U' not found, cannot determine vertical dimension!");
+
   NC(nc_inq_varndims(ncid, varid, &ndims));
-  if (ndims != 4)
-    ERRMSG
-      ("Variable 'u' does not have four dimensions, cannot determine vertical dimension!");
   NC(nc_inq_vardimid(ncid, varid, dimids));
-  NC(nc_inq_dim
-     (ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
+  
+  if(ndims == 4) {
+    NC(nc_inq_dim(ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
+  } else if(ndims == 3) {
+    NC(nc_inq_dim(ncid, dimids[ctl->met_convention == 0 ? 0 : 2], levname, &dimlen));
+  } else
+    ERRMSG("Cannot determine vertical dimension!")
   met->np = (int) dimlen;
+
   LOG(2, "Number of levels: %d", met->np);
   if (met->np < 2 || met->np > EP)
     ERRMSG("Number of levels out of range!");
