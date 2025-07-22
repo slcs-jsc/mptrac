@@ -8081,10 +8081,10 @@ void read_met_nc_grid(
 
   double rtime = 0, r, r2;
 
-  int varid, year2, mon2, day2, hour2, min2, sec2,
+  int varid, ndims, dimids[NC_MAX_DIMS], year2, mon2, day2, hour2, min2, sec2,
     year, mon, day, hour, min, sec;
 
-  size_t np;
+  size_t dimlen;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_NC_GRID", "INPUT", NVTX_READ);
@@ -8142,29 +8142,6 @@ void read_met_nc_grid(
   NC_INQ_DIM("lat", &met->ny, 2, EY);
   LOG(2, "Number of latitudes: %d", met->ny);
 
-  int dimid2;
-  sprintf(levname, "plev");
-  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
-    sprintf(levname, "lev");
-  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
-    sprintf(levname, "hybrid");
-  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
-    sprintf(levname, "hybrid_level");
-
-  NC_INQ_DIM(levname, &met->np, 1, EP);
-  if (met->np == 1) {
-    sprintf(levname, "lev_2");
-    if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR) {
-      sprintf(levname, "plev");
-      NC(nc_inq_dimid(ncid, levname, &dimid2));
-    }
-    NC(nc_inq_dimlen(ncid, dimid2, &np));
-    met->np = (int) np;
-  }
-  LOG(2, "Number of levels: %d", met->np);
-  if (met->np < 2 || met->np > EP)
-    ERRMSG("Number of levels out of range!");
-
   /* Read longitudes and latitudes... */
   NC_GET_DOUBLE("lon", met->lon, 1);
   LOG(2, "Longitudes: %g, %g ... %g deg",
@@ -8186,6 +8163,23 @@ void read_met_nc_grid(
       WARN("No regular grid spacing in latitudes!");
       break;
     }
+
+  /* Get vertical dimension... */
+  if (nc_inq_varid(ncid, "u", &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, "U", &varid) != NC_NOERR)
+      ERRMSG
+	("Variable 'u' or 'U' not found, cannot determine vertical dimension!");
+  NC(nc_inq_varndims(ncid, varid, &ndims));
+  if (ndims != 4)
+    ERRMSG
+      ("Variable 'u' does not have four dimensions, cannot determine vertical dimension!");
+  NC(nc_inq_vardimid(ncid, varid, dimids));
+  NC(nc_inq_dim
+     (ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
+  met->np = (int) dimlen;
+  LOG(2, "Number of levels: %d", met->np);
+  if (met->np < 2 || met->np > EP)
+    ERRMSG("Number of levels out of range!");
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
