@@ -108,113 +108,85 @@
 	</div>
       </div>
       
-      <!-- Simulation Time Settings -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('time-settings')">
-	<i class="fa fa-caret-down"></i> Simulation Time Settings
+      <!-- Initialization Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('init-settings')">
+	<i class="fa fa-caret-down"></i> Initialization Settings
       </button>
-      <div id="time-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Enter the simulation start and stop times in the format <code>YYYY-MM-DD HH:MM</code> (UTC). You may simulate forward or backward in time by adjusting the order of the start and stop times. The total duration must not exceed 30 days.
-	</p>
+      <div id="init-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	
+	<!-- Time Settings -->
+	<p><strong>Simulation Time:</strong> Enter the simulation start and stop times in <code>YYYY-MM-DD HH:MM</code> (UTC). Simulations can run forward or backward in time but must not exceed 30 days.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-half" style="padding: 16px;">
-            <label>Start Time</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" placeholder="YYYY-MM-DD HH:MM" required>
+	    <label>Start Time</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="start_time" value="2000-01-01 00:00" required>
 	  </div>
 	  <div class="w3-half" style="padding: 16px;">
-            <label>Stop Time</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" placeholder="YYYY-MM-DD HH:MM" required>
+	    <label>Stop Time</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="stop_time" value="2000-01-05 00:00" required>
 	  </div>
 	</div>
-      </div>
-      
-      <!-- Grid Settings -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('grid-settings')">
-	<i class="fa fa-caret-down"></i> Initial Grid Settings
-      </button>
-      <div id="grid-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Define the initial positions of the air parcels using a 3D grid by specifying the start, end, and step values for longitude, latitude, and height. Heights are internally converted to pressure using a surface pressure of 1013.25 hPa and a scale height of 7.0 km. The total number of air parcels must not exceed 10,000.</p>
+	
+	<hr style="border-color: #444;">
+	
+	<!-- Position Settings -->
+	<p><strong>Initial Position:</strong> Specify the mean initial location of the air parcels. Heights are in kilometers above sea level and converted to pressure internally.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Longitude Start [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="lon0" value="0.0">
+	    <label>Mean Longitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mlon" value="0.0">
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Longitude End [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="lon1" value="0.0">
+	    <label>Mean Latitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mlat" value="0.0">
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Longitude Step [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="dlon" value="1.0">
+	    <label>Mean Height [km]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mz" value="0.0">
 	  </div>
 	</div>
+	
+	<hr style="border-color: #444;">
+	
+	<!-- Perturbations -->
+	<p><strong>Random Perturbations:</strong> Define uniform or Gaussian spreads (Full Width at Half Maximum, FWHM) to randomly perturb the initial positions of air parcels in longitude, latitude, and height.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Latitude Start [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="lat0" value="0.0">
+	    <label>Uniform Spread Longitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="ulon" value="0.0">
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Latitude End [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="lat1" value="0.0">
+	    <label>Uniform Spread Latitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="ulat" value="0.0">
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Latitude Step [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="dlat" value="1.0">
-	  </div>
-	</div>
-	<div class="w3-row-padding">
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Height Start [km]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="z0" value="0.0">
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Height End [km]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="z1" value="0.0">
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Height Step [km]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="dz" value="1.0">
+	    <label>Uniform Spread Height [km]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="0.0">
 	  </div>
 	</div>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Number of Air Parcels per Grid Point</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="rep" value="1" required>
+	    <label>Gaussian Spread Longitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="slon" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Gaussian Spread Latitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="slat" value="0.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Gaussian Spread Height [km]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="sz" value="0.0">
 	  </div>
 	</div>
-      </div>
-      
-      <!-- Random Perturbations -->
-      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('random-perturbations')">
-	<i class="fa fa-caret-down"></i> Initial Random Perturbations
-      </button>
-      <div id="random-perturbations" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Specify the initial random perturbations for air parcel locations with uniform or Gaussian spreads for longitude, latitude, and height. The values define the extent of the perturbations in each direction.</p>
+	
+	<hr style="border-color: #444;">
+	
+	<!-- Number of Parcels -->
+	<p><strong>Number of Parcels:</strong> Specify the total number of air parcels to be released. The maximum allowed is 10,000.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-            <label>Uniform Spread Longitude [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="ulon" value="0.0">
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Uniform Spread Latitude [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="ulat" value="0.0">
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Uniform Spread Height [km]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="0.0">
-	  </div>
-	</div>
-	<div class="w3-row-padding">
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Gaussian Spread Longitude [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="slon" value="0.0">
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Gaussian Spread Latitude [°]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="slat" value="0.0">
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
-            <label>Gaussian Spread Height [km]</label>
-            <input class="w3-input w3-dark-gray w3-round" type="text" name="sz" value="0.0">
+	    <label>Number of Air Parcels</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="rep" value="1" required>
 	  </div>
 	</div>
       </div>
@@ -306,7 +278,7 @@
 	<p>Select parameters for quick look plot.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
-	    <label>Region</label><br>
+	    <label>Plot Region</label><br>
 	    <label><input class="w3-radio" type="radio" name="plot_region" value="global" checked> Global</label><br>
 	    <label><input class="w3-radio" type="radio" name="plot_region" value="regional"> Regional</label>
 	  </div>
@@ -364,7 +336,7 @@
 	  <i class="w3-spin w3-jumbo w3-text-light-blue fa fa-cog"></i>
 	</div>
 	<p class="w3-text-light-grey" style="width: 80%; margin: 0 auto; margin-top: 12px;">
-	  Please wait while we process your request. Processing may take several minutes. Runtime is limited to 10 minutes.
+	  Please wait while we process your request. Processing may take several minutes. Maximum runtime is limited to 10 minutes.
 	</p>
 	<button onclick="location.reload()" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-top: 24px;">
 	  ⏹️ Stop Simulation

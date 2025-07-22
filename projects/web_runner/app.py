@@ -161,12 +161,10 @@ def run():
             METBASE = f"/mnt/slmet-mnt/met_data/ecmwf/open_data/data/ifs_{start_dt.strftime('%Y_%m_%d')}/ifs"
         if met_source == 'gfs_3h':
             METBASE = f"/mnt/slmet-mnt/met_data/ncep/gfs/data_{start_dt.strftime('%Y_%m_%d')}/gfs"
-        z0, z1, dz = to_f('z0'), to_f('z1'), to_f('dz')
-        lat0, lat1, dlat = to_f('lat0'), to_f('lat1'), to_f('dlat')
-        lon0, lon1, dlon = to_f('lon0'), to_f('lon1'), to_f('dlon')
-        rep = int(f['rep'])
+        mlon, mlat, mz = to_f('mlon'), to_f('mlat'), to_f('mz')
         ulon, ulat, uz = to_f('ulon'), to_f('ulat'), to_f('uz')
         slon, slat, sz = to_f('slon'), to_f('slat'), to_f('sz')
+        rep = int(f['rep'])
         turb = {k: to_f(k) for k in ['turb_dx_pbl','turb_dx_trop','turb_dx_strat',
                                      'turb_dz_pbl','turb_dz_trop','turb_dz_strat',
                                      'turb_mesox','turb_mesoz']}
@@ -179,23 +177,23 @@ def run():
         central_lat = to_f('central_lat')
 
         # Check values...
-        if abs(start_time - stop_time) > 30*86400: return validation_error("Duration exceeds 30 days.")
-        if not (-100 <= z0 <= 100 and -100 <= z1 <= 100): return validation_error("Height range invalid.")
-        if not (0 < dz <= 100): return validation_error("dz must be > 0 and ≤ 100 km.")
-        if not (-90 <= lat0 <= 90 and -90 <= lat1 <= 90): return validation_error("Latitude range invalid.")
-        if not (0 < dlat <= 180): return validation_error("Latitude sampling invalid.")
-        if not (-180 <= lon0 <= 180 and -180 <= lon1 <= 180): return validation_error("Longitude range invalid.")
-        if not (0 < dlon <= 360): return validation_error("Longitude sampling invalid.")
-        if not (1 <= rep <= 10000): return validation_error("Repetitions must be 1–10000.")
-        if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())): return validation_error("Negative values not allowed.")
-        if atm_dt_out <= 0: return validation_error("Output frequency must be > 0.")
-        if not (-180 <= central_lon <= 180): return validation_error("Central longitude is out of range.")
-        if not (-90 <= central_lat <= 90): return validation_error("Central latitude is out of range.")
-
-        # Check number of air parcels...
-        nz, nlat, nlon = map(lambda x: int(round(x[0]/x[1])) + 1, [(z1-z0, dz), (lat1-lat0, dlat), (lon1-lon0, dlon)])
-        if nz * nlat * nlon * rep > 10000: return validation_error("Too many trajectories.")
-
+        if abs(start_time - stop_time) > 30*86400:
+            return validation_error("Trajectory duration exceeds 30 days.")
+        if not (-100 <= mz <= 100):
+            return validation_error("Mean height must be between -100 and 100 km.")
+        if not (-90 <= mlat <= 90):
+            return validation_error("Mean latitude must be between -90° and 90°.")
+        if not (-180 <= mlon <= 180):
+            return validation_error("Mean longitude must be between -180° and 180°.")
+        if not (1 <= rep <= 10000):
+            return validation_error("Number of particles must be between 1 and 10,000.")
+        if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())):
+            return validation_error("Turbulence parameters must be zero or positive.")
+        if not (-180 <= central_lon <= 180):
+            return validation_error("Central longitude must be between -180° and 180°.")
+        if not (-90 <= central_lat <= 90):
+            return validation_error("Central latitude must be between -90° and 90°.")
+        
         # Set forward/backward trajectory flag...
         direction = -1 if stop_time < start_time else 1
 
@@ -239,15 +237,12 @@ def run():
     # atm_init...
     INIT_T0 = {start_time}
     INIT_T1 = {start_time}
-    INIT_Z0 = {z0}
-    INIT_Z1 = {z1}
-    INIT_DZ = {dz}
-    INIT_LON0 = {lon0}
-    INIT_LON1 = {lon1}
-    INIT_DLON = {dlon}
-    INIT_LAT0 = {lat0}
-    INIT_LAT1 = {lat1}
-    INIT_DLAT = {dlat}
+    INIT_Z0 = {mz}
+    INIT_Z1 = {mz}
+    INIT_LON0 = {mlon}
+    INIT_LON1 = {mlon}
+    INIT_LAT0 = {mlat}
+    INIT_LAT1 = {mlat}
     INIT_ULON = {ulon}
     INIT_ULAT = {ulat}
     INIT_UZ = {uz}
