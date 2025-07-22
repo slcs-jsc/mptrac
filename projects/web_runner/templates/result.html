@@ -46,20 +46,63 @@
     <!-- Common wrapper to unify width -->
     <div style="width: 80%; margin: 0 auto; box-sizing: border-box;">
       
-      {% if plot_url %}
-      <h3 class="w3-center">Trajectory Plot</h3>
+      <h3 class="w3-center">Trajectory Plots</h3>
       <p style="color: #ccc; font-size: 16px; margin-bottom: 20px; text-align: center; font-family: monospace;">
 	Adjust plot style in output settings. Right-click the image to save it.
       </p>
-      <div class="w3-container w3-center" style="padding: 0;">
-	<img src="data:image/png;base64,{{ plot_url }}" alt="Trajectory Plot" 
-             class="w3-round-large"
-	     style="width: 100%; background: #222; padding: 15px; box-sizing: border-box;">
+      
+      <div class="w3-container w3-center" style="padding: 0;">      
+	<div id="carousel" style="width: 90%; margin: auto;">
+	  <img id="plot-image" src="{{ url_for('static', filename='placeholder.png') }}"  alt="Trajectory Plot"
+	       class="w3-round-large" style="width: 100%; background: #222; padding: 15px; box-sizing: border-box;" />
+	  <br><br>
+	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="prev()">◀️ Prev</button>
+	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 4px;" onclick="next()">Next ▶️</button>
+	  |
+	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-left: 4px;" onclick="play()">▶️ Play</button>
+	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-left: 10px;" onclick="stop()">⏹️ Stop</button>
+	</div>
       </div>
       
+      <script>
+	const images = {{ plot_filenames | tojson }};
+	let index = 0;
+	let intervalId = null;
+	
+	function updateImage() {
+	    document.getElementById("plot-image").src = "/runs/working/{{ run_id }}/" + images[index];
+	}
+	
+	function prev() {
+	    index = (index - 1 + images.length) % images.length;
+	    updateImage();
+	}
+	
+	function next() {
+	    index = (index + 1) % images.length;
+	    updateImage();
+	}
+	
+	function play() {
+	    if (intervalId === null) {  // Prevent multiple intervals
+		intervalId = setInterval(() => {
+		    next();
+		}, 1000); // Change image every 1000 ms (1 second)
+	    }
+	}
+	
+	function stop() {
+	    if (intervalId !== null) {
+		clearInterval(intervalId);
+		intervalId = null;
+	    }
+	}
+	
+	updateImage(); // Initial call
+      </script>
+      
       <br><br>
-      {% endif %}
-
+      
       <h3 class="w3-center">Log Output</h3>
       <p style="color: #ccc; font-size: 16px; margin-bottom: 10px; text-align: center; font-family: monospace;">
 	Please carefully check the log output below for warnings or errors.
@@ -71,7 +114,8 @@
     </div>
     
     <br><br>
-    
+
+    <!-- Buttons -->
     <div class="w3-bar w3-center">
       <button onclick="window.history.back()"
 	      class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue"

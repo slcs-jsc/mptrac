@@ -91,10 +91,10 @@ def seconds_since_2000(time_str):
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
 # Create map plot of air parcel data...
-def create_plot(lons, lats, heights,
-                projection='cartesian', region='global',
-                central_lon=0.0, central_lat=0.0,
-                met_name='', start_time_str='', stop_time_str=''):
+def create_plot_file(lons, lats, heights, filepath,
+                     projection='cartesian', region='global',
+                     central_lon=0.0, central_lat=0.0,
+                     met_name='', time_str=''):
     proj_map = {
         'cartesian': ccrs.PlateCarree(),
         'orthographic': ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat),
@@ -106,7 +106,8 @@ def create_plot(lons, lats, heights,
         ax.set_global()
     ax.coastlines(color='gray', resolution='10m')
     ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='gray')
-    sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10, edgecolors='none', transform=ccrs.PlateCarree())
+    sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10,
+                    edgecolors='none', transform=ccrs.PlateCarree())
     gl = ax.gridlines(draw_labels=True, color='gray', linestyle='--', alpha=0.5)
     gl.xlabel_style = gl.ylabel_style = {'color': 'black'}
     for obj in [ax, fig]:
@@ -116,12 +117,10 @@ def create_plot(lons, lats, heights,
     cbar.ax.xaxis.set_tick_params(color='black')
     plt.setp(cbar.ax.get_xticklabels(), color='black')
     ax.tick_params(axis='both', colors='black')
-    title = f"MPTRAC | {met_name} | {start_time_str} to {stop_time_str}"
+    title = f"MPTRAC | {met_name} | {time_str}"
     ax.set_title(title, fontsize=16, color='black', pad=12)
-    buf = io.BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', facecolor=fig.get_facecolor())
+    plt.savefig(filepath, bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close()
-    return base64.b64encode(buf.getvalue()).decode()
 
 # Exit with error message...
 def validation_error(message):
@@ -425,45 +424,67 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
         shutil.make_archive(zip_path.replace('.zip', ''), 'zip', work_dir)
 
-        # Gather data...
+        # Init...
+        plot_filenames = []
         lons, lats, heights = [], [], []
+
+        # Loop over files...
         files = sorted(glob.glob(os.path.join(work_dir, 'atm_19*.tab')) +
                        glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
         for file in files:
-            data = np.loadtxt(file)
-            if data.ndim == 1 and data.shape[0] != 4:
-                continue
-            data = data[np.newaxis, :] if data.ndim == 1 else data
-            lons.extend(data[:, 2])
-            lats.extend(data[:, 3])
-            heights.extend(data[:, 1])
+            filename = os.path.splitext(os.path.basename(file))[0]
             
-        # Sort by height...
-        combined = np.array([lons, lats, heights]).T
-        sorted_combined = combined[np.argsort(combined[:, 2])]
-        lons_sorted = sorted_combined[:, 0]
-        lats_sorted = sorted_combined[:, 1]
-        heights_sorted = sorted_combined[:, 2]
-
-        # Plot...
-        plot_url = create_plot(
-            lons_sorted, lats_sorted, heights_sorted,
-            projection=map_projection, region=plot_region,
-            central_lon=central_lon, central_lat=central_lat,
-            met_name=met_name,
-            start_time_str=start_time_str,
-            stop_time_str=stop_time_str
-        )
+            # Extract datetime components from filename...
+            parts = filename.split('_')[1:6]  # ['2011', '06', '28', '12', '30']
+            dt = datetime.strptime("_".join(parts), "%Y_%m_%d_%H_%M")
+            
+            # ISO format for title and filename...
+            timestamp_iso = dt.strftime("%Y-%m-%dT%H:%MZ")
+            
+            # Use ISO string directly in filename...
+            plot_filename = f"plot_{timestamp_iso}.png"
+            plot_file = os.path.join(work_dir, plot_filename)
+            
+            # Load and sort data...
+            data = np.loadtxt(file)
+            if data.ndim == 1:
+                data = data[np.newaxis, :]
+            lons, lats, heights = data[:, 2], data[:, 3], data[:, 1]
+            sort_idx = np.argsort(heights)
+            
+            # Create plot...
+            create_plot_file(
+                lons[sort_idx],
+                lats[sort_idx],
+                heights[sort_idx],
+                filepath=plot_file,
+                projection=map_projection,
+                region=plot_region,
+                central_lon=central_lon,
+                central_lat=central_lat,
+                met_name=met_name,
+                time_str=timestamp_iso
+            )
+            plot_filenames.append(plot_filename)
         
         # Show results...
-        return render_template('result.html', run_id=run_id, stdout=combined_output, plot_url=plot_url)
-
+        return render_template(
+            'result.html',
+            run_id=run_id,
+            stdout=combined_output,
+            plot_filenames=plot_filenames
+        )
+    
     # Show error...
     return render_template('error.html', stdout=combined_output), 500
 
 @app.route('/terms')
 def terms():
     return render_template('terms.html')
+
+@app.route('/runs/working/<run_id>/<filename>')
+def serve_plot_image(run_id, filename):
+    return send_from_directory(os.path.join(RUNS_DIR, run_id), filename)
 
 if __name__ == '__main__':
     app.run(debug=True)
