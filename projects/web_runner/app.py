@@ -9,6 +9,7 @@ import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import logging
 from logging.handlers import RotatingFileHandler
+from concurrent.futures import ProcessPoolExecutor, as_completed
 
 # Config...
 ATM_INIT_CMD = '../../src/atm_init'
@@ -121,7 +122,40 @@ def create_plot_file(lons, lats, heights, filepath,
     ax.set_title(title, fontsize=16, color='black', pad=12)
     plt.savefig(filepath, bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close()
-
+    
+# Parallel processing of plots...
+def process_plot(file, work_dir, map_projection, plot_region, central_lon, central_lat, met_name):
+    filename = os.path.splitext(os.path.basename(file))[0]
+    parts = filename.split('_')[1:6]
+    dt = datetime.strptime("_".join(parts), "%Y_%m_%d_%H_%M")
+    timestamp_iso = dt.strftime("%Y-%m-%dT%H:%MZ")
+    plot_filename = f"plot_{timestamp_iso}.png"
+    plot_file = os.path.join(work_dir, plot_filename)
+    try:
+        data = np.loadtxt(file)
+        if data.ndim == 1:
+            data = data[np.newaxis, :]
+        if data.shape[1] < 4:
+            raise ValueError("Insufficient data columns")
+    except Exception as e:
+        logger.warning(f"Skipping plot for {file}: {e}")
+        return None
+    if data.ndim == 1:
+        data = data[np.newaxis, :]
+    lons, lats, heights = data[:, 2], data[:, 3], data[:, 1]
+    sort_idx = np.argsort(heights)
+    create_plot_file(
+        lons[sort_idx], lats[sort_idx], heights[sort_idx],
+        filepath=plot_file,
+        projection=map_projection,
+        region=plot_region,
+        central_lon=central_lon,
+        central_lat=central_lat,
+        met_name=met_name,
+        time_str=timestamp_iso
+    )
+    return plot_filename
+    
 # Exit with error message...
 def validation_error(message):
     logger.warning(f"Validation failed for {request.remote_addr}: {message}")
@@ -145,8 +179,10 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-        # METBASE = '../../tests/data/ei'
-        # DT_MET = 86400
+
+        METBASE = '../../tests/data/ei'
+        DT_MET = 86400
+        
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
@@ -419,53 +455,36 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
     
     # Run successfull...
     if trac_code == 0:
-        
-        # Create zip file...
-        zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
-        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', work_dir)
 
         # Init...
         plot_filenames = []
         lons, lats, heights = [], [], []
 
-        # Loop over files...
+        # Get list of filenames...
         files = sorted(glob.glob(os.path.join(work_dir, 'atm_19*.tab')) +
                        glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
-        for file in files:
-            filename = os.path.splitext(os.path.basename(file))[0]
-            
-            # Extract datetime components from filename...
-            parts = filename.split('_')[1:6]  # ['2011', '06', '28', '12', '30']
-            dt = datetime.strptime("_".join(parts), "%Y_%m_%d_%H_%M")
-            
-            # ISO format for title and filename...
-            timestamp_iso = dt.strftime("%Y-%m-%dT%H:%MZ")
-            
-            # Use ISO string directly in filename...
-            plot_filename = f"plot_{timestamp_iso}.png"
-            plot_file = os.path.join(work_dir, plot_filename)
-            
-            # Load and sort data...
-            data = np.loadtxt(file)
-            if data.ndim == 1:
-                data = data[np.newaxis, :]
-            lons, lats, heights = data[:, 2], data[:, 3], data[:, 1]
-            sort_idx = np.argsort(heights)
-            
-            # Create plot...
-            create_plot_file(
-                lons[sort_idx],
-                lats[sort_idx],
-                heights[sort_idx],
-                filepath=plot_file,
-                projection=map_projection,
-                region=plot_region,
-                central_lon=central_lon,
-                central_lat=central_lat,
-                met_name=met_name,
-                time_str=timestamp_iso
-            )
-            plot_filenames.append(plot_filename)
+
+        # Parallel creation of plots...
+        with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
+            futures = [
+                executor.submit(process_plot, file, work_dir,
+                                map_projection, plot_region, central_lon, central_lat, met_name)
+                for file in files
+            ]
+            for future in as_completed(futures):
+                result = future.result()
+                if result:
+                    plot_filenames.append(result)
+                    
+        # Sort filenames...
+        plot_filenames = sorted(
+            [f for f in plot_filenames if f],
+            key=lambda name: datetime.strptime(name.split("_")[1][:-4], "%Y-%m-%dT%H:%MZ")
+        )
+        
+        # Create zip file...
+        zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
+        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', work_dir)
         
         # Show results...
         return render_template(
