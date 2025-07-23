@@ -185,10 +185,8 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-
-        METBASE = '../../tests/data/ei'
-        DT_MET = 86400
-        
+        # METBASE = '../../tests/data/ei'
+        # DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
