@@ -95,7 +95,8 @@ def seconds_since_2000(time_str):
 def create_plot_file(lons, lats, heights, filepath,
                      projection='cartesian', region='global',
                      central_lon=0.0, central_lat=0.0,
-                     met_name='', time_str=''):
+                     met_name='', time_str='',
+                     mlon=None, mlat=None):
     proj_map = {
         'cartesian': ccrs.PlateCarree(),
         'orthographic': ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat),
@@ -109,6 +110,9 @@ def create_plot_file(lons, lats, heights, filepath,
     ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='gray')
     sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10,
                     edgecolors='none', transform=ccrs.PlateCarree())
+    if mlon is not None and mlat is not None:
+        ax.plot(mlon, mlat, 'o', color='red', markersize=10, markeredgecolor='white',
+                transform=ccrs.PlateCarree(), zorder=5, label='Initial location')
     gl = ax.gridlines(draw_labels=True, color='gray', linestyle='--', alpha=0.5)
     gl.xlabel_style = gl.ylabel_style = {'color': 'black'}
     for obj in [ax, fig]:
@@ -124,7 +128,7 @@ def create_plot_file(lons, lats, heights, filepath,
     plt.close()
     
 # Parallel processing of plots...
-def process_plot(file, work_dir, map_projection, plot_region, central_lon, central_lat, met_name):
+def process_plot(file, work_dir, map_projection, plot_region, central_lon, central_lat, mlon, mlat, met_name):
     filename = os.path.splitext(os.path.basename(file))[0]
     parts = filename.split('_')[1:6]
     dt = datetime.strptime("_".join(parts), "%Y_%m_%d_%H_%M")
@@ -152,7 +156,9 @@ def process_plot(file, work_dir, map_projection, plot_region, central_lon, centr
         central_lon=central_lon,
         central_lat=central_lat,
         met_name=met_name,
-        time_str=timestamp_iso
+        time_str=timestamp_iso,
+        mlon=mlon,
+        mlat=mlat        
     )
     return plot_filename
     
@@ -179,8 +185,10 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-        # METBASE = '../../tests/data/ei'
-        # DT_MET = 86400
+
+        METBASE = '../../tests/data/ei'
+        DT_MET = 86400
+        
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
@@ -466,7 +474,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
             futures = [
                 executor.submit(process_plot, file, work_dir,
-                                map_projection, plot_region, central_lon, central_lat, met_name)
+                                map_projection, plot_region, central_lon, central_lat, mlon, mlat, met_name)
                 for file in files
             ]
             for future in as_completed(futures):
@@ -504,4 +512,4 @@ def serve_plot_image(run_id, filename):
     return send_from_directory(os.path.join(RUNS_DIR, run_id), filename)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False)

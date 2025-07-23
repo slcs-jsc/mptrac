@@ -57,10 +57,15 @@
 	       class="w3-round-large" style="width: 100%; background: #222; padding: 15px; box-sizing: border-box;" />
 	  <br><br>
 	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="prev()">◀️ Prev</button>
+	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="play()">▶️ Play</button>	  
+	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="stop()">⏹️ Stop</button>
 	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 4px;" onclick="next()">Next ▶️</button>
-	  |
-	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-left: 4px;" onclick="play()">▶️ Play</button>
-	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-left: 10px;" onclick="stop()">⏹️ Stop</button>
+	  <div style="margin-top: 15px; text-align: center;">
+	    <label for="intervalRange" style="color: #ccc; font-family: monospace;">Frame Interval (ms): </label>
+	    <input type="range" id="intervalRange" min="25" max="3000" step="25" value="1000"
+		   oninput="updateIntervalLabel(this.value)" onchange="changeInterval(this.value)">
+	    <span id="intervalLabel" style="color: #ccc; font-family: monospace;">1000</span>
+	  </div>
 	</div>
       </div>
       
@@ -68,6 +73,7 @@
 	const images = {{ plot_filenames | tojson }};
 	let index = 0;
 	let intervalId = null;
+	let interval = 1000;  // Default to 1 second
 	
 	function updateImage() {
 	    document.getElementById("plot-image").src = "/runs/working/{{ run_id }}/" + images[index];
@@ -84,10 +90,8 @@
 	}
 	
 	function play() {
-	    if (intervalId === null) {  // Prevent multiple intervals
-		intervalId = setInterval(() => {
-		    next();
-		}, 1000); // Change image every 1000 ms (1 second)
+	    if (intervalId === null) {
+		intervalId = setInterval(next, interval);
 	    }
 	}
 	
@@ -98,7 +102,20 @@
 	    }
 	}
 	
-	updateImage(); // Initial call
+	function changeInterval(newInterval) {
+	    interval = parseInt(newInterval);
+	    if (intervalId !== null) {
+		// Restart playback with new interval
+		stop();
+		play();
+	    }
+	}
+	
+	function updateIntervalLabel(val) {
+	    document.getElementById('intervalLabel').innerText = val;
+	}
+	
+	updateImage(); // Initial image
       </script>
       
       <br><br>
