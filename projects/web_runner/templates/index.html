@@ -53,62 +53,67 @@
 	<i class="fa fa-caret-down"></i> Example Settings
       </button>
       <div id="example-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
-	<p>Select a case study to auto-fill simulation parameters.</p>
+	<p>Select a case study from the available examples below to auto-fill simulation parameters.</p>
 	<div class="w3-row-padding">
 	  <div class="w3-full">
 	    <div class="w3-text-white">
-              <h5 style="margin: 8px 0; color: #ccc;">Available Case Studies</h5>
+	      <div style="margin-bottom: 12px;">
+		<h5 style="margin: 8px 0; color: #ccc;">Natural Events</h5>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="katrina" onchange="loadExample(this.value)">
+		  Tropical Storm — <em>Hurricane Katrina (2005)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="eyjafjallajokull" onchange="loadExample(this.value)">
+		  Volcanic Plume — <em>Eyjafjallajökull (2010)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="puyehue" onchange="loadExample(this.value)">
+		  Volcanic Plume — <em>Puyehue-Cordón Caulle (2011)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="raikoke" onchange="loadExample(this.value)">
+		  Volcanic Plume — <em>Raikoke Eruption (2019)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="canada_wildfire" onchange="loadExample(this.value)">
+		  Wildfire Smoke — <em>Canadian Wildfires (2023)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="sahara_dust" onchange="loadExample(this.value)">
+		  Dust Storm — <em>Saharan Outbreak (2020 “Godzilla” plume)</em>
+		</label>
+	      </div>
 	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="katrina" onchange="loadExample(this.value)">
-		Tropical Storm — <em>Hurricane Katrina (2005)</em>
-              </label>
+              <h5 style="margin: 8px 0; color: #ccc;">Anthropogenic Events</h5>
 	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="puyehue" onchange="loadExample(this.value)">
-		Volcanic Plume — <em>Puyehue-Cordón Caulle (2011)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="eyjafjallajokull" onchange="loadExample(this.value)">
-		Volcanic Plume — <em>Eyjafjallajökull (2010)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="raikoke" onchange="loadExample(this.value)">
-		Volcanic Plume — <em>Raikoke Eruption (2019)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="canada_wildfire" onchange="loadExample(this.value)">
-		Wildfire Smoke — <em>Canadian Wildfires (2023)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="chernobyl" onchange="loadExample(this.value)">
-		Nuclear Accident — <em>Chernobyl Fallout (1986)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="beirut" onchange="loadExample(this.value)">
-		Industrial Explosion — <em>Beirut Port Blast (2020)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="sai" onchange="loadExample(this.value)">
-		Geoengineering — <em>Stratospheric Sulfur Injection</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="sahara_dust" onchange="loadExample(this.value)">
-		Dust Storm — <em>Saharan Outbreak (2020 “Godzilla” plume)</em>
-              </label>
-	      
-              <label class="w3-block w3-padding-small">
-		<input type="radio" name="example" value="beijing_haze" onchange="loadExample(this.value)">
-		Urban Pollution — <em>Beijing Winter Haze Episode</em>
-              </label>
-	      
+	      <div>
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="chernobyl" onchange="loadExample(this.value)">
+		  Nuclear Accident — <em>Chernobyl Fallout (1986)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="beirut" onchange="loadExample(this.value)">
+		  Industrial Explosion — <em>Beirut Port Blast (2020)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="beijing_haze" onchange="loadExample(this.value)">
+		  Urban Pollution — <em>Beijing Winter Haze Episode (2018)</em>
+		</label>
+		
+		<label class="w3-block w3-padding-small">
+		  <input type="radio" name="example" value="sai" onchange="loadExample(this.value)">
+		  Geoengineering — <em>Stratospheric Sulfur Injection</em>
+		</label>
+	      </div>
 	    </div>
 	  </div>
 	</div>
@@ -212,7 +217,7 @@
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Mean Height [km]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mz" value="25.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="mz" value="0.0">
 	  </div>
 	</div>
 	
@@ -231,7 +236,7 @@
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Uniform Spread Height [km]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="50.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="uz" value="0.0">
 	  </div>
 	</div>
 	<div class="w3-row-padding">
@@ -431,8 +436,8 @@
 		  mlon: "-90.0",
 		  mlat: "29.0",
 		  mz: "2.0",
+		  uz: "0.5",
 		  met_source: "era5low_6h",
-		  rep: "5000",
 		  plot_region: "regional"
 	      },
 	      puyehue: {
@@ -441,8 +446,8 @@
 		  mlon: "-72.112",
 		  mlat: "-40.590",
 		  mz: "12.0",
+		  uz: "1.0",
 		  met_source: "era5low_6h",
-		  rep: "3000",
 		  plot_region: "global"
 	      },
 	      eyjafjallajokull: {
@@ -451,8 +456,8 @@
 		  mlon: "-19.6",
 		  mlat: "63.6",
 		  mz: "10.0",
+		  uz: "0.8",
 		  met_source: "era5low_6h",
-		  rep: "3000",
 		  plot_region: "regional"
 	      },
 	      raikoke: {
@@ -461,8 +466,8 @@
 		  mlon: "153.3",
 		  mlat: "48.3",
 		  mz: "15.0",
+		  uz: "1.0",
 		  met_source: "era5low_6h",
-		  rep: "3000",
 		  plot_region: "regional"
 	      },
 	      canada_wildfire: {
@@ -471,8 +476,8 @@
 		  mlon: "-121.0",
 		  mlat: "54.0",
 		  mz: "1.0",
+		  uz: "0.3",
 		  met_source: "era5low_6h",
-		  rep: "5000",
 		  plot_region: "regional"
 	      },
 	      chernobyl: {
@@ -481,8 +486,8 @@
 		  mlon: "30.1",
 		  mlat: "51.4",
 		  mz: "0.5",
+		  uz: "0.2",
 		  met_source: "era5low_6h",
-		  rep: "4000",
 		  plot_region: "regional"
 	      },
 	      beirut: {
@@ -491,8 +496,8 @@
 		  mlon: "35.4",
 		  mlat: "33.9",
 		  mz: "0.1",
+		  uz: "0.1",
 		  met_source: "era5low_6h",
-		  rep: "3000",
 		  plot_region: "regional"
 	      },
 	      sai: {
@@ -501,8 +506,8 @@
 		  mlon: "0.0",
 		  mlat: "0.0",
 		  mz: "20.0",
+		  uz: "1.5",
 		  met_source: "era5low_6h",
-		  rep: "5000",
 		  plot_region: "global"
 	      },
 	      sahara_dust: {
@@ -511,8 +516,8 @@
 		  mlon: "-15.0",
 		  mlat: "21.0",
 		  mz: "3.0",
+		  uz: "1.0",
 		  met_source: "gfs_3h",
-		  rep: "5000",
 		  plot_region: "regional"
 	      },
 	      beijing_haze: {
@@ -521,27 +526,26 @@
 		  mlon: "116.4",
 		  mlat: "39.9",
 		  mz: "0.5",
+		  uz: "0.3",
 		  met_source: "era5low_6h",
-		  rep: "5000",
 		  plot_region: "regional"
 	      }
 	  };
 	  
-	  const settings = examples[example];
-	  if (!settings) return;
+	  const s = examples[example];
+	  if (!s) return;
 	  
-	  document.querySelector('[name="start_time"]').value = settings.start_time;
-	  document.querySelector('[name="stop_time"]').value = settings.stop_time;
-	  document.querySelector('[name="mlon"]').value = settings.mlon;
-	  document.querySelector('[name="mlat"]').value = settings.mlat;
-	  document.querySelector('[name="mz"]').value = settings.mz;
-	  document.querySelector('[name="rep"]').value = settings.rep;
+	  // Populate form
+	  ['start_time','stop_time','mlon','mlat','mz','uz'].forEach(name => {
+	      const el = document.querySelector(`[name="${name}"]`);
+	      if (el && s[name] !== undefined) el.value = s[name];
+	  });
 	  
-	  const metRadio = document.querySelector(`[name="met_source"][value="${settings.met_source}"]`);
-	  if (metRadio) metRadio.checked = true;
+	  const ms = document.querySelector(`[name="met_source"][value="${s.met_source}"]`);
+	  if (ms) ms.checked = true;
 	  
-	  const plotRadio = document.querySelector(`[name="plot_region"][value="${settings.plot_region}"]`);
-	  if (plotRadio) plotRadio.checked = true;
+	  const pr = document.querySelector(`[name="plot_region"][value="${s.plot_region}"]`);
+	  if (pr) pr.checked = true;
       }
     </script>
     
