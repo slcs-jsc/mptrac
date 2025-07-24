@@ -3040,9 +3040,6 @@ typedef struct {
   /*! Basename of CSI data files. */
   char csi_basename[LEN];
 
-  /*! Number of ensembles. */
-  int nens;
-
   /*! Kernel data file for CSI output. */
   char csi_kernel[LEN];
 
@@ -3085,6 +3082,9 @@ typedef struct {
   /*! Upper latitude of gridded CSI data [deg]. */
   double csi_lat1;
 
+  /*! Number of ensembles. */
+  int nens;
+  
   /*! Basename of ensemble data file. */
   char ens_basename[LEN];
 

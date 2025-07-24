@@ -378,7 +378,6 @@ MODULE mptrac_struct
      INTEGER(c_int), DIMENSION(nqq) :: atm_nc_quant
      INTEGER(c_int) :: obs_type
      CHARACTER(c_char), DIMENSION(length) :: csi_basename
-     INTEGER(c_int) :: nens
      CHARACTER(c_char), DIMENSION(length) :: csi_kernel
      REAL(c_double) :: csi_dt_out
      CHARACTER(c_char), DIMENSION(length) :: csi_obsfile
@@ -393,6 +392,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: csi_ny
      REAL(c_double) :: csi_lat0
      REAL(c_double) :: csi_lat1
+     INTEGER(c_int) :: nens
      CHARACTER(c_char), DIMENSION(length) :: ens_basename
      REAL(c_double) :: ens_dt_out
      CHARACTER(c_char), DIMENSION(length) :: grid_basename

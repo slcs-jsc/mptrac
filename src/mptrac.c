@@ -5258,7 +5258,6 @@ void mptrac_read_ctl(
 
   /* Output of CSI data... */
   scan_ctl(filename, argc, argv, "CSI_BASENAME", -1, "-", ctl->csi_basename);
-  ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "CSI_KERNEL", -1, "-", ctl->csi_kernel);
   ctl->csi_dt_out =
     scan_ctl(filename, argc, argv, "CSI_DT_OUT", -1, "86400", NULL);
@@ -5281,6 +5280,7 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "CSI_NY", -1, "180", NULL);
 
   /* Output of ensemble data... */
+  ctl->nens = (int) scan_ctl(filename, argc, argv, "NENS", -1, "0", NULL);
   scan_ctl(filename, argc, argv, "ENS_BASENAME", -1, "-", ctl->ens_basename);
   ctl->ens_dt_out =
     scan_ctl(filename, argc, argv, "ENS_DT_OUT", -1, "86400", NULL);
