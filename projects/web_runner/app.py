@@ -92,11 +92,14 @@ def seconds_since_2000(time_str):
     return (dt - datetime(2000, 1, 1, tzinfo=timezone.utc)).total_seconds()
 
 # Create map plot of air parcel data...
-def create_plot_file(lons, lats, heights, filepath,
-                     projection='cartesian', region='global',
-                     central_lon=0.0, central_lat=0.0,
-                     met_name='', time_str='',
-                     mlon=None, mlat=None):
+def create_plot_file(
+    lons, lats, heights, filepath,
+    projection='cartesian', region='global',
+    central_lon=0.0, central_lat=0.0,
+    lon_min=-180, lat_min=-90, lon_max=180, lat_max=90,
+    met_name='', time_str='',
+    mlon=None, mlat=None
+):
     proj_map = {
         'cartesian': ccrs.PlateCarree(),
         'orthographic': ccrs.Orthographic(central_longitude=central_lon, central_latitude=central_lat),
@@ -106,6 +109,9 @@ def create_plot_file(lons, lats, heights, filepath,
     fig, ax = plt.subplots(figsize=(15, 12), subplot_kw={'projection': proj})
     if region == 'global':
         ax.set_global()
+    else:
+        if lon_min < lon_max and lat_min < lat_max:
+            ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
     ax.coastlines(color='gray', resolution='10m')
     ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='gray')
     sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10,
@@ -128,7 +134,14 @@ def create_plot_file(lons, lats, heights, filepath,
     plt.close()
     
 # Parallel processing of plots...
-def process_plot(file, work_dir, map_projection, plot_region, central_lon, central_lat, mlon, mlat, met_name):
+def process_plot(
+    file, work_dir,
+    map_projection, plot_region,
+    central_lon, central_lat,
+    mlon, mlat,
+    met_name,
+    lon_min, lat_min, lon_max, lat_max
+):
     filename = os.path.splitext(os.path.basename(file))[0]
     parts = filename.split('_')[1:6]
     dt = datetime.strptime("_".join(parts), "%Y_%m_%d_%H_%M")
@@ -144,8 +157,6 @@ def process_plot(file, work_dir, map_projection, plot_region, central_lon, centr
     except Exception as e:
         logger.warning(f"Skipping plot for {file}: {e}")
         return None
-    if data.ndim == 1:
-        data = data[np.newaxis, :]
     lons, lats, heights = data[:, 2], data[:, 3], data[:, 1]
     sort_idx = np.argsort(heights)
     create_plot_file(
@@ -155,13 +166,17 @@ def process_plot(file, work_dir, map_projection, plot_region, central_lon, centr
         region=plot_region,
         central_lon=central_lon,
         central_lat=central_lat,
+        lon_min=lon_min,
+        lat_min=lat_min,
+        lon_max=lon_max,
+        lat_max=lat_max,
         met_name=met_name,
         time_str=timestamp_iso,
         mlon=mlon,
-        mlat=mlat        
+        mlat=mlat
     )
     return plot_filename
-    
+
 # Exit with error message...
 def validation_error(message):
     logger.warning(f"Validation failed for {request.remote_addr}: {message}")
@@ -212,9 +227,9 @@ def run():
         atm_dt_out = to_f('atm_dt_out')
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
-        central_lon = to_f('central_lon')
-        central_lat = to_f('central_lat')
-
+        lon_min, lat_min, lon_max, lat_max = to_f('lon_min'), to_f('lat_min'), to_f('lon_max'), to_f('lat_max')
+        central_lon, central_lat = to_f('central_lon'), to_f('central_lat')
+        
         # Check values...
         if abs(start_time - stop_time) > 30*86400:
             return validation_error("Trajectory duration exceeds 30 days.")
@@ -228,6 +243,10 @@ def run():
             return validation_error("Number of particles must be between 1 and 10,000.")
         if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())):
             return validation_error("Turbulence parameters must be zero or positive.")
+        if not (-180 <= lon_min <= 180) or not (-180 <= lon_max <= 180):
+            return validation_error("Plot longitude bounds must be between -180° and 180°.")
+        if not (-90 <= lat_min <= 90) or not (-90 <= lat_max <= 90):
+            return validation_error("Plot latitude bounds must be between -90° and 90°.")
         if not (-180 <= central_lon <= 180):
             return validation_error("Central longitude must be between -180° and 180°.")
         if not (-90 <= central_lat <= 90):
@@ -472,7 +491,8 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
             futures = [
                 executor.submit(process_plot, file, work_dir,
-                                map_projection, plot_region, central_lon, central_lat, mlon, mlat, met_name)
+                                map_projection, plot_region, central_lon, central_lat, mlon, mlat, met_name,
+                                lon_min, lat_min, lon_max, lat_max)
                 for file in files
             ]
             for future in as_completed(futures):

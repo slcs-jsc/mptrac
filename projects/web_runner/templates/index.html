@@ -349,30 +349,40 @@
 	    <label style="margin-right: 16px;"><input class="w3-radio" type="radio" name="atm_dt_out" value="86400"> 24 h</label>
 	  </div>
 	</div>
+	
 	<hr style="border-color: #444;">
 	<p>Select parameters for quick look plot.</p>
+	
 	<div class="w3-row-padding">
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Plot Region</label><br>
 	    <label><input class="w3-radio" type="radio" name="plot_region" value="global" checked> Global</label><br>
 	    <label><input class="w3-radio" type="radio" name="plot_region" value="regional"> Regional</label>
-	  </div>
-	  <div class="w3-third" style="padding: 16px;">
+	    <br><br>
 	    <label>Map Projection</label><br>
 	    <label><input class="w3-radio" type="radio" name="map_projection" value="cartesian" checked> Cartesian</label><br>
 	    <label><input class="w3-radio" type="radio" name="map_projection" value="orthographic"> Orthographic</label><br>
 	    <label><input class="w3-radio" type="radio" name="map_projection" value="robinson"> Robinson</label>
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
-	    <div>
-	      <label>Central Longitude [°]</label>
-	      <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lon" value="0.0" required>
-	    </div>
+	    <label>Longitude Min [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lon_min" value="-180.0">
 	    <br>
-	    <div>
-	      <label>Central Latitude [°]</label>
-	      <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lat" value="0.0" required>
-	    </div>
+	    <label>Longitude Max [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lon_max" value="180.0">
+	    <br>
+	    <label>Latitude Min [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lat_min" value="-90.0">
+	    <br>
+	    <label>Latitude Max [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lat_max" value="90.0">
+	  </div>
+	  <div class="w3-third" style="padding: 16px;">
+	    <label>Central Longitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lon" value="0.0" required>
+	    <br>
+	    <label>Central Latitude [°]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="central_lat" value="0.0" required>
 	  </div>
 	</div>
       </div>
@@ -517,7 +527,7 @@
 		  mlat: "21.0",
 		  mz: "3.0",
 		  uz: "1.0",
-		  met_source: "gfs_3h",
+		  met_source: "era5low_6h",
 		  plot_region: "regional"
 	      },
 	      beijing_haze: {

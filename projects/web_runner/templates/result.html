@@ -53,8 +53,8 @@
       
       <div class="w3-container w3-center" style="padding: 0;">      
 	<div id="carousel" style="width: 90%; margin: auto;">
-	  <img id="plot-image" src="{{ url_for('static', filename='placeholder.png') }}"  alt="Trajectory Plot"
-	       class="w3-round-large" style="width: 100%; background: #222; padding: 15px; box-sizing: border-box;" />
+	  <img id="plot-image" src="{{ url_for('static', filename='placeholder.png') }}" alt="Trajectory Plot"
+	       class="w3-round-large" style="width: 100%; max-height: 85vh; background: #222; padding: 15px; box-sizing: border-box; object-fit: contain;" />
 	  <br><br>
 	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="prev()">◀️ Prev</button>
 	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="play()">▶️ Play</button>	  
