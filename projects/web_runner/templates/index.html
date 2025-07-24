@@ -41,8 +41,78 @@
     
     <h2 class="w3-center">Simulation Parameters</h2>
     
+    <p style="text-align: center; max-width: 900px; margin: 0 auto; color: #ccc;">
+      Please specify simulation parameters below including meteorological data, initialization, physics, and output options. You can also load predefined case settings from the “Example Settings” menu.
+    </p>
+    
     <!-- Form -->
     <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16" style="width: 80%; margin: 0 auto;">
+      
+      <!-- Example Settings -->
+      <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('example-settings')">
+	<i class="fa fa-caret-down"></i> Example Settings
+      </button>
+      <div id="example-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
+	<p>Select a case study to auto-fill simulation parameters.</p>
+	<div class="w3-row-padding">
+	  <div class="w3-full">
+	    <div class="w3-text-white">
+              <h5 style="margin: 8px 0; color: #ccc;">Available Case Studies</h5>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="katrina" onchange="loadExample(this.value)">
+		Tropical Storm — <em>Hurricane Katrina (2005)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="puyehue" onchange="loadExample(this.value)">
+		Volcanic Plume — <em>Puyehue-Cordón Caulle (2011)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="eyjafjallajokull" onchange="loadExample(this.value)">
+		Volcanic Plume — <em>Eyjafjallajökull (2010)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="raikoke" onchange="loadExample(this.value)">
+		Volcanic Plume — <em>Raikoke Eruption (2019)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="canada_wildfire" onchange="loadExample(this.value)">
+		Wildfire Smoke — <em>Canadian Wildfires (2023)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="chernobyl" onchange="loadExample(this.value)">
+		Nuclear Accident — <em>Chernobyl Fallout (1986)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="beirut" onchange="loadExample(this.value)">
+		Industrial Explosion — <em>Beirut Port Blast (2020)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="sai" onchange="loadExample(this.value)">
+		Geoengineering — <em>Stratospheric Sulfur Injection</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="sahara_dust" onchange="loadExample(this.value)">
+		Dust Storm — <em>Saharan Outbreak (2020 “Godzilla” plume)</em>
+              </label>
+	      
+              <label class="w3-block w3-padding-small">
+		<input type="radio" name="example" value="beijing_haze" onchange="loadExample(this.value)">
+		Urban Pollution — <em>Beijing Winter Haze Episode</em>
+              </label>
+	      
+	    </div>
+	  </div>
+	</div>
+      </div>
       
       <!-- Meteo Data Settings -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('meteo-settings')">
@@ -346,6 +416,132 @@
     <script>
       function showProgressModal() {
 	  document.getElementById('progressModal').style.display = 'block';
+      }
+    </script>
+
+    <!-- Loading example settings -->
+    <script>
+      function loadExample(example) {
+	  if (!example) return;
+	  
+	  const examples = {
+	      katrina: {
+		  start_time: "2005-08-25 00:00",
+		  stop_time: "2005-08-31 00:00",
+		  mlon: "-90.0",
+		  mlat: "29.0",
+		  mz: "2.0",
+		  met_source: "era5low_6h",
+		  rep: "5000",
+		  plot_region: "regional"
+	      },
+	      puyehue: {
+		  start_time: "2011-06-04 00:00",
+		  stop_time: "2011-06-10 00:00",
+		  mlon: "-72.112",
+		  mlat: "-40.590",
+		  mz: "12.0",
+		  met_source: "era5low_6h",
+		  rep: "3000",
+		  plot_region: "global"
+	      },
+	      eyjafjallajokull: {
+		  start_time: "2010-04-14 00:00",
+		  stop_time: "2010-04-20 00:00",
+		  mlon: "-19.6",
+		  mlat: "63.6",
+		  mz: "10.0",
+		  met_source: "era5low_6h",
+		  rep: "3000",
+		  plot_region: "regional"
+	      },
+	      raikoke: {
+		  start_time: "2019-06-21 00:00",
+		  stop_time: "2019-06-27 00:00",
+		  mlon: "153.3",
+		  mlat: "48.3",
+		  mz: "15.0",
+		  met_source: "era5low_6h",
+		  rep: "3000",
+		  plot_region: "regional"
+	      },
+	      canada_wildfire: {
+		  start_time: "2023-06-01 00:00",
+		  stop_time: "2023-06-15 00:00",
+		  mlon: "-121.0",
+		  mlat: "54.0",
+		  mz: "1.0",
+		  met_source: "era5low_6h",
+		  rep: "5000",
+		  plot_region: "regional"
+	      },
+	      chernobyl: {
+		  start_time: "1986-04-26 00:00",
+		  stop_time: "1986-05-10 00:00",
+		  mlon: "30.1",
+		  mlat: "51.4",
+		  mz: "0.5",
+		  met_source: "era5low_6h",
+		  rep: "4000",
+		  plot_region: "regional"
+	      },
+	      beirut: {
+		  start_time: "2020-08-04 00:00",
+		  stop_time: "2020-08-10 00:00",
+		  mlon: "35.4",
+		  mlat: "33.9",
+		  mz: "0.1",
+		  met_source: "era5low_6h",
+		  rep: "3000",
+		  plot_region: "regional"
+	      },
+	      sai: {
+		  start_time: "2025-01-01 00:00",
+		  stop_time: "2025-01-07 00:00",
+		  mlon: "0.0",
+		  mlat: "0.0",
+		  mz: "20.0",
+		  met_source: "era5low_6h",
+		  rep: "5000",
+		  plot_region: "global"
+	      },
+	      sahara_dust: {
+		  start_time: "2020-07-06 00:00",
+		  stop_time: "2020-07-12 00:00",
+		  mlon: "-15.0",
+		  mlat: "21.0",
+		  mz: "3.0",
+		  met_source: "gfs_3h",
+		  rep: "5000",
+		  plot_region: "regional"
+	      },
+	      beijing_haze: {
+		  start_time: "2018-12-10 00:00",
+		  stop_time: "2018-12-17 00:00",
+		  mlon: "116.4",
+		  mlat: "39.9",
+		  mz: "0.5",
+		  met_source: "era5low_6h",
+		  rep: "5000",
+		  plot_region: "regional"
+	      }
+	  };
+	  
+	  const settings = examples[example];
+	  if (!settings) return;
+	  
+	  document.querySelector('[name="start_time"]').value = settings.start_time;
+	  document.querySelector('[name="stop_time"]').value = settings.stop_time;
+	  document.querySelector('[name="mlon"]').value = settings.mlon;
+	  document.querySelector('[name="mlat"]').value = settings.mlat;
+	  document.querySelector('[name="mz"]').value = settings.mz;
+	  document.querySelector('[name="rep"]').value = settings.rep;
+	  
+	  const metRadio = document.querySelector(`[name="met_source"][value="${settings.met_source}"]`);
+	  if (metRadio) metRadio.checked = true;
+	  
+	  const plotRadio = document.querySelector(`[name="plot_region"][value="${settings.plot_region}"]`);
+	  if (plotRadio) plotRadio.checked = true;
       }
     </script>
     
