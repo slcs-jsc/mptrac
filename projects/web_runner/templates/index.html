@@ -446,9 +446,11 @@
 		  mlon: "-90.0",
 		  mlat: "29.0",
 		  mz: "2.0",
-		  uz: "0.5",
+		  sz: "0.5",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      puyehue: {
 		  start_time: "2011-06-04 00:00",
@@ -456,9 +458,11 @@
 		  mlon: "-72.112",
 		  mlat: "-40.590",
 		  mz: "12.0",
-		  uz: "1.0",
+		  sz: "1.0",
 		  met_source: "era5low_6h",
-		  plot_region: "global"
+		  plot_region: "global",
+		  map_projection: "orthographic",
+		  central_lat: "-90.0"
 	      },
 	      eyjafjallajokull: {
 		  start_time: "2010-04-14 00:00",
@@ -466,9 +470,11 @@
 		  mlon: "-19.6",
 		  mlat: "63.6",
 		  mz: "10.0",
-		  uz: "0.8",
+		  sz: "0.8",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      raikoke: {
 		  start_time: "2019-06-21 00:00",
@@ -476,9 +482,11 @@
 		  mlon: "153.3",
 		  mlat: "48.3",
 		  mz: "15.0",
-		  uz: "1.0",
+		  sz: "1.0",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "global",
+		  map_projection: "orthographic",
+		  central_lat: "90.0"
 	      },
 	      canada_wildfire: {
 		  start_time: "2023-06-01 00:00",
@@ -486,9 +494,11 @@
 		  mlon: "-121.0",
 		  mlat: "54.0",
 		  mz: "1.0",
-		  uz: "0.3",
+		  sz: "0.3",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      chernobyl: {
 		  start_time: "1986-04-26 00:00",
@@ -496,9 +506,11 @@
 		  mlon: "30.1",
 		  mlat: "51.4",
 		  mz: "0.5",
-		  uz: "0.2",
+		  sz: "0.2",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      beirut: {
 		  start_time: "2020-08-04 00:00",
@@ -506,9 +518,11 @@
 		  mlon: "35.4",
 		  mlat: "33.9",
 		  mz: "0.1",
-		  uz: "0.1",
+		  sz: "0.1",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      sai: {
 		  start_time: "2025-01-01 00:00",
@@ -516,9 +530,11 @@
 		  mlon: "0.0",
 		  mlat: "0.0",
 		  mz: "20.0",
-		  uz: "1.5",
+		  sz: "1.5",
 		  met_source: "era5low_6h",
-		  plot_region: "global"
+		  plot_region: "global",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      sahara_dust: {
 		  start_time: "2020-07-06 00:00",
@@ -526,9 +542,11 @@
 		  mlon: "-15.0",
 		  mlat: "21.0",
 		  mz: "3.0",
-		  uz: "1.0",
+		  sz: "1.0",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      },
 	      beijing_haze: {
 		  start_time: "2018-12-10 00:00",
@@ -536,26 +554,38 @@
 		  mlon: "116.4",
 		  mlat: "39.9",
 		  mz: "0.5",
-		  uz: "0.3",
+		  sz: "0.3",
 		  met_source: "era5low_6h",
-		  plot_region: "regional"
+		  plot_region: "regional",
+		  map_projection: "cartesian",
+		  central_lat: "0.0"
 	      }
 	  };
 	  
 	  const s = examples[example];
 	  if (!s) return;
 	  
-	  // Populate form
-	  ['start_time','stop_time','mlon','mlat','mz','uz'].forEach(name => {
-	      const el = document.querySelector(`[name="${name}"]`);
-	      if (el && s[name] !== undefined) el.value = s[name];
+	  // Populate basic fields
+	  ['start_time', 'stop_time', 'mlon', 'mlat', 'mz', 'sz', 'central_lat'].forEach(name => {
+              const el = document.querySelector(`[name="${name}"]`);
+              if (el && s[name] !== undefined) el.value = s[name];
 	  });
 	  
+	  // Set radio buttons for met_source
 	  const ms = document.querySelector(`[name="met_source"][value="${s.met_source}"]`);
 	  if (ms) ms.checked = true;
 	  
+	  // Set radio buttons for plot_region
 	  const pr = document.querySelector(`[name="plot_region"][value="${s.plot_region}"]`);
 	  if (pr) pr.checked = true;
+	  
+	  // Set map_projection (assuming it's a select dropdown or radio buttons)
+	  const mp = document.querySelector(`[name="map_projection"][value="${s.map_projection}"]`);
+	  if (mp) mp.checked = true;  // for radio buttons
+	  else {
+              const mpSelect = document.querySelector(`[name="map_projection"]`);
+              if (mpSelect && s.map_projection !== undefined) mpSelect.value = s.map_projection;
+	  }
       }
     </script>
     
