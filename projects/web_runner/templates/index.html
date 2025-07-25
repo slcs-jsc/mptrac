@@ -42,15 +42,15 @@
     <h2 class="w3-center">Simulation Parameters</h2>
     
     <p style="text-align: center; max-width: 900px; margin: 0 auto; color: #ccc;">
-      Please specify simulation parameters below including meteorological data, initialization, physics, and output options. You can also load predefined case settings from the “Example Settings” menu.
+      Please specify simulation parameters below including meteorological data, initialization, physics, and output options. You can also load predefined case studies from the “Examples” menu.
     </p>
     
     <!-- Form -->
     <form method="POST" action="/run" onsubmit="showProgressModal()" class="w3-container w3-padding-16" style="width: 80%; margin: 0 auto;">
       
-      <!-- Example Settings -->
+      <!-- Examples -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('example-settings')">
-	<i class="fa fa-caret-down"></i> Example Settings
+	<i class="fa fa-caret-down"></i> Examples
       </button>
       <div id="example-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Select a case study from the available examples below to auto-fill simulation parameters.</p>
@@ -119,9 +119,9 @@
 	</div>
       </div>
       
-      <!-- Meteo Data Settings -->
+      <!-- Meteo Data -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('meteo-settings')">
-	<i class="fa fa-caret-down"></i> Meteorological Data Settings
+	<i class="fa fa-caret-down"></i> Meteorological Data
       </button>
       <div id="meteo-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Select the meteorological dataset for the trajectory calculations.</p>
@@ -183,9 +183,9 @@
 	</div>
       </div>
       
-      <!-- Initialization Settings -->
+      <!-- Initialization -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('init-settings')">
-	<i class="fa fa-caret-down"></i> Initialization Settings
+	<i class="fa fa-caret-down"></i> Initialization
       </button>
       <div id="init-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	
@@ -268,7 +268,7 @@
       
       <!-- Physics Settings -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('diffusivity-settings')">
-	<i class="fa fa-caret-down"></i> Physics Settings
+	<i class="fa fa-caret-down"></i> Physics
       </button>
       <div id="diffusivity-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Define the stochastic perturbations of air parcel locations along trajectories by setting the horizontal and vertical diffusivity values for the PBL, troposphere, and stratosphere. Additionally, specify the subgrid-scale winds for both horizontal and vertical directions.</p>
@@ -331,9 +331,9 @@
 	</div>
       </div>
       
-      <!-- Output Settings -->
+      <!-- Output -->
       <button type="button" class="w3-button w3-block w3-dark-grey w3-left-align" style="margin-bottom: 12px;" onclick="toggleCollapsible('output-settings')">
-	<i class="fa fa-caret-down"></i> Output Settings
+	<i class="fa fa-caret-down"></i> Output
       </button>
       <div id="output-settings" class="w3-container w3-hide" style="background-color: #1a1a1a; color: white; padding: 16px; margin-bottom: 12px;">
 	<p>Select the output interval to determine how frequently simulation results are recorded.</p>
@@ -417,23 +417,46 @@
     <div id="progressModal" class="w3-modal" style="display:none;">
       <div class="w3-modal-content w3-center w3-round-large w3-padding-32" style="background:#222;">
 	<h2 class="w3-text-white">Running Simulation...</h2>
-	<div class="w3-center w3-padding-16">
-	  <i class="w3-spin w3-jumbo w3-text-light-blue fa fa-cog"></i>
-	</div>
-	<p class="w3-text-light-grey" style="width: 80%; margin: 0 auto; margin-top: 12px;">
+	<p class="w3-text-light-grey w3-margin-top" style="width: 80%; margin-left: auto; margin-right: auto;">
 	  Please wait while we process your request. Processing may take several minutes. Maximum runtime is limited to 10 minutes.
 	</p>
-	<button onclick="location.reload()" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-top: 24px;">
+	<div class="w3-center w3-padding-16 w3-margin-top">
+	  <i class="w3-spin w3-jumbo w3-text-light-blue fa fa-cog"></i>
+	</div>
+	<p id="timer" class="w3-text-light-grey w3-margin-top" style="font-size: 16px;">
+	  Elapsed Time: 00:00
+	</p>
+	<button onclick="location.reload()" 
+		class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue w3-margin-top" 
+		style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
 	  ⏹️ Stop Simulation
 	</button>
       </div>
     </div>
+    
     <script>
+      let timerInterval;
+      let startTime;
+      
       function showProgressModal() {
 	  document.getElementById('progressModal').style.display = 'block';
+	  startTime = Date.now();
+	  
+	  timerInterval = setInterval(() => {
+	      const elapsedMs = Date.now() - startTime;
+	      const totalSeconds = Math.floor(elapsedMs / 1000);
+	      const minutes = String(Math.floor(totalSeconds / 60)).padStart(2, '0');
+	      const seconds = String(totalSeconds % 60).padStart(2, '0');
+	      document.getElementById('timer').textContent = `Elapsed Time: ${minutes}:${seconds}`;
+	  }, 1000);
+      }
+      
+      function hideProgressModal() {
+	  document.getElementById('progressModal').style.display = 'none';
+	  clearInterval(timerInterval);
       }
     </script>
-
+    
     <!-- Loading example settings -->
     <script>
       function loadExample(example) {

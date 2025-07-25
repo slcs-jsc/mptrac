@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, send_from_directory
-import subprocess, threading, os, uuid, shutil, time, io, base64, glob, textwrap
-import numpy as np
+import os, io, time, uuid, glob, base64, shutil, textwrap, zipfile, subprocess, threading
 from datetime import datetime, timezone
+import numpy as np
 import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
@@ -35,17 +35,28 @@ logger.addHandler(handler)
 def clean_old_runs(max_age_sec=3600):
     now = time.time()
     for directory in [RUNS_DIR, ZIPS_DIR]:
+        logger.info(f"[CLEANUP] Scanning {directory} for files older than {max_age_sec} seconds")
         for path in glob.glob(os.path.join(directory, "*")):
             if now - os.path.getmtime(path) > max_age_sec:
                 try:
+                    logger.info(f"[CLEANUP] Removed old file or directory: {path}")
                     shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
                 except Exception as e:
-                    logger.warning(f"Failed to remove {path}: {e}")
+                    logger.warning(f"[CLEANUP] Failed to remove {path}: {e}")
 
 # Periodic cleaning...
 def schedule_periodic_cleanup(interval=3600):
     threading.Thread(target=lambda: [clean_old_runs() or time.sleep(interval) for _ in iter(int, 1)],
                      daemon=True).start()
+
+# Create zip file...
+def fast_zip_no_compression(zip_path, source_dir):
+    with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_STORED) as zipf:
+        for root, _, files in os.walk(source_dir):
+            for file in files:
+                file_path = os.path.join(root, file)
+                arcname = os.path.relpath(file_path, source_dir)
+                zipf.write(file_path, arcname)
 
 # Flask app...
 app = Flask(__name__)
@@ -79,9 +90,12 @@ def run_command(cmd, timeout=300):
     if not process_semaphore.acquire(timeout=5):
         return -999, "❌ Server is too busy."
     try:
+        logger.info(f"[EXEC] Executing command: {' '.join(cmd)}")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout)
+        logger.info(f"[EXEC] Command finished with exit code {result.returncode}")
         return result.returncode, result.stdout
     except subprocess.TimeoutExpired as e:
+        logger.info(f"[EXEC] Command timed out after {timeout} seconds.")
         return -1, (e.stdout or '') + f"\n❌ Command timed out after {timeout} seconds."
     finally:
         process_semaphore.release()
@@ -155,7 +169,7 @@ def process_plot(
         if data.shape[1] < 4:
             raise ValueError("Insufficient data columns")
     except Exception as e:
-        logger.warning(f"Skipping plot for {file}: {e}")
+        logger.warning(f"[PLOT] Skipping plot for {file}: {e}")
         return None
     lons, lats, heights = data[:, 2], data[:, 3], data[:, 1]
     sort_idx = np.argsort(heights)
@@ -179,7 +193,7 @@ def process_plot(
 
 # Exit with error message...
 def validation_error(message):
-    logger.warning(f"Validation failed for {request.remote_addr}: {message}")
+    logger.error(f"[VALIDATE] Validation failed for {request.remote_addr}: {message}")
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
 @app.route('/')
@@ -187,14 +201,21 @@ def index(): return render_template('index.html')
 
 @app.route('/download/<run_id>')
 def download(run_id):
-    logger.info(f"Download requested for run {run_id} by {request.remote_addr}")
+    logger.info(f"[DOWNLOAD] Download requested for run {run_id} by {request.remote_addr}")
     return send_from_directory(ZIPS_DIR, f"{run_id}.zip", as_attachment=True)
 
 @app.route('/run', methods=['POST'])
 def run():
+
+    # Get run ID...
+    run_id = str(uuid.uuid4())
+
+    # Parse input form...
     try:
-        # Get control parameters from input form...
         f = request.form
+        logger.info(f"[RUN] Received form input from {request.remote_addr}: {dict(f)}")
+        
+        # Parse parameters...
         to_f = lambda x: float(f[x])
         met_source = f.get('met_source', 'erai_6h')
         met_name = MET_OPTIONS[met_source]['MET_NAME']
@@ -258,17 +279,10 @@ def run():
     except Exception as e:
         return validation_error(str(e))
     
-    # Set run ID...
-    run_id = str(uuid.uuid4())
-    
-    # Logging...
-    client_ip = request.remote_addr
-    logger.info(f"Run requested by {client_ip} | MET: {met_source} | Start: {f['start_time']} | Stop: {f['stop_time']}")
-    
     # Create working directory...
     work_dir = os.path.join(RUNS_DIR, run_id)
     os.makedirs(work_dir, exist_ok=True)
-
+    
     # Create control parameter file...
     ctl_file, dirlist_file, init_file = map(lambda x: os.path.join(work_dir, x), ['trac.ctl', 'dirlist.txt', 'atm_init.tab'])
     atm_file = os.path.join(work_dir, 'atm')
@@ -458,20 +472,22 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         ctl_template += "MET_RELHUM = 1\n"
     
     with open(ctl_file, 'w') as f: f.write(ctl_template)
-
+    logger.info(f"[RUN] Control file written for run {run_id} at {ctl_file}")
+    
     # Run atm_init and trac...
     atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120)
     trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600)
     
     # Catch errors...
     if trac_code == -999:
+        logger.error(f"[RUN] Server busy for {run_id} for {request.remote_addr}")
         return render_template('server_busy.html'), 503
     
     # Logging...
     if atm_init_code != 0 or trac_code != 0:
-        logger.error(f"Run {run_id} failed for {client_ip} | atm_init_code={atm_init_code} | trac_code={trac_code}")
+        logger.error(f"[RUN] Run {run_id} failed for {request.remote_addr} | atm_init_code={atm_init_code} | trac_code={trac_code}")
     else:
-        logger.info(f"Run {run_id} succeeded for {client_ip}")
+        logger.info(f"[RUN] Run {run_id} succeeded for {request.remote_addr}")
 
     # Combine log message...
     combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
@@ -488,6 +504,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
                        glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
 
         # Parallel creation of plots...
+        logger.info(f"[PLOT] {len(files)} plot files to process for run {run_id}")
         with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
             futures = [
                 executor.submit(process_plot, file, work_dir,
@@ -505,10 +522,13 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             [f for f in plot_filenames if f],
             key=lambda name: datetime.strptime(name.split("_")[1][:-4], "%Y-%m-%dT%H:%MZ")
         )
+        logger.info(f"[PLOT] plots finished for run {run_id}")
         
         # Create zip file...
         zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
-        shutil.make_archive(zip_path.replace('.zip', ''), 'zip', work_dir)
+        logger.info(f"[ZIP] {run_id} | {request.remote_addr} | Creating zip file {zip_path}")
+        fast_zip_no_compression(zip_path, work_dir)
+        logger.info(f"[ZIP] {run_id} | {request.remote_addr} | Zip file created successfully at {zip_path}")
         
         # Show results...
         return render_template(
@@ -528,6 +548,16 @@ def terms():
 @app.route('/runs/working/<run_id>/<filename>')
 def serve_plot_image(run_id, filename):
     return send_from_directory(os.path.join(RUNS_DIR, run_id), filename)
+
+@app.route('/logs')
+def show_logs():
+    try:
+        with open(log_file, 'r') as f:
+            log_contents = f.read()
+        return f"<pre>{log_contents}</pre>"
+    except Exception as e:
+        logger.error(f"[LOG] Error reading log file: {e}")
+        return f"<p>Error reading log file: {e}</p>", 500
 
 if __name__ == '__main__':
     app.run(debug=False)
