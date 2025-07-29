@@ -259,6 +259,11 @@
 #define NP 9000000
 #endif
 
+/*! Maximum number of send and recieved particles. */
+#ifndef NPART
+#define NPART 1000000
+#endif
+
 /*! Maximum number of quantities per data point. */
 #ifndef NQ
 #define NQ 8

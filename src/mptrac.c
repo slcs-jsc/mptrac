@@ -3840,7 +3840,7 @@ void module_sort(
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
   double amax = (met0->nx*met0->ny + met0->ny)*met0->np + met0->np;
   
-  printf("I rank %d atm %f \n",*rank, atm->lon[20000]);
+  //printf("I rank %d atm %f \n",*rank, atm->lon[20000]);
   
 #ifdef _OPENACC
 #pragma acc enter data create(a[0:np],p[0:np],amax, rank)
@@ -3905,6 +3905,9 @@ void module_sort(
   *nparticles = nparticlest;
   atm->np = npt;
   #pragma acc update device(atm->np)
+  
+  if (*nparticles > NPART)
+    ERRMSG("Number of particles to send and recieve to small. Increase NPART!");
 
   //printf("rank %d module sort: %d, %d, %d\n", *rank, nparticlest, npt, np);
  
@@ -3914,6 +3917,7 @@ void module_sort(
 #endif
   free(a);
   free(p);
+  
 }
 
 /*****************************************************************************/
@@ -5597,17 +5601,17 @@ void mptrac_run_timestep(
     
   /* Domain decomposition... */
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1) {
-    
+      
     /* Initialize particles locally... */
     int nparticles = 0;
     int neighbours[NNMAX];
     particle_t* particles;
-    ALLOC(particles, particle_t, NP);
-
+    ALLOC(particles, particle_t, NPART);
+    
     /* Get the MPI information on CPU... */
     // TODO: This actually only needs to be done ones: mpi_info_t ...
     int rank, size;
-    MPI_Barrier(MPI_COMM_WORLD);
+    //MPI_Barrier(MPI_COMM_WORLD);
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     size = ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal;  
     
@@ -5618,7 +5622,7 @@ void mptrac_run_timestep(
     /* Assign particles to new subdomains... */    
     dd_assign_rect_subdomains_atm( atm, *met0, ctl, &rank, neighbours, 0);
    
-    module_sort( ctl, *met0, atm, &nparticles, &rank);
+    module_sort( ctl, *met0, atm, &nparticles, &rank); // call it dd_sort()
  
     printf("II: %d,%d\n", nparticles, atm->np);
     /* Transform from struct of array to array of struct... */
@@ -12153,9 +12157,9 @@ void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
   
   SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
   
-/* Select the particles that will be send... */
-int npart = *nparticles;
-#pragma acc enter data create( nparticles, particles[:NP])
+  /* Select the particles that will be send... */
+  int npart = *nparticles;
+#pragma acc enter data create( nparticles, particles[:NPART])
 #pragma acc update device( nparticles)
 #pragma acc parallel loop present( atm, ctl, particles, cache, nparticles)
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
@@ -12187,7 +12191,7 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
   int npart = *nparticles;
-#pragma acc enter data create(nparticles, particles[:NP])
+#pragma acc enter data create(nparticles, particles[:NPART])
 #pragma acc update device(particles[:npart], nparticles)
 #pragma acc data present(atm, ctl, cache, particles, nparticles)
 #pragma acc parallel loop
@@ -12209,6 +12213,9 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
   /* Reset size... */
   atm->np += *nparticles;
 #pragma acc update device(atm->np)
+
+  if (atm->np > NP)
+    ERRMSG("Number of particles to high. Increase NP!");
 
 }
 
@@ -12380,6 +12387,13 @@ void dd_communicate_particles(
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
+  /* Infos for MPI async... */
+  MPI_Request requests_snd_nbr[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
+  MPI_Request requests_rcv_nbr[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
+  MPI_Request requests_snd_part[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
+  MPI_Request requests_rcv_part[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
+  MPI_Status states[8];
+  
   /* Sending... */
   LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
   for (int idest = 0; idest < nneighbours; idest++) {
@@ -12398,8 +12412,8 @@ void dd_communicate_particles(
         
     SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_GPU);
     /* Send buffer sizes... */
-    MPI_Request request;
-    MPI_Isend( &nbs[idest], 1, MPI_INT, neighbours[idest], 0, MPI_COMM_WORLD, &request);
+    MPI_Isend( &nbs[idest], 1, MPI_INT, 
+               neighbours[idest], 0, MPI_COMM_WORLD, &requests_snd_nbr[idest]);
 
     /* Don't send empty signals... */
     if ( nbs[idest] == 0 )
@@ -12417,7 +12431,6 @@ void dd_communicate_particles(
         ibs++;
       }
       
-      // This might be removed and instead just use omp?
       if (ibs == nbs[idest])
       break;
 
@@ -12426,50 +12439,58 @@ void dd_communicate_particles(
     SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_GPU);
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
-    	      neighbours[idest], 1, MPI_COMM_WORLD, &request);
+    	      neighbours[idest], 1, MPI_COMM_WORLD, &requests_snd_part[idest]);
   }
   
   /* Wait for all signals to be send... */
-  MPI_Barrier(MPI_COMM_WORLD);
+  // MPI_Barrier(MPI_COMM_WORLD);
   SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_GPU);
 
   /* Recieving... */
   LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
+
   for (int isourc = 0; isourc < nneighbours; isourc++) {
   
     /* Ignore poles... */
-    if (neighbours[isourc]<0)
+    if (neighbours[isourc]<0) {
+      requests_rcv_nbr[isourc] = MPI_REQUEST_NULL;
       continue;
+    }
 
     /* Recieve buffer sizes... */
-    MPI_Status status;
-    MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
+    
+    MPI_Irecv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &requests_rcv_nbr[isourc]); 
+    //MPI_Status status;
+    //MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
     
   }
   
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
+  /* Wait for all particle numbers to be recieved... */
+  //MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Waitall(nneighbours, requests_rcv_nbr, states);
   
   SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_GPU);
   for (int isourc = 0; isourc < nneighbours; isourc++) {
   
-    /* Ignore poles... */
-    if (neighbours[isourc]<0)
+    /* Ignore poles, and neighbours without signal... */
+    if ((neighbours[isourc]<0) || (nbr[isourc]==0)) {
+      requests_rcv_part[isourc] = MPI_REQUEST_NULL;
       continue;
-  
-    /* Continue with other neighbours if there is no signal... */
-    if (nbr[isourc]==0)
-      continue;
+    }
 
     /* Allocate buffer for recieving... */
-    MPI_Status status;
-    ALLOC( recieve_buffers[isourc], particle_t, nbr[isourc]);
-    MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &status);
+    ALLOC(recieve_buffers[isourc], particle_t, nbr[isourc]);
+    
+    //MPI_Status status;
+    //MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &status);
+    MPI_Irecv(recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &requests_rcv_part[isourc]);
     
   }
 
-  /* Wait for all signals to be recieved... */
-  MPI_Barrier(MPI_COMM_WORLD);
+  /* Wait for all particles to be recieved... */
+  //MPI_Barrier(MPI_COMM_WORLD);
+  MPI_Waitall(nneighbours, requests_rcv_part, states);
+
   SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_GPU);
   
   /* Logging of communication ... */
@@ -12494,14 +12515,18 @@ void dd_communicate_particles(
       particles[ip + api].q[ctl.qnt_subdomain] = rank;
 
     }
-  api += nbr[isourc];   
+    api += nbr[isourc];   
   } 
   
   /* Set number of recieved particles... */
   *nparticles = api;
   
   SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_GPU);
-  LOG(1, "Free all the buffer.")
+
+  /* Wait for all communication to be finished... */
+  MPI_Waitall(nneighbours, requests_snd_part, states);
+  MPI_Waitall(nneighbours, requests_snd_nbr, states);
+  
   /* Free buffers and buffersizes... */
   for (int i = 0; i < nneighbours; i++) {
         
@@ -12555,7 +12580,7 @@ void dd_assign_rect_subdomains_atm(
           atm->q[ctl->qnt_destination][ip] = -1;
         }   
       } 
-#pragma acc exit data delete(neighbours, rank)
+#pragma acc exit data delete(rank)
     } else {
     
      /* Classify air parcels into subdomain... */
