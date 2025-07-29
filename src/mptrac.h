@@ -3084,7 +3084,7 @@ typedef struct {
 
   /*! Number of ensembles. */
   int nens;
-  
+
   /*! Basename of ensemble data file. */
   char ens_basename[LEN];
 

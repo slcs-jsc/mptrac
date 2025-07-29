@@ -7839,7 +7839,8 @@ int read_met_nc_2d(
       ERRMSG("Meteo data layout not implemented for packed netCDF files!");
 
     /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
+    omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
@@ -7852,6 +7853,7 @@ int read_met_nc_2d(
 	else
 	  dest[ix][iy] = NAN;
       }
+    omp_set_dynamic(0);
 
     /* Free... */
     free(help);
@@ -7883,7 +7885,8 @@ int read_met_nc_2d(
     if (ctl->met_convention == 0) {
 
       /* Copy and check data (ordering: lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++) {
 	  if (init)
@@ -7896,11 +7899,13 @@ int read_met_nc_2d(
 	  else
 	    dest[ix][iy] = NAN;
 	}
+      omp_set_dynamic(0);
 
     } else {
 
       /* Copy and check data (ordering: lon, lat)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ix = 0; ix < met->nx; ix++) {
 	  if (init)
@@ -7913,6 +7918,7 @@ int read_met_nc_2d(
 	  else
 	    dest[ix][iy] = NAN;
 	}
+      omp_set_dynamic(0);
     }
 
     /* Free... */
@@ -7988,7 +7994,8 @@ int read_met_nc_3d(
       ERRMSG("Meteo data layout not implemented for packed netCDF files!");
 
     /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
+    omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
@@ -8000,6 +8007,7 @@ int read_met_nc_3d(
 	  else
 	    dest[ix][iy][ip] = NAN;
 	}
+    omp_set_dynamic(0);
 
     /* Free... */
     free(help);
@@ -8031,7 +8039,8 @@ int read_met_nc_3d(
     if (ctl->met_convention == 0) {
 
       /* Copy and check data (ordering: lev, lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
@@ -8043,11 +8052,13 @@ int read_met_nc_3d(
 	    else
 	      dest[ix][iy][ip] = NAN;
 	  }
+      omp_set_dynamic(0);
 
     } else {
 
       /* Copy and check data (ordering: lon, lat, lev)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ip = 0; ip < met->np; ip++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ix = 0; ix < met->nx; ix++) {
@@ -8059,6 +8070,7 @@ int read_met_nc_3d(
 	    else
 	      dest[ix][iy][ip] = NAN;
 	  }
+      omp_set_dynamic(0);
     }
 
     /* Free... */
@@ -8172,14 +8184,16 @@ void read_met_nc_grid(
 
   NC(nc_inq_varndims(ncid, varid, &ndims));
   NC(nc_inq_vardimid(ncid, varid, dimids));
-  
-  if(ndims == 4) {
-    NC(nc_inq_dim(ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
-  } else if(ndims == 3) {
-    NC(nc_inq_dim(ncid, dimids[ctl->met_convention == 0 ? 0 : 2], levname, &dimlen));
+
+  if (ndims == 4) {
+    NC(nc_inq_dim
+       (ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
+  } else if (ndims == 3) {
+    NC(nc_inq_dim
+       (ncid, dimids[ctl->met_convention == 0 ? 0 : 2], levname, &dimlen));
   } else
     ERRMSG("Cannot determine vertical dimension!")
-  met->np = (int) dimlen;
+      met->np = (int) dimlen;
 
   LOG(2, "Number of levels: %d", met->np);
   if (met->np < 2 || met->np > EP)
