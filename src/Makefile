@@ -136,6 +136,12 @@ ifeq ($(MPI),1)
   CFLAGS += -DMPI
 endif
 
+# Compile for domain decompositon...
+ifeq ($(DD),1)
+  CC = mpicc
+  CFLAGS += -DDD
+endif
+
 # Optimization information...
 ifeq ($(INFO),1)
   ifeq ($(COMPILER),gcc)

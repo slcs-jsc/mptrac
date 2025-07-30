@@ -125,10 +125,12 @@ int main(
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
       /* Set-up domain decomposition... */
+#ifdef DD
       // TODO: Remove dd_init_flg ...
       static int dd_init_flg = 0;
       if (t == ctl->t_start || !dd_init_flg)
         dd_init(ctl, &mpi_info, atm, &met0, t, &dd_init_flg);
+#endif
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &mpi_info);
@@ -156,11 +158,8 @@ int main(
     LOG(1, "MEMORY_METEO = %g MByte", sizeof(met_t) / 1024. / 1024.);
 
     /* Free memory... */
-    mptrac_free(ctl, cache, clim, met0, met1, atm);
-    
-    /* Free MPI datatype... */
-    MPI_Type_free(&mpi_info.MPI_Particle);
-
+    mptrac_free(ctl, cache, clim, met0, met1, atm, &mpi_info);
+   
     /* Report timers... */
     PRINT_TIMERS;
     STOP_TIMERS;

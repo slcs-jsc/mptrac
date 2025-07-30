@@ -112,7 +112,6 @@
    Includes...
    ------------------------------------------------------------ */
 
-#include <stdbool.h>
 #include <ctype.h>
 #include <gsl/gsl_fft_complex.h>
 #include <gsl/gsl_math.h>
@@ -132,7 +131,11 @@
 
 #ifdef MPI
 #include "mpi.h"
+#endif
+
+#ifdef DD
 #include <netcdf_par.h>
+#include <stdbool.h>
 #endif
 
 #ifdef _OPENACC
@@ -245,6 +248,20 @@
 #define T0 273.15
 #endif
 
+/*! Constants indicating the North pole [-]. */
+#ifdef DD
+  #ifndef NPOLE
+  #define NPOLE -2
+  #endif
+#endif 
+
+/*! Constants indicating the South pole [-]. */
+#ifdef DD
+  #ifndef SPOLE
+  #define SPOLE -3
+  #endif
+#endif
+
 /* ------------------------------------------------------------
    Dimensions...
    ------------------------------------------------------------ */
@@ -354,56 +371,12 @@
 #define CTS 1000
 #endif
 
-/*! Define abbreviations for poles in domain decomposition. */
-#ifndef NPOLE
-#define NPOLE -2
+/*! Maximum size of send and recieve buffer. */
+#ifdef DD
+  #ifndef NBUFFER
+  #define NBUFFER 1000
+  #endif
 #endif
-#ifndef SPOLE
-#define SPOLE -3
-#endif
-
-/*! Define abbreviations for hole in particles array. */
-
-/*! Define size of send and recieve buffer. */
-#ifndef NBUFFER
-#define NBUFFER 1000
-#endif
-
-/*! Define MPTRAC Data types. */
-#ifndef MPTRAC_DOUBLE
-#define MPTRAC_DOUBLE sizeof(double)
-#endif
-
-#ifndef MPTRAC_INT
-#define MPTRAC_INT sizeof(int)
-#endif
-
-/*
-types = {MPTRAC_DOUBLE, MPTRAC_INT}
-blocklength = {1,2}
-
-
-void mptrac_alloc_particle(types, blocklengths, blocknumber) {
-  size_t size = 0
-  for (int ib=0; ib<blocknumber;ib++) {
-    size+=blocklength[ib]*types[ip];
-  }
-  
-  patricle->q;
-
-  particles_ptr.attr = malloc(1, size);
-}
-
-
-type
-
-
-int* q[nq];
-
-
-TYPE q_TYPE[NQ]
-*/
-
 
 
 /* ------------------------------------------------------------
@@ -3703,20 +3676,36 @@ typedef struct {
 
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
+ 
+#ifdef DD  
   
-  /*! More grid information... */
-  // TODO: Or this will be integrated to a grid_t ...
+  // TODO: Integrate this into a  grid_t ?
+  
+  /*! Rectangular grid limit of subdomain... */
   double subdomain_lon_max;
+  
+  /*! Rectangular grid limit of subdomain... */
   double subdomain_lon_min;
+  
+  /*! Rectangular grid limit of subdomain... */
   double subdomain_lat_max;
+  
+  /*! Rectangular grid limit of subdomain... */
   double subdomain_lat_min;
   
+  /*! Hyperslab start and count for subdomain... */
   size_t subdomain_start[4];
+  
+  /*! Hyperslab start and count for subdomain... */
   size_t subdomain_count[4];
 
+  /* Hyperslab of boundary halos start... */
   size_t halo_bnd_start[4];
+  
+  /* Hyperslab of boundary halos count... */
   size_t halo_bnd_count[4];
 
+  /* Hyperslab of boundary halos count... */
   int halo_offset_start;
   int halo_offset_end;
   
@@ -3724,6 +3713,8 @@ typedef struct {
   int nx_glob;
   int ny_glob;
   int np_glob;
+  
+#endif
 
 } met_t;
 
@@ -6069,7 +6060,8 @@ void mptrac_free(
   clim_t * clim,
   met_t * met0,
   met_t * met1,
-  atm_t * atm);
+  atm_t * atm,
+  mpi_info_t *mpi_info);
 
 /**
  * @brief Retrieves meteorological data for the specified time.
@@ -7061,7 +7053,7 @@ void read_met_detrend(
  *
  * @author Lars Hoffmann
  */
-void read_met_extrapolate(
+void read_met_extrapolate_par(
   met_t * met);
 
 /**
@@ -7125,7 +7117,7 @@ void read_met_geopot(
  * @authors Lars Hoffmann
  * @authors Jan Clemens
  */
-void read_met_grid(
+void read_met_grid_par(
   const char *filename,
   const int ncid,
   const ctl_t * ctl,
@@ -7256,7 +7248,7 @@ void read_met_monotonize(
  *
  * @author Lars Hoffmann
  */
-int read_met_nc(
+int read_met_nc_par(
   const char *filename,
   const ctl_t * ctl,
   const clim_t * clim,
@@ -7675,7 +7667,7 @@ void read_met_sample(
  * @authors Lars Hoffmann
  * @authors Jan Clemens
  */
-void read_met_surface(
+void read_met_surface_par(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
@@ -8850,6 +8842,7 @@ void write_vtk(
  *
  * @author Jan Clemens
  */
+#ifdef DD
 void atm2particles(
   atm_t* atm, 
   particle_t* particles, 
@@ -8857,7 +8850,7 @@ void atm2particles(
   int* nparticles,
   cache_t *cache,
   int rank);
-
+#endif
 /**
  * @brief Converts particle data to atmospheric data.
  *
@@ -8884,34 +8877,10 @@ void atm2particles(
   atm_t* atm, 
   particle_t particles[], 
   ctl_t ctl);*/
-  
+#ifdef DD
 void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
    cache_t* cache);
-
-/**
- * @brief Creates an MPI datatype for particle structures.
- *
- * The `dd_destination_get_rect` function defines an MPI datatype for
- * particle structures (`particle_t`). This datatype is used to describe
- * the layout of particle data in memory, enabling efficient communication
- * of particle data in MPI programs.
- *
- * @param MPI_Particle A pointer to an `MPI_Datatype` where the new datatype will be stored.
- *
- * The function performs the following steps:
- * - Defines an array of MPI datatypes (`types`) representing the types of each field in the particle structure.
- * - Defines an array of block lengths (`blocklengths`) specifying the number of elements for each field.
- * - Defines an array of displacements (`displacements`) specifying the byte offset of each field within the particle structure.
- * - Creates a new MPI struct datatype using `MPI_Type_create_struct` with the defined types, block lengths, and displacements.
- * - Commits the new datatype using `MPI_Type_commit` to make it available for use in MPI communication.
- *
- * @note This function assumes that the `particle_t` structure is defined and includes
- *       fields `time`, `p`, `lon`, `lat`, and `q`. The `NQ` macro or constant must be defined
- *       to specify the number of elements in the `q` array.
- *
- * @author Jan Clemens
- */
-
+#endif
 /**
  * @brief Creates an MPI datatype for particle structures.
  *
@@ -8935,9 +8904,10 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
  *
  * @author Jan Clemens
  */
+#ifdef DD
 void  dd_register_MPI_type_particle(
   MPI_Datatype* MPI_Particle);
-  
+#endif  
 /**
  * @brief Determines neighbour ranks for data distribution in a domain decomposition setup.
  *
@@ -8963,10 +8933,11 @@ void  dd_register_MPI_type_particle(
  *
  * @author Jan Clemens
  */
+#ifdef DD
 void dd_get_rect_neighbour(
   const ctl_t ctl, 
   mpi_info_t* mpi_info);
-  
+#endif  
 /**
  * @brief Communicates particle data between processes in a parallel computing environment.
  *
@@ -9003,6 +8974,7 @@ void dd_get_rect_neighbour(
  *
  * @author Jan Clemens
  */
+#ifdef DD
 void dd_communicate_particles(
   particle_t* particles, 
   int* nparticles, 
@@ -9010,6 +8982,7 @@ void dd_communicate_particles(
   int* neighbours, 
   int nneighbours, 
   ctl_t ctl);
+#endif
   
 /**
  * @brief Assigns rectangular subdomains to atmospheric data based on geographical coordinates.
@@ -9039,20 +9012,25 @@ void dd_communicate_particles(
  *
  * @author Jan Clemens
  */
- void dd_assign_rect_subdomains_atm(
+#ifdef DD
+void dd_assign_rect_subdomains_atm(
   atm_t* atm,
   met_t* met, 
   ctl_t* ctl, 
   mpi_info_t* mpi_info, 
   int init);
- 
+#endif
+
+#ifdef DD
 void module_dd( 
    ctl_t *ctl, 
    atm_t *atm,
    cache_t *cache, 
    mpi_info_t* mpi_info, 
    met_t **met);
+#endif
    
+#ifdef DD   
 void dd_init(
   ctl_t *ctl,
   mpi_info_t *mpi_info, 
@@ -9060,5 +9038,6 @@ void dd_init(
   met_t **met, 
   double t, 
   int* dd_init);
+#endif
 
 #endif /* LIBTRAC_H */

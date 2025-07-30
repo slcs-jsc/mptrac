@@ -4289,7 +4289,8 @@ void mptrac_free(
   clim_t *clim,
   met_t *met0,
   met_t *met1,
-  atm_t *atm) {
+  atm_t *atm,
+  mpi_info_t *mpi_info) {
 
   /* Delete data region on GPU... */
 #ifdef _OPENACC
@@ -4305,6 +4306,9 @@ void mptrac_free(
   free(clim);
   free(met0);
   free(met1);
+  
+  /* Free MPI datatype... */
+  MPI_Type_free(&mpi_info->MPI_Particle);
 }
 
 /*****************************************************************************/
@@ -5457,10 +5461,17 @@ int mptrac_read_met(
   if (!ctl->met_mpi_share || rank == 0) {
 
     /* Read netCDF data... */
+#ifndef DD
     if (ctl->met_type == 0) {
       if (read_met_nc(filename, ctl, clim, met) != 1)
 	return 0;
     }
+#else 
+    if (ctl->met_type == 0) {
+      if (read_met_nc_par(filename, ctl, clim, met) != 1)
+	return 0;
+    }
+#endif
 
     /* Read binary data... */
     else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
@@ -5601,8 +5612,10 @@ void mptrac_run_timestep(
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
     
   /* Domain decomposition... */
+#ifdef DD
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1)
     module_dd(ctl, atm, cache, mpi_info, met0);
+#endif 
    
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
@@ -7190,7 +7203,7 @@ void read_met_geopot(
 
 /*****************************************************************************/
 
-void read_met_grid(
+void read_met_grid_par(
   const char *filename,
   const int ncid,
   const ctl_t *ctl,
@@ -7341,7 +7354,6 @@ void read_met_grid(
       met->ny = met->ny + gap;
       WARN("Extended subdomains at the bottom to fit to full domain.");
     }
-
   }
   
   /* Block-size, i.e. count */
@@ -7476,7 +7488,7 @@ void read_met_grid(
 
 /*****************************************************************************/
 
-void read_met_levels(
+void read_met_levels_par(
   const int ncid,
   const ctl_t *ctl,
   met_t *met) {
@@ -7808,7 +7820,7 @@ void read_met_monotonize(
 
 /*****************************************************************************/
 
-int read_met_nc(
+int read_met_nc_par(
   const char *filename,
   const ctl_t *ctl,
   const clim_t *clim,
@@ -7823,13 +7835,13 @@ int read_met_nc(
   }
 
   /* Read coordinates of meteo data... */
-  read_met_grid(filename, ncid, ctl, met);
+  read_met_grid_par(filename, ncid, ctl, met);
 
   /* Read surface data... */
-  read_met_surface(ncid, ctl, met);
+  read_met_surface_par(ncid, ctl, met);
 
   /* Read meteo data on vertical levels... */
-  read_met_levels(ncid, ctl, met);
+  read_met_levels_par(ncid, ctl, met);
 
   /* Extrapolate data for lower boundary... */
   read_met_extrapolate(met);
@@ -7838,6 +7850,7 @@ int read_met_nc(
   read_met_polar_winds(met);
 
   /* Create periodic boundary conditions... */
+  // TODO: This module can be removed for the dd anyway...
   read_met_periodic(met, ctl);
 
   /* Downsampling... */
@@ -9163,7 +9176,7 @@ void read_met_sample(
 
 /*****************************************************************************/
 
-void read_met_surface(
+void read_met_surface_par(
   const int ncid,
   const ctl_t *ctl,
   met_t *met) {
