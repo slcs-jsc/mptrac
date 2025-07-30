@@ -557,4 +557,6 @@ def show_logs():
         return f"<p>Error reading log file: {e}</p>", 500
 
 if __name__ == '__main__':
+    clean_old_runs()
+    schedule_periodic_cleanup()
     app.run(debug=False)
