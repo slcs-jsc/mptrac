@@ -49,10 +49,17 @@
   codebase. For an overview of the core components, please refer to
   the documentation of `mptrac.h`.
 
-  \section Publications and References
+  \section References
 
   If you use MPTRAC in your scientific work, please cite the relevant
   publications:
+
+  - Hoffmann, L., Clemens, J., Griessbach, S., Haghighi Mood, K.,
+    Heng, Y., Khosrawi, F., Liu, M., Lu, Y.-S., Meyer, C., Nobre
+    Wittwer, N., Wu, X., Zou, L., MPTRAC: A high-performance
+    Lagrangian transport model for atmospheric air parcel dispersion,
+    Journal of Open Source Software, 10(111), 8177,
+    https://doi.org/10.21105/joss.08177, 2025.
 
   - Hoffmann, L., Baumeister, P. F., Cai, Z., Clemens, J., Griessbach,
     S., Günther, G., Heng, Y., Liu, M., Haghighi Mood, K., Stein, O.,
@@ -164,6 +171,10 @@
 #include "chem_Sparse.h"
 #endif
 
+#ifdef ECCODES
+#include "eccodes.h"
+#endif
+
 /* ------------------------------------------------------------
    Constants...
    ------------------------------------------------------------ */
@@ -224,8 +235,8 @@
 #endif
 
 /*! Standard pressure [hPa]. */
-#ifndef MPTRAC_P0
-#define MPTRAC_P0 1013.25
+#ifndef P0
+#define P0 1013.25
 #endif
 
 /*! Specific gas constant of dry air [J/(kg K)]. */
@@ -273,17 +284,19 @@
 
 /*! Maximum number of atmospheric data points. */
 #ifndef NP
-#define NP 9000000
+#define NP 10000000
 #endif
 
-/*! Maximum number of send and recieved particles. */
-#ifndef NPART
-#define NPART 1000000
+/*! Maximum number of particles to send and recieve. */
+#ifdef DD
+  #ifndef NPART
+  #define NPART 100000
+  #endif
 #endif
 
 /*! Maximum number of quantities per data point. */
 #ifndef NQ
-#define NQ 8
+#define NQ 15
 #endif
 
 /*! Maximum number of data points for CSI calculation. */
@@ -293,19 +306,20 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
-#define EP 150
+#define EP 140
 #endif
 
-/*! Maximum number of subdomain longitudes for meteo data. */
+/*! Maximum number of longitudes for meteo data. */
 #ifndef EX
-#define EX 1202
+#define EX 1444
 #endif
 
-/*! Maximum number of subdomain latitudes for meteo data. */
+/*! Maximum number of latitudes for meteo data. */
 #ifndef EY
-#define EY 602
+#define EY 724
 #endif
 
+#ifdef DD
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP_GLOB
 #define EP_GLOB 150
@@ -324,6 +338,7 @@
 /*! Maximum number of neighbours to communicate with. */
 #ifndef NNMAX
 #define NNMAX  26
+#endif
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -447,6 +462,7 @@
  * @param ny Number of columns in the 3D array.
  * @param iz Depth index of the 3D array element.
  * @param nz Number of depths in the 3D array.
+ * @return Linear index of the 3D array element.
  *
  * @author Lars Hoffmann
  */
@@ -671,6 +687,71 @@
  */
 #define DOTP(a, b)				\
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+  
+/**
+ * @brief Execute a ECCODES command and check for errors.
+ *
+ * This macro executes a ECCODES command and checks the result. If the
+ * result indicates an error, it prints the error message using
+ * ERRMSG.
+ *
+ * @param cmd ECCODES command to execute.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC(cmd) {							\
+    int ecc_result=(cmd);						\
+    if(ecc_result!=0)							\
+      ERRMSG("ECCODES error: %s", codes_get_error_message(ecc_result));	\
+  }
+
+/**
+ * @brief Writes 2-D data from a grib message into the met struct.
+ *
+ * This Macro writes 2-D data from an one dimensional grib message into the
+ * corresponding 2-D variable in the met struct. 
+ * 
+ * @param variable Name of the current meterological variable 
+ * @param target Pointer to the 2-D array in the met struct where the data will be stored.
+ * @param scaling_factor Scaling factor to apply to the data.
+ * @param found_flag Flag to store, that the variable was found in the grib message.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC_READ_2D(variable,target,scaling_factor,found_flag){		\
+    if( strcmp(short_name,variable)==0){				\
+      for (int ix = 0; ix < met->nx; ix++) {				\
+	for (int iy = 0; iy < met->ny; iy++) {				\
+	  target[ix][iy] = (float)(values[iy * met->nx + ix]*scaling_factor); \
+	}								\
+      }									\
+      found_flag =1;							\
+    }									\
+  }
+
+/**
+ * @brief Writes 3D data from a grib message into the met struct.
+ *
+ * This Macro writes 3D data from an one dimensional grib message into the
+ * corresponding 3D variable in the met struct. 
+ * 
+ * @param variable Name of the current meterological variable.
+ * @param target Pointer to the 3D array in the met struct where the data will be stored.
+ * @param scaling_factor Scaling factor to apply to the data.
+ * @param found_flag Counter to store, how many messages countaining data for this variable have been read.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC_READ_3D(variable,level,target,scaling_factor,found_flag){	\
+    if( strcmp(short_name,variable)==0){				\
+      for (int ix = 0; ix < met->nx; ix++) {				\
+	for (int iy = 0; iy < met->ny; iy++) {				\
+	  target[ix][iy][level] = (float) (values[iy * met->nx + ix]*scaling_factor); \
+	}								\
+      }									\
+      found_flag +=1;							\
+    }									\
+  }
 
 /**
  * @brief Calculate the floating-point remainder of dividing x by y.
@@ -1364,7 +1445,7 @@
  * @author Lars Hoffmann
  */
 #define P(z)					\
-  (MPTRAC_P0 * exp(-(z) / H0))
+  (P0 * exp(-(z) / H0))
 
 /**
  * @brief Compute saturation pressure over water.
@@ -1793,15 +1874,15 @@
  * Formula:
  *
  * The altitude (z) is computed as H0 times the natural logarithm of the
- * ratio of the reference pressure (MPTRAC_P0) to the given pressure (p), where H0
- * is the scale height and MPTRAC_P0 is the reference pressure at sea level.
+ * ratio of the reference pressure (P0) to the given pressure (p), where H0
+ * is the scale height and P0 is the reference pressure at sea level.
  * 
- * @note H0 and MPTRAC_P0 are typically defined as constants specific to the atmosphere.
+ * @note H0 and P0 are typically defined as constants specific to the atmosphere.
  * 
  * @author Lars Hoffmann
  */
 #define Z(p)					\
-  (H0 * log(MPTRAC_P0 / (p)))
+  (H0 * log(P0 / (p)))
 
 /**
  * @brief Calculate geopotential height difference.
@@ -2436,9 +2517,6 @@ typedef struct {
   /*! Quantity array index for diagnosed zeta vertical coordinate. */
   int qnt_zeta_d;
 
-  /*! Quantity array index for zeta coordinate vertical velocity. */
-  int qnt_zeta_dot;
-
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
 
@@ -2544,7 +2622,7 @@ typedef struct {
   int met_vert_coord;
 
   /*! Type of meteo data files
-     (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd, 5=cms). */
+     (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd, 5=cms, 6=grib). */
   int met_type;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
@@ -2558,6 +2636,9 @@ typedef struct {
 
   /*! Number of digits for quantization of netCDF meteo files (0=off). */
   int met_nc_quant;
+
+  /*! ZSTD compression level (from -5 to 22). */
+  int met_zstd_level;
 
   /*! ZFP compression precision for all variables, except z and T. */
   int met_zfp_prec;
@@ -3057,6 +3138,9 @@ typedef struct {
   /*! Upper latitude of gridded CSI data [deg]. */
   double csi_lat1;
 
+  /*! Number of ensembles. */
+  int nens;
+
   /*! Basename of ensemble data file. */
   char ens_basename[LEN];
 
@@ -3200,7 +3284,8 @@ typedef struct {
 
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
-  
+ 
+#ifdef DD 
   /*! Zonal subdomain number. */
   int dd_subdomains_zonal;
   
@@ -3218,6 +3303,7 @@ typedef struct {
 
   /*! Quantity array index for the destination domain */
   int qnt_destination;
+#endif
 
 } ctl_t;
 
@@ -3251,6 +3337,7 @@ typedef struct {
 
 } atm_t;
 
+#ifdef DD 
 /**
  * @brief Particle data.
  * 
@@ -3276,7 +3363,7 @@ typedef struct {
   double q[NQ];
   
 } particle_t;
-
+#endif
 
 typedef struct {
 
@@ -3293,23 +3380,6 @@ typedef struct {
   MPI_Datatype MPI_Particle;
 
 } mpi_info_t;
-
-typedef struct {
-
-  /*! Quantity data (for various, user-defined attributes). */
-  double q[NQ];
-  
-} particle_quant_t;
-
-
-typedef struct {
-  
-  /*! Quantity data (for various, user-defined attributes). */
-  double* q[NQ];
-  
-  //void* attr;
-     
-} particle_ptr_t;
 
 /**
  * @brief Cache data structure.
@@ -3534,16 +3604,28 @@ typedef struct {
   int npl;
 
   /*! Longitude [deg]. */
+#ifdef DD
   double lon[EX_GLOB];
+#else 
+  double lon[EX];
+#endif
 
   /*! Latitude [deg]. */
   // TODO:
   // They need global sizes now, maybe in the future just keep EX, EY, EP and
   // Introduce help data structure in read_met_grid etc.==
+#ifdef DD
   double lat[EY_GLOB];
+#else 
+  double lat[EY];
+#endif 
 
   /*! Pressure levels [hPa]. */
+#ifdef DD
   double p[EP_GLOB];
+#else
+  double p[EP];
+#endif
 
   /*! Model hybrid levels. */
   double hybrid[EP];
@@ -3721,15 +3803,6 @@ typedef struct {
 /* ------------------------------------------------------------
    OpenACC routines...
    ------------------------------------------------------------ */
-
-//#ifdef _OPENACC
-//#pragma acc routine (dd_get_rect_neighbour)
-//#pragma acc routine (dd_assign_rect_subdomains_atm)
-//#pragma acc routine (atm2particles)
-//#pragma acc routine (dd_register_MPI_type_particle)
-//#pragma acc routine (dd_communicate_particles)
-//#pragma acc routine (particles2atm)
-//#endif
 
 #ifdef _OPENACC
 #pragma acc routine (clim_oh)
@@ -4134,37 +4207,23 @@ void compress_zfp(
   FILE * inout);
 
 /**
- * @brief Compresses or decompresses an array of floats using the Zstandard (ZSTD) library.
+ * @brief Compresses or decompresses a float array using Zstandard (ZSTD).
  *
- * This function either compresses or decompresses an array of floats
- * based on the value of the `decompress` parameter.  Compression
- * reduces the storage size using the ZSTD compression
- * algorithm. Decompression restores the original float values from
- * the compressed representation.
+ * This function either compresses a given float array and writes the result to a file,
+ * or reads compressed data from a file and decompresses it into the array.
  *
- * @param varname The name of the variable being processed.
- * @param array Pointer to the array of floats to be compressed or decompressed.
- * @param n The number of elements in the array.
- * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
- * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression
- * and writing compressed data during compression.
+ * @param[in]  varname     Name of the variable, used for logging.
+ * @param[in,out] array    Pointer to the float array to compress or to fill with decompressed data.
+ * @param[in]  n           Number of float elements in the array.
+ * @param[in]  decompress  If non-zero, perform decompression; otherwise, perform compression.
+ * @param[in]  level       Compression level (-5 to 22). Use 0 for the Zstd default.
+ * @param[in,out] inout    File pointer for input/output. Used for reading or writing compressed data.
  *
- * The function performs the following steps:
- * - Calculates the buffer sizes required for compression and decompression.
- * - Allocates memory for the compressed data buffer.
- * - If decompressing:
- *   - Reads the size of the compressed data and the compressed data itself from the file.
- *   - Decompresses the data and stores it in the `array`.
- * - If compressing:
- *   - Compresses the data and writes the compressed data size and the compressed data itself to the file.
+ * @note This function uses ZSTD's simple one-shot compression API (ZSTD_compress),
+ *       which does not support multithreaded compression.
  *
- * The function logs the compression or decompression details and frees allocated resources before returning.
- *
- * @note This function assumes that the input `array` is already allocated and can hold the decompressed data.
- * 
- * @warning Ensure that the file pointer `inout` is correctly opened for reading or writing as required.
- *
- * @see ZSTD_compress, ZSTD_decompress, ZSTD_isError
+ * @warning The function allocates temporary memory for the compressed buffer
+ *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
  * 
  * @author Lars Hoffmann
  */
@@ -4173,6 +4232,7 @@ void compress_zstd(
   float *array,
   const size_t n,
   const int decompress,
+  const int level,
   FILE * inout);
 
 /*! Get day of year from date. */
@@ -5147,18 +5207,42 @@ void module_bound_cond(
   atm_t * atm);
 
 /**
- * @brief Calculate grid data for chemistry modules.
+ * @brief Computes gridded chemical tracer concentrations (volume mixing ratio)
+ *        from individual air parcel mass data and assigns them back to the parcels.
  *
- * This function initializes and updates chemical grid quantities
- * based on atmospheric data and interpolation of meteorological
- * variables.
+ * This function aggregates the mass of tracer particles onto a 3D chemical grid
+ * (longitude × latitude × altitude), accounting for either single or ensemble
+ * simulations depending on `ctl->nens`. It then interpolates meteorological
+ * temperature fields and computes volume mixing ratios, storing them in the
+ * specified tracer quantity (e.g., `ctl->qnt_Cx`).
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param clim Pointer to the climate data structure containing climatological data.
- * @param met0 Pointer to the first meteorological data structure.
- * @param met1 Pointer to the second meteorological data structure.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param t Time for which chemical grid is updated.
+ * If the molar mass is undefined or required quantity indices are missing,
+ * the function exits early.
+ *
+ * Parallelization is supported via OpenMP or OpenACC.
+ *
+ * @param[in]  ctl   Pointer to the control structure containing configuration
+ *                   parameters, including grid dimensions, tracer indices, and
+ *                   simulation mode.
+ * @param[in]  met0  Pointer to the meteorological data at the beginning of the
+ *                   interpolation interval.
+ * @param[in]  met1  Pointer to the meteorological data at the end of the
+ *                   interpolation interval.
+ * @param[in,out] atm Pointer to the atmospheric state, including parcel
+ *                    coordinates, time, mass, and output tracer fields.
+ * @param[in]  t     Central time step used for output and interpolation.
+ *
+ * @note
+ * - Requires `ctl->molmass > 0`, and `ctl->qnt_m` and `ctl->qnt_Cx` to be set.
+ * - Uses ensemble mode if `ctl->nens > 0` and assigns each parcel to its
+ *   ensemble member via `ctl->qnt_ens`.
+ * - Grid box volume mixing ratios are computed assuming ideal gas law and a
+ *   layered spherical grid.
+ * - The output quantity (e.g., `qnt_Cx`) is given in ppbv.
+ *
+ * @see intpol_met_time_3d()
+ * @see P(), Z(), RHO()
+ * @see ARRAY_3D macro
  *
  * @authors Mingzhao Liu
  * @authors Lars Hoffmann
@@ -5616,20 +5700,28 @@ void module_mixing(
   const double t);
 
 /**
- * @brief Perform interparcel mixing for a specific quantity.
+ * @brief Perform subgrid-scale interparcel mixing of a given quantity.
  *
- * This function performs interparcel mixing for a specific quantity
- * based on the given indices of grid boxes. It calculates the mean
- * concentration within each grid box and adjusts the quantity for
- * each particle accordingly.
+ * This function computes the average of a specified quantity within each
+ * subgrid box (and optionally for each ensemble member) and applies a 
+ * mixing adjustment to particle values based on the computed local mean.
+ * 
+ * The mixing accounts for differences in tropopause and stratosphere mixing
+ * via a weighted parameterization. It supports both ensemble and non-ensemble
+ * modes using the `use_ensemble` flag.
  *
- * @param ctl Pointer to the control structure containing simulation parameters.
- * @param clim Pointer to the climate data structure containing climatological data.
- * @param atm Pointer to the atmospheric data structure containing particle information.
- * @param ixs Pointer to the array of grid box indices along the longitude direction.
- * @param iys Pointer to the array of grid box indices along the latitude direction.
- * @param izs Pointer to the array of grid box indices along the vertical direction.
- * @param qnt_idx Index of the quantity for which mixing is performed.
+ * @param[in] ctl            Pointer to control/configuration structure.
+ * @param[in] clim           Pointer to climatological data structure.
+ * @param[in,out] atm        Pointer to atmospheric state (includes particles).
+ * @param[in] ixs            Array of x-grid indices for each particle.
+ * @param[in] iys            Array of y-grid indices for each particle.
+ * @param[in] izs            Array of z-grid indices for each particle (-1 for invalid).
+ * @param[in] qnt_idx        Index of the quantity in atm->q to be mixed.
+ * @param[in] use_ensemble   Flag indicating whether to use ensemble-aware logic (0 = no, 1 = yes).
+ *
+ * @note Particles with `izs[ip] < 0` are excluded from mixing.
+ * @note Uses OpenACC or OpenMP for parallelism depending on compilation options.
+ * @note Requires `ctl->qnt_ens` to be valid if `use_ensemble` is true.
  *
  * @authors Mingzhao Liu
  * @authors Lars Hoffmann
@@ -5641,7 +5733,8 @@ void module_mixing_help(
   const int *ixs,
   const int *iys,
   const int *izs,
-  const int qnt_idx);
+  const int qnt_idx,
+  const int use_ensemble);
 
 /**
  * @brief Perform hydroxyl chemistry calculations for atmospheric particles.
@@ -5826,13 +5919,11 @@ void module_sedi(
  *
  * @author Lars Hoffmann
  */
-void dd_sort(
+void module_sort(
   const ctl_t * ctl,
   met_t * met0,
-  atm_t * atm,
-  int* nparticles,
-  int* rank);
-
+  atm_t * atm);
+  
 /**
  * @brief Reorder an array based on a given permutation.
  *
@@ -6264,6 +6355,7 @@ void mptrac_read_ctl(
  * `met_mpi_share` flag is set in the control structure.
  * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
  * - If `ctl->met_type` is between 1 and 5, the data is read from a binary file using the `read_met_bin` function.
+ * - If `ctl->met_type` is 6, the data is read from grib files using the `read_met_grib` function.
  * - If the `met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann
@@ -7053,7 +7145,7 @@ void read_met_detrend(
  *
  * @author Lars Hoffmann
  */
-void read_met_extrapolate_par(
+void read_met_extrapolate(
   met_t * met);
 
 /**
@@ -7085,78 +7177,129 @@ void read_met_extrapolate_par(
 void read_met_geopot(
   const ctl_t * ctl,
   met_t * met);
-
+  
 /**
- * @brief Reads meteorological grid information from a NetCDF file.
+ * @brief Reads meteorological data from a grib file and processes it.
  *
- * This function reads meteorological grid information from a NetCDF
- * file, including time, spatial dimensions, and pressure levels.  It
- * also extracts longitudes, latitudes, and pressure levels from the
- * NetCDF file based on the specified control parameters.  The
- * function determines the time information either from the filename
- * or from the data file, depending on the file type.
+ * This function reads meteorological data from a grib file specified
+ * by the `filename` parameter, using the ECCODES library. It reads
+ * grid, surface, and vertical level data, processes the data and
+ * calculates various derived meteorological fields such as
+ * geopotential heights, potential vorticity, cloud properties, and
+ * convective available potential energy (CAPE).
  *
- * @param filename The filename of the NetCDF file.
- * @param ncid The NetCDF file identifier.
- * @param ctl A pointer to a structure containing control parameters.
- * @param met A pointer to a structure to store meteorological data.
+ * @param filename A constant character pointer representing the name of the grib files to read the 
+ * meteorological data from. The sf or ml suffixes indicating surface or multi-level data should be replaced with XX.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
  *
- * The function performs the following steps:
- * - Sets up a timer to monitor the reading time for meteorological grid information.
- * - Determines the time information from either the filename or the data file based on the file type.
- * - Checks the validity of the time information.
- * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
- * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
- * - Converts pressure levels to hPa if necessary.
- * - Logs the retrieved grid information for verification and debugging purposes.
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
  *
- * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
- *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
- *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ * @note
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Nils Nobre Wittwer
  */
-void read_met_grid_par(
+int read_met_grib(
   const char *filename,
-  const int ncid,
   const ctl_t * ctl,
   met_t * met);
 
 /**
- * @brief Reads meteorological variables at different vertical levels from a NetCDF file.
+ * @brief Reads global meteorological information from a grib file.
+ *
+ * This function reads meteorological grid information from a grib
+ * file, including time and spatial dimensions. The function computes the 
+ * latitude and longitude grid based on the provided boundaries and icnrement values.
+ *
+ * @param handles A pointer to an array of codes_handle pointers representing the grib messages.
+ * @param count_handles The total number of grib messages in the handles array.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from the data file.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the grib file.
+ * - Reads longitudes and latitudes boundaries and increments from the grib file and computes the grid.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ *
+ * @authors Nils Nobre Wittwer
+ */
+#ifdef ECCODES
+void read_met_grib_grid(
+  codes_handle ** handles,
+  int count_handles,
+  met_t * met);
+#endif
+
+/**
+ * @brief Reads meteorological variables at different vertical levels from a grib file.
  *
  * This function reads meteorological variables such as temperature,
  * wind components, specific humidity, ozone data, cloud parameters,
- * and cloud cover at various vertical levels from a NetCDF file.  The
- * function supports reading meteorological data from both MPTRAC and
- * CLaMS formats.  Depending on the file format, it reads specific
- * variables and performs necessary conversions or interpolations.
+ * and cloud cover at various vertical levels from a grib file.
  *
- * @param ncid The NetCDF file identifier.
+ * @param handles A pointer to an array of codes_handle pointers representing the grib messages.
+ * @param num_messages The total number of grib messages in the handles array.
  * @param ctl A pointer to a structure containing control parameters.
  * @param met A pointer to a structure to store meteorological data.
  *
  * The function performs the following steps:
  * - Sets up a timer to monitor the reading time for meteorological level data.
- * - Reads meteorological variables from the NetCDF file based on the specified control parameters and file format.
- * - Handles specific variables differently depending on the file format, such as reading temperature, wind components, humidity, ozone data, and cloud parameters.
- * - Performs conversions or interpolations if necessary, such as converting specific humidity and ozone data from mixing ratio to volume mixing ratio.
- * - Transfers velocity components to model levels for diabatic advection if applicable.
- * - Reads pressure on model levels if specified in the control parameters.
- * - Performs vertical interpolation from model levels to pressure levels if needed.
+ * - Reads meteorological variables from the grib file.
  * - Checks the ordering of pressure levels to ensure they are in descending order.
  *
- * @note This function supports reading meteorological variables from NetCDF files in MPTRAC or CLaMS formats and handles specific variables differently based on the file format and control parameters.
- *       It performs necessary conversions or interpolations and ensures the correctness of pressure levels.
- *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @authors Nils Nobre Wittwer
  */
-void read_met_levels(
-  const int ncid,
+#ifdef ECCODES
+void read_met_grib_levels(
+  codes_handle ** handles,
+  const int num_messages,
   const ctl_t * ctl,
   met_t * met);
+#endif
+
+/**
+ * @brief Reads surface meteorological data from a grib file and stores it in the meteorological data structure.
+ *
+ * This function reads various surface meteorological variables from a
+ * grib file and stores them in the provided meteorological data
+ * structure.  Depending on the configuration, it may read data for
+ * surface pressure, geopotential height, temperature, zonal and
+ * meridional wind components, land-sea mask, and sea surface
+ * temperature.
+ *
+ * @param handles A pointer to an array of codes_handle pointers representing the grib messages.
+ * @param num_messages The total number of grib messages in the handles array.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Reads surface meteorological data based on the configuration:
+ * - Reads surface pressure from "lnsp", "ps", or "sp" variables.
+ * - Converts surface pressure to Pa.
+ * - Reads geopotential height at the surface from "z" or "zm" variables.
+ * - Reads surface temperature from "t2m" or "2t" variables.
+ * - Reads zonal wind at the surface from "u10m" or "10u" variables.
+ * - Reads meridional wind at the surface from "v10m" or "10v" variables.
+ * - Reads land-sea mask from "lsm" variable.
+ * - Reads sea surface temperature from "sstk" or "sst" variables.
+ *
+ * @authors Nils Nobre Wittwer
+ */
+#ifdef ECCODES
+void read_met_grib_surface(
+  codes_handle ** handles,
+  const int num_messages,
+  const ctl_t * ctl,
+  met_t * met);
+#endif
 
 /**
  * @brief Interpolates meteorological data to specified pressure levels.
@@ -7217,7 +7360,7 @@ void read_met_monotonize(
   const ctl_t * ctl,
   met_t * met);
 
-/**
+  /**
  * @brief Reads meteorological data from a NetCDF file and processes it.
  *
  * This function reads meteorological data from a NetCDF file specified by the `filename` parameter, 
@@ -7230,8 +7373,6 @@ void read_met_monotonize(
  * meteorological data from.
  * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
  * processing the meteorological data.
- * @param clim A pointer to a `clim_t` structure that holds climatological data, used in the 
- * calculation of derived properties such as CAPE and tropopause data.
  * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
  * processed from the NetCDF file.
  *
@@ -7248,11 +7389,289 @@ void read_met_monotonize(
  *
  * @author Lars Hoffmann
  */
+int read_met_nc(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
+  
+/**
+ * @brief Reads meteorological grid information from a NetCDF file.
+ *
+ * This function reads meteorological grid information from a NetCDF
+ * file, including time, spatial dimensions, and pressure levels.  It
+ * also extracts longitudes, latitudes, and pressure levels from the
+ * NetCDF file based on the specified control parameters.  The
+ * function determines the time information either from the filename
+ * or from the data file, depending on the file type.
+ *
+ * @param filename The filename of the NetCDF file.
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from either the filename or the data file based on the file type.
+ * - Checks the validity of the time information.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
+ * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
+ * - Converts pressure levels to hPa if necessary.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
+ *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
+ *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+void read_met_nc_grid(
+  const char *filename,
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+  
+/**
+ * @brief Reads meteorological data from a NetCDF file and processes it.
+ *
+ * This function reads meteorological data from a NetCDF file specified by the `filename` parameter, 
+ * using the NetCDF library. It reads grid, surface, and vertical level data, processes the data 
+ * (including extrapolation, boundary conditions, and downsampling), and calculates various derived 
+ * meteorological fields such as geopotential heights, potential vorticity, cloud properties, and 
+ * convective available potential energy (CAPE).
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
+ *
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
+ *
+ * @note
+ * - The function opens the NetCDF file in read-only mode using `nc_open` and handles any errors 
+ * during the file opening process.
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
+ * - It is important to ensure that the NetCDF file contains the expected structure for meteorological 
+ * data (grid, levels, surface data).
+ *
+ * @author Lars Hoffmann
+ */
+#ifdef DD
 int read_met_nc_par(
   const char *filename,
   const ctl_t * ctl,
-  const clim_t * clim,
   met_t * met);
+#endif
+
+
+/**
+ * @brief Reads meteorological variables at different vertical levels from a NetCDF file.
+ *
+ * This function reads meteorological variables such as temperature,
+ * wind components, specific humidity, ozone data, cloud parameters,
+ * and cloud cover at various vertical levels from a NetCDF file.  The
+ * function supports reading meteorological data from both MPTRAC and
+ * CLaMS formats.  Depending on the file format, it reads specific
+ * variables and performs necessary conversions or interpolations.
+ *
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological level data.
+ * - Reads meteorological variables from the NetCDF file based on the specified control parameters and file format.
+ * - Handles specific variables differently depending on the file format, such as reading temperature, wind components, humidity, ozone data, and cloud parameters.
+ * - Performs conversions or interpolations if necessary, such as converting specific humidity and ozone data from mixing ratio to volume mixing ratio.
+ * - Transfers velocity components to model levels for diabatic advection if applicable.
+ * - Reads pressure on model levels if specified in the control parameters.
+ * - Performs vertical interpolation from model levels to pressure levels if needed.
+ * - Checks the ordering of pressure levels to ensure they are in descending order.
+ *
+ * @note This function supports reading meteorological variables from NetCDF files in MPTRAC or CLaMS formats and handles specific variables differently based on the file format and control parameters.
+ *       It performs necessary conversions or interpolations and ensures the correctness of pressure levels.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+void read_met_nc_levels(
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+
+ /**
+ * @brief Reads surface meteorological data from a netCDF file and stores it in the meteorological data structure.
+ *
+ * This function reads various surface meteorological variables from a
+ * netCDF file and stores them in the provided meteorological data
+ * structure.  Depending on the configuration, it may read data for
+ * surface pressure, geopotential height, temperature, zonal and
+ * meridional wind components, land-sea mask, and sea surface
+ * temperature.
+ *
+ * @param ncid NetCDF file identifier.
+ * @param met A pointer to the meteorological data structure to store the read data.
+ * @param ctl A pointer to a structure containing control parameters.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Reads surface meteorological data based on the configuration:
+ *   - For MPTRAC meteorological data:
+ *     - Reads surface pressure from "lnsp", "ps", or "sp" variables.
+ *     - Converts surface pressure to Pa if necessary.
+ *     - Reads geopotential height at the surface from "z" or "zm" variables.
+ *     - Reads surface temperature from "t2m" or "2t" variables.
+ *     - Reads zonal wind at the surface from "u10m" or "10u" variables.
+ *     - Reads meridional wind at the surface from "v10m" or "10v" variables.
+ *     - Reads land-sea mask from "lsm" variable.
+ *     - Reads sea surface temperature from "sstk" or "sst" variables.
+ *   - For CLaMS meteorological data:
+ *     - Reads surface pressure from "ps" variable.
+ *     - Reads geopotential height at the surface using the lowest level of the 3-D data field.
+ *     - Reads surface temperature from "t2" variable.
+ *     - Reads zonal wind at the surface from "u10" variable.
+ *     - Reads meridional wind at the surface from "v10" variable.
+ *     - Reads land-sea mask from "lsm" variable.
+ *     - Reads sea surface temperature from "sstk" variable.
+ *
+ * @note The function handles different variable names and units according to the specified meteorological data source (MPTRAC or CLaMS).
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+void read_met_nc_surface(
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Reads meteorological grid information from a NetCDF file.
+ *
+ * This function reads meteorological grid information from a NetCDF
+ * file, including time, spatial dimensions, and pressure levels.  It
+ * also extracts longitudes, latitudes, and pressure levels from the
+ * NetCDF file based on the specified control parameters.  The
+ * function determines the time information either from the filename
+ * or from the data file, depending on the file type.
+ *
+ * @param filename The filename of the NetCDF file.
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from either the filename or the data file based on the file type.
+ * - Checks the validity of the time information.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
+ * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
+ * - Converts pressure levels to hPa if necessary.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
+ *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
+ *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+#ifdef DD
+void read_met_grid_par(
+  const char *filename,
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+#endif
+
+/**
+ * @brief Reads meteorological grid information from a NetCDF file.
+ *
+ * This function reads meteorological grid information from a NetCDF
+ * file, including time, spatial dimensions, and pressure levels.  It
+ * also extracts longitudes, latitudes, and pressure levels from the
+ * NetCDF file based on the specified control parameters.  The
+ * function determines the time information either from the filename
+ * or from the data file, depending on the file type.
+ *
+ * @param filename The filename of the NetCDF file.
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from either the filename or the data file based on the file type.
+ * - Checks the validity of the time information.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
+ * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
+ * - Converts pressure levels to hPa if necessary.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
+ *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
+ *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+#ifdef DD
+void read_met_grid_par(
+  const char *filename,
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+#endif
+
+/**
+ * @brief Reads surface meteorological data from a netCDF file and stores it in the meteorological data structure.
+ *
+ * This function reads various surface meteorological variables from a
+ * netCDF file and stores them in the provided meteorological data
+ * structure.  Depending on the configuration, it may read data for
+ * surface pressure, geopotential height, temperature, zonal and
+ * meridional wind components, land-sea mask, and sea surface
+ * temperature.
+ *
+ * @param ncid NetCDF file identifier.
+ * @param met A pointer to the meteorological data structure to store the read data.
+ * @param ctl A pointer to a structure containing control parameters.
+ *
+ * The function performs the following steps:
+ * - Sets a timer for performance monitoring.
+ * - Reads surface meteorological data based on the configuration:
+ *   - For MPTRAC meteorological data:
+ *     - Reads surface pressure from "lnsp", "ps", or "sp" variables.
+ *     - Converts surface pressure to Pa if necessary.
+ *     - Reads geopotential height at the surface from "z" or "zm" variables.
+ *     - Reads surface temperature from "t2m" or "2t" variables.
+ *     - Reads zonal wind at the surface from "u10m" or "10u" variables.
+ *     - Reads meridional wind at the surface from "v10m" or "10v" variables.
+ *     - Reads land-sea mask from "lsm" variable.
+ *     - Reads sea surface temperature from "sstk" or "sst" variables.
+ *   - For CLaMS meteorological data:
+ *     - Reads surface pressure from "ps" variable.
+ *     - Reads geopotential height at the surface using the lowest level of the 3-D data field.
+ *     - Reads surface temperature from "t2" variable.
+ *     - Reads zonal wind at the surface from "u10" variable.
+ *     - Reads meridional wind at the surface from "v10" variable.
+ *     - Reads land-sea mask from "lsm" variable.
+ *     - Reads sea surface temperature from "sstk" variable.
+ *
+ * @note The function handles different variable names and units according to the specified meteorological data source (MPTRAC or CLaMS).
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+#ifdef DD
+void read_met_surface_par(
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+#endif
 
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
@@ -7297,6 +7716,51 @@ int read_met_nc_2d(
   const float scl,
   const int init);
 
+  /**
+ * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 2-dimensional meteorological variable from a
+ * NetCDF file in parallel and stores it in a specified destination array.  It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly.  The function also checks
+ * the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @param init Flag indicating whether to initialize the destination array before reading.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
+#ifdef DD
+int read_met_nc_2d_par(
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const char *varname5,
+  const char *varname6,
+  const ctl_t * ctl,
+  const met_t * met,
+  float dest[EX][EY],
+  const float scl,
+  const int init);
+#endif 
+
 /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
  *
@@ -7337,55 +7801,12 @@ int read_met_nc_3d(
   const met_t * met,
   float dest[EX][EY][EP],
   const float scl);
-  
-/**
- * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
- *
- * This function reads a 2-dimensional meteorological variable from a
- * NetCDF file in parallel and stores it in a specified destination array.  It
- * supports both packed and unpacked data formats and handles missing
- * values and scaling factors accordingly.  The function also checks
- * the meteorological data layout to ensure correct data copying.
- *
- * @param ncid The NetCDF file ID.
- * @param varname The name of the variable to read.
- * @param varname2 An alternative name of the variable to read (in case varname is not found).
- * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
- * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
- * @param ctl A pointer to a structure containing control parameters.
- * @param met A pointer to a structure containing meteorological data.
- * @param dest The destination array to store the read data.
- * @param scl A scaling factor to apply to the read data.
- * @param init Flag indicating whether to initialize the destination array before reading.
- * @return Returns 1 on success, 0 on failure.
- *
- * The function performs the following steps:
- * - Checks if the specified variable exists in the NetCDF file.
- * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
- * - Handles missing values and scaling factors appropriately.
- * - Copies the data to the destination array, applying the scaling factor if provided.
- *
- * @author Lars Hoffmann
- */
-int read_met_nc_2d_par(
-  const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
-  const char *varname5,
-  const char *varname6,
-  const ctl_t * ctl,
-  const met_t * met,
-  float dest[EX][EY],
-  const float scl,
-  const int init);
 
-/**
+  /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
  *
  * This function reads a 3-dimensional meteorological variable from a
- * NetCDF file in parallel and stores it in a specified destination array. It
+ * NetCDF file and stores it in a specified destination array. It
  * supports both packed and unpacked data formats and handles missing
  * values and scaling factors accordingly. The function also checks
  * the meteorological data layout to ensure correct data copying.
@@ -7411,6 +7832,7 @@ int read_met_nc_2d_par(
  *
  * @author Lars Hoffmann
  */
+#ifdef DD
 int read_met_nc_3d_par(
   const int ncid,
   const char *varname,
@@ -7421,6 +7843,7 @@ int read_met_nc_3d_par(
   const met_t * met,
   float dest[EX][EY][EP],
   const float scl);
+#endif 
 
 /**
  * @brief Computes the planetary boundary layer (PBL) pressure based on meteorological data.
@@ -7503,7 +7926,7 @@ void read_met_pbl(
  * @author Lars Hoffmann
  */
 void read_met_periodic(
-  met_t * met, const ctl_t * ctl);
+  met_t * met);
 
 /**
  * @brief Applies a fix for polar winds in meteorological data.
@@ -7624,51 +8047,6 @@ void read_met_ozone(
  * @author Lars Hoffmann
  */
 void read_met_sample(
-  const ctl_t * ctl,
-  met_t * met);
-
-/**
- * @brief Reads surface meteorological data from a netCDF file and stores it in the meteorological data structure.
- *
- * This function reads various surface meteorological variables from a
- * netCDF file and stores them in the provided meteorological data
- * structure.  Depending on the configuration, it may read data for
- * surface pressure, geopotential height, temperature, zonal and
- * meridional wind components, land-sea mask, and sea surface
- * temperature.
- *
- * @param ncid NetCDF file identifier.
- * @param met A pointer to the meteorological data structure to store the read data.
- * @param ctl A pointer to a structure containing control parameters.
- *
- * The function performs the following steps:
- * - Sets a timer for performance monitoring.
- * - Reads surface meteorological data based on the configuration:
- *   - For MPTRAC meteorological data:
- *     - Reads surface pressure from "lnsp", "ps", or "sp" variables.
- *     - Converts surface pressure to Pa if necessary.
- *     - Reads geopotential height at the surface from "z" or "zm" variables.
- *     - Reads surface temperature from "t2m" or "2t" variables.
- *     - Reads zonal wind at the surface from "u10m" or "10u" variables.
- *     - Reads meridional wind at the surface from "v10m" or "10v" variables.
- *     - Reads land-sea mask from "lsm" variable.
- *     - Reads sea surface temperature from "sstk" or "sst" variables.
- *   - For CLaMS meteorological data:
- *     - Reads surface pressure from "ps" variable.
- *     - Reads geopotential height at the surface using the lowest level of the 3-D data field.
- *     - Reads surface temperature from "t2" variable.
- *     - Reads zonal wind at the surface from "u10" variable.
- *     - Reads meridional wind at the surface from "v10" variable.
- *     - Reads land-sea mask from "lsm" variable.
- *     - Reads sea surface temperature from "sstk" variable.
- *
- * @note The function handles different variable names and units according to the specified meteorological data source (MPTRAC or CLaMS).
- *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
- */
-void read_met_surface_par(
-  const int ncid,
   const ctl_t * ctl,
   met_t * met);
 
@@ -8274,6 +8652,52 @@ void write_csi(
   const double t);
 
 /**
+ * @brief Writes ensemble-based Critical Success Index (CSI) and other
+ *        verification statistics to an output file.
+ *
+ * This function computes and writes various statistical verification metrics
+ * that assess the performance of ensemble forecasts compared to observations.
+ * The output includes, for each ensemble member:
+ * - Critical Success Index (CSI)
+ * - Equitable Threat Score (ETS)
+ * - Bias (forecast/observation ratio)
+ * - Probability of Detection (POD)
+ * - False Alarm Rate (FAR)
+ * - Correlation coefficients (Pearson, Spearman)
+ * - Error metrics (mean error, RMSE, mean absolute error)
+ * - Log-likelihood of the normalized errors
+ *
+ * On the first invocation (when `t == ctl->t_start`), the function loads
+ * observation data and kernel weights, allocates necessary arrays, and
+ * creates a new output file with a descriptive header.
+ * On the final call (when `t == ctl->t_stop`), the function closes the file
+ * and frees all persistent memory.
+ *
+ * Output is written at time steps divisible by `ctl->csi_dt_out`.
+ *
+ * @param[in] filename  Path to the output file where statistics will be written.
+ * @param[in] ctl       Pointer to control structure containing configuration,
+ *                      ensemble settings, and spatial/time grid info.
+ * @param[in] atm       Pointer to atmospheric data structure holding model output.
+ * @param[in] t         Current simulation/model time.
+ *
+ * @note This function maintains internal static buffers and handles memory
+ *       management across time steps. It validates input configuration and
+ *       will terminate with an error message if required quantities are missing
+ *       or if limits (e.g., number of ensembles or data points) are exceeded.
+ *
+ * @throws If required quantities (mass or ensemble IDs) are undefined,
+ *         if ensemble IDs are out of bounds, or if the output file cannot be created.
+ *
+ * @author Mingzhao Liu
+ */
+void write_csi_ens(
+  const char *filename,
+  const ctl_t * ctl,
+  const atm_t * atm,
+  const double t);
+
+/**
  * @brief Writes ensemble data to a file.
  *
  * The `write_ens` function processes air parcel data to calculate
@@ -8851,6 +9275,7 @@ void atm2particles(
   cache_t *cache,
   int rank);
 #endif
+
 /**
  * @brief Converts particle data to atmospheric data.
  *
@@ -8881,6 +9306,7 @@ void atm2particles(
 void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
    cache_t* cache);
 #endif
+
 /**
  * @brief Creates an MPI datatype for particle structures.
  *
@@ -8908,6 +9334,7 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
 void  dd_register_MPI_type_particle(
   MPI_Datatype* MPI_Particle);
 #endif  
+
 /**
  * @brief Determines neighbour ranks for data distribution in a domain decomposition setup.
  *
@@ -9038,6 +9465,41 @@ void dd_init(
   met_t **met, 
   double t, 
   int* dd_init);
+#endif
+
+  /**
+ * @brief Sort particles according to box index and target rank for neighbours.
+ *
+ * This function sorts particles within the atmosphere data structure
+ * based on their geographical coordinates (longitude and latitude)
+ * and pressure level, and additionally based on the target rank a particle will
+ * be send to. It allocates temporary arrays to store indices
+ * and auxiliary data for sorting, then performs the sorting
+ * operation. After sorting, it updates the order of particles in the
+ * atmosphere data structure.
+ *
+ * @param ctl Pointer to the control structure containing parameters and settings.
+ * @param met0 Pointer to the meteorological data at the current time step.
+ * @param atm Pointer to the atmospheric data containing particle information.
+ * @param nparticles Pointer to the number of particles to be send.
+ * @param rank Pointer to an integer storing the current rank.
+ *
+ * @note The function utilizes the `locate_reg` and `locate_irr` functions to determine the 
+ * appropriate index for sorting particles based on their longitude, latitude, and pressure level.
+ * @note Particle sorting is performed using either the Thrust library (if compiled with Thrust support) 
+ * or a custom sorting algorithm. If compiled without Thrust support, an error message is displayed.
+ * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere 
+ * data structure to maintain consistency.
+ *
+ * @author Lars Hoffmann
+ */
+#ifdef DD
+void dd_sort(
+  const ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm,
+  int* nparticles,
+  int* rank);
 #endif
 
 #endif /* LIBTRAC_H */

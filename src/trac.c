@@ -41,9 +41,11 @@ int main(
   clim_t *clim;
 
   met_t *met0, *met1;
-  
+ 
+#ifdef DD
   mpi_info_t mpi_info;
-  
+#endif
+
   FILE *dirlist;
 
   char dirname[LEN], filename[2 * LEN];
@@ -55,9 +57,12 @@ int main(
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
+ 
+#ifdef DD
   mpi_info.rank = rank;
   mpi_info.size = size;
+#endif
+
 #endif
 
   /* Check arguments... */
@@ -133,7 +138,11 @@ int main(
 #endif
 
       /* Run a single time step... */
+#ifdef DD
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &mpi_info);
+#else
+      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, NULL);
+#endif
 
       /* Write output... */
       mptrac_write_output(dirname, ctl, met0, met1, atm, t);
@@ -158,7 +167,11 @@ int main(
     LOG(1, "MEMORY_METEO = %g MByte", sizeof(met_t) / 1024. / 1024.);
 
     /* Free memory... */
+#ifdef DD
     mptrac_free(ctl, cache, clim, met0, met1, atm, &mpi_info);
+#else
+    mptrac_free(ctl, cache, clim, met0, met1, atm, NULL);
+#endif
    
     /* Report timers... */
     PRINT_TIMERS;
