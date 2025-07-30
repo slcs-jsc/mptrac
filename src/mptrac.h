@@ -9046,11 +9046,19 @@ void dd_communicate_particles(
   mpi_info_t* mpi_info, 
   int init);
  
-  void module_dd( 
+void module_dd( 
    ctl_t *ctl, 
    atm_t *atm,
    cache_t *cache, 
    mpi_info_t* mpi_info, 
    met_t **met);
+   
+void dd_init(
+  ctl_t *ctl,
+  mpi_info_t *mpi_info, 
+  atm_t *atm, 
+  met_t **met, 
+  double t, 
+  int* dd_init);
 
 #endif /* LIBTRAC_H */

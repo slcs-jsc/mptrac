@@ -12636,8 +12636,33 @@ void dd_assign_rect_subdomains_atm(
      }
     }
 #pragma acc exit data delete(mpi_info->neighbours, mpi_info->rank)
-   }
   }
+}
+  
+void dd_init(
+  ctl_t *ctl,
+  mpi_info_t *mpi_info, 
+  atm_t *atm, 
+  met_t **met, 
+  double t, 
+  int* dd_init_flg) {
+      
+  /* Check if enough tasks are requested... */
+  if (mpi_info->size != ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal)
+    ERRMSG("The number of tasks and subdomains is not identical.");
+  
+  /* Register the MPI_Particle data type... */
+  dd_register_MPI_type_particle(&mpi_info->MPI_Particle);
+
+  /* Define grid neighbours ... */
+  dd_get_rect_neighbour(*ctl, mpi_info);
+
+  /* Check if particles are in subdomain... */
+  dd_assign_rect_subdomains_atm( atm, *met, ctl, mpi_info, 1);
+
+  *dd_init_flg = 1;      
+}
+
   
 void module_dd( ctl_t *ctl, 
   atm_t *atm,

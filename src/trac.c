@@ -125,25 +125,10 @@ int main(
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
       /* Set-up domain decomposition... */
-      // TODO: dd_init(ctl, mpi_info, atm, met0, t)
-      static int dd_init = 0;
-      if (t == ctl->t_start || !dd_init) {
-      
-      	if (mpi_info.size != ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal)
-      	  ERRMSG("The number of nodes and subdomains is not identical.");
-      	  
-        /* Register the MPI_Particle data type... */
-        dd_register_MPI_type_particle(&mpi_info.MPI_Particle);
-      
-        /* Define grid neighbours ... */
-        dd_get_rect_neighbour(*ctl, &mpi_info);
-       
-        /* Check if particles are in subdomain. */
-        dd_assign_rect_subdomains_atm( atm, met0, ctl, &mpi_info, 1);
-
-        dd_init = 1;
-        
-      }
+      // TODO: Remove dd_init_flg ...
+      static int dd_init_flg = 0;
+      if (t == ctl->t_start || !dd_init_flg)
+        dd_init(ctl, &mpi_info, atm, &met0, t, &dd_init_flg);
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &mpi_info);
