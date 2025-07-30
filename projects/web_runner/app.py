@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_from_directory
-import os, io, time, uuid, glob, base64, shutil, textwrap, zipfile, subprocess, threading
+import os, time, uuid, glob, shutil, textwrap, zipfile, subprocess, threading
 from datetime import datetime, timezone
 import numpy as np
 import matplotlib
@@ -228,8 +228,6 @@ def run():
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
         stop_dt = datetime.strptime(f['stop_time'], "%Y-%m-%d %H:%M")
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
-        start_time_str = start_dt.strftime("%Y-%m-%dT%H:%MZ")
-        stop_time_str = stop_dt.strftime("%Y-%m-%dT%H:%MZ")
         if met_source == 'aifs_6h':
             METBASE = f"/mnt/slmet-mnt/met_data/ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"
         if met_source == 'ifs_6h':
@@ -497,8 +495,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
 
         # Init...
         plot_filenames = []
-        lons, lats, heights = [], [], []
-
+        
         # Get list of filenames...
         files = sorted(glob.glob(os.path.join(work_dir, 'atm_19*.tab')) +
                        glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
