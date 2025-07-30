@@ -35,7 +35,7 @@ logger.addHandler(handler)
 def clean_old_runs(max_age_sec=3600):
     now = time.time()
     for directory in [RUNS_DIR, ZIPS_DIR]:
-        logger.info(f"[CLEANUP] Scanning {directory} for files older than {max_age_sec} seconds")
+        logger.info(f"[CLEANUP] Scanning {directory} for files older than {max_age_sec} seconds.")
         for path in glob.glob(os.path.join(directory, "*")):
             if now - os.path.getmtime(path) > max_age_sec:
                 try:
@@ -86,16 +86,17 @@ MET_OPTIONS = {
 }
 
 # Execute shell command and check result...
-def run_command(cmd, timeout=300):
+def run_command(cmd, timeout, run_id):
     if not process_semaphore.acquire(timeout=5):
+        logger.error(f"[EXEC] [{run_id}] Server is too busy.")
         return -999, "❌ Server is too busy."
     try:
-        logger.info(f"[EXEC] Executing command: {' '.join(cmd)}")
+        logger.info(f"[EXEC] [{run_id}] Executing command: {' '.join(cmd)}")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout)
-        logger.info(f"[EXEC] Command finished with exit code {result.returncode}")
+        logger.info(f"[EXEC] [{run_id}] Command finished with exit code {result.returncode}.")
         return result.returncode, result.stdout
     except subprocess.TimeoutExpired as e:
-        logger.info(f"[EXEC] Command timed out after {timeout} seconds.")
+        logger.warning(f"[EXEC] [{run_id}] Command timed out after {timeout} seconds.")
         return -1, (e.stdout or '') + f"\n❌ Command timed out after {timeout} seconds."
     finally:
         process_semaphore.release()
@@ -169,7 +170,7 @@ def process_plot(
         if data.shape[1] < 4:
             raise ValueError("Insufficient data columns")
     except Exception as e:
-        logger.warning(f"[PLOT] Skipping plot for {file}: {e}")
+        logger.warning(f"[PLOT] [{run_id}] Skipping plot for {file}: {e}")
         return None
     lons, lats, heights = data[:, 2], data[:, 3], data[:, 1]
     sort_idx = np.argsort(heights)
@@ -192,8 +193,8 @@ def process_plot(
     return plot_filename
 
 # Exit with error message...
-def validation_error(message):
-    logger.error(f"[VALIDATE] Validation failed for {request.remote_addr}: {message}")
+def validation_error(message, run_id):
+    logger.error(f"[VALIDATE] [{run_id}] Validation failed: {message}")
     return render_template('error.html', stdout=f"❌ {message}"), 400
 
 @app.route('/')
@@ -201,19 +202,20 @@ def index(): return render_template('index.html')
 
 @app.route('/download/<run_id>')
 def download(run_id):
-    logger.info(f"[DOWNLOAD] Download requested for run {run_id} by {request.remote_addr}")
+    logger.info(f"[DOWNLOAD] [{run_id}] Download requested.")
     return send_from_directory(ZIPS_DIR, f"{run_id}.zip", as_attachment=True)
 
 @app.route('/run', methods=['POST'])
 def run():
-
+    
     # Get run ID...
     run_id = str(uuid.uuid4())
-
+    logger.info(f"[RUN] [{run_id}] Run started from {request.remote_addr}.")
+    
     # Parse input form...
     try:
         f = request.form
-        logger.info(f"[RUN] Received form input from {request.remote_addr}: {dict(f)}")
+        logger.info(f"[RUN] [{run_id}] Received input form: {dict(f)}")
         
         # Parse parameters...
         to_f = lambda x: float(f[x])
@@ -221,8 +223,10 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-        # METBASE = '../../tests/data/ei'
-        # DT_MET = 86400
+        
+        METBASE = '../../tests/data/ei'
+        DT_MET = 86400
+
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
@@ -251,31 +255,31 @@ def run():
         
         # Check values...
         if abs(start_time - stop_time) > 30*86400:
-            return validation_error("Trajectory duration exceeds 30 days.")
+            return validation_error("Trajectory duration exceeds 30 days.", run_id=run_id)
         if not (-100 <= mz <= 100):
-            return validation_error("Mean height must be between -100 and 100 km.")
+            return validation_error("Mean height must be between -100 and 100 km.", run_id=run_id)
         if not (-90 <= mlat <= 90):
-            return validation_error("Mean latitude must be between -90° and 90°.")
+            return validation_error("Mean latitude must be between -90° and 90°.", run_id=run_id)
         if not (-180 <= mlon <= 180):
-            return validation_error("Mean longitude must be between -180° and 180°.")
+            return validation_error("Mean longitude must be between -180° and 180°.", run_id=run_id)
         if not (1 <= rep <= 10000):
-            return validation_error("Number of particles must be between 1 and 10,000.")
+            return validation_error("Number of particles must be between 1 and 10,000.", run_id=run_id)
         if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())):
-            return validation_error("Turbulence parameters must be zero or positive.")
+            return validation_error("Turbulence parameters must be zero or positive.", run_id=run_id)
         if not (-180 <= lon_min <= 180) or not (-180 <= lon_max <= 180):
-            return validation_error("Plot longitude bounds must be between -180° and 180°.")
+            return validation_error("Plot longitude bounds must be between -180° and 180°.", run_id=run_id)
         if not (-90 <= lat_min <= 90) or not (-90 <= lat_max <= 90):
-            return validation_error("Plot latitude bounds must be between -90° and 90°.")
+            return validation_error("Plot latitude bounds must be between -90° and 90°.", run_id=run_id)
         if not (-180 <= central_lon <= 180):
-            return validation_error("Central longitude must be between -180° and 180°.")
+            return validation_error("Central longitude must be between -180° and 180°.", run_id=run_id)
         if not (-90 <= central_lat <= 90):
-            return validation_error("Central latitude must be between -90° and 90°.")
+            return validation_error("Central latitude must be between -90° and 90°.", run_id=run_id)
         
         # Set forward/backward trajectory flag...
         direction = -1 if stop_time < start_time else 1
 
     except Exception as e:
-        return validation_error(str(e))
+        return validation_error(str(e), run_id=run_id)
     
     # Create working directory...
     work_dir = os.path.join(RUNS_DIR, run_id)
@@ -470,22 +474,22 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         ctl_template += "MET_RELHUM = 1\n"
     
     with open(ctl_file, 'w') as f: f.write(ctl_template)
-    logger.info(f"[RUN] Control file written for run {run_id} at {ctl_file}")
+    logger.info(f"[RUN] [{run_id}] Control file written at {ctl_file}.")
     
     # Run atm_init and trac...
-    atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120)
-    trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600)
+    atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120, run_id=run_id)
+    trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600, run_id=run_id)
     
     # Catch errors...
     if trac_code == -999:
-        logger.error(f"[RUN] Server busy for {run_id} for {request.remote_addr}")
+        logger.error(f"[RUN] [{run_id}] Server busy.")
         return render_template('server_busy.html'), 503
     
     # Logging...
     if atm_init_code != 0 or trac_code != 0:
-        logger.error(f"[RUN] Run {run_id} failed for {request.remote_addr} | atm_init_code={atm_init_code} | trac_code={trac_code}")
+        logger.error(f"[RUN] [{run_id}] Run failed: atm_init_code={atm_init_code}, trac_code={trac_code}")
     else:
-        logger.info(f"[RUN] Run {run_id} succeeded for {request.remote_addr}")
+        logger.info(f"[RUN] [{run_id}] Run succeeded.")
 
     # Combine log message...
     combined_output = f"=== atm_init Output ===\n{atm_init_output}\n\n=== trac Output ===\n{trac_output}"
@@ -501,7 +505,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
                        glob.glob(os.path.join(work_dir, 'atm_20*.tab')))
 
         # Parallel creation of plots...
-        logger.info(f"[PLOT] {len(files)} plot files to process for run {run_id}")
+        logger.info(f"[PLOT] [{run_id}] {len(files)} plot files to process.")
         with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
             futures = [
                 executor.submit(process_plot, file, work_dir,
@@ -519,13 +523,13 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             [f for f in plot_filenames if f],
             key=lambda name: datetime.strptime(name.split("_")[1][:-4], "%Y-%m-%dT%H:%MZ")
         )
-        logger.info(f"[PLOT] plots finished for run {run_id}")
+        logger.info(f"[PLOT] [{run_id}] Plots finished.")
         
         # Create zip file...
         zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
-        logger.info(f"[ZIP] {run_id} | {request.remote_addr} | Creating zip file {zip_path}")
+        logger.info(f"[ZIP] [{run_id}] Creating zip file: {zip_path}")
         fast_zip_no_compression(zip_path, work_dir)
-        logger.info(f"[ZIP] {run_id} | {request.remote_addr} | Zip file created successfully at {zip_path}")
+        logger.info(f"[ZIP] [{run_id}] Zip file created successfully: {zip_path}")
         
         # Show results...
         return render_template(
