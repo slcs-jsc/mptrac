@@ -5601,40 +5601,9 @@ void mptrac_run_timestep(
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
     
   /* Domain decomposition... */
-  // TODO: module_dd()
-  if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1) {
-      
-    /* Initialize particles locally... */
-    int nparticles = 0;
-    int neighbours[NNMAX];
-    particle_t* particles;
-    ALLOC(particles, particle_t, NPART);
-    
-    /* Assign particles to new subdomains... */    
-    dd_assign_rect_subdomains_atm( atm, *met0, ctl, mpi_info, 0);
+  if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1)
+    module_dd(ctl, atm, cache, mpi_info, met0);
    
-    /* Sorting particles according to location and target rank... */
-    dd_sort(ctl, *met0, atm, &nparticles, &mpi_info->rank);
- 
-    /* Transform from struct of array to array of struct... */
-    atm2particles( atm, particles, ctl, &nparticles, cache, mpi_info->rank);
-   
-    /********************* CPU region start ***********************************/
-      
-    /* Perform the communication... */  
-    dd_communicate_particles( particles, &nparticles, mpi_info->MPI_Particle, 
-      neighbours, ctl->dd_nbr_neighbours , *ctl);
-          
-    /********************* CPU region end *************************************/
-
-    /* Transform from array of struct to struct of array... */
-    particles2atm(atm, particles, ctl, &nparticles, cache);
-        
-    /* Free local particle array... */
-    free(particles);
-    
-  }
-     
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
 #ifdef KPP
@@ -12369,6 +12338,7 @@ void dd_communicate_particles(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   
   /* Infos for MPI async... */
+  // TODO: Make this requests variable from number of neighbours... 
   MPI_Request requests_snd_nbr[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
   MPI_Request requests_rcv_nbr[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
   MPI_Request requests_snd_part[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
@@ -12423,8 +12393,6 @@ void dd_communicate_particles(
     	      neighbours[idest], 1, MPI_COMM_WORLD, &requests_snd_part[idest]);
   }
   
-  /* Wait for all signals to be send... */
-  // MPI_Barrier(MPI_COMM_WORLD);
   SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_GPU);
 
   /* Recieving... */
@@ -12439,10 +12407,7 @@ void dd_communicate_particles(
     }
 
     /* Recieve buffer sizes... */
-    
     MPI_Irecv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &requests_rcv_nbr[isourc]); 
-    //MPI_Status status;
-    //MPI_Recv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &status);
     
   }
   
@@ -12469,7 +12434,6 @@ void dd_communicate_particles(
   }
 
   /* Wait for all particles to be recieved... */
-  //MPI_Barrier(MPI_COMM_WORLD);
   MPI_Waitall(nneighbours, requests_rcv_part, states);
 
   SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_GPU);
@@ -12481,7 +12445,8 @@ void dd_communicate_particles(
   /* Start position for different buffer ranges... */
   int api = 0;
 
-  LOG(1, "Putting buffer into particle array: %d with %d particles in list.", rank, *nparticles);
+  LOG(1, "Putting buffer into particle array: %d with %d particles in list.", rank, api);
+  
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < nneighbours; isourc++) {
     
@@ -12673,3 +12638,41 @@ void dd_assign_rect_subdomains_atm(
 #pragma acc exit data delete(mpi_info->neighbours, mpi_info->rank)
    }
   }
+  
+void module_dd( ctl_t *ctl, 
+  atm_t *atm,
+  cache_t *cache, 
+  mpi_info_t* mpi_info, 
+  met_t **met) {
+ 
+    /* Initialize particles locally... */
+    int nparticles = 0;
+    particle_t* particles;
+    ALLOC(particles, particle_t, NPART);
+    
+    /* Assign particles to new subdomains... */    
+    dd_assign_rect_subdomains_atm( atm, *met, ctl, mpi_info, 0);
+   
+    /* Sorting particles according to location and target rank... */
+    dd_sort(ctl, *met, atm, &nparticles, &mpi_info->rank);
+ 
+    /* Transform from struct of array to array of struct... */
+    atm2particles( atm, particles, ctl, &nparticles, cache, mpi_info->rank);
+   
+    /********************* CPU region start ***********************************/
+      
+    /* Perform the communication... */  
+    dd_communicate_particles( particles, &nparticles, mpi_info->MPI_Particle, 
+      mpi_info->neighbours, ctl->dd_nbr_neighbours , *ctl);
+          
+    /********************* CPU region end *************************************/
+
+    /* Transform from array of struct to struct of array... */
+    particles2atm(atm, particles, ctl, &nparticles, cache);
+        
+    /* Free local particle array... */
+    free(particles);
+
+} 
+  
+  
