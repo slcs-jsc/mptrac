@@ -41,7 +41,9 @@ int main(
   clim_t *clim;
 
   met_t *met0, *met1;
-
+  
+  mpi_info_t mpi_info;
+  
   FILE *dirlist;
 
   char dirname[LEN], filename[2 * LEN];
@@ -53,6 +55,9 @@ int main(
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  
+  mpi_info.rank = rank;
+  mpi_info.size = size;
 #endif
 
   /* Check arguments... */
@@ -120,24 +125,28 @@ int main(
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
       /* Set-up domain decomposition... */
+      // TODO: dd_init(ctl, mpi_info, atm, met0, t)
       static int dd_init = 0;
-     
-     /* Update host memory... */
       if (t == ctl->t_start || !dd_init) {
       
+      	if (mpi_info.size != ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal)
+      	  ERRMSG("The number of nodes and subdomains is not identical.");
+      	  
+        /* Register the MPI_Particle data type... */
+        dd_register_MPI_type_particle(&mpi_info.MPI_Particle);
+      
         /* Define grid neighbours ... */
-        int neighbours[NNMAX];
-        dd_get_rect_neighbour(*ctl, neighbours, rank, size);
+        dd_get_rect_neighbour(*ctl, &mpi_info);
        
         /* Check if particles are in subdomain. */
-        dd_assign_rect_subdomains_atm( atm, met0, ctl, &rank, neighbours, 1);
+        dd_assign_rect_subdomains_atm( atm, met0, ctl, &mpi_info, 1);
 
         dd_init = 1;
         
       }
 
       /* Run a single time step... */
-      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
+      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &mpi_info);
 
       /* Write output... */
       mptrac_write_output(dirname, ctl, met0, met1, atm, t);
@@ -163,6 +172,9 @@ int main(
 
     /* Free memory... */
     mptrac_free(ctl, cache, clim, met0, met1, atm);
+    
+    /* Free MPI datatype... */
+    MPI_Type_free(&mpi_info.MPI_Particle);
 
     /* Report timers... */
     PRINT_TIMERS;

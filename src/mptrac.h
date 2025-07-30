@@ -3304,6 +3304,23 @@ typedef struct {
   
 } particle_t;
 
+
+typedef struct {
+
+  /*! Rank of node. */
+  int rank;
+  
+  /*! Size of node. */
+  int size;
+  
+  /*! Rank of neighbouring nodes. */
+  int neighbours[NNMAX];
+  
+  /*! MPI Type for the particle. */
+  MPI_Datatype MPI_Particle;
+
+} mpi_info_t;
+
 typedef struct {
 
   /*! Quantity data (for various, user-defined attributes). */
@@ -3707,12 +3724,6 @@ typedef struct {
   int nx_glob;
   int ny_glob;
   int np_glob;
-
-  /* TODO: Number of neighbours shif tto here?*/
-  
-  /* Neighbour ranks of the subdomain. */
-  /* TODO: use this instead of inline neighbours array...*/
-  int neighbours[NNMAX];
 
 } met_t;
 
@@ -5824,7 +5835,7 @@ void module_sedi(
  *
  * @author Lars Hoffmann
  */
-void module_sort(
+void dd_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
@@ -6297,7 +6308,8 @@ void mptrac_run_timestep(
   met_t ** met0,
   met_t ** met1,
   atm_t * atm,
-  double t);
+  double t,
+  mpi_info_t* mpi_info);
 
 /**
  * @brief Writes air parcel data to a file in various formats.
@@ -8953,9 +8965,7 @@ void  dd_register_MPI_type_particle(
  */
 void dd_get_rect_neighbour(
   const ctl_t ctl, 
-  int* neighbours, 
-  int rank, 
-  int size);
+  mpi_info_t* mpi_info);
   
 /**
  * @brief Communicates particle data between processes in a parallel computing environment.
@@ -9033,8 +9043,7 @@ void dd_communicate_particles(
   atm_t* atm,
   met_t* met, 
   ctl_t* ctl, 
-  int* rank, 
-  int* neighbours, 
+  mpi_info_t* mpi_info, 
   int init);
   
 
