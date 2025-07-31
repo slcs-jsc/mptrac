@@ -3446,7 +3446,7 @@ typedef struct {
   /*! MPI Type for the particle. */
   MPI_Datatype MPI_Particle;
   
-#endif DD
+#endif
 
 } mpi_info_t;
 
