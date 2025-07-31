@@ -170,7 +170,7 @@ int main(
 #ifdef DD
     mptrac_free(ctl, cache, clim, met0, met1, atm, &mpi_info);
 #else
-    mptrac_free(ctl, cache, clim, met0, met1, atm, NULL);
+    mptrac_free(ctl, cache, clim, met0, met1, atm);
 #endif
    
     /* Report timers... */
