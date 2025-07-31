@@ -6214,14 +6214,24 @@ void mptrac_alloc(
  *
  * @author Lars Hoffmann
  */
+#ifdef DD
 void mptrac_free(
-  ctl_t * ctl,
-  cache_t * cache,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm,
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
   mpi_info_t *mpi_info);
+#else
+void mptrac_free(
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm);
+#endif
 
 /**
  * @brief Retrieves meteorological data for the specified time.
