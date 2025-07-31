@@ -150,11 +150,10 @@ def create_plot_file(
     
 # Parallel processing of plots...
 def process_plot(
-    file, work_dir,
+    run_id, file, work_dir,
     map_projection, plot_region,
     central_lon, central_lat,
-    mlon, mlat,
-    met_name,
+    mlon, mlat, met_name,
     lon_min, lat_min, lon_max, lat_max
 ):
     filename = os.path.splitext(os.path.basename(file))[0]
@@ -506,9 +505,9 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         logger.info(f"[PLOT] [{run_id}] {len(files)} plot files to process.")
         with ProcessPoolExecutor(max_workers = min(8, os.cpu_count())) as executor:
             futures = [
-                executor.submit(process_plot, file, work_dir,
-                                map_projection, plot_region, central_lon, central_lat, mlon, mlat, met_name,
-                                lon_min, lat_min, lon_max, lat_max)
+                executor.submit(process_plot, run_id, file, work_dir,
+                                map_projection, plot_region, central_lon, central_lat,
+                                mlon, mlat, met_name, lon_min, lat_min, lon_max, lat_max)
                 for file in files
             ]
             for future in as_completed(futures):
@@ -556,7 +555,7 @@ def show_logs():
         return f"<pre>{log_contents}</pre>"
     except Exception as e:
         logger.error(f"[LOG] Error reading log file: {e}")
-        return f"<p>Error reading log file: {e}</p>", 500
+        return render_template('error.html', stdout=f"❌ Error reading log file: {e}"), 500
 
 if __name__ == '__main__':
     clean_old_runs()
