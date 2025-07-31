@@ -3,6 +3,9 @@
 # $3 = altitude (skew) [km]
 # $4 = longitude (skew) [deg]
 # $5 = latitude (skew) [deg]
-# $6 = number of particles
+# $6 = aoa (skew) [s]
+# $7 = m (skew) [kg]
+# $8 = vmr (skew) [ppv]
+# $9 = number of particles
 
-0.00 0.00 0.0144634 -0.0114641 -0.0177898 6715
+0.00 0.00 0.0144634 -0.0114641 -0.0177898 -nan -nan -nan 6715

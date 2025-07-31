@@ -27,14 +27,12 @@ awk '/Cache data structure./{f=1;next} /\} cache_t;/{f=0} f' < ../../src/mptrac.
 # compare number of structure entries and variables inside 
 grep ";" data/test_ctl_c.asc | wc -l > x
 wc -l < data/test_ctl_f.asc > y
-for varc in $(grep ";" data/test_ctl_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_ctl_c.asc
+for varc in $(grep ";" data/test_ctl_c.asc| awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_ctl_c.asc
 done
 
-for varf in $(grep "::" data/test_ctl_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_ctl_f.asc
+for varf in $(grep "::" data/test_ctl_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_ctl_f.asc
 done
 if cmp -s x y && cmp -s data/var_ctl_c.asc data/var_ctl_f.asc; then
     echo "Number of control parameters are equal:"
@@ -54,15 +52,12 @@ fi
 
 grep ";" data/test_met_c.asc | wc -l > x
 wc -l < data/test_met_f.asc > y
-for varc in $(grep ";" data/test_met_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_met_c.asc
+for varc in $(grep ";" data/test_met_c.asc| awk '{print $2}') ; do
+    echo "$varc" |awk -F'[;[]' '{print $1}' >> data/var_met_c.asc
 done
 
-for varf in $(grep "::" data/test_met_f.asc|awk '{print $NF}')
-do
-
-    echo $varf >> data/var_met_f.asc
+for varf in $(grep "::" data/test_met_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_met_f.asc
 done
 
 if cmp -s x y && cmp -s data/var_met_c.asc data/var_met_f.asc; then
@@ -83,14 +78,12 @@ fi
 
 grep ";" data/test_clim_c.asc | wc -l > x
 wc -l < data/test_clim_f.asc > y
-for varc in $(grep ";" data/test_clim_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_clim_c.asc
+for varc in $(grep ";" data/test_clim_c.asc| awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_clim_c.asc
 done
 
-for varf in $(grep "::" data/test_clim_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_clim_f.asc
+for varf in $(grep "::" data/test_clim_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_clim_f.asc
 done
 if cmp -s x y && cmp -s data/var_clim_c.asc data/var_clim_f.asc; then
     echo "Number of climatological data structures are equal:"
@@ -110,14 +103,12 @@ fi
 
 grep ";" data/test_clim_zm_c.asc | wc -l > x
 wc -l < data/test_clim_zm_f.asc > y
-for varc in $(grep ";" data/test_clim_zm_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_clim_zm_c.asc
+for varc in $(grep ";" data/test_clim_zm_c.asc| awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_clim_zm_c.asc
 done
 
-for varf in $(grep "::" data/test_clim_zm_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_clim_zm_f.asc
+for varf in $(grep "::" data/test_clim_zm_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_clim_zm_f.asc
 done
 if cmp -s x y && cmp -s data/var_clim_zm_c.asc data/var_clim_zm_f.asc; then
     echo "Number of climatological data in the form of zonal means are equal:"
@@ -137,14 +128,12 @@ fi
 
 grep ";" data/test_clim_ts_c.asc | wc -l > x
 wc -l < data/test_clim_ts_f.asc > y
-for varc in $(grep ";" data/test_clim_ts_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_clim_ts_c.asc
+for varc in $(grep ";" data/test_clim_ts_c.asc| awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_clim_ts_c.asc
 done
 
-for varf in $(grep "::" data/test_clim_ts_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_clim_ts_f.asc
+for varf in $(grep "::" data/test_clim_ts_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_clim_ts_f.asc
 done
 
 if cmp -s x y && cmp -s data/var_clim_ts_c.asc data/var_clim_ts_f.asc; then
@@ -165,14 +154,12 @@ fi
 
 grep ";" data/test_clim_photo_c.asc | wc -l > x
 wc -l < data/test_clim_photo_f.asc > y
-for varc in $(grep ";" data/test_clim_photo_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_clim_photo_c.asc
+for varc in $(grep ";" data/test_clim_photo_c.asc| awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_clim_photo_c.asc
 done
 
-for varf in $(grep "::" data/test_clim_photo_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_clim_photo_f.asc
+for varf in $(grep "::" data/test_clim_photo_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_clim_photo_f.asc
 done
 if cmp -s x y && cmp -s data/var_clim_photo_c.asc data/var_clim_photo_f.asc ; then
     echo "Number of climatological data in the form of photolysis rates are equal:"
@@ -192,14 +179,12 @@ fi
 
 grep ";" data/test_atm_c.asc | wc -l > x
 wc -l < data/test_atm_f.asc > y
-for varc in $(grep ";" data/test_atm_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_atm_c.asc
+for varc in $(grep ";" data/test_atm_c.asc| awk '{print $2}') ; do
+    echo "$varc" |awk -F'[;[]' '{print $1}' >> data/var_atm_c.asc
 done
 
-for varf in $(grep "::" data/test_atm_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_atm_f.asc
+for varf in $(grep "::" data/test_atm_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_atm_f.asc
 done
 if cmp -s x y && cmp -s data/var_atm_c.asc data/var_atm_f.asc ; then
     echo "Number of air parcel data are equal:"
@@ -219,14 +204,12 @@ fi
 
 grep ";" data/test_cache_c.asc | wc -l > x
 wc -l < data/test_cache_f.asc > y
-for varc in $(grep ";" data/test_cache_c.asc| awk '{print $2}')
-do
-    echo ${varc}|awk -F'[;[]' '{print $1}' >> data/var_cache_c.asc
+for varc in $(grep ";" data/test_cache_c.asc| awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_cache_c.asc
 done
 
-for varf in $(grep "::" data/test_cache_f.asc|awk '{print $NF}')
-do
-    echo $varf >> data/var_cache_f.asc
+for varf in $(grep "::" data/test_cache_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_cache_f.asc
 done
 if cmp -s x y && cmp -s data/var_cache_c.asc data/var_cache_f.asc ; then
     echo "Number of cache data are equal:"

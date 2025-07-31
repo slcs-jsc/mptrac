@@ -89,15 +89,26 @@ $trac/atm_init data/trac.ctl data/atm_init.tab \
 $trac/atm_split data/trac.ctl data/atm_init.tab data/atm_split.tab \
 		SPLIT_N 10000 SPLIT_M 1e9 SPLIT_DX 30.0 SPLIT_DZ 5.0
 
-# Calculate trajectories...
+# Calculate trajectories on model levels...
 echo "data" > data/dirlist
 $trac/trac data/dirlist trac.ctl atm_split.tab \
-	   ATM_BASENAME atm GRID_BASENAME grid \
-	   ENS_BASENAME ens STAT_BASENAME station \
-	   CSI_BASENAME csi CSI_OBSFILE data/obs.tab \
-	   PROF_BASENAME prof PROF_OBSFILE data/obs.tab \
-           SAMPLE_BASENAME sample SAMPLE_OBSFILE data/obs.tab \
-	   VTK_BASENAME atm
+	   METBASE ../data/era5ml MET_PRESS_LEVEL_DEF 6 \
+	   MET_VERT_COORD 1 ADVECT_VERT_COORD 2 \
+	   ATM_BASENAME atm_ml GRID_BASENAME grid_ml \
+	   ENS_BASENAME ens_ml STAT_BASENAME station_ml \
+	   CSI_BASENAME csi_ml CSI_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof_ml PROF_OBSFILE data/obs.tab \
+           SAMPLE_BASENAME sample_ml SAMPLE_OBSFILE data/obs.tab \
+	   VTK_BASENAME atm_ml
+
+# Calculate trajectories on pressure levels...
+$trac/trac data/dirlist trac.ctl atm_split.tab \
+	   ATM_BASENAME atm_pl GRID_BASENAME grid_pl \
+	   ENS_BASENAME ens_pl STAT_BASENAME station_pl \
+	   CSI_BASENAME csi_pl CSI_OBSFILE data/obs.tab \
+	   PROF_BASENAME prof_pl PROF_OBSFILE data/obs.tab \
+           SAMPLE_BASENAME sample_pl SAMPLE_OBSFILE data/obs.tab \
+	   VTK_BASENAME atm_pl
 
 # Compare files...
 echo -e "\nCompare results..."

@@ -28,6 +28,11 @@ authors:
     email: k.haghighi.mood@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0000-0002-8578-4961'
+  - given-names: Yi
+    family-names: Heng
+    email: hengyi@mail.sysu.edu.cn
+    affiliation: Sun Yat-sen University
+    orcid: 'https://orcid.org/0000-0001-6894-6976'
   - given-names: Farahnaz
     family-names: Khosrawi
     email: f.khosrawi@fz-juelich.de
@@ -35,8 +40,8 @@ authors:
     orcid: 'https://orcid.org/0000-0002-0261-7253'
   - given-names: Mingzhao
     family-names: Liu
-    email: mi.liu@fz-juelich.de
-    affiliation: Forschungszentrum Jülich
+    email: liumzh56@mail.sysu.edu.cn
+    affiliation: Sun Yat-sen University
     orcid: 'https://orcid.org/0000-0001-7314-9568'
   - given-names: Yen-Sen
     family-names: Lu
@@ -48,10 +53,20 @@ authors:
     email: cat.meyer@fz-juelich.de
     affiliation: Forschungszentrum Jülich
     orcid: 'https://orcid.org/0000-0002-9271-6174'
+  - given-names: Nils
+    family-names: Nobre Wittwer
+    email: n.nobre.wittwer@fz-juelich.de
+    affiliation: Forschungszentrum Jülich
+    orcid: 'https://orcid.org/0009-0001-3175-0889'
   - given-names: Jonas
     family-names: Sonnabend
     email: j.sonnabend@fz-juelich.de
     affiliation: Forschungszentrum Jülich
+  - given-names: Xue
+    family-names: Wu
+    email: wuxue@mail.iap.ac.cn
+    affiliation: Chinese Academy of Sciences
+    orcid: 'https://orcid.org/0000-0002-0427-782X'
   - given-names: Ling
     family-names: Zou
     email: l.zou@fz-juelich.de
@@ -59,14 +74,17 @@ authors:
     orcid: 'https://orcid.org/0000-0001-6563-9815'
 identifiers:
   - type: doi
+    value: 10.21105/joss.08177
+    description: Introductory paper.
+  - type: doi
     value: 10.5194/gmd-15-2731-2022
     description: Reference paper.
   - type: doi
     value: 10.1002/2015JD023749
-    description: Reference paper.
+    description: First publication.
   - type: doi
     value: 10.5281/zenodo.4400597
-    description: Latest release on Zenodo.
+    description: Latest software release on Zenodo.
   - type: url
     value: 'https://github.com/slcs-jsc/mptrac'
     description: Software repository on GitHub.

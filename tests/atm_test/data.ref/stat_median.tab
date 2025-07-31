@@ -3,6 +3,9 @@
 # $3 = altitude (median) [km]
 # $4 = longitude (median) [deg]
 # $5 = latitude (median) [deg]
-# $6 = number of particles
+# $6 = aoa (median) [s]
+# $7 = m (median) [kg]
+# $8 = vmr (median) [ppv]
+# $9 = number of particles
 
-0.00 0.00 29.6113 0.858181 0.276085 6715
+0.00 0.00 29.6113 0.858181 0.276085 0.00 100000 1e-09 6715

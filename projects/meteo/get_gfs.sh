@@ -3,24 +3,28 @@
 # Check arguments...
 if [ $# -ne 4 ] ; then
     cat <<EOF
-GFS data download
+Usage:
+  $0 <year> <month> <day> <dir>
 
-usage: $0 <year> <month> <day> <dir>
+Description:
+  This script retrieves 3-hourly, 10-day forecasts from the NCEP Global
+  Forecast System (GFS) at 0.5° horizontal resolution and converts them
+  for use with MPTRAC.
 
-This script retrieves 3-hourly 10-day forecasts from NCEP's Global
-Forecast System (GFS) at 0.5 degree horizontal resolution and converts
-them for use with MPTRAC. The data are retrieved from NOAA's
-Operational Model Archive and Distribution System (NOMADS,
-https://nomads.ncep.noaa.gov/).
+  The data are retrieved for the specified date (<year>, <month>, <day>)
+  and saved as NetCDF files in the specified output directory (<dir>).
 
-This script retrieves the data for a given day (<year>, <month>,
-<day>) and places the converted data files in the archive directory
-(<dir>).
+  The source of the data is NOAA's Operational Model Archive and
+  Distribution System (NOMADS): https://nomads.ncep.noaa.gov/
 
-You will need wget (https://www.gnu.org/software/wget) to retrieve the
-data, and the Climate Data Operators (CDO,
-https://code.mpimet.mpg.de/projects/cdo) and netCDF Operators (NCO,
-https://nco.sourceforge.net) to convert the netCDF files for MPTRAC.
+Requirements:
+  - wget (https://www.gnu.org/software/wget) for downloading the data
+  - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
+    for format conversion
+  - NetCDF Operators (NCO, https://nco.sourceforge.net) for file processing
+
+License:
+  GFS data are provided by NOAA and are in the public domain.
 EOF
     exit
 fi

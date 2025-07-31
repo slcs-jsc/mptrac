@@ -4,7 +4,7 @@ Please follow these guidelines when developing new code for MPTRAC.
 
 ## Compilation
 
-To remove old binaries, backup files, etc., and to clean up the source code directory, use:
+To remove old binaries, backup files, etc., and to clean up the source code directory:
 
 ```
     make clean
@@ -16,7 +16,7 @@ For faster compilation, you can use parallel compilation with `make`:
     make -j
 ```
 
-You can compile only a single binary, e.g.:
+To compile a specific binary (e.g., `trac`):
 
 ```
     make trac
@@ -30,13 +30,14 @@ You can change Makefile variables at the command line:
 
 ## Testing
 
-Always run all the tests to verify the revised code:
+Always run the full test suite to verify your code changes:
 
 ```
     make check
 ```
 
-Please do not execute tests in parallel (do not use `-j` option of `make`), you might miss seeing failed tests.
+Do not run tests in parallel (i.e., avoid using the `-j` option with
+`make check`), as this may cause test failures to be missed.
 
 You can run only selected tests, e.g.:
 
@@ -44,11 +45,17 @@ You can run only selected tests, e.g.:
     make trac_test
 ```
 
-If a test fails, please carefully compare the test results with the reference data. The Linux tool `xxdiff` can be used to compare test data and reference data number by number. The graphing utility `gnuplot` can be used to visualize any differences. The reference data of a test should only be updated if the new test results are considered correct.
+If a test fails, please carefully compare the test results with the
+reference data. The Linux tool `xxdiff` can be used to compare test
+data and reference data number by number. The graphing utility
+`gnuplot` can be used to visualize any differences. The reference data
+of a test should only be updated if the new test results are
+considered correct.
 
 ## Static code analysis
 
-You can use static code analysis to automatically detect potential problems in the code:
+You can use static code analysis to automatically detect potential
+problems in the code:
 
 ```
     make cppcheck
@@ -57,44 +64,61 @@ You can use static code analysis to automatically detect potential problems in t
 
 ## Coverage testing
 
-You can perform a coverage analysis to determine which parts of the code are covered by tests:
+You can perform a coverage analysis to determine which parts of the
+code are covered by tests:
 
 ```
     make COV=1
     make coverage
 ```
 
-If you find that parts of the code are not covered by the coverage analysis, please consider adding a new test.
+If you find that parts of the code are not covered by the coverage
+analysis, please consider adding a new test.
 
 ## Automated testing and code analysis
 
-After committing revised code to the GitHub repository, please check the [GitHub Actions page](https://github.com/slcs-jsc/mptrac/actions) to see if the automated tests were successfully passed.
+After committing revised code to the GitHub repository, please check
+the [GitHub Actions page](https://github.com/slcs-jsc/mptrac/actions)
+to see if the automated tests were successfully passed.
 
-Please also check the [Codacy](https://app.codacy.com/gh/slcs-jsc/mptrac?utm_source=github.com&utm_medium=referral&utm_content=slcs-jsc/mptrac&utm_campaign=Badge_Grade_Settings) and [Codecov](https://codecov.io/gh/slcs-jsc/mptrac) websites for test results.
+Please also check the
+[Codacy](https://app.codacy.com/gh/slcs-jsc/mptrac?utm_source=github.com&utm_medium=referral&utm_content=slcs-jsc/mptrac&utm_campaign=Badge_Grade_Settings)
+and [Codecov](https://codecov.io/gh/slcs-jsc/mptrac) websites for test
+results.
 
-Please check the [nightly build website](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds) to see if the tests passed on the Juelich supercomputers, especially for the GPU code. User at the Juelich Supercomputing Centre can also check the test results at the [ESM Buildbot](https://esm-buildbot.fz-juelich.de).
+Please check the
+[nightly build website](https://datapub.fz-juelich.de/slcs/mptrac/nightly_builds)
+to see if the tests passed on the Juelich supercomputers, especially for
+the GPU code.
+
+Users at the Jülich Supercomputing Centre can also check the test
+results at the [ESM Buildbot](https://esm-buildbot.fz-juelich.de).
 
 ## Code formatting
 
-On Linux, use the `indent` tool to apply a selected formatting style to the source code:
+On Linux, use the `indent` tool to apply a selected formatting style
+to the source code:
 
 ```
     make indent
 ```
 
-Only use `indent` if the code has been compiled correctly. You may need to re-run the `indent` command 2-3 times to get proper results.
+Only use `indent` if the code has been compiled correctly. You may
+need to run the `indent` command 2-3 times to achieve the desired
+formatting.
+
 
 ## Documentation
 
 Please update the [README file](https://github.com/slcs-jsc/mptrac/blob/master/README.md) as needed.
 
-To update the [User Manual](https://slcs-jsc.github.io/mptrac), use:
+To update the [user manual](https://slcs-jsc.github.io/mptrac), use:
 
 ```
     make mkdocs
 ```
 
-To update the [Doxygen Manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
+To update the [Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
 
 ```
     make doxygen
@@ -102,7 +126,8 @@ To update the [Doxygen Manual](https://slcs-jsc.github.io/mptrac/doxygen), use:
 
 ## Installation
 
-To copy the executables from the source directory to the `DESTDIR` directory (default `../bin/`):
+To copy the executables from the source directory to the `DESTDIR`
+directory (default `../bin/`):
 
 ```
     make install
@@ -114,7 +139,8 @@ To remove the executables from the installation directory:
     make uninstall
 ```
 
-To create a zip file of the current state of the repository, including the compiled binaries, run
+To package the current repository state into a zip file, including the
+compiled binaries, run:
 
 ```
     make dist
@@ -122,9 +148,10 @@ To create a zip file of the current state of the repository, including the compi
 
 ## Releases
 
-A new release of MPTRAC is usually made every six months.
+A new release of MPTRAC is usually created every six months.
 
-To create a new release, first define a version tag ("vX.Y")  in the local repository:
+To create a new release, first define a version tag ("vX.Y") in the
+local repository:
 
 ```
     gitk
@@ -136,23 +163,29 @@ Next, push the local tags to the remote repository on GitHub:
     git push --tags
 ```
 
-Get a list of short log messages from the previous to the current version of the code:
+Get a list of short log messages from the previous to the current
+version of the code:
 
 ```
     git log v1.1..v1.2 --oneline
 ```
 
-Using the log messages, [draft a new release](https://github.com/slcs-jsc/mptrac/releases/new) on GitHub using the newly created tag.
+Using the log messages, [draft a new release](https://github.com/slcs-jsc/mptrac/releases/new)
+on GitHub using the newly created tag.
 
-Check the [Zenodo the website](https://doi.org/10.5281/zenodo.4400597) to publish the new release and to get a DOI.
+Check the [Zenodo website](https://doi.org/10.5281/zenodo.4400597)
+to publish the new release and to get a DOI.
 
-Use the DOI to submit entry at [JuSER publication database](https://juser.fz-juelich.de/).
+Use the DOI to submit an entry to the
+[JuSER publication database](https://juser.fz-juelich.de/).
 
 ## Cleaning the git repository
 
-Always test the following procedures on a fresh copy of the repository!
+Always test the following procedures on a fresh copy of the
+repository!
 
-Files can be completely removed from the git repository using `git-filter-repo`: https://github.com/newren/git-filter-repo
+You can completely remove files from the Git repository using
+`git-filter-repo`: https://github.com/newren/git-filter-repo
 
 Analyze the current git repository:
 

@@ -4,7 +4,13 @@
 # $4 = relative horizontal distance (absdev) [%]
 # $5 = absolute vertical distance (absdev) [km]
 # $6 = relative vertical distance (absdev) [%]
-# $7 = number of particles
+# $7 = aoa absolute difference (absdev) [s]
+# $8 = aoa relative difference (absdev) [%]
+# $9 = m absolute difference (absdev) [kg]
+# $10 = m relative difference (absdev) [%]
+# $11 = vmr absolute difference (absdev) [ppv]
+# $12 = vmr relative difference (absdev) [%]
+# $13 = number of particles
 
-0.00 0.00 0 0 0 0 6715
-86400.00 86400.00 8332.16 200 16.5765 200 4493
+0.00 0.00 0 0 0 0 0.00 nan 100000 66.6667 1e-09 66.6667 6715
+86400.00 86400.00 8332.16 200 16.5765 200 0.00 0.00 100000 28.5714 1e-09 28.5714 4493

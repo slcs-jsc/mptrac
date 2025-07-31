@@ -12,9 +12,14 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: install
-      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev
+      run: sudo apt-get update ; sudo apt-get install gnuplot libgsl-dev libnetcdf-dev libhdf5-dev libzstd-dev libzfp-dev libeccodes-dev
     - name: make
-      run: cd src ; make STATIC=0
+      run: cd src ; make ZSTD=1 ZFP=1 ECCODES=1
     - name: make check
       run: cd src ; make check
-      
+    - name: make grib_test
+      run: cd src ; make grib_test
+#    - name: make wrapper
+#      run: cd src ; make wrapper ZSTD=1 ZFP=1 ECCODES=1
+#    - name: make wrapper_test
+#      run: cd src ; make wrapper_test

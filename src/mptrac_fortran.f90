@@ -28,8 +28,8 @@ MODULE mptrac_struct
   !! The values for ex, ey, ep are suited for ERA5 data. However, they
   !! exceed some size limit of NVHPC (2GB???), where the compiler fails
   !! to build the fortran wrapper. GCC and ICX work fine.
-  INTEGER, PARAMETER :: ex = 1202
-  INTEGER, PARAMETER :: ey = 602
+  INTEGER, PARAMETER :: ex = 1444
+  INTEGER, PARAMETER :: ey = 724
   INTEGER, PARAMETER :: ep = 140
   !! Alternative smaller values, good enough for ERA-interim.
   ! INTEGER, PARAMETER :: ex = 481
@@ -230,6 +230,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_nc_scale
      INTEGER(c_int) :: met_nc_level
      INTEGER(c_int) :: met_nc_quant
+     INTEGER(c_int) :: met_zstd_level
      INTEGER(c_int) :: met_zfp_prec
      REAL(c_double) :: met_zfp_tol_t
      REAL(c_double) :: met_zfp_tol_z
@@ -267,8 +268,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_relhum
      INTEGER(c_int) :: met_cape
      INTEGER(c_int) :: met_pbl
-     INTEGER(c_int) :: met_pbl_min
-     INTEGER(c_int) :: met_pbl_max
+     REAL(c_double) :: met_pbl_min
+     REAL(c_double) :: met_pbl_max
      INTEGER(c_int) :: met_tropo
      REAL(c_double) :: met_tropo_pv
      REAL(c_double) :: met_tropo_theta
@@ -391,6 +392,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: csi_ny
      REAL(c_double) :: csi_lat0
      REAL(c_double) :: csi_lat1
+     INTEGER(c_int) :: nens
      CHARACTER(c_char), DIMENSION(length) :: ens_basename
      REAL(c_double) :: ens_dt_out
      CHARACTER(c_char), DIMENSION(length) :: grid_basename

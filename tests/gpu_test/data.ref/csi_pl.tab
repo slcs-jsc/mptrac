@@ -1,0 +1,22 @@
+# $1 = time [s]
+# $2 = ensemble ID
+# $3 = number of hits (cx)
+# $4 = number of misses (cy)
+# $5 = number of false alarms (cz)
+# $6 = number of observations (cx + cy)
+# $7 = number of forecasts (cx + cz)
+# $8 = bias (%)
+# $9 = POD (%)
+# $10 = FAR (%)
+# $11 = CSI (%)
+# $12 = hits by random chance
+# $13 = ETS (%)
+# $14 = Pearson R
+# $15 = Spearman R
+# $16 = mean error [kg/m²]
+# $17 = RMSE [kg/m²]
+# $18 = MAE [kg/m²]
+# $19 = log-likelihood
+# $20 = number of points
+
+360720000.00 -999 36 0 94 36 130 361.111 100 72.3077 27.6923 16.3636 17.28 0.614822 0.484706 -0.000833297 0.00193499 0.00109007 -7.29211 130

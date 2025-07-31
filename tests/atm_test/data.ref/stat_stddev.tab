@@ -3,6 +3,9 @@
 # $3 = altitude (stddev) [km]
 # $4 = longitude (stddev) [deg]
 # $5 = latitude (stddev) [deg]
-# $6 = number of particles
+# $6 = aoa (stddev) [s]
+# $7 = m (stddev) [kg]
+# $8 = vmr (stddev) [ppv]
+# $9 = number of particles
 
-0.00 0.00 14.3625 86.5779 36.7255 6715
+0.00 0.00 14.3625 86.5779 36.7255 0.00 0 0 6715

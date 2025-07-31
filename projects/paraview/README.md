@@ -4,26 +4,26 @@ This project shows how to visualize MPTRAC particle data with ParaView.
 
 ## Control Parameters
 
-MPTRAC can generate particle data output in ParaView's native data format, called vtk files.
+MPTRAC can generate particle data output in ParaView's native data format, called VTK files.
 
-Please configure the vtk output of MPTRAC using the following control parameters:
+Please configure the VTK output of MPTRAC using the following control parameters:
 
 | Parameter    | Description                                                |
 |--------------|------------------------------------------------------------|
-| VTK_BASENAME | basename of the vtk data files                             |
-| VTK_DT_OUT   | output time interval [s] of the vtk output                 |
+| VTK_BASENAME | basename of the VTK data files                             |
+| VTK_DT_OUT   | output time interval [s] of the VTK output                 |
 | VTK_STRIDE   | stride of particle output (write only every n-th particle) |
 | VTK_SCALE    | vertical scaling factor for heights                        |
 | VTK_OFFSET   | vertical offset for heights                                |
 | VTK_SPHERE   | 0=Cartesian coordinates, 1=spherical coordinates           |
 
-See the `run.sh` script for an example of how to generate vtk output in Cartesian or spherical coordinates with MPTRAC.
+See the `run.sh` script for an example of how to generate VTK output in Cartesian or spherical coordinates with MPTRAC.
 
 ## Loading data into ParaView
 
-Follow these steps to load the vtk data files created by MPTRAC into ParaView:
+Follow these steps to load the VTK data files created by MPTRAC into ParaView:
 
-- load the vtk files: click `File` -> `Open` -> select the `data/atm_plane..vtk` or `data/atm_sphere..vtk` group for Cartesian or spherical coordinates, respectively -> click `Apply`
+- load the VTK files: click `File` -> `Open` -> select the `data/atm_plane..vtk` or `data/atm_sphere..vtk` group for Cartesian or spherical coordinates, respectively -> click `Apply`
 
 - set the visualization properties: select `Point Gaussian` for `Representation` -> select the time step and click the `Zoom Closest To Data` button in the toolbar
 
@@ -123,7 +123,7 @@ Simple method to read/visualize point data from csv files:
 
 - https://guides.lw1.at/visualizing-point-clouds/
 
-Information about the vtk file format (i.e. the native file format of ParaView):
+Information about the VTK file format (i.e. the native file format of ParaView):
 
 - https://examples.vtk.org/site/VTKFileFormats/
 

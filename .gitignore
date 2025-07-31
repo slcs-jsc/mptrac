@@ -16,6 +16,7 @@ projects/example/plots/
 !projects/fortran_wrapper/
 projects/kpp/
 !projects/meteo/
+projects/meteo/ecmwf/
 projects/meteo/era5/
 projects/meteo/gfs/
 projects/meteo/merra2/
@@ -26,6 +27,10 @@ projects/paraview/data/
 !projects/python/
 projects/python/plots/
 projects/python/venv/
+!projects/web_runner/
+projects/web_runner/__pycache__/
+projects/web_runner/runs/
+projects/web_runner/venv/
 src/*.o
 src/*.mod
 src/atm2grid
@@ -67,6 +72,7 @@ tests/atm_test/data/
 tests/cms_test/data/
 tests/compress_test/data/
 tests/gpu_test/data/
+tests/grib_test/data/
 tests/interoper_test/data/
 tests/interoper_test/run_all.sh
 tests/interoper_test/run_atm.sh

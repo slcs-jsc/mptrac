@@ -41,6 +41,8 @@ int main(
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  const int ens =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_ENS", -1, "0", NULL);
   const double t0 = scan_ctl(argv[1], argc, argv, "INIT_T0", -1, "0", NULL);
   const double t1 = scan_ctl(argv[1], argc, argv, "INIT_T1", -1, "0", NULL);
   const double dt = scan_ctl(argv[1], argc, argv, "INIT_DT", -1, "1", NULL);
@@ -106,6 +108,9 @@ int main(
 	      gsl_ran_gaussian_ziggurat(rng, DX2DEG(sx, lat) / 2.3548);
 	    ru = ulon * (gsl_rng_uniform(rng) - 0.5);
 	    atm->lon[atm->np] = (lon + rg + rx + ru);
+
+	    if (ctl.qnt_ens >= 0)
+	      atm->q[ctl.qnt_ens][atm->np] = ens;
 
 	    do {
 	      rg = gsl_ran_gaussian_ziggurat(rng, slat / 2.3548);

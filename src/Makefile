@@ -65,6 +65,9 @@ ZSTD ?= 0
 # Enable cmultiscale compression (experimental)...
 CMS ?= 0
 
+# Enable ecCodes for reading Grib data (experimental)...
+ECCODES ?= 0
+
 # Path to cmultiscale library (experimental)...
 CMSDIR ?= ../../cmultiscale/cmultiscale
 
@@ -222,6 +225,14 @@ ifeq ($(CMS),1)
   CFLAGS += -DCMS
 endif
 
+ifeq ($(ECCODES),1)
+  LDFLAGS += -leccodes
+  ifeq ($(STATIC),1)
+    LDFLAGS += -lstdc++ -lm
+  endif
+  CFLAGS += -DECCODES
+endif
+
 # Static compilation...
 ifeq ($(STATIC),1)
   ifeq ($(CMS),1)
@@ -267,7 +278,7 @@ wrapper: trac_fortran
 
 check: $(TESTS)
 
-$(TESTS) cms_test gpu_test kpp_test wrapper_test: all
+$(TESTS) cms_test gpu_test grib_test kpp_test wrapper_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \
