@@ -13167,7 +13167,7 @@ void write_vtk(
 }
 
 /*****************************************************************************/
-
+#ifdef DD
 void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles, 
     cache_t *cache, int rank) {
   
@@ -13198,9 +13198,10 @@ void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
 #pragma acc exit data delete( nparticles, particles)
   
 }
+#endif
 
 /*****************************************************************************/
-
+#ifdef DD
 void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
   cache_t* cache) {
 
@@ -13234,9 +13235,11 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
     ERRMSG("Number of particles to high. Increase NP!");
 
 }
+#endif
 
 /*****************************************************************************/
 
+#ifdef DD
 void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
   MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, 
     MPI_DOUBLE, MPI_DOUBLE };
@@ -13251,9 +13254,11 @@ void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 			  MPI_Particle);
   MPI_Type_commit (MPI_Particle);
 }
+#endif
 
 /*****************************************************************************/
 
+#ifdef DD
 void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t* mpi_info) {
 
       SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
@@ -13378,9 +13383,11 @@ void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t* mpi_info) {
     
     }
 }
+#endif
   
 /*****************************************************************************/
 
+#ifdef DD
 void dd_communicate_particles(
   particle_t* particles, 
   int* nparticles, 
@@ -13556,8 +13563,10 @@ void dd_communicate_particles(
   free(nbr);
 
 } 
+#endif 
 
 /*****************************************************************************/
+#ifdef DD
 void dd_assign_rect_subdomains_atm(
   atm_t* atm,
   met_t* met, 
@@ -13702,9 +13711,11 @@ void dd_assign_rect_subdomains_atm(
 #pragma acc exit data delete(mpi_info->neighbours, mpi_info->rank)
   }
 }
+#endif
   
 /*****************************************************************************/
 
+#ifdef DD
 void dd_init(
   ctl_t *ctl,
   mpi_info_t *mpi_info, 
@@ -13728,9 +13739,10 @@ void dd_init(
 
   *dd_init_flg = 1;      
 }
+#endif
 
 /*****************************************************************************/
-  
+#ifdef DD
 void module_dd( ctl_t *ctl, 
   atm_t *atm,
   cache_t *cache, 
@@ -13766,9 +13778,10 @@ void module_dd( ctl_t *ctl,
     free(particles);
 
 } 
+#endif 
 
 /*****************************************************************************/
-
+#ifdef DD
 void dd_sort(
   const ctl_t *ctl,
   met_t *met0,
@@ -13862,5 +13875,6 @@ void dd_sort(
   free(p);
   
 }
+#endif 
   
   
