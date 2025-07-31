@@ -141,7 +141,7 @@ int main(
 #ifdef DD
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &mpi_info);
 #else
-      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, NULL);
+      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
 #endif
 
       /* Write output... */

@@ -5527,6 +5527,7 @@ int mptrac_read_met(
 
 /*****************************************************************************/
 
+#ifdef DD
 void mptrac_run_timestep(
   ctl_t *ctl,
   cache_t *cache,
@@ -5536,7 +5537,16 @@ void mptrac_run_timestep(
   atm_t *atm,
   double t,
   mpi_info_t* mpi_info) {
-
+#else
+void mptrac_run_timestep(
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t **met0,
+  met_t **met1,
+  atm_t *atm,
+  double t) {
+#endif
   /* Initialize modules... */
   if (t == ctl->t_start) {
 
