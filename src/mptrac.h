@@ -7643,7 +7643,7 @@ void read_met_nc_grid(
  * @author Lars Hoffmann
  */
 #ifdef DD
-int read_met_nc_par(
+int read_met_nc_dd
   const char *filename,
   const ctl_t * ctl,
   met_t * met);
@@ -7731,38 +7731,40 @@ void read_met_nc_surface(
   met_t * met);
 
 /**
- * @brief Reads meteorological grid information from a NetCDF file.
+ * @brief Reads meteorological grid data from NetCDF files with domain decomposition.
  *
- * This function reads meteorological grid information from a NetCDF
- * file, including time, spatial dimensions, and pressure levels.  It
- * also extracts longitudes, latitudes, and pressure levels from the
- * NetCDF file based on the specified control parameters.  The
- * function determines the time information either from the filename
- * or from the data file, depending on the file type.
+ * The `read_met_nc_grid_dd` function reads meteorological data from NetCDF files and processes it
+ * with domain decomposition for parallel processing. It extracts time information, grid dimensions,
+ * and coordinates, and sets up hyperslabs for subdomains and halos. It also reads pressure levels
+ * and handles model level and surface data.
  *
- * @param filename The filename of the NetCDF file.
- * @param ncid The NetCDF file identifier.
- * @param ctl A pointer to a structure containing control parameters.
- * @param met A pointer to a structure to store meteorological data.
+ * @param filename A string representing the filename of the NetCDF file to read.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met A pointer to a `met_t` structure where meteorological data will be stored.
  *
  * The function performs the following steps:
- * - Sets up a timer to monitor the reading time for meteorological grid information.
- * - Determines the time information from either the filename or the data file based on the file type.
- * - Checks the validity of the time information.
- * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
- * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
- * - Converts pressure levels to hPa if necessary.
- * - Logs the retrieved grid information for verification and debugging purposes.
+ * - Sets filenames for meteorological data files.
+ * - Extracts time information from the filename or NetCDF file.
+ * - Validates the time information and logs it.
+ * - Retrieves global and local grid dimensions and checks for regular grid spacing.
+ * - Sets up hyperslabs for subdomains and halos, considering edge cases.
+ * - Adjusts grid dimensions and coordinates for subdomains and halos.
+ * - Reads pressure levels and computes the 3D pressure field.
+ * - Handles model level and surface data using GRIB handles.
+ * - Reads grid data and surface data from the respective files.
+ * - Computes the 3D pressure field and reads model level data.
  *
- * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
- *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
- *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ * @note This function assumes that the input filename and structures are properly initialized.
+ * It uses MPI for parallel processing and handles domain decomposition.
+ * The function is designed to work with NetCDF and GRIB file formats.
+ * It logs various stages of processing for debugging and validation purposes.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
+
 #ifdef DD
-void read_met_grid_par(
+void read_met_nc_grid_dd
   const char *filename,
   const int ncid,
   const ctl_t * ctl,
@@ -7770,86 +7772,72 @@ void read_met_grid_par(
 #endif
 
 /**
- * @brief Reads meteorological grid information from a NetCDF file.
+ * @brief Reads and processes meteorological level data from NetCDF files with domain decomposition.
  *
- * This function reads meteorological grid information from a NetCDF
- * file, including time, spatial dimensions, and pressure levels.  It
- * also extracts longitudes, latitudes, and pressure levels from the
- * NetCDF file based on the specified control parameters.  The
- * function determines the time information either from the filename
- * or from the data file, depending on the file type.
+ * The `read_met_nc_levels_dd` function reads meteorological level data from a NetCDF file and processes it
+ * for use in a domain decomposition context. It handles various meteorological parameters such as
+ * temperature, wind components, humidity, ozone, cloud data, and vertical velocity. The function also
+ * processes pressure levels and interpolates data between model and pressure levels as needed.
  *
- * @param filename The filename of the NetCDF file.
- * @param ncid The NetCDF file identifier.
- * @param ctl A pointer to a structure containing control parameters.
- * @param met A pointer to a structure to store meteorological data.
+ * @param ncid An integer representing the NetCDF file ID.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters and settings.
+ * @param met A pointer to a `met_t` structure where meteorological level data will be stored.
  *
  * The function performs the following steps:
- * - Sets up a timer to monitor the reading time for meteorological grid information.
- * - Determines the time information from either the filename or the data file based on the file type.
- * - Checks the validity of the time information.
- * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
- * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
- * - Converts pressure levels to hPa if necessary.
- * - Logs the retrieved grid information for verification and debugging purposes.
+ * - Reads temperature, horizontal wind components, and vertical velocity data.
+ * - Processes water vapor data, handling both specific and relative humidity.
+ * - Reads ozone and various cloud-related data such as liquid water content, ice water content, and cloud cover.
+ * - Processes zeta and zeta_dot data.
+ * - Stores velocities on model levels and saves the number of model levels.
+ * - Computes pressure on model levels using different methods based on control parameters.
+ * - Checks the ordering of pressure levels to ensure they are monotonic.
+ * - Interpolates meteorological variables from model levels to pressure levels if specified.
+ * - Validates the ordering of pressure levels to ensure they are in descending order.
  *
- * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
- *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
- *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ * @note This function assumes that the NetCDF file ID and structures are properly initialized.
+ * It is designed to work with NetCDF files and uses OpenMP for parallel processing.
+ * The function logs errors and warnings for missing or unreadable data fields and handles different data formats.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
 #ifdef DD
-void read_met_grid_par(
-  const char *filename,
+void read_met_nc_levels_dd(
   const int ncid,
-  const ctl_t * ctl,
-  met_t * met);
+  const ctl_t *ctl,
+  met_t *met)
 #endif
 
 /**
- * @brief Reads surface meteorological data from a netCDF file and stores it in the meteorological data structure.
+ * @brief Reads and processes surface meteorological data from NetCDF files with domain decomposition.
  *
- * This function reads various surface meteorological variables from a
- * netCDF file and stores them in the provided meteorological data
- * structure.  Depending on the configuration, it may read data for
- * surface pressure, geopotential height, temperature, zonal and
- * meridional wind components, land-sea mask, and sea surface
- * temperature.
+ * The `read_met_nc_surface_dd` function reads surface meteorological data from a NetCDF file
+ * and processes it for use in a domain decomposition context. It handles various surface parameters
+ * such as pressure, geopotential height, temperature, wind components, and other relevant meteorological
+ * data. The function is designed to work with different meteorological data formats and configurations.
  *
- * @param ncid NetCDF file identifier.
- * @param met A pointer to the meteorological data structure to store the read data.
- * @param ctl A pointer to a structure containing control parameters.
+ * @param ncid An integer representing the NetCDF file ID.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters and settings.
+ * @param met A pointer to a `met_t` structure where surface meteorological data will be stored.
  *
  * The function performs the following steps:
- * - Sets a timer for performance monitoring.
- * - Reads surface meteorological data based on the configuration:
- *   - For MPTRAC meteorological data:
- *     - Reads surface pressure from "lnsp", "ps", or "sp" variables.
- *     - Converts surface pressure to Pa if necessary.
- *     - Reads geopotential height at the surface from "z" or "zm" variables.
- *     - Reads surface temperature from "t2m" or "2t" variables.
- *     - Reads zonal wind at the surface from "u10m" or "10u" variables.
- *     - Reads meridional wind at the surface from "v10m" or "10v" variables.
- *     - Reads land-sea mask from "lsm" variable.
- *     - Reads sea surface temperature from "sstk" or "sst" variables.
- *   - For CLaMS meteorological data:
- *     - Reads surface pressure from "ps" variable.
- *     - Reads geopotential height at the surface using the lowest level of the 3-D data field.
- *     - Reads surface temperature from "t2" variable.
- *     - Reads zonal wind at the surface from "u10" variable.
- *     - Reads meridional wind at the surface from "v10" variable.
- *     - Reads land-sea mask from "lsm" variable.
- *     - Reads sea surface temperature from "sstk" variable.
+ * - Reads surface pressure data and converts it if necessary.
+ * - Handles different data formats for MPTRAC and CLaMS meteorological data.
+ * - Reads geopotential height at the surface and processes it based on the data format.
+ * - Retrieves surface temperature, zonal and meridional wind, and other surface parameters.
+ * - Logs warnings if specific data fields cannot be read.
+ * - Uses helper functions to read 2D and 3D data fields from the NetCDF file.
+ * - Processes and stores the read data into the provided meteorological data structure.
  *
- * @note The function handles different variable names and units according to the specified meteorological data source (MPTRAC or CLaMS).
+ * @note This function assumes that the NetCDF file ID and structures are properly initialized.
+ * It is designed to work with NetCDF files and uses MPI for parallel processing.
+ * The function logs warnings for missing or unreadable data fields and handles different data formats.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
 #ifdef DD
-void read_met_surface_par(
+void read_met_nc_surface_dd
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
@@ -7928,7 +7916,7 @@ int read_met_nc_2d(
  * @author Lars Hoffmann
  */
 #ifdef DD
-int read_met_nc_2d_par(
+int read_met_nc_2d_dd
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -8015,7 +8003,7 @@ int read_met_nc_3d(
  * @author Lars Hoffmann
  */
 #ifdef DD
-int read_met_nc_3d_par(
+int read_met_nc_3d_dd
   const int ncid,
   const char *varname,
   const char *varname2,

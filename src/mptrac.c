@@ -5432,7 +5432,7 @@ int mptrac_read_met(
 #ifdef DD
     /* Read netCDF data... */
     if (ctl->met_type == 0) {
-      if (read_met_nc_par(filename, ctl, met) != 1)
+      if (read_met_nc_dd(filename, ctl, met) != 1)
 	return 0;
     }
 #else
@@ -7231,7 +7231,7 @@ void read_met_geopot(
 
 /*****************************************************************************/
 #ifdef DD
-void read_met_grid_par(
+void read_met_nc_grid_dd(
   const char *filename,
   const ctl_t *ctl,
   met_t *met) {
@@ -7586,7 +7586,7 @@ void read_met_grid_par(
 
 /*****************************************************************************/
 #ifdef DD
-void read_met_surface_par(
+void read_met_nc_surface_dd(
   const int ncid,
   const ctl_t *ctl,
   met_t *met) {
@@ -7596,14 +7596,14 @@ void read_met_surface_par(
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
-  if (read_met_nc_2d_par
+  if (read_met_nc_2d_dd
       (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps, 1.0f,
        1)) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
   } else
-    if (!read_met_nc_2d_par
+    if (!read_met_nc_2d_dd
 	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, met->ps, 0.01f,
 	 1)) {
     WARN("Cannot not read surface pressure data (use lowest level)!");
@@ -7625,10 +7625,10 @@ void read_met_surface_par(
   if (ctl->met_clams == 0) {
 
     /* Read geopotential height at the surface... */
-    if (!read_met_nc_2d_par
+    if (!read_met_nc_2d_dd
 	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, met->zs,
 	 (float) (1. / (1000. * G0)), 1))
-      if (!read_met_nc_2d_par
+      if (!read_met_nc_2d_dd
 	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, met->zs,
 	   (float) (1. / 1000.), 1))
 	WARN("Cannot read surface geopotential height!");
@@ -7643,7 +7643,7 @@ void read_met_surface_par(
     ALLOC(help, float,
 	  EX * EY * EP);
     memcpy(help, met->pl, sizeof(met->pl));
-    if (!read_met_nc_3d_par
+    if (!read_met_nc_3d_dd
 	(ncid, "gph", "GPH", NULL, NULL, ctl, met, met->pl,
 	 (float) (1e-3 / G0)))
       ERRMSG("Cannot read geopotential height!");
@@ -7655,74 +7655,74 @@ void read_met_surface_par(
   }
 
   /* Read temperature at the surface... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, met->us,
        1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, met->vs,
        1.0, 1))
     WARN("Cannot read surface meridional wind!");
 
   /* Read eastward turbulent surface stress... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, met->ess, 1.0,
        1))
     WARN("Cannot read eastward turbulent surface stress!");
 
   /* Read northward turbulent surface stress... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, met->nss, 1.0,
        1))
     WARN("Cannot read nothward turbulent surface stress!");
 
   /* Read surface sensible heat flux... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, met->shf, 1.0,
        1))
     WARN("Cannot read surface sensible heat flux!");
 
   /* Read land-sea mask... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, met->lsm, 1.0,
        1))
     WARN("Cannot read land-sea mask!");
 
   /* Read sea surface temperature... */
-  if (!read_met_nc_2d_par
+  if (!read_met_nc_2d_dd
       (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
        1.0, 1))
     WARN("Cannot read sea surface temperature!");
 
   /* Read PBL... */
   if (ctl->met_pbl == 0)
-    if (!read_met_nc_2d_par
+    if (!read_met_nc_2d_dd
 	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
 	 0.01f, 1))
       WARN("Cannot read planetary boundary layer pressure!");
   if (ctl->met_pbl == 1)
-    if (!read_met_nc_2d_par
+    if (!read_met_nc_2d_dd
 	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
 	 0.001f, 1))
       WARN("Cannot read planetary boundary layer height!");
 
   /* Read CAPE... */
   if (ctl->met_cape == 0)
-    if (!read_met_nc_2d_par
+    if (!read_met_nc_2d_dd
 	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, met->cape,
 	 1.0, 1))
       WARN("Cannot read CAPE!");
 
   /* Read CIN... */
   if (ctl->met_cape == 0)
-    if (!read_met_nc_2d_par
+    if (!read_met_nc_2d_dd
 	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
 	 1.0, 1))
       WARN("Cannot read convective inhibition!");
@@ -7732,7 +7732,7 @@ void read_met_surface_par(
 /*****************************************************************************/
 
 #ifdef DD
-void read_met_levels_par(
+void read_met_nc_levels_dd(
   const int ncid,
   const ctl_t *ctl,
   met_t *met) {
@@ -7742,25 +7742,25 @@ void read_met_levels_par(
   LOG(2, "Read level data...");
 
   /* Read temperature... */
-  if (!read_met_nc_3d_par(ncid, "t", "T", "temp", "TEMP", ctl, met, met->t, 1.0))
+  if (!read_met_nc_3d_dd(ncid, "t", "T", "temp", "TEMP", ctl, met, met->t, 1.0))
     ERRMSG("Cannot read temperature!");
 
   /* Read horizontal wind and vertical velocity... */
-  if (!read_met_nc_3d_par(ncid, "u", "U", NULL, NULL, ctl, met, met->u, 1.0))
+  if (!read_met_nc_3d_dd(ncid, "u", "U", NULL, NULL, ctl, met, met->u, 1.0))
     ERRMSG("Cannot read zonal wind!");
-  if (!read_met_nc_3d_par(ncid, "v", "V", NULL, NULL, ctl, met, met->v, 1.0))
+  if (!read_met_nc_3d_dd(ncid, "v", "V", NULL, NULL, ctl, met, met->v, 1.0))
     ERRMSG("Cannot read meridional wind!");
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "w", "W", "omega", "OMEGA", ctl, met, met->w, 0.01f))
     WARN("Cannot read vertical velocity!");
 
   /* Read water vapor... */
   if (!ctl->met_relhum) {
-    if (!read_met_nc_3d_par
+    if (!read_met_nc_3d_dd
 	(ncid, "q", "Q", "sh", "SH", ctl, met, met->h2o, (float) (MA / MH2O)))
       WARN("Cannot read specific humidity!");
   } else {
-    if (!read_met_nc_3d_par
+    if (!read_met_nc_3d_dd
 	(ncid, "rh", "RH", NULL, NULL, ctl, met, met->h2o, 0.01f))
       WARN("Cannot read relative humidity!");
 #pragma omp parallel for default(shared) collapse(2)
@@ -7774,31 +7774,31 @@ void read_met_levels_par(
   }
 
   /* Read ozone... */
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "o3", "O3", NULL, NULL, ctl, met, met->o3, (float) (MA / MO3)))
     WARN("Cannot read ozone data!");
 
   /* Read cloud data... */
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "clwc", "CLWC", NULL, NULL, ctl, met, met->lwc, 1.0))
     WARN("Cannot read cloud liquid water content!");
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "crwc", "CRWC", NULL, NULL, ctl, met, met->rwc, 1.0))
     WARN("Cannot read cloud rain water content!");
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "ciwc", "CIWC", NULL, NULL, ctl, met, met->iwc, 1.0))
     WARN("Cannot read cloud ice water content!");
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, met->swc, 1.0))
     WARN("Cannot read cloud snow water content!");
-  if (!read_met_nc_3d_par(ncid, "cc", "CC", NULL, NULL, ctl, met, met->cc, 1.0))
+  if (!read_met_nc_3d_dd(ncid, "cc", "CC", NULL, NULL, ctl, met, met->cc, 1.0))
     WARN("Cannot read cloud cover!");
 
   /* Read zeta and zeta_dot... */
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
     WARN("Cannot read ZETA!");
-  if (!read_met_nc_3d_par
+  if (!read_met_nc_3d_dd
       (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
        NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
     WARN("Cannot read ZETA_DOT!");
@@ -7822,10 +7822,10 @@ void read_met_levels_par(
 
     /* Read 3-D pressure field... */
     if (ctl->met_vert_coord == 1) {
-      if (!read_met_nc_3d_par
+      if (!read_met_nc_3d_dd
 	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl,
 	   0.01f))
-	    if (!read_met_nc_3d_par
+	    if (!read_met_nc_3d_dd
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
 
@@ -7937,11 +7937,10 @@ void read_met_levels_par(
 }
 #endif
 
-
 /*****************************************************************************/
 
 #ifdef DD
-int read_met_nc_par(
+int read_met_nc_dd(
   const char *filename,
   const ctl_t *ctl,
   met_t *met) {
@@ -7955,13 +7954,13 @@ int read_met_nc_par(
   }
 
   /* Read coordinates of meteo data... */
-  read_met_grid_par(filename, ncid, ctl, met);
+  read_met_nc_grid_dd(filename, ncid, ctl, met);
 
   /* Read surface data... */
-  read_met_surface_par(ncid, ctl, met);
+  read_met_nc_surface_dd(ncid, ctl, met);
 
   /* Read meteo data on vertical levels... */
-  read_met_levels_par(ncid, ctl, met);
+  read_met_nc_levels_dd(ncid, ctl, met);
 
   /* Close file... */
   NC(nc_close(ncid));
@@ -7975,7 +7974,7 @@ int read_met_nc_par(
 /*****************************************************************************/
 
 #ifdef DD
-int read_met_nc_2d_par(
+int read_met_nc_2d_dd(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -8205,7 +8204,7 @@ int read_met_nc_2d_par(
 /*****************************************************************************/
 
 #ifdef DD
-int read_met_nc_3d_par(
+int read_met_nc_3d_dd(
   const int ncid,
   const char *varname,
   const char *varname2,
