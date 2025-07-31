@@ -4274,7 +4274,9 @@ void mptrac_free(
   free(met1);
   
   /* Free MPI datatype... */
+#ifdef DD
   MPI_Type_free(&mpi_info->MPI_Particle);
+#endif
 }
 
 /*****************************************************************************/

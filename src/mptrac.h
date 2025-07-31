@@ -7428,6 +7428,40 @@ void read_met_ml2pl(
 void read_met_monotonize(
   const ctl_t * ctl,
   met_t * met);
+  
+/**
+ * @brief Reads meteorological data from a NetCDF file and processes it.
+ *
+ * This function reads meteorological data from a NetCDF file specified by the `filename` parameter, 
+ * using the NetCDF library. It reads grid, surface, and vertical level data, processes the data 
+ * (including extrapolation, boundary conditions, and downsampling), and calculates various derived 
+ * meteorological fields such as geopotential heights, potential vorticity, cloud properties, and 
+ * convective available potential energy (CAPE).
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
+ *
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
+ *
+ * @note
+ * - The function opens the NetCDF file in read-only mode using `nc_open` and handles any errors 
+ * during the file opening process.
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
+ * - It is important to ensure that the NetCDF file contains the expected structure for meteorological 
+ * data (grid, levels, surface data).
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
 
 /**
  * @brief Reads meteorological variables at different vertical levels from a NetCDF file.
