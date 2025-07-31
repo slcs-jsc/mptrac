@@ -3438,11 +3438,15 @@ typedef struct {
   /*! Size of node. */
   int size;
   
+#ifdef DD
+  
   /*! Rank of neighbouring nodes. */
   int neighbours[NNMAX];
   
   /*! MPI Type for the particle. */
   MPI_Datatype MPI_Particle;
+  
+#endif DD
 
 } mpi_info_t;
 
@@ -9707,7 +9711,8 @@ void module_dd(
  * or a custom sorting algorithm. If compiled without Thrust support, an error message is displayed.
  * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere data structure to maintain consistency.
  *
- * @author Jan Clemens, Lars Hoffmann
+ * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 #ifdef DD
 void dd_sort(
