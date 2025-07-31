@@ -21,7 +21,7 @@ LIBDIR += -L ../libs/build/lib -L ../libs/build/lib64
 COMPILER ?= gcc
 
 # Compile for MPI...
-MPI ?= 1
+MPI ?= 0
 
 # Compile for GPUs...
 GPU ?= 0
