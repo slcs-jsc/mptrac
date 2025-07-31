@@ -13190,7 +13190,7 @@ void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
 
 /*****************************************************************************/
 
-void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
+void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
   cache_t* cache) {
 
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
@@ -13225,6 +13225,7 @@ void particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticle
 }
 
 /*****************************************************************************/
+
 void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
   MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, 
     MPI_DOUBLE, MPI_DOUBLE };
@@ -13241,6 +13242,7 @@ void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
 }
 
 /*****************************************************************************/
+
 void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t* mpi_info) {
 
       SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
@@ -13364,11 +13366,10 @@ void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t* mpi_info) {
       mpi_info->neighbours[7] = mpi_info->rank + 1; // lower
     
     }
-
 }
   
-
 /*****************************************************************************/
+
 void dd_communicate_particles(
   particle_t* particles, 
   int* nparticles, 
@@ -13691,6 +13692,8 @@ void dd_assign_rect_subdomains_atm(
   }
 }
   
+/*****************************************************************************/
+
 void dd_init(
   ctl_t *ctl,
   mpi_info_t *mpi_info, 
@@ -13715,6 +13718,7 @@ void dd_init(
   *dd_init_flg = 1;      
 }
 
+/*****************************************************************************/
   
 void module_dd( ctl_t *ctl, 
   atm_t *atm,
@@ -13745,13 +13749,12 @@ void module_dd( ctl_t *ctl,
     /********************* CPU region end *************************************/
 
     /* Transform from array of struct to struct of array... */
-    particles2atm(atm, particles, ctl, &nparticles, cache);
+    dd_particles2atm(atm, particles, ctl, &nparticles, cache);
         
     /* Free local particle array... */
     free(particles);
 
 } 
-
 
 /*****************************************************************************/
 
@@ -13839,8 +13842,6 @@ void dd_sort(
   
   if (*nparticles > NPART)
     ERRMSG("Number of particles to send and recieve to small. Increase NPART!");
-
-  //printf("rank %d module sort: %d, %d, %d\n", *rank, nparticlest, npt, np);
  
   /* Free... */
 #ifdef _OPENACC
