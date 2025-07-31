@@ -4249,6 +4249,7 @@ void mptrac_alloc(
 
 /*****************************************************************************/
 
+#ifdef DD
 void mptrac_free(
   ctl_t *ctl,
   cache_t *cache,
@@ -4257,6 +4258,15 @@ void mptrac_free(
   met_t *met1,
   atm_t *atm,
   mpi_info_t *mpi_info) {
+#else
+void mptrac_free(
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm) {
+#endif
 
   /* Delete data region on GPU... */
 #ifdef _OPENACC

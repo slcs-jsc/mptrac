@@ -1,3 +1,0 @@
-/p/project1/cslmet/clemens1/ltm_core/mptrac/CMakeFiles/MPTRAC_DD.dir
-/p/project1/cslmet/clemens1/ltm_core/mptrac/CMakeFiles/edit_cache.dir
-/p/project1/cslmet/clemens1/ltm_core/mptrac/CMakeFiles/rebuild_cache.dir

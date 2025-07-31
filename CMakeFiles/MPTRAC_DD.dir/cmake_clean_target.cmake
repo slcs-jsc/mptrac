@@ -1,3 +1,0 @@
-file(REMOVE_RECURSE
-  "libMPTRAC_DD.a"
-)
