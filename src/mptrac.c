@@ -1975,8 +1975,8 @@ void level_definitions(
     ERRMSG("Use 0 for l137, 1 for l91, 2 for l60 or values between 3 and 7.");
   }
 
-  if (ctl->met_np > NP) {
-    ERRMSG("Recompile with larger NP to use this pressure level definition.");
+  if (ctl->met_np > EP) {
+    ERRMSG("Recompile with larger EP to use this pressure level definition.");
   }
 }
 
@@ -13169,8 +13169,8 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
   atm->np += *nparticles;
 #pragma acc update device(atm->np)
 
-  if (atm->np > EP)
-    ERRMSG("Number of particles to high. Increase EP!");
+  if (atm->np > NP)
+    ERRMSG("Number of particles to high. Increase NP!");
 
 }
 #endif
