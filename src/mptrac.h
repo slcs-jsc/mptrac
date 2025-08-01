@@ -2582,6 +2582,9 @@ typedef struct {
   /*! Quantity array index for diagnosed zeta vertical coordinate. */
   int qnt_zeta_d;
 
+  /*! Quantity array index forvelocity of zeta vertical coordinate. */
+  int qnt_zeta_dot;
+
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
 
