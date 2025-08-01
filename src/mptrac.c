@@ -7565,12 +7565,7 @@ void read_met_nc_surface_dd(
 	met->ps[ix][iy]
 	  = (ctl->met_np > 0 ? (float) ctl->met_p[0] : (float) met->p[0]);
   }
-
-  int rank;
-  MPI_Comm_rank(MPI_COMM_WORLD,&rank);
-  for (int ix = 0; ix < met->nx; ix++)
-	  for (int iy = 0; iy < met->ny; iy++) 
-     
+      
   /* MPTRAC meteo data... */
   if (ctl->met_clams == 0) {
 
