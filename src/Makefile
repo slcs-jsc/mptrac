@@ -144,7 +144,6 @@ endif
 
 # Compile for domain decompositon...
 ifeq ($(DD),1)
-  CC = mpicc
   CFLAGS += -DDD
 endif
 
