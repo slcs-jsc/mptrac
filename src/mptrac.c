@@ -13169,8 +13169,8 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
   atm->np += *nparticles;
 #pragma acc update device(atm->np)
 
-  if (atm->np > NP)
-    ERRMSG("Number of particles to high. Increase NP!");
+  if (atm->np > EP)
+    ERRMSG("Number of particles to high. Increase EP!");
 
 }
 #endif
