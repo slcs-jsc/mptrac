@@ -7632,7 +7632,7 @@ void read_met_nc_grid(
  * @author Lars Hoffmann
  */
 #ifdef DD
-int read_met_nc_dd
+int read_met_nc_dd(
   const char *filename,
   const ctl_t * ctl,
   met_t * met);
@@ -7670,7 +7670,6 @@ int read_met_nc_dd
  * @author Lars Hoffmann
  * @author Jan Clemens
  */
-
 #ifdef DD
 void read_met_nc_grid_dd(
   const char *filename,
@@ -7713,7 +7712,7 @@ void read_met_nc_grid_dd(
 void read_met_nc_levels_dd(
   const int ncid,
   const ctl_t *ctl,
-  met_t *met)
+  met_t *met);
 #endif
 
 /**
@@ -7747,8 +7746,8 @@ void read_met_nc_levels_dd(
 #ifdef DD
 void read_met_nc_surface_dd(
   const int ncid,
-  const ctl_t * ctl,
-  met_t * met);
+  const ctl_t *ctl,
+  met_t *met);
 #endif
 
 /**
@@ -7824,7 +7823,7 @@ int read_met_nc_2d(
  * @author Lars Hoffmann
  */
 #ifdef DD
-int read_met_nc_2d_dd
+int read_met_nc_2d_dd(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -7911,7 +7910,7 @@ int read_met_nc_3d(
  * @author Lars Hoffmann
  */
 #ifdef DD
-int read_met_nc_3d_dd
+int read_met_nc_3d_dd(
   const int ncid,
   const char *varname,
   const char *varname2,

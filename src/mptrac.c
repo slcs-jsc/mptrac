@@ -7255,17 +7255,11 @@ void read_met_geopot(
 #ifdef DD
 void read_met_nc_grid_dd(
   const char *filename,
+  const int ncid,
   const ctl_t *ctl,
   met_t *met) {
 
-  /* Set filenames... */
-  size_t filename_len = strlen(filename) + 1;
-  char sf_filename[filename_len];
-  char ml_filename[filename_len];
-  strcpy(sf_filename, filename);
-  strcpy(ml_filename, filename);
-  get_met_replace(ml_filename, "XX", "ml");
-  get_met_replace(sf_filename, "XX", "sf");
+  char levname[LEN], tstr[10];
 
   double rtime = 0, r, r2;
 
@@ -7275,7 +7269,7 @@ void read_met_nc_grid_dd(
   size_t np;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_GRID", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_NC_GRID_DD", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
   /* MPTRAC meteo files... */
@@ -7537,72 +7531,6 @@ void read_met_nc_grid_dd(
 	met->p[0], met->p[1], met->p[met->np - 1]);
   }
 
-  /* Get handles for model level data... */
-  int ml_num_messages = 0, err = 0;
-  ECC(codes_count_in_file(0, ml_file, &ml_num_messages));
-  codes_handle **ml_handles =
-    (codes_handle **) malloc(sizeof(codes_handle *) *
-			     (size_t) ml_num_messages);
-  for (int i = 0; i < ml_num_messages; i++) {
-    codes_handle *h = NULL;
-    if ((h = codes_grib_handle_new_from_file(0, ml_file, &err)) != NULL)
-      ml_handles[i] = h;
-  }
-
-  /* Get handles for surface data... */
-  int sf_num_messages = 0;
-  ECC(codes_count_in_file(0, sf_file, &sf_num_messages));
-  codes_handle **sf_handles =
-    (codes_handle **) malloc(sizeof(codes_handle *) *
-			     (size_t) sf_num_messages);
-  for (int i = 0; i < sf_num_messages; i++) {
-    codes_handle *h = NULL;
-    if ((h = codes_grib_handle_new_from_file(0, sf_file, &err)) != NULL)
-      sf_handles[i] = h;
-  }
-
-  /* Close files... */
-  fclose(ml_file);
-  fclose(sf_file);
-
-  /* Read grid data... */
-  read_met_grib_grid(ml_handles, ml_num_messages, met);
-
-  /* Read surface data... */
-  read_met_grib_surface(sf_handles, sf_num_messages, ctl, met);
-  for (int i = 0; i < sf_num_messages; i++)
-    codes_handle_delete(sf_handles[i]);
-  free(sf_handles);
-
-  /* Compute 3D pressure field... */
-  size_t value_count;
-  ECC(codes_get_size(ml_handles[0], "pv", &value_count));
-  double *values = (double *) malloc(value_count * sizeof(double));
-  ECC(codes_get_double_array(ml_handles[0], "pv", values, &value_count));
-  double a_vals[138], b_vals[138];
-  for (int i = 0; i <= 137; i++) {
-    a_vals[i] = values[i];
-    b_vals[i] = values[i + 137];
-  }
-  for (int nx = 0; nx < met->nx; nx++)
-    for (int ny = 0; ny < met->ny; ny++)
-      for (int level = 0; level <= met->npl; level++) {
-	const float p1 =
-	  (float) ((a_vals[level] * 0.01f + met->ps[nx][ny] * b_vals[level]));
-	const float p2 =
-	  (float) ((a_vals[level + 1] * 0.01f +
-		    met->ps[nx][ny] * b_vals[level + 1]));
-	met->pl[nx][ny][level] = (p1 + p2) * 0.5f;
-      }
-
-  /* Read model level data... */
-  read_met_grib_levels(ml_handles, ml_num_messages, ctl, met);
-  for (int i = 0; i < ml_num_messages; i++)
-    codes_handle_delete(ml_handles[i]);
-  free(ml_handles);
-
-  /* Return success... */
-  return 1;
 }
 #endif
 
