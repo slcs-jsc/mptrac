@@ -57,8 +57,7 @@
 	       class="w3-round-large" style="width: 100%; max-height: 85vh; background: #222; padding: 15px; box-sizing: border-box; object-fit: contain;" />
 	  <br><br>
 	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="prev()">◀️ Prev</button>
-	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="play()">▶️ Play</button>	  
-	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="stop()">⏹️ Stop</button>
+	  <button id="toggleButton" class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 10px;" onclick="togglePlayStop()">▶️ Play</button>
 	  <button class="w3-button w3-small w3-hover-light-blue w3-round-large" style="background: #003366; color: white; margin-right: 4px;" onclick="next()">Next ▶️</button>
 	  <div style="margin-top: 15px; text-align: center;">
 	    <label for="intervalRange" style="color: #ccc; font-family: monospace;">Frame Interval (ms): </label>
@@ -89,16 +88,15 @@
 	    updateImage();
 	}
 	
-	function play() {
+	function togglePlayStop() {
+	    const button = document.getElementById("toggleButton");
 	    if (intervalId === null) {
 		intervalId = setInterval(next, interval);
-	    }
-	}
-	
-	function stop() {
-	    if (intervalId !== null) {
+		button.innerHTML = "⏹️ Stop";
+	    } else {
 		clearInterval(intervalId);
 		intervalId = null;
+		button.innerHTML = "▶️ Play";
 	    }
 	}
 	
@@ -106,8 +104,8 @@
 	    interval = parseInt(newInterval);
 	    if (intervalId !== null) {
 		// Restart playback with new interval
-		stop();
-		play();
+		clearInterval(intervalId);
+		intervalId = setInterval(next, interval);
 	    }
 	}
 	
