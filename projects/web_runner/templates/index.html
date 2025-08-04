@@ -366,16 +366,22 @@
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Longitude Min [°]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lon_min" value="-180.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lon_min" value="-999">
 	    <br>
 	    <label>Longitude Max [°]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lon_max" value="180.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lon_max" value="-999">
 	    <br>
 	    <label>Latitude Min [°]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lat_min" value="-90.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lat_min" value="-999">
 	    <br>
 	    <label>Latitude Max [°]</label>
-	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lat_max" value="90.0">
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="lat_max" value="-999">
+	    <br>
+	    <label>Vertical Range Min [km]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="z_min" value="-999">
+	    <br>
+	    <label>Vertical Range Max [km]</label>
+	    <input class="w3-input w3-dark-gray w3-round" type="text" name="z_max" value="-999">
 	  </div>
 	  <div class="w3-third" style="padding: 16px;">
 	    <label>Central Longitude [°]</label>
@@ -481,6 +487,8 @@
                   lon_max: "-30.0",
                   lat_min: "0.0",
                   lat_max: "60.0",
+                  z_min: "0",
+                  z_max: "16.0",
                   atm_dt_out: "10800"
               },
 	      eyjafjallajokull: {
@@ -501,6 +509,8 @@
                   lon_max: "90.0",
                   lat_min: "0.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      puyehue: {
@@ -521,6 +531,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      raikoke: {
@@ -541,6 +553,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      canada_wildfire: {
@@ -561,6 +575,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      chernobyl: {
@@ -581,6 +597,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      beirut: {
@@ -601,6 +619,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      sai: {
@@ -621,6 +641,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      sahara_dust: {
@@ -641,6 +663,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      },
 	      beijing_haze: {
@@ -661,6 +685,8 @@
                   lon_max: "180.0",
                   lat_min: "-90.0",
                   lat_max: "90.0",
+                  z_min: "-999",
+                  z_max: "-999",
                   atm_dt_out: "21600"
 	      }
 	  };
@@ -669,7 +695,7 @@
 	  if (!s) return;
 	  
 	  // Populate basic fields
-	  ['start_time', 'stop_time', 'mlon', 'mlat', 'mz', 'sz', 'uz', 'ulon', 'ulat', 'central_lat', 'lon_min', 'lon_max', 'lat_min', 'lat_max'].forEach(name => {
+	  ['start_time', 'stop_time', 'mlon', 'mlat', 'mz', 'sz', 'uz', 'ulon', 'ulat', 'central_lat', 'lon_min', 'lon_max', 'lat_min', 'lat_max', 'z_min', 'z_max'].forEach(name => {
               const el = document.querySelector(`[name="${name}"]`);
               if (el && s[name] !== undefined) el.value = s[name];
 	  });

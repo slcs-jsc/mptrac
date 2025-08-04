@@ -112,6 +112,7 @@ def create_plot_file(
     projection='cartesian', region='global',
     central_lon=0.0, central_lat=0.0,
     lon_min=-180, lat_min=-90, lon_max=180, lat_max=90,
+    z_min=-999, z_max=-999,
     met_name='', time_str='',
     mlon=None, mlat=None
 ):
@@ -129,8 +130,13 @@ def create_plot_file(
             ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
     ax.coastlines(color='gray', resolution='10m')
     ax.add_feature(cfeature.BORDERS, linewidth=0.5, edgecolor='gray')
-    sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10,
-                    edgecolors='none', transform=ccrs.PlateCarree())
+    if z_max > z_min:
+        sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10,
+                        edgecolors='none', transform=ccrs.PlateCarree(),
+                        vmin=z_min, vmax=z_max)
+    else:
+        sc = ax.scatter(lons, lats, c=heights, cmap='tab20c', s=10,
+                        edgecolors='none', transform=ccrs.PlateCarree())
     if mlon is not None and mlat is not None:
         ax.plot(mlon, mlat, 'o', color='red', markersize=10, markeredgecolor='white',
                 transform=ccrs.PlateCarree(), zorder=5, label='Initial location')
@@ -154,7 +160,9 @@ def process_plot(
     map_projection, plot_region,
     central_lon, central_lat,
     mlon, mlat, met_name,
-    lon_min, lat_min, lon_max, lat_max
+    lon_min, lat_min,
+    lon_max, lat_max,
+    z_min, z_max
 ):
     filename = os.path.splitext(os.path.basename(file))[0]
     parts = filename.split('_')[1:6]
@@ -184,6 +192,8 @@ def process_plot(
         lat_min=lat_min,
         lon_max=lon_max,
         lat_max=lat_max,
+        z_min=z_min,
+        z_max=z_max,
         met_name=met_name,
         time_str=timestamp_iso,
         mlon=mlon,
@@ -248,6 +258,7 @@ def run():
         plot_region = f.get('plot_region', 'global')
         map_projection = f.get('map_projection', 'cartesian')
         lon_min, lat_min, lon_max, lat_max = to_f('lon_min'), to_f('lat_min'), to_f('lon_max'), to_f('lat_max')
+        z_min, z_max = to_f('z_min'), to_f('z_max')
         central_lon, central_lat = to_f('central_lon'), to_f('central_lat')
         
         # Check values...
@@ -263,10 +274,6 @@ def run():
             return validation_error("Number of particles must be between 1 and 10,000.", run_id=run_id)
         if any(p < 0 for p in [ulon, ulat, uz, slon, slat, sz] + list(turb.values())):
             return validation_error("Turbulence parameters must be zero or positive.", run_id=run_id)
-        if not (-180 <= lon_min <= 180) or not (-180 <= lon_max <= 180):
-            return validation_error("Plot longitude bounds must be between -180° and 180°.", run_id=run_id)
-        if not (-90 <= lat_min <= 90) or not (-90 <= lat_max <= 90):
-            return validation_error("Plot latitude bounds must be between -90° and 90°.", run_id=run_id)
         if not (-180 <= central_lon <= 180):
             return validation_error("Central longitude must be between -180° and 180°.", run_id=run_id)
         if not (-90 <= central_lat <= 90):
@@ -507,7 +514,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
             futures = [
                 executor.submit(process_plot, run_id, file, work_dir,
                                 map_projection, plot_region, central_lon, central_lat,
-                                mlon, mlat, met_name, lon_min, lat_min, lon_max, lat_max)
+                                mlon, mlat, met_name, lon_min, lat_min, lon_max, lat_max, z_min, z_max)
                 for file in files
             ]
             for future in as_completed(futures):
