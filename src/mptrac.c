@@ -5664,6 +5664,9 @@ void mptrac_run_timestep(
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
     
+  for (int ix = 0; ix < 10; ix++)
+  	printf("%d: %d: %f\n", mpi_info->rank, ix, (*met0)->u[ix][0][60]);
+    
   /* Domain decomposition... */
 #ifdef DD
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1)
@@ -7400,7 +7403,6 @@ void read_met_nc_grid_dd(
       WARN("Extended subdomains at the right to fit to full domain.");
     }
   }
-
   if (bottom) {
     int gap = met->ny_glob - ctl->dd_subdomains_meridional*met->ny;
     if (gap > 0) {
@@ -7752,6 +7754,7 @@ void read_met_nc_levels_dd(
 
   /* Store velocities on model levels... */
   if (ctl->met_vert_coord != 0) {
+#pragma omp parallel for default(shared)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
