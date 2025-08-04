@@ -7857,7 +7857,6 @@ void read_met_nc_levels_dd(
 
   /* Interpolate from model levels to pressure levels... */
   if (ctl->met_np > 0) {
-    met->np = ctl->met_np;
 
     /* Interpolate variables... */
     read_met_ml2pl(ctl, met, met->t, "T");
