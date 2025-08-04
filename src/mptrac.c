@@ -7479,14 +7479,12 @@ void read_met_nc_grid_dd(
 
   for ( int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
     int ix_ = (int) met->subdomain_start[3] + ix;
-    //met->lon[ix + met->halo_offset_start] = met->lon[ix_];
     help_lon[ix + met->halo_offset_start] = met->lon[ix_];
   }
 
   for ( int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
      int ix_ = (int) met->halo_bnd_start[3] + ix;
     help_lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
-    //met->lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
   }
   
   /* Reset the grid dimensions... */
@@ -7533,6 +7531,10 @@ void read_met_nc_grid_dd(
     LOG(2, "Pressure levels: %g, %g ... %g hPa",
 	met->p[0], met->p[1], met->p[met->np - 1]);
   }
+  
+  /* Read hybrid levels... */
+  if (strcasecmp(levname, "hybrid") == 0)
+    NC_GET_DOUBLE("hybrid", met->hybrid, 1);
 
 }
 #endif
@@ -8083,8 +8085,7 @@ int read_met_nc_2d_dd(
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
 
-      /* Copy and check data (ordering: lat, lon)... */
-
+    /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
   for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
 	  for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
@@ -8100,7 +8101,7 @@ int read_met_nc_2d_dd(
         dest[ix + met->halo_offset_start][iy] = NAN;
     }
 
-/* Copy and check data (ordering: lat, lon)... */
+  /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
   for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
 	  for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
@@ -8263,6 +8264,7 @@ int read_met_nc_3d_dd(
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
+      
       /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
       for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++)
@@ -9883,7 +9885,7 @@ void read_met_periodic(
   /* Loop over latitudes and pressure levels... */
 #pragma omp parallel for default(shared)
   for (int iy = 0; iy < met->ny; iy++) {
-    met->ps[met->nx - 1][iy] = met->ps[0][iy];
+    met->ps[met->nx - 1][iy] = met->ps[0][iy]; 
     met->zs[met->nx - 1][iy] = met->zs[0][iy];
     met->ts[met->nx - 1][iy] = met->ts[0][iy];
     met->us[met->nx - 1][iy] = met->us[0][iy];
@@ -13510,9 +13512,9 @@ void dd_assign_rect_subdomains_atm(
     SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
     
     if (init) {
-#pragma acc enter data create(mpi_info->rank)
+#pragma acc enter data create(mpi_info)
 #pragma acc update device(mpi_info->rank)
-#pragma acc data present(atm, ctl, mpi_info->rank, met)
+#pragma acc data present(atm, ctl, mpi_info, met)
 #pragma acc parallel loop independent gang vector
       for (int ip=0; ip<atm->np; ip++) {
 
@@ -13531,13 +13533,13 @@ void dd_assign_rect_subdomains_atm(
           atm->q[ctl->qnt_destination][ip] = -1;
         }   
       } 
-#pragma acc exit data delete(mpi_info->rank)
+#pragma acc exit data delete(mpi_info)
     } else {
     
      /* Classify air parcels into subdomain... */
-#pragma acc enter data create(mpi_info->neighbours[:NNMAX], mpi_info->rank)
+#pragma acc enter data create(mpi_info)
 #pragma acc update device(mpi_info->neighbours[:NNMAX], mpi_info->rank)
-#pragma acc data present(atm, met, ctl, mpi_info->neighbours, mpi_info->rank)
+#pragma acc data present(atm, met, ctl, mpi_info)
 #pragma acc parallel loop independent gang vector
     for (int ip=0; ip<atm->np; ip++) {
     
@@ -13641,7 +13643,7 @@ void dd_assign_rect_subdomains_atm(
         }
      }
     }
-#pragma acc exit data delete(mpi_info->neighbours, mpi_info->rank)
+#pragma acc exit data delete(mpi_info)
   }
 }
 #endif
