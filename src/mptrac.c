@@ -5663,10 +5663,7 @@ void mptrac_run_timestep(
   /* First-order tracer chemistry... */
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
-    
-  for (int ix = 0; ix < 10; ix++)
-  	printf("%d: %d: %f\n", mpi_info->rank, ix, (*met0)->u[ix][0][60]);
-    
+        
   /* Domain decomposition... */
 #ifdef DD
   if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1)
