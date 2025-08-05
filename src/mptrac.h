@@ -285,10 +285,8 @@
 #endif
 
 /*! Maximum number of particles to send and recieve. */
-#ifdef DD
-  #ifndef NPART
-  #define NPART 100000
-  #endif
+#ifndef DD_NPART
+#define DD_NPART 100000
 #endif
 
 /*! Maximum number of quantities per data point. */

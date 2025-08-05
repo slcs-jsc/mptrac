@@ -12985,7 +12985,7 @@ void dd_atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
   
   /* Select the particles that will be send... */
   int npart = *nparticles;
-#pragma acc enter data create( nparticles, particles[:NPART])
+#pragma acc enter data create( nparticles, particles[:DD_NPART])
 #pragma acc update device( nparticles)
 #pragma acc parallel loop present( atm, ctl, particles, cache, nparticles)
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
@@ -13018,7 +13018,7 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
   int npart = *nparticles;
-#pragma acc enter data create(nparticles, particles[:NPART])
+#pragma acc enter data create(nparticles, particles[:DD_NPART])
 #pragma acc update device(particles[:npart], nparticles)
 #pragma acc data present(atm, ctl, cache, particles, nparticles)
 #pragma acc parallel loop
@@ -13562,7 +13562,7 @@ void module_dd( ctl_t *ctl,
     /* Initialize particles locally... */
     int nparticles = 0;
     particle_t* particles;
-    ALLOC(particles, particle_t, NPART);
+    ALLOC(particles, particle_t, DD_NPART);
     
     /* Assign particles to new subdomains... */    
     dd_assign_rect_subdomains_atm( atm, *met, ctl, mpi_info, 0);
@@ -13674,8 +13674,8 @@ void dd_sort(
   atm->np = npt;
   #pragma acc update device(atm->np)
   
-  if (*nparticles > NPART)
-    ERRMSG("Number of particles to send and recieve to small. Increase NPART!");
+  if (*nparticles > DD_NPART)
+    ERRMSG("Number of particles to send and recieve to small. Increase DD_NPART!");
  
   /* Free... */
 #ifdef _OPENACC
