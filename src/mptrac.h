@@ -3390,7 +3390,6 @@ typedef struct {
 
 } atm_t;
 
-#ifdef DD 
 /**
  * @brief Particle data.
  * 
@@ -3416,7 +3415,6 @@ typedef struct {
   double q[NQ];
   
 } particle_t;
-#endif
 
 typedef struct {
 
