@@ -7943,8 +7943,6 @@ int read_met_nc_2d_dd(
 
   char varsel[LEN];
 
-  float offset, scalfac;
-
   int varid;
 
   /* Check if variable exists... */
@@ -7968,72 +7966,7 @@ int read_met_nc_2d_dd(
   else
     return 0;
 
-  /* Read packed data... */
-  if (ctl->met_nc_scale
-      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
 
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 2-D variable: %s"
-	" (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention != 0)
-      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
-
-    /* Copy and check data... */
-    #pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++) {
-	      if (init)
-	        dest[ix][iy] = 0;
-	short aux = help[ARRAY_2D(iy, ix, met->nx)];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux * scalfac + offset) < 1e14f)
-	  dest[ix][iy] += scl * (aux * scalfac + offset);
-	else
-	  dest[ix][iy] = NAN;
-      }
-
-    /* Copy and check data... */
-    #pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++) {
-	if (init)
-	  dest[ix][iy] = 0;
-	short aux = help[ARRAY_2D(iy, ix, met->nx)];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux * scalfac + offset) < 1e14f)
-	  dest[ix][iy] += scl * (aux * scalfac + offset);
-	else
-	  dest[ix][iy] = NAN;
-      }
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Unpacked data... */
-  else {
 
     /* Read fill value and missing value... */
     float fillval, missval;
@@ -8146,7 +8079,6 @@ int read_met_nc_2d_dd(
     free(help);
     free(help_halo);
     
-  }
 
   /* Return... */
   return 1;
@@ -8168,8 +8100,6 @@ int read_met_nc_3d_dd(
   const float scl) {
 
   char varsel[LEN];
-
-  float offset, scalfac;
 
   int varid;
 
