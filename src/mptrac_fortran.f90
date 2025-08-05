@@ -217,6 +217,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_Cn2o
      INTEGER(c_int) :: qnt_Csf6
      INTEGER(c_int) :: qnt_aoa
+     INTEGER(c_int) :: qnt_subdomain
+     INTEGER(c_int) :: qnt_destination
      INTEGER(c_int) :: direction
      REAL(c_double) :: t_start
      REAL(c_double) :: t_stop
@@ -441,6 +443,10 @@ MODULE mptrac_struct
      REAL(c_double) :: vtk_scale
      REAL(c_double) :: vtk_offset
      INTEGER(c_int) :: vtk_sphere 
+     INTEGER(c_int) :: dd_subdomains_zonal
+     INTEGER(c_int) :: dd_subdomains_meridional
+     INTEGER(c_int) :: dd_nbr_neighbours
+     INTEGER(c_int) :: dd_halos_size
   END TYPE ctl_t
   
   TYPE, bind(c) :: met_t

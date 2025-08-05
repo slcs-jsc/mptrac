@@ -2646,6 +2646,12 @@ typedef struct {
 
   /*! Quantity array index for age of air. */
   int qnt_aoa;
+  
+  /*! Quantity array index for current subdomain in domain decomposition. */
+  int qnt_subdomain;
+
+  /*! Quantity array index for destination subdomain in domain decomposition. */
+  int qnt_destination;
 
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
@@ -3339,8 +3345,7 @@ typedef struct {
 
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
- 
-#ifdef DD 
+
   /*! Zonal subdomain number. */
   int dd_subdomains_zonal;
   
@@ -3352,13 +3357,6 @@ typedef struct {
 
   /*! Size of halos given in grid-points. */
   int dd_halos_size;
-
-  /*! Quantity array index for the current subdomain. */
-  int qnt_subdomain;
-
-  /*! Quantity array index for the destination domain */
-  int qnt_destination;
-#endif
 
 } ctl_t;
 
