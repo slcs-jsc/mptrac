@@ -5663,6 +5663,13 @@ void mptrac_run_timestep(
   /* First-order tracer chemistry... */
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
+  
+if (mpi_info->rank == 6)  
+  for (int ix = 0; ix<10; ix++) {
+    for (int iy = 0; iy<10; iy++)
+      printf(" %f ", (*met0)->u[ix][iy][30]);
+  printf("\n");
+  }
         
   /* Domain decomposition... */
 #ifdef DD
@@ -8181,151 +8188,97 @@ int read_met_nc_3d_dd(
   else
     return 0;
 
-  /* Read packed data... */
-  if (ctl->met_nc_scale
-      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
+  /* Read fill value and missing value... */
+  float fillval, missval;
+  if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+    fillval = 0;
+  if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+    missval = 0;
 
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
+  /* Write info... */
+  LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
+    varsel, fillval, missval);
 
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s "
-	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention != 0)
-      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
-
-    /* Copy and check data... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux * scalfac + offset) < 1e14f)
-	    dest[ix][iy][ip] = scl * (aux * scalfac + offset);
-	  else
-	    dest[ix][iy][ip] = NAN;
-	}
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Unpacked data... */
-  else {
-
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-
-    /* Define hyperslab... */
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+  /* Define hyperslab... */
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
     
-    /* Allocate... */
-    float *help;
-    ALLOC(help, float, (int) met->subdomain_count[0] * (int) met->subdomain_count[1]
-	             * (int) met->subdomain_count[2] * (int) met->subdomain_count[3]);
+  /* Allocate... */
+  float *help;
+  ALLOC(help, float, (int) met->subdomain_count[0] * (int) met->subdomain_count[1]
+	           * (int) met->subdomain_count[2] * (int) met->subdomain_count[3]);
 
-    /* Read data... */
-    NC(nc_get_vara_float(ncid, varid, met->subdomain_start, met->subdomain_count, help));
+  /* Read data... */
+  NC(nc_get_vara_float(ncid, varid, met->subdomain_start, met->subdomain_count, help));
 
-    /* Read halos separately at boundaries... */
-    float* help_halo;
-    ALLOC(help_halo, float, met->halo_bnd_count[0]*met->halo_bnd_count[1]*met->halo_bnd_count[2]*met->halo_bnd_count[3])
-    NC(nc_get_vara_float(ncid, varid,  met->halo_bnd_start, met->halo_bnd_count, help_halo));
+  /* Read halos separately at boundaries... */
+  float* help_halo;
+  ALLOC(help_halo, float, met->halo_bnd_count[0]*met->halo_bnd_count[1]*met->halo_bnd_count[2]*met->halo_bnd_count[3])
+  NC(nc_get_vara_float(ncid, varid,  met->halo_bnd_start, met->halo_bnd_count, help_halo));
 
-    /* Check meteo data layout... */
-    if (ctl->met_convention == 0) {
-      
-      /* Copy and check data (ordering: lev, lat, lon)... */
+  /* Check meteo data layout... */
+  if (ctl->met_convention == 0) {
+    /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-      for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++)
-	      for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
-	        for (int ip = 0; ip < met->np; ip++) {
-            float aux = help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix, (int) met->subdomain_count[3])];
-	  	      if ((fillval == 0 || aux != fillval)
-	      		  && (missval == 0 || aux != missval)
-	      		  && fabsf(aux) < 1e14f)
-	    		    dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
-	  	      else
-	    		    dest[ix +  met->halo_offset_start][iy][ip] = NAN;
-	      }
+    for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++)
+      for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
+        for (int ip = 0; ip < met->np; ip++) {
+          float aux = help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix, (int) met->subdomain_count[3])];
+          if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
+	    && fabsf(aux) < 1e14f)
+	    dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
+	  else 
+	    dest[ix +  met->halo_offset_start][iy][ip] = NAN;
+	}
+	
 #pragma omp parallel for default(shared) num_threads(12)
-        for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
-          for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
-            for (int ip = 0; ip < met->np; ip++) {
-              float aux = help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix, (int) met->halo_bnd_count[3])];
-              if ((fillval == 0 || aux != fillval)
-                && (missval == 0 || aux != missval)
-                && fabsf(aux) < 1e14f)
-                dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
-              else
-                dest[ix + met->halo_offset_end][iy][ip] = NAN;
-          }
+    for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
+      for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
+        for (int ip = 0; ip < met->np; ip++) {
+          float aux = help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix, (int) met->halo_bnd_count[3])];
+          if ((fillval == 0 || aux != fillval)
+            && (missval == 0 || aux != missval)
+            && fabsf(aux) < 1e14f)
+            dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
+          else
+            dest[ix + met->halo_offset_end][iy][ip] = NAN;
+        }
 
     } else {
 
-      /* Copy and check data (ordering: lon, lat, lev)... */
+    /* Copy and check data (ordering: lon, lat, lev)... */
 #pragma omp parallel for default(shared) num_threads(12)
-      for (int ip = 0; ip < met->np; ip++)
-	      for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
-	        for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
-	          float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-	          if ((fillval == 0 || aux != fillval)
-		          && (missval == 0 || aux != missval)
-		          && fabsf(aux) < 1e14f)
-	            dest[ix +  met->halo_offset_end][iy][ip] = scl * aux;
-	          else
-	            dest[ix +  met->halo_offset_end][iy][ip] = NAN;
-	    }
+    for (int ip = 0; ip < met->np; ip++)
+	    for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
+	      for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
+	        float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	        if ((fillval == 0 || aux != fillval)
+		  && (missval == 0 || aux != missval)
+		  && fabsf(aux) < 1e14f)
+	          dest[ix +  met->halo_offset_end][iy][ip] = scl * aux;
+	        else
+	          dest[ix +  met->halo_offset_end][iy][ip] = NAN;
+	      }
 
-/* Copy and check data (ordering: lon, lat, lev)... */
 #pragma omp parallel for default(shared) num_threads(12)
-for (int ip = 0; ip < met->np; ip++)
-  for (int iy = 0; iy < (int)met->halo_bnd_count[2]; iy++)
-    for (int ix = 0; ix < (int)met->halo_bnd_count[3]; ix++) {
-      float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-      if ((fillval == 0 || aux != fillval)
-        && (missval == 0 || aux != missval)
-        && fabsf(aux) < 1e14f)
-        dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
-      else
-        dest[ix +  met->halo_offset_start][iy][ip] = NAN;
-}
-
+    for (int ip = 0; ip < met->np; ip++)
+      for (int iy = 0; iy < (int)met->halo_bnd_count[2]; iy++)
+        for (int ix = 0; ix < (int)met->halo_bnd_count[3]; ix++) {
+          float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+          if ((fillval == 0 || aux != fillval)
+            && (missval == 0 || aux != missval)
+            && fabsf(aux) < 1e14f)
+            dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
+          else
+            dest[ix +  met->halo_offset_start][iy][ip] = NAN;
+        }
     }
     
     /* Free... */
   free(help);
   free(help_halo);
-  }
 
   /* Return... */
   return 1;
