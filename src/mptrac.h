@@ -3811,9 +3811,7 @@ typedef struct {
 
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
- 
-#ifdef DD  
-  
+   
   // TODO: Integrate this into a  grid_t ?
   
   /*! Rectangular grid limit of subdomain... */
@@ -3849,8 +3847,6 @@ typedef struct {
   int ny_glob;
   int np_glob;
   
-#endif
-
 } met_t;
 
 /* ------------------------------------------------------------
@@ -7615,12 +7611,10 @@ void read_met_nc_grid(
  *
  * @author Lars Hoffmann
  */
-#ifdef DD
 int read_met_nc_dd(
   const char *filename,
   const ctl_t * ctl,
   met_t * met);
-#endif
 
 /**
  * @brief Reads meteorological grid data from NetCDF files with domain decomposition.
@@ -7654,13 +7648,11 @@ int read_met_nc_dd(
  * @author Lars Hoffmann
  * @author Jan Clemens
  */
-#ifdef DD
 void read_met_nc_grid_dd(
   const char *filename,
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
-#endif
 
 /**
  * @brief Reads and processes meteorological level data from NetCDF files with domain decomposition.
@@ -7692,12 +7684,10 @@ void read_met_nc_grid_dd(
  * @author Lars Hoffmann
  * @author Jan Clemens
  */
-#ifdef DD
 void read_met_nc_levels_dd(
   const int ncid,
   const ctl_t *ctl,
   met_t *met);
-#endif
 
 /**
  * @brief Reads and processes surface meteorological data from NetCDF files with domain decomposition.
@@ -7727,12 +7717,10 @@ void read_met_nc_levels_dd(
  * @author Lars Hoffmann
  * @author Jan Clemens
  */
-#ifdef DD
 void read_met_nc_surface_dd(
   const int ncid,
   const ctl_t *ctl,
   met_t *met);
-#endif
 
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
@@ -7806,7 +7794,6 @@ int read_met_nc_2d(
  *
  * @author Lars Hoffmann
  */
-#ifdef DD
 int read_met_nc_2d_dd(
   const int ncid,
   const char *varname,
@@ -7820,7 +7807,6 @@ int read_met_nc_2d_dd(
   float dest[EX][EY],
   const float scl,
   const int init);
-#endif 
 
 /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
@@ -7893,7 +7879,6 @@ int read_met_nc_3d(
  *
  * @author Lars Hoffmann
  */
-#ifdef DD
 int read_met_nc_3d_dd(
   const int ncid,
   const char *varname,
@@ -7904,7 +7889,6 @@ int read_met_nc_3d_dd(
   const met_t * met,
   float dest[EX][EY][EP],
   const float scl);
-#endif 
 
 /**
  * @brief Computes the planetary boundary layer (PBL) pressure based on meteorological data.
@@ -9327,7 +9311,6 @@ void write_vtk(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void dd_atm2particles(
   atm_t* atm, 
   particle_t* particles, 
@@ -9335,7 +9318,6 @@ void dd_atm2particles(
   int* nparticles,
   cache_t *cache,
   int rank);
-#endif
 
 /**
  * @brief Converts particle data to atmospheric data.
@@ -9361,10 +9343,8 @@ void dd_atm2particles(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
    cache_t* cache);
-#endif
 
 /**
  * @brief Registers a custom MPI datatype for particle structures.
@@ -9387,10 +9367,10 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
  *
  * @author Jan Clemens
  */
-#ifdef DD
+ #ifdef DD
 void  dd_register_MPI_type_particle(
   MPI_Datatype* MPI_Particle);
-#endif  
+#endif 
 
 /**
  * @brief Determines rectangular neighbouring ranks for MPI processes.
