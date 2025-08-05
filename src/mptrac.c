@@ -13076,81 +13076,81 @@ void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t* mpi_info) {
       if ( mpi_info->rank + 1 == mpi_info->size) {
 
         mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;   
-        mpi_info->neighbours[1] = SPOLE;
+        mpi_info->neighbours[1] = DD_SPOLE;
         mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1; 
 
         mpi_info->neighbours[3] = 
         (mpi_info->rank + 1 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1; 
-        mpi_info->neighbours[4] = SPOLE;
+        mpi_info->neighbours[4] = DD_SPOLE;
         mpi_info->neighbours[5] = (mpi_info->rank + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
 
         mpi_info->neighbours[6] = mpi_info->rank - 1;
-        mpi_info->neighbours[7] = SPOLE;
+        mpi_info->neighbours[7] = DD_SPOLE;
       
       } else if (mpi_info->rank == ctl.dd_subdomains_meridional*( ctl.dd_subdomains_zonal - 1 )){
 
         mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional ;
         mpi_info->neighbours[1] = mpi_info->rank - ctl.dd_subdomains_meridional + 1;
-        mpi_info->neighbours[2] = NPOLE; 
+        mpi_info->neighbours[2] = DD_NPOLE; 
 
         mpi_info->neighbours[3] = (mpi_info->rank + 1 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
         mpi_info->neighbours[4] = (mpi_info->rank + 2 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
-        mpi_info->neighbours[5] = NPOLE;
+        mpi_info->neighbours[5] = DD_NPOLE;
 
-        mpi_info->neighbours[6] = NPOLE;
+        mpi_info->neighbours[6] = DD_NPOLE;
         mpi_info->neighbours[7] = mpi_info->rank + 1;
 
      } else if (mpi_info->rank == 0) {
 
         mpi_info->neighbours[0] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
         mpi_info->neighbours[1] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
-        mpi_info->neighbours[2] = NPOLE;
+        mpi_info->neighbours[2] = DD_NPOLE;
 
         mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
         mpi_info->neighbours[4] = mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
-        mpi_info->neighbours[5] = NPOLE;
+        mpi_info->neighbours[5] = DD_NPOLE;
 
-      mpi_info->neighbours[6] = NPOLE;
+      mpi_info->neighbours[6] = DD_NPOLE;
       mpi_info->neighbours[7] = mpi_info->rank + 1;
 
     } else if (mpi_info->rank + 1 == ctl.dd_subdomains_meridional) {
 
       mpi_info->neighbours[0] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-      mpi_info->neighbours[1] = SPOLE;
+      mpi_info->neighbours[1] = DD_SPOLE;
       mpi_info->neighbours[2] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
 
       mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[4] = SPOLE;
+      mpi_info->neighbours[4] = DD_SPOLE;
       mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;
 
       mpi_info->neighbours[6] = mpi_info->rank - 1;
-      mpi_info->neighbours[7] = SPOLE;
+      mpi_info->neighbours[7] = DD_SPOLE;
 
     } else if ((mpi_info->rank + 1)%ctl.dd_subdomains_meridional == 1) {
 
       mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
       mpi_info->neighbours[1] = mpi_info->rank + 1 - ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[2] = NPOLE;
+      mpi_info->neighbours[2] = DD_NPOLE;
 
       mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
       mpi_info->neighbours[4] = mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[5] = NPOLE;
+      mpi_info->neighbours[5] = DD_NPOLE;
 
-      mpi_info->neighbours[6] = NPOLE;
+      mpi_info->neighbours[6] = DD_NPOLE;
       mpi_info->neighbours[7] = mpi_info->rank + 1;
 
     } else if ((mpi_info->rank+1)%ctl.dd_subdomains_meridional == 0) {
       
       mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[1] = SPOLE;
+      mpi_info->neighbours[1] = DD_SPOLE;
       mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1;
 
       mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[4] = SPOLE;
+      mpi_info->neighbours[4] = DD_SPOLE;
       mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;
 
       mpi_info->neighbours[6] = mpi_info->rank - 1;
-      mpi_info->neighbours[7] = SPOLE;
+      mpi_info->neighbours[7] = DD_SPOLE;
     
     } else if (mpi_info->rank + 1 <= ctl.dd_subdomains_meridional) {
 
@@ -13211,8 +13211,8 @@ void dd_communicate_particles(
   int* nbr;
   ALLOC(nbs, int, nneighbours);
   ALLOC(nbr, int, nneighbours);
-  particle_t* send_buffers[NBUFFER] = { NULL };
-  particle_t* recieve_buffers[NBUFFER] = { NULL };
+  particle_t* send_buffers[DD_NNMAX] = { NULL };
+  particle_t* recieve_buffers[DD_NNMAX] = { NULL };
   
   /* Get MPI rank... */
   int rank;
@@ -13413,7 +13413,7 @@ void dd_assign_rect_subdomains_atm(
     
      /* Classify air parcels into subdomain... */
 #pragma acc enter data create(mpi_info)
-#pragma acc update device(mpi_info->neighbours[:NNMAX], mpi_info->rank, mpi_info->size)
+#pragma acc update device(mpi_info->neighbours[:DD_NNMAX], mpi_info->rank, mpi_info->size)
 #pragma acc data present(atm, met, ctl, mpi_info)
 #pragma acc parallel loop independent gang vector
     for (int ip=0; ip<atm->np; ip++) {

@@ -260,17 +260,14 @@
 #endif
 
 /*! Constants indicating the North pole [-]. */
-#ifdef DD
-  #ifndef NPOLE
-  #define NPOLE -2
-  #endif
-#endif 
+#ifndef DD_NPOLE
+#define DD_NPOLE -2
+#endif
+
 
 /*! Constants indicating the South pole [-]. */
-#ifdef DD
-  #ifndef SPOLE
-  #define SPOLE -3
-  #endif
+#ifndef DD_SPOLE
+#define DD_SPOLE -3
 #endif
 
 /* ------------------------------------------------------------
@@ -319,7 +316,6 @@
 #define EY 724
 #endif
 
-#ifdef DD
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP_GLOB
 #define EP_GLOB 150
@@ -336,9 +332,8 @@
 #endif
 
 /*! Maximum number of neighbours to communicate with. */
-#ifndef NNMAX
-#define NNMAX  26
-#endif
+#ifndef DD_NNMAX
+#define DD_NNMAX  26
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -385,14 +380,6 @@
 #ifndef CTS
 #define CTS 1000
 #endif
-
-/*! Maximum size of send and recieve buffer. */
-#ifdef DD
-  #ifndef NBUFFER
-  #define NBUFFER 1000
-  #endif
-#endif
-
 
 /* ------------------------------------------------------------
    Macros...
@@ -3444,7 +3431,7 @@ typedef struct {
 #ifdef DD
   
   /*! Rank of neighbouring nodes. */
-  int neighbours[NNMAX];
+  int neighbours[DD_NNMAX];
   
   /*! MPI Type for the particle. */
   MPI_Datatype MPI_Particle;
