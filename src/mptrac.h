@@ -3416,24 +3416,24 @@ typedef struct {
   
 } particle_t;
 
+/**
+ * @brief MPI information data.
+ *
+ * This structure contains information related to MPI (Message Passing Interface),
+ * including the rank and size of the node, and additional MPI-specific data when 
+ * the domain decomposition is defined.
+ */
 typedef struct {
-
-  /*! Rank of node. */
-  int rank;
-  
-  /*! Size of node. */
-  int size;
-  
+    /*! Rank of node. */
+    int rank;
+    /*! Size of node. */
+    int size;
 #ifdef DD
-  
-  /*! Rank of neighbouring nodes. */
-  int neighbours[DD_NNMAX];
-  
-  /*! MPI Type for the particle. */
-  MPI_Datatype MPI_Particle;
-  
+    /*! Rank of neighbouring nodes. */
+    int neighbours[DD_NNMAX];
+    /*! MPI Type for the particle. */
+    MPI_Datatype MPI_Particle;
 #endif
-
 } mpi_info_t;
 
 /**
