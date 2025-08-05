@@ -13413,7 +13413,7 @@ void dd_assign_rect_subdomains_atm(
     
      /* Classify air parcels into subdomain... */
 #pragma acc enter data create(mpi_info)
-#pragma acc update device(mpi_info->neighbours[:NNMAX], mpi_info->rank)
+#pragma acc update device(mpi_info->neighbours[:NNMAX], mpi_info->rank, mpi_info->size)
 #pragma acc data present(atm, met, ctl, mpi_info)
 #pragma acc parallel loop independent gang vector
     for (int ip=0; ip<atm->np; ip++) {
