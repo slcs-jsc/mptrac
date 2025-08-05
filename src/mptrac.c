@@ -12978,7 +12978,7 @@ void write_vtk(
 
 /*****************************************************************************/
 #ifdef DD
-void atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles, 
+void dd_atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles, 
     cache_t *cache, int rank) {
   
   SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
@@ -13571,7 +13571,7 @@ void module_dd( ctl_t *ctl,
     dd_sort(ctl, *met, atm, &nparticles, &mpi_info->rank);
  
     /* Transform from struct of array to array of struct... */
-    atm2particles( atm, particles, ctl, &nparticles, cache, mpi_info->rank);
+    dd_atm2particles( atm, particles, ctl, &nparticles, cache, mpi_info->rank);
    
     /********************* CPU region start ***********************************/
       

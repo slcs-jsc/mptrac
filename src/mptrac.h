@@ -9310,7 +9310,7 @@ void write_vtk(
 /**
  * @brief Converts atmospheric data to particle data.
  *
- * The `atm2particles` function converts data from an atmospheric data
+ * The `dd_atm2particles` function converts data from an atmospheric data
  * structure (`atm_t`) to an array of particle structures (`particle_t`).
  * It iterates over each particle and assigns corresponding values from
  * the atmospheric data based on control parameters (`ctl_t`).
@@ -9330,7 +9330,7 @@ void write_vtk(
  * @author Jan Clemens
  */
 #ifdef DD
-void atm2particles(
+void dd_atm2particles(
   atm_t* atm, 
   particle_t* particles, 
   ctl_t* ctl,
