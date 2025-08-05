@@ -23,6 +23,9 @@ COMPILER ?= gcc
 # Compile for MPI...
 MPI ?= 0
 
+# Compile for domain decomposition... (experimental)
+DD ?= 0
+
 # Compile for GPUs...
 GPU ?= 0
 
@@ -139,6 +142,11 @@ ifeq ($(MPI),1)
   CFLAGS += -DMPI
 endif
 
+# Compile for domain decompositon...
+ifeq ($(DD),1)
+  CFLAGS += -DDD
+endif
+
 # Optimization information...
 ifeq ($(INFO),1)
   ifeq ($(COMPILER),gcc)
@@ -245,6 +253,19 @@ ifeq ($(STATIC),1)
     $(error Static compilation does not work for clang compiler)
   endif
   CFLAGS += -static
+endif
+
+# Domain decomposition...
+ifeq ($(DD),1)
+  ifeq ($(MPI),0)
+    $(error The domain decomposition does not work without MPI)
+  endif
+  ifeq ($(THRUST),0)
+    $(error The domain decomposition does not work without THRUST)
+  endif
+  ifeq ($(GPU),0)
+    $(error The domain decomposition does not work on CPUs)
+  endif
 endif
 
 # -----------------------------------------------------------------------------

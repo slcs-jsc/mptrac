@@ -140,6 +140,11 @@
 #include "mpi.h"
 #endif
 
+#ifdef DD
+#include <netcdf_par.h>
+#include <stdbool.h>
+#endif
+
 #ifdef _OPENACC
 #include "openacc.h"
 #endif
@@ -254,6 +259,17 @@
 #define T0 273.15
 #endif
 
+/*! Constants indicating the North pole [-]. */
+#ifndef DD_NPOLE
+#define DD_NPOLE -2
+#endif
+
+
+/*! Constants indicating the South pole [-]. */
+#ifndef DD_SPOLE
+#define DD_SPOLE -3
+#endif
+
 /* ------------------------------------------------------------
    Dimensions...
    ------------------------------------------------------------ */
@@ -266,6 +282,11 @@
 /*! Maximum number of atmospheric data points. */
 #ifndef NP
 #define NP 10000000
+#endif
+
+/*! Maximum number of particles to send and recieve. */
+#ifndef DD_NPART
+#define DD_NPART 100000
 #endif
 
 /*! Maximum number of quantities per data point. */
@@ -291,6 +312,26 @@
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
 #define EY 724
+#endif
+
+/*! Maximum number of pressure levels for meteo data. */
+#ifndef EP_GLOB
+#define EP_GLOB 150
+#endif
+
+/*! Maximum number of global longitudes for meteo data. */
+#ifndef EX_GLOB
+#define EX_GLOB 1202
+#endif
+
+/*! Maximum number of global latitudes for meteo data. */
+#ifndef EY_GLOB
+#define EY_GLOB 602
+#endif
+
+/*! Maximum number of neighbours to communicate with. */
+#ifndef DD_NNMAX
+#define DD_NNMAX  26
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -631,6 +672,71 @@
  */
 #define DOTP(a, b)				\
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
+  
+/**
+ * @brief Execute a ECCODES command and check for errors.
+ *
+ * This macro executes a ECCODES command and checks the result. If the
+ * result indicates an error, it prints the error message using
+ * ERRMSG.
+ *
+ * @param cmd ECCODES command to execute.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC(cmd) {							\
+    int ecc_result=(cmd);						\
+    if(ecc_result!=0)							\
+      ERRMSG("ECCODES error: %s", codes_get_error_message(ecc_result));	\
+  }
+
+/**
+ * @brief Writes 2-D data from a grib message into the met struct.
+ *
+ * This Macro writes 2-D data from an one dimensional grib message into the
+ * corresponding 2-D variable in the met struct. 
+ * 
+ * @param variable Name of the current meterological variable 
+ * @param target Pointer to the 2-D array in the met struct where the data will be stored.
+ * @param scaling_factor Scaling factor to apply to the data.
+ * @param found_flag Flag to store, that the variable was found in the grib message.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC_READ_2D(variable,target,scaling_factor,found_flag){		\
+    if( strcmp(short_name,variable)==0){				\
+      for (int ix = 0; ix < met->nx; ix++) {				\
+	for (int iy = 0; iy < met->ny; iy++) {				\
+	  target[ix][iy] = (float)(values[iy * met->nx + ix]*scaling_factor); \
+	}								\
+      }									\
+      found_flag =1;							\
+    }									\
+  }
+
+/**
+ * @brief Writes 3D data from a grib message into the met struct.
+ *
+ * This Macro writes 3D data from an one dimensional grib message into the
+ * corresponding 3D variable in the met struct. 
+ * 
+ * @param variable Name of the current meterological variable.
+ * @param target Pointer to the 3D array in the met struct where the data will be stored.
+ * @param scaling_factor Scaling factor to apply to the data.
+ * @param found_flag Counter to store, how many messages countaining data for this variable have been read.
+ *
+ * @author Nils Nobre Wittwer
+ */
+#define ECC_READ_3D(variable,level,target,scaling_factor,found_flag){	\
+    if( strcmp(short_name,variable)==0){				\
+      for (int ix = 0; ix < met->nx; ix++) {				\
+	for (int iy = 0; iy < met->ny; iy++) {				\
+	  target[ix][iy][level] = (float) (values[iy * met->nx + ix]*scaling_factor); \
+	}								\
+      }									\
+      found_flag +=1;							\
+    }									\
+  }
 
 /**
  * @brief Execute a ECCODES command and check for errors.
@@ -2461,6 +2567,9 @@ typedef struct {
   /*! Quantity array index for diagnosed zeta vertical coordinate. */
   int qnt_zeta_d;
 
+  /*! Quantity array index forvelocity of zeta vertical coordinate. */
+  int qnt_zeta_dot;
+
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
 
@@ -2535,6 +2644,12 @@ typedef struct {
 
   /*! Quantity array index for age of air. */
   int qnt_aoa;
+  
+  /*! Quantity array index for current subdomain in domain decomposition. */
+  int qnt_subdomain;
+
+  /*! Quantity array index for destination subdomain in domain decomposition. */
+  int qnt_destination;
 
   /*! Direction flag (1=forward calculation, -1=backward calculation). */
   int direction;
@@ -3229,6 +3344,18 @@ typedef struct {
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
 
+  /*! Zonal subdomain number. */
+  int dd_subdomains_zonal;
+  
+  /*! Meridional subdomain number. */
+  int dd_subdomains_meridional;
+  
+  /*! Number of neighbours to communicate with. */
+  int dd_nbr_neighbours;
+
+  /*! Size of halos given in grid-points. */
+  int dd_halos_size;
+
 } ctl_t;
 
 /**
@@ -3260,6 +3387,52 @@ typedef struct {
   double q[NQ][NP];
 
 } atm_t;
+
+/**
+ * @brief Particle data.
+ * 
+ * This structure contains information related to one air parcel,
+ * including the air parcels time, pressure, longitudes, latitudes, 
+ * and various user-defined attributes.
+ */
+typedef struct {
+
+  /*! Time [s]. */
+  double time;
+
+  /*! Pressure [hPa]. */
+  double p;
+
+  /*! Longitude [deg]. */
+  double lon;
+
+  /*! Latitude [deg]. */
+  double lat;
+
+  /*! Quantity data (for various, user-defined attributes). */
+  double q[NQ];
+  
+} particle_t;
+
+/**
+ * @brief MPI information data.
+ *
+ * This structure contains information related to MPI (Message Passing Interface),
+ * including the rank and size of the node, and additional MPI-specific data when 
+ * the domain decomposition is defined.
+ */
+typedef struct {
+    /*! Rank of node. */
+    int rank;
+    /*! Size of node. */
+    int size;
+#ifdef DD
+    /*! Rank of neighbouring nodes. */
+    int neighbours[DD_NNMAX];
+    /*! MPI Type for the particle. */
+    MPI_Datatype MPI_Particle;
+#endif
+} mpi_info_t;
 
 /**
  * @brief Cache data structure.
@@ -3484,13 +3657,28 @@ typedef struct {
   int npl;
 
   /*! Longitude [deg]. */
+#ifdef DD
+  double lon[EX_GLOB];
+#else 
   double lon[EX];
+#endif
 
   /*! Latitude [deg]. */
+  // TODO:
+  // They need global sizes now, maybe in the future just keep EX, EY, EP and
+  // Introduce help data structure in read_met_grid etc.==
+#ifdef DD
+  double lat[EY_GLOB];
+#else 
   double lat[EY];
+#endif 
 
   /*! Pressure levels [hPa]. */
+#ifdef DD
+  double p[EP_GLOB];
+#else
   double p[EP];
+#endif
 
   /*! Model hybrid levels. */
   double hybrid[EP];
@@ -3623,7 +3811,42 @@ typedef struct {
 
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
+   
+  // TODO: Integrate this into a  grid_t ?
+  
+  /*! Rectangular grid limit of subdomain... */
+  double subdomain_lon_max;
+  
+  /*! Rectangular grid limit of subdomain... */
+  double subdomain_lon_min;
+  
+  /*! Rectangular grid limit of subdomain... */
+  double subdomain_lat_max;
+  
+  /*! Rectangular grid limit of subdomain... */
+  double subdomain_lat_min;
+  
+  /*! Hyperslab start and count for subdomain... */
+  size_t subdomain_start[4];
+  
+  /*! Hyperslab start and count for subdomain... */
+  size_t subdomain_count[4];
 
+  /* Hyperslab of boundary halos start... */
+  size_t halo_bnd_start[4];
+  
+  /* Hyperslab of boundary halos count... */
+  size_t halo_bnd_count[4];
+
+  /* Hyperslab of boundary halos count... */
+  int halo_offset_start;
+  int halo_offset_end;
+  
+  /*! Global sizes of meteo data... */
+  int nx_glob;
+  int ny_glob;
+  int np_glob;
+  
 } met_t;
 
 /* ------------------------------------------------------------
@@ -5749,7 +5972,7 @@ void module_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm);
-
+  
 /**
  * @brief Reorder an array based on a given permutation.
  *
@@ -5971,13 +6194,24 @@ void mptrac_alloc(
  *
  * @author Lars Hoffmann
  */
+#ifdef DD
 void mptrac_free(
-  ctl_t * ctl,
-  cache_t * cache,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm);
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm,
+  mpi_info_t *mpi_info);
+#else
+void mptrac_free(
+  ctl_t *ctl,
+  cache_t *cache,
+  clim_t *clim,
+  met_t *met0,
+  met_t *met1,
+  atm_t *atm);
+#endif
 
 /**
  * @brief Retrieves meteorological data for the specified time.
@@ -6207,9 +6441,21 @@ int mptrac_read_met(
  * @param met1  Pointer to the next meteorological data structure.
  * @param atm   Pointer to the atmosphere structure containing air parcel data.
  * @param t     Current simulation time in seconds.
+ * @param mpi_info MPI information required for the domain decomposition.
  *
  * @authors Lars Hoffmann
  */
+#ifdef DD
+void mptrac_run_timestep(
+  ctl_t * ctl,
+  cache_t * cache,
+  clim_t * clim,
+  met_t ** met0,
+  met_t ** met1,
+  atm_t * atm,
+  double t,
+  mpi_info_t* mpi_info);
+#else
 void mptrac_run_timestep(
   ctl_t * ctl,
   cache_t * cache,
@@ -6218,6 +6464,7 @@ void mptrac_run_timestep(
   met_t ** met1,
   atm_t * atm,
   double t);
+#endif
 
 /**
  * @brief Writes air parcel data to a file in various formats.
@@ -7001,7 +7248,7 @@ void read_met_extrapolate(
 void read_met_geopot(
   const ctl_t * ctl,
   met_t * met);
-
+  
 /**
  * @brief Reads meteorological data from a grib file and processes it.
  *
@@ -7183,7 +7430,7 @@ void read_met_ml2pl(
 void read_met_monotonize(
   const ctl_t * ctl,
   met_t * met);
-
+  
 /**
  * @brief Reads meteorological data from a NetCDF file and processes it.
  *
@@ -7215,43 +7462,6 @@ void read_met_monotonize(
  */
 int read_met_nc(
   const char *filename,
-  const ctl_t * ctl,
-  met_t * met);
-
-/**
- * @brief Reads meteorological grid information from a NetCDF file.
- *
- * This function reads meteorological grid information from a NetCDF
- * file, including time, spatial dimensions, and pressure levels.  It
- * also extracts longitudes, latitudes, and pressure levels from the
- * NetCDF file based on the specified control parameters.  The
- * function determines the time information either from the filename
- * or from the data file, depending on the file type.
- *
- * @param filename The filename of the NetCDF file.
- * @param ncid The NetCDF file identifier.
- * @param ctl A pointer to a structure containing control parameters.
- * @param met A pointer to a structure to store meteorological data.
- *
- * The function performs the following steps:
- * - Sets up a timer to monitor the reading time for meteorological grid information.
- * - Determines the time information from either the filename or the data file based on the file type.
- * - Checks the validity of the time information.
- * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
- * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
- * - Converts pressure levels to hPa if necessary.
- * - Logs the retrieved grid information for verification and debugging purposes.
- *
- * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
- *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
- *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
- *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
- */
-void read_met_nc_grid(
-  const char *filename,
-  const int ncid,
   const ctl_t * ctl,
   met_t * met);
 
@@ -7334,6 +7544,183 @@ void read_met_nc_surface(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
+  
+/**
+ * @brief Reads meteorological grid information from a NetCDF file.
+ *
+ * This function reads meteorological grid information from a NetCDF
+ * file, including time, spatial dimensions, and pressure levels.  It
+ * also extracts longitudes, latitudes, and pressure levels from the
+ * NetCDF file based on the specified control parameters.  The
+ * function determines the time information either from the filename
+ * or from the data file, depending on the file type.
+ *
+ * @param filename The filename of the NetCDF file.
+ * @param ncid The NetCDF file identifier.
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure to store meteorological data.
+ *
+ * The function performs the following steps:
+ * - Sets up a timer to monitor the reading time for meteorological grid information.
+ * - Determines the time information from either the filename or the data file based on the file type.
+ * - Checks the validity of the time information.
+ * - Retrieves grid dimensions (longitude, latitude, and vertical levels) from the NetCDF file.
+ * - Reads longitudes, latitudes, and pressure levels from the NetCDF file.
+ * - Converts pressure levels to hPa if necessary.
+ * - Logs the retrieved grid information for verification and debugging purposes.
+ *
+ * @note This function supports reading meteorological grid information from different types of NetCDF files, including MPTRAC and CLaMS.
+ *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
+ *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
+ *
+ * @authors Lars Hoffmann
+ * @authors Jan Clemens
+ */
+void read_met_nc_grid(
+  const char *filename,
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+  
+/**
+ * @brief Reads meteorological data from a NetCDF file and processes it.
+ *
+ * This function reads meteorological data from a NetCDF file specified by the `filename` parameter, 
+ * using the NetCDF library. It reads grid, surface, and vertical level data, processes the data 
+ * (including extrapolation, boundary conditions, and downsampling), and calculates various derived 
+ * meteorological fields such as geopotential heights, potential vorticity, cloud properties, and 
+ * convective available potential energy (CAPE).
+ *
+ * @param filename A constant character pointer representing the name of the NetCDF file to read the 
+ * meteorological data from.
+ * @param ctl A pointer to a `ctl_t` structure, which contains control parameters for reading and 
+ * processing the meteorological data.
+ * @param met A pointer to a `met_t` structure that will store the meteorological data read and 
+ * processed from the NetCDF file.
+ *
+ * @return Returns 1 on success, or 0 if the file cannot be opened.
+ *
+ * @note
+ * - The function opens the NetCDF file in read-only mode using `nc_open` and handles any errors 
+ * during the file opening process.
+ * - The function reads grid data, vertical level data, and surface data from the file, and processes 
+ * the data to calculate additional meteorological parameters.
+ * - If the file cannot be opened, the function logs a warning and returns 0.
+ * - It is important to ensure that the NetCDF file contains the expected structure for meteorological 
+ * data (grid, levels, surface data).
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc_dd(
+  const char *filename,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Reads meteorological grid data from NetCDF files with domain decomposition.
+ *
+ * The `read_met_nc_grid_dd` function reads meteorological data from NetCDF files and processes it
+ * with domain decomposition for parallel processing. It extracts time information, grid dimensions,
+ * and coordinates, and sets up hyperslabs for subdomains and halos. It also reads pressure levels
+ * and handles model level and surface data.
+ *
+ * @param filename A string representing the filename of the NetCDF file to read.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param met A pointer to a `met_t` structure where meteorological data will be stored.
+ *
+ * The function performs the following steps:
+ * - Sets filenames for meteorological data files.
+ * - Extracts time information from the filename or NetCDF file.
+ * - Validates the time information and logs it.
+ * - Retrieves global and local grid dimensions and checks for regular grid spacing.
+ * - Sets up hyperslabs for subdomains and halos, considering edge cases.
+ * - Adjusts grid dimensions and coordinates for subdomains and halos.
+ * - Reads pressure levels and computes the 3D pressure field.
+ * - Handles model level and surface data using GRIB handles.
+ * - Reads grid data and surface data from the respective files.
+ * - Computes the 3D pressure field and reads model level data.
+ *
+ * @note This function assumes that the input filename and structures are properly initialized.
+ * It uses MPI for parallel processing and handles domain decomposition.
+ * The function is designed to work with NetCDF and GRIB file formats.
+ * It logs various stages of processing for debugging and validation purposes.
+ *
+ * @author Lars Hoffmann
+ * @author Jan Clemens
+ */
+void read_met_nc_grid_dd(
+  const char *filename,
+  const int ncid,
+  const ctl_t * ctl,
+  met_t * met);
+
+/**
+ * @brief Reads and processes meteorological level data from NetCDF files with domain decomposition.
+ *
+ * The `read_met_nc_levels_dd` function reads meteorological level data from a NetCDF file and processes it
+ * for use in a domain decomposition context. It handles various meteorological parameters such as
+ * temperature, wind components, humidity, ozone, cloud data, and vertical velocity. The function also
+ * processes pressure levels and interpolates data between model and pressure levels as needed.
+ *
+ * @param ncid An integer representing the NetCDF file ID.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters and settings.
+ * @param met A pointer to a `met_t` structure where meteorological level data will be stored.
+ *
+ * The function performs the following steps:
+ * - Reads temperature, horizontal wind components, and vertical velocity data.
+ * - Processes water vapor data, handling both specific and relative humidity.
+ * - Reads ozone and various cloud-related data such as liquid water content, ice water content, and cloud cover.
+ * - Processes zeta and zeta_dot data.
+ * - Stores velocities on model levels and saves the number of model levels.
+ * - Computes pressure on model levels using different methods based on control parameters.
+ * - Checks the ordering of pressure levels to ensure they are monotonic.
+ * - Interpolates meteorological variables from model levels to pressure levels if specified.
+ * - Validates the ordering of pressure levels to ensure they are in descending order.
+ *
+ * @note This function assumes that the NetCDF file ID and structures are properly initialized.
+ * It is designed to work with NetCDF files and uses OpenMP for parallel processing.
+ * The function logs errors and warnings for missing or unreadable data fields and handles different data formats.
+ *
+ * @author Lars Hoffmann
+ * @author Jan Clemens
+ */
+void read_met_nc_levels_dd(
+  const int ncid,
+  const ctl_t *ctl,
+  met_t *met);
+
+/**
+ * @brief Reads and processes surface meteorological data from NetCDF files with domain decomposition.
+ *
+ * The `read_met_nc_surface_dd` function reads surface meteorological data from a NetCDF file
+ * and processes it for use in a domain decomposition context. It handles various surface parameters
+ * such as pressure, geopotential height, temperature, wind components, and other relevant meteorological
+ * data. The function is designed to work with different meteorological data formats and configurations.
+ *
+ * @param ncid An integer representing the NetCDF file ID.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters and settings.
+ * @param met A pointer to a `met_t` structure where surface meteorological data will be stored.
+ *
+ * The function performs the following steps:
+ * - Reads surface pressure data and converts it if necessary.
+ * - Handles different data formats for MPTRAC and CLaMS meteorological data.
+ * - Reads geopotential height at the surface and processes it based on the data format.
+ * - Retrieves surface temperature, zonal and meridional wind, and other surface parameters.
+ * - Logs warnings if specific data fields cannot be read.
+ * - Uses helper functions to read 2D and 3D data fields from the NetCDF file.
+ * - Processes and stores the read data into the provided meteorological data structure.
+ *
+ * @note This function assumes that the NetCDF file ID and structures are properly initialized.
+ * It is designed to work with NetCDF files and uses MPI for parallel processing.
+ * The function logs warnings for missing or unreadable data fields and handles different data formats.
+ *
+ * @author Lars Hoffmann
+ * @author Jan Clemens
+ */
+void read_met_nc_surface_dd(
+  const int ncid,
+  const ctl_t *ctl,
+  met_t *met);
 
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
@@ -7378,6 +7765,49 @@ int read_met_nc_2d(
   const float scl,
   const int init);
 
+  /**
+ * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 2-dimensional meteorological variable from a
+ * NetCDF file in parallel and stores it in a specified destination array.  It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly.  The function also checks
+ * the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @param init Flag indicating whether to initialize the destination array before reading.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc_2d_dd(
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const char *varname5,
+  const char *varname6,
+  const ctl_t * ctl,
+  const met_t * met,
+  float dest[EX][EY],
+  const float scl,
+  const int init);
+
 /**
  * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
  *
@@ -7409,6 +7839,47 @@ int read_met_nc_2d(
  * @author Lars Hoffmann
  */
 int read_met_nc_3d(
+  const int ncid,
+  const char *varname,
+  const char *varname2,
+  const char *varname3,
+  const char *varname4,
+  const ctl_t * ctl,
+  const met_t * met,
+  float dest[EX][EY][EP],
+  const float scl);
+
+  /**
+ * @brief Reads a 3-dimensional meteorological variable from a NetCDF file.
+ *
+ * This function reads a 3-dimensional meteorological variable from a
+ * NetCDF file and stores it in a specified destination array. It
+ * supports both packed and unpacked data formats and handles missing
+ * values and scaling factors accordingly. The function also checks
+ * the meteorological data layout to ensure correct data copying.
+ *
+ * @param ncid The NetCDF file ID.
+ * @param varname The name of the variable to read.
+ * @param varname2 An alternative name of the variable to read (in case varname is not found).
+ * @param varname3 An alternative name of the variable to read (in case varname2 is not found).
+ * @param varname4 An alternative name of the variable to read (in case varname3 is not found).
+ * @param varname5 An alternative name of the variable to read (in case varname4 is not found).
+ * @param varname6 An alternative name of the variable to read (in case varname5 is not found).
+ * @param ctl A pointer to a structure containing control parameters.
+ * @param met A pointer to a structure containing meteorological data.
+ * @param dest The destination array to store the read data.
+ * @param scl A scaling factor to apply to the read data.
+ * @return Returns 1 on success, 0 on failure.
+ *
+ * The function performs the following steps:
+ * - Checks if the specified variable exists in the NetCDF file.
+ * - Reads packed data if scaling factors are available, otherwise reads unpacked data.
+ * - Handles missing values and scaling factors appropriately.
+ * - Copies the data to the destination array, applying the scaling factor if provided.
+ *
+ * @author Lars Hoffmann
+ */
+int read_met_nc_3d_dd(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -8817,5 +9288,306 @@ void write_vtk(
   const ctl_t * ctl,
   const atm_t * atm,
   const double t);
+  
+/**
+ * @brief Converts atmospheric data to particle data.
+ *
+ * The `dd_atm2particles` function converts data from an atmospheric data
+ * structure (`atm_t`) to an array of particle structures (`particle_t`).
+ * It iterates over each particle and assigns corresponding values from
+ * the atmospheric data based on control parameters (`ctl_t`).
+ *
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param particles An array of `particle_t` structures to be populated with data.
+ * @param ctl A `ctl_t` structure containing control parameters.
+ *
+ * The function performs the following steps:
+ * - Iterates through each particle index up to the number of particles (`np`) in `atm`.
+ * - Assigns time, longitude, latitude, and pressure values from `atm` to each particle.
+ * - Copies additional quantities (`q`) from `atm` to each particle based on the number of quantities (`nq`) in `ctl`.
+ *
+ * @note This function assumes that the `particles` array is pre-allocated with sufficient
+ *       memory to hold `np` particles. The `ctl` structure must be properly initialized.
+ *
+ * @author Jan Clemens
+ */
+void dd_atm2particles(
+  atm_t* atm, 
+  particle_t* particles, 
+  ctl_t* ctl,
+  int* nparticles,
+  cache_t *cache,
+  int rank);
+
+/**
+ * @brief Converts particle data to atmospheric data.
+ *
+ * The `dd_particles2atm` function converts data from an array of particle structures (`particle_t`)
+ * to an atmospheric data structure (`atm_t`). It updates the atmospheric data with values from the particles
+ * and modifies the cache with control parameters (`ctl_t`).
+ *
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data to be updated.
+ * @param particles An array of `particle_t` structures from which data will be taken.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param nparticles A pointer to an integer representing the number of particles to process.
+ * @param cache A pointer to a `cache_t` structure used for storing intermediate values.
+ *
+ * The function performs the following steps:
+ * - Copies particle data (time, longitude, latitude, pressure, and quantities) into the atmospheric data structure.
+ * - Updates the cache with a time modification value from the control parameters.
+ * - Increases the particle count in the atmospheric data structure by the number of particles processed.
+ *
+ * @note This function assumes that the `particles` array and `atm` structure are properly initialized.
+ *       It also assumes that the `cache` is pre-allocated and accessible.
+ *       The function uses OpenACC directives for parallel processing.
+ *
+ * @author Jan Clemens
+ */
+void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
+   cache_t* cache);
+
+/**
+ * @brief Registers a custom MPI datatype for particle structures.
+ *
+ * The `dd_register_MPI_type_particle` function creates and commits a custom MPI datatype
+ * that represents the structure of a particle (`particle_t`). This datatype is used for
+ * efficient communication of particle data in MPI operations.
+ *
+ * @param MPI_Particle A pointer to an MPI_Datatype variable where the new datatype will be stored.
+ *
+ * The function performs the following steps:
+ * - Defines an array of MPI datatypes corresponding to the types of the particle structure's fields.
+ * - Specifies the block lengths for each field in the particle structure.
+ * - Calculates the displacements of each field within the particle structure using the `offsetof` macro.
+ * - Creates a structured MPI datatype using `MPI_Type_create_struct`.
+ * - Commits the new MPI datatype using `MPI_Type_commit`.
+ *
+ * @note This function assumes that the `particle_t` structure is defined and accessible.
+ *       The `NQ` constant should be defined to represent the number of quantities in the particle structure.
+ *
+ * @author Jan Clemens
+ */
+ #ifdef DD
+void  dd_register_MPI_type_particle(
+  MPI_Datatype* MPI_Particle);
+#endif 
+
+/**
+ * @brief Determines rectangular neighbouring ranks for MPI processes.
+ *
+ * The `dd_get_rect_neighbour` function calculates and assigns the neighbouring ranks for
+ * an MPI process based on its current rank and the configuration of subdomains. This is
+ * typically used in parallel computing to manage data decomposition and communication
+ * between processes arranged in a rectangular grid.
+ *
+ * @param ctl A control structure (`ctl_t`) containing configuration parameters for subdomains.
+ * @param mpi_info A pointer to an `mpi_info_t` structure where neighbour information will be stored.
+ *
+ * The function performs the following steps:
+ * - Uses conditional logic to determine the neighbours based on the current rank and subdomain configuration.
+ * - Assigns neighbour ranks to the `neighbours` array in the `mpi_info` structure.
+ * - Handles edge cases for processes at the boundaries of the grid, such as poles or edges.
+ *
+ * @note This function assumes that the `ctl` and `mpi_info` structures are properly initialized.
+ *       The function considers different configurations for processes at the boundaries and
+ *       handles them appropriately to ensure correct neighbour assignment.
+ *
+ * @author Jan Clemens
+ */
+#ifdef DD
+void dd_get_rect_neighbour(
+  const ctl_t ctl, 
+  mpi_info_t* mpi_info);
+#endif  
+
+/**
+ * @brief Communicates particles between MPI processes.
+ *
+ * The `dd_communicate_particles` function manages the communication of particle data between
+ * neighbouring MPI processes. It sends and receives particles to and from neighbouring ranks,
+ * handling the allocation and deallocation of buffers, and ensuring proper synchronization.
+ *
+ * @param particles An array of `particle_t` structures to be communicated.
+ * @param nparticles A pointer to an integer representing the number of particles.
+ * @param MPI_Particle An MPI_Datatype representing the structure of a particle.
+ * @param neighbours An array of integers representing the neighbouring ranks.
+ * @param nneighbours An integer representing the number of neighbours.
+ * @param ctl A control structure (`ctl_t`) containing configuration parameters.
+ *
+ * The function performs the following steps:
+ * - Initializes buffers for sending and receiving particles.
+ * - Retrieves the MPI rank of the current process.
+ * - Uses non-blocking MPI communication to send and receive the number of particles and particle data.
+ * - Waits for all communication operations to complete.
+ * - Copies received particles into the local particle array.
+ * - Updates the number of particles after receiving.
+ * - Frees allocated buffers after communication is complete.
+ *
+ * @note This function assumes that the `particles` array and other parameters are properly initialized.
+ *       It handles communication with neighbouring ranks, ignoring poles and empty signals.
+ *       The function uses MPI non-blocking communication for efficiency.
+ *
+ * @author Jan Clemens
+ */
+#ifdef DD
+void dd_communicate_particles(
+  particle_t* particles, 
+  int* nparticles, 
+  MPI_Datatype MPI_Particle, 
+  int* neighbours, 
+  int nneighbours, 
+  ctl_t ctl);
+#endif
+  
+/**
+ * @brief Assigns rectangular subdomains to atmospheric data particles.
+ *
+ * The `dd_assign_rect_subdomains_atm` function assigns particles in the atmospheric data structure
+ * (`atm_t`) to rectangular subdomains based on their geographical coordinates. It updates the subdomain
+ * and destination indices of each particle according to the subdomain boundaries defined in the
+ * meteorological data structure (`met_t`).
+ *
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param met A pointer to a `met_t` structure containing meteorological data and subdomain boundaries.
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information, including rank and neighbours.
+ * @param init An integer flag indicating whether this is an initialization step.
+ *
+ * The function performs the following steps:
+ * - If `init` is true, it initializes the subdomain and destination indices for each particle based on whether
+ *   the particle's coordinates fall within the defined subdomain boundaries.
+ * - If `init` is false, it classifies particles into subdomains, considering boundary conditions and
+ *   updating the destination indices based on the particle's position relative to the subdomain boundaries.
+ * - Uses OpenACC directives for parallel processing to enhance performance.
+ *
+ * @note This function assumes that the `atm`, `met`, `ctl`, and `mpi_info` structures are properly initialized.
+ *       The function handles both initialization and regular assignment of subdomains.
+ *
+ * @author Jan Clemens
+ */
+
+#ifdef DD
+void dd_assign_rect_subdomains_atm(
+  atm_t* atm,
+  met_t* met, 
+  ctl_t* ctl, 
+  mpi_info_t* mpi_info, 
+  int init);
+#endif
+
+/**
+ * @brief Initializes domain decomposition for parallel processing.
+ *
+ * The `dd_init` function initializes the domain decomposition setup for parallel processing
+ * in a distributed computing environment. It ensures that the number of tasks matches the
+ * number of subdomains, registers a custom MPI datatype for particle structures, defines
+ * grid neighbours, and assigns particles to their respective subdomains.
+ *
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param met A pointer to a pointer of a `met_t` structure containing meteorological data.
+ * @param t A double representing the current time.
+ * @param dd_init_flg A pointer to an integer flag indicating whether domain decomposition has been initialized.
+ *
+ * The function performs the following steps:
+ * - Checks if the number of tasks matches the number of subdomains.
+ * - Registers a custom MPI datatype for particle structures using `dd_register_MPI_type_particle`.
+ * - Defines grid neighbours for each MPI task using `dd_get_rect_neighbour`.
+ * - Assigns particles to their respective subdomains using `dd_assign_rect_subdomains_atm`.
+ * - Sets the initialization flag to indicate successful initialization.
+ *
+ * @note This function assumes that the `ctl`, `mpi_info`, `atm`, and `met` structures are properly initialized.
+ *       The function is typically called at the beginning of a parallel processing task to set up the environment.
+ *
+ * @author Jan Clemens
+ */
+#ifdef DD   
+void dd_init(
+  ctl_t *ctl,
+  mpi_info_t *mpi_info, 
+  atm_t *atm, 
+  met_t **met, 
+  double t, 
+  int* dd_init);
+#endif
+
+/**
+ * @brief Manages domain decomposition and particle communication in parallel processing.
+ *
+ * The `module_dd` function orchestrates the domain decomposition process, including particle assignment,
+ * sorting, transformation, and communication across MPI processes. It handles the initialization of particles,
+ * their assignment to subdomains, and communication between neighbouring processes.
+ *
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data.
+ * @param cache A pointer to a `cache_t` structure used for storing intermediate values.
+ * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information.
+ * @param met A pointer to a pointer of a `met_t` structure containing meteorological data.
+ *
+ * The function performs the following steps:
+ * - Initializes a local array of particles.
+ * - Assigns particles to subdomains using `dd_assign_rect_subdomains_atm`.
+ * - Sorts particles according to their location and target rank using `dd_sort`.
+ * - Transforms atmospheric data to particle data using `atm2particles`.
+ * - Communicates particles between neighbouring MPI processes using `dd_communicate_particles`.
+ * - Transforms particle data back to atmospheric data using `dd_particles2atm`.
+ * - Frees the local particle array after processing.
+ *
+ * @note This function assumes that the `ctl`, `atm`, `cache`, `mpi_info`, and `met` structures are properly initialized.
+ *       It is designed to work in a parallel processing environment using MPI.
+ *
+ * @author Jan Clemens
+ */
+#ifdef DD
+void module_dd( 
+   ctl_t *ctl, 
+   atm_t *atm,
+   cache_t *cache, 
+   mpi_info_t* mpi_info, 
+   met_t **met);
+#endif
+   
+/**
+ * @brief Sort particles according to box index and target rank for neighbours.
+ *
+ * The `dd_sort` function sorts particles within the atmospheric data structure (`atm_t`)
+ * based on their geographical coordinates (longitude and latitude) and pressure level.
+ * It also considers the target rank to which a particle will be sent. The function allocates
+ * temporary arrays to store indices and auxiliary data for sorting, then performs the sorting
+ * operation. After sorting, it updates the order of particles in the atmospheric data structure.
+ *
+ * @param ctl A pointer to a `ctl_t` structure containing control parameters and settings.
+ * @param met0 A pointer to a `met_t` structure containing meteorological data at the current time step.
+ * @param atm A pointer to an `atm_t` structure containing atmospheric data with particle information.
+ * @param nparticles A pointer to an integer representing the number of particles to be sent.
+ * @param rank A pointer to an integer storing the current MPI rank.
+ *
+ * The function performs the following steps:
+ * - Allocates temporary arrays for sorting indices and values.
+ * - Computes a unique index for each particle based on its geographical coordinates and pressure level.
+ * - Uses parallel processing directives (OpenACC or OpenMP) to calculate these indices.
+ * - Sorts the particles based on the computed indices using a sorting library (e.g., Thrust).
+ * - Rearranges the atmospheric data arrays according to the sorted indices.
+ * - Counts the number of particles that need to be sent to other ranks and updates the particle count.
+ * - Frees the allocated temporary arrays.
+ *
+ * @note This function assumes that the `ctl`, `met0`, `atm`, `nparticles`, and `rank` parameters are properly initialized.
+ * @note The function utilizes the `locate_reg` and `locate_irr` functions to determine the appropriate index for sorting particles.
+ * @note Particle sorting is performed using either the Thrust library (if compiled with Thrust support)
+ * or a custom sorting algorithm. If compiled without Thrust support, an error message is displayed.
+ * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere data structure to maintain consistency.
+ *
+ * @author Jan Clemens
+ * @author Lars Hoffmann
+ */
+#ifdef DD
+void dd_sort(
+  const ctl_t * ctl,
+  met_t * met0,
+  atm_t * atm,
+  int* nparticles,
+  int* rank);
+#endif
 
 #endif /* LIBTRAC_H */
