@@ -672,7 +672,7 @@
  */
 #define DOTP(a, b)				\
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
-  
+
 /**
  * @brief Execute a ECCODES command and check for errors.
  *
@@ -2644,7 +2644,7 @@ typedef struct {
 
   /*! Quantity array index for age of air. */
   int qnt_aoa;
-  
+
   /*! Quantity array index for current subdomain in domain decomposition. */
   int qnt_subdomain;
 
@@ -3346,10 +3346,10 @@ typedef struct {
 
   /*! Zonal subdomain number. */
   int dd_subdomains_zonal;
-  
+
   /*! Meridional subdomain number. */
   int dd_subdomains_meridional;
-  
+
   /*! Number of neighbours to communicate with. */
   int dd_nbr_neighbours;
 
@@ -3411,7 +3411,7 @@ typedef struct {
 
   /*! Quantity data (for various, user-defined attributes). */
   double q[NQ];
-  
+
 } particle_t;
 
 /**
@@ -3422,16 +3422,20 @@ typedef struct {
  * the domain decomposition is defined.
  */
 typedef struct {
-    /*! Rank of node. */
-    int rank;
-    /*! Size of node. */
-    int size;
+  /*! Rank of node. */
+  int rank;
+  
+  /*! Size of node. */
+  int size;
+  
 #ifdef DD
-    /*! Rank of neighbouring nodes. */
-    int neighbours[DD_NNMAX];
-    /*! MPI Type for the particle. */
-    MPI_Datatype MPI_Particle;
+  /*! Rank of neighbouring nodes. */
+  int neighbours[DD_NNMAX];
+  
+  /*! MPI Type for the particle. */
+  MPI_Datatype MPI_Particle;
 #endif
+  
 } mpi_info_t;
 
 /**
@@ -3656,22 +3660,23 @@ typedef struct {
   /*! Number of model levels. */
   int npl;
 
-  /*! Longitude [deg]. */
+  // TODO:
+  // They need global sizes now, maybe in the future just keep EX, EY, EP and
+  // Introduce help data structure in read_met_grid etc.
+  
+  /*! Longitudes [deg]. */
 #ifdef DD
   double lon[EX_GLOB];
-#else 
+#else
   double lon[EX];
 #endif
 
-  /*! Latitude [deg]. */
-  // TODO:
-  // They need global sizes now, maybe in the future just keep EX, EY, EP and
-  // Introduce help data structure in read_met_grid etc.==
+  /*! Latitudes [deg]. */
 #ifdef DD
   double lat[EY_GLOB];
-#else 
+#else
   double lat[EY];
-#endif 
+#endif
 
   /*! Pressure levels [hPa]. */
 #ifdef DD
@@ -3811,42 +3816,48 @@ typedef struct {
 
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
-   
+
   // TODO: Integrate this into a  grid_t ?
-  
-  /*! Rectangular grid limit of subdomain... */
+
+  /*! Rectangular grid limit of subdomain. */
   double subdomain_lon_max;
-  
-  /*! Rectangular grid limit of subdomain... */
+
+  /*! Rectangular grid limit of subdomain. */
   double subdomain_lon_min;
-  
-  /*! Rectangular grid limit of subdomain... */
+
+  /*! Rectangular grid limit of subdomain. */
   double subdomain_lat_max;
-  
-  /*! Rectangular grid limit of subdomain... */
+
+  /*! Rectangular grid limit of subdomain. */
   double subdomain_lat_min;
-  
-  /*! Hyperslab start and count for subdomain... */
+
+  /*! Hyperslab start and count for subdomain. */
   size_t subdomain_start[4];
-  
-  /*! Hyperslab start and count for subdomain... */
+
+  /*! Hyperslab start and count for subdomain. */
   size_t subdomain_count[4];
 
-  /* Hyperslab of boundary halos start... */
+  /* Hyperslab of boundary halos start. */
   size_t halo_bnd_start[4];
-  
-  /* Hyperslab of boundary halos count... */
+
+  /* Hyperslab of boundary halos count. */
   size_t halo_bnd_count[4];
 
-  /* Hyperslab of boundary halos count... */
+  /* Hyperslab of boundary halos count. */
   int halo_offset_start;
+
+  /* Hyperslab of boundary halos count. */
   int halo_offset_end;
-  
-  /*! Global sizes of meteo data... */
+
+  /*! Global sizes of meteo data. */
   int nx_glob;
+
+  /*! Global sizes of meteo data. */
   int ny_glob;
+
+  /*! Global sizes of meteo data. */
   int np_glob;
-  
+
 } met_t;
 
 /* ------------------------------------------------------------
@@ -5972,7 +5983,7 @@ void module_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm);
-  
+
 /**
  * @brief Reorder an array based on a given permutation.
  *
@@ -6196,21 +6207,21 @@ void mptrac_alloc(
  */
 #ifdef DD
 void mptrac_free(
-  ctl_t *ctl,
-  cache_t *cache,
-  clim_t *clim,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm,
-  mpi_info_t *mpi_info);
+  ctl_t * ctl,
+  cache_t * cache,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm,
+  mpi_info_t * mpi_info);
 #else
 void mptrac_free(
-  ctl_t *ctl,
-  cache_t *cache,
-  clim_t *clim,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm);
+  ctl_t * ctl,
+  cache_t * cache,
+  clim_t * clim,
+  met_t * met0,
+  met_t * met1,
+  atm_t * atm);
 #endif
 
 /**
@@ -6454,7 +6465,7 @@ void mptrac_run_timestep(
   met_t ** met1,
   atm_t * atm,
   double t,
-  mpi_info_t* mpi_info);
+  mpi_info_t * mpi_info);
 #else
 void mptrac_run_timestep(
   ctl_t * ctl,
@@ -7248,7 +7259,7 @@ void read_met_extrapolate(
 void read_met_geopot(
   const ctl_t * ctl,
   met_t * met);
-  
+
 /**
  * @brief Reads meteorological data from a grib file and processes it.
  *
@@ -7430,7 +7441,7 @@ void read_met_ml2pl(
 void read_met_monotonize(
   const ctl_t * ctl,
   met_t * met);
-  
+
 /**
  * @brief Reads meteorological data from a NetCDF file and processes it.
  *
@@ -7544,7 +7555,7 @@ void read_met_nc_surface(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
-  
+
 /**
  * @brief Reads meteorological grid information from a NetCDF file.
  *
@@ -7581,7 +7592,7 @@ void read_met_nc_grid(
   const int ncid,
   const ctl_t * ctl,
   met_t * met);
-  
+
 /**
  * @brief Reads meteorological data from a NetCDF file and processes it.
  *
@@ -7686,8 +7697,8 @@ void read_met_nc_grid_dd(
  */
 void read_met_nc_levels_dd(
   const int ncid,
-  const ctl_t *ctl,
-  met_t *met);
+  const ctl_t * ctl,
+  met_t * met);
 
 /**
  * @brief Reads and processes surface meteorological data from NetCDF files with domain decomposition.
@@ -7719,8 +7730,8 @@ void read_met_nc_levels_dd(
  */
 void read_met_nc_surface_dd(
   const int ncid,
-  const ctl_t *ctl,
-  met_t *met);
+  const ctl_t * ctl,
+  met_t * met);
 
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
@@ -9288,7 +9299,7 @@ void write_vtk(
   const ctl_t * ctl,
   const atm_t * atm,
   const double t);
-  
+
 /**
  * @brief Converts atmospheric data to particle data.
  *
@@ -9312,11 +9323,11 @@ void write_vtk(
  * @author Jan Clemens
  */
 void dd_atm2particles(
-  atm_t* atm, 
-  particle_t* particles, 
-  ctl_t* ctl,
-  int* nparticles,
-  cache_t *cache,
+  atm_t * atm,
+  particle_t * particles,
+  ctl_t * ctl,
+  int *nparticles,
+  cache_t * cache,
   int rank);
 
 /**
@@ -9343,8 +9354,12 @@ void dd_atm2particles(
  *
  * @author Jan Clemens
  */
-void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
-   cache_t* cache);
+void dd_particles2atm(
+  atm_t * atm,
+  particle_t * particles,
+  ctl_t * ctl,
+  int *nparticles,
+  cache_t * cache);
 
 /**
  * @brief Registers a custom MPI datatype for particle structures.
@@ -9367,10 +9382,10 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
  *
  * @author Jan Clemens
  */
- #ifdef DD
-void  dd_register_MPI_type_particle(
-  MPI_Datatype* MPI_Particle);
-#endif 
+#ifdef DD
+void dd_register_MPI_type_particle(
+  MPI_Datatype * MPI_Particle);
+#endif
 
 /**
  * @brief Determines rectangular neighbouring ranks for MPI processes.
@@ -9396,9 +9411,9 @@ void  dd_register_MPI_type_particle(
  */
 #ifdef DD
 void dd_get_rect_neighbour(
-  const ctl_t ctl, 
-  mpi_info_t* mpi_info);
-#endif  
+  const ctl_t ctl,
+  mpi_info_t * mpi_info);
+#endif
 
 /**
  * @brief Communicates particles between MPI processes.
@@ -9431,14 +9446,14 @@ void dd_get_rect_neighbour(
  */
 #ifdef DD
 void dd_communicate_particles(
-  particle_t* particles, 
-  int* nparticles, 
-  MPI_Datatype MPI_Particle, 
-  int* neighbours, 
-  int nneighbours, 
+  particle_t * particles,
+  int *nparticles,
+  MPI_Datatype MPI_Particle,
+  int *neighbours,
+  int nneighbours,
   ctl_t ctl);
 #endif
-  
+
 /**
  * @brief Assigns rectangular subdomains to atmospheric data particles.
  *
@@ -9468,10 +9483,10 @@ void dd_communicate_particles(
 
 #ifdef DD
 void dd_assign_rect_subdomains_atm(
-  atm_t* atm,
-  met_t* met, 
-  ctl_t* ctl, 
-  mpi_info_t* mpi_info, 
+  atm_t * atm,
+  met_t * met,
+  ctl_t * ctl,
+  mpi_info_t * mpi_info,
   int init);
 #endif
 
@@ -9502,14 +9517,14 @@ void dd_assign_rect_subdomains_atm(
  *
  * @author Jan Clemens
  */
-#ifdef DD   
+#ifdef DD
 void dd_init(
-  ctl_t *ctl,
-  mpi_info_t *mpi_info, 
-  atm_t *atm, 
-  met_t **met, 
-  double t, 
-  int* dd_init);
+  ctl_t * ctl,
+  mpi_info_t * mpi_info,
+  atm_t * atm,
+  met_t ** met,
+  double t,
+  int *dd_init);
 #endif
 
 /**
@@ -9540,14 +9555,14 @@ void dd_init(
  * @author Jan Clemens
  */
 #ifdef DD
-void module_dd( 
-   ctl_t *ctl, 
-   atm_t *atm,
-   cache_t *cache, 
-   mpi_info_t* mpi_info, 
-   met_t **met);
+void module_dd(
+  ctl_t * ctl,
+  atm_t * atm,
+  cache_t * cache,
+  mpi_info_t * mpi_info,
+  met_t ** met);
 #endif
-   
+
 /**
  * @brief Sort particles according to box index and target rank for neighbours.
  *
@@ -9586,8 +9601,8 @@ void dd_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
-  int* nparticles,
-  int* rank);
+  int *nparticles,
+  int *rank);
 #endif
 
 #endif /* LIBTRAC_H */

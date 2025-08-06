@@ -41,7 +41,7 @@ int main(
   clim_t *clim;
 
   met_t *met0, *met1;
- 
+
 #ifdef DD
   mpi_info_t mpi_info;
 #endif
@@ -57,7 +57,7 @@ int main(
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
- 
+
 #ifdef DD
   mpi_info.rank = rank;
   mpi_info.size = size;
@@ -93,7 +93,7 @@ int main(
 
     /* Allocate memory... */
     mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm);
-   
+
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
     mptrac_read_ctl(filename, argc, argv, ctl);
@@ -134,7 +134,7 @@ int main(
       // TODO: Remove dd_init_flg ...
       static int dd_init_flg = 0;
       if (t == ctl->t_start || !dd_init_flg)
-        dd_init(ctl, &mpi_info, atm, &met0, t, &dd_init_flg);
+	dd_init(ctl, &mpi_info, atm, &met0, t, &dd_init_flg);
 #endif
 
       /* Run a single time step... */
@@ -172,7 +172,7 @@ int main(
 #else
     mptrac_free(ctl, cache, clim, met0, met1, atm);
 #endif
-   
+
     /* Report timers... */
     PRINT_TIMERS;
     STOP_TIMERS;

@@ -3954,14 +3954,14 @@ void module_timesteps(
 
     /* Check horizontal boundaries of local meteo data... */
 #ifndef DD
-      if (local && (atm->lon[ip] <= met0->lon[0]
-		    || atm->lon[ip] >= met0->lon[met0->nx - 1]
-		    || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
-        cache->dt[ip] = 0.0; 
+    if (local && (atm->lon[ip] <= met0->lon[0]
+		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
+		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
+      cache->dt[ip] = 0.0;
 #else
-      if ( (int) atm->q[ctl->qnt_subdomain][ip] == -1)
-        cache->dt[ip] = 0;
-#endif      
+    if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
+      cache->dt[ip] = 0;
+#endif
   }
 }
 
@@ -4283,7 +4283,7 @@ void mptrac_free(
   free(clim);
   free(met0);
   free(met1);
-  
+
   /* Free MPI datatype... */
 #ifdef DD
   MPI_Type_free(&mpi_info->MPI_Particle);
@@ -4764,7 +4764,8 @@ void mptrac_read_ctl(
       SET_QNT(qnt_theta, "theta", "potential temperature", "K")
       SET_QNT(qnt_zeta, "zeta", "zeta coordinate", "K")
       SET_QNT(qnt_zeta_d, "zeta_d", "diagnosed zeta coordinate", "K")
-      SET_QNT(qnt_zeta_dot, "zeta_dot", "velocity of zeta coordinate", "K/day")
+      SET_QNT(qnt_zeta_dot, "zeta_dot", "velocity of zeta coordinate",
+	      "K/day")
       SET_QNT(qnt_tvirt, "tvirt", "virtual temperature", "K")
       SET_QNT(qnt_lapse, "lapse", "temperature lapse rate", "K/km")
       SET_QNT(qnt_vh, "vh", "horizontal velocity", "m/s")
@@ -4793,7 +4794,8 @@ void mptrac_read_ctl(
       SET_QNT(qnt_Csf6, "Csf6", "SF6 volume mixing ratio", "ppv")
       SET_QNT(qnt_aoa, "aoa", "age of air", "s")
 #ifdef DD
-      SET_QNT(qnt_destination, "destination", "subdomain index of destination", "-")
+      SET_QNT(qnt_destination, "destination",
+	      "subdomain index of destination", "-")
       SET_QNT(qnt_subdomain, "subdomain", "current subdomain index", "-")
 #endif
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
@@ -4899,13 +4901,13 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_PRESS_LEVEL_DEF", -1, "-1",
 		   NULL);
   if (ctl->met_press_level_def >= 0) {
-      level_definitions(ctl);
-    } else {
-      if (ctl->met_np > 0) {
-        for (int ip = 0; ip < ctl->met_np; ip++)
-          ctl->met_p[ip] =
-          scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
-      }
+    level_definitions(ctl);
+  } else {
+    if (ctl->met_np > 0) {
+      for (int ip = 0; ip < ctl->met_np; ip++)
+	ctl->met_p[ip] =
+	  scan_ctl(filename, argc, argv, "MET_P", ip, "", NULL);
+    }
   }
   ctl->met_nlev =
     (int) scan_ctl(filename, argc, argv, "MET_NLEV", -1, "0", NULL);
@@ -5408,18 +5410,20 @@ void mptrac_read_ctl(
     scan_ctl(filename, argc, argv, "VTK_OFFSET", -1, "0.0", NULL);
   ctl->vtk_sphere =
     (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
-    
+
 #ifdef DD
   /* Controle of domain decomposition... */
   ctl->dd_subdomains_meridional =
-    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_MERIDIONAL", -1, "1", NULL);
+    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_MERIDIONAL", -1, "1",
+		   NULL);
   ctl->dd_subdomains_zonal =
-    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_ZONAL", -1, "1", NULL);
+    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_ZONAL", -1, "1",
+		   NULL);
   ctl->dd_nbr_neighbours =
     (int) scan_ctl(filename, argc, argv, "DD_NBR_NEIGHBOURS", -1, "8", NULL);
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
-#endif 
+#endif
 
 }
 
@@ -5549,7 +5553,7 @@ void mptrac_run_timestep(
   met_t **met1,
   atm_t *atm,
   double t,
-  mpi_info_t* mpi_info) {
+  mpi_info_t *mpi_info) {
 #else
 void mptrac_run_timestep(
   ctl_t *ctl,
@@ -5663,13 +5667,13 @@ void mptrac_run_timestep(
   /* First-order tracer chemistry... */
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
-          
+
   /* Domain decomposition... */
 #ifdef DD
-  if (ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal > 1)
+  if (ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal > 1)
     module_dd(ctl, atm, cache, mpi_info, met0);
-#endif 
-   
+#endif
+
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
 #ifdef KPP
@@ -6188,7 +6192,7 @@ int read_atm_clams(
 
   /* Read further quantities if requested... */
   for (int iq = 0; iq < ctl->nq; iq++)
-    NC_GET_DOUBLE(ctl->qnt_name[iq], atm->q[iq],0);
+    NC_GET_DOUBLE(ctl->qnt_name[iq], atm->q[iq], 0);
 
   /* Read longitude and latitude... */
   NC_GET_DOUBLE("LON", atm->lon, 1);
@@ -7328,7 +7332,7 @@ void read_met_nc_grid_dd(
   NC_INQ_DIM("lat", &met->ny_glob, 2, EY_GLOB);
   LOG(2, "Number of latitudes: %d", met->ny_glob);
   met->ny = (int) floor(met->ny_glob / ctl->dd_subdomains_meridional);;
-  
+
   /* Get global coordinates... */
   int dimid2;
   sprintf(levname, "lev");
@@ -7348,7 +7352,7 @@ void read_met_nc_grid_dd(
     met->np_glob = (int) np;
   }
   met->np = met->np_glob;
-  
+
   LOG(2, "Number of levels: %d", met->np);
   if (met->np_glob < 2 || met->np_glob > EP_GLOB)
     ERRMSG("Number of levels out of range!");
@@ -7381,129 +7385,143 @@ void read_met_nc_grid_dd(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   /* Check for edge cases... */
-  bool left = (rank <= ctl->dd_subdomains_meridional-1);
-  bool right = (rank >= size-ctl->dd_subdomains_meridional);
+  bool left = (rank <= ctl->dd_subdomains_meridional - 1);
+  bool right = (rank >= size - ctl->dd_subdomains_meridional);
   bool top = (rank % ctl->dd_subdomains_meridional == 0);
-  bool bottom = (rank % ctl->dd_subdomains_meridional == ctl->dd_subdomains_meridional - 1);
+  bool bottom =
+    (rank % ctl->dd_subdomains_meridional ==
+     ctl->dd_subdomains_meridional - 1);
 
   /* Set the hyperslab for the subdomain... */
   met->subdomain_start[0] = 0;
   met->subdomain_start[1] = 0;
-  met->subdomain_start[2] = (size_t)((rank % ctl->dd_subdomains_meridional)*met->ny);
-  met->subdomain_start[3] = (size_t)(floor (rank / ctl->dd_subdomains_meridional)*met->nx);
+  met->subdomain_start[2] =
+    (size_t) ((rank % ctl->dd_subdomains_meridional) * met->ny);
+  met->subdomain_start[3] =
+    (size_t) (floor(rank / ctl->dd_subdomains_meridional) * met->nx);
 
   /* Extend subdomains at the right and bottom to fit the full domain. */
   if (right) {
-    int gap = met->nx_glob - ctl->dd_subdomains_zonal*met->nx;
+    int gap = met->nx_glob - ctl->dd_subdomains_zonal * met->nx;
     if (gap > 0) {
       met->nx = met->nx + gap;
       WARN("Extended subdomains at the right to fit to full domain.");
     }
   }
   if (bottom) {
-    int gap = met->ny_glob - ctl->dd_subdomains_meridional*met->ny;
+    int gap = met->ny_glob - ctl->dd_subdomains_meridional * met->ny;
     if (gap > 0) {
       met->ny = met->ny + gap;
       WARN("Extended subdomains at the bottom to fit to full domain.");
     }
   }
-  
+
   /* Block-size, i.e. count */
-  met->subdomain_count[0] = 1; 
-  met->subdomain_count[1] = (size_t) met->np; 
+  met->subdomain_count[0] = 1;
+  met->subdomain_count[1] = (size_t) met->np;
   met->subdomain_count[2] = (size_t) met->ny;
   met->subdomain_count[3] = (size_t) met->nx;
- 
+
   /* Create halos and include them into the subdomain... */
   if (!left && !right) {
-      // If we are not at the left or right edge extend in zonal direction...
-      // Move the start one point to the left...
-      met->subdomain_count[3] = met->subdomain_count[3] + (size_t) (ctl->dd_halos_size*2);
-      met->subdomain_start[3] = met->subdomain_start[3] - (size_t) ctl->dd_halos_size;
-     } else {
-      // If we are at the left or right edge, extend only in one zonal direction...
-      met->subdomain_count[3] = met->subdomain_count[3] + (size_t) ctl->dd_halos_size;
-      if (!left)
-        // If we are not at the left edge, move the start to the left... 
-        met->subdomain_start[3] = met->subdomain_start[3] - (size_t) ctl->dd_halos_size;
+    // If we are not at the left or right edge extend in zonal direction...
+    // Move the start one point to the left...
+    met->subdomain_count[3] =
+      met->subdomain_count[3] + (size_t) (ctl->dd_halos_size * 2);
+    met->subdomain_start[3] =
+      met->subdomain_start[3] - (size_t) ctl->dd_halos_size;
+  } else {
+    // If we are at the left or right edge, extend only in one zonal direction...
+    met->subdomain_count[3] =
+      met->subdomain_count[3] + (size_t) ctl->dd_halos_size;
+    if (!left)
+      // If we are not at the left edge, move the start to the left... 
+      met->subdomain_start[3] =
+	met->subdomain_start[3] - (size_t) ctl->dd_halos_size;
   }
-  
-  if ( !top && !bottom ) {
-      // If we are not at the upper or lower edge extend in meridional direction...
-      // Move the start point one point down...
-      met->subdomain_count[2] = met->subdomain_count[2] + (size_t) (ctl->dd_halos_size*2);
-      met->subdomain_start[2] = met->subdomain_start[2] - (size_t) ctl->dd_halos_size;
-    } else {
-      // If we are at the top or the lower edge only extend in one mer. direction...
-      met->subdomain_count[2] = met->subdomain_count[2] + (size_t) ctl->dd_halos_size;
-      if (!top)
-        // If we are not at the top, move the start one upward... 
-        met->subdomain_start[2] = met->subdomain_start[2] - (size_t) ctl->dd_halos_size;
+
+  if (!top && !bottom) {
+    // If we are not at the upper or lower edge extend in meridional direction...
+    // Move the start point one point down...
+    met->subdomain_count[2] =
+      met->subdomain_count[2] + (size_t) (ctl->dd_halos_size * 2);
+    met->subdomain_start[2] =
+      met->subdomain_start[2] - (size_t) ctl->dd_halos_size;
+  } else {
+    // If we are at the top or the lower edge only extend in one mer. direction...
+    met->subdomain_count[2] =
+      met->subdomain_count[2] + (size_t) ctl->dd_halos_size;
+    if (!top)
+      // If we are not at the top, move the start one upward... 
+      met->subdomain_start[2] =
+	met->subdomain_start[2] - (size_t) ctl->dd_halos_size;
   }
 
   /* Set boundary halo hyperslabs ... */
   double lon_shift = 0;
-  if ( left || right ) {
+  if (left || right) {
 
     met->nx = met->nx + ctl->dd_halos_size;
-    
+
     met->halo_bnd_start[0] = 0;
     met->halo_bnd_start[1] = 0;
-    met->halo_bnd_start[3] = (size_t)(left ? (met->nx_glob - ctl->dd_halos_size) : (0)); //x
-    met->halo_bnd_start[2] = met->subdomain_start[2]; //y
-      
+    met->halo_bnd_start[3] = (size_t) (left ? (met->nx_glob - ctl->dd_halos_size) : (0));	//x
+    met->halo_bnd_start[2] = met->subdomain_start[2];	//y
+
     met->halo_bnd_count[0] = 1;
     met->halo_bnd_count[1] = (size_t) met->np;
     met->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
-    met->halo_bnd_count[2] = (size_t) met->ny + (size_t) ctl->dd_halos_size * ((top || bottom) ?  1 : 2 ); 
-  
-    met->halo_offset_start =  (left ? (int) met->halo_bnd_count[3] : 0);
+    met->halo_bnd_count[2] =
+      (size_t) met->ny +
+      (size_t) ctl->dd_halos_size * ((top || bottom) ? 1 : 2);
+
+    met->halo_offset_start = (left ? (int) met->halo_bnd_count[3] : 0);
     met->halo_offset_end = (left ? 0 : (int) met->subdomain_count[3]);
     lon_shift = (left ? -360 : 360);
 
   }
 
   /* Get the range of the entire meteodata... */
-  double lon_range = met->lon[ met->nx_glob - 1 ] - met->lon[0];
-  double lat_range = met->lat[ met->ny_glob - 1 ] - met->lat[0];
-  
+  double lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
+  double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
+
   /* Focus on subdomain longitutes and latitudes... */
-  for ( int iy = 0; iy < (int) met->subdomain_count[2]; iy++) {
+  for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++) {
     int iy_ = (int) met->subdomain_start[2] + iy;
     met->lat[iy] = met->lat[iy_];
   }
 
-  /* Keep space at the beginning or end of the array for halo...*/
+  /* Keep space at the beginning or end of the array for halo... */
   double help_lon[EX];
 
-  for ( int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
+  for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
     int ix_ = (int) met->subdomain_start[3] + ix;
     help_lon[ix + met->halo_offset_start] = met->lon[ix_];
   }
 
-  for ( int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
-     int ix_ = (int) met->halo_bnd_start[3] + ix;
+  for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
+    int ix_ = (int) met->halo_bnd_start[3] + ix;
     help_lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
   }
-  
+
   /* Reset the grid dimensions... */
   met->nx = (int) met->subdomain_count[3] + (int) met->halo_bnd_count[3];
   met->ny = (int) met->subdomain_count[2];
 
-  for ( int ix = 0; ix < (int) met->nx; ix++) {
+  for (int ix = 0; ix < (int) met->nx; ix++) {
     met->lon[ix] = help_lon[ix];
   }
-  	
+
   /* Determine subdomain edges... */
-  met->subdomain_lon_min = floor (rank / ctl->dd_subdomains_meridional)
-                        * (lon_range) / (double) ctl->dd_subdomains_zonal;
+  met->subdomain_lon_min = floor(rank / ctl->dd_subdomains_meridional)
+    * (lon_range) / (double) ctl->dd_subdomains_zonal;
   met->subdomain_lon_max = met->subdomain_lon_min
-                        + (lon_range) / (double) ctl->dd_subdomains_zonal;
+    + (lon_range) / (double) ctl->dd_subdomains_zonal;
   met->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
-                        * (lat_range) / (double) ctl->dd_subdomains_meridional;
+    * (lat_range) / (double) ctl->dd_subdomains_meridional;
   met->subdomain_lat_min = met->subdomain_lat_max
-                        + (lat_range) / (double) ctl->dd_subdomains_meridional;
-  
+    + (lat_range) / (double) ctl->dd_subdomains_meridional;
+
   LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg", rank,
       met->lon[0], met->lon[1], met->lon[met->nx - 1]);
   LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg", rank,
@@ -7511,15 +7529,24 @@ void read_met_nc_grid_dd(
 
   LOG(2, "Define subdomain properties.");
   LOG(2, "MPI information: Rank %d, Size %d", rank, size);
-  LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int)left, (int)right, (int)top, (int)bottom );
+  LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int) left, (int) right,
+      (int) top, (int) bottom);
   LOG(2, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
-  LOG(2, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx, met->ny, met->np);
-  LOG(2, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",  (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2], (int) met->halo_bnd_count[1]);
-  LOG(2, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d", (int) met->subdomain_count[3], (int) met->subdomain_count[2], (int) met->subdomain_count[1]);
-  LOG(2, "Subdomain start: nx %ld ny %ld np %ld" , met->subdomain_start[3], met->subdomain_start[2], met->subdomain_start[1]);
-  LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", met->halo_bnd_start[3], met->halo_bnd_start[2], met->halo_bnd_start[1]);
-  LOG(2, "Offsets: nx %d ny %d", met->halo_offset_start, met->halo_offset_end);
-  
+  LOG(2, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx,
+      met->ny, met->np);
+  LOG(2, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",
+      (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2],
+      (int) met->halo_bnd_count[1]);
+  LOG(2, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d",
+      (int) met->subdomain_count[3], (int) met->subdomain_count[2],
+      (int) met->subdomain_count[1]);
+  LOG(2, "Subdomain start: nx %ld ny %ld np %ld", met->subdomain_start[3],
+      met->subdomain_start[2], met->subdomain_start[1]);
+  LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", met->halo_bnd_start[3],
+      met->halo_bnd_start[2], met->halo_bnd_start[1]);
+  LOG(2, "Offsets: nx %d ny %d", met->halo_offset_start,
+      met->halo_offset_end);
+
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
     NC_GET_DOUBLE(levname, met->p, 1);
@@ -7530,7 +7557,7 @@ void read_met_nc_grid_dd(
     LOG(2, "Pressure levels: %g, %g ... %g hPa",
 	met->p[0], met->p[1], met->p[met->np - 1]);
   }
-  
+
   /* Read hybrid levels... */
   if (strcasecmp(levname, "hybrid") == 0)
     NC_GET_DOUBLE("hybrid", met->hybrid, 1);
@@ -7566,7 +7593,7 @@ void read_met_nc_surface_dd(
 	met->ps[ix][iy]
 	  = (ctl->met_np > 0 ? (float) ctl->met_p[0] : (float) met->p[0]);
   }
-      
+
   /* MPTRAC meteo data... */
   if (ctl->met_clams == 0) {
 
@@ -7688,7 +7715,8 @@ void read_met_nc_levels_dd(
   LOG(2, "Read level data...");
 
   /* Read temperature... */
-  if (!read_met_nc_3d_dd(ncid, "t", "T", "temp", "TEMP", ctl, met, met->t, 1.0))
+  if (!read_met_nc_3d_dd
+      (ncid, "t", "T", "temp", "TEMP", ctl, met, met->t, 1.0))
     ERRMSG("Cannot read temperature!");
 
   /* Read horizontal wind and vertical velocity... */
@@ -7737,7 +7765,8 @@ void read_met_nc_levels_dd(
   if (!read_met_nc_3d_dd
       (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, met->swc, 1.0))
     WARN("Cannot read cloud snow water content!");
-  if (!read_met_nc_3d_dd(ncid, "cc", "CC", NULL, NULL, ctl, met, met->cc, 1.0))
+  if (!read_met_nc_3d_dd
+      (ncid, "cc", "CC", NULL, NULL, ctl, met, met->cc, 1.0))
     WARN("Cannot read cloud cover!");
 
   /* Read zeta and zeta_dot... */
@@ -7772,7 +7801,7 @@ void read_met_nc_levels_dd(
       if (!read_met_nc_3d_dd
 	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl,
 	   0.01f))
-	    if (!read_met_nc_3d_dd
+	if (!read_met_nc_3d_dd
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
 
@@ -7786,30 +7815,30 @@ void read_met_nc_levels_dd(
 
       /* Read coefficients... */
       if (ctl->met_vert_coord == 2) {
-	      int varid;
-	      NC_GET_DOUBLE("hyam", hyam, 1);
-	      NC_GET_DOUBLE("hybm", hybm, 1);
+	int varid;
+	NC_GET_DOUBLE("hyam", hyam, 1);
+	NC_GET_DOUBLE("hybm", hybm, 1);
       }
 
       /* Use control parameters... */
       else if (ctl->met_vert_coord == 3) {
 
-	      /* Check number of levels... */
-	      if (met->np != ctl->met_nlev)
-	        ERRMSG("Mismatch in number of model levels!");
+	/* Check number of levels... */
+	if (met->np != ctl->met_nlev)
+	  ERRMSG("Mismatch in number of model levels!");
 
-	      /* Copy parameters... */
-	      for (int ip = 0; ip < met->np; ip++) {
-	        hyam[ip] = ctl->met_lev_hyam[ip];
-	        hybm[ip] = ctl->met_lev_hybm[ip];
- 	      }
+	/* Copy parameters... */
+	for (int ip = 0; ip < met->np; ip++) {
+	  hyam[ip] = ctl->met_lev_hyam[ip];
+	  hybm[ip] = ctl->met_lev_hybm[ip];
+	}
       }
 
       /* Calculate pressure... */
       for (int ix = 0; ix < met->nx; ix++)
-	      for (int iy = 0; iy < met->ny; iy++)
-	        for (int ip = 0; ip < met->np; ip++)
-	          met->pl[ix][iy][ip] =
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++)
+	    met->pl[ix][iy][ip] =
 	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
 
     }
@@ -7822,13 +7851,13 @@ void read_met_nc_levels_dd(
 
       /* Use control parameters... */
       for (int ip = 0; ip < met->np + 1; ip++) {
-	      hyam[ip] = ctl->met_lev_hyam[ip];
-	      hybm[ip] = ctl->met_lev_hybm[ip];
+	hyam[ip] = ctl->met_lev_hyam[ip];
+	hybm[ip] = ctl->met_lev_hybm[ip];
       }
 
       /* Check number of levels... */
       if (met->np + 1 != ctl->met_nlev)
-	      ERRMSG("Mismatch in number of model levels!");
+	ERRMSG("Mismatch in number of model levels!");
 
       /* Calculate pressure... */
 #pragma omp parallel for default(shared) collapse(2)
@@ -7876,7 +7905,7 @@ void read_met_nc_levels_dd(
   }
 
   /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++)    
+  for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
 
@@ -7928,8 +7957,8 @@ int read_met_nc_2d_dd(
   const char *varname4,
   const char *varname5,
   const char *varname6,
-  const ctl_t * ctl,
-  const met_t * met,
+  const ctl_t *ctl,
+  const met_t *met,
   float dest[EX][EY],
   const float scl,
   const int init) {
@@ -7961,117 +7990,118 @@ int read_met_nc_2d_dd(
 
 
 
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
+  /* Read fill value and missing value... */
+  float fillval, missval;
+  if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+    fillval = 0;
+  if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+    missval = 0;
 
-    /* Write info... */
-    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-	
-    /* Define hyperslab... */
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
-    
-    /* Allocate... */
-    float* help;
-    size_t help_subdomain_start[3];
-    size_t help_subdomain_count[3];
+  /* Write info... */
+  LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
+      varsel, fillval, missval);
 
-    help_subdomain_start[0] = 0; 
-    help_subdomain_start[1] = met->subdomain_start[2];
-    help_subdomain_start[2] = met->subdomain_start[3];
-   
-    help_subdomain_count[0] = 1;
-    help_subdomain_count[1] = met->subdomain_count[2]; //y
-    help_subdomain_count[2] = met->subdomain_count[3]; //x
-    
-    ALLOC(help, float, 
-    (int) met->subdomain_count[2] *
-    (int) met->subdomain_count[3]
+  /* Define hyperslab... */
+  int rank, size;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+  /* Allocate... */
+  float *help;
+  size_t help_subdomain_start[3];
+  size_t help_subdomain_count[3];
+
+  help_subdomain_start[0] = 0;
+  help_subdomain_start[1] = met->subdomain_start[2];
+  help_subdomain_start[2] = met->subdomain_start[3];
+
+  help_subdomain_count[0] = 1;
+  help_subdomain_count[1] = met->subdomain_count[2];	//y
+  help_subdomain_count[2] = met->subdomain_count[3];	//x
+
+  ALLOC(help, float,
+	  (int) met->subdomain_count[2] * (int) met->subdomain_count[3]
     );
 
-    /* Read data... */
-    NC(nc_get_vara_float(ncid, varid, help_subdomain_start, help_subdomain_count, help));
+  /* Read data... */
+  NC(nc_get_vara_float
+     (ncid, varid, help_subdomain_start, help_subdomain_count, help));
 
-    /* Read halos at boundaries...*/
-    size_t help_halo_bnd_start[3];
-    size_t help_halo_bnd_count[3];
+  /* Read halos at boundaries... */
+  size_t help_halo_bnd_start[3];
+  size_t help_halo_bnd_count[3];
 
-    help_halo_bnd_start[0] = 0; 
-    help_halo_bnd_start[1] = met->halo_bnd_start[2];
-    help_halo_bnd_start[2] = met->halo_bnd_start[3];
-   
-    help_halo_bnd_count[0] = 1;
-    help_halo_bnd_count[1] = met->halo_bnd_count[2]; //y
-    help_halo_bnd_count[2] = met->halo_bnd_count[3]; //x
+  help_halo_bnd_start[0] = 0;
+  help_halo_bnd_start[1] = met->halo_bnd_start[2];
+  help_halo_bnd_start[2] = met->halo_bnd_start[3];
 
-    float* help_halo;
-    ALLOC( help_halo, float, help_halo_bnd_count[1]*help_halo_bnd_count[2]);     
-    NC(nc_get_vara_float(ncid, varid,  help_halo_bnd_start, help_halo_bnd_count, help_halo));
+  help_halo_bnd_count[0] = 1;
+  help_halo_bnd_count[1] = met->halo_bnd_count[2];	//y
+  help_halo_bnd_count[2] = met->halo_bnd_count[3];	//x
 
-    /* Check meteo data layout... */
-    if (ctl->met_convention == 0) {
+  float *help_halo;
+  ALLOC(help_halo, float,
+	help_halo_bnd_count[1] * help_halo_bnd_count[2]);
+  NC(nc_get_vara_float
+     (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
+
+  /* Check meteo data layout... */
+  if (ctl->met_convention == 0) {
 
     /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-  for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
-	  for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
-	    if (init == 1)
-	      dest[ix + met->halo_offset_start][iy] = 0;
-	    float aux = help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
-	    if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f) {
-	      dest[ix + met->halo_offset_start][iy] += scl * aux;
+    for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
+      for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
+	if (init == 1)
+	  dest[ix + met->halo_offset_start][iy] = 0;
+	float aux = help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
+	    && fabsf(aux) < 1e14f) {
+	  dest[ix + met->halo_offset_start][iy] += scl * aux;
+	} else
+	  dest[ix + met->halo_offset_start][iy] = NAN;
       }
-	    else
-        dest[ix + met->halo_offset_start][iy] = NAN;
-    }
 
-  /* Copy and check data (ordering: lat, lon)... */
+    /* Copy and check data (ordering: lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-  for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
-	  for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
-	    if (init == 1)
-	      dest[ix  + met->halo_offset_end][iy] = 0; 
-	    float aux = help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
-	    if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f)
-	      dest[ix + met->halo_offset_end][iy] += scl * aux;
-	    else {
-	      dest[ix + met->halo_offset_end][iy] = NAN;
-      }
-  }
-
-    } else {
-
-      /* Copy and check data (ordering: lon, lat)... */
-#pragma omp parallel for default(shared) num_threads(12)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ix = 0; ix < met->nx; ix++) {
-	  if (init)
-	    dest[ix][iy] = 0;
-	  float aux = help[ARRAY_2D(ix, iy, met->ny)];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f)
-	    dest[ix][iy] += scl * aux;
-	  else
-	    dest[ix][iy] = NAN;
+    for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
+      for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
+	if (init == 1)
+	  dest[ix + met->halo_offset_end][iy] = 0;
+	float aux = help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
+	    && fabsf(aux) < 1e14f)
+	  dest[ix + met->halo_offset_end][iy] += scl * aux;
+	else {
+	  dest[ix + met->halo_offset_end][iy] = NAN;
 	}
+      }
+
+  } else {
+
+    /* Copy and check data (ordering: lon, lat)... */
+#pragma omp parallel for default(shared) num_threads(12)
+    for (int iy = 0; iy < met->ny; iy++)
+      for (int ix = 0; ix < met->nx; ix++) {
+	if (init)
+	  dest[ix][iy] = 0;
+	float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	if ((fillval == 0 || aux != fillval)
+	    && (missval == 0 || aux != missval)
+	    && fabsf(aux) < 1e14f)
+	  dest[ix][iy] += scl * aux;
+	else
+	  dest[ix][iy] = NAN;
+      }
 
   }
 
-    /* Free... */
-    free(help);
-    free(help_halo);
-    
+  /* Free... */
+  free(help);
+  free(help_halo);
+
 
   /* Return... */
   return 1;
@@ -8087,8 +8117,8 @@ int read_met_nc_3d_dd(
   const char *varname2,
   const char *varname3,
   const char *varname4,
-  const ctl_t * ctl,
-  const met_t * met,
+  const ctl_t *ctl,
+  const met_t *met,
   float dest[EX][EY][EP],
   const float scl) {
 
@@ -8120,25 +8150,33 @@ int read_met_nc_3d_dd(
 
   /* Write info... */
   LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
-    varsel, fillval, missval);
+      varsel, fillval, missval);
 
   /* Define hyperslab... */
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-    
+
   /* Allocate... */
   float *help;
-  ALLOC(help, float, (int) met->subdomain_count[0] * (int) met->subdomain_count[1]
-	           * (int) met->subdomain_count[2] * (int) met->subdomain_count[3]);
+  ALLOC(help, float,
+	  (int) met->subdomain_count[0] * (int) met->subdomain_count[1]
+	* (int) met->subdomain_count[2] * (int) met->subdomain_count[3]);
 
   /* Read data... */
-  NC(nc_get_vara_float(ncid, varid, met->subdomain_start, met->subdomain_count, help));
+  NC(nc_get_vara_float
+     (ncid, varid, met->subdomain_start, met->subdomain_count, help));
 
   /* Read halos separately at boundaries... */
-  float* help_halo;
-  ALLOC(help_halo, float, met->halo_bnd_count[0]*met->halo_bnd_count[1]*met->halo_bnd_count[2]*met->halo_bnd_count[3])
-  NC(nc_get_vara_float(ncid, varid,  met->halo_bnd_start, met->halo_bnd_count, help_halo));
+  float *help_halo;
+  ALLOC(help_halo, float,
+	met->halo_bnd_count[0] * met->halo_bnd_count[1] *
+	met->halo_bnd_count[2] * met->halo_bnd_count[3]) NC(
+  nc_get_vara_float(ncid,
+		    varid,
+		    met->halo_bnd_start,
+		    met->halo_bnd_count,
+		    help_halo));
 
   /* Check meteo data layout... */
   if (ctl->met_convention == 0) {
@@ -8146,60 +8184,63 @@ int read_met_nc_3d_dd(
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++)
       for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
-        for (int ip = 0; ip < met->np; ip++) {
-          float aux = help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix, (int) met->subdomain_count[3])];
-          if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux) < 1e14f)
-	    dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
-	  else 
-	    dest[ix +  met->halo_offset_start][iy][ip] = NAN;
+	for (int ip = 0; ip < met->np; ip++) {
+	  float aux = help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix,
+				    (int) met->subdomain_count[3])];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + met->halo_offset_start][iy][ip] = scl * aux;
+	  else
+	    dest[ix + met->halo_offset_start][iy][ip] = NAN;
 	}
-	
+
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
       for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
-        for (int ip = 0; ip < met->np; ip++) {
-          float aux = help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix, (int) met->halo_bnd_count[3])];
-          if ((fillval == 0 || aux != fillval)
-            && (missval == 0 || aux != missval)
-            && fabsf(aux) < 1e14f)
-            dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
-          else
-            dest[ix + met->halo_offset_end][iy][ip] = NAN;
-        }
+	for (int ip = 0; ip < met->np; ip++) {
+	  float aux =
+	    help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix,
+			       (int) met->halo_bnd_count[3])];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
+	  else
+	    dest[ix + met->halo_offset_end][iy][ip] = NAN;
+	}
 
-    } else {
+  } else {
 
     /* Copy and check data (ordering: lon, lat, lev)... */
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ip = 0; ip < met->np; ip++)
-	    for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
-	      for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
-	        float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-	        if ((fillval == 0 || aux != fillval)
-		  && (missval == 0 || aux != missval)
-		  && fabsf(aux) < 1e14f)
-	          dest[ix +  met->halo_offset_end][iy][ip] = scl * aux;
-	        else
-	          dest[ix +  met->halo_offset_end][iy][ip] = NAN;
-	      }
+      for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
+	for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
+	  float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
+	  else
+	    dest[ix + met->halo_offset_end][iy][ip] = NAN;
+	}
 
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ip = 0; ip < met->np; ip++)
-      for (int iy = 0; iy < (int)met->halo_bnd_count[2]; iy++)
-        for (int ix = 0; ix < (int)met->halo_bnd_count[3]; ix++) {
-          float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-          if ((fillval == 0 || aux != fillval)
-            && (missval == 0 || aux != missval)
-            && fabsf(aux) < 1e14f)
-            dest[ix +  met->halo_offset_start][iy][ip] = scl * aux;
-          else
-            dest[ix +  met->halo_offset_start][iy][ip] = NAN;
-        }
-    }
-    
-    /* Free... */
+      for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
+	for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
+	  float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + met->halo_offset_start][iy][ip] = scl * aux;
+	  else
+	    dest[ix + met->halo_offset_start][iy][ip] = NAN;
+	}
+  }
+
+  /* Free... */
   free(help);
   free(help_halo);
 
@@ -8766,7 +8807,7 @@ void read_met_monotonize(
 	}
       }
     }
-  }
+}
 
 /*****************************************************************************/
 
@@ -9745,7 +9786,7 @@ void read_met_periodic(
   SELECT_TIMER("READ_MET_PERIODIC", "METPROC", NVTX_READ);
   LOG(2, "Apply periodic boundary conditions...");
 
-    /* Check longitudes... */
+  /* Check longitudes... */
   if (!(fabs(met->lon[met->nx - 1] - met->lon[0]
 	     + met->lon[1] - met->lon[0] - 360) < 0.01))
     return;
@@ -9760,7 +9801,7 @@ void read_met_periodic(
   /* Loop over latitudes and pressure levels... */
 #pragma omp parallel for default(shared)
   for (int iy = 0; iy < met->ny; iy++) {
-    met->ps[met->nx - 1][iy] = met->ps[0][iy]; 
+    met->ps[met->nx - 1][iy] = met->ps[0][iy];
     met->zs[met->nx - 1][iy] = met->zs[0][iy];
     met->ts[met->nx - 1][iy] = met->ts[0][iy];
     met->us[met->nx - 1][iy] = met->us[0][iy];
@@ -12978,42 +13019,51 @@ void write_vtk(
 
 /*****************************************************************************/
 #ifdef DD
-void dd_atm2particles(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles, 
-    cache_t *cache, int rank) {
-  
+void dd_atm2particles(
+  atm_t *atm,
+  particle_t *particles,
+  ctl_t *ctl,
+  int *nparticles,
+  cache_t *cache,
+  int rank) {
+
   SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
-  
+
   /* Select the particles that will be send... */
   int npart = *nparticles;
 #pragma acc enter data create( nparticles, particles[:DD_NPART])
 #pragma acc update device( nparticles)
 #pragma acc parallel loop present( atm, ctl, particles, cache, nparticles)
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
-    if (((int)(atm->q[ctl->qnt_destination][ip]) != rank)
-        && ((int)(atm->q[ctl->qnt_destination][ip]) >= 0)
-        && ((int)atm->q[ctl->qnt_subdomain][ip] >= 0)) {
+    if (((int) (atm->q[ctl->qnt_destination][ip]) != rank)
+	&& ((int) (atm->q[ctl->qnt_destination][ip]) >= 0)
+	&& ((int) atm->q[ctl->qnt_subdomain][ip] >= 0)) {
 
-        particles[ip-atm->np].time = atm->time[ip];
-        particles[ip-atm->np].lon = atm->lon[ip];
-        particles[ip-atm->np].lat = atm->lat[ip];
-        particles[ip-atm->np].p = atm->p[ip];
+      particles[ip - atm->np].time = atm->time[ip];
+      particles[ip - atm->np].lon = atm->lon[ip];
+      particles[ip - atm->np].lat = atm->lat[ip];
+      particles[ip - atm->np].p = atm->p[ip];
 
-        for (int iq = 0; iq < ctl->nq; iq++)
-            particles[ip-atm->np].q[iq] = atm->q[iq][ip];
+      for (int iq = 0; iq < ctl->nq; iq++)
+	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
 
-        atm->q[ctl->qnt_subdomain][ip] = -1;
-        cache->dt[ip] = 0;    
-  }
+      atm->q[ctl->qnt_subdomain][ip] = -1;
+      cache->dt[ip] = 0;
+    }
 #pragma acc update host( particles[:npart])
 #pragma acc exit data delete( nparticles, particles)
-  
+
 }
 #endif
 
 /*****************************************************************************/
 #ifdef DD
-void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparticles,
-  cache_t* cache) {
+void dd_particles2atm(
+  atm_t *atm,
+  particle_t *particles,
+  ctl_t *ctl,
+  int *nparticles,
+  cache_t *cache) {
 
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
@@ -13023,17 +13073,17 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
 #pragma acc data present(atm, ctl, cache, particles, nparticles)
 #pragma acc parallel loop
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
-    
-      atm->time[ip] = particles[ip - atm->np].time;
-      atm->lon[ip] = particles[ip - atm->np].lon; 
-      atm->lat[ip] = particles[ip - atm->np].lat;
-      atm->p[ip] = particles[ip - atm->np].p;
 
-      for (int iq = 0; iq < ctl->nq; iq++) 
-        atm->q[iq][ip] = particles[ip - atm->np].q[iq];
-        
-      cache->dt[ip] = ctl->dt_mod;
-      
+    atm->time[ip] = particles[ip - atm->np].time;
+    atm->lon[ip] = particles[ip - atm->np].lon;
+    atm->lat[ip] = particles[ip - atm->np].lat;
+    atm->p[ip] = particles[ip - atm->np].p;
+
+    for (int iq = 0; iq < ctl->nq; iq++)
+      atm->q[iq][ip] = particles[ip - atm->np].q[iq];
+
+    cache->dt[ip] = ctl->dt_mod;
+
   }
 #pragma acc exit data delete(nparticles, particles)
 
@@ -13050,377 +13100,435 @@ void dd_particles2atm(atm_t* atm, particle_t* particles, ctl_t* ctl, int* nparti
 /*****************************************************************************/
 
 #ifdef DD
-void dd_register_MPI_type_particle(MPI_Datatype * MPI_Particle) {
-  MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, 
-    MPI_DOUBLE, MPI_DOUBLE };
+void dd_register_MPI_type_particle(
+  MPI_Datatype *MPI_Particle) {
+  MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+    MPI_DOUBLE, MPI_DOUBLE
+  };
   int blocklengths[5] = { 1, 1, 1, 1, NQ };
-  MPI_Aint displacements[5] = { offsetof (particle_t, time), 
-                                offsetof (particle_t, p),
-                                offsetof (particle_t, lon),
-                                offsetof (particle_t, lat),
-                                offsetof (particle_t, q)
-                              };
-  MPI_Type_create_struct (5, blocklengths, displacements, types,
-			  MPI_Particle);
-  MPI_Type_commit (MPI_Particle);
+  MPI_Aint displacements[5] = { offsetof(particle_t, time),
+    offsetof(particle_t, p),
+    offsetof(particle_t, lon),
+    offsetof(particle_t, lat),
+    offsetof(particle_t, q)
+  };
+  MPI_Type_create_struct(5, blocklengths, displacements, types, MPI_Particle);
+  MPI_Type_commit(MPI_Particle);
 }
 #endif
 
 /*****************************************************************************/
 
 #ifdef DD
-void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t* mpi_info) {
+void dd_get_rect_neighbour(
+  const ctl_t ctl,
+  mpi_info_t *mpi_info) {
 
-      SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
 
-      if ( mpi_info->rank + 1 == mpi_info->size) {
+  if (mpi_info->rank + 1 == mpi_info->size) {
 
-        mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;   
-        mpi_info->neighbours[1] = DD_SPOLE;
-        mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1; 
+    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[1] = DD_SPOLE;
+    mpi_info->neighbours[2] =
+      mpi_info->rank - ctl.dd_subdomains_meridional - 1;
 
-        mpi_info->neighbours[3] = 
-        (mpi_info->rank + 1 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1; 
-        mpi_info->neighbours[4] = DD_SPOLE;
-        mpi_info->neighbours[5] = (mpi_info->rank + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
+    mpi_info->neighbours[3] =
+      (mpi_info->rank + 1 + ctl.dd_subdomains_meridional) % mpi_info->size -
+      1;
+    mpi_info->neighbours[4] = DD_SPOLE;
+    mpi_info->neighbours[5] =
+      (mpi_info->rank + ctl.dd_subdomains_meridional) % mpi_info->size - 1;
 
-        mpi_info->neighbours[6] = mpi_info->rank - 1;
-        mpi_info->neighbours[7] = DD_SPOLE;
-      
-      } else if (mpi_info->rank == ctl.dd_subdomains_meridional*( ctl.dd_subdomains_zonal - 1 )){
+    mpi_info->neighbours[6] = mpi_info->rank - 1;
+    mpi_info->neighbours[7] = DD_SPOLE;
 
-        mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional ;
-        mpi_info->neighbours[1] = mpi_info->rank - ctl.dd_subdomains_meridional + 1;
-        mpi_info->neighbours[2] = DD_NPOLE; 
+  } else if (mpi_info->rank ==
+	     ctl.dd_subdomains_meridional * (ctl.dd_subdomains_zonal - 1)) {
 
-        mpi_info->neighbours[3] = (mpi_info->rank + 1 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
-        mpi_info->neighbours[4] = (mpi_info->rank + 2 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
-        mpi_info->neighbours[5] = DD_NPOLE;
+    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[1] =
+      mpi_info->rank - ctl.dd_subdomains_meridional + 1;
+    mpi_info->neighbours[2] = DD_NPOLE;
 
-        mpi_info->neighbours[6] = DD_NPOLE;
-        mpi_info->neighbours[7] = mpi_info->rank + 1;
+    mpi_info->neighbours[3] =
+      (mpi_info->rank + 1 + ctl.dd_subdomains_meridional) % mpi_info->size -
+      1;
+    mpi_info->neighbours[4] =
+      (mpi_info->rank + 2 + ctl.dd_subdomains_meridional) % mpi_info->size -
+      1;
+    mpi_info->neighbours[5] = DD_NPOLE;
 
-     } else if (mpi_info->rank == 0) {
+    mpi_info->neighbours[6] = DD_NPOLE;
+    mpi_info->neighbours[7] = mpi_info->rank + 1;
 
-        mpi_info->neighbours[0] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-        mpi_info->neighbours[1] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
-        mpi_info->neighbours[2] = DD_NPOLE;
+  } else if (mpi_info->rank == 0) {
 
-        mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-        mpi_info->neighbours[4] = mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
-        mpi_info->neighbours[5] = DD_NPOLE;
+    mpi_info->neighbours[0] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
+    mpi_info->neighbours[1] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
+    mpi_info->neighbours[2] = DD_NPOLE;
 
-      mpi_info->neighbours[6] = DD_NPOLE;
-      mpi_info->neighbours[7] = mpi_info->rank + 1;
+    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[4] =
+      mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[5] = DD_NPOLE;
 
-    } else if (mpi_info->rank + 1 == ctl.dd_subdomains_meridional) {
+    mpi_info->neighbours[6] = DD_NPOLE;
+    mpi_info->neighbours[7] = mpi_info->rank + 1;
 
-      mpi_info->neighbours[0] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-      mpi_info->neighbours[1] = DD_SPOLE;
-      mpi_info->neighbours[2] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
+  } else if (mpi_info->rank + 1 == ctl.dd_subdomains_meridional) {
 
-      mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[4] = DD_SPOLE;
-      mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;
+    mpi_info->neighbours[0] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
+    mpi_info->neighbours[1] = DD_SPOLE;
+    mpi_info->neighbours[2] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
 
-      mpi_info->neighbours[6] = mpi_info->rank - 1;
-      mpi_info->neighbours[7] = DD_SPOLE;
+    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[4] = DD_SPOLE;
+    mpi_info->neighbours[5] =
+      mpi_info->rank + ctl.dd_subdomains_meridional - 1;
 
-    } else if ((mpi_info->rank + 1)%ctl.dd_subdomains_meridional == 1) {
+    mpi_info->neighbours[6] = mpi_info->rank - 1;
+    mpi_info->neighbours[7] = DD_SPOLE;
 
-      mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[1] = mpi_info->rank + 1 - ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[2] = DD_NPOLE;
+  } else if ((mpi_info->rank + 1) % ctl.dd_subdomains_meridional == 1) {
 
-      mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[4] = mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[5] = DD_NPOLE;
+    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[1] =
+      mpi_info->rank + 1 - ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[2] = DD_NPOLE;
 
-      mpi_info->neighbours[6] = DD_NPOLE;
-      mpi_info->neighbours[7] = mpi_info->rank + 1;
+    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[4] =
+      mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[5] = DD_NPOLE;
 
-    } else if ((mpi_info->rank+1)%ctl.dd_subdomains_meridional == 0) {
-      
-      mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[1] = DD_SPOLE;
-      mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1;
+    mpi_info->neighbours[6] = DD_NPOLE;
+    mpi_info->neighbours[7] = mpi_info->rank + 1;
 
-      mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[4] = DD_SPOLE;
-      mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;
+  } else if ((mpi_info->rank + 1) % ctl.dd_subdomains_meridional == 0) {
 
-      mpi_info->neighbours[6] = mpi_info->rank - 1;
-      mpi_info->neighbours[7] = DD_SPOLE;
-    
-    } else if (mpi_info->rank + 1 <= ctl.dd_subdomains_meridional) {
+    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[1] = DD_SPOLE;
+    mpi_info->neighbours[2] =
+      mpi_info->rank - ctl.dd_subdomains_meridional - 1;
 
-      mpi_info->neighbours[0] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-      mpi_info->neighbours[1] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
-      mpi_info->neighbours[2] = mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
+    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[4] = DD_SPOLE;
+    mpi_info->neighbours[5] =
+      mpi_info->rank + ctl.dd_subdomains_meridional - 1;
 
-      mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[4] = mpi_info->rank + ctl.dd_subdomains_meridional + 1;
-      mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;
+    mpi_info->neighbours[6] = mpi_info->rank - 1;
+    mpi_info->neighbours[7] = DD_SPOLE;
 
-      mpi_info->neighbours[6] = mpi_info->rank - 1;
-      mpi_info->neighbours[7] = mpi_info->rank + 1;
+  } else if (mpi_info->rank + 1 <= ctl.dd_subdomains_meridional) {
 
-    } else if (mpi_info->rank + 1 > mpi_info->size - ctl.dd_subdomains_meridional) {
+    mpi_info->neighbours[0] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
+    mpi_info->neighbours[1] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
+    mpi_info->neighbours[2] =
+      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
 
-      mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-      mpi_info->neighbours[1] = mpi_info->rank - ctl.dd_subdomains_meridional + 1;
-      mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1;
+    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[4] =
+      mpi_info->rank + ctl.dd_subdomains_meridional + 1;
+    mpi_info->neighbours[5] =
+      mpi_info->rank + ctl.dd_subdomains_meridional - 1;
 
-      mpi_info->neighbours[3] = (mpi_info->rank + 1 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
-      mpi_info->neighbours[4] = (mpi_info->rank + 2 + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
-      mpi_info->neighbours[5] = (mpi_info->rank  + ctl.dd_subdomains_meridional)%mpi_info->size  - 1;
+    mpi_info->neighbours[6] = mpi_info->rank - 1;
+    mpi_info->neighbours[7] = mpi_info->rank + 1;
 
-      mpi_info->neighbours[6] = mpi_info->rank - 1;
-      mpi_info->neighbours[7] = mpi_info->rank + 1;
-      
-    } else {
+  } else if (mpi_info->rank + 1 >
+	     mpi_info->size - ctl.dd_subdomains_meridional) {
 
-      mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;  // left...
-      mpi_info->neighbours[1] = mpi_info->rank - ctl.dd_subdomains_meridional + 1; // lower left..
-      mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1; // upper left..
+    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
+    mpi_info->neighbours[1] =
+      mpi_info->rank - ctl.dd_subdomains_meridional + 1;
+    mpi_info->neighbours[2] =
+      mpi_info->rank - ctl.dd_subdomains_meridional - 1;
 
-      mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional; // right...
-      mpi_info->neighbours[4] = mpi_info->rank + ctl.dd_subdomains_meridional + 1 ; // lower right...
-      mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1; // upper right...
+    mpi_info->neighbours[3] =
+      (mpi_info->rank + 1 + ctl.dd_subdomains_meridional) % mpi_info->size -
+      1;
+    mpi_info->neighbours[4] =
+      (mpi_info->rank + 2 + ctl.dd_subdomains_meridional) % mpi_info->size -
+      1;
+    mpi_info->neighbours[5] =
+      (mpi_info->rank + ctl.dd_subdomains_meridional) % mpi_info->size - 1;
 
-      mpi_info->neighbours[6] = mpi_info->rank - 1; // upper
-      mpi_info->neighbours[7] = mpi_info->rank + 1; // lower
-    
-    }
+    mpi_info->neighbours[6] = mpi_info->rank - 1;
+    mpi_info->neighbours[7] = mpi_info->rank + 1;
+
+  } else {
+
+    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;	// left...
+    mpi_info->neighbours[1] = mpi_info->rank - ctl.dd_subdomains_meridional + 1;	// lower left..
+    mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1;	// upper left..
+
+    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;	// right...
+    mpi_info->neighbours[4] = mpi_info->rank + ctl.dd_subdomains_meridional + 1;	// lower right...
+    mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;	// upper right...
+
+    mpi_info->neighbours[6] = mpi_info->rank - 1;	// upper
+    mpi_info->neighbours[7] = mpi_info->rank + 1;	// lower
+
+  }
 }
 #endif
-  
+
 /*****************************************************************************/
 
 #ifdef DD
 void dd_communicate_particles(
-  particle_t* particles, 
-  int* nparticles, 
-  MPI_Datatype MPI_Particle, 
-  int* neighbours, 
-  int nneighbours, 
+  particle_t *particles,
+  int *nparticles,
+  MPI_Datatype MPI_Particle,
+  int *neighbours,
+  int nneighbours,
   ctl_t ctl) {
 
   /* Initialize the buffers... */
-  int* nbs;
-  int* nbr;
-  ALLOC(nbs, int, nneighbours);
-  ALLOC(nbr, int, nneighbours);
-  particle_t* send_buffers[DD_NNMAX] = { NULL };
-  particle_t* recieve_buffers[DD_NNMAX] = { NULL };
-  
+  int *nbs;
+  int *nbr;
+  ALLOC(nbs, int,
+	nneighbours);
+  ALLOC(nbr, int,
+	nneighbours);
+  particle_t *send_buffers[DD_NNMAX] = { NULL };
+  particle_t *recieve_buffers[DD_NNMAX] = { NULL };
+
   /* Get MPI rank... */
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  
+
   /* Infos for MPI async... */
   // TODO: Make this requests variable from number of neighbours... 
-  MPI_Request requests_snd_nbr[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
-  MPI_Request requests_rcv_nbr[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
-  MPI_Request requests_snd_part[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
-  MPI_Request requests_rcv_part[8] = {MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL,MPI_REQUEST_NULL};
+  MPI_Request requests_snd_nbr[8] =
+    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
+    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
+  };
+  MPI_Request requests_rcv_nbr[8] =
+    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
+    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
+  };
+  MPI_Request requests_snd_part[8] =
+    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
+    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
+  };
+  MPI_Request requests_rcv_part[8] =
+    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
+    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
+  };
   MPI_Status states[8];
-  
+
   /* Sending... */
-  LOG(1, "Start sending at rank: %d with %d particles in list.", rank, *nparticles);
+  LOG(1, "Start sending at rank: %d with %d particles in list.", rank,
+      *nparticles);
   for (int idest = 0; idest < nneighbours; idest++) {
-  
+
     /* Ignore poles... */
     if (neighbours[idest] < 0)
       continue;
-            
+
     SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_GPU);
     /* Count number of particles in particle array that will be send... */
     int help_sum = 0;
     for (int ip = 0; ip < *nparticles; ip++)
-      if ((int) particles[ip].q[ctl.qnt_destination] == neighbours[idest] ) 
-          help_sum++;
+      if ((int) particles[ip].q[ctl.qnt_destination] == neighbours[idest])
+	help_sum++;
     nbs[idest] = help_sum;
-        
+
     SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_GPU);
     /* Send buffer sizes... */
-    MPI_Isend( &nbs[idest], 1, MPI_INT, 
-               neighbours[idest], 0, MPI_COMM_WORLD, &requests_snd_nbr[idest]);
+    MPI_Isend(&nbs[idest], 1, MPI_INT,
+	      neighbours[idest], 0, MPI_COMM_WORLD, &requests_snd_nbr[idest]);
 
     /* Don't send empty signals... */
-    if ( nbs[idest] == 0 )
+    if (nbs[idest] == 0)
       continue;
 
     SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_GPU);
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
-   
+
     /* Fill the send buffer in a sorted way... */
-    int ibs = 0;    
+    int ibs = 0;
     for (int ip = 0; ip < *nparticles; ip++) {
       if ((int) particles[ip].q[ctl.qnt_destination] == neighbours[idest]) {
-        memcpy( &send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
-        ibs++;
+	memcpy(&send_buffers[idest][ibs], &particles[ip], sizeof(particle_t));
+	ibs++;
       }
-      
+
       if (ibs == nbs[idest])
-      break;
+	break;
 
     }
 
     SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_GPU);
     /* Send the buffer... */
-    MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle, 
-    	      neighbours[idest], 1, MPI_COMM_WORLD, &requests_snd_part[idest]);
+    MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle,
+	      neighbours[idest], 1, MPI_COMM_WORLD,
+	      &requests_snd_part[idest]);
   }
-  
+
   SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_GPU);
 
   /* Recieving... */
-  LOG(1, "Start recieving at rank: %d with %d particles in list.", rank, *nparticles);
+  LOG(1, "Start recieving at rank: %d with %d particles in list.", rank,
+      *nparticles);
 
   for (int isourc = 0; isourc < nneighbours; isourc++) {
-  
+
     /* Ignore poles... */
-    if (neighbours[isourc]<0) {
+    if (neighbours[isourc] < 0) {
       requests_rcv_nbr[isourc] = MPI_REQUEST_NULL;
       continue;
     }
 
     /* Recieve buffer sizes... */
-    MPI_Irecv( &nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,  &requests_rcv_nbr[isourc]); 
-    
+    MPI_Irecv(&nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,
+	      &requests_rcv_nbr[isourc]);
+
   }
-  
+
   /* Wait for all particle numbers to be recieved... */
   //MPI_Barrier(MPI_COMM_WORLD);
   MPI_Waitall(nneighbours, requests_rcv_nbr, states);
-  
+
   SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_GPU);
   for (int isourc = 0; isourc < nneighbours; isourc++) {
-  
+
     /* Ignore poles, and neighbours without signal... */
-    if ((neighbours[isourc]<0) || (nbr[isourc]==0)) {
+    if ((neighbours[isourc] < 0) || (nbr[isourc] == 0)) {
       requests_rcv_part[isourc] = MPI_REQUEST_NULL;
       continue;
     }
 
     /* Allocate buffer for recieving... */
     ALLOC(recieve_buffers[isourc], particle_t, nbr[isourc]);
-    
+
     //MPI_Status status;
     //MPI_Recv( recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &status);
-    MPI_Irecv(recieve_buffers[isourc], nbr[isourc], MPI_Particle, neighbours[isourc], 1, MPI_COMM_WORLD, &requests_rcv_part[isourc]);
-    
+    MPI_Irecv(recieve_buffers[isourc], nbr[isourc], MPI_Particle,
+	      neighbours[isourc], 1, MPI_COMM_WORLD,
+	      &requests_rcv_part[isourc]);
+
   }
 
   /* Wait for all particles to be recieved... */
   MPI_Waitall(nneighbours, requests_rcv_part, states);
 
   SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_GPU);
-  
+
   /* Logging of communication ... */
   for (int isourc = 0; isourc < nneighbours; isourc++)
-    LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank, neighbours[isourc], nbs[isourc], nbr[isourc]);
+    LOG(1, "Ranks: %d <-> %d : #Particles: -> %d : <- %d", rank,
+	neighbours[isourc], nbs[isourc], nbr[isourc]);
 
   /* Start position for different buffer ranges... */
   int api = 0;
 
-  LOG(1, "Putting buffer into particle array: %d with %d particles in list.", rank, api);
-  
+  LOG(1, "Putting buffer into particle array: %d with %d particles in list.",
+      rank, api);
+
   /* Putting buffer into particle array... */
   for (int isourc = 0; isourc < nneighbours; isourc++) {
-    
+
     /* Ignore poles... */
-    if (neighbours[isourc]<0)
+    if (neighbours[isourc] < 0)
       continue;
-      
-    /* Getting particles from buffer... */ 
+
+    /* Getting particles from buffer... */
     for (int ip = 0; ip < nbr[isourc]; ip++) {
-      memcpy(&particles[ip + api], &recieve_buffers[isourc][ip], sizeof(particle_t));
+      memcpy(&particles[ip + api], &recieve_buffers[isourc][ip],
+	     sizeof(particle_t));
       particles[ip + api].q[ctl.qnt_destination] = rank;
       particles[ip + api].q[ctl.qnt_subdomain] = rank;
 
     }
-    api += nbr[isourc];   
-  } 
-  
+    api += nbr[isourc];
+  }
+
   /* Set number of recieved particles... */
   *nparticles = api;
-  
+
   SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_GPU);
 
   /* Wait for all communication to be finished... */
   MPI_Waitall(nneighbours, requests_snd_part, states);
   MPI_Waitall(nneighbours, requests_snd_nbr, states);
-  
+
   /* Free buffers and buffersizes... */
   for (int i = 0; i < nneighbours; i++) {
-        
+
     if ((send_buffers[i] != NULL) && (nbs[i] != 0)) {
       free(send_buffers[i]);
       send_buffers[i] = NULL;
     }
-    
+
     if ((recieve_buffers[i] != NULL) && (nbr[i] != 0)) {
       free(recieve_buffers[i]);
       recieve_buffers[i] = NULL;
     }
-    
+
   }
-    
+
   free(nbs);
   free(nbr);
 
-} 
-#endif 
+}
+#endif
 
 /*****************************************************************************/
 #ifdef DD
 void dd_assign_rect_subdomains_atm(
-  atm_t* atm,
-  met_t* met, 
-  ctl_t* ctl,
-  mpi_info_t* mpi_info, 
+  atm_t *atm,
+  met_t *met,
+  ctl_t *ctl,
+  mpi_info_t *mpi_info,
   int init) {
 
-    SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
-    
-    if (init) {
+  SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
+
+  if (init) {
 #pragma acc enter data create(mpi_info)
 #pragma acc update device(mpi_info->rank)
 #pragma acc data present(atm, ctl, mpi_info, met)
 #pragma acc parallel loop independent gang vector
-      for (int ip=0; ip<atm->np; ip++) {
+    for (int ip = 0; ip < atm->np; ip++) {
 
-        double lont = atm->lon[ip];
-      
-        if (lont < 0)
-          lont += 360;
+      double lont = atm->lon[ip];
 
-        if (lont >= met->subdomain_lon_min && lont < met->subdomain_lon_max
-         && atm->lat[ip] >= met->subdomain_lat_min && atm->lat[ip] < met->subdomain_lat_max) {
-          atm->q[ctl->qnt_subdomain][ip] = mpi_info->rank;
-          atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
-        }
-        else {
-          atm->q[ctl->qnt_subdomain][ip] = -1;
-          atm->q[ctl->qnt_destination][ip] = -1;
-        }   
-      } 
+      if (lont < 0)
+	lont += 360;
+
+      if (lont >= met->subdomain_lon_min && lont < met->subdomain_lon_max
+	  && atm->lat[ip] >= met->subdomain_lat_min
+	  && atm->lat[ip] < met->subdomain_lat_max) {
+	atm->q[ctl->qnt_subdomain][ip] = mpi_info->rank;
+	atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
+      } else {
+	atm->q[ctl->qnt_subdomain][ip] = -1;
+	atm->q[ctl->qnt_destination][ip] = -1;
+      }
+    }
 #pragma acc exit data delete(mpi_info)
-    } else {
-    
-     /* Classify air parcels into subdomain... */
+  } else {
+
+    /* Classify air parcels into subdomain... */
 #pragma acc enter data create(mpi_info)
 #pragma acc update device(mpi_info->neighbours[:DD_NNMAX], mpi_info->rank, mpi_info->size)
 #pragma acc data present(atm, met, ctl, mpi_info)
 #pragma acc parallel loop independent gang vector
-    for (int ip=0; ip<atm->np; ip++) {
-    
+    for (int ip = 0; ip < atm->np; ip++) {
+
       /* Skip empty places in the particle array... */
       if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
-        continue;
+	continue;
 
       double lont = atm->lon[ip];
       double latt = atm->lat[ip];
@@ -13429,115 +13537,101 @@ void dd_assign_rect_subdomains_atm(
       double lon_min = met->subdomain_lon_min;
       double lat_max = met->subdomain_lat_max;
       double lat_min = met->subdomain_lat_min;
-       
-      if (lont < 0) 
-        lont += 360;
- 
-      bool left = (mpi_info->rank <= ctl->dd_subdomains_meridional-1);
-      bool right = (mpi_info->rank >= mpi_info->size-ctl->dd_subdomains_meridional);    
-      
+
+      if (lont < 0)
+	lont += 360;
+
+      bool left = (mpi_info->rank <= ctl->dd_subdomains_meridional - 1);
+      bool right =
+	(mpi_info->rank >= mpi_info->size - ctl->dd_subdomains_meridional);
+
       bool bound = 0;
       if (left)
-        bound = (lont-lon_max > 90) ? 1 : 0;
+	bound = (lont - lon_max > 90) ? 1 : 0;
       if (right)
-        bound = (lon_min-lont > 90) ? 1 : 0;
-      	
+	bound = (lon_min - lont > 90) ? 1 : 0;
+
       if (!bound) {
-        if ((lont >= lon_max) && (latt >= lat_max)) {
-          // Upper right...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
-        }
-        else if ((lont >= lon_max) && (latt <= lat_min)) {
-          // Lower right...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
-        }
-        else if ((lont <= lon_min) && (latt >= lat_max)) {
-          // Upper left...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
-        }
-        else if ((lont <= lon_min) && (latt <= lat_min)) {
-          // Lower left...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
-        }
-        else if (lont >= lon_max) {
-          // Right...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
-        }
-        else if (lont <= lon_min) {
-          // Left...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
-        }
-        else if (latt <= lat_min) {
-          // Down...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
-        }
-        else if (latt >= lat_max) {
-          // Up...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
-        }
-        else {
-          // Within...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
-        }
+	if ((lont >= lon_max) && (latt >= lat_max)) {
+	  // Upper right...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
+	} else if ((lont >= lon_max) && (latt <= lat_min)) {
+	  // Lower right...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
+	} else if ((lont <= lon_min) && (latt >= lat_max)) {
+	  // Upper left...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
+	} else if ((lont <= lon_min) && (latt <= lat_min)) {
+	  // Lower left...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
+	} else if (lont >= lon_max) {
+	  // Right...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
+	} else if (lont <= lon_min) {
+	  // Left...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
+	} else if (latt <= lat_min) {
+	  // Down...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
+	} else if (latt >= lat_max) {
+	  // Up...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
+	} else {
+	  // Within...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
+	}
       } else {
-        if ((lont >= lon_max) && (latt >= lat_max)) {
-          // Upper right...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
-        }
-        else if ((lont >= lon_max) && (latt <= lat_min)) {
-          // Lower right...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
-        }
-        else if ((lont <= lon_min) && (latt >= lat_max)) {
-          // Upper left...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
-        }
-        else if ((lont <= lon_min) && (latt <= lat_min)) {
-          // Lower left...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
-        }
-        else if (lont >= lon_max) {
-          // Right...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
-        }
-        else if (lont <= lon_min) {
-          // Left...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
-        }
-        else if (latt <= lat_min) {
-          // Down...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
-        }
-        else if (latt >= lat_max) {
-          // Up...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
-        }
-        else {
-          // Within...
-          atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
-        }
-     }
+	if ((lont >= lon_max) && (latt >= lat_max)) {
+	  // Upper right...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
+	} else if ((lont >= lon_max) && (latt <= lat_min)) {
+	  // Lower right...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
+	} else if ((lont <= lon_min) && (latt >= lat_max)) {
+	  // Upper left...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
+	} else if ((lont <= lon_min) && (latt <= lat_min)) {
+	  // Lower left...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
+	} else if (lont >= lon_max) {
+	  // Right...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
+	} else if (lont <= lon_min) {
+	  // Left...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
+	} else if (latt <= lat_min) {
+	  // Down...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
+	} else if (latt >= lat_max) {
+	  // Up...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
+	} else {
+	  // Within...
+	  atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
+	}
+      }
     }
 #pragma acc exit data delete(mpi_info)
   }
 }
 #endif
-  
+
 /*****************************************************************************/
 
 #ifdef DD
 void dd_init(
   ctl_t *ctl,
-  mpi_info_t *mpi_info, 
-  atm_t *atm, 
-  met_t **met, 
-  double t, 
-  int* dd_init_flg) {
-      
+  mpi_info_t *mpi_info,
+  atm_t *atm,
+  met_t **met,
+  double t,
+  int *dd_init_flg) {
+
   /* Check if enough tasks are requested... */
-  if (mpi_info->size != ctl->dd_subdomains_meridional*ctl->dd_subdomains_zonal)
+  if (mpi_info->size !=
+      ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal)
     ERRMSG("The number of tasks and subdomains is not identical.");
-  
+
   /* Register the MPI_Particle data type... */
   dd_register_MPI_type_particle(&mpi_info->MPI_Particle);
 
@@ -13545,50 +13639,52 @@ void dd_init(
   dd_get_rect_neighbour(*ctl, mpi_info);
 
   /* Check if particles are in subdomain... */
-  dd_assign_rect_subdomains_atm( atm, *met, ctl, mpi_info, 1);
+  dd_assign_rect_subdomains_atm(atm, *met, ctl, mpi_info, 1);
 
-  *dd_init_flg = 1;      
+  *dd_init_flg = 1;
 }
 #endif
 
 /*****************************************************************************/
 #ifdef DD
-void module_dd( ctl_t *ctl, 
+void module_dd(
+  ctl_t *ctl,
   atm_t *atm,
-  cache_t *cache, 
-  mpi_info_t* mpi_info, 
+  cache_t *cache,
+  mpi_info_t *mpi_info,
   met_t **met) {
- 
-    /* Initialize particles locally... */
-    int nparticles = 0;
-    particle_t* particles;
-    ALLOC(particles, particle_t, DD_NPART);
-    
-    /* Assign particles to new subdomains... */    
-    dd_assign_rect_subdomains_atm( atm, *met, ctl, mpi_info, 0);
-   
-    /* Sorting particles according to location and target rank... */
-    dd_sort(ctl, *met, atm, &nparticles, &mpi_info->rank);
- 
-    /* Transform from struct of array to array of struct... */
-    dd_atm2particles( atm, particles, ctl, &nparticles, cache, mpi_info->rank);
-   
+
+  /* Initialize particles locally... */
+  int nparticles = 0;
+  particle_t *particles;
+  ALLOC(particles, particle_t, DD_NPART);
+
+  /* Assign particles to new subdomains... */
+  dd_assign_rect_subdomains_atm(atm, *met, ctl, mpi_info, 0);
+
+  /* Sorting particles according to location and target rank... */
+  dd_sort(ctl, *met, atm, &nparticles, &mpi_info->rank);
+
+  /* Transform from struct of array to array of struct... */
+  dd_atm2particles(atm, particles, ctl, &nparticles, cache, mpi_info->rank);
+
     /********************* CPU region start ***********************************/
-      
-    /* Perform the communication... */  
-    dd_communicate_particles( particles, &nparticles, mpi_info->MPI_Particle, 
-      mpi_info->neighbours, ctl->dd_nbr_neighbours , *ctl);
-          
+
+  /* Perform the communication... */
+  dd_communicate_particles(particles, &nparticles, mpi_info->MPI_Particle,
+			   mpi_info->neighbours, ctl->dd_nbr_neighbours,
+			   *ctl);
+
     /********************* CPU region end *************************************/
 
-    /* Transform from array of struct to struct of array... */
-    dd_particles2atm(atm, particles, ctl, &nparticles, cache);
-        
-    /* Free local particle array... */
-    free(particles);
+  /* Transform from array of struct to struct of array... */
+  dd_particles2atm(atm, particles, ctl, &nparticles, cache);
 
-} 
-#endif 
+  /* Free local particle array... */
+  free(particles);
+
+}
+#endif
 
 /*****************************************************************************/
 #ifdef DD
@@ -13596,8 +13692,8 @@ void dd_sort(
   const ctl_t *ctl,
   met_t *met0,
   atm_t *atm,
-  int* nparticles,
-  int* rank) {
+  int *nparticles,
+  int *rank) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
@@ -13606,10 +13702,10 @@ void dd_sort(
   const int np = atm->np;
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
-  double amax = (met0->nx*met0->ny + met0->ny)*met0->np + met0->np;
-  
+  double amax = (met0->nx * met0->ny + met0->ny) * met0->np + met0->np;
+
   //printf("I rank %d atm %f \n",*rank, atm->lon[20000]);
-  
+
 #ifdef _OPENACC
 #pragma acc enter data create(a[0:np],p[0:np],amax, rank)
 #pragma acc update device(rank, amax)
@@ -13625,17 +13721,18 @@ void dd_sort(
   for (int ip = 0; ip < np; ip++) {
     if ((int) atm->q[ctl->qnt_subdomain][ip] != -1) {
       if ((int) atm->q[ctl->qnt_destination][ip] == *rank)
-        a[ip] = (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) * met0->ny +
-		 locate_irr(met0->lat, met0->ny, atm->lat[ip]))
-		* met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
+	a[ip] =
+	  (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) *
+		     met0->ny + locate_irr(met0->lat, met0->ny, atm->lat[ip]))
+		    * met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
       else
-        a[ip] = amax + 1;
-     } else {
-        a[ip] = amax + 2;
-     }
+	a[ip] = amax + 1;
+    } else {
+      a[ip] = amax + 2;
+    }
     p[ip] = ip;
   }
-  
+
   /* Sorting... */
 #ifdef _OPENACC
 #pragma acc host_data use_device(a,p)
@@ -13653,38 +13750,39 @@ void dd_sort(
   module_sort_help(atm->lat, p, np);
   for (int iq = 0; iq < ctl->nq; iq++)
     module_sort_help(atm->q[iq], p, np);
-    
-   
+
+
   /* Reset the size... */
   int npt = 0;
 #pragma acc parallel loop reduction(+:npt) present(atm, rank, ctl)
- for (int ip = 0; ip < np; ip++)
-   if (((int) atm->q[ctl->qnt_subdomain][ip] != -1) && ((int) atm->q[ctl->qnt_destination][ip] == *rank))
-     npt++;
-     
+  for (int ip = 0; ip < np; ip++)
+    if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
+	&& ((int) atm->q[ctl->qnt_destination][ip] == *rank))
+      npt++;
+
   /* Count number of particles to send... */
   int nparticlest = 0;
 #pragma acc parallel loop reduction(+:nparticlest) present(atm, rank, ctl)
   for (int ip = npt; ip < np; ip++)
-    if (((int) atm->q[ctl->qnt_subdomain][ip] != -1) && ((int) atm->q[ctl->qnt_destination][ip] != *rank))
+    if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
+	&& ((int) atm->q[ctl->qnt_destination][ip] != *rank))
       nparticlest++;
-     
+
   /* Reset sizes... */
   *nparticles = nparticlest;
   atm->np = npt;
-  #pragma acc update device(atm->np)
-  
+#pragma acc update device(atm->np)
+
   if (*nparticles > DD_NPART)
-    ERRMSG("Number of particles to send and recieve to small. Increase DD_NPART!");
- 
+    ERRMSG
+      ("Number of particles to send and recieve to small. Increase DD_NPART!");
+
   /* Free... */
 #ifdef _OPENACC
 #pragma acc exit data delete(a,p,amax, rank)
 #endif
   free(a);
   free(p);
-  
+
 }
-#endif 
-  
-  
+#endif
