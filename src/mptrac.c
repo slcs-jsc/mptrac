@@ -13332,7 +13332,7 @@ void dd_communicate_particles(
     if (neighbours[idest] < 0)
       continue;
 
-    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_GPU);
+    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_CPU);
     /* Count number of particles in particle array that will be send... */
     int help_sum = 0;
     for (int ip = 0; ip < *nparticles; ip++)
@@ -13340,7 +13340,7 @@ void dd_communicate_particles(
 	help_sum++;
     nbs[idest] = help_sum;
 
-    SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_GPU);
+    SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_CPU);
     /* Send buffer sizes... */
     MPI_Isend(&nbs[idest], 1, MPI_INT,
 	      neighbours[idest], 0, MPI_COMM_WORLD, &requests_snd_nbr[idest]);
@@ -13349,7 +13349,7 @@ void dd_communicate_particles(
     if (nbs[idest] == 0)
       continue;
 
-    SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_GPU);
+    SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_CPU);
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
 
@@ -13366,19 +13366,16 @@ void dd_communicate_particles(
 
     }
 
-    SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_GPU);
+    SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_CPU);
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle,
 	      neighbours[idest], 1, MPI_COMM_WORLD,
 	      &requests_snd_part[idest]);
   }
 
-  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_CPU);
 
   /* Recieving... */
-  LOG(1, "Start recieving at rank: %d with %d particles in list.", rank,
-      *nparticles);
-
   for (int isourc = 0; isourc < nneighbours; isourc++) {
 
     /* Ignore poles... */
@@ -13396,7 +13393,7 @@ void dd_communicate_particles(
   /* Wait for all particle numbers to be recieved... */
   MPI_Waitall(nneighbours, requests_rcv_nbr, states);
 
-  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_CPU);
   for (int isourc = 0; isourc < nneighbours; isourc++) {
 
     /* Ignore poles, and neighbours without signal... */
@@ -13417,7 +13414,7 @@ void dd_communicate_particles(
   /* Wait for all particles to be recieved... */
   MPI_Waitall(nneighbours, requests_rcv_part, states);
 
-  SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_CPU);
 
   /* Start position for different buffer ranges... */
   int api = 0;
@@ -13443,7 +13440,7 @@ void dd_communicate_particles(
   /* Set number of recieved particles... */
   *nparticles = api;
 
-  SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_CPU);
 
   /* Wait for all communication to be finished... */
   MPI_Waitall(nneighbours, requests_snd_part, states);
