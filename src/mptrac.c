@@ -776,20 +776,24 @@ void compress_zfp(
 
   /* Allocate meta data for a compressed stream... */
   zfp_stream *zfp = zfp_stream_open(NULL);
+  if (!field || !zfp)
+    ERRMSG("Failed to allocate zfp structures!");
 
   /* Set compression mode... */
   int actual_prec = 0;
   double actual_tol = 0;
-  if (precision > 0)
+  if ((precision > 0 && tolerance > 0) || (precision <= 0 && tolerance <= 0)) {
+    ERRMSG("Exactly one of precision or tolerance must be set for zfp!");
+  } else if (precision > 0)
     actual_prec = (int) zfp_stream_set_precision(zfp, (uint) precision);
   else if (tolerance > 0)
     actual_tol = zfp_stream_set_accuracy(zfp, tolerance);
-  else
-    ERRMSG("Set precision or tolerance!");
 
   /* Allocate buffer for compressed data... */
   const size_t bufsize = zfp_stream_maximum_size(zfp, field);
   void *buffer = malloc(bufsize);
+  if (!buffer)
+    ERRMSG("Failed to allocate compression buffer!");
 
   /* Associate bit stream with allocated buffer... */
   bitstream *stream = stream_open(buffer, bufsize);
@@ -802,6 +806,8 @@ void compress_zfp(
     FREAD(&zfpsize, size_t,
 	  1,
 	  inout);
+    if (zfpsize > bufsize)
+      ERRMSG("Compressed data size exceeds allocated buffer!");
     if (fread(buffer, 1, zfpsize, inout) != zfpsize)
       ERRMSG("Error while reading zfp data!");
     if (!zfp_decompress(zfp, field)) {
@@ -4844,12 +4850,19 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_NC_QUANT", -1, "0", NULL);
   ctl->met_zstd_level =
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_LEVEL", -1, "0", NULL);
-  ctl->met_zfp_prec =
-    (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", -1, "8", NULL);
-  ctl->met_zfp_tol_t =
-    scan_ctl(filename, argc, argv, "MET_ZFP_TOL_T", -1, "5.0", NULL);
-  ctl->met_zfp_tol_z =
-    scan_ctl(filename, argc, argv, "MET_ZFP_TOL_Z", -1, "0.5", NULL);
+  for (int i = 0; i < METVAR; i++) {
+    char defprec[LEN] = "0", deftol[LEN] = "0.0";
+    if (i == 0)			/* geopotential height */
+      sprintf(deftol, "0.5");
+    else if (i == 1)		/* temperature */
+      sprintf(deftol, "5.0");
+    else			/* other variables */
+      sprintf(defprec, "8");
+    ctl->met_zfp_prec[i] =
+      (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec, NULL);
+    ctl->met_zfp_tol[i] =
+      scan_ctl(filename, argc, argv, "MET_ZFP_TOL", i, deftol, NULL);
+  }
   ctl->met_cms_batch =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
   ctl->met_cms_zstd =
@@ -12112,22 +12125,33 @@ void write_met_bin(
 
   /* Write level data... */
   write_met_bin_3d(out, ctl, met, met->z, "Z",
-		   (ctl->met_zfp_tol_z <= 0 ? ctl->met_zfp_prec : 0),
-		   ctl->met_zfp_tol_z);
+		   ctl->met_zfp_prec[0], ctl->met_zfp_tol[0]);
   write_met_bin_3d(out, ctl, met, met->t, "T",
-		   (ctl->met_zfp_tol_t <= 0 ? ctl->met_zfp_prec : 0),
-		   ctl->met_zfp_tol_t);
-  write_met_bin_3d(out, ctl, met, met->u, "U", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->v, "V", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->w, "W", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->pv, "PV", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->h2o, "H2O", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->o3, "O3", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->lwc, "LWC", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->rwc, "RWC", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->iwc, "IWC", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->swc, "SWC", ctl->met_zfp_prec, 0);
-  write_met_bin_3d(out, ctl, met, met->cc, "CC", ctl->met_zfp_prec, 0);
+		   ctl->met_zfp_prec[1], ctl->met_zfp_tol[1]);
+  write_met_bin_3d(out, ctl, met, met->u, "U",
+		   ctl->met_zfp_prec[2], ctl->met_zfp_tol[2]);
+  write_met_bin_3d(out, ctl, met, met->v, "V",
+		   ctl->met_zfp_prec[3], ctl->met_zfp_tol[3]);
+  write_met_bin_3d(out, ctl, met, met->w, "W",
+		   ctl->met_zfp_prec[4], ctl->met_zfp_tol[4]);
+  write_met_bin_3d(out, ctl, met, met->pv, "PV",
+		   ctl->met_zfp_prec[5], ctl->met_zfp_tol[5]);
+  write_met_bin_3d(out, ctl, met, met->h2o, "H2O",
+		   ctl->met_zfp_prec[6], ctl->met_zfp_tol[6]);
+  write_met_bin_3d(out, ctl, met, met->o3, "O3",
+		   ctl->met_zfp_prec[7], ctl->met_zfp_tol[7]);
+  write_met_bin_3d(out, ctl, met, met->lwc, "LWC",
+		   ctl->met_zfp_prec[8], ctl->met_zfp_tol[8]);
+  write_met_bin_3d(out, ctl, met, met->rwc, "RWC",
+		   ctl->met_zfp_prec[9], ctl->met_zfp_tol[9]);
+  write_met_bin_3d(out, ctl, met, met->iwc, "IWC",
+		   ctl->met_zfp_prec[10], ctl->met_zfp_tol[10]);
+  write_met_bin_3d(out, ctl, met, met->swc, "SWC",
+		   ctl->met_zfp_prec[11], ctl->met_zfp_tol[11]);
+  write_met_bin_3d(out, ctl, met, met->cc, "CC",
+		   ctl->met_zfp_prec[12], ctl->met_zfp_tol[12]);
+  if (METVAR != 13)
+    ERRMSG("Number of meteo variables doesn't match!");
 
   /* Write final flag... */
   int final = 999;

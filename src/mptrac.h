@@ -274,31 +274,6 @@
    Dimensions...
    ------------------------------------------------------------ */
 
-/*! Maximum length of ASCII data lines. */
-#ifndef LEN
-#define LEN 5000
-#endif
-
-/*! Maximum number of atmospheric data points. */
-#ifndef NP
-#define NP 10000000
-#endif
-
-/*! Maximum number of particles to send and recieve. */
-#ifndef DD_NPART
-#define DD_NPART 100000
-#endif
-
-/*! Maximum number of quantities per data point. */
-#ifndef NQ
-#define NQ 15
-#endif
-
-/*! Maximum number of data points for CSI calculation. */
-#ifndef NCSI
-#define NCSI 1000000
-#endif
-
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP
 #define EP 140
@@ -329,9 +304,29 @@
 #define EY_GLOB 602
 #endif
 
-/*! Maximum number of neighbours to communicate with. */
-#ifndef DD_NNMAX
-#define DD_NNMAX  26
+/*! Maximum length of ASCII data lines. */
+#ifndef LEN
+#define LEN 5000
+#endif
+
+/*! Number of 3-D meteorological variables. */
+#ifndef METVAR
+#define METVAR 13
+#endif
+
+/*! Maximum number of atmospheric data points. */
+#ifndef NP
+#define NP 10000000
+#endif
+
+/*! Maximum number of quantities per data point. */
+#ifndef NQ
+#define NQ 15
+#endif
+
+/*! Maximum number of data points for CSI calculation. */
+#ifndef NCSI
+#define NCSI 1000000
 #endif
 
 /*! Maximum number of data points for ensemble analysis. */
@@ -377,6 +372,16 @@
 /*! Maximum number of data points of climatological time series. */
 #ifndef CTS
 #define CTS 1000
+#endif
+
+/*! Maximum number of particles to send and recieve. */
+#ifndef DD_NPART
+#define DD_NPART 100000
+#endif
+
+/*! Maximum number of neighbours to communicate with. */
+#ifndef DD_NNMAX
+#define DD_NNMAX  26
 #endif
 
 /* ------------------------------------------------------------
@@ -2699,14 +2704,11 @@ typedef struct {
   /*! ZSTD compression level (from -5 to 22). */
   int met_zstd_level;
 
-  /*! ZFP compression precision for all variables, except z and T. */
-  int met_zfp_prec;
+  /*! ZFP compression precision. */
+  int met_zfp_prec[METVAR];
 
-  /*! ZFP compression tolerance for temperature. */
-  double met_zfp_tol_t;
-
-  /*! ZFP compression tolerance for geopotential height. */
-  double met_zfp_tol_z;
+  /*! ZFP compression tolerance. */
+  double met_zfp_tol[METVAR];
 
   /*! cmultiscale batch size. */
   int met_cms_batch;
@@ -3424,18 +3426,18 @@ typedef struct {
 typedef struct {
   /*! Rank of node. */
   int rank;
-  
+
   /*! Size of node. */
   int size;
-  
+
 #ifdef DD
   /*! Rank of neighbouring nodes. */
   int neighbours[DD_NNMAX];
-  
+
   /*! MPI Type for the particle. */
   MPI_Datatype MPI_Particle;
 #endif
-  
+
 } mpi_info_t;
 
 /**
@@ -3663,7 +3665,7 @@ typedef struct {
   // TODO:
   // They need global sizes now, maybe in the future just keep EX, EY, EP and
   // Introduce help data structure in read_met_grid etc.
-  
+
   /*! Longitudes [deg]. */
 #ifdef DD
   double lon[EX_GLOB];
