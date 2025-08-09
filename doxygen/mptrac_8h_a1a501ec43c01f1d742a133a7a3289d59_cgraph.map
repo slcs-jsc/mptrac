@@ -1,0 +1,4 @@
+<map id="read_clim_photo" name="read_clim_photo">
+<area shape="rect" id="node1" title="Reads photolysis rates from a NetCDF file and populates the given photolysis structure." alt="" coords="5,5,123,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a4392a0ab24a984ac30ed1ef85a89257d" title="Reads a 3D climatological photochemistry variable from a NetCDF file." alt="" coords="171,5,319,32"/>
+</map>
