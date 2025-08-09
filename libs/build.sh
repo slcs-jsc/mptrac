@@ -105,19 +105,16 @@ do
     esac
 done
 
-# Clean directories..
-if [ $ifBuildAll = true ] || [ $ifClean = true ]; then
-    printf "Clean the folder    \n"
+# Clean build directory...
+if [ "$ifBuildAll" = true ] || [ "$ifClean" = true ]; then
+    printf "Cleaning build folder...\n"
     rm -rf build
-    target=$(mkdir -p build && cd build && pwd)
-    printf "Making the folder with subfolders (src, bin, include, lib, man)   \n"
-    mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 
-else
-    if ! [ -d build ]; then
-        printf "Making the folder with subfolders    \n"
-        target=$(mkdir -p build && cd build && pwd)
-        mkdir -p $target/src $target/bin $target/include $target/lib $target/man/man1 
-    fi
+fi
+
+# Create build directory...
+if [ ! -d build ]; then
+    printf "Creating build folder with subfolders...\n"
+    mkdir -p build/src build/bin build/include build/lib build/man/man1
 fi
 
 # Mandatory ... 
@@ -265,7 +262,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildECCODES = true ] ; then
     cd $strLibsDir
     printf "starting to compile ecCodes...\n"
     strTarget=$strFileECCODES
-    cp $strTarget.tar.gz $strBuildDir/src && cd $strBuildDir/src && tar xvf $strTarget.tar.gz
+    cp $strTarget.tar.bz2 $strBuildDir/src && cd $strBuildDir/src && tar xvjf $strTarget.tar.bz2
     cd $strBuildDir/src && cmake -DCMAKE_INSTALL_PREFIX=$strBuildDir/src -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF $strTarget && make -j $numProcs && ctest -j $numProcs && make install \
         && cp -a include/* $strBuildDir/include/ \
         && cp -a lib/libeccodes* $strBuildDir/lib/ \
