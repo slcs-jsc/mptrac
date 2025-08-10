@@ -126,7 +126,8 @@ int main(
 	      geo2cart(0.0, 0.5 * (lon0 + lon1), 0.5 * (lat0 + lat1), x0);
 	      geo2cart(0.0, atm->lon[atm->np], atm->lat[atm->np], x1);
 	      const double rad =
-		RE * acos(DOTP(x0, x1) / NORM(x0) / NORM(x1));
+		RE * acos(DOTP(x0, x1) / sqrt(DOTP(x0, x0)) /
+			  sqrt(DOTP(x1, x1)));
 	      if (rad > bellrad)
 		continue;
 	      if (ctl.qnt_m >= 0)

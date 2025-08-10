@@ -77,7 +77,7 @@ void cart2geo(
   double *lon,
   double *lat) {
 
-  const double radius = NORM(x);
+  const double radius = sqrt(DOTP(x, x));
 
   *lat = RAD2DEG(asin(x[2] / radius));
   *lon = RAD2DEG(atan2(x[1], x[0]));
@@ -512,7 +512,7 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (cms, RATIO= %g)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (CMS, RATIO= %g)", varname, cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -650,7 +650,7 @@ void compress_cms(
 
     /* Write info... */
     LOG(2, "Write 3-D variable: %s"
-	" (cms, RATIO= %g, T_COARS= %g s, T_EVAL= %g s)",
+	" (CMS, RATIO= %g, T_COARS= %g s, T_EVAL= %g s)",
 	varname, cr, t_coars, t_eval);
   }
 
@@ -757,6 +757,74 @@ void compress_pck(
 
 /*****************************************************************************/
 
+#ifdef SZ3
+void compress_sz3(
+  const char *varname,
+  float *array,
+  int nx,
+  int ny,
+  int nz,
+  int precision,
+  double tolerance,
+  int decompress,
+  FILE *inout) {
+  if ((precision > 0) == (tolerance > 0.0))
+    ERRMSG("Exactly one of precision or tolerance must be set for SZ3!");
+
+  size_t r1 = (size_t) nx, r2 = (size_t) ny, r3 = (size_t) nz, r4 = 0, r5 = 0;
+  size_t total_elems = r1 * r2 * r3;
+  unsigned char *bytes = NULL;
+  size_t outSize = 0;
+
+  if (decompress) {
+    size_t sz3size;
+    FREAD(&sz3size, size_t,
+	  1,
+	  inout);
+    bytes = malloc(sz3size);
+    if (!bytes || fread(bytes, 1, sz3size, inout) != sz3size)
+      ERRMSG("Error reading SZ3 data!");
+
+    void *outData =
+      SZ_decompress(SZ_FLOAT, bytes, sz3size, r5, r4, r3, r2, r1);
+    if (!outData)
+      ERRMSG("Decompression failed!");
+
+    memcpy(array, outData, total_elems * sizeof(float));
+    free(outData);
+    free(bytes);
+
+    LOG(2, "Read 3-D variable: %s (SZ3, PREC=%d, TOL=%g, RATIO=%g)",
+	varname, precision, tolerance,
+	(double) (total_elems * sizeof(float)) / (double) sz3size);
+  } else {
+    int errBoundMode = (precision > 0) ? REL : ABS;
+    double absBound = (errBoundMode == ABS) ? tolerance : 0.0;
+    double relBound =
+      (errBoundMode == REL) ? pow(2.0, -(double) precision) : 0.0;
+
+    bytes = SZ_compress_args(SZ_FLOAT, array, &outSize,
+			     errBoundMode, absBound, relBound, 0.0,
+			     r5, r4, r3, r2, r1);
+    if (!bytes || outSize == 0)
+      ERRMSG("Compression failed!");
+
+    FWRITE(&outSize, size_t,
+	   1,
+	   inout);
+    if (fwrite(bytes, 1, outSize, inout) != outSize)
+      ERRMSG("Error writing SZ3 data!");
+    free(bytes);
+
+    LOG(2, "Write 3-D variable: %s (SZ3, PREC=%d, TOL=%g, RATIO=%g)",
+	varname, precision, tolerance,
+	(double) (total_elems * sizeof(float)) / (double) outSize);
+  }
+}
+#endif
+
+/*****************************************************************************/
+
 #ifdef ZFP
 void compress_zfp(
   const char *varname,
@@ -814,7 +882,7 @@ void compress_zfp(
       ERRMSG("Decompression failed!");
     }
     LOG(2, "Read 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
+	"(ZFP, PREC= %d, TOL= %g, RATIO= %g)",
 	varname, actual_prec, actual_tol,
 	((double) (nx * ny * nz)) / (double) zfpsize);
   }
@@ -829,10 +897,10 @@ void compress_zfp(
 	     1,
 	     inout);
       if (fwrite(buffer, 1, zfpsize, inout) != zfpsize)
-	ERRMSG("Error while writing zfp data!");
+	ERRMSG("Error while writing ZFP data!");
     }
     LOG(2, "Write 3-D variable: %s "
-	"(zfp, PREC= %d, TOL= %g, RATIO= %g)",
+	"(ZFP, PREC= %d, TOL= %g, RATIO= %g)",
 	varname, actual_prec, actual_tol,
 	((double) (nx * ny * nz)) / (double) zfpsize);
   }
@@ -871,12 +939,12 @@ void compress_zstd(
 	  1,
 	  inout);
     if (fread(compr, 1, comprLen, inout) != comprLen)
-      ERRMSG("Error while reading zstd data!");
+      ERRMSG("Error while reading ZSTD data!");
     compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
     if (ZSTD_isError(compsize)) {
       ERRMSG("Decompression failed!");
     }
-    LOG(2, "Read 3-D variable: %s (zstd, RATIO= %g)",
+    LOG(2, "Read 3-D variable: %s (ZSTD, RATIO= %g)",
 	varname, ((double) uncomprLen) / (double) comprLen)
   }
 
@@ -890,9 +958,9 @@ void compress_zstd(
 	     1,
 	     inout);
       if (fwrite(compr, 1, compsize, inout) != compsize)
-	ERRMSG("Error while writing zstd data!");
+	ERRMSG("Error while writing ZSTD data!");
     }
-    LOG(2, "Write 3-D variable: %s (zstd, RATIO= %g)",
+    LOG(2, "Write 3-D variable: %s (ZSTD, RATIO= %g)",
 	varname, ((double) uncomprLen) / (double) compsize);
   }
 
@@ -1046,6 +1114,8 @@ void get_met_help(
       sprintf(filename, "%s_YYYY_MM_DD_HH.zstd", metbase);
     else if (ctl->met_type == 5)
       sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
+    else if (ctl->met_type == 7)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.sz3", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -4858,10 +4928,10 @@ void mptrac_read_ctl(
       sprintf(deftol, "5.0");
     else			/* other variables */
       sprintf(defprec, "8");
-    ctl->met_zfp_prec[i] =
-      (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec, NULL);
-    ctl->met_zfp_tol[i] =
-      scan_ctl(filename, argc, argv, "MET_ZFP_TOL", i, deftol, NULL);
+    ctl->met_comp_prec[i] =
+      (int) scan_ctl(filename, argc, argv, "MET_COMP_PREC", i, defprec, NULL);
+    ctl->met_comp_tol[i] =
+      scan_ctl(filename, argc, argv, "MET_COMP_TOL", i, deftol, NULL);
   }
   ctl->met_cms_batch =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
@@ -5476,7 +5546,7 @@ int mptrac_read_met(
 #endif
 
     /* Read binary data... */
-    else if (ctl->met_type >= 1 && ctl->met_type <= 5) {
+    else if ((ctl->met_type >= 1 && ctl->met_type <= 5) || ctl->met_type == 7) {
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
@@ -5899,15 +5969,19 @@ void mptrac_write_met(
   /* Check compression flags... */
 #ifndef ZFP
   if (ctl->met_type == 3)
-    ERRMSG("MPTRAC was compiled without zfp compression!");
+    ERRMSG("MPTRAC was compiled without ZFP compression!");
 #endif
 #ifndef ZSTD
   if (ctl->met_type == 4)
-    ERRMSG("MPTRAC was compiled without zstd compression!");
+    ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
 #ifndef CMS
   if (ctl->met_type == 5)
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
+#endif
+#ifndef SZ3
+  if (ctl->met_type == 7)
+    ERRMSG("MPTRAC was compiled without SZ3 compression!");
 #endif
 
   /* Write netCDF data... */
@@ -5915,7 +5989,7 @@ void mptrac_write_met(
     write_met_nc(filename, ctl, met);
 
   /* Write binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 5)
+  else if (ctl->met_type >= 1 && ctl->met_type <= 7)
     write_met_bin(filename, ctl, met);
 
   /* Not implemented... */
@@ -6771,7 +6845,7 @@ void read_met_bin_3d(
     compress_pck(varname, help, (size_t) (met->ny * met->nx),
 		 (size_t) met->np, 1, in);
 
-  /* Read zfp data... */
+  /* Read ZFP data... */
   else if (ctl->met_type == 3) {
 #ifdef ZFP
     int precision;
@@ -6787,7 +6861,7 @@ void read_met_bin_3d(
     compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
 		 tolerance, 1, in);
 #else
-    ERRMSG("MPTRAC was compiled without zfp compression!");
+    ERRMSG("MPTRAC was compiled without ZFP compression!");
 #endif
   }
 
@@ -6797,7 +6871,7 @@ void read_met_bin_3d(
     compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 1,
 		  ctl->met_zstd_level, in);
 #else
-    ERRMSG("MPTRAC was compiled without zstd compression!");
+    ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
   }
 
@@ -6808,6 +6882,26 @@ void read_met_bin_3d(
 		 (size_t) met->np, 1, in);
 #else
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
+#endif
+  }
+
+  /* Read SZ3 data... */
+  else if (ctl->met_type == 7) {
+#ifdef SZ3
+    int precision;
+    FREAD(&precision, int,
+	  1,
+	  in);
+
+    double tolerance;
+    FREAD(&tolerance, double,
+	  1,
+	  in);
+
+    compress_sz3(varname, help, met->np, met->ny, met->nx, precision,
+		 tolerance, 1, in);
+#else
+    ERRMSG("MPTRAC was compiled without sz3 compression!");
 #endif
   }
 
@@ -12125,31 +12219,31 @@ void write_met_bin(
 
   /* Write level data... */
   write_met_bin_3d(out, ctl, met, met->z, "Z",
-		   ctl->met_zfp_prec[0], ctl->met_zfp_tol[0]);
+		   ctl->met_comp_prec[0], ctl->met_comp_tol[0]);
   write_met_bin_3d(out, ctl, met, met->t, "T",
-		   ctl->met_zfp_prec[1], ctl->met_zfp_tol[1]);
+		   ctl->met_comp_prec[1], ctl->met_comp_tol[1]);
   write_met_bin_3d(out, ctl, met, met->u, "U",
-		   ctl->met_zfp_prec[2], ctl->met_zfp_tol[2]);
+		   ctl->met_comp_prec[2], ctl->met_comp_tol[2]);
   write_met_bin_3d(out, ctl, met, met->v, "V",
-		   ctl->met_zfp_prec[3], ctl->met_zfp_tol[3]);
+		   ctl->met_comp_prec[3], ctl->met_comp_tol[3]);
   write_met_bin_3d(out, ctl, met, met->w, "W",
-		   ctl->met_zfp_prec[4], ctl->met_zfp_tol[4]);
+		   ctl->met_comp_prec[4], ctl->met_comp_tol[4]);
   write_met_bin_3d(out, ctl, met, met->pv, "PV",
-		   ctl->met_zfp_prec[5], ctl->met_zfp_tol[5]);
+		   ctl->met_comp_prec[5], ctl->met_comp_tol[5]);
   write_met_bin_3d(out, ctl, met, met->h2o, "H2O",
-		   ctl->met_zfp_prec[6], ctl->met_zfp_tol[6]);
+		   ctl->met_comp_prec[6], ctl->met_comp_tol[6]);
   write_met_bin_3d(out, ctl, met, met->o3, "O3",
-		   ctl->met_zfp_prec[7], ctl->met_zfp_tol[7]);
+		   ctl->met_comp_prec[7], ctl->met_comp_tol[7]);
   write_met_bin_3d(out, ctl, met, met->lwc, "LWC",
-		   ctl->met_zfp_prec[8], ctl->met_zfp_tol[8]);
+		   ctl->met_comp_prec[8], ctl->met_comp_tol[8]);
   write_met_bin_3d(out, ctl, met, met->rwc, "RWC",
-		   ctl->met_zfp_prec[9], ctl->met_zfp_tol[9]);
+		   ctl->met_comp_prec[9], ctl->met_comp_tol[9]);
   write_met_bin_3d(out, ctl, met, met->iwc, "IWC",
-		   ctl->met_zfp_prec[10], ctl->met_zfp_tol[10]);
+		   ctl->met_comp_prec[10], ctl->met_comp_tol[10]);
   write_met_bin_3d(out, ctl, met, met->swc, "SWC",
-		   ctl->met_zfp_prec[11], ctl->met_zfp_tol[11]);
+		   ctl->met_comp_prec[11], ctl->met_comp_tol[11]);
   write_met_bin_3d(out, ctl, met, met->cc, "CC",
-		   ctl->met_zfp_prec[12], ctl->met_zfp_tol[12]);
+		   ctl->met_comp_prec[12], ctl->met_comp_tol[12]);
   if (METVAR != 13)
     ERRMSG("Number of meteo variables doesn't match!");
 
@@ -12229,7 +12323,7 @@ void write_met_bin_3d(
     compress_pck(varname, help, (size_t) (met->ny * met->nx),
 		 (size_t) met->np, 0, out);
 
-  /* Write zfp data... */
+  /* Write ZFP data... */
 #ifdef ZFP
   else if (ctl->met_type == 3) {
     FWRITE(&precision, int,
@@ -12255,6 +12349,20 @@ void write_met_bin_3d(
   else if (ctl->met_type == 5) {
     compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
 		 (size_t) met->np, 0, out);
+  }
+#endif
+
+  /* Write SZ3 data... */
+#ifdef SZ3
+  else if (ctl->met_type == 7) {
+    FWRITE(&precision, int,
+	   1,
+	   out);
+    FWRITE(&tolerance, double,
+	   1,
+	   out);
+    compress_sz3(varname, help, met->np, met->ny, met->nx, precision,
+		 tolerance, 0, out);
   }
 #endif
 

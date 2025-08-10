@@ -65,6 +65,9 @@ ZFP ?= 0
 # Enable zstd compression (experimental)...
 ZSTD ?= 0
 
+# Enable SZ3 compression (experimental)...
+SZ3 ?= 0
+
 # Enable cmultiscale compression (experimental)...
 CMS ?= 0
 
@@ -214,6 +217,12 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
+endif
+
+# SZ3 compression...
+ifeq ($(SZ3),1)
+  LDFLAGS += -lSZ3c
+  CFLAGS += -DSZ3
 endif
 
 # cmultiscale compression...

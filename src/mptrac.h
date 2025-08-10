@@ -161,6 +161,10 @@
 #include "zstd.h"
 #endif
 
+#ifdef SZ3
+#include "SZ3c/sz3c.h"
+#endif
+
 #ifdef CMS
 #include "cmultiscale.h"
 #endif
@@ -1234,7 +1238,7 @@
  * @param level zlib compression level (0 = off).
  * @param quant Number of digits for quantization (0 = off).
  *
- * @note To enable zstd compression, replace `nc_def_var_deflate()` by
+ * @note To enable ZSTD compression, replace `nc_def_var_deflate()` by
  * `nc_def_var_filter()` below. Use dynamic linking, static linking does not work.
  * Set environment variable `HDF5_PLUGIN_PATH` to `./libs/build/share/netcdf-plugins/`.
  *
@@ -1429,21 +1433,6 @@
  */
 #define NN(x0, y0, x1, y1, x)				\
   (fabs((x) - (x0)) <= fabs((x) - (x1)) ? (y0) : (y1))
-
-/**
- * @brief Compute the norm (magnitude) of a vector.
- *
- * This macro computes the Euclidean norm (magnitude) of a vector `a`
- * using the dot product of the vector with itself. The vector is
- * assumed to have three components: a[0], a[1], and a[2].
- *
- * @param a The vector for which the norm is to be computed.
- * @return The Euclidean norm of the vector.
- *
- * @author Lars Hoffmann
- */
-#define NORM(a)					\
-  sqrt(DOTP(a, a))
 
 /**
  * @brief Loop over particle indices with OpenACC acceleration.
@@ -2686,7 +2675,7 @@ typedef struct {
   int met_vert_coord;
 
   /*! Type of meteo data files
-     (0=netCDF, 1=binary, 2=pck, 3=zfp, 4=zstd, 5=cms, 6=grib). */
+     (0=netCDF, 1=binary, 2=pck, 3=ZFP, 4=ZSTD, 5=cms, 6=grib, 7=SZ3). */
   int met_type;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
@@ -2704,16 +2693,16 @@ typedef struct {
   /*! ZSTD compression level (from -5 to 22). */
   int met_zstd_level;
 
-  /*! ZFP compression precision. */
-  int met_zfp_prec[METVAR];
+  /*! Compression precision for SZ3 or ZFP. */
+  int met_comp_prec[METVAR];
 
-  /*! ZFP compression tolerance. */
-  double met_zfp_tol[METVAR];
+  /*! Compression tolerance for SZ3 or ZFP. */
+  double met_comp_tol[METVAR];
 
   /*! cmultiscale batch size. */
   int met_cms_batch;
 
-  /*! cmultiscale zstd compression (0=off, 1=on). */
+  /*! cmultiscale ZSTD compression (0=off, 1=on). */
   int met_cms_zstd;
 
   /*! cmultiscale coarsening heuristics
@@ -4220,6 +4209,46 @@ void compress_pck(
   FILE * inout);
 
 /**
+ * @brief Compresses or decompresses a 3-D float array using the SZ3 library.
+ *
+ * This function either compresses a 3-D floating-point array and writes it to a file stream,
+ * or reads compressed SZ3 data from a file stream and decompresses it into the provided array.
+ * The SZ3 error bound can be specified either by relative precision (bits) or absolute tolerance.
+ *
+ * @param varname    Name of the variable (used for logging).
+ * @param array      Pointer to the 3-D float array (input for compression, output for decompression).
+ * @param nx         Size of the first dimension.
+ * @param ny         Size of the second dimension.
+ * @param nz         Size of the third dimension.
+ * @param precision  Relative precision in bits (used if > 0; tolerance must be 0).
+ * @param tolerance  Absolute error bound (used if > 0; precision must be 0).
+ * @param decompress Non-zero to decompress data from @p inout into @p array;
+ *                   zero to compress @p array into @p inout.
+ * @param inout      File stream for reading/writing compressed data.
+ *
+ * @note Exactly one of @p precision or @p tolerance must be set to a positive value.
+ * @note The SZ3 data type is fixed to @c SZ_FLOAT for this function.
+ *
+ * @throws ERRMSG if input parameters are invalid, memory allocation fails,
+ *                compression/decompression fails, or file I/O errors occur.
+ *
+ * @see SZ_compress_args
+ * @see SZ_decompress
+ *
+ * @author Lars Hoffmann
+ */
+void compress_sz3(
+  const char *varname,
+  float *array,
+  const int nx,
+  const int ny,
+  const int nz,
+  const int precision,
+  const double tolerance,
+  const int decompress,
+  FILE * inout);
+
+/**
  * @brief Compresses or decompresses a 3D array of floats using the ZFP library.
  *
  * This function either compresses or decompresses a 3D array of
@@ -4278,7 +4307,7 @@ void compress_zfp(
  * @param[in,out] array    Pointer to the float array to compress or to fill with decompressed data.
  * @param[in]  n           Number of float elements in the array.
  * @param[in]  decompress  If non-zero, perform decompression; otherwise, perform compression.
- * @param[in]  level       Compression level (-5 to 22). Use 0 for the Zstd default.
+ * @param[in]  level       Compression level (-5 to 22). Use 0 for the ZSTD default.
  * @param[in,out] inout    File pointer for input/output. Used for reading or writing compressed data.
  *
  * @note This function uses ZSTD's simple one-shot compression API (ZSTD_compress),
@@ -6426,7 +6455,7 @@ void mptrac_read_ctl(
  * - It supports MPI parallelization and will share the data across multiple processes if the 
  * `met_mpi_share` flag is set in the control structure.
  * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
- * - If `ctl->met_type` is between 1 and 5, the data is read from a binary file using the `read_met_bin` function.
+ * - If `ctl->met_type` is between 1 and 5 or 7, the data is read from a binary file using the `read_met_bin` function.
  * - If `ctl->met_type` is 6, the data is read from grib files using the `read_met_grib` function.
  * - If the `met_type` is not recognized, an error message is generated.
  *
@@ -6541,10 +6570,12 @@ void mptrac_write_atm(
  * if compiled without ZSTD support.
  * - If `ctl->met_type` is 5, CMS compression is required, and the function will generate an error 
  * if compiled without CMS support.
+ * - If `ctl->met_type` is 7, SZ3 compression is required, and the function will generate an error 
+ * if compiled without SZ3 support.
  *
  * @note 
  * - If `ctl->met_type` is 0, the function writes data in netCDF format via `write_met_nc`.
- * - If `ctl->met_type` is between 1 and 5, the function writes data in binary format via `write_met_bin`.
+ * - If `ctl->met_type` is between 1 and 5 or 7, the function writes data in binary format via `write_met_bin`.
  * - If `ctl->met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann
@@ -7098,7 +7129,7 @@ void read_met_bin_2d(
  * - Packed data
  * - ZFP compressed data (if compiled with ZFP support)
  * - ZSTD compressed data (if compiled with ZSTD support)
- * - CMULTISCALE compressed data (if compiled with CMS support)
+ * - cmultiscale compressed data (if compiled with CMS support)
  *
  * Depending on the compression type specified in the control
  * structure, the appropriate reading and decompression function is
@@ -9042,7 +9073,7 @@ void write_met_bin_2d(
  * - Copies the variable data from the 3-dimensional array `var` to the temporary
  *   buffer `help`.
  * - Writes the variable data to the binary file specified by `out` using the specified compression method
- *   (uncompressed, packed, zfp, zstd, cmultiscale).
+ *   (uncompressed, packed, ZFP, ZSTD, cmultiscale).
  * - Logs a message indicating the successful writing of the variable data.
  * - Frees the allocated memory.
  *
