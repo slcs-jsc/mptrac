@@ -17,6 +17,7 @@ ifBuildHDF5=false
 ifBuildNETCDF=false
 ifBuildKPP=false
 ifBuildECCODES=false
+ifBuildSZ3=false
 
 # System...
 numProcs=$(nproc --all)
@@ -52,6 +53,7 @@ Options:
   -i           Build SZIP
   -f           Build ZFP
   -s           Build ZSTD
+  -j           Build SZ3
   -d           Build HDF5 (requires CURL, ZLIB, SZIP)
   -n           Build NETCDF (requires HDF5)
   -k           Build KPP chemistry
@@ -80,7 +82,7 @@ EOF
 ###### Check arguments    ######
 
 [[ $# -lt 1 ]] && print_help
-while getopts amcgtuzifshnkep: flag
+while getopts amcgtuzijfshnkep: flag
 do
     case "${flag}" in
         a) ifBuildAll=true       ; echo "build all libraries      " ;;
@@ -93,6 +95,7 @@ do
 	i) ifBuildSZIP=true      ; echo "SZIP is selected         " ;;
 	f) ifBuildZFP=true       ; echo "ZFP is selected          " ;;
 	s) ifBuildZSTD=true      ; echo "ZSTD is selected         " ;;
+	j) ifBuildSZ3=true       ; echo "SZ3 is selected          " ;;
 	d) ifBuildHDF5=true      ; echo "HDF5 is selected         " ;;
 	n) ifBuildNETCDF=true    ; echo "NETCDF is selected       " ;;
 	k) ifBuildKPP=true       ; echo "KPP is selected          " ;;
@@ -148,10 +151,9 @@ if [ $ifBuildAll = true ] || [ $ifBuildCURL = true ] ; then
     Target="curl-8.10.1"
     printf "Starting to compile $Target...\n"
     cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    export CFLAGS="-fPIC"
     cd $BuildDir/src/$Target \
-        && ./configure --prefix=$BuildDir --without-ssl --without-libpsl \
-        && make -j $numProcs && make check ; make install && make clean \
+        && CFLAGS="-fPIC" ./configure --prefix=$BuildDir --without-ssl --without-libpsl \
+        && make -j $numProcs && make check || true && make install && make clean \
     	    || exit
 fi
 
@@ -160,9 +162,8 @@ if [ $ifBuildAll = true ] || [ $ifBuildZLIB = true ] ; then
     Target="zlib-1.3.1"
     printf "Starting to compile $Target...\n"
     cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    export CFLAGS="-fPIC"
     cd $BuildDir/src/$Target \
-        && ./configure --prefix=$BuildDir \
+        && CFLAGS="-fPIC" ./configure --prefix=$BuildDir \
         && make -j $numProcs && make check && make install && make clean \
     	    || exit
 fi
@@ -172,9 +173,8 @@ if [ $ifBuildAll = true ] || [ $ifBuildSZIP = true ] ; then
     Target="szip-2.1.1"
     printf "Starting to compile $Target...\n"
     cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    export CFLAGS="-fPIC"
     cd $BuildDir/src/$Target \
-        && ./configure --prefix=$BuildDir \
+        && CFLAGS="-fPIC" ./configure --prefix=$BuildDir \
         && make -j $numProcs && make check && make install && make clean \
     	    || exit
 fi
@@ -200,7 +200,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then
     printf "Starting to compile $Target...\n"
     cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
     cd $BuildDir/src/$Target \
-        && make -j $numProcs && make check \
+        && make CFLAGS=-fPIC -j $numProcs && make check \
         && cp -a lib/libzstd* $BuildDir/lib/ \
         && cp -a lib/*.h $BuildDir/include/ \
         && make clean \
@@ -225,7 +225,7 @@ if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then
     cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
     cd $BuildDir/src/$Target \
         && CPPFLAGS=-I$BuildDir/include LDFLAGS=-L$BuildDir/lib ./configure --prefix=$BuildDir --with-plugin-dir=$BuildDir/share/netcdf-plugins --disable-dap --disable-byterange --disable-nczarr --disable-libxml2 \
-        && make -j $numProcs && make check ; make install && make clean \
+        && make -j $numProcs && make check || true && make install && make clean \
 	    || exit
 fi
 
@@ -245,8 +245,20 @@ if [ $ifBuildAll = true ] || [ $ifBuildECCODES = true ] ; then
     Target="eccodes-2.38.3"
     printf "Starting to compile $Target...\n"
     cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src && cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF $Target && make -j $numProcs && ctest -j $numProcs && make install \
-        || exit
+    mkdir -p $BuildDir/src/$Target/build && cd $BuildDir/src/$Target/build || exit
+    cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF .. && make -j $numProcs && ctest -j $numProcs && make install \
+            || exit
+fi
+
+# Build SZ3...
+if [ $ifBuildAll = true ] || [ $ifBuildSZ3 = true ] ; then
+    Target="SZ3-3.2.1"
+    printf "Starting to compile $Target...\n"
+    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
+    mkdir -p $BuildDir/src/$Target/build_shared && cd $BuildDir/src/$Target/build_shared || exit
+    cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=ON .. && make -j $numProcs && make install || exit
+    mkdir -p $BuildDir/src/$Target/build_static && cd $BuildDir/src/$Target/build_static || exit
+    cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=OFF .. && make -j $numProcs && make install || exit
 fi
 
 # Finish...
