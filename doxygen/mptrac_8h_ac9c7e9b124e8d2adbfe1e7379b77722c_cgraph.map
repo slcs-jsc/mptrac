@@ -1,0 +1,13 @@
+<map id="read_met_nc" name="read_met_nc">
+<area shape="rect" id="node1" title="Reads meteorological data from a NetCDF file and processes it." alt="" coords="5,157,103,184"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a6bd8ec36fa9c1c535b05367dd4aa9488" title="Reads meteorological grid information from a NetCDF file." alt="" coords="161,81,287,108"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#aeedf0e9373bb04116d9046c60259909d" title="Reads meteorological variables at different vertical levels from a NetCDF file." alt="" coords="155,157,293,184"/>
+<area shape="rect" id="node10" href="$mptrac_8c.html#a045cd09a6dda373b343a26cd6f1b3d3d" title="Reads surface meteorological data from a netCDF file and stores it in the meteorological data structu..." alt="" coords="151,208,297,235"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="373,5,452,32"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Converts time components to seconds since January 1, 2000, 12:00:00 UTC." alt="" coords="528,81,607,108"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a8c5064804f7b46a4130b5411374a771d" title="Extracts and converts a timestamp from a filename to Julian seconds." alt="" coords="345,107,480,133"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a449f642b01d0dc65cc32f86a850bcb7b" title="Reads global meteorological information from a grib file." alt="" coords="355,157,470,184"/>
+<area shape="rect" id="node9" href="$mptrac_8c.html#a89fb3563e927b8dedaedba864ffe8086" title="Reads a 3&#45;dimensional meteorological variable from a NetCDF file." alt="" coords="353,208,472,235"/>
+<area shape="rect" id="node8" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="530,157,605,184"/>
+<area shape="rect" id="node11" href="$mptrac_8c.html#a28987fd57181ba2ea555654b199a7a65" title="Reads a 2&#45;dimensional meteorological variable from a NetCDF file." alt="" coords="353,259,472,285"/>
+</map>

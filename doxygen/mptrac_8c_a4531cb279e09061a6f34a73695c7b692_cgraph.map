@@ -1,0 +1,5 @@
+<map id="clim_tropo" name="clim_tropo">
+<area shape="rect" id="node1" title="Calculates the tropopause pressure based on climatological data." alt="" coords="5,31,88,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="140,5,215,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="136,56,219,83"/>
+</map>
