@@ -222,6 +222,9 @@ endif
 # SZ3 compression...
 ifeq ($(SZ3),1)
   LDFLAGS += -lSZ3c
+  ifeq ($(STATIC),1)
+    LDFLAGS += -lstdc++ -lm -lzstd
+  endif
   CFLAGS += -DSZ3
 endif
 
