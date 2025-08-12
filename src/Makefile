@@ -20,10 +20,13 @@ LIBDIR += -L ../libs/build/lib -L ../libs/build/lib64
 # Compiler (gcc, icx, nvc, or clang)...
 COMPILER ?= gcc
 
+# User-defined preprocessor macros...
+DEFINES ?=
+
 # Compile for MPI...
 MPI ?= 0
 
-# Compile for domain decomposition... (experimental)
+# Compile for domain decomposition (experimental)...
 DD ?= 0
 
 # Compile for GPUs...
@@ -71,7 +74,7 @@ SZ3 ?= 0
 # Enable cmultiscale compression (experimental)...
 CMS ?= 0
 
-# Enable ecCodes for reading Grib data (experimental)...
+# Enable ecCodes for reading GRIB data (experimental)...
 ECCODES ?= 0
 
 # Path to cmultiscale library (experimental)...
@@ -145,7 +148,7 @@ ifeq ($(MPI),1)
   CFLAGS += -DMPI
 endif
 
-# Compile for domain decompositon...
+# Compile for domain decomposition...
 ifeq ($(DD),1)
   CFLAGS += -DDD
 endif
@@ -174,7 +177,7 @@ ifeq ($(COV),1)
   FCFLAGS += --coverage
 endif
 
-# NVTX...
+# NVTX markers...
 ifeq ($(NVTX),1)
   CFLAGS  += -DNVTX
   LDFLAGS += -lnvToolsExt
@@ -196,7 +199,7 @@ ifeq ($(KPP),1)
   LDFLAGS += -lkpp
 endif
 
-# Thrust... 
+# Thrust sorting...
 ifeq ($(THRUST),1)
   ifeq ($(GPU),1)
     CFLAGS += -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast
@@ -239,6 +242,7 @@ ifeq ($(CMS),1)
   CFLAGS += -DCMS
 endif
 
+# ecCodes library...
 ifeq ($(ECCODES),1)
   LDFLAGS += -leccodes
   ifeq ($(STATIC),1)
@@ -284,7 +288,7 @@ endif
 # Targets...
 # -----------------------------------------------------------------------------
 
-.PHONY : all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall wrapper
+.PHONY: all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall wrapper
 
 all: $(EXC)
 	rm -f *~
