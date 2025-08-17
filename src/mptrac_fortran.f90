@@ -31,10 +31,7 @@ MODULE mptrac_struct
   INTEGER, PARAMETER :: ex = 1444
   INTEGER, PARAMETER :: ey = 724
   INTEGER, PARAMETER :: ep = 140
-  !! Alternative smaller values, good enough for ERA-interim.
-  ! INTEGER, PARAMETER :: ex = 481
-  ! INTEGER, PARAMETER :: ey = 241
-  ! INTEGER, PARAMETER :: ep = 60
+  INTEGER, PARAMETER :: metvar = 13
   INTEGER, PARAMETER :: npp = 10000000 !NP
   INTEGER, PARAMETER :: nqq = 15       !NQ
   INTEGER, PARAMETER :: length = 5000  !LEN
@@ -192,6 +189,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_theta
      INTEGER(c_int) :: qnt_zeta
      INTEGER(c_int) :: qnt_zeta_d
+     INTEGER(c_int) :: qnt_zeta_dot
      INTEGER(c_int) :: qnt_tvirt
      INTEGER(c_int) :: qnt_lapse
      INTEGER(c_int) :: qnt_vh
@@ -233,9 +231,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_nc_level
      INTEGER(c_int) :: met_nc_quant
      INTEGER(c_int) :: met_zstd_level
-     INTEGER(c_int) :: met_zfp_prec
-     REAL(c_double) :: met_zfp_tol_t
-     REAL(c_double) :: met_zfp_tol_z
+     INTEGER(c_int), DIMENSION(metvar) :: met_comp_prec
+     REAL(c_double), DIMENSION(metvar) :: met_comp_tol
      INTEGER(c_int) :: met_cms_batch
      INTEGER(c_int) :: met_cms_zstd
      INTEGER(c_int) :: met_cms_heur
@@ -502,6 +499,19 @@ MODULE mptrac_struct
      REAL(c_float), DIMENSION(ep,ey,ex) :: wl
      REAL(c_float), DIMENSION(ep,ey,ex) :: zetal
      REAL(c_float), DIMENSION(ep,ey,ex) :: zeta_dotl
+     REAL(c_double) :: subdomain_lon_max
+     REAL(c_double) :: subdomain_lon_min
+     REAL(c_double) :: subdomain_lat_max
+     REAL(c_double) :: subdomain_lat_min
+     INTEGER(c_size_t), DIMENSION(4) :: subdomain_start
+     INTEGER(c_size_t), DIMENSION(4) :: subdomain_count
+     INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_start
+     INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_count
+     INTEGER(c_int) :: halo_offset_start
+     INTEGER(c_int) :: halo_offset_end
+     INTEGER(c_int) :: nx_glob
+     INTEGER(c_int) :: ny_glob
+     INTEGER(c_int) :: np_glob
   END TYPE met_t
 
 END MODULE mptrac_struct
