@@ -153,7 +153,7 @@ def create_plot_file(
     ax.set_title(title, fontsize=16, color='black', pad=12)
     plt.savefig(filepath, bbox_inches='tight', facecolor=fig.get_facecolor())
     plt.close()
-    
+
 # Parallel processing of plots...
 def process_plot(
     run_id, file, work_dir,
@@ -237,7 +237,6 @@ def run():
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
-        stop_dt = datetime.strptime(f['stop_time'], "%Y-%m-%d %H:%M")
         start_time, stop_time = map(seconds_since_2000, (f['start_time'], f['stop_time']))
         if met_source == 'aifs_6h':
             METBASE = f"/mnt/slmet-mnt/met_data/ecmwf/open_data/data/aifs-single_{start_dt.strftime('%Y_%m_%d')}/aifs-single"

@@ -14,7 +14,12 @@ projects/benchmarking/slurm-*
 projects/example/data/
 projects/example/plots/
 !projects/fortran_wrapper/
-projects/kpp/
+!projects/kpp/
+projects/kpp/chem/*.a
+projects/kpp/chem/*.c
+projects/kpp/chem/*.h
+projects/kpp/chem/*.log
+projects/kpp/chem/Makefile*
 !projects/meteo/
 projects/meteo/ecmwf/
 projects/meteo/era5/
