@@ -18,6 +18,7 @@ ifBuildNETCDF=false
 ifBuildKPP=false
 ifBuildECCODES=false
 ifBuildSZ3=false
+ifBuildMGARD=false
 
 # System...
 numProcs=$(nproc --all)
@@ -54,6 +55,7 @@ Options:
   -f           Build ZFP
   -s           Build ZSTD
   -j           Build SZ3
+  -l           Build MGARD
   -d           Build HDF5 (requires CURL, ZLIB, SZIP)
   -n           Build NETCDF (requires HDF5)
   -k           Build KPP chemistry
@@ -82,7 +84,7 @@ EOF
 ###### Check arguments    ######
 
 [[ $# -lt 1 ]] && print_help
-while getopts amcgtuzijfshnkep: flag
+while getopts amcgtuzijlfshnkep: flag
 do
     case "${flag}" in
         a) ifBuildAll=true       ; echo "build all libraries      " ;;
@@ -96,6 +98,7 @@ do
 	f) ifBuildZFP=true       ; echo "ZFP is selected          " ;;
 	s) ifBuildZSTD=true      ; echo "ZSTD is selected         " ;;
 	j) ifBuildSZ3=true       ; echo "SZ3 is selected          " ;;
+	l) ifBuildMGARD=true     ; echo "MGARD is selected        " ;;
 	d) ifBuildHDF5=true      ; echo "HDF5 is selected         " ;;
 	n) ifBuildNETCDF=true    ; echo "NETCDF is selected       " ;;
 	k) ifBuildKPP=true       ; echo "KPP is selected          " ;;
@@ -259,6 +262,19 @@ if [ $ifBuildAll = true ] || [ $ifBuildSZ3 = true ] ; then
     cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=ON .. && make -j $numProcs && make install || exit
     mkdir -p $BuildDir/src/$Target/build_static && cd $BuildDir/src/$Target/build_static || exit
     cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=OFF .. && make -j $numProcs && make install || exit
+fi
+
+# Build MGARD...
+if [ $ifBuildAll = true ] || [ $ifBuildMGARD = true ] ; then
+    Target="MGARD-1.5.2"
+    printf "Starting to compile $Target...\n"
+    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
+    for type in shared static; do
+        builddir=$BuildDir/src/$Target/build_$type
+        cmake -S $BuildDir/src/$Target -B $builddir -DCMAKE_INSTALL_PREFIX=$BuildDir -DMGARD_ENABLE_OPENMP=ON \
+              -DBUILD_SHARED_LIBS=$([ "$type" = shared ] && echo ON || echo OFF) || exit
+        cmake --build $builddir -j $numProcs && cmake --install $builddir || exit
+    done
 fi
 
 # Finish...
