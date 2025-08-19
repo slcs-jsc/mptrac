@@ -243,7 +243,7 @@ void clim_tropo_init(
 
   /* Set latitudes [deg]... */
   clim->tropo_nlat = 73;
-  double tropo_lat[73] = {
+  const double tropo_lat[73] = {
     -90, -87.5, -85, -82.5, -80, -77.5, -75, -72.5, -70, -67.5,
     -65, -62.5, -60, -57.5, -55, -52.5, -50, -47.5, -45, -42.5,
     -40, -37.5, -35, -32.5, -30, -27.5, -25, -22.5, -20, -17.5,
@@ -255,7 +255,7 @@ void clim_tropo_init(
   memcpy(clim->tropo_lat, tropo_lat, sizeof(clim->tropo_lat));
 
   /* Set tropopause pressure [hPa] (NCEP/NCAR Reanalysis 1)... */
-  double tropo[12][73] = {
+  const double tropo[12][73] = {
     {324.1, 325.6, 325, 324.3, 322.5, 319.7, 314, 307.2, 301.8, 299.6,
      297.1, 292.2, 285.6, 276.1, 264, 248.9, 231.9, 213.5, 194.4,
      175.3, 157, 140.4, 126.7, 116.3, 109.5, 105.4, 103, 101.4, 100.4,
@@ -390,7 +390,7 @@ double clim_ts(
   else if (t >= ts->time[ts->ntime - 1])
     return ts->vmr[ts->ntime - 1];
   else {
-    int idx = locate_irr(ts->time, ts->ntime, t);
+    const int idx = locate_irr(ts->time, ts->ntime, t);
     return LIN(ts->time[idx], ts->vmr[idx],
 	       ts->time[idx + 1], ts->vmr[idx + 1], t);
   }
@@ -1823,7 +1823,7 @@ double kernel_weight(
   else if (z > kz[nk - 1])
     return kw[nk - 1];
   else {
-    int idx = locate_irr(kz, nk, z);
+    const int idx = locate_irr(kz, nk, z);
     return LIN(kz[idx], kw[idx], kz[idx + 1], kw[idx + 1], z);
   }
 }
@@ -3262,10 +3262,11 @@ void module_isosurf(
       else if (atm->time[ip] >= cache->iso_ts[cache->iso_n - 1])
 	atm->p[ip] = cache->iso_ps[cache->iso_n - 1];
       else {
-	int idx = locate_irr(cache->iso_ts, cache->iso_n, atm->time[ip]);
-	atm->p[ip] = LIN(cache->iso_ts[idx], cache->iso_ps[idx],
-			 cache->iso_ts[idx + 1], cache->iso_ps[idx + 1],
-			 atm->time[ip]);
+	const int idx =
+	  locate_irr(cache->iso_ts, cache->iso_n, atm->time[ip]);
+	atm->p[ip] =
+	  LIN(cache->iso_ts[idx], cache->iso_ps[idx], cache->iso_ts[idx + 1],
+	      cache->iso_ps[idx + 1], atm->time[ip]);
       }
     }
   }
@@ -7594,7 +7595,7 @@ void read_met_nc_grid_dd(
 
   /* Focus on subdomain longitutes and latitudes... */
   for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++) {
-    int iy_ = (int) met->subdomain_start[2] + iy;
+    const int iy_ = (int) met->subdomain_start[2] + iy;
     met->lat[iy] = met->lat[iy_];
   }
 
@@ -7602,22 +7603,20 @@ void read_met_nc_grid_dd(
   double help_lon[EX];
 
   for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
-    int ix_ = (int) met->subdomain_start[3] + ix;
+    const int ix_ = (int) met->subdomain_start[3] + ix;
     help_lon[ix + met->halo_offset_start] = met->lon[ix_];
   }
 
   for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
-    int ix_ = (int) met->halo_bnd_start[3] + ix;
+    const int ix_ = (int) met->halo_bnd_start[3] + ix;
     help_lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
   }
 
   /* Reset the grid dimensions... */
   met->nx = (int) met->subdomain_count[3] + (int) met->halo_bnd_count[3];
   met->ny = (int) met->subdomain_count[2];
-
-  for (int ix = 0; ix < (int) met->nx; ix++) {
+  for (int ix = 0; ix < (int) met->nx; ix++)
     met->lon[ix] = help_lon[ix];
-  }
 
   /* Determine subdomain edges... */
   met->subdomain_lon_min = floor(rank / ctl->dd_subdomains_meridional)
@@ -7668,7 +7667,6 @@ void read_met_nc_grid_dd(
   /* Read hybrid levels... */
   if (strcasecmp(levname, "hybrid") == 0)
     NC_GET_DOUBLE("hybrid", met->hybrid, 1);
-
 }
 #endif
 
@@ -7971,8 +7969,9 @@ void read_met_nc_levels_dd(
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
-	    double p0 = hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy];
-	    double p1 = hyam[ip + 1] / 100. + hybm[ip + 1] * met->ps[ix][iy];
+	    const double p0 = hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy];
+	    const double p1 =
+	      hyam[ip + 1] / 100. + hybm[ip + 1] * met->ps[ix][iy];
 	    met->pl[ix][iy][ip] = (float) ((p1 - p0) / log(p1 / p0));
 	  }
     }
@@ -8006,9 +8005,8 @@ void read_met_nc_levels_dd(
 
     /* Set new pressure levels... */
     met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++) {
+    for (int ip = 0; ip < met->np; ip++)
       met->p[ip] = ctl->met_p[ip];
-    }
   }
 
   /* Check ordering of pressure levels... */
@@ -8202,13 +8200,11 @@ int read_met_nc_2d_dd(
 	else
 	  dest[ix][iy] = NAN;
       }
-
   }
 
   /* Free... */
   free(help);
   free(help_halo);
-
 
   /* Return... */
   return 1;
@@ -8292,8 +8288,9 @@ int read_met_nc_3d_dd(
     for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++)
       for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
-	  float aux = help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix,
-				    (int) met->subdomain_count[3])];
+	  const float aux =
+	    help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix,
+			  (int) met->subdomain_count[3])];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -8306,7 +8303,7 @@ int read_met_nc_3d_dd(
     for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
       for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
-	  float aux =
+	  const float aux =
 	    help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix,
 			       (int) met->halo_bnd_count[3])];
 	  if ((fillval == 0 || aux != fillval)
@@ -8324,7 +8321,7 @@ int read_met_nc_3d_dd(
     for (int ip = 0; ip < met->np; ip++)
       for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
 	for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
-	  float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	  const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -8337,7 +8334,7 @@ int read_met_nc_3d_dd(
     for (int ip = 0; ip < met->np; ip++)
       for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
 	for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
-	  float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	  const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
@@ -8355,7 +8352,6 @@ int read_met_nc_3d_dd(
   return 1;
 }
 #endif
-
 
 /*****************************************************************************/
 
@@ -8820,7 +8816,7 @@ void read_met_ml2pl(
 	else if ((pt > p[met->np - 1] && p[1] > p[0])
 		 || (pt < p[met->np - 1] && p[1] < p[0]))
 	  pt = p[met->np - 1];
-	int ip2 = locate_irr(p, met->np, pt);
+	const int ip2 = locate_irr(p, met->np, pt);
 	aux[ip] = LIN(p[ip2], var[ix][iy][ip2],
 		      p[ip2 + 1], var[ix][iy][ip2 + 1], pt);
       }
@@ -10208,7 +10204,8 @@ void read_met_sample(
 	       iy2 <= MIN(iy + ctl->met_sy - 1, met->ny - 1); iy2++)
 	    for (int ip2 = MAX(ip - ctl->met_sp + 1, 0);
 		 ip2 <= MIN(ip + ctl->met_sp - 1, met->np - 1); ip2++) {
-	      float w = (1.0f - (float) abs(ix - ix2) / (float) ctl->met_sx)
+	      const float w =
+		(1.0f - (float) abs(ix - ix2) / (float) ctl->met_sx)
 		* (1.0f - (float) abs(iy - iy2) / (float) ctl->met_sy)
 		* (1.0f - (float) abs(ip - ip2) / (float) ctl->met_sp);
 	      help->ps[ix][iy] += w * met->ps[ix3][iy2];
@@ -10730,7 +10727,7 @@ void spline(
       else if (x2[i] >= x[n - 1])
 	y2[i] = y[n - 1];
       else {
-	int idx = locate_irr(x, n, x2[i]);
+	const int idx = locate_irr(x, n, x2[i]);
 	y2[i] = LIN(x[idx], y[idx], x[idx + 1], y[idx + 1], x2[i]);
       }
   }
@@ -11437,14 +11434,14 @@ void write_csi(
 
     /* Set horizontal coordinates... */
     for (int iy = 0; iy < ctl->csi_ny; iy++) {
-      double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
+      const double lat = ctl->csi_lat0 + dlat * (iy + 0.5);
       area[iy] = dlat * dlon * SQR(RE * M_PI / 180.0) * cos(DEG2RAD(lat));
     }
   }
 
   /* Set time interval... */
-  double t0 = t - 0.5 * ctl->dt_mod;
-  double t1 = t + 0.5 * ctl->dt_mod;
+  const double t0 = t - 0.5 * ctl->dt_mod;
+  const double t1 = t + 0.5 * ctl->dt_mod;
 
   /* Allocate... */
   int grid_size = ctl->csi_nx * ctl->csi_ny * ctl->csi_nz;
@@ -11467,9 +11464,9 @@ void write_csi(
       continue;
 
     /* Calculate indices... */
-    int ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
-    int iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
-    int iz = (int) ((rz[i] - ctl->csi_z0) / dz);
+    const int ix = (int) ((rlon[i] - ctl->csi_lon0) / dlon);
+    const int iy = (int) ((rlat[i] - ctl->csi_lat0) / dlat);
+    const int iz = (int) ((rz[i] - ctl->csi_z0) / dz);
     if (ix < 0 || ix >= ctl->csi_nx || iy < 0 || iy >= ctl->csi_ny || iz < 0
 	|| iz >= ctl->csi_nz)
       continue;
@@ -11494,15 +11491,15 @@ void write_csi(
       ERRMSG("Ensemble ID out of range!");
 
     /* Get indices... */
-    int ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
-    int iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
-    int iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
+    const int ix = (int) ((atm->lon[ip] - ctl->csi_lon0) / dlon);
+    const int iy = (int) ((atm->lat[ip] - ctl->csi_lat0) / dlat);
+    const int iz = (int) ((Z(atm->p[ip]) - ctl->csi_z0) / dz);
     if (ix < 0 || ix >= ctl->csi_nx || iy < 0 || iy >= ctl->csi_ny || iz < 0
 	|| iz >= ctl->csi_nz)
       continue;
 
     /* Get total mass in grid cell... */
-    int idx =
+    const int idx =
       ens_id * grid_size + ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
     modmean[idx] +=
       kernel_weight(kz, kw, nk, atm->p[ip]) * atm->q[ctl->qnt_m][ip];
@@ -11514,7 +11511,7 @@ void write_csi(
       for (int iz = 0; iz < ctl->csi_nz; iz++) {
 
 	/* Calculate mean observation index... */
-	int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
+	const int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
 	if (obscount[idx]) {
 	  obsmean[idx] /= obscount[idx];
 	  obsstd[idx] = sqrt(obsstd[idx] - SQR(obsmean[idx]));
@@ -11522,7 +11519,7 @@ void write_csi(
 
 	/* Calculate model mean per ensemble... */
 	for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
-	  int midx = e * grid_size + idx;
+	  const int midx = e * grid_size + idx;
 	  if (modmean[midx] > 0)
 	    modmean[midx] /= (1e6 * area[iy]);
 	}
@@ -11532,7 +11529,7 @@ void write_csi(
 
 	  /* Calculate CSI... */
 	  for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
-	    int midx = e * grid_size + idx;
+	    const int midx = e * grid_size + idx;
 	    ct[e]++;
 	    if (obsmean[idx] >= ctl->csi_obsmin
 		&& modmean[midx] >= ctl->csi_modmin)
@@ -11566,28 +11563,31 @@ void write_csi(
       /* Calculate verification statistics
          (https://www.cawcr.gov.au/projects/verification/) ... */
       static double work[2 * NCSI], work2[2 * NCSI];
-      int n_obs = cx[e] + cy[e];
-      int n_for = cx[e] + cz[e];
-      double cx_rd = (ct[e] > 0) ? (1. * n_obs * n_for) / ct[e] : NAN;
-      double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
-      double pod = (n_obs > 0) ? 100. * cx[e] / n_obs : NAN;
-      double far = (n_for > 0) ? 100. * cz[e] / n_for : NAN;
-      double csi =
+      const int n_obs = cx[e] + cy[e];
+      const int n_for = cx[e] + cz[e];
+      const double cx_rd = (ct[e] > 0) ? (1. * n_obs * n_for) / ct[e] : NAN;
+      const double bias = (n_obs > 0) ? 100. * n_for / n_obs : NAN;
+      const double pod = (n_obs > 0) ? 100. * cx[e] / n_obs : NAN;
+      const double far = (n_for > 0) ? 100. * cz[e] / n_for : NAN;
+      const double csi =
 	(cx[e] + cy[e] + cz[e] >
 	 0) ? 100. * cx[e] / (cx[e] + cy[e] + cz[e]) : NAN;
-      double ets =
+      const double ets =
 	(cx[e] + cy[e] + cz[e] - cx_rd >
 	 0) ? 100. * (cx[e] - cx_rd) / (cx[e] + cy[e] + cz[e] - cx_rd) : NAN;
-      double rho_p = gsl_stats_correlation(x, 1, y, 1, (size_t) n[e]);
-      double rho_s = gsl_stats_spearman(x, 1, y, 1, (size_t) n[e], work);
+      const double rho_p = gsl_stats_correlation(x, 1, y, 1, (size_t) n[e]);
+      const double rho_s =
+	gsl_stats_spearman(x, 1, y, 1, (size_t) n[e], work);
       for (int i = 0; i < n[e]; i++) {
 	work[i] = x[i] - y[i];
 	work2[i] = (obsstdn[i] != 0) ? work[i] / obsstdn[i] : 0;
       }
-      double mean = gsl_stats_mean(work, 1, (size_t) n[e]);
-      double rmse = gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[e], 0.0);
-      double absdev = gsl_stats_absdev_m(work, 1, (size_t) n[e], 0.0);
-      double loglikelihood = gsl_stats_tss(work2, 1, (size_t) n[e]) * -0.5;
+      const double mean = gsl_stats_mean(work, 1, (size_t) n[e]);
+      const double rmse =
+	gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[e], 0.0);
+      const double absdev = gsl_stats_absdev_m(work, 1, (size_t) n[e], 0.0);
+      const double loglikelihood =
+	gsl_stats_tss(work2, 1, (size_t) n[e]) * -0.5;
 
       /* Write... */
       fprintf(out,
@@ -11823,9 +11823,9 @@ void write_grid(
   /* Average data... */
   for (int ip = 0; ip < atm->np; ip++)
     if (izs[ip] >= 0) {
-      int idx =
+      const int idx =
 	ARRAY_3D(ixs[ip], iys[ip], ctl->grid_ny, izs[ip], ctl->grid_nz);
-      double kernel = kernel_weight(kz, kw, nk, atm->p[ip]);
+      const double kernel = kernel_weight(kz, kw, nk, atm->p[ip]);
       np[idx]++;
       for (int iq = 0; iq < ctl->nq; iq++) {
 	mean[iq][idx] += kernel * atm->q[iq][ip];
@@ -11840,7 +11840,7 @@ void write_grid(
       for (int iz = 0; iz < ctl->grid_nz; iz++) {
 
 	/* Get grid index... */
-	int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
+	const int idx = ARRAY_3D(ix, iy, ctl->grid_ny, iz, ctl->grid_nz);
 
 	/* Calculate column density... */
 	cd[idx] = NAN;
@@ -11870,7 +11870,7 @@ void write_grid(
 	if (np[idx] > 0)
 	  for (int iq = 0; iq < ctl->nq; iq++) {
 	    mean[iq][idx] /= np[idx];
-	    double var = sigma[iq][idx] / np[idx] - SQR(mean[iq][idx]);
+	    const double var = sigma[iq][idx] / np[idx] - SQR(mean[iq][idx]);
 	    sigma[iq][idx] = (var > 0 ? sqrt(var) : 0);
 	} else
 	  for (int iq = 0; iq < ctl->nq; iq++) {
@@ -12720,15 +12720,15 @@ void write_prof(
       continue;
 
     /* Calculate indices... */
-    int ix = (int) ((rlon[i] - ctl->prof_lon0) / dlon);
-    int iy = (int) ((rlat[i] - ctl->prof_lat0) / dlat);
+    const int ix = (int) ((rlon[i] - ctl->prof_lon0) / dlon);
+    const int iy = (int) ((rlat[i] - ctl->prof_lat0) / dlat);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->prof_nx || iy < 0 || iy >= ctl->prof_ny)
       continue;
 
     /* Get mean observation index... */
-    int idx = ARRAY_2D(ix, iy, ctl->prof_ny);
+    const int idx = ARRAY_2D(ix, iy, ctl->prof_ny);
     obsmean[idx] += robs[i];
     obscount[idx]++;
   }
@@ -12741,9 +12741,9 @@ void write_prof(
       continue;
 
     /* Get indices... */
-    int ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
-    int iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
-    int iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
+    const int ix = (int) ((atm->lon[ip] - ctl->prof_lon0) / dlon);
+    const int iy = (int) ((atm->lat[ip] - ctl->prof_lat0) / dlat);
+    const int iz = (int) ((Z(atm->p[ip]) - ctl->prof_z0) / dz);
 
     /* Check indices... */
     if (ix < 0 || ix >= ctl->prof_nx ||
@@ -12751,7 +12751,7 @@ void write_prof(
       continue;
 
     /* Get total mass in grid cell... */
-    int idx = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
+    const int idx = ARRAY_3D(ix, iy, ctl->prof_ny, iz, ctl->prof_nz);
     mass[idx] += atm->q[ctl->qnt_m][ip];
   }
 
@@ -13495,10 +13495,10 @@ void dd_communicate_particles(
 
       if (ibs == nbs[idest])
 	break;
-
     }
 
     SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_CPU);
+
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle,
 	      neighbours[idest], 1, MPI_COMM_WORLD,
@@ -13864,7 +13864,6 @@ void dd_sort(
   module_sort_help(atm->lat, p, np);
   for (int iq = 0; iq < ctl->nq; iq++)
     module_sort_help(atm->q[iq], p, np);
-
 
   /* Reset the size... */
   int npt = 0;
