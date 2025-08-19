@@ -2,34 +2,23 @@
 
 ###### Presets ######
 
-# Flags...
-ifBuildAll=false
-ifBuildMandatory=false
-ifClean=false
-ifBuildGSL=false
-ifBuildTHRUST=false
-ifBuildCURL=false
-ifBuildZLIB=false
-ifBuildSZIP=false
-ifBuildZFP=false
-ifBuildZSTD=false
-ifBuildHDF5=false
-ifBuildNETCDF=false
-ifBuildKPP=false
-ifBuildECCODES=false
-ifBuildSZ3=false
-
-# System...
-numProcs=$(nproc --all)
+# Build flags...
+declare -A build
+for lib in all mandatory clean gsl thrust curl zlib szip zfp zstd hdf5 netcdf kpp eccodes sz3 ; do
+    build[$lib]=false
+done
 
 # Directories...
-BuildDir=${PWD}/build
-LibsDir=${PWD}
+build_dir="${PWD}/build"
+libs_dir="${PWD}"
 
-export LD_LIBRARY_PATH=$BuildDir/lib:$LD_LIBRARY_PATH
+# System...
+export LD_LIBRARY_PATH="$build_dir"/lib:$LD_LIBRARY_PATH
+nprocs=$(nproc --all)
 
 ###### Functions          ######
 
+# Print help message and exit...
 print_help() {
     cat << EOF
 
@@ -79,34 +68,43 @@ EOF
     exit 0
 }
 
-###### Check arguments    ######
+# Unpack tar file...
+unpack() {
+    local target=$1
+    printf "Starting to compile $target...\n"
+    cp "$libs_dir/$target.tar.bz2" "$build_dir/src" \
+	&& cd "$build_dir/src" \
+	&& tar xvjf "$target.tar.bz2" \
+	&& cd "$target" \
+	    || exit
+}
 
+###### Check arguments    ######
 [[ $# -lt 1 ]] && print_help
-while getopts amcgtuzijfshnkep: flag
-do
+while getopts amcgtuzijfshnkep: flag ; do
     case "${flag}" in
-        a) ifBuildAll=true       ; echo "build all libraries      " ;;
-        m) ifBuildMandatory=true ; echo "build mandatory libraries" ;;
-	c) ifClean=true          ; echo "clean build directory    " ;;
-	g) ifBuildGSL=true       ; echo "GSL is selected          " ;;
-	t) ifBuildTHRUST=true    ; echo "THRUST is selected       " ;;
-	u) ifBuildCURL=true      ; echo "CURL is selected         " ;;
-	z) ifBuildZLIB=true      ; echo "ZLIB is selected         " ;;
-	i) ifBuildSZIP=true      ; echo "SZIP is selected         " ;;
-	f) ifBuildZFP=true       ; echo "ZFP is selected          " ;;
-	s) ifBuildZSTD=true      ; echo "ZSTD is selected         " ;;
-	j) ifBuildSZ3=true       ; echo "SZ3 is selected          " ;;
-	d) ifBuildHDF5=true      ; echo "HDF5 is selected         " ;;
-	n) ifBuildNETCDF=true    ; echo "NETCDF is selected       " ;;
-	k) ifBuildKPP=true       ; echo "KPP is selected          " ;;
-	e) ifBuildECCODES=true   ; echo "ECCODES is selected      " ;;
-	p) numProcs=${OPTARG} ;;
+        a) build[all]=true       ; echo "build all libraries      " ;;
+        m) build[mandatory]=true ; echo "build mandatory libraries" ;;
+	c) build[clean]=true     ; echo "clean build directory    " ;;
+	g) build[gsl]=true       ; echo "GSL is selected          " ;;
+	t) build[thrust]=true    ; echo "THRUST is selected       " ;;
+	u) build[curl]=true      ; echo "CURL is selected         " ;;
+	z) build[zlib]=true      ; echo "ZLIB is selected         " ;;
+	i) build[szip]=true      ; echo "SZIP is selected         " ;;
+	f) build[zfp]=true       ; echo "ZFP is selected          " ;;
+	s) build[zstd]=true      ; echo "ZSTD is selected         " ;;
+	j) build[sz3]=true       ; echo "SZ3 is selected          " ;;
+	d) build[hdf5]=true      ; echo "HDF5 is selected         " ;;
+	n) build[netcdf]=true    ; echo "NETCDF is selected       " ;;
+	k) build[kpp]=true       ; echo "KPP is selected          " ;;
+	e) build[eccodes]=true   ; echo "ECCODES is selected      " ;;
+	p) nprocs=${OPTARG} ;;
 	h) print_help ;;
     esac
 done
 
 # Clean build directory...
-if [ "$ifBuildAll" = true ] || [ "$ifClean" = true ] ; then
+if ${build[all]} || ${build[clean]} ; then
     printf "Cleaning build folder...\n"
     rm -rf build
 fi
@@ -116,149 +114,119 @@ printf "Creating build folder with subfolders...\n"
 mkdir -p build/src build/bin build/include build/lib build/man/man1 || exit
 
 # Select mandatory libraries... 
-if [ $ifBuildMandatory = true ] ; then
-    ifBuildGSL=true
-    ifBuildCURL=true
-    ifBuildZLIB=true
-    ifBuildSZIP=true
-    ifBuildHDF5=true
-    ifBuildNETCDF=true
+if ${build[mandatory]} ; then
+    build[gsl]=true
+    build[curl]=true
+    build[zlib]=true
+    build[szip]=true
+    build[hdf5]=true
+    build[netcdf]=true
 fi
 
 # Build GSL...
-if [ $ifBuildAll = true ] || [ $ifBuildGSL = true ] ; then
-    Target="gsl-2.7.1"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir	&& cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && ./configure --prefix=$BuildDir \
-        && make -j $numProcs && make check && make install && make clean \
-    	    || exit
+if ${build[all]} || ${build[gsl]} ; then
+    target="gsl-2.7.1"
+    unpack "$target"
+    ./configure --prefix="$build_dir" && make -j $nprocs && make check && make install && make clean || exit
 fi
 
 # Build Thrust sort...
-if [ $ifBuildAll = true ] || [ $ifBuildTHRUST = true ] ; then 
-    Target="thrustsort-1.2"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && cp -a libthrustsort_gpu.a libthrustsort_cpu.a $BuildDir/lib/ \
-    	    || exit
+if ${build[all]} || ${build[thrust]} ; then 
+    target="thrustsort-1.2"
+    unpack "$target"
+    cp -a libthrustsort_gpu.a libthrustsort_cpu.a "$build_dir"/lib/ || exit
 fi
 
 # Build curl...
-if [ $ifBuildAll = true ] || [ $ifBuildCURL = true ] ; then 
-    Target="curl-8.10.1"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && CFLAGS="-fPIC" ./configure --prefix=$BuildDir --without-ssl --without-libpsl \
-        && make -j $numProcs && make check || true && make install && make clean \
-    	    || exit
+if ${build[all]} || ${build[curl]} ; then 
+    target="curl-8.10.1"
+    unpack "$target"
+    CFLAGS="-fPIC" ./configure --prefix="$build_dir" --without-ssl --without-libpsl \
+        && make -j $nprocs && make check || true && make install && make clean || exit
 fi
 
 # Build zlib...
-if [ $ifBuildAll = true ] || [ $ifBuildZLIB = true ] ; then 
-    Target="zlib-1.3.1"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && CFLAGS="-fPIC" ./configure --prefix=$BuildDir \
-        && make -j $numProcs && make check && make install && make clean \
-    	    || exit
+if ${build[all]} || ${build[zlib]} ; then 
+    target="zlib-1.3.1"
+    unpack "$target"
+    CFLAGS="-fPIC" ./configure --prefix="$build_dir" && make -j $nprocs && make check && make install && make clean || exit
 fi
 
 # Build szip...
-if [ $ifBuildAll = true ] || [ $ifBuildSZIP = true ] ; then 
-    Target="szip-2.1.1"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && CFLAGS="-fPIC" ./configure --prefix=$BuildDir \
-        && make -j $numProcs && make check && make install && make clean \
-    	    || exit
+if ${build[all]} || ${build[szip]} ; then 
+    target="szip-2.1.1"
+    unpack "$target"
+    CFLAGS="-fPIC" ./configure --prefix="$build_dir" && make -j $nprocs && make check && make install && make clean || exit
 fi
 
 # Build zfp...
-if [ $ifBuildAll = true ] || [ $ifBuildZFP = true ] ; then 
-    Target="zfp-1.0.1"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && make BUILD_SHARED_LIBS=0 && make test \
-        && cp -a bin/* $BuildDir/bin/ \
-        && cp -a include/* $BuildDir/include/ \
-        && cp -a lib/* $BuildDir/lib/ \
+if ${build[all]} || ${build[zfp]} ; then 
+    target="zfp-1.0.1"
+    unpack "$target"
+    make BUILD_SHARED_LIBS=0 && make test \
+        && cp -a bin/* "$build_dir"/bin/ \
+        && cp -a include/* "$build_dir"/include/ \
+        && cp -a lib/* "$build_dir"/lib/ \
 	&& make BUILD_SHARED_LIBS=1 \
-	&& cp -a lib/* $BuildDir/lib/ \
-    	    || exit
+	&& cp -a lib/* "$build_dir"/lib/ || exit
 fi
 
 # Build zstd...
-if [ $ifBuildAll = true ] || [ $ifBuildZSTD = true ] ; then 
-    Target="zstd-1.5.5"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && make CFLAGS=-fPIC -j $numProcs && make check \
-        && cp -a lib/libzstd* $BuildDir/lib/ \
-        && cp -a lib/*.h $BuildDir/include/ \
-        && make clean \
-    	    || exit
+if ${build[all]} || ${build[zstd]} ; then 
+    target="zstd-1.5.5"
+    unpack "$target"
+    make CFLAGS=-fPIC -j $nprocs && make check \
+        && cp -a lib/libzstd* "$build_dir"/lib/ \
+        && cp -a lib/*.h "$build_dir"/include/ \
+        && make clean || exit
 fi
 
 # Build HDF5...
-if [ $ifBuildAll = true ] || [ $ifBuildHDF5 = true ] ; then 
-    Target="hdf5-1.14.4-3"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && ./configure --prefix=$BuildDir --with-zlib=$BuildDir --with-szlib=$BuildDir --enable-hl --disable-fortran \
-        && make -j $numProcs && make check && make install && make clean \
-	    || exit
+if ${build[all]} || ${build[hdf5]} ; then 
+    target="hdf5-1.14.4-3"
+    unpack "$target"
+    ./configure --prefix="$build_dir" --with-zlib="$build_dir" --with-szlib="$build_dir" --enable-hl --disable-fortran \
+        && make -j $nprocs && make check && make install && make clean || exit
 fi
 
 # Build netCDF...
-if [ $ifBuildAll = true ] || [ $ifBuildNETCDF = true ] ; then 
-    Target="netcdf-c-4.9.2"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    cd $BuildDir/src/$Target \
-        && CPPFLAGS=-I$BuildDir/include LDFLAGS=-L$BuildDir/lib ./configure --prefix=$BuildDir --with-plugin-dir=$BuildDir/share/netcdf-plugins --disable-dap --disable-byterange --disable-nczarr --disable-libxml2 \
-        && make -j $numProcs && make check || true && make install && make clean \
-	    || exit
+if ${build[all]} || ${build[netcdf]} ; then 
+    target="netcdf-c-4.9.2"
+    unpack "$target"
+    CPPFLAGS=-I"$build_dir"/include LDFLAGS=-L"$build_dir"/lib ./configure --prefix="$build_dir" --with-plugin-dir="$build_dir"/share/netcdf-plugins \
+	       --disable-dap --disable-byterange --disable-nczarr --disable-libxml2 \
+        && make -j $nprocs && make check || true && make install && make clean || exit
 fi
 
 # Build KPP...
-if [ $ifBuildAll = true ] || [ $ifBuildKPP = true ] ; then 
-    Target="KPP"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    export KPP_HOME=$BuildDir/src/$Target
-    export KPP_FLEX_LIB_DIR=$BuildDir/src/$Target
-    cd $KPP_HOME/src && make clean && make && cd ${LibsDir}/../projects/kpp && ./build_KPP.sh chem 0 \
-	    || exit		
+if ${build[all]} || ${build[kpp]} ; then 
+    target="KPP"
+    unpack "$target"
+    cd - 
+    export KPP_HOME="$build_dir"/src/"$target"
+    export KPP_FLEX_LIB_DIR="$build_dir"/src/"$target"
+    cd $KPP_HOME/src && make clean && make && cd ${libs_dir}/../projects/kpp && ./build_KPP.sh chem 0 || exit		
 fi
 
 # Build ecCodes...
-if [ $ifBuildAll = true ] || [ $ifBuildECCODES = true ] ; then
-    Target="eccodes-2.38.3"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    mkdir -p $BuildDir/src/$Target/build && cd $BuildDir/src/$Target/build || exit
-    cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF .. && make -j $numProcs && ctest -j $numProcs && make install \
-            || exit
+if ${build[all]} || ${build[eccodes]} ; then
+    target="eccodes-2.38.3"
+    unpack "$target"
+    cd -
+    mkdir -p "$build_dir"/src/"$target"/build && cd "$build_dir"/src/"$target"/build || exit
+    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF .. \
+	&& make -j $nprocs && ctest -j $nprocs && make install || exit
 fi
 
 # Build SZ3...
-if [ $ifBuildAll = true ] || [ $ifBuildSZ3 = true ] ; then
-    Target="SZ3-3.2.1"
-    printf "Starting to compile $Target...\n"
-    cd $LibsDir && cp $Target.tar.bz2 $BuildDir/src && cd $BuildDir/src && tar xvjf $Target.tar.bz2 || exit
-    mkdir -p $BuildDir/src/$Target/build_shared && cd $BuildDir/src/$Target/build_shared || exit
-    cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=ON .. && make -j $numProcs && make install || exit
-    mkdir -p $BuildDir/src/$Target/build_static && cd $BuildDir/src/$Target/build_static || exit
-    cmake -DCMAKE_INSTALL_PREFIX=$BuildDir -DBUILD_SHARED_LIBS=OFF .. && make -j $numProcs && make install || exit
+if ${build[all]} || ${build[sz3]} ; then
+    target="SZ3-3.2.1"
+    unpack "$target"
+    cd -
+    mkdir -p "$build_dir"/src/"$target"/build_shared && cd "$build_dir"/src/"$target"/build_shared || exit
+    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DBUILD_SHARED_LIBS=ON .. && make -j $nprocs && make install || exit
+    mkdir -p "$build_dir"/src/"$target"/build_static && cd "$build_dir"/src/"$target"/build_static || exit
+    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DBUILD_SHARED_LIBS=OFF .. && make -j $nprocs && make install || exit
 fi
 
 # Finish...
@@ -266,6 +234,6 @@ printf "All selected compilations are done.\n"
 echo -e "\n***** gcc *****\n"
 gcc --version
 echo -e "\n***** gsl-config *****\n"
-$BuildDir/bin/gsl-config --libs --cflags --version
+"$build_dir"/bin/gsl-config --libs --cflags --version
 echo -e "\n***** nc-config *****"
-$BuildDir/bin/nc-config --all
+"$build_dir"/bin/nc-config --all
