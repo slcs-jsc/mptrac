@@ -783,8 +783,8 @@ void compress_sz3(
     FREAD(&sz3size, size_t,
 	  1,
 	  inout);
-    if ((bytes = malloc(sz3size)) == NULL)
-      ERRMSG("Cannot allocate memory!");
+    ALLOC(bytes, char,
+	  sz3size);
     FREAD(bytes, unsigned char,
 	  sz3size,
 	  inout);
@@ -807,9 +807,9 @@ void compress_sz3(
   /* Compress array and output compressed stream... */
   else {
 
-    int errBoundMode = (precision > 0) ? REL : ABS;
-    double absBound = (errBoundMode == ABS) ? tolerance : 0.0;
-    double relBound =
+    const int errBoundMode = (precision > 0) ? REL : ABS;
+    const double absBound = (errBoundMode == ABS) ? tolerance : 0.0;
+    const double relBound =
       (errBoundMode == REL) ? pow(2.0, -(double) precision) : 0.0;
 
     bytes = SZ_compress_args(SZ_FLOAT, array, &outSize,
@@ -871,8 +871,8 @@ void compress_zfp(
   /* Allocate buffer for compressed data... */
   const size_t bufsize = zfp_stream_maximum_size(zfp, field);
   void *buffer = malloc(bufsize);
-  if (!buffer)
-    ERRMSG("Failed to allocate compression buffer!");
+  ALLOC(buffer, char,
+	bufsize);
 
   /* Associate bit stream with allocated buffer... */
   bitstream *stream = stream_open(buffer, bufsize);
@@ -2587,7 +2587,7 @@ void module_chem_grid(
       /* Set mass... */
       int mass_idx = ARRAY_3D(ixs[ip], iys[ip], ny, izs[ip], nz);
       if (ensemble_mode) {
-	int ens = (int) atm->q[ctl->qnt_ens][ip];
+	const int ens = (int) atm->q[ctl->qnt_ens][ip];
 	mass_idx += ens * ngrid;
       }
 
