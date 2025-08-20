@@ -776,14 +776,18 @@ void compress_sz3(
   unsigned char *bytes = NULL;
   size_t outSize = 0;
 
+  /* Read compressed stream and decompress array... */
   if (decompress) {
+
     size_t sz3size;
     FREAD(&sz3size, size_t,
 	  1,
 	  inout);
-    bytes = malloc(sz3size);
-    if (!bytes || fread(bytes, 1, sz3size, inout) != sz3size)
-      ERRMSG("Error reading SZ3 data!");
+    if ((bytes = malloc(sz3size)) == NULL)
+      ERRMSG("Cannot allocate memory!");
+    FREAD(bytes, unsigned char,
+	  sz3size,
+	  inout);
 
     void *outData =
       SZ_decompress(SZ_FLOAT, bytes, sz3size, r5, r4, r3, r2, r1);
@@ -791,13 +795,18 @@ void compress_sz3(
       ERRMSG("Decompression failed!");
 
     memcpy(array, outData, total_elems * sizeof(float));
+
     free(outData);
     free(bytes);
 
     LOG(2, "Read 3-D variable: %s (SZ3, PREC=%d, TOL=%g, RATIO=%g)",
 	varname, precision, tolerance,
 	(double) (total_elems * sizeof(float)) / (double) sz3size);
-  } else {
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+
     int errBoundMode = (precision > 0) ? REL : ABS;
     double absBound = (errBoundMode == ABS) ? tolerance : 0.0;
     double relBound =
@@ -812,8 +821,10 @@ void compress_sz3(
     FWRITE(&outSize, size_t,
 	   1,
 	   inout);
-    if (fwrite(bytes, 1, outSize, inout) != outSize)
-      ERRMSG("Error writing SZ3 data!");
+    FWRITE(bytes, unsigned char,
+	   outSize,
+	   inout);
+
     free(bytes);
 
     LOG(2, "Write 3-D variable: %s (SZ3, PREC=%d, TOL=%g, RATIO=%g)",
@@ -876,8 +887,9 @@ void compress_zfp(
 	  inout);
     if (zfpsize > bufsize)
       ERRMSG("Compressed data size exceeds allocated buffer!");
-    if (fread(buffer, 1, zfpsize, inout) != zfpsize)
-      ERRMSG("Error while reading zfp data!");
+    FREAD(buffer, unsigned char,
+	  zfpsize,
+	  inout);
     if (!zfp_decompress(zfp, field)) {
       ERRMSG("Decompression failed!");
     }
@@ -896,8 +908,9 @@ void compress_zfp(
       FWRITE(&zfpsize, size_t,
 	     1,
 	     inout);
-      if (fwrite(buffer, 1, zfpsize, inout) != zfpsize)
-	ERRMSG("Error while writing ZFP data!");
+      FWRITE(buffer, unsigned char,
+	     zfpsize,
+	     inout);
     }
     LOG(2, "Write 3-D variable: %s "
 	"(ZFP, PREC= %d, TOL= %g, RATIO= %g)",
@@ -938,8 +951,9 @@ void compress_zstd(
     FREAD(&comprLen, size_t,
 	  1,
 	  inout);
-    if (fread(compr, 1, comprLen, inout) != comprLen)
-      ERRMSG("Error while reading ZSTD data!");
+    FREAD(compr, unsigned char,
+	  comprLen,
+	  inout);
     compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
     if (ZSTD_isError(compsize)) {
       ERRMSG("Decompression failed!");
@@ -957,8 +971,9 @@ void compress_zstd(
       FWRITE(&compsize, size_t,
 	     1,
 	     inout);
-      if (fwrite(compr, 1, compsize, inout) != compsize)
-	ERRMSG("Error while writing ZSTD data!");
+      FWRITE(compr, unsigned char,
+	     compsize,
+	     inout);
     }
     LOG(2, "Write 3-D variable: %s (ZSTD, RATIO= %g)",
 	varname, ((double) uncomprLen) / (double) compsize);
