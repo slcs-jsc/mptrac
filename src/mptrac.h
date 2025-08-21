@@ -683,9 +683,9 @@
   (a[0]*b[0]+a[1]*b[1]+a[2]*b[2])
 
 /**
- * @brief Execute a ECCODES command and check for errors.
+ * @brief Execute an ECCODES command and check for errors.
  *
- * This macro executes a ECCODES command and checks the result. If the
+ * This macro executes an ECCODES command and checks the result. If the
  * result indicates an error, it prints the error message using
  * ERRMSG.
  *
@@ -700,115 +700,47 @@
   }
 
 /**
- * @brief Writes 2-D data from a grib message into the met struct.
+ * @brief Writes 2-D data from a grib message into the meteo struct.
  *
- * This Macro writes 2-D data from an one dimensional grib message into the
- * corresponding 2-D variable in the met struct. 
+ * This macro writes 2-D data from a one-dimensional grib message into the
+ * corresponding 2-D variable in the meteo struct. 
  * 
- * @param variable Name of the current meterological variable 
- * @param target Pointer to the 2-D array in the met struct where the data will be stored.
+ * @param variable Name of the current meteorological variable 
+ * @param target Pointer to the 2-D array in the meteo struct where the data will be stored.
  * @param scaling_factor Scaling factor to apply to the data.
  * @param found_flag Flag to store, that the variable was found in the grib message.
  *
  * @author Nils Nobre Wittwer
  */
-#define ECC_READ_2D(variable,target,scaling_factor,found_flag){		\
-    if( strcmp(short_name,variable)==0){				\
-      for (int ix = 0; ix < met->nx; ix++) {				\
-	for (int iy = 0; iy < met->ny; iy++) {				\
-	  target[ix][iy] = (float)(values[iy * met->nx + ix]*scaling_factor); \
-	}								\
-      }									\
-      found_flag =1;							\
+#define ECC_READ_2D(variable, target, scaling_factor, found_flag) {	\
+    if(strcmp(short_name, variable) == 0) {				\
+      for (int ix = 0; ix < met->nx; ix++)				\
+	for (int iy = 0; iy < met->ny; iy++)				\
+	  target[ix][iy] = (float)(values[iy * met->nx + ix] * scaling_factor); \
+      found_flag = 1;							\
     }									\
   }
 
 /**
- * @brief Writes 3D data from a grib message into the met struct.
+ * @brief Writes 3D data from a grib message into the meteo struct.
  *
- * This Macro writes 3D data from an one dimensional grib message into the
- * corresponding 3D variable in the met struct. 
+ * This macro writes 3D data from a one-dimensional grib message into the
+ * corresponding 3D variable in the meteo struct. 
  * 
- * @param variable Name of the current meterological variable.
- * @param target Pointer to the 3D array in the met struct where the data will be stored.
+ * @param variable Name of the current meteorological variable.
+ * @param level Index of the vertical level in the 3D array where the data should be stored.
+ * @param target Pointer to the 3D array in the meteo struct where the data will be stored.
  * @param scaling_factor Scaling factor to apply to the data.
- * @param found_flag Counter to store, how many messages countaining data for this variable have been read.
+ * @param found_flag Counter to store, how many messages containing data for this variable have been read.
  *
  * @author Nils Nobre Wittwer
  */
-#define ECC_READ_3D(variable,level,target,scaling_factor,found_flag){	\
-    if( strcmp(short_name,variable)==0){				\
-      for (int ix = 0; ix < met->nx; ix++) {				\
-	for (int iy = 0; iy < met->ny; iy++) {				\
-	  target[ix][iy][level] = (float) (values[iy * met->nx + ix]*scaling_factor); \
-	}								\
-      }									\
-      found_flag +=1;							\
-    }									\
-  }
-
-/**
- * @brief Execute a ECCODES command and check for errors.
- *
- * This macro executes a ECCODES command and checks the result. If the
- * result indicates an error, it prints the error message using
- * ERRMSG.
- *
- * @param cmd ECCODES command to execute.
- *
- * @author Nils Nobre Wittwer
- */
-#define ECC(cmd) {							\
-    int ecc_result=(cmd);						\
-    if(ecc_result!=0)							\
-      ERRMSG("ECCODES error: %s", codes_get_error_message(ecc_result));	\
-  }
-
-/**
- * @brief Writes 2-D data from a grib message into the met struct.
- *
- * This Macro writes 2-D data from an one dimensional grib message into the
- * corresponding 2-D variable in the met struct. 
- * 
- * @param variable Name of the current meterological variable 
- * @param target Pointer to the 2-D array in the met struct where the data will be stored.
- * @param scaling_factor Scaling factor to apply to the data.
- * @param found_flag Flag to store, that the variable was found in the grib message.
- *
- * @author Nils Nobre Wittwer
- */
-#define ECC_READ_2D(variable,target,scaling_factor,found_flag){		\
-    if( strcmp(short_name,variable)==0){				\
-      for (int ix = 0; ix < met->nx; ix++) {				\
-	for (int iy = 0; iy < met->ny; iy++) {				\
-	  target[ix][iy] = (float)(values[iy * met->nx + ix]*scaling_factor); \
-	}								\
-      }									\
-      found_flag =1;							\
-    }									\
-  }
-
-/**
- * @brief Writes 3D data from a grib message into the met struct.
- *
- * This Macro writes 3D data from an one dimensional grib message into the
- * corresponding 3D variable in the met struct. 
- * 
- * @param variable Name of the current meterological variable.
- * @param target Pointer to the 3D array in the met struct where the data will be stored.
- * @param scaling_factor Scaling factor to apply to the data.
- * @param found_flag Counter to store, how many messages countaining data for this variable have been read.
- *
- * @author Nils Nobre Wittwer
- */
-#define ECC_READ_3D(variable,level,target,scaling_factor,found_flag){	\
-    if( strcmp(short_name,variable)==0){				\
-      for (int ix = 0; ix < met->nx; ix++) {				\
-	for (int iy = 0; iy < met->ny; iy++) {				\
-	  target[ix][iy][level] = (float) (values[iy * met->nx + ix]*scaling_factor); \
-	}								\
-      }									\
-      found_flag +=1;							\
+#define ECC_READ_3D(variable, level, target, scaling_factor, found_flag) { \
+    if(strcmp(short_name, variable) == 0) {				\
+      for (int ix = 0; ix < met->nx; ix++)				\
+	for (int iy = 0; iy < met->ny; iy++)				\
+	  target[ix][iy][level] = (float) (values[iy * met->nx + ix] * scaling_factor); \
+      found_flag += 1;							\
     }									\
   }
 
@@ -3951,8 +3883,8 @@ void cart2geo(
  * @return     The OH concentration at the specified time, location, and pressure,
  *             possibly adjusted by a diurnal correction.
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 double clim_oh(
   const ctl_t * ctl,
@@ -3977,8 +3909,8 @@ double clim_oh(
  * @param clim Pointer to the climatology structure containing OH data that will be
  *             corrected.
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 void clim_oh_diurnal_correction(
   const ctl_t * ctl,
@@ -4010,8 +3942,8 @@ void clim_oh_diurnal_correction(
  * 3. Performs trilinear interpolation to calculate the photolysis rate based on 
  *    the input parameters.
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 double clim_photo(
   const double rate[CP][CSZA][CO3],
@@ -5214,8 +5146,8 @@ void locate_vert(
  * - The function updates longitude, latitude, and pressure (or zeta) for each particle.
  * - Special handling is applied to ensure `zeta` values remain non-negative.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
 void module_advect(
   const ctl_t * ctl,
@@ -5286,8 +5218,8 @@ void module_advect_init(
  * @param met1 Pointer to the meteorological data structure at the next time step.
  * @param atm Pointer to the atmospheric data structure containing particle information.
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 void module_bound_cond(
   const ctl_t * ctl,
@@ -5335,8 +5267,8 @@ void module_bound_cond(
  * @see P(), Z(), RHO()
  * @see ARRAY_3D macro
  *
- * @authors Mingzhao Liu
- * @authors Lars Hoffmann
+ * @author Mingzhao Liu
+ * @author Lars Hoffmann
  */
 void module_chem_grid(
   const ctl_t * ctl,
@@ -5369,7 +5301,7 @@ void module_chem_grid(
  * - Sets the concentrations of OH, HO2, H2O2, and O1D using
  *   climatological data if the respective quantity flags are set.
  *
- * @authors Mingzhao Liu
+ * @author Mingzhao Liu
  */
 void module_chem_init(
   const ctl_t * ctl,
@@ -5781,8 +5713,8 @@ void module_meteo(
  * @param atm Pointer to the atmospheric data structure containing particle information.
  * @param t Time at which mixing is performed.
  *
- * @authors Mingzhao Liu
- * @authors Lars Hoffmann
+ * @author Mingzhao Liu
+ * @author Lars Hoffmann
  */
 void module_mixing(
   const ctl_t * ctl,
@@ -5814,8 +5746,8 @@ void module_mixing(
  * @note Uses OpenACC or OpenMP for parallelism depending on compilation options.
  * @note Requires `ctl->qnt_ens` to be valid if `use_ensemble` is true.
  *
- * @authors Mingzhao Liu
- * @authors Lars Hoffmann
+ * @author Mingzhao Liu
+ * @author Lars Hoffmann
  */
 void module_mixing_help(
   const ctl_t * ctl,
@@ -5856,8 +5788,8 @@ void module_mixing_help(
  *       mass and volume mixing ratio quantities, as determined by the control
  *       structure (ctl).
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 void module_oh_chem(
   const ctl_t * ctl,
@@ -6122,8 +6054,8 @@ void module_timesteps_init(
  *       ctl->qnt_Cccl3f, ctl->qnt_Cccl2f2, ctl->qnt_Cn2o), the function updates the
  *       concentration of the tracer based on the exponential decay.
  *
- * @authors Mingzhao Liu
- * @authors Lars Hoffmann
+ * @author Mingzhao Liu
+ * @author Lars Hoffmann
  */
 void module_tracer_chem(
   const ctl_t * ctl,
@@ -6159,8 +6091,8 @@ void module_tracer_chem(
  * for physical solubility in water but also for chemical reactions, such as hydrolysis
  * and ionization, which significantly enhance dissolution in aqueous solutions.
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 void module_wet_depo(
   const ctl_t * ctl,
@@ -6390,8 +6322,8 @@ int mptrac_read_atm(
  * - `clim_oh_diurnal_correction` for applying diurnal correction to OH climatology.
  * - `read_clim_ts` for reading time series data.
  *
- * @authors Lars Hoffmann
- * @authors Mingzhao Liu
+ * @author Lars Hoffmann
+ * @author Mingzhao Liu
  */
 void mptrac_read_clim(
   const ctl_t * ctl,
@@ -6485,7 +6417,7 @@ int mptrac_read_met(
  * @param t     Current simulation time in seconds.
  * @param mpi_info MPI information required for the domain decomposition.
  *
- * @authors Lars Hoffmann
+ * @author Lars Hoffmann
  */
 #ifdef DD
 void mptrac_run_timestep(
@@ -7329,7 +7261,7 @@ int read_met_grib(
  *
  * This function reads meteorological grid information from a grib
  * file, including time and spatial dimensions. The function computes the 
- * latitude and longitude grid based on the provided boundaries and icnrement values.
+ * latitude and longitude grid based on the provided boundaries and increment values.
  *
  * @param handles A pointer to an array of codes_handle pointers representing the grib messages.
  * @param count_handles The total number of grib messages in the handles array.
@@ -7342,8 +7274,7 @@ int read_met_grib(
  * - Reads longitudes and latitudes boundaries and increments from the grib file and computes the grid.
  * - Logs the retrieved grid information for verification and debugging purposes.
  *
- *
- * @authors Nils Nobre Wittwer
+ * @author Nils Nobre Wittwer
  */
 #ifdef ECCODES
 void read_met_grib_grid(
@@ -7369,7 +7300,7 @@ void read_met_grib_grid(
  * - Reads meteorological variables from the grib file.
  * - Checks the ordering of pressure levels to ensure they are in descending order.
  *
- * @authors Nils Nobre Wittwer
+ * @author Nils Nobre Wittwer
  */
 #ifdef ECCODES
 void read_met_grib_levels(
@@ -7406,7 +7337,7 @@ void read_met_grib_levels(
  * - Reads land-sea mask from "lsm" variable.
  * - Reads sea surface temperature from "sstk" or "sst" variables.
  *
- * @authors Nils Nobre Wittwer
+ * @author Nils Nobre Wittwer
  */
 #ifdef ECCODES
 void read_met_grib_surface(
@@ -7536,8 +7467,8 @@ int read_met_nc(
  * @note This function supports reading meteorological variables from NetCDF files in MPTRAC or CLaMS formats and handles specific variables differently based on the file format and control parameters.
  *       It performs necessary conversions or interpolations and ensures the correctness of pressure levels.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
 void read_met_nc_levels(
   const int ncid,
@@ -7581,8 +7512,8 @@ void read_met_nc_levels(
  *
  * @note The function handles different variable names and units according to the specified meteorological data source (MPTRAC or CLaMS).
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
 void read_met_nc_surface(
   const int ncid,
@@ -7617,8 +7548,8 @@ void read_met_nc_surface(
  *       The time information is extracted either from the filename or from the data file, depending on the file type and control parameters.
  *       Spatial dimensions (longitude, latitude, and vertical levels) and pressure levels are retrieved from the NetCDF file.
  *
- * @authors Lars Hoffmann
- * @authors Jan Clemens
+ * @author Lars Hoffmann
+ * @author Jan Clemens
  */
 void read_met_nc_grid(
   const char *filename,

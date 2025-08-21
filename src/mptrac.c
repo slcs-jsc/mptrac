@@ -5566,6 +5566,7 @@ int mptrac_read_met(
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
+    
 #ifdef ECCODES
     /* Read grib data... */
     else if (ctl->met_type == 6) {
