@@ -3314,8 +3314,8 @@ typedef struct {
 /**
  * @brief Particle data.
  * 
- * This structure contains information related to one air parcel,
- * including the air parcels time, pressure, longitudes, latitudes, 
+ * This structure contains information related to a single air parcel,
+ * including the air parcels time, pressure, longitude, latitude,
  * and various user-defined attributes.
  */
 typedef struct {
@@ -3340,11 +3340,12 @@ typedef struct {
 /**
  * @brief MPI information data.
  *
- * This structure contains information related to MPI (Message Passing Interface),
- * including the rank and size of the node, and additional MPI-specific data when 
- * the domain decomposition is defined.
+ * This structure contains information related to MPI (Message Passing
+ * Interface), including the rank and size of the node, and additional
+ * MPI-specific data when the domain decomposition is defined.
  */
 typedef struct {
+  
   /*! Rank of node. */
   int rank;
 
@@ -3355,7 +3356,7 @@ typedef struct {
   /*! Rank of neighbouring nodes. */
   int neighbours[DD_NNMAX];
 
-  /*! MPI Type for the particle. */
+  /*! MPI type for the particle. */
   MPI_Datatype MPI_Particle;
 #endif
 
