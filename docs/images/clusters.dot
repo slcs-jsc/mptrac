@@ -29,6 +29,7 @@ graph MPTRAC {
   "infrastructure\nmodules" -- {
     "Fortran\nwrapper"
     "high-level\nAPI"
+    "domain\ndecomposition"
     "meteo data\ninterpolation"
     "particle\nsorting"
     "time\nloop"
@@ -36,6 +37,7 @@ graph MPTRAC {
   }
     "Fortran\nwrapper" [fillcolor="gray95"]
     "high-level\nAPI" [fillcolor="gray95"]
+    "domain\ndecomposition" [fillcolor="gray95"]
     "meteo data\ninterpolation" [fillcolor="gray95"]
     "particle\nsorting" [fillcolor="gray95"]
     "time\nloop" [fillcolor="gray95"]
@@ -48,18 +50,19 @@ graph MPTRAC {
     "grib\ndata"
     "netCDF\ndata"
     "packed\ndata"
-    "zfp\ndata"
     "zstd\ndata"
+    "zfp\ndata"
+    "sz3\ndata"
   }
     "AMR\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "binary\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "grib\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "netCDF\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "packed\ndata" [colorscheme=ylorbr5 fillcolor=1]
-    "zfp\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "zstd\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "zfp\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "sz3\ndata" [colorscheme=ylorbr5 fillcolor=1]
  
-
   "write\noutput" -- {
     "CSI\ndata"
     "ensemble\ndata"
