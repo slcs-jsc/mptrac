@@ -8482,36 +8482,27 @@ void read_met_grib_grid(
   SELECT_TIMER("READ_MET_GRIB_GRID", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
-  /* Read date... */
-  char datestr[50];
-  char timestr[50];
-  char year[20], month[20], day[20], hour[20];
-  size_t s = sizeof(datestr);
-
-  ECC(codes_get_string(handles[0], "dataDate", datestr, &s));
-  ECC(codes_get_string(handles[0], "dataTime", timestr, &s));
-  strncpy(year, datestr, 4);
-  year[4] = '\0';
-  strncpy(month, datestr + 4, 2);
-  month[2] = '\0';
-  strncpy(day, datestr + 6, 2);
-  day[2] = '\0';
-  strncpy(hour, timestr, 2);
-  hour[2] = '\0';
-  time2jsec(atoi(year), atoi(month), atoi(day), atoi(hour), 0, 0, 0,
-	    &(met->time));
-
-  /* Write info... */
-  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-      met->time, atoi(year), atoi(month), atoi(day), atoi(hour), 0);
-
+  /* Read date and time... */
+  char datestr[50], timestr[50];
+  size_t s_date = sizeof(datestr);
+  ECC(codes_get_string(handles[0], "dataDate", datestr, &s_date));
+  size_t s_time = sizeof(timestr);
+  ECC(codes_get_string(handles[0], "dataTime", timestr, &s_time));
+  int year, month, day, hour;
+  if (sscanf(datestr, "%4d%2d%2d", &year, &month, &day) != 3)
+    ERRMSG("Failed to parse dataDate: %s", datestr);
+  if (sscanf(timestr, "%2d", &hour) != 1)
+    ERRMSG("Failed to parse dataTime: %s", timestr);
+  time2jsec(year, month, day, hour, 0, 0, 0, &(met->time));
+  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)", met->time, year, month, day, hour, 0);
+  
   /* Read grid information... */
   long count_lat = 0, count_lon = 0;
   ECC(codes_get_long(handles[0], "Nj", &count_lat));
   ECC(codes_get_long(handles[0], "Ni", &count_lon));
   met->ny = (int) count_lat;
   met->nx = (int) count_lon;
-
+  
   /* Check grid dimensions... */
   LOG(2, "Number of longitudes: %d", met->nx);
   if (met->nx < 2 || met->nx > EX)
@@ -8541,22 +8532,22 @@ void read_met_grib_grid(
   if (iscanneg == 0)
     for (double i = first_lon; i <= last_lon + 1e-6; i += inc_lon) {
       met->lon[counter] = i;
-      counter += 1;
-  } else
+      counter++;
+    } else
     for (double i = first_lon; i > last_lon - 1e-6; i -= inc_lon) {
       met->lon[counter] = i;
-      counter += 1;
+      counter++;
     }
 
   counter = 0;
   if (jscanpos == 0)
     for (double i = first_lat; i > last_lat - 1e-6; i -= inc_lat) {
       met->lat[counter] = i;
-      counter += 1;
+      counter++;
   } else
     for (double i = first_lat; i <= last_lat + 1e-6; i += inc_lat) {
       met->lat[counter] = i;
-      counter += 1;
+      counter++;
     }
 
   /* Write info... */
