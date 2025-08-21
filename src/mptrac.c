@@ -5547,26 +5547,23 @@ int mptrac_read_met(
   /* Check rank... */
   if (!ctl->met_mpi_share || rank == 0) {
 
-#ifdef DD
     /* Read netCDF data... */
     if (ctl->met_type == 0) {
+#ifdef DD
       if (read_met_nc_dd(filename, ctl, met) != 1)
 	return 0;
-    }
 #else
-    /* Read netCDF data... */
-    if (ctl->met_type == 0) {
       if (read_met_nc(filename, ctl, met) != 1)
 	return 0;
-    }
 #endif
+    }
 
     /* Read binary data... */
     else if ((ctl->met_type >= 1 && ctl->met_type <= 5) || ctl->met_type == 7) {
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
-    
+
 #ifdef ECCODES
     /* Read grib data... */
     else if (ctl->met_type == 6) {
@@ -8439,26 +8436,29 @@ int read_met_grib(
   free(sf_handles);
 
   /* Compute 3D pressure field... */
-  size_t value_count;
+  size_t value_count = 0;
   ECC(codes_get_size(ml_handles[0], "pv", &value_count));
-  double *values = (double *) malloc(value_count * sizeof(double));
+  if (value_count % 2 != 0)
+    ERRMSG("Unexpected pv array length!");
+  size_t nlevels = value_count / 2 - 1;	/* number of full model levels */
+  double *values;
+  ALLOC(values, double, value_count);
   ECC(codes_get_double_array(ml_handles[0], "pv", values, &value_count));
-  double a_vals[138], b_vals[138];
-  for (int i = 0; i <= 137; i++) {
-    a_vals[i] = values[i];
-    b_vals[i] = values[i + 137];
-  }
+  double *a_vals = values;
+  double *b_vals = values + nlevels;
+  if (met->npl > (int) nlevels)
+    ERRMSG("met->npl exceeds number of pressure levels in GRIB!");
   for (int nx = 0; nx < met->nx; nx++)
     for (int ny = 0; ny < met->ny; ny++)
       for (int level = 0; level <= met->npl; level++) {
-	const float p1 =
-	  (float) ((a_vals[level] * 0.01f + met->ps[nx][ny] * b_vals[level]));
-	const float p2 =
-	  (float) ((a_vals[level + 1] * 0.01f +
-		    met->ps[nx][ny] * b_vals[level + 1]));
-	met->pl[nx][ny][level] = (p1 + p2) * 0.5f;
+	const float p1 = (float) (a_vals[level] * 0.01f +
+				  met->ps[nx][ny] * b_vals[level]);
+	const float p2 = (float) (a_vals[level + 1] * 0.01f +
+				  met->ps[nx][ny] * b_vals[level + 1]);
+	met->pl[nx][ny][level] = 0.5f * (p1 + p2);
       }
-
+  free(values);
+  
   /* Read model level data... */
   read_met_grib_levels(ml_handles, ml_num_messages, ctl, met);
   for (int i = 0; i < ml_num_messages; i++)
