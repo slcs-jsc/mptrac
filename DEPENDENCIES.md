@@ -30,8 +30,9 @@ These dependencies enable additional features of MPTRAC. They are not required f
 | [ecCodes](https://confluence.ecmwf.int/display/ECC/ecCodes+Home) | v2.38.3 | Encoding and decoding GRIB messages |
 | [Kinetic PreProcessor (KPP)](https://github.com/KineticPreProcessor/KPP) | v3.2.0 | Preprocessor for generating chemical mechanism code |
 | [Thrust](https://developer.nvidia.com/thrust) | v1.14.0 | C++ template library for parallel algorithms and data structures |
-| [zfp](https://computing.llnl.gov/projects/zfp) | v1.0.1 | Compression library |
 | [Zstandard](https://facebook.github.io/zstd) | v1.5.5 | Compression library |
+| [zfp](https://computing.llnl.gov/projects/zfp) | v1.0.1 | Compression library |
+| [SZ3](https://github.com/szcompressor/SZ3) | v3.2.1 | Compression library |
 | [gnuplot](http://www.gnuplot.info) | v5.4.5 | Graphing utility for visualization |
 | [ParaView](https://www.paraview.org) | v5.11.0 | Visualization tool for scientific data |
 
