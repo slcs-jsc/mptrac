@@ -8442,7 +8442,8 @@ int read_met_grib(
     ERRMSG("Unexpected pv array length!");
   size_t nlevels = value_count / 2 - 1;	/* number of full model levels */
   double *values;
-  ALLOC(values, double, value_count);
+  ALLOC(values, double,
+	value_count);
   ECC(codes_get_double_array(ml_handles[0], "pv", values, &value_count));
   double *a_vals = values;
   double *b_vals = values + nlevels;
@@ -8458,7 +8459,7 @@ int read_met_grib(
 	met->pl[nx][ny][level] = 0.5f * (p1 + p2);
       }
   free(values);
-  
+
   /* Read model level data... */
   read_met_grib_levels(ml_handles, ml_num_messages, ctl, met);
   for (int i = 0; i < ml_num_messages; i++)
@@ -8483,7 +8484,7 @@ void read_met_grib_grid(
   LOG(2, "Read meteo grid information...");
 
   /* Read date and time... */
-  char datestr[50], timestr[50];
+  char datestr[LEN], timestr[LEN];
   size_t s_date = sizeof(datestr);
   ECC(codes_get_string(handles[0], "dataDate", datestr, &s_date));
   size_t s_time = sizeof(timestr);
@@ -8494,15 +8495,16 @@ void read_met_grib_grid(
   if (sscanf(timestr, "%2d", &hour) != 1)
     ERRMSG("Failed to parse dataTime: %s", timestr);
   time2jsec(year, month, day, hour, 0, 0, 0, &(met->time));
-  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)", met->time, year, month, day, hour, 0);
-  
+  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)", met->time, year, month,
+      day, hour, 0);
+
   /* Read grid information... */
   long count_lat = 0, count_lon = 0;
   ECC(codes_get_long(handles[0], "Nj", &count_lat));
   ECC(codes_get_long(handles[0], "Ni", &count_lon));
   met->ny = (int) count_lat;
   met->nx = (int) count_lon;
-  
+
   /* Check grid dimensions... */
   LOG(2, "Number of longitudes: %d", met->nx);
   if (met->nx < 2 || met->nx > EX)
@@ -8533,7 +8535,7 @@ void read_met_grib_grid(
     for (double i = first_lon; i <= last_lon + 1e-6; i += inc_lon) {
       met->lon[counter] = i;
       counter++;
-    } else
+  } else
     for (double i = first_lon; i > last_lon - 1e-6; i -= inc_lon) {
       met->lon[counter] = i;
       counter++;
@@ -8593,7 +8595,7 @@ void read_met_grib_levels(
   /* Iterate over all messages... */
   for (int i = 0; i < num_messages; i++) {
 
-    size_t max_size = 50;
+    size_t max_size = LEN;
     char short_name[max_size];
     size_t value_count;
     double *values;
@@ -8719,9 +8721,9 @@ void read_met_grib_surface(
   /* Iterate over all messages... */
   for (int i = 0; i < num_messages; i++) {
 
-    size_t max_size = 50;
+    size_t max_size = LEN, value_count;
+
     char short_name[max_size];
-    size_t value_count;
 
     /* Store values with shortname... */
     ECC(codes_get_string(handles[i], "shortName", short_name, &max_size));
@@ -8761,9 +8763,6 @@ void read_met_grib_surface(
     /* Read PBL... */
     if (ctl->met_pbl == 0)
       ECC_READ_2D("blh", met->pbl, 0.0001f, pbl_flag);
-
-    /* Free... */
-    free(values);
   }
 
   /* Check whether data have been read... */
