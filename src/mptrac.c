@@ -3933,6 +3933,8 @@ void module_sort(
   const int np = atm->np;
   double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
   int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
+  if (a == NULL || p == NULL)
+    ERRMSG("Out of memory!");
 
 #ifdef _OPENACC
 #pragma acc enter data create(a[0:np],p[0:np])
@@ -3954,13 +3956,16 @@ void module_sort(
   }
 
   /* Sorting... */
+#ifdef THRUST
 #ifdef _OPENACC
 #pragma acc host_data use_device(a,p)
 #endif
-#ifdef THRUST
   thrustSortWrapper(a, np, p);
 #else
-  ERRMSG("MPTRAC was compiled without Thrust library!");
+#ifdef _OPENACC
+  ERRMSG("GSL sort fallback not available on GPU, use THRUST!");
+#endif
+  gsl_sort_index((size_t *) p, a, 1, (size_t) np);
 #endif
 
   /* Sort data... */
@@ -3989,6 +3994,8 @@ void module_sort_help(
   /* Allocate... */
   double *restrict const help =
     (double *) malloc((size_t) np * sizeof(double));
+  if (help == NULL)
+    ERRMSG("Out of memory!");
 
   /* Reordering of array... */
 #ifdef _OPENACC
@@ -13854,13 +13861,16 @@ void dd_sort(
   }
 
   /* Sorting... */
+#ifdef THRUST
 #ifdef _OPENACC
 #pragma acc host_data use_device(a,p)
 #endif
-#ifdef THRUST
   thrustSortWrapper(a, np, p);
 #else
-  ERRMSG("MPTRAC was compiled without Thrust library!");
+#ifdef _OPENACC
+  ERRMSG("GSL sort fallback not available on GPU, use THRUST!");
+#endif
+  gsl_sort_index((size_t *) p, a, 1, (size_t) np);
 #endif
 
   /* Sort data... */

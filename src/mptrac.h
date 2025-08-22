@@ -124,6 +124,7 @@
 #include <gsl/gsl_math.h>
 #include <gsl/gsl_randist.h>
 #include <gsl/gsl_rng.h>
+#include <gsl/gsl_sort.h>
 #include <gsl/gsl_spline.h>
 #include <gsl/gsl_statistics.h>
 #include <math.h>
@@ -3316,7 +3317,7 @@ typedef struct {
  * MPI-specific data when the domain decomposition is defined.
  */
 typedef struct {
-  
+
   /*! Rank of node. */
   int rank;
 
