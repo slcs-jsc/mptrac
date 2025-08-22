@@ -147,9 +147,10 @@ fi
 
 # Build Thrust sort...
 if ${build[all]} || ${build[thrust]} ; then 
-    target="thrustsort-1.2"
+    target="thrustsort-1.3"
     unpack "$target"
     cp -a libthrustsort_gpu.a libthrustsort_cpu.a "$build_dir"/lib/ || exit
+    cp -a thrustsort.h "$build_dir"/include/ || exit
 fi
 
 # Build zlib...

@@ -153,6 +153,10 @@
 #include "curand.h"
 #endif
 
+#ifdef THRUST
+#include "thrustsort.h"
+#endif
+
 #ifdef ZFP
 #include "zfp.h"
 #endif
@@ -2229,39 +2233,6 @@
 #define NVTX_PUSH(range_title, range_color) {}
 #define NVTX_POP {}
 #endif
-
-/* ------------------------------------------------------------
-   Thrust...
-   ------------------------------------------------------------ */
-
-/*!
- * \brief Wrapper to Thrust sorting function.
- *
- * This function serves as a wrapper for a Thrust sorting operation,
- * sorting the array `c` and maintaining the correspondence with the
- * `index` array.
- *
- * \param c Pointer to the array of double values to be sorted.
- * \param n The number of elements in the array `c`.
- * \param index Pointer to the array of indices, which will be updated to reflect the sorted order.
- *
- * \details
- * The `thrustSortWrapper` function uses the Thrust library to sort the array `c` in ascending order.
- * The `index` array is updated to reflect the new order of elements in `c` after sorting.
- *
- * This function is particularly useful when the sorted order of
- * elements needs to be tracked by indices.
- *
- * \note
- * - The `c` and `index` arrays must be of the same length `n`.
- * - The function assumes that the Thrust library is properly included and configured in the project.
- *
- * @author Kaveh Haghighi Mood
- */
-void thrustSortWrapper(
-  double *__restrict__ c,
-  int n,
-  int *__restrict__ index);
 
 /* ------------------------------------------------------------
    Structs...
