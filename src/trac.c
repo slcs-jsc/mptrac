@@ -134,7 +134,7 @@ int main(
       // TODO: Remove dd_init_flg ...
       static int dd_init_flg = 0;
       if (t == ctl->t_start || !dd_init_flg)
-	dd_init(ctl, &mpi_info, atm, &met0, t, &dd_init_flg);
+	dd_init(ctl, &mpi_info, atm, &met0, &dd_init_flg);
 #endif
 
       /* Run a single time step... */

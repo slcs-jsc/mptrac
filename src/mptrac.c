@@ -4039,7 +4039,7 @@ void module_timesteps(
 
   const int local =
     (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
-
+  
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,atm)") {
 
@@ -4053,14 +4053,19 @@ void module_timesteps(
 
     /* Check horizontal boundaries of local meteo data... */
 #ifndef DD
-    if (local && (atm->lon[ip] <= met0->lon[0]
-		  || atm->lon[ip] >= met0->lon[met0->nx - 1]
-		  || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
-      cache->dt[ip] = 0.0;
+    int dd = 0;
 #else
-    if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
-      cache->dt[ip] = 0;
+    int dd = 1;
 #endif
+    if(dd) {
+      if (local && (atm->lon[ip] <= met0->lon[0]
+		    || atm->lon[ip] >= met0->lon[met0->nx - 1]
+		    || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
+	cache->dt[ip] = 0.0;
+    } else {
+      if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
+	cache->dt[ip] = 0;
+    }
   }
 }
 
@@ -13163,6 +13168,7 @@ void write_vtk(
 }
 
 /*****************************************************************************/
+
 #ifdef DD
 void dd_atm2particles(
   atm_t *atm,
@@ -13175,10 +13181,12 @@ void dd_atm2particles(
   SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
 
   /* Select the particles that will be send... */
+#ifdef _OPENACC
   int npart = *nparticles;
 #pragma acc enter data create( nparticles, particles[:DD_NPART])
 #pragma acc update device( nparticles)
 #pragma acc parallel loop present( atm, ctl, particles, cache, nparticles)
+#endif
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
     if (((int) (atm->q[ctl->qnt_destination][ip]) != rank)
 	&& ((int) (atm->q[ctl->qnt_destination][ip]) >= 0)
@@ -13195,13 +13203,15 @@ void dd_atm2particles(
       atm->q[ctl->qnt_subdomain][ip] = -1;
       cache->dt[ip] = 0;
     }
+#ifdef _OPENACC
 #pragma acc update host( particles[:npart])
 #pragma acc exit data delete( nparticles, particles)
-
+#endif
 }
 #endif
 
 /*****************************************************************************/
+
 #ifdef DD
 void dd_particles2atm(
   atm_t *atm,
@@ -13212,33 +13222,37 @@ void dd_particles2atm(
 
   SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
 
+#ifdef _OPENACC
   int npart = *nparticles;
 #pragma acc enter data create(nparticles, particles[:DD_NPART])
 #pragma acc update device(particles[:npart], nparticles)
 #pragma acc data present(atm, ctl, cache, particles, nparticles)
 #pragma acc parallel loop
+#endif
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
-
+    
     atm->time[ip] = particles[ip - atm->np].time;
     atm->lon[ip] = particles[ip - atm->np].lon;
     atm->lat[ip] = particles[ip - atm->np].lat;
     atm->p[ip] = particles[ip - atm->np].p;
-
+    
     for (int iq = 0; iq < ctl->nq; iq++)
       atm->q[iq][ip] = particles[ip - atm->np].q[iq];
-
+    
     cache->dt[ip] = ctl->dt_mod;
-
+    
   }
+#ifdef _OPENACC
 #pragma acc exit data delete(nparticles, particles)
-
+#endif
+  
   /* Reset size... */
   atm->np += *nparticles;
+#ifdef _OPENACC
 #pragma acc update device(atm->np)
-
+#endif
   if (atm->np > NP)
     ERRMSG("Number of particles to high. Increase NP!");
-
 }
 #endif
 
@@ -13613,6 +13627,7 @@ void dd_communicate_particles(
 #endif
 
 /*****************************************************************************/
+
 #ifdef DD
 void dd_assign_rect_subdomains_atm(
   atm_t *atm,
@@ -13624,10 +13639,12 @@ void dd_assign_rect_subdomains_atm(
   SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
 
   if (init) {
+#ifdef _OPENACC
 #pragma acc enter data create(mpi_info)
 #pragma acc update device(mpi_info->rank)
 #pragma acc data present(atm, ctl, mpi_info, met)
 #pragma acc parallel loop independent gang vector
+#endif
     for (int ip = 0; ip < atm->np; ip++) {
 
       double lont = atm->lon[ip];
@@ -13645,14 +13662,18 @@ void dd_assign_rect_subdomains_atm(
 	atm->q[ctl->qnt_destination][ip] = -1;
       }
     }
+#ifdef _OPENACC
 #pragma acc exit data delete(mpi_info)
+#endif
   } else {
 
     /* Classify air parcels into subdomain... */
+#ifdef _OPENACC
 #pragma acc enter data create(mpi_info)
 #pragma acc update device(mpi_info->neighbours[:DD_NNMAX], mpi_info->rank, mpi_info->size)
 #pragma acc data present(atm, met, ctl, mpi_info)
 #pragma acc parallel loop independent gang vector
+#endif
     for (int ip = 0; ip < atm->np; ip++) {
 
       /* Skip empty places in the particle array... */
@@ -13740,7 +13761,9 @@ void dd_assign_rect_subdomains_atm(
 	}
       }
     }
+#ifdef _OPENACC
 #pragma acc exit data delete(mpi_info)
+#endif
   }
 }
 #endif
@@ -13753,7 +13776,6 @@ void dd_init(
   mpi_info_t *mpi_info,
   atm_t *atm,
   met_t **met,
-  double t,
   int *dd_init_flg) {
 
   /* Check if enough tasks are requested... */
@@ -13775,6 +13797,7 @@ void dd_init(
 #endif
 
 /*****************************************************************************/
+
 #ifdef DD
 void module_dd(
   ctl_t *ctl,
@@ -13816,6 +13839,7 @@ void module_dd(
 #endif
 
 /*****************************************************************************/
+
 #ifdef DD
 void dd_sort(
   const ctl_t *ctl,
@@ -13883,7 +13907,9 @@ void dd_sort(
 
   /* Reset the size... */
   int npt = 0;
+#ifdef _OPENACC
 #pragma acc parallel loop reduction(+:npt) present(atm, rank, ctl)
+#endif
   for (int ip = 0; ip < np; ip++)
     if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
 	&& ((int) atm->q[ctl->qnt_destination][ip] == *rank))
@@ -13891,7 +13917,9 @@ void dd_sort(
 
   /* Count number of particles to send... */
   int nparticlest = 0;
+#ifdef _OPENACC
 #pragma acc parallel loop reduction(+:nparticlest) present(atm, rank, ctl)
+#endif
   for (int ip = npt; ip < np; ip++)
     if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
 	&& ((int) atm->q[ctl->qnt_destination][ip] != *rank))
@@ -13900,8 +13928,10 @@ void dd_sort(
   /* Reset sizes... */
   *nparticles = nparticlest;
   atm->np = npt;
+#ifdef _OPENACC
 #pragma acc update device(atm->np)
-
+#endif
+  
   if (*nparticles > DD_NPART)
     ERRMSG
       ("Number of particles to send and recieve to small. Increase DD_NPART!");

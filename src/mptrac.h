@@ -9439,7 +9439,6 @@ void dd_assign_rect_subdomains_atm(
  * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information.
  * @param atm A pointer to an `atm_t` structure containing atmospheric data.
  * @param met A pointer to a pointer of a `met_t` structure containing meteorological data.
- * @param t A double representing the current time.
  * @param dd_init_flg A pointer to an integer flag indicating whether domain decomposition has been initialized.
  *
  * The function performs the following steps:
@@ -9460,7 +9459,6 @@ void dd_init(
   mpi_info_t * mpi_info,
   atm_t * atm,
   met_t ** met,
-  double t,
   int *dd_init);
 #endif
 
