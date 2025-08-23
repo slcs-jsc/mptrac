@@ -464,7 +464,7 @@ void compress_cms(
   for (size_t ix = 0; ix < nx; ix++)
     lon[ix] = 360. * (double) ix / ((double) nx - 1.);
   for (size_t iy = 0; iy < ny; iy++)
-    lat[iy] = -(180. * (double) iy / ((double) ny - 1.) - 90.);
+    lat[iy] = 90. - 180. * (double) iy / ((double) ny - 1.);
 
   /* Set multiscale parameters... */
   const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
@@ -494,7 +494,7 @@ void compress_cms(
 	cms_sol = cms_read_sol(cms_ptr, inout);
 
       /* Evaluate... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for collapse(2) default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
 	  double val;
@@ -608,7 +608,7 @@ void compress_cms(
 	t0 = omp_get_wtime();
 
 	/* Evaluate... */
-#pragma omp parallel for default(shared)
+#pragma omp parallel for collapse(2) default(shared)
 	for (size_t ix = 0; ix < nx; ix++)
 	  for (size_t iy = 0; iy < ny; iy++) {
 	    const size_t idx = ARRAY_2D(ix, iy, ny);
