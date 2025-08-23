@@ -771,10 +771,10 @@ void compress_sz3(
   if ((precision > 0) == (tolerance > 0.0))
     ERRMSG("Exactly one of precision or tolerance must be set for SZ3!");
 
-  size_t r1 = (size_t) nx, r2 = (size_t) ny, r3 = (size_t) nz, r4 = 0, r5 = 0;
-  size_t total_elems = r1 * r2 * r3;
+  size_t r1 = (size_t) nx, r2 = (size_t) ny, r3 = (size_t) nz,
+    outSize = 0, total_elems = r1 * r2 * r3;
+
   unsigned char *bytes = NULL;
-  size_t outSize = 0;
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
@@ -789,8 +789,7 @@ void compress_sz3(
 	  sz3size,
 	  inout);
 
-    void *outData =
-      SZ_decompress(SZ_FLOAT, bytes, sz3size, r5, r4, r3, r2, r1);
+    void *outData = SZ_decompress(SZ_FLOAT, bytes, sz3size, 0, 0, r3, r2, r1);
     if (!outData)
       ERRMSG("Decompression failed!");
 
@@ -814,7 +813,7 @@ void compress_sz3(
 
     bytes = SZ_compress_args(SZ_FLOAT, array, &outSize,
 			     errBoundMode, absBound, relBound, 0.0,
-			     r5, r4, r3, r2, r1);
+			     0, 0, r3, r2, r1);
     if (!bytes || outSize == 0)
       ERRMSG("Compression failed!");
 
