@@ -946,11 +946,12 @@ void compress_zstd(
 
   /* Get buffer sizes... */
   const size_t uncomprLen = n * sizeof(float);
-  size_t comprLen = ZSTD_compressBound(uncomprLen);
-  size_t compsize;
+  size_t compsize, comprLen = ZSTD_compressBound(uncomprLen);
 
   /* Allocate... */
-  char *compr = (char *) calloc((uint) comprLen, 1);
+  char *compr = calloc(comprLen, 1);
+  if (!compr)
+    ERRMSG("Memory allocation failed!");
   char *uncompr = (char *) array;
 
   /* Read compressed stream and decompress array... */
@@ -962,11 +963,10 @@ void compress_zstd(
 	  comprLen,
 	  inout);
     compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
-    if (ZSTD_isError(compsize)) {
-      ERRMSG("Decompression failed!");
-    }
+    if (ZSTD_isError(compsize) || compsize != uncomprLen)
+      ERRMSG("Decompression failed or size mismatch!");
     LOG(2, "Read 3-D variable: %s (ZSTD, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) comprLen)
+	varname, ((double) uncomprLen) / (double) comprLen);
   }
 
   /* Compress array and output compressed stream... */
