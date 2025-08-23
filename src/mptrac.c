@@ -849,9 +849,11 @@ void compress_zfp(
   FILE *inout) {
 
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
+  const size_t snx = (size_t) nx;
+  const size_t sny = (size_t) ny;
+  const size_t snz = (size_t) nz;
   const zfp_type type = zfp_type_float;
-  zfp_field *field =
-    zfp_field_3d(array, type, (uint) nx, (uint) ny, (uint) nz);
+  zfp_field *field = zfp_field_3d(array, type, snx, sny, snz);
 
   /* Allocate meta data for a compressed stream... */
   zfp_stream *zfp = zfp_stream_open(NULL);
@@ -864,13 +866,14 @@ void compress_zfp(
   if ((precision > 0 && tolerance > 0) || (precision <= 0 && tolerance <= 0)) {
     ERRMSG("Exactly one of precision or tolerance must be set for zfp!");
   } else if (precision > 0)
-    actual_prec = (int) zfp_stream_set_precision(zfp, (uint) precision);
+    actual_prec =
+      (int) zfp_stream_set_precision(zfp, (unsigned int) precision);
   else if (tolerance > 0)
     actual_tol = zfp_stream_set_accuracy(zfp, tolerance);
 
   /* Allocate buffer for compressed data... */
   const size_t bufsize = zfp_stream_maximum_size(zfp, field);
-  void *buffer = malloc(bufsize);
+  void *buffer;
   ALLOC(buffer, char,
 	bufsize);
 
@@ -893,10 +896,12 @@ void compress_zfp(
     if (!zfp_decompress(zfp, field)) {
       ERRMSG("Decompression failed!");
     }
-    LOG(2, "Read 3-D variable: %s "
-	"(ZFP, PREC= %d, TOL= %g, RATIO= %g)",
-	varname, actual_prec, actual_tol,
-	((double) (nx * ny * nz)) / (double) zfpsize);
+    const double cr =
+      ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
+    const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
+    LOG(2,
+	"Read 3-D variable: %s (ZFP, PREC= %d, TOL= %g, RATIO= %g, BPV= %g)",
+	varname, actual_prec, actual_tol, cr, bpv);
   }
 
   /* Compress array and output compressed stream... */
@@ -912,16 +917,18 @@ void compress_zfp(
 	     zfpsize,
 	     inout);
     }
-    LOG(2, "Write 3-D variable: %s "
-	"(ZFP, PREC= %d, TOL= %g, RATIO= %g)",
-	varname, actual_prec, actual_tol,
-	((double) (nx * ny * nz)) / (double) zfpsize);
+    const double cr =
+      ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
+    const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
+    LOG(2,
+	"Write 3-D variable: %s (ZFP, PREC= %d, TOL= %g, RATIO= %g, BPV= %g)",
+	varname, actual_prec, actual_tol, cr, bpv);
   }
 
   /* Free... */
   zfp_field_free(field);
-  zfp_stream_close(zfp);
   stream_close(stream);
+  zfp_stream_close(zfp);
   free(buffer);
 }
 #endif
@@ -4039,7 +4046,7 @@ void module_timesteps(
 
   const int local =
     (fabs(met0->lon[met0->nx - 1] - met0->lon[0] - 360.0) >= 0.01);
-  
+
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,atm)") {
 
@@ -4057,7 +4064,7 @@ void module_timesteps(
 #else
     int dd = 1;
 #endif
-    if(dd) {
+    if (dd) {
       if (local && (atm->lon[ip] <= met0->lon[0]
 		    || atm->lon[ip] >= met0->lon[met0->nx - 1]
 		    || atm->lat[ip] <= latmin || atm->lat[ip] >= latmax))
@@ -13230,22 +13237,22 @@ void dd_particles2atm(
 #pragma acc parallel loop
 #endif
   for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
-    
+
     atm->time[ip] = particles[ip - atm->np].time;
     atm->lon[ip] = particles[ip - atm->np].lon;
     atm->lat[ip] = particles[ip - atm->np].lat;
     atm->p[ip] = particles[ip - atm->np].p;
-    
+
     for (int iq = 0; iq < ctl->nq; iq++)
       atm->q[iq][ip] = particles[ip - atm->np].q[iq];
-    
+
     cache->dt[ip] = ctl->dt_mod;
-    
+
   }
 #ifdef _OPENACC
 #pragma acc exit data delete(nparticles, particles)
 #endif
-  
+
   /* Reset size... */
   atm->np += *nparticles;
 #ifdef _OPENACC
@@ -13931,7 +13938,7 @@ void dd_sort(
 #ifdef _OPENACC
 #pragma acc update device(atm->np)
 #endif
-  
+
   if (*nparticles > DD_NPART)
     ERRMSG
       ("Number of particles to send and recieve to small. Increase DD_NPART!");
