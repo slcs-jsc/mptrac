@@ -206,7 +206,7 @@ ifeq ($(THRUST),1)
     LDFLAGS += -lthrustsort_gpu
   else
     CFLAGS += -DTHRUST 
-    LDFLAGS += -lthrustsort_cpu -L$(CUDA_PATH)/lib64 -lcudart -lstdc++ -lgomp 
+    LDFLAGS += -lthrustsort_cpu -lstdc++ -lgomp 
   endif
 endif
 
