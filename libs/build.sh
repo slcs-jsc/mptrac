@@ -241,9 +241,9 @@ if ${build[all]} || ${build[sz3]} ; then
     unpack "$target"
     cd -
     mkdir -p "$build_dir"/src/"$target"/build_shared && cd "$build_dir"/src/"$target"/build_shared || exit
-    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DBUILD_SHARED_LIBS=ON .. && make -j $nprocs && make install || exit
+    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=ON .. && make -j $nprocs && make install || exit
     mkdir -p "$build_dir"/src/"$target"/build_static && cd "$build_dir"/src/"$target"/build_static || exit
-    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DBUILD_SHARED_LIBS=OFF .. && make -j $nprocs && make install || exit
+    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=OFF .. && make -j $nprocs && make install || exit
 fi
 
 # Finish...
