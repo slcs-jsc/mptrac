@@ -49,6 +49,11 @@ This is a list of papers and theses in which MPTRAC was applied:
   case study of the 2019 Raikoke eruption, Atmos. Chem. Phys., 25,
   4403–4418, <https://doi.org/10.5194/acp-25-4403-2025>, 2025.
 
+- Zhang, S., Wright, J. S., and Lu, M., A generalized Lagrangian
+  attribution tool for hydrometeorological extremes, Journal of
+  Geophysical Research: Atmospheres, 130, e2025JD043314,
+  <https://doi.org/10.1029/2025JD043314>, 2025.
+
 - Clemens, J. H., Multi-scenario, high-resolution Lagrangian transport
   modeling for the analysis of the Asian tropopause aerosol layer,
   Dissertation, Bergische Universität Wuppertal, Wuppertal,
