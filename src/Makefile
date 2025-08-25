@@ -136,7 +136,7 @@ endif
 # Set LDFLAGS...
 LDFLAGS += $(LIBDIR) -lgsl -lgslcblas -lnetcdf -lm
 ifeq ($(STATIC),1)
-  LDFLAGS += -lhdf5_hl -lhdf5 -lm -lz -lsz -lzstd -lcurl
+  LDFLAGS += -lhdf5_hl -lhdf5 -lm -lz -lsz -lzstd
 endif
 ifeq ($(GPU),1)
   LDFLAGS += -L $(CUDA_PATH)/lib64 -lcudart
@@ -258,9 +258,6 @@ ifeq ($(STATIC),1)
   endif
   ifeq ($(GPU),1)
     $(error Static compilation does not work for GPU)
-  endif
-  ifeq ($(THRUST),1)
-    $(error Static compilation does not work for THRUST)
   endif
   ifeq ($(MPI),1)
     $(error Static compilation does not work for MPI)
