@@ -1,0 +1,4 @@
+<map id="kernel_weight" name="kernel_weight">
+<area shape="rect" id="node1" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="5,5,108,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="156,5,231,32"/>
+</map>

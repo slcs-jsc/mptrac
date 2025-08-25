@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['sample_5fbasename_0',['sample_basename',['../structctl__t.html#aa974f483b6ccf931730d2d929eee2b51',1,'ctl_t']]],
+  ['sample_5fdx_1',['sample_dx',['../structctl__t.html#af5696aca68db24fedc7bd265d4eb6d52',1,'ctl_t']]],
+  ['sample_5fdz_2',['sample_dz',['../structctl__t.html#a857fdeffae577ddb41500ef0c875020e',1,'ctl_t']]],
+  ['sample_5fkernel_3',['sample_kernel',['../structctl__t.html#a2c08850b82591f935ab0c498217b3d65',1,'ctl_t']]],
+  ['sample_5fobsfile_4',['sample_obsfile',['../structctl__t.html#a64cde624042ea4b8d6b841660ff28546',1,'ctl_t']]],
+  ['sf6_5',['sf6',['../structclim__t.html#a787e837b08fea0fce0c6fe04140fb393',1,'clim_t']]],
+  ['shf_6',['shf',['../structmet__t.html#a3bc7785b3dea585270d402d925c02425',1,'met_t']]],
+  ['size_7',['size',['../structmpi__info__t.html#acc08a08974b5b8a47c6bdfe5ac590a66',1,'mpi_info_t']]],
+  ['sort_5fdt_8',['sort_dt',['../structctl__t.html#a126d9eac2687f4aac95ab17fff14dd07',1,'ctl_t']]],
+  ['species_9',['species',['../structctl__t.html#a20f21cdf4fea1cfc948fc1bcc1f0a520',1,'ctl_t']]],
+  ['sst_10',['sst',['../structmet__t.html#a04c8115782b3dc6697111fdeb7c8f860',1,'met_t']]],
+  ['stat_5fbasename_11',['stat_basename',['../structctl__t.html#af784e18ace4cd191ae100a7df4955b6b',1,'ctl_t']]],
+  ['stat_5flat_12',['stat_lat',['../structctl__t.html#a995505c06bd35ecba593f807c1eda591',1,'ctl_t']]],
+  ['stat_5flon_13',['stat_lon',['../structctl__t.html#a0fafec241b4112fa64cb69fe09403ea8',1,'ctl_t']]],
+  ['stat_5fr_14',['stat_r',['../structctl__t.html#a149be614c5eafb380c3c9f3ad6599971',1,'ctl_t']]],
+  ['stat_5ft0_15',['stat_t0',['../structctl__t.html#a5721f8afc611b607db92678bb063f42d',1,'ctl_t']]],
+  ['stat_5ft1_16',['stat_t1',['../structctl__t.html#a370c0a527e721ea64cd67685abd7bc42',1,'ctl_t']]],
+  ['subdomain_5fcount_17',['subdomain_count',['../structmet__t.html#aa0798887d89386a24912ee7a827f111a',1,'met_t']]],
+  ['subdomain_5flat_5fmax_18',['subdomain_lat_max',['../structmet__t.html#adcfac05d76bef5e66081b29ac3f9a7ae',1,'met_t']]],
+  ['subdomain_5flat_5fmin_19',['subdomain_lat_min',['../structmet__t.html#a274e61e45ce44d3b369a0a4d415abbce',1,'met_t']]],
+  ['subdomain_5flon_5fmax_20',['subdomain_lon_max',['../structmet__t.html#a1b058e4b80968ad2bda108052b198fce',1,'met_t']]],
+  ['subdomain_5flon_5fmin_21',['subdomain_lon_min',['../structmet__t.html#a33256b9fb3c9c6a4a96ab469b23abf25',1,'met_t']]],
+  ['subdomain_5fstart_22',['subdomain_start',['../structmet__t.html#a48c214b997192502779eb44d04ccf680',1,'met_t']]],
+  ['swc_23',['swc',['../structmet__t.html#afc1b6ec607dcb27df304f6ecb48b7fea',1,'met_t']]],
+  ['sza_24',['sza',['../structclim__photo__t.html#a0954705edbe1ca70559f1adeb231a685',1,'clim_photo_t']]]
+];
