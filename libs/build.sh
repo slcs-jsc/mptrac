@@ -231,7 +231,7 @@ if ${build[all]} || ${build[eccodes]} ; then
     unpack "$target"
     cd -
     mkdir -p "$build_dir"/src/"$target"/build && cd "$build_dir"/src/"$target"/build || exit
-    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF .. \
+    cmake -DCMAKE_INSTALL_PREFIX="$build_dir" -DCMAKE_INSTALL_LIBDIR=lib -DBUILD_SHARED_LIBS=BOTH -DENABLE_AEC=OFF -DENABLE_JPEG=OFF -DENABLE_FORTRAN=OFF -DENABLE_NETCDF=OFF .. \
 	&& make -j $nprocs && ctest -j $nprocs && make install || exit
 fi
 
