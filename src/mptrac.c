@@ -100,15 +100,14 @@ double clim_oh(
   /* Get OH data from climatology... */
   const double oh = clim_zm(&clim->oh, t, lat, p);
 
-  /* Apply diurnal correction... */
-  if (ctl->oh_chem_beta > 0) {
-    double sza = sza_calc(t, lon, lat);
-    if (sza <= sza_thresh)
-      return oh * exp(-ctl->oh_chem_beta / cos(sza));
-    else
-      return oh * exp(-ctl->oh_chem_beta / cos_sza_thresh);
-  } else
+  /* Check beta... */
+  if (ctl->oh_chem_beta <= 0)
     return oh;
+
+  /* Apply diurnal correction... */
+  const double sza = sza_calc(t, lon, lat);
+  const double denom = (sza <= sza_thresh) ? cos(sza) : cos_sza_thresh;
+  return oh * exp(-ctl->oh_chem_beta / denom);
 }
 
 /*****************************************************************************/
@@ -131,11 +130,11 @@ void clim_oh_diurnal_correction(
 
 	/* Integrate day/night correction factor over longitude... */
 	for (double lon = -180; lon < 180; lon += 1.0) {
-	  double sza = sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  if (sza <= sza_thresh)
-	    sum += exp(-ctl->oh_chem_beta / cos(sza));
-	  else
-	    sum += exp(-ctl->oh_chem_beta / cos_sza_thresh);
+	  const double sza =
+	    sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
+	  const double denom =
+	    (sza <= sza_thresh) ? cos(sza) : cos_sza_thresh;
+	  sum += exp(-ctl->oh_chem_beta / denom);
 	  n++;
 	}
 
