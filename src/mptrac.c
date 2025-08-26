@@ -180,19 +180,25 @@ double clim_photo(
   const int io3c = locate_reg(photo->o3c, photo->no3c, o3c_help);
 
   /* Interpolate photolysis rate... */
-  double aux00 = LIN(photo->p[ip], rate[ip][isza][io3c],
-		     photo->p[ip + 1], rate[ip + 1][isza][io3c], p_help);
-  double aux01 = LIN(photo->p[ip], rate[ip][isza][io3c + 1],
-		     photo->p[ip + 1], rate[ip + 1][isza][io3c + 1], p_help);
-  double aux10 = LIN(photo->p[ip], rate[ip][isza + 1][io3c],
-		     photo->p[ip + 1], rate[ip + 1][isza + 1][io3c], p_help);
-  double aux11 = LIN(photo->p[ip], rate[ip][isza + 1][io3c + 1],
-		     photo->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
-		     p_help);
-  aux00 = LIN(photo->o3c[io3c], aux00, photo->o3c[io3c + 1], aux01, o3c_help);
-  aux11 = LIN(photo->o3c[io3c], aux10, photo->o3c[io3c + 1], aux11, o3c_help);
-  aux00 = LIN(photo->sza[isza], aux00, photo->sza[isza + 1], aux11, sza_help);
-  return MAX(aux00, 0.0);
+  const double aux00 = LIN(photo->p[ip], rate[ip][isza][io3c],
+			   photo->p[ip + 1], rate[ip + 1][isza][io3c],
+			   p_help);
+  const double aux01 = LIN(photo->p[ip], rate[ip][isza][io3c + 1],
+			   photo->p[ip + 1], rate[ip + 1][isza][io3c + 1],
+			   p_help);
+  const double aux10 = LIN(photo->p[ip], rate[ip][isza + 1][io3c],
+			   photo->p[ip + 1], rate[ip + 1][isza + 1][io3c],
+			   p_help);
+  const double aux11 = LIN(photo->p[ip], rate[ip][isza + 1][io3c + 1],
+			   photo->p[ip + 1], rate[ip + 1][isza + 1][io3c + 1],
+			   p_help);
+  const double aux0 =
+    LIN(photo->o3c[io3c], aux00, photo->o3c[io3c + 1], aux01, o3c_help);
+  const double aux1 =
+    LIN(photo->o3c[io3c], aux10, photo->o3c[io3c + 1], aux11, o3c_help);
+  const double aux =
+    LIN(photo->sza[isza], aux0, photo->sza[isza + 1], aux1, sza_help);
+  return MAX(aux, 0.0);
 }
 
 /*****************************************************************************/
@@ -429,20 +435,24 @@ double clim_zm(
   const int ip = locate_irr(zm->p, zm->np, p_help);
 
   /* Interpolate climatology data... */
-  double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
-		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat], p_help);
-  double aux01 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat + 1],
-		     zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat + 1], p_help);
-  double aux10 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat],
-		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat], p_help);
-  double aux11 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat + 1],
-		     zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat + 1],
-		     p_help);
-  aux00 = LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat_help);
-  aux11 = LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat_help);
-  aux00 = LIN(zm->time[isec], aux00, zm->time[isec + 1], aux11, sec);
-
-  return MAX(aux00, 0.0);
+  const double aux00 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat],
+			   zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat],
+			   p_help);
+  const double aux01 = LIN(zm->p[ip], zm->vmr[isec][ip][ilat + 1],
+			   zm->p[ip + 1], zm->vmr[isec][ip + 1][ilat + 1],
+			   p_help);
+  const double aux10 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat],
+			   zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat],
+			   p_help);
+  const double aux11 = LIN(zm->p[ip], zm->vmr[isec + 1][ip][ilat + 1],
+			   zm->p[ip + 1], zm->vmr[isec + 1][ip + 1][ilat + 1],
+			   p_help);
+  const double aux0 =
+    LIN(zm->lat[ilat], aux00, zm->lat[ilat + 1], aux01, lat_help);
+  const double aux1 =
+    LIN(zm->lat[ilat], aux10, zm->lat[ilat + 1], aux11, lat_help);
+  const double aux = LIN(zm->time[isec], aux0, zm->time[isec + 1], aux1, sec);
+  return MAX(aux, 0.0);
 }
 
 /*****************************************************************************/
@@ -1392,38 +1402,38 @@ void intpol_met_4d_coord(
   }
 
   /* Calculate the needed array values... */
-  double array000 = cw[3] * (array1[ci[0]][ci[1]][ci[2]]
-			     - array0[ci[0]][ci[1]][ci[2]])
+  const double array000 = cw[3] * (array1[ci[0]][ci[1]][ci[2]]
+				   - array0[ci[0]][ci[1]][ci[2]])
     + array0[ci[0]][ci[1]][ci[2]];
-  double array100 = cw[3] * (array1[ci[0] + 1][ci[1]][ci[2]]
-			     - array0[ci[0] + 1][ci[1]][ci[2]])
+  const double array100 = cw[3] * (array1[ci[0] + 1][ci[1]][ci[2]]
+				   - array0[ci[0] + 1][ci[1]][ci[2]])
     + array0[ci[0] + 1][ci[1]][ci[2]];
-  double array010 = cw[3] * (array1[ci[0]][ci[1] + 1][ci[2]]
-			     - array0[ci[0]][ci[1] + 1][ci[2]])
+  const double array010 = cw[3] * (array1[ci[0]][ci[1] + 1][ci[2]]
+				   - array0[ci[0]][ci[1] + 1][ci[2]])
     + array0[ci[0]][ci[1] + 1][ci[2]];
-  double array110 = cw[3] * (array1[ci[0] + 1][ci[1] + 1][ci[2]]
-			     - array0[ci[0] + 1][ci[1] + 1][ci[2]])
+  const double array110 = cw[3] * (array1[ci[0] + 1][ci[1] + 1][ci[2]]
+				   - array0[ci[0] + 1][ci[1] + 1][ci[2]])
     + array0[ci[0] + 1][ci[1] + 1][ci[2]];
-  double array001 = cw[3] * (array1[ci[0]][ci[1]][ci[2] + 1]
-			     - array0[ci[0]][ci[1]][ci[2] + 1])
+  const double array001 = cw[3] * (array1[ci[0]][ci[1]][ci[2] + 1]
+				   - array0[ci[0]][ci[1]][ci[2] + 1])
     + array0[ci[0]][ci[1]][ci[2] + 1];
-  double array101 = cw[3] * (array1[ci[0] + 1][ci[1]][ci[2] + 1]
-			     - array0[ci[0] + 1][ci[1]][ci[2] + 1])
+  const double array101 = cw[3] * (array1[ci[0] + 1][ci[1]][ci[2] + 1]
+				   - array0[ci[0] + 1][ci[1]][ci[2] + 1])
     + array0[ci[0] + 1][ci[1]][ci[2] + 1];
-  double array011 = cw[3] * (array1[ci[0]][ci[1] + 1][ci[2] + 1]
-			     - array0[ci[0]][ci[1] + 1][ci[2] + 1])
+  const double array011 = cw[3] * (array1[ci[0]][ci[1] + 1][ci[2] + 1]
+				   - array0[ci[0]][ci[1] + 1][ci[2] + 1])
     + array0[ci[0]][ci[1] + 1][ci[2] + 1];
-  double array111 = cw[3] * (array1[ci[0] + 1][ci[1] + 1][ci[2] + 1]
-			     - array0[ci[0] + 1][ci[1] + 1][ci[2] + 1])
+  const double array111 = cw[3] * (array1[ci[0] + 1][ci[1] + 1][ci[2] + 1]
+				   - array0[ci[0] + 1][ci[1] + 1][ci[2] + 1])
     + array0[ci[0] + 1][ci[1] + 1][ci[2] + 1];
 
-  double array00 = cw[0] * (array100 - array000) + array000;
-  double array10 = cw[0] * (array110 - array010) + array010;
-  double array01 = cw[0] * (array101 - array001) + array001;
-  double array11 = cw[0] * (array111 - array011) + array011;
+  const double array00 = cw[0] * (array100 - array000) + array000;
+  const double array10 = cw[0] * (array110 - array010) + array010;
+  const double array01 = cw[0] * (array101 - array001) + array001;
+  const double array11 = cw[0] * (array111 - array011) + array011;
 
-  double aux0 = cw[1] * (array10 - array00) + array00;
-  double aux1 = cw[1] * (array11 - array01) + array01;
+  const double aux0 = cw[1] * (array10 - array00) + array00;
+  const double aux1 = cw[1] * (array11 - array01) + array01;
 
   /* Interpolate vertically... */
   *var = cw[2] * (aux1 - aux0) + aux0;
@@ -1465,26 +1475,26 @@ void intpol_met_space_3d(
   }
 
   /* Interpolate vertically... */
-  double aux00 =
+  const double aux00 =
     cw[0] * (array[ci[1]][ci[2]][ci[0]] - array[ci[1]][ci[2]][ci[0] + 1])
     + array[ci[1]][ci[2]][ci[0] + 1];
-  double aux01 =
+  const double aux01 =
     cw[0] * (array[ci[1]][ci[2] + 1][ci[0]] -
 	     array[ci[1]][ci[2] + 1][ci[0] + 1])
     + array[ci[1]][ci[2] + 1][ci[0] + 1];
-  double aux10 =
+  const double aux10 =
     cw[0] * (array[ci[1] + 1][ci[2]][ci[0]] -
 	     array[ci[1] + 1][ci[2]][ci[0] + 1])
     + array[ci[1] + 1][ci[2]][ci[0] + 1];
-  double aux11 =
+  const double aux11 =
     cw[0] * (array[ci[1] + 1][ci[2] + 1][ci[0]] -
 	     array[ci[1] + 1][ci[2] + 1][ci[0] + 1])
     + array[ci[1] + 1][ci[2] + 1][ci[0] + 1];
 
   /* Interpolate horizontally... */
-  aux00 = cw[2] * (aux00 - aux01) + aux01;
-  aux11 = cw[2] * (aux10 - aux11) + aux11;
-  *var = cw[1] * (aux00 - aux11) + aux11;
+  const double aux0 = cw[2] * (aux00 - aux01) + aux01;
+  const double aux1 = cw[2] * (aux10 - aux11) + aux11;
+  *var = cw[1] * (aux0 - aux1) + aux1;
 }
 
 /*****************************************************************************/
@@ -1549,8 +1559,8 @@ void intpol_met_space_3d_ml(
 		zs[ix + 1][iy + 1][iz + 1], array[ix + 1][iy + 1][iz + 1], z);
 
   /* Interpolate horizontally... */
-  double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
-  double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat2);
+  const double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
+  const double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat2);
   *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
 }
 
@@ -1586,17 +1596,17 @@ void intpol_met_space_2d(
   }
 
   /* Set variables... */
-  double aux00 = array[ci[1]][ci[2]];
-  double aux01 = array[ci[1]][ci[2] + 1];
-  double aux10 = array[ci[1] + 1][ci[2]];
-  double aux11 = array[ci[1] + 1][ci[2] + 1];
+  const double aux00 = array[ci[1]][ci[2]];
+  const double aux01 = array[ci[1]][ci[2] + 1];
+  const double aux10 = array[ci[1] + 1][ci[2]];
+  const double aux11 = array[ci[1] + 1][ci[2] + 1];
 
   /* Interpolate horizontally... */
   if (isfinite(aux00) && isfinite(aux01)
       && isfinite(aux10) && isfinite(aux11)) {
-    aux00 = cw[2] * (aux00 - aux01) + aux01;
-    aux11 = cw[2] * (aux10 - aux11) + aux11;
-    *var = cw[1] * (aux00 - aux11) + aux11;
+    const double aux0 = cw[2] * (aux00 - aux01) + aux01;
+    const double aux1 = cw[2] * (aux10 - aux11) + aux11;
+    *var = cw[1] * (aux0 - aux1) + aux1;
   } else {
     if (cw[2] < 0.5) {
       if (cw[1] < 0.5)
@@ -1717,7 +1727,7 @@ void intpol_tropo_3d(
   double *var,
   double *sigma) {
 
-  double aux0, aux1, aux00, aux01, aux10, aux11, mean = 0;
+  double mean = 0;
 
   int n = 0;
 
@@ -1757,34 +1767,34 @@ void intpol_tropo_3d(
       && isfinite(array1[ix + 1][iy])
       && isfinite(array1[ix + 1][iy + 1])) {
 
-    aux00 = LIN(lons[ix], array0[ix][iy],
-		lons[ix + 1], array0[ix + 1][iy], lon2);
-    aux01 = LIN(lons[ix], array0[ix][iy + 1],
-		lons[ix + 1], array0[ix + 1][iy + 1], lon2);
-    aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat2);
+    const double aux00 = LIN(lons[ix], array0[ix][iy],
+			     lons[ix + 1], array0[ix + 1][iy], lon2);
+    const double aux01 = LIN(lons[ix], array0[ix][iy + 1],
+			     lons[ix + 1], array0[ix + 1][iy + 1], lon2);
+    const double aux0 = LIN(lats[iy], aux00, lats[iy + 1], aux01, lat2);
 
-    aux10 = LIN(lons[ix], array1[ix][iy],
-		lons[ix + 1], array1[ix + 1][iy], lon2);
-    aux11 = LIN(lons[ix], array1[ix][iy + 1],
-		lons[ix + 1], array1[ix + 1][iy + 1], lon2);
-    aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat2);
+    const double aux10 = LIN(lons[ix], array1[ix][iy],
+			     lons[ix + 1], array1[ix + 1][iy], lon2);
+    const double aux11 = LIN(lons[ix], array1[ix][iy + 1],
+			     lons[ix + 1], array1[ix + 1][iy + 1], lon2);
+    const double aux1 = LIN(lats[iy], aux10, lats[iy + 1], aux11, lat2);
 
     *var = LIN(time0, aux0, time1, aux1, time);
   }
 
   /* Nearest neighbor interpolation... */
   else {
-    aux00 = NN(lons[ix], array0[ix][iy],
-	       lons[ix + 1], array0[ix + 1][iy], lon2);
-    aux01 = NN(lons[ix], array0[ix][iy + 1],
-	       lons[ix + 1], array0[ix + 1][iy + 1], lon2);
-    aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat2);
+    const double aux00 = NN(lons[ix], array0[ix][iy],
+			    lons[ix + 1], array0[ix + 1][iy], lon2);
+    const double aux01 = NN(lons[ix], array0[ix][iy + 1],
+			    lons[ix + 1], array0[ix + 1][iy + 1], lon2);
+    const double aux0 = NN(lats[iy], aux00, lats[iy + 1], aux01, lat2);
 
-    aux10 = NN(lons[ix], array1[ix][iy],
-	       lons[ix + 1], array1[ix + 1][iy], lon2);
-    aux11 = NN(lons[ix], array1[ix][iy + 1],
-	       lons[ix + 1], array1[ix + 1][iy + 1], lon2);
-    aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat2);
+    const double aux10 = NN(lons[ix], array1[ix][iy],
+			    lons[ix + 1], array1[ix + 1][iy], lon2);
+    const double aux11 = NN(lons[ix], array1[ix][iy + 1],
+			    lons[ix + 1], array1[ix + 1][iy + 1], lon2);
+    const double aux1 = NN(lats[iy], aux10, lats[iy + 1], aux11, lat2);
 
     *var = NN(time0, aux0, time1, aux1, time);
   }
@@ -8190,7 +8200,8 @@ int read_met_nc_2d_dd(
       for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
 	if (init == 1)
 	  dest[ix + met->halo_offset_start][iy] = 0;
-	float aux = help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
+	const float aux =
+	  help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f) {
@@ -8205,7 +8216,8 @@ int read_met_nc_2d_dd(
       for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
 	if (init == 1)
 	  dest[ix + met->halo_offset_end][iy] = 0;
-	float aux = help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
+	const float aux =
+	  help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f)
@@ -8223,7 +8235,7 @@ int read_met_nc_2d_dd(
       for (int ix = 0; ix < met->nx; ix++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	const float aux = help[ARRAY_2D(ix, iy, met->ny)];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f)
