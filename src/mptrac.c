@@ -8067,11 +8067,32 @@ int read_met_nc_dd(
 
   int ncid;
 
-  /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("Cannot open file!");
-    return 0;
-  }
+  /* Open netCDF file for parallel access... */
+  #ifdef MPI
+    int nc_result = nc_open_par(filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid);
+    if (nc_result != NC_NOERR) {
+      const char* error_msg;
+      switch(nc_result) {
+        case NC_ENOPAR: error_msg = "Library was not built with parallel I/O features"; break;
+        case NC_EPERM: error_msg = "No permission to access the file"; break;
+        case NC_ENOTBUILT: error_msg = "Library was not built with NETCDF4 or PnetCDF"; break;
+        case NC_EINVAL: error_msg = "Invalid parameters"; break;
+        case NC_ENOTNC: error_msg = "Not a netCDF file"; break;
+        case NC_ENOMEM: error_msg = "Out of memory"; break;
+        case NC_EHDFERR: error_msg = "HDF5 error"; break;
+        case NC_EDIMMETA: error_msg = "Error in netCDF-4 dimension metadata"; break;
+        default: error_msg = nc_strerror(nc_result); break;
+      }
+      WARN("Cannot open file for parallel access! NetCDF error: %s (code: %d)", error_msg, nc_result);
+      return 0;
+    }
+    MPI_Info_free(&info);
+  #else
+    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+      WARN("Cannot open file!");
+      return 0;
+    }
+  #endif
 
   /* Read coordinates of meteo data... */
   read_met_nc_grid_dd(filename, ncid, ctl, met);
@@ -8266,6 +8287,8 @@ int read_met_nc_3d_dd(
   const met_t *met,
   float dest[EX][EY][EP],
   const float scl) {
+  
+  SELECT_TIMER("READ_MET_NC_3D_DD", "INPUT", NVTX_READ);
 
   char varsel[LEN];
 
@@ -8296,6 +8319,8 @@ int read_met_nc_3d_dd(
   /* Write info... */
   LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
       varsel, fillval, missval);
+  
+  SELECT_TIMER("READ_MET_NC_3D_DD_CP1", "INPUT", NVTX_READ);
 
   /* Define hyperslab... */
   int rank, size;
@@ -8308,7 +8333,9 @@ int read_met_nc_3d_dd(
 	  (int) met->subdomain_count[0] * (int) met->subdomain_count[1]
 	* (int) met->subdomain_count[2] * (int) met->subdomain_count[3]);
 
-  /* Read data... */
+  SELECT_TIMER("READ_MET_NC_3D_DD_CP2", "INPUT", NVTX_READ);
+
+  /* Use default NetCDF parallel I/O behavior */
   NC(nc_get_vara_float
      (ncid, varid, met->subdomain_start, met->subdomain_count, help));
 
@@ -8316,12 +8343,18 @@ int read_met_nc_3d_dd(
   float *help_halo;
   ALLOC(help_halo, float,
 	met->halo_bnd_count[0] * met->halo_bnd_count[1] *
-	met->halo_bnd_count[2] * met->halo_bnd_count[3]) NC(
-  nc_get_vara_float(ncid,
+	met->halo_bnd_count[2] * met->halo_bnd_count[3]);
+
+  SELECT_TIMER("READ_MET_NC_3D_DD_CP3", "INPUT", NVTX_READ);
+  
+  /* Halo read also uses independent access */
+  NC(nc_get_vara_float(ncid,
 		    varid,
 		    met->halo_bnd_start,
 		    met->halo_bnd_count,
 		    help_halo));
+
+  SELECT_TIMER("READ_MET_NC_3D_DD_CP4", "INPUT", NVTX_READ);
 
   /* Check meteo data layout... */
   if (ctl->met_convention == 0) {
