@@ -88,3 +88,4 @@ tests/tools_test/data/
 tests/trac_test/data/
 tests/tropo_test/data/
 tests/wrapper_test/data/
+**/.ipynb_checkpoints/
