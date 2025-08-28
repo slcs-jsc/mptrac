@@ -1,0 +1,5 @@
+<map id="read_obs" name="read_obs">
+<area shape="rect" id="node1" title="Reads observation data from a file and stores it in arrays." alt="" coords="5,31,80,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a29da9a205ad3577ba3890f3e1e4350c3" title="Reads observation data from an ASCII file." alt="" coords="128,5,231,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a4536a82b3dc62081d26114c1250b1427" title="Reads observation data from a NetCDF file." alt="" coords="131,56,227,83"/>
+</map>
