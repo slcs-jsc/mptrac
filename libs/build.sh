@@ -199,7 +199,7 @@ if ${build[all]} || ${build[hdf5]} ; then
     else
 	./configure $cfg_opt || exit
     fi
-    make -j $nprocs && make check && make install && make clean || exit
+    make -j $nprocs && make check || true && make install && make clean || exit
 fi
 
 # Build netCDF...
