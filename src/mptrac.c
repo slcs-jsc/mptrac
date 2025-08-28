@@ -8086,7 +8086,6 @@ int read_met_nc_dd(
       WARN("Cannot open file for parallel access! NetCDF error: %s (code: %d)", error_msg, nc_result);
       return 0;
     }
-    MPI_Info_free(&info);
   #else
     if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
       WARN("Cannot open file!");
