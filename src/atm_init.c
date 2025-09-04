@@ -82,6 +82,8 @@ int main(
   const double vmr = scan_ctl(argv[1], argc, argv, "INIT_VMR", -1, "0", NULL);
   const double bellrad =
     scan_ctl(argv[1], argc, argv, "INIT_BELLRAD", -1, "0", NULL);
+  const int idx_offset =
+    (int) scan_ctl(argv[1], argc, argv, "INIT_IDX_OFFSET", -1, "0", NULL);
 
   /* Initialize random number generator... */
   gsl_rng_env_setup();
@@ -160,7 +162,7 @@ int main(
   /* Initialize air parcel index... */
   if (ctl.qnt_idx >= 0)
     for (int ip = 0; ip < atm->np; ip++)
-      atm->q[ctl.qnt_idx][ip] = ip;
+      atm->q[ctl.qnt_idx][ip] = idx_offset + ip;
 
   /* Initialize age of air... */
   if (ctl.qnt_aoa >= 0)

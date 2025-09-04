@@ -7663,15 +7663,30 @@ void read_met_nc_grid_dd(
     * (lon_range) / (double) ctl->dd_subdomains_zonal;
   met->subdomain_lon_max = met->subdomain_lon_min
     + (lon_range) / (double) ctl->dd_subdomains_zonal;
-  met->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
-    * (lat_range) / (double) ctl->dd_subdomains_meridional;
-  met->subdomain_lat_min = met->subdomain_lat_max
-    + (lat_range) / (double) ctl->dd_subdomains_meridional;
 
-  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg", rank,
-      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
-  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg", rank,
-      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+  if (lat_range < 0) {
+    /* Latitudes in descending order (90 to -90) */
+    met->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
+      * (lat_range) / (double) ctl->dd_subdomains_meridional;
+    met->subdomain_lat_min = met->subdomain_lat_max
+      + (lat_range) / (double) ctl->dd_subdomains_meridional;
+  } else {
+    /* Latitudes in ascending order (-90 to 90) */
+    met->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
+      * (lat_range) / (double) ctl->dd_subdomains_meridional;
+    met->subdomain_lat_max = met->subdomain_lat_min
+      + (lat_range) / (double) ctl->dd_subdomains_meridional;
+  }
+
+  LOG(2, "Total longitude range: %g deg", lon_range);
+  LOG(2, "Total latitude range: %g deg", lat_range);
+
+  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
+      met->lon[0], met->lon[1], met->lon[met->nx - 1], 
+      met->subdomain_lon_min, met->subdomain_lon_max);
+  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
+      met->lat[0], met->lat[1], met->lat[met->ny - 1], 
+      met->subdomain_lat_min, met->subdomain_lat_max);
 
   LOG(2, "Define subdomain properties.");
   LOG(2, "MPI information: Rank %d, Size %d", rank, size);
@@ -8067,7 +8082,6 @@ int read_met_nc_dd(
 
   int ncid;
 
-  /* Open netCDF file for parallel access... */
   #ifdef MPI
     int nc_result = nc_open_par(filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid);
     if (nc_result != NC_NOERR) {
@@ -11251,7 +11265,7 @@ void write_atm_clams_traj(
   if (out_cnt == 0) {
 
     /* Create file... */
-    nc_create(filename_out, NC_NETCDF4, &ncid);
+    NC(nc_create(filename_out, NC_NETCDF4, &ncid));
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", NC_UNLIMITED, &tid));
@@ -13247,7 +13261,7 @@ void dd_atm2particles(
       particles[ip - atm->np].p = atm->p[ip];
 
       for (int iq = 0; iq < ctl->nq; iq++)
-	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
+	      particles[ip - atm->np].q[iq] = atm->q[iq][ip];
 
       atm->q[ctl->qnt_subdomain][ip] = -1;
       cache->dt[ip] = 0;
@@ -13707,6 +13721,8 @@ void dd_assign_rect_subdomains_atm(
 	atm->q[ctl->qnt_subdomain][ip] = mpi_info->rank;
 	atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
       } else {
+	LOG(1, "Warning: Particle %d is outside the domain (lon: %f, lat: %f, subdomain: %d, subdomain bounds: [%f, %f], [%f, %f])", 
+	    ip, atm->lon[ip], atm->lat[ip], mpi_info->rank, met->subdomain_lon_min, met->subdomain_lon_max, met->subdomain_lat_min, met->subdomain_lat_max);
 	atm->q[ctl->qnt_subdomain][ip] = -1;
 	atm->q[ctl->qnt_destination][ip] = -1;
       }
