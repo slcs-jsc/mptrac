@@ -4068,9 +4068,9 @@ void module_timesteps(
 
     /* Check horizontal boundaries of local meteo data... */
 #ifndef DD
-    int dd = 0;
-#else
     int dd = 1;
+#else
+    int dd = 0;
 #endif
     if (dd) {
       if (local && (atm->lon[ip] <= met0->lon[0]
