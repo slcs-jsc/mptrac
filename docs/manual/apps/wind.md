@@ -24,3 +24,4 @@ Optional control parameters:
 * WIND_U1: horizontal wind speed at uppermost level (default: 38.587660177302 m/s)
 * WIND_W0: vertical velocity (default: 0 m/s)
 * WIND_ALPHA: rotation angle (default: 0 deg)
+* WIND_LAT_REVERSE: latitude direction flag (default: 0, set to 1 for reversed latitude direction)

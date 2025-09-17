@@ -1,6 +1,6 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/data1/slmet/model_data/mptrac/projects/domain_decomp/henke1/mptrac_hands_on/mptrac/src/atm_init | version: v3.0-314-gc2cc92-dirty | compiled: Sep 16 2025, 10:03:50)
+(executable: /p/data1/slmet/model_data/mptrac/projects/domain_decomp/henke1/mptrac_hands_on/mptrac/src/atm_init | version: v3.0-310-ge4d666-dirty | compiled: Sep 17 2025, 10:21:46)
 
 NQ = 5
 QNT_NAME[0] = idx
@@ -241,8 +241,8 @@ GRID_NZ = 1
 GRID_LON0 = 0
 GRID_LON1 = 360
 GRID_NX = 360
-GRID_LAT0 = -90
-GRID_LAT1 = 90
+GRID_LAT0 = 90
+GRID_LAT1 = 270
 GRID_NY = 181
 GRID_TYPE = 0
 PROF_BASENAME = -
@@ -287,8 +287,8 @@ INIT_DZ = 1
 INIT_LON0 = 255.000000
 INIT_LON1 = 345.000000
 INIT_DLON = 30.000000
-INIT_LAT0 = 37.500000
-INIT_LAT1 = 82.500000
+INIT_LAT0 = -82.500000
+INIT_LAT1 = -37.500000
 INIT_DLAT = 15.000000
 INIT_ST = 0
 INIT_SZ = 0
@@ -311,7 +311,7 @@ Write atmospheric data: /p/data1/slmet/model_data/mptrac/projects/domain_decomp/
   Altitude range: 10 ... 10 km
   Pressure range: 242.826 ... 242.826 hPa
   Longitude range: 255 ... 345 deg
-  Latitude range: 37.5 ... 82.5 deg
+  Latitude range: -82.5 ... -37.5 deg
   Quantity idx range: 128 ... 143 -
   Quantity zeta range: 0 ... 0 K
   Quantity m range: 0 ... 0 kg

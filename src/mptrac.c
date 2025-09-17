@@ -7664,14 +7664,14 @@ void read_met_nc_grid_dd(
   met->subdomain_lon_max = met->subdomain_lon_min
     + (lon_range) / (double) ctl->dd_subdomains_zonal;
 
+  /* Latitudes in descending order (90 to -90) */
   if (lat_range < 0) {
-    /* Latitudes in descending order (90 to -90) */
     met->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
     met->subdomain_lat_min = met->subdomain_lat_max
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
   } else {
-    /* Latitudes in ascending order (-90 to 90) */
+    WARN("lat_range > 0, but is expected to be negative, i.e. latitudes should range from 90 to -90")
     met->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
     met->subdomain_lat_max = met->subdomain_lat_min
@@ -13263,6 +13263,9 @@ void dd_atm2particles(
       for (int iq = 0; iq < ctl->nq; iq++)
 	      particles[ip - atm->np].q[iq] = atm->q[iq][ip];
 
+      LOG(3, "DD: Particle being prepared for transfer: subdomain %d -> destination %d (lon: %f, lat: %f)", 
+           (int)atm->q[ctl->qnt_subdomain][ip], (int)atm->q[ctl->qnt_destination][ip], 
+           atm->lon[ip], atm->lat[ip]);
       atm->q[ctl->qnt_subdomain][ip] = -1;
       cache->dt[ip] = 0;
     }
@@ -13342,163 +13345,23 @@ void dd_register_MPI_type_particle(
 /*****************************************************************************/
 
 #ifdef DD
-void dd_get_rect_neighbour(
-  const ctl_t ctl,
-  mpi_info_t *mpi_info) {
-
+void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t *mpi_info) {
   SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
+  
+  const int rank = mpi_info->rank;
+  const int size = mpi_info->size;
+  const int m = ctl.dd_subdomains_meridional;
+  //const int z = ctl.dd_subdomains_zonal;
+  int *nb = mpi_info->neighbours;
 
-  if (mpi_info->rank + 1 == mpi_info->size) {
-
-    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[1] = DD_SPOLE;
-    mpi_info->neighbours[2] =
-      mpi_info->rank - ctl.dd_subdomains_meridional - 1;
-
-    mpi_info->neighbours[3] =
-      (mpi_info->rank + 1 + ctl.dd_subdomains_meridional) % mpi_info->size -
-      1;
-    mpi_info->neighbours[4] = DD_SPOLE;
-    mpi_info->neighbours[5] =
-      (mpi_info->rank + ctl.dd_subdomains_meridional) % mpi_info->size - 1;
-
-    mpi_info->neighbours[6] = mpi_info->rank - 1;
-    mpi_info->neighbours[7] = DD_SPOLE;
-
-  } else if (mpi_info->rank ==
-	     ctl.dd_subdomains_meridional * (ctl.dd_subdomains_zonal - 1)) {
-
-    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[1] =
-      mpi_info->rank - ctl.dd_subdomains_meridional + 1;
-    mpi_info->neighbours[2] = DD_NPOLE;
-
-    mpi_info->neighbours[3] =
-      (mpi_info->rank + 1 + ctl.dd_subdomains_meridional) % mpi_info->size -
-      1;
-    mpi_info->neighbours[4] =
-      (mpi_info->rank + 2 + ctl.dd_subdomains_meridional) % mpi_info->size -
-      1;
-    mpi_info->neighbours[5] = DD_NPOLE;
-
-    mpi_info->neighbours[6] = DD_NPOLE;
-    mpi_info->neighbours[7] = mpi_info->rank + 1;
-
-  } else if (mpi_info->rank == 0) {
-
-    mpi_info->neighbours[0] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-    mpi_info->neighbours[1] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
-    mpi_info->neighbours[2] = DD_NPOLE;
-
-    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[4] =
-      mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[5] = DD_NPOLE;
-
-    mpi_info->neighbours[6] = DD_NPOLE;
-    mpi_info->neighbours[7] = mpi_info->rank + 1;
-
-  } else if (mpi_info->rank + 1 == ctl.dd_subdomains_meridional) {
-
-    mpi_info->neighbours[0] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-    mpi_info->neighbours[1] = DD_SPOLE;
-    mpi_info->neighbours[2] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
-
-    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[4] = DD_SPOLE;
-    mpi_info->neighbours[5] =
-      mpi_info->rank + ctl.dd_subdomains_meridional - 1;
-
-    mpi_info->neighbours[6] = mpi_info->rank - 1;
-    mpi_info->neighbours[7] = DD_SPOLE;
-
-  } else if ((mpi_info->rank + 1) % ctl.dd_subdomains_meridional == 1) {
-
-    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[1] =
-      mpi_info->rank + 1 - ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[2] = DD_NPOLE;
-
-    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[4] =
-      mpi_info->rank + 1 + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[5] = DD_NPOLE;
-
-    mpi_info->neighbours[6] = DD_NPOLE;
-    mpi_info->neighbours[7] = mpi_info->rank + 1;
-
-  } else if ((mpi_info->rank + 1) % ctl.dd_subdomains_meridional == 0) {
-
-    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[1] = DD_SPOLE;
-    mpi_info->neighbours[2] =
-      mpi_info->rank - ctl.dd_subdomains_meridional - 1;
-
-    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[4] = DD_SPOLE;
-    mpi_info->neighbours[5] =
-      mpi_info->rank + ctl.dd_subdomains_meridional - 1;
-
-    mpi_info->neighbours[6] = mpi_info->rank - 1;
-    mpi_info->neighbours[7] = DD_SPOLE;
-
-  } else if (mpi_info->rank + 1 <= ctl.dd_subdomains_meridional) {
-
-    mpi_info->neighbours[0] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank;
-    mpi_info->neighbours[1] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank + 1;
-    mpi_info->neighbours[2] =
-      mpi_info->size - ctl.dd_subdomains_meridional + mpi_info->rank - 1;
-
-    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[4] =
-      mpi_info->rank + ctl.dd_subdomains_meridional + 1;
-    mpi_info->neighbours[5] =
-      mpi_info->rank + ctl.dd_subdomains_meridional - 1;
-
-    mpi_info->neighbours[6] = mpi_info->rank - 1;
-    mpi_info->neighbours[7] = mpi_info->rank + 1;
-
-  } else if (mpi_info->rank + 1 >
-	     mpi_info->size - ctl.dd_subdomains_meridional) {
-
-    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;
-    mpi_info->neighbours[1] =
-      mpi_info->rank - ctl.dd_subdomains_meridional + 1;
-    mpi_info->neighbours[2] =
-      mpi_info->rank - ctl.dd_subdomains_meridional - 1;
-
-    mpi_info->neighbours[3] =
-      (mpi_info->rank + 1 + ctl.dd_subdomains_meridional) % mpi_info->size -
-      1;
-    mpi_info->neighbours[4] =
-      (mpi_info->rank + 2 + ctl.dd_subdomains_meridional) % mpi_info->size -
-      1;
-    mpi_info->neighbours[5] =
-      (mpi_info->rank + ctl.dd_subdomains_meridional) % mpi_info->size - 1;
-
-    mpi_info->neighbours[6] = mpi_info->rank - 1;
-    mpi_info->neighbours[7] = mpi_info->rank + 1;
-
-  } else {
-
-    mpi_info->neighbours[0] = mpi_info->rank - ctl.dd_subdomains_meridional;	// left...
-    mpi_info->neighbours[1] = mpi_info->rank - ctl.dd_subdomains_meridional + 1;	// lower left..
-    mpi_info->neighbours[2] = mpi_info->rank - ctl.dd_subdomains_meridional - 1;	// upper left..
-
-    mpi_info->neighbours[3] = mpi_info->rank + ctl.dd_subdomains_meridional;	// right...
-    mpi_info->neighbours[4] = mpi_info->rank + ctl.dd_subdomains_meridional + 1;	// lower right...
-    mpi_info->neighbours[5] = mpi_info->rank + ctl.dd_subdomains_meridional - 1;	// upper right...
-
-    mpi_info->neighbours[6] = mpi_info->rank - 1;	// upper
-    mpi_info->neighbours[7] = mpi_info->rank + 1;	// lower
-
-  }
+  nb[0] = (size + rank - m) % size;                                         // left
+  nb[3] = (rank + m) % size;                                                // right
+  nb[1] = ((rank+1) % m == 0) ? DD_SPOLE : (size + rank - m + 1) % size;    // lower left
+  nb[2] = (rank % m == 0)     ? DD_NPOLE : (size + rank - m - 1) % size;    // upper left
+  nb[4] = ((rank+1) % m == 0) ? DD_SPOLE : (rank + m + 1) % size;           // lower right
+  nb[5] = (rank % m == 0)     ? DD_NPOLE : (rank + m - 1) % size;           // upper right
+  nb[6] = (rank % m == 0)     ? DD_NPOLE : rank - 1;                        // upper
+  nb[7] = ((rank+1) % m == 0) ? DD_SPOLE : rank + 1;                        // lower
 }
 #endif
 
@@ -13561,6 +13424,10 @@ void dd_communicate_particles(
       if ((int) particles[ip].q[ctl.qnt_destination] == neighbours[idest])
 	help_sum++;
     nbs[idest] = help_sum;
+    
+    if (help_sum > 0) {
+      LOG(3, "DD: Rank %d sending %d particles to neighbour %d (rank %d)", rank, help_sum, idest, neighbours[idest]);
+    }
 
     SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_CPU);
     /* Send buffer sizes... */
@@ -13648,6 +13515,10 @@ void dd_communicate_particles(
     if (neighbours[isourc] < 0)
       continue;
 
+    if (nbr[isourc] > 0) {
+      LOG(3, "DD: Rank %d receiving %d particles from neighbour %d (rank %d)", rank, nbr[isourc], isourc, neighbours[isourc]);
+    }
+
     /* Getting particles from buffer... */
     for (int ip = 0; ip < nbr[isourc]; ip++) {
       memcpy(&particles[ip + api], &recieve_buffers[isourc][ip],
@@ -13687,6 +13558,60 @@ void dd_communicate_particles(
   free(nbr);
 
 }
+
+/*****************************************************************************/
+
+int dd_calc_subdomain_from_coords(
+  double lon, 
+  double lat, 
+  met_t *met, 
+  ctl_t *ctl, 
+  int mpi_size) {
+  
+  /* Wrap longitude to [0, 360) */
+  double wrapped_lon = lon;
+  while (wrapped_lon < 0) wrapped_lon += 360;
+  while (wrapped_lon >= 360) wrapped_lon -= 360;
+  
+  /* Handle polar coordinates by wrapping latitude and adjusting longitude */
+  double wrapped_lat = lat;
+  if (lat > 90) {
+    /* North pole overflow: wrap latitude and flip longitude */
+    wrapped_lat = 180 - lat;
+    wrapped_lon = fmod(wrapped_lon + 180, 360);
+  } else if (lat < -90) {
+    /* South pole overflow: wrap latitude and flip longitude */
+    wrapped_lat = -180 - lat;
+    wrapped_lon = fmod(wrapped_lon + 180, 360);
+  }
+  
+  /* Get global domain ranges */
+  double lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
+  double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
+  double global_lon_min = met->lon[0];
+  double global_lat_min = met->lat[0];
+  
+  /* Calculate subdomain indices */
+  int lon_idx = (int)((wrapped_lon - global_lon_min) * ctl->dd_subdomains_zonal / lon_range);
+  int lat_idx = (int)((wrapped_lat - global_lat_min) * ctl->dd_subdomains_meridional / lat_range);
+  
+  // print wrapped coords, ranges, mins and idxs for debugging
+  printf("DD: Input Lon: %f, Lat: %f | Wrapped Lon: %f, Lat: %f | Lon Range: %f, Lat Range: %f | Lon Min: %f, Lat Min: %f | Lon Idx: %d, Lat Idx: %d\n",
+          lon, lat, wrapped_lon, wrapped_lat, lon_range, lat_range, global_lon_min, global_lat_min, lon_idx, lat_idx);
+
+  /* Clamp to valid ranges */
+  lon_idx = (lon_idx < 0) ? 0 : ((lon_idx >= ctl->dd_subdomains_zonal) ? ctl->dd_subdomains_zonal - 1 : lon_idx);
+  lat_idx = (lat_idx < 0) ? 0 : ((lat_idx >= ctl->dd_subdomains_meridional) ? ctl->dd_subdomains_meridional - 1 : lat_idx);
+  
+  /* Calculate rank from indices */
+  int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
+  
+  /* Ensure rank is within valid range */
+  if (target_rank >= mpi_size) target_rank = mpi_size - 1;
+  if (target_rank < 0) target_rank = 0;
+  
+  return target_rank;
+}
 #endif
 
 /*****************************************************************************/
@@ -13721,8 +13646,8 @@ void dd_assign_rect_subdomains_atm(
 	atm->q[ctl->qnt_subdomain][ip] = mpi_info->rank;
 	atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
       } else {
-	LOG(1, "Warning: Particle %d is outside the domain (lon: %f, lat: %f, subdomain: %d, subdomain bounds: [%f, %f], [%f, %f])", 
-	    ip, atm->lon[ip], atm->lat[ip], mpi_info->rank, met->subdomain_lon_min, met->subdomain_lon_max, met->subdomain_lat_min, met->subdomain_lat_max);
+	WARN("DD: Particle is outside the domain (lon: %f, lat: %f, subdomain: %d, subdomain bounds: [%f, %f], [%f, %f])", 
+	    atm->lon[ip], atm->lat[ip], mpi_info->rank, met->subdomain_lon_min, met->subdomain_lon_max, met->subdomain_lat_min, met->subdomain_lat_max);
 	atm->q[ctl->qnt_subdomain][ip] = -1;
 	atm->q[ctl->qnt_destination][ip] = -1;
       }
@@ -13757,8 +13682,7 @@ void dd_assign_rect_subdomains_atm(
 	lont += 360;
 
       bool left = (mpi_info->rank <= ctl->dd_subdomains_meridional - 1);
-      bool right =
-	(mpi_info->rank >= mpi_info->size - ctl->dd_subdomains_meridional);
+      bool right = (mpi_info->rank >= mpi_info->size - ctl->dd_subdomains_meridional);
 
       bool bound = 0;
       if (left)
@@ -13770,27 +13694,43 @@ void dd_assign_rect_subdomains_atm(
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
+	  LOG(4, "DD: Particle crossing to upper right: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
+	  LOG(4, "DD: Particle crossing to lower right: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
+	  LOG(4, "DD: Particle crossing to upper left: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
+	  LOG(4, "DD: Particle crossing to lower left: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
+	  LOG(4, "DD: Particle crossing to right: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
+	  LOG(4, "DD: Particle crossing to left: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
+	  LOG(4, "DD: Particle crossing downward: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
+	  LOG(4, "DD: Particle crossing upward: from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
@@ -13799,31 +13739,66 @@ void dd_assign_rect_subdomains_atm(
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
+	  LOG(4, "DD: Particle crossing to upper left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
+	  LOG(4, "DD: Particle crossing to lower left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
+	  LOG(4, "DD: Particle crossing to upper right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
+	  LOG(4, "DD: Particle crossing to lower right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
+	  LOG(4, "DD: Particle crossing to left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
+	  LOG(4, "DD: Particle crossing to right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
+	  LOG(4, "DD: Particle crossing downward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
+	  LOG(4, "DD: Particle crossing upward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
+	       mpi_info->rank, mpi_info->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
 	  atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
 	}
+      }
+      
+      /* Handle particles assigned to poles by wrapping coordinates and calculating proper subdomain */
+      if ((int)atm->q[ctl->qnt_destination][ip] < 0) {
+        int calculated_rank = dd_calc_subdomain_from_coords(atm->lon[ip], atm->lat[ip], met, ctl, mpi_info->size);
+        
+        if ((int)atm->q[ctl->qnt_destination][ip] == DD_NPOLE) {
+          LOG(3, "DD: Particle was assigned to NORTH POLE - redirecting to subdomain %d (lon: %f, lat: %f)", 
+               calculated_rank, atm->lon[ip], atm->lat[ip]);
+        } else if ((int)atm->q[ctl->qnt_destination][ip] == DD_SPOLE) {
+          LOG(3, "DD: Particle was assigned to SOUTH POLE - redirecting to subdomain %d (lon: %f, lat: %f)", 
+               calculated_rank, atm->lon[ip], atm->lat[ip]);
+        } else {
+          LOG(2, "DD: Particle had invalid destination %d - redirecting to subdomain %d (lon: %f, lat: %f)", 
+               (int)atm->q[ctl->qnt_destination][ip], calculated_rank, atm->lon[ip], atm->lat[ip]);
+        }
+        
+        /* Assign particle to the calculated subdomain */
+        atm->q[ctl->qnt_destination][ip] = calculated_rank;
       }
     }
 #ifdef _OPENACC
@@ -13992,6 +13967,18 @@ void dd_sort(
 
   /* Reset sizes... */
   *nparticles = nparticlest;
+  
+  /* Count particles with -1 subdomain (these will be effectively lost) */
+  int nlost = 0;
+  for (int ip = 0; ip < np; ip++)
+    if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
+      nlost++;
+  
+  if (nlost > 0) {
+    WARN("DD: Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)", 
+         *rank, nlost, npt, nparticlest, np);
+  }
+  
   atm->np = npt;
 #ifdef _OPENACC
 #pragma acc update device(atm->np)

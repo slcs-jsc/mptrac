@@ -68,8 +68,8 @@ particles_subdomain_lat_stride=4    # number of particles in latitudinal directi
 grid_lon_start=0                    # starting longitude of the grid for the atmospheric initialization
 grid_lon_d=1                        # longitude direction (1 or -1)
 grid_lon_size=360                   # size of the grid for the atmospheric initialization in longitudinal direction
-grid_lat_start=-90                  # starting latitude of the grid for the atmospheric initialization
-grid_lat_d=1                        # latitude direction (1 or -1)
+grid_lat_start=90                   # starting latitude of the grid for the atmospheric initialization
+grid_lat_d=-1                       # latitude direction (1 or -1)
 grid_lat_size=180                   # size of the grid for the atmospheric initialization in latitudinal direction
 
 # Set meteo file parameters
@@ -87,8 +87,8 @@ met_grid_nz=60          # number of vertical levels of meteo files
 dex_glob=364            # allocated size of meteo grid in longitudinal direction
 dey_glob=186            # allocated size of meteo grid in latitudinal direction
 dez_glob=90             # allocated size of meteo grid in vertical direction
-wind_alpha=10           # angle for wind rotation  in degrees
-wind_speed=38.5876601   # wind speed in m/s
+wind_alpha=90           # angle for wind rotation  in degrees
+wind_speed=50           # wind speed in m/s
 
 # Calculate derived parameters
 processes=$((domains_lon * domains_lat))
@@ -202,8 +202,8 @@ echo "[INFO] Create initialization files for each subdomain"
 for i in $(seq 0 $((processes-1))); do
     mkdir -p data/data.$i
 
-    ilat=$(($i % domains_lat))
-    ilon=$(($i / domains_lon))
+    ilat=$((i % domains_lat))
+    ilon=$((i / domains_lon))
 
     # Calculate floating point coordinates
     init_lon0=$(echo "scale=6; $grid_lon_start + $grid_lon_d * ($ilon * $subgrid_lon_size + $subgrid_pos_lon_offset)" | bc)
@@ -310,6 +310,7 @@ WIND_U0 = ${wind_speed}
 WIND_U1 = ${wind_speed}
 WIND_W0 = 0
 WIND_ALPHA = ${wind_alpha}
+WIND_LAT_REVERSE = 1
 EOF
 
 for i in {0..6}; do

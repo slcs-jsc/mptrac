@@ -72,6 +72,8 @@ int main(
   const double w0 = scan_ctl(argv[1], argc, argv, "WIND_W0", -1, "0", NULL);
   const double alpha =
     scan_ctl(argv[1], argc, argv, "WIND_ALPHA", -1, "0.0", NULL);
+  const int lat_reverse =
+    (int) scan_ctl(argv[1], argc, argv, "WIND_LAT_REVERSE", -1, "0", NULL);
 
   /* Check dimensions... */
   if (nx < 1 || nx > EX_GLOB)
@@ -118,7 +120,7 @@ int main(
   for (int ix = 0; ix < nx; ix++)
     dataLon[ix] = 360.0 / nx * (double) ix;
   for (int iy = 0; iy < ny; iy++)
-    dataLat[iy] = 180.0 / (ny - 1) * (double) iy - 90;
+    dataLat[iy] = (lat_reverse ? - (180.0 / (ny - 1) * (double) iy - 90) : (180.0 / (ny - 1) * (double) iy - 90));
   for (int iz = 0; iz < nz; iz++)
     dataZ[iz] = 100. * P(LIN(0.0, z0, nz - 1.0, z1, iz));
 

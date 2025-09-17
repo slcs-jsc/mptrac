@@ -47,12 +47,12 @@ for ind, data_path_1 in enumerate(np.sort(glob(data_paths_files_data0))):
 
 	for idx in dublicates:
 		mask = ( atm1["idx"] == idx )
-		
+	
 	atm1 = atm1.sortby("idx")
 	
-	if init:
-		subdomains = np.array(atm1["subdomain"])
-		init = False
+	#if init:
+	subdomains = np.array(atm1["subdomain"])
+	#	init = False
 
 	# Plot domains...
 	plt.figure()
@@ -100,6 +100,7 @@ for ind, data_path_1 in enumerate(np.sort(glob(data_paths_files_data0))):
 			ndm+=1
 	
 	mask = (subdomains >=0)
+	print(np.sum(mask))
 	atm1["lon"][mask]+=180
 	
 	sdd=5.0

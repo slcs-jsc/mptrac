@@ -1,6 +1,6 @@
 
 Massive-Parallel Trajectory Calculations (MPTRAC)
-(executable: /p/data1/slmet/model_data/mptrac/projects/domain_decomp/henke1/mptrac_hands_on/mptrac/src/wind | version: v3.0-314-gc2cc92-dirty | compiled: Sep 16 2025, 10:03:50)
+(executable: /p/data1/slmet/model_data/mptrac/projects/domain_decomp/henke1/mptrac_hands_on/mptrac/src/wind | version: v3.0-310-ge4d666-dirty | compiled: Sep 17 2025, 10:21:46)
 
 NQ = 0
 ADVECT_VERT_COORD = 0
@@ -258,7 +258,7 @@ WIND_NY = 181
 WIND_NZ = 60
 WIND_Z0 = 0
 WIND_Z1 = 60
-WIND_U0 = 38.5876601
-WIND_U1 = 38.5876601
+WIND_U0 = 50
+WIND_U1 = 50
 WIND_W0 = 0
-WIND_ALPHA = 10
+WIND_ALPHA = 90

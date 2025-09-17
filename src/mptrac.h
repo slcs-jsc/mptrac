@@ -9419,6 +9419,13 @@ void dd_communicate_particles(
  */
 
 #ifdef DD
+int dd_calc_subdomain_from_coords(
+  double lon,
+  double lat,
+  met_t * met,
+  ctl_t * ctl,
+  int mpi_size);
+
 void dd_assign_rect_subdomains_atm(
   atm_t * atm,
   met_t * met,

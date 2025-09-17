@@ -30,6 +30,7 @@ Followings are some optional parameters for controlling the release of air parce
 * INIT_VMR: Volume mixing ratio of each air parcel [ppv]. The default value is 0.
 * INIT_ST/INIT_SZ/INIT_SLON/INIT_SLAT: If this parameter is set to non-zero value, the air parcels are released with a Gaussian distribution in time/altitude/longitude/latitude. The parameter value represents the full width at half maximum. 
 * INIT_UT/INIT_UZ/INIT_ULON/INIT_ULAT: If this parameter is set to non-zero value, the air parcels are released with a uniform distribution in time/altitude/longitude/latitude. The parameter value represents release range.
-* INIT_EVENLY: If this parameter is set to 1, the number of air parcels released will be weighted by the cosine of latitude so that the air parcels are evenly distributed globally. 
+* INIT_EVENLY: If this parameter is set to 1, the number of air parcels released will be weighted by the cosine of latitude so that the air parcels are evenly distributed globally.
+* INIT_IDX_OFFSET: Offset value added to air parcel indices. This parameter allows customization of the starting index for air parcels, which can be useful for domain decomposition or when combining multiple initialization runs. The default value is 0. 
 
 **Note:** Instead of using the control file the configuration parameters can also be appended to the function call. 
