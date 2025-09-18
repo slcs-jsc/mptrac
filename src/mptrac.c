@@ -4377,7 +4377,7 @@ void mptrac_free(
   met_t *met0,
   met_t *met1,
   atm_t *atm,
-  mpi_info_t *mpi_info) {
+  dd_t *dd) {
 #else
 void mptrac_free(
   ctl_t *ctl,
@@ -4405,7 +4405,7 @@ void mptrac_free(
 
   /* Free MPI datatype... */
 #ifdef DD
-  MPI_Type_free(&mpi_info->MPI_Particle);
+  MPI_Type_free(&dd->MPI_Particle);
 #endif
 }
 
@@ -5677,7 +5677,7 @@ void mptrac_run_timestep(
   met_t **met1,
   atm_t *atm,
   double t,
-  mpi_info_t *mpi_info) {
+  dd_t *dd) {
 #else
 void mptrac_run_timestep(
   ctl_t *ctl,
@@ -5795,7 +5795,7 @@ void mptrac_run_timestep(
   /* Domain decomposition... */
 #ifdef DD
   if (ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal > 1)
-    module_dd(ctl, atm, cache, mpi_info, met0);
+    module_dd(ctl, atm, cache, dd, met0);
 #endif
 
   /* KPP chemistry... */
@@ -13345,14 +13345,14 @@ void dd_register_MPI_type_particle(
 /*****************************************************************************/
 
 #ifdef DD
-void dd_get_rect_neighbour(const ctl_t ctl, mpi_info_t *mpi_info) {
+void dd_get_rect_neighbour(const ctl_t ctl, dd_t *dd) {
   SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
   
-  const int rank = mpi_info->rank;
-  const int size = mpi_info->size;
+  const int rank = dd->rank;
+  const int size = dd->size;
   const int m = ctl.dd_subdomains_meridional;
   //const int z = ctl.dd_subdomains_zonal;
-  int *nb = mpi_info->neighbours;
+  int *nb = dd->neighbours;
 
   nb[0] = (size + rank - m) % size;                                         // left
   nb[3] = (rank + m) % size;                                                // right
@@ -13621,16 +13621,16 @@ void dd_assign_rect_subdomains_atm(
   atm_t *atm,
   met_t *met,
   ctl_t *ctl,
-  mpi_info_t *mpi_info,
+  dd_t *dd,
   int init) {
 
   SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
 
   if (init) {
 #ifdef _OPENACC
-#pragma acc enter data create(mpi_info)
-#pragma acc update device(mpi_info->rank)
-#pragma acc data present(atm, ctl, mpi_info, met)
+#pragma acc enter data create(dd)
+#pragma acc update device(dd->rank)
+#pragma acc data present(atm, ctl, dd, met)
 #pragma acc parallel loop independent gang vector
 #endif
     for (int ip = 0; ip < atm->np; ip++) {
@@ -13643,25 +13643,25 @@ void dd_assign_rect_subdomains_atm(
       if (lont >= met->subdomain_lon_min && lont < met->subdomain_lon_max
 	  && atm->lat[ip] >= met->subdomain_lat_min
 	  && atm->lat[ip] < met->subdomain_lat_max) {
-	atm->q[ctl->qnt_subdomain][ip] = mpi_info->rank;
-	atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
+	atm->q[ctl->qnt_subdomain][ip] = dd->rank;
+	atm->q[ctl->qnt_destination][ip] = dd->rank;
       } else {
 	WARN("DD: Particle is outside the domain (lon: %f, lat: %f, subdomain: %d, subdomain bounds: [%f, %f], [%f, %f])", 
-	    atm->lon[ip], atm->lat[ip], mpi_info->rank, met->subdomain_lon_min, met->subdomain_lon_max, met->subdomain_lat_min, met->subdomain_lat_max);
+	    atm->lon[ip], atm->lat[ip], dd->rank, met->subdomain_lon_min, met->subdomain_lon_max, met->subdomain_lat_min, met->subdomain_lat_max);
 	atm->q[ctl->qnt_subdomain][ip] = -1;
 	atm->q[ctl->qnt_destination][ip] = -1;
       }
     }
 #ifdef _OPENACC
-#pragma acc exit data delete(mpi_info)
+#pragma acc exit data delete(dd)
 #endif
   } else {
 
     /* Classify air parcels into subdomain... */
 #ifdef _OPENACC
-#pragma acc enter data create(mpi_info)
-#pragma acc update device(mpi_info->neighbours[:DD_NNMAX], mpi_info->rank, mpi_info->size)
-#pragma acc data present(atm, met, ctl, mpi_info)
+#pragma acc enter data create(dd)
+#pragma acc update device(dd->neighbours[:DD_NNMAX], dd->rank, dd->size)
+#pragma acc data present(atm, met, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
     for (int ip = 0; ip < atm->np; ip++) {
@@ -13681,8 +13681,8 @@ void dd_assign_rect_subdomains_atm(
       if (lont < 0)
 	lont += 360;
 
-      bool left = (mpi_info->rank <= ctl->dd_subdomains_meridional - 1);
-      bool right = (mpi_info->rank >= mpi_info->size - ctl->dd_subdomains_meridional);
+      bool left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
+      bool right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
 
       bool bound = 0;
       if (left)
@@ -13693,98 +13693,98 @@ void dd_assign_rect_subdomains_atm(
       if (!bound) {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
 	  LOG(4, "DD: Particle crossing to upper right: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[5], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
 	  LOG(4, "DD: Particle crossing to lower right: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[4], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
 	  LOG(4, "DD: Particle crossing to upper left: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[2], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
 	  LOG(4, "DD: Particle crossing to lower left: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[1], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
 	  LOG(4, "DD: Particle crossing to right: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[3], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
 	  LOG(4, "DD: Particle crossing to left: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[0], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
 	  LOG(4, "DD: Particle crossing downward: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[7], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
 	  LOG(4, "DD: Particle crossing upward: from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[6], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
+	  atm->q[ctl->qnt_destination][ip] = dd->rank;
 	}
       } else {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[2];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
 	  LOG(4, "DD: Particle crossing to upper left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[2], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[1];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
 	  LOG(4, "DD: Particle crossing to lower left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[1], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[5];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
 	  LOG(4, "DD: Particle crossing to upper right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[5], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[4];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
 	  LOG(4, "DD: Particle crossing to lower right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[4], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[0];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
 	  LOG(4, "DD: Particle crossing to left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[0], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[3];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
 	  LOG(4, "DD: Particle crossing to right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[3], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[7];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
 	  LOG(4, "DD: Particle crossing downward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[7], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->neighbours[6];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
 	  LOG(4, "DD: Particle crossing upward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
-	       mpi_info->rank, mpi_info->neighbours[6], atm->lon[ip], atm->lat[ip]);
+	       dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
-	  atm->q[ctl->qnt_destination][ip] = mpi_info->rank;
+	  atm->q[ctl->qnt_destination][ip] = dd->rank;
 	}
       }
       
       /* Handle particles assigned to poles by wrapping coordinates and calculating proper subdomain */
       if ((int)atm->q[ctl->qnt_destination][ip] < 0) {
-        int calculated_rank = dd_calc_subdomain_from_coords(atm->lon[ip], atm->lat[ip], met, ctl, mpi_info->size);
+        int calculated_rank = dd_calc_subdomain_from_coords(atm->lon[ip], atm->lat[ip], met, ctl, dd->size);
         
         if ((int)atm->q[ctl->qnt_destination][ip] == DD_NPOLE) {
           LOG(3, "DD: Particle was assigned to NORTH POLE - redirecting to subdomain %d (lon: %f, lat: %f)", 
@@ -13802,7 +13802,7 @@ void dd_assign_rect_subdomains_atm(
       }
     }
 #ifdef _OPENACC
-#pragma acc exit data delete(mpi_info)
+#pragma acc exit data delete(dd)
 #endif
   }
 }
@@ -13813,24 +13813,24 @@ void dd_assign_rect_subdomains_atm(
 #ifdef DD
 void dd_init(
   ctl_t *ctl,
-  mpi_info_t *mpi_info,
+  dd_t *dd,
   atm_t *atm,
   met_t **met,
   int *dd_init_flg) {
 
   /* Check if enough tasks are requested... */
-  if (mpi_info->size !=
+  if (dd->size !=
       ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal)
     ERRMSG("The number of tasks and subdomains is not identical.");
 
   /* Register the MPI_Particle data type... */
-  dd_register_MPI_type_particle(&mpi_info->MPI_Particle);
+  dd_register_MPI_type_particle(&dd->MPI_Particle);
 
   /* Define grid neighbours ... */
-  dd_get_rect_neighbour(*ctl, mpi_info);
+  dd_get_rect_neighbour(*ctl, dd);
 
   /* Check if particles are in subdomain... */
-  dd_assign_rect_subdomains_atm(atm, *met, ctl, mpi_info, 1);
+  dd_assign_rect_subdomains_atm(atm, *met, ctl, dd, 1);
 
   *dd_init_flg = 1;
 }
@@ -13843,7 +13843,7 @@ void module_dd(
   ctl_t *ctl,
   atm_t *atm,
   cache_t *cache,
-  mpi_info_t *mpi_info,
+  dd_t *dd,
   met_t **met) {
 
   /* Initialize particles locally... */
@@ -13852,19 +13852,19 @@ void module_dd(
   ALLOC(particles, particle_t, DD_NPART);
 
   /* Assign particles to new subdomains... */
-  dd_assign_rect_subdomains_atm(atm, *met, ctl, mpi_info, 0);
+  dd_assign_rect_subdomains_atm(atm, *met, ctl, dd, 0);
 
   /* Sorting particles according to location and target rank... */
-  dd_sort(ctl, *met, atm, &nparticles, &mpi_info->rank);
+  dd_sort(ctl, *met, atm, &nparticles, &dd->rank);
 
   /* Transform from struct of array to array of struct... */
-  dd_atm2particles(atm, particles, ctl, &nparticles, cache, mpi_info->rank);
+  dd_atm2particles(atm, particles, ctl, &nparticles, cache, dd->rank);
 
     /********************* CPU region start ***********************************/
 
   /* Perform the communication... */
-  dd_communicate_particles(particles, &nparticles, mpi_info->MPI_Particle,
-			   mpi_info->neighbours, ctl->dd_nbr_neighbours,
+  dd_communicate_particles(particles, &nparticles, dd->MPI_Particle,
+			   dd->neighbours, ctl->dd_nbr_neighbours,
 			   *ctl);
 
     /********************* CPU region end *************************************/

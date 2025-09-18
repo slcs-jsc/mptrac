@@ -43,7 +43,7 @@ int main(
   met_t *met0, *met1;
 
 #ifdef DD
-  mpi_info_t mpi_info;
+  dd_t dd;
 #endif
 
   FILE *dirlist;
@@ -59,8 +59,8 @@ int main(
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
 #ifdef DD
-  mpi_info.rank = rank;
-  mpi_info.size = size;
+  dd.rank = rank;
+  dd.size = size;
 #endif
 
 #endif
@@ -134,12 +134,12 @@ int main(
       // TODO: Remove dd_init_flg ...
       static int dd_init_flg = 0;
       if (t == ctl->t_start || !dd_init_flg)
-	dd_init(ctl, &mpi_info, atm, &met0, &dd_init_flg);
+	dd_init(ctl, &dd, atm, &met0, &dd_init_flg);
 #endif
 
       /* Run a single time step... */
 #ifdef DD
-      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &mpi_info);
+      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &dd);
 #else
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
 #endif
@@ -168,7 +168,7 @@ int main(
 
     /* Free memory... */
 #ifdef DD
-    mptrac_free(ctl, cache, clim, met0, met1, atm, &mpi_info);
+    mptrac_free(ctl, cache, clim, met0, met1, atm, &dd);
 #else
     mptrac_free(ctl, cache, clim, met0, met1, atm);
 #endif

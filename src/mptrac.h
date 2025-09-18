@@ -3309,30 +3309,6 @@ typedef struct {
 
 } particle_t;
 
-/**
- * @brief MPI information data.
- *
- * This structure contains information related to MPI (Message Passing
- * Interface), including the rank and size of the node, and additional
- * MPI-specific data when the domain decomposition is defined.
- */
-typedef struct {
-
-  /*! Rank of node. */
-  int rank;
-
-  /*! Size of node. */
-  int size;
-
-#ifdef DD
-  /*! Rank of neighbouring nodes. */
-  int neighbours[DD_NNMAX];
-
-  /*! MPI type for the particle. */
-  MPI_Datatype MPI_Particle;
-#endif
-
-} mpi_info_t;
 
 /**
  * @brief Cache data structure.
@@ -3755,6 +3731,45 @@ typedef struct {
   int np_glob;
 
 } met_t;
+
+
+/*!
+ * @brief Domain decomposition data structure.
+ *
+ * This structure holds information about the domain decomposition and MPI
+ */
+typedef struct {
+  
+  /* ------------------------------------------------------------
+     MPI Information
+     ------------------------------------------------------------ */
+  /*! Rank of node. */
+  int rank;
+
+  /*! Size of node. */
+  int size;
+  
+#ifdef DD
+  /*! Rank of neighbouring nodes. */
+  int neighbours[DD_NNMAX];
+
+  /*! MPI type for the particle. */
+  MPI_Datatype MPI_Particle;
+  
+   /* ------------------------------------------------------------
+     Caches
+     ------------------------------------------------------------ */   
+     
+     
+  /* ------------------------------------------------------------
+     Properties of subdomains
+     ------------------------------------------------------------ */
+  
+  
+  
+#endif
+
+} dd_t;
 
 /* ------------------------------------------------------------
    OpenACC routines...
@@ -6149,7 +6164,7 @@ void mptrac_free(
   met_t * met0,
   met_t * met1,
   atm_t * atm,
-  mpi_info_t * mpi_info);
+  dd_t * dd);
 #else
 void mptrac_free(
   ctl_t * ctl,
@@ -6388,7 +6403,7 @@ int mptrac_read_met(
  * @param met1  Pointer to the next meteorological data structure.
  * @param atm   Pointer to the atmosphere structure containing air parcel data.
  * @param t     Current simulation time in seconds.
- * @param mpi_info MPI information required for the domain decomposition.
+ * @param dd MPI information required for the domain decomposition.
  *
  * @author Lars Hoffmann
  */
@@ -6401,7 +6416,7 @@ void mptrac_run_timestep(
   met_t ** met1,
   atm_t * atm,
   double t,
-  mpi_info_t * mpi_info);
+  dd_t * dd);
 #else
 void mptrac_run_timestep(
   ctl_t * ctl,
@@ -9333,14 +9348,14 @@ void dd_register_MPI_type_particle(
  * between processes arranged in a rectangular grid.
  *
  * @param ctl A control structure (`ctl_t`) containing configuration parameters for subdomains.
- * @param mpi_info A pointer to an `mpi_info_t` structure where neighbour information will be stored.
+ * @param dd A pointer to an `dd_t` structure where neighbour information will be stored.
  *
  * The function performs the following steps:
  * - Uses conditional logic to determine the neighbours based on the current rank and subdomain configuration.
- * - Assigns neighbour ranks to the `neighbours` array in the `mpi_info` structure.
+ * - Assigns neighbour ranks to the `neighbours` array in the `dd` structure.
  * - Handles edge cases for processes at the boundaries of the grid, such as poles or edges.
  *
- * @note This function assumes that the `ctl` and `mpi_info` structures are properly initialized.
+ * @note This function assumes that the `ctl` and `dd` structures are properly initialized.
  *       The function considers different configurations for processes at the boundaries and
  *       handles them appropriately to ensure correct neighbour assignment.
  *
@@ -9349,7 +9364,7 @@ void dd_register_MPI_type_particle(
 #ifdef DD
 void dd_get_rect_neighbour(
   const ctl_t ctl,
-  mpi_info_t * mpi_info);
+  dd_t * dd);
 #endif
 
 /**
@@ -9402,7 +9417,7 @@ void dd_communicate_particles(
  * @param atm A pointer to an `atm_t` structure containing atmospheric data.
  * @param met A pointer to a `met_t` structure containing meteorological data and subdomain boundaries.
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information, including rank and neighbours.
+ * @param dd A pointer to an `dd_t` structure containing MPI information, including rank and neighbours.
  * @param init An integer flag indicating whether this is an initialization step.
  *
  * The function performs the following steps:
@@ -9412,7 +9427,7 @@ void dd_communicate_particles(
  *   updating the destination indices based on the particle's position relative to the subdomain boundaries.
  * - Uses OpenACC directives for parallel processing to enhance performance.
  *
- * @note This function assumes that the `atm`, `met`, `ctl`, and `mpi_info` structures are properly initialized.
+ * @note This function assumes that the `atm`, `met`, `ctl`, and `dd` structures are properly initialized.
  *       The function handles both initialization and regular assignment of subdomains.
  *
  * @author Jan Clemens
@@ -9430,7 +9445,7 @@ void dd_assign_rect_subdomains_atm(
   atm_t * atm,
   met_t * met,
   ctl_t * ctl,
-  mpi_info_t * mpi_info,
+  dd_t * dd,
   int init);
 #endif
 
@@ -9443,7 +9458,7 @@ void dd_assign_rect_subdomains_atm(
  * grid neighbours, and assigns particles to their respective subdomains.
  *
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information.
+ * @param dd A pointer to an `dd_t` structure containing MPI information.
  * @param atm A pointer to an `atm_t` structure containing atmospheric data.
  * @param met A pointer to a pointer of a `met_t` structure containing meteorological data.
  * @param dd_init_flg A pointer to an integer flag indicating whether domain decomposition has been initialized.
@@ -9455,7 +9470,7 @@ void dd_assign_rect_subdomains_atm(
  * - Assigns particles to their respective subdomains using `dd_assign_rect_subdomains_atm`.
  * - Sets the initialization flag to indicate successful initialization.
  *
- * @note This function assumes that the `ctl`, `mpi_info`, `atm`, and `met` structures are properly initialized.
+ * @note This function assumes that the `ctl`, `dd`, `atm`, and `met` structures are properly initialized.
  *       The function is typically called at the beginning of a parallel processing task to set up the environment.
  *
  * @author Jan Clemens
@@ -9463,7 +9478,7 @@ void dd_assign_rect_subdomains_atm(
 #ifdef DD
 void dd_init(
   ctl_t * ctl,
-  mpi_info_t * mpi_info,
+  dd_t * dd,
   atm_t * atm,
   met_t ** met,
   int *dd_init);
@@ -9479,7 +9494,7 @@ void dd_init(
  * @param ctl A pointer to a `ctl_t` structure containing control parameters.
  * @param atm A pointer to an `atm_t` structure containing atmospheric data.
  * @param cache A pointer to a `cache_t` structure used for storing intermediate values.
- * @param mpi_info A pointer to an `mpi_info_t` structure containing MPI information.
+ * @param dd A pointer to an `dd_t` structure containing MPI information.
  * @param met A pointer to a pointer of a `met_t` structure containing meteorological data.
  *
  * The function performs the following steps:
@@ -9491,7 +9506,7 @@ void dd_init(
  * - Transforms particle data back to atmospheric data using `dd_particles2atm`.
  * - Frees the local particle array after processing.
  *
- * @note This function assumes that the `ctl`, `atm`, `cache`, `mpi_info`, and `met` structures are properly initialized.
+ * @note This function assumes that the `ctl`, `atm`, `cache`, `dd`, and `met` structures are properly initialized.
  *       It is designed to work in a parallel processing environment using MPI.
  *
  * @author Jan Clemens
@@ -9501,7 +9516,7 @@ void module_dd(
   ctl_t * ctl,
   atm_t * atm,
   cache_t * cache,
-  mpi_info_t * mpi_info,
+  dd_t * dd,
   met_t ** met);
 #endif
 
