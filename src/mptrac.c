@@ -8083,10 +8083,10 @@ int read_met_nc_dd(
   int ncid;
 
   #ifdef MPI
-    int nc_result = nc_open_par(filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid);
-    if (nc_result != NC_NOERR) {
+    int result = nc_open_par(filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid);
+    if (result != NC_NOERR) {
       const char* error_msg;
-      switch(nc_result) {
+      switch(result) {
         case NC_ENOPAR: error_msg = "Library was not built with parallel I/O features"; break;
         case NC_EPERM: error_msg = "No permission to access the file"; break;
         case NC_ENOTBUILT: error_msg = "Library was not built with NETCDF4 or PnetCDF"; break;
@@ -8095,9 +8095,9 @@ int read_met_nc_dd(
         case NC_ENOMEM: error_msg = "Out of memory"; break;
         case NC_EHDFERR: error_msg = "HDF5 error"; break;
         case NC_EDIMMETA: error_msg = "Error in netCDF-4 dimension metadata"; break;
-        default: error_msg = nc_strerror(nc_result); break;
+        default: error_msg = nc_strerror(result); break;
       }
-      WARN("Cannot open file for parallel access! NetCDF error: %s (code: %d)", error_msg, nc_result);
+      WARN("Cannot open file for parallel access! NetCDF error: %s (code: %d)", error_msg, result);
       return 0;
     }
   #else
