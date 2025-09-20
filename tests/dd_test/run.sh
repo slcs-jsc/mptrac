@@ -11,7 +11,7 @@ set -e
 # Arguments can be provided in any order
 
 #################################################################################################################
-# Setup directory structure, OMP, modules, library paths, parse arguments
+# Setup directory structure, parse arguments
 #################################################################################################################
 
 work_dir=$(pwd)
@@ -65,28 +65,20 @@ else
     echo "[INFO] Running in non-HPC mode"
 fi
 
-# Set environment
-export LD_LIBRARY_PATH=$mptrac_dir/libs/build/lib/:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=1
-export OMP_PROC_BIND=true
-export OMP_PLACES=sockets
-#export LANG=C
-#export LC_ALL=C
-
 #################################################################################################################
 # Define simulation parameters
 #################################################################################################################
 
-ntasks_per_node=4       # fixed number of tasks per node
+ntasks_per_node=9       # fixed number of tasks per node
 
-use_gpu=1                           # enable GPU support in MPTRAC compilation (0=off, 1=on)
-cpus_per_task=12                    # number of CPUs per task for HPC mode
+use_gpu=0                           # enable GPU support in MPTRAC compilation (0=off, 1=on)
+cpus_per_task=1                     # number of CPUs per task
 
 domains_lon=3                       # number of subdomains in longitudinal direction
 domains_lat=3                       # number of subdomains in latitudinal direction
 
 # Set parameters for atmospheric initialization
-use_evenly_distributed=1            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
+use_evenly_distributed=0            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
 particles_subdomain_lon_stride=4    # number of particles in longitudinal direction per subdomain
 particles_subdomain_lat_stride=4    # number of particles in latitudinal direction per subdomain
 grid_lon_start=0                    # starting longitude of the grid for the atmospheric initialization
@@ -105,7 +97,7 @@ dt_mod=600              # model time step
 met_dt_out=3600         # output time interval for meteo files
 
 # Set simulation time parameters
-simulation_hours=12     # duration of simulation in hours
+simulation_hours=6      # duration of simulation in hours
 ntimesteps=$((simulation_hours * 3600 / dt_met + 1))  # number of time steps (including initial time)
 atm_type=3              # original atmospheric data type
 met_grid_nx=360         # number of grid points in longitudinal direction of meteo files
@@ -159,28 +151,45 @@ echo "[INFO] dey: $dey"
 # Compile MPTRAC with domain decomposition
 #################################################################################################################
 
+# Set environment
+export LD_LIBRARY_PATH=$mptrac_dir/libs/build/lib/:$LD_LIBRARY_PATH
+export OMP_NUM_THREADS=$cpus_per_task
+export OMP_PROC_BIND=true
+export OMP_PLACES=sockets
+#export LANG=C
+#export LC_ALL=C
+
 defs="-DNP=${npmax} -DEX_GLOB=${dex_glob} -DEY_GLOB=${dey_glob} -DEP=${dez_glob} -DEX=${dex} -DEY=${dey} -DNQ=5"
 
 echo "[INFO] defs: $defs"
 echo "[INFO] LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
 
+# Set compiler based on mode
+if [[ "$hpc_mode" == "hpc" ]]; then
+    compiler="nvc"
+    echo "[INFO] Using nvc compiler (HPC mode)"
+else
+    compiler="gcc"
+    echo "[INFO] Using gcc compiler (non-HPC mode)"
+fi
+
 # Check if compilation should be skipped
 if [[ "$compile" != "compile" ]]; then
     echo "[INFO] Skipping compilation (default behavior - use 'compile' argument to enable)"
 else
-    echo "[INFO] Compile MPTRAC with domain decomposition"
+    echo "[INFO] Compile MPTRAC with domain decomposition using $compiler"
     cd $mptrac_dir/src
     make clean
     
     # First compile all executables with GPU support (including trac)
-    echo "[INFO] Compiling all executables with GPU support"
-    make -j8 DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=nvc DEFINES="$defs" || exit 1
+    echo "[INFO] Compiling all executables"
+    make -j DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
     
     # Then recompile atm_init without GPU support (atm_init doesn't work with GPU=1)
     echo "[INFO] Recompiling atm_init without GPU support"
     rm -f $mptrac_dir/src/atm_init
     rm -f $mptrac_dir/src/wind
-    make atm_init wind DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=nvc DEFINES="$defs" || exit 1
+    make atm_init wind DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
 fi
 
 #################################################################################################################
@@ -408,7 +417,7 @@ else
                 $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
         fi
     else
-        mpirun -np $ntasks $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > $work_dir/data/mpirun_output.log 2>&1
+        mpirun --oversubscribe -np $ntasks $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > $work_dir/data/mpirun_output.log 2>&1
     fi
 fi
 

@@ -273,6 +273,9 @@ ifeq ($(DD),1)
   ifeq ($(MPI),0)
     $(error The domain decomposition does not work without MPI)
   endif
+  ifeq ($(THRUST),0)
+    $(error The domain decomposition does not work without THRUST)
+  endif
 endif
 
 # -----------------------------------------------------------------------------
