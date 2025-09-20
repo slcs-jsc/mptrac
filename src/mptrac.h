@@ -9426,6 +9426,9 @@ int dd_calc_subdomain_from_coords(
   ctl_t * ctl,
   int mpi_size);
 
+int dd_is_periodic_longitude(
+  met_t * met);
+
 void dd_assign_rect_subdomains_atm(
   atm_t * atm,
   met_t * met,

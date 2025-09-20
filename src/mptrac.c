@@ -7630,7 +7630,18 @@ void read_met_nc_grid_dd(
   }
 
   /* Get the range of the entire meteodata... */
-  double lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
+  /* Handle both periodic (global) and non-periodic (regional) longitude grids */
+  double lon_range;
+  if (dd_is_periodic_longitude(met)) {
+    /* For global grids with periodic boundaries, use full 360 degrees */
+    lon_range = 360.0;
+    LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
+  } else {
+    /* For regional grids, use the actual data range */
+    lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
+    LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
+  }
+  
   double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
 
   /* Focus on subdomain longitutes and latitudes... */
@@ -13561,6 +13572,27 @@ void dd_communicate_particles(
 
 /*****************************************************************************/
 
+int dd_is_periodic_longitude(
+  met_t *met) {
+  
+  /* Check if we have at least 2 longitude points */
+  if (met->nx_glob < 2) {
+    return 0;  /* Cannot determine periodicity with less than 2 points */
+  }
+  
+  /* Calculate the longitude spacing */
+  double lon_spacing = met->lon[1] - met->lon[0];
+  
+  /* Check if the total range plus one spacing equals 360 degrees
+     This is the same logic as used in read_met_periodic() */
+  double total_range = met->lon[met->nx_glob - 1] - met->lon[0] + lon_spacing;
+  
+  /* Return 1 if periodic (global), 0 if not periodic (regional) */
+  return (fabs(total_range - 360.0) < 0.01);
+}
+
+/*****************************************************************************/
+
 int dd_calc_subdomain_from_coords(
   double lon, 
   double lat, 
@@ -13586,7 +13618,18 @@ int dd_calc_subdomain_from_coords(
   }
   
   /* Get global domain ranges */
-  double lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
+  /* Handle both periodic (global) and non-periodic (regional) longitude grids */
+  double lon_range;
+  if (dd_is_periodic_longitude(met)) {
+    /* For global grids with periodic boundaries, use full 360 degrees */
+    lon_range = 360.0;
+    LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
+  } else {
+    /* For regional grids, use the actual data range */
+    lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
+    LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
+  }
+  
   double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
   double global_lon_min = met->lon[0];
   double global_lat_min = met->lat[0];
