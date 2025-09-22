@@ -440,6 +440,7 @@ MODULE mptrac_struct
      REAL(c_double) :: vtk_scale
      REAL(c_double) :: vtk_offset
      INTEGER(c_int) :: vtk_sphere 
+     INTEGER(c_int) :: dd
      INTEGER(c_int) :: dd_subdomains_zonal
      INTEGER(c_int) :: dd_subdomains_meridional
      INTEGER(c_int) :: dd_nbr_neighbours
