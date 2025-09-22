@@ -3689,7 +3689,51 @@ typedef struct {
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
 
-  // TODO: Integrate this into a  grid_t ?
+  // TODO: To be removed soon...
+
+  /*! Global sizes of meteo data. */
+  int nx_glob;
+
+  /*! Global sizes of meteo data. */
+  int ny_glob;
+
+  /*! Global sizes of meteo data. */
+  int np_glob;
+
+} met_t;
+
+
+/*!
+ * @brief Domain decomposition data structure.
+ *
+ * This structure holds information about the domain decomposition and MPI.
+ */
+typedef struct {
+  
+  /* ------------------------------------------------------------
+     MPI Information
+     ------------------------------------------------------------ */
+  /*! Rank of node. */
+  int rank;
+
+  /*! Size of node. */
+  int size;
+  
+#ifdef DD
+  /*! Rank of neighbouring nodes. */
+  int neighbours[DD_NNMAX];
+
+  /*! MPI type for the particle. */
+  MPI_Datatype MPI_Particle;
+  
+   /* ------------------------------------------------------------
+     Caches
+     ------------------------------------------------------------ */   
+     
+     
+  /* ------------------------------------------------------------
+     Properties of subdomains
+     ------------------------------------------------------------ */
 
   /*! Rectangular grid limit of subdomain. */
   double subdomain_lon_max;
@@ -3719,53 +3763,7 @@ typedef struct {
   int halo_offset_start;
 
   /* Hyperslab of boundary halos count. */
-  int halo_offset_end;
-
-  /*! Global sizes of meteo data. */
-  int nx_glob;
-
-  /*! Global sizes of meteo data. */
-  int ny_glob;
-
-  /*! Global sizes of meteo data. */
-  int np_glob;
-
-} met_t;
-
-
-/*!
- * @brief Domain decomposition data structure.
- *
- * This structure holds information about the domain decomposition and MPI
- */
-typedef struct {
-  
-  /* ------------------------------------------------------------
-     MPI Information
-     ------------------------------------------------------------ */
-  /*! Rank of node. */
-  int rank;
-
-  /*! Size of node. */
-  int size;
-  
-#ifdef DD
-  /*! Rank of neighbouring nodes. */
-  int neighbours[DD_NNMAX];
-
-  /*! MPI type for the particle. */
-  MPI_Datatype MPI_Particle;
-  
-   /* ------------------------------------------------------------
-     Caches
-     ------------------------------------------------------------ */   
-     
-     
-  /* ------------------------------------------------------------
-     Properties of subdomains
-     ------------------------------------------------------------ */
-  
-  
+  int halo_offset_end;  
   
 #endif
 
@@ -6125,7 +6123,8 @@ void mptrac_alloc(
   clim_t ** clim,
   met_t ** met0,
   met_t ** met1,
-  atm_t ** atm);
+  atm_t ** atm,
+  dd_t ** dd);
 
 /**
  * @brief Frees memory resources allocated for MPTRAC.
@@ -6214,7 +6213,8 @@ void mptrac_get_met(
   clim_t * clim,
   const double t,
   met_t ** met0,
-  met_t ** met1);
+  met_t ** met1,
+  dd_t * dd);
 
 /**
  * @brief Initializes the MPTRAC model and its associated components.
@@ -6385,7 +6385,8 @@ int mptrac_read_met(
   const char *filename,
   const ctl_t * ctl,
   const clim_t * clim,
-  met_t * met);
+  met_t * met,
+  dd_t * dd);
 
 /**
  * @brief Executes a single timestep of the MPTRAC model simulation.
@@ -7577,7 +7578,8 @@ void read_met_nc_grid(
 int read_met_nc_dd(
   const char *filename,
   const ctl_t * ctl,
-  met_t * met);
+  met_t * met,
+  dd_t * dd);
 
 /**
  * @brief Reads meteorological grid data from NetCDF files with domain decomposition.
@@ -7615,7 +7617,8 @@ void read_met_nc_grid_dd(
   const char *filename,
   const int ncid,
   const ctl_t * ctl,
-  met_t * met);
+  met_t * met,
+  dd_t * dd);
 
 /**
  * @brief Reads and processes meteorological level data from NetCDF files with domain decomposition.
@@ -7650,7 +7653,8 @@ void read_met_nc_grid_dd(
 void read_met_nc_levels_dd(
   const int ncid,
   const ctl_t * ctl,
-  met_t * met);
+  met_t * met,
+  dd_t * dd);
 
 /**
  * @brief Reads and processes surface meteorological data from NetCDF files with domain decomposition.
@@ -7683,7 +7687,8 @@ void read_met_nc_levels_dd(
 void read_met_nc_surface_dd(
   const int ncid,
   const ctl_t * ctl,
-  met_t * met);
+  met_t * met,
+  dd_t * dd);
 
 /**
  * @brief Reads a 2-dimensional meteorological variable from a NetCDF file.
@@ -7767,6 +7772,7 @@ int read_met_nc_2d_dd(
   const char *varname6,
   const ctl_t * ctl,
   const met_t * met,
+  dd_t * dd,
   float dest[EX][EY],
   const float scl,
   const int init);
@@ -7850,6 +7856,7 @@ int read_met_nc_3d_dd(
   const char *varname4,
   const ctl_t * ctl,
   const met_t * met,
+  dd_t * dd,
   float dest[EX][EY][EP],
   const float scl);
 

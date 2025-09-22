@@ -33,6 +33,8 @@ int main(
   clim_t *clim;
 
   met_t *met;
+  
+  dd_t *dd;
 
   /* Check arguments... */
   if (argc < 6)
@@ -42,6 +44,7 @@ int main(
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
+  ALLOC(dd, dd_t, 1);
 
   /* Start timers... */
   START_TIMERS;
@@ -54,7 +57,7 @@ int main(
 
   /* Read meteo data... */
   ctl.met_type = atoi(argv[3]);
-  if (!mptrac_read_met(argv[2], &ctl, clim, met))
+  if (!mptrac_read_met(argv[2], &ctl, clim, met, dd))
     ERRMSG("Cannot open file!");
 
   /* Write meteo data... */

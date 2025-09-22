@@ -39,6 +39,8 @@ int main(
   atm_t *atm;
 
   met_t *met0, *met1;
+  
+  dd_t *dd;
 
   FILE *out;
 
@@ -56,6 +58,8 @@ int main(
   ALLOC(atm, atm_t, 1);
   ALLOC(met0, met_t, 1);
   ALLOC(met1, met_t, 1);
+  ALLOC(dd, dd_t, 1);
+  
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -89,7 +93,7 @@ int main(
   for (int ip = 0; ip < atm->np; ip++) {
 
     /* Get meteorological data... */
-    mptrac_get_met(&ctl, clim, atm->time[ip], &met0, &met1);
+    mptrac_get_met(&ctl, clim, atm->time[ip], &met0, &met1, dd);
 
     /* Set reference pressure for interpolation... */
     INTPOL_INIT;

@@ -33,6 +33,8 @@ int main(
   clim_t *clim;
 
   met_t *met;
+  
+  dd_t *dd;
 
   char tstr[LEN];
 
@@ -45,6 +47,7 @@ int main(
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
+  ALLOC(dd, dd_t, 1);
 
   /* Check arguments... */
   if (argc < 2)
@@ -57,7 +60,7 @@ int main(
   mptrac_read_clim(&ctl, clim);
 
   /* Read meteorological data... */
-  if (!mptrac_read_met(argv[2], &ctl, clim, met))
+  if (!mptrac_read_met(argv[2], &ctl, clim, met, dd))
     ERRMSG("Cannot open file!");
 
   /* Open netCDF file... */

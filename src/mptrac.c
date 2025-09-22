@@ -4328,7 +4328,8 @@ void mptrac_alloc(
   clim_t **clim,
   met_t **met0,
   met_t **met1,
-  atm_t **atm) {
+  atm_t **atm,
+  dd_t **dd) {
 
   /* Initialize GPU... */
 #ifdef _OPENACC
@@ -4353,6 +4354,7 @@ void mptrac_alloc(
   ALLOC(*met0, met_t, 1);
   ALLOC(*met1, met_t, 1);
   ALLOC(*atm, atm_t, 1);
+  ALLOC(*dd, dd_t, 1);
 
   /* Create data region on GPU... */
 #ifdef _OPENACC
@@ -4416,7 +4418,8 @@ void mptrac_get_met(
   clim_t *clim,
   const double t,
   met_t **met0,
-  met_t **met1) {
+  met_t **met1,
+  dd_t * dd) {
 
   static int init;
 
@@ -4434,12 +4437,12 @@ void mptrac_get_met(
     /* Read meteo data... */
     get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
 		 ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met0))
+    if (!mptrac_read_met(filename, ctl, clim, *met0, dd))
       ERRMSG("Cannot open file!");
 
     get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
 		 ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met1))
+    if (!mptrac_read_met(filename, ctl, clim, *met1, dd))
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
@@ -4467,7 +4470,7 @@ void mptrac_get_met(
 
     /* Read new meteo data... */
     get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met1))
+    if (!mptrac_read_met(filename, ctl, clim, *met1, dd))
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
@@ -4495,7 +4498,7 @@ void mptrac_get_met(
 
     /* Read new meteo data... */
     get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
-    if (!mptrac_read_met(filename, ctl, clim, *met0))
+    if (!mptrac_read_met(filename, ctl, clim, *met0, dd))
       ERRMSG("Cannot open file!");
 
     /* Update GPU... */
@@ -5559,7 +5562,8 @@ int mptrac_read_met(
   const char *filename,
   const ctl_t *ctl,
   const clim_t *clim,
-  met_t *met) {
+  met_t *met,
+  dd_t *dd) {
 
   /* Write info... */
   LOG(1, "Read meteo data: %s", filename);
@@ -5577,7 +5581,7 @@ int mptrac_read_met(
     /* Read netCDF data... */
     if (ctl->met_type == 0) {
 #ifdef DD
-      if (read_met_nc_dd(filename, ctl, met) != 1)
+      if (read_met_nc_dd(filename, ctl, met, dd) != 1)
 	return 0;
 #else
       if (read_met_nc(filename, ctl, met) != 1)
@@ -7412,7 +7416,8 @@ void read_met_nc_grid_dd(
   const char *filename,
   const int ncid,
   const ctl_t *ctl,
-  met_t *met) {
+  met_t *met,
+  dd_t *dd) {
 
   char levname[LEN], tstr[10];
 
@@ -7531,6 +7536,9 @@ void read_met_nc_grid_dd(
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
+  
+  dd->rank = rank;
+  dd->size = size;
 
   /* Check for edge cases... */
   bool left = (rank <= ctl->dd_subdomains_meridional - 1);
@@ -7541,11 +7549,11 @@ void read_met_nc_grid_dd(
      ctl->dd_subdomains_meridional - 1);
 
   /* Set the hyperslab for the subdomain... */
-  met->subdomain_start[0] = 0;
-  met->subdomain_start[1] = 0;
-  met->subdomain_start[2] =
+  dd->subdomain_start[0] = 0;
+  dd->subdomain_start[1] = 0;
+  dd->subdomain_start[2] =
     (size_t) ((rank % ctl->dd_subdomains_meridional) * met->ny);
-  met->subdomain_start[3] =
+  dd->subdomain_start[3] =
     (size_t) (floor(rank / ctl->dd_subdomains_meridional) * met->nx);
 
   /* Extend subdomains at the right and bottom to fit the full domain. */
@@ -7565,44 +7573,44 @@ void read_met_nc_grid_dd(
   }
 
   /* Block-size, i.e. count */
-  met->subdomain_count[0] = 1;
-  met->subdomain_count[1] = (size_t) met->np;
-  met->subdomain_count[2] = (size_t) met->ny;
-  met->subdomain_count[3] = (size_t) met->nx;
+  dd->subdomain_count[0] = 1;
+  dd->subdomain_count[1] = (size_t) met->np;
+  dd->subdomain_count[2] = (size_t) met->ny;
+  dd->subdomain_count[3] = (size_t) met->nx;
 
   /* Create halos and include them into the subdomain... */
   if (!left && !right) {
     // If we are not at the left or right edge extend in zonal direction...
     // Move the start one point to the left...
-    met->subdomain_count[3] =
-      met->subdomain_count[3] + (size_t) (ctl->dd_halos_size * 2);
-    met->subdomain_start[3] =
-      met->subdomain_start[3] - (size_t) ctl->dd_halos_size;
+    dd->subdomain_count[3] =
+      dd->subdomain_count[3] + (size_t) (ctl->dd_halos_size * 2);
+    dd->subdomain_start[3] =
+      dd->subdomain_start[3] - (size_t) ctl->dd_halos_size;
   } else {
     // If we are at the left or right edge, extend only in one zonal direction...
-    met->subdomain_count[3] =
-      met->subdomain_count[3] + (size_t) ctl->dd_halos_size;
+    dd->subdomain_count[3] =
+      dd->subdomain_count[3] + (size_t) ctl->dd_halos_size;
     if (!left)
       // If we are not at the left edge, move the start to the left... 
-      met->subdomain_start[3] =
-	met->subdomain_start[3] - (size_t) ctl->dd_halos_size;
+      dd->subdomain_start[3] =
+	dd->subdomain_start[3] - (size_t) ctl->dd_halos_size;
   }
 
   if (!top && !bottom) {
     // If we are not at the upper or lower edge extend in meridional direction...
     // Move the start point one point down...
-    met->subdomain_count[2] =
-      met->subdomain_count[2] + (size_t) (ctl->dd_halos_size * 2);
-    met->subdomain_start[2] =
-      met->subdomain_start[2] - (size_t) ctl->dd_halos_size;
+    dd->subdomain_count[2] =
+      dd->subdomain_count[2] + (size_t) (ctl->dd_halos_size * 2);
+    dd->subdomain_start[2] =
+      dd->subdomain_start[2] - (size_t) ctl->dd_halos_size;
   } else {
     // If we are at the top or the lower edge only extend in one mer. direction...
-    met->subdomain_count[2] =
-      met->subdomain_count[2] + (size_t) ctl->dd_halos_size;
+    dd->subdomain_count[2] =
+      dd->subdomain_count[2] + (size_t) ctl->dd_halos_size;
     if (!top)
       // If we are not at the top, move the start one upward... 
-      met->subdomain_start[2] =
-	met->subdomain_start[2] - (size_t) ctl->dd_halos_size;
+      dd->subdomain_start[2] =
+	dd->subdomain_start[2] - (size_t) ctl->dd_halos_size;
   }
 
   /* Set boundary halo hyperslabs ... */
@@ -7611,22 +7619,34 @@ void read_met_nc_grid_dd(
 
     met->nx = met->nx + ctl->dd_halos_size;
 
-    met->halo_bnd_start[0] = 0;
-    met->halo_bnd_start[1] = 0;
-    met->halo_bnd_start[3] = (size_t) (left ? (met->nx_glob - ctl->dd_halos_size) : (0));	//x
-    met->halo_bnd_start[2] = met->subdomain_start[2];	//y
+    dd->halo_bnd_start[0] = 0;
+    dd->halo_bnd_start[1] = 0;
+    dd->halo_bnd_start[3] = (size_t) (left ? (met->nx_glob - ctl->dd_halos_size) : (0));	//x
+    dd->halo_bnd_start[2] = dd->subdomain_start[2];	//y
 
-    met->halo_bnd_count[0] = 1;
-    met->halo_bnd_count[1] = (size_t) met->np;
-    met->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
-    met->halo_bnd_count[2] =
+    dd->halo_bnd_count[0] = 1;
+    dd->halo_bnd_count[1] = (size_t) met->np;
+    dd->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
+    dd->halo_bnd_count[2] =
       (size_t) met->ny +
       (size_t) ctl->dd_halos_size * ((top || bottom) ? 1 : 2);
 
-    met->halo_offset_start = (left ? (int) met->halo_bnd_count[3] : 0);
-    met->halo_offset_end = (left ? 0 : (int) met->subdomain_count[3]);
+    dd->halo_offset_start = (left ? (int) dd->halo_bnd_count[3] : 0);
+    dd->halo_offset_end = (left ? 0 : (int) dd->subdomain_count[3]);
     lon_shift = (left ? -360 : 360);
 
+  } else {
+  
+    dd->halo_bnd_start[0] = 0;
+    dd->halo_bnd_start[1] = 0;
+    dd->halo_bnd_start[3] = 0;
+    dd->halo_bnd_start[2] = 0;
+
+    dd->halo_bnd_count[0] = 0;
+    dd->halo_bnd_count[1] = 0;
+    dd->halo_bnd_count[3] = 0;
+    dd->halo_bnd_count[2] = 0;
+  
   }
 
   /* Get the range of the entire meteodata... */
@@ -7634,60 +7654,53 @@ void read_met_nc_grid_dd(
   double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
 
   /* Focus on subdomain longitutes and latitudes... */
-  for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++) {
-    const int iy_ = (int) met->subdomain_start[2] + iy;
+  for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++) {
+    const int iy_ = (int) dd->subdomain_start[2] + iy;
     met->lat[iy] = met->lat[iy_];
   }
 
   /* Keep space at the beginning or end of the array for halo... */
   double help_lon[EX];
 
-  for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
-    const int ix_ = (int) met->subdomain_start[3] + ix;
-    help_lon[ix + met->halo_offset_start] = met->lon[ix_];
+  for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
+    const int ix_ = (int) dd->subdomain_start[3] + ix;
+    help_lon[ix + dd->halo_offset_start] = met->lon[ix_];
   }
 
-  for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
-    const int ix_ = (int) met->halo_bnd_start[3] + ix;
-    help_lon[ix + met->halo_offset_end] = met->lon[ix_] + lon_shift;
+  for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
+    const int ix_ = (int) dd->halo_bnd_start[3] + ix;
+    help_lon[ix + dd->halo_offset_end] = met->lon[ix_] + lon_shift;
   }
 
   /* Reset the grid dimensions... */
-  met->nx = (int) met->subdomain_count[3] + (int) met->halo_bnd_count[3];
-  met->ny = (int) met->subdomain_count[2];
+  met->nx = (int) dd->subdomain_count[3] + (int) dd->halo_bnd_count[3];
+  met->ny = (int) dd->subdomain_count[2];
   for (int ix = 0; ix < (int) met->nx; ix++)
     met->lon[ix] = help_lon[ix];
 
   /* Determine subdomain edges... */
-  met->subdomain_lon_min = floor(rank / ctl->dd_subdomains_meridional)
+  dd->subdomain_lon_min = floor(rank / ctl->dd_subdomains_meridional)
     * (lon_range) / (double) ctl->dd_subdomains_zonal;
-  met->subdomain_lon_max = met->subdomain_lon_min
+  dd->subdomain_lon_max = dd->subdomain_lon_min
     + (lon_range) / (double) ctl->dd_subdomains_zonal;
 
   /* Latitudes in descending order (90 to -90) */
   if (lat_range < 0) {
-    met->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
+    dd->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
-    met->subdomain_lat_min = met->subdomain_lat_max
+    dd->subdomain_lat_min = dd->subdomain_lat_max
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
   } else {
     WARN("lat_range > 0, but is expected to be negative, i.e. latitudes should range from 90 to -90")
-    met->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
+    dd->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
-    met->subdomain_lat_max = met->subdomain_lat_min
+    dd->subdomain_lat_max = dd->subdomain_lat_min
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
   }
 
   LOG(2, "Total longitude range: %g deg", lon_range);
   LOG(2, "Total latitude range: %g deg", lat_range);
-
-  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
-      met->lon[0], met->lon[1], met->lon[met->nx - 1], 
-      met->subdomain_lon_min, met->subdomain_lon_max);
-  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
-      met->lat[0], met->lat[1], met->lat[met->ny - 1], 
-      met->subdomain_lat_min, met->subdomain_lat_max);
-
+  
   LOG(2, "Define subdomain properties.");
   LOG(2, "MPI information: Rank %d, Size %d", rank, size);
   LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int) left, (int) right,
@@ -7696,17 +7709,26 @@ void read_met_nc_grid_dd(
   LOG(2, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx,
       met->ny, met->np);
   LOG(2, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",
-      (int) met->halo_bnd_count[3], (int) met->halo_bnd_count[2],
-      (int) met->halo_bnd_count[1]);
+      (int) dd->halo_bnd_count[3], (int) dd->halo_bnd_count[2],
+      (int) dd->halo_bnd_count[1]);
   LOG(2, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d",
-      (int) met->subdomain_count[3], (int) met->subdomain_count[2],
-      (int) met->subdomain_count[1]);
-  LOG(2, "Subdomain start: nx %ld ny %ld np %ld", met->subdomain_start[3],
-      met->subdomain_start[2], met->subdomain_start[1]);
-  LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", met->halo_bnd_start[3],
-      met->halo_bnd_start[2], met->halo_bnd_start[1]);
-  LOG(2, "Offsets: nx %d ny %d", met->halo_offset_start,
-      met->halo_offset_end);
+      (int) dd->subdomain_count[3], (int) dd->subdomain_count[2],
+      (int) dd->subdomain_count[1]);
+  LOG(2, "Subdomain start: nx %ld ny %ld np %ld", dd->subdomain_start[3],
+      dd->subdomain_start[2], dd->subdomain_start[1]);
+  LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", dd->halo_bnd_start[3],
+      dd->halo_bnd_start[2], dd->halo_bnd_start[1]);
+  LOG(2, "Offsets: nx %d ny %d", dd->halo_offset_start,
+      dd->halo_offset_end);
+
+  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
+      met->lon[0], met->lon[1], met->lon[met->nx - 1], 
+      dd->subdomain_lon_min, dd->subdomain_lon_max);
+  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
+      met->lat[0], met->lat[1], met->lat[met->ny - 1], 
+      dd->subdomain_lat_min, dd->subdomain_lat_max);
+
+
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
@@ -7730,7 +7752,8 @@ void read_met_nc_grid_dd(
 void read_met_nc_surface_dd(
   const int ncid,
   const ctl_t *ctl,
-  met_t *met) {
+  met_t *met,
+  dd_t *dd) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
@@ -7738,14 +7761,14 @@ void read_met_nc_surface_dd(
 
   /* Read surface pressure... */
   if (read_met_nc_2d_dd
-      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps, 1.0f,
+      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, dd, met->ps, 1.0f,
        1)) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
   } else
     if (!read_met_nc_2d_dd
-	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, met->ps, 0.01f,
+	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, dd, met->ps, 0.01f,
 	 1)) {
     WARN("Cannot not read surface pressure data (use lowest level)!");
     for (int ix = 0; ix < met->nx; ix++)
@@ -7759,10 +7782,10 @@ void read_met_nc_surface_dd(
 
     /* Read geopotential height at the surface... */
     if (!read_met_nc_2d_dd
-	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, met->zs,
+	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
 	 (float) (1. / (1000. * G0)), 1))
       if (!read_met_nc_2d_dd
-	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, met->zs,
+	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
 	   (float) (1. / 1000.), 1))
 	WARN("Cannot read surface geopotential height!");
   }
@@ -7777,7 +7800,7 @@ void read_met_nc_surface_dd(
 	  EX * EY * EP);
     memcpy(help, met->pl, sizeof(met->pl));
     if (!read_met_nc_3d_dd
-	(ncid, "gph", "GPH", NULL, NULL, ctl, met, met->pl,
+	(ncid, "gph", "GPH", NULL, NULL, ctl, met, dd, met->pl,
 	 (float) (1e-3 / G0)))
       ERRMSG("Cannot read geopotential height!");
     for (int ix = 0; ix < met->nx; ix++)
@@ -7789,74 +7812,74 @@ void read_met_nc_surface_dd(
 
   /* Read temperature at the surface... */
   if (!read_met_nc_2d_dd
-      (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, met->ts, 1.0, 1))
+      (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, dd, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
   if (!read_met_nc_2d_dd
-      (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, met->us,
+      (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, dd, met->us,
        1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
   if (!read_met_nc_2d_dd
-      (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, met->vs,
+      (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, dd, met->vs,
        1.0, 1))
     WARN("Cannot read surface meridional wind!");
 
   /* Read eastward turbulent surface stress... */
   if (!read_met_nc_2d_dd
-      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, met->ess, 1.0,
+      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, dd, met->ess, 1.0,
        1))
     WARN("Cannot read eastward turbulent surface stress!");
 
   /* Read northward turbulent surface stress... */
   if (!read_met_nc_2d_dd
-      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, met->nss, 1.0,
+      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, dd, met->nss, 1.0,
        1))
     WARN("Cannot read nothward turbulent surface stress!");
 
   /* Read surface sensible heat flux... */
   if (!read_met_nc_2d_dd
-      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, met->shf, 1.0,
+      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, dd, met->shf, 1.0,
        1))
     WARN("Cannot read surface sensible heat flux!");
 
   /* Read land-sea mask... */
   if (!read_met_nc_2d_dd
-      (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, met->lsm, 1.0,
+      (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, dd, met->lsm, 1.0,
        1))
     WARN("Cannot read land-sea mask!");
 
   /* Read sea surface temperature... */
   if (!read_met_nc_2d_dd
-      (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
+      (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, dd, met->sst,
        1.0, 1))
     WARN("Cannot read sea surface temperature!");
 
   /* Read PBL... */
   if (ctl->met_pbl == 0)
     if (!read_met_nc_2d_dd
-	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
+	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, dd, met->pbl,
 	 0.01f, 1))
       WARN("Cannot read planetary boundary layer pressure!");
   if (ctl->met_pbl == 1)
     if (!read_met_nc_2d_dd
-	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
+	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, dd, met->pbl,
 	 0.001f, 1))
       WARN("Cannot read planetary boundary layer height!");
 
   /* Read CAPE... */
   if (ctl->met_cape == 0)
     if (!read_met_nc_2d_dd
-	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, met->cape,
+	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, dd, met->cape,
 	 1.0, 1))
       WARN("Cannot read CAPE!");
 
   /* Read CIN... */
   if (ctl->met_cape == 0)
     if (!read_met_nc_2d_dd
-	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
+	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, dd, met->cin,
 	 1.0, 1))
       WARN("Cannot read convective inhibition!");
 }
@@ -7868,7 +7891,8 @@ void read_met_nc_surface_dd(
 void read_met_nc_levels_dd(
   const int ncid,
   const ctl_t *ctl,
-  met_t *met) {
+  met_t *met,
+  dd_t *dd) {
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_NC_LEVELS_DD", "INPUT", NVTX_READ);
@@ -7876,26 +7900,26 @@ void read_met_nc_levels_dd(
 
   /* Read temperature... */
   if (!read_met_nc_3d_dd
-      (ncid, "t", "T", "temp", "TEMP", ctl, met, met->t, 1.0))
+      (ncid, "t", "T", "temp", "TEMP", ctl, met, dd,met->t, 1.0))
     ERRMSG("Cannot read temperature!");
 
   /* Read horizontal wind and vertical velocity... */
-  if (!read_met_nc_3d_dd(ncid, "u", "U", NULL, NULL, ctl, met, met->u, 1.0))
+  if (!read_met_nc_3d_dd(ncid, "u", "U", NULL, NULL, ctl, met, dd, met->u, 1.0))
     ERRMSG("Cannot read zonal wind!");
-  if (!read_met_nc_3d_dd(ncid, "v", "V", NULL, NULL, ctl, met, met->v, 1.0))
+  if (!read_met_nc_3d_dd(ncid, "v", "V", NULL, NULL, ctl, met, dd, met->v, 1.0))
     ERRMSG("Cannot read meridional wind!");
   if (!read_met_nc_3d_dd
-      (ncid, "w", "W", "omega", "OMEGA", ctl, met, met->w, 0.01f))
+      (ncid, "w", "W", "omega", "OMEGA", ctl, met, dd, met->w, 0.01f))
     WARN("Cannot read vertical velocity!");
 
   /* Read water vapor... */
   if (!ctl->met_relhum) {
     if (!read_met_nc_3d_dd
-	(ncid, "q", "Q", "sh", "SH", ctl, met, met->h2o, (float) (MA / MH2O)))
+	(ncid, "q", "Q", "sh", "SH", ctl, met, dd, met->h2o, (float) (MA / MH2O)))
       WARN("Cannot read specific humidity!");
   } else {
     if (!read_met_nc_3d_dd
-	(ncid, "rh", "RH", NULL, NULL, ctl, met, met->h2o, 0.01f))
+	(ncid, "rh", "RH", NULL, NULL, ctl, met, dd, met->h2o, 0.01f))
       WARN("Cannot read relative humidity!");
 #pragma omp parallel for default(shared) collapse(2)
     for (int ix = 0; ix < met->nx; ix++)
@@ -7909,33 +7933,33 @@ void read_met_nc_levels_dd(
 
   /* Read ozone... */
   if (!read_met_nc_3d_dd
-      (ncid, "o3", "O3", NULL, NULL, ctl, met, met->o3, (float) (MA / MO3)))
+      (ncid, "o3", "O3", NULL, NULL, ctl, met, dd, met->o3, (float) (MA / MO3)))
     WARN("Cannot read ozone data!");
 
   /* Read cloud data... */
   if (!read_met_nc_3d_dd
-      (ncid, "clwc", "CLWC", NULL, NULL, ctl, met, met->lwc, 1.0))
+      (ncid, "clwc", "CLWC", NULL, NULL, ctl, met, dd, met->lwc, 1.0))
     WARN("Cannot read cloud liquid water content!");
   if (!read_met_nc_3d_dd
-      (ncid, "crwc", "CRWC", NULL, NULL, ctl, met, met->rwc, 1.0))
+      (ncid, "crwc", "CRWC", NULL, NULL, ctl, met, dd, met->rwc, 1.0))
     WARN("Cannot read cloud rain water content!");
   if (!read_met_nc_3d_dd
-      (ncid, "ciwc", "CIWC", NULL, NULL, ctl, met, met->iwc, 1.0))
+      (ncid, "ciwc", "CIWC", NULL, NULL, ctl, met, dd, met->iwc, 1.0))
     WARN("Cannot read cloud ice water content!");
   if (!read_met_nc_3d_dd
-      (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, met->swc, 1.0))
+      (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, dd, met->swc, 1.0))
     WARN("Cannot read cloud snow water content!");
   if (!read_met_nc_3d_dd
-      (ncid, "cc", "CC", NULL, NULL, ctl, met, met->cc, 1.0))
+      (ncid, "cc", "CC", NULL, NULL, ctl, met, dd, met->cc, 1.0))
     WARN("Cannot read cloud cover!");
 
   /* Read zeta and zeta_dot... */
   if (!read_met_nc_3d_dd
-      (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
+      (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, dd, met->zetal, 1.0))
     WARN("Cannot read ZETA!");
   if (!read_met_nc_3d_dd
       (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
-       NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
+       NULL, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
     WARN("Cannot read ZETA_DOT!");
 
   /* Store velocities on model levels... */
@@ -7959,10 +7983,10 @@ void read_met_nc_levels_dd(
     /* Read 3-D pressure field... */
     if (ctl->met_vert_coord == 1) {
       if (!read_met_nc_3d_dd
-	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl,
+	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, dd, met->pl,
 	   0.01f))
 	if (!read_met_nc_3d_dd
-	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
+	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, dd, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
 
     }
@@ -8078,7 +8102,8 @@ void read_met_nc_levels_dd(
 int read_met_nc_dd(
   const char *filename,
   const ctl_t *ctl,
-  met_t *met) {
+  met_t *met,
+  dd_t *dd) {
 
   int ncid;
 
@@ -8108,13 +8133,13 @@ int read_met_nc_dd(
   #endif
 
   /* Read coordinates of meteo data... */
-  read_met_nc_grid_dd(filename, ncid, ctl, met);
+  read_met_nc_grid_dd(filename, ncid, ctl, met, dd);
 
   /* Read surface data... */
-  read_met_nc_surface_dd(ncid, ctl, met);
+  read_met_nc_surface_dd(ncid, ctl, met, dd);
 
   /* Read meteo data on vertical levels... */
-  read_met_nc_levels_dd(ncid, ctl, met);
+  read_met_nc_levels_dd(ncid, ctl, met, dd);
 
   /* Close file... */
   NC(nc_close(ncid));
@@ -8138,6 +8163,7 @@ int read_met_nc_2d_dd(
   const char *varname6,
   const ctl_t *ctl,
   const met_t *met,
+  dd_t *dd,
   float dest[EX][EY],
   const float scl,
   const int init) {
@@ -8191,15 +8217,15 @@ int read_met_nc_2d_dd(
   size_t help_subdomain_count[3];
 
   help_subdomain_start[0] = 0;
-  help_subdomain_start[1] = met->subdomain_start[2];
-  help_subdomain_start[2] = met->subdomain_start[3];
+  help_subdomain_start[1] = dd->subdomain_start[2];
+  help_subdomain_start[2] = dd->subdomain_start[3];
 
   help_subdomain_count[0] = 1;
-  help_subdomain_count[1] = met->subdomain_count[2];	//y
-  help_subdomain_count[2] = met->subdomain_count[3];	//x
+  help_subdomain_count[1] = dd->subdomain_count[2];	//y
+  help_subdomain_count[2] = dd->subdomain_count[3];	//x
 
   ALLOC(help, float,
-	  (int) met->subdomain_count[2] * (int) met->subdomain_count[3]
+	  (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]
     );
 
   /* Read data... */
@@ -8211,12 +8237,12 @@ int read_met_nc_2d_dd(
   size_t help_halo_bnd_count[3];
 
   help_halo_bnd_start[0] = 0;
-  help_halo_bnd_start[1] = met->halo_bnd_start[2];
-  help_halo_bnd_start[2] = met->halo_bnd_start[3];
+  help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+  help_halo_bnd_start[2] = dd->halo_bnd_start[3];
 
   help_halo_bnd_count[0] = 1;
-  help_halo_bnd_count[1] = met->halo_bnd_count[2];	//y
-  help_halo_bnd_count[2] = met->halo_bnd_count[3];	//x
+  help_halo_bnd_count[1] = dd->halo_bnd_count[2];	//y
+  help_halo_bnd_count[2] = dd->halo_bnd_count[3];	//x
 
   float *help_halo;
   ALLOC(help_halo, float,
@@ -8232,15 +8258,15 @@ int read_met_nc_2d_dd(
     for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
       for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
 	if (init == 1)
-	  dest[ix + met->halo_offset_start][iy] = 0;
+	  dest[ix + dd->halo_offset_start][iy] = 0;
 	const float aux =
 	  help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f) {
-	  dest[ix + met->halo_offset_start][iy] += scl * aux;
+	  dest[ix + dd->halo_offset_start][iy] += scl * aux;
 	} else
-	  dest[ix + met->halo_offset_start][iy] = NAN;
+	  dest[ix + dd->halo_offset_start][iy] = NAN;
       }
 
     /* Copy and check data (ordering: lat, lon)... */
@@ -8248,15 +8274,15 @@ int read_met_nc_2d_dd(
     for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
       for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
 	if (init == 1)
-	  dest[ix + met->halo_offset_end][iy] = 0;
+	  dest[ix + dd->halo_offset_end][iy] = 0;
 	const float aux =
 	  help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
 	    && fabsf(aux) < 1e14f)
-	  dest[ix + met->halo_offset_end][iy] += scl * aux;
+	  dest[ix + dd->halo_offset_end][iy] += scl * aux;
 	else {
-	  dest[ix + met->halo_offset_end][iy] = NAN;
+	  dest[ix + dd->halo_offset_end][iy] = NAN;
 	}
       }
 
@@ -8298,6 +8324,7 @@ int read_met_nc_3d_dd(
   const char *varname4,
   const ctl_t *ctl,
   const met_t *met,
+  dd_t *dd,
   float dest[EX][EY][EP],
   const float scl) {
   
@@ -8343,28 +8370,28 @@ int read_met_nc_3d_dd(
   /* Allocate... */
   float *help;
   ALLOC(help, float,
-	  (int) met->subdomain_count[0] * (int) met->subdomain_count[1]
-	* (int) met->subdomain_count[2] * (int) met->subdomain_count[3]);
+	  (int) dd->subdomain_count[0] * (int) dd->subdomain_count[1]
+	* (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]);
 
   SELECT_TIMER("READ_MET_NC_3D_DD_CP2", "INPUT", NVTX_READ);
 
   /* Use default NetCDF parallel I/O behavior */
   NC(nc_get_vara_float
-     (ncid, varid, met->subdomain_start, met->subdomain_count, help));
+     (ncid, varid, dd->subdomain_start, dd->subdomain_count, help));
 
   /* Read halos separately at boundaries... */
   float *help_halo;
   ALLOC(help_halo, float,
-	met->halo_bnd_count[0] * met->halo_bnd_count[1] *
-	met->halo_bnd_count[2] * met->halo_bnd_count[3]);
+	dd->halo_bnd_count[0] * dd->halo_bnd_count[1] *
+	dd->halo_bnd_count[2] * dd->halo_bnd_count[3]);
 
   SELECT_TIMER("READ_MET_NC_3D_DD_CP3", "INPUT", NVTX_READ);
   
   /* Halo read also uses independent access */
   NC(nc_get_vara_float(ncid,
 		    varid,
-		    met->halo_bnd_start,
-		    met->halo_bnd_count,
+		    dd->halo_bnd_start,
+		    dd->halo_bnd_count,
 		    help_halo));
 
   SELECT_TIMER("READ_MET_NC_3D_DD_CP4", "INPUT", NVTX_READ);
@@ -8373,33 +8400,33 @@ int read_met_nc_3d_dd(
   if (ctl->met_convention == 0) {
     /* Copy and check data (ordering: lev, lat, lon)... */
 #pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++)
-      for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
+    for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++)
+      for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
 	  const float aux =
-	    help[ARRAY_3D(ip, iy, (int) met->subdomain_count[2], ix,
-			  (int) met->subdomain_count[3])];
+	    help[ARRAY_3D(ip, iy, (int) dd->subdomain_count[2], ix,
+			  (int) dd->subdomain_count[3])];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
-	    dest[ix + met->halo_offset_start][iy][ip] = scl * aux;
+	    dest[ix + dd->halo_offset_start][iy][ip] = scl * aux;
 	  else
-	    dest[ix + met->halo_offset_start][iy][ip] = NAN;
+	    dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	}
 
 #pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++)
-      for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
+    for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++)
+      for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
 	for (int ip = 0; ip < met->np; ip++) {
 	  const float aux =
-	    help_halo[ARRAY_3D(ip, iy, (int) met->halo_bnd_count[2], ix,
-			       (int) met->halo_bnd_count[3])];
+	    help_halo[ARRAY_3D(ip, iy, (int) dd->halo_bnd_count[2], ix,
+			       (int) dd->halo_bnd_count[3])];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
-	    dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
+	    dest[ix + dd->halo_offset_end][iy][ip] = scl * aux;
 	  else
-	    dest[ix + met->halo_offset_end][iy][ip] = NAN;
+	    dest[ix + dd->halo_offset_end][iy][ip] = NAN;
 	}
 
   } else {
@@ -8407,28 +8434,28 @@ int read_met_nc_3d_dd(
     /* Copy and check data (ordering: lon, lat, lev)... */
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ip = 0; ip < met->np; ip++)
-      for (int iy = 0; iy < (int) met->subdomain_count[2]; iy++)
-	for (int ix = 0; ix < (int) met->subdomain_count[3]; ix++) {
+      for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++)
+	for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
 	  const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
-	    dest[ix + met->halo_offset_end][iy][ip] = scl * aux;
+	    dest[ix + dd->halo_offset_end][iy][ip] = scl * aux;
 	  else
-	    dest[ix + met->halo_offset_end][iy][ip] = NAN;
+	    dest[ix + dd->halo_offset_end][iy][ip] = NAN;
 	}
 
 #pragma omp parallel for default(shared) num_threads(12)
     for (int ip = 0; ip < met->np; ip++)
-      for (int iy = 0; iy < (int) met->halo_bnd_count[2]; iy++)
-	for (int ix = 0; ix < (int) met->halo_bnd_count[3]; ix++) {
+      for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
+	for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
 	  const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
 	  if ((fillval == 0 || aux != fillval)
 	      && (missval == 0 || aux != missval)
 	      && fabsf(aux) < 1e14f)
-	    dest[ix + met->halo_offset_start][iy][ip] = scl * aux;
+	    dest[ix + dd->halo_offset_start][iy][ip] = scl * aux;
 	  else
-	    dest[ix + met->halo_offset_start][iy][ip] = NAN;
+	    dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	}
   }
 
@@ -13629,7 +13656,7 @@ void dd_assign_rect_subdomains_atm(
   if (init) {
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
-#pragma acc update device(dd->rank)
+#pragma acc update device(dd->rank, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max)
 #pragma acc data present(atm, ctl, dd, met)
 #pragma acc parallel loop independent gang vector
 #endif
@@ -13640,14 +13667,14 @@ void dd_assign_rect_subdomains_atm(
       if (lont < 0)
 	lont += 360;
 
-      if (lont >= met->subdomain_lon_min && lont < met->subdomain_lon_max
-	  && atm->lat[ip] >= met->subdomain_lat_min
-	  && atm->lat[ip] < met->subdomain_lat_max) {
+      if (lont >= dd->subdomain_lon_min && lont < dd->subdomain_lon_max
+	  && atm->lat[ip] >= dd->subdomain_lat_min
+	  && atm->lat[ip] < dd->subdomain_lat_max) {
 	atm->q[ctl->qnt_subdomain][ip] = dd->rank;
 	atm->q[ctl->qnt_destination][ip] = dd->rank;
       } else {
 	WARN("DD: Particle is outside the domain (lon: %f, lat: %f, subdomain: %d, subdomain bounds: [%f, %f], [%f, %f])", 
-	    atm->lon[ip], atm->lat[ip], dd->rank, met->subdomain_lon_min, met->subdomain_lon_max, met->subdomain_lat_min, met->subdomain_lat_max);
+	    atm->lon[ip], atm->lat[ip], dd->rank, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max);
 	atm->q[ctl->qnt_subdomain][ip] = -1;
 	atm->q[ctl->qnt_destination][ip] = -1;
       }
@@ -13660,7 +13687,7 @@ void dd_assign_rect_subdomains_atm(
     /* Classify air parcels into subdomain... */
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
-#pragma acc update device(dd->neighbours[:DD_NNMAX], dd->rank, dd->size)
+#pragma acc update device(dd->neighbours[:DD_NNMAX], dd->rank, dd->size, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max)
 #pragma acc data present(atm, met, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
@@ -13673,10 +13700,10 @@ void dd_assign_rect_subdomains_atm(
       double lont = atm->lon[ip];
       double latt = atm->lat[ip];
 
-      double lon_max = met->subdomain_lon_max;
-      double lon_min = met->subdomain_lon_min;
-      double lat_max = met->subdomain_lat_max;
-      double lat_min = met->subdomain_lat_min;
+      double lon_max = dd->subdomain_lon_max;
+      double lon_min = dd->subdomain_lon_min;
+      double lat_max = dd->subdomain_lat_max;
+      double lat_min = dd->subdomain_lat_min;
 
       if (lont < 0)
 	lont += 360;

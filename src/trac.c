@@ -43,7 +43,7 @@ int main(
   met_t *met0, *met1;
 
 #ifdef DD
-  dd_t dd;
+  dd_t *dd;
 #endif
 
   FILE *dirlist;
@@ -57,12 +57,6 @@ int main(
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
-
-#ifdef DD
-  dd.rank = rank;
-  dd.size = size;
-#endif
-
 #endif
 
   /* Check arguments... */
@@ -92,7 +86,7 @@ int main(
     START_TIMERS;
 
     /* Allocate memory... */
-    mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm);
+    mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &dd);
 
     /* Read control parameters... */
     sprintf(filename, "%s/%s", dirname, argv[2]);
@@ -123,7 +117,7 @@ int main(
 	t = ctl->t_stop;
 
       /* Get meteo data... */
-      mptrac_get_met(ctl, clim, t, &met0, &met1);
+      mptrac_get_met(ctl, clim, t, &met0, &met1, dd);
 
       /* Check time step... */
       if (ctl->dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
@@ -134,12 +128,12 @@ int main(
       // TODO: Remove dd_init_flg ...
       static int dd_init_flg = 0;
       if (t == ctl->t_start || !dd_init_flg)
-	dd_init(ctl, &dd, atm, &met0, &dd_init_flg);
+	dd_init(ctl, dd, atm, &met0, &dd_init_flg);
 #endif
 
       /* Run a single time step... */
 #ifdef DD
-      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, &dd);
+      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, dd);
 #else
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
 #endif
@@ -168,7 +162,7 @@ int main(
 
     /* Free memory... */
 #ifdef DD
-    mptrac_free(ctl, cache, clim, met0, met1, atm, &dd);
+    mptrac_free(ctl, cache, clim, met0, met1, atm, dd);
 #else
     mptrac_free(ctl, cache, clim, met0, met1, atm);
 #endif

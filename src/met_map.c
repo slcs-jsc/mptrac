@@ -47,6 +47,8 @@ int main(
   clim_t *clim;
 
   met_t *met;
+  
+  dd_t *dd;
 
   FILE *out;
 
@@ -64,6 +66,7 @@ int main(
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
   ALLOC(met, met_t, 1);
+  ALLOC(dd, dd_t, 1);
   ALLOC(timem, double,
 	NX * NY);
   ALLOC(psm, double,
@@ -191,7 +194,7 @@ int main(
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met))
+    if (!mptrac_read_met(argv[i], &ctl, clim, met, dd))
       continue;
 
     /* Set horizontal grid... */

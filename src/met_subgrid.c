@@ -37,6 +37,8 @@ int main(
   clim_t *clim;
 
   met_t *met0, *met1;
+  
+  dd_t *dd;
 
   FILE *out;
 
@@ -50,6 +52,7 @@ int main(
   ALLOC(clim, clim_t, 1);
   ALLOC(met0, met_t, 1);
   ALLOC(met1, met_t, 1);
+  ALLOC(dd, dd_t, 1);
 
   /* Check arguments... */
   if (argc < 4 && argc % 2 != 0)
@@ -66,9 +69,9 @@ int main(
   for (int i = 3; i < argc - 1; i += 2) {
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met0))
+    if (!mptrac_read_met(argv[i], &ctl, clim, met0, dd))
       ERRMSG("Cannot open file!");
-    if (!mptrac_read_met(argv[i + 1], &ctl, clim, met1))
+    if (!mptrac_read_met(argv[i + 1], &ctl, clim, met1, dd))
       ERRMSG("Cannot open file!");
 
     /* Loop over grid boxes... */
