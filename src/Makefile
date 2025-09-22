@@ -273,6 +273,9 @@ ifeq ($(DD),1)
   ifeq ($(MPI),0)
     $(error The domain decomposition does not work without MPI)
   endif
+  ifeq ($(THRUST),0)
+    $(error The domain decomposition does not work without THRUST)
+  endif
 endif
 
 # -----------------------------------------------------------------------------
@@ -300,7 +303,7 @@ wrapper: trac_fortran
 
 check: $(TESTS)
 
-$(TESTS) cms_test gpu_test grib_test kpp_test wrapper_test: all
+$(TESTS) cms_test dd_test gpu_test grib_test kpp_test wrapper_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \

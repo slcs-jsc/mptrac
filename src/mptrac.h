@@ -300,17 +300,17 @@
 
 /*! Maximum number of pressure levels for meteo data. */
 #ifndef EP_GLOB
-#define EP_GLOB 150
+#define EP_GLOB 140
 #endif
 
 /*! Maximum number of global longitudes for meteo data. */
 #ifndef EX_GLOB
-#define EX_GLOB 1202
+#define EX_GLOB 1444
 #endif
 
 /*! Maximum number of global latitudes for meteo data. */
 #ifndef EY_GLOB
-#define EY_GLOB 602
+#define EY_GLOB 724
 #endif
 
 /*! Maximum length of ASCII data lines. */
@@ -9447,6 +9447,9 @@ int dd_calc_subdomain_from_coords(
   met_t * met,
   ctl_t * ctl,
   int mpi_size);
+
+int dd_is_periodic_longitude(
+  met_t * met);
 
 void dd_assign_rect_subdomains_atm(
   atm_t * atm,

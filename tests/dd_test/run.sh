@@ -1,35 +1,54 @@
 #! /bin/bash
 set -e
 
-# Usage: ./run.sh [skip_compile|skip] [hpc]
+# Usage: ./run.sh [compile] [hpc] [skip_wind] [skip_run] [skip_compare]
 # Arguments:
-#   skip_compile|skip: Skip compilation step
+#   compile: Enable compilation step (default is to skip compilation)
 #   hpc: Run in HPC mode (uses ml and srun), otherwise uses mpirun
+#   skip_wind: Skip wind data generation
+#   skip_run: Skip MPTRAC simulation run
+#   skip_compare: Skip result comparison
 # Arguments can be provided in any order
 
 #################################################################################################################
-# Setup directory structure, OMP, modules, library paths
+# Setup directory structure, parse arguments
 #################################################################################################################
 
-# Get absolute path to mptrac directory
+work_dir=$(pwd)
 mptrac_dir=$(cd ../../ && pwd)
-work_dir=$mptrac_dir/tests/dd_test
+meteo_data_dir=$work_dir/data/wind_data
+metbase=$meteo_data_dir/wind    # path to meteo files
 echo "[INFO] MPTRAC directory: $mptrac_dir"
 echo "[INFO] Working directory: $work_dir"
+echo "[INFO] Meteo data directory: $meteo_data_dir"
+echo "[INFO] Meteo base path: $metbase"
 cd $work_dir
 rm -rf data
-mkdir -p data/wind_data
+mkdir -p data
+mkdir -p $meteo_data_dir
 
 # Parse arguments - check all arguments for keywords
-skip_compile=""
+compile=""
 hpc_mode=""
+skip_wind=""
+skip_run=""
+skip_compare=""
 for arg in "$@"; do
     case "$arg" in
-        "skip"|"skip_compile")
-            skip_compile="$arg"
+        "compile")
+            compile="compile"
             ;;
         "hpc")
             hpc_mode="hpc"
+            ;;
+        "skip_wind")
+            skip_wind="skip_wind"
+            ;;
+        "skip_run")
+            skip_run="skip_run"
+            ;;
+        "skip_compare")
+            skip_compare="skip_compare"
             ;;
         *)
             echo "[WARNING] Unknown argument: $arg"
@@ -46,23 +65,20 @@ else
     echo "[INFO] Running in non-HPC mode"
 fi
 
-# Set environment
-export LD_LIBRARY_PATH=$mptrac_dir/libs/build/lib/:$LD_LIBRARY_PATH
-export OMP_NUM_THREADS=1
-export OMP_PROC_BIND=true
-export OMP_PLACES=sockets
-#export LANG=C
-#export LC_ALL=C
-
 #################################################################################################################
 # Define simulation parameters
 #################################################################################################################
 
-# Set number of domains in each direction
+ntasks_per_node=9       # fixed number of tasks per node
+
+use_gpu=0                           # enable GPU support in MPTRAC compilation (0=off, 1=on)
+cpus_per_task=1                     # number of CPUs per task
+
 domains_lon=3                       # number of subdomains in longitudinal direction
 domains_lat=3                       # number of subdomains in latitudinal direction
 
 # Set parameters for atmospheric initialization
+use_evenly_distributed=0            # use INIT_EVENLY=1 for cosine-weighted particle distribution (0=off, 1=on)
 particles_subdomain_lon_stride=4    # number of particles in longitudinal direction per subdomain
 particles_subdomain_lat_stride=4    # number of particles in latitudinal direction per subdomain
 grid_lon_start=0                    # starting longitude of the grid for the atmospheric initialization
@@ -73,13 +89,16 @@ grid_lat_d=-1                       # latitude direction (1 or -1)
 grid_lat_size=180                   # size of the grid for the atmospheric initialization in latitudinal direction
 
 # Set meteo file parameters
-metbase=$work_dir/data/wind_data/wind    # path to meteo files
 met_press_level_def=-1  # pressure level definition
 met_clams=0             # follow CLaMS filename guideline
 met_vert_coord=0        # original vertical coordinate type
 dt_met=3600             # read time interval for meteo files
 dt_mod=600              # model time step
 met_dt_out=3600         # output time interval for meteo files
+
+# Set simulation time parameters
+simulation_hours=6      # duration of simulation in hours
+ntimesteps=$((simulation_hours * 3600 / dt_met + 1))  # number of time steps (including initial time)
 atm_type=3              # original atmospheric data type
 met_grid_nx=360         # number of grid points in longitudinal direction of meteo files
 met_grid_ny=181         # number of grid points in latitudinal direction of meteo files
@@ -91,9 +110,11 @@ wind_alpha=90           # angle for wind rotation  in degrees
 wind_speed=50           # wind speed in m/s
 
 # Calculate derived parameters
-processes=$((domains_lon * domains_lat))
+ntasks=$((domains_lon * domains_lat))
+nnodes=$(( (ntasks + ntasks_per_node - 1) / ntasks_per_node ))
 particles_num_subdomain=$((particles_subdomain_lon_stride * particles_subdomain_lat_stride))
-npmax=$((domains_lon * domains_lat * particles_num_subdomain * 2))
+npmax=$((particles_num_subdomain * 2))
+nparticles=$((particles_num_subdomain * ntasks))
 subgrid_lon_size=$(echo "scale=6; $grid_lon_size / $domains_lon" | bc)
 subgrid_lat_size=$(echo "scale=6; $grid_lat_size / $domains_lat" | bc)
 subgrid_pos_dlon=$(echo "scale=6; $subgrid_lon_size / $particles_subdomain_lon_stride" | bc)
@@ -106,9 +127,17 @@ grid_nx=$((met_grid_nx * grid_lon_size / 360))
 grid_ny=$((met_grid_ny * grid_lat_size / 180))
 
 #print parameters
-echo "[INFO] processes: $processes"
+echo "[INFO] ntasks_per_node: $ntasks_per_node"
+echo "[INFO] cpus_per_task: $cpus_per_task"
+echo "[INFO] ntasks: $ntasks"
+echo "[INFO] nnodes: $nnodes"
+echo "[INFO] use_evenly_distributed: $use_evenly_distributed"
+echo "[INFO] use_gpu: $use_gpu"
+echo "[INFO] simulation_hours: $simulation_hours"
+echo "[INFO] ntimesteps: $ntimesteps"
 echo "[INFO] particles_num_subdomain: $particles_num_subdomain"
 echo "[INFO] npmax: $npmax"
+echo "[INFO] nparticles: $nparticles"
 echo "[INFO] subgrid_lon_size: $subgrid_lon_size"
 echo "[INFO] subgrid_lat_size: $subgrid_lat_size"
 echo "[INFO] subgrid_pos_dlon: $subgrid_pos_dlon"
@@ -118,38 +147,64 @@ echo "[INFO] subgrid_pos_lat_offset: $subgrid_pos_lat_offset"
 echo "[INFO] dex: $dex"
 echo "[INFO] dey: $dey"
 
-
 #################################################################################################################
 # Compile MPTRAC with domain decomposition
 #################################################################################################################
+
+# Set environment
+export LD_LIBRARY_PATH=$mptrac_dir/libs/build/lib/:$LD_LIBRARY_PATH
+export OMP_NUM_THREADS=$cpus_per_task
+export OMP_PROC_BIND=true
+export OMP_PLACES=sockets
+#export LANG=C
+#export LC_ALL=C
 
 defs="-DNP=${npmax} -DEX_GLOB=${dex_glob} -DEY_GLOB=${dey_glob} -DEP=${dez_glob} -DEX=${dex} -DEY=${dey} -DNQ=5"
 
 echo "[INFO] defs: $defs"
 echo "[INFO] LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
 
-# Check if compilation should be skipped
-if [[ "$skip_compile" == "skip" || "$skip_compile" == "skip_compile" ]]; then
-    echo "[INFO] Skipping compilation (argument: $skip_compile)"
+# Set compiler based on mode
+if [[ "$hpc_mode" == "hpc" ]]; then
+    compiler="nvc"
+    echo "[INFO] Using nvc compiler (HPC mode)"
 else
-    echo "[INFO] Compile MPTRAC with domain decomposition"
+    compiler="gcc"
+    echo "[INFO] Using gcc compiler (non-HPC mode)"
+fi
+
+# Check if compilation should be skipped
+if [[ "$compile" != "compile" ]]; then
+    echo "[INFO] Skipping compilation (default behavior - use 'compile' argument to enable)"
+else
+    echo "[INFO] Compile MPTRAC with domain decomposition using $compiler"
     cd $mptrac_dir/src
     make clean
-    make -j8 DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=nvc DEFINES="$defs" || exit 1
-    cd $work_dir
+    
+    # First compile all executables with GPU support (including trac)
+    echo "[INFO] Compiling all executables"
+    make -j DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
+    
+    # Then recompile atm_init without GPU support (atm_init doesn't work with GPU=1)
+    echo "[INFO] Recompiling atm_init without GPU support"
+    rm -f $mptrac_dir/src/atm_init
+    rm -f $mptrac_dir/src/wind
+    make atm_init wind DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
 fi
 
 #################################################################################################################
 # Create atmospheric initialization files & control files for each subdomain
 #################################################################################################################
 
+cd $work_dir
+
 # Set timerange of simulation
 t0=$($mptrac_dir/src/time2jsec 2022 6 2 0 0 0 0)
-t1=$($mptrac_dir/src/time2jsec 2022 6 2 6 0 0 0)
+t1=$($mptrac_dir/src/time2jsec 2022 6 2 $simulation_hours 0 0 0)
 
 echo "[INFO] write dirlist.tab and config.ctl to data directory"
 > data/dirlist.tab  # Clear the file first
-for i in $(seq 0 $((processes-1))); do
+for i in $(seq 0 $((ntasks-1))); do
     echo "data.$i" >> data/dirlist.tab
 done
 
@@ -199,7 +254,11 @@ NAP_MAX = ${npmax}
 EOF
 
 echo "[INFO] Create initialization files for each subdomain"
-for i in $(seq 0 $((processes-1))); do
+if [[ $use_evenly_distributed -eq 1 ]]; then
+    echo "[WARNING] Using INIT_EVENLY=1: Particle count per subdomain may vary due to cosine weighting"
+    echo "[WARNING] This could affect load balancing between subdomains"
+fi
+for i in $(seq 0 $((ntasks-1))); do
     mkdir -p data/data.$i
 
     ilat=$((i % domains_lat))
@@ -244,7 +303,8 @@ for i in $(seq 0 $((processes-1))); do
                 INIT_LAT0 $init_lat0 \
                 INIT_LAT1 $init_lat1 \
                 INIT_DLAT $init_dlat \
-                INIT_IDX_OFFSET $((particles_num_subdomain * i)) > $work_dir/data/atm_generation.log 2>&1
+                INIT_EVENLY $use_evenly_distributed \
+                INIT_IDX_OFFSET $((particles_num_subdomain * i)) >> $work_dir/data/atm_generation.log 2>&1
     
     cat > data/data.$i/config.ctl <<EOF
 MET_PRESS_LEVEL_DEF = ${met_press_level_def}
@@ -296,10 +356,14 @@ done
 # Generate wind data files
 #################################################################################################################
 
-cd $work_dir/data/wind_data
-echo "[INFO] Generate wind data files"
+# Check if wind data generation should be skipped
+if [[ "$skip_wind" == "skip_wind" ]]; then
+    echo "[INFO] Skipping wind data generation (argument: $skip_wind)"
+else
+    cd $meteo_data_dir
+    echo "[INFO] Generate wind data files"
 
-cat > wind.ctl <<EOF
+    cat > wind.ctl <<EOF
 WIND_T0 = ${t0}
 WIND_NX = ${met_grid_nx}
 WIND_NY = ${met_grid_ny}
@@ -313,35 +377,62 @@ WIND_ALPHA = ${wind_alpha}
 WIND_LAT_REVERSE = 1
 EOF
 
-for i in {0..6}; do
-    new_t0=$(echo "scale=6; $t0 + $i * $dt_met" | bc)
-    
-    # Update the T0 value in wind.ctl
-    sed -i "s/^WIND_T0 = .*/WIND_T0 = $new_t0/" wind.ctl
-    
-    # Run the wind command
-    $mptrac_dir/src/wind wind.ctl wind > $work_dir/data/wind_generation.log 2>&1
-    
-    echo "[INFO] Generated file $((i+1)) with T0 = $new_t0"
-done
+    for i in $(seq 0 $((ntimesteps-1))); do
+        new_t0=$(echo "scale=6; $t0 + $i * $dt_met" | bc)
+        
+        # Update the T0 value in wind.ctl
+        sed -i "s/^WIND_T0 = .*/WIND_T0 = $new_t0/" wind.ctl
+        
+        # Run the wind command
+        $mptrac_dir/src/wind wind.ctl wind >> $work_dir/data/wind_generation.log 2>&1
+        
+        echo "[INFO] Generated file $((i+1))/$ntimesteps with T0 = $new_t0"
+    done
+fi
 
 #################################################################################################################
 # Running MPTRAC with domain decomposition
 #################################################################################################################
 
-echo "[INFO] Running MPTRAC with domain decomposition with $processes processes"
-cd $work_dir/data
-if [[ "$hpc_mode" == "hpc" ]]; then
-    srun --nodes 1 --ntasks $processes --ntasks-per-node $processes --cpus-per-task 1 ../../../src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > $work_dir/data/srun_output.log 2>&1
+# Check if MPTRAC run should be skipped
+if [[ "$skip_run" == "skip_run" ]]; then
+    echo "[INFO] Skipping MPTRAC simulation run (argument: $skip_run)"
 else
-    mpirun -np $processes ../../../src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > $work_dir/data/mpirun_output.log 2>&1
+    echo "[INFO] Running MPTRAC with domain decomposition with $ntasks tasks"
+    cd $work_dir/data
+    if [[ "$hpc_mode" == "hpc" ]]; then
+        if [[ $use_gpu -eq 1 ]]; then
+            echo "[INFO] Running with GPU support on HPC (partition=booster, gres=gpu:$ntasks_per_node, cpus-per-task=$cpus_per_task)"
+            srun --partition=booster --gres=gpu:$ntasks_per_node --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
+                --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
+                --output=$work_dir/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
+                --error=$work_dir/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
+                $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
+        else
+            echo "[INFO] Running with CPU-only on HPC (cpus-per-task=$cpus_per_task)"
+            srun --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
+                --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
+                --output=$work_dir/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
+                --error=$work_dir/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
+                $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
+        fi
+    else
+        mpirun --oversubscribe -np $ntasks $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > $work_dir/data/mpirun_output.log 2>&1
+    fi
 fi
-cd $work_dir
 
 #################################################################################################################
 # Compare results
 #################################################################################################################
 
+# Check if result comparison should be skipped
+if [[ "$skip_compare" == "skip_compare" ]]; then
+    echo "[INFO] Skipping result comparison (argument: $skip_compare)"
+    echo "[INFO] Test completed (comparison skipped)."
+    exit 0
+fi
+
+cd $work_dir
 echo -e "\nComparing .tab files recursively..."
 error=0
 if [ -d "data.ref" ]; then
