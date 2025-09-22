@@ -3238,6 +3238,9 @@ typedef struct {
 
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
+  
+  /*! Domain decomposition (0=no, 1=yes, with 2x2 if not specified). */
+  int dd;
 
   /*! Zonal subdomain number. */
   int dd_subdomains_zonal;

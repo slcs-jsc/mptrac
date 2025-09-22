@@ -4404,11 +4404,14 @@ void mptrac_free(
   free(clim);
   free(met0);
   free(met1);
+  
 
   /* Free MPI datatype... */
 #ifdef DD
+  free(dd); 
   MPI_Type_free(&dd->MPI_Particle);
 #endif
+
 }
 
 /*****************************************************************************/
@@ -5540,19 +5543,24 @@ void mptrac_read_ctl(
   ctl->vtk_sphere =
     (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
 
-#ifdef DD
   /* Controle of domain decomposition... */
+  ctl->dd = (int) scan_ctl(filename, argc, argv, "DD", -1, "0",
+		   NULL);
   ctl->dd_subdomains_meridional =
-    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_MERIDIONAL", -1, "1",
-		   NULL);
+    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_MERIDIONAL", -1, 
+                   (ctl->dd == 1) ? "2" : "1", NULL);
   ctl->dd_subdomains_zonal =
-    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_ZONAL", -1, "1",
-		   NULL);
+    (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_ZONAL", -1,
+                   (ctl->dd == 1) ? "2" : "1", NULL);  		   
+  if (ctl->dd_subdomains_zonal*ctl->dd_subdomains_meridional > 1)
+    ctl->dd = 1;
+  else if (ctl->dd == 1)
+    ERRMSG("Please provide zonal and meridional subdomain numbers!")
+       
   ctl->dd_nbr_neighbours =
     (int) scan_ctl(filename, argc, argv, "DD_NBR_NEIGHBOURS", -1, "8", NULL);
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
-#endif
 
 }
 
@@ -5580,13 +5588,13 @@ int mptrac_read_met(
 
     /* Read netCDF data... */
     if (ctl->met_type == 0) {
-#ifdef DD
-      if (read_met_nc_dd(filename, ctl, met, dd) != 1)
-	return 0;
-#else
-      if (read_met_nc(filename, ctl, met) != 1)
-	return 0;
-#endif
+      if (ctl->dd == 1) {
+        if (read_met_nc_dd(filename, ctl, met, dd) != 1)
+	  return 0;
+       } else {
+           if (read_met_nc(filename, ctl, met) != 1)
+	     return 0;
+      }
     }
 
     /* Read binary data... */
@@ -5797,10 +5805,8 @@ void mptrac_run_timestep(
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
 
   /* Domain decomposition... */
-#ifdef DD
-  if (ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal > 1)
+  if (ctl->dd == 1)
     module_dd(ctl, atm, cache, dd, met0);
-#endif
 
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
