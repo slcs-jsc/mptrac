@@ -13707,16 +13707,13 @@ void dd_assign_rect_subdomains_atm(
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
 #pragma acc update device(dd->neighbours[:DD_NNMAX], dd->rank, dd->size, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max)
-#pragma acc data present(atm, ctl, dd)
+#pragma acc data present(atm, met, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
     for (int ip = 0; ip < atm->np; ip++) {
-    
-      int subdomain = (int) atm->q[ctl->qnt_subdomain][ip]
-      int destination = (int) atm->q[ctl->qnt_destination][ip]
 
       /* Skip empty places in the particle array... */
-      if (subdomain == -1)
+      if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
 	continue;
 
       double lont = atm->lon[ip];
@@ -13742,102 +13739,94 @@ void dd_assign_rect_subdomains_atm(
       if (!bound) {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
-	  destination = dd->neighbours[5];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
 	  LOG(4, "DD: Particle crossing to upper right: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
-	  destination = dd->neighbours[4];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
 	  LOG(4, "DD: Particle crossing to lower right: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
-	  destination = dd->neighbours[2];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
 	  LOG(4, "DD: Particle crossing to upper left: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
-	  destination = dd->neighbours[1];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
 	  LOG(4, "DD: Particle crossing to lower left: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
-	  destination = dd->neighbours[3];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
 	  LOG(4, "DD: Particle crossing to right: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
-	  destination = dd->neighbours[0];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
 	  LOG(4, "DD: Particle crossing to left: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
-	  destination = dd->neighbours[7];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
 	  LOG(4, "DD: Particle crossing downward: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
-	  destination = dd->neighbours[6];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
 	  LOG(4, "DD: Particle crossing upward: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
-	  destination = dd->rank;
+	  atm->q[ctl->qnt_destination][ip] = dd->rank;
 	}
       } else {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
-	  destination = dd->neighbours[2];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
 	  LOG(4, "DD: Particle crossing to upper left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
-	  destination = dd->neighbours[1];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
 	  LOG(4, "DD: Particle crossing to lower left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
-	  destination = dd->neighbours[5];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
 	  LOG(4, "DD: Particle crossing to upper right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
-	  destination = dd->neighbours[4];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
 	  LOG(4, "DD: Particle crossing to lower right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
-	  destination = dd->neighbours[0];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
 	  LOG(4, "DD: Particle crossing to left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
-	  destination = dd->neighbours[3];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
 	  LOG(4, "DD: Particle crossing to right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
-	  destination = dd->neighbours[7];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
 	  LOG(4, "DD: Particle crossing downward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
-	  destination = dd->neighbours[6];
+	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
 	  LOG(4, "DD: Particle crossing upward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
-	  destination = dd->rank;
+	  atm->q[ctl->qnt_destination][ip] = dd->rank;
 	}
       }
-      
-      
-      int pos = int(lont/360)*ctl->subdomains_zonal;
-      if (destination < 0)
-        if 
-        destination = < 0 % pos : pos + ctl->subdomains_meridional - 1
-       
-      
       
       /* Handle particles assigned to poles by wrapping coordinates and calculating proper subdomain */
       /*
