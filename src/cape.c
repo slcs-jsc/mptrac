@@ -68,9 +68,9 @@ int main(
     ERRMSG("Cannot open file!");
 
   /* Get dimensions... */
-  NC_INQ_DIM("time", &dims[0], 1, 1);
-  NC_INQ_DIM("lat", &dims[1], met->ny, met->ny);
-  NC_INQ_DIM("lon", &dims[2], met->nx - 1, met->nx - 1);
+  NC_INQ_DIM("time", &dims[0], 1, 1, 1);
+  NC_INQ_DIM("lat", &dims[1], met->ny, met->ny, 1);
+  NC_INQ_DIM("lon", &dims[2], met->nx - 1, met->nx - 1, 1);
   NC(nc_inq_dimid(ncid, "time", &dims[0]));
   NC(nc_inq_dimid(ncid, "lat", &dims[1]));
   NC(nc_inq_dimid(ncid, "lon", &dims[2]));

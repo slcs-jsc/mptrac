@@ -143,8 +143,9 @@
 
 #ifdef DD
 #include <netcdf_par.h>
-#include <stdbool.h>
 #endif
+#include <stdbool.h>
+
 
 #ifdef _OPENACC
 #include "openacc.h"
@@ -296,21 +297,6 @@
 /*! Maximum number of latitudes for meteo data. */
 #ifndef EY
 #define EY 724
-#endif
-
-/*! Maximum number of pressure levels for meteo data. */
-#ifndef EP_GLOB
-#define EP_GLOB 140
-#endif
-
-/*! Maximum number of global longitudes for meteo data. */
-#ifndef EX_GLOB
-#define EX_GLOB 1444
-#endif
-
-/*! Maximum number of global latitudes for meteo data. */
-#ifndef EY_GLOB
-#define EY_GLOB 724
 #endif
 
 /*! Maximum length of ASCII data lines. */
@@ -1236,16 +1222,19 @@
  * @param ptr Pointer to an integer where the dimension length will be stored.
  * @param min Minimum acceptable length for the dimension.
  * @param max Maximum acceptable length for the dimension.
+ * @param check Flag to check bounds. Set to 1 for bounds check.
  *
  * @author Lars Hoffmann
+ * @author Jan Clemens
  */
-#define NC_INQ_DIM(dimname, ptr, min, max) {		\
-    int dimid; size_t naux;				\
-    NC(nc_inq_dimid(ncid, dimname, &dimid));		\
-    NC(nc_inq_dimlen(ncid, dimid, &naux));		\
-    *ptr = (int)naux;					\
-    if ((*ptr) < (min) || (*ptr) > (max))		\
-      ERRMSG("Dimension %s is out of range!", dimname);	\
+#define NC_INQ_DIM(dimname, ptr, min, max, check) {       \
+    int dimid; size_t naux;				  \
+    NC(nc_inq_dimid(ncid, dimname, &dimid));		  \
+    NC(nc_inq_dimlen(ncid, dimid, &naux));		  \
+    *ptr = (int)naux;                                     \
+    if (check)		                                  \
+      if ((*ptr) < (min) || (*ptr) > (max))		  \
+        ERRMSG("Dimension %s is out of range!", dimname); \
   }
 
 /**
@@ -3535,30 +3524,14 @@ typedef struct {
   /*! Number of model levels. */
   int npl;
 
-  // TODO:
-  // They need global sizes now, maybe in the future just keep EX, EY, EP and
-  // Introduce help data structure in read_met_grid etc.
-
   /*! Longitudes [deg]. */
-#ifdef DD
-  double lon[EX_GLOB];
-#else
   double lon[EX];
-#endif
 
   /*! Latitudes [deg]. */
-#ifdef DD
-  double lat[EY_GLOB];
-#else
   double lat[EY];
-#endif
 
   /*! Pressure levels [hPa]. */
-#ifdef DD
-  double p[EP_GLOB];
-#else
   double p[EP];
-#endif
 
   /*! Model hybrid levels. */
   double hybrid[EP];
@@ -3692,17 +3665,6 @@ typedef struct {
   /*! Vertical velocity on model levels [K/s]. */
   float zeta_dotl[EX][EY][EP];
 
-  // TODO: To be removed soon...
-
-  /*! Global sizes of meteo data. */
-  int nx_glob;
-
-  /*! Global sizes of meteo data. */
-  int ny_glob;
-
-  /*! Global sizes of meteo data. */
-  int np_glob;
-
 } met_t;
 
 
@@ -3722,12 +3684,13 @@ typedef struct {
   /*! Size of node. */
   int size;
   
-#ifdef DD
   /*! Rank of neighbouring nodes. */
   int neighbours[DD_NNMAX];
 
+#ifdef DD
   /*! MPI type for the particle. */
   MPI_Datatype MPI_Particle;
+#endif 
   
    /* ------------------------------------------------------------
      Caches
@@ -3767,8 +3730,6 @@ typedef struct {
 
   /* Hyperslab of boundary halos count. */
   int halo_offset_end;  
-  
-#endif
 
 } dd_t;
 
@@ -6158,7 +6119,6 @@ void mptrac_alloc(
  *
  * @author Lars Hoffmann
  */
-#ifdef DD
 void mptrac_free(
   ctl_t * ctl,
   cache_t * cache,
@@ -6167,15 +6127,6 @@ void mptrac_free(
   met_t * met1,
   atm_t * atm,
   dd_t * dd);
-#else
-void mptrac_free(
-  ctl_t * ctl,
-  cache_t * cache,
-  clim_t * clim,
-  met_t * met0,
-  met_t * met1,
-  atm_t * atm);
-#endif
 
 /**
  * @brief Retrieves meteorological data for the specified time.
@@ -6411,7 +6362,6 @@ int mptrac_read_met(
  *
  * @author Lars Hoffmann
  */
-#ifdef DD
 void mptrac_run_timestep(
   ctl_t * ctl,
   cache_t * cache,
@@ -6421,16 +6371,7 @@ void mptrac_run_timestep(
   atm_t * atm,
   double t,
   dd_t * dd);
-#else
-void mptrac_run_timestep(
-  ctl_t * ctl,
-  cache_t * cache,
-  clim_t * clim,
-  met_t ** met0,
-  met_t ** met1,
-  atm_t * atm,
-  double t);
-#endif
+
 
 /**
  * @brief Writes air parcel data to a file in various formats.
@@ -9371,11 +9312,10 @@ void dd_register_MPI_type_particle(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void dd_get_rect_neighbour(
   const ctl_t ctl,
   dd_t * dd);
-#endif
+
 
 /**
  * @brief Communicates particles between MPI processes.
@@ -9443,24 +9383,24 @@ void dd_communicate_particles(
  * @author Jan Clemens
  */
 
-#ifdef DD
 int dd_calc_subdomain_from_coords(
   double lon,
   double lat,
   met_t * met,
   ctl_t * ctl,
-  int mpi_size);
+  int mpi_size,
+  int nx_glob,
+  int ny_glob);
 
 int dd_is_periodic_longitude(
-  met_t * met);
+  met_t * met,
+  int nx_glob);
 
 void dd_assign_rect_subdomains_atm(
   atm_t * atm,
-  met_t * met,
   ctl_t * ctl,
   dd_t * dd,
   int init);
-#endif
 
 /**
  * @brief Initializes domain decomposition for parallel processing.
@@ -9488,14 +9428,11 @@ void dd_assign_rect_subdomains_atm(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void dd_init(
   ctl_t * ctl,
   dd_t * dd,
   atm_t * atm,
-  met_t ** met,
   int *dd_init);
-#endif
 
 /**
  * @brief Manages domain decomposition and particle communication in parallel processing.
@@ -9566,13 +9503,12 @@ void module_dd(
  * @author Jan Clemens
  * @author Lars Hoffmann
  */
-#ifdef DD
 void dd_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
   int *nparticles,
   int *rank);
-#endif
+
 
 #endif /* LIBTRAC_H */

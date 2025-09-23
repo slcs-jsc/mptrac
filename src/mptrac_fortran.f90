@@ -500,6 +500,11 @@ MODULE mptrac_struct
      REAL(c_float), DIMENSION(ep,ey,ex) :: wl
      REAL(c_float), DIMENSION(ep,ey,ex) :: zetal
      REAL(c_float), DIMENSION(ep,ey,ex) :: zeta_dotl
+  END TYPE met_t
+  
+  TYPE, bind(c) :: dd_t
+     INTEGER(c_int) :: rank
+     INTEGER(c_int) :: size
      REAL(c_double) :: subdomain_lon_max
      REAL(c_double) :: subdomain_lon_min
      REAL(c_double) :: subdomain_lat_max
@@ -509,12 +514,9 @@ MODULE mptrac_struct
      INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_start
      INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_count
      INTEGER(c_int) :: halo_offset_start
-     INTEGER(c_int) :: halo_offset_end
-     INTEGER(c_int) :: nx_glob
-     INTEGER(c_int) :: ny_glob
-     INTEGER(c_int) :: np_glob
-  END TYPE met_t
-
+     INTEGER(c_int) :: halo_offset_end  
+  END TYPE dd_t
+      
 END MODULE mptrac_struct
 
 ! ------------------------------------------------------------

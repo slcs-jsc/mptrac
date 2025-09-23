@@ -4371,7 +4371,6 @@ void mptrac_alloc(
 
 /*****************************************************************************/
 
-#ifdef DD
 void mptrac_free(
   ctl_t *ctl,
   cache_t *cache,
@@ -4380,15 +4379,7 @@ void mptrac_free(
   met_t *met1,
   atm_t *atm,
   dd_t *dd) {
-#else
-void mptrac_free(
-  ctl_t *ctl,
-  cache_t *cache,
-  clim_t *clim,
-  met_t *met0,
-  met_t *met1,
-  atm_t *atm) {
-#endif
+
 
   /* Delete data region on GPU... */
 #ifdef _OPENACC
@@ -4405,10 +4396,9 @@ void mptrac_free(
   free(met0);
   free(met1);
   
-
   /* Free MPI datatype... */
-#ifdef DD
   free(dd); 
+#ifdef DD
   MPI_Type_free(&dd->MPI_Particle);
 #endif
 
@@ -5680,7 +5670,6 @@ int mptrac_read_met(
 
 /*****************************************************************************/
 
-#ifdef DD
 void mptrac_run_timestep(
   ctl_t *ctl,
   cache_t *cache,
@@ -5690,16 +5679,7 @@ void mptrac_run_timestep(
   atm_t *atm,
   double t,
   dd_t *dd) {
-#else
-void mptrac_run_timestep(
-  ctl_t *ctl,
-  cache_t *cache,
-  clim_t *clim,
-  met_t **met0,
-  met_t **met1,
-  atm_t *atm,
-  double t) {
-#endif
+  
   /* Initialize modules... */
   if (t == ctl->t_start) {
 
@@ -5717,11 +5697,10 @@ void mptrac_run_timestep(
   /* Set time steps of air parcels... */
   module_timesteps(ctl, cache, *met0, atm, t);
 
-#ifndef DD
   /* Sort particles... */
   if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
     module_sort(ctl, *met0, atm);
-#endif
+
 
   /* Check positions (initial)... */
   module_position(cache, *met0, *met1, atm);
@@ -5805,8 +5784,13 @@ void mptrac_run_timestep(
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
 
   /* Domain decomposition... */
-  if (ctl->dd == 1)
+  if (ctl->dd == 1) {
+#ifdef DD
     module_dd(ctl, atm, cache, dd, met0);
+#else 
+  ERRMSG("Control flag is set for DD, but model is compiled without DD.")
+#endif
+  } else {dd->rank = dd->rank;} //TODO: just for testing...
 
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
@@ -6297,7 +6281,7 @@ int read_atm_clams(
     return 0;
 
   /* Get dimensions... */
-  NC_INQ_DIM("NPARTS", &atm->np, 1, NP);
+  NC_INQ_DIM("NPARTS", &atm->np, 1, NP, 1);
 
   /* Get time... */
   if (nc_inq_varid(ncid, "TIME_INIT", &varid) == NC_NOERR) {
@@ -6357,7 +6341,7 @@ int read_atm_nc(
     return 0;
 
   /* Get dimensions... */
-  NC_INQ_DIM("obs", &atm->np, 1, NP);
+  NC_INQ_DIM("obs", &atm->np, 1, NP, 1);
 
   /* Read geolocations... */
   NC_GET_DOUBLE("time", atm->time, 1);
@@ -6394,19 +6378,19 @@ void read_clim_photo(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &photo->np, 2, CP);
+  NC_INQ_DIM("press", &photo->np, 2, CP, 1);
   NC_GET_DOUBLE("press", photo->p, 1);
   if (photo->p[0] < photo->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read total column ozone data... */
-  NC_INQ_DIM("total_o3col", &photo->no3c, 2, CO3);
+  NC_INQ_DIM("total_o3col", &photo->no3c, 2, CO3, 1);
   NC_GET_DOUBLE("total_o3col", photo->o3c, 1);
   if (photo->o3c[0] > photo->o3c[1])
     ERRMSG("Total column ozone data are not ascending!");
 
   /* Read solar zenith angle data... */
-  NC_INQ_DIM("sza", &photo->nsza, 2, CSZA);
+  NC_INQ_DIM("sza", &photo->nsza, 2, CSZA, 1);
   NC_GET_DOUBLE("sza", photo->sza, 1);
   if (photo->sza[0] > photo->sza[1])
     ERRMSG("Solar zenith angle data are not ascending!");
@@ -6570,13 +6554,13 @@ void read_clim_zm(
   }
 
   /* Read pressure data... */
-  NC_INQ_DIM("press", &zm->np, 2, CP);
+  NC_INQ_DIM("press", &zm->np, 2, CP, 1);
   NC_GET_DOUBLE("press", zm->p, 1);
   if (zm->p[0] < zm->p[1])
     ERRMSG("Pressure data are not descending!");
 
   /* Read latitudes... */
-  NC_INQ_DIM("lat", &zm->nlat, 2, CY);
+  NC_INQ_DIM("lat", &zm->nlat, 2, CY, 1);
   NC_GET_DOUBLE("lat", zm->lat, 1);
   if (zm->lat[0] > zm->lat[1])
     ERRMSG("Latitude data are not ascending!");
@@ -6597,7 +6581,7 @@ void read_clim_zm(
   zm->time[11] = 30153600.00;
 
   /* Check number of timesteps... */
-  NC_INQ_DIM("time", &nt, 12, 12);
+  NC_INQ_DIM("time", &nt, 12, 12, 1);
 
   /* Read data... */
   ALLOC(help, double,
@@ -7417,7 +7401,6 @@ void read_met_geopot(
 }
 
 /*****************************************************************************/
-#ifdef DD
 void read_met_nc_grid_dd(
   const char *filename,
   const int ncid,
@@ -7483,14 +7466,23 @@ void read_met_nc_grid_dd(
   LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);
 
-  /* Get global and local grid dimensions... */
-  NC_INQ_DIM("lon", &met->nx_glob, 2, EX_GLOB);
-  LOG(2, "Number of longitudes: %d", met->nx_glob);
-  met->nx = (int) floor(met->nx_glob / ctl->dd_subdomains_zonal);
+  /* Get global grid dimensions... */
+  int help_nx_glob;
+  int help_ny_glob;
+  int help_np_glob;
 
-  NC_INQ_DIM("lat", &met->ny_glob, 2, EY_GLOB);
-  LOG(2, "Number of latitudes: %d", met->ny_glob);
-  met->ny = (int) floor(met->ny_glob / ctl->dd_subdomains_meridional);;
+  NC_INQ_DIM("lon", &help_nx_glob, 0, 0, 0);
+  LOG(2, "Number of longitudes: %d", help_nx_glob);
+  met->nx = (int) floor(help_nx_glob / ctl->dd_subdomains_zonal);
+
+  NC_INQ_DIM("lat", &help_ny_glob, 0, 0, 0);
+  LOG(2, "Number of latitudes: %d", help_ny_glob);
+  met->ny = (int) floor(help_ny_glob / ctl->dd_subdomains_meridional);
+
+  double* help_lon_glob;
+  double* help_lat_glob;
+  ALLOC(help_lon_glob, double, help_nx_glob);
+  ALLOC(help_lat_glob, double, help_ny_glob);
 
   /* Get global coordinates... */
   int dimid2;
@@ -7500,78 +7492,64 @@ void read_met_nc_grid_dd(
   if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
     sprintf(levname, "hybrid");
 
-  NC_INQ_DIM(levname, &met->np_glob, 1, EP_GLOB);
-  if (met->np_glob == 1) {
+  NC_INQ_DIM(levname, &help_np_glob, 1, EP, 0);
+  if (help_np_glob == 1) {
     sprintf(levname, "lev_2");
     if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR) {
       sprintf(levname, "plev");
       NC(nc_inq_dimid(ncid, levname, &dimid2));
     }
     NC(nc_inq_dimlen(ncid, dimid2, &np));
-    met->np_glob = (int) np;
+    help_np_glob = (int) np;
   }
-  met->np = met->np_glob;
+  met->np = help_np_glob;
 
   LOG(2, "Number of levels: %d", met->np);
-  if (met->np_glob < 2 || met->np_glob > EP_GLOB)
+  if (met->np < 2 || met->np > EP)
     ERRMSG("Number of levels out of range!");
 
-  /* Read longitudes and latitudes... */
-  NC_GET_DOUBLE("lon", met->lon, 1);
+  /* Read global longitudes and latitudes... */
+  NC_GET_DOUBLE("lon", help_lon_glob, 1);
   LOG(2, "Longitudes: %g, %g ... %g deg",
-      met->lon[0], met->lon[1], met->lon[met->nx_glob - 1]);
-  NC_GET_DOUBLE("lat", met->lat, 1);
+      help_lon_glob[0], help_lon_glob[1], help_lon_glob[help_nx_glob - 1]);
+  NC_GET_DOUBLE("lat", help_lat_glob, 1);
   LOG(2, "Latitudes: %g, %g ... %g deg",
-      met->lat[0], met->lat[1], met->lat[met->ny_glob - 1]);
+      help_lat_glob[0], help_lat_glob[1], help_lat_glob[help_ny_glob - 1]);
 
-  /* Check grid spacing... */
-  for (int ix = 2; ix < met->nx; ix++)
-    if (fabs
-	(fabs(met->lon[ix] - met->lon[ix - 1]) -
-	 fabs(met->lon[1] - met->lon[0])) > 0.001)
-      ERRMSG("No regular grid spacing in longitudes!");
-  for (int iy = 2; iy < met->ny; iy++)
-    if (fabs
-	(fabs(met->lat[iy] - met->lat[iy - 1]) -
-	 fabs(met->lat[1] - met->lat[0])) > 0.001) {
-      WARN("No regular grid spacing in latitudes!");
-      break;
-    }
+  /* Determine hyperslabs for reading the data in parallel... */
 
   /* Get the MPI information... */
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
-  
-  dd->rank = rank;
-  dd->size = size;
+#ifdef MPI
+  MPI_Comm_rank(MPI_COMM_WORLD, &dd->rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &dd->size);
+#endif
 
   /* Check for edge cases... */
-  bool left = (rank <= ctl->dd_subdomains_meridional - 1);
-  bool right = (rank >= size - ctl->dd_subdomains_meridional);
-  bool top = (rank % ctl->dd_subdomains_meridional == 0);
+  bool left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
+  bool right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
+  bool top = (dd->rank % ctl->dd_subdomains_meridional == 0);
   bool bottom =
-    (rank % ctl->dd_subdomains_meridional ==
+    (dd->rank % ctl->dd_subdomains_meridional ==
      ctl->dd_subdomains_meridional - 1);
 
   /* Set the hyperslab for the subdomain... */
   dd->subdomain_start[0] = 0;
   dd->subdomain_start[1] = 0;
   dd->subdomain_start[2] =
-    (size_t) ((rank % ctl->dd_subdomains_meridional) * met->ny);
+    (size_t) ((dd->rank % ctl->dd_subdomains_meridional) * met->ny);
   dd->subdomain_start[3] =
-    (size_t) (floor(rank / ctl->dd_subdomains_meridional) * met->nx);
+    (size_t) (floor(dd->rank / ctl->dd_subdomains_meridional) * met->nx);
 
   /* Extend subdomains at the right and bottom to fit the full domain. */
   if (right) {
-    int gap = met->nx_glob - ctl->dd_subdomains_zonal * met->nx;
+    int gap = help_nx_glob - ctl->dd_subdomains_zonal * met->nx;
     if (gap > 0) {
       met->nx = met->nx + gap;
       WARN("Extended subdomains at the right to fit to full domain.");
     }
   }
   if (bottom) {
-    int gap = met->ny_glob - ctl->dd_subdomains_meridional * met->ny;
+    int gap = help_ny_glob - ctl->dd_subdomains_meridional * met->ny;
     if (gap > 0) {
       met->ny = met->ny + gap;
       WARN("Extended subdomains at the bottom to fit to full domain.");
@@ -7627,7 +7605,7 @@ void read_met_nc_grid_dd(
 
     dd->halo_bnd_start[0] = 0;
     dd->halo_bnd_start[1] = 0;
-    dd->halo_bnd_start[3] = (size_t) (left ? (met->nx_glob - ctl->dd_halos_size) : (0));	//x
+    dd->halo_bnd_start[3] = (size_t) (left ? (help_nx_glob - ctl->dd_halos_size) : (0));	//x
     dd->halo_bnd_start[2] = dd->subdomain_start[2];	//y
 
     dd->halo_bnd_count[0] = 1;
@@ -7657,59 +7635,55 @@ void read_met_nc_grid_dd(
 
   /* Get the range of the entire meteodata... */
   /* Handle both periodic (global) and non-periodic (regional) longitude grids */
-  double lon_range;
-  if (dd_is_periodic_longitude(met)) {
+  double lon_range = 360;
+  //if (dd_is_periodic_longitude(met, help_nx_glob)) {
     /* For global grids with periodic boundaries, use full 360 degrees */
-    lon_range = 360.0;
-    LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
-  } else {
+    //lon_range = 360.0;
+    //LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
+  //} else {
     /* For regional grids, use the actual data range */
-    lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
-    LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
-  }
+    //lon_range = help_lon_glob[help_nx_glob - 1] - help_lon_glob[0];
+    //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
+  //}
   
-  double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
+  double lat_range = help_lat_glob[help_ny_glob - 1] - help_lat_glob[0];
 
-  /* Focus on subdomain longitutes and latitudes... */
+  /* Focus on subdomain latitudes and longitudes... */
   for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++) {
-    const int iy_ = (int) dd->subdomain_start[2] + iy;
-    met->lat[iy] = met->lat[iy_];
+    met->lat[iy] = help_lat_glob[(int) dd->subdomain_start[2] + iy];
   }
 
+  /* Focus on subdomain longitudes... */
   /* Keep space at the beginning or end of the array for halo... */
-  double help_lon[EX];
-
   for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
-    const int ix_ = (int) dd->subdomain_start[3] + ix;
-    help_lon[ix + dd->halo_offset_start] = met->lon[ix_];
+    met->lon[ix + dd->halo_offset_start] = 
+    	help_lon_glob[(int) dd->subdomain_start[3] + ix];
   }
 
   for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
-    const int ix_ = (int) dd->halo_bnd_start[3] + ix;
-    help_lon[ix + dd->halo_offset_end] = met->lon[ix_] + lon_shift;
+    met->lon[ix + dd->halo_offset_end] = 
+    	help_lon_glob[(int) dd->halo_bnd_start[3] + ix] + lon_shift;
   }
 
   /* Reset the grid dimensions... */
   met->nx = (int) dd->subdomain_count[3] + (int) dd->halo_bnd_count[3];
   met->ny = (int) dd->subdomain_count[2];
-  for (int ix = 0; ix < (int) met->nx; ix++)
-    met->lon[ix] = help_lon[ix];
 
   /* Determine subdomain edges... */
-  dd->subdomain_lon_min = floor(rank / ctl->dd_subdomains_meridional)
+  dd->subdomain_lon_min = floor(dd->rank / ctl->dd_subdomains_meridional)
     * (lon_range) / (double) ctl->dd_subdomains_zonal;
   dd->subdomain_lon_max = dd->subdomain_lon_min
     + (lon_range) / (double) ctl->dd_subdomains_zonal;
 
   /* Latitudes in descending order (90 to -90) */
   if (lat_range < 0) {
-    dd->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
+    dd->subdomain_lat_max = 90 + (dd->rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
     dd->subdomain_lat_min = dd->subdomain_lat_max
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
   } else {
     WARN("lat_range > 0, but is expected to be negative, i.e. latitudes should range from 90 to -90")
-    dd->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
+    dd->subdomain_lat_min = -90 + (dd->rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
     dd->subdomain_lat_max = dd->subdomain_lat_min
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
@@ -7719,7 +7693,7 @@ void read_met_nc_grid_dd(
   LOG(2, "Total latitude range: %g deg", lat_range);
   
   LOG(2, "Define subdomain properties.");
-  LOG(2, "MPI information: Rank %d, Size %d", rank, size);
+  LOG(2, "MPI information: Rank %d, Size %d", dd->rank, dd->size);
   LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int) left, (int) right,
       (int) top, (int) bottom);
   LOG(2, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
@@ -7738,10 +7712,10 @@ void read_met_nc_grid_dd(
   LOG(2, "Offsets: nx %d ny %d", dd->halo_offset_start,
       dd->halo_offset_end);
 
-  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
+  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", dd->rank,
       met->lon[0], met->lon[1], met->lon[met->nx - 1], 
       dd->subdomain_lon_min, dd->subdomain_lon_max);
-  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", rank,
+  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", dd->rank,
       met->lat[0], met->lat[1], met->lat[met->ny - 1], 
       dd->subdomain_lat_min, dd->subdomain_lat_max);
 
@@ -7761,11 +7735,23 @@ void read_met_nc_grid_dd(
   /* Read hybrid levels... */
   if (strcasecmp(levname, "hybrid") == 0)
     NC_GET_DOUBLE("hybrid", met->hybrid, 1);
+
+    /* Check grid spacing... */
+  for (int ix = 2; ix < met->nx; ix++)
+    if (fabs
+	(fabs(met->lon[ix] - met->lon[ix - 1]) -
+	 fabs(met->lon[1] - met->lon[0])) > 0.001)
+      ERRMSG("No regular grid spacing in longitudes!");
+  for (int iy = 2; iy < met->ny; iy++)
+    if (fabs
+	(fabs(met->lat[iy] - met->lat[iy - 1]) -
+	 fabs(met->lat[1] - met->lat[0])) > 0.001) {
+      WARN("No regular grid spacing in latitudes!");
+      break;
+    }
 }
-#endif
 
 /*****************************************************************************/
-#ifdef DD
 void read_met_nc_surface_dd(
   const int ncid,
   const ctl_t *ctl,
@@ -7900,11 +7886,9 @@ void read_met_nc_surface_dd(
 	 1.0, 1))
       WARN("Cannot read convective inhibition!");
 }
-#endif
 
 /*****************************************************************************/
 
-#ifdef DD
 void read_met_nc_levels_dd(
   const int ncid,
   const ctl_t *ctl,
@@ -8111,11 +8095,9 @@ void read_met_nc_levels_dd(
       ERRMSG("Pressure levels must be descending!");
 
 }
-#endif
 
 /*****************************************************************************/
 
-#ifdef DD
 int read_met_nc_dd(
   const char *filename,
   const ctl_t *ctl,
@@ -8164,12 +8146,10 @@ int read_met_nc_dd(
   /* Return success... */
   return 1;
 }
-#endif
 
 
 /*****************************************************************************/
 
-#ifdef DD
 int read_met_nc_2d_dd(
   const int ncid,
   const char *varname,
@@ -8224,9 +8204,6 @@ int read_met_nc_2d_dd(
       varsel, fillval, missval);
 
   /* Define hyperslab... */
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   /* Allocate... */
   float *help;
@@ -8328,11 +8305,9 @@ int read_met_nc_2d_dd(
   /* Return... */
   return 1;
 }
-#endif
 
 /*****************************************************************************/
 
-#ifdef DD
 int read_met_nc_3d_dd(
   const int ncid,
   const char *varname,
@@ -8380,9 +8355,6 @@ int read_met_nc_3d_dd(
   SELECT_TIMER("READ_MET_NC_3D_DD_CP1", "INPUT", NVTX_READ);
 
   /* Define hyperslab... */
-  int rank, size;
-  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &size);
 
   /* Allocate... */
   float *help;
@@ -8483,7 +8455,6 @@ int read_met_nc_3d_dd(
   /* Return... */
   return 1;
 }
-#endif
 
 /*****************************************************************************/
 
@@ -9451,10 +9422,10 @@ void read_met_nc_grid(
       met->time, year2, mon2, day2, hour2, min2);
 
   /* Get grid dimensions... */
-  NC_INQ_DIM("lon", &met->nx, 2, EX);
+  NC_INQ_DIM("lon", &met->nx, 2, EX, 1);
   LOG(2, "Number of longitudes: %d", met->nx);
 
-  NC_INQ_DIM("lat", &met->ny, 2, EY);
+  NC_INQ_DIM("lat", &met->ny, 2, EY, 1);
   LOG(2, "Number of latitudes: %d", met->ny);
 
   /* Read longitudes and latitudes... */
@@ -10695,7 +10666,7 @@ void read_obs_nc(
     ERRMSG("Cannot open file!");
 
   /* Read the observations from the NetCDF file... */
-  NC_INQ_DIM("nobs", nobs, 1, NOBS);
+  NC_INQ_DIM("nobs", nobs, 1, NOBS, 1);
   NC_GET_DOUBLE("time", rt, 1);
   NC_GET_DOUBLE("alt", rz, 1);
   NC_GET_DOUBLE("lon", rlon, 1);
@@ -13388,7 +13359,6 @@ void dd_register_MPI_type_particle(
 
 /*****************************************************************************/
 
-#ifdef DD
 void dd_get_rect_neighbour(const ctl_t ctl, dd_t *dd) {
   SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
   
@@ -13407,7 +13377,6 @@ void dd_get_rect_neighbour(const ctl_t ctl, dd_t *dd) {
   nb[6] = (rank % m == 0)     ? DD_NPOLE : rank - 1;                        // upper
   nb[7] = ((rank+1) % m == 0) ? DD_SPOLE : rank + 1;                        // lower
 }
-#endif
 
 /*****************************************************************************/
 
@@ -13606,10 +13575,11 @@ void dd_communicate_particles(
 /*****************************************************************************/
 
 int dd_is_periodic_longitude(
-  met_t *met) {
+  met_t *met,
+  int nx_glob) {
   
   /* Check if we have at least 2 longitude points */
-  if (met->nx_glob < 2) {
+  if (nx_glob < 2) {
     return 0;  /* Cannot determine periodicity with less than 2 points */
   }
   
@@ -13618,7 +13588,7 @@ int dd_is_periodic_longitude(
   
   /* Check if the total range plus one spacing equals 360 degrees
      This is the same logic as used in read_met_periodic() */
-  double total_range = met->lon[met->nx_glob - 1] - met->lon[0] + lon_spacing;
+  double total_range = met->lon[nx_glob - 1] - met->lon[0] + lon_spacing;
   
   /* Return 1 if periodic (global), 0 if not periodic (regional) */
   return (fabs(total_range - 360.0) < 0.01);
@@ -13631,7 +13601,9 @@ int dd_calc_subdomain_from_coords(
   double lat, 
   met_t *met, 
   ctl_t *ctl, 
-  int mpi_size) {
+  int mpi_size,
+  int nx_glob,
+  int ny_glob) {
   
   /* Wrap longitude to [0, 360) */
   double wrapped_lon = lon;
@@ -13652,18 +13624,18 @@ int dd_calc_subdomain_from_coords(
   
   /* Get global domain ranges */
   /* Handle both periodic (global) and non-periodic (regional) longitude grids */
-  double lon_range;
-  if (dd_is_periodic_longitude(met)) {
+  double lon_range = 360.0;
+  //if (dd_is_periodic_longitude(met, nx_glob)) {
     /* For global grids with periodic boundaries, use full 360 degrees */
-    lon_range = 360.0;
-    LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
-  } else {
+    //lon_range = 360.0;
+    //LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
+  //} else {
     /* For regional grids, use the actual data range */
-    lon_range = met->lon[met->nx_glob - 1] - met->lon[0];
-    LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
-  }
+    //lon_range = met->lon[nx_glob - 1] - met->lon[0];
+    //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
+  //}
   
-  double lat_range = met->lat[met->ny_glob - 1] - met->lat[0];
+  double lat_range = met->lat[ny_glob - 1] - met->lat[0];
   double global_lon_min = met->lon[0];
   double global_lat_min = met->lat[0];
   
@@ -13692,10 +13664,8 @@ int dd_calc_subdomain_from_coords(
 
 /*****************************************************************************/
 
-#ifdef DD
 void dd_assign_rect_subdomains_atm(
   atm_t *atm,
-  met_t *met,
   ctl_t *ctl,
   dd_t *dd,
   int init) {
@@ -13706,7 +13676,7 @@ void dd_assign_rect_subdomains_atm(
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
 #pragma acc update device(dd->rank, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max)
-#pragma acc data present(atm, ctl, dd, met)
+#pragma acc data present(atm, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
     for (int ip = 0; ip < atm->np; ip++) {
@@ -13737,13 +13707,16 @@ void dd_assign_rect_subdomains_atm(
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
 #pragma acc update device(dd->neighbours[:DD_NNMAX], dd->rank, dd->size, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max)
-#pragma acc data present(atm, met, ctl, dd)
+#pragma acc data present(atm, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
     for (int ip = 0; ip < atm->np; ip++) {
+    
+      int subdomain = (int) atm->q[ctl->qnt_subdomain][ip]
+      int destination = (int) atm->q[ctl->qnt_destination][ip]
 
       /* Skip empty places in the particle array... */
-      if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
+      if (subdomain == -1)
 	continue;
 
       double lont = atm->lon[ip];
@@ -13769,98 +13742,107 @@ void dd_assign_rect_subdomains_atm(
       if (!bound) {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
+	  destination = dd->neighbours[5];
 	  LOG(4, "DD: Particle crossing to upper right: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
+	  destination = dd->neighbours[4];
 	  LOG(4, "DD: Particle crossing to lower right: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
+	  destination = dd->neighbours[2];
 	  LOG(4, "DD: Particle crossing to upper left: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
+	  destination = dd->neighbours[1];
 	  LOG(4, "DD: Particle crossing to lower left: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
+	  destination = dd->neighbours[3];
 	  LOG(4, "DD: Particle crossing to right: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
+	  destination = dd->neighbours[0];
 	  LOG(4, "DD: Particle crossing to left: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
+	  destination = dd->neighbours[7];
 	  LOG(4, "DD: Particle crossing downward: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
+	  destination = dd->neighbours[6];
 	  LOG(4, "DD: Particle crossing upward: from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
-	  atm->q[ctl->qnt_destination][ip] = dd->rank;
+	  destination = dd->rank;
 	}
       } else {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
 	  // Upper right...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
+	  destination = dd->neighbours[2];
 	  LOG(4, "DD: Particle crossing to upper left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
 	  // Lower right...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
+	  destination = dd->neighbours[1];
 	  LOG(4, "DD: Particle crossing to lower left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
 	  // Upper left...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
+	  destination = dd->neighbours[5];
 	  LOG(4, "DD: Particle crossing to upper right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
 	  // Lower left...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
+	  destination = dd->neighbours[4];
 	  LOG(4, "DD: Particle crossing to lower right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
 	  // Right...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
+	  destination = dd->neighbours[0];
 	  LOG(4, "DD: Particle crossing to left (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
 	  // Left...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
+	  destination = dd->neighbours[3];
 	  LOG(4, "DD: Particle crossing to right (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
 	  // Down...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
+	  destination = dd->neighbours[7];
 	  LOG(4, "DD: Particle crossing downward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
 	  // Up...
-	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
+	  destination = dd->neighbours[6];
 	  LOG(4, "DD: Particle crossing upward (bound case): from rank %d to rank %d (lon: %f, lat: %f)", 
 	       dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
 	  // Within...
-	  atm->q[ctl->qnt_destination][ip] = dd->rank;
+	  destination = dd->rank;
 	}
       }
       
+      
+      int pos = int(lont/360)*ctl->subdomains_zonal;
+      if (destination < 0)
+        if 
+        destination = < 0 % pos : pos + ctl->subdomains_meridional - 1
+       
+      
+      
       /* Handle particles assigned to poles by wrapping coordinates and calculating proper subdomain */
+      /*
       if ((int)atm->q[ctl->qnt_destination][ip] < 0) {
-        int calculated_rank = dd_calc_subdomain_from_coords(atm->lon[ip], atm->lat[ip], met, ctl, dd->size);
+        int calculated_rank = dd_calc_subdomain_from_coords(atm->lon[ip], atm->lat[ip], met, ctl, dd->size, help_nx_glob, help_ny_glob);
         
         if ((int)atm->q[ctl->qnt_destination][ip] == DD_NPOLE) {
           LOG(3, "DD: Particle was assigned to NORTH POLE - redirecting to subdomain %d (lon: %f, lat: %f)", 
@@ -13871,27 +13853,24 @@ void dd_assign_rect_subdomains_atm(
         } else {
           LOG(2, "DD: Particle had invalid destination %d - redirecting to subdomain %d (lon: %f, lat: %f)", 
                (int)atm->q[ctl->qnt_destination][ip], calculated_rank, atm->lon[ip], atm->lat[ip]);
-        }
+        }*/
         
         /* Assign particle to the calculated subdomain */
-        atm->q[ctl->qnt_destination][ip] = calculated_rank;
-      }
+        /*atm->q[ctl->qnt_destination][ip] = calculated_rank;
+      }*/
     }
 #ifdef _OPENACC
 #pragma acc exit data delete(dd)
 #endif
   }
 }
-#endif
 
 /*****************************************************************************/
 
-#ifdef DD
 void dd_init(
   ctl_t *ctl,
   dd_t *dd,
   atm_t *atm,
-  met_t **met,
   int *dd_init_flg) {
 
   /* Check if enough tasks are requested... */
@@ -13899,21 +13878,22 @@ void dd_init(
       ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal)
     ERRMSG("The number of tasks and subdomains is not identical.");
 
+#ifdef DD
   /* Register the MPI_Particle data type... */
   dd_register_MPI_type_particle(&dd->MPI_Particle);
+#endif
 
   /* Define grid neighbours ... */
   dd_get_rect_neighbour(*ctl, dd);
 
   /* Check if particles are in subdomain... */
-  dd_assign_rect_subdomains_atm(atm, *met, ctl, dd, 1);
+  dd_assign_rect_subdomains_atm(atm, ctl, dd, 1);
 
-  *dd_init_flg = 1;
+  *dd_init_flg = 1;  
+
 }
-#endif
 
 /*****************************************************************************/
-
 #ifdef DD
 void module_dd(
   ctl_t *ctl,
@@ -13928,7 +13908,7 @@ void module_dd(
   ALLOC(particles, particle_t, DD_NPART);
 
   /* Assign particles to new subdomains... */
-  dd_assign_rect_subdomains_atm(atm, *met, ctl, dd, 0);
+  dd_assign_rect_subdomains_atm(atm, ctl, dd, 0);
 
   /* Sorting particles according to location and target rank... */
   dd_sort(ctl, *met, atm, &nparticles, &dd->rank);
@@ -13956,7 +13936,6 @@ void module_dd(
 
 /*****************************************************************************/
 
-#ifdef DD
 void dd_sort(
   const ctl_t *ctl,
   met_t *met0,
@@ -14072,4 +14051,3 @@ void dd_sort(
   free(p);
 
 }
-#endif

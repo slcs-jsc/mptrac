@@ -72,9 +72,9 @@ int main(
       ERRMSG("Cannot open file!");
 
     /* Get dimensions... */
-    NC_INQ_DIM("time", &ntime, 1, NT);
-    NC_INQ_DIM("lat", &nlat, 1, EY);
-    NC_INQ_DIM("lon", &nlon, 1, EX);
+    NC_INQ_DIM("time", &ntime, 1, NT, 1);
+    NC_INQ_DIM("lat", &nlat, 1, EY, 1);
+    NC_INQ_DIM("lon", &nlon, 1, EX, 1);
 
     /* Read coordinates... */
     NC_GET_DOUBLE("lat", lats, 1);

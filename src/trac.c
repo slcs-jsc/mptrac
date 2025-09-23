@@ -42,9 +42,7 @@ int main(
 
   met_t *met0, *met1;
 
-#ifdef DD
   dd_t *dd;
-#endif
 
   FILE *dirlist;
 
@@ -124,19 +122,14 @@ int main(
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
       /* Set-up domain decomposition... */
-#ifdef DD
       // TODO: Remove dd_init_flg ...
       static int dd_init_flg = 0;
-      if (t == ctl->t_start || !dd_init_flg)
-	dd_init(ctl, dd, atm, &met0, &dd_init_flg);
-#endif
+      if ((t == ctl->t_start || !dd_init_flg) && (ctl->dd == 1))
+	dd_init(ctl, dd, atm, &dd_init_flg);
+
 
       /* Run a single time step... */
-#ifdef DD
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, dd);
-#else
-      mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t);
-#endif
 
       /* Write output... */
       mptrac_write_output(dirname, ctl, met0, met1, atm, t);
@@ -161,11 +154,8 @@ int main(
     LOG(1, "MEMORY_METEO = %g MByte", sizeof(met_t) / 1024. / 1024.);
 
     /* Free memory... */
-#ifdef DD
     mptrac_free(ctl, cache, clim, met0, met1, atm, dd);
-#else
-    mptrac_free(ctl, cache, clim, met0, met1, atm);
-#endif
+
 
     /* Report timers... */
     PRINT_TIMERS;

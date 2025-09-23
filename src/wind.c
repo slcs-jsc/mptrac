@@ -32,7 +32,7 @@ int main(
 
   static char filename[LEN];
 
-  static double r, dataLon[EX_GLOB], dataLat[EY_GLOB], dataZ[EP_GLOB];
+  static double r, dataLon[EX], dataLat[EY], dataZ[EP];
 
   static float *dataT, *dataU, *dataV, *dataW;
 
@@ -42,13 +42,13 @@ int main(
 
   /* Allocate... */
   ALLOC(dataT, float,
-	EP_GLOB * EY_GLOB * EX_GLOB);
+	EP * EY * EX);
   ALLOC(dataU, float,
-	EP_GLOB * EY_GLOB * EX_GLOB);
+	EP * EY * EX);
   ALLOC(dataV, float,
-	EP_GLOB * EY_GLOB * EX_GLOB);
+	EP * EY * EX);
   ALLOC(dataW, float,
-	EP_GLOB * EY_GLOB * EX_GLOB);
+	EP * EY * EX);
 
   /* Check arguments... */
   if (argc < 3)
@@ -76,11 +76,11 @@ int main(
     (int) scan_ctl(argv[1], argc, argv, "WIND_LAT_REVERSE", -1, "0", NULL);
 
   /* Check dimensions... */
-  if (nx < 1 || nx > EX_GLOB)
+  if (nx < 1 || nx > EX)
     ERRMSG("Set 1 <= NX <= MAX!");
-  if (ny < 1 || ny > EY_GLOB)
+  if (ny < 1 || ny > EY)
     ERRMSG("Set 1 <= NY <= MAX!");
-  if (nz < 1 || nz > EP_GLOB)
+  if (nz < 1 || nz > EP)
     ERRMSG("Set 1 <= NZ <= MAX!");
 
   /* Get time... */
