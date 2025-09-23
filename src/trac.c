@@ -122,10 +122,8 @@ int main(
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
       /* Set-up domain decomposition... */
-      // TODO: Remove dd_init_flg ...
-      static int dd_init_flg = 0;
-      if ((t == ctl->t_start || !dd_init_flg) && (ctl->dd == 1))
-	dd_init(ctl, dd, atm, &dd_init_flg);
+      if ((t == ctl->t_start || !dd->init ) && (ctl->dd == 1))
+	dd->init = dd_init(ctl, dd, atm);
 
 
       /* Run a single time step... */

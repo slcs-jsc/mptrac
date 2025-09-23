@@ -5784,13 +5784,13 @@ void mptrac_run_timestep(
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
 
   /* Domain decomposition... */
-  if (ctl->dd == 1) {
+  if (dd->init) {
 #ifdef DD
     module_dd(ctl, atm, cache, dd, met0);
 #else 
-  ERRMSG("Control flag is set for DD, but model is compiled without DD.")
+  ERRMSG("DD initialized, but model is compiled without DD.")
 #endif
-  } else {dd->rank = dd->rank;} //TODO: just for testing...
+  }
 
   /* KPP chemistry... */
   if (ctl->kpp_chem && fmod(t, ctl->dt_kpp) == 0) {
@@ -13707,7 +13707,7 @@ void dd_assign_rect_subdomains_atm(
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
 #pragma acc update device(dd->neighbours[:DD_NNMAX], dd->rank, dd->size, dd->subdomain_lon_min, dd->subdomain_lon_max, dd->subdomain_lat_min, dd->subdomain_lat_max)
-#pragma acc data present(atm, met, ctl, dd)
+#pragma acc data present(atm, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
     for (int ip = 0; ip < atm->np; ip++) {
@@ -13856,11 +13856,10 @@ void dd_assign_rect_subdomains_atm(
 
 /*****************************************************************************/
 
-void dd_init(
+int dd_init(
   ctl_t *ctl,
   dd_t *dd,
-  atm_t *atm,
-  int *dd_init_flg) {
+  atm_t *atm) {
 
   /* Check if enough tasks are requested... */
   if (dd->size !=
@@ -13877,8 +13876,9 @@ void dd_init(
 
   /* Check if particles are in subdomain... */
   dd_assign_rect_subdomains_atm(atm, ctl, dd, 1);
-
-  *dd_init_flg = 1;  
+  
+  /* Set flag of initialization. */
+  return 1;
 
 }
 

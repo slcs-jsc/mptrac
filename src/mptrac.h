@@ -3696,7 +3696,9 @@ typedef struct {
      Caches
      ------------------------------------------------------------ */   
      
-     
+  /* Shows if domain decomposition was initialized. */
+  int init;
+       
   /* ------------------------------------------------------------
      Properties of subdomains
      ------------------------------------------------------------ */
@@ -9428,11 +9430,10 @@ void dd_assign_rect_subdomains_atm(
  *
  * @author Jan Clemens
  */
-void dd_init(
+int dd_init(
   ctl_t * ctl,
   dd_t * dd,
-  atm_t * atm,
-  int *dd_init);
+  atm_t * atm);
 
 /**
  * @brief Manages domain decomposition and particle communication in parallel processing.
