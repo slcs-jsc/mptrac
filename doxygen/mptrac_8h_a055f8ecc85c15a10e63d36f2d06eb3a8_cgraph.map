@@ -1,0 +1,5 @@
+<map id="dd_init" name="dd_init">
+<area shape="rect" id="node1" title="Initializes domain decomposition for parallel processing." alt="" coords="5,31,65,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ad70990693ea72717320cca5278d230fc" title=" " alt="" coords="113,5,329,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a8c01b33df34978b9434092c2a8bd6d2f" title="Registers a custom MPI datatype for particle structures." alt="" coords="145,56,298,83"/>
+</map>
