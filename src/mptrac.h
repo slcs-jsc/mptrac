@@ -5936,11 +5936,14 @@ void module_sort_help(
   double *a,
   const int *p,
   const int np);
-  
+ 
+ 
+#ifdef DD
 void dd_sort_help(
   double *a,
   dd_t *dd,
   const int np);
+#endif
 
 /**
  * @brief Calculate time steps for air parcels based on specified conditions.
