@@ -4383,11 +4383,8 @@ void mptrac_alloc(
   ALLOC(*met0, met_t, 1);
   ALLOC(*met1, met_t, 1);
   ALLOC(*atm, atm_t, 1);
-  ALLOC(*dd, dd_t, 1);
-
 #ifdef DD
-  dd_t *ddup = *dd;
-#pragma acc enter data create(ddup[:1])
+  ALLOC(*dd, dd_t, 1);
 #endif
 
   /* Create data region on GPU... */
@@ -4400,6 +4397,10 @@ void mptrac_alloc(
   met_t *met1up = *met1;
   atm_t *atmup = *atm;
 #pragma acc enter data create(ctlup[:1],cacheup[:1],climup[:1],met0up[:1],met1up[:1],atmup[:1])
+#ifdef DD
+  dd_t *ddup = *dd;
+#pragma acc enter data create(ddup[:1])
+#endif
 #endif
 }
 
@@ -4413,8 +4414,7 @@ void mptrac_free(
   met_t *met1,
   atm_t *atm,
   dd_t *dd) {
-
-
+  
   /* Delete data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
@@ -4431,11 +4431,10 @@ void mptrac_free(
   free(met1);
   
   /* Free MPI datatype... */
-  free(dd); 
 #ifdef DD
   MPI_Type_free(&dd->MPI_Particle);
+  free(dd); 
 #endif
-
 }
 
 /*****************************************************************************/
@@ -9249,7 +9248,7 @@ void read_met_nc_grid_dd_naive(
       dd->subdomain_lat_max = dd->subdomain_lat_min
         + (lat_range) / (double) ctl->dd_subdomains_meridional;
     }
-
+    
     LOG(2, "Total longitude range: %g deg", lon_range);
     LOG(2, "Total latitude range: %g deg", lat_range);
   
@@ -12845,11 +12844,11 @@ void dd_communicate_particles(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   /* Infos for MPI async... */
-  MPI_Request *requests_snd_nbr = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
-  MPI_Request *requests_rcv_nbr = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
-  MPI_Request *requests_snd_part = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
-  MPI_Request *requests_rcv_part = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
-  MPI_Status *states = (MPI_Status *) calloc(nneighbours, sizeof(MPI_Status));
+  MPI_Request *requests_snd_nbr = (MPI_Request *) calloc((size_t)nneighbours, sizeof(MPI_Request));
+  MPI_Request *requests_rcv_nbr = (MPI_Request *) calloc((size_t)nneighbours, sizeof(MPI_Request));
+  MPI_Request *requests_snd_part = (MPI_Request *) calloc((size_t)nneighbours, sizeof(MPI_Request));
+  MPI_Request *requests_rcv_part = (MPI_Request *) calloc((size_t)nneighbours, sizeof(MPI_Request));
+  MPI_Status *states = (MPI_Status *) calloc((size_t)nneighbours, sizeof(MPI_Status));
   
   /* Initialize with MPI_REQUEST_NULL */
   for (int i = 0; i < nneighbours; i++) {
@@ -13005,7 +13004,6 @@ void dd_communicate_particles(
 
   free(nbs);
   free(nbr);
-
 }
 
 /*****************************************************************************/
@@ -13070,6 +13068,10 @@ int dd_calc_subdomain_from_coords(
     //lon_range = met->lon[nx_glob - 1] - met->lon[0];
     //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
   //}
+
+
+  LOG(2, "nx_glob: %d", nx_glob);
+  
   
   double lat_range = met->lat[ny_glob - 1] - met->lat[0];
   double global_lon_min = met->lon[0];
