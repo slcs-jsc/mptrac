@@ -7565,6 +7565,12 @@ void read_met_nc_grid_dd(
   const ctl_t * ctl,
   met_t * met,
   dd_t * dd);
+  
+void read_met_nc_grid_dd_naive(
+  dd_t* dd,
+  const ctl_t *ctl,
+  met_t *met,
+  const int ncid);
 
 /**
  * @brief Reads and processes meteorological level data from NetCDF files with domain decomposition.

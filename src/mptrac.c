@@ -7412,17 +7412,19 @@ void read_met_nc_grid_dd(
 
   double rtime = 0, r, r2;
 
-  int varid, year2, mon2, day2, hour2, min2, sec2,
+  int varid,  ndims, dimids[NC_MAX_DIMS], year2, mon2, day2, hour2, min2, sec2,
     year, mon, day, hour, min, sec;
 
-  size_t np;
+  size_t dimlen;
 
   /* Set timer... */
   SELECT_TIMER("READ_MET_NC_GRID_DD", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
-  /* MPTRAC meteo files... */
-  if (ctl->met_clams == 0) {
+  
+  if (!ctl->met_clams) {
+
+    /* MPTRAC meteo files... */
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
@@ -7435,10 +7437,9 @@ void read_met_nc_grid_dd(
 	WARN("Time information in meteo file does not match filename!");
     } else
       WARN("Time information in meteo file is missing!");
-  }
-
-  /* CLaMS meteo files... */
-  else {
+  } else {
+    
+    /* CLaMS meteo files... */
 
     /* Read time from file... */
     NC_GET_DOUBLE("time", &rtime, 0);
@@ -7466,260 +7467,51 @@ void read_met_nc_grid_dd(
   LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
       met->time, year2, mon2, day2, hour2, min2);
 
-  /* Get global grid dimensions... */
-  int help_nx_glob;
-  int help_ny_glob;
-  int help_np_glob;
+  /* Get vertical dimension... */
+  if (nc_inq_varid(ncid, "u", &varid) != NC_NOERR)
+    if (nc_inq_varid(ncid, "U", &varid) != NC_NOERR)
+      ERRMSG
+	("Variable 'u' or 'U' not found, cannot determine vertical dimension!");
 
-  NC_INQ_DIM("lon", &help_nx_glob, 0, 0, 0);
-  LOG(2, "Number of longitudes: %d", help_nx_glob);
-  met->nx = (int) floor(help_nx_glob / ctl->dd_subdomains_zonal);
+  NC(nc_inq_varndims(ncid, varid, &ndims));
+  NC(nc_inq_vardimid(ncid, varid, dimids));
 
-  NC_INQ_DIM("lat", &help_ny_glob, 0, 0, 0);
-  LOG(2, "Number of latitudes: %d", help_ny_glob);
-  met->ny = (int) floor(help_ny_glob / ctl->dd_subdomains_meridional);
-
-  double* help_lon_glob;
-  double* help_lat_glob;
-  ALLOC(help_lon_glob, double, help_nx_glob);
-  ALLOC(help_lat_glob, double, help_ny_glob);
-
-  /* Get global coordinates... */
-  int dimid2;
-  sprintf(levname, "lev");
-  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
-    sprintf(levname, "plev");
-  if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR)
-    sprintf(levname, "hybrid");
-
-  NC_INQ_DIM(levname, &help_np_glob, 1, EP, 0);
-  if (help_np_glob == 1) {
-    sprintf(levname, "lev_2");
-    if (nc_inq_dimid(ncid, levname, &dimid2) != NC_NOERR) {
-      sprintf(levname, "plev");
-      NC(nc_inq_dimid(ncid, levname, &dimid2));
-    }
-    NC(nc_inq_dimlen(ncid, dimid2, &np));
-    help_np_glob = (int) np;
-  }
-  met->np = help_np_glob;
+  if (ndims == 4) {
+    NC(nc_inq_dim
+       (ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
+  } else if (ndims == 3) {
+    NC(nc_inq_dim
+       (ncid, dimids[ctl->met_convention == 0 ? 0 : 2], levname, &dimlen));
+  } else
+    ERRMSG("Cannot determine vertical dimension!")
+      met->np = (int) dimlen;
 
   LOG(2, "Number of levels: %d", met->np);
   if (met->np < 2 || met->np > EP)
     ERRMSG("Number of levels out of range!");
 
-  /* Read global longitudes and latitudes... */
-  NC_GET_DOUBLE("lon", help_lon_glob, 1);
-  LOG(2, "Longitudes: %g, %g ... %g deg",
-      help_lon_glob[0], help_lon_glob[1], help_lon_glob[help_nx_glob - 1]);
-  NC_GET_DOUBLE("lat", help_lat_glob, 1);
-  LOG(2, "Latitudes: %g, %g ... %g deg",
-      help_lat_glob[0], help_lat_glob[1], help_lat_glob[help_ny_glob - 1]);
+  if (!ctl->dd) {
 
-  /* Determine hyperslabs for reading the data in parallel... */
+    /* Get grid dimensions... */
+    NC_INQ_DIM("lon", &met->nx, 2, EX, 1);
+    LOG(2, "Number of longitudes: %d", met->nx);
 
-  /* Get the MPI information... */
-#ifdef MPI
-  MPI_Comm_rank(MPI_COMM_WORLD, &dd->rank);
-  MPI_Comm_size(MPI_COMM_WORLD, &dd->size);
-#endif
+    NC_INQ_DIM("lat", &met->ny, 2, EY, 1);
+    LOG(2, "Number of latitudes: %d", met->ny);
 
-  /* Check for edge cases... */
-  bool left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
-  bool right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
-  bool top = (dd->rank % ctl->dd_subdomains_meridional == 0);
-  bool bottom =
-    (dd->rank % ctl->dd_subdomains_meridional ==
-     ctl->dd_subdomains_meridional - 1);
-
-  /* Set the hyperslab for the subdomain... */
-  dd->subdomain_start[0] = 0;
-  dd->subdomain_start[1] = 0;
-  dd->subdomain_start[2] =
-    (size_t) ((dd->rank % ctl->dd_subdomains_meridional) * met->ny);
-  dd->subdomain_start[3] =
-    (size_t) (floor(dd->rank / ctl->dd_subdomains_meridional) * met->nx);
-
-  /* Extend subdomains at the right and bottom to fit the full domain. */
-  if (right) {
-    int gap = help_nx_glob - ctl->dd_subdomains_zonal * met->nx;
-    if (gap > 0) {
-      met->nx = met->nx + gap;
-      WARN("Extended subdomains at the right to fit to full domain.");
-    }
-  }
-  if (bottom) {
-    int gap = help_ny_glob - ctl->dd_subdomains_meridional * met->ny;
-    if (gap > 0) {
-      met->ny = met->ny + gap;
-      WARN("Extended subdomains at the bottom to fit to full domain.");
-    }
-  }
-
-  /* Block-size, i.e. count */
-  dd->subdomain_count[0] = 1;
-  dd->subdomain_count[1] = (size_t) met->np;
-  dd->subdomain_count[2] = (size_t) met->ny;
-  dd->subdomain_count[3] = (size_t) met->nx;
-
-  /* Create halos and include them into the subdomain... */
-  if (!left && !right) {
-    // If we are not at the left or right edge extend in zonal direction...
-    // Move the start one point to the left...
-    dd->subdomain_count[3] =
-      dd->subdomain_count[3] + (size_t) (ctl->dd_halos_size * 2);
-    dd->subdomain_start[3] =
-      dd->subdomain_start[3] - (size_t) ctl->dd_halos_size;
-  } else {
-    // If we are at the left or right edge, extend only in one zonal direction...
-    dd->subdomain_count[3] =
-      dd->subdomain_count[3] + (size_t) ctl->dd_halos_size;
-    if (!left)
-      // If we are not at the left edge, move the start to the left... 
-      dd->subdomain_start[3] =
-	dd->subdomain_start[3] - (size_t) ctl->dd_halos_size;
-  }
-
-  if (!top && !bottom) {
-    // If we are not at the upper or lower edge extend in meridional direction...
-    // Move the start point one point down...
-    dd->subdomain_count[2] =
-      dd->subdomain_count[2] + (size_t) (ctl->dd_halos_size * 2);
-    dd->subdomain_start[2] =
-      dd->subdomain_start[2] - (size_t) ctl->dd_halos_size;
-  } else {
-    // If we are at the top or the lower edge only extend in one mer. direction...
-    dd->subdomain_count[2] =
-      dd->subdomain_count[2] + (size_t) ctl->dd_halos_size;
-    if (!top)
-      // If we are not at the top, move the start one upward... 
-      dd->subdomain_start[2] =
-	dd->subdomain_start[2] - (size_t) ctl->dd_halos_size;
-  }
-
-  /* Set boundary halo hyperslabs ... */
-  double lon_shift = 0;
-  if (left || right) {
-
-    met->nx = met->nx + ctl->dd_halos_size;
-
-    dd->halo_bnd_start[0] = 0;
-    dd->halo_bnd_start[1] = 0;
-    dd->halo_bnd_start[3] = (size_t) (left ? (help_nx_glob - ctl->dd_halos_size) : (0));	//x
-    dd->halo_bnd_start[2] = dd->subdomain_start[2];	//y
-
-    dd->halo_bnd_count[0] = 1;
-    dd->halo_bnd_count[1] = (size_t) met->np;
-    dd->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
-    dd->halo_bnd_count[2] =
-      (size_t) met->ny +
-      (size_t) ctl->dd_halos_size * ((top || bottom) ? 1 : 2);
-
-    dd->halo_offset_start = (left ? (int) dd->halo_bnd_count[3] : 0);
-    dd->halo_offset_end = (left ? 0 : (int) dd->subdomain_count[3]);
-    lon_shift = (left ? -360 : 360);
-
+    /* Read longitudes and latitudes... */
+    NC_GET_DOUBLE("lon", met->lon, 1);
+    LOG(2, "Longitudes: %g, %g ... %g deg",
+      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
+    NC_GET_DOUBLE("lat", met->lat, 1);
+    LOG(2, "Latitudes: %g, %g ... %g deg",
+      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
+  
   } else {
   
-    dd->halo_bnd_start[0] = 0;
-    dd->halo_bnd_start[1] = 0;
-    dd->halo_bnd_start[3] = 0;
-    dd->halo_bnd_start[2] = 0;
+    read_met_nc_grid_dd_naive(dd, ctl, met, ncid);
 
-    dd->halo_bnd_count[0] = 0;
-    dd->halo_bnd_count[1] = 0;
-    dd->halo_bnd_count[3] = 0;
-    dd->halo_bnd_count[2] = 0;
-  
   }
-
-  /* Get the range of the entire meteodata... */
-  /* Handle both periodic (global) and non-periodic (regional) longitude grids */
-  double lon_range = 360;
-  //if (dd_is_periodic_longitude(met, help_nx_glob)) {
-    /* For global grids with periodic boundaries, use full 360 degrees */
-    //lon_range = 360.0;
-    //LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
-  //} else {
-    /* For regional grids, use the actual data range */
-    //lon_range = help_lon_glob[help_nx_glob - 1] - help_lon_glob[0];
-    //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
-  //}
-  
-  double lat_range = help_lat_glob[help_ny_glob - 1] - help_lat_glob[0];
-
-  /* Focus on subdomain latitudes and longitudes... */
-  for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++) {
-    met->lat[iy] = help_lat_glob[(int) dd->subdomain_start[2] + iy];
-  }
-
-  /* Focus on subdomain longitudes... */
-  /* Keep space at the beginning or end of the array for halo... */
-  for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
-    met->lon[ix + dd->halo_offset_start] = 
-    	help_lon_glob[(int) dd->subdomain_start[3] + ix];
-  }
-
-  for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
-    met->lon[ix + dd->halo_offset_end] = 
-    	help_lon_glob[(int) dd->halo_bnd_start[3] + ix] + lon_shift;
-  }
-
-  /* Reset the grid dimensions... */
-  met->nx = (int) dd->subdomain_count[3] + (int) dd->halo_bnd_count[3];
-  met->ny = (int) dd->subdomain_count[2];
-
-  /* Determine subdomain edges... */
-  dd->subdomain_lon_min = floor(dd->rank / ctl->dd_subdomains_meridional)
-    * (lon_range) / (double) ctl->dd_subdomains_zonal;
-  dd->subdomain_lon_max = dd->subdomain_lon_min
-    + (lon_range) / (double) ctl->dd_subdomains_zonal;
-
-  /* Latitudes in descending order (90 to -90) */
-  if (lat_range < 0) {
-    dd->subdomain_lat_max = 90 + (dd->rank % ctl->dd_subdomains_meridional)
-      * (lat_range) / (double) ctl->dd_subdomains_meridional;
-    dd->subdomain_lat_min = dd->subdomain_lat_max
-      + (lat_range) / (double) ctl->dd_subdomains_meridional;
-  } else {
-    WARN("lat_range > 0, but is expected to be negative, i.e. latitudes should range from 90 to -90")
-    dd->subdomain_lat_min = -90 + (dd->rank % ctl->dd_subdomains_meridional)
-      * (lat_range) / (double) ctl->dd_subdomains_meridional;
-    dd->subdomain_lat_max = dd->subdomain_lat_min
-      + (lat_range) / (double) ctl->dd_subdomains_meridional;
-  }
-
-  LOG(2, "Total longitude range: %g deg", lon_range);
-  LOG(2, "Total latitude range: %g deg", lat_range);
-  
-  LOG(2, "Define subdomain properties.");
-  LOG(2, "MPI information: Rank %d, Size %d", dd->rank, dd->size);
-  LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int) left, (int) right,
-      (int) top, (int) bottom);
-  LOG(2, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
-  LOG(2, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx,
-      met->ny, met->np);
-  LOG(2, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",
-      (int) dd->halo_bnd_count[3], (int) dd->halo_bnd_count[2],
-      (int) dd->halo_bnd_count[1]);
-  LOG(2, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d",
-      (int) dd->subdomain_count[3], (int) dd->subdomain_count[2],
-      (int) dd->subdomain_count[1]);
-  LOG(2, "Subdomain start: nx %ld ny %ld np %ld", dd->subdomain_start[3],
-      dd->subdomain_start[2], dd->subdomain_start[1]);
-  LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", dd->halo_bnd_start[3],
-      dd->halo_bnd_start[2], dd->halo_bnd_start[1]);
-  LOG(2, "Offsets: nx %d ny %d", dd->halo_offset_start,
-      dd->halo_offset_end);
-
-  LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", dd->rank,
-      met->lon[0], met->lon[1], met->lon[met->nx - 1], 
-      dd->subdomain_lon_min, dd->subdomain_lon_max);
-  LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", dd->rank,
-      met->lat[0], met->lat[1], met->lat[met->ny - 1], 
-      dd->subdomain_lat_min, dd->subdomain_lat_max);
-
-
 
   /* Read pressure levels... */
   if (ctl->met_np <= 0) {
@@ -9488,6 +9280,250 @@ void read_met_nc_grid(
   if (strcasecmp(levname, "hybrid") == 0)
     NC_GET_DOUBLE("hybrid", met->hybrid, 1);
 }
+
+/*****************************************************************************/
+
+void read_met_nc_grid_dd_naive(
+  dd_t *dd,
+  const ctl_t *ctl,
+  met_t *met,
+  const int ncid)   { 
+
+    int varid;
+
+    /* Get the MPI information... */
+#ifdef MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &dd->rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &dd->size);
+#endif
+  
+    int help_nx_glob;
+    int help_ny_glob;
+
+     /* Get grid dimensions... */
+    NC_INQ_DIM("lon", &help_nx_glob, 0, 0, 0);
+    LOG(2, "Number of longitudes: %d", help_nx_glob);
+    met->nx = (int) floor(help_nx_glob / ctl->dd_subdomains_zonal);
+
+    NC_INQ_DIM("lat", &help_ny_glob, 0, 0, 0);
+    LOG(2, "Number of latitudes: %d", help_ny_glob);
+    met->ny = (int) floor(help_ny_glob / ctl->dd_subdomains_meridional);
+
+    double* help_lon_glob;
+    double* help_lat_glob;
+    ALLOC(help_lon_glob, double, help_nx_glob);
+    ALLOC(help_lat_glob, double, help_ny_glob);
+
+    /* Read global longitudes and latitudes... */
+    NC_GET_DOUBLE("lon", help_lon_glob, 1);
+    LOG(2, "Longitudes: %g, %g ... %g deg",
+      help_lon_glob[0], help_lon_glob[1], help_lon_glob[help_nx_glob - 1]);
+    NC_GET_DOUBLE("lat", help_lat_glob, 1);
+    LOG(2, "Latitudes: %g, %g ... %g deg",
+      help_lat_glob[0], help_lat_glob[1], help_lat_glob[help_ny_glob - 1]);
+
+  
+    /* Determine hyperslabs for reading the data in parallel... */
+
+    /* Check for edge cases... */
+    bool left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
+    bool right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
+    bool top = (dd->rank % ctl->dd_subdomains_meridional == 0);
+    bool bottom =
+      (dd->rank % ctl->dd_subdomains_meridional ==
+       ctl->dd_subdomains_meridional - 1);
+
+    /* Set the hyperslab for the subdomain... */
+    dd->subdomain_start[0] = 0;
+    dd->subdomain_start[1] = 0;
+    dd->subdomain_start[2] =
+      (size_t) ((dd->rank % ctl->dd_subdomains_meridional) * met->ny);
+    dd->subdomain_start[3] =
+      (size_t) (floor(dd->rank / ctl->dd_subdomains_meridional) * met->nx);
+
+    /* Extend subdomains at the right and bottom to fit the full domain. */
+    if (right) {
+      int gap = help_nx_glob - ctl->dd_subdomains_zonal * met->nx;
+      if (gap > 0) {
+        met->nx = met->nx + gap;
+        WARN("Extended subdomains at the right to fit to full domain.");
+      }
+    }
+    if (bottom) {
+      int gap = help_ny_glob - ctl->dd_subdomains_meridional * met->ny;
+      if (gap > 0) {
+        met->ny = met->ny + gap;
+        WARN("Extended subdomains at the bottom to fit to full domain.");
+      }
+    }
+
+    /* Block-size, i.e. count */
+    dd->subdomain_count[0] = 1;
+    dd->subdomain_count[1] = (size_t) met->np;
+    dd->subdomain_count[2] = (size_t) met->ny;
+    dd->subdomain_count[3] = (size_t) met->nx;
+
+    /* Create halos and include them into the subdomain... */
+    if (!left && !right) {
+      // If we are not at the left or right edge extend in zonal direction...
+      // Move the start one point to the left...
+      dd->subdomain_count[3] =
+        dd->subdomain_count[3] + (size_t) (ctl->dd_halos_size * 2);
+      dd->subdomain_start[3] =
+        dd->subdomain_start[3] - (size_t) ctl->dd_halos_size;
+    } else {
+      // If we are at the left or right edge, extend only in one zonal direction...
+      dd->subdomain_count[3] =
+        dd->subdomain_count[3] + (size_t) ctl->dd_halos_size;
+      if (!left)
+        // If we are not at the left edge, move the start to the left... 
+        dd->subdomain_start[3] =
+	  dd->subdomain_start[3] - (size_t) ctl->dd_halos_size;
+    }
+
+    if (!top && !bottom) {
+      // If we are not at the upper or lower edge extend in meridional direction...
+      // Move the start point one point down...
+      dd->subdomain_count[2] =
+        dd->subdomain_count[2] + (size_t) (ctl->dd_halos_size * 2);
+      dd->subdomain_start[2] =
+        dd->subdomain_start[2] - (size_t) ctl->dd_halos_size;
+    } else {
+      // If we are at the top or the lower edge only extend in one mer. direction...
+      dd->subdomain_count[2] =
+        dd->subdomain_count[2] + (size_t) ctl->dd_halos_size;
+      if (!top)
+        // If we are not at the top, move the start one upward... 
+        dd->subdomain_start[2] =
+	  dd->subdomain_start[2] - (size_t) ctl->dd_halos_size;
+    }
+
+    /* Set boundary halo hyperslabs ... */
+    double lon_shift = 0;
+    if (left || right) {
+
+      met->nx = met->nx + ctl->dd_halos_size;
+
+      dd->halo_bnd_start[0] = 0;
+      dd->halo_bnd_start[1] = 0;
+      dd->halo_bnd_start[3] = (size_t) (left ? (help_nx_glob - ctl->dd_halos_size) : (0));	//x
+      dd->halo_bnd_start[2] = dd->subdomain_start[2];	//y
+
+      dd->halo_bnd_count[0] = 1;
+      dd->halo_bnd_count[1] = (size_t) met->np;
+      dd->halo_bnd_count[3] = (size_t) ctl->dd_halos_size;
+      dd->halo_bnd_count[2] =
+        (size_t) met->ny +
+        (size_t) ctl->dd_halos_size * ((top || bottom) ? 1 : 2);
+
+      dd->halo_offset_start = (left ? (int) dd->halo_bnd_count[3] : 0);
+      dd->halo_offset_end = (left ? 0 : (int) dd->subdomain_count[3]);
+      lon_shift = (left ? -360 : 360);
+
+    } else {
+  
+      dd->halo_bnd_start[0] = 0;
+      dd->halo_bnd_start[1] = 0;
+      dd->halo_bnd_start[3] = 0;
+      dd->halo_bnd_start[2] = 0;
+
+      dd->halo_bnd_count[0] = 0;
+      dd->halo_bnd_count[1] = 0;
+      dd->halo_bnd_count[3] = 0;
+      dd->halo_bnd_count[2] = 0;
+  
+    }
+
+    /* Get the range of the entire meteodata... */
+    /* Handle both periodic (global) and non-periodic (regional) longitude grids */
+    double lon_range = 360;
+    //if (dd_is_periodic_longitude(met, help_nx_glob)) {
+    /* For global grids with periodic boundaries, use full 360 degrees */
+      //lon_range = 360.0;
+      //LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
+    //} else {
+      /* For regional grids, use the actual data range */
+      //lon_range = help_lon_glob[help_nx_glob - 1] - help_lon_glob[0];
+      //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
+    //}
+  
+    double lat_range = help_lat_glob[help_ny_glob - 1] - help_lat_glob[0];
+
+    /* Focus on subdomain latitudes and longitudes... */
+    for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++) {
+      met->lat[iy] = help_lat_glob[(int) dd->subdomain_start[2] + iy];
+    }
+
+    /* Focus on subdomain longitudes... */
+    /* Keep space at the beginning or end of the array for halo... */
+    for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
+      met->lon[ix + dd->halo_offset_start] = 
+    	  help_lon_glob[(int) dd->subdomain_start[3] + ix];
+    }
+
+    for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
+      met->lon[ix + dd->halo_offset_end] = 
+    	  help_lon_glob[(int) dd->halo_bnd_start[3] + ix] + lon_shift;
+    }
+
+    /* Reset the grid dimensions... */
+    met->nx = (int) dd->subdomain_count[3] + (int) dd->halo_bnd_count[3];
+    met->ny = (int) dd->subdomain_count[2];
+
+    /* Determine subdomain edges... */
+    dd->subdomain_lon_min = floor(dd->rank / ctl->dd_subdomains_meridional)
+      * (lon_range) / (double) ctl->dd_subdomains_zonal;
+    dd->subdomain_lon_max = dd->subdomain_lon_min
+      + (lon_range) / (double) ctl->dd_subdomains_zonal;
+
+    /* Latitudes in descending order (90 to -90) */
+    if (lat_range < 0) {
+      dd->subdomain_lat_max = 90 + (dd->rank % ctl->dd_subdomains_meridional)
+        * (lat_range) / (double) ctl->dd_subdomains_meridional;
+      dd->subdomain_lat_min = dd->subdomain_lat_max
+        + (lat_range) / (double) ctl->dd_subdomains_meridional;
+    } else {
+      WARN("lat_range > 0, but is expected to be negative, i.e. latitudes should range from 90 to -90")
+      dd->subdomain_lat_min = -90 + (dd->rank % ctl->dd_subdomains_meridional)
+        * (lat_range) / (double) ctl->dd_subdomains_meridional;
+      dd->subdomain_lat_max = dd->subdomain_lat_min
+        + (lat_range) / (double) ctl->dd_subdomains_meridional;
+    }
+
+    LOG(2, "Total longitude range: %g deg", lon_range);
+    LOG(2, "Total latitude range: %g deg", lat_range);
+  
+    LOG(2, "Define subdomain properties.");
+    LOG(2, "MPI information: Rank %d, Size %d", dd->rank, dd->size);
+    LOG(2, "Edge position: l=%d,r=%d,t=%d, b=%d", (int) left, (int) right,
+      (int) top, (int) bottom);
+    LOG(2, "Sizes for limits: EX %d EY %d EP %d", EX, EY, EP);
+    LOG(2, "Total size for subdomain meteo data: nx %d ny %d np %d", met->nx,
+      met->ny, met->np);
+    LOG(2, "Hyperslab sizes for boundary halos: nx %d ny %d np %d",
+      (int) dd->halo_bnd_count[3], (int) dd->halo_bnd_count[2],
+      (int) dd->halo_bnd_count[1]);
+    LOG(2, "Hyperslab sizes for subdomain and inner halos:  nx %d ny %d np %d",
+      (int) dd->subdomain_count[3], (int) dd->subdomain_count[2],
+      (int) dd->subdomain_count[1]);
+    LOG(2, "Subdomain start: nx %ld ny %ld np %ld", dd->subdomain_start[3],
+      dd->subdomain_start[2], dd->subdomain_start[1]);
+    LOG(2, "Boundary halo start: nx %ld ny %ld np %ld", dd->halo_bnd_start[3],
+      dd->halo_bnd_start[2], dd->halo_bnd_start[1]);
+    LOG(2, "Offsets: nx %d ny %d", dd->halo_offset_start,
+      dd->halo_offset_end);
+
+    LOG(2, " %d Subdomain longitudes: %g, %g ... %g deg (edges: %g to %g)", dd->rank,
+      met->lon[0], met->lon[1], met->lon[met->nx - 1], 
+      dd->subdomain_lon_min, dd->subdomain_lon_max);
+    LOG(2, " %d Subdomain latitudes: %g, %g ... %g deg (edges: %g to %g)", dd->rank,
+      met->lat[0], met->lat[1], met->lat[met->ny - 1], 
+      dd->subdomain_lat_min, dd->subdomain_lat_max);
+
+    free(help_lon_glob);
+    free(help_lat_glob);
+
+  }
 
 /*****************************************************************************/
 
