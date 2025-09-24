@@ -12850,24 +12850,19 @@ void dd_communicate_particles(
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
   /* Infos for MPI async... */
-  // TODO: Make this requests variable from number of neighbours... 
-  MPI_Request requests_snd_nbr[8] =
-    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
-    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
-  };
-  MPI_Request requests_rcv_nbr[8] =
-    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
-    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
-  };
-  MPI_Request requests_snd_part[8] =
-    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
-    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
-  };
-  MPI_Request requests_rcv_part[8] =
-    { MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL,
-    MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL, MPI_REQUEST_NULL
-  };
-  MPI_Status states[8];
+  MPI_Request *requests_snd_nbr = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
+  MPI_Request *requests_rcv_nbr = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
+  MPI_Request *requests_snd_part = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
+  MPI_Request *requests_rcv_part = (MPI_Request *) calloc(nneighbours, sizeof(MPI_Request));
+  MPI_Status *states = (MPI_Status *) calloc(nneighbours, sizeof(MPI_Status));
+  
+  /* Initialize with MPI_REQUEST_NULL */
+  for (int i = 0; i < nneighbours; i++) {
+    requests_snd_nbr[i] = MPI_REQUEST_NULL;
+    requests_rcv_nbr[i] = MPI_REQUEST_NULL;
+    requests_snd_part[i] = MPI_REQUEST_NULL;
+    requests_rcv_part[i] = MPI_REQUEST_NULL;
+  }
 
   /* Sending... */
   for (int idest = 0; idest < nneighbours; idest++) {
@@ -13385,8 +13380,6 @@ void dd_sort(
 
   /* Allocate... */
   const int np = atm->np;
-  //double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
-  //int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
   double amax = (met0->nx * met0->ny + met0->ny) * met0->np + met0->np;
 
 #ifdef _OPENACC

@@ -121,9 +121,11 @@ int main(
       if (ctl->dt_mod > fabs(met0->lon[1] - met0->lon[0]) * 111132. / 150.)
 	WARN("Violation of CFL criterion! Check DT_MOD!");
 
+#ifdef DD
       /* Set-up domain decomposition... */
       if ((t == ctl->t_start || !dd->init ) && (ctl->dd == 1))
 	dd->init = dd_init(ctl, dd, atm);
+#endif 
 
 
       /* Run a single time step... */
