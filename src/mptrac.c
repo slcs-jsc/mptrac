@@ -11046,7 +11046,7 @@ void write_csi(
     modmean[idx] +=
       kernel_weight(kz, kw, nk, atm->p[ip]) * atm->q[ctl->qnt_m][ip];
   }
-
+  for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
   /* Analyze all grid cells... */
   for (int ix = 0; ix < ctl->csi_nx; ix++)
     for (int iy = 0; iy < ctl->csi_ny; iy++)
@@ -11054,24 +11054,21 @@ void write_csi(
 
 	/* Calculate mean observation index... */
 	const int idx = ARRAY_3D(ix, iy, ctl->csi_ny, iz, ctl->csi_nz);
-	if (obscount[idx]) {
-	  obsmean[idx] /= obscount[idx];
-	  obsstd[idx] = sqrt(obsstd[idx] - SQR(obsmean[idx]));
-	}
+  if (e==0)
+    	if (obscount[idx]) {
+    	  obsmean[idx] /= obscount[idx];
+    	  obsstd[idx] = sqrt(obsstd[idx] / obscount[idx] - SQR(obsmean[idx]));
+    	}
 
 	/* Calculate model mean per ensemble... */
-	for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
 	  const int midx = e * grid_size + idx;
 	  if (modmean[midx] > 0)
 	    modmean[midx] /= (1e6 * area[iy]);
-	}
 
 	/* Check number of observations... */
 	if (obscount[idx]) {
 
 	  /* Calculate CSI... */
-	  for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
-	    const int midx = e * grid_size + idx;
 	    ct[e]++;
 	    if (obsmean[idx] >= ctl->csi_obsmin
 		&& modmean[midx] >= ctl->csi_modmin)
@@ -11091,13 +11088,10 @@ void write_csi(
 	      if ((++n[e]) >= NCSI)
 		ERRMSG("Too many points for statistics!");
 	    }
-	  }
 	}
       }
-
   /* Write output... */
   if (fmod(t, ctl->csi_dt_out) == 0) {
-    for (int e = 0; e < (ensemble ? ctl->nens : 1); e++) {
 
       if (n[e] == 0)
 	continue;
@@ -11129,7 +11123,7 @@ void write_csi(
 	gsl_stats_sd_with_fixed_mean(work, 1, (size_t) n[e], 0.0);
       const double absdev = gsl_stats_absdev_m(work, 1, (size_t) n[e], 0.0);
       const double loglikelihood =
-	gsl_stats_tss(work2, 1, (size_t) n[e]) * -0.5;
+	gsl_stats_tss_m(work2, 1, (size_t) n[e], 0.0) * -0.5;
 
       /* Write... */
       fprintf(out,
@@ -11139,10 +11133,11 @@ void write_csi(
 	      loglikelihood, n[e]);
 
       /* Set counters to zero... */
+      for (int i = 0; i < n[e]; i++) 
+        work[i] = work2[i] = x[i] = y[i] = obsstdn[i] = 0;
       ct[e] = cx[e] = cy[e] = cz[e] = n[e] = 0;
     }
   }
-
   /* Free... */
   free(modmean);
   free(obsmean);
