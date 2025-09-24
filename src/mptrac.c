@@ -4039,6 +4039,32 @@ void module_sort_help(
 
 /*****************************************************************************/
 
+void dd_sort_help(
+  double *a,
+  dd_t *dd,
+  const int np) {
+
+  /* Reordering of array... */
+#ifdef _OPENACC
+#pragma acc data present(dd,a)
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    dd->help[ip] = a[dd->p[ip]];
+#ifdef _OPENACC
+#pragma acc parallel loop independent gang vector
+#else
+#pragma omp parallel for default(shared)
+#endif
+  for (int ip = 0; ip < np; ip++)
+    a[ip] = dd->help[ip];
+ 
+}
+
+/*****************************************************************************/
+
 void module_timesteps(
   const ctl_t *ctl,
   cache_t *cache,
@@ -4355,6 +4381,11 @@ void mptrac_alloc(
   ALLOC(*met1, met_t, 1);
   ALLOC(*atm, atm_t, 1);
   ALLOC(*dd, dd_t, 1);
+
+#ifdef DD
+  dd_t *ddup = *dd;
+#pragma acc enter data create(ddup[:1])
+#endif
 
   /* Create data region on GPU... */
 #ifdef _OPENACC
@@ -13312,7 +13343,7 @@ void module_dd(
   dd_assign_rect_subdomains_atm(atm, ctl, dd, 0);
 
   /* Sorting particles according to location and target rank... */
-  dd_sort(ctl, *met, atm, &nparticles, &dd->rank);
+  dd_sort(ctl, *met, atm, dd, &nparticles, &dd->rank);
 
   /* Transform from struct of array to array of struct... */
   dd_atm2particles(atm, particles, ctl, &nparticles, cache, dd->rank);
@@ -13341,6 +13372,7 @@ void dd_sort(
   const ctl_t *ctl,
   met_t *met0,
   atm_t *atm,
+  dd_t *dd,
   int *nparticles,
   int *rank) {
 
@@ -13349,14 +13381,14 @@ void dd_sort(
 
   /* Allocate... */
   const int np = atm->np;
-  double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
-  int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
+  //double *restrict const a = (double *) malloc((size_t) np * sizeof(double));
+  //int *restrict const p = (int *) malloc((size_t) np * sizeof(int));
   double amax = (met0->nx * met0->ny + met0->ny) * met0->np + met0->np;
 
 #ifdef _OPENACC
-#pragma acc enter data create(a[0:np],p[0:np],amax, rank)
+#pragma acc enter data create(amax, rank)
 #pragma acc update device(rank, amax)
-#pragma acc data present(ctl,met0,atm,a,p,amax,rank)
+#pragma acc data present(ctl,met0,atm,dd,amax,rank)
 #endif
 
   /* Get box index... */
@@ -13368,38 +13400,38 @@ void dd_sort(
   for (int ip = 0; ip < np; ip++) {
     if ((int) atm->q[ctl->qnt_subdomain][ip] != -1) {
       if ((int) atm->q[ctl->qnt_destination][ip] == *rank)
-	a[ip] =
+	dd->a[ip] =
 	  (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) *
 		     met0->ny + locate_irr(met0->lat, met0->ny, atm->lat[ip]))
 		    * met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
       else
-	a[ip] = amax + 1;
+	dd->a[ip] = amax + 1;
     } else {
-      a[ip] = amax + 2;
+      dd->a[ip] = amax + 2;
     }
-    p[ip] = ip;
+    dd->p[ip] = ip;
   }
 
   /* Sorting... */
 #ifdef THRUST
 #ifdef _OPENACC
-#pragma acc host_data use_device(a,p)
+#pragma acc host_data use_device(dd->a,dd->p)
 #endif
-  thrustSortWrapper(a, np, p);
+  thrustSortWrapper(dd->a, np, dd->p);
 #else
 #ifdef _OPENACC
   ERRMSG("GSL sort fallback not available on GPU, use THRUST!");
 #endif
-  gsl_sort_index((size_t *) p, a, 1, (size_t) np);
+  gsl_sort_index((size_t *) (dd->p), (dd->a), 1, (size_t) np);
 #endif
 
   /* Sort data... */
-  module_sort_help(atm->time, p, np);
-  module_sort_help(atm->p, p, np);
-  module_sort_help(atm->lon, p, np);
-  module_sort_help(atm->lat, p, np);
+  dd_sort_help(atm->time, dd, np);
+  dd_sort_help(atm->p, dd, np);
+  dd_sort_help(atm->lon, dd, np);
+  dd_sort_help(atm->lat, dd, np);
   for (int iq = 0; iq < ctl->nq; iq++)
-    module_sort_help(atm->q[iq], p, np);
+    dd_sort_help(atm->q[iq], dd, np);
 
   /* Reset the size... */
   int npt = 0;
@@ -13446,9 +13478,7 @@ void dd_sort(
 
   /* Free... */
 #ifdef _OPENACC
-#pragma acc exit data delete(a,p,amax, rank)
+#pragma acc exit data delete(amax, rank)
 #endif
-  free(a);
-  free(p);
 
 }

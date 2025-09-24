@@ -3692,12 +3692,6 @@ typedef struct {
   MPI_Datatype MPI_Particle;
 #endif 
   
-   /* ------------------------------------------------------------
-     Caches
-     ------------------------------------------------------------ */   
-     
-  /* Shows if domain decomposition was initialized. */
-  int init;
        
   /* ------------------------------------------------------------
      Properties of subdomains
@@ -3732,6 +3726,26 @@ typedef struct {
 
   /* Hyperslab of boundary halos count. */
   int halo_offset_end;  
+  
+  /* ------------------------------------------------------------
+     Caches
+     ------------------------------------------------------------ */   
+     
+  /* Shows if domain decomposition was initialized. */
+  int init;
+  
+#ifdef DD
+
+  /* Sorting ... */ 
+  double a[NP];
+  int p[NP];
+  double help[NP];
+  
+  /* Subdomains ... */ 
+  // -1 = inactive; 1,2,3, ... = ranks; -2, -3 = Poles
+  //int destination[NP];
+  
+#endif 
 
 } dd_t;
 
@@ -5921,6 +5935,11 @@ void module_sort(
 void module_sort_help(
   double *a,
   const int *p,
+  const int np);
+  
+void dd_sort_help(
+  double *a,
+  dd_t *dd,
   const int np);
 
 /**
@@ -9280,6 +9299,7 @@ void dd_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
+  dd_t * dd,
   int *nparticles,
   int *rank);
 
