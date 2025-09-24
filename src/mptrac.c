@@ -4383,9 +4383,7 @@ void mptrac_alloc(
   ALLOC(*met0, met_t, 1);
   ALLOC(*met1, met_t, 1);
   ALLOC(*atm, atm_t, 1);
-#ifdef DD
   ALLOC(*dd, dd_t, 1);
-#endif
 
   /* Create data region on GPU... */
 #ifdef _OPENACC
@@ -4433,8 +4431,8 @@ void mptrac_free(
   /* Free MPI datatype... */
 #ifdef DD
   MPI_Type_free(&dd->MPI_Particle);
-  free(dd); 
 #endif
+  free(dd); 
 }
 
 /*****************************************************************************/
