@@ -5578,13 +5578,8 @@ int mptrac_read_met(
 
     /* Read netCDF data... */
     if (ctl->met_type == 0) {
-      if (ctl->dd == 1) {
-        if (read_met_nc_dd(filename, ctl, met, dd) != 1)
-	  return 0;
-       } else {
-           if (read_met_nc(filename, ctl, met) != 1)
-	     return 0;
-      }
+      if (read_met_nc(filename, ctl, met, dd) != 1)
+	      return 0;
     }
 
     /* Read binary data... */
@@ -7401,7 +7396,7 @@ void read_met_geopot(
 }
 
 /*****************************************************************************/
-void read_met_nc_grid_dd(
+void read_met_nc_grid(
   const char *filename,
   const int ncid,
   const ctl_t *ctl,
@@ -7418,7 +7413,7 @@ void read_met_nc_grid_dd(
   size_t dimlen;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_GRID_DD", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_NC_GRID", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
   
@@ -7509,6 +7504,7 @@ void read_met_nc_grid_dd(
   
   } else {
   
+    /* Use 'naive', i.e. equidistant lat-lon domain decomposition... */
     read_met_nc_grid_dd_naive(dd, ctl, met, ncid);
 
   }
@@ -7544,7 +7540,7 @@ void read_met_nc_grid_dd(
 }
 
 /*****************************************************************************/
-void read_met_nc_surface_dd(
+void read_met_nc_surface(
   const int ncid,
   const ctl_t *ctl,
   met_t *met,
@@ -7555,14 +7551,14 @@ void read_met_nc_surface_dd(
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
-  if (read_met_nc_2d_dd
+  if (read_met_nc_2d
       (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, dd, met->ps, 1.0f,
        1)) {
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 0; iy < met->ny; iy++)
 	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
   } else
-    if (!read_met_nc_2d_dd
+    if (!read_met_nc_2d
 	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, dd, met->ps, 0.01f,
 	 1)) {
     WARN("Cannot not read surface pressure data (use lowest level)!");
@@ -7576,10 +7572,10 @@ void read_met_nc_surface_dd(
   if (ctl->met_clams == 0) {
 
     /* Read geopotential height at the surface... */
-    if (!read_met_nc_2d_dd
+    if (!read_met_nc_2d
 	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
 	 (float) (1. / (1000. * G0)), 1))
-      if (!read_met_nc_2d_dd
+      if (!read_met_nc_2d
 	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, dd, met->zs,
 	   (float) (1. / 1000.), 1))
 	WARN("Cannot read surface geopotential height!");
@@ -7594,7 +7590,7 @@ void read_met_nc_surface_dd(
     ALLOC(help, float,
 	  EX * EY * EP);
     memcpy(help, met->pl, sizeof(met->pl));
-    if (!read_met_nc_3d_dd
+    if (!read_met_nc_3d
 	(ncid, "gph", "GPH", NULL, NULL, ctl, met, dd, met->pl,
 	 (float) (1e-3 / G0)))
       ERRMSG("Cannot read geopotential height!");
@@ -7606,74 +7602,74 @@ void read_met_nc_surface_dd(
   }
 
   /* Read temperature at the surface... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, dd, met->ts, 1.0, 1))
     WARN("Cannot read surface temperature!");
 
   /* Read zonal wind at the surface... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, dd, met->us,
        1.0, 1))
     WARN("Cannot read surface zonal wind!");
 
   /* Read meridional wind at the surface... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, dd, met->vs,
        1.0, 1))
     WARN("Cannot read surface meridional wind!");
 
   /* Read eastward turbulent surface stress... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, dd, met->ess, 1.0,
        1))
     WARN("Cannot read eastward turbulent surface stress!");
 
   /* Read northward turbulent surface stress... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, dd, met->nss, 1.0,
        1))
     WARN("Cannot read nothward turbulent surface stress!");
 
   /* Read surface sensible heat flux... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, dd, met->shf, 1.0,
        1))
     WARN("Cannot read surface sensible heat flux!");
 
   /* Read land-sea mask... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, dd, met->lsm, 1.0,
        1))
     WARN("Cannot read land-sea mask!");
 
   /* Read sea surface temperature... */
-  if (!read_met_nc_2d_dd
+  if (!read_met_nc_2d
       (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, dd, met->sst,
        1.0, 1))
     WARN("Cannot read sea surface temperature!");
 
   /* Read PBL... */
   if (ctl->met_pbl == 0)
-    if (!read_met_nc_2d_dd
+    if (!read_met_nc_2d
 	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, dd, met->pbl,
 	 0.01f, 1))
       WARN("Cannot read planetary boundary layer pressure!");
   if (ctl->met_pbl == 1)
-    if (!read_met_nc_2d_dd
+    if (!read_met_nc_2d
 	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, dd, met->pbl,
 	 0.001f, 1))
       WARN("Cannot read planetary boundary layer height!");
 
   /* Read CAPE... */
   if (ctl->met_cape == 0)
-    if (!read_met_nc_2d_dd
+    if (!read_met_nc_2d
 	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, dd, met->cape,
 	 1.0, 1))
       WARN("Cannot read CAPE!");
 
   /* Read CIN... */
   if (ctl->met_cape == 0)
-    if (!read_met_nc_2d_dd
+    if (!read_met_nc_2d
 	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, dd, met->cin,
 	 1.0, 1))
       WARN("Cannot read convective inhibition!");
@@ -7681,37 +7677,37 @@ void read_met_nc_surface_dd(
 
 /*****************************************************************************/
 
-void read_met_nc_levels_dd(
+void read_met_nc_levels(
   const int ncid,
   const ctl_t *ctl,
   met_t *met,
   dd_t *dd) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_LEVELS_DD", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_NC_LEVELS", "INPUT", NVTX_READ);
   LOG(2, "Read level data...");
 
   /* Read temperature... */
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "t", "T", "temp", "TEMP", ctl, met, dd,met->t, 1.0))
     ERRMSG("Cannot read temperature!");
 
   /* Read horizontal wind and vertical velocity... */
-  if (!read_met_nc_3d_dd(ncid, "u", "U", NULL, NULL, ctl, met, dd, met->u, 1.0))
+  if (!read_met_nc_3d(ncid, "u", "U", NULL, NULL, ctl, met, dd, met->u, 1.0))
     ERRMSG("Cannot read zonal wind!");
-  if (!read_met_nc_3d_dd(ncid, "v", "V", NULL, NULL, ctl, met, dd, met->v, 1.0))
+  if (!read_met_nc_3d(ncid, "v", "V", NULL, NULL, ctl, met, dd, met->v, 1.0))
     ERRMSG("Cannot read meridional wind!");
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "w", "W", "omega", "OMEGA", ctl, met, dd, met->w, 0.01f))
     WARN("Cannot read vertical velocity!");
 
   /* Read water vapor... */
   if (!ctl->met_relhum) {
-    if (!read_met_nc_3d_dd
+    if (!read_met_nc_3d
 	(ncid, "q", "Q", "sh", "SH", ctl, met, dd, met->h2o, (float) (MA / MH2O)))
       WARN("Cannot read specific humidity!");
   } else {
-    if (!read_met_nc_3d_dd
+    if (!read_met_nc_3d
 	(ncid, "rh", "RH", NULL, NULL, ctl, met, dd, met->h2o, 0.01f))
       WARN("Cannot read relative humidity!");
 #pragma omp parallel for default(shared) collapse(2)
@@ -7725,32 +7721,32 @@ void read_met_nc_levels_dd(
   }
 
   /* Read ozone... */
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "o3", "O3", NULL, NULL, ctl, met, dd, met->o3, (float) (MA / MO3)))
     WARN("Cannot read ozone data!");
 
   /* Read cloud data... */
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "clwc", "CLWC", NULL, NULL, ctl, met, dd, met->lwc, 1.0))
     WARN("Cannot read cloud liquid water content!");
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "crwc", "CRWC", NULL, NULL, ctl, met, dd, met->rwc, 1.0))
     WARN("Cannot read cloud rain water content!");
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "ciwc", "CIWC", NULL, NULL, ctl, met, dd, met->iwc, 1.0))
     WARN("Cannot read cloud ice water content!");
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, dd, met->swc, 1.0))
     WARN("Cannot read cloud snow water content!");
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "cc", "CC", NULL, NULL, ctl, met, dd, met->cc, 1.0))
     WARN("Cannot read cloud cover!");
 
   /* Read zeta and zeta_dot... */
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, dd, met->zetal, 1.0))
     WARN("Cannot read ZETA!");
-  if (!read_met_nc_3d_dd
+  if (!read_met_nc_3d
       (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
        NULL, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
     WARN("Cannot read ZETA_DOT!");
@@ -7775,10 +7771,10 @@ void read_met_nc_levels_dd(
 
     /* Read 3-D pressure field... */
     if (ctl->met_vert_coord == 1) {
-      if (!read_met_nc_3d_dd
+      if (!read_met_nc_3d
 	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, dd, met->pl,
 	   0.01f))
-	if (!read_met_nc_3d_dd
+	if (!read_met_nc_3d
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, dd, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
 
@@ -7890,59 +7886,7 @@ void read_met_nc_levels_dd(
 
 /*****************************************************************************/
 
-int read_met_nc_dd(
-  const char *filename,
-  const ctl_t *ctl,
-  met_t *met,
-  dd_t *dd) {
-
-  int ncid;
-
-  #ifdef MPI
-    int result = nc_open_par(filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid);
-    if (result != NC_NOERR) {
-      const char* error_msg;
-      switch(result) {
-        case NC_ENOPAR: error_msg = "Library was not built with parallel I/O features"; break;
-        case NC_EPERM: error_msg = "No permission to access the file"; break;
-        case NC_ENOTBUILT: error_msg = "Library was not built with NETCDF4 or PnetCDF"; break;
-        case NC_EINVAL: error_msg = "Invalid parameters"; break;
-        case NC_ENOTNC: error_msg = "Not a netCDF file"; break;
-        case NC_ENOMEM: error_msg = "Out of memory"; break;
-        case NC_EHDFERR: error_msg = "HDF5 error"; break;
-        case NC_EDIMMETA: error_msg = "Error in netCDF-4 dimension metadata"; break;
-        default: error_msg = nc_strerror(result); break;
-      }
-      WARN("Cannot open file for parallel access! NetCDF error: %s (code: %d)", error_msg, result);
-      return 0;
-    }
-  #else
-    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-      WARN("Cannot open file!");
-      return 0;
-    }
-  #endif
-
-  /* Read coordinates of meteo data... */
-  read_met_nc_grid_dd(filename, ncid, ctl, met, dd);
-
-  /* Read surface data... */
-  read_met_nc_surface_dd(ncid, ctl, met, dd);
-
-  /* Read meteo data on vertical levels... */
-  read_met_nc_levels_dd(ncid, ctl, met, dd);
-
-  /* Close file... */
-  NC(nc_close(ncid));
-
-  /* Return success... */
-  return 1;
-}
-
-
-/*****************************************************************************/
-
-int read_met_nc_2d_dd(
+int read_met_nc_2d(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -7958,6 +7902,8 @@ int read_met_nc_2d_dd(
   const int init) {
 
   char varsel[LEN];
+
+  float offset, scalfac;
 
   int varid;
 
@@ -7982,117 +7928,220 @@ int read_met_nc_2d_dd(
   else
     return 0;
 
+  /* Read packed data... */
+  if (ctl->met_nc_scale && !ctl->dd
+      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
 
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
 
-  /* Read fill value and missing value... */
-  float fillval, missval;
-  if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-    fillval = 0;
-  if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-    missval = 0;
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
 
-  /* Write info... */
-  LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
-      varsel, fillval, missval);
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s"
+	    " (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	    varsel, fillval, missval, scalfac, offset);
 
-  /* Define hyperslab... */
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
 
-  /* Allocate... */
-  float *help;
-  size_t help_subdomain_start[3];
-  size_t help_subdomain_count[3];
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
 
-  help_subdomain_start[0] = 0;
-  help_subdomain_start[1] = dd->subdomain_start[2];
-  help_subdomain_start[2] = dd->subdomain_start[3];
-
-  help_subdomain_count[0] = 1;
-  help_subdomain_count[1] = dd->subdomain_count[2];	//y
-  help_subdomain_count[2] = dd->subdomain_count[3];	//x
-
-  ALLOC(help, float,
-	  (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]
-    );
-
-  /* Read data... */
-  NC(nc_get_vara_float
-     (ncid, varid, help_subdomain_start, help_subdomain_count, help));
-
-  /* Read halos at boundaries... */
-  size_t help_halo_bnd_start[3];
-  size_t help_halo_bnd_count[3];
-
-  help_halo_bnd_start[0] = 0;
-  help_halo_bnd_start[1] = dd->halo_bnd_start[2];
-  help_halo_bnd_start[2] = dd->halo_bnd_start[3];
-
-  help_halo_bnd_count[0] = 1;
-  help_halo_bnd_count[1] = dd->halo_bnd_count[2];	//y
-  help_halo_bnd_count[2] = dd->halo_bnd_count[3];	//x
-
-  float *help_halo;
-  ALLOC(help_halo, float,
-	help_halo_bnd_count[1] * help_halo_bnd_count[2]);
-  NC(nc_get_vara_float
-     (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
-
-  /* Check meteo data layout... */
-  if (ctl->met_convention == 0) {
-
-    /* Copy and check data (ordering: lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
-      for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
-	if (init == 1)
-	  dest[ix + dd->halo_offset_start][iy] = 0;
-	const float aux =
-	  help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux) < 1e14f) {
-	  dest[ix + dd->halo_offset_start][iy] += scl * aux;
-	} else
-	  dest[ix + dd->halo_offset_start][iy] = NAN;
-      }
-
-    /* Copy and check data (ordering: lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
-      for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
-	if (init == 1)
-	  dest[ix + dd->halo_offset_end][iy] = 0;
-	const float aux =
-	  help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux) < 1e14f)
-	  dest[ix + dd->halo_offset_end][iy] += scl * aux;
-	else {
-	  dest[ix + dd->halo_offset_end][iy] = NAN;
-	}
-      }
-
-  } else {
-
-    /* Copy and check data (ordering: lon, lat)... */
-#pragma omp parallel for default(shared) num_threads(12)
-    for (int iy = 0; iy < met->ny; iy++)
-      for (int ix = 0; ix < met->nx; ix++) {
+    /* Copy and check data... */
+    omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++) {
 	if (init)
 	  dest[ix][iy] = 0;
-	const float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	const short aux = help[ARRAY_2D(iy, ix, met->nx)];
 	if ((fillval == 0 || aux != fillval)
 	    && (missval == 0 || aux != missval)
-	    && fabsf(aux) < 1e14f)
-	  dest[ix][iy] += scl * aux;
+	    && fabsf(aux * scalfac + offset) < 1e14f)
+	  dest[ix][iy] += scl * (aux * scalfac + offset);
 	else
 	  dest[ix][iy] = NAN;
       }
-  }
+    omp_set_dynamic(0);
 
-  /* Free... */
-  free(help);
-  free(help_halo);
+    /* Free... */
+    free(help);
+  
+  
+  } 
+  /* Unpacked data... */
+  else if (!ctl->dd) {
+
+    /* Allocate... */
+    float *help;
+    ALLOC(help, float,
+	  EX * EY);
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
+    /* Read data... */
+    NC(nc_get_var_float(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+
+      /* Copy and check data (ordering: lat, lon)... */
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++) {
+	  if (init)
+	    dest[ix][iy] = 0;
+	  const float aux = help[ARRAY_2D(iy, ix, met->nx)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = NAN;
+	}
+      omp_set_dynamic(0);
+
+    } else {
+
+      /* Copy and check data (ordering: lon, lat)... */
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ix = 0; ix < met->nx; ix++) {
+	  if (init)
+	    dest[ix][iy] = 0;
+	  const float aux = help[ARRAY_2D(ix, iy, met->ny)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix][iy] += scl * aux;
+	  else
+	    dest[ix][iy] = NAN;
+	}
+      omp_set_dynamic(0);
+    }
+
+    /* Free... */
+    free(help);
+
+  }
+  /* Domain decomposed data... */
+  else { 
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
+      varsel, fillval, missval);
+
+    /* Define hyperslab... */
+    float *help;
+    size_t help_subdomain_start[3];
+    size_t help_subdomain_count[3];
+
+    help_subdomain_start[0] = 0;
+    help_subdomain_start[1] = dd->subdomain_start[2];
+    help_subdomain_start[2] = dd->subdomain_start[3];
+
+    help_subdomain_count[0] = 1;
+    help_subdomain_count[1] = dd->subdomain_count[2];	//y
+    help_subdomain_count[2] = dd->subdomain_count[3];	//x
+
+    ALLOC(help, float,
+	    (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]
+      );
+
+    /* Read data... */
+    NC(nc_get_vara_float
+     (ncid, varid, help_subdomain_start, help_subdomain_count, help));
+
+    /* Read halos at boundaries... */
+    size_t help_halo_bnd_start[3];
+    size_t help_halo_bnd_count[3];
+
+    help_halo_bnd_start[0] = 0;
+    help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+    help_halo_bnd_start[2] = dd->halo_bnd_start[3];
+
+    help_halo_bnd_count[0] = 1;
+    help_halo_bnd_count[1] = dd->halo_bnd_count[2];	//y
+    help_halo_bnd_count[2] = dd->halo_bnd_count[3];	//x
+
+    float *help_halo;
+    ALLOC(help_halo, float,
+	  help_halo_bnd_count[1] * help_halo_bnd_count[2]);
+    NC(nc_get_vara_float
+     (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+      /* Copy and check data (ordering: lat, lon)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
+        for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
+	  if (init == 1)
+	    dest[ix + dd->halo_offset_start][iy] = 0;
+	  const float aux =
+	    help[ARRAY_2D(iy, ix, (int) help_subdomain_count[2])];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f) {
+	    dest[ix + dd->halo_offset_start][iy] += scl * aux;
+	  } else
+	    dest[ix + dd->halo_offset_start][iy] = NAN;
+        }
+
+      /* Copy and check data (ordering: lat, lon)... */
+#pragma omp parallel for default(shared) num_threads(12)
+      for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
+        for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
+	  if (init == 1)
+	    dest[ix + dd->halo_offset_end][iy] = 0;
+	  const float aux =
+	    help_halo[ARRAY_2D(iy, ix, (int) help_halo_bnd_count[2])];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + dd->halo_offset_end][iy] += scl * aux;
+	  else {
+	    dest[ix + dd->halo_offset_end][iy] = NAN;
+	  }
+        }
+
+    } else {
+      ERRMSG("Domain decomposition with data convection incompatible!");
+    }
+
+    /* Free... */
+    free(help);
+    free(help_halo);
+  }
 
   /* Return... */
   return 1;
@@ -8100,7 +8149,7 @@ int read_met_nc_2d_dd(
 
 /*****************************************************************************/
 
-int read_met_nc_3d_dd(
+int read_met_nc_3d(
   const int ncid,
   const char *varname,
   const char *varname2,
@@ -8112,9 +8161,11 @@ int read_met_nc_3d_dd(
   float dest[EX][EY][EP],
   const float scl) {
   
-  SELECT_TIMER("READ_MET_NC_3D_DD", "INPUT", NVTX_READ);
+  SELECT_TIMER("read_met_nc_3d", "INPUT", NVTX_READ);
 
   char varsel[LEN];
+
+  float offset, scalfac;
 
   int varid;
 
@@ -8133,6 +8184,122 @@ int read_met_nc_3d_dd(
   else
     return 0;
 
+  if (ctl->met_nc_scale && !ctl->dd
+      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
+      && nc_get_att_float(ncid, varid, "scale_factor",
+			  &scalfac) == NC_NOERR) {
+
+    /* Allocate... */
+    short *help;
+    ALLOC(help, short,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    short fillval, missval;
+    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s "
+	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
+	varsel, fillval, missval, scalfac, offset);
+
+    /* Read data... */
+    NC(nc_get_var_short(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention != 0)
+      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
+
+    /* Copy and check data... */
+    omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 0; ip < met->np; ip++) {
+	  const short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux * scalfac + offset) < 1e14f)
+	    dest[ix][iy][ip] = scl * (aux * scalfac + offset);
+	  else
+	    dest[ix][iy][ip] = NAN;
+	}
+    omp_set_dynamic(0);
+
+    /* Free... */
+    free(help);
+  }
+
+  /* Unpacked data... */
+  else if (!ctl->dd){
+
+    /* Allocate... */
+    float *help;
+    ALLOC(help, float,
+	  EX * EY * EP);
+
+    /* Read fill value and missing value... */
+    float fillval, missval;
+    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
+      fillval = 0;
+    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
+      missval = 0;
+
+    /* Write info... */
+    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
+	varsel, fillval, missval);
+
+    /* Read data... */
+    NC(nc_get_var_float(ncid, varid, help));
+
+    /* Check meteo data layout... */
+    if (ctl->met_convention == 0) {
+
+      /* Copy and check data (ordering: lev, lat, lon)... */
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int ix = 0; ix < met->nx; ix++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ip = 0; ip < met->np; ip++) {
+	    const float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval)
+		&& fabsf(aux) < 1e14f)
+	      dest[ix][iy][ip] = scl * aux;
+	    else
+	      dest[ix][iy][ip] = NAN;
+	  }
+      omp_set_dynamic(0);
+
+    } else {
+
+      /* Copy and check data (ordering: lon, lat, lev)... */
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int ip = 0; ip < met->np; ip++)
+	for (int iy = 0; iy < met->ny; iy++)
+	  for (int ix = 0; ix < met->nx; ix++) {
+	    const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval)
+		&& fabsf(aux) < 1e14f)
+	      dest[ix][iy][ip] = scl * aux;
+	    else
+	      dest[ix][iy][ip] = NAN;
+	  }
+      omp_set_dynamic(0);
+    }
+
+    /* Free... */
+    free(help);
+
+  } 
+  /* Domain decomposed data... */
+  else {
+
   /* Read fill value and missing value... */
   float fillval, missval;
   if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
@@ -8144,7 +8311,7 @@ int read_met_nc_3d_dd(
   LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
       varsel, fillval, missval);
   
-  SELECT_TIMER("READ_MET_NC_3D_DD_CP1", "INPUT", NVTX_READ);
+  SELECT_TIMER("read_met_nc_3d_CP1", "INPUT", NVTX_READ);
 
   /* Define hyperslab... */
 
@@ -8154,7 +8321,7 @@ int read_met_nc_3d_dd(
 	  (int) dd->subdomain_count[0] * (int) dd->subdomain_count[1]
 	* (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]);
 
-  SELECT_TIMER("READ_MET_NC_3D_DD_CP2", "INPUT", NVTX_READ);
+  SELECT_TIMER("read_met_nc_3d_CP2", "INPUT", NVTX_READ);
 
   /* Use default NetCDF parallel I/O behavior */
   NC(nc_get_vara_float
@@ -8166,7 +8333,7 @@ int read_met_nc_3d_dd(
 	dd->halo_bnd_count[0] * dd->halo_bnd_count[1] *
 	dd->halo_bnd_count[2] * dd->halo_bnd_count[3]);
 
-  SELECT_TIMER("READ_MET_NC_3D_DD_CP3", "INPUT", NVTX_READ);
+  SELECT_TIMER("read_met_nc_3d_CP3", "INPUT", NVTX_READ);
   
   /* Halo read also uses independent access */
   NC(nc_get_vara_float(ncid,
@@ -8175,7 +8342,7 @@ int read_met_nc_3d_dd(
 		    dd->halo_bnd_count,
 		    help_halo));
 
-  SELECT_TIMER("READ_MET_NC_3D_DD_CP4", "INPUT", NVTX_READ);
+  SELECT_TIMER("read_met_nc_3d_CP4", "INPUT", NVTX_READ);
 
   /* Check meteo data layout... */
   if (ctl->met_convention == 0) {
@@ -8243,6 +8410,8 @@ int read_met_nc_3d_dd(
   /* Free... */
   free(help);
   free(help_halo);
+
+  }
 
   /* Return... */
   return 1;
@@ -8805,24 +8974,30 @@ void read_met_monotonize(
 int read_met_nc(
   const char *filename,
   const ctl_t *ctl,
-  met_t *met) {
+  met_t *met,
+  dd_t *dd) {
 
   int ncid;
 
-  /* Open netCDF file... */
-  if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
-    WARN("Cannot open file!");
-    return 0;
-  }
+  #ifdef MPI
+    if (ctl->dd) {
+      NC(nc_open_par(filename, NC_NOWRITE | NC_SHARE, MPI_COMM_WORLD, MPI_INFO_NULL, &ncid))
+    }
+  #else
+    if (nc_open(filename, NC_NOWRITE, &ncid) != NC_NOERR) {
+      WARN("Cannot open file!");
+      return 0;
+    }
+  #endif
 
   /* Read coordinates of meteo data... */
-  read_met_nc_grid(filename, ncid, ctl, met);
+  read_met_nc_grid(filename, ncid, ctl, met, dd);
 
   /* Read surface data... */
-  read_met_nc_surface(ncid, ctl, met);
+  read_met_nc_surface(ncid, ctl, met, dd);
 
   /* Read meteo data on vertical levels... */
-  read_met_nc_levels(ncid, ctl, met);
+  read_met_nc_levels(ncid, ctl, met, dd);
 
   /* Close file... */
   NC(nc_close(ncid));
@@ -8831,455 +9006,6 @@ int read_met_nc(
   return 1;
 }
 
-/*****************************************************************************/
-
-int read_met_nc_2d(
-  const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
-  const char *varname5,
-  const char *varname6,
-  const ctl_t *ctl,
-  const met_t *met,
-  float dest[EX][EY],
-  const float scl,
-  const int init) {
-
-  char varsel[LEN];
-
-  float offset, scalfac;
-
-  int varid;
-
-  /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname);
-  else if (varname2 != NULL
-	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname2);
-  else if (varname3 != NULL
-	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname3);
-  else if (varname4 != NULL
-	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname4);
-  else if (varname5 != NULL
-	   && nc_inq_varid(ncid, varname5, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname5);
-  else if (varname6 != NULL
-	   && nc_inq_varid(ncid, varname6, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname6);
-  else
-    return 0;
-
-  /* Read packed data... */
-  if (ctl->met_nc_scale
-      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
-
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 2-D variable: %s"
-	" (FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention != 0)
-      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
-
-    /* Copy and check data... */
-    omp_set_dynamic(1);
-#pragma omp parallel for default(shared)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++) {
-	if (init)
-	  dest[ix][iy] = 0;
-	const short aux = help[ARRAY_2D(iy, ix, met->nx)];
-	if ((fillval == 0 || aux != fillval)
-	    && (missval == 0 || aux != missval)
-	    && fabsf(aux * scalfac + offset) < 1e14f)
-	  dest[ix][iy] += scl * (aux * scalfac + offset);
-	else
-	  dest[ix][iy] = NAN;
-      }
-    omp_set_dynamic(0);
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Unpacked data... */
-  else {
-
-    /* Allocate... */
-    float *help;
-    ALLOC(help, float,
-	  EX * EY);
-
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 2-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-
-    /* Read data... */
-    NC(nc_get_var_float(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention == 0) {
-
-      /* Copy and check data (ordering: lat, lon)... */
-      omp_set_dynamic(1);
-#pragma omp parallel for default(shared)
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++) {
-	  if (init)
-	    dest[ix][iy] = 0;
-	  const float aux = help[ARRAY_2D(iy, ix, met->nx)];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f)
-	    dest[ix][iy] += scl * aux;
-	  else
-	    dest[ix][iy] = NAN;
-	}
-      omp_set_dynamic(0);
-
-    } else {
-
-      /* Copy and check data (ordering: lon, lat)... */
-      omp_set_dynamic(1);
-#pragma omp parallel for default(shared)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ix = 0; ix < met->nx; ix++) {
-	  if (init)
-	    dest[ix][iy] = 0;
-	  const float aux = help[ARRAY_2D(ix, iy, met->ny)];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux) < 1e14f)
-	    dest[ix][iy] += scl * aux;
-	  else
-	    dest[ix][iy] = NAN;
-	}
-      omp_set_dynamic(0);
-    }
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Return... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-int read_met_nc_3d(
-  const int ncid,
-  const char *varname,
-  const char *varname2,
-  const char *varname3,
-  const char *varname4,
-  const ctl_t *ctl,
-  const met_t *met,
-  float dest[EX][EY][EP],
-  const float scl) {
-
-  char varsel[LEN];
-
-  float offset, scalfac;
-
-  int varid;
-
-  /* Check if variable exists... */
-  if (nc_inq_varid(ncid, varname, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname);
-  else if (varname2 != NULL
-	   && nc_inq_varid(ncid, varname2, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname2);
-  else if (varname3 != NULL
-	   && nc_inq_varid(ncid, varname3, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname3);
-  else if (varname4 != NULL
-	   && nc_inq_varid(ncid, varname4, &varid) == NC_NOERR)
-    sprintf(varsel, "%s", varname4);
-  else
-    return 0;
-
-  /* Read packed data... */
-  if (ctl->met_nc_scale
-      && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
-      && nc_get_att_float(ncid, varid, "scale_factor",
-			  &scalfac) == NC_NOERR) {
-
-    /* Allocate... */
-    short *help;
-    ALLOC(help, short,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    short fillval, missval;
-    if (nc_get_att_short(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_short(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s "
-	"(FILL = %d, MISS = %d, SCALE = %g, OFFSET = %g)",
-	varsel, fillval, missval, scalfac, offset);
-
-    /* Read data... */
-    NC(nc_get_var_short(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention != 0)
-      ERRMSG("Meteo data layout not implemented for packed netCDF files!");
-
-    /* Copy and check data... */
-    omp_set_dynamic(1);
-#pragma omp parallel for default(shared)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  const short aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
-	  if ((fillval == 0 || aux != fillval)
-	      && (missval == 0 || aux != missval)
-	      && fabsf(aux * scalfac + offset) < 1e14f)
-	    dest[ix][iy][ip] = scl * (aux * scalfac + offset);
-	  else
-	    dest[ix][iy][ip] = NAN;
-	}
-    omp_set_dynamic(0);
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Unpacked data... */
-  else {
-
-    /* Allocate... */
-    float *help;
-    ALLOC(help, float,
-	  EX * EY * EP);
-
-    /* Read fill value and missing value... */
-    float fillval, missval;
-    if (nc_get_att_float(ncid, varid, "_FillValue", &fillval) != NC_NOERR)
-      fillval = 0;
-    if (nc_get_att_float(ncid, varid, "missing_value", &missval) != NC_NOERR)
-      missval = 0;
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
-	varsel, fillval, missval);
-
-    /* Read data... */
-    NC(nc_get_var_float(ncid, varid, help));
-
-    /* Check meteo data layout... */
-    if (ctl->met_convention == 0) {
-
-      /* Copy and check data (ordering: lev, lat, lon)... */
-      omp_set_dynamic(1);
-#pragma omp parallel for default(shared)
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ip = 0; ip < met->np; ip++) {
-	    const float aux = help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)];
-	    if ((fillval == 0 || aux != fillval)
-		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
-	      dest[ix][iy][ip] = scl * aux;
-	    else
-	      dest[ix][iy][ip] = NAN;
-	  }
-      omp_set_dynamic(0);
-
-    } else {
-
-      /* Copy and check data (ordering: lon, lat, lev)... */
-      omp_set_dynamic(1);
-#pragma omp parallel for default(shared)
-      for (int ip = 0; ip < met->np; ip++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ix = 0; ix < met->nx; ix++) {
-	    const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-	    if ((fillval == 0 || aux != fillval)
-		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
-	      dest[ix][iy][ip] = scl * aux;
-	    else
-	      dest[ix][iy][ip] = NAN;
-	  }
-      omp_set_dynamic(0);
-    }
-
-    /* Free... */
-    free(help);
-  }
-
-  /* Return... */
-  return 1;
-}
-
-/*****************************************************************************/
-
-void read_met_nc_grid(
-  const char *filename,
-  const int ncid,
-  const ctl_t *ctl,
-  met_t *met) {
-
-  char levname[LEN], tstr[10];
-
-  double rtime = 0, r, r2;
-
-  int varid, ndims, dimids[NC_MAX_DIMS], year2, mon2, day2, hour2, min2, sec2,
-    year, mon, day, hour, min, sec;
-
-  size_t dimlen;
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_GRID", "INPUT", NVTX_READ);
-  LOG(2, "Read meteo grid information...");
-
-  /* MPTRAC meteo files... */
-  if (ctl->met_clams == 0) {
-
-    /* Get time from filename... */
-    met->time = time_from_filename(filename, 16);
-
-    /* Check time information from data file... */
-    jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
-    if (nc_inq_varid(ncid, "time", &varid) == NC_NOERR) {
-      NC(nc_get_var_double(ncid, varid, &rtime));
-      if (fabs(year * 10000. + mon * 100. + day + hour / 24. - rtime) > 1.0)
-	WARN("Time information in meteo file does not match filename!");
-    } else
-      WARN("Time information in meteo file is missing!");
-  }
-
-  /* CLaMS meteo files... */
-  else {
-
-    /* Read time from file... */
-    NC_GET_DOUBLE("time", &rtime, 0);
-
-    /* Get time from filename (considering the century)... */
-    if (rtime < 0)
-      sprintf(tstr, "19%.2s", &filename[strlen(filename) - 11]);
-    else
-      sprintf(tstr, "20%.2s", &filename[strlen(filename) - 11]);
-    year = atoi(tstr);
-    sprintf(tstr, "%.2s", &filename[strlen(filename) - 9]);
-    mon = atoi(tstr);
-    sprintf(tstr, "%.2s", &filename[strlen(filename) - 7]);
-    day = atoi(tstr);
-    sprintf(tstr, "%.2s", &filename[strlen(filename) - 5]);
-    hour = atoi(tstr);
-    time2jsec(year, mon, day, hour, 0, 0, 0, &met->time);
-  }
-
-  /* Check time... */
-  if (year < 1900 || year > 2100 || mon < 1 || mon > 12
-      || day < 1 || day > 31 || hour < 0 || hour > 23)
-    ERRMSG("Cannot read time from filename!");
-  jsec2time(met->time, &year2, &mon2, &day2, &hour2, &min2, &sec2, &r2);
-  LOG(2, "Time: %.2f (%d-%02d-%02d, %02d:%02d UTC)",
-      met->time, year2, mon2, day2, hour2, min2);
-
-  /* Get grid dimensions... */
-  NC_INQ_DIM("lon", &met->nx, 2, EX, 1);
-  LOG(2, "Number of longitudes: %d", met->nx);
-
-  NC_INQ_DIM("lat", &met->ny, 2, EY, 1);
-  LOG(2, "Number of latitudes: %d", met->ny);
-
-  /* Read longitudes and latitudes... */
-  NC_GET_DOUBLE("lon", met->lon, 1);
-  LOG(2, "Longitudes: %g, %g ... %g deg",
-      met->lon[0], met->lon[1], met->lon[met->nx - 1]);
-  NC_GET_DOUBLE("lat", met->lat, 1);
-  LOG(2, "Latitudes: %g, %g ... %g deg",
-      met->lat[0], met->lat[1], met->lat[met->ny - 1]);
-
-  /* Check grid spacing... */
-  for (int ix = 2; ix < met->nx; ix++)
-    if (fabs
-	(fabs(met->lon[ix] - met->lon[ix - 1]) -
-	 fabs(met->lon[1] - met->lon[0])) > 0.001)
-      ERRMSG("No regular grid spacing in longitudes!");
-  for (int iy = 2; iy < met->ny; iy++)
-    if (fabs
-	(fabs(met->lat[iy] - met->lat[iy - 1]) -
-	 fabs(met->lat[1] - met->lat[0])) > 0.001) {
-      WARN("No regular grid spacing in latitudes!");
-      break;
-    }
-
-  /* Get vertical dimension... */
-  if (nc_inq_varid(ncid, "u", &varid) != NC_NOERR)
-    if (nc_inq_varid(ncid, "U", &varid) != NC_NOERR)
-      ERRMSG
-	("Variable 'u' or 'U' not found, cannot determine vertical dimension!");
-
-  NC(nc_inq_varndims(ncid, varid, &ndims));
-  NC(nc_inq_vardimid(ncid, varid, dimids));
-
-  if (ndims == 4) {
-    NC(nc_inq_dim
-       (ncid, dimids[ctl->met_convention == 0 ? 1 : 3], levname, &dimlen));
-  } else if (ndims == 3) {
-    NC(nc_inq_dim
-       (ncid, dimids[ctl->met_convention == 0 ? 0 : 2], levname, &dimlen));
-  } else
-    ERRMSG("Cannot determine vertical dimension!")
-      met->np = (int) dimlen;
-
-  LOG(2, "Number of levels: %d", met->np);
-  if (met->np < 2 || met->np > EP)
-    ERRMSG("Number of levels out of range!");
-
-  /* Read pressure levels... */
-  if (ctl->met_np <= 0) {
-    NC_GET_DOUBLE(levname, met->p, 1);
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] /= 100.;
-    LOG(2, "Altitude levels: %g, %g ... %g km",
-	Z(met->p[0]), Z(met->p[1]), Z(met->p[met->np - 1]));
-    LOG(2, "Pressure levels: %g, %g ... %g hPa",
-	met->p[0], met->p[1], met->p[met->np - 1]);
-  }
-
-  /* Read hybrid levels... */
-  if (strcasecmp(levname, "hybrid") == 0)
-    NC_GET_DOUBLE("hybrid", met->hybrid, 1);
-}
 
 /*****************************************************************************/
 
@@ -9524,356 +9250,6 @@ void read_met_nc_grid_dd_naive(
     free(help_lat_glob);
 
   }
-
-/*****************************************************************************/
-
-void read_met_nc_levels(
-  const int ncid,
-  const ctl_t *ctl,
-  met_t *met) {
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_LEVELS", "INPUT", NVTX_READ);
-  LOG(2, "Read level data...");
-
-  /* Read temperature... */
-  if (!read_met_nc_3d(ncid, "t", "T", "temp", "TEMP", ctl, met, met->t, 1.0))
-    ERRMSG("Cannot read temperature!");
-
-  /* Read horizontal wind and vertical velocity... */
-  if (!read_met_nc_3d(ncid, "u", "U", NULL, NULL, ctl, met, met->u, 1.0))
-    ERRMSG("Cannot read zonal wind!");
-  if (!read_met_nc_3d(ncid, "v", "V", NULL, NULL, ctl, met, met->v, 1.0))
-    ERRMSG("Cannot read meridional wind!");
-  if (!read_met_nc_3d
-      (ncid, "w", "W", "omega", "OMEGA", ctl, met, met->w, 0.01f))
-    WARN("Cannot read vertical velocity!");
-
-  /* Read water vapor... */
-  if (!ctl->met_relhum) {
-    if (!read_met_nc_3d
-	(ncid, "q", "Q", "sh", "SH", ctl, met, met->h2o, (float) (MA / MH2O)))
-      WARN("Cannot read specific humidity!");
-  } else {
-    if (!read_met_nc_3d
-	(ncid, "rh", "RH", NULL, NULL, ctl, met, met->h2o, 0.01f))
-      WARN("Cannot read relative humidity!");
-#pragma omp parallel for default(shared) collapse(2)
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  double pw = met->h2o[ix][iy][ip] * PSAT(met->t[ix][iy][ip]);
-	  met->h2o[ix][iy][ip] =
-	    (float) (pw / (met->p[ip] - (1.0 - EPS) * pw));
-	}
-  }
-
-  /* Read ozone... */
-  if (!read_met_nc_3d
-      (ncid, "o3", "O3", NULL, NULL, ctl, met, met->o3, (float) (MA / MO3)))
-    WARN("Cannot read ozone data!");
-
-  /* Read cloud data... */
-  if (!read_met_nc_3d
-      (ncid, "clwc", "CLWC", NULL, NULL, ctl, met, met->lwc, 1.0))
-    WARN("Cannot read cloud liquid water content!");
-  if (!read_met_nc_3d
-      (ncid, "crwc", "CRWC", NULL, NULL, ctl, met, met->rwc, 1.0))
-    WARN("Cannot read cloud rain water content!");
-  if (!read_met_nc_3d
-      (ncid, "ciwc", "CIWC", NULL, NULL, ctl, met, met->iwc, 1.0))
-    WARN("Cannot read cloud ice water content!");
-  if (!read_met_nc_3d
-      (ncid, "cswc", "CSWC", NULL, NULL, ctl, met, met->swc, 1.0))
-    WARN("Cannot read cloud snow water content!");
-  if (!read_met_nc_3d(ncid, "cc", "CC", NULL, NULL, ctl, met, met->cc, 1.0))
-    WARN("Cannot read cloud cover!");
-
-  /* Read zeta and zeta_dot... */
-  if (!read_met_nc_3d
-      (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, met->zetal, 1.0))
-    WARN("Cannot read ZETA!");
-  if (!read_met_nc_3d
-      (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
-       NULL, ctl, met, met->zeta_dotl, 0.00001157407f))
-    WARN("Cannot read ZETA_DOT!");
-
-  /* Store velocities on model levels... */
-  if (ctl->met_vert_coord != 0) {
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 0; ip < met->np; ip++) {
-	  met->ul[ix][iy][ip] = met->u[ix][iy][ip];
-	  met->vl[ix][iy][ip] = met->v[ix][iy][ip];
-	  met->wl[ix][iy][ip] = met->w[ix][iy][ip];
-	}
-
-    /* Save number of model levels... */
-    met->npl = met->np;
-  }
-
-  /* Get pressure on model levels... */
-  if (ctl->met_np > 0 || ctl->met_vert_coord != 0) {
-
-    /* Read 3-D pressure field... */
-    if (ctl->met_vert_coord == 1) {
-      if (!read_met_nc_3d
-	  (ncid, "pl", "PL", "pressure", "PRESSURE", ctl, met, met->pl,
-	   0.01f))
-	if (!read_met_nc_3d
-	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, met->pl, 1.0))
-	  ERRMSG("Cannot read pressure on model levels!");
-    }
-
-    /* Use a and b coefficients for full levels... */
-    else if (ctl->met_vert_coord == 2 || ctl->met_vert_coord == 3) {
-
-      /* Grid level coefficients... */
-      double hyam[EP], hybm[EP];
-
-      /* Read coefficients from file... */
-      if (ctl->met_vert_coord == 2) {
-	int varid;
-	if (nc_inq_varid(ncid, "hyam", &varid) == NC_NOERR
-	    && nc_inq_varid(ncid, "hybm", &varid) == NC_NOERR) {
-	  NC_GET_DOUBLE("hyam", hyam, 1);
-	  NC_GET_DOUBLE("hybm", hybm, 1);
-	} else if (nc_inq_varid(ncid, "a_hybrid_level", &varid) == NC_NOERR
-		   && nc_inq_varid(ncid, "b_hybrid_level",
-				   &varid) == NC_NOERR) {
-	  NC_GET_DOUBLE("a_hybrid_level", hyam, 1);
-	  NC_GET_DOUBLE("b_hybrid_level", hybm, 1);
-	} else
-	  ERRMSG("Cannot read a and b level coefficients from netCDF file!");
-      }
-
-      /* Use control parameters... */
-      else if (ctl->met_vert_coord == 3) {
-
-	/* Check number of levels... */
-	if (met->np != ctl->met_nlev)
-	  ERRMSG("Mismatch in number of model levels!");
-
-	/* Copy parameters... */
-	for (int ip = 0; ip < met->np; ip++) {
-	  hyam[ip] = ctl->met_lev_hyam[ip];
-	  hybm[ip] = ctl->met_lev_hybm[ip];
-	}
-      }
-
-      /* Calculate pressure... */
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ip = 0; ip < met->np; ip++)
-	    met->pl[ix][iy][ip] =
-	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
-    }
-
-    /* Use a and b coefficients for half levels... */
-    else if (ctl->met_vert_coord == 4) {
-
-      /* Grid level coefficients... */
-      double hyam[EP], hybm[EP];
-
-      /* Use control parameters... */
-      for (int ip = 0; ip < met->np + 1; ip++) {
-	hyam[ip] = ctl->met_lev_hyam[ip];
-	hybm[ip] = ctl->met_lev_hybm[ip];
-      }
-
-      /* Check number of levels... */
-      if (met->np + 1 != ctl->met_nlev)
-	ERRMSG("Mismatch in number of model levels!");
-
-      /* Calculate pressure... */
-#pragma omp parallel for default(shared) collapse(2)
-      for (int ix = 0; ix < met->nx; ix++)
-	for (int iy = 0; iy < met->ny; iy++)
-	  for (int ip = 0; ip < met->np; ip++) {
-	    double p0 = hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy];
-	    double p1 = hyam[ip + 1] / 100. + hybm[ip + 1] * met->ps[ix][iy];
-	    met->pl[ix][iy][ip] = (float) ((p1 - p0) / log(p1 / p0));
-	  }
-    }
-
-    /* Check ordering of pressure levels... */
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	for (int ip = 1; ip < met->np; ip++)
-	  if ((met->pl[ix][iy][0] > met->pl[ix][iy][1]
-	       && met->pl[ix][iy][ip - 1] <= met->pl[ix][iy][ip])
-	      || (met->pl[ix][iy][0] < met->pl[ix][iy][1]
-		  && met->pl[ix][iy][ip - 1] >= met->pl[ix][iy][ip]))
-	    ERRMSG("Pressure profiles are not monotonic!");
-  }
-
-  /* Interpolate from model levels to pressure levels... */
-  if (ctl->met_np > 0) {
-
-    /* Check pressure on model levels... */
-    if (met->pl[0][0][0] <= 0)
-      ERRMSG("Pressure on model levels is missing, check MET_VERT_COORD!");
-
-    /* Interpolate variables... */
-    read_met_ml2pl(ctl, met, met->t, "T");
-    read_met_ml2pl(ctl, met, met->u, "U");
-    read_met_ml2pl(ctl, met, met->v, "V");
-    read_met_ml2pl(ctl, met, met->w, "W");
-    read_met_ml2pl(ctl, met, met->h2o, "H2O");
-    read_met_ml2pl(ctl, met, met->o3, "O3");
-    read_met_ml2pl(ctl, met, met->lwc, "LWC");
-    read_met_ml2pl(ctl, met, met->rwc, "RWC");
-    read_met_ml2pl(ctl, met, met->iwc, "IWC");
-    read_met_ml2pl(ctl, met, met->swc, "SWC");
-    read_met_ml2pl(ctl, met, met->cc, "CC");
-
-    /* Set new pressure levels... */
-    met->np = ctl->met_np;
-    for (int ip = 0; ip < met->np; ip++)
-      met->p[ip] = ctl->met_p[ip];
-  }
-
-  /* Check ordering of pressure levels... */
-  for (int ip = 1; ip < met->np; ip++)
-    if (met->p[ip - 1] < met->p[ip])
-      ERRMSG("Pressure levels must be descending!");
-}
-
-/*****************************************************************************/
-
-void read_met_nc_surface(
-  const int ncid,
-  const ctl_t *ctl,
-  met_t *met) {
-
-  /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_SURFACE", "INPUT", NVTX_READ);
-  LOG(2, "Read surface data...");
-
-  /* Read surface pressure... */
-  if (read_met_nc_2d
-      (ncid, "lnsp", "LNSP", NULL, NULL, NULL, NULL, ctl, met, met->ps,
-       1.0f, 1)) {
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy] = (float) (exp(met->ps[ix][iy]) / 100.);
-  } else
-    if (!read_met_nc_2d
-	(ncid, "ps", "PS", "sp", "SP", NULL, NULL, ctl, met, met->ps, 0.01f,
-	 1)) {
-    WARN("Cannot not read surface pressure data (use lowest level)!");
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	met->ps[ix][iy]
-	  = (ctl->met_np > 0 ? (float) ctl->met_p[0] : (float) met->p[0]);
-  }
-
-  /* MPTRAC meteo data... */
-  if (ctl->met_clams == 0) {
-
-    /* Read geopotential height at the surface... */
-    if (!read_met_nc_2d
-	(ncid, "z", "Z", NULL, NULL, NULL, NULL, ctl, met, met->zs,
-	 (float) (1. / (1000. * G0)), 1))
-      if (!read_met_nc_2d
-	  (ncid, "zm", "ZM", NULL, NULL, NULL, NULL, ctl, met, met->zs,
-	   (float) (1. / 1000.), 1))
-	WARN("Cannot read surface geopotential height!");
-  }
-
-  /* CLaMS meteo data... */
-  else {
-
-    /* Read geopotential height at the surface
-       (use lowermost level of 3-D data field)... */
-    float *help;
-    ALLOC(help, float,
-	  EX * EY * EP);
-    memcpy(help, met->pl, sizeof(met->pl));
-    if (!read_met_nc_3d
-	(ncid, "gph", "GPH", NULL, NULL, ctl, met, met->pl,
-	 (float) (1e-3 / G0)))
-      ERRMSG("Cannot read geopotential height!");
-    for (int ix = 0; ix < met->nx; ix++)
-      for (int iy = 0; iy < met->ny; iy++)
-	met->zs[ix][iy] = met->pl[ix][iy][0];
-    memcpy(met->pl, help, sizeof(met->pl));
-    free(help);
-  }
-
-  /* Read temperature at the surface... */
-  if (!read_met_nc_2d
-      (ncid, "t2m", "T2M", "2t", "2T", "t2", "T2", ctl, met, met->ts, 1.0, 1))
-    WARN("Cannot read surface temperature!");
-
-  /* Read zonal wind at the surface... */
-  if (!read_met_nc_2d
-      (ncid, "u10m", "U10M", "10u", "10U", "u10", "U10", ctl, met, met->us,
-       1.0, 1))
-    WARN("Cannot read surface zonal wind!");
-
-  /* Read meridional wind at the surface... */
-  if (!read_met_nc_2d
-      (ncid, "v10m", "V10M", "10v", "10V", "v10", "V10", ctl, met, met->vs,
-       1.0, 1))
-    WARN("Cannot read surface meridional wind!");
-
-  /* Read eastward turbulent surface stress... */
-  if (!read_met_nc_2d
-      (ncid, "iews", "IEWS", NULL, NULL, NULL, NULL, ctl, met, met->ess,
-       1.0, 1))
-    WARN("Cannot read eastward turbulent surface stress!");
-
-  /* Read northward turbulent surface stress... */
-  if (!read_met_nc_2d
-      (ncid, "inss", "INSS", NULL, NULL, NULL, NULL, ctl, met, met->nss,
-       1.0, 1))
-    WARN("Cannot read nothward turbulent surface stress!");
-
-  /* Read surface sensible heat flux... */
-  if (!read_met_nc_2d
-      (ncid, "ishf", "ISHF", NULL, NULL, NULL, NULL, ctl, met, met->shf,
-       1.0, 1))
-    WARN("Cannot read surface sensible heat flux!");
-
-  /* Read land-sea mask... */
-  if (!read_met_nc_2d
-      (ncid, "lsm", "LSM", NULL, NULL, NULL, NULL, ctl, met, met->lsm, 1.0,
-       1))
-    WARN("Cannot read land-sea mask!");
-
-  /* Read sea surface temperature... */
-  if (!read_met_nc_2d
-      (ncid, "sstk", "SSTK", "sst", "SST", NULL, NULL, ctl, met, met->sst,
-       1.0, 1))
-    WARN("Cannot read sea surface temperature!");
-
-  /* Read PBL... */
-  if (ctl->met_pbl == 0)
-    if (!read_met_nc_2d
-	(ncid, "blp", "BLP", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
-	 0.01f, 1))
-      WARN("Cannot read planetary boundary layer pressure!");
-  if (ctl->met_pbl == 1)
-    if (!read_met_nc_2d
-	(ncid, "blh", "BLH", NULL, NULL, NULL, NULL, ctl, met, met->pbl,
-	 0.001f, 1))
-      WARN("Cannot read planetary boundary layer height!");
-
-  /* Read CAPE... */
-  if (ctl->met_cape == 0)
-    if (!read_met_nc_2d
-	(ncid, "cape", "CAPE", NULL, NULL, NULL, NULL, ctl, met, met->cape,
-	 1.0, 1))
-      WARN("Cannot read CAPE!");
-
-  /* Read CIN... */
-  if (ctl->met_cape == 0)
-    if (!read_met_nc_2d
-	(ncid, "cin", "CIN", NULL, NULL, NULL, NULL, ctl, met, met->cin,
-	 1.0, 1))
-      WARN("Cannot read convective inhibition!");
-}
 
 /*****************************************************************************/
 
