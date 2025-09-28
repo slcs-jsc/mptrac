@@ -5564,7 +5564,7 @@ void mptrac_read_ctl(
   ctl->vtk_sphere =
     (int) scan_ctl(filename, argc, argv, "VTK_SPHERE", -1, "0", NULL);
 
-  /* Controle of domain decomposition... */
+  /* Domain decomposition... */
   ctl->dd = (int) scan_ctl(filename, argc, argv, "DD", -1, "0", NULL);
   ctl->dd_subdomains_meridional =
     (int) scan_ctl(filename, argc, argv, "DD_SUBDOMAINS_MERIDIONAL", -1,
@@ -8013,6 +8013,7 @@ int read_met_nc_2d(
 
 
   }
+  
   /* Unpacked data... */
   else if (!ctl->dd) {
 
@@ -9010,6 +9011,7 @@ int read_met_nc(
 
   int ncid;
 
+  /* Open file... */
 #ifdef DD
   if (ctl->dd) {
     NC(nc_open_par
@@ -9082,7 +9084,6 @@ void read_met_nc_grid_dd_naive(
   NC_GET_DOUBLE("lat", help_lat_glob, 1);
   LOG(2, "Latitudes: %g, %g ... %g deg",
       help_lat_glob[0], help_lat_glob[1], help_lat_glob[help_ny_glob - 1]);
-
 
   /* Determine hyperslabs for reading the data in parallel... */
 
@@ -9192,7 +9193,6 @@ void read_met_nc_grid_dd_naive(
     dd->halo_bnd_count[1] = 0;
     dd->halo_bnd_count[3] = 0;
     dd->halo_bnd_count[2] = 0;
-
   }
 
   /* Get the range of the entire meteodata... */
@@ -9211,22 +9211,19 @@ void read_met_nc_grid_dd_naive(
   double lat_range = help_lat_glob[help_ny_glob - 1] - help_lat_glob[0];
 
   /* Focus on subdomain latitudes and longitudes... */
-  for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++) {
+  for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++)
     met->lat[iy] = help_lat_glob[(int) dd->subdomain_start[2] + iy];
-  }
-
+  
   /* Focus on subdomain longitudes... */
   /* Keep space at the beginning or end of the array for halo... */
-  for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
+  for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++)
     met->lon[ix + dd->halo_offset_start] =
       help_lon_glob[(int) dd->subdomain_start[3] + ix];
-  }
 
-  for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
+  for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++)
     met->lon[ix + dd->halo_offset_end] =
       help_lon_glob[(int) dd->halo_bnd_start[3] + ix] + lon_shift;
-  }
-
+  
   /* Reset the grid dimensions... */
   met->nx = (int) dd->subdomain_count[3] + (int) dd->halo_bnd_count[3];
   met->ny = (int) dd->subdomain_count[2];
@@ -9283,7 +9280,6 @@ void read_met_nc_grid_dd_naive(
 
   free(help_lon_glob);
   free(help_lat_glob);
-
 }
 
 /*****************************************************************************/

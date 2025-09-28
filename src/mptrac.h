@@ -136,6 +136,7 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdbool.h>
 
 #ifdef MPI
 #include "mpi.h"
@@ -144,8 +145,6 @@
 #ifdef DD
 #include <netcdf_par.h>
 #endif
-#include <stdbool.h>
-
 
 #ifdef _OPENACC
 #include "openacc.h"
@@ -269,13 +268,12 @@
 #define T0 273.15
 #endif
 
-/*! Constants indicating the North pole [-]. */
+/*! Constant indicating the North pole [-]. */
 #ifndef DD_NPOLE
 #define DD_NPOLE -2
 #endif
 
-
-/*! Constants indicating the South pole [-]. */
+/*! Constant indicating the South pole [-]. */
 #ifndef DD_SPOLE
 #define DD_SPOLE -3
 #endif
@@ -369,12 +367,12 @@
 #define CTS 1000
 #endif
 
-/*! Maximum number of particles to send and recieve. */
+/*! Maximum number of particles to send and recieve in domain decomposition. */
 #ifndef DD_NPART
 #define DD_NPART 100000
 #endif
 
-/*! Maximum number of neighbours to communicate with. */
+/*! Maximum number of neighbours to communicate with in domain decomposition. */
 #ifndef DD_NNMAX
 #define DD_NNMAX  26
 #endif
@@ -3228,19 +3226,23 @@ typedef struct {
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
 
+  /* ------------------------------------------------------------
+     Domain decomposition...
+     ------------------------------------------------------------ */
+  
   /*! Domain decomposition (0=no, 1=yes, with 2x2 if not specified). */
   int dd;
-
-  /*! Zonal subdomain number. */
+  
+  /*! Domain decomposition zonal subdomain number. */
   int dd_subdomains_zonal;
 
-  /*! Meridional subdomain number. */
+  /*! Domain decomposition meridional subdomain number. */
   int dd_subdomains_meridional;
 
-  /*! Number of neighbours to communicate with. */
+  /*! Domain decomposition number of neighbours to communicate with. */
   int dd_nbr_neighbours;
 
-  /*! Size of halos given in grid-points. */
+  /*! Domain decomposition size of halos given in grid-points. */
   int dd_halos_size;
 
 } ctl_t;
@@ -3667,7 +3669,6 @@ typedef struct {
 
 } met_t;
 
-
 /*!
  * @brief Domain decomposition data structure.
  *
@@ -3678,6 +3679,7 @@ typedef struct {
   /* ------------------------------------------------------------
      MPI Information
      ------------------------------------------------------------ */
+
   /*! Rank of node. */
   int rank;
 
@@ -3691,8 +3693,7 @@ typedef struct {
   /*! MPI type for the particle. */
   MPI_Datatype MPI_Particle;
 #endif
-
-
+  
   /* ------------------------------------------------------------
      Properties of subdomains
      ------------------------------------------------------------ */
@@ -3715,36 +3716,40 @@ typedef struct {
   /*! Hyperslab start and count for subdomain. */
   size_t subdomain_count[4];
 
-  /* Hyperslab of boundary halos start. */
+  /*! Hyperslab of boundary halos start. */
   size_t halo_bnd_start[4];
 
-  /* Hyperslab of boundary halos count. */
+  /*! Hyperslab of boundary halos count. */
   size_t halo_bnd_count[4];
 
-  /* Hyperslab of boundary halos count. */
+  /*! Hyperslab of boundary halos count. */
   int halo_offset_start;
 
-  /* Hyperslab of boundary halos count. */
+  /*! Hyperslab of boundary halos count. */
   int halo_offset_end;
 
   /* ------------------------------------------------------------
      Caches
      ------------------------------------------------------------ */
 
-  /* Shows if domain decomposition was initialized. */
+  /*! Shows if domain decomposition was initialized. */
   int init;
 
 #ifdef DD
 
-  /* Sorting ... */
+  /*! Auxiliary array for sorting. */
   double a[NP];
-  int p[NP];
-  double help[NP];
 
+  /*! Auxiliary array for sorting. */
+  int p[NP];
+
+  /*! Auxiliary array for sorting. */
+  double help[NP];
+  
   /* Subdomains ... */
   // -1 = inactive; 1,2,3, ... = ranks; -2, -3 = Poles
   //int destination[NP];
-
+  
 #endif
 
 } dd_t;
@@ -5937,14 +5942,6 @@ void module_sort_help(
   const int *p,
   const int np);
 
-
-#ifdef DD
-void dd_sort_help(
-  double *a,
-  dd_t * dd,
-  const int np);
-#endif
-
 /**
  * @brief Calculate time steps for air parcels based on specified conditions.
  *
@@ -6395,7 +6392,6 @@ void mptrac_run_timestep(
   atm_t * atm,
   double t,
   dd_t * dd);
-
 
 /**
  * @brief Writes air parcel data to a file in various formats.
@@ -9112,7 +9108,6 @@ void dd_get_rect_neighbour(
   const ctl_t ctl,
   dd_t * dd);
 
-
 /**
  * @brief Communicates particles between MPI processes.
  *
@@ -9306,5 +9301,11 @@ void dd_sort(
   int *nparticles,
   int *rank);
 
+#ifdef DD
+void dd_sort_help(
+  double *a,
+  dd_t * dd,
+  const int np);
+#endif
 
 #endif /* LIBTRAC_H */
