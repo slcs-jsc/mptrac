@@ -6414,7 +6414,6 @@ void mptrac_read_ctl(
 		     NULL);
   ctl->dd_halos_size =
     (int) scan_ctl(filename, argc, argv, "DD_HALOS_SIZE", -1, "1", NULL);
-
 }
 
 /*****************************************************************************/

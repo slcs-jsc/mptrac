@@ -140,6 +140,8 @@
 
 #ifdef MPI
 #include "mpi.h"
+#else
+#define MPI_Datatype void*
 #endif
 
 #ifdef DD
@@ -182,6 +184,8 @@
 
 #ifdef ECCODES
 #include "eccodes.h"
+#else
+#define codes_handle void*
 #endif
 
 /* ------------------------------------------------------------
@@ -4399,7 +4403,6 @@ int dd_calc_subdomain_from_coords(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void dd_communicate_particles(
   particle_t * particles,
   int *nparticles,
@@ -4407,7 +4410,6 @@ void dd_communicate_particles(
   int *neighbours,
   int nneighbours,
   ctl_t ctl);
-#endif
 
 /**
  * @brief Determines rectangular neighbouring ranks for MPI processes.
@@ -4545,10 +4547,8 @@ void dd_particles2atm(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void dd_register_MPI_type_particle(
   MPI_Datatype * MPI_Particle);
-#endif
 
 /**
  * @brief Sort particles according to box index and target rank for neighbours.
@@ -4591,7 +4591,6 @@ void dd_sort(
   int *nparticles,
   int *rank);
 
-#ifdef DD
 /**
  * @brief Reorder an array according to a permutation vector.
  *
@@ -4623,7 +4622,6 @@ void dd_sort_help(
   double *a,
   dd_t * dd,
   const int np);
-#endif
 
 /**
  * @brief Converts a given day of the year (DOY) to a date (month and day).
@@ -5707,14 +5705,12 @@ void module_convection(
  *
  * @author Jan Clemens
  */
-#ifdef DD
 void module_dd(
   ctl_t * ctl,
   atm_t * atm,
   cache_t * cache,
   dd_t * dd,
   met_t ** met);
-#endif
 
 /**
  * @brief Simulate exponential decay processes for atmospheric particles.
@@ -7633,12 +7629,10 @@ int read_met_grib(
  *
  * @author Nils Nobre Wittwer
  */
-#ifdef ECCODES
 void read_met_grib_grid(
   codes_handle ** handles,
   int count_handles,
   met_t * met);
-#endif
 
 /**
  * @brief Reads meteorological variables at different vertical levels from a grib file.
@@ -7659,13 +7653,11 @@ void read_met_grib_grid(
  *
  * @author Nils Nobre Wittwer
  */
-#ifdef ECCODES
 void read_met_grib_levels(
   codes_handle ** handles,
   const int num_messages,
   const ctl_t * ctl,
   met_t * met);
-#endif
 
 /**
  * @brief Reads surface meteorological data from a grib file and stores it in the meteorological data structure.
@@ -7696,13 +7688,11 @@ void read_met_grib_levels(
  *
  * @author Nils Nobre Wittwer
  */
-#ifdef ECCODES
 void read_met_grib_surface(
   codes_handle ** handles,
   const int num_messages,
   const ctl_t * ctl,
   met_t * met);
-#endif
 
 /**
  * @brief Interpolates meteorological data to specified pressure levels.
