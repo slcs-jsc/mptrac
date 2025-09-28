@@ -3227,7 +3227,7 @@ typedef struct {
 
   /*! Spherical projection for VTK data (0=no, 1=yes). */
   int vtk_sphere;
-  
+
   /*! Domain decomposition (0=no, 1=yes, with 2x2 if not specified). */
   int dd;
 
@@ -3674,7 +3674,7 @@ typedef struct {
  * This structure holds information about the domain decomposition and MPI.
  */
 typedef struct {
-  
+
   /* ------------------------------------------------------------
      MPI Information
      ------------------------------------------------------------ */
@@ -3683,16 +3683,16 @@ typedef struct {
 
   /*! Size of node. */
   int size;
-  
+
   /*! Rank of neighbouring nodes. */
   int neighbours[DD_NNMAX];
 
 #ifdef DD
   /*! MPI type for the particle. */
   MPI_Datatype MPI_Particle;
-#endif 
-  
-       
+#endif
+
+
   /* ------------------------------------------------------------
      Properties of subdomains
      ------------------------------------------------------------ */
@@ -3725,27 +3725,27 @@ typedef struct {
   int halo_offset_start;
 
   /* Hyperslab of boundary halos count. */
-  int halo_offset_end;  
-  
+  int halo_offset_end;
+
   /* ------------------------------------------------------------
      Caches
-     ------------------------------------------------------------ */   
-     
+     ------------------------------------------------------------ */
+
   /* Shows if domain decomposition was initialized. */
   int init;
-  
+
 #ifdef DD
 
-  /* Sorting ... */ 
+  /* Sorting ... */
   double a[NP];
   int p[NP];
   double help[NP];
-  
-  /* Subdomains ... */ 
+
+  /* Subdomains ... */
   // -1 = inactive; 1,2,3, ... = ranks; -2, -3 = Poles
   //int destination[NP];
-  
-#endif 
+
+#endif
 
 } dd_t;
 
@@ -5936,12 +5936,12 @@ void module_sort_help(
   double *a,
   const int *p,
   const int np);
- 
- 
+
+
 #ifdef DD
 void dd_sort_help(
   double *a,
-  dd_t *dd,
+  dd_t * dd,
   const int np);
 #endif
 
@@ -7437,11 +7437,11 @@ void read_met_nc_grid(
   const ctl_t * ctl,
   met_t * met,
   dd_t * dd);
-  
+
 void read_met_nc_grid_dd_naive(
-  dd_t* dd,
-  const ctl_t *ctl,
-  met_t *met,
+  dd_t * dd,
+  const ctl_t * ctl,
+  met_t * met,
   const int ncid);
 
 /**

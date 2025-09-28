@@ -50,7 +50,7 @@ int main(
   clim_t *clim;
 
   met_t *met;
-  
+
   dd_t *dd;
 
   FILE *out;
@@ -92,7 +92,7 @@ int main(
   for (int i = 3; i < argc; i++) {
 
     /* Read meteorological data... */
-    if (!mptrac_read_met(argv[i], &ctl, clim, met,dd))
+    if (!mptrac_read_met(argv[i], &ctl, clim, met, dd))
       continue;
 
     /* Get altitude and pressure profiles... */

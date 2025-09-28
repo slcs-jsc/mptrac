@@ -123,9 +123,9 @@ int main(
 
 #ifdef DD
       /* Set-up domain decomposition... */
-      if ((t == ctl->t_start || !dd->init ) && (ctl->dd == 1))
+      if ((t == ctl->t_start || !dd->init) && (ctl->dd == 1))
 	dd->init = dd_init(ctl, dd, atm);
-#endif 
+#endif
 
 
       /* Run a single time step... */

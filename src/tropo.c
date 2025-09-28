@@ -33,7 +33,7 @@ int main(
   clim_t *clim;
 
   met_t *met;
-  
+
   dd_t *dd;
 
   static double ps[EX * EY], pt[EX * EY], qt[EX * EY], o3t[EX * EY],

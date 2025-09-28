@@ -37,7 +37,7 @@ int main(
   clim_t *clim;
 
   met_t *met0, *met1;
-  
+
   dd_t *dd;
 
   FILE *out;

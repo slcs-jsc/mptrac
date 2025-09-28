@@ -120,7 +120,8 @@ int main(
   for (int ix = 0; ix < nx; ix++)
     dataLon[ix] = 360.0 / nx * (double) ix;
   for (int iy = 0; iy < ny; iy++)
-    dataLat[iy] = (lat_reverse ? - (180.0 / (ny - 1) * (double) iy - 90) : (180.0 / (ny - 1) * (double) iy - 90));
+    dataLat[iy] = (lat_reverse ? -(180.0 / (ny - 1) * (double) iy - 90)
+		   : (180.0 / (ny - 1) * (double) iy - 90));
   for (int iz = 0; iz < nz; iz++)
     dataZ[iz] = 100. * P(LIN(0.0, z0, nz - 1.0, z1, iz));
 
