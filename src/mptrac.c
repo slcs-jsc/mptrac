@@ -1351,8 +1351,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1480,7 +1481,7 @@ void dd_communicate_particles(
     MPI_Irecv(&nbr[isourc], 1, MPI_INT, neighbours[isourc], 0, MPI_COMM_WORLD,
 	      &requests_rcv_nbr[isourc]);
   }
-  
+
   /* Wait for all particle numbers to be recieved... */
   MPI_Waitall(nneighbours, requests_rcv_nbr, states);
 
@@ -1594,14 +1595,14 @@ int dd_is_periodic_longitude(
   /* Check if we have at least 2 longitude points... */
   if (nx_glob < 2)
     return 0;
-  
+
   /* Calculate the longitude spacing */
   double lon_spacing = met->lon[1] - met->lon[0];
-  
+
   /* Check if the total range plus one spacing equals 360 degrees
      This is the same logic as used in read_met_periodic() */
   double total_range = met->lon[nx_glob - 1] - met->lon[0] + lon_spacing;
-  
+
   /* Return 1 if periodic (global), 0 if not periodic (regional) */
   return (fabs(total_range - 360.0) < 0.01);
 }
@@ -3509,7 +3510,7 @@ void module_convection(
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
-    /* Interpolate CAPE... */
+    /* Interpolate surface pressure... */
     double ps;
     INTPOL_INIT;
     INTPOL_2D(ps, 1);
@@ -3806,7 +3807,7 @@ void module_diff_pbl(
 					  pow(MAX(zratio, 1e-3), -1.0 / 3.0)
 					  - 1.8 * pow(zratio, 2.0 / 3.0)));
 
-	/* Calcalute Lagrangian timescales... */
+	/* Calculate Lagrangian timescales... */
 	const double C0 = 3.0;	// TODO: typically 3...6, NAME model uses 3?
 	const double eps =
 	  (1.5 - 1.2 * pow(zratio, 1.0 / 3.0)) * SQR(wstar) * wstar / zi
@@ -8258,6 +8259,7 @@ void read_met_geopot(
 }
 
 /*****************************************************************************/
+
 void read_met_nc_grid(
   const char *filename,
   const int ncid,
@@ -8278,10 +8280,8 @@ void read_met_nc_grid(
   SELECT_TIMER("READ_MET_NC_GRID", "INPUT", NVTX_READ);
   LOG(2, "Read meteo grid information...");
 
-
+  /* MPTRAC meteo files... */
   if (!ctl->met_clams) {
-
-    /* MPTRAC meteo files... */
 
     /* Get time from filename... */
     met->time = time_from_filename(filename, 16);
@@ -8294,9 +8294,10 @@ void read_met_nc_grid(
 	WARN("Time information in meteo file does not match filename!");
     } else
       WARN("Time information in meteo file is missing!");
-  } else {
+  }
 
-    /* CLaMS meteo files... */
+  /* CLaMS meteo files... */
+  else {
 
     /* Read time from file... */
     NC_GET_DOUBLE("time", &rtime, 0);
@@ -8402,6 +8403,7 @@ void read_met_nc_grid(
 }
 
 /*****************************************************************************/
+
 void read_met_nc_surface(
   const int ncid,
   const ctl_t *ctl,
@@ -8842,8 +8844,6 @@ int read_met_nc_2d(
 
     /* Free... */
     free(help);
-
-
   }
 
   /* Unpacked data... */
@@ -9274,7 +9274,6 @@ int read_met_nc_3d(
     /* Free... */
     free(help);
     free(help_halo);
-
   }
 
   /* Return... */
@@ -9872,7 +9871,6 @@ int read_met_nc(
   /* Return success... */
   return 1;
 }
-
 
 /*****************************************************************************/
 
