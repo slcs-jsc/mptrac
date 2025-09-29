@@ -47,7 +47,8 @@
   This Doxygen manual provides comprehensive documentation of the
   algorithms, data structures, and functions used in the MPTRAC
   codebase. For an overview of the core components, please refer to
-  the documentation of `mptrac.h`.
+  the documentation of `mptrac.h`. For the full list of control
+  parameters, see `ctl_t`.
 
   \section References
 
@@ -141,6 +142,7 @@
 #ifdef MPI
 #include "mpi.h"
 #else
+/*! Placeholder when MPI is not available. */
 #define MPI_Datatype void*
 #endif
 
@@ -185,6 +187,7 @@
 #ifdef ECCODES
 #include "eccodes.h"
 #else
+/*! Placeholder when ECCODES is not available. */
 #define codes_handle void*
 #endif
 
