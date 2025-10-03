@@ -1087,10 +1087,10 @@ void dd_assign_rect_subdomains_atm(
       if (lont < 0)
 	lont += 360;
 
-      bool left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
-      bool right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
+      int left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
+      int right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
 
-      bool bound = 0;
+      int bound = 0;
       if (left)
 	bound = (lont - lon_max > 90) ? 1 : 0;
       if (right)
@@ -9918,10 +9918,10 @@ void read_met_nc_grid_dd_naive(
   /* Determine hyperslabs for reading the data in parallel... */
 
   /* Check for edge cases... */
-  bool left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
-  bool right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
-  bool top = (dd->rank % ctl->dd_subdomains_meridional == 0);
-  bool bottom =
+  int left = (dd->rank <= ctl->dd_subdomains_meridional - 1);
+  int right = (dd->rank >= dd->size - ctl->dd_subdomains_meridional);
+  int top = (dd->rank % ctl->dd_subdomains_meridional == 0);
+  int bottom =
     (dd->rank % ctl->dd_subdomains_meridional ==
      ctl->dd_subdomains_meridional - 1);
 

@@ -137,7 +137,6 @@
 #include <string.h>
 #include <time.h>
 #include <sys/time.h>
-#include <stdbool.h>
 
 #ifdef MPI
 #include "mpi.h"
