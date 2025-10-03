@@ -1,0 +1,5 @@
+<map id="read_met_nc_surface" name="read_met_nc_surface">
+<area shape="rect" id="node1" title="Reads and processes surface meteorological data from NetCDF files with domain decomposition." alt="" coords="5,31,152,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a0ab3c3e5e9881f1b688e6840723356ed" title="Reads a 2&#45;dimensional meteorological variable from a NetCDF file." alt="" coords="200,5,319,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a1ff6a4eae1eba129266c5485c77aa6a3" title="Reads a 3&#45;dimensional meteorological variable from a NetCDF file." alt="" coords="200,56,319,83"/>
+</map>

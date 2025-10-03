@@ -1,0 +1,5 @@
+<map id="mptrac_read_ctl" name="mptrac_read_ctl">
+<area shape="rect" id="node1" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="5,31,120,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="168,5,283,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a" title="Scans a control file or command&#45;line arguments for a specified variable." alt="" coords="190,56,261,83"/>
+</map>
