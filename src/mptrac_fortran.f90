@@ -1,5 +1,5 @@
 ! This file is part of MPTRAC.
-! 
+!     
 ! MPTRAC is free software: you can redistribute it and/or modify it
 ! under the terms of the GNU General Public License as published by
 ! the Free Software Foundation, either version 3 of the License, or
@@ -24,10 +24,31 @@ MODULE mptrac_struct
   USE iso_c_binding
   IMPLICIT NONE
 
-  !! Values must be identical to equivalent variables in mptrac.h!
-  !! The values for ex, ey, ep are suited for ERA5 data. However, they
-  !! exceed some size limit of NVHPC (2GB???), where the compiler fails
-  !! to build the fortran wrapper. GCC and ICX work fine.
+  ! Notes:
+  !
+  ! - See the mptrac.h header file for documentation of data structures
+  !   and functions.
+  !
+  ! - All values and dimensions must exactly match the corresponding
+  !   definitions in mptrac.h.
+  !
+  ! - The values of ex, ey, and ep are chosen for ERA5 data. However,
+  !   they can exceed the NVHPC compiler's memory limits (≈2 GB),
+  !   causing the Fortran wrapper build to fail. GCC and ICX compile
+  !   successfully and can be used instead.
+  !
+  ! - The order of variables within each derived type must strictly
+  !   follow the order defined in the C structs. Any mismatch will
+  !   break interoperability and may cause memory segmentation faults.
+  !
+  ! - Remember that C uses row-major ordering and Fortran uses
+  !   column-major ordering. For example:
+  !
+  !       C: float t[EX][EY][EP]
+  !   maps to
+  !       Fortran: real(c_float), dimension(ep,ey,ex) :: t
+  
+  ! Dimensions...
   INTEGER, PARAMETER :: ex = 1444
   INTEGER, PARAMETER :: ey = 724
   INTEGER, PARAMETER :: ep = 140
@@ -42,7 +63,7 @@ MODULE mptrac_struct
   INTEGER, PARAMETER :: ct = 12
   INTEGER, PARAMETER :: cts = 1000
   
-  !! The order of the variables in each struct matters!
+  ! Air parcel data...
   TYPE, bind(c) :: atm_t
      INTEGER(c_int) :: np
      REAL(c_double), DIMENSION(npp) :: time
@@ -51,8 +72,8 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(npp) :: lat
      REAL(c_double), DIMENSION(npp,nqq) :: q
   END TYPE atm_t
-
-  !! The order of the variables in each struct matters!
+  
+  ! Cache data...
   TYPE, bind(c) :: cache_t
      REAL(c_double), DIMENSION(npp) :: iso_var
      REAL(c_double), DIMENSION(npp) :: iso_ps
@@ -62,8 +83,8 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(3 * npp + 1) :: rs
      REAL(c_double), DIMENSION(npp) :: dt
   END TYPE cache_t
-
-  !! in 3D arrays first and third index swapped
+  
+  ! Photolysis rates..
   TYPE, bind(c) :: clim_photo_t
      INTEGER(c_int) :: np
      INTEGER(c_int) :: nsza
@@ -82,12 +103,14 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(co3,csza,cp) :: h2o
   END TYPE clim_photo_t
 
+  ! Time series data...
   TYPE, bind(c) :: clim_ts_t
      INTEGER(c_int) :: ntime
      REAL(c_double), DIMENSION(cts) :: time
      REAL(c_double), DIMENSION(cts) :: vmr
   END TYPE clim_ts_t
 
+  ! Zonal mean data...
   TYPE, bind(c) :: clim_zm_t
      INTEGER(c_int) :: ntime
      INTEGER(c_int) :: nlat
@@ -98,6 +121,7 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(cyy,cp,ct) :: vmr
   END TYPE clim_zm_t
 
+  ! Climatological data...
   TYPE, bind(c) :: clim_t
      INTEGER(c_int) :: tropo_ntime
      INTEGER(c_int) :: tropo_nlat
@@ -116,7 +140,8 @@ MODULE mptrac_struct
      TYPE(clim_ts_t) :: n2o
      TYPE(clim_ts_t) :: sf6
   END TYPE clim_t
-  
+
+  ! Control parameters...
   TYPE, bind(c) :: ctl_t
      INTEGER(c_int) :: nq
      CHARACTER(c_char), DIMENSION(length,nqq) :: qnt_name
@@ -446,7 +471,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: dd_nbr_neighbours
      INTEGER(c_int) :: dd_halos_size
   END TYPE ctl_t
-  
+
+  ! Meteorological data...
   TYPE, bind(c) :: met_t
      REAL(c_double) :: time
      INTEGER(c_int) :: nx
@@ -501,7 +527,8 @@ MODULE mptrac_struct
      REAL(c_float), DIMENSION(ep,ey,ex) :: zetal
      REAL(c_float), DIMENSION(ep,ey,ex) :: zeta_dotl
   END TYPE met_t
-  
+
+  ! Domain decomposition data...
   TYPE, bind(c) :: dd_t
      INTEGER(c_int) :: rank
      INTEGER(c_int) :: size
@@ -514,9 +541,10 @@ MODULE mptrac_struct
      INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_start
      INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_count
      INTEGER(c_int) :: halo_offset_start
-     INTEGER(c_int) :: halo_offset_end  
+     INTEGER(c_int) :: halo_offset_end
+     INTEGER(c_int) :: init
   END TYPE dd_t
-      
+
 END MODULE mptrac_struct
 
 ! ------------------------------------------------------------
@@ -525,42 +553,49 @@ END MODULE mptrac_struct
 
 MODULE mptrac_func
   INTERFACE
-
-     SUBROUTINE mptrac_alloc(ctl, cache, clim, met0, met1, atm) &
+     
+     ! Allocate data structures...
+     SUBROUTINE mptrac_alloc(ctl, cache, clim, met0, met1, atm, dd) &
           bind(c,name='mptrac_alloc')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), POINTER :: ctl
        TYPE(cache_t), INTENT(inout), POINTER :: cache
        TYPE(clim_t), INTENT(inout), POINTER :: clim
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
        TYPE(atm_t), INTENT(inout), POINTER :: atm
+       TYPE(dd_t), INTENT(inout), POINTER :: dd
      END SUBROUTINE mptrac_alloc
 
-     SUBROUTINE mptrac_free(ctl, cache, clim, met0, met1, atm) &
+     ! Free data structures...
+     SUBROUTINE mptrac_free(ctl, cache, clim, met0, met1, atm, dd) &
           bind(c,name='mptrac_free')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), TARGET :: ctl
        TYPE(cache_t), INTENT(inout), TARGET :: cache
        TYPE(clim_t), INTENT(inout), TARGET :: clim
        TYPE(met_t), INTENT(inout), TARGET :: met0, met1
        TYPE(atm_t), INTENT(inout), TARGET :: atm
+       TYPE(dd_t), INTENT(inout), TARGET :: dd
      END SUBROUTINE mptrac_free
-     
-     SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1) &
+
+     ! Get meteorological data...
+     SUBROUTINE mptrac_get_met(ctl, clim, t, met0, met1, dd) &
           bind(c,name='mptrac_get_met')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, clim_t, met_t
+       USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(clim_t), INTENT(in), TARGET :: clim
        REAL(c_double), INTENT(in), VALUE :: t
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
+       TYPE(dd_t), INTENT(inout), TARGET :: dd
      END SUBROUTINE mptrac_get_met
 
+     ! Initialize model run...
      SUBROUTINE mptrac_init(ctl, cache, clim, atm, ntask) &
           bind(c,name='mptrac_init')
        USE iso_c_binding
@@ -572,7 +607,8 @@ MODULE mptrac_func
        TYPE(atm_t), INTENT(inout), TARGET :: atm
        INTEGER(c_int), INTENT(in), VALUE :: ntask
      END SUBROUTINE mptrac_init
-     
+
+     ! Read air parcel data...
      SUBROUTINE mptrac_read_atm(filename, ctl, atm) &
           bind(c,name='mptrac_read_atm')
        USE iso_c_binding
@@ -583,6 +619,7 @@ MODULE mptrac_func
        TYPE(atm_t), INTENT(out), TARGET :: atm
      END SUBROUTINE mptrac_read_atm
 
+     ! Read climatological data...
      SUBROUTINE mptrac_read_clim(ctl, clim) &
           bind(c,name='mptrac_read_clim')
        USE iso_c_binding
@@ -592,6 +629,7 @@ MODULE mptrac_func
        TYPE(clim_t), INTENT(out), TARGET :: clim
      END SUBROUTINE mptrac_read_clim
 
+     ! Read control parameters...
      SUBROUTINE mptrac_read_ctl(filename, argc, argv, ctl) &
           bind(c,name='mptrac_read_ctl')
        USE iso_c_binding
@@ -603,21 +641,24 @@ MODULE mptrac_func
        TYPE(ctl_t), INTENT(out), TARGET :: ctl
      END SUBROUTINE mptrac_read_ctl
 
-     SUBROUTINE mptrac_read_met(filename, ctl, clim, met) &
+     ! Read meteorological data...
+     SUBROUTINE mptrac_read_met(filename, ctl, clim, met, dd) &
           bind(c,name='mptrac_read_met')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t
+       USE mptrac_struct, ONLY : ctl_t, clim_t, met_t, atm_t, dd_t
        IMPLICIT NONE
        CHARACTER(c_char), DIMENSION(:), INTENT(in) :: filename
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(clim_t), INTENT(in), TARGET :: clim
        TYPE(met_t), INTENT(out), TARGET :: met
+       TYPE(dd_t), INTENT(out), TARGET :: dd
      END SUBROUTINE mptrac_read_met
 
-     SUBROUTINE mptrac_run_timestep(ctl, cache, clim, met0, met1, atm, t) &
+     ! Run model time step...
+     SUBROUTINE mptrac_run_timestep(ctl, cache, clim, met0, met1, atm, t, dd) &
           bind(c,name='mptrac_run_timestep')
        USE iso_c_binding
-       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t
+       USE mptrac_struct, ONLY : ctl_t, cache_t, clim_t, met_t, atm_t, dd_t
        IMPLICIT NONE
        TYPE(ctl_t), INTENT(inout), TARGET :: ctl
        TYPE(cache_t), INTENT(inout), TARGET :: cache
@@ -625,8 +666,10 @@ MODULE mptrac_func
        TYPE(met_t), INTENT(inout), POINTER :: met0, met1
        TYPE(atm_t), INTENT(inout), TARGET :: atm
        REAL(c_double), INTENT(in), VALUE :: t
+       TYPE(dd_t), INTENT(inout), TARGET :: dd
      END SUBROUTINE mptrac_run_timestep
 
+     ! Write air parcel data...
      SUBROUTINE mptrac_write_atm(filename, ctl, atm, t) &
           bind(c,name='mptrac_write_atm')
        USE iso_c_binding
@@ -638,6 +681,7 @@ MODULE mptrac_func
        REAL(c_double), INTENT(in), VALUE :: t
      END SUBROUTINE mptrac_write_atm
 
+     ! Write meteorological data...
      SUBROUTINE mptrac_write_met(filename, ctl, met) &
           bind(c,name='mptrac_write_met')
        USE iso_c_binding
@@ -648,6 +692,7 @@ MODULE mptrac_func
        TYPE(met_t), INTENT(inout), TARGET :: met
      END SUBROUTINE mptrac_write_met
 
+     ! Write model output...
      SUBROUTINE mptrac_write_output(dirname, ctl, met0, met1, atm, t) &
           bind(c,name='mptrac_write_output')
        USE iso_c_binding
@@ -659,6 +704,7 @@ MODULE mptrac_func
        REAL(c_double), INTENT(in), VALUE :: t
      END SUBROUTINE mptrac_write_output
 
+     ! Update device memory...
      SUBROUTINE mptrac_update_device(ctl, cache, clim, met0, met1, atm) &
           bind(c,name='mptrac_update_device')
        USE iso_c_binding
@@ -670,6 +716,7 @@ MODULE mptrac_func
        TYPE(atm_t), INTENT(inout), TARGET :: atm
      END SUBROUTINE mptrac_update_device
 
+     ! Update host memory...
      SUBROUTINE mptrac_update_host(ctl, cache, clim, met0, met1, atm) &
           bind(c,name='mptrac_update_host')
        USE iso_c_binding
