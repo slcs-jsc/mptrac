@@ -2093,57 +2093,73 @@ void intpol_check_lon_lat(
 
 void intpol_met_4d_eta(
   const met_t *met0,
-  const met_t *met1,
   const float arr0[EX][EY][EP],
+  const met_t *met1,
   const float arr1[EX][EY][EP],
   const double ts,
-  const double eta_or_p,
-  const int is_eta,
+  const double eta,
   const double lon,
   const double lat,
   double *var_out) {
 
   /* Interpolate surface pressure... */
-  double ps_t;
+  double ps;
   INTPOL_INIT;
-  intpol_met_time_2d(met0, (float (*)[EY]) met0->ps, met1,
-		     (float (*)[EY]) met1->ps, ts, lon, lat, &ps_t, ci, cw,
-		     1);
+  intpol_met_time_2d(met0, (float (*)[EY]) met0->ps,
+		     met1, (float (*)[EY]) met1->ps,
+		     ts, lon, lat, &ps, ci, cw, 1);
 
-  /* Determine target pressure... */
-  const double p_tgt = is_eta ? (eta_or_p * ps_t) : eta_or_p;
+  /* Compute target pressure from hybrid-η:
+     eta_k = A_k/1000 + B_k (fixed p0=1000 hPa);
+     A*(eta),B*(eta) by linear interp on eta_k; then p = A* / 100 + B* * ps. */
+  const int npl = met0->npl;
+  float eta_k[EP];
+  for (int k = 0; k < npl; ++k)
+    eta_k[k] = (float) (met0->hyam[k] / 100000.0 + met0->hybm[k]);
 
-  /* Find nearest grid indices once... */
+  const double eta_clamped =
+    CLAMP(eta, MIN(eta_k[0], eta_k[npl - 1]), MAX(eta_k[0], eta_k[npl - 1]));
+
+  const int ik_eta = locate_irr_float(eta_k, npl, eta_clamped, 0);
+
+  const double Astar = LIN(eta_k[ik_eta], met0->hyam[ik_eta],
+			   eta_k[ik_eta + 1], met0->hyam[ik_eta + 1],
+			   eta_clamped);
+  const double Bstar = LIN(eta_k[ik_eta], met0->hybm[ik_eta],
+			   eta_k[ik_eta + 1], met0->hybm[ik_eta + 1],
+			   eta_clamped);
+
+  /* A is in Pa; convert to hPa with /100. */
+  const double p_tgt = (Astar / 100.0) + Bstar * ps;	/* hPa */
+
+  /* Get horizontal indices... */
   double lon2, lat2;
   intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
 		       &lon2, &lat2);
   const int ix = locate_reg(met0->lon, met0->nx, lon2);
   const int iy = locate_irr(met0->lat, met0->ny, lat2);
 
-  /* Interpolate vertically for each corner at both times... */
-  int ig_init = -1;
-
-  /* t0 */
+  /* Vertical sampling at four corners, for both times... */
+  int ig_hint = -1;
   const double v00_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy, p_tgt, &ig_init);
+    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy, p_tgt, &ig_hint);
   const double v01_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy + 1, p_tgt, &ig_init);
+    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy + 1, p_tgt, &ig_hint);
   const double v10_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy, p_tgt, &ig_init);
+    intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy, p_tgt, &ig_hint);
   const double v11_0 =
     intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy + 1, p_tgt,
-				    &ig_init);
+				    &ig_hint);
 
-  /* t1 */
   const double v00_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy, p_tgt, &ig_init);
+    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy, p_tgt, &ig_hint);
   const double v01_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy + 1, p_tgt, &ig_init);
+    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy + 1, p_tgt, &ig_hint);
   const double v10_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy, p_tgt, &ig_init);
+    intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy, p_tgt, &ig_hint);
   const double v11_1 =
     intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy + 1, p_tgt,
-				    &ig_init);
+				    &ig_hint);
 
   /* Bilinear horizontal interpolation at each time... */
   const double vrow0_0 =
@@ -2160,7 +2176,7 @@ void intpol_met_4d_eta(
   const double v_spa1 =
     LIN(met1->lon[ix], vrow0_1, met1->lon[ix + 1], vrow1_1, lon2);
 
-  /* Final time interpolation... */
+  /* Linear interpolation in time... */
   *var_out = LIN(met0->time, v_spa0, met1->time, v_spa1, ts);
 }
 
@@ -2177,11 +2193,11 @@ void intpol_met_4d_eta_convert(
   double *value_out) {
 
   /* Interpolate surface pressure... */
-  double ps_t;
+  double ps;
   INTPOL_INIT;
   intpol_met_time_2d(met0, (float (*)[EY]) met0->ps,
 		     met1, (float (*)[EY]) met1->ps,
-		     ts, lon, lat, &ps_t, ci, cw, 1);
+		     ts, lon, lat, &ps, ci, cw, 1);
 
   /* Get vertical columns of pressure and eta... */
   const int npl = met0->npl;
@@ -2189,8 +2205,8 @@ void intpol_met_4d_eta_convert(
   for (int k = 0; k < npl; ++k) {
     const double ak_hPa = met0->hyam[k] / 100.0;
     const double bk = met0->hybm[k];
-    pcol[k] = (float) (ak_hPa + bk * ps_t);
-    etacol[k] = (float) (ak_hPa / ps_t + bk);
+    pcol[k] = (float) (ak_hPa + bk * ps);
+    etacol[k] = (float) (ak_hPa / 1000. + bk);
   }
 
   /* Convert pressure to eta... */
@@ -2237,8 +2253,8 @@ double intpol_met_4d_eta_sample_column(
 
   /* Get vertical index... */
   int ig = (*ig_hint >= 0 && *ig_hint < npl - 1) ? *ig_hint : 0;
-  int ik = locate_irr_float(pcol, npl, pt, ig);
-  *ig_hint = ik;		/* update hint for caller */
+  const int ik = locate_irr_float(pcol, npl, pt, ig);
+  *ig_hint = ik;
 
   /* Linear interpolation in pressure... */
   const double x0 = pcol[ik];
@@ -3426,19 +3442,17 @@ void module_advect(
 	const double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data with time-local ps and terrain-following eta */
-	intpol_met_4d_eta(met0, met1, (const float (*)[EY][EP]) met0->ul,
-			  (const float (*)[EY][EP]) met1->ul, tm,
-			  /* eta_or_p = */ x[2], /* is_eta = */ 1,
-			  x[0], x[1], &u[i]);
+	intpol_met_4d_eta(met0, (const float (*)[EY][EP]) met0->ul,
+			  met1, (const float (*)[EY][EP]) met1->ul,
+			  tm, x[2], x[0], x[1], &u[i]);
 
-	intpol_met_4d_eta(met0, met1, (const float (*)[EY][EP]) met0->vl,
-			  (const float (*)[EY][EP]) met1->vl, tm, x[2], 1,
-			  x[0], x[1], &v[i]);
+	intpol_met_4d_eta(met0, (const float (*)[EY][EP]) met0->vl,
+			  met1, (const float (*)[EY][EP]) met1->vl,
+			  tm, x[2], x[0], x[1], &v[i]);
 
-	intpol_met_4d_eta(met0, met1,
-			  (const float (*)[EY][EP]) met0->zeta_dotl,
-			  (const float (*)[EY][EP]) met1->zeta_dotl, tm, x[2],
-			  1, x[0], x[1], &eta_dot[i]);
+	intpol_met_4d_eta(met0, (const float (*)[EY][EP]) met0->zeta_dotl,
+			  met1, (const float (*)[EY][EP]) met1->zeta_dotl,
+			  tm, x[2], x[0], x[1], &eta_dot[i]);
 
 	/* Get mean wind... */
 	double k = 1.0;
