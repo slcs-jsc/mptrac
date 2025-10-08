@@ -215,6 +215,8 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_zeta
      INTEGER(c_int) :: qnt_zeta_d
      INTEGER(c_int) :: qnt_zeta_dot
+     INTEGER(c_int) :: qnt_eta
+     INTEGER(c_int) :: qnt_eta_dot
      INTEGER(c_int) :: qnt_tvirt
      INTEGER(c_int) :: qnt_lapse
      INTEGER(c_int) :: qnt_vh
@@ -483,6 +485,8 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(ey) :: lat
      REAL(c_double), DIMENSION(ep) :: p
      REAL(c_double), DIMENSION(ep) :: hybrid
+     REAL(c_double), DIMENSION(ep) :: hyam
+     REAL(c_double), DIMENSION(ep) :: hybm
      REAL(c_float), DIMENSION(ey,ex) :: ps
      REAL(c_float), DIMENSION(ey,ex) :: ts
      REAL(c_float), DIMENSION(ey,ex) :: zs

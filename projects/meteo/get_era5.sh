@@ -106,7 +106,7 @@ Model levels:
   248 = Fraction of cloud cover (0 - 1)
 
 # Model levels (optional):
-#   77 = Eta-coordinate vertical velocity [s**-1]
+   77 = Eta-coordinate vertical velocity [s**-1]
 """
 
 c.retrieve("reanalysis-era5-complete", {
@@ -127,7 +127,7 @@ c.retrieve("reanalysis-era5-complete", {
     "expver": "1",
     "levelist": "1/to/137",
     "levtype": "ml",
-    "param": "75/76/130/131/132/133/135/203/246/247/248",
+    "param": "75/76/77/130/131/132/133/135/203/246/247/248",
     "stream": "oper",
     "time": "$tstr",
     "type": "an",

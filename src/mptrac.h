@@ -484,6 +484,28 @@
   ((a) * exp( -(b) / (t)))
 
 /**
+ * @brief Clamp a value to a specified range.
+ *
+ * Ensures that @p v lies between @p lo and @p hi.
+ * If @p v < @p lo, returns @p lo.
+ * If @p v > @p hi, returns @p hi.
+ * Otherwise, returns @p v unchanged.
+ *
+ * This macro works with any numeric type (e.g., int, float, double).
+ * All arguments are evaluated exactly once — avoid passing expressions
+ * with side effects (e.g., ++ operators or function calls).
+ *
+ * @param v   Input value to clamp.
+ * @param lo  Lower bound.
+ * @param hi  Upper bound.
+ * @return The clamped value between @p lo and @p hi.
+ *
+ * @author Lars Hoffmann
+ */
+#define CLAMP(v, lo, hi)				\
+  (((v) < (lo)) ? (lo) : (((v) > (hi)) ? (hi) : (v)))
+
+/**
  * @brief Convert a longitude difference to a distance in the x-direction (east-west) at a specific latitude.
  *
  * This macro calculates the distance in the x-direction (east-west)
@@ -2458,8 +2480,14 @@ typedef struct {
   /*! Quantity array index for diagnosed zeta vertical coordinate. */
   int qnt_zeta_d;
 
-  /*! Quantity array index forvelocity of zeta vertical coordinate. */
+  /*! Quantity array index for velocity of zeta vertical coordinate. */
   int qnt_zeta_dot;
+
+  /*! Quantity array index for eta vertical coordinate. */
+  int qnt_eta;
+
+  /*! Quantity array index for velocity of eta vertical coordinate. */
+  int qnt_eta_dot;
 
   /*! Quantity array index for virtual temperature. */
   int qnt_tvirt;
@@ -2745,7 +2773,7 @@ typedef struct {
   int advect;
 
   /*! Vertical velocity of air parcels
-     (0=omega_on_plev, 1=zetadot_on_mlev, 2=omega_on_mlev). */
+     (0=omega_on_plev, 1=zetadot_on_mlev, 2=omega_on_mlev, 3=etadot_on_mlev). */
   int advect_vert_coord;
 
   /*! Random number generator (0=GSL, 1=Squares, 2=cuRAND). */
@@ -3544,6 +3572,12 @@ typedef struct {
   /*! Model hybrid levels. */
   double hybrid[EP];
 
+  /*! Model level a coefficients [Pa]. */
+  double hyam[EP];
+
+  /*! Model level b coefficients. */
+  double hybm[EP];
+
   /*! Surface pressure [hPa]. */
   float ps[EX][EY];
 
@@ -3767,7 +3801,10 @@ typedef struct {
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
 #pragma acc routine (intpol_check_lon_lat)
-#pragma acc routine (intpol_met_4d_coord)
+#pragma acc routine (intpol_met_4d_eta)
+#pragma acc routine (intpol_met_4d_eta_convert)
+#pragma acc routine (intpol_met_4d_eta_sample_column)
+#pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
 #pragma acc routine (intpol_met_space_3d_ml)
 #pragma acc routine (intpol_met_space_2d)
@@ -4859,6 +4896,158 @@ void intpol_check_lon_lat(
   double *lat2);
 
 /**
+ * @brief Interpolates a meteorological field in space, time, and vertical coordinate (η or p).
+ *
+ * This routine performs a 4-dimensional interpolation of a 3D meteorological variable 
+ * (e.g., u, v, w, T) that is stored on hybrid η levels. It accounts for the 
+ * time-dependent surface pressure field when mapping between η and pressure coordinates.
+ *
+ * The function supports both η-based and pressure-based input coordinates via the @p is_eta flag.
+ * 
+ * Interpolation steps:
+ *   1. Interpolate surface pressure (ps) horizontally and temporally to the requested time and location.
+ *   2. Compute the target pressure corresponding to the requested η level (if @p is_eta != 0).
+ *   3. Identify the surrounding horizontal grid indices (ix, iy).
+ *   4. Vertically interpolate the input field within each of the four surrounding grid columns
+ *      at both time levels, using @ref intpol_met_4d_eta_sample_column().
+ *   5. Apply bilinear interpolation horizontally (lon–lat plane) for each time level.
+ *   6. Linearly interpolate between time levels @p met0->time and @p met1->time.
+ *
+ * @param[in]  met0       Meteorological data at time t0.
+ * @param[in]  met1       Meteorological data at time t1.
+ * @param[in]  arr0       3D field (EX×EY×EP) at time t0, on hybrid levels.
+ * @param[in]  arr1       3D field (EX×EY×EP) at time t1, on hybrid levels.
+ * @param[in]  ts         Target time (seconds since reference or model time units).
+ * @param[in]  eta_or_p   Target vertical coordinate: η (dimensionless) or p (hPa),
+ *                        depending on @p is_eta.
+ * @param[in]  is_eta     Vertical coordinate flag:
+ *                          - 1 → input @p eta_or_p is η (terrain-following)
+ *                          - 0 → input @p eta_or_p is pressure (hPa)
+ * @param[in]  lon        Target longitude (degrees east).
+ * @param[in]  lat        Target latitude (degrees north).
+ * @param[out] var_out    Interpolated variable value at (ts, lon, lat, eta_or_p).
+ *
+ * @note The interpolation assumes smooth fields and monotonic vertical profiles.
+ *       The vertical interpolation uses a cached bracketing index for efficiency.
+ *
+ * @see intpol_met_4d_eta_sample_column(), intpol_met_4d_eta_convert(), intpol_met_time_2d()
+ *
+ * @author Lars Hoffmann
+ */
+void intpol_met_4d_eta(
+  const met_t * met0,
+  const met_t * met1,
+  const float arr0[EX][EY][EP],
+  const float arr1[EX][EY][EP],
+  const double ts,
+  const double eta_or_p,
+  const int is_eta,
+  const double lon,
+  const double lat,
+  double *var_out);
+
+/**
+ * @brief Converts between pressure (p) and hybrid eta (η) coordinates using
+ *        time- and location-dependent surface pressure.
+ *
+ * This routine computes the conversion between the terrain-following hybrid
+ * vertical coordinate (η) and pressure (p, in hPa) for a given location
+ * (longitude, latitude) and model time. The conversion accounts for the
+ * time-varying surface pressure field by interpolating @c ps from the two
+ * meteorological time levels @p met0 and @p met1.
+ *
+ * The conversion follows the ERA/IFS hybrid level definition:
+ * \f[
+ *   p(k) = A(k) + B(k) \cdot p_s
+ * \f]
+ * where @c A and @c B are the hybrid coefficients (`hyam`, `hybm`),
+ * and @c p_s is the surface pressure interpolated in space and time.
+ *
+ * The function builds the local vertical profile of (p, η) pairs, and performs
+ * a linear interpolation between the bracketing model levels to convert either
+ * from pressure to η (p→η) or from η to pressure (η→p).
+ *
+ * @param[in]  met0       Meteorological data at time t0.
+ * @param[in]  met1       Meteorological data at time t1.
+ * @param[in]  ts         Target time (seconds since reference or model units).
+ * @param[in]  lon        Target longitude (degrees east).
+ * @param[in]  lat        Target latitude (degrees north).
+ * @param[in]  value_in   Input value (pressure [hPa] or η, depending on @p to_eta).
+ * @param[in]  to_eta     Conversion flag:
+ *                          - 1 → convert from pressure to η (p→η)
+ *                          - 0 → convert from η to pressure (η→p)
+ * @param[out] value_out  Converted value (η if @p to_eta=1, pressure [hPa] if @p to_eta=0).
+ *
+ * @note The hybrid coefficients (`hyam`, `hybm`) are taken from @p met0 and assumed
+ *       to be identical in @p met1. Surface pressure @c ps is interpolated horizontally
+ *       and temporally between @p met0 and @p met1.
+ *
+ * @warning This function assumes monotonic vertical pressure profiles and does not
+ *          extrapolate beyond the model's valid range; input values are clamped to
+ *          the valid pressure or η range.
+ *
+ * @see intpol_met_time_2d(), locate_irr_float(), LIN(), CLAMP
+ *
+ * @author Lars Hoffmann
+ */
+void intpol_met_4d_eta_convert(
+  const met_t * met0,
+  const met_t * met1,
+  double ts,
+  double lon,
+  double lat,
+  double value_in,
+  int to_eta,
+  double *value_out);
+
+/**
+ * @brief Samples a vertical meteorological profile at a specified pressure level (hPa)
+ *        using linear interpolation within a single model column.
+ *
+ * This routine performs a 1D vertical interpolation of a meteorological field
+ * within a single grid column at grid indices (@p ixc, @p iyc). The pressure
+ * levels are reconstructed from the hybrid coefficients (@c hyam, @c hybm)
+ * and the local surface pressure @c ps. The interpolation is performed in
+ * pressure space (hPa) and supports both ascending and descending vertical
+ * level orders.
+ *
+ * To improve computational efficiency, a cached vertical index hint (@p ig_hint)
+ * can be supplied and will be updated after the call. This allows subsequent
+ * calls at nearby pressures to reuse the previously determined bracketing index,
+ * avoiding repeated binary searches.
+ *
+ * @param[in]  met            Meteorological structure containing vertical coefficients
+ *                            (`hyam`, `hybm`), surface pressure (`ps`), and level count (`npl`).
+ * @param[in]  array          3D field array [EX][EY][EP] containing the variable to sample.
+ * @param[in]  ixc            X (longitude) grid index of the column.
+ * @param[in]  iyc            Y (latitude) grid index of the column.
+ * @param[in]  p_target_hPa   Target pressure level (hPa) at which to interpolate.
+ * @param[in,out] ig_hint     Pointer to an integer storing a cached bracketing index hint.
+ *                            - Input: previous bracketing index guess (may be -1 for none).
+ *                            - Output: updated index for reuse in subsequent calls.
+ *
+ * @return Interpolated value of @p array at the requested pressure level.
+ *
+ * @note
+ * - The function clamps @p p_target_hPa to the valid model pressure range to
+ *   prevent extrapolation below ground or above the model top.
+ * - The vertical lookup uses @ref locate_irr_float(), which supports both
+ *   increasing and decreasing pressure profiles.
+ * - The interpolation is linear in pressure.
+ *
+ * @see locate_irr_float(), LIN(), CLAMP
+ *
+ * @author Lars Hoffmann
+ */
+double intpol_met_4d_eta_sample_column(
+  const met_t * met,
+  const float array[EX][EY][EP],
+  int ixc,
+  int iyc,
+  double p_target_hPa,
+  int *ig_hint);
+
+/**
  * @brief Interpolates meteorological variables to a given position and time.
  *
  * This function interpolates meteorological variables to a specified
@@ -4899,7 +5088,7 @@ void intpol_check_lon_lat(
  *
  * @author Jan Clemens
  */
-void intpol_met_4d_coord(
+void intpol_met_4d_zeta(
   const met_t * met0,
   float height0[EX][EY][EP],
   float array0[EX][EY][EP],

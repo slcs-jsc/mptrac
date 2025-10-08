@@ -2091,7 +2091,166 @@ void intpol_check_lon_lat(
 
 /*****************************************************************************/
 
-void intpol_met_4d_coord(
+void intpol_met_4d_eta(
+  const met_t *met0,
+  const met_t *met1,
+  const float arr0[EX][EY][EP],
+  const float arr1[EX][EY][EP],
+  const double ts,
+  const double eta_or_p,
+  const int is_eta,
+  const double lon,
+  const double lat,
+  double *var_out) {
+
+  /* Interpolate surface pressure... */
+  double ps_t;
+  INTPOL_INIT;
+  intpol_met_time_2d(met0, (float (*)[EY]) met0->ps, met1,
+		     (float (*)[EY]) met1->ps, ts, lon, lat, &ps_t, ci, cw,
+		     1);
+
+  /* Determine target pressure... */
+  const double p_tgt = is_eta ? (eta_or_p * ps_t) : eta_or_p;
+
+  /* Find nearest grid indices once... */
+  double lon2, lat2;
+  intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
+		       &lon2, &lat2);
+  const int ix = locate_reg(met0->lon, met0->nx, lon2);
+  const int iy = locate_irr(met0->lat, met0->ny, lat2);
+
+  /* Interpolate vertically for each corner at both times... */
+  int ig_init = -1;
+
+  /* t0 */
+  const double v00_0 =
+    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy, p_tgt, &ig_init);
+  const double v01_0 =
+    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy + 1, p_tgt, &ig_init);
+  const double v10_0 =
+    intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy, p_tgt, &ig_init);
+  const double v11_0 =
+    intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy + 1, p_tgt,
+				    &ig_init);
+
+  /* t1 */
+  const double v00_1 =
+    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy, p_tgt, &ig_init);
+  const double v01_1 =
+    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy + 1, p_tgt, &ig_init);
+  const double v10_1 =
+    intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy, p_tgt, &ig_init);
+  const double v11_1 =
+    intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy + 1, p_tgt,
+				    &ig_init);
+
+  /* Bilinear horizontal interpolation at each time... */
+  const double vrow0_0 =
+    LIN(met0->lat[iy], v00_0, met0->lat[iy + 1], v01_0, lat2);
+  const double vrow1_0 =
+    LIN(met0->lat[iy], v10_0, met0->lat[iy + 1], v11_0, lat2);
+  const double v_spa0 =
+    LIN(met0->lon[ix], vrow0_0, met0->lon[ix + 1], vrow1_0, lon2);
+
+  const double vrow0_1 =
+    LIN(met1->lat[iy], v00_1, met1->lat[iy + 1], v01_1, lat2);
+  const double vrow1_1 =
+    LIN(met1->lat[iy], v10_1, met1->lat[iy + 1], v11_1, lat2);
+  const double v_spa1 =
+    LIN(met1->lon[ix], vrow0_1, met1->lon[ix + 1], vrow1_1, lon2);
+
+  /* Final time interpolation... */
+  *var_out = LIN(met0->time, v_spa0, met1->time, v_spa1, ts);
+}
+
+/*****************************************************************************/
+
+void intpol_met_4d_eta_convert(
+  const met_t *met0,
+  const met_t *met1,
+  double ts,
+  double lon,
+  double lat,
+  double value_in,
+  int to_eta,
+  double *value_out) {
+
+  /* Interpolate surface pressure... */
+  double ps_t;
+  INTPOL_INIT;
+  intpol_met_time_2d(met0, (float (*)[EY]) met0->ps,
+		     met1, (float (*)[EY]) met1->ps,
+		     ts, lon, lat, &ps_t, ci, cw, 1);
+
+  /* Get vertical columns of pressure and eta... */
+  const int npl = met0->npl;
+  float pcol[EP], etacol[EP];
+  for (int k = 0; k < npl; ++k) {
+    const double ak_hPa = met0->hyam[k] / 100.0;
+    const double bk = met0->hybm[k];
+    pcol[k] = (float) (ak_hPa + bk * ps_t);
+    etacol[k] = (float) (ak_hPa / ps_t + bk);
+  }
+
+  /* Convert pressure to eta... */
+  if (to_eta) {
+    const double p = CLAMP(value_in,
+			   MIN(pcol[0], pcol[npl - 1]),
+			   MAX(pcol[0], pcol[npl - 1]));
+    int ik = locate_irr_float(pcol, npl, p, 0);
+    *value_out = LIN(pcol[ik], etacol[ik], pcol[ik + 1], etacol[ik + 1], p);
+  }
+
+  /* Convert eta to pressure... */
+  else {
+    const double e = CLAMP(value_in,
+			   MIN(etacol[0], etacol[npl - 1]),
+			   MAX(etacol[0], etacol[npl - 1]));
+    int ik = locate_irr_float(etacol, npl, e, 0);
+    *value_out = LIN(etacol[ik], pcol[ik], etacol[ik + 1], pcol[ik + 1], e);
+  }
+}
+
+/*****************************************************************************/
+
+double intpol_met_4d_eta_sample_column(
+  const met_t *met,
+  const float array[EX][EY][EP],
+  int ixc,
+  int iyc,
+  double p_target_hPa,
+  int *ig_hint) {
+
+  const int npl = met->npl;
+
+  /* Build pressure profile... */
+  float pcol[EP];
+  const float ps = met->ps[ixc][iyc];	/* hPa */
+  for (int k = 0; k < npl; ++k)
+    pcol[k] = (float) (met->hyam[k] / 100.0 + met->hybm[k] * ps);
+
+  /* Clamp target to valid range (handles below-ground)... */
+  const double pmin = MIN(pcol[0], pcol[npl - 1]);
+  const double pmax = MAX(pcol[0], pcol[npl - 1]);
+  const double pt = CLAMP(p_target_hPa, pmin, pmax);
+
+  /* Get vertical index... */
+  int ig = (*ig_hint >= 0 && *ig_hint < npl - 1) ? *ig_hint : 0;
+  int ik = locate_irr_float(pcol, npl, pt, ig);
+  *ig_hint = ik;		/* update hint for caller */
+
+  /* Linear interpolation in pressure... */
+  const double x0 = pcol[ik];
+  const double x1 = pcol[ik + 1];
+  const double y0 = array[ixc][iyc][ik];
+  const double y1 = array[ixc][iyc][ik + 1];
+  return LIN(x0, y0, x1, y1, pt);
+}
+
+/*****************************************************************************/
+
+void intpol_met_4d_zeta(
   const met_t *met0,
   float heights0[EX][EY][EP],
   float array0[EX][EY][EP],
@@ -2321,6 +2480,7 @@ void intpol_met_space_3d(
 
 /*****************************************************************************/
 
+#if 0
 void intpol_met_space_3d_ml(
   const met_t *met,
   float zs[EX][EY][EP],
@@ -2379,6 +2539,75 @@ void intpol_met_space_3d_ml(
   else
     aux11 = LIN(zs[ix + 1][iy + 1][iz], array[ix + 1][iy + 1][iz],
 		zs[ix + 1][iy + 1][iz + 1], array[ix + 1][iy + 1][iz + 1], z);
+
+  /* Interpolate horizontally... */
+  const double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
+  const double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat2);
+  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
+}
+#endif
+
+/*****************************************************************************/
+
+void intpol_met_space_3d_ml(
+  const met_t *met,
+  float zs[EX][EY][EP],
+  float array[EX][EY][EP],
+  const double z,
+  const double lon,
+  const double lat,
+  double *var) {
+  /* Check longitude and latitude... */
+  double lon2, lat2;
+  intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat, &lon2,
+		       &lat2);
+
+  /* Get horizontal indices... */
+  const int ix = locate_reg(met->lon, met->nx, lon2);
+  const int iy = locate_irr(met->lat, met->ny, lat2);
+
+  /* Determine if zs is increasing or decreasing */
+  const int increasing = (zs[ix][iy][met->npl - 1] > zs[ix][iy][0]);
+
+  /* Define helper macro for vertical interpolation */
+#define VERT_INT(ix_, iy_, iz_, aux_) do { \
+    if (increasing) { \
+      if (z >= zs[ix_][iy_][iz_ + 1]) \
+        aux_ = array[ix_][iy_][iz_ + 1]; \
+      else if (z <= zs[ix_][iy_][iz_]) \
+        aux_ = array[ix_][iy_][iz_]; \
+      else \
+        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_], \
+                   zs[ix_][iy_][iz_ + 1], array[ix_][iy_][iz_ + 1], z); \
+    } else { /* decreasing */ \
+      if (z <= zs[ix_][iy_][iz_ + 1]) \
+        aux_ = array[ix_][iy_][iz_ + 1]; \
+      else if (z >= zs[ix_][iy_][iz_]) \
+        aux_ = array[ix_][iy_][iz_]; \
+      else \
+        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_], \
+                   zs[ix_][iy_][iz_ + 1], array[ix_][iy_][iz_ + 1], z); \
+    } \
+  } while (0)
+
+  /* Interpolate vertically for each corner */
+  int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
+  double aux00;
+  VERT_INT(ix, iy, iz, aux00);
+
+  iz = locate_irr_float(zs[ix][iy + 1], met->npl, z, iz);
+  double aux01;
+  VERT_INT(ix, iy + 1, iz, aux01);
+
+  iz = locate_irr_float(zs[ix + 1][iy], met->npl, z, iz);
+  double aux10;
+  VERT_INT(ix + 1, iy, iz, aux10);
+
+  iz = locate_irr_float(zs[ix + 1][iy + 1], met->npl, z, iz);
+  double aux11;
+  VERT_INT(ix + 1, iy + 1, iz, aux11);
+
+#undef VERT_INT
 
   /* Interpolate horizontally... */
   const double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
@@ -2951,7 +3180,7 @@ int locate_irr_float(
   int ihi = n - 1;
   int i = (ihi + ilo) >> 1;
 
-  if (x >= xx[ig] && x < xx[ig + 1])
+  if ((xx[ig] <= x && x < xx[ig + 1]) || (xx[ig] >= x && x > xx[ig + 1]))
     return ig;
 
   if (xx[i] < xx[i + 1])
@@ -3103,10 +3332,10 @@ void module_advect(
 
       /* Convert pressure to zeta... */
       INTPOL_INIT;
-      intpol_met_4d_coord(met0, met0->pl, met0->zetal, met1,
-			  met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			  atm->lon[ip], atm->lat[ip],
-			  &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
+      intpol_met_4d_zeta(met0, met0->pl, met0->zetal, met1,
+			 met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
+			 atm->lon[ip], atm->lat[ip],
+			 &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
 
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4],
@@ -3130,13 +3359,13 @@ void module_advect(
 	const double tm = atm->time[ip] + dts;
 
 	/* Interpolate meteo data... */
-	intpol_met_4d_coord(met0, met0->zetal, met0->ul, met1, met1->zetal,
-			    met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
-	intpol_met_4d_coord(met0, met0->zetal, met0->vl, met1, met1->zetal,
-			    met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
-	intpol_met_4d_coord(met0, met0->zetal, met0->zeta_dotl, met1,
-			    met1->zetal, met1->zeta_dotl, tm, x[2], x[0],
-			    x[1], &zeta_dot[i], ci, cw, 0);
+	intpol_met_4d_zeta(met0, met0->zetal, met0->ul, met1, met1->zetal,
+			   met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+	intpol_met_4d_zeta(met0, met0->zetal, met0->vl, met1, met1->zetal,
+			   met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+	intpol_met_4d_zeta(met0, met0->zetal, met0->zeta_dotl, met1,
+			   met1->zetal, met1->zeta_dotl, tm, x[2], x[0],
+			   x[1], &zeta_dot[i], ci, cw, 0);
 
 	/* Get mean wind... */
 	double k = 1.0;
@@ -3157,10 +3386,82 @@ void module_advect(
       atm->q[ctl->qnt_zeta][ip] += cache->dt[ip] * zeta_dotm;
 
       /* Convert zeta to pressure... */
-      intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			  met1->pl, atm->time[ip],
-			  atm->q[ctl->qnt_zeta][ip], atm->lon[ip],
-			  atm->lat[ip], &atm->p[ip], ci, cw, 1);
+      intpol_met_4d_zeta(met0, met0->zetal, met0->pl, met1, met1->zetal,
+			 met1->pl, atm->time[ip],
+			 atm->q[ctl->qnt_zeta][ip], atm->lon[ip],
+			 atm->lat[ip], &atm->p[ip], ci, cw, 1);
+    }
+  }
+
+  /* Use etadot vertical velocity... */
+  else if (ctl->advect_vert_coord == 3) {
+
+    /* Loop over particles... */
+    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
+
+      /* Convert pressure to eta... */
+      intpol_met_4d_eta_convert(met0, met1,
+				atm->time[ip], atm->lon[ip], atm->lat[ip],
+				atm->p[ip], 1, &atm->q[ctl->qnt_eta][ip]);
+
+      /* Init... */
+      double dts, u[4], um = 0, v[4], vm = 0, eta_dot[4],
+	eta_dotm = 0, x[3] = { 0, 0, 0 };
+
+      /* Loop over integration nodes... */
+      for (int i = 0; i < ctl->advect; i++) {
+
+	/* Set position... */
+	if (i == 0) {
+	  dts = 0.0;
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->q[ctl->qnt_eta][ip];
+	} else {
+	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->q[ctl->qnt_eta][ip] + dts * eta_dot[i - 1];
+	}
+	const double tm = atm->time[ip] + dts;
+
+	/* Interpolate meteo data with time-local ps and terrain-following eta */
+	intpol_met_4d_eta(met0, met1, (const float (*)[EY][EP]) met0->ul,
+			  (const float (*)[EY][EP]) met1->ul, tm,
+			  /* eta_or_p = */ x[2], /* is_eta = */ 1,
+			  x[0], x[1], &u[i]);
+
+	intpol_met_4d_eta(met0, met1, (const float (*)[EY][EP]) met0->vl,
+			  (const float (*)[EY][EP]) met1->vl, tm, x[2], 1,
+			  x[0], x[1], &v[i]);
+
+	intpol_met_4d_eta(met0, met1,
+			  (const float (*)[EY][EP]) met0->zeta_dotl,
+			  (const float (*)[EY][EP]) met1->zeta_dotl, tm, x[2],
+			  1, x[0], x[1], &eta_dot[i]);
+
+	/* Get mean wind... */
+	double k = 1.0;
+	if (ctl->advect == 2)
+	  k = (i == 0 ? 0.0 : 1.0);
+	else if (ctl->advect == 4)
+	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	um += k * u[i];
+	vm += k * v[i];
+	eta_dotm += k * eta_dot[i];
+      }
+
+      /* Set new position... */
+      atm->time[ip] += cache->dt[ip];
+      atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
+			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+      atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
+      atm->q[ctl->qnt_eta][ip] += cache->dt[ip] * eta_dotm;
+
+      /* Convert eta to pressure... */
+      intpol_met_4d_eta_convert(met0, met1,
+				atm->time[ip], atm->lon[ip], atm->lat[ip],
+				atm->q[ctl->qnt_eta][ip], 0, &atm->p[ip]);
     }
   }
 }
@@ -3186,9 +3487,9 @@ void module_advect_init(
 
     /* Initialize pressure consistent with zeta... */
     INTPOL_INIT;
-    intpol_met_4d_coord(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
-			atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
+    intpol_met_4d_zeta(met0, met0->zetal, met0->pl, met1, met1->zetal,
+		       met1->pl, atm->time[ip], atm->q[ctl->qnt_zeta][ip],
+		       atm->lon[ip], atm->lat[ip], &atm->p[ip], ci, cw, 1);
   }
 }
 
@@ -4310,6 +4611,8 @@ void module_meteo(
     SET_ATM(qnt_zeta, atm->q[ctl->qnt_zeta][ip]);
     SET_ATM(qnt_zeta_d, ZETA(ps, atm->p[ip], t));
     SET_ATM(qnt_zeta_dot, atm->q[ctl->qnt_zeta_dot][ip]);
+    SET_ATM(qnt_eta, atm->q[ctl->qnt_eta][ip]);
+    SET_ATM(qnt_eta_dot, atm->q[ctl->qnt_eta_dot][ip]);
     SET_ATM(qnt_tvirt, TVIRT(t, h2o));
     SET_ATM(qnt_lapse, lapse_rate(t, h2o));
     SET_ATM(qnt_pv, pv);
@@ -5625,6 +5928,8 @@ void mptrac_read_ctl(
   ctl->qnt_zeta = -1;
   ctl->qnt_zeta_d = -1;
   ctl->qnt_zeta_dot = -1;
+  ctl->qnt_eta = -1;
+  ctl->qnt_eta_dot = -1;
   ctl->qnt_tvirt = -1;
   ctl->qnt_lapse = -1;
   ctl->qnt_vh = -1;
@@ -5746,6 +6051,8 @@ void mptrac_read_ctl(
       SET_QNT(qnt_zeta_d, "zeta_d", "diagnosed zeta coordinate", "K")
       SET_QNT(qnt_zeta_dot, "zeta_dot", "velocity of zeta coordinate",
 	      "K/day")
+      SET_QNT(qnt_eta, "eta", "eta coordinate", "1")
+      SET_QNT(qnt_eta_dot, "eta_dot", "velocity of eta coordinate", "1/s")
       SET_QNT(qnt_tvirt, "tvirt", "virtual temperature", "K")
       SET_QNT(qnt_lapse, "lapse", "temperature lapse rate", "K/km")
       SET_QNT(qnt_vh, "vh", "horizontal velocity", "m/s")
@@ -5781,20 +6088,28 @@ void mptrac_read_ctl(
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
-  /* Vertical coordinates and velocities... */
+  /* Vertical coordinate and velocity... */
   ctl->advect_vert_coord =
     (int) scan_ctl(filename, argc, argv, "ADVECT_VERT_COORD", -1, "0", NULL);
-  if (ctl->advect_vert_coord < 0 || ctl->advect_vert_coord > 2)
-    ERRMSG("Set ADVECT_VERT_COORD to 0, 1, or 2!");
+  if (ctl->advect_vert_coord < 0 || ctl->advect_vert_coord > 3)
+    ERRMSG("ADVECT_VERT_COORD must be 0, 1, 2, or 3!");
+
+  if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
+    ERRMSG("Add quantity zeta for diabatic advection!");
+  if (ctl->advect_vert_coord == 3 && ctl->qnt_eta < 0)
+    ERRMSG("Add quantity eta for etadot avection!");
+
   ctl->met_vert_coord =
     (int) scan_ctl(filename, argc, argv, "MET_VERT_COORD", -1, "0", NULL);
   if (ctl->met_vert_coord < 0 || ctl->met_vert_coord > 4)
-    ERRMSG("Set MET_VERT_COORD to 0, 1, 2, 3, or 4!");
-  if (ctl->advect_vert_coord == 1 && ctl->qnt_zeta < 0)
-    ERRMSG("Please add zeta to your quantities for diabatic calculations!");
+    ERRMSG("MET_VERT_COORD must be 0, 1, 2, 3, or 4!");
+
   if (ctl->advect_vert_coord == 2 && ctl->met_vert_coord == 0)
     ERRMSG
       ("Using ADVECT_VERT_COORD = 2 requires meteo data on model levels!");
+  if (ctl->advect_vert_coord == 3 && ctl->met_vert_coord != 3)
+    ERRMSG
+      ("Using ADVECT_VERT_COORD = 3 requires A and B model level coefficients!");
 
   /* Time steps of simulation... */
   ctl->direction =
@@ -5814,6 +6129,9 @@ void mptrac_read_ctl(
   if (ctl->advect_vert_coord == 1 && ctl->met_type != 0)
     ERRMSG
       ("Please use meteo files in netcdf format for diabatic calculations.");
+  if (ctl->advect_vert_coord == 3 && ctl->met_type != 0)
+    ERRMSG
+      ("Please use meteo files in netcdf format for etadot calculations.");
   ctl->met_clams =
     (int) scan_ctl(filename, argc, argv, "MET_CLAMS", -1, "0", NULL);
   ctl->met_nc_scale =
@@ -5900,12 +6218,12 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_NLEV", -1, "0", NULL);
   if (ctl->met_nlev > EP)
     ERRMSG("Too many model levels!");
-  for (int ip = 0; ip < ctl->met_nlev; ip++) {
+  for (int ip = 0; ip < ctl->met_nlev; ip++)
     ctl->met_lev_hyam[ip] =
       scan_ctl(filename, argc, argv, "MET_LEV_HYAM", ip, "", NULL);
+  for (int ip = 0; ip < ctl->met_nlev; ip++)
     ctl->met_lev_hybm[ip] =
       scan_ctl(filename, argc, argv, "MET_LEV_HYBM", ip, "", NULL);
-  }
   ctl->met_geopot_sx =
     (int) scan_ctl(filename, argc, argv, "MET_GEOPOT_SX", -1, "-1", NULL);
   ctl->met_geopot_sy =
@@ -8387,7 +8705,23 @@ void read_met_nc_grid(
   if (strcasecmp(levname, "hybrid") == 0)
     NC_GET_DOUBLE("hybrid", met->hybrid, 1);
 
-  /* Check grid spacing... */
+  /* Read model level coefficients from file... */
+  if (ctl->met_vert_coord == 2) {
+    NC_GET_DOUBLE("hyam", met->hyam, 1);
+    NC_GET_DOUBLE("hybm", met->hybm, 1);
+  }
+
+  /* Copy model level coefficients from control parameters... */
+  else if (ctl->met_vert_coord == 3 || ctl->met_vert_coord == 4) {
+    if (ctl->met_nlev <= 0)
+      ERRMSG("You need to specify MET_NLEV, MET_LEV_HYAM, and MET_LEV_HYBM!");
+    for (int ip = 0; ip < ctl->met_nlev; ip++) {
+      met->hyam[ip] = ctl->met_lev_hyam[ip];
+      met->hybm[ip] = ctl->met_lev_hybm[ip];
+    }
+  }
+
+  /* Check horizontal grid spacing... */
   for (int ix = 2; ix < met->nx; ix++)
     if (fabs
 	(fabs(met->lon[ix] - met->lon[ix - 1]) -
@@ -8610,13 +8944,30 @@ void read_met_nc_levels(
     WARN("Cannot read cloud cover!");
 
   /* Read zeta and zeta_dot... */
-  if (!read_met_nc_3d
-      (ncid, "ZETA", "zeta", NULL, NULL, ctl, met, dd, met->zetal, 1.0))
-    WARN("Cannot read ZETA!");
-  if (!read_met_nc_3d
-      (ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
-       NULL, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
-    WARN("Cannot read ZETA_DOT!");
+  if (ctl->advect_vert_coord == 1) {
+    if (!read_met_nc_3d
+	(ncid, "ZETA", "zeta", NULL, NULL, ctl, met, dd, met->zetal, 1.0))
+      WARN("Cannot read ZETA!");
+    if (!read_met_nc_3d
+	(ncid, "ZETA_DOT_TOT", "ZETA_DOT_clr", "zeta_dot_clr",
+	 NULL, ctl, met, dd, met->zeta_dotl, 0.00001157407f))
+      WARN("Cannot read ZETA_DOT!");
+  }
+
+  /* Read eta and eta_dot... */
+  else if (ctl->advect_vert_coord == 3) {
+#pragma omp parallel for default(shared)
+    for (int ix = 0; ix < met->nx; ix++)
+      for (int iy = 0; iy < met->ny; iy++)
+	for (int ip = 0; ip < met->np; ip++)
+	  met->zetal[ix][iy][ip] =
+	    (float) (met->hyam[ip] / (100. * met->ps[ix][iy]) +
+		     met->hybm[ip]);
+    if (!read_met_nc_3d
+	(ncid, "etadot", "ETADOT", NULL, NULL, ctl, met, dd, met->zeta_dotl,
+	 1.0))
+      WARN("Cannot read eta vertical velocity!");
+  }
 
   /* Store velocities on model levels... */
   if (ctl->met_vert_coord != 0) {
@@ -8644,56 +8995,26 @@ void read_met_nc_levels(
 	if (!read_met_nc_3d
 	    (ncid, "press", "PRESS", NULL, NULL, ctl, met, dd, met->pl, 1.0))
 	  ERRMSG("Cannot read pressure on model levels!");
-
     }
 
-    /* Use a and b coefficients for full levels... */
+    /* Use a and b coefficients for full levels (at layer midpoints)... */
     else if (ctl->met_vert_coord == 2 || ctl->met_vert_coord == 3) {
 
-      /* Grid level coefficients... */
-      double hyam[EP], hybm[EP];
-
-      /* Read coefficients... */
-      if (ctl->met_vert_coord == 2) {
-	int varid;
-	NC_GET_DOUBLE("hyam", hyam, 1);
-	NC_GET_DOUBLE("hybm", hybm, 1);
-      }
-
-      /* Use control parameters... */
-      else if (ctl->met_vert_coord == 3) {
-
-	/* Check number of levels... */
-	if (met->np != ctl->met_nlev)
-	  ERRMSG("Mismatch in number of model levels!");
-
-	/* Copy parameters... */
-	for (int ip = 0; ip < met->np; ip++) {
-	  hyam[ip] = ctl->met_lev_hyam[ip];
-	  hybm[ip] = ctl->met_lev_hybm[ip];
-	}
-      }
+      /* Check number of levels... */
+      if (ctl->met_vert_coord == 3 && met->np != ctl->met_nlev)
+	ERRMSG("Mismatch in number of model levels!");
 
       /* Calculate pressure... */
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ip = 0; ip < met->np; ip++)
 	    met->pl[ix][iy][ip] =
-	      (float) (hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy]);
-
+	      (float) (met->hyam[ip] / 100. +
+		       met->hybm[ip] * met->ps[ix][iy]);
     }
 
-    /* Use a and b coefficients for half levels... */
+    /* Use a and b coefficients for half levels (at layer interfaces)... */
     else if (ctl->met_vert_coord == 4) {
-
-      /* Grid level coefficients... */
-      double hyam[EP], hybm[EP];
-
-      /* Use control parameters... */
-      for (int ip = 0; ip < met->np + 1; ip++) {
-	hyam[ip] = ctl->met_lev_hyam[ip];
-	hybm[ip] = ctl->met_lev_hybm[ip];
-      }
 
       /* Check number of levels... */
       if (met->np + 1 != ctl->met_nlev)
@@ -8704,9 +9025,10 @@ void read_met_nc_levels(
       for (int ix = 0; ix < met->nx; ix++)
 	for (int iy = 0; iy < met->ny; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
-	    const double p0 = hyam[ip] / 100. + hybm[ip] * met->ps[ix][iy];
+	    const double p0 =
+	      met->hyam[ip] / 100. + met->hybm[ip] * met->ps[ix][iy];
 	    const double p1 =
-	      hyam[ip + 1] / 100. + hybm[ip + 1] * met->ps[ix][iy];
+	      met->hyam[ip + 1] / 100. + met->hybm[ip + 1] * met->ps[ix][iy];
 	    met->pl[ix][iy][ip] = (float) ((p1 - p0) / log(p1 / p0));
 	  }
     }
@@ -8748,7 +9070,6 @@ void read_met_nc_levels(
   for (int ip = 1; ip < met->np; ip++)
     if (met->p[ip - 1] < met->p[ip])
       ERRMSG("Pressure levels must be descending!");
-
 }
 
 /*****************************************************************************/
