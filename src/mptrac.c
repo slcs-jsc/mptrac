@@ -1351,9 +1351,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -2114,20 +2113,13 @@ void intpol_met_4d_eta(
      - A*(eta),B*(eta) by linear interpolation on eta_k
      - then p = A* / 100 + B* * ps. */
   const int npl = met0->npl;
-  float eta_k[EP];
-  for (int k = 0; k < npl; ++k)
-    eta_k[k] = (float) (met0->hyam[k] / 100000.0 + met0->hybm[k]);
-
-  const double eta_clamped =
-    CLAMP(eta, MIN(eta_k[0], eta_k[npl - 1]), MAX(eta_k[0], eta_k[npl - 1]));
-
-  const int ik_eta = locate_irr_float(eta_k, npl, eta_clamped, 0);
-
-  const double Astar = LIN(eta_k[ik_eta], met0->hyam[ik_eta],
-			   eta_k[ik_eta + 1], met0->hyam[ik_eta + 1],
+  const double eta_clamped = CLAMP(eta, met0->eta[0], met0->eta[npl - 1]);
+  const int ik_eta = locate_irr(met0->eta, npl, eta_clamped);
+  const double Astar = LIN(met0->eta[ik_eta], met0->hyam[ik_eta],
+			   met0->eta[ik_eta + 1], met0->hyam[ik_eta + 1],
 			   eta_clamped);
-  const double Bstar = LIN(eta_k[ik_eta], met0->hybm[ik_eta],
-			   eta_k[ik_eta + 1], met0->hybm[ik_eta + 1],
+  const double Bstar = LIN(met0->eta[ik_eta], met0->hybm[ik_eta],
+			   met0->eta[ik_eta + 1], met0->hybm[ik_eta + 1],
 			   eta_clamped);
 
   /* A is in Pa; convert to hPa with /100. */
@@ -2186,11 +2178,11 @@ void intpol_met_4d_eta(
 void intpol_met_4d_eta_convert(
   const met_t *met0,
   const met_t *met1,
-  double ts,
-  double lon,
-  double lat,
-  double value_in,
-  int to_eta,
+  const double ts,
+  const double lon,
+  const double lat,
+  const double value_in,
+  const int to_eta,
   double *value_out) {
 
   /* Interpolate surface pressure... */
@@ -2200,30 +2192,26 @@ void intpol_met_4d_eta_convert(
 		     met1, (float (*)[EY]) met1->ps,
 		     ts, lon, lat, &ps, ci, cw, 1);
 
-  /* Get vertical columns of pressure and eta... */
+  /* Get vertical column of pressure... */
   const int npl = met0->npl;
-  float pcol[EP], etacol[EP];
-  for (int k = 0; k < npl; ++k) {
-    pcol[k] = (float) (met0->hyam[k] / 100.0 + met0->hybm[k] * ps);
-    etacol[k] = (float) (met0->hyam[k] / 100000.0 + met0->hybm[k]);
-  }
+  double pcol[EP];
+  for (int k = 0; k < npl; ++k)
+    pcol[k] = met0->hyam[k] / 100.0 + met0->hybm[k] * ps;
 
   /* Convert pressure to eta... */
   if (to_eta) {
-    const double p = CLAMP(value_in,
-			   MIN(pcol[0], pcol[npl - 1]),
-			   MAX(pcol[0], pcol[npl - 1]));
-    int ik = locate_irr_float(pcol, npl, p, 0);
-    *value_out = LIN(pcol[ik], etacol[ik], pcol[ik + 1], etacol[ik + 1], p);
+    const double p = CLAMP(value_in, pcol[0], pcol[npl - 1]);
+    const int ik = locate_irr(pcol, npl, p);
+    *value_out =
+      LIN(pcol[ik], met0->eta[ik], pcol[ik + 1], met0->eta[ik + 1], p);
   }
 
   /* Convert eta to pressure... */
   else {
-    const double e = CLAMP(value_in,
-			   MIN(etacol[0], etacol[npl - 1]),
-			   MAX(etacol[0], etacol[npl - 1]));
-    int ik = locate_irr_float(etacol, npl, e, 0);
-    *value_out = LIN(etacol[ik], pcol[ik], etacol[ik + 1], pcol[ik + 1], e);
+    const double e = CLAMP(value_in, met0->eta[0], met0->eta[npl - 1]);
+    const int ik = locate_irr(met0->eta, npl, e);
+    *value_out =
+      LIN(met0->eta[ik], pcol[ik], met0->eta[ik + 1], pcol[ik + 1], e);
   }
 }
 
@@ -2232,35 +2220,26 @@ void intpol_met_4d_eta_convert(
 double intpol_met_4d_eta_sample_column(
   const met_t *met,
   const float array[EX][EY][EP],
-  int ixc,
-  int iyc,
-  double p_target_hPa,
+  const int ixc,
+  const int iyc,
+  const double p_target_hPa,
   int *ig_hint) {
 
+  /* Set pressure profile... */
   const int npl = met->npl;
-
-  /* Build pressure profile... */
-  float pcol[EP];
-  const float ps = met->ps[ixc][iyc];	/* hPa */
-  for (int k = 0; k < npl; ++k)
-    pcol[k] = (float) (met->hyam[k] / 100.0 + met->hybm[k] * ps);
+  const float *restrict pcol = met->pl[ixc][iyc];
 
   /* Clamp target to valid range (handles below-ground)... */
-  const double pmin = MIN(pcol[0], pcol[npl - 1]);
-  const double pmax = MAX(pcol[0], pcol[npl - 1]);
-  const double pt = CLAMP(p_target_hPa, pmin, pmax);
+  const double pt = CLAMP(p_target_hPa, pcol[0], pcol[npl - 1]);
 
   /* Get vertical index... */
-  int ig = (*ig_hint >= 0 && *ig_hint < npl - 1) ? *ig_hint : 0;
+  const int ig = (*ig_hint >= 0 && *ig_hint < npl - 1) ? *ig_hint : 0;
   const int ik = locate_irr_float(pcol, npl, pt, ig);
   *ig_hint = ik;
 
   /* Linear interpolation in pressure... */
-  const double x0 = pcol[ik];
-  const double x1 = pcol[ik + 1];
-  const double y0 = array[ixc][iyc][ik];
-  const double y1 = array[ixc][iyc][ik + 1];
-  return LIN(x0, y0, x1, y1, pt);
+  return LIN(pcol[ik], array[ixc][iyc][ik], pcol[ik + 1],
+	     array[ixc][iyc][ik + 1], pt);
 }
 
 /*****************************************************************************/
@@ -8664,6 +8643,13 @@ void read_met_nc_grid(
       met->hyam[ip] = ctl->met_lev_hyam[ip];
       met->hybm[ip] = ctl->met_lev_hybm[ip];
     }
+  }
+
+  /* Calculate eta levels... */
+  for (int k = 0; k < MAX(met->np, ctl->met_nlev); ++k) {
+    met->eta[k] = met->hyam[k] / 100000.0 + met->hybm[k];
+    if (ctl->met_vert_coord >= 2 && k > 0 && met->eta[k] <= met->eta[k - 1])
+      ERRMSG("Eta levels must be ascending!");
   }
 
   /* Check horizontal grid spacing... */

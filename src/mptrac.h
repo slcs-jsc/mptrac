@@ -3578,6 +3578,9 @@ typedef struct {
   /*! Model level b coefficients. */
   double hybm[EP];
 
+  /*! Model level eta values. */
+  double eta[EP];
+
   /*! Surface pressure [hPa]. */
   float ps[EX][EY];
 
@@ -5009,11 +5012,11 @@ void intpol_met_4d_eta(
 void intpol_met_4d_eta_convert(
   const met_t * met0,
   const met_t * met1,
-  double ts,
-  double lon,
-  double lat,
-  double value_in,
-  int to_eta,
+  const double ts,
+  const double lon,
+  const double lat,
+  const double value_in,
+  const int to_eta,
   double *value_out);
 
 /**
@@ -5068,9 +5071,9 @@ void intpol_met_4d_eta_convert(
 double intpol_met_4d_eta_sample_column(
   const met_t * met,
   const float array[EX][EY][EP],
-  int ixc,
-  int iyc,
-  double p_target_hPa,
+  const int ixc,
+  const int iyc,
+  const double p_target_hPa,
   int *ig_hint);
 
 /**

@@ -487,6 +487,7 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(ep) :: hybrid
      REAL(c_double), DIMENSION(ep) :: hyam
      REAL(c_double), DIMENSION(ep) :: hybm
+     REAL(c_double), DIMENSION(ep) :: eta
      REAL(c_float), DIMENSION(ey,ex) :: ps
      REAL(c_float), DIMENSION(ey,ex) :: ts
      REAL(c_float), DIMENSION(ey,ex) :: zs
