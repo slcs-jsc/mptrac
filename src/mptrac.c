@@ -2110,8 +2110,9 @@ void intpol_met_4d_eta(
 		     ts, lon, lat, &ps, ci, cw, 1);
 
   /* Compute target pressure from hybrid-η:
-     eta_k = A_k/1000 + B_k (fixed p0=1000 hPa);
-     A*(eta),B*(eta) by linear interp on eta_k; then p = A* / 100 + B* * ps. */
+     - eta_k = A_k/1000 + B_k (fixed p0=1000 hPa);
+     - A*(eta),B*(eta) by linear interpolation on eta_k
+     - then p = A* / 100 + B* * ps. */
   const int npl = met0->npl;
   float eta_k[EP];
   for (int k = 0; k < npl; ++k)
@@ -2203,10 +2204,8 @@ void intpol_met_4d_eta_convert(
   const int npl = met0->npl;
   float pcol[EP], etacol[EP];
   for (int k = 0; k < npl; ++k) {
-    const double ak_hPa = met0->hyam[k] / 100.0;
-    const double bk = met0->hybm[k];
-    pcol[k] = (float) (ak_hPa + bk * ps);
-    etacol[k] = (float) (ak_hPa / 1000. + bk);
+    pcol[k] = (float) (met0->hyam[k] / 100.0 + met0->hybm[k] * ps);
+    etacol[k] = (float) (met0->hyam[k] / 100000.0 + met0->hybm[k]);
   }
 
   /* Convert pressure to eta... */
@@ -2496,7 +2495,6 @@ void intpol_met_space_3d(
 
 /*****************************************************************************/
 
-#if 0
 void intpol_met_space_3d_ml(
   const met_t *met,
   float zs[EX][EY][EP],
@@ -2515,98 +2513,31 @@ void intpol_met_space_3d_ml(
   const int ix = locate_reg(met->lon, met->nx, lon2);
   const int iy = locate_irr(met->lat, met->ny, lat2);
 
-  /* Interpolate vertically... */
-  int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
-  double aux00;
-  if (z >= zs[ix][iy][iz + 1])
-    aux00 = array[ix][iy][iz + 1];
-  else if (z <= zs[ix][iy][iz])
-    aux00 = array[ix][iy][iz];
-  else
-    aux00 = LIN(zs[ix][iy][iz], array[ix][iy][iz],
-		zs[ix][iy][iz + 1], array[ix][iy][iz + 1], z);
-
-  iz = locate_irr_float(zs[ix][iy + 1], met->npl, z, iz);
-  double aux01;
-  if (z >= zs[ix][iy + 1][iz + 1])
-    aux01 = array[ix][iy + 1][iz + 1];
-  else if (z <= zs[ix][iy + 1][iz])
-    aux01 = array[ix][iy + 1][iz];
-  else
-    aux01 = LIN(zs[ix][iy + 1][iz], array[ix][iy + 1][iz],
-		zs[ix][iy + 1][iz + 1], array[ix][iy + 1][iz + 1], z);
-
-  iz = locate_irr_float(zs[ix + 1][iy], met->npl, z, iz);
-  double aux10;
-  if (z >= zs[ix + 1][iy][iz + 1])
-    aux10 = array[ix + 1][iy][iz + 1];
-  else if (z <= zs[ix + 1][iy][iz])
-    aux10 = array[ix + 1][iy][iz];
-  else
-    aux10 = LIN(zs[ix + 1][iy][iz], array[ix + 1][iy][iz],
-		zs[ix + 1][iy][iz + 1], array[ix + 1][iy][iz + 1], z);
-
-  iz = locate_irr_float(zs[ix + 1][iy + 1], met->npl, z, iz);
-  double aux11;
-  if (z >= zs[ix + 1][iy + 1][iz + 1])
-    aux11 = array[ix + 1][iy + 1][iz + 1];
-  else if (z <= zs[ix + 1][iy + 1][iz])
-    aux11 = array[ix + 1][iy + 1][iz];
-  else
-    aux11 = LIN(zs[ix + 1][iy + 1][iz], array[ix + 1][iy + 1][iz],
-		zs[ix + 1][iy + 1][iz + 1], array[ix + 1][iy + 1][iz + 1], z);
-
-  /* Interpolate horizontally... */
-  const double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
-  const double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat2);
-  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
-}
-#endif
-
-/*****************************************************************************/
-
-void intpol_met_space_3d_ml(
-  const met_t *met,
-  float zs[EX][EY][EP],
-  float array[EX][EY][EP],
-  const double z,
-  const double lon,
-  const double lat,
-  double *var) {
-  /* Check longitude and latitude... */
-  double lon2, lat2;
-  intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat, &lon2,
-		       &lat2);
-
-  /* Get horizontal indices... */
-  const int ix = locate_reg(met->lon, met->nx, lon2);
-  const int iy = locate_irr(met->lat, met->ny, lat2);
-
-  /* Determine if zs is increasing or decreasing */
+  /* Determine if zs is increasing or decreasing... */
   const int increasing = (zs[ix][iy][met->npl - 1] > zs[ix][iy][0]);
 
-  /* Define helper macro for vertical interpolation */
-#define VERT_INT(ix_, iy_, iz_, aux_) do { \
-    if (increasing) { \
-      if (z >= zs[ix_][iy_][iz_ + 1]) \
-        aux_ = array[ix_][iy_][iz_ + 1]; \
-      else if (z <= zs[ix_][iy_][iz_]) \
-        aux_ = array[ix_][iy_][iz_]; \
-      else \
-        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_], \
+  /* Define helper macro for vertical interpolation... */
+#define VERT_INT(ix_, iy_, iz_, aux_) do {				\
+    if (increasing) {							\
+      if (z >= zs[ix_][iy_][iz_ + 1])					\
+        aux_ = array[ix_][iy_][iz_ + 1];				\
+      else if (z <= zs[ix_][iy_][iz_])					\
+        aux_ = array[ix_][iy_][iz_];					\
+      else								\
+        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_],		\
                    zs[ix_][iy_][iz_ + 1], array[ix_][iy_][iz_ + 1], z); \
-    } else { /* decreasing */ \
-      if (z <= zs[ix_][iy_][iz_ + 1]) \
-        aux_ = array[ix_][iy_][iz_ + 1]; \
-      else if (z >= zs[ix_][iy_][iz_]) \
-        aux_ = array[ix_][iy_][iz_]; \
-      else \
-        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_], \
+    } else { /* decreasing */						\
+      if (z <= zs[ix_][iy_][iz_ + 1])					\
+        aux_ = array[ix_][iy_][iz_ + 1];				\
+      else if (z >= zs[ix_][iy_][iz_])					\
+        aux_ = array[ix_][iy_][iz_];					\
+      else								\
+        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_],		\
                    zs[ix_][iy_][iz_ + 1], array[ix_][iy_][iz_ + 1], z); \
-    } \
+    }									\
   } while (0)
 
-  /* Interpolate vertically for each corner */
+  /* Interpolate vertically for each corner... */
   int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
   double aux00;
   VERT_INT(ix, iy, iz, aux00);
@@ -8975,8 +8906,7 @@ void read_met_nc_levels(
       for (int iy = 0; iy < met->ny; iy++)
 	for (int ip = 0; ip < met->np; ip++)
 	  met->zetal[ix][iy][ip] =
-	    (float) (met->hyam[ip] / (100. * met->ps[ix][iy]) +
-		     met->hybm[ip]);
+	    (float) (met->hyam[ip] / 100000.0 + met->hybm[ip]);
     if (!read_met_nc_3d
 	(ncid, "etadot", "ETADOT", NULL, NULL, ctl, met, dd, met->zeta_dotl,
 	 1.0))
