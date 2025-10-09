@@ -2,7 +2,7 @@
 
 ## Advection
 
-The advection of an air parcel, i.\,e., the position $\vec{x}(t)$ at
+The advection of an air parcel, i.e., the position $\vec{x}(t)$ at
 time $t$ for a given wind and velocity field $\vec{v}(\vec{x}, t)$, is
 given by the trajectory equation,
 
