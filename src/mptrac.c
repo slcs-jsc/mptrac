@@ -2090,50 +2090,6 @@ void intpol_check_lon_lat(
 
 /*****************************************************************************/
 
-void intpol_met_4d_p_to_eta(
-  const met_t *met0,
-  const met_t *met1,
-  const double ts,
-  const double lon,
-  const double lat,
-  const double p_in,
-  double *eta_out) {
-  
-  /* Interpolate surface pressure... */
-  double ps;
-  INTPOL_INIT;
-  intpol_met_time_2d(met0, (float (*)[EY])met0->ps,
-                     met1, (float (*)[EY])met1->ps,
-                     ts, lon, lat, &ps, ci, cw, 1);
-  
-  /* Compute vertical pressure profile and find index... */
-  double p_prev = met0->hyam[0] / 100.0 + met0->hybm[0] * ps;
-  double p_next = 0.0;
-  
-  /* Clamp p_in to valid range... */
-  const int npl = met0->npl;
-  const double pmin = p_prev;
-  const double pmax = met0->hyam[npl - 1] / 100.0 + met0->hybm[npl - 1] * ps;
-  const double p = (p_in < pmin) ? pmin : (p_in > pmax ? pmax : p_in);
-  
-  int ik = 0;
-  for (int k = 0; k < npl - 1; ++k) {
-    p_next = met0->hyam[k + 1] / 100.0 + met0->hybm[k + 1] * ps;
-    if (p >= p_prev && p <= p_next) {
-      ik = k;
-      break;
-    }
-    p_prev = p_next;
-  }
-  
-  /* Linear interpolation in eta-space... */
-  const double eta0 = met0->eta[ik];
-  const double eta1 = met0->eta[ik + 1];
-  *eta_out = eta0 + (eta1 - eta0) * (p - p_prev) / (p_next - p_prev);
-}
-
-/*****************************************************************************/
-
 void intpol_met_4d_zeta(
   const met_t *met0,
   float heights0[EX][EY][EP],
@@ -3071,18 +3027,18 @@ void module_advect(
 
   /* Use omega vertical velocity... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
-
+    
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
-
+      
       /* Init... */
       INTPOL_INIT;
       double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0,
 	x[3] = { 0, 0, 0 };
-
+      
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
-
+	
 	/* Set position... */
 	if (i == 0) {
 	  dts = 0.0;
@@ -3140,141 +3096,83 @@ void module_advect(
     }
   }
 
-  /* Use zetadot vertical velocity... */
-  else if (ctl->advect_vert_coord == 1) {
+  /* Use zeta or eta vertical velocity... */
+  else if (ctl->advect_vert_coord == 1 || ctl->advect_vert_coord == 3) {
 
+    /* Select quantity index depending on coordinate... */
+    const int qnt = (ctl->advect_vert_coord == 1
+                     ? ctl->qnt_zeta
+                     : ctl->qnt_eta);
+    
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
-
-      /* Convert pressure to zeta... */
-      INTPOL_INIT;
-      intpol_met_4d_zeta(met0, met0->pl, met0->zetal, met1,
-			 met1->pl, met1->zetal, atm->time[ip], atm->p[ip],
-			 atm->lon[ip], atm->lat[ip],
-			 &atm->q[ctl->qnt_zeta][ip], ci, cw, 1);
-
-      /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, zeta_dot[4],
-	zeta_dotm = 0, x[3] = { 0, 0, 0 };
-
-      /* Loop over integration nodes... */
-      for (int i = 0; i < ctl->advect; i++) {
-
-	/* Set position... */
-	if (i == 0) {
-	  dts = 0.0;
-	  x[0] = atm->lon[ip];
-	  x[1] = atm->lat[ip];
-	  x[2] = atm->q[ctl->qnt_zeta][ip];
-	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
-	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	  x[2] = atm->q[ctl->qnt_zeta][ip] + dts * zeta_dot[i - 1];
-	}
-	const double tm = atm->time[ip] + dts;
-
-	/* Interpolate meteo data... */
-	intpol_met_4d_zeta(met0, met0->zetal, met0->ul, met1, met1->zetal,
-			   met1->ul, tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
-	intpol_met_4d_zeta(met0, met0->zetal, met0->vl, met1, met1->zetal,
-			   met1->vl, tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
-	intpol_met_4d_zeta(met0, met0->zetal, met0->zeta_dotl, met1,
-			   met1->zetal, met1->zeta_dotl, tm, x[2], x[0],
-			   x[1], &zeta_dot[i], ci, cw, 0);
-
-	/* Get mean wind... */
-	double k = 1.0;
-	if (ctl->advect == 2)
-	  k = (i == 0 ? 0.0 : 1.0);
-	else if (ctl->advect == 4)
-	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
-	um += k * u[i];
-	vm += k * v[i];
-	zeta_dotm += k * zeta_dot[i];
-      }
-
-      /* Set new position... */
-      atm->time[ip] += cache->dt[ip];
-      atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
-			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
-      atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
-      atm->q[ctl->qnt_zeta][ip] += cache->dt[ip] * zeta_dotm;
-
-      /* Convert zeta to pressure... */
-      intpol_met_4d_zeta(met0, met0->zetal, met0->pl, met1, met1->zetal,
-			 met1->pl, atm->time[ip],
-			 atm->q[ctl->qnt_zeta][ip], atm->lon[ip],
-			 atm->lat[ip], &atm->p[ip], ci, cw, 1);
-    }
-  }
-
-  /* Use etadot vertical velocity... */
-  else if (ctl->advect_vert_coord == 3) {
-
-    /* Loop over particles... */
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
-
-      /* Convert pressure to eta (use vertical-first method!)... */
-      intpol_met_4d_p_to_eta(met0, met1,
-			     atm->time[ip], atm->lon[ip], atm->lat[ip],
-			     atm->p[ip], &atm->q[ctl->qnt_eta][ip]);
       
-      /* Init... */
-      double dts, u[4], um = 0, v[4], vm = 0, eta_dot[4],
-	eta_dotm = 0, x[3] = { 0, 0, 0 };
+      /* Convert pressure to vertical coordinate (zeta or eta)... */
+      INTPOL_INIT;
+      intpol_met_4d_zeta(met0, met0->pl, met0->zetal,
+                         met1, met1->pl, met1->zetal,
+                         atm->time[ip], atm->p[ip],
+                         atm->lon[ip], atm->lat[ip],
+                         &atm->q[qnt][ip], ci, cw, 1);
 
-      /* Loop over integration nodes... */
+      /* Init... */
+      double dts, u[4], um = 0, v[4], vm = 0, wdot[4],
+             wdotm = 0, x[3] = { 0, 0, 0 };
+
+      /* Loop over integration nodes (Runge–Kutta steps)... */
       for (int i = 0; i < ctl->advect; i++) {
 
-	/* Set position... */
-	if (i == 0) {
-	  dts = 0.0;
-	  x[0] = atm->lon[ip];
-	  x[1] = atm->lat[ip];
-	  x[2] = atm->q[ctl->qnt_eta][ip];
-	} else {
-	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
-	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-	  x[2] = atm->q[ctl->qnt_eta][ip] + dts * eta_dot[i - 1];
-	}
-	const double tm = atm->time[ip] + dts;
+        /* Set position... */
+        if (i == 0) {
+          dts = 0.0;
+          x[0] = atm->lon[ip];
+          x[1] = atm->lat[ip];
+          x[2] = atm->q[qnt][ip];
+        } else {
+          dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+          x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+          x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+          x[2] = atm->q[qnt][ip] + dts * wdot[i - 1];
+        }
 
-	/* Interpolate meteo data (time-first interpolation okay)... */
-	intpol_met_time_3d_ml(met0, met0->zetal, met0->ul,
-			      met1, met1->zetal, met1->ul,
-			      tm, x[2], x[0], x[1], &u[i]);
-	intpol_met_time_3d_ml(met0, met0->zetal, met0->vl,
-			      met1, met1->zetal, met1->vl,
-			      tm, x[2], x[0], x[1], &v[i]);
-	intpol_met_time_3d_ml(met0, met0->zetal, met0->zeta_dotl,
-			      met1, met1->zetal, met1->zeta_dotl,
-			      tm, x[2], x[0], x[1], &eta_dot[i]);
+        const double tm = atm->time[ip] + dts;
 
-	/* Get mean wind... */
-	double k = 1.0;
-	if (ctl->advect == 2)
-	  k = (i == 0 ? 0.0 : 1.0);
-	else if (ctl->advect == 4)
-	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
-	um += k * u[i];
-	vm += k * v[i];
-	eta_dotm += k * eta_dot[i];
+        /* Interpolate meteo data... */
+        intpol_met_4d_zeta(met0, met0->zetal, met0->ul,
+                           met1, met1->zetal, met1->ul,
+                           tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+        intpol_met_4d_zeta(met0, met0->zetal, met0->vl,
+                           met1, met1->zetal, met1->vl,
+                           tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+        intpol_met_4d_zeta(met0, met0->zetal, met0->zeta_dotl,
+                           met1, met1->zetal, met1->zeta_dotl,
+                           tm, x[2], x[0], x[1], &wdot[i], ci, cw, 0);
+
+        /* Compute Runge–Kutta weights... */
+        double k = 1.0;
+        if (ctl->advect == 2)
+          k = (i == 0 ? 0.0 : 1.0);
+        else if (ctl->advect == 4)
+          k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+
+        um += k * u[i];
+        vm += k * v[i];
+        wdotm += k * wdot[i];
       }
 
-      /* Set new position... */
+      /* Update particle position... */
       atm->time[ip] += cache->dt[ip];
       atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
-			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+                             (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
-      atm->q[ctl->qnt_eta][ip] += cache->dt[ip] * eta_dotm;
+      atm->q[qnt][ip] += cache->dt[ip] * wdotm;
 
-      /* Convert eta to pressure (time-first interpolation is okay)... */
-      intpol_met_time_3d_ml(met0, met0->zetal, met0->pl,
-			    met1, met1->zetal, met1->pl,
-			    atm->time[ip], atm->q[ctl->qnt_eta][ip],
-			    atm->lon[ip], atm->lat[ip], &atm->p[ip]);
+      /* Convert vertical coordinate (zeta or eta) back to pressure... */
+      intpol_met_4d_zeta(met0, met0->zetal, met0->pl,
+                         met1, met1->zetal, met1->pl,
+                         atm->time[ip],
+                         atm->q[qnt][ip], atm->lon[ip], atm->lat[ip],
+                         &atm->p[ip], ci, cw, 1);
     }
   }
 }

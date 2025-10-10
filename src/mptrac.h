@@ -3804,7 +3804,6 @@ typedef struct {
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
 #pragma acc routine (intpol_check_lon_lat)
-#pragma acc routine (intpol_met_4d_p_to_eta)
 #pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
 #pragma acc routine (intpol_met_space_3d_ml)
@@ -4895,46 +4894,6 @@ void intpol_check_lon_lat(
   const double lat,
   double *lon2,
   double *lat2);
-
-/**
- * @brief Convert pressure (Pa) to eta coordinate using model-level hybrid coefficients.
- *
- * This function performs a conversion from pressure to eta (model vertical coordinate)
- * for a given location and time, using interpolated surface pressure from two meteorological
- * states (`met0` and `met1`). The surface pressure is first interpolated in space and time,
- * and then the eta level corresponding to the given pressure is linearly interpolated
- * between the nearest model levels.
- *
- * @param[in]  met0       Pointer to first meteorological time level structure.
- * @param[in]  met1       Pointer to second meteorological time level structure.
- * @param[in]  ts         Time interpolation coefficient (0 = met0, 1 = met1).
- * @param[in]  lon        Longitude of the target point (degrees east).
- * @param[in]  lat        Latitude of the target point (degrees north).
- * @param[in]  p_in       Pressure value (Pa) to be converted to eta.
- * @param[out] eta_out    Pointer to the output eta coordinate.
- *
- * @note
- * - The function internally interpolates surface pressure (`ps`) between `met0` and `met1`.
- * - Only conversion from pressure to eta is supported (eta→pressure path removed for performance).
- * - The hybrid coefficients `hyam` and `hybm` are assumed to define full model levels.
- * - The computed eta value is linearly interpolated between surrounding levels.
- *
- * @warning
- * The input pressure `p_in` is clamped to the valid model column range to avoid extrapolation.
- *
- * @see intpol_met_time_2d()
- * @see locate_irr()
- *
- * @author Lars Hoffmann
- */
-void intpol_met_4d_p_to_eta(
-  const met_t *met0,
-  const met_t *met1,
-  const double ts,
-  const double lon,
-  const double lat,
-  const double p_in,
-  double *eta_out);
 
 /**
  * @brief Interpolates meteorological variables to a given position and time.
