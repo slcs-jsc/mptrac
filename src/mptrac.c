@@ -2090,91 +2090,6 @@ void intpol_check_lon_lat(
 
 /*****************************************************************************/
 
-void intpol_met_4d_eta(
-  const met_t *met0,
-  const float arr0[EX][EY][EP],
-  const met_t *met1,
-  const float arr1[EX][EY][EP],
-  const double ts,
-  const double eta,
-  const double lon,
-  const double lat,
-  double *var_out) {
-
-  /* Interpolate surface pressure... */
-  double ps;
-  INTPOL_INIT;
-  intpol_met_time_2d(met0, (float (*)[EY]) met0->ps,
-		     met1, (float (*)[EY]) met1->ps,
-		     ts, lon, lat, &ps, ci, cw, 1);
-
-  /* Compute target pressure from hybrid-η:
-     - eta_k = A_k/1000 + B_k (fixed p0=1000 hPa);
-     - A*(eta),B*(eta) by linear interpolation on eta_k
-     - then p = A* / 100 + B* * ps. */
-  const int npl = met0->npl;
-  const double eta_clamped = CLAMP(eta, met0->eta[0], met0->eta[npl - 1]);
-  const int ik_eta = locate_irr(met0->eta, npl, eta_clamped);
-  const double Astar = LIN(met0->eta[ik_eta], met0->hyam[ik_eta],
-			   met0->eta[ik_eta + 1], met0->hyam[ik_eta + 1],
-			   eta_clamped);
-  const double Bstar = LIN(met0->eta[ik_eta], met0->hybm[ik_eta],
-			   met0->eta[ik_eta + 1], met0->hybm[ik_eta + 1],
-			   eta_clamped);
-
-  /* A is in Pa; convert to hPa with /100. */
-  const double p_tgt = (Astar / 100.0) + Bstar * ps;	/* hPa */
-
-  /* Get horizontal indices... */
-  double lon2, lat2;
-  intpol_check_lon_lat(met0->lon, met0->nx, met0->lat, met0->ny, lon, lat,
-		       &lon2, &lat2);
-  const int ix = locate_reg(met0->lon, met0->nx, lon2);
-  const int iy = locate_irr(met0->lat, met0->ny, lat2);
-
-  /* Vertical sampling at four corners, for both times... */
-  int ig_hint = -1;
-  const double v00_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy, p_tgt, &ig_hint);
-  const double v01_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix, iy + 1, p_tgt, &ig_hint);
-  const double v10_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy, p_tgt, &ig_hint);
-  const double v11_0 =
-    intpol_met_4d_eta_sample_column(met0, arr0, ix + 1, iy + 1, p_tgt,
-				    &ig_hint);
-
-  const double v00_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy, p_tgt, &ig_hint);
-  const double v01_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix, iy + 1, p_tgt, &ig_hint);
-  const double v10_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy, p_tgt, &ig_hint);
-  const double v11_1 =
-    intpol_met_4d_eta_sample_column(met1, arr1, ix + 1, iy + 1, p_tgt,
-				    &ig_hint);
-
-  /* Bilinear horizontal interpolation at each time... */
-  const double vrow0_0 =
-    LIN(met0->lat[iy], v00_0, met0->lat[iy + 1], v01_0, lat2);
-  const double vrow1_0 =
-    LIN(met0->lat[iy], v10_0, met0->lat[iy + 1], v11_0, lat2);
-  const double v_spa0 =
-    LIN(met0->lon[ix], vrow0_0, met0->lon[ix + 1], vrow1_0, lon2);
-
-  const double vrow0_1 =
-    LIN(met1->lat[iy], v00_1, met1->lat[iy + 1], v01_1, lat2);
-  const double vrow1_1 =
-    LIN(met1->lat[iy], v10_1, met1->lat[iy + 1], v11_1, lat2);
-  const double v_spa1 =
-    LIN(met1->lon[ix], vrow0_1, met1->lon[ix + 1], vrow1_1, lon2);
-
-  /* Linear interpolation in time... */
-  *var_out = LIN(met0->time, v_spa0, met1->time, v_spa1, ts);
-}
-
-/*****************************************************************************/
-
 void intpol_met_4d_eta_convert(
   const met_t *met0,
   const met_t *met1,
@@ -2213,33 +2128,6 @@ void intpol_met_4d_eta_convert(
     *value_out =
       LIN(met0->eta[ik], pcol[ik], met0->eta[ik + 1], pcol[ik + 1], e);
   }
-}
-
-/*****************************************************************************/
-
-double intpol_met_4d_eta_sample_column(
-  const met_t *met,
-  const float array[EX][EY][EP],
-  const int ixc,
-  const int iyc,
-  const double p_target_hPa,
-  int *ig_hint) {
-
-  /* Set pressure profile... */
-  const int npl = met->npl;
-  const float *restrict pcol = met->pl[ixc][iyc];
-
-  /* Clamp target to valid range (handles below-ground)... */
-  const double pt = CLAMP(p_target_hPa, pcol[0], pcol[npl - 1]);
-
-  /* Get vertical index... */
-  const int ig = (*ig_hint >= 0 && *ig_hint < npl - 1) ? *ig_hint : 0;
-  const int ik = locate_irr_float(pcol, npl, pt, ig);
-  *ig_hint = ik;
-
-  /* Linear interpolation in pressure... */
-  return LIN(pcol[ik], array[ixc][iyc][ik], pcol[ik + 1],
-	     array[ixc][iyc][ik + 1], pt);
 }
 
 /*****************************************************************************/
@@ -3325,7 +3213,7 @@ void module_advect(
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
-      /* Convert pressure to eta... */
+      /* Convert pressure to eta (use vertical-first method!)... */
       intpol_met_4d_eta_convert(met0, met1,
 				atm->time[ip], atm->lon[ip], atm->lat[ip],
 				atm->p[ip], 1, &atm->q[ctl->qnt_eta][ip]);
@@ -3351,18 +3239,16 @@ void module_advect(
 	}
 	const double tm = atm->time[ip] + dts;
 
-	/* Interpolate meteo data with time-local ps and terrain-following eta */
-	intpol_met_4d_eta(met0, (const float (*)[EY][EP]) met0->ul,
-			  met1, (const float (*)[EY][EP]) met1->ul,
-			  tm, x[2], x[0], x[1], &u[i]);
-
-	intpol_met_4d_eta(met0, (const float (*)[EY][EP]) met0->vl,
-			  met1, (const float (*)[EY][EP]) met1->vl,
-			  tm, x[2], x[0], x[1], &v[i]);
-
-	intpol_met_4d_eta(met0, (const float (*)[EY][EP]) met0->zeta_dotl,
-			  met1, (const float (*)[EY][EP]) met1->zeta_dotl,
-			  tm, x[2], x[0], x[1], &eta_dot[i]);
+	/* Interpolate meteo data (time-first interpolation okay)... */
+	intpol_met_time_3d_ml(met0, met0->zetal, met0->ul,
+			      met1, met1->zetal, met1->ul,
+			      tm, x[2], x[0], x[1], &u[i]);
+	intpol_met_time_3d_ml(met0, met0->zetal, met0->vl,
+			      met1, met1->zetal, met1->vl,
+			      tm, x[2], x[0], x[1], &v[i]);
+	intpol_met_time_3d_ml(met0, met0->zetal, met0->zeta_dotl,
+			      met1, met1->zetal, met1->zeta_dotl,
+			      tm, x[2], x[0], x[1], &eta_dot[i]);
 
 	/* Get mean wind... */
 	double k = 1.0;
@@ -3382,10 +3268,11 @@ void module_advect(
       atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
       atm->q[ctl->qnt_eta][ip] += cache->dt[ip] * eta_dotm;
 
-      /* Convert eta to pressure... */
-      intpol_met_4d_eta_convert(met0, met1,
-				atm->time[ip], atm->lon[ip], atm->lat[ip],
-				atm->q[ctl->qnt_eta][ip], 0, &atm->p[ip]);
+      /* Convert eta to pressure (time-first interpolation is okay)... */
+      intpol_met_time_3d_ml(met0, met0->zetal, met0->pl,
+			    met1, met1->zetal, met1->pl,
+			    atm->time[ip], atm->q[ctl->qnt_eta][ip],
+			    atm->lon[ip], atm->lat[ip], &atm->p[ip]);
     }
   }
 }

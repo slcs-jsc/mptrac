@@ -3804,9 +3804,7 @@ typedef struct {
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
 #pragma acc routine (intpol_check_lon_lat)
-#pragma acc routine (intpol_met_4d_eta)
 #pragma acc routine (intpol_met_4d_eta_convert)
-#pragma acc routine (intpol_met_4d_eta_sample_column)
 #pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
 #pragma acc routine (intpol_met_space_3d_ml)
@@ -4899,69 +4897,6 @@ void intpol_check_lon_lat(
   double *lat2);
 
 /**
- * @brief Interpolates a 3D meteorological variable in hybrid-η (terrain-following)
- * coordinates across space and time.
- *
- * This function performs full 4D interpolation of a field defined on hybrid-η model
- * levels between two time steps (`met0`, `met1`) and their associated data arrays
- * (`arr0`, `arr1`). The interpolation proceeds as follows:
- *
- *  1. Interpolate the surface pressure `ps` to the requested time and horizontal position.
- *  2. Convert the requested hybrid-η coordinate (dimensionless) to physical pressure
- *     using the ERA/IFS hybrid formulation:
- *
- *        η(k) = A(k)/p₀ + B(k),   with p₀ = 1000 hPa
- *        p(η) = A(η)/100 + B(η) * ps
- *
- *     where A and B are the hybrid coefficients provided by the meteorological dataset,
- *     and `ps` is the time-local surface pressure (in hPa).
- *
- *  3. Vertically interpolate the input fields in pressure space at each of the
- *     four surrounding horizontal grid points for both time levels.
- *
- *  4. Perform bilinear interpolation in longitude and latitude at each time.
- *
- *  5. Perform linear interpolation in time between `met0->time` and `met1->time`
- *     to obtain the final value.
- *
- * @param[in]  met0       Pointer to first meteorological field structure at time t₀.
- * @param[in]  arr0       3D array of the variable at time t₀ [nx][ny][nz].
- * @param[in]  met1       Pointer to second meteorological field structure at time t₁.
- * @param[in]  arr1       3D array of the variable at time t₁ [nx][ny][nz].
- * @param[in]  ts         Target time (between met0->time and met1->time).
- * @param[in]  eta        Target hybrid-η coordinate (dimensionless, range ≈ 0–1).
- * @param[in]  lon        Target longitude (degrees east).
- * @param[in]  lat        Target latitude (degrees north).
- * @param[out] var_out    Pointer to the interpolated value at (ts, lon, lat, η).
- *
- * @note
- *  - The function assumes ECMWF/ERA-style hybrid vertical coordinates,
- *    with coefficients `hyam` (Pa) and `hybm` (dimensionless).
- *  - The reference pressure p₀ = 1000 hPa is used consistently for η definition.
- *  - The interpolation is linear in time, bilinear in the horizontal,
- *    and linear in pressure in the vertical.
- *  - The local surface pressure `ps` is time-interpolated before use.
- *
- * @warning The input `eta` must lie within the model’s vertical range;
- * values outside are clamped to valid bounds before interpolation.
- *
- * @see intpol_met_4d_eta_convert()
- * @see intpol_met_4d_eta_sample_column()
- *
- * @author Lars Hoffmann
- */
-void intpol_met_4d_eta(
-  const met_t * met0,
-  const float arr0[EX][EY][EP],
-  const met_t * met1,
-  const float arr1[EX][EY][EP],
-  const double ts,
-  const double eta,
-  const double lon,
-  const double lat,
-  double *var_out);
-
-/**
  * @brief Converts between hybrid-η and pressure coordinates at a given space–time position.
  *
  * This function performs vertical coordinate conversion using the ECMWF/ERA
@@ -5004,9 +4939,6 @@ void intpol_met_4d_eta(
  *  - Using inconsistent A/B coefficient definitions or datasets with variable p₀
  *    may lead to incorrect conversions.
  *
- * @see intpol_met_4d_eta()
- * @see intpol_met_4d_eta_sample_column()
- *
  * @author Lars Hoffmann
  */
 void intpol_met_4d_eta_convert(
@@ -5018,63 +4950,6 @@ void intpol_met_4d_eta_convert(
   const double value_in,
   const int to_eta,
   double *value_out);
-
-/**
- * @brief Performs vertical interpolation within a single hybrid-η column.
- *
- * This helper function samples a 3D meteorological field along a single
- * vertical column defined by hybrid coefficients (`hyam`, `hybm`) and the local
- * surface pressure `ps`. It converts the hybrid level definition to pressure
- * coordinates and then performs a linear interpolation of the input array
- * values at the requested target pressure level.
- *
- * @details
- * The hybrid coordinate system used is:
- *
- *   p(k) = A(k)/100 + B(k) * ps
- *
- * where:
- *  - A(k) are the hybrid pressure coefficients (Pa, converted to hPa)
- *  - B(k) are the dimensionless hybrid coefficients
- *  - ps is the local surface pressure (hPa)
- *
- * The target pressure `p_target_hPa` is clamped to the valid pressure range of
- * the model column to prevent extrapolation (e.g., below ground or above top
- * level). A linear interpolation between the two surrounding model levels
- * provides the interpolated value.
- *
- * A simple integer “hint” (`ig_hint`) may be reused between calls to speed up
- * repeated vertical searches when sampling nearby columns or time steps.
- *
- * @param[in]  met            Pointer to the meteorological data structure.
- * @param[in]  array          3D variable array [EX][EY][EP] defined on model levels.
- * @param[in]  ixc            X-index (longitude grid index) of the column.
- * @param[in]  iyc            Y-index (latitude grid index) of the column.
- * @param[in]  p_target_hPa   Target pressure (hPa) for vertical interpolation.
- * @param[in,out] ig_hint     Optional search hint for the vertical index.
- *                            On input: previous level index (or -1 if none).  
- *                            On output: updated index for reuse.
- *
- * @return Interpolated value of the field at the requested pressure level (same units as `array`).
- *
- * @note
- *  - The hybrid pressure profile is built assuming a fixed reference pressure
- *    p₀ = 1000 hPa, consistent with ECMWF/ERA definitions.
- *  - The interpolation is strictly linear in pressure space.
- *  - If `p_target_hPa` lies outside the model range, it is clamped to valid limits.
- *
- * @see intpol_met_4d_eta()
- * @see intpol_met_4d_eta_convert()
- *
- * @author Lars Hoffmann
- */
-double intpol_met_4d_eta_sample_column(
-  const met_t * met,
-  const float array[EX][EY][EP],
-  const int ixc,
-  const int iyc,
-  const double p_target_hPa,
-  int *ig_hint);
 
 /**
  * @brief Interpolates meteorological variables to a given position and time.
