@@ -3804,7 +3804,7 @@ typedef struct {
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
 #pragma acc routine (intpol_check_lon_lat)
-#pragma acc routine (intpol_met_4d_eta_convert)
+#pragma acc routine (intpol_met_4d_p_to_eta)
 #pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
 #pragma acc routine (intpol_met_space_3d_ml)
@@ -4897,59 +4897,44 @@ void intpol_check_lon_lat(
   double *lat2);
 
 /**
- * @brief Converts between hybrid-η and pressure coordinates at a given space–time position.
+ * @brief Convert pressure (Pa) to eta coordinate using model-level hybrid coefficients.
  *
- * This function performs vertical coordinate conversion using the ECMWF/ERA
- * hybrid-η (terrain-following) definition:
+ * This function performs a conversion from pressure to eta (model vertical coordinate)
+ * for a given location and time, using interpolated surface pressure from two meteorological
+ * states (`met0` and `met1`). The surface pressure is first interpolated in space and time,
+ * and then the eta level corresponding to the given pressure is linearly interpolated
+ * between the nearest model levels.
  *
- *    η(k) = A(k)/p₀ + B(k),  with p₀ = 1000 hPa  
- *    p(k) = A(k)/100 + B(k) * ps
- *
- * where A(k) and B(k) are the hybrid coefficients stored in the meteorological
- * dataset, and `ps` is the time- and space-interpolated surface pressure.
- *
- * The function first interpolates the surface pressure `ps` at the requested
- * time and horizontal location, then constructs the corresponding vertical
- * profiles of pressure `p(k)` and hybrid coordinate `η(k)`. Depending on the
- * direction specified by `to_eta`, it performs a linear vertical interpolation
- * either from pressure to η or vice versa.
- *
- * @param[in]  met0        Pointer to the first meteorological field (time t₀).
- * @param[in]  met1        Pointer to the second meteorological field (time t₁).
- * @param[in]  ts          Target time (must lie between met0->time and met1->time).
- * @param[in]  lon         Target longitude (degrees east).
- * @param[in]  lat         Target latitude (degrees north).
- * @param[in]  value_in    Input value to be converted (pressure [hPa] or η [–]).
- * @param[in]  to_eta      Conversion flag:  
- *                         - `1`: convert from pressure → η  
- *                         - `0`: convert from η → pressure
- * @param[out] value_out   Pointer to the output value (η [–] or pressure [hPa]).
+ * @param[in]  met0       Pointer to first meteorological time level structure.
+ * @param[in]  met1       Pointer to second meteorological time level structure.
+ * @param[in]  ts         Time interpolation coefficient (0 = met0, 1 = met1).
+ * @param[in]  lon        Longitude of the target point (degrees east).
+ * @param[in]  lat        Latitude of the target point (degrees north).
+ * @param[in]  p_in       Pressure value (Pa) to be converted to eta.
+ * @param[out] eta_out    Pointer to the output eta coordinate.
  *
  * @note
- *  - Hybrid coefficients `hyam` (Pa) and `hybm` (dimensionless) are taken from `met0`.
- *    They are assumed identical for `met1` (as in ERA5/IFS data).
- *  - The surface pressure `ps` is linearly interpolated in space and time before use.
- *  - The interpolation is performed linearly in pressure or η between the two
- *    surrounding model levels.
- *  - Values outside the valid vertical range are clamped to prevent extrapolation.
+ * - The function internally interpolates surface pressure (`ps`) between `met0` and `met1`.
+ * - Only conversion from pressure to eta is supported (eta→pressure path removed for performance).
+ * - The hybrid coefficients `hyam` and `hybm` are assumed to define full model levels.
+ * - The computed eta value is linearly interpolated between surrounding levels.
  *
  * @warning
- *  - The function assumes a fixed reference pressure p₀ = 1000 hPa for the hybrid
- *    coordinate definition.
- *  - Using inconsistent A/B coefficient definitions or datasets with variable p₀
- *    may lead to incorrect conversions.
+ * The input pressure `p_in` is clamped to the valid model column range to avoid extrapolation.
+ *
+ * @see intpol_met_time_2d()
+ * @see locate_irr()
  *
  * @author Lars Hoffmann
  */
-void intpol_met_4d_eta_convert(
-  const met_t * met0,
-  const met_t * met1,
+void intpol_met_4d_p_to_eta(
+  const met_t *met0,
+  const met_t *met1,
   const double ts,
   const double lon,
   const double lat,
-  const double value_in,
-  const int to_eta,
-  double *value_out);
+  const double p_in,
+  double *eta_out);
 
 /**
  * @brief Interpolates meteorological variables to a given position and time.

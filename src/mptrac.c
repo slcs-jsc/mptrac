@@ -2090,44 +2090,46 @@ void intpol_check_lon_lat(
 
 /*****************************************************************************/
 
-void intpol_met_4d_eta_convert(
+void intpol_met_4d_p_to_eta(
   const met_t *met0,
   const met_t *met1,
   const double ts,
   const double lon,
   const double lat,
-  const double value_in,
-  const int to_eta,
-  double *value_out) {
-
+  const double p_in,
+  double *eta_out) {
+  
   /* Interpolate surface pressure... */
   double ps;
   INTPOL_INIT;
-  intpol_met_time_2d(met0, (float (*)[EY]) met0->ps,
-		     met1, (float (*)[EY]) met1->ps,
-		     ts, lon, lat, &ps, ci, cw, 1);
-
-  /* Get vertical column of pressure... */
+  intpol_met_time_2d(met0, (float (*)[EY])met0->ps,
+                     met1, (float (*)[EY])met1->ps,
+                     ts, lon, lat, &ps, ci, cw, 1);
+  
+  /* Compute vertical pressure profile and find index... */
+  double p_prev = met0->hyam[0] / 100.0 + met0->hybm[0] * ps;
+  double p_next = 0.0;
+  
+  /* Clamp p_in to valid range... */
   const int npl = met0->npl;
-  double pcol[EP];
-  for (int k = 0; k < npl; ++k)
-    pcol[k] = met0->hyam[k] / 100.0 + met0->hybm[k] * ps;
-
-  /* Convert pressure to eta... */
-  if (to_eta) {
-    const double p = CLAMP(value_in, pcol[0], pcol[npl - 1]);
-    const int ik = locate_irr(pcol, npl, p);
-    *value_out =
-      LIN(pcol[ik], met0->eta[ik], pcol[ik + 1], met0->eta[ik + 1], p);
+  const double pmin = p_prev;
+  const double pmax = met0->hyam[npl - 1] / 100.0 + met0->hybm[npl - 1] * ps;
+  const double p = (p_in < pmin) ? pmin : (p_in > pmax ? pmax : p_in);
+  
+  int ik = 0;
+  for (int k = 0; k < npl - 1; ++k) {
+    p_next = met0->hyam[k + 1] / 100.0 + met0->hybm[k + 1] * ps;
+    if (p >= p_prev && p <= p_next) {
+      ik = k;
+      break;
+    }
+    p_prev = p_next;
   }
-
-  /* Convert eta to pressure... */
-  else {
-    const double e = CLAMP(value_in, met0->eta[0], met0->eta[npl - 1]);
-    const int ik = locate_irr(met0->eta, npl, e);
-    *value_out =
-      LIN(met0->eta[ik], pcol[ik], met0->eta[ik + 1], pcol[ik + 1], e);
-  }
+  
+  /* Linear interpolation in eta-space... */
+  const double eta0 = met0->eta[ik];
+  const double eta1 = met0->eta[ik + 1];
+  *eta_out = eta0 + (eta1 - eta0) * (p - p_prev) / (p_next - p_prev);
 }
 
 /*****************************************************************************/
@@ -3214,10 +3216,10 @@ void module_advect(
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
 
       /* Convert pressure to eta (use vertical-first method!)... */
-      intpol_met_4d_eta_convert(met0, met1,
-				atm->time[ip], atm->lon[ip], atm->lat[ip],
-				atm->p[ip], 1, &atm->q[ctl->qnt_eta][ip]);
-
+      intpol_met_4d_p_to_eta(met0, met1,
+			     atm->time[ip], atm->lon[ip], atm->lat[ip],
+			     atm->p[ip], &atm->q[ctl->qnt_eta][ip]);
+      
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, eta_dot[4],
 	eta_dotm = 0, x[3] = { 0, 0, 0 };
