@@ -3806,10 +3806,8 @@ typedef struct {
 #pragma acc routine (intpol_check_lon_lat)
 #pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
-#pragma acc routine (intpol_met_space_3d_ml)
 #pragma acc routine (intpol_met_space_2d)
 #pragma acc routine (intpol_met_time_3d)
-#pragma acc routine (intpol_met_time_3d_ml)
 #pragma acc routine (intpol_met_time_2d)
 #pragma acc routine (kernel_weight)
 #pragma acc routine (lapse_rate)
@@ -4998,33 +4996,6 @@ void intpol_met_space_3d(
   const int init);
 
 /**
- * @brief Interpolates meteorological data in 3D space.
- *
- * This function performs trilinear interpolation to estimate a
- * meteorological variable at a given altitude (`z`), longitude
- * (`lon`), and latitude (`lat`). It uses a structured 3D grid with
- * irregular vertical spacing and regular horizontal spacing.
- *
- * @param met   Pointer to the meteorological data structure containing grid information.
- * @param zs    3D array of altitude levels at each horizontal grid point.
- * @param array 3D array of meteorological data values corresponding to the grid points.
- * @param z     Target altitude for interpolation.
- * @param lon   Target longitude for interpolation.
- * @param lat   Target latitude for interpolation.
- * @param var   Pointer to a variable where the interpolated value will be stored.
- *
- * @author Lars Hoffmann
- */
-void intpol_met_space_3d_ml(
-  const met_t * met,
-  float zs[EX][EY][EP],
-  float vals[EX][EY][EP],
-  const double z,
-  const double lon,
-  const double lat,
-  double *val);
-
-/**
  * @brief Interpolates meteorological variables in 2D space.
  *
  * This function interpolates meteorological variables at a specified
@@ -5114,41 +5085,6 @@ void intpol_met_time_3d(
   int *ci,
   double *cw,
   const int init);
-
-/**
- * @brief Interpolates meteorological data in both space and time.
- *
- * This function performs 3D spatial interpolation at two time steps
- * (`met0` and `met1`), then interpolates the results in time to
- * estimate the meteorological variable at a given time (`ts`),
- * pressure level (`p`), longitude (`lon`), and latitude (`lat`).
- *
- * @param met0   Pointer to the meteorological data structure at the earlier time step.
- * @param zs0    3D array of altitude levels for `met0`.
- * @param array0 3D array of meteorological data values corresponding to `met0`.
- * @param met1   Pointer to the meteorological data structure at the later time step.
- * @param zs1    3D array of altitude levels for `met1`.
- * @param array1 3D array of meteorological data values corresponding to `met1`.
- * @param ts     Target time for interpolation.
- * @param p      Target pressure level for interpolation.
- * @param lon    Target longitude for interpolation.
- * @param lat    Target latitude for interpolation.
- * @param var    Pointer to a variable where the interpolated value will be stored.
- *
- * @author Lars Hoffmann
- */
-void intpol_met_time_3d_ml(
-  const met_t * met0,
-  float zs0[EX][EY][EP],
-  float array0[EX][EY][EP],
-  const met_t * met1,
-  float zs1[EX][EY][EP],
-  float array1[EX][EY][EP],
-  const double ts,
-  const double p,
-  const double lon,
-  const double lat,
-  double *var);
 
 /**
  * @brief Interpolates meteorological data in 2D space and time.

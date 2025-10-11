@@ -1351,8 +1351,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -2114,7 +2115,7 @@ void intpol_met_4d_zeta(
 			 &lon2, &lat2);
 
     /* Get horizontal indizes... */
-    ci[0] = locate_irr(met0->lon, met0->nx, lon2);
+    ci[0] = locate_reg(met0->lon, met0->nx, lon2);
     ci[1] = locate_irr(met0->lat, met0->ny, lat2);
 
     /* Locate the vertical indizes for each edge of the column... */
@@ -2320,75 +2321,6 @@ void intpol_met_space_3d(
 
 /*****************************************************************************/
 
-void intpol_met_space_3d_ml(
-  const met_t *met,
-  float zs[EX][EY][EP],
-  float array[EX][EY][EP],
-  const double z,
-  const double lon,
-  const double lat,
-  double *var) {
-
-  /* Check longitude and latitude... */
-  double lon2, lat2;
-  intpol_check_lon_lat(met->lon, met->nx, met->lat, met->ny, lon, lat, &lon2,
-		       &lat2);
-
-  /* Get horizontal indices... */
-  const int ix = locate_reg(met->lon, met->nx, lon2);
-  const int iy = locate_irr(met->lat, met->ny, lat2);
-
-  /* Determine if zs is increasing or decreasing... */
-  const int increasing = (zs[ix][iy][met->npl - 1] > zs[ix][iy][0]);
-
-  /* Define helper macro for vertical interpolation... */
-#define VERT_INT(ix_, iy_, iz_, aux_) do {				\
-    if (increasing) {							\
-      if (z >= zs[ix_][iy_][iz_ + 1])					\
-        aux_ = array[ix_][iy_][iz_ + 1];				\
-      else if (z <= zs[ix_][iy_][iz_])					\
-        aux_ = array[ix_][iy_][iz_];					\
-      else								\
-        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_],		\
-                   zs[ix_][iy_][iz_ + 1], array[ix_][iy_][iz_ + 1], z); \
-    } else { /* decreasing */						\
-      if (z <= zs[ix_][iy_][iz_ + 1])					\
-        aux_ = array[ix_][iy_][iz_ + 1];				\
-      else if (z >= zs[ix_][iy_][iz_])					\
-        aux_ = array[ix_][iy_][iz_];					\
-      else								\
-        aux_ = LIN(zs[ix_][iy_][iz_], array[ix_][iy_][iz_],		\
-                   zs[ix_][iy_][iz_ + 1], array[ix_][iy_][iz_ + 1], z); \
-    }									\
-  } while (0)
-
-  /* Interpolate vertically for each corner... */
-  int iz = locate_irr_float(zs[ix][iy], met->npl, z, 0);
-  double aux00;
-  VERT_INT(ix, iy, iz, aux00);
-
-  iz = locate_irr_float(zs[ix][iy + 1], met->npl, z, iz);
-  double aux01;
-  VERT_INT(ix, iy + 1, iz, aux01);
-
-  iz = locate_irr_float(zs[ix + 1][iy], met->npl, z, iz);
-  double aux10;
-  VERT_INT(ix + 1, iy, iz, aux10);
-
-  iz = locate_irr_float(zs[ix + 1][iy + 1], met->npl, z, iz);
-  double aux11;
-  VERT_INT(ix + 1, iy + 1, iz, aux11);
-
-#undef VERT_INT
-
-  /* Interpolate horizontally... */
-  const double aux0 = LIN(met->lat[iy], aux00, met->lat[iy + 1], aux01, lat2);
-  const double aux1 = LIN(met->lat[iy], aux10, met->lat[iy + 1], aux11, lat2);
-  *var = LIN(met->lon[ix], aux0, met->lon[ix + 1], aux1, lon2);
-}
-
-/*****************************************************************************/
-
 void intpol_met_space_2d(
   const met_t *met,
   float array[EX][EY],
@@ -2472,31 +2404,6 @@ void intpol_met_time_3d(
 
   /* Interpolate... */
   *var = wt * (var0 - var1) + var1;
-}
-
-/*****************************************************************************/
-
-void intpol_met_time_3d_ml(
-  const met_t *met0,
-  float zs0[EX][EY][EP],
-  float array0[EX][EY][EP],
-  const met_t *met1,
-  float zs1[EX][EY][EP],
-  float array1[EX][EY][EP],
-  const double ts,
-  const double p,
-  const double lon,
-  const double lat,
-  double *var) {
-
-  double var0, var1;
-
-  /* Spatial interpolation... */
-  intpol_met_space_3d_ml(met0, zs0, array0, p, lon, lat, &var0);
-  intpol_met_space_3d_ml(met1, zs1, array1, p, lon, lat, &var1);
-
-  /* Interpolate... */
-  *var = LIN(met0->time, var0, met1->time, var1, ts);
 }
 
 /*****************************************************************************/
@@ -3027,18 +2934,18 @@ void module_advect(
 
   /* Use omega vertical velocity... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
-    
+
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
-      
+
       /* Init... */
       INTPOL_INIT;
       double dts, u[4], um = 0, v[4], vm = 0, w[4], wm = 0,
 	x[3] = { 0, 0, 0 };
-      
+
       /* Loop over integration nodes... */
       for (int i = 0; i < ctl->advect; i++) {
-	
+
 	/* Set position... */
 	if (i == 0) {
 	  dts = 0.0;
@@ -3065,15 +2972,15 @@ void module_advect(
 
 	/* Interpolate meteo data on model levels... */
 	else {
-	  intpol_met_time_3d_ml(met0, met0->pl, met0->ul,
-				met1, met1->pl, met1->ul,
-				tm, x[2], x[0], x[1], &u[i]);
-	  intpol_met_time_3d_ml(met0, met0->pl, met0->vl,
-				met1, met1->pl, met1->vl,
-				tm, x[2], x[0], x[1], &v[i]);
-	  intpol_met_time_3d_ml(met0, met0->pl, met0->wl,
-				met1, met1->pl, met1->wl,
-				tm, x[2], x[0], x[1], &w[i]);
+	  intpol_met_4d_zeta(met0, met0->pl, met0->ul,
+			     met1, met1->pl, met1->ul,
+			     tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+	  intpol_met_4d_zeta(met0, met0->pl, met0->vl,
+			     met1, met1->pl, met1->vl,
+			     tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+	  intpol_met_4d_zeta(met0, met0->pl, met0->wl,
+			     met1, met1->pl, met1->wl,
+			     tm, x[2], x[0], x[1], &w[i], ci, cw, 0);
 	}
 
 	/* Get mean wind... */
@@ -3101,78 +3008,77 @@ void module_advect(
 
     /* Select quantity index depending on coordinate... */
     const int qnt = (ctl->advect_vert_coord == 1
-                     ? ctl->qnt_zeta
-                     : ctl->qnt_eta);
-    
+		     ? ctl->qnt_zeta : ctl->qnt_eta);
+
     /* Loop over particles... */
     PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
-      
+
       /* Convert pressure to vertical coordinate (zeta or eta)... */
       INTPOL_INIT;
       intpol_met_4d_zeta(met0, met0->pl, met0->zetal,
-                         met1, met1->pl, met1->zetal,
-                         atm->time[ip], atm->p[ip],
-                         atm->lon[ip], atm->lat[ip],
-                         &atm->q[qnt][ip], ci, cw, 1);
+			 met1, met1->pl, met1->zetal,
+			 atm->time[ip], atm->p[ip],
+			 atm->lon[ip], atm->lat[ip],
+			 &atm->q[qnt][ip], ci, cw, 1);
 
       /* Init... */
       double dts, u[4], um = 0, v[4], vm = 0, wdot[4],
-             wdotm = 0, x[3] = { 0, 0, 0 };
+	wdotm = 0, x[3] = { 0, 0, 0 };
 
       /* Loop over integration nodes (Runge–Kutta steps)... */
       for (int i = 0; i < ctl->advect; i++) {
 
-        /* Set position... */
-        if (i == 0) {
-          dts = 0.0;
-          x[0] = atm->lon[ip];
-          x[1] = atm->lat[ip];
-          x[2] = atm->q[qnt][ip];
-        } else {
-          dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
-          x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
-          x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
-          x[2] = atm->q[qnt][ip] + dts * wdot[i - 1];
-        }
+	/* Set position... */
+	if (i == 0) {
+	  dts = 0.0;
+	  x[0] = atm->lon[ip];
+	  x[1] = atm->lat[ip];
+	  x[2] = atm->q[qnt][ip];
+	} else {
+	  dts = (i == 3 ? 1.0 : 0.5) * cache->dt[ip];
+	  x[0] = atm->lon[ip] + DX2DEG(dts * u[i - 1] / 1000., atm->lat[ip]);
+	  x[1] = atm->lat[ip] + DY2DEG(dts * v[i - 1] / 1000.);
+	  x[2] = atm->q[qnt][ip] + dts * wdot[i - 1];
+	}
 
-        const double tm = atm->time[ip] + dts;
+	const double tm = atm->time[ip] + dts;
 
-        /* Interpolate meteo data... */
-        intpol_met_4d_zeta(met0, met0->zetal, met0->ul,
-                           met1, met1->zetal, met1->ul,
-                           tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
-        intpol_met_4d_zeta(met0, met0->zetal, met0->vl,
-                           met1, met1->zetal, met1->vl,
-                           tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
-        intpol_met_4d_zeta(met0, met0->zetal, met0->zeta_dotl,
-                           met1, met1->zetal, met1->zeta_dotl,
-                           tm, x[2], x[0], x[1], &wdot[i], ci, cw, 0);
+	/* Interpolate meteo data... */
+	intpol_met_4d_zeta(met0, met0->zetal, met0->ul,
+			   met1, met1->zetal, met1->ul,
+			   tm, x[2], x[0], x[1], &u[i], ci, cw, 1);
+	intpol_met_4d_zeta(met0, met0->zetal, met0->vl,
+			   met1, met1->zetal, met1->vl,
+			   tm, x[2], x[0], x[1], &v[i], ci, cw, 0);
+	intpol_met_4d_zeta(met0, met0->zetal, met0->zeta_dotl,
+			   met1, met1->zetal, met1->zeta_dotl,
+			   tm, x[2], x[0], x[1], &wdot[i], ci, cw, 0);
 
-        /* Compute Runge–Kutta weights... */
-        double k = 1.0;
-        if (ctl->advect == 2)
-          k = (i == 0 ? 0.0 : 1.0);
-        else if (ctl->advect == 4)
-          k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
+	/* Compute Runge–Kutta weights... */
+	double k = 1.0;
+	if (ctl->advect == 2)
+	  k = (i == 0 ? 0.0 : 1.0);
+	else if (ctl->advect == 4)
+	  k = (i == 0 || i == 3 ? 1.0 / 6.0 : 2.0 / 6.0);
 
-        um += k * u[i];
-        vm += k * v[i];
-        wdotm += k * wdot[i];
+	um += k * u[i];
+	vm += k * v[i];
+	wdotm += k * wdot[i];
       }
 
       /* Update particle position... */
       atm->time[ip] += cache->dt[ip];
       atm->lon[ip] += DX2DEG(cache->dt[ip] * um / 1000.,
-                             (ctl->advect == 2 ? x[1] : atm->lat[ip]));
+			     (ctl->advect == 2 ? x[1] : atm->lat[ip]));
       atm->lat[ip] += DY2DEG(cache->dt[ip] * vm / 1000.);
       atm->q[qnt][ip] += cache->dt[ip] * wdotm;
 
       /* Convert vertical coordinate (zeta or eta) back to pressure... */
       intpol_met_4d_zeta(met0, met0->zetal, met0->pl,
-                         met1, met1->zetal, met1->pl,
-                         atm->time[ip],
-                         atm->q[qnt][ip], atm->lon[ip], atm->lat[ip],
-                         &atm->p[ip], ci, cw, 1);
+			 met1, met1->zetal, met1->pl,
+			 atm->time[ip],
+			 atm->q[qnt][ip], atm->lon[ip], atm->lat[ip],
+			 &atm->p[ip], ci, cw, 1);
     }
   }
 }
