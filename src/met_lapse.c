@@ -230,6 +230,7 @@ int main(
   /* Free... */
   free(clim);
   free(met);
+  free(dd);
 
   return EXIT_SUCCESS;
 }

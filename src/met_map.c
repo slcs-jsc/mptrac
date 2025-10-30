@@ -384,6 +384,7 @@ int main(
   /* Free... */
   free(clim);
   free(met);
+  free(dd);
   free(timem);
   free(psm);
   free(tsm);

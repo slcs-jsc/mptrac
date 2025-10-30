@@ -203,6 +203,7 @@ int main(
   free(clim);
   free(met0);
   free(met1);
+  free(dd);
 
   return EXIT_SUCCESS;
 }

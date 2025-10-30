@@ -60,7 +60,6 @@ int main(
   ALLOC(met1, met_t, 1);
   ALLOC(dd, dd_t, 1);
 
-
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
   const int geopot =
@@ -162,6 +161,7 @@ int main(
   free(atm);
   free(met0);
   free(met1);
+  free(dd);
 
   return EXIT_SUCCESS;
 }
