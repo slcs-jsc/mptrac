@@ -47,6 +47,8 @@ int main(
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
+  double kx = scan_ctl(argv[1], argc, argv, "KX", -1, "50.0", NULL);
+  double kz = scan_ctl(argv[1], argc, argv, "KZ", -1, "0.1", NULL);
 
   /* Read climatological data... */
   mptrac_read_clim(&ctl, clim);
@@ -66,18 +68,12 @@ int main(
     double dt_x_min = 1e100;
     double dt_y_min = 1e100;
     double dt_p_min = 1e100;
-    double dt_dx_pbl_min = 1e100;
-    double dt_dx_trop_min = 1e100;
-    double dt_dx_strat_min = 1e100;
-    double dt_dy_pbl_min = 1e100;
-    double dt_dy_trop_min = 1e100;
-    double dt_dy_strat_min = 1e100;
-    double dt_dp_pbl_min = 1e100;
-    double dt_dp_trop_min = 1e100;
-    double dt_dp_strat_min = 1e100;
+    double dt_dx_min = 1e100;
+    double dt_dy_min = 1e100;
+    double dt_dp_min = 1e100;
 
     /* Loop over columns... */
-#pragma omp parallel for default(shared) collapse(2) reduction(min:dt_x_min,dt_y_min,dt_p_min,dt_dx_pbl_min,dt_dx_trop_min,dt_dx_strat_min,dt_dy_pbl_min,dt_dy_trop_min,dt_dy_strat_min,dt_dp_pbl_min,dt_dp_trop_min,dt_dp_strat_min)
+#pragma omp parallel for default(shared) collapse(2) reduction(min:dt_x_min,dt_y_min,dt_p_min,dt_dx_min,dt_dy_min,dt_dp_min)
     for (int ix = 0; ix < met->nx; ix++)
       for (int iy = 1; iy < met->ny - 1; iy++) {
 
@@ -100,47 +96,21 @@ int main(
 	  dt_p_min = dt_p;
 
 	/* Check diffusion... */
-	const double dt_dx_pbl = 0.5 * SQR(n * dx) / ctl.turb_dx_pbl;
-	if (dt_dx_pbl < dt_dx_pbl_min)
-	  dt_dx_pbl_min = dt_dx_pbl;
-	const double dt_dx_trop = 0.5 * SQR(n * dx) / ctl.turb_dx_trop;
-	if (dt_dx_trop < dt_dx_trop_min)
-	  dt_dx_trop_min = dt_dx_trop;
-	const double dt_dx_strat = 0.5 * SQR(n * dx) / ctl.turb_dx_strat;
-	if (dt_dx_strat < dt_dx_strat_min)
-	  dt_dx_strat_min = dt_dx_strat;
+	const double dt_dx = 0.5 * SQR(n * dx) / kx;
+	if (dt_dx < dt_dx)
+	  dt_dx_min = dt_dx;
 
-	const double dt_dy_pbl = 0.5 * SQR(n * dy) / ctl.turb_dx_pbl;
-	if (dt_dy_pbl < dt_dy_pbl_min)
-	  dt_dy_pbl_min = dt_dy_pbl;
-	const double dt_dy_trop = 0.5 * SQR(n * dy) / ctl.turb_dx_trop;
-	if (dt_dy_trop < dt_dy_trop_min)
-	  dt_dy_trop_min = dt_dy_trop;
-	const double dt_dy_strat = 0.5 * SQR(n * dy) / ctl.turb_dx_strat;
-	if (dt_dy_strat < dt_dy_strat_min)
-	  dt_dy_strat_min = dt_dy_strat;
+	const double dt_dy = 0.5 * SQR(n * dy) / kx;
+	if (dt_dy < dt_dy_min)
+	  dt_dy_min = dt_dy;
 
-	const double dt_dp_pbl =
-	  0.5 * SQR(n * dp) / (SQR(met->p[ip] / H0 * 1e-3) * ctl.turb_dz_pbl);
-	if (dt_dp_pbl < dt_dp_pbl_min)
-	  dt_dp_pbl_min = dt_dp_pbl;
-	const double dt_dp_trop =
-	  0.5 * SQR(n * dp) / (SQR(met->p[ip] / H0 * 1e-3) *
-			       ctl.turb_dz_trop);
-	if (dt_dp_trop < dt_dp_trop_min)
-	  dt_dp_trop_min = dt_dp_trop;
-	const double dt_dp_strat =
-	  0.5 * SQR(n * dp) / (SQR(met->p[ip] / H0 * 1e-3) *
-			       ctl.turb_dz_strat);
-	if (dt_dp_strat < dt_dp_strat_min)
-	  dt_dp_strat_min = dt_dp_strat;
+	const double dt_dp = 0.5 * SQR(n * dp) / (SQR(met->p[ip] / H0 * 1e-3) * kz);
+	if (dt_dp < dt_dp_min)
+	  dt_dp_min = dt_dp;
       }
 
     /* Write output... */
-    printf("%g %g %g %g %g %g %g %g %g %g %g %g %g\n", met->p[ip], dt_x_min,
-	   dt_y_min, dt_p_min, dt_dx_pbl_min, dt_dx_trop_min, dt_dx_strat_min,
-	   dt_dy_pbl_min, dt_dy_trop_min, dt_dy_strat_min, dt_dp_pbl_min,
-	   dt_dp_trop_min, dt_dp_strat_min);
+    printf("%g %g %g %g %g %g %g\n", met->p[ip], dt_x_min, dt_y_min, dt_p_min, dt_dx_min, dt_dy_min, dt_dp_min);
   }
 
   /* Free... */
