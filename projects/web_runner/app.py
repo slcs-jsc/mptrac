@@ -44,11 +44,6 @@ def clean_old_runs(max_age_sec=3600):
                 except Exception as e:
                     logger.warning(f"[CLEANUP] Failed to remove {path}: {e}")
 
-# Periodic cleaning...
-def schedule_periodic_cleanup(interval=3600):
-    threading.Thread(target=lambda: [clean_old_runs() or time.sleep(interval) for _ in iter(int, 1)],
-                     daemon=True).start()
-
 # Create zip file...
 def fast_zip_no_compression(zip_path, source_dir):
     with zipfile.ZipFile(zip_path, 'w', compression=zipfile.ZIP_STORED) as zipf:
@@ -220,6 +215,9 @@ def run():
     # Get run ID...
     run_id = str(uuid.uuid4())
     logger.info(f"[RUN] [{run_id}] Run started from {request.remote_addr}.")
+    
+    # Clean up old runs first
+    clean_old_runs()
     
     # Parse input form...
     try:
@@ -564,6 +562,4 @@ def show_logs():
         return render_template('error.html', stdout=f"❌ Error reading log file: {e}"), 500
 
 if __name__ == '__main__':
-    clean_old_runs()
-    schedule_periodic_cleanup()
     app.run(debug=False)
