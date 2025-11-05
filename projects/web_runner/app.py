@@ -207,7 +207,7 @@ def index(): return render_template('index.html')
 @app.route('/download/<run_id>')
 def download(run_id):
     logger.info(f"[DOWNLOAD] [{run_id}] Download requested.")
-    return send_from_directory(ZIPS_DIR, f"{run_id}.zip", as_attachment=True)
+    return send_from_directory(ZIPS_DIR, f"mptrac_{run_id}.zip", as_attachment=True)
 
 @app.route('/run', methods=['POST'])
 def run():
@@ -527,7 +527,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
         logger.info(f"[PLOT] [{run_id}] Plots finished.")
         
         # Create zip file...
-        zip_path = os.path.join(ZIPS_DIR, f"{run_id}.zip")
+        zip_path = os.path.join(ZIPS_DIR, f"mptrac_{run_id}.zip")
         logger.info(f"[ZIP] [{run_id}] Creating zip file: {zip_path}")
         fast_zip_no_compression(zip_path, work_dir)
         logger.info(f"[ZIP] [{run_id}] Zip file created successfully: {zip_path}")

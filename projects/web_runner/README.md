@@ -4,7 +4,7 @@ The MPTRAC Web Runner provides a browser-based interface for performing air parc
 
 It allows users to configure, execute, and visualize Lagrangian transport simulations using meteorological reanalysis and forecast data through an interactive web interface.
 
-An instance of the MPTRAC Web Runner is currently running on the [JSC Cloud](https://www.fz-juelich.de/en/jsc/systems/scientific-clouds/jsc-cloud): [https://mptrac.jsc.fz-juelich.de/](https://mptrac.jsc.fz-juelich.de/)
+An instance of the MPTRAC Web Runner is currently running on the JSC Cloud: [https://mptrac.jsc.fz-juelich.de/](https://mptrac.jsc.fz-juelich.de/)
 
 ## Features
 
