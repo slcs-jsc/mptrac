@@ -3803,6 +3803,7 @@ typedef struct {
 #pragma acc routine (clim_tropo)
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
+#pragma acc routine (cos_sza)
 #pragma acc routine (intpol_check_lon_lat)
 #pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
@@ -3819,7 +3820,6 @@ typedef struct {
 #pragma acc routine (pbl_weight)
 #pragma acc routine (sedi)
 #pragma acc routine (stddev)
-#pragma acc routine (sza_calc)
 #pragma acc routine (tropo_weight)
 #endif
 
@@ -4265,6 +4265,35 @@ void compress_zstd(
   const int decompress,
   const int level,
   FILE * inout);
+
+/**
+ * @brief Calculates the cosine of the solar zenith angle.
+ *
+ * This function computes the cosine of the solar zenith angle (SZA), which describes
+ * the angle between the local zenith (straight up) and the line connecting the
+ * observer to the center of the Sun. The cosine of the SZA is often used directly
+ * in radiative transfer and photochemical calculations to avoid unnecessary use
+ * of trigonometric inverse functions.
+ *
+ * @param sec Seconds elapsed since 2000-01-01T12:00Z.
+ * @param lon Observer's longitude in degrees.
+ * @param lat Observer's latitude in degrees.
+ * @return The cosine of the solar zenith angle (dimensionless, range [-1, 1]).
+ *
+ * The cosine of the solar zenith angle is computed based on the observer's position
+ * (longitude and latitude) and the specified time in seconds elapsed since
+ * 2000-01-01T12:00Z.
+ *
+ * @note The input longitude and latitude must be specified in degrees.
+ *
+ * @see acos() — can be used to convert the returned value to the solar zenith angle in radians if needed.
+ *
+ * @author Lars Hoffmann
+ */
+double cos_sza(
+  const double sec,
+  const double lon,
+  const double lat);
 
 /*! Get day of year from date. */
 /**
@@ -8495,30 +8524,6 @@ void spline(
 float stddev(
   const float *data,
   const int n);
-
-/**
- * @brief Calculates the solar zenith angle.
- *
- * This function calculates the solar zenith angle, which is the angle
- * between the zenith (straight up) and the line connecting the
- * observer to the center of the sun.
- *
- * @param sec Seconds elapsed since 2000-01-01T12:00Z.
- * @param lon Observer's longitude in degrees.
- * @param lat Observer's latitude in degrees.
- * @return The solar zenith angle in radians.
- *
- * The solar zenith angle is calculated based on the observer's position (longitude and latitude) and the time specified
- * in seconds elapsed since 2000-01-01T12:00Z.
- *
- * @note This function assumes that the input longitude and latitude are given in degrees.
- *
- * @author Lars Hoffmann
- */
-double sza_calc(
-  const double sec,
-  const double lon,
-  const double lat);
 
 /**
  * @brief Converts time components to seconds since January 1, 2000, 12:00:00 UTC.

@@ -95,7 +95,7 @@ double clim_oh(
   const double p) {
 
   /* Set SZA threshold... */
-  const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
+  const double sza_thresh = DEG2RAD(85.), csza_thresh = cos(sza_thresh);
 
   /* Get OH data from climatology... */
   const double oh = clim_zm(&clim->oh, t, lat, p);
@@ -105,8 +105,8 @@ double clim_oh(
     return oh;
 
   /* Apply diurnal correction... */
-  const double sza = sza_calc(t, lon, lat);
-  const double denom = (sza <= sza_thresh) ? cos(sza) : cos_sza_thresh;
+  const double csza = cos_sza(t, lon, lat);
+  const double denom = (csza >= csza_thresh) ? csza : csza_thresh;
   return oh * exp(-ctl->oh_chem_beta / denom);
 }
 
@@ -117,7 +117,7 @@ void clim_oh_diurnal_correction(
   clim_t *clim) {
 
   /* Set SZA threshold... */
-  const double sza_thresh = DEG2RAD(85.), cos_sza_thresh = cos(sza_thresh);
+  const double sza_thresh = DEG2RAD(85.), csza_thresh = cos(sza_thresh);
 
   /* Loop over climatology data points... */
   for (int it = 0; it < clim->oh.ntime; it++)
@@ -130,10 +130,9 @@ void clim_oh_diurnal_correction(
 
 	/* Integrate day/night correction factor over longitude... */
 	for (double lon = -180; lon < 180; lon += 1.0) {
-	  const double sza =
-	    sza_calc(clim->oh.time[it], lon, clim->oh.lat[iy]);
-	  const double denom =
-	    (sza <= sza_thresh) ? cos(sza) : cos_sza_thresh;
+	  const double csza =
+	    cos_sza(clim->oh.time[it], lon, clim->oh.lat[iy]);
+	  const double denom = (csza >= csza_thresh) ? csza : csza_thresh;
 	  sum += exp(-ctl->oh_chem_beta / denom);
 	  n++;
 	}
@@ -998,6 +997,47 @@ void compress_zstd(
   free(compr);
 }
 #endif
+
+/*****************************************************************************/
+
+double cos_sza(
+  const double sec,
+  const double lon,
+  const double lat) {
+
+  /* Number of days and fraction with respect to 2000-01-01T12:00Z... */
+  const double D = sec / 86400 - 0.5;
+
+  /* Geocentric apparent ecliptic longitude [rad]... */
+  const double g = DEG2RAD(357.529 + 0.98560028 * D);
+  const double q = 280.459 + 0.98564736 * D;
+  const double L = DEG2RAD(q + 1.915 * sin(g) + 0.020 * sin(2 * g));
+
+  /* Mean obliquity of the ecliptic [rad]... */
+  const double e = DEG2RAD(23.439 - 0.00000036 * D);
+
+  /* Declination [rad]... */
+  const double sindec = sin(e) * sin(L);
+
+  /* Right ascension [rad]... */
+  const double ra = atan2(cos(e) * sin(L), cos(L));
+
+  /* Greenwich Mean Sidereal Time [h]... */
+  const double GMST = 18.697374558 + 24.06570982441908 * D;
+
+  /* Local Sidereal Time [h]... */
+  const double LST = GMST + lon / 15;
+
+  /* Hour angle [rad]... */
+  const double h = LST / 12 * M_PI - ra;
+
+  /* Convert latitude... */
+  const double lat_help = DEG2RAD(lat);
+
+  /* Return cosine of solar zenith angle... */
+  return sin(lat_help) * sindec + cos(lat_help) * sqrt(1 -
+						       SQR(sindec)) * cos(h);
+}
 
 /*****************************************************************************/
 
@@ -4927,7 +4967,8 @@ void module_tracer_chem(
     INTPOL_2D(o3c, 1);
 
     /* Get solar zenith angle... */
-    const double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    const double sza =
+      acos(cos_sza(atm->time[ip], atm->lon[ip], atm->lat[ip]));
 
     /* Get O(1D) volume mixing ratio... */
     const double o1d =
@@ -11064,47 +11105,6 @@ float stddev(
   var = var / (float) n - SQR(mean / (float) n);
 
   return (var > 0 ? sqrtf(var) : 0);
-}
-
-/*****************************************************************************/
-
-double sza_calc(
-  const double sec,
-  const double lon,
-  const double lat) {
-
-  /* Number of days and fraction with respect to 2000-01-01T12:00Z... */
-  const double D = sec / 86400 - 0.5;
-
-  /* Geocentric apparent ecliptic longitude [rad]... */
-  const double g = DEG2RAD(357.529 + 0.98560028 * D);
-  const double q = 280.459 + 0.98564736 * D;
-  const double L = DEG2RAD(q + 1.915 * sin(g) + 0.020 * sin(2 * g));
-
-  /* Mean obliquity of the ecliptic [rad]... */
-  const double e = DEG2RAD(23.439 - 0.00000036 * D);
-
-  /* Declination [rad]... */
-  const double sindec = sin(e) * sin(L);
-
-  /* Right ascension [rad]... */
-  const double ra = atan2(cos(e) * sin(L), cos(L));
-
-  /* Greenwich Mean Sidereal Time [h]... */
-  const double GMST = 18.697374558 + 24.06570982441908 * D;
-
-  /* Local Sidereal Time [h]... */
-  const double LST = GMST + lon / 15;
-
-  /* Hour angle [rad]... */
-  const double h = LST / 12 * M_PI - ra;
-
-  /* Convert latitude... */
-  const double lat_help = DEG2RAD(lat);
-
-  /* Return solar zenith angle [rad]... */
-  return acos(sin(lat_help) * sindec +
-	      cos(lat_help) * sqrt(1 - SQR(sindec)) * cos(h));
 }
 
 /*****************************************************************************/
