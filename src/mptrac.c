@@ -1351,9 +1351,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -11408,7 +11407,7 @@ void write_atm_clams(
   size_t start[2], count[2];
 
   /* Create file... */
-  nc_create(filename, NC_NETCDF4, &ncid);
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Define dimensions... */
   NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -11564,7 +11563,7 @@ void write_atm_clams_traj(
     LOG(1, "Write init file: %s", filename_init);
 
     /* Create file... */
-    nc_create(filename_init, NC_NETCDF4, &ncid);
+    NC(nc_create(filename_init, NC_NETCDF4, &ncid));
 
     /* Define dimensions... */
     NC(nc_def_dim(ncid, "time", 1, &tid));
@@ -12695,7 +12694,7 @@ void write_met_nc(
   /* Create file... */
   int ncid, varid;
   size_t start[4], count[4];
-  nc_create(filename, NC_NETCDF4, &ncid);
+  NC(nc_create(filename, NC_NETCDF4, &ncid));
 
   /* Define dimensions... */
   int tid, lonid, latid, levid;
