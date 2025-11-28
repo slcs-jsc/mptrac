@@ -1,0 +1,52 @@
+<map id="main" name="main">
+<area shape="rect" id="node1" title=" " alt="" coords="5,309,56,336"/>
+<area shape="rect" id="node2" href="$mptrac_8h.html#a055f8ecc85c15a10e63d36f2d06eb3a8" title="Initializes domain decomposition for parallel processing." alt="" coords="146,56,206,83"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a05eca328a1d7b6ea06252dca2f83961d" title="Allocates and initializes memory resources for MPTRAC." alt="" coords="128,107,224,133"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#adba57d9fe55a3a455520de070702f8e1" title="Frees memory resources allocated for MPTRAC." alt="" coords="131,157,221,184"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a8435d2ccfa5de00f6d8080d363737cd6" title="Retrieves meteorological data for the specified time." alt="" coords="118,208,234,235"/>
+<area shape="rect" id="node9" href="$mptrac_8c.html#a57d693a955f788f652b4d961ee5a29a7" title="Initializes the MPTRAC model and its associated components." alt="" coords="133,259,219,285"/>
+<area shape="rect" id="node12" href="$mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633" title="Reads air parcel data from a specified file into the given atmospheric structure." alt="" coords="115,360,237,387"/>
+<area shape="rect" id="node17" href="$mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766" title="Reads various climatological data and populates the given climatology structure." alt="" coords="113,588,239,615"/>
+<area shape="rect" id="node23" href="$mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6" title="Reads control parameters from a configuration file and populates the given structure." alt="" coords="119,765,233,792"/>
+<area shape="rect" id="node26" href="$mptrac_8c.html#a3d7054e72e7ad37c35592d7469664f0a" title="Executes a single timestep of the MPTRAC model simulation." alt="" coords="104,1373,248,1400"/>
+<area shape="rect" id="node50" href="$mptrac_8c.html#a9abd7a8f35bf3b0c211d8212675d09b1" title="Writes various types of output data to files in a specified directory." alt="" coords="106,1424,246,1451"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#aad0e01f51c815c87fccaae55195d8a35" title="Generates a formatted filename for meteorological data files based on the input parameters." alt="" coords="334,5,434,32"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#ad761ca965e59ad9246ab5825a3730058" title="Reads meteorological data from a file, supporting multiple formats and MPI broadcasting." alt="" coords="323,56,445,83"/>
+<area shape="rect" id="node8" href="$mptrac_8c.html#a55562b13a38a124b0abc09ce8511dde9" title="Updates device memory for specified data structures." alt="" coords="520,157,673,184"/>
+<area shape="rect" id="node10" href="$mptrac_8c.html#a9430c769e61661f2da526feb29d2d032" title="Initialize random number generators for parallel tasks." alt="" coords="327,208,441,235"/>
+<area shape="rect" id="node11" href="$mptrac_8c.html#a3f42ca12ace33e1168edaaf4b96e5a60" title="Initialize start time and time interval for time&#45;stepping." alt="" coords="308,259,460,285"/>
+<area shape="rect" id="node13" href="$mptrac_8c.html#af0092541e8eb2c51fc9a3fcd98043f3f" title="Reads air parcel data from an ASCII file and populates the given atmospheric structure." alt="" coords="332,309,436,336"/>
+<area shape="rect" id="node14" href="$mptrac_8c.html#ac51355e97453a01a70446623d0c382e5" title="Reads air parcel data from a binary file and populates the given atmospheric structure." alt="" coords="334,360,434,387"/>
+<area shape="rect" id="node15" href="$mptrac_8c.html#ad55d18eefcfa90b7c40d4a37dbb8fbf0" title="Reads atmospheric data from a CLAMS NetCDF file." alt="" coords="325,411,443,437"/>
+<area shape="rect" id="node16" href="$mptrac_8c.html#a2569c3ce3d8d46ce8aa186d42685494c" title="Reads air parcel data from a generic netCDF file and populates the given atmospheric structure." alt="" coords="335,461,433,488"/>
+<area shape="rect" id="node18" href="$mptrac_8c.html#aba22251f4ea0fe56c2a59719998c650a" title="Applies a diurnal correction to the hydroxyl radical (OH) concentration in climatology data." alt="" coords="296,512,472,539"/>
+<area shape="rect" id="node19" href="$mptrac_8c.html#aa9cf40c6960c5078d1ea9e12a2fb0872" title="Initializes the tropopause data in the climatology structure." alt="" coords="331,563,437,589"/>
+<area shape="rect" id="node20" href="$mptrac_8c.html#a1a501ec43c01f1d742a133a7a3289d59" title="Reads photolysis rates from a NetCDF file and populates the given photolysis structure." alt="" coords="325,613,443,640"/>
+<area shape="rect" id="node21" href="$mptrac_8c.html#a3510fe56a6a6e589b5c2474495af03e2" title="Reads a climatological time series from a file and populates the given time series structure." alt="" coords="336,664,432,691"/>
+<area shape="rect" id="node22" href="$mptrac_8c.html#a6af2603c773b4d11bf7e187ccb123ba2" title="Reads zonally averaged climatological data from a netCDF file and populates the given structure." alt="" coords="333,715,435,741"/>
+<area shape="rect" id="node24" href="$mptrac_8c.html#a51f61e053cfec3bdd62fa3a8110e046e" title="Defines pressure levels for meteorological data." alt="" coords="327,765,441,792"/>
+<area shape="rect" id="node25" href="$mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a" title="Scans a control file or command&#45;line arguments for a specified variable." alt="" coords="349,816,419,843"/>
+<area shape="rect" id="node27" href="$mptrac_8c.html#a16101092a4f867b18cf1d4feb3189d1d" title="Advances particle positions using different advection schemes." alt="" coords="329,867,439,893"/>
+<area shape="rect" id="node28" href="$mptrac_8c.html#a7f61eec2b48a2250ca25ff4657fa858d" title="Initializes the advection module by setting up pressure fields." alt="" coords="317,917,451,944"/>
+<area shape="rect" id="node29" href="$mptrac_8c.html#a7c775417ba44bae7a915616cc9df4615" title="Apply boundary conditions to particles based on meteorological and climatological data." alt="" coords="313,968,455,995"/>
+<area shape="rect" id="node30" href="$mptrac_8c.html#a6882c1e1af3a10c5f53662d353c8c1d8" title="Computes gridded chemical tracer concentrations (volume mixing ratio) from individual air parcel mass..." alt="" coords="319,1019,449,1045"/>
+<area shape="rect" id="node31" href="$mptrac_8c.html#a2a04fee6c403d3d912d89d9666c0fd7b" title="Initializes the chemistry modules by setting atmospheric composition." alt="" coords="321,1069,447,1096"/>
+<area shape="rect" id="node32" href="$mptrac_8c.html#a799ef256c15dc112842d1dbc5afc787c" title="Performs convective mixing of atmospheric particles." alt="" coords="317,1120,451,1147"/>
+<area shape="rect" id="node33" href="$mptrac_8h.html#ac7dbcc9e4768175409c30a110dcd8308" title="Manages domain decomposition and particle communication in parallel processing." alt="" coords="341,1171,427,1197"/>
+<area shape="rect" id="node34" href="$mptrac_8c.html#a1b4a2c668aae5a7ae522eab2489a464c" title="Simulate exponential decay processes for atmospheric particles." alt="" coords="331,1221,437,1248"/>
+<area shape="rect" id="node35" href="$mptrac_8c.html#ac7d1bdf49d0da3ca1911eebe2a96a2ac" title="Simulate mesoscale diffusion for atmospheric particles." alt="" coords="321,1272,447,1299"/>
+<area shape="rect" id="node36" href="$mptrac_8c.html#ae102581d80f5817f4c5ef356bde43184" title="Computes particle diffusion within the planetary boundary layer (PBL)." alt="" coords="328,1323,440,1349"/>
+<area shape="rect" id="node37" href="$mptrac_8c.html#ad3e7ae644cd3068669c3f7c7669f4a02" title="Applies turbulent diffusion processes to atmospheric particles." alt="" coords="325,1373,443,1400"/>
+<area shape="rect" id="node38" href="$mptrac_8c.html#af237449d9c3c8fec9e5f062cdc579105" title="Simulate dry deposition of atmospheric particles." alt="" coords="323,1424,445,1451"/>
+<area shape="rect" id="node39" href="$mptrac_8c.html#adeecfbf32977d527d934a778edd84f38" title="Perform chemical reactions involving H2O2 within cloud particles." alt="" coords="315,1475,453,1501"/>
+<area shape="rect" id="node40" href="$mptrac_8c.html#ae194c1be6a486d2bd92f5794637d53e2" title="Apply the isosurface module to adjust atmospheric properties." alt="" coords="329,1525,439,1552"/>
+<area shape="rect" id="node41" href="$mptrac_8c.html#a51093927ceae5630067278cee548797f" title="Initialize the isosurface module based on atmospheric data." alt="" coords="317,1576,451,1603"/>
+<area shape="rect" id="node42" href="$mptrac_8h.html#ae1de15701f752a97b1d2858125e851fc" title="KPP chemistry module." alt="" coords="319,1627,449,1653"/>
+<area shape="rect" id="node43" href="$mptrac_8c.html#a1a15f897588f202b09b4eea27b89f734" title="Update atmospheric properties using meteorological data." alt="" coords="331,1677,437,1704"/>
+<area shape="rect" id="node44" href="$mptrac_8c.html#a40777319fe0947dcf920f10de9d55085" title="Update atmospheric properties through interparcel mixing." alt="" coords="330,1728,438,1755"/>
+<area shape="rect" id="node45" href="$mptrac_8c.html#ae27eb9636b812ae9155ac23c86856d1b" title="Perform hydroxyl chemistry calculations for atmospheric particles." alt="" coords="322,1779,446,1805"/>
+<area shape="rect" id="node46" href="$mptrac_8c.html#ab8f2e9219b39e8eb46e7d5c9d8398e53" title="Update the positions and pressure levels of atmospheric particles." alt="" coords="326,1829,442,1856"/>
+<area shape="rect" id="node47" href="$mptrac_8c.html#a6cdd8f72190aa0901f08f48afc240ee1" title="Simulate sedimentation of particles in the atmosphere." alt="" coords="337,1880,431,1907"/>
+<area shape="rect" id="node48" href="$mptrac_8c.html#ac9a4606b5ab8abb85a6f4b833e9f13f2" title="Sort particles according to box index." alt="" coords="337,1931,431,1957"/>
+<area shape="rect" id="node49" href="$mptrac_8c.html#a186195c8bbbd5cac5c1f52eed531804c" title="Calculate time steps for air parcels based on specified conditions." alt="" coords="320,1981,448,2008"/>
+</map>
