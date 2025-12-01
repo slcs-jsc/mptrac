@@ -2630,9 +2630,14 @@ typedef struct {
   /*! cmultiscale ZSTD compression (0=off, 1=on). */
   int met_cms_zstd;
 
-  /*! cmultiscale coarsening heuristics
-     (0=default, 1=mean diff, 2=median diff, 3=max diff). */
-  int met_cms_heur;
+  /*! cmultiscale number of cells of coarsest grid in x-direction. */
+  int met_cms_nd0x;
+
+  /*! cmultiscale number of cells of coarsest grid in y-direction. */
+  int met_cms_nd0y;
+
+  /*! cmultiscale maximum refinement level. */
+  int met_cms_maxlev;
 
   /*! cmultiscale compression epsilon for geopotential height. */
   double met_cms_eps_z;

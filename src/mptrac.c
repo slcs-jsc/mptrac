@@ -476,9 +476,9 @@ void compress_cms(
 
   /* Set multiscale parameters... */
   const char domain[] = "[0.0, 360.0]x[-90.0, 90.0]";
-  const int Nd0_x = 48;
-  const int Nd0_y = 24;
-  const int max_level_grid = 6;
+  const int Nd0_x = ctl->met_cms_nd0x;
+  const int Nd0_y = ctl->met_cms_nd0y;
+  const int max_level_grid = ctl->met_cms_maxlev;
   cms_param_t *cms_param
     = cms_set_parameters(nx, ny, max_level_grid, Nd0_x, Nd0_y, domain);
 
@@ -5816,8 +5816,12 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
   ctl->met_cms_zstd =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_ZSTD", -1, "1", NULL);
-  ctl->met_cms_heur =
-    (int) scan_ctl(filename, argc, argv, "MET_CMS_HEUR", -1, "1", NULL);
+  ctl->met_cms_nd0x =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_ND0X", -1, "48", NULL);
+  ctl->met_cms_nd0y =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_ND0Y", -1, "24", NULL);
+  ctl->met_cms_maxlev =
+    (int) scan_ctl(filename, argc, argv, "MET_CMS_MAXLEV", -1, "6", NULL);
   ctl->met_cms_eps_z =
     scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "1.0", NULL);
   ctl->met_cms_eps_t =
