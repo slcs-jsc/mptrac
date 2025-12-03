@@ -463,6 +463,7 @@ void compress_cms(
   const size_t nx,
   const size_t ny,
   const size_t np,
+  const double *plev,
   const int decompress,
   FILE *inout) {
 
@@ -630,13 +631,17 @@ void compress_cms(
 	t_eval += (omp_get_wtime() - t0);
 
 	/* Write info... */
+	const double bias = gsl_stats_mean(tmp_diff, 1, nxy);
+	const double stddev = gsl_stats_sd_m(tmp_diff, 1, nxy, bias);
+	const double rmse = sqrt(SQR(bias) + SQR(stddev));
+	const double nrmse = rmse / gsl_stats_sd(tmp_org, 1, nxy);
 	LOG(2,
-	    "cmultiscale: var= %s / lev= %lu / ratio= %g / rho= %g"
-	    " / mean= %g / sd= %g / min= %g / max= %g", varname, ip,
-	    cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
-	    gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy),
-	    gsl_stats_mean(tmp_diff, 1, nxy), gsl_stats_sd(tmp_diff, 1, nxy),
-	    gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy));
+	    "cmultiscale: var= %s / lev= %lu / plev= %g / ratio= %g / rho= %g"
+	    " / mean= %g / sd= %g / min= %g / max= %g / NRMSE= %g", varname,
+	    ip, plev[ip], cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+	    gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy), bias, stddev,
+	    gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy),
+	    nrmse);
 
 	/* Calculate mean compression ratio... */
 	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
@@ -7751,7 +7756,7 @@ void read_met_bin_3d(
   else if (ctl->met_type == 5) {
 #ifdef CMS
     compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
-		 (size_t) met->np, 1, in);
+		 (size_t) met->np, met->p, 1, in);
 #else
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
@@ -12660,7 +12665,7 @@ void write_met_bin_3d(
 #ifdef CMS
   else if (ctl->met_type == 5) {
     compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
-		 (size_t) met->np, 0, out);
+		 (size_t) met->np, met->p, 0, out);
   }
 #endif
 

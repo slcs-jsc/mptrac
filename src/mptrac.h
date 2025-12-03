@@ -4111,6 +4111,7 @@ void compress_cms(
   const size_t nx,
   const size_t ny,
   const size_t np,
+  const double *plev,
   const int decompress,
   FILE * inout);
 
