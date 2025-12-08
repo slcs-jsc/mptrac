@@ -1,0 +1,28 @@
+var searchData=
+[
+  ['sample_5fbasename_0',['sample_basename',['../structctl__t.html#aa974f483b6ccf931730d2d929eee2b51',1,'ctl_t']]],
+  ['sample_5fdx_1',['sample_dx',['../structctl__t.html#af5696aca68db24fedc7bd265d4eb6d52',1,'ctl_t']]],
+  ['sample_5fdz_2',['sample_dz',['../structctl__t.html#a857fdeffae577ddb41500ef0c875020e',1,'ctl_t']]],
+  ['sample_5fkernel_3',['sample_kernel',['../structctl__t.html#a2c08850b82591f935ab0c498217b3d65',1,'ctl_t']]],
+  ['sample_5fobsfile_4',['sample_obsfile',['../structctl__t.html#a64cde624042ea4b8d6b841660ff28546',1,'ctl_t']]],
+  ['sf6_5',['sf6',['../structclim__t.html#a787e837b08fea0fce0c6fe04140fb393',1,'clim_t']]],
+  ['shf_6',['shf',['../structmet__t.html#a3bc7785b3dea585270d402d925c02425',1,'met_t']]],
+  ['size_7',['size',['../structdd__t.html#add774577943891853b6163f35cf04914',1,'dd_t']]],
+  ['sort_5fdt_8',['sort_dt',['../structctl__t.html#a126d9eac2687f4aac95ab17fff14dd07',1,'ctl_t']]],
+  ['species_9',['species',['../structctl__t.html#a20f21cdf4fea1cfc948fc1bcc1f0a520',1,'ctl_t']]],
+  ['sst_10',['sst',['../structmet__t.html#a04c8115782b3dc6697111fdeb7c8f860',1,'met_t']]],
+  ['stat_5fbasename_11',['stat_basename',['../structctl__t.html#af784e18ace4cd191ae100a7df4955b6b',1,'ctl_t']]],
+  ['stat_5flat_12',['stat_lat',['../structctl__t.html#a995505c06bd35ecba593f807c1eda591',1,'ctl_t']]],
+  ['stat_5flon_13',['stat_lon',['../structctl__t.html#a0fafec241b4112fa64cb69fe09403ea8',1,'ctl_t']]],
+  ['stat_5fr_14',['stat_r',['../structctl__t.html#a149be614c5eafb380c3c9f3ad6599971',1,'ctl_t']]],
+  ['stat_5ft0_15',['stat_t0',['../structctl__t.html#a5721f8afc611b607db92678bb063f42d',1,'ctl_t']]],
+  ['stat_5ft1_16',['stat_t1',['../structctl__t.html#a370c0a527e721ea64cd67685abd7bc42',1,'ctl_t']]],
+  ['subdomain_5fcount_17',['subdomain_count',['../structdd__t.html#ad58b7aeca9bd6081bf8b4d3513b5b2d9',1,'dd_t']]],
+  ['subdomain_5flat_5fmax_18',['subdomain_lat_max',['../structdd__t.html#a4c78887b9409bd5df6712a20a66521cb',1,'dd_t']]],
+  ['subdomain_5flat_5fmin_19',['subdomain_lat_min',['../structdd__t.html#adea99db4e3c656e7c653f6f2f53524c7',1,'dd_t']]],
+  ['subdomain_5flon_5fmax_20',['subdomain_lon_max',['../structdd__t.html#aabafa7b2c3e801fb698aa9e1635c2f13',1,'dd_t']]],
+  ['subdomain_5flon_5fmin_21',['subdomain_lon_min',['../structdd__t.html#a312de047e8ef2da16a83a71b42e12406',1,'dd_t']]],
+  ['subdomain_5fstart_22',['subdomain_start',['../structdd__t.html#adab6ce7b4a33bd7ca538c518d09dbdbd',1,'dd_t']]],
+  ['swc_23',['swc',['../structmet__t.html#afc1b6ec607dcb27df304f6ecb48b7fea',1,'met_t']]],
+  ['sza_24',['sza',['../structclim__photo__t.html#a0954705edbe1ca70559f1adeb231a685',1,'clim_photo_t']]]
+];
