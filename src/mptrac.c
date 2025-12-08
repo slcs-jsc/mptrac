@@ -634,7 +634,9 @@ void compress_cms(
 	const double bias = gsl_stats_mean(tmp_diff, 1, nxy);
 	const double stddev = gsl_stats_sd_m(tmp_diff, 1, nxy, bias);
 	const double rmse = sqrt(SQR(bias) + SQR(stddev));
-	const double nrmse = rmse / gsl_stats_sd(tmp_org, 1, nxy);
+	const double range =
+	  gsl_stats_max(tmp_org, 1, nxy) - gsl_stats_min(tmp_org, 1, nxy);
+	const double nrmse = (range > 0 ? rmse / range : NAN);
 	LOG(2,
 	    "cmultiscale: var= %s / lev= %lu / plev= %g / ratio= %g / rho= %g"
 	    " / mean= %g / sd= %g / min= %g / max= %g / NRMSE= %g", varname,
@@ -1396,8 +1398,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
