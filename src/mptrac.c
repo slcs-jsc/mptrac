@@ -512,8 +512,8 @@ void compress_cms(
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
 
-      /* Calculate mean compression ratio... */
-      cr += cms_compression_rate(cms_ptr, cms_sol) / (double) np;
+      /* Calculate harmonic mean of compression rates... */
+      cr += 1.0 / cms_compression_rate(cms_ptr, cms_sol);
 
       /* Free... */
       cms_delete_sol(cms_sol);
@@ -521,7 +521,8 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (CMS, RATIO= %g)", varname, cr);
+    LOG(2, "Read 3-D variable: %s (CMS, RATIO= %g)", varname,
+	(double) np / cr);
   }
 
   /* Compress array and output compressed stream... */
@@ -645,8 +646,8 @@ void compress_cms(
 	    gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy),
 	    nrmse);
 
-	/* Calculate mean compression ratio... */
-	cr += cms_compression_rate(cms_ptr[ip], cms_sol[ip]) / (double) np;
+	/* Calculate harmonic mean of compression rates... */
+	cr += 1.0 / cms_compression_rate(cms_ptr[ip], cms_sol[ip]);
 
 	/* Save binary data... */
 	if (ctl->met_cms_zstd == 1)
@@ -666,7 +667,7 @@ void compress_cms(
     /* Write info... */
     LOG(2, "Write 3-D variable: %s"
 	" (CMS, RATIO= %g, T_COARS= %g s, T_EVAL= %g s)",
-	varname, cr, t_coars, t_eval);
+	varname, (double) np / cr, t_coars, t_eval);
   }
 
   /* Free... */
@@ -1398,9 +1399,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
