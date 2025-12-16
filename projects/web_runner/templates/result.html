@@ -31,13 +31,20 @@
 
     <h3 class="w3-center">Download</h3>
     <p style="color: #ccc; font-size: 16px; margin-bottom: 20px; text-align: center; font-family: monospace;">
-      Download a ZIP archive with all output files and logs.
+      Download a ZIP archive with all output files and logs, or save the simulation setup as a JSON file for later reuse.
     </p>
     <div class="w3-center">
       <a class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue"
 	 href="/download/{{ run_id }}"
-	 style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
+	 style="background:#003366; color:white; font-size:18px; border:none;
+		transition: background-color 0.3s ease; margin-right:20px;">
 	⬇️ Download Results ZIP
+      </a>
+      <a class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue"
+	 href="/download_setup/{{ run_id }}"
+	 style="background:#003366; color:white; font-size:18px; border:none;
+		transition: background-color 0.3s ease;">
+	💾 Save Setup
       </a>
     </div>
     
@@ -48,7 +55,8 @@
       
       <h3 class="w3-center">Trajectory Plots</h3>
       <p style="color: #ccc; font-size: 16px; margin-bottom: 20px; text-align: center; font-family: monospace;">
-	Adjust plot style in output settings. Right-click the image to save it.
+	Plot style is defined in the output settings; changes require returning to the settings page and rerunning the simulation.
+	Right-click the image to save it.
       </p>
       
       <div class="w3-container w3-center" style="padding: 0;">      

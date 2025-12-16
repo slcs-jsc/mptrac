@@ -210,6 +210,18 @@ def download(run_id):
     logger.info(f"[DOWNLOAD] [{run_id}] Download requested.")
     return send_from_directory(ZIPS_DIR, f"mptrac_{run_id}.zip", as_attachment=True)
 
+@app.route('/download_setup/<run_id>')
+def download_setup(run_id):
+    setup_path = os.path.join(RUNS_DIR, run_id, "setup.json")
+    if not os.path.exists(setup_path):
+        return "Setup file not found", 404
+    return send_from_directory(
+        os.path.join(RUNS_DIR, run_id),
+        "setup.json",
+        as_attachment=True,
+        download_name=f"mptrac_setup_{run_id}.json"
+    )
+
 @app.route('/run', methods=['POST'])
 def run():
     
@@ -231,12 +243,8 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-
-        
-        METBASE = '../../tests/data/ei'
-        DT_MET = 86400
-
-        
+        # METBASE = '../../tests/data/ei'
+        # DT_MET = 86400
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
