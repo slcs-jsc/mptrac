@@ -731,7 +731,6 @@
       function loadSetupFromFile(input) {
 	  const file = input.files[0];
 	  if (!file) return;
-	  
 	  const reader = new FileReader();
 	  reader.onload = function (e) {
 	      try {
@@ -750,10 +749,8 @@
 			  }
 		      });
 		  });
-		  
-		  alert("✅ Simulation setup loaded successfully.");
 	      } catch (err) {
-		  alert("❌ Failed to load setup file.\nInvalid JSON format.");
+		  alert("Failed to load setup file. Invalid JSON format.");
 	      }
 	  };
 	  
