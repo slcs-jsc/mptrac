@@ -397,13 +397,18 @@
       
       <!-- Buttons -->
       <div class="w3-bar w3-center" style="margin-top: 20px;">
-	<button class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;" type="submit">
-	  ▶️ Run Simulation
+	<input type="file" id="setupFileInput" accept=".json" style="display:none" onchange="loadSetupFromFile(this)">
+	<button type="button" onclick="document.getElementById('setupFileInput').click()" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">
+	  📂 Load Setup
 	</button>
 	
-	<button type="reset" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;">
+	<button type="reset" class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease; margin-right: 20px;">
 	  ♻️ Reset Form
 	</button>
+	
+	<button class="w3-button w3-hover-shadow w3-padding-large w3-round-xxlarge w3-hover-light-blue" style="background: #003366; color: white; font-size: 18px; border: none; transition: background-color 0.3s ease;" type="submit">
+	  ▶️ Run Simulation
+	</button>	
       </div>
     </form>
     
@@ -718,6 +723,41 @@
 
 	  const ado = document.querySelector(`[name="atm_dt_out"][value="${s.atm_dt_out}"]`);
 	  if (ado) ado.checked = true;
+      }
+    </script>
+    
+    <!-- Load simulation setup -->
+    <script>
+      function loadSetupFromFile(input) {
+	  const file = input.files[0];
+	  if (!file) return;
+	  
+	  const reader = new FileReader();
+	  reader.onload = function (e) {
+	      try {
+		  const setup = JSON.parse(e.target.result);
+		  
+		  Object.entries(setup).forEach(([name, value]) => {
+		      const elements = document.querySelectorAll(`[name="${name}"]`);
+		      
+		      elements.forEach(el => {
+			  if (el.type === "radio") {
+			      if (String(el.value) === String(value)) {
+				  el.checked = true;
+			      }
+			  } else {
+			      el.value = value;
+			  }
+		      });
+		  });
+		  
+		  alert("✅ Simulation setup loaded successfully.");
+	      } catch (err) {
+		  alert("❌ Failed to load setup file.\nInvalid JSON format.");
+	      }
+	  };
+	  
+	  reader.readAsText(file);
       }
     </script>
     

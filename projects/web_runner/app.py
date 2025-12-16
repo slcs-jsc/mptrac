@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import cartopy.crs as ccrs
 import cartopy.feature as cfeature
 import logging
+import json
 from logging.handlers import RotatingFileHandler
 from concurrent.futures import ProcessPoolExecutor, as_completed
 
@@ -230,8 +231,12 @@ def run():
         met_name = MET_OPTIONS[met_source]['MET_NAME']
         METBASE = MET_OPTIONS[met_source]['METBASE']
         DT_MET = MET_OPTIONS[met_source]['DT_MET']
-        # METBASE = '../../tests/data/ei'
-        # DT_MET = 86400
+
+        
+        METBASE = '../../tests/data/ei'
+        DT_MET = 86400
+
+        
         MET_PRESS_LEVEL_DEF = MET_OPTIONS[met_source]['MET_PRESS_LEVEL_DEF']
         MET_VERT_COORD = MET_OPTIONS[met_source]['MET_VERT_COORD']
         start_dt = datetime.strptime(f['start_time'], "%Y-%m-%d %H:%M")
@@ -285,6 +290,11 @@ def run():
     # Create working directory...
     work_dir = os.path.join(RUNS_DIR, run_id)
     os.makedirs(work_dir, exist_ok=True)
+
+    # Save setup...
+    setup_file = os.path.join(work_dir, "setup.json")
+    with open(setup_file, "w") as f:
+        json.dump(request.form.to_dict(), f, indent=2)
     
     # Create control parameter file...
     ctl_file, dirlist_file, init_file = map(lambda x: os.path.join(work_dir, x), ['trac.ctl', 'dirlist.txt', 'atm_init.tab'])
