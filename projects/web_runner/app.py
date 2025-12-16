@@ -1,5 +1,5 @@
 from flask import Flask, render_template, request, send_from_directory
-import os, time, uuid, glob, shutil, textwrap, zipfile, subprocess, threading
+import os, time, uuid, glob, shutil, textwrap, zipfile, subprocess
 from datetime import datetime, timezone
 import numpy as np
 import matplotlib
@@ -20,9 +20,6 @@ TRAC_CMD = '../../src/trac'
 RUNS_DIR, ZIPS_DIR, LOG_DIR = 'runs/working', 'runs/zips', 'runs/logs'
 for path in [RUNS_DIR, ZIPS_DIR, LOG_DIR]:
     os.makedirs(path, exist_ok=True)
-
-# Semaphore...
-process_semaphore = threading.Semaphore(3)
 
 # Logging setup...
 log_file = os.path.join(LOG_DIR, 'web_runner.log')
@@ -83,9 +80,6 @@ MET_OPTIONS = {
 
 # Execute shell command and check result...
 def run_command(cmd, timeout, run_id):
-    if not process_semaphore.acquire(timeout=5):
-        logger.error(f"[EXEC] [{run_id}] Server is too busy.")
-        return -999, "❌ Server is too busy."
     try:
         logger.info(f"[EXEC] [{run_id}] Executing command: {' '.join(cmd)}")
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True, timeout=timeout)
@@ -93,10 +87,8 @@ def run_command(cmd, timeout, run_id):
         return result.returncode, result.stdout
     except subprocess.TimeoutExpired as e:
         logger.warning(f"[EXEC] [{run_id}] Command timed out after {timeout} seconds.")
-        return -1, (e.stdout or '') + f"\n❌ Command timed out after {timeout} seconds."
-    finally:
-        process_semaphore.release()
-
+        return -1, (e.stdout or "") + f"\n❌ Command timed out after {timeout} seconds."
+        
 # Calculate seconds since 2000-01-01, 00:00 UTC...
 def seconds_since_2000(time_str):
     dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
@@ -502,11 +494,6 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
     # Run atm_init and trac...
     atm_init_code, atm_init_output = run_command([ATM_INIT_CMD, ctl_file, init_file], timeout=120, run_id=run_id)
     trac_code, trac_output = run_command([TRAC_CMD, dirlist_file, ctl_file, init_file], timeout=600, run_id=run_id)
-    
-    # Catch errors...
-    if trac_code == -999:
-        logger.error(f"[RUN] [{run_id}] Server busy.")
-        return render_template('error.html', stdout="❌ Server is too busy. Please try again later."), 503
     
     # Logging...
     if atm_init_code != 0 or trac_code != 0:
