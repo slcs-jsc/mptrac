@@ -208,13 +208,17 @@ def index(): return render_template('index.html')
 @app.route('/download/<run_id>')
 def download(run_id):
     logger.info(f"[DOWNLOAD] [{run_id}] Download requested.")
+    zip_path = os.path.join(ZIPS_DIR, f"mptrac_{run_id}.zip")
+    if not os.path.exists(zip_path):
+        return render_template('error.html', stdout="❌ ZIP file not found."), 404
     return send_from_directory(ZIPS_DIR, f"mptrac_{run_id}.zip", as_attachment=True)
 
 @app.route('/download_setup/<run_id>')
 def download_setup(run_id):
     setup_path = os.path.join(RUNS_DIR, run_id, "setup.json")
     if not os.path.exists(setup_path):
-        return "Setup file not found", 404
+        return render_template('error.html', stdout="❌ Setup file not found."), 404
+
     return send_from_directory(
         os.path.join(RUNS_DIR, run_id),
         "setup.json",
@@ -502,7 +506,7 @@ MET_LEV_HYBM[60] = 0.00000000000000E+00
     # Catch errors...
     if trac_code == -999:
         logger.error(f"[RUN] [{run_id}] Server busy.")
-        return render_template('server_busy.html'), 503
+        return render_template('error.html', stdout="❌ Server is too busy. Please try again later."), 503
     
     # Logging...
     if atm_init_code != 0 or trac_code != 0:
