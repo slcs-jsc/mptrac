@@ -1,3 +1,4 @@
 flask
+numpy
 matplotlib
 cartopy
