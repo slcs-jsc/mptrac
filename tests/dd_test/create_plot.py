@@ -13,7 +13,7 @@ path_ltm_tools="../../../"
 sys.path.append(os.path.abspath(path_ltm_tools))
 
 # Load ltm_tools...
-from ltm_tools.io_manager import read_atm_pos, write_atm_pos
+from ltm_tools.io_manager import read_atm_pos
 
 # Set-up...
 atm_prefix = "atm"
@@ -33,15 +33,11 @@ for ind, data_path_1 in enumerate(np.sort(glob(data_paths_files_data0))):
 	print([f for f in glob(data_paths_1 + date)])
 	atm1 = xa.concat( [read_atm_pos(f) for f in glob(data_paths_1 + date)], dim="index")
 	atm1 = atm1.where( atm1["subdomain"] != -1, drop=True)
-	
 	atm1["idx"] = atm1["idx"]
-	
 	atm1["lon"][atm1["lon"]<0] += 360
-
 	idx1 = np.unique(atm1["idx"])
-
+        
 	dublicates = idx1[np.unique(atm1["idx"], return_counts=True)[1]>1]
-
 	for idx in dublicates:
 		mask = ( atm1["idx"] == idx )
 	
@@ -50,7 +46,7 @@ for ind, data_path_1 in enumerate(np.sort(glob(data_paths_files_data0))):
 	#if init:
 	subdomains = np.array(atm1["subdomain"])
 	#	init = False
-
+        
 	# Plot domains...
 	plt.figure()
 	ax = plt.axes(projection=ccrs.PlateCarree(central_longitude=180))
@@ -84,7 +80,7 @@ for ind, data_path_1 in enumerate(np.sort(glob(data_paths_files_data0))):
 	    ax.axvline(vline, c="k", lw=0.5)
 	for hline in hlines[1:-1]:
 	    ax.axhline(hline, c="k", lw=0.5)
-
+        
 	vcentres = 0.5*(vlines[1:]+vlines[:-1])
 	hcentres = 0.5*(hlines[1:]+hlines[:-1])
 	dhcentre = 0.5*(hcentres[1]-hcentres[0])

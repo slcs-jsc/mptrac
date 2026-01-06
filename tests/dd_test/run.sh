@@ -256,7 +256,7 @@ if [[ $use_evenly_distributed -eq 1 ]]; then
     echo "[WARNING] This could affect load balancing between subdomains"
 fi
 for i in $(seq 0 $((ntasks-1))); do
-    mkdir -p data/data.$i
+    mkdir -p data/"data.$i"
 
     ilat=$((i % domains_lat))
     ilon=$((i / domains_lon))
@@ -291,7 +291,7 @@ for i in $(seq 0 $((ntasks-1))); do
     echo "[INFO]   Dlat: $init_dlat"
 
     "$mptrac_dir"/src/atm_init "$work_dir"/data/config.ctl \
-                 "$work_dir"/data/data.$i/init.nc \
+                 "$work_dir"/data/"data.$i"/init.nc \
                  INIT_T0 "$t0" INIT_T1 "$t0" \
                  INIT_Z0 10.0 INIT_Z1 10.0 \
                  INIT_LON0 $init_lon0 \
@@ -303,7 +303,7 @@ for i in $(seq 0 $((ntasks-1))); do
                  INIT_EVENLY $use_evenly_distributed \
                  INIT_IDX_OFFSET $((particles_num_subdomain * i)) >> "$work_dir"/data/atm_generation.log 2>&1
     
-    cat > data/data.$i/config.ctl <<EOF
+    cat > data/"data.$i"/config.ctl <<EOF
 MET_PRESS_LEVEL_DEF = ${met_press_level_def}
 MET_CLAMS = ${met_clams}
 MET_VERT_COORD = ${met_vert_coord}

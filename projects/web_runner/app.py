@@ -38,7 +38,10 @@ def clean_old_runs(max_age_sec=3600):
             if now - os.path.getmtime(path) > max_age_sec:
                 try:
                     logger.info(f"[CLEANUP] Removed old file or directory: {path}")
-                    shutil.rmtree(path) if os.path.isdir(path) else os.remove(path)
+                    if os.path.isdir(path):
+                        shutil.rmtree(path)
+                    else:
+                        os.remove(path)
                 except Exception as e:
                     logger.warning(f"[CLEANUP] Failed to remove {path}: {e}")
 

@@ -45,7 +45,7 @@ An instance of the MPTRAC Web Runner is currently running on the JSC Cloud: [htt
 ```
 app.py              Flask backend and simulation logic
 requirements.txt    Python dependencies
-job.sh              Local test and run script
+run.sh              Local test and run script
 templates/          HTML templates for UI and results
 static/             Static assets (images, styles)
 runs/               Working directories, logs, and output archives
@@ -56,7 +56,7 @@ runs/               Working directories, logs, and output archives
 1. Install and compile MPTRAC following the official installation instructions.  
 2. Configure meteorological data paths in `app.py` by updating the `MET_OPTIONS` dictionary to match your system’s file locations.  
 3. Navigate to `[mptrac_dir]/projects/web_runner/` and set up a Python environment.  
-4. Run locally with `python app.py` or `./job.sh`.  
+4. Run locally with `python app.py` or `./run.sh`.  
 5. For production, deploy with Gunicorn behind Nginx.
 
 ## Usage

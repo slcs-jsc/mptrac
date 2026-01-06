@@ -25,7 +25,7 @@ cd "$kppdir" || exit
     && "$KPP_HOME"/bin/kpp chem.kpp 
 
 make clean \
-    && make lib INFO=0 GPU=$GPU\
+    && make lib INFO=0 GPU="$GPU" \
     && cp libkpp.a "$target"/lib \
     && cp ./*.h "$target"/include \
     && rm ./*.o
