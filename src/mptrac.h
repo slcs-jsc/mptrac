@@ -4064,45 +4064,47 @@ double clim_zm(
   const double p);
 
 /**
- * @brief Compresses or decompresses a 3D array of floats using a custom multiscale compression algorithm.
+ * @brief Compresses or decompresses a 3-D meteorological field using cmultiscale.
  *
- * This function either compresses or decompresses a 3D array of
- * floats based on the value of the `decompress` parameter.  The
- * compression and decompression are performed using a custom
- * multiscale module.
+ * This routine operates on a longitude/latitude regular grid of size @p nx × @p ny and @p np vertical
+ * levels. The grid coordinates are generated internally:
+ * - lon ∈ [0, 360] (inclusive) with @p nx points
+ * - lat ∈ [ 90,-90] (inclusive) with @p ny points
  *
- * @param ctl Pointer to the control structure containing configuration parameters.
- * @param varname The name of the variable being processed.
- * @param array Pointer to the 3D array of floats to be compressed or decompressed.
- * @param nx The number of elements in the x-dimension of the array.
- * @param ny The number of elements in the y-dimension of the array.
- * @param np The number of elements in the p-dimension of the array.
- * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
- * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression
- * and writing compressed data during compression.
+ * If @p decompress is non-zero, the function reads @p np CMS solutions from @p inout (optionally using Zstd),
+ * evaluates them on the lon/lat grid, and fills @p array (3-D layout via ARRAY_3D macro).
  *
- * The function performs the following steps:
- * - Determines grid properties from the input data dimensions.
- * - Initializes the multiscale module with the specified grid properties.
- * - Sets up longitude and latitude grids for the data.
- * - If decompressing:
- *   - Reads compressed data for each level and decompresses it.
- *   - Evaluates the decompressed data and stores it in the `array`.
- * - If compressing:
- *   - Copies data for each level into a temporary array.
- *   - Compresses the data and writes the compressed data to the file.
+ * If @p decompress is zero, the function processes the input @p array level-by-level:
+ * - selects the CMS error threshold (eps) based on @p varname (e.g., "T","U","V",...)
+ * - builds CMS solutions from the level data (coarsening)
+ * - evaluates the reconstructed field and logs basic error metrics (bias, stddev, RMSE/NRMSE, correlation)
+ * - writes CMS solutions to @p inout (optionally using Zstd)
  *
- * The function logs the compression or decompression details and
- * frees allocated resources before returning.
+ * The overall compression ratio reported in logs is the harmonic mean across levels.
  *
- * @note Ensure that the input `array` is already allocated and can hold the decompressed data.
+ * @param[in]  ctl        Control/settings structure providing CMS parameters (Nd0, max level, eps per variable,
+ *                        batching, and whether to use Zstd for I/O).
+ * @param[in]  varname    Variable name used for selecting the CMS epsilon threshold (case-insensitive).
+ *                        Supported names include: "Z","T","U","V","W","PV","H2O","O3","LWC","RWC","IWC","SWC","CC".
+ * @param[in,out] array   Field data buffer.
+ *                        - Decompress mode: output array filled with reconstructed values.
+ *                        - Compress mode: input array to be compressed.
+ *                        Expected indexing uses ARRAY_3D(ix, iy, ny, ip, np).
+ * @param[in]  nx         Number of longitude grid points (must be >= 2).
+ * @param[in]  ny         Number of latitude  grid points (must be >= 2).
+ * @param[in]  np         Number of vertical levels (pressure levels).
+ * @param[in]  plev       Pressure levels array of length @p np (used for logging).
+ * @param[in]  decompress If non-zero, read CMS stream from @p inout and reconstruct @p array.
+ *                        If zero, build CMS solutions from @p array and write them to @p inout.
+ * @param[in,out] inout   Binary stream used for CMS I/O:
+ *                        - Decompress mode: read from this stream.
+ *                        - Compress mode:   write to this stream.
+ *
+ * @note Uses OpenMP for parallel evaluation/coarsening, and GSL for statistics in compression mode.
+ * @note The function allocates temporary per-level buffers in compression mode and frees them internally.
+ * @warning @p varname must match one of the supported variable names; otherwise an error is raised.
  * 
- * @warning Ensure that the file pointer `inout` is correctly opened for reading or writing as required.
- * 
- * @see get_2d_grid_from_meteo_data, init_multiscale, read_sol, save_sol, eval, coarsening, delete_solution, delete_multiscale
- * 
- * @author 
- * Lars Hoffmann
+ * @author Lars Hoffmann
  */
 void compress_cms(
   const ctl_t * ctl,
