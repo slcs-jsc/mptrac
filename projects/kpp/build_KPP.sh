@@ -15,8 +15,8 @@ REBUILD=1
 
 # Set target directory...
 target=$(cd ../../libs/build && pwd)
-export KPP_HOME=$target/src/KPP
-export KPP_FLEX_LIB_DIR=$target/src/KPP
+export KPP_HOME="$target"/src/KPP
+export KPP_FLEX_LIB_DIR="$target"/src/KPP
 
 # Build KPP code... 
 cd "$kppdir" || exit
@@ -26,6 +26,6 @@ cd "$kppdir" || exit
 
 make clean \
     && make lib INFO=0 GPU=$GPU\
-    && cp libkpp.a $target/lib \
-    && cp ./*.h $target/include \
+    && cp libkpp.a "$target"/lib \
+    && cp ./*.h "$target"/include \
     && rm ./*.o

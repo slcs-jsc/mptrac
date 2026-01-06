@@ -22,10 +22,8 @@ echo "[INFO] MPTRAC directory: $mptrac_dir"
 echo "[INFO] Working directory: $work_dir"
 echo "[INFO] Meteo data directory: $meteo_data_dir"
 echo "[INFO] Meteo base path: $metbase"
-cd $work_dir
-rm -rf data
-mkdir -p data
-mkdir -p $meteo_data_dir
+cd "$work_dir"
+rm -rf data && mkdir -p data "$meteo_data_dir"
 
 # Parse arguments - check all arguments for keywords
 compile=""
@@ -178,7 +176,7 @@ if [[ "$compile" != "compile" ]]; then
     echo "[INFO] Skipping compilation (default behavior - use 'compile' argument to enable)"
 else
     echo "[INFO] Compile MPTRAC with domain decomposition using $compiler"
-    cd $mptrac_dir/src
+    cd "$mptrac_dir"/src
     make clean
     
     # First compile all executables with GPU support (including trac)
@@ -187,8 +185,7 @@ else
     
     # Then recompile atm_init without GPU support (atm_init doesn't work with GPU=1)
     echo "[INFO] Recompiling atm_init without GPU support"
-    rm -f $mptrac_dir/src/atm_init
-    rm -f $mptrac_dir/src/wind
+    rm -f "$mptrac_dir"/src/atm_init "$mptrac_dir"/src/wind
     make atm_init wind DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
 fi
 
@@ -196,11 +193,11 @@ fi
 # Create atmospheric initialization files & control files for each subdomain
 #################################################################################################################
 
-cd $work_dir
+cd "$work_dir"
 
 # Set timerange of simulation
-t0=$($mptrac_dir/src/time2jsec 2022 6 2 0 0 0 0)
-t1=$($mptrac_dir/src/time2jsec 2022 6 2 $simulation_hours 0 0 0)
+t0=$("$mptrac_dir"/src/time2jsec 2022 6 2 0 0 0 0)
+t1=$("$mptrac_dir"/src/time2jsec 2022 6 2 "$simulation_hours" 0 0 0)
 
 echo "[INFO] write dirlist.tab and config.ctl to data directory"
 > data/dirlist.tab  # Clear the file first
@@ -293,18 +290,18 @@ for i in $(seq 0 $((ntasks-1))); do
     echo "[INFO]   Dlon: $init_dlon"
     echo "[INFO]   Dlat: $init_dlat"
 
-    $mptrac_dir/src/atm_init $work_dir/data/config.ctl \
-                $work_dir/data/data.$i/init.nc \
-                INIT_T0 "$t0" INIT_T1 "$t0" \
-                INIT_Z0 10.0 INIT_Z1 10.0 \
-                INIT_LON0 $init_lon0 \
-                INIT_LON1 $init_lon1 \
-                INIT_DLON $init_dlon \
-                INIT_LAT0 $init_lat0 \
-                INIT_LAT1 $init_lat1 \
-                INIT_DLAT $init_dlat \
-                INIT_EVENLY $use_evenly_distributed \
-                INIT_IDX_OFFSET $((particles_num_subdomain * i)) >> $work_dir/data/atm_generation.log 2>&1
+    "$mptrac_dir"/src/atm_init "$work_dir"/data/config.ctl \
+                 "$work_dir"/data/data.$i/init.nc \
+                 INIT_T0 "$t0" INIT_T1 "$t0" \
+                 INIT_Z0 10.0 INIT_Z1 10.0 \
+                 INIT_LON0 $init_lon0 \
+                 INIT_LON1 $init_lon1 \
+                 INIT_DLON $init_dlon \
+                 INIT_LAT0 $init_lat0 \
+                 INIT_LAT1 $init_lat1 \
+                 INIT_DLAT $init_dlat \
+                 INIT_EVENLY $use_evenly_distributed \
+                 INIT_IDX_OFFSET $((particles_num_subdomain * i)) >> "$work_dir"/data/atm_generation.log 2>&1
     
     cat > data/data.$i/config.ctl <<EOF
 MET_PRESS_LEVEL_DEF = ${met_press_level_def}
@@ -360,7 +357,7 @@ done
 if [[ "$skip_wind" == "skip_wind" ]]; then
     echo "[INFO] Skipping wind data generation (argument: $skip_wind)"
 else
-    cd $meteo_data_dir
+    cd "$meteo_data_dir"
     echo "[INFO] Generate wind data files"
 
     cat > wind.ctl <<EOF
@@ -384,7 +381,7 @@ EOF
         sed -i "s/^WIND_T0 = .*/WIND_T0 = $new_t0/" wind.ctl
         
         # Run the wind command
-        $mptrac_dir/src/wind wind.ctl wind >> $work_dir/data/wind_generation.log 2>&1
+        "$mptrac_dir"/src/wind wind.ctl wind >> "$work_dir"/data/wind_generation.log 2>&1
         
         echo "[INFO] Generated file $((i+1))/$ntimesteps with T0 = $new_t0"
     done
@@ -399,25 +396,25 @@ if [[ "$skip_run" == "skip_run" ]]; then
     echo "[INFO] Skipping MPTRAC simulation run (argument: $skip_run)"
 else
     echo "[INFO] Running MPTRAC with domain decomposition with $ntasks tasks"
-    cd $work_dir/data
+    cd "$work_dir"/data
     if [[ "$hpc_mode" == "hpc" ]]; then
         if [[ $use_gpu -eq 1 ]]; then
             echo "[INFO] Running with GPU support on HPC (partition=booster, gres=gpu:$ntasks_per_node, cpus-per-task=$cpus_per_task)"
             srun --partition=booster --gres=gpu:$ntasks_per_node --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
-                --output=$work_dir/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
-                --error=$work_dir/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
-                $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
+                --output="$work_dir"/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
+                --error="$work_dir"/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
+                "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
         else
             echo "[INFO] Running with CPU-only on HPC (cpus-per-task=$cpus_per_task)"
             srun --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
-                --output=$work_dir/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
-                --error=$work_dir/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
-                $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
+                --output="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
+                --error="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
+                "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
         fi
     else
-        mpirun --oversubscribe -np $ntasks $mptrac_dir/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > $work_dir/data/mpirun_output.log 2>&1
+        mpirun --oversubscribe -np $ntasks "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm > "$work_dir"/data/mpirun_output.log 2>&1
     fi
 fi
 
@@ -432,7 +429,7 @@ if [[ "$skip_compare" == "skip_compare" ]]; then
     exit 0
 fi
 
-cd $work_dir
+cd "$work_dir"
 echo -e "\nComparing .tab files recursively..."
 error=0
 if [ -d "data.ref" ]; then

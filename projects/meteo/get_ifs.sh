@@ -122,7 +122,7 @@ for step in $step_seq ; do
 done
 
 # Remove temporary data...
-rm -rf $tmp || exit
+rm -rf "$tmp" || exit
 
 # Write info...
 echo "Download complete."

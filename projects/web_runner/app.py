@@ -88,7 +88,7 @@ def run_command(cmd, timeout, run_id):
     except subprocess.TimeoutExpired as e:
         logger.warning(f"[EXEC] [{run_id}] Command timed out after {timeout} seconds.")
         return -1, (e.stdout or "") + f"\n❌ Command timed out after {timeout} seconds."
-        
+
 # Calculate seconds since 2000-01-01, 00:00 UTC...
 def seconds_since_2000(time_str):
     dt = datetime.strptime(time_str, "%Y-%m-%d %H:%M").replace(tzinfo=timezone.utc)
