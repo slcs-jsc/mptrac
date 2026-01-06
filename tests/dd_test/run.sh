@@ -294,13 +294,13 @@ for i in $(seq 0 $((ntasks-1))); do
                  "$work_dir"/data/"data.$i"/init.nc \
                  INIT_T0 "$t0" INIT_T1 "$t0" \
                  INIT_Z0 10.0 INIT_Z1 10.0 \
-                 INIT_LON0 $init_lon0 \
-                 INIT_LON1 $init_lon1 \
-                 INIT_DLON $init_dlon \
-                 INIT_LAT0 $init_lat0 \
-                 INIT_LAT1 $init_lat1 \
-                 INIT_DLAT $init_dlat \
-                 INIT_EVENLY $use_evenly_distributed \
+                 INIT_LON0 "$init_lon0" \
+                 INIT_LON1 "$init_lon1" \
+                 INIT_DLON "$init_dlon" \
+                 INIT_LAT0 "$init_lat0" \
+                 INIT_LAT1 "$init_lat1" \
+                 INIT_DLAT "$init_dlat" \
+                 INIT_EVENLY "$use_evenly_distributed" \
                  INIT_IDX_OFFSET $((particles_num_subdomain * i)) >> "$work_dir"/data/atm_generation.log 2>&1
     
     cat > data/"data.$i"/config.ctl <<EOF
