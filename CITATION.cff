@@ -5,7 +5,7 @@ cff-version: 1.2.0
 title: Massive-Parallel Trajectory Calculations (MPTRAC)
 message: >-
   If you use this software, please cite it using the
-  metadata from this file.
+  metadata from the CITATION.cff file.
 type: software
 authors:
   - given-names: Lars
