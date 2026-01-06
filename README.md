@@ -39,7 +39,7 @@ over a wide range of spatial and temporal scales.
 
 Typical applications include studies of long-range pollutant transport,
 volcanic ash dispersion, tracer experiments, and atmospheric chemistry.
-MPTRAC is used in both research and educational contexts to investigate
+MPTRAC is used in both research and operational contexts to investigate
 atmospheric transport processes.
 
 To support easier access, especially for teaching and exploratory
