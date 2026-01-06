@@ -262,7 +262,9 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(metvar) :: met_comp_tol
      INTEGER(c_int) :: met_cms_batch
      INTEGER(c_int) :: met_cms_zstd
-     INTEGER(c_int) :: met_cms_heur
+     INTEGER(c_int) :: met_cms_nd0x
+     INTEGER(c_int) :: met_cms_nd0y
+     INTEGER(c_int) :: met_cms_maxlev
      REAL(c_double) :: met_cms_eps_z
      REAL(c_double) :: met_cms_eps_t
      REAL(c_double) :: met_cms_eps_u
