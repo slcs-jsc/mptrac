@@ -10,7 +10,9 @@ These links provide further information for users and developers of MPTRAC:
 
 * [AI documentation](https://www.deepwiki.com/slcs-jsc/mptrac)
 
-* [Reference paper](https://doi.org/10.5194/gmd-15-2731-2022)
+* [JOSS introductory paper](https://doi.org/10.21105/joss.08177)
+
+* [GMD reference paper](https://doi.org/10.5194/gmd-15-2731-2022)
 
 * [Other references](https://slcs-jsc.github.io/mptrac/references)
 
