@@ -92,7 +92,7 @@ void kpp_chem_initialize(
     double M = MOLEC_DENS(atm->p[ip], t);  
 
     /* Calculate solar zenith angle [deg] */
-    double sza = sza_calc(atm->time[ip], atm->lon[ip], atm->lat[ip]);
+    double sza = acos(cos_sza(atm->time[ip], atm->lon[ip], atm->lat[ip]));
 
     SET_VAR(ind_o3p, qnt_Co3p, M);
     SET_VAR(ind_o1d, qnt_Co1d, M);
