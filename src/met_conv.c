@@ -46,9 +46,6 @@ int main(
   ALLOC(met, met_t, 1);
   ALLOC(dd, dd_t, 1);
 
-  /* Start timers... */
-  START_TIMERS;
-
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
 
@@ -66,7 +63,6 @@ int main(
 
   /* Report timers... */
   PRINT_TIMERS;
-  STOP_TIMERS;
 
   /* Free... */
   free(clim);

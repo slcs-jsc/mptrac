@@ -80,9 +80,6 @@ int main(
        Initialize model run...
        ------------------------------------------------------------ */
 
-    /* Start timers... */
-    START_TIMERS;
-
     /* Allocate memory... */
     mptrac_alloc(&ctl, &cache, &clim, &met0, &met1, &atm, &dd);
 
@@ -156,10 +153,8 @@ int main(
     /* Free memory... */
     mptrac_free(ctl, cache, clim, met0, met1, atm, dd);
 
-
     /* Report timers... */
     PRINT_TIMERS;
-    STOP_TIMERS;
   }
 
   /* Finalize MPI... */

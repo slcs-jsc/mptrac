@@ -1075,7 +1075,7 @@ void dd_assign_rect_subdomains_atm(
   dd_t *dd,
   int init) {
 
-  SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_ASSIGN_RECT_SUBDOMAINS", "DD");
 
   if (init) {
 #ifdef _OPENACC
@@ -1290,7 +1290,7 @@ void dd_atm2particles(
   cache_t *cache,
   int rank) {
 
-  SELECT_TIMER("DD_ATM2PARTICLES", "DD", NVTX_READ);
+  SELECT_TIMER("DD_ATM2PARTICLES", "DD");
 
   /* Select the particles that will be send... */
 #ifdef _OPENACC
@@ -1467,7 +1467,7 @@ void dd_communicate_particles(
     if (neighbours[idest] < 0)
       continue;
 
-    SELECT_TIMER("DD_COUNT_NUMBER", "DD", NVTX_CPU);
+    SELECT_TIMER("DD_COUNT_NUMBER", "DD");
     /* Count number of particles in particle array that will be send... */
     int help_sum = 0;
     for (int ip = 0; ip < *nparticles; ip++)
@@ -1480,7 +1480,7 @@ void dd_communicate_particles(
 	  rank, help_sum, idest, neighbours[idest]);
     }
 
-    SELECT_TIMER("DD_SEND_NUMBER", "DD", NVTX_CPU);
+    SELECT_TIMER("DD_SEND_NUMBER", "DD");
     /* Send buffer sizes... */
     MPI_Isend(&nbs[idest], 1, MPI_INT,
 	      neighbours[idest], 0, MPI_COMM_WORLD, &requests_snd_nbr[idest]);
@@ -1489,7 +1489,7 @@ void dd_communicate_particles(
     if (nbs[idest] == 0)
       continue;
 
-    SELECT_TIMER("DD_PREP_BUFFER", "DD", NVTX_CPU);
+    SELECT_TIMER("DD_PREP_BUFFER", "DD");
     /* Allocate buffer for sending... */
     ALLOC(send_buffers[idest], particle_t, nbs[idest]);
 
@@ -1505,7 +1505,7 @@ void dd_communicate_particles(
 	break;
     }
 
-    SELECT_TIMER("DD_SEND_PARTICLES", "DD", NVTX_CPU);
+    SELECT_TIMER("DD_SEND_PARTICLES", "DD");
 
     /* Send the buffer... */
     MPI_Isend(send_buffers[idest], nbs[idest], MPI_Particle,
@@ -1513,7 +1513,7 @@ void dd_communicate_particles(
 	      &requests_snd_part[idest]);
   }
 
-  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD", NVTX_CPU);
+  SELECT_TIMER("DD_RECIEVE_NUMBERS", "DD");
 
   /* Recieving... */
   for (int isourc = 0; isourc < nneighbours; isourc++) {
@@ -1532,7 +1532,7 @@ void dd_communicate_particles(
   /* Wait for all particle numbers to be recieved... */
   MPI_Waitall(nneighbours, requests_rcv_nbr, states);
 
-  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD", NVTX_CPU);
+  SELECT_TIMER("DD_RECIEVE_PARTICLES", "DD");
   for (int isourc = 0; isourc < nneighbours; isourc++) {
 
     /* Ignore poles, and neighbours without signal... */
@@ -1553,7 +1553,7 @@ void dd_communicate_particles(
   /* Wait for all particles to be recieved... */
   MPI_Waitall(nneighbours, requests_rcv_part, states);
 
-  SELECT_TIMER("DD_EMPTY_BUFFER", "DD", NVTX_CPU);
+  SELECT_TIMER("DD_EMPTY_BUFFER", "DD");
 
   /* Start position for different buffer ranges... */
   int api = 0;
@@ -1583,7 +1583,7 @@ void dd_communicate_particles(
   /* Set number of recieved particles... */
   *nparticles = api;
 
-  SELECT_TIMER("DD_FREE_BUFFER", "DD", NVTX_CPU);
+  SELECT_TIMER("DD_FREE_BUFFER", "DD");
 
   /* Wait for all communication to be finished... */
   MPI_Waitall(nneighbours, requests_snd_part, states);
@@ -1614,7 +1614,7 @@ void dd_communicate_particles(
 void dd_get_rect_neighbour(
   const ctl_t ctl,
   dd_t *dd) {
-  SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_GET_RECT_NEIGHBOUR", "DD");
 
   const int rank = dd->rank;
   const int size = dd->size;
@@ -1693,7 +1693,7 @@ void dd_particles2atm(
   int *nparticles,
   cache_t *cache) {
 
-  SELECT_TIMER("DD_PARTICLES2ATM", "DD", NVTX_CPU);
+  SELECT_TIMER("DD_PARTICLES2ATM", "DD");
 
 #ifdef _OPENACC
   int npart = *nparticles;
@@ -1757,7 +1757,7 @@ void dd_sort(
   int *rank) {
 
   /* Set timer... */
-  SELECT_TIMER("DD_SORT", "DD", NVTX_GPU);
+  SELECT_TIMER("DD_SORT", "DD");
 
   /* Allocate... */
   const int np = atm->np;
@@ -2977,7 +2977,7 @@ void module_advect(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_ADVECT", "PHYSICS");
 
   /* Use omega vertical velocity... */
   if (ctl->advect_vert_coord == 0 || ctl->advect_vert_coord == 2) {
@@ -3144,7 +3144,7 @@ void module_advect_init(
     return;
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ADVECT_INIT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_ADVECT_INIT", "PHYSICS");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,met0,met1,atm)") {
@@ -3168,7 +3168,7 @@ void module_bound_cond(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_BOUND_COND", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_BOUND_COND", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0 && ctl->qnt_Cccl4
@@ -3269,7 +3269,7 @@ void module_chem_grid(
     ERRMSG("Molar mass is not defined!");
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEM_GRID", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_CHEM_GRID", "PHYSICS");
 
   /* Allocate... */
   const int ensemble_mode = (ctl->nens > 0);
@@ -3426,7 +3426,7 @@ void module_chem_init(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CHEM_INIT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_CHEM_INIT", "PHYSICS");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0,
@@ -3467,7 +3467,7 @@ void module_convection(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_CONVECTION", "PHYSICS");
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, (size_t) atm->np, 0);
@@ -3579,7 +3579,7 @@ void module_decay(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DECAY", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DECAY", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -3619,7 +3619,7 @@ void module_diff_meso(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFF_MESO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFF_MESO", "PHYSICS");
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
@@ -3696,7 +3696,7 @@ void module_diff_pbl(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFF_PBL", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFF_PBL", "PHYSICS");
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
@@ -3822,7 +3822,7 @@ void module_diff_turb(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DIFF_TURB", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DIFF_TURB", "PHYSICS");
 
   /* Create random numbers... */
   module_rng(ctl, cache->rs, 3 * (size_t) atm->np, 1);
@@ -3873,7 +3873,7 @@ void module_dry_depo(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_DRY_DEPO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_DRY_DEPO", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -3937,7 +3937,7 @@ void module_h2o2_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_H2O2_CHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_H2O2_CHEM", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -4020,7 +4020,7 @@ void module_isosurf_init(
   double t;
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF_INIT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_ISOSURF_INIT", "PHYSICS");
 
   /* Save pressure... */
   if (ctl->isosurf == 1) {
@@ -4088,7 +4088,7 @@ void module_isosurf(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_ISOSURF", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_ISOSURF", "PHYSICS");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 0, "acc data present(ctl,cache,met0,met1,atm)") {
@@ -4142,7 +4142,7 @@ void module_kpp_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_KPP_CHEM", "PHYSICS");
 
   const int nvar = NVAR, nfix = NFIX, nreact = NREACT;
   double rtol[1] = { 1.0e-3 };
@@ -4195,7 +4195,7 @@ void module_meteo(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_METEO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_METEO", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_tsts >= 0)
@@ -4300,7 +4300,7 @@ void module_mixing(
   const double t) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_MIXING", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_MIXING", "PHYSICS");
 
   /* Allocate... */
   const int np = atm->np;
@@ -4475,7 +4475,7 @@ void module_oh_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_OH_CHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_OH_CHEM", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -4557,7 +4557,7 @@ void module_position(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_POSITION", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_POSITION", "PHYSICS");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(cache,met0,met1,atm)") {
@@ -4657,7 +4657,7 @@ void module_rng(
 
     /* Update of random numbers on device... */
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
 #pragma acc update device(rs[:n])
 #endif
   }
@@ -4745,7 +4745,7 @@ void module_sedi(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SEDI", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_SEDI", "PHYSICS");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
@@ -4772,7 +4772,7 @@ void module_sort(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SORT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_SORT", "PHYSICS");
 
   /* Allocate... */
   const int np = atm->np;
@@ -4877,7 +4877,7 @@ void module_timesteps(
   const double t) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TIMESTEPS", "PHYSICS");
 
   const double latmin = gsl_stats_min(met0->lat, 1, (size_t) met0->ny),
     latmax = gsl_stats_max(met0->lat, 1, (size_t) met0->ny);
@@ -4921,7 +4921,7 @@ void module_timesteps_init(
   const atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TIMESTEPS_INIT", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TIMESTEPS_INIT", "PHYSICS");
 
   /* Set start time... */
   if (ctl->direction == 1) {
@@ -4956,7 +4956,7 @@ void module_tracer_chem(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_TRACER_CHEM", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_TRACER_CHEM", "PHYSICS");
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1,
@@ -5026,7 +5026,7 @@ void module_wet_depo(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_WET_DEPO", "PHYSICS", NVTX_GPU);
+  SELECT_TIMER("MODULE_WET_DEPO", "PHYSICS");
 
   /* Check quantity flags... */
   if (ctl->qnt_m < 0 && ctl->qnt_vmr < 0)
@@ -5164,7 +5164,7 @@ void mptrac_alloc(
 
   /* Initialize GPU... */
 #ifdef _OPENACC
-  SELECT_TIMER("ACC_INIT", "INIT", NVTX_GPU);
+  SELECT_TIMER("ACC_INIT", "INIT");
   int rank = 0;
 #ifdef MPI
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -5178,7 +5178,7 @@ void mptrac_alloc(
 #endif
 
   /* Allocate... */
-  SELECT_TIMER("ALLOC", "MEMORY", NVTX_CPU);
+  SELECT_TIMER("ALLOC", "MEMORY");
   ALLOC(*ctl, ctl_t, 1);
   ALLOC(*cache, cache_t, 1);
   ALLOC(*clim, clim_t, 1);
@@ -5189,7 +5189,7 @@ void mptrac_alloc(
 
   /* Create data region on GPU... */
 #ifdef _OPENACC
-  SELECT_TIMER("CREATE_DATA_REGION", "MEMORY", NVTX_GPU);
+  SELECT_TIMER("CREATE_DATA_REGION", "MEMORY");
   ctl_t *ctlup = *ctl;
   cache_t *cacheup = *cache;
   clim_t *climup = *clim;
@@ -5217,12 +5217,12 @@ void mptrac_free(
 
   /* Delete data region on GPU... */
 #ifdef _OPENACC
-  SELECT_TIMER("DELETE_DATA_REGION", "MEMORY", NVTX_GPU);
+  SELECT_TIMER("DELETE_DATA_REGION", "MEMORY");
 #pragma acc exit data delete (ctl,cache,clim,met0,met1,atm)
 #endif
 
   /* Free... */
-  SELECT_TIMER("FREE", "MEMORY", NVTX_CPU);
+  SELECT_TIMER("FREE", "MEMORY");
   free(atm);
   free(ctl);
   free(cache);
@@ -5254,7 +5254,7 @@ void mptrac_get_met(
   char cachefile[LEN], cmd[2 * LEN], filename[LEN];
 
   /* Set timer... */
-  SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+  SELECT_TIMER("GET_MET", "INPUT");
 
   /* Init... */
   if (t == ctl->t_start || !init) {
@@ -5273,7 +5273,7 @@ void mptrac_get_met(
 
     /* Update GPU... */
     mptrac_update_device(NULL, NULL, NULL, met0, met1, NULL);
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+    SELECT_TIMER("GET_MET", "INPUT");
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
@@ -5301,7 +5301,7 @@ void mptrac_get_met(
 
     /* Update GPU... */
     mptrac_update_device(NULL, NULL, NULL, NULL, met1, NULL);
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+    SELECT_TIMER("GET_MET", "INPUT");
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
@@ -5329,7 +5329,7 @@ void mptrac_get_met(
 
     /* Update GPU... */
     mptrac_update_device(NULL, NULL, NULL, met0, NULL, NULL);
-    SELECT_TIMER("GET_MET", "INPUT", NVTX_READ);
+    SELECT_TIMER("GET_MET", "INPUT");
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
@@ -5388,7 +5388,7 @@ int mptrac_read_atm(
   int result;
 
   /* Set timer... */
-  SELECT_TIMER("READ_ATM", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_ATM", "INPUT");
 
   /* Init... */
   atm->np = 0;
@@ -5456,7 +5456,7 @@ void mptrac_read_clim(
   clim_t *clim) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_CLIM", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_CLIM", "INPUT");
 
   /* Init tropopause climatology... */
   clim_tropo_init(clim);
@@ -5518,7 +5518,7 @@ void mptrac_read_ctl(
   ctl_t *ctl) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_CTL", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_CTL", "INPUT");
 
   /* Write info... */
   LOG(1, "\nMassive-Parallel Trajectory Calculations (MPTRAC)\n"
@@ -6501,7 +6501,7 @@ int mptrac_read_met(
   if (ctl->met_mpi_share) {
 
     /* Set timer... */
-    SELECT_TIMER("READ_MET_MPI_BCAST", "COMM", NVTX_SEND);
+    SELECT_TIMER("READ_MET_MPI_BCAST", "COMM");
     LOG(2, "Broadcast data on rank %d...", rank);
 
     /* Broadcast... */
@@ -6674,28 +6674,28 @@ void mptrac_update_device(
   /* Update GPU... */
   if (ctl != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
 #pragma acc update device(ctl[:1])
 #endif
   }
 
   if (cache != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
 #pragma acc update device(cache[:1])
 #endif
   }
 
   if (clim != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
 #pragma acc update device(clim[:1])
 #endif
   }
 
   if (met0 != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
     met_t *met0up = *met0;
 #pragma acc update device(met0up[:1])
 #endif
@@ -6703,7 +6703,7 @@ void mptrac_update_device(
 
   if (met1 != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
     met_t *met1up = *met1;
 #pragma acc update device(met1up[:1])
 #endif
@@ -6711,7 +6711,7 @@ void mptrac_update_device(
 
   if (atm != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
 #pragma acc update device(atm[:1])
 #endif
   }
@@ -6730,28 +6730,28 @@ void mptrac_update_host(
   /* Update GPU... */
   if (ctl != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_HOST", "MEMORY");
 #pragma acc update host(ctl[:1])
 #endif
   }
 
   if (cache != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_HOST", "MEMORY");
 #pragma acc update host(cache[:1])
 #endif
   }
 
   if (clim != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_HOST", "MEMORY");
 #pragma acc update host(clim[:1])
 #endif
   }
 
   if (met0 != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
     met_t *met0up = *met0;
 #pragma acc update host(met0up[:1])
 #endif
@@ -6759,7 +6759,7 @@ void mptrac_update_host(
 
   if (met1 != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
     met_t *met1up = *met1;
 #pragma acc update host(met1up[:1])
 #endif
@@ -6767,7 +6767,7 @@ void mptrac_update_host(
 
   if (atm != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_HOST", "MEMORY", NVTX_H2D);
+    SELECT_TIMER("UPDATE_HOST", "MEMORY");
 #pragma acc update host(atm[:1])
 #endif
   }
@@ -6782,7 +6782,7 @@ void mptrac_write_atm(
   const double t) {
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_ATM", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_ATM", "OUTPUT");
 
   /* Write info... */
   LOG(1, "Write atmospheric data: %s", filename);
@@ -6841,7 +6841,7 @@ void mptrac_write_met(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_MET", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_MET", "OUTPUT");
 
   /* Write info... */
   LOG(1, "Write meteo data: %s", filename);
@@ -7532,7 +7532,7 @@ int read_met_bin(
   int year, mon, day, hour, min, sec;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_BIN", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_BIN", "INPUT");
 
   /* Open file... */
   if (!(in = fopen(filename, "r"))) {
@@ -7813,7 +7813,7 @@ void read_met_cape(
     return;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_CAPE", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_CAPE", "METPROC");
   LOG(2, "Calculate CAPE...");
 
   /* Vertical spacing (about 100 m)... */
@@ -7922,7 +7922,7 @@ void read_met_cloud(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_CLOUD", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_CLOUD", "METPROC");
   LOG(2, "Calculate cloud data...");
 
   /* Thresholds for cloud detection... */
@@ -7986,7 +7986,7 @@ void read_met_detrend(
     return;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_DETREND", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_DETREND", "METPROC");
   LOG(2, "Detrend meteo data...");
 
   /* Allocate... */
@@ -8083,7 +8083,7 @@ void read_met_extrapolate(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_EXTRAPOLATE", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_EXTRAPOLATE", "METPROC");
   LOG(2, "Extrapolate meteo data...");
 
   /* Loop over columns... */
@@ -8130,7 +8130,7 @@ void read_met_geopot(
   int dx = ctl->met_geopot_sx, dy = ctl->met_geopot_sy;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_GEOPOT", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_GEOPOT", "METPROC");
   LOG(2, "Calculate geopotential heights...");
 
   /* Allocate... */
@@ -8264,7 +8264,7 @@ void read_met_nc_grid(
   size_t dimlen;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_GRID", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_NC_GRID", "INPUT");
   LOG(2, "Read meteo grid information...");
 
   /* MPTRAC meteo files... */
@@ -8421,7 +8421,7 @@ void read_met_nc_surface(
   dd_t *dd) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_SURFACE", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_SURFACE", "INPUT");
   LOG(2, "Read surface data...");
 
   /* Read surface pressure... */
@@ -8559,7 +8559,7 @@ void read_met_nc_levels(
   dd_t *dd) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_NC_LEVELS", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_NC_LEVELS", "INPUT");
   LOG(2, "Read level data...");
 
   /* Read temperature... */
@@ -9023,7 +9023,7 @@ int read_met_nc_3d(
   float dest[EX][EY][EP],
   const float scl) {
 
-  SELECT_TIMER("read_met_nc_3d", "INPUT", NVTX_READ);
+  SELECT_TIMER("read_met_nc_3d", "INPUT");
 
   char varsel[LEN];
 
@@ -9173,7 +9173,7 @@ int read_met_nc_3d(
     LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
 	varsel, fillval, missval);
 
-    SELECT_TIMER("read_met_nc_3d_CP1", "INPUT", NVTX_READ);
+    SELECT_TIMER("read_met_nc_3d_CP1", "INPUT");
 
     /* Define hyperslab... */
 
@@ -9183,7 +9183,7 @@ int read_met_nc_3d(
 	    (int) dd->subdomain_count[0] * (int) dd->subdomain_count[1]
 	  * (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]);
 
-    SELECT_TIMER("read_met_nc_3d_CP2", "INPUT", NVTX_READ);
+    SELECT_TIMER("read_met_nc_3d_CP2", "INPUT");
 
     /* Use default NetCDF parallel I/O behavior */
     NC(nc_get_vara_float
@@ -9195,14 +9195,14 @@ int read_met_nc_3d(
 	  dd->halo_bnd_count[0] * dd->halo_bnd_count[1] *
 	  dd->halo_bnd_count[2] * dd->halo_bnd_count[3]);
 
-    SELECT_TIMER("read_met_nc_3d_CP3", "INPUT", NVTX_READ);
+    SELECT_TIMER("read_met_nc_3d_CP3", "INPUT");
 
     /* Halo read also uses independent access */
     NC(nc_get_vara_float(ncid,
 			 varid,
 			 dd->halo_bnd_start, dd->halo_bnd_count, help_halo));
 
-    SELECT_TIMER("read_met_nc_3d_CP4", "INPUT", NVTX_READ);
+    SELECT_TIMER("read_met_nc_3d_CP4", "INPUT");
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
@@ -9390,7 +9390,7 @@ void read_met_grib_grid(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_GRIB_GRID", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_GRIB_GRID", "INPUT");
   LOG(2, "Read meteo grid information...");
 
   /* Read date and time... */
@@ -9495,7 +9495,7 @@ void read_met_grib_levels(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_GRIB_LEVELS", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_GRIB_LEVELS", "INPUT");
   LOG(2, "Read level data...");
 
   /* Init... */
@@ -9621,7 +9621,7 @@ void read_met_grib_surface(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_GRIB_SURFACE", "INPUT", NVTX_READ);
+  SELECT_TIMER("READ_MET_GRIB_SURFACE", "INPUT");
   LOG(2, "Read surface data...");
 
   /* Init... */
@@ -9712,7 +9712,7 @@ void read_met_ml2pl(
   double aux[EP], p[EP];
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_ML2PL", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_ML2PL", "METPROC");
   LOG(2, "Interpolate meteo data to pressure levels: %s", varname);
 
   /* Loop over columns... */
@@ -9754,7 +9754,7 @@ void read_met_monotonize(
     return;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_MONOTONIZE", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_MONOTONIZE", "METPROC");
   LOG(2, "Make zeta profiles monotone...");
 
   /* Create monotone zeta profiles... */
@@ -10115,7 +10115,7 @@ void read_met_pbl(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_PBL", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_PBL", "METPROC");
   LOG(2, "Calculate planetary boundary layer...");
 
   /* Convert PBL height from meteo file to pressure... */
@@ -10251,7 +10251,7 @@ void read_met_periodic(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_PERIODIC", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_PERIODIC", "METPROC");
   LOG(2, "Apply periodic boundary conditions...");
 
   /* Check longitudes... */
@@ -10312,7 +10312,7 @@ void read_met_polar_winds(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_POLAR_WINDS", "METPROC");
   LOG(2, "Apply fix for polar winds...");
 
   /* Check latitudes... */
@@ -10373,7 +10373,7 @@ void read_met_pv(
   double pows[EP];
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_PV", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_PV", "METPROC");
   LOG(2, "Calculate potential vorticity...");
 
   /* Set powers... */
@@ -10477,7 +10477,7 @@ void read_met_ozone(
   met_t *met) {
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_OZONE", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_OZONE", "METPROC");
   LOG(2, "Calculate total column ozone...");
 
   /* Loop over columns... */
@@ -10514,7 +10514,7 @@ void read_met_sample(
     return;
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_SAMPLE", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_SAMPLE", "METPROC");
   LOG(2, "Downsampling of meteo data...");
 
   /* Allocate... */
@@ -10684,7 +10684,7 @@ void read_met_tropo(
     th2[200], z[EP], z2[200];
 
   /* Set timer... */
-  SELECT_TIMER("READ_MET_TROPO", "METPROC", NVTX_READ);
+  SELECT_TIMER("READ_MET_TROPO", "METPROC");
   LOG(2, "Calculate tropopause...");
 
   /* Get altitude and pressure profiles... */
@@ -11688,7 +11688,7 @@ void write_csi(
   const int ensemble = (ctl->nens > 0);
 
   /* Set timer */
-  SELECT_TIMER("WRITE_CSI", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_CSI", "OUTPUT");
 
   /* Check quantities... */
   if (ctl->qnt_m < 0)
@@ -11959,7 +11959,7 @@ void write_ens(
   static int n[NENS];
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_ENS", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_ENS", "OUTPUT");
 
   /* Check quantities... */
   if (ctl->qnt_ens < 0)
@@ -12059,7 +12059,7 @@ void write_grid(
   int *ixs, *iys, *izs, *np;
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_GRID", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_GRID", "OUTPUT");
 
   /* Write info... */
   LOG(1, "Write grid data: %s", filename);
@@ -12937,7 +12937,7 @@ void write_prof(
   static int nobs, *obscount, ip, okay;
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_PROF", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_PROF", "OUTPUT");
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -13164,7 +13164,7 @@ void write_sample(
   static int nobs, nk;
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_SAMPLE", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_SAMPLE", "OUTPUT");
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -13321,7 +13321,7 @@ void write_station(
   static double rmax2, x0[3], x1[3];
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_STATION", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_STATION", "OUTPUT");
 
   /* Init... */
   if (t == ctl->t_start) {
@@ -13405,7 +13405,7 @@ void write_vtk(
   FILE *out;
 
   /* Set timer... */
-  SELECT_TIMER("WRITE_VTK", "OUTPUT", NVTX_WRITE);
+  SELECT_TIMER("WRITE_VTK", "OUTPUT");
 
   /* Write info... */
   LOG(1, "Write VTK data: %s", filename);

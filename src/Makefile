@@ -50,9 +50,6 @@ PROF ?= 0
 # Compile for coverage testing...
 COV ?= 0
 
-# Enable NVTX markers...
-NVTX ?= 0
-
 # Enable cuRAND random number generators...
 CURAND ?= 0
 
@@ -175,12 +172,6 @@ endif
 ifeq ($(COV),1)
   CFLAGS += --coverage
   FCFLAGS += --coverage
-endif
-
-# NVTX markers...
-ifeq ($(NVTX),1)
-  CFLAGS  += -DNVTX
-  LDFLAGS += -lnvToolsExt
 endif
 
 # Compile with cuRAND...

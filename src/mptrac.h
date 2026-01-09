@@ -2106,149 +2106,16 @@
  * \brief Select and start a timer with specific attributes.
  *
  * This macro stops the current timer (if any) and starts a new timer
- * with the specified ID, group, and color. It uses the `NVTX_POP` and
- * `NVTX_PUSH` macros for managing timer events and the `timer`
+ * with the specified ID and group. It uses the `timer`
  * function to log the timer start event.
  *
  * \param id The identifier for the timer.
  * \param group The group name associated with the timer.
- * \param color The color code associated with the timer for NVTX visualization.
- *
- * \note
- * The `NVTX_POP`, `NVTX_PUSH`, and `timer` functions/macros must be defined
- * elsewhere in the codebase for this macro to function correctly.
  * 
  * @author Lars Hoffmann
  */
-#define SELECT_TIMER(id, group, color) {				\
-    NVTX_POP;								\
-    NVTX_PUSH(id, color);						\
-    timer(id, group, 0);						\
-  }
-
-/*!
- * \brief Starts a timer for tracking.
- *
- * This macro initializes the timer tracking process by pushing a
- * start event onto the stack using the `NVTX_PUSH` macro with a
- * predefined ID ("START") and color (`NVTX_CPU`).
- *
- * \note
- * The `NVTX_PUSH` macro must be defined elsewhere in the codebase for this
- * macro to function correctly.
- * 
- * @author Lars Hoffmann
- */
-#define START_TIMERS				\
-  NVTX_PUSH("START", NVTX_CPU);
-
-/*!
- * \brief Stop the current timer.
- *
- * This macro stops the current timer by popping the top event from
- * the stack using the `NVTX_POP` macro.
- *
- * \note
- * The `NVTX_POP` macro must be defined elsewhere in the codebase for this
- * macro to function correctly.
- * 
- * @author Lars Hoffmann
- */
-#define STOP_TIMERS				\
-  NVTX_POP;
-
-/* ------------------------------------------------------------
-   NVIDIA Tools Extension (NVTX)...
-   ------------------------------------------------------------ */
-
-#ifdef NVTX
-#include "nvToolsExt.h"
-
-/*! Light blue color code (computation on CPUs). */
-#define NVTX_CPU 0xFFADD8E6
-
-/*! Dark blue color code (computation on GPUs). */
-#define NVTX_GPU 0xFF00008B
-
-/*! Yellow color code (data transfer from CPUs to GPUs). */
-#define NVTX_H2D 0xFFFFFF00
-
-/*! Orange color code (data transfer from GPUs to CPUs). */
-#define NVTX_D2H 0xFFFF8800
-
-/*! Light red color code (reading data). */
-#define NVTX_READ 0xFFFFCCCB
-
-/*! Dark red color code (writing data). */
-#define NVTX_WRITE 0xFF8B0000
-
-/*! Light green color code (MPI receive). */
-#define NVTX_RECV 0xFFCCFFCB
-
-/*! Dark green color code (MPI send). */
-#define NVTX_SEND 0xFF008B00
-
-/*!
- * \brief Macro for calling `nvtxRangePushEx` to start a named and colored NVTX range.
- *
- * This macro initializes an `nvtxEventAttributes_t` structure with
- * the provided title and color, then calls `nvtxRangePushEx` to mark
- * the beginning of an NVTX range.
- *
- * \param range_title The title of the NVTX range, displayed in the NVTX visual profiler.
- * \param range_color The color of the NVTX range, specified as an ARGB value.
- *
- * \details
- * The macro sets up the `nvtxEventAttributes_t` structure with the following fields:
- * - `version`: Set to `NVTX_VERSION`.
- * - `size`: Set to `NVTX_EVENT_ATTRIB_STRUCT_SIZE`.
- * - `messageType`: Set to `NVTX_MESSAGE_TYPE_ASCII` to indicate the message is an ASCII string.
- * - `colorType`: Set to `NVTX_COLOR_ARGB` to specify the color format.
- * - `color`: Set to the value of `range_color`.
- * - `message.ascii`: Set to the value of `range_title`.
- *
- * It then calls `nvtxRangePushEx` with the initialized attributes to start the NVTX range.
- *
- * \note
- * The NVTX (NVIDIA Tools Extension) library must be included and
- * initialized in your project for this macro to function
- * correctly. If NVTX is not available, an empty definition is
- * provided.
- * 
- * @author Lars Hoffmann
- */
-#define NVTX_PUSH(range_title, range_color) {		\
-    nvtxEventAttributes_t eventAttrib = {0};		\
-    eventAttrib.version = NVTX_VERSION;			\
-    eventAttrib.size = NVTX_EVENT_ATTRIB_STRUCT_SIZE;	\
-    eventAttrib.messageType = NVTX_MESSAGE_TYPE_ASCII;	\
-    eventAttrib.colorType = NVTX_COLOR_ARGB;		\
-    eventAttrib.color = range_color;			\
-    eventAttrib.message.ascii = range_title;		\
-    nvtxRangePushEx(&eventAttrib);			\
-  }
-
-/*!
- * \brief Macro for calling `nvtxRangePop` to end the current NVTX range.
- *
- * This macro calls `nvtxRangePop` to mark the end of the most
- * recently started NVTX range.
- *
- * \note
- * The NVTX (NVIDIA Tools Extension) library must be included and initialized in your project for
- * this macro to function correctly. If NVTX is not available, an empty definition is provided.
- * 
- * @author Lars Hoffmann
- */
-#define NVTX_POP {				\
-    nvtxRangePop();				\
-  }
-#else
-
-/* Empty definitions of NVTX_PUSH and NVTX_POP... */
-#define NVTX_PUSH(range_title, range_color) {}
-#define NVTX_POP {}
-#endif
+#define SELECT_TIMER(id, group)			\
+  timer(id, group, 0);
 
 /* ------------------------------------------------------------
    Structs...
