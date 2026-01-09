@@ -1,0 +1,5 @@
+<map id="clim_zm" name="clim_zm">
+<area shape="rect" id="node1" title="Interpolates monthly mean zonal mean climatological variables." alt="" coords="5,31,76,57"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="128,5,203,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="124,56,207,83"/>
+</map>

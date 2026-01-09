@@ -1,0 +1,9 @@
+<map id="read_met_tropo" name="read_met_tropo">
+<area shape="rect" id="node1" title="Calculates the tropopause and related meteorological variables based on various methods and stores th..." alt="" coords="5,56,117,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a4531cb279e09061a6f34a73695c7b692" title="Calculates the tropopause pressure based on climatological data." alt="" coords="197,56,279,83"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="165,107,311,133"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a62786d005ed312f3c9ba2fac7cd544fc" title="Performs spline interpolation or linear interpolation." alt="" coords="210,5,266,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="391,31,466,57"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="387,81,470,108"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="359,132,499,159"/>
+</map>

@@ -1,0 +1,4 @@
+<map id="write_grid_asc" name="write_grid_asc">
+<area shape="rect" id="node1" title="Writes grid data to an ASCII file." alt="" coords="5,5,112,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="160,5,239,32"/>
+</map>

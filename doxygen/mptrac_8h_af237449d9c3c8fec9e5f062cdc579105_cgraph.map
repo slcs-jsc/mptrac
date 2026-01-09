@@ -1,0 +1,4 @@
+<map id="module_dry_depo" name="module_dry_depo">
+<area shape="rect" id="node1" title="Simulate dry deposition of atmospheric particles." alt="" coords="5,5,128,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#a1b580107362b559d90f6766d340cc370" title="Calculates the sedimentation velocity of a particle in air." alt="" coords="176,5,223,32"/>
+</map>

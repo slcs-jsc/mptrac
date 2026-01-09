@@ -1,0 +1,9 @@
+<map id="write_csi" name="write_csi">
+<area shape="rect" id="node1" title="Writes Critical Success Index (CSI) data to a file." alt="" coords="5,56,80,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="128,5,231,32"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="135,56,224,83"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a1365b8fd93db0fc3fe4c467107710d03" title="Reads observation data from a file and stores it in arrays." alt="" coords="142,107,217,133"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="293,5,367,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a29da9a205ad3577ba3890f3e1e4350c3" title="Reads observation data from an ASCII file." alt="" coords="279,81,381,108"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a4536a82b3dc62081d26114c1250b1427" title="Reads observation data from a NetCDF file." alt="" coords="282,132,378,159"/>
+</map>

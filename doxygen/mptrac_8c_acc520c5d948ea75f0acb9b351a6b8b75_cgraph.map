@@ -1,0 +1,11 @@
+<map id="read_met_bin" name="read_met_bin">
+<area shape="rect" id="node1" title="Reads meteorological data from a binary file." alt="" coords="5,56,105,83"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="175,5,253,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a4b9aea19f1f7b7461d49a90bef54d286" title="Reads a 2&#45;dimensional meteorological variable from a binary file and stores it in the provided array." alt="" coords="153,56,275,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a8acf2c312916a07fa0856aa6d4948558" title="Reads 3D meteorological data from a binary file, potentially using different compression methods." alt="" coords="153,107,275,133"/>
+<area shape="rect" id="node5" href="$mptrac_8h.html#a2e72346e130df723f0e0bec4eb739b14" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="323,5,433,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a61bbe35a4ff7b797fdb64f9797a3ffd1" title="Compresses or decompresses a 3D array of floats." alt="" coords="325,56,431,83"/>
+<area shape="rect" id="node7" href="$mptrac_8h.html#ae686ad6d0ce087fddcd62a7b87c768f3" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="325,107,431,133"/>
+<area shape="rect" id="node8" href="$mptrac_8h.html#a412570d903373ea3f6ca36aa907f3d72" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="327,157,429,184"/>
+<area shape="rect" id="node9" href="$mptrac_8h.html#a057bb032e8b5df1b2a228b9b7931dd0c" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="323,208,433,235"/>
+</map>

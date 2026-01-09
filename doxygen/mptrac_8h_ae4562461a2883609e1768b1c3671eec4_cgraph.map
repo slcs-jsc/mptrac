@@ -1,0 +1,7 @@
+<map id="read_met_nc_grid" name="read_met_nc_grid">
+<area shape="rect" id="node1" title="Reads meteorological grid data from NetCDF files with domain decomposition." alt="" coords="5,93,131,120"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="213,5,291,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a6c6041039047d277d4836da1bb119e3d" title="Read meteorological grid data from a NetCDF file and set up subdomain decomposition with halos." alt="" coords="179,57,325,98"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Converts time components to seconds since January 1, 2000, 12:00:00 UTC." alt="" coords="373,148,452,175"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a8c5064804f7b46a4130b5411374a771d" title="Extracts and converts a timestamp from a filename to Julian seconds." alt="" coords="185,173,319,200"/>
+</map>

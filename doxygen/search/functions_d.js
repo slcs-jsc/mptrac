@@ -1,0 +1,7 @@
+var searchData=
+[
+  ['scan_5fctl_0',['scan_ctl',['../mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a',1,'scan_ctl(const char *filename, int argc, char *argv[], const char *varname, const int arridx, const char *defvalue, char *value):&#160;mptrac.c'],['../mptrac_8h.html#a7d07c7baed461e240ff50585ddeed80a',1,'scan_ctl(const char *filename, int argc, char *argv[], const char *varname, const int arridx, const char *defvalue, char *value):&#160;mptrac.c']]],
+  ['sedi_1',['sedi',['../mptrac_8c.html#a1b580107362b559d90f6766d340cc370',1,'sedi(const double p, const double T, const double rp, const double rhop):&#160;mptrac.c'],['../mptrac_8h.html#a1b580107362b559d90f6766d340cc370',1,'sedi(const double p, const double T, const double rp, const double rhop):&#160;mptrac.c']]],
+  ['spline_2',['spline',['../mptrac_8c.html#a62786d005ed312f3c9ba2fac7cd544fc',1,'spline(const double *x, const double *y, const int n, const double *x2, double *y2, const int n2, const int method):&#160;mptrac.c'],['../mptrac_8h.html#a62786d005ed312f3c9ba2fac7cd544fc',1,'spline(const double *x, const double *y, const int n, const double *x2, double *y2, const int n2, const int method):&#160;mptrac.c']]],
+  ['stddev_3',['stddev',['../mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f',1,'stddev(const float *data, const int n):&#160;mptrac.c'],['../mptrac_8h.html#a87088b5ccf95f03d986f1bdd570b5b2f',1,'stddev(const float *data, const int n):&#160;mptrac.c']]]
+];

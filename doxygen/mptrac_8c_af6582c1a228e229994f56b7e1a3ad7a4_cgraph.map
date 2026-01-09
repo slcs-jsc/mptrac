@@ -1,0 +1,14 @@
+<map id="mptrac_write_met" name="mptrac_write_met">
+<area shape="rect" id="node1" title="Writes meteorological data to a file, supporting multiple formats and compression options." alt="" coords="5,132,132,159"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#af330c627ed04b0ae7098b89e2577e733" title="Writes meteorological data in binary format to a specified file." alt="" coords="180,107,283,133"/>
+<area shape="rect" id="node10" href="$mptrac_8c.html#a92ad405ee98c55d656f4b9fcb4957503" title="Writes meteorological data to a NetCDF file." alt="" coords="181,157,281,184"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#ac27e0e729035eecb9097b57538aa1669" title="Writes a 2&#45;dimensional meteorological variable to a binary file." alt="" coords="331,56,455,83"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a135c74d7aa047461b2a8c72b312bd567" title="Writes a 3&#45;dimensional meteorological variable to a binary file." alt="" coords="331,107,455,133"/>
+<area shape="rect" id="node5" href="$mptrac_8h.html#a2e72346e130df723f0e0bec4eb739b14" title="Compresses or decompresses a 3&#45;D meteorological field using cmultiscale." alt="" coords="503,5,613,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a61bbe35a4ff7b797fdb64f9797a3ffd1" title="Compresses or decompresses a 3D array of floats." alt="" coords="505,56,611,83"/>
+<area shape="rect" id="node7" href="$mptrac_8h.html#ae686ad6d0ce087fddcd62a7b87c768f3" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="505,107,611,133"/>
+<area shape="rect" id="node8" href="$mptrac_8h.html#a412570d903373ea3f6ca36aa907f3d72" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="507,157,609,184"/>
+<area shape="rect" id="node9" href="$mptrac_8h.html#a057bb032e8b5df1b2a228b9b7931dd0c" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="503,208,613,235"/>
+<area shape="rect" id="node11" href="$mptrac_8c.html#a0bed36c022857a81c5d80e45e8be582a" title="Writes a 2D meteorological variable to a NetCDF file." alt="" coords="332,157,453,184"/>
+<area shape="rect" id="node12" href="$mptrac_8c.html#ae14d46547d2b1260b2ba857499b180d7" title="Writes a 3D meteorological variable to a NetCDF file." alt="" coords="332,208,453,235"/>
+</map>

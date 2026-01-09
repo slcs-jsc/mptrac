@@ -1,0 +1,14 @@
+<map id="write_sample" name="write_sample">
+<area shape="rect" id="node1" title="Writes sample data to a specified file." alt="" coords="5,107,104,133"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="183,5,255,32"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a5819df4f969928e2f45144e44feb50a6" title="Interpolates meteorological data in 3D space and time." alt="" coords="152,56,287,83"/>
+<area shape="rect" id="node8" href="$mptrac_8c.html#ae61cf973263fcc45574daa27d0dec8cd" title="Calculates the kernel weight based on altitude and given kernel data." alt="" coords="356,107,459,133"/>
+<area shape="rect" id="node9" href="$mptrac_8c.html#a7a3277ab872141360b876c25b5643ba6" title="Reads kernel function data from a file and populates the provided arrays." alt="" coords="175,157,264,184"/>
+<area shape="rect" id="node10" href="$mptrac_8c.html#a1365b8fd93db0fc3fe4c467107710d03" title="Reads observation data from a file and stores it in arrays." alt="" coords="182,208,257,235"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#a72b3417d6665335c02591c365f88cad1" title="Interpolates meteorological variables in 3D space." alt="" coords="335,56,480,83"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#af0880745f22b8f99b19eeecf984df11d" title="Adjusts longitude and latitude to ensure they fall within valid bounds." alt="" coords="528,5,668,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a4e1b87dc3c93a23c89f739adf10b60dc" title="Locate the index of the interval containing a given value in a sorted array." alt="" coords="561,107,635,133"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a2a3c8ab98f21179741b274439786726d" title="Locate the index of the interval containing a given value in a regular grid." alt="" coords="557,56,639,83"/>
+<area shape="rect" id="node11" href="$mptrac_8c.html#a29da9a205ad3577ba3890f3e1e4350c3" title="Reads observation data from an ASCII file." alt="" coords="356,183,459,209"/>
+<area shape="rect" id="node12" href="$mptrac_8c.html#a4536a82b3dc62081d26114c1250b1427" title="Reads observation data from a NetCDF file." alt="" coords="359,233,455,260"/>
+</map>

@@ -1,0 +1,10 @@
+<map id="mptrac_read_clim" name="mptrac_read_clim">
+<area shape="rect" id="node1" title="Reads various climatological data and populates the given climatology structure." alt="" coords="5,107,131,133"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#aba22251f4ea0fe56c2a59719998c650a" title="Applies a diurnal correction to the hydroxyl radical (OH) concentration in climatology data." alt="" coords="179,5,355,32"/>
+<area shape="rect" id="node4" href="$mptrac_8c.html#aa9cf40c6960c5078d1ea9e12a2fb0872" title="Initializes the tropopause data in the climatology structure." alt="" coords="213,56,320,83"/>
+<area shape="rect" id="node5" href="$mptrac_8c.html#a1a501ec43c01f1d742a133a7a3289d59" title="Reads photolysis rates from a NetCDF file and populates the given photolysis structure." alt="" coords="208,107,325,133"/>
+<area shape="rect" id="node7" href="$mptrac_8c.html#a3510fe56a6a6e589b5c2474495af03e2" title="Reads a climatological time series from a file and populates the given time series structure." alt="" coords="219,157,315,184"/>
+<area shape="rect" id="node8" href="$mptrac_8c.html#a6af2603c773b4d11bf7e187ccb123ba2" title="Reads zonally averaged climatological data from a netCDF file and populates the given structure." alt="" coords="215,208,318,235"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#a1c8c72b0bc66d214b4575c13a7a0eb6b" title="Calculates the cosine of the solar zenith angle." alt="" coords="441,5,512,32"/>
+<area shape="rect" id="node6" href="$mptrac_8c.html#a4392a0ab24a984ac30ed1ef85a89257d" title="Reads a 3D climatological photochemistry variable from a NetCDF file." alt="" coords="403,107,551,133"/>
+</map>
