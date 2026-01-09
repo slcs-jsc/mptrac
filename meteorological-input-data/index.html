@@ -1,0 +1,1350 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/meteorological-input-data/">
+      
+      
+        <link rel="prev" href="../control-parameters/">
+      
+      
+        <link rel="next" href="../model-output-data/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Meteorological input data - MPTRAC</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#meteorological-input-data" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="MPTRAC" class="md-header__button md-logo" aria-label="MPTRAC" data-md-component="logo">
+      
+  <img src="../img/MPTRAC_320px.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MPTRAC
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Meteorological input data
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/slcs-jsc/mptrac" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="MPTRAC" class="md-nav__button md-logo" aria-label="MPTRAC" data-md-component="logo">
+      
+  <img src="../img/MPTRAC_320px.png" alt="logo">
+
+    </a>
+    MPTRAC
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/slcs-jsc/mptrac" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User manual
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../applications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Applications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Control parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Meteorological input data
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Meteorological input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-ecmwf-reanalyses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ECMWF reanalyses
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The ECMWF reanalyses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#download-of-ecmwf-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Download of ECMWF data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpolation-to-pressure-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interpolation to pressure levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-meteorological-data-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other meteorological data sets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripts-to-assist-data-download-and-preparation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts to assist data download and preparation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meteocloud-data-archive-in-julich" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MeteoCloud data archive in Jülich
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interoperability-with-clams-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interoperability with CLaMS data
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model-output-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model output data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model-physics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model physics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diabatic-transport/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diabatic transport
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tropopause-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tropopause data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer manual
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fortran-wrapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fortran wrapper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-level-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    High-level interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parallelization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Profiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Further information
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Further information
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Links
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#introduction" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Introduction
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#the-ecmwf-reanalyses" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The ECMWF reanalyses
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="The ECMWF reanalyses">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#overview" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Overview
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#download-of-ecmwf-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Download of ECMWF data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#interpolation-to-pressure-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interpolation to pressure levels
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other-meteorological-data-sets" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other meteorological data sets
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#scripts-to-assist-data-download-and-preparation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Scripts to assist data download and preparation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#meteocloud-data-archive-in-julich" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        MeteoCloud data archive in Jülich
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#interoperability-with-clams-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Interoperability with CLaMS data
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="meteorological-input-data">Meteorological input data</h1>
+<h2 id="introduction">Introduction</h2>
+<p>The MPTRAC model needs meteorological input data (winds, temperature,
+...) to perform the trajectory calculations and for other tasks.</p>
+<p>The meteo data should be provided as netCDF files on a regular grid
+ (pressure, longitude, latitude). Each time step of the reanalysis
+ data should be provided as a separate netCDF file. The time step of
+ the corresponding meteo data file is inferred from the filename
+ following this naming convention:</p>
+<pre><code>     &lt;basename&gt;_&lt;YYYY&gt;_&lt;MM&gt;_&lt;DD&gt;_&lt;HH&gt;.nc
+</code></pre>
+<p>At a minimum, MPTRAC needs temperature (netCDF variable name: <code>T</code>),
+zonal wind (<code>U</code>), and meridional wind (<code>V</code>). Additionally, many
+applications need the vertical velocity (<code>W</code>), specific humidity (<code>Q</code>)
+or relative humidity (<code>RH</code>), ozone (<code>O3</code>), cloud liquid/rain water
+content (<code>CLWC</code>/<code>CRWC</code>), cloud ice/snow water content (<code>CIWC</code>/<code>CSWC</code>),
+and cloud cover (<code>CC</code>).</p>
+<p>It is also necessary to provide the surface pressure (<code>LNSP</code>, <code>PS</code>, or
+<code>SP</code>) and the surface geopotential height (<code>Z</code> or <code>ZM</code>). Optionally,
+the surface temperature (<code>T2M</code>), the surface wind components (<code>U10M</code>,
+<code>V10M</code>), the land-sea mask (<code>LSM</code>), and sea surface temperature
+(<code>SSTK</code>) are read in.</p>
+<p>It is possible to provide meteo data on model levels rather than
+pressure levels. In this case, pressure on model levels (<code>PL</code>) is
+required as an additional 3-D input variable in order to perform a
+vertical interpolation from model levels to pressure levels.</p>
+<p>See the <code>tests/data/</code> directory in the MPTRAC repository for examples
+of meteo data netCDF files used for MPTRAC.</p>
+<h2 id="the-ecmwf-reanalyses">The ECMWF reanalyses</h2>
+<h3 id="overview">Overview</h3>
+<p>As an example, we discuss the use of
+<a href="https://www.ecmwf.int/en/forecasts/datasets/reanalysis-datasets/era5">ERA5</a>
+reanalysis data provided by the European Centre for Medium-Range
+Weather Forecasts (ECMWF) to run the MPTRAC model.</p>
+<p>ERA5 provides hourly estimates of a large number of atmospheric, land
+and oceanic climate variables from 1950 to present. The data cover the
+Earth on a 30 km grid (T639 triangular truncation) and resolve the
+atmosphere using 137 levels from the surface up to a height of about
+80 km. ERA5 includes information about uncertainties for all variables
+at reduced spatial and temporal resolutions.</p>
+<h3 id="download-of-ecmwf-data">Download of ECMWF data</h3>
+<p>The first step is to download the ERA5 data from the
+<a href="https://cds.climate.copernicus.eu/#!/search?text=ERA5&amp;type=dataset">Copernicus Climate Change Service (C3S) Climate Date Store</a>.
+It is recommended to download the data in grib file format at 0.3°x0.3°
+horizontal resolution, on all 137 model levels, and at hourly time
+intervals.</p>
+<h3 id="interpolation-to-pressure-levels">Interpolation to pressure levels</h3>
+<p>The second step is to interpolate the ERA5 data from model levels to
+pressure levels. Here, a set of target pressure levels needs to be
+selected. It is recommended to use a set of 137 pressure levels that
+matches the vertical sampling of the IFS model level data as defined
+by a fixed surface pressure of 1013.25 hPa and
+<a href="https://www.ecmwf.int/en/forecasts/documentation-and-support/137-model-levels">ECMWF's a and b level coefficients</a>.</p>
+<p>Potentially, the vertical sampling of the target pressure levels in
+the lower troposphere and the number of levels in the mesosphere can
+be reduced to reduce the amount of data.  However, it is highly
+recommended to add additional target pressure levels in the range of
+1013.25 to about 1045 hPa to avoid extrapolation errors in case the
+actual surface pressure is larger than the standard pressure of
+1013.25 hPa.</p>
+<p>The <a href="https://code.mpimet.mpg.de/projects/cdo">CDO tools</a> can be used
+to perform the vertical interpolation from model levels to pressure
+levels and to convert from grib to netCDF file format. For example:</p>
+<pre><code>    # merge surface and model level grib files...
+    cdo -P 8 merge 2020010100_sf.grb 2020010100_ml.grb merge.grib
+
+    # interpolate to pressure levels and create netCDF file...
+    cdo -P 8 -a -f nc -t ecmwf ml2pl,104445,103725,103006,102286,101567,100847,100128,99408.1,98688.6,97969,97249.5,96529.9,95810.4,95090.8,94314,93476.7,92575.7,91608.1,90571.2,89462.2,88279.1,87020,85683.8,84269.6,82777.6,81208.5,79564,77846.6,76060,74208.6,72297.9,70334.7,68326.2,66280.8,64207.6,62116.2,60016.7,57919.3,55834.3,53772,51742,49758.4,47831,45963.2,44153.9,42401.9,40705.8,39064.5,37476.7,35941.1,34456.6,33022,31636.1,30297.6,29005.5,27758.5,26555.6,25395.5,24277.2,23199.5,22161.5,21161.9,20199.7,19273.9,18383.4,17527.3,16704.5,15914,15154.9,14426.2,13727,13056.4,12413.4,11797.1,11206.8,10641.5,10100.5,9582.8,9087.74,8614.5,8161.82,7728.1,7311.87,6911.87,6526.95,6156.07,5798.34,5452.99,5119.9,4799.15,4490.82,4194.93,3911.49,3640.47,3381.74,3135.12,2900.39,2677.35,2465.77,2265.43,2076.1,1897.52,1729.45,1571.62,1423.77,1285.61,1156.85,1037.2,926.34,823.97,729.74,643.34,564.41,492.62,427.59,368.98,316.42,269.54,227.97,191.34,159.28,131.43,107.42,86.9,69.52,54.96,42.88,32.99,24.99,18.61,13.61,9.75,6.83,4.67,3.1,2,1 -selname,lnsp,z,t,u,v,w,q,o3 merge.grib ea5_2020_01_01_00.nc
+</code></pre>
+<h2 id="other-meteorological-data-sets">Other meteorological data sets</h2>
+<p>The MPTRAC model has also been used with other meteorological data sets.</p>
+<p>The <a href="https://gmao.gsfc.nasa.gov/reanalysis/MERRA-2/">Modern-Era Retrospective analysis for Research and Applications, Version 2 (MERRA-2)</a>
+provides data beginning in 1980. It was introduced to replace the
+original MERRA dataset because of the advances made in the
+assimilation system that enable the assimilation of modern
+hyperspectral radiance and microwave observations, along with
+GPS-Radio Occultation datasets. It also uses NASA's ozone profile
+observations that began in late 2004. Additional advances in both the
+GEOS model and the GSI assimilation system are included in
+MERRA-2. The spatial resolution remains about the same (about 50 km in
+the latitudinal direction) as in MERRA.</p>
+<p>The <a href="https://psl.noaa.gov/data/gridded/data.ncep.reanalysis.html">NCEP/NCAR Reanalysis 1</a>
+project is using a state-of-the-art analysis/forecast system to
+perform data assimilation using past data from 1948 to the present. A
+large subset of this data is available from PSL in its original 4
+times daily format and as daily averages. However, the data from
+1948-1957 is a little different, in the regular (non-Gaussian) gridded
+data. That data was done at 8 times daily in the model because the
+inputs available in that era were available at 3Z, 9Z, 15Z, and 21Z,
+whereas the 4x daily data has been available at 0Z, 6Z, 12Z, and
+18Z. These latter times were forecasted and the combined result for
+this early era is 8x daily. The local ingestion process took only the
+0Z, 6Z, 12Z, and 18Z forecasted values, and thus only those were used
+to make the daily time series and monthly means here.</p>
+<p>The <a href="https://www.ncdc.noaa.gov/data-access/model-data/model-datasets/global-forcast-system-gfs">Global Forecast System (GFS)</a>
+is a weather forecast model produced by the National Centers for
+Environmental Prediction (NCEP). Dozens of atmospheric and land-soil
+variables are available through this dataset, from temperatures,
+winds, and precipitation to soil moisture and atmospheric ozone
+concentration. The entire globe is covered by the GFS at a base
+horizontal resolution of 18 miles (28 kilometers) between grid points,
+which is used by the operational forecasters who predict weather out
+to 16 days in the future. Horizontal resolution drops to 44 miles (70
+kilometers) between grid points for forecasts between one week and two
+weeks.</p>
+<h2 id="scripts-to-assist-data-download-and-preparation">Scripts to assist data download and preparation</h2>
+<p>To assist users in downloading and preparing meteorological input
+data, MPTRAC provides example scripts in the <code>projects/meteo/</code>
+directory of the repository. These scripts cover the download and
+basic processing for ERA5, GFS, NCEP/NCAR Reanalysis 1, and MERRA-2
+datasets.</p>
+<p>Please note that access to the respective data servers of the
+meteorological centers is required to use these scripts, and
+additional tools such as CDO are necessary for data conversion.</p>
+<p>While downloading and converting meteorological data files for use
+with MPTRAC is often the most challenging step for new users, these
+scripts are intended to simplify the process and serve as a helpful
+starting point.</p>
+<h2 id="meteocloud-data-archive-in-julich">MeteoCloud data archive in Jülich</h2>
+<p>For registered users and collaboration partners at the Jülich
+Supercomputing Centre, Germany, a number of meteorological data sets
+are readily available for MPTRAC in netCDF file format. The data sets
+are stored in the
+<a href="https://datapub.fz-juelich.de/slcs/meteocloud">MeteoCloud data archive</a>
+in Jülich. Please contact us in order to inquire about getting access
+to the data.</p>
+<h2 id="interoperability-with-clams-data">Interoperability with CLaMS data</h2>
+<p>MPTRAC can read meteorological data that follows the data format
+guidelines for the CLaMS Lagrangian transport model. See the page on
+<a href="../diabatic-transport/">diabatic transport</a> for further details.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>

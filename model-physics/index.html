@@ -1,0 +1,1863 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+      
+      
+        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/model-physics/">
+      
+      
+        <link rel="prev" href="../model-output-data/">
+      
+      
+        <link rel="next" href="../diabatic-transport/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.1">
+    
+    
+      
+        <title>Model physics - MPTRAC</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    <body dir="ltr">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#model-physics" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="MPTRAC" class="md-header__button md-logo" aria-label="MPTRAC" data-md-component="logo">
+      
+  <img src="../img/MPTRAC_320px.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            MPTRAC
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Model physics
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/slcs-jsc/mptrac" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="MPTRAC" class="md-nav__button md-logo" aria-label="MPTRAC" data-md-component="logo">
+      
+  <img src="../img/MPTRAC_320px.png" alt="logo">
+
+    </a>
+    MPTRAC
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/slcs-jsc/mptrac" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    GitHub
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    User manual
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    User manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../quickstart/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../applications/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Applications
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../control-parameters/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Control parameters
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../meteorological-input-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Meteorological input data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../model-output-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model output data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model physics
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Model physics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#advection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vertical-coordinate-and-diabatickinematic-velocities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vertical coordinate and diabatic/kinematic velocities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turbulent-diffusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turbulent diffusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subgrid-scale-wind-fluctuations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subgrid-scale wind fluctuations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#convection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sedimentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sedimentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wet-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wet deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dry-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hydroxyl-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hydroxyl chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exponential-decay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exponential decay
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boundary-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boundary conditions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../diabatic-transport/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diabatic transport
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tropopause-data/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tropopause data
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer manual
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Developer manual
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../code-development/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code development
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../fortran-wrapper/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Fortran wrapper
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../high-level-interface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    High-level interface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../parallelization/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Parallelization
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../profiling/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Profiling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Further information
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Further information
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../references/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    References
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../links/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Links
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#advection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Advection
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Advection">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#integration-method" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Integration Method
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#vertical-coordinate-and-diabatickinematic-velocities" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Vertical coordinate and diabatic/kinematic velocities
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#turbulent-diffusion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Turbulent diffusion
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#subgrid-scale-wind-fluctuations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Subgrid-scale wind fluctuations
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#convection" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convection
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#sedimentation" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Sedimentation
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#wet-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Wet deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dry-deposition" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dry deposition
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#hydroxyl-chemistry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hydroxyl chemistry
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#exponential-decay" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Exponential decay
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boundary-conditions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boundary conditions
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="model-physics">Model physics</h1>
+<h2 id="advection">Advection</h2>
+<p>The advection of an air parcel, i.e., the position <span class="arithmatex">\(\vec{x}(t)\)</span> at
+time <span class="arithmatex">\(t\)</span> for a given wind and velocity field <span class="arithmatex">\(\vec{v}(\vec{x}, t)\)</span>, is
+given by the trajectory equation,</p>
+<div class="arithmatex">\[
+\begin{align}
+  \frac{d\vec{x}}{dt}=\vec{v}(\vec{x}, t).
+\end{align}
+\]</div>
+<p>Here, the position <span class="arithmatex">\(\vec{x}\)</span> is provided in a meteorological
+coordinate system, <span class="arithmatex">\(\vec{x}=(\lambda,\phi,p)\)</span>, with longitude
+<span class="arithmatex">\(\lambda\)</span>, latitude <span class="arithmatex">\(\phi\)</span>, and a vertical coordinate (pressure <span class="arithmatex">\(p\)</span> or
+zeta <span class="arithmatex">\(\zeta\)</span>). The velocity vector <span class="arithmatex">\(\vec{v}=(u,v,\omega)\)</span> is composed
+of the zonal wind component <span class="arithmatex">\(u\)</span>, the meridional wind component <span class="arithmatex">\(v\)</span>,
+and the vertical velocity (<span class="arithmatex">\(\omega\)</span> or <span class="arithmatex">\(\dot{\zeta}\)</span>), respectively.</p>
+<h4 id="integration-method">Integration Method</h4>
+<p>Based on its accuracy and computational efficiency for trajectory
+calculations (Rößler et al., 2018), per default we apply the explicit
+midpoint method to solve the trajectory equation,</p>
+<div class="arithmatex">\[
+\begin{align}
+  \vec{x}(t+\Delta t) = \vec{x}(t) + \vec{v}(\vec{x}(t) + \frac{\Delta t}{2}\vec{v}\left[\vec{x}(t), t\right], t+\frac{\Delta t}{2})  \Delta t.
+\end{align}
+\]</div>
+<p>As an alternative, the classical 4th-order Runge-Kutta method can be
+employed for the simulation, which has higher accuracy at higher
+computational costs. The method is defined by the equations:</p>
+<div class="arithmatex">\[
+\begin{align}
+\vec{x}(t+\Delta t) = \vec{x}(t) + \frac{1}{6}\left(k_1 + 2k_2 + 2k_3 + k_4 \right)\Delta t\\
+\end{align}
+\]</div>
+<div class="arithmatex">\[
+\begin{align}
+ \vec{k_1} = \vec{v}(t, \vec{x}(t))\\
+ \vec{k_2} = \vec{v}\left(t + \frac{\Delta t}{2}, \vec{x}(t) + \Delta t\frac{k_1}{2}\right)\\
+ \vec{k_3} = \vec{v}\left(t + \frac{\Delta t}{2}, \vec{x}(t) + \Delta t\frac{k_2}{2}\right)\\
+ \vec{k_4} = \vec{v}\left(t + \Delta t, \vec{x}(t) + \Delta t\,k_3\right)
+\end{align}
+\]</div>
+<p>Finally, MPTRAC can use the Euler method as well. The Euler method has
+low accuracy but is the fastest option available.</p>
+<p>The integration method is selected with the parameter <code>ADVECT</code>.</p>
+<table>
+<thead>
+<tr>
+<th>ADVECT</th>
+<th>Integration Method</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>explicit Euler</td>
+</tr>
+<tr>
+<td>2 (default)</td>
+<td>mid-point</td>
+</tr>
+<tr>
+<td>4</td>
+<td>classical 4th order Runge-Kutta</td>
+</tr>
+</tbody>
+</table>
+<h4 id="vertical-coordinate-and-diabatickinematic-velocities">Vertical coordinate and diabatic/kinematic velocities</h4>
+<p>Besides the pressure coordinate with the pressure tendency as vertical
+velocity, MPTRAC applies the hybrid vertical coordinate <span class="arithmatex">\(\zeta\)</span> with
+associated diabatic vertical velocity <span class="arithmatex">\(\dot\zeta=\frac{d\zeta}{dt}\)</span>
+for trajectory calculations. The hybrid coordinate <span class="arithmatex">\(\zeta\)</span> is defined
+as shown in the equation below. Near the surface, the hybrid
+coordinate <span class="arithmatex">\(\zeta\)</span> follows the orography in the form of a sigma-like
+coordinate <span class="arithmatex">\(\sigma=\frac{p}{p_s}\)</span>, where <span class="arithmatex">\(p_s\)</span> is the surface
+pressure. At higher altitudes, above <span class="arithmatex">\(\sigma_{r}=0.3\)</span>, the zeta
+coordinate is smoothly transformed into the potential temperature
+<span class="arithmatex">\(\theta(p)\)</span> (see also Mahowald et al, 2004).</p>
+<div class="arithmatex">\[
+\begin{equation}
+    \zeta(p) = \begin{cases}
+                \theta(p) &amp; \text{if}\,\sigma &lt; \sigma_r \\
+                \theta(p) \sin{\left(\frac{1-\sigma(p)}{1-\sigma_r}\right)} &amp; \text{if}\,\sigma \geq \sigma_r
+                \end{cases}
+\end{equation}
+\]</div>
+<p>While kinematic velocities are derived from the continuity equation
+diabatic velocities are obtained by radiative calculations. Diabatic
+velocities are well-suited for stratospheric transport processes,
+because of the isentropic nature of transport at this height. However,
+in the troposphere, where parameterisations of mixing in the boundary
+layer and for convection are needed, most modules rely on a
+formulation in pressure coordinates (see e.g. convection, turbulent
+diffusion below).  MPTRAC allows a coupled mode, where advection is
+performed in hybrid coordinates (<span class="arithmatex">\(\zeta\)</span>) but other modules can be
+employed in pressure coordinates.</p>
+<h2 id="turbulent-diffusion">Turbulent diffusion</h2>
+<p>Rather complex parameterizations of atmospheric diffusivity are
+available for the planetary boundary layer. Much less is known on the
+diffusivities in the free troposphere and in the stratosphere, being
+in the scope of the MPTRAC model. In our model, the effects of
+atmospheric diffusion are simulated by adding stochastic perturbations
+to the positions <span class="arithmatex">\(\vec{x}\)</span> of the air parcels at each time step
+<span class="arithmatex">\(\Delta t\)</span> of the model,</p>
+<div class="arithmatex">\[
+\begin{align}
+  \Delta x_i(t+\Delta t) = x_i(t) + \sqrt{2\,D_i\,\Delta t}\xi_i.
+\end{align}
+\]</div>
+<p>This method requires a vector <span class="arithmatex">\(\vec{\xi}=(\xi_x, \xi_y, \xi_z)\)</span> of
+random variates to be drawn from the standard normal distribution for
+each air parcel at each time step. The vector of diffusivities
+<span class="arithmatex">\(\vec{d}=(D_x, D_x, D_z)\)</span> is composed of the horizontal diffusivity
+<span class="arithmatex">\(D_x\)</span> and the vertical diffusivity <span class="arithmatex">\(D_z\)</span>. The model allows to specify
+<span class="arithmatex">\(D_x\)</span> and <span class="arithmatex">\(D_z\)</span> separately for the troposphere and stratosphere as
+control parameters. A smooth transition between tropospheric and
+stratospheric diffusivities is created within a <span class="arithmatex">\(\pm 1km\)</span> log-pressure
+altitude range around the tropopause. The tropopause's pressure level
+is determined by linear interpolation from a monthly mean zonal mean
+climatology derived from the NCEP/NCAR Reanalysis 1 project (Kalnay et
+al, 1996). Following choices made for the FLEXPART model (Stohl et al,
+2005), default values of <span class="arithmatex">\(D_x=50m^2s^{-1}\)</span> and <span class="arithmatex">\(D_z=0\)</span> have been
+selected for the troposphere and <span class="arithmatex">\(D_x=0\)</span> and <span class="arithmatex">\(D_z=0.1m^2s^{-1}\)</span> have
+been selected for the stratosphere.</p>
+<p>Note that for simulations without diffusion, the diffusivity needs to
+be set to zero everywhere. To specify the diffusivity in the
+stratosphere and troposphere as desired the following parameters can
+be used:</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Layer</th>
+<th>Direction</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TURB_DX_TROP</td>
+<td>Troposphere</td>
+<td>horizontal</td>
+<td><span class="arithmatex">\(50~\rm{m^2~s^{-1}}\)</span></td>
+</tr>
+<tr>
+<td>TURB_DX_STRAT</td>
+<td>Stratosphere</td>
+<td>horizontal</td>
+<td><span class="arithmatex">\(0~\rm{m^2~s^{-1}}\)</span></td>
+</tr>
+<tr>
+<td>TURB_DZ_TROP</td>
+<td>Troposphere</td>
+<td>vertical</td>
+<td><span class="arithmatex">\(0~\rm{m^2~s^{-1}}\)</span></td>
+</tr>
+<tr>
+<td>TURB_DZ_STRAT</td>
+<td>Stratosphere</td>
+<td>vertical</td>
+<td><span class="arithmatex">\(0.1~\rm{m^2~s^{-1}}\)</span></td>
+</tr>
+</tbody>
+</table>
+<h2 id="subgrid-scale-wind-fluctuations">Subgrid-scale wind fluctuations</h2>
+<p>In addition to turbulent diffusion, the effects of unresolved
+subgrid-scale winds, also referred to as mesoscale wind perturbations,
+are considered. The starting point for this approach is the separation
+of the horizontal wind and vertical velocity vector <span class="arithmatex">\(\vec{v}\)</span> into the
+grid-scale mean <span class="arithmatex">\(\bar{\vec{v}}\)</span> and the subgrid-scale perturbations
+<span class="arithmatex">\(\vec{v}'\)</span>,</p>
+<div class="arithmatex">\[
+\begin{equation}
+  \vec{v}=\bar{\vec{v}} + \vec{v}'.
+\end{equation}
+\]</div>
+<p>It is further assumed that the mean wind <span class="arithmatex">\(\bar{\vec{v}}\)</span> is given by
+the coarse-grid meteorological data, whereas the wind perturbations
+<span class="arithmatex">\(\vec{v}'\)</span> need to be modelled. The sub-grid scale wind perturbations
+are simulated by means of a Langevin equation,</p>
+<div class="arithmatex">\[
+\begin{align}
+  &amp; v_i'(t+\Delta t) = rv_i'(t) + \sqrt{1-r^2} (f\sigma_i)^2 \xi_i, \\
+  &amp; r = 1-2\frac{\Delta t}{\Delta t_{met}}.
+\end{align}
+\]</div>
+<p>Mathematically, this represents a Markov chain or a random walk, which
+adds temporally correlated stochastic perturbations to the winds over
+time. The degree of correlation depends on the correlation coefficient
+<span class="arithmatex">\(r\)</span>, and therefore on the time step <span class="arithmatex">\(\Delta t\)</span> of the model and the
+time step <span class="arithmatex">\(\Delta t_{met}\)</span> of the meteorological data. The variance
+<span class="arithmatex">\((f\sigma_i)^2\)</span> of the random component added at each time step
+depends on the grid-scale variance <span class="arithmatex">\(\sigma_i^2\)</span> of the wind and
+velocity data and a scaling factor <span class="arithmatex">\(f\)</span>, which is used for downscaling
+to the subgrid scale. The scaling factor <span class="arithmatex">\(f\)</span> needs to be specified as
+a control parameter of the model. The default value is <span class="arithmatex">\(f=40\)</span>%,
+following a choice made for the FLEXPART model (Stohl et al.,
+2005). For each air parcel, the grid-scale variance <span class="arithmatex">\(\sigma_i^2\)</span> is
+calculated from the neighbouring eight grid boxes and two-time step of
+the meteorological data. To make computations more efficient, the
+grid-scale variance of each parcel is kept in cache. As before,
+<span class="arithmatex">\(\vec{\xi}\)</span> is a vector of random variates to be drawn from the
+standard normal distribution.</p>
+<p>The scaling factor f is <em>not</em> directly set in MPTRAC. Instead the
+square <span class="arithmatex">\(f^2\)</span> can be set for the vertical and horizontal dispersion of
+air parcels with the parameters <code>TURB_MESOX</code> and <code>TURB_MESOZ</code>. Accordingly
+their default value is 16%.</p>
+<h2 id="convection">Convection</h2>
+<p>The convection parameterization implemented in MPTRAC introduces the
+concept of the Extreme Convection Parametrization (ECP) to efficiently
+simulate convective effects within Lagrangian transport models. This
+method is based on the assumption that convective events create
+well-mixed columns of air, and it leverages convective available
+potential energy (CAPE), convective inhibition (CIN) and equilibrium
+level (EL) data from meteorological fields to capture this behavior.</p>
+<p>The fundamental idea underlying the ECP approach involves several key
+steps. First, the meteorological fields are used to interpolate
+gridded CAPE, CIN and EL values to the horizontal positions of
+individual air parcels within the Lagrangian model. Then, user-defined
+thresholds of <span class="arithmatex">\(\sf{CAPE_0}\)</span> and <span class="arithmatex">\(\sf{CIN_0}\)</span> are applied globally. If
+the interpolated CAPE value of an air parcel surpasses the
+<span class="arithmatex">\(\sf{CAPE_0}\)</span> threshold or the interpolated CIN value is below the
+<span class="arithmatex">\(\sf{CIN_0}\)</span> threshold and the parcel's position is below the EL, the
+model triggers a convective event.</p>
+<p>During a convective event, air parcels affected by the event are
+subject to random vertical redistribution within the atmospheric
+column, spanning from the Earth's surface to the equilibrium
+level. This vertical redistribution takes into account air density to
+ensure the creation of a well-mixed column of air. Importantly, this
+redistribution process adheres to mass conservation principles,
+maintaining both the number of air parcels and their collective mass
+constant.</p>
+<p>In subsequent time steps of the model, the trajectories of air parcels
+are continued from their new vertical positions, assigned during the
+convective mixing event. This dynamic approach enables the model to
+capture the transport implications of convective events, while also
+accounting for the vertical mixing effects they induce.</p>
+<p>The ECP method within MPTRAC is versatile and accommodates different
+simulation scenarios based on the chosen threshold <span class="arithmatex">\(\sf{CAPE_0}\)</span>. By
+setting <span class="arithmatex">\(\sf{CAPE_0}\)</span> to zero, the model implements the "extreme
+convection" approach, where convection is simulated wherever CAPE
+exists below the EL. This represents an upper-limit scenario for the
+effects of unresolved convection in the meteorological fields. On the
+other hand, by turning off the ECP entirely, only explicitly resolved
+convective updrafts of the meteorological fields are considered,
+representing a lower-limit scenario. Intermediate states can be
+simulated by selecting specific values for threshold
+<span class="arithmatex">\(\sf{CAPE_0}\)</span>. The parameter <span class="arithmatex">\(\sf{CIN_0}\)</span> can be used to prevent
+triggered convection in regions where a larger lower-level inversion
+layer is located, with high CAPE above it.</p>
+<p>The frequency of applying the ECP can be customized to the
+simulation's requirements. It can be implemented every model time step
+or at user-defined intervals that match typical convective
+timescales. This adaptability adds to the flexibility of the ECP
+method, making it suitable for a variety of simulation contexts.</p>
+<p>The convection parameterisation is set off per default, i.e. values
+are set to -999.</p>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Explanation</th>
+<th>Default Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CONV_CAPE</td>
+<td>CAPE threshold</td>
+<td>-999</td>
+</tr>
+<tr>
+<td>CONV_CIN</td>
+<td>CIN threshold</td>
+<td>-999</td>
+</tr>
+<tr>
+<td>CONV_DT</td>
+<td>evaluation interval</td>
+<td>-999</td>
+</tr>
+</tbody>
+</table>
+<h2 id="sedimentation">Sedimentation</h2>
+<p>In order to take into account the gravitational settling of particles,
+the sedimentation velocity <span class="arithmatex">\(v_s\)</span> needs to be calculated. Using <span class="arithmatex">\(v_s\)</span>,
+the change of the vertical position of the particles over the model
+time step <span class="arithmatex">\(\Delta t\)</span> can be calculated. In MPTRAC, <span class="arithmatex">\(v_s\)</span> is calculated
+for spherical particles following the method described by <a href="https://www.cambridge.org/core/books/fundamentals-of-atmospheric-modeling/A6B866737D682B17EE46F8449F76FB2C">Jacobson
+(1999)</a>. In
+the first step, we calculate the density of dry air,</p>
+<div class="arithmatex">\[
+\begin{equation}
+  \rho=\frac{p}{RT},
+\end{equation}
+\]</div>
+<p>using the atmospheric pressure <span class="arithmatex">\(p\)</span>, temperature <span class="arithmatex">\(T\)</span>, and the specific
+gas constant <span class="arithmatex">\(R\)</span> of dry air. The dynamic viscosity of air,</p>
+<div class="arithmatex">\[
+\begin{equation}
+  \eta=1.832515 \cdot 10^{-5} \frac{\rm{kg}}{\rm{m}~\rm{s}} \left (\frac{416.16~\sf{K}}{T+120~\rm{K}} \right ) \left (\frac{T}{296.16~\rm{K}} \right )^{1.5},
+  \end{equation}
+\]</div>
+<p>and the thermal velocity of an air molecule,</p>
+<div class="arithmatex">\[
+\begin{equation}
+  v=\sqrt{\rho RT}, 
+\end{equation}
+\]</div>
+<p>are used to calculate the mean free path of an air molecule <span class="arithmatex">\(\lambda\)</span>,
+as well as the Knudsen number <span class="arithmatex">\(K_n\)</span> for air,</p>
+<div class="arithmatex">\[
+\begin{equation}
+  \lambda=\frac{\rho}{2\eta v} \quad \text{and} \quad K_n=\frac{\lambda}{r_p},
+\end{equation}
+\]</div>
+<p>where <span class="arithmatex">\(r_p\)</span> refers to the particle radius. The Cunningham slipflow
+correction is calculated from</p>
+<div class="arithmatex">\[
+\begin{equation}
+  G=1+K \left [1.249+0.42 \exp \left ( \frac{-0.87}{K} \right ) \right]
+\end{equation}
+\]</div>
+<p>Finally, the sedimentation velocity is obtained by means of Stokes law
+and from the slip-flow correction,</p>
+<div class="arithmatex">\[
+\begin{equation}
+ v_s=\frac{2r_p^2g(\rho_p-\rho)}{9\eta}G
+\end{equation}
+\]</div>
+<p>with particle density <span class="arithmatex">\(\rho_p\)</span> and conventional standard gravitational
+acceleration g. Note that <span class="arithmatex">\(r_p\)</span> and <span class="arithmatex">\(\rho_p\)</span> can be specified
+individually for each air parcel. A larger set of parcels can be used
+to represent a size distribution of aerosol or cloud particles.</p>
+<h2 id="wet-deposition">Wet deposition</h2>
+<p>Wet deposition causes the removal of trace gases and aerosol particles
+from the atmosphere within or below clouds by mixing with suspended
+water and following washout through rain, snow, or fog. Wet deposition
+in MPTRAC is calculated based on the following four steps:</p>
+<p>(1) it is determined whether an air parcel is located below a cloud
+top. The cloud-top pressure <span class="arithmatex">\(p_{ct}\)</span> is determined from the
+meteorological data as the highest vertical level where cloud water or
+ice (i.e., CLWC, CRWC, CIWC, or CSWC) is existent.</p>
+<p>(2) the wet deposition parametrization determines an estimate of the
+subgrid-scale precipitation rate <span class="arithmatex">\(I_s\)</span>, which is needed to calculate
+the scavenging coefficient <span class="arithmatex">\(\Lambda\)</span>. The precipitation rate <span class="arithmatex">\(I_s\)</span> (in
+units of <span class="arithmatex">\(\rm{mm h^{-1}}\)</span>) is calculated from the total column cloud
+water <span class="arithmatex">\(c_l\)</span> (in units of <span class="arithmatex">\(\rm{kg m^{-2}}\)</span>) by means of a correlation
+function reported by Pisso et al. (2019),</p>
+<div class="arithmatex">\[
+\begin{equation}
+ I_s= (2c_l)^{1/0.36},
+\end{equation}
+\]</div>
+<p>(3) it is inferred whether the air parcel is located within or below
+the cloud because scavenging coefficients will be different under
+these conditions. The position of the air parcel within or below the
+cloud is determined by interpolating the cloud water content to the
+position of the air parcel and by testing whether the interpolated
+values are larger than zero.</p>
+<p>(4) the scavenging coefficient <span class="arithmatex">\(\Lambda\)</span> is calculated based on the
+precipitation rate <span class="arithmatex">\(I_s\)</span>,</p>
+<div class="arithmatex">\[
+\begin{equation}
+ \Lambda=HRT I_s \Delta z_c^{-1},
+\end{equation}
+\]</div>
+<p>where H is Henry’s law constant, R is the universal gas constant, and
+<span class="arithmatex">\(\Delta z_c\)</span> is the depth of the cloud layer, which is calculated from
+<span class="arithmatex">\(p_{ct}\)</span> and <span class="arithmatex">\(p_{cb}\)</span>. Henry’s law constant is obtained from</p>
+<div class="arithmatex">\[
+\begin{equation}
+  H(T)=H^\ominus \exp \left [\frac{\Lambda_{sol}H}{R} \left (\frac{1}{T}-\frac{1}{T^\ominus}  \right ) \right] 
+\end{equation}
+\]</div>
+<p>The constants <span class="arithmatex">\(H^\ominus\)</span> and <span class="arithmatex">\(\Delta_{sol}H/R\)</span> with enthalpy of
+dissolution <span class="arithmatex">\(\Delta_{sol}H\)</span> at the reference temperature
+<span class="arithmatex">\(T^\ominus=298.15~K\)</span> need to be specified as control
+parameters. Values for a wide range of species are tabulated by Sander
+(2015). The values of selected species of interest are summarized in
+the following table are included as default parameters in MPTRAC.</p>
+<table>
+<thead>
+<tr>
+<th>Species</th>
+<th><span class="arithmatex">\(H^\ominus\)</span> (at 298.15 K)</th>
+<th><span class="arithmatex">\(-\frac{\Delta_{sol}H}{R}\)</span></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(\sf{CF_2Cl_2}\)</span></td>
+<td>3.0 <span class="arithmatex">\(\cdot 10^{-5}\)</span></td>
+<td>3500</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{CFCl_3}\)</span></td>
+<td>1.1 <span class="arithmatex">\(\cdot 10^{-4}\)</span></td>
+<td>3300</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{CH_4}\)</span></td>
+<td>1.4 <span class="arithmatex">\(\cdot 10^{-5}\)</span></td>
+<td>1600</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{CO}\)</span></td>
+<td>9.7 <span class="arithmatex">\(\cdot 10^{-6}\)</span></td>
+<td>1300</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{CO_2}\)</span></td>
+<td>3.3 <span class="arithmatex">\(\cdot 10^{-4}\)</span></td>
+<td>2400</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{N_2O}\)</span></td>
+<td>2.4 <span class="arithmatex">\(\cdot 10^{-4}\)</span></td>
+<td>2600</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{NH_3}\)</span></td>
+<td>5.9 <span class="arithmatex">\(\cdot 10^{-1}\)</span></td>
+<td>4200</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{HNO_3}\)</span></td>
+<td>2.1 <span class="arithmatex">\(\cdot 10^3\)</span></td>
+<td>8700</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{NO}\)</span></td>
+<td>1.9 <span class="arithmatex">\(\cdot 10^{-5}\)</span></td>
+<td>1600</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{NO_2}\)</span></td>
+<td>1.2 <span class="arithmatex">\(\cdot 10^{-4}\)</span></td>
+<td>2400</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{O_3}\)</span></td>
+<td>1.0 <span class="arithmatex">\(\cdot 10^{-4}\)</span></td>
+<td>2800</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{SF_6}\)</span></td>
+<td>2.4 <span class="arithmatex">\(\cdot 10^{-6}\)</span></td>
+<td>3100</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{SO_2}\)</span></td>
+<td>1.3 <span class="arithmatex">\(\cdot 10^{-2}\)</span></td>
+<td>2900</td>
+</tr>
+</tbody>
+</table>
+<h2 id="dry-deposition">Dry deposition</h2>
+<p>Dry deposition leads to a loss of mass of aerosol particles or trace
+gases by gravitational settling or chemical and physical interactions
+with the surface of the dry phase. In the parametrization implemented
+in MPTRAC, dry deposition is calculated for air parcels located in the
+lowermost <span class="arithmatex">\(\Delta_p=\)</span> 30 hPa layer above the surface. This corresponds
+to a layer width of <span class="arithmatex">\(\Delta z \approx\)</span> 200 m at standard conditions.</p>
+<p>For aerosol particles, the deposition velocity <span class="arithmatex">\(v_{dep}\)</span> will be
+calculated as described in Hoffmann et al. (2022) as a function of
+surface pressure <span class="arithmatex">\(p\)</span> and temperature <span class="arithmatex">\(T\)</span> as well as particle radius
+<span class="arithmatex">\(r_p\)</span> and particle density <span class="arithmatex">\(\rho\)</span>. For trace gases, the deposition
+velocity <span class="arithmatex">\(v_{dep}\)</span> needs to be specified as a control
+parameter. Currently, this parameter is set to a constant value across
+the globe for each trace gas. For future applications with a stronger
+focus on the boundary layer, <span class="arithmatex">\(v_{dep}\)</span> will need to vary
+geographically to account for dependence on the surface
+characteristics and atmospheric conditions.</p>
+<p>For both particles and gases, the loss of mass is calculated based on
+the deposition velocity <span class="arithmatex">\(v_{dep}\)</span>, the model time step <span class="arithmatex">\(\Delta t\)</span>, and
+the surface layer width <span class="arithmatex">\(\Delta z\)</span> from</p>
+<div class="arithmatex">\[
+\begin{equation}
+  m(t+\Delta t)=M(t) \mathrm{exp} \left ( -\frac{\Delta t v_{dep}}{\Delta z} \right )
+\end{equation}
+\]</div>
+<h2 id="hydroxyl-chemistry">Hydroxyl chemistry</h2>
+<p>The hydroxyl radical (OH) is an important oxidant in the atmosphere,
+causing the decomposition of many gas-phase species. The oxidation of
+different gas-phase species with OH can be classified into two main
+categories, bimolecular reactions (e.g., reactions of <span class="arithmatex">\(\sf{CH_4}\)</span> or
+<span class="arithmatex">\(\sf{NH_3}\)</span>), and termolecular reactions (e.g., CO or <span class="arithmatex">\(\sf{SO_2}\)</span>).</p>
+<p>For bimolecular reactions, the rate constant is calculated from
+Arrhenius law,</p>
+<div class="arithmatex">\[
+\begin{equation}
+  k(T)=A \times \mathrm{exp} \left ( -\frac{E}{RT} \right )
+\end{equation}
+\]</div>
+<p>with Avogadro constant <span class="arithmatex">\(N_A\)</span>. For the calculation of the second-order
+rate constant k see Eq. 25 in Hoffmann et al. (2022).</p>
+<p>For the calculation of k the low- and high-pressure limits of the
+reaction rate constant are given by</p>
+<div class="arithmatex">\[
+\begin{equation}
+  k_0=k_0^{298} \left ( \frac{T}{298} \right )^{-n}, \quad
+  k_\infty=k_\infty^{298} \left ( \frac{T}{298}\right )^{-m} .
+\end{equation}
+\]</div>
+<p>The constants <span class="arithmatex">\(k_0^{298}\)</span> and <span class="arithmatex">\(k_\infty^{298}\)</span> at the reference
+temperature of 298 K and the exponents n and m need to be specified as
+control parameters. The exponents can be set to zero in order to
+neglect the temperature dependence of the low- or high pressure limits
+of <span class="arithmatex">\(k_0\)</span> and <span class="arithmatex">\(k_\infty\)</span>. The termolecular reaction rate coefficients
+implemented directly into MPTRAC are listed in the table.</p>
+<table>
+<thead>
+<tr>
+<th>Reaction</th>
+<th>A factor</th>
+<th>E/R</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><span class="arithmatex">\(\sf{CH}_4+\sf{OH} \to \sf{CH}_3+\rm{H_2O}\)</span></td>
+<td>2.45 <span class="arithmatex">\(\cdot 10^{-12}\)</span></td>
+<td>1775</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{NH}_3+\sf{OH} \to \sf{H_2O}+\rm{NH}_2\)</span></td>
+<td>1.7 <span class="arithmatex">\(\cdot 10^{-12}\)</span></td>
+<td>710</td>
+</tr>
+<tr>
+<td><span class="arithmatex">\(\sf{O}_3+\sf{OH} \to \sf{HO}_2+\rm{O}_2\)</span></td>
+<td>1.7 <span class="arithmatex">\(\cdot 10^{-12}\)</span></td>
+<td>940</td>
+</tr>
+</tbody>
+</table>
+<p>Where A is in <span class="arithmatex">\(\sf{cm^{-3}}\sf{molec^{-1}} \sf{s^{-1}}\)</span> and E/R in K.</p>
+<p>Based on the bimolecular reaction rate k=k(T) or the termolecular
+reaction rate k=k(T, [M]), the loss of mass of the gas-phase species
+over time is calculated from</p>
+<div class="arithmatex">\[
+\begin{equation}
+m(t+\Delta t)=m(t) \mathrm{exp} (-k[OH] \Delta t).
+\end{equation}
+\]</div>
+<p>The hydroxyl radical concentrations [OH] are obtained by bilinear
+interpolation from the monthly mean zonal mean climatology of Pommrich
+et al. (2014). This approach is suitable for global simulations
+covering at least several days, as hydroxyl concentrations may vary
+significantly between day and nighttime as well as the local
+atmospheric composition.</p>
+<h2 id="exponential-decay">Exponential decay</h2>
+<p>A rather generic module was implemented in MPTRAC, to simulate the
+loss of mass of an air parcel over a model time step <span class="arithmatex">\(\Delta t\)</span> due to
+any kind of exponential decay process, e.g., chemical loss or
+radioactivity,</p>
+<div class="arithmatex">\[
+\begin{equation}
+m(t+\Delta t)=m(t)\mathrm{exp} \left ( -\frac{\Delta t}{t_e} \right ).
+\end{equation}
+\]</div>
+<p>The e-folding lifetime <span class="arithmatex">\(t_e\)</span> of the species needs to be specified as a
+control parameter. As typical lifetimes may differ, we implemented an
+option to specify separate lifetimes for the troposphere and
+stratosphere. A smooth transition between the tropospheric and
+stratospheric lifetime is created within a 1 km log-pressure altitude
+range around the tropopause.</p>
+<h2 id="boundary-conditions">Boundary conditions</h2>
+<p>When an air parcels reach the upper and lower boundary layer two
+options are available. First, they can be reflected back or second,
+their position is set to the lowest or highest height level available in the
+meteorological data and hence will slide along the boundaries until
+updrafts or downdrafts transport them back into the wider model
+domain. Those two options can be selected with the parameter REFLECT,
+which is 1 if air parcels are supposed to be reflected and 0 if they
+are supposed to be set to the boundary heights. The default value is
+0, hence no reflection.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": [], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+        <script src="../javascripts/mathjax.js"></script>
+      
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+      
+        <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+      
+    
+  </body>
+</html>
