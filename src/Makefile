@@ -39,7 +39,7 @@ GPU_PIN ?= 0
 STATIC ?= 0
 
 # Optimization flags...
-OPTI ?= -O3
+OPT ?= -O3
 
 # Optimization information...
 INFO ?= 0
@@ -85,7 +85,7 @@ CMSDIR ?= ../../cmultiscale/cmultiscale
 VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags)
 
 # Set CC and CFLAGS...
-CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPTI) -g
+CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
 ifeq ($(COMPILER),gcc)
   CC=gcc
   CFLAGS += -DHAVE_INLINE -pedantic -Werror -Wall -W -Wmissing-prototypes -Wconversion -Wshadow -Wpointer-arith -Wcast-qual -Wcast-align -Wnested-externs -Wno-long-long -Wmissing-declarations -Wredundant-decls -Winline -fno-common -fshort-enums -fopenmp
@@ -105,13 +105,13 @@ endif
 # Set FC and FCFLAGS...
 ifeq ($(COMPILER),gcc)
   FC=gfortran
-  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation $(OPTI)
+  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation $(OPT)
 else ifeq ($(COMPILER),icx)
   FC=ifort
-  FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium $(OPTI)
+  FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium $(OPT)
 else ifeq ($(COMPILER),nvc)
   FC=nvfortran
-  FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays $(OPTI) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
+  FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays $(OPT) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
 else ifeq ($(COMPILER),clang)
   $(warning Compiler $(COMPILER) does not support Fortran wrapper)
 endif
