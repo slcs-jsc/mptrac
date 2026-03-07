@@ -2431,6 +2431,24 @@ typedef struct {
   /*! Quantity array index for age of air. */
   int qnt_aoa;
 
+  /*! Quantity array index for radioactive activity of Rn-222. */
+  int qnt_Arn222;
+
+  /*! Quantity array index for radioactive activity of Pb-210. */
+  int qnt_Apb210;
+
+  /*! Quantity array index for radioactive activity of Be-7. */
+  int qnt_Abe7;
+
+  /*! Quantity array index for radioactive activity of Cs-137. */
+  int qnt_Acs137;
+
+  /*! Quantity array index for radioactive activity of I-131. */
+  int qnt_Ai131;
+
+  /*! Quantity array index for radioactive activity of Xe-133. */
+  int qnt_Axe133;
+
   /*! Quantity array index for current subdomain in domain decomposition. */
   int qnt_subdomain;
 
@@ -2860,6 +2878,9 @@ typedef struct {
 
   /*! Switch for first order tracer chemistry module (0=off, 1=on). */
   int tracer_chem;
+
+  /*! Switch for radioactive decay module (0=off, 1=on). */
+  int radio_decay;
 
   /*! Coefficients for precipitation calculation. */
   double wet_depo_pre[2];
@@ -5750,7 +5771,7 @@ void module_diff_meso(
  * @brief Computes particle diffusion within the planetary boundary layer (PBL).
  *
  * This function handles the effects of turbulence on particles within
- * the PBL.  It calculates turbulent velocity variances, Lagrangian
+ * the PBL. It calculates turbulent velocity variances, Lagrangian
  * timescales, and updates particle positions and perturbations based
  * on random fluctuations and boundary layer physics. This module adapts
  * the approach of Ryall and Maryon (1998) and Stohl et al. (2005).
@@ -6219,6 +6240,45 @@ void module_rng(
   double *rs,
   const size_t n,
   const int method);
+
+/**
+ * @brief Apply radioactive decay to atmospheric tracer species.
+ *
+ * This routine updates the concentrations of radioactive tracers carried by
+ * atmospheric particles by applying exponential decay over the current
+ * particle timestep. The decay constants are derived from the half-lives of
+ * the respective isotopes.
+ *
+ * Implemented isotopes:
+ * - Rn-222
+ * - Pb-210
+ * - Be-7
+ * - Cs-137
+ * - I-131
+ * - Xe-133
+ *
+ * For each particle, the tracer mixing ratios are reduced according to
+ * \f$ q(t+\Delta t) = q(t) \exp(-\lambda \Delta t) \f$, where
+ * \f$\lambda\f$ is the decay constant and \f$\Delta t\f$ is the particle
+ * timestep.
+ *
+ * Additionally, the decay of Rn-222 contributes to the production of Pb-210
+ * via a simplified parent–daughter relationship.
+ *
+ * The update is performed only if the corresponding tracer index in
+ * the control structure is non-negative.
+ *
+ * @param[in]  ctl   Control structure containing tracer indices.
+ * @param[in]  cache Cache structure providing particle timesteps.
+ * @param[in,out] atm Atmospheric state containing particle tracer fields
+ *                    that are updated in place.
+ *
+ * @author Lars Hoffmann
+ */
+void module_radio_decay(
+  const ctl_t * ctl,
+  const cache_t * cache,
+  atm_t * atm);
 
 /**
  * @brief Simulate sedimentation of particles in the atmosphere.

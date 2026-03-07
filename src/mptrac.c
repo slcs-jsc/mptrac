@@ -1399,8 +1399,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -4344,7 +4345,8 @@ void module_mixing(
     ctl->qnt_Cco, ctl->qnt_Coh, ctl->qnt_Ch, ctl->qnt_Cho2,
     ctl->qnt_Ch2o2, ctl->qnt_Co1d, ctl->qnt_Co3p, ctl->qnt_Cccl4,
     ctl->qnt_Cccl3f, ctl->qnt_Cccl2f2, ctl->qnt_Cn2o,
-    ctl->qnt_Csf6, ctl->qnt_aoa
+    ctl->qnt_Csf6, ctl->qnt_aoa, ctl->qnt_Arn222, ctl->qnt_Apb210,
+    ctl->qnt_Abe7, ctl->qnt_Acs137, ctl->qnt_Ai131, ctl->qnt_Axe133
   };
   const int n_qnt = sizeof(quantities) / sizeof(quantities[0]);
 
@@ -4596,6 +4598,64 @@ void module_position(
       if (atm->p[ip] > ps)
 	atm->p[ip] = ps;
     }
+  }
+}
+
+/*****************************************************************************/
+
+void module_radio_decay(
+  const ctl_t *ctl,
+  const cache_t *cache,
+  atm_t *atm) {
+
+  /* Set timer... */
+  SELECT_TIMER("MODULE_RADIO_DECAY", "PHYSICS");
+
+  /* Set decay constants of radioactive species [s^-1]... */
+  const double lambda_rn222 = log(2.0) / (3.8235 * 86400.0);
+  const double lambda_pb210 = log(2.0) / (22.3 * 365.25 * 86400.0);
+  const double lambda_be7 = log(2.0) / (53.22 * 86400.0);
+  const double lambda_cs137 = log(2.0) / (30.05 * 365.25 * 86400.0);
+  const double lambda_i131 = log(2.0) / (8.02 * 86400.0);
+  const double lambda_xe133 = log(2.0) / (5.2474 * 86400.0);
+
+  /* Loop over particles... */
+  PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,atm)") {
+
+    /* Set timestep... */
+    const double dt = cache->dt[ip];
+
+    /* Loss for Pb-210... */
+    if (ctl->qnt_Apb210 >= 0)
+      atm->q[ctl->qnt_Apb210][ip] *= exp(-dt * lambda_pb210);
+
+    /* Loss for Rn-222... */
+    if (ctl->qnt_Arn222 >= 0) {
+      const double old = atm->q[ctl->qnt_Arn222][ip];
+      const double aux = exp(-dt * lambda_rn222);
+      const double lost = old * (1.0 - aux);
+      atm->q[ctl->qnt_Arn222][ip] = old * aux;
+
+      /* Parent-daughter process for Pb-210... */
+      if (ctl->qnt_Apb210 >= 0)
+	atm->q[ctl->qnt_Apb210][ip] += lost * lambda_pb210 / lambda_rn222;
+    }
+
+    /* Loss for Be-7... */
+    if (ctl->qnt_Abe7 >= 0)
+      atm->q[ctl->qnt_Abe7][ip] *= exp(-dt * lambda_be7);
+
+    /* Loss for Cs-137... */
+    if (ctl->qnt_Acs137 >= 0)
+      atm->q[ctl->qnt_Acs137][ip] *= exp(-dt * lambda_cs137);
+
+    /* Loss for I-131... */
+    if (ctl->qnt_Ai131 >= 0)
+      atm->q[ctl->qnt_Ai131][ip] *= exp(-dt * lambda_i131);
+
+    /* Loss for Xe-133... */
+    if (ctl->qnt_Axe133 >= 0)
+      atm->q[ctl->qnt_Axe133][ip] *= exp(-dt * lambda_xe133);
   }
 }
 
@@ -5620,7 +5680,12 @@ void mptrac_read_ctl(
   ctl->qnt_Cn2o = -1;
   ctl->qnt_Csf6 = -1;
   ctl->qnt_aoa = -1;
-
+  ctl->qnt_Arn222 = -1;
+  ctl->qnt_Apb210 = -1;
+  ctl->qnt_Abe7 = -1;
+  ctl->qnt_Acs137 = -1;
+  ctl->qnt_Ai131 = -1;
+  ctl->qnt_Axe133 = -1;
 #ifdef DD
   ctl->qnt_destination = -1;
   ctl->qnt_subdomain = -1;
@@ -5745,6 +5810,12 @@ void mptrac_read_ctl(
       SET_QNT(qnt_Cn2o, "Cn2o", "N2O volume mixing ratio", "ppv")
       SET_QNT(qnt_Csf6, "Csf6", "SF6 volume mixing ratio", "ppv")
       SET_QNT(qnt_aoa, "aoa", "age of air", "s")
+      SET_QNT(qnt_Arn222, "Arn222", "Rn-222 activity", "Bq")
+      SET_QNT(qnt_Apb210, "Apb210", "Pb-210 activity", "Bq")
+      SET_QNT(qnt_Abe7, "Abe7", "Be-7 activity", "Bq")
+      SET_QNT(qnt_Acs137, "Acs137", "Cs-137 activity", "Bq")
+      SET_QNT(qnt_Ai131, "Ai131", "I-131 activity", "Bq")
+      SET_QNT(qnt_Axe133, "Axe133", "Xe-133 activity", "Bq")
 #ifdef DD
       SET_QNT(qnt_destination, "destination",
 	      "subdomain index of destination", "-")
@@ -6125,6 +6196,10 @@ void mptrac_read_ctl(
   /* First order tracer chemistry... */
   ctl->tracer_chem =
     (int) scan_ctl(filename, argc, argv, "TRACER_CHEM", -1, "0", NULL);
+
+  /* Radioactive decay... */
+  ctl->radio_decay =
+    (int) scan_ctl(filename, argc, argv, "RADIO_DECAY", -1, "0", NULL);
 
   /* Wet deposition... */
   for (int ip = 0; ip < 2; ip++) {
@@ -6627,6 +6702,10 @@ void mptrac_run_timestep(
   /* First-order tracer chemistry... */
   if (ctl->tracer_chem)
     module_tracer_chem(ctl, cache, clim, *met0, *met1, atm);
+
+  /* Radioactive decay... */
+  if (ctl->radio_decay)
+    module_radio_decay(ctl, cache, atm);
 
   /* Domain decomposition... */
   if (dd->init) {
