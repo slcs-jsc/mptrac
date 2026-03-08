@@ -368,19 +368,14 @@
 #define DD_NPART 100000
 #endif
 
-/*! Maximum number of neighbours to communicate with in domain decomposition. */
-#ifndef DD_NNMAX
-#define DD_NNMAX 26
+/*! Maximum number of longitudes of global meteo data. */
+#ifndef DD_EX_GLOB
+#define DD_EX_GLOB (EX * 16)
 #endif
 
-/*! Constant indicating the North pole [-]. */
-#ifndef DD_NPOLE
-#define DD_NPOLE -2
-#endif
-
-/*! Constant indicating the South pole [-]. */
-#ifndef DD_SPOLE
-#define DD_SPOLE -3
+/*! Maximum number of latitudes of global meteo data. */
+#ifndef DD_EY_GLOB
+#define DD_EY_GLOB (EY * 16)
 #endif
 
 /* ------------------------------------------------------------
@@ -3166,9 +3161,6 @@ typedef struct {
   /*! Domain decomposition meridional subdomain number. */
   int dd_subdomains_meridional;
 
-  /*! Domain decomposition number of neighbours to communicate with. */
-  int dd_nbr_neighbours;
-
   /*! Domain decomposition size of halos given in grid-points. */
   int dd_halos_size;
 
@@ -3616,19 +3608,26 @@ typedef struct {
      MPI Information
      ------------------------------------------------------------ */
 
-  /*! Rank of node. */
-  int rank;
-
-  /*! Size of node. */
-  int size;
-
-  /*! Rank of neighbouring nodes. */
-  int neighbours[DD_NNMAX];
-
 #ifdef DD
   /*! MPI type for the particle. */
   MPI_Datatype MPI_Particle;
 #endif
+
+  /* ------------------------------------------------------------
+     Global grid
+     ------------------------------------------------------------ */
+
+  /*! Number of longitudes. */
+  int nx_glob;
+
+  /*! Number of latitudes. */
+  int ny_glob;
+
+  /*! Longitudes of global grid [deg]. */
+  double lon_glob[DD_EX_GLOB];
+
+  /*! Latitude of global grid [deg]. */
+  double lat_glob[DD_EY_GLOB];
 
   /* ------------------------------------------------------------
      Properties of subdomains
@@ -3697,6 +3696,7 @@ typedef struct {
 #pragma acc routine (clim_ts)
 #pragma acc routine (clim_zm)
 #pragma acc routine (cos_sza)
+#pragma acc routine (dd_calc_subdomain_from_coords)
 #pragma acc routine (intpol_check_lon_lat)
 #pragma acc routine (intpol_met_4d_zeta)
 #pragma acc routine (intpol_met_space_3d)
@@ -4221,287 +4221,241 @@ void day2doy(
   int *doy);
 
 /**
- * @brief Assign atmospheric particles to rectangular subdomains.
+ * @brief Assign particles to domain-decomposition subdomains.
  *
- * This function classifies particles in an atmospheric model into
- * subdomains defined by the domain decomposition (\c dd). Depending on
- * whether this is the initial assignment (\p init != 0) or a subsequent
- * reclassification, it either:
- * - Assigns each particle to the local subdomain based on longitude and
- *   latitude coordinates.
- * - Updates particle destinations when they cross subdomain boundaries,
- *   using neighbor information.
+ * This routine determines the subdomain membership and communication
+ * destination of each particle based on its geographic coordinates.
+ * It is used during domain decomposition to ensure that particles are
+ * owned by the correct MPI rank.
  *
- * Longitude values are wrapped into the [0, 360) range to ensure
- * consistency, and boundary conditions at the left and right edges of
- * the domain are handled explicitly. Particles falling outside the
- * subdomain bounds are marked with \c -1 during initialization.
+ * Two modes of operation are supported:
  *
- * @param[in,out] atm  Pointer to an \c atm_t structure containing particle
- *                     data:
- *                     - \c atm->lon, \c atm->lat : particle coordinates
- *                     - \c atm->q : classification arrays, indexed by
- *                       \c ctl->qnt_subdomain and \c ctl->qnt_destination.
- * @param[in]     ctl  Pointer to a \c ctl_t structure containing control
- *                     parameters, including subdomain indices and query IDs
- *                     (e.g., \c ctl->qnt_subdomain).
- * @param[in]     dd   Pointer to a \c dd_t structure containing decomposition
- *                     information:
- *                     - rank, size
- *                     - longitude/latitude subdomain bounds
- *                     - neighbor ranks (\c dd->neighbours).
- * @param[in]     init Flag indicating whether this is the initial
- *                     assignment (\c init != 0) or a reclassification
- *                     (\c init == 0).
+ * - **Initialization mode** (`init != 0`):
+ *   Each particle is checked against the spatial bounds of the local
+ *   subdomain. Particles located inside the local subdomain are assigned
+ *   to the current MPI rank. Particles outside the domain bounds are
+ *   marked with a subdomain index of `-1`.
+ *
+ * - **Reclassification mode** (`init == 0`):
+ *   After particle advection, the routine checks whether particles have
+ *   crossed subdomain boundaries. If a particle is still located within
+ *   the local subdomain, its destination remains the current rank.
+ *   Otherwise, a new destination rank is calculated from its coordinates.
+ *
+ * Longitude values are normalized to the range [0, 360) to ensure
+ * consistent spatial classification.
+ *
+ * @param[in]     ctl   Pointer to the control structure containing model
+ *                      configuration and indices of particle quantities
+ *                      (e.g. `ctl->qnt_subdomain`, `ctl->qnt_destination`).
+ * @param[in,out] atm   Pointer to the atmospheric particle structure.
+ *                      Particle coordinates (`lon`, `lat`) are read and
+ *                      classification flags in `atm->q` are updated.
+ * @param[in]     dd    Pointer to the domain decomposition structure
+ *                      containing subdomain bounds and global grid
+ *                      information.
+ * @param[in]     init  Initialization flag:
+ *                      - non-zero → initial assignment of particles
+ *                      - zero → reclassification after particle movement.
  *
  * @note
- * - Parallelization is supported with OpenACC if compiled with
- *   `_OPENACC`.
- * - Neighbor indices in \c dd->neighbours follow a directional
- *   convention (left, right, up, down, and diagonals).
- * - Particles that do not belong to any subdomain are set to \c -1
- *   during initialization.
- * - Optional logic for handling particles at the poles is provided but
- *   currently disabled.
+ * - This routine is typically called before particle sorting and
+ *   communication in the domain decomposition workflow.
+ * - Particles with subdomain index `-1` are considered invalid and may
+ *   be removed during subsequent processing.
+ * - When compiled with `_OPENACC`, the classification loop can execute
+ *   on the accelerator.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
-void dd_assign_rect_subdomains_atm(
-  atm_t * atm,
+void dd_assign_subdomains(
   ctl_t * ctl,
+  atm_t * atm,
   dd_t * dd,
   int init);
 
 /**
- * @brief Extracts particles from an atmospheric state and prepares them
- *        for inter-domain transfer.
+ * @brief Convert atmospheric particle data to transferable particle structures.
  *
- * This routine scans the atmospheric arrays for particles that should be
- * transferred to another MPI/OpenMP/OpenACC rank (i.e., particles whose
- * destination subdomain differs from the current @p rank). For each such
- * particle, the function copies its prognostic variables (time, position,
- * pressure, tracers) into the @p particles buffer and marks the particle
- * in the atmospheric fields as inactive by setting its subdomain flag to -1.
+ * This routine extracts particles from the atmospheric state that need to
+ * be transferred to another MPI rank and copies their properties into a
+ * temporary particle buffer. The buffer uses an array-of-structures layout
+ * that is suitable for MPI communication.
  *
- * Additionally, the particle's timestep entry in @p cache is reset so that
- * the receiving process can re-initialize it.  
+ * For each particle whose destination rank differs from the current rank,
+ * the function copies the particle's state variables (time, position,
+ * pressure, and tracer quantities) from the atmospheric arrays into the
+ * particle buffer. The corresponding particle entry in the atmospheric
+ * structure is then marked as inactive by setting its subdomain flag to
+ * `-1`, indicating that ownership will be transferred to another process.
  *
- * If compiled with OpenACC, the function also manages the corresponding
- * device data movement for @p particles and @p nparticles, and performs
- * the selection loop on the accelerator.
+ * Additionally, the particle timestep stored in the cache structure is
+ * reset so that the receiving process can reinitialize it.
  *
- * @param[in,out] atm
- *     Pointer to the atmospheric state. Particle properties (time, lon, lat,
- *     pressure, tracer fields) are read from this structure. The particle’s
- *     subdomain field is overwritten and set to -1 for particles selected
- *     for transfer.
- *
- * @param[out] particles
- *     Output buffer where selected particles are copied. The array must be
- *     allocated to hold at least @p *nparticles entries. Indexing is
- *     relative to `atm->np`.
- *
- * @param[in] ctl
- *     Model control structure containing metadata such as the number of
- *     tracers (`ctl->nq`), and indices of relevant tracer fields
- *     (`ctl->qnt_destination`, `ctl->qnt_subdomain`).
- *
- * @param[in,out] nparticles
- *     On input, the number of particles to inspect (particles with indices
- *     `[atm->np, atm->np + *nparticles)`).  
- *     On output, unchanged. Device copies may be created or updated when
- *     using OpenACC.
- *
- * @param[in,out] cache
- *     Cache structure used to store per-particle timestep values. For each
- *     particle selected for transfer, `cache->dt[ip]` is set to 0.
- *
- * @param[in] rank
- *     Rank of the current processing unit. Particles whose destination field
- *     does not match @p rank are selected for transfer.
+ * @param[in]     ctl        Pointer to the control structure containing
+ *                           metadata such as the number of tracer fields
+ *                           and quantity indices.
+ * @param[in,out] cache      Pointer to the cache structure. The timestep
+ *                           entry (`cache->dt`) is reset for particles
+ *                           selected for transfer.
+ * @param[in,out] atm        Pointer to the atmospheric particle structure.
+ *                           Particle data are read from this structure and
+ *                           the subdomain flag of transferred particles is
+ *                           set to `-1`.
+ * @param[out]    particles  Output buffer storing the selected particles in
+ *                           an array-of-structures representation suitable
+ *                           for MPI communication.
+ * @param[in,out] nparticles Number of particles prepared for transfer.
+ *                           This value determines the range of atmospheric
+ *                           indices inspected.
  *
  * @note
- * Particle selection criteria:
- *   - `atm->q[ctl->qnt_destination][ip] != rank`
- *   - destination index >= 0
- *   - subdomain index >= 0
- *
- * @note
- * The function logs each particle prepared for transfer (verbosity level 3).
- *
- * @warning
- * This routine modifies the atmospheric arrays in place. Any subsequent
- * operations should treat selected particles as removed/inactive until they
- * are reconstructed or replaced by incoming particles.
+ * - Only particles whose destination rank differs from the current rank
+ *   are copied into the transfer buffer.
+ * - Particles marked with subdomain index `-1` are ignored.
+ * - When compiled with `_OPENACC`, the extraction loop may run on the
+ *   accelerator and the particle buffer is synchronized with the host.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 void dd_atm2particles(
+  ctl_t * ctl,
+  cache_t * cache,
   atm_t * atm,
   particle_t * particles,
-  ctl_t * ctl,
-  int *nparticles,
-  cache_t * cache,
-  int rank);
+  int *nparticles);
 
 /**
- * @brief Computes the destination subdomain (MPI rank) for a particle
- *        based on its geographic coordinates.
+ * @brief Determine the MPI subdomain rank from geographic coordinates.
  *
- * This function determines which distributed-memory subdomain a particle
- * belongs to, given its longitude and latitude. It performs several steps:
+ * This routine computes the target MPI rank corresponding to a particle
+ * position defined by longitude and latitude. The function maps the
+ * geographic coordinates onto the global domain decomposition grid and
+ * returns the MPI rank responsible for the corresponding subdomain.
  *
- *   - Wraps longitude into the canonical range [0, 360).
- *   - Wraps latitudes that cross the poles (>90 or <−90 degrees) by reflecting
- *     them across the poles and applying a 180° longitude shift.
- *   - Determines the global coordinate ranges from the provided meteorological
- *     grid (@p met).
- *   - Computes zonal and meridional subdomain indices based on uniform
- *     partitioning of the global grid into
- *     `ctl->dd_subdomains_zonal × ctl->dd_subdomains_meridional` tiles.
- *   - Clamps the resulting indices to valid ranges.
- *   - Converts the 2-D subdomain index (lon × lat) into a 1-D MPI rank index.
+ * Longitude values are normalized to the range [0, 360). If latitude
+ * values exceed the physical range [-90, 90], the coordinates are wrapped
+ * across the poles and the longitude is shifted by 180 degrees to ensure
+ * consistent positioning on the sphere.
  *
- * The rank is finally clamped into the valid range `[0, mpi_size-1]`.
+ * The normalized coordinates are then converted into zonal and meridional
+ * subdomain indices based on the global domain extents and the number of
+ * subdomains defined in the control structure. These indices are used to
+ * compute the MPI rank associated with the corresponding subdomain.
  *
- * @param[in] lon
- *     Input longitude in degrees. May lie outside [0, 360). Values are wrapped.
+ * @param[in] ctl       Pointer to the control structure containing the
+ *                      number of zonal and meridional subdomains.
+ * @param[in] dd        Pointer to the domain decomposition structure
+ *                      containing the global longitude and latitude grid.
+ * @param[in] lon       Particle longitude [deg].
+ * @param[in] lat       Particle latitude [deg].
+ * @param[in] mpi_size  Total number of MPI ranks participating in the
+ *                      simulation.
  *
- * @param[in] lat
- *     Input latitude in degrees. May lie outside the range [−90, 90].  
- *     Values past the poles are wrapped and the longitude is flipped accordingly.
- *
- * @param[in] met
- *     Pointer to meteorological grid information. Only the longitude and latitude
- *     arrays (`met->lon[]`, `met->lat[]`) are used to determine the global range
- *     of coordinates.
- *
- * @param[in] ctl
- *     Model control structure. Provides the number of zonal and meridional
- *     subdomains (`ctl->dd_subdomains_zonal`, `ctl->dd_subdomains_meridional`)
- *     used for domain decomposition.
- *
- * @param[in] mpi_size
- *     Number of MPI ranks participating in the simulation. The computed target
- *     rank is clamped to `[0, mpi_size - 1]`.
- *
- * @param[in] nx_glob
- *     Number of global longitude points in @p met->lon. Used to compute
- *     the global longitude range.
- *
- * @param[in] ny_glob
- *     Number of global latitude points in @p met->lat. Used to compute
- *     the global latitude range.
- *
- * @return
- *     The MPI rank (subdomain ID) corresponding to the provided coordinates.
- *     Guaranteed to be in the range `[0, mpi_size - 1]`.
+ * @return MPI rank corresponding to the subdomain that contains the
+ *         specified coordinates.
  *
  * @note
- * The function assumes a *uniform* partitioning of the global grid into
- * rectangular longitude/latitude blocks.
- *
- * @note
- * Diagnostic information (wrapped coordinates, computed ranges, indices)
- * is printed to stdout for debugging.
+ * - Longitude is wrapped into the interval [0, 360).
+ * - Latitude values outside [-90, 90] are wrapped across the poles.
+ * - The resulting subdomain indices are clamped to valid ranges to
+ *   ensure the returned rank is within `[0, mpi_size-1]`.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 int dd_calc_subdomain_from_coords(
+  ctl_t * ctl,
+  dd_t * dd,
   double lon,
   double lat,
-  met_t * met,
-  ctl_t * ctl,
-  int mpi_size,
-  int nx_glob,
-  int ny_glob);
+  int mpi_size);
 
 /**
- * @brief Communicates particles between MPI processes.
+ * @brief Exchange particles between MPI ranks according to domain ownership.
  *
- * The `dd_communicate_particles` function manages the communication of particle data between
- * neighbouring MPI processes. It sends and receives particles to and from neighbouring ranks,
- * handling the allocation and deallocation of buffers, and ensuring proper synchronization.
+ * This routine performs the inter-process communication step of the domain
+ * decomposition workflow. Particles prepared for transfer are exchanged
+ * between MPI ranks so that each process receives the particles belonging
+ * to its spatial subdomain.
  *
- * @param particles An array of `particle_t` structures to be communicated.
- * @param nparticles A pointer to an integer representing the number of particles.
- * @param MPI_Particle An MPI_Datatype representing the structure of a particle.
- * @param neighbours An array of integers representing the neighbouring ranks.
- * @param nneighbours An integer representing the number of neighbours.
- * @param ctl A control structure (`ctl_t`) containing configuration parameters.
+ * The function determines how many particles must be sent to each MPI rank
+ * based on their destination indices. The particles are packed into a send
+ * buffer and exchanged collectively using `MPI_Alltoallv`. After the
+ * communication step, received particles are copied back into the local
+ * particle array and their subdomain and destination fields are updated
+ * to the current rank.
  *
- * The function performs the following steps:
- * - Initializes buffers for sending and receiving particles.
- * - Retrieves the MPI rank of the current process.
- * - Uses non-blocking MPI communication to send and receive the number of particles and particle data.
- * - Waits for all communication operations to complete.
- * - Copies received particles into the local particle array.
- * - Updates the number of particles after receiving.
- * - Frees allocated buffers after communication is complete.
+ * The number of particles stored locally is replaced by the number of
+ * received particles after the communication.
  *
- * @note This function assumes that the `particles` array and other parameters are properly initialized.
- *       It handles communication with neighbouring ranks, ignoring poles and empty signals.
- *       The function uses MPI non-blocking communication for efficiency.
+ * @param[in]     ctl         Pointer to the control structure containing
+ *                            quantity indices used for particle metadata.
+ * @param[in,out] particles   Array of particle structures used for
+ *                            communication. On input, it contains the
+ *                            particles prepared for transfer; on output,
+ *                            it holds the particles received from other
+ *                            MPI ranks.
+ * @param[in,out] nparticles  Number of particles in the buffer. On input,
+ *                            the number of particles to be communicated;
+ *                            on output, the number of particles received.
+ * @param[in]     MPI_Particle MPI datatype describing the particle
+ *                            structure used in the communication.
+ *
+ * @note
+ * - Particle exchange is implemented using `MPI_Alltoallv`.
+ * - Temporary send and receive buffers are allocated internally.
+ * - After reception, particle destination and subdomain indices are
+ *   reset to the current MPI rank.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 void dd_communicate_particles(
+  ctl_t * ctl,
   particle_t * particles,
   int *nparticles,
-  MPI_Datatype MPI_Particle,
-  int *neighbours,
-  int nneighbours,
-  ctl_t ctl);
+  MPI_Datatype MPI_Particle);
 
 /**
- * @brief Determines rectangular neighbouring ranks for MPI processes.
+ * @brief Initialize the domain decomposition subsystem.
  *
- * The `dd_get_rect_neighbour` function calculates and assigns the neighbouring ranks for
- * an MPI process based on its current rank and the configuration of subdomains. This is
- * typically used in parallel computing to manage data decomposition and communication
- * between processes arranged in a rectangular grid.
+ * This routine prepares the domain decomposition infrastructure used
+ * for parallel particle transport. It verifies that the number of MPI
+ * tasks matches the configured decomposition and initializes auxiliary
+ * data structures required for particle exchange.
  *
- * @param ctl A control structure (`ctl_t`) containing configuration parameters for subdomains.
- * @param dd  A pointer to an `dd_t` structure where neighbour information will be stored.
+ * In particular, the function performs the following steps:
+ * 1. Checks that the total number of MPI ranks equals the number of
+ *    subdomains defined by the zonal and meridional decomposition.
+ * 2. Registers the MPI datatype used for particle communication.
+ * 3. Assigns all particles to their initial subdomains based on their
+ *    geographic coordinates.
  *
- * The function performs the following steps:
- * - Uses conditional logic to determine the neighbours based on the current rank and subdomain configuration.
- * - Assigns neighbour ranks to the `neighbours` array in the `dd` structure.
- * - Handles edge cases for processes at the boundaries of the grid, such as poles or edges.
+ * After successful initialization, each particle is associated with
+ * the MPI rank responsible for the subdomain containing its location.
  *
- * @note This function assumes that the `ctl` and `dd` structures are properly initialized.
- *       The function considers different configurations for processes at the boundaries and
- *       handles them appropriately to ensure correct neighbour assignment.
+ * @param[in]     ctl  Pointer to the control structure containing the
+ *                     domain decomposition parameters (number of zonal
+ *                     and meridional subdomains).
+ * @param[in,out] dd   Pointer to the domain decomposition structure.
+ *                     The MPI datatype for particle communication is
+ *                     initialized in this structure.
+ * @param[in,out] atm  Pointer to the atmospheric particle structure.
+ *                     Particle subdomain and destination fields are
+ *                     initialized according to their coordinates.
  *
- * @author Jan Clemens
- */
-void dd_get_rect_neighbour(
-  const ctl_t ctl,
-  dd_t * dd);
-
-/**
- * @brief Initializes domain decomposition for parallel processing.
+ * @return Non-zero value indicating successful initialization.
  *
- * The `dd_init` function initializes the domain decomposition setup for parallel processing
- * in a distributed computing environment. It ensures that the number of tasks matches the
- * number of subdomains, registers a custom MPI datatype for particle structures, defines
- * grid neighbours, and assigns particles to their respective subdomains.
- *
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param dd  A pointer to an `dd_t` structure containing MPI information.
- * @param atm A pointer to an `atm_t` structure containing atmospheric data.
- *
- * The function performs the following steps:
- * - Checks if the number of tasks matches the number of subdomains.
- * - Registers a custom MPI datatype for particle structures using `dd_register_MPI_type_particle`.
- * - Defines grid neighbours for each MPI task using `dd_get_rect_neighbour`.
- * - Assigns particles to their respective subdomains using `dd_assign_rect_subdomains_atm`.
- * - Sets the initialization flag to indicate successful initialization.
- *
- * @note This function assumes that the `ctl`, `dd`, `atm`, and `met` structures are properly initialized.
- *       The function is typically called at the beginning of a parallel processing task to set up the environment.
+ * @note
+ * - The function assumes that MPI has already been initialized.
+ * - The number of MPI ranks must match
+ *   `ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional`.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 int dd_init(
   ctl_t * ctl,
@@ -4509,25 +4463,29 @@ int dd_init(
   atm_t * atm);
 
 /**
- * @brief Check whether the longitude grid is periodic (global coverage).
+ * @brief Check whether the longitude grid represents a periodic domain.
  *
- * This function determines if the longitude array in \p met represents
- * a global, periodic grid (covering 360°). It does so by computing the
- * longitude spacing and testing whether the total range of longitudes
- * plus one spacing approximately equals 360 degrees.
+ * This routine determines whether the meteorological longitude grid
+ * covers a complete global domain with periodic boundary conditions.
+ * The grid is considered periodic if the total longitude range,
+ * including one grid spacing, is approximately equal to 360 degrees.
  *
- * @param[in] met      Pointer to a \c met_t structure containing the
- *                     longitude array (\c met->lon).
- * @param[in] nx_glob  Number of global longitude grid points.
+ * The check follows the same logic used when reading meteorological
+ * input fields to distinguish between global (periodic) and regional
+ * (non-periodic) grids.
  *
- * @retval 1  The longitude grid is periodic (global).
- * @retval 0  The longitude grid is not periodic (regional).
+ * @param[in] met      Pointer to the meteorological data structure
+ *                     containing the longitude grid (`met->lon`).
+ * @param[in] nx_glob  Number of longitude grid points.
+ *
+ * @return
+ * - `1` if the longitude grid is periodic (global domain).
+ * - `0` if the grid is non-periodic (regional domain).
  *
  * @note
- * - At least two longitude points are required; otherwise the function
- *   returns 0 (not periodic).
- * - A tolerance of ±0.01° is used to account for floating-point rounding.
- * - The logic used here is consistent with \c read_met_periodic().
+ * - At least two longitude grid points are required to evaluate the
+ *   periodicity condition.
+ * - The periodicity check uses a tolerance of 0.01 degrees.
  *
  * @author Jan Clemens
  */
@@ -4536,54 +4494,85 @@ int dd_is_periodic_longitude(
   int nx_glob);
 
 /**
- * @brief Converts particle data to atmospheric data.
+ * @brief Insert received particles into the atmospheric data structure.
  *
- * The `dd_particles2atm` function converts data from an array of particle structures (`particle_t`)
- * to an atmospheric data structure (`atm_t`). It updates the atmospheric data with values from the particles
- * and modifies the cache with control parameters (`ctl_t`).
+ * This routine converts particles received from other MPI ranks back
+ * into the atmospheric particle representation. The particle properties
+ * stored in the temporary communication buffer are copied into the
+ * atmospheric arrays, effectively transferring ownership of the
+ * particles to the current process.
  *
- * @param atm A pointer to an `atm_t` structure containing atmospheric data to be updated.
- * @param particles An array of `particle_t` structures from which data will be taken.
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param nparticles A pointer to an integer representing the number of particles to process.
- * @param cache A pointer to a `cache_t` structure used for storing intermediate values.
+ * For each received particle, the state variables (time, longitude,
+ * latitude, pressure, and tracer quantities) are written into the
+ * atmospheric structure at the next available indices. The particle
+ * timestep stored in the cache structure is reinitialized so that the
+ * particle can continue its trajectory integration on the receiving
+ * process.
  *
- * The function performs the following steps:
- * - Copies particle data (time, longitude, latitude, pressure, and quantities) into the atmospheric data structure.
- * - Updates the cache with a time modification value from the control parameters.
- * - Increases the particle count in the atmospheric data structure by the number of particles processed.
+ * After all particles have been inserted, the total number of local
+ * particles (`atm->np`) is increased accordingly.
  *
- * @note This function assumes that the `particles` array and `atm` structure are properly initialized.
- *       It also assumes that the `cache` is pre-allocated and accessible.
- *       The function uses OpenACC directives for parallel processing.
+ * @param[in]     ctl        Pointer to the control structure containing
+ *                           model parameters, including the number of
+ *                           tracer quantities.
+ * @param[in,out] cache      Pointer to the cache structure. The timestep
+ *                           (`cache->dt`) of inserted particles is set to
+ *                           the module timestep (`ctl->dt_mod`).
+ * @param[in]     particles  Array containing particles received from
+ *                           other MPI ranks.
+ * @param[in,out] nparticles Number of received particles stored in
+ *                           `particles`.
+ * @param[in,out] atm        Pointer to the atmospheric particle
+ *                           structure. Particle state variables are
+ *                           appended to the atmospheric arrays.
+ *
+ * @note
+ * - The atmospheric particle counter (`atm->np`) is updated after the
+ *   insertion of all received particles.
+ * - When compiled with `_OPENACC`, device memory is updated accordingly
+ *   so the atmospheric arrays remain synchronized with the accelerator.
+ *
+ * @warning
+ * The function assumes that the atmospheric arrays provide sufficient
+ * capacity (`NP`) to store the received particles.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 void dd_particles2atm(
-  atm_t * atm,
-  particle_t * particles,
   ctl_t * ctl,
+  cache_t * cache,
+  particle_t * particles,
   int *nparticles,
-  cache_t * cache);
+  atm_t * atm);
 
 /**
- * @brief Registers a custom MPI datatype for particle structures.
+ * @brief Register the MPI datatype used for particle communication.
  *
- * The `dd_register_MPI_type_particle` function creates and commits a custom MPI datatype
- * that represents the structure of a particle (`particle_t`). This datatype is used for
- * efficient communication of particle data in MPI operations.
+ * This routine creates and commits a custom MPI datatype that describes
+ * the memory layout of the `particle_t` structure. The datatype is used
+ * for exchanging particle data between MPI ranks during domain
+ * decomposition.
  *
- * @param MPI_Particle A pointer to an MPI_Datatype variable where the new datatype will be stored.
+ * The registered datatype includes the following particle fields:
+ * - time
+ * - pressure
+ * - longitude
+ * - latitude
+ * - tracer quantities (`q`)
  *
- * The function performs the following steps:
- * - Defines an array of MPI datatypes corresponding to the types of the particle structure's fields.
- * - Specifies the block lengths for each field in the particle structure.
- * - Calculates the displacements of each field within the particle structure using the `offsetof` macro.
- * - Creates a structured MPI datatype using `MPI_Type_create_struct`.
- * - Commits the new MPI datatype using `MPI_Type_commit`.
+ * The MPI datatype is constructed using `MPI_Type_create_struct` so that
+ * the particle structure can be communicated directly with MPI collective
+ * operations such as `MPI_Alltoallv`.
  *
- * @note This function assumes that the `particle_t` structure is defined and accessible.
- *       The `NQ` constant should be defined to represent the number of quantities in the particle structure.
+ * @param[out] MPI_Particle Pointer to the MPI datatype that will represent
+ *                          the `particle_t` structure in MPI communication.
+ *
+ * @note
+ * - The datatype must be registered before any particle exchange is
+ *   performed.
+ * - The resulting datatype is committed with `MPI_Type_commit`.
+ * - The layout of the datatype must match the definition of `particle_t`.
  *
  * @author Jan Clemens
  */
@@ -4591,71 +4580,91 @@ void dd_register_MPI_type_particle(
   MPI_Datatype * MPI_Particle);
 
 /**
- * @brief Sort particles according to box index and target rank for neighbours.
+ * @brief Sort particles and determine those that must be communicated.
  *
- * The `dd_sort` function sorts particles within the atmospheric data structure (`atm_t`)
- * based on their geographical coordinates (longitude and latitude) and pressure level.
- * It also considers the target rank to which a particle will be sent. The function allocates
- * temporary arrays to store indices and auxiliary data for sorting, then performs the sorting
- * operation. After sorting, it updates the order of particles in the atmospheric data structure.
+ * This routine reorders the atmospheric particle arrays according to
+ * their spatial location and communication status within the domain
+ * decomposition framework. The sorting step groups particles that
+ * remain in the local subdomain at the beginning of the arrays and
+ * particles that must be transferred to other MPI ranks at the end.
  *
- * @param ctl A pointer to a `ctl_t` structure containing control parameters and settings.
- * @param met0 A pointer to a `met_t` structure containing meteorological data at the current time step.
- * @param atm A pointer to an `atm_t` structure containing atmospheric data with particle information.
- * @param dd  A pointer to an `dd_t` structure containing MPI information, including rank and neighbours.
- * @param nparticles A pointer to an integer representing the number of particles to be sent.
- * @param rank A pointer to an integer storing the current MPI rank.
+ * For each particle, a sorting key is computed from its position in
+ * the meteorological grid (longitude, latitude, pressure). Particles
+ * whose destination rank differs from the current rank are assigned
+ * a large key value so that they are placed after locally owned
+ * particles in the sorted arrays.
  *
- * The function performs the following steps:
- * - Allocates temporary arrays for sorting indices and values.
- * - Computes a unique index for each particle based on its geographical coordinates and pressure level.
- * - Uses parallel processing directives (OpenACC or OpenMP) to calculate these indices.
- * - Sorts the particles based on the computed indices using a sorting library (e.g., Thrust).
- * - Rearranges the atmospheric data arrays according to the sorted indices.
- * - Counts the number of particles that need to be sent to other ranks and updates the particle count.
- * - Frees the allocated temporary arrays.
+ * After sorting, the routine:
+ * - Reorders all atmospheric particle arrays consistently.
+ * - Determines the number of particles that remain on the current rank.
+ * - Counts the number of particles that must be transferred to other
+ *   MPI ranks.
+ * - Updates the local particle counter (`atm->np`) to include only
+ *   particles that stay on the current rank.
  *
- * @note This function assumes that the `ctl`, `met0`, `atm`, `nparticles`, and `rank` parameters are properly initialized.
- * @note The function utilizes the `locate_reg` and `locate_irr` functions to determine the appropriate index for sorting particles.
- * @note Particle sorting is performed using either the Thrust library (if compiled with Thrust support)
- * or a custom sorting algorithm. If compiled without Thrust support, an error message is displayed.
- * @note After sorting, the function updates the order of particle-related data arrays in the atmosphere data structure to maintain consistency.
+ * The number of particles that must be communicated is returned via
+ * `nparticles`. These particles occupy the trailing portion of the
+ * reordered atmospheric arrays and will be extracted for transfer in
+ * the subsequent communication step.
+ *
+ * @param[in]     ctl        Pointer to the control structure containing
+ *                           indices of particle quantities.
+ * @param[in]     met0       Pointer to the meteorological data structure
+ *                           used to determine grid cell indices.
+ * @param[in,out] atm        Pointer to the atmospheric particle structure.
+ *                           All particle arrays are reordered in place.
+ * @param[in,out] dd         Pointer to the domain decomposition structure
+ *                           containing auxiliary sorting arrays.
+ * @param[out]    nparticles Number of particles that must be transferred
+ *                           to other MPI ranks.
+ *
+ * @note
+ * - Sorting is performed using either the THRUST backend (GPU) or
+ *   the GSL sorting routine (CPU fallback).
+ * - Particles marked with subdomain index `-1` are ignored and may be
+ *   removed during the sorting process.
+ * - The function prepares the particle arrays for subsequent extraction
+ *   and MPI communication.
+ *
+ * @warning
+ * The routine modifies the atmospheric particle arrays in place.
  *
  * @author Jan Clemens
- * @author Lars Hoffmann
  */
 void dd_sort(
   const ctl_t * ctl,
   met_t * met0,
   atm_t * atm,
   dd_t * dd,
-  int *nparticles,
-  int *rank);
+  int *nparticles);
 
 /**
- * @brief Reorder an array according to a permutation vector.
+ * @brief Reorder a particle data array according to a sorting permutation.
  *
- * This function reorders the contents of the array \p a using the permutation
- * indices stored in \c dd->p. A temporary buffer (\c dd->help) is used to
- * perform the reordering in two passes:
- * - First, elements from \p a are copied into \c dd->help in permuted order.
- * - Then, \c dd->help is copied back into \p a in sequential order.
+ * This helper routine applies the permutation generated during the
+ * domain decomposition sorting step to a given particle data array.
+ * The permutation indices stored in the domain decomposition structure
+ * (`dd->p`) define the new ordering of the elements.
  *
- * Parallelization is supported with OpenACC or OpenMP, depending on
- * compilation flags.
+ * The function first copies the permuted values into a temporary buffer
+ * (`dd->help`) and then writes them back into the original array. This
+ * ensures that all particle-related arrays remain consistently ordered
+ * after the sorting step.
  *
- * @param[in,out] a   Pointer to the array of doubles to be reordered.
- *                    On input, it contains the original data;
- *                    on output, it contains the reordered data.
- * @param[in,out] dd  Pointer to a \c dd_t structure containing:
- *                    - \c dd->p : permutation indices (size \p np)
- *                    - \c dd->help : temporary buffer (size \p np)
- * @param[in] np      Number of elements in the array and permutation vector.
+ * @param[in,out] a   Pointer to the particle data array that will be
+ *                    reordered in place.
+ * @param[in]     dd  Pointer to the domain decomposition structure
+ *                    containing the permutation indices (`dd->p`)
+ *                    and the temporary buffer (`dd->help`).
+ * @param[in]     np  Number of elements in the array.
  *
  * @note
- * - The \c dd->p and \c dd->help arrays must be allocated with at least \p np elements.
- * - Uses `#pragma acc` when compiled with OpenACC (`_OPENACC` defined),
- *   otherwise falls back to OpenMP.
+ * - The permutation indices are generated by `dd_sort()`.
+ * - This routine is applied to all atmospheric particle arrays
+ *   (e.g. time, longitude, latitude, pressure, tracer quantities)
+ *   to maintain a consistent ordering.
+ * - When compiled with `_OPENACC`, the reordering loops may execute
+ *   on the accelerator.
  *
  * @author Jan Clemens
  */
@@ -5659,37 +5668,43 @@ void module_convection(
   atm_t * atm);
 
 /**
- * @brief Manages domain decomposition and particle communication in parallel processing.
+ * @brief Perform domain decomposition and exchange particles between MPI processes.
  *
- * The `module_dd` function orchestrates the domain decomposition process, including particle assignment,
- * sorting, transformation, and communication across MPI processes. It handles the initialization of particles,
- * their assignment to subdomains, and communication between neighbouring processes.
- *
- * @param ctl A pointer to a `ctl_t` structure containing control parameters.
- * @param atm A pointer to an `atm_t` structure containing atmospheric data.
- * @param cache A pointer to a `cache_t` structure used for storing intermediate values.
- * @param dd A pointer to an `dd_t` structure containing MPI information.
- * @param met A pointer to a pointer of a `met_t` structure containing meteorological data.
+ * This routine manages the redistribution of particles across MPI ranks
+ * according to the current spatial domain decomposition. It ensures that
+ * each process owns the particles located inside its subdomain.
  *
  * The function performs the following steps:
- * - Initializes a local array of particles.
- * - Assigns particles to subdomains using `dd_assign_rect_subdomains_atm`.
- * - Sorts particles according to their location and target rank using `dd_sort`.
- * - Transforms atmospheric data to particle data using `atm2particles`.
- * - Communicates particles between neighbouring MPI processes using `dd_communicate_particles`.
- * - Transforms particle data back to atmospheric data using `dd_particles2atm`.
- * - Frees the local particle array after processing.
+ * 1. Assign particles to their target subdomains based on their positions.
+ * 2. Sort particles according to their destination MPI rank.
+ * 3. Convert particle data from the atmospheric structure (structure-of-arrays)
+ *    into a temporary particle buffer (array-of-structures).
+ * 4. Exchange particles between MPI processes using collective MPI communication.
+ * 5. Convert received particle data back into the atmospheric data structure.
  *
- * @note This function assumes that the `ctl`, `atm`, `cache`, `dd`, and `met` structures are properly initialized.
- *       It is designed to work in a parallel processing environment using MPI.
+ * A temporary particle buffer is allocated locally to store particles
+ * during sorting and communication. After communication, the updated
+ * particle information is written back to the atmospheric data structure.
+ *
+ * @param[in]     ctl   Pointer to the control structure containing simulation settings.
+ * @param[in,out] cache Pointer to the cache structure used for temporary data.
+ * @param[in,out] dd    Pointer to the domain decomposition structure containing MPI
+ *                      information and auxiliary buffers.
+ * @param[in,out] atm   Pointer to the atmospheric data structure holding particle data.
+ * @param[in]     met   Pointer to the meteorological data used for sorting and
+ *                      subdomain assignment.
+ *
+ * @note This routine is only available when MPTRAC is compiled with
+ *       domain decomposition support (`DD`) and MPI enabled.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 void module_dd(
   ctl_t * ctl,
-  atm_t * atm,
   cache_t * cache,
   dd_t * dd,
+  atm_t * atm,
   met_t ** met);
 
 /**
