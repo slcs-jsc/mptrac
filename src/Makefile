@@ -122,7 +122,6 @@ ifeq ($(GPU),1)
     CFLAGS += -fopenacc -foffload=-lm
   else ifeq ($(COMPILER),nvc)
     CFLAGS += -acc -gpu=cc80,cc90,mem:separate:pinnedalloc
-  else ifeq ($(COMPILER),clang)
 #    ifeq ($(GPU_PIN),1)
 #      CFLAGS += -gpu=pinned
 #    endif
