@@ -2299,6 +2299,27 @@ typedef struct {
   /*! Quantity array index for O(1D) volume mixing ratio (climatology). */
   int qnt_o1d;
 
+  /*! Quantity array index for total mass loss due to OH chemistry. */
+  int qnt_mloss_oh;
+
+  /*! Quantity array index for total mass loss due to H2O2 chemistry. */
+  int qnt_mloss_h2o2;
+
+  /*! Quantity array index for total mass loss due to KPP chemistry. */
+  int qnt_mloss_kpp;
+
+  /*! Quantity array index for total mass loss due to wet deposition. */
+  int qnt_mloss_wet;
+
+  /*! Quantity array index for total mass loss due to dry deposition. */
+  int qnt_mloss_dry;
+
+  /*! Quantity array index for total mass loss due to exponential decay. */
+  int qnt_mloss_decay;
+
+  /*! Quantity array index for total loss rate. */
+  int qnt_loss_rate;
+
   /*! Quantity array index for saturation pressure over water. */
   int qnt_psat;
 
@@ -2362,8 +2383,8 @@ typedef struct {
   /*! Quantity array index for T_NAT. */
   int qnt_tnat;
 
-  /*! Quantity array index for SO2 volume mixing ratio (chemistry code). */
-  int qnt_Cso2;
+  /*! Quantity array index for trace species x volume mixing ratio (chemistry code). */
+  int qnt_Cx;
 
   /*! Quantity array index for H2O volume mixing ratio (chemistry code). */
   int qnt_Ch2o;
@@ -5532,7 +5553,7 @@ void module_bound_cond(
  * (longitude × latitude × altitude), accounting for either single or ensemble
  * simulations depending on `ctl->nens`. It then interpolates meteorological
  * temperature fields and computes volume mixing ratios, storing them in the
- * specified tracer quantity (e.g., `ctl->qnt_Cso2`).
+ * specified tracer quantity (e.g., `ctl->qnt_Cx`).
  *
  * If the molar mass is undefined or required quantity indices are missing,
  * the function exits early.
@@ -5551,12 +5572,12 @@ void module_bound_cond(
  * @param[in]  t     Central time step used for output and interpolation.
  *
  * @note
- * - Requires `ctl->molmass > 0`, and `ctl->qnt_m` and `ctl->qnt_Cso2` to be set.
+ * - Requires `ctl->molmass > 0`, and `ctl->qnt_m` and `ctl->qnt_Cx` to be set.
  * - Uses ensemble mode if `ctl->nens > 0` and assigns each parcel to its
  *   ensemble member via `ctl->qnt_ens`.
  * - Grid box volume mixing ratios are computed assuming ideal gas law and a
  *   layered spherical grid.
- * - The output quantity (e.g., `qnt_Cso2`) is given in ppbv.
+ * - The output quantity (e.g., `qnt_Cx`) is given in ppbv.
  *
  * @see intpol_met_time_3d()
  * @see P(), Z(), RHO()

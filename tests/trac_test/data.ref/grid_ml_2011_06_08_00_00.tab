@@ -19,7 +19,7 @@
 # $19 = stat (mean) [-]
 # $20 = ens (mean) [-]
 # $21 = Cccl3f (mean) [ppv]
-# $22 = Cso2 (mean) [ppv]
+# $22 = Cx (mean) [ppv]
 
 360806400.00 40 -89.75 -59.75 1555.46 90 0 0 0 nan nan nan nan nan nan nan nan nan nan nan nan nan
 360806400.00 40 -89.75 -59.25 1578.67 90 0 0 0 nan nan nan nan nan nan nan nan nan nan nan nan nan
