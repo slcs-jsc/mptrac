@@ -13,7 +13,7 @@
 ! You should have received a copy of the GNU General Public License
 ! along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
 ! 
-! Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+! Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 
 ! ------------------------------------------------------------
 ! MPTRAC data structures
@@ -242,6 +242,12 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_Cn2o
      INTEGER(c_int) :: qnt_Csf6
      INTEGER(c_int) :: qnt_aoa
+     INTEGER(c_int) :: qnt_Arn222
+     INTEGER(c_int) :: qnt_Apb210
+     INTEGER(c_int) :: qnt_Abe7
+     INTEGER(c_int) :: qnt_Acs137
+     INTEGER(c_int) :: qnt_Ai131
+     INTEGER(c_int) :: qnt_Axe133
      INTEGER(c_int) :: qnt_subdomain
      INTEGER(c_int) :: qnt_destination
      INTEGER(c_int) :: direction
@@ -381,6 +387,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: kpp_chem
      REAL(c_double) :: dt_kpp
      INTEGER(c_int) :: tracer_chem
+     INTEGER(c_int) :: radio_decay
      REAL(c_double), DIMENSION(2) :: wet_depo_pre
      REAL(c_double) :: wet_depo_bc_a
      REAL(c_double) :: wet_depo_bc_b
