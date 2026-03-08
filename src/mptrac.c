@@ -1087,7 +1087,6 @@ void dd_assign_rect_subdomains_atm(
     for (int ip = 0; ip < atm->np; ip++) {
 
       double lont = atm->lon[ip];
-
       if (lont < 0)
 	lont += 360;
 
@@ -1146,131 +1145,129 @@ void dd_assign_rect_subdomains_atm(
 
       if (!bound) {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
+
 	  // Upper right...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
 	  LOG(4,
 	      "DD: Particle crossing to upper right: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
+
 	  // Lower right...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
 	  LOG(4,
 	      "DD: Particle crossing to lower right: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
+
 	  // Upper left...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
 	  LOG(4,
 	      "DD: Particle crossing to upper left: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
+
 	  // Lower left...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
 	  LOG(4,
 	      "DD: Particle crossing to lower left: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
+
 	  // Right...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
 	  LOG(4,
 	      "DD: Particle crossing to right: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
+
 	  // Left...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
 	  LOG(4,
 	      "DD: Particle crossing to left: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
+
 	  // Down...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
 	  LOG(4,
 	      "DD: Particle crossing downward: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
+
 	  // Up...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
 	  LOG(4,
 	      "DD: Particle crossing upward: from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
+
 	  // Within...
 	  atm->q[ctl->qnt_destination][ip] = dd->rank;
 	}
       } else {
 	if ((lont >= lon_max) && (latt >= lat_max)) {
+
 	  // Upper right...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[2];
 	  LOG(4,
 	      "DD: Particle crossing to upper left (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[2], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont >= lon_max) && (latt <= lat_min)) {
+
 	  // Lower right...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[1];
 	  LOG(4,
 	      "DD: Particle crossing to lower left (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[1], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt >= lat_max)) {
+
 	  // Upper left...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[5];
 	  LOG(4,
 	      "DD: Particle crossing to upper right (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[5], atm->lon[ip], atm->lat[ip]);
 	} else if ((lont <= lon_min) && (latt <= lat_min)) {
+
 	  // Lower left...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[4];
 	  LOG(4,
 	      "DD: Particle crossing to lower right (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[4], atm->lon[ip], atm->lat[ip]);
 	} else if (lont >= lon_max) {
+
 	  // Right...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[0];
 	  LOG(4,
 	      "DD: Particle crossing to left (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[0], atm->lon[ip], atm->lat[ip]);
 	} else if (lont <= lon_min) {
+
 	  // Left...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[3];
 	  LOG(4,
 	      "DD: Particle crossing to right (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[3], atm->lon[ip], atm->lat[ip]);
 	} else if (latt <= lat_min) {
+
 	  // Down...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[7];
 	  LOG(4,
 	      "DD: Particle crossing downward (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[7], atm->lon[ip], atm->lat[ip]);
 	} else if (latt >= lat_max) {
+
 	  // Up...
 	  atm->q[ctl->qnt_destination][ip] = dd->neighbours[6];
 	  LOG(4,
 	      "DD: Particle crossing upward (bound case): from rank %d to rank %d (lon: %f, lat: %f)",
 	      dd->rank, dd->neighbours[6], atm->lon[ip], atm->lat[ip]);
 	} else {
+
 	  // Within...
 	  atm->q[ctl->qnt_destination][ip] = dd->rank;
 	}
       }
-
-      /* Handle particles assigned to poles by wrapping coordinates and calculating proper subdomain */
-      /*
-         if ((int)atm->q[ctl->qnt_destination][ip] < 0) {
-         int calculated_rank = dd_calc_subdomain_from_coords(atm->lon[ip], atm->lat[ip], met, ctl, dd->size, help_nx_glob, help_ny_glob);
-
-         if ((int)atm->q[ctl->qnt_destination][ip] == DD_NPOLE) {
-         LOG(3, "DD: Particle was assigned to NORTH POLE - redirecting to subdomain %d (lon: %f, lat: %f)", 
-         calculated_rank, atm->lon[ip], atm->lat[ip]);
-         } else if ((int)atm->q[ctl->qnt_destination][ip] == DD_SPOLE) {
-         LOG(3, "DD: Particle was assigned to SOUTH POLE - redirecting to subdomain %d (lon: %f, lat: %f)", 
-         calculated_rank, atm->lon[ip], atm->lat[ip]);
-         } else {
-         LOG(2, "DD: Particle had invalid destination %d - redirecting to subdomain %d (lon: %f, lat: %f)", 
-         (int)atm->q[ctl->qnt_destination][ip], calculated_rank, atm->lon[ip], atm->lat[ip]);
-         } */
-
-      /* Assign particle to the calculated subdomain */
-      /*atm->q[ctl->qnt_destination][ip] = calculated_rank;
-         } */
     }
 #ifdef _OPENACC
 #pragma acc exit data delete(dd)
@@ -1308,7 +1305,6 @@ void dd_atm2particles(
       particles[ip - atm->np].lon = atm->lon[ip];
       particles[ip - atm->np].lat = atm->lat[ip];
       particles[ip - atm->np].p = atm->p[ip];
-
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
 
@@ -1338,7 +1334,7 @@ int dd_calc_subdomain_from_coords(
   int nx_glob,
   int ny_glob) {
 
-  /* Wrap longitude to [0, 360) */
+  /* Wrap longitude to [0, 360)... */
   double wrapped_lon = lon;
   while (wrapped_lon < 0)
     wrapped_lon += 360;
@@ -1348,35 +1344,25 @@ int dd_calc_subdomain_from_coords(
   /* Handle polar coordinates by wrapping latitude and adjusting longitude */
   double wrapped_lat = lat;
   if (lat > 90) {
+
     /* North pole overflow: wrap latitude and flip longitude */
     wrapped_lat = 180 - lat;
     wrapped_lon = fmod(wrapped_lon + 180, 360);
   } else if (lat < -90) {
+
     /* South pole overflow: wrap latitude and flip longitude */
     wrapped_lat = -180 - lat;
     wrapped_lon = fmod(wrapped_lon + 180, 360);
   }
 
-  /* Get global domain ranges */
-  /* Handle both periodic (global) and non-periodic (regional) longitude grids */
+  /* Get global domain ranges... */
   double lon_range = 360.0;
-  //if (dd_is_periodic_longitude(met, nx_glob)) {
-  /* For global grids with periodic boundaries, use full 360 degrees */
-  //lon_range = 360.0;
-  //LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
-  //} else {
-  /* For regional grids, use the actual data range */
-  //lon_range = met->lon[nx_glob - 1] - met->lon[0];
-  //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
-  //}
-
   LOG(2, "nx_glob: %d", nx_glob);
-
   double lat_range = met->lat[ny_glob - 1] - met->lat[0];
   double global_lon_min = met->lon[0];
   double global_lat_min = met->lat[0];
 
-  /* Calculate subdomain indices */
+  /* Calculate subdomain indices... */
   int lon_idx =
     (int) ((wrapped_lon -
 	    global_lon_min) * ctl->dd_subdomains_zonal / lon_range);
@@ -1390,7 +1376,7 @@ int dd_calc_subdomain_from_coords(
      lon, lat, wrapped_lon, wrapped_lat, lon_range, lat_range, global_lon_min,
      global_lat_min, lon_idx, lat_idx);
 
-  /* Clamp to valid ranges */
+  /* Clamp to valid ranges... */
   lon_idx =
     (lon_idx <
      0) ? 0 : ((lon_idx >=
@@ -1399,9 +1385,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1668,10 +1653,8 @@ int dd_init(
   if (dd->size != ctl->dd_subdomains_meridional * ctl->dd_subdomains_zonal)
     ERRMSG("The number of tasks and subdomains is not identical.");
 
-#ifdef DD
   /* Register the MPI_Particle data type... */
   dd_register_MPI_type_particle(&dd->MPI_Particle);
-#endif
 
   /* Define grid neighbours ... */
   dd_get_rect_neighbour(*ctl, dd);
@@ -1731,16 +1714,20 @@ void dd_particles2atm(
 #ifdef DD
 void dd_register_MPI_type_particle(
   MPI_Datatype *MPI_Particle) {
+
   MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
     MPI_DOUBLE, MPI_DOUBLE
   };
+
   int blocklengths[5] = { 1, 1, 1, 1, NQ };
+
   MPI_Aint displacements[5] = { offsetof(particle_t, time),
     offsetof(particle_t, p),
     offsetof(particle_t, lon),
     offsetof(particle_t, lat),
     offsetof(particle_t, q)
   };
+
   MPI_Type_create_struct(5, blocklengths, displacements, types, MPI_Particle);
   MPI_Type_commit(MPI_Particle);
 }
@@ -5686,10 +5673,8 @@ void mptrac_read_ctl(
   ctl->qnt_Acs137 = -1;
   ctl->qnt_Ai131 = -1;
   ctl->qnt_Axe133 = -1;
-#ifdef DD
-  ctl->qnt_destination = -1;
   ctl->qnt_subdomain = -1;
-#endif
+  ctl->qnt_destination = -1;
 
   /* Read quantities... */
   ctl->nq = (int) scan_ctl(filename, argc, argv, "NQ", -1, "0", NULL);
@@ -5816,11 +5801,9 @@ void mptrac_read_ctl(
       SET_QNT(qnt_Acs137, "Acs137", "Cs-137 activity", "Bq")
       SET_QNT(qnt_Ai131, "Ai131", "I-131 activity", "Bq")
       SET_QNT(qnt_Axe133, "Axe133", "Xe-133 activity", "Bq")
-#ifdef DD
+      SET_QNT(qnt_subdomain, "subdomain", "current subdomain index", "-")
       SET_QNT(qnt_destination, "destination",
 	      "subdomain index of destination", "-")
-      SET_QNT(qnt_subdomain, "subdomain", "current subdomain index", "-")
-#endif
       scan_ctl(filename, argc, argv, "QNT_UNIT", iq, "", ctl->qnt_unit[iq]);
   }
 
@@ -10101,18 +10084,7 @@ void read_met_nc_grid_dd_naive(
   }
 
   /* Get the range of the entire meteodata... */
-  /* Handle both periodic (global) and non-periodic (regional) longitude grids */
   double lon_range = 360;
-  //if (dd_is_periodic_longitude(met, help_nx_glob)) {
-  /* For global grids with periodic boundaries, use full 360 degrees */
-  //lon_range = 360.0;
-  //LOG(3, "Detected periodic longitude boundaries, using lon_range = 360.0");
-  //} else {
-  /* For regional grids, use the actual data range */
-  //lon_range = help_lon_glob[help_nx_glob - 1] - help_lon_glob[0];
-  //LOG(3, "Detected non-periodic longitude boundaries, using lon_range = %g", lon_range);
-  //}
-
   double lat_range = help_lat_glob[help_ny_glob - 1] - help_lat_glob[0];
 
   /* Focus on subdomain latitudes and longitudes... */
