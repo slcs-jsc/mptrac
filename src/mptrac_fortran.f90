@@ -198,13 +198,6 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_h2o2
      INTEGER(c_int) :: qnt_ho2
      INTEGER(c_int) :: qnt_o1d
-     INTEGER(c_int) :: qnt_mloss_oh
-     INTEGER(c_int) :: qnt_mloss_h2o2
-     INTEGER(c_int) :: qnt_mloss_kpp
-     INTEGER(c_int) :: qnt_mloss_wet
-     INTEGER(c_int) :: qnt_mloss_dry
-     INTEGER(c_int) :: qnt_mloss_decay
-     INTEGER(c_int) :: qnt_loss_rate
      INTEGER(c_int) :: qnt_psat
      INTEGER(c_int) :: qnt_psice
      INTEGER(c_int) :: qnt_pw
@@ -226,7 +219,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_tice
      INTEGER(c_int) :: qnt_tsts
      INTEGER(c_int) :: qnt_tnat
-     INTEGER(c_int) :: qnt_Cx
+     INTEGER(c_int) :: qnt_Cso2
      INTEGER(c_int) :: qnt_Ch2o
      INTEGER(c_int) :: qnt_Co3
      INTEGER(c_int) :: qnt_Cco
@@ -242,6 +235,12 @@ MODULE mptrac_struct
      INTEGER(c_int) :: qnt_Cn2o
      INTEGER(c_int) :: qnt_Csf6
      INTEGER(c_int) :: qnt_aoa
+     INTEGER(c_int) :: qnt_Arn222
+     INTEGER(c_int) :: qnt_Apb210
+     INTEGER(c_int) :: qnt_Abe7
+     INTEGER(c_int) :: qnt_Acs137
+     INTEGER(c_int) :: qnt_Ai131
+     INTEGER(c_int) :: qnt_Axe133
      INTEGER(c_int) :: qnt_subdomain
      INTEGER(c_int) :: qnt_destination
      INTEGER(c_int) :: direction
@@ -381,6 +380,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: kpp_chem
      REAL(c_double) :: dt_kpp
      INTEGER(c_int) :: tracer_chem
+     INTEGER(c_int) :: radio_decay
      REAL(c_double), DIMENSION(2) :: wet_depo_pre
      REAL(c_double) :: wet_depo_bc_a
      REAL(c_double) :: wet_depo_bc_b

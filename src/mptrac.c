@@ -1399,9 +1399,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -3264,7 +3263,7 @@ void module_chem_grid(
   const double tt) {
 
   /* Check quantities... */
-  if (ctl->qnt_m < 0 || ctl->qnt_Cx < 0)
+  if (ctl->qnt_m < 0 || ctl->qnt_Cso2 < 0)
     return;
   if (ctl->molmass <= 0)
     ERRMSG("Molar mass is not defined!");
@@ -3397,7 +3396,7 @@ void module_chem_grid(
 
       /* Calculate volume mixing ratio... */
       const double m = mass[mass_idx];
-      atm->q[ctl->qnt_Cx][ip] = MA / ctl->molmass * m
+      atm->q[ctl->qnt_Cso2][ip] = MA / ctl->molmass * m
 	/ (RHO(press[izs[ip]], temp) * area[iys[ip]] * dz * 1e9);
     }
 
@@ -3597,14 +3596,8 @@ void module_decay(
 
     /* Calculate exponential decay... */
     const double aux = exp(-cache->dt[ip] / tdec);
-    if (ctl->qnt_m >= 0) {
-      if (ctl->qnt_mloss_decay >= 0)
-	atm->q[ctl->qnt_mloss_decay][ip]
-	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+    if (ctl->qnt_m >= 0)
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += 1. / tdec;
-    }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
@@ -3914,14 +3907,8 @@ void module_dry_depo(
 
     /* Calculate loss of mass based on deposition velocity... */
     const double aux = exp(-cache->dt[ip] * v_dep / dz);
-    if (ctl->qnt_m >= 0) {
-      if (ctl->qnt_mloss_dry >= 0)
-	atm->q[ctl->qnt_mloss_dry][ip]
-	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+    if (ctl->qnt_m >= 0)
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += v_dep / dz;
-    }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
@@ -3980,11 +3967,11 @@ void module_h2o2_chem(
       8.3e2 * exp(7600. * (1. / t - 1. / 298.15)) * RI * t;
 
     /* Correction factor for high SO2 concentration
-       (if qnt_Cx is defined, the correction is switched on)... */
+       (if qnt_Cso2 is defined, the correction is switched on)... */
     double cor = 1.0;
-    if (ctl->qnt_Cx >= 0)
-      cor = atm->q[ctl->qnt_Cx][ip] >
-	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
+    if (ctl->qnt_Cso2 >= 0)
+      cor = atm->q[ctl->qnt_Cso2][ip] >
+	low ? a * pow(atm->q[ctl->qnt_Cso2][ip], b) : 1;
 
     const double h2o2 = H_h2o2
       * clim_zm(&clim->h2o2, atm->time[ip], atm->lat[ip], atm->p[ip])
@@ -3997,13 +3984,8 @@ void module_h2o2_chem(
     /* Calculate exponential decay (Rolph et al., 1992)... */
     const double rate_coef = k * K_1S * h2o2 * H_SO2 * CWC;
     const double aux = exp(-cache->dt[ip] * rate_coef);
-    if (ctl->qnt_m >= 0) {
-      if (ctl->qnt_mloss_h2o2 >= 0)
-	atm->q[ctl->qnt_mloss_h2o2][ip] += atm->q[ctl->qnt_m][ip] * (1 - aux);
+    if (ctl->qnt_m >= 0)
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
-    }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
@@ -4525,26 +4507,20 @@ void module_oh_chem(
     }
 
     /* Correction factor for high SO2 concentration
-       (if qnt_Cx is defined, the correction is switched on)... */
+       (if qnt_Cso2 is defined, the correction is switched on)... */
     double cor = 1;
-    if (ctl->qnt_Cx >= 0)
+    if (ctl->qnt_Cso2 >= 0)
       cor =
-	atm->q[ctl->qnt_Cx][ip] >
-	low ? a * pow(atm->q[ctl->qnt_Cx][ip], b) : 1;
+	atm->q[ctl->qnt_Cso2][ip] >
+	low ? a * pow(atm->q[ctl->qnt_Cso2][ip], b) : 1;
 
     /* Calculate exponential decay... */
     const double rate_coef =
       k * clim_oh(ctl, clim, atm->time[ip], atm->lon[ip],
 		  atm->lat[ip], atm->p[ip]) * M * cor;
     const double aux = exp(-cache->dt[ip] * rate_coef);
-    if (ctl->qnt_m >= 0) {
-      if (ctl->qnt_mloss_oh >= 0)
-	atm->q[ctl->qnt_mloss_oh][ip]
-	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+    if (ctl->qnt_m >= 0)
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += rate_coef;
-    }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
@@ -5198,14 +5174,8 @@ void module_wet_depo(
 
     /* Calculate exponential decay of mass... */
     const double aux = exp(-cache->dt[ip] * lambda);
-    if (ctl->qnt_m >= 0) {
-      if (ctl->qnt_mloss_wet >= 0)
-	atm->q[ctl->qnt_mloss_wet][ip]
-	  += atm->q[ctl->qnt_m][ip] * (1 - aux);
+    if (ctl->qnt_m >= 0)
       atm->q[ctl->qnt_m][ip] *= aux;
-      if (ctl->qnt_loss_rate >= 0)
-	atm->q[ctl->qnt_loss_rate][ip] += lambda;
-    }
     if (ctl->qnt_vmr >= 0)
       atm->q[ctl->qnt_vmr][ip] *= aux;
   }
@@ -5636,13 +5606,6 @@ void mptrac_read_ctl(
   ctl->qnt_h2o2 = -1;
   ctl->qnt_ho2 = -1;
   ctl->qnt_o1d = -1;
-  ctl->qnt_mloss_oh = -1;
-  ctl->qnt_mloss_h2o2 = -1;
-  ctl->qnt_mloss_kpp = -1;
-  ctl->qnt_mloss_wet = -1;
-  ctl->qnt_mloss_dry = -1;
-  ctl->qnt_mloss_decay = -1;
-  ctl->qnt_loss_rate = -1;
   ctl->qnt_psat = -1;
   ctl->qnt_psice = -1;
   ctl->qnt_pw = -1;
@@ -5664,7 +5627,7 @@ void mptrac_read_ctl(
   ctl->qnt_tice = -1;
   ctl->qnt_tsts = -1;
   ctl->qnt_tnat = -1;
-  ctl->qnt_Cx = -1;
+  ctl->qnt_Cso2 = -1;
   ctl->qnt_Ch2o = -1;
   ctl->qnt_Co3 = -1;
   ctl->qnt_Cco = -1;
@@ -5758,18 +5721,6 @@ void mptrac_read_ctl(
       SET_QNT(qnt_h2o2, "h2o2", "hydrogen peroxide", "ppv")
       SET_QNT(qnt_ho2, "ho2", "hydroperoxyl radical", "ppv")
       SET_QNT(qnt_o1d, "o1d", "atomic oxygen", "ppv")
-      SET_QNT(qnt_mloss_oh, "mloss_oh", "mass loss due to OH chemistry", "kg")
-      SET_QNT(qnt_mloss_h2o2, "mloss_h2o2",
-	      "mass loss due to H2O2 chemistry", "kg")
-      SET_QNT(qnt_mloss_kpp, "mloss_kpp", "mass loss due to kpp chemistry",
-	      "kg")
-      SET_QNT(qnt_mloss_wet, "mloss_wet", "mass loss due to wet deposition",
-	      "kg")
-      SET_QNT(qnt_mloss_dry, "mloss_dry", "mass loss due to dry deposition",
-	      "kg")
-      SET_QNT(qnt_mloss_decay, "mloss_decay",
-	      "mass loss due to exponential decay", "kg")
-      SET_QNT(qnt_loss_rate, "loss_rate", "total loss rate", "s^-1")
       SET_QNT(qnt_psat, "psat", "saturation pressure over water", "hPa")
       SET_QNT(qnt_psice, "psice", "saturation pressure over ice", "hPa")
       SET_QNT(qnt_pw, "pw", "partial water vapor pressure", "hPa")
@@ -5792,7 +5743,7 @@ void mptrac_read_ctl(
       SET_QNT(qnt_tice, "tice", "frost point temperature", "K")
       SET_QNT(qnt_tsts, "tsts", "STS existence temperature", "K")
       SET_QNT(qnt_tnat, "tnat", "NAT existence temperature", "K")
-      SET_QNT(qnt_Cx, "Cx", "Trace species x volume mixing ratio", "ppv")
+      SET_QNT(qnt_Cso2, "Cso2", "SO2 volume mixing ratio", "ppv")
       SET_QNT(qnt_Ch2o, "Ch2o", "H2O volume mixing ratio", "ppv")
       SET_QNT(qnt_Co3, "Co3", "O3 volume mixing ratio", "ppv")
       SET_QNT(qnt_Cco, "Cco", "CO volume mixing ratio", "ppv")
@@ -6669,13 +6620,6 @@ void mptrac_run_timestep(
   if ((ctl->bound_lat0 < ctl->bound_lat1)
       && (ctl->bound_p0 > ctl->bound_p1))
     module_bound_cond(ctl, cache, clim, *met0, *met1, atm);
-
-  /* Initialize quantity of total loss rate... */
-  if (ctl->qnt_loss_rate >= 0) {
-    PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,atm)") {
-      atm->q[ctl->qnt_loss_rate][ip] = 0;
-    }
-  }
 
   /* Decay of particle mass... */
   if (ctl->tdec_trop > 0 && ctl->tdec_strat > 0)
