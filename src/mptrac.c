@@ -1078,97 +1078,65 @@ void dd_assign_subdomains(
   /* Set timer... */
   SELECT_TIMER("DD_ASSIGN_SUBDOMAINS", "DD");
 
+  /* Get MPI rank and size... */
   int rank, size;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
   MPI_Comm_size(MPI_COMM_WORLD, &size);
 
-  /* Set initial subdomains... */
-  if (init) {
+  /* Loop over particles... */
 #ifdef _OPENACC
 #pragma acc enter data create(dd)
 #pragma acc update device(dd->subdomain_lon_min, dd->subdomain_lon_max, \
                           dd->subdomain_lat_min, dd->subdomain_lat_max, \
                           dd->nx_glob, dd->ny_glob,			\
-			  dd->lon_glob[:dd->nx_glob],			\
+                          dd->lon_glob[:dd->nx_glob],			\
                           dd->lat_glob[:dd->ny_glob])
 #pragma acc data present(atm, ctl, dd)
 #pragma acc parallel loop independent gang vector
 #endif
-    for (int ip = 0; ip < atm->np; ip++) {
+  for (int ip = 0; ip < atm->np; ip++) {
 
-      double latt = atm->lat[ip];
-      double lont = atm->lon[ip];
-      if (lont < 0)
-	lont += 360;
+    /* Skip already invalid particles... */
+    if (!init && (int) atm->q[ctl->qnt_subdomain][ip] == -1)
+      continue;
 
-      if (lont >= dd->subdomain_lon_min && lont < dd->subdomain_lon_max
-	  && latt >= dd->subdomain_lat_min && latt < dd->subdomain_lat_max) {
+    /* Set longitude and latitude... */
+    double lon = atm->lon[ip];
+    double lat = atm->lat[ip];
+    dd_normalize_lon_lat(dd, &lon, &lat);
+
+    /* Flag whether particle is inside the subdomain... */
+    const int inside =
+      (lon >= dd->subdomain_lon_min && lon < dd->subdomain_lon_max &&
+       lat >= dd->subdomain_lat_min && lat < dd->subdomain_lat_max);
+
+    /* Init... */
+    if (init) {
+      if (inside) {
 	atm->q[ctl->qnt_subdomain][ip] = rank;
 	atm->q[ctl->qnt_destination][ip] = rank;
-
       } else {
-
-	WARN
-	  ("DD: Particle is outside the domain (lon: %f, lat: %f, subdomain: %d, subdomain bounds: [%f, %f], [%f, %f])",
-	   atm->lon[ip], atm->lat[ip], rank, dd->subdomain_lon_min,
-	   dd->subdomain_lon_max, dd->subdomain_lat_min,
-	   dd->subdomain_lat_max);
 	atm->q[ctl->qnt_subdomain][ip] = -1;
 	atm->q[ctl->qnt_destination][ip] = -1;
       }
     }
-#ifdef _OPENACC
-#pragma acc exit data delete(dd)
-#endif
 
-  } else {
-
-    /* Reclassify air parcels after advection... */
-#ifdef _OPENACC
-#pragma acc enter data create(dd)
-#pragma acc update device(dd->subdomain_lon_min, dd->subdomain_lon_max, \
-                          dd->subdomain_lat_min, dd->subdomain_lat_max, \
-                          dd->nx_glob, dd->ny_glob,			\
-			  dd->lon_glob[:dd->nx_glob],			\
-                          dd->lat_glob[:dd->ny_glob])
-#pragma acc data present(atm, ctl, dd)
-#pragma acc parallel loop independent gang vector
-#endif
-    for (int ip = 0; ip < atm->np; ip++) {
-
-      /* Skip empty places in the particle array... */
-      if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
-	continue;
-
-      double latt = atm->lat[ip];
-      double lont = atm->lon[ip];
-      if (lont < 0)
-	lont += 360;
-
-      /* Still inside the local subdomain... */
-      if (lont >= dd->subdomain_lon_min && lont < dd->subdomain_lon_max
-	  && latt >= dd->subdomain_lat_min && latt < dd->subdomain_lat_max) {
+    /* Reassign... */
+    else {
+      if (inside) {
 	atm->q[ctl->qnt_destination][ip] = rank;
-      }
-
-      /* Move to different subdomain... */
-      else {
-
+      } else {
 	const int dest =
 	  dd_calc_subdomain_from_coords(ctl, dd, atm->lon[ip], atm->lat[ip],
 					size);
-
 	atm->q[ctl->qnt_destination][ip] = dest;
-
-	LOG(4,
-	    "DD: Particle reassigned by coordinates: from rank %d to rank %d (lon: %f, lat: %f)",
-	    rank, dest, atm->lon[ip], atm->lat[ip]);
       }
     }
+  }
+
 #ifdef _OPENACC
 #pragma acc exit data delete(dd)
 #endif
-  }
 }
 #endif
 
@@ -1231,26 +1199,10 @@ int dd_calc_subdomain_from_coords(
   double lat,
   int mpi_size) {
 
-  /* Wrap longitude to [0, 360)... */
+  /* Set longitude and latitude... */
   double wrapped_lon = lon;
-  while (wrapped_lon < 0)
-    wrapped_lon += 360;
-  while (wrapped_lon >= 360)
-    wrapped_lon -= 360;
-
-  /* Handle polar coordinates by wrapping latitude and adjusting longitude */
   double wrapped_lat = lat;
-  if (lat > 90) {
-
-    /* North pole overflow: wrap latitude and flip longitude */
-    wrapped_lat = 180 - lat;
-    wrapped_lon = fmod(wrapped_lon + 180, 360);
-  } else if (lat < -90) {
-
-    /* South pole overflow: wrap latitude and flip longitude */
-    wrapped_lat = -180 - lat;
-    wrapped_lon = fmod(wrapped_lon + 180, 360);
-  }
+  dd_normalize_lon_lat(dd, &wrapped_lon, &wrapped_lat);
 
   /* Get global domain ranges... */
   double lon_range = 360.0;
@@ -1275,9 +1227,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1420,29 +1371,6 @@ void dd_communicate_particles(
 /*****************************************************************************/
 
 #ifdef DD
-int dd_is_periodic_longitude(
-  met_t *met,
-  int nx_glob) {
-
-  /* Check if we have at least 2 longitude points... */
-  if (nx_glob < 2)
-    return 0;
-
-  /* Calculate the longitude spacing */
-  double lon_spacing = met->lon[1] - met->lon[0];
-
-  /* Check if the total range plus one spacing equals 360 degrees
-     This is the same logic as used in read_met_periodic() */
-  double total_range = met->lon[nx_glob - 1] - met->lon[0] + lon_spacing;
-
-  /* Return 1 if periodic (global), 0 if not periodic (regional) */
-  return (fabs(total_range - 360.0) < 0.01);
-}
-#endif
-
-/*****************************************************************************/
-
-#ifdef DD
 int dd_init(
   ctl_t *ctl,
   dd_t *dd,
@@ -1462,6 +1390,39 @@ int dd_init(
 
   /* Set flag of initialization. */
   return 1;
+}
+#endif
+
+/*****************************************************************************/
+
+#ifdef DD
+void dd_normalize_lon_lat(
+  const dd_t *dd,
+  double *lon,
+  double *lat) {
+
+  const double lon_min = (dd->lon_glob[0] < 0) ? -180.0 : 0.0;
+
+  /* Normalize longitude to match global grid convention... */
+  *lon = FMOD(*lon - lon_min, 360.0);
+  if (*lon < 0.0)
+    *lon += 360.0;
+  *lon += lon_min;
+
+  /* Wrap latitude across the poles and shift longitude... */
+  if (*lat > 90.0) {
+    *lat = 180.0 - *lat;
+    *lon += 180.0;
+  } else if (*lat < -90.0) {
+    *lat = -180.0 - *lat;
+    *lon += 180.0;
+  }
+
+  /* Renormalize longitude after pole crossing... */
+  *lon = FMOD(*lon - lon_min, 360.0);
+  if (*lon < 0.0)
+    *lon += 360.0;
+  *lon += lon_min;
 }
 #endif
 
@@ -1566,29 +1527,29 @@ void dd_sort(
   for (int ip = 0; ip < np; ip++) {
     if ((int) atm->q[ctl->qnt_subdomain][ip] != -1) {
       if ((int) atm->q[ctl->qnt_destination][ip] == rank)
-	dd->a[ip] =
+	dd->sort_key[ip] =
 	  (double) ((locate_reg(met0->lon, met0->nx, atm->lon[ip]) *
 		     met0->ny + locate_irr(met0->lat, met0->ny, atm->lat[ip]))
 		    * met0->np + locate_irr(met0->p, met0->np, atm->p[ip]));
       else
-	dd->a[ip] = amax + 1;
+	dd->sort_key[ip] = amax + 1;
     } else {
-      dd->a[ip] = amax + 2;
+      dd->sort_key[ip] = amax + 2;
     }
-    dd->p[ip] = ip;
+    dd->perm[ip] = ip;
   }
 
   /* Sorting... */
 #ifdef THRUST
 #ifdef _OPENACC
-#pragma acc host_data use_device(dd->a,dd->p)
+#pragma acc host_data use_device(dd->sort_key,dd->perm)
 #endif
-  thrustSortWrapper(dd->a, np, dd->p);
+  thrustSortWrapper(dd->sort_key, np, dd->perm);
 #else
 #ifdef _OPENACC
   ERRMSG("GSL sort fallback not available on GPU, use THRUST!");
 #endif
-  gsl_sort_index((size_t *) (dd->p), (dd->a), 1, (size_t) np);
+  gsl_sort_index((size_t *) (dd->perm), (dd->sort_key), 1, (size_t) np);
 #endif
 
   /* Sort data... */
@@ -1600,27 +1561,27 @@ void dd_sort(
     dd_sort_help(atm->q[iq], dd, np);
 
   /* Reset the size... */
-  int npt = 0;
+  int nkeep = 0;
 #ifdef _OPENACC
-#pragma acc parallel loop reduction(+:npt) present(atm, ctl)
+#pragma acc parallel loop reduction(+:nkeep) present(atm, ctl)
 #endif
   for (int ip = 0; ip < np; ip++)
     if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
 	&& ((int) atm->q[ctl->qnt_destination][ip] == rank))
-      npt++;
+      nkeep++;
 
   /* Count number of particles to send... */
-  int nparticlest = 0;
+  int nsend = 0;
 #ifdef _OPENACC
-#pragma acc parallel loop reduction(+:nparticlest) present(atm, ctl)
+#pragma acc parallel loop reduction(+:nsend) present(atm, ctl)
 #endif
-  for (int ip = npt; ip < np; ip++)
+  for (int ip = nkeep; ip < np; ip++)
     if (((int) atm->q[ctl->qnt_subdomain][ip] != -1)
 	&& ((int) atm->q[ctl->qnt_destination][ip] != rank))
-      nparticlest++;
+      nsend++;
 
   /* Reset sizes... */
-  *nparticles = nparticlest;
+  *nparticles = nsend;
 
   /* Count particles with -1 subdomain (these will be effectively lost) */
   int nlost = 0;
@@ -1631,10 +1592,10 @@ void dd_sort(
   if (nlost > 0) {
     WARN
       ("DD: Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)",
-       rank, nlost, npt, nparticlest, np);
+       rank, nlost, nkeep, nsend, np);
   }
 
-  atm->np = npt;
+  atm->np = nkeep;
 #ifdef _OPENACC
 #pragma acc update device(atm->np)
 #endif
@@ -1665,14 +1626,14 @@ void dd_sort_help(
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++)
-    dd->help[ip] = a[dd->p[ip]];
+    dd->tmp[ip] = a[dd->perm[ip]];
 #ifdef _OPENACC
 #pragma acc parallel loop independent gang vector
 #else
 #pragma omp parallel for default(shared)
 #endif
   for (int ip = 0; ip < np; ip++)
-    a[ip] = dd->help[ip];
+    a[ip] = dd->tmp[ip];
 }
 #endif
 
@@ -9900,21 +9861,21 @@ void read_met_nc_grid_dd_naive(
   met->ny = (int) dd->subdomain_count[2];
 
   /* Determine subdomain edges... */
-  dd->subdomain_lon_min = floor(rank / ctl->dd_subdomains_meridional)
-    * (lon_range) / (double) ctl->dd_subdomains_zonal;
-  dd->subdomain_lon_max = dd->subdomain_lon_min
-    + (lon_range) / (double) ctl->dd_subdomains_zonal;
+  const int lon_rank = (int) floor(rank / ctl->dd_subdomains_meridional);
+  const double dlon_sub = lon_range / (double) ctl->dd_subdomains_zonal;
+  const double lon0 = dd->lon_glob[0];
 
-  /* Latitudes in descending order (90 to -90) */
+  dd->subdomain_lon_min = lon0 + lon_rank * dlon_sub;
+  dd->subdomain_lon_max = dd->subdomain_lon_min + dlon_sub;
+
+  /* Latitudes in descending order (90 to -90 deg)... */
   if (lat_range < 0) {
     dd->subdomain_lat_max = 90 + (rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
     dd->subdomain_lat_min = dd->subdomain_lat_max
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
   } else {
-    WARN
-      ("lat_range > 0, but is expected to be negative, i.e. latitudes should range from 90 to -90")
-      dd->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
+    dd->subdomain_lat_min = -90 + (rank % ctl->dd_subdomains_meridional)
       * (lat_range) / (double) ctl->dd_subdomains_meridional;
     dd->subdomain_lat_max = dd->subdomain_lat_min
       + (lat_range) / (double) ctl->dd_subdomains_meridional;
