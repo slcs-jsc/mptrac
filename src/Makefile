@@ -121,10 +121,10 @@ ifeq ($(GPU),1)
   ifeq ($(COMPILER),gcc)
     CFLAGS += -fopenacc -foffload=-lm
   else ifeq ($(COMPILER),nvc)
-    CFLAGS += -acc -gpu=cc80,cc90,mem:separate:pinnedalloc
-#    ifeq ($(GPU_PIN),1)
-#      CFLAGS += -gpu=pinned
-#    endif
+    CFLAGS += -acc -gpu=cc80,cc90
+    ifeq ($(GPU_PIN),1)
+      CFLAGS += -gpu=mem:separate:pinnedalloc
+    endif
   else ifeq ($(COMPILER),clang)
     $(error OpenACC is not supported by the clang compiler)
   endif
