@@ -1085,7 +1085,6 @@ void dd_assign_subdomains(
 
   /* Loop over particles... */
 #ifdef _OPENACC
-#pragma acc enter data create(dd)
 #pragma acc update device(dd->subdomain_lon_min, dd->subdomain_lon_max, \
                           dd->subdomain_lat_min, dd->subdomain_lat_max, \
                           dd->nx_glob, dd->ny_glob,			\
@@ -1133,10 +1132,6 @@ void dd_assign_subdomains(
       }
     }
   }
-
-#ifdef _OPENACC
-#pragma acc exit data delete(dd)
-#endif
 }
 #endif
 
@@ -1223,9 +1218,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -5043,7 +5037,10 @@ void mptrac_free(
   /* Delete data region on GPU... */
 #ifdef _OPENACC
   SELECT_TIMER("DELETE_DATA_REGION", "MEMORY");
-#pragma acc exit data delete (ctl,cache,clim,met0,met1,atm)
+#pragma acc exit data delete(ctl,cache,clim,met0,met1,atm)
+#ifdef DD
+#pragma acc exit data delete(dd)
+#endif
 #endif
 
   /* Free... */
