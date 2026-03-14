@@ -1159,7 +1159,7 @@ void dd_atm2particles(
   /* Select the particles that will be send... */
 #ifdef _OPENACC
   int npart = *nparticles;
-#pragma acc enter data create( nparticles, particles[:DD_NPART])
+#pragma acc enter data create(nparticles, particles[:DD_NPART])
 #pragma acc update device(nparticles)
 #pragma acc parallel loop present(atm, ctl, particles, cache, nparticles)
 #endif
@@ -1175,10 +1175,6 @@ void dd_atm2particles(
       for (int iq = 0; iq < ctl->nq; iq++)
 	particles[ip - atm->np].q[iq] = atm->q[iq][ip];
 
-      LOG(3,
-	  "DD: Particle being prepared for transfer: subdomain %d -> destination %d (lon: %f, lat: %f)",
-	  (int) atm->q[ctl->qnt_subdomain][ip],
-	  (int) atm->q[ctl->qnt_destination][ip], atm->lon[ip], atm->lat[ip]);
       atm->q[ctl->qnt_subdomain][ip] = -1;
       cache->dt[ip] = 0;
     }
@@ -12431,11 +12427,9 @@ void write_met_bin_3d(
 #endif
 
   /* Unknown method... */
-  else {
+  else
     ERRMSG("MET_TYPE not supported!");
-    LOG(3, "%d %g", precision, tolerance);
-  }
-
+  
   /* Free... */
   free(help);
 }
