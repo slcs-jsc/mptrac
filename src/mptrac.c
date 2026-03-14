@@ -1223,8 +1223,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -12427,9 +12428,11 @@ void write_met_bin_3d(
 #endif
 
   /* Unknown method... */
-  else
+  else {
     ERRMSG("MET_TYPE not supported!");
-  
+    LOG(3, "%d %g", precision, tolerance);
+  }
+
   /* Free... */
   free(help);
 }
