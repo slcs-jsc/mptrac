@@ -6514,7 +6514,7 @@ void mptrac_update_host(
 
   if (met0 != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
+    SELECT_TIMER("UPDATE_HOST", "MEMORY");
     met_t *met0up = *met0;
 #pragma acc update host(met0up[:1])
 #endif
@@ -6522,7 +6522,7 @@ void mptrac_update_host(
 
   if (met1 != NULL) {
 #ifdef _OPENACC
-    SELECT_TIMER("UPDATE_DEVICE", "MEMORY");
+    SELECT_TIMER("UPDATE_HOST", "MEMORY");
     met_t *met1up = *met1;
 #pragma acc update host(met1up[:1])
 #endif
