@@ -114,7 +114,7 @@ int main(
 
 	const double dp = 0.5 * fabs(met->p[ip + 1] - met->p[ip - 1]);
 	const double dt_p = fabs(c_max * dp / met->w[ix][iy][ip]);
-	if (met->w[ix][iy][ip])
+	if (met->w[ix][iy][ip] != 0)
 	  dt_p_min = MIN(dt_p, dt_p_min);
 
 	/* Check diffusion... */
