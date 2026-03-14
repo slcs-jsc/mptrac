@@ -4433,45 +4433,6 @@ void dd_communicate_particles(
 /**
  * @brief Initialize the domain decomposition subsystem.
  *
- * This routine prepares the domain decomposition infrastructure used
- * for parallel particle transport. It verifies that the number of MPI
- * tasks matches the configured decomposition and initializes auxiliary
- * data structures required for particle exchange.
- *
- * In particular, the function performs the following steps:
- * 1. Checks that the total number of MPI ranks equals the number of
- *    subdomains defined by the zonal and meridional decomposition.
- * 2. Registers the MPI datatype used for particle communication.
- * 3. Assigns all particles to their initial subdomains based on their
- *    geographic coordinates.
- *
- * After successful initialization, each particle is associated with
- * the MPI rank responsible for the subdomain containing its location.
- *
- * @param[in]     ctl  Pointer to the control structure containing the
- *                     domain decomposition parameters (number of zonal
- *                     and meridional subdomains).
- * @param[in,out] dd   Pointer to the domain decomposition structure.
- *                     The MPI datatype for particle communication is
- *                     initialized in this structure.
- * @param[in,out] atm  Pointer to the atmospheric particle structure.
- *                     Particle subdomain and destination fields are
- *                     initialized according to their coordinates.
- *
- * @return Non-zero value indicating successful initialization.
- *
- * @note
- * - The function assumes that MPI has already been initialized.
- * - The number of MPI ranks must match
- *   `ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional`.
- *
- * @author Jan Clemens
- * @author Lars Hoffmann
- */
-
-/**
- * @brief Initialize the domain decomposition subsystem.
- *
  * This routine initializes the data structures required for domain
  * decomposition in parallel MPTRAC simulations. It verifies that the
  * number of MPI tasks matches the configured decomposition and prepares
