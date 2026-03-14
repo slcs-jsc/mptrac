@@ -3758,38 +3758,6 @@ typedef struct {
 } dd_t;
 
 /* ------------------------------------------------------------
-   OpenACC routines...
-   ------------------------------------------------------------ */
-
-#ifdef _OPENACC
-#pragma acc routine (clim_oh)
-#pragma acc routine (clim_photo)
-#pragma acc routine (clim_tropo)
-#pragma acc routine (clim_ts)
-#pragma acc routine (clim_zm)
-#pragma acc routine (cos_sza)
-#pragma acc routine (dd_calc_subdomain_from_coords)
-#pragma acc routine (dd_normalize_lon_lat)
-#pragma acc routine (intpol_check_lon_lat)
-#pragma acc routine (intpol_met_4d_zeta)
-#pragma acc routine (intpol_met_space_3d)
-#pragma acc routine (intpol_met_space_2d)
-#pragma acc routine (intpol_met_time_3d)
-#pragma acc routine (intpol_met_time_2d)
-#pragma acc routine (kernel_weight)
-#pragma acc routine (lapse_rate)
-#pragma acc routine (locate_irr)
-#pragma acc routine (locate_irr_float)
-#pragma acc routine (locate_reg)
-#pragma acc routine (locate_vert)
-#pragma acc routine (nat_temperature)
-#pragma acc routine (pbl_weight)
-#pragma acc routine (sedi)
-#pragma acc routine (stddev)
-#pragma acc routine (tropo_weight)
-#endif
-
-/* ------------------------------------------------------------
    Functions...
    ------------------------------------------------------------ */
 
@@ -9539,5 +9507,37 @@ void write_vtk(
   const ctl_t * ctl,
   const atm_t * atm,
   const double t);
+
+/* ------------------------------------------------------------
+   OpenACC routines...
+   ------------------------------------------------------------ */
+
+#ifdef _OPENACC
+#pragma acc routine (clim_oh)
+#pragma acc routine (clim_photo)
+#pragma acc routine (clim_tropo)
+#pragma acc routine (clim_ts)
+#pragma acc routine (clim_zm)
+#pragma acc routine (cos_sza)
+#pragma acc routine (dd_calc_subdomain_from_coords)
+#pragma acc routine (dd_normalize_lon_lat)
+#pragma acc routine (intpol_check_lon_lat)
+#pragma acc routine (intpol_met_4d_zeta)
+#pragma acc routine (intpol_met_space_3d)
+#pragma acc routine (intpol_met_space_2d)
+#pragma acc routine (intpol_met_time_3d)
+#pragma acc routine (intpol_met_time_2d)
+#pragma acc routine (kernel_weight)
+#pragma acc routine (lapse_rate)
+#pragma acc routine (locate_irr)
+#pragma acc routine (locate_irr_float)
+#pragma acc routine (locate_reg)
+#pragma acc routine (locate_vert)
+#pragma acc routine (nat_temperature)
+#pragma acc routine (pbl_weight)
+#pragma acc routine (sedi)
+#pragma acc routine (stddev)
+#pragma acc routine (tropo_weight)
+#endif
 
 #endif /* LIBTRAC_H */
