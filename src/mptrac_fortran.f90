@@ -479,7 +479,6 @@ MODULE mptrac_struct
      INTEGER(c_int) :: dd
      INTEGER(c_int) :: dd_subdomains_zonal
      INTEGER(c_int) :: dd_subdomains_meridional
-     INTEGER(c_int) :: dd_nbr_neighbours
      INTEGER(c_int) :: dd_halos_size
   END TYPE ctl_t
 
