@@ -148,6 +148,7 @@ ifeq ($(GPU),1)
 endif
 
 # Compile with MPI...
+MPICC ?= mpicc
 ifeq ($(MPI),1)
   ifneq ($(origin CC),command line)
     CC := $(MPICC)
