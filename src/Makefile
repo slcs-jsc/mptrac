@@ -140,8 +140,9 @@ ifeq ($(GPU),1)
 endif
 
 # Compile with MPI...
+MPICC ?= mpicc
 ifeq ($(MPI),1)
-  CC = mpicc
+  CC = $(MPICC)
   CFLAGS += -DMPI
 endif
 
