@@ -1223,8 +1223,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1538,14 +1539,23 @@ void dd_sort(
   /* Sorting... */
 #ifdef THRUST
 #ifdef _OPENACC
-#pragma acc host_data use_device(dd->sort_key,dd->perm)
+#pragma acc host_data use_device(dd->sort_key, dd->perm)
 #endif
   thrustSortWrapper(dd->sort_key, np, dd->perm);
 #else
+  size_t *perm_sz = (size_t *) malloc((size_t) np * sizeof(size_t));
+  if (perm_sz == NULL)
+    ERRMSG("Out of memory!");
 #ifdef _OPENACC
-  ERRMSG("GSL sort fallback not available on GPU, use THRUST!");
+#pragma acc update self(dd->sort_key[0:np])
 #endif
-  gsl_sort_index((size_t *) (dd->perm), (dd->sort_key), 1, (size_t) np);
+  gsl_sort_index(perm_sz, dd->sort_key, 1, (size_t) np);
+  for (int ip = 0; ip < np; ++ip)
+    dd->perm[ip] = (int) perm_sz[ip];
+  free(perm_sz);
+#ifdef _OPENACC
+#pragma acc update device(dd->perm[0:np])
+#endif
 #endif
 
   /* Sort data... */
@@ -4613,10 +4623,19 @@ void module_sort(
 #endif
   thrustSortWrapper(a, np, p);
 #else
+  size_t *perm_sz = (size_t *) malloc((size_t) np * sizeof(size_t));
+  if (perm_sz == NULL)
+    ERRMSG("Out of memory!");
 #ifdef _OPENACC
-  ERRMSG("GSL sort fallback not available on GPU, use THRUST!");
+#pragma acc update self(a[0:np])
 #endif
-  gsl_sort_index((size_t *) p, a, 1, (size_t) np);
+  gsl_sort_index(perm_sz, a, 1, (size_t) np);
+  for (int ip = 0; ip < np; ++ip)
+    p[ip] = (int) perm_sz[ip];
+  free(perm_sz);
+#ifdef _OPENACC
+#pragma acc update device(p[0:np])
+#endif
 #endif
 
   /* Sort data... */
