@@ -1070,10 +1070,10 @@ void day2doy(
 
 #ifdef DD
 void dd_assign_subdomains(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   atm_t *atm,
-  dd_t *dd,
-  int init) {
+  const dd_t *dd,
+  const int init) {
 
   /* Set timer... */
   SELECT_TIMER("DD_ASSIGN_SUBDOMAINS", "DD");
@@ -1139,7 +1139,7 @@ void dd_assign_subdomains(
 
 #ifdef DD
 void dd_atm2particles(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   cache_t *cache,
   atm_t *atm,
   particle_t *particles,
@@ -1153,7 +1153,7 @@ void dd_atm2particles(
 
   /* Select the particles that will be send... */
 #ifdef _OPENACC
-  int npart = *nparticles;
+  const int npart = *nparticles;
 #pragma acc enter data create(nparticles, particles[:DD_NPART])
 #pragma acc update device(nparticles)
 #pragma acc parallel loop present(atm, ctl, particles, cache, nparticles)
@@ -1175,7 +1175,7 @@ void dd_atm2particles(
     }
 #ifdef _OPENACC
 #pragma acc update host( particles[:npart])
-#pragma acc exit data delete( nparticles, particles)
+#pragma acc exit data delete(nparticles, particles)
 #endif
 }
 #endif
@@ -1184,11 +1184,11 @@ void dd_atm2particles(
 
 #ifdef DD
 int dd_calc_subdomain_from_coords(
-  ctl_t *ctl,
-  dd_t *dd,
-  double lon,
-  double lat,
-  int mpi_size) {
+  const ctl_t *ctl,
+  const dd_t *dd,
+  const double lon,
+  const double lat,
+  const int mpi_size) {
 
   /* Set longitude and latitude... */
   double wrapped_lon = lon;
@@ -1196,10 +1196,10 @@ int dd_calc_subdomain_from_coords(
   dd_normalize_lon_lat(dd, &wrapped_lon, &wrapped_lat);
 
   /* Get global domain ranges... */
-  double lon_range = 360.0;
-  double lat_range = dd->lat_glob[dd->ny_glob - 1] - dd->lat_glob[0];
-  double global_lon_min = dd->lon_glob[0];
-  double global_lat_min = dd->lat_glob[0];
+  const double lon_range = 360.0;
+  const double lat_range = dd->lat_glob[dd->ny_glob - 1] - dd->lat_glob[0];
+  const double global_lon_min = dd->lon_glob[0];
+  const double global_lat_min = dd->lat_glob[0];
 
   /* Calculate subdomain indices... */
   int lon_idx =
@@ -1239,10 +1239,10 @@ int dd_calc_subdomain_from_coords(
 
 #ifdef DD
 void dd_communicate_particles(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   particle_t *particles,
   int *nparticles,
-  MPI_Datatype MPI_Particle) {
+  const MPI_Datatype MPI_Particle) {
 
   /* Set timer... */
   SELECT_TIMER("DD_COMMUNICATE_PARTICLES", "DD");
@@ -1277,7 +1277,7 @@ void dd_communicate_particles(
   /* Count particles per destination rank... */
   for (int ip = 0; ip < *nparticles; ip++) {
 
-    int dest = (int) particles[ip].q[ctl->qnt_destination];
+    const int dest = (int) particles[ip].q[ctl->qnt_destination];
     if (dest == rank)
       continue;
 
@@ -1321,8 +1321,7 @@ void dd_communicate_particles(
   /* Pack particles... */
   for (int ip = 0; ip < *nparticles; ip++) {
 
-    int dest = (int) particles[ip].q[ctl->qnt_destination];
-
+    const int dest = (int) particles[ip].q[ctl->qnt_destination];
     if (dest == rank)
       continue;
 
@@ -1364,7 +1363,7 @@ void dd_communicate_particles(
 
 #ifdef DD
 void dd_init(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   dd_t *dd,
   atm_t *atm) {
 
@@ -1419,9 +1418,9 @@ void dd_normalize_lon_lat(
 
 #ifdef DD
 void dd_particles2atm(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   cache_t *cache,
-  particle_t *particles,
+  const particle_t *particles,
   int *nparticles,
   atm_t *atm) {
 
@@ -1429,7 +1428,7 @@ void dd_particles2atm(
   SELECT_TIMER("DD_PARTICLES2ATM", "DD");
 
 #ifdef _OPENACC
-  int npart = *nparticles;
+  const int npart = *nparticles;
 #pragma acc enter data create(nparticles, particles[:DD_NPART])
 #pragma acc update device(particles[:npart], nparticles)
 #pragma acc data present(atm, ctl, cache, particles, nparticles)
@@ -1464,13 +1463,13 @@ void dd_particles2atm(
 void dd_register_MPI_type_particle(
   MPI_Datatype *MPI_Particle) {
 
-  MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
+  const MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
     MPI_DOUBLE, MPI_DOUBLE
   };
 
-  int blocklengths[5] = { 1, 1, 1, 1, NQ };
+  const int blocklengths[5] = { 1, 1, 1, 1, NQ };
 
-  MPI_Aint displacements[5] = { offsetof(particle_t, time),
+  const MPI_Aint displacements[5] = { offsetof(particle_t, time),
     offsetof(particle_t, p),
     offsetof(particle_t, lon),
     offsetof(particle_t, lat),
@@ -1487,7 +1486,7 @@ void dd_register_MPI_type_particle(
 #ifdef DD
 void dd_sort(
   const ctl_t *ctl,
-  met_t *met0,
+  const met_t *met0,
   atm_t *atm,
   dd_t *dd,
   int *nparticles) {
@@ -1587,11 +1586,10 @@ void dd_sort(
     if ((int) atm->q[ctl->qnt_subdomain][ip] == -1)
       nlost++;
 
-  if (nlost > 0) {
+  if (nlost > 0)
     WARN
       ("DD: Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)",
        rank, nlost, nkeep, nsend, np);
-  }
 
   atm->np = nkeep;
 #ifdef _OPENACC
@@ -4517,7 +4515,7 @@ void module_sedi(
 
 void module_sort(
   const ctl_t *ctl,
-  met_t *met0,
+  const met_t *met0,
   atm_t *atm) {
 
   /* Set timer... */
