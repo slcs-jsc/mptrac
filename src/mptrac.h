@@ -4236,10 +4236,10 @@ void day2doy(
  * @author Lars Hoffmann
  */
 void dd_assign_subdomains(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   atm_t * atm,
-  dd_t * dd,
-  int init);
+  const dd_t * dd,
+  const int init);
 
 /**
  * @brief Convert atmospheric particle data to transferable particle structures.
@@ -4287,7 +4287,7 @@ void dd_assign_subdomains(
  * @author Lars Hoffmann
  */
 void dd_atm2particles(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   cache_t * cache,
   atm_t * atm,
   particle_t * particles,
@@ -4338,11 +4338,11 @@ void dd_atm2particles(
  * @author Lars Hoffmann
  */
 int dd_calc_subdomain_from_coords(
-  ctl_t * ctl,
-  dd_t * dd,
-  double lon,
-  double lat,
-  int mpi_size);
+  const ctl_t * ctl,
+  const dd_t * dd,
+  const double lon,
+  const double lat,
+  const int mpi_size);
 
 /**
  * @brief Exchange particles between MPI ranks according to domain ownership.
@@ -4390,10 +4390,10 @@ int dd_calc_subdomain_from_coords(
  * @author Lars Hoffmann
  */
 void dd_communicate_particles(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   particle_t * particles,
   int *nparticles,
-  MPI_Datatype MPI_Particle);
+  const MPI_Datatype MPI_Particle);
 
 /**
  * @brief Initialize the domain decomposition subsystem.
@@ -4433,7 +4433,7 @@ void dd_communicate_particles(
  * @author Lars Hoffmann
  */
 void dd_init(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   dd_t * dd,
   atm_t * atm);
 
@@ -4522,9 +4522,9 @@ void dd_normalize_lon_lat(
  * @author Lars Hoffmann
  */
 void dd_particles2atm(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   cache_t * cache,
-  particle_t * particles,
+  const particle_t * particles,
   int *nparticles,
   atm_t * atm);
 
@@ -4616,7 +4616,7 @@ void dd_register_MPI_type_particle(
  */
 void dd_sort(
   const ctl_t * ctl,
-  met_t * met0,
+  const met_t * met0,
   atm_t * atm,
   dd_t * dd,
   int *nparticles);
@@ -6330,7 +6330,7 @@ void module_sedi(
  */
 void module_sort(
   const ctl_t * ctl,
-  met_t * met0,
+  const met_t * met0,
   atm_t * atm);
 
 /**
