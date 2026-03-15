@@ -1071,8 +1071,8 @@ void day2doy(
 #ifdef DD
 void dd_assign_subdomains(
   const ctl_t *ctl,
-  atm_t *atm,
   const dd_t *dd,
+  atm_t *atm,
   const int init) {
 
   /* Set timer... */
@@ -1383,7 +1383,7 @@ void dd_init(
   MPI_Type_commit(&dd->MPI_Particle);
 
   /* Check if particles are in subdomain... */
-  dd_assign_subdomains(ctl, atm, dd, 1);
+  dd_assign_subdomains(ctl, dd, atm, 1);
 }
 #endif
 
@@ -3274,7 +3274,7 @@ void module_dd(
   ALLOC(particles, particle_t, DD_NPART);
 
   /* Assign particles to new subdomains... */
-  dd_assign_subdomains(ctl, atm, dd, 0);
+  dd_assign_subdomains(ctl, dd, atm, 0);
 
   /* Sort particles according to location and target rank... */
   dd_sort(ctl, *met, atm, dd, &nparticles);
