@@ -3677,50 +3677,38 @@ typedef struct {
      Global grid...
      ------------------------------------------------------------ */
 
-  /*! Number of longitudes. */
+  /*! Number of global longitudes. */
   int nx_glob;
 
-  /*! Number of latitudes. */
+  /*! Number of global latitudes. */
   int ny_glob;
 
-  /*! Longitudes of global grid [deg]. */
+  /*! Longitudes of the global grid [deg]. */
   double lon_glob[DD_EX_GLOB];
 
-  /*! Latitude of global grid [deg]. */
+  /*! Latitudes of the global grid [deg]. */
   double lat_glob[DD_EY_GLOB];
 
   /* ------------------------------------------------------------
      Subdomains...
      ------------------------------------------------------------ */
 
-  /*! Rectangular grid limit of subdomain. */
-  double subdomain_lon_max;
-
-  /*! Rectangular grid limit of subdomain. */
-  double subdomain_lon_min;
-
-  /*! Rectangular grid limit of subdomain. */
-  double subdomain_lat_max;
-
-  /*! Rectangular grid limit of subdomain. */
-  double subdomain_lat_min;
-
-  /*! Hyperslab start and count for subdomain. */
+  /*! Start indices of the local subdomain hyperslab (including inner halos). */
   size_t subdomain_start[4];
 
-  /*! Hyperslab start and count for subdomain. */
+  /*! Extent of the local subdomain hyperslab (including inner halos). */
   size_t subdomain_count[4];
 
-  /*! Hyperslab of boundary halos start. */
+  /*! Start indices of the periodic boundary halo hyperslab. */
   size_t halo_bnd_start[4];
 
-  /*! Hyperslab of boundary halos count. */
+  /*! Extent of the periodic boundary halo hyperslab. */
   size_t halo_bnd_count[4];
 
-  /*! Hyperslab of boundary halos count. */
+  /*! Offset of the periodic halo block at the beginning of the local x-array. */
   int halo_offset_start;
 
-  /*! Hyperslab of boundary halos count. */
+  /*! Offset of the periodic halo block at the end of the local x-array. */
   int halo_offset_end;
 
   /* ------------------------------------------------------------
@@ -3729,16 +3717,16 @@ typedef struct {
 
 #ifdef DD
 
-  /*! MPI type for the particle. */
+  /*! MPI datatype for particle exchange. */
   MPI_Datatype MPI_Particle;
 
   /*! Auxiliary array for sorting. */
   double sort_key[NP];
 
-  /*! Auxiliary array for sorting. */
+  /*! Auxiliary permutation array for sorting. */
   int perm[NP];
 
-  /*! Auxiliary array for sorting. */
+  /*! Auxiliary temporary array for sorting. */
   double tmp[NP];
 
 #endif
@@ -4250,51 +4238,52 @@ void day2doy(
   int *doy);
 
 /**
- * @brief Assign or update particle subdomain ownership information.
+ * @brief Assign or update particle subdomain ownership.
  *
- * This routine determines whether each atmospheric particle is located
- * inside the local MPI subdomain and updates the domain-decomposition
- * bookkeeping quantities stored in the atmospheric state.
+ * This routine determines whether each atmospheric particle belongs to
+ * the local MPI subdomain and updates the domain-decomposition bookkeeping
+ * quantities stored in the atmospheric state.
  *
- * The particle coordinates are first normalized with
- * ::dd_normalize_lon_lat() so that they are consistent with the
- * longitude convention and pole handling of the global meteorological
- * grid stored in the domain decomposition structure.
+ * The particle longitude and latitude are first normalized using
+ * ::dd_normalize_lon_lat() to ensure consistency with the longitude
+ * convention and pole handling of the global meteorological grid stored
+ * in the domain decomposition structure.
+ *
+ * The particle position is then mapped to global grid indices using
+ * ::locate_reg() for longitude and ::locate_irr() for latitude. These
+ * indices are compared with the index range of the local subdomain
+ * owned by the current MPI rank.
  *
  * If @p init is nonzero, the routine performs the initial ownership
  * assignment. Particles inside the local subdomain are assigned to the
  * current MPI rank by setting both `ctl->qnt_subdomain` and
  * `ctl->qnt_destination` to that rank. Particles outside the local
- * subdomain are marked as invalid by setting both quantities to `-1`.
+ * subdomain are marked invalid by setting both quantities to `-1`.
  *
  * If @p init is zero, the routine updates only the destination rank.
- * Particles that are already marked invalid
- * (`atm->q[ctl->qnt_subdomain][ip] == -1`) are skipped. For particles
- * that remain inside the local subdomain, `ctl->qnt_destination` is set
- * to the current MPI rank. For particles that have left the local
- * subdomain, the destination rank is recomputed with
- * ::dd_calc_subdomain_from_coords().
+ * Particles already marked invalid (`qnt_subdomain == -1`) are skipped.
+ * For particles that remain inside the local subdomain,
+ * `ctl->qnt_destination` is set to the current MPI rank. For particles
+ * that have left the local subdomain, the destination rank is recomputed
+ * with ::dd_calc_subdomain_from_coords().
  *
- * @param[in]     ctl   Pointer to the control structure containing the
- *                      indices of the domain-decomposition quantities
- *                      `qnt_subdomain` and `qnt_destination`.
- * @param[in]     dd    Pointer to the domain decomposition structure
- *                      containing the local subdomain bounds and global
- *                      grid information used for coordinate
- *                      normalization and reassignment.
- * @param[in,out] atm   Pointer to the atmospheric state. Particle
- *                      positions are read from this structure, and the
- *                      subdomain and/or destination quantities are
- *                      updated in place.
+ * @param[in]     ctl   Control structure containing the indices of the
+ *                      domain-decomposition quantities `qnt_subdomain`
+ *                      and `qnt_destination`.
+ * @param[in]     dd    Domain decomposition structure containing the
+ *                      global grid and subdomain layout information.
+ * @param[in,out] atm   Atmospheric state. Particle positions are read
+ *                      from this structure and the subdomain and/or
+ *                      destination quantities are updated in place.
  * @param[in]     init  Initialization flag. If nonzero, perform the
- *                      initial subdomain assignment; otherwise, only
+ *                      initial subdomain assignment; otherwise only
  *                      update destination ranks for particle exchange.
  *
  * @note
  * - The local MPI rank is obtained internally from `MPI_COMM_WORLD`.
- * - During non-initial updates, particles already marked with
- *   subdomain `-1` are ignored.
- * - When compiled with `_OPENACC`, the particle loop may run on the
+ * - During non-initial updates, particles already marked invalid are
+ *   ignored.
+ * - When compiled with `_OPENACC`, the particle loop may execute on an
  *   accelerator.
  *
  * @author Jan Clemens
@@ -4364,53 +4353,30 @@ void dd_atm2particles(
   particle_t * particles,
   const int npart);
 
-/**
- * @brief Determine the MPI rank responsible for a geographic position.
+/*!
+ * @brief Determine MPI subdomain from particle coordinates.
  *
- * This routine computes the MPI subdomain rank corresponding to a
- * given longitude–latitude position based on the domain-decomposition
- * grid defined in the control and domain-decomposition structures.
+ * This function maps a particle position to the corresponding MPI rank
+ * in the domain-decomposed grid. The longitude and latitude are first
+ * normalized using dd_normalize_lon_lat(). The corresponding global grid
+ * cell indices are then determined using locate_reg() for longitude and
+ * locate_irr() for latitude.
  *
- * The input coordinates are first normalized using
- * ::dd_normalize_lon_lat() so that longitude wrapping and pole
- * handling are consistent with the global meteorological grid.
+ * The grid indices are mapped to the zonal and meridional subdomain blocks
+ * defined by ctl->dd_subdomains_zonal and ctl->dd_subdomains_meridional.
+ * The resulting subdomain indices are converted to an MPI rank assuming
+ * the layout:
  *
- * The normalized coordinates are then mapped onto the regular
- * domain-decomposition grid defined by
- * `ctl->dd_subdomains_zonal` (longitude direction) and
- * `ctl->dd_subdomains_meridional` (latitude direction). The
- * corresponding zonal and meridional indices are computed by
- * scaling the position relative to the global longitude and
- * latitude ranges stored in `dd->lon_glob` and `dd->lat_glob`.
+ *   rank = zonal_rank * dd_subdomains_meridional + merid_rank
  *
- * The final MPI rank is obtained from the 2-D subdomain indices
- * using row-major ordering:
+ * This implementation works for both regular and irregular latitude grids.
  *
- *   rank = lon_index * dd_subdomains_meridional + lat_index
+ * @param ctl Pointer to control structure.
+ * @param dd  Pointer to domain decomposition structure.
+ * @param lon Longitude of particle [deg].
+ * @param lat Latitude of particle [deg].
  *
- * The indices and resulting rank are clamped to valid ranges to
- * ensure that the returned rank lies within `[0, mpi_size - 1]`.
- *
- * @param[in] ctl        Pointer to the control structure containing
- *                       the number of zonal and meridional
- *                       subdomains.
- * @param[in] dd         Pointer to the domain decomposition structure
- *                       containing the global longitude and latitude
- *                       grids used for coordinate normalization and
- *                       range determination.
- * @param[in] lon        Particle longitude in degrees.
- * @param[in] lat        Particle latitude in degrees.
- * @param[in] mpi_size   Total number of MPI ranks participating in
- *                       the simulation.
- *
- * @return The MPI rank responsible for the subdomain containing the
- *         specified coordinates.
- *
- * @note
- * - Longitude values are wrapped and latitude values normalized using
- *   ::dd_normalize_lon_lat() before subdomain indices are computed.
- * - The returned rank is clamped to the valid MPI range to avoid
- *   invalid destination ranks.
+ * @return MPI rank of the target subdomain.
  *
  * @author Jan Clemens
  * @author Lars Hoffmann
@@ -4419,8 +4385,7 @@ int dd_calc_subdomain_from_coords(
   const ctl_t * ctl,
   const dd_t * dd,
   const double lon,
-  const double lat,
-  const int mpi_size);
+  const double lat);
 
 /**
  * @brief Exchange particles between MPI ranks according to their destination rank.
@@ -7912,48 +7877,48 @@ void read_met_nc_grid(
   dd_t * dd);
 
 /**
- * @brief Read meteorological grid data from a NetCDF file and set up
- *        subdomain decomposition with halos.
+ * @brief Read meteorological grid information and construct the
+ *        domain-decomposed grid with halo regions.
  *
- * This function initializes the distributed grid decomposition for meteorological
- * data stored in a NetCDF file. It queries global grid dimensions (longitude,
- * latitude), determines the local subdomain size for each MPI rank, and sets up
- * hyperslabs for reading data in parallel. It also constructs halo regions for
- * subdomain boundaries, ensuring periodic wrap-around in the zonal direction
- * when applicable.
+ * This routine reads the global longitude and latitude grid from a
+ * NetCDF meteorological input file and initializes the domain
+ * decomposition used for parallel processing. The global grid is
+ * partitioned into zonal and meridional subdomains according to
+ * `ctl->dd_subdomains_zonal` and `ctl->dd_subdomains_meridional`.
  *
- * The function adjusts subdomain sizes at the right and bottom edges of the
- * global grid to exactly fit the full domain. It then updates the `met_t`
- * structure with the local longitude and latitude arrays for the subdomain
- * including halos, and stores decomposition metadata in the `dd_t` structure.
+ * For the current MPI rank, the routine determines the core subdomain
+ * in index space and constructs a hyperslab describing the portion of
+ * the meteorological grid that must be read from the NetCDF file.
+ * The hyperslab is extended with inner halo cells to overlap with
+ * neighboring subdomains. For ranks located at the zonal boundaries,
+ * additional periodic boundary halos are created.
  *
- * @param[out] dd    Pointer to a \c dd_t structure. On output, it contains:
- *                   - MPI rank and size
- *                   - subdomain start indices and counts
- *                   - halo start indices and counts
- *                   - subdomain longitude and latitude ranges
- *                   - halo offsets
- * @param[in]  ctl   Pointer to a \c ctl_t structure containing decomposition
- *                   parameters:
- *                   - \c ctl->dd_subdomains_zonal
- *                   - \c ctl->dd_subdomains_meridional
- *                   - \c ctl->dd_halos_size
- * @param[out] met   Pointer to a \c met_t structure. On output, it contains:
- *                   - subdomain grid dimensions (\c nx, \c ny, \c np)
- *                   - longitude and latitude arrays restricted to the subdomain
- *                     including halos.
- * @param[in]  ncid  NetCDF file ID obtained from a call to `nc_open`.
+ * The function populates the local longitude and latitude arrays in
+ * the `met_t` structure for the subdomain including halos, and stores
+ * the hyperslab definitions and halo offsets in the `dd_t` structure.
+ *
+ * @param[out] dd   Domain decomposition structure. On return it contains
+ *                  global grid dimensions, hyperslab definitions for the
+ *                  local subdomain, and halo metadata.
+ * @param[in]  ctl  Control structure specifying the number of zonal and
+ *                  meridional subdomains and the halo size
+ *                  (`dd_subdomains_zonal`, `dd_subdomains_meridional`,
+ *                  `dd_halos_size`).
+ * @param[out] met  Meteorological grid structure. On return it contains
+ *                  the local longitude and latitude arrays and the grid
+ *                  dimensions (`nx`, `ny`, `np`) of the halo-extended
+ *                  subdomain.
+ * @param[in]  ncid NetCDF file identifier returned by `nc_open()`.
  *
  * @note
- * - Requires MPI if compiled with `-DMPI`.
- * - Assumes latitude is ordered from 90 to -90 (descending). A warning is issued
- *   if latitude range is positive.
- * - Allocates and frees temporary arrays for global longitude and latitude.
- * - Halo setup ensures overlap with neighboring subdomains, and handles
- *   wrap-around at the left and right boundaries.
- * - For periodic grids, the longitude range is assumed to be 360°.
+ * - Requires MPI when compiled with `-DMPI`.
+ * - The domain decomposition is performed in index space; the global
+ *   grid may therefore have irregular spacing (e.g. Gaussian latitudes).
+ * - Zonal periodicity is handled by constructing additional boundary
+ *   halo hyperslabs with appropriate longitude shifts.
  *
  * @author Jan Clemens
+ * @author Lars Hoffmann
  */
 void read_met_nc_grid_dd_naive(
   dd_t * dd,
