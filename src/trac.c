@@ -120,10 +120,9 @@ int main(
 
 #ifdef DD
       /* Set-up domain decomposition... */
-      if ((t == ctl->t_start || !dd->init) && (ctl->dd == 1))
-	dd->init = dd_init(ctl, dd, atm);
+      if ((t == ctl->t_start) && (ctl->dd == 1))
+	dd_init(ctl, dd, atm);
 #endif
-
 
       /* Run a single time step... */
       mptrac_run_timestep(ctl, cache, clim, &met0, &met1, atm, t, dd);
