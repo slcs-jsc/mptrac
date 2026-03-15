@@ -4463,9 +4463,9 @@ int dd_calc_subdomain_from_coords(
  */
 void dd_communicate_particles(
   const ctl_t * ctl,
+  const dd_t * cc,
   particle_t * particles,
-  int *nparticles,
-  const MPI_Datatype MPI_Particle);
+  int *nparticles);
 
 /**
  * @brief Initialize the domain decomposition subsystem.

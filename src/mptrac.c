@@ -1218,8 +1218,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1239,9 +1240,9 @@ int dd_calc_subdomain_from_coords(
 #ifdef DD
 void dd_communicate_particles(
   const ctl_t *ctl,
+  const dd_t *dd,
   particle_t *particles,
-  int *nparticles,
-  const MPI_Datatype MPI_Particle) {
+  int *nparticles) {
 
   /* Set timer... */
   SELECT_TIMER("DD_COMMUNICATE_PARTICLES", "DD");
@@ -1329,12 +1330,8 @@ void dd_communicate_particles(
   }
 
   /* Exchange particle data... */
-  MPI_Alltoallv(sendbuf,
-		send_counts,
-		send_displs,
-		MPI_Particle,
-		recvbuf,
-		recv_counts, recv_displs, MPI_Particle, MPI_COMM_WORLD);
+  MPI_Alltoallv(sendbuf, send_counts, send_displs, dd->MPI_Particle, recvbuf,
+		recv_counts, recv_displs, dd->MPI_Particle, MPI_COMM_WORLD);
 
   /* Copy received particles... */
   for (int ip = 0; ip < nrecv; ip++) {
@@ -3245,7 +3242,7 @@ void module_dd(
   /********************* CPU region start ***********************************/
 
   /* Perform the communication... */
-  dd_communicate_particles(ctl, particles, &nparticles, dd->MPI_Particle);
+  dd_communicate_particles(ctl, dd, particles, &nparticles);
 
   /********************* CPU region end *************************************/
 
