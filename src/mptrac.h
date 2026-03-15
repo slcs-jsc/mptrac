@@ -4314,7 +4314,7 @@ void dd_assign_subdomains(
  * different MPI rank into the temporary particle communication buffer.
  *
  * The routine processes atmospheric entries in the index range
- * `[atm->np, atm->np + *nparticles)`. A particle is selected for export
+ * `[atm->np, atm->np + npart)`. A particle is selected for export
  * if all of the following conditions are met:
  * - `atm->q[ctl->qnt_destination][ip] != rank`,
  * - `atm->q[ctl->qnt_destination][ip] >= 0`,
@@ -4343,7 +4343,7 @@ void dd_assign_subdomains(
  * @param[out]    particles   Buffer receiving the particles selected
  *                            for communication. Selected atmospheric
  *                            entries are copied to index `ip - atm->np`.
- * @param[in]     nparticles  Number of candidate particle entries in
+ * @param[in]     npart       Number of candidate particle entries in
  *                            the atmospheric communication region.
  *
  * @note
@@ -4362,7 +4362,7 @@ void dd_atm2particles(
   cache_t * cache,
   atm_t * atm,
   particle_t * particles,
-  int *nparticles);
+  const int npart);
 
 /**
  * @brief Determine the MPI rank responsible for a geographic position.
@@ -4437,7 +4437,7 @@ int dd_calc_subdomain_from_coords(
  * buffer, and the particle data are exchanged with `MPI_Alltoallv`
  * using the MPI datatype stored in `dd->MPI_Particle`.
  *
- * After communication, the leading `*nparticles` entries of the local
+ * After communication, the leading `npart` entries of the local
  * particle array are replaced by the received particles only. For each
  * received particle, both `ctl->qnt_destination` and
  * `ctl->qnt_subdomain` are reset to the current MPI rank.
@@ -4454,7 +4454,7 @@ int dd_calc_subdomain_from_coords(
  *                            export. On output, its leading entries
  *                            are overwritten with the particles
  *                            received by the current MPI rank.
- * @param[in,out] nparticles  Number of local particles. On input, it
+ * @param[in,out] npart       Number of local particles. On input, it
  *                            specifies the number of valid entries in
  *                            @p particles. On output, it is replaced
  *                            by the number of received particles.
@@ -4476,7 +4476,7 @@ void dd_communicate_particles(
   const ctl_t * ctl,
   const dd_t * dd,
   particle_t * particles,
-  int *nparticles);
+  int *npart);
 
 /**
  * @brief Initialize the domain decomposition infrastructure.
@@ -4566,7 +4566,7 @@ void dd_normalize_lon_lat(
  * particle buffer to the atmospheric particle arrays. The particles are
  * written into the index range
  *
- *   [atm->np, atm->np + *nparticles)
+ *   [atm->np, atm->np + npart)
  *
  * of the atmospheric state.
  *
@@ -4577,7 +4577,7 @@ void dd_normalize_lon_lat(
  * particle.
  *
  * After all particles have been copied, the total number of
- * atmospheric particles `atm->np` is increased by `*nparticles`.
+ * atmospheric particles `atm->np` is increased by `npart`.
  *
  * @param[in]     ctl         Pointer to the control structure
  *                            containing the number of quantities
@@ -4588,7 +4588,7 @@ void dd_normalize_lon_lat(
  *                            `ctl->dt_mod`.
  * @param[in]     particles   Buffer containing the particles to be
  *                            appended to the atmospheric state.
- * @param[in]     nparticles  Number of valid particles stored in
+ * @param[in]     npart       Number of valid particles stored in
  *                            @p particles.
  * @param[in,out] atm         Pointer to the atmospheric state. The
  *                            particle data are appended to its arrays,
@@ -4610,7 +4610,7 @@ void dd_particles2atm(
   const ctl_t * ctl,
   cache_t * cache,
   const particle_t * particles,
-  int *nparticles,
+  const int npart,
   atm_t * atm);
 
 /**
@@ -4637,7 +4637,7 @@ void dd_particles2atm(
  * After sorting, the routine:
  * - counts the number of particles kept on the current rank,
  * - counts the number of particles that must be exported,
- * - stores the export count in `*nparticles`,
+ * - stores the export count in `npart`,
  * - shrinks `atm->np` to the number of kept particles.
  *
  * Particles with subdomain index `-1` are not retained in the active
@@ -4660,7 +4660,7 @@ void dd_particles2atm(
  *                            structure providing the temporary arrays
  *                            `sort_key` and `perm` used during
  *                            sorting.
- * @param[out]    nparticles  On return, number of particles that must
+ * @param[out]    npart       On return, number of particles that must
  *                            be sent to other MPI ranks.
  *
  * @note
@@ -4680,7 +4680,7 @@ void dd_sort(
   const met_t * met0,
   atm_t * atm,
   dd_t * dd,
-  int *nparticles);
+  int * npart);
 
 /**
  * @brief Apply the sorting permutation to a particle data array.
@@ -8798,7 +8798,7 @@ void write_atm_bin(
  *
  * The function performs the following steps:
  * - Creates the NetCDF file with the specified filename.
- * - Defines the dimensions for time and the number of particles (NPARTS).
+ * - Defines the dimensions for time and the number of particles (`NPARTS`).
  * - Defines variables for time, latitude, longitude, pressure, zeta, and other quantities.
  * - Sets global attributes for the vertical coordinate name and model.
  * - Writes the data into the NetCDF file.

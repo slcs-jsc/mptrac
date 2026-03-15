@@ -1143,7 +1143,7 @@ void dd_atm2particles(
   cache_t *cache,
   atm_t *atm,
   particle_t *particles,
-  int *nparticles) {
+  const int npart) {
 
   /* Set timer... */
   SELECT_TIMER("DD_ATM2PARTICLES", "DD");
@@ -1153,12 +1153,11 @@ void dd_atm2particles(
 
   /* Select the particles that will be send... */
 #ifdef _OPENACC
-  const int npart = *nparticles;
-#pragma acc enter data create(nparticles, particles[:DD_NPART])
-#pragma acc update device(nparticles)
-#pragma acc parallel loop present(atm, ctl, particles, cache, nparticles)
+#pragma acc enter data create(npart, particles[:DD_NPART])
+#pragma acc update device(npart)
+#pragma acc parallel loop present(atm, ctl, particles, cache, npart)
 #endif
-  for (int ip = atm->np; ip < atm->np + *nparticles; ip++)
+  for (int ip = atm->np; ip < atm->np + npart; ip++)
     if (((int) (atm->q[ctl->qnt_destination][ip]) != rank)
 	&& ((int) (atm->q[ctl->qnt_destination][ip]) >= 0)
 	&& ((int) atm->q[ctl->qnt_subdomain][ip] >= 0)) {
@@ -1175,7 +1174,7 @@ void dd_atm2particles(
     }
 #ifdef _OPENACC
 #pragma acc update host( particles[:npart])
-#pragma acc exit data delete(nparticles, particles)
+#pragma acc exit data delete(npart, particles)
 #endif
 }
 #endif
@@ -1242,7 +1241,7 @@ void dd_communicate_particles(
   const ctl_t *ctl,
   const dd_t *dd,
   particle_t *particles,
-  int *nparticles) {
+  int *npart) {
 
   /* Set timer... */
   SELECT_TIMER("DD_COMMUNICATE_PARTICLES", "DD");
@@ -1275,7 +1274,7 @@ void dd_communicate_particles(
   }
 
   /* Count particles per destination rank... */
-  for (int ip = 0; ip < *nparticles; ip++) {
+  for (int ip = 0; ip < *npart; ip++) {
 
     const int dest = (int) particles[ip].q[ctl->qnt_destination];
     if (dest == rank)
@@ -1319,7 +1318,7 @@ void dd_communicate_particles(
     offsets[i] = send_displs[i];
 
   /* Pack particles... */
-  for (int ip = 0; ip < *nparticles; ip++) {
+  for (int ip = 0; ip < *npart; ip++) {
 
     const int dest = (int) particles[ip].q[ctl->qnt_destination];
     if (dest == rank)
@@ -1340,7 +1339,7 @@ void dd_communicate_particles(
     particles[ip].q[ctl->qnt_subdomain] = rank;
   }
 
-  *nparticles = nrecv;
+  *npart = nrecv;
 
   /* Free... */
   if (sendbuf)
@@ -1427,20 +1426,23 @@ void dd_particles2atm(
   const ctl_t *ctl,
   cache_t *cache,
   const particle_t *particles,
-  int *nparticles,
+  const int npart,
   atm_t *atm) {
 
   /* Set timer... */
   SELECT_TIMER("DD_PARTICLES2ATM", "DD");
 
+  /* Check number of particles... */
+  if (atm->np + npart > NP)
+    ERRMSG("Too many particles. Increase NP!");
+  
 #ifdef _OPENACC
-  const int npart = *nparticles;
-#pragma acc enter data create(nparticles, particles[:DD_NPART])
-#pragma acc update device(particles[:npart], nparticles)
-#pragma acc data present(atm, ctl, cache, particles, nparticles)
+#pragma acc enter data create(npart, particles[:DD_NPART])
+#pragma acc update device(particles[:npart], npart)
+#pragma acc data present(atm, ctl, cache, particles, npart)
 #pragma acc parallel loop
 #endif
-  for (int ip = atm->np; ip < atm->np + *nparticles; ip++) {
+  for (int ip = atm->np; ip < atm->np + npart; ip++) {
     atm->time[ip] = particles[ip - atm->np].time;
     atm->lon[ip] = particles[ip - atm->np].lon;
     atm->lat[ip] = particles[ip - atm->np].lat;
@@ -1450,16 +1452,14 @@ void dd_particles2atm(
     cache->dt[ip] = ctl->dt_mod;
   }
 #ifdef _OPENACC
-#pragma acc exit data delete(nparticles, particles)
+#pragma acc exit data delete(npart, particles)
 #endif
 
   /* Reset size... */
-  atm->np += *nparticles;
+  atm->np += npart;
 #ifdef _OPENACC
 #pragma acc update device(atm->np)
 #endif
-  if (atm->np > NP)
-    ERRMSG("Too many particles. Increase NP!");
 }
 #endif
 
@@ -1471,7 +1471,7 @@ void dd_sort(
   const met_t *met0,
   atm_t *atm,
   dd_t *dd,
-  int *nparticles) {
+  int *npart) {
 
   /* Set timer... */
   SELECT_TIMER("DD_SORT", "DD");
@@ -1560,7 +1560,7 @@ void dd_sort(
       nsend++;
 
   /* Reset sizes... */
-  *nparticles = nsend;
+  *npart = nsend;
 
   /* Count particles with -1 subdomain (these will be effectively lost) */
   int nlost = 0;
@@ -1578,7 +1578,7 @@ void dd_sort(
 #pragma acc update device(atm->np)
 #endif
 
-  if (*nparticles > DD_NPART)
+  if (*npart > DD_NPART)
     ERRMSG("Too many particles to send and recieve. Increase DD_NPART!");
 
   /* Free... */
@@ -3212,7 +3212,7 @@ void module_dd(
   SELECT_TIMER("MODULE_DD", "DD");
 
   /* Initialize particles locally... */
-  int nparticles = 0;
+  int npart = 0;
   particle_t *particles;
   ALLOC(particles, particle_t, DD_NPART);
 
@@ -3220,20 +3220,20 @@ void module_dd(
   dd_assign_subdomains(ctl, dd, atm, 0);
 
   /* Sort particles according to location and target rank... */
-  dd_sort(ctl, *met, atm, dd, &nparticles);
+  dd_sort(ctl, *met, atm, dd, &npart);
 
   /* Transform from struct of array to array of struct... */
-  dd_atm2particles(ctl, cache, atm, particles, &nparticles);
+  dd_atm2particles(ctl, cache, atm, particles, npart);
 
   /********************* CPU region start ***********************************/
 
   /* Perform the communication... */
-  dd_communicate_particles(ctl, dd, particles, &nparticles);
+  dd_communicate_particles(ctl, dd, particles, &npart);
 
   /********************* CPU region end *************************************/
 
   /* Transform from array of struct to struct of array... */
-  dd_particles2atm(ctl, cache, particles, &nparticles, atm);
+  dd_particles2atm(ctl, cache, particles, npart, atm);
 
   /* Free local particle array... */
   free(particles);
