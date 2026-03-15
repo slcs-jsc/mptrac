@@ -1218,9 +1218,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1791,8 +1790,8 @@ void get_met_help(
 
 void get_met_replace(
   char *orig,
-  char *search,
-  char *repl) {
+  const char *search,
+  const char *repl) {
 
   char buffer[LEN];
 
@@ -1816,7 +1815,7 @@ void get_met_replace(
 void get_tropo(
   const int met_tropo,
   ctl_t *ctl,
-  clim_t *clim,
+  const clim_t *clim,
   met_t *met,
   const double *lons,
   const int nx,
