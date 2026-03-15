@@ -4801,8 +4801,8 @@ void get_met_help(
  */
 void get_met_replace(
   char *orig,
-  char *search,
-  char *repl);
+  const char *search,
+  const char *repl);
 
 /**
  * @brief Calculate tropopause data.
@@ -4843,7 +4843,7 @@ void get_met_replace(
 void get_tropo(
   const int met_tropo,
   ctl_t * ctl,
-  clim_t * clim,
+  const clim_t * clim,
   met_t * met,
   const double *lons,
   const int nx,
