@@ -140,9 +140,6 @@
 
 #ifdef MPI
 #include "mpi.h"
-#else
-/*! Placeholder when MPI is not available. */
-#define MPI_Datatype void*
 #endif
 
 #ifdef DD
@@ -3605,16 +3602,7 @@ typedef struct {
 typedef struct {
 
   /* ------------------------------------------------------------
-     MPI Information
-     ------------------------------------------------------------ */
-
-#ifdef DD
-  /*! MPI type for the particle. */
-  MPI_Datatype MPI_Particle;
-#endif
-
-  /* ------------------------------------------------------------
-     Global grid
+     Global grid...
      ------------------------------------------------------------ */
 
   /*! Number of longitudes. */
@@ -3630,7 +3618,7 @@ typedef struct {
   double lat_glob[DD_EY_GLOB];
 
   /* ------------------------------------------------------------
-     Properties of subdomains
+     Subdomains...
      ------------------------------------------------------------ */
 
   /*! Rectangular grid limit of subdomain. */
@@ -3664,10 +3652,13 @@ typedef struct {
   int halo_offset_end;
 
   /* ------------------------------------------------------------
-     Caches
+     Helpers...
      ------------------------------------------------------------ */
 
 #ifdef DD
+
+  /*! MPI type for the particle. */
+  MPI_Datatype MPI_Particle;
 
   /*! Auxiliary array for sorting. */
   double sort_key[NP];
@@ -4407,8 +4398,7 @@ void dd_communicate_particles(
  * - Checks that the total number of MPI ranks equals the number of
  *   subdomains defined by
  *   `ctl->dd_subdomains_zonal * ctl->dd_subdomains_meridional`.
- * - Registers the MPI datatype describing the `particle_t` structure
- *   using ::dd_register_MPI_type_particle().
+ * - Registers the MPI datatype describing the `particle_t` structure.
  * - Assigns all particles to their initial subdomains based on their
  *   geographic coordinates using ::dd_assign_subdomains().
  *
@@ -4527,39 +4517,6 @@ void dd_particles2atm(
   const particle_t * particles,
   int *nparticles,
   atm_t * atm);
-
-/**
- * @brief Register the MPI datatype used for particle communication.
- *
- * This routine creates and commits a custom MPI datatype that describes
- * the memory layout of the `particle_t` structure. The datatype is used
- * for exchanging particle data between MPI ranks during domain
- * decomposition.
- *
- * The registered datatype includes the following particle fields:
- * - time
- * - pressure
- * - longitude
- * - latitude
- * - tracer quantities (`q`)
- *
- * The MPI datatype is constructed using `MPI_Type_create_struct` so that
- * the particle structure can be communicated directly with MPI collective
- * operations such as `MPI_Alltoallv`.
- *
- * @param[out] MPI_Particle Pointer to the MPI datatype that will represent
- *                          the `particle_t` structure in MPI communication.
- *
- * @note
- * - The datatype must be registered before any particle exchange is
- *   performed.
- * - The resulting datatype is committed with `MPI_Type_commit`.
- * - The layout of the datatype must match the definition of `particle_t`.
- *
- * @author Jan Clemens
- */
-void dd_register_MPI_type_particle(
-  MPI_Datatype * MPI_Particle);
 
 /**
  * @brief Sort local particle arrays and identify particles to be transferred.
