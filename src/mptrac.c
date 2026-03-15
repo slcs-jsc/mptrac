@@ -1217,9 +1217,8 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->
-		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
-	       1 : lat_idx);
+		ctl->dd_subdomains_meridional) ? ctl->
+	       dd_subdomains_meridional - 1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1435,7 +1434,7 @@ void dd_particles2atm(
   /* Check number of particles... */
   if (atm->np + npart > NP)
     ERRMSG("Too many particles. Increase NP!");
-  
+
 #ifdef _OPENACC
 #pragma acc enter data create(npart, particles[:DD_NPART])
 #pragma acc update device(particles[:npart], npart)
@@ -3202,7 +3201,7 @@ void module_convection(
 
 #ifdef DD
 void module_dd(
-  ctl_t *ctl,
+  const ctl_t *ctl,
   cache_t *cache,
   dd_t *dd,
   atm_t *atm,

@@ -4680,7 +4680,7 @@ void dd_sort(
   const met_t * met0,
   atm_t * atm,
   dd_t * dd,
-  int * npart);
+  int *npart);
 
 /**
  * @brief Apply the sorting permutation to a particle data array.
@@ -5743,7 +5743,7 @@ void module_convection(
  * @author Lars Hoffmann
  */
 void module_dd(
-  ctl_t * ctl,
+  const ctl_t * ctl,
   cache_t * cache,
   dd_t * dd,
   atm_t * atm,
