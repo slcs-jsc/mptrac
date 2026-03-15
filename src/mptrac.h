@@ -3667,9 +3667,6 @@ typedef struct {
      Caches
      ------------------------------------------------------------ */
 
-  /*! Shows if domain decomposition was initialized. */
-  int init;
-
 #ifdef DD
 
   /*! Auxiliary array for sorting. */
@@ -4427,8 +4424,6 @@ void dd_communicate_particles(
  *                     Particle subdomain and destination fields are
  *                     initialized according to their coordinates.
  *
- * @return Non-zero value indicating successful initialization.
- *
  * @note
  * - MPI must be initialized before calling this routine.
  * - The number of MPI tasks must match the configured number of
@@ -4437,7 +4432,7 @@ void dd_communicate_particles(
  * @author Jan Clemens
  * @author Lars Hoffmann
  */
-int dd_init(
+void dd_init(
   ctl_t * ctl,
   dd_t * dd,
   atm_t * atm);

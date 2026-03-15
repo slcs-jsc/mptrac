@@ -1218,8 +1218,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1362,7 +1363,7 @@ void dd_communicate_particles(
 /*****************************************************************************/
 
 #ifdef DD
-int dd_init(
+void dd_init(
   ctl_t *ctl,
   dd_t *dd,
   atm_t *atm) {
@@ -1378,9 +1379,6 @@ int dd_init(
 
   /* Check if particles are in subdomain... */
   dd_assign_subdomains(ctl, atm, dd, 1);
-
-  /* Set flag of initialization. */
-  return 1;
 }
 #endif
 
@@ -6376,7 +6374,6 @@ void mptrac_run_timestep(
   if (ctl->sort_dt > 0 && fmod(t, ctl->sort_dt) == 0)
     module_sort(ctl, *met0, atm);
 
-
   /* Check positions (initial)... */
   module_position(cache, *met0, *met1, atm);
 
@@ -6463,7 +6460,7 @@ void mptrac_run_timestep(
     module_radio_decay(ctl, cache, atm);
 
   /* Domain decomposition... */
-  if (dd->init) {
+  if (ctl->dd) {
 #ifdef DD
     module_dd(ctl, cache, dd, atm, met0);
 #else
