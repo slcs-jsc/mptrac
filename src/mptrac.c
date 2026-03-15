@@ -1370,7 +1370,17 @@ void dd_init(
     ERRMSG("Number of tasks and subdomains is not identical!");
 
   /* Register the MPI_Particle data type... */
-  dd_register_MPI_type_particle(&dd->MPI_Particle);
+  const MPI_Datatype types[5] =
+    { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE };
+  const int blocklengths[5] = { 1, 1, 1, 1, NQ };
+  const MPI_Aint displacements[5] =
+    { offsetof(particle_t, time), offsetof(particle_t, p),
+    offsetof(particle_t, lon), offsetof(particle_t, lat),
+    offsetof(particle_t, q)
+  };
+  MPI_Type_create_struct(5, blocklengths, displacements, types,
+			 &dd->MPI_Particle);
+  MPI_Type_commit(&dd->MPI_Particle);
 
   /* Check if particles are in subdomain... */
   dd_assign_subdomains(ctl, atm, dd, 1);
@@ -1450,30 +1460,6 @@ void dd_particles2atm(
 #endif
   if (atm->np > NP)
     ERRMSG("Too many particles. Increase NP!");
-}
-#endif
-
-/*****************************************************************************/
-
-#ifdef DD
-void dd_register_MPI_type_particle(
-  MPI_Datatype *MPI_Particle) {
-
-  const MPI_Datatype types[5] = { MPI_DOUBLE, MPI_DOUBLE, MPI_DOUBLE,
-    MPI_DOUBLE, MPI_DOUBLE
-  };
-
-  const int blocklengths[5] = { 1, 1, 1, 1, NQ };
-
-  const MPI_Aint displacements[5] = { offsetof(particle_t, time),
-    offsetof(particle_t, p),
-    offsetof(particle_t, lon),
-    offsetof(particle_t, lat),
-    offsetof(particle_t, q)
-  };
-
-  MPI_Type_create_struct(5, blocklengths, displacements, types, MPI_Particle);
-  MPI_Type_commit(MPI_Particle);
 }
 #endif
 
