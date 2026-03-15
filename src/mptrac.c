@@ -1153,7 +1153,7 @@ void dd_atm2particles(
 
   /* Select the particles that will be send... */
 #ifdef _OPENACC
-#pragma acc enter data create(npart, particles[:DD_NPART])
+#pragma acc enter data create(npart, particles[:npart])
 #pragma acc update device(npart)
 #pragma acc parallel loop present(atm, ctl, particles, cache, npart)
 #endif
@@ -1217,8 +1217,9 @@ int dd_calc_subdomain_from_coords(
   lat_idx =
     (lat_idx <
      0) ? 0 : ((lat_idx >=
-		ctl->dd_subdomains_meridional) ? ctl->
-	       dd_subdomains_meridional - 1 : lat_idx);
+		ctl->
+		dd_subdomains_meridional) ? ctl->dd_subdomains_meridional -
+	       1 : lat_idx);
 
   /* Calculate rank from indices... */
   int target_rank = lon_idx * ctl->dd_subdomains_meridional + lat_idx;
@@ -1267,11 +1268,6 @@ void dd_communicate_particles(
   ALLOC(offsets, int,
 	size);
 
-  for (int i = 0; i < size; i++) {
-    send_counts[i] = 0;
-    recv_counts[i] = 0;
-  }
-
   /* Count particles per destination rank... */
   for (int ip = 0; ip < *npart; ip++) {
 
@@ -1280,7 +1276,7 @@ void dd_communicate_particles(
       continue;
 
     if (dest < 0 || dest >= size)
-      ERRMSG("DD: invalid destination rank!");
+      ERRMSG("Invalid destination rank!");
 
     send_counts[dest]++;
   }
@@ -1290,9 +1286,6 @@ void dd_communicate_particles(
     send_displs[i] = nsend;
     nsend += send_counts[i];
   }
-
-  if (nsend > DD_NPART)
-    ERRMSG("DD: send buffer overflow!");
 
   /* Exchange particle counts... */
   MPI_Alltoall(send_counts, 1, MPI_INT,
@@ -1305,7 +1298,7 @@ void dd_communicate_particles(
   }
 
   if (nrecv > DD_NPART)
-    ERRMSG("DD: receive buffer overflow!");
+    ERRMSG("Receive buffer overflow, increase DD_NPART!");
 
   if (nsend > 0)
     ALLOC(sendbuf, particle_t, nsend);
@@ -1436,7 +1429,7 @@ void dd_particles2atm(
     ERRMSG("Too many particles. Increase NP!");
 
 #ifdef _OPENACC
-#pragma acc enter data create(npart, particles[:DD_NPART])
+#pragma acc enter data create(npart, particles[:npart])
 #pragma acc update device(particles[:npart], npart)
 #pragma acc data present(atm, ctl, cache, particles, npart)
 #pragma acc parallel loop
@@ -1569,7 +1562,7 @@ void dd_sort(
 
   if (nlost > 0)
     WARN
-      ("DD: Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)",
+      ("Rank %d: %d particles have subdomain index -1 and will be lost (kept: %d, to_send: %d, total_before: %d)",
        rank, nlost, nkeep, nsend, np);
 
   atm->np = nkeep;
