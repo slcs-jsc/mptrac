@@ -784,6 +784,7 @@ void compress_sz3(
   double tolerance,
   int decompress,
   FILE *inout) {
+
   if ((precision > 0) == (tolerance > 0.0))
     ERRMSG("Exactly one of precision or tolerance must be set for SZ3!");
 
@@ -908,9 +909,8 @@ void compress_zfp(
     FREAD(buffer, unsigned char,
 	  zfpsize,
 	  inout);
-    if (!zfp_decompress(zfp, field)) {
+    if (!zfp_decompress(zfp, field))
       ERRMSG("Decompression failed!");
-    }
     const double cr =
       ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
     const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
@@ -2547,9 +2547,9 @@ void level_definitions(
     ERRMSG("Use values between 3 and 7.");
   }
 
-  if (ctl->met_np > EP) {
+
+  if (ctl->met_np > EP)
     ERRMSG("Recompile with larger EP to use this pressure level definition!");
-  }
 }
 
 /*****************************************************************************/
@@ -6405,7 +6405,10 @@ void mptrac_run_timestep(
 #ifdef DD
     module_dd(ctl, cache, dd, atm, met0);
 #else
-    ERRMSG("Code was compiled without DD!")
+    ERRMSG("Code was compiled without DD!");
+
+    /* This will never execute, hack to avoid compilation error... */
+    LOG(3, "%d", dd->nx_glob);
 #endif
   }
 
@@ -12442,6 +12445,8 @@ void write_met_bin_3d(
   /* Unknown method... */
   else {
     ERRMSG("MET_TYPE not supported!");
+
+    /* This will never execute, hack to avoid compilation error... */
     LOG(3, "%d %g", precision, tolerance);
   }
 
