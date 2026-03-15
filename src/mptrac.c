@@ -1222,8 +1222,9 @@ int dd_calc_subdomain_from_coords(
 void dd_communicate_particles(
   const ctl_t *ctl,
   const dd_t *dd,
-  particle_t *particles,
-  int *npart) {
+  particle_t **particles,
+  int *npart,
+  int *capacity) {
 
   /* Set timer... */
   SELECT_TIMER("DD_COMMUNICATE_PARTICLES", "DD");
@@ -1252,17 +1253,15 @@ void dd_communicate_particles(
 
   /* Count particles per destination rank... */
   for (int ip = 0; ip < *npart; ip++) {
-
-    const int dest = (int) particles[ip].q[ctl->qnt_destination];
+    const int dest = (int) (*particles)[ip].q[ctl->qnt_destination];
     if (dest == rank)
       continue;
-
     if (dest < 0 || dest >= size)
       ERRMSG("Invalid destination rank!");
-
     send_counts[dest]++;
   }
 
+  /* Compute send displacements... */
   int nsend = 0;
   for (int i = 0; i < size; i++) {
     send_displs[i] = nsend;
@@ -1273,49 +1272,56 @@ void dd_communicate_particles(
   MPI_Alltoall(send_counts, 1, MPI_INT,
 	       recv_counts, 1, MPI_INT, MPI_COMM_WORLD);
 
+  /* Compute receive displacements... */
   int nrecv = 0;
   for (int i = 0; i < size; i++) {
     recv_displs[i] = nrecv;
     nrecv += recv_counts[i];
   }
-
-  if (nrecv > DD_NPART)
-    ERRMSG("Receive buffer overflow, increase DD_NPART!");
-
   if (nsend > 0)
     ALLOC(sendbuf, particle_t, nsend);
-
   if (nrecv > 0)
     ALLOC(recvbuf, particle_t, nrecv);
-
   for (int i = 0; i < size; i++)
     offsets[i] = send_displs[i];
 
-  /* Pack particles... */
+  /* Pack particles into send buffer... */
   for (int ip = 0; ip < *npart; ip++) {
-
-    const int dest = (int) particles[ip].q[ctl->qnt_destination];
+    const int dest = (int) (*particles)[ip].q[ctl->qnt_destination];
     if (dest == rank)
       continue;
-
-    memcpy(&sendbuf[offsets[dest]], &particles[ip], sizeof(particle_t));
+    memcpy(&sendbuf[offsets[dest]], &(*particles)[ip], sizeof(particle_t));
     offsets[dest]++;
   }
 
   /* Exchange particle data... */
-  MPI_Alltoallv(sendbuf, send_counts, send_displs, dd->MPI_Particle, recvbuf,
+  MPI_Alltoallv(sendbuf,
+		send_counts,
+		send_displs,
+		dd->MPI_Particle,
+		recvbuf,
 		recv_counts, recv_displs, dd->MPI_Particle, MPI_COMM_WORLD);
+
+  /* Resize particle buffer if necessary... */
+  if (nrecv > *capacity) {
+    const int newcap = nrecv + nrecv / 2 + 1;
+    particle_t *tmp =
+      realloc(*particles, (size_t) newcap * sizeof(particle_t));
+    if (!tmp)
+      ERRMSG("Out of memory!");
+    *particles = tmp;
+    *capacity = newcap;
+  }
 
   /* Copy received particles... */
   for (int ip = 0; ip < nrecv; ip++) {
-    memcpy(&particles[ip], &recvbuf[ip], sizeof(particle_t));
-    particles[ip].q[ctl->qnt_destination] = rank;
-    particles[ip].q[ctl->qnt_subdomain] = rank;
+    (*particles)[ip] = recvbuf[ip];
+    (*particles)[ip].q[ctl->qnt_destination] = rank;
+    (*particles)[ip].q[ctl->qnt_subdomain] = rank;
   }
-
   *npart = nrecv;
 
-  /* Free... */
+  /* Free temporary buffers... */
   if (sendbuf)
     free(sendbuf);
   if (recvbuf)
@@ -1551,9 +1557,6 @@ void dd_sort(
 #ifdef _OPENACC
 #pragma acc update device(atm->np)
 #endif
-
-  if (*npart > DD_NPART)
-    ERRMSG("Too many particles to send and recieve. Increase DD_NPART!");
 
   /* Free... */
 #ifdef _OPENACC
@@ -3243,9 +3246,8 @@ void module_dd(
   SELECT_TIMER("MODULE_DD", "DD");
 
   /* Initialize particles locally... */
-  int npart = 0;
-  particle_t *particles;
-  ALLOC(particles, particle_t, DD_NPART);
+  int npart = 0, capacity = 0;
+  particle_t *particles = NULL;
 
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
@@ -3253,15 +3255,22 @@ void module_dd(
   /* Sort particles according to location and target rank... */
   dd_sort(ctl, *met, atm, dd, &npart);
 
+  /* Ensure particle buffer is large enough for outgoing particles... */
+  if (npart > capacity) {
+    const int newcap = npart + npart / 2 + 1;
+    particle_t *tmp =
+      realloc(particles, (size_t) newcap * sizeof(particle_t));
+    if (!tmp)
+      ERRMSG("Out of memory!");
+    particles = tmp;
+    capacity = newcap;
+  }
+
   /* Transform from struct of array to array of struct... */
   dd_atm2particles(ctl, cache, atm, particles, npart);
 
-  /********************* CPU region start ***********************************/
-
   /* Perform the communication... */
-  dd_communicate_particles(ctl, dd, particles, &npart);
-
-  /********************* CPU region end *************************************/
+  dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
   /* Transform from array of struct to struct of array... */
   dd_particles2atm(ctl, cache, particles, npart, atm);
