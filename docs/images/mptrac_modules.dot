@@ -11,57 +11,61 @@ graph MPTRAC {
   
   MPTRAC -- {
     "infrastructure\nmodules"
+    "read meteo\ndata"
+    "meteo data\npre-processing"
     "trajectory\ncalculations"
     "chemistry\ncalculations"
-    "read meteo\ndata"
     "write\noutput"
-    "meteo data\npre-processing"
   }
   MPTRAC [fontsize=48 height=2]
   "infrastructure\nmodules" [fontsize=32 fillcolor="gray95"]
+  "read meteo\ndata" [fontsize=32 colorscheme=ylorbr5 fillcolor=1]
+  "meteo data\npre-processing" [fontsize=32 colorscheme=blues5 fillcolor=1]
   "trajectory\ncalculations" [fontsize=32 colorscheme=purples5 fillcolor=1]
   "chemistry\ncalculations" [fontsize=32 colorscheme=reds5 fillcolor=1]
-  "read meteo\ndata" [fontsize=32 colorscheme=ylorbr5 fillcolor=1]
   "write\noutput" [fontsize=32 colorscheme=greens5 fillcolor=1]
-  "meteo data\npre-processing" [fontsize=32 colorscheme=blues5 fillcolor=1]
 
 
   "infrastructure\nmodules" -- {
+    "time\nstepping"
     "Fortran\nwrapper"
     "high-level\nAPI"
     "domain\ndecomposition"
+    "MPI / OpenMP\nparallelization"
+    "GPU\noffloading"
     "meteo data\ninterpolation"
     "particle\nsorting"
-    "time\nloop"
-    "utilities"
+    "utility\nfunctions"
   }
+    "time\nstepping" [fillcolor="gray95"]
     "Fortran\nwrapper" [fillcolor="gray95"]
     "high-level\nAPI" [fillcolor="gray95"]
     "domain\ndecomposition" [fillcolor="gray95"]
+    "MPI / OpenMP\nparallelization" [fillcolor="gray95"]
+    "GPU\noffloading" [fillcolor="gray95"]
     "meteo data\ninterpolation" [fillcolor="gray95"]
     "particle\nsorting" [fillcolor="gray95"]
-    "time\nloop" [fillcolor="gray95"]
-    "utilities" [fillcolor="gray95"]
+    "utility\nfunctions" [fillcolor="gray95"]
 
 
   "read meteo\ndata" -- {
     "AMR\ndata"
     "binary\ndata"
-    "grib\ndata"
+    "GRIB\ndata"
     "netCDF\ndata"
     "packed\ndata"
-    "zstd\ndata"
-    "zfp\ndata"
-    "sz3\ndata"
+    "ZFP\ndata"
+    "ZSTD\ndata"
+    "SZ3\ndata"
   }
     "AMR\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "binary\ndata" [colorscheme=ylorbr5 fillcolor=1]
-    "grib\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "GRIB\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "netCDF\ndata" [colorscheme=ylorbr5 fillcolor=1]
     "packed\ndata" [colorscheme=ylorbr5 fillcolor=1]
-    "zstd\ndata" [colorscheme=ylorbr5 fillcolor=1]
-    "zfp\ndata" [colorscheme=ylorbr5 fillcolor=1]
-    "sz3\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "ZFP\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "ZSTD\ndata" [colorscheme=ylorbr5 fillcolor=1]
+    "SZ3\ndata" [colorscheme=ylorbr5 fillcolor=1]
  
   "write\noutput" -- {
     "CSI\ndata"
@@ -71,6 +75,7 @@ graph MPTRAC {
     "profile\ndata"
     "station\ndata"
     "VTK\ndata"
+    "CLaMS\ndata"
   }
     "CSI\ndata" [colorscheme=greens5 fillcolor=1]
     "ensemble\ndata" [colorscheme=greens5 fillcolor=1]
@@ -79,50 +84,63 @@ graph MPTRAC {
     "profile\ndata" [colorscheme=greens5 fillcolor=1]
     "station\ndata" [colorscheme=greens5 fillcolor=1]
     "VTK\ndata" [colorscheme=greens5 fillcolor=1]
+    "CLaMS\ndata" [colorscheme=greens5 fillcolor=1]
 
 
   "meteo data\npre-processing" -- {
-    "geopotential\nheights"
-    "potential\nvorticity"
-    "CAPE"
     "boundary\nlayer"
+    "CAPE"
     "cloud\nproperties"
+    "geopotential\nheights"
+    "polar\nwinds"
+    "potential\nvorticity"
+    "total column\nozone"
     "tropopause"
     "down-\nsampling"
+    "periodic\nboundaries"
   }
-    "geopotential\nheights" [colorscheme=blues5 fillcolor=1]
-    "potential\nvorticity" [colorscheme=blues5 fillcolor=1]
-    "CAPE" [colorscheme=blues5 fillcolor=1]
     "boundary\nlayer" [colorscheme=blues5 fillcolor=1]
+    "CAPE" [colorscheme=blues5 fillcolor=1]
     "cloud\nproperties" [colorscheme=blues5 fillcolor=1]
+    "geopotential\nheights" [colorscheme=blues5 fillcolor=1]
+    "polar\nwinds" [colorscheme=blues5 fillcolor=1]
+    "potential\nvorticity" [colorscheme=blues5 fillcolor=1]
+    "total column\nozone" [colorscheme=blues5 fillcolor=1]
     "tropopause" [colorscheme=blues5 fillcolor=1]
     "down-\nsampling" [colorscheme=blues5 fillcolor=1]
+    "periodic\nboundaries" [colorscheme=blues5 fillcolor=1]
 
 
   "trajectory\ncalculations" -- {
     "position\ncheck"
     "advection"
-    "diffusion"
-    "subgrid\nwinds"
+    "PBL\ndiffusion"
+    "fixed-K\ndiffusion"
+    "mesoscale\nwinds"
     "convection"
     "sedimentation"
     "isosurface"
+    "meteo\nsampling"
   }
     "position\ncheck" [colorscheme=purples5 fillcolor=1]
     "advection" [colorscheme=purples5 fillcolor=1]
-    "diffusion" [colorscheme=purples5 fillcolor=1]
-    "subgrid\nwinds" [colorscheme=purples5 fillcolor=1]
+    "PBL\ndiffusion" [colorscheme=purples5 fillcolor=1]
+    "fixed-K\ndiffusion" [colorscheme=purples5 fillcolor=1]
+    "mesoscale\nwinds" [colorscheme=purples5 fillcolor=1]
     "convection" [colorscheme=purples5 fillcolor=1]
     "sedimentation" [colorscheme=purples5 fillcolor=1]
     "isosurface" [colorscheme=purples5 fillcolor=1]
-
+    "meteo\nsampling" [colorscheme=purples5 fillcolor=1]
 
   "chemistry\ncalculations" -- {
     "boundary\nconditions"
     "interparcel\nmixing"
     "exponential\ndecay"
-    "sulfur\nchemistry"
-    "tracer\nchemistry"
+    "radio-\nnuclides"
+    "OH\nchemistry"
+    "H2O2\nchemistry"
+    "long-lived\ntracers"
+    "age of\nair"
     "KPP\ninterface"
     "dry\ndeposition"
     "wet\ndeposition"
@@ -130,8 +148,11 @@ graph MPTRAC {
     "boundary\nconditions" [colorscheme=reds5 fillcolor=1]
     "interparcel\nmixing" [colorscheme=reds5 fillcolor=1]
     "exponential\ndecay" [colorscheme=reds5 fillcolor=1]
-    "sulfur\nchemistry" [colorscheme=reds5 fillcolor=1]
-    "tracer\nchemistry" [colorscheme=reds5 fillcolor=1]
+    "radio-\nnuclides" [colorscheme=reds5 fillcolor=1]
+    "OH\nchemistry" [colorscheme=reds5 fillcolor=1]
+    "H2O2\nchemistry" [colorscheme=reds5 fillcolor=1]
+    "long-lived\ntracers" [colorscheme=reds5 fillcolor=1]
+    "age of\nair" [colorscheme=reds5 fillcolor=1]
     "KPP\ninterface" [colorscheme=reds5 fillcolor=1]
     "dry\ndeposition" [colorscheme=reds5 fillcolor=1]
     "wet\ndeposition" [colorscheme=reds5 fillcolor=1]

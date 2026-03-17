@@ -47,7 +47,7 @@ transport simulations, including:
   General Public License (GPL) and developed in an open repository,
   allowing users to inspect, modify, and contribute to the codebase.
 
-![Geophysical modules and main software components of MPTRAC](img/clusters.png)
+![Geophysical modules and main software components of MPTRAC](img/mptrac_modules.png)
 
 ## Getting Started
 
