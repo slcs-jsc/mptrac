@@ -9,13 +9,18 @@ Usage:
   $0 <year> <month> <day> <dir> <res> <dt>
 
 Description:
-  This script retrieves ECMWF's ERA5 reanalysis data
-  (https://www.ecmwf.int/en/forecasts/dataset/ecmwf-reanalysis-v5/)
-  and converts it for use with MPTRAC. The data are accessed through
-  the Climate Data Store (CDS): https://cds.climate.copernicus.eu/
+  This script retrieves ECMWF ERA5 or ERA5.1 reanalysis data
+  and converts it for use with MPTRAC. The script automatically
+  selects the dataset based on the given year:
+
+    - ERA5.1 for 2000-2006
+    - ERA5 otherwise
+
+  Data are accessed through the Climate Data Store (CDS):
+  https://cds.climate.copernicus.eu/
 
   The script retrieves data for the specified date (<year>, <month>, <day>)
-  and stores the converted NetCDF files in the output directory (<dir>).
+  and stores the converted netCDF files in the output directory (<dir>).
 
   Data are provided on 137 model levels and a regular
   latitude-longitude grid with horizontal resolution <res> (in degrees).
@@ -25,7 +30,7 @@ Requirements:
   - Python and the CDS API (https://cds.climate.copernicus.eu/api-how-to)
     must be installed and configured to retrieve data from the CDS.
   - Climate Data Operators (CDO, https://code.mpimet.mpg.de/projects/cdo)
-    are required to convert GRIB files to NetCDF format for MPTRAC.
+    are required to convert GRIB files to netCDF format for MPTRAC.
 
 License:
   ERA5 data are distributed under the Copernicus open data license.
@@ -40,6 +45,11 @@ day=$(echo "$3" | awk '{printf("%02d", $1)}')
 dir=$4/${year}/${mon}
 res=$5
 dt=$6
+
+# Select dataset based on year...
+[ "$year" -ge 2000 ] && [ "$year" -le 2006 ] \
+    && dataset="reanalysis-era5.1-complete" \
+	|| dataset="reanalysis-era5-complete"
 
 # Create Python environment...
 python3 -m venv venv
@@ -84,17 +94,10 @@ Surface variables (analysis):
   230.128 = Instantaneous northward turbulent surface stress [N m**-2]
   231.128 = Instantaneous surface sensible heat net flux [W m**-2]
 
-# Surface variables (only in forecasts):
-#   50.128 = Large-scale precipitation fraction [s]
-#  142.128 = Large-scale precipitation [m]
-#  143.128 = Convective precipitation [m]
-#  146.128 = Time-integrated surface sensible heat net flux [J m**-2]
-#  147.128 = Time-integrated surface latent heat net flux [J m**-2]
-#  228.128 = Total precipitation [m]
-
 Model levels:
    75 = Specific rain water content [kg kg**-1]
    76 = Specific snow water content [kg kg**-1]
+   77 = Eta-coordinate vertical velocity [s**-1]
   130 = Temperature [K]
   131 = U component of wind [m s**-1]
   132 = V component of wind [m s**-1]
@@ -104,34 +107,28 @@ Model levels:
   246 = Specific cloud liquid water content [kg kg**-1]
   247 = Specific cloud ice water content [kg kg**-1]
   248 = Fraction of cloud cover (0 - 1)
-
-# Model levels (optional):
-   77 = Eta-coordinate vertical velocity [s**-1]
 """
 
-c.retrieve("reanalysis-era5-complete", {
-    "class": "ea",
+dataset = "${dataset}"
+common = {
     "date": "${year}-${mon}-${day}",
-    "expver": "1",
-    "levtype": "sfc",
-    "param": "34.128/59.128/129.128/134.128/159.128/160.128/164.128/165.128/166.128/167.128/168.128/172.128/186.128/187.128/188.128/229.128/230.128/231.128",
     "stream": "oper",
-    "time": "$tstr",
+    "time": "${tstr}",
     "type": "an",
-    "grid": "$res/$res"
+    "grid": "${res}/${res}"
+}
+
+c.retrieve(dataset, {
+    **common,
+    "levtype": "sfc",
+    "param": "34.128/59.128/129.128/134.128/159.128/160.128/164.128/165.128/166.128/167.128/168.128/172.128/186.128/187.128/188.128/229.128/230.128/231.128"
 }, "sf.grib")
 
-c.retrieve("reanalysis-era5-complete", {
-    "class": "ea",
-    "date": "${year}-${mon}-${day}",
-    "expver": "1",
+c.retrieve(dataset, {
+    **common,
     "levelist": "1/to/137",
     "levtype": "ml",
-    "param": "75/76/77/130/131/132/133/135/203/246/247/248",
-    "stream": "oper",
-    "time": "$tstr",
-    "type": "an",
-    "grid": "$res/$res"
+    "param": "75/76/77/130/131/132/133/135/203/246/247/248"
 }, "ml.grib")
 EOF
 cd - || exit
