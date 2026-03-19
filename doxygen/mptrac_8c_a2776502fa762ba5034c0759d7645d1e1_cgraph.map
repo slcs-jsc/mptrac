@@ -1,0 +1,4 @@
+<map id="read_met_detrend" name="read_met_detrend">
+<area shape="rect" id="node1" title="Detrends meteorological data." alt="" coords="5,5,132,32"/>
+<area shape="rect" id="node2" href="$mptrac_8c.html#ae3aea782dfca9019f3f2d169f8cc0f6d" title="Converts geographic coordinates (longitude, latitude, altitude) to Cartesian coordinates." alt="" coords="180,5,252,32"/>
+</map>
