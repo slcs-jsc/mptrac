@@ -196,7 +196,7 @@ fi
 if ${build[all]} || ${build[hdf5]} ; then 
     target="hdf5-1.14.4-3"
     unpack "$target"
-    cfg_opt="--prefix=$build_dir --with-zlib=$build_dir --with-szlib=$build_dir --enable-hl --disable-fortran --enable-shared --enable-static --disable-dap --disable-logging --without-curl"
+    cfg_opt="--prefix=$build_dir --with-zlib=$build_dir --with-szlib=$build_dir --enable-hl --disable-fortran --disable-cxx --enable-shared --enable-static"
     if ${build[parallel]} ; then
         CC=mpicc CXX=mpicxx ./configure $cfg_opt --enable-parallel || exit
     else
@@ -209,7 +209,7 @@ fi
 if ${build[all]} || ${build[netcdf]} ; then 
     target="netcdf-c-4.9.2"
     unpack "$target"
-    cfg_opt="--prefix=$build_dir --with-hdf5=$build_dir --with-plugin-dir=$build_dir/share/netcdf-plugins --disable-dap --disable-byterange --disable-nczarr --disable-libxml2 --with-zlib=$build_dir"
+    cfg_opt="--prefix=$build_dir --with-plugin-dir=$build_dir/share/netcdf-plugins --disable-dap --disable-byterange --disable-nczarr --disable-libxml2"
     if ${build[parallel]}; then
         CPPFLAGS="-I$build_dir/include" LDFLAGS="-L$build_dir/lib" CC=mpicc ./configure $cfg_opt --enable-netcdf-4 --enable-parallel4 || exit
     else
