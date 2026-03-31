@@ -14,11 +14,10 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: Check out repository
+      - name: mkdocs
         uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: preparing_environment
+        uses: actions/setup-python@v5
         with:
           python-version: 3.x
       - name: installing_mkdocs
@@ -31,8 +30,6 @@ jobs:
     steps:
       - name: doxygen
         uses: actions/checkout@v5
-      - name: cleaning_doxygen_output
-        run: rm -rf docs/docs/html
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
