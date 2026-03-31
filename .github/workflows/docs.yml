@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - name: mkdocs
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: preparing_environment
         uses: actions/setup-python@v5
         with:
@@ -25,7 +25,7 @@ jobs:
     needs: deploying_mkdoc
     steps:
       - name: doxygen
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
