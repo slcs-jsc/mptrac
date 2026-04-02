@@ -26,6 +26,9 @@ DEFINES ?=
 # Compile for MPI...
 MPI ?= 0
 
+# MPI C compiler wrapper...
+MPICC ?= mpicc
+
 # Compile for domain decomposition (experimental)...
 DD ?= 0
 
@@ -82,7 +85,7 @@ CMSDIR ?= ../../cmultiscale/cmultiscale
 # -----------------------------------------------------------------------------
 
 # Get git version...
-VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags)
+VERSION ?= $(shell git describe --abbrev=6 --dirty --always --tags 2>/dev/null || echo unknown)
 
 # Set CC and CFLAGS...
 CFLAGS += $(INCDIR) $(DEFINES) -DVERSION=\"$(VERSION)\" $(OPT) -g
@@ -141,7 +144,9 @@ endif
 
 # Compile with MPI...
 ifeq ($(MPI),1)
-  CC = mpicc
+  ifneq ($(origin CC),command line)
+    CC := $(MPICC)
+  endif
   CFLAGS += -DMPI
 endif
 
@@ -304,25 +309,28 @@ clean:
 	rm -rf $(EXC) trac_fortran lib* *.o *.mod *.gcda *.gcno *.gcov coverage* *~
 
 coverage:
-	lcov --capture --directory . --output-file=coverage.info ; \
-	genhtml coverage.info --legend --frames --output-directory=coverage ; \
-	gcov -abcfu *.c ; echo "FINISHED" || true
+	$(MAKE) clean
+	$(MAKE) COV=1 all
+	$(MAKE) COV=1 check
+	lcov --capture --directory . --output-file=coverage.info
+	genhtml coverage.info --legend --frames --output-directory=coverage
+	gcov -abcfu *.c || true
 
 cppcheck:
 	cppcheck --enable=all ./
 
 dist:
-	cd ..  && tar cvfz mptrac_$(VERSION).tgz bin/* \
-          docs/Doxyfile projects/example/* \
-          libs/build.sh libs/*bz2 src/* tests/*
+	cd .. && git ls-files -z | tar --null --files-from=- \
+          --transform 's|^|mptrac_$(VERSION)/|' \
+          -czvf mptrac_$(VERSION).tgz
 
 doxygen:
-	cd ../docs && rm -rf docs/html && doxygen
+	cd ../docs && doxygen
 
 indent:
 	indent -br -brf -brs -bfda -ce -cdw -lp -npcs -npsl *.c *.h
 
-install:
+install: all
 	mkdir -p $(DESTDIR) && cp $(EXC) $(DESTDIR)
 
 lib: mptrac.c mptrac.h Makefile
