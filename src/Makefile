@@ -333,7 +333,7 @@ dist:
           -czvf mptrac_$(VERSION).tgz
 
 doxygen:
-	cd ../docs && doxygen
+	cd ../docs && rm -rf docs/html && doxygen
 
 indent:
 	indent -br -brf -brs -bfda -ce -cdw -lp -npcs -npsl *.c *.h
