@@ -12,14 +12,19 @@ $ ./met_zm  <ctl> <zm.tab> <met0> [<met1> ...]
 The required arguments are:
 * ctl: The file containing the control parameters.
 * zm.tab: The output file where the zonal means are stored.
-* met0 \[\<met1\> ...\]: The meteorological input files from which the zonal mean should be calculatd from.
+* met0 \[\<met1\> ...\]: The meteorological input files from which the zonal mean should be calculated.
 
-Calling met_zm and creating a global zonal mean data with latitude band of 10 degree from ERA5 data would look like as follows:
+Example control-file settings for creating a global zonal mean with a
+latitude band width of 10 degrees from ERA5 data:
 
 ```
-# Calling met_zm
-$./met_prof - zm_era5_2017_01_08_17_1_1.tab era5_2017_01_08_17.nc \
-	ZM_DLAT 10  
+ZM_DLAT = 10
+```
+
+Example call:
+
+```
+./met_zm zm.ctl zm_era5_2017_01_08_17_1_1.tab era5_2017_01_08_17.nc
 ```
 
 The optional control parameters required are listed as follows:

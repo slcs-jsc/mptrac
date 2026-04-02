@@ -13,12 +13,25 @@ The required arguments are:
 * prof.tab: The output file in which the profile data should be stored.
 * \<met0\> \[\<met1\> ...]: The meteorological input data.
 
-Calling met_prof and creating a 1 km resolution verical profile from a global ERA5 data sample of 1° x 1° would look like as follows:
+Example control-file settings for creating a 1 km resolution vertical
+profile from global ERA5 data sampled on a 1° x 1° grid:
 
 ```
-# Calling met_map
-$./met_prof - prof_era5_2017_01_08_17_1_1.tab era5_2017_01_08_17.nc PROF_LON0 -180 PROF_LON1 180\
-	PROF_LAT0 -90 PROF_LAT1 90 PROF_DLON 1 PROF_DLAT 1 PROF_Z0 0 PROF_Z1 25 PROF_DZ 1
+PROF_LON0 = -180
+PROF_LON1 = 180
+PROF_LAT0 = -90
+PROF_LAT1 = 90
+PROF_DLON = 1
+PROF_DLAT = 1
+PROF_Z0 = 0
+PROF_Z1 = 25
+PROF_DZ = 1
+```
+
+Example call:
+
+```
+./met_prof prof.ctl prof_era5_2017_01_08_17_1_1.tab era5_2017_01_08_17.nc
 ```
 
 The optional control parameters required are listed as follows:

@@ -33,11 +33,12 @@ $ make wrapper_test
 
 This program calculates trajectories based on MPTRAC's module_advect
 function. It is the Fortran counterpart to trac.c. The program is
-called with at least four (4) arguments:
+called with a directory list, a control file name, and an atmospheric
+input file name:
 
 ```
 # calling trac_fortran
-$ ./trac_fortran  <dirlist> <ctl> <atm_in> <metbase>
+$ ./trac_fortran <dirlist> <ctl> <atm_in> [KEY VALUE ...]
 ```
 
 The required arguments are:
@@ -52,14 +53,11 @@ The required arguments are:
 * `atm_in`: The starting point file contains a list of starting points
   for the trajectory calculation.
 
-* `metbase`: Here, the path to the meteorological data files and their
-  basename shall be given.
-
 Example from the repository:
 
 ```
 # minimal required input to run trac_fortran
-$ ./trac_fortran data/dirlist trac.ctl atm_split.tab meteo/ei
+$ ./trac_fortran data/dirlist trac.ctl atm_split.tab
 ```
 
 In addition it is possible to append control parameters, giving the
@@ -68,7 +66,7 @@ space. Example:
 
 ```
 #
-$ ./trac_fortran data/dirlist trac.ctl atm_split.tab meteo/ei ATM_BASENAME atm_diff GRID_BASENAME grid_diff
+$ ./trac_fortran data/dirlist trac.ctl atm_split.tab ATM_BASENAME atm_diff GRID_BASENAME grid_diff
 ```
 
 ## Interface

@@ -159,7 +159,7 @@ script:
 
     # Calculate trajectories...                                                                                                                                                                     
     nsys profile -f true -o wodiff --trace=nvtx,osrt,openacc --stats=true \
-        $trac/trac data/dirlist trac.ctl atm_split.tab meteo/ei ATM_BASENAME atm | tee data/log_trac.txt
+        $trac/trac data/dirlist trac.ctl atm_split.tab ATM_BASENAME atm | tee data/log_trac.txt
 ```
 
 After the execution, you can visualize `.qdrep`-files in
