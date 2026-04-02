@@ -4,7 +4,9 @@ The MPTRAC applications are controlled either through a control
 parameter file or by specifying control parameters directly as
 command-line arguments. A comprehensive
 [list of control parameters](https://slcs-jsc.github.io/mptrac/doxygen/structctl__t.html)
-is available in the Doxygen manual.
+is available in the Doxygen manual. The Doxygen page is the reference
+for the `ctl_t` fields themselves, while this manual page explains the
+file syntax, command-line overrides, and practical usage patterns.
 
 By default, if no values are explicitly provided, the applications
 will use predefined default values for most control

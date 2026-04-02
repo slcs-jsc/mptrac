@@ -1,42 +1,39 @@
 # trac
 
-The major app for calculating forward or backward trajectories is trac. It is called with at least four (4) arguments:
+`trac` is the main application for forward and backward trajectory
+calculations. It is called with a directory list, a control file name,
+and an atmospheric input file name:
 
+```bash
+./trac <dirlist> <ctl> <atm_in> [KEY VALUE ...]
 ```
-# calling trac
-$ ./trac  <dirlist> <ctl> <atm_in> <metbase>
-```
 
-The required arguments are:
+Required arguments:
 
-* dirlist: A file containing directories to be processed. Each directory has to have an own control parameter file and a starting point file.
+- `dirlist`: text file containing the work directories to be processed.
+- `ctl`: control file name relative to each directory from `dirlist`.
+- `atm_in`: atmospheric input file name relative to each directory from `dirlist`.
 
-* ctl: In the control parameter file the configuration parameters can be set.
-
-* atm_in: The starting point file contains a list of starting points for the trajectory calculation.
-
-* metbase: Here, the path to the meteorological data files and their basename shall be given.
+Optional trailing arguments can be used to override control parameters
+on the command line as `KEY VALUE` pairs.
 
 Example from the repository:
 
-```
-# minimal required input to run trac
-$ ./trac data/dirlist trac.ctl atm_split.tab meteo/ei
-```
-
-In addition it is possible to append control parameters, giving the flag name first, followed by the parameter, all separated by a space. Example:
-
-```
-#
-$ ./trac data/dirlist trac.ctl atm_split.tab meteo/ei ATM_BASENAME atm_diff GRID_BASENAME grid_diff
+```bash
+./trac data/dirlist trac.ctl atm_split.tab
 ```
 
-The following control parameters are effective in trac:
+Example with command-line overrides:
 
-**Todo**
+```bash
+./trac data/dirlist trac.ctl atm_split.tab \
+  ATM_BASENAME atm_diff \
+  GRID_BASENAME grid_diff
+```
 
-**add flaglist here ….** 
-
-A full list can be found in the [doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/structctl__t.html).
-
-**Note: However, in the doxygen are so far no default values etc. provided.**
+The effective configuration is defined by the `ctl_t` control
+parameters. A full field-by-field reference is available in the
+[Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/structctl__t.html).
+Practical examples, file syntax, and precedence rules are documented in
+the [control parameters](../control-parameters.md) section of the user
+manual.

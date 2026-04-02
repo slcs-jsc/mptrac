@@ -26,6 +26,8 @@ jobs:
     steps:
       - name: doxygen
         uses: actions/checkout@v5
+      - name: cleaning_doxygen_output
+        run: rm -rf docs/docs/html
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:

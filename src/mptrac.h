@@ -25,34 +25,84 @@
 /*! 
   \mainpage
   
-  Massive-Parallel Trajectory Calculations (MPTRAC) is a
-  high-performance Lagrangian particle dispersion model designed for
-  simulating atmospheric transport processes in the free troposphere
-  and stratosphere. It leverages parallel computing to efficiently
-  handle large-scale trajectory calculations, making it a valuable
-  tool for atmospheric research.
+  MPTRAC (Massive-Parallel Trajectory Calculations) is a
+  high-performance Lagrangian particle dispersion model for
+  simulating atmospheric transport in the free troposphere and
+  stratosphere. The code supports large ensembles of air parcels and
+  combines trajectory calculations with optional modules for diffusion,
+  convection, sedimentation, chemistry, deposition, and diagnostic
+  post-processing.
 
-  \section Introduction
+  This Doxygen manual is the API and source-code reference for the
+  MPTRAC core library and command-line tools. It is intended to
+  complement, not replace, the project-level documentation in the
+  repository.
 
-  MPTRAC is developed at the Jülich Supercomputing Centre,
-  Forschungszentrum Jülich, Germany.  The source code is available on
-  the official [GitHub repository](https://github.com/slcs-jsc/mptrac).
+  \section mainpage_start_here Start here
 
-  For introductory information and installation instructions, please
-  refer to the
-  [README.md](https://github.com/slcs-jsc/mptrac/blob/master/README.md)
-  file in the repository.  Additional guidance and usage details can
-  be found in the [User Manual](https://slcs-jsc.github.io/mptrac).
+  - For installation, build instructions, and a project overview, see
+    the [README](https://github.com/slcs-jsc/mptrac/blob/master/README.md).
+  - For usage guidance, application workflows, and control-file syntax,
+    see the [User Manual](https://slcs-jsc.github.io/mptrac).
+  - For source code, issues, and contributions, see the
+    [GitHub repository](https://github.com/slcs-jsc/mptrac).
 
-  This Doxygen manual provides comprehensive documentation of the
-  algorithms, data structures, and functions used in the MPTRAC
-  codebase. For an overview of the core components, please refer to
-  the documentation of `mptrac.h`. For the full list of control
-  parameters, see `ctl_t`.
+  \section mainpage_api_map API map
 
-  \section References
+  Important entry points in this Doxygen manual include:
 
-  If you use MPTRAC in your scientific work, please cite the relevant
+  - [mptrac.h](mptrac_8h.html): public declarations, constants, data
+    structures, and function prototypes.
+  - [mptrac.c](mptrac_8c.html): core implementation of the MPTRAC
+    library routines.
+  - [ctl_t](structctl__t.html): control parameters used by the
+    command-line applications and library workflows.
+  - [atm_t](structatm__t.html): air parcel state vectors and associated
+    metadata.
+  - [met_t](structmet__t.html): meteorological fields and diagnostics.
+  - [clim_t](structclim__t.html): climatological input data.
+  - [cache_t](structcache__t.html): interpolation and runtime cache
+    structures.
+
+  \section mainpage_apps Command-line applications
+
+  MPTRAC provides a set of standalone tools built from the `src/`
+  directory. Commonly used entry points are:
+
+  - [trac](trac_8c.html): main trajectory calculation program.
+  - [atm_init](atm__init_8c.html): initialize air parcel ensembles.
+  - [atm_split](atm__split_8c.html): split or duplicate particle sets.
+  - [atm_select](atm__select_8c.html): select subsets of particle data.
+  - [atm_stat](atm__stat_8c.html): compute statistics from particle output.
+  - [met_map](met__map_8c.html), [met_prof](met__prof_8c.html), and
+    [met_zm](met__zm_8c.html): meteorological diagnostics and analysis.
+
+  These file pages document the corresponding source files and, where
+  available, the command-line entrypoints. The user manual remains the
+  better place for end-to-end examples and application recipes.
+
+  \section mainpage_parallel Parallel execution
+
+  MPTRAC supports OpenMP throughout the core code and can optionally be
+  compiled with MPI and OpenACC/GPU support depending on the selected
+  build configuration. Build flags and external dependencies are
+  documented in the repository `README.md`, `DEPENDENCIES.md`, and the
+  developer manual.
+
+  \section mainpage_reference_docs Related documentation
+
+  - [README](https://github.com/slcs-jsc/mptrac/blob/master/README.md):
+    installation, build, and project overview.
+  - [User Manual](https://slcs-jsc.github.io/mptrac): application
+    usage, configuration, and scientific background.
+  - [Contributing Guide](https://github.com/slcs-jsc/mptrac/blob/master/CONTRIBUTING.md):
+    contribution workflow.
+  - [Code of Conduct](https://github.com/slcs-jsc/mptrac/blob/master/CODE_OF_CONDUCT.md):
+    collaboration guidelines.
+
+  \section mainpage_citation Citation
+
+  If you use MPTRAC in scientific work, please cite the relevant
   publications:
 
   - Hoffmann, L., Clemens, J., Griessbach, S., Haghighi Mood, K.,
@@ -77,9 +127,9 @@
     https://doi.org/10.1002/2015JD023749, 2016.
 
   For a complete list of related publications and references, please
-  visit the [References Page](https://slcs-jsc.github.io/mptrac/references).
+  visit the [references page](https://slcs-jsc.github.io/mptrac/references).
 
-  \section License
+  \section mainpage_license License
 
   MPTRAC is distributed under the terms of the
   [GNU General Public License v3.0](https://github.com/slcs-jsc/mptrac/blob/master/COPYING).
@@ -87,7 +137,7 @@
   modify, and distribute, while encouraging community-driven
   development.
 
-  \section Contributing
+  \section mainpage_contributing Contributing
 
   We welcome contributions to MPTRAC from both researchers and
   developers.  If you encounter bugs, have suggestions, or want to
@@ -101,7 +151,7 @@
   For detailed instructions on contributing, please see the
   contributing guidelines in the repository.
 
-  \section Contact
+  \section mainpage_contact Contact
 
   For inquiries, support, or collaboration opportunities, please
   contact:
