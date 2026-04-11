@@ -7,16 +7,17 @@ This application calculates the PSC formation temperatures (in Kelvin).
 $./tnat <p> <h2o> <hno3>
 ```
 
-Required paramters are:
+Required parameters are:
 * p: The atmospheric pressure in hPa.
 * h2o: The volume mixing ratio (ppv) of water vapour.
-* hno3: The volume mixing ratio (ppv)  of sulfuric acid.
+* hno3: The volume mixing ratio (ppv) of nitric acid.
 
-Assuming a pressure of 50 hPa and a H<sub>2</sub>O volume mixing ratio of 5 ppmv and a HNO<sub>3</sub> mixing ratio of 15 ppbv: 
+Assuming a pressure of 50 hPa, a H<sub>2</sub>O volume mixing ratio of
+5e-6 ppv, and a HNO<sub>3</sub> volume mixing ratio of 15e-9 ppv:
 ```
 $./tnat 50 5e-6 15e-9
 ```
-one receives the following ouput:
+one receives the following output:
 
 ```
 $ p = 50 hPa

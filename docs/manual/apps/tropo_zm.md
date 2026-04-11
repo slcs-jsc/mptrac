@@ -7,8 +7,8 @@ This application extracts the zonal mean of a tropopause data set.
 ./tropo_zm <ctl> <zm.tab> <var> <tropo.nc>
 ```
 The required parameters are:
-* ctrl: The file containing the control parameters.
-* zm.tab: The ouput file in which the zonal means should be stored.
+* ctl: The file containing the control parameters.
+* zm.tab: The output file in which the zonal means should be stored.
 * var: The tropopause variables
 * tropo.nc: The tropopause data set of which the zonal means should be calculated.
 
@@ -17,7 +17,7 @@ The required parameters are:
 | clp     | cold point tropopause           |
 | dyn     | dynamical tropopause            |
 | wmo_1st | WMO first lapse rate tropopause |
-| wmo_2nd | WMO secon lapse rate tropopause |
+| wmo_2nd | WMO second lapse rate tropopause |
 
 Example:
 ```

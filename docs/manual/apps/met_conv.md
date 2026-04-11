@@ -6,7 +6,7 @@ Conversion of meteorological data
 # calling met_conv
 ./met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type>
 ```
-The required paramters are as follows:
+The required parameters are as follows:
 
 * ctl: The control file.
 * met_in: The name of the meteorological file that should be converted.
@@ -30,12 +30,11 @@ The following input/output files are supported by met_conv:
 |3          | zfp    |
 |4          | zstd |
 
-whereby netcdf and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp) and zst (zstandard, https://github.com/facebook/zstd) are compression formats. 
+whereby netCDF and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp), and zstd (zstandard, https://github.com/facebook/zstd) are compression formats.
 
 Currently to enable the usage of zfp and zstd format MPTRAC needs to be compiled using ZSTD=1 and ZFP=1:
 
 ```
 # Run make enabling the usage of the ZFP and ZSTD compression
 $ make ZSTD=1 ZFP=1
-````
-
+```

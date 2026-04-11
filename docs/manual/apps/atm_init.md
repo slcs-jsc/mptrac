@@ -23,7 +23,7 @@ The following specific configuration parameters can be used to determine the rel
 | INIT_LAT1 | Release latitude range end | 0 |
 | INIT_DLAT | Release latitude interval | 1 |
 
-Followings are some optional parameters for controlling the release of air parcels:
+The following optional parameters can be used for controlling the release of air parcels:
 
 * INIT_REP: This parameter controls the number of air parcels in each release position. The default value is 1.
 * INIT_MASS: Total release mass [kg]. The default value is 0.

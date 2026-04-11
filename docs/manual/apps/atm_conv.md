@@ -11,7 +11,7 @@ $ ./atm_conv  <ctl> <atm_in> <atm_type_in> <atm_out> <atm_type_out>
 * ```atm_in```: Input atmospheric file
 * ```atm_type_in```: Format of input atmospheric file
 * ```atm_out```: Output atmospheric file
-* ```atm_type_in```: Format of output atmospheric file
+* ```atm_type_out```: Format of output atmospheric file
 
 The type of data can be chosen from the options below:
 
@@ -34,5 +34,4 @@ EOF
 Example: 
 > ```atm_conv atm_conv.ctl input.tab 0 output.nc 2```
 > 
-> , converts the input.tab ASCII file into the new > netcdf file output.nc.
-
+> converts the input.tab ASCII file into the new netCDF file output.nc.

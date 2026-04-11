@@ -4,7 +4,7 @@ Add CAPE data to netCDF file.
 
 ```
 # Calling cape
-./ cape <ctl> <met.nc>
+./cape <ctl> <met.nc>
 ```
 The required parameters are:
 * ctl: The control file.

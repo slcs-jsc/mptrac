@@ -14,7 +14,7 @@ The atmospheric input data file <atm_in> contains a list of data points with the
 time altitude longitude latitude quantity_1 quantity_2 ...
 ```
 
-Based on the locations provided in the input atmospheric data file <atm_in> atm_split generates a specified total number of data points by generating new data points in a region defined by the configuration parameters and stores the result in a new atmospheric data file with the file name provided in <atm_select>.
+Based on the locations provided in the input atmospheric data file <atm_in> atm_split generates a specified total number of data points by generating new data points in a region defined by the configuration parameters and stores the result in a new atmospheric data file with the file name provided in <atm_out>.
 
 The following atm_split specific configuration parameters can be used:
 

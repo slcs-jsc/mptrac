@@ -4,7 +4,7 @@ This app conducts a spectral analysis of the meteorological temperature fields u
 
 ```
 Calling met_spec
-./met_sepc <ctl> <spec.tab> <met0>
+./met_spec <ctl> <spec.tab> <met0>
 ```
 
 The required control parameters are:

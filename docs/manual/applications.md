@@ -11,7 +11,10 @@ The apps [met_map](apps/met_map.md), [met_prof](apps/met_prof.md), and
 [met_zm](apps/met_zm.md) can be used to extract global maps, vertical
 profiles, and zonal means from meteorological data. The app
 [met_sample](apps/met_sample.md) can be used to sample the meteo data
-at individual locations in space and time.
+at individual locations in space and time. The app
+[met_lapse](apps/met_lapse.md) calculates lapse-rate statistics, and
+[met_check_dt](apps/met_check_dt.md) checks model time-step constraints
+for a given meteorological data file.
 
 The app [atm_conv](apps/atm_conv.md) can be used to convert between
 different file formats of the particle data (ASCII, binary,
@@ -24,7 +27,8 @@ data, like individual trajectories. The app
 [atm_split](apps/atm_split.md) can split sets of particles into larger
 sets, retaining their total mass. The app [atm_stat](apps/atm_stat.md)
 calculates trajectory statistics, for example, the mean position of
-the air parcels.
+the air parcels. The app [atm2grid](apps/atm2grid.md) converts
+atmospheric particle data to gridded output.
 
 The tools [day2doy](apps/day2doy.md), [doy2day](apps/doy2day.md),
 [jsec2time](apps/jsec2time.md), and [time2jsec](apps/time2jsec.md) are
@@ -35,7 +39,9 @@ time (YYYY-MM-DD, HH:MM:SS) and the absolute time in seconds since
 
 The tools [tropo](apps/tropo.md) and
 [tropo_sample](apps/tropo_sample.md) can be used to determine lapse
-rate statistics and to prepare and sample tropopause data files.
+rate statistics and to prepare and sample tropopause data files. The
+tool [tropo_clim](apps/tropo_clim.md) calculates climatological
+statistics from tropopause data files.
 
 Please see the
 [list of files in the Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/files.html)
