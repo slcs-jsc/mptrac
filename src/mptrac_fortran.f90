@@ -26,20 +26,24 @@ MODULE mptrac_struct
 
   ! Notes:
   !
-  ! - See the mptrac.h header file for documentation of data structures
-  !   and functions.
+  ! - See mptrac.h for the authoritative field and function
+  !   documentation. The derived types and interfaces below mirror that
+  !   header for Fortran callers, but intentionally do not duplicate every
+  !   field comment.
   !
   ! - All values and dimensions must exactly match the corresponding
-  !   definitions in mptrac.h.
+  !   definitions used to compile the C code. Size macros may be overridden
+  !   via the Makefile DEFINES variable, so this file must also be
+  !   preprocessed with those definitions.
   !
   ! - The values of ex, ey, and ep are chosen for ERA5 data. However,
-  !   they can exceed the NVHPC compiler's memory limits (≈2 GB),
+  !   they can exceed the NVHPC compiler's memory limits (about 2 GB),
   !   causing the Fortran wrapper build to fail. GCC and ICX compile
   !   successfully and can be used instead.
   !
   ! - The order of variables within each derived type must strictly
-  !   follow the order defined in the C structs. Any mismatch will
-  !   break interoperability and may cause memory segmentation faults.
+  !   follow the order defined in the corresponding C structs. Any mismatch
+  !   breaks binary interoperability and may cause segmentation faults.
   !
   ! - Remember that C uses row-major ordering and Fortran uses
   !   column-major ordering. For example:
@@ -47,22 +51,69 @@ MODULE mptrac_struct
   !       C: float t[EX][EY][EP]
   !   maps to
   !       Fortran: real(c_float), dimension(ep,ey,ex) :: t
+  !
+  ! - Fixed-size C character arrays map to CHARACTER(c_char) arrays in
+  !   Fortran. String arguments passed to C routines must be terminated
+  !   with c_null_char by the caller.
+
+#ifndef EP
+#define EP 140
+#endif
+#ifndef EX
+#define EX 1444
+#endif
+#ifndef EY
+#define EY 724
+#endif
+#ifndef LEN
+#define LEN 5000
+#endif
+#ifndef METVAR
+#define METVAR 13
+#endif
+#ifndef NP
+#define NP 10000000
+#endif
+#ifndef NQ
+#define NQ 15
+#endif
+#ifndef CY
+#define CY 250
+#endif
+#ifndef CO3
+#define CO3 30
+#endif
+#ifndef CP
+#define CP 70
+#endif
+#ifndef CSZA
+#define CSZA 50
+#endif
+#ifndef CT
+#define CT 12
+#endif
+#ifndef CTS
+#define CTS 1000
+#endif
+#ifndef DD_NNMAX
+#define DD_NNMAX 26
+#endif
   
-  ! Dimensions...
-  INTEGER, PARAMETER :: ex = 1444
-  INTEGER, PARAMETER :: ey = 724
-  INTEGER, PARAMETER :: ep = 140
-  INTEGER, PARAMETER :: metvar = 13
-  INTEGER, PARAMETER :: npp = 10000000 !NP
-  INTEGER, PARAMETER :: nqq = 15       !NQ
-  INTEGER, PARAMETER :: length = 5000  !LEN
-  INTEGER, PARAMETER :: cyy = 250      !CY
-  INTEGER, PARAMETER :: co3 = 30
-  INTEGER, PARAMETER :: cp = 70
-  INTEGER, PARAMETER :: csza = 50
-  INTEGER, PARAMETER :: ct = 12
-  INTEGER, PARAMETER :: cts = 1000
-  INTEGER, PARAMETER :: dd_nnmax = 26
+  ! Effective dimensions after preprocessing.
+  INTEGER, PARAMETER :: ex = EX
+  INTEGER, PARAMETER :: ey = EY
+  INTEGER, PARAMETER :: ep = EP
+  INTEGER, PARAMETER :: metvar = METVAR
+  INTEGER, PARAMETER :: npp = NP
+  INTEGER, PARAMETER :: nqq = NQ
+  INTEGER, PARAMETER :: length = LEN
+  INTEGER, PARAMETER :: cyy = CY
+  INTEGER, PARAMETER :: co3 = CO3
+  INTEGER, PARAMETER :: cp = CP
+  INTEGER, PARAMETER :: csza = CSZA
+  INTEGER, PARAMETER :: ct = CT
+  INTEGER, PARAMETER :: cts = CTS
+  INTEGER, PARAMETER :: dd_nnmax = DD_NNMAX
   
   ! Air parcel data...
   TYPE, bind(c) :: atm_t
@@ -85,7 +136,7 @@ MODULE mptrac_struct
      REAL(c_double), DIMENSION(npp) :: dt
   END TYPE cache_t
   
-  ! Photolysis rates..
+  ! Photolysis rate data...
   TYPE, bind(c) :: clim_photo_t
      INTEGER(c_int) :: np
      INTEGER(c_int) :: nsza
@@ -568,6 +619,10 @@ END MODULE mptrac_struct
 ! ------------------------------------------------------------
 
 MODULE mptrac_func
+  ! The declarations below describe the C ABI from mptrac.h. Use VALUE
+  ! for scalar arguments passed by value in C, TARGET for objects whose
+  ! address is passed to C, and POINTER only where the C routine allocates
+  ! or updates pointer associations.
   INTERFACE
      
      ! Allocate data structures...

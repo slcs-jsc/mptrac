@@ -108,16 +108,21 @@ endif
 # Set FC and FCFLAGS...
 ifeq ($(COMPILER),gcc)
   FC=gfortran
-  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation $(OPT)
+  FCFLAGS=-Wall -fopenmp -g -fcheck=all -fbacktrace -mcmodel=medium -Wcharacter-truncation -cpp $(DEFINES) $(OPT)
+  FPPFLAGS=-cpp -E -P $(DEFINES)
 else ifeq ($(COMPILER),icx)
   FC=ifort
-  FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium $(OPT)
+  FCFLAGS=-warn -qopenmp -g -check=all -traceback -mcmodel=medium -fpp $(DEFINES) $(OPT)
+  FPPFLAGS=-fpp -E -P $(DEFINES)
 else ifeq ($(COMPILER),nvc)
   FC=nvfortran
-  FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays $(OPT) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
+  FCFLAGS=-Wall -fopenmp -g -traceback -mcmodel=medium -Mlarge_arrays -Mpreprocess $(DEFINES) $(OPT) -Mdclchk -Mstandard -Mbounds -Mchkptr  -Mchkstk -Minfo
+  FPPFLAGS=-Mpreprocess -E $(DEFINES)
 else ifeq ($(COMPILER),clang)
   $(warning Compiler $(COMPILER) does not support Fortran wrapper)
 endif
+
+export CC FC DEFINES FPPFLAGS
 
 # Compile for GPUs...
 ifeq ($(GPU),1)

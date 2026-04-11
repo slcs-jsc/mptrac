@@ -5,16 +5,22 @@
 # remove variable files if exist
 rm -f data/var_*
 
+# Preprocess sources with the same user-defined macros used for the build.
+fortran_src=data/mptrac_fortran.pp.f90
+c_defines=data/mptrac_defines_c.asc
+${FC:-gfortran} ${FPPFLAGS:--cpp -E -P} ../../src/mptrac_fortran.f90 > "$fortran_src"
+${CC:-gcc} -E -dM ${DEFINES} ../../src/mptrac.h > "$c_defines"
+
 # extract structures
-awk '/TYPE, bind\(c\) :: ctl_t/{f=1;next} /END TYPE ctl_t/{f=0} f' <  ../../src/mptrac_fortran.f90 > data/test_ctl_f.asc
-awk '/TYPE, bind\(c\) :: met_t/{f=1;next} /END TYPE met_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_met_f.asc
-awk '$0=="  TYPE, bind(c) :: clim_t"{f=1;next} /END TYPE clim_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_f.asc
-awk '/TYPE, bind\(c\) :: clim_zm_t/{f=1;next} /END TYPE clim_zm_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_zm_f.asc
-awk '/TYPE, bind\(c\) :: clim_ts_t/{f=1;next} /END TYPE clim_ts_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_ts_f.asc
-awk '/TYPE, bind\(c\) :: clim_photo_t/{f=1;next} /END TYPE clim_photo_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_photo_f.asc
-awk '/TYPE, bind\(c\) :: atm_t/{f=1;next} /END TYPE atm_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_atm_f.asc
-awk '/TYPE, bind\(c\) :: cache_t/{f=1;next} /END TYPE cache_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_cache_f.asc
-awk '/TYPE, bind\(c\) :: dd_t/{f=1;next} /END TYPE dd_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_dd_f.asc
+awk '/TYPE, bind\(c\) :: ctl_t/{f=1;next} /END TYPE ctl_t/{f=0} f' < "$fortran_src" > data/test_ctl_f.asc
+awk '/TYPE, bind\(c\) :: met_t/{f=1;next} /END TYPE met_t/{f=0} f' < "$fortran_src" > data/test_met_f.asc
+awk '$0=="  TYPE, bind(c) :: clim_t"{f=1;next} /END TYPE clim_t/{f=0} f' < "$fortran_src" > data/test_clim_f.asc
+awk '/TYPE, bind\(c\) :: clim_zm_t/{f=1;next} /END TYPE clim_zm_t/{f=0} f' < "$fortran_src" > data/test_clim_zm_f.asc
+awk '/TYPE, bind\(c\) :: clim_ts_t/{f=1;next} /END TYPE clim_ts_t/{f=0} f' < "$fortran_src" > data/test_clim_ts_f.asc
+awk '/TYPE, bind\(c\) :: clim_photo_t/{f=1;next} /END TYPE clim_photo_t/{f=0} f' < "$fortran_src" > data/test_clim_photo_f.asc
+awk '/TYPE, bind\(c\) :: atm_t/{f=1;next} /END TYPE atm_t/{f=0} f' < "$fortran_src" > data/test_atm_f.asc
+awk '/TYPE, bind\(c\) :: cache_t/{f=1;next} /END TYPE cache_t/{f=0} f' < "$fortran_src" > data/test_cache_f.asc
+awk '/TYPE, bind\(c\) :: dd_t/{f=1;next} /END TYPE dd_t/{f=0} f' < "$fortran_src" > data/test_dd_f.asc
 
 awk '/brief Control parameters/{f=1;next} /\} ctl_t;/{f=0} f' < ../../src/mptrac.h > data/test_ctl_c.asc
 awk '/Meteo data structure/{f=1;next} /\} met_t;/{f=0} f' < ../../src/mptrac.h > data/test_met_c.asc
@@ -257,255 +263,37 @@ fi
 
 ########## Compare Dimensions 
 
-grep "ex =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
+check_dimension() {
+    macro=$1
+    fvar=$2
+    grep "^#define $macro " "$c_defines" | awk '{print $3}' > xx
+    grep -i "^[[:space:]]*INTEGER, PARAMETER :: $fvar =" "$fortran_src" | awk '{print $6}' > yy
 
-grep "#define EX " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
+    if cmp -s xx yy; then
+	echo "Dimension $macro (C) and $fvar (Fortran) are equal"
+	rm xx yy
+    else
+	echo "Dimension $macro (C) and $fvar (Fortran) are not equal. $macro is:"
+	cat xx
+	echo "and $fvar is:"
+	cat yy
+	rm xx yy
+	exit_code=99
+	exit $exit_code
+    fi
+}
 
-if cmp -s xx yy; then
-    echo "Dimension EX (C) and ex (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension EX (C) and ex (Fortran) are not equal. EX is:"
-    cat xx
-    echo "and ex is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "ey ="  ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define EY "  ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension EY (C) and ey (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension EY (C) and ey (Fortran) are not equal. EY is:"
-    cat xx
-    echo "and ey is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "ep ="  ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define EP "  ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension EP (C) and ep (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension EP (C) and ep (Fortran) are not equal. EP is:"
-    cat xx
-    echo "and ep is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "npp ="  ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define NP "  ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension NP (C) and npp (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension NP (C) and npp (Fortran) are not equal. NP is:"
-    cat xx
-    echo "and npp is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "nqq =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define NQ "  ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension NQ (C) and nqq (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension NQ (C) and nqq (Fortran) are not equal. NQ is:"
-    cat xx
-    echo "and nqq is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "length =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define LEN " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension LEN (C) and length (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension LEN (C) and length (Fortran) are not equal. LEN is:"
-    cat xx
-    echo "and length is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "cyy =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define CY " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension CY (C) and cyy (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension CY (C) and cyy (Fortran) are not equal. CY is:"
-    cat xx
-    echo "and cyy is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "co3 =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define CO3 " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension CO3 (C) and co3 (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension CO3 (C) and co3 (Fortran) are not equal. CO3 is:"
-    cat xx
-    echo "and co3 is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "cp =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define CP " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension CP (C) and cp (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension CP (C) and cp (Fortran) are not equal. CP is:"
-    cat xx
-    echo "and cp is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "csza =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define CSZA " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension CSZA (C) and csza (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension CSZA (C) and csza (Fortran) are not equal. CSZA is:"
-    cat xx
-    echo "and csza is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-echo "Difference ct, CT"
-grep "ct =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define CT " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension CT (C) and ct (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension CT (C) and ct (Fortran) are not equal. CT is:"
-    cat xx
-    echo "and ct is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
-
-grep "cts =" ../../src/mptrac_fortran.f90 | awk '{print $6}' > y
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > yy; fi; done < y
-rm y
-
-grep "#define CTS " ../../src/mptrac.h | awk '{print $3}' > x
-while read line ; do  if [[ $line = *[[:"digit":]]* ]]; then echo $line > xx; fi; done < x
-rm x
-
-if cmp -s xx yy; then
-    echo "Dimension CTS (C) and cts (Fortran) are equal"
-    rm xx yy
-else
-    echo "Dimension CTS (C) and cts (Fortran) are not equal. CTS is:"
-    cat xx
-    echo "and cts is:"
-    cat yy
-    rm xx yy
-    exit_code=99
-    exit $exit_code
-fi
+check_dimension EX ex
+check_dimension EY ey
+check_dimension EP ep
+check_dimension METVAR metvar
+check_dimension NP npp
+check_dimension NQ nqq
+check_dimension LEN length
+check_dimension CY cyy
+check_dimension CO3 co3
+check_dimension CP cp
+check_dimension CSZA csza
+check_dimension CT ct
+check_dimension CTS cts
+check_dimension DD_NNMAX dd_nnmax
