@@ -33,9 +33,9 @@ PROGRAM trac_fortran
   TYPE(met_t), POINTER :: met0p, met1p
   TYPE(dd_t), POINTER :: ddp
   REAL(real64) :: t
-  CHARACTER(len=5000) :: arg
+  CHARACTER(len=length) :: arg
   TYPE(c_ptr), ALLOCATABLE, DIMENSION(:) :: argv_ptrs
-  CHARACTER(len=5000), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
+  CHARACTER(len=length), ALLOCATABLE, DIMENSION(:), TARGET :: tmp
   INTEGER :: i, stat
   
   ! Read command line arguments...
