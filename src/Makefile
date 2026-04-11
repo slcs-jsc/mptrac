@@ -294,7 +294,7 @@ $(EXC): %: %.c mptrac.o
 mptrac.o: mptrac.c mptrac.h Makefile
 	$(CC) $(CFLAGS) -c -o mptrac.o mptrac.c
 
-mptrac_fortran.o: mptrac_fortran.f90 Makefile
+mptrac_fortran.o: mptrac_fortran.f90 mptrac.h Makefile
 	$(FC) $(FCFLAGS) -o mptrac_fortran.o -c mptrac_fortran.f90 $(LDFLAGS)
 
 trac_fortran: trac_fortran.f90 mptrac_fortran.o mptrac.o
@@ -303,6 +303,8 @@ trac_fortran: trac_fortran.f90 mptrac_fortran.o mptrac.o
 wrapper: trac_fortran
 
 check: $(TESTS)
+
+wrapper_test: wrapper
 
 $(TESTS) cms_test dd_test gpu_test grib_test kpp_test wrapper_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
