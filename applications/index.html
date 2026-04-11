@@ -999,7 +999,10 @@ calculations.</p>
 <a href="../apps/met_zm/">met_zm</a> can be used to extract global maps, vertical
 profiles, and zonal means from meteorological data. The app
 <a href="../apps/met_sample/">met_sample</a> can be used to sample the meteo data
-at individual locations in space and time.</p>
+at individual locations in space and time. The app
+<a href="../apps/met_lapse/">met_lapse</a> calculates lapse-rate statistics, and
+<a href="../apps/met_check_dt/">met_check_dt</a> checks model time-step constraints
+for a given meteorological data file.</p>
 <p>The app <a href="../apps/atm_conv/">atm_conv</a> can be used to convert between
 different file formats of the particle data (ASCII, binary,
 netCDF). The app <a href="../apps/atm_dist/">atm_dist</a> can be used to calculate
@@ -1011,7 +1014,8 @@ data, like individual trajectories. The app
 <a href="../apps/atm_split/">atm_split</a> can split sets of particles into larger
 sets, retaining their total mass. The app <a href="../apps/atm_stat/">atm_stat</a>
 calculates trajectory statistics, for example, the mean position of
-the air parcels.</p>
+the air parcels. The app <a href="../apps/atm2grid/">atm2grid</a> converts
+atmospheric particle data to gridded output.</p>
 <p>The tools <a href="../apps/day2doy/">day2doy</a>, <a href="../apps/doy2day/">doy2day</a>,
 <a href="../apps/jsec2time/">jsec2time</a>, and <a href="../apps/time2jsec/">time2jsec</a> are
 used for time conversion. In particular, they can be used to determine
@@ -1020,7 +1024,9 @@ time (YYYY-MM-DD, HH:MM:SS) and the absolute time in seconds since
 2000-01-01, 00:00 UTC (the internal time coordinate of MPTRAC).</p>
 <p>The tools <a href="../apps/tropo/">tropo</a> and
 <a href="../apps/tropo_sample/">tropo_sample</a> can be used to determine lapse
-rate statistics and to prepare and sample tropopause data files.</p>
+rate statistics and to prepare and sample tropopause data files. The
+tool <a href="../apps/tropo_clim/">tropo_clim</a> calculates climatological
+statistics from tropopause data files.</p>
 <p>Please see the
 <a href="https://slcs-jsc.github.io/mptrac/doxygen/files.html">list of files in the Doxygen manual</a>
 for more information.</p>

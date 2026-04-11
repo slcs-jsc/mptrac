@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/atm_stat/">
+        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/met_lapse/">
       
       
       
@@ -21,7 +21,7 @@
     
     
       
-        <title>atm_stat - MPTRAC</title>
+        <title>met_lapse - MPTRAC</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#atm_stat" class="md-skip">
+        <a href="#met_lapse" class="md-skip">
           Skip to content
         </a>
       
@@ -97,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              atm_stat
+              met_lapse
             
           </span>
         </div>
@@ -884,24 +884,83 @@
   
 
 
-<h1 id="atm_stat">atm_stat</h1>
-<p>Calculate air parcel statistics.</p>
-<pre><code># calling atm_stat
-$ atm_stat  &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]
+<h1 id="met_lapse">met_lapse</h1>
+<p><code>met_lapse</code> calculates lapse-rate statistics from one or more
+meteorological data files.</p>
+<pre><code class="language-bash">./met_lapse &lt;ctl&gt; &lt;lapse.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]
 </code></pre>
-<p>Statistical parameters that can be calculated are:</p>
+<p>Required arguments:</p>
 <ul>
-<li>mean</li>
-<li>stddev</li>
-<li>min</li>
-<li>max</li>
-<li>skew</li>
-<li>kurt</li>
-<li>absdev</li>
-<li>median</li>
-<li>mad</li>
+<li><code>ctl</code>: control parameter file.</li>
+<li><code>lapse.tab</code>: output file for the lapse-rate statistics.</li>
+<li><code>met0 [&lt;met1&gt; ...]</code>: meteorological input files.</li>
 </ul>
-<p>The statistics are calculated with the GNU Scientific Library. More information on the <a href="https://www.gnu.org/software/gsl/doc/html/statistics.html">GNU Scientific Library statistics functions</a> can be found on their webpage.</p>
+<p>Set optional <code>LAPSE_*</code> and <code>MET_*</code> parameters in the control file for
+reliable operation. Appending them after the meteorological input files
+is not recommended for this tool.</p>
+<p>Relevant control parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">parameter</th>
+<th style="text-align: left;">purpose</th>
+<th style="text-align: right;">default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>LAPSE_DZ</code></td>
+<td style="text-align: left;">vertical layer thickness for lapse-rate estimates [0.1 km levels]</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LAPSE_LAT0</code></td>
+<td style="text-align: left;">latitude range start [deg]</td>
+<td style="text-align: right;">-90</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LAPSE_LAT1</code></td>
+<td style="text-align: left;">latitude range end [deg]</td>
+<td style="text-align: right;">90</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LAPSE_Z0</code></td>
+<td style="text-align: left;">altitude range start [km]</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LAPSE_Z1</code></td>
+<td style="text-align: left;">altitude range end [km]</td>
+<td style="text-align: right;">100</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>LAPSE_INTPOL</code></td>
+<td style="text-align: left;">use spline interpolation (<code>1</code>) or linear interpolation (<code>0</code>)</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+<p>The output columns are:</p>
+<ul>
+<li><code>$1</code>: mean altitude [km]</li>
+<li><code>$2</code>: mean latitude [deg]</li>
+<li><code>$3</code>: lapse-rate bin [K/km]</li>
+<li><code>$4</code>: counts of maxima per bin</li>
+<li><code>$5</code>: total number of maxima</li>
+<li><code>$6</code>: normalized frequency of maxima</li>
+<li><code>$7</code>: counts of minima per bin</li>
+<li><code>$8</code>: total number of minima</li>
+<li><code>$9</code>: normalized frequency of minima</li>
+<li><code>$10</code>: counts of means per bin</li>
+<li><code>$11</code>: total number of means</li>
+<li><code>$12</code>: normalized frequency of means</li>
+<li><code>$13</code>: counts of standard deviations per bin</li>
+<li><code>$14</code>: total number of standard deviations</li>
+<li><code>$15</code>: normalized frequency of standard deviations</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-bash">./met_lapse lapse.ctl lapse_2011_06_05.tab ei_2011_06_05_00.nc
+</code></pre>
 
 
 

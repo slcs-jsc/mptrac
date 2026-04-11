@@ -889,7 +889,7 @@
 <pre><code># calling met_conv
 ./met_conv &lt;ctl&gt; &lt;met_in&gt; &lt;met_in_type&gt; &lt;met_out&gt; &lt;met_out_type&gt;
 </code></pre>
-<p>The required paramters are as follows:</p>
+<p>The required parameters are as follows:</p>
 <ul>
 <li>ctl: The control file.</li>
 <li>met_in: The name of the meteorological file that should be converted.</li>
@@ -932,12 +932,11 @@
 </tr>
 </tbody>
 </table>
-<p>whereby netcdf and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp) and zst (zstandard, https://github.com/facebook/zstd) are compression formats. </p>
+<p>whereby netCDF and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp), and zstd (zstandard, https://github.com/facebook/zstd) are compression formats.</p>
 <p>Currently to enable the usage of zfp and zstd format MPTRAC needs to be compiled using ZSTD=1 and ZFP=1:</p>
-<p>```</p>
-<h1 id="run-make-enabling-the-usage-of-the-zfp-and-zstd-compression">Run make enabling the usage of the ZFP and ZSTD compression</h1>
-<p>$ make ZSTD=1 ZFP=1
-````</p>
+<pre><code># Run make enabling the usage of the ZFP and ZSTD compression
+$ make ZSTD=1 ZFP=1
+</code></pre>
 
 
 

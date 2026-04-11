@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/atm_stat/">
+        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/met_check_dt/">
       
       
       
@@ -21,7 +21,7 @@
     
     
       
-        <title>atm_stat - MPTRAC</title>
+        <title>met_check_dt - MPTRAC</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#atm_stat" class="md-skip">
+        <a href="#met_check_dt" class="md-skip">
           Skip to content
         </a>
       
@@ -97,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              atm_stat
+              met_check_dt
             
           </span>
         </div>
@@ -884,24 +884,68 @@
   
 
 
-<h1 id="atm_stat">atm_stat</h1>
-<p>Calculate air parcel statistics.</p>
-<pre><code># calling atm_stat
-$ atm_stat  &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]
+<h1 id="met_check_dt">met_check_dt</h1>
+<p><code>met_check_dt</code> checks model time-step constraints for a meteorological
+data file. It reports height-dependent estimates for horizontal and
+vertical advection and diffusion time steps.</p>
+<pre><code class="language-bash">./met_check_dt &lt;ctl&gt; &lt;dt_file&gt; &lt;met&gt; [KEY VALUE ...]
 </code></pre>
-<p>Statistical parameters that can be calculated are:</p>
+<p>Required arguments:</p>
 <ul>
-<li>mean</li>
-<li>stddev</li>
-<li>min</li>
-<li>max</li>
-<li>skew</li>
-<li>kurt</li>
-<li>absdev</li>
-<li>median</li>
-<li>mad</li>
+<li><code>ctl</code>: control parameter file.</li>
+<li><code>dt_file</code>: output file for the time-step diagnostics.</li>
+<li><code>met</code>: meteorological input file.</li>
 </ul>
-<p>The statistics are calculated with the GNU Scientific Library. More information on the <a href="https://www.gnu.org/software/gsl/doc/html/statistics.html">GNU Scientific Library statistics functions</a> can be found on their webpage.</p>
+<p>Optional trailing arguments can be used to override control parameters
+on the command line as <code>KEY VALUE</code> pairs.</p>
+<p>Relevant control parameters:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">parameter</th>
+<th style="text-align: left;">purpose</th>
+<th style="text-align: right;">default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>KX</code></td>
+<td style="text-align: left;">horizontal diffusivity [m2/s]</td>
+<td style="text-align: right;">50.0</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>KZ</code></td>
+<td style="text-align: left;">vertical diffusivity [m2/s]</td>
+<td style="text-align: right;">0.1</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>DX</code></td>
+<td style="text-align: left;">horizontal grid spacing [km]</td>
+<td style="text-align: right;">required</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>CMAX</code></td>
+<td style="text-align: left;">maximum Courant number for advection</td>
+<td style="text-align: right;">0.5</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>NMAX</code></td>
+<td style="text-align: left;">maximum stability factor for diffusion</td>
+<td style="text-align: right;">0.3</td>
+</tr>
+</tbody>
+</table>
+<p>The output columns are:</p>
+<ul>
+<li><code>$1</code>: height [km]</li>
+<li><code>$2</code>: time step for horizontal advection [s]</li>
+<li><code>$3</code>: time step for vertical advection [s]</li>
+<li><code>$4</code>: time step for horizontal diffusion [s]</li>
+<li><code>$5</code>: time step for vertical diffusion [s]</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-bash">./met_check_dt trac.ctl dt_2011_06_05.tab ei_2011_06_05_00.nc DX 50
+</code></pre>
 
 
 

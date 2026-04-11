@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/atm_stat/">
+        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/tropo_clim/">
       
       
       
@@ -21,7 +21,7 @@
     
     
       
-        <title>atm_stat - MPTRAC</title>
+        <title>tropo_clim - MPTRAC</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#atm_stat" class="md-skip">
+        <a href="#tropo_clim" class="md-skip">
           Skip to content
         </a>
       
@@ -97,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              atm_stat
+              tropo_clim
             
           </span>
         </div>
@@ -884,24 +884,72 @@
   
 
 
-<h1 id="atm_stat">atm_stat</h1>
-<p>Calculate air parcel statistics.</p>
-<pre><code># calling atm_stat
-$ atm_stat  &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]
+<h1 id="tropo_clim">tropo_clim</h1>
+<p><code>tropo_clim</code> calculates tropopause climatology statistics from one or
+more tropopause data files.</p>
+<pre><code class="language-bash">./tropo_clim &lt;ctl&gt; &lt;clim.tab&gt; &lt;var&gt; &lt;tropo.nc&gt; [&lt;tropo2.nc&gt; ...]
 </code></pre>
-<p>Statistical parameters that can be calculated are:</p>
+<p>Required arguments:</p>
 <ul>
-<li>mean</li>
-<li>stddev</li>
-<li>min</li>
-<li>max</li>
-<li>skew</li>
-<li>kurt</li>
-<li>absdev</li>
-<li>median</li>
-<li>mad</li>
+<li><code>ctl</code>: control parameter file.</li>
+<li><code>clim.tab</code>: output file for the tropopause climatology.</li>
+<li><code>var</code>: tropopause variable prefix to process.</li>
+<li><code>tropo.nc [&lt;tropo2.nc&gt; ...]</code>: tropopause input files.</li>
 </ul>
-<p>The statistics are calculated with the GNU Scientific Library. More information on the <a href="https://www.gnu.org/software/gsl/doc/html/statistics.html">GNU Scientific Library statistics functions</a> can be found on their webpage.</p>
+<p>Supported values for <code>var</code> are the variable prefixes written by
+<code>tropo</code>, for example:</p>
+<table>
+<thead>
+<tr>
+<th style="text-align: left;">var</th>
+<th style="text-align: left;">description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;"><code>clp</code></td>
+<td style="text-align: left;">cold point tropopause</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>dyn</code></td>
+<td style="text-align: left;">dynamical tropopause</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>wmo_1st</code></td>
+<td style="text-align: left;">WMO first lapse-rate tropopause</td>
+</tr>
+<tr>
+<td style="text-align: left;"><code>wmo_2nd</code></td>
+<td style="text-align: left;">WMO second lapse-rate tropopause</td>
+</tr>
+</tbody>
+</table>
+<p>For a selected variable prefix such as <code>wmo_1st</code>, the input file must
+contain the variables <code>wmo_1st_z</code>, <code>wmo_1st_p</code>, and <code>wmo_1st_t</code>.
+Water vapor and ozone variables with the suffixes <code>_q</code> and <code>_o3</code> are
+used if they are present.</p>
+<p>The output columns are:</p>
+<ul>
+<li><code>$1</code>: longitude [deg]</li>
+<li><code>$2</code>: latitude [deg]</li>
+<li><code>$3</code>: tropopause height mean [km]</li>
+<li><code>$4</code>: tropopause pressure mean [hPa]</li>
+<li><code>$5</code>: tropopause temperature mean [K]</li>
+<li><code>$6</code>: tropopause water vapor mean [ppv]</li>
+<li><code>$7</code>: tropopause ozone mean [ppv]</li>
+<li><code>$8</code>: tropopause height standard deviation [km]</li>
+<li><code>$9</code>: tropopause pressure standard deviation [hPa]</li>
+<li><code>$10</code>: tropopause temperature standard deviation [K]</li>
+<li><code>$11</code>: tropopause water vapor standard deviation [ppv]</li>
+<li><code>$12</code>: tropopause ozone standard deviation [ppv]</li>
+<li><code>$13</code>: number of valid data points</li>
+<li><code>$14</code>: occurrence frequency [%]</li>
+</ul>
+<p>Example:</p>
+<pre><code class="language-bash">for var in clp dyn wmo_1st wmo_2nd ; do
+  ./tropo_clim tropo.ctl clim_${var}.tab ${var} tropo_2011_06_05.nc
+done
+</code></pre>
 
 
 

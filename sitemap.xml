@@ -69,6 +69,10 @@
          <lastmod>2026-04-11</lastmod>
     </url>
     <url>
+         <loc>https://slcs-jsc.github.io/mptrac/apps/atm2grid/</loc>
+         <lastmod>2026-04-11</lastmod>
+    </url>
+    <url>
          <loc>https://slcs-jsc.github.io/mptrac/apps/atm_conv/</loc>
          <lastmod>2026-04-11</lastmod>
     </url>
@@ -109,7 +113,15 @@
          <lastmod>2026-04-11</lastmod>
     </url>
     <url>
+         <loc>https://slcs-jsc.github.io/mptrac/apps/met_check_dt/</loc>
+         <lastmod>2026-04-11</lastmod>
+    </url>
+    <url>
          <loc>https://slcs-jsc.github.io/mptrac/apps/met_conv/</loc>
+         <lastmod>2026-04-11</lastmod>
+    </url>
+    <url>
+         <loc>https://slcs-jsc.github.io/mptrac/apps/met_lapse/</loc>
          <lastmod>2026-04-11</lastmod>
     </url>
     <url>
@@ -154,6 +166,10 @@
     </url>
     <url>
          <loc>https://slcs-jsc.github.io/mptrac/apps/tropo/</loc>
+         <lastmod>2026-04-11</lastmod>
+    </url>
+    <url>
+         <loc>https://slcs-jsc.github.io/mptrac/apps/tropo_clim/</loc>
          <lastmod>2026-04-11</lastmod>
     </url>
     <url>

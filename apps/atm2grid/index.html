@@ -8,7 +8,7 @@
       
       
       
-        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/atm_stat/">
+        <link rel="canonical" href="https://slcs-jsc.github.io/mptrac/apps/atm2grid/">
       
       
       
@@ -21,7 +21,7 @@
     
     
       
-        <title>atm_stat - MPTRAC</title>
+        <title>atm2grid - MPTRAC</title>
       
     
     
@@ -62,7 +62,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#atm_stat" class="md-skip">
+        <a href="#atm2grid" class="md-skip">
           Skip to content
         </a>
       
@@ -97,7 +97,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              atm_stat
+              atm2grid
             
           </span>
         </div>
@@ -884,24 +884,26 @@
   
 
 
-<h1 id="atm_stat">atm_stat</h1>
-<p>Calculate air parcel statistics.</p>
-<pre><code># calling atm_stat
-$ atm_stat  &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]
+<h1 id="atm2grid">atm2grid</h1>
+<p><code>atm2grid</code> converts an atmospheric particle data file to gridded output
+data. It reads the output settings from the control file and writes a
+grid file using the configured <code>GRID_BASENAME</code>.</p>
+<pre><code class="language-bash">./atm2grid &lt;ctl&gt; &lt;atm_in&gt; [KEY VALUE ...]
 </code></pre>
-<p>Statistical parameters that can be calculated are:</p>
+<p>Required arguments:</p>
 <ul>
-<li>mean</li>
-<li>stddev</li>
-<li>min</li>
-<li>max</li>
-<li>skew</li>
-<li>kurt</li>
-<li>absdev</li>
-<li>median</li>
-<li>mad</li>
+<li><code>ctl</code>: control parameter file.</li>
+<li><code>atm_in</code>: atmospheric input file.</li>
 </ul>
-<p>The statistics are calculated with the GNU Scientific Library. More information on the <a href="https://www.gnu.org/software/gsl/doc/html/statistics.html">GNU Scientific Library statistics functions</a> can be found on their webpage.</p>
+<p>Optional trailing arguments can be used to override control parameters
+on the command line as <code>KEY VALUE</code> pairs.</p>
+<p>The control parameter <code>GRID_BASENAME</code> must be set. The output filename
+is derived from <code>GRID_BASENAME</code> and the time stamp read from <code>atm_in</code>.
+For tabular grid output, the file suffix is <code>.tab</code>; for netCDF grid
+output, the file suffix is <code>.nc</code>.</p>
+<p>Example:</p>
+<pre><code class="language-bash">./atm2grid trac.ctl atm_2011_06_05_00_00.tab GRID_BASENAME grid
+</code></pre>
 
 
 
