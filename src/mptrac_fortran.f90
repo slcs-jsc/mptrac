@@ -62,6 +62,7 @@ MODULE mptrac_struct
   INTEGER, PARAMETER :: csza = 50
   INTEGER, PARAMETER :: ct = 12
   INTEGER, PARAMETER :: cts = 1000
+  INTEGER, PARAMETER :: dd_nnmax = 26
   
   ! Air parcel data...
   TYPE, bind(c) :: atm_t
@@ -546,6 +547,7 @@ MODULE mptrac_struct
   TYPE, bind(c) :: dd_t
      INTEGER(c_int) :: rank
      INTEGER(c_int) :: size
+     INTEGER(c_int), DIMENSION(dd_nnmax) :: neighbours
      REAL(c_double) :: subdomain_lon_max
      REAL(c_double) :: subdomain_lon_min
      REAL(c_double) :: subdomain_lat_max
@@ -623,15 +625,16 @@ MODULE mptrac_func
      END SUBROUTINE mptrac_init
 
      ! Read air parcel data...
-     SUBROUTINE mptrac_read_atm(filename, ctl, atm) &
+     FUNCTION mptrac_read_atm(filename, ctl, atm) &
           bind(c,name='mptrac_read_atm')
        USE iso_c_binding
        USE mptrac_struct, ONLY : ctl_t, atm_t
        IMPLICIT NONE
+       INTEGER(c_int) :: mptrac_read_atm
        CHARACTER(c_char), INTENT(in) :: filename
        TYPE(ctl_t), INTENT(in), TARGET :: ctl
        TYPE(atm_t), INTENT(out), TARGET :: atm
-     END SUBROUTINE mptrac_read_atm
+     END FUNCTION mptrac_read_atm
 
      ! Read climatological data...
      SUBROUTINE mptrac_read_clim(ctl, clim) &
@@ -651,7 +654,7 @@ MODULE mptrac_func
        IMPLICIT NONE
        CHARACTER(c_char), INTENT(in) :: filename
        INTEGER(c_int), VALUE :: argc
-       TYPE(c_ptr), DIMENSION(5) :: argv
+       TYPE(c_ptr), DIMENSION(*) :: argv
        TYPE(ctl_t), INTENT(out), TARGET :: ctl
      END SUBROUTINE mptrac_read_ctl
 

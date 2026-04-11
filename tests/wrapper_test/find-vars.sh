@@ -14,6 +14,7 @@ awk '/TYPE, bind\(c\) :: clim_ts_t/{f=1;next} /END TYPE clim_ts_t/{f=0} f' < ../
 awk '/TYPE, bind\(c\) :: clim_photo_t/{f=1;next} /END TYPE clim_photo_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_clim_photo_f.asc
 awk '/TYPE, bind\(c\) :: atm_t/{f=1;next} /END TYPE atm_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_atm_f.asc
 awk '/TYPE, bind\(c\) :: cache_t/{f=1;next} /END TYPE cache_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_cache_f.asc
+awk '/TYPE, bind\(c\) :: dd_t/{f=1;next} /END TYPE dd_t/{f=0} f' < ../../src/mptrac_fortran.f90 > data/test_dd_f.asc
 
 awk '/brief Control parameters/{f=1;next} /\} ctl_t;/{f=0} f' < ../../src/mptrac.h > data/test_ctl_c.asc
 awk '/Meteo data structure/{f=1;next} /\} met_t;/{f=0} f' < ../../src/mptrac.h > data/test_met_c.asc
@@ -23,6 +24,7 @@ awk '/Climatological data in the form of time series./{f=1;next} /\} clim_ts_t;/
 awk '/Climatological data in the form of photolysis rates./{f=1;next} /\} clim_photo_t;/{f=0} f' < ../../src/mptrac.h > data/test_clim_photo_c.asc
 awk '/Air parcel data./{f=1;next} /\} atm_t;/{f=0} f' < ../../src/mptrac.h > data/test_atm_c.asc
 awk '/Cache data structure./{f=1;next} /\} cache_t;/{f=0} f' < ../../src/mptrac.h > data/test_cache_c.asc
+awk '/Domain decomposition data structure./{f=1;skip=0;next} /\} dd_t;/{f=0} f {if ($0 ~ /#ifdef DD/) {skip=1; next}; if ($0 ~ /#endif/) {skip=0; next}; if (!skip) print}' < ../../src/mptrac.h > data/test_dd_c.asc
 
 # compare number of structure entries and variables inside 
 grep ";" data/test_ctl_c.asc | wc -l > x
@@ -222,6 +224,31 @@ else
     cat y
     echo "Difference between var_cache_c.asc and var_cache_f.asc"
     diff data/var_cache_c.asc data/var_cache_f.asc
+    rm x y
+    exit_code=99
+    exit $exit_code
+fi
+
+grep ";" data/test_dd_c.asc | wc -l > x
+wc -l < data/test_dd_f.asc > y
+for varc in $(grep ";" data/test_dd_c.asc | awk '{print $2}') ; do
+    echo "$varc" | awk -F'[;[]' '{print $1}' >> data/var_dd_c.asc
+done
+
+for varf in $(grep "::" data/test_dd_f.asc|awk '{print $NF}') ; do
+    echo "$varf" >> data/var_dd_f.asc
+done
+if cmp -s x y && cmp -s data/var_dd_c.asc data/var_dd_f.asc ; then
+    echo "Number of domain decomposition data are equal:"
+    cat x
+    rm x y
+else
+    echo "Number of domain decomposition data are not equal. C has: "
+    cat x
+    echo "and Fortran has: "
+    cat y
+    echo "Difference between var_dd_c.asc and var_dd_f.asc"
+    diff data/var_dd_c.asc data/var_dd_f.asc
     rm x y
     exit_code=99
     exit $exit_code
@@ -482,4 +509,3 @@ else
     exit_code=99
     exit $exit_code
 fi
-

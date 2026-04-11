@@ -31,10 +31,10 @@ $ make wrapper_test
 
 ### trac_fortran.f90
 
-This program calculates trajectories based on MPTRAC's module_advect
-function. It is the Fortran counterpart to trac.c. The program is
-called with a directory list, a control file name, and an atmospheric
-input file name:
+This program calculates trajectories by calling MPTRAC's time step
+routine. It is the Fortran counterpart to trac.c. The program is called
+with a directory list, a control file name, and an atmospheric input
+file name:
 
 ```
 # calling trac_fortran
@@ -75,13 +75,14 @@ $ ./trac_fortran data/dirlist trac.ctl atm_split.tab ATM_BASENAME atm_diff GRID_
 
 To ensure the interoperability between Fortran and C an interface is
 needed. This interface includes some general dimension variables, the
-structures `atm_t`, `clim_photo_t`, `clim_t`, `clim_ts_t`,
-`clim_zm_t`, `clt_t`, `met_t` and the functions `mptrac_get_met`,
-`mptrac_module_advect`, `mptrac_module_timesteps`, `mptrac_read_atm`,
-`mptrac_read_clim`, `mptrac_read_ctl`, `mptrac_read_met`,
-`mptrac_write_output`. The functions have always the prefix `mptrac`
-to indicate that they are only an interface calling the original
-MPTRAC function.
+structures `atm_t`, `cache_t`, `clim_photo_t`, `clim_t`, `clim_ts_t`,
+`clim_zm_t`, `ctl_t`, `dd_t`, `met_t` and the functions
+`mptrac_alloc`, `mptrac_free`, `mptrac_get_met`, `mptrac_init`,
+`mptrac_read_atm`, `mptrac_read_clim`, `mptrac_read_ctl`,
+`mptrac_read_met`, `mptrac_run_timestep`, `mptrac_write_atm`,
+`mptrac_write_met`, `mptrac_write_output`, `mptrac_update_device`, and
+`mptrac_update_host`. The functions have the prefix `mptrac` to
+indicate that they are interfaces to the original MPTRAC functions.
 
 ### Checking order and array sizes
 
@@ -89,7 +90,7 @@ It is crucial that the order and array sizes in the Fortran interface
 match those in the original C structure. The structures in MPTRAC
 consist of extensive variable lists (up to O100 for the control
 parameter list) and data types that may also depend on self-defined
-structures (struct of struct). A shell script `find_vars.sh` (in
+structures (struct of struct). A shell script `find-vars.sh` (in
 `tests/wrapper_test/`) can be used to check differences in the
 structures and variable dimensions. This script is automatically
 executed when the wrapper test is performed.
@@ -99,9 +100,9 @@ executed when the wrapper test is performed.
 An example of using the Fortran wrapper for trajectory calculations
 can be found in `tests/wrapper_test/run.sh`.
 
-This file executes the trajectory calculation first with the original
-C code `trac.c`. The output is stored in the directory
-`data.ref/`. Afterwards, the Fortran code `trac_fortran.f90` is
-called. This output is stored in the directory `data/`. Both
-directories are compared to make sure that the Fortran version
-produces the same results as the C version.
+This file executes the trajectory calculation first with the original C
+code `trac.c`. The output is stored in the directory `data/c/`.
+Afterwards, the Fortran code `trac_fortran.f90` is called. This output
+is stored in the directory `data/fortran/`. Both directories are
+compared to make sure that the Fortran version produces the same
+results as the C version.

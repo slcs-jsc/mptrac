@@ -24,19 +24,13 @@ PROGRAM trac_fortran
   
   IMPLICIT NONE
   
-  CHARACTER(len=40) :: filename_ctl, filename_atm, dirname
-  INTEGER(c_int) :: argc, ntask = -1
-  TYPE(ctl_t), TARGET :: ctl
+  CHARACTER(len=length) :: filename_ctl, filename_atm, dirname
+  INTEGER(c_int) :: argc, ntask = -1, read_atm_status
   TYPE(ctl_t), POINTER :: ctlp
-  TYPE(cache_t), TARGET :: cache
   TYPE(cache_t), POINTER :: cachep
-  TYPE(atm_t), TARGET :: atm
   TYPE(atm_t), POINTER :: atmp
-  TYPE(clim_t), TARGET :: clim
   TYPE(clim_t), POINTER :: climp
-  TYPE(met_t), TARGET :: met0, met1
   TYPE(met_t), POINTER :: met0p, met1p
-  TYPE(dd_t), TARGET :: dd
   TYPE(dd_t), POINTER :: ddp
   REAL(real64) :: t
   CHARACTER(len=5000) :: arg
@@ -47,14 +41,14 @@ PROGRAM trac_fortran
   ! Read command line arguments...
   argc = command_argument_count()
   
-  IF (argc < 4) THEN
+  IF (argc < 3) THEN
      WRITE(*,*) "Error: Give parameters: <dirlist> <ctl> <atm_in>"
      CALL EXIT
   ENDIF
   
-  ALLOCATE(tmp(argc), argv_ptrs(argc))
+  ALLOCATE(tmp(0:argc), argv_ptrs(0:argc))
   
-  DO i = 1, argc
+  DO i = 0, argc
      CALL get_command_argument(i, arg)
      IF (LEN_TRIM(arg) == 0) EXIT
      tmp(i) = TRIM(arg)//c_null_char
@@ -67,15 +61,8 @@ PROGRAM trac_fortran
      WRITE(*,*) "Error: Cannot open directory list!"
      CALL EXIT
   ENDIF
-  
-  ! Set pointers...
-  ctlp => ctl
-  cachep => cache
-  climp => clim
-  met0p => met0
-  met1p => met1
-  atmp => atm
-  ddp => dd
+
+  NULLIFY(ctlp, cachep, climp, met0p, met1p, atmp, ddp)
   
   ! Endless loop...
   DO WHILE (1 .eq. 1)
@@ -88,44 +75,48 @@ PROGRAM trac_fortran
      CALL mptrac_alloc(ctlp, cachep, climp, met0p, met1p, atmp, ddp)
      
      ! Read control parameters...
-     CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc, argv_ptrs, ctl)
+     CALL mptrac_read_ctl(TRIM(filename_ctl)//c_null_char, argc + 1, argv_ptrs, ctlp)
      
      ! Read climatological data... 
-     CALL mptrac_read_clim(ctl, clim)
+     CALL mptrac_read_clim(ctlp, climp)
      
      ! Read atmospheric data...
-     CALL mptrac_read_atm(TRIM(filename_atm)//c_null_char, ctl, atm)
+     read_atm_status = mptrac_read_atm(TRIM(filename_atm)//c_null_char, ctlp, atmp)
+     IF (read_atm_status == 0) THEN
+        WRITE(*,*) "Error: Cannot open file!"
+        CALL EXIT
+     ENDIF
      
      ! Initialize MPTRAC...
-     CALL mptrac_init(ctl, cache, clim, atm, ntask)
+     CALL mptrac_init(ctlp, cachep, climp, atmp, ntask)
 
      ! Set start time...
-     t = ctl%t_start
+     t = ctlp%t_start
 
      ! Loop over time steps...
-     DO WHILE (ctl%direction * (t - ctl%t_stop) < ctl%dt_mod)
+     DO WHILE (ctlp%direction * (t - ctlp%t_stop) < ctlp%dt_mod)
         
         ! Adjust length of final time step... 
-        IF (ctl%direction * (t - ctl%t_stop) > 0) THEN
-           t = ctl%t_stop
+        IF (ctlp%direction * (t - ctlp%t_stop) > 0) THEN
+           t = ctlp%t_stop
         ENDIF
         
         ! Get meteo data...
-        CALL mptrac_get_met(ctl, clim, t, met0p, met1p, ddp)
+        CALL mptrac_get_met(ctlp, climp, t, met0p, met1p, ddp)
         
         ! Check time step...
-        IF (ctl%dt_mod > ABS(met0p%lon(2) - met0p%lon(1)) * 111132. / 150.) THEN
+        IF (ctlp%dt_mod > ABS(met0p%lon(2) - met0p%lon(1)) * 111132. / 150.) THEN
            WRITE(*,*) "Violation of CFL criterion! Check DT_MOD!"
         ENDIF
         
         ! Run a single time step..."
-        CALL mptrac_run_timestep(ctl, cache, clim, met0p, met1p, atm, t, ddp)
+        CALL mptrac_run_timestep(ctlp, cachep, climp, met0p, met1p, atmp, t, ddp)
         
         ! Write output...
-        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctl, met0p, met1p, atm, t)
+        CALL mptrac_write_output(TRIM(dirname)//c_null_char, ctlp, met0p, met1p, atmp, t)
 
         ! Set time...
-        t = t + ctl%direction * ctl%dt_mod
+        t = t + ctlp%direction * ctlp%dt_mod
         
      END DO
      
