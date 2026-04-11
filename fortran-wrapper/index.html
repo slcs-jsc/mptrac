@@ -1144,10 +1144,10 @@ directory:</p>
 </code></pre>
 <h2 id="application">Application</h2>
 <h3 id="trac_fortranf90">trac_fortran.f90</h3>
-<p>This program calculates trajectories based on MPTRAC's module_advect
-function. It is the Fortran counterpart to trac.c. The program is
-called with a directory list, a control file name, and an atmospheric
-input file name:</p>
+<p>This program calculates trajectories by calling MPTRAC's time step
+routine. It is the Fortran counterpart to trac.c. The program is called
+with a directory list, a control file name, and an atmospheric input
+file name:</p>
 <pre><code># calling trac_fortran
 $ ./trac_fortran &lt;dirlist&gt; &lt;ctl&gt; &lt;atm_in&gt; [KEY VALUE ...]
 </code></pre>
@@ -1181,31 +1181,32 @@ $ ./trac_fortran data/dirlist trac.ctl atm_split.tab ATM_BASENAME atm_diff GRID_
 <h3 id="mptrac_fortranf90">mptrac_fortran.f90</h3>
 <p>To ensure the interoperability between Fortran and C an interface is
 needed. This interface includes some general dimension variables, the
-structures <code>atm_t</code>, <code>clim_photo_t</code>, <code>clim_t</code>, <code>clim_ts_t</code>,
-<code>clim_zm_t</code>, <code>clt_t</code>, <code>met_t</code> and the functions <code>mptrac_get_met</code>,
-<code>mptrac_module_advect</code>, <code>mptrac_module_timesteps</code>, <code>mptrac_read_atm</code>,
-<code>mptrac_read_clim</code>, <code>mptrac_read_ctl</code>, <code>mptrac_read_met</code>,
-<code>mptrac_write_output</code>. The functions have always the prefix <code>mptrac</code>
-to indicate that they are only an interface calling the original
-MPTRAC function.</p>
+structures <code>atm_t</code>, <code>cache_t</code>, <code>clim_photo_t</code>, <code>clim_t</code>, <code>clim_ts_t</code>,
+<code>clim_zm_t</code>, <code>ctl_t</code>, <code>dd_t</code>, <code>met_t</code> and the functions
+<code>mptrac_alloc</code>, <code>mptrac_free</code>, <code>mptrac_get_met</code>, <code>mptrac_init</code>,
+<code>mptrac_read_atm</code>, <code>mptrac_read_clim</code>, <code>mptrac_read_ctl</code>,
+<code>mptrac_read_met</code>, <code>mptrac_run_timestep</code>, <code>mptrac_write_atm</code>,
+<code>mptrac_write_met</code>, <code>mptrac_write_output</code>, <code>mptrac_update_device</code>, and
+<code>mptrac_update_host</code>. The functions have the prefix <code>mptrac</code> to
+indicate that they are interfaces to the original MPTRAC functions.</p>
 <h3 id="checking-order-and-array-sizes">Checking order and array sizes</h3>
 <p>It is crucial that the order and array sizes in the Fortran interface
 match those in the original C structure. The structures in MPTRAC
 consist of extensive variable lists (up to O100 for the control
 parameter list) and data types that may also depend on self-defined
-structures (struct of struct). A shell script <code>find_vars.sh</code> (in
+structures (struct of struct). A shell script <code>find-vars.sh</code> (in
 <code>tests/wrapper_test/</code>) can be used to check differences in the
 structures and variable dimensions. This script is automatically
 executed when the wrapper test is performed.</p>
 <h2 id="example">Example</h2>
 <p>An example of using the Fortran wrapper for trajectory calculations
 can be found in <code>tests/wrapper_test/run.sh</code>.</p>
-<p>This file executes the trajectory calculation first with the original
-C code <code>trac.c</code>. The output is stored in the directory
-<code>data.ref/</code>. Afterwards, the Fortran code <code>trac_fortran.f90</code> is
-called. This output is stored in the directory <code>data/</code>. Both
-directories are compared to make sure that the Fortran version
-produces the same results as the C version.</p>
+<p>This file executes the trajectory calculation first with the original C
+code <code>trac.c</code>. The output is stored in the directory <code>data/c/</code>.
+Afterwards, the Fortran code <code>trac_fortran.f90</code> is called. This output
+is stored in the directory <code>data/fortran/</code>. Both directories are
+compared to make sure that the Fortran version produces the same
+results as the C version.</p>
 
 
 
