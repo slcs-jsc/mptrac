@@ -2512,7 +2512,6 @@ void level_definitions(
     ERRMSG("Use values between 3 and 7.");
   }
 
-
   if (ctl->met_np > EP)
     ERRMSG("Recompile with larger EP to use this pressure level definition!");
 }
