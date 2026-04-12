@@ -213,6 +213,13 @@ void usage(
   printf("  <ctl>      Control file.\n");
   printf("  <atm_out>  Atmospheric output file.\n");
   printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  INIT_T0, INIT_T1, INIT_DT        Time range and spacing.\n");
+  printf("  INIT_Z0, INIT_Z1, INIT_DZ        Altitude range and spacing.\n");
+  printf("  INIT_LON0, INIT_LON1, INIT_DLON  Longitude range and spacing.\n");
+  printf("  INIT_LAT0, INIT_LAT1, INIT_DLAT  Latitude range and spacing.\n");
+  printf("  INIT_MASS, INIT_VMR              Initial parcel mass or VMR.\n");
+  printf("  INIT_EVENLY, INIT_REP            Parcel distribution settings.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

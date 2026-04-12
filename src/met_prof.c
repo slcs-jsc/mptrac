@@ -81,7 +81,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_prof <ctl> <prof.tab> <met0> [<met1> ...]\n\n"
+	   "Usage: met_prof <ctl> <prof.tab> <met0> [<met1> ...] [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -262,12 +262,17 @@ void usage(
   printf("Extract vertical profiles from meteorological data.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  met_prof <ctl> <prof.tab> <met0> [<met1> ...]\n");
+  printf("  met_prof <ctl> <prof.tab> <met0> [<met1> ...] [KEY VALUE ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>       Control file.\n");
   printf("  <prof.tab>  Output table.\n");
   printf("  <met*>      Meteorological input files.\n");
+  printf("  [KEY VALUE] Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  PROF_Z0, PROF_Z1, PROF_DZ        Altitude range and spacing.\n");
+  printf("  PROF_LON0, PROF_LON1, PROF_DLON  Longitude range and spacing.\n");
+  printf("  PROF_LAT0, PROF_LAT1, PROF_DLAT  Latitude range and spacing.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

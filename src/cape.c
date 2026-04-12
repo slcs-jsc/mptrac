@@ -67,7 +67,7 @@ int main(
   /* Check arguments... */
   if (argc < 2)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: cape <ctl> <met.nc>\n\n" "Use -h for full help.");
+	   "Usage: cape <ctl> <met.nc> [KEY VALUE ...]\n\n" "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -174,11 +174,12 @@ void usage(
   printf("Add CAPE data to a meteorological netCDF file.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  cape <ctl> <met.nc>\n");
+  printf("  cape <ctl> <met.nc> [KEY VALUE ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>     Control file.\n");
   printf("  <met.nc>  Meteorological netCDF file to update.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

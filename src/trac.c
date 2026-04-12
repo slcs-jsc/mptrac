@@ -200,6 +200,14 @@ void usage(
   printf
     ("  <atm_in>   Atmospheric input file name relative to each work directory.\n");
   printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nCommon control parameters:\n");
+  printf("  T_STOP, DT_MOD                   Simulation end time and model time step.\n");
+  printf("  DIRECTION                        Time-integration direction.\n");
+  printf("  METBASE, DT_MET                  Meteorological input basename and step.\n");
+  printf("  ATM_BASENAME, ATM_DT_OUT         Atmospheric output basename and step.\n");
+  printf("  GRID_BASENAME, GRID_DT_OUT       Gridded output basename and step.\n");
+  printf("  ENS_BASENAME, STAT_BASENAME      Ensemble and statistics output basenames.\n");
+  printf("  SAMPLE_BASENAME, PROF_BASENAME   Sample and profile output basenames.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

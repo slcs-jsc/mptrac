@@ -198,6 +198,14 @@ void usage(
   printf("  <atm_in>   Atmospheric input file.\n");
   printf("  <atm_out>  Atmospheric output file.\n");
   printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  SPLIT_N, SPLIT_M, SPLIT_UM       Parcel count and mass settings.\n");
+  printf("  SPLIT_T0, SPLIT_T1, SPLIT_DT     Time range and spacing.\n");
+  printf("  SPLIT_Z0, SPLIT_Z1, SPLIT_DZ     Altitude range and spacing.\n");
+  printf("  SPLIT_DX                         Horizontal split distance.\n");
+  printf("  SPLIT_LON0, SPLIT_LON1           Longitude range.\n");
+  printf("  SPLIT_LAT0, SPLIT_LAT1           Latitude range.\n");
+  printf("  SPLIT_KERNEL                     Kernel file for weighted splitting.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

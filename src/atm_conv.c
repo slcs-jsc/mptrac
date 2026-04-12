@@ -50,7 +50,7 @@ int main(
   /* Check arguments... */
   if (argc < 6)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: atm_conv <ctl> <atm_in> <atm_in_type> <atm_out> <atm_out_type>\n\n"
+	   "Usage: atm_conv <ctl> <atm_in> <atm_in_type> <atm_out> <atm_out_type> [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
 
   /* Allocate... */
@@ -96,7 +96,7 @@ void usage(
   printf("\n");
   printf("Usage:\n");
   printf
-    ("  atm_conv <ctl> <atm_in> <atm_in_type> <atm_out> <atm_out_type>\n");
+    ("  atm_conv <ctl> <atm_in> <atm_in_type> <atm_out> <atm_out_type> [KEY VALUE ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>           Control file.\n");
@@ -108,6 +108,7 @@ void usage(
   printf("  <atm_out_type>  Output format: 0=ASCII, 1=binary, 2=netCDF,\n");
   printf
     ("                  3=CLaMS trajectory/position netCDF, 4=CLaMS position netCDF.\n");
+  printf("  [KEY VALUE]     Optional control parameters.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

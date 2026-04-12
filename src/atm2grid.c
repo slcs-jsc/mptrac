@@ -109,6 +109,12 @@ void usage(
   printf("\n");
   printf("Notes:\n");
   printf("  GRID_BASENAME must be set in the control parameters.\n");
+  printf("\nCommon control parameters:\n");
+  printf("  GRID_BASENAME                    Basename of gridded output files.\n");
+  printf("  GRID_Z0, GRID_Z1, GRID_NZ        Altitude grid settings.\n");
+  printf("  GRID_LON0, GRID_LON1, GRID_NX    Longitude grid settings.\n");
+  printf("  GRID_LAT0, GRID_LAT1, GRID_NY    Latitude grid settings.\n");
+  printf("  GRID_TYPE, GRID_SPARSE           Grid output type and sparse output.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

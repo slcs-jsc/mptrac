@@ -87,7 +87,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_zm <ctl> <zm.tab> <met0> [<met1> ...]\n\n"
+	   "Usage: met_zm <ctl> <zm.tab> <met0> [<met1> ...] [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -290,12 +290,17 @@ void usage(
   printf("Extract zonal means from meteorological data.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  met_zm <ctl> <zm.tab> <met0> [<met1> ...]\n");
+  printf("  met_zm <ctl> <zm.tab> <met0> [<met1> ...] [KEY VALUE ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>     Control file.\n");
   printf("  <zm.tab>  Output table.\n");
   printf("  <met*>    Meteorological input files.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  ZM_Z0, ZM_Z1, ZM_DZ             Altitude range and spacing.\n");
+  printf("  ZM_LON0, ZM_LON1                Longitude range.\n");
+  printf("  ZM_LAT0, ZM_LAT1, ZM_DLAT       Latitude range and spacing.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

@@ -199,6 +199,13 @@ void usage(
   printf("  <ctl>      Control file.\n");
   printf("  <metbase>  Basename of the output meteorological data.\n");
   printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  WIND_T0                          Output time.\n");
+  printf("  WIND_NX, WIND_NY, WIND_NZ        Grid dimensions.\n");
+  printf("  WIND_Z0, WIND_Z1                 Altitude range.\n");
+  printf("  WIND_U0, WIND_U1, WIND_W0        Wind speed settings.\n");
+  printf("  WIND_ALPHA                       Rotation angle.\n");
+  printf("  WIND_LAT_REVERSE                 Reverse latitude direction if set.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

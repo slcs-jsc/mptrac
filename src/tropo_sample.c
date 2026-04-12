@@ -77,7 +77,7 @@ int main(
   /* Check arguments... */
   if (argc < 5)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: tropo_sample <ctl> <sample.tab> <tropo.nc> <var> <atm_in>\n\n"
+	   "Usage: tropo_sample <ctl> <sample.tab> <tropo.nc> <var> <atm_in> [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -276,7 +276,7 @@ void usage(
   printf("Sample tropopause data at atmospheric particle locations.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  tropo_sample <ctl> <sample.tab> <tropo.nc> <var> <atm_in>\n");
+  printf("  tropo_sample <ctl> <sample.tab> <tropo.nc> <var> <atm_in> [KEY VALUE ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>         Control file.\n");
@@ -286,6 +286,9 @@ void usage(
     ("  <var>         Tropopause variable prefix, such as clp, dyn, wmo_1st,\n");
   printf("                or wmo_2nd.\n");
   printf("  <atm_in>      Atmospheric input file with sample locations.\n");
+  printf("  [KEY VALUE]   Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  TROPO_SAMPLE_METHOD             Horizontal interpolation method.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

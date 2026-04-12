@@ -97,7 +97,7 @@ int main(
   /* Check arguments... */
   if (argc < 6)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...]\n\n"
+	   "Usage: atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...] [KEY VALUE ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -412,7 +412,7 @@ void usage(
   printf("\n");
   printf("Usage:\n");
   printf
-    ("  atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...]\n");
+    ("  atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...] [KEY VALUE ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>       Control file.\n");
@@ -421,6 +421,13 @@ void usage(
     ("  <param>     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n");
   printf("              median, or mad.\n");
   printf("  <atm*a/b>   Atmospheric input files to compare pairwise.\n");
+  printf("  [KEY VALUE] Optional control parameters.\n");
+  printf("\nTool-specific control parameters:\n");
+  printf("  DIST_ENS                         Ensemble index filter.\n");
+  printf("  DIST_Z0, DIST_Z1                 Altitude range.\n");
+  printf("  DIST_LON0, DIST_LON1             Longitude range.\n");
+  printf("  DIST_LAT0, DIST_LAT1             Latitude range.\n");
+  printf("  DIST_ZSCORE                      Z-score threshold.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }
