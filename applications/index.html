@@ -420,6 +420,67 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Applications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trajectory-calculations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trajectory calculations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmospheric-particle-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atmospheric particle data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#meteorological-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Meteorological data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tropopause-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tropopause data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -956,6 +1017,67 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Applications">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#trajectory-calculations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trajectory calculations
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#atmospheric-particle-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Atmospheric particle data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#meteorological-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Meteorological data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#tropopause-data" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tropopause data
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#time-conversion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Time conversion
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -994,44 +1116,184 @@
 <p>The MPTRAC model comes with a number of individual programs or
 applications. The most important app of MPTRAC is the tool
 <a href="../apps/trac/">trac</a>, which is used to conduct the trajectory
-calculations.</p>
+calculations. The tables below give an overview of the available apps
+and tools by application field.</p>
 <p>All apps and tools accept <code>-h</code> and <code>--help</code> to print a short command-line
 help message.</p>
-<p>The apps <a href="../apps/met_map/">met_map</a>, <a href="../apps/met_prof/">met_prof</a>, and
-<a href="../apps/met_zm/">met_zm</a> can be used to extract global maps, vertical
-profiles, and zonal means from meteorological data. The app
-<a href="../apps/met_sample/">met_sample</a> can be used to sample the meteo data
-at individual locations in space and time. The app
-<a href="../apps/met_lapse/">met_lapse</a> calculates lapse-rate statistics, and
-<a href="../apps/met_check_dt/">met_check_dt</a> checks model time-step constraints
-for a given meteorological data file.</p>
-<p>The app <a href="../apps/atm_conv/">atm_conv</a> can be used to convert between
-different file formats of the particle data (ASCII, binary,
-netCDF). The app <a href="../apps/atm_dist/">atm_dist</a> can be used to calculate
-transport deviations between trajectory sets. The app
-<a href="../apps/atm_init/">atm_init</a> can be used to create particle data files
-with initial trajectory seeds. The app
-<a href="../apps/atm_select/">atm_select</a> can extract subsets of the particle
-data, like individual trajectories. The app
-<a href="../apps/atm_split/">atm_split</a> can split sets of particles into larger
-sets, retaining their total mass. The app <a href="../apps/atm_stat/">atm_stat</a>
-calculates trajectory statistics, for example, the mean position of
-the air parcels. The app <a href="../apps/atm2grid/">atm2grid</a> converts
-atmospheric particle data to gridded output.</p>
-<p>The tools <a href="../apps/day2doy/">day2doy</a>, <a href="../apps/doy2day/">doy2day</a>,
-<a href="../apps/jsec2time/">jsec2time</a>, and <a href="../apps/time2jsec/">time2jsec</a> are
-used for time conversion. In particular, they can be used to determine
-the day of the year (doy) for a given date and convert between a UTC
-time (YYYY-MM-DD, HH:MM:SS) and the absolute time in seconds since
-2000-01-01, 00:00 UTC (the internal time coordinate of MPTRAC).</p>
-<p>The tools <a href="../apps/tropo/">tropo</a> and
-<a href="../apps/tropo_sample/">tropo_sample</a> can be used to determine lapse
-rate statistics and to prepare and sample tropopause data files. The
-tool <a href="../apps/tropo_clim/">tropo_clim</a> calculates climatological
-statistics from tropopause data files.</p>
+<h3 id="trajectory-calculations">Trajectory calculations</h3>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../apps/trac/">trac</a></td>
+<td>Run forward or backward trajectory calculations.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="atmospheric-particle-data">Atmospheric particle data</h3>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../apps/atm_init/">atm_init</a></td>
+<td>Create atmospheric particle files with initial trajectory seeds.</td>
+</tr>
+<tr>
+<td><a href="../apps/atm_split/">atm_split</a></td>
+<td>Split particle sets into larger sets while retaining total mass.</td>
+</tr>
+<tr>
+<td><a href="../apps/atm_select/">atm_select</a></td>
+<td>Extract subsets of atmospheric particle data, such as individual trajectories.</td>
+</tr>
+<tr>
+<td><a href="../apps/atm_stat/">atm_stat</a></td>
+<td>Calculate statistics for atmospheric particle data.</td>
+</tr>
+<tr>
+<td><a href="../apps/atm_dist/">atm_dist</a></td>
+<td>Calculate transport deviations between trajectory sets.</td>
+</tr>
+<tr>
+<td><a href="../apps/atm_conv/">atm_conv</a></td>
+<td>Convert atmospheric particle data between supported file formats.</td>
+</tr>
+<tr>
+<td><a href="../apps/atm2grid/">atm2grid</a></td>
+<td>Convert atmospheric particle data to gridded output.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="meteorological-data">Meteorological data</h3>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../apps/met_conv/">met_conv</a></td>
+<td>Convert meteorological data between supported file formats.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_check_dt/">met_check_dt</a></td>
+<td>Check model time-step constraints for meteorological data.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_lapse/">met_lapse</a></td>
+<td>Calculate lapse-rate statistics from meteorological data.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_map/">met_map</a></td>
+<td>Extract maps from meteorological data.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_prof/">met_prof</a></td>
+<td>Extract vertical profiles from meteorological data.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_sample/">met_sample</a></td>
+<td>Sample meteorological data at atmospheric particle locations.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_spec/">met_spec</a></td>
+<td>Perform spectral analysis of meteorological temperature fields.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_subgrid/">met_subgrid</a></td>
+<td>Calculate subgrid-scale wind and vertical velocity statistics.</td>
+</tr>
+<tr>
+<td><a href="../apps/met_zm/">met_zm</a></td>
+<td>Extract zonal means from meteorological data.</td>
+</tr>
+<tr>
+<td><a href="../apps/cape/">cape</a></td>
+<td>Add CAPE data to meteorological netCDF files.</td>
+</tr>
+<tr>
+<td><a href="../apps/sedi/">sedi</a></td>
+<td>Calculate sedimentation velocities for aerosol or cloud particles.</td>
+</tr>
+<tr>
+<td><a href="../apps/tnat/">tnat</a></td>
+<td>Calculate polar stratospheric cloud formation temperatures.</td>
+</tr>
+<tr>
+<td><a href="../apps/wind/">wind</a></td>
+<td>Create synthetic meteorological wind fields for test cases.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="tropopause-data">Tropopause data</h3>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../apps/tropo/">tropo</a></td>
+<td>Create tropopause data sets from meteorological data.</td>
+</tr>
+<tr>
+<td><a href="../apps/tropo_clim/">tropo_clim</a></td>
+<td>Calculate climatological statistics from tropopause data.</td>
+</tr>
+<tr>
+<td><a href="../apps/tropo_sample/">tropo_sample</a></td>
+<td>Sample tropopause data at atmospheric particle locations.</td>
+</tr>
+<tr>
+<td><a href="../apps/tropo_zm/">tropo_zm</a></td>
+<td>Extract zonal means from tropopause data.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="time-conversion">Time conversion</h3>
+<table>
+<thead>
+<tr>
+<th>App</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="../apps/day2doy/">day2doy</a></td>
+<td>Convert a calendar date to day of year.</td>
+</tr>
+<tr>
+<td><a href="../apps/doy2day/">doy2day</a></td>
+<td>Convert day of year to a calendar date.</td>
+</tr>
+<tr>
+<td><a href="../apps/jsec2time/">jsec2time</a></td>
+<td>Convert MPTRAC seconds since 2000-01-01, 00:00 UTC to UTC time.</td>
+</tr>
+<tr>
+<td><a href="../apps/time2jsec/">time2jsec</a></td>
+<td>Convert UTC time to MPTRAC seconds since 2000-01-01, 00:00 UTC.</td>
+</tr>
+</tbody>
+</table>
 <p>Please see the
 <a href="https://slcs-jsc.github.io/mptrac/doxygen/files.html">list of files in the Doxygen manual</a>
-for more information.</p>
+for the source-code reference of all apps and tools.</p>
 <h2 id="workflows">Workflows</h2>
 <p>The individual apps can be connected to more comprehensive simulation
 workflows by means of bash scripts.</p>
