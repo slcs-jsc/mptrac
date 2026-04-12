@@ -192,15 +192,21 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  258</span>  printf(<span class="stringliteral">&quot;Calculate lapse-rate statistics from meteorological data.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  259</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  260</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  261</span>  printf(<span class="stringliteral">&quot;  met_lapse &lt;ctl&gt; &lt;lapse.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  261</span>  printf(<span class="stringliteral">&quot;  met_lapse &lt;ctl&gt; &lt;lapse.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  262</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  263</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  264</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;        Control file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  265</span>  printf(<span class="stringliteral">&quot;  &lt;lapse.tab&gt;  Output table for lapse-rate statistics.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  266</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;       Meteorological input files.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  267</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  268</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  269</span>}</div>
+<div class="line"><span class="lineno">  267</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]  Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  268</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  269</span>  printf(<span class="stringliteral">&quot;  LAPSE_DZ                         Vertical layer depth.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  270</span>  printf(<span class="stringliteral">&quot;  LAPSE_Z0, LAPSE_Z1               Altitude range.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  271</span>  printf(<span class="stringliteral">&quot;  LAPSE_LAT0, LAPSE_LAT1           Latitude range.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  272</span>  printf(<span class="stringliteral">&quot;  LAPSE_INTPOL                     Interpolation method flag.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  273</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  274</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  275</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -260,7 +266,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   80</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   81</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
 <div class="line"><span class="lineno">   82</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   83</span>           <span class="stringliteral">&quot;Usage: met_lapse &lt;ctl&gt; &lt;lapse.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   83</span>           <span class="stringliteral">&quot;Usage: met_lapse &lt;ctl&gt; &lt;lapse.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   84</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   85</span> </div>
 <div class="line"><span class="lineno">   86</span>  <span class="comment">/* Read control parameters... */</span></div>

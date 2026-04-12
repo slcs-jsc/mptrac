@@ -141,7 +141,7 @@ $(function() {
 <div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span>  <span class="keywordflow">if</span> (argc &lt; 4 &amp;&amp; argc % 2 != 0)</div>
 <div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>           <span class="stringliteral">&quot;Usage: met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...]\n\n&quot;</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span>           <span class="stringliteral">&quot;Usage: met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><a id="l00072" name="l00072"></a><span class="lineno">   72</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><a id="l00073" name="l00073"></a><span class="lineno">   73</span> </div>
 <div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  <span class="comment">/* Read control parameters... */</span></div>
@@ -304,15 +304,16 @@ $(function() {
 <div class="line"><a id="l00232" name="l00232"></a><span class="lineno">  232</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00233" name="l00233"></a><span class="lineno">  233</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
 <div class="line"><a id="l00234" name="l00234"></a><span class="lineno">  234</span>  printf</div>
-<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    (<span class="stringliteral">&quot;  met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...]\n&quot;</span>);</div>
+<div class="line"><a id="l00235" name="l00235"></a><span class="lineno">  235</span>    (<span class="stringliteral">&quot;  met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><a id="l00236" name="l00236"></a><span class="lineno">  236</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00237" name="l00237"></a><span class="lineno">  237</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><a id="l00238" name="l00238"></a><span class="lineno">  238</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;          Control file.\n&quot;</span>);</div>
 <div class="line"><a id="l00239" name="l00239"></a><span class="lineno">  239</span>  printf(<span class="stringliteral">&quot;  &lt;subgrid.tab&gt;  Output table.\n&quot;</span>);</div>
 <div class="line"><a id="l00240" name="l00240"></a><span class="lineno">  240</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;         Meteorological input file pairs.\n&quot;</span>);</div>
-<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>}</div>
+<div class="line"><a id="l00241" name="l00241"></a><span class="lineno">  241</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]    Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><a id="l00242" name="l00242"></a><span class="lineno">  242</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><a id="l00243" name="l00243"></a><span class="lineno">  243</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><a id="l00244" name="l00244"></a><span class="lineno">  244</span>}</div>
 <div class="ttc" id="amet__subgrid_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="met__subgrid_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="met__subgrid_8c_source.html#l00039">met_subgrid.c:39</a></div></div>
 <div class="ttc" id="amet__subgrid_8c_html_ae8605e2b78cd4a81b6c6b5c30cb7366a"><div class="ttname"><a href="met__subgrid_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a></div><div class="ttdeci">void usage(void)</div><div class="ttdoc">Print command-line help.</div><div class="ttdef"><b>Definition:</b> <a href="met__subgrid_8c_source.html#l00226">met_subgrid.c:226</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a87088b5ccf95f03d986f1bdd570b5b2f"><div class="ttname"><a href="mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f">stddev</a></div><div class="ttdeci">float stddev(const float *data, const int n)</div><div class="ttdoc">Calculates the standard deviation of a set of data.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l11154">mptrac.c:11154</a></div></div>

@@ -124,15 +124,20 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  285</span>  printf(<span class="stringliteral">&quot;Create tropopause data sets from meteorological data.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  286</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  287</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  288</span>  printf(<span class="stringliteral">&quot;  tropo &lt;ctl&gt; &lt;tropo.nc&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  288</span>  printf(<span class="stringliteral">&quot;  tropo &lt;ctl&gt; &lt;tropo.nc&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  289</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  290</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  291</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  292</span>  printf(<span class="stringliteral">&quot;  &lt;tropo.nc&gt;  Output tropopause netCDF file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  293</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;      Meteorological input files.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  294</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  295</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  296</span>}</div>
+<div class="line"><span class="lineno">  294</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE] Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  295</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  296</span>  printf(<span class="stringliteral">&quot;  TROPO_LON0, TROPO_LON1, TROPO_DLON  Longitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  297</span>  printf(<span class="stringliteral">&quot;  TROPO_LAT0, TROPO_LAT1, TROPO_DLAT  Latitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  298</span>  printf(<span class="stringliteral">&quot;  TROPO_H2O, TROPO_O3                  Extract H2O and O3 if set.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  299</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  300</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  301</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -191,7 +196,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   66</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   67</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
 <div class="line"><span class="lineno">   68</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   69</span>           <span class="stringliteral">&quot;Usage: tropo &lt;ctl&gt; &lt;tropo.nc&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   69</span>           <span class="stringliteral">&quot;Usage: tropo &lt;ctl&gt; &lt;tropo.nc&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   70</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   71</span> </div>
 <div class="line"><span class="lineno">   72</span>  <span class="comment">/* Read control parameters... */</span></div>

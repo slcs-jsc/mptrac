@@ -124,7 +124,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  242</span>  printf(<span class="stringliteral">&quot;Calculate air parcel statistics.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  243</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  244</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  245</span>  printf(<span class="stringliteral">&quot;  atm_stat &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  245</span>  printf(<span class="stringliteral">&quot;  atm_stat &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  246</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  247</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  248</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
@@ -133,9 +133,15 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  251</span>    (<span class="stringliteral">&quot;  &lt;param&gt;     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  252</span>  printf(<span class="stringliteral">&quot;              median, or mad.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  253</span>  printf(<span class="stringliteral">&quot;  &lt;atm*&gt;      Atmospheric input files.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  254</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  255</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  256</span>}</div>
+<div class="line"><span class="lineno">  254</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE] Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  255</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  256</span>  printf(<span class="stringliteral">&quot;  STAT_ENS                         Ensemble index filter.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  257</span>  printf(<span class="stringliteral">&quot;  STAT_Z0, STAT_Z1                 Altitude range.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  258</span>  printf(<span class="stringliteral">&quot;  STAT_LON0, STAT_LON1             Longitude range.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  259</span>  printf(<span class="stringliteral">&quot;  STAT_LAT0, STAT_LAT1             Latitude range.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  260</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  261</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  262</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -192,7 +198,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   64</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   65</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
 <div class="line"><span class="lineno">   66</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   67</span>           <span class="stringliteral">&quot;Usage: atm_stat &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   67</span>           <span class="stringliteral">&quot;Usage: atm_stat &lt;ctl&gt; &lt;stat.tab&gt; &lt;param&gt; &lt;atm1&gt; [&lt;atm2&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   68</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   69</span> </div>
 <div class="line"><span class="lineno">   70</span>  <span class="comment">/* Read control parameters... */</span></div>

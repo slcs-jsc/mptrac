@@ -150,7 +150,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  276</span>  printf(<span class="stringliteral">&quot;Sample tropopause data at atmospheric particle locations.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  277</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  278</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  279</span>  printf(<span class="stringliteral">&quot;  tropo_sample &lt;ctl&gt; &lt;sample.tab&gt; &lt;tropo.nc&gt; &lt;var&gt; &lt;atm_in&gt;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  279</span>  printf(<span class="stringliteral">&quot;  tropo_sample &lt;ctl&gt; &lt;sample.tab&gt; &lt;tropo.nc&gt; &lt;var&gt; &lt;atm_in&gt; [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  280</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  281</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  282</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;         Control file.\n&quot;</span>);</div>
@@ -160,9 +160,12 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  286</span>    (<span class="stringliteral">&quot;  &lt;var&gt;         Tropopause variable prefix, such as clp, dyn, wmo_1st,\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  287</span>  printf(<span class="stringliteral">&quot;                or wmo_2nd.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  288</span>  printf(<span class="stringliteral">&quot;  &lt;atm_in&gt;      Atmospheric input file with sample locations.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  289</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  290</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  291</span>}</div>
+<div class="line"><span class="lineno">  289</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]   Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  290</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  291</span>  printf(<span class="stringliteral">&quot;  TROPO_SAMPLE_METHOD             Horizontal interpolation method.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  292</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  293</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  294</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -225,7 +228,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   77</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   78</span>  <span class="keywordflow">if</span> (argc &lt; 5)</div>
 <div class="line"><span class="lineno">   79</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   80</span>           <span class="stringliteral">&quot;Usage: tropo_sample &lt;ctl&gt; &lt;sample.tab&gt; &lt;tropo.nc&gt; &lt;var&gt; &lt;atm_in&gt;\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   80</span>           <span class="stringliteral">&quot;Usage: tropo_sample &lt;ctl&gt; &lt;sample.tab&gt; &lt;tropo.nc&gt; &lt;var&gt; &lt;atm_in&gt; [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   81</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   82</span> </div>
 <div class="line"><span class="lineno">   83</span>  <span class="comment">/* Read control parameters... */</span></div>

@@ -153,7 +153,7 @@ $(function() {
 <div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
 <div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>           <span class="stringliteral">&quot;Usage: met_prof &lt;ctl&gt; &lt;prof.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n\n&quot;</span></div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>           <span class="stringliteral">&quot;Usage: met_prof &lt;ctl&gt; &lt;prof.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span> </div>
 <div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  <span class="comment">/* Read control parameters... */</span></div>
@@ -333,15 +333,20 @@ $(function() {
 <div class="line"><a id="l00262" name="l00262"></a><span class="lineno">  262</span>  printf(<span class="stringliteral">&quot;Extract vertical profiles from meteorological data.\n&quot;</span>);</div>
 <div class="line"><a id="l00263" name="l00263"></a><span class="lineno">  263</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00264" name="l00264"></a><span class="lineno">  264</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  printf(<span class="stringliteral">&quot;  met_prof &lt;ctl&gt; &lt;prof.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n&quot;</span>);</div>
+<div class="line"><a id="l00265" name="l00265"></a><span class="lineno">  265</span>  printf(<span class="stringliteral">&quot;  met_prof &lt;ctl&gt; &lt;prof.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><a id="l00266" name="l00266"></a><span class="lineno">  266</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00267" name="l00267"></a><span class="lineno">  267</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><a id="l00268" name="l00268"></a><span class="lineno">  268</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
 <div class="line"><a id="l00269" name="l00269"></a><span class="lineno">  269</span>  printf(<span class="stringliteral">&quot;  &lt;prof.tab&gt;  Output table.\n&quot;</span>);</div>
 <div class="line"><a id="l00270" name="l00270"></a><span class="lineno">  270</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;      Meteorological input files.\n&quot;</span>);</div>
-<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>}</div>
+<div class="line"><a id="l00271" name="l00271"></a><span class="lineno">  271</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE] Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><a id="l00272" name="l00272"></a><span class="lineno">  272</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><a id="l00273" name="l00273"></a><span class="lineno">  273</span>  printf(<span class="stringliteral">&quot;  PROF_Z0, PROF_Z1, PROF_DZ        Altitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><a id="l00274" name="l00274"></a><span class="lineno">  274</span>  printf(<span class="stringliteral">&quot;  PROF_LON0, PROF_LON1, PROF_DLON  Longitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><a id="l00275" name="l00275"></a><span class="lineno">  275</span>  printf(<span class="stringliteral">&quot;  PROF_LAT0, PROF_LAT1, PROF_DLAT  Latitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><a id="l00276" name="l00276"></a><span class="lineno">  276</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><a id="l00277" name="l00277"></a><span class="lineno">  277</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><a id="l00278" name="l00278"></a><span class="lineno">  278</span>}</div>
 <div class="ttc" id="amet__prof_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="met__prof_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="met__prof_8c_source.html#l00046">met_prof.c:46</a></div></div>
 <div class="ttc" id="amet__prof_8c_html_a693aee47b2103d0a7fcd3a0a0dd4fb57"><div class="ttname"><a href="met__prof_8c.html#a693aee47b2103d0a7fcd3a0a0dd4fb57">NZ</a></div><div class="ttdeci">#define NZ</div><div class="ttdoc">Maximum number of altitudes.</div><div class="ttdef"><b>Definition:</b> <a href="met__prof_8c_source.html#l00032">met_prof.c:32</a></div></div>
 <div class="ttc" id="amet__prof_8c_html_ae8605e2b78cd4a81b6c6b5c30cb7366a"><div class="ttname"><a href="met__prof_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a></div><div class="ttdeci">void usage(void)</div><div class="ttdoc">Print command-line help.</div><div class="ttdef"><b>Definition:</b> <a href="met__prof_8c_source.html#l00258">met_prof.c:258</a></div></div>

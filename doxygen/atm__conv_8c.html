@@ -125,7 +125,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   96</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">   97</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">   98</span>  printf</div>
-<div class="line"><span class="lineno">   99</span>    (<span class="stringliteral">&quot;  atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   99</span>    (<span class="stringliteral">&quot;  atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt; [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  100</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  101</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  102</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;           Control file.\n&quot;</span>);</div>
@@ -137,9 +137,10 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  108</span>  printf(<span class="stringliteral">&quot;  &lt;atm_out_type&gt;  Output format: 0=ASCII, 1=binary, 2=netCDF,\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  109</span>  printf</div>
 <div class="line"><span class="lineno">  110</span>    (<span class="stringliteral">&quot;                  3=CLaMS trajectory/position netCDF, 4=CLaMS position netCDF.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  111</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  112</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  113</span>}</div>
+<div class="line"><span class="lineno">  111</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]     Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  112</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  113</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  114</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -182,7 +183,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   50</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   51</span>  <span class="keywordflow">if</span> (argc &lt; 6)</div>
 <div class="line"><span class="lineno">   52</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   53</span>           <span class="stringliteral">&quot;Usage: atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt;\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   53</span>           <span class="stringliteral">&quot;Usage: atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt; [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   54</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   55</span> </div>
 <div class="line"><span class="lineno">   56</span>  <span class="comment">/* Allocate... */</span></div>

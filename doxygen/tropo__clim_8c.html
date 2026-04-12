@@ -151,7 +151,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  287</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  288</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  289</span>  printf</div>
-<div class="line"><span class="lineno">  290</span>    (<span class="stringliteral">&quot;  tropo_clim &lt;ctl&gt; &lt;clim.tab&gt; &lt;var&gt; &lt;tropo.nc&gt; [&lt;tropo2.nc&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  290</span>    (<span class="stringliteral">&quot;  tropo_clim &lt;ctl&gt; &lt;clim.tab&gt; &lt;var&gt; &lt;tropo.nc&gt; [&lt;tropo2.nc&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  291</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  292</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  293</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
@@ -160,9 +160,10 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  296</span>    (<span class="stringliteral">&quot;  &lt;var&gt;       Tropopause variable prefix, such as clp, dyn, wmo_1st,\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  297</span>  printf(<span class="stringliteral">&quot;              or wmo_2nd.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  298</span>  printf(<span class="stringliteral">&quot;  &lt;tropo*&gt;    Tropopause netCDF input files.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  299</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  300</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  301</span>}</div>
+<div class="line"><span class="lineno">  299</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE] Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  300</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  301</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  302</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -255,7 +256,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  107</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">  108</span>  <span class="keywordflow">if</span> (argc &lt; 5)</div>
 <div class="line"><span class="lineno">  109</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">  110</span>           <span class="stringliteral">&quot;Usage: tropo_clim &lt;ctl&gt; &lt;clim.tab&gt; &lt;var&gt; &lt;tropo.nc&gt; [&lt;tropo2.nc&gt; ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">  110</span>           <span class="stringliteral">&quot;Usage: tropo_clim &lt;ctl&gt; &lt;clim.tab&gt; &lt;var&gt; &lt;tropo.nc&gt; [&lt;tropo2.nc&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">  111</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">  112</span> </div>
 <div class="line"><span class="lineno">  113</span>  <span class="comment">/* Read control parameters... */</span></div>

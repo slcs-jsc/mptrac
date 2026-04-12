@@ -126,15 +126,16 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  232</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  233</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  234</span>  printf</div>
-<div class="line"><span class="lineno">  235</span>    (<span class="stringliteral">&quot;  met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  235</span>    (<span class="stringliteral">&quot;  met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  236</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  237</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  238</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;          Control file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  239</span>  printf(<span class="stringliteral">&quot;  &lt;subgrid.tab&gt;  Output table.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  240</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;         Meteorological input file pairs.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  241</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  242</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  243</span>}</div>
+<div class="line"><span class="lineno">  241</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]    Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  242</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  243</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  244</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -195,7 +196,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   68</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   69</span>  <span class="keywordflow">if</span> (argc &lt; 4 &amp;&amp; argc % 2 != 0)</div>
 <div class="line"><span class="lineno">   70</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   71</span>           <span class="stringliteral">&quot;Usage: met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   71</span>           <span class="stringliteral">&quot;Usage: met_subgrid &lt;ctl&gt; &lt;subgrid.tab&gt; &lt;met0&gt; &lt;met1&gt; [&lt;met0b&gt; &lt;met1b&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   72</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   73</span> </div>
 <div class="line"><span class="lineno">   74</span>  <span class="comment">/* Read control parameters... */</span></div>

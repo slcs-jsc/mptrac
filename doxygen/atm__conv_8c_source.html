@@ -123,7 +123,7 @@ $(function() {
 <div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>  <span class="keywordflow">if</span> (argc &lt; 6)</div>
 <div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>           <span class="stringliteral">&quot;Usage: atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt;\n\n&quot;</span></div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span>           <span class="stringliteral">&quot;Usage: atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt; [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span> </div>
 <div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="comment">/* Allocate... */</span></div>
@@ -168,7 +168,7 @@ $(function() {
 <div class="line"><a id="l00096" name="l00096"></a><span class="lineno">   96</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00097" name="l00097"></a><span class="lineno">   97</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
 <div class="line"><a id="l00098" name="l00098"></a><span class="lineno">   98</span>  printf</div>
-<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    (<span class="stringliteral">&quot;  atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt;\n&quot;</span>);</div>
+<div class="line"><a id="l00099" name="l00099"></a><span class="lineno">   99</span>    (<span class="stringliteral">&quot;  atm_conv &lt;ctl&gt; &lt;atm_in&gt; &lt;atm_in_type&gt; &lt;atm_out&gt; &lt;atm_out_type&gt; [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><a id="l00100" name="l00100"></a><span class="lineno">  100</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00101" name="l00101"></a><span class="lineno">  101</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><a id="l00102" name="l00102"></a><span class="lineno">  102</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;           Control file.\n&quot;</span>);</div>
@@ -180,9 +180,10 @@ $(function() {
 <div class="line"><a id="l00108" name="l00108"></a><span class="lineno">  108</span>  printf(<span class="stringliteral">&quot;  &lt;atm_out_type&gt;  Output format: 0=ASCII, 1=binary, 2=netCDF,\n&quot;</span>);</div>
 <div class="line"><a id="l00109" name="l00109"></a><span class="lineno">  109</span>  printf</div>
 <div class="line"><a id="l00110" name="l00110"></a><span class="lineno">  110</span>    (<span class="stringliteral">&quot;                  3=CLaMS trajectory/position netCDF, 4=CLaMS position netCDF.\n&quot;</span>);</div>
-<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>}</div>
+<div class="line"><a id="l00111" name="l00111"></a><span class="lineno">  111</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]     Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><a id="l00112" name="l00112"></a><span class="lineno">  112</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><a id="l00113" name="l00113"></a><span class="lineno">  113</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><a id="l00114" name="l00114"></a><span class="lineno">  114</span>}</div>
 <div class="ttc" id="aatm__conv_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="atm__conv_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="atm__conv_8c_source.html#l00039">atm_conv.c:39</a></div></div>
 <div class="ttc" id="aatm__conv_8c_html_ae8605e2b78cd4a81b6c6b5c30cb7366a"><div class="ttname"><a href="atm__conv_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a></div><div class="ttdeci">void usage(void)</div><div class="ttdoc">Print command-line help.</div><div class="ttdef"><b>Definition:</b> <a href="atm__conv_8c_source.html#l00091">atm_conv.c:91</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a07d1a762eeeef6c54d4dd68ac2477f9d"><div class="ttname"><a href="mptrac_8c.html#a07d1a762eeeef6c54d4dd68ac2477f9d">mptrac_write_atm</a></div><div class="ttdeci">void mptrac_write_atm(const char *filename, const ctl_t *ctl, const atm_t *atm, const double t)</div><div class="ttdoc">Writes air parcel data to a file in various formats.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l06840">mptrac.c:6840</a></div></div>

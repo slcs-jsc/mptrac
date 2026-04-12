@@ -257,7 +257,7 @@ $(function() {
 <div class="line"><a id="l00186" name="l00186"></a><span class="lineno">  186</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><a id="l00187" name="l00187"></a><span class="lineno">  187</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
 <div class="line"><a id="l00188" name="l00188"></a><span class="lineno">  188</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>           <span class="stringliteral">&quot;Usage: met_map &lt;ctl&gt; &lt;map.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n\n&quot;</span></div>
+<div class="line"><a id="l00189" name="l00189"></a><span class="lineno">  189</span>           <span class="stringliteral">&quot;Usage: met_map &lt;ctl&gt; &lt;map.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><a id="l00190" name="l00190"></a><span class="lineno">  190</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><a id="l00191" name="l00191"></a><span class="lineno">  191</span> </div>
 <div class="line"><a id="l00192" name="l00192"></a><span class="lineno">  192</span>  <span class="comment">/* Read control parameters... */</span></div>
@@ -534,15 +534,20 @@ $(function() {
 <div class="line"><a id="l00464" name="l00464"></a><span class="lineno">  464</span>  printf(<span class="stringliteral">&quot;Extract maps from meteorological data.\n&quot;</span>);</div>
 <div class="line"><a id="l00465" name="l00465"></a><span class="lineno">  465</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00466" name="l00466"></a><span class="lineno">  466</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>  printf(<span class="stringliteral">&quot;  met_map &lt;ctl&gt; &lt;map.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...]\n&quot;</span>);</div>
+<div class="line"><a id="l00467" name="l00467"></a><span class="lineno">  467</span>  printf(<span class="stringliteral">&quot;  met_map &lt;ctl&gt; &lt;map.tab&gt; &lt;met0&gt; [&lt;met1&gt; ...] [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><a id="l00468" name="l00468"></a><span class="lineno">  468</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><a id="l00469" name="l00469"></a><span class="lineno">  469</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><a id="l00470" name="l00470"></a><span class="lineno">  470</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;      Control file.\n&quot;</span>);</div>
 <div class="line"><a id="l00471" name="l00471"></a><span class="lineno">  471</span>  printf(<span class="stringliteral">&quot;  &lt;map.tab&gt;  Output table.\n&quot;</span>);</div>
 <div class="line"><a id="l00472" name="l00472"></a><span class="lineno">  472</span>  printf(<span class="stringliteral">&quot;  &lt;met*&gt;     Meteorological input files.\n&quot;</span>);</div>
-<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span>}</div>
+<div class="line"><a id="l00473" name="l00473"></a><span class="lineno">  473</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]  Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><a id="l00474" name="l00474"></a><span class="lineno">  474</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><a id="l00475" name="l00475"></a><span class="lineno">  475</span>  printf(<span class="stringliteral">&quot;  MAP_Z0, MAP_THETA                Altitude or potential temperature level.\n&quot;</span>);</div>
+<div class="line"><a id="l00476" name="l00476"></a><span class="lineno">  476</span>  printf(<span class="stringliteral">&quot;  MAP_LON0, MAP_LON1, MAP_DLON     Longitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><a id="l00477" name="l00477"></a><span class="lineno">  477</span>  printf(<span class="stringliteral">&quot;  MAP_LAT0, MAP_LAT1, MAP_DLAT     Latitude range and spacing.\n&quot;</span>);</div>
+<div class="line"><a id="l00478" name="l00478"></a><span class="lineno">  478</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><a id="l00479" name="l00479"></a><span class="lineno">  479</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><a id="l00480" name="l00480"></a><span class="lineno">  480</span>}</div>
 <div class="ttc" id="amet__map_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="met__map_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="met__map_8c_source.html#l00049">met_map.c:49</a></div></div>
 <div class="ttc" id="amet__map_8c_html_a4a9d32ff035c82119003134767948ebf"><div class="ttname"><a href="met__map_8c.html#a4a9d32ff035c82119003134767948ebf">NX</a></div><div class="ttdeci">#define NX</div><div class="ttdoc">Maximum number of longitudes.</div><div class="ttdef"><b>Definition:</b> <a href="met__map_8c_source.html#l00032">met_map.c:32</a></div></div>
 <div class="ttc" id="amet__map_8c_html_a652e87ecc9140879666ae9d6bf4ca893"><div class="ttname"><a href="met__map_8c.html#a652e87ecc9140879666ae9d6bf4ca893">NY</a></div><div class="ttdeci">#define NY</div><div class="ttdoc">Maximum number of latitudes.</div><div class="ttdef"><b>Definition:</b> <a href="met__map_8c_source.html#l00035">met_map.c:35</a></div></div>

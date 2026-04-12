@@ -124,14 +124,15 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  174</span>  printf(<span class="stringliteral">&quot;Add CAPE data to a meteorological netCDF file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  175</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  176</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  177</span>  printf(<span class="stringliteral">&quot;  cape &lt;ctl&gt; &lt;met.nc&gt;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  177</span>  printf(<span class="stringliteral">&quot;  cape &lt;ctl&gt; &lt;met.nc&gt; [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  178</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  179</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  180</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;     Control file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  181</span>  printf(<span class="stringliteral">&quot;  &lt;met.nc&gt;  Meteorological netCDF file to update.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  182</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  183</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  184</span>}</div>
+<div class="line"><span class="lineno">  182</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]  Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  183</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  184</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  185</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -191,7 +192,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   67</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   68</span>  <span class="keywordflow">if</span> (argc &lt; 2)</div>
 <div class="line"><span class="lineno">   69</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   70</span>           <span class="stringliteral">&quot;Usage: cape &lt;ctl&gt; &lt;met.nc&gt;\n\n&quot;</span> <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
+<div class="line"><span class="lineno">   70</span>           <span class="stringliteral">&quot;Usage: cape &lt;ctl&gt; &lt;met.nc&gt; [KEY VALUE ...]\n\n&quot;</span> <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   71</span> </div>
 <div class="line"><span class="lineno">   72</span>  <span class="comment">/* Read control parameters... */</span></div>
 <div class="line"><span class="lineno">   73</span>  <a class="code hl_function" href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6">mptrac_read_ctl</a>(argv[1], argc, argv, &amp;ctl);</div>

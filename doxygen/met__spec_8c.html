@@ -124,15 +124,18 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">  154</span>  printf(<span class="stringliteral">&quot;Conduct spectral analysis of meteorological temperature fields.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  155</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  156</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  157</span>  printf(<span class="stringliteral">&quot;  met_spec &lt;ctl&gt; &lt;spec.tab&gt; &lt;met0&gt;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  157</span>  printf(<span class="stringliteral">&quot;  met_spec &lt;ctl&gt; &lt;spec.tab&gt; &lt;met0&gt; [KEY VALUE ...]\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  158</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  159</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  160</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;       Control file.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  161</span>  printf(<span class="stringliteral">&quot;  &lt;spec.tab&gt;  Output table.\n&quot;</span>);</div>
 <div class="line"><span class="lineno">  162</span>  printf(<span class="stringliteral">&quot;  &lt;met0&gt;      Meteorological input file.\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  163</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  164</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
-<div class="line"><span class="lineno">  165</span>}</div>
+<div class="line"><span class="lineno">  163</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE] Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  164</span>  printf(<span class="stringliteral">&quot;\nTool-specific control parameters:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  165</span>  printf(<span class="stringliteral">&quot;  SPEC_WAVEMAX                    Maximum zonal wave number.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  166</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  167</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  168</span>}</div>
 </div><!-- fragment -->
 </div>
 </div>
@@ -188,7 +191,7 @@ Functions</h2></td></tr>
 <div class="line"><span class="lineno">   63</span>  <span class="comment">/* Check arguments... */</span></div>
 <div class="line"><span class="lineno">   64</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
 <div class="line"><span class="lineno">   65</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
-<div class="line"><span class="lineno">   66</span>           <span class="stringliteral">&quot;Usage: met_spec &lt;ctl&gt; &lt;spec.tab&gt; &lt;met0&gt;\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   66</span>           <span class="stringliteral">&quot;Usage: met_spec &lt;ctl&gt; &lt;spec.tab&gt; &lt;met0&gt; [KEY VALUE ...]\n\n&quot;</span></div>
 <div class="line"><span class="lineno">   67</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
 <div class="line"><span class="lineno">   68</span> </div>
 <div class="line"><span class="lineno">   69</span>  <span class="comment">/* Read control parameters... */</span></div>
