@@ -93,40 +93,81 @@ $(function() {
 <div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment">  You should have received a copy of the GNU General Public License</span></div>
 <div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment">  along with MPTRAC. If not, see &lt;http://www.gnu.org/licenses/&gt;.</span></div>
 <div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment">  </span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment">  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH</span></div>
 <div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment">*/</span></div>
 <div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span> </div>
 <div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="preprocessor">#include &quot;<a class="code" href="mptrac_8h.html">mptrac.h</a>&quot;</span></div>
 <div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span> </div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno"><a class="line" href="time2jsec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">   27</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="time2jsec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a>(</div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span>  <span class="keywordtype">int</span> argc,</div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span>  <span class="keywordtype">char</span> *argv[]) {</div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment">/* ------------------------------------------------------------</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment">   Functions...</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment">   ------------------------------------------------------------ */</span></div>
 <div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span> </div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span>  <span class="keywordtype">double</span> jsec;</div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span> </div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>  <span class="comment">/* Check arguments... */</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span>  <span class="keywordflow">if</span> (argc &lt; 8)</div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Give parameters: &lt;year&gt; &lt;mon&gt; &lt;day&gt; &lt;hour&gt; &lt;min&gt; &lt;sec&gt; &lt;remain&gt;&quot;</span>);</div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span> </div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span>  <span class="comment">/* Read arguments... */</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> year = atoi(argv[1]);</div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> mon = atoi(argv[2]);</div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> day = atoi(argv[3]);</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> hour = atoi(argv[4]);</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> min = atoi(argv[5]);</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> sec = atoi(argv[6]);</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> remain = atof(argv[7]);</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span> </div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>  <span class="comment">/* Convert... */</span></div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>  <a class="code hl_function" href="mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f">time2jsec</a>(year, mon, day, hour, min, sec, remain, &amp;jsec);</div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>  printf(<span class="stringliteral">&quot;%.2f\n&quot;</span>, jsec);</div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span> </div>
-<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
-<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>}</div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="keywordtype">void</span> <a class="code hl_function" href="time2jsec_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a>(</div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span>  <span class="keywordtype">void</span>);</div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span> </div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment">/* ------------------------------------------------------------</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment">   Main...</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment">   ------------------------------------------------------------ */</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno"><a class="line" href="time2jsec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">   39</a></span><span class="keywordtype">int</span> <a class="code hl_function" href="time2jsec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a>(</div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>  <span class="keywordtype">int</span> argc,</div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>  <span class="keywordtype">char</span> *argv[]) {</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span> </div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>  <span class="keywordtype">double</span> jsec;</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span> </div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>  <span class="comment">/* Print usage information... */</span></div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>  <a class="code hl_define" href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a>;</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span> </div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>  <span class="comment">/* Check arguments... */</span></div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span>  <span class="keywordflow">if</span> (argc &lt; 8)</div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span>           <span class="stringliteral">&quot;Usage: time2jsec &lt;year&gt; &lt;mon&gt; &lt;day&gt; &lt;hour&gt; &lt;min&gt; &lt;sec&gt; &lt;remain&gt;\n\n&quot;</span></div>
+<div class="line"><a id="l00052" name="l00052"></a><span class="lineno">   52</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
+<div class="line"><a id="l00053" name="l00053"></a><span class="lineno">   53</span> </div>
+<div class="line"><a id="l00054" name="l00054"></a><span class="lineno">   54</span>  <span class="comment">/* Read arguments... */</span></div>
+<div class="line"><a id="l00055" name="l00055"></a><span class="lineno">   55</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> year = atoi(argv[1]);</div>
+<div class="line"><a id="l00056" name="l00056"></a><span class="lineno">   56</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> mon = atoi(argv[2]);</div>
+<div class="line"><a id="l00057" name="l00057"></a><span class="lineno">   57</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> day = atoi(argv[3]);</div>
+<div class="line"><a id="l00058" name="l00058"></a><span class="lineno">   58</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> hour = atoi(argv[4]);</div>
+<div class="line"><a id="l00059" name="l00059"></a><span class="lineno">   59</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> min = atoi(argv[5]);</div>
+<div class="line"><a id="l00060" name="l00060"></a><span class="lineno">   60</span>  <span class="keyword">const</span> <span class="keywordtype">int</span> sec = atoi(argv[6]);</div>
+<div class="line"><a id="l00061" name="l00061"></a><span class="lineno">   61</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> remain = atof(argv[7]);</div>
+<div class="line"><a id="l00062" name="l00062"></a><span class="lineno">   62</span> </div>
+<div class="line"><a id="l00063" name="l00063"></a><span class="lineno">   63</span>  <span class="comment">/* Convert... */</span></div>
+<div class="line"><a id="l00064" name="l00064"></a><span class="lineno">   64</span>  <a class="code hl_function" href="mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f">time2jsec</a>(year, mon, day, hour, min, sec, remain, &amp;jsec);</div>
+<div class="line"><a id="l00065" name="l00065"></a><span class="lineno">   65</span>  printf(<span class="stringliteral">&quot;%.2f\n&quot;</span>, jsec);</div>
+<div class="line"><a id="l00066" name="l00066"></a><span class="lineno">   66</span> </div>
+<div class="line"><a id="l00067" name="l00067"></a><span class="lineno">   67</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
+<div class="line"><a id="l00068" name="l00068"></a><span class="lineno">   68</span>}</div>
+<div class="line"><a id="l00069" name="l00069"></a><span class="lineno">   69</span> </div>
+<div class="line"><a id="l00070" name="l00070"></a><span class="lineno">   70</span><span class="comment">/*****************************************************************************/</span></div>
+<div class="line"><a id="l00071" name="l00071"></a><span class="lineno">   71</span> </div>
+<div class="line"><a id="l00073" name="l00073"></a><span class="lineno"><a class="line" href="time2jsec_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">   73</a></span><span class="keywordtype">void</span> <a class="code hl_function" href="time2jsec_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a>(</div>
+<div class="line"><a id="l00074" name="l00074"></a><span class="lineno">   74</span>  <span class="keywordtype">void</span>) {</div>
+<div class="line"><a id="l00075" name="l00075"></a><span class="lineno">   75</span> </div>
+<div class="line"><a id="l00076" name="l00076"></a><span class="lineno">   76</span>  printf(<span class="stringliteral">&quot;\nMPTRAC time2jsec tool.\n\n&quot;</span>);</div>
+<div class="line"><a id="l00077" name="l00077"></a><span class="lineno">   77</span>  printf(<span class="stringliteral">&quot;Convert calendar time to seconds since 2000-01-01 00:00 UTC.\n&quot;</span>);</div>
+<div class="line"><a id="l00078" name="l00078"></a><span class="lineno">   78</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><a id="l00079" name="l00079"></a><span class="lineno">   79</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
+<div class="line"><a id="l00080" name="l00080"></a><span class="lineno">   80</span>  printf(<span class="stringliteral">&quot;  time2jsec &lt;year&gt; &lt;mon&gt; &lt;day&gt; &lt;hour&gt; &lt;min&gt; &lt;sec&gt; &lt;remain&gt;\n&quot;</span>);</div>
+<div class="line"><a id="l00081" name="l00081"></a><span class="lineno">   81</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><a id="l00082" name="l00082"></a><span class="lineno">   82</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
+<div class="line"><a id="l00083" name="l00083"></a><span class="lineno">   83</span>  printf(<span class="stringliteral">&quot;  &lt;year&gt;    Year.\n&quot;</span>);</div>
+<div class="line"><a id="l00084" name="l00084"></a><span class="lineno">   84</span>  printf(<span class="stringliteral">&quot;  &lt;mon&gt;     Month.\n&quot;</span>);</div>
+<div class="line"><a id="l00085" name="l00085"></a><span class="lineno">   85</span>  printf(<span class="stringliteral">&quot;  &lt;day&gt;     Day of month.\n&quot;</span>);</div>
+<div class="line"><a id="l00086" name="l00086"></a><span class="lineno">   86</span>  printf(<span class="stringliteral">&quot;  &lt;hour&gt;    Hour.\n&quot;</span>);</div>
+<div class="line"><a id="l00087" name="l00087"></a><span class="lineno">   87</span>  printf(<span class="stringliteral">&quot;  &lt;min&gt;     Minute.\n&quot;</span>);</div>
+<div class="line"><a id="l00088" name="l00088"></a><span class="lineno">   88</span>  printf(<span class="stringliteral">&quot;  &lt;sec&gt;     Second.\n&quot;</span>);</div>
+<div class="line"><a id="l00089" name="l00089"></a><span class="lineno">   89</span>  printf(<span class="stringliteral">&quot;  &lt;remain&gt;  Fractional-second remainder.\n&quot;</span>);</div>
+<div class="line"><a id="l00090" name="l00090"></a><span class="lineno">   90</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><a id="l00091" name="l00091"></a><span class="lineno">   91</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><a id="l00092" name="l00092"></a><span class="lineno">   92</span>}</div>
 <div class="ttc" id="amptrac_8c_html_a578e7ebaa62304182de8fe7ddf144b8f"><div class="ttname"><a href="mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f">time2jsec</a></div><div class="ttdeci">void time2jsec(const int year, const int mon, const int day, const int hour, const int min, const int sec, const double remain, double *jsec)</div><div class="ttdoc">Converts time components to seconds since January 1, 2000, 12:00:00 UTC.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l11175">mptrac.c:11175</a></div></div>
 <div class="ttc" id="amptrac_8h_html"><div class="ttname"><a href="mptrac_8h.html">mptrac.h</a></div><div class="ttdoc">MPTRAC library declarations.</div></div>
-<div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02093">mptrac.h:2093</a></div></div>
-<div class="ttc" id="atime2jsec_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="time2jsec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="time2jsec_8c_source.html#l00027">time2jsec.c:27</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02115">mptrac.h:2115</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a56fe9bff0a1be75aae2da3e593053e2c"><div class="ttname"><a href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a></div><div class="ttdeci">#define USAGE</div><div class="ttdoc">Print usage information on -h or --help.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l01922">mptrac.h:1922</a></div></div>
+<div class="ttc" id="atime2jsec_8c_html_a0ddf1224851353fc92bfbff6f499fa97"><div class="ttname"><a href="time2jsec_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a></div><div class="ttdeci">int main(int argc, char *argv[])</div><div class="ttdef"><b>Definition:</b> <a href="time2jsec_8c_source.html#l00039">time2jsec.c:39</a></div></div>
+<div class="ttc" id="atime2jsec_8c_html_ae8605e2b78cd4a81b6c6b5c30cb7366a"><div class="ttname"><a href="time2jsec_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a></div><div class="ttdeci">void usage(void)</div><div class="ttdoc">Print command-line help.</div><div class="ttdef"><b>Definition:</b> <a href="time2jsec_8c_source.html#l00073">time2jsec.c:73</a></div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>

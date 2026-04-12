@@ -88,6 +88,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ae8605e2b78cd4a81b6c6b5c30cb7366a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="trac_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a> (void)</td></tr>
+<tr class="memdesc:ae8605e2b78cd4a81b6c6b5c30cb7366a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print command-line help.  <a href="trac_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">More...</a><br /></td></tr>
+<tr class="separator:ae8605e2b78cd4a81b6c6b5c30cb7366a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="trac_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -96,6 +99,45 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition in file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="ae8605e2b78cd4a81b6c6b5c30cb7366a" name="ae8605e2b78cd4a81b6c6b5c30cb7366a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8605e2b78cd4a81b6c6b5c30cb7366a">&#9670;&nbsp;</a></span>usage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void usage </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Print command-line help. </p>
+
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l00188">188</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">  189</span>        {</div>
+<div class="line"><span class="lineno">  190</span> </div>
+<div class="line"><span class="lineno">  191</span>  printf(<span class="stringliteral">&quot;\nMPTRAC trac tool.\n\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  192</span>  printf(<span class="stringliteral">&quot;Run forward or backward trajectory calculations.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  193</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  194</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  195</span>  printf(<span class="stringliteral">&quot;  trac &lt;dirlist&gt; &lt;ctl&gt; &lt;atm_in&gt; [KEY VALUE ...]\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  196</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  197</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  198</span>  printf(<span class="stringliteral">&quot;  &lt;dirlist&gt;  Text file containing work directories to process.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  199</span>  printf(<span class="stringliteral">&quot;  &lt;ctl&gt;      Control file name relative to each work directory.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  200</span>  printf</div>
+<div class="line"><span class="lineno">  201</span>    (<span class="stringliteral">&quot;  &lt;atm_in&gt;   Atmospheric input file name relative to each work directory.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  202</span>  printf(<span class="stringliteral">&quot;  [KEY VALUE]  Optional control parameters.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  203</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  204</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  205</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="a0ddf1224851353fc92bfbff6f499fa97" name="a0ddf1224851353fc92bfbff6f499fa97"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0ddf1224851353fc92bfbff6f499fa97">&#9670;&nbsp;</a></span>main()</h2>
 
@@ -122,141 +164,146 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l00031">31</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   33</span>                {</div>
-<div class="line"><span class="lineno">   34</span> </div>
-<div class="line"><span class="lineno">   35</span>  <a class="code hl_struct" href="structctl__t.html">ctl_t</a> *ctl;</div>
-<div class="line"><span class="lineno">   36</span> </div>
-<div class="line"><span class="lineno">   37</span>  <a class="code hl_struct" href="structatm__t.html">atm_t</a> *atm;</div>
-<div class="line"><span class="lineno">   38</span> </div>
-<div class="line"><span class="lineno">   39</span>  <a class="code hl_struct" href="structcache__t.html">cache_t</a> *cache;</div>
-<div class="line"><span class="lineno">   40</span> </div>
-<div class="line"><span class="lineno">   41</span>  <a class="code hl_struct" href="structclim__t.html">clim_t</a> *clim;</div>
-<div class="line"><span class="lineno">   42</span> </div>
-<div class="line"><span class="lineno">   43</span>  <a class="code hl_struct" href="structmet__t.html">met_t</a> *met0, *met1;</div>
-<div class="line"><span class="lineno">   44</span> </div>
-<div class="line"><span class="lineno">   45</span>  <a class="code hl_struct" href="structdd__t.html">dd_t</a> *dd;</div>
+<p class="definition">Definition at line <a class="el" href="trac_8c_source.html#l00043">43</a> of file <a class="el" href="trac_8c_source.html">trac.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   45</span>                {</div>
 <div class="line"><span class="lineno">   46</span> </div>
-<div class="line"><span class="lineno">   47</span>  FILE *dirlist;</div>
+<div class="line"><span class="lineno">   47</span>  <a class="code hl_struct" href="structctl__t.html">ctl_t</a> *ctl;</div>
 <div class="line"><span class="lineno">   48</span> </div>
-<div class="line"><span class="lineno">   49</span>  <span class="keywordtype">char</span> dirname[<a class="code hl_define" href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>], filename[2 * <a class="code hl_define" href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>];</div>
+<div class="line"><span class="lineno">   49</span>  <a class="code hl_struct" href="structatm__t.html">atm_t</a> *atm;</div>
 <div class="line"><span class="lineno">   50</span> </div>
-<div class="line"><span class="lineno">   51</span>  <span class="keywordtype">int</span> ntask = -1, rank = 0, size = 1;</div>
+<div class="line"><span class="lineno">   51</span>  <a class="code hl_struct" href="structcache__t.html">cache_t</a> *cache;</div>
 <div class="line"><span class="lineno">   52</span> </div>
-<div class="line"><span class="lineno">   53</span>  <span class="comment">/* Initialize MPI... */</span></div>
-<div class="line"><span class="lineno">   54</span><span class="preprocessor">#ifdef MPI</span></div>
-<div class="line"><span class="lineno">   55</span>  MPI_Init(&amp;argc, &amp;argv);</div>
-<div class="line"><span class="lineno">   56</span>  MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);</div>
-<div class="line"><span class="lineno">   57</span>  MPI_Comm_size(MPI_COMM_WORLD, &amp;size);</div>
-<div class="line"><span class="lineno">   58</span><span class="preprocessor">#endif</span></div>
-<div class="line"><span class="lineno">   59</span> </div>
-<div class="line"><span class="lineno">   60</span>  <span class="comment">/* Check arguments... */</span></div>
-<div class="line"><span class="lineno">   61</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
-<div class="line"><span class="lineno">   62</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Give parameters: &lt;dirlist&gt; &lt;ctl&gt; &lt;atm_in&gt;&quot;</span>);</div>
-<div class="line"><span class="lineno">   63</span> </div>
-<div class="line"><span class="lineno">   64</span>  <span class="comment">/* Open directory list... */</span></div>
-<div class="line"><span class="lineno">   65</span>  <span class="keywordflow">if</span> (!(dirlist = fopen(argv[1], <span class="stringliteral">&quot;r&quot;</span>)))</div>
-<div class="line"><span class="lineno">   66</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot open directory list!&quot;</span>);</div>
+<div class="line"><span class="lineno">   53</span>  <a class="code hl_struct" href="structclim__t.html">clim_t</a> *clim;</div>
+<div class="line"><span class="lineno">   54</span> </div>
+<div class="line"><span class="lineno">   55</span>  <a class="code hl_struct" href="structmet__t.html">met_t</a> *met0, *met1;</div>
+<div class="line"><span class="lineno">   56</span> </div>
+<div class="line"><span class="lineno">   57</span>  <a class="code hl_struct" href="structdd__t.html">dd_t</a> *dd;</div>
+<div class="line"><span class="lineno">   58</span> </div>
+<div class="line"><span class="lineno">   59</span>  FILE *dirlist;</div>
+<div class="line"><span class="lineno">   60</span> </div>
+<div class="line"><span class="lineno">   61</span>  <span class="keywordtype">char</span> dirname[<a class="code hl_define" href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>], filename[2 * <a class="code hl_define" href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>];</div>
+<div class="line"><span class="lineno">   62</span> </div>
+<div class="line"><span class="lineno">   63</span>  <span class="keywordtype">int</span> ntask = -1, rank = 0, size = 1;</div>
+<div class="line"><span class="lineno">   64</span> </div>
+<div class="line"><span class="lineno">   65</span>  <span class="comment">/* Print usage information... */</span></div>
+<div class="line"><span class="lineno">   66</span>  <a class="code hl_define" href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a>;</div>
 <div class="line"><span class="lineno">   67</span> </div>
-<div class="line"><span class="lineno">   68</span>  <span class="comment">/* Loop over directories... */</span></div>
-<div class="line"><span class="lineno">   69</span>  <span class="keywordflow">while</span> (fscanf(dirlist, <span class="stringliteral">&quot;%4999s&quot;</span>, dirname) != EOF) {</div>
-<div class="line"><span class="lineno">   70</span> </div>
-<div class="line"><span class="lineno">   71</span>    <span class="comment">/* MPI parallelization... */</span></div>
-<div class="line"><span class="lineno">   72</span>    <span class="keywordflow">if</span> ((++ntask) % size != rank)</div>
-<div class="line"><span class="lineno">   73</span>      <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">   68</span>  <span class="comment">/* Initialize MPI... */</span></div>
+<div class="line"><span class="lineno">   69</span><span class="preprocessor">#ifdef MPI</span></div>
+<div class="line"><span class="lineno">   70</span>  MPI_Init(&amp;argc, &amp;argv);</div>
+<div class="line"><span class="lineno">   71</span>  MPI_Comm_rank(MPI_COMM_WORLD, &amp;rank);</div>
+<div class="line"><span class="lineno">   72</span>  MPI_Comm_size(MPI_COMM_WORLD, &amp;size);</div>
+<div class="line"><span class="lineno">   73</span><span class="preprocessor">#endif</span></div>
 <div class="line"><span class="lineno">   74</span> </div>
-<div class="line"><span class="lineno">   75</span>    <span class="comment">/* Write info... */</span></div>
-<div class="line"><span class="lineno">   76</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;Parallelization: ntask= %d | rank= %d | size= %d&quot;</span>,</div>
-<div class="line"><span class="lineno">   77</span>        ntask, rank, size);</div>
-<div class="line"><span class="lineno">   78</span> </div>
-<div class="line"><span class="lineno">   79</span>    <span class="comment">/* ------------------------------------------------------------</span></div>
-<div class="line"><span class="lineno">   80</span><span class="comment">       Initialize model run...</span></div>
-<div class="line"><span class="lineno">   81</span><span class="comment">       ------------------------------------------------------------ */</span></div>
-<div class="line"><span class="lineno">   82</span> </div>
-<div class="line"><span class="lineno">   83</span>    <span class="comment">/* Allocate memory... */</span></div>
-<div class="line"><span class="lineno">   84</span>    <a class="code hl_function" href="mptrac_8c.html#a05eca328a1d7b6ea06252dca2f83961d">mptrac_alloc</a>(&amp;ctl, &amp;cache, &amp;clim, &amp;met0, &amp;met1, &amp;atm, &amp;dd);</div>
-<div class="line"><span class="lineno">   85</span> </div>
-<div class="line"><span class="lineno">   86</span>    <span class="comment">/* Read control parameters... */</span></div>
-<div class="line"><span class="lineno">   87</span>    sprintf(filename, <span class="stringliteral">&quot;%s/%s&quot;</span>, dirname, argv[2]);</div>
-<div class="line"><span class="lineno">   88</span>    <a class="code hl_function" href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6">mptrac_read_ctl</a>(filename, argc, argv, ctl);</div>
-<div class="line"><span class="lineno">   89</span> </div>
-<div class="line"><span class="lineno">   90</span>    <span class="comment">/* Read climatological data... */</span></div>
-<div class="line"><span class="lineno">   91</span>    <a class="code hl_function" href="mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766">mptrac_read_clim</a>(ctl, clim);</div>
-<div class="line"><span class="lineno">   92</span> </div>
-<div class="line"><span class="lineno">   93</span>    <span class="comment">/* Read atmospheric data... */</span></div>
-<div class="line"><span class="lineno">   94</span>    sprintf(filename, <span class="stringliteral">&quot;%s/%s&quot;</span>, dirname, argv[3]);</div>
-<div class="line"><span class="lineno">   95</span>    <span class="keywordflow">if</span> (!<a class="code hl_function" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a>(filename, ctl, atm))</div>
-<div class="line"><span class="lineno">   96</span>      <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot open file!&quot;</span>);</div>
-<div class="line"><span class="lineno">   97</span> </div>
-<div class="line"><span class="lineno">   98</span>    <span class="comment">/* Initialize MPTRAC... */</span></div>
-<div class="line"><span class="lineno">   99</span>    <a class="code hl_function" href="mptrac_8c.html#a57d693a955f788f652b4d961ee5a29a7">mptrac_init</a>(ctl, cache, clim, atm, ntask);</div>
-<div class="line"><span class="lineno">  100</span> </div>
-<div class="line"><span class="lineno">  101</span>    <span class="comment">/* ------------------------------------------------------------</span></div>
-<div class="line"><span class="lineno">  102</span><span class="comment">       Loop over timesteps...</span></div>
-<div class="line"><span class="lineno">  103</span><span class="comment">       ------------------------------------------------------------ */</span></div>
-<div class="line"><span class="lineno">  104</span> </div>
-<div class="line"><span class="lineno">  105</span>    <span class="comment">/* Loop over timesteps... */</span></div>
-<div class="line"><span class="lineno">  106</span>    <span class="keywordflow">for</span> (<span class="keywordtype">double</span> t = ctl-&gt;<a class="code hl_variable" href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">t_start</a>;</div>
-<div class="line"><span class="lineno">  107</span>         ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">direction</a> * (t - ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a649752813806c995ee09923a44d0e974">t_stop</a>) &lt; ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a718d3200f867d9018369f12f66464807">dt_mod</a>;</div>
-<div class="line"><span class="lineno">  108</span>         t += ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">direction</a> * ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a718d3200f867d9018369f12f66464807">dt_mod</a>) {</div>
+<div class="line"><span class="lineno">   75</span>  <span class="comment">/* Check arguments... */</span></div>
+<div class="line"><span class="lineno">   76</span>  <span class="keywordflow">if</span> (argc &lt; 4)</div>
+<div class="line"><span class="lineno">   77</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   78</span>           <span class="stringliteral">&quot;Usage: trac &lt;dirlist&gt; &lt;ctl&gt; &lt;atm_in&gt; [KEY VALUE ...]\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   79</span>           <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
+<div class="line"><span class="lineno">   80</span> </div>
+<div class="line"><span class="lineno">   81</span>  <span class="comment">/* Open directory list... */</span></div>
+<div class="line"><span class="lineno">   82</span>  <span class="keywordflow">if</span> (!(dirlist = fopen(argv[1], <span class="stringliteral">&quot;r&quot;</span>)))</div>
+<div class="line"><span class="lineno">   83</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot open directory list!&quot;</span>);</div>
+<div class="line"><span class="lineno">   84</span> </div>
+<div class="line"><span class="lineno">   85</span>  <span class="comment">/* Loop over directories... */</span></div>
+<div class="line"><span class="lineno">   86</span>  <span class="keywordflow">while</span> (fscanf(dirlist, <span class="stringliteral">&quot;%4999s&quot;</span>, dirname) != EOF) {</div>
+<div class="line"><span class="lineno">   87</span> </div>
+<div class="line"><span class="lineno">   88</span>    <span class="comment">/* MPI parallelization... */</span></div>
+<div class="line"><span class="lineno">   89</span>    <span class="keywordflow">if</span> ((++ntask) % size != rank)</div>
+<div class="line"><span class="lineno">   90</span>      <span class="keywordflow">continue</span>;</div>
+<div class="line"><span class="lineno">   91</span> </div>
+<div class="line"><span class="lineno">   92</span>    <span class="comment">/* Write info... */</span></div>
+<div class="line"><span class="lineno">   93</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;Parallelization: ntask= %d | rank= %d | size= %d&quot;</span>,</div>
+<div class="line"><span class="lineno">   94</span>        ntask, rank, size);</div>
+<div class="line"><span class="lineno">   95</span> </div>
+<div class="line"><span class="lineno">   96</span>    <span class="comment">/* ------------------------------------------------------------</span></div>
+<div class="line"><span class="lineno">   97</span><span class="comment">       Initialize model run...</span></div>
+<div class="line"><span class="lineno">   98</span><span class="comment">       ------------------------------------------------------------ */</span></div>
+<div class="line"><span class="lineno">   99</span> </div>
+<div class="line"><span class="lineno">  100</span>    <span class="comment">/* Allocate memory... */</span></div>
+<div class="line"><span class="lineno">  101</span>    <a class="code hl_function" href="mptrac_8c.html#a05eca328a1d7b6ea06252dca2f83961d">mptrac_alloc</a>(&amp;ctl, &amp;cache, &amp;clim, &amp;met0, &amp;met1, &amp;atm, &amp;dd);</div>
+<div class="line"><span class="lineno">  102</span> </div>
+<div class="line"><span class="lineno">  103</span>    <span class="comment">/* Read control parameters... */</span></div>
+<div class="line"><span class="lineno">  104</span>    sprintf(filename, <span class="stringliteral">&quot;%s/%s&quot;</span>, dirname, argv[2]);</div>
+<div class="line"><span class="lineno">  105</span>    <a class="code hl_function" href="mptrac_8c.html#adb6e87e9f904fe4ad238e5a99ec9fbc6">mptrac_read_ctl</a>(filename, argc, argv, ctl);</div>
+<div class="line"><span class="lineno">  106</span> </div>
+<div class="line"><span class="lineno">  107</span>    <span class="comment">/* Read climatological data... */</span></div>
+<div class="line"><span class="lineno">  108</span>    <a class="code hl_function" href="mptrac_8c.html#a8fc9ec02bd18b27c2e225161d833c766">mptrac_read_clim</a>(ctl, clim);</div>
 <div class="line"><span class="lineno">  109</span> </div>
-<div class="line"><span class="lineno">  110</span>      <span class="comment">/* Adjust length of final time step... */</span></div>
-<div class="line"><span class="lineno">  111</span>      <span class="keywordflow">if</span> (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">direction</a> * (t - ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a649752813806c995ee09923a44d0e974">t_stop</a>) &gt; 0)</div>
-<div class="line"><span class="lineno">  112</span>        t = ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a649752813806c995ee09923a44d0e974">t_stop</a>;</div>
-<div class="line"><span class="lineno">  113</span> </div>
-<div class="line"><span class="lineno">  114</span>      <span class="comment">/* Get meteo data... */</span></div>
-<div class="line"><span class="lineno">  115</span>      <a class="code hl_function" href="mptrac_8c.html#a8435d2ccfa5de00f6d8080d363737cd6">mptrac_get_met</a>(ctl, clim, t, &amp;met0, &amp;met1, dd);</div>
-<div class="line"><span class="lineno">  116</span> </div>
-<div class="line"><span class="lineno">  117</span>      <span class="comment">/* Check time step... */</span></div>
-<div class="line"><span class="lineno">  118</span>      <span class="keywordflow">if</span> (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a718d3200f867d9018369f12f66464807">dt_mod</a> &gt; fabs(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[1] - met0-&gt;<a class="code hl_variable" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[0]) * 111132. / 150.)</div>
-<div class="line"><span class="lineno">  119</span>        <a class="code hl_define" href="mptrac_8h.html#a8f75b971030a39ef811d3526a62b36b8">WARN</a>(<span class="stringliteral">&quot;Violation of CFL criterion! Check DT_MOD!&quot;</span>);</div>
-<div class="line"><span class="lineno">  120</span> </div>
-<div class="line"><span class="lineno">  121</span><span class="preprocessor">#ifdef DD</span></div>
-<div class="line"><span class="lineno">  122</span>      <span class="comment">/* Set-up domain decomposition... */</span></div>
-<div class="line"><span class="lineno">  123</span>      <span class="keywordflow">if</span> ((t == ctl-&gt;<a class="code hl_variable" href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">t_start</a> || !dd-&gt;<a class="code hl_variable" href="structdd__t.html#a6b3f46164e3e50d121dd10ee5bd8f2c8">init</a>) &amp;&amp; (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">dd</a> == 1))</div>
-<div class="line"><span class="lineno">  124</span>        dd-&gt;<a class="code hl_variable" href="structdd__t.html#a6b3f46164e3e50d121dd10ee5bd8f2c8">init</a> = <a class="code hl_function" href="mptrac_8h.html#a055f8ecc85c15a10e63d36f2d06eb3a8">dd_init</a>(ctl, dd, atm);</div>
-<div class="line"><span class="lineno">  125</span><span class="preprocessor">#endif</span></div>
+<div class="line"><span class="lineno">  110</span>    <span class="comment">/* Read atmospheric data... */</span></div>
+<div class="line"><span class="lineno">  111</span>    sprintf(filename, <span class="stringliteral">&quot;%s/%s&quot;</span>, dirname, argv[3]);</div>
+<div class="line"><span class="lineno">  112</span>    <span class="keywordflow">if</span> (!<a class="code hl_function" href="mptrac_8c.html#a96e5b8b7db1bad827222e732ac6d1633">mptrac_read_atm</a>(filename, ctl, atm))</div>
+<div class="line"><span class="lineno">  113</span>      <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Cannot open file!&quot;</span>);</div>
+<div class="line"><span class="lineno">  114</span> </div>
+<div class="line"><span class="lineno">  115</span>    <span class="comment">/* Initialize MPTRAC... */</span></div>
+<div class="line"><span class="lineno">  116</span>    <a class="code hl_function" href="mptrac_8c.html#a57d693a955f788f652b4d961ee5a29a7">mptrac_init</a>(ctl, cache, clim, atm, ntask);</div>
+<div class="line"><span class="lineno">  117</span> </div>
+<div class="line"><span class="lineno">  118</span>    <span class="comment">/* ------------------------------------------------------------</span></div>
+<div class="line"><span class="lineno">  119</span><span class="comment">       Loop over timesteps...</span></div>
+<div class="line"><span class="lineno">  120</span><span class="comment">       ------------------------------------------------------------ */</span></div>
+<div class="line"><span class="lineno">  121</span> </div>
+<div class="line"><span class="lineno">  122</span>    <span class="comment">/* Loop over timesteps... */</span></div>
+<div class="line"><span class="lineno">  123</span>    <span class="keywordflow">for</span> (<span class="keywordtype">double</span> t = ctl-&gt;<a class="code hl_variable" href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">t_start</a>;</div>
+<div class="line"><span class="lineno">  124</span>         ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">direction</a> * (t - ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a649752813806c995ee09923a44d0e974">t_stop</a>) &lt; ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a718d3200f867d9018369f12f66464807">dt_mod</a>;</div>
+<div class="line"><span class="lineno">  125</span>         t += ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">direction</a> * ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a718d3200f867d9018369f12f66464807">dt_mod</a>) {</div>
 <div class="line"><span class="lineno">  126</span> </div>
-<div class="line"><span class="lineno">  127</span> </div>
-<div class="line"><span class="lineno">  128</span>      <span class="comment">/* Run a single time step... */</span></div>
-<div class="line"><span class="lineno">  129</span>      <a class="code hl_function" href="mptrac_8c.html#a3d7054e72e7ad37c35592d7469664f0a">mptrac_run_timestep</a>(ctl, cache, clim, &amp;met0, &amp;met1, atm, t, dd);</div>
+<div class="line"><span class="lineno">  127</span>      <span class="comment">/* Adjust length of final time step... */</span></div>
+<div class="line"><span class="lineno">  128</span>      <span class="keywordflow">if</span> (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">direction</a> * (t - ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a649752813806c995ee09923a44d0e974">t_stop</a>) &gt; 0)</div>
+<div class="line"><span class="lineno">  129</span>        t = ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a649752813806c995ee09923a44d0e974">t_stop</a>;</div>
 <div class="line"><span class="lineno">  130</span> </div>
-<div class="line"><span class="lineno">  131</span>      <span class="comment">/* Write output... */</span></div>
-<div class="line"><span class="lineno">  132</span>      <a class="code hl_function" href="mptrac_8c.html#a9abd7a8f35bf3b0c211d8212675d09b1">mptrac_write_output</a>(dirname, ctl, met0, met1, atm, t);</div>
-<div class="line"><span class="lineno">  133</span>    }</div>
-<div class="line"><span class="lineno">  134</span> </div>
-<div class="line"><span class="lineno">  135</span>    <span class="comment">/* ------------------------------------------------------------</span></div>
-<div class="line"><span class="lineno">  136</span><span class="comment">       Finalize model run...</span></div>
-<div class="line"><span class="lineno">  137</span><span class="comment">       ------------------------------------------------------------ */</span></div>
-<div class="line"><span class="lineno">  138</span> </div>
-<div class="line"><span class="lineno">  139</span>    <span class="comment">/* Flush output buffer... */</span></div>
-<div class="line"><span class="lineno">  140</span>    fflush(NULL);</div>
-<div class="line"><span class="lineno">  141</span> </div>
-<div class="line"><span class="lineno">  142</span>    <span class="comment">/* Report problem size... */</span></div>
-<div class="line"><span class="lineno">  143</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;SIZE_NP = %d&quot;</span>, atm-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>);</div>
-<div class="line"><span class="lineno">  144</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;SIZE_MPI_TASKS = %d&quot;</span>, size);</div>
-<div class="line"><span class="lineno">  145</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;SIZE_OMP_THREADS = %d&quot;</span>, omp_get_max_threads());</div>
-<div class="line"><span class="lineno">  146</span> </div>
-<div class="line"><span class="lineno">  147</span>    <span class="comment">/* Report memory usage... */</span></div>
-<div class="line"><span class="lineno">  148</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_ATM = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structatm__t.html">atm_t</a>) / 1024. / 1024.);</div>
-<div class="line"><span class="lineno">  149</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_CACHE = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structcache__t.html">cache_t</a>) / 1024. / 1024.);</div>
-<div class="line"><span class="lineno">  150</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_CLIM = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structclim__t.html">clim_t</a>) / 1024. / 1024.);</div>
-<div class="line"><span class="lineno">  151</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_METEO = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmet__t.html">met_t</a>) / 1024. / 1024.);</div>
-<div class="line"><span class="lineno">  152</span> </div>
-<div class="line"><span class="lineno">  153</span>    <span class="comment">/* Free memory... */</span></div>
-<div class="line"><span class="lineno">  154</span>    <a class="code hl_function" href="mptrac_8c.html#adba57d9fe55a3a455520de070702f8e1">mptrac_free</a>(ctl, cache, clim, met0, met1, atm, dd);</div>
+<div class="line"><span class="lineno">  131</span>      <span class="comment">/* Get meteo data... */</span></div>
+<div class="line"><span class="lineno">  132</span>      <a class="code hl_function" href="mptrac_8c.html#a8435d2ccfa5de00f6d8080d363737cd6">mptrac_get_met</a>(ctl, clim, t, &amp;met0, &amp;met1, dd);</div>
+<div class="line"><span class="lineno">  133</span> </div>
+<div class="line"><span class="lineno">  134</span>      <span class="comment">/* Check time step... */</span></div>
+<div class="line"><span class="lineno">  135</span>      <span class="keywordflow">if</span> (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a718d3200f867d9018369f12f66464807">dt_mod</a> &gt; fabs(met0-&gt;<a class="code hl_variable" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[1] - met0-&gt;<a class="code hl_variable" href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">lon</a>[0]) * 111132. / 150.)</div>
+<div class="line"><span class="lineno">  136</span>        <a class="code hl_define" href="mptrac_8h.html#a8f75b971030a39ef811d3526a62b36b8">WARN</a>(<span class="stringliteral">&quot;Violation of CFL criterion! Check DT_MOD!&quot;</span>);</div>
+<div class="line"><span class="lineno">  137</span> </div>
+<div class="line"><span class="lineno">  138</span><span class="preprocessor">#ifdef DD</span></div>
+<div class="line"><span class="lineno">  139</span>      <span class="comment">/* Set-up domain decomposition... */</span></div>
+<div class="line"><span class="lineno">  140</span>      <span class="keywordflow">if</span> ((t == ctl-&gt;<a class="code hl_variable" href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">t_start</a> || !dd-&gt;<a class="code hl_variable" href="structdd__t.html#a6b3f46164e3e50d121dd10ee5bd8f2c8">init</a>) &amp;&amp; (ctl-&gt;<a class="code hl_variable" href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">dd</a> == 1))</div>
+<div class="line"><span class="lineno">  141</span>        dd-&gt;<a class="code hl_variable" href="structdd__t.html#a6b3f46164e3e50d121dd10ee5bd8f2c8">init</a> = <a class="code hl_function" href="mptrac_8h.html#a055f8ecc85c15a10e63d36f2d06eb3a8">dd_init</a>(ctl, dd, atm);</div>
+<div class="line"><span class="lineno">  142</span><span class="preprocessor">#endif</span></div>
+<div class="line"><span class="lineno">  143</span> </div>
+<div class="line"><span class="lineno">  144</span> </div>
+<div class="line"><span class="lineno">  145</span>      <span class="comment">/* Run a single time step... */</span></div>
+<div class="line"><span class="lineno">  146</span>      <a class="code hl_function" href="mptrac_8c.html#a3d7054e72e7ad37c35592d7469664f0a">mptrac_run_timestep</a>(ctl, cache, clim, &amp;met0, &amp;met1, atm, t, dd);</div>
+<div class="line"><span class="lineno">  147</span> </div>
+<div class="line"><span class="lineno">  148</span>      <span class="comment">/* Write output... */</span></div>
+<div class="line"><span class="lineno">  149</span>      <a class="code hl_function" href="mptrac_8c.html#a9abd7a8f35bf3b0c211d8212675d09b1">mptrac_write_output</a>(dirname, ctl, met0, met1, atm, t);</div>
+<div class="line"><span class="lineno">  150</span>    }</div>
+<div class="line"><span class="lineno">  151</span> </div>
+<div class="line"><span class="lineno">  152</span>    <span class="comment">/* ------------------------------------------------------------</span></div>
+<div class="line"><span class="lineno">  153</span><span class="comment">       Finalize model run...</span></div>
+<div class="line"><span class="lineno">  154</span><span class="comment">       ------------------------------------------------------------ */</span></div>
 <div class="line"><span class="lineno">  155</span> </div>
-<div class="line"><span class="lineno">  156</span>    <span class="comment">/* Report timers... */</span></div>
-<div class="line"><span class="lineno">  157</span>    <a class="code hl_define" href="mptrac_8h.html#ab84d08f557a59406c2b0969300937769">PRINT_TIMERS</a>;</div>
-<div class="line"><span class="lineno">  158</span>  }</div>
-<div class="line"><span class="lineno">  159</span> </div>
-<div class="line"><span class="lineno">  160</span>  <span class="comment">/* Finalize MPI... */</span></div>
-<div class="line"><span class="lineno">  161</span><span class="preprocessor">#ifdef MPI</span></div>
-<div class="line"><span class="lineno">  162</span>  MPI_Finalize();</div>
-<div class="line"><span class="lineno">  163</span><span class="preprocessor">#endif</span></div>
-<div class="line"><span class="lineno">  164</span> </div>
-<div class="line"><span class="lineno">  165</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
-<div class="line"><span class="lineno">  166</span>}</div>
+<div class="line"><span class="lineno">  156</span>    <span class="comment">/* Flush output buffer... */</span></div>
+<div class="line"><span class="lineno">  157</span>    fflush(NULL);</div>
+<div class="line"><span class="lineno">  158</span> </div>
+<div class="line"><span class="lineno">  159</span>    <span class="comment">/* Report problem size... */</span></div>
+<div class="line"><span class="lineno">  160</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;SIZE_NP = %d&quot;</span>, atm-&gt;<a class="code hl_variable" href="structatm__t.html#a473366004c7195d5c455373296ee1833">np</a>);</div>
+<div class="line"><span class="lineno">  161</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;SIZE_MPI_TASKS = %d&quot;</span>, size);</div>
+<div class="line"><span class="lineno">  162</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;SIZE_OMP_THREADS = %d&quot;</span>, omp_get_max_threads());</div>
+<div class="line"><span class="lineno">  163</span> </div>
+<div class="line"><span class="lineno">  164</span>    <span class="comment">/* Report memory usage... */</span></div>
+<div class="line"><span class="lineno">  165</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_ATM = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structatm__t.html">atm_t</a>) / 1024. / 1024.);</div>
+<div class="line"><span class="lineno">  166</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_CACHE = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structcache__t.html">cache_t</a>) / 1024. / 1024.);</div>
+<div class="line"><span class="lineno">  167</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_CLIM = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structclim__t.html">clim_t</a>) / 1024. / 1024.);</div>
+<div class="line"><span class="lineno">  168</span>    <a class="code hl_define" href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a>(1, <span class="stringliteral">&quot;MEMORY_METEO = %g MByte&quot;</span>, <span class="keyword">sizeof</span>(<a class="code hl_struct" href="structmet__t.html">met_t</a>) / 1024. / 1024.);</div>
+<div class="line"><span class="lineno">  169</span> </div>
+<div class="line"><span class="lineno">  170</span>    <span class="comment">/* Free memory... */</span></div>
+<div class="line"><span class="lineno">  171</span>    <a class="code hl_function" href="mptrac_8c.html#adba57d9fe55a3a455520de070702f8e1">mptrac_free</a>(ctl, cache, clim, met0, met1, atm, dd);</div>
+<div class="line"><span class="lineno">  172</span> </div>
+<div class="line"><span class="lineno">  173</span>    <span class="comment">/* Report timers... */</span></div>
+<div class="line"><span class="lineno">  174</span>    <a class="code hl_define" href="mptrac_8h.html#ab84d08f557a59406c2b0969300937769">PRINT_TIMERS</a>;</div>
+<div class="line"><span class="lineno">  175</span>  }</div>
+<div class="line"><span class="lineno">  176</span> </div>
+<div class="line"><span class="lineno">  177</span>  <span class="comment">/* Finalize MPI... */</span></div>
+<div class="line"><span class="lineno">  178</span><span class="preprocessor">#ifdef MPI</span></div>
+<div class="line"><span class="lineno">  179</span>  MPI_Finalize();</div>
+<div class="line"><span class="lineno">  180</span><span class="preprocessor">#endif</span></div>
+<div class="line"><span class="lineno">  181</span> </div>
+<div class="line"><span class="lineno">  182</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
+<div class="line"><span class="lineno">  183</span>}</div>
 <div class="ttc" id="amptrac_8c_html_a05eca328a1d7b6ea06252dca2f83961d"><div class="ttname"><a href="mptrac_8c.html#a05eca328a1d7b6ea06252dca2f83961d">mptrac_alloc</a></div><div class="ttdeci">void mptrac_alloc(ctl_t **ctl, cache_t **cache, clim_t **clim, met_t **met0, met_t **met1, atm_t **atm, dd_t **dd)</div><div class="ttdoc">Allocates and initializes memory resources for MPTRAC.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l05203">mptrac.c:5203</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a3d7054e72e7ad37c35592d7469664f0a"><div class="ttname"><a href="mptrac_8c.html#a3d7054e72e7ad37c35592d7469664f0a">mptrac_run_timestep</a></div><div class="ttdeci">void mptrac_run_timestep(ctl_t *ctl, cache_t *cache, clim_t *clim, met_t **met0, met_t **met1, atm_t *atm, double t, dd_t *dd)</div><div class="ttdoc">Executes a single timestep of the MPTRAC model simulation.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l06576">mptrac.c:6576</a></div></div>
 <div class="ttc" id="amptrac_8c_html_a57d693a955f788f652b4d961ee5a29a7"><div class="ttname"><a href="mptrac_8c.html#a57d693a955f788f652b4d961ee5a29a7">mptrac_init</a></div><div class="ttdeci">void mptrac_init(ctl_t *ctl, cache_t *cache, clim_t *clim, atm_t *atm, const int ntask)</div><div class="ttdoc">Initializes the MPTRAC model and its associated components.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l05411">mptrac.c:5411</a></div></div>
@@ -268,24 +315,25 @@ Functions</h2></td></tr>
 <div class="ttc" id="amptrac_8c_html_adba57d9fe55a3a455520de070702f8e1"><div class="ttname"><a href="mptrac_8c.html#adba57d9fe55a3a455520de070702f8e1">mptrac_free</a></div><div class="ttdeci">void mptrac_free(ctl_t *ctl, cache_t *cache, clim_t *clim, met_t *met0, met_t *met1, atm_t *atm, dd_t *dd)</div><div class="ttdoc">Frees memory resources allocated for MPTRAC.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l05256">mptrac.c:5256</a></div></div>
 <div class="ttc" id="amptrac_8h_html_a055f8ecc85c15a10e63d36f2d06eb3a8"><div class="ttname"><a href="mptrac_8h.html#a055f8ecc85c15a10e63d36f2d06eb3a8">dd_init</a></div><div class="ttdeci">int dd_init(ctl_t *ctl, dd_t *dd, atm_t *atm)</div><div class="ttdoc">Initializes domain decomposition for parallel processing.</div></div>
 <div class="ttc" id="amptrac_8h_html_a05b49c662c073f89e86804f7856622a0"><div class="ttname"><a href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a></div><div class="ttdeci">#define LEN</div><div class="ttdoc">Maximum length of ASCII data lines.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l00348">mptrac.h:348</a></div></div>
-<div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02093">mptrac.h:2093</a></div></div>
-<div class="ttc" id="amptrac_8h_html_a8f75b971030a39ef811d3526a62b36b8"><div class="ttname"><a href="mptrac_8h.html#a8f75b971030a39ef811d3526a62b36b8">WARN</a></div><div class="ttdeci">#define WARN(...)</div><div class="ttdoc">Print a warning message with contextual information.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02060">mptrac.h:2060</a></div></div>
-<div class="ttc" id="amptrac_8h_html_ab84d08f557a59406c2b0969300937769"><div class="ttname"><a href="mptrac_8h.html#ab84d08f557a59406c2b0969300937769">PRINT_TIMERS</a></div><div class="ttdeci">#define PRINT_TIMERS</div><div class="ttdoc">Print the current state of all timers.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02152">mptrac.h:2152</a></div></div>
-<div class="ttc" id="amptrac_8h_html_acaa1c3fa56061380a29889d703236251"><div class="ttname"><a href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a></div><div class="ttdeci">#define LOG(level,...)</div><div class="ttdoc">Print a log message with a specified logging level.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02023">mptrac.h:2023</a></div></div>
-<div class="ttc" id="astructatm__t_html"><div class="ttname"><a href="structatm__t.html">atm_t</a></div><div class="ttdoc">Air parcel data.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03235">mptrac.h:3235</a></div></div>
-<div class="ttc" id="astructatm__t_html_a473366004c7195d5c455373296ee1833"><div class="ttname"><a href="structatm__t.html#a473366004c7195d5c455373296ee1833">atm_t::np</a></div><div class="ttdeci">int np</div><div class="ttdoc">Number of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03238">mptrac.h:3238</a></div></div>
-<div class="ttc" id="astructcache__t_html"><div class="ttname"><a href="structcache__t.html">cache_t</a></div><div class="ttdoc">Cache data structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03290">mptrac.h:3290</a></div></div>
-<div class="ttc" id="astructclim__t_html"><div class="ttname"><a href="structclim__t.html">clim_t</a></div><div class="ttdoc">Climatological data.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03430">mptrac.h:3430</a></div></div>
-<div class="ttc" id="astructctl__t_html"><div class="ttname"><a href="structctl__t.html">ctl_t</a></div><div class="ttdoc">Control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02181">mptrac.h:2181</a></div></div>
-<div class="ttc" id="astructctl__t_html_a1a6d5b4003ebd8f9c77b3b45933779e6"><div class="ttname"><a href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">ctl_t::direction</a></div><div class="ttdeci">int direction</div><div class="ttdoc">Direction flag (1=forward calculation, -1=backward calculation).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02509">mptrac.h:2509</a></div></div>
-<div class="ttc" id="astructctl__t_html_a587663283cba9a4470dd7b753b5a1690"><div class="ttname"><a href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">ctl_t::dd</a></div><div class="ttdeci">int dd</div><div class="ttdoc">Domain decomposition (0=no, 1=yes, with 2x2 if not specified).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03211">mptrac.h:3211</a></div></div>
-<div class="ttc" id="astructctl__t_html_a649752813806c995ee09923a44d0e974"><div class="ttname"><a href="structctl__t.html#a649752813806c995ee09923a44d0e974">ctl_t::t_stop</a></div><div class="ttdeci">double t_stop</div><div class="ttdoc">Stop time of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02515">mptrac.h:2515</a></div></div>
-<div class="ttc" id="astructctl__t_html_a718d3200f867d9018369f12f66464807"><div class="ttname"><a href="structctl__t.html#a718d3200f867d9018369f12f66464807">ctl_t::dt_mod</a></div><div class="ttdeci">double dt_mod</div><div class="ttdoc">Time step of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02518">mptrac.h:2518</a></div></div>
-<div class="ttc" id="astructctl__t_html_aee3354b4dacf5d89944ae0b7faaa12c6"><div class="ttname"><a href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">ctl_t::t_start</a></div><div class="ttdeci">double t_start</div><div class="ttdoc">Start time of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02512">mptrac.h:2512</a></div></div>
-<div class="ttc" id="astructdd__t_html"><div class="ttname"><a href="structdd__t.html">dd_t</a></div><div class="ttdoc">Domain decomposition data structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03663">mptrac.h:3663</a></div></div>
-<div class="ttc" id="astructdd__t_html_a6b3f46164e3e50d121dd10ee5bd8f2c8"><div class="ttname"><a href="structdd__t.html#a6b3f46164e3e50d121dd10ee5bd8f2c8">dd_t::init</a></div><div class="ttdeci">int init</div><div class="ttdoc">Shows if domain decomposition was initialized.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03722">mptrac.h:3722</a></div></div>
-<div class="ttc" id="astructmet__t_html"><div class="ttname"><a href="structmet__t.html">met_t</a></div><div class="ttdoc">Meteo data structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03489">mptrac.h:3489</a></div></div>
-<div class="ttc" id="astructmet__t_html_a85df96bff71dfa55576a995234a87b8f"><div class="ttname"><a href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">met_t::lon</a></div><div class="ttdeci">double lon[EX]</div><div class="ttdoc">Longitudes [deg].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03507">mptrac.h:3507</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02115">mptrac.h:2115</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a56fe9bff0a1be75aae2da3e593053e2c"><div class="ttname"><a href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a></div><div class="ttdeci">#define USAGE</div><div class="ttdoc">Print usage information on -h or --help.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l01922">mptrac.h:1922</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a8f75b971030a39ef811d3526a62b36b8"><div class="ttname"><a href="mptrac_8h.html#a8f75b971030a39ef811d3526a62b36b8">WARN</a></div><div class="ttdeci">#define WARN(...)</div><div class="ttdoc">Print a warning message with contextual information.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02082">mptrac.h:2082</a></div></div>
+<div class="ttc" id="amptrac_8h_html_ab84d08f557a59406c2b0969300937769"><div class="ttname"><a href="mptrac_8h.html#ab84d08f557a59406c2b0969300937769">PRINT_TIMERS</a></div><div class="ttdeci">#define PRINT_TIMERS</div><div class="ttdoc">Print the current state of all timers.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02174">mptrac.h:2174</a></div></div>
+<div class="ttc" id="amptrac_8h_html_acaa1c3fa56061380a29889d703236251"><div class="ttname"><a href="mptrac_8h.html#acaa1c3fa56061380a29889d703236251">LOG</a></div><div class="ttdeci">#define LOG(level,...)</div><div class="ttdoc">Print a log message with a specified logging level.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02045">mptrac.h:2045</a></div></div>
+<div class="ttc" id="astructatm__t_html"><div class="ttname"><a href="structatm__t.html">atm_t</a></div><div class="ttdoc">Air parcel data.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03257">mptrac.h:3257</a></div></div>
+<div class="ttc" id="astructatm__t_html_a473366004c7195d5c455373296ee1833"><div class="ttname"><a href="structatm__t.html#a473366004c7195d5c455373296ee1833">atm_t::np</a></div><div class="ttdeci">int np</div><div class="ttdoc">Number of air parcels.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03260">mptrac.h:3260</a></div></div>
+<div class="ttc" id="astructcache__t_html"><div class="ttname"><a href="structcache__t.html">cache_t</a></div><div class="ttdoc">Cache data structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03312">mptrac.h:3312</a></div></div>
+<div class="ttc" id="astructclim__t_html"><div class="ttname"><a href="structclim__t.html">clim_t</a></div><div class="ttdoc">Climatological data.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03452">mptrac.h:3452</a></div></div>
+<div class="ttc" id="astructctl__t_html"><div class="ttname"><a href="structctl__t.html">ctl_t</a></div><div class="ttdoc">Control parameters.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02203">mptrac.h:2203</a></div></div>
+<div class="ttc" id="astructctl__t_html_a1a6d5b4003ebd8f9c77b3b45933779e6"><div class="ttname"><a href="structctl__t.html#a1a6d5b4003ebd8f9c77b3b45933779e6">ctl_t::direction</a></div><div class="ttdeci">int direction</div><div class="ttdoc">Direction flag (1=forward calculation, -1=backward calculation).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02531">mptrac.h:2531</a></div></div>
+<div class="ttc" id="astructctl__t_html_a587663283cba9a4470dd7b753b5a1690"><div class="ttname"><a href="structctl__t.html#a587663283cba9a4470dd7b753b5a1690">ctl_t::dd</a></div><div class="ttdeci">int dd</div><div class="ttdoc">Domain decomposition (0=no, 1=yes, with 2x2 if not specified).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03233">mptrac.h:3233</a></div></div>
+<div class="ttc" id="astructctl__t_html_a649752813806c995ee09923a44d0e974"><div class="ttname"><a href="structctl__t.html#a649752813806c995ee09923a44d0e974">ctl_t::t_stop</a></div><div class="ttdeci">double t_stop</div><div class="ttdoc">Stop time of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02537">mptrac.h:2537</a></div></div>
+<div class="ttc" id="astructctl__t_html_a718d3200f867d9018369f12f66464807"><div class="ttname"><a href="structctl__t.html#a718d3200f867d9018369f12f66464807">ctl_t::dt_mod</a></div><div class="ttdeci">double dt_mod</div><div class="ttdoc">Time step of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02540">mptrac.h:2540</a></div></div>
+<div class="ttc" id="astructctl__t_html_aee3354b4dacf5d89944ae0b7faaa12c6"><div class="ttname"><a href="structctl__t.html#aee3354b4dacf5d89944ae0b7faaa12c6">ctl_t::t_start</a></div><div class="ttdeci">double t_start</div><div class="ttdoc">Start time of simulation [s].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02534">mptrac.h:2534</a></div></div>
+<div class="ttc" id="astructdd__t_html"><div class="ttname"><a href="structdd__t.html">dd_t</a></div><div class="ttdoc">Domain decomposition data structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03685">mptrac.h:3685</a></div></div>
+<div class="ttc" id="astructdd__t_html_a6b3f46164e3e50d121dd10ee5bd8f2c8"><div class="ttname"><a href="structdd__t.html#a6b3f46164e3e50d121dd10ee5bd8f2c8">dd_t::init</a></div><div class="ttdeci">int init</div><div class="ttdoc">Shows if domain decomposition was initialized.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03744">mptrac.h:3744</a></div></div>
+<div class="ttc" id="astructmet__t_html"><div class="ttname"><a href="structmet__t.html">met_t</a></div><div class="ttdoc">Meteo data structure.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03511">mptrac.h:3511</a></div></div>
+<div class="ttc" id="astructmet__t_html_a85df96bff71dfa55576a995234a87b8f"><div class="ttname"><a href="structmet__t.html#a85df96bff71dfa55576a995234a87b8f">met_t::lon</a></div><div class="ttdeci">double lon[EX]</div><div class="ttdoc">Longitudes [deg].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l03529">mptrac.h:3529</a></div></div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">

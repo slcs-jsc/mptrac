@@ -88,6 +88,9 @@ $(function() {
 <table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a id="func-members" name="func-members"></a>
 Functions</h2></td></tr>
+<tr class="memitem:ae8605e2b78cd4a81b6c6b5c30cb7366a"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sedi_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">usage</a> (void)</td></tr>
+<tr class="memdesc:ae8605e2b78cd4a81b6c6b5c30cb7366a"><td class="mdescLeft">&#160;</td><td class="mdescRight">Print command-line help.  <a href="sedi_8c.html#ae8605e2b78cd4a81b6c6b5c30cb7366a">More...</a><br /></td></tr>
+<tr class="separator:ae8605e2b78cd4a81b6c6b5c30cb7366a"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a0ddf1224851353fc92bfbff6f499fa97"><td class="memItemLeft" align="right" valign="top">int&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="sedi_8c.html#a0ddf1224851353fc92bfbff6f499fa97">main</a> (int argc, char *argv[])</td></tr>
 <tr class="separator:a0ddf1224851353fc92bfbff6f499fa97"><td class="memSeparator" colspan="2">&#160;</td></tr>
 </table>
@@ -96,6 +99,45 @@ Functions</h2></td></tr>
 
 <p class="definition">Definition in file <a class="el" href="sedi_8c_source.html">sedi.c</a>.</p>
 </div><h2 class="groupheader">Function Documentation</h2>
+<a id="ae8605e2b78cd4a81b6c6b5c30cb7366a" name="ae8605e2b78cd4a81b6c6b5c30cb7366a"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#ae8605e2b78cd4a81b6c6b5c30cb7366a">&#9670;&nbsp;</a></span>usage()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">void usage </td>
+          <td>(</td>
+          <td class="paramtype">void&#160;</td>
+          <td class="paramname"></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Print command-line help. </p>
+
+<p class="definition">Definition at line <a class="el" href="sedi_8c_source.html#l00084">84</a> of file <a class="el" href="sedi_8c_source.html">sedi.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   85</span>        {</div>
+<div class="line"><span class="lineno">   86</span> </div>
+<div class="line"><span class="lineno">   87</span>  printf(<span class="stringliteral">&quot;\nMPTRAC sedi tool.\n\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   88</span>  printf</div>
+<div class="line"><span class="lineno">   89</span>    (<span class="stringliteral">&quot;Calculate sedimentation velocity for aerosol or cloud particles.\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   90</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   91</span>  printf(<span class="stringliteral">&quot;Usage:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   92</span>  printf(<span class="stringliteral">&quot;  sedi &lt;p&gt; &lt;T&gt; &lt;r_p&gt; &lt;rho_p&gt;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   93</span>  printf(<span class="stringliteral">&quot;\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   94</span>  printf(<span class="stringliteral">&quot;Arguments:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   95</span>  printf(<span class="stringliteral">&quot;  &lt;p&gt;      Pressure [hPa].\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   96</span>  printf(<span class="stringliteral">&quot;  &lt;T&gt;      Temperature [K].\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   97</span>  printf(<span class="stringliteral">&quot;  &lt;r_p&gt;    Particle radius [um].\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   98</span>  printf(<span class="stringliteral">&quot;  &lt;rho_p&gt;  Particle density [kg/m3].\n&quot;</span>);</div>
+<div class="line"><span class="lineno">   99</span>  printf(<span class="stringliteral">&quot;\nFurther information:\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  100</span>  printf(<span class="stringliteral">&quot;  Manual: https://slcs-jsc.github.io/mptrac/\n&quot;</span>);</div>
+<div class="line"><span class="lineno">  101</span>}</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="a0ddf1224851353fc92bfbff6f499fa97" name="a0ddf1224851353fc92bfbff6f499fa97"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a0ddf1224851353fc92bfbff6f499fa97">&#9670;&nbsp;</a></span>main()</h2>
 
@@ -122,45 +164,50 @@ Functions</h2></td></tr>
       </table>
 </div><div class="memdoc">
 
-<p class="definition">Definition at line <a class="el" href="sedi_8c_source.html#l00027">27</a> of file <a class="el" href="sedi_8c_source.html">sedi.c</a>.</p>
-<div class="fragment"><div class="line"><span class="lineno">   29</span>                {</div>
-<div class="line"><span class="lineno">   30</span> </div>
-<div class="line"><span class="lineno">   31</span>  <span class="comment">/* Check arguments... */</span></div>
-<div class="line"><span class="lineno">   32</span>  <span class="keywordflow">if</span> (argc &lt; 5)</div>
-<div class="line"><span class="lineno">   33</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Give parameters: &lt;p&gt; &lt;T&gt; &lt;r_p&gt; &lt;rho_p&gt;&quot;</span>);</div>
-<div class="line"><span class="lineno">   34</span> </div>
-<div class="line"><span class="lineno">   35</span>  <span class="comment">/* Read arguments... */</span></div>
-<div class="line"><span class="lineno">   36</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> p = atof(argv[1]);</div>
-<div class="line"><span class="lineno">   37</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> T = atof(argv[2]);</div>
-<div class="line"><span class="lineno">   38</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> r_p = atof(argv[3]);</div>
-<div class="line"><span class="lineno">   39</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> rho_p = atof(argv[4]);</div>
-<div class="line"><span class="lineno">   40</span> </div>
-<div class="line"><span class="lineno">   41</span>  <span class="comment">/* Calculate sedimentation velocity... */</span></div>
-<div class="line"><span class="lineno">   42</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> vs = <a class="code hl_function" href="mptrac_8c.html#a1b580107362b559d90f6766d340cc370">sedi</a>(p, T, r_p, rho_p);</div>
-<div class="line"><span class="lineno">   43</span> </div>
-<div class="line"><span class="lineno">   44</span>  <span class="comment">/* Density of dry air [kg / m^3]... */</span></div>
-<div class="line"><span class="lineno">   45</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> rho = 100. * p / (<a class="code hl_define" href="mptrac_8h.html#a30a3f049b718d26a32f16ed72716d588">RA</a> * T);</div>
-<div class="line"><span class="lineno">   46</span> </div>
-<div class="line"><span class="lineno">   47</span>  <span class="comment">/* Dynamic viscosity of air [kg / (m s)]... */</span></div>
-<div class="line"><span class="lineno">   48</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);</div>
-<div class="line"><span class="lineno">   49</span> </div>
-<div class="line"><span class="lineno">   50</span>  <span class="comment">/* Particle Reynolds number... */</span></div>
-<div class="line"><span class="lineno">   51</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> Re = 2e-6 * r_p * vs * rho / eta;</div>
-<div class="line"><span class="lineno">   52</span> </div>
-<div class="line"><span class="lineno">   53</span>  <span class="comment">/* Write output... */</span></div>
-<div class="line"><span class="lineno">   54</span>  printf(<span class="stringliteral">&quot;    p= %g hPa\n&quot;</span>, p);</div>
-<div class="line"><span class="lineno">   55</span>  printf(<span class="stringliteral">&quot;    T= %g K\n&quot;</span>, T);</div>
-<div class="line"><span class="lineno">   56</span>  printf(<span class="stringliteral">&quot;  r_p= %g microns\n&quot;</span>, r_p);</div>
-<div class="line"><span class="lineno">   57</span>  printf(<span class="stringliteral">&quot;rho_p= %g kg/m^3\n&quot;</span>, rho_p);</div>
-<div class="line"><span class="lineno">   58</span>  printf(<span class="stringliteral">&quot;rho_a= %g kg/m^3\n&quot;</span>, <a class="code hl_define" href="mptrac_8h.html#ae088e183d18a16fd6ab469d48ce3f06a">RHO</a>(p, T));</div>
-<div class="line"><span class="lineno">   59</span>  printf(<span class="stringliteral">&quot;  v_s= %g m/s\n&quot;</span>, vs);</div>
-<div class="line"><span class="lineno">   60</span>  printf(<span class="stringliteral">&quot;   Re= %g\n&quot;</span>, Re);</div>
-<div class="line"><span class="lineno">   61</span> </div>
-<div class="line"><span class="lineno">   62</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
-<div class="line"><span class="lineno">   63</span>}</div>
+<p class="definition">Definition at line <a class="el" href="sedi_8c_source.html#l00039">39</a> of file <a class="el" href="sedi_8c_source.html">sedi.c</a>.</p>
+<div class="fragment"><div class="line"><span class="lineno">   41</span>                {</div>
+<div class="line"><span class="lineno">   42</span> </div>
+<div class="line"><span class="lineno">   43</span>  <span class="comment">/* Print usage information... */</span></div>
+<div class="line"><span class="lineno">   44</span>  <a class="code hl_define" href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a>;</div>
+<div class="line"><span class="lineno">   45</span> </div>
+<div class="line"><span class="lineno">   46</span>  <span class="comment">/* Check arguments... */</span></div>
+<div class="line"><span class="lineno">   47</span>  <span class="keywordflow">if</span> (argc &lt; 5)</div>
+<div class="line"><span class="lineno">   48</span>    <a class="code hl_define" href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a>(<span class="stringliteral">&quot;Missing or invalid command-line arguments.\n\n&quot;</span></div>
+<div class="line"><span class="lineno">   49</span>           <span class="stringliteral">&quot;Usage: sedi &lt;p&gt; &lt;T&gt; &lt;r_p&gt; &lt;rho_p&gt;\n\n&quot;</span> <span class="stringliteral">&quot;Use -h for full help.&quot;</span>);</div>
+<div class="line"><span class="lineno">   50</span> </div>
+<div class="line"><span class="lineno">   51</span>  <span class="comment">/* Read arguments... */</span></div>
+<div class="line"><span class="lineno">   52</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> p = atof(argv[1]);</div>
+<div class="line"><span class="lineno">   53</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> T = atof(argv[2]);</div>
+<div class="line"><span class="lineno">   54</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> r_p = atof(argv[3]);</div>
+<div class="line"><span class="lineno">   55</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> rho_p = atof(argv[4]);</div>
+<div class="line"><span class="lineno">   56</span> </div>
+<div class="line"><span class="lineno">   57</span>  <span class="comment">/* Calculate sedimentation velocity... */</span></div>
+<div class="line"><span class="lineno">   58</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> vs = <a class="code hl_function" href="mptrac_8c.html#a1b580107362b559d90f6766d340cc370">sedi</a>(p, T, r_p, rho_p);</div>
+<div class="line"><span class="lineno">   59</span> </div>
+<div class="line"><span class="lineno">   60</span>  <span class="comment">/* Density of dry air [kg / m^3]... */</span></div>
+<div class="line"><span class="lineno">   61</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> rho = 100. * p / (<a class="code hl_define" href="mptrac_8h.html#a30a3f049b718d26a32f16ed72716d588">RA</a> * T);</div>
+<div class="line"><span class="lineno">   62</span> </div>
+<div class="line"><span class="lineno">   63</span>  <span class="comment">/* Dynamic viscosity of air [kg / (m s)]... */</span></div>
+<div class="line"><span class="lineno">   64</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> eta = 1.8325e-5 * (416.16 / (T + 120.)) * pow(T / 296.16, 1.5);</div>
+<div class="line"><span class="lineno">   65</span> </div>
+<div class="line"><span class="lineno">   66</span>  <span class="comment">/* Particle Reynolds number... */</span></div>
+<div class="line"><span class="lineno">   67</span>  <span class="keyword">const</span> <span class="keywordtype">double</span> Re = 2e-6 * r_p * vs * rho / eta;</div>
+<div class="line"><span class="lineno">   68</span> </div>
+<div class="line"><span class="lineno">   69</span>  <span class="comment">/* Write output... */</span></div>
+<div class="line"><span class="lineno">   70</span>  printf(<span class="stringliteral">&quot;    p= %g hPa\n&quot;</span>, p);</div>
+<div class="line"><span class="lineno">   71</span>  printf(<span class="stringliteral">&quot;    T= %g K\n&quot;</span>, T);</div>
+<div class="line"><span class="lineno">   72</span>  printf(<span class="stringliteral">&quot;  r_p= %g microns\n&quot;</span>, r_p);</div>
+<div class="line"><span class="lineno">   73</span>  printf(<span class="stringliteral">&quot;rho_p= %g kg/m^3\n&quot;</span>, rho_p);</div>
+<div class="line"><span class="lineno">   74</span>  printf(<span class="stringliteral">&quot;rho_a= %g kg/m^3\n&quot;</span>, <a class="code hl_define" href="mptrac_8h.html#ae088e183d18a16fd6ab469d48ce3f06a">RHO</a>(p, T));</div>
+<div class="line"><span class="lineno">   75</span>  printf(<span class="stringliteral">&quot;  v_s= %g m/s\n&quot;</span>, vs);</div>
+<div class="line"><span class="lineno">   76</span>  printf(<span class="stringliteral">&quot;   Re= %g\n&quot;</span>, Re);</div>
+<div class="line"><span class="lineno">   77</span> </div>
+<div class="line"><span class="lineno">   78</span>  <span class="keywordflow">return</span> EXIT_SUCCESS;</div>
+<div class="line"><span class="lineno">   79</span>}</div>
 <div class="ttc" id="amptrac_8c_html_a1b580107362b559d90f6766d340cc370"><div class="ttname"><a href="mptrac_8c.html#a1b580107362b559d90f6766d340cc370">sedi</a></div><div class="ttdeci">double sedi(const double p, const double T, const double rp, const double rhop)</div><div class="ttdoc">Calculates the sedimentation velocity of a particle in air.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8c_source.html#l11074">mptrac.c:11074</a></div></div>
 <div class="ttc" id="amptrac_8h_html_a30a3f049b718d26a32f16ed72716d588"><div class="ttname"><a href="mptrac_8h.html#a30a3f049b718d26a32f16ed72716d588">RA</a></div><div class="ttdeci">#define RA</div><div class="ttdoc">Specific gas constant of dry air [J/(kg K)].</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l00309">mptrac.h:309</a></div></div>
-<div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02093">mptrac.h:2093</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a3e0ae69dee4a8bb2e616526b5ebe6875"><div class="ttname"><a href="mptrac_8h.html#a3e0ae69dee4a8bb2e616526b5ebe6875">ERRMSG</a></div><div class="ttdeci">#define ERRMSG(...)</div><div class="ttdoc">Print an error message with contextual information and terminate the program.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02115">mptrac.h:2115</a></div></div>
+<div class="ttc" id="amptrac_8h_html_a56fe9bff0a1be75aae2da3e593053e2c"><div class="ttname"><a href="mptrac_8h.html#a56fe9bff0a1be75aae2da3e593053e2c">USAGE</a></div><div class="ttdeci">#define USAGE</div><div class="ttdoc">Print usage information on -h or --help.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l01922">mptrac.h:1922</a></div></div>
 <div class="ttc" id="amptrac_8h_html_ae088e183d18a16fd6ab469d48ce3f06a"><div class="ttname"><a href="mptrac_8h.html#ae088e183d18a16fd6ab469d48ce3f06a">RHO</a></div><div class="ttdeci">#define RHO(p, t)</div><div class="ttdoc">Compute density of air.</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l01670">mptrac.h:1670</a></div></div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
