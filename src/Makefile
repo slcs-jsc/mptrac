@@ -300,9 +300,9 @@ mptrac_fortran.o: mptrac_fortran.f90 mptrac.h Makefile
 trac_fortran: trac_fortran.f90 mptrac_fortran.o mptrac.o
 	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.f90 mptrac_fortran.o mptrac.o $(LDFLAGS)
 
-wrapper: trac_fortran
+wrapper: mptrac_fortran.o
 
-wrapper_test: wrapper
+wrapper_test: trac_fortran
 
 print-exc:
 	@printf '%s\n' $(EXC)
