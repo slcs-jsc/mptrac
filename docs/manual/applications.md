@@ -5,50 +5,69 @@
 The MPTRAC model comes with a number of individual programs or
 applications. The most important app of MPTRAC is the tool
 [trac](apps/trac.md), which is used to conduct the trajectory
-calculations.
+calculations. The tables below give an overview of the available apps
+and tools by application field.
 
 All apps and tools accept `-h` and `--help` to print a short command-line
 help message.
 
-The apps [met_map](apps/met_map.md), [met_prof](apps/met_prof.md), and
-[met_zm](apps/met_zm.md) can be used to extract global maps, vertical
-profiles, and zonal means from meteorological data. The app
-[met_sample](apps/met_sample.md) can be used to sample the meteo data
-at individual locations in space and time. The app
-[met_lapse](apps/met_lapse.md) calculates lapse-rate statistics, and
-[met_check_dt](apps/met_check_dt.md) checks model time-step constraints
-for a given meteorological data file.
+### Trajectory calculations
 
-The app [atm_conv](apps/atm_conv.md) can be used to convert between
-different file formats of the particle data (ASCII, binary,
-netCDF). The app [atm_dist](apps/atm_dist.md) can be used to calculate
-transport deviations between trajectory sets. The app
-[atm_init](apps/atm_init.md) can be used to create particle data files
-with initial trajectory seeds. The app
-[atm_select](apps/atm_select.md) can extract subsets of the particle
-data, like individual trajectories. The app
-[atm_split](apps/atm_split.md) can split sets of particles into larger
-sets, retaining their total mass. The app [atm_stat](apps/atm_stat.md)
-calculates trajectory statistics, for example, the mean position of
-the air parcels. The app [atm2grid](apps/atm2grid.md) converts
-atmospheric particle data to gridded output.
+| App | Purpose |
+| --- | --- |
+| [trac](apps/trac.md) | Run forward or backward trajectory calculations. |
 
-The tools [day2doy](apps/day2doy.md), [doy2day](apps/doy2day.md),
-[jsec2time](apps/jsec2time.md), and [time2jsec](apps/time2jsec.md) are
-used for time conversion. In particular, they can be used to determine
-the day of the year (doy) for a given date and convert between a UTC
-time (YYYY-MM-DD, HH:MM:SS) and the absolute time in seconds since
-2000-01-01, 00:00 UTC (the internal time coordinate of MPTRAC).
+### Atmospheric particle data
 
-The tools [tropo](apps/tropo.md) and
-[tropo_sample](apps/tropo_sample.md) can be used to determine lapse
-rate statistics and to prepare and sample tropopause data files. The
-tool [tropo_clim](apps/tropo_clim.md) calculates climatological
-statistics from tropopause data files.
+| App | Purpose |
+| --- | --- |
+| [atm_init](apps/atm_init.md) | Create atmospheric particle files with initial trajectory seeds. |
+| [atm_split](apps/atm_split.md) | Split particle sets into larger sets while retaining total mass. |
+| [atm_select](apps/atm_select.md) | Extract subsets of atmospheric particle data, such as individual trajectories. |
+| [atm_stat](apps/atm_stat.md) | Calculate statistics for atmospheric particle data. |
+| [atm_dist](apps/atm_dist.md) | Calculate transport deviations between trajectory sets. |
+| [atm_conv](apps/atm_conv.md) | Convert atmospheric particle data between supported file formats. |
+| [atm2grid](apps/atm2grid.md) | Convert atmospheric particle data to gridded output. |
+
+### Meteorological data
+
+| App | Purpose |
+| --- | --- |
+| [met_conv](apps/met_conv.md) | Convert meteorological data between supported file formats. |
+| [met_check_dt](apps/met_check_dt.md) | Check model time-step constraints for meteorological data. |
+| [met_lapse](apps/met_lapse.md) | Calculate lapse-rate statistics from meteorological data. |
+| [met_map](apps/met_map.md) | Extract maps from meteorological data. |
+| [met_prof](apps/met_prof.md) | Extract vertical profiles from meteorological data. |
+| [met_sample](apps/met_sample.md) | Sample meteorological data at atmospheric particle locations. |
+| [met_spec](apps/met_spec.md) | Perform spectral analysis of meteorological temperature fields. |
+| [met_subgrid](apps/met_subgrid.md) | Calculate subgrid-scale wind and vertical velocity statistics. |
+| [met_zm](apps/met_zm.md) | Extract zonal means from meteorological data. |
+| [cape](apps/cape.md) | Add CAPE data to meteorological netCDF files. |
+| [sedi](apps/sedi.md) | Calculate sedimentation velocities for aerosol or cloud particles. |
+| [tnat](apps/tnat.md) | Calculate polar stratospheric cloud formation temperatures. |
+| [wind](apps/wind.md) | Create synthetic meteorological wind fields for test cases. |
+
+### Tropopause data
+
+| App | Purpose |
+| --- | --- |
+| [tropo](apps/tropo.md) | Create tropopause data sets from meteorological data. |
+| [tropo_clim](apps/tropo_clim.md) | Calculate climatological statistics from tropopause data. |
+| [tropo_sample](apps/tropo_sample.md) | Sample tropopause data at atmospheric particle locations. |
+| [tropo_zm](apps/tropo_zm.md) | Extract zonal means from tropopause data. |
+
+### Time conversion
+
+| App | Purpose |
+| --- | --- |
+| [day2doy](apps/day2doy.md) | Convert a calendar date to day of year. |
+| [doy2day](apps/doy2day.md) | Convert day of year to a calendar date. |
+| [jsec2time](apps/jsec2time.md) | Convert MPTRAC seconds since 2000-01-01, 00:00 UTC to UTC time. |
+| [time2jsec](apps/time2jsec.md) | Convert UTC time to MPTRAC seconds since 2000-01-01, 00:00 UTC. |
 
 Please see the
 [list of files in the Doxygen manual](https://slcs-jsc.github.io/mptrac/doxygen/files.html)
-for more information.
+for the source-code reference of all apps and tools.
 
 ## Workflows
 
