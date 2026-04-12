@@ -930,12 +930,25 @@
 <td style="text-align: left;">4</td>
 <td style="text-align: center;">zstd</td>
 </tr>
+<tr>
+<td style="text-align: left;">5</td>
+<td style="text-align: center;">cms</td>
+</tr>
+<tr>
+<td style="text-align: left;">7</td>
+<td style="text-align: center;">sz3</td>
+</tr>
 </tbody>
 </table>
-<p>whereby netCDF and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp), and zstd (zstandard, https://github.com/facebook/zstd) are compression formats.</p>
-<p>Currently to enable the usage of zfp and zstd format MPTRAC needs to be compiled using ZSTD=1 and ZFP=1:</p>
-<pre><code># Run make enabling the usage of the ZFP and ZSTD compression
-$ make ZSTD=1 ZFP=1
+<p>whereby netCDF and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp), zstd (zstandard, https://github.com/facebook/zstd), cms, and sz3 are compression formats.</p>
+<p>The output formats store the pressure-level meteorological fields used by
+standard trajectory simulations. The generic MPTRAC netCDF writer also
+includes derived 2-D diagnostics, but it does not write native model-level
+fields such as <code>PL</code>, <code>UL</code>, <code>VL</code>, <code>WL</code>, <code>ZETA</code>, and <code>ZETA_DOT</code>. Keep the
+original netCDF meteo files for diabatic or zeta-coordinate workflows.</p>
+<p>The optional compression formats need to be enabled at compile time. For example:</p>
+<pre><code># Enable selected compression backends.
+$ make ZFP=1 ZSTD=1 SZ3=1 CMS=1
 </code></pre>
 
 

@@ -1180,7 +1180,16 @@ the surface temperature (<code>T2M</code>), the surface wind components (<code>U
 <p>It is possible to provide meteo data on model levels rather than
 pressure levels. In this case, pressure on model levels (<code>PL</code>) is
 required as an additional 3-D input variable in order to perform a
-vertical interpolation from model levels to pressure levels.</p>
+vertical interpolation from model levels to pressure levels.
+Additional native model-level fields, such as pressure (<code>PL</code>), zeta
+(<code>ZETA</code>), and zeta tendency (<code>ZETA_DOT</code>), are read only from netCDF
+meteorological input files. The generic MPTRAC netCDF writer stores the
+pressure-level fields and derived 2-D diagnostics, but not the native
+model-level fields (<code>PL</code>, <code>UL</code>, <code>VL</code>, <code>WL</code>, <code>ZETA</code>, <code>ZETA_DOT</code>). The
+binary and compressed MPTRAC meteo formats are intended as caches for the
+pressure-level fields used by standard trajectory simulations. Workflows
+that require native model-level, zeta, or diabatic-advection fields should
+therefore keep the original netCDF meteorological input files.</p>
 <p>See the <code>tests/data/</code> directory in the MPTRAC repository for examples
 of meteo data netCDF files used for MPTRAC.</p>
 <h2 id="the-ecmwf-reanalyses">The ECMWF reanalyses</h2>
