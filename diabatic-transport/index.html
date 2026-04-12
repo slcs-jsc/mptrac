@@ -997,7 +997,7 @@ levels must be explicitly defined. The following configuration is
 required for proper reading and transformation of CLaMS data:</p>
 <pre><code>MET_CLAMS = 1
 MET_VERT_COORD = 1
-MET_PRESS_LEVEL_DEF = 0
+MET_PRESS_LEVEL_DEF = 3
 </code></pre>
 <p>To enable vertical advection in <span class="arithmatex">\(\zeta\)</span> coordinates with diabatic
 transport, set the following parameters and include <span class="arithmatex">\(\zeta\)</span> as an
@@ -1013,7 +1013,11 @@ definitions</a>. Additional
 near-surface levels have been added (down to ~1045 hPa) to reduce
 extrapolation errors.</p>
 <p>By default, <code>MET_PRESS_LEVEL_DEF = -1</code>, meaning predefined sets are
-ignored. For ERA5 data, it is recommended to use set 6.</p>
+ignored. Sets 0, 1, and 2 are disabled because their near-surface spacing can
+require extrapolation where the local surface pressure exceeds 1013.25 hPa.
+Set 6 is the recommended default for ERA5-like model-level data. Set 7 keeps
+the coarser ERA-Interim/L60 spacing near the surface and is intended for
+ERA-Interim- and JRA-55-like data.</p>
 <table>
 <thead>
 <tr>
@@ -1022,29 +1026,33 @@ ignored. For ERA5 data, it is recommended to use set 6.</p>
 <th>bottom</th>
 <th>top</th>
 <th>number of levels</th>
+<th>notes</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>0</td>
 <td>L137</td>
-<td>1044.45 hPa</td>
-<td>0.02 hPa</td>
-<td>138</td>
+<td>disabled</td>
+<td>disabled</td>
+<td>disabled</td>
+<td>replaced by set 3</td>
 </tr>
 <tr>
 <td>1</td>
 <td>L91</td>
-<td>1044.45 hPa</td>
-<td>0.02 hPa</td>
-<td>92</td>
+<td>disabled</td>
+<td>disabled</td>
+<td>disabled</td>
+<td>replaced by set 4</td>
 </tr>
 <tr>
 <td>2</td>
 <td>L60</td>
-<td>1044.45 hPa</td>
-<td>0.01 hPa</td>
-<td>60</td>
+<td>disabled</td>
+<td>disabled</td>
+<td>disabled</td>
+<td>replaced by set 5</td>
 </tr>
 <tr>
 <td>3</td>
@@ -1052,6 +1060,7 @@ ignored. For ERA5 data, it is recommended to use set 6.</p>
 <td>1044.45 hPa</td>
 <td>0.02 hPa</td>
 <td>147</td>
+<td>extended L137 with fine near-surface spacing</td>
 </tr>
 <tr>
 <td>4</td>
@@ -1059,6 +1068,7 @@ ignored. For ERA5 data, it is recommended to use set 6.</p>
 <td>1044.45 hPa</td>
 <td>0.02 hPa</td>
 <td>101</td>
+<td>extended L91 with fine near-surface spacing</td>
 </tr>
 <tr>
 <td>5</td>
@@ -1066,6 +1076,7 @@ ignored. For ERA5 data, it is recommended to use set 6.</p>
 <td>1044.45 hPa</td>
 <td>0.01 hPa</td>
 <td>62</td>
+<td>extended L60</td>
 </tr>
 <tr>
 <td>6</td>
@@ -1073,6 +1084,7 @@ ignored. For ERA5 data, it is recommended to use set 6.</p>
 <td>1044.45 hPa</td>
 <td>0.01 hPa</td>
 <td>137</td>
+<td>recommended default for ERA5-like data</td>
 </tr>
 <tr>
 <td>7</td>
@@ -1080,6 +1092,44 @@ ignored. For ERA5 data, it is recommended to use set 6.</p>
 <td>1046.13 hPa</td>
 <td>0.1 hPa</td>
 <td>59</td>
+<td>ERA-Interim/JRA-55-like L60 grid with extrapolated lower levels</td>
+</tr>
+</tbody>
+</table>
+<p>Recommended settings for common meteorological data sources:</p>
+<table>
+<thead>
+<tr>
+<th>Data source</th>
+<th>MET_PRESS_LEVEL_DEF</th>
+<th>notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ERA5</td>
+<td>6</td>
+<td>recommended default</td>
+</tr>
+<tr>
+<td>ERA-Interim</td>
+<td>7</td>
+<td>keeps the ERA-Interim/L60-like spacing and 0.1 hPa top</td>
+</tr>
+<tr>
+<td>MERRA-2</td>
+<td>6</td>
+<td>uses a 0.01 hPa top, matching the native upper model domain</td>
+</tr>
+<tr>
+<td>JRA-3Q</td>
+<td>6</td>
+<td>uses a 0.01 hPa top for the extended upper model domain</td>
+</tr>
+<tr>
+<td>JRA-55</td>
+<td>7</td>
+<td>closer to the 60-level, 0.1 hPa-top setup</td>
 </tr>
 </tbody>
 </table>
