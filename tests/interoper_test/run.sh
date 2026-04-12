@@ -30,7 +30,7 @@ t1=$(${trac}/time2jsec 2016 7 1 6 0 0 0)
 # Create control parameter file...
 cat > ./data/trac.ctl <<EOF
 MET_CONVENTION = 1
-MET_PRESS_LEVEL_DEF = 2
+MET_PRESS_LEVEL_DEF = 5
 ATM_TYPE = 3
 ATM_TYPE_OUT = 0
 ADVECT = 2
