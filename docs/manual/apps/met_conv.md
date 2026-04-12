@@ -29,12 +29,20 @@ The following input/output files are supported by met_conv:
 |2          | pck    |
 |3          | zfp    |
 |4          | zstd |
+|5          | cms    |
+|7          | sz3    |
 
-whereby netCDF and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp), and zstd (zstandard, https://github.com/facebook/zstd) are compression formats.
+whereby netCDF and binary are standard data formats. Pck (layer packing, https://gmd.copernicus.org/articles/10/413/2017), zfp (https://computing.llnl.gov/projects/zfp), zstd (zstandard, https://github.com/facebook/zstd), cms, and sz3 are compression formats.
 
-Currently to enable the usage of zfp and zstd format MPTRAC needs to be compiled using ZSTD=1 and ZFP=1:
+The output formats store the pressure-level meteorological fields used by
+standard trajectory simulations. The generic MPTRAC netCDF writer also
+includes derived 2-D diagnostics, but it does not write native model-level
+fields such as `PL`, `UL`, `VL`, `WL`, `ZETA`, and `ZETA_DOT`. Keep the
+original netCDF meteo files for diabatic or zeta-coordinate workflows.
+
+The optional compression formats need to be enabled at compile time. For example:
 
 ```
-# Run make enabling the usage of the ZFP and ZSTD compression
-$ make ZSTD=1 ZFP=1
+# Enable selected compression backends.
+$ make ZFP=1 ZSTD=1 SZ3=1 CMS=1
 ```
