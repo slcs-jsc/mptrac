@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
 
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -27,6 +27,18 @@
 #ifdef KPP
 #include "kpp_chem.h"
 #endif
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -50,6 +62,9 @@ int main(
 
   int ntask = -1, rank = 0, size = 1;
 
+  /* Print usage information... */
+  USAGE;
+
   /* Initialize MPI... */
 #ifdef MPI
   MPI_Init(&argc, &argv);
@@ -59,7 +74,9 @@ int main(
 
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <dirlist> <ctl> <atm_in>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: trac <dirlist> <ctl> <atm_in> [KEY VALUE ...]\n\n"
+	   "Use -h for full help.");
 
   /* Open directory list... */
   if (!(dirlist = fopen(argv[1], "r")))
@@ -163,4 +180,26 @@ int main(
 #endif
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC trac tool.\n\n");
+  printf("Run forward or backward trajectory calculations.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  trac <dirlist> <ctl> <atm_in> [KEY VALUE ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <dirlist>  Text file containing work directories to process.\n");
+  printf("  <ctl>      Control file name relative to each work directory.\n");
+  printf
+    ("  <atm_in>   Atmospheric input file name relative to each work directory.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

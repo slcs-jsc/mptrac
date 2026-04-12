@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -42,9 +54,14 @@ int main(
   ALLOC(atm, atm_t, 1);
   ALLOC(atm2, atm_t, 1);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <atm_in> <atm_out>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: atm_split <ctl> <atm_in> <atm_out> [KEY VALUE ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -162,4 +179,25 @@ int main(
   free(atm2);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC atm_split tool.\n\n");
+  printf("Split air parcels into a larger number of parcels.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  atm_split <ctl> <atm_in> <atm_out> [KEY VALUE ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>      Control file.\n");
+  printf("  <atm_in>   Atmospheric input file.\n");
+  printf("  <atm_out>  Atmospheric output file.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

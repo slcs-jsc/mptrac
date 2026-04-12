@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -30,6 +30,14 @@
 
 /*! Maximum number of time steps. */
 #define NT 744
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
 
 /* ------------------------------------------------------------
    Main...
@@ -56,9 +64,14 @@ int main(
 
   static size_t count[10], start[10];
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 5)
-    ERRMSG("Give parameters: <ctl> <zm.tab> <var> <tropo.nc>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: tropo_zm <ctl> <zm.tab> <var> <tropo.nc>\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -220,4 +233,27 @@ int main(
   fclose(out);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC tropo_zm tool.\n\n");
+  printf("Extract zonal means from tropopause data.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  tropo_zm <ctl> <zm.tab> <var> <tropo.nc>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>       Control file.\n");
+  printf("  <zm.tab>    Output table.\n");
+  printf
+    ("  <var>       Tropopause variable prefix, such as clp, dyn, wmo_1st,\n");
+  printf("              or wmo_2nd.\n");
+  printf("  <tropo.nc>  Tropopause netCDF input file.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

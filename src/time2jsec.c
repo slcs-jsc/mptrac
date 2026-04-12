@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -24,15 +24,32 @@
 
 #include "mptrac.h"
 
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
+
 int main(
   int argc,
   char *argv[]) {
 
   double jsec;
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 8)
-    ERRMSG("Give parameters: <year> <mon> <day> <hour> <min> <sec> <remain>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: time2jsec <year> <mon> <day> <hour> <min> <sec> <remain>\n\n"
+	   "Use -h for full help.");
 
   /* Read arguments... */
   const int year = atoi(argv[1]);
@@ -48,4 +65,28 @@ int main(
   printf("%.2f\n", jsec);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC time2jsec tool.\n\n");
+  printf("Convert calendar time to seconds since 2000-01-01 00:00 UTC.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  time2jsec <year> <mon> <day> <hour> <min> <sec> <remain>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <year>    Year.\n");
+  printf("  <mon>     Month.\n");
+  printf("  <day>     Day of month.\n");
+  printf("  <hour>    Hour.\n");
+  printf("  <min>     Minute.\n");
+  printf("  <sec>     Second.\n");
+  printf("  <remain>  Fractional-second remainder.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

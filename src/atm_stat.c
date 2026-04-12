@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -46,9 +58,14 @@ int main(
   ALLOC(zs, double,
 	NP);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <stat.tab> <param> <atm1> [<atm2> ...]");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -213,4 +230,27 @@ int main(
   free(zs);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC atm_stat tool.\n\n");
+  printf("Calculate air parcel statistics.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>       Control file.\n");
+  printf("  <stat.tab>  Output table.\n");
+  printf
+    ("  <param>     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n");
+  printf("              median, or mad.\n");
+  printf("  <atm*>      Atmospheric input files.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

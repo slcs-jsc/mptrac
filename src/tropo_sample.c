@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -30,6 +30,14 @@
 
 /*! Maximum number of time steps. */
 #define NT 744
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
 
 /* ------------------------------------------------------------
    Main...
@@ -63,9 +71,14 @@ int main(
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 5)
-    ERRMSG("Give parameters: <ctl> <sample.tab> <tropo.nc> <var> <atm_in>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: tropo_sample <ctl> <sample.tab> <tropo.nc> <var> <atm_in>\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -251,4 +264,28 @@ int main(
   free(atm);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC tropo_sample tool.\n\n");
+  printf("Sample tropopause data at atmospheric particle locations.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  tropo_sample <ctl> <sample.tab> <tropo.nc> <var> <atm_in>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>         Control file.\n");
+  printf("  <sample.tab>  Output table.\n");
+  printf("  <tropo.nc>    Tropopause netCDF input file.\n");
+  printf
+    ("  <var>         Tropopause variable prefix, such as clp, dyn, wmo_1st,\n");
+  printf("                or wmo_2nd.\n");
+  printf("  <atm_in>      Atmospheric input file with sample locations.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -33,6 +33,14 @@
 
 /*! Maximum number of latitudes. */
 #define NY EY
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
 
 /* ------------------------------------------------------------
    Main...
@@ -172,9 +180,14 @@ int main(
   ALLOC(npt, int,
 	NX * NY);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <map.tab> <met0> [ <met1> ... ]");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: met_map <ctl> <map.tab> <met0> [<met1> ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -439,4 +452,24 @@ int main(
   free(npt);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC met_map tool.\n\n");
+  printf("Extract maps from meteorological data.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  met_map <ctl> <map.tab> <met0> [<met1> ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>      Control file.\n");
+  printf("  <map.tab>  Output table.\n");
+  printf("  <met*>     Meteorological input files.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

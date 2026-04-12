@@ -7,6 +7,9 @@ applications. The most important app of MPTRAC is the tool
 [trac](apps/trac.md), which is used to conduct the trajectory
 calculations.
 
+All apps and tools accept `-h` and `--help` to print a short command-line
+help message.
+
 The apps [met_map](apps/met_map.md), [met_prof](apps/met_prof.md), and
 [met_zm](apps/met_zm.md) can be used to extract global maps, vertical
 profiles, and zonal means from meteorological data. The app

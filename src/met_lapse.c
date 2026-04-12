@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -28,7 +28,7 @@
    Dimensions...
    ------------------------------------------------------------ */
 
-/*! Lapse rate minimum [K/km. */
+/*! Lapse rate minimum [K/km]. */
 #define LAPSEMIN -20.0
 
 /*! Lapse rate bin size [K/km]. */
@@ -36,6 +36,14 @@
 
 /*! Maximum number of histogram bins. */
 #define IDXMAX 400
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
 
 /* ------------------------------------------------------------
    Main...
@@ -66,9 +74,14 @@ int main(
   ALLOC(met, met_t, 1);
   ALLOC(dd, dd_t, 1);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <lapse.tab> <met0> [ <met1> ... ]");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: met_lapse <ctl> <lapse.tab> <met0> [<met1> ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -233,4 +246,24 @@ int main(
   free(dd);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC met_lapse tool.\n\n");
+  printf("Calculate lapse-rate statistics from meteorological data.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  met_lapse <ctl> <lapse.tab> <met0> [<met1> ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>        Control file.\n");
+  printf("  <lapse.tab>  Output table for lapse-rate statistics.\n");
+  printf("  <met*>       Meteorological input files.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

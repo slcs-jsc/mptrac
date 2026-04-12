@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -24,6 +24,18 @@
 
 #include "mptrac.h"
 
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
+
 int main(
   int argc,
   char *argv[]) {
@@ -32,10 +44,14 @@ int main(
 
   atm_t *atm;
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 6)
-    ERRMSG("Give parameters: <ctl> <atm_in> <atm_in_type>"
-	   " <atm_out> <atm_out_type>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: atm_conv <ctl> <atm_in> <atm_in_type> <atm_out> <atm_out_type>\n\n"
+	   "Use -h for full help.");
 
   /* Allocate... */
   ALLOC(atm, atm_t, 1);
@@ -67,4 +83,31 @@ int main(
   free(atm);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC atm_conv tool.\n\n");
+  printf("Convert atmospheric particle data between file formats.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf
+    ("  atm_conv <ctl> <atm_in> <atm_in_type> <atm_out> <atm_out_type>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>           Control file.\n");
+  printf("  <atm_in>        Atmospheric input file.\n");
+  printf("  <atm_in_type>   Input format: 0=ASCII, 1=binary, 2=netCDF,\n");
+  printf
+    ("                  3=CLaMS trajectory/position netCDF, 4=CLaMS position netCDF.\n");
+  printf("  <atm_out>       Atmospheric output file.\n");
+  printf("  <atm_out_type>  Output format: 0=ASCII, 1=binary, 2=netCDF,\n");
+  printf
+    ("                  3=CLaMS trajectory/position netCDF, 4=CLaMS position netCDF.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

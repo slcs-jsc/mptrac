@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -36,10 +48,14 @@ int main(
 
   dd_t *dd;
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 6)
-    ERRMSG("Give parameters: <ctl> <met_in> <met_in_type>"
-	   " <met_out> <met_out_type>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type>\n\n"
+	   "Use -h for full help.");
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -70,4 +86,31 @@ int main(
   free(dd);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC met_conv tool.\n\n");
+  printf("Convert meteorological data between file formats.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf
+    ("  met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>           Control file.\n");
+  printf("  <met_in>        Meteorological input file.\n");
+  printf
+    ("  <met_in_type>   Input format: 0=netCDF, 1=binary, 2=pck, 3=zfp,\n");
+  printf("                  4=zstd, 5=cms, 6=GRIB, 7=SZ3.\n");
+  printf("  <met_out>       Meteorological output file.\n");
+  printf
+    ("  <met_out_type>  Output format: 0=netCDF, 1=binary, 2=pck, 3=zfp,\n");
+  printf("                  4=zstd, 5=cms, 6=GRIB, 7=SZ3.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

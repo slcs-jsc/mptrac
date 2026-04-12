@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -36,9 +48,14 @@ int main(
 
   dd_t *dd;
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <dt_file> <met>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: met_check_dt <ctl> <dt_file> <met> [KEY VALUE ...]\n\n"
+	   "Use -h for full help.");
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -123,4 +140,25 @@ int main(
   free(dd);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC met_check_dt tool.\n\n");
+  printf("Check model time-step constraints for meteorological data.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  met_check_dt <ctl> <dt_file> <met> [KEY VALUE ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>      Control file.\n");
+  printf("  <dt_file>  Output table for time-step diagnostics.\n");
+  printf("  <met>      Meteorological input file.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

@@ -1909,6 +1909,28 @@
   ((t) * (1. + (1. - EPS) * MAX((h2o), 0.1e-6)))
 
 /**
+ * @brief Print usage information on `-h` or `--help`.
+ *
+ * Calls the local `usage()` function and exits successfully when any command
+ * argument is `-h` or `--help`.
+ *
+ * @note This macro expects local `argc` and `argv` variables and a local
+ *       `usage()` function.
+ *
+ * @author Lars Hoffmann
+ */
+#define USAGE								\
+  do {									\
+    int iusage;								\
+    for (iusage = 1; iusage < argc; iusage++)				\
+      if (!strcmp(argv[iusage], "-h")					\
+	  || !strcmp(argv[iusage], "--help")) {				\
+	usage();							\
+	return EXIT_SUCCESS;						\
+      }									\
+  } while (0)
+
+/**
  * @brief Convert pressure to altitude.
  *
  * This macro calculates the altitude from the given pressure using

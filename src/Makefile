@@ -6,7 +6,7 @@
 EXC = atm2grid atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_check_dt met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_clim tropo_sample tropo_zm wind
 
 # List of tests...
-TESTS = atm_test compress_test interoper_test met_test tools_test trac_test tropo_test
+TESTS = atm_test cli_test compress_test interoper_test met_test tools_test trac_test tropo_test
 
 # Installation directory...
 DESTDIR ?= ../bin
@@ -283,7 +283,7 @@ endif
 # Targets...
 # -----------------------------------------------------------------------------
 
-.PHONY: all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs strip uninstall wrapper
+.PHONY: all check clean coverage cppcheck dist doxygen indent install lib lizard mkdocs print-exc strip uninstall wrapper
 
 all: $(EXC)
 	rm -f *~
@@ -302,15 +302,18 @@ trac_fortran: trac_fortran.f90 mptrac_fortran.o mptrac.o
 
 wrapper: trac_fortran
 
-check: $(TESTS)
-
 wrapper_test: wrapper
+
+print-exc:
+	@printf '%s\n' $(EXC)
 
 $(TESTS) cms_test dd_test gpu_test grib_test kpp_test wrapper_test: all
 	@(echo "\n===== Running \"$@\" ... =====") ; \
 	  cd ../tests/$@ ; ./run.sh \
 	  && (echo "\n===== Test \"$@\" passed! =====") \
 	  || (echo "\n===== Test \"$@\" failed! =====" ; exit 1)
+
+check: $(TESTS)
 
 clean:
 	rm -rf $(EXC) trac_fortran lib* *.o *.mod *.gcda *.gcno *.gcov coverage* *~

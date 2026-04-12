@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -36,9 +48,14 @@ int main(
   ALLOC(atm, atm_t, 1);
   ALLOC(atm2, atm_t, 1);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 4)
-    ERRMSG("Give parameters: <ctl> <atm_select> <atm1> [<atm2> ...]");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: atm_select <ctl> <atm_select> <atm1> [<atm2> ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -174,4 +191,24 @@ int main(
   free(atm2);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC atm_select tool.\n\n");
+  printf("Extract subsets of air parcels from atmospheric data files.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  atm_select <ctl> <atm_select> <atm1> [<atm2> ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>         Control file.\n");
+  printf("  <atm_select>  Atmospheric output file for selected parcels.\n");
+  printf("  <atm*>        Atmospheric input files.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

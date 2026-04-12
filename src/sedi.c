@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -24,13 +24,29 @@
 
 #include "mptrac.h"
 
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
+
 int main(
   int argc,
   char *argv[]) {
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 5)
-    ERRMSG("Give parameters: <p> <T> <r_p> <rho_p>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: sedi <p> <T> <r_p> <rho_p>\n\n" "Use -h for full help.");
 
   /* Read arguments... */
   const double p = atof(argv[1]);
@@ -60,4 +76,26 @@ int main(
   printf("   Re= %g\n", Re);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC sedi tool.\n\n");
+  printf
+    ("Calculate sedimentation velocity for aerosol or cloud particles.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  sedi <p> <T> <r_p> <rho_p>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <p>      Pressure [hPa].\n");
+  printf("  <T>      Temperature [K].\n");
+  printf("  <r_p>    Particle radius [um].\n");
+  printf("  <rho_p>  Particle density [kg/m3].\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

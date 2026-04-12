@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -50,9 +62,14 @@ int main(
   ALLOC(dataW, float,
 	EP * EY * EX);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 3)
-    ERRMSG("Give parameters: <ctl> <metbase>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: wind <ctl> <metbase> [KEY VALUE ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -164,4 +181,24 @@ int main(
   free(dataW);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC wind tool.\n\n");
+  printf("Create meteorological data with synthetic wind fields.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  wind <ctl> <metbase> [KEY VALUE ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>      Control file.\n");
+  printf("  <metbase>  Basename of the output meteorological data.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

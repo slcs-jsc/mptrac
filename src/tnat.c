@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -24,13 +24,29 @@
 
 #include "mptrac.h"
 
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
+
 int main(
   int argc,
   char *argv[]) {
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 3)
-    ERRMSG("Give parameters: <p> <h2o> <hno3>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: tnat <p> <h2o> <hno3>\n\n" "Use -h for full help.");
 
   /* Get varibles... */
   const double p = atof(argv[1]);
@@ -46,4 +62,24 @@ int main(
   printf(" T_NAT= %g K\n", nat_temperature(p, h2o, hno3));
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC tnat tool.\n\n");
+  printf("Calculate PSC formation temperatures.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  tnat <p> <h2o> <hno3>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <p>     Pressure [hPa].\n");
+  printf("  <h2o>   Water vapor volume mixing ratio [ppv].\n");
+  printf("  <hno3>  Nitric acid volume mixing ratio [ppv].\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

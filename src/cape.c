@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -49,9 +61,13 @@ int main(
   ALLOC(met, met_t, 1);
   ALLOC(dd, dd_t, 1);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 2)
-    ERRMSG("Give parameters: <ctl> <met.nc>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: cape <ctl> <met.nc>\n\n" "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -146,4 +162,23 @@ int main(
   free(dd);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC cape tool.\n\n");
+  printf("Add CAPE data to a meteorological netCDF file.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  cape <ctl> <met.nc>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>     Control file.\n");
+  printf("  <met.nc>  Meteorological netCDF file to update.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

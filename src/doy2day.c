@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -24,13 +24,29 @@
 
 #include "mptrac.h"
 
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
+
 int main(
   int argc,
   char *argv[]) {
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 3)
-    ERRMSG("Give parameters: <year> <doy>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: doy2day <year> <doy>\n\n" "Use -h for full help.");
 
   /* Read arguments... */
   const int year = atoi(argv[1]);
@@ -42,4 +58,23 @@ int main(
   printf("%d %d %d\n", year, mon, day);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC doy2day tool.\n\n");
+  printf("Convert year and day of year to calendar date.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  doy2day <year> <doy>\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <year>  Year.\n");
+  printf("  <doy>   Day of year.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

@@ -75,6 +75,7 @@ src/*.gcda
 src/*.gcov
 src/coverage*
 tests/atm_test/data/
+tests/cli_test/data/
 tests/cms_test/data/
 tests/compress_test/data/
 tests/dd_test/data/

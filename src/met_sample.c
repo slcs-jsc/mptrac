@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,14 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
 
 /* ------------------------------------------------------------
    Main...
@@ -49,9 +57,14 @@ int main(
     cape, cin, o3c, pv, t, tt, u, v, w, z, zm, zref, zt, time_old = -999,
     p_old = -999, lon_old = -999, lat_old = -999;
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 3)
-    ERRMSG("Give parameters: <ctl> <sample.tab> <atm_in>");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: met_sample <ctl> <sample.tab> <atm_in> [KEY VALUE ...]\n\n"
+	   "Use -h for full help.");
 
   /* Allocate... */
   ALLOC(clim, clim_t, 1);
@@ -164,4 +177,25 @@ int main(
   free(dd);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC met_sample tool.\n\n");
+  printf("Sample meteorological data at atmospheric particle locations.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf("  met_sample <ctl> <sample.tab> <atm_in> [KEY VALUE ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>         Control file.\n");
+  printf("  <sample.tab>  Output table.\n");
+  printf("  <atm_in>      Atmospheric input file with sample locations.\n");
+  printf("  [KEY VALUE]  Optional control parameters.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

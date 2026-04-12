@@ -14,7 +14,7 @@
   You should have received a copy of the GNU General Public License
   along with MPTRAC. If not, see <http://www.gnu.org/licenses/>.
   
-  Copyright (C) 2013-2025 Forschungszentrum Juelich GmbH
+  Copyright (C) 2013-2026 Forschungszentrum Juelich GmbH
 */
 
 /*! 
@@ -23,6 +23,18 @@
 */
 
 #include "mptrac.h"
+
+/* ------------------------------------------------------------
+   Functions...
+   ------------------------------------------------------------ */
+
+/*! Print command-line help. */
+void usage(
+  void);
+
+/* ------------------------------------------------------------
+   Main...
+   ------------------------------------------------------------ */
 
 int main(
   int argc,
@@ -79,10 +91,14 @@ int main(
   ALLOC(work, double,
 	NP);
 
+  /* Print usage information... */
+  USAGE;
+
   /* Check arguments... */
   if (argc < 6)
-    ERRMSG("Give parameters: <ctl> <dist.tab> <param> <atm1a> <atm1b>"
-	   " [<atm2a> <atm2b> ...]");
+    ERRMSG("Missing or invalid command-line arguments.\n\n"
+	   "Usage: atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...]\n\n"
+	   "Use -h for full help.");
 
   /* Read control parameters... */
   mptrac_read_ctl(argv[1], argc, argv, &ctl);
@@ -382,4 +398,29 @@ int main(
   free(work);
 
   return EXIT_SUCCESS;
+}
+
+/*****************************************************************************/
+
+/*! Print command-line help. */
+void usage(
+  void) {
+
+  printf("\nMPTRAC atm_dist tool.\n\n");
+  printf
+    ("Calculate transport deviations between pairs of trajectory data sets.\n");
+  printf("\n");
+  printf("Usage:\n");
+  printf
+    ("  atm_dist <ctl> <dist.tab> <param> <atm1a> <atm1b> [<atm2a> <atm2b> ...]\n");
+  printf("\n");
+  printf("Arguments:\n");
+  printf("  <ctl>       Control file.\n");
+  printf("  <dist.tab>  Output table.\n");
+  printf
+    ("  <param>     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n");
+  printf("              median, or mad.\n");
+  printf("  <atm*a/b>   Atmospheric input files to compare pairwise.\n");
+  printf("\nFurther information:\n");
+  printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }
