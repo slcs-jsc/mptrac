@@ -80,7 +80,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_lapse <ctl> <lapse.tab> <met0> [<met1> ...] [KEY VALUE ...]\n\n"
+	   "Usage: met_lapse <ctl> <lapse.tab> <met0> [<met1> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -258,18 +258,12 @@ void usage(
   printf("Calculate lapse-rate statistics from meteorological data.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  met_lapse <ctl> <lapse.tab> <met0> [<met1> ...] [KEY VALUE ...]\n");
+  printf("  met_lapse <ctl> <lapse.tab> <met0> [<met1> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>        Control file.\n");
   printf("  <lapse.tab>  Output table for lapse-rate statistics.\n");
   printf("  <met*>       Meteorological input files.\n");
-  printf("  [KEY VALUE]  Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  LAPSE_DZ                         Vertical layer depth.\n");
-  printf("  LAPSE_Z0, LAPSE_Z1               Altitude range.\n");
-  printf("  LAPSE_LAT0, LAPSE_LAT1           Latitude range.\n");
-  printf("  LAPSE_INTPOL                     Interpolation method flag.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

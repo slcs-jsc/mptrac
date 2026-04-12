@@ -66,7 +66,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: tropo <ctl> <tropo.nc> <met0> [<met1> ...] [KEY VALUE ...]\n\n"
+	   "Usage: tropo <ctl> <tropo.nc> <met0> [<met1> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -285,17 +285,12 @@ void usage(
   printf("Create tropopause data sets from meteorological data.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  tropo <ctl> <tropo.nc> <met0> [<met1> ...] [KEY VALUE ...]\n");
+  printf("  tropo <ctl> <tropo.nc> <met0> [<met1> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>       Control file.\n");
   printf("  <tropo.nc>  Output tropopause netCDF file.\n");
   printf("  <met*>      Meteorological input files.\n");
-  printf("  [KEY VALUE] Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  TROPO_LON0, TROPO_LON1, TROPO_DLON  Longitude range and spacing.\n");
-  printf("  TROPO_LAT0, TROPO_LAT1, TROPO_DLAT  Latitude range and spacing.\n");
-  printf("  TROPO_H2O, TROPO_O3                  Extract H2O and O3 if set.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

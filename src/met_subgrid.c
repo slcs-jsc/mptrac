@@ -68,7 +68,7 @@ int main(
   /* Check arguments... */
   if (argc < 4 && argc % 2 != 0)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_subgrid <ctl> <subgrid.tab> <met0> <met1> [<met0b> <met1b> ...] [KEY VALUE ...]\n\n"
+	   "Usage: met_subgrid <ctl> <subgrid.tab> <met0> <met1> [<met0b> <met1b> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -232,13 +232,12 @@ void usage(
   printf("\n");
   printf("Usage:\n");
   printf
-    ("  met_subgrid <ctl> <subgrid.tab> <met0> <met1> [<met0b> <met1b> ...] [KEY VALUE ...]\n");
+    ("  met_subgrid <ctl> <subgrid.tab> <met0> <met1> [<met0b> <met1b> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>          Control file.\n");
   printf("  <subgrid.tab>  Output table.\n");
   printf("  <met*>         Meteorological input file pairs.\n");
-  printf("  [KEY VALUE]    Optional control parameters.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

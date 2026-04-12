@@ -300,7 +300,7 @@ trac_fortran: trac_fortran.f90 mptrac_fortran.o mptrac.o
 
 wrapper: mptrac_fortran.o
 
-wrapper_test: trac_fortran
+wrapper_test: wrapper
 
 print-exc:
 	@printf '%s\n' $(EXC)

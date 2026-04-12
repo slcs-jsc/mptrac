@@ -54,7 +54,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: atm_select <ctl> <atm_select> <atm1> [<atm2> ...] [KEY VALUE ...]\n\n"
+	   "Usage: atm_select <ctl> <atm_select> <atm1> [<atm2> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -203,22 +203,12 @@ void usage(
   printf("Extract subsets of air parcels from atmospheric data files.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  atm_select <ctl> <atm_select> <atm1> [<atm2> ...] [KEY VALUE ...]\n");
+  printf("  atm_select <ctl> <atm_select> <atm1> [<atm2> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>         Control file.\n");
   printf("  <atm_select>  Atmospheric output file for selected parcels.\n");
   printf("  <atm*>        Atmospheric input files.\n");
-  printf("  [KEY VALUE]   Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  SELECT_STRIDE                   Select every nth parcel.\n");
-  printf("  SELECT_IDX0, SELECT_IDX1        Parcel index range.\n");
-  printf("  SELECT_IP0, SELECT_IP1          Parcel array index range.\n");
-  printf("  SELECT_T0, SELECT_T1            Time range.\n");
-  printf("  SELECT_Z0, SELECT_Z1            Altitude range.\n");
-  printf("  SELECT_LON0, SELECT_LON1        Longitude range.\n");
-  printf("  SELECT_LAT0, SELECT_LAT1        Latitude range.\n");
-  printf("  SELECT_R0, SELECT_R1            Radial distance range.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

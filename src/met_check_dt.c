@@ -159,10 +159,6 @@ void usage(
   printf("  <dt_file>  Output table for time-step diagnostics.\n");
   printf("  <met>      Meteorological input file.\n");
   printf("  [KEY VALUE]  Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  KX, KZ                           Diffusion coefficients.\n");
-  printf("  DX                               Horizontal transport distance.\n");
-  printf("  CMAX, NMAX                       CFL and diffusion stability limits.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

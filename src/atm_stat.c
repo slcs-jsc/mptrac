@@ -64,7 +64,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...] [KEY VALUE ...]\n\n"
+	   "Usage: atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -242,7 +242,7 @@ void usage(
   printf("Calculate air parcel statistics.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...] [KEY VALUE ...]\n");
+  printf("  atm_stat <ctl> <stat.tab> <param> <atm1> [<atm2> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>       Control file.\n");
@@ -251,12 +251,6 @@ void usage(
     ("  <param>     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n");
   printf("              median, or mad.\n");
   printf("  <atm*>      Atmospheric input files.\n");
-  printf("  [KEY VALUE] Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  STAT_ENS                         Ensemble index filter.\n");
-  printf("  STAT_Z0, STAT_Z1                 Altitude range.\n");
-  printf("  STAT_LON0, STAT_LON1             Longitude range.\n");
-  printf("  STAT_LAT0, STAT_LAT1             Latitude range.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

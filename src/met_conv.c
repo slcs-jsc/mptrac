@@ -54,7 +54,7 @@ int main(
   /* Check arguments... */
   if (argc < 6)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type> [KEY VALUE ...]\n\n"
+	   "Usage: met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type>\n\n"
 	   "Use -h for full help.");
 
   /* Allocate... */
@@ -99,7 +99,7 @@ void usage(
   printf("\n");
   printf("Usage:\n");
   printf
-    ("  met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type> [KEY VALUE ...]\n");
+    ("  met_conv <ctl> <met_in> <met_in_type> <met_out> <met_out_type>\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>           Control file.\n");
@@ -111,7 +111,6 @@ void usage(
   printf
     ("  <met_out_type>  Output format: 0=netCDF, 1=binary, 2=pck, 3=zfp,\n");
   printf("                  4=zstd, 5=cms, 6=GRIB, 7=SZ3.\n");
-  printf("  [KEY VALUE]     Optional control parameters.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

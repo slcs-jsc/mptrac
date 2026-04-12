@@ -11,6 +11,15 @@ and tools by application field.
 All apps and tools accept `-h` and `--help` to print a short command-line
 help message.
 
+The apps [met_map](apps/met_map.md), [met_prof](apps/met_prof.md), and
+[met_zm](apps/met_zm.md) can be used to extract global maps, vertical
+profiles, and zonal means from meteorological data. The app
+[met_sample](apps/met_sample.md) can be used to sample the meteo data
+at individual locations in space and time. The app
+[met_lapse](apps/met_lapse.md) calculates lapse-rate statistics, and
+[met_check_dt](apps/met_check_dt.md) checks model time-step constraints
+for a given meteorological data file.
+
 ### Trajectory calculations
 
 | App | Purpose |

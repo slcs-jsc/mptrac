@@ -107,7 +107,7 @@ int main(
   /* Check arguments... */
   if (argc < 5)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: tropo_clim <ctl> <clim.tab> <var> <tropo.nc> [<tropo2.nc> ...] [KEY VALUE ...]\n\n"
+	   "Usage: tropo_clim <ctl> <clim.tab> <var> <tropo.nc> [<tropo2.nc> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -287,7 +287,7 @@ void usage(
   printf("\n");
   printf("Usage:\n");
   printf
-    ("  tropo_clim <ctl> <clim.tab> <var> <tropo.nc> [<tropo2.nc> ...] [KEY VALUE ...]\n");
+    ("  tropo_clim <ctl> <clim.tab> <var> <tropo.nc> [<tropo2.nc> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>       Control file.\n");
@@ -296,7 +296,6 @@ void usage(
     ("  <var>       Tropopause variable prefix, such as clp, dyn, wmo_1st,\n");
   printf("              or wmo_2nd.\n");
   printf("  <tropo*>    Tropopause netCDF input files.\n");
-  printf("  [KEY VALUE] Optional control parameters.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

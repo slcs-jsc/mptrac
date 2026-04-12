@@ -186,7 +186,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_map <ctl> <map.tab> <met0> [<met1> ...] [KEY VALUE ...]\n\n"
+	   "Usage: met_map <ctl> <map.tab> <met0> [<met1> ...]\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -464,17 +464,12 @@ void usage(
   printf("Extract maps from meteorological data.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  met_map <ctl> <map.tab> <met0> [<met1> ...] [KEY VALUE ...]\n");
+  printf("  met_map <ctl> <map.tab> <met0> [<met1> ...]\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>      Control file.\n");
   printf("  <map.tab>  Output table.\n");
   printf("  <met*>     Meteorological input files.\n");
-  printf("  [KEY VALUE]  Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  MAP_Z0, MAP_THETA                Altitude or potential temperature level.\n");
-  printf("  MAP_LON0, MAP_LON1, MAP_DLON     Longitude range and spacing.\n");
-  printf("  MAP_LAT0, MAP_LAT1, MAP_DLAT     Latitude range and spacing.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

@@ -196,12 +196,6 @@ void usage(
   printf("  <sample.tab>  Output table.\n");
   printf("  <atm_in>      Atmospheric input file with sample locations.\n");
   printf("  [KEY VALUE]  Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  SAMPLE_GEOPOT                   Interpolate by geopotential height.\n");
-  printf("  SAMPLE_GRID_TIME                Add blank lines between time slices.\n");
-  printf("  SAMPLE_GRID_Z                   Add blank lines between altitude levels.\n");
-  printf("  SAMPLE_GRID_LON                 Add blank lines between longitudes.\n");
-  printf("  SAMPLE_GRID_LAT                 Add blank lines between latitudes.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }

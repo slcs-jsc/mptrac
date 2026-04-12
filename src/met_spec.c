@@ -63,7 +63,7 @@ int main(
   /* Check arguments... */
   if (argc < 4)
     ERRMSG("Missing or invalid command-line arguments.\n\n"
-	   "Usage: met_spec <ctl> <spec.tab> <met0> [KEY VALUE ...]\n\n"
+	   "Usage: met_spec <ctl> <spec.tab> <met0>\n\n"
 	   "Use -h for full help.");
 
   /* Read control parameters... */
@@ -154,15 +154,12 @@ void usage(
   printf("Conduct spectral analysis of meteorological temperature fields.\n");
   printf("\n");
   printf("Usage:\n");
-  printf("  met_spec <ctl> <spec.tab> <met0> [KEY VALUE ...]\n");
+  printf("  met_spec <ctl> <spec.tab> <met0>\n");
   printf("\n");
   printf("Arguments:\n");
   printf("  <ctl>       Control file.\n");
   printf("  <spec.tab>  Output table.\n");
   printf("  <met0>      Meteorological input file.\n");
-  printf("  [KEY VALUE] Optional control parameters.\n");
-  printf("\nTool-specific control parameters:\n");
-  printf("  SPEC_WAVEMAX                    Maximum zonal wave number.\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
 }
