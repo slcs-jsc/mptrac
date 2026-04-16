@@ -1151,6 +1151,10 @@ void dd_atm2particles(
 
   /* Set timer... */
   SELECT_TIMER("DD_ATM2PARTICLES", "DD");
+  
+  /* Check if particles are present... */
+  if (npart == 0)
+    return;
 
   int rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -1158,7 +1162,7 @@ void dd_atm2particles(
   /* Select the particles that will be send... */
 #ifdef _OPENACC
 #pragma acc enter data create(npart, particles[:npart])
-#pragma acc update device(npart)
+#pragma acc update device(npart, particles[:npart])
 #pragma acc parallel loop present(atm, ctl, particles, cache, npart)
 #endif
   for (int ip = atm->np; ip < atm->np + npart; ip++)
@@ -1411,6 +1415,10 @@ void dd_particles2atm(
 
   /* Set timer... */
   SELECT_TIMER("DD_PARTICLES2ATM", "DD");
+  
+  /* Check if particles are present... */
+  if (npart == 0)
+  	return;
 
   /* Check number of particles... */
   if (atm->np + npart > NP)
@@ -3207,8 +3215,8 @@ void module_dd(
       ERRMSG("Out of memory!");
     particles = tmp;
     capacity = newcap;
-  }
-
+  } 
+  
   /* Transform from struct of array to array of struct... */
   dd_atm2particles(ctl, cache, atm, particles, npart);
 
@@ -8678,6 +8686,7 @@ int read_met_nc_2d(
       );
 
     /* Read data... */
+    nc_var_par_access(ncid, varid, NC_COLLECTIVE);
     NC(nc_get_vara_float
        (ncid, varid, help_subdomain_start, help_subdomain_count, help));
 
@@ -8696,6 +8705,8 @@ int read_met_nc_2d(
     float *help_halo;
     ALLOC(help_halo, float,
 	  help_halo_bnd_count[1] * help_halo_bnd_count[2]);
+
+    nc_var_par_access(ncid, varid, NC_COLLECTIVE);
     NC(nc_get_vara_float
        (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
 
@@ -8924,6 +8935,7 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP2", "INPUT");
 
     /* Use default NetCDF parallel I/O behavior */
+    nc_var_par_access(ncid, varid, NC_COLLECTIVE);
     NC(nc_get_vara_float
        (ncid, varid, dd->subdomain_start, dd->subdomain_count, help));
 
@@ -8936,6 +8948,7 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP3", "INPUT");
 
     /* Halo read also uses independent access */
+    nc_var_par_access(ncid, varid, NC_COLLECTIVE);
     NC(nc_get_vara_float(ncid,
 			 varid,
 			 dd->halo_bnd_start, dd->halo_bnd_count, help_halo));
@@ -9693,7 +9706,7 @@ void read_met_nc_grid_dd_naive(
   if (!left && !right) {
     dd->subdomain_start[3] -= (size_t) ctl->dd_halos_size;
     dd->subdomain_count[3] += (size_t) (2 * ctl->dd_halos_size);
-  } else {
+  } else if (left ^ right) {
     dd->subdomain_count[3] += (size_t) ctl->dd_halos_size;
     if (!left)
       dd->subdomain_start[3] -= (size_t) ctl->dd_halos_size;
@@ -9702,7 +9715,7 @@ void read_met_nc_grid_dd_naive(
   if (!top && !bottom) {
     dd->subdomain_start[2] -= (size_t) ctl->dd_halos_size;
     dd->subdomain_count[2] += (size_t) (2 * ctl->dd_halos_size);
-  } else {
+  } else if (left ^ right) {
     dd->subdomain_count[2] += (size_t) ctl->dd_halos_size;
     if (!top)
       dd->subdomain_start[2] -= (size_t) ctl->dd_halos_size;
@@ -9711,7 +9724,7 @@ void read_met_nc_grid_dd_naive(
   /* Set boundary halo hyperslabs... */
   double lon_shift = 0.0;
 
-  if (left || right) {
+  if (left ^ right) {
     dd->halo_bnd_start[0] = 0;
     dd->halo_bnd_start[1] = 0;
     dd->halo_bnd_start[2] = dd->subdomain_start[2];
