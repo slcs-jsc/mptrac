@@ -8686,7 +8686,9 @@ int read_met_nc_2d(
       );
 
     /* Read data... */
+#ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
+#endif
     NC(nc_get_vara_float
        (ncid, varid, help_subdomain_start, help_subdomain_count, help));
 
@@ -8706,7 +8708,9 @@ int read_met_nc_2d(
     ALLOC(help_halo, float,
 	  help_halo_bnd_count[1] * help_halo_bnd_count[2]);
 
+#ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
+#endif
     NC(nc_get_vara_float
        (ncid, varid, help_halo_bnd_start, help_halo_bnd_count, help_halo));
 
@@ -8935,7 +8939,9 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP2", "INPUT");
 
     /* Use default NetCDF parallel I/O behavior */
+#ifdef
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
+#endif
     NC(nc_get_vara_float
        (ncid, varid, dd->subdomain_start, dd->subdomain_count, help));
 
@@ -8948,7 +8954,9 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP3", "INPUT");
 
     /* Halo read also uses independent access */
+#ifdef
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
+#endif
     NC(nc_get_vara_float(ncid,
 			 varid,
 			 dd->halo_bnd_start, dd->halo_bnd_count, help_halo));
