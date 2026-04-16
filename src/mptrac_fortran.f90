@@ -95,9 +95,6 @@ MODULE mptrac_struct
 #ifndef CTS
 #define CTS 1000
 #endif
-#ifndef DD_NNMAX
-#define DD_NNMAX 26
-#endif
 #ifndef DD_EX_GLOB
 #define DD_EX_GLOB (EX * 16)
 #endif
@@ -121,7 +118,6 @@ MODULE mptrac_struct
   INTEGER, PARAMETER :: csza = CSZA
   INTEGER, PARAMETER :: ct = CT
   INTEGER, PARAMETER :: cts = CTS
-  INTEGER, PARAMETER :: dd_nnmax = DD_NNMAX
   
   ! Air parcel data...
   TYPE, bind(c) :: atm_t
