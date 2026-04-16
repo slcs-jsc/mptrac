@@ -6,7 +6,7 @@
 <area shape="rect" id="node14" href="$mptrac_8c.html#a6882c1e1af3a10c5f53662d353c8c1d8" title="Computes gridded chemical tracer concentrations (volume mixing ratio) from individual air parcel mass..." alt="" coords="203,133,333,160"/>
 <area shape="rect" id="node15" href="$mptrac_8c.html#a2a04fee6c403d3d912d89d9666c0fd7b" title="Initializes the chemistry modules by setting atmospheric composition." alt="" coords="205,640,331,667"/>
 <area shape="rect" id="node19" href="$mptrac_8c.html#a799ef256c15dc112842d1dbc5afc787c" title="Performs convective mixing of atmospheric particles." alt="" coords="201,235,335,261"/>
-<area shape="rect" id="node21" href="$mptrac_8h.html#ac7dbcc9e4768175409c30a110dcd8308" title="Manages domain decomposition and particle communication in parallel processing." alt="" coords="225,336,311,363"/>
+<area shape="rect" id="node21" href="$mptrac_8h.html#aba4fc8be4bc42581f1ff896c2a8221a9" title="Perform domain decomposition and exchange particles between MPI ranks." alt="" coords="225,336,311,363"/>
 <area shape="rect" id="node22" href="$mptrac_8c.html#a1b4a2c668aae5a7ae522eab2489a464c" title="Simulate exponential decay processes for atmospheric particles." alt="" coords="411,995,516,1021"/>
 <area shape="rect" id="node25" href="$mptrac_8c.html#ac7d1bdf49d0da3ca1911eebe2a96a2ac" title="Simulate mesoscale diffusion for atmospheric particles." alt="" coords="205,387,331,413"/>
 <area shape="rect" id="node26" href="$mptrac_8c.html#ae102581d80f5817f4c5ef356bde43184" title="Computes particle diffusion within the planetary boundary layer (PBL)." alt="" coords="212,285,324,312"/>
@@ -22,7 +22,7 @@
 <area shape="rect" id="node42" href="$mptrac_8c.html#ab8f2e9219b39e8eb46e7d5c9d8398e53" title="Update the positions and pressure levels of atmospheric particles." alt="" coords="210,995,326,1021"/>
 <area shape="rect" id="node43" href="$mptrac_8c.html#a82b45268d35f33a047e9f38d04c8a7a5" title="Apply radioactive decay to atmospheric tracer species." alt="" coords="198,1045,338,1072"/>
 <area shape="rect" id="node44" href="$mptrac_8c.html#a6cdd8f72190aa0901f08f48afc240ee1" title="Simulate sedimentation of particles in the atmosphere." alt="" coords="221,944,315,971"/>
-<area shape="rect" id="node45" href="$mptrac_8c.html#ac9a4606b5ab8abb85a6f4b833e9f13f2" title="Sort particles according to box index." alt="" coords="797,691,890,717"/>
+<area shape="rect" id="node45" href="$mptrac_8c.html#a745b4aaa2f48daf3e82ddff6f31ea1ba" title="Sort particles according to box index." alt="" coords="797,691,890,717"/>
 <area shape="rect" id="node47" href="$mptrac_8c.html#a186195c8bbbd5cac5c1f52eed531804c" title="Calculate time steps for air parcels based on specified conditions." alt="" coords="204,1197,332,1224"/>
 <area shape="rect" id="node48" href="$mptrac_8c.html#adb66834f81688452a86c1a574bafca03" title="Simulate chemical reactions involving long&#45;lived atmospheric tracers." alt="" coords="392,488,535,515"/>
 <area shape="rect" id="node50" href="$mptrac_8c.html#a5e35405aee5829cf062bd3cab20b0425" title="Perform wet deposition calculations for air parcels." alt="" coords="205,1299,331,1325"/>

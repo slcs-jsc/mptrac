@@ -3,7 +3,7 @@
 <area shape="rect" id="node2" href="$mptrac_8c.html#aad0e01f51c815c87fccaae55195d8a35" title="Generates a formatted filename for meteorological data files based on the input parameters." alt="" coords="196,167,296,193"/>
 <area shape="rect" id="node5" href="$mptrac_8c.html#ad761ca965e59ad9246ab5825a3730058" title="Reads meteorological data from a file, supporting multiple formats and MPI broadcasting." alt="" coords="185,597,307,624"/>
 <area shape="rect" id="node48" href="$mptrac_8c.html#a55562b13a38a124b0abc09ce8511dde9" title="Updates device memory for specified data structures." alt="" coords="169,648,323,675"/>
-<area shape="rect" id="node3" href="$mptrac_8c.html#ac54a92b848d49b96ef6091df37b552f2" title="Replaces occurrences of a substring in a string with another substring." alt="" coords="387,116,506,143"/>
+<area shape="rect" id="node3" href="$mptrac_8c.html#ad1c9df0ba0d19441bec285a6ebe3d757" title="Replaces occurrences of a substring in a string with another substring." alt="" coords="387,116,506,143"/>
 <area shape="rect" id="node4" href="$mptrac_8c.html#acc0c1829ca7770d2dd6342f2cdf10bb9" title="Converts Julian seconds to calendar date and time components." alt="" coords="799,259,878,285"/>
 <area shape="rect" id="node6" href="$mptrac_8h.html#aa4b5f89a098befae2a864decab80f133" title="Broadcasts large data across all processes in an MPI communicator." alt="" coords="373,623,520,649"/>
 <area shape="rect" id="node7" href="$mptrac_8c.html#acc520c5d948ea75f0acb9b351a6b8b75" title="Reads meteorological data from a binary file." alt="" coords="397,319,497,345"/>
@@ -39,7 +39,7 @@
 <area shape="rect" id="node30" href="$mptrac_8c.html#ae4562461a2883609e1768b1c3671eec4" title="Reads meteorological grid data from NetCDF files with domain decomposition." alt="" coords="581,369,707,396"/>
 <area shape="rect" id="node34" href="$mptrac_8c.html#a2ee3cac435af17ad5aaf885cc2dc3262" title="Reads and processes meteorological level data from NetCDF files with domain decomposition." alt="" coords="575,576,713,603"/>
 <area shape="rect" id="node37" href="$mptrac_8c.html#aa86499774fc9def653b04f95e56b4052" title="Reads and processes surface meteorological data from NetCDF files with domain decomposition." alt="" coords="571,525,717,552"/>
-<area shape="rect" id="node31" href="$mptrac_8c.html#a6c6041039047d277d4836da1bb119e3d" title="Read meteorological grid data from a NetCDF file and set up subdomain decomposition with halos." alt="" coords="765,361,912,402"/>
+<area shape="rect" id="node31" href="$mptrac_8c.html#a6c6041039047d277d4836da1bb119e3d" title="Read meteorological grid information and construct the domain&#45;decomposed grid with halo regions." alt="" coords="765,361,912,402"/>
 <area shape="rect" id="node32" href="$mptrac_8c.html#a578e7ebaa62304182de8fe7ddf144b8f" title="Converts time components to seconds since January 1, 2000, 12:00:00 UTC." alt="" coords="991,368,1069,395"/>
 <area shape="rect" id="node33" href="$mptrac_8c.html#a8c5064804f7b46a4130b5411374a771d" title="Extracts and converts a timestamp from a filename to Julian seconds." alt="" coords="771,309,906,336"/>
 <area shape="rect" id="node35" href="$mptrac_8c.html#a449f642b01d0dc65cc32f86a850bcb7b" title="Interpolates meteorological data to specified pressure levels." alt="" coords="781,579,896,605"/>

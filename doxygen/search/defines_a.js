@@ -7,6 +7,5 @@ var searchData=
   ['mh2o_4',['MH2O',['../mptrac_8h.html#a1c4cf7d6c3605ff72cd8b9a63379d4ea',1,'mptrac.h']]],
   ['min_5',['MIN',['../mptrac_8h.html#a3acffbd305ee72dcd4593c0d8af64a4f',1,'mptrac.h']]],
   ['mo3_6',['MO3',['../mptrac_8h.html#aa5770de64e81ecf3f35d559357f67a76',1,'mptrac.h']]],
-  ['molec_5fdens_7',['MOLEC_DENS',['../mptrac_8h.html#a241767dd865cc665eeee896fb598eb9f',1,'mptrac.h']]],
-  ['mpi_5fdatatype_8',['MPI_Datatype',['../mptrac_8h.html#ada6230d3c1696537923dc5a9446d7521',1,'mptrac.h']]]
+  ['molec_5fdens_7',['MOLEC_DENS',['../mptrac_8h.html#a241767dd865cc665eeee896fb598eb9f',1,'mptrac.h']]]
 ];
