@@ -98,11 +98,19 @@ MODULE mptrac_struct
 #ifndef DD_NNMAX
 #define DD_NNMAX 26
 #endif
+#ifndef DD_EX_GLOB
+#define DD_EX_GLOB (EX * 16)
+#endif
+#ifndef DD_EY_GLOB
+#define DD_EY_GLOB (EY * 16)
+#endif
   
   ! Effective dimensions after preprocessing.
   INTEGER, PARAMETER :: ex = EX
   INTEGER, PARAMETER :: ey = EY
   INTEGER, PARAMETER :: ep = EP
+  INTEGER, PARAMETER :: ex_glob = DD_EX_GLOB
+  INTEGER, PARAMETER :: ey_glob = DD_EY_GLOB
   INTEGER, PARAMETER :: metvar = METVAR
   INTEGER, PARAMETER :: npp = NP
   INTEGER, PARAMETER :: nqq = NQ
@@ -595,20 +603,16 @@ MODULE mptrac_struct
 
   ! Domain decomposition data...
   TYPE, bind(c) :: dd_t
-     INTEGER(c_int) :: rank
-     INTEGER(c_int) :: size
-     INTEGER(c_int), DIMENSION(dd_nnmax) :: neighbours
-     REAL(c_double) :: subdomain_lon_max
-     REAL(c_double) :: subdomain_lon_min
-     REAL(c_double) :: subdomain_lat_max
-     REAL(c_double) :: subdomain_lat_min
+     INTEGER(c_int) :: nx_glob
+     INTEGER(c_int) :: ny_glob
+     REAL(c_double), DIMENSION(ex_glob) :: lon_glob
+     REAL(c_double), DIMENSION(ey_glob) :: lat_glob
      INTEGER(c_size_t), DIMENSION(4) :: subdomain_start
      INTEGER(c_size_t), DIMENSION(4) :: subdomain_count
      INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_start
      INTEGER(c_size_t), DIMENSION(4) :: halo_bnd_count
      INTEGER(c_int) :: halo_offset_start
      INTEGER(c_int) :: halo_offset_end
-     INTEGER(c_int) :: init
   END TYPE dd_t
 
 END MODULE mptrac_struct
