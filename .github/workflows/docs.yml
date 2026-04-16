@@ -14,22 +14,20 @@ jobs:
     runs-on: ubuntu-24.04
 
     steps:
-      - name: mkdocs
+      - name: checkout
         uses: actions/checkout@v5
+
       - name: preparing_environment
         uses: actions/setup-python@v5
         with:
           python-version: 3.x
+
       - name: installing_mkdocs
-        run: pip install mkdocs ; pip install mkdocs-material; 
-             cd docs && mkdocs gh-deploy --force --clean --verbose
-        
-  deploying_doxygen:
-    runs-on: ubuntu-24.04
-    needs: deploying_mkdoc
-    steps:
-      - name: doxygen
-        uses: actions/checkout@v5
+        run: pip install mkdocs mkdocs-material
+
+      - name: building_mkdocs
+        run: cd docs && mkdocs build --clean --verbose
+
       - name: preparing_doxygen
         uses: mattnotmitt/doxygen-action@v1.9.4
         with:
@@ -38,11 +36,11 @@ jobs:
 
       - name: Merge Doxygen output into site
         run: |
-          mkdir -p site/doxygen
-          cp -r docs/docs/html/* site/doxygen/
+          mkdir -p docs/site/doxygen
+          cp -r docs/docs/html/. docs/site/doxygen/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+          publish_dir: ./docs/site
