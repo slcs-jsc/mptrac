@@ -296,7 +296,7 @@ mptrac_fortran.o: mptrac_fortran.f90 mptrac.h Makefile
 trac_fortran: trac_fortran.f90 mptrac_fortran.o mptrac.o
 	$(FC) $(FCFLAGS) -o trac_fortran trac_fortran.f90 mptrac_fortran.o mptrac.o $(LDFLAGS)
 
-wrapper: mptrac_fortran.o
+wrapper: trac_fortran
 
 wrapper_test: wrapper
 
