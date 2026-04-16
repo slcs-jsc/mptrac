@@ -8939,7 +8939,7 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP2", "INPUT");
 
     /* Use default NetCDF parallel I/O behavior */
-#ifdef
+#ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
 #endif
     NC(nc_get_vara_float
@@ -8954,7 +8954,7 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP3", "INPUT");
 
     /* Halo read also uses independent access */
-#ifdef
+#ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
 #endif
     NC(nc_get_vara_float(ncid,
