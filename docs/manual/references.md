@@ -54,6 +54,12 @@ This is a list of papers and theses in which MPTRAC was applied:
   Geophysical Research: Atmospheres, 130, e2025JD043314,
   <https://doi.org/10.1029/2025JD043314>, 2025.
 
+- Smoydzin, L., Bense, V., Bozem, H., Joppe, P., Kunkel, D., Lachnitt,
+  H.-C., Tost, H., Zahn, A., Ziereis, H., Riese, M., and Hoor, P.:
+  Impact of South American biomass burning emissions on elevated South
+  Atlantic upper tropospheric ozone, EGUsphere [preprint],
+  <https://doi.org/10.5194/egusphere-2025-5372>, 2025.
+
 - Clemens, J. H., Multi-scenario, high-resolution Lagrangian transport
   modeling for the analysis of the Asian tropopause aerosol layer,
   Dissertation, Bergische Universität Wuppertal, Wuppertal,
