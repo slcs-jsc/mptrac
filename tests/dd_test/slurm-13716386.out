@@ -1,0 +1,167 @@
+[INFO] MPTRAC directory: /p/project1/cslmet/clemens1/mptrac_hands_on/mptrac_new
+[INFO] Working directory: /p/project1/cslmet/clemens1/mptrac_hands_on/mptrac_new/tests/dd_test
+[INFO] Meteo data directory: /p/project1/cslmet/clemens1/mptrac_hands_on/mptrac_new/tests/dd_test/data/wind_data
+[INFO] Meteo base path: /p/project1/cslmet/clemens1/mptrac_hands_on/mptrac_new/tests/dd_test/data/wind_data/wind
+[INFO] Running in HPC mode
+Die folgenden Module wurden nicht entladen:
+  (Benutzen Sie "module --force purge" um alle Module zu entladen):
+
+  1) Stages/2026
+[WARNING] NVHPC as a compiler module is deprecated. Please use 'nvidia-compilers' instead.
+          This module might get removed in future Stages.
+[INFO] ntasks_per_node: 9
+[INFO] cpus_per_task: 1
+[INFO] ntasks: 9
+[INFO] nnodes: 1
+[INFO] use_evenly_distributed: 0
+[INFO] use_gpu: 1
+[INFO] simulation_hours: 6
+[INFO] ntimesteps: 7
+[INFO] particles_num_subdomain: 16
+[INFO] npmax: 32
+[INFO] nparticles: 144
+[INFO] subgrid_lon_size: 120.000000
+[INFO] subgrid_lat_size: 60.000000
+[INFO] subgrid_pos_dlon: 30.000000
+[INFO] subgrid_pos_dlat: 15.000000
+[INFO] subgrid_pos_lon_offset: 15.000000
+[INFO] subgrid_pos_lat_offset: 7.500000
+[INFO] dex: 130
+[INFO] dey: 70
+[INFO] defs: -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5
+[INFO] LD_LIBRARY_PATH: /p/project1/cslmet/clemens1/mptrac_hands_on/mptrac_new/libs/build/lib/:/p/software/default/stages/2026/software/GSL/2.8-nvidia-compilers-25.9-CUDA-13/lib:/p/software/default/stages/2026/software/netCDF/4.9.3-npsmpic-2025b/lib:/p/software/default/stages/2026/software/zstd/1.5.7-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/Szip/2.1.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/PnetCDF/1.14.1-npsmpic-2025b/lib:/p/software/default/stages/2026/software/Blosc2/2.19.0-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/lz4/1.10.0-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libjpeg-turbo/3.1.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/HDF5/1.14.6-npsmpic-2025b/lib:/p/software/default/stages/2026/software/libaec/1.1.4-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/cURL/8.14.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libpsl/0.21.5-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libunistring/1.3-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libiconv/1.18-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libidn2/2.3.8-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/Blosc/1.21.6-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/bzip2/1.0.8-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/psmpi/5.13.0-1-nvidia-compilers-25.9-CUDA-13/lib:/p/software/default/stages/2026/software/UCC/default-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/NCCL/default-GCCcore-14.3.0-CUDA-13/lib:/p/software/default/stages/2026/software/PMIx/5.0.8-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/hwloc/2.12.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libpciaccess/0.18.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/libevent/2.1.12-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/OpenSSL/3/lib64:/p/software/default/stages/2026/software/libxml2/2.14.3-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/XZ/5.8.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/pscom/6-default-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/UCX/default-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/nvidia-compilers/25.9-CUDA-13/Linux_x86_64/25.9/comm_libs/13.0/nvshmem/lib:/p/software/default/stages/2026/software/nvidia-compilers/25.9-CUDA-13/Linux_x86_64/25.9/comm_libs/13.0/nccl/lib:/p/software/default/stages/2026/software/nvidia-compilers/25.9-CUDA-13/Linux_x86_64/25.9/math_libs/13.0/targets/x86_64-linux/lib:/p/software/default/stages/2026/software/nvidia-compilers/25.9-CUDA-13/Linux_x86_64/25.9/compilers/lib:/p/software/default/stages/2026/software/numactl/2.0.19-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/binutils/2.44-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/zlib/1.3.1-GCCcore-14.3.0/lib:/p/software/default/stages/2026/software/GCCcore/14.3.0/lib64:/p/software/default/stages/2026/software/CUDA/13/nvvm/lib64:/p/software/default/stages/2026/software/CUDA/13/extras/CUPTI/lib64:/p/software/default/stages/2026/software/CUDA/13/targets/x86_64-linux/lib
+[INFO] Using nvc compiler (HPC mode)
+[INFO] Compile MPTRAC with domain decomposition using nvc
+rm -rf atm2grid atm_conv atm_dist atm_init atm_select atm_split atm_stat cape day2doy doy2day jsec2time met_check_dt met_conv met_lapse met_map met_prof met_sample met_spec met_subgrid met_zm time2jsec sedi tnat trac tropo tropo_clim tropo_sample tropo_zm wind trac_fortran lib* *.o *.mod *.gcda *.gcno *.gcov coverage* *~
+[INFO] Compiling all executables
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -c -o mptrac.o mptrac.c
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm2grid atm2grid.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_conv atm_conv.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_dist atm_dist.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_init atm_init.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_select atm_select.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_split atm_split.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_stat atm_stat.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o cape cape.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o day2doy day2doy.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o doy2day doy2day.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o jsec2time jsec2time.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_check_dt met_check_dt.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_conv met_conv.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_lapse met_lapse.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_map met_map.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_prof met_prof.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_sample met_sample.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_spec met_spec.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_subgrid met_subgrid.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o met_zm met_zm.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o time2jsec time2jsec.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o sedi sedi.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o tnat tnat.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o trac trac.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o tropo tropo.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o tropo_clim tropo_clim.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o tropo_sample tropo_sample.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o tropo_zm tropo_zm.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o wind wind.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+atm2grid.c:
+atm_conv.c:
+atm_dist.c:
+atm_init.c:
+atm_select.c:
+atm_split.c:
+atm_stat.c:
+cape.c:
+day2doy.c:
+doy2day.c:
+jsec2time.c:
+met_check_dt.c:
+met_conv.c:
+met_lapse.c:
+met_map.c:
+met_prof.c:
+met_sample.c:
+met_spec.c:
+met_subgrid.c:
+met_zm.c:
+time2jsec.c:
+sedi.c:
+tnat.c:
+trac.c:
+tropo.c:
+tropo_clim.c:
+tropo_sample.c:
+tropo_zm.c:
+wind.c:
+rm -f *~
+[INFO] Recompiling atm_init without GPU support
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o atm_init atm_init.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+atm_init.c:
+mpicc -I ../libs/build/include -DNP=32 -DEX_GLOB=364 -DEY_GLOB=186 -DEP=90 -DEX=130 -DEY=70 -DNQ=5 -DVERSION=\"unknown\" -O3 -g -mp -acc -gpu=cc80,cc90 -DMPI -DDD -DTHRUST -c++libs -acc=gpu -gpu=cc80 -fast -o wind wind.c mptrac.o -L ../libs/build/lib -L ../libs/build/lib64 -lgsl -lgslcblas -lnetcdf -lm -L /p/software/default/stages/2026/software/CUDA/13/lib64 -lcudart -lthrustsort_gpu
+wind.c:
+[INFO] write dirlist.tab and config.ctl to data directory
+[INFO] Create initialization files for each subdomain
+[INFO] Domain 0 (ilon=0, ilat=0):
+[INFO]   Lon0: 15.000000
+[INFO]   Lon1: 105.000000
+[INFO]   Lat0: 37.500000
+[INFO]   Lat1: 82.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 1 (ilon=0, ilat=1):
+[INFO]   Lon0: 15.000000
+[INFO]   Lon1: 105.000000
+[INFO]   Lat0: -22.500000
+[INFO]   Lat1: 22.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 2 (ilon=0, ilat=2):
+[INFO]   Lon0: 15.000000
+[INFO]   Lon1: 105.000000
+[INFO]   Lat0: -82.500000
+[INFO]   Lat1: -37.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 3 (ilon=1, ilat=0):
+[INFO]   Lon0: 135.000000
+[INFO]   Lon1: 225.000000
+[INFO]   Lat0: 37.500000
+[INFO]   Lat1: 82.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 4 (ilon=1, ilat=1):
+[INFO]   Lon0: 135.000000
+[INFO]   Lon1: 225.000000
+[INFO]   Lat0: -22.500000
+[INFO]   Lat1: 22.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 5 (ilon=1, ilat=2):
+[INFO]   Lon0: 135.000000
+[INFO]   Lon1: 225.000000
+[INFO]   Lat0: -82.500000
+[INFO]   Lat1: -37.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 6 (ilon=2, ilat=0):
+[INFO]   Lon0: 255.000000
+[INFO]   Lon1: 345.000000
+[INFO]   Lat0: 37.500000
+[INFO]   Lat1: 82.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 7 (ilon=2, ilat=1):
+[INFO]   Lon0: 255.000000
+[INFO]   Lon1: 345.000000
+[INFO]   Lat0: -22.500000
+[INFO]   Lat1: 22.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Domain 8 (ilon=2, ilat=2):
+[INFO]   Lon0: 255.000000
+[INFO]   Lon1: 345.000000
+[INFO]   Lat0: -82.500000
+[INFO]   Lat1: -37.500000
+[INFO]   Dlon: 30.000000
+[INFO]   Dlat: 15.000000
+[INFO] Generate wind data files

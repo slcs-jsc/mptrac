@@ -58,7 +58,7 @@ done
 if [[ "$hpc_mode" == "hpc" ]]; then
     echo "[INFO] Running in HPC mode"
     ml purge
-    ml NVHPC ParaStationMPI bzip2/.1.0.8
+    ml NVHPC ParaStationMPI bzip2/1.0.8 netCDF/4.9.3 GSL
 else
     echo "[INFO] Running in non-HPC mode"
 fi
@@ -69,7 +69,7 @@ fi
 
 ntasks_per_node=9       # fixed number of tasks per node
 
-use_gpu=0                           # enable GPU support in MPTRAC compilation (0=off, 1=on)
+use_gpu=1                           # enable GPU support in MPTRAC compilation (0=off, 1=on)
 cpus_per_task=1                     # number of CPUs per task
 
 domains_lon=3                       # number of subdomains in longitudinal direction
@@ -186,7 +186,7 @@ else
     # Then recompile atm_init without GPU support (atm_init doesn't work with GPU=1)
     echo "[INFO] Recompiling atm_init without GPU support"
     rm -f "$mptrac_dir"/src/atm_init "$mptrac_dir"/src/wind
-    make atm_init wind DD=1 MPI=1 STATIC=0 GPU=0 THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
+    make atm_init wind DD=1 MPI=1 STATIC=0 GPU=$use_gpu THRUST=1 COMPILER=$compiler DEFINES="$defs" || exit 1
 fi
 
 #################################################################################################################
@@ -400,14 +400,14 @@ else
     if [[ "$hpc_mode" == "hpc" ]]; then
         if [[ $use_gpu -eq 1 ]]; then
             echo "[INFO] Running with GPU support on HPC (partition=booster, gres=gpu:$ntasks_per_node, cpus-per-task=$cpus_per_task)"
-            srun --partition=booster --gres=gpu:$ntasks_per_node --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
+            srun --partition=booster --gres=gpu:$ntasks_per_node --nodes $nnodes --ntasks $ntasks --account=exaww --time=00:59:00 \
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
                 --output="$work_dir"/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
                 --error="$work_dir"/data/mptrac_gpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \
                 "$mptrac_dir"/src/trac dirlist.tab config.ctl init.nc ATM_BASENAME atm
         else
             echo "[INFO] Running with CPU-only on HPC (cpus-per-task=$cpus_per_task)"
-            srun --nodes $nnodes --ntasks $ntasks --account=gsp25 --time=00:59:00 \
+            srun --nodes $nnodes --ntasks $ntasks --account=exaww --time=00:59:00 \
                 --ntasks-per-node $ntasks_per_node --cpus-per-task $cpus_per_task \
                 --output="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.out \
                 --error="$work_dir"/data/mptrac_cpu_${domains_lon}x${domains_lat}_n${nnodes}_t${ntasks}.err \

@@ -3190,7 +3190,8 @@ void module_dd(
   cache_t *cache,
   dd_t *dd,
   atm_t *atm,
-  met_t **met) {
+  met_t **met,
+  double t) {
 
   /* Set timer... */
   SELECT_TIMER("MODULE_DD", "DD");
@@ -3202,8 +3203,70 @@ void module_dd(
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
 
-  /* Sort particles according to location and target rank... */
-  dd_sort(ctl, *met, atm, dd, &npart);
+  /* Sort particles according to location and target rank... */ 
+  if (fmod(t, ctl->dd_sort_dt) == 0) {
+    dd_sort(ctl, *met, atm, dd, &npart);
+    printf("DD_SORT is running!.\n");
+   }
+  else {
+  
+     printf("DD_PUSH is running!.\n");
+   // dd_push(ctl, atm, cache, &npart);
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    int device_counter = 0;
+    int* device_counter_ptr = (int*)acc_malloc(sizeof(int));
+    acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
+
+#pragma acc parallel loop present(atm, cache) deviceptr(device_counter_ptr)
+    for (int ip = 0; ip < atm->np; ip++) {
+        if ((int)atm->q[ctl->qnt_subdomain][ip] != -1 &&
+            (int)atm->q[ctl->qnt_destination][ip] != rank) {
+            
+            int local_idx;
+            
+#pragma acc atomic capture
+            {
+	      local_idx = *device_counter_ptr;
+              (*device_counter_ptr)++;
+              /*if (*device_counter_ptr > NP)
+                exit(EXIT_FAILURE);*/
+            }
+            
+            int global_index = atm->np + local_idx;
+
+            // Copy time, pressure, longitude, and latitude
+            atm->time[global_index] = atm->time[ip];
+            atm->p[global_index] = atm->p[ip];
+            atm->lon[global_index] = atm->lon[ip];
+            atm->lat[global_index] = atm->lat[ip];
+
+            // Copy all quantity data (q array)
+            for (int iq = 0; iq < NQ; iq++) {
+                atm->q[iq][global_index] = atm->q[iq][ip];
+            }
+
+            // Mark the original parcel as processed
+            atm->q[ctl->qnt_destination][ip] = -1;
+            atm->q[ctl->qnt_subdomain][ip] = -1;
+
+            // Reset cache->dt for the shifted particle
+            cache->dt[global_index] = cache->dt[ip];
+            cache->dt[ip] = 0;
+
+        }
+      }
+      
+    //printf("DD_PUSH LOOP FINISHED.\n");
+    acc_memcpy_from_device(&npart, device_counter_ptr, sizeof(int));
+    acc_free(device_counter_ptr);  
+/*#pragma acc update host(atm->q[ctl->qnt_subdomain][:NP], cache->dt[:NP], atm->np)
+    if (rank == 0)
+      for (int i = 0; i< atm->np+npart; i++)
+        printf("%d: subdomain: %d cache: %f: npart: %d\n",i, atm->q[ctl->qnt_subdomain][i], cache->dt[i], npart);
+     */ 
+    }
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   if (npart > capacity) {
@@ -5521,6 +5584,7 @@ void mptrac_read_ctl(
     ERRMSG("Set DIRECTION to -1 or 1!");
   ctl->t_stop = scan_ctl(filename, argc, argv, "T_STOP", -1, "1e100", NULL);
   ctl->dt_mod = scan_ctl(filename, argc, argv, "DT_MOD", -1, "180", NULL);
+  ctl->dd_sort_dt = scan_ctl(filename, argc, argv, "DD_SORT_DT", -1, "1800", NULL);
 
   /* Meteo data... */
   scan_ctl(filename, argc, argv, "METBASE", -1, "-", ctl->metbase);
@@ -6373,7 +6437,7 @@ void mptrac_run_timestep(
   /* Domain decomposition... */
   if (ctl->dd) {
 #ifdef DD
-    module_dd(ctl, cache, dd, atm, met0);
+    module_dd(ctl, cache, dd, atm, met0, t);
 #else
     ERRMSG("Code was compiled without DD!");
 
