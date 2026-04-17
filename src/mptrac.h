@@ -3228,9 +3228,6 @@ typedef struct {
   /*! Domain decomposition size of halos given in grid-points. */
   int dd_halos_size;
 
-  /*! Compactification frequency for the domain decomposition. */
-  int dd_sort_dt;
-
 } ctl_t;
 
 /**
@@ -5721,8 +5718,7 @@ void module_dd(
   cache_t * cache,
   dd_t * dd,
   atm_t * atm,
-  met_t ** met,
-  double t);
+  met_t ** met);
 
 /**
  * @brief Simulate exponential decay processes for atmospheric particles.
