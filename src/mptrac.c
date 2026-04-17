@@ -4098,8 +4098,63 @@ void module_dd(
   /* Assign particles to new subdomains... */
   dd_assign_subdomains(ctl, dd, atm, 0);
 
-  /* Sort particles according to location and target rank... */
-  dd_sort(ctl, *met, atm, dd, &npart);
+  /* Sort particles according to location and target rank... */ 
+  if (fmod(t, ctl->dd_sort_dt) == 0) {
+    dd_sort(ctl, *met, atm, dd, &npart);
+   }
+  else {
+ 
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    
+    int device_counter = 0;
+    int* device_counter_ptr = (int*)acc_malloc(sizeof(int));
+    acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
+
+#pragma acc parallel loop present(atm, cache) deviceptr(device_counter_ptr)
+    for (int ip = 0; ip < atm->np; ip++) {
+        if ((int)atm->q[ctl->qnt_subdomain][ip] != -1 &&
+            (int)atm->q[ctl->qnt_destination][ip] != rank) {
+            
+            int local_idx;
+            
+#pragma acc atomic capture
+            {
+	      local_idx = *device_counter_ptr;
+              (*device_counter_ptr)++;
+              /*if (*device_counter_ptr > NP)
+                exit(EXIT_FAILURE);*/
+            }
+            
+            int global_index = atm->np + local_idx;
+
+            // Copy time, pressure, longitude, and latitude
+            atm->time[global_index] = atm->time[ip];
+            atm->p[global_index] = atm->p[ip];
+            atm->lon[global_index] = atm->lon[ip];
+            atm->lat[global_index] = atm->lat[ip];
+
+            // Copy all quantity data (q array)
+            for (int iq = 0; iq < NQ; iq++) {
+                atm->q[iq][global_index] = atm->q[iq][ip];
+            }
+
+            // Mark the original parcel as processed
+            atm->q[ctl->qnt_destination][ip] = -1;
+            atm->q[ctl->qnt_subdomain][ip] = -1;
+
+            // Reset cache->dt for the shifted particle
+            cache->dt[global_index] = cache->dt[ip];
+            cache->dt[ip] = 0;
+
+        }
+      }
+      
+    acc_memcpy_from_device(&npart, device_counter_ptr, sizeof(int));
+    acc_free(device_counter_ptr);  
+
+    }
+
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   if (npart > capacity) {
