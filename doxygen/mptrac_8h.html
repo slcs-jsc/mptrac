@@ -9554,23 +9554,20 @@ Here is the call graph for this function:</div>
 </div><div class="memdoc">
 
 <p>Defines pressure levels for meteorological data. </p>
-<p >This function defines pressure levels for meteorological data based on the given control structure (<code>ctl</code>). Pressure levels are defined differently based on the value of <code>press_level_def</code> in <code>ctl</code>.</p>
+<p >This function defines pressure levels for meteorological data based on the given control structure (<code>ctl</code>). Pressure levels are defined differently based on the value of <code>met_press_level_def</code> in <code>ctl</code>.</p>
 <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">ctl</td><td>Control structure containing information about pressure level definitions.</td></tr>
   </table>
   </dd>
 </dl>
-<p>The function determines the number of pressure levels (<code>met_np</code>) and the corresponding pressure values (<code>met_p</code>) based on the value of <code>press_level_def</code> in the control structure <code>ctl</code>. It initializes the <code>met_np</code> and <code>met_p</code> fields accordingly.</p>
-<dl class="section note"><dt>Note</dt><dd>Valid values for <code>press_level_def</code> are:<ul>
-<li>0: Define 138 pressure levels.</li>
-<li>1: Define 92 pressure levels.</li>
-<li>2: Define 60 pressure levels.</li>
+<p>The function determines the number of pressure levels (<code>met_np</code>) and the corresponding pressure values (<code>met_p</code>) based on the value of <code>met_press_level_def</code> in the control structure <code>ctl</code>. It initializes the <code>met_np</code> and <code>met_p</code> fields accordingly.</p>
+<dl class="section note"><dt>Note</dt><dd>Valid values for <code>met_press_level_def</code> are:<ul>
 <li>3: Define 147 pressure levels.</li>
 <li>4: Define 101 pressure levels.</li>
 <li>5: Define 62 pressure levels.</li>
 <li>6: Define 137 pressure levels.</li>
-<li>7: Define 59 pressure levels. Any other value for <code>press_level_def</code> will result in an error message.</li>
+<li>7: Define 59 pressure levels. Values 0, 1, and 2 are disabled and any other value will result in an error message.</li>
 </ul>
 </dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Jan Clemens </dd></dl>
