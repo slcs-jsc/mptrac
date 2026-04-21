@@ -5317,26 +5317,24 @@ double lapse_rate(
  *
  * This function defines pressure levels for meteorological data based
  * on the given control structure (`ctl`).  Pressure levels are
- * defined differently based on the value of `press_level_def` in
+ * defined differently based on the value of `met_press_level_def` in
  * `ctl`.
  *
  * @param ctl Control structure containing information about pressure level definitions.
  *
  * The function determines the number of pressure levels (`met_np`)
  * and the corresponding pressure values (`met_p`) based on the value
- * of `press_level_def` in the control structure `ctl`. It initializes
+ * of `met_press_level_def` in the control structure `ctl`. It initializes
  * the `met_np` and `met_p` fields accordingly.
  *
- * @note Valid values for `press_level_def` are:
- * - 0: Define 138 pressure levels.
- * - 1: Define 92 pressure levels.
- * - 2: Define 60 pressure levels.
+ * @note Valid values for `met_press_level_def` are:
  * - 3: Define 147 pressure levels.
  * - 4: Define 101 pressure levels.
  * - 5: Define 62 pressure levels.
  * - 6: Define 137 pressure levels.
  * - 7: Define 59 pressure levels.
- * Any other value for `press_level_def` will result in an error message.
+ * Values 0, 1, and 2 are disabled and any other value will result in
+ * an error message.
  *
  * @author Jan Clemens
  */
