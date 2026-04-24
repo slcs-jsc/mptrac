@@ -1151,7 +1151,7 @@ void dd_atm2particles(
 
   /* Set timer... */
   SELECT_TIMER("DD_ATM2PARTICLES", "DD");
-  
+
   /* Check if particles are present... */
   if (npart == 0)
     return;
@@ -1415,10 +1415,10 @@ void dd_particles2atm(
 
   /* Set timer... */
   SELECT_TIMER("DD_PARTICLES2ATM", "DD");
-  
+
   /* Check if particles are present... */
   if (npart == 0)
-  	return;
+    return;
 
   /* Check number of particles... */
   if (atm->np + npart > NP)
@@ -2373,15 +2373,18 @@ void level_definitions(
 
   if (0 == ctl->met_press_level_def) {
 
-    ERRMSG("MET_PRESS_LEVEL_DEF=0 is disabled. Use 3 for the extended L137 set.");
+    ERRMSG
+      ("MET_PRESS_LEVEL_DEF=0 is disabled. Use 3 for the extended L137 set.");
 
   } else if (1 == ctl->met_press_level_def) {
 
-    ERRMSG("MET_PRESS_LEVEL_DEF=1 is disabled. Use 4 for the extended L91 set.");
+    ERRMSG
+      ("MET_PRESS_LEVEL_DEF=1 is disabled. Use 4 for the extended L91 set.");
 
   } else if (2 == ctl->met_press_level_def) {
 
-    ERRMSG("MET_PRESS_LEVEL_DEF=2 is disabled. Use 5 for the extended L60 set.");
+    ERRMSG
+      ("MET_PRESS_LEVEL_DEF=2 is disabled. Use 5 for the extended L60 set.");
 
   } else if (3 == ctl->met_press_level_def) {
 
@@ -3214,8 +3217,8 @@ void module_dd(
       ERRMSG("Out of memory!");
     particles = tmp;
     capacity = newcap;
-  } 
-  
+  }
+
   /* Transform from struct of array to array of struct... */
   dd_atm2particles(ctl, cache, atm, particles, npart);
 
@@ -8673,12 +8676,22 @@ int read_met_nc_2d(
     size_t help_subdomain_count[3];
 
     help_subdomain_start[0] = 0;
-    help_subdomain_start[1] = dd->subdomain_start[2];
-    help_subdomain_start[2] = dd->subdomain_start[3];
+    if (ctl->met_convention == 0) {
+      help_subdomain_start[1] = dd->subdomain_start[2];
+      help_subdomain_start[2] = dd->subdomain_start[3];
+    } else {
+      help_subdomain_start[1] = dd->subdomain_start[3];
+      help_subdomain_start[2] = dd->subdomain_start[2];
+    }
 
     help_subdomain_count[0] = 1;
-    help_subdomain_count[1] = dd->subdomain_count[2];	//y
-    help_subdomain_count[2] = dd->subdomain_count[3];	//x
+    if (ctl->met_convention == 0) {
+      help_subdomain_count[1] = dd->subdomain_count[2];	//y
+      help_subdomain_count[2] = dd->subdomain_count[3];	//x
+    } else {
+      help_subdomain_count[1] = dd->subdomain_count[3];	//x
+      help_subdomain_count[2] = dd->subdomain_count[2];	//y
+    }
 
     ALLOC(help, float,
 	    (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]
@@ -8696,12 +8709,22 @@ int read_met_nc_2d(
     size_t help_halo_bnd_count[3];
 
     help_halo_bnd_start[0] = 0;
-    help_halo_bnd_start[1] = dd->halo_bnd_start[2];
-    help_halo_bnd_start[2] = dd->halo_bnd_start[3];
+    if (ctl->met_convention == 0) {
+      help_halo_bnd_start[1] = dd->halo_bnd_start[2];
+      help_halo_bnd_start[2] = dd->halo_bnd_start[3];
+    } else {
+      help_halo_bnd_start[1] = dd->halo_bnd_start[3];
+      help_halo_bnd_start[2] = dd->halo_bnd_start[2];
+    }
 
     help_halo_bnd_count[0] = 1;
-    help_halo_bnd_count[1] = dd->halo_bnd_count[2];	//y
-    help_halo_bnd_count[2] = dd->halo_bnd_count[3];	//x
+    if (ctl->met_convention == 0) {
+      help_halo_bnd_count[1] = dd->halo_bnd_count[2];	//y
+      help_halo_bnd_count[2] = dd->halo_bnd_count[3];	//x
+    } else {
+      help_halo_bnd_count[1] = dd->halo_bnd_count[3];	//x
+      help_halo_bnd_count[2] = dd->halo_bnd_count[2];	//y
+    }
 
     float *help_halo;
     ALLOC(help_halo, float,
@@ -8715,8 +8738,10 @@ int read_met_nc_2d(
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
+
       /* Copy and check data (ordering: lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) help_subdomain_count[2]; ix++)
 	for (int iy = 0; iy < (int) help_subdomain_count[1]; iy++) {
 	  if (init == 1)
@@ -8730,9 +8755,11 @@ int read_met_nc_2d(
 	  } else
 	    dest[ix + dd->halo_offset_start][iy] = NAN;
 	}
+      omp_set_dynamic(0);
 
       /* Copy and check data (ordering: lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
 	for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
 	  if (init == 1)
@@ -8747,9 +8774,45 @@ int read_met_nc_2d(
 	    dest[ix + dd->halo_offset_end][iy] = NAN;
 	  }
 	}
+      omp_set_dynamic(0);
 
     } else {
-      ERRMSG("Domain decomposition with data convection incompatible!");
+
+      /* Copy and check data (ordering: lon, lat)... */
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int ix = 0; ix < (int) help_subdomain_count[1]; ix++)
+	for (int iy = 0; iy < (int) help_subdomain_count[2]; iy++) {
+	  if (init == 1)
+	    dest[ix + dd->halo_offset_start][iy] = 0;
+	  const float aux =
+	    help[ARRAY_2D(ix, iy, (int) help_subdomain_count[1])];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + dd->halo_offset_start][iy] += scl * aux;
+	  else
+	    dest[ix + dd->halo_offset_start][iy] = NAN;
+	}
+      omp_set_dynamic(0);
+
+      /* Copy and check data (ordering: lon, lat)... */
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int ix = 0; ix < (int) help_halo_bnd_count[1]; ix++)
+	for (int iy = 0; iy < (int) help_halo_bnd_count[2]; iy++) {
+	  if (init == 1)
+	    dest[ix + dd->halo_offset_end][iy] = 0;
+	  const float aux =
+	    help_halo[ARRAY_2D(ix, iy, (int) help_halo_bnd_count[1])];
+	  if ((fillval == 0 || aux != fillval)
+	      && (missval == 0 || aux != missval)
+	      && fabsf(aux) < 1e14f)
+	    dest[ix + dd->halo_offset_end][iy] += scl * aux;
+	  else
+	    dest[ix + dd->halo_offset_end][iy] = NAN;
+	}
+      omp_set_dynamic(0);
     }
 
     /* Free... */
@@ -8928,6 +8991,39 @@ int read_met_nc_3d(
     SELECT_TIMER("read_met_nc_3d_CP1", "INPUT");
 
     /* Define hyperslab... */
+    size_t help_subdomain_start[4];
+    size_t help_subdomain_count[4];
+    size_t help_halo_bnd_start[4];
+    size_t help_halo_bnd_count[4];
+
+    if (ctl->met_convention == 0) {
+      for (int i = 0; i < 4; i++) {
+	help_subdomain_start[i] = dd->subdomain_start[i];
+	help_subdomain_count[i] = dd->subdomain_count[i];
+	help_halo_bnd_start[i] = dd->halo_bnd_start[i];
+	help_halo_bnd_count[i] = dd->halo_bnd_count[i];
+      }
+    } else {
+      help_subdomain_start[0] = dd->subdomain_start[0];
+      help_subdomain_start[1] = dd->subdomain_start[3];
+      help_subdomain_start[2] = dd->subdomain_start[2];
+      help_subdomain_start[3] = dd->subdomain_start[1];
+
+      help_subdomain_count[0] = dd->subdomain_count[0];
+      help_subdomain_count[1] = dd->subdomain_count[3];
+      help_subdomain_count[2] = dd->subdomain_count[2];
+      help_subdomain_count[3] = dd->subdomain_count[1];
+
+      help_halo_bnd_start[0] = dd->halo_bnd_start[0];
+      help_halo_bnd_start[1] = dd->halo_bnd_start[3];
+      help_halo_bnd_start[2] = dd->halo_bnd_start[2];
+      help_halo_bnd_start[3] = dd->halo_bnd_start[1];
+
+      help_halo_bnd_count[0] = dd->halo_bnd_count[0];
+      help_halo_bnd_count[1] = dd->halo_bnd_count[3];
+      help_halo_bnd_count[2] = dd->halo_bnd_count[2];
+      help_halo_bnd_count[3] = dd->halo_bnd_count[1];
+    }
 
     /* Allocate... */
     float *help;
@@ -8942,7 +9038,7 @@ int read_met_nc_3d(
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
 #endif
     NC(nc_get_vara_float
-       (ncid, varid, dd->subdomain_start, dd->subdomain_count, help));
+       (ncid, varid, help_subdomain_start, help_subdomain_count, help));
 
     /* Read halos separately at boundaries... */
     float *help_halo;
@@ -8958,14 +9054,17 @@ int read_met_nc_3d(
 #endif
     NC(nc_get_vara_float(ncid,
 			 varid,
-			 dd->halo_bnd_start, dd->halo_bnd_count, help_halo));
+			 help_halo_bnd_start, help_halo_bnd_count,
+			 help_halo));
 
     SELECT_TIMER("read_met_nc_3d_CP4", "INPUT");
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
+
       /* Copy and check data (ordering: lev, lat, lon)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++)
 	for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
@@ -8979,8 +9078,10 @@ int read_met_nc_3d(
 	    else
 	      dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	  }
+      omp_set_dynamic(0);
 
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++)
 	for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
 	  for (int ip = 0; ip < met->np; ip++) {
@@ -8994,28 +9095,19 @@ int read_met_nc_3d(
 	    else
 	      dest[ix + dd->halo_offset_end][iy][ip] = NAN;
 	  }
+      omp_set_dynamic(0);
 
     } else {
 
       /* Copy and check data (ordering: lon, lat, lev)... */
-#pragma omp parallel for default(shared) num_threads(12)
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
       for (int ip = 0; ip < met->np; ip++)
 	for (int iy = 0; iy < (int) dd->subdomain_count[2]; iy++)
 	  for (int ix = 0; ix < (int) dd->subdomain_count[3]; ix++) {
-	    const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
-	    if ((fillval == 0 || aux != fillval)
-		&& (missval == 0 || aux != missval)
-		&& fabsf(aux) < 1e14f)
-	      dest[ix + dd->halo_offset_end][iy][ip] = scl * aux;
-	    else
-	      dest[ix + dd->halo_offset_end][iy][ip] = NAN;
-	  }
-
-#pragma omp parallel for default(shared) num_threads(12)
-      for (int ip = 0; ip < met->np; ip++)
-	for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
-	  for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
-	    const float aux = help[ARRAY_3D(ix, iy, met->ny, ip, met->np)];
+	    const float aux =
+	      help[ARRAY_3D
+		   (ix, iy, (int) dd->subdomain_count[2], ip, met->np)];
 	    if ((fillval == 0 || aux != fillval)
 		&& (missval == 0 || aux != missval)
 		&& fabsf(aux) < 1e14f)
@@ -9023,6 +9115,24 @@ int read_met_nc_3d(
 	    else
 	      dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	  }
+      omp_set_dynamic(0);
+
+      omp_set_dynamic(1);
+#pragma omp parallel for default(shared)
+      for (int ip = 0; ip < met->np; ip++)
+	for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
+	  for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++) {
+	    const float aux =
+	      help_halo[ARRAY_3D(ix, iy, (int) dd->halo_bnd_count[2], ip,
+				 met->np)];
+	    if ((fillval == 0 || aux != fillval)
+		&& (missval == 0 || aux != missval)
+		&& fabsf(aux) < 1e14f)
+	      dest[ix + dd->halo_offset_end][iy][ip] = scl * aux;
+	    else
+	      dest[ix + dd->halo_offset_end][iy][ip] = NAN;
+	  }
+      omp_set_dynamic(0);
     }
 
     /* Free... */
