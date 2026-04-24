@@ -1689,7 +1689,7 @@ void geo2cart(
 
 /*****************************************************************************/
 
-void get_met_help(
+void get_met_filename(
   const ctl_t *ctl,
   const double t,
   const int direct,
@@ -4995,13 +4995,13 @@ void mptrac_get_met(
     init = 1;
 
     /* Read meteo data... */
-    get_met_help(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
-		 ctl->metbase, ctl->dt_met, filename);
+    get_met_filename(ctl, t + (ctl->direction == -1 ? -1 : 0), -1,
+		     ctl->metbase, ctl->dt_met, filename);
     if (!mptrac_read_met(filename, ctl, clim, *met0, dd))
       ERRMSG("Cannot open file!");
 
-    get_met_help(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
-		 ctl->metbase, ctl->dt_met, filename);
+    get_met_filename(ctl, t + (ctl->direction == 1 ? 1 : 0), 1,
+		     ctl->metbase, ctl->dt_met, filename);
     if (!mptrac_read_met(filename, ctl, clim, *met1, dd))
       ERRMSG("Cannot open file!");
 
@@ -5011,8 +5011,8 @@ void mptrac_get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
-		   ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
+      get_met_filename(ctl, t + 1.1 * ctl->dt_met * ctl->direction,
+		       ctl->direction, ctl->metbase, ctl->dt_met, cachefile);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -5029,7 +5029,7 @@ void mptrac_get_met(
     *met0 = mets;
 
     /* Read new meteo data... */
-    get_met_help(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
+    get_met_filename(ctl, t, 1, ctl->metbase, ctl->dt_met, filename);
     if (!mptrac_read_met(filename, ctl, clim, *met1, dd))
       ERRMSG("Cannot open file!");
 
@@ -5039,8 +5039,8 @@ void mptrac_get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
-		   cachefile);
+      get_met_filename(ctl, t + ctl->dt_met, 1, ctl->metbase, ctl->dt_met,
+		       cachefile);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -5057,7 +5057,7 @@ void mptrac_get_met(
     *met0 = mets;
 
     /* Read new meteo data... */
-    get_met_help(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
+    get_met_filename(ctl, t, -1, ctl->metbase, ctl->dt_met, filename);
     if (!mptrac_read_met(filename, ctl, clim, *met0, dd))
       ERRMSG("Cannot open file!");
 
@@ -5067,8 +5067,8 @@ void mptrac_get_met(
 
     /* Caching... */
     if (ctl->met_cache && t != ctl->t_stop) {
-      get_met_help(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
-		   cachefile);
+      get_met_filename(ctl, t - ctl->dt_met, -1, ctl->metbase, ctl->dt_met,
+		       cachefile);
       sprintf(cmd, "cat %s > /dev/null &", cachefile);
       LOG(1, "Caching: %s", cachefile);
       if (system(cmd) != 0)
@@ -8654,8 +8654,8 @@ int read_met_nc_2d(
 
     /* Free... */
     free(help);
-
   }
+
   /* Domain decomposed data... */
   else {
 
@@ -8694,8 +8694,7 @@ int read_met_nc_2d(
     }
 
     ALLOC(help, float,
-	    (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]
-      );
+	    (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]);
 
     /* Read data... */
 #ifdef DD
@@ -8755,10 +8754,7 @@ int read_met_nc_2d(
 	  } else
 	    dest[ix + dd->halo_offset_start][iy] = NAN;
 	}
-      omp_set_dynamic(0);
 
-      /* Copy and check data (ordering: lat, lon)... */
-      omp_set_dynamic(1);
 #pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) help_halo_bnd_count[2]; ix++)
 	for (int iy = 0; iy < (int) help_halo_bnd_count[1]; iy++) {
@@ -8794,10 +8790,7 @@ int read_met_nc_2d(
 	  else
 	    dest[ix + dd->halo_offset_start][iy] = NAN;
 	}
-      omp_set_dynamic(0);
 
-      /* Copy and check data (ordering: lon, lat)... */
-      omp_set_dynamic(1);
 #pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) help_halo_bnd_count[1]; ix++)
 	for (int iy = 0; iy < (int) help_halo_bnd_count[2]; iy++) {
@@ -8861,6 +8854,7 @@ int read_met_nc_3d(
   else
     return 0;
 
+  /* Read packed data... */
   if (ctl->met_nc_scale && !ctl->dd
       && nc_get_att_float(ncid, varid, "add_offset", &offset) == NC_NOERR
       && nc_get_att_float(ncid, varid, "scale_factor",
@@ -8972,8 +8966,8 @@ int read_met_nc_3d(
 
     /* Free... */
     free(help);
-
   }
+
   /* Domain decomposed data... */
   else {
 
@@ -9078,9 +9072,7 @@ int read_met_nc_3d(
 	    else
 	      dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	  }
-      omp_set_dynamic(0);
 
-      omp_set_dynamic(1);
 #pragma omp parallel for default(shared)
       for (int ix = 0; ix < (int) dd->halo_bnd_count[3]; ix++)
 	for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
@@ -9115,9 +9107,7 @@ int read_met_nc_3d(
 	    else
 	      dest[ix + dd->halo_offset_start][iy][ip] = NAN;
 	  }
-      omp_set_dynamic(0);
 
-      omp_set_dynamic(1);
 #pragma omp parallel for default(shared)
       for (int ip = 0; ip < met->np; ip++)
 	for (int iy = 0; iy < (int) dd->halo_bnd_count[2]; iy++)
@@ -9832,7 +9822,7 @@ void read_met_nc_grid_dd_naive(
   if (!top && !bottom) {
     dd->subdomain_start[2] -= (size_t) ctl->dd_halos_size;
     dd->subdomain_count[2] += (size_t) (2 * ctl->dd_halos_size);
-  } else if (left ^ right) {
+  } else if (top ^ bottom) {
     dd->subdomain_count[2] += (size_t) ctl->dd_halos_size;
     if (!top)
       dd->subdomain_start[2] -= (size_t) ctl->dd_halos_size;

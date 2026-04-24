@@ -4790,7 +4790,7 @@ void geo2cart(
  *
  * @author Lars Hoffmann
  */
-void get_met_help(
+void get_met_filename(
   const ctl_t * ctl,
   const double t,
   const int direct,
@@ -6622,7 +6622,7 @@ void mptrac_free(
  * @note This function utilizes GPU acceleration with OpenACC directives if enabled.
  * @note Ensure that `ctl`, `clim`, `met0`, and `met1` are properly initialized before calling this function.
  *
- * @see get_met_help
+ * @see get_met_filename
  * @see read_met
  * @see SELECT_TIMER
  * @see LOG
