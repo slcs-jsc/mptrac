@@ -2590,44 +2590,8 @@ typedef struct {
   /*! cmultiscale maximum refinement level. */
   int met_cms_maxlev;
 
-  /*! cmultiscale compression epsilon for geopotential height. */
-  double met_cms_eps_z;
-
-  /*! cmultiscale compression epsilon for temperature. */
-  double met_cms_eps_t;
-
-  /*! cmultiscale compression epsilon for zonal wind. */
-  double met_cms_eps_u;
-
-  /*! cmultiscale compression epsilon for meridional wind. */
-  double met_cms_eps_v;
-
-  /*! cmultiscale compression epsilon for vertical velocity. */
-  double met_cms_eps_w;
-
-  /*! cmultiscale compression epsilon for potential vorticity. */
-  double met_cms_eps_pv;
-
-  /*! cmultiscale compression epsilon for water vapor. */
-  double met_cms_eps_h2o;
-
-  /*! cmultiscale compression epsilon for ozone. */
-  double met_cms_eps_o3;
-
-  /*! cmultiscale compression epsilon for cloud liquid water content. */
-  double met_cms_eps_lwc;
-
-  /*! cmultiscale compression epsilon for cloud rain water content. */
-  double met_cms_eps_rwc;
-
-  /*! cmultiscale compression epsilon for cloud ice water content. */
-  double met_cms_eps_iwc;
-
-  /*! cmultiscale compression epsilon for cloud snow water content. */
-  double met_cms_eps_swc;
-
-  /*! cmultiscale compression epsilon for cloud cover. */
-  double met_cms_eps_cc;
+  /*! cmultiscale compression epsilon. */
+  double met_cms_eps[METVAR];
 
   /*! Stride for longitudes. */
   int met_dx;

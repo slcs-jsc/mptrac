@@ -562,34 +562,34 @@ void compress_cms(
 	    tmp_arr[ARRAY_2D(ix, iy, ny)] =
 	      array[ARRAY_3D(ix, iy, ny, ip, np)];
 
-	/* Set eps threshold value... */
-	double c_thresh_test;
+	/* Get variable index... */
+	int metvar_id = -1;
 	if (strcasecmp(varname, "Z") == 0)
-	  c_thresh_test = ctl->met_cms_eps_z;
+	  metvar_id = 0;
 	else if (strcasecmp(varname, "T") == 0)
-	  c_thresh_test = ctl->met_cms_eps_t;
+	  metvar_id = 1;
 	else if (strcasecmp(varname, "U") == 0)
-	  c_thresh_test = ctl->met_cms_eps_u;
+	  metvar_id = 2;
 	else if (strcasecmp(varname, "V") == 0)
-	  c_thresh_test = ctl->met_cms_eps_v;
+	  metvar_id = 3;
 	else if (strcasecmp(varname, "W") == 0)
-	  c_thresh_test = ctl->met_cms_eps_w;
+	  metvar_id = 4;
 	else if (strcasecmp(varname, "PV") == 0)
-	  c_thresh_test = ctl->met_cms_eps_pv;
+	  metvar_id = 5;
 	else if (strcasecmp(varname, "H2O") == 0)
-	  c_thresh_test = ctl->met_cms_eps_h2o;
+	  metvar_id = 6;
 	else if (strcasecmp(varname, "O3") == 0)
-	  c_thresh_test = ctl->met_cms_eps_o3;
+	  metvar_id = 7;
 	else if (strcasecmp(varname, "LWC") == 0)
-	  c_thresh_test = ctl->met_cms_eps_lwc;
+	  metvar_id = 8;
 	else if (strcasecmp(varname, "RWC") == 0)
-	  c_thresh_test = ctl->met_cms_eps_rwc;
+	  metvar_id = 9;
 	else if (strcasecmp(varname, "IWC") == 0)
-	  c_thresh_test = ctl->met_cms_eps_iwc;
+	  metvar_id = 10;
 	else if (strcasecmp(varname, "SWC") == 0)
-	  c_thresh_test = ctl->met_cms_eps_swc;
+	  metvar_id = 11;
 	else if (strcasecmp(varname, "CC") == 0)
-	  c_thresh_test = ctl->met_cms_eps_cc;
+	  metvar_id = 12;
 	else
 	  ERRMSG("Variable name unknown!");
 
@@ -599,7 +599,7 @@ void compress_cms(
 	/* Coarsening... */
 	cms_sol[ip] =
 	  cms_read_arr_new(cms_ptr[ip], tmp_arr, lon, lat,
-			   nx, ny, c_thresh_test);
+			   nx, ny, ctl->met_cms_eps[metvar_id]);
 
 	/* Free... */
 	free(tmp_arr);
@@ -5935,32 +5935,13 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_CMS_ND0Y", -1, "24", NULL);
   ctl->met_cms_maxlev =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_MAXLEV", -1, "6", NULL);
-  ctl->met_cms_eps_z =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_Z", -1, "1.0", NULL);
-  ctl->met_cms_eps_t =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_T", -1, "0.05", NULL);
-  ctl->met_cms_eps_u =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_U", -1, "0.05", NULL);
-  ctl->met_cms_eps_v =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_V", -1, "0.05", NULL);
-  ctl->met_cms_eps_w =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_W", -1, "1.0", NULL);
-  ctl->met_cms_eps_pv =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_PV", -1, "1.0", NULL);
-  ctl->met_cms_eps_h2o =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_H2O", -1, "1.0", NULL);
-  ctl->met_cms_eps_o3 =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_O3", -1, "1.0", NULL);
-  ctl->met_cms_eps_lwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_LWC", -1, "1.0", NULL);
-  ctl->met_cms_eps_rwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_RWC", -1, "1.0", NULL);
-  ctl->met_cms_eps_iwc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_IWC", -1, "1.0", NULL);
-  ctl->met_cms_eps_swc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_SWC", -1, "1.0", NULL);
-  ctl->met_cms_eps_cc =
-    scan_ctl(filename, argc, argv, "MET_CMS_EPS_CC", -1, "1.0", NULL);
+  for (int i = 0; i < METVAR; i++) {
+    char defeps[LEN] = "1.0";
+    if (i == 1 || i == 2 || i == 3)
+      sprintf(defeps, "0.05");
+    ctl->met_cms_eps[i] =
+      scan_ctl(filename, argc, argv, "MET_CMS_EPS", i, defeps, NULL);
+  }
   ctl->met_dx = (int) scan_ctl(filename, argc, argv, "MET_DX", -1, "1", NULL);
   ctl->met_dy = (int) scan_ctl(filename, argc, argv, "MET_DY", -1, "1", NULL);
   ctl->met_dp = (int) scan_ctl(filename, argc, argv, "MET_DP", -1, "1", NULL);

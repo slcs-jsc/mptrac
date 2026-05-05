@@ -322,24 +322,13 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_zstd_level
      INTEGER(c_int), DIMENSION(metvar) :: met_comp_prec
      REAL(c_double), DIMENSION(metvar) :: met_comp_tol
+     CHARACTER(c_char), DIMENSION(length) :: met_comp_logfile
      INTEGER(c_int) :: met_cms_batch
      INTEGER(c_int) :: met_cms_zstd
      INTEGER(c_int) :: met_cms_nd0x
      INTEGER(c_int) :: met_cms_nd0y
      INTEGER(c_int) :: met_cms_maxlev
-     REAL(c_double) :: met_cms_eps_z
-     REAL(c_double) :: met_cms_eps_t
-     REAL(c_double) :: met_cms_eps_u
-     REAL(c_double) :: met_cms_eps_v
-     REAL(c_double) :: met_cms_eps_w
-     REAL(c_double) :: met_cms_eps_pv
-     REAL(c_double) :: met_cms_eps_h2o
-     REAL(c_double) :: met_cms_eps_o3
-     REAL(c_double) :: met_cms_eps_lwc
-     REAL(c_double) :: met_cms_eps_rwc
-     REAL(c_double) :: met_cms_eps_iwc
-     REAL(c_double) :: met_cms_eps_swc
-     REAL(c_double) :: met_cms_eps_cc
+     REAL(c_double), DIMENSION(metvar) :: met_cms_eps
      INTEGER(c_int) :: met_dx
      INTEGER(c_int) :: met_dy
      INTEGER(c_int) :: met_dp
