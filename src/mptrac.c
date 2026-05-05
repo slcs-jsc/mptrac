@@ -465,6 +465,7 @@ void compress_cms(
   const size_t np,
   const double *plev,
   const int decompress,
+  FILE *level_log,
   FILE *inout) {
 
   /* Set lon-lat grid... */
@@ -488,6 +489,7 @@ void compress_cms(
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
+    t_eval = 0;
 
     /* Loop over levels... */
     for (size_t ip = 0; ip < np; ip++) {
@@ -502,7 +504,8 @@ void compress_cms(
       else
 	cms_sol = cms_read_sol(cms_ptr, inout);
 
-      /* Evaluate... */
+      /* Evaluate current level... */
+      const double t0 = omp_get_wtime();
 #pragma omp parallel for collapse(2) default(shared)
       for (size_t ix = 0; ix < nx; ix++)
 	for (size_t iy = 0; iy < ny; iy++) {
@@ -511,6 +514,7 @@ void compress_cms(
 	  cms_eval(cms_ptr, cms_sol, x, &val);
 	  array[ARRAY_3D(ix, iy, ny, ip, np)] = (float) val;
 	}
+      t_eval += omp_get_wtime() - t0;
 
       /* Calculate harmonic mean of compression rates... */
       cr += 1.0 / cms_compression_rate(cms_ptr, cms_sol);
@@ -521,8 +525,10 @@ void compress_cms(
     }
 
     /* Write info... */
-    LOG(2, "Read 3-D variable: %s (CMS, RATIO= %g)", varname,
-	(double) np / cr);
+    LOG(2, "Read 3-D variable: %s"
+	" (CMS, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, (double) np / cr, 32. * cr / (double) np, t_eval,
+	compress_speed_mib(nx * ny * np * sizeof(float), t_eval));
   }
 
   /* Compress array and output compressed stream... */
@@ -587,7 +593,7 @@ void compress_cms(
 	else
 	  ERRMSG("Variable name unknown!");
 
-	/* Initialize multiscale module... */
+	/* Initialize current level... */
 	cms_ptr[ip] = cms_init(cms_param);
 
 	/* Coarsening... */
@@ -606,12 +612,10 @@ void compress_cms(
       for (size_t ip = ip0; ip < MIN(ip0 + dip, np); ip++) {
 
 	/* Allocate... */
-	double *tmp_cms, *tmp_org, *tmp_diff;
-	ALLOC(tmp_cms, double,
+	float *tmp_cms, *tmp_org;
+	ALLOC(tmp_cms, float,
 	      nxy);
-	ALLOC(tmp_org, double,
-	      nxy);
-	ALLOC(tmp_diff, double,
+	ALLOC(tmp_org, float,
 	      nxy);
 
 	/* Measure time... */
@@ -623,28 +627,23 @@ void compress_cms(
 	  for (size_t iy = 0; iy < ny; iy++) {
 	    const size_t idx = ARRAY_2D(ix, iy, ny);
 	    const double x[] = { lon[ix], lat[iy] };
-	    cms_eval(cms_ptr[ip], cms_sol[ip], x, &tmp_cms[idx]);
+	    double val;
+	    cms_eval(cms_ptr[ip], cms_sol[ip], x, &val);
+	    tmp_cms[idx] = (float) val;
 	    tmp_org[idx] = array[ARRAY_3D(ix, iy, ny, ip, np)];
-	    tmp_diff[idx] = tmp_cms[idx] - tmp_org[idx];
 	  }
 
 	/* Measure time... */
 	t_eval += (omp_get_wtime() - t0);
 
-	/* Write info... */
-	const double bias = gsl_stats_mean(tmp_diff, 1, nxy);
-	const double stddev = gsl_stats_sd_m(tmp_diff, 1, nxy, bias);
-	const double rmse = sqrt(SQR(bias) + SQR(stddev));
-	const double range =
-	  gsl_stats_max(tmp_org, 1, nxy) - gsl_stats_min(tmp_org, 1, nxy);
-	const double nrmse = (range > 0 ? rmse / range : NAN);
-	LOG(2,
-	    "cmultiscale: var= %s / lev= %lu / plev= %g / ratio= %g / rho= %g"
-	    " / mean= %g / sd= %g / min= %g / max= %g / NRMSE= %g", varname,
-	    ip, plev[ip], cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
-	    gsl_stats_correlation(tmp_cms, 1, tmp_org, 1, nxy), bias, stddev,
-	    gsl_stats_min(tmp_diff, 1, nxy), gsl_stats_max(tmp_diff, 1, nxy),
-	    nrmse);
+	/* Write per-level diagnostics... */
+	if (level_log)
+	  compress_log_level(level_log, "CMS", varname, ip, plev[ip],
+			     cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
+			     32. / cms_compression_rate(cms_ptr[ip],
+							cms_sol[ip]),
+			     NAN, NAN, NAN, nxy, nxy * sizeof(float),
+			     tmp_org, tmp_cms);
 
 	/* Calculate harmonic mean of compression rates... */
 	cr += 1.0 / cms_compression_rate(cms_ptr[ip], cms_sol[ip]);
@@ -660,14 +659,16 @@ void compress_cms(
 	cms_delete_module(cms_ptr[ip]);
 	free(tmp_cms);
 	free(tmp_org);
-	free(tmp_diff);
       }
     }
 
     /* Write info... */
     LOG(2, "Write 3-D variable: %s"
-	" (CMS, RATIO= %g, T_COARS= %g s, T_EVAL= %g s)",
-	varname, (double) np / cr, t_coars, t_eval);
+	" (CMS, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, (double) np / cr, 32. * cr / (double) np, t_coars,
+	compress_speed_mib(nx * ny * np * sizeof(float), t_coars), t_eval,
+	compress_speed_mib(nx * ny * np * sizeof(float), t_eval));
   }
 
   /* Free... */
@@ -677,17 +678,142 @@ void compress_cms(
 
 /*****************************************************************************/
 
+double compress_speed_mib(
+  const size_t nbytes,
+  const double dt) {
+
+  /* Calculate compression speed in MiB/s... */
+  return (dt > 0 ? ((double) nbytes) / (dt * 1024. * 1024.) : NAN);
+}
+
+/*****************************************************************************/
+
+void compress_error_stats(
+  const float *org,
+  const float *cmp,
+  const size_t n,
+  double *mean,
+  double *stddev,
+  double *min,
+  double *max,
+  double *nrmse) {
+
+  double avg = 0, m2 = 0, err_min = 0, err_max = 0, rmse = 0;
+  double org_min = 0, org_max = 0;
+
+  /* Calculate error statistics... */
+  for (size_t i = 0; i < n; i++) {
+    const double err = (double) cmp[i] - (double) org[i];
+    const double val = (double) org[i];
+    const double delta = err - avg;
+
+    avg += delta / ((double) i + 1.);
+    m2 += delta * (err - avg);
+    rmse += err * err;
+
+    if (i == 0 || err < err_min)
+      err_min = err;
+    if (i == 0 || err > err_max)
+      err_max = err;
+    if (i == 0 || val < org_min)
+      org_min = val;
+    if (i == 0 || val > org_max)
+      org_max = val;
+  }
+
+  *mean = avg;
+  *stddev = (n > 1 ? sqrt(m2 / ((double) n - 1.)) : 0);
+  *min = err_min;
+  *max = err_max;
+  *nrmse = ((org_max - org_min) > 0
+	    ? sqrt(rmse / (double) n) / (org_max - org_min)
+	    : NAN);
+}
+
+/*****************************************************************************/
+
+void compress_log_header(
+  FILE *out) {
+
+  /* Write file header... */
+  fprintf(out,
+	  "# $1 = compression codec name [-]\n"
+	  "# $2 = variable name [-]\n"
+	  "# $3 = level index [-]\n"
+	  "# $4 = pressure level [hPa]\n"
+	  "# $5 = compression ratio [-]\n"
+	  "# $6 = bits per value [bit/value]\n"
+	  "# $7 = correlation coefficient [-]\n"
+	  "# $8 = mean compression error [-]\n"
+	  "# $9 = standard deviation of compression error [-]\n"
+	  "# $10 = minimum compression error [-]\n"
+	  "# $11 = maximum compression error [-]\n"
+	  "# $12 = normalized root mean square error [-]\n"
+	  "# $13 = compression time [s]\n"
+	  "# $14 = compression speed [MiB/s]\n"
+	  "# $15 = decompression time [s]\n"
+	  "# $16 = decompression speed [MiB/s]\n\n");
+}
+
+/*****************************************************************************/
+
+void compress_log_level(
+  FILE *out,
+  const char *codec,
+  const char *varname,
+  const size_t lev,
+  const double plev,
+  const double ratio,
+  const double bpv,
+  const double rho,
+  const double t_comp,
+  const double t_decomp,
+  const size_t n,
+  const size_t nbytes,
+  const float *org,
+  const float *cmp) {
+  static FILE *last_out = NULL;
+  static char last_var[LEN] = "";
+
+  double mean, stddev, min, max, nrmse, rho_out = rho;
+
+  /* Calculate error statistics... */
+  compress_error_stats(org, cmp, n, &mean, &stddev, &min, &max, &nrmse);
+  if (isnan(rho_out))
+    rho_out = gsl_stats_float_correlation(org, 1, cmp, 1, n);
+
+  /* Write output... */
+  if (out != last_out) {
+    last_out = out;
+    last_var[0] = '\0';
+  }
+  if (last_var[0] != '\0' && strcmp(last_var, varname) != 0)
+    fprintf(out, "\n");
+  snprintf(last_var, LEN, "%s", varname);
+  fprintf(out,
+	  "%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	  codec, varname, (unsigned long) lev, plev, ratio, bpv, rho_out,
+	  mean, stddev, min, max, nrmse, t_comp,
+	  compress_speed_mib(nbytes, t_comp), t_decomp,
+	  compress_speed_mib(nbytes, t_decomp));
+}
+
+/*****************************************************************************/
+
 void compress_pck(
   const char *varname,
   float *array,
   const size_t nxy,
   const size_t nz,
+  const double *plev,
   const int decompress,
+  FILE *level_log,
   FILE *inout) {
 
   double min[EP], max[EP], off[EP], scl[EP];
-
   unsigned short *sarray;
+  const double cr = (double) (nxy * nz * sizeof(float))
+    / (double) (nxy * nz * sizeof(unsigned short) + 2 * nz * sizeof(double));
 
   /* Allocate... */
   ALLOC(sarray, unsigned short,
@@ -695,10 +821,6 @@ void compress_pck(
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
-
-    /* Write info... */
-    LOG(2, "Read 3-D variable: %s (pck, RATIO= %g)",
-	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
 
     /* Read data... */
     FREAD(&scl, double,
@@ -711,20 +833,37 @@ void compress_pck(
 	  nxy * nz,
 	  inout);
 
+    /* Measure time... */
+    const double t0 = omp_get_wtime();
+
     /* Convert to float... */
 #pragma omp parallel for default(shared)
     for (size_t ixy = 0; ixy < nxy; ixy++)
       for (size_t iz = 0; iz < nz; iz++)
 	array[ixy * nz + iz]
 	  = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
+
+    /* Write info... */
+    const double t_decomp = omp_get_wtime() - t0;
+    LOG(2, "Read 3-D variable: %s"
+	" (PCK, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, cr, (8. * (double) (nxy * nz * sizeof(unsigned short)
+				     +
+				     2 * nz * sizeof(double))) /
+	(double) (nxy * nz), t_decomp,
+	compress_speed_mib(nxy * nz * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
+    float *tmp_org, *tmp_pck;
+    double t_comp_sum = 0, t_decomp_sum = 0;
 
-    /* Write info... */
-    LOG(2, "Write 3-D variable: %s (pck, RATIO= %g)",
-	varname, (double) sizeof(float) / (double) sizeof(unsigned short));
+    /* Allocate... */
+    ALLOC(tmp_org, float,
+	  nxy);
+    ALLOC(tmp_pck, float,
+	  nxy);
 
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
@@ -745,15 +884,44 @@ void compress_pck(
       off[iz] = min[iz];
     }
 
-    /* Convert to short... */
+    /* Convert to short and evaluate per level... */
+    for (size_t iz = 0; iz < nz; iz++) {
+      const double t0 = omp_get_wtime();
+
 #pragma omp parallel for default(shared)
-    for (size_t ixy = 0; ixy < nxy; ixy++)
-      for (size_t iz = 0; iz < nz; iz++)
+      for (size_t ixy = 0; ixy < nxy; ixy++)
 	if (scl[iz] != 0)
-	  sarray[ixy * nz + iz] = (unsigned short)
-	    ((array[ixy * nz + iz] - off[iz]) / scl[iz] + .5);
+	  sarray[ixy * nz + iz] =
+	    (unsigned short) ((array[ixy * nz + iz] - off[iz]) / scl[iz] +
+			      .5);
 	else
 	  sarray[ixy * nz + iz] = 0;
+
+      const double t_comp = omp_get_wtime() - t0;
+      t_comp_sum += t_comp;
+
+      const double t1 = omp_get_wtime();
+
+#pragma omp parallel for default(shared)
+      for (size_t ixy = 0; ixy < nxy; ixy++) {
+	tmp_org[ixy] = array[ixy * nz + iz];
+	tmp_pck[ixy] = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
+      }
+
+      const double t_decomp = omp_get_wtime() - t1;
+      t_decomp_sum += t_decomp;
+
+      if (level_log)
+	compress_log_level(level_log, "PCK", varname, iz, plev[iz],
+			   (double) (nxy * sizeof(float))
+			   / (double) (nxy * sizeof(unsigned short)
+				       + 2 * sizeof(double)),
+			   (8. * (double) (nxy * sizeof(unsigned short)
+					   + 2 * sizeof(double)))
+			   / (double) nxy,
+			   NAN, t_comp, t_decomp, nxy,
+			   nxy * sizeof(float), tmp_org, tmp_pck);
+    }
 
     /* Write data... */
     FWRITE(&scl, double,
@@ -765,6 +933,22 @@ void compress_pck(
     FWRITE(sarray, unsigned short,
 	   nxy * nz,
 	   inout);
+
+    /* Write info... */
+    LOG(2, "Write 3-D variable: %s"
+	" (PCK, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, cr, (8. * (double) (nxy * nz * sizeof(unsigned short)
+				     +
+				     2 * nz * sizeof(double))) /
+	(double) (nxy * nz), t_comp_sum,
+	compress_speed_mib(nxy * nz * sizeof(float), t_comp_sum),
+	t_decomp_sum, compress_speed_mib(nxy * nz * sizeof(float),
+					 t_decomp_sum));
+
+    /* Free... */
+    free(tmp_org);
+    free(tmp_pck);
   }
 
   /* Free... */
@@ -780,11 +964,12 @@ void compress_sz3(
   int nx,
   int ny,
   int nz,
+  const double *plev,
   int precision,
   double tolerance,
   int decompress,
+  FILE *level_log,
   FILE *inout) {
-
   if ((precision > 0) == (tolerance > 0.0))
     ERRMSG("Exactly one of precision or tolerance must be set for SZ3!");
 
@@ -806,31 +991,37 @@ void compress_sz3(
 	  sz3size,
 	  inout);
 
+    const double t0 = omp_get_wtime();
     void *outData = SZ_decompress(SZ_FLOAT, bytes, sz3size, 0, 0, r3, r2, r1);
     if (!outData)
       ERRMSG("Decompression failed!");
 
     memcpy(array, outData, total_elems * sizeof(float));
+    const double t_decomp = omp_get_wtime() - t0;
 
     free(outData);
     free(bytes);
 
-    LOG(2, "Read 3-D variable: %s (SZ3, PREC=%d, TOL=%g, RATIO=%g)",
+    LOG(2, "Read 3-D variable: %s"
+	" (SZ3, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
 	varname, precision, tolerance,
-	(double) (total_elems * sizeof(float)) / (double) sz3size);
+	(double) (total_elems * sizeof(float)) / (double) sz3size,
+	(8. * (double) sz3size) / (double) total_elems, t_decomp,
+	compress_speed_mib(total_elems * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
-
     const int errBoundMode = (precision > 0) ? REL : ABS;
     const double absBound = (errBoundMode == ABS) ? tolerance : 0.0;
     const double relBound =
       (errBoundMode == REL) ? pow(2.0, -(double) precision) : 0.0;
 
+    const double t0 = omp_get_wtime();
     bytes = SZ_compress_args(SZ_FLOAT, array, &outSize,
 			     errBoundMode, absBound, relBound, 0.0,
 			     0, 0, r3, r2, r1);
+    const double t_comp = omp_get_wtime() - t0;
     if (!bytes || outSize == 0)
       ERRMSG("Compression failed!");
 
@@ -841,11 +1032,71 @@ void compress_sz3(
 	   outSize,
 	   inout);
 
-    free(bytes);
+    double t_decomp = NAN;
+    if (level_log) {
+      unsigned char *bytes_copy;
 
-    LOG(2, "Write 3-D variable: %s (SZ3, PREC=%d, TOL=%g, RATIO=%g)",
-	varname, precision, tolerance,
-	(double) (total_elems * sizeof(float)) / (double) outSize);
+      /* Reconstruct data for per-level diagnostics... */
+      ALLOC(bytes_copy, unsigned char,
+	    outSize);
+      memcpy(bytes_copy, bytes, outSize);
+
+      const double t1 = omp_get_wtime();
+      void *decData = SZ_decompress(SZ_FLOAT, bytes_copy, outSize, 0, 0, r3,
+				    r2, r1);
+      t_decomp = omp_get_wtime() - t1;
+      if (!decData)
+	ERRMSG("Decompression failed!");
+
+      float *tmp_all, *tmp_org, *tmp_sz3;
+      const size_t nxy = r2 * r3;
+
+      ALLOC(tmp_all, float,
+	    total_elems);
+      ALLOC(tmp_org, float,
+	    nxy);
+      ALLOC(tmp_sz3, float,
+	    nxy);
+      memcpy(tmp_all, decData, total_elems * sizeof(float));
+
+      for (size_t lev = 0; lev < r1; lev++) {
+
+	/* Extract current level... */
+#pragma omp parallel for default(shared)
+	for (size_t ixy = 0; ixy < nxy; ixy++) {
+	  tmp_org[ixy] = array[ixy * r1 + lev];
+	  tmp_sz3[ixy] = tmp_all[ixy * r1 + lev];
+	}
+	compress_log_level(level_log, "SZ3", varname, lev, plev[lev],
+			   (double) (total_elems * sizeof(float))
+			   / (double) outSize,
+			   (8. * (double) outSize) / (double) total_elems,
+			   NAN, t_comp, t_decomp, nxy,
+			   total_elems * sizeof(float), tmp_org, tmp_sz3);
+      }
+
+      free(tmp_all);
+      free(tmp_org);
+      free(tmp_sz3);
+      free(decData);
+      free(bytes_copy);
+
+      LOG(2, "Write 3-D variable: %s"
+	  " (SZ3, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	  " T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	  varname, precision, tolerance,
+	  (double) (total_elems * sizeof(float)) / (double) outSize,
+	  (8. * (double) outSize) / (double) total_elems, t_comp,
+	  compress_speed_mib(total_elems * sizeof(float), t_comp), t_decomp,
+	  compress_speed_mib(total_elems * sizeof(float), t_decomp));
+    } else
+      LOG(2, "Write 3-D variable: %s"
+	  " (SZ3, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s)",
+	  varname, precision, tolerance,
+	  (double) (total_elems * sizeof(float)) / (double) outSize,
+	  (8. * (double) outSize) / (double) total_elems, t_comp,
+	  compress_speed_mib(total_elems * sizeof(float), t_comp));
+    free(bytes);
   }
 }
 #endif
@@ -859,9 +1110,11 @@ void compress_zfp(
   const int nx,
   const int ny,
   const int nz,
+  const double *plev,
   const int precision,
   const double tolerance,
   const int decompress,
+  FILE *level_log,
   FILE *inout) {
 
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
@@ -909,19 +1162,36 @@ void compress_zfp(
     FREAD(buffer, unsigned char,
 	  zfpsize,
 	  inout);
+    const double t0 = omp_get_wtime();
     if (!zfp_decompress(zfp, field))
       ERRMSG("Decompression failed!");
+    const double t_decomp = omp_get_wtime() - t0;
     const double cr =
       ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
     const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
     LOG(2,
-	"Read 3-D variable: %s (ZFP, PREC= %d, TOL= %g, RATIO= %g, BPV= %g)",
-	varname, actual_prec, actual_tol, cr, bpv);
+	"Read 3-D variable: %s"
+	" (ZFP, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_DECOMP=%g s,"
+	" V_DECOMP=%g MiB/s)",
+	varname, actual_prec, actual_tol, cr, bpv, t_decomp,
+	compress_speed_mib(snx * sny * snz * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
+    float *tmp_all, *tmp_org, *tmp_zfp;
+    const size_t nxy = sny * snz;
+
+    ALLOC(tmp_all, float,
+	  snx * sny * snz);
+    ALLOC(tmp_org, float,
+	  nxy);
+    ALLOC(tmp_zfp, float,
+	  nxy);
+
+    const double t0 = omp_get_wtime();
     zfpsize = zfp_compress(zfp, field);
+    const double t_comp = omp_get_wtime() - t0;
     if (!zfpsize) {
       ERRMSG("Compression failed!");
     } else {
@@ -932,12 +1202,50 @@ void compress_zfp(
 	     zfpsize,
 	     inout);
     }
+
+    zfp_field *dec_field = zfp_field_3d(tmp_all, type, snx, sny, snz);
+    if (!dec_field)
+      ERRMSG("Failed to allocate zfp structures!");
+
+    const double t1 = omp_get_wtime();
+    zfp_stream_rewind(zfp);
+    if (!zfp_decompress(zfp, dec_field))
+      ERRMSG("Decompression failed!");
+    const double t_decomp = omp_get_wtime() - t1;
+
+    for (size_t lev = 0; lev < snx; lev++) {
+
+      /* Extract current level... */
+#pragma omp parallel for default(shared)
+      for (size_t ixy = 0; ixy < nxy; ixy++) {
+	tmp_org[ixy] = array[ixy * snx + lev];
+	tmp_zfp[ixy] = tmp_all[ixy * snx + lev];
+      }
+      if (level_log)
+	compress_log_level(level_log, "ZFP", varname, lev, plev[lev],
+			   ((double) (snx * sny * snz * sizeof(float)))
+			   / (double) zfpsize, (8.0 * (double) zfpsize)
+			   / (double) (snx * sny * snz),
+			   NAN, t_comp, t_decomp, nxy,
+			   snx * sny * snz * sizeof(float), tmp_org, tmp_zfp);
+    }
+
     const double cr =
       ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
     const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
     LOG(2,
-	"Write 3-D variable: %s (ZFP, PREC= %d, TOL= %g, RATIO= %g, BPV= %g)",
-	varname, actual_prec, actual_tol, cr, bpv);
+	"Write 3-D variable: %s"
+	" (ZFP, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_COMP=%g s,"
+	" V_COMP=%g MiB/s, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, actual_prec, actual_tol, cr, bpv, t_comp,
+	compress_speed_mib(snx * sny * snz * sizeof(float), t_comp),
+	t_decomp,
+	compress_speed_mib(snx * sny * snz * sizeof(float), t_decomp));
+
+    free(tmp_all);
+    free(tmp_org);
+    free(tmp_zfp);
+    zfp_field_free(dec_field);
   }
 
   /* Free... */
@@ -954,12 +1262,16 @@ void compress_zfp(
 void compress_zstd(
   const char *varname,
   float *array,
-  const size_t n,
+  const size_t nxy,
+  const size_t nz,
+  const double *plev,
   const int decompress,
   const int level,
+  FILE *level_log,
   FILE *inout) {
 
   /* Get buffer sizes... */
+  const size_t n = nxy * nz;
   const size_t uncomprLen = n * sizeof(float);
   size_t compsize, comprLen = ZSTD_compressBound(uncomprLen);
 
@@ -977,16 +1289,32 @@ void compress_zstd(
     FREAD(compr, unsigned char,
 	  comprLen,
 	  inout);
+    const double t0 = omp_get_wtime();
     compsize = ZSTD_decompress(uncompr, uncomprLen, compr, comprLen);
+    const double t_decomp = omp_get_wtime() - t0;
     if (ZSTD_isError(compsize) || compsize != uncomprLen)
       ERRMSG("Decompression failed or size mismatch!");
-    LOG(2, "Read 3-D variable: %s (ZSTD, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) comprLen);
+    LOG(2, "Read 3-D variable: %s"
+	" (ZSTD, LEVEL=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, level, ((double) uncomprLen) / (double) comprLen,
+	(8. * (double) comprLen) / (double) n, t_decomp,
+	compress_speed_mib(uncomprLen, t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
+    float *tmp_org, *tmp_zstd, *tmp_all;
+
+    ALLOC(tmp_org, float,
+	  nxy);
+    ALLOC(tmp_zstd, float,
+	  nxy);
+    ALLOC(tmp_all, float,
+	  n);
+
+    const double t0 = omp_get_wtime();
     compsize = ZSTD_compress(compr, comprLen, uncompr, uncomprLen, level);
+    const double t_comp = omp_get_wtime() - t0;
     if (ZSTD_isError(compsize)) {
       ERRMSG("Compression failed!");
     } else {
@@ -997,8 +1325,41 @@ void compress_zstd(
 	     compsize,
 	     inout);
     }
-    LOG(2, "Write 3-D variable: %s (ZSTD, RATIO= %g)",
-	varname, ((double) uncomprLen) / (double) compsize);
+
+    const double t1 = omp_get_wtime();
+    const size_t decomp_size = ZSTD_decompress(tmp_all, uncomprLen, compr,
+					       compsize);
+    const double t_decomp = omp_get_wtime() - t1;
+    if (ZSTD_isError(decomp_size) || decomp_size != uncomprLen)
+      ERRMSG("Decompression failed or size mismatch!");
+
+    for (size_t lev = 0; lev < nz; lev++) {
+
+      /* Extract current level... */
+#pragma omp parallel for default(shared)
+      for (size_t ixy = 0; ixy < nxy; ixy++) {
+	tmp_org[ixy] = array[ixy * nz + lev];
+	tmp_zstd[ixy] = tmp_all[ixy * nz + lev];
+      }
+      if (level_log)
+	compress_log_level(level_log, "ZSTD", varname, lev, plev[lev],
+			   ((double) uncomprLen) / (double) compsize,
+			   (8. * (double) compsize) / (double) n,
+			   NAN, t_comp, t_decomp, nxy, uncomprLen, tmp_org,
+			   tmp_zstd);
+    }
+
+    LOG(2, "Write 3-D variable: %s"
+	" (ZSTD, LEVEL=%d, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, level, ((double) uncomprLen) / (double) compsize,
+	(8. * (double) compsize) / (double) n, t_comp,
+	compress_speed_mib(uncomprLen, t_comp), t_decomp,
+	compress_speed_mib(uncomprLen, t_decomp));
+
+    free(tmp_org);
+    free(tmp_zstd);
+    free(tmp_all);
   }
 
   /* Free... */
@@ -5561,6 +5922,9 @@ void mptrac_read_ctl(
     ctl->met_comp_tol[i] =
       scan_ctl(filename, argc, argv, "MET_COMP_TOL", i, deftol, NULL);
   }
+  /* Scan compression diagnostics file... */
+  scan_ctl(filename, argc, argv, "MET_COMP_LOGFILE", -1, "-",
+	   ctl->met_comp_logfile);
   ctl->met_cms_batch =
     (int) scan_ctl(filename, argc, argv, "MET_CMS_BATCH", -1, "-1", NULL);
   ctl->met_cms_zstd =
@@ -7471,7 +7835,7 @@ void read_met_bin_3d(
   /* Read packed data... */
   else if (ctl->met_type == 2)
     compress_pck(varname, help, (size_t) (met->ny * met->nx),
-		 (size_t) met->np, 1, in);
+		 (size_t) met->np, met->p, 1, NULL, in);
 
   /* Read ZFP data... */
   else if (ctl->met_type == 3) {
@@ -7486,8 +7850,8 @@ void read_met_bin_3d(
 	  1,
 	  in);
 
-    compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
-		 tolerance, 1, in);
+    compress_zfp(varname, help, met->np, met->ny, met->nx, met->p,
+		 precision, tolerance, 1, NULL, in);
 #else
     ERRMSG("MPTRAC was compiled without ZFP compression!");
 #endif
@@ -7496,8 +7860,8 @@ void read_met_bin_3d(
   /* Read zstd data... */
   else if (ctl->met_type == 4) {
 #ifdef ZSTD
-    compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 1,
-		  ctl->met_zstd_level, in);
+    compress_zstd(varname, help, (size_t) (met->ny * met->nx),
+		  (size_t) met->np, met->p, 1, ctl->met_zstd_level, NULL, in);
 #else
     ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
@@ -7507,7 +7871,7 @@ void read_met_bin_3d(
   else if (ctl->met_type == 5) {
 #ifdef CMS
     compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
-		 (size_t) met->np, met->p, 1, in);
+		 (size_t) met->np, met->p, 1, NULL, in);
 #else
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
 #endif
@@ -7526,8 +7890,8 @@ void read_met_bin_3d(
 	  1,
 	  in);
 
-    compress_sz3(varname, help, met->np, met->ny, met->nx, precision,
-		 tolerance, 1, in);
+    compress_sz3(varname, help, met->np, met->ny, met->nx, met->p,
+		 precision, tolerance, 1, NULL, in);
 #else
     ERRMSG("MPTRAC was compiled without sz3 compression!");
 #endif
@@ -12267,9 +12631,16 @@ void write_met_bin(
   met_t *met) {
 
   /* Create file... */
-  FILE *out;
+  FILE *out, *level_log = NULL;
   if (!(out = fopen(filename, "w")))
     ERRMSG("Cannot create file!");
+  if (strcmp(ctl->met_comp_logfile, "-") != 0) {
+    /* Open diagnostics file... */
+    if (!(level_log = fopen(ctl->met_comp_logfile, "w")))
+      ERRMSG("Cannot create compression log file!");
+    compress_log_header(level_log);
+    LOG(1, "Write compression diagnostics: %s", ctl->met_comp_logfile);
+  }
 
   /* Write type of binary data... */
   FWRITE(&ctl->met_type, int,
@@ -12333,31 +12704,31 @@ void write_met_bin(
 
   /* Write level data... */
   write_met_bin_3d(out, ctl, met, met->z, "Z",
-		   ctl->met_comp_prec[0], ctl->met_comp_tol[0]);
+		   ctl->met_comp_prec[0], ctl->met_comp_tol[0], level_log);
   write_met_bin_3d(out, ctl, met, met->t, "T",
-		   ctl->met_comp_prec[1], ctl->met_comp_tol[1]);
+		   ctl->met_comp_prec[1], ctl->met_comp_tol[1], level_log);
   write_met_bin_3d(out, ctl, met, met->u, "U",
-		   ctl->met_comp_prec[2], ctl->met_comp_tol[2]);
+		   ctl->met_comp_prec[2], ctl->met_comp_tol[2], level_log);
   write_met_bin_3d(out, ctl, met, met->v, "V",
-		   ctl->met_comp_prec[3], ctl->met_comp_tol[3]);
+		   ctl->met_comp_prec[3], ctl->met_comp_tol[3], level_log);
   write_met_bin_3d(out, ctl, met, met->w, "W",
-		   ctl->met_comp_prec[4], ctl->met_comp_tol[4]);
+		   ctl->met_comp_prec[4], ctl->met_comp_tol[4], level_log);
   write_met_bin_3d(out, ctl, met, met->pv, "PV",
-		   ctl->met_comp_prec[5], ctl->met_comp_tol[5]);
+		   ctl->met_comp_prec[5], ctl->met_comp_tol[5], level_log);
   write_met_bin_3d(out, ctl, met, met->h2o, "H2O",
-		   ctl->met_comp_prec[6], ctl->met_comp_tol[6]);
+		   ctl->met_comp_prec[6], ctl->met_comp_tol[6], level_log);
   write_met_bin_3d(out, ctl, met, met->o3, "O3",
-		   ctl->met_comp_prec[7], ctl->met_comp_tol[7]);
+		   ctl->met_comp_prec[7], ctl->met_comp_tol[7], level_log);
   write_met_bin_3d(out, ctl, met, met->lwc, "LWC",
-		   ctl->met_comp_prec[8], ctl->met_comp_tol[8]);
+		   ctl->met_comp_prec[8], ctl->met_comp_tol[8], level_log);
   write_met_bin_3d(out, ctl, met, met->rwc, "RWC",
-		   ctl->met_comp_prec[9], ctl->met_comp_tol[9]);
+		   ctl->met_comp_prec[9], ctl->met_comp_tol[9], level_log);
   write_met_bin_3d(out, ctl, met, met->iwc, "IWC",
-		   ctl->met_comp_prec[10], ctl->met_comp_tol[10]);
+		   ctl->met_comp_prec[10], ctl->met_comp_tol[10], level_log);
   write_met_bin_3d(out, ctl, met, met->swc, "SWC",
-		   ctl->met_comp_prec[11], ctl->met_comp_tol[11]);
+		   ctl->met_comp_prec[11], ctl->met_comp_tol[11], level_log);
   write_met_bin_3d(out, ctl, met, met->cc, "CC",
-		   ctl->met_comp_prec[12], ctl->met_comp_tol[12]);
+		   ctl->met_comp_prec[12], ctl->met_comp_tol[12], level_log);
   if (METVAR != 13)
     ERRMSG("Number of meteo variables doesn't match!");
 
@@ -12368,6 +12739,8 @@ void write_met_bin(
 	 out);
 
   /* Close file... */
+  if (level_log)
+    fclose(level_log);
   fclose(out);
 }
 
@@ -12409,7 +12782,8 @@ void write_met_bin_3d(
   float var[EX][EY][EP],
   const char *varname,
   const int precision,
-  const double tolerance) {
+  const double tolerance,
+  FILE *level_log) {
 
   float *help;
 
@@ -12435,7 +12809,7 @@ void write_met_bin_3d(
   /* Write packed data... */
   else if (ctl->met_type == 2)
     compress_pck(varname, help, (size_t) (met->ny * met->nx),
-		 (size_t) met->np, 0, out);
+		 (size_t) met->np, met->p, 0, level_log, out);
 
   /* Write ZFP data... */
 #ifdef ZFP
@@ -12446,23 +12820,24 @@ void write_met_bin_3d(
     FWRITE(&tolerance, double,
 	   1,
 	   out);
-    compress_zfp(varname, help, met->np, met->ny, met->nx, precision,
-		 tolerance, 0, out);
+    compress_zfp(varname, help, met->np, met->ny, met->nx, met->p,
+		 precision, tolerance, 0, level_log, out);
   }
 #endif
 
   /* Write zstd data... */
 #ifdef ZSTD
   else if (ctl->met_type == 4)
-    compress_zstd(varname, help, (size_t) (met->np * met->ny * met->nx), 0,
-		  ctl->met_zstd_level, out);
+    compress_zstd(varname, help, (size_t) (met->ny * met->nx),
+		  (size_t) met->np, met->p, 0, ctl->met_zstd_level, level_log,
+		  out);
 #endif
 
   /* Write cmultiscale data... */
 #ifdef CMS
   else if (ctl->met_type == 5) {
     compress_cms(ctl, varname, help, (size_t) met->nx, (size_t) met->ny,
-		 (size_t) met->np, met->p, 0, out);
+		 (size_t) met->np, met->p, 0, level_log, out);
   }
 #endif
 
@@ -12475,8 +12850,8 @@ void write_met_bin_3d(
     FWRITE(&tolerance, double,
 	   1,
 	   out);
-    compress_sz3(varname, help, met->np, met->ny, met->nx, precision,
-		 tolerance, 0, out);
+    compress_sz3(varname, help, met->np, met->ny, met->nx, met->p,
+		 precision, tolerance, 0, level_log, out);
   }
 #endif
 
@@ -12679,6 +13054,7 @@ void write_met_nc_2d(
       help[ARRAY_2D(iy, ix, met->nx)] = scl * var[ix][iy];
 
   /* Write data... */
+  LOG(2, "Write 2-D variable: %s (netCDF)", varname);
   NC_PUT_FLOAT(varname, help, 0);
 
   /* Free... */
@@ -12709,6 +13085,7 @@ void write_met_nc_3d(
 	help[ARRAY_3D(ip, iy, met->ny, ix, met->nx)] = scl * var[ix][iy][ip];
 
   /* Write data... */
+  LOG(2, "Write 3-D variable: %s (netCDF)", varname);
   NC_PUT_FLOAT(varname, help, 0);
 
   /* Free... */

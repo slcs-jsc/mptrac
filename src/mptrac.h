@@ -768,6 +768,8 @@
  */
 #define ECC_READ_2D(variable, target, scaling_factor, found_flag) {	\
     if(strcmp(short_name, variable) == 0) {				\
+      if ((found_flag) == 0)						\
+	LOG(2, "Read 2-D variable: %s (GRIB)", variable);		\
       for (int ix = 0; ix < met->nx; ix++)				\
 	for (int iy = 0; iy < met->ny; iy++)				\
 	  target[ix][iy] = (float)(values[iy * met->nx + ix] * scaling_factor); \
@@ -791,6 +793,8 @@
  */
 #define ECC_READ_3D(variable, level, target, scaling_factor, found_flag) { \
     if(strcmp(short_name, variable) == 0) {				\
+      if ((found_flag) == 0)						\
+	LOG(2, "Read 3-D variable: %s (GRIB)", variable);		\
       for (int ix = 0; ix < met->nx; ix++)				\
 	for (int iy = 0; iy < met->ny; iy++)				\
 	  target[ix][iy][level] = (float) (values[iy * met->nx + ix] * scaling_factor); \
@@ -2568,6 +2572,9 @@ typedef struct {
   /*! Compression tolerance for SZ3 or ZFP. */
   double met_comp_tol[METVAR];
 
+  /*! Filename for per-level compression diagnostics ("-" disables output). */
+  char met_comp_logfile[LEN];
+
   /*! cmultiscale batch size. */
   int met_cms_batch;
 
@@ -3964,6 +3971,100 @@ double clim_zm(
   const double p);
 
 /**
+ * @brief Calculate compression throughput in MiB/s.
+ *
+ * This helper converts a processed byte count and elapsed wall-clock
+ * time into a throughput value expressed in MiB/s.
+ *
+ * @param[in] nbytes Number of processed bytes.
+ * @param[in] dt     Elapsed time in seconds.
+ * @return Throughput in MiB/s, or @c NAN if @p dt is not positive.
+ *
+ * @author Lars Hoffmann
+ */
+double compress_speed_mib(
+  const size_t nbytes,
+  const double dt);
+
+/**
+ * @brief Compute error statistics between original and reconstructed data.
+ *
+ * The error is defined element-wise as @p cmp - @p org. The routine
+ * returns the mean error, standard deviation, minimum, maximum, and the
+ * normalized root-mean-square error (NRMSE).
+ *
+ * @param[in]  org     Original values.
+ * @param[in]  cmp     Reconstructed/compressed values.
+ * @param[in]  n       Number of elements.
+ * @param[out] mean    Mean error.
+ * @param[out] stddev  Standard deviation of the error.
+ * @param[out] min     Minimum error.
+ * @param[out] max     Maximum error.
+ * @param[out] nrmse   Normalized root-mean-square error.
+ *
+ * @author Lars Hoffmann
+ */
+void compress_error_stats(
+  const float *org,
+  const float *cmp,
+  const size_t n,
+  double *mean,
+  double *stddev,
+  double *min,
+  double *max,
+  double *nrmse);
+
+/**
+ * @brief Write the ASCII header for per-level compression diagnostics.
+ *
+ * @param[in,out] out Output stream receiving the table header.
+ *
+ * @author Lars Hoffmann
+ */
+void compress_log_header(
+  FILE * out);
+
+/**
+ * @brief Write one row of per-level compression diagnostics.
+ *
+ * This helper computes the error statistics for one level and writes one
+ * ASCII table row to @p out. If @p rho is @c NAN, the correlation
+ * coefficient is derived from @p org and @p cmp using GSL.
+ *
+ * @param[in,out] out       Output stream.
+ * @param[in]     codec     Compression codec name.
+ * @param[in]     varname   Variable name.
+ * @param[in]     lev       Level index.
+ * @param[in]     plev      Pressure level in hPa.
+ * @param[in]     ratio     Compression ratio.
+ * @param[in]     bpv       Bits per value.
+ * @param[in]     rho       Correlation coefficient, or @c NAN to compute it.
+ * @param[in]     t_comp    Compression time in seconds.
+ * @param[in]     t_decomp  Decompression time in seconds.
+ * @param[in]     n         Number of data values in the level slice.
+ * @param[in]     nbytes    Byte count used for throughput reporting.
+ * @param[in]     org       Original level data.
+ * @param[in]     cmp       Reconstructed level data.
+ *
+ * @author Lars Hoffmann
+ */
+void compress_log_level(
+  FILE * out,
+  const char *codec,
+  const char *varname,
+  const size_t lev,
+  const double plev,
+  const double ratio,
+  const double bpv,
+  const double rho,
+  const double t_comp,
+  const double t_decomp,
+  const size_t n,
+  const size_t nbytes,
+  const float *org,
+  const float *cmp);
+
+/**
  * @brief Compresses or decompresses a 3-D meteorological field using cmultiscale.
  *
  * This routine operates on a longitude/latitude regular grid of size @p nx × @p ny and @p np vertical
@@ -4015,6 +4116,7 @@ void compress_cms(
   const size_t np,
   const double *plev,
   const int decompress,
+  FILE * level_log,
   FILE * inout);
 
 /**
@@ -4054,7 +4156,9 @@ void compress_pck(
   float *array,
   const size_t nxy,
   const size_t nz,
+  const double *plev,
   const int decompress,
+  FILE * level_log,
   FILE * inout);
 
 /**
@@ -4092,9 +4196,11 @@ void compress_sz3(
   const int nx,
   const int ny,
   const int nz,
+  const double *plev,
   const int precision,
   const double tolerance,
   const int decompress,
+  FILE * level_log,
   FILE * inout);
 
 /**
@@ -4141,9 +4247,11 @@ void compress_zfp(
   const int nx,
   const int ny,
   const int nz,
+  const double *plev,
   const int precision,
   const double tolerance,
   const int decompress,
+  FILE * level_log,
   FILE * inout);
 
 /**
@@ -4154,9 +4262,12 @@ void compress_zfp(
  *
  * @param[in]  varname     Name of the variable, used for logging.
  * @param[in,out] array    Pointer to the float array to compress or to fill with decompressed data.
- * @param[in]  n           Number of float elements in the array.
+ * @param[in]  nxy         Number of horizontal grid points per level.
+ * @param[in]  nz          Number of levels in the array.
+ * @param[in]  plev        Pressure levels corresponding to the vertical levels.
  * @param[in]  decompress  If non-zero, perform decompression; otherwise, perform compression.
  * @param[in]  level       Compression level (-5 to 22). Use 0 for the ZSTD default.
+ * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable it.
  * @param[in,out] inout    File pointer for input/output. Used for reading or writing compressed data.
  *
  * @note This function uses ZSTD's simple one-shot compression API (ZSTD_compress),
@@ -4170,9 +4281,12 @@ void compress_zfp(
 void compress_zstd(
   const char *varname,
   float *array,
-  const size_t n,
+  const size_t nxy,
+  const size_t nz,
+  const double *plev,
   const int decompress,
   const int level,
+  FILE * level_log,
   FILE * inout);
 
 /**
@@ -9225,7 +9339,8 @@ void write_met_bin_3d(
   float var[EX][EY][EP],
   const char *varname,
   const int precision,
-  const double tolerance);
+  const double tolerance,
+  FILE * level_log);
 
 /**
  * @brief Writes meteorological data to a NetCDF file.
