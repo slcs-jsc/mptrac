@@ -9176,8 +9176,6 @@ int read_met_nc_3d(
   float dest[EX][EY][EP],
   const float scl) {
 
-  SELECT_TIMER("read_met_nc_3d", "INPUT");
-
   char varsel[LEN];
 
   float offset, scalfac;
@@ -9327,8 +9325,6 @@ int read_met_nc_3d(
     LOG(2, "Read 3-D variable: %s (FILL = %g, MISS = %g)",
 	varsel, fillval, missval);
 
-    SELECT_TIMER("read_met_nc_3d_CP1", "INPUT");
-
     /* Define hyperslab... */
     size_t help_subdomain_start[4];
     size_t help_subdomain_count[4];
@@ -9370,8 +9366,6 @@ int read_met_nc_3d(
 	    (int) dd->subdomain_count[0] * (int) dd->subdomain_count[1]
 	  * (int) dd->subdomain_count[2] * (int) dd->subdomain_count[3]);
 
-    SELECT_TIMER("read_met_nc_3d_CP2", "INPUT");
-
     /* Use default NetCDF parallel I/O behavior */
 #ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
@@ -9385,8 +9379,6 @@ int read_met_nc_3d(
 	  dd->halo_bnd_count[0] * dd->halo_bnd_count[1] *
 	  dd->halo_bnd_count[2] * dd->halo_bnd_count[3]);
 
-    SELECT_TIMER("read_met_nc_3d_CP3", "INPUT");
-
     /* Halo read also uses independent access */
 #ifdef DD
     nc_var_par_access(ncid, varid, NC_COLLECTIVE);
@@ -9395,8 +9387,6 @@ int read_met_nc_3d(
 			 varid,
 			 help_halo_bnd_start, help_halo_bnd_count,
 			 help_halo));
-
-    SELECT_TIMER("read_met_nc_3d_CP4", "INPUT");
 
     /* Check meteo data layout... */
     if (ctl->met_convention == 0) {
