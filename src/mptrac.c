@@ -5944,10 +5944,14 @@ void mptrac_read_ctl(
       sprintf(deftol, "5.0");
     else			/* other variables */
       sprintf(defprec, "8");
-    ctl->met_comp_prec[i] =
-      (int) scan_ctl(filename, argc, argv, "MET_COMP_PREC", i, defprec, NULL);
-    ctl->met_comp_tol[i] =
-      scan_ctl(filename, argc, argv, "MET_COMP_TOL", i, deftol, NULL);
+    ctl->met_zfp_prec[i] =
+      (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec, NULL);
+    ctl->met_zfp_tol[i] =
+      scan_ctl(filename, argc, argv, "MET_ZFP_TOL", i, deftol, NULL);
+    ctl->met_sz3_prec[i] =
+      (int) scan_ctl(filename, argc, argv, "MET_SZ3_PREC", i, defprec, NULL);
+    ctl->met_sz3_tol[i] =
+      scan_ctl(filename, argc, argv, "MET_SZ3_TOL", i, deftol, NULL);
   }
   /* Scan compression diagnostics file... */
   scan_ctl(filename, argc, argv, "MET_COMP_LOGFILE", -1, "-",
@@ -12701,32 +12705,19 @@ void write_met_bin(
   write_met_bin_2d(out, met, met->o3c, "O3C");
 
   /* Write level data... */
-  write_met_bin_3d(out, ctl, met, met->z, "Z",
-		   ctl->met_comp_prec[0], ctl->met_comp_tol[0], level_log);
-  write_met_bin_3d(out, ctl, met, met->t, "T",
-		   ctl->met_comp_prec[1], ctl->met_comp_tol[1], level_log);
-  write_met_bin_3d(out, ctl, met, met->u, "U",
-		   ctl->met_comp_prec[2], ctl->met_comp_tol[2], level_log);
-  write_met_bin_3d(out, ctl, met, met->v, "V",
-		   ctl->met_comp_prec[3], ctl->met_comp_tol[3], level_log);
-  write_met_bin_3d(out, ctl, met, met->w, "W",
-		   ctl->met_comp_prec[4], ctl->met_comp_tol[4], level_log);
-  write_met_bin_3d(out, ctl, met, met->pv, "PV",
-		   ctl->met_comp_prec[5], ctl->met_comp_tol[5], level_log);
-  write_met_bin_3d(out, ctl, met, met->h2o, "H2O",
-		   ctl->met_comp_prec[6], ctl->met_comp_tol[6], level_log);
-  write_met_bin_3d(out, ctl, met, met->o3, "O3",
-		   ctl->met_comp_prec[7], ctl->met_comp_tol[7], level_log);
-  write_met_bin_3d(out, ctl, met, met->lwc, "LWC",
-		   ctl->met_comp_prec[8], ctl->met_comp_tol[8], level_log);
-  write_met_bin_3d(out, ctl, met, met->rwc, "RWC",
-		   ctl->met_comp_prec[9], ctl->met_comp_tol[9], level_log);
-  write_met_bin_3d(out, ctl, met, met->iwc, "IWC",
-		   ctl->met_comp_prec[10], ctl->met_comp_tol[10], level_log);
-  write_met_bin_3d(out, ctl, met, met->swc, "SWC",
-		   ctl->met_comp_prec[11], ctl->met_comp_tol[11], level_log);
-  write_met_bin_3d(out, ctl, met, met->cc, "CC",
-		   ctl->met_comp_prec[12], ctl->met_comp_tol[12], level_log);
+  write_met_bin_3d(out, ctl, met, met->z, "Z", 0, level_log);
+  write_met_bin_3d(out, ctl, met, met->t, "T", 1, level_log);
+  write_met_bin_3d(out, ctl, met, met->u, "U", 2, level_log);
+  write_met_bin_3d(out, ctl, met, met->v, "V", 3, level_log);
+  write_met_bin_3d(out, ctl, met, met->w, "W", 4, level_log);
+  write_met_bin_3d(out, ctl, met, met->pv, "PV", 5, level_log);
+  write_met_bin_3d(out, ctl, met, met->h2o, "H2O", 6, level_log);
+  write_met_bin_3d(out, ctl, met, met->o3, "O3", 7, level_log);
+  write_met_bin_3d(out, ctl, met, met->lwc, "LWC", 8, level_log);
+  write_met_bin_3d(out, ctl, met, met->rwc, "RWC", 9, level_log);
+  write_met_bin_3d(out, ctl, met, met->iwc, "IWC", 10, level_log);
+  write_met_bin_3d(out, ctl, met, met->swc, "SWC", 11, level_log);
+  write_met_bin_3d(out, ctl, met, met->cc, "CC", 12, level_log);
   if (METVAR != 13)
     ERRMSG("Number of meteo variables doesn't match!");
 
@@ -12779,8 +12770,7 @@ void write_met_bin_3d(
   met_t *met,
   float var[EX][EY][EP],
   const char *varname,
-  const int precision,
-  const double tolerance,
+  const int metvar,
   FILE *level_log) {
 
   float *help;
@@ -12812,6 +12802,8 @@ void write_met_bin_3d(
   /* Write ZFP data... */
 #ifdef ZFP
   else if (ctl->met_type == 3) {
+    const int precision = ctl->met_zfp_prec[metvar];
+    const double tolerance = ctl->met_zfp_tol[metvar];
     FWRITE(&precision, int,
 	   1,
 	   out);
@@ -12842,6 +12834,8 @@ void write_met_bin_3d(
   /* Write SZ3 data... */
 #ifdef SZ3
   else if (ctl->met_type == 7) {
+    const int precision = ctl->met_sz3_prec[metvar];
+    const double tolerance = ctl->met_sz3_tol[metvar];
     FWRITE(&precision, int,
 	   1,
 	   out);
@@ -12858,7 +12852,7 @@ void write_met_bin_3d(
     ERRMSG("MET_TYPE not supported!");
 
     /* This will never execute, hack to avoid compilation error... */
-    LOG(3, "%d %g", precision, tolerance);
+    LOG(3, "%d", metvar);
   }
 
   /* Free... */

@@ -320,8 +320,10 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_nc_level
      INTEGER(c_int) :: met_nc_quant
      INTEGER(c_int) :: met_zstd_level
-     INTEGER(c_int), DIMENSION(metvar) :: met_comp_prec
-     REAL(c_double), DIMENSION(metvar) :: met_comp_tol
+     INTEGER(c_int), DIMENSION(metvar) :: met_zfp_prec
+     REAL(c_double), DIMENSION(metvar) :: met_zfp_tol
+     INTEGER(c_int), DIMENSION(metvar) :: met_sz3_prec
+     REAL(c_double), DIMENSION(metvar) :: met_sz3_tol
      CHARACTER(c_char), DIMENSION(length) :: met_comp_logfile
      INTEGER(c_int) :: met_cms_batch
      INTEGER(c_int) :: met_cms_zstd

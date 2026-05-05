@@ -2566,11 +2566,17 @@ typedef struct {
   /*! ZSTD compression level (from -5 to 22). */
   int met_zstd_level;
 
-  /*! Compression precision for SZ3 or ZFP. */
-  int met_comp_prec[METVAR];
+  /*! ZFP compression precision. */
+  int met_zfp_prec[METVAR];
 
-  /*! Compression tolerance for SZ3 or ZFP. */
-  double met_comp_tol[METVAR];
+  /*! ZFP compression tolerance. */
+  double met_zfp_tol[METVAR];
+
+  /*! SZ3 compression precision. */
+  int met_sz3_prec[METVAR];
+
+  /*! SZ3 compression tolerance. */
+  double met_sz3_tol[METVAR];
 
   /*! Filename for per-level compression diagnostics ("-" disables output). */
   char met_comp_logfile[LEN];
@@ -9275,8 +9281,8 @@ void write_met_bin_2d(
  * @param met A pointer to a `met_t` structure containing meteorological data.
  * @param var An array of floats representing the 3-dimensional variable data.
  * @param varname A string containing the name of the variable being written.
- * @param precision An integer specifying the precision of compression (for certain compression methods).
- * @param tolerance A double specifying the tolerance for compression (for certain compression methods).
+ * @param metvar Index of the meteorological variable, used to select
+ * codec-specific compression settings.
  *
  * The function performs the following steps:
  * - Allocates memory for a temporary buffer to hold the variable data.
@@ -9302,8 +9308,7 @@ void write_met_bin_3d(
   met_t * met,
   float var[EX][EY][EP],
   const char *varname,
-  const int precision,
-  const double tolerance,
+  const int metvar,
   FILE * level_log);
 
 /**
