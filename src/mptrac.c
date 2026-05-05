@@ -537,6 +537,8 @@ void compress_cms(
     /* Init... */
     cms_module_t *cms_ptr[EP];
     cms_sol_t *cms_sol[EP];
+    double rho[EP], mean[EP], stddev[EP], min[EP], max[EP], nrmse[EP];
+    double ratio[EP], bpv[EP];
 
     /* Loop over batches... */
     const size_t dip = (ctl->met_cms_batch <= 0
@@ -637,13 +639,13 @@ void compress_cms(
 	t_eval += (omp_get_wtime() - t0);
 
 	/* Write per-level diagnostics... */
-	if (level_log)
-	  compress_log_level(level_log, "CMS", varname, ip, plev[ip],
-			     cms_compression_rate(cms_ptr[ip], cms_sol[ip]),
-			     32. / cms_compression_rate(cms_ptr[ip],
-							cms_sol[ip]),
-			     NAN, NAN, NAN, nxy, nxy * sizeof(float),
-			     tmp_org, tmp_cms);
+	if (level_log) {
+	  ratio[ip] = cms_compression_rate(cms_ptr[ip], cms_sol[ip]);
+	  bpv[ip] = 32. / ratio[ip];
+	  compress_error_stats(tmp_org, tmp_cms, nxy, &mean[ip], &stddev[ip],
+			       &min[ip], &max[ip], &nrmse[ip]);
+	  rho[ip] = gsl_stats_float_correlation(tmp_org, 1, tmp_cms, 1, nxy);
+	}
 
 	/* Calculate harmonic mean of compression rates... */
 	cr += 1.0 / cms_compression_rate(cms_ptr[ip], cms_sol[ip]);
@@ -660,6 +662,18 @@ void compress_cms(
 	free(tmp_cms);
 	free(tmp_org);
       }
+    }
+
+    /* Write per-level diagnostics... */
+    if (level_log) {
+      const size_t nbytes = nx * ny * np * sizeof(float);
+      for (size_t ip = 0; ip < np; ip++)
+	fprintf(level_log,
+		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+		"CMS", varname, (unsigned long) ip, plev[ip], ratio[ip],
+		bpv[ip], rho[ip], mean[ip], stddev[ip], min[ip], max[ip],
+		nrmse[ip], t_coars, compress_speed_mib(nbytes, t_coars),
+		t_eval, compress_speed_mib(nbytes, t_eval));
     }
 
     /* Write info... */
@@ -774,7 +788,6 @@ void compress_log_level(
   const float *cmp) {
   static FILE *last_out = NULL;
   static char last_var[LEN] = "";
-
   double mean, stddev, min, max, nrmse, rho_out = rho;
 
   /* Calculate error statistics... */
@@ -810,7 +823,7 @@ void compress_pck(
   FILE *level_log,
   FILE *inout) {
 
-  double min[EP], max[EP], off[EP], scl[EP];
+  double vmin[EP], vmax[EP], off[EP], scl[EP];
   unsigned short *sarray;
   const double cr = (double) (nxy * nz * sizeof(float))
     / (double) (nxy * nz * sizeof(unsigned short) + 2 * nz * sizeof(double));
@@ -858,6 +871,7 @@ void compress_pck(
   else {
     float *tmp_org, *tmp_pck;
     double t_comp_sum = 0, t_decomp_sum = 0;
+    double rho[EP], mean[EP], stddev[EP], min[EP], max[EP], nrmse[EP];
 
     /* Allocate... */
     ALLOC(tmp_org, float,
@@ -867,21 +881,21 @@ void compress_pck(
 
     /* Get range... */
     for (size_t iz = 0; iz < nz; iz++) {
-      min[iz] = array[iz];
-      max[iz] = array[iz];
+      vmin[iz] = array[iz];
+      vmax[iz] = array[iz];
     }
     for (size_t ixy = 1; ixy < nxy; ixy++)
       for (size_t iz = 0; iz < nz; iz++) {
-	if (array[ixy * nz + iz] < min[iz])
-	  min[iz] = array[ixy * nz + iz];
-	if (array[ixy * nz + iz] > max[iz])
-	  max[iz] = array[ixy * nz + iz];
+	if (array[ixy * nz + iz] < vmin[iz])
+	  vmin[iz] = array[ixy * nz + iz];
+	if (array[ixy * nz + iz] > vmax[iz])
+	  vmax[iz] = array[ixy * nz + iz];
       }
 
     /* Get offset and scaling factor... */
     for (size_t iz = 0; iz < nz; iz++) {
-      scl[iz] = (max[iz] - min[iz]) / 65533.;
-      off[iz] = min[iz];
+      scl[iz] = (vmax[iz] - vmin[iz]) / 65533.;
+      off[iz] = vmin[iz];
     }
 
     /* Convert to short and evaluate per level... */
@@ -911,16 +925,29 @@ void compress_pck(
       const double t_decomp = omp_get_wtime() - t1;
       t_decomp_sum += t_decomp;
 
-      if (level_log)
-	compress_log_level(level_log, "PCK", varname, iz, plev[iz],
-			   (double) (nxy * sizeof(float))
-			   / (double) (nxy * sizeof(unsigned short)
-				       + 2 * sizeof(double)),
-			   (8. * (double) (nxy * sizeof(unsigned short)
-					   + 2 * sizeof(double)))
-			   / (double) nxy,
-			   NAN, t_comp, t_decomp, nxy,
-			   nxy * sizeof(float), tmp_org, tmp_pck);
+      if (level_log) {
+	compress_error_stats(tmp_org, tmp_pck, nxy, &mean[iz], &stddev[iz],
+			     &min[iz], &max[iz], &nrmse[iz]);
+	rho[iz] = gsl_stats_float_correlation(tmp_org, 1, tmp_pck, 1, nxy);
+      }
+    }
+
+    /* Write per-level diagnostics... */
+    if (level_log) {
+      const double ratio = (double) (nxy * sizeof(float))
+	/ (double) (nxy * sizeof(unsigned short) + 2 * sizeof(double));
+      const double bpv = (8. * (double) (nxy * sizeof(unsigned short)
+					 + 2 * sizeof(double)))
+	/ (double) nxy;
+      const double t_comp = t_comp_sum / (double) nz;
+      const double t_decomp = t_decomp_sum / (double) nz;
+      for (size_t iz = 0; iz < nz; iz++)
+	fprintf(level_log,
+		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+		"PCK", varname, (unsigned long) iz, plev[iz], ratio, bpv,
+		rho[iz], mean[iz], stddev[iz], min[iz], max[iz], nrmse[iz],
+		t_comp, compress_speed_mib(nxy * sizeof(float), t_comp),
+		t_decomp, compress_speed_mib(nxy * sizeof(float), t_decomp));
     }
 
     /* Write data... */
