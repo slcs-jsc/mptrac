@@ -7240,7 +7240,7 @@ SZ_decompress</dd></dl>
   </table>
   </dd>
 </dl>
-<dl class="section note"><dt>Note</dt><dd>This function uses ZSTD's advanced compression API (ZSTD_compress2), which supports optional multithreaded compression via <code>nworkers</code>. MPTRAC currently uses 4 worker threads by default.</dd></dl>
+<dl class="section note"><dt>Note</dt><dd>This function uses ZSTD's advanced compression API (ZSTD_compress2), which supports optional multithreaded compression via <code>nworkers</code>. MPTRAC currently uses compression level -3 and 4 worker threads by default.</dd></dl>
 <dl class="section warning"><dt>Warning</dt><dd>The function allocates temporary memory for the compressed buffer and frees it internally. Ensure <code>array</code> has sufficient space for uncompressed data.</dd></dl>
 <dl class="section author"><dt>Author</dt><dd>Lars Hoffmann </dd></dl>
 
@@ -16341,7 +16341,7 @@ Here is the call graph for this function:</div>
 <div class="line"><span class="lineno"> 5970</span>  ctl-&gt;met_nc_quant =</div>
 <div class="line"><span class="lineno"> 5971</span>    (<span class="keywordtype">int</span>) <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(filename, argc, argv, &quot;MET_NC_QUANT&quot;, -1, &quot;0&quot;, NULL);</div>
 <div class="line"><span class="lineno"> 5972</span>  ctl-&gt;met_zstd_level =</div>
-<div class="line"><span class="lineno"> 5973</span>    (<span class="keywordtype">int</span>) <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(filename, argc, argv, &quot;MET_ZSTD_LEVEL&quot;, -1, &quot;0&quot;, NULL);</div>
+<div class="line"><span class="lineno"> 5973</span>    (<span class="keywordtype">int</span>) <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(filename, argc, argv, &quot;MET_ZSTD_LEVEL&quot;, -1, &quot;-3&quot;, NULL);</div>
 <div class="line"><span class="lineno"> 5974</span>  ctl-&gt;met_zstd_nworkers =</div>
 <div class="line"><span class="lineno"> 5975</span>    (<span class="keywordtype">int</span>) <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(filename, argc, argv, &quot;MET_ZSTD_NWORKERS&quot;, -1, &quot;4&quot;, NULL);</div>
 <div class="line"><span class="lineno"> 5976</span>  for (<span class="keywordtype">int</span> i = 0; i &lt; <a class="code hl_define" href="mptrac_8h.html#a1d2af32106d1fe82729714d3aa28a1c4">METVAR</a>; i++) {</div>
@@ -20110,7 +20110,7 @@ If the appropriate compression support is not compiled, an error message is gene
 <div class="ttc" id="amptrac_8h_html_a8f9a27879df0669b5fee661d8a858f8a"><div class="ttname"><a href="mptrac_8h.html#a8f9a27879df0669b5fee661d8a858f8a">compress_zfp</a></div><div class="ttdeci">void compress_zfp(const char *varname, float *array, const int nx, const int ny, const int nz, const double *plev, const int precision, const double tolerance, const int decompress, FILE *level_log, FILE *inout)</div><div class="ttdoc">Compresses or decompresses a 3D array of floats using the ZFP library.</div></div>
 <div class="ttc" id="amptrac_8h_html_ae50ac73b95c0e3baa03e97f858724b59"><div class="ttname"><a href="mptrac_8h.html#ae50ac73b95c0e3baa03e97f858724b59">compress_sz3</a></div><div class="ttdeci">void compress_sz3(const char *varname, float *array, const int nx, const int ny, const int nz, const double *plev, const int precision, const double tolerance, const int decompress, FILE *level_log, FILE *inout)</div><div class="ttdoc">Compresses or decompresses a 3-D float array using the SZ3 library.</div></div>
 <div class="ttc" id="astructctl__t_html_a07e4c5ab7f01cf74531b0b6340c8420f"><div class="ttname"><a href="structctl__t.html#a07e4c5ab7f01cf74531b0b6340c8420f">ctl_t::met_zstd_nworkers</a></div><div class="ttdeci">int met_zstd_nworkers</div><div class="ttdoc">ZSTD number of worker threads (0=single-threaded, default=4).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02570">mptrac.h:2570</a></div></div>
-<div class="ttc" id="astructctl__t_html_a1601f7c2d8e163790e3a81cc647b7756"><div class="ttname"><a href="structctl__t.html#a1601f7c2d8e163790e3a81cc647b7756">ctl_t::met_zstd_level</a></div><div class="ttdeci">int met_zstd_level</div><div class="ttdoc">ZSTD compression level (from -5 to 22).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02567">mptrac.h:2567</a></div></div>
+<div class="ttc" id="astructctl__t_html_a1601f7c2d8e163790e3a81cc647b7756"><div class="ttname"><a href="structctl__t.html#a1601f7c2d8e163790e3a81cc647b7756">ctl_t::met_zstd_level</a></div><div class="ttdeci">int met_zstd_level</div><div class="ttdoc">ZSTD compression level (from -5 to 22, default=-3).</div><div class="ttdef"><b>Definition:</b> <a href="mptrac_8h_source.html#l02567">mptrac.h:2567</a></div></div>
 </div><!-- fragment --><div class="dynheader">
 Here is the call graph for this function:</div>
 <div class="dyncontent">
