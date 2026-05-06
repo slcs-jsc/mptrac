@@ -2566,6 +2566,9 @@ typedef struct {
   /*! ZSTD compression level (from -5 to 22). */
   int met_zstd_level;
 
+  /*! ZSTD number of worker threads (0=single-threaded, default=4). */
+  int met_zstd_nworkers;
+
   /*! ZFP compression precision. */
   int met_zfp_prec[METVAR];
 
@@ -4242,11 +4245,13 @@ void compress_zfp(
  * @param[in]  plev        Pressure levels corresponding to the vertical levels.
  * @param[in]  decompress  If non-zero, perform decompression; otherwise, perform compression.
  * @param[in]  level       Compression level (-5 to 22). Use 0 for the ZSTD default.
+ * @param[in]  nworkers    Number of ZSTD worker threads (0=single-threaded).
  * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable it.
  * @param[in,out] inout    File pointer for input/output. Used for reading or writing compressed data.
  *
- * @note This function uses ZSTD's simple one-shot compression API (ZSTD_compress),
- *       which does not support multithreaded compression.
+ * @note This function uses ZSTD's advanced compression API (ZSTD_compress2),
+ *       which supports optional multithreaded compression via @p nworkers.
+ *       MPTRAC currently uses 4 worker threads by default.
  *
  * @warning The function allocates temporary memory for the compressed buffer
  *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
@@ -4261,6 +4266,7 @@ void compress_zstd(
   const double *plev,
   const int decompress,
   const int level,
+  const int nworkers,
   FILE * level_log,
   FILE * inout);
 

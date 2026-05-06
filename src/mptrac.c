@@ -1312,6 +1312,7 @@ void compress_zstd(
   const double *plev,
   const int decompress,
   const int level,
+  const int nworkers,
   FILE *level_log,
   FILE *inout) {
 
@@ -1349,6 +1350,7 @@ void compress_zstd(
   /* Compress array and output compressed stream... */
   else {
     float *tmp_org, *tmp_zstd, *tmp_all;
+    ZSTD_CCtx *cctx;
 
     ALLOC(tmp_org, float,
 	  nxy);
@@ -1357,10 +1359,23 @@ void compress_zstd(
     ALLOC(tmp_all, float,
 	  n);
 
+    cctx = ZSTD_createCCtx();
+    if (!cctx)
+      ERRMSG("Cannot create ZSTD context!");
+
+    if (ZSTD_isError(ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel,
+					    level)))
+      ERRMSG("Cannot set ZSTD compression level!");
+
+    if (ZSTD_isError(ZSTD_CCtx_setParameter(cctx, ZSTD_c_nbWorkers,
+					    nworkers)))
+      ERRMSG("Cannot set ZSTD worker count!");
+
     const double t0 = omp_get_wtime();
-    compsize = ZSTD_compress(compr, comprLen, uncompr, uncomprLen, level);
+    compsize = ZSTD_compress2(cctx, compr, comprLen, uncompr, uncomprLen);
     const double t_comp = omp_get_wtime() - t0;
     if (ZSTD_isError(compsize)) {
+      ZSTD_freeCCtx(cctx);
       ERRMSG("Compression failed!");
     } else {
       FWRITE(&compsize, size_t,
@@ -1395,13 +1410,15 @@ void compress_zstd(
     }
 
     LOG(2, "Write 3-D variable: %s"
-	" (ZSTD, LEVEL=%d, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" (ZSTD, LEVEL=%d, NWORKERS=%d, RATIO=%g, BPV=%g, T_COMP=%g s,"
+	" V_COMP=%g MiB/s,"
 	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
-	varname, level, ((double) uncomprLen) / (double) compsize,
+	varname, level, nworkers, ((double) uncomprLen) / (double) compsize,
 	(8. * (double) compsize) / (double) n, t_comp,
 	compress_speed_mib(uncomprLen, t_comp), t_decomp,
 	compress_speed_mib(uncomprLen, t_decomp));
 
+    ZSTD_freeCCtx(cctx);
     free(tmp_org);
     free(tmp_zstd);
     free(tmp_all);
@@ -5954,6 +5971,8 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_NC_QUANT", -1, "0", NULL);
   ctl->met_zstd_level =
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_LEVEL", -1, "0", NULL);
+  ctl->met_zstd_nworkers =
+    (int) scan_ctl(filename, argc, argv, "MET_ZSTD_NWORKERS", -1, "4", NULL);
   for (int i = 0; i < METVAR; i++) {
     char defprec_zfp[LEN] = "8", deftol_zfp[LEN] = "0.0";
     char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
@@ -7913,7 +7932,8 @@ void read_met_bin_3d(
   else if (ctl->met_type == 4) {
 #ifdef ZSTD
     compress_zstd(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, met->p, 1, ctl->met_zstd_level, NULL, in);
+		  (size_t) met->np, met->p, 1, ctl->met_zstd_level,
+		  ctl->met_zstd_nworkers, NULL, in);
 #else
     ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
@@ -12859,8 +12879,8 @@ void write_met_bin_3d(
 #ifdef ZSTD
   else if (ctl->met_type == 4)
     compress_zstd(varname, help, (size_t) (met->ny * met->nx),
-		  (size_t) met->np, met->p, 0, ctl->met_zstd_level, level_log,
-		  out);
+		  (size_t) met->np, met->p, 0, ctl->met_zstd_level,
+		  ctl->met_zstd_nworkers, level_log, out);
 #endif
 
   /* Write cmultiscale data... */
