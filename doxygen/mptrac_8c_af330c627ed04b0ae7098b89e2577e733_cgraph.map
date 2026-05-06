@@ -7,7 +7,7 @@
 <area shape="rect" id="node6" href="$mptrac_8c.html#a3fe8fe8beb8d5b8a42795cf51b43d2e1" title="Compresses or decompresses a 3D array of floats." alt="" coords="355,56,462,83"/>
 <area shape="rect" id="node10" href="$mptrac_8h.html#ae50ac73b95c0e3baa03e97f858724b59" title="Compresses or decompresses a 3&#45;D float array using the SZ3 library." alt="" coords="355,107,462,133"/>
 <area shape="rect" id="node11" href="$mptrac_8h.html#a8f9a27879df0669b5fee661d8a858f8a" title="Compresses or decompresses a 3D array of floats using the ZFP library." alt="" coords="357,157,460,184"/>
-<area shape="rect" id="node12" href="$mptrac_8h.html#ade91b6ced1b42fe5fdd2706de95398f9" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="353,208,464,235"/>
+<area shape="rect" id="node12" href="$mptrac_8h.html#a2d5151bcbef31bf3f4069847391f359b" title="Compresses or decompresses a float array using Zstandard (ZSTD)." alt="" coords="353,208,464,235"/>
 <area shape="rect" id="node7" href="$mptrac_8c.html#a62cc993134ab4b67165333530e895b71" title="Compute error statistics between original and reconstructed data." alt="" coords="513,5,661,32"/>
 <area shape="rect" id="node8" href="$mptrac_8c.html#a87088b5ccf95f03d986f1bdd570b5b2f" title="Calculates the standard deviation of a set of data." alt="" coords="709,31,771,57"/>
 <area shape="rect" id="node9" href="$mptrac_8c.html#a46417375cd04484401aaf5ef4efff304" title="Calculate compression throughput in MiB/s." alt="" coords="512,107,661,133"/>
