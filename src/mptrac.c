@@ -5970,7 +5970,7 @@ void mptrac_read_ctl(
   ctl->met_nc_quant =
     (int) scan_ctl(filename, argc, argv, "MET_NC_QUANT", -1, "0", NULL);
   ctl->met_zstd_level =
-    (int) scan_ctl(filename, argc, argv, "MET_ZSTD_LEVEL", -1, "0", NULL);
+    (int) scan_ctl(filename, argc, argv, "MET_ZSTD_LEVEL", -1, "-3", NULL);
   ctl->met_zstd_nworkers =
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_NWORKERS", -1, "4", NULL);
   for (int i = 0; i < METVAR; i++) {

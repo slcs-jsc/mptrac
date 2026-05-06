@@ -2563,7 +2563,7 @@ typedef struct {
   /*! Number of digits for quantization of netCDF meteo files (0=off). */
   int met_nc_quant;
 
-  /*! ZSTD compression level (from -5 to 22). */
+  /*! ZSTD compression level (from -5 to 22, default=-3). */
   int met_zstd_level;
 
   /*! ZSTD number of worker threads (0=single-threaded, default=4). */
@@ -4251,7 +4251,7 @@ void compress_zfp(
  *
  * @note This function uses ZSTD's advanced compression API (ZSTD_compress2),
  *       which supports optional multithreaded compression via @p nworkers.
- *       MPTRAC currently uses 4 worker threads by default.
+ *       MPTRAC currently uses compression level -3 and 4 worker threads by default.
  *
  * @warning The function allocates temporary memory for the compressed buffer
  *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
