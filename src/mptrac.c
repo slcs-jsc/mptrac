@@ -537,7 +537,8 @@ void compress_cms(
     /* Init... */
     cms_module_t *cms_ptr[EP];
     cms_sol_t *cms_sol[EP];
-    double rho[EP], mean[EP], stddev[EP], min[EP], max[EP], nrmse[EP];
+    double rho[EP], mean_err[EP], stddev_err[EP], min_err[EP], max_err[EP];
+    double mean_org[EP], range_org[EP], nrmse[EP];
     double ratio[EP], bpv[EP];
 
     /* Loop over batches... */
@@ -642,8 +643,9 @@ void compress_cms(
 	if (level_log) {
 	  ratio[ip] = cms_compression_rate(cms_ptr[ip], cms_sol[ip]);
 	  bpv[ip] = 32. / ratio[ip];
-	  compress_error_stats(tmp_org, tmp_cms, nxy, &mean[ip], &stddev[ip],
-			       &min[ip], &max[ip], &nrmse[ip]);
+	  compress_error_stats(tmp_org, tmp_cms, nxy, &mean_err[ip],
+			       &stddev_err[ip], &min_err[ip], &max_err[ip],
+			       &nrmse[ip], &mean_org[ip], &range_org[ip]);
 	  rho[ip] = gsl_stats_float_correlation(tmp_org, 1, tmp_cms, 1, nxy);
 	}
 
@@ -669,10 +671,11 @@ void compress_cms(
       const size_t nbytes = nx * ny * np * sizeof(float);
       for (size_t ip = 0; ip < np; ip++)
 	fprintf(level_log,
-		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		"CMS", varname, (unsigned long) ip, plev[ip], ratio[ip],
-		bpv[ip], rho[ip], mean[ip], stddev[ip], min[ip], max[ip],
-		nrmse[ip], t_coars, compress_speed_mib(nbytes, t_coars),
+		bpv[ip], rho[ip], mean_err[ip], stddev_err[ip], min_err[ip],
+		max_err[ip], mean_org[ip], range_org[ip], nrmse[ip], t_coars,
+		compress_speed_mib(nbytes, t_coars),
 		t_eval, compress_speed_mib(nbytes, t_eval));
     }
 
@@ -710,7 +713,9 @@ void compress_error_stats(
   double *stddev,
   double *min,
   double *max,
-  double *nrmse) {
+  double *nrmse,
+  double *org_mean,
+  double *range) {
 
   double avg = 0, m2 = 0, err_min = 0, err_max = 0, rmse = 0;
   double org_min = 0, org_max = 0;
@@ -739,6 +744,11 @@ void compress_error_stats(
   *stddev = (n > 1 ? sqrt(m2 / ((double) n - 1.)) : 0);
   *min = err_min;
   *max = err_max;
+  *org_mean = 0;
+  for (size_t i = 0; i < n; i++)
+    *org_mean += (double) org[i];
+  *org_mean /= (double) n;
+  *range = org_max - org_min;
   *nrmse = ((org_max - org_min) > 0
 	    ? sqrt(rmse / (double) n) / (org_max - org_min)
 	    : NAN);
@@ -762,11 +772,13 @@ void compress_log_header(
 	  "# $9 = standard deviation of compression error [-]\n"
 	  "# $10 = minimum compression error [-]\n"
 	  "# $11 = maximum compression error [-]\n"
-	  "# $12 = normalized root mean square error [-]\n"
-	  "# $13 = compression time [s]\n"
-	  "# $14 = compression speed [MiB/s]\n"
-	  "# $15 = decompression time [s]\n"
-	  "# $16 = decompression speed [MiB/s]\n\n");
+	  "# $12 = mean value of original field [-]\n"
+	  "# $13 = value range of original field [-]\n"
+	  "# $14 = normalized root mean square error [-]\n"
+	  "# $15 = compression time [s]\n"
+	  "# $16 = compression speed [MiB/s]\n"
+	  "# $17 = decompression time [s]\n"
+	  "# $18 = decompression speed [MiB/s]\n\n");
 }
 
 /*****************************************************************************/
@@ -788,10 +800,12 @@ void compress_log_level(
   const float *cmp) {
   static FILE *last_out = NULL;
   static char last_var[LEN] = "";
-  double mean, stddev, min, max, nrmse, rho_out = rho;
+  double mean_err, stddev_err, min_err, max_err;
+  double nrmse, mean_org, range_org, rho_out = rho;
 
   /* Calculate error statistics... */
-  compress_error_stats(org, cmp, n, &mean, &stddev, &min, &max, &nrmse);
+  compress_error_stats(org, cmp, n, &mean_err, &stddev_err, &min_err,
+		       &max_err, &nrmse, &mean_org, &range_org);
   if (isnan(rho_out))
     rho_out = gsl_stats_float_correlation(org, 1, cmp, 1, n);
 
@@ -804,9 +818,10 @@ void compress_log_level(
     fprintf(out, "\n");
   snprintf(last_var, LEN, "%s", varname);
   fprintf(out,
-	  "%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+	  "%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 	  codec, varname, (unsigned long) lev, plev, ratio, bpv, rho_out,
-	  mean, stddev, min, max, nrmse, t_comp,
+	  mean_err, stddev_err, min_err, max_err, mean_org, range_org, nrmse,
+	  t_comp,
 	  compress_speed_mib(nbytes, t_comp), t_decomp,
 	  compress_speed_mib(nbytes, t_decomp));
 }
@@ -872,6 +887,7 @@ void compress_pck(
     float *tmp_org, *tmp_pck;
     double t_comp_sum = 0, t_decomp_sum = 0;
     double rho[EP], mean[EP], stddev[EP], min[EP], max[EP], nrmse[EP];
+    double org_mean[EP], range[EP];
 
     /* Allocate... */
     ALLOC(tmp_org, float,
@@ -927,7 +943,8 @@ void compress_pck(
 
       if (level_log) {
 	compress_error_stats(tmp_org, tmp_pck, nxy, &mean[iz], &stddev[iz],
-			     &min[iz], &max[iz], &nrmse[iz]);
+			     &min[iz], &max[iz], &nrmse[iz], &org_mean[iz],
+			     &range[iz]);
 	rho[iz] = gsl_stats_float_correlation(tmp_org, 1, tmp_pck, 1, nxy);
       }
     }
@@ -943,9 +960,10 @@ void compress_pck(
       const double t_decomp = t_decomp_sum / (double) nz;
       for (size_t iz = 0; iz < nz; iz++)
 	fprintf(level_log,
-		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
+		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
 		"PCK", varname, (unsigned long) iz, plev[iz], ratio, bpv,
-		rho[iz], mean[iz], stddev[iz], min[iz], max[iz], nrmse[iz],
+		rho[iz], mean[iz], stddev[iz], min[iz], max[iz], org_mean[iz],
+		range[iz], nrmse[iz],
 		t_comp, compress_speed_mib(nxy * sizeof(float), t_comp),
 		t_decomp, compress_speed_mib(nxy * sizeof(float), t_decomp));
     }
@@ -5937,21 +5955,38 @@ void mptrac_read_ctl(
   ctl->met_zstd_level =
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_LEVEL", -1, "0", NULL);
   for (int i = 0; i < METVAR; i++) {
-    char defprec[LEN] = "0", deftol[LEN] = "0.0";
-    if (i == 0)			/* geopotential height */
-      sprintf(deftol, "0.5");
-    else if (i == 1)		/* temperature */
-      sprintf(deftol, "5.0");
-    else			/* other variables */
-      sprintf(defprec, "8");
+    char defprec_zfp[LEN] = "9", deftol_zfp[LEN] = "0.0";
+    char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
+    if (i == 0) {		/* geopotential height */
+      sprintf(defprec_zfp, "12");
+      sprintf(defprec_sz3, "10");
+    } else if (i == 1) {	/* temperature */
+      sprintf(defprec_zfp, "12");
+    } else if (i == 4) {	/* vertical wind */
+      sprintf(defprec_sz3, "8");
+    } else if (i == 5) {	/* potential vorticity */
+      sprintf(defprec_sz3, "9");
+    } else if (i == 6) {	/* water vapor */
+      sprintf(defprec_zfp, "10");
+      sprintf(defprec_sz3, "8");
+    } else if (i == 7) {	/* ozone */
+      sprintf(defprec_zfp, "11");
+      sprintf(defprec_sz3, "8");
+    } else if (i >= 8 && i <= 11) {	/* cloud water fields */
+      sprintf(defprec_sz3, "8");
+    } else if (i == 12) {	/* cloud cover */
+      sprintf(defprec_zfp, "10");
+    }
     ctl->met_zfp_prec[i] =
-      (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec, NULL);
+      (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec_zfp,
+		     NULL);
     ctl->met_zfp_tol[i] =
-      scan_ctl(filename, argc, argv, "MET_ZFP_TOL", i, deftol, NULL);
+      scan_ctl(filename, argc, argv, "MET_ZFP_TOL", i, deftol_zfp, NULL);
     ctl->met_sz3_prec[i] =
-      (int) scan_ctl(filename, argc, argv, "MET_SZ3_PREC", i, defprec, NULL);
+      (int) scan_ctl(filename, argc, argv, "MET_SZ3_PREC", i, defprec_sz3,
+		     NULL);
     ctl->met_sz3_tol[i] =
-      scan_ctl(filename, argc, argv, "MET_SZ3_TOL", i, deftol, NULL);
+      scan_ctl(filename, argc, argv, "MET_SZ3_TOL", i, deftol_sz3, NULL);
   }
   /* Scan compression diagnostics file... */
   scan_ctl(filename, argc, argv, "MET_COMP_LOGFILE", -1, "-",
@@ -6555,7 +6590,6 @@ int mptrac_read_met(
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
-
 #ifdef ECCODES
     /* Read grib data... */
     else if (ctl->met_type == 6) {

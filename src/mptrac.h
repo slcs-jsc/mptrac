@@ -3961,16 +3961,19 @@ double compress_speed_mib(
  *
  * The error is defined element-wise as @p cmp - @p org. The routine
  * returns the mean error, standard deviation, minimum, maximum, and the
- * normalized root-mean-square error (NRMSE).
+ * normalized root-mean-square error (NRMSE), together with the mean value
+ * and value range of the original field.
  *
  * @param[in]  org     Original values.
  * @param[in]  cmp     Reconstructed/compressed values.
  * @param[in]  n       Number of elements.
- * @param[out] mean    Mean error.
- * @param[out] stddev  Standard deviation of the error.
- * @param[out] min     Minimum error.
- * @param[out] max     Maximum error.
- * @param[out] nrmse   Normalized root-mean-square error.
+ * @param[out] mean      Mean error.
+ * @param[out] stddev    Standard deviation of the error.
+ * @param[out] min       Minimum error.
+ * @param[out] max       Maximum error.
+ * @param[out] nrmse     Normalized root-mean-square error.
+ * @param[out] org_mean  Mean value of the original field.
+ * @param[out] range     Value range of the original field.
  *
  * @author Lars Hoffmann
  */
@@ -3982,7 +3985,9 @@ void compress_error_stats(
   double *stddev,
   double *min,
   double *max,
-  double *nrmse);
+  double *nrmse,
+  double *org_mean,
+  double *range);
 
 /**
  * @brief Write the ASCII header for per-level compression diagnostics.

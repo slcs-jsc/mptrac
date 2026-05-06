@@ -16,19 +16,13 @@ $trac/met_conv - ../data/ei_2011_06_05_00.nc 0 data/ei_2011_06_05_00.bin 1 \
 
 # Convert from binary to compressed data...
 $trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.nc 0
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.pck 2
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.zfp 3
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.zstd 4
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.sz3 7
-
-# Generate per-level compression logfiles without affecting reference products...
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/logtest_2011_06_05_00.pck 2 \
+$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.pck 2 \
 	       MET_COMP_LOGFILE data/ei_2011_06_05_00.pck.log
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/logtest_2011_06_05_00.zfp 3 \
+$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.zfp 3 \
 	       MET_COMP_LOGFILE data/ei_2011_06_05_00.zfp.log
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/logtest_2011_06_05_00.zstd 4 \
+$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.zstd 4 \
 	       MET_COMP_LOGFILE data/ei_2011_06_05_00.zstd.log
-$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/logtest_2011_06_05_00.sz3 7 \
+$trac/met_conv - data/ei_2011_06_05_00.bin 1 data/ei_2011_06_05_00.sz3 7 \
 	       MET_COMP_LOGFILE data/ei_2011_06_05_00.sz3.log
 
 # Convert from compressed to binary data...
