@@ -1861,7 +1861,9 @@ Here is the call graph for this function:</div>
     <tr><td class="paramname">array</td><td>Pointer to the 3D array of floats to be compressed or decompressed. </td></tr>
     <tr><td class="paramname">nxy</td><td>The number of elements in the first two dimensions of the array. </td></tr>
     <tr><td class="paramname">nz</td><td>The number of elements in the third dimension of the array. </td></tr>
+    <tr><td class="paramname">plev</td><td>Pressure levels corresponding to the third dimension of the array; used only for per-level compression diagnostics. </td></tr>
     <tr><td class="paramname">decompress</td><td>If non-zero, the function will decompress the data; otherwise, it will compress the data. </td></tr>
+    <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging. </td></tr>
     <tr><td class="paramname">inout</td><td>File pointer for input or output operations. It is used for reading compressed data during decompression and writing compressed data during compression.</td></tr>
   </table>
   </dd>
@@ -21663,7 +21665,8 @@ Here is the call graph for this function:</div>
     <tr><td class="paramname">met</td><td>A pointer to a <code><a class="el" href="structmet__t.html" title="Meteo data structure.">met_t</a></code> structure containing meteorological data. </td></tr>
     <tr><td class="paramname">var</td><td>An array of floats representing the 3-dimensional variable data. </td></tr>
     <tr><td class="paramname">varname</td><td>A string containing the name of the variable being written. </td></tr>
-    <tr><td class="paramname">metvar</td><td>Index of the meteorological variable, used to select codec-specific compression settings.</td></tr>
+    <tr><td class="paramname">metvar</td><td>Index of the meteorological variable, used to select codec-specific compression settings. </td></tr>
+    <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging.</td></tr>
   </table>
   </dd>
 </dl>

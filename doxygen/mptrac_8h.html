@@ -6633,6 +6633,7 @@ Here is the call graph for this function:</div>
     <tr><td class="paramdir">[in]</td><td class="paramname">np</td><td>Number of vertical levels (pressure levels). </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">plev</td><td>Pressure levels array of length <code>np</code> (used for logging). </td></tr>
     <tr><td class="paramdir">[in]</td><td class="paramname">decompress</td><td>If non-zero, read CMS stream from <code>inout</code> and reconstruct <code>array</code>. If zero, build CMS solutions from <code>array</code> and write them to <code>inout</code>. </td></tr>
+    <tr><td class="paramdir">[in,out]</td><td class="paramname">level_log</td><td>Optional output stream for per-level compression diagnostics, or <code>NULL</code> to disable per-level logging. </td></tr>
     <tr><td class="paramdir">[in,out]</td><td class="paramname">inout</td><td>Binary stream used for CMS I/O:<ul>
 <li>Decompress mode: read from this stream.</li>
 <li>Compress mode: write to this stream.</li>
@@ -6719,7 +6720,9 @@ The function allocates temporary per-level buffers in compression mode and frees
     <tr><td class="paramname">array</td><td>Pointer to the 3D array of floats to be compressed or decompressed. </td></tr>
     <tr><td class="paramname">nxy</td><td>The number of elements in the first two dimensions of the array. </td></tr>
     <tr><td class="paramname">nz</td><td>The number of elements in the third dimension of the array. </td></tr>
+    <tr><td class="paramname">plev</td><td>Pressure levels corresponding to the third dimension of the array; used only for per-level compression diagnostics. </td></tr>
     <tr><td class="paramname">decompress</td><td>If non-zero, the function will decompress the data; otherwise, it will compress the data. </td></tr>
+    <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging. </td></tr>
     <tr><td class="paramname">inout</td><td>File pointer for input or output operations. It is used for reading compressed data during decompression and writing compressed data during compression.</td></tr>
   </table>
   </dd>
@@ -7012,9 +7015,11 @@ Here is the call graph for this function:</div>
     <tr><td class="paramname">nx</td><td>Size of the first dimension. </td></tr>
     <tr><td class="paramname">ny</td><td>Size of the second dimension. </td></tr>
     <tr><td class="paramname">nz</td><td>Size of the third dimension. </td></tr>
+    <tr><td class="paramname">plev</td><td>Pressure levels corresponding to the third dimension of the array; used only for per-level compression diagnostics. </td></tr>
     <tr><td class="paramname">precision</td><td>Relative precision in bits (used if &gt; 0; tolerance must be 0). </td></tr>
     <tr><td class="paramname">tolerance</td><td>Absolute error bound (used if &gt; 0; precision must be 0). </td></tr>
     <tr><td class="paramname">decompress</td><td>Non-zero to decompress data from <code>inout</code> into <code>array</code>; zero to compress <code>array</code> into <code>inout</code>. </td></tr>
+    <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging. </td></tr>
     <tr><td class="paramname">inout</td><td>File stream for reading/writing compressed data.</td></tr>
   </table>
   </dd>
@@ -7124,9 +7129,11 @@ SZ_decompress</dd></dl>
     <tr><td class="paramname">nx</td><td>The number of elements in the x-dimension of the array. </td></tr>
     <tr><td class="paramname">ny</td><td>The number of elements in the y-dimension of the array. </td></tr>
     <tr><td class="paramname">nz</td><td>The number of elements in the z-dimension of the array. </td></tr>
+    <tr><td class="paramname">plev</td><td>Pressure levels corresponding to the z-dimension of the array; used only for per-level compression diagnostics. </td></tr>
     <tr><td class="paramname">precision</td><td>The precision parameter for ZFP compression. If greater than 0, it sets the fixed precision mode. </td></tr>
     <tr><td class="paramname">tolerance</td><td>The tolerance parameter for ZFP compression. If greater than 0 and precision is 0, it sets the fixed accuracy mode. </td></tr>
     <tr><td class="paramname">decompress</td><td>If non-zero, the function will decompress the data; otherwise, it will compress the data. </td></tr>
+    <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging. </td></tr>
     <tr><td class="paramname">inout</td><td>File pointer for input or output operations. It is used for reading compressed data during decompression and writing compressed data during compression.</td></tr>
   </table>
   </dd>
@@ -27978,7 +27985,8 @@ Here is the call graph for this function:</div>
     <tr><td class="paramname">met</td><td>A pointer to a <code><a class="el" href="structmet__t.html" title="Meteo data structure.">met_t</a></code> structure containing meteorological data. </td></tr>
     <tr><td class="paramname">var</td><td>An array of floats representing the 3-dimensional variable data. </td></tr>
     <tr><td class="paramname">varname</td><td>A string containing the name of the variable being written. </td></tr>
-    <tr><td class="paramname">metvar</td><td>Index of the meteorological variable, used to select codec-specific compression settings.</td></tr>
+    <tr><td class="paramname">metvar</td><td>Index of the meteorological variable, used to select codec-specific compression settings. </td></tr>
+    <tr><td class="paramname">level_log</td><td>Optional file stream for per-level compression diagnostics, or <code>NULL</code> to disable logging.</td></tr>
   </table>
   </dd>
 </dl>
