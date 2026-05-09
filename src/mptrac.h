@@ -4082,6 +4082,8 @@ void compress_log_level(
  * @param[in]  plev       Pressure levels array of length @p np (used for logging).
  * @param[in]  decompress If non-zero, read CMS stream from @p inout and reconstruct @p array.
  *                        If zero, build CMS solutions from @p array and write them to @p inout.
+ * @param[in,out] level_log Optional output stream for per-level compression diagnostics,
+ *                          or @c NULL to disable per-level logging.
  * @param[in,out] inout   Binary stream used for CMS I/O:
  *                        - Decompress mode: read from this stream.
  *                        - Compress mode:   write to this stream.
@@ -4118,7 +4120,11 @@ void compress_cms(
  * @param array Pointer to the 3D array of floats to be compressed or decompressed.
  * @param nxy The number of elements in the first two dimensions of the array.
  * @param nz The number of elements in the third dimension of the array.
+ * @param plev Pressure levels corresponding to the third dimension of the array;
+ * used only for per-level compression diagnostics.
  * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param level_log Optional file stream for per-level compression diagnostics,
+ * or @c NULL to disable logging.
  * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
  * and writing compressed data during compression.
  *
@@ -4158,10 +4164,14 @@ void compress_pck(
  * @param nx         Size of the first dimension.
  * @param ny         Size of the second dimension.
  * @param nz         Size of the third dimension.
+ * @param plev       Pressure levels corresponding to the third dimension of the array;
+ *                   used only for per-level compression diagnostics.
  * @param precision  Relative precision in bits (used if > 0; tolerance must be 0).
  * @param tolerance  Absolute error bound (used if > 0; precision must be 0).
  * @param decompress Non-zero to decompress data from @p inout into @p array;
  *                   zero to compress @p array into @p inout.
+ * @param level_log  Optional file stream for per-level compression diagnostics,
+ *                   or @c NULL to disable logging.
  * @param inout      File stream for reading/writing compressed data.
  *
  * @note Exactly one of @p precision or @p tolerance must be set to a positive value.
@@ -4203,9 +4213,13 @@ void compress_sz3(
  * @param nx The number of elements in the x-dimension of the array.
  * @param ny The number of elements in the y-dimension of the array.
  * @param nz The number of elements in the z-dimension of the array.
+ * @param plev Pressure levels corresponding to the z-dimension of the array;
+ * used only for per-level compression diagnostics.
  * @param precision The precision parameter for ZFP compression. If greater than 0, it sets the fixed precision mode.
  * @param tolerance The tolerance parameter for ZFP compression. If greater than 0 and precision is 0, it sets the fixed accuracy mode.
  * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param level_log Optional file stream for per-level compression diagnostics,
+ * or @c NULL to disable logging.
  * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
  * and writing compressed data during compression.
  *
@@ -9338,6 +9352,8 @@ void write_met_bin_2d(
  * @param varname A string containing the name of the variable being written.
  * @param metvar Index of the meteorological variable, used to select
  * codec-specific compression settings.
+ * @param level_log Optional file stream for per-level compression diagnostics,
+ * or @c NULL to disable logging.
  *
  * The function performs the following steps:
  * - Allocates memory for a temporary buffer to hold the variable data.
