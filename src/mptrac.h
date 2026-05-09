@@ -2576,6 +2576,9 @@ typedef struct {
   /*! LZ4 acceleration factor (>=1, default=8). */
   int met_lz4_accel;
 
+  /*! Apply an additional ZSTD compression step to PCK payloads (0=off, 1=on). */
+  int met_pck_zstd;
+
   /*! ZFP compression precision. */
   int met_zfp_prec[METVAR];
 
@@ -4123,6 +4126,9 @@ void compress_cms(
  * @param plev Pressure levels corresponding to the third dimension of the array;
  * used only for per-level compression diagnostics.
  * @param decompress If non-zero, the function will decompress the data; otherwise, it will compress the data.
+ * @param pck_zstd If non-zero, an additional ZSTD compression layer is applied to or expected around the packed PCK payload.
+ * @param zstd_level ZSTD compression level used when @p pck_zstd is enabled.
+ * @param zstd_nworkers ZSTD worker thread count used when @p pck_zstd is enabled.
  * @param level_log Optional file stream for per-level compression diagnostics,
  * or @c NULL to disable logging.
  * @param inout File pointer for input or output operations. It is used for reading compressed data during decompression 
@@ -4136,6 +4142,7 @@ void compress_cms(
  *   - Computes the minimum and maximum values for each slice in the third dimension.
  *   - Calculates scaling factors and offsets based on these values.
  *   - Compresses the data by converting floats to unsigned shorts using the scaling factors and offsets.
+ *   - Optionally applies an additional ZSTD compression step to the packed PCK payload.
  *   - Writes the scaling factors, offsets, and compressed data to the file.
  *
  * The function allocates memory for the compressed data array and frees it before returning.
@@ -4149,6 +4156,9 @@ void compress_pck(
   const size_t nz,
   const double *plev,
   const int decompress,
+  const int pck_zstd,
+  const int zstd_level,
+  const int zstd_nworkers,
   FILE * level_log,
   FILE * inout);
 

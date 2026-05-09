@@ -828,6 +828,76 @@ void compress_log_level(
 
 /*****************************************************************************/
 
+#ifdef ZSTD
+static const uint64_t pck_zstd_magic = UINT64_C(0x50434b5a53544431);
+
+static size_t compress_zstd_buffer(
+  const void *src,
+  const size_t src_len,
+  const int level,
+  const int nworkers,
+  void **dst_out,
+  double *t_comp) {
+
+  const size_t dst_cap = ZSTD_compressBound(src_len);
+  void *dst = calloc(dst_cap, 1);
+  ZSTD_CCtx *cctx;
+
+  if (!dst)
+    ERRMSG("Memory allocation failed!");
+
+  cctx = ZSTD_createCCtx();
+  if (!cctx) {
+    free(dst);
+    ERRMSG("Cannot create ZSTD context!");
+  }
+
+  if (ZSTD_isError(ZSTD_CCtx_setParameter(cctx, ZSTD_c_compressionLevel,
+					  level))) {
+    ZSTD_freeCCtx(cctx);
+    free(dst);
+    ERRMSG("Cannot set ZSTD compression level!");
+  }
+
+  if (ZSTD_isError(ZSTD_CCtx_setParameter(cctx, ZSTD_c_nbWorkers, nworkers))) {
+    ZSTD_freeCCtx(cctx);
+    free(dst);
+    ERRMSG("Cannot set ZSTD worker count!");
+  }
+
+  const double t0 = omp_get_wtime();
+  const size_t dst_len = ZSTD_compress2(cctx, dst, dst_cap, src, src_len);
+  *t_comp = omp_get_wtime() - t0;
+
+  ZSTD_freeCCtx(cctx);
+
+  if (ZSTD_isError(dst_len)) {
+    free(dst);
+    ERRMSG("PCK ZSTD compression failed!");
+  }
+
+  *dst_out = dst;
+  return dst_len;
+}
+
+static void decompress_zstd_buffer(
+  const void *src,
+  const size_t src_len,
+  void *dst,
+  const size_t dst_len,
+  double *t_decomp) {
+
+  const double t0 = omp_get_wtime();
+  const size_t out_len = ZSTD_decompress(dst, dst_len, src, src_len);
+  *t_decomp = omp_get_wtime() - t0;
+
+  if (ZSTD_isError(out_len) || out_len != dst_len)
+    ERRMSG("PCK ZSTD decompression failed or size mismatch!");
+}
+#endif
+
+/*****************************************************************************/
+
 void compress_pck(
   const char *varname,
   float *array,
@@ -835,13 +905,17 @@ void compress_pck(
   const size_t nz,
   const double *plev,
   const int decompress,
+  const int pck_zstd,
+  const int zstd_level,
+  const int zstd_nworkers,
   FILE *level_log,
   FILE *inout) {
 
   double vmin[EP], vmax[EP], off[EP], scl[EP];
   unsigned short *sarray;
-  const double cr = (double) (nxy * nz * sizeof(float))
-    / (double) (nxy * nz * sizeof(unsigned short) + 2 * nz * sizeof(double));
+  const size_t payload_len = 2 * nz * sizeof(double)
+    + nxy * nz * sizeof(unsigned short);
+  size_t stored_len = payload_len;
 
   /* Allocate... */
   ALLOC(sarray, unsigned short,
@@ -849,17 +923,49 @@ void compress_pck(
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
+    double t_zstd = 0.0;
 
     /* Read data... */
-    FREAD(&scl, double,
-	  nz,
-	  inout);
-    FREAD(&off, double,
-	  nz,
-	  inout);
-    FREAD(sarray, unsigned short,
-	  nxy * nz,
-	  inout);
+    if (pck_zstd) {
+#ifdef ZSTD
+      uint64_t magic;
+      unsigned char *compr = NULL, *payload = NULL;
+
+      FREAD(&magic, uint64_t, 1, inout);
+      if (magic != pck_zstd_magic)
+	ERRMSG("PCK+ZSTD magic mismatch! Check MET_PCK_ZSTD and file type.");
+      FREAD(&stored_len, size_t,
+	    1,
+	    inout);
+      ALLOC(compr, unsigned char,
+	    stored_len);
+      FREAD(compr, unsigned char,
+	    stored_len,
+	    inout);
+      ALLOC(payload, unsigned char,
+	    payload_len);
+      decompress_zstd_buffer(compr, stored_len, payload, payload_len,
+			     &t_zstd);
+      memcpy(scl, payload, nz * sizeof(double));
+      memcpy(off, payload + nz * sizeof(double), nz * sizeof(double));
+      memcpy(sarray, payload + 2 * nz * sizeof(double),
+	     nxy * nz * sizeof(unsigned short));
+      free(payload);
+      free(compr);
+#else
+      ERRMSG("MPTRAC was compiled without ZSTD compression!");
+#endif
+    } else {
+      FREAD(&scl, double,
+	    nz,
+	    inout);
+      FREAD(&off, double,
+	    nz,
+	    inout);
+      FREAD(sarray, unsigned short,
+	    nxy * nz,
+	    inout);
+    }
 
     /* Measure time... */
     const double t0 = omp_get_wtime();
@@ -872,20 +978,20 @@ void compress_pck(
 	  = (float) (sarray[ixy * nz + iz] * scl[iz] + off[iz]);
 
     /* Write info... */
-    const double t_decomp = omp_get_wtime() - t0;
+    const double t_decomp = t_zstd + omp_get_wtime() - t0;
+    const double ratio_out =
+      (double) (nxy * nz * sizeof(float)) / (double) stored_len;
+    const double bpv_out = (8. * (double) stored_len) / (double) (nxy * nz);
     LOG(2, "Read 3-D variable: %s"
-	" (PCK, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
-	varname, cr, (8. * (double) (nxy * nz * sizeof(unsigned short)
-				     +
-				     2 * nz * sizeof(double))) /
-	(double) (nxy * nz), t_decomp,
+	" (PCK%s, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, pck_zstd ? "+ZSTD" : "", ratio_out, bpv_out, t_decomp,
 	compress_speed_mib(nxy * nz * sizeof(float), t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
     float *tmp_org, *tmp_pck;
-    double t_comp_sum = 0, t_decomp_sum = 0;
+    double t_comp_sum = 0, t_decomp_sum = 0, t_zstd = 0, t_zstd_decomp = 0;
     double rho[EP], mean[EP], stddev[EP], min[EP], max[EP], nrmse[EP];
     double org_mean[EP], range[EP];
 
@@ -949,49 +1055,82 @@ void compress_pck(
       }
     }
 
+    /* Write data... */
+    void *stored_data = NULL;
+
+    if (pck_zstd) {
+#ifdef ZSTD
+      unsigned char *payload = NULL, *payload_chk = NULL;
+      ALLOC(payload, unsigned char,
+	    payload_len);
+      memcpy(payload, scl, nz * sizeof(double));
+      memcpy(payload + nz * sizeof(double), off, nz * sizeof(double));
+      memcpy(payload + 2 * nz * sizeof(double), sarray,
+	     nxy * nz * sizeof(unsigned short));
+      stored_len = compress_zstd_buffer(payload, payload_len, zstd_level,
+					zstd_nworkers, &stored_data, &t_zstd);
+      ALLOC(payload_chk, unsigned char,
+	    payload_len);
+      decompress_zstd_buffer(stored_data, stored_len, payload_chk,
+			     payload_len, &t_zstd_decomp);
+      free(payload_chk);
+      free(payload);
+      FWRITE(&pck_zstd_magic, uint64_t, 1, inout);
+      FWRITE(&stored_len, size_t,
+	     1,
+	     inout);
+      FWRITE(stored_data, unsigned char,
+	     stored_len,
+	     inout);
+#else
+      ERRMSG("MPTRAC was compiled without ZSTD compression!");
+#endif
+    } else {
+      FWRITE(&scl, double,
+	     nz,
+	     inout);
+      FWRITE(&off, double,
+	     nz,
+	     inout);
+      FWRITE(sarray, unsigned short,
+	     nxy * nz,
+	     inout);
+    }
+
+    /* Write info... */
+    const double ratio_out =
+      (double) (nxy * nz * sizeof(float)) / (double) stored_len;
+    const double bpv_out = (8. * (double) stored_len) / (double) (nxy * nz);
+    const double t_comp = t_comp_sum + t_zstd;
+    const double t_decomp = t_decomp_sum + t_zstd_decomp;
+    LOG(2, "Write 3-D variable: %s"
+	" (PCK%s, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, pck_zstd ? "+ZSTD" : "", ratio_out, bpv_out, t_comp,
+	compress_speed_mib(nxy * nz * sizeof(float), t_comp),
+	t_decomp, compress_speed_mib(nxy * nz * sizeof(float), t_decomp));
+
     /* Write per-level diagnostics... */
     if (level_log) {
-      const double ratio = (double) (nxy * sizeof(float))
-	/ (double) (nxy * sizeof(unsigned short) + 2 * sizeof(double));
-      const double bpv = (8. * (double) (nxy * sizeof(unsigned short)
-					 + 2 * sizeof(double)))
-	/ (double) nxy;
-      const double t_comp = t_comp_sum / (double) nz;
-      const double t_decomp = t_decomp_sum / (double) nz;
+      const double ratio_level = ratio_out;
+      const double bpv_level = bpv_out;
+      const double t_comp_level = t_comp / (double) nz;
+      const double t_decomp_level = t_decomp / (double) nz;
       for (size_t iz = 0; iz < nz; iz++)
 	fprintf(level_log,
 		"%s %s %lu %g %g %g %g %g %g %g %g %g %g %g %g %g %g %g\n",
-		"PCK", varname, (unsigned long) iz, plev[iz], ratio, bpv,
+		pck_zstd ? "PCKZSTD" : "PCK", varname, (unsigned long) iz,
+		plev[iz], ratio_level, bpv_level,
 		rho[iz], mean[iz], stddev[iz], min[iz], max[iz], org_mean[iz],
 		range[iz], nrmse[iz],
-		t_comp, compress_speed_mib(nxy * sizeof(float), t_comp),
-		t_decomp, compress_speed_mib(nxy * sizeof(float), t_decomp));
+		t_comp_level,
+		compress_speed_mib(nxy * sizeof(float), t_comp_level),
+		t_decomp_level,
+		compress_speed_mib(nxy * sizeof(float), t_decomp_level));
     }
 
-    /* Write data... */
-    FWRITE(&scl, double,
-	   nz,
-	   inout);
-    FWRITE(&off, double,
-	   nz,
-	   inout);
-    FWRITE(sarray, unsigned short,
-	   nxy * nz,
-	   inout);
-
-    /* Write info... */
-    LOG(2, "Write 3-D variable: %s"
-	" (PCK, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
-	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
-	varname, cr, (8. * (double) (nxy * nz * sizeof(unsigned short)
-				     +
-				     2 * nz * sizeof(double))) /
-	(double) (nxy * nz), t_comp_sum,
-	compress_speed_mib(nxy * nz * sizeof(float), t_comp_sum),
-	t_decomp_sum, compress_speed_mib(nxy * nz * sizeof(float),
-					 t_decomp_sum));
-
     /* Free... */
+    free(stored_data);
     free(tmp_org);
     free(tmp_pck);
   }
@@ -6099,6 +6238,14 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_NWORKERS", -1, "4", NULL);
   ctl->met_lz4_accel =
     (int) scan_ctl(filename, argc, argv, "MET_LZ4_ACCEL", -1, "8", NULL);
+  ctl->met_pck_zstd =
+    (int) scan_ctl(filename, argc, argv, "MET_PCK_ZSTD", -1, "0", NULL);
+  if (ctl->met_pck_zstd != 0 && ctl->met_pck_zstd != 1)
+    ERRMSG("Set MET_PCK_ZSTD to 0 or 1!");
+#ifndef ZSTD
+  if (ctl->met_type == 2 && ctl->met_pck_zstd)
+    ERRMSG("MET_PCK_ZSTD requires MPTRAC to be compiled with ZSTD support!");
+#endif
   for (int i = 0; i < METVAR; i++) {
     char defprec_zfp[LEN] = "8", deftol_zfp[LEN] = "0.0";
     char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
@@ -8038,7 +8185,8 @@ void read_met_bin_3d(
   /* Read packed data... */
   else if (ctl->met_type == 2)
     compress_pck(varname, help, (size_t) (met->ny * met->nx),
-		 (size_t) met->np, met->p, 1, NULL, in);
+		 (size_t) met->np, met->p, 1, ctl->met_pck_zstd,
+		 ctl->met_zstd_level, ctl->met_zstd_nworkers, NULL, in);
 
   /* Read ZFP data... */
   else if (ctl->met_type == 3) {
@@ -12999,7 +13147,8 @@ void write_met_bin_3d(
   /* Write packed data... */
   else if (ctl->met_type == 2)
     compress_pck(varname, help, (size_t) (met->ny * met->nx),
-		 (size_t) met->np, met->p, 0, level_log, out);
+		 (size_t) met->np, met->p, 0, ctl->met_pck_zstd,
+		 ctl->met_zstd_level, ctl->met_zstd_nworkers, level_log, out);
 
   /* Write ZFP data... */
 #ifdef ZFP
