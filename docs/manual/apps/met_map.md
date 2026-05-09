@@ -57,9 +57,9 @@ Example call:
 ./met_map map.ctl map_era5_2017_01_08_17.tab era5_2017_01_08_17.zfp
 ```
 
-Currently, to enable the usage of zfp and zstd format MPTRAC needs to be compiled using ZSTD=1 and ZFP=1:
+Currently, to enable the usage of ZFP, ZSTD, or LZ4 compressed meteorological input, MPTRAC needs to be compiled with the corresponding build flags:
 
 ```
-# Run make enabling the usage of the ZFP and ZSTD compression
-$ make ZSTD=1 ZFP=1
+# Run make enabling the usage of the ZFP, ZSTD, and LZ4 compression
+$ make ZSTD=1 ZFP=1 LZ4=1
 ```

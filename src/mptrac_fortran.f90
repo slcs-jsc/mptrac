@@ -321,6 +321,7 @@ MODULE mptrac_struct
      INTEGER(c_int) :: met_nc_quant
      INTEGER(c_int) :: met_zstd_level
      INTEGER(c_int) :: met_zstd_nworkers
+     INTEGER(c_int) :: met_lz4_accel
      INTEGER(c_int), DIMENSION(metvar) :: met_zfp_prec
      REAL(c_double), DIMENSION(metvar) :: met_zfp_tol
      INTEGER(c_int), DIMENSION(metvar) :: met_sz3_prec

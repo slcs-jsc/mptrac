@@ -6,7 +6,7 @@
 
 # Build flags...
 declare -A build
-for lib in all mandatory clean parallel gsl thrust zlib szip zfp zstd hdf5 netcdf kpp eccodes sz3 ; do
+for lib in all mandatory clean parallel gsl thrust zlib szip zfp zstd lz4 hdf5 netcdf kpp eccodes sz3 ; do
     build[$lib]=false
 done
 
@@ -49,6 +49,7 @@ Options:
   -i           Build SZIP
   -f           Build ZFP
   -s           Build ZSTD
+  -x           Build LZ4
   -j           Build SZ3
   -d           Build HDF5 (requires ZLIB and SZIP)
   -n           Build NETCDF (requires HDF5)
@@ -95,7 +96,7 @@ unpack() {
 # --------------------------------------------------
 
 [[ $# -lt 1 ]] && print_help
-while getopts amcgtzijfshnlkepd: flag ; do
+while getopts amcgtzijfshxnlkepd: flag ; do
     case "${flag}" in
         a) build[all]=true       ; echo "build all libraries      " ;;
         m) build[mandatory]=true ; echo "build mandatory libraries" ;;
@@ -106,6 +107,7 @@ while getopts amcgtzijfshnlkepd: flag ; do
 	i) build[szip]=true      ; echo "SZIP is selected         " ;;
 	f) build[zfp]=true       ; echo "ZFP is selected          " ;;
 	s) build[zstd]=true      ; echo "ZSTD is selected         " ;;
+	x) build[lz4]=true       ; echo "LZ4 is selected          " ;;
 	j) build[sz3]=true       ; echo "SZ3 is selected          " ;;
 	d) build[hdf5]=true      ; echo "HDF5 is selected         " ;;
 	n) build[netcdf]=true    ; echo "NETCDF is selected       " ;;
@@ -189,6 +191,15 @@ if ${build[all]} || ${build[zstd]} ; then
     make -j $nprocs lib-mt && make check \
         && cp -a lib/libzstd* "$build_dir"/lib/ \
         && cp -a lib/*.h "$build_dir"/include/ \
+        && make clean || exit
+fi
+
+# Build lz4...
+if ${build[all]} || ${build[lz4]} ; then
+    target="lz4-1.9.4"
+    unpack "$target"
+    make -j $nprocs && make check \
+        && make PREFIX="$build_dir" install \
         && make clean || exit
 fi
 

@@ -65,6 +65,9 @@ ZFP ?= 0
 # Enable zstd compression...
 ZSTD ?= 0
 
+# Enable LZ4 compression...
+LZ4 ?= 0
+
 # Enable SZ3 compression...
 SZ3 ?= 0
 
@@ -220,6 +223,12 @@ endif
 ifeq ($(ZSTD),1)
   LDFLAGS += -lzstd
   CFLAGS += -DZSTD
+endif
+
+# LZ4 compression...
+ifeq ($(LZ4),1)
+  LDFLAGS += -llz4
+  CFLAGS += -DLZ4
 endif
 
 # SZ3 compression...

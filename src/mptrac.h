@@ -216,6 +216,10 @@
 #include "zstd.h"
 #endif
 
+#ifdef LZ4
+#include "lz4.h"
+#endif
+
 #ifdef SZ3
 #include "SZ3c/sz3c.h"
 #endif
@@ -2548,7 +2552,7 @@ typedef struct {
   int met_vert_coord;
 
   /*! Type of meteo data files
-     (0=netCDF, 1=binary, 2=pck, 3=ZFP, 4=ZSTD, 5=cms, 6=grib, 7=SZ3). */
+     (0=netCDF, 1=binary, 2=pck, 3=ZFP, 4=ZSTD, 5=cms, 6=grib, 7=SZ3, 8=LZ4). */
   int met_type;
 
   /*! Read MPTRAC or CLaMS meteo data (0=MPTRAC, 1=CLaMS). */
@@ -2568,6 +2572,9 @@ typedef struct {
 
   /*! ZSTD number of worker threads (0=single-threaded, default=4). */
   int met_zstd_nworkers;
+
+  /*! LZ4 acceleration factor (>=1, default=1). */
+  int met_lz4_accel;
 
   /*! ZFP compression precision. */
   int met_zfp_prec[METVAR];
@@ -4267,6 +4274,41 @@ void compress_zstd(
   const int decompress,
   const int level,
   const int nworkers,
+  FILE * level_log,
+  FILE * inout);
+
+/**
+ * @brief Compresses or decompresses a float array using LZ4.
+ *
+ * This function either compresses a given float array and writes the result to a file,
+ * or reads compressed data from a file and decompresses it into the array.
+ *
+ * @param[in]  varname      Name of the variable, used for logging.
+ * @param[in,out] array     Pointer to the float array to compress or to fill with decompressed data.
+ * @param[in]  nxy          Number of horizontal grid points per level.
+ * @param[in]  nz           Number of levels in the array.
+ * @param[in]  plev         Pressure levels corresponding to the vertical levels.
+ * @param[in]  decompress   If non-zero, perform decompression; otherwise, perform compression.
+ * @param[in]  acceleration LZ4 acceleration factor (>=1).
+ * @param[in,out] level_log Optional output stream for per-level compression diagnostics, or @c NULL to disable it.
+ * @param[in,out] inout     File pointer for input/output. Used for reading or writing compressed data.
+ *
+ * @note This function uses the block API (`LZ4_compress_fast` / `LZ4_decompress_safe`).
+ *       MPTRAC currently uses acceleration factor 1 by default.
+ *
+ * @warning The function allocates temporary memory for the compressed buffer
+ *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.
+ *
+ * @author Lars Hoffmann
+ */
+void compress_lz4(
+  const char *varname,
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  const double *plev,
+  const int decompress,
+  const int acceleration,
   FILE * level_log,
   FILE * inout);
 
@@ -6894,7 +6936,7 @@ void mptrac_read_ctl(
  * - It supports MPI parallelization and will share the data across multiple processes if the 
  * `met_mpi_share` flag is set in the control structure.
  * - If `ctl->met_type` is 0, the data is read from a NetCDF file using the `read_met_nc` function.
- * - If `ctl->met_type` is between 1 and 5 or 7, the data is read from a binary file using the `read_met_bin` function.
+ * - If `ctl->met_type` is between 1 and 5, or equals 7 or 8, the data is read from a binary file using the `read_met_bin` function.
  * - If `ctl->met_type` is 6, the data is read from grib files using the `read_met_grib` function.
  * - If the `met_type` is not recognized, an error message is generated.
  *
@@ -7001,10 +7043,12 @@ void mptrac_write_atm(
  * if compiled without CMS support.
  * - If `ctl->met_type` is 7, SZ3 compression is required, and the function will generate an error 
  * if compiled without SZ3 support.
+ * - If `ctl->met_type` is 8, LZ4 compression is required, and the function will generate an error
+ * if compiled without LZ4 support.
  *
  * @note 
  * - If `ctl->met_type` is 0, the function writes data in netCDF format via `write_met_nc`.
- * - If `ctl->met_type` is between 1 and 5 or 7, the function writes data in binary format via `write_met_bin`.
+ * - If `ctl->met_type` is between 1 and 5, or equals 7 or 8, the function writes data in binary format via `write_met_bin`.
  * - If `ctl->met_type` is not recognized, an error message is generated.
  *
  * @author Lars Hoffmann

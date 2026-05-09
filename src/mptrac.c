@@ -1431,6 +1431,127 @@ void compress_zstd(
 
 /*****************************************************************************/
 
+#ifdef LZ4
+void compress_lz4(
+  const char *varname,
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  const double *plev,
+  const int decompress,
+  const int acceleration,
+  FILE *level_log,
+  FILE *inout) {
+
+  /* Get buffer sizes... */
+  const size_t n = nxy * nz;
+  const size_t uncomprLen = n * sizeof(float);
+  if (uncomprLen > (size_t) INT_MAX)
+    ERRMSG("LZ4 input buffer exceeds INT_MAX!");
+  const int uncomprLenInt = (int) uncomprLen;
+  const int accel = acceleration > 0 ? acceleration : 1;
+  const int comprCapInt = LZ4_compressBound(uncomprLenInt);
+  if (comprCapInt <= 0)
+    ERRMSG("Cannot determine LZ4 compression bound!");
+  size_t comprLen = (size_t) comprCapInt;
+
+  /* Allocate... */
+  char *compr = calloc(comprLen, 1);
+  if (!compr)
+    ERRMSG("Memory allocation failed!");
+  char *uncompr = (char *) array;
+
+  /* Read compressed stream and decompress array... */
+  if (decompress) {
+    FREAD(&comprLen, size_t,
+	  1,
+	  inout);
+    if (comprLen > (size_t) INT_MAX)
+      ERRMSG("LZ4 compressed buffer exceeds INT_MAX!");
+    FREAD(compr, unsigned char,
+	  comprLen,
+	  inout);
+    const double t0 = omp_get_wtime();
+    const int decomp_size =
+      LZ4_decompress_safe(compr, uncompr, (int) comprLen, uncomprLenInt);
+    const double t_decomp = omp_get_wtime() - t0;
+    if (decomp_size != uncomprLenInt)
+      ERRMSG("Decompression failed or size mismatch!");
+    LOG(2, "Read 3-D variable: %s"
+	" (LZ4, ACCEL=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, accel, ((double) uncomprLen) / (double) comprLen,
+	(8. * (double) comprLen) / (double) n, t_decomp,
+	compress_speed_mib(uncomprLen, t_decomp));
+  }
+
+  /* Compress array and output compressed stream... */
+  else {
+    float *tmp_org, *tmp_lz4, *tmp_all;
+
+    ALLOC(tmp_org, float,
+	  nxy);
+    ALLOC(tmp_lz4, float,
+	  nxy);
+    ALLOC(tmp_all, float,
+	  n);
+
+    const double t0 = omp_get_wtime();
+    const int compsizeInt =
+      LZ4_compress_fast(uncompr, compr, uncomprLenInt, comprCapInt, accel);
+    const double t_comp = omp_get_wtime() - t0;
+    if (compsizeInt <= 0)
+      ERRMSG("Compression failed!");
+    const size_t compsize = (size_t) compsizeInt;
+    FWRITE(&compsize, size_t,
+	   1,
+	   inout);
+    FWRITE(compr, unsigned char,
+	   compsize,
+	   inout);
+
+    const double t1 = omp_get_wtime();
+    const int decomp_size =
+      LZ4_decompress_safe(compr, (char *) tmp_all, compsizeInt, uncomprLenInt);
+    const double t_decomp = omp_get_wtime() - t1;
+    if (decomp_size != uncomprLenInt)
+      ERRMSG("Decompression failed or size mismatch!");
+
+    for (size_t lev = 0; lev < nz; lev++) {
+
+      /* Extract current level... */
+#pragma omp parallel for default(shared)
+      for (size_t ixy = 0; ixy < nxy; ixy++) {
+	tmp_org[ixy] = array[ixy * nz + lev];
+	tmp_lz4[ixy] = tmp_all[ixy * nz + lev];
+      }
+      if (level_log)
+	compress_log_level(level_log, "LZ4", varname, lev, plev[lev],
+			   ((double) uncomprLen) / (double) compsize,
+			   (8. * (double) compsize) / (double) n,
+			   NAN, t_comp, t_decomp, nxy, uncomprLen, tmp_org,
+			   tmp_lz4);
+    }
+
+    LOG(2, "Write 3-D variable: %s"
+	" (LZ4, ACCEL=%d, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	" T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, accel, ((double) uncomprLen) / (double) compsize,
+	(8. * (double) compsize) / (double) n, t_comp,
+	compress_speed_mib(uncomprLen, t_comp), t_decomp,
+	compress_speed_mib(uncomprLen, t_decomp));
+
+    free(tmp_org);
+    free(tmp_lz4);
+    free(tmp_all);
+  }
+
+  /* Free... */
+  free(compr);
+}
+#endif
+
+/*****************************************************************************/
+
 double cos_sza(
   const double sec,
   const double lon,
@@ -2151,6 +2272,8 @@ void get_met_filename(
       sprintf(filename, "%s_YYYY_MM_DD_HH.cms", metbase);
     else if (ctl->met_type == 7)
       sprintf(filename, "%s_YYYY_MM_DD_HH.sz3", metbase);
+    else if (ctl->met_type == 8)
+      sprintf(filename, "%s_YYYY_MM_DD_HH.lz4", metbase);
     sprintf(repl, "%d", year);
     get_met_replace(filename, "YYYY", repl);
     sprintf(repl, "%02d", mon);
@@ -5973,6 +6096,8 @@ void mptrac_read_ctl(
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_LEVEL", -1, "-3", NULL);
   ctl->met_zstd_nworkers =
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_NWORKERS", -1, "4", NULL);
+  ctl->met_lz4_accel =
+    (int) scan_ctl(filename, argc, argv, "MET_LZ4_ACCEL", -1, "1", NULL);
   for (int i = 0; i < METVAR; i++) {
     char defprec_zfp[LEN] = "8", deftol_zfp[LEN] = "0.0";
     char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
@@ -6611,7 +6736,8 @@ int mptrac_read_met(
     }
 
     /* Read binary data... */
-    else if ((ctl->met_type >= 1 && ctl->met_type <= 5) || ctl->met_type == 7) {
+    else if ((ctl->met_type >= 1 && ctl->met_type <= 5)
+	     || ctl->met_type == 7 || ctl->met_type == 8) {
       if (read_met_bin(filename, ctl, met) != 1)
 	return 0;
     }
@@ -7038,6 +7164,10 @@ void mptrac_write_met(
   if (ctl->met_type == 4)
     ERRMSG("MPTRAC was compiled without ZSTD compression!");
 #endif
+#ifndef LZ4
+  if (ctl->met_type == 8)
+    ERRMSG("MPTRAC was compiled without LZ4 compression!");
+#endif
 #ifndef CMS
   if (ctl->met_type == 5)
     ERRMSG("MPTRAC was compiled without cmultiscale compression!");
@@ -7052,7 +7182,8 @@ void mptrac_write_met(
     write_met_nc(filename, ctl, met);
 
   /* Write binary data... */
-  else if (ctl->met_type >= 1 && ctl->met_type <= 7)
+  else if ((ctl->met_type >= 1 && ctl->met_type <= 5)
+	   || ctl->met_type == 7 || ctl->met_type == 8)
     write_met_bin(filename, ctl, met);
 
   /* Not implemented... */
@@ -7936,6 +8067,16 @@ void read_met_bin_3d(
 		  ctl->met_zstd_nworkers, NULL, in);
 #else
     ERRMSG("MPTRAC was compiled without ZSTD compression!");
+#endif
+  }
+
+  /* Read LZ4 data... */
+  else if (ctl->met_type == 8) {
+#ifdef LZ4
+    compress_lz4(varname, help, (size_t) (met->ny * met->nx),
+		 (size_t) met->np, met->p, 1, ctl->met_lz4_accel, NULL, in);
+#else
+    ERRMSG("MPTRAC was compiled without LZ4 compression!");
 #endif
   }
 
@@ -12881,6 +13022,14 @@ void write_met_bin_3d(
     compress_zstd(varname, help, (size_t) (met->ny * met->nx),
 		  (size_t) met->np, met->p, 0, ctl->met_zstd_level,
 		  ctl->met_zstd_nworkers, level_log, out);
+#endif
+
+  /* Write LZ4 data... */
+#ifdef LZ4
+  else if (ctl->met_type == 8)
+    compress_lz4(varname, help, (size_t) (met->ny * met->nx),
+		 (size_t) met->np, met->p, 0, ctl->met_lz4_accel,
+		 level_log, out);
 #endif
 
   /* Write cmultiscale data... */
