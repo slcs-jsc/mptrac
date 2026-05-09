@@ -2573,7 +2573,7 @@ typedef struct {
   /*! ZSTD number of worker threads (0=single-threaded, default=4). */
   int met_zstd_nworkers;
 
-  /*! LZ4 acceleration factor (>=1, default=1). */
+  /*! LZ4 acceleration factor (>=1, default=8). */
   int met_lz4_accel;
 
   /*! ZFP compression precision. */
@@ -4308,7 +4308,7 @@ void compress_zstd(
  * @param[in,out] inout     File pointer for input/output. Used for reading or writing compressed data.
  *
  * @note This function uses the block API (`LZ4_compress_fast` / `LZ4_decompress_safe`).
- *       MPTRAC currently uses acceleration factor 1 by default.
+ *       MPTRAC currently uses acceleration factor 8 by default.
  *
  * @warning The function allocates temporary memory for the compressed buffer
  *          and frees it internally. Ensure `array` has sufficient space for uncompressed data.

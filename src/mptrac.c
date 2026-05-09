@@ -1511,7 +1511,8 @@ void compress_lz4(
 
     const double t1 = omp_get_wtime();
     const int decomp_size =
-      LZ4_decompress_safe(compr, (char *) tmp_all, compsizeInt, uncomprLenInt);
+      LZ4_decompress_safe(compr, (char *) tmp_all, compsizeInt,
+			  uncomprLenInt);
     const double t_decomp = omp_get_wtime() - t1;
     if (decomp_size != uncomprLenInt)
       ERRMSG("Decompression failed or size mismatch!");
@@ -6097,7 +6098,7 @@ void mptrac_read_ctl(
   ctl->met_zstd_nworkers =
     (int) scan_ctl(filename, argc, argv, "MET_ZSTD_NWORKERS", -1, "4", NULL);
   ctl->met_lz4_accel =
-    (int) scan_ctl(filename, argc, argv, "MET_LZ4_ACCEL", -1, "1", NULL);
+    (int) scan_ctl(filename, argc, argv, "MET_LZ4_ACCEL", -1, "8", NULL);
   for (int i = 0; i < METVAR; i++) {
     char defprec_zfp[LEN] = "8", deftol_zfp[LEN] = "0.0";
     char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
