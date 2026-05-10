@@ -911,6 +911,11 @@ void compress_pck(
   FILE *level_log,
   FILE *inout) {
 
+#ifndef ZSTD
+  (void) zstd_level;
+  (void) zstd_nworkers;
+#endif
+
   double vmin[EP], vmax[EP], off[EP], scl[EP];
   unsigned short *sarray;
   const size_t payload_len = 2 * nz * sizeof(double)
