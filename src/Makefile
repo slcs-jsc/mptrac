@@ -325,8 +325,8 @@ clean:
 
 coverage:
 	$(MAKE) clean
-	$(MAKE) COV=1 all
-	$(MAKE) COV=1 check
+	$(MAKE) COV=1 ZSTD=$(ZSTD) LZ4=$(LZ4) ZFP=$(ZFP) SZ3=$(SZ3) ECCODES=$(ECCODES) all
+	$(MAKE) COV=1 ZSTD=$(ZSTD) LZ4=$(LZ4) ZFP=$(ZFP) SZ3=$(SZ3) ECCODES=$(ECCODES) check
 	lcov --capture --directory . --output-file=coverage.info
 	genhtml coverage.info --legend --frames --output-directory=coverage
 	gcov -abcfu *.c || true
