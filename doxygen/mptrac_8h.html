@@ -16554,29 +16554,29 @@ Here is the call graph for this function:</div>
 <div class="line"><span class="lineno"> 6256</span>    <span class="keywordtype">char</span> defprec_sz3[<a class="code hl_define" href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>] = <span class="stringliteral">&quot;7&quot;</span>, deftol_sz3[<a class="code hl_define" href="mptrac_8h.html#a05b49c662c073f89e86804f7856622a0">LEN</a>] = <span class="stringliteral">&quot;0.0&quot;</span>;</div>
 <div class="line"><span class="lineno"> 6257</span>    <span class="keywordflow">if</span> (i == 0) {               <span class="comment">/* geopotential height */</span></div>
 <div class="line"><span class="lineno"> 6258</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;12&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6259</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;10&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6259</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;11&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6260</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 1) {        <span class="comment">/* temperature */</span></div>
 <div class="line"><span class="lineno"> 6261</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;11&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6262</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;7&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6262</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;8&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6263</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 2 || i == 3) {      <span class="comment">/* horizontal wind */</span></div>
-<div class="line"><span class="lineno"> 6264</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;7&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6264</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;8&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6265</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 4) {        <span class="comment">/* vertical wind */</span></div>
 <div class="line"><span class="lineno"> 6266</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;7&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6267</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;8&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6267</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;10&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6268</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 5) {        <span class="comment">/* potential vorticity */</span></div>
 <div class="line"><span class="lineno"> 6269</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;7&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6270</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;11&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6270</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;13&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6271</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 6) {        <span class="comment">/* water vapor */</span></div>
 <div class="line"><span class="lineno"> 6272</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;9&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6273</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;7&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6273</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;8&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6274</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 7) {        <span class="comment">/* ozone */</span></div>
 <div class="line"><span class="lineno"> 6275</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;10&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6276</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;8&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6276</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;9&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6277</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i &gt;= 8 &amp;&amp; i &lt;= 11) {     <span class="comment">/* cloud water fields */</span></div>
-<div class="line"><span class="lineno"> 6278</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;7&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6278</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;8&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6279</span>    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (i == 12) {       <span class="comment">/* cloud cover */</span></div>
 <div class="line"><span class="lineno"> 6280</span>      sprintf(defprec_zfp, <span class="stringliteral">&quot;9&quot;</span>);</div>
-<div class="line"><span class="lineno"> 6281</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;6&quot;</span>);</div>
+<div class="line"><span class="lineno"> 6281</span>      sprintf(defprec_sz3, <span class="stringliteral">&quot;7&quot;</span>);</div>
 <div class="line"><span class="lineno"> 6282</span>    }</div>
 <div class="line"><span class="lineno"> 6283</span>    ctl-&gt;<a class="code hl_variable" href="structctl__t.html#af3c8d8efd9fda3d4aed0465afb3bae01">met_zfp_prec</a>[i] =</div>
 <div class="line"><span class="lineno"> 6284</span>      (int) <a class="code hl_function" href="mptrac_8c.html#a7d07c7baed461e240ff50585ddeed80a">scan_ctl</a>(filename, argc, argv, <span class="stringliteral">&quot;MET_ZFP_PREC&quot;</span>, i, defprec_zfp,</div>
