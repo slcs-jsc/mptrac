@@ -6256,29 +6256,29 @@ void mptrac_read_ctl(
     char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
     if (i == 0) {		/* geopotential height */
       sprintf(defprec_zfp, "12");
-      sprintf(defprec_sz3, "10");
+      sprintf(defprec_sz3, "11");
     } else if (i == 1) {	/* temperature */
       sprintf(defprec_zfp, "11");
-      sprintf(defprec_sz3, "7");
+      sprintf(defprec_sz3, "8");
     } else if (i == 2 || i == 3) {	/* horizontal wind */
-      sprintf(defprec_sz3, "7");
+      sprintf(defprec_sz3, "8");
     } else if (i == 4) {	/* vertical wind */
       sprintf(defprec_zfp, "7");
-      sprintf(defprec_sz3, "8");
+      sprintf(defprec_sz3, "10");
     } else if (i == 5) {	/* potential vorticity */
       sprintf(defprec_zfp, "7");
-      sprintf(defprec_sz3, "11");
+      sprintf(defprec_sz3, "13");
     } else if (i == 6) {	/* water vapor */
       sprintf(defprec_zfp, "9");
-      sprintf(defprec_sz3, "7");
+      sprintf(defprec_sz3, "8");
     } else if (i == 7) {	/* ozone */
       sprintf(defprec_zfp, "10");
-      sprintf(defprec_sz3, "8");
+      sprintf(defprec_sz3, "9");
     } else if (i >= 8 && i <= 11) {	/* cloud water fields */
-      sprintf(defprec_sz3, "7");
+      sprintf(defprec_sz3, "8");
     } else if (i == 12) {	/* cloud cover */
       sprintf(defprec_zfp, "9");
-      sprintf(defprec_sz3, "6");
+      sprintf(defprec_sz3, "7");
     }
     ctl->met_zfp_prec[i] =
       (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec_zfp,
