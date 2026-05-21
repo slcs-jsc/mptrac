@@ -6252,33 +6252,35 @@ void mptrac_read_ctl(
     ERRMSG("MET_PCK_ZSTD requires MPTRAC to be compiled with ZSTD support!");
 #endif
   for (int i = 0; i < METVAR; i++) {
-    char defprec_zfp[LEN] = "8", deftol_zfp[LEN] = "0.0";
-    char defprec_sz3[LEN] = "7", deftol_sz3[LEN] = "0.0";
+    char defprec_zfp[LEN] = "7", deftol_zfp[LEN] = "0.0";
+    char defprec_sz3[LEN] = "6", deftol_sz3[LEN] = "0.0";
     if (i == 0) {		/* geopotential height */
       sprintf(defprec_zfp, "12");
       sprintf(defprec_sz3, "11");
     } else if (i == 1) {	/* temperature */
       sprintf(defprec_zfp, "11");
-      sprintf(defprec_sz3, "8");
+      sprintf(defprec_sz3, "7");
     } else if (i == 2 || i == 3) {	/* horizontal wind */
-      sprintf(defprec_sz3, "8");
-    } else if (i == 4) {	/* vertical wind */
       sprintf(defprec_zfp, "7");
-      sprintf(defprec_sz3, "10");
+      sprintf(defprec_sz3, "7");
+    } else if (i == 4) {	/* vertical wind */
+      sprintf(defprec_zfp, "6");
+      sprintf(defprec_sz3, "13");
     } else if (i == 5) {	/* potential vorticity */
       sprintf(defprec_zfp, "7");
-      sprintf(defprec_sz3, "13");
+      sprintf(defprec_sz3, "20");
     } else if (i == 6) {	/* water vapor */
-      sprintf(defprec_zfp, "9");
-      sprintf(defprec_sz3, "8");
-    } else if (i == 7) {	/* ozone */
       sprintf(defprec_zfp, "10");
-      sprintf(defprec_sz3, "9");
+      sprintf(defprec_sz3, "18");
+    } else if (i == 7) {	/* ozone */
+      sprintf(defprec_zfp, "9");
+      sprintf(defprec_sz3, "10");
     } else if (i >= 8 && i <= 11) {	/* cloud water fields */
-      sprintf(defprec_sz3, "8");
+      sprintf(defprec_zfp, "6");
+      sprintf(defprec_sz3, "13");
     } else if (i == 12) {	/* cloud cover */
       sprintf(defprec_zfp, "9");
-      sprintf(defprec_sz3, "7");
+      sprintf(defprec_sz3, "6");
     }
     ctl->met_zfp_prec[i] =
       (int) scan_ctl(filename, argc, argv, "MET_ZFP_PREC", i, defprec_zfp,
