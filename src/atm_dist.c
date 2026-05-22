@@ -32,6 +32,13 @@
 void usage(
   void);
 
+/*! Calculate a statistic on finite values only. */
+double finite_stat(
+  const double *data,
+  int np,
+  const char *param,
+  double *work);
+
 /* ------------------------------------------------------------
    Main...
    ------------------------------------------------------------ */
@@ -48,7 +55,7 @@ int main(
 
   double *ahtd, *aqtd, *avtd, ahtdm, aqtdm[NQ], avtdm, *lat1_old, *lat2_old,
     *lh1, *lh2, *lon1_old, *lon2_old, *lv1, *lv2, *rhtd, *rqtd, *rvtd, rhtdm,
-    rqtdm[NQ], rvtdm, t0 =
+    rel_min[NQ], rqtdm[NQ], rvtdm, t0 =
     0, x0[3], x1[3], x2[3], z1, *z1_old, z2, *z2_old, *work;
 
   int init = 0, np;
@@ -119,6 +126,9 @@ int main(
   const double zscore =
     scan_ctl(argv[1], argc, argv, "DIST_ZSCORE", -1, "-999", NULL);
 
+  for (int iq = 0; iq < NQ; iq++)
+    rel_min[iq] = 0;
+
   /* Write info... */
   LOG(1, "Write transport deviations: %s", argv[2]);
 
@@ -135,12 +145,19 @@ int main(
 	  "# $5 = absolute vertical distance (%s) [km]\n"
 	  "# $6 = relative vertical distance (%s) [%%]\n",
 	  argv[3], argv[3], argv[3], argv[3]);
-  for (int iq = 0; iq < ctl.nq; iq++)
+  for (int iq = 0; iq < ctl.nq; iq++) {
+    rel_min[iq] =
+      scan_ctl(argv[1], argc, argv, "DIST_REL_MIN", iq, "0", NULL);
+    if (rel_min[iq] > 0)
+      fprintf(out,
+	      "# Relative %s differences are masked where |q1| + |q2| <= %g %s.\n",
+	      ctl.qnt_name[iq], rel_min[iq], ctl.qnt_unit[iq]);
     fprintf(out,
 	    "# $%d = %s absolute difference (%s) [%s]\n"
 	    "# $%d = %s relative difference (%s) [%%]\n",
 	    7 + 2 * iq, ctl.qnt_name[iq], argv[3], ctl.qnt_unit[iq],
 	    8 + 2 * iq, ctl.qnt_name[iq], argv[3]);
+  }
   fprintf(out, "# $%d = number of particles\n\n", 7 + 2 * ctl.nq);
 
   /* Loop over file pairs... */
@@ -232,9 +249,15 @@ int main(
       }
 
       /* Get relative transport deviations... */
-      for (int iq = 0; iq < ctl.nq; iq++)
-	rqtd[iq * NP + np] = 200. * (atm1->q[iq][ip] - atm2->q[iq][ip])
-	  / (fabs(atm1->q[iq][ip]) + fabs(atm2->q[iq][ip]));
+      for (int iq = 0; iq < ctl.nq; iq++) {
+	const double q1 = atm1->q[iq][ip];
+	const double q2 = atm2->q[iq][ip];
+	const double denom = fabs(q1) + fabs(q2);
+	if (denom <= rel_min[iq])
+	  rqtd[iq * NP + np] = GSL_NAN;
+	else
+	  rqtd[iq * NP + np] = 200. * (q1 - q2) / denom;
+      }
 
       /* Save positions of air parcels... */
       lon1_old[ip] = atm1->lon[ip];
@@ -284,7 +307,7 @@ int main(
       rvtdm = gsl_stats_mean(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_mean(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_mean(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "stddev") == 0) {
       ahtdm = gsl_stats_sd(ahtd, 1, (size_t) np);
@@ -293,7 +316,7 @@ int main(
       rvtdm = gsl_stats_sd(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_sd(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_sd(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "min") == 0) {
       ahtdm = gsl_stats_min(ahtd, 1, (size_t) np);
@@ -302,7 +325,7 @@ int main(
       rvtdm = gsl_stats_min(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_min(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_min(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "max") == 0) {
       ahtdm = gsl_stats_max(ahtd, 1, (size_t) np);
@@ -311,7 +334,7 @@ int main(
       rvtdm = gsl_stats_max(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_max(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_max(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "skew") == 0) {
       ahtdm = gsl_stats_skew(ahtd, 1, (size_t) np);
@@ -320,7 +343,7 @@ int main(
       rvtdm = gsl_stats_skew(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_skew(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_skew(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "kurt") == 0) {
       ahtdm = gsl_stats_kurtosis(ahtd, 1, (size_t) np);
@@ -329,7 +352,7 @@ int main(
       rvtdm = gsl_stats_kurtosis(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_kurtosis(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_kurtosis(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "absdev") == 0) {
       ahtdm = gsl_stats_absdev_m(ahtd, 1, (size_t) np, 0.0);
@@ -338,7 +361,7 @@ int main(
       rvtdm = gsl_stats_absdev_m(rvtd, 1, (size_t) np, 0.0);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_absdev_m(&aqtd[iq * NP], 1, (size_t) np, 0.0);
-	rqtdm[iq] = gsl_stats_absdev_m(&rqtd[iq * NP], 1, (size_t) np, 0.0);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "median") == 0) {
       ahtdm = gsl_stats_median(ahtd, 1, (size_t) np);
@@ -347,7 +370,7 @@ int main(
       rvtdm = gsl_stats_median(rvtd, 1, (size_t) np);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_median(&aqtd[iq * NP], 1, (size_t) np);
-	rqtdm[iq] = gsl_stats_median(&rqtd[iq * NP], 1, (size_t) np);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else if (strcasecmp(argv[3], "mad") == 0) {
       ahtdm = gsl_stats_mad0(ahtd, 1, (size_t) np, work);
@@ -356,7 +379,7 @@ int main(
       rvtdm = gsl_stats_mad0(rvtd, 1, (size_t) np, work);
       for (int iq = 0; iq < ctl.nq; iq++) {
 	aqtdm[iq] = gsl_stats_mad0(&aqtd[iq * NP], 1, (size_t) np, work);
-	rqtdm[iq] = gsl_stats_mad0(&rqtd[iq * NP], 1, (size_t) np, work);
+	rqtdm[iq] = finite_stat(&rqtd[iq * NP], np, argv[3], work);
       }
     } else
       ERRMSG("Unknown parameter!");
@@ -421,6 +444,51 @@ void usage(
     ("  <param>     Statistic: mean, stddev, min, max, skew, kurt, absdev,\n");
   printf("              median, or mad.\n");
   printf("  <atm*a/b>   Atmospheric input files to compare pairwise.\n");
+  printf("\nControl parameters:\n");
+  printf("  DIST_REL_MIN[iq]  Mask qnt-specific relative differences where\n");
+  printf("                    |q1| + |q2| is smaller than or equal to this\n");
+  printf("                    threshold in the qnt unit [default: 0].\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");
+}
+
+
+/*****************************************************************************/
+
+/*! Calculate a statistic on finite values only. */
+double finite_stat(
+  const double *data,
+  int np,
+  const char *param,
+  double *work) {
+
+  int n = 0;
+  for (int i = 0; i < np; i++)
+    if (isfinite(data[i]))
+      work[n++] = data[i];
+
+  if (n <= 0)
+    return GSL_NAN;
+
+  if (strcasecmp(param, "mean") == 0)
+    return gsl_stats_mean(work, 1, (size_t) n);
+  if (strcasecmp(param, "stddev") == 0)
+    return gsl_stats_sd(work, 1, (size_t) n);
+  if (strcasecmp(param, "min") == 0)
+    return gsl_stats_min(work, 1, (size_t) n);
+  if (strcasecmp(param, "max") == 0)
+    return gsl_stats_max(work, 1, (size_t) n);
+  if (strcasecmp(param, "skew") == 0)
+    return gsl_stats_skew(work, 1, (size_t) n);
+  if (strcasecmp(param, "kurt") == 0)
+    return gsl_stats_kurtosis(work, 1, (size_t) n);
+  if (strcasecmp(param, "absdev") == 0)
+    return gsl_stats_absdev_m(work, 1, (size_t) n, 0.0);
+  if (strcasecmp(param, "median") == 0)
+    return gsl_stats_median(work, 1, (size_t) n);
+  if (strcasecmp(param, "mad") == 0)
+    return gsl_stats_mad0(work, 1, (size_t) n, work);
+
+  ERRMSG("Unknown parameter!");
+  return GSL_NAN;
 }

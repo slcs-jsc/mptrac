@@ -66,6 +66,10 @@ done
 #for param in mean stddev min max skew kurt median absdev mad ; do
 # TODO: disabled tests of stddev, skew, and kurt because of numerical differences with different compilers
 for param in mean min max median absdev mad ; do
+    extra=""
+    if [ "$param" = mean ] ; then
+        extra="DIST_REL_MIN[2] 1e-8"
+    fi
     $trac/atm_dist - data/dist_$param.tab $param \
 		   data/atm_2000_01_01_00_00.tab \
 		   data/atm2_2000_01_01_00_00.tab \
@@ -73,7 +77,7 @@ for param in mean min max median absdev mad ; do
 		   data/atm2_2000_01_02_00_00.tab \
 		   DIST_Z0 5 DIST_Z1 55 \
 		   DIST_LAT0 -75 DIST_LAT1 75 \
-		   DIST_LON0 -150 DIST_LON1 150 $qnt
+		   DIST_LON0 -150 DIST_LON1 150 $extra $qnt
 done
 
 # Convert to grid data...
