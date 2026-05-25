@@ -39,8 +39,6 @@ static uint64_t rng_ctr;
 static curandGenerator_t rng_curand;
 #endif
 
-/*****************************************************************************/
-
 #ifdef MPI
 void broadcast_large_data(
   void *data,
@@ -898,6 +896,100 @@ static void decompress_zstd_buffer(
 
 /*****************************************************************************/
 
+void compress_scale_to_unit(
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  double *off,
+  double *scl) {
+
+  for (size_t iz = 0; iz < nz; iz++) {
+    off[iz] = array[iz];
+    scl[iz] = array[iz];
+  }
+
+  for (size_t ixy = 1; ixy < nxy; ixy++)
+    for (size_t iz = 0; iz < nz; iz++) {
+      const double value = array[ixy * nz + iz];
+      if (value < off[iz])
+	off[iz] = value;
+      if (value > scl[iz])
+	scl[iz] = value;
+    }
+
+  for (size_t iz = 0; iz < nz; iz++) {
+    const double range = scl[iz] - off[iz];
+    const double ref = fmax(1.0, fmax(fabs(off[iz]), fabs(scl[iz])));
+    scl[iz] = !(range > 1e-12 * ref) ? 0.0 : range;
+  }
+
+#pragma omp parallel for default(shared)
+  for (size_t ixy = 0; ixy < nxy; ixy++)
+    for (size_t iz = 0; iz < nz; iz++)
+      if (scl[iz] > 0.0)
+	array[ixy * nz + iz] =
+	  (float) ((array[ixy * nz + iz] - off[iz]) / scl[iz]);
+      else
+	array[ixy * nz + iz] = 0.0f;
+}
+
+/*****************************************************************************/
+
+void compress_unscale_from_unit(
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  const double *off,
+  const double *scl) {
+
+#pragma omp parallel for default(shared)
+  for (size_t ixy = 0; ixy < nxy; ixy++)
+    for (size_t iz = 0; iz < nz; iz++)
+      if (scl[iz] > 0.0)
+	array[ixy * nz + iz] =
+	  (float) (array[ixy * nz + iz] * scl[iz] + off[iz]);
+      else
+	array[ixy * nz + iz] = (float) off[iz];
+}
+
+/*****************************************************************************/
+
+int compress_metvar_index(
+  const char *varname) {
+
+  if (strcasecmp(varname, "Z") == 0)
+    return 0;
+  if (strcasecmp(varname, "T") == 0)
+    return 1;
+  if (strcasecmp(varname, "U") == 0)
+    return 2;
+  if (strcasecmp(varname, "V") == 0)
+    return 3;
+  if (strcasecmp(varname, "W") == 0)
+    return 4;
+  if (strcasecmp(varname, "PV") == 0)
+    return 5;
+  if (strcasecmp(varname, "H2O") == 0)
+    return 6;
+  if (strcasecmp(varname, "O3") == 0)
+    return 7;
+  if (strcasecmp(varname, "LWC") == 0)
+    return 8;
+  if (strcasecmp(varname, "RWC") == 0)
+    return 9;
+  if (strcasecmp(varname, "IWC") == 0)
+    return 10;
+  if (strcasecmp(varname, "SWC") == 0)
+    return 11;
+  if (strcasecmp(varname, "CC") == 0)
+    return 12;
+
+  ERRMSG("Unknown meteorological variable name!");
+  return -1;
+}
+
+/*****************************************************************************/
+
 void compress_pck(
   const char *varname,
   float *array,
@@ -1156,6 +1248,7 @@ void compress_sz3(
   const double *plev,
   int precision,
   double tolerance,
+  int lossy_scale,
   int decompress,
   FILE *level_log,
   FILE *inout) {
@@ -1166,9 +1259,34 @@ void compress_sz3(
     outSize = 0, total_elems = r1 * r2 * r3;
 
   unsigned char *bytes = NULL;
+  double *scale_off = NULL, *scale_scl = NULL;
+  float *orig_all = NULL;
+
+  if (lossy_scale < 0 || lossy_scale > 1)
+    ERRMSG("Set MET_LOSSY_SCALE to 0 or 1!");
+
 
   /* Read compressed stream and decompress array... */
   if (decompress) {
+
+    int stored_lossy_scale;
+    FREAD(&stored_lossy_scale, int,
+	  1,
+	  inout);
+    if (stored_lossy_scale < 0 || stored_lossy_scale > 1)
+      ERRMSG("Invalid stored MET_LOSSY_SCALE flag!");
+    if (stored_lossy_scale > 0) {
+      ALLOC(scale_off, double,
+	    r1);
+      ALLOC(scale_scl, double,
+	    r1);
+      FREAD(scale_off, double,
+	    r1,
+	    inout);
+      FREAD(scale_scl, double,
+	    r1,
+	    inout);
+    }
 
     size_t sz3size;
     FREAD(&sz3size, size_t,
@@ -1186,14 +1304,16 @@ void compress_sz3(
       ERRMSG("Decompression failed!");
 
     memcpy(array, outData, total_elems * sizeof(float));
+    if (stored_lossy_scale > 0)
+      compress_unscale_from_unit(array, r2 * r3, r1, scale_off, scale_scl);
     const double t_decomp = omp_get_wtime() - t0;
 
     free(outData);
     free(bytes);
 
     LOG(2, "Read 3-D variable: %s"
-	" (SZ3, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
-	varname, precision, tolerance,
+	" (SZ3, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
+	varname, precision, tolerance, stored_lossy_scale,
 	(double) (total_elems * sizeof(float)) / (double) sz3size,
 	(8. * (double) sz3size) / (double) total_elems, t_decomp,
 	compress_speed_mib(total_elems * sizeof(float), t_decomp));
@@ -1202,6 +1322,27 @@ void compress_sz3(
   /* Compress array and output compressed stream... */
   else {
     const int errBoundMode = (precision > 0) ? REL : ABS;
+    FWRITE(&lossy_scale, int,
+	   1,
+	   inout);
+    if (lossy_scale > 0) {
+      ALLOC(scale_off, double,
+	    r1);
+      ALLOC(scale_scl, double,
+	    r1);
+      if (level_log) {
+	ALLOC(orig_all, float,
+	      total_elems);
+	memcpy(orig_all, array, total_elems * sizeof(float));
+      }
+      compress_scale_to_unit(array, r2 * r3, r1, scale_off, scale_scl);
+      FWRITE(scale_off, double,
+	     r1,
+	     inout);
+      FWRITE(scale_scl, double,
+	     r1,
+	     inout);
+    }
     const double absBound = (errBoundMode == ABS) ? tolerance : 0.0;
     const double relBound =
       (errBoundMode == REL) ? pow(2.0, -(double) precision) : 0.0;
@@ -1247,13 +1388,16 @@ void compress_sz3(
       ALLOC(tmp_sz3, float,
 	    nxy);
       memcpy(tmp_all, decData, total_elems * sizeof(float));
+      if (lossy_scale > 0)
+	compress_unscale_from_unit(tmp_all, r2 * r3, r1, scale_off,
+				   scale_scl);
 
       for (size_t lev = 0; lev < r1; lev++) {
 
 	/* Extract current level... */
 #pragma omp parallel for default(shared)
 	for (size_t ixy = 0; ixy < nxy; ixy++) {
-	  tmp_org[ixy] = array[ixy * r1 + lev];
+	  tmp_org[ixy] = (orig_all ? orig_all : array)[ixy * r1 + lev];
 	  tmp_sz3[ixy] = tmp_all[ixy * r1 + lev];
 	}
 	compress_log_level(level_log, "SZ3", varname, lev, plev[lev],
@@ -1271,22 +1415,26 @@ void compress_sz3(
       free(bytes_copy);
 
       LOG(2, "Write 3-D variable: %s"
-	  " (SZ3, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
+	  " (SZ3, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s,"
 	  " T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
-	  varname, precision, tolerance,
+	  varname, precision, tolerance, lossy_scale,
 	  (double) (total_elems * sizeof(float)) / (double) outSize,
 	  (8. * (double) outSize) / (double) total_elems, t_comp,
 	  compress_speed_mib(total_elems * sizeof(float), t_comp), t_decomp,
 	  compress_speed_mib(total_elems * sizeof(float), t_decomp));
     } else
       LOG(2, "Write 3-D variable: %s"
-	  " (SZ3, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s)",
-	  varname, precision, tolerance,
+	  " (SZ3, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_COMP=%g s, V_COMP=%g MiB/s)",
+	  varname, precision, tolerance, lossy_scale,
 	  (double) (total_elems * sizeof(float)) / (double) outSize,
 	  (8. * (double) outSize) / (double) total_elems, t_comp,
 	  compress_speed_mib(total_elems * sizeof(float), t_comp));
     free(bytes);
+    free(orig_all);
   }
+
+  free(scale_off);
+  free(scale_scl);
 }
 #endif
 
@@ -1302,9 +1450,13 @@ void compress_zfp(
   const double *plev,
   const int precision,
   const double tolerance,
+  const int lossy_scale,
   const int decompress,
   FILE *level_log,
   FILE *inout) {
+
+  if (lossy_scale < 0 || lossy_scale > 1)
+    ERRMSG("Set MET_LOSSY_SCALE to 0 or 1!");
 
   /* Allocate meta data for the 3D array a[nz][ny][nx]... */
   const size_t snx = (size_t) nx;
@@ -1342,7 +1494,26 @@ void compress_zfp(
 
   /* Read compressed stream and decompress array... */
   size_t zfpsize;
+  double *scale_off = NULL, *scale_scl = NULL;
   if (decompress) {
+    int stored_lossy_scale;
+    FREAD(&stored_lossy_scale, int,
+	  1,
+	  inout);
+    if (stored_lossy_scale < 0 || stored_lossy_scale > 1)
+      ERRMSG("Invalid stored MET_LOSSY_SCALE flag!");
+    if (stored_lossy_scale > 0) {
+      ALLOC(scale_off, double,
+	    snx);
+      ALLOC(scale_scl, double,
+	    snx);
+      FREAD(scale_off, double,
+	    snx,
+	    inout);
+      FREAD(scale_scl, double,
+	    snx,
+	    inout);
+    }
     FREAD(&zfpsize, size_t,
 	  1,
 	  inout);
@@ -1354,22 +1525,47 @@ void compress_zfp(
     const double t0 = omp_get_wtime();
     if (!zfp_decompress(zfp, field))
       ERRMSG("Decompression failed!");
+    if (stored_lossy_scale > 0)
+      compress_unscale_from_unit(array, sny * snz, snx, scale_off, scale_scl);
     const double t_decomp = omp_get_wtime() - t0;
     const double cr =
       ((double) (snx * sny * snz * sizeof(float))) / (double) zfpsize;
     const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
     LOG(2,
 	"Read 3-D variable: %s"
-	" (ZFP, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_DECOMP=%g s,"
+	" (ZFP, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_DECOMP=%g s,"
 	" V_DECOMP=%g MiB/s)",
-	varname, actual_prec, actual_tol, cr, bpv, t_decomp,
-	compress_speed_mib(snx * sny * snz * sizeof(float), t_decomp));
+	varname, actual_prec, actual_tol, stored_lossy_scale, cr, bpv,
+	t_decomp, compress_speed_mib(snx * sny * snz * sizeof(float),
+				     t_decomp));
   }
 
   /* Compress array and output compressed stream... */
   else {
-    float *tmp_all, *tmp_org, *tmp_zfp;
+    float *tmp_all, *tmp_org, *tmp_zfp, *orig_all = NULL;
     const size_t nxy = sny * snz;
+
+    FWRITE(&lossy_scale, int,
+	   1,
+	   inout);
+    if (lossy_scale > 0) {
+      ALLOC(scale_off, double,
+	    snx);
+      ALLOC(scale_scl, double,
+	    snx);
+      if (level_log) {
+	ALLOC(orig_all, float,
+	      snx * sny * snz);
+	memcpy(orig_all, array, snx * sny * snz * sizeof(float));
+      }
+      compress_scale_to_unit(array, nxy, snx, scale_off, scale_scl);
+      FWRITE(scale_off, double,
+	     snx,
+	     inout);
+      FWRITE(scale_scl, double,
+	     snx,
+	     inout);
+    }
 
     ALLOC(tmp_all, float,
 	  snx * sny * snz);
@@ -1400,6 +1596,8 @@ void compress_zfp(
     zfp_stream_rewind(zfp);
     if (!zfp_decompress(zfp, dec_field))
       ERRMSG("Decompression failed!");
+    if (lossy_scale > 0)
+      compress_unscale_from_unit(tmp_all, nxy, snx, scale_off, scale_scl);
     const double t_decomp = omp_get_wtime() - t1;
 
     for (size_t lev = 0; lev < snx; lev++) {
@@ -1407,7 +1605,7 @@ void compress_zfp(
       /* Extract current level... */
 #pragma omp parallel for default(shared)
       for (size_t ixy = 0; ixy < nxy; ixy++) {
-	tmp_org[ixy] = array[ixy * snx + lev];
+	tmp_org[ixy] = (orig_all ? orig_all : array)[ixy * snx + lev];
 	tmp_zfp[ixy] = tmp_all[ixy * snx + lev];
       }
       if (level_log)
@@ -1424,9 +1622,9 @@ void compress_zfp(
     const double bpv = (8.0 * (double) zfpsize) / (double) (snx * sny * snz);
     LOG(2,
 	"Write 3-D variable: %s"
-	" (ZFP, PREC=%d, TOL=%g, RATIO=%g, BPV=%g, T_COMP=%g s,"
+	" (ZFP, PREC=%d, TOL=%g, SCALE=%d, RATIO=%g, BPV=%g, T_COMP=%g s,"
 	" V_COMP=%g MiB/s, T_DECOMP=%g s, V_DECOMP=%g MiB/s)",
-	varname, actual_prec, actual_tol, cr, bpv, t_comp,
+	varname, actual_prec, actual_tol, lossy_scale, cr, bpv, t_comp,
 	compress_speed_mib(snx * sny * snz * sizeof(float), t_comp),
 	t_decomp,
 	compress_speed_mib(snx * sny * snz * sizeof(float), t_decomp));
@@ -1434,8 +1632,12 @@ void compress_zfp(
     free(tmp_all);
     free(tmp_org);
     free(tmp_zfp);
+    free(orig_all);
     zfp_field_free(dec_field);
   }
+
+  free(scale_off);
+  free(scale_scl);
 
   /* Free... */
   zfp_field_free(field);
@@ -6251,6 +6453,8 @@ void mptrac_read_ctl(
   if (ctl->met_type == 2 && ctl->met_pck_zstd)
     ERRMSG("MET_PCK_ZSTD requires MPTRAC to be compiled with ZSTD support!");
 #endif
+  const int def_lossy_scale =
+    (int) scan_ctl(filename, argc, argv, "MET_LOSSY_SCALE", -1, "0", NULL);
   for (int i = 0; i < METVAR; i++) {
     char defprec_zfp[LEN] = "7", deftol_zfp[LEN] = "0.0";
     char defprec_sz3[LEN] = "6", deftol_sz3[LEN] = "0.0";
@@ -6292,6 +6496,13 @@ void mptrac_read_ctl(
 		     NULL);
     ctl->met_sz3_tol[i] =
       scan_ctl(filename, argc, argv, "MET_SZ3_TOL", i, deftol_sz3, NULL);
+    char defscale[LEN];
+    snprintf(defscale, LEN, "%d", def_lossy_scale);
+    ctl->met_lossy_scale[i] =
+      (int) scan_ctl(filename, argc, argv, "MET_LOSSY_SCALE", i, defscale,
+		     NULL);
+    if (ctl->met_lossy_scale[i] < 0 || ctl->met_lossy_scale[i] > 1)
+      ERRMSG("Set MET_LOSSY_SCALE to 0 or 1!");
   }
   /* Scan compression diagnostics file... */
   scan_ctl(filename, argc, argv, "MET_COMP_LOGFILE", -1, "-",
@@ -8022,7 +8233,7 @@ int read_met_bin(
   FREAD(&version, int,
 	1,
 	in);
-  if (version != 103)
+  if (version != 104)
     ERRMSG("Wrong version of binary data!");
 
   /* Read time... */
@@ -8176,6 +8387,8 @@ void read_met_bin_3d(
   const float bound_max) {
 
   float *help;
+  const int metvar = compress_metvar_index(varname);
+  (void) metvar;
 
   /* Allocate... */
   ALLOC(help, float,
@@ -8209,7 +8422,8 @@ void read_met_bin_3d(
 	  in);
 
     compress_zfp(varname, help, met->np, met->ny, met->nx, met->p,
-		 precision, tolerance, 1, NULL, in);
+		 precision, tolerance, ctl->met_lossy_scale[metvar], 1, NULL,
+		 in);
 #else
     ERRMSG("MPTRAC was compiled without ZFP compression!");
 #endif
@@ -8260,7 +8474,8 @@ void read_met_bin_3d(
 	  in);
 
     compress_sz3(varname, help, met->np, met->ny, met->nx, met->p,
-		 precision, tolerance, 1, NULL, in);
+		 precision, tolerance, ctl->met_lossy_scale[metvar], 1, NULL,
+		 in);
 #else
     ERRMSG("MPTRAC was compiled without sz3 compression!");
 #endif
@@ -13007,7 +13222,7 @@ void write_met_bin(
 	 out);
 
   /* Write version of binary data... */
-  int version = 103;
+  int version = 104;
   FWRITE(&version, int,
 	 1,
 	 out);
@@ -13169,7 +13384,8 @@ void write_met_bin_3d(
 	   1,
 	   out);
     compress_zfp(varname, help, met->np, met->ny, met->nx, met->p,
-		 precision, tolerance, 0, level_log, out);
+		 precision, tolerance, ctl->met_lossy_scale[metvar], 0,
+		 level_log, out);
   }
 #endif
 
@@ -13209,7 +13425,8 @@ void write_met_bin_3d(
 	   1,
 	   out);
     compress_sz3(varname, help, met->np, met->ny, met->nx, met->p,
-		 precision, tolerance, 0, level_log, out);
+		 precision, tolerance, ctl->met_lossy_scale[metvar], 0,
+		 level_log, out);
   }
 #endif
 

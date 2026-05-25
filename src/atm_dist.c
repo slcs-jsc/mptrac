@@ -445,8 +445,10 @@ void usage(
   printf("              median, or mad.\n");
   printf("  <atm*a/b>   Atmospheric input files to compare pairwise.\n");
   printf("\nControl parameters:\n");
-  printf("  DIST_REL_MIN[iq]  Mask qnt-specific relative differences where\n");
-  printf("                    |q1| + |q2| is smaller than or equal to this\n");
+  printf
+    ("  DIST_REL_MIN[iq]  Mask qnt-specific relative differences where\n");
+  printf
+    ("                    |q1| + |q2| is smaller than or equal to this\n");
   printf("                    threshold in the qnt unit [default: 0].\n");
   printf("\nFurther information:\n");
   printf("  Manual: https://slcs-jsc.github.io/mptrac/\n");

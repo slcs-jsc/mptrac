@@ -2591,6 +2591,9 @@ typedef struct {
   /*! SZ3 compression tolerance. */
   double met_sz3_tol[METVAR];
 
+  /*! Apply levelwise [0,1] scaling before lossy compression (0=off, 1=on). */
+  int met_lossy_scale[METVAR];
+
   /*! Filename for per-level compression diagnostics ("-" disables output). */
   char met_comp_logfile[LEN];
 
@@ -4110,6 +4113,64 @@ void compress_cms(
   FILE * inout);
 
 /**
+ * @brief Scales each vertical level of a 3-D field independently to the interval [0,1].
+ *
+ * The routine computes per-level offsets and scales from the minimum and maximum values
+ * of each vertical slice and transforms the field in place. Constant or nearly constant
+ * levels are mapped to zero and can be reconstructed exactly with the stored offsets.
+ *
+ * @param[in,out] array Field values stored in horizontal-major order.
+ * @param[in]     nxy   Number of horizontal points per level.
+ * @param[in]     nz    Number of vertical levels.
+ * @param[out]    off   Per-level offsets (minimum values).
+ * @param[out]    scl   Per-level scales (ranges).
+ *
+ * @author Lars Hoffmann
+ */
+void compress_scale_to_unit(
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  double *off,
+  double *scl);
+
+/**
+ * @brief Restores a levelwise [0,1]-scaled 3-D field to physical units.
+ *
+ * This routine applies the inverse transformation of ::compress_scale_to_unit() using
+ * the supplied per-level offsets and scales. Constant levels are restored directly from
+ * their offsets.
+ *
+ * @param[in,out] array Field values stored in horizontal-major order.
+ * @param[in]     nxy   Number of horizontal points per level.
+ * @param[in]     nz    Number of vertical levels.
+ * @param[in]     off   Per-level offsets (minimum values).
+ * @param[in]     scl   Per-level scales (ranges).
+ *
+ * @author Lars Hoffmann
+ */
+void compress_unscale_from_unit(
+  float *array,
+  const size_t nxy,
+  const size_t nz,
+  const double *off,
+  const double *scl);
+
+/**
+ * @brief Maps a meteorological variable name to its internal MPTRAC variable index.
+ *
+ * The returned index can be used to access variable-specific control arrays such as
+ * `MET_LOSSY_SCALE`, `MET_ZFP_PREC`, and `MET_SZ3_PREC`.
+ *
+ * @param varname Meteorological variable name as stored in the meteorological file.
+ * @return Internal MPTRAC meteorological variable index.
+ *
+ * @author Lars Hoffmann
+ */
+int compress_metvar_index(
+  const char *varname);
+
+/**
  * @brief Compresses or decompresses a 3D array of floats.
  *
  * This function either compresses or decompresses a 3D array of
@@ -4204,6 +4265,7 @@ void compress_sz3(
   const double *plev,
   const int precision,
   const double tolerance,
+  const int lossy_scale,
   const int decompress,
   FILE * level_log,
   FILE * inout);
@@ -4259,6 +4321,7 @@ void compress_zfp(
   const double *plev,
   const int precision,
   const double tolerance,
+  const int lossy_scale,
   const int decompress,
   FILE * level_log,
   FILE * inout);
