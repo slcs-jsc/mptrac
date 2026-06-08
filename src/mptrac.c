@@ -7665,8 +7665,18 @@ void mptrac_write_output(
       sprintf(ext, "bin");
     else if (ctl->atm_type_out == 2)
       sprintf(ext, "nc");
-    sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
-	    dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
+
+    if (ctl->atm_type_out == 5) {
+      sprintf(filename, "%s/%s.%s", dirname, ctl->atm_basename, ext);
+    } else if (ctl->atm_dt_out < 60) {
+      sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d_%02d.%s",
+	      dirname, ctl->atm_basename, year, mon, day, hour, min, sec,
+	      ext);
+    } else {
+      sprintf(filename, "%s/%s_%04d_%02d_%02d_%02d_%02d.%s",
+	      dirname, ctl->atm_basename, year, mon, day, hour, min, ext);
+    }
+
     mptrac_write_atm(filename, ctl, atm, t);
   }
 
@@ -9038,7 +9048,7 @@ void read_met_nc_grid(
   if (!ctl->met_clams) {
 
     /* Get time from filename... */
-    met->time = time_from_filename(filename, 16);
+    met->time = time_from_filename(filename, 16, 0);
 
     /* Check time information from data file... */
     jsec2time(met->time, &year, &mon, &day, &hour, &min, &sec, &r);
@@ -12025,7 +12035,8 @@ void timer(
 
 double time_from_filename(
   const char *filename,
-  const int offset) {
+  const int offset,
+  const int with_seconds) {
 
   char tstr[10];
 
@@ -12044,13 +12055,19 @@ double time_from_filename(
   sprintf(tstr, "%.2s", &filename[len - offset + 14]);
   int min = atoi(tstr);
 
+  int sec = 0;
+  if (with_seconds) {
+    sprintf(tstr, "%.2s", &filename[len - offset + 17]);
+    sec = atoi(tstr);
+  }
+
   /* Check time... */
   if (year < 1900 || year > 2100 || mon < 1 || mon > 12 || day < 1
       || day > 31 || hour < 0 || hour > 23 || min < 0 || min > 59)
     ERRMSG("Cannot read time from filename!");
 
   /* Convert time to Julian seconds... */
-  time2jsec(year, mon, day, hour, min, 0, 0.0, &t);
+  time2jsec(year, mon, day, hour, min, sec, 0.0, &t);
 
   /* Return time... */
   return t;

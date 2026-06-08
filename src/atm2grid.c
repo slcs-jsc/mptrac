@@ -70,9 +70,17 @@ int main(
     ERRMSG("Cannot open file!");
 
   /* Get time from filename... */
+  int time_offset = ctl.atm_type < 2 ? 20 : 19;
+  if (ctl.atm_dt_out < 60)
+    time_offset += 3;
+  const int with_seconds = ctl.atm_dt_out < 60;
+
   int year, mon, day, hour, min, sec;
-  double r, t = time_from_filename(argv[2], ctl.atm_type < 2 ? 20 : 19);
+  double r, t = time_from_filename(argv[2], time_offset, with_seconds);
   jsec2time(t, &year, &mon, &day, &hour, &min, &sec, &r);
+
+  if (sec != 0)
+    WARN("Seconds will be truncated in the filename of the grid data");
 
   /* Set output filename... */
   char filename[3 * LEN];

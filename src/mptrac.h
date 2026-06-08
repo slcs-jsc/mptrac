@@ -8887,16 +8887,20 @@ void timer(
  *
  * @param filename A string representing the filename containing the timestamp.
  * @param offset An integer indicating the position from the end of the filename where the timestamp starts.
- * 
+ * @param with_seconds An integer indicating if the filename contains seconds or not.
+ *
  * @return The time in Julian seconds as a double.
  *
  * The function performs the following steps:
- * - Extracts the year, month, day, hour, and minute components of the timestamp from the filename using the given offset.
+ * - Extracts the year, month, day, hour, minute and (optionally) second components of the timestamp
+ *   from the filename using the given offset.
  * - Validates the extracted components to ensure they represent a valid date and time.
  * - Converts the validated date and time components to Julian seconds using the `time2jsec` function.
  * - Returns the computed time in Julian seconds.
  *
- * @note The expected format of the timestamp in the filename is `YYYY-MM-DD_HH-MM` (e.g., "2023-05-27_14-45").
+ * @note The expected formats of the timestamp in the filename are:
+ *  - if with_seconds=0: `YYYY-MM-DD_HH-MM` (e.g., "2023-05-27_14-45")
+ *  - if with_seconds=1: `YYYY-MM-DD_HH-MM-SS` (e.g., "2023-05-27_14-45-12")
  *
  * @warning If the extracted components do not represent a valid date and time, the function will trigger an error message.
  * 
@@ -8904,7 +8908,8 @@ void timer(
  */
 double time_from_filename(
   const char *filename,
-  const int offset);
+  const int offset,
+  const int with_seconds);
 
 /**
  * @brief Computes a weighting factor based on tropopause pressure.

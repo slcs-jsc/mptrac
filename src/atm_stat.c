@@ -111,7 +111,12 @@ int main(
       continue;
 
     /* Get time from filename... */
-    t = time_from_filename(argv[f], ctl.atm_type < 2 ? 20 : 19);
+    int time_offset = ctl.atm_type < 2 ? 20 : 19;
+    if (ctl.atm_dt_out < 60)
+      time_offset += 3;
+    const int with_seconds = ctl.atm_dt_out < 60;
+
+    t = time_from_filename(argv[f], time_offset, with_seconds);
 
     /* Save initial time... */
     if (!init) {
