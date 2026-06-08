@@ -23,6 +23,11 @@ The following specific configuration parameters can be used to determine the rel
 | INIT_LAT1 | Release latitude range end | 0 |
 | INIT_DLAT | Release latitude interval | 1 |
 
+For the standard longitude/latitude grid these horizontal coordinates
+are given in degrees. For the special-purpose UTM-grid mode
+(`MET_COORD_TYPE = 1`), the same parameters refer to UTM easting and
+northing in metres.
+
 The following optional parameters can be used for controlling the release of air parcels:
 
 * INIT_REP: This parameter controls the number of air parcels in each release position. The default value is 1.

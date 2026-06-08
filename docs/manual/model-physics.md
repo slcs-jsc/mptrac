@@ -19,6 +19,8 @@ zeta $\zeta$). The velocity vector $\vec{v}=(u,v,\omega)$ is composed
 of the zonal wind component $u$, the meridional wind component $v$,
 and the vertical velocity ($\omega$ or $\dot{\zeta}$), respectively.
 
+For special-purpose regional UTM-grid simulations, the horizontal coordinates are in UTM easting and northing in metres.
+
 #### Integration Method
 
 Based on its accuracy and computational efficiency for trajectory
