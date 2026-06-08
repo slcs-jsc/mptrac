@@ -79,6 +79,7 @@ tests/cli_test/data/
 tests/cms_test/data/
 tests/compress_test/data/
 tests/dd_test/data/
+tests/dt_test/data/
 tests/gpu_test/data/
 tests/grib_test/data/
 tests/interoper_test/data/
