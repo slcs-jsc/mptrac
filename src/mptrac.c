@@ -2147,12 +2147,14 @@ void dd_communicate_particles(
 	size);
 
   /* Count particles per destination rank... */
+#pragma omp parallel for
   for (int ip = 0; ip < *npart; ip++) {
     const int dest = (int) (*particles)[ip].q[ctl->qnt_destination];
     if (dest == rank)
       continue;
     if (dest < 0 || dest >= size)
       ERRMSG("Invalid destination rank!");
+#pragma omp atomic
     send_counts[dest]++;
   }
 
@@ -2209,6 +2211,7 @@ void dd_communicate_particles(
   }
 
   /* Copy received particles... */
+#pragma omp parallel for
   for (int ip = 0; ip < nrecv; ip++) {
     (*particles)[ip] = recvbuf[ip];
     (*particles)[ip].q[ctl->qnt_destination] = rank;
@@ -2339,6 +2342,71 @@ void dd_particles2atm(
 #ifdef _OPENACC
 #pragma acc update device(atm->np)
 #endif
+}
+#endif
+
+/*****************************************************************************/
+
+#ifdef DD
+void dd_push(
+  const ctl_t *ctl, 
+  atm_t *atm, 
+  cache_t *cache, 
+  int *npart) {
+  
+    SELECT_TIMER("DD_PUSH", "DD");
+  
+    int rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    /* Create a counter on the device... */
+    int device_counter = 0;
+    int* device_counter_ptr = (int*)acc_malloc(sizeof(int));
+    if (device_counter_ptr == NULL) {
+        ERRMSG("Failed to allocate device counter memory!");
+    }
+    acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
+
+    /* Push non local particles behind the end of the atm... */
+#pragma acc parallel loop present(atm, cache) deviceptr(device_counter_ptr)
+    for (int ip = 0; ip < atm->np; ip++) {
+      if ((int)atm->q[ctl->qnt_subdomain][ip] != -1 &&
+         (int)atm->q[ctl->qnt_destination][ip] != rank) {
+
+        int local_idx;
+
+#pragma acc atomic capture
+        {
+          local_idx = *device_counter_ptr;
+          (*device_counter_ptr)++;
+        }
+
+        int global_index = atm->np + local_idx;
+
+        /* Copy time, pressure, longitude, and latitude...*/
+        atm->time[global_index] = atm->time[ip];
+        atm->p[global_index] = atm->p[ip];
+        atm->lon[global_index] = atm->lon[ip];
+        atm->lat[global_index] = atm->lat[ip];
+
+        /* Copy all quantity data (q array)... */
+        for (int iq = 0; iq < NQ; iq++) {
+          atm->q[iq][global_index] = atm->q[iq][ip];
+        }
+
+        /* Mark the original parcel as processed...*/
+        atm->q[ctl->qnt_destination][ip] = -1;
+        atm->q[ctl->qnt_subdomain][ip] = -1;
+
+        /* Reset cache->dt for the shifted particle... */
+        cache->dt[global_index] = cache->dt[ip];
+        cache->dt[ip] = 0;
+      }
+    }
+
+    /* Update host and free... */
+    acc_memcpy_from_device(npart, device_counter_ptr, sizeof(int));
+    acc_free(device_counter_ptr);
 }
 #endif
 
@@ -4088,9 +4156,6 @@ void module_dd(
   atm_t *atm,
   met_t **met) {
 
-  /* Set timer... */
-  SELECT_TIMER("MODULE_DD", "DD");
-
   /* Initialize particles locally... */
   int npart = 0, capacity = 0;
   particle_t *particles = NULL;
@@ -4099,62 +4164,10 @@ void module_dd(
   dd_assign_subdomains(ctl, dd, atm, 0);
 
   /* Sort particles according to location and target rank... */ 
-  if (fmod(t, ctl->dd_sort_dt) == 0) {
+  if (fmod(t, ctl->dd_sort_dt) == 0)
     dd_sort(ctl, *met, atm, dd, &npart);
-   }
-  else {
- 
-    int rank;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    
-    int device_counter = 0;
-    int* device_counter_ptr = (int*)acc_malloc(sizeof(int));
-    acc_memcpy_to_device(device_counter_ptr, &device_counter, sizeof(int));
-
-#pragma acc parallel loop present(atm, cache) deviceptr(device_counter_ptr)
-    for (int ip = 0; ip < atm->np; ip++) {
-        if ((int)atm->q[ctl->qnt_subdomain][ip] != -1 &&
-            (int)atm->q[ctl->qnt_destination][ip] != rank) {
-            
-            int local_idx;
-            
-#pragma acc atomic capture
-            {
-	      local_idx = *device_counter_ptr;
-              (*device_counter_ptr)++;
-              /*if (*device_counter_ptr > NP)
-                exit(EXIT_FAILURE);*/
-            }
-            
-            int global_index = atm->np + local_idx;
-
-            // Copy time, pressure, longitude, and latitude
-            atm->time[global_index] = atm->time[ip];
-            atm->p[global_index] = atm->p[ip];
-            atm->lon[global_index] = atm->lon[ip];
-            atm->lat[global_index] = atm->lat[ip];
-
-            // Copy all quantity data (q array)
-            for (int iq = 0; iq < NQ; iq++) {
-                atm->q[iq][global_index] = atm->q[iq][ip];
-            }
-
-            // Mark the original parcel as processed
-            atm->q[ctl->qnt_destination][ip] = -1;
-            atm->q[ctl->qnt_subdomain][ip] = -1;
-
-            // Reset cache->dt for the shifted particle
-            cache->dt[global_index] = cache->dt[ip];
-            cache->dt[ip] = 0;
-
-        }
-      }
-      
-    acc_memcpy_from_device(&npart, device_counter_ptr, sizeof(int));
-    acc_free(device_counter_ptr);  
-
-    }
-
+  else
+    dd_push( ctl, atm, cache, &npart);
 
   /* Ensure particle buffer is large enough for outgoing particles... */
   if (npart > capacity) {
@@ -4169,7 +4182,10 @@ void module_dd(
 
   /* Transform from struct of array to array of struct... */
   dd_atm2particles(ctl, cache, atm, particles, npart);
-
+  
+  SELECT_TIMER("SYNC", "DD");
+  MPI_Barrier(MPI_COMM_WORLD);
+  
   /* Perform the communication... */
   dd_communicate_particles(ctl, dd, &particles, &npart, &capacity);
 
@@ -5415,7 +5431,7 @@ void module_sedi(
   atm_t *atm) {
 
   /* Set timer... */
-  SELECT_TIMER("MODULE_SEDI", "PHYSICS");
+  SELECT_TIMER("MODULE_SEDI", "PHYSICS")
 
   /* Loop over particles... */
   PARTICLE_LOOP(0, atm->np, 1, "acc data present(ctl,cache,met0,met1,atm)") {
