@@ -26,7 +26,10 @@ The following specific configuration parameters can be used to determine the rel
 For the standard longitude/latitude grid these horizontal coordinates
 are given in degrees. For the special-purpose UTM-grid mode
 (`MET_COORD_TYPE = 1`), the same parameters refer to UTM easting and
-northing in metres.
+northing in metres. The horizontal spread parameters (`INIT_SLON`,
+`INIT_SLAT`, `INIT_ULON`, `INIT_ULAT`, and `INIT_SX`) use the same
+horizontal coordinate units as the respective met grid: degrees for longitude/latitude grids and
+metres for UTM grids.
 
 The following optional parameters can be used for controlling the release of air parcels:
 

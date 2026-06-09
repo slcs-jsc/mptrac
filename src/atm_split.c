@@ -147,10 +147,18 @@ int main(
       atm2->lon[atm2->np] = lon0 + (lon1 - lon0) * gsl_rng_uniform_pos(rng);
       atm2->lat[atm2->np] = lat0 + (lat1 - lat0) * gsl_rng_uniform_pos(rng);
     } else {
+      double dx_coord, dy_coord;
+      if (ctl.met_coord_type == 0) {
+        dx_coord = DX2DEG(dx, atm->lat[ip]);
+        dy_coord = DY2DEG(dx);
+      } else {
+        dx_coord = 1000. * dx;
+        dy_coord = 1000. * dx;
+      }
       atm2->lon[atm2->np] = atm->lon[ip]
-	+ gsl_ran_gaussian_ziggurat(rng, DX2DEG(dx, atm->lat[ip]) / 2.3548);
+	+ gsl_ran_gaussian_ziggurat(rng, dx_coord / 2.3548);
       atm2->lat[atm2->np] = atm->lat[ip]
-	+ gsl_ran_gaussian_ziggurat(rng, DY2DEG(dx) / 2.3548);
+	+ gsl_ran_gaussian_ziggurat(rng, dy_coord / 2.3548);
     }
 
     /* Copy quantities... */
