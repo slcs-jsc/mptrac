@@ -27,7 +27,7 @@ var searchData=
   ['tropo_5fntime_24',['tropo_ntime',['../structclim__t.html#a71b9c5664f017ee5f36db4aae204328a',1,'clim_t']]],
   ['tropo_5fsample_2ec_25',['tropo_sample.c',['../tropo__sample_8c.html',1,'']]],
   ['tropo_5ftime_26',['tropo_time',['../structclim__t.html#ae2845f40329df2cf90838d1684617ada',1,'clim_t']]],
-  ['tropo_5fweight_27',['tropo_weight',['../mptrac_8h.html#a90bdbbffe8b8633d84a48d2ddd311180',1,'tropo_weight(const clim_t *clim, const atm_t *atm, const int ip):&#160;mptrac.c'],['../mptrac_8c.html#a90bdbbffe8b8633d84a48d2ddd311180',1,'tropo_weight(const clim_t *clim, const atm_t *atm, const int ip):&#160;mptrac.c']]],
+  ['tropo_5fweight_27',['tropo_weight',['../mptrac_8h.html#af82147c2a37a4f9be2d99ff258838a63',1,'tropo_weight(const ctl_t *ctl, const clim_t *clim, const atm_t *atm, const int ip):&#160;mptrac.c'],['../mptrac_8c.html#af82147c2a37a4f9be2d99ff258838a63',1,'tropo_weight(const ctl_t *ctl, const clim_t *clim, const atm_t *atm, const int ip):&#160;mptrac.c']]],
   ['tropo_5fzm_2ec_28',['tropo_zm.c',['../tropo__zm_8c.html',1,'']]],
   ['ts_29',['ts',['../structmet__t.html#a61ef93fdd727e61639dc6408a4573149',1,'met_t']]],
   ['tt_30',['tt',['../structmet__t.html#a9677a606f7850c8143f698e9fb15273f',1,'met_t']]],
